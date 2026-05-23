@@ -1,0 +1,14 @@
+# working documents — not for public repo
+HANDOFF.md
+CV_TRIGGER_INVENTORY.md
+vs_texrouter_SPEC.md
+
+# Max backup files
+*.maxpat.bak
+
+# macOS
+.DS_Store
+
+# editor / OS noise
+*.swp
+*.swo

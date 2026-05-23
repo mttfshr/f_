@@ -1,0 +1,9 @@
+{
+    "name": "f_",
+    "display_name": "f_",
+    "version": "0.1.0",
+    "author": "Matt Fisher",
+    "description": "Visual processing bpatchers for Vsynth",
+    "max_version_required": "9.0",
+    "tags": [ "video", "vsynth", "jitter", "effects", "gl" ]
+}
