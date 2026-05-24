@@ -12,8 +12,8 @@
 		"rect": [
 			610.0,
 			61.0,
-			698.0,
-			824.0
+			921.0,
+			876.0
 		],
 		"openinpresentation": 1,
 		"toolbars_unpinned_last_save": 2,
@@ -85,8 +85,8 @@
 					],
 					"parameter_enable": 1,
 					"patching_rect": [
-						158.75,
-						366.0,
+						432.0,
+						89.00000357627869,
 						46.0,
 						15.0
 					],
@@ -122,8 +122,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						241.0,
-						165.5,
+						48.16666793823242,
+						512.8333349227905,
 						111.0,
 						16.0
 					],
@@ -146,8 +146,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						226.0,
-						150.5,
+						15.50000011920929,
+						525.3333489894867,
 						111.0,
 						16.0
 					],
@@ -254,8 +254,8 @@
 					"numinlets": 0,
 					"numoutlets": 0,
 					"patching_rect": [
-						169.00000503659248,
-						141.3333375453949,
+						4.0000001192092896,
+						415.33334571123123,
 						146.0,
 						21.0
 					],
@@ -286,8 +286,8 @@
 					"param_connect": "jit.gl.pix_AA::edge_falloff",
 					"parameter_enable": 1,
 					"patching_rect": [
-						168.25,
-						315.20000475645065,
+						408.0,
+						85.00000357627869,
 						25.0,
 						23.0
 					],
@@ -324,8 +324,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						211.0,
-						135.5,
+						6.5000001192092896,
+						440.00001311302185,
 						123.0,
 						17.0
 					],
@@ -353,8 +353,8 @@
 					"param_connect": "jit.gl.pix_AA::bypass",
 					"parameter_enable": 1,
 					"patching_rect": [
-						79.20000118017197,
-						158.40000236034393,
+						84.0,
+						85.0,
 						18.0,
 						12.0
 					],
@@ -394,8 +394,8 @@
 					"param_connect": "jit.gl.pix_AA::sat_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
-						226.0,
-						132.00000196695328,
+						165.0,
+						80.0,
 						27.0,
 						43.0
 					],
@@ -438,8 +438,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						226.0,
-						150.5,
+						33.50000083446503,
+						497.50000113248825,
 						116.0,
 						17.0
 					],
@@ -462,8 +462,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						211.0,
-						135.5,
+						30.8333340883255,
+						466.8333335518837,
 						121.0,
 						17.0
 					],
@@ -486,8 +486,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						196.0,
-						120.5,
+						9.50000011920929,
+						459.5,
 						117.0,
 						17.0
 					],
@@ -566,8 +566,8 @@
 						""
 					],
 					"patching_rect": [
-						252.00000375509262,
-						486.4000072479248,
+						418.66667914390564,
+						128.00000381469727,
 						155.0,
 						22.0
 					],
@@ -620,8 +620,8 @@
 						""
 					],
 					"patching_rect": [
-						535.5,
-						193.6000028848648,
+						327.0,
+						163.333338201046,
 						142.0,
 						22.0
 					],
@@ -638,8 +638,8 @@
 						""
 					],
 					"patching_rect": [
-						370.4000055193901,
-						196.80000293254852,
+						252.00000375509262,
+						193.6000028848648,
 						141.0,
 						22.0
 					],
@@ -656,8 +656,8 @@
 						""
 					],
 					"patching_rect": [
-						226.0,
-						193.6000028848648,
+						165.0,
+						163.333338201046,
 						136.0,
 						22.0
 					],
@@ -680,8 +680,8 @@
 					"param_connect": "jit.gl.pix_AA::hue_shift",
 					"parameter_enable": 1,
 					"patching_rect": [
-						535.5,
-						135.00000196695328,
+						327.0,
+						80.0,
 						27.0,
 						43.0
 					],
@@ -730,8 +730,8 @@
 					"param_connect": "jit.gl.pix_AA::lum_shift",
 					"parameter_enable": 1,
 					"patching_rect": [
-						370.4000055193901,
-						137.60000205039978,
+						246.0,
+						75.00000357627869,
 						27.0,
 						43.0
 					],
@@ -775,8 +775,8 @@
 						""
 					],
 					"patching_rect": [
-						79.20000118017197,
-						193.6000028848648,
+						84.0,
+						133.33333730697632,
 						131.0,
 						22.0
 					],
@@ -810,8 +810,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						450.5,
-						459.5,
+						374.0000111460686,
+						480.00001430511475,
 						30.0,
 						30.0
 					]
@@ -832,9 +832,9 @@
 						""
 					],
 					"patching_rect": [
-						332.0,
-						370.0,
-						295.0,
+						84.0,
+						50.0,
+						424.0,
 						22.0
 					],
 					"text": "route bypass sat_amt lum_shift hue_shift edge_falloff"
@@ -852,8 +852,8 @@
 						""
 					],
 					"patching_rect": [
-						332.0,
-						339.0,
+						84.0,
+						8.0,
 						30.0,
 						30.0
 					]
@@ -969,8 +969,8 @@
 						]
 					},
 					"patching_rect": [
-						432.0,
-						405.0,
+						354.5,
+						400.66667860746384,
 						222.0,
 						22.0
 					],
@@ -1000,8 +1000,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						129.0000038444996,
-						166.6666716337204,
+						4.0000001192092896,
+						273.33334147930145,
 						128.0,
 						128.0
 					],
@@ -1022,7 +1022,7 @@
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
-						""
+						"bang"
 					],
 					"patching_rect": [
 						600.0,
@@ -1031,61 +1031,6 @@
 						22.0
 					],
 					"text": "loadbang"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-41",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						600.0,
-						80.0,
-						200.0,
-						22.0
-					],
-					"text": "getattr presentation_rect @listen 0"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-42",
-					"maxclass": "newobj",
-					"numinlets": 2,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						600.0,
-						110.0,
-						60.0,
-						22.0
-					],
-					"text": "zl slice 2"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-43",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						600.0,
-						140.0,
-						70.0,
-						22.0
-					],
-					"text": "prepend tam"
 				}
 			},
 			{
@@ -1108,6 +1053,24 @@
 						"parameter_enable": 0
 					},
 					"text": "js moduleSize.js"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-45",
+					"maxclass": "message",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						600.0,
+						80.0,
+						80.0,
+						22.0
+					],
+					"text": "tam 150 120"
 				}
 			}
 		],
@@ -1286,7 +1249,7 @@
 						"obj-19",
 						0
 					],
-					"order": 0,
+					"order": 1,
 					"source": [
 						"obj-26",
 						0
@@ -1299,7 +1262,7 @@
 						"obj-5",
 						0
 					],
-					"order": 1,
+					"order": 0,
 					"source": [
 						"obj-26",
 						0
@@ -1485,7 +1448,7 @@
 						0
 					],
 					"destination": [
-						"obj-41",
+						"obj-45",
 						0
 					]
 				}
@@ -1493,31 +1456,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
-						0
-					],
-					"destination": [
-						"obj-42",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-42",
-						0
-					],
-					"destination": [
-						"obj-43",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-43",
+						"obj-45",
 						0
 					],
 					"destination": [

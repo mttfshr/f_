@@ -995,61 +995,6 @@
 			},
 			{
 				"box": {
-					"id": "obj-32",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						600.0,
-						80.0,
-						200.0,
-						22.0
-					],
-					"text": "getattr presentation_rect @listen 0"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-33",
-					"maxclass": "newobj",
-					"numinlets": 2,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						600.0,
-						110.0,
-						60.0,
-						22.0
-					],
-					"text": "zl slice 2"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-34",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						600.0,
-						140.0,
-						70.0,
-						22.0
-					],
-					"text": "prepend tam"
-				}
-			},
-			{
-				"box": {
 					"id": "obj-35",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -1068,6 +1013,24 @@
 						"parameter_enable": 0
 					},
 					"text": "js moduleSize.js"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-36",
+					"maxclass": "message",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						600.0,
+						80.0,
+						80.0,
+						22.0
+					],
+					"text": "tam 150 120"
 				}
 			}
 		],
@@ -1457,7 +1420,7 @@
 						0
 					],
 					"destination": [
-						"obj-32",
+						"obj-36",
 						0
 					]
 				}
@@ -1465,31 +1428,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-32",
-						0
-					],
-					"destination": [
-						"obj-33",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-33",
-						0
-					],
-					"destination": [
-						"obj-34",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-34",
+						"obj-36",
 						0
 					],
 					"destination": [
