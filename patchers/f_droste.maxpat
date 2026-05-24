@@ -17,10 +17,10 @@
                     "id": "obj-21",
                     "maxclass": "newobj",
                     "numinlets": 1,
-                    "numoutlets": 5,
-                    "outlettype": [ "", "", "", "", "" ],
-                    "patching_rect": [ 300.0, 140.0, 230.0, 22.0 ],
-                    "text": "route zoom n_arms twist rotation"
+                    "numoutlets": 6,
+                    "outlettype": [ "", "", "", "", "", "" ],
+                    "patching_rect": [ 300.0, 140.0, 280.0, 22.0 ],
+                    "text": "route bypass zoom n_arms twist rotation"
                 }
             },
             {
@@ -51,7 +51,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 50.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 12.0, 27.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 4.0, 36.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -61,7 +61,7 @@
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "zoom",
-                            "parameter_mmax": 8.0,
+                            "parameter_mmax": 50.0,
                             "parameter_mmin": 1.1,
                             "parameter_modmode": 3,
                             "parameter_shortname": "zoom",
@@ -90,7 +90,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 100.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 52.0, 27.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 41.0, 36.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -129,7 +129,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 150.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 92.0, 27.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 78.0, 36.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -168,7 +168,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 200.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 132.0, 27.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 115.0, 36.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -202,8 +202,8 @@
                     "numoutlets": 0,
                     "patching_rect": [ 50.0, 140.0, 35.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 10.0, 74.0, 35.0, 18.0 ],
-                    "text": "zoom"
+                    "presentation_rect": [ 3.0, 21.0, 35.0, 18.0 ],
+                    "text": "Zoom"
                 }
             },
             {
@@ -216,8 +216,8 @@
                     "numoutlets": 0,
                     "patching_rect": [ 100.0, 140.0, 35.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 50.0, 74.0, 35.0, 18.0 ],
-                    "text": "arms"
+                    "presentation_rect": [ 39.0, 21.0, 35.0, 18.0 ],
+                    "text": "Arms"
                 }
             },
             {
@@ -230,8 +230,8 @@
                     "numoutlets": 0,
                     "patching_rect": [ 150.0, 140.0, 35.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 90.0, 74.0, 35.0, 18.0 ],
-                    "text": "twist"
+                    "presentation_rect": [ 76.0, 21.0, 35.0, 18.0 ],
+                    "text": "Twist"
                 }
             },
             {
@@ -244,8 +244,8 @@
                     "numoutlets": 0,
                     "patching_rect": [ 200.0, 140.0, 30.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 133.0, 74.0, 30.0, 18.0 ],
-                    "text": "rot"
+                    "presentation_rect": [ 116.0, 21.0, 30.0, 18.0 ],
+                    "text": "Rot"
                 }
             },
             {
@@ -381,7 +381,7 @@
                             },
                             {
                                 "box": {
-                                    "code": "Param zoom(2.0);\nParam n_arms(1.0);\nParam time_s(0.0);\nParam twist(0.0);\nParam rotation(0.0);\n\nTWO_PI = 6.28318530717959;\n\ndx = norm.x - 0.5;\ndy = norm.y - 0.5;\n\nr = sqrt(dx*dx + dy*dy);\ntheta = atan2(dy, dx);\n\nlog_zoom = log(max(zoom, 1.001));\ns = log(max(r, 0.00001)) / log_zoom;\nt = (theta / TWO_PI) + rotation;\n\ns = s + time_s;\n\n// symmetric shear in log-polar space\n// twist=0: rings + radial spokes\n// twist=1: Escher coupling — both families spiral, one revolution = one zoom level\ns_sp = s - t * twist;\nt_sp = t + s * twist;\n\nout1 = sample(in1, vec(fract(t_sp / n_arms), fract(s_sp), 0));",
+                                    "code": "Param zoom(2.0);\nParam n_arms(1.0);\nParam time_s(0.0);\nParam twist(0.0);\nParam rotation(0.0);\nParam bypass(0.0);\n\nTWO_PI = 6.28318530717959;\n\ndx = norm.x - 0.5;\ndy = norm.y - 0.5;\n\nr = sqrt(dx*dx + dy*dy);\ntheta = atan2(dy, dx);\n\nlog_zoom = log(max(zoom, 1.001));\ns = log(max(r, 0.00001)) / log_zoom;\nt = (theta / TWO_PI) + rotation;\n\ns = s + time_s;\n\n// symmetric shear in log-polar space\n// twist=0: rings + radial spokes\n// twist=1: Escher coupling — both families spiral, one revolution = one zoom level\ns_sp = s - t * twist;\nt_sp = t + s * twist;\n\ndroste_out = sample(in1, vec(fract(t_sp / n_arms), fract(s_sp), 0));\nout1 = mix(droste_out, sample(in1, norm), bypass);",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
@@ -426,6 +426,45 @@
             },
             {
                 "box": {
+                    "bgcolor": [ 0.313725490196078, 0.313725490196078, 0.313725490196078, 1.0 ],
+                    "id": "obj-22",
+                    "maxclass": "toggle",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "int" ],
+                    "param_connect": "droste_pix::bypass",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 50.0, 30.0, 20.0, 20.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 136.0, 5.0, 13.333333730697632, 13.333333730697632 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_enum": [ "off", "on" ],
+                            "parameter_linknames": 1,
+                            "parameter_longname": "bypass",
+                            "parameter_mmax": 1.0,
+                            "parameter_modmode": 4,
+                            "parameter_shortname": "bypass",
+                            "parameter_type": 1,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "bypass"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-23",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "patching_rect": [ 50.0, 60.0, 131.0, 22.0 ],
+                    "text": "prepend param bypass"
+                }
+            },
+            {
+                "box": {
                     "angle": 270.0,
                     "background": 1,
                     "bgcolor": [ 0.0, 0.0, 0.0, 1.0 ],
@@ -438,7 +477,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 175.0, 85.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 0.0, 0.0, 175.0, 97.0 ],
+                    "presentation_rect": [ 0.0, 0.0, 150.0, 88.5 ],
                     "proportion": 0.5
                 }
             }
@@ -460,6 +499,12 @@
                 "patchline": {
                     "destination": [ "obj-19", 0 ],
                     "source": [ "obj-13", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-21", 0 ],
+                    "source": [ "obj-13", 2 ]
                 }
             },
             {
@@ -506,6 +551,36 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-22", 0 ],
+                    "source": [ "obj-21", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-2", 0 ],
+                    "source": [ "obj-21", 1 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-3", 0 ],
+                    "source": [ "obj-21", 2 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-4", 0 ],
+                    "source": [ "obj-21", 3 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-5", 0 ],
+                    "source": [ "obj-21", 4 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-15", 0 ],
                     "source": [ "obj-3", 0 ]
                 }
@@ -524,32 +599,14 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-21", 0 ],
-                    "source": [ "obj-13", 2 ]
+                    "destination": [ "obj-23", 0 ],
+                    "source": [ "obj-22", 0 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-2", 0 ],
-                    "source": [ "obj-21", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-21", 1 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-4", 0 ],
-                    "source": [ "obj-21", 2 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-21", 3 ]
+                    "destination": [ "obj-19", 0 ],
+                    "source": [ "obj-23", 0 ]
                 }
             }
         ],
@@ -558,6 +615,7 @@
             "obj-3": [ "n_arms", "n_arms", 0 ],
             "obj-4": [ "twist", "twist", 0 ],
             "obj-5": [ "rotation", "rotation", 0 ],
+            "obj-22": [ "bypass", "bypass", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,

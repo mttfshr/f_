@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 183.0, 95.0, 935.0, 922.0 ],
+        "rect": [ 136.0, 171.0, 935.0, 922.0 ],
         "openinpresentation": 1,
         "description": "4x4 texture routing matrix for Vsynth",
         "boxes": [
@@ -759,10 +759,10 @@
             },
             {
                 "box": {
-                    "activebgcolor": [ 0.0, 0.854901960784314, 0.282352941176471, 1.0 ],
+                    "activebgcolor": [ 0.14901960784313725, 0.43529411764705883, 0.24313725490196078, 1.0 ],
                     "activebgoncolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
-                    "bgcolor": [ 0.0, 0.854901960784314, 0.282352941176471, 1.0 ],
-                    "bgoncolor": [ 0.0, 0.854901960784314, 0.282352941176471, 1.0 ],
+                    "bgcolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
+                    "bgoncolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
                     "bordercolor": [ 0.53926766494125, 0.539267534772943, 0.539267568788001, 1.0 ],
                     "id": "obj-45",
                     "maxclass": "live.toggle",
@@ -776,16 +776,16 @@
                     "rounded": 4.0,
                     "saved_attribute_attributes": {
                         "activebgcolor": {
-                            "expression": "themecolor.live_macro_assignment"
+                            "expression": ""
                         },
                         "activebgoncolor": {
                             "expression": "themecolor.live_contrast_frame"
                         },
                         "bgcolor": {
-                            "expression": "themecolor.live_macro_assignment"
+                            "expression": "themecolor.live_contrast_frame"
                         },
                         "bgoncolor": {
-                            "expression": "themecolor.live_macro_assignment"
+                            "expression": "themecolor.live_contrast_frame"
                         },
                         "bordercolor": {
                             "expression": "themecolor.live_control_fill_handle"
@@ -1371,7 +1371,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 1750.0, 50.0, 110.0, 21.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.666666805744171, -1.3333333730697632, 96.0, 21.0 ],
+                    "presentation_rect": [ -0.5, -1.5, 96.0, 21.0 ],
                     "text": "Texture router",
                     "textcolor": [ 0.9, 0.9, 0.9, 1.0 ]
                 }
