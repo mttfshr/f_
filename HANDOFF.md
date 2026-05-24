@@ -1,68 +1,71 @@
 # f_ Package Handoff
-_Last updated: 2026-05-23 — package cleanup and bypass toggle rollout_
+_Last updated: 2026-05-24 — f_cymascope initial build + vsynth-bpatcher skill update_
 
 ## What was done this session
 
-### Package restructure
-- Renamed `javascript/` → `code/` (Max package convention — auto-adds to search path)
-- Fixed hardcoded absolute JS paths in `f_luma_processor` and `f_tone_curve`
-- Symlinked package into Max Packages folder — all JS files now resolve by name
+### f_cymascope: new Bessel mode cymatics bpatcher
 
-### Control messaging (route-based)
-Added named message control to all processor patchers. Pattern:
+Built `patchers/f_cymascope.maxpat` from scratch — a circular plate modal synthesis visualizer.
 
-```
-inlet → route <param1> <param2> ... → UI elements → prepend param → pix
-                                    → last outlet → pix (texture passthrough)
-```
+**Concept:** Superimposes 8 circular membrane modes using large-x asymptotic Bessel function approximations. Each mode `m` contributes `sqrt(2/πr) * cos(r - z_m) * cos(m*θ + ph_m) * amplitude`. Nodal lines rendered via `1 - clip(sqrt(abs(total)) * linesharpness, 0, 1)`.
 
-Params per patcher:
-- `f_tone_curve`: bypass, shadows, midtones, highlights, edge_falloff, low_mid, mid_high
-- `f_luma_processor`: bypass, sat_amt, lum_shift, hue_shift, edge_falloff, low_mid, mid_high
-- `f_hue_processor`: bypass, sat_amt, lum_shift, hue_shift, edge_falloff (rslider params excluded)
-- `f_channel_grader`: bypass, r/g/b × lift/gamma/gain, m × lift/gamma/gain
-- `f_droste`: bypass, zoom, n_arms, twist, rotation (on routepass unmatched outlet)
-- `f_grain`: bypass, density, amount, persistence, fade, size, size_var, shape, softness, jitter, ch_diverge, luma_gate, displace, edge_mode_menu, field, sv_seed
+**Parameters:**
+- `m0amp`–`m7amp` — modal amplitudes (signal-driven inputs)
+- `z0`–`z7` — Bessel zeros, correct J_m first zeros by default, tweakable
+- `ph0`–`ph7` — phase per mode (note: ph0 has no effect for m0, no angular term)
+- `dishradius` — plate radius scale
+- `reflectamt` — boundary reflection standing wave mix
+- `linesharpness` — nodal line width
+- `globalscale` — output brightness
+- `view_mode` — 0=circular (default), 1=unwrapped strip, blendable
 
-Usage: send `sat_amt 0.5` or `bypass 1` into bpatcher inlet.
+**Intended signal chain (not yet built):**
+- Audio path: mic → bandpass bank (8 filters at modal freq ratios) → peakamp → smooth → mNamp
+- EEG path: Muse OSC → udpreceive → band routing → scale → smooth → mNamp
+- Muse updates at ~10Hz — needs `line`/`slide~` smoothing before params
 
-### bypass_toggle.js
-New jsui component in `code/bypass_toggle.js`:
-- Web-style pill toggle, 18×12px
-- Gray = active (effect running), Red = bypassed
-- Click to toggle, inlet accepts 0/1 messages
-- autopattr compatible (`getvalueof`/`setvalueof`)
-- Hover label shows "bypass"
+**EEG band → mode mapping:**
+Delta→m0, Theta→m1, Alpha→m2, Beta-lo→m3, Beta-hi→m4, Gamma-lo→m5, Gamma-hi→m6, Spare→m7
 
-Rolled out to all 7 patchers replacing the standard Max toggle.
+### vsynth-bpatcher skill updated
+
+Updated `/Users/matt/Github/claude-scaffold/skills/vsynth-bpatcher/SKILL.md` with:
+- `patterns/` vs `patchers/` distinction (version control boundary)
+- One-sentence mental model: Vsynth owns render tempo and cornerpins
+- Codebox-first workflow: write text, paste manually, verify before building JSON
+- Template derived from f_droste (no autopattr, routepass pattern, moduleSize chain)
+- Two codebox gotchas added: `vec4()` invalid (use `vec()`), single Vsynth inlet
 
 ## Current state
 
-All patchers working and tested in Max. Package is clean, committed.
+All patchers working. f_cymascope confirmed producing correct Bessel patterns visually.
 
 ## Loose threads
 
-- **hue_lower / hue_upper not remotely controllable** — rslider params were intentionally left out of the route object in `f_hue_processor` to avoid feedback loops. Revisit if needed.
-- **f_texrouter bypass semantics** — bypass in texrouter = freeze (gate states unchanged, control messages blocked). Different from processor bypass which passes texture through. Worth documenting in help patch.
-- **bypass_toggle hover label** — `onmouseenter`/`onmouseleave` confirmed working in Max 9. If it breaks in future versions, fallback is to remove hover and rely on the red/gray visual alone.
-- **f_grain_displace** — removed, work deferred indefinitely.
+- **f_cymascope signal chain** — modal amps are static dials; audio/EEG analysis chain not yet built
+- **f_cymascope near-center singularity** — `sqrt(2/πr)` diverges at origin, visible as bright spike. Low priority, somewhat characteristic of cymatics images
+- **ph0 dead param** — phase has no effect for m0 (cos(0*θ + ph0) = cos(ph0) = constant). Consider repurposing as global phase or hiding
+- **hue_lower / hue_upper not remotely controllable** — rslider params intentionally left out of route in `f_hue_processor`. Revisit if needed
+- **f_texrouter bypass semantics** — bypass = freeze, different from processor bypass. Document in help patch
 
 ## Next steps
 
+- Build audio signal analysis chain for f_cymascope (bandpass bank → peakamp → smooth)
+- Build Muse OSC → cymascope routing patch
 - Help patchers — none of the bpatchers have help files yet
-- Test control messaging in a real Vsynth patch (send named messages from another module)
-- Consider adding `route`-based control to `f_texrouter` for cell, preset, clear, reset
+- Test control messaging in a real Vsynth patch
 
 ## Package structure
 
 ```
 f_/
-  code/           — JS files (bypass_toggle.js, hue_rslider.js, hue_range.js, etc.)
-  patchers/       — all 7 bpatchers
-  help/           — (empty, to be filled)
+  code/           — JS files (bypass_toggle.js, hue_rslider.js, etc.)
+  patchers/       — 8 bpatchers (+ f_cymascope new this session)
+  help/           — (empty)
   package-info.json
 ```
 
 ## Resources
 - Max package conventions: https://docs.cycling74.com/max8/vignettes/packages
 - Vsynth: /Users/matt/Documents/Max 9/Packages/Vsynth
+- Cymascope Obsidian note: f_cymascope_bpatcher.md

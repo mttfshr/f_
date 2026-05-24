@@ -172,7 +172,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Spiral arm count",
+					"hint": "Arm count — all integers tile cleanly",
 					"id": "obj-3",
 					"maxclass": "live.dial",
 					"numinlets": 1,
@@ -207,11 +207,11 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "n_arms",
-							"parameter_mmax": 8.0,
-							"parameter_mmin": -8.0,
+							"parameter_mmax": 16.0,
+							"parameter_mmin": 1.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "n_arms",
-							"parameter_type": 0,
+							"parameter_type": 1,
 							"parameter_unitstyle": 1
 						}
 					},
@@ -646,7 +646,7 @@
 							},
 							{
 								"box": {
-									"code": "Param zoom(2.0);\nParam n_arms(1.0);\nParam time_s(0.0);\nParam twist(0.0);\nParam rotation(0.0);\nParam bypass(0.0);\n\nTWO_PI = 6.28318530717959;\n\ndx = norm.x - 0.5;\ndy = norm.y - 0.5;\n\nr = sqrt(dx*dx + dy*dy);\ntheta = atan2(dy, dx);\n\nlog_zoom = log(max(zoom, 1.001));\ns = log(max(r, 0.00001)) / log_zoom;\nt = (theta / TWO_PI) + rotation;\n\ns = s + time_s;\n\n// symmetric shear in log-polar space\n// twist=0: rings + radial spokes\n// twist=1: Escher coupling \u2014 both families spiral, one revolution = one zoom level\ns_sp = s - t * twist;\nt_sp = t + s * twist;\n\ndroste_out = sample(in1, vec(fract(t_sp / n_arms), fract(s_sp), 0));\nout1 = mix(droste_out, sample(in1, norm), bypass);",
+									"code": "Param zoom(2.0);\nParam n_arms(1.0);\nParam time_s(0.0);\nParam twist(0.0);\nParam rotation(0.0);\nParam bypass(0.0);\n\nTWO_PI = 6.28318530717959;\n\ndx = norm.x - 0.5;\ndy = norm.y - 0.5;\n\nr = sqrt(dx*dx + dy*dy);\ntheta = atan2(dy, dx);\n\nlog_zoom = log(max(zoom, 1.001));\ns = log(max(r, 0.00001)) / log_zoom;\nt = (theta / TWO_PI) + rotation;\n\ns = s + time_s;\n\n// symmetric shear in log-polar space\n// twist=0: rings + radial spokes\n// twist=1: Escher coupling \u2014 both families spiral, one revolution = one zoom level\ns_sp = s - t * twist;\nt_sp = t + s * twist;\n\ndroste_out = sample(in1, vec(fract(t_sp * n_arms), fract(s_sp), 0));\nout1 = mix(droste_out, sample(in1, norm), bypass);",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
