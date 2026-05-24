@@ -2143,10 +2143,68 @@
 					"patching_rect": [
 						600.0,
 						80.0,
+						180.0,
+						22.0
+					],
+					"text": "getattr presentation_rect"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-93",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 4,
+					"outlettype": [
+						"",
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						600.0,
+						110.0,
 						80.0,
 						22.0
 					],
-					"text": "tam 233 166"
+					"text": "thispatcher"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-94",
+					"maxclass": "newobj",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						600.0,
+						140.0,
+						60.0,
+						22.0
+					],
+					"text": "zl slice 2"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-95",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						600.0,
+						170.0,
+						80.0,
+						22.0
+					],
+					"text": "prepend tam"
 				}
 			}
 		],
@@ -2949,6 +3007,42 @@
 				"patchline": {
 					"source": [
 						"obj-92",
+						0
+					],
+					"destination": [
+						"obj-93",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-93",
+						0
+					],
+					"destination": [
+						"obj-94",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-94",
+						1
+					],
+					"destination": [
+						"obj-95",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-95",
 						0
 					],
 					"destination": [
