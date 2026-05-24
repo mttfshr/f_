@@ -82,13 +82,17 @@ function onmouseleave(x, y, but, cmd, shift, capslock, option, ctrl) {
     mgraphics.redraw();
 }
 
-// Inlet: set state without re-outputting (avoids feedback loops)
+// Inlet: set state and output (avoids feedback loops via setvalueof staying silent)
 function msg_int(v) {
-    setvalueof(v);
+    state = (v != 0) ? 1 : 0;
+    outlet(0, state);
+    mgraphics.redraw();
 }
 
 function msg_float(v) {
-    setvalueof(v);
+    state = (v != 0) ? 1 : 0;
+    outlet(0, state);
+    mgraphics.redraw();
 }
 
 // --- Helpers ---

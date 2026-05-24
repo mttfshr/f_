@@ -9,9 +9,37 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 620.0, 120.0, 664.0, 883.0 ],
+        "rect": [ 475.0, 112.0, 908.0, 937.0 ],
         "openinpresentation": 1,
         "boxes": [
+            {
+                "box": {
+                    "filename": "bypass_toggle.js",
+                    "hint": "Bypass",
+                    "id": "obj-17",
+                    "maxclass": "jsui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "param_connect": "jit.gl.pix_AA::bypass",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 133.0, 219.0, 18.0, 12.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 126.25, 6.5, 18.0, 12.0 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_invisible": 1,
+                            "parameter_longname": "bypass",
+                            "parameter_modmode": 4,
+                            "parameter_shortname": "bypass",
+                            "parameter_type": 1,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "valuepopuplabel": 1,
+                    "varname": "bypass"
+                }
+            },
             {
                 "box": {
                     "activebgcolor": [ 0.0, 0.0, 0.0, 0.0 ],
@@ -384,33 +412,6 @@
             },
             {
                 "box": {
-                    "bgcolor": [ 0.313725490196078, 0.313725490196078, 0.313725490196078, 1.0 ],
-                    "id": "obj-11",
-                    "maxclass": "toggle",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "int" ],
-                    "param_connect": "jit.gl.pix_AA::bypass",
-                    "parameter_enable": 1,
-                    "patching_rect": [ 133.0, 233.0, 24.0, 24.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 129.66667053103447, 6.000000178813934, 14.5, 14.5 ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_enum": [ "off", "on" ],
-                            "parameter_longname": "bypass",
-                            "parameter_mmax": 1.0,
-                            "parameter_modmode": 0,
-                            "parameter_shortname": "bypass",
-                            "parameter_type": 1,
-                            "parameter_unitstyle": 0
-                        }
-                    },
-                    "varname": "bypass"
-                }
-            },
-            {
-                "box": {
                     "id": "obj-9",
                     "maxclass": "newobj",
                     "numinlets": 1,
@@ -611,12 +612,6 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-9", 0 ],
-                    "source": [ "obj-11", 0 ]
-                }
-            },
-            {
-                "patchline": {
                     "destination": [ "obj-4", 0 ],
                     "source": [ "obj-13", 0 ]
                 }
@@ -659,6 +654,12 @@
                     "destination": [ "obj-8", 0 ],
                     "order": 0,
                     "source": [ "obj-16", 1 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-9", 0 ],
+                    "source": [ "obj-17", 0 ]
                 }
             },
             {
@@ -719,12 +720,6 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-11", 0 ],
-                    "source": [ "obj-30", 0 ]
-                }
-            },
-            {
-                "patchline": {
                     "destination": [ "obj-13", 0 ],
                     "source": [ "obj-30", 1 ]
                 }
@@ -739,6 +734,12 @@
                 "patchline": {
                     "destination": [ "obj-15", 0 ],
                     "source": [ "obj-30", 3 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-17", 0 ],
+                    "source": [ "obj-30", 0 ]
                 }
             },
             {
@@ -797,10 +798,10 @@
             }
         ],
         "parameters": {
-            "obj-11": [ "bypass", "bypass", 0 ],
             "obj-13": [ "shadows", "shadows", 0 ],
             "obj-14": [ "midtones", "midtones", 0 ],
             "obj-15": [ "highlights", "highlights", 0 ],
+            "obj-17": [ "bypass", "bypass", 0 ],
             "obj-22": [ "edge_falloff", "edge_falloff", 0 ],
             "obj-24": [ "low_mid", "low_mid", 0 ],
             "obj-25": [ "mid_high", "mid_high", 0 ],
