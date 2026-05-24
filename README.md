@@ -1,8 +1,10 @@
 # f_
 
-A collection of visual processing bpatchers for [Vsynth](https://github.com/jakeot/vsynth) in Max 9.
+A collection of visual processing utility bpatchers for [Vsynth](https://www.kevinkripper.com/vsynth) in [Max](https://cycling74.com/products/max).
 
 ## Installation
+
+Clone this repository and place the `f_` folder in your Max search path. There are two options for doing this:
 
 **Option A — symlink (recommended for development):**
 ```bash
@@ -17,7 +19,7 @@ Restart Max after either method. Patches will be available on Max's search path.
 ## Requirements
 
 - Max 9
-- Vsynth package installed
+- Vsynth package installed. You can find it in [Max's Package Manager.](https://docs.cycling74.com/userguide/package_manager/)
 
 ## Patches
 
@@ -37,4 +39,6 @@ Each patch has a corresponding `.maxhelp` file in the `help/` folder. Right-clic
 
 ## Notes
 
-These patches are developed alongside personal Vsynth performance work and released as-is. They follow Vsynth conventions and are designed to sit naturally in a Vsynth signal chain.
+These patches are developed alongside personal Vsynth performance work and released as-is. They follow Vsynth conventions and are designed for Vsynth signal chains.
+
+If you know Max and Vsynth, you should be able to understand and modify the patches as needed.
