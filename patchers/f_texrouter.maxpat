@@ -29,14 +29,15 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_invisible": 1,
-                            "parameter_longname": "jsui",
-                            "parameter_modmode": 0,
-                            "parameter_shortname": "jsui",
-                            "parameter_type": 3
+                            "parameter_longname": "bypass",
+                            "parameter_modmode": 4,
+                            "parameter_shortname": "bypass",
+                            "parameter_type": 1,
+                            "parameter_unitstyle": 0
                         }
                     },
                     "valuepopuplabel": 1,
-                    "varname": "jsui"
+                    "varname": "bypass"
                 }
             },
             {
@@ -2474,7 +2475,7 @@
             "obj-42": [ "tog_31", "tog_31", 0 ],
             "obj-43": [ "tog_32", "tog_32", 0 ],
             "obj-44": [ "tog_33", "tog_33", 0 ],
-            "obj-45": [ "jsui", "jsui", 0 ],
+            "obj-45": [ "bypass", "bypass", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
