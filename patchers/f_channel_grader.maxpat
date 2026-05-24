@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 313.0, 193.0, 945.0, 852.0 ],
+        "rect": [ 572.0, 122.0, 584.0, 852.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
@@ -226,6 +226,7 @@
                         "valueof": {
                             "parameter_invisible": 1,
                             "parameter_longname": "bypass",
+                            "parameter_mmax": 1.0,
                             "parameter_modmode": 4,
                             "parameter_shortname": "bypass",
                             "parameter_type": 1,
