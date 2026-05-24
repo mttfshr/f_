@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 553.0, 95.0, 715.0, 893.0 ],
+        "rect": [ 192.0, 95.0, 1484.0, 905.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
@@ -23,7 +23,7 @@
                     "outlettype": [ "" ],
                     "param_connect": "grain_pix::bypass",
                     "parameter_enable": 1,
-                    "patching_rect": [ 164.4375, 108.0, 18.0, 12.0 ],
+                    "patching_rect": [ 164.0, 103.0, 18.0, 12.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 208.00000309944153, 5.600000083446503, 18.0, 12.0 ],
                     "saved_attribute_attributes": {
@@ -43,42 +43,6 @@
             },
             {
                 "box": {
-                    "angle": 270.0,
-                    "bgcolor": [ 0.158640689195807, 0.158640642399981, 0.158640654628478, 0.0 ],
-                    "border": 1,
-                    "bordercolor": [ 0.16862745098039217, 0.20392156862745098, 0.25882352941176473, 1.0 ],
-                    "id": "obj-46",
-                    "maxclass": "panel",
-                    "mode": 0,
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 88.9375, 312.0, 128.0, 128.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 183.0, 97.0, 45.5, 69.0 ],
-                    "proportion": 0.5,
-                    "rounded": 4
-                }
-            },
-            {
-                "box": {
-                    "angle": 270.0,
-                    "bgcolor": [ 0.158640689195807, 0.158640642399981, 0.158640654628478, 0.0 ],
-                    "border": 1,
-                    "bordercolor": [ 0.24313725490196078, 0.29411764705882354, 0.3764705882352941, 1.0 ],
-                    "id": "obj-45",
-                    "maxclass": "panel",
-                    "mode": 0,
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 372.0, 291.0, 128.0, 128.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 4.0, 97.0, 109.0, 69.0 ],
-                    "proportion": 0.5,
-                    "rounded": 4
-                }
-            },
-            {
-                "box": {
                     "fontname": "Ableton Sans Light",
                     "id": "obj-43",
                     "maxclass": "live.numbox",
@@ -87,7 +51,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::field",
                     "parameter_enable": 1,
-                    "patching_rect": [ 615.0, 445.0, 44.0, 15.0 ],
+                    "patching_rect": [ 1212.0, 106.5, 44.0, 15.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 114.0, 82.0, 31.0, 15.0 ],
                     "saved_attribute_attributes": {
@@ -110,7 +74,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 178.5, 769.0, 152.0, 22.0 ],
+                    "patching_rect": [ 917.0, 436.0, 152.0, 22.0 ],
                     "text": "prepend param ch_diverge",
                     "varname": "param[11]"
                 }
@@ -127,7 +91,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::ch_diverge",
                     "parameter_enable": 1,
-                    "patching_rect": [ 145.5, 753.0, 27.0, 43.0 ],
+                    "patching_rect": [ 908.375, 98.0, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 43.0, 115.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -160,7 +124,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 176.5, 365.0, 117.0, 22.0 ],
+                    "patching_rect": [ 473.0, 258.0, 117.0, 22.0 ],
                     "text": "prepend param fade",
                     "varname": "param[10]"
                 }
@@ -177,7 +141,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::fade",
                     "parameter_enable": 1,
-                    "patching_rect": [ 132.0, 348.0, 27.0, 43.0 ],
+                    "patching_rect": [ 461.75, 92.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 152.0, 38.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -331,7 +295,7 @@
                     "numinlets": 17,
                     "numoutlets": 17,
                     "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" ],
-                    "patching_rect": [ 164.4375, 64.0, 902.0, 22.0 ],
+                    "patching_rect": [ 164.0, 64.0, 1210.0, 22.0 ],
                     "text": "route bypass density amount persistence fade size size_var shape softness jitter ch_diverge luma_gate displace edge_mode_menu field sv_seed"
                 }
             },
@@ -354,7 +318,7 @@
                     "numinlets": 3,
                     "numoutlets": 3,
                     "outlettype": [ "", "", "" ],
-                    "patching_rect": [ 923.0, 334.0, 215.0, 22.0 ],
+                    "patching_rect": [ 1355.0, 132.0, 215.0, 22.0 ],
                     "text": "routepass jit_gl_texture jit_matrix"
                 }
             },
@@ -365,7 +329,7 @@
                     "numinlets": 3,
                     "numoutlets": 3,
                     "outlettype": [ "", "", "" ],
-                    "patching_rect": [ 610.5, 401.0, 120.0, 22.0 ],
+                    "patching_rect": [ 1194.0, 228.0, 120.0, 22.0 ],
                     "text": "route field sv_seed"
                 }
             },
@@ -377,7 +341,7 @@
                     "maxclass": "outlet",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 560.0, 773.0, 30.0, 30.0 ],
+                    "patching_rect": [ 578.5, 742.0, 30.0, 30.0 ],
                     "tricolor": [ 0.9529411764705882, 0.6901960784313725, 0.6196078431372549, 1.0 ]
                 }
             },
@@ -390,7 +354,7 @@
                     "maxclass": "outlet",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 650.0, 795.0, 30.0, 30.0 ],
+                    "patching_rect": [ 633.5, 742.0, 30.0, 30.0 ],
                     "tricolor": [ 0.6196078431372549, 0.9529411764705882, 0.6588235294117647, 1.0 ]
                 }
             },
@@ -402,7 +366,7 @@
                     "maxclass": "outlet",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 732.5, 773.0, 30.0, 30.0 ],
+                    "patching_rect": [ 690.0, 742.0, 30.0, 30.0 ],
                     "tricolor": [ 0.9490196078431372, 0.6196078431372549, 0.9529411764705882, 1.0 ]
                 }
             },
@@ -413,7 +377,7 @@
                     "numinlets": 0,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 516.0, 103.0, 50.0, 22.0 ],
+                    "patching_rect": [ 469.0, 157.0, 50.0, 22.0 ],
                     "text": "r draw"
                 }
             },
@@ -435,7 +399,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 638.0, 280.0, 160.0, 22.0 ],
+                    "patching_rect": [ 640.0, 258.0, 160.0, 22.0 ],
                     "text": "prepend param era_clock"
                 }
             },
@@ -451,7 +415,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::density",
                     "parameter_enable": 1,
-                    "patching_rect": [ 219.0, 106.5, 27.0, 43.0 ],
+                    "patching_rect": [ 238.4375, 94.0, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 42.0, 38.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -484,7 +448,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 160.0, 193.0, 131.0, 22.0 ],
+                    "patching_rect": [ 243.0, 176.0, 131.0, 22.0 ],
                     "text": "prepend param density",
                     "varname": "param[1]"
                 }
@@ -501,7 +465,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::amount",
                     "parameter_enable": 1,
-                    "patching_rect": [ 274.8125, 106.5, 27.0, 43.0 ],
+                    "patching_rect": [ 312.875, 94.0, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 6.0, 115.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -534,7 +498,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 166.0, 151.5, 133.0, 22.0 ],
+                    "patching_rect": [ 317.0, 208.0, 133.0, 22.0 ],
                     "text": "prepend param amount",
                     "varname": "param[2]"
                 }
@@ -551,7 +515,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::persistence",
                     "parameter_enable": 1,
-                    "patching_rect": [ 330.0, 106.5, 27.0, 43.0 ],
+                    "patching_rect": [ 387.3125, 92.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 188.0, 38.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -584,7 +548,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 162.0, 318.0, 155.0, 22.0 ],
+                    "patching_rect": [ 387.3125, 228.0, 155.0, 22.0 ],
                     "text": "prepend param persistence",
                     "varname": "param[3]"
                 }
@@ -596,7 +560,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 115.0, 157.0, 131.0, 22.0 ],
+                    "patching_rect": [ 159.0, 146.0, 131.0, 22.0 ],
                     "text": "prepend param bypass",
                     "varname": "param[4]"
                 }
@@ -608,7 +572,7 @@
                     "numinlets": 1,
                     "numoutlets": 4,
                     "outlettype": [ "", "", "", "" ],
-                    "patching_rect": [ 6.0, 502.0, 56.0, 22.0 ],
+                    "patching_rect": [ 298.375, 21.0, 56.0, 22.0 ],
                     "restore": {
                         "amount": [ 0.5 ],
                         "bypass": [ 0 ],
@@ -699,7 +663,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::size",
                     "parameter_enable": 1,
-                    "patching_rect": [ 127.5, 604.0, 27.0, 43.0 ],
+                    "patching_rect": [ 536.1875, 92.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 6.0, 38.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -732,7 +696,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 178.5, 623.0, 115.0, 22.0 ],
+                    "patching_rect": [ 548.0, 291.0, 115.0, 22.0 ],
                     "text": "prepend param size",
                     "varname": "param[5]"
                 }
@@ -749,7 +713,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::size_var",
                     "parameter_enable": 1,
-                    "patching_rect": [ 127.5, 557.0, 27.0, 43.0 ],
+                    "patching_rect": [ 610.625, 92.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 79.0, 38.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -782,7 +746,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 178.5, 578.0, 138.0, 22.0 ],
+                    "patching_rect": [ 618.0, 317.0, 138.0, 22.0 ],
                     "text": "prepend param size_var",
                     "varname": "param[6]"
                 }
@@ -799,7 +763,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::shape",
                     "parameter_enable": 1,
-                    "patching_rect": [ 127.5, 502.0, 27.0, 43.0 ],
+                    "patching_rect": [ 685.0625, 92.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 115.0, 38.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -832,7 +796,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 176.5, 528.0, 126.0, 22.0 ],
+                    "patching_rect": [ 690.0, 352.0, 126.0, 22.0 ],
                     "text": "prepend param shape",
                     "varname": "param[7]"
                 }
@@ -849,7 +813,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::softness",
                     "parameter_enable": 1,
-                    "patching_rect": [ 122.5, 453.0, 27.0, 43.0 ],
+                    "patching_rect": [ 759.5, 98.0, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 152.0, 115.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -882,7 +846,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 170.5, 468.5, 138.0, 22.0 ],
+                    "patching_rect": [ 764.0, 378.0, 138.0, 22.0 ],
                     "text": "prepend param softness",
                     "varname": "param[8]"
                 }
@@ -955,7 +919,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::jitter",
                     "parameter_enable": 1,
-                    "patching_rect": [ 132.0, 401.0, 27.0, 43.0 ],
+                    "patching_rect": [ 830.0, 92.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 119.0, 112.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -988,7 +952,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 173.0, 417.0, 124.0, 22.0 ],
+                    "patching_rect": [ 830.0, 406.0, 124.0, 22.0 ],
                     "text": "prepend param jitter",
                     "varname": "param[9]"
                 }
@@ -1034,7 +998,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::luma_gate",
                     "parameter_enable": 1,
-                    "patching_rect": [ 113.0, 263.5, 27.0, 43.0 ],
+                    "patching_rect": [ 982.8125, 87.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 79.0, 115.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -1068,7 +1032,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 155.0, 280.0, 155.0, 22.0 ],
+                    "patching_rect": [ 993.25, 463.0, 155.0, 22.0 ],
                     "text": "prepend param luma_gate",
                     "varname": "param[12]"
                 }
@@ -1100,7 +1064,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::displace",
                     "parameter_enable": 1,
-                    "patching_rect": [ 145.5, 700.0, 27.0, 43.0 ],
+                    "patching_rect": [ 1057.25, 92.5, 27.0, 43.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 188.0, 115.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
@@ -1133,7 +1097,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 182.5, 715.0, 145.0, 22.0 ],
+                    "patching_rect": [ 1053.0, 493.0, 145.0, 22.0 ],
                     "text": "prepend param displace",
                     "varname": "param[13]"
                 }
@@ -1170,7 +1134,7 @@
                     "numoutlets": 3,
                     "outlettype": [ "int", "", "" ],
                     "parameter_enable": 1,
-                    "patching_rect": [ 49.5, 659.0, 115.0, 23.0 ],
+                    "patching_rect": [ 1131.6875, 102.5, 115.0, 23.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 210.0, 97.0, 23.5, 23.0 ],
                     "saved_attribute_attributes": {
@@ -1196,7 +1160,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 182.5, 660.0, 157.0, 22.0 ],
+                    "patching_rect": [ 1138.0, 172.0, 157.0, 22.0 ],
                     "text": "prepend param edge_mode",
                     "varname": "param[14]"
                 }
@@ -1230,7 +1194,7 @@
                     "numinlets": 1,
                     "numoutlets": 2,
                     "outlettype": [ "float", "float" ],
-                    "patching_rect": [ 638.0, 239.0, 42.0, 22.0 ],
+                    "patching_rect": [ 649.5, 208.0, 42.0, 22.0 ],
                     "text": "t f f"
                 }
             },
@@ -1241,7 +1205,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 615.0, 468.5, 140.0, 22.0 ],
+                    "patching_rect": [ 1226.0, 263.0, 140.0, 22.0 ],
                     "text": "prepend param field",
                     "varname": "param[16]"
                 }
@@ -1256,7 +1220,7 @@
                     "outlettype": [ "", "float" ],
                     "param_connect": "grain_pix::sv_seed",
                     "parameter_enable": 1,
-                    "patching_rect": [ 774.0, 438.0, 44.0, 15.0 ],
+                    "patching_rect": [ 1280.5625, 106.5, 44.0, 15.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 75.0, 82.0, 34.0, 15.0 ],
                     "saved_attribute_attributes": {
@@ -1281,7 +1245,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 765.0, 468.5, 152.0, 22.0 ],
+                    "patching_rect": [ 1274.0, 301.0, 152.0, 22.0 ],
                     "text": "prepend param sv_seed"
                 }
             },
