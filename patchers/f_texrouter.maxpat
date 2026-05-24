@@ -9,10 +9,36 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 136.0, 171.0, 935.0, 922.0 ],
+        "rect": [ 254.0, 95.0, 935.0, 922.0 ],
         "openinpresentation": 1,
         "description": "4x4 texture routing matrix for Vsynth",
         "boxes": [
+            {
+                "box": {
+                    "filename": "bypass_toggle.js",
+                    "hint": "Bypass",
+                    "id": "obj-45",
+                    "maxclass": "jsui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 880.0, 46.0, 18.0, 12.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 191.00000569224358, 4.33333346247673, 18.0, 12.0 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_invisible": 1,
+                            "parameter_longname": "jsui",
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "jsui",
+                            "parameter_type": 3
+                        }
+                    },
+                    "valuepopuplabel": 1,
+                    "varname": "jsui"
+                }
+            },
             {
                 "box": {
                     "comment": "in0 — texture + control",
@@ -112,7 +138,7 @@
                     "numinlets": 2,
                     "numoutlets": 2,
                     "outlettype": [ "", "" ],
-                    "patching_rect": [ 30.0, 80.0, 165.0, 22.0 ],
+                    "patching_rect": [ -10.0, 80.0, 165.0, 22.0 ],
                     "text": "routepass jit_gl_texture"
                 }
             },
@@ -123,7 +149,7 @@
                     "numinlets": 2,
                     "numoutlets": 2,
                     "outlettype": [ "", "" ],
-                    "patching_rect": [ 190.0, 80.0, 165.0, 22.0 ],
+                    "patching_rect": [ 174.0, 67.0, 165.0, 22.0 ],
                     "text": "routepass jit_gl_texture"
                 }
             },
@@ -134,7 +160,7 @@
                     "numinlets": 2,
                     "numoutlets": 2,
                     "outlettype": [ "", "" ],
-                    "patching_rect": [ 350.0, 80.0, 165.0, 22.0 ],
+                    "patching_rect": [ 350.0, 67.0, 165.0, 22.0 ],
                     "text": "routepass jit_gl_texture"
                 }
             },
@@ -145,7 +171,7 @@
                     "numinlets": 2,
                     "numoutlets": 2,
                     "outlettype": [ "", "" ],
-                    "patching_rect": [ 510.0, 80.0, 165.0, 22.0 ],
+                    "patching_rect": [ 550.0, 67.0, 165.0, 22.0 ],
                     "text": "routepass jit_gl_texture"
                 }
             },
@@ -759,53 +785,6 @@
             },
             {
                 "box": {
-                    "activebgcolor": [ 0.14901960784313725, 0.43529411764705883, 0.24313725490196078, 1.0 ],
-                    "activebgoncolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
-                    "bgcolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
-                    "bgoncolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
-                    "bordercolor": [ 0.53926766494125, 0.539267534772943, 0.539267568788001, 1.0 ],
-                    "id": "obj-45",
-                    "maxclass": "live.toggle",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 960.0, 80.0, 16.0, 12.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 191.000006, 3.0, 16.0, 12.0 ],
-                    "rounded": 4.0,
-                    "saved_attribute_attributes": {
-                        "activebgcolor": {
-                            "expression": ""
-                        },
-                        "activebgoncolor": {
-                            "expression": "themecolor.live_contrast_frame"
-                        },
-                        "bgcolor": {
-                            "expression": "themecolor.live_contrast_frame"
-                        },
-                        "bgoncolor": {
-                            "expression": "themecolor.live_contrast_frame"
-                        },
-                        "bordercolor": {
-                            "expression": "themecolor.live_control_fill_handle"
-                        },
-                        "valueof": {
-                            "parameter_enum": [ "off", "on" ],
-                            "parameter_initial": [ 0 ],
-                            "parameter_initial_enable": 1,
-                            "parameter_longname": "bypass",
-                            "parameter_mmax": 1,
-                            "parameter_modmode": 0,
-                            "parameter_shortname": "bypass",
-                            "parameter_type": 2
-                        }
-                    },
-                    "varname": "router_bypass"
-                }
-            },
-            {
-                "box": {
                     "id": "obj-46",
                     "maxclass": "newobj",
                     "numinlets": 2,
@@ -887,7 +866,7 @@
                     "outlettype": [ "", "", "", "" ],
                     "patching_rect": [ 1110.0, 405.0, 120.0, 22.0 ],
                     "restore": {
-                        "router_bypass": [ 0.0 ],
+                        "jsui": [ 0 ],
                         "tog_00": [ 1.0 ],
                         "tog_01": [ 0.0 ],
                         "tog_02": [ 0.0 ],
@@ -2495,7 +2474,7 @@
             "obj-42": [ "tog_31", "tog_31", 0 ],
             "obj-43": [ "tog_32", "tog_32", 0 ],
             "obj-44": [ "tog_33", "tog_33", 0 ],
-            "obj-45": [ "bypass", "bypass", 0 ],
+            "obj-45": [ "jsui", "jsui", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,

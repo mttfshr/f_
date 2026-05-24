@@ -9,9 +9,37 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 123.0, 227.0, 907.0, 856.0 ],
+        "rect": [ 355.0, 219.0, 907.0, 856.0 ],
         "openinpresentation": 1,
         "boxes": [
+            {
+                "box": {
+                    "filename": "bypass_toggle.js",
+                    "hint": "Bypass",
+                    "id": "obj-17",
+                    "maxclass": "jsui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "param_connect": "grain_pix::bypass",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 111.20000165700912, 228.80000340938568, 18.0, 12.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 208.00000309944153, 5.600000083446503, 18.0, 12.0 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_invisible": 1,
+                            "parameter_longname": "bypass",
+                            "parameter_modmode": 4,
+                            "parameter_shortname": "bypass",
+                            "parameter_type": 1,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "valuepopuplabel": 1,
+                    "varname": "bypass"
+                }
+            },
             {
                 "box": {
                     "angle": 270.0,
@@ -299,10 +327,10 @@
                 "box": {
                     "id": "obj-86",
                     "maxclass": "newobj",
-                    "numinlets": 1,
+                    "numinlets": 17,
                     "numoutlets": 17,
                     "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" ],
-                    "patching_rect": [ 512.5, 340.0, 700.0, 22.0 ],
+                    "patching_rect": [ 564.8000084161758, 146.0, 782.0, 22.0 ],
                     "text": "route bypass density amount persistence fade size size_var shape softness jitter ch_diverge luma_gate displace edge_mode_menu field sv_seed"
                 }
             },
@@ -315,7 +343,7 @@
                     "numinlets": 0,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 512.5, 310.0, 30.0, 30.0 ]
+                    "patching_rect": [ 564.8000084161758, 115.5999995470047, 30.0, 30.0 ]
                 }
             },
             {
@@ -562,34 +590,6 @@
             },
             {
                 "box": {
-                    "bgcolor": [ 0.313725490196078, 0.313725490196078, 0.313725490196078, 1.0 ],
-                    "id": "obj-17",
-                    "maxclass": "toggle",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "int" ],
-                    "param_connect": "grain_pix::bypass",
-                    "parameter_enable": 1,
-                    "patching_rect": [ 108.0, 233.0, 24.0, 24.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 212.0, 5.0, 13.333333730697632, 13.333333730697632 ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_enum": [ "off", "on" ],
-                            "parameter_linknames": 1,
-                            "parameter_longname": "bypass",
-                            "parameter_mmax": 1.0,
-                            "parameter_modmode": 4,
-                            "parameter_shortname": "bypass",
-                            "parameter_type": 1,
-                            "parameter_unitstyle": 0
-                        }
-                    },
-                    "varname": "bypass"
-                }
-            },
-            {
-                "box": {
                     "id": "obj-18",
                     "maxclass": "newobj",
                     "numinlets": 1,
@@ -610,7 +610,7 @@
                     "patching_rect": [ 248.0, 24.0, 56.0, 22.0 ],
                     "restore": {
                         "amount": [ 0.5 ],
-                        "bypass": [ 0 ],
+                        "bypass": [ 1 ],
                         "ch_diverge": [ 0.0 ],
                         "density": [ 0.5 ],
                         "displace": [ 0.0 ],
@@ -1590,24 +1590,6 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-75", 0 ],
-                    "source": [ "obj-9", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-84", 0 ],
-                    "source": [ "obj-86", 16 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-17", 0 ],
-                    "source": [ "obj-86", 0 ]
-                }
-            },
-            {
-                "patchline": {
                     "destination": [ "obj-11", 0 ],
                     "source": [ "obj-86", 1 ]
                 }
@@ -1622,6 +1604,12 @@
                 "patchline": {
                     "destination": [ "obj-15", 0 ],
                     "source": [ "obj-86", 3 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-17", 0 ],
+                    "source": [ "obj-86", 0 ]
                 }
             },
             {
@@ -1668,6 +1656,12 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-43", 0 ],
+                    "source": [ "obj-86", 14 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-60", 0 ],
                     "source": [ "obj-86", 11 ]
                 }
@@ -1686,14 +1680,20 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-43", 0 ],
-                    "source": [ "obj-86", 14 ]
+                    "destination": [ "obj-82", 0 ],
+                    "source": [ "obj-86", 15 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-82", 0 ],
-                    "source": [ "obj-86", 15 ]
+                    "destination": [ "obj-84", 0 ],
+                    "source": [ "obj-86", 16 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-75", 0 ],
+                    "source": [ "obj-9", 0 ]
                 }
             }
         ],

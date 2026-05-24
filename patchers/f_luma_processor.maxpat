@@ -9,10 +9,38 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 452.0, 424.0, 829.0, 804.0 ],
+        "rect": [ 362.0, 254.0, 829.0, 804.0 ],
         "openinpresentation": 1,
         "toolbars_unpinned_last_save": 2,
         "boxes": [
+            {
+                "box": {
+                    "filename": "bypass_toggle.js",
+                    "hint": "Bypass",
+                    "id": "obj-8",
+                    "maxclass": "jsui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "param_connect": "jit.gl.pix_AA::bypass",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 115.0, 99.0, 18.0, 12.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 129.0, 4.0, 18.0, 12.0 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_invisible": 1,
+                            "parameter_longname": "bypass",
+                            "parameter_modmode": 4,
+                            "parameter_shortname": "bypass",
+                            "parameter_type": 1,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "valuepopuplabel": 1,
+                    "varname": "bypass"
+                }
+            },
             {
                 "box": {
                     "id": "obj-24",
@@ -205,37 +233,6 @@
                     "presentation": 1,
                     "presentation_rect": [ 1.75, 56.75, 34.0, 17.0 ],
                     "text": "Falloff"
-                }
-            },
-            {
-                "box": {
-                    "bgcolor": [ 0.313725490196078, 0.313725490196078, 0.313725490196078, 1.0 ],
-                    "hint": "Bypass",
-                    "id": "obj-8",
-                    "maxclass": "toggle",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "int" ],
-                    "param_connect": "jit.gl.pix_AA::bypass",
-                    "parameter_enable": 1,
-                    "patching_rect": [ 79.20000118017197, 158.40000236034393, 24.0, 24.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 131.33333724737167, 5.000000149011612, 14.000000417232513, 14.000000417232513 ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_enum": [ "off", "on" ],
-                            "parameter_linknames": 1,
-                            "parameter_longname": "bypass",
-                            "parameter_mmax": 1.0,
-                            "parameter_modmode": 4,
-                            "parameter_shortname": "bypass",
-                            "parameter_type": 1,
-                            "parameter_unitstyle": 0
-                        }
-                    },
-                    "valuepopup": 1,
-                    "valuepopuplabel": 1,
-                    "varname": "bypass"
                 }
             },
             {

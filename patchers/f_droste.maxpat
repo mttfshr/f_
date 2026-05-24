@@ -9,14 +9,42 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 100.0, 100.0, 800.0, 600.0 ],
+        "rect": [ 354.0, 238.0, 800.0, 600.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
                 "box": {
+                    "filename": "bypass_toggle.js",
+                    "hint": "Bypass",
+                    "id": "obj-24",
+                    "maxclass": "jsui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "param_connect": "jit.gl.pix_AA::bypass",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 189.5, 11.0, 18.0, 12.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 129.0, 4.0, 18.0, 12.0 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_invisible": 1,
+                            "parameter_longname": "bypass[1]",
+                            "parameter_modmode": 4,
+                            "parameter_shortname": "bypass",
+                            "parameter_type": 1,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "valuepopuplabel": 1,
+                    "varname": "bypass[1]"
+                }
+            },
+            {
+                "box": {
                     "id": "obj-21",
                     "maxclass": "newobj",
-                    "numinlets": 1,
+                    "numinlets": 6,
                     "numoutlets": 6,
                     "outlettype": [ "", "", "", "", "", "" ],
                     "patching_rect": [ 300.0, 140.0, 280.0, 22.0 ],
@@ -426,34 +454,6 @@
             },
             {
                 "box": {
-                    "bgcolor": [ 0.313725490196078, 0.313725490196078, 0.313725490196078, 1.0 ],
-                    "id": "obj-22",
-                    "maxclass": "toggle",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "int" ],
-                    "param_connect": "droste_pix::bypass",
-                    "parameter_enable": 1,
-                    "patching_rect": [ 50.0, 30.0, 20.0, 20.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 136.0, 5.0, 13.333333730697632, 13.333333730697632 ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_enum": [ "off", "on" ],
-                            "parameter_linknames": 1,
-                            "parameter_longname": "bypass",
-                            "parameter_mmax": 1.0,
-                            "parameter_modmode": 4,
-                            "parameter_shortname": "bypass",
-                            "parameter_type": 1,
-                            "parameter_unitstyle": 0
-                        }
-                    },
-                    "varname": "bypass"
-                }
-            },
-            {
-                "box": {
                     "id": "obj-23",
                     "maxclass": "newobj",
                     "numinlets": 1,
@@ -551,14 +551,14 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-22", 0 ],
-                    "source": [ "obj-21", 0 ]
+                    "destination": [ "obj-2", 0 ],
+                    "source": [ "obj-21", 1 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-2", 0 ],
-                    "source": [ "obj-21", 1 ]
+                    "destination": [ "obj-24", 0 ],
+                    "source": [ "obj-21", 0 ]
                 }
             },
             {
@@ -581,6 +581,18 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-19", 0 ],
+                    "source": [ "obj-23", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-23", 0 ],
+                    "source": [ "obj-24", 0 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-15", 0 ],
                     "source": [ "obj-3", 0 ]
                 }
@@ -596,26 +608,14 @@
                     "destination": [ "obj-17", 0 ],
                     "source": [ "obj-5", 0 ]
                 }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-23", 0 ],
-                    "source": [ "obj-22", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-19", 0 ],
-                    "source": [ "obj-23", 0 ]
-                }
             }
         ],
         "parameters": {
             "obj-2": [ "zoom", "zoom", 0 ],
+            "obj-24": [ "bypass[1]", "bypass", 0 ],
             "obj-3": [ "n_arms", "n_arms", 0 ],
             "obj-4": [ "twist", "twist", 0 ],
             "obj-5": [ "rotation", "rotation", 0 ],
-            "obj-22": [ "bypass", "bypass", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,

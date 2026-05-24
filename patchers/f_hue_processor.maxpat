@@ -209,31 +209,28 @@
             },
             {
                 "box": {
-                    "bgcolor": [ 0.313725490196078, 0.313725490196078, 0.313725490196078, 1.0 ],
+                    "filename": "bypass_toggle.js",
                     "hint": "Bypass",
                     "id": "obj-8",
-                    "maxclass": "toggle",
+                    "maxclass": "jsui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "int" ],
+                    "outlettype": [ "" ],
                     "param_connect": "jit.gl.pix_AA::bypass",
                     "parameter_enable": 1,
-                    "patching_rect": [ 79.20000118017197, 158.40000236034393, 24.0, 24.0 ],
+                    "patching_rect": [ 79.20000118017197, 158.40000236034393, 18.0, 12.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 131.25, 5.0, 14.000000417232513, 14.000000417232513 ],
+                    "presentation_rect": [ 131.25, 5.0, 18.0, 12.0 ],
                     "saved_attribute_attributes": {
                         "valueof": {
-                            "parameter_enum": [ "off", "on" ],
-                            "parameter_linknames": 1,
+                            "parameter_invisible": 1,
                             "parameter_longname": "bypass",
-                            "parameter_mmax": 1.0,
                             "parameter_modmode": 4,
                             "parameter_shortname": "bypass",
                             "parameter_type": 1,
                             "parameter_unitstyle": 0
                         }
                     },
-                    "valuepopup": 1,
                     "valuepopuplabel": 1,
                     "varname": "bypass"
                 }
