@@ -17,16 +17,24 @@ Planned work across the package. Working bpatcher state lives in `docs/`. Ideas 
 #### Audio Path
 
 ```
-mic → bandpass bank (8 filters at modal frequency ratios)
+mic → bandpass bank (8 filters, switchable tuning mode)
     → peakamp~
-    → snapshot~ / slide~    (smoothing, ~10ms attack)
+    → slide~    (smoothing, ~10ms attack)
     → m0amp–m7amp
 ```
 
-- 8 bandpass filters tuned to the modal frequency ratios of the Bessel zeros `z0`–`z7`
+- 8 bandpass filters with two switchable tuning modes (toggle/umenu in companion patch):
+  - **Bessel** — center frequencies at Bessel-zero ratios relative to a reference fundamental; physically accurate Chladni modal tuning
+  - **Log** — 8 logarithmically-spaced bands covering ~80Hz–8kHz; more responsive to varied material in performance
+- Default tuning: Log
 - `peakamp~` extracts envelope per band
-- `snapshot~` or `slide~` smooths the signal before driving amplitude parameters (~10ms is a reasonable starting point; may need tuning for visual responsiveness)
+- `slide~` smooths the signal before driving amplitude parameters (~10ms attack; tune empirically)
 - Output: 8 float messages routed to the bpatcher as `m0amp`–`m7amp`
+
+**Companion patch UI (`f_chladni_audio.maxpat`):**
+- Tuning mode toggle (Bessel / Log)
+- Master gain (scales all 8 outputs)
+- Per-band level meters (visual confirmation signal is arriving)
 
 #### EEG Path (Muse Headset)
 
@@ -52,7 +60,7 @@ Muse OSC → udpreceive
 | Beta-hi | m4 |
 | Gamma-lo | m5 |
 | Gamma-hi | m6 |
-| Spare | m7 |
+| Total power (sum of all 7 bands) | m7 |
 
 #### Path Switching
 
@@ -62,7 +70,7 @@ No switching mechanism is designed yet. Likely approach: separate patches (audio
 
 - **Smoothing time:** ~10ms is a starting guess for audio; EEG will need much longer (~100–200ms) to hide the 10Hz update rate. Tune empirically.
 - **Scale mapping:** Muse raw values need calibration — what range do they actually output? Needs a measurement pass.
-- **Bandpass tuning:** The modal frequency ratios are set by the Bessel zeros `z0`–`z7`. Document the actual Hz values these map to at a reference fundamental.
+- **Bandpass tuning:** Log-spaced bands default; document center frequencies once built. Bessel mode requires a reference fundamental — defer tuning decision to build time.
 
 ---
 
@@ -185,3 +193,13 @@ Before prioritizing the optics family, f_cymascope build, or f_chladni plate mor
 - How does the generative side (f_chladni, f_cymascope) fit with the processor side (grader, hue, luma, tone)?
 
 This scope review should inform task prioritization and can be done conversationally at the start of a session before touching any files.
+
+---
+
+## Clarifications
+
+### Session 2026-05-25
+
+- Q: How should bandpass filters be tuned — fixed fundamental, user-controlled, or broad-spectrum? → A: Two switchable modes (Bessel-ratio and log-spaced), toggled in companion patch via umenu. Default: Log. Bessel mode kept for physically-accurate use when audio source is a sustained tone.
+- Q: What UI scope for companion patches? → A: Utility + basic controls — tuning mode toggle, master gain, per-band level meters. No per-band gain/mute or preset recall.
+- Q: What drives m7 in the EEG path ("Spare" slot)? → A: Total power — sum of all 7 Muse band values, scaled to 0.0–1.0.
