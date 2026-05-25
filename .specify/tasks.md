@@ -3,43 +3,41 @@
 _Last updated: 2026-05-25_
 
 Cross-session task list. One item per line. Reorder freely — top = highest priority.
+Spec for all planned work lives in `.specify/spec.md`.
 
-## Next Session: Repo Reorganization (do first)
+---
 
-- [ ] **Migrate .specify/bpatchers/ → docs/** — working bpatchers only (f_droste, f_grain, f_channel_grader, f_hue_processor, f_luma_processor, f_tone_curve, f_texrouter); strip planning content, keep as-built reference
-- [ ] **Migrate .specify/bpatchers/f_chladni.md → docs/** — it's working (signal chain pending but the bpatcher itself is working)
-- [ ] **Migrate .specify/bpatchers/f_cymascope.md → ideas/f_cymascope.md** — not yet built
-- [ ] **Migrate .specify/ideas.md → ideas/scratchpad.md** — rename and move
-- [ ] **Delete .specify/bpatchers/** — once migration is confirmed
-- [ ] **Write spec.md** — planned work only: f_chladni signal chain first
-- [ ] **Derive plan.md and rewrite tasks.md** from spec.md
+## Active: f_chladni Signal Chain
 
-## In Progress
-
-- [ ] **f_chladni: rename patcher file** — rename `patchers/f_cymascope.maxpat` → `f_chladni.maxpat` in Max and update any references
-- [ ] **f_chladni: audio signal chain** — bandpass bank (8 filters at modal freq ratios) → peakamp~ → smooth → m0–m7 amp inputs
-- [ ] **f_chladni: Muse OSC routing** — udpreceive → band routing → scale → line/slide~ smooth → m0–m7
+- [ ] **Scope review** — conversational, no files needed; decide taxonomy, prioritize optics family vs f_cymascope vs f_chladni loose threads; informs plate morphing decision
+- [ ] **f_chladni: patcher file rename** — open `patchers/f_cymascope.maxpat` in Max, File → Save As `f_chladni.maxpat`; update `docs/f_chladni.md`, `package-info.json`, `README.md`
+- [ ] **f_chladni: ph0 decision** — repurpose as global phase offset (preferred) or hide from UI; update codebox and docs
+- [ ] **f_chladni: audio signal chain** — build bandpass bank (8 filters at modal freq ratios) → peakamp~ → slide~ → m0–m7 in a companion patch
+- [ ] **f_chladni: EEG signal chain** — udpreceive → band routing → scale → line/slide~ → m0–m7; calibrate Muse raw value range first
+- [ ] **f_chladni: view_mode blend** — test circular↔strip blend with live signal chain once audio path is working
 
 ## Up Next
 
-- [ ] **Scope review** — step back and review overall package direction: generative bpatchers (f_chladni, f_cymascope) vs image processors (grader, hue, luma, tone); what's the arc? Feeds into f_chladni plate morphing decision and f_cymascope feasibility assessment
-- [ ] **f_cymascope: feasibility check** — confirm ping-pong texture / FDTD wave propagation is viable in jit.gl.pix within Vsynth context before committing to build
-- [ ] **f_chladni: ph0 dead param** — cos(0·θ + ph0) = constant; repurpose as global phase offset or hide
-- [ ] **f_chladni: near-center singularity** — sqrt(2/πr) diverges at origin; decide whether to address or leave as characteristic artifact
-- [ ] **f_chladni: plate shape morphing** — pending scope review; circular (Bessel) → rectangular (sine products) morph param
-- [ ] **Help patches** — none of the bpatchers have .maxhelp files yet; start with most-used
-- [ ] **f_texrouter: bypass semantics** — document bypass = freeze (not pass-through) in help patch
+- [ ] **f_cymascope: feasibility check** — can jit.gl.pix read/write feedback texture at Vsynth render tempo without frame-order issues? Answer before committing to build
+- [ ] **Help patches** — start with f_texrouter (bypass=freeze must be documented), then f_droste, then f_chladni
+- [ ] **f_chladni: near-center singularity** — decide epsilon floor vs accept; low priority, do after signal chain is working
+- [ ] **f_chladni: plate shape morphing** — hold until scope review; significant GLSL change, may not be worth it
 
 ## Backlog
 
-- [ ] **f_cymascope: build** — FDTD wave propagation in GLSL, fluid medium, pitch-driven source; see spec
-- [ ] **f_hue_processor: hue_lower / hue_upper remote control** — rslider params excluded from route; revisit if needed
-- [ ] **README: add f_chladni** — update patch table (was listed as f_cymascope)
-- [ ] **f_chladni: view_mode blend** — 0=circular, 1=unwrapped strip; blendable but not tested with live signal chain
+- [ ] **Optics family** — scope review first; then f_lens/f_aberration (review prior session work), f_caustic, f_flare, f_diffraction; see spec.md
+- [ ] **Apollonian fractal** — GLSL approach TBD; see ideas/scratchpad.md
+- [ ] **Non-Euclidean geometry** — hyperbolic tiling / Möbius transforms; see ideas/scratchpad.md
+- [ ] **f_hue_processor: hue_lower / hue_upper remote control** — on hold; revisit if remote control needed in performance
+- [ ] **README: update patch table** — add f_chladni (rename from f_cymascope listing)
+
+---
 
 ## Done (recent)
 
-- [x] `f_chladni` initial build (as f_cymascope) — Bessel mode visualizer, 8 modal amps, confirmed working visually
-- [x] vsynth-bpatcher skill updated — patterns/patchers distinction, codebox-first workflow, template from f_droste
-- [x] `.specify/` scaffold — constitution, tasks, all 8 bpatcher stubs
-- [x] Clarified f_chladni vs f_cymascope distinction — renamed accordingly, separate specs
+- [x] Repo migration — docs/, ideas/ directories created; bpatcher specs moved from .specify/bpatchers/
+- [x] spec.md written — all planned work consolidated from docs/, ideas/, tasks.md, HANDOFF.md
+- [x] f_chladni vs f_cymascope clarification — separate specs, distinct physics
+- [x] vsynth-bpatcher skill updated — package structure and bpatcher lifecycle
+- [x] .specify/ scaffold — constitution, all 8 bpatcher stubs
+- [x] f_chladni initial build (as f_cymascope) — Bessel mode visualizer, 8 modal amps, confirmed working visually
