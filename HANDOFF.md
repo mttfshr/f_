@@ -1,71 +1,50 @@
 # f_ Package Handoff
-_Last updated: 2026-05-25 — .specify/ scaffold + conceptual clarifications_
+_Last updated: 2026-05-25 — repo structure design + skill update_
 
 ## What was done this session
 
-### .specify/ scaffold built from scratch
-
-Created the full project planning structure in `f_/.specify/`:
-
-- **constitution.md** — project identity, bpatcher conventions, development approach, two-tier ideas→spec graduation system
-- **tasks.md** — cross-session task tracker; migrated all loose threads and next steps from HANDOFF
-- **ideas.md** — scratchpad for half-formed bpatcher ideas before they have a name and parameter contract
-- **bpatchers/** — stub specs for all 8 bpatchers, with params extracted from source; f_chladni has full spec including signal chain and EEG band mapping
+### .specify/ scaffold built
+Constitution, tasks, ideas, and per-bpatcher stubs (params extracted from source). See previous commit for details.
 
 ### f_cymascope → f_chladni clarification
+Existing bpatcher is Chladni plate physics (Bessel modal superposition), not cymascope (FDTD wave propagation through fluid). Renamed spec. New f_cymascope.md written as a distinct concept spec. **Patcher file rename still pending in Max.**
 
-Realized the existing bpatcher is Chladni plate physics (modal superposition, Bessel functions, nodal lines on a solid plate) — not cymascope physics (wave propagation through a fluid medium). Renamed spec accordingly. A new `f_cymascope.md` spec describes the FDTD wave propagation approach as a distinct future bpatcher, with a feasibility note about ping-pong texture technique in Vsynth.
+### Repo structure designed and committed
+Three-tier layout agreed and documented in constitution + vsynth-bpatcher skill:
 
-**Patcher file rename still pending** — `f_cymascope.maxpat` → `f_chladni.maxpat` needs to happen in Max.
+- **`docs/`** — as-built reference, working bpatchers only
+- **`ideas/`** — planned and half-formed bpatchers (scratchpad.md + per-bpatcher files)
+- **`.specify/`** — planning workspace only (constitution, spec, plan, tasks)
+
+Current `.specify/bpatchers/` files are temporary — migration to docs/ and ideas/ is the first task next session.
 
 ### Ideas captured
+Four idea clusters in ideas.md: optics family (f_lens, f_caustic, f_flare, f_diffraction — unified by "incoming texture as light source"), Apollonian fractal, non-Euclidean / hyperbolic geometry, light caustics. Emerging taxonomy noted: processors / optical elements / wave physics / geometry.
 
-Four idea clusters added to ideas.md:
-- **Optics family** (f_lens, f_caustic, f_flare, f_diffraction) — unified by "incoming texture as light source" framing; separate bpatchers, shared parameter vocabulary
-- **Apollonian fractal** — circular gasket, animatable, GLSL approach TBD
-- **Non-Euclidean geometry** — hyperbolic tiling (Poincaré disk / Möbius transforms), connects to f_droste mathematically
-- **Light caustics** — wave physics / optics crossover; generator vs processor question open
+### vsynth-bpatcher skill updated
+Package structure and bpatcher lifecycle added. claude-scaffold committed `1064daf`.
 
-Emerging taxonomy noted: processors / optical elements / wave physics / geometry — useful framing for the scope review.
+## First thing next session
 
-## Current state
+**Repo migration — do before anything else:**
+1. Create `docs/` and `ideas/` directories
+2. Move working bpatcher specs from `.specify/bpatchers/` → `docs/`
+3. Move f_cymascope.md → `ideas/f_cymascope.md`
+4. Rename ideas.md → `ideas/scratchpad.md`
+5. Delete `.specify/bpatchers/`
+6. Write `spec.md` for f_chladni signal chain
+7. Derive `plan.md` and rewrite `tasks.md` from spec
 
-All patchers working. .specify/ scaffold committed. No Max files modified this session.
+## After migration
+
+- f_chladni patcher file rename in Max (f_cymascope.maxpat → f_chladni.maxpat)
+- Scope review — package taxonomy, optics family prioritization
+- f_chladni audio signal chain build
 
 ## Loose threads
 
-- **f_chladni: patcher file rename** — do in Max, update param_connect strings inside the patcher
-- **f_chladni: audio signal chain** — bandpass bank → peakamp~ → smooth → m0–m7
-- **f_chladni: Muse OSC routing** — udpreceive → band routing → scale → smooth → m0–m7
-- **f_cymascope feasibility** — ping-pong texture / FDTD in jit.gl.pix; needs dedicated discussion before building
-- **Scope review** — step back on overall package direction before planning new bpatchers; feeds into plate morphing decision and optics family prioritization
-- **Help patches** — none exist yet
-
-## Next steps
-
-1. Rename f_cymascope.maxpat → f_chladni.maxpat in Max
-2. Scope review conversation (taxonomy: processors / optics / wave physics / geometry)
-3. Build f_chladni audio signal chain
-4. Begin speccing optics family (review prior aberration session work first)
-
-## Package structure
-
-```
-f_/
-  patchers/       — 8 bpatchers (f_cymascope.maxpat pending rename to f_chladni)
-  code/           — JS files
-  help/           — (empty)
-  .specify/
-    constitution.md
-    ideas.md
-    tasks.md
-    bpatchers/    — 9 specs (8 working + f_cymascope concept)
-  package-info.json
-  HANDOFF.md
-  README.md       — needs f_chladni added to patch table
-```
-
-## Resources
-- Vsynth: /Users/matt/Documents/Max 9/Packages/Vsynth
-- vsynth-bpatcher skill: /mnt/skills/user/vsynth-bpatcher/SKILL.md
-- Chladni Obsidian note: f_cymascope_bpatcher.md (needs renaming)
+- f_chladni: ph0 dead param, near-center singularity, plate shape morphing (pending scope review)
+- f_cymascope: ping-pong texture / FDTD feasibility — needs dedicated discussion
+- Help patches: none exist yet
+- f_texrouter: bypass = freeze semantics need documenting
+- README: update patch table for f_chladni rename
