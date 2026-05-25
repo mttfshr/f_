@@ -45,32 +45,42 @@ Every bpatcher in `patchers/` follows the vsynth-bpatcher skill conventions:
 
 ## Development Approach
 
-### New Bpatcher Ideas
+### The Bpatcher Lifecycle
 
-Half-formed ideas, inspiration, and things to try go in `.specify/ideas.md` — no structure required. When an idea has a name, concept, and rough parameter contract, it graduates to a spec file in `.specify/bpatchers/`.
+Each bpatcher moves through three stages, each with a distinct home:
 
-### The Unit of Work Is a Bpatcher
+**1. `ideas/scratchpad.md`** — half-formed, no structure required. A name, a feeling, a reference. Low friction.
 
-Each bpatcher has its own spec file in `.specify/bpatchers/`. A bpatcher spec covers:
-- Purpose and concept
-- Parameters (with types and ranges)
-- Signal chain (intended data flow)
-- Loose threads and known issues
-- Status (working / in-progress / stub)
+**2. `ideas/f_name.md`** — graduated from scratchpad when the idea has a concept, rough parameter contract, and known open questions. Not yet built. `f_cymascope` lives here.
+
+**3. `docs/f_name.md`** — as-built reference. The bpatcher is working. Documents params, signal chain, usage, and known issues as they actually exist. Stable unless the bpatcher changes.
+
+A bpatcher moves from `ideas/` to `docs/` when it is built and confirmed working. Nothing lives in `docs/` that isn't working.
+
+### Planning Workspace
+
+`.specify/` is a planning workspace, not a reference directory. It contains:
+
+- **constitution.md** — project identity and conventions (this file)
+- **spec.md** — intended functionality and goals for planned work; single file until it needs to split
+- **plan.md** — technical approach derived from spec.md
+- **tasks.md** — flat ordered task list derived from plan.md; the session anchor
+
+Spec covers only planned work — bpatchers in `ideas/` that are being actively developed. Working bpatchers are referenced in `docs/`, not `.specify/`.
 
 ### Sessions May Touch Multiple Bpatchers
 
-A session might add a parameter to `f_hue_processor`, fix a bug in `f_droste`, and build the signal chain for `f_cymascope`. Cross-session state lives in:
-
-- **Per-bpatcher specs** — what that bpatcher is and what's unresolved
-- **`tasks.md`** — flat, ordered list of in-progress and next work across all bpatchers
+Cross-session state lives in:
+- **`docs/f_name.md`** — what a working bpatcher is and how it behaves
+- **`ideas/f_name.md`** — what a planned bpatcher should be
+- **`tasks.md`** — what's in progress and next, across all bpatchers
 
 ### Handoff Protocol
 
 At the end of a session:
-1. Update any modified bpatcher specs
+1. Update any modified `docs/` or `ideas/` files
 2. Update `tasks.md` — mark done, add new items, reorder
-3. Update `HANDOFF.md` at the repo root — one paragraph summary of where things stand
+3. Update `HANDOFF.md` at repo root — summary of where things stand
 
 ---
 
@@ -80,15 +90,23 @@ At the end of a session:
 f_/
   patchers/       — bpatcher .maxpat files (source of truth)
   code/           — JS files used by patchers
-  help/           — .maxhelp files (currently empty)
-  .specify/
-    constitution.md       — this file
-    ideas.md              — scratchpad for half-formed bpatcher ideas (no structure required)
-    bpatchers/            — one spec per bpatcher (graduated from ideas.md)
-    tasks.md              — cross-session task tracker
+  help/           — .maxhelp files (derived from docs/ eventually)
+  docs/           — as-built reference docs (working bpatchers only)
+    f_droste.md
+    f_grain.md
+    ...
+  ideas/          — planned and half-formed bpatchers
+    scratchpad.md — low-friction idea dump, no structure required
+    f_cymascope.md — specced, not yet built
+    ...
+  .specify/       — planning workspace
+    constitution.md     — this file
+    spec.md             — planned work (to be written)
+    plan.md             — derived from spec.md
+    tasks.md            — derived from plan.md; session anchor
   package-info.json
-  HANDOFF.md              — session handoff summary
-  README.md               — public-facing package docs
+  HANDOFF.md      — session handoff summary
+  README.md       — public-facing package docs
 ```
 
 ---

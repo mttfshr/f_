@@ -4,6 +4,16 @@ _Last updated: 2026-05-25_
 
 Cross-session task list. One item per line. Reorder freely — top = highest priority.
 
+## Next Session: Repo Reorganization (do first)
+
+- [ ] **Migrate .specify/bpatchers/ → docs/** — working bpatchers only (f_droste, f_grain, f_channel_grader, f_hue_processor, f_luma_processor, f_tone_curve, f_texrouter); strip planning content, keep as-built reference
+- [ ] **Migrate .specify/bpatchers/f_chladni.md → docs/** — it's working (signal chain pending but the bpatcher itself is working)
+- [ ] **Migrate .specify/bpatchers/f_cymascope.md → ideas/f_cymascope.md** — not yet built
+- [ ] **Migrate .specify/ideas.md → ideas/scratchpad.md** — rename and move
+- [ ] **Delete .specify/bpatchers/** — once migration is confirmed
+- [ ] **Write spec.md** — planned work only: f_chladni signal chain first
+- [ ] **Derive plan.md and rewrite tasks.md** from spec.md
+
 ## In Progress
 
 - [ ] **f_chladni: rename patcher file** — rename `patchers/f_cymascope.maxpat` → `f_chladni.maxpat` in Max and update any references
