@@ -7,7 +7,7 @@
 
 ## Summary
 
-Build the signal chain that drives f_chladni's 8 modal amplitude inputs (`m0amp`–`m7amp`) from live audio and EEG data. The bpatcher itself requires no changes — it is generic over its input source. All signal chain work lives in companion patches outside the bpatcher. Two companion patches will be built: one audio-driven (mic → bandpass bank → envelope → amplitudes), one EEG-driven (Muse OSC → band routing → smoothing → amplitudes). Both output the same message protocol to the bpatcher. Additionally: resolve the ph0 dead parameter, rename the patcher file, and verify view_mode with a live signal.
+Build the signal chain that drives f_chladni's 8 modal amplitude inputs (`m0amp`–`m7amp`) from live audio and EEG data. The bpatcher itself requires no changes — it is generic over its input source. All signal chain work lives in companion patches outside the bpatcher. Two companion patches will be built: one audio-driven (mic → bandpass bank with switchable Bessel/Log tuning → envelope → amplitudes), one EEG-driven (Muse OSC → band routing → smoothing → amplitudes, with m7 driven by total power). Both output the same message protocol to the bpatcher. Companion patches include basic UI: tuning mode toggle, master gain, per-band level meters. Additionally: resolve the ph0 dead parameter, rename the patcher file, and verify view_mode with a live signal.
 
 ---
 
@@ -172,21 +172,27 @@ f_/
 
 ### Phase 2: Audio Companion Patch (Block 2)
 - Create `patchers/f_chladni_audio.maxpat`
-- Build: `adc~ → biquad~ × 8` (bandpass, tuned to modal freq ratios from z0–z7)
-- Connect each biquad~ → `peakamp~` → `slide~` → `snapshot~` (to convert back to control rate)
-- Route outputs as `m0amp 0.x`, `m1amp 0.x`, … `m7amp 0.x` messages
-- Wire to f_chladni bpatcher outlet (or leave as standalone with instructions)
-- Test with mic: speech and tones should animate figure
-- Document modal frequency tuning rationale in patch comments
+- Build filter bank: `adc~ → biquad~ × 8` with two stored frequency sets:
+  - **Log set**: 8 logarithmically-spaced center frequencies ~80Hz–8kHz (default)
+  - **Bessel set**: 8 center frequencies at Bessel-zero ratios (reference fundamental chosen at build time; document in patch)
+- Add `umenu` toggle (Bessel / Log) that swaps the active frequency set into the biquad~ coefficients
+- Connect each biquad~ → `peakamp~` → `slide~` (attack ~10ms)
+- Add master gain (scales all 8 peakamp~ outputs before message routing)
+- Add per-band level meters (`meter~` or `number~` display per band)
+- Route outputs as `m0amp 0.x` … `m7amp 0.x` messages
+- Test with mic: speech and varied tones should animate figure across modes
+- Verify tuning toggle switches modes without clicks or discontinuities
 
 ### Phase 3: EEG Companion Patch (Block 3)
 - Measurement pass first: connect Muse, print raw OSC values, document actual range per band
 - Create `patchers/f_chladni_eeg.maxpat`
 - Build: `udpreceive 5000` (or appropriate port) → `route` by band name
 - Scale each band's raw range → 0.0–1.0 using measured values
-- Smooth via `line` with ~150ms ramp time (adjust empirically)
+- Smooth each band via `line` with ~150ms ramp time (adjust empirically)
+- Compute m7 (total power): sum all 7 scaled band values, divide by 7, output as `m7amp`
+- Add master gain and per-band level meters (same UI convention as audio patch)
 - Route outputs as `m0amp`–`m7amp` messages
-- Test: Muse-animated figure should have smooth, responsive transitions
+- Test: Muse-animated figure should have smooth, responsive transitions; m7 should reflect overall activity level
 
 ### Phase 4: view_mode Verification (Block 4)
 - With audio companion patch running, test view_mode 0→1 blend
@@ -202,6 +208,7 @@ f_/
 
 ## Complexity Notes
 
-- **Bandpass filter tuning** is the main unknown in the audio path. The Bessel zeros z0–z7 define modal frequency ratios, but the absolute Hz values depend on the fundamental. A reasonable approach: tune relative to A4 (440Hz) as a reference, document the resulting filter center frequencies, and expose the fundamental as a parameter if needed.
+- **Bandpass filter tuning** — two frequency sets will be computed and stored in the audio patch: Log (straightforward, 8 bands geometrically spaced 80Hz–8kHz) and Bessel (ratios from z0–z7 applied to a reference fundamental chosen at build time). Log is the default and works for any material. Bessel requires a deliberate pitch reference and is most meaningful with a sustained tone source.
 - **Muse calibration** is empirical — raw OSC values must be measured before the EEG path can be properly scaled. Budget a measurement session before building the EEG patch.
 - **EEG smoothing** will need tuning in use. Start with 150ms ramp; adjust based on visual feel in performance.
+- **Tuning toggle continuity** — switching filter frequency sets mid-signal may cause a transient. If this is audible or visually disruptive, the toggle should only switch when signal is below a threshold, or crossfade between sets.
