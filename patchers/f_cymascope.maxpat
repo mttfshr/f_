@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 996.0, 169.0, 1197.0, 831.0 ],
+        "rect": [ 497.0, 169.0, 1197.0, 831.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
@@ -135,24 +135,6 @@
                     "presentation": 1,
                     "presentation_rect": [ -1.5, 0.0, 100.0, 21.0 ],
                     "text": "Cymascope"
-                }
-            },
-            {
-                "box": {
-                    "angle": 270.0,
-                    "background": 1,
-                    "bgcolor": [ 0.0, 0.0, 0.0, 1.0 ],
-                    "border": 1,
-                    "bordercolor": [ 0.0, 0.03529411765, 0.2274509804, 1.0 ],
-                    "id": "obj-3",
-                    "maxclass": "panel",
-                    "mode": 0,
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 41.9666666666667, 590.0, 360.0, 180.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 0.0, 0.0, 299.0, 223.0 ],
-                    "proportion": 0.5
                 }
             },
             {
@@ -1745,6 +1727,144 @@
                         "parameter_enable": 0
                     },
                     "text": "js moduleSize.js"
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-0",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 500.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 4.0, 17.0, 27.0, 18.0 ],
+                    "text": "0",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-1",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 520.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 41.0, 17.0, 27.0, 18.0 ],
+                    "text": "1",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-2",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 540.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 78.0, 17.0, 27.0, 18.0 ],
+                    "text": "2",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-3",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 560.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 115.0, 17.0, 27.0, 18.0 ],
+                    "text": "3",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-4",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 580.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 152.0, 17.0, 27.0, 18.0 ],
+                    "text": "4",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-5",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 600.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 189.0, 17.0, 27.0, 18.0 ],
+                    "text": "5",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-6",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 620.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 226.0, 17.0, 27.0, 18.0 ],
+                    "text": "6",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-label-7",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 640.0, 27.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 263.0, 17.0, 27.0, 18.0 ],
+                    "text": "7",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "angle": 270.0,
+                    "background": 1,
+                    "bgcolor": [ 0.0, 0.0, 0.0, 1.0 ],
+                    "border": 1,
+                    "bordercolor": [ 0.0, 0.03529411765, 0.2274509804, 1.0 ],
+                    "id": "obj-3",
+                    "maxclass": "panel",
+                    "mode": 0,
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 41.9666666666667, 590.0, 360.0, 180.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ -1.0, -15.0, 299.0, 234.0 ],
+                    "proportion": 0.5
                 }
             }
         ],
