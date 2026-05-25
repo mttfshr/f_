@@ -1,71 +1,71 @@
 # f_ Package Handoff
-_Last updated: 2026-05-24 — f_cymascope initial build + vsynth-bpatcher skill update_
+_Last updated: 2026-05-25 — .specify/ scaffold + conceptual clarifications_
 
 ## What was done this session
 
-### f_cymascope: new Bessel mode cymatics bpatcher
+### .specify/ scaffold built from scratch
 
-Built `patchers/f_cymascope.maxpat` from scratch — a circular plate modal synthesis visualizer.
+Created the full project planning structure in `f_/.specify/`:
 
-**Concept:** Superimposes 8 circular membrane modes using large-x asymptotic Bessel function approximations. Each mode `m` contributes `sqrt(2/πr) * cos(r - z_m) * cos(m*θ + ph_m) * amplitude`. Nodal lines rendered via `1 - clip(sqrt(abs(total)) * linesharpness, 0, 1)`.
+- **constitution.md** — project identity, bpatcher conventions, development approach, two-tier ideas→spec graduation system
+- **tasks.md** — cross-session task tracker; migrated all loose threads and next steps from HANDOFF
+- **ideas.md** — scratchpad for half-formed bpatcher ideas before they have a name and parameter contract
+- **bpatchers/** — stub specs for all 8 bpatchers, with params extracted from source; f_chladni has full spec including signal chain and EEG band mapping
 
-**Parameters:**
-- `m0amp`–`m7amp` — modal amplitudes (signal-driven inputs)
-- `z0`–`z7` — Bessel zeros, correct J_m first zeros by default, tweakable
-- `ph0`–`ph7` — phase per mode (note: ph0 has no effect for m0, no angular term)
-- `dishradius` — plate radius scale
-- `reflectamt` — boundary reflection standing wave mix
-- `linesharpness` — nodal line width
-- `globalscale` — output brightness
-- `view_mode` — 0=circular (default), 1=unwrapped strip, blendable
+### f_cymascope → f_chladni clarification
 
-**Intended signal chain (not yet built):**
-- Audio path: mic → bandpass bank (8 filters at modal freq ratios) → peakamp → smooth → mNamp
-- EEG path: Muse OSC → udpreceive → band routing → scale → smooth → mNamp
-- Muse updates at ~10Hz — needs `line`/`slide~` smoothing before params
+Realized the existing bpatcher is Chladni plate physics (modal superposition, Bessel functions, nodal lines on a solid plate) — not cymascope physics (wave propagation through a fluid medium). Renamed spec accordingly. A new `f_cymascope.md` spec describes the FDTD wave propagation approach as a distinct future bpatcher, with a feasibility note about ping-pong texture technique in Vsynth.
 
-**EEG band → mode mapping:**
-Delta→m0, Theta→m1, Alpha→m2, Beta-lo→m3, Beta-hi→m4, Gamma-lo→m5, Gamma-hi→m6, Spare→m7
+**Patcher file rename still pending** — `f_cymascope.maxpat` → `f_chladni.maxpat` needs to happen in Max.
 
-### vsynth-bpatcher skill updated
+### Ideas captured
 
-Updated `/Users/matt/Github/claude-scaffold/skills/vsynth-bpatcher/SKILL.md` with:
-- `patterns/` vs `patchers/` distinction (version control boundary)
-- One-sentence mental model: Vsynth owns render tempo and cornerpins
-- Codebox-first workflow: write text, paste manually, verify before building JSON
-- Template derived from f_droste (no autopattr, routepass pattern, moduleSize chain)
-- Two codebox gotchas added: `vec4()` invalid (use `vec()`), single Vsynth inlet
+Four idea clusters added to ideas.md:
+- **Optics family** (f_lens, f_caustic, f_flare, f_diffraction) — unified by "incoming texture as light source" framing; separate bpatchers, shared parameter vocabulary
+- **Apollonian fractal** — circular gasket, animatable, GLSL approach TBD
+- **Non-Euclidean geometry** — hyperbolic tiling (Poincaré disk / Möbius transforms), connects to f_droste mathematically
+- **Light caustics** — wave physics / optics crossover; generator vs processor question open
+
+Emerging taxonomy noted: processors / optical elements / wave physics / geometry — useful framing for the scope review.
 
 ## Current state
 
-All patchers working. f_cymascope confirmed producing correct Bessel patterns visually.
+All patchers working. .specify/ scaffold committed. No Max files modified this session.
 
 ## Loose threads
 
-- **f_cymascope signal chain** — modal amps are static dials; audio/EEG analysis chain not yet built
-- **f_cymascope near-center singularity** — `sqrt(2/πr)` diverges at origin, visible as bright spike. Low priority, somewhat characteristic of cymatics images
-- **ph0 dead param** — phase has no effect for m0 (cos(0*θ + ph0) = cos(ph0) = constant). Consider repurposing as global phase or hiding
-- **hue_lower / hue_upper not remotely controllable** — rslider params intentionally left out of route in `f_hue_processor`. Revisit if needed
-- **f_texrouter bypass semantics** — bypass = freeze, different from processor bypass. Document in help patch
+- **f_chladni: patcher file rename** — do in Max, update param_connect strings inside the patcher
+- **f_chladni: audio signal chain** — bandpass bank → peakamp~ → smooth → m0–m7
+- **f_chladni: Muse OSC routing** — udpreceive → band routing → scale → smooth → m0–m7
+- **f_cymascope feasibility** — ping-pong texture / FDTD in jit.gl.pix; needs dedicated discussion before building
+- **Scope review** — step back on overall package direction before planning new bpatchers; feeds into plate morphing decision and optics family prioritization
+- **Help patches** — none exist yet
 
 ## Next steps
 
-- Build audio signal analysis chain for f_cymascope (bandpass bank → peakamp → smooth)
-- Build Muse OSC → cymascope routing patch
-- Help patchers — none of the bpatchers have help files yet
-- Test control messaging in a real Vsynth patch
+1. Rename f_cymascope.maxpat → f_chladni.maxpat in Max
+2. Scope review conversation (taxonomy: processors / optics / wave physics / geometry)
+3. Build f_chladni audio signal chain
+4. Begin speccing optics family (review prior aberration session work first)
 
 ## Package structure
 
 ```
 f_/
-  code/           — JS files (bypass_toggle.js, hue_rslider.js, etc.)
-  patchers/       — 8 bpatchers (+ f_cymascope new this session)
+  patchers/       — 8 bpatchers (f_cymascope.maxpat pending rename to f_chladni)
+  code/           — JS files
   help/           — (empty)
+  .specify/
+    constitution.md
+    ideas.md
+    tasks.md
+    bpatchers/    — 9 specs (8 working + f_cymascope concept)
   package-info.json
+  HANDOFF.md
+  README.md       — needs f_chladni added to patch table
 ```
 
 ## Resources
-- Max package conventions: https://docs.cycling74.com/max8/vignettes/packages
 - Vsynth: /Users/matt/Documents/Max 9/Packages/Vsynth
-- Cymascope Obsidian note: f_cymascope_bpatcher.md
+- vsynth-bpatcher skill: /mnt/skills/user/vsynth-bpatcher/SKILL.md
+- Chladni Obsidian note: f_cymascope_bpatcher.md (needs renaming)
