@@ -26,7 +26,8 @@ Nodal lines rendered via:
 |------|------|-------|-------------|
 | `m0amp`–`m7amp` | signal (float) | 0.0–1.0 | Modal amplitudes — primary signal inputs |
 | `z0`–`z7` | float | positive | Bessel zeros — J_m first zeros by default, tweakable |
-| `ph0`–`ph7` | float | 0.0–1.0 | Phase per mode (ph0 has no effect — see loose threads) |
+| `ph0` | float | 0.0–1.0 | Global phase offset applied to all modes |
+| `ph1`–`ph7` | float | 0.0–1.0 | Per-mode phase offset |
 | `dishradius` | float | — | Plate radius scale |
 | `reflectamt` | float | 0.0–1.0 | Boundary reflection standing wave mix |
 | `linesharpness` | float | — | Nodal line width (higher = sharper) |
@@ -66,7 +67,7 @@ Muse OSC → udpreceive
 
 ## Loose Threads
 
-- **ph0 dead param** — `cos(0·θ + ph0)` = `cos(ph0)` = constant; phase has no angular effect for m=0. Repurpose as global phase offset, or hide from UI.
+- **ph0 global offset** — Repurposed as global phase offset added to all modal phases (`ph_m + ph0`). Done.
 - **Near-center singularity** — `sqrt(2/πr)` diverges at origin, visible as bright spike. Low priority — somewhat characteristic of Chladni images. Could add epsilon floor to r if distracting.
 - **view_mode blend** — implemented but not tested with a live signal chain yet.
 - **Audio vs EEG path** — no switching mechanism designed yet; probably separate patches that feed into the same bpatcher.
@@ -74,4 +75,4 @@ Muse OSC → udpreceive
 
 ## Source File
 
-`patchers/f_cymascope.maxpat` ← rename to `f_chladni.maxpat` pending
+`patchers/f_chladni.maxpat`

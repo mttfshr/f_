@@ -19,7 +19,7 @@ Visualizes Chladni plate physics — modal superposition of Bessel functions on 
 
 ```
 mic → bandpass bank (8 filters, switchable tuning)
-    → peakamp~
+    → abs~
     → slide~    (~10ms attack)
     → m0amp–m7amp
 ```
@@ -35,6 +35,40 @@ mic → bandpass bank (8 filters, switchable tuning)
 - Tuning mode toggle (Log / Bessel)
 - Master gain
 - Per-band level meters
+
+**Outlet contract (`f_chladni_audio.maxpat`):**
+- `inlet~` 1 — mono audio in (caller supplies `ezadc~` or signal source)
+- `outlet` 1 — named amplitude messages: `m0amp <float>` … `m7amp <float>`
+  - Format matches `f_chladni` control inlet directly; wire outlet → f_chladni in1
+  - Messages fire at `snapshot~` rate (~20ms)
+
+### Filter Frequency Sets
+
+**Log** — 8 bands, geometric spacing, ~0.95 octaves/band:
+| Band | Freq (Hz) |
+|------|-----------|
+| m0 | 80.0 |
+| m1 | 154.5 |
+| m2 | 298.2 |
+| m3 | 575.7 |
+| m4 | 1111.6 |
+| m5 | 2146.2 |
+| m6 | 4143.6 |
+| m7 | 8000.0 |
+
+**Bessel** — f0 = A3 (220 Hz), ratios from Bessel zeros z0–z7:
+| Band | Freq (Hz) | Ratio |
+|------|-----------|-------|
+| m0 | 220.0 | 1.0000 |
+| m1 | 350.5 | 1.5934 |
+| m2 | 469.8 | 2.1356 |
+| m3 | 583.7 | 2.6531 |
+| m4 | 694.2 | 3.1555 |
+| m5 | 802.4 | 3.6475 |
+| m6 | 909.0 | 4.1318 |
+| m7 | 1014.2 | 4.6101 |
+
+Spans A3–B5 (~220–1014 Hz). Ratios are the first zeros of J_0–J_7 divided by z0 = 2.4048.
 
 ---
 

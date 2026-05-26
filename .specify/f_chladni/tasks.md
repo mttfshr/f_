@@ -8,11 +8,11 @@
 
 ## Phase 0: Rename
 
-- [ ] T001 Open `patchers/f_cymascope.maxpat` in Max; File → Save As `patchers/f_chladni.maxpat`
-- [ ] T002 Verify `f_chladni.maxpat` opens correctly and Vsynth loads it
-- [ ] T003 Update source file reference in `docs/f_chladni.md`
-- [ ] T004 Check `package-info.json`; update if patcher name present
-- [ ] T005 Update `README.md` patch table: f_cymascope → f_chladni
+- [x] T001 Open `patchers/f_cymascope.maxpat` in Max; File → Save As `patchers/f_chladni.maxpat`
+- [x] T002 Verify `f_chladni.maxpat` opens correctly and Vsynth loads it
+- [x] T003 Update source file reference in `docs/f_chladni.md`
+- [x] T004 Check `package-info.json`; update if patcher name present
+- [x] T005 Update `README.md` patch table: f_cymascope → f_chladni
 
 **Checkpoint**: `f_chladni.maxpat` exists; loads in Vsynth; docs and README consistent.
 
@@ -20,9 +20,9 @@
 
 ## Phase 1: ph0 Fix
 
-- [ ] T006 Open codebox in `f_chladni.maxpat`; change per-mode phase to `(ph_m + ph0)` across all 8 modes
-- [ ] T007 Verify: ph0 slider visibly shifts nodal pattern globally
-- [ ] T008 Update `docs/f_chladni.md` parameter table: ph0 → "Global phase offset applied to all modes"
+- [x] T006 Open codebox in `f_chladni.maxpat`; change per-mode phase to `(ph_m + ph0)` across all 8 modes
+- [x] T007 Verify: ph0 slider visibly shifts nodal pattern globally
+- [x] T008 Update `docs/f_chladni.md` parameter table: ph0 → "Global phase offset applied to all modes"
 
 **Checkpoint**: ph0 produces visible global phase shift; no regression in other params.
 
@@ -30,15 +30,15 @@
 
 ## Phase 2: Audio Companion Patch
 
-- [ ] T009 Create `patchers/f_chladni_audio.maxpat`
-- [ ] T010 Build `adc~ → biquad~ × 8` filter bank DSP chain
-- [ ] T011 [P] Compute Log frequency set: 8 bands geometrically spaced ~80Hz–8kHz; store in patch
-- [ ] T012 [P] Compute Bessel frequency set: 8 bands at Bessel-zero ratios; choose and document reference fundamental
-- [ ] T013 Add `umenu` (Log / Bessel); wire to swap frequency set into `biquad~` coefficients
-- [ ] T014 Wire `biquad~ × 8 → peakamp~ × 8 → slide~ × 8` (attack ~10ms)
-- [ ] T015 Add master gain scaling all 8 outputs
-- [ ] T016 Add per-band level meters (`meter~` or `number~` per band)
-- [ ] T017 Route outputs: `m0amp $1` … `m7amp $1`
+- [x] T009 Create `patchers/f_chladni_audio.maxpat`
+- [x] T010 Build `adc~ → biquad~ × 8` filter bank DSP chain
+- [x] T011 [P] Compute Log frequency set: 8 bands geometrically spaced ~80Hz–8kHz; store in patch
+- [x] T012 [P] Compute Bessel frequency set: 8 bands at Bessel-zero ratios; choose and document reference fundamental
+- [x] T013 Add `umenu` (Log / Bessel); wire to swap frequency set into `biquad~` coefficients
+- [x] T014 Wire `biquad~ × 8 → abs~ × 8 → slide~ × 8` (attack ~10ms)
+- [x] T015 Add master gain scaling all 8 outputs
+- [x] T016 Add per-band level meters (`meter~` or `number~` per band)
+- [x] T017 Route outputs: `m0amp $1` … `m7amp $1`
 - [ ] T018 Test with mic: speech and varied tones animate figure across modes
 - [ ] T019 Test tuning toggle: Bessel ↔ Log while signal active; no click or visual snap
 
