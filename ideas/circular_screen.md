@@ -112,7 +112,7 @@ The ambisonics connection is worth exploring: ambisonics encodes a 3D sound fiel
 |------|---------|--------|
 | `f_stereo` | Stereographic projection — display layer for circular screen; wraps any texture into spherically-correct coordinates | Idea |
 | `f_sharmonics` | Spherical harmonics visualizer in stereographic projection; driven by m0–m7 amplitudes; natively seamless on circular screen | Idea |
-| `f_mobius` | General Möbius transformation processor applied to UV coordinates; foundation for stereographic + hyperbolic work | Idea |
+| `f_mobius` | General Möbius transformation processor applied to UV coordinates; foundation for stereographic + hyperbolic work | Specced — see `ideas/f_mobius.md` |
 | `f_poincare` | Poincaré disk — hyperbolic tiling in the unit disk; naturally fits the circular screen | In backlog (scratchpad.md) |
 
 ---
