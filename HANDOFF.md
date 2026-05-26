@@ -1,71 +1,25 @@
 # f_ — Handoff
 
-_Last updated: 2026-05-25_
+_Session: 2026-05-25_
 
----
+## What was done this session
 
-## Active Build
+- Repo migrated to `docs/` and `ideas/` structure
+- `spec.md`, `plan.md`, `tasks.md` written for f_chladni signal chain
+- f_mobius specced (`ideas/f_mobius.md`, `.specify/f_mobius/spec.md`)
+- Circular screen design direction captured (`ideas/circular_screen.md`)
+- `.specify/` restructured: per-bpatcher dirs replacing monolithic files
+- `README.md` now carries permanent project state (status table, build queue)
+- `HANDOFF.md` (this file) scoped to session notes only
+- `constitution.md` and `vsynth-bpatcher` skill updated to reflect new structure
 
-**f_chladni — Signal Chain**
-`.specify/f_chladni/` — spec, plan, tasks all present.
-Start with `tasks.md` → T001 (patcher rename in Max).
+## First thing next session
 
----
+Open `.specify/f_chladni/tasks.md` → start at T001 (patcher rename in Max).
 
-## Bpatcher Status
+## Loose threads
 
-| Bpatcher | Stage | Location |
-|----------|-------|----------|
-| f_chladni | 🔨 Active build | `.specify/f_chladni/` |
-| f_mobius | 📋 Specced | `.specify/f_mobius/spec.md` |
-| f_droste | ✅ Working | `docs/f_droste.md` |
-| f_grain | ✅ Working | `docs/f_grain.md` |
-| f_hue_processor | ✅ Working | `docs/f_hue_processor.md` |
-| f_luma_processor | ✅ Working | `docs/f_luma_processor.md` |
-| f_tone_curve | ✅ Working | `docs/f_tone_curve.md` |
-| f_channel_grader | ✅ Working | `docs/f_channel_grader.md` |
-| f_texrouter | ✅ Working | `docs/f_texrouter.md` |
-| f_cymascope | 💡 Idea | `ideas/f_cymascope.md` |
-| f_stereo | 💡 Idea | `ideas/circular_screen.md` |
-| f_sharmonics | 💡 Idea | `ideas/circular_screen.md` |
-| f_poincare | 💡 Idea | `ideas/circular_screen.md` |
-
----
-
-## Build Queue
-
-1. **f_chladni signal chain** — active
-2. **f_mobius** — next; plan + tasks when f_chladni is done
-3. **f_stereo** — after f_mobius (shared math)
-4. **f_poincare** — after f_mobius (shared math)
-5. **f_sharmonics** — after f_stereo
-6. **f_cymascope** — feasibility check first (ping-pong texture in jit.gl.pix)
-
-Scope review needed before committing to optics family (f_lens, f_caustic, f_flare, f_diffraction) or Apollonian fractal.
-
----
-
-## Package-Wide Loose Threads
-
-- **Help patches** — none exist for any bpatcher; start with f_texrouter (bypass = freeze, not pass-through — must be documented)
-- **f_chladni rename** — `f_cymascope.maxpat` → `f_chladni.maxpat` still pending in Max (T001)
-- **f_hue_processor** — hue_lower/hue_upper not remotely controllable; on hold
-- **README patch table** — needs update after f_chladni rename
-
----
-
-## .specify/ Structure
-
-```
-.specify/
-  constitution.md          — package-wide constraints and values
-  f_chladni/
-    spec.md                — what it does, signal chain, acceptance criteria
-    plan.md                — ADRs, dependency blocks, phases
-    tasks.md               — T001–T034, session anchor
-  f_mobius/
-    spec.md                — what it does, params, codebox structure
-                           — plan + tasks added when build begins
-```
-
-**Lifecycle**: `ideas/scratchpad.md` → `ideas/f_name.md` → `.specify/f_name/` → `docs/f_name.md`
+- f_chladni: ph0 decision made (global phase offset) but not yet implemented — T006
+- f_chladni: Muse calibration measurement pass needed before EEG patch build — T020
+- Scope review still pending: optics family vs circular screen prioritization
+- Help patches: none exist for any bpatcher; f_texrouter first (bypass = freeze)
