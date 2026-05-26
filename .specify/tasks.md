@@ -150,13 +150,15 @@ Phase 2 + Phase 3 + Phase 4 → Phase 5 (Docs)
 Items not part of the f_chladni signal chain build; tracked here for continuity.
 
 - [ ] **Scope review** — conversational; taxonomy, optics family prioritization, f_cymascope vs optics sequencing
+- [ ] **f_mobius** — specced in `ideas/f_mobius.md`; build after f_chladni signal chain; foundation for f_stereo and f_poincare; codebox-first (verify cmul/cdiv and full transform before patcher wrapper)
 - [ ] **f_cymascope: feasibility check** — can jit.gl.pix read/write feedback texture at Vsynth render tempo without frame-order issues?
 - [ ] **Help patches** — none exist; start with f_texrouter (bypass=freeze must be documented), then f_droste, then f_chladni
 - [ ] **f_chladni: near-center singularity** — accept or add epsilon floor; low priority
 - [ ] **f_chladni: plate shape morphing** — hold until scope review
 - [ ] **Optics family** — f_lens/f_aberration (review prior session work first), f_caustic, f_flare, f_diffraction; pending scope review
 - [ ] **Apollonian fractal** — GLSL approach TBD; see `ideas/scratchpad.md`
-- [ ] **Non-Euclidean geometry** — Möbius / hyperbolic tiling; see `ideas/scratchpad.md`
+- [ ] **Circular screen family** — f_stereo (stereographic projection), f_sharmonics (spherical harmonics visualizer), f_poincare (Poincaré disk); all depend on f_mobius; see `ideas/circular_screen.md`
+- [ ] **Non-Euclidean geometry** — absorbed into circular screen direction; see `ideas/circular_screen.md`
 - [ ] **f_hue_processor: hue_lower/hue_upper remote control** — on hold; revisit if needed in performance
 - [ ] **f_luma_processor/f_tone_curve: shared parameter convention** — low_mid/mid_high/edge_falloff; note only, no action needed now
 

@@ -181,6 +181,26 @@ Circular Apollonian gasket — iterative circle packing fractal. Naturally anima
 
 Three possible angles: hyperbolic tiling (Poincaré disk, Möbius transformations), spherical projection with controllable curvature, geodesic displacement as a processor. Möbius transformation math overlaps with Apollonian fractal. See `ideas/scratchpad.md`.
 
+### Circular Screen Direction — f_mobius, f_stereo, f_sharmonics, f_poincare
+
+The circular screen (6'–8' diameter projection) is a first-class design domain, not just a display target. The governing problem: mapping a Euclidean texture onto a sphere produces unavoidable seams (Gauss's Theorema Egregium). Three directions address this at the root. Full notes in `ideas/circular_screen.md`.
+
+**f_mobius** — Möbius transformation UV-space processor. Applies `f(z) = (az + b) / (cz + d)` to sampling coordinates. Circle-preserving, angle-preserving, composes cleanly in any chain. Parameters: `cx`/`cy` (center, driven by xy encoder), `rotate`, `zoom` (log-mapped), `invert` (0=rotation/zoom, 1=full 1/z inversion, 0.2–0.8=loxodromic/hyperbolic motion territory). Foundation layer for f_stereo and f_poincare. Shares math with Apollonian gasket.
+
+**Status:** Specced. See `ideas/f_mobius.md`. Build after f_chladni signal chain.
+
+**f_stereo** — Stereographic projection display-layer processor. Maps UV coordinates through stereographic projection so the circular screen becomes a mathematically honest view of a sphere — no seams, rotations are Möbius transformations. South pole → center of disk, equator → mid-radius ring, north pole → edge.
+
+**Status:** Idea. See `ideas/circular_screen.md`. Build after f_mobius (shares math).
+
+**f_sharmonics** — Spherical harmonics visualizer rendered in stereographic projection. Driven by same m0–m7 amplitude protocol as f_chladni. Spherical harmonics Y_l^m are the natural angular basis for anything radiating from a center point — the spherical upgrade of f_chladni's Bessel+Fourier approach. Natively seamless on a circular screen.
+
+**Status:** Idea. See `ideas/circular_screen.md`. Build after f_stereo.
+
+**f_poincare** — Poincaré disk hyperbolic tiling. Möbius transformations that keep the unit disk inside itself tile hyperbolic space perfectly — no seams, infinite refinement toward the edge. The circular screen is its natural canvas. Shares motion model with f_mobius.
+
+**Status:** Idea. See `ideas/circular_screen.md` and `ideas/scratchpad.md`. Build after f_mobius.
+
 ---
 
 ## Pending: Scope Review
