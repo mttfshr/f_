@@ -61,26 +61,35 @@ A bpatcher moves from `ideas/` to `docs/` when it is built and confirmed working
 
 `.specify/` is a planning workspace, not a reference directory. It contains:
 
-- **constitution.md** — project identity and conventions (this file)
-- **spec.md** — intended functionality and goals for planned work; single file until it needs to split
-- **plan.md** — technical approach derived from spec.md
-- **tasks.md** — flat ordered task list derived from plan.md; the session anchor
+- **`constitution.md`** — project identity and conventions (this file)
+- **`f_name/spec.md`** — what the bpatcher does, for whom, and how you know it's working
+- **`f_name/plan.md`** — ADRs, dependency blocks, implementation phases; derived from spec
+- **`f_name/tasks.md`** — flat ordered task list; the session anchor for that build
 
-Spec covers only planned work — bpatchers in `ideas/` that are being actively developed. Working bpatchers are referenced in `docs/`, not `.specify/`.
+Each bpatcher gets its own subdirectory when actively being built. `spec.md` is written first. `plan.md` and `tasks.md` are added when the build begins. The folder is removed (or archived) when the bpatcher graduates to `docs/`.
 
 ### Sessions May Touch Multiple Bpatchers
 
 Cross-session state lives in:
 - **`docs/f_name.md`** — what a working bpatcher is and how it behaves
 - **`ideas/f_name.md`** — what a planned bpatcher should be
-- **`tasks.md`** — what's in progress and next, across all bpatchers
+- **`.specify/f_name/tasks.md`** — what's in progress for the active build
 
 ### Handoff Protocol
 
-At the end of a session:
-1. Update any modified `docs/` or `ideas/` files
-2. Update `tasks.md` — mark done, add new items, reorder
-3. Update `HANDOFF.md` at repo root — summary of where things stand
+At the end of every session, update **both**:
+
+**`README.md`** (permanent project state):
+- Bpatcher status table — add new bpatchers, update status changes
+- Build queue — reflect any priority changes
+- `.specify/` structure — update if directories were added or removed
+
+**`HANDOFF.md`** (session notes — ephemeral):
+- What was done this session
+- What to do first next session
+- Any loose threads or open decisions
+
+HANDOFF.md is written fresh each session. README.md is maintained continuously. Do not put permanent project state in HANDOFF — it will be overwritten.
 
 ---
 
@@ -92,21 +101,18 @@ f_/
   code/           — JS files used by patchers
   help/           — .maxhelp files (derived from docs/ eventually)
   docs/           — as-built reference docs (working bpatchers only)
-    f_droste.md
-    f_grain.md
-    ...
   ideas/          — planned and half-formed bpatchers
-    scratchpad.md — low-friction idea dump, no structure required
-    f_cymascope.md — specced, not yet built
-    ...
+    scratchpad.md — low-friction idea dump
+    f_name.md     — specced, not yet built
   .specify/       — planning workspace
     constitution.md     — this file
-    spec.md             — planned work (to be written)
-    plan.md             — derived from spec.md
-    tasks.md            — derived from plan.md; session anchor
+    f_name/             — one dir per bpatcher under active development
+      spec.md           — what it does and how you know it's working
+      plan.md           — ADRs, blocks, phases (added when build begins)
+      tasks.md          — flat task list, session anchor (added when build begins)
   package-info.json
-  HANDOFF.md      — session handoff summary
-  README.md       — public-facing package docs
+  HANDOFF.md      — session notes (ephemeral; written fresh each session)
+  README.md       — permanent project state: status table, build queue
 ```
 
 ---
@@ -132,4 +138,4 @@ f_/
 2. **Codebox before patcher** — write and verify GLSL in codebox text before building JSON structure
 3. **One bpatcher, one concern** — resist adding unrelated functionality to an existing bpatcher
 4. **Specs before building** — for any new bpatcher, write the spec (concept + params + signal chain) before opening Max
-5. **Tasks.md is the session anchor** — always update it at session end; it is the handoff
+5. **Tasks.md is the session anchor** — always update `.specify/f_name/tasks.md` at session end; also update README.md (project state) and HANDOFF.md (session notes)
