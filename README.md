@@ -53,3 +53,5 @@ Each patch has a corresponding `.maxhelp` file in the `help/` folder. Right-clic
 These patches are developed alongside personal Vsynth performance work and released as-is. They follow Vsynth conventions and are designed for Vsynth signal chains.
 
 If you know Max and Vsynth, you should be able to understand and modify the patches as needed.
+
+There's no release schedule or roadmap for these patches and the patchers might change significantly as development continues.

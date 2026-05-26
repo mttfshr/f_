@@ -36,6 +36,20 @@ Routing driven by matrix cell messages `0`–`15`. Preset system stores/recalls 
 
 `patchers/f_texrouter.maxpat`
 
-## Reference
+---
 
-`vs_texrouter_SPEC.md` in repo root — original spec document.
+## Implementation Notes
+
+Non-obvious behaviors worth knowing if modifying the patch:
+
+**Fan-out**: Multiple open gates on the same row (e.g. in0 → out1 and in0 → out2 both open) sends the same texture to two outlets. Intentional and correct — `jit_gl_texture` is a message, the same texture name fans out cleanly.
+
+**Fan-in**: Multiple open gates on the same column (e.g. in0 → out1 and in1 → out1 both open) means two sources both send to out1. Last message in scheduler order wins on the GL side. The matrix doesn't enforce single-source per outlet — that's the patch designer's responsibility.
+
+**pattrstorage + autopattr coexistence**: `router_autopattr` handles save/restore of full bpatcher state (including dirty toggle edits). `router_pattrstorage` handles the named preset bank. Both coexist cleanly — autopattr saves raw toggle values, pattrstorage saves named snapshots.
+
+**Preset recall timing**: pattrstorage recall sets live.toggle parameter values which immediately output to their gates. Glitch-free because `jit_gl_texture` is message-domain, not audio-domain.
+
+**cell_val ordering is safe by construction**: `unpack` fires right-to-left — V always reaches `cell_val` before R triggers the index calculation. Ordering is deterministic in Max's single-threaded scheduler.
+
+**Preset slot 0**: Ships pre-stored as identity (diagonal). After any rebuild, recall identity state then send `store 0` to `router_pattrstorage` to restore this.
