@@ -33,16 +33,15 @@ Restart Max after either method. Patches will be available on Max's search path.
 | `f_tone_curve` | Tone curve adjustment | ✅ Working |
 | `f_texrouter` | 4×4 texture routing matrix with preset system | ✅ Working |
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes) | 🔨 Signal chain in progress |
-| `f_mobius` | Möbius transformation UV-space processor | 📋 Specced |
+| `f_mobius` | Möbius transformation UV-space processor | ✅ Working |
 
 ## Build Queue
 
 1. f_chladni signal chain — active (`.specify/f_chladni/`)
-2. f_mobius — next (`.specify/f_mobius/spec.md`)
-3. f_stereo — stereographic projection display layer; after f_mobius
-4. f_poincare — Poincaré disk hyperbolic tiling; after f_mobius
-5. f_sharmonics — spherical harmonics visualizer; after f_stereo
-6. f_cymascope — FDTD wave propagation; feasibility check first
+2. f_stereo — stereographic projection display layer; specced (`.specify/f_stereo/`)
+3. f_poincare — Poincaré disk hyperbolic tiling
+4. f_sharmonics — spherical harmonics visualizer; after f_stereo
+5. f_cymascope — FDTD wave propagation; feasibility check first
 
 ## Help files
 

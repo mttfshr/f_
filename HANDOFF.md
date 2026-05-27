@@ -4,38 +4,29 @@ _Session: 2026-05-26_
 
 ## What was done this session
 
-**f_chladni Phase 0 + Phase 1 complete:**
-- Renamed `f_cymascope.maxpat` → `f_chladni.maxpat` (T001–T005)
-- Codebox patched: ph0 repurposed as global phase offset, added to all 8 modal angular terms (T006–T008)
-- `docs/f_chladni.md` updated: source file, ph0 description, parameter table split (ph0 vs ph1–ph7)
-
-**f_chladni_audio.maxpat built (Phase 2, T009–T017):**
-- Filter bank: `inlet~` → `biquad~ ×8` → `abs~` → `slide~` → `*~` → `snapshot~` → `prepend mXamp` → `outlet`
-- Two frequency sets computed and stored as message boxes: Log (80Hz–8kHz, ~0.95 oct/band) and Bessel (f0=A3=220Hz, Bessel-zero ratios, 220–1014Hz)
-- Coefficients normalized to unity gain at center frequency (b0=1, b2=-1, a1/a2 per band)
-- Umenu toggles Log/Bessel by banging the appropriate coefficient message boxes into unpack → biquad~ inlets 2–6
-- Master gain via `number~` into all 8 `*~` right inlets
-- `meter~` per band for visual monitoring
-- Outlet contract: `inlet~` mono audio in; `outlet` message out → `m0amp`–`m7amp` floats at ~20ms
-
-**f_chladni control inlet added:**
-- Second inlet added to `f_chladni.maxpat` (obj-76), wired to route object (obj-8)
-- Parent patch: `ezadc~` → `f_chladni_audio` in~ → outlet → `f_chladni` control inlet 2
-
-**Spec updated:**
-- Outlet contract documented in `.specify/f_chladni/spec.md`
-- Signal chain corrected: peakamp~ → abs~ (peakamp~ outputs float, not signal)
-- Frequency set tables added to spec
-- T009–T017 marked complete in tasks.md
+**f_mobius complete (all phases):**
+- Planned `.specify/f_mobius/plan.md` and `tasks.md` from existing spec
+- Codebox written and verified: passthrough, inversion, rotation, singularity guard all pass
+- Production bpatcher `patchers/f_mobius.maxpat` built via one-shot generator script (deleted after use)
+- Zoom exponent tuned to `pow(10, (zoom-0.5) * 5.0)` empirically
+- Behavior clarified through exploration:
+  - `invert` is a wet/dry between passthrough UV and `1/z` inversion — the distinctive control
+  - `rotate` and `zoom` affect the passthrough (identity) path; at `invert=1` they have no effect
+  - The `mix()` blend between paths is not group-pure Möbius at intermediate values, but produces coherent and interesting UV warps
+  - Output is visually strong — lobe structures, circle-preserving distortions, striking with waveform generator source
+- Architectural insight: f_mobius is not a mathematical foundation for f_stereo/f_poincare — those modules will implement their own Möbius math internally, parameterized correctly for their purpose (sphere rotations for f_stereo, disk automorphisms for f_poincare)
+- README updated: f_mobius → ✅ Working; build queue updated; f_stereo is next
 
 ## First thing next session
 
-Open `.specify/f_chladni/tasks.md` → T018 (formal mic test: verify all 8 bands differentiate with music/speech) and T019 (tuning toggle test: Log vs Bessel swap verified live). Then pivot to next patcher.
+`.specify/f_stereo/spec.md` is written. Start with `plan.md` — the key task is expanding the rotation matrix R = Rz(lon) * Rx(lat) * Rz(spin) into explicit scalar expressions for rx, ry, rz, then verify in a scratch patch before building the wrapper.
 
 ## Loose threads
 
-- **loadbang init**: coefficients don't load automatically on patch open — loadbang → select → log message boxes path not firing reliably; workaround is clicking umenu. Needs investigation.
-- **T020+**: EEG companion patch still pending; Muse calibration pass needed first
-- **f_droste**: needs autopattr added (`.specify/f_droste/tasks.md`, 3 tasks)
-- **Scope review**: optics family vs circular screen prioritization still pending
-- **Help patches**: none exist for any bpatcher; f_texrouter first
+- **f_mobius T010**: autopattr state save/restore not verified
+- **f_mobius T011**: moduleSize.js chain not verified
+- **f_mobius T013**: cx/cy via xy encoder not tested
+- **f_mobius T016**: composition with f_droste not tested
+- **f_mobius docs**: `docs/f_mobius.md` not written yet
+- **f_chladni T018/T019**: mic test and tuning toggle test still pending
+- **f_chladni loadbang**: coefficients don't load automatically on patch open — workaround is clicking umenu
