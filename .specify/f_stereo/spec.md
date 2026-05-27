@@ -4,38 +4,41 @@ _Last updated: 2026-05-26_
 
 ## What it does
 
-A display-layer bpatcher that maps any flat texture onto a sphere via
-stereographic projection, then rotates the sphere using three performer
-controls. Replaces the current fisheye + XY displacement workflow with a
-mathematically correct equivalent: the same gestural vocabulary (pan,
-tilt, spin), but operating honestly in spherical coordinates rather than
-approximating them on a flat tiled surface.
+A display-layer bpatcher that maps any flat texture onto a sphere and
+rotates the sphere using three performer controls — lon, lat, spin.
+The texture tiles seamlessly across the sphere surface. The output is
+a circular stereographic projection of the sphere with a hard black mask
+at the unit disk boundary.
 
 **Chain position:** Display layer — last in chain, before the circular
-screen. Takes any flat texture in. Outputs a stereographically-projected
-circular image with a hard black mask at the unit disk boundary.
+screen. Takes any flat texture in. Outputs a circular image.
 
-**The projection:** Stereographic projection maps the entire sphere
-conformally onto the plane — preserving angles and local shapes. The
-north pole maps to the center of the circular screen. The equator maps
-to a ring at mid-radius. The south pole maps to infinity (outside the
-visible disk). Every pixel on the circular screen corresponds to exactly
-one point on the sphere — no seams, no corner artifacts.
+**The display projection:** Stereographic projection maps the sphere
+conformally onto the circular screen. Every pixel in the disk corresponds
+to exactly one point on the sphere. The center of the disk is the north
+pole of the rotated sphere.
 
-**Sphere rotation:** Rotating the sphere is equivalent to a Möbius
-transformation in the projected plane. f_stereo applies the rotation in
-3D (plane → sphere → rotate → plane) so the math is exact. lon/lat
-position the north pole; spin rolls around the viewing axis.
+**Texture sampling:** The sphere surface is sampled using equirectangular
+UV coordinates — `atan2` for longitude, `asin` for latitude. The source
+texture tiles seamlessly in both directions across the sphere. This gives
+a natural "globe" feel: the texture wraps the sphere uniformly with no
+compression artifacts at the poles.
+
+**Sphere rotation:** R = Rz(spin) × Ry(lon) × Rx(lat), applied in 3D
+as scalar arithmetic on the inverse-projected sphere point (sx, sy, sz).
+- `Ry(lon)` — globe spins on its vertical axis, content moves left/right
+- `Rx(lat)` — pole tilts toward/away from viewer
+- `Rz(spin)` — screen-space roll, always independent
 
 **Replaces:** fisheye filter + XY displacement + angle displacement in
-the current Vsynth workflow. The same three controls (x position, y
-position, angle) map to lon, lat, spin.
+the current Vsynth workflow.
 
 **Acceptance criteria:**
-- `lon=0.5, lat=0.5, spin=0` → stable centered projection, radially
-  symmetric texture appears symmetric (north pole at screen center)
-- Sweeping `lon` → content rotates continuously around the viewing axis
-- Sweeping `lat` → content tilts (north pole moves off-center)
+- `lon=0.5, lat=0.5, spin=0` → equatorial view, texture visible across
+  full disk, radially symmetric source appears symmetric
+- Sweeping `lon` → content rotates like a globe on a stand (left/right)
+- Sweeping `lat` → pole tilts toward/away from viewer
+- `spin` → rolls content around disk center, independent of lon/lat
 - LFO on `lon` produces smooth continuous rotation with no discontinuity
 - Hard black circular mask at unit disk boundary
 - Bypass shows raw unwarped texture (mask also bypassed)
@@ -47,66 +50,66 @@ position, angle) map to lon, lat, spin.
 
 | Param | Range | Default | Description |
 |-------|-------|---------|-------------|
-| `lon` | 0–1 | 0.5 | Longitude — azimuthal position of north pole (0.5 = centered). LFO target for continuous rotation. |
-| `lat` | 0–1 | 0.5 | Latitude — tilt of north pole from viewing axis (0.5 = facing viewer, 0 or 1 = tilted 90°). |
+| `lon` | 0–1 | 0.5 | Longitude — globe rotation around vertical axis. Full sweep = one revolution. LFO target for continuous rotation. |
+| `lat` | 0–1 | 0.5 | Latitude — tilt of pole toward/away from viewer. 0.5 = equatorial view. 0 = south pole facing. 1 = north pole facing. |
 | `spin` | 0–1 | 0.0 | Spin — roll around the viewing axis. Independent of lon/lat. |
 | `bypass` | 0/1 | 0 | Standard bypass — passes raw texture, removes mask. |
 
-**lon:** Primary animation target. Maps 0–1 to 0–2π azimuthal rotation.
-Full sweep = one complete revolution. Driving with a slow LFO (0.01–0.1
-Hz) produces the continuous sphere rotation effect.
+**lon:** Primary animation target. Maps 0–1 to −π→π (full revolution,
+centered at 0.5). Driving with a slow LFO (0.01–0.1 Hz) produces
+continuous globe rotation. At default lat=0.5, lon and spin affect
+different axes and are fully independent.
 
-**lat:** Tilts the sphere so the north pole moves off the viewing axis.
-At 0.5 the north pole is centered. Moving away from 0.5 in either
-direction tilts the sphere — content from the "side" of the sphere
-comes into view. Maps to ±90° from center (±π/2 tilt range). Beyond
-that range content from the back hemisphere fills in — handled
-naturally by the projection.
+**lat:** Maps 0–1 to −π/2→π/2. At 0.5 = equatorial view (default).
+At 0 = south pole faces viewer. At 1 = north pole faces viewer.
+Range is ±90° — does not traverse the full sphere, keeps content
+always visible.
 
-**spin:** Rolls the image around the center of the circular screen.
-Equivalent to the current angle displacement control. At lat=0.5 (no
-tilt), spin and lon are equivalent; the distinction matters when lat≠0.5.
+**spin:** Maps 0–1 to 0–2π. Rolls sampling around the viewing axis.
+Screen-space roll — independent of lon/lat orientation.
 
-**xy encoder convention:** lon → x-axis, lat → y-axis. Same as the
-current XY displacement encoder. Named float messages on in1: `lon 0.4`,
-`lat 0.6`. Standard Vsynth control inlet.
+**xy encoder convention:** lon → x-axis, lat → y-axis. Named float
+messages on in1: `lon 0.4`, `lat 0.6`.
 
 ---
 
 ## Codebox Structure
 
 ```
-// 1. UV → complex plane (centered, unit circle = equator)
+// 1. UV → centered complex plane
 zx = (norm.x - 0.5) * 2.0;
 zy = (norm.y - 0.5) * 2.0;
 
-// 2. Inverse stereographic projection: plane → sphere
-// Projects from south pole onto equatorial plane
+// 2. Inverse stereographic projection: plane → unit sphere
 r2 = zx*zx + zy*zy;
 denom = 1.0 + r2;
 sx = 2.0 * zx / denom;
 sy = 2.0 * zy / denom;
 sz = (1.0 - r2) / denom;
-// Result: (sx, sy, sz) is a point on the unit sphere
-// North pole (0,0,1) → center; equator → unit circle
 
-// 3. Sphere rotation: R = Rz(lon) * Rx(lat_tilt) * Rz(spin)
-spin_a  = spin * TWO_PI;
-lat_a   = (lat - 0.5) * TWO_PI;   // -π to π (full sphere coverage)
-lon_a   = lon * TWO_PI;
-// Apply rotation matrix inline (9 terms)
-// rx, ry, rz = R * (sx, sy, sz)
+// 3. Rotation angles
+TWO_PI = 3.14159265359 * 2.0;
+PI = 3.14159265359;
+lon_a  = (lon - 0.5) * TWO_PI;   // -π to π, centered at 0.5
+lat_a  = (lat - 0.5) * PI;       // -π/2 to π/2, centered at 0.5
+spin_a = spin * TWO_PI;           // 0 to 2π
 
-// 4. Forward stereographic projection: sphere → plane
-// Guard against south pole singularity (rz → -1)
-denom2 = max(1.0 + rz, 0.0001);
-ux = (rx / denom2) * 0.5 + 0.5;
-uy = (ry / denom2) * 0.5 + 0.5;
+// Precompute trig (s=spin, b=lon, a=lat)
+ca = cos(lat_a);  sa = sin(lat_a);
+cb = cos(lon_a);  sb = sin(lon_a);
+cs = cos(spin_a); ss = sin(spin_a);
 
-// 5. Sample
+// 4. Apply R = Rz(spin) × Ry(lon) × Rx(lat)
+rx = cs*cb*sx + (cs*sb*sa - ss*ca)*sy + (cs*sb*ca + ss*sa)*sz;
+ry = ss*cb*sx + (ss*sb*sa + cs*ca)*sy + (ss*sb*ca - cs*sa)*sz;
+rz =   -sb*sx +              cb*sa*sy +              cb*ca*sz;
+
+// 5. Equirectangular sampling
+ux = atan2(ry, rx) / TWO_PI + 0.5;
+uy = asin(rz) / PI + 0.5;
 effect_out = sample(in1, vec(ux, uy, 0));
 
-// 6. Circular mask — hard black outside unit disk
+// 6. Circular mask
 dist = length(vec(norm.x - 0.5, norm.y - 0.5));
 masked = mix(effect_out, vec(0, 0, 0, 1), step(0.5, dist));
 
@@ -114,19 +117,17 @@ masked = mix(effect_out, vec(0, 0, 0, 1), step(0.5, dist));
 out1 = mix(masked, sample(in1, norm), bypass);
 ```
 
-**Rotation matrix composition:** R = Rz(lon) * Rx(lat) * Rz(spin).
-Applied inline — no matrix objects, just scalar arithmetic on sx/sy/sz.
-Nine multiply-add operations. Fully works out to explicit rx, ry, rz
-expressions; compute at plan/codebox stage.
+**Rotation matrix R = Rz(spin) × Ry(lon) × Rx(lat) expanded:**
+```
+rx = cs*cb*sx  +  (cs*sb*sa - ss*ca)*sy  +  (cs*sb*ca + ss*sa)*sz
+ry = ss*cb*sx  +  (ss*sb*sa + cs*ca)*sy  +  (ss*sb*ca - cs*sa)*sz
+rz =   -sb*sx  +               cb*sa*sy  +               cb*ca*sz
+```
+Verified: lon=0.5, lat=0.5, spin=0 → all angles 0 → identity (rx=sx, ry=sy, rz=sz).
 
-**South pole singularity:** When rz → -1, denom2 → 0. The `max(...,
-0.0001)` guard keeps it finite — the south pole region gets a large UV
-value that lands outside the unit disk and is masked to black anyway.
-
-**No edge wrap needed:** UV values outside [0,1] after projection
-correspond to content from the back hemisphere. This is expected —
-the texture tiles and the projection handles it naturally. No fract()
-needed.
+**No south pole singularity guard needed:** forward stereographic
+projection is gone. Equirectangular sampling is well-behaved everywhere
+on the sphere.
 
 ---
 
@@ -143,29 +144,22 @@ needed.
 - f_sharmonics (planned) — spherical harmonics rendered in
   stereographic projection; f_stereo provides the display layer
 
-**Enables:**
-- Honest sphere rotation — the displacement trick becomes exact
-- Seam-free content on the circular screen — no corner artifacts
-- f_sharmonics — once f_stereo exists, a spherical harmonics
-  visualizer can render directly in stereographic coordinates
+**Note on f_poincare:** At lat=0 or lat=1 (pole facing viewer) with the
+original all-stereographic architecture, f_stereo produced Poincaré-disk
+geometry as an emergent property. With equirectangular sampling this no
+longer occurs. f_poincare remains a separate planned module.
 
 **Does not depend on:**
-- f_mobius — f_stereo implements its own Möbius math internally
-  (the sphere rotation step is itself a Möbius transform)
+- f_mobius — f_stereo implements its own rotation math internally
 
 ---
 
 ## Open Questions
 
-- **lat range:** Full ±180° (2π) — complete sphere coverage. lat=0.5
-  is north pole facing viewer; lat=0 or lat=1 is south pole facing
-  viewer (fully inverted). Resolved: use `(lat - 0.5) * TWO_PI`.
-- **Texture sampling at back hemisphere:** UV values from the back
-  hemisphere may sample unexpected regions of a non-tiling texture.
-  Test with f_chladni and f_grain to see if this is an issue in
-  practice.
 - **Aspect ratio:** Assumes square output. If the Vsynth context is not
   square, the circular mask and projection will be elliptical. Verify
   with actual Vsynth context dimensions.
 - **Prefix:** `stereo` → `stereo_pix`. Confirm no collision with
   existing Vsynth objects.
+- **lon sweep direction:** Verify that increasing lon moves content in
+  the expected direction (left or right). May need sign flip on lon_a.

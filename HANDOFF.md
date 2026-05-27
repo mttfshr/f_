@@ -1,28 +1,43 @@
 # f_ — Handoff
 
-_Session: 2026-05-26_
+_Session: 2026-05-27_
 
 ## What was done this session
 
-**f_mobius complete (all phases):**
-- Planned `.specify/f_mobius/plan.md` and `tasks.md` from existing spec
-- Codebox written and verified: passthrough, inversion, rotation, singularity guard all pass
-- Production bpatcher `patchers/f_mobius.maxpat` built via one-shot generator script (deleted after use)
-- Zoom exponent tuned to `pow(10, (zoom-0.5) * 5.0)` empirically
-- Behavior clarified through exploration:
-  - `invert` is a wet/dry between passthrough UV and `1/z` inversion — the distinctive control
-  - `rotate` and `zoom` affect the passthrough (identity) path; at `invert=1` they have no effect
-  - The `mix()` blend between paths is not group-pure Möbius at intermediate values, but produces coherent and interesting UV warps
-  - Output is visually strong — lobe structures, circle-preserving distortions, striking with waveform generator source
-- Architectural insight: f_mobius is not a mathematical foundation for f_stereo/f_poincare — those modules will implement their own Möbius math internally, parameterized correctly for their purpose (sphere rotations for f_stereo, disk automorphisms for f_poincare)
-- README updated: f_mobius → ✅ Working; build queue updated; f_stereo is next
+**f_stereo complete (all phases):**
+- T009–T020 verified in Max (confirmed by Matt at session start)
+- docs/f_stereo.md written — params, signal chain, rotation model, known behaviors
+- README updated: f_stereo added to patches table as ✅ Working; build queue updated
+- Key verified behaviors:
+  - lon sweep: smooth continuous rotation, no 0/1 discontinuity
+  - lat sweep: pole tilts correctly toward/away from viewer
+  - spin: fully independent roll
+  - proj: 0 = orthographic, 1 = stereographic; outside 0–1 expressive but uncontrolled
+  - Circular mask: works correctly in Vsynth context (square output assumed)
+  - xy encoder routing on in1: working
+  - Composition with f_grain, f_chladni, f_mobius: no context errors
+
+**Display chain discoveries (documented in docs/f_stereo.md):**
+- Full display chain: `source → [vs_flipy → vs_poltocar →] f_stereo → vs_fisheye → output`
+- Fisheye post-processing significantly improves spherical illusion — narrows FOV so both poles aren't visible simultaneously
+- Prep chain for radially symmetric sources: `source → vs_flipy → vs_poltocar → f_stereo` — aligns source center with viewing pole. Verified with f_chladni.
+
+**`circ` toggle added post-completion:**
+- `live.text` mode selector showing "circle" / "full" — matches Vsynth UI convention (Displacement module pattern)
+- circle = mask on (circular output), full = unmasked rectangle (back hemisphere visible in corners)
+- Distinct from bypass which removes the projection entirely
+- Key lesson: jsui objects with `param_connect` must appear before the gen object in the boxes array — if created after, Max crashes on open (mutex not initialized at setvalueof time)
 
 ## First thing next session
 
-`.specify/f_stereo/spec.md` is written. Start with `plan.md` — the key task is expanding the rotation matrix R = Rz(lon) * Rx(lat) * Rz(spin) into explicit scalar expressions for rx, ry, rz, then verify in a scratch patch before building the wrapper.
+Two options:
+1. Return to **f_chladni** — T018/T019 (mic test, tuning toggle) still pending
+2. Begin **f_poincare** spec — now next in build queue after f_stereo
 
 ## Loose threads
 
+- **f_stereo**: Ghost image artifact — faint blob behind sphere when sweeping lat/lon. Likely alpha bleed at mask edge or singularity contribution. Not yet diagnosed.
+- **f_stereo**: proj outside 0–1 range — expressive but uncontrolled; may scale back in future revision
 - **f_mobius T010**: autopattr state save/restore not verified
 - **f_mobius T011**: moduleSize.js chain not verified
 - **f_mobius T013**: cx/cy via xy encoder not tested
