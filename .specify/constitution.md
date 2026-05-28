@@ -37,7 +37,6 @@ Every bpatcher in `patchers/` follows the vsynth-bpatcher skill conventions:
 - Vsynth owns render tempo and cornerpins
 - `routepass` pattern for parameter routing
 - `moduleSize` chain for UI sizing
-- No `autopattr` (explicit routing only)
 - Single Vsynth inlet; parameters via message
 - GLSL in codebox, not inline
 

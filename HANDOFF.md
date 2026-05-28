@@ -43,5 +43,4 @@ Two options:
 - **f_mobius T013**: cx/cy via xy encoder not tested
 - **f_mobius T016**: composition with f_droste not tested
 - **f_mobius docs**: `docs/f_mobius.md` not written yet
-- **f_chladni T018/T019**: mic test and tuning toggle test still pending
-- **f_chladni loadbang**: coefficients don't load automatically on patch open — workaround is clicking umenu
+- **f_chladni T018/T019**: mic test and tuning toggle deferred — role reframed as texture ingredient rather than display layer. Next step is patching it upstream of f_droste or f_grain and observing what it contributes, not formal verification tasks.

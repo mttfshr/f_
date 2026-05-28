@@ -1,8 +1,18 @@
 # f_chladni — Bpatcher Spec
 
-_Last updated: 2026-05-25_
-_Status: Working — signal chain pending_
+_Last updated: 2026-05-27_
+_Status: Working — role being discovered through use_
 _Previously named: f_cymascope_
+
+## Role
+
+f_chladni is an **ingredient**, not a display layer. Chladni glyphs are visually well-known enough that presenting them as a final image isn't the goal. The patch is more useful as a texture that modulates other activity — driving displacement in f_droste, density in f_grain, or other downstream parameters.
+
+The sparseness of the nodal field (only some modes active at a time) is a feature in this role: sparse fields leave room for whatever they're modulating to breathe. Audio-responsiveness becomes interesting rather than limiting — slow modulation of which modes are active produces an evolving texture driven by something real.
+
+**Natural downstream targets:** f_droste (displacement), f_grain (density/threshold), f_mobius (UV distortion).
+
+The circular mask question is deferred — as a texture ingredient, output boundary shape matters less than texture quality.
 
 ## Concept
 
