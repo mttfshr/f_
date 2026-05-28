@@ -4,21 +4,11 @@ A collection of visual processing utility bpatchers for [Vsynth](https://www.kev
 
 ## Installation
 
-Clone this repository and place the `f_` folder in your Max search path. There are two options for doing this:
-
-**Option A — symlink (recommended for development):**
-```bash
-ln -s ~/Github/f_ ~/Documents/Max\ 9/Packages/f_
-```
-
-**Option B — copy:**
-Copy the `f_` folder into `~/Documents/Max 9/Packages/`.
-
-Restart Max after either method. Patches will be available on Max's search path.
+Clone this repository and place the `f_` folder in your Max search path. 
 
 ## Requirements
 
-- Max 9
+- Max 9. Might work on earlier versions but I haven't tested it.
 - Vsynth package installed. You can find it in [Max's Package Manager.](https://docs.cycling74.com/userguide/package_manager/)
 
 ## Patches
@@ -38,14 +28,15 @@ Restart Max after either method. Patches will be available on Max's search path.
 
 ## Build Queue
 
-1. f_chladni signal chain — active (`.specify/f_chladni/`)
-2. f_poincare — Poincaré disk hyperbolic tiling
-3. f_sharmonics — spherical harmonics visualizer
-4. f_cymascope — FDTD wave propagation; feasibility check first
+1. f_lens — filmic lens processor; specced (`.specify/f_lens/`)
+2. f_chladni signal chain — active (`.specify/f_chladni/`)
+3. f_poincare — Poincaré disk hyperbolic tiling
+4. f_sharmonics — spherical harmonics visualizer
+5. f_cymascope — FDTD wave propagation; feasibility check first
 
 ## Help files
 
-Each patch has a corresponding `.maxhelp` file in the `help/` folder. Right-click any patch in Max and choose **Open Help** to open it.
+To be written.
 
 ## Notes
 
