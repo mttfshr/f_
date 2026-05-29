@@ -43,31 +43,32 @@ The critical early question — whether jit.gl.pix supports three texture inlets
 
 ### ADR-1: Internal pix architecture
 
-**Context:** f_lens has three texture inlets at the bpatcher level, but the internal arrangement of jit.gl.pix objects is a separate question. A single pix with three texture inlets is one option; a pipeline of smaller pix objects composited inside the bpatcher is another. Vsynth owns the render context — multiple pix objects inside one bpatcher all draw to the same `vsynth` context and are composited in order.
+**Context:** f_lens has three texture inlets at the bpatcher level. The internal arrangement of objects is a separate question. Phase 0 tested jit.gl.pass (requires jit.world, not vsynth-compatible — no output) and jit.fx.cf.tiltshift (works in vsynth context — confirmed).
 
-**Decision:** Defer to Phase 0. Build two minimal scratch arrangements and compare:
-- **Option A:** Single pix, three inlets — one codebox handles all effects
-- **Option B:** Pipeline of pix objects — e.g. pix_main (in1 → aberration/distortion/transmission/tilt), pix_surface (+ in2 → dust/coating), pix_field (+ in3 → spatial variation)
+**Decision:** Mixed pipeline:
+- `jit.gl.pix vsynth @name lens_pix` — three texture inlets; codebox handles aberration, distortion, transmission, in2 surface modulation, in3 field modulation
+- `jit.fx.cf.tiltshift` — downstream of lens_pix; handles all tilt-shift (blur_amount, angle, center, mode, slope)
 
-Choose based on which is easier to reason about, debug, and extend. Option B is likely cleaner — each pix has a single concern and its own small codebox.
+Tilt params are routed from the `route` object directly to jit.fx.cf.tiltshift, not into lens_pix.
 
 **Consequences:**
-- Option A: Simpler patcher wiring; one codebox may become large and hard to debug
-- Option B: More pix objects; each codebox is smaller and independently testable; closer to the "one concern per object" principle
+- lens_pix codebox stays focused on UV-space effects; tilt-shift is a separate concern handled by a purpose-built object
+- Better quality tilt-shift than unrolled multi-sample codebox approximation
+- Two render objects inside the bpatcher, but no context conflict — both draw to vsynth
+- Build script needs to wire lens_pix out0 → jit.fx.cf.tiltshift in0, and route tilt params separately
 
 ---
 
-### ADR-2: Tilt blur via fixed multi-sample
+### ADR-2: Tilt blur implementation
 
-**Context:** True per-pixel tilt-shift blur requires convolution — many samples per output pixel. A ping-pong pass would enable separable blur but adds architectural complexity.
+**Context:** True per-pixel tilt-shift blur requires convolution. Phase 0 found `jit.fx.cf.tiltshift` works in the vsynth context with purpose-built params: blur_amount, angle, center, mode (radial/linear), slope, bypass.
 
-**Decision:** Approximate with 4–8 fixed samples per pixel along the blur direction, weighted by distance from the focal band. Physically inaccurate but reads convincingly as tilt-shift. Single render pass, no ping-pong.
-
-**Sample strategy:** Sample in1 at N evenly spaced offsets perpendicular to the tilt axis, scaled by `blur_amt`. Average the results. Exact N and step size determined experimentally during Phase 2.
+**Decision:** Use `jit.fx.cf.tiltshift` — supersedes the fixed multi-sample codebox fallback. No unrolled samples needed. Tilt-shift is handled entirely outside lens_pix by this dedicated object. Params tilt/tilt_axis/tilt_pos/mode/slope are wired directly to jit.fx.cf.tiltshift from the route object.
 
 **Consequences:**
-- Positive: Stays within single jit.gl.pix, no additional objects or passes
-- Negative: Not physically accurate; banding may be visible at extreme blur_amt values. Revisit if quality becomes important.
+- Better quality than multi-sample approximation
+- Two new params (mode, slope) exposed to the user — genuinely useful artistic controls
+- UI grows from 8 to 10 params; 3×4 grid layout (two empties at end of row 3)
 
 ---
 

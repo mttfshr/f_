@@ -12,3 +12,7 @@ vs_texrouter_SPEC.md
 # editor / OS noise
 *.swp
 *.swo
+
+# thinking stuff not for public repo
+.specify
+ideas/
