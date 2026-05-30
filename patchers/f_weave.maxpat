@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 34.0, 100.0, 1039.0, 800.0 ],
+        "rect": [ 128.0, 134.0, 1039.0, 800.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
@@ -51,7 +51,7 @@
                     "patching_rect": [ 20.0, 20.0, 80.0, 21.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 8.0, 5.0, 80.0, 21.0 ],
-                    "text": "f_weave"
+                    "text": "Masonry"
                 }
             },
             {
@@ -92,11 +92,11 @@
                 "box": {
                     "id": "obj-5b",
                     "maxclass": "newobj",
-                    "numinlets": 18,
-                    "numoutlets": 18,
-                    "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" ],
+                    "numinlets": 20,
+                    "numoutlets": 20,
+                    "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" ],
                     "patching_rect": [ 50.0, 130.0, 1022.4, 22.0 ],
-                    "text": "route courses bond offset angle skip quantize regularity drift phase speed_var mortar softness width roundness bypass course_color brick_color"
+                    "text": "route courses bond offset angle skip quantize regularity drift phase speed_var mortar softness width roundness bypass course_color brick_color course_seed brick_seed"
                 }
             },
             {
@@ -111,20 +111,22 @@
                         "angle": [ 0.0 ],
                         "bond": [ 8.0 ],
                         "brick_color": [ 0.0 ],
+                        "brick_seed": [ 0.0 ],
                         "bypass": [ 0 ],
                         "course_color": [ 0.0 ],
+                        "course_seed": [ 0.0 ],
                         "courses": [ 8.0 ],
                         "drift": [ 0.0 ],
-                        "mortar": [ 0.5 ],
+                        "mortar": [ 0.2 ],
                         "offset": [ 0.0 ],
                         "phase": [ 0.0 ],
                         "quantize": [ 0.0 ],
                         "regularity": [ 1.0 ],
                         "roundness": [ 0.0 ],
                         "skip": [ 1.0 ],
-                        "softness": [ 0.2 ],
+                        "softness": [ 0.0 ],
                         "speed_var": [ 0.0 ],
-                        "width": [ 0.5 ]
+                        "width": [ 0.9 ]
                     },
                     "text": "autopattr @varname weave_autopattr",
                     "varname": "u945001373"
@@ -147,7 +149,7 @@
                             "modernui": 1
                         },
                         "classnamespace": "jit.gen",
-                        "rect": [ 117.0, 95.0, 650.0, 950.0 ],
+                        "rect": [ 26.0, 337.0, 650.0, 950.0 ],
                         "boxes": [
                             {
                                 "box": {
@@ -173,7 +175,7 @@
                             },
                             {
                                 "box": {
-                                    "code": "// f_weave codebox — Phase 4 final\n// 2026-05-29\n// Changes from Phase 3:\n//   - Added: width (mark aspect ratio, independent of weight)\n//   - Added: roundness (rect/round blend, normalized by 1/sqrt(2))\n//   - Added: quantize (crossfade swing between slot-quantized and continuous hash)\n//   - Added: band_diverge (per-band background color, full RGB hash)\n//   - Added: mark_diverge (per-mark color, full RGB hash, tints mark from white)\n//   - Added: aspect correction via dim.x/dim.y (requires r dim → pix @dim in patcher)\n//   - mark_slot: mark identity from mark center, not pixel slot — color stays with mark\n//   - Removed: size_var, thickness_var\n//\n// Known behaviors (not bugs):\n//   - quantize>0 with swing>0: pixel noise in continuous swing hash\n//   - quantize=0 with swing>0: seam/cut artifact at slot boundaries in motion\n//   - params beyond 0-1 produce undefined behavior\n//   - band_diverge/mark_diverge above 1.0 over-saturates (expressive)\n//\n// Build script notes:\n//   - r dim → pix object needed so dim.x/dim.y is populated for aspect correction\n//   - 17 float params, all live.dial, no integer params\n//   - control inlet only (no texture inlet), use route not routepass\n\nParam angle(0.0);\nParam density(0.5);\nParam freq(0.5);\nParam offset(0.0);\nParam weight(0.5);\nParam softness(0.2);\nParam regularity(1.0);\nParam swing(0.0);\nParam phase(0.0);\nParam speed_var(0.0);\nParam continuity(1.0);\nParam bypass(0.0);\nParam width(0.5);\nParam roundness(0.0);\nParam quantize(0.0);\nParam band_diverge(0.0);\nParam mark_diverge(0.0);\n\ntheta  = angle * PI;\ncosT   = cos(theta);\nsinT   = sin(theta);\n\naspect = dim.x / dim.y;\npx     = norm.x * aspect;\npy     = norm.y;\nalong  =  px * cosT + py * sinT;\nacross = -px * sinT + py * cosT;\n\ndensity_scale = pow(2.0, mix(1.0, 6.0, density));\nfreq_scale    = pow(2.0, mix(1.0, 6.0, freq));\nband_idx      = floor(across * density_scale);\n\n// per-band speed hash\nh3         = band_idx * 419.2;\nh3         = sin(h3) * 43758.5;\nband_hash  = h3 - floor(h3);\nband_speed = 1.0 + (band_hash - 0.5) * speed_var * 2.0;\nband_phase = phase * band_speed;\n\nslot       = floor(along * freq_scale + band_idx * offset);\nalong_cont = along * freq_scale + band_idx * offset;\n\n// presence hash — always slot-quantized (continuous hash produces pixel noise)\nh1        = slot * 127.1 + band_idx * 311.7;\nh1        = sin(h1) * 43758.5;\nslot_hash = h1 - floor(h1);\n\n// swing hash — slot-quantized\nh2      = slot * 269.5 + band_idx * 183.3;\nh2      = sin(h2) * 43758.5;\nswing_q = (h2 - floor(h2) - 0.5) * swing;\n\n// swing hash — continuous (quantize=1: fluid drift, quantize=0: slot seams)\nh2c     = along_cont * 269.5 + band_idx * 183.3;\nh2c     = sin(h2c) * 43758.5;\nswing_c = (h2c - floor(h2c) - 0.5) * swing;\n\nswing_offset = mix(swing_q, swing_c, quantize);\n\nalong_phase = wrap(along_cont + swing_offset + band_phase, 0.0, 1.0);\n\n// regular mark distance\nmark_dist_reg = abs(along_phase - 0.5) * 2.0;\n\n// random mark distance\nmark_dist_rnd = mix(along_phase, 1.0 - along_phase, step(0.5, slot_hash));\nmark_dist_rnd = mark_dist_rnd * 2.0;\n\n// blend\nmark_dist = mix(mark_dist_rnd, mark_dist_reg, regularity);\n\n// continuity — per-band hash gate\nh4        = band_idx * 591.3;\nh4        = sin(h4) * 43758.5;\nband_cont = h4 - floor(h4);\ncont      = step(1.0 - continuity, band_cont);\n\n// across-band distance, scaled by width for aspect ratio control\nacross_phase = wrap(across * density_scale, 0.0, 1.0);\nacross_dist  = abs(across_phase - 0.5) * 2.0;\nacross_d     = across_dist / max(width, 0.01);\n\n// along distance\nalong_d = mark_dist;\n\n// rect/round blend — normalized so mark size is consistent across roundness sweep\nrect_dist  = max(along_d, across_d);\nround_dist = sqrt(along_d * along_d + across_d * across_d) * 0.7071;\nfinal_dist = mix(rect_dist, round_dist, roundness);\n\n// mark identity — from mark center, not pixel slot, so color tracks the mark\nmark_center = along_cont + swing_offset + band_phase - along_phase + 0.5;\nmark_slot   = floor(mark_center);\n\n// per-band color — full RGB hash [0,1]\nband_col_r = (sin(band_idx * 127.1) * 43758.5453 - floor(sin(band_idx * 127.1) * 43758.5453));\nband_col_g = (sin(band_idx * 91.3)  * 43758.5453 - floor(sin(band_idx * 91.3)  * 43758.5453));\nband_col_b = (sin(band_idx * 43.1)  * 43758.5453 - floor(sin(band_idx * 43.1)  * 43758.5453));\n\n// per-mark color — full RGB hash [0,1], seeded from mark_slot + band_idx\nmark_col_r = (sin(mark_slot * 127.1 + band_idx * 311.7) * 43758.5453 - floor(sin(mark_slot * 127.1 + band_idx * 311.7) * 43758.5453));\nmark_col_g = (sin(mark_slot * 57.2  + band_idx * 91.3)  * 43758.5453 - floor(sin(mark_slot * 57.2  + band_idx * 91.3)  * 43758.5453));\nmark_col_b = (sin(mark_slot * 123.7 + band_idx * 43.1)  * 43758.5453 - floor(sin(mark_slot * 123.7 + band_idx * 43.1)  * 43758.5453));\n\nmark_size = 1.0 - weight;\nmark_out  = smoothstep(mark_size + softness, mark_size - softness, final_dist) * cont;\n\n// marks: tint from white toward random color via mark_diverge\nmark_r = mark_out * mix(1.0, mark_col_r, mark_diverge);\nmark_g = mark_out * mix(1.0, mark_col_g, mark_diverge);\nmark_b = mark_out * mix(1.0, mark_col_b, mark_diverge);\n\n// band backgrounds: black toward random band color via band_diverge\nbg_r = mix(0.0, band_col_r, band_diverge);\nbg_g = mix(0.0, band_col_g, band_diverge);\nbg_b = mix(0.0, band_col_b, band_diverge);\n\n// composite: background in gaps, marks on top\nout_r = mix(bg_r, mark_r, mark_out);\nout_g = mix(bg_g, mark_g, mark_out);\nout_b = mix(bg_b, mark_b, mark_out);\n\nout1 = mix(vec(out_r, out_g, out_b, 1.0), vec(0.0, 0.0, 0.0, 0.0), bypass);\n\n// --- jit.gen operator notes ---\n// noise()/snoise()/cycle() not available — use arithmetic hash: sin(x*prime)*43758.5\n// frac() not available — use x - floor(x) or wrap(x, 0.0, 1.0)\n// vec2/float2 not available — expand manually: sqrt(a*a + b*b)\n// select() not available — use mix(a, b, step(threshold, val))\n// smooth is a GLSL reserved word — avoid as param name\n// vec(r,g,b,a) is the correct 4-component constructor\n// dim.x/dim.y available only when patcher wires r dim → pix @dim\n",
+                                    "code": "Param angle(0.0);\nParam courses(8.0);\nParam bond(8.0);\nParam offset(0.0);\nParam mortar(0.2);\nParam softness(0.0);\nParam regularity(1.0);\nParam drift(0.0);\nParam phase(0.0);\nParam speed_var(0.0);\nParam skip(1.0);\nParam bypass(0.0);\nParam width(0.9);\nParam roundness(0.0);\nParam quantize(0.0);\nParam course_color(0.0);\nParam brick_color(0.0);\nParam course_seed(0.0);\nParam brick_seed(0.0);\n\ntheta  = angle * (PI / 180.0);\ncosT   = cos(theta);\nsinT   = sin(theta);\n\naspect = dim.x / dim.y;\npx     = norm.x * aspect;\npy     = norm.y;\nalong  =  px * cosT + py * sinT;\nacross = -px * sinT + py * cosT;\n\ncourse_scale = max(courses, 0.001);\nbond_scale   = max(bond, 0.001);\nband_idx     = floor(across * course_scale);\n\ncs = floor(course_seed);\nbs = floor(brick_seed);\n\n// per-course speed hash\nh3         = (band_idx + cs) * 419.2;\nh3         = sin(h3) * 43758.5;\nband_hash  = h3 - floor(h3);\nband_speed = 1.0 + (band_hash - 0.5) * speed_var * 2.0;\nband_phase = phase * band_speed;\n\nslot       = floor(along * bond_scale + band_idx * offset);\nalong_cont = along * bond_scale + band_idx * offset;\n\n// presence hash — always slot-quantized\nh1        = (slot + bs) * 127.1 + (band_idx + cs) * 311.7;\nh1        = sin(h1) * 43758.5;\nslot_hash = h1 - floor(h1);\n\n// drift hash — slot-quantized\nh2      = (slot + bs) * 269.5 + band_idx * 183.3;\nh2      = sin(h2) * 43758.5;\ndrift_q = (h2 - floor(h2) - 0.5) * drift * 0.5;\n\n// drift hash — continuous\nh2c     = (along + bs) * 1.3;\nh2c     = sin(h2c) * 43758.5;\ndrift_c = (h2c - floor(h2c) - 0.5) * drift * 0.5;\n\ndrift_offset = mix(drift_q, drift_c, quantize);\n\nalong_phase = wrap(along_cont + drift_offset + band_phase, 0.0, 1.0);\n\n// regular mark distance\nmark_dist_reg = abs(wrap(along_phase, 0.0, 1.0) - 0.5) * 2.0;\n\n// random mark distance\nmark_dist_rnd = mix(along_phase, 1.0 - along_phase, step(0.5, slot_hash));\nmark_dist_rnd = mark_dist_rnd * 2.0;\n\n// blend\nmark_dist = mix(mark_dist_rnd, mark_dist_reg, regularity);\n\n// skip — per-course hash gate\nh4        = (band_idx + cs) * 591.3;\nh4        = sin(h4) * 43758.5;\nband_cont = h4 - floor(h4);\ncont      = step(1.0 - skip, band_cont);\n\n// across-band distance, scaled by width\nacross_phase = wrap(across * course_scale, 0.0, 1.0);\nacross_dist  = abs(across_phase - 0.5) * 2.0;\nacross_d     = across_dist / max(width, 0.01);\n\n// along distance\nalong_d = mark_dist;\n\n// rect/round blend — normalized for consistent mark size\nrect_dist  = max(along_d, across_d);\nround_dist = sqrt(along_d * along_d + across_d * across_d) * 0.7071;\nfinal_dist = mix(rect_dist, round_dist, roundness);\n\n// mark identity — color tracks the mark not the slot\nmark_center = along_cont + drift_offset + band_phase - along_phase + 0.5;\nmark_slot   = floor(mark_center);\n\n// per-course color — full RGB hash\nband_col_r = (sin((band_idx + cs) * 127.1) * 43758.5453 - floor(sin((band_idx + cs) * 127.1) * 43758.5453));\nband_col_g = (sin((band_idx + cs) * 91.3)  * 43758.5453 - floor(sin((band_idx + cs) * 91.3)  * 43758.5453));\nband_col_b = (sin((band_idx + cs) * 43.1)  * 43758.5453 - floor(sin((band_idx + cs) * 43.1)  * 43758.5453));\n\n// per-brick color — full RGB hash\nmark_col_r = (sin((mark_slot + bs) * 127.1 + (band_idx + cs) * 311.7) * 43758.5453 - floor(sin((mark_slot + bs) * 127.1 + (band_idx + cs) * 311.7) * 43758.5453));\nmark_col_g = (sin((mark_slot + bs) * 57.2  + (band_idx + cs) * 91.3)  * 43758.5453 - floor(sin((mark_slot + bs) * 57.2  + (band_idx + cs) * 91.3)  * 43758.5453));\nmark_col_b = (sin((mark_slot + bs) * 123.7 + (band_idx + cs) * 43.1)  * 43758.5453 - floor(sin((mark_slot + bs) * 123.7 + (band_idx + cs) * 43.1)  * 43758.5453));\n\nmark_size = 1.0 - mortar;\nmark_out  = smoothstep(mark_size + softness, mark_size - softness, final_dist) * cont;\n\n// marks: tint from white toward random brick color\nmark_r = mark_out * mix(1.0, mark_col_r, brick_color);\nmark_g = mark_out * mix(1.0, mark_col_g, brick_color);\nmark_b = mark_out * mix(1.0, mark_col_b, brick_color);\n\n// backgrounds: black toward random course color\nbg_r = mix(0.0, band_col_r, course_color);\nbg_g = mix(0.0, band_col_g, course_color);\nbg_b = mix(0.0, band_col_b, course_color);\n\n// composite\nout_r = mix(bg_r, mark_r, mark_out);\nout_g = mix(bg_g, mark_g, mark_out);\nout_b = mix(bg_b, mark_b, mark_out);\n\nout1 = mix(vec(out_r, out_g, out_b, 1.0), vec(0.0, 0.0, 0.0, 0.0), bypass);",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
@@ -676,7 +678,7 @@
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "drift",
-                            "parameter_mmax": 1.0,
+                            "parameter_mmax": 4.0,
                             "parameter_modmode": 3,
                             "parameter_shortname": "drift",
                             "parameter_type": 0,
@@ -880,7 +882,7 @@
                             "expression": ""
                         },
                         "valueof": {
-                            "parameter_initial": [ 0.2 ],
+                            "parameter_initial": [ 0.0 ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "softness",
@@ -1309,6 +1311,88 @@
             },
             {
                 "box": {
+                    "fontname": "Ableton Sans Light",
+                    "hint": "course_seed",
+                    "id": "obj-90",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "param_connect": "weave_pix::course_seed",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 752.8, 425.5, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 4.5, 249.0, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_initial": [ 0.0 ],
+                            "parameter_initial_enable": 1,
+                            "parameter_linknames": 1,
+                            "parameter_longname": "course_seed",
+                            "parameter_mmax": 999.0,
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "course_seed",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "varname": "course_seed"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-92",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "patching_rect": [ 650.0, 540.0, 180.0, 22.0 ],
+                    "text": "prepend param course_seed"
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "hint": "brick_seed",
+                    "id": "obj-91",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "param_connect": "weave_pix::brick_seed",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 700.0, 403.5, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 46.5, 249.0, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_initial": [ 0.0 ],
+                            "parameter_initial_enable": 1,
+                            "parameter_linknames": 1,
+                            "parameter_longname": "brick_seed",
+                            "parameter_mmax": 999.0,
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "brick_seed",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "varname": "brick_seed"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-93",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "patching_rect": [ 650.0, 540.0, 172.8, 22.0 ],
+                    "text": "prepend param brick_seed"
+                }
+            },
+            {
+                "box": {
                     "angle": 270.0,
                     "background": 1,
                     "bgcolor": [ 0, 0, 0, 1 ],
@@ -1321,7 +1405,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 215.0, 225.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 0.0, 0.0, 215.0000064074993, 253.66667422652245 ],
+                    "presentation_rect": [ 0.0, 0.0, 215.0, 271.0 ],
                     "proportion": 0.5
                 }
             }
@@ -1575,6 +1659,18 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-90", 0 ],
+                    "source": [ "obj-5b", 18 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-91", 0 ],
+                    "source": [ "obj-5b", 19 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-4", 0 ],
                     "source": [ "obj-7", 0 ]
                 }
@@ -1686,6 +1782,30 @@
                     "destination": [ "obj-7", 0 ],
                     "source": [ "obj-86", 0 ]
                 }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-92", 0 ],
+                    "source": [ "obj-90", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-93", 0 ],
+                    "source": [ "obj-91", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-7", 0 ],
+                    "source": [ "obj-92", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-7", 0 ],
+                    "source": [ "obj-93", 0 ]
+                }
             }
         ],
         "parameters": {
@@ -1706,6 +1826,8 @@
             "obj-35": [ "course_color", "course_color", 0 ],
             "obj-36": [ "brick_color", "brick_color", 0 ],
             "obj-8": [ "bypass", "bypass", 0 ],
+            "obj-90": [ "course_seed", "course_seed", 0 ],
+            "obj-91": [ "brick_seed", "brick_seed", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
