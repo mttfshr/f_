@@ -23,6 +23,7 @@ Clone this repository and place the `f_` folder in your Max search path.
 | `f_tone_curve` | Tone curve adjustment | ✅ Working |
 | `f_texrouter` | 4×4 texture routing matrix with preset system | ✅ Working |
 | `f_lens` | Filmic lens processor — aberration, distortion, transmission, tilt-shift, spatial modulation | ✅ Working |
+| `f_masonry` | Parametric masonry texture source — courses, bond, mortar, drift, color | ✅ Working |
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes) | 🔨 Signal chain in progress |
 | `f_mobius` | Möbius transformation UV-space processor | ✅ Working |
 | `f_stereo` | Stereographic projection display layer | ✅ Working |
@@ -30,6 +31,7 @@ Clone this repository and place the `f_` folder in your Max search path.
 ## Build Queue
 
 1. f_chladni signal chain — active (`.specify/f_chladni/`)
+2. f_stipple — 2D hash field stipple source/processor (`.specify/f_stipple/`)
 3. f_poincare — Poincaré disk hyperbolic tiling
 4. f_sharmonics — spherical harmonics visualizer
 5. f_cymascope — FDTD wave propagation; feasibility check first
