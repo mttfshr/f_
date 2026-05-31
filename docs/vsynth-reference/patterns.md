@@ -199,7 +199,51 @@ Kevin's comment in the patcher: *"Avoid [render] to keep triggering [bline] afte
 
 **f_ current approach:** Manual `aspect = dim.x / dim.y; px = norm.x * aspect;` in codebox. Functionally equivalent. Kevin's subpatcher is reusable across node-based gens; f_'s codebox approach is fine for codebox-based patches.
 
+## Pattern: Two Tier 3 Mechanisms — Draw Order vs. Texture Set
+
+**Source: `vs_feedback.maxpat`, `vs_filter_temp.maxpat`, `vs_frame_delay.maxpat`, `vs_chemical_osc.maxpat`**
+
+Vsynth uses two distinct Tier 3 mechanisms depending on how many frames of delay are needed:
+
+**Mechanism 1: Draw-order frame memory (most common)**
+Multiple `jit.gl.pix vsynth` instances in the same named context. Sequential draw order means pix_A's output from the prior cycle is readable by pix_B in the current cycle. Minimum delay: exactly 1 frame. Used by: `vs_feedback`, `vs_filter_temp`, likely `vs_differentiator`. `vs_chemical_osc` extends this to 8 pix instances for a full multi-pass pipeline within one GL context — slide, color, blur ×2, rotation, and additional processing, all chained by draw order.
+
+**Mechanism 2: jit.gl.textureset.js (explicit buffer)**
+A JavaScript object that manages a named set of GL textures explicitly. Enables arbitrary delay depth (not just 1 frame). Used by `vs_frame_delay` which needs user-configurable delay times. Higher overhead than draw-order method but more flexible.
+
+**Implication for f_cymascope (FDTD):** Draw-order mechanism is the right choice — FDTD needs exactly 1-frame delay (previous wave state → current computation). The chemical oscillator's 8-pix pipeline confirms that complex multi-pass algorithms are viable within a single named context.
+
 ---
 
-*Populated: 2026-05-31 (second analysis pass — vs_bline confirmed, vs_displacement, compositing modules)*
+## Pattern: WFG as Modulation Source (Full Architecture)
+
+**Source: `vs_wfg_3.maxpat` outer patcher**
+
+The WFG patcher's inlet/outlet contract, confirmed:
+
+**Inlets (3):**
+1. FM In / Control In — texture for frequency modulation + all control messages
+2. PM In — texture for phase modulation
+3. PWM In — texture for pulse width modulation
+
+**Outlets (2):**
+1. Texture Out — waveform [0,1] as RGBA float32
+2. Inverted Texture Out — `1 - waveform` [0,1] as RGBA float32
+
+**`@type float32`:** WFG output is full 32-bit float, not 8-bit char. This preserves precision for use as a modulation source — essential when the WFG output drives displacement amounts or phase offsets in downstream patches.
+
+**Smoothing:** Every controllable WFG parameter goes through `vs_bline` before reaching the gen param — freq, fm, pm, speed, bias all smoothed. This is why WFG parameter changes feel gradual in performance.
+
+**All three modulation inlets use `vs_inState`:** When FM, PM, or PWM inlets are unconnected, `vs_black` fallback keeps modulation at zero. WFG works as a pure spatial/temporal oscillator with no modulation when used standalone.
+
+**Gen swapping:** `gen vs_wfg3.genjit` vs `gen vs_wfg3_pow.genjit` — two implementations of the same parameter surface, selectable at the patcher level. Likely `_pow` variant applies power-law shaping to the waveform. Same inlet/outlet contract, different math.
+
+**f_ implications:**
+- When receiving WFG output, both normal and inverted are available — no need to invert in codebox
+- The WFG already does all modulation input handling (FM, PM, PWM) with full `vs_inState` per inlet — f_ patches that receive WFG output don't need to handle modulation, just sample the result
+- `@type float32` means WFG values arriving at f_ texture inlets are precise floats, not quantized — sample them directly for modulation without rescaling for quantization
+
+---
+
+*Populated: 2026-05-31 (analysis complete)*
 *Last updated: 2026-05-31*
