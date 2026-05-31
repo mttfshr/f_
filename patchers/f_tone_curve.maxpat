@@ -1097,6 +1097,26 @@
 					],
 					"text": "prepend tam"
 				}
+			},
+			{
+				"box": {
+					"id": "obj-rp100",
+					"maxclass": "newobj",
+					"text": "routepass jit_gl_texture jit_matrix",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"jit_gl_texture",
+						"jit_matrix",
+						""
+					],
+					"patching_rect": [
+						259.0,
+						165.0,
+						220.0,
+						22.0
+					]
+				}
 			}
 		],
 		"lines": [
@@ -1208,18 +1228,6 @@
 					],
 					"source": [
 						"obj-17",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"destination": [
-						"obj-30",
-						0
-					],
-					"source": [
-						"obj-2",
 						0
 					]
 				}
@@ -1534,6 +1542,42 @@
 					],
 					"destination": [
 						"obj-35",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-2",
+						0
+					],
+					"destination": [
+						"obj-rp100",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rp100",
+						0
+					],
+					"destination": [
+						"obj-1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rp100",
+						2
+					],
+					"destination": [
+						"obj-30",
 						0
 					]
 				}
