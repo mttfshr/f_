@@ -895,6 +895,28 @@
 					],
 					"text": "prepend tam"
 				}
+			},
+			{
+				"box": {
+					"id": "obj-22",
+					"maxclass": "newobj",
+					"text": "autopattr",
+					"numinlets": 1,
+					"numoutlets": 4,
+					"outlettype": [
+						"",
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						500.0,
+						500.0,
+						56.0,
+						22.0
+					],
+					"varname": "droste_autopattr"
+				}
 			}
 		],
 		"lines": [
