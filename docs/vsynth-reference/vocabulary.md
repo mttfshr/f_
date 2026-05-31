@@ -1,6 +1,6 @@
 # Vsynth Vocabulary
 
-**Status:** Skeleton — not yet populated. Reading pass planned; see HANDOFF.md.
+**Status:** Populated from first analysis pass, 2026-05-31.
 
 **Purpose:** Named abstractions, send/receive conventions, what specific objects and terms mean in Vsynth context. Reduces reconstruction cost each session. Answers "what does X actually do?"
 
@@ -11,77 +11,135 @@
 ### vs_inState
 *Source: `patchers/abstractions/vs_inState.maxpat`*
 
-Monitors whether a texture is connected to an inlet. Uses draw-callback timing rather than luma/alpha to detect connection state — avoids false negatives with black textures.
+Detects whether a real texture is connected to an inlet. Uses a `timer` against `r draw` (the global draw bang) to measure time since last texture arrived. If elapsed time < 180ms, a texture is connected; if ≥ 180ms, disconnected. Uses `r vs_noConnectionTimer` as threshold reference.
 
-- **Outlet 0:** real upstream texture when connected; `vs_black` fallback when not
-- **Outlet 1:** 0/1 int — fires on state change only (not every frame). 0 = unconnected, 1 = connected
+Mechanism: `route clear` separates `clear` messages from real textures. Real textures restart the timer; `clear` messages indicate no connection. A `change` object ensures state-change output fires only on transitions, not every frame.
 
-Used to implement dual-mode bpatchers (source when unconnected, processor when texture present).
+- **Inlet 0:** texture or control signal from upstream
+- **Outlet 0:** real upstream texture when connected; `jit_gl_texture vs_black` fallback when not (switched via `switch 2`)
+- **Outlet 1:** 0/1 int — fires **on state change only**, not every frame. 0 = disconnected (source mode), 1 = connected (processor mode)
 
-### vs_black
-*Source: unknown — likely a send or abstraction producing a black texture*
+The fallback is `vs_black`. An optional `vs_gray` fallback also exists in the patcher but is not in the default signal path.
 
-Black texture fallback used by `vs_inState` when no upstream texture is connected. Allows source-mode bpatchers to render without a real upstream signal.
+### vs_thru
+*Source: `patchers/abstractions/vs_thru.maxpat`*
 
-### vs_render
-*Source: `patchers/vs_render.maxpat`*
+Trivial passthrough — inlet directly wired to outlet with no logic. Used as a named wire for clarity in larger patches. Seen in `vs_render` routing texture flow.
 
-Owns the Vsynth GL render context and render tempo. Sets `qmetro` rate, creates the `vsynth` drawto context. f_ bpatchers draw to this context via `jit.gl.pix vsynth` — they never touch `vs_render` directly.
+### vs_canvas
+*Source: `patchers/abstractions/vs_canvas.maxpat`*
 
-### vs_modules
-*Source: `patchers/vs_modules.maxpat`*
+Enable-gate abstraction. Routes `enable` messages to control a `gate 1 1` (default open). Passes all non-enable messages straight through. Listens to `r canvas` global receive — the canvas state can be set globally to block/pass all canvas-routed signals. Used to enable/disable modules from a central control point.
 
-Module layout system. Manages bpatcher sizing and positioning in the Vsynth canvas. f_ bpatchers report their presentation size via the `moduleSize.js` chain so `vs_modules` can arrange them.
+### vs_canvasLFO
+*Source: `patchers/abstractions/vs_canvasLFO.maxpat`*
 
-### vs_sync_time
-*Source: `patchers/vs_sync_time.maxpat`*
+Identical to `vs_canvas` but listens to `r canvas_lfo`. Allows LFO modulation to be globally toggled independently of main canvas enable.
 
-Tempo/time sync utility. Exposes a `r time` global receiver carrying the current render time. Used by f_ patches that need time-based animation (e.g. `f_grain` speed control).
+### vs_range
+*Source: `patchers/abstractions/vs_range.maxpat`*
+
+Parameter range selector with 3 preset ranges. Takes integer 0/1/2, outputs `_parameter_range #min #max` with corresponding args (set via patcherargs). This is the mechanism behind dual/triple-range params in WFG modules (e.g. `freq [0-1000] [0-10000]`). The `vs_range` abstraction switches which range is active at runtime.
+
+### vs_b2b (black-to-bang)
+*Source: `patchers/abstractions/vs_b2b.maxpat`*
+
+Texture-to-bang converter. Runs `jit.3m` on incoming matrix, extracts mean luma (÷255), thresholds at 0.5, fires a one-shot bang on first frame where mean luma exceeds 0.5. Uses `onebang` to prevent repeated firing. Purpose: detect when a texture "goes bright" and fire a single event. Used for beat/event detection from visual sources.
+
+### vs_newTime
+*Source: `patchers/abstractions/vs_newTime.maxpat`*
+
+Time/sync abstraction with 3 inlets: shape (inlet 1), freq (inlet 2), speed (inlet 3). Reads `r vs_ntime` (normalized time) and `r trig_res` (trigger reset). Produces `time $1` message on outlet 1. Translates the global time signal into per-module time with independent speed control. Core of how WFG animation is driven. Handles sync locking and modulo wrapping.
+
+### vs_bline
+*Source: `patchers/abstractions/vs_bline.maxpat` — structure inferred from usage in vs_feedback*
+
+Used between amt control signal and `prepend amt` in `vs_feedback`. Almost certainly a smoothing/interpolation abstraction (bline = breakpoint line interpolator). Smooths parameter changes over time rather than stepping. To be confirmed by reading the file.
 
 ---
 
-## Send/Receive Namespace
+## Global Sends / Receives
 
-*To be populated from `patchers/vs_public_variables.txt`.*
+From `patchers/vs_public_variables.txt` and patcher reads.
 
 | Send/Receive | Type | Description |
 |---|---|---|
-| `r dim` | vec2 | Current render dimensions |
-| `r time` | float | Global render time / tempo signal |
-
-*Additional sends/receives to be documented after reading `vs_public_variables.txt`.*
+| `r draw` | bang | Global draw bang — fires every render frame. Used by `vs_inState` for timing. |
+| `r vs_ntime` | float | Normalized global time signal. Used by `vs_newTime` for animation. |
+| `r vs_noConnectionTimer` | float | Threshold value (~180ms) used by `vs_inState` for disconnect detection. |
+| `r trig_res` | float/bang | Trigger reset. Used by `vs_newTime` for sync reset. |
+| `r canvas` | int | Global canvas enable. Received by all `vs_canvas` abstractions. |
+| `r canvas_lfo` | int | Global LFO enable. Received by all `vs_canvasLFO` abstractions. |
+| `r time` | float | Time signal used directly by WFG gen params. |
+| `r dim` | vec2 | Current render dimensions. Used in source patchers for aspect correction. |
 
 ---
 
-## Parameter Conventions
+## External Control Message Conventions
 
-*To be populated from WFG and other module reads.*
+From `patchers/vs_public_variables.txt`. Document self-describes as outdated — check individual help files for current params.
 
-| Term | Meaning |
-|---|---|
-| `freq` | Spatial frequency — number of cycles across the frame |
-| `phase` | Phase offset — where in the waveform cycle the field starts |
-| `angle` | Orientation in degrees (-360 to 360) |
-| `FM` / `PM` | Frequency/phase modulation amount — how much an incoming signal modulates the waveform |
-| `bypass` | 0/1 toggle — passes input texture through unmodified when 1 |
+**Common to most modules:**
+- `enable [boolean]` — on/off
+
+**WFG family params (wfg_3 / bipolar_wfg):**
+- `freq [0-1000] [0-10000]` — dual range (narrow/wide)
+- `fm [-1-1] [-5-5]` — frequency modulation amount, dual range
+- `pm [-1-1] [-5-5]` — phase modulation amount, dual range
+- `bias [0-100]` — DC bias
+- `bm [-0.5-0.5]` — bias modulation
+- `pw [0-100]` — pulse width
+- `pwm [-0.5-0.5]` — pulse width modulation
+- `phase [0-1]` — initial phase offset
+- `speed [-10-10]` — animation speed
+- `angle [0-360]` — spatial orientation
+- `shape [0-1]` — waveform shape blend
+- `sync_lock [0-3]` — sync mode
+
+**Displacement:**
+- `x/y` — triple range: `[-0.1-0.1]`, `[-0.5-0.5]`, `[-3-3]`
+- `angle [0-360]`
+- `zoom [0-5]`
+- `bound mode [0-3]`
 
 ---
 
 ## Naming Conventions
 
-*To be populated from analysis pass.*
+| Prefix | Domain |
+|---|---|
+| `vs_` | Core Vsynth module |
+| `vs_wfg_` | Waveform generator family |
+| `vs_lfo_` | LFO variant |
+| `vs_bm_` | Blend mode gen implementation |
+| `vs_op` | Math operator, 1-input |
+| `vs_op2` | Math operator, 2-input |
+| `f_` | Matt's extension library |
+| `f_util_` | f_ infrastructure/analysis tools |
+| `vector_` | Vector subsystem (separate output domain) |
 
-- `vs_` prefix — core Vsynth module
-- `vs_wfg_` prefix — waveform generator family
-- `vs_lfo_` prefix — LFO variant of waveform generators
-- `vs_bm_` prefix — blend mode gen implementation
-- `vs_op` prefix — math operator (1-input)
-- `vs_op2` prefix — math operator (2-input)
-- `f_` prefix — Matt's extension library (this repo)
-- `f_util_` prefix — f_ infrastructure/analysis tools (no texture output)
-- `vector_` prefix — vector subsystem modules (separate output domain)
+**Kevin's parameter naming conventions:**
+- Single-word lowercase: `freq`, `phase`, `speed`, `angle`, `bias`, `shape`
+- Two-letter modulation suffix: `fm`, `pm`, `bm`, `pwm`, `hm`, `sm`, `lm`, `am`
+- `enable` = module on/off. Kevin does NOT use `bypass` — f_ does.
 
 ---
 
-*Populated: 2026-05-31 (skeleton + known items from session notes — no Vsynth files read yet)*
+## Key Architectural Terms
+
+| Term | Meaning |
+|---|---|
+| `vsynth` | Named GL drawto context — all modules draw here |
+| `vs_render` | Patch that owns render context, qmetro, fps |
+| `vs_modules` | Module layout/sizing system |
+| `vs_black` | Named black texture — system-wide zero-signal reference |
+| `vs_gray` | Named gray texture — alternative fallback |
+| `r draw` | Per-frame heartbeat of the entire render system |
+| `_parameter_range` | Max message to set live.dial range at runtime |
+| `vs_bline` | Parameter smoothing abstraction (likely) |
+| `vs_canvas` | Enable-gate with global toggle |
+
+---
+
+*Populated: 2026-05-31 (first analysis pass)*
 *Last updated: 2026-05-31*

@@ -159,10 +159,10 @@ Blend modes (`code/vs_bm_*.genjit`) and math operators (`code/vs_op*.genjit`) ar
 
 | Module | Tier | Notes |
 |--------|------|-------|
-| `vs_feedback` | 3 | Core feedback loop — priority read |
+| `vs_feedback` | 3 | Two jit.gl.pix instances in vsynth context; draw order creates frame memory. No CPU readback. `@type char` on feedback path (8-bit quantization intentional). |
 | `vs_envelope` | — | |
 | `vs_envelope_follower` | — | |
-| `vs_chemical_osc` | — | Reaction-diffusion; likely Tier 3 |
+| `vs_chemical_osc` | — | Reaction-diffusion; likely Tier 3, same two-pix pattern |
 
 ## Audio
 
@@ -201,5 +201,5 @@ Separate output domain — XY oscilloscope-style output, not raster texture. f_ 
 
 ---
 
-*Populated: 2026-05-31 (skeleton from directory inventory only — no files read yet)*
+*Populated: 2026-05-31 (skeleton from directory inventory; first analysis pass complete — vs_public_variables, abstractions, vs_wfg_sine, vs_wfg3, vs_feedback partial, vs_render partial)*
 *Last updated: 2026-05-31*
