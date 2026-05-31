@@ -1,60 +1,96 @@
-# HANDOFF — f_ session 2026-05-31 (ideation)
+# HANDOFF — f_ session 2026-05-31
 
 ## Status
-Pure ideation session — no patches built, no files changed except documentation. Thinking about the texture analysis utility family substantially developed and captured.
+Clean. All committed work passing. No broken state.
 
 ---
 
 ## What was completed this session
 
-### f_util_analysis family — ideation developed and graduated
-Extended the `f_util_profile` scratchpad entry into a full design document at `ideas/f_util_analysis.md`. Key developments:
+### Tech debt audit and resolution
+Full audit of all active patchers against current vsynth-bpatcher conventions.
+Four debt axes identified and paid:
 
-**Design principle established: proprioception**
-The analysis utility family is framed not as "useful control signals" but as giving a patch awareness of its own visual content. The animating idea: a patch that responds to what it's doing rather than what it's told is a qualitatively different instrument.
+**`prepend param` → `attrui`** (all patchers)
+141 boxes migrated across 13 patchers. `build_patcher.py` updated to generate
+`attrui` going forward. `tools/migrate_to_attrui.py` added for future reference.
+`src_mode` correctly left as `prepend` (system-driven, intentional).
 
-**Concrete case articulated (f_weave + f_util_profile):**
-A weave patch that knows its own luminance distribution per band can develop internal coherence — bright regions behaving differently from dark regions according to rules that emerge from the content itself. The rule is simple and fixed; the behavior is complex because the signal driving it is itself dynamic. That's the loop.
+**Missing `routepass` on 4 processor patchers**
+`f_channel_grader`, `f_hue_processor`, `f_luma_processor`, `f_tone_curve` all had
+`inlet → route` directly — texture path broken entirely. Fixed by inserting
+`routepass jit_gl_texture jit_matrix` in each. `tools/add_routepass.py` added.
 
-**f_util_envelope identified as companion utility:**
-ADSR-style conditioning for raw analysis signals. Without shaping, per-band parameters driven by raw luminance would jitter every frame. The shaped signal gives the patch's response to its own content a feeling of intention rather than noise. Sits downstream of any analysis utility — not tied to profile specifically.
+**Missing `autopattr` on `f_droste`**
+Added `autopattr @varname droste_autopattr`.
 
-**Broader utility family named:**
-Centroid, variance, dominant frequency, motion energy, regional contrast — all captured with initial evocations and design notes. Common thread: most interesting outputs preserve some spatial structure rather than collapsing to a scalar.
+**Missing `vs_inState` on `f_grain` and `f_masonry`**
+Both patchers now use `vs_inState` + `vs_black` fallback. Draw when unconnected.
+`Param src_mode(0.0)` prepended to both codeboxes. `tools/add_instate.py` added.
 
-**Design gaps identified to hold:**
-- Temporal structure (rate of change, periodicity) — easy to miss when thinking in pictures
-- Signal relationships (ratios/differences between analysis outputs)
-- Signal conditioning — gap between raw GPU output and useful control signal
+All patchers opened and verified working in Max after migration.
 
-**Scratchpad updated:**
-- `f_util_profile` entry replaced with pointer to `ideas/f_util_analysis.md`
-- Gap 1 (texture analysis) in capability gaps section replaced with pointer
+### f_lens Phase 5
+Vsynth integration testing passed. README updated (was already marked Working —
+Phase 5 confirmation now on record).
+
+### README / status table
+`f_stipple` added to status table (was missing). Removed from build queue.
+`f_masonry` naming note: pix object has `@name weave_pix` — pre-existing
+inconsistency, not introduced this session. Not fixed (low priority).
+
+### f_util_profile spec + plan + tasks
+Full spec locked:
+- Output: always `1×128` GL texture (fixed dimensions)
+- `resolution` param (1–128, default 64): CPU-side analysis sharpness via
+  interpolation — real-time modulatable, does not change output dimensions
+- `freq` param (1–64, default 8): sync vocabulary only, not used internally
+- Bypass: freeze last computed profile; 0.5 flat on first load
+- Architecture: `jit.gl.asyncread` → `js profile_compute.js` → `jit.gl.texture`
+- New archetype: no `jit.gl.pix`, CPU-side only, hand-built JSON (no build script)
+
+Plan written with 6 ADRs. Tasks written T001–T039 across 5 phases.
 
 ---
 
 ## Recommended next session
 
-### First: tech debt assessment
-Now that conventions are solidifying and ideation for new patchers is accelerating, begin by auditing existing patchers against current thinking. Known axes of debt:
+### Start: f_util_profile Phase 1 (T001–T008)
+Build the scratch patch and prove the GPU→CPU→GPU round trip.
 
-- **`prepend param` → `attrui`** — convention changed forward-only; existing patchers still use old wiring
-- **Dual-mode (`vs_inState`)** — identified candidates (f_grain, f_masonry) not yet evaluated against current pattern
-- **Texture inlet opportunities** — structural modulation targets identified per-patch in scratchpad; none implemented yet
-- **Bypass pattern** — verify all patchers use current bypass JSON convention
-- **UI/parameter surface** — older patchers may predate current parameter naming and range conventions
+Four open questions Phase 1 will answer:
+1. Does `jit.gl.asyncread` need `@drawto vsynth` to read from the right context?
+2. Is asyncread output `char` (0–255) or `float32`? (Affects JS normalization)
+3. Is `f_/code/profile_compute.js` found by Max when bpatcher loaded from `patchers/`?
+4. `jit.gl.texture @name` collision strategy for multiple instances — defer to Phase 4
 
-Goal: produce a prioritized debt inventory before starting any new patch work. Decide which debt is worth paying now vs. accepting as legacy.
+### Then: f_util_profile Phase 2 (T009–T016)
+Aggregation and interpolation in JS. f_masonry as upstream texture for verification.
 
-### Then:
-1. **f_lens Phase 5** — Vsynth integration testing (longest-standing deferred item)
-2. **f_util_profile** — begin speccing concretely; first decision is consumption pattern downstream (how does f_weave actually read the 1×N matrix?)
-3. **f_util_envelope** — spec alongside profile; needed immediately once profile produces raw signal
-4. **f_chladni signal chain** — EEG/spectral driving via muse.maxpat
+### Remaining backlog (lower priority)
+- `f_chladni` signal chain — EEG/spectral driving via muse.maxpat
+- `f_util_envelope` — spec alongside or immediately after profile build; needed
+  once profile is producing raw signal
+- `f_masonry` pix naming: `@name weave_pix` should be `masonry_pix` — trivial
+  fix but requires closing the patcher first
 
 ---
 
 ## Files changed this session
-- `ideas/f_util_analysis.md` — created (new file)
-- `ideas/scratchpad.md` — f_util_profile and Gap 1 entries replaced with pointers
-- `HANDOFF.md` — this file
+- `patchers/*.maxpat` — all 13 active patchers (attrui migration + routepass + instate)
+- `tools/build_patcher.py` — prepend_box → attrui_box
+- `tools/migrate_to_attrui.py` — new
+- `tools/add_routepass.py` — new
+- `tools/add_instate.py` — new
+- `README.md` — f_stipple added, f_lens Phase 5 noted, build queue updated
+- `.specify/f_util_profile/spec.md` — new (gitignored)
+- `.specify/f_util_profile/plan.md` — new (gitignored)
+- `.specify/f_util_profile/tasks.md` — new (gitignored)
+
+## Git log this session
+```
+80b2a1d README: add f_stipple to table, remove from build queue; f_lens Phase 5 confirmed
+416de72 tech debt: autopattr on f_droste, vs_inState on f_grain + f_masonry
+deb9646 add routepass to 4 processor patchers missing texture/control separation
+01ab900 migrate prepend param → attrui across all patchers and build script
+```
