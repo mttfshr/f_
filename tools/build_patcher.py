@@ -43,6 +43,10 @@ OBJ_MODULESIZE  = "obj-16"
 # Dual-mode only:
 OBJ_INSTATE     = "obj-17"
 OBJ_SRCMODE_PRE = "obj-18"
+# Header toggle (proc_mode or similar binary param) — fixed IDs
+OBJ_HEADER_TOGGLE       = "obj-19a"
+OBJ_HEADER_TOGGLE_LABEL = "obj-19b"
+OBJ_HEADER_TOGGLE_PRE   = "obj-19c"
 # bypass IDs are dynamic — computed from n_ui_params in build()
 UI_PARAM_BASE   = 20
 
@@ -183,7 +187,10 @@ def instate_boxes():
     ]
 
 def dial_box(n, p, object_name):
-    x = 4.0 + n * 37.0
+    col = n % 5
+    row = n // 5
+    x = 4.0 + col * 37.0
+    y = 38.0 + row * 62.0
     return box(param_obj_id(n),
         maxclass="live.dial",
         activedialcolor=DIAL_COLOR,
@@ -194,7 +201,7 @@ def dial_box(n, p, object_name):
         parameter_enable=1,
         patching_rect=[50.0 + n * 50.0, 80.0, 27.0, 43.0],
         presentation=1,
-        presentation_rect=[x, 22.0, 27.0, 43.0],
+        presentation_rect=[x, y, 27.0, 43.0],
         saved_attribute_attributes={
             "activedialcolor": {"expression": ""},
             "valueof": {
@@ -214,7 +221,10 @@ def dial_box(n, p, object_name):
         varname=p["name"])
 
 def numbox_box(n, p, object_name):
-    x = 4.0 + n * 37.0
+    col = n % 5
+    row = n // 5
+    x = 4.0 + col * 37.0
+    y = 38.0 + row * 62.0
     return box(param_obj_id(n),
         maxclass="live.numbox",
         fontname=FONT,
@@ -224,7 +234,7 @@ def numbox_box(n, p, object_name):
         parameter_enable=1,
         patching_rect=[50.0 + n * 50.0, 80.0, 44.0, 15.0],
         presentation=1,
-        presentation_rect=[x, 36.0, 34.0, 15.0],
+        presentation_rect=[x, y, 34.0, 15.0],
         saved_attribute_attributes={
             "valueof": {
                 "parameter_initial": [float(p["default"])],
@@ -242,15 +252,20 @@ def numbox_box(n, p, object_name):
         varname=p["name"])
 
 def label_box(n, p):
-    x = 4.0 + n * 37.0
+    col = n % 5
+    row = n // 5
+    x = 4.0 + col * 37.0
+    y = 20.0 + row * 62.0
+    label = p.get("label", p["name"].replace("_", " ").title())
     return box(param_label_id(n),
         maxclass="comment",
         fontname=FONT, fontsize=FONT_LABEL,
         numinlets=1, numoutlets=0,
-        patching_rect=[50.0 + n * 50.0, 130.0, 35.0, 18.0],
+        patching_rect=[50.0 + n * 50.0, 130.0, 50.0, 18.0],
         presentation=1,
-        presentation_rect=[x - 2.0, 64.0, 35.0, 18.0],
-        text=p["name"].replace("_", " ").title())
+        presentation_rect=[x - 11.5, y, 50.0, 18.0],
+        text=label,
+        textjustification=1)
 
 def prepend_box(obj_id, name, x, y):
     return box(obj_id,
@@ -258,6 +273,49 @@ def prepend_box(obj_id, name, x, y):
         numinlets=1, numoutlets=1, outlettype=[""],
         patching_rect=[x, y, max(100.0, len(name) * 7.0 + 80.0), 22.0],
         text=f"prepend param {name}")
+
+def header_toggle_box(p, object_name, pw):
+    # 20×20 live.toggle, right-aligned in header, left of bypass
+    x = pw - 50.0
+    return box(OBJ_HEADER_TOGGLE,
+        maxclass="live.toggle",
+        fontname=FONT,
+        hint=p.get("hint", ""),
+        numinlets=1, numoutlets=1, outlettype=[""],
+        param_connect=f"{object_name}::{p['name']}",
+        parameter_enable=1,
+        patching_rect=[450.0, 60.0, 20.0, 20.0],
+        presentation=1,
+        presentation_rect=[x, 1.0, 20.0, 20.0],
+        saved_attribute_attributes={
+            "valueof": {
+                "parameter_initial": [float(p["default"])],
+                "parameter_initial_enable": 1,
+                "parameter_linknames": 1,
+                "parameter_longname": p["name"],
+                "parameter_mmax": float(p["max"]),
+                "parameter_mmin": float(p["min"]),
+                "parameter_modmode": 0,
+                "parameter_shortname": p["name"],
+                "parameter_type": 1,
+                "parameter_unitstyle": 0
+            }
+        },
+        varname=p["name"])
+
+def header_toggle_label_box(p, pw):
+    # label left of the toggle
+    x = pw - 50.0 - 43.0
+    label = p.get("header_label", p["name"].replace("_", " ").title())
+    return box(OBJ_HEADER_TOGGLE_LABEL,
+        maxclass="comment",
+        fontname=FONT, fontsize=FONT_LABEL,
+        numinlets=1, numoutlets=0,
+        patching_rect=[450.0, 60.0, 43.0, 18.0],
+        presentation=1,
+        presentation_rect=[x, 3.0, 43.0, 18.0],
+        text=label,
+        textjustification=2)
 
 
 # ---------------------------------------------------------------------------
@@ -368,11 +426,12 @@ def build(defn):
 
     # Separate param types
     ui_params       = [p for p in all_params if p["type"] in ("float", "int")]
+    header_toggles  = [p for p in all_params if p["type"] == "header_toggle"]
     internal_params = [p for p in all_params if p["type"] == "internal"]
     # bypass is handled separately
 
-    # Route param names = all ui params (not internal, not bypass)
-    route_params = ui_params
+    # Route param names = ui params + header toggles (not internal, not bypass)
+    route_params = ui_params + header_toggles
 
     # bypass IDs — placed after all per-param objects
     bp_jsui_id = bypass_jsui_id(len(ui_params))
@@ -393,7 +452,7 @@ def build(defn):
     if archetype == "dual":
         boxes.extend(instate_boxes())
 
-    # Per-param boxes
+    # Per-param boxes (grid — float and int only)
     for n, p in enumerate(ui_params):
         if p["type"] == "float":
             boxes.append(dial_box(n, p, object_name))
@@ -402,6 +461,13 @@ def build(defn):
         boxes.append(prepend_box(param_pre_id(n), p["name"],
                                  50.0 + n * 50.0, 170.0 + n * 30.0))
         boxes.append(label_box(n, p))
+
+    # Header toggle boxes (e.g. proc_mode) — rendered in header, wired via route
+    if header_toggles:
+        p = header_toggles[0]   # currently only one supported
+        boxes.append(header_toggle_box(p, object_name, pw))
+        boxes.append(header_toggle_label_box(p, pw))
+        boxes.append(prepend_box(OBJ_HEADER_TOGGLE_PRE, p["name"], 500.0, 230.0))
 
     # bypass jsui and prepend LAST — must come after pix in boxes list
     boxes.append(bypass_jsui_box(bp_jsui_id, object_name, pw))
@@ -440,16 +506,25 @@ def build(defn):
     lines.append(wire(OBJ_ZLSLICE, 1, OBJ_PRETAM, 0))
     lines.append(wire(OBJ_PRETAM, 0, OBJ_MODULESIZE, 0))
 
-    # route outlets → dials → prepends → pix
+    # route outlets → grid controls → prepends → pix
     for n, p in enumerate(ui_params):
         lines.append(wire(OBJ_ROUTE, n, param_obj_id(n), 0))
         lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
         lines.append(wire(param_pre_id(n), 0, OBJ_PIX, 0))
 
-    # parameters block — UI params only (not bypass jsui, which has no param_connect)
+    # route outlets → header toggles → prepends → pix
+    if header_toggles:
+        ht_outlet = len(ui_params)   # header toggles come after ui_params in route
+        lines.append(wire(OBJ_ROUTE, ht_outlet, OBJ_HEADER_TOGGLE, 0))
+        lines.append(wire(OBJ_HEADER_TOGGLE, 0, OBJ_HEADER_TOGGLE_PRE, 0))
+        lines.append(wire(OBJ_HEADER_TOGGLE_PRE, 0, OBJ_PIX, 0))
+
+    # parameters block — grid params + header toggles (not bypass jsui)
     params_block = {}
     for n, p in enumerate(ui_params):
         params_block[param_obj_id(n)] = [p["name"], p["name"], 0]
+    if header_toggles:
+        params_block[OBJ_HEADER_TOGGLE] = [header_toggles[0]["name"], header_toggles[0]["name"], 0]
     params_block["parameterbanks"] = {"0": {
         "index": 0, "name": "",
         "parameters": ["-","-","-","-","-","-","-","-"],

@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 10,
+					"numoutlets": 11,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -93,10 +94,10 @@
 					"patching_rect": [
 						200.0,
 						130.0,
-						623.0,
+						700.0,
 						22.0
 					],
-					"text": "route freq angle anisotropy threshold softness zoom along_phase across_phase colorize proc_mode"
+					"text": "route freq coarseness anisotropy angle zoom threshold colorize along_phase across_phase softness proc_mode"
 				}
 			},
 			{
@@ -146,7 +147,7 @@
 							},
 							{
 								"box": {
-									"code": "Param freq(5.0);\nParam angle(0.0);\nParam anisotropy(0.5);\nParam threshold(0.5);\nParam softness(0.1);\nParam along_phase(0.0);\nParam across_phase(0.0);\nParam zoom(1.0);\nParam colorize(0.0);\nParam proc_mode(0.0);\nParam src_mode(0.0);\nParam bypass(0.0);\n\n// Coordinate frame\ntheta = angle * (3.14159265 / 180.0);\ncx = cos(theta);\nsx = sin(theta);\nalong = norm.x * cx + norm.y * sx;\nacross = -norm.x * sx + norm.y * cx;\n\n// Phase offset\nalong_d = along + along_phase;\nacross_d = across + across_phase;\n\n// Zoom applied to base coords only\nzoomed_along = along_d / max(zoom, 0.001);\nzoomed_across = across_d / max(zoom, 0.001);\n\n// Input sample\ninput_luma = sample(in1, norm).r;\nsrc_col = sample(in1, norm);\n\n// Displacement: warp zoomed coords by input luma\nwarp = input_luma * threshold;\nalong_disp = zoomed_along + warp;\nacross_disp = zoomed_across + warp * 0.5;\n\n// Select hash coordinates\nuse_along = mix(zoomed_along, along_disp, step(0.5, proc_mode));\nuse_across = mix(zoomed_across, across_disp, step(0.5, proc_mode));\n\n// Parallel (sin-based) hash\nh_par_raw = sin(use_along * freq * 43758.5453);\nh_parallel = h_par_raw - floor(h_par_raw);\n\n// Isotropic (arithmetic) hash\nh_iso_raw = sin((use_along * 127.1 + use_across * 311.7) * freq);\nh_iso = h_iso_raw - floor(h_iso_raw);\n\n// Anisotropy blend\nhash_field = mix(h_iso, h_parallel, anisotropy);\n\n// Source mode: threshold against hash field directly\nlo = threshold - softness * 0.5;\nhi = threshold + softness * 0.5;\nsource_stipple = smoothstep(lo, hi, hash_field);\n\n// Processor/dither: input luma compared against hash field\ndither_stipple = smoothstep(hash_field - softness * 0.5, hash_field + softness * 0.5, input_luma + threshold - 0.5);\n\n// Select stipple by src_mode and proc_mode\nstipple = mix(source_stipple, dither_stipple, src_mode * (1.0 - step(0.5, proc_mode)));\nstipple = mix(stipple, source_stipple, src_mode * step(0.5, proc_mode));\n\n// Output color\nmono_out = vec(stipple, stipple, stipple, 1.0);\ncolor_out = vec(src_col.r * stipple, src_col.g * stipple, src_col.b * stipple, 1.0);\nresult = mix(mono_out, color_out, colorize * src_mode);\n\n// Bypass\nsource_bp = vec(0.0, 0.0, 0.0, 1.0);\nproc_bp = src_col;\nbypass_out = mix(source_bp, proc_bp, src_mode);\n\nout1 = mix(result, bypass_out, bypass);\n",
+									"code": "Param freq(5.0);\nParam angle(0.0);\nParam anisotropy(0.5);\nParam threshold(0.5);\nParam softness(0.1);\nParam along_phase(0.0);\nParam across_phase(0.0);\nParam zoom(1.0);\nParam colorize(0.0);\nParam coarseness(1.0);\nParam proc_mode(0.0);\nParam src_mode(0.0);\nParam bypass(0.0);\n\n// Coordinate frame\ntheta = angle * (3.14159265 / 180.0);\ncx = cos(theta);\nsx = sin(theta);\nalong = norm.x * cx + norm.y * sx;\nacross = -norm.x * sx + norm.y * cx;\n\n// Phase offset\nalong_d = along + along_phase;\nacross_d = across + across_phase;\n\n// Zoom applied to base coords only\nzoomed_along = along_d / max(zoom, 0.001);\nzoomed_across = across_d / max(zoom, 0.001);\n\n// Input sample\ninput_luma = sample(in1, norm).r;\nsrc_col = sample(in1, norm);\n\n// Displacement: warp zoomed coords by input luma\nwarp = input_luma * threshold;\nalong_disp = zoomed_along + warp;\nacross_disp = zoomed_across + warp * 0.5;\n\n// Select hash coordinates\nuse_along = mix(zoomed_along, along_disp, step(0.5, proc_mode));\nuse_across = mix(zoomed_across, across_disp, step(0.5, proc_mode));\n\n// Coarseness: scales down the large prime to increase grain period\nprime_scale = 43758.5 / max(coarseness, 1.0);\n\n// Parallel (sin-based) hash\nh_par_raw = sin(use_along * freq * prime_scale);\nh_parallel = h_par_raw - floor(h_par_raw);\n\n// Isotropic (arithmetic) hash\nh_iso_raw = sin((use_along * 127.1 + use_across * 311.7) * prime_scale);\nh_iso = h_iso_raw - floor(h_iso_raw);\n\n// Anisotropy blend\nhash_field = mix(h_iso, h_parallel, anisotropy);\n\n// Source mode: threshold against hash field directly\nlo = threshold - softness * 0.5;\nhi = threshold + softness * 0.5;\nsource_stipple = smoothstep(lo, hi, hash_field);\n\n// Processor/dither: input luma compared against hash field\ndither_stipple = smoothstep(hash_field - softness * 0.5, hash_field + softness * 0.5, input_luma + threshold - 0.5);\n\n// Select stipple by src_mode and proc_mode\nstipple = mix(source_stipple, dither_stipple, src_mode * (1.0 - step(0.5, proc_mode)));\nstipple = mix(stipple, source_stipple, src_mode * step(0.5, proc_mode));\n\n// Output color\nmono_out = vec(stipple, stipple, stipple, 1.0);\ncolor_out = vec(src_col.r * stipple, src_col.g * stipple, src_col.b * stipple, 1.0);\nresult = mix(mono_out, color_out, colorize * src_mode);\n\n// Bypass\nsource_bp = vec(0.0, 0.0, 0.0, 1.0);\nproc_bp = src_col;\nbypass_out = mix(source_bp, proc_bp, src_mode);\n\nout1 = mix(result, bypass_out, bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -265,15 +266,15 @@
 					"patching_rect": [
 						20.0,
 						20.0,
-						255.0,
-						88.0
+						191.0,
+						157.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						255.0,
-						88.0
+						191.0,
+						157.0
 					],
 					"proportion": 0.5
 				}
@@ -484,7 +485,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						4.0,
-						22.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -494,7 +495,7 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								5.0
+								2.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
@@ -543,17 +544,18 @@
 					"patching_rect": [
 						50.0,
 						130.0,
-						35.0,
+						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						2.0,
-						64.0,
-						35.0,
+						-7.5,
+						20.0,
+						50.0,
 						18.0
 					],
-					"text": "Freq"
+					"text": "Freq",
+					"textjustification": 1
 				}
 			},
 			{
@@ -567,14 +569,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Orientation of along/across coordinate frame",
+					"hint": "Grain period scale \u2014 higher = chunkier grains",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "stipple_pix::angle",
+					"param_connect": "stipple_pix::coarseness",
 					"parameter_enable": 1,
 					"patching_rect": [
 						100.0,
@@ -585,7 +587,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						41.0,
-						22.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -595,15 +597,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								20.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "angle",
-							"parameter_mmax": 360.0,
-							"parameter_mmin": -360.0,
+							"parameter_longname": "coarseness",
+							"parameter_mmax": 100.0,
+							"parameter_mmin": 1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "angle",
+							"parameter_shortname": "coarseness",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -612,7 +614,7 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "angle"
+					"varname": "coarseness"
 				}
 			},
 			{
@@ -627,10 +629,10 @@
 					"patching_rect": [
 						100.0,
 						200.0,
-						115.0,
+						150.0,
 						22.0
 					],
-					"text": "prepend param angle"
+					"text": "prepend param coarseness"
 				}
 			},
 			{
@@ -644,17 +646,18 @@
 					"patching_rect": [
 						100.0,
 						130.0,
-						35.0,
+						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						39.0,
-						64.0,
-						35.0,
+						29.5,
+						20.0,
+						50.0,
 						18.0
 					],
-					"text": "Angle"
+					"text": "Coarse.",
+					"textjustification": 1
 				}
 			},
 			{
@@ -686,7 +689,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						78.0,
-						22.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -745,17 +748,18 @@
 					"patching_rect": [
 						150.0,
 						130.0,
-						35.0,
+						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						76.0,
-						64.0,
-						35.0,
+						66.5,
+						20.0,
+						50.0,
 						18.0
 					],
-					"text": "Anisotropy"
+					"text": "Aniso.",
+					"textjustification": 1
 				}
 			},
 			{
@@ -769,14 +773,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Dither bias (dither mode); displacement amount (displacement mode)",
+					"hint": "Orientation of along/across coordinate frame",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "stipple_pix::threshold",
+					"param_connect": "stipple_pix::angle",
 					"parameter_enable": 1,
 					"patching_rect": [
 						200.0,
@@ -787,7 +791,7 @@
 					"presentation": 1,
 					"presentation_rect": [
 						115.0,
-						22.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -797,15 +801,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.5
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "threshold",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
+							"parameter_longname": "angle",
+							"parameter_mmax": 360.0,
+							"parameter_mmin": -360.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "threshold",
+							"parameter_shortname": "angle",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -814,7 +818,7 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "threshold"
+					"varname": "angle"
 				}
 			},
 			{
@@ -829,10 +833,10 @@
 					"patching_rect": [
 						200.0,
 						260.0,
-						143.0,
+						115.0,
 						22.0
 					],
-					"text": "prepend param threshold"
+					"text": "prepend param angle"
 				}
 			},
 			{
@@ -846,123 +850,23 @@
 					"patching_rect": [
 						200.0,
 						130.0,
-						35.0,
+						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						113.0,
-						64.0,
-						35.0,
+						103.5,
+						20.0,
+						50.0,
 						18.0
 					],
-					"text": "Threshold"
+					"text": "Angle",
+					"textjustification": 1
 				}
 			},
 			{
 				"box": {
 					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Smoothstep width at comparison boundary",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "stipple_pix::softness",
-					"parameter_enable": 1,
-					"patching_rect": [
-						250.0,
-						80.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						152.0,
-						22.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.1
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "softness",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "softness",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "softness"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-33",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						250.0,
-						290.0,
-						136.0,
-						22.0
-					],
-					"text": "prepend param softness"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-34",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						250.0,
-						130.0,
-						35.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						150.0,
-						64.0,
-						35.0,
-						18.0
-					],
-					"text": "Softness"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-35",
 					"maxclass": "live.dial",
 					"activedialcolor": [
 						0.8,
@@ -981,15 +885,15 @@
 					"param_connect": "stipple_pix::zoom",
 					"parameter_enable": 1,
 					"patching_rect": [
-						300.0,
+						250.0,
 						80.0,
 						27.0,
 						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						189.0,
-						22.0,
+						152.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -1021,6 +925,108 @@
 			},
 			{
 				"box": {
+					"id": "obj-33",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						250.0,
+						290.0,
+						108.0,
+						22.0
+					],
+					"text": "prepend param zoom"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-34",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						250.0,
+						130.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Zoom",
+					"textjustification": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-35",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Dither bias (dither mode); displacement amount (displacement mode)",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "stipple_pix::threshold",
+					"parameter_enable": 1,
+					"patching_rect": [
+						300.0,
+						80.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.5
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "threshold",
+							"parameter_mmax": 2.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "threshold",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "threshold"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-36",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -1031,10 +1037,10 @@
 					"patching_rect": [
 						300.0,
 						320.0,
-						108.0,
+						143.0,
 						22.0
 					],
-					"text": "prepend param zoom"
+					"text": "prepend param threshold"
 				}
 			},
 			{
@@ -1048,224 +1054,23 @@
 					"patching_rect": [
 						300.0,
 						130.0,
-						35.0,
+						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						187.0,
-						64.0,
-						35.0,
+						-7.5,
+						82.0,
+						50.0,
 						18.0
 					],
-					"text": "Zoom"
+					"text": "Thresh.",
+					"textjustification": 1
 				}
 			},
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Hash field offset along angle axis; drive externally for drift",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "stipple_pix::along_phase",
-					"parameter_enable": 1,
-					"patching_rect": [
-						350.0,
-						80.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						226.0,
-						22.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "along_phase",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": -1.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "along_phase",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "along_phase"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-39",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						350.0,
-						350.0,
-						157.0,
-						22.0
-					],
-					"text": "prepend param along_phase"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-40",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						350.0,
-						130.0,
-						35.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						224.0,
-						64.0,
-						35.0,
-						18.0
-					],
-					"text": "Along Phase"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Hash field offset perpendicular to angle axis; drive externally for drift",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "stipple_pix::across_phase",
-					"parameter_enable": 1,
-					"patching_rect": [
-						400.0,
-						80.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						263.0,
-						22.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "across_phase",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": -1.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "across_phase",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "across_phase"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-42",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						400.0,
-						380.0,
-						164.0,
-						22.0
-					],
-					"text": "prepend param across_phase"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-43",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400.0,
-						130.0,
-						35.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						261.0,
-						64.0,
-						35.0,
-						18.0
-					],
-					"text": "Across Phase"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-44",
 					"maxclass": "live.dial",
 					"activedialcolor": [
 						0.8,
@@ -1284,15 +1089,15 @@
 					"param_connect": "stipple_pix::colorize",
 					"parameter_enable": 1,
 					"patching_rect": [
-						450.0,
+						350.0,
 						80.0,
 						27.0,
 						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						300.0,
-						22.0,
+						41.0,
+						100.0,
 						27.0,
 						43.0
 					],
@@ -1324,6 +1129,210 @@
 			},
 			{
 				"box": {
+					"id": "obj-39",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						350.0,
+						136.0,
+						22.0
+					],
+					"text": "prepend param colorize"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-40",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						350.0,
+						130.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Colorize",
+					"textjustification": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-41",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Hash field offset along angle axis; drive externally for drift",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "stipple_pix::along_phase",
+					"parameter_enable": 1,
+					"patching_rect": [
+						400.0,
+						80.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						78.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "along_phase",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": -1.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "along_phase",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "along_phase"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-42",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						400.0,
+						380.0,
+						157.0,
+						22.0
+					],
+					"text": "prepend param along_phase"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-43",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						400.0,
+						130.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						66.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Along",
+					"textjustification": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-44",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Hash field offset perpendicular to angle axis; drive externally for drift",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "stipple_pix::across_phase",
+					"parameter_enable": 1,
+					"patching_rect": [
+						450.0,
+						80.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						115.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "across_phase",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": -1.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "across_phase",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "across_phase"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-45",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -1334,10 +1343,10 @@
 					"patching_rect": [
 						450.0,
 						410.0,
-						136.0,
+						164.0,
 						22.0
 					],
-					"text": "prepend param colorize"
+					"text": "prepend param across_phase"
 				}
 			},
 			{
@@ -1351,63 +1360,77 @@
 					"patching_rect": [
 						450.0,
 						130.0,
-						35.0,
+						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						298.0,
-						64.0,
-						35.0,
+						103.5,
+						82.0,
+						50.0,
 						18.0
 					],
-					"text": "Colorize"
+					"text": "Across",
+					"textjustification": 1
 				}
 			},
 			{
 				"box": {
 					"id": "obj-47",
-					"maxclass": "live.numbox",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
 					"fontname": "Ableton Sans Light",
-					"hint": "0=dither  1=displacement",
+					"hint": "Smoothstep width at comparison boundary",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "stipple_pix::proc_mode",
+					"param_connect": "stipple_pix::softness",
 					"parameter_enable": 1,
 					"patching_rect": [
 						500.0,
 						80.0,
-						44.0,
-						15.0
+						27.0,
+						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						337.0,
-						36.0,
-						34.0,
-						15.0
+						152.0,
+						100.0,
+						27.0,
+						43.0
 					],
 					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								0.1
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "proc_mode",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "softness",
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "proc_mode",
+							"parameter_shortname": "softness",
 							"parameter_type": 0,
-							"parameter_unitstyle": 0
+							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "proc_mode"
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "softness"
 				}
 			},
 			{
@@ -1422,10 +1445,10 @@
 					"patching_rect": [
 						500.0,
 						440.0,
-						143.0,
+						136.0,
 						22.0
 					],
-					"text": "prepend param proc_mode"
+					"text": "prepend param softness"
 				}
 			},
 			{
@@ -1439,17 +1462,106 @@
 					"patching_rect": [
 						500.0,
 						130.0,
-						35.0,
+						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						335.0,
-						64.0,
-						35.0,
+						140.5,
+						82.0,
+						50.0,
 						18.0
 					],
-					"text": "Proc Mode"
+					"text": "Soft.",
+					"textjustification": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19a",
+					"maxclass": "live.toggle",
+					"fontname": "Ableton Sans Light",
+					"hint": "0=dither  1=displacement",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"param_connect": "stipple_pix::proc_mode",
+					"parameter_enable": 1,
+					"patching_rect": [
+						450.0,
+						60.0,
+						20.0,
+						20.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						141.0,
+						1.0,
+						20.0,
+						20.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "proc_mode",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "proc_mode",
+							"parameter_type": 1,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "proc_mode"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19b",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						450.0,
+						60.0,
+						43.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						98.0,
+						3.0,
+						43.0,
+						18.0
+					],
+					"text": "Displace",
+					"textjustification": 2
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19c",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						500.0,
+						230.0,
+						143.0,
+						22.0
+					],
+					"text": "prepend param proc_mode"
 				}
 			},
 			{
@@ -1465,13 +1577,13 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						233.0,
+						169.0,
 						5.0,
 						18.0,
 						12.0
 					],
 					"presentation_rect": [
-						233.0,
+						169.0,
 						5.0,
 						18.0,
 						12.0
@@ -2027,6 +2139,42 @@
 						0
 					]
 				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						10
+					],
+					"destination": [
+						"obj-19a",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19a",
+						0
+					],
+					"destination": [
+						"obj-19c",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19c",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
 			}
 		],
 		"parameters": {
@@ -2036,8 +2184,8 @@
 				0
 			],
 			"obj-23": [
-				"angle",
-				"angle",
+				"coarseness",
+				"coarseness",
 				0
 			],
 			"obj-26": [
@@ -2046,36 +2194,41 @@
 				0
 			],
 			"obj-29": [
-				"threshold",
-				"threshold",
+				"angle",
+				"angle",
 				0
 			],
 			"obj-32": [
-				"softness",
-				"softness",
+				"zoom",
+				"zoom",
 				0
 			],
 			"obj-35": [
-				"zoom",
-				"zoom",
+				"threshold",
+				"threshold",
 				0
 			],
 			"obj-38": [
-				"along_phase",
-				"along_phase",
+				"colorize",
+				"colorize",
 				0
 			],
 			"obj-41": [
-				"across_phase",
-				"across_phase",
+				"along_phase",
+				"along_phase",
 				0
 			],
 			"obj-44": [
-				"colorize",
-				"colorize",
+				"across_phase",
+				"across_phase",
 				0
 			],
 			"obj-47": [
+				"softness",
+				"softness",
+				0
+			],
+			"obj-19a": [
 				"proc_mode",
 				"proc_mode",
 				0
