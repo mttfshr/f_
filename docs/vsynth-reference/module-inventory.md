@@ -65,16 +65,16 @@ Blend modes (`code/vs_bm_*.genjit`) and math operators (`code/vs_op*.genjit`) ar
 
 | Module | Tier | Notes |
 |--------|------|-------|
-| `vs_displacement` | — | Core displacement; likely Tier 3 |
-| `vs_offset` | — | |
-| `vs_offset+rot` | — | Offset + rotation |
-| `vs_cartopol` | — | Cartesian → polar |
-| `vs_poltocar` | — | Polar → cartesian |
-| `vs_fish_eye` | — | |
-| `vs_flip&swap` | — | |
-| `vs_pixelator` | — | |
-| `vs_pixelator_2` | — | |
-| `vs_pixelator_nonSquare` | — | |
+| `vs_displacement` | 1 | 5 inlets: primary texture + 4 optional modulation textures (fmx, fmy, angle_m, zoom_m). Each optional inlet via `vs_inState`. Displacement field in polar space internally. Params: zoom, angle, x/y offset, bound mode (Clear/Clamp/Wrap/Mirror). `vs_bline` on x/y/zoom. |
+| `vs_offset` | 1 | |
+| `vs_offset+rot` | 1 | Offset + rotation |
+| `vs_cartopol` | 1 | Cartesian → polar |
+| `vs_poltocar` | 1 | Polar → cartesian |
+| `vs_fish_eye` | 1 | Fisheye distortion via aperture param |
+| `vs_flip&swap` | 1 | Flip x/y and channel swap |
+| `vs_pixelator` | 1 | |
+| `vs_pixelator_2` | 1 | |
+| `vs_pixelator_nonSquare` | 1 | |
 
 ## Processors — Color
 
@@ -101,30 +101,30 @@ Blend modes (`code/vs_bm_*.genjit`) and math operators (`code/vs_op*.genjit`) ar
 
 | Module | Tier | Notes |
 |--------|------|-------|
-| `vs_alpha_blend` | — | |
-| `vs_alpha_blend_2` | — | |
-| `vs_chroma_key` | — | |
-| `vs_clr_xtrct` | — | Color extract/isolate |
-| `vs_comparator` | — | |
-| `vs_crssfade` | — | Crossfade |
-| `vs_fader` | — | |
-| `vs_luma_key` | — | |
-| `vs_quad_crossfader` | — | |
-| `vs_vca` | — | VCA-style level control |
+| `vs_alpha_blend` | 1 | 3 inlets: Blacks In, Whites In, Alpha Texture In. Alpha channel of 3rd texture drives blend between first two. |
+| `vs_alpha_blend_2` | 1 | Variant with mode toggle and threshold/smooth params |
+| `vs_chroma_key` | 1 | Color-based keying with threshold and smooth |
+| `vs_clr_xtrct` | 1 | Color extract/isolate |
+| `vs_comparator` | 1 | 1 inlet, threshold-based comparison op |
+| `vs_crssfade` | 1 | 2-inlet crossfade |
+| `vs_fader` | 1 | 1-inlet level control |
+| `vs_luma_key` | 1 | 2 inlets: Texture 1/Control, Texture 2. Luma-based keying with threshold and smooth. |
+| `vs_quad_crossfader` | 1 | XY-controlled 4-source crossfade |
+| `vs_vca` | 1 | VCA-style level control with bias and AM |
 
 ## Processors — Mixing
 
 | Module | Tier | Notes |
 |--------|------|-------|
-| `vs_mixer_3` | — | 3-channel mixer |
-| `vs_mixer_3_avg` | — | |
-| `vs_mixer_6` | — | 6-channel mixer |
-| `vs_mixer_fdbk` | — | Feedback mixer |
-| `vs_mixer_spat` | — | Spatial mixer |
-| `vs_mixer_spat2` | — | |
-| `vs_blendmode_mixer` | — | |
+| `vs_mixer_3` | 1 | 3-input weighted mix. Per-channel level + master. `@adapt 0 @type char`. |
+| `vs_mixer_3_avg` | 1 | 3-channel average mix |
+| `vs_mixer_6` | 1 | 6-input weighted mix |
+| `vs_mixer_fdbk` | 3 | Feedback mixer — frame memory |
+| `vs_mixer_spat` | 1 | Spatial mixer — position-modulated mix |
+| `vs_mixer_spat2` | 1 | Spatial mixer variant |
+| `vs_blendmode_mixer` | 1 | 2-input with 13 selectable blend modes. Gen file swapped at runtime via `@gen filename`. |
 
-*Blend mode gen implementations in `code/vs_bm_*.genjit`: absdiff, add, alpha, avg, exclude, max, min, mod, mult, negate, screen, sub (13 modes).*
+*Blend mode gen implementations in `code/vs_bm_*.genjit`: absdiff, add, alpha, avg, exclude, max, min, mod, mult, negate, screen, sub (13 modes). Selected by swapping `@gen` filename at runtime.*
 
 ## Processors — Filtering / Temporal
 

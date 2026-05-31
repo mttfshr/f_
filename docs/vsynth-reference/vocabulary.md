@@ -52,9 +52,19 @@ Texture-to-bang converter. Runs `jit.3m` on incoming matrix, extracts mean luma 
 Time/sync abstraction with 3 inlets: shape (inlet 1), freq (inlet 2), speed (inlet 3). Reads `r vs_ntime` (normalized time) and `r trig_res` (trigger reset). Produces `time $1` message on outlet 1. Translates the global time signal into per-module time with independent speed control. Core of how WFG animation is driven. Handles sync locking and modulo wrapping.
 
 ### vs_bline
-*Source: `patchers/abstractions/vs_bline.maxpat` — structure inferred from usage in vs_feedback*
+*Source: `patchers/abstractions/vs_bline.maxpat`*
 
-Used between amt control signal and `prepend amt` in `vs_feedback`. Almost certainly a smoothing/interpolation abstraction (bline = breakpoint line interpolator). Smooths parameter changes over time rather than stepping. To be confirmed by reading the file.
+Parameter interpolation abstraction wrapping Max's built-in `bline` object (breakpoint line interpolator). Smooths discrete value changes into a continuous ramp, frame-synced to `r draw`.
+
+**Mechanism:** Incoming float → `pak f 6` (packages with 6-frame interpolation time) → `bline 0.`. A `gate` object opens only when the value is changing (detected via `change`) — the `r draw` bang only drives `bline` while interpolating, stops at destination. Kevin's comment: *"Avoid [render] to keep triggering [bline] after reaching destination."*
+
+- **Inlet 0:** float value to smooth toward
+- **Outlet 0:** smoothed float output
+- **Outlet 1:** `done` bang when destination is reached
+
+Optional: accepts a name via patcherargs — outputs `prepend <name>` message for named param bundling.
+
+Used in `vs_feedback` (amt), `vs_displacement` (x, y, zoom), and likely many other modules. f_ does not currently use `vs_bline` — direct live.dial → prepend is sufficient for most params. For automation-sensitive params (feedback amount, blend ratios), `vs_bline` improves behavior.
 
 ---
 
@@ -136,10 +146,15 @@ From `patchers/vs_public_variables.txt`. Document self-describes as outdated —
 | `vs_gray` | Named gray texture — alternative fallback |
 | `r draw` | Per-frame heartbeat of the entire render system |
 | `_parameter_range` | Max message to set live.dial range at runtime |
-| `vs_bline` | Parameter smoothing abstraction (likely) |
+| `vs_bline` | Frame-synced parameter smoothing abstraction |
 | `vs_canvas` | Enable-gate with global toggle |
+| `@gen filename` | `jit.gl.pix` attribute to specify gen implementation by file — Kevin's pattern for runtime-selectable operations (e.g. blendmode_mixer swaps gen file to change blend mode) |
+| `@adapt 0` | On `jit.gl.pix` — disables auto-dimension adaptation to input. Used in mixers to keep fixed output size. |
+| `@type char` | On `jit.gl.pix` — 8-bit integer output. Used on feedback paths intentionally for quantization character. |
+| `poltocar` | Gen object: polar to cartesian conversion. Used inside displacement gen to define displacement field in polar space. |
+| `scale 0. 1. -1. 1.` | Gen object: remaps [0,1] texture values to [-1,1] bipolar displacement. Standard pattern for texture-driven bipolar modulation. |
 
 ---
 
-*Populated: 2026-05-31 (first analysis pass)*
+*Populated: 2026-05-31 (second analysis pass — vs_bline confirmed, vs_displacement, compositing modules)*
 *Last updated: 2026-05-31*
