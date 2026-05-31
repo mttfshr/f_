@@ -27,14 +27,14 @@ Clone this repository and place the `f_` folder in your Max search path.
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes) | 🔨 Signal chain in progress |
 | `f_mobius` | Möbius transformation UV-space processor | ✅ Working |
 | `f_stereo` | Stereographic projection display layer | ✅ Working |
+| `f_stipple` | 2D hash field stipple source/processor | ✅ Working |
 
 ## Build Queue
 
 1. f_chladni signal chain — active (`.specify/f_chladni/`)
-2. f_stipple — 2D hash field stipple source/processor (`.specify/f_stipple/`)
-3. f_poincare — Poincaré disk hyperbolic tiling
-4. f_sharmonics — spherical harmonics visualizer
-5. f_cymascope — FDTD wave propagation; feasibility check first
+2. f_poincare — Poincaré disk hyperbolic tiling
+3. f_sharmonics — spherical harmonics visualizer
+4. f_cymascope — FDTD wave propagation; feasibility check first
 
 ## Help files
 
