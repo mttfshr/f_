@@ -121,12 +121,13 @@ def bypass_jsui_box(obj_id, object_name, pw):
         valuepopuplabel=1,
         varname="bypass")
 
-def bypass_prepend_box(obj_id):
+def bypass_attrui_box(obj_id):
     return box(obj_id,
-        maxclass="newobj",
+        maxclass="attrui",
+        attr="bypass",
         numinlets=1, numoutlets=1, outlettype=[""],
         patching_rect=[400.0, 60.0, 131.0, 22.0],
-        text="prepend param bypass")
+        style="")
 
 def panel_box(pw, ph):
     return box(OBJ_PANEL,
@@ -267,12 +268,13 @@ def label_box(n, p):
         text=label,
         textjustification=1)
 
-def prepend_box(obj_id, name, x, y):
+def attrui_box(obj_id, name, x, y):
     return box(obj_id,
-        maxclass="newobj",
+        maxclass="attrui",
+        attr=name,
         numinlets=1, numoutlets=1, outlettype=[""],
         patching_rect=[x, y, max(100.0, len(name) * 7.0 + 80.0), 22.0],
-        text=f"prepend param {name}")
+        style="")
 
 def header_toggle_box(p, object_name, pw):
     # 20×20 live.toggle, right-aligned in header, left of bypass
@@ -458,8 +460,8 @@ def build(defn):
             boxes.append(dial_box(n, p, object_name))
         elif p["type"] == "int":
             boxes.append(numbox_box(n, p, object_name))
-        boxes.append(prepend_box(param_pre_id(n), p["name"],
-                                 50.0 + n * 50.0, 170.0 + n * 30.0))
+        boxes.append(attrui_box(param_pre_id(n), p["name"],
+                                50.0 + n * 50.0, 170.0 + n * 30.0))
         boxes.append(label_box(n, p))
 
     # Header toggle boxes (e.g. proc_mode) — rendered in header, wired via route
@@ -467,11 +469,11 @@ def build(defn):
         p = header_toggles[0]   # currently only one supported
         boxes.append(header_toggle_box(p, object_name, pw))
         boxes.append(header_toggle_label_box(p, pw))
-        boxes.append(prepend_box(OBJ_HEADER_TOGGLE_PRE, p["name"], 500.0, 230.0))
+        boxes.append(attrui_box(OBJ_HEADER_TOGGLE_PRE, p["name"], 500.0, 230.0))
 
     # bypass jsui and prepend LAST — must come after pix in boxes list
     boxes.append(bypass_jsui_box(bp_jsui_id, object_name, pw))
-    boxes.append(bypass_prepend_box(bp_pre_id))
+    boxes.append(bypass_attrui_box(bp_pre_id))
 
     # Build patchlines
     lines = []

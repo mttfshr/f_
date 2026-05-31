@@ -133,7 +133,8 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "edge_falloff",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -145,7 +146,7 @@
 						155.0,
 						22.0
 					],
-					"text": "prepend param edge_falloff"
+					"style": ""
 				}
 			},
 			{
@@ -654,7 +655,8 @@
 			{
 				"box": {
 					"id": "obj-9",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "bypass",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -666,13 +668,14 @@
 						131.0,
 						22.0
 					],
-					"text": "prepend param bypass"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-8",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "mid_high",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -684,13 +687,14 @@
 						142.0,
 						22.0
 					],
-					"text": "prepend param mid_high"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-7",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "low_mid",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -702,13 +706,14 @@
 						137.0,
 						22.0
 					],
-					"text": "prepend param low_mid"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-6",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "highlights",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -720,13 +725,14 @@
 						144.0,
 						22.0
 					],
-					"text": "prepend param highlights"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-5",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "midtones",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -738,13 +744,14 @@
 						142.0,
 						22.0
 					],
-					"text": "prepend param midtones"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-4",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "shadows",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -756,7 +763,7 @@
 						141.0,
 						22.0
 					],
-					"text": "prepend param shadows"
+					"style": ""
 				}
 			},
 			{

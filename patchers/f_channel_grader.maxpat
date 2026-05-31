@@ -20,7 +20,8 @@
 			{
 				"box": {
 					"id": "obj-18",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "m_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -32,14 +33,14 @@
 						133.0,
 						22.0
 					],
-					"text": "prepend param m_gain",
-					"varname": "param[2]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-19",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "m_gamma",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -51,14 +52,14 @@
 						150.0,
 						22.0
 					],
-					"text": "prepend param m_gamma",
-					"varname": "param[12]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-16",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "m_lift",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -70,8 +71,7 @@
 						122.0,
 						22.0
 					],
-					"text": "prepend param m_lift",
-					"varname": "param[1]"
+					"style": ""
 				}
 			},
 			{
@@ -990,7 +990,8 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "b_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1002,14 +1003,14 @@
 						129.0,
 						22.0
 					],
-					"text": "prepend param b_gain",
-					"varname": "param[9]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-39",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "b_gamma",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1021,14 +1022,14 @@
 						147.0,
 						22.0
 					],
-					"text": "prepend param b_gamma",
-					"varname": "param[10]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-40",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "b_lift",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1040,14 +1041,14 @@
 						119.0,
 						22.0
 					],
-					"text": "prepend param b_lift",
-					"varname": "param[11]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-37",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "g_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1059,14 +1060,14 @@
 						129.0,
 						22.0
 					],
-					"text": "prepend param g_gain",
-					"varname": "param[8]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-36",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "g_lift",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1078,14 +1079,14 @@
 						119.0,
 						22.0
 					],
-					"text": "prepend param g_lift",
-					"varname": "param[7]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-35",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "r_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1097,14 +1098,14 @@
 						127.0,
 						22.0
 					],
-					"text": "prepend param r_gain",
-					"varname": "param[6]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-34",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "r_gamma",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1116,14 +1117,14 @@
 						144.0,
 						22.0
 					],
-					"text": "prepend param r_gamma",
-					"varname": "param[5]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-33",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "r_lift",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1135,14 +1136,14 @@
 						116.0,
 						22.0
 					],
-					"text": "prepend param r_lift",
-					"varname": "param[4]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-30",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "bypass",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1154,14 +1155,14 @@
 						131.0,
 						22.0
 					],
-					"text": "prepend param bypass",
-					"varname": "param[3]"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-21",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "g_gamma",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1173,8 +1174,7 @@
 						147.0,
 						22.0
 					],
-					"text": "prepend param g_gamma",
-					"varname": "param"
+					"style": ""
 				}
 			},
 			{

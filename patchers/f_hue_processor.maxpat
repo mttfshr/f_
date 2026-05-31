@@ -559,7 +559,8 @@
 			{
 				"box": {
 					"id": "obj-19",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "edge_falloff",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -571,13 +572,14 @@
 						155.0,
 						22.0
 					],
-					"text": "prepend param edge_falloff"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-11",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "hue_upper",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -589,13 +591,14 @@
 						151.0,
 						22.0
 					],
-					"text": "prepend param hue_upper"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-10",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "hue_lower",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -607,13 +610,14 @@
 						149.0,
 						22.0
 					],
-					"text": "prepend param hue_lower"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-18",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "hue_shift",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -625,13 +629,14 @@
 						142.0,
 						22.0
 					],
-					"text": "prepend param hue_shift"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-17",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "lum_shift",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -643,13 +648,14 @@
 						141.0,
 						22.0
 					],
-					"text": "prepend param lum_shift"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-16",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "sat_amt",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -661,7 +667,7 @@
 						136.0,
 						22.0
 					],
-					"text": "prepend param sat_amt"
+					"style": ""
 				}
 			},
 			{
@@ -768,7 +774,8 @@
 			{
 				"box": {
 					"id": "obj-12",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "bypass",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -780,13 +787,14 @@
 						131.0,
 						22.0
 					],
-					"text": "prepend param bypass"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-9",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "hue_center",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -798,7 +806,7 @@
 						153.0,
 						22.0
 					],
-					"text": "prepend param hue_center"
+					"style": ""
 				}
 			},
 			{

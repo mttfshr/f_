@@ -518,7 +518,8 @@
 			{
 				"box": {
 					"id": "obj-21",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "freq",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -530,7 +531,7 @@
 						108.0,
 						22.0
 					],
-					"text": "prepend param freq"
+					"style": ""
 				}
 			},
 			{
@@ -620,7 +621,8 @@
 			{
 				"box": {
 					"id": "obj-24",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "coarseness",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -632,7 +634,7 @@
 						150.0,
 						22.0
 					],
-					"text": "prepend param coarseness"
+					"style": ""
 				}
 			},
 			{
@@ -722,7 +724,8 @@
 			{
 				"box": {
 					"id": "obj-27",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "anisotropy",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -734,7 +737,7 @@
 						150.0,
 						22.0
 					],
-					"text": "prepend param anisotropy"
+					"style": ""
 				}
 			},
 			{
@@ -824,7 +827,8 @@
 			{
 				"box": {
 					"id": "obj-30",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "angle",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -836,7 +840,7 @@
 						115.0,
 						22.0
 					],
-					"text": "prepend param angle"
+					"style": ""
 				}
 			},
 			{
@@ -926,7 +930,8 @@
 			{
 				"box": {
 					"id": "obj-33",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "zoom",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -938,7 +943,7 @@
 						108.0,
 						22.0
 					],
-					"text": "prepend param zoom"
+					"style": ""
 				}
 			},
 			{
@@ -1028,7 +1033,8 @@
 			{
 				"box": {
 					"id": "obj-36",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "threshold",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1040,7 +1046,7 @@
 						143.0,
 						22.0
 					],
-					"text": "prepend param threshold"
+					"style": ""
 				}
 			},
 			{
@@ -1130,7 +1136,8 @@
 			{
 				"box": {
 					"id": "obj-39",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "colorize",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1142,7 +1149,7 @@
 						136.0,
 						22.0
 					],
-					"text": "prepend param colorize"
+					"style": ""
 				}
 			},
 			{
@@ -1232,7 +1239,8 @@
 			{
 				"box": {
 					"id": "obj-42",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "along_phase",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1244,7 +1252,7 @@
 						157.0,
 						22.0
 					],
-					"text": "prepend param along_phase"
+					"style": ""
 				}
 			},
 			{
@@ -1334,7 +1342,8 @@
 			{
 				"box": {
 					"id": "obj-45",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "across_phase",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1346,7 +1355,7 @@
 						164.0,
 						22.0
 					],
-					"text": "prepend param across_phase"
+					"style": ""
 				}
 			},
 			{
@@ -1436,7 +1445,8 @@
 			{
 				"box": {
 					"id": "obj-48",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "softness",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1448,7 +1458,7 @@
 						136.0,
 						22.0
 					],
-					"text": "prepend param softness"
+					"style": ""
 				}
 			},
 			{
@@ -1549,7 +1559,8 @@
 			{
 				"box": {
 					"id": "obj-19c",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "proc_mode",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1561,7 +1572,7 @@
 						143.0,
 						22.0
 					],
-					"text": "prepend param proc_mode"
+					"style": ""
 				}
 			},
 			{
@@ -1595,7 +1606,8 @@
 			{
 				"box": {
 					"id": "obj-51",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "bypass",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1607,7 +1619,7 @@
 						131.0,
 						22.0
 					],
-					"text": "prepend param bypass"
+					"style": ""
 				}
 			}
 		],

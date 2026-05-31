@@ -172,7 +172,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Arm count — all integers tile cleanly",
+					"hint": "Arm count \u2014 all integers tile cleanly",
 					"id": "obj-3",
 					"maxclass": "live.dial",
 					"numinlets": 1,
@@ -512,7 +512,8 @@
 			{
 				"box": {
 					"id": "obj-14",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "zoom",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -524,13 +525,14 @@
 						123.0,
 						22.0
 					],
-					"text": "prepend param zoom"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-15",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "n_arms",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -542,13 +544,14 @@
 						133.0,
 						22.0
 					],
-					"text": "prepend param n_arms"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-16",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "twist",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -560,13 +563,14 @@
 						117.0,
 						22.0
 					],
-					"text": "prepend param twist"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-17",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "rotation",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -578,13 +582,14 @@
 						133.0,
 						22.0
 					],
-					"text": "prepend param rotation"
+					"style": ""
 				}
 			},
 			{
 				"box": {
 					"id": "obj-18",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "time_s",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -596,7 +601,7 @@
 						129.0,
 						22.0
 					],
-					"text": "prepend param time_s"
+					"style": ""
 				}
 			},
 			{
@@ -721,7 +726,8 @@
 			{
 				"box": {
 					"id": "obj-23",
-					"maxclass": "newobj",
+					"maxclass": "attrui",
+					"attr": "bypass",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -733,7 +739,7 @@
 						131.0,
 						22.0
 					],
-					"text": "prepend param bypass"
+					"style": ""
 				}
 			},
 			{
