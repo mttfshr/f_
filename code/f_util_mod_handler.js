@@ -29,8 +29,9 @@
 //
 // Outlets:
 //   0 — param messages to pix in0
+//   1 — echo: set <source_idx> <param> <amount>  (to keep grid and strip in sync)
 
-outlets = 1;
+outlets = 2;
 inlets = 2;
 
 // amounts[paramName][source_idx] = amount
@@ -51,6 +52,7 @@ function anything() {
 		amounts[param][src] = amount;
 
 		outlet(0, "param", param + suffix, amount);
+		outlet(1, "set", src, param, amount);
 
 	} else if (inlet === 1) {
 		// base value: <param> <value>
