@@ -1,96 +1,82 @@
-# HANDOFF — f_ session 2026-05-31
+# HANDOFF — f_ session 2026-06-03
 
 ## Status
-Clean. All committed work passing. No broken state.
+f_masonry context strip complete and working. Several reconstruction issues resolved after accidental git restore. Commit pending.
 
 ---
 
-## What was completed this session
+## What was done this session
 
-### Tech debt audit and resolution
-Full audit of all active patchers against current vsynth-bpatcher conventions.
-Four debt axes identified and paid:
+### f_masonry: context strip (Phase 6 UI refinement)
 
-**`prepend param` → `attrui`** (all patchers)
-141 boxes migrated across 13 patchers. `build_patcher.py` updated to generate
-`attrui` going forward. `tools/migrate_to_attrui.py` added for future reference.
-`src_mode` correctly left as `prepend` (system-driven, intentional).
+**Design decision:** Replace Controls/Matrix back-panel-only workflow with a persistent context strip at the bottom of the front panel. Strip shows A/B mod amounts for the last-touched dial — same row layout as the grid. Grid on back panel unchanged (visual memory/recall function). Two views into the same mod handler state.
 
-**Missing `routepass` on 4 processor patchers**
-`f_channel_grader`, `f_hue_processor`, `f_luma_processor`, `f_tone_curve` all had
-`inlet → route` directly — texture path broken entirely. Fixed by inserting
-`routepass jit_gl_texture jit_matrix` in each. `tools/add_routepass.py` added.
+**JS changes — `f_util_matrix_grid.js`:**
+- Added `strip_mode` and `focused_param` state variables
+- Added `strip` message: sets single-row mode
+- Added `focus <param>` message: sets focused param, triggers redraw
+- Extracted `draw_row()` as shared function used by both grid and strip
+- Added `paint_strip()` / `paint_grid()` split; `paint()` branches on `strip_mode`
+- Strip hit test works without scroll offset or header
+- Placeholder state: "— no focus —" when no param focused yet
+- A/B labels rendered as small dim text in top-left of each cell (no separate header row)
 
-**Missing `autopattr` on `f_droste`**
-Added `autopattr @varname droste_autopattr`.
+**`f_util_mod_handler.js`:**
+- Added outlet 1: echoes `set <source_idx> <param> <amount>` on every mod assignment
+- Grid and strip both receive echo → stay in sync when either is edited
 
-**Missing `vs_inState` on `f_grain` and `f_masonry`**
-Both patchers now use `vs_inState` + `vs_black` fallback. Draw when unconnected.
-`Param src_mode(0.0)` prepended to both codeboxes. `tools/add_instate.py` added.
+**Patcher changes — `f_masonry.maxpat`:**
+- Panel extended by 26px to accommodate strip
+- Strip jsui (obj-141, varname=`context_strip`) added to front presentation layer
+- `strip` message (obj-142) fires at loadbang via deferlow path
+- `params` message fans out to both grid (obj-100) and strip (obj-141)
+- Mod handler outlet 1 wired to both grid and strip for sync
+- Per-dial focus chain: dial out0 → `focus <param>` message (obj-156–168) → strip
+- Focus fires on value change (live.dial doesn't expose mousedown — known limitation)
+- `deferlow + 0` message forces Controls panel on load (was showing Matrix on open)
 
-All patchers opened and verified working in Max after migration.
+**Texture inlets restored (lost in git restore incident):**
+- `in2` / `in3` added to gen subpatcher, wired to codebox inlets 1/2
+- Codebox `numinlets` set to 3
+- 26 mod_amt params added to codebox (`<param>_mod_amt_a/b` for 13 modulatable params)
+- `a_sample` / `b_sample` sampling lines added; `_eff` values computed per param
+- `vs_inState` added for in2 and in3 (modulation inlets get vs_black fallback)
+- `vs_inState` on in0 removed — masonry is a pure generator, replaced with `r draw`
+- Masonry now renders standalone without any incoming texture
 
-### f_lens Phase 5
-Vsynth integration testing passed. README updated (was already marked Working —
-Phase 5 confirmation now on record).
-
-### README / status table
-`f_stipple` added to status table (was missing). Removed from build queue.
-`f_masonry` naming note: pix object has `@name weave_pix` — pre-existing
-inconsistency, not introduced this session. Not fixed (low priority).
-
-### f_util_profile spec + plan + tasks
-Full spec locked:
-- Output: always `1×128` GL texture (fixed dimensions)
-- `resolution` param (1–128, default 64): CPU-side analysis sharpness via
-  interpolation — real-time modulatable, does not change output dimensions
-- `freq` param (1–64, default 8): sync vocabulary only, not used internally
-- Bypass: freeze last computed profile; 0.5 flat on first load
-- Architecture: `jit.gl.asyncread` → `js profile_compute.js` → `jit.gl.texture`
-- New archetype: no `jit.gl.pix`, CPU-side only, hand-built JSON (no build script)
-
-Plan written with 6 ADRs. Tasks written T001–T039 across 5 phases.
+**Build scripts added:**
+- `tools/add_context_strip_to_masonry.py` — adds strip jsui, focus chain, panel extension
+- `tools/add_texture_inlets_to_masonry.py` — adds in2/in3, mod_amt params, codebox sampling
 
 ---
 
-## Recommended next session
+## Known issues / loose threads
 
-### Start: f_util_profile Phase 1 (T001–T008)
-Build the scratch patch and prove the GPU→CPU→GPU round trip.
+- **Strip focus on click without drag:** `live.dial` doesn't expose mousedown. Strip updates on first value change only. Acceptable for performance use — dial touch implies value change.
+- **`f_masonry` pix still named `weave_pix`:** pre-existing inconsistency, low priority.
+- **`autopattr varname` error on load:** pre-existing, not introduced this session.
 
-Four open questions Phase 1 will answer:
-1. Does `jit.gl.asyncread` need `@drawto vsynth` to read from the right context?
-2. Is asyncread output `char` (0–255) or `float32`? (Affects JS normalization)
-3. Is `f_/code/profile_compute.js` found by Max when bpatcher loaded from `patchers/`?
-4. `jit.gl.texture @name` collision strategy for multiple instances — defer to Phase 4
+---
 
-### Then: f_util_profile Phase 2 (T009–T016)
-Aggregation and interpolation in JS. f_masonry as upstream texture for verification.
+## Incident note
 
-### Remaining backlog (lower priority)
-- `f_chladni` signal chain — EEG/spectral driving via muse.maxpat
-- `f_util_envelope` — spec alongside or immediately after profile build; needed
-  once profile is producing raw signal
-- `f_masonry` pix naming: `@name weave_pix` should be `masonry_pix` — trivial
-  fix but requires closing the patcher first
+Mid-session `git checkout patchers/f_masonry.maxpat` was run twice without diffing first, destroying uncommitted manual layout work (matrix grid tightening, panel toggle, texture inlets). Recovered by replaying build scripts against git baseline. **Always diff before git restore.** Commit after every verified milestone.
+
+---
+
+## Next session
+
+- Verify full modulation signal chain works end-to-end (texture on in2/in3 → shader mod)
+- Commit this session's work (pending)
+- Consider propagating context strip pattern to other f_ patches with matrix modulation
+- f_util_profile Phase 1 (T001–T008) — scratch patch, GPU→CPU→GPU round trip
+- f_chladni signal chain
 
 ---
 
 ## Files changed this session
-- `patchers/*.maxpat` — all 13 active patchers (attrui migration + routepass + instate)
-- `tools/build_patcher.py` — prepend_box → attrui_box
-- `tools/migrate_to_attrui.py` — new
-- `tools/add_routepass.py` — new
-- `tools/add_instate.py` — new
-- `README.md` — f_stipple added, f_lens Phase 5 noted, build queue updated
-- `.specify/f_util_profile/spec.md` — new (gitignored)
-- `.specify/f_util_profile/plan.md` — new (gitignored)
-- `.specify/f_util_profile/tasks.md` — new (gitignored)
-
-## Git log this session
-```
-80b2a1d README: add f_stipple to table, remove from build queue; f_lens Phase 5 confirmed
-416de72 tech debt: autopattr on f_droste, vs_inState on f_grain + f_masonry
-deb9646 add routepass to 4 processor patchers missing texture/control separation
-01ab900 migrate prepend param → attrui across all patchers and build script
-```
+- `patchers/f_masonry.maxpat` — context strip, texture inlets, pure generator fix
+- `code/f_util_matrix_grid.js` — strip mode, focus message, draw_row refactor
+- `code/f_util_mod_handler.js` — outlet 1 echo for grid/strip sync
+- `tools/add_context_strip_to_masonry.py` — new
+- `tools/add_texture_inlets_to_masonry.py` — new
