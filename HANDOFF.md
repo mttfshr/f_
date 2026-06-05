@@ -1,63 +1,57 @@
-# HANDOFF — f_ session 2026-06-04
+# HANDOFF — f_ session 2026-06-04 (session 2)
 
 ## Status
-f_masonry three-space modulation architecture designed, spec/plan/tasks updated, codebox (phase6) written and working. C inlet wiring issue blocking final verification — left for next session.
+Texture resolution and aliasing investigation across droste, stereo, masonry. Several fixes committed. f_grain reported broken — needs troubleshooting next session.
 
 ---
 
 ## What was done this session
 
-### f_masonry: three-space modulation architecture
+### f_droste, f_stereo: @type char
+Both patchers were outputting at lower effective resolution than input because `jit.gl.pix` without `@type char` defaults to float32 and adapts to Vsynth context dim in an inconsistent way. Added `@type char` to both, matching Vsynth processor convention (vs_hue_rot, vs_wavefolder, etc.).
 
-**Design discussion:** Identified that A and B were both sampling in brick identity space (slot/course center quantized). This is correct for structural params but limits expressive range. Developed a principled three-space model:
+**Note:** f_mobius, f_grain, f_lens, f_stipple, f_masonry, f_chladni are also missing `@type char` — deferred.
 
-- **A (slot space)** — brick identity, `brick_uv` — structural + appearance params
-- **B (intra-brick space)** — `vec(along_frac, across_phase)`, tiles per brick face — appearance params only
-- **C (pixel/screen space)** — `norm`, continuous across field — appearance params only
+### Droste center pixelation investigation
+Investigated pixelation of raster sources (masonry, stipple) near droste center vs WFG which is clean. Conclusion: single-pass droste on raster sources fundamentally cannot recurse — the center maps to magnified source texels. True Droste recursion requires multi-pass rendering (each pass feeding the next) or the source to be analytically infinite (like WFG float32). Frame delay doesn't help for static sources. **Not resolved — accepted as architectural limitation of single-pass droste on raster sources.**
 
-Key insight: upstream screen-space textures get chopped by the brick mask — they do not modulate brick structure. So pixel space is genuinely a third distinct space, not redundant with upstream processing.
-
-Structural/appearance param split is principled: modulating offset, drift, etc. from intra-brick or screen space breaks slot quantization or causes circularity. Appearance params (mortar, softness, width, roundness, course_color, brick_color) are safe from all three spaces. Framed as discovery — C may make some appearance params redundant.
-
-**Spec/plan/tasks updated:**
-- spec.md Phase 5 fully rewritten for three-space model
-- plan.md ADR 6 added documenting the decision
-- tasks.md M001 marked superseded, M002 written
-
-**Codebox:** `codebox_phase6.gen` written and pasted into patcher. Compiles and runs correctly. B sampling moved to after full geometry block (needs `along_frac`, `across_phase`). C samples at `norm`. `sqrt()` replaced with `pow(x, 0.5)`.
-
-**Matrix UI:** `f_util_matrix_grid.js` updated to 3 sources (A/B/C). `f_util_mod_handler.js` updated with C suffix routing. Matrix now shows three columns.
-
-**Anti-aliasing investigation:** `dFdx`/`dFdy` confirmed NOT available in jit.gl.pix gen codebox (Gen compiles to GLSL but only exposes documented GenExpr operators). Approximation via `courses/dim.y` tried but caused artifacts. Reverted. Aliasing is a known limitation for now.
+### f_masonry: @type float32 + analytical AA
+- Changed pix to `@type float32` (preserves precision)
+- Added analytical AA block computing per-pixel smoothstep width from screen-space gradient of brick geometry
+- `dim` in jit.gl.pix codebox returns input matrix dimensions (huge/undefined when no texture input) — workaround is hardcoded `px_norm = 1.0 / 640.0`
+- AA improves edge quality at native resolution but does not fix droste center pixelation (different problem)
+- `aspect = dim.x / dim.y` in masonry codebox is also using broken `dim` — currently returns 1.0 by coincidence (square context) but should be fixed properly
 
 ---
 
-## Loose thread: C inlet wiring
+## Known issues / loose threads
 
-C inlet "no data" in vs_inState despite WFG wired to it in Vsynth. Traced through JSON:
-- `in 4` exists in gen subpatcher and is wired to codebox
-- `numinlets` on pix is 4 (correct)
-- Three vs_inState objects present, third feeds pix inlet 3
-- Outer bpatcher inlet objects all show `index: 0` — possible inlet ordering/indexing issue
-- Suspect bpatcher inlet positions may not match expected order in Vsynth
+### f_grain: broken
+Suddenly not working. Cause unknown. **First priority next session.**
 
-**Next session: hover over each texture inlet on the outer bpatcher in Max and confirm which inlet index each reports. Check if inlet 4 on the outer bpatcher is correctly declared.**
+### f_masonry: C inlet wiring still unverified
+From previous session: C inlet (in4) may not be correctly wired in bpatcher. Hover over each texture inlet in Max to confirm index ordering.
+
+### f_masonry: aspect using broken dim
+`aspect = dim.x / dim.y` uses `dim` which returns input matrix dimensions (undefined for generator). Works by coincidence in square context. Should be replaced with hardcoded `1.0` or exposed as a param.
+
+### f_masonry: overall unresolved
+Masonry is not a well-resolved tool yet. Aliasing, droste interaction, C inlet, and general robustness all need work.
 
 ---
 
-## Param split reference (A only vs A+B+C)
-
-**A only (structural):** drift, offset, speed_var, regularity, phase, quantize, skip
-
-**A + B + C (appearance):** mortar, softness, width, roundness, course_color, brick_color
+## Key learnings this session
+- `dim` in jit.gl.pix codebox = input matrix dimensions, not output/context dimensions
+- `norm` is correctly 0–1 over output in jit.gl.pix generator context
+- `texdim` does not exist in jit.gl.pix gen context
+- `@type char` is the correct Vsynth processor convention for most effect patchers
+- True Droste recursion on raster sources requires multi-pass rendering
 
 ---
 
 ## Files changed this session
-- `.specify/f_masonry/spec.md` — Phase 5 rewritten for three-space model
-- `.specify/f_masonry/plan.md` — ADR 6 added
-- `.specify/f_masonry/tasks.md` — M001 superseded, M002 written
-- `.specify/f_masonry/codebox_phase6.gen` — new codebox
-- `patchers/f_masonry.maxpat` — codebox updated (phase6), pix numinlets=4
-- `code/f_util_matrix_grid.js` — NUM_SOURCES 2→3, SOURCE_LABELS A/B/C
+- `patchers/f_droste.maxpat` — added `@type char`
+- `patchers/f_stereo.maxpat` — added `@type char`
+- `patchers/f_masonry.maxpat` — `@type float32`, analytical AA block
+- `code/f_util_matrix_grid.js` — NUM_SOURCES 2→3, labels A/B/C
 - `code/f_util_mod_handler.js` — C suffix routing added

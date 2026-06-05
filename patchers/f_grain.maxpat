@@ -28,8 +28,6 @@
 					"outlettype": [
 						""
 					],
-					"param_connect": "grain_pix::bypass",
-					"parameter_enable": 1,
 					"patching_rect": [
 						164.0,
 						103.0,
