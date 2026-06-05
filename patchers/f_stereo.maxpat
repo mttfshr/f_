@@ -872,7 +872,7 @@
 						270.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name stereo_pix",
+					"text": "jit.gl.pix vsynth @name stereo_pix @type char",
 					"varname": "stereo_pix"
 				}
 			},

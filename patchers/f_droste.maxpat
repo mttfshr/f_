@@ -719,7 +719,7 @@
 						230.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name droste_pix",
+					"text": "jit.gl.pix vsynth @name droste_pix @type char",
 					"varname": "droste_pix"
 				}
 			},
