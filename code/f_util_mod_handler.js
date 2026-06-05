@@ -46,7 +46,7 @@ function anything() {
 		if (args.length < 2) return;
 		var src = args[0];  // 0 = a, 1 = b
 		var amount = args[1];
-		var suffix = (src === 0) ? "_mod_amt_a" : "_mod_amt_b";
+		var suffix = (src === 0) ? "_mod_amt_a" : (src === 1) ? "_mod_amt_b" : "_mod_amt_c";
 
 		if (!amounts[param]) amounts[param] = {};
 		amounts[param][src] = amount;
@@ -65,7 +65,7 @@ function anything() {
 function clear() {
 	for (var p in amounts) {
 		for (var src in amounts[p]) {
-			var suffix = (parseInt(src) === 0) ? "_mod_amt_a" : "_mod_amt_b";
+			var suffix = (parseInt(src) === 0) ? "_mod_amt_a" : (parseInt(src) === 1) ? "_mod_amt_b" : "_mod_amt_c";
 			outlet(0, "param", p + suffix, 0.0);
 		}
 	}
@@ -76,7 +76,7 @@ function clear() {
 function dump() {
 	for (var p in amounts) {
 		for (var src in amounts[p]) {
-			var suffix = (parseInt(src) === 0) ? "_mod_amt_a" : "_mod_amt_b";
+			var suffix = (parseInt(src) === 0) ? "_mod_amt_a" : (parseInt(src) === 1) ? "_mod_amt_b" : "_mod_amt_c";
 			post(p + suffix + " = " + amounts[p][src] + "\n");
 		}
 	}

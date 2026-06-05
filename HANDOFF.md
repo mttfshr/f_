@@ -1,53 +1,63 @@
-# HANDOFF — f_ session 2026-06-03 (evening)
+# HANDOFF — f_ session 2026-06-04
 
 ## Status
-f_masonry modulation sampling architecture fixed and working. Commit pending.
+f_masonry three-space modulation architecture designed, spec/plan/tasks updated, codebox (phase6) written and working. C inlet wiring issue blocking final verification — left for next session.
 
 ---
 
 ## What was done this session
 
-### f_masonry: brick-space modulation sampling
+### f_masonry: three-space modulation architecture
 
-**Problem identified:** A and B were sampling in screen space (`norm.x`, `norm.y`), not masonry structure space. This caused:
-- Offset modulation having no effect on course 0 (band_idx=0 → band_idx * offset_eff = 0)
-- Other params modulating in screen-space gradients rather than brick-space patterns
-- The original per-course/per-brick articulation was designed for 1×N profile textures — with full 2D textures the distinction belongs in what texture you connect, not how you sample
+**Design discussion:** Identified that A and B were both sampling in brick identity space (slot/course center quantized). This is correct for structural params but limits expressive range. Developed a principled three-space model:
 
-**Architecture settled:**
-- A and B both sample at the same brick-UV: `vec(wrap(slot/bond_scale, 0,1), wrap(band_idx/course_scale, 0,1))`
-- Two independent mod lanes, distinction is in the texture patched to each inlet
-- Geometry block moved before sampling so brick-UV coords are available
+- **A (slot space)** — brick identity, `brick_uv` — structural + appearance params
+- **B (intra-brick space)** — `vec(along_frac, across_phase)`, tiles per brick face — appearance params only
+- **C (pixel/screen space)** — `norm`, continuous across field — appearance params only
 
-**Offset special case:**
-- `offset_shift` computed from per-course UV `vec(0.5, band_idx/course_scale)` — no along component
-- Avoids circularity: offset shifts the slot used for sampling, so sampling can't depend on the shifted slot
-- `along_shifted = along + offset_shift / bond_scale` applied before all slot/along_cont computation
-- Whole course slides as a unit — gaps and bricks together, no stripe artifacts
+Key insight: upstream screen-space textures get chopped by the brick mask — they do not modulate brick structure. So pixel space is genuinely a third distinct space, not redundant with upstream processing.
 
-**Stripe artifact root cause and fix:**
-- Artifact appeared at slot boundaries when offset_shift was in along_cont but not in slot
-- Or when preliminary slot (for UV) and rendering slot were out of sync
-- Fix: per-course offset sampling breaks the circularity entirely — preliminary slot stays unshifted, along_shifted carries the shift into both slot and along_cont together
+Structural/appearance param split is principled: modulating offset, drift, etc. from intra-brick or screen space breaks slot quantization or causes circularity. Appearance params (mortar, softness, width, roundness, course_color, brick_color) are safe from all three spaces. Framed as discovery — C may make some appearance params redundant.
 
----
+**Spec/plan/tasks updated:**
+- spec.md Phase 5 fully rewritten for three-space model
+- plan.md ADR 6 added documenting the decision
+- tasks.md M001 marked superseded, M002 written
 
-## Known issues / loose threads
+**Codebox:** `codebox_phase6.gen` written and pasted into patcher. Compiles and runs correctly. B sampling moved to after full geometry block (needs `along_frac`, `across_phase`). C samples at `norm`. `sqrt()` replaced with `pow(x, 0.5)`.
 
-- **Other mod params not audited** for structural issues — likely fine since none multiply by band_idx the way offset does, but worth a pass
-- **Offset samples at x=0.5** — horizontal texture variation ignored for offset modulation. Per-column offset variation not possible with current approach. Acceptable for now.
-- **`f_masonry` pix still named `weave_pix`** — pre-existing, low priority
-- **`autopattr varname` error on load** — pre-existing, not introduced this session
+**Matrix UI:** `f_util_matrix_grid.js` updated to 3 sources (A/B/C). `f_util_mod_handler.js` updated with C suffix routing. Matrix now shows three columns.
+
+**Anti-aliasing investigation:** `dFdx`/`dFdy` confirmed NOT available in jit.gl.pix gen codebox (Gen compiles to GLSL but only exposes documented GenExpr operators). Approximation via `courses/dim.y` tried but caused artifacts. Reverted. Aliasing is a known limitation for now.
 
 ---
 
-## Next session
+## Loose thread: C inlet wiring
 
-- Audit remaining mod params for structural issues
-- f_util_profile Phase 1 (T001–T008) — scratch patch, GPU→CPU→GPU round trip
-- f_chladni signal chain
+C inlet "no data" in vs_inState despite WFG wired to it in Vsynth. Traced through JSON:
+- `in 4` exists in gen subpatcher and is wired to codebox
+- `numinlets` on pix is 4 (correct)
+- Three vs_inState objects present, third feeds pix inlet 3
+- Outer bpatcher inlet objects all show `index: 0` — possible inlet ordering/indexing issue
+- Suspect bpatcher inlet positions may not match expected order in Vsynth
+
+**Next session: hover over each texture inlet on the outer bpatcher in Max and confirm which inlet index each reports. Check if inlet 4 on the outer bpatcher is correctly declared.**
+
+---
+
+## Param split reference (A only vs A+B+C)
+
+**A only (structural):** drift, offset, speed_var, regularity, phase, quantize, skip
+
+**A + B + C (appearance):** mortar, softness, width, roundness, course_color, brick_color
 
 ---
 
 ## Files changed this session
-- `patchers/f_masonry.maxpat` — brick-space modulation sampling, offset special case, geometry reorder
+- `.specify/f_masonry/spec.md` — Phase 5 rewritten for three-space model
+- `.specify/f_masonry/plan.md` — ADR 6 added
+- `.specify/f_masonry/tasks.md` — M001 superseded, M002 written
+- `.specify/f_masonry/codebox_phase6.gen` — new codebox
+- `patchers/f_masonry.maxpat` — codebox updated (phase6), pix numinlets=4
+- `code/f_util_matrix_grid.js` — NUM_SOURCES 2→3, SOURCE_LABELS A/B/C
+- `code/f_util_mod_handler.js` — C suffix routing added

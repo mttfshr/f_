@@ -23,8 +23,8 @@ mgraphics.init();
 mgraphics.relative_coords = 0;
 mgraphics.autofill = 0;
 
-var NUM_SOURCES = 2;
-var SOURCE_LABELS = ["A", "B"];
+var NUM_SOURCES = 3;
+var SOURCE_LABELS = ["A", "B", "C"];
 
 var params = [];
 var amounts = [];
