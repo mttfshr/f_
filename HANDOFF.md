@@ -1,57 +1,66 @@
-# HANDOFF — f_ session 2026-06-04 (session 2)
+# HANDOFF — f_ session 2026-06-05
 
 ## Status
-Texture resolution and aliasing investigation across droste, stereo, masonry. Several fixes committed. f_grain reported broken — needs troubleshooting next session.
+f_grain fixed (processor mode working). Codebox skill written from empirical test data. E2E testing plan written. Cache clear script added. Ready for e2e testing phase.
 
 ---
 
 ## What was done this session
 
-### f_droste, f_stereo: @type char
-Both patchers were outputting at lower effective resolution than input because `jit.gl.pix` without `@type char` defaults to float32 and adapts to Vsynth context dim in an inconsistent way. Added `@type char` to both, matching Vsynth processor convention (vs_hue_rot, vs_wavefolder, etc.).
+### f_grain: fixed
+- vs_inState wiring was broken (obj-44 / prepend param src_mode was wired to wrong inlet)
+- Added `r draw` receiver to drive pix when no texture connected
+- Removed `param_connect` / `parameter_enable` from bypass_toggle.js jsui (latent crash risk)
+- Dual-mode (no-input) behavior attempted but not resolved — deferred, noted in scratchpad
+- **Grain now works correctly as a processor** (requires incoming texture)
 
-**Note:** f_mobius, f_grain, f_lens, f_stipple, f_masonry, f_chladni are also missing `@type char` — deferred.
+### jit-gen-codebox skill
+- Ran 45 operator verification tests in scratch.maxpat against jit.gl.pix GPU path
+- Key findings that correct prior assumptions:
+  - `fract()` and `sqrt()` ARE valid — prior workaround notes were wrong
+  - `noise()` silently outputs black (most dangerous — compiles, no error, no output)
+  - Component access on stored variables (`col.x` after `col = sample(...)`) silently fails — inline access on sample() return value works (`sample(in1, uv).x`)
+  - `boundmode` in GenExpr syntax silently ignored — use `fract()` on coord instead
+  - `swiz` silently fails on GPU path
+  - `cell` and `band` are NOT reserved words — they shadow operators silently
+  - `dim` returns pixel dimensions (e.g. 640×480), not normalized values
+- Skill written to `/Users/matt/Github/claude-scaffold/skills/jit-gen-codebox/SKILL.md`
+- vsynth-bpatcher skill updated to reference jit-gen-codebox and correct outdated info
 
-### Droste center pixelation investigation
-Investigated pixelation of raster sources (masonry, stipple) near droste center vs WFG which is clean. Conclusion: single-pass droste on raster sources fundamentally cannot recurse — the center maps to magnified source texels. True Droste recursion requires multi-pass rendering (each pass feeding the next) or the source to be analytically infinite (like WFG float32). Frame delay doesn't help for static sources. **Not resolved — accepted as architectural limitation of single-pass droste on raster sources.**
+### E2E testing plan
+- Written to `.specify/e2e-testing/tasks.md`
+- Covers 11 working patchers + cross-cutting checks + build script backfill
+- 7 test dimensions per patcher: load/crash, code health, functional output, Vsynth chain integration, presentation layout, edit mode layout, build script cross-check
 
-### f_masonry: @type float32 + analytical AA
-- Changed pix to `@type float32` (preserves precision)
-- Added analytical AA block computing per-pixel smoothstep width from screen-space gradient of brick geometry
-- `dim` in jit.gl.pix codebox returns input matrix dimensions (huge/undefined when no texture input) — workaround is hardcoded `px_norm = 1.0 / 640.0`
-- AA improves edge quality at native resolution but does not fix droste center pixelation (different problem)
-- `aspect = dim.x / dim.y` in masonry codebox is also using broken `dim` — currently returns 1.0 by coincidence (square context) but should be fixed properly
+### Cache clear script
+- `tools/clear_max_cache.sh` — clears Max 9 Database/ cache
+- Checks Max is closed, skips Ableton/lock files, asks confirmation
+- Run with `./tools/clear_max_cache.sh` from repo root
 
 ---
 
 ## Known issues / loose threads
 
-### f_grain: broken
-Suddenly not working. Cause unknown. **First priority next session.**
+### f_grain dual-mode (no-input)
+- `r draw` + `vs_inState` + `src_mode` gray fallback all in place but dim uniform flickering, no grain visible
+- Needs dedicated debugging session
+- Grain works fine as processor — not a blocker
 
-### f_masonry: C inlet wiring still unverified
-From previous session: C inlet (in4) may not be correctly wired in bpatcher. Hover over each texture inlet in Max to confirm index ordering.
+### f_masonry unresolved
+- `aspect` uses `dim` which returns context pixel dimensions (640×480) — works by coincidence in square context but wrong
+- C inlet (in4) wiring still unverified
+- AA hardcoded to `px_norm = 1.0/640.0`
+- All captured in e2e tasks
 
-### f_masonry: aspect using broken dim
-`aspect = dim.x / dim.y` uses `dim` which returns input matrix dimensions (undefined for generator). Works by coincidence in square context. Should be replaced with hardcoded `1.0` or exposed as a param.
+### @type char missing
+- f_mobius, f_grain, f_lens, f_stipple, f_masonry, f_chladni all missing `@type char`
+- Tracked in e2e cross-cutting checks
 
-### f_masonry: overall unresolved
-Masonry is not a well-resolved tool yet. Aliasing, droste interaction, C inlet, and general robustness all need work.
-
----
-
-## Key learnings this session
-- `dim` in jit.gl.pix codebox = input matrix dimensions, not output/context dimensions
-- `norm` is correctly 0–1 over output in jit.gl.pix generator context
-- `texdim` does not exist in jit.gl.pix gen context
-- `@type char` is the correct Vsynth processor convention for most effect patchers
-- True Droste recursion on raster sources requires multi-pass rendering
+### scratch.maxpat
+- Needed `@drawto vsynth` on jit.gl.pix and render trigger — now correctly set up
+- Located at `/Users/matt/Vsynth/patterns/scratch.maxpat`
 
 ---
 
-## Files changed this session
-- `patchers/f_droste.maxpat` — added `@type char`
-- `patchers/f_stereo.maxpat` — added `@type char`
-- `patchers/f_masonry.maxpat` — `@type float32`, analytical AA block
-- `code/f_util_matrix_grid.js` — NUM_SOURCES 2→3, labels A/B/C
-- `code/f_util_mod_handler.js` — C suffix routing added
+## Next session
+Start e2e testing. Begin with f_grain (fresh in mind, known issues to document). Run A/B/C checks, layout audit, create definition.py.
