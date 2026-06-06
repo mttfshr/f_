@@ -16,6 +16,7 @@ var FIELD_OBJS = [
     "lbl_transmission_mod","lbl_surface_mod"
 ];
 
+function loadbang()   { setpanel(0); }
 function msg_int(v)   { setpanel(v); }
 function msg_float(v) { setpanel(Math.round(v)); }
 
