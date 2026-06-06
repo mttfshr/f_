@@ -4,7 +4,7 @@ A collection of bpatchers for [Vsynth](https://www.kevinkripper.com/vsynth) in [
 
 ## Installation
 
-Clone this repository or download a release and place the `f_` folder in your Max Packages directory:
+Clone this repository and place the `f_` folder in your Max Packages directory:
 
 - **macOS:** `~/Documents/Max 9/Packages/`
 - **Windows:** `Documents\Max 9\Packages\`
