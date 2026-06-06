@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 34.0, 383.0, 900.0, 700.0 ],
+        "rect": [ 34.0, 104.0, 900.0, 700.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
@@ -410,7 +410,7 @@
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "invert",
-                            "parameter_mmax": 1.0,
+                            "parameter_mmax": 10.0,
                             "parameter_modmode": 3,
                             "parameter_shortname": "invert",
                             "parameter_type": 0,
