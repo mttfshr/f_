@@ -113,15 +113,17 @@ Any patch with a vector field inlet must:
 
 | Patch | Status | Description |
 |---|---|---|
-| `f_vortex` | **Complete** | Single fixed-point vortex field — position, convergence, curl; 4 mod inlets |
-| `f_vortex_multi` | **Complete** | Three-site additive vortex field — per-site position/conv/curl via control inlet; 4 global mod inlets |
-| `f_vortex_turbulence` | Idea | Hash-grid turbulence field — implicit infinite sites |
+| `f_vf_vortex` | **Complete** | Single fixed-point vortex field — position, convergence, curl; 4 mod inlets |
+| `f_vf_vortex_multi` | **Complete** | Three-site additive vortex field — per-site position/conv/curl via control inlet; 4 global mod inlets |
+| `f_vf_fieldmap` | Planned | Scalar texture → vecfield via spatial derivative; replaces f_vortex_turbulence concept |
+| `f_vf_chladni` | Planned | Modal superposition, audio-driven; vecfield outlet to be added to existing f_chladni |
+| `f_vf_cymascope` | Planned | FDTD wave propagation, audio-driven |
 
 ### Consumers
 
 | Patch | Status | Notes |
 |---|---|---|
-| `f_caustic` | Idea | Streamline accumulation — requires coherent field; divergence-sensitive |
+| `f_caustic` | **Complete** | Streamline accumulation — requires coherent field; divergence-sensitive |
 | `f_lens` | Partial | Field inlet planned for spatial aberration modulation |
 | `vs_displacement` | Existing | Compatible encoding; treats as scalar pair, not coherent field |
 | `vs_xyz_disp` | Existing | Same as vs_displacement |

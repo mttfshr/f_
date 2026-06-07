@@ -333,8 +333,8 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name vortex_pix @type float32",
-					"varname": "vortex_pix"
+					"text": "jit.gl.pix vsynth @name vf_vortex_pix @type float32",
+					"varname": "vf_vortex_pix"
 				}
 			},
 			{
@@ -356,7 +356,7 @@
 						22.0
 					],
 					"text": "autopattr",
-					"varname": "vortex_autopattr"
+					"varname": "vf_vortex_autopattr"
 				}
 			},
 			{
@@ -707,7 +707,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::cx",
+					"param_connect": "vf_vortex_pix::cx",
 					"parameter_enable": 1,
 					"patching_rect": [
 						50.0,
@@ -810,7 +810,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::cy",
+					"param_connect": "vf_vortex_pix::cy",
 					"parameter_enable": 1,
 					"patching_rect": [
 						100.0,
@@ -913,7 +913,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::convergence",
+					"param_connect": "vf_vortex_pix::convergence",
 					"parameter_enable": 1,
 					"patching_rect": [
 						150.0,
@@ -1016,7 +1016,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::curl",
+					"param_connect": "vf_vortex_pix::curl",
 					"parameter_enable": 1,
 					"patching_rect": [
 						200.0,
@@ -1119,7 +1119,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::falloff",
+					"param_connect": "vf_vortex_pix::falloff",
 					"parameter_enable": 1,
 					"patching_rect": [
 						250.0,
@@ -1222,7 +1222,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::cx_amt",
+					"param_connect": "vf_vortex_pix::cx_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
 						300.0,
@@ -1325,7 +1325,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::cy_amt",
+					"param_connect": "vf_vortex_pix::cy_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
 						350.0,
@@ -1428,7 +1428,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::convergence_amt",
+					"param_connect": "vf_vortex_pix::convergence_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
 						400.0,
@@ -1531,7 +1531,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "vortex_pix::curl_amt",
+					"param_connect": "vf_vortex_pix::curl_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
 						450.0,
