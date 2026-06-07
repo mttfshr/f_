@@ -1,85 +1,52 @@
-# HANDOFF — f_ session 2026-06-07 (sixth session)
+# HANDOFF — f_ session 2026-06-07
 
 ## Status
 
-f_vortex label clipping fixed. f_caustic spec written. Ready for Phase 1 scratch validation.
+f_caustic is complete and working. Good stopping point.
 
 ---
 
 ## What was done this session
 
-### f_vortex — UI label clipping fixed
+### jit-gen-codebox skill — inlet mechanics corrected
+- Documented the correct mechanics for jit.gl.pix inlet count:
+  - `numinlets` on pix is read-only — derived from `in N` object count in gen subpatcher
+  - Codebox inlets are not set — they appear because `inN` is referenced in codebox code
+  - `in N` object must be wired to the codebox inlet that appears from the variable reference
+  - Order: add `inN` reference to codebox code first → inlet appears → add `in N` object → wire it
 
-- Added explicit `"label"` keys to all params in `.specify/f_vortex/definition.py`
-- Long names shortened: "Convergence" → "Converge", "Convergence Amt" → "Conv Amt", "Curl Amt" → "Curl Amt", etc.
-- Rebuilt `patchers/f_vortex.maxpat` — verify labels readable in Max
-
-### f_caustic spec written
-
-- `.specify/f_caustic/spec.md` — full spec, ready for plan phase
-- Core decisions locked (see below)
-- Four open questions flagged for scratch validation to resolve
-
----
-
-## f_caustic — decisions locked this session
-
-**Architecture:** additive streamline accumulation. At each pixel, trace backward
-through the field N steps, sample source, weight by local convergence (negative
-divergence), sum. Not UV displacement.
-
-**Inlets:**
-- in1: light source (required)
-- in2: f_vecfield (required, no fallback — unconnected = silent, zero caustic)
-
-**No in3 (surface texture) at launch** — deferred.
-
-**No inline radial fallback** — rejected. Unconnected field inlet is silent.
-
-**Parameters:** `intensity`, `scale`, `softness`, `color_shift`, `bypass`. Step count
-is a fixed compile-time constant (8), documented not parametric.
-
-**Outlets:** two, matching f_grain pattern:
-- out1: caustic composited additively over source (bypass-respecting)
-- out2: isolated caustic layer (pre-composite; black when bypass)
-
-**Compositing:** additive on out1. Darkening at divergence zones comes from absence
-of accumulation, not subtraction.
+### f_caustic — built and working
+- Scratch patch validated: streamline accumulation weighted by divergence works correctly
+- Fixed color_shift: was dead code; now offsets R/B sample positions along field direction per step
+- Codebox v3 is the final version: `in2` = light source, `in3` = vec field
+- Built `patchers/f_caustic.maxpat` via `.specify/f_caustic/build_caustic.py`
+- Confirmed working in Vsynth: caustic bright bands at vortex convergence zone, both outlets active
 
 ---
 
-## Open questions — resolve during Phase 1 scratch validation
+## f_caustic architecture (for reference)
 
-1. **`@type`:** processor convention = char, but caustic accumulation benefits from
-   float32 headroom. Lean toward float32. Decide after seeing accumulation behavior
-   in scratch patch — if bands clip or out2 is used as modulation source, float32.
-
-2. **`scale` calibration:** at scale=1.0, step_size = 1/8 = 0.125 normalized.
-   May be too coarse or too far. Calibrate against f_vortex sink output.
-
-3. **Divergence sign convention:** negative divergence = convergence = bright bands.
-   Confirm f_vortex sink topology (convergence > 0) actually produces negative
-   divergence at fixed point when decoded from RG texture.
-
-4. **out2 clamping:** leave unclamped (float32 modulation source) or clamp to 0–1?
-   Decide based on downstream use cases observed in scratch.
+- Inlet 0: control/bang
+- Inlet 1: light source → vs_inState → pix in1
+- Inlet 2: vec field → pix in2 directly (no vs_inState — zero field = silent, correct)
+- Outlet 0: composited (caustic additive over source)
+- Outlet 1: isolated caustic layer
+- `@type float32`, 4 params: intensity, scale, softness, color_shift
 
 ---
 
-## Next session
+## Next session priorities
 
-1. **Verify f_vortex labels** — open in Max, confirm no clipping
-2. **f_caustic Phase 1 scratch validation** — build caustic shader in scratch patch
-   using consumer_pix pattern from f_vortex Phase 1; resolve the four open questions
-3. **f_caustic plan** — write after scratch validation confirms architecture
+1. **f_vortex label fix** — already done last session; verify it's committed
+2. **f_masonry C inlet** — hover in Max to confirm inlet index assignments (was deferred)
+3. **f_grain** — was flagged broken; needs diagnosis
+4. **f_vortex_multi** — spec when f_vortex has seen performance use
 
 ---
 
-## Loose threads (carry-forward)
+## Loose threads
 
-- f_vortex Phase 3 integration — revisit when f_caustic is built
-- f_masonry C inlet (in4) wiring — hover in Max to confirm index assignments
-- f_masonry `quantize` param — needs performance use to judge
-- f_grain dual-mode — partially implemented, not working; deferred
-- f_droste `time_s` inlet on in[1] — convention violation; deferred refactor
-- f_vortex_multi and f_vortex_turbulence — do not spec until f_vortex in performance use
+- f_caustic has no help file yet
+- color_shift effect is subtle at low values — may want to scale the cs offset more aggressively
+- f_caustic + f_lens on same f_vortex field: untested but architecturally sound
+- jit-gen-codebox skill updated in claude-scaffold repo — verify it's committed there too

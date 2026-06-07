@@ -34,6 +34,7 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_tone_curve` | Processor | Tone curve adjustment |
 | `f_texrouter` | Utility | 4×4 texture routing matrix with preset system |
 | `f_vortex` | Generator | Single fixed-point vortex field — convergence, curl, position; f_vecfield producer |
+| `f_caustic` | Processor | Optical caustic — streamline accumulation weighted by field convergence; two outlets (composited / isolated layer) |
 
 ## Notes
 
