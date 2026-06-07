@@ -1,107 +1,58 @@
-# HANDOFF — f_ session 2026-06-06
+# HANDOFF — f_ session 2026-06-06 (fourth session)
 
 ## Status
 
-Repo cleanup + helpfile work. `f_droste.maxhelp` completed as the template for all future helpfiles.
-
----
-
-## Helpfile conventions established (f_droste.maxhelp as template)
-
-**Layout**: Single flat pane. No tabs unless a module has genuinely distinct usage modes or long documentation.
-
-**Structure top to bottom:**
-- Title bar: Ableton Sans Medium, 36pt, full width, themed bgcolor (`themecolor.live_control_text_bg`), varname `autohelp_top_digest[4]`. Text is short name without prefix — "Droste" not "f_droste".
-- Digest bar: Ableton Sans Light, 14pt, full width, same themed bgcolor, varname `autohelp_top_digest[3]`.
-- Signal flow column left: `vs_sources_main` → bpatcher → `vs_preview`. Dashed wires.
-- LFO (`vs_wfg_s`) to the right of bpatcher, wired to scalar/time inlet via outlet 1 (data out, not texture out).
-- Bubble label ("time_s") pointing left toward the wire, Ableton Sans Light.
-
-**External Control Messages block** (top-right, Ableton Sans Light, right-justified):
-Lists only externally-addressable params with ranges. Not UI dials.
-
-**References block** below External Control Messages, same column, Ableton Sans Light 12pt.
-Plain ASCII only (no unicode math symbols or curly quotes — font renders them but safer to avoid).
-
-**Canonical rects (processor with time inlet, patcher rect ~771x681):**
-- Panel (left column bg): `[0, -2, 303, 765]`
-- Title (h-1): `[15, 15, 270, 50]`
-- Digest (h-2): `[15, 75, 270, 40]`
-- External Control Messages (d-8): `[15, 150, 270, 122]` — grows with param count
-- References (r-1): `[15, 315, 270, 208]` — starts ~165px below ext ctrl bottom
-- vs_sources_main (d-3): `[338, 24, 296, 126]`
-- LFO/vs_wfg_s (d-6): `[417, 196, 75, 74]`
-- time_s bubble (d-7): `[500, 221, 64, 26]`
-- bpatcher (d-4): `[338, 294, 154, 91]`
-- vs_preview (d-5): `[338, 405, 236, 249]`
-
-**Tab architecture**: Investigated. Works via `showontab: 1` inside embedded patcher + `showrootpatcherontab: 0` on root. Root tab cannot be fully suppressed via JSON alone. Not worth the complexity for modules with short reference lists. Revisit only if a module genuinely needs multiple distinct views.
-
-**docs/ references**: Each module's `docs/f_name.md` gets a `## References` section with full citations. Helpfile references block is the summary; docs file is the canonical source.
+Scratch patch validated. f_vortex field generator and consumer both working. Ready to spec f_vortex.
 
 ---
 
 ## What was done this session
 
-### Repo organization
-- `code/` renamed to `javascript/` — aligns with Max package convention (Vsynth uses `javascript/` for JS, `code/` for gen files)
-- `tools/build_texrouter.py` moved from `code/` to `tools/` (it's a build script, not a runtime file)
-- `tools/` reorganized: masonry-specific scripts into `tools/masonry/`, util_profile scripts into `tools/util_profile/`
+### vortex-scratch.maxpat — built and validated
 
-### .specify/ updates
-- `f_chladni/tasks.md`: T029/T030 (view_mode verification) marked complete — confirmed passing last session per HANDOFF
-- `e2e-testing/tasks.md`: A (load/crash safety) marked done for all patchers touched last session (droste, lens, mobius, stereo, channel_grader, hue_processor, luma_processor, tone_curve); notes added; @type and bypass_toggle cross-cutting checks marked complete
-- `.specify/f_weave/` deleted — pre-rename masonry artifacts, superseded, preserved in git history
+Built `/Users/matt/Vsynth/patterns/vortex-scratch.maxpat` from scratch. Two jit.gl.pix objects:
 
-### ideas/ reorganization
-Scratchpad pruned from 506 → ~160 lines. Extracted to dedicated files:
-- `ideas/f_util_audio_spectra.md` — audio spectral character extractor concept
-- `ideas/f_vecfield.md` — vector field displacement generator; multi-fixed-point architecture; face/figure generator as motivating use case
-- `ideas/vsynth_gaps.md` — strategic analysis of Vsynth capability gaps and f_ positioning
-- `ideas/f_weave.md` — collision events appended; **distance field as hard design requirement** added with rationale
+- **vortex_pix** (`@type float32`) — field generator. Params: cx, cy, convergence, curl, falloff. Encodes signed XY field components as RG, 0.5 = zero vector.
+- **consumer_pix** (`@type char`) — field consumer. Decodes field from in2, displaces UV, samples source from in1. One param: amount.
 
-Deleted: `ideas/f_mobius.md`, `ideas/f_stipple.md` (superseded by built patchers)
+Signal flow: POLARIZER WAVEFORM GENERATOR → vortex_pix (bang) + consumer_pix in1 (source). vortex_pix outlet → consumer_pix in2 (field). consumer_pix outlet → CORNERPINS.
 
-Updated:
-- `ideas/f_cymascope.md` — history note clarifying chladni split; multi-pix alternative to ping-pong noted
-- `ideas/entrainment.md` — f_spiral noted as superseded by droste (arms=1, twist≈0, slow rotation)
-- `ideas/vsynth_gaps.md` — displacement gap clarified: field generators and idioms are interesting, replacement processors are not
+### Validation results
 
-### New ideas captured
-- **Masonry→droste aliasing root cause**: mortar edges are high-frequency boundary transitions; distance field approach is the architectural fix; f_weave written distance-field-native serves as proof of concept for future masonry refactor
-- **f_vecfield multi-fixed-point**: motivating use case is generative face/figure generator (tribal/fauvist/outsider aesthetic); face emerges from attractor topology rather than being drawn
-- **Droste raster reframe**: 360 video works through droste because natural images have no sub-pixel features; masonry's problem is feature frequency vs droste compression ratio, not AA per se
-- **f_cymascope**: multi-pix chaining may avoid explicit ping-pong texture management; investigate vs_chemical_osc architecture
+- Field topology correct: sink behavior confirmed with convergence, spiral with curl, fixed point moves with cx/cy
+- Falloff working: shapes the region of field influence
+- Consumer displacement confirmed: POLARIZER image visibly pulled toward fixed point
+- Encoding confirmed end-to-end: float32 RG → char displacement output
 
-### Helpfiles
-- `help/f_droste.maxhelp` created — working demo + external control block + references
-- `docs/f_droste.md` updated — correct param ranges, loose threads, references section added
-- Helpfile conventions documented above
+### Key empirical finding — inlet indexing
 
-### README
-Rewritten for public/package framing:
-- Installation updated to Packages directory with OS paths
-- Type column added to patch table (Generator / Processor / Utility)
-- Patches reordered: generators, processors, utilities
-- f_chladni updated to with audio companion note
-- Build Queue removed
-- Help files note folded into Notes
+In a jit.gl.pix gen subpatcher with two texture inlets:
+- Outer inlet 0 → `in 1` inside codebox (first texture)
+- Outer inlet 1 → `in 2` inside codebox (second texture)
+
+No bang-only inlet offset. The inlet index in the codebox (`in 1`, `in 2`) maps directly to outer inlet index (0, 1). This should be added to the jit-gen-codebox skill.
 
 ---
 
-## Next session options
+## Next session
 
-- **f_chladni Phase 3 (EEG)** — requires Muse headset; T020 measurement pass first
-- **f_chladni Phase 5 (docs)** — update docs/f_chladni.md, mark tasks complete
-- **f_mobius** — performance gap; what params would open up the useful range?
-- **f_chladni_audio spectral normalization** — per-frame normalization after slide~ envelopes
-- **Continue e2e audit** — B–G remaining for most patchers
-- **More helpfiles** — f_stereo is next simplest candidate
+**f_vortex spec** — scratch patch is validated, architecture is settled, ready to write `.specify/f_vortex/spec.md`. Key decisions already made:
+- Single fixed point
+- Continuous convergence/curl param space
+- Position animatable via modulation inlet
+- @type float32 (generator convention)
+- Encode: v * 0.5 + 0.5 into RG, B=0.5, A=1.0
 
-## Loose threads
+---
 
+## Loose threads (carry-forward)
+
+- jit-gen-codebox skill needs inlet indexing finding added (in 1 = outer inlet 0, no offset)
+- consumer_pix comment label still says "in0=field, in1=source" — wrong, cosmetic only
+- f_vortex_multi and f_vortex_turbulence — do not spec until f_vortex bpatcher working
 - f_masonry C inlet (in4) wiring — hover in Max to confirm index assignments
-- f_masonry `quantize` param — needs performance use to judge whether it earns its place
+- f_masonry `quantize` param — needs performance use to judge
 - f_grain dual-mode — partially implemented, not working; deferred
-- f_vecfield scratch patch — validate single-center displacement field in Vsynth before speccing
-- f_droste `time_s` inlet on in[1] — convention violation (should be in[0]); deferred refactor
+- f_droste `time_s` inlet on in[1] — convention violation; deferred refactor
+- f_caustic — do not spec until f_vortex scratch patch validated (now unblocked in principle, but f_vortex bpatcher should come first)
+- f_lens field inlet — what structural param does the field modulate? Deferred
