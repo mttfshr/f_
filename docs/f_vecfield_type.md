@@ -1,7 +1,7 @@
 # f_vecfield — Vector Field Type Contract
 
 _Created: 2026-06-06_
-_Status: Draft — encoding confirmed against vs_displacement source; consumer contracts (f_caustic, f_lens field inlet) pending_
+_Status: Draft — f_vortex complete; consumer contracts (f_caustic, f_lens field inlet) pending_
 
 ---
 
@@ -113,7 +113,7 @@ Any patch with a vector field inlet must:
 
 | Patch | Status | Description |
 |---|---|---|
-| `f_vortex` | Planned | Single fixed-point vortex field — position, convergence, curl |
+| `f_vortex` | **Complete** | Single fixed-point vortex field — position, convergence, curl |
 | `f_vortex_multi` | Idea | Voronoi-partitioned multi-fixed-point field |
 | `f_vortex_turbulence` | Idea | Hash-grid turbulence field — implicit infinite sites |
 
