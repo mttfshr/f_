@@ -994,7 +994,7 @@
 						50.0,
 						18.0
 					],
-					"text": "Convergence",
+					"text": "Converge",
 					"textjustification": 1
 				}
 			},
@@ -1509,7 +1509,7 @@
 						50.0,
 						18.0
 					],
-					"text": "Convergence Amt",
+					"text": "Conv Amt",
 					"textjustification": 1
 				}
 			},
