@@ -1,7 +1,7 @@
 # f_vecfield — Vector Field Type Contract
 
 _Created: 2026-06-06_
-_Status: Draft — f_vortex and f_vortex_multi complete; consumer contracts (f_caustic, f_lens field inlet) pending_
+_Status: Draft — f_vf_vortex and f_vf_vortex_multi complete; consumer contracts (f_caustic, f_lens field inlet) pending_
 
 ---
 
