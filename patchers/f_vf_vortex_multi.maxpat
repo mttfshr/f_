@@ -9,9 +9,25 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 660.0, 291.0, 800.0, 600.0 ],
+        "rect": [ 660.0, 291.0, 496.0, 600.0 ],
         "openinpresentation": 1,
         "boxes": [
+            {
+                "box": {
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 12.0,
+                    "id": "obj-7",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 35.0, 35.0, 81.0, 21.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 66.00000196695328, 0.0, 81.0, 21.0 ],
+                    "text": "vecfield",
+                    "textcolor": [ 0.45098039215686275, 0.47058823529411764, 0.5764705882352941, 1.0 ]
+                }
+            },
             {
                 "box": {
                     "comment": "texture in",
@@ -195,7 +211,7 @@
                             }
                         ]
                     },
-                    "patching_rect": [ 200.0, 380.0, 300.0, 22.0 ],
+                    "patching_rect": [ 200.0, 380.0, 316.0, 22.0 ],
                     "text": "jit.gl.pix vsynth @name vf_vortex_multi_pix @type float32",
                     "varname": "vf_vortex_multi_pix"
                 }

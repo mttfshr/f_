@@ -115,7 +115,7 @@ Any patch with a vector field inlet must:
 |---|---|---|
 | `f_vf_vortex` | **Complete** | Single fixed-point vortex field — position, convergence, curl; 4 mod inlets |
 | `f_vf_vortex_multi` | **Complete** | Three-site additive vortex field — per-site position/conv/curl via control inlet; 4 global mod inlets |
-| `f_vf_fieldmap` | Planned | Scalar texture → vecfield via spatial derivative; replaces f_vortex_turbulence concept |
+| `f_vf_fieldmap` | **Complete** | Scalar texture → vecfield via spatial derivative; replaces f_vortex_turbulence concept |
 | `f_vf_chladni` | Planned | Modal superposition, audio-driven; vecfield outlet to be added to existing f_chladni |
 | `f_vf_cymascope` | Planned | FDTD wave propagation, audio-driven |
 

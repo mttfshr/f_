@@ -37,6 +37,7 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | **f_vf_ family** | **vecfield producers** | **Output float32 f_vecfield textures -- consumed by f_caustic and f_lens field inlet** |
 | `f_vf_vortex` | Generator | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Generator | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
+| `f_vf_fieldmap` | Processor | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |
 
 ## Notes
 
