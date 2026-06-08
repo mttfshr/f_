@@ -22,7 +22,8 @@ var SIZES = {
     "util_profile":   [200, 120],
     "vf_vortex":      [196, 160],
     "vf_vortex_multi":[191, 284],
-    "vf_fieldmap":    [100,  80]
+    "vf_fieldmap":    [100,  80],
+    "vf_warp":        [ 78,  90]
 };
 
 function addmod(mod) {

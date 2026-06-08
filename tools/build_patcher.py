@@ -349,17 +349,41 @@ def mod_inlet_boxes(mod_inlets):
             text="vs_inState"))
     return boxes
 
+def mod_state_pre_id(i):
+    """prepend param <state_param> for modulation inlet i (when state_param present)."""
+    return f"obj-{100 + i * 3 + 2}"
+
 def mod_inlet_lines(mod_inlets):
-    """Wire each modulation inlet → vs_inState → pix inlet N."""
+    """Wire each modulation inlet → vs_inState → pix inlet N.
+    If a mod_inlet has a 'state_param' key, also wire vs_inState out1
+    → prepend param <state_param> → pix in0 (message inlet).
+    """
     lines = []
-    for i in range(len(mod_inlets)):
+    for i, mi in enumerate(mod_inlets):
         inlet_id   = mod_inlet_obj_id(i)
         instate_id = mod_instate_obj_id(i)
         # inlet → vs_inState
         lines.append(wire(inlet_id, 0, instate_id, 0))
         # vs_inState out0 (texture or vs_black) → pix inlet i+1
         lines.append(wire(instate_id, 0, OBJ_PIX, i + 1))
+        # optional: vs_inState out1 (0/1 state) → prepend param <state_param> → pix in0
+        if mi.get("state_param"):
+            pre_id = mod_state_pre_id(i)
+            lines.append(wire(instate_id, 1, pre_id, 0))
+            lines.append(wire(pre_id, 0, OBJ_PIX, 0))
     return lines
+
+def mod_state_pre_boxes(mod_inlets):
+    """Generate prepend param <state_param> boxes for mod inlets that declare one."""
+    boxes = []
+    for i, mi in enumerate(mod_inlets):
+        if mi.get("state_param"):
+            pre_id = mod_state_pre_id(i)
+            boxes.append(box(pre_id,
+                maxclass="newobj", numinlets=1, numoutlets=1, outlettype=[""],
+                patching_rect=[30.0 + (i + 1) * 60.0, 130.0, 160.0, 22.0],
+                text=f"prepend param {mi['state_param']}"))
+    return boxes
 
 
 # ---------------------------------------------------------------------------
@@ -444,23 +468,30 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None):
         # Wire codebox → out
         lines.append({"patchline": {"destination": [out_id, 0], "source": [codebox_id, 0]}})
     else:
-        # processor and dual: single inlet to codebox (mod_inlets not supported for these yet)
+        # processor and dual: in 1 → codebox inlet 0; optional mod_inlets → inlets 1..N
+        n_codebox_inlets = 1 + len(mod_inlets)
+        codebox_id = "gen-obj-2"
+        out_id     = "gen-obj-3"
         boxes.append({"box": {
             "code": codebox,
             "fontface": 0, "fontname": "<Monospaced>", "fontsize": 12.0,
-            "id": "gen-obj-2", "maxclass": "codebox",
-            "numinlets": 1, "numoutlets": 1, "outlettype": [""],
+            "id": codebox_id, "maxclass": "codebox",
+            "numinlets": n_codebox_inlets, "numoutlets": 1, "outlettype": [""],
             "patching_rect": [22.0, 80.0, 550.0, 380.0]
         }})
         boxes.append({"box": {
-            "id": "gen-obj-3", "maxclass": "newobj",
+            "id": out_id, "maxclass": "newobj",
             "numinlets": 1, "numoutlets": 0,
             "patching_rect": [22.0, 490.0, 35.0, 22.0], "text": "out 1"
         }})
-        lines = [
-            {"patchline": {"destination": ["gen-obj-2", 0], "source": ["gen-obj-1", 0]}},
-            {"patchline": {"destination": ["gen-obj-3", 0], "source": ["gen-obj-2", 0]}},
-        ]
+        # in 1 → codebox inlet 0
+        lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
+        # in 2..N → codebox inlets 1..N-1
+        for i in range(len(mod_inlets)):
+            gen_in_id = f"gen-obj-{10 + i}"
+            lines.append({"patchline": {"destination": [codebox_id, i + 1], "source": [gen_in_id, 0]}})
+        # codebox → out
+        lines.append({"patchline": {"destination": [out_id, 0], "source": [codebox_id, 0]}})
 
     return {
         "fileversion": 1,
@@ -545,9 +576,10 @@ def build(defn):
     if archetype == "dual":
         boxes.extend(instate_boxes())
 
-    # Modulation inlet boxes (inlet + vs_inState per mod inlet)
+    # Modulation inlet boxes (inlet + vs_inState per mod inlet, plus state prepends)
     if mod_inlets:
         boxes.extend(mod_inlet_boxes(mod_inlets))
+        boxes.extend(mod_state_pre_boxes(mod_inlets))
 
     # Per-param boxes (grid — float and int only)
     for n, p in enumerate(ui_params):
