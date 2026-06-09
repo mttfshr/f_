@@ -1,71 +1,49 @@
-# HANDOFF — f_ session 2026-06-08
+# HANDOFF — f_ session 2026-06-09 (continued)
 
 ## What was done this session
 
-### f_vf_streak — complete
+### Build system assessment and generalization
 
-Full build from idea through integration testing and registration.
+Full assessment of build_patcher.py gaps vs per-module scripts. Two features identified and implemented:
 
-**Design discussion:**
-- Evaluated vecfield consumer candidates from NOTES.md; chose flow streaks as next build
-- Decided against masking (infrastructure, not immediately performable) and advection (multipass, not yet)
-- Established parameter set: strength, length, falloff, color_shift — rationale documented
-- Pressure-tested whether `scale` should be added to f_vf_warp (it shouldn't; no clean mapping)
+**Feature A — Multiple outlets (`outlets` key)**
+- `outlets: [{comment, color?}, ...]` in definition.py
+- Defaults to `[{"comment": "texture out"}]` — no breaking change to existing definitions
+- Drives: outlet box count (obj-2 primary, obj-201+ additional), tricolor on colored outlets,
+  gen subpatcher out N count, codebox numoutlets, pix outlettype, pix→outlet wires
 
-**Spec written:** `.specify/f_vf_streak/spec.md`
-- Pure Processor archetype, two outlets (sidechain pattern matching caustic)
-- Clarifications: additive composite for out0; src_vecfield suppression required (vs_black → -1.0 offset)
-- Parameter ranges confirmed from scratch patch: length 0–20, color_shift 0–20, falloff 0–2.5
+**Feature B — Per-inlet vs_inState control (`vs_instate: False`)**
+- `"vs_instate": False` on individual mod_inlets entries
+- Routes inlet directly to pix without vs_inState box
+- Validated exclusive of state_param (raises ValueError if both set)
 
-**Plan written:** `.specify/f_vf_streak/plan.md`
-- 6 ADRs: processor archetype, src_vecfield suppression, dual-outlet gen, additive composite, falloff interpolation, color_shift per-channel UV offset
-- Confirmed build_patcher.py does not support dual gen outlets → custom build_streak.py required
+**New definition files written:**
+- `.specify/f_caustic/definition.py` — uses dual outlet + light-src via vs_inState + vec-field direct
+- `.specify/f_vf_streak/definition.py` — uses dual outlet + existing mod_inlets/state_param
 
-**Tasks written:** `.specify/f_vf_streak/tasks.md` — 53 tasks, 5 phases
+Both per-module scripts (`build_caustic.py`, `build_streak.py`) are now superseded. Not deleted yet
+— keep until Max load-testing confirms generated patchers are functionally equivalent.
 
-**Phase 1 (codebox):**
-- `codebox_v1.gen` written and pasted into scratch patch
-- All verifications passed: streak visible, params correct, passthrough clean, both outlets correct
-- Scratch patch: `/Users/matt/Vsynth/patterns/vf_streak_scratch.maxpat`
+**spec.md updated** with outlets and mod_inlets optional key documentation.
 
-**Phase 2 (build system):**
-- Confirmed build_patcher.py lacks dual outlet support
-- Wrote `build_streak.py` modelled on `build_caustic.py`
-
-**Phase 3 (build + inspection):**
-- Patcher built, JSON valid
-- Structural inspection passed: pix 2in/2out, gen in1/in2/codebox/out1/out2, vs_inState wired correctly, src_vecfield suppression in place, params block clean
-
-**Phase 4 (integration):** Passed in Vsynth
-
-**Phase 5 (docs + registration):**
-- `docs/f_vf_streak.md` written
-- `README.md` updated — f_vf_streak added, f_vf_ family description updated
-- `f_modules` Vecfield category updated with Streak entry
-- `javascript/f_addmod.js` SIZES entry added: `"vf_streak": [190, 100]`
-- `f_modules.maxpat` regenerated and validated
-
----
-
-## To be continued...
-
-- **Helpfile pass** — f_vf_warp and f_vf_streak both need helpfiles; f_droste.maxhelp is the template
-- **f_vf_fieldmap constitution discrepancy** — listed as working in README but as planned in constitution; needs resolving
-- **f_lens Phase 5** — Vsynth integration testing, deferred multiple times
-- **Vecfield consumer ecosystem** — masking (f_vf_scalar?) and advection still in NOTES.md
+Committed: `6e44863` — build system: multi-outlet and per-inlet vs_instate support
 
 ---
 
 ## Priorities for next session
 
-1. Commit this session's work (f_vf_streak complete)
-2. Helpfile for f_vf_streak or f_vf_warp
-3. Or f_lens Phase 5
+1. **Load test in Max** — open f_caustic and f_vf_streak, confirm they load without errors,
+   outlets work, parameter save/restore works, bypass works. Then delete the per-module scripts.
+2. **Update plan.md work queue** — build system assessment is done; check it off
+3. **Next workstream** — f_poincare spec is the natural next step now that infrastructure is clean
 
 ---
 
-## Loose threads
+## Loose threads (carried from previous)
 
-- `build_patcher.py` generalisation (dual outlet support, etc.) — deferred deliberately; worth a dedicated infrastructure session
-- `falloff > 1` produces negative tail weights — this is expressive and documented, not a bug
-- color_shift currently only shifts along field X axis; could extend to full 2D field vector for both R and B channels — noted as a potential v2 improvement
+- f_mobius performance gap — needs performance use before deciding if params need extending
+- Color theming via Max styles — worth establishing before module count grows further
+- Reaction-diffusion → f_vf_fieldmap → f_caustic experiment — no new patches needed, just a signal chain test
+- f_poincare presentation region — vecfield masking (f_vf_scalar) is the natural mechanism;
+  could be developed alongside f_poincare. Documented in ideas/f_poincare.md.
+- f_chladni audio companion loadbang-in-bpatcher init reliability — open issue
