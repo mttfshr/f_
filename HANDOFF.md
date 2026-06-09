@@ -1,68 +1,71 @@
-# HANDOFF — f_ session 2026-06-07 (session 5)
+# HANDOFF — f_ session 2026-06-08
 
 ## What was done this session
 
-### f_vf_warp — complete
+### f_vf_streak — complete
 
-Full build from spec through integration testing and registration.
+Full build from idea through integration testing and registration.
 
-**Spec revised:**
-- Archetype clarified to pure Processor (no vs_inState on in0)
-- `src_vecfield` hidden system param documented — suppresses vs_black diagonal offset artifact
-- Signal flow and codebox pseudocode updated
+**Design discussion:**
+- Evaluated vecfield consumer candidates from NOTES.md; chose flow streaks as next build
+- Decided against masking (infrastructure, not immediately performable) and advection (multipass, not yet)
+- Established parameter set: strength, length, falloff, color_shift — rationale documented
+- Pressure-tested whether `scale` should be added to f_vf_warp (it shouldn't; no clean mapping)
 
-**Plan written:** 5 phases, codebox-first gate, ADRs for archetype choice, suppression pattern, and strength range.
+**Spec written:** `.specify/f_vf_streak/spec.md`
+- Pure Processor archetype, two outlets (sidechain pattern matching caustic)
+- Clarifications: additive composite for out0; src_vecfield suppression required (vs_black → -1.0 offset)
+- Parameter ranges confirmed from scratch patch: length 0–20, color_shift 0–20, falloff 0–2.5
 
-**Tasks written (46 tasks):** Corrected two codebox skill errors from initial draft — `numinlets` not settable on pix or codebox, inline component access required.
+**Plan written:** `.specify/f_vf_streak/plan.md`
+- 6 ADRs: processor archetype, src_vecfield suppression, dual-outlet gen, additive composite, falloff interpolation, color_shift per-channel UV offset
+- Confirmed build_patcher.py does not support dual gen outlets → custom build_streak.py required
 
-**Codebox verified in scratch patch:**
-- WFG sine wave warped through f_vf_vortex — correct spiral distortion
-- Edge clamp behavior confirmed at strength=1
-- Suppression logic (`mix`/`step` on src_vecfield) confirmed correct
+**Tasks written:** `.specify/f_vf_streak/tasks.md` — 53 tasks, 5 phases
 
-**build_patcher.py extended:**
-- Processor and dual archetypes now support `mod_inlets` (previously source-only)
-- `state_param` key on mod_inlet dicts: wires `vs_inState out1 → prepend param <state_param> → pix in0`
-- `mod_state_pre_boxes()` and updated `mod_inlet_lines()` added
+**Phase 1 (codebox):**
+- `codebox_v1.gen` written and pasted into scratch patch
+- All verifications passed: streak visible, params correct, passthrough clean, both outlets correct
+- Scratch patch: `/Users/matt/Vsynth/patterns/vf_streak_scratch.maxpat`
 
-**definition.py authored and built:**
-- `archetype: "processor"`, `pix_type: "char"`, prefix `vfwarp`
-- `mod_inlets: [{"label": "vecfield", "state_param": "src_vecfield"}]`
-- JSON valid, structural inspection passed (T023–T030)
+**Phase 2 (build system):**
+- Confirmed build_patcher.py lacks dual outlet support
+- Wrote `build_streak.py` modelled on `build_caustic.py`
 
-**Integration tested in Vsynth:**
-- f_masonry → f_vf_warp (in0) + f_vf_vortex (in1) — brick grid warped by vortex, looks great
-- WFG modulating vortex convergence/curl amt for animated distortion
-- Module UI correct: title, Strength dial, bypass toggle
+**Phase 3 (build + inspection):**
+- Patcher built, JSON valid
+- Structural inspection passed: pix 2in/2out, gen in1/in2/codebox/out1/out2, vs_inState wired correctly, src_vecfield suppression in place, params block clean
 
-**Docs and registration:**
-- `docs/f_vf_warp.md` written
-- `README.md` updated — f_vf_warp added, f_vf_ family description updated to "producers/consumers"
-- `f_modules` Vecfield category updated with Warp entry
-- `javascript/f_addmod.js` SIZES entry added: `"vf_warp": [78, 90]`
-- `build_modules.py` path bug fixed (was going up 2 dirs, needed 3)
-- f_modules.maxpat regenerated and validated
+**Phase 4 (integration):** Passed in Vsynth
+
+**Phase 5 (docs + registration):**
+- `docs/f_vf_streak.md` written
+- `README.md` updated — f_vf_streak added, f_vf_ family description updated
+- `f_modules` Vecfield category updated with Streak entry
+- `javascript/f_addmod.js` SIZES entry added: `"vf_streak": [190, 100]`
+- `f_modules.maxpat` regenerated and validated
 
 ---
 
 ## To be continued...
 
-- **f_vf_fieldmap** — scalar texture → vecfield via central difference gradient; still listed as planned in README
-- **f_lens Phase 5** — Vsynth integration testing (deferred multiple times)
-- **Helpfile series** — `f_droste.maxhelp` is template; `f_stereo` identified as next candidate
-- **f_vf_warp helpfile** — not written yet; low priority given README note on helpfiles
+- **Helpfile pass** — f_vf_warp and f_vf_streak both need helpfiles; f_droste.maxhelp is the template
+- **f_vf_fieldmap constitution discrepancy** — listed as working in README but as planned in constitution; needs resolving
+- **f_lens Phase 5** — Vsynth integration testing, deferred multiple times
+- **Vecfield consumer ecosystem** — masking (f_vf_scalar?) and advection still in NOTES.md
 
 ---
 
 ## Priorities for next session
 
-1. Commit this session's work (f_vf_warp complete, build_patcher.py extended)
-2. Decide next build: f_vf_fieldmap or f_lens Phase 5
-3. Or: helpfile pass if in a documentation mood
+1. Commit this session's work (f_vf_streak complete)
+2. Helpfile for f_vf_streak or f_vf_warp
+3. Or f_lens Phase 5
 
 ---
 
 ## Loose threads
 
-- `build_modules.py` path bug was pre-existing (not introduced this session) — the fix (3x dirname) is now in. If other scripts have similar patterns, worth auditing.
-- `f_vf_fieldmap` is listed as working in README but listed as "not yet built" in the constitution — constitution needs updating if it's actually built, or README needs correcting if it isn't.
+- `build_patcher.py` generalisation (dual outlet support, etc.) — deferred deliberately; worth a dedicated infrastructure session
+- `falloff > 1` produces negative tail weights — this is expressive and documented, not a bug
+- color_shift currently only shifts along field X axis; could extend to full 2D field vector for both R and B channels — noted as a potential v2 improvement

@@ -34,11 +34,12 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_tone_curve` | Processor | Tone curve adjustment |
 | `f_texrouter` | Utility | 4x4 texture routing matrix with preset system |
 | `f_caustic` | Processor | Optical caustic -- streamline accumulation weighted by field convergence; two outlets (composited / isolated layer) |
-| **f_vf_ family** | **vecfield producers/consumers** | **float32 f_vecfield textures -- produced by f_vf_ generators, consumed by f_caustic, f_vf_warp, f_lens field inlet** |
+| **f_vf_ family** | **vecfield producers/consumers** | **float32 f_vecfield textures -- produced by f_vf_ generators, consumed by f_caustic, f_vf_warp, f_vf_streak, f_lens field inlet** |
 | `f_vf_vortex` | Generator | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Generator | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
 | `f_vf_fieldmap` | Processor | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |
 | `f_vf_warp` | Processor | UV warp via f_vecfield -- displaces source texture along field streamlines |
+| `f_vf_streak` | Processor | Directional blur via f_vecfield -- accumulates source samples along streamlines; two outlets (composite / isolated streak layer) |
 
 ## Notes
 
