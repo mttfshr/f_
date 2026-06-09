@@ -14,6 +14,22 @@
         "boxes": [
             {
                 "box": {
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 12.0,
+                    "id": "obj-7",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 35.0, 35.0, 81.0, 21.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 39.0, 0.0, 52.0, 21.0 ],
+                    "text": "vecfield",
+                    "textcolor": [ 0.45098039215686275, 0.47058823529411764, 0.5764705882352941, 1.0 ]
+                }
+            },
+            {
+                "box": {
                     "comment": "texture in",
                     "id": "obj-1",
                     "index": 0,
@@ -179,7 +195,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 78.0, 90.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 0.0, 0.0, 78.0, 90.0 ],
+                    "presentation_rect": [ 0.0, 0.0, 113.0, 90.0 ],
                     "proportion": 0.5
                 }
             },
@@ -193,7 +209,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 80.0, 21.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ -1.5, 0.0, 80.0, 21.0 ],
+                    "presentation_rect": [ -1.0, 0.0, 39.0, 21.0 ],
                     "text": "Warp"
                 }
             },
@@ -316,7 +332,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 50.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 8.0, 38.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -362,7 +378,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 50.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ -7.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [ -3.0, 20.0, 50.0, 18.0 ],
                     "text": "Strength",
                     "textjustification": 1
                 }
@@ -379,7 +395,7 @@
                     "parameter_enable": 0,
                     "patching_rect": [ 56.0, 5.0, 18.0, 12.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 56.0, 5.0, 18.0, 12.0 ],
+                    "presentation_rect": [ 91.0, 5.0, 18.0, 12.0 ],
                     "valuepopuplabel": 1,
                     "varname": "bypass"
                 }
