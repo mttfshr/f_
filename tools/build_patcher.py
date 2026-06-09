@@ -80,10 +80,29 @@ def inlet_box():
         patching_rect=[30.0, 30.0, 30.0, 30.0])
 
 def outlet_box():
+    """Single default outlet — used when definition has no 'outlets' key."""
     return box(OBJ_OUTLET,
         maxclass="outlet", comment="texture out", index=0,
         numinlets=1, numoutlets=0,
         patching_rect=[30.0, 500.0, 30.0, 30.0])
+
+def outlet_obj_id(i):
+    """Outlet object ID for outlet index i. i=0 → obj-2 (primary), i>0 → obj-200+i."""
+    return OBJ_OUTLET if i == 0 else f"obj-{200 + i}"
+
+def outlet_boxes(outlets):
+    """Generate outlet boxes for a list of outlet dicts: [{comment, color?}, ...]"""
+    boxes = []
+    for i, o in enumerate(outlets):
+        obj_id = outlet_obj_id(i)
+        kwargs = dict(
+            maxclass="outlet", comment=o.get("comment", "texture out"), index=i,
+            numinlets=1, numoutlets=0,
+            patching_rect=[30.0 + i * 70.0, 500.0, 30.0, 30.0])
+        if o.get("color"):
+            kwargs["tricolor"] = o["color"]
+        boxes.append(box(obj_id, **kwargs))
+    return boxes
 
 def routepass_box():
     return box(OBJ_ROUTEPASS,
@@ -333,20 +352,24 @@ def mod_instate_obj_id(i):
     return f"obj-{100 + i * 3 + 1}"
 
 def mod_inlet_boxes(mod_inlets):
-    """Generate inlet + vs_inState boxes for each modulation inlet."""
+    """Generate inlet + optional vs_inState boxes for each modulation inlet.
+    If vs_instate is False, no vs_inState box is generated (inlet routes directly to pix).
+    """
     boxes = []
     for i, mi in enumerate(mod_inlets):
         inlet_id   = mod_inlet_obj_id(i)
         instate_id = mod_instate_obj_id(i)
         label      = mi.get("label", f"mod {i+1}")
+        use_instate = mi.get("vs_instate", True)
         boxes.append(box(inlet_id,
             maxclass="inlet", comment=label, index=i + 1,
             numinlets=0, numoutlets=1, outlettype=[""],
             patching_rect=[30.0 + (i + 1) * 60.0, 30.0, 30.0, 30.0]))
-        boxes.append(box(instate_id,
-            maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["", ""],
-            patching_rect=[30.0 + (i + 1) * 60.0, 80.0, 80.0, 22.0],
-            text="vs_inState"))
+        if use_instate:
+            boxes.append(box(instate_id,
+                maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["", ""],
+                patching_rect=[30.0 + (i + 1) * 60.0, 80.0, 80.0, 22.0],
+                text="vs_inState"))
     return boxes
 
 def mod_state_pre_id(i):
@@ -354,23 +377,29 @@ def mod_state_pre_id(i):
     return f"obj-{100 + i * 3 + 2}"
 
 def mod_inlet_lines(mod_inlets):
-    """Wire each modulation inlet → vs_inState → pix inlet N.
+    """Wire each modulation inlet → (vs_inState →) pix inlet N.
+    vs_instate defaults True. When False, inlet wires directly to pix (no vs_inState).
     If a mod_inlet has a 'state_param' key, also wire vs_inState out1
     → prepend param <state_param> → pix in0 (message inlet).
+    state_param requires vs_instate=True (validated in build()).
     """
     lines = []
     for i, mi in enumerate(mod_inlets):
-        inlet_id   = mod_inlet_obj_id(i)
-        instate_id = mod_instate_obj_id(i)
-        # inlet → vs_inState
-        lines.append(wire(inlet_id, 0, instate_id, 0))
-        # vs_inState out0 (texture or vs_black) → pix inlet i+1
-        lines.append(wire(instate_id, 0, OBJ_PIX, i + 1))
-        # optional: vs_inState out1 (0/1 state) → prepend param <state_param> → pix in0
-        if mi.get("state_param"):
-            pre_id = mod_state_pre_id(i)
-            lines.append(wire(instate_id, 1, pre_id, 0))
-            lines.append(wire(pre_id, 0, OBJ_PIX, 0))
+        inlet_id    = mod_inlet_obj_id(i)
+        instate_id  = mod_instate_obj_id(i)
+        use_instate = mi.get("vs_instate", True)
+        if use_instate:
+            # inlet → vs_inState → pix inlet i+1
+            lines.append(wire(inlet_id, 0, instate_id, 0))
+            lines.append(wire(instate_id, 0, OBJ_PIX, i + 1))
+            # optional state_param feedback
+            if mi.get("state_param"):
+                pre_id = mod_state_pre_id(i)
+                lines.append(wire(instate_id, 1, pre_id, 0))
+                lines.append(wire(pre_id, 0, OBJ_PIX, 0))
+        else:
+            # inlet → pix inlet i+1 directly (no vs_inState)
+            lines.append(wire(inlet_id, 0, OBJ_PIX, i + 1))
     return lines
 
 def mod_state_pre_boxes(mod_inlets):
@@ -390,11 +419,12 @@ def mod_state_pre_boxes(mod_inlets):
 # Gen subpatcher builder
 # ---------------------------------------------------------------------------
 
-def gen_subpatcher(codebox, archetype, mod_inlets=None):
+def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
     """
     mod_inlets: list of mod inlet dicts (from definition). When present,
     adds in 2, in 3, ... objects and wires them to codebox inlets 1, 2, ...
     The base in 1 (bang/render trigger) is always inlet 0 of the codebox.
+    n_outlets: number of gen out objects (and codebox outlets) to generate.
     """
     mod_inlets = mod_inlets or []
     boxes = []
@@ -420,78 +450,85 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None):
     n_codebox_inlets = 1 + len(mod_inlets)
 
     if archetype == "source" and not mod_inlets:
-        # Original source: in 1 + r dim + codebox(2 inlets)
+        # Original source: in 1 + r dim + codebox
         boxes.append({"box": {
             "id": "gen-obj-2", "maxclass": "newobj",
             "numinlets": 0, "numoutlets": 1, "outlettype": [""],
             "patching_rect": [120.0, 30.0, 35.0, 22.0], "text": "r dim"
         }})
+        codebox_outlettype = [""] * n_outlets
         boxes.append({"box": {
             "code": codebox,
             "fontface": 0, "fontname": "<Monospaced>", "fontsize": 12.0,
             "id": "gen-obj-3", "maxclass": "codebox",
-            "numinlets": 2, "numoutlets": 1, "outlettype": [""],
+            "numinlets": 2, "numoutlets": n_outlets, "outlettype": codebox_outlettype,
             "patching_rect": [22.0, 80.0, 550.0, 380.0]
         }})
-        boxes.append({"box": {
-            "id": "gen-obj-4", "maxclass": "newobj",
-            "numinlets": 1, "numoutlets": 0,
-            "patching_rect": [22.0, 490.0, 35.0, 22.0], "text": "out 1"
-        }})
+        for k in range(n_outlets):
+            out_id = f"gen-obj-{4 + k}"
+            boxes.append({"box": {
+                "id": out_id, "maxclass": "newobj",
+                "numinlets": 1, "numoutlets": 0,
+                "patching_rect": [22.0 + k * 60.0, 490.0, 35.0, 22.0],
+                "text": f"out {k + 1}"
+            }})
         lines = [
             {"patchline": {"destination": ["gen-obj-3", 0], "source": ["gen-obj-1", 0]}},
             {"patchline": {"destination": ["gen-obj-3", 1], "source": ["gen-obj-2", 0]}},
-            {"patchline": {"destination": ["gen-obj-4", 0], "source": ["gen-obj-3", 0]}},
         ]
+        for k in range(n_outlets):
+            lines.append({"patchline": {"destination": [f"gen-obj-{4 + k}", 0], "source": ["gen-obj-3", k]}})
     elif archetype == "source" and mod_inlets:
-        # Source with modulation inlets: in 1 + in 2..N + codebox(1+N inlets)
+        # Source with modulation inlets
         codebox_id = "gen-obj-3"
-        out_id     = "gen-obj-4"
+        codebox_outlettype = [""] * n_outlets
         boxes.append({"box": {
             "code": codebox,
             "fontface": 0, "fontname": "<Monospaced>", "fontsize": 12.0,
             "id": codebox_id, "maxclass": "codebox",
-            "numinlets": n_codebox_inlets, "numoutlets": 1, "outlettype": [""],
+            "numinlets": n_codebox_inlets, "numoutlets": n_outlets, "outlettype": codebox_outlettype,
             "patching_rect": [22.0, 80.0, 550.0, 380.0]
         }})
-        boxes.append({"box": {
-            "id": out_id, "maxclass": "newobj",
-            "numinlets": 1, "numoutlets": 0,
-            "patching_rect": [22.0, 490.0, 35.0, 22.0], "text": "out 1"
-        }})
-        # Wire in 1 → codebox inlet 0
+        for k in range(n_outlets):
+            out_id = f"gen-obj-{4 + k}"
+            boxes.append({"box": {
+                "id": out_id, "maxclass": "newobj",
+                "numinlets": 1, "numoutlets": 0,
+                "patching_rect": [22.0 + k * 60.0, 490.0, 35.0, 22.0],
+                "text": f"out {k + 1}"
+            }})
         lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
-        # Wire in 2..N → codebox inlets 1..N-1
         for i in range(len(mod_inlets)):
             gen_in_id = f"gen-obj-{10 + i}"
             lines.append({"patchline": {"destination": [codebox_id, i + 1], "source": [gen_in_id, 0]}})
-        # Wire codebox → out
-        lines.append({"patchline": {"destination": [out_id, 0], "source": [codebox_id, 0]}})
+        for k in range(n_outlets):
+            lines.append({"patchline": {"destination": [f"gen-obj-{4 + k}", 0], "source": [codebox_id, k]}})
     else:
-        # processor and dual: in 1 → codebox inlet 0; optional mod_inlets → inlets 1..N
+        # processor and dual
         n_codebox_inlets = 1 + len(mod_inlets)
         codebox_id = "gen-obj-2"
-        out_id     = "gen-obj-3"
+        codebox_outlettype = [""] * n_outlets
         boxes.append({"box": {
             "code": codebox,
             "fontface": 0, "fontname": "<Monospaced>", "fontsize": 12.0,
             "id": codebox_id, "maxclass": "codebox",
-            "numinlets": n_codebox_inlets, "numoutlets": 1, "outlettype": [""],
+            "numinlets": n_codebox_inlets, "numoutlets": n_outlets, "outlettype": codebox_outlettype,
             "patching_rect": [22.0, 80.0, 550.0, 380.0]
         }})
-        boxes.append({"box": {
-            "id": out_id, "maxclass": "newobj",
-            "numinlets": 1, "numoutlets": 0,
-            "patching_rect": [22.0, 490.0, 35.0, 22.0], "text": "out 1"
-        }})
-        # in 1 → codebox inlet 0
+        for k in range(n_outlets):
+            out_id = f"gen-obj-{3 + k}"
+            boxes.append({"box": {
+                "id": out_id, "maxclass": "newobj",
+                "numinlets": 1, "numoutlets": 0,
+                "patching_rect": [22.0 + k * 60.0, 490.0, 35.0, 22.0],
+                "text": f"out {k + 1}"
+            }})
         lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
-        # in 2..N → codebox inlets 1..N-1
         for i in range(len(mod_inlets)):
             gen_in_id = f"gen-obj-{10 + i}"
             lines.append({"patchline": {"destination": [codebox_id, i + 1], "source": [gen_in_id, 0]}})
-        # codebox → out
-        lines.append({"patchline": {"destination": [out_id, 0], "source": [codebox_id, 0]}})
+        for k in range(n_outlets):
+            lines.append({"patchline": {"destination": [f"gen-obj-{3 + k}", 0], "source": [codebox_id, k]}})
 
     return {
         "fileversion": 1,
@@ -508,15 +545,18 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None):
 # jit.gl.pix box
 # ---------------------------------------------------------------------------
 
-def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None):
+def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None):
     mod_inlets = mod_inlets or []
+    outlets    = outlets or [{"comment": "texture out"}]
     type_attr  = f" @type {pix_type}" if pix_type else ""
     n_outer_inlets = 1 + len(mod_inlets)
+    n_outlets      = len(outlets)
+    outlettype     = ["jit_gl_texture"] * n_outlets + [""]
     return box(OBJ_PIX,
         maxclass="newobj",
-        numinlets=n_outer_inlets, numoutlets=2,
-        outlettype=["jit_gl_texture", ""],
-        patcher=gen_subpatcher(codebox, archetype, mod_inlets),
+        numinlets=n_outer_inlets, numoutlets=n_outlets + 1,
+        outlettype=outlettype,
+        patcher=gen_subpatcher(codebox, archetype, mod_inlets, n_outlets),
         patching_rect=[200.0, 380.0, max(200.0, len(object_name) * 8.0 + 80.0), 22.0],
         text=f"jit.gl.pix vsynth @name {object_name}{type_attr}",
         varname=object_name)
@@ -547,6 +587,12 @@ def build(defn):
     all_params  = defn["params"]
     mod_inlets  = defn.get("mod_inlets", [])
     pix_type    = defn.get("pix_type", None)
+    outlets     = defn.get("outlets", [{"comment": "texture out"}])
+
+    # Validate: vs_instate:False and state_param are mutually exclusive
+    for mi in mod_inlets:
+        if not mi.get("vs_instate", True) and mi.get("state_param"):
+            raise ValueError(f"mod_inlet '{mi.get('label')}': vs_instate:False and state_param are mutually exclusive")
 
     # Separate param types
     ui_params       = [p for p in all_params if p["type"] in ("float", "int")]
@@ -564,10 +610,10 @@ def build(defn):
     # Build boxes — pix must come before bypass jsui (param_connect dependency)
     boxes = []
     boxes.append(inlet_box())
-    boxes.append(outlet_box())
+    boxes.extend(outlet_boxes(outlets))
     boxes.append(routepass_box())
     boxes.append(route_box(route_params))
-    boxes.append(pix_box(prefix, object_name, codebox, archetype, mod_inlets, pix_type))
+    boxes.append(pix_box(prefix, object_name, codebox, archetype, mod_inlets, pix_type, outlets))
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
     boxes.append(title_box(title))
@@ -576,7 +622,7 @@ def build(defn):
     if archetype == "dual":
         boxes.extend(instate_boxes())
 
-    # Modulation inlet boxes (inlet + vs_inState per mod inlet, plus state prepends)
+    # Modulation inlet boxes (inlet + optional vs_inState per mod inlet, plus state prepends)
     if mod_inlets:
         boxes.extend(mod_inlet_boxes(mod_inlets))
         boxes.extend(mod_state_pre_boxes(mod_inlets))
@@ -621,10 +667,11 @@ def build(defn):
     # routepass out2 (unmatched) → route
     lines.append(wire(OBJ_ROUTEPASS, 2, OBJ_ROUTE, 0))
 
-    # pix out0 → outlet
-    lines.append(wire(OBJ_PIX, 0, OBJ_OUTLET, 0))
+    # pix outN → outletN (one wire per outlet)
+    for i in range(len(outlets)):
+        lines.append(wire(OBJ_PIX, i, outlet_obj_id(i), 0))
 
-    # modulation inlets → vs_inState → pix
+    # modulation inlets → (vs_inState →) pix
     if mod_inlets:
         lines.extend(mod_inlet_lines(mod_inlets))
 

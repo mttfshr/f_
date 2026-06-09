@@ -60,6 +60,39 @@ patcher = {
 }
 ```
 
+**Optional keys:**
+
+```python
+patcher = {
+    # ...required keys above...
+
+    # pix_type: @type attribute on jit.gl.pix. Default: omitted (Max default).
+    # Use "float32" for vecfield producers; "char" for standard processors.
+    "pix_type":           str,   # e.g. "float32", "char"
+
+    # outlets: list of bpatcher outlet descriptors. Default: [{"comment": "texture out"}].
+    # Each entry generates one bpatcher outlet, one gen `out N`, one codebox outlet.
+    # Primary outlet (index 0) is always obj-2. Additional outlets are obj-201, obj-202, etc.
+    # color is optional — if present, sets tricolor on the outlet box.
+    "outlets": [
+        {"comment": str, "color": [r, g, b, a]},  # color is optional
+    ],
+
+    # mod_inlets: list of additional texture inlets beyond inlet 0.
+    # Each entry generates an inlet box and (by default) a vs_inState.
+    # Inside the gen subpatcher, these become in 2, in 3, ...
+    "mod_inlets": [
+        {
+            "label":       str,   # inlet hover text
+            "vs_instate":  bool,  # default True. False = route inlet directly to pix, no vs_inState
+            "state_param": str,   # optional. Requires vs_instate=True. Wires vs_inState out1
+                                  # → prepend param <state_param> → pix in0. Used to suppress
+                                  # vs_black artifact when inlet is unconnected.
+        },
+    ],
+}
+```
+
 **Param schema:**
 
 ```python
