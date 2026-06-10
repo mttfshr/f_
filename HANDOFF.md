@@ -2,19 +2,33 @@
 
 ## What was done this session
 
-### Inlet/outlet label standardization (152755d)
-Established a consistent vocabulary for inlet/outlet comments across all patchers:
-- `texture` — standard jit.gl.texture signal (in or out)
-- `vecfield` — float32 RG vecfield texture (in or out)
+### Inlet/outlet label standardization (152755d, f98a189)
+Established consistent vocabulary for inlet/outlet comments across all patchers:
+- `texture / control` — primary inlet (texture or Max messages)
+- `texture` — standard texture outlet (passthrough/transform)
+- `vecfield` — float32 RG vecfield signal (in or out)
 - `composite` — processed output blended over source
-- `control` — Max message/param inlet
-- layer names (`caustic`, `streak`, `grain mask`, `displaced`) — isolated effect outlets
+- `control` — dedicated Max message/param inlet (Mobius, Stereo legacy)
+- Layer names (`caustic`, `streak`, `grain mask`, `displaced`, `brick mask`, `warped`, `advected`) — isolated effect outlets
 
-Changes:
-- `build_patcher.py` default inlet/outlet comments updated to `"texture"`
-- `definition.py` updated for `f_caustic`, `f_vf_fieldmap`, `f_vf_vortex`, `f_vf_vortex_multi` (added explicit `vecfield` outlet), `f_vf_streak` (outlet renamed), `f_grain` (`label` → `comment` bug fixed + vocabulary updated)
-- Hand-edited `.maxpat`: `f_channel_grader`, `f_hue_processor`, `f_luma_processor`, `f_tone_curve`, `f_droste`, `f_mobius`, `f_stereo`, `f_chladni`, `f_lens`, `f_masonry`, `f_vf_advect`
-- All definition.py-backed patchers rebuilt
+### Multi-outlet additions (f98a189)
+- `f_stipple` — 3 outlets: composite, stipple mask, displaced; `proc_mode` header toggle removed; displacement always computed
+- `f_masonry` — 2 outlets: composite, brick mask
+- `f_vf_warp` — 2 outlets: composite, warped (raw displaced sample)
+- `f_vf_advect` — 2 outlets: composite, advected (accumulated state pre-mix)
+- `f_grain` — label→comment bug fixed; outlet vocabulary updated
+
+### Vecfield signal_type label in header (66cd5f6)
+- `build_patcher.py`: `signal_type_box()` renders small cyan-blue label in header right of title
+- `SIGNAL_TYPE_COLORS`: `vecfield=[0.35, 0.75, 0.95, 1.0]`
+- `"signal_type": "vecfield"` added to all vf_ definition.py files
+- `build_advect.py` updated with hardcoded label at obj-8
+- Label is now rebuild-proof — no longer hand-added in Max
+
+### Python tooling (df0611b)
+- `tools/py.sh` wrapper ensures Homebrew Python 3.13 is used for all build scripts
+- Use `tools/py.sh tools/build_patcher.py ...` instead of `python3 ...`
+- Desktop Commander was picking up system Python 3.9.6; restart Claude to get fresh shell with updated PATH from ~/.bashrc
 
 ---
 
@@ -34,7 +48,9 @@ Reading order: plan.md → HANDOFF.md
 ## Loose threads
 
 - f_mobius performance gap — needs use before deciding if params need extending
-- Color theming via Max styles — worth establishing before module count grows further  
+- Color theming via Max styles — worth establishing before module count grows further
 - Reaction-diffusion → f_vf_fieldmap → f_caustic — signal chain experiment
 - f_poincare presentation region — f_vf_scalar masking is the natural mechanism
 - f_chladni audio companion loadbang-in-bpatcher init reliability
+- Stipple displaced UV reconstruction with angle≠0 — worth a scratch patch verify
+- f_vf_vortex/vortex_multi: in0 label is 'texture / control' but it's control-only (no texture) — minor cosmetic inaccuracy, low priority
