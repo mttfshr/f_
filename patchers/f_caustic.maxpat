@@ -119,7 +119,7 @@
 				"box": {
 					"id": "obj-5",
 					"maxclass": "newobj",
-					"numinlets": 3,
+					"numinlets": 2,
 					"numoutlets": 3,
 					"outlettype": [
 						"jit_gl_texture",
@@ -181,31 +181,13 @@
 							},
 							{
 								"box": {
-									"id": "gen-obj-11",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										138.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 3"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_caustic codebox v1 \u2014 scratch validation\n// Additive streamline accumulation weighted by local convergence (negative divergence)\n// in2 = light source texture\n// in3 = f_vecfield (f_vortex RG output, encoded: 0.5 = zero, 0=neg, 1=pos)\n\nParam intensity(0.5);\nParam scale(0.3);\nParam softness(0.3);\nParam color_shift(0.0);\nParam bypass(0.0);\n\nuv = norm;\n\n// finite difference offset for divergence estimation\nh = 1.0 / 512.0;\n\n// step size in UV space \u2014 scale drives trace distance\nstep_size = scale / 8.0;\ncs = color_shift * step_size;\n\n// --- accumulation loop (8 steps, unrolled) ---\n// at each step: walk backward along field, sample source, weight by convergence\n\n// helper: decode field channel from [0,1] to [-1,1]\n// NOTE: always decoded inline on sample() \u2014 never stored then accessed\n\n// --- step 0: at current pixel ---\npos0x = uv.x;\npos0y = uv.y;\n\n// decode field at pos0\nf0x = (sample(in3, vec(pos0x, pos0y)).x - 0.5) * 2.0;\nf0y = (sample(in3, vec(pos0x, pos0y)).y - 0.5) * 2.0;\n\n// divergence at pos0 via finite differences on field\ndiv0 = ((sample(in3, vec(pos0x + h, pos0y)).x - sample(in3, vec(pos0x - h, pos0y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos0x, pos0y + h)).y - sample(in3, vec(pos0x, pos0y - h)).y) * 2.0 / (2.0 * h));\n\n// convergence weight: accumulate only where div < 0 (converging zones)\nw0 = max(-div0, 0.0);\n\n// source sample at pos0 (R channel for now, extend to RGB below)\nsrc0r = sample(in2, vec(pos0x + f0x * cs, pos0y + f0y * cs)).x;\nsrc0g = sample(in2, vec(pos0x, pos0y)).y;\nsrc0b = sample(in2, vec(pos0x - f0x * cs, pos0y - f0y * cs)).z;\n\n// --- step 1: walk backward one step ---\npos1x = pos0x - f0x * step_size;\npos1y = pos0y - f0y * step_size;\n\nf1x = (sample(in3, vec(pos1x, pos1y)).x - 0.5) * 2.0;\nf1y = (sample(in3, vec(pos1x, pos1y)).y - 0.5) * 2.0;\n\ndiv1 = ((sample(in3, vec(pos1x + h, pos1y)).x - sample(in3, vec(pos1x - h, pos1y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos1x, pos1y + h)).y - sample(in3, vec(pos1x, pos1y - h)).y) * 2.0 / (2.0 * h));\n\nw1 = max(-div1, 0.0);\n\nsrc1r = sample(in2, vec(pos1x + f1x * cs, pos1y + f1y * cs)).x;\nsrc1g = sample(in2, vec(pos1x, pos1y)).y;\nsrc1b = sample(in2, vec(pos1x - f1x * cs, pos1y - f1y * cs)).z;\n\n// --- step 2 ---\npos2x = pos1x - f1x * step_size;\npos2y = pos1y - f1y * step_size;\n\nf2x = (sample(in3, vec(pos2x, pos2y)).x - 0.5) * 2.0;\nf2y = (sample(in3, vec(pos2x, pos2y)).y - 0.5) * 2.0;\n\ndiv2 = ((sample(in3, vec(pos2x + h, pos2y)).x - sample(in3, vec(pos2x - h, pos2y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos2x, pos2y + h)).y - sample(in3, vec(pos2x, pos2y - h)).y) * 2.0 / (2.0 * h));\n\nw2 = max(-div2, 0.0);\n\nsrc2r = sample(in2, vec(pos2x + f2x * cs, pos2y + f2y * cs)).x;\nsrc2g = sample(in2, vec(pos2x, pos2y)).y;\nsrc2b = sample(in2, vec(pos2x - f2x * cs, pos2y - f2y * cs)).z;\n\n// --- step 3 ---\npos3x = pos2x - f2x * step_size;\npos3y = pos2y - f2y * step_size;\n\nf3x = (sample(in3, vec(pos3x, pos3y)).x - 0.5) * 2.0;\nf3y = (sample(in3, vec(pos3x, pos3y)).y - 0.5) * 2.0;\n\ndiv3 = ((sample(in3, vec(pos3x + h, pos3y)).x - sample(in3, vec(pos3x - h, pos3y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos3x, pos3y + h)).y - sample(in3, vec(pos3x, pos3y - h)).y) * 2.0 / (2.0 * h));\n\nw3 = max(-div3, 0.0);\n\nsrc3r = sample(in2, vec(pos3x + f3x * cs, pos3y + f3y * cs)).x;\nsrc3g = sample(in2, vec(pos3x, pos3y)).y;\nsrc3b = sample(in2, vec(pos3x - f3x * cs, pos3y - f3y * cs)).z;\n\n// --- step 4 ---\npos4x = pos3x - f3x * step_size;\npos4y = pos3y - f3y * step_size;\n\nf4x = (sample(in3, vec(pos4x, pos4y)).x - 0.5) * 2.0;\nf4y = (sample(in3, vec(pos4x, pos4y)).y - 0.5) * 2.0;\n\ndiv4 = ((sample(in3, vec(pos4x + h, pos4y)).x - sample(in3, vec(pos4x - h, pos4y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos4x, pos4y + h)).y - sample(in3, vec(pos4x, pos4y - h)).y) * 2.0 / (2.0 * h));\n\nw4 = max(-div4, 0.0);\n\nsrc4r = sample(in2, vec(pos4x + f4x * cs, pos4y + f4y * cs)).x;\nsrc4g = sample(in2, vec(pos4x, pos4y)).y;\nsrc4b = sample(in2, vec(pos4x - f4x * cs, pos4y - f4y * cs)).z;\n\n// --- step 5 ---\npos5x = pos4x - f4x * step_size;\npos5y = pos4y - f4y * step_size;\n\nf5x = (sample(in3, vec(pos5x, pos5y)).x - 0.5) * 2.0;\nf5y = (sample(in3, vec(pos5x, pos5y)).y - 0.5) * 2.0;\n\ndiv5 = ((sample(in3, vec(pos5x + h, pos5y)).x - sample(in3, vec(pos5x - h, pos5y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos5x, pos5y + h)).y - sample(in3, vec(pos5x, pos5y - h)).y) * 2.0 / (2.0 * h));\n\nw5 = max(-div5, 0.0);\n\nsrc5r = sample(in2, vec(pos5x + f5x * cs, pos5y + f5y * cs)).x;\nsrc5g = sample(in2, vec(pos5x, pos5y)).y;\nsrc5b = sample(in2, vec(pos5x - f5x * cs, pos5y - f5y * cs)).z;\n\n// --- step 6 ---\npos6x = pos5x - f5x * step_size;\npos6y = pos5y - f5y * step_size;\n\nf6x = (sample(in3, vec(pos6x, pos6y)).x - 0.5) * 2.0;\nf6y = (sample(in3, vec(pos6x, pos6y)).y - 0.5) * 2.0;\n\ndiv6 = ((sample(in3, vec(pos6x + h, pos6y)).x - sample(in3, vec(pos6x - h, pos6y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos6x, pos6y + h)).y - sample(in3, vec(pos6x, pos6y - h)).y) * 2.0 / (2.0 * h));\n\nw6 = max(-div6, 0.0);\n\nsrc6r = sample(in2, vec(pos6x + f6x * cs, pos6y + f6y * cs)).x;\nsrc6g = sample(in2, vec(pos6x, pos6y)).y;\nsrc6b = sample(in2, vec(pos6x - f6x * cs, pos6y - f6y * cs)).z;\n\n// --- step 7 ---\npos7x = pos6x - f6x * step_size;\npos7y = pos6y - f6y * step_size;\n\nf7x = (sample(in3, vec(pos7x, pos7y)).x - 0.5) * 2.0;\nf7y = (sample(in3, vec(pos7x, pos7y)).y - 0.5) * 2.0;\n\ndiv7 = ((sample(in3, vec(pos7x + h, pos7y)).x - sample(in3, vec(pos7x - h, pos7y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in3, vec(pos7x, pos7y + h)).y - sample(in3, vec(pos7x, pos7y - h)).y) * 2.0 / (2.0 * h));\n\nw7 = max(-div7, 0.0);\n\nsrc7r = sample(in2, vec(pos7x + f7x * cs, pos7y + f7y * cs)).x;\nsrc7g = sample(in2, vec(pos7x, pos7y)).y;\nsrc7b = sample(in2, vec(pos7x - f7x * cs, pos7y - f7y * cs)).z;\n\n// --- weighted accumulation ---\n// accumulate weighted sums per channel\naccum_r = (w0 * src0r + w1 * src1r + w2 * src2r + w3 * src3r\n         + w4 * src4r + w5 * src5r + w6 * src6r + w7 * src7r);\naccum_g = (w0 * src0g + w1 * src1g + w2 * src2g + w3 * src3g\n         + w4 * src4g + w5 * src5g + w6 * src6g + w7 * src7g);\naccum_b = (w0 * src0b + w1 * src1b + w2 * src2b + w3 * src3b\n         + w4 * src4b + w5 * src5b + w6 * src6b + w7 * src7b);\n\n// normalize by step count and apply intensity\nnorm_factor = 1.0 / 8.0;\ncaustic_r = accum_r * norm_factor * intensity;\ncaustic_g = accum_g * norm_factor * intensity;\ncaustic_b = accum_b * norm_factor * intensity;\n\n// softness: smoothstep on caustic luma to soften/harden bands\nluma = caustic_r * 0.299 + caustic_g * 0.587 + caustic_b * 0.114;\nsoft_mask = smoothstep(0.0, softness + 0.001, luma);\ncaustic_r = caustic_r * soft_mask;\ncaustic_g = caustic_g * soft_mask;\ncaustic_b = caustic_b * soft_mask;\n\n// out2: isolated caustic layer\ncaustic_out = vec(clamp(caustic_r, 0.0, 1.0),\n                  clamp(caustic_g, 0.0, 1.0),\n                  clamp(caustic_b, 0.0, 1.0),\n                  1.0);\n\n// out1: additive composite over source\nsrc_r = sample(in2, uv).x;\nsrc_g = sample(in2, uv).y;\nsrc_b = sample(in2, uv).z;\n\ncomposite = vec(clamp(src_r + caustic_r, 0.0, 1.0),\n                clamp(src_g + caustic_g, 0.0, 1.0),\n                clamp(src_b + caustic_b, 0.0, 1.0),\n                1.0);\n\n// bypass: out1 passes source, out2 goes black\nsource_pass = vec(src_r, src_g, src_b, 1.0);\nblack = vec(0.0, 0.0, 0.0, 1.0);\n\nout1 = mix(composite, source_pass, bypass);\nout2 = mix(caustic_out, black, bypass);\n",
+									"code": "// f_caustic codebox v1 \u2014 scratch validation\n// Additive streamline accumulation weighted by local convergence (negative divergence)\n// in1 = light source texture\n// in1 = f_vecfield (f_vortex RG output, encoded: 0.5 = zero, 0=neg, 1=pos)\n\nParam intensity(0.5);\nParam scale(0.3);\nParam softness(0.3);\nParam color_shift(0.0);\nParam bypass(0.0);\n\nuv = norm;\n\n// finite difference offset for divergence estimation\nh = 1.0 / 512.0;\n\n// step size in UV space \u2014 scale drives trace distance\nstep_size = scale / 8.0;\ncs = color_shift * step_size;\n\n// --- accumulation loop (8 steps, unrolled) ---\n// at each step: walk backward along field, sample source, weight by convergence\n\n// helper: decode field channel from [0,1] to [-1,1]\n// NOTE: always decoded inline on sample() \u2014 never stored then accessed\n\n// --- step 0: at current pixel ---\npos0x = uv.x;\npos0y = uv.y;\n\n// decode field at pos0\nf0x = (sample(in1, vec(pos0x, pos0y)).x - 0.5) * 2.0;\nf0y = (sample(in1, vec(pos0x, pos0y)).y - 0.5) * 2.0;\n\n// divergence at pos0 via finite differences on field\ndiv0 = ((sample(in1, vec(pos0x + h, pos0y)).x - sample(in1, vec(pos0x - h, pos0y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos0x, pos0y + h)).y - sample(in1, vec(pos0x, pos0y - h)).y) * 2.0 / (2.0 * h));\n\n// convergence weight: accumulate only where div < 0 (converging zones)\nw0 = max(-div0, 0.0);\n\n// source sample at pos0 (R channel for now, extend to RGB below)\nsrc0r = sample(in1, vec(pos0x + f0x * cs, pos0y + f0y * cs)).x;\nsrc0g = sample(in1, vec(pos0x, pos0y)).y;\nsrc0b = sample(in1, vec(pos0x - f0x * cs, pos0y - f0y * cs)).z;\n\n// --- step 1: walk backward one step ---\npos1x = pos0x - f0x * step_size;\npos1y = pos0y - f0y * step_size;\n\nf1x = (sample(in1, vec(pos1x, pos1y)).x - 0.5) * 2.0;\nf1y = (sample(in1, vec(pos1x, pos1y)).y - 0.5) * 2.0;\n\ndiv1 = ((sample(in1, vec(pos1x + h, pos1y)).x - sample(in1, vec(pos1x - h, pos1y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos1x, pos1y + h)).y - sample(in1, vec(pos1x, pos1y - h)).y) * 2.0 / (2.0 * h));\n\nw1 = max(-div1, 0.0);\n\nsrc1r = sample(in1, vec(pos1x + f1x * cs, pos1y + f1y * cs)).x;\nsrc1g = sample(in1, vec(pos1x, pos1y)).y;\nsrc1b = sample(in1, vec(pos1x - f1x * cs, pos1y - f1y * cs)).z;\n\n// --- step 2 ---\npos2x = pos1x - f1x * step_size;\npos2y = pos1y - f1y * step_size;\n\nf2x = (sample(in1, vec(pos2x, pos2y)).x - 0.5) * 2.0;\nf2y = (sample(in1, vec(pos2x, pos2y)).y - 0.5) * 2.0;\n\ndiv2 = ((sample(in1, vec(pos2x + h, pos2y)).x - sample(in1, vec(pos2x - h, pos2y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos2x, pos2y + h)).y - sample(in1, vec(pos2x, pos2y - h)).y) * 2.0 / (2.0 * h));\n\nw2 = max(-div2, 0.0);\n\nsrc2r = sample(in1, vec(pos2x + f2x * cs, pos2y + f2y * cs)).x;\nsrc2g = sample(in1, vec(pos2x, pos2y)).y;\nsrc2b = sample(in1, vec(pos2x - f2x * cs, pos2y - f2y * cs)).z;\n\n// --- step 3 ---\npos3x = pos2x - f2x * step_size;\npos3y = pos2y - f2y * step_size;\n\nf3x = (sample(in1, vec(pos3x, pos3y)).x - 0.5) * 2.0;\nf3y = (sample(in1, vec(pos3x, pos3y)).y - 0.5) * 2.0;\n\ndiv3 = ((sample(in1, vec(pos3x + h, pos3y)).x - sample(in1, vec(pos3x - h, pos3y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos3x, pos3y + h)).y - sample(in1, vec(pos3x, pos3y - h)).y) * 2.0 / (2.0 * h));\n\nw3 = max(-div3, 0.0);\n\nsrc3r = sample(in1, vec(pos3x + f3x * cs, pos3y + f3y * cs)).x;\nsrc3g = sample(in1, vec(pos3x, pos3y)).y;\nsrc3b = sample(in1, vec(pos3x - f3x * cs, pos3y - f3y * cs)).z;\n\n// --- step 4 ---\npos4x = pos3x - f3x * step_size;\npos4y = pos3y - f3y * step_size;\n\nf4x = (sample(in1, vec(pos4x, pos4y)).x - 0.5) * 2.0;\nf4y = (sample(in1, vec(pos4x, pos4y)).y - 0.5) * 2.0;\n\ndiv4 = ((sample(in1, vec(pos4x + h, pos4y)).x - sample(in1, vec(pos4x - h, pos4y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos4x, pos4y + h)).y - sample(in1, vec(pos4x, pos4y - h)).y) * 2.0 / (2.0 * h));\n\nw4 = max(-div4, 0.0);\n\nsrc4r = sample(in1, vec(pos4x + f4x * cs, pos4y + f4y * cs)).x;\nsrc4g = sample(in1, vec(pos4x, pos4y)).y;\nsrc4b = sample(in1, vec(pos4x - f4x * cs, pos4y - f4y * cs)).z;\n\n// --- step 5 ---\npos5x = pos4x - f4x * step_size;\npos5y = pos4y - f4y * step_size;\n\nf5x = (sample(in1, vec(pos5x, pos5y)).x - 0.5) * 2.0;\nf5y = (sample(in1, vec(pos5x, pos5y)).y - 0.5) * 2.0;\n\ndiv5 = ((sample(in1, vec(pos5x + h, pos5y)).x - sample(in1, vec(pos5x - h, pos5y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos5x, pos5y + h)).y - sample(in1, vec(pos5x, pos5y - h)).y) * 2.0 / (2.0 * h));\n\nw5 = max(-div5, 0.0);\n\nsrc5r = sample(in1, vec(pos5x + f5x * cs, pos5y + f5y * cs)).x;\nsrc5g = sample(in1, vec(pos5x, pos5y)).y;\nsrc5b = sample(in1, vec(pos5x - f5x * cs, pos5y - f5y * cs)).z;\n\n// --- step 6 ---\npos6x = pos5x - f5x * step_size;\npos6y = pos5y - f5y * step_size;\n\nf6x = (sample(in1, vec(pos6x, pos6y)).x - 0.5) * 2.0;\nf6y = (sample(in1, vec(pos6x, pos6y)).y - 0.5) * 2.0;\n\ndiv6 = ((sample(in1, vec(pos6x + h, pos6y)).x - sample(in1, vec(pos6x - h, pos6y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos6x, pos6y + h)).y - sample(in1, vec(pos6x, pos6y - h)).y) * 2.0 / (2.0 * h));\n\nw6 = max(-div6, 0.0);\n\nsrc6r = sample(in1, vec(pos6x + f6x * cs, pos6y + f6y * cs)).x;\nsrc6g = sample(in1, vec(pos6x, pos6y)).y;\nsrc6b = sample(in1, vec(pos6x - f6x * cs, pos6y - f6y * cs)).z;\n\n// --- step 7 ---\npos7x = pos6x - f6x * step_size;\npos7y = pos6y - f6y * step_size;\n\nf7x = (sample(in1, vec(pos7x, pos7y)).x - 0.5) * 2.0;\nf7y = (sample(in1, vec(pos7x, pos7y)).y - 0.5) * 2.0;\n\ndiv7 = ((sample(in1, vec(pos7x + h, pos7y)).x - sample(in1, vec(pos7x - h, pos7y)).x) * 2.0 / (2.0 * h))\n      + ((sample(in1, vec(pos7x, pos7y + h)).y - sample(in1, vec(pos7x, pos7y - h)).y) * 2.0 / (2.0 * h));\n\nw7 = max(-div7, 0.0);\n\nsrc7r = sample(in1, vec(pos7x + f7x * cs, pos7y + f7y * cs)).x;\nsrc7g = sample(in1, vec(pos7x, pos7y)).y;\nsrc7b = sample(in1, vec(pos7x - f7x * cs, pos7y - f7y * cs)).z;\n\n// --- weighted accumulation ---\n// accumulate weighted sums per channel\naccum_r = (w0 * src0r + w1 * src1r + w2 * src2r + w3 * src3r\n         + w4 * src4r + w5 * src5r + w6 * src6r + w7 * src7r);\naccum_g = (w0 * src0g + w1 * src1g + w2 * src2g + w3 * src3g\n         + w4 * src4g + w5 * src5g + w6 * src6g + w7 * src7g);\naccum_b = (w0 * src0b + w1 * src1b + w2 * src2b + w3 * src3b\n         + w4 * src4b + w5 * src5b + w6 * src6b + w7 * src7b);\n\n// normalize by step count and apply intensity\nnorm_factor = 1.0 / 8.0;\ncaustic_r = accum_r * norm_factor * intensity;\ncaustic_g = accum_g * norm_factor * intensity;\ncaustic_b = accum_b * norm_factor * intensity;\n\n// softness: smoothstep on caustic luma to soften/harden bands\nluma = caustic_r * 0.299 + caustic_g * 0.587 + caustic_b * 0.114;\nsoft_mask = smoothstep(0.0, softness + 0.001, luma);\ncaustic_r = caustic_r * soft_mask;\ncaustic_g = caustic_g * soft_mask;\ncaustic_b = caustic_b * soft_mask;\n\n// out2: isolated caustic layer\ncaustic_out = vec(clamp(caustic_r, 0.0, 1.0),\n                  clamp(caustic_g, 0.0, 1.0),\n                  clamp(caustic_b, 0.0, 1.0),\n                  1.0);\n\n// out1: additive composite over source\nsrc_r = sample(in1, uv).x;\nsrc_g = sample(in1, uv).y;\nsrc_b = sample(in1, uv).z;\n\ncomposite = vec(clamp(src_r + caustic_r, 0.0, 1.0),\n                clamp(src_g + caustic_g, 0.0, 1.0),\n                clamp(src_b + caustic_b, 0.0, 1.0),\n                1.0);\n\n// bypass: out1 passes source, out2 goes black\nsource_pass = vec(src_r, src_g, src_b, 1.0);\nblack = vec(0.0, 0.0, 0.0, 1.0);\n\nout1 = mix(composite, source_pass, bypass);\nout2 = mix(caustic_out, black, bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 3,
+									"numinlets": 2,
 									"numoutlets": 2,
 									"outlettype": [
 										"",
@@ -271,18 +253,6 @@
 									],
 									"source": [
 										"gen-obj-10",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										2
-									],
-									"source": [
-										"gen-obj-11",
 										0
 									]
 								}
@@ -557,7 +527,7 @@
 				"box": {
 					"id": "obj-100",
 					"maxclass": "inlet",
-					"comment": "texture",
+					"comment": "vecfield",
 					"index": 1,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -566,44 +536,6 @@
 					],
 					"patching_rect": [
 						90.0,
-						30.0,
-						30.0,
-						30.0
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-101",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						90.0,
-						80.0,
-						80.0,
-						22.0
-					],
-					"text": "vs_inState"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-103",
-					"maxclass": "inlet",
-					"comment": "vecfield",
-					"index": 2,
-					"numinlets": 0,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						150.0,
 						30.0,
 						30.0,
 						30.0
@@ -1138,32 +1070,8 @@
 						0
 					],
 					"destination": [
-						"obj-101",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-101",
-						0
-					],
-					"destination": [
 						"obj-5",
 						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-103",
-						0
-					],
-					"destination": [
-						"obj-5",
-						2
 					]
 				}
 			},
