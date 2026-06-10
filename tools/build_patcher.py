@@ -75,14 +75,14 @@ def box(id, **kwargs):
 
 def inlet_box():
     return box(OBJ_INLET,
-        maxclass="inlet", comment="texture in", index=0,
+        maxclass="inlet", comment="texture", index=0,
         numinlets=0, numoutlets=1, outlettype=[""],
         patching_rect=[30.0, 30.0, 30.0, 30.0])
 
 def outlet_box():
     """Single default outlet — used when definition has no 'outlets' key."""
     return box(OBJ_OUTLET,
-        maxclass="outlet", comment="texture out", index=0,
+        maxclass="outlet", comment="texture", index=0,
         numinlets=1, numoutlets=0,
         patching_rect=[30.0, 500.0, 30.0, 30.0])
 

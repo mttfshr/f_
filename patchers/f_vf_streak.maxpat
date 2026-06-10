@@ -21,7 +21,7 @@
 				"box": {
 					"id": "obj-1",
 					"maxclass": "inlet",
-					"comment": "texture in",
+					"comment": "texture",
 					"index": 0,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -40,7 +40,7 @@
 				"box": {
 					"id": "obj-2",
 					"maxclass": "outlet",
-					"comment": "out",
+					"comment": "composite",
 					"index": 0,
 					"numinlets": 1,
 					"numoutlets": 0,
