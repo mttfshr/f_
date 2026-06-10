@@ -110,7 +110,7 @@
       },
       {
         "box": {
-          "comment": "texture",
+          "comment": "texture / control",
           "id": "obj-4",
           "index": 0,
           "maxclass": "inlet",

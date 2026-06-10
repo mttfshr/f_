@@ -2,28 +2,19 @@
 
 ## What was done this session
 
-### Build system generalization (6e44863, 11bec32)
-- `outlets` key and `vs_instate: False` added to build_patcher.py
-- f_caustic and f_vf_streak definition.py written; per-module build scripts retired
+### Inlet/outlet label standardization (152755d)
+Established a consistent vocabulary for inlet/outlet comments across all patchers:
+- `texture` — standard jit.gl.texture signal (in or out)
+- `vecfield` — float32 RG vecfield texture (in or out)
+- `composite` — processed output blended over source
+- `control` — Max message/param inlet
+- layer names (`caustic`, `streak`, `grain mask`, `displaced`) — isolated effect outlets
 
-### Temporal synthesis discovery (3ca76e6)
-- Pattern 1 (chained pix feedback) documented in `docs/temporal_synthesis_architecture.md`
-
-### f_vf_advect — full build cycle complete (2cf67af, d26d943)
-- Spec, plan, tasks written
-- Codebox verified in scratch patch (`~/Vsynth/patterns/advect_scratch.maxpat`)
-- build_advect.py written, patcher built and validated
-- All Phase 3 acceptance criteria passed
-- Param ranges tuned from integration testing:
-  - dt: 0–0.05 (default 0.01)
-  - decay: 0.8–1.5 (default 0.97) — >1.0 = excitable/amplifying mode
-  - injection: 0–0.2 (default 0.02)
-  - mix: 0–1.5 (default 1.0)
-- README, f_modules menu, f_addmod.js updated
-
-**Key expressive finding:** decay > 1.0 is a qualitatively different operating mode —
-content amplifies rather than dissipates. Best sources: f_grain, f_caustic (isotropic texture).
-Best fields: f_vf_fieldmap (organic), f_vf_vortex_multi (structured).
+Changes:
+- `build_patcher.py` default inlet/outlet comments updated to `"texture"`
+- `definition.py` updated for `f_caustic`, `f_vf_fieldmap`, `f_vf_vortex`, `f_vf_vortex_multi` (added explicit `vecfield` outlet), `f_vf_streak` (outlet renamed), `f_grain` (`label` → `comment` bug fixed + vocabulary updated)
+- Hand-edited `.maxpat`: `f_channel_grader`, `f_hue_processor`, `f_luma_processor`, `f_tone_curve`, `f_droste`, `f_mobius`, `f_stereo`, `f_chladni`, `f_lens`, `f_masonry`, `f_vf_advect`
+- All definition.py-backed patchers rebuilt
 
 ---
 

@@ -75,7 +75,7 @@ def box(id, **kwargs):
 
 def inlet_box():
     return box(OBJ_INLET,
-        maxclass="inlet", comment="texture", index=0,
+        maxclass="inlet", comment="texture / control", index=0,
         numinlets=0, numoutlets=1, outlettype=[""],
         patching_rect=[30.0, 30.0, 30.0, 30.0])
 

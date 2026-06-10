@@ -435,7 +435,7 @@
       },
       {
         "box": {
-          "comment": "texture",
+          "comment": "texture / control",
           "id": "obj-10",
           "index": 0,
           "maxclass": "inlet",

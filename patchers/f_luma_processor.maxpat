@@ -807,7 +807,7 @@
       },
       {
         "box": {
-          "comment": "texture",
+          "comment": "texture / control",
           "id": "obj-2",
           "index": 0,
           "maxclass": "inlet",
