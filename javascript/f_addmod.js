@@ -24,7 +24,8 @@ var SIZES = {
     "vf_vortex_multi":[191, 284],
     "vf_fieldmap":    [100,  80],
     "vf_warp":        [ 78,  90],
-    "vf_streak":      [190, 100]
+    "vf_streak":      [190, 100],
+    "vf_advect":      [190, 130]
 };
 
 function addmod(mod) {
