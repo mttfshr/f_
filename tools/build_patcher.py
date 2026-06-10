@@ -23,6 +23,12 @@ DIAL_COLOR  = [0.8, 0.8, 0.8, 1.0]
 BG_COLOR    = [0.0, 0.0, 0.0, 1.0]
 BORDER_COLOR = [0.0, 0.03529411765, 0.2274509804, 1.0]
 
+# Signal type label colors (used in header next to title)
+SIGNAL_TYPE_COLORS = {
+    "vecfield": [0.35, 0.75, 0.95, 1.0],   # cyan-blue
+}
+OBJ_SIGNAL_TYPE = "obj-8"  # reserved ID for signal type label
+
 # ---------------------------------------------------------------------------
 # Object ID scheme (deterministic)
 # ---------------------------------------------------------------------------
@@ -171,6 +177,20 @@ def title_box(title):
         presentation_rect=[-1.5, 0.0, 80.0, 21.0],
         text=title)
 
+def signal_type_box(signal_type, title):
+    """Small colored label rendered in the header, right of the title text."""
+    color = SIGNAL_TYPE_COLORS.get(signal_type, [0.6, 0.6, 0.6, 1.0])
+    # Estimate title width to position label after it (approx 7px per char)
+    title_w = max(40.0, len(title) * 7.2)
+    return box(OBJ_SIGNAL_TYPE,
+        maxclass="comment",
+        fontname=FONT, fontsize=FONT_LABEL,
+        textcolor=color,
+        numinlets=1, numoutlets=0,
+        patching_rect=[20.0, 20.0, 60.0, 21.0],
+        presentation=1,
+        presentation_rect=[title_w - 2.0, 2.5, 60.0, 18.0],
+        text=signal_type)
 
 def modulesize_boxes():
     return [
@@ -617,6 +637,9 @@ def build(defn):
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
     boxes.append(title_box(title))
+    signal_type = defn.get("signal_type")
+    if signal_type:
+        boxes.append(signal_type_box(signal_type, title))
     boxes.extend(modulesize_boxes())
 
     if archetype == "dual":

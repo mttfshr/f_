@@ -370,6 +370,36 @@
 			},
 			{
 				"box": {
+					"id": "obj-8",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"textcolor": [
+						0.35,
+						0.75,
+						0.95,
+						1.0
+					],
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						20.0,
+						20.0,
+						60.0,
+						21.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						38.0,
+						2.5,
+						60.0,
+						18.0
+					],
+					"text": "vecfield"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-11",
 					"maxclass": "newobj",
 					"numinlets": 1,
