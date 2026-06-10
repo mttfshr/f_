@@ -12,7 +12,7 @@ Established consistent vocabulary for inlet/outlet comments across all patchers:
 - Layer names (`caustic`, `streak`, `grain mask`, `displaced`, `brick mask`, `warped`, `advected`) — isolated effect outlets
 
 ### Multi-outlet additions (f98a189)
-- `f_stipple` — 3 outlets: composite, stipple mask, displaced; `proc_mode` header toggle removed; displacement always computed
+- `f_stipple` — 3 outlets: composite, stipple mask, displaced; `proc_mode` header toggle removed
 - `f_masonry` — 2 outlets: composite, brick mask
 - `f_vf_warp` — 2 outlets: composite, warped (raw displaced sample)
 - `f_vf_advect` — 2 outlets: composite, advected (accumulated state pre-mix)
@@ -21,14 +21,19 @@ Established consistent vocabulary for inlet/outlet comments across all patchers:
 ### Vecfield signal_type label in header (66cd5f6)
 - `build_patcher.py`: `signal_type_box()` renders small cyan-blue label in header right of title
 - `SIGNAL_TYPE_COLORS`: `vecfield=[0.35, 0.75, 0.95, 1.0]`
-- `"signal_type": "vecfield"` added to all vf_ definition.py files
-- `build_advect.py` updated with hardcoded label at obj-8
+- `"signal_type": "vecfield"` added to all vf_ definition.py files + build_advect.py
 - Label is now rebuild-proof — no longer hand-added in Max
 
+### f_caustic refactor — pure processor (c783325)
+- Removed vestigial primary inlet (was doing nothing — texture was arriving on in1 not in0)
+- Now 2 inlets: `texture / control` on in0, `vecfield` on in1 (direct, no vs_inState)
+- Architecturally consistent with f_vf_warp and f_vf_streak
+- Codebox: in2→in1, in3→in2 (mechanical renumber, no logic changed)
+
 ### Python tooling (df0611b)
-- `tools/py.sh` wrapper ensures Homebrew Python 3.13 is used for all build scripts
+- `tools/py.sh` wrapper ensures Homebrew Python 3.13
 - Use `tools/py.sh tools/build_patcher.py ...` instead of `python3 ...`
-- Desktop Commander was picking up system Python 3.9.6; restart Claude to get fresh shell with updated PATH from ~/.bashrc
+- Restart Claude at start of next session to pick up updated ~/.bashrc PATH
 
 ---
 
@@ -53,4 +58,4 @@ Reading order: plan.md → HANDOFF.md
 - f_poincare presentation region — f_vf_scalar masking is the natural mechanism
 - f_chladni audio companion loadbang-in-bpatcher init reliability
 - Stipple displaced UV reconstruction with angle≠0 — worth a scratch patch verify
-- f_vf_vortex/vortex_multi: in0 label is 'texture / control' but it's control-only (no texture) — minor cosmetic inaccuracy, low priority
+- f_vf_vortex/vortex_multi: in0 label is 'texture / control' but it's control-only — minor cosmetic inaccuracy, low priority
