@@ -54,7 +54,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-2b",
+					"id": "obj-201",
 					"maxclass": "outlet",
 					"comment": "advected",
 					"index": 1,
@@ -107,213 +107,6 @@
 						22.0
 					],
 					"text": "route dt decay injection mix_amt"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-5",
-					"maxclass": "newobj",
-					"numinlets": 3,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-2",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										80.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 2"
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										138.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 3"
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-4",
-									"maxclass": "codebox",
-									"code": "Param dt(0.02);\nParam decay(0.95);\nParam injection(0.05);\nParam mix_amt(1.0);\nParam bypass(0.0);\nParam src_vecfield(0.0);\n\nuv = norm;\n\n// Vecfield: sample inline (no stored variable component access)\nfx = (sample(in2, uv).x - 0.5) * 2.0;\nfy = (sample(in2, uv).y - 0.5) * 2.0;\n\n// Suppress displacement when vecfield unconnected (src_vecfield = 0)\nconnected = step(0.5, src_vecfield);\nfx = fx * connected;\nfy = fy * connected;\n\n// Backward-displaced UV, clamped to edge\nsrc_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));\n\n// Advect previous frame, add source injection\nadvected = sample(in3, src_uv) * decay;\nresult = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);\n\n// Wet/dry, then bypass\nmixed = mix(sample(in1, uv), result, mix_amt);\nout1 = mix(mixed, sample(in1, uv), bypass);\nout2 = result;\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"numinlets": 3,
-									"numoutlets": 2,
-									"outlettype": [
-										"",
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-5",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-6",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										80.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 2"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"source": [
-										"gen-obj-1",
-										0
-									],
-									"destination": [
-										"gen-obj-4",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"gen-obj-2",
-										0
-									],
-									"destination": [
-										"gen-obj-4",
-										1
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"gen-obj-3",
-										0
-									],
-									"destination": [
-										"gen-obj-4",
-										2
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"gen-obj-4",
-										0
-									],
-									"destination": [
-										"gen-obj-5",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"gen-obj-4",
-										1
-									],
-									"destination": [
-										"gen-obj-6",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						200.0,
-						380.0,
-						320.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_advect_pix @type char @adapt 1",
-					"varname": "#0_advect_pix"
 				}
 			},
 			{
@@ -394,12 +187,220 @@
 					},
 					"patching_rect": [
 						200.0,
-						440.0,
-						300.0,
+						380.0,
+						200.0,
 						22.0
 					],
 					"text": "jit.gl.pix vsynth @name #0_advect_pass @type char @adapt 1",
 					"varname": "#0_advect_pass"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-5",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 3,
+					"outlettype": [
+						"jit_gl_texture",
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"code": "Param dt(0.02);\nParam decay(0.95);\nParam injection(0.05);\nParam mix_amt(1.0);\nParam bypass(0.0);\nParam src_vecfield(0.0);\n\nuv = norm;\n\n// Vecfield: sample inline (no stored variable component access)\nfx = (sample(in2, uv).x - 0.5) * 2.0;\nfy = (sample(in2, uv).y - 0.5) * 2.0;\n\n// Suppress displacement when vecfield unconnected (src_vecfield = 0)\nconnected = step(0.5, src_vecfield);\nfx = fx * connected;\nfy = fy * connected;\n\n// Backward-displaced UV, clamped to edge\nsrc_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));\n\n// Advect previous frame, add source injection\nadvected = sample(in3, src_uv) * decay;\nresult = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);\n\n// Wet/dry, then bypass\nmixed = mix(sample(in1, uv), result, mix_amt);\nout1 = mix(mixed, sample(in1, uv), bypass);\nout2 = result;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 3,
+									"numoutlets": 2,
+									"outlettype": [
+										"",
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-4",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										82.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 2"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-4",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										1
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						200.0,
+						380.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_advect_pix @type char @adapt 1",
+					"varname": "#0_advect_pix"
 				}
 			},
 			{
@@ -491,11 +492,11 @@
 					"id": "obj-8",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
+					"fontsize": 12.0,
 					"textcolor": [
-						0.35,
-						0.75,
-						0.95,
+						0.302,
+						0.325,
+						0.463,
 						1.0
 					],
 					"numinlets": 1,
@@ -514,62 +515,6 @@
 						18.0
 					],
 					"text": "vecfield"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-51",
-					"maxclass": "inlet",
-					"comment": "vecfield",
-					"index": 1,
-					"numinlets": 0,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						90.0,
-						30.0,
-						30.0,
-						30.0
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-52",
-					"maxclass": "newobj",
-					"text": "vs_inState",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						90.0,
-						80.0,
-						80.0,
-						22.0
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-53",
-					"maxclass": "newobj",
-					"text": "prepend param src_vecfield",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						90.0,
-						130.0,
-						180.0,
-						22.0
-					]
 				}
 			},
 			{
@@ -690,6 +635,25 @@
 			},
 			{
 				"box": {
+					"id": "obj-100",
+					"maxclass": "inlet",
+					"comment": "vecfield",
+					"index": 1,
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						90.0,
+						30.0,
+						30.0,
+						30.0
+					]
+				}
+			},
+			{
+				"box": {
 					"id": "obj-20",
 					"maxclass": "live.dial",
 					"activedialcolor": [
@@ -699,6 +663,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
+					"hint": "Displacement step size per frame -- larger = faster flow",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -801,6 +766,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
+					"hint": "Frame decay -- <1.0 fades, >1.0 amplifies (excitable regime)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -903,6 +869,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
+					"hint": "Source injection amount per frame",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1005,6 +972,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
+					"hint": "Wet/dry mix -- 0=source only, 1=fully advected",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1184,78 +1152,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
-						0
-					],
-					"destination": [
-						"obj-52",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-52",
-						0
-					],
-					"destination": [
-						"obj-5",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-52",
-						1
-					],
-					"destination": [
-						"obj-53",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-5",
-						2
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-5",
-						0
-					],
-					"destination": [
-						"obj-50",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-5",
 						0
 					],
@@ -1272,8 +1168,20 @@
 						1
 					],
 					"destination": [
-						"obj-2b",
+						"obj-201",
 						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-100",
+						0
+					],
+					"destination": [
+						"obj-5",
+						1
 					]
 				}
 			},
@@ -1298,6 +1206,30 @@
 					"destination": [
 						"obj-5",
 						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-5",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-50",
+						0
+					],
+					"destination": [
+						"obj-5",
+						2
 					]
 				}
 			},

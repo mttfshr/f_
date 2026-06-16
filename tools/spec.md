@@ -110,6 +110,44 @@ patcher = {
 {"name": "bypass", "type": "bypass"}
 ```
 
+**Multi-pix chain keys** (optional — when present, replaces `object_name`, `codebox`, and `pix_type`):
+
+```python
+patcher = {
+    # ...required keys above, except object_name/codebox/pix_type are omitted...
+
+    # pix_chain: list of pix node dicts. When present, build_patcher.py generates
+    # one jit.gl.pix per entry instead of the single-pix default path.
+    # Exactly one entry must have "primary": True. The primary pix is the target
+    # for params, bypass, mod_inlets, and bpatcher outlets. Support pix are
+    # internal plumbing only.
+    "pix_chain": [
+        {
+            "id":       str,   # symbolic ID used in pix_wires references
+            "name":     str,   # literal @name string on jit.gl.pix — author decides
+            "gen":      str,   # "pass" for identity gen, or filename relative to
+                               # .specify/f_<name>/ for a codebox file
+            "n_inlets": int,   # number of gen inlets (in 1, in 2, ...)
+            "n_outlets":int,   # number of gen outlets (out 1, out 2, ...)
+            "pix_type": str,   # optional — @type attribute (e.g. "char", "float32")
+            "adapt":    bool,  # optional — adds @adapt 1 if True
+            "primary":  bool,  # True for exactly one entry
+        },
+        # ... more nodes ...
+    ],
+
+    # pix_wires: cross-pix patchlines, referencing pix_chain "id" values.
+    # Standard wiring (routepass→primary, mod_inlets→primary, primary→outlets)
+    # is generated automatically. pix_wires adds only the cross-pix connections.
+    # Format: [src_id, src_outlet, dst_id, dst_inlet]
+    "pix_wires": [
+        [str, int, str, int],
+    ],
+}
+```
+
+Object ID assignment for multi-pix: primary pix → `obj-5`; support pix → `obj-50`, `obj-51`, ... in chain order (excluding primary).
+
 **Param ordering rules:**
 - `bypass` is always last
 - Internal params appear in the list for documentation but generate no UI objects

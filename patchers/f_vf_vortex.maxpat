@@ -426,11 +426,11 @@
 					"id": "obj-8",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
+					"fontsize": 12.0,
 					"textcolor": [
-						0.35,
-						0.75,
-						0.95,
+						0.302,
+						0.325,
+						0.463,
 						1.0
 					],
 					"numinlets": 1,

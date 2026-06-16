@@ -582,6 +582,111 @@ def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, 
         varname=object_name)
 
 # ---------------------------------------------------------------------------
+# Multi-pix chain support
+# ---------------------------------------------------------------------------
+
+def gen_identity():
+    """Trivial identity gen: in 1 → out 1. Used for pass_pix nodes."""
+    return {
+        "fileversion": 1,
+        "appversion": {"major": 9, "minor": 1, "revision": 4,
+                       "architecture": "x64", "modernui": 1},
+        "classnamespace": "jit.gen",
+        "rect": [100.0, 100.0, 400.0, 300.0],
+        "boxes": [
+            {"box": {"id": "gen-obj-1", "maxclass": "newobj",
+                     "numinlets": 0, "numoutlets": 1, "outlettype": [""],
+                     "patching_rect": [22.0, 30.0, 28.0, 22.0], "text": "in 1"}},
+            {"box": {"id": "gen-obj-2", "maxclass": "newobj",
+                     "numinlets": 1, "numoutlets": 0,
+                     "patching_rect": [22.0, 100.0, 35.0, 22.0], "text": "out 1"}},
+        ],
+        "lines": [
+            {"patchline": {"source": ["gen-obj-1", 0], "destination": ["gen-obj-2", 0]}}
+        ]
+    }
+
+
+def chain_pix_obj_id(node):
+    """Return obj-id for a pix_chain node. Primary → OBJ_PIX; support → obj-50+."""
+    if node["primary"]:
+        return OBJ_PIX
+    return f"obj-{50 + node['_support_index']}"
+
+
+def build_pix_chain(defn, def_dir):
+    """
+    Build boxes and cross-pix wires for a pix_chain definition.
+
+    Returns (chain_boxes, chain_lines, primary_obj_id, primary_node)
+      chain_boxes    — jit.gl.pix box dicts for all nodes
+      chain_lines    — patchlines for pix_wires cross-wiring only
+      primary_obj_id — obj-id of the primary pix
+      primary_node   — the primary node dict
+    """
+    chain      = [dict(n) for n in defn["pix_chain"]]  # shallow copy to annotate
+    wires_spec = defn.get("pix_wires", [])
+
+    # Annotate support index (position among non-primary nodes, in chain order)
+    support_idx = 0
+    for node in chain:
+        if node["primary"]:
+            node["_support_index"] = None
+        else:
+            node["_support_index"] = support_idx
+            support_idx += 1
+
+    id_to_obj      = {node["id"]: chain_pix_obj_id(node) for node in chain}
+    primary_node   = next(n for n in chain if n["primary"])
+    primary_obj_id = id_to_obj[primary_node["id"]]
+
+    chain_boxes = []
+    for node in chain:
+        obj_id     = id_to_obj[node["id"]]
+        name       = node["name"]
+        pix_type   = node.get("pix_type")
+        adapt      = node.get("adapt", False)
+        n_in       = node["n_inlets"]
+        n_out      = node["n_outlets"]
+        type_attr  = f" @type {pix_type}" if pix_type else ""
+        adapt_attr = " @adapt 1" if adapt else ""
+        outlettype = ["jit_gl_texture"] * n_out + [""]
+
+        gen_spec = node.get("gen", "")
+        if gen_spec == "pass":
+            gen = gen_identity()
+        else:
+            cb_path = def_dir / gen_spec
+            codebox = cb_path.read_text()
+            # Processor-style gen; extra inlets beyond in1 are mod_inlet placeholders
+            gen = gen_subpatcher(codebox, "processor",
+                                 mod_inlets=[{}] * (n_in - 1),
+                                 n_outlets=n_out)
+
+        y_rect = (380.0 + node["_support_index"] * 60.0
+                  if not node["primary"] else 380.0)
+        chain_boxes.append(box(obj_id,
+            maxclass="newobj",
+            numinlets=n_in, numoutlets=n_out + 1,
+            outlettype=outlettype,
+            patcher=gen,
+            patching_rect=[200.0, y_rect, max(200.0, len(name) * 8.0 + 80.0), 22.0],
+            text=f"jit.gl.pix vsynth @name {name}{type_attr}{adapt_attr}",
+            varname=name))
+
+    # Cross-pix wires from pix_wires spec
+    chain_lines = []
+    for w in wires_spec:
+        src_id, src_out, dst_id, dst_in = w
+        chain_lines.append({"patchline": {
+            "source":      [id_to_obj[src_id], src_out],
+            "destination": [id_to_obj[dst_id], dst_in],
+        }})
+
+    return chain_boxes, chain_lines, primary_obj_id, primary_node
+
+
+# ---------------------------------------------------------------------------
 # Patchline builder
 # ---------------------------------------------------------------------------
 
@@ -598,15 +703,11 @@ def wire(src_id, src_outlet, dst_id, dst_inlet):
 def build(defn):
     name        = defn["name"]
     prefix      = defn["prefix"]
-    object_name = defn["object_name"]
     title       = defn["title"]
-    archetype   = defn["archetype"]
     pw          = float(defn["presentation_width"])
     ph          = float(defn["presentation_height"])
-    codebox     = defn["codebox"]
     all_params  = defn["params"]
     mod_inlets  = defn.get("mod_inlets", [])
-    pix_type    = defn.get("pix_type", None)
     outlets     = defn.get("outlets", [{"comment": "texture out"}])
 
     # Validate: vs_instate:False and state_param are mutually exclusive
@@ -627,13 +728,37 @@ def build(defn):
     bp_jsui_id = bypass_jsui_id(len(ui_params))
     bp_pre_id  = bypass_pre_id(len(ui_params))
 
+    # ---------------------------------------------------------------------------
+    # Pix box(es) — single-pix or pix_chain path
+    # ---------------------------------------------------------------------------
+    pix_chain = defn.get("pix_chain")
+
+    if pix_chain:
+        # Multi-pix path
+        def_dir = Path(defn.get("_def_path", ".")).parent
+        chain_boxes, chain_lines, primary_obj_id, primary_node = build_pix_chain(defn, def_dir)
+        object_name = primary_node["name"]   # @name of primary pix — used for param_connect
+        archetype   = defn.get("archetype", "processor")
+        pix_boxes_to_add = chain_boxes
+        extra_pix_lines  = chain_lines
+    else:
+        # Single-pix path (existing behaviour)
+        object_name = defn["object_name"]
+        archetype   = defn["archetype"]
+        codebox     = defn["codebox"]
+        pix_type    = defn.get("pix_type", None)
+        primary_obj_id   = OBJ_PIX
+        pix_boxes_to_add = [pix_box(prefix, object_name, codebox, archetype,
+                                    mod_inlets, pix_type, outlets)]
+        extra_pix_lines  = []
+
     # Build boxes — pix must come before bypass jsui (param_connect dependency)
     boxes = []
     boxes.append(inlet_box())
     boxes.extend(outlet_boxes(outlets))
     boxes.append(routepass_box())
     boxes.append(route_box(route_params))
-    boxes.append(pix_box(prefix, object_name, codebox, archetype, mod_inlets, pix_type, outlets))
+    boxes.extend(pix_boxes_to_add)
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
     boxes.append(title_box(title))
@@ -678,29 +803,32 @@ def build(defn):
     lines.append(wire(OBJ_INLET, 0, OBJ_ROUTEPASS, 0))
 
     if archetype == "dual":
-        # routepass out0 → vs_inState → pix
+        # routepass out0 → vs_inState → primary pix
         lines.append(wire(OBJ_ROUTEPASS, 0, OBJ_INSTATE, 0))
-        lines.append(wire(OBJ_INSTATE, 0, OBJ_PIX, 0))
+        lines.append(wire(OBJ_INSTATE, 0, primary_obj_id, 0))
         lines.append(wire(OBJ_INSTATE, 1, OBJ_SRCMODE_PRE, 0))
-        lines.append(wire(OBJ_SRCMODE_PRE, 0, OBJ_PIX, 0))
+        lines.append(wire(OBJ_SRCMODE_PRE, 0, primary_obj_id, 0))
     else:
-        # routepass out0 → pix
-        lines.append(wire(OBJ_ROUTEPASS, 0, OBJ_PIX, 0))
+        # routepass out0 → primary pix
+        lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
 
     # routepass out2 (unmatched) → route
     lines.append(wire(OBJ_ROUTEPASS, 2, OBJ_ROUTE, 0))
 
-    # pix outN → outletN (one wire per outlet)
+    # primary pix outN → outletN (one wire per outlet)
     for i in range(len(outlets)):
-        lines.append(wire(OBJ_PIX, i, outlet_obj_id(i), 0))
+        lines.append(wire(primary_obj_id, i, outlet_obj_id(i), 0))
 
-    # modulation inlets → (vs_inState →) pix
+    # modulation inlets → (vs_inState →) primary pix
     if mod_inlets:
         lines.extend(mod_inlet_lines(mod_inlets))
 
-    # bypass jsui → prepend bypass → pix
+    # bypass jsui → prepend bypass → primary pix
     lines.append(wire(bp_jsui_id, 0, bp_pre_id, 0))
-    lines.append(wire(bp_pre_id, 0, OBJ_PIX, 0))
+    lines.append(wire(bp_pre_id, 0, primary_obj_id, 0))
+
+    # cross-pix wires (pix_chain only)
+    lines.extend(extra_pix_lines)
 
     # moduleSize chain
     lines.append(wire(OBJ_LOADBANG, 0, OBJ_GETATTR, 0))
@@ -709,18 +837,18 @@ def build(defn):
     lines.append(wire(OBJ_ZLSLICE, 1, OBJ_PRETAM, 0))
     lines.append(wire(OBJ_PRETAM, 0, OBJ_MODULESIZE, 0))
 
-    # route outlets → grid controls → prepends → pix
+    # route outlets → grid controls → prepends → primary pix
     for n, p in enumerate(ui_params):
         lines.append(wire(OBJ_ROUTE, n, param_obj_id(n), 0))
         lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
-        lines.append(wire(param_pre_id(n), 0, OBJ_PIX, 0))
+        lines.append(wire(param_pre_id(n), 0, primary_obj_id, 0))
 
-    # route outlets → header toggles → prepends → pix
+    # route outlets → header toggles → prepends → primary pix
     if header_toggles:
         ht_outlet = len(ui_params)   # header toggles come after ui_params in route
         lines.append(wire(OBJ_ROUTE, ht_outlet, OBJ_HEADER_TOGGLE, 0))
         lines.append(wire(OBJ_HEADER_TOGGLE, 0, OBJ_HEADER_TOGGLE_PRE, 0))
-        lines.append(wire(OBJ_HEADER_TOGGLE_PRE, 0, OBJ_PIX, 0))
+        lines.append(wire(OBJ_HEADER_TOGGLE_PRE, 0, primary_obj_id, 0))
 
     # parameters block — grid params + header toggles (not bypass jsui)
     params_block = {}
@@ -759,7 +887,9 @@ def load_definition(path):
     spec = importlib.util.spec_from_file_location("definition", path)
     mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod.patcher
+    defn = mod.patcher
+    defn["_def_path"] = str(Path(path).resolve())
+    return defn
 
 def main():
     if len(sys.argv) < 2:
