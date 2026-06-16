@@ -654,6 +654,43 @@
 			},
 			{
 				"box": {
+					"id": "obj-101",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						90.0,
+						80.0,
+						80.0,
+						22.0
+					],
+					"text": "vs_inState"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-102",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						90.0,
+						130.0,
+						160.0,
+						22.0
+					],
+					"text": "prepend param src_vecfield"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-20",
 					"maxclass": "live.dial",
 					"activedialcolor": [
@@ -1180,8 +1217,44 @@
 						0
 					],
 					"destination": [
+						"obj-101",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						0
+					],
+					"destination": [
 						"obj-5",
 						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						1
+					],
+					"destination": [
+						"obj-102",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-102",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
 					]
 				}
 			},
