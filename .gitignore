@@ -15,4 +15,5 @@ vs_texrouter_SPEC.md
 
 # thinking stuff not for public repo
 .specify
-ideas/
+ideas/.specify
+tools/helpfile_queue.json
