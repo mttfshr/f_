@@ -25,7 +25,7 @@ BORDER_COLOR = [0.0, 0.03529411765, 0.2274509804, 1.0]
 
 # Signal type label colors (used in header next to title)
 SIGNAL_TYPE_COLORS = {
-    "vecfield": [0.35, 0.75, 0.95, 1.0],   # cyan-blue
+    "vecfield": [ 0.302, 0.325, 0.463, 1.000 ],   
 }
 OBJ_SIGNAL_TYPE = "obj-8"  # reserved ID for signal type label
 
@@ -184,7 +184,7 @@ def signal_type_box(signal_type, title):
     title_w = max(40.0, len(title) * 7.2)
     return box(OBJ_SIGNAL_TYPE,
         maxclass="comment",
-        fontname=FONT, fontsize=FONT_LABEL,
+        fontname=FONT, fontsize=FONT_TITLE,
         textcolor=color,
         numinlets=1, numoutlets=0,
         patching_rect=[20.0, 20.0, 60.0, 21.0],

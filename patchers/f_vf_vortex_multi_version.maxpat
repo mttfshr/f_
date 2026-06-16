@@ -9,26 +9,261 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 468.0, 95.0, 767.0, 865.0 ],
+        "rect": [ 167.0, 95.0, 930.0, 845.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
                 "box": {
+                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
+                    "appearance": 3,
+                    "id": "obj-99",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 132.25, 174.0, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 141.5, 103.0, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_selection"
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[4]",
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "live.numbox",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "live.numbox[3]"
+                }
+            },
+            {
+                "box": {
+                    "activeslidercolor": [ 0.0, 0.549019607843137, 0.67843137254902, 1.0 ],
+                    "appearance": 3,
+                    "id": "obj-102",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 117.25, 159.0, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 103.0, 102.75, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_modulation"
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[6]",
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "live.numbox",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "live.numbox[4]"
+                }
+            },
+            {
+                "box": {
+                    "activeslidercolor": [ 0.972549019607843, 0.462745098039216, 0.501960784313725, 1.0 ],
+                    "appearance": 3,
+                    "id": "obj-105",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 102.25, 144.0, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 71.5, 102.75, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_display_handle_two"
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[7]",
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "live.numbox",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "live.numbox[5]"
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-98",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 895.0, 175.0, 50.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 151.5, 69.5, 17.0, 18.0 ],
+                    "text": "3",
+                    "textjustification": 1
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-97",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 880.0, 160.0, 50.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 111.5, 69.5, 17.0, 18.0 ],
+                    "text": "2",
+                    "textjustification": 1
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-96",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 865.0, 145.0, 50.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 85.0, 69.5, 17.0, 18.0 ],
+                    "text": "1",
+                    "textjustification": 1
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-92",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "patching_rect": [ 173.53, 127.26, 100.0, 22.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 173.53, 127.26, 100.0, 22.0 ]
+                }
+            },
+            {
+                "box": {
+                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
+                    "appearance": 3,
+                    "id": "obj-84",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 117.25, 159.0, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 141.5, 85.75, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_selection"
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[2]",
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "live.numbox",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "live.numbox[2]"
+                }
+            },
+            {
+                "box": {
+                    "activeslidercolor": [ 0.0, 0.549019607843137, 0.67843137254902, 1.0 ],
+                    "appearance": 3,
+                    "id": "obj-83",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 102.25, 144.0, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 103.0, 85.75, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_modulation"
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[1]",
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "live.numbox",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "live.numbox[1]"
+                }
+            },
+            {
+                "box": {
+                    "activeslidercolor": [ 0.972549019607843, 0.462745098039216, 0.501960784313725, 1.0 ],
+                    "appearance": 3,
+                    "id": "obj-81",
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 87.25, 129.0, 44.0, 15.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 68.0, 85.75, 34.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_display_handle_two"
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox",
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "live.numbox",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "live.numbox"
+                }
+            },
+            {
+                "box": {
+                    "candycane": 4,
+                    "candycane2": [ 0.031373, 0.541176, 0.498039, 1.0 ],
+                    "candycane3": [ 0.29392, 0.41441, 0.71583, 1.0 ],
                     "disabledalpha": 1.0,
                     "id": "obj-76",
                     "maxclass": "nodes",
-                    "nodenumber": 3,
-                    "nodesnames": [ "1", "2", "3" ],
-                    "nsize": [ 0.1, 0.1, 0.1 ],
+                    "nodecolor": [ 0.972549019607843, 0.462745098039216, 0.501960784313725, 1.0 ],
+                    "nodenumber": 4,
+                    "nodesnames": [ "1", "2", "3", "C" ],
+                    "nsize": [ 0.08, 0.08, 0.08, 0.08 ],
                     "numinlets": 1,
                     "numoutlets": 3,
                     "outlettype": [ "", "", "" ],
                     "parameter_enable": 1,
                     "patching_rect": [ 184.25, 216.25, 100.0, 100.0 ],
+                    "pointcolor": [ 0.438625166187593, 0.438625058064006, 0.438625086318427, 0.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 210.5, 87.5, 68.5, 70.0 ],
+                    "presentation_rect": [ 0.5, 23.0, 62.5, 56.0 ],
                     "saved_attribute_attributes": {
+                        "nodecolor": {
+                            "expression": "themecolor.live_display_handle_two"
+                        },
                         "valueof": {
+                            "parameter_initial": [ 0.2773722627737226, 0.32857142857142857, 0.08, 1, 0.7591240875912408, 0.291970802919708, 0.08, 1, 0.3357664233576642, 0.708029197080292, 0.08, 1, 0.3333333333333333, 0.3333333333333333, 0.08, 1 ],
+                            "parameter_initial_enable": 1,
                             "parameter_invisible": 1,
                             "parameter_longname": "nodes",
                             "parameter_modmode": 0,
@@ -37,31 +272,8 @@
                         }
                     },
                     "varname": "nodes",
-                    "xplace": [ 0.23357664233576642, 0.7591240875912408, 0.3357664233576642 ],
-                    "yplace": [ 0.3146067415730337, 0.291970802919708, 0.708029197080292 ]
-                }
-            },
-            {
-                "box": {
-                    "bgmode": 0,
-                    "border": 0,
-                    "clickthrough": 0,
-                    "enablehscroll": 0,
-                    "enablevscroll": 0,
-                    "id": "obj-19",
-                    "lockeddragscroll": 0,
-                    "lockedsize": 0,
-                    "maxclass": "bpatcher",
-                    "name": "vsc_center_ctrl.maxpat",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 238.169921875, 97.294921875, 60.0, 60.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 210.5, 21.0, 60.0, 60.0 ],
-                    "varname": "vsc_center_ctrl",
-                    "viewvisibility": 1
+                    "xplace": [ 0.2788181668577418, 0.7591240875912408, 0.3357664233576642, 0.4180503254824311 ],
+                    "yplace": [ 0.20575218286925856, 0.291970802919708, 0.708029197080292, 0.4113815128803253 ]
                 }
             },
             {
@@ -262,12 +474,18 @@
                     "patching_rect": [ 500.0, 500.0, 56.0, 22.0 ],
                     "restore": {
                         "bypass": [ 0 ],
-                        "conv_amt": [ 0.0 ],
+                        "conv_amt": [ 0.5354330708661412 ],
                         "curl_amt": [ 0.0 ],
                         "cx_amt": [ 0.0 ],
                         "cy_amt": [ 0.0 ],
                         "falloff": [ 2.0 ],
-                        "nodes": [ 0.23357664233576642, 0.3146067415730337, 0.1, 1, 0.7591240875912408, 0.291970802919708, 0.1, 1, 0.3357664233576642, 0.708029197080292, 0.1, 1 ],
+                        "live.numbox": [ 0.0 ],
+                        "live.numbox[1]": [ 9.999999999999986 ],
+                        "live.numbox[2]": [ 24.0 ],
+                        "live.numbox[3]": [ 0.0 ],
+                        "live.numbox[4]": [ 0.0 ],
+                        "live.numbox[5]": [ 0.0 ],
+                        "nodes": [ 0.2788181668577418, 0.20575218286925856, 0.08, 1, 0.7591240875912408, 0.291970802919708, 0.08, 1, 0.3357664233576642, 0.708029197080292, 0.08, 1, 0.4180503254824311, 0.4113815128803253, 0.08, 1 ],
                         "s1_conv": [ 0.5 ],
                         "s1_curl": [ 0.0 ],
                         "s1_cx": [ 0.3 ],
@@ -299,7 +517,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 486.0, 130.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 0.0, 0.0, 190.0, 283.0 ],
+                    "presentation_rect": [ 3.75, 11.75, 186.0, 197.0 ],
                     "proportion": 0.5
                 }
             },
@@ -327,7 +545,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 74.0, 21.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 72.00000214576721, 0.0, 74.0, 21.0 ],
+                    "presentation_rect": [ 72.0, 0.0, 49.5, 21.0 ],
                     "text": "vecfield",
                     "textcolor": [ 0.302, 0.325, 0.463, 1.0 ]
                 }
@@ -509,7 +727,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 50.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 252.0, 57.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -555,7 +773,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 50.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ -7.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 224.0, 31.0, 50.0, 18.0 ],
                     "text": "S1 Cx",
                     "textjustification": 1
                 }
@@ -574,7 +792,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 100.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 41.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 281.0, 57.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -620,7 +838,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 100.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 29.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 276.0, 31.0, 50.0, 18.0 ],
                     "text": "S1 Cy",
                     "textjustification": 1
                 }
@@ -639,7 +857,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 150.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 78.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 141.5, 235.5, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -677,21 +895,6 @@
             },
             {
                 "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-28",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 150.0, 130.0, 50.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 66.5, 20.0, 50.0, 18.0 ],
-                    "text": "S1 Conv",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
                     "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Site 1 curl",
@@ -704,7 +907,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 200.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 115.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 178.5, 235.5, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -743,21 +946,6 @@
             },
             {
                 "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-31",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 200.0, 130.0, 50.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 103.5, 20.0, 50.0, 18.0 ],
-                    "text": "S1 Curl",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
                     "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Site 2 X position",
@@ -770,7 +958,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 250.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 152.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 240.5, 108.5, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -816,7 +1004,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 250.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 140.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 198.90110862255096, 125.0, 50.0, 18.0 ],
                     "text": "S2 Cx",
                     "textjustification": 1
                 }
@@ -835,7 +1023,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 300.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.0, 100.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 281.0, 108.5, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -881,7 +1069,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 300.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ -7.5, 82.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 313.18682849407196, 100.0, 50.0, 18.0 ],
                     "text": "S2 Cy",
                     "textjustification": 1
                 }
@@ -900,7 +1088,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 350.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 41.0, 100.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 141.5, 309.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -938,21 +1126,6 @@
             },
             {
                 "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-40",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 350.0, 130.0, 50.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 29.5, 82.0, 50.0, 18.0 ],
-                    "text": "S2 Conv",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
                     "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Site 2 curl",
@@ -965,7 +1138,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 400.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 78.0, 100.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 178.5, 309.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1004,21 +1177,6 @@
             },
             {
                 "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-43",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 400.0, 130.0, 50.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 66.5, 82.0, 50.0, 18.0 ],
-                    "text": "S2 Curl",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
                     "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Site 3 X position",
@@ -1031,7 +1189,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 450.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 115.0, 100.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 247.0, 167.03297519683838, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1077,7 +1235,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 450.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 103.5, 82.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 203.29671323299408, 167.03297519683838, 50.0, 18.0 ],
                     "text": "S3 Cx",
                     "textjustification": 1
                 }
@@ -1096,7 +1254,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 500.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 152.0, 100.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 287.5, 162.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1142,7 +1300,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 500.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 140.5, 82.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 313.18682849407196, 156.59341424703598, 50.0, 18.0 ],
                     "text": "S3 Cy",
                     "textjustification": 1
                 }
@@ -1161,7 +1319,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 550.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.0, 162.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 141.5, 373.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1199,21 +1357,6 @@
             },
             {
                 "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-52",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 550.0, 130.0, 50.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ -7.5, 144.0, 50.0, 18.0 ],
-                    "text": "S3 Conv",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
                     "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Site 3 curl",
@@ -1226,7 +1369,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 600.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 41.0, 162.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 178.5, 373.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1265,21 +1408,6 @@
             },
             {
                 "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-55",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 600.0, 130.0, 50.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 29.5, 144.0, 50.0, 18.0 ],
-                    "text": "S3 Curl",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
                     "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Shared exponential falloff rate",
@@ -1292,7 +1420,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 650.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 78.0, 162.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 71.5, 23.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1338,7 +1466,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 650.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 66.5, 144.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 95.0, 31.0, 50.0, 18.0 ],
                     "text": "Falloff",
                     "textjustification": 1
                 }
@@ -1357,7 +1485,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 700.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 115.0, 162.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 247.03846210241318, 242.13186901807785, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1403,7 +1531,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 700.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 103.5, 144.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 235.5, 224.0, 50.0, 18.0 ],
                     "text": "Cx Amt",
                     "textjustification": 1
                 }
@@ -1422,7 +1550,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 750.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 152.0, 162.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 284.40110129117966, 242.13186901807785, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1468,7 +1596,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 750.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 140.5, 144.0, 50.0, 18.0 ],
+                    "presentation_rect": [ 272.8626391887665, 224.0, 50.0, 18.0 ],
                     "text": "Cy Amt",
                     "textjustification": 1
                 }
@@ -1487,7 +1615,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 800.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.0, 224.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 38.0, 77.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1533,8 +1661,8 @@
                     "numoutlets": 0,
                     "patching_rect": [ 800.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ -7.5, 206.0, 50.0, 18.0 ],
-                    "text": "Conv Amt",
+                    "presentation_rect": [ 9.5, 84.25, 35.5, 18.0 ],
+                    "text": "Conv.",
                     "textjustification": 1
                 }
             },
@@ -1552,7 +1680,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 850.0, 80.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 41.0, 224.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 29.5, 138.25, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -1598,8 +1726,8 @@
                     "numoutlets": 0,
                     "patching_rect": [ 850.0, 130.0, 50.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 29.5, 206.0, 50.0, 18.0 ],
-                    "text": "Curl Amt",
+                    "presentation_rect": [ 13.5, 118.25, 36.5, 18.0 ],
+                    "text": "Curl",
                     "textjustification": 1
                 }
             },
@@ -1615,7 +1743,7 @@
                     "parameter_enable": 0,
                     "patching_rect": [ 464.0, 5.0, 18.0, 12.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 168.0, 4.5, 18.0, 12.0 ],
+                    "presentation_rect": [ 120.25, 4.5, 18.0, 12.0 ],
                     "valuepopuplabel": 1,
                     "varname": "bypass"
                 }
@@ -2056,7 +2184,8 @@
             }
         ],
         "parameters": {
-            "obj-19::obj-2": [ "vs_phase_ctrl", "vs_phase_ctrl", 0 ],
+            "obj-102": [ "live.numbox[6]", "live.numbox", 0 ],
+            "obj-105": [ "live.numbox[7]", "live.numbox", 0 ],
             "obj-20": [ "s1_cx", "s1_cx", 0 ],
             "obj-23": [ "s1_cy", "s1_cy", 0 ],
             "obj-26": [ "s1_conv", "s1_conv", 0 ],
@@ -2075,6 +2204,10 @@
             "obj-65": [ "conv_amt", "conv_amt", 0 ],
             "obj-68": [ "curl_amt", "curl_amt", 0 ],
             "obj-76": [ "nodes", "nodes", 0 ],
+            "obj-81": [ "live.numbox", "live.numbox", 0 ],
+            "obj-83": [ "live.numbox[1]", "live.numbox", 0 ],
+            "obj-84": [ "live.numbox[2]", "live.numbox", 0 ],
+            "obj-99": [ "live.numbox[4]", "live.numbox", 0 ],
             "inherited_shortname": 1
         },
         "autosave": 0
