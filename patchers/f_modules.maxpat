@@ -836,14 +836,15 @@
                                 "Fieldmap",
                                 "Warp",
                                 "Streak",
-                                "Advect"
+                                "Advect",
+                                "Glow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_disp",
-                            "parameter_mmax": 5,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -879,14 +880,15 @@
                                 "vf_fieldmap",
                                 "vf_warp",
                                 "vf_streak",
-                                "vf_advect"
+                                "vf_advect",
+                                "vf_glow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_file",
-                            "parameter_mmax": 5,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

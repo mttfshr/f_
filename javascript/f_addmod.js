@@ -25,7 +25,8 @@ var SIZES = {
     "vf_fieldmap":    [100,  80],
     "vf_warp":        [ 78,  90],
     "vf_streak":      [190, 100],
-    "vf_advect":      [190, 130]
+    "vf_advect":      [190, 130],
+    "vf_glow":        [190, 120]
 };
 
 function addmod(mod) {

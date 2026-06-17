@@ -41,6 +41,7 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_vf_warp` | Processor | UV warp via f_vecfield -- displaces source texture along field streamlines |
 | `f_vf_streak` | Processor | Directional blur via f_vecfield -- accumulates source samples along streamlines; two outlets (composite / isolated streak layer) |
 | `f_vf_advect` | Processor | Temporal fluid advection via f_vecfield -- accumulates flow across frames; decay >1.0 gives excitable/amplifying character |
+| `f_vf_glow` | Processor | Field-aligned directional blur via f_vecfield -- accumulates source samples along streamlines with exponential falloff; two outlets (composite / isolated glow layer) |
 
 ## Notes
 
