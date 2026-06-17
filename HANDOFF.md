@@ -1,24 +1,26 @@
-# HANDOFF — f_ session 2026-06-16
+# HANDOFF — f_ session 2026-06-17
 
 ## What was done this session
 
-### f_vf_glow — complete
-Full build from spec through registration. Field-aligned directional blur via f_vecfield — 48-step accumulation with per-step jitter, exponential falloff, bidirectional/forward/backward direction modes, color/luma mix, dual outlet (composite + isolated glow layer).
+### Architecture discussions — no code written
 
-Key discoveries during Phase 1 scratch patch verification:
-- Fixed 24-step count insufficient — upgraded to 48 steps
-- Jitter amplitude of 0.5 steps too high (visible noise grain); 0.1 steps correct
-- `falloff * 0.1` scaling removed — param now directly reflects shader coefficient; range 0.0–0.05, default 0.002
-- Usable `radius` range is 0.005–0.05 for smooth glow; up to 0.2 works for comet-tail streaks at low falloff
-- vs_black suppression works correctly via pre-remap raw value test
-- `f_vf_glow` is a field-aligned blur, not a radial bloom — fieldmap produces tangential edge feathering, vortex produces arc halos; radial bloom achieved via vortex with `curl=0, converge` negative
+**f_vf_diverge / fieldmap extension**
+Revisited the divergence vecfield idea from a previous session. Conclusion: the "diverge from bright shapes" behavior is likely achievable as a patch recipe — `f_vf_glow → f_vf_fieldmap` — rather than a new module. Glow spreads luma mass spatially; fieldmap differentiates it into a gradient field. Key note: fieldmap's gradient points *toward* increasing luma by default; negate `strength` to get outward push from bright regions. Captured as experiment-first: try the recipe, note results, build a module only if the recipe has a clear gap. `ideas/f_vf_diverge.md` not yet created — low priority until experiment surfaces a need.
 
-All 35 tasks complete across 4 phases. Registered in f_modules (Vecfield category), f_addmod.js, README.md. docs/f_vf_glow.md written including signal chain recipes.
+**f_vf_mix reassessment**
+Pressure-tested whether a dedicated vecfield mixer is needed given Vsynth's existing tools. Result: linear crossfade works correctly with standard Vsynth mixers (the 0.5=zero encoding is linear, so weighted average is encoding-safe). The real gap is additive combination — standard color-space add gets the encoding wrong (`0.5 + 0.5 = 1.0` not `0.0`). But this is thin enough that it's experiment-first: try `vs_mixer_3_avg` and `vs_op2` in practice, see where encoding breaks down, build only if needed. Demoted from "most pressing infrastructure gap" to "experiment before building."
 
-### Ideas captured
-- `ideas/f_vf_mix.md` — blend/combine two vecfields; most pressing infrastructure gap
-- `ideas/f_vf_normal.md` — repackage RG texture as vecfield; may not need building (test jit.gl.bfg normal output wiring directly first)
-- `ideas/f_vf_optical_flow.md` — motion-derived vecfield; frame diff + fieldmap approximation worth testing before full build
+**f_chladni — major reframe**
+Full architecture discussion resulting in rewritten spec, plan, and tasks. Key decisions:
+
+- **Single resonance, not 8-band superposition.** The 8-mode filterbank architecture produces visualizer character — spectral content is legible in the pattern. A single resonant mode selected by MIDI pitch is more physically faithful and more sculptural.
+- **Interface: `note` (MIDI 0–127) + `amp` (0–1).** Replaces `m0amp`–`m7amp`. Upstream companion patches convert any source to this interface.
+- **Two mode selection behaviors to test in scratch patch:** linear interpolation between adjacent Bessel zeros vs. resonance snap with falloff curve centered on each zero. Decision gates all build work.
+- **Dual outlet:** luma (nodal lines) + float32 f_vecfield (gradient of `total` pointing toward nodal lines). Vecfield outlet promoted from deferred to core.
+- **Circular geometry only.** Strip view mode retained for f_stereo routing. Rectangular/sine-mode boundary deferred indefinitely as a separate module.
+- **Companion patches simplified** to supply `note` + `amp` only. Previous filterbank architecture superseded.
+
+All three `.specify/f_chladni/` files rewritten. Project `plan.md` updated.
 
 ---
 
@@ -26,16 +28,18 @@ All 35 tasks complete across 4 phases. Registered in f_modules (Vecfield categor
 
 Reading order: .specify/plan.md → HANDOFF.md
 
-1. **f_vf_mix** — most useful next vecfield build; simple architecture, high combinatorial value
-2. **f_hue_processor band drag** — optional; needs clean design approach before touching
-3. **Test `jit.gl.bfg` normal output → f_vf_ consumer** — may make f_vf_normal unnecessary
+1. **Regression audit follow-up** — f_hue_processor, f_stereo, f_masonry, f_droste still outstanding. Do these first.
+2. **f_chladni scratch patch** — T100–T106; build minimal patch to compare linear vs. resonance snap mode selection; determine expressive MIDI range; write scratch_notes.md
+3. **f_vf_mix / f_vf_diverge experiments** — try patch recipes before committing to builds
 
 ---
 
 ## Loose threads
 
-- `f_vf_glow` param ranges calibrated on vortex + ring source — may want to revisit defaults with more varied source material in performance
-- `bwd_weight` direction branchless expression works but is non-obvious; documented in codebox comments
+- `f_vf_glow` param ranges calibrated on vortex + ring source — revisit defaults with more varied source material in performance
 - f_vf_normal: test `jit.gl.bfg` direct wiring before building the module
-- f_vf_optical_flow: frame diff + fieldmap approximation worth a scratch patch test before committing to full optical flow implementation
+- f_vf_optical_flow: frame diff + fieldmap approximation worth a scratch patch test before committing
 - Regression audit script improvements still pending (live.text, jsui as legitimate UI sources; patcher-inlet → attrui path tracing)
+- f_chladni scratch patch: note whether a `spread` param (falloff width for resonance snap) adds expressive value or is noise
+- f_chladni vecfield gradient: numerical differencing preferred (evaluate `total` at norm ± epsilon); calibrate epsilon during codebox write (~0.004 starting point, same as fieldmap)
+- EEG companion patch note mapping: weighted centroid vs. highest-amplitude band — decide empirically when companion patch phase is reached
