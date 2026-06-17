@@ -9,19 +9,20 @@
 - Helpfile section updated: 18 helpfiles generated (all modules except vortex_multi, advect, texrouter)
 - Regression audit section refreshed
 
-### f_hue_processor — partial regression audit
-Audit flagged `hue_lower` and `hue_upper` as having no UI path to pix. Investigation found:
-- The attruis (obj-10, obj-11) exist but had no incoming wires from hue_range.js and no outgoing wires to pix
-- Added 4 wires: hue_range.js out1/out2 → attruis, attruis → pix
-- edge_falloff dial now also wires directly to jsui in2 for visual feedback
-- inlet/outlet assist strings added to hue_rslider.js and hue_range.js (tooltips on hover)
+### Regression audit — complete (416ab89)
+All four flagged modules resolved:
 
-**Known remaining issue:** band drag (dragging the center marker to move the whole range) does not maintain the hi-lo distance. Individual handle dragging works. The wiring around the jsui/hue_range.js/numbox triangle is tangled and caused significant thrash this session — do not touch without a clear plan. The module is usable as-is.
+- **f_hue_processor** — hue_lower/hue_upper attruis were present but unwired. Added 4 wires: hue_range.js out1/out2 → attruis, attruis → pix. edge_falloff dial now also drives jsui in2 for visual feedback. inlet/outlet assist strings added to hue_rslider.js and hue_range.js.
+- **f_stereo** — false positive. `circ` works correctly via `live.text` (obj-32) with `varname: circ` + param system. Audit script doesn't recognise live.text as a legitimate UI source.
+- **f_masonry** — dead `Param src_mode(0.0)` declaration removed from codebox. Module is a pure generator (has `r draw`); src_mode was never used in shader logic or exposed in UI.
+- **f_droste `time_s`** — almost certainly a false positive; `time_s` has a patcher inlet + attrui. Audit script doesn't trace patcher-inlet → attrui paths.
 
-**Do not rewire f_hue_processor without first:**
-1. Reading all wire state fresh from the file
-2. Drawing the intended signal flow on paper
-3. Agreeing on the full wire list before touching anything
+**Audit script improvements still needed:**
+- Recognise `live.text` as a legitimate UI source
+- Recognise `jsui` as a legitimate UI source
+- Trace patcher-inlet → attrui paths (would resolve f_droste false positive)
+
+**Known remaining issue in f_hue_processor:** band drag (dragging center marker to move whole range) does not maintain hi-lo distance. Individual handle dragging works. Do not rewire without a clear plan — this area caused significant thrash this session.
 
 ---
 
@@ -29,9 +30,8 @@ Audit flagged `hue_lower` and `hue_upper` as having no UI path to pix. Investiga
 
 Reading order: plan.md → HANDOFF.md
 
-1. **f_stereo — `circ` missing UI** — next regression audit item; likely simple restore
-2. **f_masonry — `src_mode` unused in codebox** — different class of issue, investigate separately
-3. **f_vf_glow** — next vecfield build after audit complete
+1. **f_vf_glow** — next vecfield build; field-aligned directional blur, single-pass first
+2. **f_hue_processor band drag** — optional; needs a clean design approach before touching
 
 ---
 
