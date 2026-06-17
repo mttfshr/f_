@@ -71,6 +71,14 @@ def bypass_jsui_id(n_ui_params):
 def bypass_pre_id(n_ui_params):
     return f"obj-{UI_PARAM_BASE + n_ui_params * 3 + 1}"
 
+# Range tier objects occupy obj-300+ to avoid all collisions
+# Each param with range_tiers gets: 1 menu + 1 sel + N message boxes
+# Allocation: obj-{300 + n*10 + 0} = menu, obj-{300 + n*10 + 1} = sel,
+#             obj-{300 + n*10 + 2..} = messages (one per tier)
+def range_menu_id(n):    return f"obj-{300 + n * 10 + 0}"
+def range_sel_id(n):     return f"obj-{300 + n * 10 + 1}"
+def range_msg_id(n, t):  return f"obj-{300 + n * 10 + 2 + t}"
+
 
 # ---------------------------------------------------------------------------
 # Box builders
@@ -225,6 +233,61 @@ def instate_boxes():
             maxclass="newobj", numinlets=1, numoutlets=1, outlettype=[""],
             patching_rect=[350.0, 60.0, 145.0, 22.0], text="prepend param src_mode"),
     ]
+
+def range_tier_boxes(n, p):
+    """
+    Generate menu + sel + message boxes for a param with range_tiers.
+    n         — param index (for ID and presentation position)
+    p         — param dict with 'range_tiers' key (list of upper bounds, min assumed 0.)
+    Returns list of box dicts.
+    """
+    tiers    = p["range_tiers"]
+    n_tiers  = len(tiers)
+    col      = n % 5
+    dial_x   = 4.0 + col * 37.0
+
+    # Menu — presentation: triangle-only (16x15) positioned right of dial label
+    menu_items = [str(t) for t in tiers]
+    menu = box(range_menu_id(n),
+        maxclass="live.menu",
+        fontname=FONT,
+        fontsize=9.0,
+        numinlets=1, numoutlets=3,
+        outlettype=["", "", "float"],
+        parameter_enable=1,
+        patching_rect=[500.0 + n * 120.0, 200.0, 100.0, 15.0],
+        presentation=1,
+        presentation_rect=[dial_x + 22.5, 21.5, 16.0, 15.0],
+        saved_attribute_attributes={
+            "valueof": {
+                "parameter_enum":     menu_items,
+                "parameter_longname": f"range_{p['name']}",
+                "parameter_shortname": f"range_{p['name']}",
+                "parameter_type":     2,
+            }
+        })
+
+    # sel object — one outlet per tier
+    sel_args = " ".join(str(i) for i in range(n_tiers))
+    sel = box(range_sel_id(n),
+        maxclass="newobj",
+        numinlets=1, numoutlets=n_tiers,
+        outlettype=[""] * n_tiers,
+        patching_rect=[500.0 + n * 120.0, 240.0, 60.0, 22.0],
+        text=f"sel {sel_args}")
+
+    # One _parameter_range message per tier
+    msgs = []
+    for t, upper in enumerate(tiers):
+        msgs.append(box(range_msg_id(n, t),
+            maxclass="message",
+            numinlets=2, numoutlets=1, outlettype=[""],
+            patching_rect=[500.0 + n * 120.0 + t * 150.0, 280.0 + t * 30.0,
+                           134.0, 22.0],
+            text=f"_parameter_range 0. {upper}"))
+
+    return [menu, sel] + msgs
+
 
 def dial_box(n, p, object_name):
     col = n % 5
@@ -784,6 +847,8 @@ def build(defn):
         boxes.append(attrui_box(param_pre_id(n), p["name"],
                                 50.0 + n * 50.0, 170.0 + n * 30.0))
         boxes.append(label_box(n, p))
+        if p.get("range_tiers"):
+            boxes.extend(range_tier_boxes(n, p))
 
     # Header toggle boxes (e.g. proc_mode) — rendered in header, wired via route
     if header_toggles:
@@ -842,6 +907,13 @@ def build(defn):
         lines.append(wire(OBJ_ROUTE, n, param_obj_id(n), 0))
         lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
         lines.append(wire(param_pre_id(n), 0, primary_obj_id, 0))
+        if p.get("range_tiers"):
+            # menu → sel
+            lines.append(wire(range_menu_id(n), 0, range_sel_id(n), 0))
+            # sel outN → messageN → dial
+            for t in range(len(p["range_tiers"])):
+                lines.append(wire(range_sel_id(n), t, range_msg_id(n, t), 0))
+                lines.append(wire(range_msg_id(n, t), 0, param_obj_id(n), 0))
 
     # route outlets → header toggles → prepends → primary pix
     if header_toggles:

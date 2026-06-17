@@ -148,6 +148,24 @@ patcher = {
 
 Object ID assignment for multi-pix: primary pix → `obj-5`; support pix → `obj-50`, `obj-51`, ... in chain order (excluding primary).
 
+**`range_tiers` — optional dial range selector** (float params only):
+
+```python
+{
+    "name": "dt", "type": "float",
+    "min": 0.0, "max": 0.05, "default": 0.01,
+    "label": "dt",
+    "range_tiers": [0.05, 0.5, 1.0],  # list of upper bounds; min assumed 0.
+}
+```
+
+When present, generates a compact `live.menu` (triangle-only, 16×15px) positioned
+to the right of the param label in the header row, plus a `sel` and one
+`_parameter_range 0. X` message per tier. Selecting a tier dynamically rescales the
+dial. Menu state persists via `autopattr`. Object IDs: `obj-{300 + n*10}` = menu,
+`obj-{300 + n*10 + 1}` = sel, `obj-{300 + n*10 + 2+t}` = messages (n = param index
+among ui_params, t = tier index).
+
 **Param ordering rules:**
 - `bypass` is always last
 - Internal params appear in the list for documentation but generate no UI objects
