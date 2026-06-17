@@ -3,6 +3,12 @@ autowatch = 1;
 inlets  = 3;   // 0 = set_low, 1 = set_high, 2 = edge_falloff (all suppress output)
 outlets = 2;
 
+setinletassist(0, "set_low — low hue bound (0–360), suppresses output");
+setinletassist(1, "set_high — high hue bound (0–360), suppresses output");
+setinletassist(2, "edge_falloff — shoulder width in degrees (0–180), suppresses output");
+setoutletassist(0, "low — raw hue value (0–360)");
+setoutletassist(1, "high — raw hue value (0–360)");
+
 var low  = 84.0;
 var high = 156.0;
 var min_val = 0.0;
