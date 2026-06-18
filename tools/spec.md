@@ -102,6 +102,9 @@ patcher = {
 # Int param — renders as live.numbox
 {"name": str, "type": "int", "min": int, "max": int, "default": int, "hint": str}
 
+# Menu param — renders as live.menu with labelled options, outputs integer 0-N
+{"name": str, "type": "menu", "options": [str, ...], "default": int, "hint": str}
+
 # Internal param — present in codebox, no UI object, absent from parameters block
 # Driven from patcher (e.g. vs_inState outlet → prepend param src_mode → pix in0)
 {"name": str, "type": "internal"}

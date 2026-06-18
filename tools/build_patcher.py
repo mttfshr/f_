@@ -354,6 +354,39 @@ def numbox_box(n, p, object_name):
         },
         varname=p["name"])
 
+def menu_box(n, p, object_name):
+    col = n % 5
+    row = n // 5
+    x = 4.0 + col * 37.0
+    y = 38.0 + row * 62.0
+    options = p.get("options", [])
+    return box(param_obj_id(n),
+        maxclass="live.menu",
+        fontname=FONT,
+        hint=p.get("hint", ""),
+        numinlets=1, numoutlets=3, outlettype=["", "", "float"],
+        param_connect=f"{object_name}::{p['name']}",
+        parameter_enable=1,
+        patching_rect=[50.0 + n * 50.0, 80.0, 60.0, 15.0],
+        presentation=1,
+        presentation_rect=[x - 4.0, y + 14.0, 45.0, 15.0],
+        saved_attribute_attributes={
+            "valueof": {
+                "parameter_enum":           options,
+                "parameter_initial":        [float(p["default"])],
+                "parameter_initial_enable": 1,
+                "parameter_linknames":      1,
+                "parameter_longname":       p["name"],
+                "parameter_mmax":           float(len(options) - 1),
+                "parameter_mmin":           0.0,
+                "parameter_modmode":        0,
+                "parameter_shortname":      p["name"],
+                "parameter_type":           2,
+                "parameter_unitstyle":      0
+            }
+        },
+        varname=p["name"])
+
 def label_box(n, p):
     col = n % 5
     row = n // 5
@@ -779,7 +812,7 @@ def build(defn):
             raise ValueError(f"mod_inlet '{mi.get('label')}': vs_instate:False and state_param are mutually exclusive")
 
     # Separate param types
-    ui_params       = [p for p in all_params if p["type"] in ("float", "int")]
+    ui_params       = [p for p in all_params if p["type"] in ("float", "int", "menu")]
     header_toggles  = [p for p in all_params if p["type"] == "header_toggle"]
     internal_params = [p for p in all_params if p["type"] == "internal"]
     # bypass is handled separately
@@ -844,6 +877,8 @@ def build(defn):
             boxes.append(dial_box(n, p, object_name))
         elif p["type"] == "int":
             boxes.append(numbox_box(n, p, object_name))
+        elif p["type"] == "menu":
+            boxes.append(menu_box(n, p, object_name))
         boxes.append(attrui_box(param_pre_id(n), p["name"],
                                 50.0 + n * 50.0, 170.0 + n * 30.0))
         boxes.append(label_box(n, p))
