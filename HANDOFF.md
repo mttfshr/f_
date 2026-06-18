@@ -1,26 +1,46 @@
-# HANDOFF — f_ session 2026-06-17
+# HANDOFF — f_ session 2026-06-18
 
 ## What was done this session
 
-### Architecture discussions — no code written
+### Plan cleanup
+- Marked regression audit fully complete (hue_processor, masonry fixed last session; stereo and droste confirmed fine by hand)
+- Marked f_vf_glow as built (was still in queue)
+- Removed stale regression audit section from plan.md
+- Work queue updated: f_chladni scratch patch now #1
 
-**f_vf_diverge / fieldmap extension**
-Revisited the divergence vecfield idea from a previous session. Conclusion: the "diverge from bright shapes" behavior is likely achievable as a patch recipe — `f_vf_glow → f_vf_fieldmap` — rather than a new module. Glow spreads luma mass spatially; fieldmap differentiates it into a gradient field. Key note: fieldmap's gradient points *toward* increasing luma by default; negate `strength` to get outward push from bright regions. Captured as experiment-first: try the recipe, note results, build a module only if the recipe has a clear gap. `ideas/f_vf_diverge.md` not yet created — low priority until experiment surfaces a need.
+### f_chladni — full build cycle complete
 
-**f_vf_mix reassessment**
-Pressure-tested whether a dedicated vecfield mixer is needed given Vsynth's existing tools. Result: linear crossfade works correctly with standard Vsynth mixers (the 0.5=zero encoding is linear, so weighted average is encoding-safe). The real gap is additive combination — standard color-space add gets the encoding wrong (`0.5 + 0.5 = 1.0` not `0.0`). But this is thin enough that it's experiment-first: try `vs_mixer_3_avg` and `vs_op2` in practice, see where encoding breaks down, build only if needed. Demoted from "most pressing infrastructure gap" to "experiment before building."
+All tasks T100–T120 complete. Summary of decisions and findings:
 
-**f_chladni — major reframe**
-Full architecture discussion resulting in rewritten spec, plan, and tasks. Key decisions:
+**Scratch patch** (`/Users/matt/Vsynth/patterns/chladni-scratch.maxpat`)
+- Mode A (linear interp between adjacent Bessel modes) and Mode B (Gaussian resonance snap) both working
+- Mixed-geometry approach confirmed: blending both radial envelope and angular order simultaneously works cleanly, no artifacts
+- Mode distinction is subtle at default params; emerges with specific param combinations; both modes retained
+- Full MIDI range 0–127 correct convention; scaling happens upstream
+- Mode B: `spread` useful range 0.1–0.5; below 0.1 produces white artifacts between modes (accepted as floor, not fixed)
+- `ph0` retained — useful even in single-mode operation
+- Dual outlet confirmed: luma (out1) + float32 vecfield (out2)
 
-- **Single resonance, not 8-band superposition.** The 8-mode filterbank architecture produces visualizer character — spectral content is legible in the pattern. A single resonant mode selected by MIDI pitch is more physically faithful and more sculptural.
-- **Interface: `note` (MIDI 0–127) + `amp` (0–1).** Replaces `m0amp`–`m7amp`. Upstream companion patches convert any source to this interface.
-- **Two mode selection behaviors to test in scratch patch:** linear interpolation between adjacent Bessel zeros vs. resonance snap with falloff curve centered on each zero. Decision gates all build work.
-- **Dual outlet:** luma (nodal lines) + float32 f_vecfield (gradient of `total` pointing toward nodal lines). Vecfield outlet promoted from deferred to core.
-- **Circular geometry only.** Strip view mode retained for f_stereo routing. Rectangular/sine-mode boundary deferred indefinitely as a separate module.
-- **Companion patches simplified** to supply `note` + `amp` only. Previous filterbank architecture superseded.
+**Key technical discoveries**
+- User-defined functions work in jit.gl.pix GPU codebox path (no `def` keyword — bare `funcname(args) { ... }` syntax)
+- Functions must be declared before all Param statements and main body
+- Params are not accessible inside function bodies — must be passed as arguments
+- Used this to implement correct central-difference gradient: `modal_A` and `modal_B` helper functions called 4× each for offset UV sampling
 
-All three `.specify/f_chladni/` files rewritten. Project `plan.md` updated.
+**Vecfield gradient**
+- Central difference at `eps=0.004` (same as fieldmap, confirmed good resolution)
+- Gradient is mode-aware: `modal_B` function used for gradient when `mode=1`, so vecfield tracks luma correctly including spread param
+- Encoded as float32 RG: normalized gradient direction, 0.5=zero
+
+**Build and audit**
+- `tools/build_patcher.py` ran clean
+- Audit: f_chladni passes with no warnings
+- Consumer verification: chladni vecfield → f_lens + f_vf_glow + f_vf_advect chain confirmed working beautifully in Max
+
+**Commits this session**
+- `e98083c` f_chladni: reframe as single-resonance MIDI transducer with dual outlet
+- `14dfe3b` f_chladni: vecfield gradient now mode-aware
+- `a786dc3` f_vf_fieldmap: Max resave formatting only
 
 ---
 
@@ -28,18 +48,18 @@ All three `.specify/f_chladni/` files rewritten. Project `plan.md` updated.
 
 Reading order: .specify/plan.md → HANDOFF.md
 
-1. **Regression audit follow-up** — f_hue_processor, f_stereo, f_masonry, f_droste still outstanding. Do these first.
-2. **f_chladni scratch patch** — T100–T106; build minimal patch to compare linear vs. resonance snap mode selection; determine expressive MIDI range; write scratch_notes.md
-3. **f_vf_mix / f_vf_diverge experiments** — try patch recipes before committing to builds
+1. **UI density discovery** — design research phase; blocks f_util_matrix jsui and composite dials
+2. **f_vf_mix experiments** — try vs_mixer_3_avg and vs_op2 for vecfield blending; build only if encoding breaks down
+3. **f_vf_diverge experiment** — try `f_vf_glow → f_vf_fieldmap` recipe with negated strength; build only if recipe has clear gap
 
 ---
 
 ## Loose threads
 
-- `f_vf_glow` param ranges calibrated on vortex + ring source — revisit defaults with more varied source material in performance
-- f_vf_normal: test `jit.gl.bfg` direct wiring before building the module
+- f_chladni companion patches not yet built (sigmund → note/amp, analog CV → note/amp, OSC → note/amp)
+- f_chladni helpfile not yet written (parked until pre-release pass)
+- f_vf_normal: test `jit.gl.bfg` direct wiring before building
 - f_vf_optical_flow: frame diff + fieldmap approximation worth a scratch patch test before committing
-- Regression audit script improvements still pending (live.text, jsui as legitimate UI sources; patcher-inlet → attrui path tracing)
-- f_chladni scratch patch: note whether a `spread` param (falloff width for resonance snap) adds expressive value or is noise
-- f_chladni vecfield gradient: numerical differencing preferred (evaluate `total` at norm ± epsilon); calibrate epsilon during codebox write (~0.004 starting point, same as fieldmap)
-- EEG companion patch note mapping: weighted centroid vs. highest-amplitude band — decide empirically when companion patch phase is reached
+- Audit script: patcher-inlet → attrui path tracing still not recognized (f_droste time_s false positive)
+- f_vf_advect audit flag: multi-pix architecture not traceable by audit script (known limitation)
+- EEG companion patch note mapping: weighted centroid vs. highest-amplitude band — decide empirically
