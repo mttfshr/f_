@@ -837,7 +837,8 @@
                                 "Warp",
                                 "Streak",
                                 "Advect",
-                                "Glow"
+                                "Glow",
+                                "Repulse"
                             ],
                             "parameter_initial": [
                                 0.0
@@ -881,7 +882,8 @@
                                 "vf_warp",
                                 "vf_streak",
                                 "vf_advect",
-                                "vf_glow"
+                                "vf_glow",
+                                "vf_repulse"
                             ],
                             "parameter_initial": [
                                 0.0
