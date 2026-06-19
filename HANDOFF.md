@@ -10,14 +10,6 @@ Tested full library at 1920×1080. Results:
 - f_grain: rectangular grains at non-square aspect — acceptable
 - **f_masonry: always outputs square texture** — not a regression, never worked at non-square
 
-f_masonry investigation: patcher already has `r dim → prepend dim → pix[0]` wiring (hand-built). Removing it and adding `@adapt 0` made no difference. Root cause not identified. Deferred as feature task.
-
-**f_masonry aspect ratio — deferred feature:**
-- Option A (preferred): compute aspect ratio from `r dim` in outer patcher, pass as param to codebox, use instead of `dim.x / dim.y`
-- Option B: find and fix what keeps pix output square
-- Note: hardcoded `px_norm = 1.0 / 640.0` is a separate AA calibration issue at non-square dims
-- Needs scratch patch verification before codebox edit
-
 ### f_vf_repulse — registered and bypass fixed
 
 - Registered in f_modules.maxpat, f_addmod.js SIZES, README.md
@@ -28,19 +20,35 @@ f_masonry investigation: patcher already has `r dim → prepend dim → pix[0]` 
 
 Too many modules still in active development. Revisit once module set stabilizes.
 
+### f_masonry aspect ratio — investigated, partially improved, root cause unknown
+
+**What we tried:**
+- Added `r dim → unpack → / → prepend param aspect → pix` chain in outer patcher
+- Changed `aspect = dim.x / dim.y` to `Param aspect(1.0)` driven from outside
+- Added `routepass out0 → pix inlet 0` (was missing)
+- None of these changed the square output
+
+**Current state:** patcher reverted to HEAD (clean). Root cause of square pix output unknown — the codebox `dim` variable should report render context dimensions per the skill, but something keeps the pix at square. Needs runtime inspection (print dim.x from inside the gen) to diagnose.
+
+**Codebox refactor landed (separate from aspect issue):**
+- Extracted `hash1d()` user-defined function — eliminates 6 inline hash repetitions
+- Fixed `PI` → `pi` (skill-compliant)
+- Committed: `f_masonry: codebox refactor — hash1d function, fix PI->pi, inline hash elimination`
+
 ---
 
 ## Commits this session
 
 - `f_vf_repulse: register in f_modules, f_addmod SIZES, README`
 - `f_vf_repulse: fix bypass — neutral vecfield (0.5,0.5) not input passthrough`
-- `HANDOFF: dim bug resolved; masonry aspect ratio deferred as feature`
+- `HANDOFF: update priorities, park UI density, note chladni complete`
+- `f_masonry: codebox refactor — hash1d function, fix PI->pi, inline hash elimination`
 
 ---
 
 ## Priorities for next session
 
-1. **f_masonry aspect ratio** — Option A: outer patcher computes aspect from `r dim`, passes as param
+1. **f_masonry aspect ratio** — runtime diagnosis needed: print `dim.x` from inside gen at 1920×1080 to confirm what value `dim` actually reports. If it reports 640 (square), the pix is stuck at default. If it reports 1920, the issue is elsewhere.
 2. **f_vf_normal** — test jit.gl.bfg direct wiring in scratch patch before building
 3. **f_vf_optical_flow** — scratch patch: frame diff + fieldmap approximation
 4. **f_chladni companion patches** — sigmund / analog CV / OSC → note/amp input patches
