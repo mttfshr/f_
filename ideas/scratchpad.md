@@ -87,6 +87,20 @@ Max's built-in styles system could let f_ ship a named style (`f_default`) and l
 
 ---
 
+## f_magic_eye: autostereogram generator/processor
+
+Two inlets: depth/mask texture (shape) + pattern texture (e.g. from f_stipple or f_grain). Outputs a SIRDS-style autostereogram. Core algorithm: horizontal pixel shift driven by depth map, pattern tiled as repeating strip.
+
+**Open question:** the standard SIRDS algorithm has a left-to-right feedback dependency (each pixel's output depends on the pixel N columns left of it). This conflicts with jit.gl.pix's parallel execution model — needs investigation before committing to a scratch patch. May require a multi-pass approach or a CPU fallback.
+
+---
+
+## f_dither: parametric dither processor
+
+Handles transition gradients in posterized/quantized textures. Sits naturally after f_tone_curve or any quantizing processor. Two dither source modes: internal hash-based (with shape/scale control param) or external pattern inlet (e.g. f_stipple). Clean fit with the existing library — stipple-driven dither especially interesting.
+
+---
+
 ## Extracted to dedicated files
 
 - `f_util_compound_dial` → `ideas/f_util_compound_dial.md`

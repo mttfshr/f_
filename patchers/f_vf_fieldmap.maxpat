@@ -50,11 +50,11 @@
                 "box": {
                     "id": "obj-4",
                     "maxclass": "newobj",
-                    "numinlets": 3,
-                    "numoutlets": 3,
-                    "outlettype": [ "", "", "" ],
-                    "patching_rect": [ 200.0, 130.0, 150.0, 22.0 ],
-                    "text": "route strength scale"
+                    "numinlets": 5,
+                    "numoutlets": 5,
+                    "outlettype": [ "", "", "", "", "" ],
+                    "patching_rect": [ 200.0, 130.0, 220.0, 22.0 ],
+                    "text": "route strength scale rotate thresh"
                 }
             },
             {
@@ -74,7 +74,7 @@
                             "modernui": 1
                         },
                         "classnamespace": "jit.gen",
-                        "rect": [ 100.0, 100.0, 700.0, 600.0 ],
+                        "rect": [ 34.0, 483.0, 700.0, 600.0 ],
                         "boxes": [
                             {
                                 "box": {
@@ -89,7 +89,7 @@
                             },
                             {
                                 "box": {
-                                    "code": "Param strength(4.0);\nParam scale(0.004);\nParam bypass(0.0);\n\n// central difference gradient — inline component access (no stored variables)\n// luma = 0.299r + 0.587g + 0.114b (Rec. 601)\nL_right = sample(in1, vec(norm.x + scale, norm.y)).x * 0.299 + sample(in1, vec(norm.x + scale, norm.y)).y * 0.587 + sample(in1, vec(norm.x + scale, norm.y)).z * 0.114;\nL_left  = sample(in1, vec(norm.x - scale, norm.y)).x * 0.299 + sample(in1, vec(norm.x - scale, norm.y)).y * 0.587 + sample(in1, vec(norm.x - scale, norm.y)).z * 0.114;\nL_down  = sample(in1, vec(norm.x, norm.y + scale)).x * 0.299 + sample(in1, vec(norm.x, norm.y + scale)).y * 0.587 + sample(in1, vec(norm.x, norm.y + scale)).z * 0.114;\nL_up    = sample(in1, vec(norm.x, norm.y - scale)).x * 0.299 + sample(in1, vec(norm.x, norm.y - scale)).y * 0.587 + sample(in1, vec(norm.x, norm.y - scale)).z * 0.114;\n\ngx = (L_right - L_left) * strength;\ngy = (L_down  - L_up)   * strength;\n\n// encode to f_vecfield (0.5 = zero vector)\nfield   = vec(clamp(gx * 0.5 + 0.5, 0.0, 1.0), clamp(gy * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);\nneutral = vec(0.5, 0.5, 0.5, 1.0);\n\nout1 = mix(field, neutral, bypass);\n",
+                                    "code": "Param strength(4.0);\nParam scale(0.004);\nParam rotate(0.0);\nParam thresh(0.0);\nParam bypass(0.0);\n\n// inset UV by scale to keep neighbor samples within bounds\nsuv_x = norm.x * (1.0 - 2.0 * scale) + scale;\nsuv_y = norm.y * (1.0 - 2.0 * scale) + scale;\n\nL_center = sample(in1, vec(suv_x, suv_y)).x * 0.299 + sample(in1, vec(suv_x, suv_y)).y * 0.587 + sample(in1, vec(suv_x, suv_y)).z * 0.114;\nL_right  = sample(in1, vec(suv_x + scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x + scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x + scale, suv_y)).z * 0.114;\nL_left   = sample(in1, vec(suv_x - scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x - scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x - scale, suv_y)).z * 0.114;\nL_down   = sample(in1, vec(suv_x, suv_y + scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y + scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y + scale)).z * 0.114;\nL_up     = sample(in1, vec(suv_x, suv_y - scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y - scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y - scale)).z * 0.114;\n\ngx = (L_right - L_left) * strength;\ngy = (L_down  - L_up)   * strength;\n\nangle = rotate * pi / 180.0;\ncos_r = cos(angle);\nsin_r = sin(angle);\ngx2 = gx * cos_r - gy * sin_r;\ngy2 = gx * sin_r + gy * cos_r;\n\nfield   = vec(clamp(gx2 * 0.5 + 0.5, 0.0, 1.0), clamp(gy2 * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);\nneutral = vec(0.5, 0.5, 0.5, 1.0);\n\nthreshed = mix(field, neutral, step(L_center, thresh));\n\nout1 = mix(threshed, neutral, bypass);",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
@@ -127,8 +127,8 @@
                             }
                         ]
                     },
-                    "patching_rect": [ 200.0, 380.0, 280.0, 22.0 ],
-                    "text": "jit.gl.pix vsynth @name fieldmap_pix @type float32",
+                    "patching_rect": [ 201.0, 380.0, 369.0, 22.0 ],
+                    "text": "jit.gl.pix vsynth @name fieldmap_pix @type float32 @boundmode 1",
                     "varname": "fieldmap_pix"
                 }
             },
@@ -142,29 +142,13 @@
                     "patching_rect": [ 500.0, 500.0, 56.0, 22.0 ],
                     "restore": {
                         "bypass": [ 0 ],
+                        "rotate": [ 0.0 ],
                         "scale": [ 0.004 ],
-                        "strength": [ 4.0 ]
+                        "strength": [ 4.0 ],
+                        "thresh": [ 0.0 ]
                     },
                     "text": "autopattr",
                     "varname": "fieldmap_autopattr"
-                }
-            },
-            {
-                "box": {
-                    "angle": 270.0,
-                    "background": 1,
-                    "bgcolor": [ 0.0, 0.0, 0.0, 1.0 ],
-                    "border": 1,
-                    "bordercolor": [ 0.0, 0.03529411765, 0.2274509804, 1.0 ],
-                    "id": "obj-9",
-                    "maxclass": "panel",
-                    "mode": 0,
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 20.0, 20.0, 100.0, 80.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 0.0, 0.0, 100.0, 80.0 ],
-                    "proportion": 0.5
                 }
             },
             {
@@ -191,7 +175,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 60.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 55.6, 2.5, 60.0, 18.0 ],
+                    "presentation_rect": [ 56.0, 3.0, 60.0, 18.0 ],
                     "text": "vecfield",
                     "textcolor": [ 0.35, 0.75, 0.95, 1.0 ]
                 }
@@ -411,7 +395,7 @@
                     "parameter_enable": 0,
                     "patching_rect": [ 78.0, 5.0, 18.0, 12.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 78.0, 5.0, 18.0, 12.0 ],
+                    "presentation_rect": [ 129.0, 5.0, 18.0, 12.0 ],
                     "valuepopuplabel": 1,
                     "varname": "bypass"
                 }
@@ -426,6 +410,155 @@
                     "outlettype": [ "" ],
                     "parameter_enable": 0,
                     "patching_rect": [ 400.0, 60.0, 131.0, 22.0 ]
+                }
+            },
+            {
+                "box": {
+                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "fontname": "Ableton Sans Light",
+                    "hint": "Rotate gradient vector in degrees.",
+                    "id": "obj-28",
+                    "maxclass": "live.dial",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "param_connect": "fieldmap_pix::rotate",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 150.0, 80.0, 27.0, 43.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 78.0, 38.0, 27.0, 43.0 ],
+                    "saved_attribute_attributes": {
+                        "activedialcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_initial": [ 0.0 ],
+                            "parameter_initial_enable": 1,
+                            "parameter_linknames": 1,
+                            "parameter_longname": "rotate",
+                            "parameter_mmax": 180.0,
+                            "parameter_mmin": -180.0,
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "rotate",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "showname": 0,
+                    "triangle": 1,
+                    "valuepopup": 1,
+                    "valuepopuplabel": 1,
+                    "varname": "rotate"
+                }
+            },
+            {
+                "box": {
+                    "attr": "rotate",
+                    "id": "obj-29",
+                    "maxclass": "attrui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "parameter_enable": 0,
+                    "patching_rect": [ 150.0, 200.0, 136.0, 22.0 ]
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-30",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 150.0, 130.0, 50.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 66.5, 20.0, 50.0, 18.0 ],
+                    "text": "Rotate",
+                    "textjustification": 1
+                }
+            },
+            {
+                "box": {
+                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "fontname": "Ableton Sans Light",
+                    "hint": "Suppress field below source luma threshold.",
+                    "id": "obj-31",
+                    "maxclass": "live.dial",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "param_connect": "fieldmap_pix::thresh",
+                    "parameter_enable": 1,
+                    "patching_rect": [ 200.0, 80.0, 27.0, 43.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 115.0, 38.0, 27.0, 43.0 ],
+                    "saved_attribute_attributes": {
+                        "activedialcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_initial": [ 0.0 ],
+                            "parameter_initial_enable": 1,
+                            "parameter_linknames": 1,
+                            "parameter_longname": "thresh",
+                            "parameter_mmax": 1.0,
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "thresh",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "showname": 0,
+                    "triangle": 1,
+                    "valuepopup": 1,
+                    "valuepopuplabel": 1,
+                    "varname": "thresh"
+                }
+            },
+            {
+                "box": {
+                    "attr": "thresh",
+                    "id": "obj-32",
+                    "maxclass": "attrui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [ "" ],
+                    "parameter_enable": 0,
+                    "patching_rect": [ 200.0, 240.0, 136.0, 22.0 ]
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-33",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 200.0, 130.0, 50.0, 18.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 103.5, 20.0, 50.0, 18.0 ],
+                    "text": "Thresh",
+                    "textjustification": 1
+                }
+            },
+            {
+                "box": {
+                    "angle": 270.0,
+                    "background": 1,
+                    "bgcolor": [ 0.0, 0.0, 0.0, 1.0 ],
+                    "border": 1,
+                    "bordercolor": [ 0.0, 0.03529411765, 0.2274509804, 1.0 ],
+                    "id": "obj-9",
+                    "maxclass": "panel",
+                    "mode": 0,
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 20.0, 20.0, 150.0, 80.0 ],
+                    "presentation": 1,
+                    "presentation_rect": [ 0.0, 0.0, 150.0, 80.0 ],
+                    "proportion": 0.5
                 }
             }
         ],
@@ -504,6 +637,18 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-29", 0 ],
+                    "source": [ "obj-28", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-5", 0 ],
+                    "source": [ "obj-29", 0 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-4", 0 ],
                     "source": [ "obj-3", 2 ]
                 }
@@ -512,6 +657,18 @@
                 "patchline": {
                     "destination": [ "obj-5", 0 ],
                     "source": [ "obj-3", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-32", 0 ],
+                    "source": [ "obj-31", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-5", 0 ],
+                    "source": [ "obj-32", 0 ]
                 }
             },
             {
@@ -528,6 +685,18 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-28", 0 ],
+                    "source": [ "obj-4", 2 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-31", 0 ],
+                    "source": [ "obj-4", 3 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-2", 0 ],
                     "source": [ "obj-5", 0 ]
                 }
@@ -536,6 +705,8 @@
         "parameters": {
             "obj-20": [ "strength", "strength", 0 ],
             "obj-23": [ "scale", "scale", 0 ],
+            "obj-28": [ "rotate", "rotate", 0 ],
+            "obj-31": [ "thresh", "thresh", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
