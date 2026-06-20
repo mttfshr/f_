@@ -1,53 +1,68 @@
-# HANDOFF — f_ session 2026-06-20
+# HANDOFF — f_ session 2026-06-20 (afternoon/evening)
 
 ## What was done this session
 
-### Param naming audit + standardization across vecfield processors
+### f_vf_chroma — new module
 
-**Core decision:** `strength` is now the canonical "amount of effect in the composite" param across all 5 vecfield processors. Small dial (25×23, `appearance=1`), leftmost position, range 0–1.5, default 0.
+Vecfield-driven chromatic aberration. Full design, spec, scratch validation,
+and build completed in one session.
 
-**`f_vf_fieldmap` + `f_vf_repulse`:** renamed `strength` → `gain` (gradient/field magnitude scalar — different semantic). Fieldmap definition.py synced to add `rotate`, `thresh`, fix `scale` min. Committed separately.
+- **Core mechanic:** sample vecfield at each pixel → offset R and B channel
+  sampling positions in opposite directions along field direction, G at center
+- **Two modes:** Split (hard 2-sample R/B separation) and Prism (5-sample
+  spectral spread with overlapping weights)
+- **Composite:** crossfade from source to chroma (not additive — additive
+  was tested and produced no visible change at low strength)
+- **Dual outlet:** out1 composite, out2 isolated chroma layer
+- **Codebox v4:** full color sampling at all 5 positions (not luma-only),
+  balanced spectral weights (each channel sums to 1.6)
+- Registered in f_modules Vecfield category
 
-**`f_vf_streak`, `f_vf_glow`, `f_vf_warp`:** `strength` already named correctly — standardized to small dial, leftmost, range 0–1.5, default 0.
+Key learnings:
+- `src_vecfield` gate (step(0.5, src_vecfield)) must be explicitly set to 1
+  in scratch patches — vs_inState wiring handles this in the built patcher
+- Additive composite wrong for this effect; crossfade is correct
+- Prism mode must sample full RGB at each position, not luma — luma-only
+  produces desaturated out2 when source is color
 
-**`f_vf_advect`:** `mix_amt` renamed → `strength`, same treatment, moved to leftmost, other dials shifted right. Labels fixed to match.
+### f_lens mod dial discussion
 
-**`f_caustic`:** new `strength` param added as leftmost small dial; codebox applies it as `mix(source_pass, composite, strength)` before bypass. `intensity` remains as character param (affects out2 independently). Panel widened to 227px. Labels updated.
-
-All definition.py files updated to match.
+Noted that aberration and aberration_mod dials are confusing because mod is
+proportional (scales with base aberration) rather than additive. Not fixed
+this session — parked for future UI pass.
 
 ---
 
 ## Commits this session
 
-- `rename strength→gain in f_vf_fieldmap and f_vf_repulse`
-- `standardize strength param across 5 vecfield processors: leftmost small dial, range 0-1.5, default 0; rename mix_amt->strength in advect; add strength composite scalar to caustic`
-- `fix label positions and text across 5 vecfield processors to match reordered dials`
+- `add f_vf_chroma: vecfield-driven chromatic aberration, split/prism toggle, dual outlet`
+- `f_vf_chroma: rebuild with v4 codebox (full color prism, balanced spectral weights)`
 
 ---
 
 ## Priorities for next session
 
-1. **Audit other f_vf_ consumers** (carried from last session) — check f_vf_warp, f_vf_streak, f_vf_glow, f_vf_advect for the in1/in2 bug found in caustic
-2. **Verify caustic `strength` behavior in Max** — confirm `strength=0` gives clean source on out1 while `intensity` still affects out2
+1. **Load f_vf_chroma in Max and verify** — test both outlets, Split/Prism
+   toggle, bypass, unconnected vecfield behavior
+2. **Experiment with f_vf_chroma** — sundog/flare chains, vortex field,
+   fieldmap at various scales; get a feel for expressive range before any
+   further codebox changes
+3. **Verify f_vf_split** (carried from last session) — load, test
+   Unipolar/Bipolar toggle, confirm channels split correctly
+4. **Audit f_vf_ consumers for in1/in2 bug** (carried) — f_vf_warp,
+   f_vf_streak, f_vf_glow, f_vf_advect
 
 ---
 
-## Parking lot (do not act on without explicit discussion)
+## Parking lot
 
-- **Rename `strength` → `amount`** — clearer semantics; sweep across all 5 modules when ready
-- **Tiny dial display issue** — `appearance=1` truncates value; "1.5" reads as "1". Address during UI density pass. Consider wider dial or numbox alternative.
-- **UI density work** — explicitly parked until module development stabilizes
-
----
-
-## Loose threads (carried)
-
-- f_masonry: parked until UI redesign + dim bug resolution
-- f_chladni companion patches: parked until cymascope work
-- f_vf_smooth: idea only
-- f_vf_dilate: specced, deprioritized
-- Audit script: patcher-inlet → attrui path not recognized (false positives)
+- f_lens aberration_mod / aberration dial confusion — fix during UI pass
+- f_vf_chroma spectral weights may need tuning after real-world use
+- f_vf_chroma: spread max 0.2 may still be too conservative or too wide —
+  tune after experimentation
+- f_masonry dim bug (parked, needs runtime diagnostic)
+- f_chladni companion patches
+- UI density work — parked until module development stabilizes
+- Audit script false positives (live.text, jsui, patcher-inlet→attrui paths)
 - EEG companion patch note mapping
-- f_vf_optical_flow: scratch patch idea
 - f_poincare, f_sharmonics: ideas pipeline
