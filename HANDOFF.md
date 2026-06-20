@@ -1,56 +1,53 @@
-# HANDOFF — f_ session 2026-06-19
+# HANDOFF — f_ session 2026-06-20
 
 ## What was done this session
 
-### Ideas captured to scratchpad
-- `f_magic_eye` — SIRDS autostereogram generator/processor; noted feedback dependency issue
-- `f_dither` — parametric dither processor, hash or pattern inlet
-- Parked: f_masonry (until UI redesign), f_chladni companions (until cymascope work)
+### Param naming audit + standardization across vecfield processors
 
-### f_vf_fieldmap — enhanced
-- Added `rotate` param: 2D rotation of gradient vector in degrees (-180..180)
-- Added `thresh` param: suppress field to neutral below center luma (0..1)
-- Added UV inset edge fix: `suv = norm * (1 - 2*scale) + scale` — neighbor samples never reach texture boundary
-- Added `@boundmode 1` to jit.gl.pix
-- Panel widened to 150px to accommodate four dials in single row
-- Committed: `f_vf_fieldmap: add rotate, thresh params; UV inset edge fix; @boundmode 1`
+**Core decision:** `strength` is now the canonical "amount of effect in the composite" param across all 5 vecfield processors. Small dial (25×23, `appearance=1`), leftmost position, range 0–1.5, default 0.
 
-### f_caustic — vecfield inlet bug fixed
-- Root cause: codebox was using `in1` for both source texture AND vecfield
-- Both labels said `in1` in comments — the separate vecfield inlet (in2) was wired correctly in outer patcher and gen, but never used in the codebox
-- Fix: all field reads (fx/fy decode, divergence) changed to `sample(in2, ...)`, source reads stay `in1`
-- Caustic now correctly responds to any f_vf_ producer on inlet 1
-- Committed: `f_caustic: fix vecfield inlet — was sampling in1 for both source and field; now correctly uses in2 for field`
+**`f_vf_fieldmap` + `f_vf_repulse`:** renamed `strength` → `gain` (gradient/field magnitude scalar — different semantic). Fieldmap definition.py synced to add `rotate`, `thresh`, fix `scale` min. Committed separately.
 
-### bfg → fieldmap → caustic chain
-- Confirmed working well after both fixes
-- `fractal.multi` basis with fieldmap produces rich, spatially coherent caustic patterns
-- `rotate` on fieldmap gives expressive directional control of caustic accumulation
+**`f_vf_streak`, `f_vf_glow`, `f_vf_warp`:** `strength` already named correctly — standardized to small dial, leftmost, range 0–1.5, default 0.
+
+**`f_vf_advect`:** `mix_amt` renamed → `strength`, same treatment, moved to leftmost, other dials shifted right. Labels fixed to match.
+
+**`f_caustic`:** new `strength` param added as leftmost small dial; codebox applies it as `mix(source_pass, composite, strength)` before bypass. `intensity` remains as character param (affects out2 independently). Panel widened to 227px. Labels updated.
+
+All definition.py files updated to match.
 
 ---
 
 ## Commits this session
 
-- `f_vf_fieldmap: add rotate, thresh params; UV inset edge fix; @boundmode 1`
-- `f_caustic: fix vecfield inlet — was sampling in1 for both source and field; now correctly uses in2 for field`
+- `rename strength→gain in f_vf_fieldmap and f_vf_repulse`
+- `standardize strength param across 5 vecfield processors: leftmost small dial, range 0-1.5, default 0; rename mix_amt->strength in advect; add strength composite scalar to caustic`
+- `fix label positions and text across 5 vecfield processors to match reordered dials`
 
 ---
 
 ## Priorities for next session
 
-1. **Audit other f_vf_ consumers** — check f_vf_warp, f_vf_streak, f_vf_glow, f_vf_advect for the same in1/in2 bug as caustic. If caustic had it silently, others likely do too.
-2. **Explore bfg → fieldmap → caustic chain** — now working well; deeper performance exploration before considering new modules
-3. **f_vf_optical_flow** — scratch patch: frame diff + fieldmap approximation
+1. **Audit other f_vf_ consumers** (carried from last session) — check f_vf_warp, f_vf_streak, f_vf_glow, f_vf_advect for the in1/in2 bug found in caustic
+2. **Verify caustic `strength` behavior in Max** — confirm `strength=0` gives clean source on out1 while `intensity` still affects out2
 
 ---
 
-## Loose threads
+## Parking lot (do not act on without explicit discussion)
 
-- f_vf_dilate: specced in .specify/f_vf_dilate/ — deprioritized, not abandoned
-- f_vf_repulse: multi-instance interaction not yet tested
-- f_masonry: parked until UI redesign + simplification; dim bug deferred to that point
-- f_chladni companion patches: parked until cymascope work begins
-- f_vf_smooth: idea only — stateful downstream smoother for any vecfield; would keep fieldmap stateless
-- Audit script: patcher-inlet → attrui path tracing not yet recognized (f_droste false positive)
-- EEG companion patch note mapping: weighted centroid vs highest-amplitude band
-- Residual edge artifact in fieldmap at extreme scale values (>0.05) — acceptable tradeoff, not worth pursuing further
+- **Rename `strength` → `amount`** — clearer semantics; sweep across all 5 modules when ready
+- **Tiny dial display issue** — `appearance=1` truncates value; "1.5" reads as "1". Address during UI density pass. Consider wider dial or numbox alternative.
+- **UI density work** — explicitly parked until module development stabilizes
+
+---
+
+## Loose threads (carried)
+
+- f_masonry: parked until UI redesign + dim bug resolution
+- f_chladni companion patches: parked until cymascope work
+- f_vf_smooth: idea only
+- f_vf_dilate: specced, deprioritized
+- Audit script: patcher-inlet → attrui path not recognized (false positives)
+- EEG companion patch note mapping
+- f_vf_optical_flow: scratch patch idea
+- f_poincare, f_sharmonics: ideas pipeline
