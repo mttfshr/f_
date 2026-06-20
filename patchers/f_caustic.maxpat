@@ -664,7 +664,7 @@
             50.0,
             18.0
           ],
-          "text": "Intens",
+          "text": "Strength",
           "textjustification": 1
         }
       },
@@ -766,7 +766,7 @@
             50.0,
             18.0
           ],
-          "text": "Scale",
+          "text": "Intens",
           "textjustification": 1
         }
       },
@@ -868,7 +868,7 @@
             50.0,
             18.0
           ],
-          "text": "Soft",
+          "text": "Scale",
           "textjustification": 1
         }
       },
@@ -970,7 +970,7 @@
             50.0,
             18.0
           ],
-          "text": "Color",
+          "text": "Soft",
           "textjustification": 1
         }
       },
@@ -1079,6 +1079,31 @@
           "valuepopuplabel": 1,
           "varname": "strength",
           "appearance": 1
+        }
+      },
+      {
+        "box": {
+          "fontname": "Ableton Sans Light",
+          "fontsize": 9.5,
+          "id": "obj-label-f_caustic-color_shift",
+          "maxclass": "comment",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            50.0,
+            130.0,
+            50.0,
+            18.0
+          ],
+          "presentation": 1,
+          "presentation_rect": [
+            140.5,
+            20.0,
+            50.0,
+            18.0
+          ],
+          "text": "Color",
+          "textjustification": 1
         }
       }
     ],

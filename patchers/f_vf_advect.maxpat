@@ -788,7 +788,7 @@
             50.0,
             18.0
           ],
-          "text": "dt",
+          "text": "Strength",
           "textjustification": 1
         }
       },
@@ -1006,7 +1006,7 @@
             50.0,
             18.0
           ],
-          "text": "Decay",
+          "text": "dt",
           "textjustification": 1
         }
       },
@@ -1109,7 +1109,7 @@
             50.0,
             18.0
           ],
-          "text": "Inject",
+          "text": "Decay",
           "textjustification": 1
         }
       },
@@ -1328,7 +1328,7 @@
             50.0,
             18.0
           ],
-          "text": "Mix",
+          "text": "Inject",
           "textjustification": 1
         }
       },

@@ -773,7 +773,7 @@
             50.0,
             18.0
           ],
-          "text": "Radius",
+          "text": "Strength",
           "textjustification": 1
         }
       },
@@ -875,7 +875,7 @@
             50.0,
             18.0
           ],
-          "text": "Falloff",
+          "text": "Radius",
           "textjustification": 1
         }
       },
@@ -979,7 +979,7 @@
             50.0,
             18.0
           ],
-          "text": "Strength",
+          "text": "Falloff",
           "textjustification": 1
         }
       },
