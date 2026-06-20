@@ -839,14 +839,15 @@
                                 "Advect",
                                 "Glow",
                                 "Repulse",
-                                "Split"
+                                "Split",
+                                "Chroma"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_disp",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -885,14 +886,15 @@
                                 "vf_advect",
                                 "vf_glow",
                                 "vf_repulse",
-                                "vf_split"
+                                "vf_split",
+                                "vf_chroma"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_file",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
