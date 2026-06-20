@@ -354,6 +354,50 @@ def numbox_box(n, p, object_name):
         },
         varname=p["name"])
 
+def text_button_box(n, p, object_name):
+    col = n % 5
+    row = n // 5
+    x = 4.0 + col * 37.0
+    y = 38.0 + row * 62.0
+    options = p.get("options", ["Off", "On"])
+    text_off = options[0]
+    text_on  = options[1] if len(options) > 1 else options[0]
+    w = max(35.0, max(len(text_off), len(text_on)) * 6.5 + 8.0)
+    return box(param_obj_id(n),
+        maxclass="live.text",
+        fontname=FONT,
+        fontsize=FONT_LABEL,
+        hint=p.get("hint", ""),
+        numinlets=1, numoutlets=2, outlettype=["", ""],
+        param_connect=f"{object_name}::{p['name']}",
+        parameter_enable=1,
+        patching_rect=[50.0 + n * 50.0, 80.0, w, 17.0],
+        presentation=1,
+        presentation_rect=[x - 4.0, y + 14.0, w, 17.0],
+        text=text_off,
+        texton=text_on,
+        saved_attribute_attributes={
+            "activebgcolor":   {"expression": ""},
+            "activebgoncolor": {"expression": ""},
+            "activetextcolor": {"expression": ""},
+            "activetextoncolor": {"expression": ""},
+            "bgoncolor":       {"expression": ""},
+            "valueof": {
+                "parameter_enum":           options,
+                "parameter_initial":        [float(p["default"])],
+                "parameter_initial_enable": 1,
+                "parameter_linknames":      1,
+                "parameter_longname":       p["name"],
+                "parameter_mmax":           1.0,
+                "parameter_mmin":           0.0,
+                "parameter_modmode":        0,
+                "parameter_shortname":      p["name"],
+                "parameter_type":           1,
+                "parameter_unitstyle":      0
+            }
+        },
+        varname=p["name"])
+
 def menu_box(n, p, object_name):
     col = n % 5
     row = n // 5
@@ -812,7 +856,7 @@ def build(defn):
             raise ValueError(f"mod_inlet '{mi.get('label')}': vs_instate:False and state_param are mutually exclusive")
 
     # Separate param types
-    ui_params       = [p for p in all_params if p["type"] in ("float", "int", "menu")]
+    ui_params       = [p for p in all_params if p["type"] in ("float", "int", "menu", "text_button")]
     header_toggles  = [p for p in all_params if p["type"] == "header_toggle"]
     internal_params = [p for p in all_params if p["type"] == "internal"]
     # bypass is handled separately
@@ -879,9 +923,12 @@ def build(defn):
             boxes.append(numbox_box(n, p, object_name))
         elif p["type"] == "menu":
             boxes.append(menu_box(n, p, object_name))
+        elif p["type"] == "text_button":
+            boxes.append(text_button_box(n, p, object_name))
         boxes.append(attrui_box(param_pre_id(n), p["name"],
                                 50.0 + n * 50.0, 170.0 + n * 30.0))
-        boxes.append(label_box(n, p))
+        if p["type"] != "text_button":
+            boxes.append(label_box(n, p))
         if p.get("range_tiers"):
             boxes.extend(range_tier_boxes(n, p))
 
