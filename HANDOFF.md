@@ -35,11 +35,15 @@ effect (see screenshot from session). Not pursued further — filed as a future 
 
 ## What's next
 
-1. **Register f_vf_prism** in f_modules (add to build_modules.py + f_addmod.js SIZES dict)
-2. **Write help file** for f_vf_prism (f-helpfile skill)
-3. **Audit in1/in2 bug** — check other f_vf_ consumer modules (f_vf_warp, f_vf_streak,
+1. **f_vf_prism boundary fade** — displaced UVs hitting texture edge produce sharp
+   reflected artifacts. Fix: multiply gate by edge falloff inside channel_gate(),
+   `edge_fade = min(min(dux, 1-dux), min(duy, 1-duy)); gate *= smoothstep(0, margin, edge_fade)`
+   Especially visible with f_vf_repulse as field source at edges.
+2. **Register f_vf_prism** in f_modules (add to build_modules.py + f_addmod.js SIZES dict)
+3. **Write help file** for f_vf_prism (f-helpfile skill)
+4. **Audit in1/in2 bug** — check other f_vf_ consumer modules (f_vf_warp, f_vf_streak,
    f_vf_glow, f_vf_advect) for the same in1/in2 mixup found in f_caustic
-4. **f_vf_chroma** — decide whether to continue or leave parked
+5. **f_vf_chroma** — decide whether to continue or leave parked
 
 ## Known issues / loose threads
 
