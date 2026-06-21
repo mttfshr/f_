@@ -840,14 +840,15 @@
                                 "Glow",
                                 "Repulse",
                                 "Split",
-                                "Chroma"
+                                "Chroma",
+                                "Prism"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_disp",
-                            "parameter_mmax": 9,
+                            "parameter_mmax": 10,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -887,14 +888,15 @@
                                 "vf_glow",
                                 "vf_repulse",
                                 "vf_split",
-                                "vf_chroma"
+                                "vf_chroma",
+                                "vf_prism"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_file",
-                            "parameter_mmax": 9,
+                            "parameter_mmax": 10,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

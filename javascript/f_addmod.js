@@ -29,7 +29,8 @@ var SIZES = {
     "vf_glow":        [190, 120],
     "vf_repulse":     [165,  80],
     "vf_split":       [ 80,  80],
-    "vf_chroma":      [190, 100]
+    "vf_chroma":      [190, 100],
+    "vf_prism":       [190, 160]
 };
 
 function addmod(mod) {
