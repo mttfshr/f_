@@ -1,42 +1,60 @@
-# HANDOFF — f_ session 2026-06-20 (evening)
+# HANDOFF — f_ library
 
-## What was done this session
+Last session: 2026-06-21
 
-### f_vf_chroma — full retool (in progress, not complete)
+## What just happened
 
-Extensive retool of f_vf_chroma from local chromatic aberration to a
-vecfield-driven spectral streak effect. 10 codebox versions iterated.
-Current state: v10 built and loaded, produces field-driven colored streaks
-with luma gate, but rainbow separation still not satisfying.
+Built `f_vf_prism` from scratch — a new module forked from `f_vf_chroma` based on
+an insight during chroma exploration. Instead of a streak/rainbow accumulation effect,
+prism does physically-motivated spectral dispersion: R/G/B channels displaced along
+the vecfield at slightly different angles, creating prismatic color separation that
+follows field lines.
 
-See `.specify/f_vf_chroma/continuity.md` for full version history,
-core unsolved problem, and proposed next directions.
+### f_vf_prism — WORKING, committed
+Architecture: three-UV angular dispersion + 11-tap Gaussian blur of gate values
+perpendicular to the field direction.
 
-**Current built state:** v10 — accumulation loop with synthesized rainbow,
-single march UV, hsl2rgb from step position. Works but averages colors.
+Key params:
+- `reach` — how far channels are displaced along the field
+- `spread` — angular separation between R/G/B (controls width of chromatic spread)
+- `threshold` / `gate_width` — luma gate controls which emitters fire
+- `feather` — inter-channel blend, normalized to separation distance (not independent)
+- `strength` — additive composite amount
 
-**Signal flow confirmed working:** jit.gl.bfg → f_vf_repulse → f_vf_chroma.
-Repulse gives outward bleed beyond bright areas (better than fieldmap for
-flare/sundog character).
+Two outlets: out1 = composite, out2 = isolated prism layer.
 
----
+Best with: f_vf_vortex as field source, bright-on-dark source (jit.gl.bfg + colorize).
 
-## Priorities for next session
+### f_vf_chroma — parked, not deleted
+Still at v10 (accumulation loop, synthesized rainbow). Not broken, just unresolved.
+The rainbow separation is washed out due to normalization averaging. Parked for now.
 
-1. **Read continuity.md first** — full context is there
-2. **Try closest-emitter / first-hit approach** — march until gate fires,
-   output that step's hue, no averaging. This is the most promising untried direction.
-3. **Alternative: single-sample no-loop** — one UV offset at radius distance,
-   gate × synthesized hue. Simplest possible version. Good sanity check.
-4. **Fix build script text_button 3-option bug** — parameter_mmax hardcoded to 1.0,
-   Bi (direction=2) unreachable from UI
+### Perspectival depth idea — parked in ideas
+The vortex field + prism combination revealed a perspectival depth/light-from-a-point
+effect (see screenshot from session). Not pursued further — filed as a future module idea.
 
----
+## What's next
 
-## Parking lot (carried)
+1. **Register f_vf_prism** in f_modules (add to build_modules.py + f_addmod.js SIZES dict)
+2. **Write help file** for f_vf_prism (f-helpfile skill)
+3. **Audit in1/in2 bug** — check other f_vf_ consumer modules (f_vf_warp, f_vf_streak,
+   f_vf_glow, f_vf_advect) for the same in1/in2 mixup found in f_caustic
+4. **f_vf_chroma** — decide whether to continue or leave parked
 
-- f_masonry dim bug (needs runtime diagnostic)
-- Audit f_vf_ consumers for in1/in2 bug (f_vf_warp, f_vf_streak, f_vf_glow, f_vf_advect)
-- f_lens aberration_mod / aberration dial confusion
-- UI density pass — parked
-- f_chladni companion patches
+## Known issues / loose threads
+
+- f_vf_prism not yet registered in f_modules menu
+- f_masonry square output at non-square render dimensions still unresolved
+- f_hue_processor band drag still broken (do not touch without a plan)
+- text_button param type only reliably supports two options (three-option limitation)
+- `rename strength → amount` across modules still parked
+
+## Key learnings from this session (worth adding to jit-gen-codebox skill)
+
+- **Blur gate values after threshold, not luma before** — blurring luma causes
+  omnidirectional shape softening; blurring the gated output keeps blob edges sharp
+- **step_size must scale to actual inter-channel separation** — `sin(spread) * reach * field_mag`
+  gives the real distance between channels; feather as a fraction of that stays contained
+- **Long accumulation lines silently fail** — split into two lines per channel
+- `length` and `width` are reserved words in jit.gl.pix attribute system — use `reach`
+  and `spread` instead
