@@ -35,10 +35,15 @@ effect (see screenshot from session). Not pursued further — filed as a future 
 
 ## What's next
 
-1. **f_vf_prism boundary fade** — displaced UVs hitting texture edge produce sharp
-   reflected artifacts. Fix: multiply gate by edge falloff inside channel_gate(),
-   `edge_fade = min(min(dux, 1-dux), min(duy, 1-duy)); gate *= smoothstep(0, margin, edge_fade)`
-   Especially visible with f_vf_repulse as field source at edges.
+1. **f_vf_prism boundary handling** — displaced UVs hitting texture edge produce sharp
+   reflected artifacts (visible with f_vf_repulse at edges). Vsynth convention is
+   Clear/Clamp/Wrap/Mirror via `live.menu` → `p boundmode` subpatcher → `selector` → 
+   sets `@boundmode` on `sample` gen object at patcher level (NOT a codebox Param).
+   See vs_displacement.maxpat for the reference implementation.
+   This is a non-trivial build system change — needs live.menu + p boundmode subpatcher
+   wired to the gen sample objects. May want a simpler interim fix first:
+   multiply gate by edge fade `smoothstep(0, margin, min(min(dux,1-dux),min(duy,1-duy)))`
+   inside channel_gate() as a stopgap.
 2. **Register f_vf_prism** in f_modules (add to build_modules.py + f_addmod.js SIZES dict)
 3. **Write help file** for f_vf_prism (f-helpfile skill)
 4. **Audit in1/in2 bug** — check other f_vf_ consumer modules (f_vf_warp, f_vf_streak,
