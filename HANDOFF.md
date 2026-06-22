@@ -4,66 +4,41 @@ Last session: 2026-06-21
 
 ## What just happened
 
-Built `f_vf_prism` from scratch — a new module forked from `f_vf_chroma` based on
-an insight during chroma exploration. Instead of a streak/rainbow accumulation effect,
-prism does physically-motivated spectral dispersion: R/G/B channels displaced along
-the vecfield at slightly different angles, creating prismatic color separation that
-follows field lines.
+### f_vf_repulse edge artifact — FIXED, committed
+Ring samples now operate in [reach, 1-reach] UV space (zu/zv remap), ensuring all 16
+ring positions stay within [0,1] for every output pixel. Eliminates edge bands caused
+by OOB clamp artifact. Full diagnosis documented in jit-gen-codebox skill.
 
-### f_vf_prism — WORKING, committed
+### f_vf_prism — WORKING, registered, committed
 Architecture: three-UV angular dispersion + 11-tap Gaussian blur of gate values
-perpendicular to the field direction.
+perpendicular to the field direction. Registered in f_modules menu.
 
-Key params:
-- `reach` — how far channels are displaced along the field
-- `spread` — angular separation between R/G/B (controls width of chromatic spread)
-- `threshold` / `gate_width` — luma gate controls which emitters fire
-- `feather` — inter-channel blend, normalized to separation distance (not independent)
-- `strength` — additive composite amount
+Best with: f_vf_repulse as field source, bright-on-dark source (jit.gl.bfg + colorize).
 
-Two outlets: out1 = composite, out2 = isolated prism layer.
-
-Best with: f_vf_vortex as field source, bright-on-dark source (jit.gl.bfg + colorize).
-
-### f_vf_chroma — parked, not deleted
-Still at v10 (accumulation loop, synthesized rainbow). Not broken, just unresolved.
-The rainbow separation is washed out due to normalization averaging. Parked for now.
-
-### Perspectival depth idea — parked in ideas
-The vortex field + prism combination revealed a perspectival depth/light-from-a-point
-effect (see screenshot from session). Not pursued further — filed as a future module idea.
+### Empirical boundmode test scratch patch
+`~/Vsynth/patterns/boundmode_test.maxpat` — tests OOB sample behavior in jit.gl.pix.
+Use as template for future GPU behavior verification.
 
 ## What's next
 
-1. **f_vf_prism boundary handling** — displaced UVs hitting texture edge produce sharp
-   reflected artifacts (visible with f_vf_repulse at edges). Vsynth convention is
-   Clear/Clamp/Wrap/Mirror via `live.menu` → `p boundmode` subpatcher → `selector` → 
-   sets `@boundmode` on `sample` gen object at patcher level (NOT a codebox Param).
-   See vs_displacement.maxpat for the reference implementation.
-   This is a non-trivial build system change — needs live.menu + p boundmode subpatcher
-   wired to the gen sample objects. May want a simpler interim fix first:
-   multiply gate by edge fade `smoothstep(0, margin, min(min(dux,1-dux),min(duy,1-duy)))`
-   inside channel_gate() as a stopgap.
-2. **Register f_vf_prism** in f_modules (add to build_modules.py + f_addmod.js SIZES dict)
-3. **Write help file** for f_vf_prism (f-helpfile skill)
-4. **Audit in1/in2 bug** — check other f_vf_ consumer modules (f_vf_warp, f_vf_streak,
+1. **Write help file** for f_vf_prism (f-helpfile skill)
+2. **Audit in1/in2 bug** — check other f_vf_ consumer modules (f_vf_warp, f_vf_streak,
    f_vf_glow, f_vf_advect) for the same in1/in2 mixup found in f_caustic
-5. **f_vf_chroma** — decide whether to continue or leave parked
+3. **f_vf_chroma** — decide whether to continue or leave parked
 
 ## Known issues / loose threads
 
-- f_vf_prism not yet registered in f_modules menu
 - f_masonry square output at non-square render dimensions still unresolved
 - f_hue_processor band drag still broken (do not touch without a plan)
 - text_button param type only reliably supports two options (three-option limitation)
 - `rename strength → amount` across modules still parked
 
-## Key learnings from this session (worth adding to jit-gen-codebox skill)
+## Key learnings from this session (added to jit-gen-codebox skill)
 
-- **Blur gate values after threshold, not luma before** — blurring luma causes
-  omnidirectional shape softening; blurring the gated output keeps blob edges sharp
-- **step_size must scale to actual inter-channel separation** — `sin(spread) * reach * field_mag`
-  gives the real distance between channels; feather as a fraction of that stays contained
-- **Long accumulation lines silently fail** — split into two lines per channel
-- `length` and `width` are reserved words in jit.gl.pix attribute system — use `reach`
-  and `spread` instead
+- **sample() default boundmode is CLAMP** — empirically verified 2026-06-21 with literal
+  OOB coordinate (vec(1.3, norm.y) produces solid stripe)
+- **Stored scalars silently fail inside vec()** — `oob_u = 1.3; sample(in1, vec(oob_u, norm.y))`
+  samples at norm.x instead of oob_u. Use literals or norm.x/norm.y directly
+- **norm.x/norm.y must be used directly** — `uv = norm; uv.x` silently returns 0
+- **Ring accumulation OOB fix: UV zoom** — remap sample center to [reach, 1-reach]
+  so ring positions never go OOB. Cleaner than edge crop or OOB gate alone
