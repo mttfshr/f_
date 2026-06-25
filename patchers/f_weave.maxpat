@@ -94,25 +94,13 @@
                                     "numinlets": 0,
                                     "numoutlets": 1,
                                     "outlettype": [ "" ],
-                                    "patching_rect": [ 80.0, 30.0, 28.0, 22.0 ],
+                                    "patching_rect": [ 494.0, 26.0, 28.0, 22.0 ],
                                     "text": "in 2"
                                 }
                             },
                             {
                                 "box": {
-                                    "id": "gen-obj-2",
-                                    "linecount": 2,
-                                    "maxclass": "newobj",
-                                    "numinlets": 0,
-                                    "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 120.0, 30.0, 40.0, 22.0 ],
-                                    "text": "r draw"
-                                }
-                            },
-                            {
-                                "box": {
-                                    "code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam src_vecfield(0.0);\nParam bypass(0.0);\n\n// ─── Orientation ─────────────────────────────────────────────────────────────\n\nvx = sample(in2, norm).x - 0.5;\nvy = sample(in2, norm).y - 0.5;\n\nbase_cs = cos(angle * pi);\nbase_sn = sin(angle * pi);\n\ncs = base_cs + (-vy) * src_vecfield;\nsn = base_sn + vx * src_vecfield;\n\nmag = sqrt(cs * cs + sn * sn);\ncs = cs / max(mag, 0.0001);\nsn = sn / max(mag, 0.0001);\n\nacross = norm.x * cs + norm.y * sn;\nalong  = norm.x * (-sn) + norm.y * cs;\n\n// ─── Density scale (log-mapped) ───────────────────────────────────────────────\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\n// ─── Distance to nearest line ─────────────────────────────────────────────────\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// ─── Per-line phase offset ────────────────────────────────────────────────────\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// ─── Mark ────────────────────────────────────────────────────────────────────\n\nmark = smoothstep(weight, 0.0, dist_to_line) * smoothstep(marklen, 0.0, dist_to_mark);\n\n// ─── Output ───────────────────────────────────────────────────────────────────\n\nout1 = mix(vec(mark, mark, mark, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);\n",
+                                    "code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam src_vecfield(0.0);\nParam bypass(0.0);\n\n// ─── Orientation ─────────────────────────────────────────────────────────────\n\nvx = sample(in2, norm).x - 0.5;\nvy = sample(in2, norm).y - 0.5;\n\nbase_cs = cos(angle * pi);\nbase_sn = sin(angle * pi);\n\ncs = base_cs + (-vy) * src_vecfield;\nsn = base_sn + vx * src_vecfield;\n\nmag = sqrt(cs * cs + sn * sn);\ncs = cs / max(mag, 0.0001);\nsn = sn / max(mag, 0.0001);\n\n// Potential field driving across coordinate\nacross = sample(in2, norm).x * 8.0;\nalong  = norm.y;\n\n// ─── Density scale (log-mapped) ───────────────────────────────────────────────\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\n// ─── Distance to nearest line ─────────────────────────────────────────────────\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// ─── Per-line phase offset ────────────────────────────────────────────────────\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// ─── Mark ────────────────────────────────────────────────────────────────────\n\nmark = smoothstep(weight, 0.0, dist_to_line) * smoothstep(marklen, 0.0, dist_to_mark);\n\n// ─── Output ───────────────────────────────────────────────────────────────────\n\nout1 = mix(vec(mark, mark, mark, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);\n",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,

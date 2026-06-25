@@ -144,3 +144,37 @@ general solve for multipass GPU computation in Vsynth.
 
 ---
 
+
+## f_vf_lic: Line Integral Convolution streamline renderer
+
+**Context:** Emerged from f_vf_potential experiment 2026-06-25. The desired visual is
+a weather-map wind direction layer — streamlines that follow the field direction
+continuously across the frame, like wind barbs or ocean current visualization.
+
+**What it is:** LIC (Line Integral Convolution) is a technique that produces streamline
+textures by convolving a noise texture along field-direction paths. Each pixel's value
+is the weighted average of a noise field sampled along the streamline passing through
+that pixel. The result is a texture where structure is aligned along field lines
+everywhere — classic wind map / fluid flow visualization character.
+
+**Architecture:** Ping-pong multipass. Each pass traces one step along the field
+direction, accumulating a blurred noise texture along the path. Requires:
+- A white noise source texture (can be generated analytically from a hash)
+- N passes of short-step accumulation along field direction
+- Normalization pass
+
+Alternatively: advect a noise texture along the field with fast decay — gives
+approximate streamline character without true LIC, cheaper, might be sufficient
+for performance use.
+
+**Distinction from f_vf_potential:**
+- f_vf_potential produces isolines (lines perpendicular to field — like pressure
+  contours on a weather map)
+- f_vf_lic produces streamlines (lines parallel to field — like wind direction arrows)
+
+**Relation to existing modules:** f_vf_advect with a noise source and fast decay
+is a crude approximation. A proper LIC module would be a cleaner, more controllable
+version of that character.
+
+**Status:** Idea only. Capture before building f_vf_potential.
+
