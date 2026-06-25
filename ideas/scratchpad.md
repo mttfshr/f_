@@ -111,3 +111,36 @@ Handles transition gradients in posterized/quantized textures. Sits naturally af
 - `f_util_profile` → `ideas/f_util_analysis.md`
 - `f_cymascope` → `ideas/f_cymascope.md`
 - Droste singularity → `ideas/droste_singularity.md`
+
+## f_vf_potential: scalar potential field integrator
+
+**Context:** Emerged from f_weave Phase 2 work. The vecfield inlet in f_weave steers
+local line orientation per-pixel, which works well for gentle deflection but can't
+produce coherent curved lines across the frame (fingerprint/isoline character). True
+isoline structure requires lines to be isolines of a scalar potential field — the
+integral of the vecfield.
+
+**What it is:** A vecfield processor that integrates an input vecfield into a scalar
+potential texture (float32 single-channel). The potential value at each pixel represents
+the accumulated "depth" along field lines from some reference. Isolines of this field
+are the coherent curved paths that vecfield-driven f_weave would follow.
+
+**Architecture:** Ping-pong feedback (same pattern as f_vf_advect). Each frame
+accumulates `scalar += dot(field_xy, march_direction)` along a consistent marching
+direction. Converges quickly for well-behaved fields (vortex: a few passes). For
+vortex specifically, `atan2(y - cy, x - cx)` is the analytic potential — could be
+a fast-path mode with no iteration needed.
+
+**Integration with f_weave:** f_weave v2 would have an optional `across` inlet
+(float32 scalar). When connected, this replaces the internal
+`fract(across * density_scale)` with the potential field directly — lines become
+isolines of the potential. Chain: `f_vf_vortex → f_vf_potential → f_weave`.
+
+**Relation to cymascope:** Same ping-pong architecture as the FDTD wave simulation
+proposed for f_cymascope. Both confirm that f_vf_advect's feedback pattern is the
+general solve for multipass GPU computation in Vsynth.
+
+**Status:** Idea. Graduate to dedicated file when ready to spec.
+
+---
+

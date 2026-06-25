@@ -1,44 +1,74 @@
 # HANDOFF — f_ library
 
-Last session: 2026-06-21
+Last session: 2026-06-25
 
 ## What just happened
 
-### f_vf_repulse edge artifact — FIXED, committed
-Ring samples now operate in [reach, 1-reach] UV space (zu/zv remap), ensuring all 16
-ring positions stay within [0,1] for every output pixel. Eliminates edge bands caused
-by OOB clamp artifact. Full diagnosis documented in jit-gen-codebox skill.
+### f_weave — COMPLETE, registered
+New generator: continuous line-mark texture. Distance field marks (droste-compatible),
+per-line phase hash (regularity param), optional vecfield in1 for orientation steering.
+Params: density, angle, weight, marklen, regularity, phase.
 
-### f_vf_prism — WORKING, registered, committed
-Architecture: three-UV angular dispersion + 11-tap Gaussian blur of gate values
-perpendicular to the field direction. Registered in f_modules menu.
+Key architectural finding: band_idx-as-grid-identity is a masonry concern. Weave uses
+continuous fract-based distance fields — no slot structure, no Euclidean rhythm.
 
-Best with: f_vf_repulse as field source, bright-on-dark source (jit.gl.bfg + colorize).
+Vecfield inlet steers line orientation via basis vector perturbation (not atan2 — avoids
+discontinuity). Works best at moderate field strength; strong fields produce
+interference patterns (physical, not artifact).
 
-### Empirical boundmode test scratch patch
-`~/Vsynth/patterns/boundmode_test.maxpat` — tests OOB sample behavior in jit.gl.pix.
-Use as template for future GPU behavior verification.
+### f_vf_prism desaturation — FIXED, committed
+Bug: luma gate used for all three channels → B&W output.
+Fix: three per-channel gate functions (channel_gate_r/g/b) each sampling .x/.y/.z
+respectively. Full color preserved. Chromatic dispersion now correct.
+Codebox: codebox_v15.gen
+
+### build_patcher.py source archetype fix
+Source archetype now generates `r draw` as outer patcher object wired to pix inlet 0.
+Previously was using `r dim` inside gen (wrong). Fix applies to both no-mod-inlet and
+mod-inlet source variants.
 
 ## What's next
 
-1. **Write help file** for f_vf_prism (f-helpfile skill)
-2. **Audit in1/in2 bug** — check other f_vf_ consumer modules (f_vf_warp, f_vf_streak,
-   f_vf_glow, f_vf_advect) for the same in1/in2 mixup found in f_caustic
-3. **f_vf_chroma** — decide whether to continue or leave parked
+1. **f_vf_potential** — scalar potential field integrator (ping-pong, like f_vf_advect).
+   Enables isoline-based weave character (fingerprint/contour). Spec captured in
+   ideas/scratchpad.md. Natural next module.
+
+2. **f_weave v2** — `across` inlet for external potential field. Enables
+   `f_vf_vortex → f_vf_potential → f_weave` isoline chain.
+
+3. **Write help file** for f_vf_prism (f-helpfile skill)
+
+4. **Audit in1/in2 bug** — check f_vf_warp, f_vf_streak, f_vf_glow, f_vf_advect
+   for same inlet mixup found in f_caustic
 
 ## Known issues / loose threads
 
 - f_masonry square output at non-square render dimensions still unresolved
 - f_hue_processor band drag still broken (do not touch without a plan)
-- text_button param type only reliably supports two options (three-option limitation)
+- text_button param type only reliably supports two options
 - `rename strength → amount` across modules still parked
+- f_weave: vecfield at high field strength produces interference (physical behavior,
+  not bug — document as expected)
+- f_weave: isoline character (fingerprint/contour) requires f_vf_potential (future)
 
-## Key learnings from this session (added to jit-gen-codebox skill)
+## Key learnings this session
 
-- **sample() default boundmode is CLAMP** — empirically verified 2026-06-21 with literal
-  OOB coordinate (vec(1.3, norm.y) produces solid stripe)
-- **Stored scalars silently fail inside vec()** — `oob_u = 1.3; sample(in1, vec(oob_u, norm.y))`
-  samples at norm.x instead of oob_u. Use literals or norm.x/norm.y directly
-- **norm.x/norm.y must be used directly** — `uv = norm; uv.x` silently returns 0
-- **Ring accumulation OOB fix: UV zoom** — remap sample center to [reach, 1-reach]
-  so ring positions never go OOB. Cleaner than edge crop or OOB gate alone
+- **`r draw` not `r dim`** — source archetype render trigger is `r draw` wired to
+  pix inlet 0 in outer patcher. `r dim` inside gen does not self-trigger. Fixed in
+  build_patcher.py.
+
+- **Continuous distance fields vs grid identity** — fract-based mark placement needs
+  no band/slot structure. `line_idx` used only as hash seed, never as grid identity.
+  This is the key distinction from f_masonry architecture.
+
+- **Vecfield orientation via basis perturbation** — adding vecfield XY to cos/sin
+  rotation basis (with normalization) avoids atan2 discontinuity. Works for any
+  vecfield type, not just vortex.
+
+- **Isoline weave requires scalar potential field** — per-pixel orientation rotation
+  aliases at density > 1. True curved lines need isolines of integrated field.
+  f_vf_potential (ping-pong) is the correct architecture.
+
+- **f_vf_prism per-channel gate** — gate function must sample the corresponding
+  color channel (.x for R gate, .y for G gate, .z for B gate). Luma gate produces
+  desaturation. Per-channel gates produce color-correct chromatic dispersion.

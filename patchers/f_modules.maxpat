@@ -236,14 +236,15 @@
                                 "Masonry",
                                 "Chladni",
                                 "Stipple",
-                                "Grain"
+                                "Grain",
+                                "Weave"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 4,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -277,14 +278,15 @@
                                 "masonry",
                                 "chladni",
                                 "stipple",
-                                "grain"
+                                "grain",
+                                "weave"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 4,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

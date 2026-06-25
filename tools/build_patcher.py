@@ -610,11 +610,13 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
     n_codebox_inlets = 1 + len(mod_inlets)
 
     if archetype == "source" and not mod_inlets:
-        # Original source: in 1 + r dim + codebox
+        # Original source: in 1 + r draw + codebox
+        # r draw fires every render frame in the Vsynth GL context — required for
+        # self-generating patches that need no upstream texture to render.
         boxes.append({"box": {
             "id": "gen-obj-2", "maxclass": "newobj",
             "numinlets": 0, "numoutlets": 1, "outlettype": [""],
-            "patching_rect": [120.0, 30.0, 35.0, 22.0], "text": "r dim"
+            "patching_rect": [120.0, 30.0, 40.0, 22.0], "text": "r draw"
         }})
         codebox_outlettype = [""] * n_outlets
         boxes.append({"box": {
@@ -639,7 +641,12 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
         for k in range(n_outlets):
             lines.append({"patchline": {"destination": [f"gen-obj-{4 + k}", 0], "source": ["gen-obj-3", k]}})
     elif archetype == "source" and mod_inlets:
-        # Source with modulation inlets
+        # Source with modulation inlets: add r draw for render trigger
+        boxes.append({"box": {
+            "id": "gen-obj-2", "maxclass": "newobj",
+            "numinlets": 0, "numoutlets": 1, "outlettype": [""],
+            "patching_rect": [120.0, 30.0, 40.0, 22.0], "text": "r draw"
+        }})
         codebox_id = "gen-obj-3"
         codebox_outlettype = [""] * n_outlets
         boxes.append({"box": {
@@ -658,6 +665,8 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
                 "text": f"out {k + 1}"
             }})
         lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
+        # r draw (gen-obj-2) exists free-standing — its presence triggers gen each frame
+        # it is NOT wired to the codebox
         for i in range(len(mod_inlets)):
             gen_in_id = f"gen-obj-{10 + i}"
             lines.append({"patchline": {"destination": [codebox_id, i + 1], "source": [gen_in_id, 0]}})
@@ -910,6 +919,13 @@ def build(defn):
     if archetype == "dual":
         boxes.extend(instate_boxes())
 
+    # r draw for source archetype — wired to pix inlet 0 as render trigger
+    OBJ_RDRAW = "obj-20a"
+    if archetype == "source":
+        boxes.append(box(OBJ_RDRAW,
+            maxclass="newobj", numinlets=0, numoutlets=1, outlettype=[""],
+            patching_rect=[400.0, 30.0, 50.0, 22.0], text="r draw"))
+
     # Modulation inlet boxes (inlet + optional vs_inState per mod inlet, plus state prepends)
     if mod_inlets:
         boxes.extend(mod_inlet_boxes(mod_inlets))
@@ -955,6 +971,11 @@ def build(defn):
         lines.append(wire(OBJ_INSTATE, 0, primary_obj_id, 0))
         lines.append(wire(OBJ_INSTATE, 1, OBJ_SRCMODE_PRE, 0))
         lines.append(wire(OBJ_SRCMODE_PRE, 0, primary_obj_id, 0))
+    elif archetype == "source":
+        # routepass out0 → primary pix (texture trigger)
+        lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
+        # r draw → pix inlet 0 (render trigger for self-generating patches)
+        lines.append(wire("obj-20a", 0, primary_obj_id, 0))
     else:
         # routepass out0 → primary pix
         lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))

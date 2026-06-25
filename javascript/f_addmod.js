@@ -30,7 +30,8 @@ var SIZES = {
     "vf_repulse":     [165,  80],
     "vf_split":       [ 80,  80],
     "vf_chroma":      [190, 100],
-    "vf_prism":       [190, 160]
+    "vf_prism":       [190, 160],
+    "weave":          [220,  80]
 };
 
 function addmod(mod) {
