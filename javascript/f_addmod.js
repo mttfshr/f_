@@ -31,6 +31,8 @@ var SIZES = {
     "vf_split":       [ 80,  80],
     "vf_chroma":      [190, 100],
     "vf_prism":       [190, 160],
+    "vf_potential":   [190, 100],
+    "vf_flow":        [150,  80],
     "weave":          [220,  80]
 };
 

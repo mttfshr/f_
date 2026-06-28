@@ -714,10 +714,11 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
 # jit.gl.pix box
 # ---------------------------------------------------------------------------
 
-def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None):
+def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False):
     mod_inlets = mod_inlets or []
     outlets    = outlets or [{"comment": "texture out"}]
     type_attr  = f" @type {pix_type}" if pix_type else ""
+    adapt_attr = " @adapt 1" if adapt else ""
     n_outer_inlets = 1 + len(mod_inlets)
     n_outlets      = len(outlets)
     outlettype     = ["jit_gl_texture"] * n_outlets + [""]
@@ -727,7 +728,7 @@ def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, 
         outlettype=outlettype,
         patcher=gen_subpatcher(codebox, archetype, mod_inlets, n_outlets),
         patching_rect=[200.0, 380.0, max(200.0, len(object_name) * 8.0 + 80.0), 22.0],
-        text=f"jit.gl.pix vsynth @name {object_name}{type_attr}",
+        text=f"jit.gl.pix vsynth @name {object_name}{type_attr}{adapt_attr}",
         varname=object_name)
 
 # ---------------------------------------------------------------------------
@@ -898,7 +899,8 @@ def build(defn):
         pix_type    = defn.get("pix_type", None)
         primary_obj_id   = OBJ_PIX
         pix_boxes_to_add = [pix_box(prefix, object_name, codebox, archetype,
-                                    mod_inlets, pix_type, outlets)]
+                                    mod_inlets, pix_type, outlets,
+                                    adapt=defn.get("pix_adapt", False))]
         extra_pix_lines  = []
 
     # Build boxes — pix must come before bypass jsui (param_connect dependency)

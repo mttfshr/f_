@@ -843,14 +843,16 @@
                                 "Repulse",
                                 "Split",
                                 "Chroma",
-                                "Prism"
+                                "Prism",
+                                "Potential",
+                                "Flow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_disp",
-                            "parameter_mmax": 10,
+                            "parameter_mmax": 12,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -891,14 +893,16 @@
                                 "vf_repulse",
                                 "vf_split",
                                 "vf_chroma",
-                                "vf_prism"
+                                "vf_prism",
+                                "vf_potential",
+                                "vf_flow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_file",
-                            "parameter_mmax": 10,
+                            "parameter_mmax": 12,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
