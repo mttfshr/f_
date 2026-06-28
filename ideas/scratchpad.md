@@ -101,6 +101,13 @@ Handles transition gradients in posterized/quantized textures. Sits naturally af
 
 ---
 
+## f_vf_seeds: discrete-item family reference implementation
+
+Captured 2026-06-27 from comparative analysis of f_grain, f_masonry, f_weave.
+Graduated to `ideas/f_vf_seeds.md`. Family framework in `ideas/discrete_item_family.md`.
+
+---
+
 ## Extracted to dedicated files
 
 - `f_util_compound_dial` → `ideas/f_util_compound_dial.md`
