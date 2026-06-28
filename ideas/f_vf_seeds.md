@@ -181,9 +181,6 @@ no additional passes.
 
 ## Status
 
-Idea. Graduate to `.specify/f_vf_seeds/` when ready to build.
-
-Pre-requisites:
-- f_vf_potential built and registered (in progress)
-- discrete_item_family.md framework settled (done, this session)
-- f_weave softness/shape additions complete (planned this session)
+Spec written at `.specify/f_vf_seeds/definition.py` with stub codebox.
+Next: scratch patch to resolve Q1–Q3, then replace stub with validated codebox,
+then run build_patcher.py.

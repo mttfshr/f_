@@ -57,7 +57,8 @@ Codebox change:
 Also needs: live.dial in UI + attrui + route entry. One new row of UI.
 
 ### 2. f_vf_seeds — scratch patch  ← next
-Build and test at `~/Vsynth/patterns/f_vf_seeds_scratch.maxpat`.
+Spec written at `.specify/f_vf_seeds/definition.py` (stub codebox).
+Build scratch patch at `~/Vsynth/patterns/f_vf_seeds_scratch.maxpat`.
 
 Key experiments (from ideas/f_vf_seeds.md):
 - Seed distribution: Voronoi centroids vs. regular grid + jitter
