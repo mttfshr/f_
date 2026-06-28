@@ -9,7 +9,12 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 100.0, 100.0, 800.0, 600.0 ],
+        "rect": [
+            100.0,
+            100.0,
+            800.0,
+            600.0
+        ],
         "openinpresentation": 1,
         "boxes": [
             {
@@ -20,8 +25,15 @@
                     "maxclass": "inlet",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 30.0, 30.0, 30.0, 30.0 ]
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        30.0,
+                        30.0,
+                        30.0,
+                        30.0
+                    ]
                 }
             },
             {
@@ -32,7 +44,12 @@
                     "maxclass": "outlet",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 30.0, 500.0, 30.0, 30.0 ]
+                    "patching_rect": [
+                        30.0,
+                        500.0,
+                        30.0,
+                        30.0
+                    ]
                 }
             },
             {
@@ -41,8 +58,17 @@
                     "maxclass": "newobj",
                     "numinlets": 3,
                     "numoutlets": 3,
-                    "outlettype": [ "", "", "" ],
-                    "patching_rect": [ 200.0, 90.0, 215.0, 22.0 ],
+                    "outlettype": [
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        200.0,
+                        90.0,
+                        215.0,
+                        22.0
+                    ],
                     "text": "routepass jit_gl_texture jit_matrix"
                 }
             },
@@ -50,11 +76,26 @@
                 "box": {
                     "id": "obj-4",
                     "maxclass": "newobj",
-                    "numinlets": 7,
-                    "numoutlets": 7,
-                    "outlettype": [ "", "", "", "", "", "", "" ],
-                    "patching_rect": [ 200.0, 130.0, 315.0, 22.0 ],
-                    "text": "route density angle weight marklen regularity phase"
+                    "numinlets": 9,
+                    "numoutlets": 9,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        200.0,
+                        130.0,
+                        315.0,
+                        22.0
+                    ],
+                    "text": "route density angle weight marklen regularity phase softness shape"
                 }
             },
             {
@@ -63,7 +104,10 @@
                     "maxclass": "newobj",
                     "numinlets": 2,
                     "numoutlets": 2,
-                    "outlettype": [ "jit_gl_texture", "" ],
+                    "outlettype": [
+                        "jit_gl_texture",
+                        ""
+                    ],
                     "patcher": {
                         "fileversion": 1,
                         "appversion": {
@@ -74,7 +118,12 @@
                             "modernui": 1
                         },
                         "classnamespace": "jit.gen",
-                        "rect": [ 100.0, 100.0, 700.0, 600.0 ],
+                        "rect": [
+                            100.0,
+                            100.0,
+                            700.0,
+                            600.0
+                        ],
                         "boxes": [
                             {
                                 "box": {
@@ -82,8 +131,15 @@
                                     "maxclass": "newobj",
                                     "numinlets": 0,
                                     "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 22.0, 30.0, 28.0, 22.0 ],
+                                    "outlettype": [
+                                        ""
+                                    ],
+                                    "patching_rect": [
+                                        22.0,
+                                        30.0,
+                                        28.0,
+                                        22.0
+                                    ],
                                     "text": "in 1"
                                 }
                             },
@@ -93,14 +149,21 @@
                                     "maxclass": "newobj",
                                     "numinlets": 0,
                                     "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 80.0, 30.0, 28.0, 22.0 ],
+                                    "outlettype": [
+                                        ""
+                                    ],
+                                    "patching_rect": [
+                                        80.0,
+                                        30.0,
+                                        28.0,
+                                        22.0
+                                    ],
                                     "text": "in 2"
                                 }
                             },
                             {
                                 "box": {
-                                    "code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam src_potential(0.0);\nParam bypass(0.0);\n\n// ─── Orientation ─────────────────────────────────────────────────────────────\n\nvx = sample(in1, norm).x - 0.5;\nvy = sample(in1, norm).y - 0.5;\n\nbase_cs = cos(angle * pi);\nbase_sn = sin(angle * pi);\n\ncs = base_cs + (-vy);\nsn = base_sn + vx;\n\nmag = sqrt(cs * cs + sn * sn);\ncs = cs / max(mag, 0.0001);\nsn = sn / max(mag, 0.0001);\n\nacross_rot = norm.x * cs + norm.y * sn;\nalong      = norm.x * (-sn) + norm.y * cs;\n\n// ─── Scalar potential override ────────────────────────────────────────────────\n\nacross_pot = sample(in2, norm).x;\nacross = mix(across_rot, across_pot, src_potential);\n\n// ─── Density scale (log-mapped) ───────────────────────────────────────────────\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\n// ─── Distance to nearest line ─────────────────────────────────────────────────\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// ─── Per-line phase offset ────────────────────────────────────────────────────\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// ─── Mark ────────────────────────────────────────────────────────────────────\n\nmark = smoothstep(weight, 0.0, dist_to_line) * smoothstep(marklen, 0.0, dist_to_mark);\n\n// ─── Output ───────────────────────────────────────────────────────────────────\n\ncr = mix(1.0, sample(in2, norm).x, src_potential);\ncg = mix(1.0, sample(in2, norm).y, src_potential);\ncb = mix(1.0, sample(in2, norm).z, src_potential);\n\nout1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
+                                    "code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam softness(0.0);\nParam shape(0.0);\nParam src_potential(0.0);\nParam bypass(0.0);\n\n// \u2500\u2500\u2500 Orientation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nvx = sample(in1, norm).x - 0.5;\nvy = sample(in1, norm).y - 0.5;\n\nbase_cs = cos(angle * pi);\nbase_sn = sin(angle * pi);\n\ncs = base_cs + (-vy);\nsn = base_sn + vx;\n\nmag = sqrt(cs * cs + sn * sn);\ncs = cs / max(mag, 0.0001);\nsn = sn / max(mag, 0.0001);\n\nacross_rot = norm.x * cs + norm.y * sn;\nalong      = norm.x * (-sn) + norm.y * cs;\n\n// \u2500\u2500\u2500 Scalar potential override \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nacross_pot = sample(in2, norm).x;\nacross = mix(across_rot, across_pot, src_potential);\n\n// \u2500\u2500\u2500 Density scale (log-mapped) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\n// \u2500\u2500\u2500 Distance to nearest line \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// \u2500\u2500\u2500 Per-line phase offset \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// \u2500\u2500\u2500 Edge falloff (softness separates thickness from edge hardness) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nsoft = clamp(softness, 0.0, 0.49);\nedge_across = smoothstep(weight + soft, max(weight - soft, 0.0), dist_to_line);\nedge_along  = smoothstep(marklen + soft, max(marklen - soft, 0.0), dist_to_mark);\n\n// \u2500\u2500\u2500 Shape profile (flat-top \u2192 raised cosine) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nprofile = mix(1.0, cos(clamp(dist_to_line / max(weight, 0.0001), 0.0, 1.0) * pi * 0.5), shape);\n\n// \u2500\u2500\u2500 Mark \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nmark = edge_across * edge_along * profile;\n\n// \u2500\u2500\u2500 Output \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ncr = mix(1.0, sample(in2, norm).x, src_potential);\ncg = mix(1.0, sample(in2, norm).y, src_potential);\ncb = mix(1.0, sample(in2, norm).z, src_potential);\n\nout1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
@@ -108,8 +171,15 @@
                                     "maxclass": "codebox",
                                     "numinlets": 2,
                                     "numoutlets": 1,
-                                    "outlettype": [ "" ],
-                                    "patching_rect": [ 22.0, 80.0, 550.0, 380.0 ]
+                                    "outlettype": [
+                                        ""
+                                    ],
+                                    "patching_rect": [
+                                        22.0,
+                                        80.0,
+                                        550.0,
+                                        380.0
+                                    ]
                                 }
                             },
                             {
@@ -118,7 +188,12 @@
                                     "maxclass": "newobj",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 22.0, 490.0, 35.0, 22.0 ],
+                                    "patching_rect": [
+                                        22.0,
+                                        490.0,
+                                        35.0,
+                                        22.0
+                                    ],
                                     "text": "out 1"
                                 }
                             }
@@ -126,25 +201,48 @@
                         "lines": [
                             {
                                 "patchline": {
-                                    "destination": [ "gen-obj-2", 0 ],
-                                    "source": [ "gen-obj-1", 0 ]
+                                    "destination": [
+                                        "gen-obj-2",
+                                        0
+                                    ],
+                                    "source": [
+                                        "gen-obj-1",
+                                        0
+                                    ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "gen-obj-2", 1 ],
-                                    "source": [ "gen-obj-10", 0 ]
+                                    "destination": [
+                                        "gen-obj-2",
+                                        1
+                                    ],
+                                    "source": [
+                                        "gen-obj-10",
+                                        0
+                                    ]
                                 }
                             },
                             {
                                 "patchline": {
-                                    "destination": [ "gen-obj-3", 0 ],
-                                    "source": [ "gen-obj-2", 0 ]
+                                    "destination": [
+                                        "gen-obj-3",
+                                        0
+                                    ],
+                                    "source": [
+                                        "gen-obj-2",
+                                        0
+                                    ]
                                 }
                             }
                         ]
                     },
-                    "patching_rect": [ 200.0, 380.0, 257.0, 22.0 ],
+                    "patching_rect": [
+                        200.0,
+                        380.0,
+                        257.0,
+                        22.0
+                    ],
                     "text": "jit.gl.pix vsynth @name weave_pix @type char",
                     "varname": "weave_pix"
                 }
@@ -155,16 +253,46 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 4,
-                    "outlettype": [ "", "", "", "" ],
-                    "patching_rect": [ 500.0, 500.0, 56.0, 22.0 ],
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        500.0,
+                        500.0,
+                        56.0,
+                        22.0
+                    ],
                     "restore": {
-                        "angle": [ 0.0 ],
-                        "bypass": [ 0 ],
-                        "density": [ 0.5 ],
-                        "marklen": [ 0.3 ],
-                        "phase": [ 0.0 ],
-                        "regularity": [ 0.5 ],
-                        "weight": [ 0.1 ]
+                        "angle": [
+                            0.0
+                        ],
+                        "bypass": [
+                            0
+                        ],
+                        "density": [
+                            0.5
+                        ],
+                        "marklen": [
+                            0.3
+                        ],
+                        "phase": [
+                            0.0
+                        ],
+                        "regularity": [
+                            0.5
+                        ],
+                        "weight": [
+                            0.1
+                        ],
+                        "softness": [
+                            0.0
+                        ],
+                        "shape": [
+                            0.0
+                        ]
                     },
                     "text": "autopattr",
                     "varname": "weave_autopattr"
@@ -174,17 +302,37 @@
                 "box": {
                     "angle": 270.0,
                     "background": 1,
-                    "bgcolor": [ 0.0, 0.0, 0.0, 1.0 ],
+                    "bgcolor": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
                     "border": 1,
-                    "bordercolor": [ 0.0, 0.03529411765, 0.2274509804, 1.0 ],
+                    "bordercolor": [
+                        0.0,
+                        0.03529411765,
+                        0.2274509804,
+                        1.0
+                    ],
                     "id": "obj-9",
                     "maxclass": "panel",
                     "mode": 0,
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 20.0, 20.0, 220.0, 80.0 ],
+                    "patching_rect": [
+                        20.0,
+                        20.0,
+                        220.0,
+                        80.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 0.0, 0.0, 220.0, 159.0 ],
+                    "presentation_rect": [
+                        0.0,
+                        0.0,
+                        220.0,
+                        159.0
+                    ],
                     "proportion": 0.5
                 }
             },
@@ -196,9 +344,19 @@
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 20.0, 20.0, 80.0, 21.0 ],
+                    "patching_rect": [
+                        20.0,
+                        20.0,
+                        80.0,
+                        21.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ -1.5, 0.0, 80.0, 21.0 ],
+                    "presentation_rect": [
+                        -1.5,
+                        0.0,
+                        80.0,
+                        21.0
+                    ],
                     "text": "Weave"
                 }
             },
@@ -208,8 +366,15 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "bang" ],
-                    "patching_rect": [ 600.0, 50.0, 60.0, 22.0 ],
+                    "outlettype": [
+                        "bang"
+                    ],
+                    "patching_rect": [
+                        600.0,
+                        50.0,
+                        60.0,
+                        22.0
+                    ],
                     "text": "loadbang"
                 }
             },
@@ -219,8 +384,15 @@
                     "maxclass": "message",
                     "numinlets": 2,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 600.0, 80.0, 180.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        600.0,
+                        80.0,
+                        180.0,
+                        22.0
+                    ],
                     "text": "getattr presentation_rect"
                 }
             },
@@ -230,9 +402,24 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "" ],
-                    "patching_rect": [ 600.0, 110.0, 80.0, 22.0 ],
-                    "save": [ "#N", "thispatcher", ";", "#Q", "end", ";" ],
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        600.0,
+                        110.0,
+                        80.0,
+                        22.0
+                    ],
+                    "save": [
+                        "#N",
+                        "thispatcher",
+                        ";",
+                        "#Q",
+                        "end",
+                        ";"
+                    ],
                     "text": "thispatcher"
                 }
             },
@@ -242,8 +429,16 @@
                     "maxclass": "newobj",
                     "numinlets": 2,
                     "numoutlets": 2,
-                    "outlettype": [ "", "" ],
-                    "patching_rect": [ 600.0, 140.0, 60.0, 22.0 ],
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        600.0,
+                        140.0,
+                        60.0,
+                        22.0
+                    ],
                     "text": "zl slice 2"
                 }
             },
@@ -253,8 +448,15 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 600.0, 170.0, 80.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        600.0,
+                        170.0,
+                        80.0,
+                        22.0
+                    ],
                     "text": "prepend tam"
                 }
             },
@@ -264,8 +466,15 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 600.0, 200.0, 100.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        600.0,
+                        200.0,
+                        100.0,
+                        22.0
+                    ],
                     "saved_object_attributes": {
                         "filename": "moduleSize.js",
                         "parameter_enable": 0
@@ -281,8 +490,15 @@
                     "maxclass": "inlet",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 90.0, 30.0, 30.0, 30.0 ]
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        90.0,
+                        30.0,
+                        30.0,
+                        30.0
+                    ]
                 }
             },
             {
@@ -291,8 +507,16 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "" ],
-                    "patching_rect": [ 90.0, 80.0, 80.0, 22.0 ],
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        90.0,
+                        80.0,
+                        80.0,
+                        22.0
+                    ],
                     "text": "vs_inState"
                 }
             },
@@ -302,32 +526,59 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 90.0, 130.0, 161.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        90.0,
+                        130.0,
+                        161.0,
+                        22.0
+                    ],
                     "text": "prepend param src_potential"
                 }
             },
             {
                 "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Line spacing and mark frequency (log-mapped).",
                     "id": "obj-20",
                     "maxclass": "live.dial",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
                     "param_connect": "weave_pix::density",
                     "parameter_enable": 1,
-                    "patching_rect": [ 50.0, 80.0, 27.0, 43.0 ],
+                    "patching_rect": [
+                        50.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [
+                        4.0,
+                        38.0,
+                        27.0,
+                        43.0
+                    ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
                         },
                         "valueof": {
-                            "parameter_initial": [ 0.5 ],
+                            "parameter_initial": [
+                                0.5
+                            ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "density",
@@ -352,9 +603,16 @@
                     "maxclass": "attrui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 50.0, 170.0, 129.0, 22.0 ]
+                    "patching_rect": [
+                        50.0,
+                        170.0,
+                        129.0,
+                        22.0
+                    ]
                 }
             },
             {
@@ -365,34 +623,64 @@
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 50.0, 130.0, 50.0, 18.0 ],
+                    "patching_rect": [
+                        50.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ -7.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [
+                        -7.5,
+                        20.0,
+                        50.0,
+                        18.0
+                    ],
                     "text": "Density",
                     "textjustification": 1
                 }
             },
             {
                 "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
                     "fontname": "Ableton Sans Light",
-                    "hint": "Global line orientation (0-1 maps to 0-π).",
+                    "hint": "Global line orientation (0-1 maps to 0-\u03c0).",
                     "id": "obj-23",
                     "maxclass": "live.dial",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
                     "param_connect": "weave_pix::angle",
                     "parameter_enable": 1,
-                    "patching_rect": [ 100.0, 80.0, 27.0, 43.0 ],
+                    "patching_rect": [
+                        100.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 41.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [
+                        41.0,
+                        38.0,
+                        27.0,
+                        43.0
+                    ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
                         },
                         "valueof": {
-                            "parameter_initial": [ 0.0 ],
+                            "parameter_initial": [
+                                0.0
+                            ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "angle",
@@ -417,9 +705,16 @@
                     "maxclass": "attrui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 100.0, 200.0, 127.5, 22.0 ]
+                    "patching_rect": [
+                        100.0,
+                        200.0,
+                        127.5,
+                        22.0
+                    ]
                 }
             },
             {
@@ -430,34 +725,64 @@
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 100.0, 130.0, 50.0, 18.0 ],
+                    "patching_rect": [
+                        100.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 29.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [
+                        29.5,
+                        20.0,
+                        50.0,
+                        18.0
+                    ],
                     "text": "Angle",
                     "textjustification": 1
                 }
             },
             {
                 "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
                     "fontname": "Ableton Sans Light",
-                    "hint": "Line thickness — across-line mark extent.",
+                    "hint": "Line thickness \u2014 across-line mark extent.",
                     "id": "obj-26",
                     "maxclass": "live.dial",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
                     "param_connect": "weave_pix::weight",
                     "parameter_enable": 1,
-                    "patching_rect": [ 150.0, 80.0, 27.0, 43.0 ],
+                    "patching_rect": [
+                        150.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 78.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [
+                        78.0,
+                        38.0,
+                        27.0,
+                        43.0
+                    ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
                         },
                         "valueof": {
-                            "parameter_initial": [ 0.1 ],
+                            "parameter_initial": [
+                                0.1
+                            ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "weight",
@@ -482,9 +807,16 @@
                     "maxclass": "attrui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 150.0, 230.0, 127.5, 22.0 ]
+                    "patching_rect": [
+                        150.0,
+                        230.0,
+                        127.5,
+                        22.0
+                    ]
                 }
             },
             {
@@ -495,34 +827,64 @@
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 150.0, 130.0, 50.0, 18.0 ],
+                    "patching_rect": [
+                        150.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 66.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [
+                        66.5,
+                        20.0,
+                        50.0,
+                        18.0
+                    ],
                     "text": "Weight",
                     "textjustification": 1
                 }
             },
             {
                 "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
                     "fontname": "Ableton Sans Light",
                     "hint": "Mark length along line direction.",
                     "id": "obj-29",
                     "maxclass": "live.dial",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
                     "param_connect": "weave_pix::marklen",
                     "parameter_enable": 1,
-                    "patching_rect": [ 200.0, 80.0, 27.0, 43.0 ],
+                    "patching_rect": [
+                        200.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 115.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [
+                        115.0,
+                        38.0,
+                        27.0,
+                        43.0
+                    ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
                         },
                         "valueof": {
-                            "parameter_initial": [ 0.3 ],
+                            "parameter_initial": [
+                                0.3
+                            ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "marklen",
@@ -547,9 +909,16 @@
                     "maxclass": "attrui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 200.0, 260.0, 129.0, 22.0 ]
+                    "patching_rect": [
+                        200.0,
+                        260.0,
+                        129.0,
+                        22.0
+                    ]
                 }
             },
             {
@@ -560,34 +929,64 @@
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 200.0, 130.0, 50.0, 18.0 ],
+                    "patching_rect": [
+                        200.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 103.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [
+                        103.5,
+                        20.0,
+                        50.0,
+                        18.0
+                    ],
                     "text": "Marklen",
                     "textjustification": 1
                 }
             },
             {
                 "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
                     "fontname": "Ableton Sans Light",
                     "hint": "1=lines in phase (grid-like), 0=fully varied per-line offset.",
                     "id": "obj-32",
                     "maxclass": "live.dial",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
                     "param_connect": "weave_pix::regularity",
                     "parameter_enable": 1,
-                    "patching_rect": [ 250.0, 80.0, 27.0, 43.0 ],
+                    "patching_rect": [
+                        250.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 152.0, 38.0, 27.0, 43.0 ],
+                    "presentation_rect": [
+                        152.0,
+                        38.0,
+                        27.0,
+                        43.0
+                    ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
                         },
                         "valueof": {
-                            "parameter_initial": [ 0.5 ],
+                            "parameter_initial": [
+                                0.5
+                            ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "regularity",
@@ -612,9 +1011,16 @@
                     "maxclass": "attrui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 250.0, 290.0, 150.0, 22.0 ]
+                    "patching_rect": [
+                        250.0,
+                        290.0,
+                        150.0,
+                        22.0
+                    ]
                 }
             },
             {
@@ -625,34 +1031,64 @@
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 250.0, 130.0, 50.0, 18.0 ],
+                    "patching_rect": [
+                        250.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 140.5, 20.0, 50.0, 18.0 ],
+                    "presentation_rect": [
+                        140.5,
+                        20.0,
+                        50.0,
+                        18.0
+                    ],
                     "text": "Regularity",
                     "textjustification": 1
                 }
             },
             {
                 "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
                     "fontname": "Ableton Sans Light",
-                    "hint": "Animation phase — scrolls marks along line direction.",
+                    "hint": "Animation phase \u2014 scrolls marks along line direction.",
                     "id": "obj-35",
                     "maxclass": "live.dial",
                     "numinlets": 1,
                     "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
                     "param_connect": "weave_pix::phase",
                     "parameter_enable": 1,
-                    "patching_rect": [ 300.0, 80.0, 27.0, 43.0 ],
+                    "patching_rect": [
+                        300.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 4.0, 100.0, 27.0, 43.0 ],
+                    "presentation_rect": [
+                        4.0,
+                        100.0,
+                        27.0,
+                        43.0
+                    ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
                         },
                         "valueof": {
-                            "parameter_initial": [ 0.0 ],
+                            "parameter_initial": [
+                                0.0
+                            ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
                             "parameter_longname": "phase",
@@ -678,9 +1114,16 @@
                     "maxclass": "attrui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 300.0, 320.0, 127.5, 22.0 ]
+                    "patching_rect": [
+                        300.0,
+                        320.0,
+                        127.5,
+                        22.0
+                    ]
                 }
             },
             {
@@ -691,9 +1134,19 @@
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 300.0, 130.0, 50.0, 18.0 ],
+                    "patching_rect": [
+                        300.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ -7.5, 82.0, 50.0, 18.0 ],
+                    "presentation_rect": [
+                        -7.5,
+                        82.0,
+                        50.0,
+                        18.0
+                    ],
                     "text": "Phase",
                     "textjustification": 1
                 }
@@ -706,11 +1159,23 @@
                     "maxclass": "jsui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 198.0, 5.0, 18.0, 12.0 ],
+                    "patching_rect": [
+                        198.0,
+                        5.0,
+                        18.0,
+                        12.0
+                    ],
                     "presentation": 1,
-                    "presentation_rect": [ 198.0, 5.0, 18.0, 12.0 ],
+                    "presentation_rect": [
+                        198.0,
+                        5.0,
+                        18.0,
+                        12.0
+                    ],
                     "valuepopuplabel": 1,
                     "varname": "bypass"
                 }
@@ -722,228 +1187,761 @@
                     "maxclass": "attrui",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
+                    "outlettype": [
+                        ""
+                    ],
                     "parameter_enable": 0,
-                    "patching_rect": [ 400.0, 60.0, 131.0, 22.0 ]
+                    "patching_rect": [
+                        400.0,
+                        60.0,
+                        131.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
+                    "fontname": "Ableton Sans Light",
+                    "hint": "Edge softness \u2014 feathers the mark boundary independently of weight.",
+                    "id": "obj-50",
+                    "maxclass": "live.dial",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
+                    "param_connect": "weave_pix::softness",
+                    "parameter_enable": 1,
+                    "patching_rect": [
+                        350.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        41.0,
+                        100.0,
+                        27.0,
+                        43.0
+                    ],
+                    "saved_attribute_attributes": {
+                        "activedialcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_initial": [
+                                0.0
+                            ],
+                            "parameter_initial_enable": 1,
+                            "parameter_linknames": 1,
+                            "parameter_longname": "softness",
+                            "parameter_mmax": 0.49,
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "softness",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "showname": 0,
+                    "triangle": 1,
+                    "valuepopup": 1,
+                    "valuepopuplabel": 1,
+                    "varname": "softness"
+                }
+            },
+            {
+                "box": {
+                    "attr": "softness",
+                    "id": "obj-51",
+                    "maxclass": "attrui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "parameter_enable": 0,
+                    "patching_rect": [
+                        350.0,
+                        350.0,
+                        129.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-52",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        350.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        29.5,
+                        82.0,
+                        50.0,
+                        18.0
+                    ],
+                    "text": "Softness",
+                    "textjustification": 1
+                }
+            },
+            {
+                "box": {
+                    "activedialcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
+                    "fontname": "Ableton Sans Light",
+                    "hint": "Mark profile \u2014 0=flat-top rectangle, 1=raised cosine (calligraphic).",
+                    "id": "obj-53",
+                    "maxclass": "live.dial",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
+                    "param_connect": "weave_pix::shape",
+                    "parameter_enable": 1,
+                    "patching_rect": [
+                        400.0,
+                        80.0,
+                        27.0,
+                        43.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        78.0,
+                        100.0,
+                        27.0,
+                        43.0
+                    ],
+                    "saved_attribute_attributes": {
+                        "activedialcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_initial": [
+                                0.0
+                            ],
+                            "parameter_initial_enable": 1,
+                            "parameter_linknames": 1,
+                            "parameter_longname": "shape",
+                            "parameter_mmax": 1.0,
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "shape",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "showname": 0,
+                    "triangle": 1,
+                    "valuepopup": 1,
+                    "valuepopuplabel": 1,
+                    "varname": "shape"
+                }
+            },
+            {
+                "box": {
+                    "attr": "shape",
+                    "id": "obj-54",
+                    "maxclass": "attrui",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "parameter_enable": 0,
+                    "patching_rect": [
+                        400.0,
+                        380.0,
+                        127.5,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-55",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        400.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        66.5,
+                        82.0,
+                        50.0,
+                        18.0
+                    ],
+                    "text": "Shape",
+                    "textjustification": 1
                 }
             }
         ],
         "lines": [
             {
                 "patchline": {
-                    "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-1", 0 ]
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-101", 0 ],
-                    "source": [ "obj-100", 0 ]
+                    "destination": [
+                        "obj-101",
+                        0
+                    ],
+                    "source": [
+                        "obj-100",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-102", 0 ],
-                    "source": [ "obj-101", 1 ]
+                    "destination": [
+                        "obj-102",
+                        0
+                    ],
+                    "source": [
+                        "obj-101",
+                        1
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 1 ],
-                    "source": [ "obj-101", 0 ]
+                    "destination": [
+                        "obj-5",
+                        1
+                    ],
+                    "source": [
+                        "obj-101",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-102", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-102",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-12", 0 ],
-                    "source": [ "obj-11", 0 ]
+                    "destination": [
+                        "obj-12",
+                        0
+                    ],
+                    "source": [
+                        "obj-11",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-13", 0 ],
-                    "source": [ "obj-12", 0 ]
+                    "destination": [
+                        "obj-13",
+                        0
+                    ],
+                    "source": [
+                        "obj-12",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-14", 0 ],
-                    "source": [ "obj-13", 0 ]
+                    "destination": [
+                        "obj-14",
+                        0
+                    ],
+                    "source": [
+                        "obj-13",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-15", 0 ],
-                    "source": [ "obj-14", 1 ]
+                    "destination": [
+                        "obj-15",
+                        0
+                    ],
+                    "source": [
+                        "obj-14",
+                        1
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-16", 0 ],
-                    "source": [ "obj-15", 0 ]
+                    "destination": [
+                        "obj-16",
+                        0
+                    ],
+                    "source": [
+                        "obj-15",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-21", 0 ],
-                    "source": [ "obj-20", 0 ]
+                    "destination": [
+                        "obj-21",
+                        0
+                    ],
+                    "source": [
+                        "obj-20",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-21", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-21",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-24", 0 ],
-                    "source": [ "obj-23", 0 ]
+                    "destination": [
+                        "obj-24",
+                        0
+                    ],
+                    "source": [
+                        "obj-23",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-24", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-24",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-27", 0 ],
-                    "source": [ "obj-26", 0 ]
+                    "destination": [
+                        "obj-27",
+                        0
+                    ],
+                    "source": [
+                        "obj-26",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-27", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-27",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-30", 0 ],
-                    "source": [ "obj-29", 0 ]
+                    "destination": [
+                        "obj-30",
+                        0
+                    ],
+                    "source": [
+                        "obj-29",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-4", 0 ],
-                    "source": [ "obj-3", 2 ]
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        2
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-3", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-30", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-30",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-33", 0 ],
-                    "source": [ "obj-32", 0 ]
+                    "destination": [
+                        "obj-33",
+                        0
+                    ],
+                    "source": [
+                        "obj-32",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-33", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-33",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-36", 0 ],
-                    "source": [ "obj-35", 0 ]
+                    "destination": [
+                        "obj-36",
+                        0
+                    ],
+                    "source": [
+                        "obj-35",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-36", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-36",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-39", 0 ],
-                    "source": [ "obj-38", 0 ]
+                    "destination": [
+                        "obj-39",
+                        0
+                    ],
+                    "source": [
+                        "obj-38",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-39", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-39",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-20", 0 ],
-                    "source": [ "obj-4", 0 ]
+                    "destination": [
+                        "obj-20",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-23", 0 ],
-                    "source": [ "obj-4", 1 ]
+                    "destination": [
+                        "obj-23",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        1
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-26", 0 ],
-                    "source": [ "obj-4", 2 ]
+                    "destination": [
+                        "obj-26",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        2
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-29", 0 ],
-                    "source": [ "obj-4", 3 ]
+                    "destination": [
+                        "obj-29",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        3
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-32", 0 ],
-                    "source": [ "obj-4", 4 ]
+                    "destination": [
+                        "obj-32",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        4
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-35", 0 ],
-                    "source": [ "obj-4", 5 ]
+                    "destination": [
+                        "obj-35",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        5
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-2", 0 ],
-                    "source": [ "obj-5", 0 ]
+                    "destination": [
+                        "obj-2",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-51",
+                        0
+                    ],
+                    "source": [
+                        "obj-50",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-51",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-54",
+                        0
+                    ],
+                    "source": [
+                        "obj-53",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-54",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-50",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        6
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-53",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        7
+                    ]
                 }
             }
         ],
         "parameters": {
-            "obj-20": [ "density", "density", 0 ],
-            "obj-23": [ "angle", "angle", 0 ],
-            "obj-26": [ "weight", "weight", 0 ],
-            "obj-29": [ "marklen", "marklen", 0 ],
-            "obj-32": [ "regularity", "regularity", 0 ],
-            "obj-35": [ "phase", "phase", 0 ],
+            "obj-20": [
+                "density",
+                "density",
+                0
+            ],
+            "obj-23": [
+                "angle",
+                "angle",
+                0
+            ],
+            "obj-26": [
+                "weight",
+                "weight",
+                0
+            ],
+            "obj-29": [
+                "marklen",
+                "marklen",
+                0
+            ],
+            "obj-32": [
+                "regularity",
+                "regularity",
+                0
+            ],
+            "obj-35": [
+                "phase",
+                "phase",
+                0
+            ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
                     "name": "",
-                    "parameters": [ "-", "-", "-", "-", "-", "-", "-", "-" ],
-                    "buttons": [ "-", "-", "-", "-", "-", "-", "-", "-" ]
+                    "parameters": [
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-"
+                    ],
+                    "buttons": [
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-"
+                    ]
                 }
             },
-            "inherited_shortname": 1
+            "inherited_shortname": 1,
+            "obj-50": [
+                "softness",
+                "softness",
+                0
+            ],
+            "obj-53": [
+                "shape",
+                "shape",
+                0
+            ]
         },
         "autosave": 0
     }
