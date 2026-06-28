@@ -4,70 +4,55 @@ Last session: 2026-06-27
 
 ## What just happened
 
-### f_vf_potential — built and registered ✓
-Patcher built from `.specify/f_vf_potential/definition.py`. Two-pix chain
-(pass_pix + potential_pix), float32, ping-pong feedback. Params: dt, decay,
-strength. Inlets: vecfield, color. Outlet: scalar potential.
-Registered in f_modules (Vecfield category) and f_addmod.js SIZES [190, 100].
+### f_vf_seeds — built and registered ✓
 
-Signal chain operational: `f_vf_repulse → f_vf_potential → f_weave (scalar in)`
+Scratch patch validated at `~/Vsynth/patterns/f_vf_seeds-scratch.maxpat`.
 
-### f_vf_flow — built and registered ✓
-Discovered as untracked built patcher. Dual-mode vecfield generator: uniform
-direction (angle param) or texture-perturbed direction (spread param). float32.
-Registered in f_modules (Vecfield category) and f_addmod.js SIZES [150, 80].
+Open questions resolved:
+- Q1: Grid + jitter confirmed (not Voronoi centroids) — simpler, controllable density
+- Q2: Taper as param confirmed — asymmetric along-axis endpoints
+- Q3: 3×3 neighbourhood search adequate
+- Strength fix: blend to default rightward orientation (not toward zero) — avoids basis collapse
 
-### Discrete-item family framework — captured and committed ✓
-- `ideas/discrete_item_family.md` — four control layers, standard inlet/outlet
-  spec, UI grouping proposal, vecfield magnitude as free second parameter
-- `ideas/f_vf_seeds.md` — full design for fourth module (reference implementation
-  for new architecture)
+Codebox from scratch patch copied to `.specify/f_vf_seeds/codebox_seeds.gen`.
+Patcher built from definition.py → `patchers/f_vf_seeds.maxpat`.
+Registered in f_modules (Vecfield category) and f_addmod.js SIZES [190, 175].
 
-### Commits made this session
-```
-46684b5 docs: discrete-item family framework and f_vf_seeds design
-695c26b feat: build and register f_vf_potential, f_vf_flow
-```
+Structure: 3 inlets (control, vecfield, identity tex), 3 outlets (composite, mask, identity coord).
+12 dials: density, jitter, weight, marklen, softness, shape, taper, strength, mag_weight, phase,
+weight_mod, marklen_mod.
 
-Previous pending commits from earlier sessions were already committed (confirmed
-via git log — prism, weave scalar inlet, repulse, etc. all present).
+### Also completed this session
+- f_vf_potential registered ✓
+- f_vf_flow discovered and registered ✓
+- f_weave softness + shape params ✓
+- f_weave softness formulation fixed (expand outer edge, not symmetric zone) ✓
+- docs/discrete_item_conventions.md written ✓
+- ideas/discrete_item_family.md + ideas/f_vf_seeds.md written ✓
 
 ---
 
-## What's next — priority order
+## What's next
 
-### 1. f_weave softness + shape params — DONE ✓
-Codebox-only additions, no patcher restructuring.
+### 1. Test f_vf_seeds in Max
+Open `patchers/f_vf_seeds.maxpat` as a bpatcher. Connect:
+- f_vf_vortex → in1 (vecfield)
+- Nothing on in2 initially
+- out0 → vs_output
 
-**softness** — add `Param softness(0.0)` controlling smoothstep width on both
-`dist_to_line` and `dist_to_mark`. Currently both axes are hard-edged; weight
-controls thickness only. Separating edge softness from line weight brings weave
-into vocabulary alignment with grain and masonry.
+Things to verify:
+- Marks visible and field-following
+- identity coord output (out2) produces visible UV map
+- Identity tex inlet (in2): connect f_vf_seeds out2 → f_tone_curve → f_vf_seeds in2 for self-modulation test
 
-Codebox change:
-- `dist_to_line` smoothstep: `smoothstep(weight + softness, weight - softness, dist_to_line)`
-  (instead of `smoothstep(weight, 0.0, dist_to_line)`)
-- `dist_to_mark`: `smoothstep(marklen + softness, marklen - softness, dist_to_mark)`
+### 2. f_vf_seeds helpfile
+Write `help/f_vf_seeds.maxhelp` following f_droste.maxhelp conventions.
+See `skills/f-helpfile/SKILL.md`.
 
-**shape** — add `Param shape(0.0)` blending mark brightness profile:
-- shape=0: flat-top rectangle (current behavior)
-- shape=1: raised cosine profile — `cos(dist_to_line / weight * pi * 0.5)` or similar
-  Gives calligraphic/ink-on-paper feel; marks brightest at center, taper to edges.
-
-Also needs: live.dial in UI + attrui + route entry. One new row of UI.
-
-### 2. f_vf_seeds — scratch patch  ← next
-Spec written at `.specify/f_vf_seeds/definition.py` (stub codebox).
-Build scratch patch at `~/Vsynth/patterns/f_vf_seeds_scratch.maxpat`.
-
-Key experiments (from ideas/f_vf_seeds.md):
-- Seed distribution: Voronoi centroids vs. regular grid + jitter
-- Vecfield sampling: at seed position (stable) vs. at screen pixel (shears mark)
-- Mark taper/asymmetry
-- Identity coordinate output feasibility
-
-### 3. Docs: regularity distinction + phase convention — DONE ✓
-Written as `docs/discrete_item_conventions.md`.
+### 3. Remaining discrete-item family work (deferred)
+- f_grain: vecfield inlet for cell elongation — own session
+- f_weave: identity tex + screen tex mod inlets — after f_vf_seeds validates pattern
+- UI density pass (Section 1 / Section 2 layout) — blocked pending compound dial widget
 
 ---
 
@@ -75,18 +60,13 @@ Written as `docs/discrete_item_conventions.md`.
 
 - f_masonry square output at non-square render dimensions — root cause unresolved
 - f_hue_processor band drag still broken (do not touch without a plan)
-- text_button param type only reliably supports two options
+- f_weave: mod inlets (identity tex + screen tex) — deferred
+- f_grain: vecfield inlet — deferred
 - `rename strength → amount` across modules — parked
-- f_weave: vecfield at high field strength produces interference (physical, not bug)
-- f_weave: `along` axis in potential mode follows rotation basis, not field gradient
-  (deferred — would need gradient of potential)
-- f_weave: mod inlets (identity tex + screen tex) — deferred until f_vf_seeds
-  validates the pattern
-- f_grain: vecfield inlet (cell elongation) — deferred, own session after f_vf_seeds
 
 ---
 
-## Module inventory (current working set)
+## Module inventory (current)
 
 **Generators:** f_masonry, f_chladni, f_stipple, f_grain, f_weave
 **Processors:** f_droste, f_mobius, f_stereo, f_lens, f_caustic
@@ -94,4 +74,4 @@ Written as `docs/discrete_item_conventions.md`.
 **Utilities:** f_texrouter, f_util_profile
 **Vecfield:** f_vf_vortex, f_vf_vortex_multi, f_vf_fieldmap, f_vf_warp,
   f_vf_streak, f_vf_advect, f_vf_glow, f_vf_repulse, f_vf_split, f_vf_chroma,
-  f_vf_prism, f_vf_potential, f_vf_flow
+  f_vf_prism, f_vf_potential, f_vf_flow, f_vf_seeds

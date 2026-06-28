@@ -845,14 +845,15 @@
                                 "Chroma",
                                 "Prism",
                                 "Potential",
-                                "Flow"
+                                "Flow",
+                                "Seeds"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_disp",
-                            "parameter_mmax": 12,
+                            "parameter_mmax": 13,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -895,14 +896,15 @@
                                 "vf_chroma",
                                 "vf_prism",
                                 "vf_potential",
-                                "vf_flow"
+                                "vf_flow",
+                                "vf_seeds"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_file",
-                            "parameter_mmax": 12,
+                            "parameter_mmax": 13,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
