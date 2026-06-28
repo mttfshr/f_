@@ -2,57 +2,71 @@
 
 Last session: 2026-06-27
 
-## What just happened
+## What just happened — full session summary
 
-### f_vf_seeds — built and registered ✓
+### Discrete-item family framework — designed and documented
+Comparative analysis of f_grain, f_masonry, f_weave produced a design framework
+for the module family. Captured in:
+- `ideas/discrete_item_family.md` — four control layers, standard inlet/outlet spec,
+  UI grouping proposal, vecfield magnitude as free second parameter
+- `docs/discrete_item_conventions.md` — regularity, phase, softness, shape conventions
 
-Scratch patch validated at `~/Vsynth/patterns/f_vf_seeds-scratch.maxpat`.
+### f_vf_potential + f_vf_flow — built and registered ✓
+Both were built in prior sessions but unregistered. Now in f_modules and f_addmod.js.
 
-Open questions resolved:
-- Q1: Grid + jitter confirmed (not Voronoi centroids) — simpler, controllable density
-- Q2: Taper as param confirmed — asymmetric along-axis endpoints
-- Q3: 3×3 neighbourhood search adequate
-- Strength fix: blend to default rightward orientation (not toward zero) — avoids basis collapse
+### f_weave softness + shape params — added ✓
+- `softness`: expands outer smoothstep edge (`weight * (1 + softness)`), preserves
+  zero behavior exactly. mmax=2.0.
+- `shape`: raised cosine mark profile blend. mmax=1.0.
 
-Codebox from scratch patch copied to `.specify/f_vf_seeds/codebox_seeds.gen`.
-Patcher built from definition.py → `patchers/f_vf_seeds.maxpat`.
-Registered in f_modules (Vecfield category) and f_addmod.js SIZES [190, 175].
+### f_vf_seeds — designed, built, tested, registered ✓
+Reference implementation for the discrete-item family architecture.
 
-Structure: 3 inlets (control, vecfield, identity tex), 3 outlets (composite, mask, identity coord).
-12 dials: density, jitter, weight, marklen, softness, shape, taper, strength, mag_weight, phase,
-weight_mod, marklen_mod.
+**Architecture validated:**
+- Grid + jitter seed distribution (not Voronoi centroids)
+- Vecfield sampled at seed position — gives coherent per-mark orientation
+- 3×3 neighbourhood search adequate
+- Strength blends to default rightward orientation (avoids basis collapse at strength=0)
+- Identity coord output (out2) works — Voronoi UV map per pixel
+- Per-seed character modulation via identity tex inlet works
+- Composite output (out0) additively blends marks over source texture
+- Density scale: `pow(2, density * 7.0 - 1.0)` — up to 64 seeds across at max
 
-### Also completed this session
-- f_vf_potential registered ✓
-- f_vf_flow discovered and registered ✓
-- f_weave softness + shape params ✓
-- f_weave softness formulation fixed (expand outer edge, not symmetric zone) ✓
-- docs/discrete_item_conventions.md written ✓
-- ideas/discrete_item_family.md + ideas/f_vf_seeds.md written ✓
+**Bugs fixed during testing:**
+- Inlet mapping: vecfield on in2 (outer inlet 1), identity on in3 (outer inlet 2)
+- Strength collapse: blend toward (1,0) not toward (0,0)
+- Composite output: was identical to mask — fixed to sample in1 source texture
+
+**Known refinement opportunities (not bugs):**
+- Mark shapes are rough — smoothstep-only AA, no analytical derivatives
+- Taper implementation could be more elegant
+- Aspect correction on mark geometry may need tuning
+- `shape` param (raised cosine) not yet producing strong calligraphic effect
+
+**Status: proof of concept validated. Architecture works.**
 
 ---
 
-## What's next
+## What's next — priority order
 
-### 1. Test f_vf_seeds in Max
-Open `patchers/f_vf_seeds.maxpat` as a bpatcher. Connect:
-- f_vf_vortex → in1 (vecfield)
-- Nothing on in2 initially
-- out0 → vs_output
-
-Things to verify:
-- Marks visible and field-following
-- identity coord output (out2) produces visible UV map
-- Identity tex inlet (in2): connect f_vf_seeds out2 → f_tone_curve → f_vf_seeds in2 for self-modulation test
-
-### 2. f_vf_seeds helpfile
+### 1. f_vf_seeds helpfile
 Write `help/f_vf_seeds.maxhelp` following f_droste.maxhelp conventions.
-See `skills/f-helpfile/SKILL.md`.
+Read `skills/f-helpfile/SKILL.md` first.
 
-### 3. Remaining discrete-item family work (deferred)
-- f_grain: vecfield inlet for cell elongation — own session
-- f_weave: identity tex + screen tex mod inlets — after f_vf_seeds validates pattern
-- UI density pass (Section 1 / Section 2 layout) — blocked pending compound dial widget
+### 2. f_vf_seeds mark shape refinement
+When ready — improve mark rendering quality:
+- Analytical AA via derivatives (`dFdx`/`dFdy` if available in jit.gl.pix GPU path)
+- Review taper implementation
+- Review aspect correction
+
+### 3. Discrete-item family: next modules
+- f_grain: vecfield inlet (cell elongation/orientation) — own session
+- f_weave: identity tex mod inlet (per-line weight/marklen) — own session
+- Both informed by f_vf_seeds architecture
+
+### 4. UI density pass
+Section 1 (intrinsic character) / Section 2 (field response) layout for all
+discrete-item modules. Blocked pending compound dial widget design.
 
 ---
 
