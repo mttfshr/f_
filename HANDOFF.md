@@ -36,7 +36,7 @@ via git log — prism, weave scalar inlet, repulse, etc. all present).
 
 ## What's next — priority order
 
-### 1. f_weave softness + shape params
+### 1. f_weave softness + shape params — DONE ✓
 Codebox-only additions, no patcher restructuring.
 
 **softness** — add `Param softness(0.0)` controlling smoothstep width on both
@@ -56,7 +56,7 @@ Codebox change:
 
 Also needs: live.dial in UI + attrui + route entry. One new row of UI.
 
-### 2. f_vf_seeds — scratch patch
+### 2. f_vf_seeds — scratch patch  ← next
 Build and test at `~/Vsynth/patterns/f_vf_seeds_scratch.maxpat`.
 
 Key experiments (from ideas/f_vf_seeds.md):
@@ -65,10 +65,8 @@ Key experiments (from ideas/f_vf_seeds.md):
 - Mark taper/asymmetry
 - Identity coordinate output feasibility
 
-### 3. Docs: regularity distinction + phase convention
-Write brief notes in docs/ distinguishing f_weave `regularity` (per-line phase
-randomness) from f_masonry `regularity` (per-brick presence regularity).
-Document `phase` as the standard animation param name for stateless generators.
+### 3. Docs: regularity distinction + phase convention — DONE ✓
+Written as `docs/discrete_item_conventions.md`.
 
 ---
 
