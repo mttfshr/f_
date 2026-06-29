@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 34.0, 376.0, 1058.0, 876.0 ],
+        "rect": [ 110.0, 192.0, 1058.0, 876.0 ],
         "openinpresentation": 1,
         "boxes": [
             {
@@ -106,11 +106,11 @@
                 "box": {
                     "id": "obj-4",
                     "maxclass": "newobj",
-                    "numinlets": 12,
-                    "numoutlets": 12,
-                    "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "" ],
+                    "numinlets": 11,
+                    "numoutlets": 11,
+                    "outlettype": [ "", "", "", "", "", "", "", "", "", "", "" ],
                     "patching_rect": [ 332.0, 236.0, 693.0, 22.0 ],
-                    "text": "route density jitter weight marklen softness stretch strength mag_weight phase weight_mod marklen_mod"
+                    "text": "route density jitter weight marklen stretch strength mag_weight phase weight_mod marklen_mod"
                 }
             },
             {
@@ -178,7 +178,7 @@
                             },
                             {
                                 "box": {
-                                    "code": "// f_vf_seeds — placement and orientation engine\n// in1: source  in2: shape tex  in3: vecfield  in4: mod tex\n\nParam density(0.5);\nParam jitter(0.5);\nParam weight(0.1);\nParam marklen(0.3);\nParam stretch(0.0);\nParam softness(0.0);\nParam phase(0.0);\nParam strength(1.0);\nParam mag_weight(0.0);\nParam weight_mod(0.0);\nParam marklen_mod(0.0);\nParam src_vecfield(0.0);\nParam src_mod(0.0);\nParam src_shape(0.0);\nParam bypass(0.0);\n\n// ── Grid density ──────────────────────────────────────────────────────────────\n\ndensity_scale = pow(2.0, density * 9.0 - 1.0);\naspect = dim.x / dim.y;\n\npx = norm.x * density_scale * aspect;\npy = norm.y * density_scale;\nicx = floor(px);\nicy = floor(py);\n\n// ── 3x3 neighbourhood seed search ────────────────────────────────────────────\n\nncx = icx-1.0; ncy = icy-1.0;\njxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyA = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxA = (ncx + 0.5 + jxA*jitter) / (density_scale * aspect);\nsyA = (ncy + 0.5 + jyA*jitter) / density_scale;\ndxA = norm.x - sxA; dyA = norm.y - syA;\ndA = dxA*dxA + dyA*dyA;\n\nncx = icx; ncy = icy-1.0;\njxB = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyB = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxB = (ncx + 0.5 + jxB*jitter) / (density_scale * aspect);\nsyB = (ncy + 0.5 + jyB*jitter) / density_scale;\ndxB = norm.x - sxB; dyB = norm.y - syB;\ndB = dxB*dxB + dyB*dyB;\n\nncx = icx+1.0; ncy = icy-1.0;\njxC = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyC = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxC = (ncx + 0.5 + jxC*jitter) / (density_scale * aspect);\nsyC = (ncy + 0.5 + jyC*jitter) / density_scale;\ndxC = norm.x - sxC; dyC = norm.y - syC;\ndC = dxC*dxC + dyC*dyC;\n\nncx = icx-1.0; ncy = icy;\njxD = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyD = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxD = (ncx + 0.5 + jxD*jitter) / (density_scale * aspect);\nsyD = (ncy + 0.5 + jyD*jitter) / density_scale;\ndxD = norm.x - sxD; dyD = norm.y - syD;\ndD = dxD*dxD + dyD*dyD;\n\nncx = icx; ncy = icy;\njxE = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyE = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxE = (ncx + 0.5 + jxE*jitter) / (density_scale * aspect);\nsyE = (ncy + 0.5 + jyE*jitter) / density_scale;\ndxE = norm.x - sxE; dyE = norm.y - syE;\ndE = dxE*dxE + dyE*dyE;\n\nncx = icx+1.0; ncy = icy;\njxF = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyF = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxF = (ncx + 0.5 + jxF*jitter) / (density_scale * aspect);\nsyF = (ncy + 0.5 + jyF*jitter) / density_scale;\ndxF = norm.x - sxF; dyF = norm.y - syF;\ndF = dxF*dxF + dyF*dyF;\n\nncx = icx-1.0; ncy = icy+1.0;\njxG = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyG = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxG = (ncx + 0.5 + jxG*jitter) / (density_scale * aspect);\nsyG = (ncy + 0.5 + jyG*jitter) / density_scale;\ndxG = norm.x - sxG; dyG = norm.y - syG;\ndG = dxG*dxG + dyG*dyG;\n\nncx = icx; ncy = icy+1.0;\njxH = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyH = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxH = (ncx + 0.5 + jxH*jitter) / (density_scale * aspect);\nsyH = (ncy + 0.5 + jyH*jitter) / density_scale;\ndxH = norm.x - sxH; dyH = norm.y - syH;\ndH = dxH*dxH + dyH*dyH;\n\nncx = icx+1.0; ncy = icy+1.0;\njxI = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyI = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxI = (ncx + 0.5 + jxI*jitter) / (density_scale * aspect);\nsyI = (ncy + 0.5 + jyI*jitter) / density_scale;\ndxI = norm.x - sxI; dyI = norm.y - syI;\ndI = dxI*dxI + dyI*dyI;\n\n// ── Find nearest seed ─────────────────────────────────────────────────────────\n\nbest_d=dA; best_gx=sxA; best_gy=syA; best_dx=dxA; best_dy=dyA;\nt=step(dB,best_d); best_d=mix(best_d,dB,t); best_gx=mix(best_gx,sxB,t); best_gy=mix(best_gy,syB,t); best_dx=mix(best_dx,dxB,t); best_dy=mix(best_dy,dyB,t);\nt=step(dC,best_d); best_d=mix(best_d,dC,t); best_gx=mix(best_gx,sxC,t); best_gy=mix(best_gy,syC,t); best_dx=mix(best_dx,dxC,t); best_dy=mix(best_dy,dyC,t);\nt=step(dD,best_d); best_d=mix(best_d,dD,t); best_gx=mix(best_gx,sxD,t); best_gy=mix(best_gy,syD,t); best_dx=mix(best_dx,dxD,t); best_dy=mix(best_dy,dyD,t);\nt=step(dE,best_d); best_d=mix(best_d,dE,t); best_gx=mix(best_gx,sxE,t); best_gy=mix(best_gy,syE,t); best_dx=mix(best_dx,dxE,t); best_dy=mix(best_dy,dyE,t);\nt=step(dF,best_d); best_d=mix(best_d,dF,t); best_gx=mix(best_gx,sxF,t); best_gy=mix(best_gy,syF,t); best_dx=mix(best_dx,dxF,t); best_dy=mix(best_dy,dyF,t);\nt=step(dG,best_d); best_d=mix(best_d,dG,t); best_gx=mix(best_gx,sxG,t); best_gy=mix(best_gy,syG,t); best_dx=mix(best_dx,dxG,t); best_dy=mix(best_dy,dyG,t);\nt=step(dH,best_d); best_d=mix(best_d,dH,t); best_gx=mix(best_gx,sxH,t); best_gy=mix(best_gy,syH,t); best_dx=mix(best_dx,dxH,t); best_dy=mix(best_dy,dyH,t);\nt=step(dI,best_d); best_d=mix(best_d,dI,t); best_gx=mix(best_gx,sxI,t); best_gy=mix(best_gy,syI,t); best_dx=mix(best_dx,dxI,t); best_dy=mix(best_dy,dyI,t);\n\n// ── Sample vecfield at seed position ─────────────────────────────────────────\n\nvx = (sample(in3, vec(best_gx, best_gy)).x - 0.5) * 2.0;\nvy = (sample(in3, vec(best_gx, best_gy)).y - 0.5) * 2.0;\n\nfield_mag = sqrt(max(vx*vx + vy*vy, 0.0));\nmag = max(field_mag, 0.0001);\nfcs = vx / mag;\nfsn = vy / mag;\n\ncs = mix(1.0, fcs, strength);\nsn = mix(0.0, fsn, strength);\nmag2 = max(sqrt(cs*cs + sn*sn), 0.0001);\ncs = cs / mag2;\nsn = sn / mag2;\n\n// ── Project pixel offset into seed-local frame ────────────────────────────────\n\nodx = best_dx * aspect;\nody = best_dy;\nalong  =  odx * cs + ody * sn;\nacross = -odx * sn + ody * cs;\n\n// ── Mod tex modulation (sampled at seed UV) ───────────────────────────────────\n\nmod_sample = sample(in4, vec(best_gx, best_gy)).x * src_mod;\nweight_eff  = clamp(weight  + mod_sample * weight_mod  + field_mag * mag_weight, 0.001, 0.5);\nmarklen_eff = clamp(marklen + mod_sample * marklen_mod, 0.001, 0.5);\n\n// ── Construct seed-local UV ───────────────────────────────────────────────────\n// along axis: always normalized by marklen (with phase offset)\n// across axis: stretch=1 → normalized by weight (deform)\n//              stretch=0 → normalized by marklen (preserve aspect) + weight aperture clip\n\nalong_shifted = along - phase * marklen_eff;\n\nlocal_u = along_shifted / marklen_eff * 0.5 + 0.5;\nlocal_v_stretch = across / weight_eff * 0.5 + 0.5;\nlocal_v_uniform = across / marklen_eff * 0.5 + 0.5;\nlocal_v = mix(local_v_uniform, local_v_stretch, stretch);\n\n// ── Gate and softness ─────────────────────────────────────────────────────────\n// Softness feathers the boundary in UV space.\n// In uniform mode, also gate on weight aperture (across axis clip).\n\nsoft = max(softness, 0.0001);\nedge_u = smoothstep(1.0 + soft, 1.0, abs(local_u * 2.0 - 1.0));\nedge_v = smoothstep(1.0 + soft, 1.0, abs(local_v * 2.0 - 1.0));\n\n// weight aperture in uniform mode — hard gate on across distance\naperture = step(abs(across), weight_eff);\naperture_mixed = mix(aperture, 1.0, stretch);\n\ngate = edge_u * edge_v * aperture_mixed;\n\n// ── Sample shape tex, take luma ───────────────────────────────────────────────\n// Passthrough if no shape connected (src_shape=0 → gate zeroes out via mix)\n\nshape_r = sample(in2, vec(local_u, local_v)).x;\nshape_g = sample(in2, vec(local_u, local_v)).y;\nshape_b = sample(in2, vec(local_u, local_v)).z;\nshape_luma = (shape_r + shape_g + shape_b) / 3.0;\n\nmark = shape_luma * gate * src_shape;\n\n// ── Outputs ───────────────────────────────────────────────────────────────────\n\nsrc = sample(in1, norm);\ncomposite = vec(src.x + mark, src.y + mark, src.z + mark, 1.0);\nout1 = mix(composite, vec(0.0, 0.0, 0.0, 1.0), bypass);\nout2 = mix(vec(mark, mark, mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\nout3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);",
+                                    "code": "// f_vf_seeds — placement and orientation engine\n// in1: source  in2: shape tex  in3: vecfield  in4: mod tex\n\nParam density(0.5);\nParam jitter(0.5);\nParam weight(0.1);\nParam marklen(0.3);\nParam stretch(0.0);\nParam phase(0.0);\nParam strength(1.0);\nParam mag_weight(0.0);\nParam weight_mod(0.0);\nParam marklen_mod(0.0);\nParam src_vecfield(0.0);\nParam src_mod(0.0);\nParam src_shape(0.0);\nParam bypass(0.0);\n\n// ── Grid density ──────────────────────────────────────────────────────────────\n\ndensity_scale = pow(2.0, density * 9.0 - 1.0);\naspect = dim.x / dim.y;\n\npx = norm.x * density_scale * aspect;\npy = norm.y * density_scale;\nicx = floor(px);\nicy = floor(py);\n\n// ── 3x3 neighbourhood seed search ────────────────────────────────────────────\n\nncx = icx-1.0; ncy = icy-1.0;\njxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyA = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxA = (ncx + 0.5 + jxA*jitter) / (density_scale * aspect);\nsyA = (ncy + 0.5 + jyA*jitter) / density_scale;\ndxA = norm.x - sxA; dyA = norm.y - syA;\ndA = dxA*dxA + dyA*dyA;\n\nncx = icx; ncy = icy-1.0;\njxB = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyB = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxB = (ncx + 0.5 + jxB*jitter) / (density_scale * aspect);\nsyB = (ncy + 0.5 + jyB*jitter) / density_scale;\ndxB = norm.x - sxB; dyB = norm.y - syB;\ndB = dxB*dxB + dyB*dyB;\n\nncx = icx+1.0; ncy = icy-1.0;\njxC = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyC = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxC = (ncx + 0.5 + jxC*jitter) / (density_scale * aspect);\nsyC = (ncy + 0.5 + jyC*jitter) / density_scale;\ndxC = norm.x - sxC; dyC = norm.y - syC;\ndC = dxC*dxC + dyC*dyC;\n\nncx = icx-1.0; ncy = icy;\njxD = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyD = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxD = (ncx + 0.5 + jxD*jitter) / (density_scale * aspect);\nsyD = (ncy + 0.5 + jyD*jitter) / density_scale;\ndxD = norm.x - sxD; dyD = norm.y - syD;\ndD = dxD*dxD + dyD*dyD;\n\nncx = icx; ncy = icy;\njxE = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyE = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxE = (ncx + 0.5 + jxE*jitter) / (density_scale * aspect);\nsyE = (ncy + 0.5 + jyE*jitter) / density_scale;\ndxE = norm.x - sxE; dyE = norm.y - syE;\ndE = dxE*dxE + dyE*dyE;\n\nncx = icx+1.0; ncy = icy;\njxF = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyF = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxF = (ncx + 0.5 + jxF*jitter) / (density_scale * aspect);\nsyF = (ncy + 0.5 + jyF*jitter) / density_scale;\ndxF = norm.x - sxF; dyF = norm.y - syF;\ndF = dxF*dxF + dyF*dyF;\n\nncx = icx-1.0; ncy = icy+1.0;\njxG = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyG = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxG = (ncx + 0.5 + jxG*jitter) / (density_scale * aspect);\nsyG = (ncy + 0.5 + jyG*jitter) / density_scale;\ndxG = norm.x - sxG; dyG = norm.y - syG;\ndG = dxG*dxG + dyG*dyG;\n\nncx = icx; ncy = icy+1.0;\njxH = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyH = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxH = (ncx + 0.5 + jxH*jitter) / (density_scale * aspect);\nsyH = (ncy + 0.5 + jyH*jitter) / density_scale;\ndxH = norm.x - sxH; dyH = norm.y - syH;\ndH = dxH*dxH + dyH*dyH;\n\nncx = icx+1.0; ncy = icy+1.0;\njxI = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyI = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxI = (ncx + 0.5 + jxI*jitter) / (density_scale * aspect);\nsyI = (ncy + 0.5 + jyI*jitter) / density_scale;\ndxI = norm.x - sxI; dyI = norm.y - syI;\ndI = dxI*dxI + dyI*dyI;\n\n// ── Find nearest seed ─────────────────────────────────────────────────────────\n\nbest_d=dA; best_gx=sxA; best_gy=syA; best_dx=dxA; best_dy=dyA;\nt=step(dB,best_d); best_d=mix(best_d,dB,t); best_gx=mix(best_gx,sxB,t); best_gy=mix(best_gy,syB,t); best_dx=mix(best_dx,dxB,t); best_dy=mix(best_dy,dyB,t);\nt=step(dC,best_d); best_d=mix(best_d,dC,t); best_gx=mix(best_gx,sxC,t); best_gy=mix(best_gy,syC,t); best_dx=mix(best_dx,dxC,t); best_dy=mix(best_dy,dyC,t);\nt=step(dD,best_d); best_d=mix(best_d,dD,t); best_gx=mix(best_gx,sxD,t); best_gy=mix(best_gy,syD,t); best_dx=mix(best_dx,dxD,t); best_dy=mix(best_dy,dyD,t);\nt=step(dE,best_d); best_d=mix(best_d,dE,t); best_gx=mix(best_gx,sxE,t); best_gy=mix(best_gy,syE,t); best_dx=mix(best_dx,dxE,t); best_dy=mix(best_dy,dyE,t);\nt=step(dF,best_d); best_d=mix(best_d,dF,t); best_gx=mix(best_gx,sxF,t); best_gy=mix(best_gy,syF,t); best_dx=mix(best_dx,dxF,t); best_dy=mix(best_dy,dyF,t);\nt=step(dG,best_d); best_d=mix(best_d,dG,t); best_gx=mix(best_gx,sxG,t); best_gy=mix(best_gy,syG,t); best_dx=mix(best_dx,dxG,t); best_dy=mix(best_dy,dyG,t);\nt=step(dH,best_d); best_d=mix(best_d,dH,t); best_gx=mix(best_gx,sxH,t); best_gy=mix(best_gy,syH,t); best_dx=mix(best_dx,dxH,t); best_dy=mix(best_dy,dyH,t);\nt=step(dI,best_d); best_d=mix(best_d,dI,t); best_gx=mix(best_gx,sxI,t); best_gy=mix(best_gy,syI,t); best_dx=mix(best_dx,dxI,t); best_dy=mix(best_dy,dyI,t);\n\n// ── Sample vecfield at seed position ─────────────────────────────────────────\n\nvx = (sample(in3, vec(best_gx, best_gy)).x - 0.5) * 2.0;\nvy = (sample(in3, vec(best_gx, best_gy)).y - 0.5) * 2.0;\n\nfield_mag = sqrt(max(vx*vx + vy*vy, 0.0));\nmag = max(field_mag, 0.0001);\nfcs = vx / mag;\nfsn = vy / mag;\n\ncs = mix(1.0, fcs, strength);\nsn = mix(0.0, fsn, strength);\nmag2 = max(sqrt(cs*cs + sn*sn), 0.0001);\ncs = cs / mag2;\nsn = sn / mag2;\n\n// ── Project pixel offset into seed-local frame ────────────────────────────────\n\nodx = best_dx * aspect;\nody = best_dy;\nalong  =  odx * cs + ody * sn;\nacross = -odx * sn + ody * cs;\n\n// ── Mod tex modulation (sampled at seed UV) ───────────────────────────────────\n\nmod_sample = sample(in4, vec(best_gx, best_gy)).x * src_mod;\nweight_eff  = clamp(weight  + mod_sample * weight_mod  + field_mag * mag_weight, 0.001, 0.5);\nmarklen_eff = clamp(marklen + mod_sample * marklen_mod, 0.001, 0.5);\n\n// ── Construct seed-local UV ───────────────────────────────────────────────────\n\nalong_shifted = along - phase * marklen_eff;\n\nlocal_u = along_shifted / marklen_eff * 0.5 + 0.5;\nlocal_v_stretch = across / weight_eff * 0.5 + 0.5;\nlocal_v_uniform = across / marklen_eff * 0.5 + 0.5;\nlocal_v = mix(local_v_uniform, local_v_stretch, stretch);\n\n// ── Gate ─────────────────────────────────────────────────────────────────────\n\ngate_u = step(abs(along_shifted), marklen_eff);\ngate_v_stretch = step(abs(across), weight_eff);\ngate_v_uniform = step(abs(across), marklen_eff);\ngate_v = mix(gate_v_uniform, gate_v_stretch, stretch);\naperture = step(abs(across), weight_eff);\naperture_mixed = mix(aperture, 1.0, stretch);\ngate = gate_u * gate_v * aperture_mixed;\n\n// ── Sample shape tex, take luma ───────────────────────────────────────────────\n\nshape_r = sample(in2, vec(local_u, local_v)).x;\nshape_g = sample(in2, vec(local_u, local_v)).y;\nshape_b = sample(in2, vec(local_u, local_v)).z;\nshape_luma = (shape_r + shape_g + shape_b) / 3.0;\n\nmark = shape_luma * gate * src_shape;\n\n// ── Outputs ───────────────────────────────────────────────────────────────────\n\nsrc = sample(in1, norm);\ncomposite = vec(src.x + mark, src.y + mark, src.z + mark, 1.0);\nout1 = mix(composite, vec(0.0, 0.0, 0.0, 1.0), bypass);\nout2 = mix(vec(mark, mark, mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\nout3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
@@ -206,7 +206,7 @@
                                     "maxclass": "newobj",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 82.0, 490.0, 35.0, 22.0 ],
+                                    "patching_rect": [ 245.0, 490.0, 35.0, 22.0 ],
                                     "text": "out 2"
                                 }
                             },
@@ -216,7 +216,7 @@
                                     "maxclass": "newobj",
                                     "numinlets": 1,
                                     "numoutlets": 0,
-                                    "patching_rect": [ 142.0, 490.0, 35.0, 22.0 ],
+                                    "patching_rect": [ 496.0, 504.0, 35.0, 22.0 ],
                                     "text": "out 3"
                                 }
                             }
@@ -287,7 +287,6 @@
                         "marklen": [ 0.3 ],
                         "marklen_mod": [ 0.0 ],
                         "phase": [ 0.0 ],
-                        "softness": [ 0.0 ],
                         "strength": [ 1.0 ],
                         "stretch": [ 0.0 ],
                         "weight": [ 0.1 ],
@@ -722,71 +721,6 @@
                     "presentation": 1,
                     "presentation_rect": [ 103.5, 20.0, 50.0, 18.0 ],
                     "text": "Marklen",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
-                    "fontname": "Ableton Sans Light",
-                    "hint": "Edge feather — expands falloff zone beyond mark boundary",
-                    "id": "obj-32",
-                    "maxclass": "live.dial",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "param_connect": "vfseeds_pix::softness",
-                    "parameter_enable": 1,
-                    "patching_rect": [ 250.0, 80.0, 27.0, 43.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 152.0, 38.0, 27.0, 43.0 ],
-                    "saved_attribute_attributes": {
-                        "activedialcolor": {
-                            "expression": ""
-                        },
-                        "valueof": {
-                            "parameter_initial": [ 0.0 ],
-                            "parameter_initial_enable": 1,
-                            "parameter_linknames": 1,
-                            "parameter_longname": "softness",
-                            "parameter_mmax": 2.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "softness",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "showname": 0,
-                    "triangle": 1,
-                    "valuepopup": 1,
-                    "valuepopuplabel": 1,
-                    "varname": "softness"
-                }
-            },
-            {
-                "box": {
-                    "attr": "softness",
-                    "id": "obj-33",
-                    "maxclass": "attrui",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "parameter_enable": 0,
-                    "patching_rect": [ 250.0, 290.0, 136.0, 22.0 ]
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-34",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 250.0, 130.0, 50.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 140.5, 20.0, 50.0, 18.0 ],
-                    "text": "Softness",
                     "textjustification": 1
                 }
             },
@@ -1400,18 +1334,6 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-33", 0 ],
-                    "source": [ "obj-32", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-33", 0 ]
-                }
-            },
-            {
-                "patchline": {
                     "destination": [ "obj-20", 0 ],
                     "source": [ "obj-4", 0 ]
                 }
@@ -1437,43 +1359,37 @@
             {
                 "patchline": {
                     "destination": [ "obj-300", 0 ],
-                    "source": [ "obj-4", 5 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-32", 0 ],
                     "source": [ "obj-4", 4 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-41", 0 ],
-                    "source": [ "obj-4", 6 ]
+                    "source": [ "obj-4", 5 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-44", 0 ],
-                    "source": [ "obj-4", 7 ]
+                    "source": [ "obj-4", 6 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-47", 0 ],
-                    "source": [ "obj-4", 8 ]
+                    "source": [ "obj-4", 7 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-50", 0 ],
-                    "source": [ "obj-4", 9 ]
+                    "source": [ "obj-4", 8 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-53", 0 ],
-                    "source": [ "obj-4", 10 ]
+                    "source": [ "obj-4", 9 ]
                 }
             },
             {
@@ -1585,7 +1501,6 @@
             "obj-26": [ "weight", "weight", 0 ],
             "obj-29": [ "marklen", "marklen", 0 ],
             "obj-300": [ "stretch", "stretch", 0 ],
-            "obj-32": [ "softness", "softness", 0 ],
             "obj-41": [ "strength", "strength", 0 ],
             "obj-44": [ "mag_weight", "mag_weight", 0 ],
             "obj-47": [ "phase", "phase", 0 ],
