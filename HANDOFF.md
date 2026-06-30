@@ -160,7 +160,7 @@ not worth a dedicated static dial — see "Near-term" below for a mod-tex-driven
 revival of this idea.
 
 **Both definition.py and codebox_seeds.gen synced to match current patcher.**
-Findings captured in `docs/discrete_item_conventions.md`:
+Findings captured in `docs/f-reference/discrete_item_conventions.md`:
 - size+stretch pattern (recommended for future discrete-item modules)
 - bipolar modulation depths (recommended as new default)
 - shape-tex-inlet architecture (full writeup, mechanics, consequences)
@@ -199,7 +199,7 @@ Read `skills/f-helpfile/SKILL.md` first. Deferred from prior session pending
 architecture stabilization — architecture is now stable, ready to write.
 
 ### 3. Discrete-item family: cross-module semantic audit
-Flagged in `docs/discrete_item_conventions.md` (OPEN section at top): `density`
+Flagged in `docs/f-reference/discrete_item_conventions.md` (OPEN section at top): `density`
 and `size` likely mean different things across f_grain/f_weave/f_masonry/
 f_vf_seeds in ways that haven't been reconciled. Needs a deliberate side-by-side
 pass before drawing conclusions.

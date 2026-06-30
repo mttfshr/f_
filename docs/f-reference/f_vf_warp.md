@@ -60,4 +60,4 @@ Edge behavior: pixels displaced outside [0,1] UV clamp to edge — boundary pixe
 - `src_vecfield` is a hidden system param driven by vs_inState outlet 1; not user-facing
 - At strength=1 the warp spans ±1 UV (full texture width/height) — extreme values produce strong edge smear; typical expressive range is 0.05–0.3
 - Works well with animated vortex fields (f_vf_vortex with modulated cx/cy/curl)
-- See `docs/f_vecfield_type.md` for f_vecfield type contract
+- See `docs/f-reference/f_vecfield_type.md` for f_vecfield type contract

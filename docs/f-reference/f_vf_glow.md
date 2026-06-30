@@ -113,7 +113,7 @@ Forward/backward distinction is most visible with f_vf_vortex where the rotation
 ### Typical expressive ranges
 `radius` 0.005–0.05, `falloff` 0.001–0.01, `strength` 0.5–1.0. Extreme `radius` (>0.1) with low `falloff` (<0.001) produces long comet-tail streaks — expressive at high `direction` values with an asymmetric vortex field.
 
-- See `docs/f_vecfield_type.md` for f_vecfield type contract
+- See `docs/f-reference/f_vecfield_type.md` for f_vecfield type contract
 
 ---
 

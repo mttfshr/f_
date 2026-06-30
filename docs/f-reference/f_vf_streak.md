@@ -74,4 +74,4 @@ Step count is fixed at 8. Field vectors are suppressed by `src_vecfield` when in
 - out1 clips at high `strength` with bright sources; this is expected and often desirable
 - Typical expressive ranges: `length` 0.1–2.0, `falloff` 0–1.5, `color_shift` 0–3.0; extreme values available for deliberate effect
 - Works well chained after f_vf_vortex or f_vf_fieldmap; out1 (streak layer) pairs well with additive compositing in Vsynth
-- See `docs/f_vecfield_type.md` for f_vecfield type contract
+- See `docs/f-reference/f_vecfield_type.md` for f_vecfield type contract

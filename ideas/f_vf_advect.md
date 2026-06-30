@@ -10,7 +10,7 @@ Visually distinct from f_vf_streak and f_vf_warp: those are stateless single-pas
 
 ## Architecture
 
-Two chained jit.gl.pix (Pattern 1 from `docs/temporal_synthesis_architecture.md`): `pass_pix` holds the previous frame as a stable texture reference; `advect_pix` reads source, vecfield, and previous frame to compute the new advected state. The GL pipeline's one-frame latency makes the loop stable without explicit buffer management.
+Two chained jit.gl.pix (Pattern 1 from `docs/max-reference/temporal_synthesis_architecture.md`): `pass_pix` holds the previous frame as a stable texture reference; `advect_pix` reads source, vecfield, and previous frame to compute the new advected state. The GL pipeline's one-frame latency makes the loop stable without explicit buffer management.
 
 ## Key expressive findings
 

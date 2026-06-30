@@ -278,7 +278,7 @@ C74 staff (Rob Ramirez) and empirically verified. This enables multi-pass
 intra-frame algorithms (e.g. autostereogram strip generation) that are
 impossible with draw-order chaining between `jit.gl.pix vsynth` instances
 (which always have a 1-frame delay). See
-`docs/intraframe_multipass_architecture.md` for full pattern.
+`docs/max-reference/intraframe_multipass_architecture.md` for full pattern.
 
 ---
 

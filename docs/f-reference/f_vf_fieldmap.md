@@ -52,7 +52,7 @@ gy = luma(x, y + scale) - luma(x, y - scale)
 Scaled by `strength`, encoded to f_vecfield convention:
 `R = clamp(gx * 0.5 + 0.5, 0, 1)`, `G = clamp(gy * 0.5 + 0.5, 0, 1)`, `B = 0.5`, `A = 1.0`.
 
-Flat input regions produce exactly R = G = 0.5 (zero gradient, neutral field). Consumers decode via `(sample - 0.5) * 2.0`. See `docs/f_vecfield_type.md` for full type contract.
+Flat input regions produce exactly R = G = 0.5 (zero gradient, neutral field). Consumers decode via `(sample - 0.5) * 2.0`. See `docs/f-reference/f_vecfield_type.md` for full type contract.
 
 ---
 
@@ -84,4 +84,4 @@ The fieldmap derives a vector field from the noise spatial structure. f_caustic 
 - No auto-normalization — gradient magnitude varies with input contrast; `strength` is the user calibration control
 - No mod inlets in v1 — expressiveness comes from input source variety
 - Compatible with `vs_displacement` as a dumb two-channel texture (treats RG as independent scalars)
-- See `docs/f_vecfield_type.md` for full type contract and consumer conventions
+- See `docs/f-reference/f_vecfield_type.md` for full type contract and consumer conventions

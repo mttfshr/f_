@@ -70,4 +70,4 @@ Modulation inlets decode the same way: `(sample.x - 0.5) * 2.0 * amt` added to t
 
 - Off-screen fixed points (cx/cy outside 0–1 via modulation) are valid — field computes cleanly
 - Falloff uses `exp(-r * falloff)` — always positive, no ring artifact
-- See `docs/f_vecfield_type.md` for full type contract
+- See `docs/f-reference/f_vecfield_type.md` for full type contract

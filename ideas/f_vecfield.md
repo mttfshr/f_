@@ -1,13 +1,13 @@
 # f_vecfield — Vector Field Family
 
 _Last updated: 2026-06-09_
-_Status: Architecture settled. Type contract in `docs/f_vecfield_type.md`. Core producers and consumers built._
+_Status: Architecture settled. Type contract in `docs/f-reference/f_vecfield_type.md`. Core producers and consumers built._
 
 ## What's built
 
 Producers: `f_vf_vortex`, `f_vf_vortex_multi`, `f_vf_fieldmap`. Consumers: `f_caustic`, `f_vf_warp`, `f_vf_streak`. Type contract: float32, RG=XY, 0.5=zero vector.
 
-The fixed-point framing and encoding decisions are settled — see `docs/f_vecfield_type.md` for the full contract.
+The fixed-point framing and encoding decisions are settled — see `docs/f-reference/f_vecfield_type.md` for the full contract.
 
 ---
 
