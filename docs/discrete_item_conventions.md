@@ -5,6 +5,28 @@ See `ideas/discrete_item_family.md` for the full architectural framework.
 
 ---
 
+## OPEN: cross-module semantic audit needed for `density` / `size`
+
+**Flagged 2026-06-29, not yet resolved.** `density` and `size` (and possibly
+other shared names) likely mean different things across modules in ways that
+haven't been reconciled:
+
+- f_vf_seeds `density`: log-mapped seed grid spacing (this doc, below).
+- f_weave `density`: not yet compared — may be closer in spirit to seeds'
+  since weave is also line/grid-based, but needs verification.
+- f_grain `size` and `density`: grain's underlying model (Voronoi cell-based,
+  era-clock driven) is structurally different from seeds' grid+jitter search,
+  so even where param names match, the felt behavior may not.
+
+This is the same kind of naming collision already documented below for
+`regularity` and `shape` — sometimes the shared name is intentional (same
+concept, different mechanism) and sometimes it's accidental drift that should
+be reconciled. Needs a deliberate side-by-side pass across all four modules
+before drawing conclusions. Not blocking current work; noting so it doesn't
+get lost.
+
+---
+
 ## `regularity` — shared name, distinct semantics
 
 Both f_weave and f_masonry have a `regularity` param. The name is intentionally
