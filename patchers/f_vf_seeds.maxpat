@@ -125,10 +125,9 @@
                 "box": {
                     "id": "obj-4",
                     "maxclass": "newobj",
-                    "numinlets": 11,
-                    "numoutlets": 11,
+                    "numinlets": 10,
+                    "numoutlets": 10,
                     "outlettype": [
-                        "",
                         "",
                         "",
                         "",
@@ -146,14 +145,14 @@
                         693.0,
                         22.0
                     ],
-                    "text": "route density jitter weight marklen stretch strength mag_weight phase weight_mod marklen_mod"
+                    "text": "route density jitter size stretch strength mag_weight phase size_mod stretch_mod"
                 }
             },
             {
                 "box": {
                     "id": "obj-5",
                     "maxclass": "newobj",
-                    "numinlets": 3,
+                    "numinlets": 2,
                     "numoutlets": 4,
                     "outlettype": [
                         "jit_gl_texture",
@@ -234,13 +233,13 @@
                             },
                             {
                                 "box": {
-                                    "code": "// f_vf_seeds \u2014 placement and orientation engine\n// in1: shape tex  in2: vecfield  in3: mod tex\n\nParam density(0.5);\nParam jitter(0.5);\nParam weight(0.1);\nParam marklen(0.3);\nParam stretch(0.0);\nParam phase(0.0);\nParam strength(1.0);\nParam mag_weight(0.0);\nParam weight_mod(0.0);\nParam marklen_mod(0.0);\nParam src_vecfield(0.0);\nParam src_mod(0.0);\nParam src_shape(0.0);\nParam bypass(0.0);\n\n// \u2500\u2500 Grid density \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndensity_scale = pow(2.0, density * 9.0 - 1.0);\naspect = dim.x / dim.y;\n\npx = norm.x * density_scale * aspect;\npy = norm.y * density_scale;\nicx = floor(px);\nicy = floor(py);\n\n// \u2500\u2500 3x3 neighbourhood seed search \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nncx = icx-1.0; ncy = icy-1.0;\njxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyA = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxA = (ncx + 0.5 + jxA*jitter) / (density_scale * aspect);\nsyA = (ncy + 0.5 + jyA*jitter) / density_scale;\ndxA = norm.x - sxA; dyA = norm.y - syA;\ndA = dxA*dxA + dyA*dyA;\n\nncx = icx; ncy = icy-1.0;\njxB = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyB = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxB = (ncx + 0.5 + jxB*jitter) / (density_scale * aspect);\nsyB = (ncy + 0.5 + jyB*jitter) / density_scale;\ndxB = norm.x - sxB; dyB = norm.y - syB;\ndB = dxB*dxB + dyB*dyB;\n\nncx = icx+1.0; ncy = icy-1.0;\njxC = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyC = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxC = (ncx + 0.5 + jxC*jitter) / (density_scale * aspect);\nsyC = (ncy + 0.5 + jyC*jitter) / density_scale;\ndxC = norm.x - sxC; dyC = norm.y - syC;\ndC = dxC*dxC + dyC*dyC;\n\nncx = icx-1.0; ncy = icy;\njxD = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyD = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxD = (ncx + 0.5 + jxD*jitter) / (density_scale * aspect);\nsyD = (ncy + 0.5 + jyD*jitter) / density_scale;\ndxD = norm.x - sxD; dyD = norm.y - syD;\ndD = dxD*dxD + dyD*dyD;\n\nncx = icx; ncy = icy;\njxE = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyE = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxE = (ncx + 0.5 + jxE*jitter) / (density_scale * aspect);\nsyE = (ncy + 0.5 + jyE*jitter) / density_scale;\ndxE = norm.x - sxE; dyE = norm.y - syE;\ndE = dxE*dxE + dyE*dyE;\n\nncx = icx+1.0; ncy = icy;\njxF = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyF = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxF = (ncx + 0.5 + jxF*jitter) / (density_scale * aspect);\nsyF = (ncy + 0.5 + jyF*jitter) / density_scale;\ndxF = norm.x - sxF; dyF = norm.y - syF;\ndF = dxF*dxF + dyF*dyF;\n\nncx = icx-1.0; ncy = icy+1.0;\njxG = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyG = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxG = (ncx + 0.5 + jxG*jitter) / (density_scale * aspect);\nsyG = (ncy + 0.5 + jyG*jitter) / density_scale;\ndxG = norm.x - sxG; dyG = norm.y - syG;\ndG = dxG*dxG + dyG*dyG;\n\nncx = icx; ncy = icy+1.0;\njxH = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyH = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxH = (ncx + 0.5 + jxH*jitter) / (density_scale * aspect);\nsyH = (ncy + 0.5 + jyH*jitter) / density_scale;\ndxH = norm.x - sxH; dyH = norm.y - syH;\ndH = dxH*dxH + dyH*dyH;\n\nncx = icx+1.0; ncy = icy+1.0;\njxI = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyI = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxI = (ncx + 0.5 + jxI*jitter) / (density_scale * aspect);\nsyI = (ncy + 0.5 + jyI*jitter) / density_scale;\ndxI = norm.x - sxI; dyI = norm.y - syI;\ndI = dxI*dxI + dyI*dyI;\n\n// \u2500\u2500 Find nearest seed \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nbest_d=dA; best_gx=sxA; best_gy=syA; best_dx=dxA; best_dy=dyA;\nt=step(dB,best_d); best_d=mix(best_d,dB,t); best_gx=mix(best_gx,sxB,t); best_gy=mix(best_gy,syB,t); best_dx=mix(best_dx,dxB,t); best_dy=mix(best_dy,dyB,t);\nt=step(dC,best_d); best_d=mix(best_d,dC,t); best_gx=mix(best_gx,sxC,t); best_gy=mix(best_gy,syC,t); best_dx=mix(best_dx,dxC,t); best_dy=mix(best_dy,dyC,t);\nt=step(dD,best_d); best_d=mix(best_d,dD,t); best_gx=mix(best_gx,sxD,t); best_gy=mix(best_gy,syD,t); best_dx=mix(best_dx,dxD,t); best_dy=mix(best_dy,dyD,t);\nt=step(dE,best_d); best_d=mix(best_d,dE,t); best_gx=mix(best_gx,sxE,t); best_gy=mix(best_gy,syE,t); best_dx=mix(best_dx,dxE,t); best_dy=mix(best_dy,dyE,t);\nt=step(dF,best_d); best_d=mix(best_d,dF,t); best_gx=mix(best_gx,sxF,t); best_gy=mix(best_gy,syF,t); best_dx=mix(best_dx,dxF,t); best_dy=mix(best_dy,dyF,t);\nt=step(dG,best_d); best_d=mix(best_d,dG,t); best_gx=mix(best_gx,sxG,t); best_gy=mix(best_gy,syG,t); best_dx=mix(best_dx,dxG,t); best_dy=mix(best_dy,dyG,t);\nt=step(dH,best_d); best_d=mix(best_d,dH,t); best_gx=mix(best_gx,sxH,t); best_gy=mix(best_gy,syH,t); best_dx=mix(best_dx,dxH,t); best_dy=mix(best_dy,dyH,t);\nt=step(dI,best_d); best_d=mix(best_d,dI,t); best_gx=mix(best_gx,sxI,t); best_gy=mix(best_gy,syI,t); best_dx=mix(best_dx,dxI,t); best_dy=mix(best_dy,dyI,t);\n\n// \u2500\u2500 Sample vecfield at seed position \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nvx = (sample(in2, vec(best_gx, best_gy)).x - 0.5) * 2.0;\nvy = (sample(in2, vec(best_gx, best_gy)).y - 0.5) * 2.0;\n\nfield_mag = sqrt(max(vx*vx + vy*vy, 0.0));\nmag = max(field_mag, 0.0001);\nfcs = vx / mag;\nfsn = vy / mag;\n\ncs = mix(1.0, fcs, strength);\nsn = mix(0.0, fsn, strength);\nmag2 = max(sqrt(cs*cs + sn*sn), 0.0001);\ncs = cs / mag2;\nsn = sn / mag2;\n\n// \u2500\u2500 Project pixel offset into seed-local frame \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nodx = best_dx * aspect;\nody = best_dy;\nalong  =  odx * cs + ody * sn;\nacross = -odx * sn + ody * cs;\n\n// \u2500\u2500 Mod tex modulation (sampled at seed UV) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nmod_sample = sample(in3, vec(best_gx, best_gy)).x * src_mod;\nweight_eff  = clamp(weight  + mod_sample * weight_mod  + field_mag * mag_weight, 0.001, 0.5);\nmarklen_eff = clamp(marklen + mod_sample * marklen_mod, 0.001, 0.5);\n\n// \u2500\u2500 Construct seed-local UV \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nalong_shifted = along - phase * marklen_eff;\n\nlocal_u = along_shifted / marklen_eff * 0.5 + 0.5;\nlocal_v_stretch = across / weight_eff * 0.5 + 0.5;\nlocal_v_uniform = across / marklen_eff * 0.5 + 0.5;\nlocal_v = mix(local_v_uniform, local_v_stretch, stretch);\n\n// \u2500\u2500 Gate \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ngate_u = step(abs(along_shifted), marklen_eff);\ngate_v_stretch = step(abs(across), weight_eff);\ngate_v_uniform = step(abs(across), marklen_eff);\ngate_v = mix(gate_v_uniform, gate_v_stretch, stretch);\naperture = step(abs(across), weight_eff);\naperture_mixed = mix(aperture, 1.0, stretch);\ngate = gate_u * gate_v * aperture_mixed;\n\n// \u2500\u2500 Sample shape tex \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nshape_r = sample(in1, vec(local_u, local_v)).x;\nshape_g = sample(in1, vec(local_u, local_v)).y;\nshape_b = sample(in1, vec(local_u, local_v)).z;\nshape_luma = (shape_r + shape_g + shape_b) / 3.0;\n\nmark_r = shape_r * gate * src_shape;\nmark_g = shape_g * gate * src_shape;\nmark_b = shape_b * gate * src_shape;\nmark_luma = shape_luma * gate * src_shape;\n\n// \u2500\u2500 Outputs \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nout1 = mix(vec(mark_r, mark_g, mark_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\nout2 = mix(vec(mark_luma, mark_luma, mark_luma, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\nout3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
+                                    "code": "// f_vf_seeds \u2014 placement and orientation engine\n// in1: shape tex  in2: vecfield  in3: mod tex\n\nParam density(0.5);\nParam jitter(0.5);\nParam size(0.2);\nParam stretch(0.0);\nParam phase(0.0);\nParam strength(1.0);\nParam mag_weight(0.0);\nParam size_mod(0.0);\nParam stretch_mod(0.0);\nParam src_vecfield(0.0);\nParam src_mod(0.0);\nParam src_shape(0.0);\nParam bypass(0.0);\n\n// \u2500\u2500 Grid density \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndensity_scale = pow(2.0, density * 9.0 - 1.0);\naspect = dim.x / dim.y;\n\npx = norm.x * density_scale * aspect;\npy = norm.y * density_scale;\nicx = floor(px);\nicy = floor(py);\n\n// \u2500\u2500 3x3 neighbourhood seed search \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nncx = icx-1.0; ncy = icy-1.0;\njxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyA = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxA = (ncx + 0.5 + jxA*jitter) / (density_scale * aspect);\nsyA = (ncy + 0.5 + jyA*jitter) / density_scale;\ndxA = norm.x - sxA; dyA = norm.y - syA;\ndA = dxA*dxA + dyA*dyA;\n\nncx = icx; ncy = icy-1.0;\njxB = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyB = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxB = (ncx + 0.5 + jxB*jitter) / (density_scale * aspect);\nsyB = (ncy + 0.5 + jyB*jitter) / density_scale;\ndxB = norm.x - sxB; dyB = norm.y - syB;\ndB = dxB*dxB + dyB*dyB;\n\nncx = icx+1.0; ncy = icy-1.0;\njxC = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyC = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxC = (ncx + 0.5 + jxC*jitter) / (density_scale * aspect);\nsyC = (ncy + 0.5 + jyC*jitter) / density_scale;\ndxC = norm.x - sxC; dyC = norm.y - syC;\ndC = dxC*dxC + dyC*dyC;\n\nncx = icx-1.0; ncy = icy;\njxD = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyD = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxD = (ncx + 0.5 + jxD*jitter) / (density_scale * aspect);\nsyD = (ncy + 0.5 + jyD*jitter) / density_scale;\ndxD = norm.x - sxD; dyD = norm.y - syD;\ndD = dxD*dxD + dyD*dyD;\n\nncx = icx; ncy = icy;\njxE = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyE = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxE = (ncx + 0.5 + jxE*jitter) / (density_scale * aspect);\nsyE = (ncy + 0.5 + jyE*jitter) / density_scale;\ndxE = norm.x - sxE; dyE = norm.y - syE;\ndE = dxE*dxE + dyE*dyE;\n\nncx = icx+1.0; ncy = icy;\njxF = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyF = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxF = (ncx + 0.5 + jxF*jitter) / (density_scale * aspect);\nsyF = (ncy + 0.5 + jyF*jitter) / density_scale;\ndxF = norm.x - sxF; dyF = norm.y - syF;\ndF = dxF*dxF + dyF*dyF;\n\nncx = icx-1.0; ncy = icy+1.0;\njxG = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyG = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxG = (ncx + 0.5 + jxG*jitter) / (density_scale * aspect);\nsyG = (ncy + 0.5 + jyG*jitter) / density_scale;\ndxG = norm.x - sxG; dyG = norm.y - syG;\ndG = dxG*dxG + dyG*dyG;\n\nncx = icx; ncy = icy+1.0;\njxH = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyH = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxH = (ncx + 0.5 + jxH*jitter) / (density_scale * aspect);\nsyH = (ncy + 0.5 + jyH*jitter) / density_scale;\ndxH = norm.x - sxH; dyH = norm.y - syH;\ndH = dxH*dxH + dyH*dyH;\n\nncx = icx+1.0; ncy = icy+1.0;\njxI = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;\njyI = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;\nsxI = (ncx + 0.5 + jxI*jitter) / (density_scale * aspect);\nsyI = (ncy + 0.5 + jyI*jitter) / density_scale;\ndxI = norm.x - sxI; dyI = norm.y - syI;\ndI = dxI*dxI + dyI*dyI;\n\n// \u2500\u2500 Find nearest seed \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nbest_d=dA; best_gx=sxA; best_gy=syA; best_dx=dxA; best_dy=dyA;\nt=step(dB,best_d); best_d=mix(best_d,dB,t); best_gx=mix(best_gx,sxB,t); best_gy=mix(best_gy,syB,t); best_dx=mix(best_dx,dxB,t); best_dy=mix(best_dy,dyB,t);\nt=step(dC,best_d); best_d=mix(best_d,dC,t); best_gx=mix(best_gx,sxC,t); best_gy=mix(best_gy,syC,t); best_dx=mix(best_dx,dxC,t); best_dy=mix(best_dy,dyC,t);\nt=step(dD,best_d); best_d=mix(best_d,dD,t); best_gx=mix(best_gx,sxD,t); best_gy=mix(best_gy,syD,t); best_dx=mix(best_dx,dxD,t); best_dy=mix(best_dy,dyD,t);\nt=step(dE,best_d); best_d=mix(best_d,dE,t); best_gx=mix(best_gx,sxE,t); best_gy=mix(best_gy,syE,t); best_dx=mix(best_dx,dxE,t); best_dy=mix(best_dy,dyE,t);\nt=step(dF,best_d); best_d=mix(best_d,dF,t); best_gx=mix(best_gx,sxF,t); best_gy=mix(best_gy,syF,t); best_dx=mix(best_dx,dxF,t); best_dy=mix(best_dy,dyF,t);\nt=step(dG,best_d); best_d=mix(best_d,dG,t); best_gx=mix(best_gx,sxG,t); best_gy=mix(best_gy,syG,t); best_dx=mix(best_dx,dxG,t); best_dy=mix(best_dy,dyG,t);\nt=step(dH,best_d); best_d=mix(best_d,dH,t); best_gx=mix(best_gx,sxH,t); best_gy=mix(best_gy,syH,t); best_dx=mix(best_dx,dxH,t); best_dy=mix(best_dy,dyH,t);\nt=step(dI,best_d); best_d=mix(best_d,dI,t); best_gx=mix(best_gx,sxI,t); best_gy=mix(best_gy,syI,t); best_dx=mix(best_dx,dxI,t); best_dy=mix(best_dy,dyI,t);\n\n// \u2500\u2500 Sample vecfield at seed position \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nvx = (sample(in2, vec(best_gx, best_gy)).x - 0.5) * 2.0;\nvy = (sample(in2, vec(best_gx, best_gy)).y - 0.5) * 2.0;\n\nfield_mag = sqrt(max(vx*vx + vy*vy, 0.0));\nmag = max(field_mag, 0.0001);\nfcs = vx / mag;\nfsn = vy / mag;\n\ncs = mix(1.0, fcs, strength);\nsn = mix(0.0, fsn, strength);\nmag2 = max(sqrt(cs*cs + sn*sn), 0.0001);\ncs = cs / mag2;\nsn = sn / mag2;\n\n// \u2500\u2500 Project pixel offset into seed-local frame \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nodx = best_dx * aspect;\nody = best_dy;\nalong  =  odx * cs + ody * sn;\nacross = -odx * sn + ody * cs;\n\n// \u2500\u2500 Mod tex modulation (sampled at seed UV) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nmod_sample = sample(in3, vec(best_gx, best_gy)).x * src_mod;\nsize_eff = clamp(size + mod_sample * size_mod + field_mag * mag_weight, 0.001, 0.5);\nstretch_eff = stretch + mod_sample * stretch_mod;\n\nstretch_factor = 1.0 + stretch_eff;\nmarklen_eff = size_eff * stretch_factor;\nweight_eff = size_eff / max(stretch_factor, 0.0001);\n\n// \u2500\u2500 Construct seed-local UV \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nalong_shifted = along - phase * marklen_eff;\n\nlocal_u = along_shifted / marklen_eff * 0.5 + 0.5;\nlocal_v = across / weight_eff * 0.5 + 0.5;\n\n// \u2500\u2500 Gate \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ngate = step(abs(along_shifted), marklen_eff) * step(abs(across), weight_eff);\n\n// \u2500\u2500 Sample shape tex \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nshape_r = sample(in1, vec(local_u, local_v)).x;\nshape_g = sample(in1, vec(local_u, local_v)).y;\nshape_b = sample(in1, vec(local_u, local_v)).z;\nshape_luma = (shape_r + shape_g + shape_b) / 3.0;\n\nmark_r = shape_r * gate * src_shape;\nmark_g = shape_g * gate * src_shape;\nmark_b = shape_b * gate * src_shape;\nmark_luma = shape_luma * gate * src_shape;\n\n// \u2500\u2500 Outputs \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nout1 = mix(vec(mark_r, mark_g, mark_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\nout2 = mix(vec(mark_luma, mark_luma, mark_luma, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\nout3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
                                     "id": "gen-obj-2",
                                     "maxclass": "codebox",
-                                    "numinlets": 4,
+                                    "numinlets": 3,
                                     "numoutlets": 3,
                                     "outlettype": [
                                         "",
@@ -416,9 +415,6 @@
                         ],
                         "mag_weight": [
                             0.0
-                        ],
-                        "marklen": [
-                            0.3
                         ],
                         "marklen_mod": [
                             0.0
@@ -623,7 +619,7 @@
                 "box": {
                     "comment": "vecfield",
                     "id": "obj-100",
-                    "index": 1,
+                    "index": 0,
                     "maxclass": "inlet",
                     "numinlets": 0,
                     "numoutlets": 1,
@@ -661,7 +657,7 @@
                 "box": {
                     "comment": "mod tex",
                     "id": "obj-103",
-                    "index": 2,
+                    "index": 0,
                     "maxclass": "inlet",
                     "numinlets": 0,
                     "numoutlets": 1,
@@ -944,7 +940,7 @@
                         1.0
                     ],
                     "fontname": "Ableton Sans Light",
-                    "hint": "Mark width (across-axis extent)",
+                    "hint": "Mark size (overall scale)",
                     "id": "obj-26",
                     "maxclass": "live.dial",
                     "numinlets": 1,
@@ -974,7 +970,7 @@
                         },
                         "valueof": {
                             "parameter_initial": [
-                                0.1
+                                0.2
                             ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
@@ -995,7 +991,7 @@
             },
             {
                 "box": {
-                    "attr": "weight",
+                    "attr": "size",
                     "id": "obj-27",
                     "maxclass": "attrui",
                     "numinlets": 1,
@@ -1033,109 +1029,7 @@
                         50.0,
                         18.0
                     ],
-                    "text": "Weight",
-                    "textjustification": 1
-                }
-            },
-            {
-                "box": {
-                    "activedialcolor": [
-                        0.8,
-                        0.8,
-                        0.8,
-                        1.0
-                    ],
-                    "fontname": "Ableton Sans Light",
-                    "hint": "Mark length (along-axis extent in field direction)",
-                    "id": "obj-29",
-                    "maxclass": "live.dial",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [
-                        "",
-                        "float"
-                    ],
-                    "param_connect": "vfseeds_pix::marklen",
-                    "parameter_enable": 1,
-                    "patching_rect": [
-                        200.0,
-                        80.0,
-                        27.0,
-                        43.0
-                    ],
-                    "presentation": 1,
-                    "presentation_rect": [
-                        115.0,
-                        38.0,
-                        27.0,
-                        43.0
-                    ],
-                    "saved_attribute_attributes": {
-                        "activedialcolor": {
-                            "expression": ""
-                        },
-                        "valueof": {
-                            "parameter_initial": [
-                                0.3
-                            ],
-                            "parameter_initial_enable": 1,
-                            "parameter_linknames": 1,
-                            "parameter_longname": "marklen",
-                            "parameter_mmax": 0.5,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "marklen",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "showname": 0,
-                    "triangle": 1,
-                    "valuepopup": 1,
-                    "valuepopuplabel": 1,
-                    "varname": "marklen"
-                }
-            },
-            {
-                "box": {
-                    "attr": "marklen",
-                    "id": "obj-30",
-                    "maxclass": "attrui",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [
-                        ""
-                    ],
-                    "parameter_enable": 0,
-                    "patching_rect": [
-                        200.0,
-                        260.0,
-                        129.0,
-                        22.0
-                    ]
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-31",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        200.0,
-                        130.0,
-                        50.0,
-                        18.0
-                    ],
-                    "presentation": 1,
-                    "presentation_rect": [
-                        103.5,
-                        20.0,
-                        50.0,
-                        18.0
-                    ],
-                    "text": "Marklen",
+                    "text": "Size",
                     "textjustification": 1
                 }
             },
@@ -1167,7 +1061,7 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        78.0,
+                        4.0,
                         100.0,
                         27.0,
                         43.0
@@ -1232,7 +1126,7 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        66.5,
+                        -7.5,
                         82.0,
                         50.0,
                         18.0
@@ -1269,7 +1163,7 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        115.0,
+                        41.0,
                         100.0,
                         27.0,
                         43.0
@@ -1334,7 +1228,7 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        103.5,
+                        29.5,
                         82.0,
                         50.0,
                         18.0
@@ -1371,7 +1265,7 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        152.0,
+                        78.0,
                         100.0,
                         27.0,
                         43.0
@@ -1437,7 +1331,7 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        140.5,
+                        66.5,
                         82.0,
                         50.0,
                         18.0
@@ -1455,7 +1349,7 @@
                         1.0
                     ],
                     "fontname": "Ableton Sans Light",
-                    "hint": "Identity texture \u2192 weight modulation depth",
+                    "hint": "Mod tex -> size modulation depth",
                     "id": "obj-50",
                     "maxclass": "live.dial",
                     "numinlets": 1,
@@ -1491,6 +1385,7 @@
                             "parameter_linknames": 1,
                             "parameter_longname": "weight_mod",
                             "parameter_mmax": 1.0,
+                            "parameter_mmin": -1.0,
                             "parameter_modmode": 3,
                             "parameter_shortname": "weight_mod",
                             "parameter_type": 0,
@@ -1506,7 +1401,7 @@
             },
             {
                 "box": {
-                    "attr": "weight_mod",
+                    "attr": "size_mod",
                     "id": "obj-51",
                     "maxclass": "attrui",
                     "numinlets": 1,
@@ -1544,7 +1439,7 @@
                         50.0,
                         18.0
                     ],
-                    "text": "Wt Mod",
+                    "text": "Size Mod",
                     "textjustification": 1
                 }
             },
@@ -1557,7 +1452,7 @@
                         1.0
                     ],
                     "fontname": "Ableton Sans Light",
-                    "hint": "Identity texture \u2192 mark length modulation depth",
+                    "hint": "Mod tex -> stretch modulation depth",
                     "id": "obj-53",
                     "maxclass": "live.dial",
                     "numinlets": 1,
@@ -1593,6 +1488,7 @@
                             "parameter_linknames": 1,
                             "parameter_longname": "marklen_mod",
                             "parameter_mmax": 1.0,
+                            "parameter_mmin": -1.0,
                             "parameter_modmode": 3,
                             "parameter_shortname": "marklen_mod",
                             "parameter_type": 0,
@@ -1608,7 +1504,7 @@
             },
             {
                 "box": {
-                    "attr": "marklen_mod",
+                    "attr": "stretch_mod",
                     "id": "obj-54",
                     "maxclass": "attrui",
                     "numinlets": 1,
@@ -1646,7 +1542,7 @@
                         50.0,
                         18.0
                     ],
-                    "text": "Len Mod",
+                    "text": "Str Mod",
                     "textjustification": 1
                 }
             },
@@ -1691,8 +1587,8 @@
                     ],
                     "parameter_enable": 0,
                     "patching_rect": [
-                        400.0,
-                        60.0,
+                        378.0,
+                        19.5,
                         131.0,
                         22.0
                     ]
@@ -1726,8 +1622,8 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        4.0,
-                        100.0,
+                        115.0,
+                        38.0,
                         27.0,
                         43.0
                     ],
@@ -1791,8 +1687,8 @@
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        -7.5,
-                        82.0,
+                        103.5,
+                        20.0,
                         50.0,
                         18.0
                     ],
@@ -1909,18 +1805,6 @@
                     "source": [
                         "obj-104",
                         1
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [
-                        "obj-5",
-                        2
-                    ],
-                    "source": [
-                        "obj-104",
-                        0
                     ]
                 }
             },
@@ -2095,30 +1979,6 @@
             {
                 "patchline": {
                     "destination": [
-                        "obj-30",
-                        0
-                    ],
-                    "source": [
-                        "obj-29",
-                        0
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [
-                        "obj-5",
-                        0
-                    ],
-                    "source": [
-                        "obj-30",
-                        0
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [
                         "obj-301",
                         0
                     ],
@@ -2179,7 +2039,7 @@
             {
                 "patchline": {
                     "destination": [
-                        "obj-29",
+                        "obj-300",
                         0
                     ],
                     "source": [
@@ -2191,7 +2051,7 @@
             {
                 "patchline": {
                     "destination": [
-                        "obj-300",
+                        "obj-41",
                         0
                     ],
                     "source": [
@@ -2203,7 +2063,7 @@
             {
                 "patchline": {
                     "destination": [
-                        "obj-41",
+                        "obj-44",
                         0
                     ],
                     "source": [
@@ -2215,7 +2075,7 @@
             {
                 "patchline": {
                     "destination": [
-                        "obj-44",
+                        "obj-47",
                         0
                     ],
                     "source": [
@@ -2227,7 +2087,7 @@
             {
                 "patchline": {
                     "destination": [
-                        "obj-47",
+                        "obj-50",
                         0
                     ],
                     "source": [
@@ -2239,24 +2099,12 @@
             {
                 "patchline": {
                     "destination": [
-                        "obj-50",
-                        0
-                    ],
-                    "source": [
-                        "obj-4",
-                        8
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [
                         "obj-53",
                         0
                     ],
                     "source": [
                         "obj-4",
-                        9
+                        8
                     ]
                 }
             },
@@ -2479,11 +2327,6 @@
             "obj-26": [
                 "weight",
                 "weight",
-                0
-            ],
-            "obj-29": [
-                "marklen",
-                "marklen",
                 0
             ],
             "obj-300": [
