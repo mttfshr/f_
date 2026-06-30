@@ -246,4 +246,73 @@ The WFG patcher's inlet/outlet contract, confirmed:
 ---
 
 *Populated: 2026-05-31 (analysis complete)*
-*Last updated: 2026-05-31*
+*Last updated: 2026-06-30*
+
+---
+
+## Pattern: jit.gl.node @capture for Render-to-Texture within Vsynth
+
+**Source: Kevin's tutorial "Capture with jit.gl.node to mix Vsynth with 3D content"**
+
+`jit.gl.node vsynth @capture 1` renders its sub-context to an internal
+texture, outputting a `jit_gl_texture` message from its left outlet each frame.
+This is a first-class Vsynth pattern — Kevin uses it in a documented tutorial.
+
+```
+jit.gl.node vsynth @capture 1 @erase_color 0 0 0 0 @fsaa 1 @adapt 0
+```
+
+- `vsynth` = parent context
+- `@capture 1` = render to texture
+- `@erase_color 0 0 0 0` = transparent background (required for correct compositing)
+- `@fsaa 1` = anti-aliasing on capture
+- `@adapt 0` / `@adapt 1` = fixed vs. input-matched output dimensions
+
+The captured texture outlet feeds directly into `vs_op2` or any other Vsynth
+module inlet. `jit.gl.pix` and 3D objects inside the node use the node's name
+as their `drawto` attribute.
+
+**Intra-frame ordering:** Multiple nodes at different `@layer` values draw in
+layer order *within a single frame* with no inter-frame delay. Confirmed by
+C74 staff (Rob Ramirez) and empirically verified. This enables multi-pass
+intra-frame algorithms (e.g. autostereogram strip generation) that are
+impossible with draw-order chaining between `jit.gl.pix vsynth` instances
+(which always have a 1-frame delay). See
+`docs/intraframe_multipass_architecture.md` for full pattern.
+
+---
+
+## Pattern: Sibling Render Context Synchronized to Vsynth
+
+**Source: Kevin's tutorial "Shows how to make your render context child of Vsynth"**
+
+For a *separate* output window synchronized to Vsynth's frame rate — e.g.
+second projector output, separate display — rather than embedding within the
+`vsynth` context:
+
+```
+r draw                     ← Vsynth publishes a draw bang every frame via s draw
+  ↓
+t b b erase
+  ├── s your_context_draw  ← drive your context's draw
+  └── [erase] → jit.gl.render your_context_name @erase_color 0. 0. 0. 1.
+
+jit.window your_context_name @shared 1 @pos X Y
+                            ← @shared 1 = shares OpenGL context with Vsynth
+                              (texture names valid across both contexts)
+
+[vsynth texture] → jit.gl.cornerpin your_context_name @preserve_aspect 1 ...
+                            ← display Vsynth content in your window
+```
+
+**`r draw`:** Vsynth's render loop publishes a global bang via a named send
+every frame. Any patch can receive it to drive a synchronized sibling context.
+This is the global timing signal for anything outside the `vsynth` context.
+
+**`@shared 1`:** Without this, texture names from the `vsynth` context are
+not valid references in the sibling window's context.
+
+**Distinct from `jit.gl.node @capture`:** That pattern embeds *within* the
+`vsynth` context. This pattern creates a *sibling* context driven by Vsynth's
+clock. Use this for separate output windows; use `jit.gl.node @capture` for
+multi-pass rendering that feeds back into the Vsynth signal chain.

@@ -1,8 +1,125 @@
 # HANDOFF — f_ library
 
-Last session: 2026-06-29
+Last session: 2026-06-30 (scratch patch + research session — spec updated)
 
-## What just happened — full session summary
+## f_magic_eye — spec updated, implementation blocked on infrastructure question
+
+Full spec at `.specify/f_magic_eye/spec.md`.
+
+**What we learned this session (scratch patch testing):**
+- Single-pass `jit.gl.pix` is confirmed insufficient — not a tuning problem,
+  a structural impossibility. Tested with multiple pattern sources (stipple,
+  f_grain, noise) and depth sources (wfg shapes, triangle, concentric squares).
+  Each pixel independently samples the pattern at a shifted coordinate with no
+  reference to neighboring pixels → no consistent horizontal repeat structure
+  → eye cannot fuse.
+- Correct algorithm: GPU Gems Chapter 41 ("Real-Time Stereograms", Policarpo
+  2004) — strip-based, multi-pass, intra-frame texture feedback. Frame divided
+  into N vertical strips (8–24 typical). Strip 0 = pattern direct. Strip i =
+  strip i-1's output sampled at `uv.x - strip_width + depth * depth_factor *
+  strip_width`. Per-strip fragment math is trivial; the blocker is intra-frame
+  render-to-texture feedback between strips.
+
+**Current blocker — RESOLVED by research (2026-06-30):**
+`jit.gl.node @capture 1 @layer N` is the correct intra-frame render-to-texture
+mechanism. C74 staff confirmed (Cycling '74 forum, Rob Ramirez) that two nodes
+at different `@layer` values share texture within the same frame, no delay.
+User confirmed empirically "no frame delay." Architecture:
+- N nodes at ascending layers, each `@capture 1`, each containing one `jit.gl.pix`
+- Node 0 (layer 0): takes pattern texture, tiles it at strip width
+- Node i (layer i): takes node i-1 captured texture + depth, applies GPU Gems
+  displacement formula within its strip range, passes through elsewhere
+- Final output = node N-1's captured texture
+
+Constraint: `@capture` only works in automatic mode. Fine for always-on use.
+
+**Remaining open question — for Kevin specifically:**
+Does the Vsynth `vsynth` render context (wrapped by `vs_render`) support N
+`jit.gl.node @capture 1 @layer N` children inside a bpatcher with guaranteed
+intra-frame layer ordering? Documented for `jit.world`/`jit.gl.render`;
+needs confirmation it holds for the Vsynth context specifically.
+
+Also note: `/Users/matt/Vsynth/sirds.genjit` exists — single-pass genjit
+approach that doesn't produce fusible results, but contains correct per-pixel
+displacement math useful as reference for the per-strip codebox.
+
+**Next step:** Build a minimal 2-strip scratch patch using `jit.gl.node
+@capture 1` at layers 0 and 1, verify no-delay intra-frame texture handoff,
+then scale to N strips once the mechanism is confirmed in Vsynth context.
+
+**Scratch patch saved at:** `/Users/matt/Vsynth/patterns/magic_eye_scratch.maxpat`
+(contains v2 single-pass codebox — useful as a starting point for the strip-0
+fragment program once multi-pass infrastructure is resolved)
+
+## Discussion session — soft-mod, grain, weave
+
+No code touched this session — pure architecture/strategy discussion across
+three threads. Captured here so next session starts with full context.
+
+**f_vf_seeds soft-mod — tabled, not decided.** Explored feather (cheap,
+single-sample vignette on local-UV boundary distance — this is what f_grain's
+`softness` actually does, via `shape_t`/`soft_falloff`) vs. true blur
+(multi-tap neighborhood sampling, real cost, softens internal shape detail
+not just silhouette edge). Conclusion: which one (or both, on different axes)
+reads as the "disproportionately expressive" hard↔soft control depends
+entirely on the upstream shape tex content, and isn't resolvable by reasoning
+alone — needs a scratch-patch comparison across several shape sources (soft
+blob, hard geometric mark, detailed/textured shape, asymmetric shape) before
+committing to a mechanism. Explicitly tabled, come back to it.
+
+**f_grain extension — resolved, see "Captured but not scheduled" section
+below.** Ruled out shape-tex inlet (too disruptive to grain's core voronoi
+identity) and vecfield-driven displacement-steering (displace only offsets
+the *background sample* under each grain, not grain position/orientation —
+no real anchor for field-steering). Landed on: a plain mod-texture inlet
+blended into `cell_size`, new `size_mod` depth param. Small, scoped, additive.
+Full reasoning + integration point captured below — ready to build next time.
+
+**f_weave — open, needs a scratch-patch A/B before deciding anything.**
+Started from the HANDOFF item "extend shape-tex-inlet pattern to f_grain and
+f_weave" — on inspection this doesn't transfer cleanly. f_weave's marks are
+procedural line/hash geometry (`dist_to_line`/`dist_to_mark` smoothstep
+gates), not item-based like f_vf_seeds; there's no per-mark local-UV frame to
+sample a shape tex against. Building one from scratch would be a real
+architecture port, not an extension.
+
+Separately, Matt shared a screenshot: f_weave fed a video→optical-flow
+vecfield on in1 produces dense, organic, scribble/hatching-like output that
+tracks scene structure — visually strong, but Matt described it as feeling
+"uncontrolled," specifically in **orientation response**, not (or not only)
+density/spacing.
+
+Root cause identified in the orientation block:
+```
+cs = base_cs + (-vy); sn = base_sn + vx;
+mag = sqrt(cs*cs+sn*sn); cs/=mag; sn/=mag;
+```
+This is vector addition + renormalize, not angular blending. Two problems:
+(1) field contribution depth is implicit and fixed (ratio of unit base vector
+to ±0.5-range field vector), not an exposed/dialable param; (2) vector-add
+renormalization isn't proportional to angular difference — response isn't
+linear/predictable, and near-zero (flat/no-motion) field regions still get
+normalized into *some* direction rather than falling back to base angle.
+
+Two candidate fixes discussed, not chosen:
+- **A — exposed depth param, same mechanism.** Scale field term before
+  adding (`field_amount` param). Minimal change, inherits non-proportional
+  response behavior.
+- **B — true angular blend.** Compute field angle directly (atan2 or
+  equivalent — verify availability/safety in GenExpr first), circular-
+  interpolate with base angle, weighted by depth and optionally by field
+  magnitude (so flat regions fall back to base automatically). More correct,
+  bigger change to the block.
+
+Matt was unsure which would actually feel better — correctly identified as
+an empirical question, not a reasoning-from-the-couch one. **Next step:**
+scratch patch with both mechanisms wired side-by-side/switchable, same
+video→flow source as the screenshot, A/B live before committing to either.
+Stopped here — session ended due to fatigue, explicitly flagged by Matt.
+
+---
+
+## Prior session — full summary
 
 ### f_vf_seeds — shape-tex architecture (major revision) ✓
 
@@ -97,6 +214,27 @@ Section 1 (intrinsic character) / Section 2 (field response) layout for all
 discrete-item modules. Blocked pending compound dial widget design.
 
 ---
+
+## Captured but not scheduled — f_grain
+
+- **f_grain: size mod inlet.** Decided NOT to extend f_grain with a shape-tex
+  inlet (too disruptive to its core voronoi mechanism) or a vecfield inlet
+  for displacement-steering (on inspection, `displace` only offsets the
+  *background sample* under each grain — `uv_d` → `sample(in1, uv_d)` — it
+  does not move or orient grains; grain has no position/orientation concept
+  to redirect, so "field-steered displacement" doesn't have a real anchor
+  here). Instead: a plain mod-texture inlet (not vecfield-typed) sampled
+  per-cell at `(best_gx, best_gy)`, blended into the existing `cell_size`
+  computation:
+  ```
+  cell_size = mix(1.0, mix(cell_size_a, cell_size_b, svf), size_var);
+  ```
+  New mod sample blends in here (e.g. `mix(cell_size, mod_sample, mod_depth)`),
+  with a new `size_mod`/depth param controlling blend amount. `size_var` and
+  its existing hash-based variation stay untouched when nothing's connected —
+  this is additive, not a replacement. Small, contained: one new inlet, one
+  new param, one line of codebox touched. Deliberately scoped to avoid the
+  rest of grain's mechanism (displacement, era/fade, luma gate, shape).
 
 ## Captured but not scheduled — see ideas/
 
