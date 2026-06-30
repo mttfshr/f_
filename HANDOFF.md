@@ -1,72 +1,111 @@
 # HANDOFF — f_ library
 
-Last session: 2026-06-27
+Last session: 2026-06-29
 
 ## What just happened — full session summary
 
-### Discrete-item family framework — designed and documented
-Comparative analysis of f_grain, f_masonry, f_weave produced a design framework
-for the module family. Captured in:
-- `ideas/discrete_item_family.md` — four control layers, standard inlet/outlet spec,
-  UI grouping proposal, vecfield magnitude as free second parameter
-- `docs/discrete_item_conventions.md` — regularity, phase, softness, shape conventions
+### f_vf_seeds — shape-tex architecture (major revision) ✓
 
-### f_vf_potential + f_vf_flow — built and registered ✓
-Both were built in prior sessions but unregistered. Now in f_modules and f_addmod.js.
+The original f_vf_seeds (internal smoothstep mark geometry, identity tex as
+weight/marklen modulator) was superseded this session by a cleaner architecture:
+external shape texture as the mark footprint, with f_vf_seeds reduced to a pure
+placement/orientation engine.
 
-### f_weave softness + shape params — added ✓
-- `softness`: expands outer smoothstep edge (`weight * (1 + softness)`), preserves
-  zero behavior exactly. mmax=2.0.
-- `shape`: raised cosine mark profile blend. mmax=1.0.
+**Architecture, current state:**
+- Inlets: shape tex (in1), vecfield (in2), mod tex (in3). No source inlet —
+  module is a generator (`archetype: source`), not a processor.
+- Mark rendering: project pixel into seed-local (along, across) frame as before,
+  but instead of computing geometry, normalize into a local UV and sample an
+  external shape tex. Gate (hard clip) on UV bounds. No internal edge/profile
+  logic at all.
+- Outlets: mark color (out1, full RGB from shape tex), mark mask (out2, luma
+  greyscale), seed coord (out3, RG seed UV per pixel).
+- Passthrough convention: no shape connected → src_shape=0 → black output.
+  No internal fallback shape; the module has no opinion about mark appearance.
+- Shape tex canonical convention: square domain, mark centered, oriented
+  rightward, any color/source (WFG, camera, gradient, jit.gl.pix generator —
+  no dedicated shape-generator module family needed).
 
-### f_vf_seeds — designed, built, tested, registered ✓
-Reference implementation for the discrete-item family architecture.
+**Param simplification — `size` + `stretch` replaces `weight` + `marklen`:**
+Independent per-axis scale params were fussy (dialing one threw off the other).
+Replaced with a single `size` (overall scale) + `stretch` (aspect ratio) pair:
+`marklen_eff = size_eff * (1+stretch)`, `weight_eff = size_eff / (1+stretch)`.
+Reciprocal relationship keeps mark from collapsing/ballooning as stretch increases.
 
-**Architecture validated:**
-- Grid + jitter seed distribution (not Voronoi centroids)
-- Vecfield sampled at seed position — gives coherent per-mark orientation
-- 3×3 neighbourhood search adequate
-- Strength blends to default rightward orientation (avoids basis collapse at strength=0)
-- Identity coord output (out2) works — Voronoi UV map per pixel
-- Per-seed character modulation via identity tex inlet works
-- Composite output (out0) additively blends marks over source texture
-- Density scale: `pow(2, density * 7.0 - 1.0)` — up to 64 seeds across at max
+**Bipolar modulation depths:** `size_mod` and `stretch_mod` extended to -1..1
+(from 0..1). Bipolar reads as substantially more expressive/alive than unipolar
+for this kind of per-seed modulation — mod tex can grow or shrink the base value
+around its set point rather than only adding.
 
-**Bugs fixed during testing:**
-- Inlet mapping: vecfield on in2 (outer inlet 1), identity on in3 (outer inlet 2)
-- Strength collapse: blend toward (1,0) not toward (0,0)
-- Composite output: was identical to mask — fixed to sample in1 source texture
+**`softness` removed entirely.** Edge character now lives in the shape tex.
+The footprint-boundary feather softness used to provide was a narrow effect
+not worth a dedicated static dial — see "Near-term" below for a mod-tex-driven
+revival of this idea.
 
-**Known refinement opportunities (not bugs):**
-- Mark shapes are rough — smoothstep-only AA, no analytical derivatives
-- Taper implementation could be more elegant
-- Aspect correction on mark geometry may need tuning
-- `shape` param (raised cosine) not yet producing strong calligraphic effect
+**Both definition.py and codebox_seeds.gen synced to match current patcher.**
+Findings captured in `docs/discrete_item_conventions.md`:
+- size+stretch pattern (recommended for future discrete-item modules)
+- bipolar modulation depths (recommended as new default)
+- shape-tex-inlet architecture (full writeup, mechanics, consequences)
+- open flag: cross-module `density`/`size` semantic audit needed (not started)
 
-**Status: proof of concept validated. Architecture works.**
+**Original mark-quality refinement goals (analytical AA, taper, aspect
+correction) are now moot** — taper and shape moved upstream to the shape tex
+entirely, so there's no internal geometry left to refine. This is a good
+outcome but worth naming explicitly: those HANDOFF items are obsolete, not
+completed.
+
+**Session also involved real Max-plumbing debugging** — inlet/outlet index
+vs. patching_rect x-position ordering bugs, stale shader cache after codebox
+edits, route numinlets/outlets mismatches after param count changes. None of
+this was architecture-related, but it ate significant time. Worth hardening
+the build/edit workflow before doing this kind of patcher surgery again on
+f_grain or f_weave.
+
+**Status: shape-tex architecture proven and working. Proof of concept succeeded.**
 
 ---
 
 ## What's next — priority order
 
-### 1. f_vf_seeds helpfile
+### 1. f_vf_seeds: per-seed softness/low-pass mod
+Static `softness` dial was removed (see above) since a fixed footprint feather
+wasn't worth a dial. But a **mod-tex-driven** version is a stronger case — same
+mechanism as `size_mod`/`stretch_mod`, modulating edge feather per-seed via the
+mod tex rather than a static value. Worth adding as a third bipolar mod depth
+(`soft_mod`?) once the gate logic supports a feathered (smoothstep) boundary
+again, parameterized per-seed instead of globally.
+
+### 2. f_vf_seeds helpfile
 Write `help/f_vf_seeds.maxhelp` following f_droste.maxhelp conventions.
-Read `skills/f-helpfile/SKILL.md` first.
+Read `skills/f-helpfile/SKILL.md` first. Deferred from prior session pending
+architecture stabilization — architecture is now stable, ready to write.
 
-### 2. f_vf_seeds mark shape refinement
-When ready — improve mark rendering quality:
-- Analytical AA via derivatives (`dFdx`/`dFdy` if available in jit.gl.pix GPU path)
-- Review taper implementation
-- Review aspect correction
+### 3. Discrete-item family: cross-module semantic audit
+Flagged in `docs/discrete_item_conventions.md` (OPEN section at top): `density`
+and `size` likely mean different things across f_grain/f_weave/f_masonry/
+f_vf_seeds in ways that haven't been reconciled. Needs a deliberate side-by-side
+pass before drawing conclusions.
 
-### 3. Discrete-item family: next modules
-- f_grain: vecfield inlet (cell elongation/orientation) — own session
-- f_weave: identity tex mod inlet (per-line weight/marklen) — own session
-- Both informed by f_vf_seeds architecture
+### 4. Discrete-item family: extend shape-tex-inlet pattern
+Candidate for f_grain and f_weave per the architecture validated in f_vf_seeds.
+Own session each. Also reconsider size+stretch and bipolar-mod findings when
+touching either module.
 
-### 4. UI density pass
+### 5. UI density pass
 Section 1 (intrinsic character) / Section 2 (field response) layout for all
 discrete-item modules. Blocked pending compound dial widget design.
+
+---
+
+## Captured but not scheduled — see ideas/
+
+- **Breaking the grid entirely** (f_vf_seeds seed distribution): current 3x3
+  neighborhood search assumes a roughly uniform grid with jitter. True
+  non-grid placement (Poisson disk, density-field-driven scatter, or something
+  else) is a different seed-distribution algorithm, not a parameter tweak.
+  Captured as its own exploration in `ideas/` — see
+  `ideas/seed_distribution_beyond_grid.md`.
 
 ---
 
