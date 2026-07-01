@@ -7,9 +7,36 @@ _Status: Discovery complete. Findings from reading vs_chemical_osc, vs_feedback,
 
 ## The core finding
 
-Temporal state in Vsynth/jit.gl.pix is managed through **direct pix-to-pix feedback wiring**. One pix object reads a previous frame's output by receiving the output of another pix object as its input — and that second object's output is also fed back as the first's input. The GL texture pipeline has one frame of inherent latency, so this loop is naturally stable: when pix A renders, pix B's output is the result from the previous frame.
+Temporal state in Vsynth/jit.gl.pix is managed through **direct pix-to-pix feedback wiring**. One pix object reads a previous frame's output by receiving the output of another pix object as its input — and that second object's output is also fed back as the first's input.
 
-There is no special "ping-pong" object, no explicit texture buffer management for the simple case. The feedback is just a wire.
+**Sharpened 2026-07-01** (see `jit_gl_pass_architecture.md` and HANDOFF.md
+for the full research thread): the one-frame latency here is a property of
+**closing a feedback loop specifically, not a general property of the GL
+texture pipeline.** Both `jit.gl.slab` and `jit.gl.pix` copy their incoming
+texture rather than binding to it by reference — this is what prevents a
+feedback loop from becoming an infinite instantaneous regress, and it's
+*that* copy-on-cycle behavior that produces the one-frame settle, not
+texture handoff in general. A straight-line forward chain (A→B→C, nothing
+feeding back to an earlier point) has no such structural requirement and
+is not expected to carry the same delay — confirmed both by `jit.gl.pix`'s
+documented default `thru` behavior (synchronous output when input is
+received) and by the fact that every existing f_ *processor* module
+already chains `jit.gl.pix` objects sampling an upstream inlet in
+production, with no observed frame-lag artifact. If forward chaining
+carried an inherent delay, it would show up as a full frame of lag on
+every processor module in the library, not just in an edge-case test.
+
+**Practical takeaway:** when building something that *needs* the delay
+(temporal state, exactly what this doc is about), close the loop as
+described below. When building something that must *not* have a delay
+(e.g. a forward multi-pass chain within a single frame, as in
+f_stereogram's strip algorithm), a straight non-cyclic chain should be
+safe — the delay is a loop property, not a chaining property.
+
+The GL texture pipeline being naturally stable across this loop is what
+makes Pattern 1 below work with nothing more than a wire — no special
+"ping-pong" object, no explicit texture buffer management for the simple
+case.
 
 ---
 

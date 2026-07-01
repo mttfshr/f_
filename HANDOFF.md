@@ -1,55 +1,223 @@
 # HANDOFF — f_ library
 
-Last session: 2026-06-30 (scratch patch + research session — spec updated)
+Last session: 2026-07-01 (`jit.gl.pass` research + scratch-test session —
+key open question RESOLVED)
 
-## f_stereogram — spec updated, implementation blocked on infrastructure question
+## jit.gl.pass — no-3D-content question RESOLVED via scratch test
+
+Full writeup: `docs/max-reference/jit_gl_pass_architecture.md`. Started
+from C74 documentation research, then confirmed empirically in
+`/Users/matt/Vsynth/patterns/glpass-scratch.maxpat`.
+
+**The single highest-priority open question is now answered: `jit.gl.pass`
+renders correctly against a `jit.world` context with zero 3D geometry.**
+A single subpass sourcing `TEXTURE0` (fed via `jit.gl.pass`'s own
+`@texture` attribute, built at runtime by combining two dynamically-named
+Vsynth module outputs — `route jit_gl_texture` → `pack s s` → `prepend
+texture`) rendered a known-good C74 shader (`cf.edgedetect.jxs`) correctly
+with no `jit.gl.material`/`jit.gl.gridshape`/any 3D content present.
+Removing 3D content that had briefly been added as a positive control made
+no difference — tested both with and without, closing/reopening the patch
+between. The "geometry must have a material attached" language in C74's
+docs turns out to be specific to `NORMALS`/`VELOCITY`/`ALBEDO`/
+`ROUGHMETAL`/`ENVIRONMENT` sources, not a blanket requirement.
+
+**Real bug hit and resolved along the way, worth remembering on its own:**
+`jit.world`'s `@enable` attribute defaults to 0 — confirmed in the local
+maxref ("Enable automatic rendering (default = 0)"). A bare `jit.world`
+never renders a single frame without `@enable 1` or an external bang. This
+produced identical black output across every variable tested in a long
+diagnostic chain (missing `jit.gl.layer`, context ambiguity, a bad
+`.genjit` reference, a known-good shader, the no-geometry test itself) —
+none of those were the actual problem; the window had simply never
+rendered. Same category as the stale-`.maxpat`-reload gotcha already
+documented above: check the boring, easy-to-overlook setting before
+trusting a "still broken" result as evidence about the real question.
+
+**RESOLVED, same session:** the actual `PREVIOUS`/multi-subpass chaining
+this whole research thread exists for. `jit_gl_pass_scratch_B_fxname.jxp`
+(subpass 0 samples `TEXTURE0`, subpass 1 mixes `PREVIOUS` + `TEXTURE1` via
+`mix_test.genjit`) rendered a clean 50/50 blend of the two Vsynth source
+textures in `testworld` — visually confirmed, not inferred. **Both halves
+of the core mechanism question are now settled: no 3D content required,
+same-frame sequential dependency via `PREVIOUS` works as documented.**
+
+**Still open, unaffected by this result:** the Vsynth-integration and
+`build_patcher.py`-fit concerns from the original fit assessment (points 2
+and 3 in the reference doc) — a `jit.gl.pass`-based module is still a
+structurally different bpatcher shape than everything else in f_, JXP file
+and all. Resolving the geometry question makes this path *viable*, not
+necessarily *preferable* to the node-chain approach or the plain pix-to-
+pix wire — see below, now also resolved.
+
+## Plain pix-to-pix wire delay question — RESOLVED, no scratch test needed
+
+The original HANDOFF item flagging this as **UNVERIFIED — first empirical
+test to run** is resolved, via a different route than planned: not a
+clean scratch-test result (the actual test hit real friction — `jit.world`
+render isn't bang-steppable, flicker rate is too fast to eyeball, and an
+early "still black with parity forced" result turned out to just be
+screenshot-vs-flicker timing, confirmed after the fact) but via web
+research plus reconciling against `temporal_synthesis_architecture.md`'s
+already-working, already-built modules.
+
+**Answer: a straight-line forward pix-to-pix chain (A→B→C, no loop back to
+an earlier point) does not carry an inherent one-frame delay.** The
+one-frame latency Vsynth's temporal modules rely on
+(`pass_pix`/`slide_pix`, see `temporal_synthesis_architecture.md`) is a
+property of **closing a feedback loop** specifically — both `jit.gl.pix`
+and `jit.gl.slab` copy their incoming texture, which is what prevents a
+feedback loop from becoming an infinite instantaneous regress, and that
+copy-on-cycle behavior is what produces the settle, not texture handoff in
+general. Corroborated three ways: `jit.gl.pix`'s documented default `thru`
+attribute (synchronous output when input is received), the fact that
+texture-delay tooling (`jit.gl.textureset`, texture-bank tricks) has to be
+built deliberately rather than being free, and — most concretely — every
+existing f_ processor module already chains `jit.gl.pix` objects sampling
+an upstream inlet in production with no observed frame-lag artifact. If
+forward chaining carried an inherent delay, it would show up as a full
+frame of lag on every processor module in the library, not just in an
+edge-case test.
+
+**Practical implication for f_stereogram:** a plain forward chain of
+`jit.gl.pix` objects (source → strip 1 → strip 2 → ... ) should be safe
+for the strip algorithm's intra-frame dependency structure, with no need
+for the node-chain architecture or `jit.gl.pass` specifically to avoid a
+delay problem. This doesn't mean `jit.gl.pass` was wasted effort — it's
+now a confirmed-viable, real option, and may still be worth it for other
+reasons (cleaner multi-subpass expression, no `build_patcher.py` extension
+for multi-pix bpatchers) — but it's no longer *the* answer to "how do we
+avoid a frame delay," because there may not be one to avoid in the first
+place. **Next actual step for f_stereogram: revisit whether the strip
+algorithm can just be a straight `jit.gl.pix` chain**, before reaching for
+node-chaining or `jit.gl.pass` complexity at all.
+
+`temporal_synthesis_architecture.md` updated same session to sharpen its
+"GL texture pipeline has one frame of inherent latency" language — that
+phrasing overstated the claim; scoped now to feedback loops specifically.
+
+**No skill files or module code touched this session.** Still deferred —
+worth revisiting once the `PREVIOUS`-chain test is done and there's a
+fuller picture of what a `jit.gl.pass`-based module would actually cost to
+build and maintain.
+
+---
+
+Last session: 2026-06-30 (scratch patch + research session — RESOLVED via web research, corrected mental model)
+
+## f_stereogram — jit.gl.node / jit.gl.pix interaction: RESOLVED (wrong mental model, not a binding bug)
 
 Full spec at `.specify/f_stereogram/spec.md`.
 
-**What we learned this session (scratch patch testing):**
-- Single-pass `jit.gl.pix` is confirmed insufficient — not a tuning problem,
-  a structural impossibility. Tested with multiple pattern sources (stipple,
-  f_grain, noise) and depth sources (wfg shapes, triangle, concentric squares).
-  Each pixel independently samples the pattern at a shifted coordinate with no
-  reference to neighboring pixels → no consistent horizontal repeat structure
-  → eye cannot fuse.
-- Correct algorithm: GPU Gems Chapter 41 ("Real-Time Stereograms", Policarpo
-  2004) — strip-based, multi-pass, intra-frame texture feedback. Frame divided
-  into N vertical strips (8–24 typical). Strip 0 = pattern direct. Strip i =
-  strip i-1's output sampled at `uv.x - strip_width + depth * depth_factor *
-  strip_width`. Per-strip fragment math is trivial; the blocker is intra-frame
-  render-to-texture feedback between strips.
+**Algorithm is settled, not in question.** GPU Gems Chapter 41 ("Real-Time
+Stereograms", Policarpo 2004) — strip-based, multi-pass, intra-frame texture
+feedback. Single-pass `jit.gl.pix` confirmed insufficient (structural, not a
+tuning problem — no cross-pixel reference means no fusible repeat structure).
 
-**Current blocker — RESOLVED by research (2026-06-30):**
-`jit.gl.node @capture 1 @layer N` is the correct intra-frame render-to-texture
-mechanism. C74 staff confirmed (Cycling '74 forum, Rob Ramirez) that two nodes
-at different `@layer` values share texture within the same frame, no delay.
-User confirmed empirically "no frame delay." Architecture:
-- N nodes at ascending layers, each `@capture 1`, each containing one `jit.gl.pix`
-- Node 0 (layer 0): takes pattern texture, tiles it at strip width
-- Node i (layer i): takes node i-1 captured texture + depth, applies GPU Gems
-  displacement formula within its strip range, passes through elsewhere
-- Final output = node N-1's captured texture
+**The empirical dead-end from earlier this session (Method 1 name/drawto
+binding, Method 2 middle-outlet binding) was chasing the wrong mechanism
+entirely.** Both methods assume `jit.gl.pix` needs to be bound *as a child
+inside* a `jit.gl.node`'s sub-context, the same way a 3D scene object
+(`jit.gl.plato`, `jit.gl.mesh`, `jit.gl.gridshape`, `jit.gl.videoplane`)
+does. It doesn't work that way, and testing confirmed it doesn't — but the
+correct conclusion isn't "which outlet/attribute is the right binding
+mechanism," it's that **`jit.gl.pix`/`jit.gl.slab` are texture-domain
+operators, not scene members, and were never going to bind via either
+method.**
 
-Constraint: `@capture` only works in automatic mode. Fine for always-on use.
+**Correct model (confirmed via Cycling '74 docs + the official jit.gl.pix
+tutorial, which cites Andrew Benson's SceneWarp technique as the canonical
+example):**
+```
+[jit.gl.node @capture 1]   <- 3D objects (mesh/plato/gridshape/videoplane)
+        |                     bind here via name/drawto or middle outlet
+        | left outlet = captured jit.gl.texture, output every draw
+        v
+[jit.gl.pix]                <- receives the captured texture as a NORMAL
+                                INLET 0 INPUT, exactly like any other
+                                texture source. No naming/drawto/outlet
+                                trick on the pix side at all.
+```
+Direct doc quote: "When capture is enabled, jit.gl.node outputs a
+jit.gl.texture out its left-most outlet every time it draws itself. In
+this mode, jit.gl.slab and jit.gl.pix objects can be **chained to the
+node**..." — "chained to" is ordinary patch-cord texture flow.
 
-**Remaining open question — for Kevin specifically:**
-Does the Vsynth `vsynth` render context (wrapped by `vs_render`) support N
-`jit.gl.node @capture 1 @layer N` children inside a bpatcher with guaranteed
-intra-frame layer ordering? Documented for `jit.world`/`jit.gl.render`;
-needs confirmation it holds for the Vsynth context specifically.
+This also explains why the isolated learning-patch test (bright red
+`@erase_color`, solid-green zero-input pix) necessarily failed under both
+methods: that pix had zero texture inputs and neither method is a
+texture-passing mechanism, so there was no path by which it could ever
+have shown up in the node's capture regardless of which binding syntax
+was used. The test was well-designed but tested the wrong hypothesis.
 
-Also note: `/Users/matt/Vsynth/sirds.genjit` exists — single-pass genjit
-approach that doesn't produce fusible results, but contains correct per-pixel
-displacement math useful as reference for the per-strip codebox.
+**`jit.gl.pass` researched (2026-07-01) — see
+`docs/max-reference/jit_gl_pass_architecture.md`.** Confirmed via C74
+canonical docs: subpasses do natively support `PREVIOUS` (prior subpass
+output) and named-subpass/`SUBPASS0..N` sourcing — a real, documented
+same-frame chaining mechanism. But it's architecturally a 3D-scene
+post-processing system (binds to a `jit.gl.node`, documented precondition
+of geometry with a material attached), a different bpatcher shape than the
+rest of f_, and carries an unverified dependency on 3D scene/material
+content that may or may not gate the plain-2D-texture case f_stereogram
+needs. **Not established as simpler than the node-chain approach** — the
+highest-priority open question (does a subpass chain work against an
+empty node fed only via `@texture`, no 3D content?) is still untested.
+See that doc's "Fit assessment" section before reaching for it.
 
-**Next step:** Build a minimal 2-strip scratch patch using `jit.gl.node
-@capture 1` at layers 0 and 1, verify no-delay intra-frame texture handoff,
-then scale to N strips once the mechanism is confirmed in Vsynth context.
+**Workflow gotcha hit hard this session, worth remembering going
+forward:** editing a `.maxpat` JSON file on disk while it's already open
+in Max does NOT live-update the open patcher window. Several rounds of
+edits appeared to have no effect because Max was still showing a stale
+in-memory copy. **Always fully close and reopen a patch after any file-
+level edit before treating a test result as meaningful.** This alone
+explained at least one full round of false "still broken" reports.
 
-**Scratch patch saved at:** `/Users/matt/Vsynth/patterns/stereogram_scratch.maxpat`
-(contains v2 single-pass codebox — useful as a starting point for the strip-0
-fragment program once multi-pass infrastructure is resolved)
+**Files:**
+- `/Users/matt/Vsynth/patterns/stereogram_scratch.maxpat` — original
+  scratch test. Contains v1 single-pass (`obj-5`, confirmed insufficient,
+  left untouched) and v2 2-strip multi-pass attempt (`obj-40`–`obj-48`,
+  currently non-functional / black output, built on the now-corrected
+  binding assumption). Do not resume debugging this file directly until
+  the node→pix texture-chain pattern (or `jit.gl.pass` subpass approach)
+  has been proven in the isolated learning patch first.
+- Isolated learning patch — built directly in Max by Matt, not yet saved
+  to a path visible to me. **Get this path at the start of next session**
+  and read it via Desktop Commander before touching anything.
+- `/Users/matt/Vsynth/sirds.genjit` — single-pass genjit reference,
+  correct per-pixel displacement math, doesn't produce fusible results on
+  its own (single-pass), useful only as a math reference for whichever
+  strip codebox eventually gets built.
+
+**Reference doc corrected (2026-06-30):**
+`docs/max-reference/intraframe_multipass_architecture.md` has been updated
+to retract the pix-drawto-node claim and mark several previously-confident
+assertions as **UNVERIFIED** (notably: whether a plain pix-to-pix message
+chain actually has a frame delay at all — that was asserted, never tested).
+Read that doc's "Open questions" section at the start of next session.
+
+**Next step, in order:**
+1. Get the learning patch's file path from Matt, read it fresh.
+2. **Cheapest test first, do this before anything else:** wire pix_A's
+   outlet directly to pix_B's inlet (no `jit.gl.node` at all) and check
+   whether there's actually a one-frame delay. If there isn't, the entire
+   node-based architecture may be unnecessary for f_stereogram — worth
+   knowing before investing more time in the node approach.
+3. If pix-to-pix does have a delay: rework the node test instead — wire
+   the node's left outlet (captured `jit.gl.texture`) into a pix's inlet 0
+   as an ordinary texture input (not a binding), with the node containing
+   a simple visible 3D object. Close/reopen Max fully, confirm.
+4. `jit.gl.pass` researched (2026-07-01, see
+   `docs/max-reference/jit_gl_pass_architecture.md`) — confirmed
+   `PREVIOUS`/named-subpass chaining is real, but fit for f_stereogram is
+   unresolved pending one specific test: does a subpass chain work against
+   a `jit.gl.node` with no 3D scene content, using only `@texture`-fed
+   inputs? If yes, worth evaluating in parallel with steps 2-3. If a 3D
+   scene/material turns out to be a hard requirement, deprioritize it —
+   it would be a heavier-weight, differently-shaped module than the rest
+   of f_ for no clear benefit over the node-chain approach.
+5. Once one of these is confirmed working in the isolated learning patch,
+   port it back into `stereogram_scratch.maxpat`'s strip0/strip1
+   structure — don't keep iterating on the compromised file until then.
 
 ## Discussion session — soft-mod, grain, weave
 
