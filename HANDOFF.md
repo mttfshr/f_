@@ -2,9 +2,9 @@
 
 Last session: 2026-06-30 (scratch patch + research session — spec updated)
 
-## f_magic_eye — spec updated, implementation blocked on infrastructure question
+## f_stereogram — spec updated, implementation blocked on infrastructure question
 
-Full spec at `.specify/f_magic_eye/spec.md`.
+Full spec at `.specify/f_stereogram/spec.md`.
 
 **What we learned this session (scratch patch testing):**
 - Single-pass `jit.gl.pix` is confirmed insufficient — not a tuning problem,
@@ -47,7 +47,7 @@ displacement math useful as reference for the per-strip codebox.
 @capture 1` at layers 0 and 1, verify no-delay intra-frame texture handoff,
 then scale to N strips once the mechanism is confirmed in Vsynth context.
 
-**Scratch patch saved at:** `/Users/matt/Vsynth/patterns/magic_eye_scratch.maxpat`
+**Scratch patch saved at:** `/Users/matt/Vsynth/patterns/stereogram_scratch.maxpat`
 (contains v2 single-pass codebox — useful as a starting point for the strip-0
 fragment program once multi-pass infrastructure is resolved)
 

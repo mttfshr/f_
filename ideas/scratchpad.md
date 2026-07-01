@@ -87,7 +87,7 @@ Max's built-in styles system could let f_ ship a named style (`f_default`) and l
 
 ---
 
-## f_magic_eye: autostereogram generator/processor
+## f_stereogram: autostereogram generator/processor
 
 Two inlets: depth/mask texture (shape) + pattern texture (e.g. from f_stipple or f_grain). Outputs a SIRDS-style autostereogram. Core algorithm: horizontal pixel shift driven by depth map, pattern tiled as repeating strip.
 

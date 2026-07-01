@@ -21,7 +21,7 @@ These are two distinct architectural categories that should not be confused.
 **Use intra-frame multi-pass when:**
 - Pass N+1 depends on the *current frame's* output of pass N (not a previous frame's)
 - The algorithm requires sequential horizontal/spatial propagation within one frame
-- Examples: autostereogram strip generation (f_magic_eye), multi-pass
+- Examples: autostereogram strip generation (f_stereogram), multi-pass
   accumulation effects where each pass builds on the current frame's previous
   pass output
 
@@ -93,7 +93,7 @@ draw to the node's sub-context, not to `vsynth` directly.
 
 **Naming convention (proposed):** `{module}_node_{i}` for the node name
 attribute, `{module}_pass_{i}` for the child pix `@name`. Example for
-f_magic_eye: `magiceye_node_0`, `magiceye_pass_0`, etc.
+f_stereogram: `magiceye_node_0`, `magiceye_pass_0`, etc.
 
 ---
 
@@ -192,7 +192,7 @@ which plugs directly into `vs_op2` mixer inlets or any other Vsynth module
 inlet. 3D objects (e.g. `jit.gl.plato`) and `jit.gl.pix` objects draw to the
 node's sub-context by using the node's name as their `drawto` attribute.
 
-**This is the pattern for f_magic_eye's strip-chain architecture.**
+**This is the pattern for f_stereogram's strip-chain architecture.**
 
 ---
 
@@ -228,14 +228,14 @@ Vsynth's timing propagates to sibling contexts.
 underlying OpenGL context with Vsynth. Without this, texture names from the
 `vsynth` context are not valid references in the sibling context.
 
-**This is NOT the pattern for f_magic_eye** — which needs intra-context
+**This is NOT the pattern for f_stereogram** — which needs intra-context
 multi-pass (Tutorial 1), not a sibling context. Tutorial 2 is useful for:
 separate output windows, multi-projector setups, secondary display contexts
 that consume Vsynth output.
 
 ---
 
-`f_magic_eye` is the first module in this library to require intra-frame
+`f_stereogram` is the first module in this library to require intra-frame
 multi-pass rendering. It implements the GPU Gems Chapter 41 SIS algorithm
 (Policarpo 2004): N vertical strips, each strip reading from the previous
 strip's output displaced by depth.
@@ -284,7 +284,7 @@ correct displacement math but doesn't produce a fusible autostereogram (single-
 pass confirmed insufficient 2026-06-30). The displacement formula it uses is
 identical to the per-strip formula above.
 
-**Spec:** `.specify/f_magic_eye/spec.md`
+**Spec:** `.specify/f_stereogram/spec.md`
 
 ---
 
@@ -304,7 +304,7 @@ a different structural container than the standard bpatcher convention:
 
 `build_patcher.py` likely cannot express this structure via `definition.py`
 without extension — the current schema assumes one `jit.gl.pix` per module.
-This is a build system question to resolve when f_magic_eye reaches the build
+This is a build system question to resolve when f_stereogram reaches the build
 phase. May require hand-building the patcher JSON rather than generating it.
 
 ---
@@ -317,7 +317,7 @@ phase. May require hand-building the patcher JSON rather than generating it.
   empirically once the mechanism is confirmed in a scratch patch.
 
 - **`@adapt` setting for chained nodes:** Kevin's patch uses `@adapt 0` with
-  explicit dimensions (mixing fixed-size 3D content). For f_magic_eye, where
+  explicit dimensions (mixing fixed-size 3D content). For f_stereogram, where
   output should match the input depth/pattern texture dimensions, `@adapt 1`
   is likely correct — but needs verification that adapt correctly propagates
   through a chain of nodes.
