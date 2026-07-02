@@ -1,5 +1,97 @@
 # HANDOFF — f_ library
 
+Last session: 2026-07-01 (4-stage forward-chain scratch test — TOP OPEN
+QUESTION RESOLVED, plus a new displacement/valid-region constraint found)
+
+## f_stereogram — forward-chain architecture PROVEN via 4-stage scratch test
+
+File: `/Users/matt/Vsynth/patterns/stereogram_scratch_alt.maxpat` (new
+file — do not confuse with the older `stereogram_scratch.maxpat`, which
+contains the pre-correction v1/v2 attempts described further down this
+document and is now superseded for this line of testing).
+
+**The top open question from the previous session — "revisit whether the
+strip algorithm can just be a straight `jit.gl.pix` chain" — is answered
+YES, empirically, end to end.** Built a 4-stage fixed-N proof: `stage0_pix`
+through `stage3_pix`, each a plain `jit.gl.pix` object wired in a straight
+forward chain (`stage_N out0 → stage_N+1 in0`), each also fed `depth_source`
+on `in1`. Each stage's codebox implements the passthrough/compute split
+directly: within its own hardcoded strip range (`uv.x` quartiles), sample
+the previous stage's output at a depth-displaced coordinate; outside that
+range, pass the previous stage's output straight through unchanged. Stage 0
+is the base case (no previous stage — pattern sampled directly, black
+outside its own strip).
+
+**Confirmed by direct observation, stage by stage:**
+- `stage0_pix` alone: pattern tiled correctly into strip 0's quarter, black
+  elsewhere.
+- `stage1_pix`: at `depth_factor=0`, quarter 1 shows stage 0's content
+  passed through undisplaced (shift cancels exactly) — proved the
+  passthrough/region-split wiring before testing displacement at all. Then
+  swept `depth_factor` and confirmed only quarter 1 (and downstream)
+  responded — `preview_1` (pure stage-0 output) stayed completely static,
+  ruling out any cross-talk between the separate `jit.gl.pix` instances.
+- `stage2_pix`/`stage3_pix`: same pattern extended, full 4-strip chain
+  confirmed live in a single preview window, each stage responding only to
+  its own `depth_factor`.
+
+**No `jit.gl.node`, no `jit.gl.pass`, no manual node-chaining needed for
+this mechanism.** The architecture question that's been open since
+2026-06-30 is closed: a plain forward chain of `jit.gl.pix` objects is
+sufficient for the strip algorithm's intra-frame dependency structure.
+This doesn't retroactively waste the `jit.gl.pass` research — it's a
+confirmed-viable alternative and may still be worth it for other reasons —
+but it's no longer required to make this algorithm work at all.
+
+**Render-clock gotcha recurred, worth naming as a pattern now (second
+occurrence):** the first attempt at viewing `stage0_pix`'s output showed
+all-black across every preview. Root cause was not the shader — it was
+`vs_render`'s own `ON`/`OFF` toggle defaulting to `OFF`, with the render
+window's fps readout showing `0.00000`. Last session it was `jit.world`'s
+`@enable` defaulting to 0; this session it was a different control with
+the same failure signature. **Standing check going forward: before
+debugging any shader/patch logic that's producing black output, check the
+render window's fps counter first.** A `0.00000` reading means nothing
+downstream can be trusted as evidence about anything else yet.
+
+**New finding — displacement magnitude is bounded by previous-stage valid
+region, not free:** swapping `pattern_source` for a noise generator
+(`N0ISE 3`) surfaced black seams between strips at `depth_factor=0.2` that
+were not present with the original edge-shaped test pattern. Diagnosed by
+setting `depth_factor` back to `0` on both live stages — seams vanished
+completely, full continuous noise texture across all four strips,
+confirming this is not a wiring/compositing bug. Root cause: in this
+4-stage test, each stage's "valid" content is confined to its own
+strip-width quarter (stage 0 is black outside its own strip, and that
+constraint propagates forward through the passthrough chain). When
+`shift_x = uv.x - strip_width + depth_val * depth_factor * strip_width`
+pushes the sample coordinate past the edge of the previous stage's
+populated region, it samples black — visible as a seam. **This is a real
+constraint the production version needs to account for, not an artifact of
+the test rig**, though the test rig's per-stage confinement to exactly one
+strip-width of valid content is more restrictive than a production version
+would likely be. Needs resolving before the live-`num_strips` architecture
+is built: either bound max displacement to stay within available valid
+content, or redesign what "valid region" means per stage so it isn't
+confined to that one stage's own quarter.
+
+**Still open / not addressed this session:** the live-`num_strips`
+architecture itself (fixed max chain, e.g. up to 24 stages, only the first
+`num_strips` active per the live param — discussed and agreed on
+2026-07-01 prior to this test, not yet built). The strip-count ceiling is
+still unknown empirically (per Matt: "we don't know yet"). Circular-screen
+presentation is confirmed out of scope for this module — masking happens
+downstream, `f_stereogram` stays naive rectangular UV.
+
+**Next step:** resolve the displacement/valid-region constraint (likely
+needs its own small scratch test — e.g. does giving stage 0 a wider
+initial valid region, or redefining "valid" more generously per stage,
+eliminate the seam at higher `depth_factor` without the artificial
+4-strip-test confinement?), then move to building the real fixed-max-chain
+architecture per the live-`num_strips` design agreed earlier this session.
+
+---
+
 Last session: 2026-07-01 (`jit.gl.pass` research + scratch-test session —
 key open question RESOLVED)
 
