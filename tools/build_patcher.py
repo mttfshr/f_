@@ -511,20 +511,33 @@ def mod_instate_obj_id(i):
     """vs_inState for modulation inlet i."""
     return f"obj-{100 + i * 3 + 1}"
 
-def mod_inlet_boxes(mod_inlets):
+def mod_inlet_boxes(mod_inlets, driving_inlet=False):
     """Generate inlet + optional vs_inState boxes for each modulation inlet.
     If vs_instate is False, no vs_inState box is generated (inlet routes directly to pix).
+
+    driving_inlet: when True, mod_inlets[0] is the module's primary driving
+    texture and shares outer inlet 0 with inlet_box() (the "texture /
+    control" inlet) instead of getting its own dedicated inlet object —
+    mirrors the gen_subpatcher driving_inlet fix, which likewise omits a
+    redundant channel rather than reindexing/sharing. Its vs_inState/
+    state_param boxes (if declared) are still generated here; the wiring
+    that sources them from OBJ_ROUTEPASS instead of a dedicated inlet
+    lives in mod_inlet_lines(). Remaining mod_inlets shift down by one
+    outer-inlet index (i instead of i+1).
     """
     boxes = []
     for i, mi in enumerate(mod_inlets):
-        inlet_id   = mod_inlet_obj_id(i)
-        instate_id = mod_instate_obj_id(i)
-        label      = mi.get("label", f"mod {i+1}")
+        instate_id  = mod_instate_obj_id(i)
+        label       = mi.get("label", f"mod {i+1}")
         use_instate = mi.get("vs_instate", True)
-        boxes.append(box(inlet_id,
-            maxclass="inlet", comment=label, index=i + 1,
-            numinlets=0, numoutlets=1, outlettype=[""],
-            patching_rect=[30.0 + (i + 1) * 60.0, 30.0, 30.0, 30.0]))
+        skip_inlet  = driving_inlet and i == 0
+        if not skip_inlet:
+            inlet_id = mod_inlet_obj_id(i)
+            index    = i if driving_inlet else i + 1
+            boxes.append(box(inlet_id,
+                maxclass="inlet", comment=label, index=index,
+                numinlets=0, numoutlets=1, outlettype=[""],
+                patching_rect=[30.0 + index * 60.0, 30.0, 30.0, 30.0]))
         if use_instate:
             boxes.append(box(instate_id,
                 maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["", ""],
@@ -536,30 +549,46 @@ def mod_state_pre_id(i):
     """prepend param <state_param> for modulation inlet i (when state_param present)."""
     return f"obj-{100 + i * 3 + 2}"
 
-def mod_inlet_lines(mod_inlets):
+def mod_inlet_lines(mod_inlets, driving_inlet=False):
     """Wire each modulation inlet → (vs_inState →) pix inlet N.
     vs_instate defaults True. When False, inlet wires directly to pix (no vs_inState).
     If a mod_inlet has a 'state_param' key, also wire vs_inState out1
     → prepend param <state_param> → pix in0 (message inlet).
     state_param requires vs_instate=True (validated in build()).
+
+    driving_inlet: when True, mod_inlets[0] is the module's primary driving
+    texture (not optional modulation) and shares pix inlet 0 with control
+    messages, per Vsynth convention ("in[0] is the driving texture if
+    needed, as well as all control messages"). mod_inlets[i] then wires to
+    pix inlet i (not i+1). Use for generators whose core content comes
+    from an external texture (e.g. f_vf_seeds), not for optional secondary
+    modulation on an otherwise self-sufficient generator (e.g. f_vf_vortex,
+    where pix inlet 0 is control-only and mod_inlets start at inlet 1).
     """
     lines = []
+    offset = 0 if driving_inlet else 1
     for i, mi in enumerate(mod_inlets):
-        inlet_id    = mod_inlet_obj_id(i)
         instate_id  = mod_instate_obj_id(i)
         use_instate = mi.get("vs_instate", True)
+        # mod_inlets[0] under driving_inlet has no dedicated inlet object
+        # (see mod_inlet_boxes) — it shares outer inlet 0, so its wiring
+        # sources from OBJ_ROUTEPASS's texture outlet instead. build()
+        # must not also emit its own unconditional OBJ_ROUTEPASS→pix
+        # inlet-0 wire in this case (would double-feed pix inlet 0).
+        is_driving_primary = driving_inlet and i == 0
+        source_id = OBJ_ROUTEPASS if is_driving_primary else mod_inlet_obj_id(i)
         if use_instate:
-            # inlet → vs_inState → pix inlet i+1
-            lines.append(wire(inlet_id, 0, instate_id, 0))
-            lines.append(wire(instate_id, 0, OBJ_PIX, i + 1))
+            # source → vs_inState → pix inlet i+offset
+            lines.append(wire(source_id, 0, instate_id, 0))
+            lines.append(wire(instate_id, 0, OBJ_PIX, i + offset))
             # optional state_param feedback
             if mi.get("state_param"):
                 pre_id = mod_state_pre_id(i)
                 lines.append(wire(instate_id, 1, pre_id, 0))
                 lines.append(wire(pre_id, 0, OBJ_PIX, 0))
         else:
-            # inlet → pix inlet i+1 directly (no vs_inState)
-            lines.append(wire(inlet_id, 0, OBJ_PIX, i + 1))
+            # source → pix inlet i+offset directly (no vs_inState)
+            lines.append(wire(source_id, 0, OBJ_PIX, i + offset))
     return lines
 
 def mod_state_pre_boxes(mod_inlets):
@@ -579,35 +608,48 @@ def mod_state_pre_boxes(mod_inlets):
 # Gen subpatcher builder
 # ---------------------------------------------------------------------------
 
-def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
+def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inlet=False):
     """
     mod_inlets: list of mod inlet dicts (from definition). When present,
     adds in 2, in 3, ... objects and wires them to codebox inlets 1, 2, ...
     The base in 1 (bang/render trigger) is always inlet 0 of the codebox.
     n_outlets: number of gen out objects (and codebox outlets) to generate.
+
+    driving_inlet: when True, there is no separate bang-only "in 1" — the
+    module's core content comes from an external texture, so mod_inlets[0]
+    IS "in 1" (codebox inlet 0), mod_inlets[1] is "in 2" (inlet 1), etc.
+    Per Vsynth convention: inlet 0 carries the driving texture plus all
+    control messages, never a phantom control-only channel. Do not set
+    this for generators with true optional modulation on an otherwise
+    self-sufficient base (e.g. f_vf_vortex) — there, the bang-only in 1
+    is correct.
     """
     mod_inlets = mod_inlets or []
     boxes = []
     lines = []
 
-    boxes.append({"box": {
-        "id": "gen-obj-1", "maxclass": "newobj",
-        "numinlets": 0, "numoutlets": 1, "outlettype": [""],
-        "patching_rect": [22.0, 30.0, 28.0, 22.0], "text": "in 1"
-    }})
+    if not driving_inlet:
+        boxes.append({"box": {
+            "id": "gen-obj-1", "maxclass": "newobj",
+            "numinlets": 0, "numoutlets": 1, "outlettype": [""],
+            "patching_rect": [22.0, 30.0, 28.0, 22.0], "text": "in 1"
+        }})
 
-    # Extra gen inlet objects for modulation (in 2, in 3, ...)
+    # Extra gen inlet objects for modulation (in 2, in 3, ...) — or, when
+    # driving_inlet, these ARE the primary content inlets (in 1, in 2, ...)
     for i, _ in enumerate(mod_inlets):
         gen_in_id = f"gen-obj-{10 + i}"
+        in_num = i + 1 if driving_inlet else i + 2
         boxes.append({"box": {
             "id": gen_in_id, "maxclass": "newobj",
             "numinlets": 0, "numoutlets": 1, "outlettype": [""],
             "patching_rect": [80.0 + i * 58.0, 30.0, 28.0, 22.0],
-            "text": f"in {i + 2}"
+            "text": f"in {in_num}"
         }})
 
-    # Total codebox inlets: 1 (base) + len(mod_inlets)
-    n_codebox_inlets = 1 + len(mod_inlets)
+    # Total codebox inlets: driving_inlet has no separate bang tap, so it's
+    # just len(mod_inlets); otherwise 1 (base bang) + len(mod_inlets).
+    n_codebox_inlets = len(mod_inlets) if driving_inlet else 1 + len(mod_inlets)
 
     if archetype == "source" and not mod_inlets:
         # Original source: in 1 + r draw + codebox
@@ -664,12 +706,14 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
                 "patching_rect": [22.0 + k * 60.0, 490.0, 35.0, 22.0],
                 "text": f"out {k + 1}"
             }})
-        lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
+        if not driving_inlet:
+            lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
         # r draw (gen-obj-2) exists free-standing — its presence triggers gen each frame
         # it is NOT wired to the codebox
+        cb_offset = 0 if driving_inlet else 1
         for i in range(len(mod_inlets)):
             gen_in_id = f"gen-obj-{10 + i}"
-            lines.append({"patchline": {"destination": [codebox_id, i + 1], "source": [gen_in_id, 0]}})
+            lines.append({"patchline": {"destination": [codebox_id, i + cb_offset], "source": [gen_in_id, 0]}})
         for k in range(n_outlets):
             lines.append({"patchline": {"destination": [f"gen-obj-{4 + k}", 0], "source": [codebox_id, k]}})
     else:
@@ -714,19 +758,19 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1):
 # jit.gl.pix box
 # ---------------------------------------------------------------------------
 
-def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False):
+def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False, driving_inlet=False):
     mod_inlets = mod_inlets or []
     outlets    = outlets or [{"comment": "texture out"}]
     type_attr  = f" @type {pix_type}" if pix_type else ""
     adapt_attr = " @adapt 1" if adapt else ""
-    n_outer_inlets = 1 + len(mod_inlets)
+    n_outer_inlets = len(mod_inlets) if driving_inlet else 1 + len(mod_inlets)
     n_outlets      = len(outlets)
     outlettype     = ["jit_gl_texture"] * n_outlets + [""]
     return box(OBJ_PIX,
         maxclass="newobj",
         numinlets=n_outer_inlets, numoutlets=n_outlets + 1,
         outlettype=outlettype,
-        patcher=gen_subpatcher(codebox, archetype, mod_inlets, n_outlets),
+        patcher=gen_subpatcher(codebox, archetype, mod_inlets, n_outlets, driving_inlet=driving_inlet),
         patching_rect=[200.0, 380.0, max(200.0, len(object_name) * 8.0 + 80.0), 22.0],
         text=f"jit.gl.pix vsynth @name {object_name}{type_attr}{adapt_attr}",
         varname=object_name)
@@ -897,10 +941,12 @@ def build(defn):
         archetype   = defn["archetype"]
         codebox     = defn["codebox"]
         pix_type    = defn.get("pix_type", None)
+        driving_inlet = defn.get("driving_inlet", False)
         primary_obj_id   = OBJ_PIX
         pix_boxes_to_add = [pix_box(prefix, object_name, codebox, archetype,
                                     mod_inlets, pix_type, outlets,
-                                    adapt=defn.get("pix_adapt", False))]
+                                    adapt=defn.get("pix_adapt", False),
+                                    driving_inlet=driving_inlet)]
         extra_pix_lines  = []
 
     # Build boxes — pix must come before bypass jsui (param_connect dependency)
@@ -930,7 +976,7 @@ def build(defn):
 
     # Modulation inlet boxes (inlet + optional vs_inState per mod inlet, plus state prepends)
     if mod_inlets:
-        boxes.extend(mod_inlet_boxes(mod_inlets))
+        boxes.extend(mod_inlet_boxes(mod_inlets, driving_inlet=defn.get("driving_inlet", False)))
         boxes.extend(mod_state_pre_boxes(mod_inlets))
 
     # Per-param boxes (grid — float and int only)
@@ -974,8 +1020,12 @@ def build(defn):
         lines.append(wire(OBJ_INSTATE, 1, OBJ_SRCMODE_PRE, 0))
         lines.append(wire(OBJ_SRCMODE_PRE, 0, primary_obj_id, 0))
     elif archetype == "source":
-        # routepass out0 → primary pix (texture trigger)
-        lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
+        # routepass out0 → primary pix (texture trigger) — suppressed when
+        # driving_inlet + mod_inlets are present, since mod_inlet_lines()
+        # already sources mod_inlets[0] from OBJ_ROUTEPASS directly (this
+        # avoids double-feeding pix inlet 0 from two separate wires)
+        if not (defn.get("driving_inlet", False) and mod_inlets):
+            lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
         # r draw → pix inlet 0 (render trigger for self-generating patches)
         lines.append(wire("obj-20a", 0, primary_obj_id, 0))
     else:
@@ -991,7 +1041,7 @@ def build(defn):
 
     # modulation inlets → (vs_inState →) primary pix
     if mod_inlets:
-        lines.extend(mod_inlet_lines(mod_inlets))
+        lines.extend(mod_inlet_lines(mod_inlets, driving_inlet=defn.get("driving_inlet", False)))
 
     # bypass jsui → prepend bypass → primary pix
     lines.append(wire(bp_jsui_id, 0, bp_pre_id, 0))
