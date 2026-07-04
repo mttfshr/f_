@@ -14,6 +14,7 @@ var SIZES = {
     "stereo":         [160,  90],
     "lens":           [175, 155],
     "caustic":        [190, 100],
+    "sirds":          [190, 130],
     "channel_grader": [150, 165],
     "hue_processor":  [150, 120],
     "luma_processor": [150, 120],
