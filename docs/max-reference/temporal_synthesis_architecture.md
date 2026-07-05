@@ -166,7 +166,13 @@ A phase-coherent Hz oscillator needs frame-to-frame phase accumulation: `phase[t
 
 ## Recommended build sequence
 
-1. **f_vf_advect** — probe module; Pattern 1, one historical frame, no physics model. Establishes the multi-pix bpatcher convention and any needed build_patcher.py extensions.
-2. **f_cymascope** — Pattern 1 extended (three pix), FDTD physics. Build after advect proves the pattern.
-3. **f_vf_smear** — try single-pass LIC first; fall back to Pattern 1 if insufficient.
-4. **f_weave collision model** — only if the band-structure v1 is insufficient; significant additional complexity.
+1. ~~**f_vf_advect** — probe module; Pattern 1, one historical frame, no
+   physics model.~~ **Built and shipped** — established the multi-pix
+   bpatcher convention this doc predicted would be needed.
+2. **f_cymascope** — Pattern 1 extended (three pix), FDTD physics. Not
+   started as of this update.
+3. **f_vf_smear** — try single-pass LIC first; fall back to Pattern 1 if
+   insufficient. Not started as of this update.
+4. **f_weave collision model** — only if the band-structure v1 is
+   insufficient; significant additional complexity. Not started as of
+   this update; current v1 (band-structure) has been sufficient so far.

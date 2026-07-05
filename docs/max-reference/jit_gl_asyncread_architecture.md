@@ -1,6 +1,8 @@
 # jit.gl.asyncread — Architecture Reference
 
-_Created: 2026-07-01_
+_Created: 2026-07-01, reviewed 2026-07-05 — no fit surfaced since (f_sirds
+and f_vf_seeds' Evolution 2 both shipped without any need for CPU-side
+matrix readback). Status below unchanged._
 _Status: Sourced from Cycling '74 documentation (Max 8 object reference —
 the Max 9 refpage on disk has several `TEXT_HERE` placeholder gaps C74
 never filled in, so the Max 8 docs page fills those in), the "GL Texture
