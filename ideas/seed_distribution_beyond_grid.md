@@ -72,6 +72,27 @@ parameter on the existing approach.
   search structure. See the "Priority as a generalized quantity" section
   below for how this connects to the field-convergence-overlap question.
 
+  **LANDED, 2026-07-05.** Built as `f_vf_seeds`' Evolution 2 (K=2, not a
+  live loop bound — GenExpr codeboxes can't loop, so this became two
+  9-candidate search halves + a top-2 merge, not a literal `k=0..N`
+  loop as originally imagined here). Full architecture, empirical
+  findings, and open questions: `docs/f-reference/f_vf_seeds.md`,
+  `.specify/f_vf_seeds/spec.md` (Evolution 2), `.specify/f_vf_seeds/plan.md`
+  (ADR 7/8 + addenda). One correction to this bullet's own prediction:
+  the `sqrt(N)` density compensation described above was actually built,
+  then **removed** — it made the resulting `bomb` control read as a
+  zoom/density knob rather than a clustering knob (cell pitch and jitter
+  rescaled together, mechanically identical to `density` itself).
+  Point density now genuinely rises with bombing — the density/
+  irregularity coupling this whole file is about is reintroduced by
+  bombing itself, not resolved by it. Confirmed real overlap does occur
+  (clustered marks genuinely intersecting), but only once combined with
+  `mag_weight` (field magnitude → mark size) — priority-based selection
+  alone, without mark growth, never produces overlap regardless of how
+  it's tuned. That distinction — selection vs. growth — wasn't obvious
+  going in and is worth remembering for any future placement mechanism
+  in this family.
+
 ## Sharpened description of the itch (2026-07-03 discussion)
 
 Came back to this via a discussion of `f_grain`/`f_vf_seeds` overlap

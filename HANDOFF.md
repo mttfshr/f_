@@ -1,8 +1,139 @@
 # HANDOFF — f_ library
 
-Last session: 2026-07-04 (build_patcher.py driving_inlet bug — RESOLVED
-and confirmed working in Max; f_vf_seeds outer bpatcher now shows the
-correct 3 inlets)
+Last session: 2026-07-04 (f_vf_seeds Evolution 2 — Phases 1-3 of
+multi-owner overlap CONFIRMED WORKING in scratch, incl. fps; Phase 4
+bombing mid-build, blocked on reconnecting render-stage inputs after a
+patch cleanup — see below for the exact next step)
+
+## f_vf_seeds — Evolution 2 (texture bombing + multi-owner overlap):
+Phases 1-3 confirmed, Phase 4 mid-build, render stages currently
+disconnected
+
+Full spec/plan/tasks: `.specify/f_vf_seeds/spec.md` (Evolution 1.5 +
+Evolution 2 sections), `.specify/f_vf_seeds/plan.md` (ADR 6-8),
+`.specify/f_vf_seeds/tasks.md` — **read all three at start of next
+session**, this entry is a pointer/summary plus the exact next step.
+
+### Evolution 1.5 — luma-keyed alpha (SHIPPED, may still need committing)
+
+Landed in production `codebox_seeds.gen` this session, `patchers/
+f_vf_seeds.maxpat` rebuilt and JSON-validated. `out1`'s alpha changed from
+hardcoded `1.0` to `mark_luma` (shape luma × gate), bypass changed from
+opaque black to fully transparent. Full rationale in `spec.md`'s
+"Evolution 1.5" section / `plan.md`'s ADR 6. **Matt has not explicitly
+confirmed committing this** — check `git status` on
+`codebox_seeds.gen`/`patchers/f_vf_seeds.maxpat` before assuming it's
+landed in git, even though it's confirmed working in Max.
+
+### Evolution 2 — Phases 1-3 CONFIRMED WORKING, including fps
+
+Full mechanism: top-2 (not just top-1) candidate retention in the seed
+selection, each rank independently rendered and alpha-composited — this
+is what makes real mark-on-mark overlap possible, on top of the existing
+`field_priority`/`field_gain`/`mag_weight` mechanism which controls *when*
+marks grow/compete but was never sufficient alone (single-owner selection
+warps cell boundaries but never draws two marks at once — confirmed
+directly by Matt hitting exactly this symptom mid-session, see `plan.md`
+ADR 7/8 for the full diagnostic path).
+
+**Hit a hard platform ceiling building this (ADR 8, real, not
+theoretical):** Max's GL2→GL3 shader transformer parses codebox source
+via a Lua pattern-matching DSL with a hard ~32-capture-group ceiling.
+Combining the top-2 insertion reduction with duplicated downstream render
+logic in one codebox overflowed this (`"DSL.Parser":393: stack overflow
+(too many captures)"`, confirmed via Max console — jit.gl.pix silently
+left in a broken/invalid-object state, NOT a logic bug in the math,
+which never even ran). **Standing lesson for any future large codebox:**
+check the Max console for this exact error before assuming a visually-
+broken result is a logic bug — it looks identical to a real bug from the
+render alone.
+
+**Resolution: split into a multi-stage `jit.gl.pix` chain**, same pattern
+`f_sirds` already established (custom builder, not `tools/
+build_patcher.py`, which only supports single-codebox modules):
+- **Stage 1** — search + top-2 select (9 candidates, unchanged math)
+- **Stage 2 / Stage 3** — identical render codebox, one instance per
+  rank, each takes a coord texture + shape/vecfield/mod tex
+- **Stage 4** — rank1-over-rank2 alpha composite, `bypass` applied only
+  here
+
+**All of Phase 1-3 confirmed working in Max, including a real fps
+number:** 59-60fps at Matt's test resolution, with the full 4-stage
+chain plus doubled render cost. This was the single biggest unknown per
+`plan.md`'s Complexity Notes going in — **resolved, cheap, not a
+concern**. Real overlap confirmed visually (clustered marks genuinely
+intersecting, not just touching at cell boundaries) once `mag_weight`
+was turned up alongside `field_gain` — worth remembering that
+`field_priority`/`field_gain` alone control *selection*, not mark size;
+`mag_weight` is what actually grows marks into each other's territory.
+
+### Phase 4 (bombing) — hit a SECOND compile ceiling, mid-fix, blocked
+on reconnection
+
+Extending Stage 1 to 18 candidates (the actual "bombing" — a second
+jittered sample per cell, density-compensated by `sqrt(2)`, live-faded by
+a new `bomb` param) hit the **same** `DSL.Parser` capture-group ceiling
+again — confirmed via console, same error signature as ADR 8. This means
+the ceiling is lower than assumed: Stage 1 alone at 18 candidates +
+top-2 selection exceeds it, with zero render logic involved.
+
+**Fix in progress, same split-until-it-compiles approach:** Stage 1
+itself further split into three:
+- **Stage 1a** — 9-candidate search + top-2 select, original hash salts
+- **Stage 1b** — same codebox as 1a (literally identical file), different
+  salt constants (`salt1-4` pulled out as `Param`s specifically so one
+  codebox serves both halves), `active_blend` param wired to `bomb` (this
+  is the bombing half — forced to a losing sentinel priority when
+  `bomb=0`)
+- **Stage 1c** — small top-2 merge across the two halves' already-reduced
+  results (4 candidates in, not 9 or 18 — well inside anything that's
+  compiled so far)
+
+**All three pieces (1a, 1b, 1c) confirmed compiling independently.**
+Wiring confirmed correct via screenshot: Stage 1a + Stage 1b → Stage 1c
+→ (should feed) Stage 2/Stage 3. Total pipeline is now 6 stages.
+
+**BLOCKED, exact next step:** in the course of simplifying the patch for
+screenshots, the two render boxes (Stage 2/Stage 3) lost ALL of their
+inputs — shape tex, vecfield, mod tex, and every control param (`size`,
+`stretch`, `strength`, `mag_weight`, `phase`, `size_mod`, `stretch_mod`,
+`src_shape`, `src_mod`) are currently disconnected on both. **This is
+pure GUI rewiring, not a design or logic question** — everything needed
+to do it is already known and documented above. Concretely, for each of
+the two render boxes: inlet 2 ← shape tex, inlet 3 ← vecfield, inlet 4 ←
+mod tex (mod tex can be left unconnected if none is in use), inlet 0 ←
+the same control params both boxes should share identically. Once done:
+Stage 1c's `out1`/`out2` need to be (re)confirmed feeding Stage 2/Stage
+3's `in1` respectively (should already be correct per the last
+confirmed screenshot, but reconfirm after rewiring the rest).
+
+**Once rewired, the actual remaining checks (tasks.md T017-T019, not yet
+done):**
+- [ ] `bomb=0` — should be pixel-identical to Phase 3's already-confirmed
+      output (the strict regression check)
+- [ ] `bomb=1` — sanity check only so far (no NaNs/solid color), no
+      pattern-match confirmed yet
+- [ ] fps re-measured at 18-candidate search (6-stage chain) vs. Phase
+      3's 9-candidate (4-stage) baseline — this is a real open question,
+      not assumed cheap just because Phase 3 was
+
+**Not yet touched:** Phase 5 (promotion to production — custom builder
+script, `definition.py` update, docs, helpfile, `ideas/
+seed_distribution_beyond_grid.md` status update). Nothing in this
+Evolution 2 thread has touched any production file yet except Evolution
+1.5's alpha fix (see above) — all of Phase 1-4 work is scratch-only.
+
+**Session process note, worth remembering:** this session's wiring
+back-and-forth went sideways for a stretch — instructions referencing
+boxes by abstract stage names ("Stage 1c") without Matt and I looking at
+the same screenshot led to real confusion. What worked: asking for one
+whole-chain screenshot and switching to describing boxes by visible
+position (top-left/middle/bottom-right/etc.) instead. Worth defaulting
+to position-based description immediately for any future multi-box
+wiring session, rather than only falling back to it after confusion
+surfaces.
+
+---
 
 ## build_patcher.py driving_inlet bug — RESOLVED, f_vf_seeds confirmed in Max
 
