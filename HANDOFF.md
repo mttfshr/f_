@@ -1,5 +1,126 @@
 # HANDOFF — f_ library
 
+Last session: 2026-07-05 (f_vf_seeds Evolution 2 — SHIPPED to production.
+Multi-owner overlap + texture bombing fully built, tested, and promoted.
+Only the helpfile remains, deferred by Matt's own choice — everything
+else is done.)
+
+## f_vf_seeds — Evolution 2 (texture bombing + multi-owner overlap):
+SHIPPED
+
+Full spec/plan/tasks: `.specify/f_vf_seeds/spec.md` (Evolution 1.5 +
+Evolution 2 sections), `.specify/f_vf_seeds/plan.md` (ADR 6-8 + several
+addenda), `.specify/f_vf_seeds/tasks.md` (all phases complete except the
+deferred helpfile). New as-built reference doc:
+`docs/f-reference/f_vf_seeds.md`. **Read spec.md and plan.md at start of
+next session if resuming this module** — this entry is a pointer/summary,
+not the full history.
+
+### What shipped
+
+`patchers/f_vf_seeds.maxpat` regenerated via a new custom builder,
+`.specify/f_vf_seeds/build_seeds_multistage.py` (`tools/build_patcher.py`
+can't be used here — same category of limitation as `f_sirds`: most
+params need to fan out to two differently-named internal pix objects at
+once, which `param_connect` can't do). Confirmed working in Max, matching
+pre-Evolution-2 behavior at defaults and producing real, visually
+confirmed mark-on-mark overlap once `mag_weight`/`field_gain`/`bomb` are
+raised. fps confirmed 60+ at the most expensive configuration tested.
+
+**Architecture: six `jit.gl.pix` stages, not one, not four.** A
+single-codebox implementation hit Max's GL2→GL3 shader transformer's Lua
+`DSL.Parser` capture-group ceiling — twice, at two different points
+(once combining top-2 selection with duplicated render logic, again when
+extending Stage 1 alone to 18 candidates for bombing). Resolution both
+times was the same: split further, don't trim blind. Final shape: Stage
+1a/1b (two 9-candidate search halves, one shared codebox with baked hash
+salts) → Stage 1c (small merge) → Stage 2/3 (shared render codebox,
+instanced per rank) → Stage 4 (composite). Full diagnostic history in
+plan.md's ADR 7/8 and their addenda — worth reading if anything like
+this comes up again in another module.
+
+**The mechanism itself, if picking this thread back up:** priority-based
+seed selection alone (warping which single candidate wins a pixel) never
+produces overlap, no matter how it's tuned — this took real testing to
+confirm, not just reasoning about it. Real overlap needs BOTH multi-owner
+compositing (retaining top-2 candidates, not just the winner) AND
+`mag_weight` (mark size actually growing with field magnitude). Also:
+`bomb` (the second-sample-per-cell toggle) turned out to only work as an
+on/off switch, not a graded fader — real priority magnitude scales with
+other params, so no fixed sentinel constant stays correctly scaled across
+settings. Confirmed with two different sentinel values, both produced a
+near-hard-switch. Left as a toggle rather than adding the complexity of
+dynamically rescaling it.
+
+**Two real "looked fine on paper, broken in practice" bugs this session
+— both instructive:**
+1. A shader that silently failed to compile (the capture-ceiling issue
+   above) left `jit.gl.pix` in a broken state that looked exactly like a
+   render bug — wasted real time before the actual Max console error was
+   checked. **Lesson: check the console before trusting a "still broken"
+   visual result as evidence about the render logic.**
+2. A `route bomb` → `prepend active_blend` message-rename chain
+   validated perfectly as a box graph (no dangling wires, correct JSON)
+   but silently dropped the value at runtime — found only because Matt
+   placed a `print` object in the chain and watched the console. Fixed
+   by binding the `bomb` dial's `attrui` directly to `active_blend`
+   (an attrui's *output* name comes from its own `attr` property, not
+   whatever fed its inlet) — simpler than the rename chain it replaced,
+   and actually correct. **Lesson, worth carrying forward explicitly:
+   structural/JSON verification is necessary but not sufficient — twice
+   this session, something that checked out completely on paper was
+   still wrong once actually run.**
+
+**Outlet contract preserved deliberately.** The pre-Evolution-2 module
+had 3 outlets (mark color, mark mask, seed coord); Stage 4 alone only
+produces one. Matt's call: keep all 3 for backward compatibility rather
+than let the redesign silently drop two of them. `mark mask` — a second
+Stage 4 output (composited alpha as greyscale). `seed coord` — sourced
+directly from Stage 1c (bypassing Stage 4 entirely), exposing rank 1's
+position only, in the exact original zero-padded format. This required
+giving Stage 1c its own `bypass` param too, since that outlet doesn't
+pass through Stage 4's bypass gating.
+
+**A technique used unusually this session, worth naming for next time:**
+large chunks of this build (codebox edits, patchline wiring, structural
+verification) were done via direct `.maxpat` JSON editing through Desktop
+Commander, at Matt's explicit request — a real departure from this
+project's usual "paste codebox text into Max" convention. This worked
+well for anything with a static, fully-specified representation in the
+file (codeboxes, wiring between fixed objects) — verifiable by reading
+the JSON back and grep-checking for structural errors (a real transcription
+bug was caught this way while extracting codeboxes into `.gen` files).
+It does NOT work for anything depending on live/dynamic state — shape
+tex/vecfield/mod tex sources in the scratch patch came from
+`vs_modules.maxpat`'s menu-driven dynamic module loading, which has no
+static representation to safely pre-wire blind. **Boundary to remember:
+static structure is safe to edit directly; live/dynamic module selection
+needs Matt's hands in Max.**
+
+### What's left
+
+Only `docs/f-helpfile`'s `.maxhelp` file (T028 in tasks.md) — deferred by
+Matt's explicit choice, not blocked. `f_vf_seeds` has 3 real texture
+inlets (shape/vecfield/mod tex), which doesn't fit the `f-helpfile`
+skill's documented single-`vs_sources_main`-source template cleanly, and
+building one blind (no way to verify layout in Max directly) carried
+more risk than everything else this session, which was all independently
+verifiable via JSON/structural checks. Matt will build it directly in
+Max using `f_droste.maxhelp` as the skill's reference template, at his
+own pace.
+
+**Git status at session end:** every file touched this session — 
+`codebox_seeds_search.gen`, `codebox_seeds_merge.gen`,
+`codebox_seeds_render.gen`, `codebox_seeds_composite.gen` (new),
+`build_seeds_multistage.py` (new), `definition.py`, `spec.md`, `plan.md`,
+`tasks.md`, `patchers/f_vf_seeds.maxpat`, `docs/f-reference/f_vf_seeds.md`
+(new), `ideas/seed_distribution_beyond_grid.md` — ready to commit as one
+logical unit (or split by the natural phase boundaries already reflected
+in `plan.md`'s ADRs, if preferred). **Not committed yet — Matt commits
+and pushes manually, per standing practice.**
+
+---
+
 Last session: 2026-07-04 (f_vf_seeds Evolution 2 — Phases 1-3 of
 multi-owner overlap CONFIRMED WORKING in scratch, incl. fps; Phase 4
 bombing mid-build, blocked on reconnecting render-stage inputs after a

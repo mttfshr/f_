@@ -34,7 +34,8 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_tone_curve` | Processor | Tone curve adjustment |
 | `f_texrouter` | Utility | 4x4 texture routing matrix with preset system |
 | `f_caustic` | Processor | Optical caustic -- streamline accumulation weighted by field convergence; two outlets (composited / isolated layer) |
-| **f_vf_ family** | **vecfield producers/consumers** | **float32 f_vecfield textures -- produced by f_vf_ generators, consumed by f_caustic, f_vf_warp, f_vf_streak, f_lens field inlet** |
+| `f_sirds` | Generator | Single Image Random Dot Stereogram -- strip-based real-time construction; depth texture drives displacement of a repeating pattern |
+| **f_vf_ family** | **vecfield producers/consumers** | **float32 f_vecfield textures -- produced by f_vf_ generators, consumed by f_caustic, f_vf_warp, f_vf_streak, f_vf_seeds, f_lens field inlet** |
 | `f_vf_vortex` | Generator | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Generator | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
 | `f_vf_fieldmap` | Processor | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |
@@ -43,6 +44,7 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_vf_advect` | Processor | Temporal fluid advection via f_vecfield -- accumulates flow across frames; decay >1.0 gives excitable/amplifying character |
 | `f_vf_glow` | Processor | Field-aligned directional blur via f_vecfield -- accumulates source samples along streamlines with exponential falloff; two outlets (composite / isolated glow layer) |
 | `f_vf_repulse` | Generator | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold; four accumulation modes (Cancel, Max, Abs Add, Turbulent) |
+| `f_vf_seeds` | Generator | Discrete mark placement/orientation via f_vecfield and a shape tex -- Voronoi-style seed distribution with priority-generalized selection and multi-owner overlap (texture bombing); shape tex + mod tex inlets |
 
 ## Notes
 
