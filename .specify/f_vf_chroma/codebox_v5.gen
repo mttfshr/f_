@@ -1,0 +1,122 @@
+// f_vf_chroma codebox v5 — spectral streak accumulator
+// in1 = source texture (char)
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = radius mod
+// in4 = dispersion mod
+// in5 = threshold mod
+
+Param radius(0.01);
+Param dispersion(0.5);
+Param falloff(0.002);
+Param threshold(0.8);
+Param threshold_width(0.1);
+Param strength(0.8);
+Param direction(0.0);
+Param src_vecfield(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// suppress field when vecfield inlet unconnected — vs_black remaps to (-1,-1)
+connected = step(0.5, src_vecfield);
+
+// remap vecfield 0–1 → -1–1, suppress when disconnected
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// source pixel (center sample, inline access)
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// modulation inlets — additive
+mod_radius     = sample(in3, uv).x;
+mod_dispersion = sample(in4, uv).x;
+mod_threshold  = sample(in5, uv).x;
+
+radius_eff     = clamp(radius + mod_radius * radius, 0.0, 0.5);
+dispersion_eff = clamp(dispersion + mod_dispersion, -1.0, 1.0);
+threshold_eff  = clamp(threshold + mod_threshold, 0.0, 1.0);
+
+// per-channel march distance ratios
+// dispersion=0: all channels march identically at 1.0x (neutral, no rainbow)
+// dispersion=1: R=0.5x, G=1.0x, B=1.5x (B streaks furthest)
+// dispersion=-1: R=1.5x, G=1.0x, B=0.5x (R streaks furthest)
+r_scale = 1.0 - dispersion_eff * 0.5;
+g_scale = 1.0;
+b_scale = 1.0 + dispersion_eff * 0.5;
+
+// step delta per iteration
+dx = fx * radius_eff;
+dy = fy * radius_eff;
+
+// direction weights — branchless
+// dir=0 (fwd): fwd=1, bwd=0 | dir=1 (bwd): fwd=0, bwd=1 | dir=2 (bi): fwd=1, bwd=1
+fwd_weight = 1.0 - step(0.5, direction) + step(1.5, direction);
+bwd_weight = step(0.5, direction);
+
+// 48-step accumulation — per-channel staggered march distances
+accum_r = 0.0; accum_g = 0.0; accum_b = 0.0; accum_w = 0.0;
+
+for (i = 1.0; i <= 48.0; i += 1.0) {
+  w = exp(-i * i * falloff);
+
+  // forward UVs — each channel marches at its own scaled distance
+  fwd_uv_r = vec(clamp(uv.x + dx * i * r_scale, 0.0, 1.0), clamp(uv.y + dy * i * r_scale, 0.0, 1.0));
+  fwd_uv_g = vec(clamp(uv.x + dx * i * g_scale, 0.0, 1.0), clamp(uv.y + dy * i * g_scale, 0.0, 1.0));
+  fwd_uv_b = vec(clamp(uv.x + dx * i * b_scale, 0.0, 1.0), clamp(uv.y + dy * i * b_scale, 0.0, 1.0));
+
+  // backward UVs
+  bwd_uv_r = vec(clamp(uv.x - dx * i * r_scale, 0.0, 1.0), clamp(uv.y - dy * i * r_scale, 0.0, 1.0));
+  bwd_uv_g = vec(clamp(uv.x - dx * i * g_scale, 0.0, 1.0), clamp(uv.y - dy * i * g_scale, 0.0, 1.0));
+  bwd_uv_b = vec(clamp(uv.x - dx * i * b_scale, 0.0, 1.0), clamp(uv.y - dy * i * b_scale, 0.0, 1.0));
+
+  // luma gate — only bright pixels are emitters
+  // inline sample access to avoid silent failure on stored variable component access
+  fwd_luma_r = sample(in1, fwd_uv_r).x * 0.2126 + sample(in1, fwd_uv_r).y * 0.7152 + sample(in1, fwd_uv_r).z * 0.0722;
+  fwd_luma_g = sample(in1, fwd_uv_g).x * 0.2126 + sample(in1, fwd_uv_g).y * 0.7152 + sample(in1, fwd_uv_g).z * 0.0722;
+  fwd_luma_b = sample(in1, fwd_uv_b).x * 0.2126 + sample(in1, fwd_uv_b).y * 0.7152 + sample(in1, fwd_uv_b).z * 0.0722;
+
+  bwd_luma_r = sample(in1, bwd_uv_r).x * 0.2126 + sample(in1, bwd_uv_r).y * 0.7152 + sample(in1, bwd_uv_r).z * 0.0722;
+  bwd_luma_g = sample(in1, bwd_uv_g).x * 0.2126 + sample(in1, bwd_uv_g).y * 0.7152 + sample(in1, bwd_uv_g).z * 0.0722;
+  bwd_luma_b = sample(in1, bwd_uv_b).x * 0.2126 + sample(in1, bwd_uv_b).y * 0.7152 + sample(in1, bwd_uv_b).z * 0.0722;
+
+  fwd_gate_r = smoothstep(threshold_eff, threshold_eff + threshold_width, fwd_luma_r);
+  fwd_gate_g = smoothstep(threshold_eff, threshold_eff + threshold_width, fwd_luma_g);
+  fwd_gate_b = smoothstep(threshold_eff, threshold_eff + threshold_width, fwd_luma_b);
+
+  bwd_gate_r = smoothstep(threshold_eff, threshold_eff + threshold_width, bwd_luma_r);
+  bwd_gate_g = smoothstep(threshold_eff, threshold_eff + threshold_width, bwd_luma_g);
+  bwd_gate_b = smoothstep(threshold_eff, threshold_eff + threshold_width, bwd_luma_b);
+
+  // accumulate — gate zeroes out sub-threshold emitters
+  accum_r = accum_r + sample(in1, fwd_uv_r).x * fwd_gate_r * w * fwd_weight;
+  accum_g = accum_g + sample(in1, fwd_uv_g).y * fwd_gate_g * w * fwd_weight;
+  accum_b = accum_b + sample(in1, fwd_uv_b).z * fwd_gate_b * w * fwd_weight;
+
+  accum_r = accum_r + sample(in1, bwd_uv_r).x * bwd_gate_r * w * bwd_weight;
+  accum_g = accum_g + sample(in1, bwd_uv_g).y * bwd_gate_g * w * bwd_weight;
+  accum_b = accum_b + sample(in1, bwd_uv_b).z * bwd_gate_b * w * bwd_weight;
+
+  accum_w = accum_w + w * fwd_weight + w * bwd_weight;
+}
+
+// normalize — shared weight; per-channel intensity difference IS the dispersion signal
+streak_r = accum_r / max(accum_w, 0.0001);
+streak_g = accum_g / max(accum_w, 0.0001);
+streak_b = accum_b / max(accum_w, 0.0001);
+
+// composite: source + streak (additive — streak is an emission layer)
+comp_r = clamp(src_r + streak_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + streak_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + streak_b * strength, 0.0, 1.0);
+
+// bypass
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+
+// isolated streak outlet — zeroed on bypass
+out2 = mix(vec(streak_r, streak_g, streak_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

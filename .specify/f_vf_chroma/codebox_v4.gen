@@ -1,0 +1,74 @@
+// f_vf_chroma codebox v4 — full color prism with balanced spectral weights
+// in1 = source texture (char)
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+
+Param spread(0.0);
+Param strength(0.0);
+Param mode(0.0);
+Param src_vecfield(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// suppress field when inlet unconnected — vs_black → (-1,-1) without this
+connected = step(0.5, src_vecfield);
+
+// remap vecfield 0–1 → -1–1, suppress when disconnected
+fx = (sample(in2, uv).x - 0.5) * 2.0 * connected;
+fy = (sample(in2, uv).y - 0.5) * 2.0 * connected;
+
+// sample positions along field direction
+r_uv  = vec(uv.x + fx * spread,       uv.y + fy * spread);
+rh_uv = vec(uv.x + fx * spread * 0.5, uv.y + fy * spread * 0.5);
+bh_uv = vec(uv.x - fx * spread * 0.5, uv.y - fy * spread * 0.5);
+b_uv  = vec(uv.x - fx * spread,       uv.y - fy * spread);
+
+// sample all three channels at all 5 positions
+fr_r = sample(in1, r_uv).x;
+fr_g = sample(in1, r_uv).y;
+fr_b = sample(in1, r_uv).z;
+
+hr_r = sample(in1, rh_uv).x;
+hr_g = sample(in1, rh_uv).y;
+hr_b = sample(in1, rh_uv).z;
+
+c_r  = sample(in1, uv).x;
+c_g  = sample(in1, uv).y;
+c_b  = sample(in1, uv).z;
+
+hb_r = sample(in1, bh_uv).x;
+hb_g = sample(in1, bh_uv).y;
+hb_b = sample(in1, bh_uv).z;
+
+fb_r = sample(in1, b_uv).x;
+fb_g = sample(in1, b_uv).y;
+fb_b = sample(in1, b_uv).z;
+
+// --- split mode: hard channel assignment, preserves source color ---
+split_r = fr_r;
+split_g = c_g;
+split_b = fb_b;
+
+// --- prism mode: overlapping spectral weights applied per channel ---
+// weights: R peaks at +full, G peaks at center, B peaks at -full
+// equal total weight per channel: each sums to 1.6
+prism_r = (fr_r * 1.0 + hr_r * 0.5 + c_r * 0.1) / 1.6;
+prism_g = (hr_g * 0.4 + c_g * 0.8 + hb_g * 0.4) / 1.6;
+prism_b = (c_b  * 0.1 + hb_b * 0.5 + fb_b * 1.0) / 1.6;
+
+// blend split / prism by mode toggle
+chroma_r = mix(split_r, prism_r, mode);
+chroma_g = mix(split_g, prism_g, mode);
+chroma_b = mix(split_b, prism_b, mode);
+
+chroma = vec(chroma_r, chroma_g, chroma_b, 1.0);
+
+// source pixel for composite and bypass
+src_px = vec(c_r, c_g, c_b, 1.0);
+
+// out2: isolated chroma layer — black on bypass
+out2 = mix(chroma, vec(0.0, 0.0, 0.0, 1.0), bypass);
+
+// out1: crossfade source → chroma, bypass returns to source
+effect = mix(src_px, chroma, strength);
+out1 = mix(effect, src_px, bypass);

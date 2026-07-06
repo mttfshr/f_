@@ -1,0 +1,17 @@
+Param depth_factor(0.0);
+Param bypass(0.0);
+
+uv = norm;
+strip_lo = {stage_index} * {strip_width};
+strip_hi = strip_lo + {strip_width};
+
+in_strip = step(strip_lo, uv.x) * step(uv.x, strip_hi) * (1.0 - bypass);
+
+depth_uv = vec((uv.x - {strip_width}) / (1.0 - {strip_width}), uv.y);
+depth_val = sample(in2, depth_uv).x * 0.299 + sample(in2, depth_uv).y * 0.587 + sample(in2, depth_uv).z * 0.114;
+shift_x = uv.x - {strip_width} + depth_val * depth_factor * {strip_width};
+
+computed = sample(in1, vec(shift_x, uv.y));
+passthrough = sample(in1, uv);
+
+out1 = mix(passthrough, computed, in_strip);

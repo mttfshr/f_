@@ -1,8 +1,3 @@
-# working documents — not for public repo
-HANDOFF.md
-CV_TRIGGER_INVENTORY.md
-vs_texrouter_SPEC.md
-
 # Max backup files
 *.maxpat.bak
 
@@ -13,7 +8,3 @@ vs_texrouter_SPEC.md
 *.swp
 *.swo
 
-# thinking stuff not for public repo
-.specify
-ideas/.specify
-tools/helpfile_queue.json

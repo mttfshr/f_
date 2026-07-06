@@ -1,0 +1,85 @@
+// f_vf_chroma codebox v7 — RGB displacement with synthesized hue
+// in1 = source texture (char) — luma used for gate only
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = hue mod
+// in4 = dispersion mod
+
+Param radius(0.05);
+Param hue(0.0);
+Param dispersion(0.5);
+Param saturation(1.0);
+Param threshold(0.8);
+Param threshold_width(0.1);
+Param strength(0.8);
+Param direction(0.0);
+Param src_vecfield(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// suppress field when vecfield inlet unconnected
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// source pixel — for composite and bypass
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// hue and dispersion modulation (centered — mod at 0.5 = no change)
+hue_eff  = wrap(hue + (sample(in3, uv).x - 0.5), 0.0, 1.0);
+disp_eff = clamp(dispersion + (sample(in4, uv).x - 0.5), 0.0, 1.0);
+
+// direction: fwd=march along field, bwd=against, bi=average both
+// for bi, we use forward march (symmetric result at this scale)
+sign = switch(direction > 0.5 && direction < 1.5, -1.0, 1.0);
+
+// per-channel march distance ratios
+// dispersion=0: all channels at same position (monochrome)
+// dispersion=1: R at 0.5x, G at 1.0x, B at 1.5x
+r_scale = 1.0 - disp_eff * 0.5;
+g_scale = 1.0;
+b_scale = 1.0 + disp_eff * 0.5;
+
+// per-channel sample UVs
+r_uv = vec(clamp(uv.x + fx * radius * r_scale * sign, 0.0, 1.0),
+           clamp(uv.y + fy * radius * r_scale * sign, 0.0, 1.0));
+g_uv = vec(clamp(uv.x + fx * radius * g_scale * sign, 0.0, 1.0),
+           clamp(uv.y + fy * radius * g_scale * sign, 0.0, 1.0));
+b_uv = vec(clamp(uv.x + fx * radius * b_scale * sign, 0.0, 1.0),
+           clamp(uv.y + fy * radius * b_scale * sign, 0.0, 1.0));
+
+// luma gate at each channel's sample position
+r_luma = sample(in1, r_uv).x * 0.2126 + sample(in1, r_uv).y * 0.7152 + sample(in1, r_uv).z * 0.0722;
+g_luma = sample(in1, g_uv).x * 0.2126 + sample(in1, g_uv).y * 0.7152 + sample(in1, g_uv).z * 0.0722;
+b_luma = sample(in1, b_uv).x * 0.2126 + sample(in1, b_uv).y * 0.7152 + sample(in1, b_uv).z * 0.0722;
+
+r_gate = smoothstep(threshold, threshold + threshold_width, r_luma);
+g_gate = smoothstep(threshold, threshold + threshold_width, g_luma);
+b_gate = smoothstep(threshold, threshold + threshold_width, b_luma);
+
+// synthesize hue at each channel's march distance
+// R is closest to hue, G is mid, B is furthest
+r_hue = wrap(hue_eff, 0.0, 1.0);
+g_hue = wrap(hue_eff + disp_eff * 0.5, 0.0, 1.0);
+b_hue = wrap(hue_eff + disp_eff, 0.0, 1.0);
+
+streak_r = hsl2rgb(vec(r_hue, saturation, 0.5, 1.0)).x * r_gate;
+streak_g = hsl2rgb(vec(g_hue, saturation, 0.5, 1.0)).y * g_gate;
+streak_b = hsl2rgb(vec(b_hue, saturation, 0.5, 1.0)).z * b_gate;
+
+// composite: additive streak over source
+comp_r = clamp(src_r + streak_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + streak_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + streak_b * strength, 0.0, 1.0);
+
+// bypass
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+
+// isolated streak outlet — zeroed on bypass
+out2 = mix(vec(streak_r, streak_g, streak_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

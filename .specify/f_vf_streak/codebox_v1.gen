@@ -1,0 +1,148 @@
+// f_vf_streak codebox v1 — scratch validation
+// Directional blur: accumulate source texture samples along vecfield streamlines
+// in1 = source texture (char)
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+
+Param strength(0.3);
+Param length(0.15);
+Param falloff(0.0);
+Param color_shift(0.0);
+Param src_vecfield(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// step size in UV space
+step_size = length / 8.0;
+cs = color_shift * step_size;
+
+// suppress field when inlet unconnected — vs_black → -1.0 offset without this
+connected = step(0.5, src_vecfield);
+
+// falloff weights — wN = mix(1.0, 1.0 - (n/7.0), falloff)
+// step 0: always 1.0 regardless of falloff
+// step 7: mix(1.0, 0.0, falloff)
+w0 = 1.0;
+w1 = mix(1.0, 1.0 - (1.0/7.0), falloff);
+w2 = mix(1.0, 1.0 - (2.0/7.0), falloff);
+w3 = mix(1.0, 1.0 - (3.0/7.0), falloff);
+w4 = mix(1.0, 1.0 - (4.0/7.0), falloff);
+w5 = mix(1.0, 1.0 - (5.0/7.0), falloff);
+w6 = mix(1.0, 1.0 - (6.0/7.0), falloff);
+w7 = mix(1.0, 0.0, falloff);
+
+w_sum = w0 + w1 + w2 + w3 + w4 + w5 + w6 + w7;
+
+// --- step 0: current pixel ---
+pos0x = uv.x;
+pos0y = uv.y;
+
+f0x = (sample(in2, vec(pos0x, pos0y)).x - 0.5) * 2.0 * connected;
+f0y = (sample(in2, vec(pos0x, pos0y)).y - 0.5) * 2.0 * connected;
+
+src0r = sample(in1, vec(pos0x + f0x * cs, pos0y)).x;
+src0g = sample(in1, vec(pos0x,            pos0y)).y;
+src0b = sample(in1, vec(pos0x - f0x * cs, pos0y)).z;
+
+// --- step 1 ---
+pos1x = pos0x - f0x * step_size;
+pos1y = pos0y - f0y * step_size;
+
+f1x = (sample(in2, vec(pos1x, pos1y)).x - 0.5) * 2.0 * connected;
+f1y = (sample(in2, vec(pos1x, pos1y)).y - 0.5) * 2.0 * connected;
+
+src1r = sample(in1, vec(pos1x + f1x * cs, pos1y)).x;
+src1g = sample(in1, vec(pos1x,            pos1y)).y;
+src1b = sample(in1, vec(pos1x - f1x * cs, pos1y)).z;
+
+// --- step 2 ---
+pos2x = pos1x - f1x * step_size;
+pos2y = pos1y - f1y * step_size;
+
+f2x = (sample(in2, vec(pos2x, pos2y)).x - 0.5) * 2.0 * connected;
+f2y = (sample(in2, vec(pos2x, pos2y)).y - 0.5) * 2.0 * connected;
+
+src2r = sample(in1, vec(pos2x + f2x * cs, pos2y)).x;
+src2g = sample(in1, vec(pos2x,            pos2y)).y;
+src2b = sample(in1, vec(pos2x - f2x * cs, pos2y)).z;
+
+// --- step 3 ---
+pos3x = pos2x - f2x * step_size;
+pos3y = pos2y - f2y * step_size;
+
+f3x = (sample(in2, vec(pos3x, pos3y)).x - 0.5) * 2.0 * connected;
+f3y = (sample(in2, vec(pos3x, pos3y)).y - 0.5) * 2.0 * connected;
+
+src3r = sample(in1, vec(pos3x + f3x * cs, pos3y)).x;
+src3g = sample(in1, vec(pos3x,            pos3y)).y;
+src3b = sample(in1, vec(pos3x - f3x * cs, pos3y)).z;
+
+// --- step 4 ---
+pos4x = pos3x - f3x * step_size;
+pos4y = pos3y - f3y * step_size;
+
+f4x = (sample(in2, vec(pos4x, pos4y)).x - 0.5) * 2.0 * connected;
+f4y = (sample(in2, vec(pos4x, pos4y)).y - 0.5) * 2.0 * connected;
+
+src4r = sample(in1, vec(pos4x + f4x * cs, pos4y)).x;
+src4g = sample(in1, vec(pos4x,            pos4y)).y;
+src4b = sample(in1, vec(pos4x - f4x * cs, pos4y)).z;
+
+// --- step 5 ---
+pos5x = pos4x - f4x * step_size;
+pos5y = pos4y - f4y * step_size;
+
+f5x = (sample(in2, vec(pos5x, pos5y)).x - 0.5) * 2.0 * connected;
+f5y = (sample(in2, vec(pos5x, pos5y)).y - 0.5) * 2.0 * connected;
+
+src5r = sample(in1, vec(pos5x + f5x * cs, pos5y)).x;
+src5g = sample(in1, vec(pos5x,            pos5y)).y;
+src5b = sample(in1, vec(pos5x - f5x * cs, pos5y)).z;
+
+// --- step 6 ---
+pos6x = pos5x - f5x * step_size;
+pos6y = pos5y - f5y * step_size;
+
+f6x = (sample(in2, vec(pos6x, pos6y)).x - 0.5) * 2.0 * connected;
+f6y = (sample(in2, vec(pos6x, pos6y)).y - 0.5) * 2.0 * connected;
+
+src6r = sample(in1, vec(pos6x + f6x * cs, pos6y)).x;
+src6g = sample(in1, vec(pos6x,            pos6y)).y;
+src6b = sample(in1, vec(pos6x - f6x * cs, pos6y)).z;
+
+// --- step 7 ---
+pos7x = pos6x - f6x * step_size;
+pos7y = pos6y - f6y * step_size;
+
+f7x = (sample(in2, vec(pos7x, pos7y)).x - 0.5) * 2.0 * connected;
+f7y = (sample(in2, vec(pos7x, pos7y)).y - 0.5) * 2.0 * connected;
+
+src7r = sample(in1, vec(pos7x + f7x * cs, pos7y)).x;
+src7g = sample(in1, vec(pos7x,            pos7y)).y;
+src7b = sample(in1, vec(pos7x - f7x * cs, pos7y)).z;
+
+// --- weighted accumulation and normalization ---
+streak_r = (w0*src0r + w1*src1r + w2*src2r + w3*src3r + w4*src4r + w5*src5r + w6*src6r + w7*src7r) / w_sum;
+streak_g = (w0*src0g + w1*src1g + w2*src2g + w3*src3g + w4*src4g + w5*src5g + w6*src6g + w7*src7g) / w_sum;
+streak_b = (w0*src0b + w1*src1b + w2*src2b + w3*src3b + w4*src4b + w5*src5b + w6*src6b + w7*src7b) / w_sum;
+
+streak_layer = vec(clamp(streak_r, 0.0, 1.0),
+                   clamp(streak_g, 0.0, 1.0),
+                   clamp(streak_b, 0.0, 1.0),
+                   1.0);
+
+// source pixel for composite and bypass
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_px = vec(src_r, src_g, src_b, 1.0);
+
+// out2: isolated streak layer — black on bypass
+out2 = mix(streak_layer, vec(0.0, 0.0, 0.0, 1.0), bypass);
+
+// out1: additive composite — streak adds light over source, scaled by strength
+composite = vec(clamp(src_r + streak_r * strength, 0.0, 1.0),
+                clamp(src_g + streak_g * strength, 0.0, 1.0),
+                clamp(src_b + streak_b * strength, 0.0, 1.0),
+                1.0);
+out1 = mix(composite, src_px, bypass);

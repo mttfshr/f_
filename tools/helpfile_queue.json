@@ -1,0 +1,124 @@
+[
+  {
+    "module_name": "f_caustic",
+    "short_name": "caustic",
+    "module_type": "processor",
+    "source": "definition.py",
+    "params": [
+      {
+        "name": "intensity",
+        "hint": "",
+        "range": "[0.0 \u2013 2.0]",
+        "type": "float"
+      },
+      {
+        "name": "scale",
+        "hint": "",
+        "range": "[0.0 \u2013 1.0]",
+        "type": "float"
+      },
+      {
+        "name": "softness",
+        "hint": "",
+        "range": "[0.0 \u2013 1.0]",
+        "type": "float"
+      },
+      {
+        "name": "color_shift",
+        "hint": "",
+        "range": "[0.0 \u2013 1.0]",
+        "type": "float"
+      },
+      {
+        "name": "bypass",
+        "hint": "Bypass",
+        "range": "[0 / 1]",
+        "type": "bool"
+      }
+    ],
+    "has_docs": false,
+    "docs_path": null,
+    "helpfile_path": "/Users/matt/Github/f_/help/f_caustic.maxhelp",
+    "status": "done",
+    "tokens_used": 9904
+  },
+  {
+    "module_name": "f_stipple",
+    "short_name": "stipple",
+    "module_type": "processor",
+    "source": "definition.py",
+    "params": [
+      {
+        "name": "freq",
+        "hint": "Hash field spatial frequency",
+        "range": "[0.0 \u2013 20.0]",
+        "type": "float"
+      },
+      {
+        "name": "coarseness",
+        "hint": "Grain period scale \u2014 higher = chunkier grains",
+        "range": "[1.0 \u2013 100.0]",
+        "type": "float"
+      },
+      {
+        "name": "anisotropy",
+        "hint": "0=isotropic grain  1=parallel lines  >1=expressive aliasing",
+        "range": "[0.0 \u2013 4.0]",
+        "type": "float"
+      },
+      {
+        "name": "angle",
+        "hint": "Orientation of along/across coordinate frame",
+        "range": "[-360.0 \u2013 360.0]",
+        "type": "float"
+      },
+      {
+        "name": "zoom",
+        "hint": "Scales viewport into hash field \u2014 same character, bigger or smaller",
+        "range": "[0.1 \u2013 4.0]",
+        "type": "float"
+      },
+      {
+        "name": "threshold",
+        "hint": "Dither bias / displacement amount",
+        "range": "[0.0 \u2013 2.0]",
+        "type": "float"
+      },
+      {
+        "name": "colorize",
+        "hint": "0=monochrome dither output  1=inherit input color",
+        "range": "[0.0 \u2013 1.0]",
+        "type": "float"
+      },
+      {
+        "name": "along_phase",
+        "hint": "Hash field offset along angle axis; drive externally for drift",
+        "range": "[-1.0 \u2013 1.0]",
+        "type": "float"
+      },
+      {
+        "name": "across_phase",
+        "hint": "Hash field offset perpendicular to angle axis; drive externally for drift",
+        "range": "[-1.0 \u2013 1.0]",
+        "type": "float"
+      },
+      {
+        "name": "softness",
+        "hint": "Smoothstep width at comparison boundary",
+        "range": "[0.0 \u2013 2.0]",
+        "type": "float"
+      },
+      {
+        "name": "bypass",
+        "hint": "Bypass",
+        "range": "[0 / 1]",
+        "type": "bool"
+      }
+    ],
+    "has_docs": false,
+    "docs_path": null,
+    "helpfile_path": "/Users/matt/Github/f_/help/f_stipple.maxhelp",
+    "status": "done",
+    "tokens_used": 11381
+  }
+]

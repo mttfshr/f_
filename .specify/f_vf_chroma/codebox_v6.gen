@@ -1,0 +1,100 @@
+// f_vf_chroma codebox v6 — synthesized spectral streak
+// in1 = source texture (char) — luma used for gate only
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = hue mod
+// in4 = dispersion mod
+
+Param radius(0.01);
+Param hue(0.0);
+Param dispersion(0.5);
+Param saturation(1.0);
+Param falloff(0.002);
+Param threshold(0.8);
+Param threshold_width(0.1);
+Param strength(0.8);
+Param direction(0.0);
+Param src_vecfield(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// suppress field when vecfield inlet unconnected — vs_black remaps to (-1,-1)
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// source pixel — for composite and gate
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// hue and dispersion modulation
+mod_hue        = sample(in3, uv).x - 0.5;
+mod_dispersion = sample(in4, uv).x - 0.5;
+hue_eff        = wrap(hue + mod_hue, 0.0, 1.0);
+disp_eff       = clamp(dispersion + mod_dispersion, 0.0, 1.0);
+
+// step delta per iteration
+dx = fx * radius;
+dy = fy * radius;
+
+// direction weights — branchless
+// dir=0 (fwd): fwd=1, bwd=0 | dir=1 (bwd): fwd=0, bwd=1 | dir=2 (bi): fwd=1, bwd=1
+fwd_weight = 1.0 - step(0.5, direction) + step(1.5, direction);
+bwd_weight = step(0.5, direction);
+
+// 48-step accumulation
+accum_r = 0.0; accum_g = 0.0; accum_b = 0.0; accum_w = 0.0;
+
+for (i = 1.0; i <= 48.0; i += 1.0) {
+  w = exp(-i * i * falloff);
+
+  // single march UV per direction
+  fwd_uv = vec(clamp(uv.x + dx * i, 0.0, 1.0), clamp(uv.y + dy * i, 0.0, 1.0));
+  bwd_uv = vec(clamp(uv.x - dx * i, 0.0, 1.0), clamp(uv.y - dy * i, 0.0, 1.0));
+
+  // luma gate — only bright pixels are emitters
+  fwd_luma = sample(in1, fwd_uv).x * 0.2126 + sample(in1, fwd_uv).y * 0.7152 + sample(in1, fwd_uv).z * 0.0722;
+  bwd_luma = sample(in1, bwd_uv).x * 0.2126 + sample(in1, bwd_uv).y * 0.7152 + sample(in1, bwd_uv).z * 0.0722;
+
+  fwd_gate = smoothstep(threshold, threshold + threshold_width, fwd_luma);
+  bwd_gate = smoothstep(threshold, threshold + threshold_width, bwd_luma);
+
+  // synthesize hue from march position — sweep across dispersion range
+  // inline channel access on hsl2rgb return — stored variable component access silently fails on GPU
+  step_hue = wrap(hue_eff + (i / 48.0) * disp_eff, 0.0, 1.0);
+  col_r = hsl2rgb(vec(step_hue, saturation, 0.5, 1.0)).x;
+  col_g = hsl2rgb(vec(step_hue, saturation, 0.5, 1.0)).y;
+  col_b = hsl2rgb(vec(step_hue, saturation, 0.5, 1.0)).z;
+
+  // accumulate synthesized color weighted by gate and falloff
+  accum_r = accum_r + col_r * fwd_gate * w * fwd_weight;
+  accum_g = accum_g + col_g * fwd_gate * w * fwd_weight;
+  accum_b = accum_b + col_b * fwd_gate * w * fwd_weight;
+
+  accum_r = accum_r + col_r * bwd_gate * w * bwd_weight;
+  accum_g = accum_g + col_g * bwd_gate * w * bwd_weight;
+  accum_b = accum_b + col_b * bwd_gate * w * bwd_weight;
+
+  accum_w = accum_w + fwd_gate * w * fwd_weight + bwd_gate * w * bwd_weight;
+}
+
+// normalize
+streak_r = accum_r / max(accum_w, 0.0001);
+streak_g = accum_g / max(accum_w, 0.0001);
+streak_b = accum_b / max(accum_w, 0.0001);
+
+// composite: additive streak over source, strength as wet/dry
+comp_r = clamp(src_r + streak_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + streak_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + streak_b * strength, 0.0, 1.0);
+
+// bypass
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+
+// isolated streak outlet — zeroed on bypass
+out2 = mix(vec(streak_r, streak_g, streak_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

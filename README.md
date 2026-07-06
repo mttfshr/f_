@@ -33,17 +33,25 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_luma_processor` | Processor | Luminance-selective processing |
 | `f_tone_curve` | Processor | Tone curve adjustment |
 | `f_texrouter` | Utility | 4x4 texture routing matrix with preset system |
+| `f_util_profile` | Utility | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
+| `f_util_matrix_2` | Utility | Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status |
+| `f_weave` | Generator | Parametric line-mark texture -- continuous distance-field lines with per-line phase variation; optional vecfield + scalar-potential inlets |
 | `f_caustic` | Processor | Optical caustic -- streamline accumulation weighted by field convergence; two outlets (composited / isolated layer) |
 | `f_sirds` | Generator | Single Image Random Dot Stereogram -- strip-based real-time construction; depth texture drives displacement of a repeating pattern |
 | **f_vf_ family** | **vecfield producers/consumers** | **float32 f_vecfield textures -- produced by f_vf_ generators, consumed by f_caustic, f_vf_warp, f_vf_streak, f_vf_seeds, f_lens field inlet** |
 | `f_vf_vortex` | Generator | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Generator | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
+| `f_vf_flow` | Generator | Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet |
 | `f_vf_fieldmap` | Processor | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |
+| `f_vf_potential` | Processor | Scalar potential-field integrator -- accumulates vecfield magnitude over time via feedback; feeds f_weave's scalar inlet |
 | `f_vf_warp` | Processor | UV warp via f_vecfield -- displaces source texture along field streamlines |
 | `f_vf_streak` | Processor | Directional blur via f_vecfield -- accumulates source samples along streamlines; two outlets (composite / isolated streak layer) |
 | `f_vf_advect` | Processor | Temporal fluid advection via f_vecfield -- accumulates flow across frames; decay >1.0 gives excitable/amplifying character |
 | `f_vf_glow` | Processor | Field-aligned directional blur via f_vecfield -- accumulates source samples along streamlines with exponential falloff; two outlets (composite / isolated glow layer) |
 | `f_vf_repulse` | Generator | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold; four accumulation modes (Cancel, Max, Abs Add, Turbulent) |
+| `f_vf_chroma` | Processor | Vecfield-driven chromatic aberration -- rainbow/hue-sweep streak along field direction; two outlets (composite / isolated layer) |
+| `f_vf_prism` | Processor | Vecfield-driven spectral/prism separation -- luma-gated RGB displacement along field direction; two outlets (composite / isolated layer) |
+| `f_vf_split` | Utility | Splits an f_vecfield's X/Y channels to two separate greyscale outlets, unipolar or bipolar |
 | `f_vf_seeds` | Generator | Discrete mark placement/orientation via f_vecfield and a shape tex -- Voronoi-style seed distribution with priority-generalized selection and multi-owner overlap (texture bombing); shape tex + mod tex inlets |
 
 ## Notes

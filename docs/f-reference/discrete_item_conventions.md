@@ -5,6 +5,24 @@ See `ideas/discrete_item_family.md` for the full architectural framework.
 
 ---
 
+## OPEN: this doc's f_weave description is stale relative to the shipped module (found 2026-07-05)
+
+**This doc's `softness` and `shape` sections both describe f_weave params that
+do not exist in `.specify/f_weave/definition.py`'s shipped param list**
+(`density`, `angle`, `weight`, `marklen`, `regularity`, `phase`,
+`src_potential`, `bypass` — no `softness`, no `shape`). Either f_weave
+shipped without these params (deferred, same as `swing`/`continuity`/
+`beats` per `f_weave/spec.md`'s "What Was Dropped and Why"), or they were
+removed after this doc was written, or this doc describes a planned-but-
+unbuilt design rather than the current build. Whichever it is, the
+`softness`/`shape` sections below should not be trusted as descriptions of
+the current `f_weave.maxpat` without checking `docs/f-reference/f_weave.md`
+and the codebox directly first. Not corrected inline below (would require
+knowing which explanation is true) — flagged here so it isn't silently
+trusted.
+
+---
+
 ## OPEN: cross-module semantic audit needed for `density` / `size`
 
 **Flagged 2026-06-29, not yet resolved.** `density` and `size` (and possibly

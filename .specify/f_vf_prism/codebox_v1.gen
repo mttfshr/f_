@@ -1,0 +1,79 @@
+// f_vf_prism codebox v1 — three-UV prismatic dispersion
+// in1 = source texture (char) — luma sampled at displaced UVs for gate + color
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = length mod
+// in4 = width mod
+
+Param length(0.05);
+Param width(0.1);
+Param threshold(0.7);
+Param threshold_width(0.1);
+Param strength(1.0);
+Param src_vecfield(0.0);
+Param src_length_mod(0.0);
+Param src_width_mod(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// source pixel for composite and bypass
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// field vector — suppress when vecfield inlet unconnected
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// length and width modulation
+length_eff = clamp(length + (sample(in3, uv).x - 0.5), 0.0, 0.3);
+width_eff  = clamp(width  + (sample(in4, uv).x - 0.5), 0.0, 0.5);
+
+// per-channel angular rotation of field vector
+// R: rotated +width, G: no rotation, B: rotated -width
+angle_r =  width_eff;
+angle_g =  0.0;
+angle_b = -width_eff;
+
+cos_r = cos(angle_r); sin_r = sin(angle_r);
+cos_b = cos(angle_b); sin_b = sin(angle_b);
+
+// displaced UVs — look back along field (subtract) to find emitter
+r_uv = vec(clamp(uv.x - (fx * cos_r - fy * sin_r) * length_eff, 0.0, 1.0),
+           clamp(uv.y - (fx * sin_r + fy * cos_r) * length_eff, 0.0, 1.0));
+
+g_uv = vec(clamp(uv.x - fx * length_eff, 0.0, 1.0),
+           clamp(uv.y - fy * length_eff, 0.0, 1.0));
+
+b_uv = vec(clamp(uv.x - (fx * cos_b - fy * sin_b) * length_eff, 0.0, 1.0),
+           clamp(uv.y - (fx * sin_b + fy * cos_b) * length_eff, 0.0, 1.0));
+
+// luma gate at each displaced UV — is there a bright emitter there?
+r_luma = sample(in1, r_uv).x * 0.2126 + sample(in1, r_uv).y * 0.7152 + sample(in1, r_uv).z * 0.0722;
+g_luma = sample(in1, g_uv).x * 0.2126 + sample(in1, g_uv).y * 0.7152 + sample(in1, g_uv).z * 0.0722;
+b_luma = sample(in1, b_uv).x * 0.2126 + sample(in1, b_uv).y * 0.7152 + sample(in1, b_uv).z * 0.0722;
+
+r_gate = smoothstep(threshold, threshold + threshold_width, r_luma);
+g_gate = smoothstep(threshold, threshold + threshold_width, g_luma);
+b_gate = smoothstep(threshold, threshold + threshold_width, b_luma);
+
+// prism output — each channel independently gated at its own displaced position
+prism_r = r_gate;
+prism_g = g_gate;
+prism_b = b_gate;
+
+// composite: additive prism over source
+comp_r = clamp(src_r + prism_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + prism_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + prism_b * strength, 0.0, 1.0);
+
+// bypass
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+
+// isolated prism layer — zeroed on bypass
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

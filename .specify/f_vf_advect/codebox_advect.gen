@@ -1,0 +1,29 @@
+Param dt(0.02);
+Param decay(0.95);
+Param injection(0.05);
+Param mix_amt(1.0);
+Param bypass(0.0);
+Param src_vecfield(0.0);
+
+uv = norm;
+
+// Vecfield: sample inline (no stored variable component access)
+fx = (sample(in2, uv).x - 0.5) * 2.0;
+fy = (sample(in2, uv).y - 0.5) * 2.0;
+
+// Suppress displacement when vecfield unconnected (src_vecfield = 0)
+connected = step(0.5, src_vecfield);
+fx = fx * connected;
+fy = fy * connected;
+
+// Backward-displaced UV, clamped to edge
+src_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));
+
+// Advect previous frame, add source injection
+advected = sample(in3, src_uv) * decay;
+result = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);
+
+// Wet/dry, then bypass
+mixed = mix(sample(in1, uv), result, mix_amt);
+out1 = mix(mixed, sample(in1, uv), bypass);
+out2 = result;

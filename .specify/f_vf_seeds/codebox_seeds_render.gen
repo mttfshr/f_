@@ -1,0 +1,89 @@
+// f_vf_seeds — Stage 2/3: Render
+// Rank-agnostic — same codebox instanced twice, once per rank_coord input.
+// in1: rank_coord (gx, gy, dx, dy from Stage 1c merge)
+// in2: shape tex
+// in3: vecfield
+// in4: mod tex
+//
+// Reproduces Evolution 1.5's exact per-winner downstream block (orientation
+// projection, mod-tex sample, gate, shape sample, luma alpha) but consumes
+// dx/dy from Stage 1c rather than recomputing them. No bypass here — per
+// plan.md ADR 8, bypass is applied only at Stage 4 (composite).
+
+Param strength(1.0);
+Param mag_weight(0.0);
+Param size(0.2);
+Param stretch(0.0);
+Param phase(0.0);
+Param size_mod(0.0);
+Param stretch_mod(0.0);
+Param src_shape(1.0);
+Param src_mod(0.0);
+
+aspect = dim.x / dim.y;
+
+// ── Consume Stage 1c's coord (pixel-for-pixel passthrough, same context) ────
+
+gx = sample(in1, vec(norm.x, norm.y)).x;
+gy = sample(in1, vec(norm.x, norm.y)).y;
+dx = sample(in1, vec(norm.x, norm.y)).z;
+dy = sample(in1, vec(norm.x, norm.y)).w;
+
+// ── Vecfield sampled at this rank's seed position ─────────────────────────────
+
+vx = (sample(in3, vec(gx, gy)).x - 0.5) * 2.0;
+vy = (sample(in3, vec(gx, gy)).y - 0.5) * 2.0;
+field_mag = sqrt(max(vx*vx + vy*vy, 0.0));
+
+// ── Orientation ────────────────────────────────────────────────────────────────
+
+mag = max(field_mag, 0.0001);
+fcs = vx / mag;
+fsn = vy / mag;
+cs = mix(1.0, fcs, strength);
+sn = mix(0.0, fsn, strength);
+mag2 = max(sqrt(cs*cs + sn*sn), 0.0001);
+cs = cs / mag2;
+sn = sn / mag2;
+
+// ── Project pixel offset into seed-local frame ────────────────────────────────
+
+odx = dx * aspect;
+ody = dy;
+along  =  odx * cs + ody * sn;
+across = -odx * sn + ody * cs;
+
+// ── Mod tex modulation ────────────────────────────────────────────────────────
+
+mod_sample = sample(in4, vec(gx, gy)).x * src_mod;
+size_eff = clamp(size + mod_sample * size_mod + field_mag * mag_weight, 0.001, 0.5);
+stretch_eff = stretch + mod_sample * stretch_mod;
+stretch_factor = 1.0 + stretch_eff;
+marklen_eff = size_eff * stretch_factor;
+weight_eff = size_eff / max(stretch_factor, 0.0001);
+
+// ── Construct seed-local UV ────────────────────────────────────────────────────
+
+along_shifted = along - phase * marklen_eff;
+local_u = along_shifted / marklen_eff * 0.5 + 0.5;
+local_v = across / weight_eff * 0.5 + 0.5;
+
+// ── Gate ─────────────────────────────────────────────────────────────────────
+
+gate = step(abs(along_shifted), marklen_eff) * step(abs(across), weight_eff);
+
+// ── Sample shape tex ─────────────────────────────────────────────────────────
+
+shape_r = sample(in2, vec(local_u, local_v)).x;
+shape_g = sample(in2, vec(local_u, local_v)).y;
+shape_b = sample(in2, vec(local_u, local_v)).z;
+shape_luma = (shape_r + shape_g + shape_b) / 3.0;
+
+mark_r = shape_r * gate * src_shape;
+mark_g = shape_g * gate * src_shape;
+mark_b = shape_b * gate * src_shape;
+mark_a = shape_luma * gate * src_shape;
+
+// ── Output ───────────────────────────────────────────────────────────────────
+
+out1 = vec(mark_r, mark_g, mark_b, mark_a);

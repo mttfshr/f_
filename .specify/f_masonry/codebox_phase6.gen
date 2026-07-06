@@ -1,0 +1,231 @@
+// f_masonry codebox — Phase 6
+// 2026-06-04
+// Changes from current (A/B both slot space):
+//   - A (in2) stays: slot space, brick_uv — structural + appearance params
+//   - B (in3) changed: intra-brick space, vec(along_frac, across_phase) — appearance params only
+//   - C (in4) added: screen space, norm — appearance params only
+//   - B and C sample after full geometry (along_frac, across_phase available)
+//   - Structural params modulated by A only (offset, drift, speed_var, phase,
+//     regularity, skip, quantize) — modulating from B/C breaks slot quantization
+//   - Appearance params (mortar, softness, width, roundness, course_color,
+//     brick_color) modulated by A + B + C
+//   - sqrt() replaced with pow(x, 0.5) — known codebox gotcha
+
+Param src_mode(0.0);
+Param angle(0.0);
+Param courses(8.0);
+Param bond(8.0);
+Param offset(0.0);
+Param mortar(0.2);
+Param softness(0.0);
+Param regularity(1.0);
+Param drift(0.0);
+Param phase(0.0);
+Param speed_var(0.0);
+Param skip(1.0);
+Param bypass(0.0);
+Param width(0.9);
+Param roundness(0.0);
+Param quantize(0.0);
+Param course_color(0.0);
+Param brick_color(0.0);
+Param course_seed(0.0);
+Param brick_seed(0.0);
+
+// A (slot space) — structural params
+Param drift_mod_amt_a(0.0);
+Param offset_mod_amt_a(0.0);
+Param speed_var_mod_amt_a(0.0);
+Param regularity_mod_amt_a(0.0);
+Param phase_mod_amt_a(0.0);
+Param quantize_mod_amt_a(0.0);
+Param skip_mod_amt_a(0.0);
+
+// A (slot space) — appearance params
+Param mortar_mod_amt_a(0.0);
+Param softness_mod_amt_a(0.0);
+Param width_mod_amt_a(0.0);
+Param roundness_mod_amt_a(0.0);
+Param course_color_mod_amt_a(0.0);
+Param brick_color_mod_amt_a(0.0);
+
+// B (intra-brick space) — appearance params only
+Param mortar_mod_amt_b(0.0);
+Param softness_mod_amt_b(0.0);
+Param width_mod_amt_b(0.0);
+Param roundness_mod_amt_b(0.0);
+Param course_color_mod_amt_b(0.0);
+Param brick_color_mod_amt_b(0.0);
+
+// C (screen/pixel space) — appearance params only
+Param mortar_mod_amt_c(0.0);
+Param softness_mod_amt_c(0.0);
+Param width_mod_amt_c(0.0);
+Param roundness_mod_amt_c(0.0);
+Param course_color_mod_amt_c(0.0);
+Param brick_color_mod_amt_c(0.0);
+
+// ------------------------------------------------------------------
+// Early geometry — needed for A (slot space) sampling
+// ------------------------------------------------------------------
+
+theta  = angle * (PI / 180.0);
+cosT   = cos(theta);
+sinT   = sin(theta);
+
+aspect = dim.x / dim.y;
+px     = norm.x * aspect;
+py     = norm.y;
+along  =  px * cosT + py * sinT;
+across = -px * sinT + py * cosT;
+
+course_scale = max(courses, 0.001);
+bond_scale   = max(bond, 0.001);
+band_idx     = floor(across * course_scale);
+
+cs = floor(course_seed);
+bs = floor(brick_seed);
+
+// unshifted slot — stable brick identity for A UV sampling
+slot = floor(along * bond_scale + band_idx * offset);
+
+// ------------------------------------------------------------------
+// A sampling — slot space
+// structural + appearance params
+// ------------------------------------------------------------------
+
+// offset special case: per-course only, no along component, avoids circularity
+brick_uv_offset = vec(0.5, wrap(band_idx / course_scale, 0.0, 1.0));
+offset_shift = sample(in2, brick_uv_offset).r * offset_mod_amt_a;
+
+// standard brick identity UV
+brick_uv = vec(wrap(slot / bond_scale, 0.0, 1.0), wrap(band_idx / course_scale, 0.0, 1.0));
+a_sample = sample(in2, brick_uv).r;
+
+// structural _eff — A only
+drift_eff      = clamp(drift      + a_sample * drift_mod_amt_a,      0.0, 1.0);
+speed_var_eff  = clamp(speed_var  + a_sample * speed_var_mod_amt_a,  0.0, 1.0);
+regularity_eff = clamp(regularity + a_sample * regularity_mod_amt_a, 0.0, 1.0);
+phase_eff      = clamp(phase      + a_sample * phase_mod_amt_a,      0.0, 1.0);
+quantize_eff   = clamp(quantize   + a_sample * quantize_mod_amt_a,   0.0, 1.0);
+skip_eff       = clamp(skip       + a_sample * skip_mod_amt_a,       0.0, 1.0);
+
+// ------------------------------------------------------------------
+// Full geometry — using structural _eff params
+// ------------------------------------------------------------------
+
+// per-course speed hash
+h3         = (band_idx + cs) * 419.2;
+h3         = sin(h3) * 43758.5;
+band_hash  = h3 - floor(h3);
+band_speed = 1.0 + (band_hash - 0.5) * speed_var_eff * 2.0;
+band_phase = phase_eff * band_speed;
+
+along_shifted = along + offset_shift / bond_scale;
+slot          = floor(along_shifted * bond_scale + band_idx * offset);
+along_cont    = along_shifted * bond_scale + band_idx * offset;
+
+// presence hash — slot-quantized
+h1        = (slot + bs) * 127.1 + (band_idx + cs) * 311.7;
+h1        = sin(h1) * 43758.5;
+slot_hash = h1 - floor(h1);
+
+// drift hash — slot-quantized
+h2      = (slot + bs) * 269.5 + band_idx * 183.3;
+h2      = sin(h2) * 43758.5;
+drift_q = (h2 - floor(h2) - 0.5) * drift_eff * 0.5;
+
+// drift hash — continuous
+along_frac = along_cont - floor(along_cont);
+h2c        = (along_frac + bs) * 7.3;
+h2c        = sin(h2c) * 43758.5;
+drift_c    = (h2c - floor(h2c) - 0.5) * drift_eff * 0.5;
+
+drift_offset = mix(drift_q, drift_c, quantize_eff);
+
+along_phase = wrap(along_cont + drift_offset + band_phase, 0.0, 1.0);
+
+// regular mark distance
+mark_dist_reg = abs(wrap(along_phase, 0.0, 1.0) - 0.5) * 2.0;
+
+// random mark distance
+mark_dist_rnd = mix(along_phase, 1.0 - along_phase, step(0.5, slot_hash));
+mark_dist_rnd = mark_dist_rnd * 2.0;
+
+mark_dist = mix(mark_dist_rnd, mark_dist_reg, regularity_eff);
+
+// skip — per-course hash gate
+h4        = (band_idx + cs) * 591.3;
+h4        = sin(h4) * 43758.5;
+band_cont = h4 - floor(h4);
+cont      = step(1.0 - skip_eff, band_cont);
+
+// across-band distance
+across_phase = wrap(across * course_scale, 0.0, 1.0);
+across_dist  = abs(across_phase - 0.5) * 2.0;
+
+// ------------------------------------------------------------------
+// B sampling — intra-brick space
+// C sampling — screen space
+// Both here, after along_frac and across_phase are available
+// ------------------------------------------------------------------
+
+b_sample = sample(in3, vec(along_frac, across_phase)).r;
+c_sample = sample(in4, norm).r;
+
+// appearance _eff — A + B + C
+mortar_eff      = clamp(mortar      + a_sample * mortar_mod_amt_a      + b_sample * mortar_mod_amt_b      + c_sample * mortar_mod_amt_c,      0.0, 1.0);
+softness_eff    = clamp(softness    + a_sample * softness_mod_amt_a    + b_sample * softness_mod_amt_b    + c_sample * softness_mod_amt_c,    0.0, 1.0);
+width_eff       = clamp(width       + a_sample * width_mod_amt_a       + b_sample * width_mod_amt_b       + c_sample * width_mod_amt_c,       0.0, 2.0);
+roundness_eff   = clamp(roundness   + a_sample * roundness_mod_amt_a   + b_sample * roundness_mod_amt_b   + c_sample * roundness_mod_amt_c,   0.0, 1.0);
+course_color_eff = clamp(course_color + a_sample * course_color_mod_amt_a + b_sample * course_color_mod_amt_b + c_sample * course_color_mod_amt_c, 0.0, 1.0);
+brick_color_eff  = clamp(brick_color  + a_sample * brick_color_mod_amt_a  + b_sample * brick_color_mod_amt_b  + c_sample * brick_color_mod_amt_c,  0.0, 1.0);
+
+// ------------------------------------------------------------------
+// Output geometry — using appearance _eff params
+// ------------------------------------------------------------------
+
+across_d = across_dist / max(width_eff, 0.01);
+along_d  = mark_dist;
+
+// rect/round blend
+rect_dist  = max(along_d, across_d);
+round_dist = pow(along_d * along_d + across_d * across_d, 0.5) * 0.7071;
+final_dist = mix(rect_dist, round_dist, roundness_eff);
+
+// mark identity
+mark_center = along_cont + drift_offset + band_phase - along_phase + 0.5;
+mark_slot   = floor(mark_center);
+
+// ------------------------------------------------------------------
+// Color
+// ------------------------------------------------------------------
+
+band_col_r = (sin((band_idx + cs) * 127.1) * 43758.5453 - floor(sin((band_idx + cs) * 127.1) * 43758.5453));
+band_col_g = (sin((band_idx + cs) * 91.3)  * 43758.5453 - floor(sin((band_idx + cs) * 91.3)  * 43758.5453));
+band_col_b = (sin((band_idx + cs) * 43.1)  * 43758.5453 - floor(sin((band_idx + cs) * 43.1)  * 43758.5453));
+
+mark_col_r = (sin((mark_slot + bs) * 127.1 + (band_idx + cs) * 311.7) * 43758.5453 - floor(sin((mark_slot + bs) * 127.1 + (band_idx + cs) * 311.7) * 43758.5453));
+mark_col_g = (sin((mark_slot + bs) * 57.2  + (band_idx + cs) * 91.3)  * 43758.5453 - floor(sin((mark_slot + bs) * 57.2  + (band_idx + cs) * 91.3)  * 43758.5453));
+mark_col_b = (sin((mark_slot + bs) * 123.7 + (band_idx + cs) * 43.1)  * 43758.5453 - floor(sin((mark_slot + bs) * 123.7 + (band_idx + cs) * 43.1)  * 43758.5453));
+
+// ------------------------------------------------------------------
+// Composite
+// ------------------------------------------------------------------
+
+mark_size = 1.0 - mortar_eff;
+mark_out  = smoothstep(mark_size + softness_eff, mark_size - softness_eff, final_dist) * cont;
+
+mark_r = mark_out * mix(1.0, mark_col_r, brick_color_eff);
+mark_g = mark_out * mix(1.0, mark_col_g, brick_color_eff);
+mark_b = mark_out * mix(1.0, mark_col_b, brick_color_eff);
+
+bg_r = mix(0.0, band_col_r, course_color_eff);
+bg_g = mix(0.0, band_col_g, course_color_eff);
+bg_b = mix(0.0, band_col_b, course_color_eff);
+
+out_r = mix(bg_r, mark_r, mark_out);
+out_g = mix(bg_g, mark_g, mark_out);
+out_b = mix(bg_b, mark_b, mark_out);
+
+out1 = mix(vec(out_r, out_g, out_b, 1.0), vec(0.0, 0.0, 0.0, 0.0), bypass);

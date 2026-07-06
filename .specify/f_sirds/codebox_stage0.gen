@@ -1,0 +1,5 @@
+uv = norm;
+local_x = mod(uv.x, {strip_width}) / {strip_width};
+result = sample(in1, vec(local_x, uv.y));
+
+out1 = result;

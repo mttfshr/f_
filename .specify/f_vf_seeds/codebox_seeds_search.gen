@@ -1,0 +1,220 @@
+// f_vf_seeds — Stage 1a/1b: Search Half
+// in1: vecfield
+//
+// Same codebox instanced TWICE — once per 9-candidate group. Salts are
+// baked as literal constants via {{salt1}}-{{salt4}} template placeholders
+// (not live Params) — they're fixed identity constants distinguishing the
+// two halves; a live dial here would break the decorrelation the split
+// depends on. active_blend/sentinel ARE live Params in both instances,
+// but only Stage 1b's active_blend is ever wired to anything (to `bomb`,
+// renamed at the outer module boundary) — Stage 1a's sits unused at its
+// default (1.0) permanently. This asymmetry is intentional: keeping both
+// instances textually identical (true DRY) outweighs the minor unused-
+// attribute cost on Stage 1a.
+//
+// Confirmed empirically (2026-07-04): active_blend/bomb behaves as an
+// on/off toggle, not a graded fader — real priority magnitude scales
+// with density/jitter/field_gain/field_priority, so no fixed `sentinel`
+// constant stays correctly scaled across settings. See spec.md's
+// Evolution 2 "bomb" param note and plan.md's toggle-behavior addendum.
+// No code fix applied — this is documented behavior, not a bug.
+//
+// Density-compensation (sqrt(2) cell-growth) was tried and REMOVED —
+// it made `bomb` read as a zoom/density control instead of a clustering
+// control (cell pitch and jitter rescaled together, mechanically
+// identical to the density param itself). Accepted trade-off: point
+// count now genuinely rises with bomb (density/irregularity coupling,
+// already flagged in ideas/seed_distribution_beyond_grid.md).
+//
+// This is the same search+top-2 shape confirmed compiling clean in
+// isolation (T003) — Stage 1 as a single 18-candidate codebox hit Max's
+// GL2→GL3 shader transformer's Lua DSL.Parser capture-group ceiling;
+// splitting into two 9-candidate halves + a small merge stage (1c)
+// resolved it. Full history: plan.md ADR 7/8 and its addenda.
+//
+// out1 = rank1_coord (best_gx, best_gy, best_dx, best_dy) — this half's winner
+// out2 = rank2_coord (second_gx, second_gy, second_dx, second_dy) — this half's runner-up
+// out3 = pri_pair (best_pri, second_pri, 0, 1) — needed by Stage 1c to merge two halves
+
+Param density(0.5);
+Param jitter(0.5);
+Param field_priority(0.0);
+Param field_gain(0.0);
+Param active_blend(1.0);
+Param sentinel(5.0);
+
+density_scale = pow(2.0, density * 9.0 - 1.0);
+density_scale_eff = density_scale;
+aspect = dim.x / dim.y;
+
+px = norm.x * density_scale_eff * aspect;
+py = norm.y * density_scale_eff;
+icx = floor(px);
+icy = floor(py);
+
+ncx = icx-1.0; ncy = icy-1.0;
+jxA = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyA = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxA = (ncx + 0.5 + jxA*jitter) / (density_scale_eff * aspect);
+syA = (ncy + 0.5 + jyA*jitter) / density_scale_eff;
+dxA = norm.x - sxA; dyA = norm.y - syA;
+dA = dxA*dxA + dyA*dyA;
+vxA = (sample(in1, vec(sxA, syA)).x - 0.5) * 2.0;
+vyA = (sample(in1, vec(sxA, syA)).y - 0.5) * 2.0;
+fmA = sqrt(max(vxA*vxA + vyA*vyA, 0.0));
+priAr = mix(dA, -fmA * field_gain, field_priority);
+priA = mix(sentinel, priAr, active_blend);
+
+ncx = icx; ncy = icy-1.0;
+jxB = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyB = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxB = (ncx + 0.5 + jxB*jitter) / (density_scale_eff * aspect);
+syB = (ncy + 0.5 + jyB*jitter) / density_scale_eff;
+dxB = norm.x - sxB; dyB = norm.y - syB;
+dB = dxB*dxB + dyB*dyB;
+vxB = (sample(in1, vec(sxB, syB)).x - 0.5) * 2.0;
+vyB = (sample(in1, vec(sxB, syB)).y - 0.5) * 2.0;
+fmB = sqrt(max(vxB*vxB + vyB*vyB, 0.0));
+priBr = mix(dB, -fmB * field_gain, field_priority);
+priB = mix(sentinel, priBr, active_blend);
+
+ncx = icx+1.0; ncy = icy-1.0;
+jxC = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyC = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxC = (ncx + 0.5 + jxC*jitter) / (density_scale_eff * aspect);
+syC = (ncy + 0.5 + jyC*jitter) / density_scale_eff;
+dxC = norm.x - sxC; dyC = norm.y - syC;
+dC = dxC*dxC + dyC*dyC;
+vxC = (sample(in1, vec(sxC, syC)).x - 0.5) * 2.0;
+vyC = (sample(in1, vec(sxC, syC)).y - 0.5) * 2.0;
+fmC = sqrt(max(vxC*vxC + vyC*vyC, 0.0));
+priCr = mix(dC, -fmC * field_gain, field_priority);
+priC = mix(sentinel, priCr, active_blend);
+
+ncx = icx-1.0; ncy = icy;
+jxD = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyD = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxD = (ncx + 0.5 + jxD*jitter) / (density_scale_eff * aspect);
+syD = (ncy + 0.5 + jyD*jitter) / density_scale_eff;
+dxD = norm.x - sxD; dyD = norm.y - syD;
+dD = dxD*dxD + dyD*dyD;
+vxD = (sample(in1, vec(sxD, syD)).x - 0.5) * 2.0;
+vyD = (sample(in1, vec(sxD, syD)).y - 0.5) * 2.0;
+fmD = sqrt(max(vxD*vxD + vyD*vyD, 0.0));
+priDr = mix(dD, -fmD * field_gain, field_priority);
+priD = mix(sentinel, priDr, active_blend);
+
+ncx = icx; ncy = icy;
+jxE = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyE = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxE = (ncx + 0.5 + jxE*jitter) / (density_scale_eff * aspect);
+syE = (ncy + 0.5 + jyE*jitter) / density_scale_eff;
+dxE = norm.x - sxE; dyE = norm.y - syE;
+dE = dxE*dxE + dyE*dyE;
+vxE = (sample(in1, vec(sxE, syE)).x - 0.5) * 2.0;
+vyE = (sample(in1, vec(sxE, syE)).y - 0.5) * 2.0;
+fmE = sqrt(max(vxE*vxE + vyE*vyE, 0.0));
+priEr = mix(dE, -fmE * field_gain, field_priority);
+priE = mix(sentinel, priEr, active_blend);
+
+ncx = icx+1.0; ncy = icy;
+jxF = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyF = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxF = (ncx + 0.5 + jxF*jitter) / (density_scale_eff * aspect);
+syF = (ncy + 0.5 + jyF*jitter) / density_scale_eff;
+dxF = norm.x - sxF; dyF = norm.y - syF;
+dF = dxF*dxF + dyF*dyF;
+vxF = (sample(in1, vec(sxF, syF)).x - 0.5) * 2.0;
+vyF = (sample(in1, vec(sxF, syF)).y - 0.5) * 2.0;
+fmF = sqrt(max(vxF*vxF + vyF*vyF, 0.0));
+priFr = mix(dF, -fmF * field_gain, field_priority);
+priF = mix(sentinel, priFr, active_blend);
+
+ncx = icx-1.0; ncy = icy+1.0;
+jxG = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyG = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxG = (ncx + 0.5 + jxG*jitter) / (density_scale_eff * aspect);
+syG = (ncy + 0.5 + jyG*jitter) / density_scale_eff;
+dxG = norm.x - sxG; dyG = norm.y - syG;
+dG = dxG*dxG + dyG*dyG;
+vxG = (sample(in1, vec(sxG, syG)).x - 0.5) * 2.0;
+vyG = (sample(in1, vec(sxG, syG)).y - 0.5) * 2.0;
+fmG = sqrt(max(vxG*vxG + vyG*vyG, 0.0));
+priGr = mix(dG, -fmG * field_gain, field_priority);
+priG = mix(sentinel, priGr, active_blend);
+
+ncx = icx; ncy = icy+1.0;
+jxH = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyH = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxH = (ncx + 0.5 + jxH*jitter) / (density_scale_eff * aspect);
+syH = (ncy + 0.5 + jyH*jitter) / density_scale_eff;
+dxH = norm.x - sxH; dyH = norm.y - syH;
+dH = dxH*dxH + dyH*dyH;
+vxH = (sample(in1, vec(sxH, syH)).x - 0.5) * 2.0;
+vyH = (sample(in1, vec(sxH, syH)).y - 0.5) * 2.0;
+fmH = sqrt(max(vxH*vxH + vyH*vyH, 0.0));
+priHr = mix(dH, -fmH * field_gain, field_priority);
+priH = mix(sentinel, priHr, active_blend);
+
+ncx = icx+1.0; ncy = icy+1.0;
+jxI = fract(sin(ncx*{salt1} + ncy*{salt2})*43758.5453) - 0.5;
+jyI = fract(sin(ncx*{salt3} + ncy*{salt4})*43758.5453) - 0.5;
+sxI = (ncx + 0.5 + jxI*jitter) / (density_scale_eff * aspect);
+syI = (ncy + 0.5 + jyI*jitter) / density_scale_eff;
+dxI = norm.x - sxI; dyI = norm.y - syI;
+dI = dxI*dxI + dyI*dyI;
+vxI = (sample(in1, vec(sxI, syI)).x - 0.5) * 2.0;
+vyI = (sample(in1, vec(sxI, syI)).y - 0.5) * 2.0;
+fmI = sqrt(max(vxI*vxI + vyI*vyI, 0.0));
+priIr = mix(dI, -fmI * field_gain, field_priority);
+priI = mix(sentinel, priIr, active_blend);
+
+t0=step(priB,priA);
+best_pri=mix(priA,priB,t0); best_gx=mix(sxA,sxB,t0); best_gy=mix(syA,syB,t0); best_dx=mix(dxA,dxB,t0); best_dy=mix(dyA,dyB,t0);
+second_pri=mix(priB,priA,t0); second_gx=mix(sxB,sxA,t0); second_gy=mix(syB,syA,t0); second_dx=mix(dxB,dxA,t0); second_dy=mix(dyB,dyA,t0);
+
+t=step(priC,best_pri);
+demoted_pri=mix(priC,best_pri,t); demoted_gx=mix(sxC,best_gx,t); demoted_gy=mix(syC,best_gy,t); demoted_dx=mix(dxC,best_dx,t); demoted_dy=mix(dyC,best_dy,t);
+best_pri=mix(best_pri,priC,t); best_gx=mix(best_gx,sxC,t); best_gy=mix(best_gy,syC,t); best_dx=mix(best_dx,dxC,t); best_dy=mix(best_dy,dyC,t);
+t2=step(demoted_pri,second_pri);
+second_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);
+
+t=step(priD,best_pri);
+demoted_pri=mix(priD,best_pri,t); demoted_gx=mix(sxD,best_gx,t); demoted_gy=mix(syD,best_gy,t); demoted_dx=mix(dxD,best_dx,t); demoted_dy=mix(dyD,best_dy,t);
+best_pri=mix(best_pri,priD,t); best_gx=mix(best_gx,sxD,t); best_gy=mix(best_gy,syD,t); best_dx=mix(best_dx,dxD,t); best_dy=mix(best_dy,dyD,t);
+t2=step(demoted_pri,second_pri);
+second_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);
+
+t=step(priE,best_pri);
+demoted_pri=mix(priE,best_pri,t); demoted_gx=mix(sxE,best_gx,t); demoted_gy=mix(syE,best_gy,t); demoted_dx=mix(dxE,best_dx,t); demoted_dy=mix(dyE,best_dy,t);
+best_pri=mix(best_pri,priE,t); best_gx=mix(best_gx,sxE,t); best_gy=mix(best_gy,syE,t); best_dx=mix(best_dx,dxE,t); best_dy=mix(best_dy,dyE,t);
+t2=step(demoted_pri,second_pri);
+second_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);
+
+t=step(priF,best_pri);
+demoted_pri=mix(priF,best_pri,t); demoted_gx=mix(sxF,best_gx,t); demoted_gy=mix(syF,best_gy,t); demoted_dx=mix(dxF,best_dx,t); demoted_dy=mix(dyF,best_dy,t);
+best_pri=mix(best_pri,priF,t); best_gx=mix(best_gx,sxF,t); best_gy=mix(best_gy,syF,t); best_dx=mix(best_dx,dxF,t); best_dy=mix(best_dy,dyF,t);
+t2=step(demoted_pri,second_pri);
+second_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);
+
+t=step(priG,best_pri);
+demoted_pri=mix(priG,best_pri,t); demoted_gx=mix(sxG,best_gx,t); demoted_gy=mix(syG,best_gy,t); demoted_dx=mix(dxG,best_dx,t); demoted_dy=mix(dyG,best_dy,t);
+best_pri=mix(best_pri,priG,t); best_gx=mix(best_gx,sxG,t); best_gy=mix(best_gy,syG,t); best_dx=mix(best_dx,dxG,t); best_dy=mix(best_dy,dyG,t);
+t2=step(demoted_pri,second_pri);
+second_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);
+
+t=step(priH,best_pri);
+demoted_pri=mix(priH,best_pri,t); demoted_gx=mix(sxH,best_gx,t); demoted_gy=mix(syH,best_gy,t); demoted_dx=mix(dxH,best_dx,t); demoted_dy=mix(dyH,best_dy,t);
+best_pri=mix(best_pri,priH,t); best_gx=mix(best_gx,sxH,t); best_gy=mix(best_gy,syH,t); best_dx=mix(best_dx,dxH,t); best_dy=mix(best_dy,dyH,t);
+t2=step(demoted_pri,second_pri);
+second_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);
+
+t=step(priI,best_pri);
+demoted_pri=mix(priI,best_pri,t); demoted_gx=mix(sxI,best_gx,t); demoted_gy=mix(syI,best_gy,t); demoted_dx=mix(dxI,best_dx,t); demoted_dy=mix(dyI,best_dy,t);
+best_pri=mix(best_pri,priI,t); best_gx=mix(best_gx,sxI,t); best_gy=mix(best_gy,syI,t); best_dx=mix(best_dx,dxI,t); best_dy=mix(best_dy,dyI,t);
+t2=step(demoted_pri,second_pri);
+second_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);
+
+out1 = vec(best_gx, best_gy, best_dx, best_dy);
+out2 = vec(second_gx, second_gy, second_dx, second_dy);
+out3 = vec(best_pri, second_pri, 0.0, 1.0);

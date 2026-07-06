@@ -1,0 +1,146 @@
+// f_vf_prism codebox v14 — refactored with helper functions
+// in1 = source texture (char) — luma sampled at displaced UVs for gate
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = reach mod
+// in4 = spread mod
+
+// helper: luma from displaced UV — cx/sx are cos/sin of channel rotation
+displaced_luma(tux, tuy, fx, fy, cx, sx, reach) {
+    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0., 1.);
+    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0., 1.);
+    return sample(in1, vec(dux, duy)).x * 0.2126
+         + sample(in1, vec(dux, duy)).y * 0.7152
+         + sample(in1, vec(dux, duy)).z * 0.0722;
+}
+
+// helper: gate value for one channel at one tap position
+channel_gate(tux, tuy, fx, fy, cx, sx, reach, thresh, twidth) {
+    luma = displaced_luma(tux, tuy, fx, fy, cx, sx, reach);
+    return smoothstep(thresh, thresh + twidth, luma);
+}
+
+Param reach(0.05);
+Param spread(0.1);
+Param threshold(0.7);
+Param threshold_width(0.1);
+Param feather(0.1);
+Param strength(1.0);
+Param src_vecfield(0.0);
+Param src_length_mod(0.0);
+Param src_width_mod(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// source pixel
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// field vector
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// mod inlets
+reach_eff  = clamp(reach  + (sample(in3, uv).x - 0.5) * src_length_mod, 0.0, 0.3);
+spread_eff = clamp(spread + (sample(in4, uv).x - 0.5) * src_width_mod,  0.0, 0.5);
+
+// per-channel rotation scalars
+cos_r = cos(spread_eff);  sin_r = sin(spread_eff);
+cos_b = cos(-spread_eff); sin_b = sin(-spread_eff);
+// G channel: no rotation, cos=1 sin=0
+cos_g = 1.0; sin_g = 0.0;
+
+// perpendicular direction (normalized)
+field_mag = max(sqrt(fx * fx + fy * fy), 0.0001);
+px = -fy / field_mag;
+py =  fx / field_mag;
+
+// feather step size — fraction of inter-channel separation, never extends beyond spread
+separation = sin(spread_eff) * reach_eff * field_mag;
+step_size = feather * separation;
+
+// 11-tap gaussian weights (symmetric, sum=1)
+w0 = 0.0093;
+w1 = 0.0280;
+w2 = 0.0660;
+w3 = 0.1220;
+w4 = 0.1747;
+w5 = 0.2000;
+
+// compute tap UVs and gate values for all 11 taps × 3 channels
+// tap offset = k * step_size along perpendicular
+
+t5x = uv.x + px * (-5.0) * step_size; t5y = uv.y + py * (-5.0) * step_size;
+t4x = uv.x + px * (-4.0) * step_size; t4y = uv.y + py * (-4.0) * step_size;
+t3x = uv.x + px * (-3.0) * step_size; t3y = uv.y + py * (-3.0) * step_size;
+t2x = uv.x + px * (-2.0) * step_size; t2y = uv.y + py * (-2.0) * step_size;
+t1x = uv.x + px * (-1.0) * step_size; t1y = uv.y + py * (-1.0) * step_size;
+t0x = uv.x;                            t0y = uv.y;
+p1x = uv.x + px *   1.0  * step_size; p1y = uv.y + py *   1.0  * step_size;
+p2x = uv.x + px *   2.0  * step_size; p2y = uv.y + py *   2.0  * step_size;
+p3x = uv.x + px *   3.0  * step_size; p3y = uv.y + py *   3.0  * step_size;
+p4x = uv.x + px *   4.0  * step_size; p4y = uv.y + py *   4.0  * step_size;
+p5x = uv.x + px *   5.0  * step_size; p5y = uv.y + py *   5.0  * step_size;
+
+// R channel gates
+gr_t5 = channel_gate(t5x, t5y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t4 = channel_gate(t4x, t4y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t3 = channel_gate(t3x, t3y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t2 = channel_gate(t2x, t2y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t1 = channel_gate(t1x, t1y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t0 = channel_gate(t0x, t0y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p1 = channel_gate(p1x, p1y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p2 = channel_gate(p2x, p2y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p3 = channel_gate(p3x, p3y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p4 = channel_gate(p4x, p4y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p5 = channel_gate(p5x, p5y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+
+// G channel gates
+gg_t5 = channel_gate(t5x, t5y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t4 = channel_gate(t4x, t4y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t3 = channel_gate(t3x, t3y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t2 = channel_gate(t2x, t2y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t1 = channel_gate(t1x, t1y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t0 = channel_gate(t0x, t0y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p1 = channel_gate(p1x, p1y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p2 = channel_gate(p2x, p2y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p3 = channel_gate(p3x, p3y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p4 = channel_gate(p4x, p4y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p5 = channel_gate(p5x, p5y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+
+// B channel gates
+gb_t5 = channel_gate(t5x, t5y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t4 = channel_gate(t4x, t4y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t3 = channel_gate(t3x, t3y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t2 = channel_gate(t2x, t2y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t1 = channel_gate(t1x, t1y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t0 = channel_gate(t0x, t0y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p1 = channel_gate(p1x, p1y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p2 = channel_gate(p2x, p2y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p3 = channel_gate(p3x, p3y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p4 = channel_gate(p4x, p4y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p5 = channel_gate(p5x, p5y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+
+// weighted sum — split into two lines per channel to avoid line length issues
+prism_r = gr_t5*w0 + gr_t4*w1 + gr_t3*w2 + gr_t2*w3 + gr_t1*w4 + gr_t0*w5;
+prism_r = prism_r + gr_p1*w4 + gr_p2*w3 + gr_p3*w2 + gr_p4*w1 + gr_p5*w0;
+
+prism_g = gg_t5*w0 + gg_t4*w1 + gg_t3*w2 + gg_t2*w3 + gg_t1*w4 + gg_t0*w5;
+prism_g = prism_g + gg_p1*w4 + gg_p2*w3 + gg_p3*w2 + gg_p4*w1 + gg_p5*w0;
+
+prism_b = gb_t5*w0 + gb_t4*w1 + gb_t3*w2 + gb_t2*w3 + gb_t1*w4 + gb_t0*w5;
+prism_b = prism_b + gb_p1*w4 + gb_p2*w3 + gb_p3*w2 + gb_p4*w1 + gb_p5*w0;
+
+// composite
+comp_r = clamp(src_r + prism_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + prism_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + prism_b * strength, 0.0, 1.0);
+
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

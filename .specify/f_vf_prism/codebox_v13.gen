@@ -1,0 +1,254 @@
+// f_vf_prism codebox v13 — 11-tap perpendicular gate blur
+// in1 = source texture (char) — luma sampled at displaced UVs for gate
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = reach mod
+// in4 = spread mod
+
+Param reach(0.05);
+Param spread(0.1);
+Param threshold(0.7);
+Param threshold_width(0.1);
+Param feather(0.1);
+Param strength(1.0);
+Param src_vecfield(0.0);
+Param src_length_mod(0.0);
+Param src_width_mod(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// source pixel
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// field vector
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// mod inlets
+reach_eff  = clamp(reach  + (sample(in3, uv).x - 0.5) * src_length_mod, 0.0, 0.3);
+spread_eff = clamp(spread + (sample(in4, uv).x - 0.5) * src_width_mod,  0.0, 0.5);
+
+// per-channel rotation scalars
+cos_r = cos(spread_eff);  sin_r = sin(spread_eff);
+cos_b = cos(-spread_eff); sin_b = sin(-spread_eff);
+
+// perpendicular direction (normalized)
+field_mag = max(sqrt(fx * fx + fy * fy), 0.0001);
+px = -fy / field_mag;
+py =  fx / field_mag;
+
+// feather step size — fraction of inter-channel separation, never extends beyond spread
+separation = sin(spread_eff) * reach_eff * field_mag;
+step_size = feather * separation;
+
+// 11-tap gaussian weights (sigma ~2.5, normalized)
+w0 = 0.0093;
+w1 = 0.0280;
+w2 = 0.0660;
+w3 = 0.1220;
+w4 = 0.1747;
+w5 = 0.2000;
+
+// tap k=-5
+tap_ux_m5 = uv.x + px * (-5.0) * step_size;
+tap_uy_m5 = uv.y + py * (-5.0) * step_size;
+luma_r_m5 = sample(in1, vec(clamp(tap_ux_m5 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m5 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m5 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m5 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m5 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m5 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_m5 = smoothstep(threshold, threshold + threshold_width, luma_r_m5);
+luma_g_m5 = sample(in1, vec(clamp(tap_ux_m5 - fx*reach_eff, 0.,1.), clamp(tap_uy_m5 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m5 - fx*reach_eff, 0.,1.), clamp(tap_uy_m5 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m5 - fx*reach_eff, 0.,1.), clamp(tap_uy_m5 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_m5 = smoothstep(threshold, threshold + threshold_width, luma_g_m5);
+luma_b_m5 = sample(in1, vec(clamp(tap_ux_m5 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m5 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m5 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m5 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m5 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m5 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_m5 = smoothstep(threshold, threshold + threshold_width, luma_b_m5);
+
+// tap k=-4
+tap_ux_m4 = uv.x + px * (-4.0) * step_size;
+tap_uy_m4 = uv.y + py * (-4.0) * step_size;
+luma_r_m4 = sample(in1, vec(clamp(tap_ux_m4 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m4 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m4 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m4 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m4 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m4 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_m4 = smoothstep(threshold, threshold + threshold_width, luma_r_m4);
+luma_g_m4 = sample(in1, vec(clamp(tap_ux_m4 - fx*reach_eff, 0.,1.), clamp(tap_uy_m4 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m4 - fx*reach_eff, 0.,1.), clamp(tap_uy_m4 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m4 - fx*reach_eff, 0.,1.), clamp(tap_uy_m4 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_m4 = smoothstep(threshold, threshold + threshold_width, luma_g_m4);
+luma_b_m4 = sample(in1, vec(clamp(tap_ux_m4 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m4 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m4 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m4 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m4 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m4 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_m4 = smoothstep(threshold, threshold + threshold_width, luma_b_m4);
+
+// tap k=-3
+tap_ux_m3 = uv.x + px * (-3.0) * step_size;
+tap_uy_m3 = uv.y + py * (-3.0) * step_size;
+luma_r_m3 = sample(in1, vec(clamp(tap_ux_m3 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m3 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m3 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m3 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m3 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m3 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_m3 = smoothstep(threshold, threshold + threshold_width, luma_r_m3);
+luma_g_m3 = sample(in1, vec(clamp(tap_ux_m3 - fx*reach_eff, 0.,1.), clamp(tap_uy_m3 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m3 - fx*reach_eff, 0.,1.), clamp(tap_uy_m3 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m3 - fx*reach_eff, 0.,1.), clamp(tap_uy_m3 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_m3 = smoothstep(threshold, threshold + threshold_width, luma_g_m3);
+luma_b_m3 = sample(in1, vec(clamp(tap_ux_m3 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m3 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m3 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m3 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m3 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m3 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_m3 = smoothstep(threshold, threshold + threshold_width, luma_b_m3);
+
+// tap k=-2
+tap_ux_m2 = uv.x + px * (-2.0) * step_size;
+tap_uy_m2 = uv.y + py * (-2.0) * step_size;
+luma_r_m2 = sample(in1, vec(clamp(tap_ux_m2 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m2 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m2 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m2 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m2 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m2 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_m2 = smoothstep(threshold, threshold + threshold_width, luma_r_m2);
+luma_g_m2 = sample(in1, vec(clamp(tap_ux_m2 - fx*reach_eff, 0.,1.), clamp(tap_uy_m2 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m2 - fx*reach_eff, 0.,1.), clamp(tap_uy_m2 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m2 - fx*reach_eff, 0.,1.), clamp(tap_uy_m2 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_m2 = smoothstep(threshold, threshold + threshold_width, luma_g_m2);
+luma_b_m2 = sample(in1, vec(clamp(tap_ux_m2 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m2 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m2 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m2 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m2 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m2 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_m2 = smoothstep(threshold, threshold + threshold_width, luma_b_m2);
+
+// tap k=-1
+tap_ux_m1 = uv.x + px * (-1.0) * step_size;
+tap_uy_m1 = uv.y + py * (-1.0) * step_size;
+luma_r_m1 = sample(in1, vec(clamp(tap_ux_m1 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m1 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m1 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m1 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m1 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_m1 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_m1 = smoothstep(threshold, threshold + threshold_width, luma_r_m1);
+luma_g_m1 = sample(in1, vec(clamp(tap_ux_m1 - fx*reach_eff, 0.,1.), clamp(tap_uy_m1 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m1 - fx*reach_eff, 0.,1.), clamp(tap_uy_m1 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m1 - fx*reach_eff, 0.,1.), clamp(tap_uy_m1 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_m1 = smoothstep(threshold, threshold + threshold_width, luma_g_m1);
+luma_b_m1 = sample(in1, vec(clamp(tap_ux_m1 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m1 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_m1 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m1 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_m1 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_m1 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_m1 = smoothstep(threshold, threshold + threshold_width, luma_b_m1);
+
+// tap k=0 (center)
+tap_ux_0 = uv.x;
+tap_uy_0 = uv.y;
+luma_r_0 = sample(in1, vec(clamp(tap_ux_0 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_0 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_0 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_0 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_0 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_0 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_0 = smoothstep(threshold, threshold + threshold_width, luma_r_0);
+luma_g_0 = sample(in1, vec(clamp(tap_ux_0 - fx*reach_eff, 0.,1.), clamp(tap_uy_0 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_0 - fx*reach_eff, 0.,1.), clamp(tap_uy_0 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_0 - fx*reach_eff, 0.,1.), clamp(tap_uy_0 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_0 = smoothstep(threshold, threshold + threshold_width, luma_g_0);
+luma_b_0 = sample(in1, vec(clamp(tap_ux_0 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_0 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_0 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_0 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_0 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_0 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_0 = smoothstep(threshold, threshold + threshold_width, luma_b_0);
+
+// tap k=1
+tap_ux_p1 = uv.x + px * (1.0) * step_size;
+tap_uy_p1 = uv.y + py * (1.0) * step_size;
+luma_r_p1 = sample(in1, vec(clamp(tap_ux_p1 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p1 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p1 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p1 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p1 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p1 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_p1 = smoothstep(threshold, threshold + threshold_width, luma_r_p1);
+luma_g_p1 = sample(in1, vec(clamp(tap_ux_p1 - fx*reach_eff, 0.,1.), clamp(tap_uy_p1 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p1 - fx*reach_eff, 0.,1.), clamp(tap_uy_p1 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p1 - fx*reach_eff, 0.,1.), clamp(tap_uy_p1 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_p1 = smoothstep(threshold, threshold + threshold_width, luma_g_p1);
+luma_b_p1 = sample(in1, vec(clamp(tap_ux_p1 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p1 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p1 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p1 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p1 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p1 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_p1 = smoothstep(threshold, threshold + threshold_width, luma_b_p1);
+
+// tap k=2
+tap_ux_p2 = uv.x + px * (2.0) * step_size;
+tap_uy_p2 = uv.y + py * (2.0) * step_size;
+luma_r_p2 = sample(in1, vec(clamp(tap_ux_p2 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p2 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p2 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p2 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p2 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p2 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_p2 = smoothstep(threshold, threshold + threshold_width, luma_r_p2);
+luma_g_p2 = sample(in1, vec(clamp(tap_ux_p2 - fx*reach_eff, 0.,1.), clamp(tap_uy_p2 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p2 - fx*reach_eff, 0.,1.), clamp(tap_uy_p2 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p2 - fx*reach_eff, 0.,1.), clamp(tap_uy_p2 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_p2 = smoothstep(threshold, threshold + threshold_width, luma_g_p2);
+luma_b_p2 = sample(in1, vec(clamp(tap_ux_p2 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p2 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p2 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p2 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p2 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p2 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_p2 = smoothstep(threshold, threshold + threshold_width, luma_b_p2);
+
+// tap k=3
+tap_ux_p3 = uv.x + px * (3.0) * step_size;
+tap_uy_p3 = uv.y + py * (3.0) * step_size;
+luma_r_p3 = sample(in1, vec(clamp(tap_ux_p3 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p3 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p3 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p3 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p3 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p3 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_p3 = smoothstep(threshold, threshold + threshold_width, luma_r_p3);
+luma_g_p3 = sample(in1, vec(clamp(tap_ux_p3 - fx*reach_eff, 0.,1.), clamp(tap_uy_p3 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p3 - fx*reach_eff, 0.,1.), clamp(tap_uy_p3 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p3 - fx*reach_eff, 0.,1.), clamp(tap_uy_p3 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_p3 = smoothstep(threshold, threshold + threshold_width, luma_g_p3);
+luma_b_p3 = sample(in1, vec(clamp(tap_ux_p3 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p3 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p3 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p3 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p3 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p3 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_p3 = smoothstep(threshold, threshold + threshold_width, luma_b_p3);
+
+// tap k=4
+tap_ux_p4 = uv.x + px * (4.0) * step_size;
+tap_uy_p4 = uv.y + py * (4.0) * step_size;
+luma_r_p4 = sample(in1, vec(clamp(tap_ux_p4 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p4 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p4 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p4 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p4 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p4 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_p4 = smoothstep(threshold, threshold + threshold_width, luma_r_p4);
+luma_g_p4 = sample(in1, vec(clamp(tap_ux_p4 - fx*reach_eff, 0.,1.), clamp(tap_uy_p4 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p4 - fx*reach_eff, 0.,1.), clamp(tap_uy_p4 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p4 - fx*reach_eff, 0.,1.), clamp(tap_uy_p4 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_p4 = smoothstep(threshold, threshold + threshold_width, luma_g_p4);
+luma_b_p4 = sample(in1, vec(clamp(tap_ux_p4 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p4 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p4 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p4 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p4 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p4 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_p4 = smoothstep(threshold, threshold + threshold_width, luma_b_p4);
+
+// tap k=5
+tap_ux_p5 = uv.x + px * (5.0) * step_size;
+tap_uy_p5 = uv.y + py * (5.0) * step_size;
+luma_r_p5 = sample(in1, vec(clamp(tap_ux_p5 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p5 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p5 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p5 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p5 - (fx*cos_r - fy*sin_r)*reach_eff, 0.,1.), clamp(tap_uy_p5 - (fx*sin_r + fy*cos_r)*reach_eff, 0.,1.))).z * 0.0722;
+gate_r_p5 = smoothstep(threshold, threshold + threshold_width, luma_r_p5);
+luma_g_p5 = sample(in1, vec(clamp(tap_ux_p5 - fx*reach_eff, 0.,1.), clamp(tap_uy_p5 - fy*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p5 - fx*reach_eff, 0.,1.), clamp(tap_uy_p5 - fy*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p5 - fx*reach_eff, 0.,1.), clamp(tap_uy_p5 - fy*reach_eff, 0.,1.))).z * 0.0722;
+gate_g_p5 = smoothstep(threshold, threshold + threshold_width, luma_g_p5);
+luma_b_p5 = sample(in1, vec(clamp(tap_ux_p5 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p5 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).x * 0.2126
+           + sample(in1, vec(clamp(tap_ux_p5 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p5 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).y * 0.7152
+           + sample(in1, vec(clamp(tap_ux_p5 - (fx*cos_b - fy*sin_b)*reach_eff, 0.,1.), clamp(tap_uy_p5 - (fx*sin_b + fy*cos_b)*reach_eff, 0.,1.))).z * 0.0722;
+gate_b_p5 = smoothstep(threshold, threshold + threshold_width, luma_b_p5);
+
+// blur gate values — weighted sum across 11 taps (split to avoid line length limits)
+acc_r = gate_r_m5 * w0 + gate_r_m4 * w1 + gate_r_m3 * w2 + gate_r_m2 * w3 + gate_r_m1 * w4;
+acc_r = acc_r + gate_r_0 * w5 + gate_r_p1 * w4 + gate_r_p2 * w3 + gate_r_p3 * w2 + gate_r_p4 * w1 + gate_r_p5 * w0;
+prism_r = acc_r;
+
+acc_g = gate_g_m5 * w0 + gate_g_m4 * w1 + gate_g_m3 * w2 + gate_g_m2 * w3 + gate_g_m1 * w4;
+acc_g = acc_g + gate_g_0 * w5 + gate_g_p1 * w4 + gate_g_p2 * w3 + gate_g_p3 * w2 + gate_g_p4 * w1 + gate_g_p5 * w0;
+prism_g = acc_g;
+
+acc_b = gate_b_m5 * w0 + gate_b_m4 * w1 + gate_b_m3 * w2 + gate_b_m2 * w3 + gate_b_m1 * w4;
+acc_b = acc_b + gate_b_0 * w5 + gate_b_p1 * w4 + gate_b_p2 * w3 + gate_b_p3 * w2 + gate_b_p4 * w1 + gate_b_p5 * w0;
+prism_b = acc_b;
+
+// composite
+comp_r = clamp(src_r + prism_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + prism_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + prism_b * strength, 0.0, 1.0);
+
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

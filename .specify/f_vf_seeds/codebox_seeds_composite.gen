@@ -1,0 +1,31 @@
+// f_vf_seeds — Stage 4: Composite
+// in1: rank1 render (mark_r, mark_g, mark_b, mark_a)
+// in2: rank2 render (mark_r, mark_g, mark_b, mark_a)
+//
+// Rank-1-over-rank-2 alpha composite, using rank1's own alpha (luma-keyed,
+// per Evolution 1.5) as the blend factor. bypass lives here for out1 —
+// Stage 2/3's output is discarded either way once composited, so no
+// bypass gating needed upstream for the mark-color path (plan.md ADR 8).
+//
+// out2 = mark mask (comp_a as greyscale, matching the ORIGINAL
+// single-codebox contract's separate mask outlet).
+
+Param bypass(0.0);
+
+r1 = sample(in1, vec(norm.x, norm.y)).x;
+g1 = sample(in1, vec(norm.x, norm.y)).y;
+b1 = sample(in1, vec(norm.x, norm.y)).z;
+a1 = sample(in1, vec(norm.x, norm.y)).w;
+
+r2 = sample(in2, vec(norm.x, norm.y)).x;
+g2 = sample(in2, vec(norm.x, norm.y)).y;
+b2 = sample(in2, vec(norm.x, norm.y)).z;
+a2 = sample(in2, vec(norm.x, norm.y)).w;
+
+comp_r = mix(r2, r1, a1);
+comp_g = mix(g2, g1, a1);
+comp_b = mix(b2, b1, a1);
+comp_a = a1 + a2 * (1.0 - a1);
+
+out1 = mix(vec(comp_r, comp_g, comp_b, comp_a), vec(0.0, 0.0, 0.0, 0.0), bypass);
+out2 = mix(vec(comp_a, comp_a, comp_a, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

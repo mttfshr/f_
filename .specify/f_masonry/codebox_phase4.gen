@@ -1,0 +1,155 @@
+// f_weave codebox — Phase 4 final
+// 2026-05-29
+// Changes from Phase 3:
+//   - Added: width (mark aspect ratio, independent of weight)
+//   - Added: roundness (rect/round blend, normalized by 1/sqrt(2))
+//   - Added: quantize (crossfade swing between slot-quantized and continuous hash)
+//   - Added: band_diverge (per-band background color, full RGB hash)
+//   - Added: mark_diverge (per-mark color, full RGB hash, tints mark from white)
+//   - Added: aspect correction via dim.x/dim.y (requires r dim → pix @dim in patcher)
+//   - mark_slot: mark identity from mark center, not pixel slot — color stays with mark
+//   - Removed: size_var, thickness_var
+//
+// Known behaviors (not bugs):
+//   - quantize>0 with swing>0: pixel noise in continuous swing hash
+//   - quantize=0 with swing>0: seam/cut artifact at slot boundaries in motion
+//   - params beyond 0-1 produce undefined behavior
+//   - band_diverge/mark_diverge above 1.0 over-saturates (expressive)
+//
+// Build script notes:
+//   - r dim → pix object needed so dim.x/dim.y is populated for aspect correction
+//   - 17 float params, all live.dial, no integer params
+//   - control inlet only (no texture inlet), use route not routepass
+
+Param angle(0.0);
+Param density(0.5);
+Param freq(0.5);
+Param offset(0.0);
+Param weight(0.5);
+Param softness(0.2);
+Param regularity(1.0);
+Param swing(0.0);
+Param phase(0.0);
+Param speed_var(0.0);
+Param continuity(1.0);
+Param bypass(0.0);
+Param width(0.5);
+Param roundness(0.0);
+Param quantize(0.0);
+Param band_diverge(0.0);
+Param mark_diverge(0.0);
+
+theta  = angle * PI;
+cosT   = cos(theta);
+sinT   = sin(theta);
+
+aspect = dim.x / dim.y;
+px     = norm.x * aspect;
+py     = norm.y;
+along  =  px * cosT + py * sinT;
+across = -px * sinT + py * cosT;
+
+density_scale = pow(2.0, mix(1.0, 6.0, density));
+freq_scale    = pow(2.0, mix(1.0, 6.0, freq));
+band_idx      = floor(across * density_scale);
+
+// per-band speed hash
+h3         = band_idx * 419.2;
+h3         = sin(h3) * 43758.5;
+band_hash  = h3 - floor(h3);
+band_speed = 1.0 + (band_hash - 0.5) * speed_var * 2.0;
+band_phase = phase * band_speed;
+
+slot       = floor(along * freq_scale + band_idx * offset);
+along_cont = along * freq_scale + band_idx * offset;
+
+// presence hash — always slot-quantized (continuous hash produces pixel noise)
+h1        = slot * 127.1 + band_idx * 311.7;
+h1        = sin(h1) * 43758.5;
+slot_hash = h1 - floor(h1);
+
+// swing hash — slot-quantized
+h2      = slot * 269.5 + band_idx * 183.3;
+h2      = sin(h2) * 43758.5;
+swing_q = (h2 - floor(h2) - 0.5) * swing;
+
+// swing hash — continuous (quantize=1: fluid drift, quantize=0: slot seams)
+h2c     = along_cont * 269.5 + band_idx * 183.3;
+h2c     = sin(h2c) * 43758.5;
+swing_c = (h2c - floor(h2c) - 0.5) * swing;
+
+swing_offset = mix(swing_q, swing_c, quantize);
+
+along_phase = wrap(along_cont + swing_offset + band_phase, 0.0, 1.0);
+
+// regular mark distance
+mark_dist_reg = abs(along_phase - 0.5) * 2.0;
+
+// random mark distance
+mark_dist_rnd = mix(along_phase, 1.0 - along_phase, step(0.5, slot_hash));
+mark_dist_rnd = mark_dist_rnd * 2.0;
+
+// blend
+mark_dist = mix(mark_dist_rnd, mark_dist_reg, regularity);
+
+// continuity — per-band hash gate
+h4        = band_idx * 591.3;
+h4        = sin(h4) * 43758.5;
+band_cont = h4 - floor(h4);
+cont      = step(1.0 - continuity, band_cont);
+
+// across-band distance, scaled by width for aspect ratio control
+across_phase = wrap(across * density_scale, 0.0, 1.0);
+across_dist  = abs(across_phase - 0.5) * 2.0;
+across_d     = across_dist / max(width, 0.01);
+
+// along distance
+along_d = mark_dist;
+
+// rect/round blend — normalized so mark size is consistent across roundness sweep
+rect_dist  = max(along_d, across_d);
+round_dist = sqrt(along_d * along_d + across_d * across_d) * 0.7071;
+final_dist = mix(rect_dist, round_dist, roundness);
+
+// mark identity — from mark center, not pixel slot, so color tracks the mark
+mark_center = along_cont + swing_offset + band_phase - along_phase + 0.5;
+mark_slot   = floor(mark_center);
+
+// per-band color — full RGB hash [0,1]
+band_col_r = (sin(band_idx * 127.1) * 43758.5453 - floor(sin(band_idx * 127.1) * 43758.5453));
+band_col_g = (sin(band_idx * 91.3)  * 43758.5453 - floor(sin(band_idx * 91.3)  * 43758.5453));
+band_col_b = (sin(band_idx * 43.1)  * 43758.5453 - floor(sin(band_idx * 43.1)  * 43758.5453));
+
+// per-mark color — full RGB hash [0,1], seeded from mark_slot + band_idx
+mark_col_r = (sin(mark_slot * 127.1 + band_idx * 311.7) * 43758.5453 - floor(sin(mark_slot * 127.1 + band_idx * 311.7) * 43758.5453));
+mark_col_g = (sin(mark_slot * 57.2  + band_idx * 91.3)  * 43758.5453 - floor(sin(mark_slot * 57.2  + band_idx * 91.3)  * 43758.5453));
+mark_col_b = (sin(mark_slot * 123.7 + band_idx * 43.1)  * 43758.5453 - floor(sin(mark_slot * 123.7 + band_idx * 43.1)  * 43758.5453));
+
+mark_size = 1.0 - weight;
+mark_out  = smoothstep(mark_size + softness, mark_size - softness, final_dist) * cont;
+
+// marks: tint from white toward random color via mark_diverge
+mark_r = mark_out * mix(1.0, mark_col_r, mark_diverge);
+mark_g = mark_out * mix(1.0, mark_col_g, mark_diverge);
+mark_b = mark_out * mix(1.0, mark_col_b, mark_diverge);
+
+// band backgrounds: black toward random band color via band_diverge
+bg_r = mix(0.0, band_col_r, band_diverge);
+bg_g = mix(0.0, band_col_g, band_diverge);
+bg_b = mix(0.0, band_col_b, band_diverge);
+
+// composite: background in gaps, marks on top
+out_r = mix(bg_r, mark_r, mark_out);
+out_g = mix(bg_g, mark_g, mark_out);
+out_b = mix(bg_b, mark_b, mark_out);
+
+out1 = mix(vec(out_r, out_g, out_b, 1.0), vec(0.0, 0.0, 0.0, 0.0), bypass);
+
+// --- jit.gen operator notes ---
+// noise()/snoise()/cycle() not available — use arithmetic hash: sin(x*prime)*43758.5
+// frac() not available — use x - floor(x) or wrap(x, 0.0, 1.0)
+// vec2/float2 not available — expand manually: sqrt(a*a + b*b)
+// select() not available — use mix(a, b, step(threshold, val))
+// smooth is a GLSL reserved word — avoid as param name
+// vec(r,g,b,a) is the correct 4-component constructor
+// dim.x/dim.y available only when patcher wires r dim → pix @dim

@@ -1,0 +1,120 @@
+// f_vf_prism codebox v9 — perpendicular position from displaced UV geometry
+// in1 = source texture (char) — luma sampled at displaced UVs for gate
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = reach mod
+// in4 = spread mod
+
+Param reach(0.05);
+Param spread(0.1);
+Param threshold(0.7);
+Param threshold_width(0.1);
+Param feather(0.1);
+Param strength(1.0);
+Param src_vecfield(0.0);
+Param src_length_mod(0.0);
+Param src_width_mod(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// source pixel for composite and bypass
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// field vector — suppress when vecfield inlet unconnected
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// mod inlets — only offset when connected
+reach_eff  = clamp(reach  + (sample(in3, uv).x - 0.5) * src_length_mod, 0.0, 0.3);
+spread_eff = clamp(spread + (sample(in4, uv).x - 0.5) * src_width_mod,  0.0, 0.5);
+
+// per-channel rotation scalars
+cos_r = cos(spread_eff);  sin_r = sin(spread_eff);
+cos_b = cos(-spread_eff); sin_b = sin(-spread_eff);
+
+// displaced UV coordinates — scalar pairs, never stored as vec
+r_ux = clamp(uv.x - (fx * cos_r - fy * sin_r) * reach_eff, 0.0, 1.0);
+r_uy = clamp(uv.y - (fx * sin_r + fy * cos_r) * reach_eff, 0.0, 1.0);
+
+g_ux = clamp(uv.x - fx * reach_eff, 0.0, 1.0);
+g_uy = clamp(uv.y - fy * reach_eff, 0.0, 1.0);
+
+b_ux = clamp(uv.x - (fx * cos_b - fy * sin_b) * reach_eff, 0.0, 1.0);
+b_uy = clamp(uv.y - (fx * sin_b + fy * cos_b) * reach_eff, 0.0, 1.0);
+
+// luma at each displaced UV
+r_luma = sample(in1, vec(r_ux, r_uy)).x * 0.2126
+       + sample(in1, vec(r_ux, r_uy)).y * 0.7152
+       + sample(in1, vec(r_ux, r_uy)).z * 0.0722;
+
+g_luma = sample(in1, vec(g_ux, g_uy)).x * 0.2126
+       + sample(in1, vec(g_ux, g_uy)).y * 0.7152
+       + sample(in1, vec(g_ux, g_uy)).z * 0.0722;
+
+b_luma = sample(in1, vec(b_ux, b_uy)).x * 0.2126
+       + sample(in1, vec(b_ux, b_uy)).y * 0.7152
+       + sample(in1, vec(b_ux, b_uy)).z * 0.0722;
+
+// gate per channel
+r_gate = smoothstep(threshold, threshold + threshold_width, r_luma);
+g_gate = smoothstep(threshold, threshold + threshold_width, g_luma);
+b_gate = smoothstep(threshold, threshold + threshold_width, b_luma);
+
+// R-to-B axis in UV space — the vector from B's sample to R's sample
+// this is the actual separation direction in output space
+rb_dx = r_ux - b_ux;
+rb_dy = r_uy - b_uy;
+rb_len = max(sqrt(rb_dx * rb_dx + rb_dy * rb_dy), 0.0001);
+rb_nx = rb_dx / rb_len;
+rb_ny = rb_dy / rb_len;
+
+// project current pixel position onto the R-B axis, relative to G (center)
+// gives signed position: positive = toward R, negative = toward B
+perp_pos = (uv.x - g_ux) * rb_nx + (uv.y - g_uy) * rb_ny;
+
+// half-span = distance from G to R (or G to B) along the axis
+half_span = rb_len * 0.5;
+
+// normalize to [-1, 1]: -1=B position, 0=G position, +1=R position
+t = clamp(perp_pos / max(half_span, 0.0001), -1.0, 1.0);
+
+// feather controls transition width as fraction of the half-span
+// feather=0: hard steps, feather=1: full gradual blend across span
+safe_feather = max(feather, 0.001);
+
+// tent weights centered at R(+1), G(0), B(-1)
+r_spec = clamp(t / safe_feather, 0.0, 1.0);
+b_spec = clamp(-t / safe_feather, 0.0, 1.0);
+g_spec = clamp(1.0 - abs(t) / safe_feather, 0.0, 1.0);
+
+// normalize
+spec_total = max(r_spec + g_spec + b_spec, 0.0001);
+r_spec = r_spec / spec_total;
+g_spec = g_spec / spec_total;
+b_spec = b_spec / spec_total;
+
+// output: spectral position selects color, gate controls presence
+// each output channel gets the gate value weighted by spectral position
+gate_at_pos = r_gate * r_spec + g_gate * g_spec + b_gate * b_spec;
+
+prism_r = gate_at_pos * r_spec;
+prism_g = gate_at_pos * g_spec;
+prism_b = gate_at_pos * b_spec;
+
+// composite: additive prism over source
+comp_r = clamp(src_r + prism_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + prism_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + prism_b * strength, 0.0, 1.0);
+
+// bypass
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+
+// isolated prism layer — zeroed on bypass
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

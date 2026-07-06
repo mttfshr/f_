@@ -1,0 +1,191 @@
+// f_vf_seeds — scratch patch codebox
+// Tests: seed distribution, vecfield-at-seed sampling, mark rendering, taper, identity output
+
+Param density(0.5);
+Param jitter(0.5);
+Param weight(0.1);
+Param marklen(0.3);
+Param softness(0.0);
+Param shape(0.0);
+Param taper(0.0);
+Param strength(1.0);
+Param mag_weight(0.0);
+Param phase(0.0);
+Param weight_mod(0.0);
+Param marklen_mod(0.0);
+Param src_vecfield(0.0);
+Param src_identity(0.0);
+Param bypass(0.0);
+
+// ── Grid density (log-mapped, matches f_weave/f_grain convention) ─────────────
+
+density_scale = pow(2.0, density * 5.0 - 1.0);
+aspect = dim.x / dim.y;
+
+// pixel position in grid space (aspect-corrected)
+px = norm.x * density_scale * aspect;
+py = norm.y * density_scale;
+icx = floor(px);
+icy = floor(py);
+
+// ── 3x3 neighbourhood seed search ────────────────────────────────────────────
+// For each candidate cell, compute jittered seed position and squared distance.
+// best_gx/best_gy = seed identity UV (normalised screen coords of seed centre).
+
+ncx = icx-1.0; ncy = icy-1.0;
+jxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyA = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxA = (ncx + 0.5 + jxA*jitter) / (density_scale * aspect);
+syA = (ncy + 0.5 + jyA*jitter) / density_scale;
+dxA = norm.x - sxA; dyA = norm.y - syA;
+dA = dxA*dxA + dyA*dyA;
+
+ncx = icx; ncy = icy-1.0;
+jxB = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyB = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxB = (ncx + 0.5 + jxB*jitter) / (density_scale * aspect);
+syB = (ncy + 0.5 + jyB*jitter) / density_scale;
+dxB = norm.x - sxB; dyB = norm.y - syB;
+dB = dxB*dxB + dyB*dyB;
+
+ncx = icx+1.0; ncy = icy-1.0;
+jxC = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyC = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxC = (ncx + 0.5 + jxC*jitter) / (density_scale * aspect);
+syC = (ncy + 0.5 + jyC*jitter) / density_scale;
+dxC = norm.x - sxC; dyC = norm.y - syC;
+dC = dxC*dxC + dyC*dyC;
+
+ncx = icx-1.0; ncy = icy;
+jxD = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyD = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxD = (ncx + 0.5 + jxD*jitter) / (density_scale * aspect);
+syD = (ncy + 0.5 + jyD*jitter) / density_scale;
+dxD = norm.x - sxD; dyD = norm.y - syD;
+dD = dxD*dxD + dyD*dyD;
+
+ncx = icx; ncy = icy;
+jxE = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyE = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxE = (ncx + 0.5 + jxE*jitter) / (density_scale * aspect);
+syE = (ncy + 0.5 + jyE*jitter) / density_scale;
+dxE = norm.x - sxE; dyE = norm.y - syE;
+dE = dxE*dxE + dyE*dyE;
+
+ncx = icx+1.0; ncy = icy;
+jxF = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyF = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxF = (ncx + 0.5 + jxF*jitter) / (density_scale * aspect);
+syF = (ncy + 0.5 + jyF*jitter) / density_scale;
+dxF = norm.x - sxF; dyF = norm.y - syF;
+dF = dxF*dxF + dyF*dyF;
+
+ncx = icx-1.0; ncy = icy+1.0;
+jxG = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyG = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxG = (ncx + 0.5 + jxG*jitter) / (density_scale * aspect);
+syG = (ncy + 0.5 + jyG*jitter) / density_scale;
+dxG = norm.x - sxG; dyG = norm.y - syG;
+dG = dxG*dxG + dyG*dyG;
+
+ncx = icx; ncy = icy+1.0;
+jxH = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyH = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxH = (ncx + 0.5 + jxH*jitter) / (density_scale * aspect);
+syH = (ncy + 0.5 + jyH*jitter) / density_scale;
+dxH = norm.x - sxH; dyH = norm.y - syH;
+dH = dxH*dxH + dyH*dyH;
+
+ncx = icx+1.0; ncy = icy+1.0;
+jxI = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyI = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxI = (ncx + 0.5 + jxI*jitter) / (density_scale * aspect);
+syI = (ncy + 0.5 + jyI*jitter) / density_scale;
+dxI = norm.x - sxI; dyI = norm.y - syI;
+dI = dxI*dxI + dyI*dyI;
+
+// ── Find nearest seed ─────────────────────────────────────────────────────────
+// best_gx/gy: identity UV of winning seed (normalised screen position)
+// best_dx/dy: pixel offset from that seed (in norm space)
+
+best_d=dA; best_gx=sxA; best_gy=syA; best_dx=dxA; best_dy=dyA;
+t=step(dB,best_d); best_d=mix(best_d,dB,t); best_gx=mix(best_gx,sxB,t); best_gy=mix(best_gy,syB,t); best_dx=mix(best_dx,dxB,t); best_dy=mix(best_dy,dyB,t);
+t=step(dC,best_d); best_d=mix(best_d,dC,t); best_gx=mix(best_gx,sxC,t); best_gy=mix(best_gy,syC,t); best_dx=mix(best_dx,dxC,t); best_dy=mix(best_dy,dyC,t);
+t=step(dD,best_d); best_d=mix(best_d,dD,t); best_gx=mix(best_gx,sxD,t); best_gy=mix(best_gy,syD,t); best_dx=mix(best_dx,dxD,t); best_dy=mix(best_dy,dyD,t);
+t=step(dE,best_d); best_d=mix(best_d,dE,t); best_gx=mix(best_gx,sxE,t); best_gy=mix(best_gy,syE,t); best_dx=mix(best_dx,dxE,t); best_dy=mix(best_dy,dyE,t);
+t=step(dF,best_d); best_d=mix(best_d,dF,t); best_gx=mix(best_gx,sxF,t); best_gy=mix(best_gy,syF,t); best_dx=mix(best_dx,dxF,t); best_dy=mix(best_dy,dyF,t);
+t=step(dG,best_d); best_d=mix(best_d,dG,t); best_gx=mix(best_gx,sxG,t); best_gy=mix(best_gy,syG,t); best_dx=mix(best_dx,dxG,t); best_dy=mix(best_dy,dyG,t);
+t=step(dH,best_d); best_d=mix(best_d,dH,t); best_gx=mix(best_gx,sxH,t); best_gy=mix(best_gy,syH,t); best_dx=mix(best_dx,dxH,t); best_dy=mix(best_dy,dyH,t);
+t=step(dI,best_d); best_d=mix(best_d,dI,t); best_gx=mix(best_gx,sxI,t); best_gy=mix(best_gy,syI,t); best_dx=mix(best_dx,dxI,t); best_dy=mix(best_dy,dyI,t);
+
+// ── Sample vecfield at seed position (not at pixel) ───────────────────────────
+// This is the key architectural decision: stable per-seed orientation.
+// Remap RG vecfield [0,1] → [-1,1], apply strength blend toward neutral.
+
+seed_uv = vec(best_gx, best_gy);
+vx = (sample(in1, seed_uv).x - 0.5) * 2.0;
+vy = (sample(in1, seed_uv).y - 0.5) * 2.0;
+
+// field magnitude from raw field (before strength attenuation)
+// so mag_weight responds to field energy, not our gain setting
+field_mag = sqrt(vx*vx + vy*vy);
+
+// blend toward neutral (no deflection) at strength=0
+vx = vx * strength;
+vy = vy * strength;
+
+// normalised orientation basis (cs, sn)
+mag = max(sqrt(vx*vx + vy*vy), 0.0001);
+cs = vx / mag;
+sn = vy / mag;
+
+// ── Project pixel offset into seed-local frame ────────────────────────────────
+// along: projection onto field direction (mark length axis)
+// across: projection perpendicular to field (mark width axis)
+// best_dx/dy are in norm space — scale to aspect-corrected space for mark geometry
+
+odx = best_dx * aspect;
+ody = best_dy;
+along  =  odx * cs + ody * sn;
+across = -odx * sn + ody * cs;
+
+// ── Identity texture modulation (sampled at seed UV) ──────────────────────────
+
+id_sample = sample(in2, seed_uv).x * src_identity;
+weight_eff  = clamp(weight  + id_sample * weight_mod,  0.0, 0.5);
+marklen_eff = clamp(marklen + id_sample * marklen_mod, 0.0, 0.5);
+
+// field magnitude modulates weight additively
+weight_eff = clamp(weight_eff + field_mag * mag_weight, 0.0, 0.5);
+
+// ── Mark rendering ────────────────────────────────────────────────────────────
+// Taper: asymmetric along-axis endpoints. taper=0 → symmetric dash.
+// taper=1 → leading edge (along > 0) is full marklen, trailing edge collapses.
+// Implementation: scale the negative-along endpoint by (1 - taper).
+
+half_len = marklen_eff * 0.5;
+along_shifted = along - phase * half_len;
+
+lo_end = half_len * (1.0 - taper);
+hi_end = half_len;
+
+outer_across = weight_eff + softness * weight_eff;
+outer_along_lo = lo_end  + softness * lo_end;
+outer_along_hi = hi_end  + softness * hi_end;
+
+edge_across   = smoothstep(outer_across,   0.0, abs(across));
+edge_along_lo = smoothstep(outer_along_lo, 0.0, max(-along_shifted, 0.0));
+edge_along_hi = smoothstep(outer_along_hi, 0.0, max( along_shifted, 0.0));
+edge_along    = edge_along_lo * edge_along_hi;
+
+// shape profile: raised cosine blend
+profile = mix(1.0, cos(clamp(abs(across) / max(weight_eff, 0.0001), 0.0, 1.0) * pi * 0.5), shape);
+
+mark = edge_across * edge_along * profile;
+
+// ── Outputs ───────────────────────────────────────────────────────────────────
+
+result = vec(mark, mark, mark, 1.0);
+out1 = mix(result, vec(0.0, 0.0, 0.0, 1.0), bypass);  // composite
+out2 = mix(vec(mark, mark, mark, 1.0), vec(0.0,0.0,0.0,1.0), bypass);  // mark mask
+out3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0,0.0,0.0,1.0), bypass);  // identity coord

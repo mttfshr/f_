@@ -1,0 +1,239 @@
+// f_vf_seeds — placement and orientation engine
+// in1: shape tex  in2: vecfield  in3: mod tex
+//
+// Priority-generalized selection (2026-07-04): seed selection blends from
+// pure nearest-distance toward field-magnitude-driven priority via
+// `field_priority` (0=distance-only, matches pre-2026-07-04 behavior
+// exactly; 1=field-magnitude-only, a degenerate boundary — see spec.md's
+// Character Space table). `field_gain` is the live scale on the field
+// term; ships with range_tiers [0.2, 0.8, 1.5] in definition.py (per-field
+// empirically-tested windows: Flow/Repulse/Vortex respectively) as a pure
+// UI menu convenience, same mechanism as f_vf_advect's dt/injection — no
+// codebox-side range logic. Full history: .specify/f_vf_seeds/spec.md,
+// plan.md. Source: GPU Gems Ch. 20 ("Texture Bombing") — Voronoi mode and
+// texture-bombing mode are the same reduction loop, differing only in
+// what feeds `priority`.
+//
+// Vecfield is now sampled at EACH of the 9 candidates (before selection),
+// not once at the winner afterward — required to compute per-candidate
+// priority. The winning candidate's vx/vy is carried through the same
+// reduction chain as best_gx/best_gy, so no separate post-selection
+// vecfield sample is needed. Total cost: 9 samples (measured: negligible
+// at 1920x1080 60+fps and 3840x2160 58-60fps).
+//
+// Luma-keyed alpha on mark color (2026-07-04): out1's alpha was previously
+// hardcoded to 1.0, so the rectangular UV gate (not the shape texture's
+// own content) determined opacity — overlapping marks stamped hard black
+// rectangles instead of respecting the shape tex's own masked silhouette.
+// out1's alpha is now mark_luma (shape luma × gate), so black/low-luma
+// areas of the shape tex read as transparent — same luma-gating idiom
+// f_grain already uses. Bypass now outputs fully transparent
+// (0,0,0,0) instead of opaque black, consistent with alpha now meaning
+// something. out2 (mask) and out3 (seed coord) unchanged.
+
+Param density(0.5);
+Param jitter(0.5);
+Param size(0.2);
+Param stretch(0.0);
+Param phase(0.0);
+Param strength(1.0);
+Param mag_weight(0.0);
+Param size_mod(0.0);
+Param stretch_mod(0.0);
+Param src_vecfield(0.0);
+Param src_mod(0.0);
+Param src_shape(0.0);
+Param bypass(0.0);
+Param field_priority(0.0);
+Param field_gain(0.0);
+
+// ── Grid density ──────────────────────────────────────────────────────────────
+
+density_scale = pow(2.0, density * 9.0 - 1.0);
+aspect = dim.x / dim.y;
+
+px = norm.x * density_scale * aspect;
+py = norm.y * density_scale;
+icx = floor(px);
+icy = floor(py);
+
+// ── 3x3 neighbourhood candidate search — with per-candidate field sample ─────
+
+ncx = icx-1.0; ncy = icy-1.0;
+jxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyA = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxA = (ncx + 0.5 + jxA*jitter) / (density_scale * aspect);
+syA = (ncy + 0.5 + jyA*jitter) / density_scale;
+dxA = norm.x - sxA; dyA = norm.y - syA;
+dA = dxA*dxA + dyA*dyA;
+vxA = (sample(in2, vec(sxA, syA)).x - 0.5) * 2.0;
+vyA = (sample(in2, vec(sxA, syA)).y - 0.5) * 2.0;
+fmA = sqrt(max(vxA*vxA + vyA*vyA, 0.0));
+priA = mix(dA, -fmA * field_gain, field_priority);
+
+ncx = icx; ncy = icy-1.0;
+jxB = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyB = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxB = (ncx + 0.5 + jxB*jitter) / (density_scale * aspect);
+syB = (ncy + 0.5 + jyB*jitter) / density_scale;
+dxB = norm.x - sxB; dyB = norm.y - syB;
+dB = dxB*dxB + dyB*dyB;
+vxB = (sample(in2, vec(sxB, syB)).x - 0.5) * 2.0;
+vyB = (sample(in2, vec(sxB, syB)).y - 0.5) * 2.0;
+fmB = sqrt(max(vxB*vxB + vyB*vyB, 0.0));
+priB = mix(dB, -fmB * field_gain, field_priority);
+
+ncx = icx+1.0; ncy = icy-1.0;
+jxC = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyC = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxC = (ncx + 0.5 + jxC*jitter) / (density_scale * aspect);
+syC = (ncy + 0.5 + jyC*jitter) / density_scale;
+dxC = norm.x - sxC; dyC = norm.y - syC;
+dC = dxC*dxC + dyC*dyC;
+vxC = (sample(in2, vec(sxC, syC)).x - 0.5) * 2.0;
+vyC = (sample(in2, vec(sxC, syC)).y - 0.5) * 2.0;
+fmC = sqrt(max(vxC*vxC + vyC*vyC, 0.0));
+priC = mix(dC, -fmC * field_gain, field_priority);
+
+ncx = icx-1.0; ncy = icy;
+jxD = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyD = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxD = (ncx + 0.5 + jxD*jitter) / (density_scale * aspect);
+syD = (ncy + 0.5 + jyD*jitter) / density_scale;
+dxD = norm.x - sxD; dyD = norm.y - syD;
+dD = dxD*dxD + dyD*dyD;
+vxD = (sample(in2, vec(sxD, syD)).x - 0.5) * 2.0;
+vyD = (sample(in2, vec(sxD, syD)).y - 0.5) * 2.0;
+fmD = sqrt(max(vxD*vxD + vyD*vyD, 0.0));
+priD = mix(dD, -fmD * field_gain, field_priority);
+
+ncx = icx; ncy = icy;
+jxE = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyE = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxE = (ncx + 0.5 + jxE*jitter) / (density_scale * aspect);
+syE = (ncy + 0.5 + jyE*jitter) / density_scale;
+dxE = norm.x - sxE; dyE = norm.y - syE;
+dE = dxE*dxE + dyE*dyE;
+vxE = (sample(in2, vec(sxE, syE)).x - 0.5) * 2.0;
+vyE = (sample(in2, vec(sxE, syE)).y - 0.5) * 2.0;
+fmE = sqrt(max(vxE*vxE + vyE*vyE, 0.0));
+priE = mix(dE, -fmE * field_gain, field_priority);
+
+ncx = icx+1.0; ncy = icy;
+jxF = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyF = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxF = (ncx + 0.5 + jxF*jitter) / (density_scale * aspect);
+syF = (ncy + 0.5 + jyF*jitter) / density_scale;
+dxF = norm.x - sxF; dyF = norm.y - syF;
+dF = dxF*dxF + dyF*dyF;
+vxF = (sample(in2, vec(sxF, syF)).x - 0.5) * 2.0;
+vyF = (sample(in2, vec(sxF, syF)).y - 0.5) * 2.0;
+fmF = sqrt(max(vxF*vxF + vyF*vyF, 0.0));
+priF = mix(dF, -fmF * field_gain, field_priority);
+
+ncx = icx-1.0; ncy = icy+1.0;
+jxG = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyG = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxG = (ncx + 0.5 + jxG*jitter) / (density_scale * aspect);
+syG = (ncy + 0.5 + jyG*jitter) / density_scale;
+dxG = norm.x - sxG; dyG = norm.y - syG;
+dG = dxG*dxG + dyG*dyG;
+vxG = (sample(in2, vec(sxG, syG)).x - 0.5) * 2.0;
+vyG = (sample(in2, vec(sxG, syG)).y - 0.5) * 2.0;
+fmG = sqrt(max(vxG*vxG + vyG*vyG, 0.0));
+priG = mix(dG, -fmG * field_gain, field_priority);
+
+ncx = icx; ncy = icy+1.0;
+jxH = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyH = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxH = (ncx + 0.5 + jxH*jitter) / (density_scale * aspect);
+syH = (ncy + 0.5 + jyH*jitter) / density_scale;
+dxH = norm.x - sxH; dyH = norm.y - syH;
+dH = dxH*dxH + dyH*dyH;
+vxH = (sample(in2, vec(sxH, syH)).x - 0.5) * 2.0;
+vyH = (sample(in2, vec(sxH, syH)).y - 0.5) * 2.0;
+fmH = sqrt(max(vxH*vxH + vyH*vyH, 0.0));
+priH = mix(dH, -fmH * field_gain, field_priority);
+
+ncx = icx+1.0; ncy = icy+1.0;
+jxI = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
+jyI = fract(sin(ncx*269.5 + ncy*183.3)*43758.5453) - 0.5;
+sxI = (ncx + 0.5 + jxI*jitter) / (density_scale * aspect);
+syI = (ncy + 0.5 + jyI*jitter) / density_scale;
+dxI = norm.x - sxI; dyI = norm.y - syI;
+dI = dxI*dxI + dyI*dyI;
+vxI = (sample(in2, vec(sxI, syI)).x - 0.5) * 2.0;
+vyI = (sample(in2, vec(sxI, syI)).y - 0.5) * 2.0;
+fmI = sqrt(max(vxI*vxI + vyI*vyI, 0.0));
+priI = mix(dI, -fmI * field_gain, field_priority);
+
+// ── Select winner by priority (lower wins) — carries vx/vy through too ───────
+
+best_pri=priA; best_gx=sxA; best_gy=syA; best_dx=dxA; best_dy=dyA; best_vx=vxA; best_vy=vyA;
+t=step(priB,best_pri); best_pri=mix(best_pri,priB,t); best_gx=mix(best_gx,sxB,t); best_gy=mix(best_gy,syB,t); best_dx=mix(best_dx,dxB,t); best_dy=mix(best_dy,dyB,t); best_vx=mix(best_vx,vxB,t); best_vy=mix(best_vy,vyB,t);
+t=step(priC,best_pri); best_pri=mix(best_pri,priC,t); best_gx=mix(best_gx,sxC,t); best_gy=mix(best_gy,syC,t); best_dx=mix(best_dx,dxC,t); best_dy=mix(best_dy,dyC,t); best_vx=mix(best_vx,vxC,t); best_vy=mix(best_vy,vyC,t);
+t=step(priD,best_pri); best_pri=mix(best_pri,priD,t); best_gx=mix(best_gx,sxD,t); best_gy=mix(best_gy,syD,t); best_dx=mix(best_dx,dxD,t); best_dy=mix(best_dy,dyD,t); best_vx=mix(best_vx,vxD,t); best_vy=mix(best_vy,vyD,t);
+t=step(priE,best_pri); best_pri=mix(best_pri,priE,t); best_gx=mix(best_gx,sxE,t); best_gy=mix(best_gy,syE,t); best_dx=mix(best_dx,dxE,t); best_dy=mix(best_dy,dyE,t); best_vx=mix(best_vx,vxE,t); best_vy=mix(best_vy,vyE,t);
+t=step(priF,best_pri); best_pri=mix(best_pri,priF,t); best_gx=mix(best_gx,sxF,t); best_gy=mix(best_gy,syF,t); best_dx=mix(best_dx,dxF,t); best_dy=mix(best_dy,dyF,t); best_vx=mix(best_vx,vxF,t); best_vy=mix(best_vy,vyF,t);
+t=step(priG,best_pri); best_pri=mix(best_pri,priG,t); best_gx=mix(best_gx,sxG,t); best_gy=mix(best_gy,syG,t); best_dx=mix(best_dx,dxG,t); best_dy=mix(best_dy,dyG,t); best_vx=mix(best_vx,vxG,t); best_vy=mix(best_vy,vyG,t);
+t=step(priH,best_pri); best_pri=mix(best_pri,priH,t); best_gx=mix(best_gx,sxH,t); best_gy=mix(best_gy,syH,t); best_dx=mix(best_dx,dxH,t); best_dy=mix(best_dy,dyH,t); best_vx=mix(best_vx,vxH,t); best_vy=mix(best_vy,vyH,t);
+t=step(priI,best_pri); best_pri=mix(best_pri,priI,t); best_gx=mix(best_gx,sxI,t); best_gy=mix(best_gy,syI,t); best_dx=mix(best_dx,dxI,t); best_dy=mix(best_dy,dyI,t); best_vx=mix(best_vx,vxI,t); best_vy=mix(best_vy,vyI,t);
+
+// ── Orientation — from carried best_vx/best_vy, no extra sample needed ───────
+
+field_mag = sqrt(max(best_vx*best_vx + best_vy*best_vy, 0.0));
+mag = max(field_mag, 0.0001);
+fcs = best_vx / mag;
+fsn = best_vy / mag;
+
+cs = mix(1.0, fcs, strength);
+sn = mix(0.0, fsn, strength);
+mag2 = max(sqrt(cs*cs + sn*sn), 0.0001);
+cs = cs / mag2;
+sn = sn / mag2;
+
+// ── Project pixel offset into seed-local frame ────────────────────────────────
+
+odx = best_dx * aspect;
+ody = best_dy;
+along  =  odx * cs + ody * sn;
+across = -odx * sn + ody * cs;
+
+// ── Mod tex modulation (sampled at seed UV) ───────────────────────────────────
+
+mod_sample = sample(in3, vec(best_gx, best_gy)).x * src_mod;
+size_eff = clamp(size + mod_sample * size_mod + field_mag * mag_weight, 0.001, 0.5);
+stretch_eff = stretch + mod_sample * stretch_mod;
+
+stretch_factor = 1.0 + stretch_eff;
+marklen_eff = size_eff * stretch_factor;
+weight_eff = size_eff / max(stretch_factor, 0.0001);
+
+// ── Construct seed-local UV ───────────────────────────────────────────────────
+
+along_shifted = along - phase * marklen_eff;
+
+local_u = along_shifted / marklen_eff * 0.5 + 0.5;
+local_v = across / weight_eff * 0.5 + 0.5;
+
+// ── Gate ─────────────────────────────────────────────────────────────────────
+
+gate = step(abs(along_shifted), marklen_eff) * step(abs(across), weight_eff);
+
+// ── Sample shape tex ─────────────────────────────────────────────────────────
+
+shape_r = sample(in1, vec(local_u, local_v)).x;
+shape_g = sample(in1, vec(local_u, local_v)).y;
+shape_b = sample(in1, vec(local_u, local_v)).z;
+shape_luma = (shape_r + shape_g + shape_b) / 3.0;
+
+mark_r = shape_r * gate * src_shape;
+mark_g = shape_g * gate * src_shape;
+mark_b = shape_b * gate * src_shape;
+mark_luma = shape_luma * gate * src_shape;
+
+// ── Outputs ───────────────────────────────────────────────────────────────────
+
+out1 = mix(vec(mark_r, mark_g, mark_b, mark_luma), vec(0.0, 0.0, 0.0, 0.0), bypass);
+out2 = mix(vec(mark_luma, mark_luma, mark_luma, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+out3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

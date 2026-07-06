@@ -1,0 +1,199 @@
+// f_masonry codebox — Phase 5c
+// 2026-06-01
+// Changes from Phase 5b:
+//   - Geometry (band_idx) computed BEFORE modulation sampling
+//   - V-mod sampled at course center: vec(0.5, (band_idx + 0.5) / courses)
+//     so all pixels in a course get the same modulation value (true per-course)
+//   - U-mod sampled at column center: vec((slot + 0.5) / bond, 0.5)
+//     so all pixels in a column slot get the same modulation value (true per-slot)
+//   - slot computed before u_sample for same reason
+
+Param src_mode(0.0);
+Param angle(0.0);
+Param courses(8.0);
+Param bond(8.0);
+Param offset(0.0);
+Param mortar(0.2);
+Param softness(0.0);
+Param regularity(1.0);
+Param drift(0.0);
+Param phase(0.0);
+Param speed_var(0.0);
+Param skip(1.0);
+Param bypass(0.0);
+Param width(0.9);
+Param roundness(0.0);
+Param quantize(0.0);
+Param course_color(0.0);
+Param brick_color(0.0);
+Param course_seed(0.0);
+Param brick_seed(0.0);
+Param u_mod_target(0.0);
+Param u_mod_depth(0.0);
+Param v_mod_target(0.0);
+Param v_mod_depth(0.0);
+
+// ------------------------------------------------------------------
+// Geometry — must come first so band_idx and slot are available
+// for per-course and per-slot modulation sampling
+// ------------------------------------------------------------------
+
+theta  = angle * (PI / 180.0);
+cosT   = cos(theta);
+sinT   = sin(theta);
+
+aspect = dim.x / dim.y;
+px     = norm.x * aspect;
+py     = norm.y;
+along  =  px * cosT + py * sinT;
+across = -px * sinT + py * cosT;
+
+course_scale = max(courses, 0.001);
+bond_scale   = max(bond, 0.001);
+band_idx     = floor(across * course_scale);
+
+cs = floor(course_seed);
+bs = floor(brick_seed);
+
+// slot needed for u-mod sampling (per-slot column coordinate)
+slot_pre   = floor(along * bond_scale + band_idx * offset);
+along_cont_pre = along * bond_scale + band_idx * offset;
+
+// ------------------------------------------------------------------
+// Modulation sampling — sampled at course/slot center for discrete effect
+// ------------------------------------------------------------------
+
+// V-mod: sample at vertical center of current course
+// All pixels in the same course share band_idx → same sample coordinate → same delta
+course_y = (band_idx + 0.5) / course_scale;
+v_sample = sample(in3, vec(0.5, course_y)).r;
+
+// U-mod: sample at horizontal center of current brick slot
+// All pixels in the same slot share slot_pre → same sample coordinate → same delta
+slot_x   = (slot_pre + 0.5) / bond_scale;
+u_sample = sample(in2, vec(slot_x, 0.5)).r;
+
+u_delta = (u_sample - 0.5) * u_mod_depth * 2.0;
+v_delta = (v_sample - 0.5) * v_mod_depth * 2.0;
+
+// U-axis chooser: 0=none, 1=mortar, 2=drift, 3=offset
+u_is_mortar = step(0.5, u_mod_target) * step(u_mod_target, 1.5);
+u_is_drift  = step(1.5, u_mod_target) * step(u_mod_target, 2.5);
+u_is_offset = step(2.5, u_mod_target) * step(u_mod_target, 3.5);
+
+// V-axis chooser: 0=none, 1=mortar, 2=drift, 3=offset,
+//                 4=speed_var, 5=regularity, 6=width, 7=phase
+v_is_mortar     = step(0.5, v_mod_target) * step(v_mod_target, 1.5);
+v_is_drift      = step(1.5, v_mod_target) * step(v_mod_target, 2.5);
+v_is_offset     = step(2.5, v_mod_target) * step(v_mod_target, 3.5);
+v_is_speed_var  = step(3.5, v_mod_target) * step(v_mod_target, 4.5);
+v_is_regularity = step(4.5, v_mod_target) * step(v_mod_target, 5.5);
+v_is_width      = step(5.5, v_mod_target) * step(v_mod_target, 6.5);
+v_is_phase      = step(6.5, v_mod_target) * step(v_mod_target, 7.5);
+
+// _eff variables: base param + modulation delta, clamped
+mortar_eff     = clamp(mortar     + u_delta * u_is_mortar + v_delta * v_is_mortar, 0.0, 1.0);
+drift_eff      = clamp(drift      + u_delta * u_is_drift  + v_delta * v_is_drift,  0.0, 1.0);
+offset_eff     = clamp(offset     + u_delta * u_is_offset + v_delta * v_is_offset, 0.0, 1.0);
+speed_var_eff  = clamp(speed_var  + v_delta * v_is_speed_var,                      0.0, 1.0);
+regularity_eff = clamp(regularity + v_delta * v_is_regularity,                     0.0, 1.0);
+width_eff      = clamp(width      + v_delta * v_is_width,                          0.01, 2.0);
+phase_eff      = phase + v_delta * v_is_phase;
+
+// ------------------------------------------------------------------
+// Full geometry — now using _eff params
+// ------------------------------------------------------------------
+
+// per-course speed hash — uses speed_var_eff
+h3         = (band_idx + cs) * 419.2;
+h3         = sin(h3) * 43758.5;
+band_hash  = h3 - floor(h3);
+band_speed = 1.0 + (band_hash - 0.5) * speed_var_eff * 2.0;
+band_phase = phase_eff * band_speed;
+
+slot       = floor(along * bond_scale + band_idx * offset_eff);
+along_cont = along * bond_scale + band_idx * offset_eff;
+
+// presence hash — slot-quantized
+h1        = (slot + bs) * 127.1 + (band_idx + cs) * 311.7;
+h1        = sin(h1) * 43758.5;
+slot_hash = h1 - floor(h1);
+
+// drift hash — slot-quantized
+h2      = (slot + bs) * 269.5 + band_idx * 183.3;
+h2      = sin(h2) * 43758.5;
+drift_q = (h2 - floor(h2) - 0.5) * drift_eff * 0.5;
+
+// drift hash — continuous
+along_frac = along_cont - floor(along_cont);
+h2c        = (along_frac + bs) * 7.3;
+h2c        = sin(h2c) * 43758.5;
+drift_c    = (h2c - floor(h2c) - 0.5) * drift_eff * 0.5;
+
+drift_offset = mix(drift_q, drift_c, quantize);
+
+along_phase = wrap(along_cont + drift_offset + band_phase, 0.0, 1.0);
+
+// regular mark distance
+mark_dist_reg = abs(wrap(along_phase, 0.0, 1.0) - 0.5) * 2.0;
+
+// random mark distance — uses regularity_eff
+mark_dist_rnd = mix(along_phase, 1.0 - along_phase, step(0.5, slot_hash));
+mark_dist_rnd = mark_dist_rnd * 2.0;
+
+mark_dist = mix(mark_dist_rnd, mark_dist_reg, regularity_eff);
+
+// skip — per-course hash gate
+h4        = (band_idx + cs) * 591.3;
+h4        = sin(h4) * 43758.5;
+band_cont = h4 - floor(h4);
+cont      = step(1.0 - skip, band_cont);
+
+// across-band distance — uses width_eff
+across_phase = wrap(across * course_scale, 0.0, 1.0);
+across_dist  = abs(across_phase - 0.5) * 2.0;
+across_d     = across_dist / width_eff;
+
+along_d = mark_dist;
+
+// rect/round blend
+rect_dist  = max(along_d, across_d);
+round_dist = pow(along_d * along_d + across_d * across_d, 0.5) * 0.7071;
+final_dist = mix(rect_dist, round_dist, roundness);
+
+// mark identity
+mark_center = along_cont + drift_offset + band_phase - along_phase + 0.5;
+mark_slot   = floor(mark_center);
+
+// ------------------------------------------------------------------
+// Color
+// ------------------------------------------------------------------
+
+band_col_r = (sin((band_idx + cs) * 127.1) * 43758.5453 - floor(sin((band_idx + cs) * 127.1) * 43758.5453));
+band_col_g = (sin((band_idx + cs) * 91.3)  * 43758.5453 - floor(sin((band_idx + cs) * 91.3)  * 43758.5453));
+band_col_b = (sin((band_idx + cs) * 43.1)  * 43758.5453 - floor(sin((band_idx + cs) * 43.1)  * 43758.5453));
+
+mark_col_r = (sin((mark_slot + bs) * 127.1 + (band_idx + cs) * 311.7) * 43758.5453 - floor(sin((mark_slot + bs) * 127.1 + (band_idx + cs) * 311.7) * 43758.5453));
+mark_col_g = (sin((mark_slot + bs) * 57.2  + (band_idx + cs) * 91.3)  * 43758.5453 - floor(sin((mark_slot + bs) * 57.2  + (band_idx + cs) * 91.3)  * 43758.5453));
+mark_col_b = (sin((mark_slot + bs) * 123.7 + (band_idx + cs) * 43.1)  * 43758.5453 - floor(sin((mark_slot + bs) * 123.7 + (band_idx + cs) * 43.1)  * 43758.5453));
+
+// ------------------------------------------------------------------
+// Output
+// ------------------------------------------------------------------
+
+mark_size = 1.0 - mortar_eff;
+mark_out  = smoothstep(mark_size + softness, mark_size - softness, final_dist) * cont;
+
+mark_r = mark_out * mix(1.0, mark_col_r, brick_color);
+mark_g = mark_out * mix(1.0, mark_col_g, brick_color);
+mark_b = mark_out * mix(1.0, mark_col_b, brick_color);
+
+bg_r = mix(0.0, band_col_r, course_color);
+bg_g = mix(0.0, band_col_g, course_color);
+bg_b = mix(0.0, band_col_b, course_color);
+
+out_r = mix(bg_r, mark_r, mark_out);
+out_g = mix(bg_g, mark_g, mark_out);
+out_b = mix(bg_b, mark_b, mark_out);
+
+out1 = mix(vec(out_r, out_g, out_b, 1.0), vec(0.0, 0.0, 0.0, 0.0), bypass);

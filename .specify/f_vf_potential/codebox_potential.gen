@@ -1,0 +1,39 @@
+Param dt(0.01);
+Param decay(0.98);
+Param strength(1.0);
+Param src_vecfield(0.0);
+Param src_color(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// Vecfield: remap from [0,1] to [-1,1]
+fx = (sample(in2, uv).x - 0.5) * 2.0;
+fy = (sample(in2, uv).y - 0.5) * 2.0;
+
+// Suppress displacement when vecfield unconnected
+connected = step(0.5, src_vecfield);
+fx = fx * connected;
+fy = fy * connected;
+
+// Field magnitude — the quantity being accumulated
+field_mag = sqrt(fx * fx + fy * fy);
+
+// Backward-advect previous frame along field
+src_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));
+prev = sample(in4, src_uv).x;
+
+// Accumulate: advected prev + field contribution, decayed
+potential = clamp(prev * decay + field_mag * dt, 0.0, 1.0);
+potential_scaled = potential * strength;
+
+// Color source: sample in3 if connected, else white
+color = sample(in3, uv);
+r = mix(1.0, color.x, src_color);
+g = mix(1.0, color.y, src_color);
+b = mix(1.0, color.z, src_color);
+
+// Modulate color by potential
+result = vec(r * potential_scaled, g * potential_scaled, b * potential_scaled, 1.0);
+neutral = vec(0.0, 0.0, 0.0, 1.0);
+out1 = mix(result, neutral, bypass);

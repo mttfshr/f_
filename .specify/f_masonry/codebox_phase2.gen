@@ -1,0 +1,81 @@
+// f_weave codebox — Phase 2 confirmed state
+// 2026-05-28
+// All params working: angle, density, freq, offset, weight, softness, regularity,
+//   swing, phase, speed_var, continuity, bypass
+// Verified in weave-scratch.maxpat against vsynth context
+// Animation confirmed: vs_lfo → phase inlet streams marks along bands
+// speed_var: per-band hash speed multiplier, bands drift at different rates
+// continuity: candidate A (whole bands on/off via per-band hash gate)
+// bypass: outputs black confirmed
+
+Param angle(0.0);
+Param density(0.5);
+Param freq(0.5);
+Param offset(0.0);
+Param weight(0.5);
+Param softness(0.2);
+Param regularity(1.0);
+Param swing(0.0);
+Param phase(0.0);
+Param speed_var(0.0);
+Param continuity(1.0);
+Param bypass(0.0);
+
+theta  = angle * PI;
+cosT   = cos(theta);
+sinT   = sin(theta);
+
+along  =  norm.x * cosT + norm.y * sinT;
+across = -norm.x * sinT + norm.y * cosT;
+
+density_scale = pow(2.0, mix(1.0, 6.0, density));
+freq_scale    = pow(2.0, mix(1.0, 6.0, freq));
+band_idx      = floor(across * density_scale);
+
+// per-band speed hash
+h3          = band_idx * 419.2;
+h3          = sin(h3) * 43758.5;
+band_hash   = h3 - floor(h3);
+band_speed  = 1.0 + (band_hash - 0.5) * speed_var * 2.0;
+band_phase  = phase * band_speed;
+
+slot        = floor(along * freq_scale + band_idx * offset);
+
+// presence hash
+h1          = slot * 127.1 + band_idx * 311.7;
+h1          = sin(h1) * 43758.5;
+slot_hash   = h1 - floor(h1);
+
+// swing hash
+h2          = slot * 269.5 + band_idx * 183.3;
+h2          = sin(h2) * 43758.5;
+swing_offset = (h2 - floor(h2) - 0.5) * swing;
+
+along_phase  = wrap(along * freq_scale + band_idx * offset + swing_offset + band_phase, 0.0, 1.0);
+
+// regular mark distance
+mark_dist_reg = abs(along_phase - 0.5) * 2.0;
+
+// random mark distance
+mark_dist_rnd = mix(along_phase, 1.0 - along_phase, step(0.5, slot_hash));
+mark_dist_rnd = mark_dist_rnd * 2.0;
+
+// blend
+mark_dist = mix(mark_dist_rnd, mark_dist_reg, regularity);
+
+// continuity — per-band hash gate (candidate A: whole bands on/off)
+h4        = band_idx * 591.3;
+h4        = sin(h4) * 43758.5;
+band_cont = h4 - floor(h4);
+cont      = step(1.0 - continuity, band_cont);
+
+mark_size = 1.0 - weight;
+mark_out  = smoothstep(mark_size + softness, mark_size - softness, mark_dist) * cont;
+out1      = mix(mark_out, 0.0, bypass);
+
+// --- jit.gen operator notes ---
+// noise() / snoise() / cycle() not available — use arithmetic hash: sin(x * prime) * 43758.5
+// frac() not available — use wrap(x, 0.0, 1.0)
+// vec2 / float2 not available — scalar hash inputs work fine
+// select() not available — use mix(a, b, step(threshold, val))
+// curl field (theta variation) not yet implemented — deferred, add sin(norm.x * freq) * curl to theta

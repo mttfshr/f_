@@ -1,0 +1,19 @@
+Param angle(0.0);
+Param spread(0.5);
+Param src_mode(0.0);
+Param bypass(0.0);
+
+// Base direction from angle param (0-1 maps to full circle)
+theta = angle * twopi;
+
+// Texture perturbation: luminance of in1 offsets direction
+perturb = (sample(in1, norm).x - 0.5) * spread * twopi;
+theta = theta + perturb * src_mode;
+
+// Encode as unit vecfield: cos/sin mapped from [-1,1] to [0,1]
+fx = cos(theta) * 0.5 + 0.5;
+fy = sin(theta) * 0.5 + 0.5;
+
+result = vec(fx, fy, 0.5, 1.0);
+neutral = vec(0.5, 0.5, 0.5, 1.0);
+out1 = mix(result, neutral, bypass);

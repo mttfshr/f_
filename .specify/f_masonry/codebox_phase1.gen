@@ -1,0 +1,59 @@
+// f_weave codebox — Phase 1 confirmed state
+// 2026-05-28
+// All core params working: angle, density, freq, offset, weight, softness, regularity, swing
+// Verified in weave-scratch.maxpat against vsynth context
+
+Param angle(0.0);
+Param density(0.5);
+Param freq(0.5);
+Param offset(0.0);
+Param weight(0.5);
+Param softness(0.2);
+Param regularity(1.0);
+Param swing(0.0);
+
+theta  = angle * PI;
+cosT   = cos(theta);
+sinT   = sin(theta);
+
+along  =  norm.x * cosT + norm.y * sinT;
+across = -norm.x * sinT + norm.y * cosT;
+
+density_scale = pow(2.0, mix(1.0, 6.0, density));
+freq_scale    = pow(2.0, mix(1.0, 6.0, freq));
+band_idx      = floor(across * density_scale);
+
+slot          = floor(along * freq_scale + band_idx * offset);
+
+// presence hash
+h1            = slot * 127.1 + band_idx * 311.7;
+h1            = sin(h1) * 43758.5;
+slot_hash     = h1 - floor(h1);
+
+// swing hash — different seed
+h2            = slot * 269.5 + band_idx * 183.3;
+h2            = sin(h2) * 43758.5;
+swing_offset  = (h2 - floor(h2) - 0.5) * swing;
+
+along_phase   = wrap(along * freq_scale + band_idx * offset + swing_offset, 0.0, 1.0);
+
+// regular mark distance
+mark_dist_reg = abs(along_phase - 0.5) * 2.0;
+
+// random mark distance
+mark_dist_rnd = mix(along_phase, 1.0 - along_phase, step(0.5, slot_hash));
+mark_dist_rnd = mark_dist_rnd * 2.0;
+
+// blend
+mark_dist = mix(mark_dist_rnd, mark_dist_reg, regularity);
+
+mark_size = 1.0 - weight;
+out1 = smoothstep(mark_size + softness, mark_size - softness, mark_dist);
+
+// --- Phase 1 notes ---
+// noise() and cycle() not available in jit.gen — use arithmetic hash (sin * large prime)
+// frac() not available — use wrap(x, 0.0, 1.0)
+// vec2/float2 not available for noise input — scalar hash works fine
+// offset values > 1.0 produce interesting higher-order staggers (not clamped yet)
+// density and freq are independent — confirmed working
+// regularity transition 0→1 is smooth, no visual pop

@@ -1,0 +1,149 @@
+// f_vf_prism codebox v10 — v4 separation + perpendicular directional blur
+// in1 = source texture (char) — luma sampled at displaced UVs for gate
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = reach mod
+// in4 = spread mod
+
+Param reach(0.05);
+Param spread(0.1);
+Param threshold(0.7);
+Param threshold_width(0.1);
+Param feather(0.1);
+Param strength(1.0);
+Param src_vecfield(0.0);
+Param src_length_mod(0.0);
+Param src_width_mod(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// source pixel
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// field vector
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// mod inlets
+reach_eff  = clamp(reach  + (sample(in3, uv).x - 0.5) * src_length_mod, 0.0, 0.3);
+spread_eff = clamp(spread + (sample(in4, uv).x - 0.5) * src_width_mod,  0.0, 0.5);
+
+// per-channel rotation scalars
+cos_r = cos(spread_eff);  sin_r = sin(spread_eff);
+cos_b = cos(-spread_eff); sin_b = sin(-spread_eff);
+
+// base displaced UV coordinates
+r_ux = clamp(uv.x - (fx * cos_r - fy * sin_r) * reach_eff, 0.0, 1.0);
+r_uy = clamp(uv.y - (fx * sin_r + fy * cos_r) * reach_eff, 0.0, 1.0);
+
+g_ux = clamp(uv.x - fx * reach_eff, 0.0, 1.0);
+g_uy = clamp(uv.y - fy * reach_eff, 0.0, 1.0);
+
+b_ux = clamp(uv.x - (fx * cos_b - fy * sin_b) * reach_eff, 0.0, 1.0);
+b_uy = clamp(uv.y - (fx * sin_b + fy * cos_b) * reach_eff, 0.0, 1.0);
+
+// perpendicular direction (normalized)
+field_mag = max(sqrt(fx * fx + fy * fy), 0.0001);
+px = -fy / field_mag;
+py =  fx / field_mag;
+
+// feather step size — perpendicular offset per kernel tap
+step_size = feather * 0.05;
+
+// gaussian weights for 5-tap kernel: k = -2, -1, 0, +1, +2
+w0 = 0.0625;
+w1 = 0.25;
+w2 = 0.375;
+
+// --- R channel: 5-tap perpendicular blur at r_uv ---
+luma_r_m2 = sample(in1, vec(clamp(r_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(r_uy + py * (-2.0) * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(r_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(r_uy + py * (-2.0) * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(r_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(r_uy + py * (-2.0) * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_r_m1 = sample(in1, vec(clamp(r_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(r_uy + py * (-1.0) * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(r_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(r_uy + py * (-1.0) * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(r_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(r_uy + py * (-1.0) * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_r_0 = sample(in1, vec(r_ux, r_uy)).x * 0.2126
+          + sample(in1, vec(r_ux, r_uy)).y * 0.7152
+          + sample(in1, vec(r_ux, r_uy)).z * 0.0722;
+
+luma_r_p1 = sample(in1, vec(clamp(r_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(r_uy + py * 1.0 * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(r_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(r_uy + py * 1.0 * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(r_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(r_uy + py * 1.0 * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_r_p2 = sample(in1, vec(clamp(r_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(r_uy + py * 2.0 * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(r_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(r_uy + py * 2.0 * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(r_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(r_uy + py * 2.0 * step_size, 0.0, 1.0))).z * 0.0722;
+
+r_luma = luma_r_m2 * w0 + luma_r_m1 * w1 + luma_r_0 * w2 + luma_r_p1 * w1 + luma_r_p2 * w0;
+
+// --- G channel: 5-tap perpendicular blur at g_uv ---
+luma_g_m2 = sample(in1, vec(clamp(g_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(g_uy + py * (-2.0) * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(g_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(g_uy + py * (-2.0) * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(g_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(g_uy + py * (-2.0) * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_g_m1 = sample(in1, vec(clamp(g_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(g_uy + py * (-1.0) * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(g_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(g_uy + py * (-1.0) * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(g_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(g_uy + py * (-1.0) * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_g_0 = sample(in1, vec(g_ux, g_uy)).x * 0.2126
+          + sample(in1, vec(g_ux, g_uy)).y * 0.7152
+          + sample(in1, vec(g_ux, g_uy)).z * 0.0722;
+
+luma_g_p1 = sample(in1, vec(clamp(g_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(g_uy + py * 1.0 * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(g_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(g_uy + py * 1.0 * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(g_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(g_uy + py * 1.0 * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_g_p2 = sample(in1, vec(clamp(g_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(g_uy + py * 2.0 * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(g_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(g_uy + py * 2.0 * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(g_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(g_uy + py * 2.0 * step_size, 0.0, 1.0))).z * 0.0722;
+
+g_luma = luma_g_m2 * w0 + luma_g_m1 * w1 + luma_g_0 * w2 + luma_g_p1 * w1 + luma_g_p2 * w0;
+
+// --- B channel: 5-tap perpendicular blur at b_uv ---
+luma_b_m2 = sample(in1, vec(clamp(b_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(b_uy + py * (-2.0) * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(b_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(b_uy + py * (-2.0) * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(b_ux + px * (-2.0) * step_size, 0.0, 1.0), clamp(b_uy + py * (-2.0) * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_b_m1 = sample(in1, vec(clamp(b_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(b_uy + py * (-1.0) * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(b_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(b_uy + py * (-1.0) * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(b_ux + px * (-1.0) * step_size, 0.0, 1.0), clamp(b_uy + py * (-1.0) * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_b_0 = sample(in1, vec(b_ux, b_uy)).x * 0.2126
+          + sample(in1, vec(b_ux, b_uy)).y * 0.7152
+          + sample(in1, vec(b_ux, b_uy)).z * 0.0722;
+
+luma_b_p1 = sample(in1, vec(clamp(b_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(b_uy + py * 1.0 * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(b_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(b_uy + py * 1.0 * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(b_ux + px * 1.0 * step_size, 0.0, 1.0), clamp(b_uy + py * 1.0 * step_size, 0.0, 1.0))).z * 0.0722;
+
+luma_b_p2 = sample(in1, vec(clamp(b_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(b_uy + py * 2.0 * step_size, 0.0, 1.0))).x * 0.2126
+           + sample(in1, vec(clamp(b_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(b_uy + py * 2.0 * step_size, 0.0, 1.0))).y * 0.7152
+           + sample(in1, vec(clamp(b_ux + px * 2.0 * step_size, 0.0, 1.0), clamp(b_uy + py * 2.0 * step_size, 0.0, 1.0))).z * 0.0722;
+
+b_luma = luma_b_m2 * w0 + luma_b_m1 * w1 + luma_b_0 * w2 + luma_b_p1 * w1 + luma_b_p2 * w0;
+
+// gate each blurred luma
+r_gate = smoothstep(threshold, threshold + threshold_width, r_luma);
+g_gate = smoothstep(threshold, threshold + threshold_width, g_luma);
+b_gate = smoothstep(threshold, threshold + threshold_width, b_luma);
+
+prism_r = r_gate;
+prism_g = g_gate;
+prism_b = b_gate;
+
+// composite
+comp_r = clamp(src_r + prism_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + prism_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + prism_b * strength, 0.0, 1.0);
+
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);

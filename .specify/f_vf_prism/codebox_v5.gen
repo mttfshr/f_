@@ -1,0 +1,93 @@
+// f_vf_prism codebox v5 — inter-channel feathering for spectral blend
+// in1 = source texture (char) — luma sampled at displaced UVs for gate + color
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = reach mod
+// in4 = spread mod
+
+Param reach(0.05);
+Param spread(0.1);
+Param threshold(0.7);
+Param threshold_width(0.1);
+Param feather(0.1);
+Param strength(1.0);
+Param src_vecfield(0.0);
+Param src_length_mod(0.0);
+Param src_width_mod(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// source pixel for composite and bypass
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// field vector — suppress when vecfield inlet unconnected
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// mod inlets — only offset when connected
+reach_eff  = clamp(reach  + (sample(in3, uv).x - 0.5) * src_length_mod, 0.0, 0.3);
+spread_eff = clamp(spread + (sample(in4, uv).x - 0.5) * src_width_mod,  0.0, 0.5);
+
+// per-channel rotation scalars
+cos_r = cos(spread_eff);  sin_r = sin(spread_eff);
+cos_b = cos(-spread_eff); sin_b = sin(-spread_eff);
+
+// displaced UV coordinates — scalar pairs, never stored as vec
+r_ux = clamp(uv.x - (fx * cos_r - fy * sin_r) * reach_eff, 0.0, 1.0);
+r_uy = clamp(uv.y - (fx * sin_r + fy * cos_r) * reach_eff, 0.0, 1.0);
+
+g_ux = clamp(uv.x - fx * reach_eff, 0.0, 1.0);
+g_uy = clamp(uv.y - fy * reach_eff, 0.0, 1.0);
+
+b_ux = clamp(uv.x - (fx * cos_b - fy * sin_b) * reach_eff, 0.0, 1.0);
+b_uy = clamp(uv.y - (fx * sin_b + fy * cos_b) * reach_eff, 0.0, 1.0);
+
+// luma at each displaced UV
+r_luma = sample(in1, vec(r_ux, r_uy)).x * 0.2126
+       + sample(in1, vec(r_ux, r_uy)).y * 0.7152
+       + sample(in1, vec(r_ux, r_uy)).z * 0.0722;
+
+g_luma = sample(in1, vec(g_ux, g_uy)).x * 0.2126
+       + sample(in1, vec(g_ux, g_uy)).y * 0.7152
+       + sample(in1, vec(g_ux, g_uy)).z * 0.0722;
+
+b_luma = sample(in1, vec(b_ux, b_uy)).x * 0.2126
+       + sample(in1, vec(b_ux, b_uy)).y * 0.7152
+       + sample(in1, vec(b_ux, b_uy)).z * 0.0722;
+
+// blob boundary gate — softness from threshold_width (source edge)
+r_gate = smoothstep(threshold, threshold + threshold_width, r_luma);
+g_gate = smoothstep(threshold, threshold + threshold_width, g_luma);
+b_gate = smoothstep(threshold, threshold + threshold_width, b_luma);
+
+// inter-channel feathering — each channel weighted by proximity to its neighbors
+// feather=0: hard separation, feather>0: channels bleed into each other
+// safe_feather prevents division by zero
+safe_feather = max(feather, 0.001);
+
+r_bell = exp(-pow(r_luma - 1.0, 2.0) / safe_feather);
+g_bell = exp(-pow(g_luma - 1.0, 2.0) / safe_feather);
+b_bell = exp(-pow(b_luma - 1.0, 2.0) / safe_feather);
+
+// blend: mix between hard gate and bell-weighted gate
+prism_r = mix(r_gate, r_gate * r_bell, feather * 4.0) ;
+prism_g = mix(g_gate, g_gate * g_bell, feather * 4.0);
+prism_b = mix(b_gate, b_gate * b_bell, feather * 4.0);
+
+// composite: additive prism over source
+comp_r = clamp(src_r + prism_r * strength, 0.0, 1.0);
+comp_g = clamp(src_g + prism_g * strength, 0.0, 1.0);
+comp_b = clamp(src_b + prism_b * strength, 0.0, 1.0);
+
+// bypass
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+
+// isolated prism layer — zeroed on bypass
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
