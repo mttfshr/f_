@@ -38,9 +38,10 @@ PREFIX      = "vfadvect"
 OBJ_NAME    = "#0_advect_pix"   # advect pix @name (scoped)
 PASS_NAME   = "#0_advect_pass"  # pass pix @name (scoped)
 TITLE       = "Advect"
-PW, PH      = 190.0, 130.0     # presentation width, height
+PW, PH      = 190.0, 150.0     # presentation width, height
 
-CODEBOX = open(Path(__file__).parent / "codebox_advect.gen").read()
+CODEBOX      = open(Path(__file__).parent / "codebox_advect.gen").read()
+PASS_CODEBOX = open(Path(__file__).parent / "codebox_advect_pass.gen").read()
 
 # ---------------------------------------------------------------------------
 # UI params (displayed in grid)
@@ -50,6 +51,9 @@ PARAMS = [
     {"name": "decay",     "type": "float", "min": 0.8,  "max": 1.5,  "default": 0.97, "label": "Decay"},
     {"name": "injection", "type": "float", "min": 0.0,  "max": 0.2,  "default": 0.02, "label": "Inject"},
     {"name": "mix_amt",   "type": "float", "min": 0.0,  "max": 1.5,  "default": 1.0,  "label": "Mix"},
+    # separate / mode target advect_pass (the feedback stage), not advect_pix
+    {"name": "separate",  "type": "float", "min": 0.0,  "max": 1.0,  "default": 0.0,  "label": "Separate", "target": "pass"},
+    {"name": "mode",      "type": "float", "min": 0.0,  "max": 2.0,  "default": 0.0,  "label": "Mode",     "target": "pass"},
 ]
 
 # ---------------------------------------------------------------------------
@@ -99,23 +103,36 @@ def wire(src, src_out, dst, dst_in):
 # ---------------------------------------------------------------------------
 
 def gen_pass():
-    """Trivial identity gen: in 1 → out 1. No codebox needed."""
+    """Separate stage gen: in 1 → codebox → out 1.
+
+    Was a trivial identity holder; now carries the feedback-loop 'separate'
+    color stage (codebox_advect_pass.gen). Params (separate, mode) are gen
+    Params set as attributes on the pass pix — no extra inlets needed.
+    """
     return {
         "fileversion": 1,
         "appversion": {"major": 9, "minor": 1, "revision": 4,
                        "architecture": "x64", "modernui": 1},
         "classnamespace": "jit.gen",
-        "rect": [100.0, 100.0, 400.0, 300.0],
+        "rect": [100.0, 100.0, 700.0, 600.0],
         "boxes": [
             {"box": {"id": "gen-obj-1", "maxclass": "newobj",
                      "numinlets": 0, "numoutlets": 1, "outlettype": [""],
                      "patching_rect": [22.0, 30.0, 28.0, 22.0], "text": "in 1"}},
-            {"box": {"id": "gen-obj-2", "maxclass": "newobj",
+            {"box": {
+                "id": "gen-obj-2", "maxclass": "codebox",
+                "code": PASS_CODEBOX,
+                "fontface": 0, "fontname": "<Monospaced>", "fontsize": 12.0,
+                "numinlets": 1, "numoutlets": 1, "outlettype": [""],
+                "patching_rect": [22.0, 80.0, 550.0, 380.0]
+            }},
+            {"box": {"id": "gen-obj-3", "maxclass": "newobj",
                      "numinlets": 1, "numoutlets": 0,
-                     "patching_rect": [22.0, 100.0, 35.0, 22.0], "text": "out 1"}},
+                     "patching_rect": [22.0, 490.0, 35.0, 22.0], "text": "out 1"}},
         ],
         "lines": [
-            {"patchline": {"source": ["gen-obj-1", 0], "destination": ["gen-obj-2", 0]}}
+            {"patchline": {"source": ["gen-obj-1", 0], "destination": ["gen-obj-2", 0]}},
+            {"patchline": {"source": ["gen-obj-2", 0], "destination": ["gen-obj-3", 0]}},
         ]
     }
 
@@ -165,13 +182,14 @@ def gen_advect():
 # ---------------------------------------------------------------------------
 
 def dial_box(n, p):
+    pix_name = PASS_NAME if p.get("target") == "pass" else OBJ_NAME
     col = n % 5; row = n // 5
     x = 4.0 + col * 37.0; y = 38.0 + row * 62.0
     return box(param_obj_id(n),
         maxclass="live.dial",
         activedialcolor=DIAL_COLOR, fontname=FONT,
         numinlets=1, numoutlets=2, outlettype=["", "float"],
-        param_connect=f"{OBJ_NAME}::{p['name']}",
+        param_connect=f"{pix_name}::{p['name']}",
         parameter_enable=1,
         patching_rect=[50.0 + n*50.0, 80.0, 27.0, 43.0],
         presentation=1,
@@ -260,15 +278,15 @@ def build():
             numinlets=3, numoutlets=2, outlettype=["jit_gl_texture", ""],
             patcher=gen_advect(),
             patching_rect=[200.0, 380.0, 320.0, 22.0],
-            text=f"jit.gl.pix vsynth @name {OBJ_NAME} @type char @adapt 1",
+            text=f"jit.gl.pix vsynth @name {OBJ_NAME} @type float32 @adapt 1",
             varname=OBJ_NAME),
 
-        # pass_pix — identity pix, holds previous frame
+        # pass_pix — feedback stage: holds previous frame + applies 'separate'
         box(OBJ_PASS_PIX, maxclass="newobj",
             numinlets=1, numoutlets=2, outlettype=["jit_gl_texture", ""],
             patcher=gen_pass(),
             patching_rect=[200.0, 440.0, 300.0, 22.0],
-            text=f"jit.gl.pix vsynth @name {PASS_NAME} @type char @adapt 1",
+            text=f"jit.gl.pix vsynth @name {PASS_NAME} @type float32 @adapt 1",
             varname=PASS_NAME),
 
         # autopattr
@@ -372,11 +390,13 @@ def build():
         wire(OBJ_PRETAM,     0, OBJ_MODULESIZE,   0),
     ]
 
-    # route → dial → attrui → advect_pix
+    # route → dial → attrui → target pix (advect_pix by default, advect_pass
+    # for params flagged "target": "pass", i.e. separate / mode)
     for n, p in enumerate(PARAMS):
+        tgt = OBJ_PASS_PIX if p.get("target") == "pass" else OBJ_ADVECT_PIX
         lines.append(wire(OBJ_ROUTE,       n, param_obj_id(n), 0))
         lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
-        lines.append(wire(param_pre_id(n), 0, OBJ_ADVECT_PIX,  0))
+        lines.append(wire(param_pre_id(n), 0, tgt,             0))
 
     # parameters block
     params_block = {}

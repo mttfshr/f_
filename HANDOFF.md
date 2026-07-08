@@ -1,9 +1,332 @@
 # HANDOFF — f_ library
 
-Last session: 2026-07-05 (f_vf_seeds Evolution 2 — SHIPPED to production.
-Multi-owner overlap + texture bombing fully built, tested, and promoted.
-Only the helpfile remains, deferred by Matt's own choice — everything
-else is done.)
+Last session: 2026-07-08 (f_apollonian — Ford-circles proof-of-concept
+built, confirmed working, then deliberately superseded; scope redirected
+to the classical ring + central-circle closed gasket, which is not yet
+built)
+
+## f_apollonian — Ford-circles proof-of-concept CONFIRMED, but superseded scope — closed gasket not yet built
+
+Full history: `.specify/f_apollonian/spec.md`, `.specify/f_apollonian/plan.md`,
+`.specify/f_apollonian/tasks.md` — all three updated this session with
+explicit supersession notes, nothing deleted. `ideas/f_apollonian.md` and
+`ideas/f_poincare.md` also updated earlier this session with the initial
+research/reference-shader findings (before scratch-testing began).
+
+**What actually happened this session, in order:**
+
+1. Wrote `.specify/f_apollonian/{spec,plan,tasks}.md` from scratch —
+   ADR-1 chose the **Ford circles** construction (infinite tangent-circle
+   strip, unconditional per-iteration fold, no `break`/early-exit needed)
+   as the safest first scratch target, deliberately deferring the
+   classical **ring + central-circle** construction (the actual "closed
+   gasket" — bounded, per-candidate containment-tested, needs `break` or
+   a branchless equivalent).
+2. Built and scratch-tested the Ford-circles construction in
+   `~/Vsynth/patterns/apollonian-scratch.maxpat`. Found and fixed two real
+   translation bugs along the way (not just tuning): a missing
+   scale-accumulator (`s`) that should divide the final line-draw
+   distance, and a wrong inversion radius (`1.0` instead of the correct
+   `2.0`). **A pre-fix version compiled clean and looked plausible but
+   was not actually correct** — worth remembering that "compiles + looks
+   like the reference" isn't sufficient verification; only after fixing
+   both bugs did the output show genuine nested tangent-circle detail
+   matching the reference's algebra, not just its general shape.
+3. Added and confirmed a live-animated final circle inversion
+   (`inv_x`/`inv_y`/`inv_radius`/`inv_amount`, blended via `mix()`, with a
+   local taper near its own singularity) — swept clean from 0 to 0.7,
+   dramatic but artifact-free.
+4. **Matt then correctly identified that Ford circles is structurally the
+   wrong shape for this project** — an infinite strip, not the closed,
+   bounded gasket that fits a circular screen. This wasn't a mistake in
+   the proof-of-concept (ADR-1 always flagged this tradeoff explicitly),
+   but it does mean **the Ford-circles work is not what ships** — it
+   proved the GenExpr mechanics (guarded inversion, scale-accumulator
+   pattern, `mix()`-based animatable blend, avoiding `break` entirely)
+   without being the target construction itself.
+5. All three planning docs updated in place (not replaced) to reflect
+   this: original Phase 1–2 in `tasks.md` relabeled
+   `[PROOF-OF-CONCEPT, COMPLETE — SUPERSEDED SCOPE]` and left intact as
+   the historical record; a new "Phase 1 (redirected)" section (T111–T119)
+   added, targeting the ring + central-circle construction; ADR-1 and
+   ADR-2 in `plan.md` both carry explicit "SUPERSEDED 2026-07-08" notes
+   with the pivot's reasoning, original reasoning left untouched above
+   them; `spec.md` got a Status Addendum plus a new top-level "What
+   'production' means" section (see below).
+
+**Critical framing for next session — do not skip this**: per Matt's
+explicit instruction this session, this module is **proof-of-concept
+scope, full stop, until three specific things are built**:
+generalized/arbitrary generating circle configurations (not locked to a
+fixed N=3 ring), per-region texture sampling (not iteration-depth coloring
+alone), and a live max-iteration-count param (not a build-time constant).
+This is written into `spec.md`'s new "What 'production' means" section
+and into `plan.md`'s Phase 4 checkpoint. **A working closed gasket with
+none of these three would still not be production-ready** — don't let a
+successful `definition.py` build read as "done" next session.
+
+**What's actually next**: `.specify/f_apollonian/tasks.md`'s "Phase 1
+(redirected)" section, T111–T119 — build the ring + central-circle
+construction, reusing the confirmed `invertX`/`invertY` functions from
+the Ford-circles work. The one open technical question that must actually
+get resolved this time (it was legitimately sidestepped, not answered, by
+the Ford-circles construction): whether `break`/early-exit is GPU-safe in
+`jit.gl.pix`, or whether the branchless `settled`-flag fallback (described
+in `ideas/f_apollonian.md`) is needed instead — T114 in the redirected
+tasks list.
+
+**Skill updates made this session** (in
+`/Users/matt/Github/claude-scaffold/skills/`, the real editable source —
+not the `/mnt/skills/user/` mount, which lags behind):
+- `jit-gen-codebox/SKILL.md`: new finding — component **assignment**
+  (`z.x = ...`) is a hard "invalid left-hand expression" compile error,
+  distinct from the previously-documented component **read** silent
+  failure. Fallback: use separate scalars (`zx`, `zy`), not one
+  vector-like variable with fields.
+- `vsynth-bpatcher/SKILL.md`: new debugging note — a codebox object can
+  visually overlap/hide a missing wire to the output chain
+  (`vs_output`/`CORNERPINS`), producing "clean console, nothing on
+  screen" that looks like a rendering-pipeline problem but is actually
+  just an obscured missing connection. Check the wire before suspecting
+  `@drawto`/math.
+
+---
+
+## f_vf_vorticity — built, status UNVERIFIED — do not call this shipped
+
+Full history: `.specify/f_vf_vorticity/spec.md`, `.specify/f_vf_vorticity/plan.md`,
+`docs/f-reference/f_vf_vorticity.md` (as-built reference — read this
+first if resuming this module, but note it overstates confidence — see
+below). Vorticity confinement (GPU Gems 1 Ch. 38, S:38.5.1) as a
+standalone f_vecfield→f_vecfield processor. Single codebox (curl via
+central-difference functions, gradient of vorticity magnitude,
+perpendicular corrective force) compiled clean with no console errors
+and no capture-ceiling split needed.
+
+**Matt corrected the record on this at end of session (2026-07-06):
+this module is NOT confirmed working.** Earlier in the session this
+entry and the as-built doc stated it was shipped/confirmed based on
+apparent chain-testing results against `f_vf_repulse`/`f_vf_advect`.
+Given how much of this same session's `f_vf_advect` work *also* seemed
+confirmed at each step and later turned out not to be, that earlier
+confidence should not be trusted without independent re-verification.
+**Treat every claim below as unconfirmed until re-checked from scratch
+next session** — do not build on top of this or register it in
+`f_modules.maxpat` assuming it works.
+
+Claims made earlier this session that need re-verification, not
+re-assertion:
+- Single codebox compiling without a capture-ceiling issue
+- `confinement` producing a visible effect against `f_vf_repulse`
+- The "requires temporal feedback in the consumer" finding (`f_vf_advect`
+  chain vs. memoryless consumers `f_caustic`/`f_vf_warp`/`f_lens`/
+  `f_vf_glow`)
+- `range_tiers` (0.1/1.0/10.0) being reasonable values
+
+Registration (Phase 4) not started — correctly, given the above.
+
+## f_vf_advect — confinement fold-in attempted, reverted; module
+otherwise unchanged
+
+**Do not re-attempt this blind next session — read this entry fully
+first.** Full narrative: `ideas/vorticity_confinement.md`'s "Addendum
+(2026-07-06)" section — this entry is a pointer/summary.
+
+Matt asked to try folding vorticity confinement directly into
+`f_vf_advect` instead of using it as a standalone processor externally —
+curl computed on `in3` (the previous accumulated frame, via the
+existing pass/state feedback loop) rather than a live external source,
+so confinement could reinforce rotation emerging from the feedback loop
+itself. Real, correct engineering happened along the way: both
+`pix_chain` nodes changed `char`→`float32` (needed for curl precision
+near the f_vecfield rest state — confirmed necessary, not speculative),
+a third outlet added exposing the real enhanced displacement field
+(gated by the same `connected` convention as elsewhere, not a relabeled
+copy of the existing outlet), and a genuine **pre-existing, unrelated
+bug found and fixed**: this module's "Strength" param was declared as
+`strength` in `definition.py` while the codebox's actual `Param` was
+always `mix_amt` — every rebuild silently regenerated an `attrui` bound
+to a nonexistent pix attribute, meaning the dial never reached the
+codebox at all, regardless of the codebox being correct. **This fix
+was preserved through the revert** (see below) — it's real and worth
+having regardless of what happened with confinement.
+
+**Confinement itself was never gotten working, despite extensive,
+evidence-based debugging that ruled out — one at a time, each with
+direct confirmation, not assumption — every hypothesis tried:**
+- Wrong `param_connect` metadata (real, fixed, not the cause — value
+  delivery goes through `attrui`'s own `attr`, confirmed by checking a
+  working param's `attrui` in the same file)
+- `mix_amt=0` silently breaking the feedback loop (real, fixed, not the
+  cause — confirmed via the actual codebox math: at `mix_amt=0`, `out1`
+  collapses to the raw unadvected source, which is what gets fed back
+  into `in3`)
+- `@type`/`@adapt` interaction silently overriding explicit float32
+  (checked directly against the Max reference docs at
+  `/Applications/Max.app/Contents/Resources/C74/docs/refpages/` —
+  `@adapt` only affects output dimensions, not type; ruled out)
+- `dim`/`sx` reporting an unexpected scale in this multi-pix/`@adapt`
+  context (directly visualized via a temporary diagnostic — confirmed
+  sane)
+- A silent Lua `DSL.Parser` capture-group compile ceiling (same failure
+  mode that hit `f_vf_seeds`/`f_masonry` at similar complexity) from
+  fully inlining the curl functions — Matt confirmed a clean console,
+  ruling this out
+- The elaborate 5-curl-evaluation gradient-of-vorticity-magnitude chain
+  being the specific failure point — replaced with a much simpler
+  single-curl-sample, perpendicular-to-current-flow-direction variant —
+  still no effect
+- Tiny (1-texel) sampling offsets behaving differently than the larger,
+  confirmed-working offset the advection step's own
+  `sample(in3, src_uv)` already uses on the same feedback texture —
+  tested at 8x the offset, still no effect
+
+**Genuinely unresolved.** Whatever the actual root cause is, it wasn't
+found. The one thing all evidence points to: something about reading
+*spatial neighbor offsets* from `in3` specifically *for the curl
+computation* never produced a nonzero result, even though the identical
+codebox's advection line proves offset-sampling of the same `in3`
+texture works correctly (the visible spiral in the "advected" output
+requires it) — the difference between "offset for advection" and
+"offset for curl" was never isolated.
+
+**Reverted via `git checkout` to the last-committed state (`e27db16`)**
+— 2 outlets, `char` type, no curl/confinement code. Only the unrelated
+`mix_amt` naming fix was re-applied on top of the clean revert (edited
+`definition.py`, rebuilt via `tools/build_patcher.py`, confirmed
+`attrui attr=mix_amt` in the rebuilt JSON). Module should behave exactly
+as it did before this session's confinement work began, plus that one
+real fix.
+
+**If this thread is picked up again:** don't re-attempt curl-on-in3
+inside a single combined codebox blind. The one genuinely untested
+approach: split into a dedicated multi-stage `pix_chain` — one stage
+computes curl from `in3` and outputs it as its own texture, a second
+stage samples *that* texture's neighbors to build the confinement force
+— i.e., the same multi-stage pattern already proven for `f_vf_seeds`/
+`f_sirds`, not tried here because the problem never actually presented
+as a compile-ceiling issue that would obviously call for it. Whether
+this changes anything is unknown — flagged as the next thing to try,
+not a confirmed direction.
+
+---
+
+## f_masonry — ADR 7 candidate-search slot ownership: SHIPPED
+
+Full history: `.specify/f_masonry/spec.md` (updated acceptance criteria),
+`plan.md` (ADR 7 + addenda), `tasks.md` (E001, mostly checked off).
+`definition.py` is now understood to be **reference documentation only,
+not a build source** for this module — see below.
+
+### The bug and the fix
+
+At high `drift`, output was a "sliced barcode" — bars of random width
+hard-clipped at fixed slot boundaries — instead of the organic broken-
+course look the spec describes. Root cause: `slot = floor(...)` was a
+single lookup from the pixel's own position; `drift` only ever reshuffled
+phase *within* that one fixed, never-moving slot. Same structural shape
+as `f_vf_seeds`' pre-Evolution-2 Voronoi (single-owner grid, hard clip),
+independently re-derived from first principles by reading the codebox
+directly, then confirmed empirically in Max.
+
+**Fix:** replaced the single `slot` lookup with a 3-candidate search
+(`base_slot-1/0/+1`), winner-take-all (no multi-owner compositing — real
+bricks don't overlap, unlike `f_vf_seeds`' marks). `regularity` was
+repurposed from edge-hugging-within-a-fixed-slot to a **priority bias in
+the search itself** (same shape as `f_vf_seeds`' `field_priority`) —
+`regularity=0` now produces genuinely uneven brick spacing as contested
+territory is won, which **breaks the spec's original "same average
+density" criterion by design**, confirmed in Max to read as intentional
+(genuinely wider bricks), not broken. `quantize` was **removed
+entirely** — Matt caught that, as implemented
+(`drift_scale = drift * 0.5 * (1 - quantize)`), it was a pure linear
+scalar on `drift`, not an independent axis; confirmed mathematically.
+`phase` now shifts the search's query point before the search runs
+(real cross-cell migration while scrolling) instead of wrapping locally.
+All of E001a-i confirmed in Max: regression check passes at defaults,
+60+fps, no flicker, contested territory reads as a wider brick (so the
+`mag_weight`-equivalent flagged as a possible follow-up is **not
+needed**).
+
+### Two real bugs hit getting this into production — both instructive
+
+1. **Silent compile failure — all `attrui`s grayed out, no console
+   error.** Root cause: `eval_candidate()`, a **user-defined function**,
+   used `return raw_dist, bias_dist;` (multi-value return). The
+   jit-gen-codebox skill confirms multi-return via comma-assignment for
+   *built-in* operators (`cartopol`) and confirms user-defined functions
+   work, but had no confirmed case of a user-defined function itself
+   returning multiple values — untested territory, not a documented
+   pattern. **Fix:** inlined the per-candidate math three times
+   (duplicated, not called) using only the confirmed-working `hash1d`
+   single-return pattern. **Worth adding to the jit-gen-codebox skill if
+   this comes up again** — not done yet.
+   A second, smaller contributor to the same symptom: `Param aspect(1.0)`
+   had been declared *after* other executable statements (`theta`/
+   `cosT`/`sinT`) — Matt caught this and moved it to the top with the
+   other `Param` declarations. Note: this same ordering existed in the
+   *original* shipped codebox and worked fine there — likely a
+   complexity/parse-budget threshold this larger codebox tipped over,
+   similar in spirit to `f_vf_seeds`' capture-ceiling issue, not a hard
+   universal rule. Don't over-generalize from this one data point.
+
+2. **A full `tools/build_patcher.py` regeneration silently destroyed the
+   mod matrix and the Controls/Matrix toggle switch.** `f_masonry` has
+   substantial hand-built custom UI (`f_util_matrix_grid.js`, appearing
+   twice) that the generic builder has no way to reproduce.
+   `definition.py` was *also* missing its `mod_inlets` declaration
+   entirely (a separate, real gap, found and fixed first — the 3
+   slot/brick/pixel mod texture inlets had been hand-wired directly into
+   the `.maxpat` at some point and never captured back into
+   `definition.py`). Regenerating from `definition.py` alone silently
+   dropped ~1900 lines of real, working structure. **Recovered by
+   restoring `patchers/f_masonry.maxpat` from git (`git checkout HEAD --
+   patchers/f_masonry.maxpat`, last commit `5ceb451`)** — `definition.py`
+   is gitignored, so it was never the actual source of truth; the
+   tracked `.maxpat` was. **`f_masonry` now joins `f_sirds`/`f_vf_seeds`
+   in the "never regenerate the whole file via `tools/build_patcher.py`,
+   hand-edit the `.maxpat` directly" category.** The actual ADR 7 fix
+   was then applied as a single surgical text replacement of just the
+   codebox string (found via unique-substring extraction in a small
+   Python script, not hand-retyped — avoids exact-escaping mismatches),
+   verified by `git diff --stat` showing exactly 1 line changed.
+
+### `.gitignore` changed as a direct result
+
+Matt removed a large number of entries from `.gitignore` this session —
+`.specify/*/definition.py` files (and much more) are now tracked. This
+is the right fix for the root cause above: `definition.py` being
+gitignored is exactly why it was able to silently drift out of sync with
+the real patcher for as long as it did. A large pile of newly-untracked
+files surfaced as a result (most of `.specify/`, several new
+`docs/f-reference/*.md` files, `tools/helpfile_queue.json`,
+`ideas/CV_TRIGGER_INVENTORY.md`) — **not reviewed or committed this
+session**, left for Matt to review and commit in whatever grouping makes
+sense to him. One thing flagged but not yet addressed:
+`.specify/f_vf_prism/__pycache__/` showed up untracked and should be
+added to `.gitignore`, not committed as source.
+
+### Committed
+
+`e27db16 fix masonry and tweak gitignore` — `patchers/f_masonry.maxpat`
+(the ADR 7 fix) + the `.gitignore` change. Pushed by Matt.
+
+### Not yet done
+
+- `quantize`'s `live.dial` and Matrix-view row are still visibly present
+  in the UI but functionally inert (codebox no longer reads them) — a
+  cosmetic cleanup, not a bug, deliberately deferred rather than risk
+  another surgical UI edit in the same session.
+- Phase-scroll (E001f) was confirmed working with a `vs_lfo` earlier in
+  the session, but against the pre-multi-return-fix codebox — worth a
+  quick re-check against the exact final shipped version, though nothing
+  about the fix should have touched phase behavior.
+- The `mag_weight`-equivalent question (does winning contested territory
+  need to visibly grow a brick, not just claim more mortar/gap around
+  it) was explicitly checked and judged **not needed** — don't
+  re-litigate this without a new concrete complaint.
+
+---
 
 ## f_vf_seeds — Evolution 2 (texture bombing + multi-owner overlap):
 SHIPPED

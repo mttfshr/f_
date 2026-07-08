@@ -1,7 +1,7 @@
 # f_poincare
 
 _Status: Planned — not yet specced_
-_Last updated: 2026-06-09_
+_Last updated: 2026-07-07 — see `ideas/f_apollonian.md` for a closely related idea revisited this session_
 
 ## Concept
 
@@ -31,6 +31,7 @@ The Möbius transformations that tile hyperbolic space are closely related to f_
 
 ## Relationship to other patches
 
+- `f_apollonian` (see `ideas/f_apollonian.md`) — separate idea file, real shared DNA: both are iterated-Möbius-transform tilings (a point repeatedly transformed by a generating set until it settles, then sampled/colored). Ford circles specifically are the circle-packing shadow of a hyperbolic tessellation by the modular group — not just an architectural analogy. Real divergence: {p,q} tessellation is space-filling (every point converges quickly to a fundamental domain), Apollonian gaskets have a genuine fractal residual boundary that never settles. Undecided whether these end up as one module (mode switch) or two siblings sharing a `.genexpr` helper library — see that file for reference-shader findings (fixed-boundary + one live final inversion as the clean way to animate region size without breaking tangency; half-plane-as-degenerate-boundary as prior art for the "arbitrary boundary" question below).
 - `f_mobius` — shares Möbius transformation math; f_poincare is a group of Möbius transformations rather than a single one
 - `f_stereo` — shares conformal map geometry; stereographic projection and hyperbolic tiling are both conformal
 - `f_droste` — the singularity boundary behavior in droste is the same conformal compression phenomenon as Poincaré disk tile edges near the boundary

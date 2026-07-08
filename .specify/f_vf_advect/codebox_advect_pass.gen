@@ -1,0 +1,72 @@
+// codebox_advect_pass.gen — feedback-loop "separate" stage for f_vf_advect
+// CANDIDATE / UNVERIFIED (2026-07-07). Three modes on one intensity knob.
+// separate = 0 is EXACT identity in every mode (backward-compat invariant).
+//
+// mode: 0 = Ride  multiplicative chroma expansion; scale-invariant, so the
+//               marble lives on the decay x injection x separate surface
+//               and CAN fry to primaries.
+//       1 = Hold  attractor pulling chroma toward Thold; self-stabilizing,
+//               decoupled from loop rates, CANNOT fry.
+//       2 = Snap  quantize hue to Nsnap sectors; hard immiscible bands.
+//
+// CEILING WARNING: all three inline in one codebox is the config most
+// likely to trip the GL2->GL3 capture-group ceiling. If params gray out
+// or the pix goes invalid, CHECK THE MAX CONSOLE FIRST — the fix is to
+// move Snap to its own pix stage, not to debug the math.
+
+Param separate(0.0);
+Param mode(0.0);
+
+Thold = 0.7;   // Hold target chroma magnitude   (bake-to-expose candidate)
+Nsnap = 6.0;   // Snap hue sector count           (bake-to-expose candidate)
+
+uv = norm;
+c  = sample(in1, uv);
+
+// luma (Rec.709) + per-channel chroma deviation
+l  = c.x * 0.2126 + c.y * 0.7152 + c.z * 0.0722;
+dx = c.x - l;
+dy = c.y - l;
+dz = c.z - l;
+
+// --- mode 0: Ride ------------------------------------------------------
+sride  = 1.0 + separate;
+ride_r = l + dx * sride;
+ride_g = l + dy * sride;
+ride_b = l + dz * sride;
+
+// --- mode 1: Hold ------------------------------------------------------
+cmag   = sqrt(dx*dx + dy*dy + dz*dz);
+hscale = mix(1.0, Thold / max(cmag, 0.0001), separate);
+hscale = clamp(hscale, 0.0, 4.0);
+hold_r = l + dx * hscale;
+hold_g = l + dy * hscale;
+hold_b = l + dz * hscale;
+
+// --- mode 2: Snap ------------------------------------------------------
+cmag2, cang = cartopol(dx, dz);               // (Cr,Cb) -> magnitude, angle
+sa     = 6.28318530718 / Nsnap;
+qang   = floor(cang / sa + 0.5) * sa;         // nearest hue sector
+tdx    = mix(dx, cmag2 * cos(qang), separate);
+tdz    = mix(dz, cmag2 * sin(qang), separate);
+snap_r = l + tdx;
+snap_b = l + tdz;
+snap_g = (l - 0.2126 * snap_r - 0.0722 * snap_b) / 0.7152;  // luma-locked
+
+// --- branchless mode select --------------------------------------------
+m1 = step(0.5, mode);
+m2 = step(1.5, mode);
+w0 = 1.0 - m1;
+w1 = m1 - m2;
+w2 = m2;
+
+out_r = ride_r*w0 + hold_r*w1 + snap_r*w2;
+out_g = ride_g*w0 + hold_g*w1 + snap_g*w2;
+out_b = ride_b*w0 + hold_b*w1 + snap_b*w2;
+
+out1 = vec(
+	clamp(out_r, 0.0, 1.0),
+	clamp(out_g, 0.0, 1.0),
+	clamp(out_b, 0.0, 1.0),
+	c.w
+);
