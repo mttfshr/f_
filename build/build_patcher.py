@@ -1120,7 +1120,7 @@ def load_definition(path):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 tools/build_patcher.py .specify/f_<name>/definition.py")
+        print("Usage: python3 build/build_patcher.py .specify/f_<name>/definition.py")
         sys.exit(1)
 
     def_path  = Path(sys.argv[1])
@@ -1128,7 +1128,7 @@ def main():
     result    = build(defn)
 
     repo_root = Path(__file__).parent.parent
-    out_path  = repo_root / "patchers" / f"{defn['name']}.maxpat"
+    out_path  = repo_root / "package" / "patchers" / f"{defn['name']}.maxpat"
 
     with open(out_path, "w") as f:
         json.dump(result, f, indent="\t")

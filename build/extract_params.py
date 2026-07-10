@@ -18,8 +18,8 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-PATCHERS_DIR = REPO_ROOT / "patchers"
-HELP_DIR = REPO_ROOT / "help"
+PATCHERS_DIR = REPO_ROOT / "package" / "patchers"
+HELP_DIR = REPO_ROOT / "package" / "help"
 DOCS_DIR = REPO_ROOT / "docs"
 SPECIFY_DIR = REPO_ROOT / ".specify"
 STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"

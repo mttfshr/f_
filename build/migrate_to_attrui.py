@@ -28,7 +28,7 @@ from pathlib import Path
 SKIP_NAMES = {"src_mode"}   # prepend param names that must stay as prepend
 
 REPO_ROOT = Path(__file__).parent.parent
-PATCHERS_DIR = REPO_ROOT / "patchers"
+PATCHERS_DIR = REPO_ROOT / "package" / "patchers"
 
 EXCLUDE_FILES = {"f_menu.maxpat", "f_modules.maxpat", "f_chladni_audio.maxpat"}
 

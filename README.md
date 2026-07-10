@@ -2,12 +2,14 @@
 
 A collection of bpatchers for [Vsynth](https://www.kevinkripper.com/vsynth) in [Max](https://cycling74.com/products/max). Generators, processors, and utilities that follow Vsynth conventions and are designed to work in Vsynth signal chains.
 
+This repo is more than the patchers themselves — it also documents the process used to design and build them, in case that's useful to other Vsynth module authors. See "Repo Structure" below.
+
 ## Installation
 
-Clone this repository and place the `f_` folder in your Max Packages directory:
+Clone this repository, then place (or symlink) the `package` folder in your Max Packages directory, renamed to `f_`:
 
-- **macOS:** `~/Documents/Max 9/Packages/`
-- **Windows:** `Documents\Max 9\Packages\`
+- **macOS:** `~/Documents/Max 9/Packages/f_` → `path/to/f_/package`
+- **Windows:** `Documents\Max 9\Packages\f_` → `path\to\f_\package`
 
 Restart Max. The patches will be available in your file browser under `f_`.
 
@@ -58,4 +60,15 @@ Restart Max. The patches will be available in your file browser under `f_`.
 
 These patches are developed alongside personal Vsynth performance work and released as-is. They follow Vsynth conventions and are designed for Vsynth signal chains. If you know Max and Vsynth, you should be able to understand and modify the patches as needed.
 
-There is no release schedule. Patches may change significantly as development continues. Help files are not yet written -- the patch tables and parameter names are designed to be self-explanatory within the Vsynth context.
+There is no release schedule. Patches may change significantly as development continues.
+
+## Repo Structure
+
+This repo has four parts:
+
+- **`package/`** — the installable Max package: `patchers/`, `help/`, `javascript/`, `package-info.json`. This is the only folder Max needs (see Installation above).
+- **`build/`** — the build system used to generate patchers from definition files, plus supporting tools (helpfile generation via Claude API, interface auditing, migrations). Meant to be forked or read if you want to build your own `f_`-style bpatcher library. See `build/spec.md`.
+- **`ideas/`, `.specify/`, `docs/`** — planning and reference material: half-formed module ideas (`ideas/`), specs/plans/ADRs for modules under active development (`.specify/`), and as-built reference docs plus research notes on Vsynth/Max internals (`docs/`). Kept public as a reference and conversation starter, not as polished documentation — expect dead ends, superseded approaches, and in-progress modules alongside finished ones.
+- **`skills/`** — [Claude](https://claude.ai) skills used to collaborate with Claude on this codebase: conventions for bpatcher structure (`vsynth-bpatcher`), GenExpr/`jit.gl.pix` gotchas (`jit-gen-codebox`), helpfile format (`f-helpfile`), and a notation system for describing patches in chat (`max-patch-notation`). Copy these into your own Claude setup (e.g. `claude-scaffold`-style skills directory) if you want a similar collaboration workflow — you'll want to adjust the hardcoded paths in `vsynth-bpatcher/SKILL.md` to match your own repo location.
+
+`tools/` also exists, holding one-off scripts from past development sessions — not part of the supported build system (see `tools/README.md`).

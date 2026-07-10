@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 from collections import defaultdict
 
-PATCHERS_DIR = Path(__file__).parent.parent / "patchers"
+PATCHERS_DIR = Path(__file__).parent.parent / "package" / "patchers"
 
 SKIP = {
     "f_modules", "f_texrouter", "f_util_matrix_2",

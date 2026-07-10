@@ -23,9 +23,9 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-HELP_DIR = REPO_ROOT / "help"
+HELP_DIR = REPO_ROOT / "package" / "help"
 STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"
-TEMPLATE_PATH = REPO_ROOT / "help" / "f_droste.maxhelp"
+TEMPLATE_PATH = REPO_ROOT / "package" / "help" / "f_droste.maxhelp"
 SKILL_PATH = Path.home() / "Github/claude-scaffold/skills/f-helpfile/SKILL.md"
 
 DEFAULT_BUDGET = 50_000

@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT    = Path(__file__).parent.parent
-PATCHERS_DIR = REPO_ROOT / "patchers"
+PATCHERS_DIR = REPO_ROOT / "package" / "patchers"
 
 TARGETS = [
     "f_grain.maxpat",
