@@ -2,15 +2,15 @@
 """
 generate_helpfiles.py — generate f_ helpfiles via Claude API.
 
-Reads tools/helpfile_queue.json (written by extract_params.py), calls the
+Reads build/helpfile_queue.json (written by extract_params.py), calls the
 Anthropic API for each pending entry, writes the helpfile, and updates the
 queue with status and token spend.
 
 Usage:
-    python3.13 tools/generate_helpfiles.py                  # process all pending
-    python3.13 tools/generate_helpfiles.py f_grain          # single module
-    python3.13 tools/generate_helpfiles.py --budget 50000   # token ceiling (default: 50000)
-    python3.13 tools/generate_helpfiles.py --dry-run        # print prompt, no API call
+    python3.13 build/generate_helpfiles.py                  # process all pending
+    python3.13 build/generate_helpfiles.py f_grain          # single module
+    python3.13 build/generate_helpfiles.py --budget 50000   # token ceiling (default: 50000)
+    python3.13 build/generate_helpfiles.py --dry-run        # print prompt, no API call
 
 Requirements:
     ANTHROPIC_API_KEY env var set
@@ -24,7 +24,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
 HELP_DIR = REPO_ROOT / "help"
-STATE_FILE = REPO_ROOT / "tools" / "helpfile_queue.json"
+STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"
 TEMPLATE_PATH = REPO_ROOT / "help" / "f_droste.maxhelp"
 SKILL_PATH = Path.home() / "Github/claude-scaffold/skills/f-helpfile/SKILL.md"
 
@@ -235,8 +235,8 @@ def main():
             parsed = json.loads(raw)
         except json.JSONDecodeError as e:
             print(f"    WARNING: response is not valid JSON: {e}")
-            print(f"    Raw response saved to tools/{module_name}_raw.txt")
-            (REPO_ROOT / "tools" / f"{module_name}_raw.txt").write_text(raw)
+            print(f"    Raw response saved to build/{module_name}_raw.txt")
+            (REPO_ROOT / "build" / f"{module_name}_raw.txt").write_text(raw)
             entry["status"] = "error_json"
             entry["error"] = str(e)
             save_queue(queue)

@@ -5,12 +5,12 @@ extract_params.py — extract param metadata from f_ patchers for helpfile gener
 Priority: .specify/<name>/definition.py > patcher JSON extraction
 
 Usage:
-    python3 tools/extract_params.py                  # all patchers missing helpfiles
-    python3 tools/extract_params.py f_grain          # single patcher by name
-    python3 tools/extract_params.py --all            # all patchers, incl. existing helpfiles
-    python3 tools/extract_params.py --dry-run        # print JSON, don't write state file
+    python3 build/extract_params.py                  # all patchers missing helpfiles
+    python3 build/extract_params.py f_grain          # single patcher by name
+    python3 build/extract_params.py --all            # all patchers, incl. existing helpfiles
+    python3 build/extract_params.py --dry-run        # print JSON, don't write state file
 
-Output: tools/helpfile_queue.json
+Output: build/helpfile_queue.json
 """
 
 import json
@@ -22,7 +22,7 @@ PATCHERS_DIR = REPO_ROOT / "patchers"
 HELP_DIR = REPO_ROOT / "help"
 DOCS_DIR = REPO_ROOT / "docs"
 SPECIFY_DIR = REPO_ROOT / ".specify"
-STATE_FILE = REPO_ROOT / "tools" / "helpfile_queue.json"
+STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"
 
 
 # ---------------------------------------------------------------------------

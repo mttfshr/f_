@@ -10,15 +10,15 @@ Skips `prepend param src_mode` — that object is system-driven (vs_inState
 dual-mode) and intentionally uses prepend, not attrui.
 
 Usage:
-    python3 tools/migrate_to_attrui.py [patcher ...] [--dry-run]
+    python3 build/migrate_to_attrui.py [patcher ...] [--dry-run]
 
     With no patcher arguments, migrates all .maxpat files in patchers/.
     --dry-run prints what would change without writing.
 
 Examples:
-    python3 tools/migrate_to_attrui.py                          # all patchers
-    python3 tools/migrate_to_attrui.py patchers/f_grain.maxpat  # one patcher
-    python3 tools/migrate_to_attrui.py --dry-run                # preview
+    python3 build/migrate_to_attrui.py                          # all patchers
+    python3 build/migrate_to_attrui.py patchers/f_grain.maxpat  # one patcher
+    python3 build/migrate_to_attrui.py --dry-run                # preview
 """
 
 import json

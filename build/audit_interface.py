@@ -19,7 +19,7 @@ Checks:
 Skips patchers with no jit.gl.pix.
 
 Usage:
-    tools/py.sh tools/audit_interface.py [--patcher NAME]
+    build/py.sh build/audit_interface.py [--patcher NAME]
 """
 
 import json
