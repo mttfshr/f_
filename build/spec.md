@@ -4,7 +4,7 @@ _Last updated: 2026-05-30_
 
 ## What it does
 
-A general-purpose Python script that reads a patcher definition file and writes a valid Max 9 `.maxpat` JSON file to `patchers/f_<name>.maxpat`. One script generates any f_ bpatcher — new patchers are defined by writing a definition file, not modifying the script.
+A general-purpose Python script that reads a patcher definition file and writes a valid Max 9 `.maxpat` JSON file to `package/patchers/f_<name>.maxpat`. One script generates any f_ bpatcher — new patchers are defined by writing a definition file, not modifying the script.
 
 This is a personal scaffolding tool. It generates the initial patcher correctly and convention-compliantly. After generation, Max owns the `.maxpat` — hand edits in Max are expected and fine. The definition file is a structured intermediate for the build process, not a permanent mirror of the patcher.
 
@@ -17,12 +17,12 @@ scratch patch (iterate codebox)
     ↓
 .specify/f_<name>/definition.py   ← patcher definition: codebox + params + archetype
     ↓
-tools/build_patcher.py            ← reads definition, writes .maxpat
+build/build_patcher.py            ← reads definition, writes .maxpat
     ↓
-patchers/f_<name>.maxpat          ← distributed artifact; Max owns it from here
+package/patchers/f_<name>.maxpat  ← distributed artifact; Max owns it from here
 ```
 
-`.specify/` is gitignored — definition files are private dev workspace. `patchers/` is version controlled and is the distribution artifact.
+`.specify/` is version controlled (planning/reference material, kept public). `package/patchers/` is version controlled and is the distribution artifact — the only folder Max needs, see the repo root README.
 
 ---
 
@@ -178,7 +178,7 @@ among ui_params, t = tier index).
 
 ## Output
 
-`patchers/f_<name>.maxpat` — a valid Max 9 JSON patcher file.
+`package/patchers/f_<name>.maxpat` — a valid Max 9 JSON patcher file.
 
 **Required objects in every output patcher:**
 
