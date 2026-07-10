@@ -1,9 +1,486 @@
 # HANDOFF — f_ library
 
-Last session: 2026-07-08 (f_apollonian — Ford-circles proof-of-concept
-built, confirmed working, then deliberately superseded; scope redirected
-to the classical ring + central-circle closed gasket, which is not yet
-built)
+Last session: 2026-07-09, continued (f_apollonian SHELVED; f_poincare
+made real progress -- first genuine {4,5} hyperbolic tiling confirmed
+working. See below.)
+
+## f_poincare — real {4,5} geodesic tiling CONFIRMED (2026-07-09) -- priority next session
+
+**Read `.specify/f_poincare/plan.md`'s "Phase 3 Step 3 result" in full
+before resuming** -- this entry is a pointer/summary.
+
+Derived the closed-form {p,q} edge-geodesic formula from scratch
+(right-angled hyperbolic triangle → `cosh(ℓ) = cos(π/q)/sin(π/p)` →
+Euclidean circle center/radius via `tanh(ℓ/2)` + orthogonality to the
+unit circle), cross-checked two ways (validity condition falls out for
+free, `q→∞` limit reproduces `f_apollonian`'s already-confirmed ring
+formula exactly). Built `poincare-p4q5-scratch.maxpat` -- confirmed in
+Max: correct square fundamental domain, correct 4-fold symmetry, and
+**real recursive depth visible up to depth 4**, concentrated toward the
+disk boundary exactly as genuine hyperbolic tiling should. This is the
+first actual {p,q} tiling this project has produced, not just a
+diagnostic test.
+
+Before this, also confirmed (staged, in three steps -- single circle →
+2 overlapping circles → 2 tangent circles) that the branchless multi-
+candidate priority-selection pattern -- the one piece of machinery
+`f_apollonian` never isolated cleanly on its own -- holds up correctly,
+including at real tangency. Scratch files: `two-circle-priority-
+scratch.maxpat`, `tangent-circle-priority-scratch.maxpat`. A real
+simplification was found along the way and used in the {4,5} build:
+resolve the winning candidate's `cx/cy/r2` via the priority `mix()`
+chain first, then call `invertX/Y` once, rather than nesting per-
+candidate invert calls.
+
+**Next session, real open items, not yet done**:
+- Iteration count (24, untested guess) -- does more reveal deeper real
+  structure or hit a ceiling?
+- Only {4,5} tested -- cross-check the closed-form geometry against a
+  second {p,q} pair
+- No real source-texture sampling yet -- current output is region-ID/
+  depth coloring only, not the module's actual end-user behavior
+- `edge_r2`/`edge_d` are hand-computed offline (Python) and hardcoded as
+  `Param` defaults -- computing them in-codebox from live `p`/`q`
+  params is unexplored
+
+---
+
+## f_apollonian — SHELVED (2026-07-09), real contradictory findings recorded, module paused indefinitely
+
+**Do not resume this module next session by default.** Matt made the
+explicit call to stop and shelve it after this session's re-testing
+produced two results that don't reconcile and weren't resolved before
+stopping. Full detail is in `.specify/f_apollonian/plan.md` ADR-8's
+"Update 2" (2026-07-09) — read that in full before touching this module
+again, this HANDOFF entry is a pointer/summary only.
+
+**The core unresolved contradiction**: after relaxing the debug
+mismatch threshold from `0.01` to `0.3` (confirmed live via a full patch
+reopen), `use_mapped=2` (pass/fail view) still showed the four large
+ring/central regions as solid red/fail — no improvement. But
+`use_mapped=4` (actual signed error-vector view, checked immediately
+after on the same `ring_count=3`) showed those same regions as flat
+neutral gray — i.e. genuinely near-zero error, exactly the result ADR-8's
+math would predict, with color blooms appearing only at tangent points
+as expected. **These two views should agree and don't** — `debug_ok`'s
+own logic (not necessarily the underlying error calculation) is the
+prime unexamined suspect, per plan.md's Update 2 next-steps list.
+
+**A real, separate, non-blocking finding, safe to keep**: `ring_count=2`
+is a genuine divide-by-zero (`theta=pi/2` makes `r=1/cos(theta)`
+undefined) — the tangency formula only supports `ring_count >= 3`. Needs
+a guard whenever `ring_count` becomes a live param.
+
+**A real process mistake this session, worth remembering generally**:
+`use_mapped=3` (depth/iteration coloring) was mistaken for the error view
+and analyzed at length as such before being caught and retracted —
+caused by not checking the codebox's actual `step()` threshold values
+(1.5/2.5/3.5) against the requested mode number before interpreting the
+rendered image. Worth checking those numbers explicitly next time,
+rather than relying on memory of which `use_mapped` value means what.
+
+**Concrete next step, if/when this is picked back up**: get one clean,
+verified-fresh back-to-back `use_mapped=2` → `use_mapped=4` pair (forcing
+a full reopen or param nudge between them to rule out stale compile
+state), then trace `debug_ok`'s own step/mix wiring directly if they
+still disagree — see plan.md's Update 2 for the full 3-step list. Treat
+this session's `use_mapped=1` screenshot (large blue disc, insect/bird-
+shaped black cutout) as uninterpreted until that reconciliation happens,
+not as a confirmed remaining defect.
+
+**Not yet started, still correctly blocked, unchanged**: production
+items #2 (live max-iteration param) and #3 (per-region texture
+sampling), and the `ring_count` generalization (still reverted to fixed
+N=3, now additionally blocked behind the above reconciliation, not just
+behind base-construction confirmation).
+
+---
+
+## f_apollonian — mapped-circle coloring (ADR-8) debugging paused mid-thread; real progress made, but NOT yet reapplied to the actual module (earlier this session, superseded by shelving above)
+
+**Read `.specify/f_apollonian/plan.md` ADR-8 in full before touching this
+module again** — it now has a 2026-07-09 update appended describing
+exactly what changed. This entry is a pointer/summary, not the full
+derivation.
+
+**Where this session left off, concretely:** the accumulated-Möbius-
+transform tracking built last session (mapping fixed "limit circles"
+through the settled transform to get real flat-disc coloring, replacing
+the old fold-path-based `last_id` coloring) was showing a persistent,
+confusing four-lobed mismatch pattern in its debug/verification view
+(`use_mapped=2` in `apollonian-scratch.maxpat`). One real bug was found
+and fixed this session (the position-update chain never applied the
+central-circle inversion — see ADR-8's own history for that one, fixed
+before this detour began). But a *second*, more confusing mismatch
+persisted after that fix, and chasing it directly on the real
+3-ring-circle construction was going nowhere — every hypothesis
+(matrix composition order, conjugation sign, quadrant-dependent bugs)
+kept getting hand-verified as *correct* while the GPU render kept
+disagreeing.
+
+**Matt's call, and the right one:** stop debugging blind on the full
+construction, detour into `f_poincare` (a structurally related but much
+simpler problem — same iterated-anti-holomorphic-transform family, no
+fractal residual, unambiguous pass/fail) to test the same shared
+machinery in isolation. This is now done, see the `f_poincare` entry
+below for the full path. **The actual finding: the persistent mismatch
+was substantially a debug-threshold artifact** (a `0.01` error
+threshold is too strict for regions where a Möbius map sends points to
+large magnitudes — expected float32 precision softness, not a logic
+bug), confirmed by loosening the threshold to `0.3` and watching the
+mismatched region shrink dramatically.
+
+**Concrete next step, not yet done:** go back to
+`apollonian-scratch.maxpat`, relax `debug_ok`'s error threshold (currently
+`0.01`) by roughly an order of magnitude or more, re-check `use_mapped=2`
+now expecting mostly-green, then move to `use_mapped=1` (the actual
+mapped-circle coloring) and get Matt's honest visual read against the
+Img 1/4/5 references from two sessions ago — flat, round, solid discs at
+every scale, no enclosing circle, whole frame covered. **This has not
+been done yet this session** — the relaxed-threshold insight came from
+`f_poincare`'s scratch file, not from re-testing `apollonian-scratch.maxpat`
+itself. Don't assume `use_mapped=1` looks right without actually
+re-checking it.
+
+**Also worth carrying forward, not yet acted on:** given how much of this
+session's confusion came from over-trusting a tight numerical threshold,
+the right general debugging move next time a mismatch persists despite
+correct-on-paper math is to test threshold sensitivity *early*, not as a
+last resort — see the new dedicated section in the `jit-gen-codebox`
+skill for the general version of this lesson.
+
+**Not yet started, still correctly blocked, unchanged from before:**
+production items #2 (live max-iteration param) and #3 (per-region
+texture sampling), and the `ring_count` generalization (still reverted to
+fixed N=3 pending the base construction's actual confirmation, which
+still hasn't happened).
+
+---
+
+## f_poincare — Phase 0/1 (dihedral kaleidoscope) CONFIRMED WORKING; Phase 2 (accumulated-transform tracking) confirmed sound via isolated testing, real threshold-sensitivity lesson found
+
+New module this session. Full spec/plan:
+`.specify/f_poincare/spec.md`, `.specify/f_poincare/plan.md` — read both
+if resuming this thread, this entry is a pointer/summary.
+
+**Why this module exists as a detour**: `f_apollonian`'s ADR-8 tracking
+was stuck on a confusing mismatch. Rather than keep guessing on the full
+3-ring construction, built the simplest possible member of the same
+mathematical family (iterated anti-holomorphic transform + settle loop)
+to test the shared machinery in isolation, with an unambiguous pass/fail
+visual check (a proper kaleidoscope either tiles perfectly or it
+doesn't — no "almost" ambiguity like Apollonian's fractal residual).
+
+**Phase 1 (line-reflection kaleidoscope) — CONFIRMED WORKING, one real
+bug found and fixed along the way.** `poincare-scratch.maxpat`: N mirror
+lines through the origin, branchless alternating reflection, settled
+position samples the *same* input texture (classic self-referential
+kaleidoscope technique). One real, concretely-verified sign-inversion
+bug found (`step(0.0, crossTheta)` should have been `step(crossTheta,
+0.0)` — caught via a worked numeric example, not guessed) and fixed.
+Also found: fixed iteration count needs to scale roughly with
+`n_mirrors` (worst-case convergence for alternating-fold settling is
+~O(n_mirrors) reflections) — 10 iterations broke down visibly (deformed,
+asymmetric shape) around `n_mirrors=18`; raised to 32, confirmed clean at
+least that far. Matt confirmed clean symmetric output across multiple
+`n_mirrors` values after both fixes.
+
+**Byproduct: `f_ngon`, a new module idea** — see its own entry below.
+Forked as `~/Vsynth/patterns/ngon-scratch.maxpat` before continuing
+`f_poincare` work, per Matt's explicit call not to lose this.
+
+**Phase 2 (accumulated Möbius-transform tracking) — composition/parity
+logic CONFIRMED sound, circle-inversion math CONFIRMED sound, one real
+process lesson found.** Added the same `N`-matrix tracking + settled-
+position reconstruction check built for `f_apollonian`'s ADR-8, first on
+the kaleidoscope's pure line-reflections (came back clean immediately —
+confirms the composition recursion and parity handling are correct, not
+the source of Apollonian's issue), then on an isolated single-circle
+escape test (`circle-check-scratch.maxpat`) built specifically to
+exercise real complex division and off-origin circles, which the
+kaleidoscope's trivial `c=0,d=1` matrices never touched.
+
+**The single-circle test initially showed a confusing, persistent
+four-lobed mismatch** — survived every isolation attempt (fresh-vs-
+loop-tracked `N`, literals vs. live `Param`s, in-loop vs. out-of-loop,
+off-center vs. origin-centered circles), while extensive independent
+hand-verification (multiple worked numeric examples, including the exact
+production parameters) kept confirming the underlying math was correct.
+Built a minimal hardcoded-literal unit test (`mobpt-unit-test.maxpat`) to
+check the raw complex-arithmetic functions in total isolation — passed
+cleanly. **Root cause, found by loosening the error threshold from `0.01`
+to `0.3` and watching the mismatch shrink dramatically**: this was
+substantially a floating-point precision effect near the Möbius
+transform's pole (where the map sends points to large magnitudes), which
+GPU float32 handles with expected, bounded softness — not a logic bug.
+The tight `0.01` threshold was misreading normal numerical behavior as a
+hard failure.
+
+**What this means going forward, for both modules:** the verified,
+reusable complex/Möbius arithmetic functions (`cmulre/cmulim/cdivre/
+cdivim/mobPtX/mobPtY`, the `N_{k+1}=M_{k+1}*conj(N_k)` composition rule,
+the adjugate-without-determinant-division matrix inverse) are now in the
+`jit-gen-codebox` skill as a confirmed-correct known-good pattern — no
+need to re-derive or re-verify this machinery from scratch again. The
+threshold-sensitivity lesson is also now in that skill as its own
+section.
+
+**Not yet done**: Phase 3 (real circular-arc {p,q} hyperbolic tiling,
+the module's actual end target) hasn't been started — Phase 2's findings
+should get applied back to `f_apollonian` first, per Matt's stated
+intent, before continuing this module further.
+
+---
+
+## f_ngon — new module idea, captured, not yet specced
+
+Full write-up: `ideas/f_ngon.md`. A live, modulatable regular N-gon
+generator/shape mask — Vsynth currently has no simple way to get a clean
+regular polygon with a live vertex-count param (the existing shape
+generator is limited). Discovered as a direct byproduct of `f_poincare`
+Phase 1's kaleidoscope loop (the same mirror-fold mechanism naturally
+produces a regular `2*n_mirrors`-gon). Forked to its own scratch file
+(`~/Vsynth/patterns/ngon-scratch.maxpat`) at Matt's explicit request,
+before `f_poincare` work continued past that point — so the two files
+have since diverged (`ngon-scratch.maxpat` is the Phase-1-only kaleidoscope;
+`poincare-scratch.maxpat` has since gained Phase 2's matrix tracking on
+top). Real open questions (live iteration-count scaling, mask-vs-sample
+output mode, rotation param, relationship to the existing shape
+generator) are listed in the idea file. **Not scheduled** — flagged so
+it isn't lost, not queued as next work.
+
+---
+
+## Skill updates this session
+
+Both in `/Users/matt/Github/claude-scaffold/skills/` (the real editable
+source, not the `/mnt/skills/user/` mount):
+
+- **`vsynth-bpatcher/SKILL.md`** — new section: before characterizing
+  what an external reference source (shader, paper, saved reference doc)
+  actually does, especially before proposing an architecture change,
+  reread the actual saved source in full — don't rely on a prior
+  session's summary or your own restated description, even if it
+  pattern-matches a known concept. Added after incorrectly claiming
+  `f_apollonian`'s reference was doing explicit Descartes Circle Theorem
+  construction (it wasn't — same iterated-inversion family already in
+  use) without rereading the actual saved reference file first this
+  session. A matching standing instruction was also added to Claude's
+  cross-session memory for this project (not just this skill file).
+- **`jit-gen-codebox/SKILL.md`** — three additions: (1) `mod()` confirmed
+  GPU-safe via an isolated test, safe for discrete region/id coloring;
+  (2) the verified complex/Möbius arithmetic building blocks (see
+  `f_poincare` entry above) as a known-good reusable pattern, including
+  the composition/parity/inverse rules; (3) a new "Debugging Numerical
+  Mismatches — Threshold Sensitivity Near Möbius Poles" section — when a
+  mismatch survives multiple isolation attempts and correct-on-paper math
+  keeps disagreeing with the GPU render, test the debug threshold itself
+  early (loosen by an order of magnitude, see if the mismatch shrinks
+  proportionally or stays the same size) before assuming a deeper
+  undiscovered logic bug.
+
+---
+
+## Git / file status at session end
+
+**Nothing committed this session** — Matt commits and pushes manually,
+per standing practice.
+
+**Modified/created, not yet committed:**
+- `.specify/f_apollonian/plan.md` (ADR-8 written this-and-last-session,
+  2026-07-09 update appended)
+- `.specify/f_poincare/spec.md`, `.specify/f_poincare/plan.md` (new)
+- `ideas/f_ngon.md` (new)
+- `/Users/matt/Github/claude-scaffold/skills/vsynth-bpatcher/SKILL.md`
+- `/Users/matt/Github/claude-scaffold/skills/jit-gen-codebox/SKILL.md`
+
+**Scratch patches (untracked per convention, not in git at all,
+in-Max state won't survive without Matt saving them locally):**
+`~/Vsynth/patterns/apollonian-scratch.maxpat` (has the ADR-8 matrix
+tracking, central-circle fix, and `use_mapped` 0-4 debug modes — the
+error threshold has NOT yet been relaxed here, that's the next step),
+`~/Vsynth/patterns/poincare-scratch.maxpat` (Phase 1 kaleidoscope +
+Phase 2 matrix tracking, confirmed working),
+`~/Vsynth/patterns/ngon-scratch.maxpat` (Phase-1-only fork, the `f_ngon`
+seed), `~/Vsynth/patterns/circle-check-scratch.maxpat` and
+`~/Vsynth/patterns/mobpt-unit-test.maxpat` (diagnostic-only, not meant
+to become production modules — safe to leave behind or delete once
+their findings are fully absorbed elsewhere, though no harm in keeping
+them as reference).
+
+No production `.maxpat` files touched this session.
+
+---
+
+## f_apollonian — real circle-packing bug found and mostly fixed; session paused mid-verification, NOT confirmed done (2026-07-08 session, THIRD that day, layered on top of the two sessions recorded below it)
+
+Full history: `.specify/f_apollonian/tasks.md` (T601–T611 and their
+inline findings — read these in full, they're dense but load-bearing),
+`.specify/f_apollonian/plan.md` (ADR-6, ADR-7 — ADR-7 especially, it's
+the core diagnosis), `.specify/f_apollonian/spec.md` (User Story 2.5),
+`ideas/f_apollonian_reference_glsl.md` (NEW — full reference GLSL
+sources Matt supplied this session, preserved verbatim; read this before
+touching the construction again).
+
+**The headline finding**: the previous session's T111–T119
+"ring+central-circle" construction, marked "CONFIRMED WORKING AND
+CORRECT," was never actually verified against real reference source —
+it invented a large "enclosing" circle with no counterpart in the real
+algorithm, which corrupted the entire render. Matt correctly flagged
+that the rendered output showed no legible recursive circle-packing;
+initial hypotheses (coloring, orientation) were tested and ruled out via
+direct side-by-side comparison against the unmodified original codebox
+(pixel-identical output — ruled out a regression from this session's
+work, but not a pre-existing bug). Matt then supplied the actual
+reference GLSL (`shadertoy.com/view/MlVfzy`, ebanflo-derived/
+mla-modified), enabling a real diff instead of more guessing. The real
+construction has N ring circles PLUS one small CENTRAL circle at the
+origin (not a giant bound) — see ADR-7 for the full corrected formulas.
+**This is a real regression in confidence for a construction two prior
+sessions had marked confirmed** — same "compiled clean, looked
+plausible, wasn't actually correct" trap this project has hit before
+(Ford-circles' missing scale accumulator, `f_masonry`'s slot bug).
+
+**Three real GenExpr bugs found and fixed while rebuilding the corrected
+construction** (all now in the `jit-gen-codebox` skill, editable source
+at `/Users/matt/Github/claude-scaffold/skills/jit-gen-codebox/SKILL.md`):
+1. `inN`-shaped variable names (e.g. `in0`...`in7`) silently collide with
+   GenExpr's actual inlet-reference syntax — compiles clean, solid black,
+   no error. Fix: avoid the `in`+digit shape entirely (used `ins0`
+   instead).
+2. A variable first assigned inside a `for` loop can't be read after the
+   loop ends (`"varname" is not defined`) — must pre-declare with an
+   initial value before the loop.
+3. `active` as a variable name silently collides (same shape as #1),
+   suspected to be a reserved Jitter/Max attribute name (`@active`).
+   Renamed to `alive`, fixed immediately.
+
+None of these three fully explain two earlier compile failures this
+session (`"res_x" is not defined"`, `"new_zx" is not defined`) that
+happened *within* a loop body, not after it — those were worked around
+by fully inlining the position update into one statement (matching
+T111–T119's original proven shape) rather than truly root-caused. If
+this resurfaces, don't assume it's the same bug as #2 above; it might be
+a related-but-distinct scoping quirk.
+
+**Where things stand**: after all three fixes, a FIXED N=3, 16-iteration
+version with real color output renders what looks like genuine recursive
+circle-packing for the first time this session (large flat "escaped"
+regions, fractal detail concentrated at tangent points, small stacked
+central-circle images visible) — see the screenshot referenced in the
+tasks.md T609 log. **Matt's read on this was "almost" matches
+expected — not a full confirmation, and the specific gap was not
+identified before the session closed.**
+
+**Next session must start here, not by resuming `ring_count`
+generalization:**
+1. Pin down what "almost" means — get specific about what still looks
+   off, the same way Matt's earlier "no circle packing" complaint turned
+   out to have a precise, fixable root cause once actually isolated
+   rather than assumed
+2. Only once the fixed-N=3 construction is genuinely confirmed correct,
+   reintroduce the `ring_count`/`MAX_RING` generalization (T601–T608,
+   currently reverted back to fixed N=3 circles for debugging — the
+   generalization itself hasn't been retested against the corrected
+   base construction yet)
+3. The capture-ceiling question (does a `MAX_RING=8` single codebox
+   compile, or does it need a multi-stage `jit.gl.pix` split per
+   `f_vf_seeds` precedent) is STILL untested — the failures chased this
+   session turned out to be unrelated bugs, not the anticipated ceiling,
+   so that risk is still live and unaddressed
+
+**Not yet started, still correctly blocked**: production items #2 (live
+max-iteration param) and #3 (per-region texture sampling) — item #3 now
+has real reference material to work from (`ideas/f_apollonian_reference_glsl.md`'s
+"Apollonian Britney" source, showing the `cMobiusOnCircle`/per-circle UV
+mechanism) but no spec/plan/tasks written yet. `f_poincare` relationship
+decision also still open, untouched this session.
+
+**Git status**: `.specify/f_apollonian/{spec,plan,tasks}.md`,
+`ideas/f_apollonian_reference_glsl.md` (new file), and the
+`jit-gen-codebox` skill (at `claude-scaffold/skills/`, not the
+`/mnt/skills/user/` mount) all modified/created this session — ready to
+commit. No production `.maxpat` files touched; the scratch patch
+(`~/Vsynth/patterns/apollonian-scratch.maxpat`) is untracked per this
+module's own convention, so its in-progress codebox isn't in git at all
+— next session will need to re-paste the last codebox from this
+conversation or from `tasks.md`'s T609 log if the scratch patch's
+in-Max state isn't saved. **Matt commits and pushes manually, per
+standing practice — not yet committed as of this session's end.**
+
+---
+
+## f_apollonian — ring + central-circle closed gasket CONFIRMED (T111–T119 complete) — SEE ABOVE, THIS CONFIRMATION WAS WRONG
+
+**2026-07-08 correction, same day, later session: do not trust this
+entry's "CONFIRMED WORKING AND CORRECT" language — see the entry above
+this one for the full correction.** Kept intact below as the historical
+record of what was believed and why, not deleted or edited in place.
+
+Full history: `.specify/f_apollonian/tasks.md` (Phase 1 redirected
+section, T111–T119, all checked off with findings), `.specify/
+f_apollonian/plan.md` (ADR-2 now has a RESOLVED note, not just the
+supersession note from the prior session). This entry is a pointer/
+summary — read `tasks.md`'s findings in full before resuming this
+module, they're detailed and worth it.
+
+**What shipped this session**: the actual target construction (per the
+prior session's ADR-1 pivot) — 3 equal-radius ring circles (120°
+spacing) + 1 enclosing circle, all 4 checked unconditionally every
+iteration via a branchless settled-flag approach (no `break` anywhere),
+priority-ordered via nested `mix()`. Confirmed in Max: recognizable
+closed gasket, bilateral mirror symmetry (correct, given the 90°/210°/
+330° ring placement), nested self-similar detail at tangent points,
+clean console, no NaN artifacts, 62+ fps standalone at 16 iterations.
+
+**The `break`/early-exit question (ADR-2, open since the very first
+f_apollonian session) is now actually resolved, not deferred again**:
+branchless is confirmed working. `break` itself was never tested — the
+branchless approach worked, so there was no need to test the
+alternative.
+
+**Real debugging thread worth reading in full in `tasks.md`, not just
+this summary**: getting the branchless update to actually compile took
+three rounds of a Gen compiler error ("variable X is not defined") that
+each looked like the same bug recurring but were three different real
+causes — repeated variable reassignment as both read/write target,
+then the same failure on staged replacement temporaries, then a third
+time on a single bare alias assignment (`ox = zx;`) that was too simple
+to plausibly be a capture-ceiling issue. That third one is the most
+interesting unresolved thread: possible Gen optimizer copy-propagation
+bug on plain aliases, **not fully root-caused** — worth treating
+"variable not defined" as a family of distinct failure modes if it
+recurs in a future module, not one bug with one fix. The actual working
+fix was parallel comma-assignment (`zx, zy = exprX, exprY;`) — evaluates
+both sides against the pre-update point with zero extra named
+variables, extending a pattern the `jit-gen-codebox` skill already
+documented for built-in multi-value returns to two independently
+computed expressions.
+
+**A real logic bug also caught, distinct from the compiler issues**: an
+intermediate version assigning `zx` then `zy` as two separate
+statements compiled with zero errors but was wrong — `zy`'s expression
+read the already-updated `zx`. Same "clean compile ≠ correct" lesson
+the Ford-circles proof-of-concept already logged once this session
+(under the prior HANDOFF entry below), now confirmed to generalize
+rather than being a one-off.
+
+**Phase 3 (iteration count/fps calibration) deliberately NOT done in
+full this session** — a second fps spot-check (62+ standalone, 16
+iterations) was taken and recorded, consistent with the Ford-circles
+proof-of-concept's own spot-check margin, but the full T301–T305 sweep
+(4/8/16/32 iterations × 1920×1080 and 3840×2160 × alongside another
+`f_` module) was explicitly not run. This was a deliberate scope call
+this session, not an oversight — worth revisiting, not treating the
+spot-check as sufficient.
+
+**What's actually next**: `.specify/f_apollonian/tasks.md`'s Phase 3
+(T301–T305) — the full iteration-count/fps sweep. After that, Phase 4
+(`definition.py` + build) is gated behind Phase 3's checkpoint, same as
+always — don't skip ahead to a production `.maxpat` just because Phase
+1's construction is confirmed correct.
+
+---
 
 ## f_apollonian — Ford-circles proof-of-concept CONFIRMED, but superseded scope — closed gasket not yet built
 

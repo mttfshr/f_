@@ -97,4 +97,51 @@ Ideally the scale parameter is continuous and performable. Snapping to integer r
 
 ## Status
 
+**Shelved (2026-07-09) — waiting for a real reason to be built.**
+
+Scratch-tested a downsample/upsample chain (`f_raster-scratch.maxpat`) against a
+camera source to check the core mechanism (forced-low-res render via
+`jit.gl.pix @adapt 0 @dim`, nearest/linear upsample via `filter`). The forced
+low-res dim worked immediately and visibly. The live nearest/linear filter
+switch did not, through three different wiring attempts (wrapper texture
+object, filter on the consuming stage, filter on the producing stage as a
+bare attribute message) — each fix was evidence-based, not a blind guess, but
+none worked.
+
+Reading Kevin's actual `vs_pixelator.maxpat` (Vsynth package) resolved the
+mechanism: `filter` must be dispatched via `sendinput`/`sendoutput` (documented
+`jit.gl.pix`/`jit.gl.slab` methods that forward a message to the object's
+*internal* texture objects), not sent as a bare attribute message to the
+box's own inlet. Applying that fix to the scratch patch still showed no
+visible difference — unresolved, not re-diagnosed further, because a bigger
+problem surfaced first (see below).
+
+**The real finding: this module's core pitch is already shipped.**
+`vs_pixelator.maxpat` (and `_2`/`_nonSquare` variants) already does forced
+low-res dim + live nearest/linear interpolation toggle + bypass, natively in
+Vsynth, battle-tested. Comparing against the use cases in this file:
+
+- Expressive lo-fi pixelation (nearest/linear, scale down) — **already covered
+  by `vs_pixelator`**, no gap
+- Mismatched-resolution compositing (two instances, different settings) —
+  trivially covered by two `vs_pixelator`s
+- Anisotropic x/y scale — not covered (pixelator forces square blocks via
+  `dim $1 $1`), but also not resolved as worth building here
+- Supersampling as an anti-aliasing prefilter (scale > 1.0, feeding hard-edge
+  generators into droste/mobius) — **not covered**, pixelator only goes down
+- Second outlet exposing the low-res texture — not covered
+
+**Decision: do not proceed with `f_raster` as originally scoped.** The
+downsample/pixelation half of this concept duplicates `vs_pixelator`. If this
+idea gets picked up again, the only remaining real justification is the
+supersampling/pre-filter use case (masonry/stipple/chladni aliasing through
+droste/mobius) or anisotropic x/y as a genuinely new aesthetic — not
+pixelation, which already exists. Don't resume this by rebuilding the
+nearest/linear pixelation mechanism; that question is answered and shelved.
+
+Scratch file left at `~/Vsynth/patterns/f_raster-scratch.maxpat` (untracked,
+per convention) if the filter-routing dead end is ever worth re-examining.
+
+---
+
 Concept only. Not specced, not planned. Emerged from f_masonry e2e testing (2026-06-05) — masonry aliasing through droste revealed the gap. The expressive use cases (risograph compositing, anisotropic resolution) may be more interesting than the original pipeline utility framing.

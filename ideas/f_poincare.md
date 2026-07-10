@@ -58,6 +58,17 @@ Note: the **upper half-plane model** is mathematically equivalent (convertible v
 
 ---
 
+## Reference: numerical stability near the disk boundary (2026-07-09)
+
+Matt found ["Conformal Models of the Hyperbolic Plane" (roguetemple.com/z/hyper/papers/conformal.pdf)](https://www.roguetemple.com/z/hyper/papers/conformal.pdf) (HyperRogue project). Directly relevant, not just adjacent — the paper's actual subject is conformal maps of H² including the Poincaré disk model itself, which is this module's stated end target.
+
+Two concrete carryovers for when real {p,q} tiling work starts:
+
+- **The paper's framing matches ADR-8's math.** It treats conformal projections of H² as functions into a subset of ℂ, and composes them as biholomorphic/anti-holomorphic complex functions — the same frame `f_apollonian`'s accumulated-Möbius-matrix tracking (plan.md ADR-8) already uses for circle inversion. The paper's note that one model can be obtained by composing another with a biholomorphic `f` is the same move as mapping canonical circles through an inverse accumulated transform. When this module reintroduces real circular-arc geodesics (per its "Relationship back to f_apollonian" path), ADR-8's composition/parity-tracking machinery is the direct starting point, not a new derivation.
+- **Numerical instability near the boundary is a real, quantified concern, not speculation.** The paper measures conformal maps of H² losing precision as distance from origin grows — points get squeezed into a vanishingly small float neighborhood near the boundary (their example: `1 − 2.8×10⁻¹¹` at hyperbolic distance 25, right at double-precision's edge). This is the same failure family `f_poincare`/`f_apollonian`'s own scratch testing just found empirically this week (Möbius maps ill-conditioned near their pole, requiring a relaxed debug-mismatch threshold rather than assuming a logic bug) — the paper confirms it's inherent to the math, not a GenExpr- or project-specific artifact. Important asymmetry to remember: this project runs in GPU float32, meaningfully less precise than the paper's doubles, so the effect will bite harder and closer to the origin than the paper's own numbers suggest. Anything that pushes points near the disk boundary — deep tiling recursion, points near a geodesic's pole — should expect this, and any fixed debug-mismatch threshold likely needs to scale with depth/distance rather than being one constant.
+
+**Not directly applicable yet**: the paper's core numerical method (discretely solving a boundary-value/Laplace problem to conformally map H² onto an arbitrary bitmap shape) is a different problem than this module's fixed-symmetry {p,q} tiling — no arbitrary-shape mapping is in scope here. Worth revisiting only if presentation-region work (see above) ever wants to conform the tiling to an arbitrary mask shape rather than just crop/gate it.
+
 ## Build sequence
 
 After f_mobius is well-understood in performance. Spec should incorporate droste singularity geometry explicitly from the start. Vecfield masking requires f_vf_scalar (not yet built) — the two could be developed together.

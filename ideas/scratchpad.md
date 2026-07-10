@@ -24,34 +24,6 @@ Feels like it does a specific and somewhat limited thing in practice. Not clear 
 
 ---
 
-## f_masonry: open questions
-
-### mod matrix UI — tex A asymmetry
-Tex A (in2) is the only inlet that can modulate structural params (offset, drift, speed_var, phase, regularity, skip, quantize). Tex B and C are appearance-only. This asymmetry is architecturally correct but not visible in the UI.
-
-Options (not decided):
-- Visual distinction in the grid (dimmed rows for B/C on structural params)
-- Restructure grid into two sections: structural (A only) / appearance (A+B+C)
-- Accept as-is and document
-
-**Deferred — not a blocker.**
-
-### Continuous drift hash seam
-The `quantize` param continuous drift has a faint diagonal seam at non-zero values. Current codebox uses `1.3` as compromise frequency. Consider revisiting with a 2D hash approach (hashing both `along` and `across` together) to break diagonal coherence.
-
-### Distance field refactor
-Masonry's smoothstep boundary approach is the root cause of masonry→droste aliasing. A distance field refactor would fix this. f_weave is being written distance-field-native as the proof of concept — a working weave→droste chain is the validation before attempting the masonry refactor. See `ideas/f_weave.md`.
-
----
-
-## Mod matrix interaction model
-
-Context: f_masonry shipped with mod matrix (back panel) + context strip (front panel). Strip shows A/B mod amounts for the last-touched dial. Core problem: `live.dial` doesn't expose mousedown — only value change. Strip shows last *changed* param, not last *touched*. Friction in performance.
-
-**Key insight:** The focus/strip problem is downstream of showing a *subset* of state. A table or compound-cell grid showing all state simultaneously resolves it. See `ideas/f_util_compound_dial.md` and UI density discovery workstream.
-
----
-
 ## Low-frequency drift moiré → f_moire concept
 
 Discovered during f_masonry development: when the continuous drift hash uses a low frequency multiplier and angle is non-orthogonal, the hash field produces large-scale moiré/interference patterns. Wrong for masonry, but interesting as its own thing — a dedicated `f_moire` patch where interference is the point. Parameters: two frequency fields, their angle relationship, phase offset, animation speed. Not yet ready to graduate.
@@ -87,37 +59,12 @@ Max's built-in styles system could let f_ ship a named style (`f_default`) and l
 
 ---
 
-## f_stereogram: autostereogram generator/processor
-
-Two inlets: depth/mask texture (shape) + pattern texture (e.g. from f_stipple or f_grain). Outputs a SIRDS-style autostereogram. Core algorithm: horizontal pixel shift driven by depth map, pattern tiled as repeating strip.
-
-**Open question:** the standard SIRDS algorithm has a left-to-right feedback dependency (each pixel's output depends on the pixel N columns left of it). This conflicts with jit.gl.pix's parallel execution model — needs investigation before committing to a scratch patch. May require a multi-pass approach or a CPU fallback.
-
----
-
 ## f_dither: parametric dither processor
 
 Handles transition gradients in posterized/quantized textures. Sits naturally after f_tone_curve or any quantizing processor. Two dither source modes: internal hash-based (with shape/scale control param) or external pattern inlet (e.g. f_stipple). Clean fit with the existing library — stipple-driven dither especially interesting.
 
----
-
-## f_vf_seeds: discrete-item family reference implementation
-
-Captured 2026-06-27 from comparative analysis of f_grain, f_masonry, f_weave.
-Graduated to `ideas/f_vf_seeds.md`. Family framework in `ideas/discrete_item_family.md`.
 
 ---
-
-## Extracted to dedicated files
-
-- `f_util_compound_dial` → `ideas/f_util_compound_dial.md`
-- `f_util_audio_spectra` → `ideas/f_util_audio_spectra.md`
-- `f_vecfield` + feedback chain vocabulary → `ideas/f_vecfield.md`
-- Vsynth capability gaps → `ideas/vsynth_gaps.md`
-- Weave collision events → `ideas/f_weave.md`
-- `f_util_profile` → `ideas/f_util_analysis.md`
-- `f_cymascope` → `ideas/f_cymascope.md`
-- Droste singularity → `ideas/droste_singularity.md`
 
 ## f_vf_potential: scalar potential field integrator
 

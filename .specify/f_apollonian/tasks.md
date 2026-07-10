@@ -9,11 +9,39 @@ in Max, per standing practice (scratch-test before production).
 **Status (2026-07-08)**: Phase 1–2 below (Ford circles construction) are
 complete and confirmed as a **proof-of-concept** — see the finding at the
 end of the original Phase 1 section. Per `plan.md`'s ADR-1/ADR-2
-supersession notes, scope has been **redirected to the ring +
-central-circle construction** (the classical closed gasket). A new
-"Phase 1 (redirected)" section below starts that work fresh — the
-original Phase 1–2 sections are kept intact below as the historical
-record of what was proven and how, not deleted.
+supersession notes, scope was **redirected to the ring + central-circle
+construction** (the classical closed gasket).
+
+**"Phase 1 (redirected)" (T111–T119)'s "CONFIRMED WORKING AND CORRECT"
+status is REVOKED (2026-07-08) — see plan.md ADR-7 for the full
+diagnosis.** The construction built there invented a large "enclosing"
+circle with no counterpart in the actual reference shader
+(`shadertoy.com/view/MlVfzy`, full source now preserved in
+`ideas/f_apollonian_reference_glsl.md`) — the real construction has N
+ring circles plus one small CENTRAL circle (not a giant bound), and no
+enclosing circle at all. T111–T119 passed every check that was run
+against it (no NaN, clean console, "recognizable gasket-like character")
+but was never actually verified against real reference source, and the
+fabricated circle explains the swirl-without-legible-packing look Matt
+correctly flagged this session. This is a real regression in confidence,
+not just a scope change — treat T111–T119's findings about GenExpr
+mechanics (branchless containment via `mix()`, parallel comma-assignment
+for `zx`/`zy` updates, guarded division) as still valid, but the specific
+geometry/circle-set as built is wrong and needs rebuilding per ADR-7's
+corrected formulas before any further verification proceeds.
+
+**Next up is Phase 2.5, NOT Phase 3.** Per Matt's explicit call
+(2026-07-08) and spec.md's "What 'production' means" section, Phase 3
+(iteration-count/fps calibration, T301–T305 below) is low priority and
+blocked behind three production-scope items, in this order: (1)
+generalized ring count — count only, equal-radius circles, scoped and
+specced this session as User Story 2.5/ADR-6/Phase 2.5 (T601–T608,
+below) — (2) live max-iteration count as a user param, (3) per-region
+texture sampling. Items 2 and 3 don't have specs yet — do those passes
+when Phase 2.5 is confirmed. Running the fps sweep before all three land
+would measure a construction that's about to change anyway (generalized
+configs alter per-iteration cost; a live iteration param removes the
+"pick one fixed count" premise Phase 3 assumes).
 
 ---
 
@@ -175,53 +203,256 @@ visual match to the `ebanflo`-derived reference's closed, bounded
 character; no NaN/undefined output; `break`/early-exit question actually
 resolved, not sidestepped.
 
-- [ ] T111 Reuse `apollonian-scratch.maxpat`, same `vs_render`/wiring
+- [x] T111 Reuse `apollonian-scratch.maxpat`, same `vs_render`/wiring
       pattern as T101 — no new scratch patch needed
-- [ ] T112 Reuse the confirmed `invertX`/`invertY` shared functions
+- [x] T112 Reuse the confirmed `invertX`/`invertY` shared functions
       unchanged (per plan.md's carry-forward note) — no need to
       re-derive the guarded-inversion math
-- [ ] T113 Write the N=3 ring + central-circle candidate geometry: one
-      central circle plus N ring circles at fixed angular positions
-      around it, per the `ebanflo`-derived reference's `gasket()`
-      function
-- [ ] T114 Decide and implement the `break`/early-exit resolution per
-      `plan.md` ADR-2's supersession note — attempt the branchless
-      `settled`-flag approach first (run every candidate check
-      unconditionally, gate the inversion's effect via a flag rather than
-      exiting the loop); only fall back to testing `break` directly if
-      the branchless version proves awkward to get correct
-- [ ] T115 Write the fixed-count outer loop (start at whatever count the
-      Ford-circles proof-of-concept settled on, 16, as a starting guess —
-      this construction's convergence behavior is genuinely different
-      and may need a different count) with the inner per-candidate
-      containment test from T113/T114
-- [ ] T116 Write output coloring — start with iteration-depth coloring
-      (per the reference's HSV-by-depth approach) rather than the
-      Ford-circles line-draw distance field, since this construction's
-      natural output is "which iteration did this pixel settle at," not
-      a two-line distance field
-- [ ] T117 Paste into Max, confirm compiles with no console errors
-- [ ] T118 Visually compare against the `ebanflo`-derived reference's
-      character — four mutually tangent circles at the base level, nested
-      self-similar circles filling gaps, bounded within a visible outer
-      structure (not an infinite strip)
-- [ ] T119 Scan the frame for NaN/undefined regions — this construction
-      has a genuine escape-time termination character (unlike Ford
-      circles), so this check is more load-bearing here than it was in
-      the original T108 (per spec's revised Acceptance Scenario 2) —
-      specifically check what non-settled pixels (max-iteration reached)
-      actually show
+- [x] T113 Write the N=3 ring + central-circle candidate geometry —
+      **implemented as 3 equal-radius ring circles (120° spacing) + 1
+      enclosing circle, not a small inner Descartes circle** (that
+      ambiguity was resolved explicitly before coding — see finding
+      below). Exact constants derived via Descartes' Circle Theorem,
+      symmetric case, ring radius r=1: `d = 2/√3 ≈ 1.154701` (ring
+      distance), `R = r/(2√3−3) ≈ 2.154701` (enclosing radius).
+- [x] T114 Decide and implement the `break`/early-exit resolution —
+      **branchless settled-flag approach confirmed working, `break`
+      never tested/needed.** See finding below — this is the actual
+      resolution to the long-deferred ADR-2 question.
+- [x] T115 Fixed-count outer loop — 16 iterations, same count the
+      Ford-circles proof-of-concept used. Not yet calibrated against
+      this construction's own convergence behavior (that's Phase 3).
+- [x] T116 Output coloring — iteration-depth (3-phase cosine cycle on a
+      `depth` accumulator that increments only on iterations where an
+      inversion actually fired), not the Ford-circles distance field.
+- [x] T117 Paste into Max, confirm compiles with no console errors
+      **— CONFIRMED CLEAN 2026-07-08**, after resolving three real
+      compiler issues along the way (see finding below).
+- [x] T118 Visually compare against the reference's character
+      **— CONFIRMED MATCH 2026-07-08.** Bilateral (left-right) mirror
+      symmetry, not 3-fold rotational — correct and expected, since ring
+      circles sit at 90°/210°/330° (210°/330° are exact mirrors of each
+      other, 90° sits alone at top). Nested self-similar detail
+      concentrated at tangent points, not smeared uniformly. Bounded
+      within a visible outer structure, not an infinite strip.
+- [x] T119 Scan the frame for NaN/undefined regions
+      **— CONFIRMED CLEAN 2026-07-08.** No flat black/white flicker or
+      hard discontinuities anywhere, including at the visible
+      circle-boundary seams. Not yet a dedicated pixel-level probe at
+      the exact three ring-circle tangent points specifically (closest
+      approach to `dot(p,p)=0` for a non-origin-centered generator) —
+      visual inspection only; flag as a light gap, not a failure.
+
+**Finding (2026-07-08): T113's "central circle" ambiguity resolved before
+coding, not discovered during it.** "Ring + central circle" could mean
+either (a) an enclosing/bounding circle containing the ring, or (b) a
+small inner Descartes circle nested in the gap between ring circles.
+Resolved as (a) — 3 ring + 1 enclosing, 4 total generators — via
+discussion before writing any code, matching T118's "bounded within a
+visible outer structure" checkpoint language. (b) remains a candidate
+5th generator for a denser classic look, not attempted this session.
+
+**Finding (2026-07-08): three real Gen-compiler issues hit getting T114
+to actually compile — a genuine debugging thread, not one clean pass.**
+All three surfaced as "variable X is not defined" — a misleading error
+class, since each one was actually a different real issue, not the same
+bug under a new name:
+
+1. **Repeated reassignment of the same variable as both read-source and
+   write-target within one loop body** (`nx = mix(nx, ...)` chained four
+   times) — first attempt, renamed to staged uniquely-named temporaries
+   (`stage1x`...`stage4x`) as the fix.
+2. **The staged-temporaries fix still failed**, now on `stage4x` —
+   collapsing to a single nested `mix(mix(mix(mix(...))))` expression
+   per variable (no intermediate names at all) was the next attempt.
+3. **A bare alias assignment** (`ox = zx;`, meant to snapshot the
+   pre-update `zx` for use in the `zy` update) **itself threw "not
+   defined."** This is the most informative data point of the three —
+   it suggests Gen's optimizer may copy-propagate a plain
+   variable-to-variable assignment and lose track once its source is
+   reassigned later in the same scope, a different failure shape than a
+   pure capture-count ceiling (the `f_vf_seeds`/`f_masonry` precedent).
+   **Not fully root-caused — worth deeper investigation if this pattern
+   recurs**, but the workaround is confirmed: avoid bare aliasing.
+
+**The actual fix, and the real T114 resolution:** parallel
+comma-assignment — `zx, zy = <exprX>, <exprY>;` — evaluates both
+right-hand sides against the same pre-iteration point before writing
+either left-hand side, with **no extra named variable at all**. This
+is the GenExpr idiom the `jit-gen-codebox` skill already documents for
+built-in multi-value returns (`sum, diff = a+b, a-b;`); confirmed here to
+also work for two independently-computed expressions, not just a single
+function's paired outputs.
+
+**A fourth, purely logical (not compiler) bug also caught before
+shipping**: an intermediate version that assigned `zx = mix(...)` then
+`zy = mix(...)` as two separate statements compiled clean but was
+*wrong* — the `zy` line's `invertY(zx, zy, ...)` call read the
+already-updated `zx`, not the true previous point. Compiling without
+error is not the same as being correct — same lesson the Ford-circles
+session already logged once this session, now confirmed to generalize
+beyond that one construction.
 
 **Checkpoint**: Recognizable closed gasket renders, matching the
-reference's bounded character. `break`/early-exit question has an actual
-resolution recorded (not deferred again). No NaN anywhere in frame,
-including at non-settled pixels. Do not proceed to a redirected Phase 2
-(reusing T201-style animated-inversion work against this new construction)
-until all three are true.
+reference's bounded character — **PASSED.** `break`/early-exit question
+has an actual resolution recorded — **PASSED, branchless confirmed, see
+above.** No NaN anywhere in frame, including at non-settled pixels —
+**PASSED** (visual scan; dedicated tangent-point probe not done, see
+T119 note). All three true — **Phase 1 (redirected) is COMPLETE.**
 
 ---
 
-## Phase 3: Iteration count and fps calibration (maps to plan.md Phase 3, spec User Story 3)
+## Phase 2.5: Generalized ring count (maps to plan.md Phase 2.5/ADR-6, spec User Story 2.5) — NEXT UP (2026-07-08)
+
+**Goal**: Replace the hardcoded N=3 ring with a formula-derived,
+`ring_count`-parameterized ring (equal-radius, evenly-spaced only — see
+spec's Explicitly Deferred for this evolution), bounded by a fixed
+`MAX_RING` slot budget.
+
+**Independent Test**: Spec User Story 2.5's Acceptance Scenarios —
+`ring_count=3` regresses against T111–T119, other in-range counts each
+produce a valid tangent gasket, out-of-range slots are provably inert.
+
+- [ ] T601 Choose initial `MAX_RING` (start at 8, per ADR-6)
+- [ ] T602 Implement the tangency formulas (spec FR-101) — `d`, `r` from
+      `ring_count`/`R`; per-index center via `cos`/`sin` of
+      `2*pi*i/ring_count`
+- [ ] T603 Confirm whether a user-defined function can cleanly return
+      both center and radius, or whether this needs the parallel
+      comma-assignment idiom (ADR-2) instead — record which, and why, in
+      plan.md if it differs from the ADR-6 assumption
+- [ ] T604 Nest a `for i in 0..MAX_RING-1` ring-candidate loop inside the
+      existing gasket-iteration loop; branchless-gate `i >= ring_count`
+      slots inert (never win the priority mix chain), per FR-103
+- [ ] T605 Compile-check in Max — confirm no console errors before any
+      visual verification (capture-ceiling risk flagged in ADR-6/FR-104
+      — if it fails, split into a multi-stage `jit.gl.pix` chain rather
+      than shrinking `MAX_RING`)
+      **— first attempt (nested `for`-over-`k` with a loop-carried
+      `res_x`/`res_y` accumulator) failed: `"res_x" is not defined`. A
+      different failure shape than any of ADR-2's three — loop-carried
+      scalar accumulation across a nested `for`, not a same-statement
+      read-after-write. Fix: abandon the inner loop, fully unroll all 8
+      ring candidates into one nested-`mix()` expression (same shape as
+      T111–T119's proven 4-candidate chain, just bigger).**
+      **— second attempt (fully unrolled) compiled clean but produced
+      solid black output — a genuine silent failure, not a compile
+      error. Root cause (suspected, not yet isolated with a minimal
+      repro): the containment flags were named `in0`–`in7`, and `inN`
+      (an `in` followed by digits) is GenExpr's actual inlet-reference
+      syntax — the parser likely treats any `in`+digit token as an
+      inlet reference regardless of whether that inlet exists in this
+      codebox (which has none), reading as zero/undefined rather than
+      erroring. Logged in `jit-gen-codebox` skill as a new documented
+      silent-failure pattern. Fix: rename `in0`–`in7` → `ins0`–`ins7`
+      throughout. Retry pending.**
+- [ ] T606 Regression check: `ring_count=3` visually matches the existing
+      confirmed T111–T119 output
+      **— T606 investigation (2026-07-08): Matt flagged the ring_count=3
+      render as apparently missing recursive circle-packing — only the
+      3 base circles visible, no legible nested smaller circles. Isolated
+      via direct side-by-side: pasting the untouched original T111–T119
+      codebox (verbatim, no generalization changes) produces the
+      IDENTICAL output. This rules out a regression from the Phase 2.5
+      generalization work — the issue, if it is one, predates this
+      session's changes and is common to both. Root cause identified:
+      not a math/packing bug at all — `cos(depth * 0.5 + phase)`
+      iteration-depth coloring (T116) has no mechanism to draw circle
+      *boundaries*, and its ~12.57-depth-unit color cycle means nested
+      circles at different depths can land on visually similar colors.
+      The recursive packing is confirmed happening geometrically (the
+      inversion math is unchanged and was already confirmed correct);
+      it's specifically illegible under this coloring scheme. This was
+      always true of the original N=3 hardcoded version too — it was
+      never actually visually verified for legible packing, only for
+      "recognizable gasket-like character" (T107's original acceptance
+      bar was looser than what Matt is now checking for). Open decision:
+      improve coloring now (e.g. draw circle-boundary lines via a
+      distance field, or discretize depth into visually distinct bands)
+      vs. defer legible-packing verification to per-region texture
+      sampling (production item #3), which will make circle identity
+      visually obvious by construction. Not yet decided — see plan.md.**
+- [ ] T607 Sweep `ring_count` across other in-range values (e.g. 4, 5,
+      6, up to `MAX_RING`) — confirm each is a correctly-tangent,
+      N-fold-symmetric closed gasket, no gaps/overlaps/NaN
+- [ ] T608 Confirm slots beyond `ring_count` are inert across a range of
+      pixel positions, not just spot-checked at one point
+- [ ] T609 (added 2026-07-08, supersedes T601-608's construction) Rebuild
+      per ADR-7's corrected formulas: `ringR2=s*s`, `centralR2=(r-s)^2`
+      replacing the fabricated `encR2` entirely, ring positions
+      `(r*sin(2*i*theta), r*cos(2*i*theta))`, and a sticky `active` flag
+      (`active = active * any_inside`) gating position/depth updates so
+      escaped points genuinely freeze rather than continuing to be
+      inverted through a nonexistent enclosing circle
+- [ ] T610 Re-run T606-T608's checks against the corrected construction —
+      the old T606 "regress against T111-T119" check is now void (that
+      output was wrong); the new correctness bar is "recognizably matches
+      the real reference's known character" instead
+- [ ] T611 Re-verify no NaN/crash at points near the central circle's
+      boundary and at ring-circle tangent points specifically (these are
+      exactly where the escape-time character gets most extreme, per the
+      real reference's own fractal-boundary behavior)
+      **— T609 retry (2026-07-08) hit a compile failure: `"new_zx" is
+      not defined`. Likely the capture-ceiling risk FR-104/ADR-6 already
+      flagged, now actually landing — the corrected construction needs
+      up to 9 candidates (8 ring + 1 central) folded into one
+      nested-`mix()` expression, more than double the 4-candidate chain
+      (3 ring + 1 fabricated-enclosing) that was the largest thing
+      confirmed to compile in this module before. Same failure family as
+      the earlier `"res_x" is not defined` error — a giant expression
+      silently failing to register, surfacing downstream as "not
+      defined" rather than a clear capture-ceiling message. Testing
+      cheaply: retry at `MAX_RING=4` (5 total candidates: 4 ring + 1
+      central) before committing to a multi-stage `jit.gl.pix` split —
+      if 5 candidates compiles and 9 doesn't, that's real evidence of
+      where the ceiling sits for this module, informative for the
+      split-vs-shrink decision either way.**
+      **— Investigation continued via systematic bisection (2026-07-08):
+      the capture-ceiling hypothesis was WRONG. Root cause found via
+      isolating a minimal repro (static geometry test → single-step
+      test → 2-iteration test), not by continuing to guess at the full
+      construction: TWO real GenExpr bugs, neither related to
+      complexity/ceiling. (1) A variable whose first assignment happens
+      inside a `for` block cannot be read after the loop ends — this
+      broke `any_inside` (needed for the final color) and would have
+      broken `active`/`depth` too; fix is pre-declaring with an initial
+      value before the loop. (2) `active` as a variable name silently
+      collides (same failure shape as the `inN` collision — clean
+      compile, solid black, no error) — suspected to be a reserved
+      Jitter/Max attribute name (`@active`); renaming to `alive` fixed
+      it immediately with zero other changes. Both logged in the
+      `jit-gen-codebox` skill. Confirmed via the fixed 3-circle,
+      2-iteration case showing correct recursive packing (visible
+      nested smaller circles) for the first time this session — the
+      original swirl-without-packing symptom is resolved. Next: scale
+      to full 16 iterations, real color output, then reintroduce the
+      `MAX_RING`/`ring_count` generalization on top of this now-working
+      base.**
+
+**Session paused here (2026-07-08 end of session).** Full next-session
+pointer in `HANDOFF.md` at project root — read that first. Short
+version: real recursive circle-packing is finally confirmed rendering
+correctly (fixed N=3, 16 iterations, real color) after fixing three
+distinct GenExpr bugs this session (see the T609 log entries above and
+the `jit-gen-codebox` skill for full detail: `inN`-shaped variable names,
+variables first assigned inside a `for` loop being unreadable after it,
+and `active` as a silently-colliding variable name). Matt's read on the
+current render was "almost" matches expected — not a full confirmation,
+and the specific gap wasn't identified before the session closed. Next
+session should start by pinning down what "almost" means before doing
+anything else, not by assuming this is done and moving on to
+`ring_count` generalization (T601 onward, still not reintroduced since
+the ADR-7 rebuild — currently only fixed N=3 is confirmed).
+
+---
+
+## Phase 3: Iteration count and fps calibration (maps to plan.md Phase 3, spec User Story 3) — LOW PRIORITY, blocked (2026-07-08)
+
+**Do not start this phase next.** Blocked behind spec.md's three
+production-scope items, in order: (1) generalized/arbitrary generating
+circle configurations, (2) live max-iteration count as a user param, (3)
+per-region texture sampling. See the tasks.md status block at top of
+this file and plan.md's Phase 3 note for full reasoning.
 
 **Goal**: Choose a shipped default iteration count balancing visual
 completeness against the 60fps target.
@@ -236,6 +467,17 @@ resolution — comfortable headroom, not a marginal result. This confirms
 16 iterations is affordable at all, but is **not** a substitute for T301–
 T305's full sweep (multiple iteration counts, both target resolutions,
 alongside another `f_` module) — those remain open for a future session.
+
+**Second spot-check (2026-07-08, ring+enclosing construction, still not
+the full sweep)**: fps read 62+ at 16 iterations, standalone, against
+the confirmed T111–T119 ring+enclosing codebox — consistent with the
+Ford-circles proof-of-concept's own spot-check margin at the same count.
+Deliberately not expanded into the full T301–T305 sweep this session
+(explicit call, not an oversight) — the margin here is comfortable
+enough that grinding through 4/8/16/32 × both resolutions × alongside
+another module didn't feel like the highest-value use of this session,
+but that's a scope decision to revisit, not a substitute for actually
+doing it. Full sweep remains open for a future session.
 
 - [ ] T301 Sweep the fixed iteration count (try 4, 8, 16, 32) — for each,
       note visual completeness (how much of the frame reads as

@@ -28,6 +28,26 @@ that phase should not be treated as "ship this" until these three are
 either built or explicitly re-scoped out with the same deliberateness as
 the Ford-circles pivot above.
 
+**Build order and priority relative to Phase 3 (2026-07-08, Matt's
+explicit call)**: these three items take priority over `plan.md`/
+`tasks.md`'s Phase 3 (iteration-count/fps calibration sweep, T301–T305).
+Phase 3 is low-priority and explicitly deferred until all three land —
+not because fps doesn't matter, but because two of these three items
+change the very thing Phase 3 would be measuring (generalized circle
+configs changes the per-iteration cost; a live iteration-count param
+turns Phase 3's "pick one fixed count" premise into a live-tunable range
+instead). Running the fps sweep now would measure the wrong construction.
+Agreed build order:
+
+1. **Generalized/arbitrary generating circle configurations** — first,
+   since the other two both depend on however this ends up representing
+   "the set of generating circles"
+2. **Live max-iteration count as a user param**
+3. **Per-region texture sampling**
+
+Each of these three needs its own spec/plan/tasks pass when picked up —
+not detailed here yet, this section only records scope and order.
+
 ---
 
 ## Status Addendum (2026-07-08): scope redirected after proof-of-concept
@@ -196,6 +216,89 @@ gaps, or overlap artifacts introduced by the animation itself.
    **When** viewed, **Then** behavior is at minimum non-crashing (exact
    visual character at these extremes is UNVERIFIED — flagged as an edge
    case to observe during scratch testing, not a precondition)
+
+### User Story 2.5 — Generalized ring count, evenly-spaced equal circles (Priority: P1, added 2026-07-08)
+
+A performer can choose the number of circles in the generating ring
+(not locked to N=3), while every ring configuration remains a
+genuinely valid, mutually-tangent Apollonian gasket — no gaps, no
+overlaps, no per-circle size/position freedom.
+
+**Scope decision (2026-07-08, Matt's explicit call)**: generalization is
+**count only**. Ring circles remain equal-radius and evenly spaced at
+every `ring_count`. Variable relative sizes within the ring, and fully
+arbitrary/independent circle placement, are explicitly rejected as scope
+for this module (see Explicitly Deferred) — not a smaller first step
+toward those, a deliberate ceiling.
+
+**Why this priority**: this is production item #1 of the three listed
+in "What 'production' means" above, and per that section's build order,
+it comes first because the later two items (live max-iteration param,
+per-region texture sampling) both depend on however the set of
+generating circles ends up represented — settling that representation
+here unblocks both.
+
+**Independent Test**: In the scratch patch, promote `ring_count` from a
+hardcoded `3` to a live param (bounded by a fixed compile-time
+`MAX_RING` slot budget). Sweep `ring_count` across its full range and
+confirm each value produces a structurally valid closed gasket — not
+just that N=3 still works.
+
+**Acceptance Scenarios**:
+1. **Given** `ring_count = 3` (the value already confirmed working in
+   T111–T119), **When** viewed, **Then** output is pixel-identical (or
+   visually indistinguishable) to the existing confirmed T111–T119
+   result — regression check, since the formula-derived circle
+   positions/radii must reduce to the same values the hardcoded version
+   used
+2. **Given** `ring_count` swept to other values within `MAX_RING` (e.g.
+   4, 5, 6), **When** viewed, **Then** each produces a recognizable,
+   correctly-tangent closed gasket with `ring_count`-fold rotational
+   symmetry — no gaps between neighboring ring circles, no overlap, no
+   NaN
+3. **Given** slots beyond the active `ring_count` (up to `MAX_RING`),
+   **When** the per-iteration containment check runs, **Then** inactive
+   slots are provably inert (never win the priority-ordered mix chain,
+   regardless of pixel position) — branchless gate, not a skipped loop
+   iteration
+
+**Functional Requirements (this evolution)**:
+- **FR-101**: Ring circle `i`'s center and radius MUST be derived purely
+  from `i`, `ring_count`, and the enclosing circle's radius `R`, via the
+  tangency formulas below — no per-circle stored position/radius data
+- **FR-102**: `ring_count` MUST be a live param, bounded by a fixed
+  compile-time `MAX_RING` (exact value TBD — start at 8, revisit if
+  capture-ceiling or fps pressure demands lower, per NF-002)
+- **FR-103**: Slots with `i >= ring_count` MUST be branchless-gated
+  inert (consistent with T111–T119's existing `settled`-flag idiom) —
+  no early-exit, no variable-length loop
+- **FR-104**: The nested loop structure (ring-candidate loop inside the
+  existing gasket-iteration loop) MUST compile without console errors at
+  `MAX_RING`'s chosen value — if a single codebox hits the Lua
+  `DSL.Parser` capture-group ceiling (per `f_vf_seeds`/`f_masonry`
+  precedent), split into a multi-stage `jit.gl.pix` chain rather than
+  reducing `MAX_RING` to route around it
+
+**Tangency formulas** (equal-radius circles in a ring, each tangent to
+its two ring neighbors and internally tangent to an enclosing circle of
+radius `R`):
+- `d = R / (1 + sin(π / ring_count))` — distance from origin to each
+  ring circle's center
+- `r = R · sin(π / ring_count) / (1 + sin(π / ring_count))` — each ring
+  circle's radius
+- Ring circle `i`'s center: `(d·cos(2πi/ring_count), d·sin(2πi/ring_count))`
+- At `ring_count = 3`, this must reduce to the values T111–T119 already
+  hardcoded — the concrete regression check for Acceptance Scenario 1
+
+**Explicitly Deferred (this evolution)**:
+- Variable relative sizes within the ring (unequal-radius mutually
+  tangent circles, requiring a Descartes' Circle Theorem solve rather
+  than fixed trig) — considered and rejected as scope, not deferred to
+  "later" in the roadmap sense; would need its own scope decision to
+  revisit
+- Fully arbitrary/independent circle placement (no tangency constraint)
+  — considered and rejected as scope entirely, per Matt's explicit call
+  this session; not planned as a future evolution of this module
 
 ### User Story 3 — Performance at live-performance resolution (Priority: P2)
 

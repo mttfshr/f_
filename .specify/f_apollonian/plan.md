@@ -145,6 +145,44 @@ whichever future work needs the ring+central-circle construction (the
 `ideas/f_apollonian.md` and the spec's Open Questions when that thread
 picks back up, rather than treating this ADR as having answered it.
 
+**RESOLVED 2026-07-08 (tasks.md T111–T119)**: The branchless
+`settled`-flag approach recommended above is confirmed working —
+`break` was never needed or tested. Every one of the 4 generator
+circles (3 ring + 1 enclosing) is checked unconditionally every
+iteration; priority order is resolved via nested `mix()` gated by
+`step()`-based containment flags, not by exiting the loop.
+
+**Real implementation difficulty this exposed, worth recording
+precisely since it wasn't just "write the branchless version and it
+works":** getting the branchless update to actually compile took three
+attempts, each failing with a Gen compiler error of the same class
+("variable X is not defined") but for three different underlying
+reasons — repeated reassignment of one variable as both read-source and
+write-target in a loop, then the same failure recurring on staged
+replacement temporaries, then recurring a third time on a single bare
+alias assignment (`ox = zx;`) that never should have been complex
+enough to hit a capture-ceiling at all. That third failure is the most
+informative: it suggests Gen's optimizer may copy-propagate a plain
+variable-to-variable alias and lose track once its source is reassigned
+later in the same scope — a different failure shape than the
+`f_vf_seeds`/`f_masonry` capture-count-ceiling precedent this ADR
+initially expected to be the relevant risk. **Not fully root-caused —
+if this resurfaces in a future module, treat "variable not defined" as
+a family of at least two distinct failure modes, not one.**
+
+**The actual working idiom**: parallel comma-assignment,
+`zx, zy = <exprX>, <exprY>;`, evaluating both right-hand sides against
+the same pre-update point before writing either left-hand side — with
+zero extra named variables. This is the same idiom the `jit-gen-codebox`
+skill already documents for built-in multi-value returns; confirmed
+here to also work for two independently-computed expressions rather
+than one function's paired outputs. **A logically incorrect
+intermediate version compiled with no errors at all** (writing `zx`
+then reading the now-updated `zx` inside `zy`'s expression) — worth
+restating since it's the same "clean compile ≠ correct" lesson ADR-1's
+Ford-circles work already logged once this session, now confirmed
+general rather than a one-off.
+
 ---
 
 ### ADR-3: Final inversion as a blend amount, not a "neutral" center/radius
@@ -222,7 +260,414 @@ that matters visually.
 
 ---
 
-## Implementation Phases
+### ADR-6: Generalized ring count via derived-not-stored circle data, count only (2026-07-08)
+
+**Context**: Spec User Story 2.5 (production item #1) requires the ring
+to support counts other than the hardcoded N=3 used in T111–T119, while
+Matt explicitly scoped this to count-only — equal-radius, evenly-spaced
+circles at every count, not variable relative sizes and not arbitrary
+independent circles.
+
+**Decision**: Ring circle `i`'s center/radius are computed each frame
+from `i`, `ring_count`, and enclosing radius `R` via closed-form tangency
+trig (see spec FR-101 and its formulas) — no per-circle stored data (no
+texture, no per-slot params). `ring_count` becomes a live param bounded
+by a fixed compile-time `MAX_RING` slot count; the containment-check loop
+becomes a nested `for i in 0..MAX_RING-1` inside the existing
+gasket-iteration loop, with `i >= ring_count` slots branchless-gated
+inert using the same idiom ADR-2's `settled`-flag already established.
+
+**Rationale**: Equal-radius rings have a closed-form tangency solution
+(derivation in spec.md), so there's no need for a tangency-solver or
+stored per-circle data — the formula-per-index approach is strictly
+simpler than either alternative discussed (fixed-max unrolled params with
+independent x/y/r, or a texture-fed circle table), and matches Matt's
+explicit "count only" scope decision. Discussed alternatives (texture-fed
+arbitrary circle table, per-slot independent params) are recorded as
+rejected-for-this-module, not merely deferred — see spec's Explicitly
+Deferred (this evolution).
+
+**Consequences**:
+- Positive: no new data-plumbing mechanism (no texture read inside a
+  loop, no per-circle param explosion) — smallest reasonable change to
+  the existing confirmed T111–T119 codebox
+- Negative/risk: nesting a nested `for i in 0..MAX_RING-1` ring-candidate
+  loop inside the existing gasket-iteration loop is more deeply nested
+  than anything built in this module so far — real capture-ceiling risk
+  (per `f_vf_seeds`/`f_masonry` precedent), flagged explicitly in FR-104.
+  If a single codebox won't compile at the chosen `MAX_RING`, split into
+  a multi-stage `jit.gl.pix` chain (same resolution pattern already used
+  for `f_vf_seeds`) rather than reducing `MAX_RING` to dodge the ceiling
+- `MAX_RING`'s value is a real open tuning question (start at 8, per
+  spec FR-102) — needs its own scratch-confirmed choice, balancing
+  capture-ceiling/fps risk against how large a ring a performer would
+  actually want live
+
+**Real compile failure hit implementing this (2026-07-08), same family
+as ADR-2's, different shape**: a first attempt used a nested `for (k =
+0; k < MAX_RING; k += 1)` loop with a loop-carried scalar accumulator
+(`res_x = mix(res_x, ..., inside_k);`, reassigning `res_x` across `k`
+iterations) — failed to compile with `"res_x" is not defined`. This is
+a different shape than any of ADR-2's three documented failures: those
+were all about *reading an updated variable within the same statement*
+or a bare alias reassignment; this is a **loop-carried single-scalar
+accumulator across a nested `for`**, which the T111–T119 codebox never
+actually did — its own `zx`/`zy` update is one paired comma-assignment
+statement per outer-loop iteration, not a scalar folded across an inner
+loop. **Fix**: abandon the inner `for`-over-`k` entirely and fully
+unroll the `MAX_RING=8` candidates into one nested-`mix()` expression,
+structurally identical to T111–T119's proven 4-candidate (3 ring + 1
+enclosing) chain, just extended to 9 candidates (8 ring + 1 enclosing).
+Ring circle centers/active-gates are computed once before the gasket
+loop (they depend only on `ring_count`, not per-pixel state), same as
+T111–T119's constants. **This reintroduces the real capture-ceiling
+risk FR-104 already flagged** — a single statement folding 9 candidates
+is meaningfully larger than the 4-candidate chain that already worked,
+so this is the actual test of whether a single codebox holds or a
+multi-stage split (per `f_vf_seeds` precedent) is needed. Not yet
+confirmed either way.
+
+**Second silent failure hit (2026-07-08)**: the fully-unrolled retry
+compiled clean but rendered solid black. Root cause: the per-candidate
+containment flags were named `in0`–`in7`, and `inN` (an `in` followed by
+digits) is GenExpr's actual inlet-reference syntax. Renaming to
+`ins0`–`ins7` fixed it. Logged as a new pattern in the `jit-gen-codebox`
+skill.
+
+---
+
+### ADR-7: Real reference source obtained — the ring+central-circle construction was fundamentally mistranslated, not just missing generalization (2026-07-08)
+
+**Context**: After the `ins`-rename fix, `ring_count` swept cleanly across
+2/3/4 with no crashes or NaN, but Matt correctly identified that the
+render showed no legible recursive circle-packing — just the base
+circles and swirly fractal-boundary detail at tangent points, no visibly
+nested smaller circles. Initial hypotheses (coloring legibility, viewing
+orientation) were tested and ruled out via direct comparison against the
+unmodified original T111–T119 codebox, which produced **pixel-identical**
+output — ruling out a regression from this session's generalization work,
+but not ruling out a pre-existing bug in T111–T119 itself. Matt then
+supplied the actual reference GLSL source (`shadertoy.com/view/MlVfzy`,
+the real ebanflo-derived/mla-modified shader — see
+`ideas/f_apollonian_reference_glsl.md` for the full preserved source),
+enabling a real line-by-line diff instead of further guessing.
+
+**The actual bug, confirmed by the diff**: T111–T119's construction
+invented a large "enclosing" circle (`encR2`) that inverts every point
+landing outside it back inward, unconditionally, every iteration,
+indefinitely. **This circle does not exist anywhere in the real
+reference.** The actual reference has:
+
+- N ring circles: centered at distance `r = 1/cos(theta)` from origin,
+  radius `s = tan(theta)`, `theta = pi/N`
+- ONE small central circle: centered at the ORIGIN (not a giant bound),
+  radius `r - s` — for N=3, radius ≈0.268 vs. the ring circles' ≈1.732,
+  genuinely different sizes (matches Matt's observation that "the
+  largest packed circles are not identical sizes")
+- **No enclosing/outer circle at all.** Each iteration checks the
+  central circle, then each ring circle; the instant a point isn't
+  inside ANY of the N+1 circles, the loop terminates for that point
+  (real per-pixel variable-length escape, via `break` in the reference)
+
+T111–T119's fabricated enclosing-circle inversion was applied to the
+majority of the frame every single iteration — a real, continuously-
+applied transform that has no counterpart in the actual algorithm. This
+fully explains the swirl-without-packing visual: most pixels were being
+corrupted by a transform that shouldn't exist, not failing to show real
+packing that was otherwise present.
+
+**Consequence — T111–T119's "CONFIRMED WORKING AND CORRECT" status is
+REVOKED, not just this session's generalization work.** The original
+hardcoded N=3 version has the identical bug (confirmed via the
+side-by-side test above, before the real reference was obtained) — it
+was never actually a correct Apollonian gasket construction, despite
+passing every check that was run against it (no NaN, clean console,
+"recognizable gasket-like character"). This is the same "compiled clean,
+looked plausible, wasn't actually correct" trap this project has hit
+before (Ford-circles' missing scale accumulator, `f_masonry`'s slot bug)
+— worth restating as a general lesson: **visual plausibility of a
+fractal-like image is not evidence of correctness against a specific
+target construction** — only a direct comparison against verified
+reference source or reference output actually confirms it. This project
+went two full sessions (T101–T119) on an unverified construction because
+no one had the actual reference source to diff against until this
+session.
+
+**Decision — corrected construction, replacing the fabricated enclosing
+circle with the real central circle + genuine settle/escape logic**:
+
+- `ringR2 = s*s` (not the previous fixed `1.0`), `centralR2 = (r-s)*(r-s)`
+  (replacing `encR2` entirely — this is a different circle in a
+  different place serving a different structural role, not a renamed
+  version of the old one)
+- Ring circle positions: `(r*sin(2*i*theta), r*cos(2*i*theta))`, matching
+  the reference's exact angle/axis convention (not this session's earlier
+  `cos`/`sin` convention, which was an independent, unrelated deviation
+  worth dropping now that we have the real reference to match)
+- **The genuine escape/settle behavior needs a different branchless
+  idiom than what T111–T119 used.** T111–T119's `settled`-flag (per
+  ADR-2) picked among always-active candidates every iteration — it
+  never actually froze a point once it escaped, because in the invented
+  construction, every point was always inside either a ring/central
+  circle or the fabricated enclosing circle, so there was never a true
+  "outside everything" state to freeze at. The real reference's `break`
+  is a genuine per-pixel variable-length escape: once a point isn't
+  inside any of the N+1 real circles, it's done, permanently, for that
+  pixel. Branchless equivalent: a **sticky `active` flag**,
+  `active = active * any_inside` each iteration (multiplicatively
+  latching to 0 forever once a point escapes, never recovering) — this
+  refines ADR-2's resolution rather than replacing it: the "no `break`
+  needed, branchless flag suffices" conclusion still holds, but the
+  flag's job is freezing state at true escape, not selecting among
+  perpetually-active candidates.
+- Depth accumulation, position update, and `s`-scale accumulation (if
+  used for line-drawing) must all be gated by this same `active` flag,
+  not just the per-candidate `any_inside` flag — a point that has
+  already escaped must not keep accumulating depth or moving in later
+  iterations, or the "settled" state has no meaning
+
+**This does not change ADR-6's ring-count generalization approach**
+(formula-derived-not-stored circle data, fixed `MAX_RING` slot budget,
+branchless `active_k` gating per slot) — that architecture is sound and
+orthogonal to this bug. What changes is the actual tangency formulas
+(`ringR2`/`centralR2`/positions, corrected per the real reference above)
+and the addition of the sticky escape-freeze mechanism, which T111–T119
+never needed because its invented construction never had a genuine
+"escaped" state.
+
+---
+
+### ADR-8: Accumulated Möbius-transform tracking, replacing fold-path coloring with real mapped-circle containment (2026-07-09)
+
+**Context**: ADR-7's corrected escape/settle construction fixed the
+fabricated-enclosing-circle bug, but Matt's visual read of the corrected
+render (screenshot, 2026-07-09) found continuous rainbow-swirl bands at
+tangent points rather than the flat, solid, round discs the reference
+images (and the actual definition of an Apollonian gasket — mutually
+tangent circles, each recursively filled) require. Root cause, confirmed
+by rereading the saved reference source in full (not just its prior
+summary — see the new standing rule added to `vsynth-bpatcher/SKILL.md`
+this session): our codebox colors by `depth`/`last_id`, both properties
+of the **fold path** a point took (how many inversions, which circle it
+last passed through) — neither is a test against a real circle in screen
+space, so nothing forces the colored regions to be round. The primary
+reference (`shadertoy.com/view/MlVfzy`) doesn't solve this either — it
+only computes escape-time `n`. The *second* reference we saved
+("Apollonian Britney", `shadertoy.com/view/Xclfzj`'s sibling) does solve
+it: it tracks the **accumulated Möbius transform** through the settle
+loop, inverts it once at the end, and applies it to a small fixed set of
+canonical "limit circles" to find their true image position/radius in
+*this pixel's original screen frame* — then does a real containment test
+against that mapped circle. That's what produces flat discs.
+
+**Decision**: Add accumulated-transform tracking to the existing
+iterated-inversion loop (ADR-7's construction, unchanged), then use the
+inverted transform to map 4 canonical "limit circles" (3 ring + 1
+central, formula below) into screen space and test real containment
+against them for coloring — an addition on top of the existing
+mechanism, not a replacement of it.
+
+**Why this is not a pivot to Descartes' Circle Theorem** (a real option
+Matt raised and I initially over-corrected toward): Descartes' theorem
+explicitly solves for a new tangent circle's radius/position from three
+existing ones and would require a genuinely different loop structure
+(building an explicit growing list of circles). What we're doing instead
+stays entirely within the already-working iterated-inversion/reflection-
+group method — we're just completing the half of it our codebox was
+missing (screen-space circle reconstruction), matching what the second
+reference actually does. Confirmed this by rereading both saved reference
+sources in full this session, not by assuming from memory.
+
+**Math, worked from first principles for this project's specific
+per-step formula** (not copied from the reference's complex-matrix
+notation, since GenExpr has no complex/matrix types and the reference's
+own matrix construction wasn't fully legible without re-deriving it):
+
+- Each inversion step is anti-holomorphic:
+  `f_k(z) = c_k + r2_k / conj(z - c_k)`, equivalently
+  `f_k(z) = M_k(conj(z))` where `M_k` is the *holomorphic* Möbius matrix
+  `[[c_k, r2_k - |c_k|²], [1, -conj(c_k)]]`.
+- Composing a chain of such steps, tracking only a holomorphic matrix
+  `N_k` and the *parity* of how many steps have been applied (`depth`,
+  which we already accumulate), gives a clean recursion:
+  `N_{k+1} = M_{k+1} · conj(N_k)` (matrix product, entries conjugated
+  elementwise), for every step — parity doesn't change the update rule,
+  only how the *final* total map is interpreted: total forward map is
+  `N_k(z)` if `depth` even, `N_k(conj(z))` if `depth` odd.
+- Möbius matrices are projective (defined up to a nonzero scalar
+  multiple) — this means the standard adjugate inverse
+  `N⁻¹ = (d, -b, -c, a)` is valid **without dividing by the determinant**,
+  the same simplification the reference's own `cMobiusInverse` uses.
+- To map a **circle** (not just a point) through `N⁻¹`, use the
+  reference's `cMobiusOnCircle` approach: map the circle's center with a
+  correction term (`z -= r² / conj(d/c + center)`), then apply the plain
+  Möbius point-map; get the radius by also mapping `center + (radius, 0)`
+  and taking the distance between the two mapped points.
+- When `depth` is odd, the *whole* accumulated map includes an extra
+  outer conjugation — geometrically this is just a global y-axis mirror,
+  so it's applied **after** the circle-mapping step by negating the
+  mapped circle's y-coordinate (`mix(Dy, -Dy, is_odd)`), not by
+  complicating the matrix math itself.
+- **Canonical limit circles** (defined once, independent of any per-pixel
+  fold, using the same `theta`/`r`/`s` already computed): ring limit
+  circles at `(-cos(2iθ)·R_lim, sin(2iθ)·R_lim)`, radius `R_lim_r`, where
+  `R_lim = (r-s)·r` and `R_lim_r = (r-s)·s`; central limit circle at the
+  origin with radius exactly `1.0` (this elegant result — the "never
+  inverted" region maps back to the full unit disk — comes directly from
+  the reference, not independently derived, and is a good sanity check
+  if implemented correctly).
+
+**Alternatives rejected**:
+- Pivoting to explicit Descartes-theorem circle generation (my initial,
+  over-corrected suggestion): rejected because it's not what either
+  saved reference actually does, and would require a structurally
+  different loop (explicit growing circle list) rather than extending
+  the confirmed-working iterated-inversion mechanism already in place.
+- Tuning the existing `last_id` coloring further (softer bands, blurred
+  transitions, etc.): rejected — no coloring scheme built on `depth`/
+  `last_id` can produce round discs, since neither is a screen-space
+  circle test. This is a structural gap, not a tuning one, matching the
+  standing project lesson (`f_masonry`, Ford-circles) that a
+  compiles-and-looks-plausible result isn't evidence of correctness
+  against the actual target.
+
+**Consequences / real risks, named upfront rather than discovered**:
+- **Real capture-ceiling risk, likely the biggest one yet in this
+  project.** This adds 9 new user-defined functions (complex multiply/
+  divide, plain Möbius point-map, circle-map x/y/radius) and roughly
+  doubles the per-iteration variable count inside the existing loop
+  (8 new scalars for the accumulated matrix, updated branchlessly every
+  iteration via the same nested-`mix()` priority-chain idiom as the
+  existing position/color-id updates). If this doesn't compile as one
+  codebox, the fallback is the same multi-stage `jit.gl.pix` split
+  already proven for `f_vf_seeds`/`f_masonry` — split the settle loop
+  (producing `zx,zy` + the accumulated matrix + `depth`) from the
+  post-loop limit-circle mapping/coloring into two stages.
+- **This is a from-scratch derivation, not a direct translation** — the
+  reference's own matrix construction wasn't fully re-derivable from its
+  code alone in the time available this session, so the composition
+  rule above was worked out independently from the known mathematical
+  fact that circle inversions are anti-holomorphic Möbius maps. This
+  needs empirical confirmation in Max before being trusted, same as any
+  other new codebox math — check the console first, then check that the
+  four base circles render as genuinely round, flat discs (the actual
+  target), not just "different from before."
+- A useful built-in sanity check: since the forward-fold `zx,zy` are
+  already computed independently by the existing loop, `N_k` applied to
+  the *original* pixel position should reconstruct `zx,zy` exactly
+  (`N_k(z0)` if `depth` even, `N_k(conj(z0))` if odd) — if this project
+  ever needs to debug the matrix tracking specifically, comparing against
+  the already-trusted `zx,zy` is a stronger check than eyeballing the
+  final coloring alone.
+- Added a `use_mapped` param (0/1) so the existing `last_id` coloring and
+  the new mapped-circle coloring can be A/B compared directly in Max
+  without reverting the file — consistent with this project's general
+  preference for direct empirical comparison over trusting either
+  version blind.
+
+**Update (2026-07-09, via f_poincare diagnostic detour)**: the
+composition/parity/circle-inversion math has since been confirmed
+correct at the GPU runtime level (not just on paper) via isolated
+testing in `f_poincare`'s scratch files — see that module's `plan.md`
+Phase 2 result. One real, previously-undiagnosed factor found there:
+**the mismatch-detection threshold used in debug views (`0.01`) was too
+strict** — Möbius transforms are inherently ill-conditioned near their
+pole (points mapping to large magnitudes), and GPU float32 precision
+degrades there in an expected, bounded way that a tight threshold
+misreads as a hard logic error. Any renewed debugging of this module's
+remaining visual mismatches should first relax the threshold (informed
+by `f_poincare`'s `0.3` finding, though the right value likely scales
+with the circles' own scale) before concluding a mismatch is a real bug
+rather than expected numerical softness. The central-circle
+position-update bug (above) is confirmed real and fixed regardless.
+
+**Update 2 (2026-07-09, later same session) — MODULE SHELVED, real
+contradictory findings recorded, not resolved. Read this in full before
+resuming.**
+
+Matt made the explicit call to stop and shelve this module for now,
+after this session's re-testing produced two results that don't fit
+together and weren't reconciled before stopping:
+
+1. `debug_ok`'s threshold in `apollonian-scratch.maxpat` was relaxed
+   from `0.01` to `0.3` (per Update 1 above), file was confirmed reopened
+   in Max (not just edited on disk) so the change was live. **At
+   `use_mapped=2` (pass/fail debug view) after this change, the four
+   large ring/central regions still rendered solid red (fail)** — no
+   visible improvement from the threshold relaxation, contradicting
+   `f_poincare`'s isolated single-circle test where the same relaxation
+   made the mismatch shrink dramatically.
+2. Immediately after, `use_mapped=4` (the actual signed-error-vector
+   view, `err_col_r/g`) was checked at the same `ring_count=3` — **and
+   showed the opposite result**: the four large regions rendered flat
+   neutral gray (meaning near-zero `err_x`/`err_y`, i.e. should read as
+   pass), with colorful error blooms appearing only right at the tangent
+   points between circles, fading smoothly outward — exactly the
+   pole-proximity signature ADR-8's math would predict, and a genuinely
+   good-looking result on its own.
+
+**These two views should agree and don't.** Zero-error-reading regions
+(`use_mapped=4`, gray) should be exactly the `debug_ok=1` (pass, green)
+regions in `use_mapped=2` — instead `use_mapped=2` showed those same
+regions as fail (red). This was never reconciled this session. Real
+candidate explanations, none confirmed:
+- `debug_ok`'s own wiring/threshold comparison has a bug independent of
+  the `err_mag` calculation that `use_mapped=4` visualizes (i.e. `err_mag`
+  itself may be fine, but `step(err_mag, 0.3)` or its downstream color
+  mix isn't reading it correctly)
+- The two screenshots were not actually taken under identical conditions
+  (e.g. a stale compiled state on one of the two checks) despite Matt's
+  confirmation of reopening the file earlier in the session — cannot be
+  ruled out, wasn't independently verified via a fresh back-to-back pair
+  before Matt called it
+- Something in the color-mix override chain (`is_debug`/`is_depth_view`/
+  `is_err_view`, all layered via sequential `mix()` calls gated by
+  `step()` on `use_mapped`) has a boundary bug affecting `use_mapped=2`
+  specifically — untested
+
+**A separate, real, unrelated finding from this session, safe to keep
+regardless of the above**: `ring_count=2` renders solid black. This is
+expected and correct, not a bug — `theta = pi/ring_count` gives
+`theta = pi/2` at N=2, making `r = 1/cos(theta)` a division by zero.
+The tangency formula this module uses is only valid for `ring_count >= 3`.
+Worth a guard/range floor whenever `ring_count` is promoted to a live
+param (ADR-6/spec User Story 2.5) — not yet added anywhere.
+
+**This session also produced one real process mistake worth naming
+plainly**: mid-session, `use_mapped=3` (the depth/iteration bit-plane
+coloring view) was misidentified as the error view and analyzed at
+length as if it were — a real misreading of the codebox's own
+`is_debug`/`is_depth_view`/`is_err_view` override order (`use_mapped`
+thresholds at 1.5/2.5/3.5, so `3` selects depth view, `4` selects error
+view, not `3`). The wrong analysis was retracted once caught, but real
+time was spent reasoning from it. Lesson: when reasoning about a
+multi-mode debug codebox's output, check the actual `step()` threshold
+values against the requested `use_mapped` number before interpreting the
+image, don't rely on remembering which number maps to which mode.
+
+**Next session, if this module is picked back up, must start here — not
+by resuming `ring_count` generalization, and not by assuming either the
+`use_mapped=2` or `use_mapped=4` result is the trustworthy one:**
+1. Get one clean, verified-fresh back-to-back pair: `use_mapped=2` then
+   `use_mapped=4`, same `ring_count`, confirmed no stale compile state
+   between them (e.g. force a trivial param nudge and back, or fully
+   close/reopen the patch immediately before each screenshot) — this
+   session's pair was not confirmed clean this way before stopping
+2. If they still disagree once genuinely controlled, treat `debug_ok`'s
+   own logic (the `step(err_mag, threshold)` line and its color-mix
+   wiring, not the error calculation itself) as a prime suspect and
+   trace it directly, rather than re-litigating the threshold value
+   again
+3. Only once `debug_ok` and the actual error magnitude are confirmed to
+   agree does it make sense to form a real opinion on `use_mapped=1`'s
+   (the actual mapped-circle coloring) visual correctness — this
+   session's `use_mapped=1` screenshot (large blue disc with an
+   insect/bird-shaped black cutout) should be treated as uninterpreted
+   pending that reconciliation, not as a confirmed remaining defect to
+   fix directly
+
+---
+
 
 ### Status addendum (2026-07-08) — Phases 1–2 confirmed, ADR-1's math corrected
 
@@ -304,7 +749,54 @@ Add `inv_x`, `inv_y`, `inv_radius`, `inv_amount` per ADR-3. Wire
 
 ---
 
-### Phase 3 — Iteration count and fps calibration
+### Phase 2.5 — Generalized ring count (production item #1, ADR-6) — NEXT UP (2026-07-08)
+
+This is the phase to pick up next, ahead of Phase 3. Implements spec
+User Story 2.5 / ADR-6: replace the T111–T119 codebox's hardcoded N=3
+ring circles with formula-derived circles indexed by a nested
+`for i in 0..MAX_RING-1` loop, gated by a live `ring_count` param.
+
+**Steps**:
+- Pick an initial `MAX_RING` (start at 8, per ADR-6)
+- Implement the tangency formulas (spec FR-101) as a small helper
+  function (`ring_circle(i, ring_count, R)` returning center/radius) —
+  check whether GenExpr user-defined functions can return the pair
+  cleanly or whether this needs the same parallel comma-assignment
+  idiom ADR-2 already confirmed for two independently-computed values
+- Nest the ring-candidate loop inside the existing gasket-iteration
+  loop; gate `i >= ring_count` slots inert via the same branchless
+  `mix()`/flag idiom as the existing 4-circle containment check
+- Compile-check first, before any visual verification — this is the
+  step most likely to hit a capture-ceiling issue (per ADR-6's risk
+  note); if it does, split into a multi-stage `jit.gl.pix` chain rather
+  than shrinking `MAX_RING` to route around it
+
+**Checkpoint** (spec User Story 2.5, all Acceptance Scenarios):
+- `ring_count = 3` regresses cleanly against the existing confirmed
+  T111–T119 output (formula must reduce to the same hardcoded values)
+- `ring_count` swept across other in-range values each produces a
+  correctly-tangent, N-fold-symmetric closed gasket — no gaps, overlaps,
+  or NaN
+- Slots beyond `ring_count` (up to `MAX_RING`) are confirmed inert
+  regardless of pixel position
+- Codebox compiles clean at the chosen `MAX_RING` (or the multi-stage
+  fallback compiles clean, if needed)
+
+---
+
+### Phase 3 — Iteration count and fps calibration — LOW PRIORITY, blocked behind spec.md's production items (2026-07-08)
+
+**Deprioritized, per Matt's explicit call (2026-07-08).** Per spec.md's
+"What 'production' means" section, three items — generalized/arbitrary
+generating circle configurations, a live max-iteration-count param, and
+per-region texture sampling — take priority over this phase, in that
+order. Two of the three directly change what Phase 3 would even be
+measuring: generalized circle configs change per-iteration cost, and
+promoting iteration count to a live param turns "pick one fixed shipped
+default" into a live-tunable range instead of a single number to choose.
+Running this sweep before those land would measure the wrong
+construction. Do not pick this phase up next — go to the three items
+above (each needs its own spec/plan/tasks pass) before returning here.
 
 With both Phase 1 and 2 confirmed correct, sweep the fixed iteration
 count (try 4, 8, 16, 32) and measure fps at each, at 1920×1080 and
