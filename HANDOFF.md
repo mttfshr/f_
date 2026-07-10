@@ -1,5 +1,103 @@
 # HANDOFF — f_ library
 
+Last session: 2026-07-10 (f_modules menu rebuild — 5 categories → 8,
+plus vecfield port labeling across 16 module patchers. Unrelated to
+the f_apollonian/f_poincare thread below, which is still where it was
+left on 2026-07-09.)
+
+## f_modules — menu rebuilt to 8 categories, vecfield ports labeled (2026-07-10)
+
+**Not committed yet — Matt commits manually.** Suggested commit message
+(possibly split into two) is in this session's chat log if needed.
+
+`patchers/f_modules.maxpat` has no build script (fully hand-built JSON,
+unlike production module patchers) — all edits this session were done
+via small one-off Python scripts in `tools/` (`rebuild_modules_menu.py`,
+`append_nabla_menu.py`, `scan_vecfield_labels.py`,
+`update_vecfield_labels.py`), loading/mutating/rewriting the JSON, each
+verified with `json.load()` after. Kept for reference/reuse, not meant
+as permanent build infrastructure.
+
+**Menu category rebuild**: replaced the old 5 categories (Generators,
+Processors, Color/Tone, Utilities, Vecfield) with 8, reorganized by
+visual character rather than generator/processor archetype — Matt's
+explicit call: menu category doesn't have to equal module type.
+Final order and contents:
+
+- **Scope**: Chladni
+- **Discrete**: Masonry, Stipple, Grain, Weave, Seeds
+- **Spatial**: Mobius, Stereo, SIRDS, Droste
+- **Optical**: Lens, Prism
+- **∇ Generators**: Vortex, Vortex Multi
+- **∇ Processors**: Caustic, Fieldmap, Flow, Repulse, Warp, Streak, Glow, Advect, Chroma
+- **Color / Tone**: Channel Grader, Hue Processor, Luma Processor, Tone Curve
+- **Utilities**: Tex Router, Profile, Split, Potential, Matrix 2
+
+All 32 shipped modules accounted for (none dropped, none duplicated).
+`f_util_matrix_2` is now in the menu for the first time — previously
+missing entirely. Unshipped/unverified modules (`f_apollonian`,
+`f_poincare`, `f_vf_vorticity`) correctly excluded, per existing
+convention.
+
+**Real bug found and fixed**: `live.menu` with a single-item
+`parameter_enum` (Scope/Chladni, `parameter_mmax=0`) rendered as raw
+"0"/"1" instead of the label text, instead of just showing "Chladni".
+Fixed by padding to a duplicate 2-item enum
+(`["Chladni","Chladni"]`, `mmax=1`) — functionally identical (always
+resolves to `chladni`), but gives `live.menu` a real range to render
+against. **Worth remembering if any future single-module category is
+added** — same fix will be needed again.
+
+**Vecfield marking convention, new this session**: appended "∇" to the
+display label of every module (in the menu) that takes or produces an
+`f_vecfield` texture, and prepended "∇" to the two category labels
+(Generators, Processors) where every member happens to be
+vecfield-typed. 17 module labels updated; the two vecfield-typed
+categories renamed to "∇ Generators"/"∇ Processors" in the menu (not
+in README/HANDOFF's own category naming, just the UI).
+
+**Panel/window resize**: background panel presentation size 96×249 →
+96×380 (patching 160×209 → 160×340), root window height 835 → 966, to
+fit the taller 8-category list. Purely cosmetic, no functional change.
+
+**Separately, module-level header labels**: the generic "vecfield"
+header comment (a presentation-layer text box, distinct from each
+inlet/outlet's own `comment` attribute) in 16 module patchers
+(`f_caustic`, `f_vf_advect`, `f_vf_chroma`, `f_vf_fieldmap`,
+`f_vf_flow`, `f_vf_glow`, `f_vf_potential`, `f_vf_prism`,
+`f_vf_repulse`, `f_vf_seeds`, `f_vf_split`, `f_vf_streak`,
+`f_vf_vortex`, `f_vf_vortex_multi`, `f_vf_vorticity`, `f_vf_warp`) was
+changed to say "vecfield in", "vecfield out", or "vecfield in/out"
+per each module's actual port direction, determined by checking each
+inlet/outlet object's own `comment` field in the JSON (not assumed
+from the module's general description). Two needed manual
+determination rather than automatic detection, because their vecfield
+port is the module's sole, generically-labeled primary inlet rather
+than a separately-labeled one: `f_vf_split` (in only — splits vecfield
+into non-vecfield greyscale channel outlets) and `f_vf_vorticity`
+(in/out — genuine vecfield→vecfield processor; label change only,
+does NOT change its still-unverified status from the 2026-07-06/07
+entries below).
+
+**Left alone, not an oversight**: `f_lens` and `f_weave` currently have
+no "vecfield" header label to edit at all — `f_lens` has no wired field
+inlet in the current file (aberration/distortion/transmission/surface
+mod inlets only), and `f_weave`'s vecfield sampling happens through its
+generic primary "texture / control" inlet with no dedicated label. If
+either gets an explicit vecfield inlet/label in a future session, it'll
+need this same "in"/"out" treatment. `f_vf_vortex_multi_version.maxpat`
+(an untracked-from-menu draft/alt file) also left untouched.
+
+**Not yet done**: nothing outstanding on this thread — Matt confirmed
+the result in Max after each step (menu rebuild, panel resize, Scope
+fix, ∇ labels, category ∇ prefixes, module header labels). Next natural
+step if resumed would be applying the same "∇" marking convention
+anywhere else vecfield status is surfaced to the user (e.g. `README.md`'s
+patch table currently doesn't visually distinguish vecfield modules at
+all), but this wasn't requested and isn't queued.
+
+---
+
 Last session: 2026-07-09, continued (f_apollonian SHELVED; f_poincare
 made real progress -- first genuine {4,5} hyperbolic tiling confirmed
 working. See below.)

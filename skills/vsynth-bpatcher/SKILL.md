@@ -1,6 +1,6 @@
 ---
 name: vsynth-bpatcher
-description: Conventions and checklist for building f_ Vsynth bpatchers in Max. Use when creating or editing a patcher in /Users/matt/Github/f_/patchers/. Covers file structure, signal flow pattern, parameter wiring, UI styling, codebox writing workflow, and the required objects every patcher must have.
+description: Conventions and checklist for building f_ Vsynth bpatchers in Max. Use when creating or editing a patcher in /Users/matt/Github/f_/package/patchers/. Covers file structure, signal flow pattern, parameter wiring, UI styling, codebox writing workflow, and the required objects every patcher must have.
 ---
 
 # Vsynth Bpatcher Skill
@@ -34,11 +34,11 @@ Consult these before designing a new f_ patch: capability map (what Vsynth alrea
 ## File Locations
 
 ```
-/Users/matt/Github/f_/patchers/   — production f_ bpatchers (version controlled)
-/Users/matt/Vsynth/patterns/      — experiments and signal flow scratch (not version controlled)
+/Users/matt/Github/f_/package/patchers/   — production f_ bpatchers (version controlled)
+/Users/matt/Vsynth/patterns/              — experiments and signal flow scratch (not version controlled)
 ```
 
-`patterns/` is where you develop and understand a signal flow. Once stable and reusable, it becomes an `f_` bpatcher in `patchers/`. Never put one-off performance files or experiments in the repo.
+`patterns/` is where you develop and understand a signal flow. Once stable and reusable, it becomes an `f_` bpatcher in `package/patchers/`. Never put one-off performance files or experiments in the repo.
 
 ### Scratch patch GL context requirement
 
@@ -154,9 +154,11 @@ This is the most token-efficient approach:
 
 ```
 f_/
-  patchers/    — all bpatcher .maxpat files (source of truth)
-  code/        — JS files (on Max search path)
-  help/        — .maxhelp files (derived from docs/ eventually)
+  package/     — the installable Max package (this alone is what Max needs)
+    patchers/    — all bpatcher .maxpat files (source of truth)
+    javascript/  — JS files (on Max search path)
+    help/        — .maxhelp files, generated via build/generate_helpfiles.py
+    package-info.json
   docs/        — as-built reference docs for working bpatchers + vsynth-reference/ analysis docs
   ideas/       — planned and half-formed bpatchers
     scratchpad.md       — low-friction idea dump, no structure required
@@ -167,6 +169,8 @@ f_/
     extract_params.py, generate_helpfiles.py, audit_interface.py, migrate_to_attrui.py
   tools/       — one-off / module-specific scripts (version controlled, not build infra)
     masonry/, util_profile/, build_texrouter.py, etc.
+  skills/      — Claude skills for collaborating on this repo (copies of the source
+                 skills in claude-scaffold; this file's copy lives here)
   .specify/    — planning workspace (version controlled — no longer gitignored)
     constitution.md
     f_<name>/           — one dir per bpatcher under active development
@@ -174,7 +178,6 @@ f_/
       plan.md           — ADRs, blocks, phases (added when build begins)
       tasks.md          — flat task list, session anchor (added when build begins)
       definition.py     — patcher definition: codebox + params + archetype (added at end of Phase 2)
-  package-info.json
   HANDOFF.md   — session notes (ephemeral; written fresh each session)
   README.md    — permanent project state: bpatcher status table, build queue
 ```
@@ -187,12 +190,12 @@ f_/
 
 Bpatchers whose **primary output is an f_vecfield texture** (float32, RG=XY, 0.5=zero vector) use the `f_vf_` prefix rather than `f_`. This signals to users that the output is a specialized texture consumed by specific downstream modules (f_caustic, f_lens field inlet) rather than a standard Vsynth char texture.
 
-Current f_vf_ family:
-- `f_vf_vortex` — single analytic fixed-point vortex field
-- `f_vf_vortex_multi` — three-site additive vortex field
-- `f_vf_chladni` — modal superposition, audio-driven (vecfield outlet pending)
-- `f_vf_cymascope` — FDTD wave propagation, audio-driven (planned)
-- `f_vf_fieldmap` — scalar texture → vecfield via spatial derivative (planned)
+Current f_vf_ family (float32 `f_vecfield` producers/consumers — see README's patch table for full descriptions):
+- Producers: `f_vf_vortex`, `f_vf_vortex_multi`, `f_vf_flow`, `f_vf_fieldmap`, `f_vf_repulse`
+- Processors (consume + re-emit a vecfield): `f_vf_potential`, `f_vf_warp`, `f_vf_streak`, `f_vf_advect`, `f_vf_glow`, `f_vf_chroma`, `f_vf_prism`
+- Utility: `f_vf_split` (splits X/Y channels to greyscale, does not re-emit a vecfield)
+- Also consumes a vecfield without the prefix: `f_caustic`, `f_lens` (field inlet), `f_vf_seeds` (shape/mod tex inlets)
+- `f_vf_vorticity` exists as a built module but is explicitly **not confirmed working** — do not treat it as shipped (see HANDOFF.md)
 
 The type contract is in `docs/f_vecfield_type.md`. User-facing disambiguation (UI badge on each producer, helpfile explanation) reinforces the distinction without requiring users to memorize the prefix meaning.
 
@@ -659,7 +662,7 @@ The `route` object dispatches by name to the correct `live.dial` or `live.numbox
 
 ## Checklist: New Patcher
 
-- [ ] File in `patchers/f_<name>.maxpat`
+- [ ] File in `package/patchers/f_<name>.maxpat`
 - [ ] `"openinpresentation": 1`
 - [ ] `jit.gl.pix vsynth @name <prefix>_pix` — no `@dim`
 - [ ] `autopattr @varname <prefix>_autopattr` present
@@ -696,11 +699,11 @@ The `route` object dispatches by name to the correct `live.dial` or `live.numbox
 
 ## f_modules — Module Menu
 
-`patchers/f_modules.maxpat` is the f_ module insertion menu. Drop it as a bpatcher directly into a user patch — no wrapper needed. Selecting an item from any category menu spawns the corresponding `f_` bpatcher adjacent to the menu.
+`package/patchers/f_modules.maxpat` is the f_ module insertion menu. Drop it as a bpatcher directly into a user patch — no wrapper needed. Selecting an item from any category menu spawns the corresponding `f_` bpatcher adjacent to the menu.
 
 ### Architecture
 
-- Five categorized `live.menu` objects (visible, display names) each paired with a hidden `live.menu` (filenames)
+- Eight categorized `live.menu` objects (visible, display names) each paired with a hidden `live.menu` (filenames) — reorganized 2026-07-10 from an earlier 5-category set (Generators/Processors/Color-Tone/Utilities/Vecfield), by visual character rather than module archetype; see the Module Categories table below
 - Selection: display menu outlet 0 → filename menu inlet 0; filename menu outlet 1 → `prepend addmod` → `gate` → `js f_addmod.js`
 - Gate is held open by `loadmess 1` → `pipe 250` on load (debounce — prevents spurious spawn on patch open)
 - `f_addmod.js` navigates **one level up** (`this.patcher.parentpatcher`) — f_modules is a direct bpatcher in the user's patch, not nested in a wrapper
@@ -731,27 +734,34 @@ Key decisions:
 
 ### Adding a New Module
 
-Two files must be updated together:
+**`f_modules.maxpat` has no build script** — unlike production module patchers, it's fully hand-built JSON, edited directly via small one-off Python scripts in `tools/` (e.g. `tools/rebuild_modules_menu.py`, `tools/append_nabla_menu.py`) that load/mutate/rewrite the JSON. These are one-off per edit, not a reusable generator — see `tools/README.md`. (An earlier `.specify/f_modules/build_modules.py` script is no longer how this file is maintained.)
 
-1. **`.specify/f_modules/build_modules.py`** — add entry to `CATEGORIES` list: `("Display Name", "filename")`. Run the script to regenerate `f_modules.maxpat`.
+Two things need updating when a module is added:
+
+1. **`package/patchers/f_modules.maxpat`** — add the module's display name + filename to the appropriate category's menu, via a small script or direct JSON edit. `python3 -c "import json; json.load(open('package/patchers/f_modules.maxpat'))"` to validate after.
 2. **`javascript/f_addmod.js`** — add entry to `SIZES` dict: `"filename": [w, h]`. Get the size from the module's `presentation_rect` on its background panel.
-
-Then validate: `python3 -c "import json; json.load(open('patchers/f_modules.maxpat'))"`
 
 ### Why No f_menu Wrapper
 
 The original design had `f_menu.maxpat` as a thin bpatcher wrapper around `f_modules.maxpat` (mirroring Vsynth's `vs_menu` → `vs_modules` pattern). This was removed — `f_modules` is self-contained and the extra indirection broke the `f_addmod.js` parent navigation. Use `f_modules.maxpat` directly.
 
-### Regeneration Warning
+### Editing Warning
 
-The build script overwrites `f_modules.maxpat` completely. Max reformats the file on open and may alter typography attributes. The build script bakes in the exact font/color/size values from the last manually-edited version — but if you edit typography in Max and then regenerate, your edits will be lost. **Read the file back after any manual typography edits and update the build script constants before regenerating.**
+Since there's no build script, edits happen directly against the live `.maxpat` JSON via small one-off scripts (see above) — always `git diff` before and after to confirm the change is exactly what was intended, and nothing else. Max reformats the file on open and may alter typography attributes, so a manual typography edit made in Max should be treated as the new source of truth — don't let a stale script overwrite it later. This file previously had a `build_modules.py` generator that overwrote it completely on every run; that workflow is no longer in use (see "Adding a New Module" above).
 
 ### Module Categories
 
+Reorganized 2026-07-10 by visual character rather than generator/processor archetype — menu category doesn't have to equal module type. "∇"-prefixed categories are entirely vecfield-typed; individual module labels also get a "∇" suffix if they take or produce an `f_vecfield` texture, even outside those two categories.
+
 | Category | Modules |
 |---|---|
-| Generators | Masonry, Chladni, Stipple, Grain |
-| Processors | Droste, Mobius, Stereo, Lens, Caustic |
+| Scope | Chladni |
+| Discrete | Masonry, Stipple, Grain, Weave, Seeds |
+| Spatial | Mobius, Stereo, SIRDS, Droste |
+| Optical | Lens, Prism |
+| ∇ Generators | Vortex, Vortex Multi |
+| ∇ Processors | Caustic, Fieldmap, Flow, Repulse, Warp, Streak, Glow, Advect, Chroma |
 | Color / Tone | Channel Grader, Hue Processor, Luma Processor, Tone Curve |
-| Utilities | Tex Router, Profile |
-| Vecfield | Vortex, Vortex Multi, Fieldmap |
+| Utilities | Tex Router, Profile, Split, Potential, Matrix 2 |
+
+`f_apollonian`, `f_poincare`, and `f_vf_vorticity` are intentionally excluded (unshipped/unverified — see HANDOFF.md).
