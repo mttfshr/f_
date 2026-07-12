@@ -78,6 +78,7 @@ radial caustic.
 
 | Param | UI | Range | Default | Notes |
 |---|---|---|---|---|
+| `strength` | live.dial | 0.0–1.5 | 0.0 | Wet/dry crossfade — `composited = mix(source_pass, composite, strength)`. Missing from this table until 2026-07-11; confirmed wired in `codebox_v2.gen` (see plan.md's bug-fix ADR — `definition.py` had been pointing at a stray broken `codebox_v3.gen` that didn't reference this param at all) |
 | `intensity` | live.dial | 0.0–2.0 | 0.5 | Overall caustic brightness scale |
 | `scale` | live.dial | 0.0–1.0 | 0.3 | Streamline trace distance. 0 = no trace (no caustic). 1 = full-frame trace. |
 | `softness` | live.dial | 0.0–1.0 | 0.3 | Band sharpness. 0 = hard bright lines. 1 = diffuse glow. |
@@ -86,7 +87,7 @@ radial caustic.
 
 **Prefix:** `caustic`
 **Object name:** `caustic_pix`
-**Type:** `@type char` (processor convention)
+**Type:** `@type float32` (overrides the processor-convention default of `char` — accumulation benefits from float32 headroom, decided in scratch validation; confirmed against `definition.py`'s `pix_type` field 2026-07-11)
 
 ---
 
@@ -192,3 +193,66 @@ the same field geometry — coherent optical character without parameter coordin
 - Q: color_shift at launch? → A: Yes, included.
 - Q: Outlet pattern? → A: Two outlets matching f_grain: out1 = composited, out2 = isolated caustic layer.
 - Q: Compositing mode? → A: Additive over source on out1. out2 is pre-composite isolated layer.
+
+---
+
+## Reframe (2026-07-11): bug fix + gain/wet naming pass (findings 1–3)
+
+### Bug fix (prerequisite to everything below)
+
+`definition.py` was pointing at `codebox_v3.gen`, a stray earlier draft
+(self-labeled `v1` internally, single-inlet, no `strength`) instead of
+`codebox_v2.gen`, which has the correct two-inlet structure and the
+`strength` crossfade this section originally failed to document at all.
+Fixed: `codebox_v3.gen` deleted, `definition.py` now points at
+`codebox_v2.gen`. Full account in `plan.md`'s bug-fix ADR and
+`docs/f-reference/f_caustic.md`'s resolved discrepancy note. **This means
+whatever `f_caustic.maxpat` currently exists on disk may have been built
+from the broken file — rebuild and re-verify in Max before trusting
+existing behavior.**
+
+### Findings 1–3 status
+
+Unlike every other module in this rollout so far, `f_caustic` doesn't
+need new gain/wet architecture — `codebox_v2.gen` already has it:
+
+```
+composited = mix(source_pass, composite, strength);   // already a literal crossfade
+```
+
+`intensity` already functions as the gain-equivalent (scales
+`caustic_r/g/b` before the additive layer is formed), and `strength`
+already functions as the wet-equivalent (blends that layer against
+clean source, bounded 0–1.5). This is the same shape `f_vf_advect`
+turned out to already have — this rollout's findings 1–3 aren't always
+new work; sometimes they're a naming/UI pass on an already-correct
+architecture.
+
+### Decision (resolved)
+
+- Rename `strength` → `wet`, **cap range at true 0–1** (dropping the
+  1.0–1.5 extrapolation zone) — matches the crossfader framing finding 2
+  wants, rather than keeping the linear-extrapolation-past-composite
+  behavior the old 0–1.5 range allowed
+- Rename `intensity` → `gain`, keep its existing 0–2.0 range and 0.5
+  default — it already functions as the gain-equivalent (scales
+  `caustic_r/g/b` before the additive layer forms); renaming makes that
+  explicit rather than leaving it named for what it does mechanically
+  rather than what role it plays in the dry/wet frame
+- Add crossfader-styled UI widget for `wet` (check
+  `vsynth-bpatcher/SKILL.md` for the established convention), replacing
+  the current `live.dial`
+- Outlet comment: `composite` → `mix`
+
+### Acceptance criteria (addition)
+
+- `wet=0` → out1 (mix) is clean source regardless of `gain`
+- `wet=1` → matches current `strength=1.0` behavior exactly (regression
+  check against pre-rename behavior, once rebuilt from the corrected
+  `codebox_v2.gen`)
+- No change to out2 (caustic, isolated layer)
+- Bypass behavior unchanged
+- **First priority**: confirm in Max that the vecfield inlet actually
+  produces caustic structure at all, now that the codebox reference is
+  fixed — this is a regression check against the bug, not just the
+  naming pass

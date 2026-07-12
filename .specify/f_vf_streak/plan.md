@@ -255,3 +255,55 @@ Medium complexity — higher than f_vf_warp due to the accumulation loop (8-step
 - Normalization arithmetic: sum of falloff-weighted weights must be computed correctly to avoid brightness shift. Verify in scratch patch across falloff range.
 - Dual gen outlet support in build_patcher.py: check before committing to definition.py path. If unsupported, custom build script adds a phase of work but is low-risk given caustic as template.
 - out1 isolation when in1 unconnected: when src_vecfield suppresses offsets, all steps accumulate the same UV → out1 will be a solid color (the source pixel), not black. May need explicit out1 = black when src_vecfield=0. Verify in scratch patch.
+
+---
+
+### ADR 7: gain/wet split + outlet rename (findings 1–3, 2026-07-11)
+
+**Context**: Library-wide convention change (`ideas/dry_wet_gain_and_novel_field_outlet.md`,
+findings 1–3). See spec.md's 2026-07-11 reframe for full context —
+`f_vf_streak` is in the additive-layer group (ADR 4 above already
+establishes the additive composite this reframe builds on).
+
+**Decision**: Rename `strength`→`gain` (range/default unchanged from
+shipped code: 0–1.5, default 0.0 — corrected from this plan's original
+ADR 4 note of 0.3, see spec.md's parameter table correction), add `wet`
+(float 0–1, crossfader widget), rewrite composite as two-stage
+`layer = clamp(src + streak*gain, 0, 1); out1 = mix(src, layer, wet)`.
+Rename `composite` outlet comment → `mix`.
+
+**Rationale**: Matches the identical change already made to
+`f_vf_glow` — `gain` preserves overdrive on the streak layer itself,
+`wet` is a separate bounded blend stage. No change to finding 4 status —
+still an open question for this module (the ideas doc flags the resolved
+multi-step trajectory as a possible but unconfirmed 3rd-outlet
+candidate, distinct from `f_vf_glow`'s scalar-accumulation read); not
+resolved as part of this ADR.
+
+**Consequences**:
+- Positive: consistent naming with `f_vf_glow`/`f_vf_advect`/`f_vf_prism`
+  once all rollouts land
+- Negative: `strength`→`gain` rename breaks saved patch attrui
+  references, same cost as any param rename in this library
+
+---
+
+### Phase 6: gain/wet split + outlet rename
+
+**Work:**
+- Confirm crossfader widget convention against `vsynth-bpatcher/SKILL.md`
+  before building
+- Rewrite codebox per ADR 7; rename `strength`→`gain`, add `wet` param
+- Rename `composite` outlet comment → `mix`
+- Rebuild via `build_patcher.py`; JSON-validate
+
+**Verification:**
+- `wet=0` → out1 (mix) is clean source regardless of `gain`
+- `wet=1`, `gain=1.0` → out1 matches pre-change `strength=1.0` behavior
+  exactly (regression check)
+- `gain` scales streak intensity independent of `wet`
+- out2 (streak, isolated) unaffected by gain/wet
+- Bypass behavior unchanged
+
+**Checkpoint:** All reframe acceptance criteria from spec.md verified in
+Max. No regression to Phase 1–5 behavior. Update HANDOFF.md.

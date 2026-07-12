@@ -113,6 +113,61 @@ Near-center singularity (`sqrt(2/πr)` diverges at origin) — accepted. Charact
 
 ---
 
+## Reframe (2026-07-11): 3rd outlet — modal amplitude scalar
+
+### Rationale
+
+Per `ideas/dry_wet_gain_and_novel_field_outlet.md` finding 6: `f_chladni`
+already computes `total` (the raw modal interference sum, post-`amp`
+scale) as an intermediate before either existing outlet consumes it —
+`out1` compresses it lossily through `sqrt(abs(total))` into line
+thickness, `out2` normalizes it to a unit gradient direction, discarding
+magnitude entirely. Neither existing outlet preserves the raw signal.
+Confirmed as the cleanest case in the whole library-wide inventory (both
+the processor sweep and the generator sweep): the value is already a
+named local variable, unused past its two current consumers — the
+addition is wiring, not new computation.
+
+### Encoding decision
+
+`total` is unbounded and signed (interference sum, can be positive or
+negative depending on mode and phase). Decided: **unsigned magnitude,
+scaled by a new `gain` param** — `out3 = clamp(abs(total) * gain, 0.0,
+1.0)`, matching `f_vf_potential`'s existing scalar-output convention
+(the established precedent for vecfield/field-adjacent scalar textures
+in this library) rather than the vecfield library's signed `0.5=zero`
+encoding, since this outlet isn't itself a vector — there's no direction
+component to preserve sign for. `gain` gives performers control over
+what range of `total` maps to visible output, rather than a fixed
+normalization baked into the module.
+
+### New param
+
+- `gain` — float, unbounded range (mirrors `f_vf_fieldmap`'s `gain`
+  param shape: allows overdrive, no hard ceiling) — scales `abs(total)`
+  before the 3rd outlet's clamp. Default TBD in scratch patch — pick a
+  value that puts a typical single-mode amplitude near mid-range output,
+  not saturated.
+
+### New outlet
+
+- Out 3: unsigned scalar texture (greyscale) — magnitude of raw modal
+  interference, gain-scaled and clamped to `[0,1]`. Bypass behavior:
+  black (`vec(0,0,0,1)`), consistent with `out1`'s bypass convention.
+
+### Acceptance criteria (addition)
+
+- `out3` visibly tracks `amp`/`note` changes independently of `out1`'s
+  line pattern and `out2`'s gradient direction — i.e., produces a
+  genuinely different signal, not a rescaled copy of either existing
+  outlet
+- `gain` param scales `out3`'s brightness without affecting `out1` or
+  `out2`
+- `out3` goes black on bypass, matching `out1`'s existing bypass pattern
+- No change to `out1`/`out2` behavior — this is a pure addition
+
+---
+
 ## Superseded
 
 The following from the previous spec are superseded by this reframe:

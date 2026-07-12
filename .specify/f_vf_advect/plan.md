@@ -166,6 +166,58 @@ out1 = in1;
 
 ---
 
+### ADR 6: 3rd outlet — gradient of accumulated flow, not input-field passthrough
+
+**Context**: `ideas/dry_wet_gain_and_novel_field_outlet.md` finding 4
+originally credited this module as a clean pass based on HANDOFF's note
+about the reverted vorticity-confinement fold-in. Direct read of the
+current codebox (post-ADR-5, current production state) shows the actual
+field consumption (`fx,fy`, gated passthrough via `connected`) is not
+novel — same shape as `f_vf_warp`'s fail case. The confinement work that
+would have made it novel is exactly what got reverted (see
+`ideas/vorticity_confinement.md`). This ADR supersedes that original
+finding-4 credit for this module.
+
+**Decision**: Add a 3rd outlet exposing the central-difference gradient
+of `result` (the accumulated color state already computed for outlet 2),
+not a smoothed/enhanced version of the input field. See spec.md's
+2026-07-11 reframe section for full acceptance criteria.
+
+**Rationale**: Considered and rejected a temporally-smoothed input field
+(inertia/lag on the vecfield itself) — that's generic to any vecfield
+producer, not specific to advection, and would add a second feedback
+loop to a module where one feedback experiment (confinement) already
+failed and was reverted. The gradient-of-`result` option is
+self-referential in a way nothing else in the library produces: the
+shape the flow has drawn becomes a new field to flow along, patchable
+back into another `f_vf_advect` or `f_vf_warp` for flow that reshapes
+its own future direction. It's also the cheaper option — reuses
+`f_vf_fieldmap`'s central-difference idiom on a texture the module
+already holds in state (`result`, feeding `in3` next frame), no new pix
+stage or feedback wiring required.
+
+**Alternatives considered**:
+- Temporally-smoothed input field — rejected, generic (not
+  advect-specific), adds a second feedback loop; parked as its own idea
+  in `ideas/f_vf_temporal_smooth.md`
+- Leaving finding 4 out of scope for this module — considered, rejected
+  because the gradient option is cheap enough and specific enough to be
+  worth doing now rather than deferring
+
+**Consequences**:
+- Positive: no new pix stage, no new feedback wiring; reuses a proven
+  idiom (`f_vf_fieldmap`'s gradient trick) applied to an already-held
+  texture instead of a fresh input
+- Negative: `result` is char/RGB, not a pre-existing scalar field like
+  `f_chladni`'s `total` — needs a luma-reduction step before the
+  gradient, one small piece of new codebox work `f_chladni`'s case didn't
+  require
+- Corrects the record: finding 4 in the ideas doc needs its `f_vf_advect`
+  entry read as "originally miscredited, corrected here" rather than
+  "confirmed clean pass" — done as part of this ADR (see finding 7)
+
+---
+
 ## Implementation Phases
 
 ### Phase 1: Scratch patch — codebox verification
@@ -231,6 +283,27 @@ Open built patcher in live Vsynth patch and verify all acceptance criteria.
 
 ---
 
+### Phase 5: 3rd outlet — gradient of accumulated flow
+
+**Work:**
+- In scratch patch (reopen `f_vf_advect`'s scratch or build a fresh one
+  against the current production codebox), add luma-reduction of
+  `result` and central-difference gradient (reuse `f_vf_fieldmap`'s
+  `scale`/epsilon constant as a starting point)
+- Encode as f_vecfield (RG float32, `0.5 = zero vector`), wire as out3
+- Verify acceptance criteria from spec.md's 2026-07-11 reframe: out3
+  tracks accumulated structure (not instantaneous input), neutral when
+  `result` is flat, bypass → neutral, out1/out2 unaffected
+- Confirm by routing out3 → a second `f_vf_advect` or `f_vf_warp` and
+  observing visibly different behavior from routing the original input
+  field to the same destination
+
+**Checkpoint:** Out3 verified in Max against all reframe acceptance
+criteria. No regression to out1/out2. Update `docs/f_vf_advect.md` and
+HANDOFF with the new outlet.
+
+---
+
 ## Dependency Blocks
 
 | Block | Depends on | Produces | Gate |
@@ -239,6 +312,7 @@ Open built patcher in live Vsynth patch and verify all acceptance criteria.
 | Phase 2: Build script | Phase 1 | `f_vf_advect.maxpat` | JSON valid before Phase 3 |
 | Phase 3: Integration | Phase 2 + Vsynth env | Verified working patcher | All acceptance criteria before Phase 4 |
 | Phase 4: Docs | Phase 3 | Updated project records | — |
+| Phase 5: 3rd outlet | Phase 3 (production module stable) | Gradient-of-`result` outlet, verified | Reframe acceptance criteria before docs update |
 
 ---
 

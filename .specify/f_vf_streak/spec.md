@@ -95,7 +95,7 @@ When in0 is unconnected: output is black.
 
 | Param | UI | Range | Default | Notes |
 |---|---|---|---|---|
-| `strength` | live.dial | 0.0–1.0 | 0.3 | Wet/dry mix of streak layer into out0. out1 unaffected. |
+| `strength` | live.dial | 0.0–1.5 | 0.0 | Wet/dry mix of streak layer into out0. out1 unaffected. Ceiling raised to 1.5 and default reset to 0.0 during library standardization — corrected 2026-07-11 against actual `definition.py`; the rest of this table matches shipped code exactly. |
 | `length` | live.dial | 0.0–20.0 | 0.15 | Streamline trace distance in UV space. Controls streak reach. |
 | `falloff` | live.dial | 0.0–2.5 | 0.0 | 0 = uniform blur, 1 = linear trailing smear. >1 = negative tail weights (expressive artifact territory). |
 | `color_shift` | live.dial | 0.0–20.0 | 0.0 | Chromatic separation along streak direction. 0 = none. |
@@ -187,3 +187,58 @@ vfstreak_pix out1 → out1 (streak layer isolated, @type char)
 ## Open Questions
 
 - **Two-outlet bpatcher size:** Default processor size is 78×90. Two outlets and four params may require wider presentation rect — check against moduleSize.js constraints.
+
+---
+
+## Reframe (2026-07-11): gain/wet split + outlet rename (findings 1–3)
+
+### Context
+
+Library-wide convention change (`ideas/dry_wet_gain_and_novel_field_outlet.md`,
+findings 1–3). `f_vf_streak` is in the additive-layer group this applies
+to — its composite is already explicitly additive (see Clarifications
+above: "Additive (`source + streak * strength`)"), same shape as
+`f_vf_glow`.
+
+### Decision
+
+- Rename `strength` → `gain`, keep its current 0–1.5 range and default
+  of 0.0 (matches `f_vf_glow`'s corrected ceiling)
+- Add new `wet` param, float 0–1, crossfader-styled UI widget (check
+  `vsynth-bpatcher/SKILL.md` for the established widget convention)
+- Codebox: two-stage form —
+  ```
+  layer_r = clamp(src_r + streak_r * gain, 0.0, 1.0);
+  out1_r  = mix(src_r, layer_r, wet);
+  ```
+  (and analogously for g/b), replacing the current direct
+  `source + streak*strength` composite
+- Outlet comment: `composite` → `mix`
+
+### Rationale
+
+Same as the library-wide finding 1 and the identical change already made
+to `f_vf_glow` — `gain` preserves the ability to overdrive the streak
+layer itself, `wet` gives a separate, bounded blend control, matching the
+audio-sidechain shape.
+
+### No change to finding 4
+
+`f_vf_streak`'s field consumption is the same 8-step recursive walk
+structure as `f_vf_glow` — the ideas doc's finding 4 called this "leans
+pass, still genuinely ambiguous," specifically flagging that the resolved
+multi-step trajectory (`pos7 - pos0`, or a falloff-weighted average
+direction) might be vecfield-shaped in a way `f_vf_glow`'s scalar
+accumulation isn't. Not resolved here — this reframe is scoped to
+findings 1–3 only; the 3rd-outlet question for this module is still
+open and would need its own closer look before deciding either way.
+
+### Acceptance criteria (addition)
+
+- `wet=0` → out1 (mix) is clean source regardless of `gain`
+- `wet=1`, `gain=1.0` → out1 matches the old `strength=1.0` composite
+  behavior exactly (regression check)
+- `gain` scales streak intensity independent of `wet`
+- No change to out2 (streak, isolated) — still the raw accumulated
+  streak layer
+- Bypass behavior unchanged

@@ -165,3 +165,72 @@ bypass_toggle.js → attrui bypass → advect_pix in0
 1. **`@adapt 1` on both pix:** Almost certainly required (confirmed from vs_frame_delay pattern). Verify in scratch — failure mode is black output at mismatched resolutions. Treat as a scratch-phase confirmation, not a design question.
 
 2. **dt upper bound:** `0.1` is provisional. Revisit after scratch testing; changing the dial range is a trivial update.
+
+---
+
+## Reframe (2026-07-11): 3rd outlet — gradient of accumulated flow
+
+### Correction to prior assumption
+
+`ideas/dry_wet_gain_and_novel_field_outlet.md` originally called this
+module the cleanest finding-4 pass in the library, reasoning from
+HANDOFF's note about the reverted vorticity-confinement fold-in rather
+than the current codebox. On direct read, the module's actual field
+consumption (`fx,fy` — gated passthrough of the vecfield inlet, no
+further computation) fails the novel-field test the same way
+`f_vf_warp` does. The confinement work that would have made it novel is
+exactly what got reverted. This spec addition is not "finish the
+originally-planned 3rd outlet" — it's a new decision, made in light of
+that correction (see finding 7 in the ideas doc for full reasoning).
+
+### What's novel here instead
+
+`result` (the accumulated color state, already outlet 2 — `advected`) is
+genuinely temporal and novel, but it's a texture, not a vecfield. Two
+vecfield-shaped candidates were considered:
+
+- Temporally-smoothed input field (inertia/lag) — rejected, generic to
+  any vecfield producer, not specific to advection; would also add a
+  second feedback loop to a module where one feedback experiment
+  (vorticity confinement) already failed and was reverted. Parked as its
+  own idea: `ideas/f_vf_temporal_smooth.md`.
+- **Gradient of the accumulated texture** — finite-difference `result`
+  (same idiom as `f_vf_fieldmap`), turning the *shape* the flow has drawn
+  into a direction field. Chosen: self-referential in a way nothing else
+  in the library produces (patched back into another `f_vf_advect` or
+  `f_vf_warp`, the flow can reshape its own future direction based on
+  what it already drew), cheap (four extra samples on `result`, which
+  the module already holds as `in3`'s next-frame source), no new pix
+  stage or feedback wiring.
+
+### New outlet
+
+- Out 3: float32 f_vecfield — central-difference gradient of `result`
+  (luma or per-channel, TBD in scratch — `result` is a char/RGB
+  accumulation, not a scalar field like `f_chladni`'s `total`, so the
+  gradient needs a luma-reduction step first, same as `f_vf_fieldmap`'s
+  approach to an RGB source). Encoded RG float32, `0.5 = zero vector`,
+  standard f_vecfield convention.
+- No new param anticipated — reuses the same `scale`/step-size constant
+  `f_vf_fieldmap` uses for its central difference, unless scratch testing
+  shows advect's accumulated texture needs a different epsilon.
+- Bypass behavior: neutral vecfield (`0.5, 0.5`), matching `f_vf_flow`'s
+  bypass convention for vecfield outlets (not `f_vf_glow`'s black-on-
+  bypass, since this outlet isn't an additive layer).
+
+### Acceptance criteria (addition)
+
+- Out 3 responds to accumulated structure, not instantaneous input —
+  verify by holding a static source + field and confirming out3 changes
+  shape as `result` builds up over several frames, not just per-frame
+  with the input
+- Out 3 is zero-ish (neutral `0.5,0.5`) when `result` is uniform/flat —
+  confirms it's tracking gradient, not absolute state
+- Routing out3 → another `f_vf_advect` or `f_vf_warp` produces visibly
+  different behavior from routing the original input field to the same
+  destination — confirms the outlet carries genuinely different
+  information, not a rescaled copy
+- No change to out1 (composite/mix) or out2 (advected) behavior — pure
+  addition
+- Bypass sets out3 to neutral, consistent with other vecfield-outlet
+  bypass conventions in the library

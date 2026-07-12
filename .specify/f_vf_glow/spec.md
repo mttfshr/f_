@@ -73,12 +73,12 @@ A performer can tap the raw glow layer (before composite) for independent downst
 ### Functional Requirements
 
 - **FR-001**: Module MUST consume a float32 RG vecfield texture (f_vecfield convention: 0.5 = zero vector) on in1
-- **FR-002**: Module MUST accumulate source color at 24 fixed steps along the field direction
-- **FR-003**: Step count MUST be fixed at compile time (24); `radius` param controls spatial extent
+- **FR-002**: Module MUST accumulate source color at 48 fixed steps along the field direction, with small per-step jitter (`fract(sin(...) * 43758.5453) - 0.5`, scaled by 0.1) to break up banding artifacts at low step-to-radius ratios
+- **FR-003**: Step count MUST be fixed at compile time (48, not 24 as originally specced — corrected 2026-07-11 against actual `codebox_v1.gen`); `radius` param controls spatial extent
 - **FR-004**: Module MUST support three direction modes: bidirectional (0), forward (1), backward (2)
 - **FR-005**: Accumulation weight per step MUST follow exponential falloff: `exp(-i * i * falloff)`
 - **FR-006**: `color_mix` param MUST blend accumulated color between full-color (0) and luma-only (1)
-- **FR-007**: `strength` param MUST control wet/dry mix of glow over source
+- **FR-007**: `strength` param MUST control glow intensity, added additively over source (`comp = clamp(src + glow*strength, 0, 1)`) — not a crossfade; corrected 2026-07-11, this is the additive-layer shape findings 1–3 apply to, not a wet/dry mix as originally worded here
 - **FR-008**: Module MUST provide a radius modulation inlet (in2); unconnected state (vs_black = 0.0) MUST degrade to base `radius` param gracefully
 - **FR-009**: When vecfield inlet is unconnected (vs_black fallback), glow MUST be suppressed — vs_black remaps to (-1,-1), which is non-zero; suppression requires mix/step on field magnitude
 - **FR-010**: Module MUST provide two outlets: composited (out0) and isolated glow layer (out1)
@@ -89,7 +89,7 @@ A performer can tap the raw glow layer (before composite) for independent downst
 - **NF-001**: Module MUST draw to `@drawto vsynth` GL context
 - **NF-002**: Source texture type: `@type char` (Vsynth processor convention)
 - **NF-003**: Vecfield inlet: float32 RG, consistent with f_vecfield_type.md contract
-- **NF-004**: Performance: 24 steps × 2 directions (max 48 samples) per pixel — acceptable on target GPU for standard Vsynth resolutions
+- **NF-004**: Performance: 48 steps × 2 directions sampled per iteration (both `fwd_uv`/`bwd_uv` computed every loop regardless of which direction weight is active) = 96 texture samples per pixel — corrected 2026-07-11; originally stated as 24×2=48, undercounting by half since both directions are always sampled, not just the active one
 - **NF-005**: All params registered in `parameters` block; autopattr present for state save
 - **NF-006**: Follows vsynth-bpatcher skill conventions throughout
 
@@ -97,13 +97,19 @@ A performer can tap the raw glow layer (before composite) for independent downst
 
 ## Parameter Contract
 
+_Corrected 2026-07-11 against actual `definition.py`/`codebox_v1.gen` —
+the ranges/defaults below replace stale values from initial spec
+authoring; the concept and acceptance criteria elsewhere in this doc were
+still accurate and are unchanged._
+
 | Param | Type | Range | Default | Description |
 |---|---|---|---|---|
-| `radius` | float | 0.0 – 0.2 | 0.05 | UV step size per step; controls glow spatial extent |
-| `falloff` | float | 0.0 – 5.0 | 1.5 | Exponential decay per step; higher = tighter glow |
-| `strength` | float | 0.0 – 1.0 | 0.8 | Glow wet/dry mix over source |
+| `radius` | float | 0.0 – 0.2 | 0.01 | UV step size per step; controls glow spatial extent |
+| `falloff` | float | 0.0 – 0.05 | 0.002 | Exponential decay per step (`exp(-i²·falloff)`, i up to 48) — small values are correct here, not a typo; higher = tighter glow |
+| `strength` | float | 0.0 – 1.5 | 0.0 | Glow intensity, additive over source (see FR-007) — allows overdriving past 1:1 |
 | `color_mix` | float | 0.0 – 1.0 | 0.0 | 0 = full color glow; 1 = luma-only glow |
 | `direction` | int | 0 – 2 | 0 | 0 = bidirectional, 1 = forward, 2 = backward |
+| `src_vecfield` | internal | — | 0.0 | vs_inState gate; suppresses vs_black diagonal-offset artifact (FR-009) — present in shipped module, missing from this table in the original spec |
 | `bypass` | float | 0.0 – 1.0 | 0.0 | Standard bypass |
 
 ---
@@ -119,10 +125,61 @@ A performer can tap the raw glow layer (before composite) for independent downst
 
 ---
 
-## Edge Cases
+---
 
-- **vs_black on vecfield inlet**: `vs_black` remaps to (-1,-1), not (0,0) — field magnitude is non-zero, so naive implementation produces glow in a fixed direction on unconnected patches. Must suppress via `step(magnitude_threshold, magnitude)` or `mix` on scalar magnitude.
-- **vs_black on radius mod inlet**: 0.0 texture value → radius mod contribution is 0.0 → `radius_effective = radius_base + 0.0 * scale` — graceful degradation if mod is additive. Or: `radius_effective = radius_base * (1.0 + mod)` — needs careful default so unconnected = no change.
-- **Zero-magnitude field region**: At field singularities (vortex center), field magnitude → 0. Steps go nowhere; accumulation converges on source pixel. Result should be a tight spot with no spread — correct behavior, no special case needed.
-- **Radius = 0**: Steps have zero UV delta; all samples land on source pixel; accumulation = source color × sum of weights. `strength` mix then adds that back over source — effectively a brightness boost. Acceptable degenerate case.
-- **Very high falloff (>>5)**: Weight at step 2 ≈ exp(-4 * 5) ≈ 0 — effectively only step 0 contributes. Glow disappears. Acceptable.
+## Reframe (2026-07-11): gain/wet split + outlet rename (findings 1–3)
+
+### Context
+
+Library-wide convention change (`ideas/dry_wet_gain_and_novel_field_outlet.md`,
+findings 1–3) — separate effect intensity from blend amount, use a
+crossfader-style control for blend, rename the `composite` outlet to
+`mix`. `f_vf_glow` is a founding example of the additive-layer group this
+applies to (its codebox is what originally grounded finding 1's
+distinction between additive layering and true crossfade).
+
+### Decision
+
+- Rename `strength` → `gain`, keep its current 0–1.5 range and default
+  of 0.0 (matches `f_vf_streak`/`f_caustic`'s ceiling, unlike
+  `f_vf_prism`'s 2.0 — no reason found to deviate here)
+- Add new `wet` param, float 0–1, crossfader-styled UI widget (check
+  `vsynth-bpatcher/SKILL.md` for the established widget convention before
+  building — don't invent a one-off)
+- Codebox: replace the current direct additive composite —
+  ```
+  comp_r = clamp(src_r + glow_r * gain, 0.0, 1.0);
+  ```
+  — with the two-stage gain-then-wet form:
+  ```
+  layer_r = clamp(src_r + glow_r * gain, 0.0, 1.0);
+  comp_r  = mix(src_r, layer_r, wet);
+  ```
+  (and analogously for g/b)
+- Outlet comment: `composite` → `mix`
+
+### Rationale
+
+Same reasoning as the library-wide finding 1 — `gain` preserves the
+existing ability to overdrive the glow itself past 1:1, `wet` gives a
+separate, bounded, performable blend control on top, matching the
+audio-sidechain shape (send level vs. return blend are different
+controls).
+
+### No change to finding 4
+
+`f_vf_glow`'s own field consumption (`fx,fy`, gated passthrough) was
+already assessed in the ideas doc as leaning toward the scalar-
+accumulation-weight case, not a clean vecfield-shaped pass — no 3rd
+outlet planned here. This reframe is scoped to findings 1–3 only.
+
+### Acceptance criteria (addition)
+
+- `wet=0` → out1 (mix) is clean source regardless of `gain`
+- `wet=1`, `gain=1.0` → out1 matches the old `strength=1.0` composite
+  behavior exactly (regression check against pre-change behavior)
+- `gain` scales glow intensity independent of `wet`
+- No change to out2 (glow, isolated layer) — still the raw accumulated
+  glow, gain/wet don't affect it (matches `f_vf_advect`'s pattern of
+  leaving the isolated/raw outlet unaffected by the blend-stage change)
+- Bypass behavior unchanged

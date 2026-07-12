@@ -49,15 +49,48 @@ Rectangular/sine-mode boundary is a separate module. Strip view mode retained fo
 ### Decision 6: Companion patches supply note + amp only
 Previous companion patches supplied 8 amplitude messages. New interface is two values: `note` and `amp`. Companion patch design is deferred until bpatcher architecture is verified.
 
+### Decision 7: 3rd outlet — unsigned magnitude scalar, gain param
+
+**Context**: `ideas/dry_wet_gain_and_novel_field_outlet.md` finding 6
+identified `total` (raw modal interference, post-`amp`) as a genuinely
+novel signal already computed but unexposed — neither `out1` (lossy
+`sqrt(abs(total))` compression) nor `out2` (unit-normalized, magnitude
+discarded) preserves it.
+
+**Decision**: Add `out3` — unsigned magnitude, `clamp(abs(total) * gain,
+0.0, 1.0)` — plus a new `gain` param (unbounded, mirrors
+`f_vf_fieldmap`'s `gain` shape). Bypass → black, matching `out1`'s
+convention.
+
+**Rationale**: `total` is unbounded and signed; unsigned magnitude was
+chosen over a signed `0.5=zero` vecfield-style encoding because this
+outlet has no direction component to preserve sign for. Matches
+`f_vf_potential`'s existing scalar-output convention rather than
+inventing a new one.
+
+**Alternatives considered**:
+- Signed encoding (vecfield convention) — rejected, no direction to
+  justify preserving sign
+- Fixed normalization (no `gain` param) — rejected, performer control
+  over range preferred over baked-in scaling, consistent with how gain
+  works elsewhere in the library
+
+**Consequences**:
+- Positive: near-zero new computation (variable already exists), gives
+  performers a raw-energy signal distinct from both existing outlets,
+  establishes the "expose an already-unnormalized/discarded intermediate"
+  pattern for future modules
+- Negative: one more param and outlet to document and wire; `gain`
+  default needs empirical tuning in scratch patch (no natural default —
+  depends on typical `total` magnitude at mid-range `amp`)
+
 ---
 
-## Dependency Blocks
-
 ```
-Block 0: Scratch patch → determines mode selection behavior and MIDI range
+Block 0: Scratch patch → determines mode selection behavior, MIDI range, and gain default for out3
 Block 1: definition.py rewrite → depends on Block 0 decisions
 Block 2: Build + verify bpatcher → depends on Block 1
-Block 3: Vecfield outlet verification → depends on Block 2 (needs f_caustic routing)
+Block 3: Vecfield + scalar outlet verification → depends on Block 2 (needs f_caustic routing for out2, downstream greyscale consumer for out3)
 Block 4: Companion patches → depends on Block 2 interface being stable
 Block 5: Docs + registration → wraps up all blocks
 ```
@@ -81,19 +114,20 @@ Evaluate: which behavior is more sculptural, what MIDI range is expressive, whet
 
 ### Phase 1: Definition Rewrite
 Rewrite `.specify/f_chladni/definition.py` with:
-- New param set: `note`, `amp`, `dishradius`, `reflectamt`, `linesharpness`, `view_mode`, `ph0`, `bypass`
+- New param set: `note`, `amp`, `dishradius`, `reflectamt`, `linesharpness`, `view_mode`, `ph0`, `gain`, `bypass`
 - Optional: `spread` (if scratch patch warrants it)
-- Two outlets: luma (out1), vecfield float32 (out2)
-- Codebox implementing chosen mode selection behavior + vecfield gradient
+- Three outlets: luma (out1), vecfield float32 (out2), unsigned magnitude scalar (out3)
+- Codebox implementing chosen mode selection behavior + vecfield gradient + `out3 = clamp(abs(total) * gain, 0.0, 1.0)`
 
 ### Phase 2: Build + Verify
 - Run `tools/build_patcher.py`
-- Verify in Max: note input selects mode, amp scales output, ph0 shifts pattern, view_mode blends
+- Verify in Max: note input selects mode, amp scales output, ph0 shifts pattern, view_mode blends, gain scales out3 without affecting out1/out2
 - Run audit_interface.py; resolve any issues
 
-### Phase 3: Vecfield Outlet Verification
+### Phase 3: Vecfield + Scalar Outlet Verification
 - Route out2 → f_caustic; verify convergence accumulates at nodal lines
 - Route out2 → f_vf_warp; verify source texture warps toward nodal lines
+- Route out3 into a greyscale-consuming module (e.g. as a `f_weave` scalar inlet, matching `f_vf_potential`'s existing signal-chain precedent); verify it tracks amp/note independently of out1/out2 and confirm bypass goes black
 - Document signal chain recipes
 
 ### Phase 4: Companion Patches

@@ -30,5 +30,5 @@ patcher = {
         {"name": "bypass",      "type": "bypass"},
     ],
 
-    "codebox": open("/Users/matt/Github/f_/.specify/f_caustic/codebox_v3.gen").read(),
+    "codebox": open("/Users/matt/Github/f_/.specify/f_caustic/codebox_v2.gen").read(),
 }

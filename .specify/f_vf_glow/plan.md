@@ -7,7 +7,7 @@
 
 ## Summary
 
-A vecfield consumer + processor bpatcher built to the standard f_ / Vsynth conventions. Single jit.gl.pix with a gen subpatcher codebox. Three inlets (texture/control, vecfield, radius mod), two outlets (composited, isolated glow). Fixed 24-step accumulation loop; `radius` controls spatial extent. No temporal feedback in v1.
+A vecfield consumer + processor bpatcher built to the standard f_ / Vsynth conventions. Single jit.gl.pix with a gen subpatcher codebox. Three inlets (texture/control, vecfield, radius mod), two outlets (composited, isolated glow). Fixed 48-step accumulation loop (raised from an initial 24 during tuning, with per-step jitter added — see spec.md's 2026-07-11 correction); `radius` controls spatial extent. No temporal feedback.
 
 ---
 
@@ -24,13 +24,13 @@ A vecfield consumer + processor bpatcher built to the standard f_ / Vsynth conve
 
 ## Architecture Decisions
 
-### ADR-1: Fixed 24-step loop, `radius` as range control
+### ADR-1: Fixed step loop, `radius` as range control
 
 **Context**: GenExpr `for` loops require compile-time constant trip counts. A user-controllable step count would require multiple gen subpatchers.
 
-**Decision**: Fix at 24 steps. `radius` (UV step size) is the sole range control — small radius = tight glow, large radius = wide glow.
+**Decision**: Fix at 48 steps (raised from an initial 24 during tuning — see spec.md's 2026-07-11 correction; this plan's number updated to match `codebox_v1.gen`, not re-decided here). `radius` (UV step size) is the sole range control — small radius = tight glow, large radius = wide glow. Per-step jitter added during tuning to break up banding at low step-to-radius ratios (not part of the original ADR reasoning, but present in shipped code).
 
-**Rationale**: 24 steps × 2 directions = 48 samples worst case, acceptable GPU cost. The artist controls spatial extent, not sample density. Cleaner UX and simpler shader.
+**Rationale**: 48 steps, both directions always sampled per iteration (96 samples worst case) — acceptable GPU cost at target resolutions per spec NF-004. The artist controls spatial extent, not sample density. Cleaner UX and simpler shader.
 
 **Alternatives rejected**:
 - Variable step count via separate gen subpatchers: too complex, no clear UX benefit
@@ -154,3 +154,53 @@ Drop `f_vf_glow` into a Vsynth signal chain with `f_vf_vortex` feeding the vecfi
 The vs_black suppression (ADR-2) and direction branchless logic (ADR-4) are the two areas most likely to need iteration in Phase 1. Both should be verified explicitly in the scratch patch before writing definition.py.
 
 The two-outlet pattern is established precedent (f_caustic, f_vf_streak) — definition.py syntax is known-good.
+
+---
+
+### ADR-5: gain/wet split + outlet rename (findings 1–3, 2026-07-11)
+
+**Context**: Library-wide convention change (`ideas/dry_wet_gain_and_novel_field_outlet.md`,
+findings 1–3). See spec.md's 2026-07-11 reframe for full context —
+`f_vf_glow` is a founding example of the additive-layer group, its
+codebox is what originally grounded finding 1's distinction between
+additive layering and true crossfade.
+
+**Decision**: Rename `strength`→`gain` (range/default unchanged: 0–1.5,
+default 0.0), add `wet` (float 0–1, crossfader widget), rewrite composite
+as two-stage `layer = clamp(src + glow*gain, 0, 1); comp = mix(src,
+layer, wet)`. Rename `composite` outlet comment → `mix`.
+
+**Rationale**: Matches the audio-sidechain shape — `gain` preserves
+overdrive on the effect itself, `wet` is a separate bounded blend stage.
+No change to finding 4 status (already assessed as not a clean pass for
+this module — no 3rd outlet planned).
+
+**Consequences**:
+- Positive: consistent naming with `f_vf_advect`/`f_vf_prism` once their
+  own rollouts land; crossfader UI matches convention once established
+- Negative: `strength`→`gain` rename breaks any saved patch attrui
+  references, same cost as any param rename in this library
+
+---
+
+### Phase 5 — gain/wet split + outlet rename
+
+**Work:**
+- Confirm crossfader widget convention against `vsynth-bpatcher/SKILL.md`
+  before building (don't invent a one-off — same check needed for every
+  module in this rollout)
+- Rewrite codebox per ADR-5; rename `strength`→`gain` in definition.py
+  params, add `wet` param
+- Rename `composite` outlet comment → `mix`
+- Rebuild via `build_patcher.py`; JSON-validate
+
+**Verification:**
+- `wet=0` → out1 (mix) is clean source regardless of `gain`
+- `wet=1`, `gain=1.0` → out1 matches pre-change `strength=1.0` behavior
+  exactly (regression check)
+- `gain` scales intensity independent of `wet`
+- out2 (glow, isolated) unaffected by gain/wet — still raw accumulation
+- Bypass behavior unchanged
+
+**Checkpoint:** All reframe acceptance criteria from spec.md verified in
+Max. No regression to Phase 1–4 behavior. Update HANDOFF.md.

@@ -38,7 +38,7 @@ A Python module at `.specify/f_<name>/definition.py` containing a single dict na
 patcher = {
     # Identity
     "name":               str,   # e.g. "f_stipple" — used for output filename
-    "prefix":             str,   # e.g. "stipple" — param_connect prefix
+    "prefix":             str,   # e.g. "stipple" — used for autopattr varname (<prefix>_autopattr) and passed into pix_box
     "object_name":        str,   # e.g. "stipple_pix" — @name on jit.gl.pix
     "title":              str,   # e.g. "Stipple" — display name in presentation
 
@@ -191,9 +191,9 @@ among ui_params, t = tier index).
 | `jit.gl.pix vsynth @name <object_name>` | shader core with embedded gen subpatcher |
 | `autopattr @varname <prefix>_autopattr` | state save/restore |
 | `bypass_toggle.js` jsui | bypass UI; wired directly to pix, not through route |
-| `live.dial` per float param | with param_connect, varname, parameter_enable |
+| `live.dial` per float param | with parameter_enable, varname |
 | `live.numbox` per int param | same wiring pattern as live.dial |
-| `prepend param <name>` per param | sends value to pix in0 |
+| `attrui` per param | sits between dial/numbox and pix in0; `attr` key names the target param — replaces the older `prepend param <name>` pattern |
 | label comment per param | 9.5pt Ableton Sans Light, below dial |
 | title comment | 12pt Ableton Sans Light, top-left of presentation panel |
 | background panel | black bg, blue border, presentation only |
@@ -222,7 +222,7 @@ obj-4   route
 obj-5   jit.gl.pix (contains gen subpatcher)
 obj-6   autopattr
 obj-7   bypass_toggle.js jsui
-obj-8   prepend param bypass
+obj-8   bypass attrui
 obj-9   panel (background)
 obj-10  title comment
 obj-11  loadbang (moduleSize chain)
@@ -239,7 +239,7 @@ obj-18  prepend param src_mode
 # Per UI param (float and int, in order, excluding internal and bypass):
 # n = 0-based index among UI params
 obj-(20 + n*3 + 0)   live.dial or live.numbox
-obj-(20 + n*3 + 1)   prepend param <name>
+obj-(20 + n*3 + 1)   attrui
 obj-(20 + n*3 + 2)   label comment
 ```
 
@@ -276,8 +276,8 @@ gen-obj-3   out 1
 **Source:**
 ```
 inlet → routepass → pix in0                          [render trigger]
-routepass unmatched → route → dials → prepend → pix in0
-bypass_toggle → prepend param bypass → pix in0
+routepass unmatched → route → dials → attrui → pix in0
+bypass_toggle → attrui (bypass) → pix in0
 r dim → codebox inlet 1                              [inside gen]
 pix out0 → outlet
 ```
@@ -285,8 +285,8 @@ pix out0 → outlet
 **Processor:**
 ```
 inlet → routepass → pix in0                          [texture]
-routepass unmatched → route → dials → prepend → pix in0
-bypass_toggle → prepend param bypass → pix in0
+routepass unmatched → route → dials → attrui → pix in0
+bypass_toggle → attrui (bypass) → pix in0
 pix out0 → outlet
 ```
 
@@ -294,8 +294,8 @@ pix out0 → outlet
 ```
 inlet → routepass → vs_inState → pix in0             [texture or vs_black]
 vs_inState outlet 1 → prepend param src_mode → pix in0
-routepass unmatched → route → dials → prepend → pix in0
-bypass_toggle → prepend param bypass → pix in0
+routepass unmatched → route → dials → attrui → pix in0
+bypass_toggle → attrui (bypass) → pix in0
 pix out0 → outlet
 ```
 

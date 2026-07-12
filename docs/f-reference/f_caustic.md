@@ -1,7 +1,7 @@
 # f_caustic
 
 **Type:** Processor (f_vecfield consumer)
-**Status:** Working — see discrepancy note below
+**Status:** Working — vecfield-inlet discrepancy resolved 2026-07-11 (see Notes)
 
 ---
 
@@ -32,7 +32,7 @@ caustic_pix (@type float32) out2 → caustic layer (isolated)
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `strength` | 0–1.5 | 0.0 | Present in `definition.py`'s param list; not referenced in `codebox_v3.gen` or `spec.md`'s parameter table — see discrepancy note |
+| `strength` | 0–1.5 | 0.0 | Wet/dry crossfade — `composited = mix(source_pass, composite, strength)`. Confirmed wired in `codebox_v2.gen` (see resolved discrepancy note); `spec.md`'s parameter table is still missing this row, correction pending |
 | `intensity` | 0–2.0 | 0.5 | Overall caustic brightness scale |
 | `scale` | 0–1.0 | 0.3 | Streamline trace distance (`step_size = scale / 8`). 0 = no trace, no caustic. |
 | `softness` | 0–1.0 | 0.3 | Band sharpness via smoothstep on accumulated luma. 0 = hard bright lines. 1 = diffuse glow. |
@@ -60,8 +60,10 @@ for n in 0..7:
 
 caustic = (Σ weight_n * src_n) / 8 * intensity
 caustic *= smoothstep(0, softness + 0.001, luma(caustic))   // softness gate
+composite = clamp(source + caustic, 0, 1)                     // additive layer
+composited = mix(source, composite, strength)                 // wet/dry crossfade
 out2 = clamp(caustic, 0, 1)
-out1 = clamp(source + caustic, 0, 1)                          // additive composite
+out1 = composited
 ```
 
 Backward tracing (rather than forward) finds which source regions would have contributed light to the current pixel given the field — the correct per-pixel accumulation framing without needing to iterate from the source.
@@ -70,8 +72,8 @@ Backward tracing (rather than forward) finds which source regions would have con
 
 ## Notes
 
-- **Discrepancy — verify in Max before relying on this doc:** the codebox currently shipped as `codebox_v3.gen` (the file `definition.py` opens and builds from) references only a single texture inlet (`in1`) throughout — for both the field decode/divergence math *and* the source-color sampling. `spec.md`'s design and `definition.py`'s `mod_inlets` declaration both call for two distinct texture inlets (light source on `in1`, vecfield on `in2`). Either `codebox_v3.gen` is an earlier self-referential scratch step that hasn't been updated to the documented two-inlet design, or the `in1`/`in2` codebox numbering doesn't map the way this doc assumes. Confirm against the actual patched `f_caustic.maxpat` object inlets before trusting the signal-flow diagram above in detail.
-- `strength` appears in `definition.py`'s params list (range 0–1.5, default 0.0) but is not read anywhere in `codebox_v3.gen`, and does not appear in `spec.md`'s parameter table at all — likely a leftover or an in-progress addition. Treat as inert until confirmed wired.
+- **Resolved 2026-07-11 (was: discrepancy note):** `definition.py` had been pointing at `codebox_v3.gen`, which turned out to be a stray, earlier single-inlet draft — its own internal header comment reads `// f_caustic codebox v1 — scratch validation` despite the `v3` filename, and it referenced only `in1` throughout (both field decode and source-color sampling), never `in2`. Confirmed via filesystem mtimes and by directly comparing its content against `codebox_v2.gen`, which has the correct two-inlet structure, the `strength` crossfade, and matches this doc's signal-flow/algorithm sections as originally written. `codebox_v3.gen` has been deleted; `definition.py` now points at `codebox_v2.gen`. This means **the vecfield inlet may not have been functioning in whatever patcher was last built from `definition.py`** — rebuild and re-verify in Max before relying on existing `f_caustic.maxpat` behavior matching this doc.
+- `strength` is confirmed wired in `codebox_v2.gen` (`composited = mix(source_pass, composite, strength)` — a real crossfade, not additive-only). `spec.md`'s parameter table is still missing this row as of this note; correction tracked separately.
 - `@type float32` overrides the processor default of `char` — accumulation benefits from float32 headroom (decided in scratch validation).
 - Divergence sign convention confirmed: f_vf_vortex sink topology (positive convergence) produces negative divergence at the fixed point, which is what produces bright bands.
 - No `in3` surface texture in v1 — deferred.

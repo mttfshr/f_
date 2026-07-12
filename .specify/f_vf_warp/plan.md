@@ -188,3 +188,79 @@ The critical gate is Phase 1 → 2: do not write the definition file until the c
 This is a low-complexity build. The patcher structure is well-understood (matches f_caustic's two-inlet processor pattern). The only novel element is the `src_vecfield` suppression pattern, which is a one-line codebox addition and a single wire in the patcher.
 
 The main risk is the `mix`/`step` suppression failing in jit.gen — but both operators are empirically verified. If for any reason it fails, fallback is to branch in the codebox using `src_vecfield > 0.5` as a float comparison (also verified safe).
+
+---
+
+### ADR 5: dry/wet crossfader (finding 1, 2026-07-11)
+
+**Context**: Library-wide convention change (`ideas/dry_wet_gain_and_novel_field_outlet.md`,
+finding 1). `f_vf_warp` is the replacement-type shape — `out1`/`out2`
+are full remapped images, not an additive layer — which finding 1
+identifies as the textbook clean case for a direct crossfade, no
+gain/wet split needed the way the additive-layer group required. Unlike
+`f_vf_advect`/`f_caustic`, though, this module currently has no blend
+control at all: `out1` is unconditionally fully-warped (or
+fully-source-on-bypass), with `strength` controlling depth, not blend.
+
+Also corrects two things caught while writing this reframe (see
+spec.md's parallel correction): this doc previously described a
+single-outlet module, when `definition.py` has had a second outlet
+(`warped`) for some time; and `out2` currently doesn't respect bypass at
+all (`out2 = warped_sample`, unconditional) — the only module in this
+whole rollout with that asymmetry.
+
+**Decision**:
+- Add `wet` param, float 0–1, crossfader widget (check
+  `vsynth-bpatcher/SKILL.md` convention)
+- `out1 = mix(mix(source, warped, wet), source, bypass)`
+- Leave `strength` (0–1.5, warp depth) as-is — correct gain-equivalent
+  for this shape
+- `out2 = mix(warped, source, bypass)` — makes out2 respect bypass,
+  matching every other module's isolated/raw-outlet convention in this
+  library rather than leaving this module as the sole exception
+- Outlet comment: `composite` → `mix`
+
+**Rationale**: Simpler than the additive-layer group's two-stage
+gain-then-wet form — no layer to compute before blending, `wet` blends
+directly between source and warped. Matches finding 1's prediction for
+this shape exactly.
+
+**Alternatives considered**:
+- Leave out2's bypass behavior unconditional (as shipped) — considered,
+  rejected in favor of consistency with the rest of the library; flagged
+  as a real behavior change from current shipped code, not a silent
+  correction, since a performer relying on the current always-warped
+  out2 would see a change
+
+**Consequences**:
+- Positive: this module needs less new complexity than the additive-
+  layer group despite needing genuinely new architecture (unlike
+  `f_caustic`/`f_vf_advect`, which already had the shape) — only one
+  new param, no two-stage composite math
+- Negative: out2's bypass-behavior change is a real functional change,
+  not just a rename — needs explicit regression testing, not just a
+  naming verification
+
+---
+
+### Phase 6: dry/wet crossfader
+
+**Work:**
+- Confirm crossfader widget convention against `vsynth-bpatcher/SKILL.md`
+  before building
+- Add `wet` param; rewrite `out1`/`out2` per ADR 5
+- Rename `composite` outlet comment → `mix`
+- Rebuild via `build_patcher.py`; JSON-validate
+
+**Verification:**
+- `wet=0` → out1 is clean source regardless of `strength`
+- `wet=1` → out1 matches current pre-change behavior at any given
+  `strength` (regression check)
+- out2 now goes to source on bypass (behavior change — confirm this is
+  the intended new behavior, not a regression, when reviewing in Max)
+- No vecfield connected: sensible behavior at any `wet`/`strength`
+  (offset suppressed via `src_vecfield`)
+
+**Checkpoint:** All reframe acceptance criteria from spec.md verified in
+Max, including the out2 bypass behavior change specifically. Update
+`docs/f-reference/f_vf_warp.md` and HANDOFF.md.
