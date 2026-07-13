@@ -22,7 +22,8 @@ patcher = {
     ],
 
     "params": [
-        {"name": "strength",    "type": "float", "min": 0.0,  "max": 1.5,  "default": 0.0,  "label": "Strength"},
+        {"name": "gain",        "type": "float", "min": 0.0,  "max": 1.5,  "default": 0.3,  "label": "Gain", "hint": "Streak intensity. Renamed from strength 2026-07-12 to match the library-wide gain/mix naming convention."},
+        {"name": "mix_pct",     "type": "float", "min": 0.0,  "max": 100.0,"default": 0.0,  "label": "Mix", "widget": "numbox", "hint": "Dry/wet crossfade toward the fully-composited (source+streak) state. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator. Default 0 (off by default, matching this module's original load behavior)."},
         {"name": "length",      "type": "float", "min": 0.0,  "max": 20.0, "default": 0.15, "label": "Length"},
         {"name": "falloff",     "type": "float", "min": 0.0,  "max": 2.5,  "default": 0.0,  "label": "Falloff"},
         {"name": "color_shift", "type": "float", "min": 0.0,  "max": 20.0, "default": 0.0,  "label": "Color"},

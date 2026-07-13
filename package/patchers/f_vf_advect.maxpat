@@ -92,9 +92,10 @@
                 "box": {
                     "id": "obj-4",
                     "maxclass": "newobj",
-                    "numinlets": 7,
-                    "numoutlets": 7,
+                    "numinlets": 8,
+                    "numoutlets": 8,
                     "outlettype": [
+                        "",
                         "",
                         "",
                         "",
@@ -109,7 +110,7 @@
                         280.0,
                         22.0
                     ],
-                    "text": "route dt decay injection mix_amt separate mode"
+                    "text": "route dt decay injection gain mix separate mode"
                 }
             },
             {
@@ -117,8 +118,9 @@
                     "id": "obj-5",
                     "maxclass": "newobj",
                     "numinlets": 3,
-                    "numoutlets": 3,
+                    "numoutlets": 4,
                     "outlettype": [
+                        "jit_gl_texture",
                         "jit_gl_texture",
                         "jit_gl_texture",
                         ""
@@ -196,15 +198,16 @@
                             },
                             {
                                 "box": {
-                                    "code": "Param dt(0.02);\nParam decay(0.95);\nParam injection(0.05);\nParam mix_amt(1.0);\nParam bypass(0.0);\nParam src_vecfield(0.0);\n\nuv = norm;\n\n// Vecfield: sample inline (no stored variable component access)\nfx = (sample(in2, uv).x - 0.5) * 2.0;\nfy = (sample(in2, uv).y - 0.5) * 2.0;\n\n// Suppress displacement when vecfield unconnected (src_vecfield = 0)\nconnected = step(0.5, src_vecfield);\nfx = fx * connected;\nfy = fy * connected;\n\n// Backward-displaced UV, clamped to edge\nsrc_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));\n\n// Advect previous frame, add source injection\nadvected = sample(in3, src_uv) * decay;\nresult = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);\n\n// Wet/dry, then bypass\nmixed = mix(sample(in1, uv), result, mix_amt);\nout1 = mix(mixed, sample(in1, uv), bypass);\nout2 = result;\n",
+                                    "code": "Param dt(0.02);\nParam decay(0.95);\nParam injection(0.05);\nParam gain(1.0);\nParam mix_pct(100.0);\nParam bypass(0.0);\nParam src_vecfield(0.0);\n\nuv = norm;\n\n// Vecfield: sample inline (no stored variable component access)\nfx = (sample(in2, uv).x - 0.5) * 2.0;\nfy = (sample(in2, uv).y - 0.5) * 2.0;\n\n// Suppress displacement when vecfield unconnected (src_vecfield = 0)\nconnected = step(0.5, src_vecfield);\nfx = fx * connected;\nfy = fy * connected;\n\n// Backward-displaced UV, clamped to edge\nsrc_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));\n\n// Advect previous frame, add source injection\nadvected = sample(in3, src_uv) * decay;\nresult = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);\n\n// Wet/dry, then bypass\ndriven = clamp(result * gain, 0.0, 1.0);\nmixed = mix(sample(in1, uv), driven, mix_pct / 100.0);\nout1 = mix(mixed, sample(in1, uv), bypass);\nout2 = result;\n\n// --- 3rd outlet: gradient of accumulated flow (luma-reduced central\n// difference on the feedback texture in3, per ADR 6 / spec.md's\n// 2026-07-11 reframe -- result itself is a per-pixel value, not a\n// resamplable texture within this pass, so in3 (the previous frame's\n// accumulation, the same signal result derives from) stands in as the\n// best available proxy for \"shape of the accumulated flow\" ) ---\ngrad_scale = 0.004;\ngrad_gain  = 4.0;\n\nL_right = sample(in3, vec(uv.x + grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x + grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x + grad_scale, uv.y)).z * 0.114;\nL_left  = sample(in3, vec(uv.x - grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x - grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x - grad_scale, uv.y)).z * 0.114;\nL_down  = sample(in3, vec(uv.x, uv.y + grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y + grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y + grad_scale)).z * 0.114;\nL_up    = sample(in3, vec(uv.x, uv.y - grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y - grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y - grad_scale)).z * 0.114;\n\ngx = (L_right - L_left) * grad_gain;\ngy = (L_down  - L_up)   * grad_gain;\n\nfield   = vec(clamp(gx * 0.5 + 0.5, 0.0, 1.0), clamp(gy * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);\n\nout3 = field;  // always live -- feedback loop keeps running during bypass, out3 shouldn't flatten\n",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
                                     "id": "gen-obj-4",
                                     "maxclass": "codebox",
                                     "numinlets": 3,
-                                    "numoutlets": 2,
+                                    "numoutlets": 3,
                                     "outlettype": [
+                                        "",
                                         "",
                                         ""
                                     ],
@@ -244,6 +247,21 @@
                                         22.0
                                     ],
                                     "text": "out 2"
+                                }
+                            },
+                            {
+                                "box": {
+                                    "id": "gen-obj-7",
+                                    "maxclass": "newobj",
+                                    "numinlets": 1,
+                                    "numoutlets": 0,
+                                    "patching_rect": [
+                                        142.0,
+                                        490.0,
+                                        35.0,
+                                        22.0
+                                    ],
+                                    "text": "out 3"
                                 }
                             }
                         ],
@@ -305,6 +323,18 @@
                                     "source": [
                                         "gen-obj-4",
                                         1
+                                    ]
+                                }
+                            },
+                            {
+                                "patchline": {
+                                    "source": [
+                                        "gen-obj-4",
+                                        2
+                                    ],
+                                    "destination": [
+                                        "gen-obj-7",
+                                        0
                                     ]
                                 }
                             }
@@ -1075,7 +1105,7 @@
                         "",
                         "float"
                     ],
-                    "param_connect": "#0_advect_pix::mix_amt",
+                    "param_connect": "#0_advect_pix::gain",
                     "parameter_enable": 1,
                     "patching_rect": [
                         200.0,
@@ -1100,24 +1130,25 @@
                             ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
-                            "parameter_longname": "mix_amt",
-                            "parameter_mmax": 1.5,
+                            "parameter_longname": "gain",
+                            "parameter_mmax": 4.0,
                             "parameter_modmode": 3,
-                            "parameter_shortname": "mix_amt",
+                            "parameter_shortname": "gain",
                             "parameter_type": 0,
-                            "parameter_unitstyle": 1
+                            "parameter_unitstyle": 1,
+                            "parameter_mmin": 0.0
                         }
                     },
                     "showname": 0,
                     "triangle": 1,
                     "valuepopup": 1,
                     "valuepopuplabel": 1,
-                    "varname": "mix_amt"
+                    "varname": "gain"
                 }
             },
             {
                 "box": {
-                    "attr": "mix_amt",
+                    "attr": "gain",
                     "id": "obj-30",
                     "maxclass": "attrui",
                     "numinlets": 1,
@@ -1155,7 +1186,7 @@
                         50.0,
                         18.0
                     ],
-                    "text": "Mix",
+                    "text": "Gain",
                     "textjustification": 1
                 }
             },
@@ -1179,15 +1210,15 @@
                     "param_connect": "#0_advect_pass::separate",
                     "parameter_enable": 1,
                     "patching_rect": [
-                        250.0,
+                        300.0,
                         80.0,
                         27.0,
                         43.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        152.0,
-                        38.0,
+                        4.0,
+                        100.0,
                         27.0,
                         43.0
                     ],
@@ -1229,7 +1260,7 @@
                     ],
                     "parameter_enable": 0,
                     "patching_rect": [
-                        250.0,
+                        300.0,
                         290.0,
                         136.0,
                         22.0
@@ -1245,15 +1276,15 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        250.0,
+                        300.0,
                         130.0,
                         50.0,
                         18.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        140.5,
-                        20.0,
+                        -7.5,
+                        82.0,
                         50.0,
                         18.0
                     ],
@@ -1263,58 +1294,52 @@
             },
             {
                 "box": {
-                    "activedialcolor": [
-                        0.8,
-                        0.8,
-                        0.8,
-                        1.0
-                    ],
-                    "fontname": "Ableton Sans Light",
                     "id": "obj-35",
-                    "maxclass": "live.dial",
+                    "maxclass": "live.menu",
+                    "fontname": "Ableton Sans Light",
                     "numinlets": 1,
-                    "numoutlets": 2,
+                    "numoutlets": 3,
                     "outlettype": [
+                        "",
                         "",
                         "float"
                     ],
                     "param_connect": "#0_advect_pass::mode",
                     "parameter_enable": 1,
                     "patching_rect": [
-                        300.0,
+                        350.0,
                         80.0,
-                        27.0,
-                        43.0
+                        60.0,
+                        15.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        4.0,
-                        100.0,
-                        27.0,
-                        43.0
+                        37.0,
+                        114.0,
+                        45.0,
+                        15.0
                     ],
                     "saved_attribute_attributes": {
-                        "activedialcolor": {
-                            "expression": ""
-                        },
                         "valueof": {
+                            "parameter_enum": [
+                                "Ride",
+                                "Hold",
+                                "Snap"
+                            ],
+                            "parameter_longname": "mode",
+                            "parameter_shortname": "mode",
+                            "parameter_mmax": 2.0,
+                            "parameter_mmin": 0.0,
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_initial_enable": 1,
                             "parameter_linknames": 1,
-                            "parameter_longname": "mode",
-                            "parameter_mmax": 2.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "mode",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
+                            "parameter_modmode": 0,
+                            "parameter_type": 2,
+                            "parameter_unitstyle": 0
                         }
                     },
-                    "showname": 0,
-                    "triangle": 1,
-                    "valuepopup": 1,
-                    "valuepopuplabel": 1,
                     "varname": "mode"
                 }
             },
@@ -1330,7 +1355,7 @@
                     ],
                     "parameter_enable": 0,
                     "patching_rect": [
-                        300.0,
+                        350.0,
                         320.0,
                         127.5,
                         22.0
@@ -1346,14 +1371,14 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        300.0,
+                        350.0,
                         130.0,
                         50.0,
                         18.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
-                        -7.5,
+                        29.5,
                         82.0,
                         50.0,
                         18.0
@@ -1407,6 +1432,112 @@
                         60.0,
                         131.0,
                         22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-90",
+                    "maxclass": "live.numbox",
+                    "fontname": "Ableton Sans Light",
+                    "hint": "Wet/dry crossfade -- 0=source only, 100=fully advected",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        "float"
+                    ],
+                    "param_connect": "#0_advect_pix::mix_pct",
+                    "parameter_enable": 1,
+                    "patching_rect": [
+                        250.0,
+                        80.0,
+                        44.0,
+                        15.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        152.0,
+                        38.0,
+                        34.0,
+                        15.0
+                    ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_longname": "mix_pct",
+                            "parameter_shortname": "mix_pct",
+                            "parameter_mmin": 0.0,
+                            "parameter_mmax": 100.0,
+                            "parameter_initial": [
+                                100.0
+                            ],
+                            "parameter_initial_enable": 1,
+                            "parameter_linknames": 1,
+                            "parameter_modmode": 3,
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 0
+                        }
+                    },
+                    "varname": "mix_pct"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-91",
+                    "maxclass": "attrui",
+                    "attr": "mix_pct",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "parameter_enable": 0,
+                    "patching_rect": [
+                        250.0,
+                        260.0,
+                        129.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-92",
+                    "maxclass": "comment",
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        250.0,
+                        130.0,
+                        50.0,
+                        18.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        140.5,
+                        20.0,
+                        50.0,
+                        18.0
+                    ],
+                    "text": "Mix",
+                    "textjustification": 1
+                }
+            },
+            {
+                "box": {
+                    "comment": "vecfield",
+                    "id": "obj-2c",
+                    "index": 2,
+                    "maxclass": "outlet",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        170.0,
+                        500.0,
+                        30.0,
+                        30.0
                     ]
                 }
             }
@@ -1732,7 +1863,7 @@
                     ],
                     "source": [
                         "obj-4",
-                        4
+                        5
                     ]
                 }
             },
@@ -1744,7 +1875,7 @@
                     ],
                     "source": [
                         "obj-4",
-                        5
+                        6
                     ]
                 }
             },
@@ -1842,6 +1973,54 @@
                     ],
                     "source": [
                         "obj-53",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-4",
+                        4
+                    ],
+                    "destination": [
+                        "obj-90",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-90",
+                        0
+                    ],
+                    "destination": [
+                        "obj-91",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-91",
+                        0
+                    ],
+                    "destination": [
+                        "obj-5",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-5",
+                        2
+                    ],
+                    "destination": [
+                        "obj-2c",
                         0
                     ]
                 }

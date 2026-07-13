@@ -1,8 +1,13 @@
 // f_vf_glow codebox — 48-step field-aligned accumulation with jitter
 // in1 = source texture, in2 = vecfield (float32 RG, 0.5=zero), in3 = radius mod
+// `strength` renamed to `gain`; `mix` (numbox, 0-100%, internal Param
+// mix_pct) added 2026-07-12 per the library-wide gain/mix naming
+// convention (vsynth-bpatcher skill) -- composite rewritten to the
+// two-stage driven/mix crossfade confirmed correct on f_vf_prism.
 Param radius(0.01);
 Param falloff(0.002);
-Param strength(0.8);
+Param gain(0.8);
+Param mix_pct(0.0);
 Param color_mix(0.0);
 Param direction(0.0);
 Param bypass(0.0);
@@ -54,10 +59,15 @@ luma = norm_r * 0.2126 + norm_g * 0.7152 + norm_b * 0.0722;
 glow_r = mix(norm_r, luma, color_mix);
 glow_g = mix(norm_g, luma, color_mix);
 glow_b = mix(norm_b, luma, color_mix);
-// composite: source + glow
-comp_r = clamp(src_r + glow_r * strength, 0.0, 1.0);
-comp_g = clamp(src_g + glow_g * strength, 0.0, 1.0);
-comp_b = clamp(src_b + glow_b * strength, 0.0, 1.0);
+// composite: driven = the complete effect-applied state (source +
+// glow*gain); mix is a plain continuous blend toward that state, not
+// spatial masking -- same shape confirmed correct on f_vf_prism.
+driven_r = clamp(src_r + glow_r * gain, 0.0, 1.0);
+driven_g = clamp(src_g + glow_g * gain, 0.0, 1.0);
+driven_b = clamp(src_b + glow_b * gain, 0.0, 1.0);
+comp_r = mix(src_r, driven_r, mix_pct / 100.0);
+comp_g = mix(src_g, driven_g, mix_pct / 100.0);
+comp_b = mix(src_b, driven_b, mix_pct / 100.0);
 // bypass
 out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
 // isolated glow outlet (zeroed on bypass)

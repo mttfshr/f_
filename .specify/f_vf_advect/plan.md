@@ -302,6 +302,28 @@ Open built patcher in live Vsynth patch and verify all acceptance criteria.
 criteria. No regression to out1/out2. Update `docs/f_vf_advect.md` and
 HANDOFF with the new outlet.
 
+**Status: DONE, 2026-07-12.** Built directly in production
+(`package/patchers/f_vf_advect.maxpat`) — third outlet computes a
+luma-reduced central-difference gradient of `in3` (the feedback
+texture the accumulated state derives from), same idiom as
+`f_vf_fieldmap`. Confirmed working in Max.
+
+**Correction to spec/ADR 6's bypass behavior**: the original design
+called for `out3` to go neutral (`0.5, 0.5`) on bypass, matching
+`f_vf_flow`'s convention. Matt's direction after testing: **out3 should
+stay live through bypass**, not flatten — the feedback loop keeps
+running regardless of `bypass` (that's the whole point of this module's
+bypass design, per the original spec's "feedback loop stays warm"
+acceptance criterion), so a derived signal off that loop shouldn't
+artificially clamp just because `out1` is showing the dry source.
+`out3 = field;` unconditionally now — no `mix(field, neutral, bypass)`,
+and the now-unused `neutral` local was removed. This is a genuine
+correction to the original bypass convention for this specific outlet,
+not a bug — worth remembering if `f_vf_flow`'s bypass-to-neutral
+convention gets cited as a blanket rule elsewhere: it applies to
+*stateless* vecfield producers/passthroughs, not to a derived signal off
+a feedback loop that keeps running under bypass.
+
 ---
 
 ## Dependency Blocks
@@ -323,7 +345,76 @@ HANDOFF with the new outlet.
 
 ---
 
-## Complexity Notes
+---
+
+### ADR 7: mix_amt split into gain + mix (dry/wet rollout); Param name collision with `mix()` operator
+
+**Context**: Part of the library-wide dry/wet/gain convention rollout
+(`ideas/dry_wet_gain_and_novel_field_outlet.md` finding 1;
+`vsynth-bpatcher/SKILL.md`'s crossfade convention). `f_vf_advect`'s
+existing `mix_amt` (live.dial, 0–1.5, labeled "Strength"/"Mix") already
+conflated two separate concerns — overdrive/effect-strength and simple
+crossfade blend — in one control. Per Matt's direction, this module gets
+the same gain/mix split as other modules in the rollout, applied
+uniformly rather than only to the additive-layer subset originally
+scoped in finding 1.
+
+**Decision**: Split `mix_amt` into:
+- **`gain`** (live.dial, 0.0–4.0, default 1.0) — scales the accumulated
+  `result` before blending: `driven = clamp(result * gain, 0, 1)`
+- **`mix`** (live.numbox, 0–100%, default 100) — user-facing name/label/
+  varname/attrui attr all "mix"; crossfades `driven` against source:
+  `mixed = mix(source, driven, mix_pct/100.0)`
+
+**Real bug hit and fixed**: the first build used `Param mix(100.0)` —
+identical to the codebox's built-in `mix()` operator, used on the very
+same line (`mixed = mix(sample(in1,uv), driven, mix/100.0)`). This
+compiled without error but produced a black outlet — a silent failure,
+not a build-time error. Confirmed empirically in Max (Matt: "advect
+outlet is black now") immediately after this change, with nothing else
+touched. **Fix**: renamed only the internal codebox `Param` to
+`mix_pct`, and updated the `attrui`/`live.numbox` plumbing (`attr`,
+`varname`, `param_connect`) to match — the user-facing control name/
+label ("Mix") and the external control-message keyword (`route`'s
+`mix`) are unaffected, since those are independent of the internal
+`Param` identifier. Reload confirmed working.
+
+**General principle, now added to `jit-gen-codebox` skill**: a `Param`
+name that collides with a built-in codebox operator name (`mix`, `step`,
+`clamp`, etc.) is the same class of silent-failure bug as the documented
+`in0`–`in7` inlet-name collision — no compile error, just broken/black
+output. Check any new `Param` name against the operator list before
+using it, especially for names as generically-tempting as `mix`, `step`,
+or `clamp`.
+
+**Consequences**:
+- `mix_pct` (internal) vs. `mix` (external label, route keyword,
+  attrui/varname) is now the standing pattern for this specific
+  collision — established here, not unique to this module; any future
+  module wanting a `mix`-named control should use `mix_pct` internally
+  too, per the `jit-gen-codebox` skill update
+- No behavior change from the intended design otherwise — `gain`/`mix`
+  work as specced once the naming was fixed
+
+---
+
+### ADR 8: `mode` upgraded from live.dial to live.menu (plan.md work queue item)
+
+**Context**: Plan.md's work queue had "mode param upgrade to live.menu
+(f_vf_advect) — labels outstanding" as a standing item, referring to the
+`mode` param on the `separate` (Ride/Hold/Snap) feature, previously a
+0–2 stepped `live.dial` with no visible labels.
+
+**Decision**: Converted to `live.menu` with `parameter_enum: ["Ride",
+"Hold", "Snap"]`, same `param_connect` target (`#0_advect_pass::mode`),
+same underlying 0/1/2 values. Grid position moved (from row2/col0 to
+row2/col1) to make room for the new `mix` control taking `separate`'s
+old slot in row1.
+
+**Consequences**: Purely a UI/labeling improvement — no codebox change,
+no behavior change. Confirmed alongside the gain/mix split in the same
+Max verification pass.
+
 
 Medium complexity. The codebox is straightforward (backward advection is a standard single expression). The novel elements are:
 

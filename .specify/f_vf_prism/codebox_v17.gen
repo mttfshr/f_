@@ -1,0 +1,204 @@
+// f_vf_prism codebox v17 — v15 baseline + out3 gate-weighted dispersion
+// direction (ADR1). `strength` renamed to `gain` 2026-07-12 to match
+// the library-wide gain/mix naming convention (vsynth-bpatcher skill) --
+// no change to the underlying math, name only.
+// in1 = source texture (char)
+// in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// in3 = reach mod
+// in4 = spread mod
+
+// helper: displaced R channel
+displaced_r(tux, tuy, fx, fy, cx, sx, reach) {
+    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0., 1.);
+    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0., 1.);
+    return sample(in1, vec(dux, duy)).x;
+}
+
+// helper: displaced G channel
+displaced_g(tux, tuy, fx, fy, cx, sx, reach) {
+    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0., 1.);
+    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0., 1.);
+    return sample(in1, vec(dux, duy)).y;
+}
+
+// helper: displaced B channel
+displaced_b(tux, tuy, fx, fy, cx, sx, reach) {
+    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0., 1.);
+    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0., 1.);
+    return sample(in1, vec(dux, duy)).z;
+}
+
+// gate value for R channel at one tap position
+channel_gate_r(tux, tuy, fx, fy, cx, sx, reach, thresh, twidth) {
+    val = displaced_r(tux, tuy, fx, fy, cx, sx, reach);
+    return smoothstep(thresh, thresh + twidth, val);
+}
+
+// gate value for G channel at one tap position
+channel_gate_g(tux, tuy, fx, fy, cx, sx, reach, thresh, twidth) {
+    val = displaced_g(tux, tuy, fx, fy, cx, sx, reach);
+    return smoothstep(thresh, thresh + twidth, val);
+}
+
+// gate value for B channel at one tap position
+channel_gate_b(tux, tuy, fx, fy, cx, sx, reach, thresh, twidth) {
+    val = displaced_b(tux, tuy, fx, fy, cx, sx, reach);
+    return smoothstep(thresh, thresh + twidth, val);
+}
+
+Param reach(0.05);
+Param spread(0.1);
+Param threshold(0.7);
+Param threshold_width(0.1);
+Param feather(0.1);
+Param gain(1.0);
+Param mix_pct(100.0);
+Param src_vecfield(0.0);
+Param src_length_mod(0.0);
+Param src_width_mod(0.0);
+Param bypass(0.0);
+
+uv = norm;
+
+// source pixel
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+// field vector
+connected = step(0.5, src_vecfield);
+raw_x = sample(in2, uv).x;
+raw_y = sample(in2, uv).y;
+field_suppress = step(0.02, raw_x + raw_y);
+fx = (raw_x - 0.5) * 2.0 * connected * field_suppress;
+fy = (raw_y - 0.5) * 2.0 * connected * field_suppress;
+
+// mod inlets
+reach_eff  = clamp(reach  + (sample(in3, uv).x - 0.5) * src_length_mod, 0.0, 0.3);
+spread_eff = clamp(spread + (sample(in4, uv).x - 0.5) * src_width_mod,  0.0, 0.5);
+
+// per-channel rotation scalars
+cos_r = cos(spread_eff);  sin_r = sin(spread_eff);
+cos_b = cos(-spread_eff); sin_b = sin(-spread_eff);
+cos_g = 1.0; sin_g = 0.0;
+
+// perpendicular direction (normalized)
+field_mag = max(sqrt(fx * fx + fy * fy), 0.0001);
+px = -fy / field_mag;
+py =  fx / field_mag;
+
+// feather step size
+separation = sin(spread_eff) * reach_eff * field_mag;
+step_size = feather * separation;
+
+// 11-tap gaussian weights (symmetric, sum=1)
+w0 = 0.0093;
+w1 = 0.0280;
+w2 = 0.0660;
+w3 = 0.1220;
+w4 = 0.1747;
+w5 = 0.2000;
+
+// tap UVs
+t5x = uv.x + px * (-5.0) * step_size; t5y = uv.y + py * (-5.0) * step_size;
+t4x = uv.x + px * (-4.0) * step_size; t4y = uv.y + py * (-4.0) * step_size;
+t3x = uv.x + px * (-3.0) * step_size; t3y = uv.y + py * (-3.0) * step_size;
+t2x = uv.x + px * (-2.0) * step_size; t2y = uv.y + py * (-2.0) * step_size;
+t1x = uv.x + px * (-1.0) * step_size; t1y = uv.y + py * (-1.0) * step_size;
+t0x = uv.x;                            t0y = uv.y;
+p1x = uv.x + px *   1.0  * step_size; p1y = uv.y + py *   1.0  * step_size;
+p2x = uv.x + px *   2.0  * step_size; p2y = uv.y + py *   2.0  * step_size;
+p3x = uv.x + px *   3.0  * step_size; p3y = uv.y + py *   3.0  * step_size;
+p4x = uv.x + px *   4.0  * step_size; p4y = uv.y + py *   4.0  * step_size;
+p5x = uv.x + px *   5.0  * step_size; p5y = uv.y + py *   5.0  * step_size;
+
+// R channel gates (samples .x)
+gr_t5 = channel_gate_r(t5x, t5y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t4 = channel_gate_r(t4x, t4y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t3 = channel_gate_r(t3x, t3y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t2 = channel_gate_r(t2x, t2y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t1 = channel_gate_r(t1x, t1y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_t0 = channel_gate_r(t0x, t0y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p1 = channel_gate_r(p1x, p1y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p2 = channel_gate_r(p2x, p2y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p3 = channel_gate_r(p3x, p3y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p4 = channel_gate_r(p4x, p4y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+gr_p5 = channel_gate_r(p5x, p5y, fx, fy, cos_r, sin_r, reach_eff, threshold, threshold_width);
+
+// G channel gates (samples .y)
+gg_t5 = channel_gate_g(t5x, t5y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t4 = channel_gate_g(t4x, t4y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t3 = channel_gate_g(t3x, t3y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t2 = channel_gate_g(t2x, t2y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t1 = channel_gate_g(t1x, t1y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_t0 = channel_gate_g(t0x, t0y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p1 = channel_gate_g(p1x, p1y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p2 = channel_gate_g(p2x, p2y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p3 = channel_gate_g(p3x, p3y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p4 = channel_gate_g(p4x, p4y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+gg_p5 = channel_gate_g(p5x, p5y, fx, fy, cos_g, sin_g, reach_eff, threshold, threshold_width);
+
+// B channel gates (samples .z)
+gb_t5 = channel_gate_b(t5x, t5y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t4 = channel_gate_b(t4x, t4y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t3 = channel_gate_b(t3x, t3y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t2 = channel_gate_b(t2x, t2y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t1 = channel_gate_b(t1x, t1y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_t0 = channel_gate_b(t0x, t0y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p1 = channel_gate_b(p1x, p1y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p2 = channel_gate_b(p2x, p2y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p3 = channel_gate_b(p3x, p3y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p4 = channel_gate_b(p4x, p4y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+gb_p5 = channel_gate_b(p5x, p5y, fx, fy, cos_b, sin_b, reach_eff, threshold, threshold_width);
+
+// weighted sum
+prism_r = gr_t5*w0 + gr_t4*w1 + gr_t3*w2 + gr_t2*w3 + gr_t1*w4 + gr_t0*w5;
+prism_r = prism_r + gr_p1*w4 + gr_p2*w3 + gr_p3*w2 + gr_p4*w1 + gr_p5*w0;
+
+prism_g = gg_t5*w0 + gg_t4*w1 + gg_t3*w2 + gg_t2*w3 + gg_t1*w4 + gg_t0*w5;
+prism_g = prism_g + gg_p1*w4 + gg_p2*w3 + gg_p3*w2 + gg_p4*w1 + gg_p5*w0;
+
+prism_b = gb_t5*w0 + gb_t4*w1 + gb_t3*w2 + gb_t2*w3 + gb_t1*w4 + gb_t0*w5;
+prism_b = prism_b + gb_p1*w4 + gb_p2*w3 + gb_p3*w2 + gb_p4*w1 + gb_p5*w0;
+
+// composite: driven = pure effect standing alone at "what it would be
+// at 100%" (strength-scaled); mix is a plain continuous blend ratio
+// toward that state -- NOT spatial masking, NOT coverage/opacity. At
+// mix=30%, every pixel is exactly 30% of the way from source toward
+// that same pixel's 100%-effect value. Matt: "an effect applied 30%
+// isn't the same as an effect applied to 30% of a masked shape... it
+// bends 30% of the way toward what it would be at 100%."
+driven_r = clamp(src_r + prism_r * gain, 0.0, 1.0);
+driven_g = clamp(src_g + prism_g * gain, 0.0, 1.0);
+driven_b = clamp(src_b + prism_b * gain, 0.0, 1.0);
+comp_r = mix(src_r, driven_r, mix_pct / 100.0);
+comp_g = mix(src_g, driven_g, mix_pct / 100.0);
+comp_b = mix(src_b, driven_b, mix_pct / 100.0);
+
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+
+// --- out3: gate-weighted dispersion direction (ADR1) ---
+// Each channel's own displacement vector (the rotation of the field
+// actually used to compute its sample position), weighted by that
+// channel's own post-blur gate strength (prism_r/g/b, already computed
+// above for out1/out2 -- reused, no new sampling passes). Where gates
+// agree the three (nearly-aligned) vectors reinforce; where they
+// disagree the result leans toward whichever channel is actually gated
+// "on" -- information the input field alone doesn't carry.
+rvx = (fx*cos_r - fy*sin_r) * reach_eff;  rvy = (fx*sin_r + fy*cos_r) * reach_eff;
+gvx = fx * reach_eff;                      gvy = fy * reach_eff;
+bvx = (fx*cos_b - fy*sin_b) * reach_eff;  bvy = (fx*sin_b + fy*cos_b) * reach_eff;
+
+combined_x = prism_r*rvx + prism_g*gvx + prism_b*bvx;
+combined_y = prism_r*rvy + prism_g*gvy + prism_b*bvy;
+
+// internal scale constant (not a user param, per spec -- tune empirically
+// like f_vf_advect's grad_gain; starting guess, watch in Max)
+out3_scale = 8.0;
+
+out3_x = clamp(combined_x * out3_scale * 0.5 + 0.5, 0.0, 1.0);
+out3_y = clamp(combined_y * out3_scale * 0.5 + 0.5, 0.0, 1.0);
+
+out3 = mix(vec(out3_x, out3_y, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);

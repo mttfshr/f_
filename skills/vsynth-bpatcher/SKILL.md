@@ -149,7 +149,6 @@ This is the most token-efficient approach:
 - Only write the full `definition.py` and run `build_patcher.py` when the codebox is confirmed working
 
 ---
-
 ## Package Structure
 
 ```
@@ -226,7 +225,6 @@ Each bpatcher moves through three stages:
 `HANDOFF.md` is written fresh each session — do not put permanent project state there. `README.md` is maintained continuously.
 
 ---
-
 ## Required Objects (Every Patcher)
 
 1. **`jit.gl.pix vsynth @name <prefix>_pix`** — shader core, draws to vsynth context
@@ -531,6 +529,123 @@ Use for integer values like seeds, counts, mode selectors. Wires identically to 
 
 In codebox: `seed_int = floor(seed_param);`
 
+### Canonical naming: `gain` vs `mix` (locked 2026-07-12)
+
+Any module with a composite/blended outlet (source combined with an
+effect via add/multiply/etc.) has **two separate, always-separately-
+named controls** — never more than these two names, never a synonym:
+
+- **`gain`** — unbounded, can overdrive past 1:1. Controls how intense
+  the effect itself is, independent of blend. This is the *only* name
+  used for this role anywhere in the library — never `strength`,
+  `intensity`, or any other synonym, regardless of what an individual
+  module's codebox variable happens to be called internally.
+- **`mix`** — bounded 0–100%, `live.numbox` (see below). Controls the
+  ratio of source to effect on the composite outlet. Also the *only*
+  name used for this role — never `wet`, `strength`, or `blend`.
+
+This was reaffirmed 2026-07-12 after real drift across the rollout:
+`f_vf_advect` and `f_chladni` used `gain`; `f_vf_prism` used `strength`
+(its own plan called for renaming to `gain` and then abandoned the
+rename mid-fix); `f_caustic` used `intensity` for the same role. All of
+these are being retrofitted to `gain`. There is no acceptable reason for
+two modules to name the same *role* differently — a performer needs to
+build one muscle memory for "the intensity knob," not five.
+
+### live.numbox (mix — dry/wet crossfade params)
+
+For `mix` dry/wet blend controls: `live.numbox`, deliberately, not
+`live.dial` — a dedicated convention distinct from the float-param
+default. Unipolar **0–100%** (not bipolar) — nothing in the additive-
+layer dry/wet design (`ideas/dry_wet_gain_and_novel_field_outlet.md`
+finding 1) gives a negative range meaning. Wires identically to other
+`live.numbox` params — through `attrui` → pix in0.
+
+**Naming collision warning:** `mix` is also the codebox's built-in
+blend operator (`mix(a, b, t)`). Declaring `Param mix(100.0)` and then
+calling `mix(src, layer, mix / 100.0)` on the same line silently
+produces black output — no compile error — confirmed on `f_vf_advect`
+2026-07-12 (see `jit-gen-codebox` skill's matching entry). **Always name
+the internal codebox `Param` something that doesn't collide** — e.g.
+`mix_pct` — while keeping the user-facing label, `attrui` `attr`,
+`live.numbox` `varname`, and any external control-message keyword as
+plain `mix`. Those live outside the codebox and aren't part of the
+collision, so the control still reads "Mix" to the user.
+
+In codebox (additive-layer modules — glow, prism, streak, caustic, etc.),
+**final formula, confirmed correct on `f_vf_prism` after five attempts
+(2026-07-12)** — see `ideas/dry_wet_gain_and_novel_field_outlet.md`
+finding 1 for the full round-by-round history of what was tried first:
+
+```
+driven = clamp(src + layer * gain, 0.0, 1.0);   // the COMPLETE composited state, source included
+comp   = mix(src, driven, mix_pct / 100.0);      // plain crossfade toward that complete state
+```
+
+**Why `driven` must include `src`, not be a bare effect layer**: three
+earlier attempts all failed by crossfading toward a *bare, sparse*
+effect layer instead:
+- `driven = clamp(layer*gain, 0, 1)` with a plain crossfade → produced a
+  frame-uniform double exposure at intermediate `mix` values, because
+  the bare layer is mostly black/empty and blending toward it visibly
+  superimposes two unrelated images.
+- Coverage-based "over" compositing (using the layer's own magnitude as
+  per-pixel opacity) → still double-imaged, because the soft, feather-
+  blurred gate value used as "coverage" rarely reaches a clean 1.0
+  across its intentionally-wide transition band, so source kept
+  bleeding through even at `mix=100%`.
+- Pure additive `src + layer*gain*mix` (mix as an attenuator, no
+  crossfade at all) → same superimposition problem, just via a
+  different mechanism.
+
+`driven = clamp(src + layer*gain, 0, 1)` sidesteps all three failure
+modes because it's a **complete, non-sparse image everywhere** (source
+is baked in) — crossfading between two complete images produces a
+genuine "N% of the way there" blend with no region where one side is
+empty/black, so no double-exposure artifact. Matt's own framing: "an
+effect applied 30% isn't the same as an effect applied to 30% of a
+masked shape... it bends 30% of the way toward what it would be at
+100%." Note this is the *reverse* of what earlier guidance in this
+section said — that guidance was wrong, corrected 2026-07-12.
+
+**Open, unresolved question** (flagged on `f_vf_prism`, not fixed): this
+`driven` formula is "additive/screen" — light added on top of source.
+Whether some effects should instead use "occlusion" (effect locally
+replaces source rather than stacking with it) is a real per-module
+design question — see `ideas/dry_wet_gain_and_novel_field_outlet.md`
+finding 1's vocabulary section, and `f_vf_prism`'s own plan.md "Open
+follow-up." `f_vf_advect` was independently unaffected by any of this —
+it's replacement-shape (`driven` was already the full
+standalone processed result, no separate source term to accidentally
+include).
+
+### Vecfield labeling for non-`f_vf_`-prefixed modules
+
+Only the `f_vf_` prefix is reserved for modules whose **primary** output
+is a vecfield. A module with a *mixed* outlet set — e.g. `f_chladni`
+(luma + vecfield + magnitude) — keeps its plain name but still needs the
+vecfield outlet surfaced to users in two places:
+
+1. **Header label** (`definition.py`): set `"signal_type"` to a free-text
+   direction string — `"vecfield in"`, `"vecfield out"`, or
+   `"vecfield in/out"` — not the bare `"vecfield"` (that plain string is
+   reserved for actual `f_vf_`-prefixed producers/consumers whose *entire*
+   output/input is vecfield-typed; it also happens to be the only key
+   `SIGNAL_TYPE_COLORS` matches, so a directional string always renders
+   grey `[0.6,0.6,0.6,1]` on first build). After building, hand-fix the
+   header comment box (`obj-8`) `textcolor` to the library's standard
+   value `[0.302, 0.325, 0.463, 1.0]` to match the rest of the library —
+   `build_patcher.py` doesn't do this automatically for non-exact-match
+   signal_type strings.
+2. **`f_modules` menu**: add the module's bare filename (e.g. `"chladni"`)
+   to `tools/append_nabla_menu.py`'s `VECFIELD_MODULES` set, then rerun
+   the script — appends `" ∇"` to its display label. Note the script's
+   `PATH` constant points at `package/patchers/f_modules.maxpat` (repo
+   reorg location, not the old `patchers/` path).
+
+Established 2026-07-12 via `f_chladni`'s `out3`/vecfield labeling pass —
+see HANDOFF.md and `.specify/f_chladni/plan.md` for the concrete example.
+
 ---
 
 ## bypass_toggle.js
@@ -693,7 +808,6 @@ The `route` object dispatches by name to the correct `live.dial` or `live.numbox
 - Output to screen (`cornerpins`, `jit.pwindow`)
 - GL context creation (`vs_render`, `vs_modules`)
 - Preview windows (`jit.pwindow`)
-
 
 ---
 

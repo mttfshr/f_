@@ -98,6 +98,7 @@ Param ph0(0.0);
 Param spread(0.3);
 Param mode(0.0);
 Param view_mode(0.0);
+Param gain(1.0);
 Param bypass(0.0);
 
 // --- Bessel zeros ---
@@ -171,9 +172,13 @@ gy = (t_yp - t_yn) / (2.0 * eps);
 gmag = max(sqrt(gx*gx + gy*gy), 0.0001);
 vf_out = vec(gx/gmag * 0.5 + 0.5, gy/gmag * 0.5 + 0.5, 0.0, 1.0);
 
+// --- Out 3: unsigned magnitude of raw modal interference ---
+mag_out = clamp(abs(total) * gain, 0.0, 1.0);
+
 // --- Outputs ---
 out1 = mix(luma_out, vec(0.0, 0.0, 0.0, 1.0), bypass);
 out2 = mix(vf_out,   vec(0.5, 0.5, 0.0, 1.0), bypass);
+out3 = mix(vec(mag_out, mag_out, mag_out, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
 """
 
 patcher = {
@@ -182,6 +187,7 @@ patcher = {
     "object_name": "chladni_pix",
     "title":       "Chladni",
     "archetype":   "generator",
+    "signal_type": "vecfield out",
 
     "pix_type":           "float32",
 
@@ -198,12 +204,14 @@ patcher = {
         {"name": "spread",        "type": "float", "min": 0.1,     "max": 1.0,    "default": 0.3,   "label": "spread",  "hint": "Mode B falloff width — 0.1=snap 0.5=broad (Mode B only)"},
         {"name": "mode",          "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "mode",    "hint": "0=linear interp between modes  1=Gaussian resonance snap"},
         {"name": "view_mode",     "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "view",    "hint": "0=circular plate  1=unwrapped strip"},
+        {"name": "gain",          "type": "float", "min": 0.0,     "max": 20.0,   "default": 1.0,   "label": "gain",    "hint": "Scales out3 (raw modal magnitude) — no hard ceiling on effective range"},
         {"name": "bypass",        "type": "bypass"},
     ],
 
     "outlets": [
         {"comment": "luma"},
         {"comment": "vecfield", "signal_type": "float32"},
+        {"comment": "magnitude"},
     ],
 
     "codebox": CODEBOX,

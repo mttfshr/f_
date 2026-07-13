@@ -4,7 +4,31 @@
 **Plan**: `.specify/f_vf_advect/plan.md`
 **Build order**: Sequential. Complete each phase before the next. Phase 1 (scratch) is the hard gate — codeboxes are frozen before any build work begins.
 
----
+**2026-07-12: Phases 1-4 confirmed shipped in production** (two-pix
+feedback loop, `separate` Ride/Hold/Snap stage) — the module has been
+hand-maintained directly in `package/patchers/f_vf_advect.maxpat` since
+(this module is on the "never regenerate via build_patcher.py" list).
+This session's work: ADR 7 (mix_amt split into gain + mix, dry/wet
+rollout), ADR 8 (mode → live.menu), and Phase 5 (3rd outlet, gradient of
+accumulated flow) — see plan.md for full detail.
+
+## Phase 5: 3rd outlet — gradient of accumulated flow
+
+- [x] T133 Built directly in production: luma-reduced central-difference gradient of `in3` (feedback texture), same idiom as `f_vf_fieldmap`; encoded RG float32, `0.5=zero vector`
+- [x] T134 Confirmed in Max: out3 tracks accumulated structure
+- [x] T135 Real correction found in Max: out3 must stay live through bypass (not go neutral) — feedback loop keeps running under bypass, derived signal shouldn't flatten. Fixed: `out3 = field;` unconditionally, dead `neutral` local removed. Both `plan.md` (ADR/Phase 5 note) and `spec.md` (acceptance criteria) updated to match.
+- [x] T136 No regression to out1/out2 confirmed
+
+## Phase 6: gain/mix split + mode→live.menu (dry/wet rollout, ADR 7/8)
+
+- [x] T139 Split `mix_amt` into `gain` (live.dial, 0-4.0, default 1.0) and `mix` (live.numbox, 0-100%, default 100); codebox: `driven = clamp(result*gain, 0, 1); mixed = mix(source, driven, mix_pct/100.0)`
+- [x] T140 Hit and fixed real bug: `Param mix(100.0)` collided with the `mix()` operator on the same line — silent black output, no compile error. Renamed internal `Param` to `mix_pct`; UI label/attrui attr/varname/route keyword stay `mix`. Confirmed working in Max after fix.
+- [x] T141 Converted `mode` from live.dial (0-2 stepped) to live.menu with labels `["Ride","Hold","Snap"]`; relaid out grid (`separate`→row2/col0, `mode`→row2/col1) to fit new `mix` control
+- [x] T142 Documented ADR 7 (naming collision + split) and ADR 8 (mode→menu) in `plan.md`
+- [x] T143 Added general `Param`-name-collides-with-operator finding to `jit-gen-codebox` skill
+- [x] T144 Renamed `SKILL.md`/ideas-doc convention from working name `wet` to `mix` per Matt's explicit call
+
+
 
 ## Expected Artifacts
 

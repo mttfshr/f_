@@ -211,12 +211,13 @@ vecfield-shaped candidates were considered:
   gradient needs a luma-reduction step first, same as `f_vf_fieldmap`'s
   approach to an RGB source). Encoded RG float32, `0.5 = zero vector`,
   standard f_vecfield convention.
-- No new param anticipated — reuses the same `scale`/step-size constant
-  `f_vf_fieldmap` uses for its central difference, unless scratch testing
-  shows advect's accumulated texture needs a different epsilon.
-- Bypass behavior: neutral vecfield (`0.5, 0.5`), matching `f_vf_flow`'s
-  bypass convention for vecfield outlets (not `f_vf_glow`'s black-on-
-  bypass, since this outlet isn't an additive layer).
+- Bypass behavior: **passthrough of the incoming source texture**
+  (`out3 = mix(field, sample(in1, uv), bypass)`), not a neutral vecfield.
+  Corrected 2026-07-12 — the module was already built with `neutral
+  (0.5,0.5)` on bypass, which Matt flagged as wrong: out3 isn't
+  "producing a vecfield that happens to be neutral" when bypassed, it
+  should show the plain incoming texture, same spirit as out1's bypass
+  passthrough.
 
 ### Acceptance criteria (addition)
 
@@ -232,5 +233,10 @@ vecfield-shaped candidates were considered:
   information, not a rescaled copy
 - No change to out1 (composite/mix) or out2 (advected) behavior — pure
   addition
-- Bypass sets out3 to neutral, consistent with other vecfield-outlet
-  bypass conventions in the library
+- Bypass does NOT affect out3 — it stays **live**, continuing to output
+  the gradient of the accumulated feedback state (`out3 = field;`
+  unconditionally, no bypass mix). The feedback loop keeps running
+  regardless of `bypass` (this module's whole bypass design keeps the
+  loop warm), so a signal derived from that loop shouldn't flatten just
+  because `out1` shows the dry source. Corrected 2026-07-12 after Max
+  verification — see decision above.

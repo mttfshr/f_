@@ -46,25 +46,189 @@ fader loses that headroom.
 
 ## Finding 1 resolution: separate gain from wet
 
+_(Original discussion below uses "wet" as the working name; renamed to
+"mix" in finding 2's resolution — see there for why.)_
+
 Matt's call: keep **two controls**, not one, for additive-layer modules —
 
 - **`gain`** (can exceed 1.0) — controls how strong the effect itself is,
   independent of blend. Preserves current overdrive range.
-- **`wet`** (0–1, crossfader) — controls how much of that computed layer
-  blends against dry source, as a separate later stage: `out = mix(src,
-  src + layer * gain, wet)`.
+- **`mix`** (0–100%, crossfader) — controls how much of that computed
+  layer blends against dry source, as a separate later stage.
 
 This is the actual audio-sidechain shape (send level vs. return blend are
 different controls), not a cosmetic rename of `strength`. It adds one
 control to every affected module's UI — a real cost, worth confirming
 per-module rather than assuming it's free.
 
-Naming note: avoid calling the new blend param `mix` — `f_vf_advect`
-already has an internal `Param` named `mix_amt` (the exact param the
-HANDOFF bug was about — dial labeled "Strength," wired to `mix_amt`).
-Reserve "mix" for the *outlet* rename (finding 3, below); use `wet`/`dry`
-or `blend` for the new param to avoid two different things both being
-called "mix" in the same module.
+**Real bug found and fixed on `f_vf_prism` (2026-07-12):** the formula
+above was originally written as `out = mix(src, src + layer*gain, mix)`
+— i.e. the "driven"/wet side baked the *source* into itself before
+blending. That's wrong: at `mix=100%` this still shows `src + effect`,
+not the effect alone — dry source bleeds through no matter how far
+toward "wet" the control is turned. Caught empirically by Matt testing
+`f_vf_prism` ("the mix param is doing something unexpected... at 100%
+we should have all wet signal"). **Corrected formula**:
+
+```
+driven = clamp(layer * gain, 0.0, 1.0);      // pure effect layer, NO src added
+out    = mix(src, driven, mix_pct / 100.0);  // mix alone controls src bleed-through
+```
+
+At `mix=0`: pure dry source. At `mix=100`: pure gain-scaled effect layer,
+zero source underneath — an actual crossfade, not "source-plus-effect
+scaled by an increasingly-irrelevant knob." This is a correction to the
+*documented convention itself*, not a one-off module bug — check any
+module built against the original (wrong) formula before this date.
+
+`f_vf_advect` was independently unaffected: its "driven" was already the
+full standalone processed `result` (replacement-shape, not additive-
+layer — no source term to accidentally bake in). `f_chladni` has no
+`mix` control at all (only `gain`, applied solely to its `out3` scalar).
+Neither needed correction. `f_vf_glow`/`f_vf_streak`/`f_caustic` — still
+pending in the rollout — must use the corrected formula from the start.
+
+Naming note (superseded 2026-07-12, see finding 2's resolution): this
+originally warned off calling the new blend param `mix` because
+`f_vf_advect` had an internal `Param mix_amt`. That's moot now —
+`mix_amt` was retired and split into `gain`+`mix` as part of finding 2's
+resolution, and `mix` turned out to have a different, more fundamental
+collision (the codebox's own `mix()` operator) that applies to every
+module, not just this one. See finding 2 for the actual fix (`mix_pct`
+internally, `mix` externally) and the `jit-gen-codebox` skill for the
+general pattern.
+
+## Finding 1 — Vocabulary for composite blend models (2026-07-12)
+
+**Context**: after several failed attempts at `f_vf_prism`'s `mix`/`gain`
+formula (all reverted — see the Global ADR below for the history), it
+became clear "additive-layer" was a negative definition ("not a full
+replacement") covering several genuinely different blend behaviors that
+were getting conflated. This finding names them so future module work
+can pick the right one deliberately instead of by trial and error.
+
+**Three distinct composite models** (audio-synthesis analogy in
+parens):
+
+1. **Additive/Screen** (additive synthesis) — `out = src + effect`.
+   The effect represents *light added on top*; both source and effect
+   are meant to be visible together wherever the effect has content.
+   Superimposition is the correct, intended look here — a lens flare
+   over a photo is supposed to still show the photo.
+2. **Occlusion/Over** (subtractive/gated synthesis) — `out = lerp(src,
+   effect_color, coverage)`, where `coverage` is the effect's own
+   per-pixel presence. The effect represents the material itself
+   changing at that point, not light adding on top — wherever it's
+   present it should locally replace, not visibly stack with, source.
+3. **Global blend** (crossfade) — `out = lerp(src, effect_texture, t)`
+   uniform across the whole frame. Only correct for full-image
+   stylization; produces literal double-exposure whenever the effect is
+   spatially sparse, which was the actual bug behind every failed
+   attempt on `f_vf_prism` today.
+
+**Which model belongs in a module's internal composite outlet — the
+"novel information" test**: a module already exposes source and the
+isolated effect layer as separate outlets. Models 1 and 3 are both
+*trivially reconstructible downstream* from those two outlets alone — a
+generic external "add" or "crossfade" utility needs no module-specific
+knowledge to do either. **Model 2 is the only one that needs
+information the module has and nothing downstream does** — the
+per-pixel `coverage` value living inside its own gate/threshold
+computation, never exposed as its own outlet. That's why occlusion,
+specifically, is the right default for a module's internal composite:
+it's the one thing a person can't already build themselves from what's
+already exposed. This generalizes the same "does this add real,
+non-recoverable information" test the vecfield-outlet findings already
+established (finding 4 and others) to composite outlets too.
+
+**A tempting extension, considered and explicitly rejected (2026-07-12)**:
+could `coverage` be exposed via the isolated-layer outlet's own alpha
+channel, making occlusion externally reconstructible too via a generic
+alpha-aware compositor? Checked against actual Vsynth tooling
+(`vs_alpha_blend`, `vs_alpha_blend_2`, `vs_crssfade`) — **none of them
+read per-pixel texture alpha at all**. "Alpha blend" in Vsynth's naming
+means a manually-supplied blend-*amount* control (a knob, same as any
+crossfader), not per-pixel image transparency; RGB alpha is otherwise
+unused throughout the toolkit as far as this check went. Building new
+alpha-aware compositing tooling to unlock this is a real option but a
+separate, larger project — Matt's call: don't refactor around a
+dimension (alpha) nothing downstream currently uses. **Occlusion stays
+computed internally**, from the module's own private coverage signal
+directly (its gate/threshold value), not routed through alpha at all.
+
+---
+
+## Finding 1 attempt (SUPERSEDED 2026-07-12 — see the vocabulary finding above)
+
+**This entire section describes a formula that was tried on `f_vf_prism`
+and produced exactly the double-image/ghost-edge bug it claims to fix**
+— the "coverage" value below is the *soft, feather-blurred* gate value,
+which rarely reaches a clean 1.0 across its intentionally-wide
+transition band. Using it directly as opacity meant source bled through
+broadly even at `mix=100%` (visible in Matt's screenshot testing).
+Retained only as a record of a wrong turn — see the vocabulary finding
+above for the corrected direction (occlusion using a private coverage
+signal, computed internally, no alpha channel involved) and
+`.specify/f_vf_prism/plan.md` for the full attempt-by-attempt history.
+
+**Context (2026-07-12, after `f_vf_prism` testing)**: even after fixing
+the source-bleed bug above (`driven` = pure effect layer, no source
+baked in), a plain linear crossfade `mix(src, driven, mix_pct/100)` is
+still the wrong shape for additive-layer modules specifically. Matt's
+diagnosis: at `mix=100%` the current (fixed) behavior is already
+correct — sparse effect, source peeking through wherever the effect has
+no content, exactly as expected. The actual problem is at intermediate
+values like 50%, where a linear crossfade blends the *entire frame* at a
+uniform ratio, producing a literal double-exposure look (each pixel
+becomes "half of two visually-unrelated images") rather than "passthrough
+with the effect applied at half strength."
+
+**Root cause**: additive-layer effects (`f_vf_prism`'s fringes,
+presumably `f_vf_glow`'s bloom, `f_vf_streak`'s trails, `f_caustic`'s
+convergence) are inherently *sparse* — the effect layer is already
+near-zero everywhere except where its own internal gating/threshold
+logic fires. A uniform crossfade fraction ignores that sparsity and
+treats the whole frame as if the effect were dense everywhere.
+
+**Decision**: use the effect's own magnitude as a per-pixel
+coverage/opacity value, and composite it **over** the source (standard
+alpha "over" operator), with `mix` scaling that per-pixel opacity —
+not scaling a frame-uniform crossfade fraction:
+
+```
+coverage = clamp(max(layer_r, layer_g, layer_b) * gain, 0.0, 1.0);  // per-pixel: how much effect exists here
+out      = mix(src, effect_color, coverage * mix_pct / 100.0);
+```
+
+This reconciles both observations:
+- **mix=100%**: wherever `coverage≈1` (the effect is actually active),
+  source is fully replaced — same sparse-but-correct look already
+  confirmed working. Wherever `coverage≈0`, source persists even at
+  100% mix, because there's nothing there to composite — this is the
+  effect's natural sparsity, not a bug.
+- **mix=50%**: only the already-active regions get pulled partway
+  toward the effect, at their own local strength; the passthrough stays
+  intact everywhere the effect has no content. This is "passthrough
+  with wet applied at 50%," not a frame-uniform double exposure.
+
+**Why this doesn't apply to `f_vf_advect`**: replacement-shape modules
+have no sparse "coverage" concept — the entire frame is always fully
+"covered" by the processed result (there's no region where the effect
+has literally zero content), so a plain frame-uniform crossfade is
+already the correct shape for that class. This distinction — additive-
+layer (coverage-composited) vs. replacement (plain crossfade) — is now
+the standing rule for which formula a given module's rollout should use.
+
+**Status**: direction confirmed by Matt, not yet implemented in
+`f_vf_prism`'s codebox (pending — will need its own Max verification
+pass, since `coverage` needs a real per-effect definition of "layer
+magnitude," which will differ per module: prism's is
+`max(prism_r,g,b)`; glow/streak/caustic's own coverage measure is TBD
+per-module once each is reached).
+
+---
+
+
 
 ## Finding 2: crossfader is a UI/param-type swap only
 
@@ -73,6 +237,39 @@ widget (`live.slider` horizontal, possibly styled, vs. `live.dial`).
 Before deciding, check `vsynth-bpatcher/SKILL.md` for whatever param-
 widget convention already exists, so this doesn't become an unexplained
 one-off next to every other module's dials.
+
+**Resolved 2026-07-12.** `SKILL.md` has no existing dry/wet or crossfader
+convention — `live.dial` is the default for float params, `live.numbox`
+is otherwise reserved for integer/seed params. Matt's decision, made
+fresh for this control specifically:
+
+- **`mix`** — unipolar **0–100%**, not bipolar. (Renamed from an
+  earlier "wet" working name to "mix" per Matt's explicit call, to match
+  the library's existing informal usage.) A bipolar -100/100 range
+  was considered and dropped: nothing in finding 1's design gives the
+  negative half a meaning (`mix(src, src + layer*gain, mix)` isn't
+  defined outside [0,1] without inventing new behavior for negative
+  values), so unipolar keeps the control literal — 0% = fully dry, 100%
+  = fully wet, no undefined region.
+- **Widget: `live.numbox`, deliberately** — not `live.dial`. This is a
+  new, intentional convention specifically for the `mix` control,
+  distinct from the float-param default elsewhere in the library. Displays
+  as a percentage.
+- **Naming collision, found on `f_vf_advect` (2026-07-12):** `mix` is
+  also the codebox's built-in blend operator. A `Param` literally named
+  `mix` used inside a call to `mix()` on the same line compiles clean
+  but produces solid black output. Fix: name the internal codebox
+  `Param` `mix_pct` instead, keeping the UI-facing label/`attrui` `attr`/
+  `varname`/route keyword as plain `mix` — those are outside the
+  codebox and unaffected. See `jit-gen-codebox` skill for the general
+  pattern (same class as the `active`/`inN` collisions already
+  documented there).
+- Codebox: `out1 = mix(src, src + layer * gain, mix_pct / 100.0);` —
+  divide by 100 once at the top of the wet/gain stage, everywhere else in
+  the codebox continues to work in the existing 0–1 `mix()` convention.
+
+This is now the standing `f_` convention for any future wet/dry control,
+not just the six modules in this rollout.
 
 ## Finding 3: outlet rename
 

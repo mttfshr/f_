@@ -78,8 +78,8 @@ radial caustic.
 
 | Param | UI | Range | Default | Notes |
 |---|---|---|---|---|
-| `strength` | live.dial | 0.0–1.5 | 0.0 | Wet/dry crossfade — `composited = mix(source_pass, composite, strength)`. Missing from this table until 2026-07-11; confirmed wired in `codebox_v2.gen` (see plan.md's bug-fix ADR — `definition.py` had been pointing at a stray broken `codebox_v3.gen` that didn't reference this param at all) |
-| `intensity` | live.dial | 0.0–2.0 | 0.5 | Overall caustic brightness scale |
+| `mix` | live.numbox | 0.0–100.0% | 0.0 | Dry/wet crossfade — `composited = mix(source_pass, composite, mix_pct/100.0)`. Renamed from `strength` 2026-07-12 (library-wide `gain`/`mix` naming convention, vsynth-bpatcher skill); range capped to true 0–100% (dropping the old 0–1.5 extrapolation zone). Internal codebox `Param` is `mix_pct` (external label/attr/varname stay `mix`) to avoid colliding with the codebox's own `mix()` operator. Default kept at 0 (off by default, matching this module's original load behavior — not 100 like `f_vf_prism`/`f_vf_advect`'s convention; Matt's explicit call 2026-07-12) |
+| `gain` | live.dial | 0.0–2.0 | 0.5 | Overall caustic brightness scale. Renamed from `intensity` 2026-07-12 to match the library-wide naming convention — same math, name only |
 | `scale` | live.dial | 0.0–1.0 | 0.3 | Streamline trace distance. 0 = no trace (no caustic). 1 = full-frame trace. |
 | `softness` | live.dial | 0.0–1.0 | 0.3 | Band sharpness. 0 = hard bright lines. 1 = diffuse glow. |
 | `color_shift` | live.dial | 0.0–1.0 | 0.0 | Chromatic dispersion. 0 = monochrome bands. >0 = warm/cool hue split across bands. |
@@ -160,7 +160,7 @@ the same field geometry — coherent optical character without parameter coordin
   zone around fixed point. out1 shows source with bright overlay. out2 shows isolated
   ring.
 - `scale = 0`: no streamline trace, no accumulation, out1 = source passthrough, out2 = black.
-- `intensity = 0`: caustic present structurally but invisible (multiplied out). out1 = source.
+- `gain = 0`: caustic present structurally but invisible (multiplied out). out1 = source.
 - `softness = 0`: hard bright lines at convergence zone boundaries.
 - `softness = 1`: diffuse glow, no hard edges.
 - `color_shift = 0`: monochrome caustic bands.
@@ -228,31 +228,43 @@ turned out to already have — this rollout's findings 1–3 aren't always
 new work; sometimes they're a naming/UI pass on an already-correct
 architecture.
 
-### Decision (resolved)
+### Decision (resolved, and later renamed 2026-07-12)
 
-- Rename `strength` → `wet`, **cap range at true 0–1** (dropping the
+- Rename `strength` → `mix`, **cap range at true 0–100%** (dropping the
   1.0–1.5 extrapolation zone) — matches the crossfader framing finding 2
   wants, rather than keeping the linear-extrapolation-past-composite
-  behavior the old 0–1.5 range allowed
-- Rename `intensity` → `gain`, keep its existing 0–2.0 range and 0.5
-  default — it already functions as the gain-equivalent (scales
-  `caustic_r/g/b` before the additive layer forms); renaming makes that
-  explicit rather than leaving it named for what it does mechanically
-  rather than what role it plays in the dry/wet frame
-- Add crossfader-styled UI widget for `wet` (check
-  `vsynth-bpatcher/SKILL.md` for the established convention), replacing
-  the current `live.dial`
-- Outlet comment: `composite` → `mix`
+  behavior the old 0–1.5 range allowed. (Originally decided as a rename
+  to `wet`; superseded 2026-07-12 by the library-wide canonical naming
+  decision — `mix` is the one and only name for this role everywhere,
+  never `wet`/`strength`/`blend`. See `vsynth-bpatcher/SKILL.md`'s
+  "Canonical naming: `gain` vs `mix`" section.)
+- Rename `intensity` → `gain` (not `wet`'s counterpart `gain` from the
+  original ADR wording — same rename, same rationale, just also now the
+  one canonical name for this role library-wide), keep its existing
+  0–2.0 range and 0.5 default — it already functions as the gain-
+  equivalent (scales `caustic_r/g/b` before the additive layer forms)
+- `live.numbox` widget for `mix` (confirmed against `vsynth-bpatcher/SKILL.md`'s
+  established convention) — internal `Param mix_pct` to dodge the
+  `mix()` operator collision, external label/attr/varname stay `mix`
+- Outlet comment: kept as `composite` — **not** renamed to `mix`,
+  correcting the original ADR's plan. `f_vf_prism`'s own shipped module
+  (the precedent this rollout is following) also kept its outlet
+  comment as `composite`, never renamed it — the outlet-rename half of
+  the original finding 3 never actually happened in practice for any
+  module in this rollout, so `f_caustic` matches real precedent by not
+  doing it either.
 
-### Acceptance criteria (addition)
+### Acceptance criteria (addition, done 2026-07-12)
 
-- `wet=0` → out1 (mix) is clean source regardless of `gain`
-- `wet=1` → matches current `strength=1.0` behavior exactly (regression
-  check against pre-rename behavior, once rebuilt from the corrected
-  `codebox_v2.gen`)
-- No change to out2 (caustic, isolated layer)
-- Bypass behavior unchanged
-- **First priority**: confirm in Max that the vecfield inlet actually
-  produces caustic structure at all, now that the codebox reference is
-  fixed — this is a regression check against the bug, not just the
-  naming pass
+- `mix=0` → out1 (composite) is clean source regardless of `gain` — ✓
+  (matches original default-off load behavior)
+- `mix=100` → matches the old `strength=1.0` behavior exactly — ✓
+  (same formula, just renamed and rescaled from 0–1.5 dial to 0–100
+  numbox)
+- No change to out2 (caustic, isolated layer) — ✓
+- Bypass behavior unchanged — ✓
+- Rebuild verified via `build_patcher.py`; diff against pre-rename
+  `.maxpat` showed only the expected renames (`route` message list,
+  `attr`/`varname`/`parameter_longname`/`parameter_shortname`, widget
+  class `live.dial`→`live.numbox` for `mix`, label text) — no
+  unintended structural changes

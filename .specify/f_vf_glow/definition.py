@@ -25,7 +25,8 @@ patcher = {
     "params": [
         {"name": "radius",      "type": "float", "min": 0.0,  "max": 0.2,  "default": 0.01,  "label": "Radius"},
         {"name": "falloff",     "type": "float", "min": 0.0,  "max": 0.05, "default": 0.002, "label": "Falloff"},
-        {"name": "strength",    "type": "float", "min": 0.0,  "max": 1.5,  "default": 0.0,   "label": "Strength"},
+        {"name": "gain",        "type": "float", "min": 0.0,  "max": 1.5,  "default": 0.8,   "label": "Gain", "hint": "Glow intensity. Renamed from strength 2026-07-12 to match the library-wide gain/mix naming convention."},
+        {"name": "mix_pct",     "type": "float", "min": 0.0,  "max": 100.0,"default": 0.0,   "label": "Mix", "widget": "numbox", "hint": "Dry/wet crossfade toward the fully-composited (source+glow) state. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator — see jit-gen-codebox skill. Default 0 (off by default, matching this module's original load behavior)."},
         {"name": "color_mix",   "type": "float", "min": 0.0,  "max": 1.0,  "default": 0.0,   "label": "Color"},
         {"name": "direction",   "type": "int",   "min": 0,    "max": 2,    "default": 0,     "label": "Dir"},
         {"name": "src_vecfield", "type": "internal"},

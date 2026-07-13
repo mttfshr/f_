@@ -95,7 +95,8 @@ When in0 is unconnected: output is black.
 
 | Param | UI | Range | Default | Notes |
 |---|---|---|---|---|
-| `strength` | live.dial | 0.0–1.5 | 0.0 | Wet/dry mix of streak layer into out0. out1 unaffected. Ceiling raised to 1.5 and default reset to 0.0 during library standardization — corrected 2026-07-11 against actual `definition.py`; the rest of this table matches shipped code exactly. |
+| `gain` | live.dial | 0.0–1.5 | 0.3 | Streak intensity, additive over source before the `mix` blend stage. Renamed from `strength` 2026-07-12 to match the library-wide `gain`/`mix` naming convention (vsynth-bpatcher skill) — same math, name only. Default changed from 0.0 to 0.3 (matching the codebox's own internal compile-time default) since `mix` (default 0) is now the master off-switch. |
+| `mix` | live.numbox | 0.0–100.0% | 0.0 | Dry/wet crossfade toward the fully-composited (source+streak) state. Added 2026-07-12. Internal `Param mix_pct` (external label/attr/varname stay `mix`) to avoid colliding with the codebox's own `mix()` operator. Default 0 — off by default, preserving this module's original load behavior. |
 | `length` | live.dial | 0.0–20.0 | 0.15 | Streamline trace distance in UV space. Controls streak reach. |
 | `falloff` | live.dial | 0.0–2.5 | 0.0 | 0 = uniform blur, 1 = linear trailing smear. >1 = negative tail weights (expressive artifact territory). |
 | `color_shift` | live.dial | 0.0–20.0 | 0.0 | Chromatic separation along streak direction. 0 = none. |
@@ -190,55 +191,56 @@ vfstreak_pix out1 → out1 (streak layer isolated, @type char)
 
 ---
 
-## Reframe (2026-07-11): gain/wet split + outlet rename (findings 1–3)
+## Reframe (2026-07-12): gain/mix split + naming retrofit — done
 
 ### Context
 
 Library-wide convention change (`ideas/dry_wet_gain_and_novel_field_outlet.md`,
-findings 1–3). `f_vf_streak` is in the additive-layer group this applies
-to — its composite is already explicitly additive (see Clarifications
-above: "Additive (`source + streak * strength`)"), same shape as
+findings 1–3), superseded by the 2026-07-12 canonical-naming decision
+(`vsynth-bpatcher/SKILL.md`'s "Canonical naming: `gain` vs `mix`"): the
+effect-intensity role is always `gain`, the blend role is always `mix` —
+never `strength`/`intensity`/`wet`. `f_vf_streak`'s composite was
+already explicitly additive (see Clarifications above), same shape as
 `f_vf_glow`.
 
-### Decision
+### What changed
 
-- Rename `strength` → `gain`, keep its current 0–1.5 range and default
-  of 0.0 (matches `f_vf_glow`'s corrected ceiling)
-- Add new `wet` param, float 0–1, crossfader-styled UI widget (check
-  `vsynth-bpatcher/SKILL.md` for the established widget convention)
-- Codebox: two-stage form —
+- `strength` → `gain`, same 0–1.5 range, default changed 0.0 → 0.3
+  (matches the codebox's own internal compile-time default, since `mix`
+  now carries the off-by-default role)
+- New `mix` param: `live.numbox`, 0–100%, internal `Param mix_pct`,
+  default 0
+- Codebox composite rewritten to the two-stage form confirmed correct on
+  `f_vf_prism`:
   ```
-  layer_r = clamp(src_r + streak_r * gain, 0.0, 1.0);
-  out1_r  = mix(src_r, layer_r, wet);
+  driven_r = clamp(src_r + streak_r * gain, 0.0, 1.0);
+  out1_r   = mix(src_r, driven_r, mix_pct / 100.0);
   ```
-  (and analogously for g/b), replacing the current direct
-  `source + streak*strength` composite
-- Outlet comment: `composite` → `mix`
+  (and analogously for g/b) — `driven` is the complete composited state
+  (source included), not a bare effect layer
+- Outlet comment left as `composite` (not renamed to `mix`) — matches
+  actual shipped precedent on `f_vf_prism`/`f_vf_glow`/`f_caustic`
 
-### Rationale
+### One pre-existing labeling bug found and fixed as a rebuild side effect
 
-Same as the library-wide finding 1 and the identical change already made
-to `f_vf_glow` — `gain` preserves the ability to overdrive the streak
-layer itself, `wet` gives a separate, bounded blend control, matching the
-audio-sidechain shape.
+The vecfield inlet was labeled "vecfield in" instead of the plain
+`"vecfield"` this fully-`f_vf_`-typed module should use (same issue
+found and fixed on `f_vf_glow`). Rebuild corrected it.
 
 ### No change to finding 4
 
-`f_vf_streak`'s field consumption is the same 8-step recursive walk
-structure as `f_vf_glow` — the ideas doc's finding 4 called this "leans
-pass, still genuinely ambiguous," specifically flagging that the resolved
-multi-step trajectory (`pos7 - pos0`, or a falloff-weighted average
-direction) might be vecfield-shaped in a way `f_vf_glow`'s scalar
-accumulation isn't. Not resolved here — this reframe is scoped to
-findings 1–3 only; the 3rd-outlet question for this module is still
-open and would need its own closer look before deciding either way.
+Still an open, unresolved question for this module — the ideas doc
+flags the resolved multi-step trajectory as a possible but unconfirmed
+3rd-outlet candidate, distinct from `f_vf_glow`'s scalar-accumulation
+read. Not addressed here.
 
-### Acceptance criteria (addition)
+### Verification
 
-- `wet=0` → out1 (mix) is clean source regardless of `gain`
-- `wet=1`, `gain=1.0` → out1 matches the old `strength=1.0` composite
-  behavior exactly (regression check)
-- `gain` scales streak intensity independent of `wet`
-- No change to out2 (streak, isolated) — still the raw accumulated
-  streak layer
-- Bypass behavior unchanged
+- Rebuild via `build_patcher.py`, JSON-validated
+- Diff against pre-rename `.maxpat` showed only the expected changes:
+  `route` message list, `gain`/`mix_pct` attr/varname/parameter_*
+  fields, widget class for `mix_pct` (`live.dial`→`live.numbox`), label
+  text, plus the one unrelated pre-existing labeling bug above — no
+  unintended structural changes
+- Not yet verified live in Max — do that before considering this
+  module's rollout fully closed

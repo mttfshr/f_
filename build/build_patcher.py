@@ -981,7 +981,12 @@ def build(defn):
 
     # Per-param boxes (grid — float and int only)
     for n, p in enumerate(ui_params):
-        if p["type"] == "float":
+        if p["type"] == "float" and p.get("widget") == "numbox":
+            # opt-in override for the library's mix/dry-wet crossfade
+            # convention (vsynth-bpatcher/SKILL.md) -- live.numbox instead
+            # of the float-param default live.dial
+            boxes.append(numbox_box(n, p, object_name))
+        elif p["type"] == "float":
             boxes.append(dial_box(n, p, object_name))
         elif p["type"] == "int":
             boxes.append(numbox_box(n, p, object_name))

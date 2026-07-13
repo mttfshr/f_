@@ -233,8 +233,8 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Chladni",
-                                "Chladni"
+                                "Chladni \u2207",
+                                "Chladni \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
@@ -777,7 +777,7 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "∇ Generators",
+                    "text": "\u2207 Generators",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -923,7 +923,7 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "∇ Processors",
+                    "text": "\u2207 Processors",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,

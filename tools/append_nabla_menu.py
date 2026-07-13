@@ -1,11 +1,11 @@
 import json
 
-PATH = "/Users/matt/Github/f_/patchers/f_modules.maxpat"
+PATH = "/Users/matt/Github/f_/package/patchers/f_modules.maxpat"
 
 # filenames (as they appear in the *_file live.menu enums) that take or
-# produce an f_vecfield -- per README's f_vf_ family list plus the three
-# non-vf_-prefixed consumers (f_caustic, f_lens's field inlet, f_weave's
-# optional vecfield inlet)
+# produce an f_vecfield -- per README's f_vf_ family list plus the
+# non-vf_-prefixed consumers/producers (f_caustic, f_lens's field inlet,
+# f_weave's optional vecfield inlet, f_chladni's out2 vecfield outlet)
 VECFIELD_MODULES = {
     "weave",
     "vf_seeds",
@@ -24,6 +24,7 @@ VECFIELD_MODULES = {
     "vf_chroma",
     "vf_split",
     "vf_potential",
+    "chladni",
 }
 
 NABLA = " \u2207"

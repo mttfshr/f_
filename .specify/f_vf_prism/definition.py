@@ -10,10 +10,12 @@ patcher = {
     "presentation_width":  190,
     "presentation_height": 160,
 
-    # Two outlets: composite (primary) and isolated prism layer
+    # Three outlets: composite (primary), isolated prism layer, gate-
+    # weighted dispersion direction (float32 vecfield, ADR1)
     "outlets": [
         {"comment": "composite"},
         {"comment": "prism", "color": [0.6196078431372549, 0.9529411764705882, 0.6588235294117647, 1.0]},
+        {"comment": "vecfield", "signal_type": "float32"},
     ],
 
     # Inlet 1: source texture
@@ -32,12 +34,13 @@ patcher = {
         {"name": "threshold",       "type": "float", "min": 0.0, "max": 1.0,  "default": 0.7,   "label": "Threshold", "hint": "Luma gate — only bright pixels at sample position cast prism color"},
         {"name": "threshold_width", "type": "float", "min": 0.0, "max": 0.5,  "default": 0.1,   "label": "Gate Width","hint": "Softness of the luma gate — blob boundary edge"},
         {"name": "feather",         "type": "float", "min": 0.0, "max": 0.5,  "default": 0.1,   "label": "Feather",   "hint": "Inter-channel blend — 0=hard RGB separation, high=smooth spectral gradient"},
-        {"name": "strength",        "type": "float", "min": 0.0, "max": 2.0,  "default": 1.0,   "label": "Strength",  "hint": "Prism intensity — additive over source on out1"},
+        {"name": "gain",            "type": "float", "min": 0.0, "max": 2.0,  "default": 1.0,   "label": "Gain",  "hint": "Prism intensity — additive over source, before mix"},
+        {"name": "mix_pct",         "type": "float", "min": 0.0, "max": 100.0, "default": 100.0, "label": "Mix", "widget": "numbox", "hint": "% strength toward the fully-composited (source+effect) state — a continuous blend, not spatial masking. mix=30 means every pixel is 30% of the way from source toward its own 100%-effect value. (internal Param named mix_pct to avoid colliding with the codebox's mix() operator — see jit-gen-codebox skill)"},
         {"name": "src_vecfield",    "type": "internal"},
         {"name": "src_length_mod",  "type": "internal"},
         {"name": "src_width_mod",   "type": "internal"},
         {"name": "bypass",          "type": "bypass"},
     ],
 
-    "codebox": open("/Users/matt/Github/f_/.specify/f_vf_prism/codebox_v15.gen").read(),
+    "codebox": open("/Users/matt/Github/f_/.specify/f_vf_prism/codebox_v17.gen").read(),
 }

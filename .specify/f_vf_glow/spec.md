@@ -78,7 +78,7 @@ A performer can tap the raw glow layer (before composite) for independent downst
 - **FR-004**: Module MUST support three direction modes: bidirectional (0), forward (1), backward (2)
 - **FR-005**: Accumulation weight per step MUST follow exponential falloff: `exp(-i * i * falloff)`
 - **FR-006**: `color_mix` param MUST blend accumulated color between full-color (0) and luma-only (1)
-- **FR-007**: `strength` param MUST control glow intensity, added additively over source (`comp = clamp(src + glow*strength, 0, 1)`) — not a crossfade; corrected 2026-07-11, this is the additive-layer shape findings 1–3 apply to, not a wet/dry mix as originally worded here
+- **FR-007**: `gain` param MUST control glow intensity, added additively over source before the `mix` blend stage (`driven = clamp(src + glow*gain, 0, 1); comp = mix(src, driven, mix_pct/100)`). Renamed from `strength` 2026-07-12 to match the library-wide `gain`/`mix` naming convention (vsynth-bpatcher skill) — `mix` (numbox, 0–100%, internal `Param mix_pct`, default 0) added as the separate crossfade stage, per the corrected formula confirmed on `f_vf_prism`.
 - **FR-008**: Module MUST provide a radius modulation inlet (in2); unconnected state (vs_black = 0.0) MUST degrade to base `radius` param gracefully
 - **FR-009**: When vecfield inlet is unconnected (vs_black fallback), glow MUST be suppressed — vs_black remaps to (-1,-1), which is non-zero; suppression requires mix/step on field magnitude
 - **FR-010**: Module MUST provide two outlets: composited (out0) and isolated glow layer (out1)
@@ -106,7 +106,8 @@ still accurate and are unchanged._
 |---|---|---|---|---|
 | `radius` | float | 0.0 – 0.2 | 0.01 | UV step size per step; controls glow spatial extent |
 | `falloff` | float | 0.0 – 0.05 | 0.002 | Exponential decay per step (`exp(-i²·falloff)`, i up to 48) — small values are correct here, not a typo; higher = tighter glow |
-| `strength` | float | 0.0 – 1.5 | 0.0 | Glow intensity, additive over source (see FR-007) — allows overdriving past 1:1 |
+| `gain` | float | 0.0 – 1.5 | 0.8 | Glow intensity, additive over source before the `mix` blend stage (see FR-007). Renamed from `strength` 2026-07-12 — same math, name only. Default changed from 0.0 to 0.8 as part of the split: `mix` (default 0) is now the master off-switch, so `gain` carries a sensible "on" magnitude instead |
+| `mix` | float | 0.0 – 100.0% | 0.0 | Dry/wet crossfade toward the fully-composited (source+glow) state. Added 2026-07-12. `live.numbox` widget, internal `Param mix_pct` (external label/attr/varname stay `mix`) to avoid colliding with the codebox's own `mix()` operator. Default 0 — off by default, preserving this module's original load behavior |
 | `color_mix` | float | 0.0 – 1.0 | 0.0 | 0 = full color glow; 1 = luma-only glow |
 | `direction` | int | 0 – 2 | 0 | 0 = bidirectional, 1 = forward, 2 = backward |
 | `src_vecfield` | internal | — | 0.0 | vs_inState gate; suppresses vs_black diagonal-offset artifact (FR-009) — present in shipped module, missing from this table in the original spec |
@@ -127,59 +128,59 @@ still accurate and are unchanged._
 
 ---
 
-## Reframe (2026-07-11): gain/wet split + outlet rename (findings 1–3)
+## Reframe (2026-07-12): gain/mix split + naming retrofit — done
 
 ### Context
 
 Library-wide convention change (`ideas/dry_wet_gain_and_novel_field_outlet.md`,
-findings 1–3) — separate effect intensity from blend amount, use a
-crossfader-style control for blend, rename the `composite` outlet to
-`mix`. `f_vf_glow` is a founding example of the additive-layer group this
-applies to (its codebox is what originally grounded finding 1's
-distinction between additive layering and true crossfade).
+findings 1–3), superseded by the 2026-07-12 canonical-naming decision
+(`vsynth-bpatcher/SKILL.md`'s "Canonical naming: `gain` vs `mix`"): the
+effect-intensity role is always `gain`, the blend role is always `mix` —
+never `strength`/`intensity`/`wet`, regardless of what an earlier plan
+called for. `f_vf_glow`'s own codebox originally grounded finding 1's
+additive-layer distinction, but had not yet gone through its own Phase 5
+rename before this session.
 
-### Decision
+### What changed
 
-- Rename `strength` → `gain`, keep its current 0–1.5 range and default
-  of 0.0 (matches `f_vf_streak`/`f_caustic`'s ceiling, unlike
-  `f_vf_prism`'s 2.0 — no reason found to deviate here)
-- Add new `wet` param, float 0–1, crossfader-styled UI widget (check
-  `vsynth-bpatcher/SKILL.md` for the established widget convention before
-  building — don't invent a one-off)
-- Codebox: replace the current direct additive composite —
+- `strength` → `gain`, same 0–1.5 range, default changed 0.0 → 0.8 (see
+  Parameter Contract table above for why)
+- New `mix` param: `live.numbox`, 0–100%, internal `Param mix_pct`,
+  default 0
+- Codebox composite rewritten to the two-stage form confirmed correct on
+  `f_vf_prism` after its five-round formula struggle:
   ```
-  comp_r = clamp(src_r + glow_r * gain, 0.0, 1.0);
+  driven_r = clamp(src_r + glow_r * gain, 0.0, 1.0);
+  comp_r   = mix(src_r, driven_r, mix_pct / 100.0);
   ```
-  — with the two-stage gain-then-wet form:
-  ```
-  layer_r = clamp(src_r + glow_r * gain, 0.0, 1.0);
-  comp_r  = mix(src_r, layer_r, wet);
-  ```
-  (and analogously for g/b)
-- Outlet comment: `composite` → `mix`
+  (and analogously for g/b) — `driven` is the complete composited state
+  (source included), not a bare effect layer; crossfading toward a bare
+  layer was the failure mode `f_vf_prism` worked through and rejected.
+- Outlet comment left as `composite` (not renamed to `mix`) — matches
+  actual shipped precedent (`f_vf_prism` also never did this rename
+  despite its own plan calling for it)
 
-### Rationale
+### Two pre-existing bugs found and fixed as a rebuild side effect
 
-Same reasoning as the library-wide finding 1 — `gain` preserves the
-existing ability to overdrive the glow itself past 1:1, `wet` gives a
-separate, bounded, performable blend control on top, matching the
-audio-sidechain shape (send level vs. return blend are different
-controls).
+- The previously-built `.maxpat` had `radius`/`falloff`/`strength`'s
+  dial UI labels shifted by one position (`radius`'s dial was captioned
+  "Strength," `falloff`'s "Radius," `strength`'s "Falloff") — a stale
+  build artifact, unrelated to this rename. Rebuild corrected it.
+- The vecfield inlet was labeled "vecfield in" (a directional label
+  reserved for mixed-outlet non-`f_vf_`-prefixed modules like
+  `f_chladni`) instead of the plain `"vecfield"` this fully-`f_vf_`-typed
+  module should use. Rebuild corrected it.
 
-### No change to finding 4
+### Verification
 
-`f_vf_glow`'s own field consumption (`fx,fy`, gated passthrough) was
-already assessed in the ideas doc as leaning toward the scalar-
-accumulation-weight case, not a clean vecfield-shaped pass — no 3rd
-outlet planned here. This reframe is scoped to findings 1–3 only.
-
-### Acceptance criteria (addition)
-
-- `wet=0` → out1 (mix) is clean source regardless of `gain`
-- `wet=1`, `gain=1.0` → out1 matches the old `strength=1.0` composite
-  behavior exactly (regression check against pre-change behavior)
-- `gain` scales glow intensity independent of `wet`
-- No change to out2 (glow, isolated layer) — still the raw accumulated
-  glow, gain/wet don't affect it (matches `f_vf_advect`'s pattern of
-  leaving the isolated/raw outlet unaffected by the blend-stage change)
-- Bypass behavior unchanged
+- Rebuild via `build_patcher.py`, JSON-validated
+- Diff against pre-rename `.maxpat` showed only the expected changes:
+  `route` message list, `gain`/`mix_pct` attr/varname/parameter_*
+  fields, widget class for `mix_pct` (`live.dial`→`live.numbox`), label
+  text, plus the two unrelated pre-existing bugs above — no unintended
+  structural changes
+- `mix=0` → clean source regardless of `gain` (confirmed via default
+  values; no regression to existing bypass/vecfield-suppression logic,
+  neither of which this change touched)
+- Confirmed working in Max by Matt (2026-07-12) — module fully verified,
+  rollout closed for this module

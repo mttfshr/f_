@@ -2,8 +2,13 @@
 // Directional blur: accumulate source texture samples along vecfield streamlines
 // in1 = source texture (char)
 // in2 = f_vecfield (float32, RG=XY, 0.5=zero vector)
+// `strength` renamed to `gain`; `mix` (numbox, 0-100%, internal Param
+// mix_pct) added 2026-07-12 per the library-wide gain/mix naming
+// convention (vsynth-bpatcher skill) -- composite rewritten to the
+// two-stage driven/mix crossfade confirmed correct on f_vf_prism.
 
-Param strength(0.3);
+Param gain(0.3);
+Param mix_pct(0.0);
 Param length(0.15);
 Param falloff(0.0);
 Param color_shift(0.0);
@@ -140,9 +145,14 @@ src_px = vec(src_r, src_g, src_b, 1.0);
 // out2: isolated streak layer — black on bypass
 out2 = mix(streak_layer, vec(0.0, 0.0, 0.0, 1.0), bypass);
 
-// out1: additive composite — streak adds light over source, scaled by strength
-composite = vec(clamp(src_r + streak_r * strength, 0.0, 1.0),
-                clamp(src_g + streak_g * strength, 0.0, 1.0),
-                clamp(src_b + streak_b * strength, 0.0, 1.0),
+// out1: driven = complete effect-applied state (source + streak*gain);
+// mix is a plain continuous blend toward that state, not spatial
+// masking -- same shape confirmed correct on f_vf_prism.
+driven_r = clamp(src_r + streak_r * gain, 0.0, 1.0);
+driven_g = clamp(src_g + streak_g * gain, 0.0, 1.0);
+driven_b = clamp(src_b + streak_b * gain, 0.0, 1.0);
+composite = vec(mix(src_r, driven_r, mix_pct / 100.0),
+                mix(src_g, driven_g, mix_pct / 100.0),
+                mix(src_b, driven_b, mix_pct / 100.0),
                 1.0);
 out1 = mix(composite, src_px, bypass);

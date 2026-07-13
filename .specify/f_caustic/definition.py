@@ -22,8 +22,8 @@ patcher = {
     ],
 
     "params": [
-        {"name": "strength",    "type": "float", "min": 0.0, "max": 1.5, "default": 0.0,  "label": "Strength"},
-        {"name": "intensity",   "type": "float", "min": 0.0, "max": 2.0, "default": 0.5,  "label": "Intens"},
+        {"name": "mix_pct",     "type": "float", "min": 0.0, "max": 100.0, "default": 0.0,  "label": "Mix", "widget": "numbox", "hint": "Dry/wet crossfade toward the fully-composited (source+caustic) state. Renamed from strength 2026-07-12, range capped to true 0-100% (dropping the old 0-1.5 extrapolation zone). Internal Param named mix_pct to avoid colliding with the codebox's mix() operator."},
+        {"name": "gain",        "type": "float", "min": 0.0, "max": 2.0, "default": 0.5,  "label": "Gain", "hint": "Caustic brightness scale. Renamed from intensity 2026-07-12 to match the library-wide gain/mix naming convention."},
         {"name": "scale",       "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,  "label": "Scale"},
         {"name": "softness",    "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,  "label": "Soft"},
         {"name": "color_shift", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0,  "label": "Color"},

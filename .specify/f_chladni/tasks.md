@@ -63,6 +63,21 @@ _Last updated: 2026-06-17_
 
 ---
 
+## Decision 7: out3 magnitude scalar + gain param (2026-07-12)
+
+**Phases 0-3 above confirmed already shipped in production** (`note`/`amp`
+interface, dual luma+vecfield outlet, verified working). This section is
+new work: Decision 7's out3 magnitude scalar + `gain` param, now built
+and confirmed in Max.
+
+- [x] T133 Add `gain` param and `out3` outlet to `definition.py`, `out3 = clamp(abs(total)*gain, 0, 1)`, black on bypass
+- [x] T134 Rebuild via `build/build_patcher.py`; validate JSON
+- [x] T135 Verify in Max: `gain` affects only `out3`, confirmed no effect on `out1`/`out2`; `gain=1.0` default confirmed visually correct, no further tuning needed
+- [x] T136 Rewrite `docs/f-reference/f_chladni.md` to reflect as-built state (was badly stale, pre-2026-06-17 reframe)
+- [ ] T137 Update HANDOFF.md and README.md if needed
+
+---
+
 ## Phase 4: Companion Patches
 
 - [ ] T122 Design audio→note mapping: sigmund~ pitch output → MIDI note scaling; document approach

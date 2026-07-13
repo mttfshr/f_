@@ -118,6 +118,131 @@ finalizing, but not blocking the plan on it.
   their `gain`/`strength` attrui rewired on rebuild (same cost as any
   other param rename in this library, not unique to this module)
 
+**Real bug found and fixed, 2026-07-12** (round 1): the first build used
+`driven_r = clamp(src_r + prism_r*gain, 0, 1)` — baking the source into
+"driven" before the `mix` blend. That means `mix=100%` still showed
+`src + effect`, not the effect alone — dry source bled through
+regardless of how far toward "wet" the control was turned. Caught
+empirically by Matt testing in Max ("at 100% we should have all wet
+signal").
+
+**Round 2**: fixed round 1 to a plain linear crossfade against a
+*pure effect layer* (`driven = clamp(prism_r*gain,0,1); mixed = mix(src,
+driven, mix_pct/100)`) — still wrong. At 50% it produced a frame-uniform
+double exposure (half of source + half of the sparse, mostly-black
+effect layer, everywhere) — a literal double image, visible in Matt's
+screenshot testing.
+
+**Round 3**: tried coverage-based "over" compositing — use the effect's
+own magnitude as per-pixel opacity (`coverage = max(driven_r,g,b);
+opacity = coverage*mix; mixed = mix(src, driven, opacity)`). Broke
+differently: coverage was computed from the *soft, feather-blurred* gate
+value, which rarely reaches a clean 1.0 across its intentionally-wide
+transition band — so source still bled through broadly even at
+`mix=100%` (a new, different-looking double image, caught in Matt's
+screenshot). Diagnosis at the time: "with nonzero threshold values the
+fully wet signal is not opaque... the passthrough value is fully present
+even at mix=100."
+
+**Round 4**: tried pure additive `out = src + prism*gain*mix` (mix as an
+attenuator multiplying gain, no crossfade/masking at all) — rejected on
+sight as "we're breaking things... gate doesn't work as expected... we
+still see a superimposition of two textures." **Full revert to `v15`**
+at this point (single `strength` param, no `gain`/`mix` split at all) to
+get back to a known-good baseline before continuing.
+
+**Round 5 (final, confirmed correct)**: re-added `out3` cleanly on top of
+the `v15` baseline first (`codebox_v17.gen` — diff against v15 is
+*only* the appended out3 block, nothing else touched). Then, working
+from Matt's own description of the correct behavior — "an effect applied
+30% isn't the same as an effect applied to 30% of a masked shape... it
+bends 30% of the way toward what it would be at 100%" — implemented a
+plain per-pixel linear interpolation toward the **full original v15
+additive-composite** (not toward a bare effect layer):
+
+```
+driven_r/g/b = clamp(src_r/g/b + prism_r/g/b * strength, 0.0, 1.0);  // the original v15 composite, unchanged
+comp_r/g/b   = mix(src_r/g/b, driven_r/g/b, mix_pct / 100.0);        // plain continuous blend, no masking
+```
+
+**Why this one actually works, unlike rounds 2–4**: `driven` here is
+never a sparse, mostly-black layer (rounds 2–3's failure mode) — it's
+the *complete* v15 composite image, which is a full, natural-looking
+image everywhere by construction (source is baked in). Crossfading
+between two complete images produces a genuine "bends N% of the way
+there" effect with no double-exposure artifact, because there's no
+region where one side of the blend is empty/black. This is a frame-
+uniform crossfade (vocabulary finding's "model 3"), which the vocabulary
+finding says is usually wrong for sparse effects — but it works here
+specifically *because* `driven` isn't sparse; the sparsity was hiding
+inside `strength`'s own definition, which brings us to the next
+paragraph.
+
+**Confirmed by Matt as correct**, with an important caveat surfaced in
+the same breath: the `mix`/`strength` *mechanism* is right, but
+`strength`'s own 100%-state — `src + prism*strength`, additive/screen
+model (vocabulary finding's "model 1") — was flagged as the real
+remaining architectural question, not fixed today. Matt's diagnosis,
+verbatim: "what is still feeling wrong about this isn't the
+strength/mix articulation — that's actually correct, it's that the
+original implementation of strength is an additive layer in the first
+place." A prism's physical metaphor (light passing through *becomes*
+separated color) is arguably occlusion (model 2), not light added on
+top — but redefining `strength`'s 100%-state means giving `prism_r/g/b`
+a real separate meaning for "effect color" vs. "gate strength," which
+today's session correctly declined to improvise live against production
+after four prior wrong turns. **This is real, separately-scoped
+follow-up work** — see "Open follow-up" below — not something resolved
+today.
+
+**Also resolved this session**: whether giving `out2`'s alpha channel
+real per-pixel coverage meaning would unlock external "over" compositing
+via existing Vsynth tooling. Checked directly — `vs_alpha_blend`,
+`vs_alpha_blend_2`, and `vs_crssfade` all use a manually-supplied blend-
+*amount* control (a knob), none read per-pixel texture alpha at all.
+Matt's call: don't refactor around a dimension (alpha) nothing
+downstream currently consumes. Full vocabulary + alpha finding now in
+`ideas/dry_wet_gain_and_novel_field_outlet.md` finding 1.
+
+**Shipped final state**: `strength` (live.dial, 0–2.0, unchanged from
+v15) + `mix` (live.numbox, 0–100%, `mix_pct` internally per the naming-
+collision fix) + `out3` (gate-weighted dispersion vecfield, ADR 1,
+unchanged from its original design). `f_vf_glow`/`f_vf_streak`/
+`f_caustic` should use this same mechanism (`mix` crossfades toward the
+module's own complete, already-composited 100%-state, never toward a
+bare sparse effect layer) once picked up — and should each separately
+consider whether their own `strength`-equivalent has the same additive-
+vs-occlusion question raised here.
+
+**Update 2026-07-12**: `strength` renamed to `gain` after all, per the
+library-wide canonical naming decision (`vsynth-bpatcher/SKILL.md`'s
+"Canonical naming: `gain` vs `mix`") — this module's own earlier ADR 2
+called for exactly this rename and then abandoned it mid-fix during the
+five-round formula struggle above; the rename is now finished
+separately from that struggle, with no change to the confirmed-correct
+formula. Rebuilt via `build_patcher.py`, diff showed only the expected
+param/attr/varname/label changes. Confirmed working in Max by Matt
+(2026-07-12).
+
+### Open follow-up (not resolved today): is `strength`'s composite model correct?
+
+`comp = src + prism*strength` is additive/screen (vocabulary finding's
+model 1) — light added on top of source. Matt's read: a prism's actual
+character (light passing through *becomes* separated color) is closer to
+occlusion (model 2) — the effect should locally replace source where
+active, not visibly stack with it. Redefining this needs:
+- A real, separate definition of "effect color" vs. "gate strength" —
+  currently `prism_r/g/b` conflates both (it's literally the blurred
+  gate magnitude, reused directly as if it were a color)
+- Whatever new formula results should be scratch-tested, not iterated
+  live against production — four of today's five attempts broke
+  something, and the pattern each time was jumping to a plausible-
+  looking formula without an actual before/after visual check in Max
+  first
+- Should probably be designed alongside `f_vf_glow`/`f_vf_streak`/
+  `f_caustic`'s own composites, since the same additive-vs-occlusion
+  question likely applies to at least some of them too
+
 ---
 
 ## Implementation Phases

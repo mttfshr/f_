@@ -79,7 +79,8 @@ not this module's).
 | `threshold`       | float    | 0–1.0    | 0.7     | Threshold | Luma gate floor — keep high so only bright sources emit |
 | `threshold_width` | float    | 0–0.5    | 0.1     | Gate Width| Softness of the luma gate edge |
 | `feather`         | float    | 0–0.5    | 0.1     | Feather   | Inter-channel Gaussian blend width, scaled to separation |
-| `strength`        | float    | 0–2.0    | 1.0     | Strength  | Additive composite depth on out1 — **note the 2.0 ceiling is higher than most other additive-layer modules' 1.5** (`f_vf_glow`, `f_vf_streak`, `f_caustic`), not yet reconciled; worth a look when findings 1–3 land on this module |
+| `gain`            | float    | 0–2.0    | 1.0     | Gain      | Renamed from `strength` 2026-07-12 to match the library-wide `gain`/`mix` naming convention (vsynth-bpatcher skill) — name only, no behavior change. Additive composite depth toward the 100%-effect state — **note the 2.0 ceiling is higher than most other additive-layer modules' 1.5** (`f_vf_glow`, `f_vf_streak`, `f_caustic`), not yet reconciled; confirmed correct as-is, not touched by the mix rollout below |
+| `mix`             | float    | 0–100%   | 100     | Mix       | Added 2026-07-12 (dry/wet rollout). Live.numbox, internal `Param mix_pct`. Plain per-pixel linear blend toward the full `strength`-composited state — NOT spatial masking, NOT coverage/opacity. `mix=30` means every pixel is 30% of the way from source toward its own 100%-effect value. See "Composite Model" below and plan.md ADR 2 for the five-round history of what didn't work first. |
 | `src_vecfield`    | internal | —        | 0.0     | —         | vs_inState gate; suppresses vs_black offset |
 | `src_length_mod`  | internal | —        | 0.0     | —         | reach mod depth |
 | `src_width_mod`   | internal | —        | 0.0     | —         | spread mod depth |
@@ -96,20 +97,42 @@ not this module's).
 
 ## Composite Model
 
-Confirmed additive, not crossfade (correcting the prior version of this
-spec):
+**Updated 2026-07-12** (dry/wet rollout — see plan.md ADR 2 for the
+five-round history of what was tried and rejected first; `strength`
+renamed to `gain` later the same day to match the library-wide naming
+convention, math unchanged). `gain`'s own composite is unchanged —
+confirmed additive, not crossfade:
 
 ```
-comp_r = clamp(src_r + prism_r * strength, 0.0, 1.0);
-comp_g = clamp(src_g + prism_g * strength, 0.0, 1.0);
-comp_b = clamp(src_b + prism_b * strength, 0.0, 1.0);
+driven_r = clamp(src_r + prism_r * gain, 0.0, 1.0);
+driven_g = clamp(src_g + prism_g * gain, 0.0, 1.0);
+driven_b = clamp(src_b + prism_b * gain, 0.0, 1.0);
+```
+
+`mix` is a plain per-pixel linear blend *toward* that driven state — not
+toward a bare effect layer, not spatial masking/coverage:
+
+```
+comp_r = mix(src_r, driven_r, mix_pct / 100.0);
+comp_g = mix(src_g, driven_g, mix_pct / 100.0);
+comp_b = mix(src_b, driven_b, mix_pct / 100.0);
 out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
 out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
 ```
 
-Same additive-layer shape as `f_vf_glow`/`f_vf_streak`/`f_caustic` — this
-module is a finding-1/2/3 candidate (gain/wet split, crossfader, `mix`
-rename) once that rollout reaches it, same as those.
+**Open question, not resolved 2026-07-12**: `strength`'s own composite
+is additive/screen (light added on top of source) — Matt's read is that
+a prism's actual character (light passing through *becomes* separated
+color) is closer to occlusion (effect locally replaces source, doesn't
+visibly stack with it). See plan.md's "Open follow-up" for what
+redefining this would need. Not blocking — `mix`/`strength` as shipped
+is confirmed correct for what it does; this is a question about what
+`strength`'s 100%-state itself should mean.
+
+Same additive-layer shape as `f_vf_glow`/`f_vf_streak`/`f_caustic` —
+those three should use the same `mix`-crossfades-toward-the-complete-
+composited-state mechanism once picked up (not toward a bare effect
+layer — see plan.md ADR 2 for why that specific distinction matters).
 
 ## Acceptance Criteria
 
