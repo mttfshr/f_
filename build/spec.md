@@ -151,6 +151,90 @@ patcher = {
 
 Object ID assignment for multi-pix: primary pix → `obj-5`; support pix → `obj-50`, `obj-51`, ... in chain order (excluding primary).
 
+**`pix_target` on a param** (added 2026-07-15, for `f_lens` halation) — a
+normal (non-`raw_ui`) param can target an object other than the primary
+pix. Value is either a `pix_chain` node `id` (looked up automatically),
+or, if not found there, treated as a **literal object id** directly —
+this second form is what lets a param target a manually-declared
+`raw_boxes` object (see below) without requiring the primary pix itself
+to be restructured into a `pix_chain`. The param still gets full normal
+dial/label/route-dispatch generation; only the final attrui wire target
+changes. No effect on message format — `jit.gl.pix` attrui messages are
+generic attribute-set messages, bound by name on whichever object
+receives them, regardless of which pix declared the matching `Param`.
+
+```python
+{"name": "halation", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0,
+ "pix_target": "obj-raw-17"}   # a raw_boxes object id, not a pix_chain node
+```
+
+**`raw_boxes` / `raw_lines` / `raw_parameters`** (added 2026-07-15, for
+`f_lens`'s tilt-shift and halation) — an escape hatch for content too
+bespoke to model declaratively: verbatim box/patchline/parameter dicts,
+already in the exact wrapper shape used throughout this file
+(`{"box": {...}}` / `{"patchline": {...}}`), appended to the build
+output unmodified.
+
+```python
+"raw_boxes":      [ {"box": {...}}, ... ],
+"raw_lines":       [ {"patchline": {...}}, ... ],
+"raw_parameters": { "obj-id": [longname, shortname, 0], ... },
+```
+
+Author is responsible for using object IDs that don't collide with
+anything the schema generates — the `obj-raw-N` namespace (any id
+containing non-numeric characters after `obj-`) is guaranteed safe,
+since nothing in this file's own ID generation ever produces one.
+Extract-and-remap from a working reference file rather than hand-picking
+IDs from scratch. See `ideas/build_patcher_schema_gaps.md` for the full
+background on when this is the right tool vs. `pix_chain`/`pix_target`.
+
+**`"type": "raw_ui"` param** (added 2026-07-15) — reserves a route
+outlet (dispatched by name, appended to the route arg list after
+`ui_params` + `header_toggles`) but generates **no** dial/label/attrui/
+pix-wire. For params with real UI and route dispatch but bespoke
+downstream wiring (e.g. `f_lens`'s `tilt_axis`/`tilt_pos`, which both
+feed a custom `lens_tiltcenter.js` transform before reaching
+`jit.fx.cf.tiltshift`) that doesn't fit `pix_target`'s "route straight to
+one object" shape. The param's actual UI/wiring is then supplied via
+`raw_boxes`/`raw_lines`.
+
+**`outlet_source_override`** (added 2026-07-15) — `{outlet_index:
+anything}`; skips the schema's automatic primary-pix→outlet wire for
+that outlet index. Use when one or more `raw_boxes` objects sit between
+the primary pix and a bpatcher outlet (e.g. `f_lens`'s
+`lens_pix → halation → tiltshift → outlet0` chain) — the full wire path
+is then supplied explicitly via `raw_lines` instead. The override value
+itself isn't consumed, only the key's presence matters; a short
+descriptive string is conventional.
+
+```python
+"outlet_source_override": {0: "tiltshift"},
+```
+
+**`panel_toggle`** (added 2026-07-15, generalized from `f_lens`'s
+hand-built `panel_toggle`/`lens_toggle.js`) — declares a front/back
+panel split. Generates the toggle `live.text` button, a per-module
+toggle JS file (`package/javascript/<prefix>_toggle.js`, written as a
+build side-effect — **not currently gated by a dry-run flag**, so even a
+build call whose `.maxpat` output goes to a scratch path will still
+overwrite the live JS file; a `dry_run` guard is a known follow-up, see
+`ideas/build_patcher_schema_gaps.md`), and all wiring (reuses the same
+`thispatcher` object `modulesize` already wires up).
+
+```python
+"panel_toggle": {
+    "front": ["param1", "param2", ...],
+    "back":  ["param3", "param4", ...],
+    "front_label": "lens",   # shown when back panel active; optional, default "front"
+    "back_label":  "field",  # shown when front panel active; optional, default "back"
+},
+```
+
+Requires `label_box()`'s `varname=f"lbl_{p['name']}"` (added the same
+day as a prerequisite fix — labels previously had no `varname` at all,
+so `script sendbox` couldn't target them for any toggle mechanism).
+
 **`range_tiers` — optional dial range selector** (float params only):
 
 ```python
@@ -158,13 +242,26 @@ Object ID assignment for multi-pix: primary pix → `obj-5`; support pix → `ob
     "name": "dt", "type": "float",
     "min": 0.0, "max": 0.05, "default": 0.01,
     "label": "dt",
-    "range_tiers": [0.05, 0.5, 1.0],  # list of upper bounds; min assumed 0.
+    "range_tiers": [0.05, 0.5, 1.0],  # unipolar form: list of upper bounds; min assumed 0.
 }
 ```
 
+**Bipolar form** (added 2026-07-15, for `f_lens` v2's aberration/distortion/transmission/ghost_spacing tiers) — each tier entry can also be a `(lower, upper)` 2-tuple/list, giving an explicit lower bound instead of the assumed 0.:
+
+```python
+{
+    "name": "aberration", "type": "float",
+    "min": -1.0, "max": 1.0, "default": 0.0,
+    "label": "Aberration",
+    "range_tiers": [(-1.0, 1.0), (-2.0, 2.0), (-10.0, 10.0)],  # bipolar tiers
+}
+```
+
+The two forms can be mixed within one param's `range_tiers` list — each entry is checked independently (plain number → unipolar `(0., upper)`, tuple/list → explicit `(lower, upper)`). Menu labels differ correspondingly: unipolar entries display as `"1.0"`; bipolar entries display as `"-1.0..1.0"`.
+
 When present, generates a compact `live.menu` (triangle-only, 16×15px) positioned
 to the right of the param label in the header row, plus a `sel` and one
-`_parameter_range 0. X` message per tier. Selecting a tier dynamically rescales the
+`_parameter_range <lower>. <upper>` message per tier. Selecting a tier dynamically rescales the
 dial. Menu state persists via `autopattr`. Object IDs: `obj-{300 + n*10}` = menu,
 `obj-{300 + n*10 + 1}` = sel, `obj-{300 + n*10 + 2+t}` = messages (n = param index
 among ui_params, t = tier index).

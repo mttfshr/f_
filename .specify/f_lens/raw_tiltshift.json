@@ -1,0 +1,858 @@
+{
+  "remap": {
+    "obj-15": "obj-raw-1",
+    "obj-16": "obj-raw-2",
+    "obj-23": "obj-raw-3",
+    "obj-24": "obj-raw-4",
+    "obj-25": "obj-raw-5",
+    "obj-26": "obj-raw-6",
+    "obj-27": "obj-raw-7",
+    "obj-28": "obj-raw-8",
+    "obj-29": "obj-raw-9",
+    "obj-37": "obj-raw-10",
+    "obj-38": "obj-raw-11",
+    "obj-39": "obj-raw-12",
+    "obj-53": "obj-raw-13",
+    "obj-54": "obj-raw-14",
+    "obj-55": "obj-raw-15",
+    "obj-56": "obj-raw-16"
+  },
+  "raw_boxes": [
+    {
+      "box": {
+        "embedstate": [
+          [
+            "adapt",
+            1
+          ],
+          [
+            "bypass",
+            0
+          ],
+          [
+            "enable",
+            1
+          ]
+        ],
+        "filename": "jit.fx.cf.tiltshift.js",
+        "id": "obj-raw-1",
+        "maxclass": "newobj",
+        "numinlets": 1,
+        "numoutlets": 1,
+        "outlettype": [
+          "jit_gl_texture"
+        ],
+        "patching_rect": [
+          898.0,
+          573.0,
+          160.0,
+          22.0
+        ],
+        "saved_object_attributes": {
+          "parameter_enable": 0
+        },
+        "text": "jit.fx.cf.tiltshift vsynth",
+        "textfile": {
+          "filename": "jit.fx.cf.tiltshift.js",
+          "flags": 0,
+          "embed": 0,
+          "autowatch": 1
+        },
+        "varname": "lens_tiltshift"
+      }
+    },
+    {
+      "box": {
+        "id": "obj-raw-2",
+        "maxclass": "newobj",
+        "numinlets": 2,
+        "numoutlets": 1,
+        "outlettype": [
+          ""
+        ],
+        "patching_rect": [
+          725.0,
+          239.0,
+          130.0,
+          22.0
+        ],
+        "saved_object_attributes": {
+          "filename": "lens_tiltcenter.js",
+          "parameter_enable": 0
+        },
+        "text": "js lens_tiltcenter.js"
+      }
+    },
+    {
+      "box": {
+        "activedialcolor": [
+          0.8,
+          0.8,
+          0.8,
+          1.0
+        ],
+        "fontname": "Ableton Sans Light",
+        "hidden": 1,
+        "hint": "tilt",
+        "id": "obj-raw-3",
+        "maxclass": "live.dial",
+        "numinlets": 1,
+        "numoutlets": 2,
+        "outlettype": [
+          "",
+          "float"
+        ],
+        "parameter_enable": 1,
+        "patching_rect": [
+          633.0,
+          160.0,
+          27.0,
+          43.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          140.0,
+          36.0,
+          27.0,
+          43.0
+        ],
+        "saved_attribute_attributes": {
+          "activedialcolor": {
+            "expression": ""
+          },
+          "valueof": {
+            "parameter_initial": [
+              0.0
+            ],
+            "parameter_initial_enable": 1,
+            "parameter_linknames": 1,
+            "parameter_longname": "tilt",
+            "parameter_mmax": 1.0,
+            "parameter_modmode": 3,
+            "parameter_shortname": "tilt",
+            "parameter_type": 0,
+            "parameter_unitstyle": 1
+          }
+        },
+        "showname": 0,
+        "triangle": 1,
+        "valuepopup": 1,
+        "valuepopuplabel": 1,
+        "varname": "tilt"
+      }
+    },
+    {
+      "box": {
+        "activedialcolor": [
+          0.8,
+          0.8,
+          0.8,
+          1.0
+        ],
+        "fontname": "Ableton Sans Light",
+        "hidden": 1,
+        "hint": "tilt_axis",
+        "id": "obj-raw-4",
+        "maxclass": "live.dial",
+        "numinlets": 1,
+        "numoutlets": 2,
+        "outlettype": [
+          "",
+          "float"
+        ],
+        "parameter_enable": 1,
+        "patching_rect": [
+          733.1538461538462,
+          164.0,
+          27.0,
+          43.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          8.0,
+          104.0,
+          27.0,
+          43.0
+        ],
+        "saved_attribute_attributes": {
+          "activedialcolor": {
+            "expression": ""
+          },
+          "valueof": {
+            "parameter_initial": [
+              0.0
+            ],
+            "parameter_initial_enable": 1,
+            "parameter_linknames": 1,
+            "parameter_longname": "tilt_axis",
+            "parameter_mmax": 1.0,
+            "parameter_modmode": 3,
+            "parameter_shortname": "tilt_axis",
+            "parameter_type": 0,
+            "parameter_unitstyle": 1
+          }
+        },
+        "showname": 0,
+        "triangle": 1,
+        "valuepopup": 1,
+        "valuepopuplabel": 1,
+        "varname": "tilt_axis"
+      }
+    },
+    {
+      "box": {
+        "activedialcolor": [
+          0.8,
+          0.8,
+          0.8,
+          1.0
+        ],
+        "fontname": "Ableton Sans Light",
+        "hidden": 1,
+        "hint": "tilt_pos",
+        "id": "obj-raw-5",
+        "maxclass": "live.dial",
+        "numinlets": 1,
+        "numoutlets": 2,
+        "outlettype": [
+          "",
+          "float"
+        ],
+        "parameter_enable": 1,
+        "patching_rect": [
+          809.7846153846154,
+          160.0,
+          27.0,
+          43.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          52.0,
+          104.0,
+          27.0,
+          43.0
+        ],
+        "saved_attribute_attributes": {
+          "activedialcolor": {
+            "expression": ""
+          },
+          "valueof": {
+            "parameter_initial": [
+              0.5
+            ],
+            "parameter_initial_enable": 1,
+            "parameter_linknames": 1,
+            "parameter_longname": "tilt_pos",
+            "parameter_mmax": 1.0,
+            "parameter_modmode": 3,
+            "parameter_shortname": "tilt_pos",
+            "parameter_type": 0,
+            "parameter_unitstyle": 1
+          }
+        },
+        "showname": 0,
+        "triangle": 1,
+        "valuepopup": 1,
+        "valuepopuplabel": 1,
+        "varname": "tilt_pos"
+      }
+    },
+    {
+      "box": {
+        "activedialcolor": [
+          0.8,
+          0.8,
+          0.8,
+          1.0
+        ],
+        "fontname": "Ableton Sans Light",
+        "hidden": 1,
+        "hint": "slope",
+        "id": "obj-raw-6",
+        "maxclass": "live.dial",
+        "numinlets": 1,
+        "numoutlets": 2,
+        "outlettype": [
+          "",
+          "float"
+        ],
+        "parameter_enable": 1,
+        "patching_rect": [
+          886.4153846153847,
+          186.0,
+          27.0,
+          43.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          96.0,
+          104.0,
+          27.0,
+          43.0
+        ],
+        "saved_attribute_attributes": {
+          "activedialcolor": {
+            "expression": ""
+          },
+          "valueof": {
+            "parameter_initial": [
+              0.5
+            ],
+            "parameter_initial_enable": 1,
+            "parameter_linknames": 1,
+            "parameter_longname": "slope",
+            "parameter_mmax": 1.0,
+            "parameter_modmode": 3,
+            "parameter_shortname": "slope",
+            "parameter_type": 0,
+            "parameter_unitstyle": 1
+          }
+        },
+        "showname": 0,
+        "triangle": 1,
+        "valuepopup": 1,
+        "valuepopuplabel": 1,
+        "varname": "slope"
+      }
+    },
+    {
+      "box": {
+        "activebgcolor": [
+          0.067,
+          0.063,
+          0.063,
+          1.0
+        ],
+        "activebgoncolor": [
+          0.067,
+          0.063,
+          0.063,
+          1.0
+        ],
+        "activetextcolor": [
+          0.757,
+          0.757,
+          0.757,
+          1.0
+        ],
+        "activetextoncolor": [
+          0.659,
+          0.659,
+          0.659,
+          1.0
+        ],
+        "bordercolor": [
+          0.8,
+          0.8,
+          0.8,
+          1.0
+        ],
+        "fontname": "Ableton Sans Light",
+        "hidden": 1,
+        "id": "obj-raw-7",
+        "maxclass": "live.text",
+        "numinlets": 1,
+        "numoutlets": 2,
+        "outlettype": [
+          "",
+          ""
+        ],
+        "parameter_enable": 1,
+        "patching_rect": [
+          956.0,
+          167.5,
+          44.0,
+          16.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          79.5,
+          3.0,
+          35.5,
+          16.0
+        ],
+        "rounded": 4.0,
+        "saved_attribute_attributes": {
+          "activebgcolor": {
+            "expression": ""
+          },
+          "activebgoncolor": {
+            "expression": ""
+          },
+          "activetextcolor": {
+            "expression": ""
+          },
+          "activetextoncolor": {
+            "expression": ""
+          },
+          "bordercolor": {
+            "expression": ""
+          },
+          "valueof": {
+            "parameter_enum": [
+              "val1",
+              "val2"
+            ],
+            "parameter_initial": [
+              0.0
+            ],
+            "parameter_initial_enable": 1,
+            "parameter_linknames": 1,
+            "parameter_longname": "mode",
+            "parameter_mmax": 1,
+            "parameter_modmode": 0,
+            "parameter_shortname": "mode",
+            "parameter_speedlim": 0.0,
+            "parameter_type": 2
+          }
+        },
+        "text": "linear",
+        "texton": "radial",
+        "varname": "mode"
+      }
+    },
+    {
+      "box": {
+        "attr": "blur_amount",
+        "id": "obj-raw-8",
+        "maxclass": "attrui",
+        "numinlets": 1,
+        "numoutlets": 1,
+        "outlettype": [
+          ""
+        ],
+        "parameter_enable": 0,
+        "patching_rect": [
+          626.0,
+          335.0,
+          150.0,
+          22.0
+        ]
+      }
+    },
+    {
+      "box": {
+        "attr": "slope",
+        "id": "obj-raw-9",
+        "maxclass": "attrui",
+        "numinlets": 1,
+        "numoutlets": 1,
+        "outlettype": [
+          ""
+        ],
+        "parameter_enable": 0,
+        "patching_rect": [
+          850.0,
+          324.0,
+          150.0,
+          22.0
+        ]
+      }
+    },
+    {
+      "box": {
+        "id": "obj-raw-10",
+        "maxclass": "newobj",
+        "numinlets": 3,
+        "numoutlets": 3,
+        "outlettype": [
+          "bang",
+          "bang",
+          ""
+        ],
+        "patching_rect": [
+          948.0,
+          207.0,
+          60.0,
+          22.0
+        ],
+        "text": "sel 0 1"
+      }
+    },
+    {
+      "box": {
+        "id": "obj-raw-11",
+        "maxclass": "message",
+        "numinlets": 2,
+        "numoutlets": 1,
+        "outlettype": [
+          ""
+        ],
+        "patching_rect": [
+          910.0,
+          281.0,
+          79.2,
+          22.0
+        ],
+        "text": "mode linear"
+      }
+    },
+    {
+      "box": {
+        "id": "obj-raw-12",
+        "maxclass": "message",
+        "numinlets": 2,
+        "numoutlets": 1,
+        "outlettype": [
+          ""
+        ],
+        "patching_rect": [
+          1004.0,
+          281.0,
+          79.2,
+          22.0
+        ],
+        "text": "mode radial"
+      }
+    },
+    {
+      "box": {
+        "fontname": "Ableton Sans Light",
+        "fontsize": 9.5,
+        "hidden": 1,
+        "id": "obj-raw-13",
+        "maxclass": "comment",
+        "numinlets": 1,
+        "numoutlets": 0,
+        "patching_rect": [
+          20.0,
+          20.0,
+          44.0,
+          18.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          144.0,
+          20.0,
+          35.0,
+          18.0
+        ],
+        "text": "Tilt",
+        "varname": "lbl_tilt"
+      }
+    },
+    {
+      "box": {
+        "fontname": "Ableton Sans Light",
+        "fontsize": 9.5,
+        "hidden": 1,
+        "id": "obj-raw-14",
+        "maxclass": "comment",
+        "numinlets": 1,
+        "numoutlets": 0,
+        "patching_rect": [
+          20.0,
+          20.0,
+          44.0,
+          18.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          8.0,
+          88.0,
+          44.0,
+          18.0
+        ],
+        "text": "Axis",
+        "varname": "lbl_tilt_axis"
+      }
+    },
+    {
+      "box": {
+        "fontname": "Ableton Sans Light",
+        "fontsize": 9.5,
+        "hidden": 1,
+        "id": "obj-raw-15",
+        "maxclass": "comment",
+        "numinlets": 1,
+        "numoutlets": 0,
+        "patching_rect": [
+          20.0,
+          20.0,
+          44.0,
+          18.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          52.0,
+          88.0,
+          44.0,
+          18.0
+        ],
+        "text": "Pos",
+        "varname": "lbl_tilt_pos"
+      }
+    },
+    {
+      "box": {
+        "fontname": "Ableton Sans Light",
+        "fontsize": 9.5,
+        "hidden": 1,
+        "id": "obj-raw-16",
+        "maxclass": "comment",
+        "numinlets": 1,
+        "numoutlets": 0,
+        "patching_rect": [
+          20.0,
+          20.0,
+          44.0,
+          18.0
+        ],
+        "presentation": 1,
+        "presentation_rect": [
+          96.0,
+          88.0,
+          44.0,
+          18.0
+        ],
+        "text": "Slope",
+        "varname": "lbl_slope"
+      }
+    }
+  ],
+  "raw_lines": [
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-1",
+          0
+        ],
+        "source": [
+          "obj-raw-2",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-8",
+          0
+        ],
+        "source": [
+          "obj-raw-3",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-2",
+          1
+        ],
+        "source": [
+          "obj-raw-4",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-2",
+          0
+        ],
+        "source": [
+          "obj-raw-5",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-9",
+          0
+        ],
+        "source": [
+          "obj-raw-6",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-10",
+          0
+        ],
+        "source": [
+          "obj-raw-7",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-1",
+          0
+        ],
+        "source": [
+          "obj-raw-8",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-1",
+          0
+        ],
+        "source": [
+          "obj-raw-9",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-11",
+          0
+        ],
+        "source": [
+          "obj-raw-10",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-12",
+          0
+        ],
+        "source": [
+          "obj-raw-10",
+          1
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-1",
+          0
+        ],
+        "source": [
+          "obj-raw-11",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "destination": [
+          "obj-raw-1",
+          0
+        ],
+        "source": [
+          "obj-raw-12",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "source": [
+          "obj-4",
+          10
+        ],
+        "destination": [
+          "obj-raw-3",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "source": [
+          "obj-4",
+          11
+        ],
+        "destination": [
+          "obj-raw-4",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "source": [
+          "obj-4",
+          12
+        ],
+        "destination": [
+          "obj-raw-5",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "source": [
+          "obj-4",
+          13
+        ],
+        "destination": [
+          "obj-raw-6",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "source": [
+          "obj-4",
+          14
+        ],
+        "destination": [
+          "obj-raw-7",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "source": [
+          "obj-raw-1",
+          0
+        ],
+        "destination": [
+          "obj-2",
+          0
+        ]
+      }
+    }
+  ],
+  "raw_parameters": {
+    "obj-raw-3": [
+      "tilt",
+      "tilt",
+      0
+    ],
+    "obj-raw-4": [
+      "tilt_axis",
+      "tilt_axis",
+      0
+    ],
+    "obj-raw-5": [
+      "tilt_pos",
+      "tilt_pos",
+      0
+    ],
+    "obj-raw-6": [
+      "slope",
+      "slope",
+      0
+    ],
+    "obj-raw-7": [
+      "mode",
+      "mode",
+      0
+    ]
+  }
+}

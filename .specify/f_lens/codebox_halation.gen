@@ -1,0 +1,97 @@
+Param halation(0.0);
+Param halation_threshold(0.7);
+Param bypass(0.0);
+
+uv = norm;
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+src_a = sample(in1, uv).w;
+
+radius1 = 0.015;
+radius2 = 0.03;
+w1 = 1.0;
+w2 = 0.5;
+
+d0x = 1.0;      d0y = 0.0;
+d1x = 0.7071;   d1y = 0.7071;
+d2x = 0.0;      d2y = 1.0;
+d3x = -0.7071;  d3y = 0.7071;
+d4x = -1.0;     d4y = 0.0;
+d5x = -0.7071;  d5y = -0.7071;
+d6x = 0.0;      d6y = -1.0;
+d7x = 0.7071;   d7y = -0.7071;
+
+// ring 1 (inner)
+uv0a = vec(uv.x + d0x*radius1, uv.y + d0y*radius1);
+uv1a = vec(uv.x + d1x*radius1, uv.y + d1y*radius1);
+uv2a = vec(uv.x + d2x*radius1, uv.y + d2y*radius1);
+uv3a = vec(uv.x + d3x*radius1, uv.y + d3y*radius1);
+uv4a = vec(uv.x + d4x*radius1, uv.y + d4y*radius1);
+uv5a = vec(uv.x + d5x*radius1, uv.y + d5y*radius1);
+uv6a = vec(uv.x + d6x*radius1, uv.y + d6y*radius1);
+uv7a = vec(uv.x + d7x*radius1, uv.y + d7y*radius1);
+
+// ring 2 (outer)
+uv0b = vec(uv.x + d0x*radius2, uv.y + d0y*radius2);
+uv1b = vec(uv.x + d1x*radius2, uv.y + d1y*radius2);
+uv2b = vec(uv.x + d2x*radius2, uv.y + d2y*radius2);
+uv3b = vec(uv.x + d3x*radius2, uv.y + d3y*radius2);
+uv4b = vec(uv.x + d4x*radius2, uv.y + d4y*radius2);
+uv5b = vec(uv.x + d5x*radius2, uv.y + d5y*radius2);
+uv6b = vec(uv.x + d6x*radius2, uv.y + d6y*radius2);
+uv7b = vec(uv.x + d7x*radius2, uv.y + d7y*radius2);
+
+r0a=sample(in1,uv0a).x; g0a=sample(in1,uv0a).y; b0a=sample(in1,uv0a).z;
+r1a=sample(in1,uv1a).x; g1a=sample(in1,uv1a).y; b1a=sample(in1,uv1a).z;
+r2a=sample(in1,uv2a).x; g2a=sample(in1,uv2a).y; b2a=sample(in1,uv2a).z;
+r3a=sample(in1,uv3a).x; g3a=sample(in1,uv3a).y; b3a=sample(in1,uv3a).z;
+r4a=sample(in1,uv4a).x; g4a=sample(in1,uv4a).y; b4a=sample(in1,uv4a).z;
+r5a=sample(in1,uv5a).x; g5a=sample(in1,uv5a).y; b5a=sample(in1,uv5a).z;
+r6a=sample(in1,uv6a).x; g6a=sample(in1,uv6a).y; b6a=sample(in1,uv6a).z;
+r7a=sample(in1,uv7a).x; g7a=sample(in1,uv7a).y; b7a=sample(in1,uv7a).z;
+
+r0b=sample(in1,uv0b).x; g0b=sample(in1,uv0b).y; b0b=sample(in1,uv0b).z;
+r1b=sample(in1,uv1b).x; g1b=sample(in1,uv1b).y; b1b=sample(in1,uv1b).z;
+r2b=sample(in1,uv2b).x; g2b=sample(in1,uv2b).y; b2b=sample(in1,uv2b).z;
+r3b=sample(in1,uv3b).x; g3b=sample(in1,uv3b).y; b3b=sample(in1,uv3b).z;
+r4b=sample(in1,uv4b).x; g4b=sample(in1,uv4b).y; b4b=sample(in1,uv4b).z;
+r5b=sample(in1,uv5b).x; g5b=sample(in1,uv5b).y; b5b=sample(in1,uv5b).z;
+r6b=sample(in1,uv6b).x; g6b=sample(in1,uv6b).y; b6b=sample(in1,uv6b).z;
+r7b=sample(in1,uv7b).x; g7b=sample(in1,uv7b).y; b7b=sample(in1,uv7b).z;
+
+lm0a = r0a*0.2126+g0a*0.7152+b0a*0.0722; lm0b = r0b*0.2126+g0b*0.7152+b0b*0.0722;
+lm1a = r1a*0.2126+g1a*0.7152+b1a*0.0722; lm1b = r1b*0.2126+g1b*0.7152+b1b*0.0722;
+lm2a = r2a*0.2126+g2a*0.7152+b2a*0.0722; lm2b = r2b*0.2126+g2b*0.7152+b2b*0.0722;
+lm3a = r3a*0.2126+g3a*0.7152+b3a*0.0722; lm3b = r3b*0.2126+g3b*0.7152+b3b*0.0722;
+lm4a = r4a*0.2126+g4a*0.7152+b4a*0.0722; lm4b = r4b*0.2126+g4b*0.7152+b4b*0.0722;
+lm5a = r5a*0.2126+g5a*0.7152+b5a*0.0722; lm5b = r5b*0.2126+g5b*0.7152+b5b*0.0722;
+lm6a = r6a*0.2126+g6a*0.7152+b6a*0.0722; lm6b = r6b*0.2126+g6b*0.7152+b6b*0.0722;
+lm7a = r7a*0.2126+g7a*0.7152+b7a*0.0722; lm7b = r7b*0.2126+g7b*0.7152+b7b*0.0722;
+
+denom = max(1.0 - halation_threshold, 0.0001);
+br0a = clamp((lm0a-halation_threshold)/denom, 0.0, 1.0); br0b = clamp((lm0b-halation_threshold)/denom, 0.0, 1.0);
+br1a = clamp((lm1a-halation_threshold)/denom, 0.0, 1.0); br1b = clamp((lm1b-halation_threshold)/denom, 0.0, 1.0);
+br2a = clamp((lm2a-halation_threshold)/denom, 0.0, 1.0); br2b = clamp((lm2b-halation_threshold)/denom, 0.0, 1.0);
+br3a = clamp((lm3a-halation_threshold)/denom, 0.0, 1.0); br3b = clamp((lm3b-halation_threshold)/denom, 0.0, 1.0);
+br4a = clamp((lm4a-halation_threshold)/denom, 0.0, 1.0); br4b = clamp((lm4b-halation_threshold)/denom, 0.0, 1.0);
+br5a = clamp((lm5a-halation_threshold)/denom, 0.0, 1.0); br5b = clamp((lm5b-halation_threshold)/denom, 0.0, 1.0);
+br6a = clamp((lm6a-halation_threshold)/denom, 0.0, 1.0); br6b = clamp((lm6b-halation_threshold)/denom, 0.0, 1.0);
+br7a = clamp((lm7a-halation_threshold)/denom, 0.0, 1.0); br7b = clamp((lm7b-halation_threshold)/denom, 0.0, 1.0);
+
+wsum = (w1 + w2) * 8.0;
+
+glow_r = (r0a*br0a*w1 + r1a*br1a*w1 + r2a*br2a*w1 + r3a*br3a*w1 + r4a*br4a*w1 + r5a*br5a*w1 + r6a*br6a*w1 + r7a*br7a*w1
+        + r0b*br0b*w2 + r1b*br1b*w2 + r2b*br2b*w2 + r3b*br3b*w2 + r4b*br4b*w2 + r5b*br5b*w2 + r6b*br6b*w2 + r7b*br7b*w2) / wsum;
+glow_g = (g0a*br0a*w1 + g1a*br1a*w1 + g2a*br2a*w1 + g3a*br3a*w1 + g4a*br4a*w1 + g5a*br5a*w1 + g6a*br6a*w1 + g7a*br7a*w1
+        + g0b*br0b*w2 + g1b*br1b*w2 + g2b*br2b*w2 + g3b*br3b*w2 + g4b*br4b*w2 + g5b*br5b*w2 + g6b*br6b*w2 + g7b*br7b*w2) / wsum;
+glow_b = (b0a*br0a*w1 + b1a*br1a*w1 + b2a*br2a*w1 + b3a*br3a*w1 + b4a*br4a*w1 + b5a*br5a*w1 + b6a*br6a*w1 + b7a*br7a*w1
+        + b0b*br0b*w2 + b1b*br1b*w2 + b2b*br2b*w2 + b3b*br3b*w2 + b4b*br4b*w2 + b5b*br5b*w2 + b6b*br6b*w2 + b7b*br7b*w2) / wsum;
+
+warm_r = 1.1; warm_g = 1.0; warm_b = 0.85;
+
+comp_r = clamp(src_r + glow_r * warm_r * halation, 0.0, 1.0);
+comp_g = clamp(src_g + glow_g * warm_g * halation, 0.0, 1.0);
+comp_b = clamp(src_b + glow_b * warm_b * halation, 0.0, 1.0);
+
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);

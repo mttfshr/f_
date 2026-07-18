@@ -1,0 +1,149 @@
+{
+  "raw_boxes": [
+    {
+      "box": {
+        "id": "obj-raw-17",
+        "maxclass": "newobj",
+        "numinlets": 1,
+        "numoutlets": 2,
+        "outlettype": [
+          "jit_gl_texture",
+          ""
+        ],
+        "patcher": {
+          "fileversion": 1,
+          "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 4,
+            "architecture": "x64",
+            "modernui": 1
+          },
+          "classnamespace": "jit.gen",
+          "rect": [
+            100.0,
+            100.0,
+            700.0,
+            600.0
+          ],
+          "boxes": [
+            {
+              "box": {
+                "id": "gen-obj-1",
+                "maxclass": "newobj",
+                "numinlets": 0,
+                "numoutlets": 1,
+                "outlettype": [
+                  ""
+                ],
+                "patching_rect": [
+                  22.0,
+                  30.0,
+                  28.0,
+                  22.0
+                ],
+                "text": "in 1"
+              }
+            },
+            {
+              "box": {
+                "code": "Param halation(0.0);\nParam halation_threshold(0.7);\nParam bypass(0.0);\n\nuv = norm;\nsrc_r = sample(in1, uv).x;\nsrc_g = sample(in1, uv).y;\nsrc_b = sample(in1, uv).z;\nsrc_a = sample(in1, uv).w;\n\nradius1 = 0.015;\nradius2 = 0.03;\nw1 = 1.0;\nw2 = 0.5;\n\nd0x = 1.0;      d0y = 0.0;\nd1x = 0.7071;   d1y = 0.7071;\nd2x = 0.0;      d2y = 1.0;\nd3x = -0.7071;  d3y = 0.7071;\nd4x = -1.0;     d4y = 0.0;\nd5x = -0.7071;  d5y = -0.7071;\nd6x = 0.0;      d6y = -1.0;\nd7x = 0.7071;   d7y = -0.7071;\n\n// ring 1 (inner)\nuv0a = vec(uv.x + d0x*radius1, uv.y + d0y*radius1);\nuv1a = vec(uv.x + d1x*radius1, uv.y + d1y*radius1);\nuv2a = vec(uv.x + d2x*radius1, uv.y + d2y*radius1);\nuv3a = vec(uv.x + d3x*radius1, uv.y + d3y*radius1);\nuv4a = vec(uv.x + d4x*radius1, uv.y + d4y*radius1);\nuv5a = vec(uv.x + d5x*radius1, uv.y + d5y*radius1);\nuv6a = vec(uv.x + d6x*radius1, uv.y + d6y*radius1);\nuv7a = vec(uv.x + d7x*radius1, uv.y + d7y*radius1);\n\n// ring 2 (outer)\nuv0b = vec(uv.x + d0x*radius2, uv.y + d0y*radius2);\nuv1b = vec(uv.x + d1x*radius2, uv.y + d1y*radius2);\nuv2b = vec(uv.x + d2x*radius2, uv.y + d2y*radius2);\nuv3b = vec(uv.x + d3x*radius2, uv.y + d3y*radius2);\nuv4b = vec(uv.x + d4x*radius2, uv.y + d4y*radius2);\nuv5b = vec(uv.x + d5x*radius2, uv.y + d5y*radius2);\nuv6b = vec(uv.x + d6x*radius2, uv.y + d6y*radius2);\nuv7b = vec(uv.x + d7x*radius2, uv.y + d7y*radius2);\n\nr0a=sample(in1,uv0a).x; g0a=sample(in1,uv0a).y; b0a=sample(in1,uv0a).z;\nr1a=sample(in1,uv1a).x; g1a=sample(in1,uv1a).y; b1a=sample(in1,uv1a).z;\nr2a=sample(in1,uv2a).x; g2a=sample(in1,uv2a).y; b2a=sample(in1,uv2a).z;\nr3a=sample(in1,uv3a).x; g3a=sample(in1,uv3a).y; b3a=sample(in1,uv3a).z;\nr4a=sample(in1,uv4a).x; g4a=sample(in1,uv4a).y; b4a=sample(in1,uv4a).z;\nr5a=sample(in1,uv5a).x; g5a=sample(in1,uv5a).y; b5a=sample(in1,uv5a).z;\nr6a=sample(in1,uv6a).x; g6a=sample(in1,uv6a).y; b6a=sample(in1,uv6a).z;\nr7a=sample(in1,uv7a).x; g7a=sample(in1,uv7a).y; b7a=sample(in1,uv7a).z;\n\nr0b=sample(in1,uv0b).x; g0b=sample(in1,uv0b).y; b0b=sample(in1,uv0b).z;\nr1b=sample(in1,uv1b).x; g1b=sample(in1,uv1b).y; b1b=sample(in1,uv1b).z;\nr2b=sample(in1,uv2b).x; g2b=sample(in1,uv2b).y; b2b=sample(in1,uv2b).z;\nr3b=sample(in1,uv3b).x; g3b=sample(in1,uv3b).y; b3b=sample(in1,uv3b).z;\nr4b=sample(in1,uv4b).x; g4b=sample(in1,uv4b).y; b4b=sample(in1,uv4b).z;\nr5b=sample(in1,uv5b).x; g5b=sample(in1,uv5b).y; b5b=sample(in1,uv5b).z;\nr6b=sample(in1,uv6b).x; g6b=sample(in1,uv6b).y; b6b=sample(in1,uv6b).z;\nr7b=sample(in1,uv7b).x; g7b=sample(in1,uv7b).y; b7b=sample(in1,uv7b).z;\n\nlm0a = r0a*0.2126+g0a*0.7152+b0a*0.0722; lm0b = r0b*0.2126+g0b*0.7152+b0b*0.0722;\nlm1a = r1a*0.2126+g1a*0.7152+b1a*0.0722; lm1b = r1b*0.2126+g1b*0.7152+b1b*0.0722;\nlm2a = r2a*0.2126+g2a*0.7152+b2a*0.0722; lm2b = r2b*0.2126+g2b*0.7152+b2b*0.0722;\nlm3a = r3a*0.2126+g3a*0.7152+b3a*0.0722; lm3b = r3b*0.2126+g3b*0.7152+b3b*0.0722;\nlm4a = r4a*0.2126+g4a*0.7152+b4a*0.0722; lm4b = r4b*0.2126+g4b*0.7152+b4b*0.0722;\nlm5a = r5a*0.2126+g5a*0.7152+b5a*0.0722; lm5b = r5b*0.2126+g5b*0.7152+b5b*0.0722;\nlm6a = r6a*0.2126+g6a*0.7152+b6a*0.0722; lm6b = r6b*0.2126+g6b*0.7152+b6b*0.0722;\nlm7a = r7a*0.2126+g7a*0.7152+b7a*0.0722; lm7b = r7b*0.2126+g7b*0.7152+b7b*0.0722;\n\ndenom = max(1.0 - halation_threshold, 0.0001);\nbr0a = clamp((lm0a-halation_threshold)/denom, 0.0, 1.0); br0b = clamp((lm0b-halation_threshold)/denom, 0.0, 1.0);\nbr1a = clamp((lm1a-halation_threshold)/denom, 0.0, 1.0); br1b = clamp((lm1b-halation_threshold)/denom, 0.0, 1.0);\nbr2a = clamp((lm2a-halation_threshold)/denom, 0.0, 1.0); br2b = clamp((lm2b-halation_threshold)/denom, 0.0, 1.0);\nbr3a = clamp((lm3a-halation_threshold)/denom, 0.0, 1.0); br3b = clamp((lm3b-halation_threshold)/denom, 0.0, 1.0);\nbr4a = clamp((lm4a-halation_threshold)/denom, 0.0, 1.0); br4b = clamp((lm4b-halation_threshold)/denom, 0.0, 1.0);\nbr5a = clamp((lm5a-halation_threshold)/denom, 0.0, 1.0); br5b = clamp((lm5b-halation_threshold)/denom, 0.0, 1.0);\nbr6a = clamp((lm6a-halation_threshold)/denom, 0.0, 1.0); br6b = clamp((lm6b-halation_threshold)/denom, 0.0, 1.0);\nbr7a = clamp((lm7a-halation_threshold)/denom, 0.0, 1.0); br7b = clamp((lm7b-halation_threshold)/denom, 0.0, 1.0);\n\nwsum = (w1 + w2) * 8.0;\n\nglow_r = (r0a*br0a*w1 + r1a*br1a*w1 + r2a*br2a*w1 + r3a*br3a*w1 + r4a*br4a*w1 + r5a*br5a*w1 + r6a*br6a*w1 + r7a*br7a*w1\n        + r0b*br0b*w2 + r1b*br1b*w2 + r2b*br2b*w2 + r3b*br3b*w2 + r4b*br4b*w2 + r5b*br5b*w2 + r6b*br6b*w2 + r7b*br7b*w2) / wsum;\nglow_g = (g0a*br0a*w1 + g1a*br1a*w1 + g2a*br2a*w1 + g3a*br3a*w1 + g4a*br4a*w1 + g5a*br5a*w1 + g6a*br6a*w1 + g7a*br7a*w1\n        + g0b*br0b*w2 + g1b*br1b*w2 + g2b*br2b*w2 + g3b*br3b*w2 + g4b*br4b*w2 + g5b*br5b*w2 + g6b*br6b*w2 + g7b*br7b*w2) / wsum;\nglow_b = (b0a*br0a*w1 + b1a*br1a*w1 + b2a*br2a*w1 + b3a*br3a*w1 + b4a*br4a*w1 + b5a*br5a*w1 + b6a*br6a*w1 + b7a*br7a*w1\n        + b0b*br0b*w2 + b1b*br1b*w2 + b2b*br2b*w2 + b3b*br3b*w2 + b4b*br4b*w2 + b5b*br5b*w2 + b6b*br6b*w2 + b7b*br7b*w2) / wsum;\n\nwarm_r = 1.1; warm_g = 1.0; warm_b = 0.85;\n\ncomp_r = clamp(src_r + glow_r * warm_r * halation, 0.0, 1.0);\ncomp_g = clamp(src_g + glow_g * warm_g * halation, 0.0, 1.0);\ncomp_b = clamp(src_b + glow_b * warm_b * halation, 0.0, 1.0);\n\nout1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);\n",
+                "fontface": 0,
+                "fontname": "<Monospaced>",
+                "fontsize": 12.0,
+                "id": "gen-obj-2",
+                "maxclass": "codebox",
+                "numinlets": 1,
+                "numoutlets": 1,
+                "outlettype": [
+                  ""
+                ],
+                "patching_rect": [
+                  22.0,
+                  80.0,
+                  550.0,
+                  380.0
+                ]
+              }
+            },
+            {
+              "box": {
+                "id": "gen-obj-3",
+                "maxclass": "newobj",
+                "numinlets": 1,
+                "numoutlets": 0,
+                "patching_rect": [
+                  22.0,
+                  490.0,
+                  35.0,
+                  22.0
+                ],
+                "text": "out 1"
+              }
+            }
+          ],
+          "lines": [
+            {
+              "patchline": {
+                "destination": [
+                  "gen-obj-2",
+                  0
+                ],
+                "source": [
+                  "gen-obj-1",
+                  0
+                ]
+              }
+            },
+            {
+              "patchline": {
+                "destination": [
+                  "gen-obj-3",
+                  0
+                ],
+                "source": [
+                  "gen-obj-2",
+                  0
+                ]
+              }
+            }
+          ]
+        },
+        "patching_rect": [
+          200.0,
+          320.0,
+          220.0,
+          22.0
+        ],
+        "text": "jit.gl.pix vsynth @name lens_halation @type char",
+        "varname": "lens_halation"
+      }
+    }
+  ],
+  "raw_lines": [
+    {
+      "patchline": {
+        "source": [
+          "obj-5",
+          0
+        ],
+        "destination": [
+          "obj-raw-17",
+          0
+        ]
+      }
+    },
+    {
+      "patchline": {
+        "source": [
+          "obj-raw-17",
+          0
+        ],
+        "destination": [
+          "obj-raw-1",
+          0
+        ]
+      }
+    }
+  ]
+}

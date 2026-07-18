@@ -29,7 +29,7 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_chladni` | Generator | Chladni plate modal synthesis visualizer (Bessel modes); audio companion patch included |
 | `f_mobius` | Processor | Mobius transformation UV-space processor |
 | `f_stereo` | Processor | Stereographic projection display layer |
-| `f_lens` | Processor | Filmic lens -- aberration, distortion, transmission, tilt-shift, spatial modulation |
+| `f_lens` | Processor | Filmic lens -- aberration, distortion, transmission, tilt-shift, ghost images, halation, spatial modulation |
 | `f_channel_grader` | Processor | Per-channel color grading |
 | `f_hue_processor` | Processor | Hue-selective processing |
 | `f_luma_processor` | Processor | Luminance-selective processing |
@@ -40,7 +40,7 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_weave` | Generator | Parametric line-mark texture -- continuous distance-field lines with per-line phase variation; optional vecfield + scalar-potential inlets |
 | `f_caustic` | Processor | Optical caustic -- streamline accumulation weighted by field convergence; two outlets (composited / isolated layer) |
 | `f_sirds` | Generator | Single Image Random Dot Stereogram -- strip-based real-time construction; depth texture drives displacement of a repeating pattern |
-| **f_vf_ family** | **vecfield producers/consumers** | **float32 f_vecfield textures -- produced by f_vf_ generators, consumed by f_caustic, f_vf_warp, f_vf_streak, f_vf_seeds, f_lens field inlet** |
+| **f_vf_ family** | **vecfield producers/consumers** | **float32 f_vecfield textures -- produced by f_vf_ generators, consumed by f_caustic, f_vf_warp, f_vf_streak, f_vf_seeds** |
 | `f_vf_vortex` | Generator | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Generator | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
 | `f_vf_flow` | Generator | Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet |

@@ -31,7 +31,7 @@ adjacent products surfaced:
   Measures effort at the mouth, not chest/torso expansion — a different
   signal than what's wanted here.
 - **Digital/electronic stethoscopes** (Littmann 3200, Thinklabs One,
-  eKuore) — real medical devices, acoustic pickup of heart/lung sound,
+  ) — real medical devices, acoustic pickup of heart/lung sound,
   output audio (some over Bluetooth), not MIDI or structured data.
 
 **Resolved direction:** audio is fine — Max doesn't care what kind of

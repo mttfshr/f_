@@ -47,7 +47,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Optical lens simulation -- chromatic aberration, distortion, and vignette",
+                    "text": "Optical lens simulation -- chromatic aberration, distortion, vignette, tilt-shift focus, ghost images, and halation glow",
                     "varname": "autohelp_top_digest[3]"
                 }
             },
@@ -241,7 +241,7 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 13.0,
                     "id": "d-8",
-                    "linecount": 11,
+                    "linecount": 20,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
@@ -249,14 +249,14 @@
                         15.0,
                         150.0,
                         270.0,
-                        163.0
+                        296.4
                     ],
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "External Control Messages\n\naberration [0.0 \u2013 1.0]\ndistortion [0.0 \u2013 1.0]\ntransmission [0.0 \u2013 1.0]\naberration_mod [0.0 \u2013 1.0]\ndistortion_mod [0.0 \u2013 1.0]\ntransmission_mod [0.0 \u2013 1.0]\nsurface_mod [0.0 \u2013 5.0]\nbypass [0 / 1]",
+                    "text": "External Control Messages\n\naberration [-1.0 \u2013 1.0]\ndistortion [-1.0 \u2013 1.0]\ntransmission [-1.0 \u2013 1.0]\ntilt [0.0 \u2013 1.0]\ntilt_axis [0.0 \u2013 1.0]\ntilt_pos [0.0 \u2013 1.0]\nslope [0.0 \u2013 1.0]\nmode [linear / radial]\naberration_mod [0.0 \u2013 1.0]\ndistortion_mod [0.0 \u2013 1.0]\ntransmission_mod [0.0 \u2013 1.0]\nsurface_mod [0.0 \u2013 5.0]\nghost [-1.0 \u2013 1.0]\nghost_count [1 \u2013 4]\nghost_spacing [-1.0 \u2013 1.0]\nhalation [0.0 \u2013 1.0]\nhalation_threshold [0.0 \u2013 1.0]\nbypass [0 / 1]",
                     "textjustification": 0
                 }
             },
@@ -266,22 +266,22 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 12.0,
                     "id": "r-1",
-                    "linecount": 18,
+                    "linecount": 17,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        355.0,
+                        488.4,
                         270.0,
-                        240.0
+                        251.9
                     ],
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "References\n\nChromatic aberration: wavelength-dependent\nrefractive index (dispersion). RGB channels\nsampled at radially offset UV coordinates.\n\nBarrel/pincushion distortion: classic\nradial distortion model (Brown, 1966).\ndistortion=0.5 is identity (no warp).\n\nVignette / transmission falloff: cosine-power\nmodel with warm color shift toward edges,\nafter Zheng et al. (2009) \"Modeling\nRadiometric Calibration\".\n\nSurface emboss: inlet 5 gradient texture\ndisplaces UV before lens sampling.\nDerived in development -- not from any\nexternal source."
+                    "text": "References\n\nChromatic aberration / distortion:\nclassic radial lens models (Brown,\n1966 distortion; wavelength\ndispersion for aberration).\n\nVignette: cosine-power falloff with\nwarm shift, after Zheng et al. (2009)\n\"Radiometric Calibration\".\n\nSurface emboss, ghost images, and\nhalation: derived in development --\nnot from any external source. Halation\nfollows the classic silver-halide\nlight-scatter phenomenon; ghosts model\ninternal lens-surface reflections."
                 }
             },
             {

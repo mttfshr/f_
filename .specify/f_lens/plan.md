@@ -1,7 +1,80 @@
 # Implementation Plan: f_lens
 
 _Date: 2026-05-27_
+_Updated: 2026-07-15 — v2 scope (see ADR-6)_
 _Spec: .specify/f_lens/spec.md_
+
+---
+
+## ADR-6: v2 expansion — tilt-shift extraction, ghost/halation added (2026-07-15, anamorphic later removed same day — see addendum below)
+
+**Context:** `f_lens` v1 (aberration/distortion/transmission/tilt) has
+been built and working since 2026-06-09. Revisiting `ideas/f_lens.md`'s
+original open questions (ghost images, anamorphic, halation) plus the
+tabled `ideas/f_lens_tiltshift_split.md` architecture question surfaced
+a coherent v2 direction.
+
+**Decision:**
+- Tilt-shift fully extracted to new module `f_focus`
+  (`.specify/f_focus/`) — not kept even in lightweight form in
+  `f_lens`. Rationale and phasing in `f_focus/plan.md` ADR-1/ADR-2.
+- Ghost images promoted from "out of scope" to in-scope — extends the
+  existing `lens_pix` codebox's radial vector machinery.
+- Halation promoted from "out of scope" to in-scope, shipping as a mode
+  within `f_lens` (Matt's explicit call) despite the mechanism mismatch
+  with the rest of the codebox — architecture TBD, likely a second
+  `pix_chain` stage.
+- Anamorphic promoted from "deferred" to in-scope, split into static
+  (no new inlet) and field-driven (new vecfield inlet, in4) variants.
+
+Full detail in `.specify/f_lens/spec.md` v2 Scope section and Session
+2026-07-15 Clarifications.
+
+**Consequences:** This is a substantially larger build than v1 — three
+new effect families plus a new inlet type, on top of removing an
+existing one. Real open questions remain before any codebox work starts
+(see spec.md's v2 open questions): vecfield inlet driving-vs-modulation
+behavior, vecfield inlet labeling convention (no precedent exists yet
+for non-`f_vf_`-prefixed *inlets*, only outlets), `in3` rename to avoid
+colliding with the new vecfield inlet's natural "field" name, halation's
+internal architecture, and panel layout at increased param count. None
+of these are resolved yet — this ADR records the scope decision, not a
+green light to start building. Per standing preference, architecture
+gets discussed further (each open question above) before any codebox or
+patcher work begins.
+
+---
+
+## ADR-6 Addendum: anamorphic removed from scope (2026-07-15, same day)
+
+**Context:** During Phase 1 (ghost images) build work, a design
+conversation established that static anamorphic is genuinely
+non-redundant with the existing `distortion`/`distortion_mod` machinery
+(distortion mod-texture varies warp *magnitude* spatially but stays
+isotropic per-pixel; anamorphic squeeze is a *constant* per-axis scale,
+a structurally different degree of freedom) — so the removal below is
+not "it turned out to be redundant," it's a scope/density judgment call.
+
+**Decision:** Both anamorphic variants (static + field-driven) removed
+from `f_lens` v2 entirely, moved to `ideas/f_anamorph_unnamed.md` as a
+candidate for its own future module. Matt's reasoning: `f_lens` was
+"already very full of expressive potential," and the field-driven half
+specifically needs a vecfield inlet — a signal type nothing else in
+`f_lens` uses, and a closer structural match to the `f_vf_` consumer
+family (`f_vf_warp`, `f_vf_streak`) than to `f_lens`'s own radial-optical
+character. Static-only was considered as a partial keep (no new inlet,
+cheap to leave in) but rejected in favor of moving both variants
+together — one future module should own the whole anamorphic concept
+rather than splitting it across two files.
+
+**Consequences:** `f_lens` v2 scope is now ghost images + halation only.
+`.specify/f_lens/tasks.md` Phase 3 (Anamorphic) struck through/removed,
+task numbers T023–T030 retired. `spec.md`'s Anamorphic subsection and
+related Clarifications/Open-Questions entries marked struck-through for
+history, not deleted. The `anamorphic_field_amt` bias/blend decision and
+the vecfield hemisphere-alignment mechanism (worked out during this same
+conversation, before the scope-removal decision) are preserved in the
+ideas file rather than lost — real design work, just relocated.
 
 ---
 

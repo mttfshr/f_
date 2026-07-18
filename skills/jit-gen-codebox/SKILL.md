@@ -520,6 +520,26 @@ course_uv = vec(0.5, (course_idx + 0.5) / course_scale);
 mod_val = sample(in2, course_uv).x;
 ```
 
+### `vec4 + vec4` addition on stored variables (confirmed GPU-correct 2026-07-15)
+Elementwise addition of two stored `vec4` variables (not component-sliced
+— see the component-access failure class above) is safe, same as the
+already-confirmed `vec4 * vec4`/`vec4 * scalar` multiplication pattern
+(`effect_out * warm_shift * vignette` in `f_lens`). Confirmed on
+`f_lens`'s ghost-images addition, where an addend vector's alpha channel
+was deliberately zeroed (`vec(r, g, b, 0.0)`) before adding to a base
+`vec4` whose alpha was already 1.0, specifically to avoid alpha drifting
+above 1.0 from naive whole-vector accumulation:
+```
+ghost_vec = vec(ghost_r, ghost_g, ghost_b, 0.0);
+effect_out = effect_out + ghost_vec * ghost;  // confirmed working in Max
+```
+General lesson: when accumulating color contributions onto a base `vec4`
+via plain addition, explicitly zero the alpha channel of anything being
+added (rather than letting it default to 1.0 from a `sample()` call) —
+the addition itself is GPU-safe, but the *semantics* of adding two
+alpha=1.0 vectors together will push the result past 1.0 if you don't
+control for it.
+
 ### Complex/Möbius arithmetic (confirmed GPU-correct 2026-07-09)
 GenExpr has no complex number type. Representing a complex value as two
 scalars (`_re`, `_im`) and a 2x2 complex Möbius matrix as eight scalars

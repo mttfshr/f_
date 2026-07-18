@@ -681,7 +681,7 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Lens \u2207",
+                                "Lens",
                                 "Prism \u2207"
                             ],
                             "parameter_initial": [

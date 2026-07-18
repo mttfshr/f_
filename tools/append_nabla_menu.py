@@ -4,12 +4,15 @@ PATH = "/Users/matt/Github/f_/package/patchers/f_modules.maxpat"
 
 # filenames (as they appear in the *_file live.menu enums) that take or
 # produce an f_vecfield -- per README's f_vf_ family list plus the
-# non-vf_-prefixed consumers/producers (f_caustic, f_lens's field inlet,
-# f_weave's optional vecfield inlet, f_chladni's out2 vecfield outlet)
+# non-vf_-prefixed consumers/producers (f_caustic, f_weave's optional
+# vecfield inlet, f_chladni's out2 vecfield outlet). "lens" removed
+# 2026-07-16 -- was here based on an incorrect assumption that f_lens's
+# scalar "field" mod-texture inlet was a vecfield; confirmed directly
+# against f_lens.maxpat during the v2 build that it never was. f_lens
+# has no vecfield port as of this writing.
 VECFIELD_MODULES = {
     "weave",
     "vf_seeds",
-    "lens",
     "vf_prism",
     "vf_vortex",
     "vf_vortex_multi",
