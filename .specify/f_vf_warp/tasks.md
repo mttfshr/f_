@@ -151,6 +151,19 @@ docs/
 
 ---
 
+## Phase 6: Bug — `out2` ignores bypass
+
+**Purpose:** With the module bypassed, `out2` (the vecfield outlet) still appears to change the direction of the incoming vecfield instead of passing it through untouched. Found through use 2026-07-17, not a documentation gap — a real behavior bug. Tracked here rather than only in `plan.md` so it isn't orphaned again.
+
+- [ ] T047 Reproduce in isolation: feed a known static vecfield to in1, enable bypass, confirm `out2` differs from the input vecfield (rule out that this is expected behavior misread as a bug)
+- [ ] T048 Trace the codebox/gen wiring for `out2` — confirm whether `bypass` is referenced at all in the branch that produces `out2`, versus only gating `out1`
+- [ ] T049 Decide the correct bypassed behavior for `out2` (likely: pass the input vecfield through unmodified) and implement
+- [ ] T050 Re-verify T036-equivalent for `out2`: with bypass enabled, `out2` exactly matches the incoming vecfield regardless of `strength`
+
+**Checkpoint:** `out2` passes through unmodified when bypassed. Update `docs/f_vf_warp.md` if it documents current (buggy) behavior.
+
+---
+
 ## Dependencies
 
 **Phase dependencies (strict):**

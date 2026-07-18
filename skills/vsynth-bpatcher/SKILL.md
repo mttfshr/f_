@@ -170,13 +170,19 @@ f_/
     masonry/, util_profile/, build_texrouter.py, etc.
   skills/      — Claude skills for collaborating on this repo (copies of the source
                  skills in claude-scaffold; this file's copy lives here)
-  .specify/    — planning workspace (version controlled — no longer gitignored)
+  .specify/    — planning workspace: spec.md/plan.md/tasks.md only (version controlled — no longer gitignored)
     constitution.md
-    f_<name>/           — one dir per bpatcher under active development
+    f_<name>/           — one dir per bpatcher, planning docs only
       spec.md           — what it does and how you know it's working
       plan.md           — ADRs, blocks, phases (added when build begins)
-      tasks.md          — flat task list, session anchor (added when build begins)
+      tasks.md          — flat task list, session anchor (added when build begins); absent once a module has no outstanding work
+    f_<name>.stable/    — same as above, suffix marks the module shipped/verified with nothing outstanding
+    f_<name>.paused/    — same as above, suffix marks the module shelved on a real open question — don't resume by default
+  src/         — build-input files (version controlled)
+    f_<name>/           — one dir per bpatcher with code
       definition.py     — patcher definition: codebox + params + archetype (added at end of Phase 2)
+      codebox_*.gen     — confirmed codebox content, referenced by definition.py
+      build_*.py        — per-module build script, for modules whose build needs diverge from build_patcher.py's general path
   HANDOFF.md   — session notes (ephemeral; written fresh each session)
   README.md    — permanent project state: bpatcher status table, build queue
 ```
@@ -213,12 +219,12 @@ Each bpatcher moves through three stages:
 - **`ideas/f_name.md`** — spec for a planned bpatcher: concept, parameter contract, open questions. Lives here until the build begins.
 - **`.specify/f_name/spec.md`** — what the bpatcher does and how you know it's working. Written before touching Max.
 - **`.specify/f_name/plan.md`** — ADRs, dependency blocks, implementation phases. Added when build begins.
-- **`.specify/f_name/tasks.md`** — flat ordered task list; the session anchor for this build. Added when build begins.
-- **`.specify/f_name/definition.py`** — patcher definition file: confirmed codebox + full param contract + archetype. Written at end of Phase 2 (codebox confirmed). Input to `build/build_patcher.py`. See `build/spec.md` for schema.
+- **`.specify/f_name/tasks.md`** — flat ordered task list; the session anchor for this build. Added when build begins. Delete once nothing is outstanding — absence is the "no open work" signal.
+- **`src/f_name/definition.py`** — patcher definition file: confirmed codebox + full param contract + archetype. Written at end of Phase 2 (codebox confirmed). Input to `build/build_patcher.py`. See `build/spec.md` for schema.
 - **`docs/f_name.md`** — as-built reference. Updated when the bpatcher changes, not during planning.
 
 **At session end, update all three:**
-1. **`.specify/f_name/tasks.md`** — mark done, add new items, reorder
+1. **`.specify/f_name/tasks.md`** — mark done, add new items, reorder. If everything is done and confirmed, delete `tasks.md` and `git mv` the module's `.specify/f_name/` to `.specify/f_name.stable/`. If the module is being shelved on a real open question rather than finished, `git mv` to `.specify/f_name.paused/` instead (spec/plan/tasks stay, they're not deleted — the suffix just signals don't-resume-by-default). Unmarked directories are active work.
 2. **`README.md`** — permanent project state: bpatcher status table, build queue
 3. **`HANDOFF.md`** — session notes only: what was done, what's next, loose threads
 
@@ -848,7 +854,7 @@ Key decisions:
 
 ### Adding a New Module
 
-**`f_modules.maxpat` has no build script** — unlike production module patchers, it's fully hand-built JSON, edited directly via small one-off Python scripts in `tools/` (e.g. `tools/rebuild_modules_menu.py`, `tools/append_nabla_menu.py`) that load/mutate/rewrite the JSON. These are one-off per edit, not a reusable generator — see `tools/README.md`. (An earlier `.specify/f_modules/build_modules.py` script is no longer how this file is maintained.)
+**`f_modules.maxpat` has no build script** — unlike production module patchers, it's fully hand-built JSON, edited directly via small one-off Python scripts in `tools/` (e.g. `tools/rebuild_modules_menu.py`, `tools/append_nabla_menu.py`) that load/mutate/rewrite the JSON. These are one-off per edit, not a reusable generator — see `tools/README.md`. (An earlier `build_modules.py` script, now at `build/tools/f_modules/build_modules.py`, is no longer how this file is maintained.)
 
 Two things need updating when a module is added:
 

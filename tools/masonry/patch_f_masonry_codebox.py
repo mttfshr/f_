@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 
 PATCHER_PATH = Path("/Users/matt/Github/f_/patchers/f_masonry.maxpat")
-CODEBOX_PATH = Path("/Users/matt/Github/f_/.specify/f_masonry/codebox_phase5b.gen")
+CODEBOX_PATH = Path("/Users/matt/Github/f_/src/f_masonry/codebox_phase5b.gen")
 
 with open(PATCHER_PATH) as f:
     doc = json.load(f)

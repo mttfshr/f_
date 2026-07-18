@@ -15,14 +15,14 @@ This is a personal scaffolding tool. It generates the initial patcher correctly 
 ```
 scratch patch (iterate codebox)
     ↓
-.specify/f_<name>/definition.py   ← patcher definition: codebox + params + archetype
+src/f_<name>/definition.py         ← patcher definition: codebox + params + archetype
     ↓
 build/build_patcher.py            ← reads definition, writes .maxpat
     ↓
 package/patchers/f_<name>.maxpat  ← distributed artifact; Max owns it from here
 ```
 
-`.specify/` is version controlled (planning/reference material, kept public). `package/patchers/` is version controlled and is the distribution artifact — the only folder Max needs, see the repo root README.
+`src/` holds build-input files (`definition.py`, codebox `.gen` files, per-module build scripts) — the working source for the build system. `.specify/` holds planning/reference material only (`spec.md`/`plan.md`/`tasks.md`), version controlled and kept public. `package/patchers/` is version controlled and is the distribution artifact — the only folder Max needs, see the repo root README.
 
 ---
 
@@ -30,7 +30,7 @@ package/patchers/f_<name>.maxpat  ← distributed artifact; Max owns it from her
 
 ### Definition file
 
-A Python module at `.specify/f_<name>/definition.py` containing a single dict named `patcher`. Imported directly by the build script.
+A Python module at `src/f_<name>/definition.py` containing a single dict named `patcher`. Imported directly by the build script.
 
 **Required keys:**
 
@@ -129,7 +129,7 @@ patcher = {
             "id":       str,   # symbolic ID used in pix_wires references
             "name":     str,   # literal @name string on jit.gl.pix — author decides
             "gen":      str,   # "pass" for identity gen, or filename relative to
-                               # .specify/f_<name>/ for a codebox file
+                               # src/f_<name>/ for a codebox file
             "n_inlets": int,   # number of gen inlets (in 1, in 2, ...)
             "n_outlets":int,   # number of gen outlets (out 1, out 2, ...)
             "pix_type": str,   # optional — @type attribute (e.g. "char", "float32")

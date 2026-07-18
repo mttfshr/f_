@@ -3,9 +3,9 @@
 build_patcher.py — generates f_ Vsynth bpatcher .maxpat JSON from a definition file.
 
 Usage:
-    python3 tools/build_patcher.py .specify/f_stipple/definition.py
+    python3 build/build_patcher.py src/f_stipple/definition.py
 
-See tools/spec.md for definition file schema.
+See build/spec.md for definition file schema.
 """
 
 import json
@@ -1315,7 +1315,7 @@ def load_definition(path):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 build/build_patcher.py .specify/f_<name>/definition.py")
+        print("Usage: python3 build/build_patcher.py src/f_<name>/definition.py")
         sys.exit(1)
 
     def_path  = Path(sys.argv[1])

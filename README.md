@@ -64,11 +64,12 @@ There is no release schedule. Patches may change significantly as development co
 
 ## Repo Structure
 
-This repo has four parts:
+This repo has five parts:
 
 - **`package/`** — the installable Max package: `patchers/`, `help/`, `javascript/`, `package-info.json`. This is the only folder Max needs (see Installation above).
 - **`build/`** — the build system used to generate patchers from definition files, plus supporting tools (helpfile generation via Claude API, interface auditing, migrations). Meant to be forked or read if you want to build your own `f_`-style bpatcher library. See `build/spec.md`.
-- **`ideas/`, `.specify/`, `docs/`** — planning and reference material: half-formed module ideas (`ideas/`), specs/plans/ADRs for modules under active development (`.specify/`), and as-built reference docs plus research notes on Vsynth/Max internals (`docs/`). Kept public as a reference and conversation starter, not as polished documentation — expect dead ends, superseded approaches, and in-progress modules alongside finished ones.
+- **`src/`** — build-input files per module: `definition.py` (patcher definition), `codebox_*.gen` (confirmed codebox content), and per-module build scripts for modules whose build needs diverge from the general `build_patcher.py` path.
+- **`ideas/`, `.specify/`, `docs/`** — planning and reference material: half-formed module ideas (`ideas/`), specs/plans/ADRs for modules under active development (`.specify/`), and as-built reference docs plus research notes on Vsynth/Max internals (`docs/`). `.specify/f_name/` directories carry an optional suffix — `.stable` (shipped, verified, nothing outstanding) or `.paused` (shelved on a real open question, don't resume by default); unsuffixed means active. Kept public as a reference and conversation starter, not as polished documentation — expect dead ends, superseded approaches, and in-progress modules alongside finished ones.
 - **`skills/`** — [Claude](https://claude.ai) skills used to collaborate with Claude on this codebase: conventions for bpatcher structure (`vsynth-bpatcher`), GenExpr/`jit.gl.pix` gotchas (`jit-gen-codebox`), helpfile format (`f-helpfile`), and a notation system for describing patches in chat (`max-patch-notation`). Copy these into your own Claude setup (e.g. `claude-scaffold`-style skills directory) if you want a similar collaboration workflow — you'll want to adjust the hardcoded paths in `vsynth-bpatcher/SKILL.md` to match your own repo location.
 
 `tools/` also exists, holding one-off scripts from past development sessions — not part of the supported build system (see `tools/README.md`).
