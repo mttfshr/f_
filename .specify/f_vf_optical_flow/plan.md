@@ -40,7 +40,7 @@ technique in the library (windowed multi-term accumulation). Already
 flagged as the most computationally expensive module in the family if
 built to full spec.
 
-### ADR-2: Confidence as a separate outlet, not a bundled channel
+### ADR-2: Confidence as a separate outlet, not a bundled channel — **masking added 2026-07-18, reversing part of this ADR's original scope**
 
 **Context:** Lucas-Kanade's 2×2 system is singular or near-singular in
 flat/textureless regions (the aperture problem) — no existing `f_vf_`
@@ -55,6 +55,27 @@ information out of/alongside a vecfield as its own outlet. Any future
 masking/suppression logic that consumes this confidence signal is
 explicitly out of scope for this module (see spec.md Out of Scope) —
 this module only produces the signal.
+
+**Revision (2026-07-18):** Real Phase 4 testing showed this scope
+boundary was wrong in practice, not just theoretically incomplete.
+`det_safe`'s divide-by-zero floor (Phase 2) means ordinary per-frame
+sensor noise in low-`det` regions gets amplified into large, erratic
+`(u,v)` values — and this hits worst exactly along real 1D edges
+(window blinds, silhouette outlines), not in flat regions, since edges
+are where `det` is small enough for the floor to matter but there's
+still enough gradient to generate noisy numerators. Confirmed via a
+static test scene: the vecfield should read flat/neutral with zero
+real motion, but instead showed sharp noise tracing scene edges — the
+same aperture-problem geometry the Phase 2 synthetic-edge test already
+proved, just manifesting as visible noise on real edges instead of a
+clean `det≈0` reading. Added `mask_lo`/`mask_hi` as live dials in
+`stage_c` (`smoothstep`-gated mix toward neutral below `mask_lo`,
+full-strength above `mask_hi`) rather than a hardcoded threshold,
+since `det`'s real numeric range was never precisely measured (T017) —
+confirmed working directly against live camera input, cleanly killing
+static-scene noise while real motion in textured regions still passes
+through. The confidence outlet itself (`out2`) is unchanged — still
+raw, unmasked — only the `(u,v)` vecfield gets gated.
 
 ### ADR-3: Single-scale only, pyramid explicitly deferred
 
@@ -72,7 +93,7 @@ expected failure mode for single-scale LK), that's a known, documented
 next step (pyramid), not a surprise gap requiring re-scoping from
 scratch.
 
-### ADR-4: 4-node `pix_chain`, one shared previous-frame loop
+### ADR-4: 4-node `pix_chain`, one shared previous-frame loop — **revised to 5 nodes in Phase 1, then 7 in Phase 4**
 
 **Context:** Initially assumed each stage might need its own feedback
 loop (mirroring the ruled-out approach's 4-pix build, which had two
@@ -86,6 +107,43 @@ fresh output each frame, no feedback of their own.
 **Consequences:** Total node count is 4: `pass_pix` (previous-frame
 identity) + Stage A + Stage B + Stage C — same total as the ruled-out
 attempt, restructured around real math instead of a diff-blob gradient.
+
+**Revision (Phase 1):** Stage B's 5×5 windowed sum turned out to be
+separable (horizontal 5-tap sum → vertical 5-tap sum, mathematically
+identical to a naive 25-tap 2D sum but far fewer sample operations) —
+built proactively as two codeboxes (`stage_b_h_pix`, `stage_b_v_pix`)
+from the start, rather than attempting the naive single-codebox version
+and splitting only if the GL2→GL3 capture-group ceiling bit. Total node
+count is therefore 5, not 4: `pass_pix` + `stage_a_pix` + `stage_b_h_pix`
++ `stage_b_v_pix` + `stage_c_pix`. Confirmed compiling/rendering with no
+console errors, and spot-checked correct against a static synthetic
+test pattern (Phase 1, T008–T012).
+
+**Revision (Phase 4, 2026-07-18):** Real testing revealed the
+per-frame LK solve, even correctly masked (see ADR-2's revision), has
+*no temporal continuity at all* — it's purely instantaneous, with no
+mechanism for direction to persist frame-to-frame. Result: it felt
+transitory/noisy in feel even where the math was fully correct, not
+flagged by any of the correctness checks in Phases 0–3 because
+"correct" and "reads as coherent flow" turned out to be different
+questions. Added a second feedback pair — `pass_d` + `stage_d_pix` —
+implementing the same decay/injection accumulation pattern already
+proven in `f_vf_advect` (not a novel technique, reused directly),
+sitting after `stage_c` in the chain. `stage_c`'s output is now only
+an intermediate injection signal; the module's real `(u,v)` outlet
+comes from `stage_d`'s accumulated field. Total node count is 7:
+`pass_pix` + `stage_a_pix` + `stage_b_h_pix` + `stage_b_v_pix` +
+`stage_c_pix` + `pass_d_pix` + `stage_d_pix`. This is this module's
+second genuinely new technique (after Stage B's separable sum) to
+require its own real design work, rather than being reducible to
+"apply an existing pattern verbatim" — the decay/injection *shape* is
+reused from `f_vf_advect`, but accumulating a *vector field* (magnitude
++ direction, decode/re-encode at the 0.5-centered vecfield boundary)
+is a different problem than `f_vf_advect`'s scalar accumulation.
+**Not yet confirmed stable** — Matt confirmed this is a real
+improvement and closer to the intended feel, but flagged the module
+overall as needing more work before being considered done. See
+`tasks.md`'s Phase 4 notes and `HANDOFF.md` for what's still open.
 
 ### ADR-5: `pix_chain` schema confirmed sufficient — no new build-system capability needed
 

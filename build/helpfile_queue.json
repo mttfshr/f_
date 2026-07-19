@@ -6,8 +6,14 @@
     "source": "definition.py",
     "params": [
       {
-        "name": "intensity",
-        "hint": "",
+        "name": "mix_pct",
+        "hint": "Dry/wet crossfade toward the fully-composited (source+caustic) state. Renamed from strength 2026-07-12, range capped to true 0-100% (dropping the old 0-1.5 extrapolation zone). Internal Param named mix_pct to avoid colliding with the codebox's mix() operator.",
+        "range": "[0.0 \u2013 100.0]",
+        "type": "float"
+      },
+      {
+        "name": "gain",
+        "hint": "Caustic brightness scale. Renamed from intensity 2026-07-12 to match the library-wide gain/mix naming convention.",
         "range": "[0.0 \u2013 2.0]",
         "type": "float"
       },
@@ -36,76 +42,40 @@
         "type": "bool"
       }
     ],
-    "has_docs": false,
-    "docs_path": null,
-    "helpfile_path": "/Users/matt/Github/f_/help/f_caustic.maxhelp",
+    "has_docs": true,
+    "docs_path": "/Users/matt/Github/f_/docs/f-reference/f_caustic.md",
+    "helpfile_path": "/Users/matt/Github/f_/package/help/f_caustic.maxhelp",
     "status": "done",
-    "tokens_used": 9904
+    "tokens_used": 14244
   },
   {
-    "module_name": "f_stipple",
-    "short_name": "stipple",
+    "module_name": "f_vf_fieldmap",
+    "short_name": "vf_fieldmap",
     "module_type": "processor",
     "source": "definition.py",
     "params": [
       {
-        "name": "freq",
-        "hint": "Hash field spatial frequency",
-        "range": "[0.0 \u2013 20.0]",
+        "name": "gain",
+        "hint": "Gradient magnitude scale. Negative inverts field direction.",
+        "range": "[-10.0 \u2013 10.0]",
         "type": "float"
       },
       {
-        "name": "coarseness",
-        "hint": "Grain period scale \u2014 higher = chunkier grains",
-        "range": "[1.0 \u2013 100.0]",
+        "name": "scale",
+        "hint": "Central difference step size (normalized UV). Negative inverts gradient axis.",
+        "range": "[-0.05 \u2013 0.05]",
         "type": "float"
       },
       {
-        "name": "anisotropy",
-        "hint": "0=isotropic grain  1=parallel lines  >1=expressive aliasing",
-        "range": "[0.0 \u2013 4.0]",
+        "name": "rotate",
+        "hint": "Rotate field vector in degrees.",
+        "range": "[-180.0 \u2013 180.0]",
         "type": "float"
       },
       {
-        "name": "angle",
-        "hint": "Orientation of along/across coordinate frame",
-        "range": "[-360.0 \u2013 360.0]",
-        "type": "float"
-      },
-      {
-        "name": "zoom",
-        "hint": "Scales viewport into hash field \u2014 same character, bigger or smaller",
-        "range": "[0.1 \u2013 4.0]",
-        "type": "float"
-      },
-      {
-        "name": "threshold",
-        "hint": "Dither bias / displacement amount",
-        "range": "[0.0 \u2013 2.0]",
-        "type": "float"
-      },
-      {
-        "name": "colorize",
-        "hint": "0=monochrome dither output  1=inherit input color",
+        "name": "thresh",
+        "hint": "Suppress field below this luma threshold.",
         "range": "[0.0 \u2013 1.0]",
-        "type": "float"
-      },
-      {
-        "name": "along_phase",
-        "hint": "Hash field offset along angle axis; drive externally for drift",
-        "range": "[-1.0 \u2013 1.0]",
-        "type": "float"
-      },
-      {
-        "name": "across_phase",
-        "hint": "Hash field offset perpendicular to angle axis; drive externally for drift",
-        "range": "[-1.0 \u2013 1.0]",
-        "type": "float"
-      },
-      {
-        "name": "softness",
-        "hint": "Smoothstep width at comparison boundary",
-        "range": "[0.0 \u2013 2.0]",
         "type": "float"
       },
       {
@@ -115,10 +85,59 @@
         "type": "bool"
       }
     ],
-    "has_docs": false,
-    "docs_path": null,
-    "helpfile_path": "/Users/matt/Github/f_/help/f_stipple.maxhelp",
+    "has_docs": true,
+    "docs_path": "/Users/matt/Github/f_/docs/f-reference/f_vf_fieldmap.md",
+    "helpfile_path": "/Users/matt/Github/f_/package/help/f_vf_fieldmap.maxhelp",
     "status": "done",
-    "tokens_used": 11381
+    "tokens_used": 12106
+  },
+  {
+    "module_name": "f_vf_streak",
+    "short_name": "vf_streak",
+    "module_type": "processor",
+    "source": "definition.py",
+    "params": [
+      {
+        "name": "gain",
+        "hint": "Streak intensity. Renamed from strength 2026-07-12 to match the library-wide gain/mix naming convention.",
+        "range": "[0.0 \u2013 1.5]",
+        "type": "float"
+      },
+      {
+        "name": "mix_pct",
+        "hint": "Dry/wet crossfade toward the fully-composited (source+streak) state. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator. Default 0 (off by default, matching this module's original load behavior).",
+        "range": "[0.0 \u2013 100.0]",
+        "type": "float"
+      },
+      {
+        "name": "length",
+        "hint": "",
+        "range": "[0.0 \u2013 20.0]",
+        "type": "float"
+      },
+      {
+        "name": "falloff",
+        "hint": "",
+        "range": "[0.0 \u2013 2.5]",
+        "type": "float"
+      },
+      {
+        "name": "color_shift",
+        "hint": "",
+        "range": "[0.0 \u2013 20.0]",
+        "type": "float"
+      },
+      {
+        "name": "bypass",
+        "hint": "Bypass",
+        "range": "[0 / 1]",
+        "type": "bool"
+      }
+    ],
+    "has_docs": true,
+    "docs_path": "/Users/matt/Github/f_/docs/f-reference/f_vf_streak.md",
+    "helpfile_path": "/Users/matt/Github/f_/package/help/f_vf_streak.maxhelp",
+    "status": "done",
+    "tokens_used": 12699
   }
 ]

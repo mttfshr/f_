@@ -438,6 +438,109 @@ BORDER_COLOR = [0.0, 0.03529411765, 0.2274509804, 1.0]
 
 ---
 
+## Helpfile Generation Pipeline
+
+_Added 2026-07-19._ This section governs `extract_params.py` +
+`generate_helpfiles.py`, not `build_patcher.py` itself — kept in this file
+because it's the same "build system" the repo README points to for the
+whole pipeline, not just the `.maxpat` generator.
+
+**The rule:** a module cannot get a generated `.maxhelp` until
+`docs/f-reference/f_name.md` exists and reflects that module's current
+stable state. This is a hard sequencing gate, not a nice-to-have.
+
+**Why:** `docs/f-reference/f_name.md` is the one place dev-time reasoning
+(`.specify/f_name/spec.md`'s resolved decisions, `plan.md`/`tasks.md`'s
+empirical findings, real signal flow from the built patcher) gets
+synthesized into prod-facing language. `generate_helpfiles.py` draws its
+prose — descriptions, notes, References block — from that doc, not from
+`spec.md`/`plan.md` directly. Skip the doc and the generator has nothing
+but mechanical param ranges to work with: a `.maxhelp` that's accurate but
+says nothing about why the module exists or what its honest limitations
+are. `f_vf_optical_flow.md` is the worked example of what this synthesis
+should look like.
+
+**Enforcement:**
+- `extract_params.py` marks a module's queue entry `"blocked_no_docs"`
+  instead of `"pending"` if `docs/f-reference/f_name.md` doesn't exist —
+  visibly excluded from the queue rather than silently generated with a
+  placeholder References block.
+- `generate_helpfiles.py` independently skips any entry without
+  `has_docs=True` before calling the API, even if the queue file was
+  hand-edited — reported separately from budget-skips.
+
+**Sequencing in practice:**
+```
+module reaches stable
+    ↓
+write/update docs/f-reference/f_name.md
+    (params from definition.py + real signal flow + Notes distilled
+     from spec.md/plan.md/tasks.md — see f-helpfile skill's
+     "Prerequisite" section for what this should contain)
+    ↓
+extract_params.py f_name       ← queues it (has_docs now true)
+    ↓
+generate_helpfiles.py f_name   ← generates .maxhelp
+```
+
+See also: `skills/f-helpfile/SKILL.md`'s "Prerequisite" section for the
+how-to; this section is the why/rule.
+
+**Staleness tracking and the review loop.** Once a module has both a doc
+and a helpfile, `extract_params.py --all` compares their mtimes and reports
+one of: `current` (helpfile reflects the doc), `stale` (doc edited since
+the helpfile was last generated), `pending` (doc exists, no helpfile yet),
+or `blocked_no_docs`.
+
+A `stale` result is never auto-regenerated — not by `extract_params.py`
+(which only reports status, never writes helpfiles), and not by
+`generate_helpfiles.py` in a bulk/unfiltered run, which only picks up
+`pending` entries. Regenerating a `stale` helpfile requires naming it
+explicitly (`generate_helpfiles.py f_name`) — a deliberate per-module
+choice, since regeneration discards any manual edits made directly in Max.
+
+The loop this supports, once a real finding surfaces (from performance,
+from opening the module in Max, from anything):
+```
+edit docs/f-reference/f_name.md with the finding
+    ↓
+next extract_params.py --all run flags it "stale"
+    ↓
+explicitly decide to regenerate: generate_helpfiles.py f_name
+    ↓
+open in Max, review, tweak as needed, save
+    ↓
+Max's save bumps the .maxhelp's mtime past the doc's — the next audit
+run reports it "current" again, with no separate bookkeeping step
+```
+Conversely: cosmetic tweaks made directly in Max (wording, layout) don't
+need a doc update to "settle" — saving in Max is itself what clears
+staleness, since it's a plain mtime comparison. Only tweaks that represent
+real findings need to be written back into the doc — otherwise that
+knowledge exists only in a comment box in Max and could be silently lost
+on a future regeneration.
+
+**Full lifecycle, including the eventual `.specify/stable/` move:**
+```
+module reaches stable
+    ↓
+write/update docs/f-reference/f_name.md   ← harvest point; confirm it
+                                              actually captured everything
+                                              worth keeping from spec/plan/tasks
+    ↓
+extract_params.py f_name → generate_helpfiles.py f_name
+    ↓
+.specify/f_name/ moved to .specify/stable/f_name/
+    (reorganized into that subdirectory, not renamed — see README.md's
+     "Repo Structure" section. From this point its spec/plan/tasks content
+     is archival — the ADR/decision history — not the active reference;
+     docs/f-reference/f_name.md is. Resuming later means moving it back
+     to .specify/ root and treating its content as a starting draft, not
+     a clean slate.)
+```
+
+---
+
 ## Known Constraints
 
 - Max does not pick up external file edits while a patch is open — close without saving, reopen to load build script output

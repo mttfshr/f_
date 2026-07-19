@@ -32,8 +32,10 @@ vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradien
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `strength` | 0–10 | 4.0 | Scales gradient magnitude into f_vecfield range. Calibrate to input contrast. |
-| `scale` | 0.001–0.05 | 0.004 | Central difference neighbor distance (normalized UV). Low = fine structure; High = coarse/smooth. ~2px at 480p. |
+| `gain` | -10–10 | 4.0 | Scales gradient magnitude into f_vecfield range. Negative inverts field direction. Renamed from `strength`. |
+| `scale` | -0.05–0.05 | 0.004 | Central difference neighbor distance (normalized UV). Low = fine structure; High = coarse/smooth. ~2px at 480p. Negative inverts gradient axis. |
+| `rotate` | -180–180 | 0.0 | Rotates the field vector in degrees, applied after gradient computation. |
+| `thresh` | 0–1 | 0.0 | Suppresses the field (outputs neutral 0.5) below this center-pixel luma threshold. |
 | `bypass` | 0/1 | 0 | Outputs neutral field (all 0.5) |
 
 **Prefix:** `fieldmap` — **Object name:** `fieldmap_pix`
@@ -42,15 +44,22 @@ vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradien
 
 ## Field Computation
 
-Luminance (Rec. 601: `0.299R + 0.587G + 0.114B`) sampled at 4 neighbors via central difference:
+UV is inset by `scale` before sampling (`suv = norm * (1 - 2*scale) + scale`) to keep all four neighbor samples within texture bounds. Luminance (Rec. 601: `0.299R + 0.587G + 0.114B`) sampled at center and 4 neighbors via central difference:
 
 ```
-gx = luma(x + scale, y) - luma(x - scale, y)
-gy = luma(x, y + scale) - luma(x, y - scale)
+gx = (luma(suv.x + scale, suv.y) - luma(suv.x - scale, suv.y)) * gain
+gy = (luma(suv.x, suv.y + scale) - luma(suv.x, suv.y - scale)) * gain
 ```
 
-Scaled by `strength`, encoded to f_vecfield convention:
-`R = clamp(gx * 0.5 + 0.5, 0, 1)`, `G = clamp(gy * 0.5 + 0.5, 0, 1)`, `B = 0.5`, `A = 1.0`.
+The gradient is then rotated by `rotate` degrees:
+
+```
+angle = rotate * pi / 180
+gx' = gx*cos(angle) - gy*sin(angle)
+gy' = gx*sin(angle) + gy*cos(angle)
+```
+
+Encoded to f_vecfield convention: `R = clamp(gx'*0.5+0.5, 0, 1)`, `G = clamp(gy'*0.5+0.5, 0, 1)`, `B = 0.5`, `A = 1.0` — then gated by `thresh`: pixels whose center luma is at or below `thresh` are replaced with the neutral field (0.5, 0.5, 0.5).
 
 Flat input regions produce exactly R = G = 0.5 (zero gradient, neutral field). Consumers decode via `(sample - 0.5) * 2.0`. See `docs/f-reference/f_vecfield_type.md` for full type contract.
 
@@ -68,20 +77,20 @@ The fieldmap derives a vector field from the noise spatial structure. f_caustic 
 
 ## Calibration by Input Type
 
-| Input | Strength | Scale | Character |
+| Input | Gain | Scale | Character |
 |---|---|---|---|
 | simplex / Perlin | ~4.0 | 0.004 | Smooth lens-like caustic blobs |
 | Voronoi smooth | ~4.0 | 0.004 | Sharp radial fan structures at cell centers |
 | fractal.fbm | ~0.1 | 0.01–0.02 | Fine scattered caustic flecks; fbm gradient is high-contrast |
 
-`strength` default (4.0) is calibrated for simplex/Perlin. High-contrast inputs like fractal.fbm need significantly lower strength to avoid saturation.
+`gain` default (4.0) is calibrated for simplex/Perlin. High-contrast inputs like fractal.fbm need significantly lower gain to avoid saturation.
 
 ---
 
 ## Notes
 
+- **2026-07-19:** `strength` renamed to `gain`; `rotate` and `thresh` params added (rotate the field vector post-gradient; suppress field below a luma threshold). Also fixed: neighbor sampling now insets UV by `scale` to stay within texture bounds, avoiding edge-sample artifacts present in the earlier version.
 - `scale` doubles as a spatial frequency selector: low scale tracks fine noise structure, high scale extracts coarse structure from high-frequency inputs
-- No auto-normalization — gradient magnitude varies with input contrast; `strength` is the user calibration control
-- No mod inlets in v1 — expressiveness comes from input source variety
+- No auto-normalization — gradient magnitude varies with input contrast; `gain` is the user calibration control
 - Compatible with `vs_displacement` as a dumb two-channel texture (treats RG as independent scalars)
 - See `docs/f-reference/f_vecfield_type.md` for full type contract and consumer conventions

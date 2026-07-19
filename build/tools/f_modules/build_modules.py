@@ -47,7 +47,8 @@ CATEGORIES = [
                      ("Prism",          "vf_prism"),
                      ("Potential",      "vf_potential"),
                      ("Flow",           "vf_flow"),
-                     ("Seeds",          "vf_seeds")]),
+                     ("Seeds",          "vf_seeds"),
+                     ("Optical Flow",   "vf_optical_flow")]),
 ]
 
 # ─── Colours (from manually-edited file) ──────────────────────────────────────
@@ -280,8 +281,8 @@ patcher = {
     }
 }
 
-repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-out_path  = os.path.join(repo_root, "patchers", "f_modules.maxpat")
+repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+out_path  = os.path.join(repo_root, "package", "patchers", "f_modules.maxpat")
 
 with open(out_path, "w") as f:
     json.dump(patcher, f, indent=4)

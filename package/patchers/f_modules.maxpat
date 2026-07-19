@@ -233,7 +233,6 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Chladni \u2207",
                                 "Chladni \u2207"
                             ],
                             "parameter_initial": [
@@ -241,7 +240,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 0,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -272,7 +271,6 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "chladni",
                                 "chladni"
                             ],
                             "parameter_initial": [
@@ -280,7 +278,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 0,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -981,14 +979,15 @@
                                 "Streak \u2207",
                                 "Glow \u2207",
                                 "Advect \u2207",
-                                "Chroma \u2207"
+                                "Chroma \u2207",
+                                "Optical Flow \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_disp",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1027,14 +1026,15 @@
                                 "vf_streak",
                                 "vf_glow",
                                 "vf_advect",
-                                "vf_chroma"
+                                "vf_chroma",
+                                "vf_optical_flow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_file",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

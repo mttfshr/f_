@@ -14,6 +14,7 @@ Output: build/helpfile_queue.json
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -22,6 +23,7 @@ PATCHERS_DIR = REPO_ROOT / "package" / "patchers"
 HELP_DIR = REPO_ROOT / "package" / "help"
 DOCS_DIR = REPO_ROOT / "docs"
 SPECIFY_DIR = REPO_ROOT / ".specify"
+SRC_DIR = REPO_ROOT / "src"
 STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"
 
 
@@ -30,17 +32,31 @@ STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"
 # ---------------------------------------------------------------------------
 
 def load_definition(module_name: str):
-    """Import .specify/<module_name>/definition.py and return the patcher dict."""
-    def_path = SPECIFY_DIR / module_name / "definition.py"
-    if not def_path.exists():
-        return None
-    namespace = {}
-    try:
-        exec(def_path.read_text(), namespace)
-    except Exception as e:
-        print(f"  WARNING: error executing {def_path}: {e}", file=sys.stderr)
-        return None
-    return namespace.get("patcher")
+    """
+    Import <module_name>/definition.py from wherever it currently lives and
+    return the patcher dict. src/<name>/definition.py is the canonical home;
+    checked first. .specify/stable/<name>, .specify/paused/<name>, and
+    .specify/<name> are checked as fallback for modules not yet migrated to
+    src/ (e.g. still under active development, definition.py living
+    alongside its spec/plan/tasks).
+    """
+    candidate_dirs = (
+        SRC_DIR,
+        SPECIFY_DIR / "stable",
+        SPECIFY_DIR / "paused",
+        SPECIFY_DIR,
+    )
+    for candidate_dir in candidate_dirs:
+        def_path = candidate_dir / module_name / "definition.py"
+        if def_path.exists():
+            namespace = {"__file__": str(def_path)}
+            try:
+                exec(def_path.read_text(), namespace)
+            except Exception as e:
+                print(f"  WARNING: error executing {def_path}: {e}", file=sys.stderr)
+                return None
+            return namespace.get("patcher")
+    return None
 
 
 def params_from_definition(defn: dict) -> list[dict]:
@@ -204,8 +220,33 @@ def extract_patcher(path: Path):
         params, module_type = params_from_patcher_json(path)
         source = "patcher JSON"
 
-    docs_path = DOCS_DIR / f"{module_name}.md"
+    # docs/f-reference/f_name.md is a required prerequisite, not optional
+    # supporting material — see build/spec.md "Helpfile Generation Pipeline".
+    # A module without it is blocked, not pending: the real next task is
+    # writing that doc, not generating a helpfile.
+    docs_path = DOCS_DIR / "f-reference" / f"{module_name}.md"
     has_docs = docs_path.exists()
+
+    helpfile_path = HELP_DIR / f"{module_name}.maxhelp"
+    helpfile_exists = helpfile_path.exists()
+
+    # Staleness: docs/f-reference edited after the helpfile was last generated
+    # means the helpfile may no longer reflect current findings/params — a
+    # judgment call for a human to make (regen, or leave as-is), not something
+    # to auto-regenerate on. Only meaningful when both files exist.
+    stale = (
+        has_docs and helpfile_exists
+        and docs_path.stat().st_mtime > helpfile_path.stat().st_mtime
+    )
+
+    if not has_docs:
+        status = "blocked_no_docs"
+    elif stale:
+        status = "stale"
+    elif helpfile_exists:
+        status = "current"
+    else:
+        status = "pending"
 
     return {
         "module_name": module_name,
@@ -215,8 +256,8 @@ def extract_patcher(path: Path):
         "params": params,
         "has_docs": has_docs,
         "docs_path": str(docs_path) if has_docs else None,
-        "helpfile_path": str(HELP_DIR / f"{module_name}.maxhelp"),
-        "status": "pending",
+        "helpfile_path": str(helpfile_path),
+        "status": status,
     }
 
 
@@ -252,7 +293,24 @@ def main():
             queue.append(result)
             print(f"    {len(result['params'])} params | type={result['module_type']} | source={result['source']} | docs={result['has_docs']}")
 
-    print(f"\n{len(queue)} patcher(s) ready.")
+    blocked = [e for e in queue if e["status"] == "blocked_no_docs"]
+    ready = [e for e in queue if e["status"] == "pending"]
+    stale = [e for e in queue if e["status"] == "stale"]
+    current = [e for e in queue if e["status"] == "current"]
+    print(
+        f"\n{len(ready)} ready, {len(stale)} stale (docs updated since helpfile), "
+        f"{len(current)} current, {len(blocked)} blocked (missing docs/f-reference)."
+    )
+    if blocked:
+        print("Blocked — write docs/f-reference/<name>.md before these can be queued:")
+        for e in blocked:
+            print(f"  - {e['module_name']}")
+    if stale:
+        print("Stale — docs/f-reference changed since the helpfile was generated;")
+        print("review and decide whether to regenerate (run generate_helpfiles.py")
+        print("directly on these — they won't be picked up automatically):")
+        for e in stale:
+            print(f"  - {e['module_name']}")
 
     if dry_run:
         print("\n--- DRY RUN OUTPUT ---")

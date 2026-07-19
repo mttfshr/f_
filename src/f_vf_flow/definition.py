@@ -48,5 +48,5 @@ patcher = {
         },
     ],
 
-    "codebox": open("/Users/matt/Github/f_/.specify/f_vf_flow/codebox_flow.gen").read(),
+    "codebox": open("/Users/matt/Github/f_/src/f_vf_flow/codebox_flow.gen").read(),
 }

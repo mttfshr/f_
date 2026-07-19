@@ -1,14 +1,42 @@
 ---
 name: f-helpfile
-description: Conventions for writing .maxhelp files for the f_ Vsynth bpatcher library. Use when creating or editing any file in /Users/matt/Github/f_/help/. Covers layout, fonts, object structure, tab mechanics, signal flow conventions, and the reference block pattern. f_droste.maxhelp is the canonical template.
+description: Conventions for writing .maxhelp files for the f_ Vsynth bpatcher library. Use when creating or editing any file in /Users/matt/Github/f_/package/help/. Covers layout, fonts, object structure, tab mechanics, signal flow conventions, and the reference block pattern. f_droste.maxhelp is the canonical template.
 ---
 
 # f_ Helpfile Skill
 
-Conventions for `help/f_<name>.maxhelp` files in the f_ library. The canonical template is `help/f_droste.maxhelp` — read it before generating a new helpfile.
+Conventions for `package/help/f_<name>.maxhelp` files in the f_ library. The canonical template is `package/help/f_droste.maxhelp` — read it before generating a new helpfile.
 
-**Helpfiles live at:** `/Users/matt/Github/f_/help/`
-**Template:** `/Users/matt/Github/f_/help/f_droste.maxhelp`
+**Helpfiles live at:** `/Users/matt/Github/f_/package/help/`
+**Template:** `/Users/matt/Github/f_/package/help/f_droste.maxhelp`
+
+---
+
+## Prerequisite: docs/f-reference must exist first
+
+`docs/f-reference/f_name.md` is not optional supporting material — it is the
+required upstream synthesis this skill's output is generated from. Before
+writing or generating any `.maxhelp` file:
+
+1. Confirm `docs/f-reference/f_name.md` exists and reflects the module's
+   current stable state. If it doesn't exist yet, **that's the actual task**
+   — write it first, synthesizing:
+   - Mechanical params from `.specify/f_name/definition.py` (or the built
+     `.maxpat` if no definition file exists)
+   - Real signal flow from the built patcher
+   - A Notes section distilled from that module's `spec.md`/`plan.md`/
+     `tasks.md` — resolved decisions, empirical findings, known honest
+     limitations. See `f_vf_optical_flow.md` for a worked example of this
+     synthesis.
+2. Only once that doc exists does `build/extract_params.py` +
+   `build/generate_helpfiles.py` have real material to draw prose from —
+   both refuse to queue/generate a module without it (see `build/spec.md`'s
+   "Helpfile Generation Pipeline" section for the full rule and why).
+
+Skipping straight to helpfile generation without this doc produces a
+mechanically-correct but narratively-empty helpfile — accurate param ranges,
+no real "why" or known-limitations content, because there's nothing to draw
+that from.
 
 ---
 

@@ -1,0 +1,31 @@
+// Stage D: temporal accumulation with decay/injection (mirrors
+// f_vf_advect's proven state/pass feedback pattern), giving the
+// instantaneous per-frame LK solve some persistence/momentum rather
+// than reading as a pure frame-to-frame noise field. Added 2026-07-18
+// after real testing showed the raw solve, even correctly masked, felt
+// too transitory to read as coherent flow direction.
+//
+// in1 = stage_c's masked instantaneous vecfield (this frame's fresh
+// solve), in2 = previous accumulated field (via pass_d feedback loop,
+// same one-frame-delay mechanism as stage_a's own pass_pix loop).
+Param decay(0.9);
+Param injection(0.3);
+Param bypass(0.0);
+
+raw_u  = (sample(in1, norm).x - 0.5) * 2.0;
+raw_v  = (sample(in1, norm).y - 0.5) * 2.0;
+prev_u = (sample(in2, norm).x - 0.5) * 2.0;
+prev_v = (sample(in2, norm).y - 0.5) * 2.0;
+
+// decay above 1.0 allows a self-reinforcing/excitable regime -- same
+// convention as f_vf_advect's own decay param (range 0.8-1.5 there)
+accum_u = prev_u * decay + raw_u * injection;
+accum_v = prev_v * decay + raw_v * injection;
+
+// encode back to standard f_vecfield (0.5-centered) -- this becomes
+// both the module's real (u,v) outlet and next frame's "previous"
+// via the pass_d feedback loop
+field = vec(clamp(accum_u*0.5 + 0.5, 0.0, 1.0), clamp(accum_v*0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+neutral = vec(0.5, 0.5, 0.5, 1.0);
+
+out1 = mix(field, neutral, bypass);

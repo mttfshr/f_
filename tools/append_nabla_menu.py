@@ -28,6 +28,7 @@ VECFIELD_MODULES = {
     "vf_split",
     "vf_potential",
     "chladni",
+    "vf_optical_flow",
 }
 
 NABLA = " \u2207"

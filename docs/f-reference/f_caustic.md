@@ -1,7 +1,7 @@
 # f_caustic
 
 **Type:** Processor (f_vecfield consumer)
-**Status:** Working — vecfield-inlet discrepancy resolved 2026-07-11 (see Notes)
+**Status:** Working — vecfield-inlet discrepancy resolved 2026-07-11; gain/mix rollout applied 2026-07-12 (see Notes)
 
 ---
 
@@ -32,8 +32,8 @@ caustic_pix (@type float32) out2 → caustic layer (isolated)
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `strength` | 0–1.5 | 0.0 | Wet/dry crossfade — `composited = mix(source_pass, composite, strength)`. Confirmed wired in `codebox_v2.gen` (see resolved discrepancy note); `spec.md`'s parameter table is still missing this row, correction pending |
-| `intensity` | 0–2.0 | 0.5 | Overall caustic brightness scale |
+| `mix_pct` | 0–100% | 0.0 | Wet/dry crossfade toward the fully-composited (source+caustic) state — `composited = mix(source_pass, composite, mix_pct)`. Renamed from `strength` 2026-07-12 (gain/mix rollout); range capped to true 0–100% (dropping the old 0–1.5 extrapolation zone). Rendered as `live.numbox`; internal Param named `mix_pct` to avoid colliding with the codebox's `mix()` operator. |
+| `gain` | 0–2.0 | 0.5 | Caustic brightness scale. Renamed from `intensity` 2026-07-12 to match the library-wide gain/mix naming convention. |
 | `scale` | 0–1.0 | 0.3 | Streamline trace distance (`step_size = scale / 8`). 0 = no trace, no caustic. |
 | `softness` | 0–1.0 | 0.3 | Band sharpness via smoothstep on accumulated luma. 0 = hard bright lines. 1 = diffuse glow. |
 | `color_shift` | 0–1.0 | 0.0 | Chromatic dispersion — R/B channels sampled with offset step sizes along the streamline. 0 = monochrome bands. |
@@ -58,10 +58,10 @@ for n in 0..7:
     src_n.b   = sample(source, pos_n - field_n * color_shift * step_size).b
     pos_(n+1) = pos_n - field_n * step_size
 
-caustic = (Σ weight_n * src_n) / 8 * intensity
+caustic = (Σ weight_n * src_n) / 8 * gain
 caustic *= smoothstep(0, softness + 0.001, luma(caustic))   // softness gate
 composite = clamp(source + caustic, 0, 1)                     // additive layer
-composited = mix(source, composite, strength)                 // wet/dry crossfade
+composited = mix(source, composite, mix_pct / 100)             // wet/dry crossfade
 out2 = clamp(caustic, 0, 1)
 out1 = composited
 ```
@@ -72,8 +72,9 @@ Backward tracing (rather than forward) finds which source regions would have con
 
 ## Notes
 
-- **Resolved 2026-07-11 (was: discrepancy note):** `definition.py` had been pointing at `codebox_v3.gen`, which turned out to be a stray, earlier single-inlet draft — its own internal header comment reads `// f_caustic codebox v1 — scratch validation` despite the `v3` filename, and it referenced only `in1` throughout (both field decode and source-color sampling), never `in2`. Confirmed via filesystem mtimes and by directly comparing its content against `codebox_v2.gen`, which has the correct two-inlet structure, the `strength` crossfade, and matches this doc's signal-flow/algorithm sections as originally written. `codebox_v3.gen` has been deleted; `definition.py` now points at `codebox_v2.gen`. This means **the vecfield inlet may not have been functioning in whatever patcher was last built from `definition.py`** — rebuild and re-verify in Max before relying on existing `f_caustic.maxpat` behavior matching this doc.
-- `strength` is confirmed wired in `codebox_v2.gen` (`composited = mix(source_pass, composite, strength)` — a real crossfade, not additive-only). `spec.md`'s parameter table is still missing this row as of this note; correction tracked separately.
+- **Resolved 2026-07-11 (was: discrepancy note):** `definition.py` had been pointing at `codebox_v3.gen`, which turned out to be a stray, earlier single-inlet draft — its own internal header comment reads `// f_caustic codebox v1 — scratch validation` despite the `v3` filename, and it referenced only `in1` throughout (both field decode and source-color sampling), never `in2`. Confirmed via filesystem mtimes and by directly comparing its content against `codebox_v2.gen`, which has the correct two-inlet structure, the wet/dry crossfade, and matches this doc's signal-flow/algorithm sections as originally written. `codebox_v3.gen` has been deleted; `definition.py` now points at `codebox_v2.gen`. This means **the vecfield inlet may not have been functioning in whatever patcher was last built from `definition.py`** — rebuild and re-verify in Max before relying on existing `f_caustic.maxpat` behavior matching this doc.
+- **2026-07-12 gain/mix rollout:** `strength` renamed to `mix_pct` (range capped to true 0–100%, rendered as `live.numbox`) and `intensity` renamed to `gain`, matching the library-wide convention (`gain` = unbounded effect intensity, `mix` = 0–100% blend ratio). Confirmed wired in `codebox_v2.gen`.
+- **2026-07-19:** `definition.py`'s `open()` call for `codebox_v2.gen` had a stale hardcoded path pointing at `.specify/f_caustic/` from before the `src/` reorg — fixed to point at `src/f_caustic/codebox_v2.gen`, where the file actually lives.
 - `@type float32` overrides the processor default of `char` — accumulation benefits from float32 headroom (decided in scratch validation).
 - Divergence sign convention confirmed: f_vf_vortex sink topology (positive convergence) produces negative divergence at the fixed point, which is what produces bright bands.
 - No `in3` surface texture in v1 — deferred.

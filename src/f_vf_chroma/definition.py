@@ -40,5 +40,5 @@ patcher = {
         {"name": "bypass",          "type": "bypass"},
     ],
 
-    "codebox": open("/Users/matt/Github/f_/.specify/f_vf_chroma/codebox_v10.gen").read(),
+    "codebox": open("/Users/matt/Github/f_/src/f_vf_chroma/codebox_v10.gen").read(),
 }

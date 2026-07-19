@@ -1,0 +1,52 @@
+// Stage A: Ix/Iy spatial gradients (central diff, current-frame-only
+// per T003 decision) + It signed temporal diff. in1=current, in2=previous.
+// Param bypass declared here but unused -- this node is the module's
+// primary (for automatic source-inlet wiring), so it receives the
+// automatic bypass fan-out message too; the real bypass behavior (mix
+// to neutral field + zero confidence) lives in stage_c, wired via
+// raw_lines. See definition.py's architecture note.
+Param scale(0.004);
+Param bypass(0.0);
+
+Lc_r = sample(in1, vec(norm.x + scale, norm.y)).x*0.2126 + sample(in1, vec(norm.x + scale, norm.y)).y*0.7152 + sample(in1, vec(norm.x + scale, norm.y)).z*0.0722;
+Lc_l = sample(in1, vec(norm.x - scale, norm.y)).x*0.2126 + sample(in1, vec(norm.x - scale, norm.y)).y*0.7152 + sample(in1, vec(norm.x - scale, norm.y)).z*0.0722;
+Lc_d = sample(in1, vec(norm.x, norm.y + scale)).x*0.2126 + sample(in1, vec(norm.x, norm.y + scale)).y*0.7152 + sample(in1, vec(norm.x, norm.y + scale)).z*0.0722;
+Lc_u = sample(in1, vec(norm.x, norm.y - scale)).x*0.2126 + sample(in1, vec(norm.x, norm.y - scale)).y*0.7152 + sample(in1, vec(norm.x, norm.y - scale)).z*0.0722;
+
+ix = (Lc_r - Lc_l);
+iy = (Lc_d - Lc_u);
+
+// Edge banding fix (2026-07-18): sample() always clamps at texture
+// boundaries on this GPU path (boundmode args are silently ignored, per
+// jit-gen-codebox skill) -- so near any frame edge, one of the two
+// central-difference taps above collapses onto the center sample
+// instead of a genuinely-offset one, producing a biased/asymmetric
+// derivative in a band `scale` pixels wide from every border (not
+// noise -- a real, systematic artifact whose width scales directly
+// with |scale|). Rather than build a separate masking mechanism, zero
+// ix/iy explicitly within that margin -- Stage B's windowed sums
+// (Sxx/Sxy/Syy) then naturally shrink toward zero wherever the window
+// touches this zeroed border, so Stage C's existing mask_lo/mask_hi
+// confidence gate already treats it as "no data" with no new
+// machinery needed (mask_lo must be above 0 for this to actually gate
+// anything -- a mask_lo of exactly 0.00 won't catch the now-legitimately-
+// low det near edges).
+edge_dist = min(min(norm.x, 1.0 - norm.x), min(norm.y, 1.0 - norm.y));
+edge_mask = step(abs(scale), edge_dist);
+ix = ix * edge_mask;
+iy = iy * edge_mask;
+
+lcur  = sample(in1, norm).x*0.2126  + sample(in1, norm).y*0.7152  + sample(in1, norm).z*0.0722;
+lprev = sample(in2, norm).x*0.2126 + sample(in2, norm).y*0.7152 + sample(in2, norm).z*0.0722;
+it = lcur - lprev;
+
+// out1: Ix/Iy packed as vecfield (0.5-centered RG), matches f_vf_fieldmap encoding
+out1 = vec(clamp(ix*0.5 + 0.5, 0.0, 1.0), clamp(iy*0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+
+// out2: It, 0.5-centered grayscale for direct preview
+out2 = vec(clamp(it*0.5 + 0.5, 0.0, 1.0), clamp(it*0.5 + 0.5, 0.0, 1.0), clamp(it*0.5 + 0.5, 0.0, 1.0), 1.0);
+
+// out3: cur passthrough -- closes the feedback loop with pass_pix so in2
+// (previous frame) is genuinely delayed one frame, not resampling the
+// current frame every tick (same shape as f_vf_advect's state/pass loop)
+out3 = sample(in1, norm);

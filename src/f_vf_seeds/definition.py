@@ -227,8 +227,8 @@ patcher = {
         },
     ],
 
-    "codebox_search":    open("/Users/matt/Github/f_/.specify/f_vf_seeds/codebox_seeds_search.gen").read(),
-    "codebox_merge":     open("/Users/matt/Github/f_/.specify/f_vf_seeds/codebox_seeds_merge.gen").read(),
-    "codebox_render":    open("/Users/matt/Github/f_/.specify/f_vf_seeds/codebox_seeds_render.gen").read(),
-    "codebox_composite": open("/Users/matt/Github/f_/.specify/f_vf_seeds/codebox_seeds_composite.gen").read(),
+    "codebox_search":    open("/Users/matt/Github/f_/src/f_vf_seeds/codebox_seeds_search.gen").read(),
+    "codebox_merge":     open("/Users/matt/Github/f_/src/f_vf_seeds/codebox_seeds_merge.gen").read(),
+    "codebox_render":    open("/Users/matt/Github/f_/src/f_vf_seeds/codebox_seeds_render.gen").read(),
+    "codebox_composite": open("/Users/matt/Github/f_/src/f_vf_seeds/codebox_seeds_composite.gen").read(),
 }

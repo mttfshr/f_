@@ -1,6 +1,6 @@
 import json
 
-PATH = "/Users/matt/Github/f_/patchers/f_modules.maxpat"
+PATH = "/Users/matt/Github/f_/package/patchers/f_modules.maxpat"
 
 # (category label, [(display, filename), ...])
 CATEGORIES = [
@@ -24,11 +24,11 @@ CATEGORIES = [
         ("Lens", "lens"),
         ("Prism", "vf_prism"),
     ]),
-    ("Generators", [
+    ("∇ Generators", [
         ("Vortex", "vf_vortex"),
         ("Vortex Multi", "vf_vortex_multi"),
     ]),
-    ("Processors", [
+    ("∇ Processors", [
         ("Caustic", "caustic"),
         ("Fieldmap", "vf_fieldmap"),
         ("Flow", "vf_flow"),
@@ -38,6 +38,7 @@ CATEGORIES = [
         ("Glow", "vf_glow"),
         ("Advect", "vf_advect"),
         ("Chroma", "vf_chroma"),
+        ("Optical Flow", "vf_optical_flow"),
     ]),
     ("Color / Tone", [
         ("Channel Grader", "channel_grader"),

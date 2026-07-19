@@ -26,7 +26,7 @@ REPO_ROOT = Path(__file__).parent.parent
 HELP_DIR = REPO_ROOT / "package" / "help"
 STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"
 TEMPLATE_PATH = REPO_ROOT / "package" / "help" / "f_droste.maxhelp"
-SKILL_PATH = Path.home() / "Github/claude-scaffold/skills/f-helpfile/SKILL.md"
+SKILL_PATH = REPO_ROOT / "skills" / "f-helpfile" / "SKILL.md"
 
 DEFAULT_BUDGET = 50_000
 MODEL = "claude-sonnet-4-6"
@@ -53,6 +53,21 @@ Your output must be:
 - Object IDs must follow the skill naming: h-1, h-2, d-3, d-4, d-5, d-6, d-7, d-8, r-1, obj-1
 - For generators: omit vs_sources_main (d-3) and LFO/time_s (d-6, d-7), bpatcher at top of right column
 - For processors: include full signal flow as shown in template
+- Suggested-chain comment (judgment call, not mechanical): read the docs and form a
+  real sense of this module's essential character — what kind of effect it produces,
+  what it needs to look interesting (a moving/textured source? a companion vecfield
+  consumer to visualize a field that's otherwise invisible? a specific kind of input
+  pattern?). If, and only if, that reading suggests 1-3 specific companion f_ modules
+  that would meaningfully demonstrate the module's character in the exemplar patch
+  (e.g. a vecfield producer wants a downstream consumer since the field itself has
+  no visible output; a masking/threshold effect wants a source with real contrast to
+  act on), add ONE additional comment box near the bpatcher/signal-flow area in the
+  right column, worded as a hand-wiring suggestion, e.g. "Try feeding into: f_vf_warp
+  or f_vf_advect (swap to compare)" or "Works best with a textured/moving source —
+  try f_grain or live camera". Do not force this if the docs don't give clear signal
+  either way — an absent or generic module doesn't need one. This box is a note for
+  the module's author to wire by hand afterward, not a functional connection — do not
+  wire real patchlines to it.
 
 Do not output anything except the JSON.
 """
@@ -176,9 +191,30 @@ def main():
     processed = 0
     skipped = 0
 
-    pending = [
+    blocked = [
         e for e in queue
         if e["status"] == "pending"
+        and not e.get("has_docs")
+        and (not filter_names or e["module_name"] in filter_names)
+    ]
+    if blocked:
+        print("Skipping (missing docs/f-reference/<name>.md — write that first, see build/spec.md):")
+        for e in blocked:
+            print(f"  - {e['module_name']}")
+            e["status"] = "blocked_no_docs"
+        save_queue(queue)
+        print()
+
+    pending = [
+        e for e in queue
+        if e.get("has_docs")
+        and (
+            e["status"] == "pending"
+            # "stale" (docs updated since last helpfile) only regenerates when
+            # explicitly named — never picked up in a bulk unfiltered run, so
+            # regenerating a stale helpfile stays a deliberate per-module choice.
+            or (e["status"] == "stale" and filter_names and e["module_name"] in filter_names)
+        )
         and (not filter_names or e["module_name"] in filter_names)
     ]
 

@@ -45,7 +45,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Fieldmap",
+                    "text": "Optical Flow",
                     "varname": "autohelp_top_digest[4]"
                 }
             },
@@ -76,7 +76,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Converts a scalar texture into an f_vecfield via central-difference gradient",
+                    "text": "Real Lucas-Kanade optical flow -- confidence-gated, temporally accumulated, directionally filled",
                     "varname": "autohelp_top_digest[3]"
                 }
             },
@@ -91,7 +91,7 @@
                     "fontface": 0,
                     "fontname": "Ableton Sans Light",
                     "id": "d-8",
-                    "linecount": 7,
+                    "linecount": 12,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
@@ -99,15 +99,14 @@
                         15.0,
                         150.0,
                         270.0,
-                        122.0
+                        186.0
                     ],
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "External Control Messages\n\ngain [-10.0 \u2013 10.0]\nscale [-0.05 \u2013 0.05]\nrotate [-180.0 \u2013 180.0]\nthresh [0.0 \u2013 1.0]\nbypass [0 / 1]",
-                    "textjustification": 0
+                    "text": "External Control Messages\n\nscale [-0.05 \u2013 0.05]\ngain [-10.0 \u2013 10.0]\nmask_lo [0.0 \u2013 20.0]\nmask_hi [0.0 \u2013 20.0]\ndecay [0.0 \u2013 1.5]\ninjection [0.0 \u2013 2.0]\nstep [-0.1 \u2013 0.1]\nreach [0.0 \u2013 0.1]\nmix_pct [0.0 \u2013 100.0]\nbypass [0 / 1]"
                 }
             },
             {
@@ -115,17 +114,17 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 12.0,
                     "id": "r-1",
-                    "linecount": 8,
+                    "linecount": 15,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        315.0,
+                        379.0,
                         270.0,
-                        160.0
+                        232.5
                     ],
-                    "text": "References\n\nCentral-difference image gradient:\nclassical technique, no single external\nsource.\n\nSee docs/f-reference/f_vf_fieldmap.md for\nthe full field computation and calibration\nnotes, and docs/f-reference/f_vecfield_type.md\nfor the f_vecfield type contract."
+                    "text": "References\n\nLucas, B.D. & Kanade, T. (1981)\n\"An Iterative Image Registration Technique\nwith an Application to Stereo Vision\"\nProc. DARPA Image Understanding Workshop\n\nAperture problem / structure tensor:\nShi, J. & Tomasi, C. (1994)\n\"Good Features to Track\", IEEE CVPR\n\nConfidence-gated directional fill (Stage E) and\nthe double-angle ambiguous-axis encoding:\nderived in development -- not from any\nexternal source."
                 }
             },
             {
@@ -183,14 +182,15 @@
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "f_vf_fieldmap.maxpat",
+                    "name": "f_vf_optical_flow.maxpat",
                     "numinlets": 1,
-                    "numoutlets": 1,
+                    "numoutlets": 2,
                     "offset": [
                         0.0,
                         0.0
                     ],
                     "outlettype": [
+                        "jit_gl_texture",
                         "jit_gl_texture"
                     ],
                     "patching_rect": [
@@ -199,7 +199,7 @@
                         154.0,
                         91.0
                     ],
-                    "varname": "f_vf_fieldmap",
+                    "varname": "f_vf_optical_flow",
                     "viewvisibility": 1
                 }
             },
@@ -226,37 +226,11 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        404.75,
+                        458.0,
                         236.0,
                         249.0
                     ],
                     "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
-                    "bgcolor": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "bubble": 1,
-                    "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 12.0,
-                    "id": "d-9",
-                    "linecount": 3,
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        500.0,
-                        300.0,
-                        190.0,
-                        55.0
-                    ],
-                    "text": "Try feeding this into:\nf_caustic or another vecfield\nconsumer -- the field itself has\nno visible output on its own"
                 }
             }
         ],
@@ -287,26 +261,224 @@
             }
         ],
         "parameters": {
+            "d-3::obj-14::obj-12": [
+                "flip_x[1]",
+                "flip_x",
+                0
+            ],
+            "d-3::obj-14::obj-21": [
+                "flip_y[1]",
+                "flip_x",
+                0
+            ],
+            "d-3::obj-14::obj-22": [
+                "swap[1]",
+                "flip_x",
+                0
+            ],
+            "d-3::obj-14::obj-3": [
+                "sync_invert[1]",
+                "sync_inv",
+                0
+            ],
+            "d-3::obj-14::obj-4": [
+                "live.text[12]",
+                "live.text",
+                0
+            ],
+            "d-3::obj-15::obj-16": [
+                "live.arrows",
+                "live.arrows",
+                0
+            ],
+            "d-3::obj-15::obj-28": [
+                "sync_invert",
+                "sync_inv",
+                0
+            ],
+            "d-3::obj-15::obj-42": [
+                "number",
+                "number",
+                0
+            ],
+            "d-3::obj-24::obj-11": [
+                "sync_invert[2]",
+                "sync_inv",
+                0
+            ],
+            "d-3::obj-24::obj-19": [
+                "noise2_dim_x[1]",
+                "dim_x",
+                0
+            ],
+            "d-3::obj-24::obj-2": [
+                "noise2_dim_x",
+                "dim_x",
+                0
+            ],
+            "d-3::obj-24::obj-35": [
+                "live.dial",
+                "Speed",
+                0
+            ],
+            "d-3::obj-24::obj-43": [
+                "temp_freq",
+                "Slide",
+                0
+            ],
+            "d-3::obj-24::obj-8": [
+                "sync_invert[3]",
+                "sync_inv",
+                0
+            ],
+            "d-3::obj-4::obj-1": [
+                "live.text",
+                "sync_inv",
+                0
+            ],
+            "d-3::obj-4::obj-10": [
+                "wfg_pw[1]",
+                "PW",
+                0
+            ],
+            "d-3::obj-4::obj-137": [
+                "wfg_wf[1]",
+                "waveform",
+                0
+            ],
+            "d-3::obj-4::obj-139": [
+                "sync_pos",
+                "position",
+                0
+            ],
+            "d-3::obj-4::obj-29": [
+                "wfg_freq[2]",
+                "Freq",
+                0
+            ],
+            "d-3::obj-4::obj-3": [
+                "sync_time",
+                "Time",
+                0
+            ],
+            "d-3::obj-4::obj-4": [
+                "wfg_freq[1]",
+                "Phase",
+                0
+            ],
+            "d-3::obj-4::obj-60": [
+                "clrizer_color[1]",
+                "color",
+                0
+            ],
+            "d-3::obj-9::obj-13": [
+                "myGrads",
+                "live.menu",
+                0
+            ],
+            "d-3::obj-9::obj-17": [
+                "live.numbox",
+                "live.numbox",
+                0
+            ],
+            "d-3::obj-9::obj-22": [
+                "clpick",
+                "live.text",
+                0
+            ],
+            "d-3::obj-9::obj-34": [
+                "live.tab",
+                "live.tab",
+                0
+            ],
             "d-4::obj-20": [
-                "gain",
-                "gain",
+                "scale",
+                "scale",
                 0
             ],
             "d-4::obj-23": [
-                "scale",
-                "scale",
+                "gain",
+                "gain",
                 0
             ],
-            "d-4::obj-28": [
-                "rotate",
-                "rotate",
+            "d-4::obj-26": [
+                "mask_lo",
+                "mask_lo",
                 0
             ],
-            "d-4::obj-31": [
-                "thresh",
-                "thresh",
+            "d-4::obj-29": [
+                "mask_hi",
+                "mask_hi",
                 0
             ],
+            "d-4::obj-32": [
+                "decay",
+                "decay",
+                0
+            ],
+            "d-4::obj-35": [
+                "injection",
+                "injection",
+                0
+            ],
+            "d-4::obj-38": [
+                "step",
+                "step",
+                0
+            ],
+            "d-4::obj-41": [
+                "reach",
+                "reach",
+                0
+            ],
+            "d-4::obj-44": [
+                "mix_pct",
+                "mix_pct",
+                0
+            ],
+            "parameterbanks": {
+                "0": {
+                    "index": 0,
+                    "name": "",
+                    "parameters": [
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-"
+                    ],
+                    "buttons": [
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-",
+                        "-"
+                    ]
+                }
+            },
+            "parameter_overrides": {
+                "d-3::obj-24::obj-11": {
+                    "parameter_longname": "sync_invert[2]"
+                },
+                "d-3::obj-24::obj-8": {
+                    "parameter_longname": "sync_invert[3]"
+                },
+                "d-3::obj-4::obj-10": {
+                    "parameter_longname": "wfg_pw[1]"
+                },
+                "d-3::obj-4::obj-137": {
+                    "parameter_longname": "wfg_wf[1]"
+                },
+                "d-3::obj-4::obj-29": {
+                    "parameter_longname": "wfg_freq[2]"
+                }
+            },
             "inherited_shortname": 1
         },
         "autosave": 0

@@ -23,24 +23,35 @@ patcher = {
     ],
 
     "codebox": """\
-Param strength(4.0);
+Param gain(4.0);
 Param scale(0.004);
+Param rotate(0.0);
+Param thresh(0.0);
 Param bypass(0.0);
 
-// central difference gradient — inline component access (no stored variables)
-// luma = 0.299r + 0.587g + 0.114b (Rec. 601)
-L_right = sample(in1, vec(norm.x + scale, norm.y)).x * 0.299 + sample(in1, vec(norm.x + scale, norm.y)).y * 0.587 + sample(in1, vec(norm.x + scale, norm.y)).z * 0.114;
-L_left  = sample(in1, vec(norm.x - scale, norm.y)).x * 0.299 + sample(in1, vec(norm.x - scale, norm.y)).y * 0.587 + sample(in1, vec(norm.x - scale, norm.y)).z * 0.114;
-L_down  = sample(in1, vec(norm.x, norm.y + scale)).x * 0.299 + sample(in1, vec(norm.x, norm.y + scale)).y * 0.587 + sample(in1, vec(norm.x, norm.y + scale)).z * 0.114;
-L_up    = sample(in1, vec(norm.x, norm.y - scale)).x * 0.299 + sample(in1, vec(norm.x, norm.y - scale)).y * 0.587 + sample(in1, vec(norm.x, norm.y - scale)).z * 0.114;
+// inset UV by scale to keep neighbor samples within bounds
+suv_x = norm.x * (1.0 - 2.0 * scale) + scale;
+suv_y = norm.y * (1.0 - 2.0 * scale) + scale;
 
-gx = (L_right - L_left) * strength;
-gy = (L_down  - L_up)   * strength;
+L_center = sample(in1, vec(suv_x, suv_y)).x * 0.299 + sample(in1, vec(suv_x, suv_y)).y * 0.587 + sample(in1, vec(suv_x, suv_y)).z * 0.114;
+L_right  = sample(in1, vec(suv_x + scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x + scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x + scale, suv_y)).z * 0.114;
+L_left   = sample(in1, vec(suv_x - scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x - scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x - scale, suv_y)).z * 0.114;
+L_down   = sample(in1, vec(suv_x, suv_y + scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y + scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y + scale)).z * 0.114;
+L_up     = sample(in1, vec(suv_x, suv_y - scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y - scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y - scale)).z * 0.114;
 
-// encode to f_vecfield (0.5 = zero vector)
-field   = vec(clamp(gx * 0.5 + 0.5, 0.0, 1.0), clamp(gy * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+gx = (L_right - L_left) * gain;
+gy = (L_down  - L_up)   * gain;
+
+angle = rotate * pi / 180.0;
+cos_r = cos(angle);
+sin_r = sin(angle);
+gx2 = gx * cos_r - gy * sin_r;
+gy2 = gx * sin_r + gy * cos_r;
+
+field   = vec(clamp(gx2 * 0.5 + 0.5, 0.0, 1.0), clamp(gy2 * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
 neutral = vec(0.5, 0.5, 0.5, 1.0);
 
-out1 = mix(field, neutral, bypass);
+threshed = mix(field, neutral, step(L_center, thresh));
+out1 = mix(threshed, neutral, bypass);
 """,
 }

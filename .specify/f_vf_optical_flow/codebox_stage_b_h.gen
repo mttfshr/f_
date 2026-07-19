@@ -1,0 +1,46 @@
+// Stage B (pass 1/2): horizontal 5-tap box sum of Ix^2, Iy^2, IxIy,
+// IxIt, IyIt. Separable box filter -- avoids naive 25-tap 2D sum
+// (GL2->GL3 capture-group ceiling risk per jit-gen-codebox skill).
+// Vertical pass (stage_b_v) completes the 5x5 window.
+// in1 = Stage A out1 (Ix/Iy vecfield-encoded), in2 = Stage A out2
+// (It vecfield-encoded, grayscale). All component access inline on
+// sample() -- never store-then-slice (silent black-output failure).
+// step is a live Param (bipolar -0.1..0.1, default 0.0015), driving
+// window tap spacing on both Stage B passes. RESOLVED 2026-07-18: an
+// open question carried since scratch-test days asked whether naming
+// a Param "step" collides with GenExpr's built-in step() operator
+// (cell/in/norm/snorm/dim/inN/active class of silent-failure hazard,
+// per jit-gen-codebox skill). Tested directly in the built module --
+// confirmed working correctly (dial visibly changes window spacing,
+// no collision). Kept as a permanent live control.
+Param step(0.0015);
+
+ix_m2 = (sample(in1, vec(norm.x - step*2.0, norm.y)).x - 0.5) * 2.0;
+iy_m2 = (sample(in1, vec(norm.x - step*2.0, norm.y)).y - 0.5) * 2.0;
+it_m2 = (sample(in2, vec(norm.x - step*2.0, norm.y)).x - 0.5) * 2.0;
+
+ix_m1 = (sample(in1, vec(norm.x - step, norm.y)).x - 0.5) * 2.0;
+iy_m1 = (sample(in1, vec(norm.x - step, norm.y)).y - 0.5) * 2.0;
+it_m1 = (sample(in2, vec(norm.x - step, norm.y)).x - 0.5) * 2.0;
+
+ix_0 = (sample(in1, norm).x - 0.5) * 2.0;
+iy_0 = (sample(in1, norm).y - 0.5) * 2.0;
+it_0 = (sample(in2, norm).x - 0.5) * 2.0;
+
+ix_p1 = (sample(in1, vec(norm.x + step, norm.y)).x - 0.5) * 2.0;
+iy_p1 = (sample(in1, vec(norm.x + step, norm.y)).y - 0.5) * 2.0;
+it_p1 = (sample(in2, vec(norm.x + step, norm.y)).x - 0.5) * 2.0;
+
+ix_p2 = (sample(in1, vec(norm.x + step*2.0, norm.y)).x - 0.5) * 2.0;
+iy_p2 = (sample(in1, vec(norm.x + step*2.0, norm.y)).y - 0.5) * 2.0;
+it_p2 = (sample(in2, vec(norm.x + step*2.0, norm.y)).x - 0.5) * 2.0;
+
+h_ix2  = ix_m2*ix_m2 + ix_m1*ix_m1 + ix_0*ix_0 + ix_p1*ix_p1 + ix_p2*ix_p2;
+h_iy2  = iy_m2*iy_m2 + iy_m1*iy_m1 + iy_0*iy_0 + iy_p1*iy_p1 + iy_p2*iy_p2;
+h_ixiy = ix_m2*iy_m2 + ix_m1*iy_m1 + ix_0*iy_0 + ix_p1*iy_p1 + ix_p2*iy_p2;
+h_ixit = ix_m2*it_m2 + ix_m1*it_m1 + ix_0*it_0 + ix_p1*it_p1 + ix_p2*it_p2;
+h_iyit = iy_m2*it_m2 + iy_m1*it_m1 + iy_0*it_0 + iy_p1*it_p1 + iy_p2*it_p2;
+
+// raw, unbounded, unencoded partial sums -- pix_type float32 required
+out1 = vec(h_ix2, h_iy2, h_ixiy, 1.0);
+out2 = vec(h_ixit, h_iyit, 0.0, 1.0);

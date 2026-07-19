@@ -1,0 +1,26 @@
+// Stage B (pass 2/2): vertical 5-tap sum, completing the 5x5
+// separable box filter over the horizontal partial sums from
+// stage_b_h. in1 = (h_ix2, h_iy2, h_ixiy), in2 = (h_ixit, h_iyit).
+// These are raw unbounded sums -- no vecfield decode needed here
+// (unlike stage_a's 0.5-centered outputs); all access inline on
+// sample(), never store-then-slice.
+// step is a live Param (bipolar -0.1..0.1, default 0.0015), driving
+// window tap spacing on both Stage B passes. RESOLVED 2026-07-18: an
+// open question carried since scratch-test days asked whether naming
+// a Param "step" collides with GenExpr's built-in step() operator
+// (cell/in/norm/snorm/dim/inN/active class of silent-failure hazard,
+// per jit-gen-codebox skill). Tested directly in the built module --
+// confirmed working correctly (dial visibly changes window spacing,
+// no collision). Kept as a permanent live control.
+Param step(0.0015);
+
+sum_ix2  = sample(in1, vec(norm.x, norm.y - step*2.0)).x + sample(in1, vec(norm.x, norm.y - step)).x + sample(in1, norm).x + sample(in1, vec(norm.x, norm.y + step)).x + sample(in1, vec(norm.x, norm.y + step*2.0)).x;
+sum_iy2  = sample(in1, vec(norm.x, norm.y - step*2.0)).y + sample(in1, vec(norm.x, norm.y - step)).y + sample(in1, norm).y + sample(in1, vec(norm.x, norm.y + step)).y + sample(in1, vec(norm.x, norm.y + step*2.0)).y;
+sum_ixiy = sample(in1, vec(norm.x, norm.y - step*2.0)).z + sample(in1, vec(norm.x, norm.y - step)).z + sample(in1, norm).z + sample(in1, vec(norm.x, norm.y + step)).z + sample(in1, vec(norm.x, norm.y + step*2.0)).z;
+sum_ixit = sample(in2, vec(norm.x, norm.y - step*2.0)).x + sample(in2, vec(norm.x, norm.y - step)).x + sample(in2, norm).x + sample(in2, vec(norm.x, norm.y + step)).x + sample(in2, vec(norm.x, norm.y + step*2.0)).x;
+sum_iyit = sample(in2, vec(norm.x, norm.y - step*2.0)).y + sample(in2, vec(norm.x, norm.y - step)).y + sample(in2, norm).y + sample(in2, vec(norm.x, norm.y + step)).y + sample(in2, vec(norm.x, norm.y + step*2.0)).y;
+
+// final 5x5 windowed sums -- ready for Stage C's 2x2 solve.
+// out1 = A-matrix terms (Ix^2, Iy^2, IxIy), out2 = b-vector terms (IxIt, IyIt)
+out1 = vec(sum_ix2, sum_iy2, sum_ixiy, 1.0);
+out2 = vec(sum_ixit, sum_iyit, 0.0, 1.0);

@@ -1,0 +1,100 @@
+// Stage C: closed-form 2x2 Lucas-Kanade solve (Cramer's rule) for
+// (u,v) from Stage B's five windowed sums, plus the matrix
+// determinant as a separate confidence outlet (ADR-2). in1 = Stage B
+// out1 (Sxx, Syy, Sxy), in2 = Stage B out2 (Sxt, Syt). Raw, unbounded
+// inputs -- no vecfield decode needed (same convention as Stage B).
+//
+// This node produces the module's real outlets (u,v vecfield +
+// confidence) even though it is NOT the pix_chain's "primary" node
+// (stage_a is primary, so it gets the automatic module-source wiring).
+// Outlet wiring and bypass are both supplied via definition.py's
+// raw_lines, mirroring f_lens's outlet_source_override precedent --
+// see definition.py's architecture note for the full explanation.
+Param gain(1.0);
+Param mask_lo(0.0);
+Param mask_hi(1.0);
+Param bypass(0.0);
+
+sxx = sample(in1, norm).x;
+syy = sample(in1, norm).y;
+sxy = sample(in1, norm).z;
+sxt = sample(in2, norm).x;
+syt = sample(in2, norm).y;
+
+det = sxx*syy - sxy*sxy;
+// det is mathematically >= 0 for this covariance-like matrix
+// (Cauchy-Schwarz: (SIxIy)^2 <= SIx^2 * SIy^2) -- guard only against
+// the near-singular/aperture-problem case, no sign handling needed.
+// Empirically confirmed 2026-07-18: det reads flat ~0 against a pure
+// synthetic edge (test_edge_pix), correctly reflecting the aperture
+// problem, and visibly nonzero on real corner/texture content.
+det_safe = max(det, 0.0001);
+
+// T035 (2026-07-18): the locally-ambiguous axis, for Stage E's future
+// confidence-gated directional fill (Phase 5). Standard structure-
+// tensor double-angle result: cos(2*theta)=(Sxx-Syy)/mag,
+// sin(2*theta)=2*Sxy/mag gives the dominant-gradient (well-
+// constrained, larger-eigenvalue, "across the edge") direction theta.
+// The ambiguous axis (smaller eigenvalue, "along the edge" -- what
+// Stage E actually needs to propagate along) is perpendicular, i.e.
+// theta+halfpi -- but a 90-degree rotation is a 180-degree rotation in
+// this doubled-angle space, so it's the SAME (cos2t,sin2t) pair; Stage
+// E adds the perpendicular offset itself when reconstructing a
+// direction vector, no extra math needed here. Stored as double-angle
+// rather than a plain angle specifically to avoid a wraparound
+// discontinuity: an axis (undirected line, not a vector) repeats every
+// 180 degrees, so a naive single-angle encoding would jump/wrap
+// somewhere in the frame, and neighboring pixels straddling that wrap
+// would blend garbage under Stage E's own bilinear sampling. Doubling
+// the angle first makes the stored signal continuous everywhere.
+mag = sqrt((sxx-syy)*(sxx-syy) + (2.0*sxy)*(2.0*sxy));
+mag_safe = max(mag, 0.0001);
+cos2t = (sxx-syy) / mag_safe;
+sin2t = (2.0*sxy) / mag_safe;
+// mag_safe's floor makes cos2t/sin2t arbitrary-but-harmless in
+// isotropic regions (both eigenvalues equal -- no preferred axis to
+// speak of, e.g. corners) and in genuinely flat/textureless regions
+// (no gradient at all) -- Stage E only consults this signal when
+// searching FROM a low-confidence pixel, and both of those cases are
+// degenerate starting points where any search direction is a
+// reasonable fallback, not a correctness problem.
+
+u = (-sxt*syy + sxy*syt) / det_safe;
+v = (-sxx*syt + sxy*sxt) / det_safe;
+
+// encode (u,v) as a standard f_vecfield -- 0.5 = zero vector, same
+// convention as f_vf_fieldmap -- loads into f_vf_warp/f_vf_fieldmap-
+// family consumers with no adapter (T015)
+field = vec(clamp(u*gain*0.5 + 0.5, 0.0, 1.0), clamp(v*gain*0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+neutral = vec(0.5, 0.5, 0.5, 1.0);
+
+// Confidence-gated masking -- ADR-2 originally deferred this (raw
+// confidence signal only, no masking), but real testing 2026-07-18
+// showed WHY it's needed: det_safe's divide-by-zero floor means any
+// tiny per-frame sensor noise in low-det (aperture-problem) regions
+// gets amplified into large erratic (u,v) values -- worst exactly
+// along real 1D edges (window blinds, silhouette outlines), which is
+// the opposite of where you'd want noise. Confirmed via a static
+// scene: vecfield should read flat/neutral with zero real motion, but
+// showed sharp edge-tracking noise instead -- the same aperture-
+// problem geometry as the synthetic test_edge_pix result, just on
+// real edges instead of a synthetic one. mask_lo/mask_hi are live
+// dials rather than hardcoded, since det's real numeric range was
+// never pinned down empirically (T017) -- turning them while watching
+// the vecfield preview IS the empirical range-finding.
+mask = smoothstep(mask_lo, mask_hi, det);
+field_masked = mix(neutral, field, mask);
+
+// out2: raw determinant in x (unclamped -- range not yet known
+// empirically beyond qualitative behavior, T017), T035's ambiguous-
+// axis signal in y/z (cos2t/sin2t, remapped to [0,1] for texture
+// storage since this outlet is not clamped/normalized to a display
+// range the way out1 is). This means out2 no longer previews as clean
+// grayscale (y/z used to duplicate x purely for preview convenience,
+// now carry real directional information instead) -- no current
+// consumer reads out2 (T023's f_vf_warp wiring uses out1 only), so
+// this is a real but currently-harmless behavior change. Bypass zeroes
+// it, since a bypassed module shouldn't claim any confidence or axis
+// data for flow it isn't actually producing.
+out1 = mix(field_masked, neutral, bypass);
+out2 = mix(vec(det, cos2t*0.5+0.5, sin2t*0.5+0.5, 1.0), vec(0.0, 0.5, 0.5, 1.0), bypass);

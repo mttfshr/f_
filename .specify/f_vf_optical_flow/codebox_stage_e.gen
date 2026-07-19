@@ -1,0 +1,94 @@
+// Stage E: confidence-gated directional propagation (T036, 2026-07-18)
+// Fills in low-confidence (aperture-problem) pixels by pulling from
+// higher-confidence neighbors specifically along the locally-ambiguous
+// axis derived in Stage C (T035) -- NOT an isotropic blur, since only
+// the axis-aligned direction actually carries information a straight
+// edge's own geometry could plausibly share (a rigid edge's true
+// motion is constant along its own length, so sampling further along
+// that same line is where a real answer might exist; sampling
+// perpendicular to it would just blend in unrelated content).
+//
+// in1 = stage_c's masked instantaneous field (already neutral where
+// stage_c's own mask_lo/mask_hi gated it out). in2 = stage_c's
+// confidence+axis signal: x=raw det (unmasked, independent of in1's
+// own masking), y/z=cos2t/sin2t (T035's double-angle-encoded ambiguous
+// axis -- see codebox_stage_c.gen for the full derivation and
+// wraparound rationale).
+//
+// Sits between Stage C and Stage D (C -> E -> D, decided 2026-07-18):
+// spatial fill happens per-frame BEFORE temporal accumulation, so
+// Stage D's decay/injection accumulates an already-filled signal
+// instead of repeatedly decaying/re-injecting from neutral in gap
+// regions every frame.
+//
+// mask_lo/mask_hi are the SAME dials as Stage C's (fanned out via
+// definition.py raw_lines, not a second near-duplicate pair) -- one
+// set of confidence controls in the UI, reused here to judge both the
+// center pixel's own confidence and each sampled tap's confidence.
+//
+// No bypass Param needed here: Stage D's own bypass already forces the
+// module's final output to neutral regardless of what this stage
+// computes, and Stage C's bypass already zeroes both in1 (neutral
+// field) and in2 (det=0), which naturally drives this stage's own
+// output to neutral too (own_mask and every tap weight fall to 0,
+// triggering the neutral fallback below) -- no explicit propagation
+// of the bypass flag required.
+Param mask_lo(0.0);
+Param mask_hi(1.0);
+Param reach(0.01);
+Param mix_pct(100.0);
+
+own_field = sample(in1, norm);
+own_det   = sample(in2, norm).x;
+own_mask  = smoothstep(mask_lo, mask_hi, own_det);
+
+// T035's double-angle decode -- see codebox_stage_c.gen for why this
+// is stored as (cos2t,sin2t) rather than a plain angle (avoids a
+// wraparound discontinuity that would blend garbage under this very
+// stage's own bilinear sampling)
+cos2t = sample(in2, norm).y * 2.0 - 1.0;
+sin2t = sample(in2, norm).z * 2.0 - 1.0;
+theta = atan2(sin2t, cos2t) * 0.5;
+dx = -sin(theta);
+dy = cos(theta);
+
+// four taps along the ambiguous axis, both directions -- same
+// two-steps-either-side shape as Stage B's own window, just spatial
+// instead of a fixed small offset
+t1 = vec(norm.x + dx*reach,       norm.y + dy*reach);
+t2 = vec(norm.x + dx*reach*2.0,   norm.y + dy*reach*2.0);
+t3 = vec(norm.x - dx*reach,       norm.y - dy*reach);
+t4 = vec(norm.x - dx*reach*2.0,   norm.y - dy*reach*2.0);
+
+// component access must happen on the SAME line as each sample() call
+// (storing a full vec then slicing it later is a documented silent-
+// failure hazard on this GPU path) -- every .x/.y/.z below is inlined
+// against its own sample() call, not extracted from a stored variable
+w1 = smoothstep(mask_lo, mask_hi, sample(in2, t1).x);
+w2 = smoothstep(mask_lo, mask_hi, sample(in2, t2).x);
+w3 = smoothstep(mask_lo, mask_hi, sample(in2, t3).x);
+w4 = smoothstep(mask_lo, mask_hi, sample(in2, t4).x);
+
+sum_w = w1 + w2 + w3 + w4;
+sum_x = sample(in1, t1).x*w1 + sample(in1, t2).x*w2 + sample(in1, t3).x*w3 + sample(in1, t4).x*w4;
+sum_y = sample(in1, t1).y*w1 + sample(in1, t2).y*w2 + sample(in1, t3).y*w3 + sample(in1, t4).y*w4;
+
+// neutral fallback when no confident tap exists within reach (rather
+// than a spurious near-zero encoded value from dividing by the
+// epsilon floor with nothing real in the numerator either)
+have_data  = step(0.01, sum_w);
+sum_w_safe = max(sum_w, 0.0001);
+filled_x = mix(0.5, sum_x/sum_w_safe, have_data);
+filled_y = mix(0.5, sum_y/sum_w_safe, have_data);
+filled_field = vec(filled_x, filled_y, 0.5, 1.0);
+
+// near-identity where own confidence is already high; full directional
+// fill where it isn't
+stage_result = mix(filled_field, own_field, own_mask);
+
+// global dry/wet -- a live performance control to dial the fill effect
+// down or off entirely, independent of per-pixel confidence. mix_pct
+// convention: 0-100% live.numbox, internal Param named mix_pct (never
+// bare "mix" -- collides with the codebox's built-in mix() operator).
+mix_frac = mix_pct / 100.0;
+out1 = mix(own_field, stage_result, mix_frac);
