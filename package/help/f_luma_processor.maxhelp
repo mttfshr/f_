@@ -9,77 +9,134 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 100.0, 99.0, 871.0, 780.0 ],
+        "rect": [
+            100.0,
+            99.0,
+            871.0,
+            780.0
+        ],
         "gridonopen": 2,
         "toolbarvisible": 0,
         "helpsidebarclosed": 1,
         "boxes": [
             {
                 "box": {
-                    "bgcolor": [ 0.2, 0.2, 0.2, 0.0 ],
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
                     "fontface": 0,
                     "fontname": "Ableton Sans Medium",
-                    "fontsize": 36.0,
                     "id": "h-1",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 15.0, 270.0, 50.0 ],
-                    "saved_attribute_attributes": {
-                        "textcolor": { "expression": "themecolor.live_control_fg" }
-                    },
+                    "patching_rect": [
+                        15.0,
+                        15.0,
+                        270.0,
+                        50.0
+                    ],
                     "text": "Luma Processor",
-                    "varname": "autohelp_top_digest[4]"
+                    "fontsize": 36.0,
+                    "varname": "autohelp_top_digest[4]",
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
                 }
             },
             {
                 "box": {
-                    "bgcolor": [ 0.2, 0.2, 0.2, 0.0 ],
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
                     "fontface": 0,
                     "fontname": "Ableton Sans Light",
-                    "fontsize": 14.0,
                     "id": "h-2",
-                    "linecount": 2,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 75.0, 270.0, 40.0 ],
+                    "patching_rect": [
+                        15.0,
+                        75.0,
+                        270.0,
+                        40.0
+                    ],
+                    "text": "Luminance-selective saturation, luminance, and hue-rotation within a luma band",
+                    "fontsize": 14.0,
+                    "varname": "autohelp_top_digest[3]",
+                    "linecount": 2,
                     "saved_attribute_attributes": {
-                        "textcolor": { "expression": "themecolor.live_control_fg" }
-                    },
-                    "text": "Luma-selective saturation, luminance, and hue shift",
-                    "varname": "autohelp_top_digest[3]"
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
                 }
             },
             {
                 "box": {
-                    "bgcolor": [ 0.2, 0.2, 0.2, 0.0 ],
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
                     "fontface": 0,
                     "fontname": "Ableton Sans Light",
                     "id": "d-8",
-                    "linecount": 11,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 150.0, 270.0, 162.0 ],
+                    "patching_rect": [
+                        15.0,
+                        150.0,
+                        270.0,
+                        137.25
+                    ],
+                    "text": "External Control Messages\n\nlow_mid [0.0 \u2013 1.0]\nmid_high [0.0 \u2013 1.0]\nedge_falloff [0.0 \u2013 0.5]\nsat_amt [-1.0 \u2013 1.0]\nlum_shift [-1.0 \u2013 1.0]\nhue_shift [-180.0 \u2013 180.0]\nbypass [0 / 1]",
+                    "linecount": 9,
                     "saved_attribute_attributes": {
-                        "textcolor": { "expression": "themecolor.live_control_fg" }
-                    },
-                    "text": "External Control Messages\n\nsat_amt [-1.0 -- 1.0]\nlum_shift [-1.0 -- 1.0]\nhue_shift [-180.0 -- 180.0]\nedge_falloff [0.0 -- 0.5]\nlow_mid [0.0 -- 1.0]\nmid_high [0.0 -- 1.0]\nbypass [0 / 1]",
-                    "textjustification": 0
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
                 }
             },
             {
                 "box": {
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
+                    "fontface": 0,
                     "fontname": "Ableton Sans Light",
-                    "fontsize": 12.0,
                     "id": "r-1",
-                    "linecount": 11,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 360.0, 270.0, 165.0 ],
-                    "text": "References\n\nLuma band mask via flat-top smoothstep:\nmask = smoothstep(lm-ef, lm+ef, lum)\n     * (1 - smoothstep(mh-ef, mh+ef, lum))\n\nHSV operations applied within band;\nbranch-free HSV<->RGB conversion.\n\nShares low_mid / mid_high / edge_falloff\nconvention with f_tone_curve.\n\nOriginal derivation -- not from external source."
+                    "patching_rect": [
+                        15.0,
+                        327.25,
+                        270.0,
+                        120.0
+                    ],
+                    "text": "References\n\nParallel structure to f_hue_processor -- see\ndocs/f-reference/f_luma_processor.md for the full\nparameter reference.",
+                    "fontsize": 12.0,
+                    "linecount": 5,
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
                 }
             },
             {
@@ -88,88 +145,163 @@
                     "maxclass": "panel",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 0.0, -2.0, 303.0, 765.0 ]
+                    "patching_rect": [
+                        0.0,
+                        -2.0,
+                        303.0,
+                        765.0
+                    ]
                 }
             },
             {
                 "box": {
-                    "bgmode": 1, "border": 1, "clickthrough": 0,
-                    "enablehscroll": 0, "enablevscroll": 0,
-                    "id": "d-3", "lockeddragscroll": 0, "lockedsize": 0,
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "d-3",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
                     "maxclass": "bpatcher",
                     "name": "vs_sources_main.maxpat",
-                    "numinlets": 1, "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 338.0, 23.75, 296.4, 125.5 ],
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        338.0,
+                        23.75,
+                        296.4,
+                        125.5
+                    ],
                     "viewvisibility": 1
                 }
             },
             {
                 "box": {
-                    "bgmode": 1, "border": 1, "clickthrough": 0,
-                    "enablehscroll": 0, "enablevscroll": 0,
-                    "id": "d-6", "lockeddragscroll": 0, "lockedsize": 0,
-                    "maxclass": "bpatcher",
-                    "name": "vs_wfg_s.maxpat",
-                    "numinlets": 1, "numoutlets": 2,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture", "float" ],
-                    "patching_rect": [ 417.0, 195.75, 75.0, 73.5 ],
-                    "varname": "vs_wfg_s",
-                    "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
-                    "bgcolor": [ 0.0, 0.0, 0.0, 0.0 ],
-                    "bubble": 1, "bubbleside": 1,
-                    "fontface": 0, "fontname": "Ableton Sans Light", "fontsize": 13.0,
-                    "id": "d-7", "maxclass": "comment",
-                    "numinlets": 1, "numoutlets": 0,
-                    "patching_rect": [ 500.0, 220.75, 64.0, 26.0 ],
-                    "text": "time_s"
-                }
-            },
-            {
-                "box": {
-                    "bgmode": 1, "border": 1, "clickthrough": 0,
-                    "enablehscroll": 0, "enablevscroll": 0,
-                    "id": "d-4", "lockeddragscroll": 0, "lockedsize": 0,
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "d-4",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
                     "maxclass": "bpatcher",
                     "name": "f_luma_processor.maxpat",
-                    "numinlets": 2, "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 338.0, 293.75, 154.0, 91.0 ],
-                    "varname": "f_luma_processor",
-                    "viewvisibility": 1
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        338.0,
+                        190.0,
+                        154.0,
+                        91.0
+                    ],
+                    "viewvisibility": 1,
+                    "varname": "f_luma_processor"
                 }
             },
             {
                 "box": {
-                    "bgmode": 1, "border": 1, "clickthrough": 0,
-                    "enablehscroll": 0, "enablevscroll": 0,
-                    "id": "d-5", "lockeddragscroll": 0, "lockedsize": 0,
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "d-5",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
                     "maxclass": "bpatcher",
                     "name": "vs_preview.maxpat",
-                    "numinlets": 1, "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 338.0, 404.75, 236.0, 249.0 ],
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        338.0,
+                        301.0,
+                        236.0,
+                        249.0
+                    ],
                     "viewvisibility": 1
                 }
             }
         ],
         "lines": [
-            { "patchline": { "destination": [ "d-4", 0 ], "source": [ "d-3", 0 ] } },
-            { "patchline": { "destination": [ "d-5", 0 ], "source": [ "d-4", 0 ] } },
-            { "patchline": { "destination": [ "d-4", 1 ], "source": [ "d-6", 1 ] } }
+            {
+                "patchline": {
+                    "destination": [
+                        "d-4",
+                        0
+                    ],
+                    "source": [
+                        "d-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "d-5",
+                        0
+                    ],
+                    "source": [
+                        "d-4",
+                        0
+                    ]
+                }
+            }
         ],
         "parameters": {
-            "parameterbanks": {
-                "0": { "index": 0, "name": "", "parameters": [ "-", "-", "-", "-", "-", "-", "-", "-" ], "buttons": [ "-", "-", "-", "-", "-", "-", "-", "-" ] }
-            },
+            "d-4::obj-7": [
+                "low_mid",
+                "low_mid",
+                0
+            ],
+            "d-4::obj-20": [
+                "mid_high",
+                "mid_high",
+                0
+            ],
+            "d-4::obj-26": [
+                "edge_falloff",
+                "edge_falloff",
+                0
+            ],
+            "d-4::obj-13": [
+                "sat_amt",
+                "sat_amt",
+                0
+            ],
+            "d-4::obj-14": [
+                "lum_shift",
+                "lum_shift",
+                0
+            ],
+            "d-4::obj-15": [
+                "hue_shift",
+                "hue_shift",
+                0
+            ],
             "inherited_shortname": 1
         },
         "autosave": 0

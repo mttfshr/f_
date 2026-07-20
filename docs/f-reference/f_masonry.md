@@ -19,7 +19,6 @@ A parametric masonry texture generator — courses (horizontal bands), bond (bri
 | `offset` | float | 0.0–1.0 | 0.0 | Per-course stagger — 0.5 = half-brick running bond |
 | `angle` | float | -360–360 | 0.0 | Field rotation in degrees |
 | `skip` | float | 0.0–1.0 | 1.0 | Fraction of courses that are visible (course presence gate) |
-| `quantize` | float | 0.0–1.0 | 0.0 | 0=slot-quantized drift, 1=continuous drift |
 | `regularity` | float | 0.0–1.0 | 1.0 | 1=regular grid, 0=random mark positions at same density |
 | `drift` | float | 0.0–4.0 | 0.0 | Per-course along-axis drift amount |
 | `phase` | float | 0.0–1.0 | 0.0 | Per-course phase offset — primary animation target (drive with vs_lfo) |
@@ -59,10 +58,11 @@ masonry_pix out1 (mask)       → out1
 
 ## Algorithm
 
-Coordinate frame rotates by `angle` into `along`/`across` axes (with `aspect` correction). `across` is quantized into course bands (`band_idx`); `along` is quantized into brick slots (`slot`), staggered per-course by `offset`. Per-course hashes (seeded by `course_seed`) drive `skip` (course presence), `speed_var` (per-course animation rate), and `course_color`. Per-brick hashes (seeded by `brick_seed`) drive `regularity` (regular vs. randomized spacing), `drift` (positional jitter, blended between slot-quantized and continuous via `quantize`), and `brick_color`. Brick footprint is a `mix` between a rectangular and rounded (superellipse-like) distance field, gated by `roundness`, sized by `mortar`/`width`, and anti-aliased by a per-pixel-derivative-aware `softness` floor (`aa_width`, computed from screen-space partials of `along`/`across`). `skip`-gated courses are dropped entirely (`cont` gate) before compositing.
+Coordinate frame rotates by `angle` into `along`/`across` axes (with `aspect` correction). `across` is quantized into course bands (`band_idx`); `along` is quantized into brick slots (`slot`), staggered per-course by `offset`. Per-course hashes (seeded by `course_seed`) drive `skip` (course presence), `speed_var` (per-course animation rate), and `course_color`. Per-brick hashes (seeded by `brick_seed`) drive `regularity` (regular vs. randomized spacing) and `drift` (positional jitter, via the ADR 7 candidate-search below), and `brick_color`. Brick footprint is a `mix` between a rectangular and rounded (superellipse-like) distance field, gated by `roundness`, sized by `mortar`/`width`, and anti-aliased by a per-pixel-derivative-aware `softness` floor (`aa_width`, computed from screen-space partials of `along`/`across`). `skip`-gated courses are dropped entirely (`cont` gate) before compositing.
 
 ## Loose Threads
 
+- **Dead `quantize` control in the live `.maxpat` — confirmed 2026-07-19.** `quantize` was removed from the codebox algorithm entirely in the 2026-07-05 ADR 7 candidate-search redesign (`src/f_masonry/definition.py`'s own header comment: "quantize removed"; no `Param quantize` declared). But the live `.maxpat`'s `quantize` `live.dial`, its `route` entry, and its `prepend quantize`/message wiring are all still present and unremoved — since `f_masonry` is on the never-regenerate-via-`build_patcher.py` list, nobody's gone back to strip the dead UI after the codebox stopped using it. The dial still moves and still sends a message, it just lands on nothing. Not urgent, but a real dangling control — worth removing from the `.maxpat` by hand next time this module is opened for other reasons.
 - Known bug (per HANDOFF): square-output artifact at non-square render resolutions — untouched.
 - Target-list partitioning for the three modulation inlets is a working hypothesis (structural params → slot space, appearance params → brick/pixel space), not finalized — see `.specify/f_masonry/spec.md`'s Open Questions.
 - Angle compensation for slot-mod sampling when `angle≠0` is deferred (sample coordinate doesn't currently correct for rotation).

@@ -28,27 +28,25 @@
                         0.0
                     ],
                     "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 14.0,
-                    "id": "h-2",
-                    "linecount": 2,
+                    "fontname": "Ableton Sans Medium",
+                    "id": "h-1",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        75.0,
+                        15.0,
                         270.0,
-                        40.0
+                        50.0
                     ],
-                    "presentation_linecount": 2,
+                    "text": "Mobius",
+                    "fontsize": 36.0,
+                    "varname": "autohelp_top_digest[4]",
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
-                    },
-                    "text": "Mobius transformation -- conformal complex-plane mapping with rotation, zoom, and inversion",
-                    "varname": "autohelp_top_digest[3]"
+                    }
                 }
             },
             {
@@ -60,25 +58,99 @@
                         0.0
                     ],
                     "fontface": 0,
-                    "fontname": "Ableton Sans Medium",
-                    "fontsize": 36.0,
-                    "id": "h-1",
+                    "fontname": "Ableton Sans Light",
+                    "id": "h-2",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        15.0,
+                        75.0,
                         270.0,
-                        50.0
+                        40.0
                     ],
+                    "text": "Mobius-family UV-space transform -- rotation/zoom blended toward complex inversion",
+                    "fontsize": 14.0,
+                    "varname": "autohelp_top_digest[3]",
+                    "linecount": 2,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
-                    },
-                    "text": "Mobius",
-                    "varname": "autohelp_top_digest[4]"
+                    }
+                }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "id": "d-8",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        15.0,
+                        150.0,
+                        270.0,
+                        122.0
+                    ],
+                    "text": "External Control Messages\n\ncx [0.0 \u2013 1.0]\ncy [0.0 \u2013 1.0]\nrotate [0.0 \u2013 1.0]\nzoom [0.0 \u2013 1.0]\ninvert [0.0 \u2013 10.0]\nbypass [0 / 1]",
+                    "linecount": 8,
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
+                }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "id": "r-1",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        15.0,
+                        312.0,
+                        270.0,
+                        120.0
+                    ],
+                    "text": "References\n\nMobius transformations preserve circles and angles --\nclassical complex analysis, not from a specific source.\nSee docs/f-reference/f_mobius.md for the full algorithm\nand loose threads (invert range, singularity guard).",
+                    "fontsize": 12.0,
+                    "linecount": 6,
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "panel",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        0.0,
+                        -2.0,
+                        303.0,
+                        765.0
+                    ]
                 }
             },
             {
@@ -134,12 +206,12 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        293.75,
+                        190.0,
                         154.0,
                         91.0
                     ],
-                    "varname": "f_mobius",
-                    "viewvisibility": 1
+                    "viewvisibility": 1,
+                    "varname": "f_mobius"
                 }
             },
             {
@@ -165,74 +237,11 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        404.75,
+                        301.0,
                         236.0,
                         249.0
                     ],
                     "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
-                    "bgcolor": [
-                        0.2,
-                        0.2,
-                        0.2,
-                        0.0
-                    ],
-                    "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 13.0,
-                    "id": "d-8",
-                    "linecount": 10,
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        15.0,
-                        150.0,
-                        270.0,
-                        152.0
-                    ],
-                    "saved_attribute_attributes": {
-                        "textcolor": {
-                            "expression": "themecolor.live_control_fg"
-                        }
-                    },
-                    "text": "External Control Messages\n\ncx [0.0 - 1.0]\ncy [0.0 - 1.0]\nrotate [0.0 - 1.0]\nzoom [0.0 - 1.0]\ninvert [0.0 - 10.0]\nbypass [0 / 1]",
-                    "textjustification": 0
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 12.0,
-                    "id": "r-1",
-                    "linecount": 18,
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        15.0,
-                        345.0,
-                        270.0,
-                        240.0
-                    ],
-                    "text": "References\n\nMobius (fractional linear) transformation:\nf(z) = (az + b) / (cz + d), ad - bc != 0\nClassical complex analysis -- see Needham (1997)\n\"Visual Complex Analysis\"\nOxford University Press\n\nConformal mapping properties:\nAngles preserved locally; circles map to circles\n(or lines as degenerate circles).\n\nInversion blend (invert param):\nInterpolates from rotation/zoom toward 1/z.\nDerived in development -- not from any external source.\n\nZoom param: logarithmic scale\n10^((zoom - 0.5) * 5), identity at zoom=0.5"
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-1",
-                    "maxclass": "panel",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        0.0,
-                        -2.0,
-                        303.0,
-                        765.0
-                    ]
                 }
             }
         ],
@@ -263,32 +272,31 @@
             }
         ],
         "parameters": {
-            "parameterbanks": {
-                "0": {
-                    "index": 0,
-                    "name": "",
-                    "parameters": [
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-"
-                    ],
-                    "buttons": [
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-"
-                    ]
-                }
-            },
+            "d-4::obj-10": [
+                "cx",
+                "cx",
+                0
+            ],
+            "d-4::obj-12": [
+                "cy",
+                "cy",
+                0
+            ],
+            "d-4::obj-14": [
+                "rotate",
+                "rotate",
+                0
+            ],
+            "d-4::obj-16": [
+                "zoom",
+                "zoom",
+                0
+            ],
+            "d-4::obj-18": [
+                "invert",
+                "invert",
+                0
+            ],
             "inherited_shortname": 1
         },
         "autosave": 0

@@ -24,7 +24,7 @@ Stochastic grain field with per-grain displacement and luma gating. Generates a 
 | `ch_diverge` | float | Per-channel color divergence |
 | `luma_gate` | float | Luminance threshold for grain placement |
 | `displace` | float | Displacement magnitude |
-| `edge_mode_menu` | int | Edge handling mode |
+| `edge_mode` | int | Edge handling mode (Clear/Clamp/Wrap/Mirror) |
 | `field` | float | Field scale |
 | `sv_seed` | int | Random seed for grain field |
 
@@ -36,11 +36,12 @@ texture in → jit.gl.pix (grain field codebox)
            → texture out
 ```
 
-Parameters routed via `route bypass density amount persistence fade size size_var shape softness jitter ch_diverge luma_gate displace edge_mode_menu field sv_seed`.
+Parameters routed via `route bypass density amount persistence fade size size_var shape softness jitter ch_diverge luma_gate displace edge_mode field sv_seed`.
 
 ## Loose Threads
 
-- None known.
+- `softness`'s `live.dial` range is `0.0-5.0` with no custom min, unlike `shape`/`jitter` which both got tuned ranges -- appears to be an untuned Max default, never corrected. The codebox only uses it meaningfully in `[0,1]` (`feather = mix(0.02, 0.5, softness)`); values beyond ~1.0 just keep extrapolating with no new effect. Not urgent, but a real inconsistency.
+- This module predates `build_patcher.py` (patcher added 2026-05-23, build system added 2026-05-30). `src/f_grain/definition.py` was written after the fact (2026-07-05) as a record of the real `.maxpat`, not a generator for it -- **never regenerate this module via `build_patcher.py`.**
 
 ## Source File
 

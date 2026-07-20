@@ -1,24 +1,27 @@
 #!/opt/homebrew/bin/python3.13
 """
-generate_helpfiles.py — generate f_ helpfiles via Claude API.
+generate_helpfiles.py — build the generation prompt for f_ helpfiles.
 
-Reads build/helpfile_queue.json (written by extract_params.py), calls the
-Anthropic API for each pending entry, writes the helpfile, and updates the
-queue with status and token spend.
+NO ANTHROPIC API CALLS. Per Matt's standing instruction (repeated
+2026-07-19 after being asked once before), this script must never call
+the Anthropic API. It only ever assembles and prints/writes the prompt
+that a human-in-session Claude (already holding full context on the
+module) uses to write the .maxhelp file directly via edit_block/
+write_file. There is no other code path.
+
+Reads build/helpfile_queue.json (written by extract_params.py) and
+prints the full generation prompt for each pending entry to stdout (or
+to build/<module>_prompt.txt with --write-prompt). Generation itself
+happens in-session, by hand, using that prompt plus the skill/template
+already in context — never via a script-issued API call.
 
 Usage:
-    python3.13 build/generate_helpfiles.py                  # process all pending
-    python3.13 build/generate_helpfiles.py f_grain          # single module
-    python3.13 build/generate_helpfiles.py --budget 50000   # token ceiling (default: 50000)
-    python3.13 build/generate_helpfiles.py --dry-run        # print prompt, no API call
-
-Requirements:
-    ANTHROPIC_API_KEY env var set
-    pip install anthropic
+    python3.13 build/generate_helpfiles.py                    # print prompt for all pending
+    python3.13 build/generate_helpfiles.py f_grain             # single module
+    python3.13 build/generate_helpfiles.py f_grain --write-prompt  # write to build/f_grain_prompt.txt
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -27,9 +30,6 @@ HELP_DIR = REPO_ROOT / "package" / "help"
 STATE_FILE = REPO_ROOT / "build" / "helpfile_queue.json"
 TEMPLATE_PATH = REPO_ROOT / "package" / "help" / "f_droste.maxhelp"
 SKILL_PATH = REPO_ROOT / "skills" / "f-helpfile" / "SKILL.md"
-
-DEFAULT_BUDGET = 50_000
-MODEL = "claude-sonnet-4-6"
 
 # ---------------------------------------------------------------------------
 # Prompt construction
@@ -116,27 +116,8 @@ Generate the complete f_{short_name}.maxhelp JSON now.
 
 
 # ---------------------------------------------------------------------------
-# API call
+# NOTE: no API-call function here, deliberately. See module docstring.
 # ---------------------------------------------------------------------------
-
-def call_claude(system: str, user: str) -> tuple[str, int, int]:
-    """Returns (response_text, input_tokens, output_tokens)."""
-    try:
-        import anthropic
-    except ImportError:
-        print("ERROR: anthropic package not installed. Run: pip install anthropic", file=sys.stderr)
-        sys.exit(1)
-
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=4096,
-        system=system,
-        messages=[{"role": "user", "content": user}],
-    )
-    text = response.content[0].text
-    return text, response.usage.input_tokens, response.usage.output_tokens
-
 
 # ---------------------------------------------------------------------------
 # Queue management
@@ -162,15 +143,8 @@ def save_queue(queue: list[dict]) -> None:
 
 def main():
     args = sys.argv[1:]
-    dry_run = "--dry-run" in args
-    args = [a for a in args if a != "--dry-run"]
-
-    budget = DEFAULT_BUDGET
-    for i, arg in enumerate(args):
-        if arg == "--budget" and i + 1 < len(args):
-            budget = int(args[i + 1])
-            args = args[:i] + args[i+2:]
-            break
+    write_prompt = "--write-prompt" in args
+    args = [a for a in args if a != "--write-prompt"]
 
     # Filter to named modules if given
     filter_names = set()
@@ -178,18 +152,11 @@ def main():
         if not a.startswith("--"):
             filter_names.add(a if a.startswith("f_") else f"f_{a}")
 
-    if not dry_run and "ANTHROPIC_API_KEY" not in os.environ:
-        print("ERROR: ANTHROPIC_API_KEY not set", file=sys.stderr)
-        sys.exit(1)
-
     # Load supporting files
     skill_text = SKILL_PATH.read_text()
     template_json = TEMPLATE_PATH.read_text()
 
     queue = load_queue()
-    total_tokens = 0
-    processed = 0
-    skipped = 0
 
     blocked = [
         e for e in queue
@@ -222,8 +189,11 @@ def main():
         print("No pending entries in queue.")
         return
 
-    print(f"Budget: {budget:,} tokens")
-    print(f"Pending: {len(pending)} module(s)\n")
+    print(f"Pending: {len(pending)} module(s)")
+    print("This script only builds the prompt -- it never calls the Anthropic")
+    print("API. Take the printed (or written) prompt into an in-session Claude")
+    print("conversation, which already holds the skill/template/docs context,")
+    print("and have it write the .maxhelp file directly via edit_block/write_file.\n")
 
     for entry in pending:
         module_name = entry["module_name"]
@@ -237,59 +207,16 @@ def main():
                 pass
 
         user_prompt = build_user_prompt(entry, skill_text, template_json, docs_text)
+        full_prompt = SYSTEM_PROMPT + "\n\n" + user_prompt
 
-        if dry_run:
-            print(f"=== DRY RUN: {module_name} ===")
-            print(user_prompt[:2000], "...[truncated]" if len(user_prompt) > 2000 else "")
+        if write_prompt:
+            out_path = REPO_ROOT / "build" / f"{module_name}_prompt.txt"
+            out_path.write_text(full_prompt)
+            print(f"  Wrote prompt: {out_path}")
+        else:
+            print(f"=== {module_name} ===")
+            print(full_prompt)
             print()
-            continue
-
-        # Budget check — rough estimate before calling (1 token ≈ 4 chars)
-        estimated_input = len(SYSTEM_PROMPT + user_prompt) // 4
-        if total_tokens + estimated_input > budget:
-            print(f"  BUDGET LIMIT: stopping before {module_name} (estimated {estimated_input:,} input tokens, {total_tokens:,} used so far)")
-            entry["status"] = "skipped_budget"
-            skipped += 1
-            continue
-
-        print(f"  Generating {module_name}...", end=" ", flush=True)
-
-        try:
-            raw, input_tokens, output_tokens = call_claude(SYSTEM_PROMPT, user_prompt)
-        except Exception as e:
-            print(f"ERROR: {e}")
-            entry["status"] = "error"
-            entry["error"] = str(e)
-            save_queue(queue)
-            continue
-
-        total_tokens += input_tokens + output_tokens
-        print(f"{input_tokens:,}in + {output_tokens:,}out = {input_tokens+output_tokens:,} tokens (running total: {total_tokens:,})")
-
-        # Validate JSON
-        try:
-            parsed = json.loads(raw)
-        except json.JSONDecodeError as e:
-            print(f"    WARNING: response is not valid JSON: {e}")
-            print(f"    Raw response saved to build/{module_name}_raw.txt")
-            (REPO_ROOT / "build" / f"{module_name}_raw.txt").write_text(raw)
-            entry["status"] = "error_json"
-            entry["error"] = str(e)
-            save_queue(queue)
-            continue
-
-        # Write helpfile
-        helpfile_path = Path(entry["helpfile_path"])
-        helpfile_path.parent.mkdir(exist_ok=True)
-        helpfile_path.write_text(json.dumps(parsed, indent=4))
-        print(f"    Written: {helpfile_path}")
-
-        entry["status"] = "done"
-        entry["tokens_used"] = input_tokens + output_tokens
-        processed += 1
-        save_queue(queue)
-
-    print(f"\nDone. {processed} generated, {skipped} skipped (budget). Total tokens: {total_tokens:,}")
 
 
 if __name__ == "__main__":

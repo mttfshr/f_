@@ -9,82 +9,134 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 100.0, 99.0, 871.0, 780.0 ],
+        "rect": [
+            100.0,
+            99.0,
+            871.0,
+            780.0
+        ],
         "gridonopen": 2,
         "toolbarvisible": 0,
         "helpsidebarclosed": 1,
         "boxes": [
             {
                 "box": {
-                    "bgcolor": [ 0.2, 0.2, 0.2, 0.0 ],
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
                     "fontface": 0,
                     "fontname": "Ableton Sans Medium",
-                    "fontsize": 36.0,
                     "id": "h-1",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 15.0, 270.0, 50.0 ],
+                    "patching_rect": [
+                        15.0,
+                        15.0,
+                        270.0,
+                        50.0
+                    ],
+                    "text": "Stereo",
+                    "fontsize": 36.0,
+                    "varname": "autohelp_top_digest[4]",
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
-                    },
-                    "text": "Stereo",
-                    "varname": "autohelp_top_digest[4]"
+                    }
                 }
             },
             {
                 "box": {
-                    "bgcolor": [ 0.2, 0.2, 0.2, 0.0 ],
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
                     "fontface": 0,
                     "fontname": "Ableton Sans Light",
-                    "fontsize": 14.0,
                     "id": "h-2",
-                    "linecount": 2,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 75.0, 270.0, 40.0 ],
+                    "patching_rect": [
+                        15.0,
+                        75.0,
+                        270.0,
+                        40.0
+                    ],
+                    "text": "Stereographic projection display layer -- flat texture wrapped onto a rotating sphere",
+                    "fontsize": 14.0,
+                    "varname": "autohelp_top_digest[3]",
+                    "linecount": 2,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
-                    },
-                    "text": "Stereographic projection -- maps flat texture onto a rotating sphere",
-                    "varname": "autohelp_top_digest[3]"
+                    }
                 }
             },
             {
                 "box": {
-                    "bgcolor": [ 0.2, 0.2, 0.2, 0.0 ],
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
                     "fontface": 0,
                     "fontname": "Ableton Sans Light",
                     "id": "d-8",
-                    "linecount": 8,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 150.0, 270.0, 122.0 ],
+                    "patching_rect": [
+                        15.0,
+                        150.0,
+                        270.0,
+                        122.0
+                    ],
+                    "text": "External Control Messages\n\nlon [0.0 \u2013 1.0]\nlat [-1.0 \u2013 1.0]\nspin [0.0 \u2013 1.0]\nproj [-2.0 \u2013 2.0]\ncirc [circle / full]\nbypass [0 / 1]",
+                    "linecount": 8,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
-                    },
-                    "text": "External Control Messages\n\nlon [0.0 -- 1.0]\nlat [-1.0 -- 1.0]\nspin [0.0 -- 1.0]\nproj [-2.0 -- 2.0]\ncirc [0 / 1]\nbypass [0 / 1]"
+                    }
                 }
             },
             {
                 "box": {
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
+                    "fontface": 0,
                     "fontname": "Ableton Sans Light",
-                    "fontsize": 12.0,
                     "id": "r-1",
-                    "linecount": 14,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 15.0, 345.0, 270.0, 208.0 ],
-                    "text": "References\n\nStereographic projection: classical complex analysis\nSphere sampling via equirectangular coordinates\n(atan2 / asin) -- well-behaved everywhere.\n\nRotation model: R = Rz(spin) x Ry(lon) x Rx(lat)\nInlined scalar arithmetic -- no matrix objects.\n\nProjection blend (proj param):\n0 = orthographic, 1 = stereographic.\nValues outside 0--1 produce extended distortions.\nOriginal derivation -- not from external source."
+                    "patching_rect": [
+                        15.0,
+                        312.0,
+                        270.0,
+                        120.0
+                    ],
+                    "text": "References\n\nStereographic/orthographic projection -- classical\ncartography and complex analysis, not from a specific\nsource. See docs/f-reference/f_stereo.md for the full\nrotation model, equirectangular sampling, and the\nvs_flipy -> vs_poltocar radially-symmetric-source recipe.",
+                    "fontsize": 12.0,
+                    "linecount": 7,
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
                 }
             },
             {
@@ -93,7 +145,12 @@
                     "maxclass": "panel",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 0.0, -2.0, 303.0, 765.0 ]
+                    "patching_rect": [
+                        0.0,
+                        -2.0,
+                        303.0,
+                        765.0
+                    ]
                 }
             },
             {
@@ -110,9 +167,19 @@
                     "name": "vs_sources_main.maxpat",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 338.0, 23.75, 296.4, 125.5 ],
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        338.0,
+                        23.75,
+                        296.4,
+                        125.5
+                    ],
                     "viewvisibility": 1
                 }
             },
@@ -128,13 +195,23 @@
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
                     "name": "f_stereo.maxpat",
-                    "numinlets": 2,
+                    "numinlets": 1,
                     "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 338.0, 293.75, 154.0, 91.0 ],
-                    "varname": "f_stereo",
-                    "viewvisibility": 1
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        338.0,
+                        190.0,
+                        154.0,
+                        91.0
+                    ],
+                    "viewvisibility": 1,
+                    "varname": "f_stereo"
                 }
             },
             {
@@ -151,87 +228,101 @@
                     "name": "vs_preview.maxpat",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 338.0, 404.75, 236.0, 249.0 ],
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        338.0,
+                        301.0,
+                        236.0,
+                        249.0
+                    ],
                     "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "id": "d-9",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        500.0,
+                        321.0,
+                        210.0,
+                        87.0
+                    ],
+                    "text": "Feed in f_chladni (via vs_flipy ->\nvs_poltocar) for radially symmetric\ncontent; add vs_fisheye downstream for\na stronger spherical illusion.",
+                    "fontsize": 12.0,
+                    "linecount": 4,
+                    "bubble": 1
                 }
             }
         ],
         "lines": [
             {
                 "patchline": {
-                    "destination": [ "d-4", 0 ],
-                    "source": [ "d-3", 0 ]
+                    "destination": [
+                        "d-4",
+                        0
+                    ],
+                    "source": [
+                        "d-3",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "d-5", 0 ],
-                    "source": [ "d-4", 0 ]
+                    "destination": [
+                        "d-5",
+                        0
+                    ],
+                    "source": [
+                        "d-4",
+                        0
+                    ]
                 }
             }
         ],
         "parameters": {
-            "d-3::obj-14::obj-12": [ "flip_x[1]", "flip_x", 0 ],
-            "d-3::obj-14::obj-21": [ "flip_y[1]", "flip_x", 0 ],
-            "d-3::obj-14::obj-22": [ "swap[1]", "flip_x", 0 ],
-            "d-3::obj-14::obj-3": [ "sync_invert[1]", "sync_inv", 0 ],
-            "d-3::obj-14::obj-4": [ "live.text[12]", "live.text", 0 ],
-            "d-3::obj-15::obj-16": [ "live.arrows", "live.arrows", 0 ],
-            "d-3::obj-15::obj-28": [ "sync_invert", "sync_inv", 0 ],
-            "d-3::obj-15::obj-42": [ "number", "number", 0 ],
-            "d-3::obj-24::obj-11": [ "sync_invert[3]", "sync_inv", 0 ],
-            "d-3::obj-24::obj-19": [ "noise2_dim_x[1]", "dim_x", 0 ],
-            "d-3::obj-24::obj-2": [ "noise2_dim_x", "dim_x", 0 ],
-            "d-3::obj-24::obj-35": [ "live.dial", "Speed", 0 ],
-            "d-3::obj-24::obj-43": [ "temp_freq", "Slide", 0 ],
-            "d-3::obj-24::obj-8": [ "sync_invert[2]", "sync_inv", 0 ],
-            "d-3::obj-4::obj-1": [ "live.text", "sync_inv", 0 ],
-            "d-3::obj-4::obj-10": [ "wfg_pw[1]", "PW", 0 ],
-            "d-3::obj-4::obj-137": [ "wfg_wf[1]", "waveform", 0 ],
-            "d-3::obj-4::obj-139": [ "sync_pos", "position", 0 ],
-            "d-3::obj-4::obj-29": [ "wfg_freq[1]", "Freq", 0 ],
-            "d-3::obj-4::obj-3": [ "sync_time", "Time", 0 ],
-            "d-3::obj-4::obj-4": [ "wfg_freq[2]", "Phase", 0 ],
-            "d-3::obj-4::obj-60": [ "clrizer_color[1]", "color", 0 ],
-            "d-3::obj-9::obj-13": [ "myGrads", "live.menu", 0 ],
-            "d-3::obj-9::obj-17": [ "live.numbox", "live.numbox", 0 ],
-            "d-3::obj-9::obj-22": [ "clpick", "live.text", 0 ],
-            "d-3::obj-9::obj-34": [ "live.tab", "live.tab", 0 ],
-            "d-4::obj-10": [ "lon", "lon", 0 ],
-            "d-4::obj-12": [ "lat", "lat", 0 ],
-            "d-4::obj-14": [ "spin", "spin", 0 ],
-            "d-4::obj-16": [ "proj", "proj", 0 ],
-            "d-4::obj-32": [ "circ", "circ", 0 ],
-            "parameterbanks": {
-                "0": {
-                    "index": 0,
-                    "name": "",
-                    "parameters": [ "-", "-", "-", "-", "-", "-", "-", "-" ],
-                    "buttons": [ "-", "-", "-", "-", "-", "-", "-", "-" ]
-                }
-            },
-            "parameter_overrides": {
-                "d-3::obj-24::obj-11": {
-                    "parameter_longname": "sync_invert[3]"
-                },
-                "d-3::obj-24::obj-8": {
-                    "parameter_longname": "sync_invert[2]"
-                },
-                "d-3::obj-4::obj-10": {
-                    "parameter_longname": "wfg_pw[1]"
-                },
-                "d-3::obj-4::obj-137": {
-                    "parameter_longname": "wfg_wf[1]"
-                },
-                "d-3::obj-4::obj-29": {
-                    "parameter_longname": "wfg_freq[1]"
-                },
-                "d-3::obj-4::obj-4": {
-                    "parameter_longname": "wfg_freq[2]"
-                }
-            },
+            "d-4::obj-10": [
+                "lon",
+                "lon",
+                0
+            ],
+            "d-4::obj-12": [
+                "lat",
+                "lat",
+                0
+            ],
+            "d-4::obj-14": [
+                "spin",
+                "spin",
+                0
+            ],
+            "d-4::obj-16": [
+                "proj",
+                "proj",
+                0
+            ],
+            "d-4::obj-32": [
+                "circ",
+                "circ",
+                0
+            ],
             "inherited_shortname": 1
         },
         "autosave": 0

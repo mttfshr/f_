@@ -33,7 +33,26 @@ This document is orientation, not execution. It names active workstreams, states
 ## Workstreams
 
 ### Helpfile pass
-Tooling operational — `tools/generate_helpfiles.py`. 18+ helpfiles generated; `f_vf_seeds` deferred by Matt's explicit choice (3 real texture inlets don't fit the skill's single-source template cleanly — Matt will build this one directly in Max). `f_sirds`, `f_vf_advect` helpfiles still outstanding. `f_droste.maxhelp` remains the canonical hand-built template.
+**Pipeline formalized 2026-07-19** — see `build/spec.md`'s "Helpfile
+Generation Pipeline" section for the full rule/lifecycle and
+`skills/f-helpfile/SKILL.md`'s "Prerequisite" section for the how-to.
+`docs/f-reference/f_name.md` must exist and be current before a helpfile
+generates; `extract_params.py --all` now tracks four states
+(`pending`/`stale`/`current`/`blocked_no_docs`) via doc-vs-helpfile mtime
+comparison. **2026-07-19: the 15-item stale-review queue is fully
+cleared** (11 modules were prose-only staleness, safe to regenerate as-is;
+4 — `f_grain`, `f_lens`, `f_masonry`, `f_vf_warp` — had real doc/
+`definition.py` drift fixed first; see HANDOFF for the per-module detail).
+As of that pass (37 modules): 19 current, 15 ready (no helpfile yet), 0
+stale, 3 blocked (`f_chladni_audio`, `f_modules`, `f_vf_vortex_multi_version`
+— no docs at all). `f_sirds` deferred by Matt's explicit choice (3 real
+texture inlets don't fit the skill's single-source template cleanly).
+`f_droste.maxhelp` remains the canonical hand-built template;
+`f_vf_optical_flow.maxhelp` is the reference example for modules without a
+separate scalar/LFO inlet. **`build/generate_helpfiles.py` no longer calls
+the Anthropic API at all** (2026-07-19, per Matt's standing instruction) —
+it only builds/prints/writes the generation prompt; actual generation is
+always in-session by hand.
 
 ### Vecfield consumer ecosystem
 Producers: `f_vf_vortex`, `f_vf_vortex_multi`, `f_vf_fieldmap`. Consumers: `f_caustic`, `f_vf_warp`, `f_vf_streak`, `f_vf_advect`, `f_vf_glow` — all built and shipped. `f_vf_vorticity` ("curl amp") is a standalone processor attempt, unverified — see Paused/blocked above.
@@ -49,7 +68,7 @@ Masking (`f_vf_scalar` — magnitude/divergence/curl/angle as scalar outputs) re
 ### Build system generalisation
 **Complete.** `build_patcher.py` supports `outlets`, `vs_instate` per-inlet bypass, `pix_chain`/`pix_wires` multi-pix bpatchers, `range_tiers`, and (since the `f_vf_seeds` inlet bug fix) `driving_inlet` for primary-required-content modules vs. optional-secondary-modulation modules. Per-module scripts retired except where hand-built UI makes full regeneration unsafe (see below).
 
-**Never regenerate via `tools/build_patcher.py` — hand-edit `.maxpat` directly:** `f_masonry`, `f_sirds`, `f_vf_advect`, `f_vf_seeds` (multistage). Confirmed the hard way (a full regen of `f_masonry` once silently destroyed ~1900 lines of hand-built mod-matrix UI). Surgical Python-script text edits or Desktop Commander `edit_block` only, verified against `git diff --stat`.
+**Never regenerate via `tools/build_patcher.py` — hand-edit `.maxpat` directly:** `f_masonry`, `f_sirds`, `f_vf_advect`, `f_vf_seeds` (multistage), `f_grain` (added 2026-07-19: predates the build system entirely — patcher added 2026-05-23, `build_patcher.py` added 2026-05-30; `src/f_grain/definition.py` is a 2026-07-05 after-the-fact transcription, not an authoritative source, and it was already missing the real `softness` control until this session). Confirmed the hard way (a full regen of `f_masonry` once silently destroyed ~1900 lines of hand-built mod-matrix UI). Surgical Python-script text edits or Desktop Commander `edit_block` only, verified against `git diff --stat`.
 
 ### Temporal synthesis
 `f_vf_advect` (Pattern 1, one historical frame) and `f_vf_glow` (single-pass field-aligned blur) both done. `f_cymascope` (Pattern 1 extended, two historical frames) still queued behind the audio-to-vecfield family settling above. `f_vf_smear` — try single-pass LIC first. `f_ganzflicker`/`f_dreamachine`/`f_util_envelope` — not texture-feedback problems, live in audio/signal domain instead.

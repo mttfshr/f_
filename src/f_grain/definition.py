@@ -207,6 +207,7 @@ patcher = {
         {"name": "size",        "type": "float",  "min": 0.0,  "max": 1.0,  "default": 0.0,  "label": "Size",   "hint": "Grain size — exponential zoom into fixed voronoi grid"},
         {"name": "size_var",    "type": "float",  "min": 0.0,  "max": 1.0,  "default": 0.0,  "label": "S.var",  "hint": "Per-cell size variation amount"},
         {"name": "shape",       "type": "float",  "min": 0.0,  "max": 1.0,  "default": 0.5,  "label": "Shape",  "hint": "0=voronoi-conforming  1=circular"},
+        {"name": "softness",    "type": "float",  "min": 0.0,  "max": 5.0,  "default": 0.0,  "label": "Soft",   "hint": "Grain edge softness -- feather = mix(0.02, 0.5, softness) in codebox, so values beyond ~1.0 just keep extrapolating past full feather with no new visual effect. Live dial's mmax=5.0 appears to be an untuned Max default (shape/jitter both got custom ranges, this one didn't) -- recorded as-is since this module predates build_patcher.py and this file is a record of the real .maxpat, not its source of truth."},
         {"name": "jitter",      "type": "float",  "min": 0.0,  "max": 2.0,  "default": 0.0,  "label": "Jitter", "hint": "Voronoi center displacement (0=grid 1=scattered)"},
         {"name": "fade",        "type": "float",  "min": 0.0,  "max": 4.0,  "default": 0.0,  "label": "Fade",   "hint": "Grain crossfade duration at era boundaries"},
         {"name": "persistence", "type": "float",  "min": 0.0,  "max": 1.0,  "default": 1.0,  "label": "Freeze", "hint": "Temporal persistence (0=boil 1=frozen) — scales era_clock in parent patch"},

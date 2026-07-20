@@ -106,6 +106,7 @@ Unconnected `in1`/`in2`/`in3`/`in4` on `lens_pix` sample as black; at default `*
 
 ## Loose Threads
 
+- **Bypass is incomplete — real bug, confirmed 2026-07-17.** The bypass jsui → attrui (`@attr bypass`) wiring targets `lens_pix` only. `lens_halation` and `jit.fx.cf.tiltshift` (both downstream in the `lens_pix → lens_halation → tiltshift → outlet` chain) receive no bypass wiring at all — toggling bypass today only makes the radial aberration/distortion stage transparent; halation and tiltshift stay live and keep applying whatever their own params are set to. Intended behavior is full-module passthrough. Fix belongs with the `f_focus` extraction (removing tiltshift simplifies the remaining problem to just `lens_pix`+`lens_halation`) or as its own v2 cleanup pass. See `.specify/plan.md` Work Queue item 9.
 - **Tilt-shift is slated for removal** once `f_focus` ships (near-mechanical port, not yet built — see `.specify/f_focus/`). When that lands, `tilt`/`tilt_axis`/`tilt_pos`/`slope`/`mode`, the `jit.fx.cf.tiltshift` object, and `lens_tiltcenter.js` all come out of this module entirely — this doc's Parameters/Signal Chain/Algorithm sections above will need trimming at that point, not just a note.
 - **`definition.py`'s tilt-shift representation is a verbatim splice** (`raw_ui` params + `raw_boxes`/`raw_lines`/`raw_parameters`, extracted from the working live patcher and ID-remapped to an `obj-raw-N` namespace), not a declarative schema description — `build_patcher.py` doesn't understand *why* this wiring works, it just preserves it unmodified on regeneration. See `ideas/build_patcher_schema_gaps.md` for the full background.
 - Anamorphic (static + field-driven directional squeeze) was considered for v2 and deliberately moved out to its own future module — see `ideas/f_anamorph_unnamed.md`. Not in scope for `f_lens`.
@@ -113,4 +114,4 @@ Unconnected `in1`/`in2`/`in3`/`in4` on `lens_pix` sample as black; at default `*
 
 ## Source File
 
-`package/patchers/f_lens.maxpat` — built from `.specify/f_lens/definition.py` (+ `raw_tiltshift.json`, `raw_halation.json`, `codebox_lens.gen`, `codebox_halation.gen`) via `build/build_patcher.py`.
+`package/patchers/f_lens.maxpat` — built from `src/f_lens/definition.py` (+ `raw_tiltshift.json`, `raw_halation.json`, `codebox_lens.gen`, `codebox_halation.gen`) via `build/build_patcher.py`.

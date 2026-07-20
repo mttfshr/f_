@@ -28,27 +28,25 @@
                         0.0
                     ],
                     "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 14.0,
-                    "id": "h-2",
-                    "linecount": 2,
+                    "fontname": "Ableton Sans Medium",
+                    "id": "h-1",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        75.0,
+                        15.0,
                         270.0,
-                        40.0
+                        50.0
                     ],
-                    "presentation_linecount": 2,
+                    "text": "Lens",
+                    "fontsize": 36.0,
+                    "varname": "autohelp_top_digest[4]",
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
-                    },
-                    "text": "Optical lens simulation -- chromatic aberration, distortion, vignette, tilt-shift focus, ghost images, and halation glow",
-                    "varname": "autohelp_top_digest[3]"
+                    }
                 }
             },
             {
@@ -60,25 +58,99 @@
                         0.0
                     ],
                     "fontface": 0,
-                    "fontname": "Ableton Sans Medium",
-                    "fontsize": 36.0,
-                    "id": "h-1",
+                    "fontname": "Ableton Sans Light",
+                    "id": "h-2",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        15.0,
+                        75.0,
                         270.0,
-                        50.0
+                        40.0
                     ],
+                    "text": "Filmic lens processor -- aberration, distortion, transmission, ghosting, halation, tilt-shift",
+                    "fontsize": 14.0,
+                    "varname": "autohelp_top_digest[3]",
+                    "linecount": 2,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
-                    },
-                    "text": "Lens",
-                    "varname": "autohelp_top_digest[4]"
+                    }
+                }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "id": "d-8",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        15.0,
+                        150.0,
+                        270.0,
+                        305.0
+                    ],
+                    "text": "External Control Messages\n\naberration [-1.0 \u2013 1.0]\ndistortion [-1.0 \u2013 1.0]\ntransmission [-1.0 \u2013 1.0]\naberration_mod [0.0 \u2013 1.0]\ndistortion_mod [0.0 \u2013 1.0]\ntransmission_mod [0.0 \u2013 1.0]\nsurface_mod [0.0 \u2013 5.0]\nghost [-1.0 \u2013 1.0]\nghost_count [1 \u2013 4]\nghost_spacing [-1.0 \u2013 1.0]\nhalation [0.0 \u2013 1.0]\nhalation_threshold [0.0 \u2013 1.0]\ntilt [0.0 \u2013 1.0]\ntilt_axis [0.0 \u2013 1.0]\ntilt_pos [0.0 \u2013 1.0]\nslope [0.0 \u2013 1.0]\nmode [linear / radial]\nbypass [0 / 1]",
+                    "linecount": 20,
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
+                }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.2,
+                        0.2,
+                        0.2,
+                        0.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "id": "r-1",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        15.0,
+                        495.0,
+                        270.0,
+                        120.0
+                    ],
+                    "text": "References\n\nSee docs/f-reference/f_lens.md for the full algorithm,\nsignal chain, and a known bug (bypass gates lens_pix\nonly -- halation and tilt-shift stay live regardless).\nTilt-shift is slated for extraction to f_focus once that\nmodule ships.",
+                    "fontsize": 12.0,
+                    "linecount": 7,
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_control_fg"
+                        }
+                    }
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "panel",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        0.0,
+                        -2.0,
+                        303.0,
+                        765.0
+                    ]
                 }
             },
             {
@@ -118,69 +190,12 @@
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
-                    "id": "d-6",
-                    "lockeddragscroll": 0,
-                    "lockedsize": 0,
-                    "maxclass": "bpatcher",
-                    "name": "vs_lfo.maxpat",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "offset": [
-                        0.0,
-                        0.0
-                    ],
-                    "outlettype": [
-                        "jit_gl_texture",
-                        "float"
-                    ],
-                    "patching_rect": [
-                        417.0,
-                        195.75,
-                        75.0,
-                        73.5
-                    ],
-                    "varname": "vs_lfo",
-                    "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
-                    "bgcolor": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                    ],
-                    "bubble": 1,
-                    "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 13.0,
-                    "id": "d-7",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        500.0,
-                        220.75,
-                        64.0,
-                        26.0
-                    ],
-                    "text": "time_s"
-                }
-            },
-            {
-                "box": {
-                    "bgmode": 1,
-                    "border": 1,
-                    "clickthrough": 0,
-                    "enablehscroll": 0,
-                    "enablevscroll": 0,
                     "id": "d-4",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
                     "name": "f_lens.maxpat",
-                    "numinlets": 2,
+                    "numinlets": 1,
                     "numoutlets": 1,
                     "offset": [
                         0.0,
@@ -191,12 +206,12 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        293.75,
+                        190.0,
                         154.0,
                         91.0
                     ],
-                    "varname": "f_lens",
-                    "viewvisibility": 1
+                    "viewvisibility": 1,
+                    "varname": "f_lens"
                 }
             },
             {
@@ -222,80 +237,11 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        404.75,
+                        301.0,
                         236.0,
                         249.0
                     ],
                     "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
-                    "bgcolor": [
-                        0.2,
-                        0.2,
-                        0.2,
-                        0.0
-                    ],
-                    "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 13.0,
-                    "id": "d-8",
-                    "linecount": 20,
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        15.0,
-                        150.0,
-                        270.0,
-                        296.4
-                    ],
-                    "saved_attribute_attributes": {
-                        "textcolor": {
-                            "expression": "themecolor.live_control_fg"
-                        }
-                    },
-                    "text": "External Control Messages\n\naberration [-1.0 \u2013 1.0]\ndistortion [-1.0 \u2013 1.0]\ntransmission [-1.0 \u2013 1.0]\ntilt [0.0 \u2013 1.0]\ntilt_axis [0.0 \u2013 1.0]\ntilt_pos [0.0 \u2013 1.0]\nslope [0.0 \u2013 1.0]\nmode [linear / radial]\naberration_mod [0.0 \u2013 1.0]\ndistortion_mod [0.0 \u2013 1.0]\ntransmission_mod [0.0 \u2013 1.0]\nsurface_mod [0.0 \u2013 5.0]\nghost [-1.0 \u2013 1.0]\nghost_count [1 \u2013 4]\nghost_spacing [-1.0 \u2013 1.0]\nhalation [0.0 \u2013 1.0]\nhalation_threshold [0.0 \u2013 1.0]\nbypass [0 / 1]",
-                    "textjustification": 0
-                }
-            },
-            {
-                "box": {
-                    "fontface": 0,
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 12.0,
-                    "id": "r-1",
-                    "linecount": 17,
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        15.0,
-                        488.4,
-                        270.0,
-                        251.9
-                    ],
-                    "saved_attribute_attributes": {
-                        "textcolor": {
-                            "expression": "themecolor.live_control_fg"
-                        }
-                    },
-                    "text": "References\n\nChromatic aberration / distortion:\nclassic radial lens models (Brown,\n1966 distortion; wavelength\ndispersion for aberration).\n\nVignette: cosine-power falloff with\nwarm shift, after Zheng et al. (2009)\n\"Radiometric Calibration\".\n\nSurface emboss, ghost images, and\nhalation: derived in development --\nnot from any external source. Halation\nfollows the classic silver-halide\nlight-scatter phenomenon; ghosts model\ninternal lens-surface reflections."
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-1",
-                    "maxclass": "panel",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        0.0,
-                        -2.0,
-                        303.0,
-                        765.0
-                    ]
                 }
             }
         ],
@@ -323,47 +269,94 @@
                         0
                     ]
                 }
-            },
-            {
-                "patchline": {
-                    "destination": [
-                        "d-4",
-                        1
-                    ],
-                    "source": [
-                        "d-6",
-                        1
-                    ]
-                }
             }
         ],
         "parameters": {
-            "parameterbanks": {
-                "0": {
-                    "index": 0,
-                    "name": "",
-                    "parameters": [
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-"
-                    ],
-                    "buttons": [
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-",
-                        "-"
-                    ]
-                }
-            },
+            "d-4::obj-20": [
+                "aberration",
+                "aberration",
+                0
+            ],
+            "d-4::obj-23": [
+                "distortion",
+                "distortion",
+                0
+            ],
+            "d-4::obj-26": [
+                "transmission",
+                "transmission",
+                0
+            ],
+            "d-4::obj-29": [
+                "aberration_mod",
+                "aberration_mod",
+                0
+            ],
+            "d-4::obj-32": [
+                "distortion_mod",
+                "distortion_mod",
+                0
+            ],
+            "d-4::obj-35": [
+                "transmission_mod",
+                "transmission_mod",
+                0
+            ],
+            "d-4::obj-38": [
+                "surface_mod",
+                "surface_mod",
+                0
+            ],
+            "d-4::obj-41": [
+                "ghost",
+                "ghost",
+                0
+            ],
+            "d-4::obj-44": [
+                "ghost_count",
+                "ghost_count",
+                0
+            ],
+            "d-4::obj-47": [
+                "ghost_spacing",
+                "ghost_spacing",
+                0
+            ],
+            "d-4::obj-50": [
+                "halation",
+                "halation",
+                0
+            ],
+            "d-4::obj-53": [
+                "halation_threshold",
+                "halation_threshold",
+                0
+            ],
+            "d-4::obj-raw-3": [
+                "tilt",
+                "tilt",
+                0
+            ],
+            "d-4::obj-raw-4": [
+                "tilt_axis",
+                "tilt_axis",
+                0
+            ],
+            "d-4::obj-raw-5": [
+                "tilt_pos",
+                "tilt_pos",
+                0
+            ],
+            "d-4::obj-raw-6": [
+                "slope",
+                "slope",
+                0
+            ],
+            "d-4::obj-raw-7": [
+                "mode",
+                "mode",
+                0
+            ],
             "inherited_shortname": 1
         },
         "autosave": 0
