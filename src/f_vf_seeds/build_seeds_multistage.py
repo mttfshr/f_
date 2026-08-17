@@ -114,6 +114,10 @@ PARAMS = [
      "label": "Str Mod",
      "hint": "Mod tex \u2192 stretch modulation depth (bipolar)",
      "targets": ["2", "3"]},
+    {"name": "color_mode", "min": 0.0, "max": 1.0, "default": 0.0,
+     "label": "Color Mode",
+     "hint": "Blend between shape tex's own color (0) and the color driving texture sampled at each seed's position (1).",
+     "targets": ["2", "3"]},
 ]
 
 BYPASS_TARGETS = ["1c", "4"]
@@ -124,6 +128,7 @@ BYPASS_TARGETS = ["1c", "4"]
 OBJ_INLET_SHAPE     = "obj-1"    # index0, shape tex + control (driving)
 OBJ_INLET_VECFIELD  = "obj-2"    # index1
 OBJ_INLET_MODTEX    = "obj-3"    # index2
+OBJ_INLET_COLORDRIVE = "obj-7"   # index3, color driving texture (Evolution 3)
 OBJ_OUTLET_COLOR    = "obj-4"    # index0, mark color
 OBJ_OUTLET_MASK      = "obj-5"    # index1, mark mask
 OBJ_OUTLET_COORD    = "obj-6"    # index2, seed coord (rank1 only)
@@ -137,6 +142,8 @@ OBJ_VECFIELD_INSTATE = "obj-14"
 OBJ_VECFIELD_PRE     = "obj-15"   # prepend param src_vecfield (unused in math, kept for convention)
 OBJ_MODTEX_INSTATE   = "obj-16"
 OBJ_MODTEX_PRE       = "obj-17"   # prepend param src_mod
+OBJ_COLORDRIVE_INSTATE = "obj-18"
+OBJ_COLORDRIVE_PRE     = "obj-19"   # prepend param src_color_drive
 
 OBJ_STAGE_1A = "obj-20"
 OBJ_STAGE_1B = "obj-21"
@@ -283,9 +290,12 @@ def gen_render():
             {"box": {"id": "gen-obj-6", "maxclass": "newobj",
                      "numinlets": 0, "numoutlets": 1, "outlettype": [""],
                      "patching_rect": [443.0, 14.0, 28.0, 22.0], "text": "in 4"}},
+            {"box": {"id": "gen-obj-7", "maxclass": "newobj",
+                     "numinlets": 0, "numoutlets": 1, "outlettype": [""],
+                     "patching_rect": [500.0, 14.0, 28.0, 22.0], "text": "in 5"}},
             {"box": {"id": "gen-obj-3", "maxclass": "codebox", "code": CODEBOX_RENDER,
                      "fontface": 0, "fontname": "<Monospaced>", "fontsize": 12.0,
-                     "numinlets": 4, "numoutlets": 1, "outlettype": [""],
+                     "numinlets": 5, "numoutlets": 1, "outlettype": [""],
                      "patching_rect": [29.0, 56.0, 539.0, 685.0]}},
             {"box": {"id": "gen-obj-4", "maxclass": "newobj",
                      "numinlets": 1, "numoutlets": 0,
@@ -296,6 +306,7 @@ def gen_render():
             wire("gen-obj-2", 0, "gen-obj-3", 1),
             wire("gen-obj-5", 0, "gen-obj-3", 2),
             wire("gen-obj-6", 0, "gen-obj-3", 3),
+            wire("gen-obj-7", 0, "gen-obj-3", 4),
             wire("gen-obj-3", 0, "gen-obj-4", 0),
         ]
     }
@@ -473,6 +484,9 @@ def build():
         box(OBJ_INLET_MODTEX, maxclass="inlet", comment="mod tex",
             index=2, numinlets=0, numoutlets=1, outlettype=[""],
             patching_rect=[150.0, 30.0, 30.0, 30.0]),
+        box(OBJ_INLET_COLORDRIVE, maxclass="inlet", comment="color drive tex",
+            index=3, numinlets=0, numoutlets=1, outlettype=[""],
+            patching_rect=[210.0, 30.0, 30.0, 30.0]),
         box(OBJ_OUTLET_COLOR, maxclass="outlet", comment="mark color",
             index=0, numinlets=1, numoutlets=0,
             patching_rect=[30.0, 780.0, 30.0, 30.0]),
@@ -524,6 +538,12 @@ def build():
         box(OBJ_MODTEX_PRE, maxclass="newobj", numinlets=1, numoutlets=1,
             outlettype=[""], patching_rect=[350.0, 0.0, 150.0, 22.0],
             text="prepend param src_mod"),
+        box(OBJ_COLORDRIVE_INSTATE, maxclass="newobj", numinlets=1, numoutlets=2,
+            outlettype=["", ""], patching_rect=[200.0, -30.0, 80.0, 22.0],
+            text="vs_inState"),
+        box(OBJ_COLORDRIVE_PRE, maxclass="newobj", numinlets=1, numoutlets=1,
+            outlettype=[""], patching_rect=[350.0, -30.0, 180.0, 22.0],
+            text="prepend param src_color_drive"),
     ]
     lines += [
         # shape tex: driving inlet, shares OBJ_ROUTEPASS's texture outlet
@@ -535,6 +555,9 @@ def build():
         # mod tex: its own dedicated inlet
         wire(OBJ_INLET_MODTEX, 0, OBJ_MODTEX_INSTATE, 0),
         wire(OBJ_MODTEX_INSTATE, 1, OBJ_MODTEX_PRE, 0),
+        # color drive tex: its own dedicated inlet (Evolution 3)
+        wire(OBJ_INLET_COLORDRIVE, 0, OBJ_COLORDRIVE_INSTATE, 0),
+        wire(OBJ_COLORDRIVE_INSTATE, 1, OBJ_COLORDRIVE_PRE, 0),
     ]
 
     # ---- Six internal pix stages -------------------------------------------
@@ -561,14 +584,14 @@ def build():
             text=f"jit.gl.pix vsynth @name {PREFIX}_merge @type float32",
             varname=f"{PREFIX}_merge"),
         box(OBJ_STAGE_2, maxclass="newobj",
-            numinlets=4, numoutlets=2,
+            numinlets=5, numoutlets=2,
             outlettype=["jit_gl_texture", ""],
             patcher=gen_render(),
             patching_rect=[200.0, 420.0, 140.0, 22.0],
             text=f"jit.gl.pix vsynth @name {PREFIX}_render_1",
             varname=f"{PREFIX}_render_1"),
         box(OBJ_STAGE_3, maxclass="newobj",
-            numinlets=4, numoutlets=2,
+            numinlets=5, numoutlets=2,
             outlettype=["jit_gl_texture", ""],
             patcher=gen_render(),
             patching_rect=[400.0, 420.0, 140.0, 22.0],
@@ -596,11 +619,17 @@ def build():
         # mod tex -> Stage 2, 3
         wire(OBJ_MODTEX_INSTATE, 0, OBJ_STAGE_2, 3),
         wire(OBJ_MODTEX_INSTATE, 0, OBJ_STAGE_3, 3),
-        # src_shape / src_mod state -> Stage 2, 3 (control message on inlet 0)
+        # color drive tex -> Stage 2, 3 (Evolution 3, new inlet 4)
+        wire(OBJ_COLORDRIVE_INSTATE, 0, OBJ_STAGE_2, 4),
+        wire(OBJ_COLORDRIVE_INSTATE, 0, OBJ_STAGE_3, 4),
+        # src_shape / src_mod / src_color_drive state -> Stage 2, 3 (control
+        # message on inlet 0)
         wire(OBJ_SHAPE_PRE, 0, OBJ_STAGE_2, 0),
         wire(OBJ_SHAPE_PRE, 0, OBJ_STAGE_3, 0),
         wire(OBJ_MODTEX_PRE, 0, OBJ_STAGE_2, 0),
         wire(OBJ_MODTEX_PRE, 0, OBJ_STAGE_3, 0),
+        wire(OBJ_COLORDRIVE_PRE, 0, OBJ_STAGE_2, 0),
+        wire(OBJ_COLORDRIVE_PRE, 0, OBJ_STAGE_3, 0),
         # src_vecfield tracked but unused in either codebox's math — no
         # further destination, matches its already-vestigial status in the
         # pre-Evolution-2 shipped module.
@@ -719,7 +748,7 @@ def build():
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     result = build()
-    out_path = REPO / "patchers" / f"{NAME}.maxpat"
+    out_path = REPO / "package" / "patchers" / f"{NAME}.maxpat"
     with open(out_path, "w") as f:
         json.dump(result, f, indent="\t")
     print(f"Written: {out_path}")

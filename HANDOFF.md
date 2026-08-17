@@ -1,149 +1,115 @@
 # HANDOFF
 
-_Session: 2026-07-19 — stale-helpfile queue cleared + generate_helpfiles.py API removal_
+_Session: 2026-08-05 through 2026-08-07_
 
-## Start Here — Next Session
+## What happened
 
-Read `README.md` → this file → `.specify/plan.md`.
+Long session. Picked up from a T3-in-progress state, resolved it, then
+worked through T4, T5, T6, and — after a genuinely difficult multi-day
+detour — T7 for `f_a_ripple`.
 
-The 15-item stale-helpfile queue from the prior session is now fully
-cleared (0 stale, 19 current, 15 ready, 3 blocked_no_docs). No pickup
-list remains from that workstream. See "Loose threads" below for what's
-actually open now.
+**T3 resolved.** Table-resolution quantization was the root cause of the
+non-null residual (64-entry table too coarse against `peek`'s
+floor-not-interpolate behavior); fixed by sizing the table up to 2048.
+ADR-2's split logic confirmed correct.
 
----
+**T4, T5, T6 built and passed** (T5/T6 partially — spectrogram comparison
+against the paper's figures still unrun, no tool available any session).
+T4 established the `run`-gated frozen-time pattern and a `reset`→`gen~`
+reserved-word collision (documented). T5 combined T3's wavetable with T4's
+modulator into full AM, confirmed close to indistinguishable from the
+checkhearing.org reference by ear. T6 added a `mod_type` toggle for a
+genuine same-state AM/PM A/B.
 
-## This session, in order
+**T7 — the big one.** Built `f_a_ripple_scratch_t7a.maxpat` +
+`t7a_inner.maxpat` (`pfft~`'s per-bin AM version). Signal path worked
+early, after two real structural findings (`pfft~` requires an external
+subpatch file, unlike `gen~`; a `gen~` codebox's true multi-signal inlets
+need the `in1`...`inN` keyword syntax, not `Param`). But the actual AM
+effect stayed completely absent through **four different `gen~`-inside-
+`pfft~` control-routing architectures**, each ruled out by direct
+`depth=0` vs. `depth=100` A/B listening, plus caching, reserved-word, and
+spectral-leakage hypotheses all ruled out too. This was a real process
+failure — guessing fixes from reference prose instead of reading actual
+working examples — until Matt pushed on two things directly: whether the
+help files had actually been read, and whether the external-subpatch
+mechanism itself (not the routing details within it) was the more
+suspect thing. Reading Cycling '74's own `pfft.pfftgen.maxpat`/
+`fp_fft.maxpat` examples revealed the real idiom — **a per-bin gain curve
+in a named `buffer~`, read via plain `index~`, no `gen~` involved at
+all** — and a rebuild on that basis (message-rate `expr` driven by a
+`uzi` sweep, since `gen~`+`snapshot~` can't keep pace with `uzi`'s speed)
+**worked immediately**. T7 passed.
 
-### Cleared the full 15-item stale-helpfile review queue
-For each of `f_channel_grader`, `f_chladni`, `f_droste`, `f_grain`,
-`f_hue_processor`, `f_lens`, `f_luma_processor`, `f_masonry`, `f_mobius`,
-`f_stereo`, `f_stipple`, `f_tone_curve`, `f_util_profile`, `f_vf_vortex`,
-`f_vf_warp`: diffed `extract_params.py`'s dry-run param list against
-`docs/f-reference/f_name.md`, fixed real drift where found, then
-regenerated the helpfile directly in-session (one throwaway local Python
-script, no API call -- pulled real object IDs from each built `.maxpat`
-via a varname->id scan, matching the `f_droste`/`f_caustic` template
-conventions). All 15 written, JSON-validated, script deleted after use.
+**Two new skills** came out of the T7 saga: `max-advanced-object-
+methodology/SKILL.md` (read help/example patches before architecting with
+an unfamiliar object; smallest verified increment; don't present a
+documentation guess with confirmed-pattern confidence) and a full,
+honest rewrite of `pfft-spectral-processing/SKILL.md` (the working
+`buffer~`/`index~` pattern as canonical, four failed `gen~` architectures
+kept as a "what didn't work" record).
 
-**11 modules were prose-only staleness** (`f_channel_grader`, `f_chladni`,
-`f_droste`, `f_hue_processor`, `f_luma_processor`, `f_mobius`, `f_stereo`,
-`f_stipple`, `f_tone_curve`, `f_util_profile`, `f_vf_vortex`) -- params
-already matched `definition.py`, just regenerated as-is.
+## Done
 
-**4 modules had real drift, fixed before regenerating:**
+- T3 passed (table 64→2048). spec.md, plan.md updated.
+- T4 passed. spec.md, plan.md updated. `gen-tilde-codebox/SKILL.md`
+  created and built out across this session (reserved-word collisions,
+  multi-inlet findings, testing-methodology lessons).
+- T5, T6 partially passed (listening confirmed, spectrogram unrun).
+  spec.md, plan.md updated.
+- T7 passed. `f_a_ripple_scratch_t7a.maxpat` and `t7a_inner.maxpat` in
+  their final working state (`buffer~`/`index~`/`expr`/`uzi` pattern).
+  Idea file's T7 entry fully rewritten with the complete story.
+- Created `max-advanced-object-methodology/SKILL.md`.
+- Rewrote `pfft-spectral-processing/SKILL.md` (working pattern +
+  honest "what didn't work" record).
 
-- **`f_grain`** -- `docs/f-reference/f_grain.md` listed a `softness` param
-  that was missing from `src/f_grain/definition.py`'s `params` array
-  entirely, plus a stale `edge_mode_menu` name (real name: `edge_mode`).
-  Confirmed via the live `.maxpat` that `softness` is real and wired
-  (`live.dial`, `param_connect: grain_pix::softness`) -- `definition.py`
-  was simply incomplete, not the patch. Traced why: `f_grain.maxpat` was
-  added 2026-05-23, `build_patcher.py` didn't exist until 2026-05-30 --
-  this module predates the build system entirely, and
-  `src/f_grain/definition.py` (added 2026-07-05) is an after-the-fact
-  transcription, not a generator, so it simply missed `softness` during
-  that transcription. Fixed `definition.py` to add `softness` (recording
-  its real but oddly-untuned `0.0-5.0` live-dial range rather than
-  "fixing" it to `0-1`, since this file documents production, it doesn't
-  drive it). Fixed the doc's naming and added loose-thread notes.
-  **Added `f_grain` to `plan.md`'s never-regenerate-via-`build_patcher.py`
-  list** alongside `f_masonry`/`f_sirds`/`f_vf_advect`/`f_vf_seeds`.
-- **`f_lens`** -- doc (dated 2026-07-16) predated the 2026-07-17 confirmed
-  bug ("`f_lens` bypass only gates `lens_pix`, not `lens_halation`/
-  tiltshift") already recorded in `plan.md` -- doc's Loose Threads didn't
-  mention it at all. Added that section. Also fixed a stale Source File
-  path (`.specify/f_lens/definition.py` -> `src/f_lens/definition.py`,
-  left over from before the `src/` reorg).
-- **`f_masonry`** -- doc still listed a `quantize` param
-  ("0=slot-quantized drift, 1=continuous drift") that was removed from
-  the codebox entirely in the 2026-07-05 ADR 7 candidate-search redesign
-  (`definition.py`'s own header comment confirms: "quantize removed").
-  But the live `.maxpat`'s `quantize` `live.dial`/`route` entry/
-  `prepend quantize` message are all still present and unremoved --
-  since `f_masonry` is on the never-regenerate list, nobody's gone back
-  to strip the dead UI after the codebox stopped using it. Fixed the
-  doc (removed the param row, updated Algorithm prose) and added a
-  loose-thread flagging the dangling dial in the live patch for future
-  by-hand removal.
-- **`f_vf_warp`** -- doc only documented one outlet (`out0`), but the
-  module actually has two (`out0`="composite", `out1`="warped" in Max's
-  0-indexed numbering / `out1`/`out2` in the Gen codebox's 1-indexed
-  convention). Confirmed in the codebox that `out1`(codebox)/`out2` is
-  assigned `warped_sample` unconditionally, with no `bypass` term at all
-  -- matches `plan.md`'s confirmed 2026-07-17 bug exactly. Also found
-  `strength`'s doc range (`0-1`, default `0.1`) didn't match
-  `definition.py` (`min 0.0, max 1.5, default 0.0`). Fixed both plus
-  added a Known Bug section.
+## Next session — start here
 
-### Removed the Anthropic API call from `build/generate_helpfiles.py`
-Matt reiterated a standing instruction (asked once previously, repeated
-this session) that this codebase must never call the Anthropic API from
-any script. Rewrote `generate_helpfiles.py` to remove `call_claude()`,
-the `anthropic` import, `ANTHROPIC_API_KEY` handling, and the
-budget/token-tracking machinery entirely -- it now only builds and
-prints (or writes via `--write-prompt`) the generation prompt for
-in-session manual use. No other code path exists. Verified via repo-wide
-grep that no other `.py`/`.js`/`.sh` file references `anthropic`,
-`ANTHROPIC_API_KEY`, or any Claude model string / API call pattern --
-`generate_helpfiles.py`'s only remaining match is its own docstring
-explaining the constraint.
+**T7b — PM in `pfft~`.** No longer blocked on a control-routing problem
+(the `buffer~`/`index~` pattern generalizes to any per-bin curve,
+including a phase-offset one). Real remaining question is DSP, not
+plumbing: phase modulation in overlap-add STFT isn't obviously equivalent
+to true per-partial phase advancement (each analysis frame only gives a
+phase *snapshot*; naive per-frame phase offsets risk inter-frame
+discontinuities/glitching). Will need `cartopol~`/`poltocar~` to
+manipulate phase independently of magnitude — see
+`pfft-spectral-processing/SKILL.md`'s "Open question: PM in `pfft~`"
+section for the current thinking, thin as it is.
 
-**Also added to memory** (not just this file) as a hard, standing
-constraint, since it was violated by omission once already: never call
-the Anthropic API from within this codebase or any script/tool
-invocation, full stop.
+**Independently, whenever a spectrogram tool becomes available**: T5, T6,
+and T7 all have an open spectrogram-comparison gap against the paper's
+figures — same cause each time (no tool in-session), not urgent, but
+worth closing whenever possible.
 
----
+**T8 (cross-frequency correlation check)** remains the one the idea file
+flags as "easy to skip and shouldn't be" — it's the only test of the
+paper's actual claim rather than "sounds plausible." Not started.
 
-## Current audit state (37 modules total)
+## Loose threads
 
-Run `python3.13 build/extract_params.py --all --dry-run` any time to
-refresh this.
+**Both `gen-tilde-codebox/SKILL.md` and `pfft-spectral-processing/
+SKILL.md` grew substantially this session** — worth a read-through next
+session to make sure they're still internally consistent and not
+carrying stale cross-references, given how much got added/rewritten in
+place under time pressure.
 
-- **19 current** (was 4 at start of session)
-- **15 ready** -- have `docs/f-reference`, no helpfile yet (unchanged;
-  not this session's scope)
-- **0 stale** (was 15 -- fully cleared this session)
-- **3 blocked** (no `docs/f-reference` at all, unchanged) --
-  `f_chladni_audio`, `f_modules`, `f_vf_vortex_multi_version`
+**Scratch patches are intentionally messy, by design, until Phase 2 is
+fully done** (spectrogram gap): `f_a_ripple_scratch_t3.maxpat`,
+`_t4.maxpat`, `_t5.maxpat`, `_t6.maxpat`, `_t7a.maxpat`,
+`t7a_inner.maxpat`, `_t7a_bandcheck.maxpat`. Not cleaned up.
 
----
+**`f_a_ripple_scratch_t7a_bandcheck.maxpat`** (the isolated
+`freq_bin`/`modband` arithmetic checker) is still useful as a template
+for isolating suspect arithmetic outside `pfft~`/`gen~` complexity in
+future work — worth keeping even though T7's actual bug wasn't there.
 
-## Loose threads / open items for next session
+**`f_a_decorrelate` stays fully blocked** on `f_a_ripple`'s T2-T6 (per
+ADR-3) — T7 passing doesn't unblock it by itself, since T7 was an
+architecture-comparison track (build A vs. build B), not part of the
+gating sequence. Worth double-checking this dependency is still correctly
+understood next session, given how much shifted around T7's own scope.
 
-- **`f_hue_processor`'s open UI bug** ("hue_lower/hue_upper missing UI
-  path", per HANDOFF history) is still unresolved -- doc-level review
-  this session confirmed params match `definition.py` cleanly, but the
-  bug itself needs a fresh look in Max to characterize the actual
-  current symptom. Not touched this session.
-- **`f_masonry`'s dead `quantize` control** -- confirmed real (live
-  `.maxpat` still has the dial/route/message, codebox has used none of
-  it since 2026-07-05). Not urgent, but should be removed by hand next
-  time this module is opened for other reasons (never via
-  `build_patcher.py` regen -- it's on the never-regenerate list).
-- **`f_vf_warp`'s bypass bug** (doesn't gate the `out1`/"warped" outlet)
-  -- now fully documented in `docs/f-reference/f_vf_warp.md`'s new Known
-  Bug section, but still needs an actual fix + task written into
-  `.specify/f_vf_warp/tasks.md` per `plan.md` Work Queue item 9. Not
-  fixed this session, only documented.
-- **`f_lens`'s bypass bug** (only gates `lens_pix`, not
-  `lens_halation`/tiltshift) -- same story, now documented in the doc's
-  Loose Threads, still not fixed. Tied to the pending `f_focus`
-  extraction per `plan.md` item 9's sibling note.
-- **The 15-item stale-helpfile queue is closed.** No next-session
-  pickup list remains from that workstream. Whatever's picked up next
-  should come from `.specify/plan.md`'s Work Queue / Paused-blocked
-  sections instead (e.g. `f_vf_optical_flow`'s `smoothstep` edge-fill
-  work, `f_vf_warp`'s bypass fix, the `f_lens` v2 bypass cleanup).
-
-## Committed state
-
-Not committed -- this session's changes (4 doc fixes, 4 `definition.py`/
-`plan.md` edits, 15 regenerated `.maxhelp` files, `generate_helpfiles.py`
-rewrite) sit alongside the still-uncommitted work from prior sessions
-(helpfile pipeline tooling fixes, `f_vf_optical_flow`). Natural split if
-breaking this up: (1) the four real content/definition.py fixes
-(`f_grain`, `f_lens`, `f_masonry`, `f_vf_warp`) plus their regenerated
-helpfiles and the 11 prose-only regens as one commit, (2)
-`generate_helpfiles.py`'s API removal as its own small commit.
+**Uncommitted.** Everything from this session — spec.md/plan.md/idea-file
+updates, both new/rewritten skill files, all scratch patches — is on disk,
+nothing committed. Matt commits manually.

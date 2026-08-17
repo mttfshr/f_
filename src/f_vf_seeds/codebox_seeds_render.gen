@@ -4,6 +4,7 @@
 // in2: shape tex
 // in3: vecfield
 // in4: mod tex
+// in5: color driving texture (Evolution 3 — seed-sampled color blend)
 //
 // Reproduces Evolution 1.5's exact per-winner downstream block (orientation
 // projection, mod-tex sample, gate, shape sample, luma alpha) but consumes
@@ -19,6 +20,10 @@ Param size_mod(0.0);
 Param stretch_mod(0.0);
 Param src_shape(1.0);
 Param src_mod(0.0);
+
+// ── Evolution 3: seed-sampled color, blended in via color_mode ──────────────
+Param color_mode(0.0);
+Param src_color_drive(0.0);
 
 aspect = dim.x / dim.y;
 
@@ -79,9 +84,38 @@ shape_g = sample(in2, vec(local_u, local_v)).y;
 shape_b = sample(in2, vec(local_u, local_v)).z;
 shape_luma = (shape_r + shape_g + shape_b) / 3.0;
 
-mark_r = shape_r * gate * src_shape;
-mark_g = shape_g * gate * src_shape;
-mark_b = shape_b * gate * src_shape;
+// ── Evolution 3: color drive tex, sampled once per seed at (gx, gy) ─────────
+// Same coordinate already used for vecfield/mod-tex sampling, so a bombed
+// (jittered) second seed automatically samples under its own jittered
+// position — no extra wiring needed for that to fall out correctly.
+
+drive_r = sample(in5, vec(gx, gy)).x;
+drive_g = sample(in5, vec(gx, gy)).y;
+drive_b = sample(in5, vec(gx, gy)).z;
+
+// ── Blend shape color with seed-sampled color (T036) ─────────────────────────
+// color_mode=0: shape tex's own color (regression, unchanged).
+// color_mode=1: fully replaced by the color driving texture's sample.
+// Gated by src_color_drive so an unconnected inlet can't blend toward black.
+//
+// Weighted by shape_luma, NOT just gate: gate is only a rectangular bounding
+// box (sized by `size`), not the shape's actual silhouette — most of that
+// box is normally black because the shape tex itself is black there. Since
+// drive_r/g/b is a single constant color per seed (sampled once at gx,gy,
+// not varying across local_u/local_v), blending it in across the whole gate
+// box would flood that mostly-black background with flat color — visible
+// as a full Voronoi cell fill with hard box edges once seed spacing gets
+// close to `size`. Weighting by shape_luma confines the color swap to
+// wherever the shape is actually drawn.
+
+blend = color_mode * src_color_drive * shape_luma;
+final_r = mix(shape_r, drive_r, blend);
+final_g = mix(shape_g, drive_g, blend);
+final_b = mix(shape_b, drive_b, blend);
+
+mark_r = final_r * gate * src_shape;
+mark_g = final_g * gate * src_shape;
+mark_b = final_b * gate * src_shape;
 mark_a = shape_luma * gate * src_shape;
 
 // ── Output ───────────────────────────────────────────────────────────────────

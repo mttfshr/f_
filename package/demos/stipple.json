@@ -1,0 +1,63 @@
+{
+    "pattrstorage": {
+        "name": "Vsynth",
+        "slots": {
+            "1": {
+                "id": 1,
+                "data": {
+                    "vs_output::lowr_y": [ 1.0 ],
+                    "vs_output::lowr_x": [ 1.0 ],
+                    "vs_output::lowl_y": [ 1.0 ],
+                    "vs_output::lowl_x": [ 0.0 ],
+                    "vs_output::uppr_y": [ 0.0 ],
+                    "vs_output::uppr_x": [ 1.0 ],
+                    "vs_output::uppl_y": [ 0.0 ],
+                    "vs_output::uppl_x": [ 0.0 ],
+                    "vs_wfg_polarizer::pm_range": [ 0.0 ],
+                    "vs_wfg_polarizer::lock_freq": [ 1.0 ],
+                    "vs_wfg_polarizer::angle": [ 0.0 ],
+                    "vs_wfg_polarizer::bias": [ 50.0 ],
+                    "vs_wfg_polarizer::bm": [ 0.0 ],
+                    "vs_wfg_polarizer::freq": [ 60.0 ],
+                    "vs_wfg_polarizer::morph": [ 0.0 ],
+                    "vs_wfg_polarizer::phase": [ 0.0 ],
+                    "vs_wfg_polarizer::phase_time_switch": [ 0.0 ],
+                    "vs_wfg_polarizer::pm": [ 0.0 ],
+                    "vs_wfg_polarizer::polarizer": [ 1.0 ],
+                    "vs_wfg_polarizer::shape": [ 0.75 ],
+                    "vs_wfg_polarizer::speed": [ 0.05 ],
+                    "f_stipple::across_phase": [ 0.0 ],
+                    "f_stipple::along_phase": [ 0.0 ],
+                    "f_stipple::angle": [ 22.67716535433067 ],
+                    "f_stipple::anisotropy": [ 0.0 ],
+                    "f_stipple::bypass": [ 0 ],
+                    "f_stipple::coarseness": [ 50.401574803149536 ],
+                    "f_stipple::colorize": [ 0.1102362204724425 ],
+                    "f_stipple::freq": [ 2.5196850393700787 ],
+                    "f_stipple::softness": [ 0.29921259842519676 ],
+                    "f_stipple::threshold": [ 0.0 ],
+                    "f_stipple::zoom": [ 1.0 ],
+                    "f_lens::aberration": [ 0.33858267716535195 ],
+                    "f_lens::aberration_mod": [ 0.0 ],
+                    "f_lens::bypass": [ 0 ],
+                    "f_lens::distortion": [ -0.8740157480314963 ],
+                    "f_lens::distortion_mod": [ 0.0 ],
+                    "f_lens::ghost": [ 0.0 ],
+                    "f_lens::ghost_count": [ 3.0 ],
+                    "f_lens::ghost_spacing": [ 0.27559055118110365 ],
+                    "f_lens::halation": [ 1.0 ],
+                    "f_lens::halation_threshold": [ 0.21259842519685007 ],
+                    "f_lens::live.menu": [ 0.0 ],
+                    "f_lens::live.menu[1]": [ 0.0 ],
+                    "f_lens::live.menu[2]": [ 0.0 ],
+                    "f_lens::live.menu[3]": [ 0.0 ],
+                    "f_lens::panel_toggle": [ 0.0 ],
+                    "f_lens::surface_mod": [ 0.0 ],
+                    "f_lens::transmission": [ 1.0 ],
+                    "f_lens::transmission_mod": [ 0.0 ],
+                    "vs_presets::3681.pre": [ -1 ]
+                }
+            }
+        }
+    }
+}

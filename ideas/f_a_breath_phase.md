@@ -1,9 +1,10 @@
-# f_breath_phase (working name) — respiratory phase/character input utility
+# f_a_breath_phase — respiratory phase/character input utility
 
 **Status:** idea only, not specced, not scheduled. Captured from a pure
 ideation session (2026-07-12) that explicitly had no clear next step.
-Do not treat any naming here (`f_breath_phase`, tier names, etc.) as
-locked — nothing has been confirmed against real hardware or a real
+Renamed from `f_breath_phase` on 2026-07-27 when the `f_a_` audio-module
+prefix was established. Tier names and internal terminology are still
+unlocked — nothing has been confirmed against real hardware or a real
 signal yet.
 
 ## Core idea
@@ -140,12 +141,11 @@ before it could be built.
   fully stall? Not decided — flagged as a real design fork the
   two-ramp model needs an answer for before it's buildable, and
   directly related to the rate-averaging-vs-reset fork above.
-- Whether this is architecturally closer to `f_chladni`'s
-  audio-companion-patch pattern (audio-domain conditioning living
-  outside the GL layer, feeding in via a simple interface) or needs
-  its own new prefix/family (e.g. `f_bio_`) if this grows siblings —
-  not decided, and not urgent until there's a second module in this
-  family to compare against.
+- **Resolved 2026-07-27:** this module's prefix is `f_a_` (audio module:
+  audio-domain synthesis or conditioning, no texture path, no vsynth GL
+  context). The earlier `f_bio_` suggestion is dropped — the defining
+  characteristic is the audio domain, not the biological source.
+  `f_a_purr` is the sibling that settled the question.
 
 ## Explicitly not decided / not in scope yet
 
@@ -153,7 +153,8 @@ before it could be built.
   architecture of the conversation, per standing rule (capture
   valuable architectural discussion into docs rather than losing it to
   session-log compression).
-- No naming is locked (`f_breath_phase` is a placeholder).
+- Module name is now `f_a_breath_phase` (prefix resolved 2026-07-27).
+  The tier names and internal terminology remain placeholders.
 - No relationship to the parked entrainment/perceptual work
   (`f_ganzflicker`, `f_dreamachine`, Muse Athena EEG) has been asserted —
   worth a glance later since both are biosignal-adjacent, but not

@@ -260,3 +260,249 @@ end of Phase 3 (is the cost acceptable at all, before bombing adds more).
 - Stop at either checkpoint above to validate independently before
   continuing.
 - Commit after each phase's checkpoint passes, not only at the end.
+
+---
+
+# Tasks: f_vf_seeds — Evolution 3 (Color-Driving Texture)
+
+**Spec**: `.specify/f_vf_seeds/spec.md` (Evolution 3 section)
+**Plan**: `.specify/f_vf_seeds/plan.md` (ADR 9)
+**Build order**: Sequential. Complete each phase's scratch proof before
+the next.
+**Scratch location**: `~/Vsynth/patterns/`
+**Origin note**: This work originated as a separate module attempt
+(`.specify/f_dither_grain/`) that was folded in here 2026-07-21 once it
+became clear the overlap-legibility problem it kept hitting was already
+solved by this module's own Evolution 2. See that directory's spec.md
+"Architecture Pivot" section for the full history if useful context.
+
+---
+
+## Phase 1: Hue-threshold mechanism — scratch proof (SUPERSEDED, see Phase 1B)
+
+**Purpose:** Confirm the already-proven hue-bracket/threshold mechanism
+(from the `f_dither_grain` scratch sessions) works correctly when `gx`/
+`gy` come from this module's real search+select output, sampled once per
+seed rather than per-pixel.
+
+**Superseded 2026-07-22 (ADR 10, plan.md):** built exactly as specced
+below, then removed the same session once Matt clarified the actual
+intent was direct per-seed sampling, not hue-space bracketing/dithering.
+Left unchecked/struck rather than deleted — real history of what was
+tried, not just what shipped.
+
+- [x] T031 ~~DECISION GATE: low-saturation fallback target~~ — moot,
+      `fallback_mode` and the whole low-sat gate it belonged to no
+      longer exist
+- [x] T032 ~~Copy `codebox_seeds_render.gen` into a scratch equivalent~~
+      — skipped the scratch step at Matt's explicit request; edited the
+      production file directly (`hue_a`/`hue_b`/`color_mode` Params,
+      new `in5`)
+- [x] T033 ~~Add hue-angle extraction~~ — built with collision-safe
+      `hcomp_r`/`hcomp_g`/`hcomp_b` locals as planned, later removed
+      entirely with the rest of the hue mechanism
+- [x] T034 ~~Add sorted 2-hue bracket + fractional position `t`~~ — built
+      (circular-distance bracket), later removed
+- [x] T035 ~~Add low-saturation gate + per-seed dither threshold `d`~~ —
+      built; the dither comparison direction was initially inverted
+      (`step(d,t)` picked the wrong hue at `t=0`) and was caught and
+      fixed before removal made it moot
+- [x] T036 ~~Wire `color_mode` as a hard switch~~ — built, then changed
+      in kind (not just removed) once Matt asked for a blend instead —
+      see Phase 1B
+
+**Checkpoint:** Mechanism was correct on its own terms (regression held,
+bracket math was right, the one bug found — inverted dither comparison —
+was caught before shipping) but solved a problem this evolution didn't
+actually have. Superseded, not failed.
+
+---
+
+## Phase 1B: Seed-sampled color blend (SHIPPED — what actually ships)
+
+**Purpose:** Replace Phase 1's hue-threshold mechanism with what Matt
+actually asked for: sample the color driving texture once at each seed's
+own position, use it directly as that seed's color, blended against the
+shape tex's own color via `color_mode`.
+
+- [x] T032B Remove `hue_a`, `hue_b`, `fallback_mode` and the entire
+      extraction/bracket/dither/fallback chain from
+      `codebox_seeds_render.gen`; `drive_r/g/b` (already sampled at
+      `gx,gy`, unchanged from Phase 1's placement) used directly
+- [x] T033B Change `color_mode` from a hard switch to a genuine 0–1
+      blend (`mix(shape_color, drive_color, color_mode * src_color_drive)`)
+      per Matt's preference
+- [x] T034B Remove `hue_a`/`hue_b`/`fallback_mode` from `definition.py`
+      and `build_seeds_multistage.py`'s `PARAMS` list; keep `color_mode`
+      with an updated hint describing it as a blend
+- [x] T035B Rebuild, validate JSON — 13 params (net +1 over
+      pre-Evolution-3's 12, just `color_mode`), structurally clean diff
+      (9 boxes removed matching the 3 removed params × 3 boxes each)
+
+**Checkpoint:** Simpler mechanism shipped, matches what was actually
+asked for. → Proceed to Phase 2 (which surfaced a real bug in this
+mechanism, not the removed one).
+
+---
+
+## Phase 2: Gate-vs-shape-silhouette bug — found and fixed (BLOCKING,
+now resolved)
+
+**Purpose:** Originally scoped as "overlap legibility" testing under the
+old hue-threshold mechanism (see struck text below); actually surfaced a
+different, more fundamental bug in Phase 1B's color-blend mechanism —
+not an overlap-compositing problem at all.
+
+~~Purpose (superseded framing): Confirm this genuinely solves the
+problem the standalone `f_dither_grain` attempt never cleared — legible
+size/coverage variation in the full-color composite.~~ Moot once the
+hue-threshold mechanism was removed — there's no "legibility across a
+palette" problem left to solve; Phase 2 became a straightforward visual
+check of the new blend mechanism instead, and that check is what
+surfaced T040's bug.
+
+- [x] T039 Opened in Max, `color_mode=1` tested with a real color
+      driving texture (BFGENER8R colored Perlin noise) and real seed
+      density/size settings
+- [x] T040 **Bug found:** `color_mode=1` produced a full-frame flat-
+      colored Voronoi tessellation with hard cell edges, not the
+      intended small-mark-takes-its-color look. Traced to `gate` (a
+      rectangular bounding box sized by `size`) being conflated with the
+      shape's actual silhouette — `drive_r/g/b` is a constant per seed,
+      so blending it in via `gate` alone flooded the whole box. Fixed by
+      weighting the blend with `shape_luma`
+      (`blend = color_mode * src_color_drive * shape_luma`) — see
+      ADR 11, plan.md. Confirmed live in Max post-fix: small mark takes
+      its seed's color, surrounding cell stays black, matches
+      `color_mode=0`'s footprint exactly.
+- [x] T041 Logged as a general pattern (not specific to this module) in
+      `skills/jit-gen-codebox/SKILL.md` — Known-Good Patterns section
+      + Code Health Checklist entry, since any per-seed constant blended
+      into a discrete-item codebox via `gate` alone has this same
+      failure mode
+
+**Checkpoint:** Real bug found via actual visual testing (not assumed
+from structural correctness alone — same standing lesson this module
+has hit before, ADR 8/bomb-routing), fixed, confirmed live, generalized
+into the shared skill reference. → Phase 3.
+
+---
+
+## Phase 3: Promotion to production
+
+**Purpose:** Confirmed mechanism becomes part of the shipped module.
+
+- [x] T042 `codebox_seeds_render.gen` updated with confirmed mechanism
+      (seed-sampled color blend, `shape_luma`-weighted)
+- [x] T043 New `in5` (color driving texture) threaded through
+      `definition.py`'s inlet list and `build_seeds_multistage.py`'s
+      wiring — verified structurally (diff: zero wires removed, only
+      additive) AND confirmed live in Max
+- [x] T044 `color_mode` added to param list (`hue_a`/`hue_b`/
+      `fallback_mode` built then removed, per ADR 10)
+- [x] T045 Rebuilt, JSON validated, opened in Max
+- [x] T046 Regression check: `color_mode=0` matches pre-Evolution-3
+      output exactly
+- [ ] T047 Update `docs/f-reference/f_vf_seeds.md` — new inlet, new
+      param, attribution to the originating `f_dither_grain` thread —
+      **still pending**
+- [ ] T048 Retire `.specify/f_dither_grain/` — mark its spec/plan/tasks
+      as superseded-and-folded-in (already done for spec.md as of the
+      pivot; plan.md/tasks.md there should get the same treatment),
+      not deleted — real history worth keeping — **still pending**
+
+**Checkpoint:** Evolution 3 shipped and confirmed live in Max; docs and
+`f_dither_grain` retirement still open.
+
+---
+
+## Dependencies
+
+**Phase dependencies (strict):** 1 → 1B → 2 → 3, where Phase 1's
+mechanism was superseded by Phase 1B rather than promoted forward.
+Phase 2 surfaced a real bug in Phase 1B's mechanism via actual visual
+testing — do not skip straight to "done" on structural correctness
+alone, given this module's repeated lesson that structural/mechanical
+correctness and real observed behavior have diverged before (ADR 8's
+compile ceiling, the `bomb` routing bug, and now the gate-vs-silhouette
+bug).
+
+**Independent of Evolution 2's own remaining cleanup** (T028/T030 in
+this file's Evolution 2 section) — this can proceed in parallel with
+those, they don't block each other.
+
+---
+
+## Known Bug (open, unresolved): concentric rectangular gate-box
+artifacts at nonzero `field_priority` — confirmed 2026-07-22
+
+**Status:** Real, confirmed, reproducible. Root cause NOT identified.
+Not caused by anything in this session's color work (Evolution 3) —
+reproduces identically at `color_mode=0`. Logged here rather than
+guessed further at, per this module's own standing lesson that
+structural code-reading isn't sufficient proof (ADR 8, bomb-routing
+bug) — this needs empirical isolation in Max, not more inference from
+reading the codebox.
+
+**Reproduction:**
+- Vecfield: Vortex (a smooth, deterministic, non-noisy field — this
+  is NOT the separate optical-flow-noise flicker issue documented
+  below, which is a different, understood, and resolved interaction)
+- `field_priority = 0.5` (not near the documented `field_priority≈1`
+  degenerate/wedge-collapse boundary — see spec.md's Character Space
+  table; this is a different regime)
+- Confirmed independent of `color_mode` (reproduces at both 0 and 1)
+- Confirmed on the isolated "mark mask" outlet directly (out1),
+  bypassing BFGENER8R/CORNERPINS/everything else downstream — this
+  rules out the artifact originating anywhere outside `f_vf_seeds`
+  itself
+
+**Symptom:** Large, stable (non-flickering, non-animating) concentric
+rectangular regions of solid white in the mask output, banding outward
+from roughly the vortex field's center, at a scale much larger than a
+single seed's own gate box.
+
+**Ruled out (checked directly against the codebox, not assumed):**
+- **`mag_weight`** — Matt confirmed this is not the explanation (was
+  incorrectly assumed at nonzero mid-investigation and corrected).
+  Treat as ruled out per Matt's direct statement, not re-litigated.
+- **Per-pixel `dx`/`dy` correctness** — traced through
+  `codebox_seeds_search.gen`: `dxA = norm.x - sxA` (and equivalents for
+  all 9 candidates) are computed fresh per pixel against each
+  candidate's position, and travel through the entire top-2
+  `step`/`mix` insertion reduction consistently paired with their
+  matching `gx`/`gy` at every stage — no mismatch found by direct
+  reading.
+- **Documented `field_priority=1` wedge-collapse regime** (spec.md
+  Character Space table) — doesn't apply; that's a distinct, already-
+  understood degenerate case specifically at `field_priority=1`
+  exactly, not `0.5`.
+- **Optical-flow noise / vecfield instability** — separately confirmed
+  as a real, different, resolved issue (a genuine flicker, fixed by
+  smoothing/flattening the vecfield) — but Matt confirmed the
+  concentric-rectangle artifact persists even with a smooth,
+  deterministic field (Vortex) and no flicker, so this is not the same
+  root cause.
+
+**Not yet checked (suggested starting point, next session):**
+- Visualize `best_gx`/`best_gy` directly as color (temporarily wire
+  Stage 1c's rank1_coord output straight to a color display) to see
+  the actual shape/extent of the region sharing one winning seed —
+  this would show directly whether the "same seed wins a huge
+  contiguous area" hypothesis is even correct, rather than continuing
+  to infer it from the render output alone.
+- Check whether the artifact's scale/position responds to `density`
+  or `field_gain` in a way that narrows down which term
+  (`d` vs. `-field_mag*field_gain`) is actually driving the effect.
+- Re-examine `codebox_seeds_merge.gen` (Stage 1c) — not yet re-read
+  this session; the bug could be introduced during the merge across
+  Stage 1a/1b's two halves rather than within either search half
+  alone.
+- Worth checking Vortex's own vecfield codebox directly — confirm
+  `field_mag` genuinely varies smoothly with no unexpected discrete
+  banding/quantization of its own that could explain a concentric-ring
+  pattern independent of anything in `f_vf_seeds`.
+
+**Do not re-litigate with Matt whether this is real** — confirmed
+directly, multiple times, via isolated mask-output testing. Next
+session's job is root-causing it, not re-confirming it exists.

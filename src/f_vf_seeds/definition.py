@@ -78,6 +78,8 @@ Inlets:
   in 0 — shape tex (mark footprint, oriented rightward, centered, any color)
   in 1 — vecfield (float32 RG, drives mark orientation per seed)
   in 2 — mod tex (sampled at seed UV, per-seed weight/marklen modulation)
+  in 3 — color driving texture (Evolution 3, optional — sampled once per
+         seed at (gx,gy); blended with shape color via color_mode)
 
 Outlets:
   out 0 — mark color (composited rank1-over-rank2, gated by mark footprint)
@@ -121,6 +123,11 @@ patcher = {
             "label":       "mod tex",
             "vs_instate":  True,
             "state_param": "src_mod",
+        },
+        {
+            "label":       "color drive tex",
+            "vs_instate":  True,
+            "state_param": "src_color_drive",
         },
     ],
 
@@ -212,6 +219,14 @@ patcher = {
             "label": "Str Mod",
         },
 
+        # ── Color (Evolution 3 — seed-sampled color blend) ───────────────────
+        {
+            "name": "color_mode", "type": "float",
+            "min": 0.0, "max": 1.0, "default": 0.0,
+            "hint": "Blend between shape tex's own color (0) and the color driving texture sampled at each seed's position (1).",
+            "label": "Color Mode",
+        },
+
         # ── Internal / system ─────────────────────────────────────────────────
         {
             "name": "src_shape", "type": "internal",
@@ -221,6 +236,9 @@ patcher = {
         },
         {
             "name": "src_mod", "type": "internal",
+        },
+        {
+            "name": "src_color_drive", "type": "internal",
         },
         {
             "name": "bypass", "type": "bypass",

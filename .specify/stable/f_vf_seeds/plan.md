@@ -626,3 +626,164 @@ verification (no dangling wires, valid JSON, correct box graph) is
 necessary but not sufficient. Confirmation in actual running Max,
 including targeted diagnostics like a temporary `print` object when a
 value silently doesn't arrive, remains the only real proof.
+
+---
+
+## Evolution 3 — Color-Driving Texture (Hue-Dithered Marks)
+
+**Date:** 2026-07-21
+**Spec:** `.specify/f_vf_seeds/spec.md` (Evolution 3 section)
+
+### Summary
+
+Adds an optional color-driving-texture inlet: each seed samples it at its
+own stable `(gx, gy)` identity and picks between two authored reference
+hues via a threshold-vs-hash test (classic ordered dithering applied to
+hue selection). Originates from a separate module attempt
+(`f_dither_grain`) that hit this module's own already-solved overlap
+problem and was folded in rather than duplicated.
+
+### ADR 9 — Fold into `f_vf_seeds` as Evolution 3, not a new module
+
+**Context:** `f_dither_grain` (separate conversational thread, see
+`.specify/f_dither_grain/spec.md`'s Architecture Pivot section) built its
+own nearest/second-nearest search, jitter, and vecfield-driven size/shape
+mechanism from scratch, attempting to make grain size legible in a
+full-color composite. Every attempt hit the same wall: revealing a
+same-color neighbor is invisible almost everywhere with only two
+reference hues, so size only ever read near the hue transition itself.
+
+Reading this module's own history directly (not from memory) surfaced
+that Evolution 2 hit the identical structural problem for a different
+reason (field-driven overlap, not hue dithering) and already built the
+real fix: top-2 candidate retention + luma-keyed alpha compositing
+(ADR 6/7 above). Once recognized as the same problem already solved here,
+building a second, parallel solution elsewhere would be pure duplication
+— same reasoning as ADR 1's original "no distinct identity left for a
+separate module" logic.
+
+**Decision:** Evolution 3. New optional inlet (color driving texture),
+new params (`hue_a`, `hue_b`, `color_mode`), all confined to
+`codebox_seeds_render.gen`'s color computation — no changes to Stage 1/
+1a/1b/1c (search/select) or Stage 4 (composite). Substitutes
+`shape_r`/`shape_g`/`shape_b` when `color_mode=1`; `shape_luma` (the
+coverage/alpha signal) stays sourced from the shape texture unchanged, so
+this evolution touches color only, never coverage or placement.
+
+**Rationale:** Because `codebox_seeds_render.gen` is already
+rank-agnostic (one shared codebox, instanced per rank), this
+automatically applies to both ranks with zero new plumbing — Stage 4's
+existing alpha composite handles the "what shows through when a mark's
+own color-choice differs from its neighbor's" question for free, since
+that's exactly the mechanism it already exists to solve.
+
+**Consequences:** `definition.py`/`build_seeds_multistage.py` need a
+5th inlet threaded through (currently 4: shape, vecfield, mod, + the
+implicit render-stage identity passthrough). Same class of wiring change
+as ADR 5's `driving_inlet` fix — needs care, not assumed trivial. No
+changes anticipated to Stage 1/1a/1b/1c/4 codeboxes at all.
+
+### Dependency Blocks
+
+#### Block 5: Hue-threshold mechanism proven against real render codebox
+**Dependencies:** None (independent of Evolution 2's own remaining
+T028/T030 cleanup items)
+**Builds:** Scratch-modified copy of `codebox_seeds_render.gen` with
+hue-angle extraction + bracket/threshold test
+**Verification:** Per spec.md Evolution 3 Phase 1 — regression at
+`color_mode=0`, stable per-mark (not per-pixel) hue at `color_mode=1`
+
+#### Block 6: Overlap legibility confirmed
+**Dependencies:** Block 5
+**Builds:** Nothing new — wiring Block 5's mechanism into the existing
+6-stage chain with real `field_priority`/`bomb` activity
+**Verification:** Per spec.md Evolution 3 Phase 2 — this is the actual
+point of the evolution: does varying overlap now read as legible
+size/coverage variation, the thing the standalone `f_dither_grain`
+attempt never achieved
+
+#### Block 7: Promotion to production
+**Dependencies:** Blocks 5+6
+**Builds:** `codebox_seeds_render.gen` updated; new inlet threaded
+through `definition.py`/`build_seeds_multistage.py`; new params added
+**Verification:** JSON valid, opens in Max, `color_mode=0` regression
+exact, docs updated with attribution to the originating conversation
+
+### Complexity Notes — Evolution 3
+
+Lower risk than Evolution 2 — no new search/reduction logic, no new
+compile-ceiling exposure (the render codebox isn't growing in candidate
+count, just adding one texture sample + the already-proven hue-bracket
+math). The real open question is empirical, not structural: does Block 6
+actually clear the bar the standalone attempt couldn't, or does some
+new, not-yet-anticipated legibility problem show up once this is wired
+into the full 6-stage chain with real overlap active. Phase 2's
+acceptance criteria exist specifically to catch that rather than assume
+success from Phase 1 alone.
+
+### ADR 10 — Hue-threshold/dither mechanism replaced with a direct
+seed-sampled color blend; `hue_a`/`hue_b`/`fallback_mode` removed
+
+**Context:** After Block 7's initial implementation (hue extraction,
+2-hue circular bracket, per-seed dither, low-sat fallback — see ADR 9),
+Matt clarified the actual intent was much simpler: overlay the seed grid
+onto the color driving texture and sample it once at each seed's own
+center (or jittered position, in the bombing case), using that sample
+directly as the seed's color. No hue-space reduction to two authored
+reference hues, no dithering, no fallback — all of which existed to
+solve a "legibility across a full palette" problem this request never
+had.
+
+**Decision:** Removed `hue_a`, `hue_b`, `fallback_mode`, and the entire
+extraction/bracket/dither/fallback chain from `codebox_seeds_render.gen`.
+`drive_r/g/b` (already sampled at `gx,gy` — no change needed there, per
+ADR 9's original placement) is now used directly. `color_mode` kept, but
+changed in kind from a hard switch to a genuine 0–1 blend between the
+shape tex's own color and the seed-sampled color, per Matt's preference.
+
+**Consequences:** Net param count change is +1 over pre-Evolution-3 (just
+`color_mode`), not +4. `definition.py`/`build_seeds_multistage.py` and
+the codebox all updated together; rebuilt and diffed structurally clean
+(zero existing wires removed, only additive).
+
+### ADR 11 — Gate-vs-shape-silhouette bug: per-seed color bled across
+the entire mark bounding box, not just the shape's own footprint
+
+**Context:** After ADR 10's rebuild, Matt reported `color_mode=1`
+produced a full-frame flat-colored Voronoi tessellation with hard cell
+edges — not the intended "small mark takes on its seed's color" look.
+Traced (direct read of `codebox_seeds_render.gen`) to a masking mismatch:
+`gate` (the rectangular bounding-box test against `along`/`across` vs.
+`marklen_eff`/`weight_eff`) is sized by the `size` param and is *not* the
+shape's actual silhouette — the shape tex draws a small blob within that
+box, and most of the box reads as black only because the shape tex
+itself is black there, not because `gate` excludes it. `drive_r/g/b` is a
+single constant color per seed (sampled once at `gx,gy`, invariant across
+the box's local UV space), so blending it in across the whole `gate`
+region — rather than just where the shape is actually drawn — flooded
+the entire bounding box with flat color. Once seed spacing (`density`)
+got anywhere near the box size (`size`), adjacent boxes' flat fills
+tiled seamlessly into what looked exactly like a colored Voronoi
+tessellation — a plausible enough symptom that it was initially suspected
+to be a wiring/staleness issue or a bug in a completely different part
+of the chain (Stage 1c's coordinate output, Stage 4's composite) before
+being traced back to this single-codebox masking mismatch.
+
+**Decision:** Weight the color blend by `shape_luma` in addition to
+`gate`: `blend = color_mode * src_color_drive * shape_luma`. This
+confines the color swap to wherever the shape is actually drawn (with
+natural soft-edge falloff matching the shape's own alpha, since
+`shape_luma` isn't a hard threshold), leaving everywhere else in the
+gate box exactly as before (`shape_r`, near-zero/black).
+
+**Rationale:** Minimal, correct fix — no change to `gate` itself, no
+change to sizing/spacing params, no change to the shape tex or Stage 1c/
+Stage 4. Confirmed working live in Max: small mark takes its seed color,
+surrounding cell area stays black, matching `color_mode=0`'s footprint
+exactly.
+
+**Consequences:** This is a general pattern, not specific to color —
+logged in `skills/jit-gen-codebox/SKILL.md` (Known-Good Patterns +
+Code Health Checklist) since it applies to any per-seed constant blended
+into a discrete-item codebox with a bounding-box `gate`, not just this
+module's color feature.

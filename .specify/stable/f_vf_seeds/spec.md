@@ -421,3 +421,153 @@ Stage 4 — Composite (vfseeds_composite_pix)
       attribution extended to cover the bombing mechanism specifically
 - [ ] `ideas/seed_distribution_beyond_grid.md` status updated — "Multiple
       samples per cell" item moves from captured-idea to landed
+
+---
+
+## Evolution 3 — Color-Driving Texture (Seed-Sampled Color Blend)
+
+**Status:** Shipped 2026-07-22. Originates from a separate conversational
+thread (`ideas/f_dither_grain.md`, `.specify/f_dither_grain/`) that set out
+to build parametric dithering as its own standalone module, hit the
+identical structural problem this module's own Evolution 2 already solved
+(see below), and was folded in here — but the mechanism that actually
+shipped is much simpler than that origin implies. See ADR 9/10/11 in
+plan.md for the full sequence (fold-in decision → hue-threshold build →
+simplification → gate/silhouette bug fix).
+
+### Concept (as shipped — simpler than the original hue-threshold design)
+
+Adds an optional **color-driving texture** inlet. Each seed samples this
+texture once at its own stable identity (`gx`/`gy` — the same coordinate
+already used for vecfield/mod-tex sampling), and that sample is used
+directly as the seed's mark color, blended against the shape tex's own
+color via `color_mode` (a genuine 0–1 blend, not a switch). A bombed
+(jittered) second seed automatically samples under its own jittered
+position — no extra wiring needed, since Stage 2 and Stage 3 already run
+as independent codebox instances, each fed its own `rank_coord`.
+
+**Superseded design (built, then removed same session, ADR 10):** the
+original plan extracted a hue angle from the driving texture and
+threshold-dithered between two authored reference hues (`hue_a`/`hue_b`),
+with a low-saturation fallback — the mechanism `ideas/f_dither_grain.md`
+had been building for a different reason (making mark *size* legible
+against a full palette). Once Matt clarified the actual intent — sample
+the driving texture directly at each seed's position, no hue-space
+reduction — this entire chain was removed. `hue_a`, `hue_b`, and
+`fallback_mode` no longer exist.
+
+### Why this folds into `f_vf_seeds` rather than being a new module
+
+The standalone attempt (`f_dither_grain`) built its own 3x3 nearest/
+second-nearest search, jitter, and vecfield-driven size/shape logic from
+scratch, and repeatedly hit the same failure: making mark *size* legible
+in a full-color composite requires *something* to show through where a
+mark shrinks, and with only two reference hues, a flat neighbor-reveal
+is invisible almost everywhere except right at the hue seam (confirmed
+via repeated debug-channel isolation, 2026-07-21 session).
+
+This module already solved the identical problem for its own Evolution 2
+(see spec.md above, "Why Evolution 1 alone wasn't enough") — the fix was
+retaining top-2 candidates and alpha-compositing rank-1-over-rank-2 using
+rank-1's own **luma-keyed alpha** (from real shape-texture content, not a
+flat color swap) as the blend factor. Once that's understood as already
+solved and already shipped, there's no distinct identity left for a
+separate module to have — same reasoning ADR 1 already applied to the
+original priority-generalization work. (This reasoning motivated folding
+the work in here; it didn't end up determining what the final color
+mechanism actually needed to be — see Concept above.)
+
+### Where this plugs in (as shipped, `codebox_seeds_render.gen`)
+
+```
+drive_r = sample(in5, vec(gx, gy)).x;
+drive_g = sample(in5, vec(gx, gy)).y;
+drive_b = sample(in5, vec(gx, gy)).z;
+
+blend = color_mode * src_color_drive * shape_luma;
+final_r = mix(shape_r, drive_r, blend);
+final_g = mix(shape_g, drive_g, blend);
+final_b = mix(shape_b, drive_b, blend);
+
+mark_r = final_r * gate * src_shape;
+mark_g = final_g * gate * src_shape;
+mark_b = final_b * gate * src_shape;
+mark_a = shape_luma * gate * src_shape;
+```
+
+**The `shape_luma` factor in `blend` is load-bearing, not decorative** —
+see ADR 11 in plan.md. `gate` is a rectangular bounding box sized by
+`size`, not the shape's actual silhouette; `drive_r/g/b` is a single
+constant per seed (invariant across that box's local UV space). Blending
+it in weighted by `gate` alone floods the *entire* box with flat color,
+not just the shape's visible pixels — visible as a full Voronoi-cell
+tessellation with hard box edges once seed spacing approaches the box
+size. Weighting by `shape_luma` confines the color swap to wherever the
+shape is actually drawn, with soft-edge falloff matching the shape's own
+alpha. This is a general pattern for this codebox family, logged in
+`skills/jit-gen-codebox/SKILL.md`.
+
+`gx`/`gy` are already computed at the top of this exact codebox (Stage
+1c's coord passthrough) — no new coordinate math needed. Because this
+codebox is already rank-agnostic (instanced once per rank in Stage 2/3),
+the new logic applies to both ranks automatically — Stage 4's existing
+rank-1-over-rank-2 composite requires no changes at all.
+
+### New Parameters (as shipped)
+
+| Param | Type | Range | Default | Description |
+|-------|------|-------|---------|-------------|
+| `color_mode` | float | 0-1 | 0.0 | Blend between shape tex's own color (0) and the color driving texture sampled at each seed's position (1). Genuine blend, not a switch. |
+| `src_color_drive` | internal | — | — | `vs_inState`-driven, same convention as `src_shape`/`src_vecfield`/`src_mod` — not user-facing |
+
+**Existing params unaffected**: everything about placement, jitter,
+density, size, stretch, field_priority/field_gain, bomb — untouched.
+This evolution only ever touches color, never geometry/coverage.
+
+### Acceptance Criteria
+
+#### Phase 1 — Mechanism proof against real render codebox
+- [x] Color driving texture sampled at `(gx, gy)`, used directly as
+      seed color (no hue extraction/bracket/dither — that path was built
+      then removed, see ADR 10 in plan.md)
+- [x] Each visible mark resolves to a single, stable color — no
+      per-pixel variation within one mark's footprint (confirms
+      per-seed, not per-pixel, sampling)
+- [x] Regression: `color_mode=0` behaves identically to today's shipped
+      output — shape tex's own color unaffected
+- [x] Bombed (jittered) second seed samples under its own jittered
+      position automatically — confirmed structurally (same `gx,gy`
+      mechanism already used for vecfield/mod-tex sampling in each
+      independent rank instance)
+
+#### Phase 2 — Overlap legibility + gate/silhouette bug (found and fixed)
+- [x] Confirmed live in Max: at `color_mode=1`, color initially bled
+      across the entire seed's bounding box rather than staying confined
+      to the mark's own silhouette — traced to `gate` (bounding box) vs.
+      `shape_luma` (actual shape footprint) being two different masks;
+      fixed by weighting the color blend by `shape_luma` (ADR 11)
+- [x] Confirmed live in Max, post-fix: small mark takes its seed's
+      color, surrounding cell area stays black, matching `color_mode=0`'s
+      footprint exactly
+
+#### Phase 3 — Promotion to production
+- [x] `codebox_seeds_render.gen` updated (shared by both rank instances,
+      no duplication)
+- [x] New `in5` (color driving texture) added to `definition.py`'s inlet
+      list and `build_seeds_multistage.py`'s wiring
+- [x] `color_mode` added to param list (`hue_a`/`hue_b`/`fallback_mode`
+      built then removed, per ADR 10)
+- [x] Regression: `color_mode=0` matches pre-Evolution-3 output exactly
+- [ ] Docs (`docs/f-reference/f_vf_seeds.md`) updated — new inlet, new
+      param, attribution to `ideas/f_dither_grain.md`'s originating
+      conversation — **still pending**
+
+### Out of Scope (This Evolution)
+
+- Any change to placement, jitter, density, size, stretch, or the
+  priority/bombing mechanism — this evolution is color-only.
+- N-hue reference-palette dithering — considered, built, then removed
+  once the actual requirement turned out to be direct sampling, not
+  palette reduction. Not ruled out for a future evolution if a real use
+  case for palette-constrained color surfaces later, just not what this
+  evolution needed.

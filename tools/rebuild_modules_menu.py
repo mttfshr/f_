@@ -19,6 +19,7 @@ CATEGORIES = [
         ("Stereo", "stereo"),
         ("SIRDS", "sirds"),
         ("Droste", "droste"),
+        ("Ngon", "ngon"),
     ]),
     ("Optical", [
         ("Lens", "lens"),

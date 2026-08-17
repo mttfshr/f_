@@ -532,14 +532,15 @@
                                 "Mobius",
                                 "Stereo",
                                 "SIRDS",
-                                "Droste"
+                                "Droste",
+                                "Ngon"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_disp",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 4,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -573,14 +574,15 @@
                                 "mobius",
                                 "stereo",
                                 "sirds",
-                                "droste"
+                                "droste",
+                                "ngon"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_file",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 4,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
