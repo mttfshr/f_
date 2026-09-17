@@ -1,8 +1,9 @@
 # f_a_spectral_ripple — Cross-Frequency De-Correlating Modulation
 
-_Last updated: 2026-08-05_
-_Status: Idea only. **T1, T2 done. T3 partially run, verdict pending — see
-scratch-test log.** Paper, data deposit, and full MATLAB stimulus code all
+_Last updated: 2026-09-15_
+_Status: Phase 2 (scratch verification) complete. **T1–T7 all passed** — see
+scratch-test log. T7b (PM in `pfft~`) and T8 (cross-frequency correlation
+check) not started. Paper, data deposit, and full MATLAB stimulus code all
 read; five paper-vs-code discrepancies found and recorded. Naming
 provisional._
 
@@ -606,8 +607,8 @@ Cheap, ordered, each one settles something.
 
   Scratch file: `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t4.maxpat`.
 
-- **T5 — AM on one octave.** ⏳ **Partially passed 2026-08-05, spectrogram
-  comparison still open.** Built
+- **T5 — AM on one octave.** ✅ **PASSED 2026-09-15** (listening pass
+  2026-08-05, spectrogram gap closed 2026-09-15). Built
   `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t5.maxpat`, combining T3's
   wavetable (unmodulated partials — now correctly excluding the modulated
   band from the render loop) with T4's proven modulator, applied as real AM
@@ -644,14 +645,28 @@ Cheap, ordered, each one settles something.
 
   Scratch file: `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t5.maxpat`.
 
+  **Spectrogram comparison, closed 2026-09-15.** A `spectroscope~` (Sonogram
+  display mode, FFT ≥ 2048) was wired to the gen~'s audio outlet. With
+  output raised and the modulated band running, the sonogram showed a
+  diagonal, curving stripe pattern — fixed-frequency harmonic lines whose
+  brightness is modulated by a slowly-drifting spatial grating — matching
+  the qualitative character of the paper's Fig. 3C, confirmed across two
+  consecutive 4 s stimulus re-triggers (different random `q`/`p`, same
+  structural pattern each time). Judged a pass directly against the live
+  sonogram in Max. Not walked through point-by-point in this record: exact
+  confinement of the rippling to band 6's edges (5657–11314 Hz) vs. the
+  flanking harmonics, and whether the stripe tilt visibly drifts within a
+  single 4 s window (half the 8 s `smr_cycle`). Real pass, one rung below
+  T3/T4's numeric-verification standard.
+
 - **T6 — PM on one octave**, then A/B against T5 by ear and by spectrogram.
-  ⏳ **Partially passed 2026-08-06, spectrogram comparison still open.**
-  Built `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t6.maxpat` as a
-  clone of T5 with one addition: a `mod_type` toggle (0=AM, 1=PM) switching
-  only the final per-partial mapping — everything upstream (wavetable
-  render, `geomean_mod`, `q`/`p` draw, `Mₙ(t)`/`S(t)`) is shared, identical
-  code, so flipping `mod_type` mid-stimulus without re-triggering "new
-  stimulus" is a genuine like-for-like comparison rather than two
+  ✅ **PASSED 2026-09-15** (A/B by ear 2026-08-06, spectrogram gap closed
+  2026-09-15). Built `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t6.maxpat`
+  as a clone of T5 with one addition: a `mod_type` toggle (0=AM, 1=PM)
+  switching only the final per-partial mapping — everything upstream
+  (wavetable render, `geomean_mod`, `q`/`p` draw, `Mₙ(t)`/`S(t)`) is shared,
+  identical code, so flipping `mod_type` mid-stimulus without re-triggering
+  "new stimulus" is a genuine like-for-like comparison rather than two
   independently-randomized patches. Uses the code-accurate PM formula —
   `sin(2π fₙ t + (π/2)(1 + d·Mₙ(t)))`, depth `π/2` not the paper's stated
   `π` (MATLAB discrepancy #2 above) — computed alongside the AM formula
@@ -660,9 +675,9 @@ Cheap, ordered, each one settles something.
   **A/B by ear passed**: PM "sounds a little different, a plausible
   variant" of T5's AM at the same modulator state — exactly the expected
   outcome, since AM and PM are genuinely different perceptual mappings of
-  the same shared `Mₙ(t)`, not two routes to identical output. **The
-  spectrogram comparison has not been run** — same gap, same cause as T5
-  (no spectrogram tool available this session).
+  the same shared `Mₙ(t)`, not two routes to identical output. **Spectrogram
+  comparison, closed 2026-09-15** with the same `spectroscope~` Sonogram
+  setup as T5, judged a pass directly in Max.
 
   Scratch file: `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t6.maxpat`.
 

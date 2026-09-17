@@ -1,7 +1,8 @@
 # f_a_ripple — Specification
 
 _Created: 2026-08-04_
-_Status: Phase 1 — concept complete, nothing scratch-tested_
+_Status: Phase 2 (scratch verification) complete — T2–T7 all passed. See
+plan.md Phases._
 
 ## What it does
 
@@ -143,8 +144,8 @@ Maps to T1–T6 in `ideas/f_a_spectral_ripple.md`.
       same collision class as the `mix()` operator issue already documented
       in `jit-gen-codebox/SKILL.md`, but in the audio dialect. Full trace in
       `ideas/f_a_spectral_ripple.md` T4 log.
-- [~] T5 — AM output's spectrogram matches the paper's Fig. 4 by eye.
-      **Partially passed 2026-08-05.** Built
+- [x] T5 — AM output's spectrogram matches the paper's Fig. 4 by eye.
+      **PASSED 2026-09-15.** Built
       `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t5.maxpat`: T3's
       wavetable (unmodulated partials, now correctly excluding the
       modulated band) combined with T4's modulator applied as real AM to
@@ -152,21 +153,30 @@ Maps to T1–T6 in `ideas/f_a_spectral_ripple.md`.
       per-harmonic `Fₙ` derived from a one-shot `geomean_mod` computation.
       At defaults (band 6, f0=96) it sounds close to indistinguishable from
       the checkhearing.org reference by ear — real signal, not noise, not
-      obviously wrong. **The actual spectrogram-vs-Fig.-4 comparison has not
-      been run** (no spectrogram tool available in this session) — this is
-      a listening-only pass, one rung below T3/T4's numeric-verification
-      standard, and should not be treated as equivalent to it. Also
-      confirmed: **DSP held up clean at low `output_level`, no glitching**,
-      despite the modulated-band `for (n=1..200)` loop running per-sample at
-      audio rate (44.1k iterations/sec × up to 200 = real load) — first
-      actual data point against the Primary Risk section's "CPU cost...
-      unmeasured" flag below. Not a full CPU measurement (no profiling, no
-      worst-case band 7 tested), but a real signal the wavetable split's
-      payoff is doing its job. Full trace in `ideas/f_a_spectral_ripple.md`
-      T5 log.
-- [~] T6 — PM output's spectrogram is visibly distinct from AM's in the
+      obviously wrong (2026-08-05). **The spectrogram gap closed
+      2026-09-15**: a `spectroscope~` (Sonogram display mode, FFT ≥ 2048)
+      was wired to the gen~'s audio outlet, output raised, and the resulting
+      time-frequency view showed the expected diagonal, curving stripe
+      pattern — fixed-frequency harmonic lines whose brightness is
+      modulated by a slowly-drifting spatial grating — the same qualitative
+      character as the paper's Fig. 3C, confirmed across two consecutive
+      4 s stimulus re-triggers. Judged a pass by Matt directly against the
+      live sonogram; the finer checks discussed (stripe pattern confined to
+      band 6's edges specifically, tilt-angle drift visible within one 4 s
+      window) weren't walked through point-by-point in the record here, so
+      treat this as a real but not maximally rigorous spectrogram pass — a
+      step up from T5's original listening-only result, one step below
+      T3/T4's numeric-verification standard. Also confirmed: **DSP held up
+      clean at low `output_level`, no glitching**, despite the
+      modulated-band `for (n=1..200)` loop running per-sample at audio rate
+      (44.1k iterations/sec × up to 200 = real load) — first actual data
+      point against the Primary Risk section's "CPU cost... unmeasured"
+      flag below. Not a full CPU measurement (no profiling, no worst-case
+      band 7 tested), but a real signal the wavetable split's payoff is
+      doing its job. Full trace in `ideas/f_a_spectral_ripple.md` T5 log.
+- [x] T6 — PM output's spectrogram is visibly distinct from AM's in the
       expected way (frequency wobble vs. amplitude wobble on each harmonic).
-      **Partially passed 2026-08-06.** Built
+      **PASSED 2026-09-15.** Built
       `/Users/matt/Vsynth/patterns/f_a_ripple_scratch_t6.maxpat` as a clone
       of T5 with one addition: a `mod_type` toggle (0=AM, 1=PM) switching
       only the final per-partial formula — wavetable, `geomean_mod`,
@@ -175,13 +185,11 @@ Maps to T1–T6 in `ideas/f_a_spectral_ripple.md`.
       stimulus") is a genuine like-for-like A/B rather than two
       independently-randomized builds. Uses the code-accurate PM depth
       (`π/2`, not the paper's stated `π` — MATLAB discrepancy #2, idea
-      file). **A/B by ear passed**: PM "sounds a little different, a
-      plausible variant" of T5's AM at the same modulator state — the right
-      outcome, since AM and PM are genuinely different perceptual effects
-      sharing one modulator, not two paths to the same sound. **The
-      spectrogram comparison has not been run**, same gap as T5, same
-      cause (no spectrogram tool available this session). Full trace in
-      `ideas/f_a_spectral_ripple.md` T6 log.
+      file). **A/B by ear passed 2026-08-06**: PM "sounds a little
+      different, a plausible variant" of T5's AM at the same modulator
+      state. **Spectrogram gap closed 2026-09-15** with the same
+      `spectroscope~` Sonogram setup as T5, judged a pass by Matt directly
+      in Max. Full trace in `ideas/f_a_spectral_ripple.md` T6 log.
 - [ ] Trial-default configuration produces output perceptually comparable to
       the checkhearing.org reference at matched settings
 
@@ -194,13 +202,22 @@ clicks, denormal silence, or clipping.
 
 ## Primary risk
 
-**CPU cost of the modulated-band partials is unmeasured.** The wavetable
-split's *correctness* is now confirmed (T3, 2026-08-05) at a 2048-entry
-table, but its *CPU payoff* — the actual reason ADR-2 exists — is still
-unmeasured. If the per-partial modulated path is too expensive at the
-worst-case band (8–16 kHz, ~84 partials, two `sin` each), the whole
-architecture in plan.md needs revisiting before any parameter work is
-meaningful.
+**Resolved 2026-09-15 — CPU cost of the modulated-band partials is
+negligible.** Measured on T5 via Max's Audio Status/DSP Status CPU% (Signal
+CPU), comparing `gen~` fully disconnected (from `*~`/`dac~`, `scope~`, and
+`spectroscope~` — a true idle floor) against fully connected, at both the
+current default (`f0=96`, band 6) and the nominal worst case for the
+current implementation (`f0=50`, band 7, low end of the `f0` range): all
+three readings held at ~33% CPU, no measurable difference. **Caveat worth
+recording**: the codebox's `for (n=1..200)` loop currently runs all 200
+iterations (full `log`/two `sin` calls each) every sample regardless of
+`band`/`f0` — it doesn't actually restrict itself to the harmonics inside
+`flo_mod`/`fhi_mod` the way ADR-2 describes, only gates the *accumulation*.
+This is a real latent inefficiency (the honest fix loops `n_lo..n_hi`,
+computed from the band edges and `f0`, same idiom the MATLAB itself uses)
+but the measurement shows it isn't costing anything detectable even
+unfixed — so the fix is a code-hygiene item, not a performance blocker.
+Not yet fixed in T5/T6's `.maxpat`.
 
 **New, narrower risk from the T3 finding:** table size can't be pushed
 indefinitely for free — a 2048-entry table costs ~410,000 loop iterations on

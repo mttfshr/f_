@@ -22,18 +22,35 @@ depending on band) run per-sample in the `gen~` codebox.
 per-partial null holds at a 2048-entry table and in-range f0 (96 Hz); it
 visibly fails at a 64-entry smoke-test table, but that failure is
 table-resolution quantization (`peek` floors rather than interpolates — see
-`jit-gen-codebox` skill), not a flaw in the split itself. **Still open, and
-now the actual blocker for this ADR:** the CPU payoff this split exists for
-is unmeasured, and the production table size hasn't been chosen — a
-2048-entry table works at f0=96 Hz but hasn't been checked against the full
-50–400 Hz `f0_lo`/`f0_hi` range (spec.md Parameters), where the
-samples-per-cycle-to-table-entries ratio changes. Two candidate fixes if a
-fixed table proves insufficient across that range: a larger table, or
-`peek`-based linear interpolation between adjacent entries. Neither has been
-tried. This decision belongs in Phase 3 (parameter characterisation,
-spec.md/plan.md Phases) alongside the CPU measurement itself, since table
-size and interpolation both trade against the render-time cost this ADR was
-meant to keep cheap.
+`jit-gen-codebox` skill), not a flaw in the split itself.
+
+**CPU payoff measured 2026-09-15 (spec.md Primary Risk) — turns out not to
+matter at current scale.** DSP Status CPU% was identical (~33%) with the
+modulated-band loop fully disconnected vs. running at both typical
+(f0=96, band 6) and nominal-worst-case (f0=50, band 7) settings. The loop
+also doesn't currently restrict itself to `n_lo..n_hi` the way this ADR
+describes — it runs all 200 candidate harmonics unconditionally and only
+gates the accumulation — so the *split's* CPU savings aren't even actually
+implemented yet, and it still doesn't register. Fixing the loop bounds is
+now a code-hygiene item, not something blocking Phase 3.
+
+**Decided 2026-09-15, implemented 2026-09-16 — `peek`-interpolation applied
+by design, not verified by measurement.** An attempt to verify the
+2048-entry table across the full 50–400 Hz range (not just the 96 Hz
+spot-check) broke down on tooling problems (`scope~` failing to render
+above f0≈200, `peakamp~` units confusion, unrepeatable readings — see
+HANDOFF) without producing a trustworthy result. Rather than keep chasing
+that measurement: given the CPU headroom already confirmed above (fully
+negligible), there's no cost reason not to just fix the root cause
+outright. `f_a_ripple_scratch_t3.maxpat` (the null-test rig) and T5/T6's
+wavetable-render codeboxes now read the two nearest table entries and
+linearly blend by the fractional index (wrapping at the table boundary via
+`mod`), instead of `peek`'s default floor/truncate — removes the
+quantization error at any f0 rather than shrinking it to "probably small
+enough." Not re-verified against A in this session (per the reframing:
+accept reasonable assumptions about correct Max/gen~ behavior here rather
+than re-proving from scratch) — worth a quick listen/scope-check next time
+these patches are open, but not treated as blocking.
 
 ### ADR-3 — Default configuration matches the code, not the paper
 Two defaults deliberately deviate from the paper's stated equations to match
@@ -85,29 +102,53 @@ file, Licensing.
 
 - **Phase 1 — concept and interface.** Complete. `ideas/f_a_spectral_ripple.md`,
   this spec.
-- **Phase 2 — scratch verification.** In progress. T2–T6 (spec.md). T2
-  (static harmonic complex), T3 (wavetable/per-partial null), and T4
-  (modulation matrix drift/breathing) all **passed** as of 2026-08-05.
-  T5 (full AM build) and T6 (AM/PM A-B) both **partially passed** —
-  T5 2026-08-05, T6 2026-08-06. Both listening comparisons sound right
-  (T5 close to indistinguishable from checkhearing.org; T6's PM sounds
-  like a plausible variant of T5's AM at the same modulator state, as
-  expected) and DSP held up clean at audio rate in both, but **the
-  spec.md-mandated spectrogram comparisons for both T5 and T6 haven't been
-  run** — no spectrogram tool was available in either session. This phase
-  isn't done until that gap closes.
-- **Phase 3 — parameter characterisation.** Not started, and blocked on
-  Phase 2 finishing — the sweeps below need a working modulated signal to
-  sweep. Sweep the six **[free]** parameters; find where TMR crosses from
-  ripple into audio-rate roughness (idea file Q5); confirm SMR-range > mean
-  doesn't produce silence or artifacts at its sign-reversal boundary. Also
-  now includes the two open items from ADR-2: a real CPU measurement of the
-  modulated-band path (T5's listening test showed no glitching at band 6,
-  a first good sign, but that's not a profiled measurement and hasn't
-  touched the worst-case band 7 at ~84 partials), and settling production
-  wavetable size (or interpolated `peek`) across the full 50–400 Hz f0
-  range, not just the 96 Hz spot-check.
-- **Phase 4 — production build.** Not started. No `definition.py` equivalent
-  exists for `f_a_` modules yet — same open build-path question as
-  `f_a_purr`.
+- **Phase 2 — scratch verification.** Complete. T2–T6 (spec.md) all
+  **passed**. T2 (static harmonic complex), T3 (wavetable/per-partial
+  null), and T4 (modulation matrix drift/breathing) passed 2026-08-05.
+  T5 (full AM build) and T6 (AM/PM A-B) passed their listening checks
+  2026-08-05/06 (T5 close to indistinguishable from checkhearing.org;
+  T6's PM sounds like a plausible variant of T5's AM at the same
+  modulator state, as expected) and their spectrogram checks 2026-09-15,
+  once a `spectroscope~` (Sonogram mode) was wired into both scratch
+  patches — the diagonal, drifting stripe pattern matched the paper's
+  Fig. 3C character. See spec.md T5/T6 entries for what was and wasn't
+  walked through point-by-point in that spectrogram pass.
+- **Phase 3 — parameter characterisation.** Effectively complete
+  2026-09-16, at the pragmatic bar spec.md's Acceptance section actually
+  asks for (not a deep characterization project — see HANDOFF's
+  mid-session reframe). **CPU measurement done 2026-09-15** — not a
+  blocker. **Wavetable size: `peek` interpolation implemented
+  2026-09-16** (by design, not verified by measurement). **Free-parameter
+  sanity sweep done 2026-09-16**: `depth`, `tmr`, `smr_mean`, `smr_range`
+  (including a value exceeding `smr_mean`, crossing S(t)'s sign reversal),
+  and `smr_cycle` all swept live on T5 with no clicks, dropouts, or
+  clipping. Impressions only, not a formal characterization — consistent
+  with the reframe. **`pm_turns` not tested — not actually wired as a
+  live parameter yet.** T6's codebox hardcodes the trial-default PM depth
+  (`halfpi = twopi/4`, i.e. `pm_turns=0.5`) rather than exposing it as a
+  `Param`; exposing and sweeping it is a known TODO whenever T6 gets
+  built out further, not a blocker for the AM-only path.
+- **Phase 4 — production build.** Core DSP built and confirmed working
+  2026-09-16: `/Users/matt/Vsynth/patterns/f_a_ripple_v1.maxpat`. Combines
+  everything previously verified in isolation (T3's interpolated
+  wavetable, T5/T6's AM/PM per-partial modulation) with genuinely new
+  work not covered by any prior scratch test: fully self-timed per-
+  stimulus cycling (internal `t>=stim_dur` check, `noise()`-drawn f0/q/p,
+  no external trigger needed), raised-cosine on/off ramps, the ADR-5
+  hearing-correction staircase applied per-harmonic in both the wavetable
+  render and the modulated loop, `band` (1-7) mapped internally to
+  half-octave edges per ADR-4, a real `pm_turns` Param (T6 had this
+  hardcoded), and a `tanh()` safety ceiling per ADR-6 (output bounded to
+  [-1,1] by construction, after `output_level`, regardless of
+  profile/depth/band). One authoring mistake caught and fixed by Matt:
+  `band`/`hearing_profile` were built with `maxclass: "numbox"`, which
+  isn't a real Max UI object — swapped for `flonum`, rewired correctly.
+  Confirmed by Matt: compiles clean, sounds right, auto-retrigger and
+  ramps behave as intended.
+
+  **Not yet done**: production UI polish (live.dial grid matching `f_`
+  visual conventions instead of plain flonums — see
+  `ideas/f_a_build_process.md`), placement in `package/patchers/`,
+  Phase 5 (docs/helpfile). The DSP itself is the hard part and it's done;
+  packaging is comparatively mechanical.
 - **Phase 5 — docs and helpfile.** Not started.

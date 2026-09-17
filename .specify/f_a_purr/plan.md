@@ -107,5 +107,7 @@ template. Cost several exchanges of misdirected debugging.
 - **Phase 3 — parameter characterisation.** Not started. Blocked on resolving
   the primary risk in spec.md.
 - **Phase 4 — production build.** Not started. No `definition.py` equivalent
-  exists for `f_a_` modules; build path must be decided.
+  exists for `f_a_` modules; build path must be decided. Scoped (not solved)
+  2026-09-16 in `ideas/f_a_build_process.md` — a follow-up project, not
+  something to resolve while finishing this module's earlier phases.
 - **Phase 5 — docs and helpfile.** Not started.
