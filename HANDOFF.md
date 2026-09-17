@@ -1,157 +1,149 @@
 # HANDOFF
 
-_Session: 2026-09-15_
+_Session: 2026-09-15 through 2026-09-16_
 
 ## What happened
 
-Picked up `f_a_ripple` after a ~5-week gap. Read back in via the previous
-HANDOFF, `spec.md`, `plan.md`, and the idea file. Did three things:
+Picked up `f_a_ripple` after a ~5-week gap. Closed out Phase 2/3, then
+pushed all the way through a first working Phase 4 production build in
+the same session — further than planned, after a mid-session reframe.
 
-1. **Committed loose work from the previous session** that had never been
-   committed: the three new/rewritten skill files from the T7 `pfft~` saga
-   (`gen-tilde-codebox`, `pfft-spectral-processing`,
-   `max-advanced-object-methodology`) live in a *different* repo,
-   `claude-scaffold`, not `f_`. Split into two commits there — the ripple
-   session's skills, and an unrelated older batch of `jit-gen-codebox`
-   findings from July that had also never been committed.
+**Housekeeping first.** `git` was completely broken at session start (an
+Xcode license prompt blocking every git command) — fixed by Matt running
+`sudo xcodebuild -license` directly (needs a password, so not something I
+can do). Also found and committed loose work from the *previous* session
+that had never been committed: three new/rewritten skill files from the
+T7 `pfft~` saga live in a different repo, `claude-scaffold`, not `f_` —
+split into two commits there (the ripple-session skills, and an unrelated
+older batch of `jit-gen-codebox` findings from July).
 
-2. **Closed the T5/T6 spectrogram gap** (open since 2026-08-05/06, blocked
-   only on tooling). Wired a `spectroscope~` (Sonogram mode) into both
-   scratch patches. Matt's own screenshot of T5's sonogram showed the
-   expected diagonal, curving stripe pattern matching the paper's Fig. 3C
-   character. Marked T5 and T6 passed in spec.md/plan.md/idea file. **This
-   was a fast, clean win** — contrast with item 3 below.
+**Closed the T5/T6 spectrogram gap** (open since 2026-08-05/06, blocked
+only on tooling). Wired `spectroscope~` (Sonogram mode) into both scratch
+patches; Matt's own screenshot showed the expected diagonal, curving
+stripe pattern matching the paper's Fig. 3C. Marked T5/T6 passed.
 
-3. **Started Phase 3 with the CPU-cost question, then the wavetable-size
-   question. First went well, second did not.**
-   - **CPU measurement: resolved cleanly.** Found that T5/T6's modulated-
-     band loop actually runs a fixed 200 iterations every sample regardless
-     of `band`/`f0` (the `modband` ternary only gates accumulation, not the
-     `sin`/`log` calls) — so ADR-2's claimed CPU savings aren't actually
-     implemented. Measured anyway: DSP Status CPU% read ~33% identically
-     whether the loop was fully connected or fully disconnected, at both
-     typical and nominal-worst-case settings. **CPU is not a bottleneck**,
-     even in the current unoptimized form. Logged in spec.md's Primary
-     Risk section and plan.md's ADR-2. The loop-bound fix (restrict to
-     `n_lo..n_hi` instead of `1..200`) is still undone — correctness/
-     hygiene item, not urgent.
-   - **Wavetable-size check across the f0 range: inconclusive, not
-     resolved.** Reused the existing T3 A-vs-B null-test rig
-     (`f_a_ripple_scratch_t3.maxpat`) to check whether the 2048-entry table
-     still nulls cleanly at f0=50 and f0=400 (only 96 Hz had been checked
-     before). Went sideways for several real reasons, in order:
-     - `scope~` itself stops rendering above f0≈200 (a display limitation,
-       confirmed by adding a `dac~` and hearing sound was still present
-       when the scope went blank) — cost real time before being identified
-       as a tooling artifact, not a DSP bug.
-     - Added a `peakamp~` residual-peak readout to get a number instead of
-       eyeballing a scope. Turned out `peakamp~`'s output is linear
-       amplitude, not dB (confirmed once Matt added an `atodb` object) —
-       my initial guidance assumed dB throughout, which was wrong and
-       wasted a round of readings.
-     - Even after that fix, readings were unstable: A-alone and the A−B
-       residual read *identical* values, and re-measuring the same f0 gave
-       different numbers each time. Never got a clean, repeatable reading.
-     - Final numbers taken at face value (A ≈ A−B at each point, not
-       trustworthy as a null measurement): f0=50 → 8.6287, f0=96 → 6.195,
-       f0=400 → 3.035. **Do not treat these as a result** — they're
-       recorded only so the next session doesn't have to re-derive that
-       this attempt didn't work.
+**Phase 3: CPU cost resolved cleanly, wavetable-size check did not.**
+Found that T5/T6's modulated-band loop actually runs a fixed 200
+iterations every sample regardless of `band`/`f0` (the `modband` ternary
+only gates accumulation, not the `sin`/`log` calls) — so ADR-2's claimed
+CPU savings weren't actually implemented. Measured anyway: DSP Status
+CPU% read ~33% identically whether the loop was fully connected or fully
+disconnected. **CPU is not a bottleneck.** The wavetable-size question (is
+a 2048-entry table still accurate at f0=50/400, not just the already-
+passed 96 Hz) went sideways for real reasons — `scope~` stops rendering
+above f0≈200 (a display bug, not a DSP bug, confirmed by adding a `dac~`
+and still hearing sound), then `peakamp~` turned out to output linear
+amplitude not dB (wasted a round of readings on a wrong assumption), then
+readings were unstable and unrepeatable even after that fix. Never got a
+trustworthy number.
+
+**Mid-session reframe, the important pivot:** rather than keep chasing
+that measurement, Matt named the actual problem — we were letting
+verification-for-its-own-sake block a module that was ready to move
+forward. Decision: accept reasonable assumptions about Max/gen~ behavior
+and general CPU headroom, stop trying to prove everything from
+foundational assumptions, and prioritize getting `f_a_ripple` to a
+finishable state. Concrete effects:
+- Applied `peek`-based linear interpolation to the wavetable lookup **by
+  design** (removes the floor/step quantization error at any f0) instead
+  of continuing to verify a fixed table size was "probably enough."
+- Ran a fast free-parameter sanity sweep instead of a deep
+  characterization project — `depth`, `tmr`, `smr_mean`, `smr_range`
+  (crossing S(t)'s sign reversal), `smr_cycle` all swept live, no clicks/
+  dropouts/clipping. `pm_turns` was flagged as not actually wired as a
+  live parameter in T6 (hardcoded) — later fixed for real, see below.
+- Recognized T7b (PM in `pfft~`) and T8 (cross-frequency correlation
+  check) **don't actually gate `f_a_ripple` v1** — T7/T7b is Build B work
+  for the separate `f_a_decorrelate` module; T8 is offline scientific
+  validation, not a build requirement. Spec.md's real Acceptance bar is
+  just: trial-default config nulls acceptably, and every free parameter
+  sweeps clean.
+- Scoped (not solved) the `f_a_`-class production-build-process question
+  in `ideas/f_a_build_process.md` — analyzed which parts of
+  `build_patcher.py` are `jit.gl.pix`-specific (don't carry over: texture
+  routing, `vs_inState`, the whole `gen_subpatcher`/`pix_box` core-object
+  builder, `moduleSize.js`) vs. generic Max UI plumbing (does carry over:
+  the dial/label/attrui/`route`-dispatch machinery, panel/title styling,
+  bypass shape). Cross-referenced from both `f_a_ripple` and `f_a_purr`'s
+  `plan.md`. Explicitly a follow-up project, not solved tonight.
+
+**Then: a real Phase 4 production build, further than the plan called
+for.** Matt asked to push into production once Phase 3 was pragmatically
+closed. Scoped it with two explicit calls: build the full automatic
+per-stimulus timing (not just manual/live control), and include both AM
+and PM (wiring `pm_turns` for real, fixing the T6 gap). Built
+`/Users/matt/Vsynth/patterns/f_a_ripple_v1.maxpat`, combining everything
+verified in isolation across T2–T7 with genuinely new work: self-timed
+per-stimulus cycling (internal `t>=stim_dur` check, `noise()`-drawn
+f0/q/p, no external trigger — self-starts via `History t`'s bootstrap
+initial value), raised-cosine on/off ramps, the ADR-5 hearing-correction
+staircase applied per-harmonic in both the wavetable render and the
+modulated loop, `band` (1–7) mapped internally to half-octave edges per
+ADR-4, a real `pm_turns` Param, and a `tanh()` safety ceiling per ADR-6
+(output bounded to [-1,1] by construction, after `output_level`,
+regardless of profile/depth/band). One authoring mistake: `band`/
+`hearing_profile` were built with `maxclass: "numbox"`, not a real Max UI
+object — Matt caught it, swapped to `flonum`, rewired correctly himself.
+**Confirmed by Matt: compiles clean, sounds right, auto-retrigger and
+ramps behave as intended.** Copied into the repo as
+`package/patchers/f_a_ripple.maxpat`.
 
 ## Done
 
-- Committed claude-scaffold skill files (two commits, see above).
-- spec.md/plan.md/idea file updated: T5, T6 marked passed (spectrogram
-  gap closed). Stale header/status lines fixed across all three docs
-  while in there.
-- spec.md Primary Risk section rewritten: CPU cost resolved, not a
-  blocker. plan.md ADR-2 updated to match.
-- `spectroscope~` added to `f_a_ripple_scratch_t5.maxpat` and
-  `_t6.maxpat` (both tapping the gen~'s audio outlet, alongside the
-  existing `scope~`) — left in place, useful going forward.
-- `peakamp~` + toggle/metro readout added to
-  `f_a_ripple_scratch_t3.maxpat`'s residual signal — left in place but
-  **not proven reliable**, see below.
+- Committed loose `claude-scaffold` skill work from the previous session
+  (two commits there).
+- T5/T6 spectrogram gap closed, marked passed.
+- CPU cost resolved: not a bottleneck. Logged in spec.md/plan.md.
+- Wavetable interpolation implemented by design (not measurement-
+  verified) in `f_a_ripple_scratch_t3/_t5/_t6.maxpat`.
+- Free-parameter sanity sweep passed (5 of 6; `pm_turns` fixed properly
+  in the production build, see below).
+- `ideas/f_a_build_process.md` written, scoping the `f_a_` build-process
+  question as a follow-up.
+- **`package/patchers/f_a_ripple.maxpat` — first working production DSP
+  build, confirmed by ear.** Committed to `f_` in two commits: docs
+  (`703d3e3`), the patcher itself (`f63c0ba`).
 
 ## Next session — start here
 
-**Mid-session reframe (2026-09-16), worth carrying forward**: stop trying
-to verify everything from foundational assumptions — accept reasonable
-assumptions about general CPU performance and Max/gen~ behavior, and
-prioritize getting `f_a_ripple` to a finishable state over exhaustively
-proving each piece. Two concrete consequences already applied:
-- T7b (PM in `pfft~`) and T8 (cross-frequency correlation check) are
-  **not actually gating `f_a_ripple` v1** — T7/T7b is Build B work
-  (`pfft~` audio *processor*), which spec.md explicitly scopes as the
-  separate `f_a_decorrelate` module, not this one. T8 is offline
-  scientific validation of the paper's claim, not a build requirement.
-  Spec.md's real Acceptance bar is just: trial-default config nulls
-  acceptably against the MATLAB reference, and every free parameter
-  sweeps live without clicks/silence/clipping.
-- The `f_a_`-class build-process question (no `definition.py` equivalent
-  for audio modules) is scoped as its own follow-up in
-  `ideas/f_a_build_process.md`, not something to solve while finishing
-  this module.
+**Production UI polish.** The DSP is done and confirmed working; the UI
+is still plain flonums/toggles/messages, not the `f_` visual convention
+(`live.dial`/`live.numbox`/`live.menu` grid, panel/title styling, bypass).
+`ideas/f_a_build_process.md` has the analysis of which parts of
+`build_patcher.py`'s UI-generation helpers are reusable as-is. This is
+comparatively mechanical work now that the DSP itself is solid.
 
-**Wavetable-size fix: implemented 2026-09-16, not re-verified.** Applied
-`peek`-based linear interpolation (read the two nearest table entries,
-blend by the fractional index, wrap via `mod`) to
-`f_a_ripple_scratch_t3.maxpat`'s wavetable codebox and both T5/T6's
-wavetable-render codeboxes — by design, per the reframe above, rather than
-continuing to chase last session's broken measurement rig. Worth a quick
-listen/scope glance next time these patches are open, but not treated as
-blocking.
+**Then Phase 5** — docs and helpfile. Not started.
 
-**Free-parameter sanity sweep: done 2026-09-16.** `depth`, `tmr`,
-`smr_mean`, `smr_range` (including a value exceeding `smr_mean`, to cross
-S(t)'s sign reversal), and `smr_cycle` all swept live on T5 — no clicks,
-dropouts, or clipping reported. Impressions-only, per the reframe, not a
-formal write-up.
-
-**Phase 3 is effectively closed at this point** (see plan.md). One real
-gap surfaced while doing the sweep: **`pm_turns` isn't actually wired as
-a live parameter in T6** — the codebox hardcodes the trial-default PM
-depth (`halfpi = twopi/4`) rather than exposing it as a `Param`. Not a
-blocker (AM-only path is fully sane), but a known TODO whenever T6 gets
-built out further.
-
-**Genuinely next, if picked up again**: Phase 4 (production packaging) —
-see `ideas/f_a_build_process.md`, not started, shared with `f_a_purr`.
-Otherwise `f_a_ripple`'s Phase 2/3 work is in a good, finishable state.
-
-**The `peakamp~` measurement rig in `f_a_ripple_scratch_t3.maxpat` was
-never made trustworthy last session** (A-alone and A−B residual read
-identical values; repeated reads at the same f0 didn't agree) — don't
-resume debugging it unless it's actually needed again; it's been
-superseded by the decision to fix the wavetable by design instead.
-
-**Still open from before, untouched this session:**
-- T7b (PM in `pfft~`) — see idea file's "Open question: PM in `pfft~`."
-- T8 (cross-frequency correlation check) — the one flagged as "easy to
-  skip and shouldn't be."
-- The loop-bound fix in T5/T6's codebox (`n_lo..n_hi` instead of fixed
-  `1..200`) — not urgent (CPU measurement showed it doesn't matter at
-  current scale) but still technically incorrect relative to what ADR-2
-  describes.
+**Loose ends, not blocking:**
+- `carrier_phase` (sine vs. random) is still hardcoded to sine — the
+  trial-faithful default, and correct for v1, but the "random phase" free
+  parameter from spec.md's Parameters table isn't wired up. Low priority.
+- The modulated-band loop still runs a fixed 200 iterations regardless of
+  `band`/`f0` (doesn't restrict to `n_lo..n_hi`) — confirmed not a CPU
+  problem, but still a correctness/hygiene gap relative to what ADR-2
+  describes. Same status in the new production build as it was in T5/T6.
+- `f_a_ripple_scratch_t3.maxpat`'s `peakamp~`/`atodb` measurement rig was
+  never made trustworthy (A-alone and A−B residual read identical values;
+  unrepeatable readings) — superseded by the decision to fix the
+  wavetable by design instead. Don't resume debugging it unless actually
+  needed again.
+- T7b (PM in `pfft~`) and T8 (cross-frequency correlation check) remain
+  unstarted — confirmed this session that neither actually gates
+  `f_a_ripple` v1 (see reframe above), so no urgency, but they're real
+  work if `f_a_decorrelate` or the paper's-claim validation ever becomes
+  a priority.
 - Read-through of `gen-tilde-codebox`/`pfft-spectral-processing` for
-  internal consistency — flagged last session, still not done.
+  internal consistency — flagged two sessions ago, still not done.
+- `_t4.maxpat`, `_t7a.maxpat`, `t7a_inner.maxpat`,
+  `_t7a_bandcheck.maxpat` untouched this session, still intentionally
+  messy scratch state.
 
 ## Loose threads
 
-**`git` was completely broken at the start of this session** (Xcode
-license prompt blocking every git command) — fixed via `sudo xcodebuild
--license`, run by Matt directly since it needs a password. Not expected
-to recur, but if git errors with an Xcode license message again, that's
-the fix.
-
-**Scratch patches remain intentionally messy**, now with debug
-instrumentation added this session on top of the previous session's
-mess: `f_a_ripple_scratch_t3.maxpat` (peakamp~/atodb rig, not yet
-trustworthy), `_t5.maxpat` and `_t6.maxpat` (spectroscope~ added,
-working). `_t4.maxpat`, `_t7a.maxpat`, `t7a_inner.maxpat`,
-`_t7a_bandcheck.maxpat` untouched this session.
-
-**Uncommitted.** All of tonight's spec.md/plan.md/idea-file edits and
-all scratch-patch edits are on disk in `f_` and `~/Vsynth/patterns/`,
-nothing committed there (the claude-scaffold skill commits are the only
-commits made this session). Matt commits manually.
+**Everything from tonight is committed** in `f_` (two commits, `703d3e3`
+and `f63c0ba`) — nothing left uncommitted there. The scratch patches in
+`~/Vsynth/patterns/` (including the new `f_a_ripple_v1.maxpat`, now also
+copied to `package/patchers/f_a_ripple.maxpat` in the repo) aren't under
+git — that's expected, matches how this project has always treated the
+Vsynth scratch directory.
