@@ -7,22 +7,53 @@ path so the original idea remains findable.)**
 **Status:** discussed to a conclusion 2026-07-29, not yet specced. No
 code written. Some claims verified directly against `f_masonry` and
 `src/` during that discussion (marked **verified**); the rest is
-inference and still needs checking.
+inference and still needs checking. **SUPERSEDED AS THE LEADING PLAN,
+2026-09-17** — see banner below.
 
 ---
 
 ## Conclusion
 
-> **⚠️ 2026-07-29, same session: a possible alternative to this whole
-> approach was raised — see `ideas/named_mod_textures.md`.** Tagging
-> texture streams with `prepend` and demultiplexing with `route` inside
-> the module would solve the same scaling problem *without* breaking
-> Kevin's 1:1 binding, without a matrix, and without an assignment UI.
-> It is **unverified** — nothing scratch-tested — so the conclusion
-> below stands for now, since it is at least grounded in a shipped
-> working implementation. But do not build on this file until
-> `named_mod_textures.md` T1/T2 have been run, because passing tests
-> there would make most of what follows obsolete.
+> **⚠️ 2026-09-17 update: the trigger condition below has been met.**
+> `named_mod_textures.md` T1 (round-trip), T2 (two tagged streams sharing
+> one inlet), and T3 (no staleness) all passed live in Max. Per this
+> file's own 2026-07-29 note, that makes most of the conclusion below
+> obsolete as the *leading* plan — not deleted, since the tagged-texture
+> approach still needs its own T4 (live, against a real `vs_inState`-
+> wrapped module)/T5 (inlet ceiling)/T6 (`routepass` interaction) closed,
+> plus an unexplained failure mode (a bare pass-through `jit.gl.pix`
+> didn't render in the scratch test; routing straight into the display
+> did) root-caused before anything gets built on it either.
+>
+> What actually falls away if named textures holds: the assignment
+> *matrix* mechanism itself, `f_util_matrix_grid.js` as something worth
+> continuing to invest in (nothing left to display), and the
+> `_mod_amt_a`/`_mod_amt_b`/`_mod_amt_c` per-param×channel Param
+> explosion — named tags give each target its own dedicated stream, so
+> that collapses toward one mod-depth Param per target.
+>
+> What survives untouched, because it's orthogonal to the routing
+> mechanism: the scalar/depth/texture **triple** (see "Scalar modulation
+> vs. texture modulation" below), the **unipolar/bipolar divergence**
+> (still fully open, still blocking), "masonry isn't convention
+> authority," and masonry's real insight that mod sources are different
+> **coordinate spaces**, not interchangeable channels (see "Why
+> `f_masonry` is the wrong template" below) — a named target still needs
+> to be sampled at its own correct space, that part doesn't go away.
+>
+> One real tradeoff, not a strict loss: the matrix model let one
+> upstream texture drive several params at once, at different live-
+> adjustable depths, from a UI grid. Named textures doesn't give that for
+> free — fanning one source to two params becomes an upstream patching
+> decision (cable it out twice under two tags), not a runtime-adjustable
+> blend. Worth checking whether that multicast was ever actually used
+> before treating its loss as a real cost.
+>
+> Original 2026-07-29 banner, for the record: "a possible alternative to
+> this whole approach was raised — see `ideas/named_mod_textures.md`...
+> unverified — nothing scratch-tested — so the conclusion below stands
+> for now... do not build on this file until T1/T2 have been run, because
+> passing tests there would make most of what follows obsolete."
 
 A module exposes a small fixed number of mod texture inlets (**2 as the
 working default**), and *what those textures drive* is set in the UI at

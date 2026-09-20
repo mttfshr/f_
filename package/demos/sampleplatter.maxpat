@@ -9,8 +9,299 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 139.0, 95.0, 1516.0, 922.0 ],
+        "rect": [ 139.0, 95.0, 969.0, 922.0 ],
         "boxes": [
+            {
+                "box": {
+                    "bubbletextmargin": 1,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-68",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 582.3333506882191, 455.0000135600567, 57.083350628614426, 18.0 ],
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_focus_frame"
+                        }
+                    },
+                    "text": " Mod",
+                    "textcolor": [ 0.41657702213511, 0.416576918840945, 0.41657694583336, 1.0 ],
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 12.0,
+                    "id": "obj-67",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 571.25, 384.8000057339668, 66.08335062861443, 21.0 ],
+                    "text": "Droste",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-66",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 583.000017374754, 426.6666793823242, 56.333350628614426, 18.0 ],
+                    "saved_attribute_attributes": {
+                        "textcolor": {
+                            "expression": "themecolor.live_focus_frame"
+                        }
+                    },
+                    "text": " Mod",
+                    "textcolor": [ 0.41657702213511, 0.416576918840945, 0.41657694583336, 1.0 ],
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "activebgcolor": [ 0.071196037102503, 0.071195997168178, 0.071196007384196, 1.0 ],
+                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
+                    "appearance": 2,
+                    "focusbordercolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
+                    "fontname": "Ableton Sans Light",
+                    "id": "obj-65",
+                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
+                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 638.6666857004166, 485.00001445412636, 67.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activebgcolor": {
+                            "expression": "themecolor.live_meter_bg"
+                        },
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_selection"
+                        },
+                        "focusbordercolor": {
+                            "expression": "themecolor.live_contrast_frame"
+                        },
+                        "lcdbgcolor": {
+                            "expression": ""
+                        },
+                        "lcdcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[22]",
+                            "parameter_mmax": 1.0,
+                            "parameter_mmin": -1.0,
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "live.numbox[4]",
+                            "parameter_steps": 1000,
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "valuepopup": 1,
+                    "varname": "live.numbox[6]"
+                }
+            },
+            {
+                "box": {
+                    "activebgcolor": [ 0.071196037102503, 0.071195997168178, 0.071196007384196, 1.0 ],
+                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
+                    "appearance": 2,
+                    "focusbordercolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
+                    "fontname": "Ableton Sans Light",
+                    "id": "obj-64",
+                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
+                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 638.6666857004166, 470.33334735035896, 67.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activebgcolor": {
+                            "expression": "themecolor.live_meter_bg"
+                        },
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_selection"
+                        },
+                        "focusbordercolor": {
+                            "expression": "themecolor.live_contrast_frame"
+                        },
+                        "lcdbgcolor": {
+                            "expression": ""
+                        },
+                        "lcdcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[21]",
+                            "parameter_mmax": 1.0,
+                            "parameter_mmin": -1.0,
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "live.numbox[4]",
+                            "parameter_steps": 1000,
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "valuepopup": 1,
+                    "varname": "live.numbox[5]"
+                }
+            },
+            {
+                "box": {
+                    "activebgcolor": [ 0.071196037102503, 0.071195997168178, 0.071196007384196, 1.0 ],
+                    "activeslidercolor": [ 0.3, 0.3, 0.3, 1.0 ],
+                    "appearance": 3,
+                    "focusbordercolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
+                    "fontname": "Ableton Sans Light",
+                    "id": "obj-57",
+                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
+                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 638.6666857004166, 456.6666802763939, 66.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activebgcolor": {
+                            "expression": "themecolor.live_meter_bg"
+                        },
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_lcd_control_fg_zombie"
+                        },
+                        "focusbordercolor": {
+                            "expression": "themecolor.live_contrast_frame"
+                        },
+                        "lcdbgcolor": {
+                            "expression": ""
+                        },
+                        "lcdcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[19]",
+                            "parameter_mmax": 1.0,
+                            "parameter_mmin": -1.0,
+                            "parameter_modmode": 3,
+                            "parameter_shortname": "live.numbox[4]",
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "varname": "live.numbox[1]"
+                }
+            },
+            {
+                "box": {
+                    "activebgcolor": [ 0.071196037102503, 0.071195997168178, 0.071196007384196, 1.0 ],
+                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
+                    "appearance": 3,
+                    "focusbordercolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
+                    "fontname": "Ableton Sans Light",
+                    "id": "obj-58",
+                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
+                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
+                    "maxclass": "live.numbox",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "outlettype": [ "", "float" ],
+                    "parameter_enable": 1,
+                    "patching_rect": [ 638.6666857004166, 442.6666798591614, 67.0, 15.0 ],
+                    "saved_attribute_attributes": {
+                        "activebgcolor": {
+                            "expression": "themecolor.live_meter_bg"
+                        },
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_selection"
+                        },
+                        "focusbordercolor": {
+                            "expression": "themecolor.live_contrast_frame"
+                        },
+                        "lcdbgcolor": {
+                            "expression": ""
+                        },
+                        "lcdcolor": {
+                            "expression": ""
+                        },
+                        "valueof": {
+                            "parameter_longname": "live.numbox[20]",
+                            "parameter_mmax": 1.0,
+                            "parameter_mmin": -1.0,
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "live.numbox[4]",
+                            "parameter_steps": 1000,
+                            "parameter_type": 0,
+                            "parameter_unitstyle": 1
+                        }
+                    },
+                    "valuepopup": 1,
+                    "varname": "live.numbox[4]"
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-56",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 582.3333506882191, 482.6666810512543, 57.0, 18.0 ],
+                    "text": "Rotation",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "floatoutput": 1,
+                    "id": "obj-53",
+                    "maxclass": "slider",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "orientation": 1,
+                    "outlettype": [ "" ],
+                    "parameter_enable": 0,
+                    "patching_rect": [ 703.0, 278.0, 87.0, 21.5 ],
+                    "valuepopup": 1
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-44",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 582.3333506882191, 468.66668063402176, 57.0, 18.0 ],
+                    "text": "Twist",
+                    "textjustification": 2
+                }
+            },
+            {
+                "box": {
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 9.5,
+                    "id": "obj-36",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 582.3333506882191, 441.3333464860916, 57.0, 18.0 ],
+                    "text": "Arms",
+                    "textjustification": 2
+                }
+            },
             {
                 "box": {
                     "bgmode": 1,
@@ -76,329 +367,22 @@
             {
                 "box": {
                     "fontname": "Ableton Sans Light",
-                    "fontsize": 8.0,
-                    "id": "obj-90",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 581.5000010728836, 494.3333480656147, 27.0, 16.0 ],
-                    "text": "Mod",
-                    "textcolor": [ 0.5686274509803921, 0.6980392156862745, 0.9019607843137255, 1.0 ]
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-91",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 581.5000010728836, 476.3333475291729, 39.0, 18.0 ],
-                    "text": "Param"
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-92",
-                    "maxclass": "live.dial",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 545.5, 476.3333475291729, 27.0, 34.0 ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_longname": "live.dial[5]",
-                            "parameter_mmax": 1.0,
-                            "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "live.dial",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "showname": 0,
-                    "shownumber": 0,
-                    "triangle": 1,
-                    "varname": "live.dial[3]"
-                }
-            },
-            {
-                "box": {
-                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
-                    "appearance": 3,
-                    "bordercolor": [ 0.09019607843137255, 0.09019607843137255, 0.09019607843137255, 0.0 ],
-                    "fontname": "Ableton Sans Light",
-                    "id": "obj-93",
-                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
-                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
-                    "maxclass": "live.numbox",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 611.5000019669533, 495.333348095417, 38.0, 15.0 ],
-                    "saved_attribute_attributes": {
-                        "activeslidercolor": {
-                            "expression": "themecolor.live_selection"
-                        },
-                        "bordercolor": {
-                            "expression": ""
-                        },
-                        "lcdbgcolor": {
-                            "expression": ""
-                        },
-                        "lcdcolor": {
-                            "expression": ""
-                        },
-                        "textcolor": {
-                            "expression": ""
-                        },
-                        "valueof": {
-                            "parameter_longname": "live.numbox[13]",
-                            "parameter_mmax": 1.0,
-                            "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "live.numbox[4]",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "textcolor": [ 0.5686274509803921, 0.6980392156862745, 0.9019607843137255, 1.0 ],
-                    "textjustification": 0,
-                    "varname": "live.numbox[5]"
-                }
-            },
-            {
-                "box": {
-                    "appearance": 3,
-                    "bordercolor": [ 0.09019607843137255, 0.09019607843137255, 0.09019607843137255, 0.0 ],
-                    "fontname": "Ableton Sans Light",
-                    "id": "obj-94",
-                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
-                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
-                    "maxclass": "live.numbox",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 615.5000020861626, 476.3333475291729, 34.0, 15.0 ],
-                    "saved_attribute_attributes": {
-                        "bordercolor": {
-                            "expression": ""
-                        },
-                        "lcdbgcolor": {
-                            "expression": ""
-                        },
-                        "lcdcolor": {
-                            "expression": ""
-                        },
-                        "valueof": {
-                            "parameter_longname": "live.numbox[14]",
-                            "parameter_mmax": 1.0,
-                            "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "live.numbox[4]",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "textjustification": 0,
-                    "varname": "live.numbox[6]"
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 8.0,
-                    "id": "obj-85",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 581.5000010728836, 455.66668024659157, 27.0, 16.0 ],
-                    "text": "Mod",
-                    "textcolor": [ 0.5686274509803921, 0.6980392156862745, 0.9019607843137255, 1.0 ]
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "obj-86",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 581.5000010728836, 437.66667971014977, 39.0, 18.0 ],
-                    "text": "Param"
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-87",
-                    "maxclass": "live.dial",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 545.5, 437.66667971014977, 27.0, 34.0 ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_longname": "live.dial[4]",
-                            "parameter_mmax": 1.0,
-                            "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "live.dial",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "showname": 0,
-                    "shownumber": 0,
-                    "triangle": 1,
-                    "varname": "live.dial[2]"
-                }
-            },
-            {
-                "box": {
-                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
-                    "appearance": 3,
-                    "bordercolor": [ 0.09019607843137255, 0.09019607843137255, 0.09019607843137255, 0.0 ],
-                    "fontname": "Ableton Sans Light",
-                    "id": "obj-88",
-                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
-                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
-                    "maxclass": "live.numbox",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 611.5000019669533, 456.6666802763939, 38.0, 15.0 ],
-                    "saved_attribute_attributes": {
-                        "activeslidercolor": {
-                            "expression": "themecolor.live_selection"
-                        },
-                        "bordercolor": {
-                            "expression": ""
-                        },
-                        "lcdbgcolor": {
-                            "expression": ""
-                        },
-                        "lcdcolor": {
-                            "expression": ""
-                        },
-                        "textcolor": {
-                            "expression": ""
-                        },
-                        "valueof": {
-                            "parameter_longname": "live.numbox[8]",
-                            "parameter_mmax": 1.0,
-                            "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "live.numbox[4]",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "textcolor": [ 0.5686274509803921, 0.6980392156862745, 0.9019607843137255, 1.0 ],
-                    "textjustification": 0,
-                    "varname": "live.numbox[1]"
-                }
-            },
-            {
-                "box": {
-                    "appearance": 3,
-                    "bordercolor": [ 0.09019607843137255, 0.09019607843137255, 0.09019607843137255, 0.0 ],
-                    "fontname": "Ableton Sans Light",
-                    "id": "obj-89",
-                    "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
-                    "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
-                    "maxclass": "live.numbox",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 615.5000020861626, 437.66667971014977, 34.0, 15.0 ],
-                    "saved_attribute_attributes": {
-                        "bordercolor": {
-                            "expression": ""
-                        },
-                        "lcdbgcolor": {
-                            "expression": ""
-                        },
-                        "lcdcolor": {
-                            "expression": ""
-                        },
-                        "valueof": {
-                            "parameter_longname": "live.numbox[12]",
-                            "parameter_mmax": 1.0,
-                            "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "live.numbox[4]",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "textjustification": 0,
-                    "varname": "live.numbox[4]"
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 8.0,
-                    "id": "obj-64",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 581.5, 417.5, 27.0, 16.0 ],
-                    "text": "Mod",
-                    "textcolor": [ 0.5686274509803921, 0.6980392156862745, 0.9019607843137255, 1.0 ]
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
                     "fontsize": 9.5,
                     "id": "obj-63",
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 581.5, 399.5, 39.0, 18.0 ],
-                    "text": "Param"
+                    "patching_rect": [ 582.3333506882191, 412.6666789650917, 57.083350628614426, 18.0 ],
+                    "text": "Zoom",
+                    "textjustification": 2
                 }
             },
             {
                 "box": {
-                    "id": "obj-59",
-                    "maxclass": "live.dial",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "parameter_enable": 1,
-                    "patching_rect": [ 545.5, 399.5, 27.0, 34.0 ],
-                    "saved_attribute_attributes": {
-                        "valueof": {
-                            "parameter_longname": "live.dial[1]",
-                            "parameter_mmax": 1.0,
-                            "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "live.dial",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "showname": 0,
-                    "shownumber": 0,
-                    "triangle": 1,
-                    "varname": "live.dial[1]"
-                }
-            },
-            {
-                "box": {
-                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
+                    "activebgcolor": [ 0.071196037102503, 0.071195997168178, 0.071196007384196, 1.0 ],
+                    "activeslidercolor": [ 0.3, 0.3, 0.3, 1.0 ],
                     "appearance": 3,
-                    "bordercolor": [ 0.09019607843137255, 0.09019607843137255, 0.09019607843137255, 0.0 ],
+                    "focusbordercolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
                     "fontname": "Ableton Sans Light",
                     "id": "obj-60",
                     "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
@@ -408,21 +392,21 @@
                     "numoutlets": 2,
                     "outlettype": [ "", "float" ],
                     "parameter_enable": 1,
-                    "patching_rect": [ 611.5, 418.5, 38.0, 15.0 ],
+                    "patching_rect": [ 638.75, 428.25, 65.91668570041656, 15.0 ],
                     "saved_attribute_attributes": {
-                        "activeslidercolor": {
-                            "expression": "themecolor.live_selection"
+                        "activebgcolor": {
+                            "expression": "themecolor.live_meter_bg"
                         },
-                        "bordercolor": {
-                            "expression": ""
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_lcd_control_fg_zombie"
+                        },
+                        "focusbordercolor": {
+                            "expression": "themecolor.live_contrast_frame"
                         },
                         "lcdbgcolor": {
                             "expression": ""
                         },
                         "lcdcolor": {
-                            "expression": ""
-                        },
-                        "textcolor": {
                             "expression": ""
                         },
                         "valueof": {
@@ -435,16 +419,17 @@
                             "parameter_unitstyle": 1
                         }
                     },
-                    "textcolor": [ 0.5686274509803921, 0.6980392156862745, 0.9019607843137255, 1.0 ],
-                    "textjustification": 0,
                     "varname": "live.numbox[2]"
                 }
             },
             {
                 "box": {
+                    "activebgcolor": [ 0.13725490196078433, 0.13725490196078433, 0.13725490196078433, 1.0 ],
+                    "activeslidercolor": [ 0.248147342932382, 0.389555476390115, 0.57502990756344, 1.0 ],
                     "appearance": 3,
-                    "bordercolor": [ 0.09019607843137255, 0.09019607843137255, 0.09019607843137255, 0.0 ],
+                    "focusbordercolor": [ 0.089792420291703, 0.089792385133236, 0.089792394259233, 1.0 ],
                     "fontname": "Ableton Sans Light",
+                    "hint": "-1 | 1 range",
                     "id": "obj-61",
                     "lcdbgcolor": [ 0.06666666666666667, 0.06274509803921569, 0.06274509803921569, 1.0 ],
                     "lcdcolor": [ 0.30196078431372547, 0.3254901960784314, 0.4627450980392157, 1.0 ],
@@ -453,10 +438,16 @@
                     "numoutlets": 2,
                     "outlettype": [ "", "float" ],
                     "parameter_enable": 1,
-                    "patching_rect": [ 615.5, 399.5, 34.0, 15.0 ],
+                    "patching_rect": [ 637.8999998271465, 413.60000026226044, 67.0, 15.0 ],
                     "saved_attribute_attributes": {
-                        "bordercolor": {
+                        "activebgcolor": {
                             "expression": ""
+                        },
+                        "activeslidercolor": {
+                            "expression": "themecolor.live_selection"
+                        },
+                        "focusbordercolor": {
+                            "expression": "themecolor.live_contrast_frame"
                         },
                         "lcdbgcolor": {
                             "expression": ""
@@ -465,16 +456,19 @@
                             "expression": ""
                         },
                         "valueof": {
+                            "parameter_invisible": 3,
                             "parameter_longname": "live.numbox[7]",
                             "parameter_mmax": 1.0,
                             "parameter_mmin": -1.0,
-                            "parameter_modmode": 3,
+                            "parameter_modmode": 0,
                             "parameter_shortname": "live.numbox[4]",
+                            "parameter_steps": 1000,
                             "parameter_type": 0,
                             "parameter_unitstyle": 1
                         }
                     },
-                    "textjustification": 0,
+                    "valuepopup": 1,
+                    "valuepopuplabel": 1,
                     "varname": "live.numbox[3]"
                 }
             },
@@ -976,6 +970,19 @@
                     "patching_rect": [ 3.0, 7.0, 79.0, 316.0 ],
                     "viewvisibility": 1
                 }
+            },
+            {
+                "box": {
+                    "angle": 270.0,
+                    "bgcolor": [ 0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0 ],
+                    "id": "obj-47",
+                    "maxclass": "panel",
+                    "mode": 0,
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [ 592.0, 384.75, 113.66668570041656, 120.25 ],
+                    "proportion": 0.5
+                }
             }
         ],
         "lines": [
@@ -994,6 +1001,14 @@
             {
                 "patchline": {
                     "destination": [ "obj-11", 0 ],
+                    "order": 1,
+                    "source": [ "obj-4", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-27", 0 ],
+                    "order": 0,
                     "source": [ "obj-4", 0 ]
                 }
             },
@@ -1192,7 +1207,8 @@
             "obj-4::obj-63": [ "wfg3_phase", "Phase", 0 ],
             "obj-4::obj-65": [ "wfg3_shape", "Shape", 0 ],
             "obj-4::obj-72": [ "wfg3_phase_time_switch", "wfg2_phase_time_switch", 0 ],
-            "obj-59": [ "live.dial[1]", "live.dial", 0 ],
+            "obj-57": [ "live.numbox[19]", "live.numbox[4]", 0 ],
+            "obj-58": [ "live.numbox[20]", "live.numbox[4]", 0 ],
             "obj-5::obj-19d": [ "panel_toggle", "panel_toggle", 0 ],
             "obj-5::obj-20": [ "aberration", "aberration", 0 ],
             "obj-5::obj-23": [ "tilt", "distortion", 0 ],
@@ -1212,6 +1228,8 @@
             "obj-5::obj-53": [ "halation_threshold", "halation_threshold", 0 ],
             "obj-60": [ "live.numbox[6]", "live.numbox[4]", 0 ],
             "obj-61": [ "live.numbox[7]", "live.numbox[4]", 0 ],
+            "obj-64": [ "live.numbox[21]", "live.numbox[4]", 0 ],
+            "obj-65": [ "live.numbox[22]", "live.numbox[4]", 0 ],
             "obj-7::obj-12": [ "f_module_1_disp", "live.menu", 0 ],
             "obj-7::obj-13": [ "f_module_1_file", "live.menu", 0 ],
             "obj-7::obj-16": [ "f_module_2_disp", "live.menu", 0 ],
@@ -1228,9 +1246,6 @@
             "obj-7::obj-37": [ "f_module_7_file", "live.menu", 0 ],
             "obj-7::obj-8": [ "f_module_0_disp", "live.menu", 0 ],
             "obj-7::obj-9": [ "f_module_0_file", "live.menu", 0 ],
-            "obj-87": [ "live.dial[4]", "live.dial", 0 ],
-            "obj-88": [ "live.numbox[8]", "live.numbox[4]", 0 ],
-            "obj-89": [ "live.numbox[12]", "live.numbox[4]", 0 ],
             "obj-8::obj-19::obj-2": [ "vs_phase_ctrl", "vs_phase_ctrl", 0 ],
             "obj-8::obj-20": [ "s1_cx", "s1_cx", 0 ],
             "obj-8::obj-23": [ "s1_cy", "s1_cy", 0 ],
@@ -1250,9 +1265,6 @@
             "obj-8::obj-65": [ "conv_amt", "conv_amt", 0 ],
             "obj-8::obj-68": [ "curl_amt", "curl_amt", 0 ],
             "obj-8::obj-76": [ "nodes", "nodes", 0 ],
-            "obj-92": [ "live.dial[5]", "live.dial", 0 ],
-            "obj-93": [ "live.numbox[13]", "live.numbox[4]", 0 ],
-            "obj-94": [ "live.numbox[14]", "live.numbox[4]", 0 ],
             "obj-95::obj-102": [ "live.numbox[17]", "live.numbox", 0 ],
             "obj-95::obj-105": [ "live.numbox[16]", "live.numbox", 0 ],
             "obj-95::obj-20": [ "s1_cx[1]", "s1_cx", 0 ],
