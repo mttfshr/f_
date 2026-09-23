@@ -4,6 +4,8 @@
 
 **Purpose:** Flat reference of every Vsynth module with type, tier, inlet/outlet count, and one-line description. The capability map for f_ design: answers "does Vsynth already do X?"
 
+**See also:** [`docs/f-reference/module-inventory.md`](../f-reference/module-inventory.md) — the equivalent flat capability map for the f_ extension layer built on top of this (color grading, vecfield-driven effects, discrete-item generators, etc). Most "should this be a new module" questions belong there first; come here when the answer might already exist in core Vsynth instead.
+
 **Tier definitions:**
 - **Tier 1** — single-pass, stateless. No frame memory. Pure shader.
 - **Tier 2** — multi-pass within one frame, no frame-to-frame state. (Not yet observed in Vsynth.)

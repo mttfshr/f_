@@ -84,6 +84,35 @@ Contents of the template:
   window (the template's single `vs_output` only displays one texture
   stream at a time)
 
+### Exception: bpatcher-composition scratch patches (comparing existing modules)
+
+The "don't hand-generate raw JSON" guidance above is about a **new**
+`jit.gl.pix`/gen/codebox object — Claude has no verified template for that
+internal wiring, and a subtle `numinlets`/inlet-order mistake there is
+expensive to debug. It does not apply to a scratch patch that only **wires
+together already-shipped `f_`/`vs_` bpatchers** — e.g. comparing two or
+three module chains side by side (a vortex field into `f_caustic` vs. into
+`f_vf_warp`, feeding separate `vs_preview` windows). For that case, Claude
+hand-authoring the `.maxpat` JSON directly is fine and is the preferred
+approach — validated 2026-09-20 on `scratch/fresnel_comparison.maxpat`.
+Each bpatcher's public interface (numinlets/numoutlets/outlettype) is
+already documented in `docs/f-reference/*.md` and `docs/vsynth-reference/`,
+so there's no inference risk the way there is for a new codebox — Claude
+is just placing `bpatcher` boxes (`name`, `varname`, `patching_rect`) and
+`patchline` connections between documented inlets/outlets. Base the JSON
+structure on an existing file already in the repo (e.g.
+`package/demos/general.maxpat`) for the exact box/patchline schema Max
+expects, and validate the result parses (`python3 -c "import json;
+json.load(open(path))"`) before handing it off.
+
+Do **not** reach for the `maxmsp` MCP server for this. It requires its own
+`max/mcp_host.maxpat` host patch open in Max — a generic audio-DSP sandbox
+unrelated to this project's actual Vsynth session — has no mechanism to
+point a `bpatcher` box at a specific module file, and its object
+cheat-sheet is oriented around plain audio objects (`cycle~`, `dac~`),
+not Vsynth's bpatcher/global-send architecture. Confirmed a poor fit in
+practice, not just in theory.
+
 ### Debugging "no output at all" — check the wire before the math
 
 If `vs_render` is confirmed running (fps reads a real number, not 0) and
