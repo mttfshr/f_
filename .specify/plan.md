@@ -1,6 +1,6 @@
 # f_ — Project Plan
 
-_Last updated: 2026-07-12_
+_Last updated: 2026-09-22_
 
 This document is orientation, not execution. It names active workstreams, states current thinking on sequencing and priority, and surfaces open questions that need a decision before work can proceed. Per-module task detail lives in `.specify/f_name/tasks.md`. Session-specific state and full narrative history live in `HANDOFF.md`.
 
@@ -31,6 +31,20 @@ This document is orientation, not execution. It names active workstreams, states
 ---
 
 ## Workstreams
+
+### Test infrastructure (math-first + Max test bench)
+**New 2026-09-22, built and working.** Two layers in `tests/`: a NumPy
+math layer (`gpu_sim.py` mirrors jit.gl.pix; `tests/run.sh`) and a Max test
+bench — one generated patch driven from Python over OSC, float32 `.jxf`
+data transfer, numeric diffs against the NumPy mirrors, fps measurement
+(`tests/bench.sh`, 21/21). Spec/plan/tasks: `.specify/test_bench/`. Any
+codebox can now be verified numerically without a hand-built scratch patch.
+First payoff: separable-DFT FFT verified on the GPU (~1e-7 vs `np.fft`,
+real-time at 128–256²) — see `ideas/ceyron_simulation_scripts_notes.md`.
+Also produced real GenExpr findings now in the `jit-gen-codebox` skill
+(notably: `cell` is `norm * (dim - 1)`, not an integer index). Candidates to
+put through it: re-verify `f_vf_vorticity` (UNVERIFIED), trace
+`f_apollonian`'s `debug_ok` contradiction.
 
 ### Demo patches
 **New 2026-07-19.** Multi-module (~4-6) concept-teaching patches, separate
