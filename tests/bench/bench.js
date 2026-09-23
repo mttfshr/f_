@@ -72,10 +72,11 @@ function bench_error() {
 function bang() {
     if (inlet !== 2 || !job) return;
     frames++;
-    if (frames === PARAM_FRAME && (job.mode === "correctness" || job.mode === "performance")) {
+    if (frames === PARAM_FRAME && job.mode !== "stub" && job.mode !== "stub_delay") {
         guarded(applyParams);
     }
     if (job.mode === "correctness") guarded(correctnessFrame);
+    else if (job.mode === "temporal") guarded(temporalFrame);
     else if (job.mode === "performance" && perf) guarded(performanceFrame);
 }
 
@@ -145,6 +146,8 @@ function startJob(dir) {
         startCorrectness();
     } else if (job.mode === "performance") {
         startPerformance();
+    } else if (job.mode === "temporal") {
+        startTemporal();
     } else {
         finish("error", "mode '" + job.mode + "' not implemented in this bench version");
     }
@@ -152,7 +155,11 @@ function startJob(dir) {
 
 // ------------------------------------------------------------ correctness
 
+function outName(k) { return k === 1 ? "bench_out" : "bench_out" + k; }
+function gateName(k) { return k === 1 ? "bench_gate" : "bench_gate" + k; }
+
 function startCorrectness() {
+    for (var k = 1; k <= 4; k++) obj(outName(k)).message("dim", 1, 1);   // detect silent outlets
     setupSlots(1);
     loadInputs();
     startWatchdog();
@@ -205,12 +212,80 @@ function loadInputs() {
 function correctnessFrame() {
     var w = Math.max(job.warmup || 5, PARAM_FRAME + 2);   // capture after params land
     if (frames === w + 1) {
-        obj("bench_gate").message(1);
+        for (var k = 1; k <= 4; k++) obj(gateName(k)).message(1);
     } else if (frames === w + 2) {
-        obj("bench_gate").message(0);
-        obj("bench_out").message("write", jobDir + "/out.jxf");
-        output = "out.jxf";
+        var got = [];
+        for (var j = 1; j <= 4; j++) {
+            obj(gateName(j)).message(0);
+            var m = obj(outName(j)), d = m.getattr("dim");
+            if (d && !(d[0] === 1 && d[1] === 1)) {
+                m.message("write", jobDir + "/" + (j === 1 ? "out.jxf" : "out" + j + ".jxf"));
+                got.push(j);
+            }
+        }
+        output = got.indexOf(1) >= 0 ? "out.jxf" : null;
+        extra.outputs = got;
         finish(errors.length ? "error" : "ok");
+    }
+}
+
+// ------------------------------------------------------------ temporal (E4)
+// Step s (1-based) renders on frame S0 + s - 1, S0 = first frame after params.
+// At the start of frame S0 (draw bang precedes the textures) js re-uploads the
+// initial state into in2/in3 and enables feedback, so step 1 reads the
+// initial state and step s reads step s-1's output. Captures: gates open at
+// the start of step s's frame, written at the start of the next frame (before
+// its textures), so consecutive steps can be captured.
+
+var temporal = null;
+
+function startTemporal() {
+    for (var k = 1; k <= 4; k++) obj(outName(k)).message("dim", 1, 1);
+    obj("bench_fbsel").message(0);
+    obj("bench_fbgate").message(0);
+    obj("bench_fb").message("type", job.type || "float32");
+    setupSlots(1);
+    loadInputs();
+    var fb = job.feedback || { from_out: 1, to_in: 2 };
+    var steps = (job.steps || [1]).slice().sort(function (a, b) { return a - b; });
+    temporal = { S0: Math.max(job.warmup || 5, PARAM_FRAME + 2), fb: fb, steps: steps,
+                 last: steps[steps.length - 1], open: null, captures: {} };
+    startWatchdog();
+}
+
+function temporalFrame() {
+    var t = temporal, step = frames - t.S0 + 1;
+    if (step < 1) return;
+    if (t.open !== null) {                            // write the step captured last frame
+        var got = [];
+        for (var k = 1; k <= 4; k++) {
+            obj(gateName(k)).message(0);
+            var m = obj(outName(k)), d = m.getattr("dim");
+            if (d && !(d[0] === 1 && d[1] === 1)) {
+                m.message("write", jobDir + "/out" + k + "_s" + t.open + ".jxf");
+                got.push(k);
+            }
+        }
+        t.captures[t.open] = got;
+        if (t.open === t.last) {
+            obj("bench_fbsel").message(0);
+            obj("bench_fbgate").message(0);
+            extra.captures = t.captures;
+            temporal = null;
+            finish(errors.length ? "error" : "ok");
+            return;
+        }
+        t.open = null;
+    }
+    if (step === 1) {
+        var ti = t.fb.to_in;                          // re-upload initial state, enable feedback
+        obj("bench_in" + ti).message("bang");
+        obj("bench_fbsel").message(t.fb.from_out);
+        obj("bench_fbgate").message(ti - 1);
+    }
+    if (t.steps.indexOf(step) >= 0) {
+        for (var j = 1; j <= 4; j++) obj(gateName(j)).message(1);
+        t.open = step;
     }
 }
 
@@ -308,8 +383,7 @@ function finish(status, extraError) {
     if (extraError) errors.push("bench: " + extraError);
     if (watchdog) { watchdog.cancel(); watchdog = null; }
     restorePerf();
-    var gate = obj("bench_gate");
-    if (gate) gate.message(0);
+    for (var gk = 1; gk <= 4; gk++) { var gate = obj(gateName(gk)); if (gate) gate.message(0); }
     var result = {
         id: job.id,
         status: status,

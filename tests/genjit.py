@@ -26,7 +26,7 @@ def count_ports(code):
     return max(ins + [1]), max(outs + [1])
 
 
-def make_genjit(code, n_inputs=None, n_outputs=None, min_inputs=1):
+def make_genjit(code, n_inputs=None, n_outputs=None, min_inputs=1, min_outputs=1):
     """min_inputs: create at least this many `in` objects even if the code
     doesn't reference them (unused ones are left unwired). jit.gl.pix's inlet
     count follows the gen patcher's `in` objects, so the bench uses
@@ -34,7 +34,8 @@ def make_genjit(code, n_inputs=None, n_outputs=None, min_inputs=1):
     auto_in, auto_out = count_ports(code)
     n_used = n_inputs or auto_in
     n_in = max(n_used, min_inputs)
-    n_out = n_outputs or auto_out
+    n_out_used = n_outputs or auto_out
+    n_out = max(n_out_used, min_outputs)    # constant outlet count (same idea as inputs)
     boxes, lines = [], []
     for i in range(n_in):
         boxes.append({"box": {
@@ -47,15 +48,16 @@ def make_genjit(code, n_inputs=None, n_outputs=None, min_inputs=1):
     boxes.append({"box": {
         "id": "codebox", "maxclass": "codebox", "code": code,
         "fontface": 0, "fontname": "<Monospaced>", "fontsize": 12.0,
-        "numinlets": n_used, "numoutlets": n_out, "outlettype": [""] * n_out,
+        "numinlets": n_used, "numoutlets": n_out_used, "outlettype": [""] * n_out_used,
         "patching_rect": [22.0, 60.0, 560.0, 400.0]}})
     for k in range(n_out):
         boxes.append({"box": {
             "id": f"out-{k + 1}", "maxclass": "newobj", "text": f"out {k + 1}",
             "numinlets": 1, "numoutlets": 0,
             "patching_rect": [22.0 + 60.0 * k, 480.0, 40.0, 22.0]}})
-        lines.append({"patchline": {"source": ["codebox", k],
-                                    "destination": [f"out-{k + 1}", 0]}})
+        if k < n_out_used:
+            lines.append({"patchline": {"source": ["codebox", k],
+                                        "destination": [f"out-{k + 1}", 0]}})
     return {"patcher": {
         "fileversion": 1,
         "appversion": {"major": 9, "minor": 1, "revision": 4,

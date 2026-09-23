@@ -107,6 +107,9 @@ FLIP_ROWS = False
 
 
 def matrix_to_rgba(m):
+    m = np.asarray(m)
+    if m.dtype == np.uint8:                  # char matrix: k represents k/255
+        m = m.astype(np.float32) / np.float32(255)
     rgba = np.asarray(m, np.float32)[..., PLANES_ARGB_TO_RGBA]
     return rgba[::-1] if FLIP_ROWS else rgba
 

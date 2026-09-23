@@ -19,6 +19,8 @@ from pathlib import Path
 HOST = "127.0.0.1"
 TO_BENCH_PORT = 7471
 FROM_BENCH_PORT = 7472
+CODEBOX_PORTS = (TO_BENCH_PORT, FROM_BENCH_PORT)     # tests/bench/bench.maxpat
+MODULE_PORTS = (7473, 7474)                          # tests/bench/bench_module.maxpat
 
 TESTS_DIR = Path(__file__).resolve().parent
 BENCH_DIR = TESTS_DIR / "bench"
@@ -91,19 +93,23 @@ def osc_decode(data):
 # ---------------------------------------------------------------- transport
 
 class Channel:
-    """Context manager: bind the reply port, send, and receive replies."""
+    """Context manager: bind the reply port, send, and receive replies.
+    ports = (to_bench, from_bench); defaults to the codebox bench."""
+
+    def __init__(self, ports=CODEBOX_PORTS):
+        self.to_port, self.from_port = ports
 
     def __enter__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind((HOST, FROM_BENCH_PORT))
+        self.sock.bind((HOST, self.from_port))
         return self
 
     def __exit__(self, *exc):
         self.sock.close()
 
     def send(self, address, *args):
-        self.sock.sendto(osc_encode(address, *args), (HOST, TO_BENCH_PORT))
+        self.sock.sendto(osc_encode(address, *args), (HOST, self.to_port))
 
     def wait_for(self, match, timeout):
         """Receive until match(address, args) is true; ignore other traffic.
@@ -123,8 +129,8 @@ class Channel:
                 return address, args
 
 
-def ping(timeout=1.0):
-    with Channel() as ch:
+def ping(timeout=1.0, ports=CODEBOX_PORTS):
+    with Channel(ports) as ch:
         ch.send("/ping")
         try:
             ch.wait_for(lambda a, _: a == "/pong", timeout)
@@ -133,28 +139,28 @@ def ping(timeout=1.0):
             return False
 
 
-def require_bench():
-    if not ping():
+def require_bench(ports=CODEBOX_PORTS, patch="bench.maxpat"):
+    if not ping(ports=ports):
         raise BenchUnreachable(
-            "bench not reachable -- open Max and tests/bench/bench.maxpat "
-            f"(expects /pong on UDP {FROM_BENCH_PORT})")
+            f"bench not reachable -- open Max and tests/bench/{patch} "
+            f"(expects /pong on UDP {ports[1]})")
 
 
-def reopen(wait=15.0):
-    """Close the open bench (if any) and open tests/bench/bench.maxpat fresh,
-    e.g. after regenerating it with make_bench.py. Max must be running."""
+def reopen(wait=15.0, ports=CODEBOX_PORTS, patch="bench.maxpat"):
+    """Close the open bench (if any) and open tests/bench/<patch> fresh,
+    e.g. after regenerating it. Max must be running."""
     import subprocess
-    with Channel() as ch:
+    with Channel(ports) as ch:
         ch.send("/close")
         try:
             ch.wait_for(lambda a, _: a in ("/closing", "/busy"), 1.0)
         except socket.timeout:
             pass                                    # not open: fine
     time.sleep(1.0)
-    subprocess.run(["open", "-a", "Max", str(BENCH_DIR / "bench.maxpat")], check=True)
+    subprocess.run(["open", "-a", "Max", str(BENCH_DIR / patch)], check=True)
     deadline = time.monotonic() + wait
     while time.monotonic() < deadline:
-        if ping(0.5):
+        if ping(0.5, ports=ports):
             return True
     raise BenchUnreachable("bench did not answer after reopening")
 
@@ -182,7 +188,7 @@ def _is_reply(kinds, job_dir):
     return lambda a, args: a in kinds and args and str(args[0]) == target
 
 
-def run_job(job, job_dir, channel=None):
+def run_job(job, job_dir, channel=None, ports=CODEBOX_PORTS):
     """Trigger a prepared job and wait for its result.json. Raises
     BenchBusy, BenchTimeout, or BenchUnreachable (no reply at all)."""
     _write_job(job, job_dir)
@@ -201,7 +207,7 @@ def run_job(job, job_dir, channel=None):
 
     if channel is not None:
         return go(channel)
-    with Channel() as ch:
+    with Channel(ports) as ch:
         return go(ch)
 
 
@@ -225,7 +231,7 @@ def _prepare(code, inputs, dim, mode, **fields):
         job["inputs"].append(name)
     (job_dir / "code.gen").write_text(code)
     genjit_path = BENCH_DIR / (job["gen"] + ".genjit")
-    write_genjit(genjit_path, code, min_inputs=3)   # constant 3 inlets (plan ADR-6 rev.)
+    write_genjit(genjit_path, code, min_inputs=3, min_outputs=4)   # constant inlets/outlets
     return job, job_dir, genjit_path
 
 
@@ -240,7 +246,8 @@ def _cleanup_genjits(keep):
 
 
 def run_pass(code, inputs, dim=None, params=None, warmup=5, timeout_ms=10000,
-             compile=False, raw=False, keep_genjit=False):
+             compile=False, raw=False, keep_genjit=False, pix_type="float32",
+             all_outputs=False):
     """Run one codebox pass on the bench (spec Story 2; plan ADR-3/ADR-4).
 
     code    -- codebox text (GenExpr)
@@ -248,6 +255,10 @@ def run_pass(code, inputs, dim=None, params=None, warmup=5, timeout_ms=10000,
     dim     -- (w, h) output size; defaults to the first input's size
     raw     -- return the output as the raw Jitter matrix (planes as stored)
                instead of converting through jxf's RGBA conventions
+    pix_type    -- "float32" (default) or "char" (E2); char outputs come back
+                   scaled to 0..1 (k/255)
+    all_outputs -- return [out1, out2, out3, out4] (None for silent outlets)
+                   instead of out1 alone (E1)
 
     Returns (output_array_or_None, result_dict). The codebox is also saved
     as code.gen in the job dir for post-mortems.
@@ -257,15 +268,49 @@ def run_pass(code, inputs, dim=None, params=None, warmup=5, timeout_ms=10000,
     job, job_dir, genjit_path = _prepare(
         code, inputs, dim, "correctness", params=params or {}, warmup=warmup,
         timeout_ms=timeout_ms, compile=bool(compile))
+    job["type"] = pix_type
     result = run_job(job, job_dir)
     if not keep_genjit:
         _cleanup_genjits(genjit_path)
-    out = None
-    out_path = job_dir / "out.jxf"
-    if result.get("output") and out_path.exists():
-        out = jxf.read_jxf(out_path) if raw else jxf.read_rgba(out_path)
+    read = jxf.read_jxf if raw else jxf.read_rgba
+    outs = []
+    for k in range(1, 5):
+        path = job_dir / ("out.jxf" if k == 1 else f"out{k}.jxf")
+        outs.append(read(path) if path.exists() else None)
     result["job_dir"] = str(job_dir)
-    return out, result
+    return (outs if all_outputs else outs[0]), result
+
+
+def run_temporal(code, inputs, steps, feedback=(1, 2), dim=None, params=None,
+                 pix_type="float32", timeout_ms=15000):
+    """E4: run a codebox for several frames with feedback -- slot 1's outlet
+    feedback[0] is copied (identity pass pix) into its inlet feedback[1] (2 or
+    3), one frame later. inputs[feedback[1]-1] is the initial state. Step s
+    reads step s-1's output (step 1 reads the initial state).
+
+    Returns ({step: [out1..out4 or None]}, result)."""
+    import jxf
+    from_out, to_in = feedback
+    if to_in not in (2, 3) or not 1 <= from_out <= 4:
+        raise ValueError("feedback = (from_out 1..4, to_in 2 or 3)")
+    if len(inputs) < to_in:
+        raise ValueError(f"inputs[{to_in - 1}] must hold the initial state")
+    job, job_dir, genjit_path = _prepare(
+        code, inputs, dim, "temporal", params=params or {}, timeout_ms=timeout_ms,
+        steps=sorted(set(int(s) for s in steps)),
+        feedback={"from_out": int(from_out), "to_in": int(to_in)})
+    job["type"] = pix_type
+    result = run_job(job, job_dir)
+    _cleanup_genjits(genjit_path)
+    frames = {}
+    for s in job["steps"]:
+        outs = []
+        for k in range(1, 5):
+            p = job_dir / f"out{k}_s{s}.jxf"
+            outs.append(jxf.read_rgba(p) if p.exists() else None)
+        frames[s] = outs
+    result["job_dir"] = str(job_dir)
+    return frames, result
 
 
 def measure(code, inputs, dim=None, chain=1, params=None, warmup=30,

@@ -323,7 +323,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             330.0,
@@ -331,6 +331,9 @@
             22.0
           ],
           "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             "jit_gl_texture",
             ""
           ],
@@ -343,7 +346,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             365.0,
@@ -351,6 +354,9 @@
             22.0
           ],
           "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             "jit_gl_texture",
             ""
           ],
@@ -363,7 +369,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             400.0,
@@ -371,6 +377,9 @@
             22.0
           ],
           "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             "jit_gl_texture",
             ""
           ],
@@ -383,7 +392,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             435.0,
@@ -391,6 +400,9 @@
             22.0
           ],
           "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             "jit_gl_texture",
             ""
           ],
@@ -403,7 +415,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             470.0,
@@ -411,6 +423,9 @@
             22.0
           ],
           "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             "jit_gl_texture",
             ""
           ],
@@ -423,7 +438,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             505.0,
@@ -431,6 +446,9 @@
             22.0
           ],
           "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             "jit_gl_texture",
             ""
           ],
@@ -443,7 +461,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             540.0,
@@ -451,6 +469,9 @@
             22.0
           ],
           "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             "jit_gl_texture",
             ""
           ],
@@ -463,7 +484,7 @@
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
           "numinlets": 3,
-          "numoutlets": 2,
+          "numoutlets": 5,
           "patching_rect": [
             20.0,
             575.0,
@@ -472,6 +493,9 @@
           ],
           "outlettype": [
             "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
             ""
           ],
           "varname": "bench_p8"
@@ -479,7 +503,7 @@
       },
       {
         "box": {
-          "id": "gate",
+          "id": "gate1",
           "maxclass": "newobj",
           "text": "gate",
           "numinlets": 2,
@@ -498,15 +522,15 @@
       },
       {
         "box": {
-          "id": "outmat",
+          "id": "outmat1",
           "maxclass": "newobj",
-          "text": "jit.matrix bench_out 4 float32 256 256 @adapt 1",
+          "text": "jit.matrix bench_out 4 float32 1 1 @adapt 1",
           "numinlets": 1,
           "numoutlets": 2,
           "patching_rect": [
             450.0,
             360.0,
-            290.0,
+            160.0,
             22.0
           ],
           "outlettype": [
@@ -514,6 +538,185 @@
             ""
           ],
           "varname": "bench_out"
+        }
+      },
+      {
+        "box": {
+          "id": "gate2",
+          "maxclass": "newobj",
+          "text": "gate",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "patching_rect": [
+            620.0,
+            320.0,
+            40.0,
+            22.0
+          ],
+          "outlettype": [
+            ""
+          ],
+          "varname": "bench_gate2"
+        }
+      },
+      {
+        "box": {
+          "id": "outmat2",
+          "maxclass": "newobj",
+          "text": "jit.matrix bench_out2 4 float32 1 1 @adapt 1",
+          "numinlets": 1,
+          "numoutlets": 2,
+          "patching_rect": [
+            620.0,
+            360.0,
+            160.0,
+            22.0
+          ],
+          "outlettype": [
+            "jit_matrix",
+            ""
+          ],
+          "varname": "bench_out2"
+        }
+      },
+      {
+        "box": {
+          "id": "gate3",
+          "maxclass": "newobj",
+          "text": "gate",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "patching_rect": [
+            790.0,
+            320.0,
+            40.0,
+            22.0
+          ],
+          "outlettype": [
+            ""
+          ],
+          "varname": "bench_gate3"
+        }
+      },
+      {
+        "box": {
+          "id": "outmat3",
+          "maxclass": "newobj",
+          "text": "jit.matrix bench_out3 4 float32 1 1 @adapt 1",
+          "numinlets": 1,
+          "numoutlets": 2,
+          "patching_rect": [
+            790.0,
+            360.0,
+            160.0,
+            22.0
+          ],
+          "outlettype": [
+            "jit_matrix",
+            ""
+          ],
+          "varname": "bench_out3"
+        }
+      },
+      {
+        "box": {
+          "id": "gate4",
+          "maxclass": "newobj",
+          "text": "gate",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "patching_rect": [
+            960.0,
+            320.0,
+            40.0,
+            22.0
+          ],
+          "outlettype": [
+            ""
+          ],
+          "varname": "bench_gate4"
+        }
+      },
+      {
+        "box": {
+          "id": "outmat4",
+          "maxclass": "newobj",
+          "text": "jit.matrix bench_out4 4 float32 1 1 @adapt 1",
+          "numinlets": 1,
+          "numoutlets": 2,
+          "patching_rect": [
+            960.0,
+            360.0,
+            160.0,
+            22.0
+          ],
+          "outlettype": [
+            "jit_matrix",
+            ""
+          ],
+          "varname": "bench_out4"
+        }
+      },
+      {
+        "box": {
+          "id": "fbsel",
+          "maxclass": "newobj",
+          "text": "switch 4 0",
+          "numinlets": 5,
+          "numoutlets": 1,
+          "patching_rect": [
+            450.0,
+            420.0,
+            90.0,
+            22.0
+          ],
+          "outlettype": [
+            ""
+          ],
+          "varname": "bench_fbsel"
+        }
+      },
+      {
+        "box": {
+          "id": "fb",
+          "maxclass": "newobj",
+          "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32",
+          "numinlets": 3,
+          "numoutlets": 5,
+          "patching_rect": [
+            450.0,
+            455.0,
+            330.0,
+            22.0
+          ],
+          "outlettype": [
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
+            "jit_gl_texture",
+            ""
+          ],
+          "varname": "bench_fb"
+        }
+      },
+      {
+        "box": {
+          "id": "fbgate",
+          "maxclass": "newobj",
+          "text": "gate 2 0",
+          "numinlets": 2,
+          "numoutlets": 2,
+          "patching_rect": [
+            450.0,
+            490.0,
+            60.0,
+            22.0
+          ],
+          "outlettype": [
+            "",
+            ""
+          ],
+          "varname": "bench_fbgate"
         }
       }
     ],
@@ -957,7 +1160,7 @@
             0
           ],
           "destination": [
-            "gate",
+            "gate1",
             1
           ]
         }
@@ -965,12 +1168,180 @@
       {
         "patchline": {
           "source": [
-            "gate",
+            "gate1",
             0
           ],
           "destination": [
-            "outmat",
+            "outmat1",
             0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "p1",
+            1
+          ],
+          "destination": [
+            "gate2",
+            1
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "gate2",
+            0
+          ],
+          "destination": [
+            "outmat2",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "p1",
+            2
+          ],
+          "destination": [
+            "gate3",
+            1
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "gate3",
+            0
+          ],
+          "destination": [
+            "outmat3",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "p1",
+            3
+          ],
+          "destination": [
+            "gate4",
+            1
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "gate4",
+            0
+          ],
+          "destination": [
+            "outmat4",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "p1",
+            0
+          ],
+          "destination": [
+            "fbsel",
+            1
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "p1",
+            1
+          ],
+          "destination": [
+            "fbsel",
+            2
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "p1",
+            2
+          ],
+          "destination": [
+            "fbsel",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "p1",
+            3
+          ],
+          "destination": [
+            "fbsel",
+            4
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "fbsel",
+            0
+          ],
+          "destination": [
+            "fb",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "fb",
+            0
+          ],
+          "destination": [
+            "fbgate",
+            1
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "fbgate",
+            0
+          ],
+          "destination": [
+            "p1",
+            1
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "fbgate",
+            1
+          ],
+          "destination": [
+            "p1",
+            2
           ]
         }
       }

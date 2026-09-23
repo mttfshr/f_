@@ -95,6 +95,36 @@ def test_4_two_inputs_physical_cords():
     check("out == in1 + 10*in2 (rel)", np.abs(out - expect).max() / np.abs(expect).max(), 1e-6)
 
 
+def test_5_multiple_outputs():
+    """E1: all four outlets captured. T111 gate (answered 2026-09-22): an
+    unwired `out 4` in the gen patcher compiles, keeps its outlet, and emits
+    an all-zero texture."""
+    x = rand(32, 32, seed=7)
+    code = "out1 = in1;\nout2 = in1 * 2;\nout3 = vec(norm.x, norm.y, 0, 1);"
+    outs, r = bc.run_pass(code, [x], all_outputs=True)
+    check("status ok (no errors from unwired out 4)", 0 if r["status"] == "ok" else 1, 0)
+    check("out1 == in1", np.abs(outs[0] - x).max(), 0)
+    check("out2 == 2*in1", np.abs(outs[1] - 2 * x).max(), 0)
+    nx, ny, _, _ = grid(32, 32)
+    check("out3 == (norm.x, norm.y, 0, 1)",
+          np.abs(outs[2] - np.stack([nx, ny, 0 * nx, 0 * nx + 1], -1)).max(), 0)
+    check("unwired out4 emits zeros", np.abs(outs[3]).max() if outs[3] is not None else 1, 0)
+
+
+def test_6_char_quantization():
+    """E2: pix @type char. Which quantization does the GPU apply (T121 gate)?
+    Values outside [0,1] included to check clamping."""
+    x = rand(32, 32, -0.25, 1.25, seed=8)
+    out, r = bc.run_pass("out1 = in1;", [x], pix_type="char")
+    check("status ok", 0 if r["status"] == "ok" else 1, 0)
+    c = np.clip(x, 0, 1)
+    d_round = np.abs(out - np.round(c * 255) / 255).max()
+    d_floor = np.abs(out - np.floor(c * 255) / 255).max()
+    note("max diff vs round(x*255)/255", d_round)
+    note("max diff vs floor(x*255)/255", d_floor)
+    check("matches round or floor exactly (incl. clamping)", min(d_round, d_floor), 1e-7)
+
+
 if __name__ == "__main__":
     bc.require_bench()
     sys.exit(run(globals()))

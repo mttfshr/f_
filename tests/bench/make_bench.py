@@ -107,18 +107,38 @@ for k in range(1, N_SLOTS + 1):
     bypass = "" if k == 1 else " @bypass 1"
     obj(f"p{k}", f"jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 "
         f"@type float32{bypass}",
-        3, 2, [20, 330 + (k - 1) * 35, 400, 22], ["jit_gl_texture", ""],
+        3, 5, [20, 330 + (k - 1) * 35, 400, 22], ["jit_gl_texture"] * 4 + [""],
         varname=f"bench_p{k}")
     wire(prev, 0, f"p{k}", 0)
     wire("tex2", 0, f"p{k}", 1)
     wire("tex3", 0, f"p{k}", 2)
     prev = f"p{k}"
 
-obj("gate", "gate", 2, 1, [450, 320, 40, 22], varname="bench_gate")
-obj("outmat", "jit.matrix bench_out 4 float32 256 256 @adapt 1", 1, 2,
-    [450, 360, 290, 22], ["jit_matrix", ""], varname="bench_out")
-wire("p1", 0, "gate", 1)
-wire("gate", 0, "outmat", 0)
+# capture taps on all 4 outlets of slot 1 (E1). Out 1 keeps the original
+# names (bench_gate / bench_out); outs 2-4 are bench_gateK / bench_outK.
+for k in range(1, 5):
+    g = "bench_gate" if k == 1 else f"bench_gate{k}"
+    o = "bench_out" if k == 1 else f"bench_out{k}"
+    obj(f"gate{k}", "gate", 2, 1, [450 + (k - 1) * 170, 320, 40, 22], varname=g)
+    obj(f"outmat{k}", f"jit.matrix {o} 4 float32 1 1 @adapt 1", 1, 2,
+        [450 + (k - 1) * 170, 360, 160, 22], ["jit_matrix", ""], varname=o)
+    wire("p1", k - 1, f"gate{k}", 1)
+    wire(f"gate{k}", 0, f"outmat{k}", 0)
+
+# E4 feedback path (Pattern 1: state pix + identity pass pix). A switch picks
+# which slot-1 outlet feeds back; bench_fb copies it; a gate routes the copy
+# into slot 1's inlet 1 (in2) or 2 (in3). Non-left pix inlets store without
+# rendering, so slot 1 reads the previous frame's output: one-frame delay.
+obj("fbsel", "switch 4 0", 5, 1, [450, 420, 90, 22], varname="bench_fbsel")
+for k in range(4):
+    wire("p1", k, "fbsel", k + 1)
+obj("fb", "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32", 3, 5,
+    [450, 455, 330, 22], ["jit_gl_texture"] * 4 + [""], varname="bench_fb")
+wire("fbsel", 0, "fb", 0)
+obj("fbgate", "gate 2 0", 2, 2, [450, 490, 60, 22], varname="bench_fbgate")
+wire("fb", 0, "fbgate", 1)
+wire("fbgate", 0, "p1", 1)
+wire("fbgate", 1, "p1", 2)
 
 patcher = {"patcher": {
     "fileversion": 1,
@@ -134,7 +154,7 @@ if __name__ == "__main__":
     import sys
     sys.path.insert(0, str(OUT.parent.parent))          # tests/
     from genjit import write_genjit
-    write_genjit(OUT.parent / "bench_default.genjit", "out1 = in1;", min_inputs=3)
+    write_genjit(OUT.parent / "bench_default.genjit", "out1 = in1;", min_inputs=3, min_outputs=4)
     with open(OUT, "w") as f:
         json.dump(patcher, f, indent=2)
     print(f"wrote {OUT} ({len(boxes)} boxes, {len(lines)} lines)")

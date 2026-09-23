@@ -105,6 +105,51 @@
             22.0
           ]
         }
+      },
+      {
+        "box": {
+          "id": "out-2",
+          "maxclass": "newobj",
+          "text": "out 2",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            82.0,
+            480.0,
+            40.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "out-3",
+          "maxclass": "newobj",
+          "text": "out 3",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            142.0,
+            480.0,
+            40.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "out-4",
+          "maxclass": "newobj",
+          "text": "out 4",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            202.0,
+            480.0,
+            40.0,
+            22.0
+          ]
+        }
       }
     ],
     "lines": [
