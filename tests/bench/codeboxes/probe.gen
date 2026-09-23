@@ -1,0 +1,2 @@
+// coordinate probe: which plane/row holds what (plan ADR-7)
+out1 = vec(norm.x, norm.y, cell.x, cell.y);

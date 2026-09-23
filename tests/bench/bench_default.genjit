@@ -1,0 +1,137 @@
+{
+  "patcher": {
+    "fileversion": 1,
+    "appversion": {
+      "major": 9,
+      "minor": 1,
+      "revision": 4,
+      "architecture": "x64",
+      "modernui": 1
+    },
+    "classnamespace": "jit.gen",
+    "rect": [
+      100.0,
+      100.0,
+      620.0,
+      540.0
+    ],
+    "boxes": [
+      {
+        "box": {
+          "id": "in-1",
+          "maxclass": "newobj",
+          "text": "in 1",
+          "numinlets": 0,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            22.0,
+            20.0,
+            34.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "in-2",
+          "maxclass": "newobj",
+          "text": "in 2",
+          "numinlets": 0,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            82.0,
+            20.0,
+            34.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "in-3",
+          "maxclass": "newobj",
+          "text": "in 3",
+          "numinlets": 0,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            142.0,
+            20.0,
+            34.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "codebox",
+          "maxclass": "codebox",
+          "code": "out1 = in1;",
+          "fontface": 0,
+          "fontname": "<Monospaced>",
+          "fontsize": 12.0,
+          "numinlets": 1,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            22.0,
+            60.0,
+            560.0,
+            400.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "out-1",
+          "maxclass": "newobj",
+          "text": "out 1",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            22.0,
+            480.0,
+            40.0,
+            22.0
+          ]
+        }
+      }
+    ],
+    "lines": [
+      {
+        "patchline": {
+          "source": [
+            "in-1",
+            0
+          ],
+          "destination": [
+            "codebox",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "codebox",
+            0
+          ],
+          "destination": [
+            "out-1",
+            0
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,2 @@
+// plane-order probe: R=1 G=2 B=3 A=4
+out1 = vec(1, 2, 3, 4);

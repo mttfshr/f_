@@ -1,0 +1,2 @@
+// deliberate syntax error (self-test: errors must surface)
+out1 = in1 +;

@@ -9,3 +9,7 @@
 *.swo
 
 __pycache__/
+
+# f_ tests runtime (see .specify/test_bench/)
+tests/jobs/
+tests/bench/job_*.genjit

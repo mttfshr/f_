@@ -1,0 +1,2 @@
+// two-input check: in2 delivered via activeinput (plan ADR-6 revision)
+out1 = in1 + in2 * 10;

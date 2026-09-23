@@ -1,0 +1,43 @@
+// dft_x.gen -- one pass of the separable DFT: full 1D DFT along x for every
+// row. Mirror of test_fft_separable.pass_dft(axis="x"); FFT T1
+// (.specify/test_bench/tasks.md T023).
+//
+// Packing (float32 RGBA): R,G = Re,Im of u; B,A = Re,Im of v.
+// inverse = 0: forward, exp(-i...);  inverse = 1: exp(+i...) and 1/N scale.
+//
+// Carried findings:
+//   - integer bin index is floor(norm.x * N) -- NOT `cell`, which is
+//     norm*(dim-1) on jit.gl.pix (bench probe, 2026-09-22)
+//   - nearest() at texel centers (n + 0.5)/N, never bilinear
+//   - twiddle index mod(k*n, N) before scaling to an angle (keeps sin/cos
+//     arguments small; exact for power-of-2 N)
+//   - components accessed inline on nearest(), never on a stored vector
+//
+// N is a hard constant. Its literal value appears exactly twice in the code
+// (the N assignment and the loop bound) and nowhere in comments;
+// bench_fft.py substitutes both to run other sizes.
+
+Param inverse(0);
+
+N = 128;
+k = floor(norm.x * N);
+sgn = inverse * 2 - 1;
+
+acc0 = 0;
+acc1 = 0;
+acc2 = 0;
+acc3 = 0;
+
+for (n = 0; n < 128; n += 1) {
+	uv = vec((n + 0.5) / N, norm.y);
+	ang = sgn * twopi * mod(k * n, N) / N;
+	c = cos(ang);
+	s = sin(ang);
+	acc0 += nearest(in1, uv).x * c - nearest(in1, uv).y * s;
+	acc1 += nearest(in1, uv).x * s + nearest(in1, uv).y * c;
+	acc2 += nearest(in1, uv).z * c - nearest(in1, uv).w * s;
+	acc3 += nearest(in1, uv).z * s + nearest(in1, uv).w * c;
+}
+
+scale = mix(1, 1 / N, inverse);
+out1 = vec(acc0, acc1, acc2, acc3) * scale;

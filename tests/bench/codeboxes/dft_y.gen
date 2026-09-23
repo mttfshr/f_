@@ -1,0 +1,28 @@
+// dft_y.gen -- one pass of the separable DFT: full 1D DFT along y for every
+// column. Mirror of test_fft_separable.pass_dft(axis="y"). Same packing,
+// conventions and N-substitution rule as dft_x.gen.
+
+Param inverse(0);
+
+N = 128;
+k = floor(norm.y * N);
+sgn = inverse * 2 - 1;
+
+acc0 = 0;
+acc1 = 0;
+acc2 = 0;
+acc3 = 0;
+
+for (n = 0; n < 128; n += 1) {
+	uv = vec(norm.x, (n + 0.5) / N);
+	ang = sgn * twopi * mod(k * n, N) / N;
+	c = cos(ang);
+	s = sin(ang);
+	acc0 += nearest(in1, uv).x * c - nearest(in1, uv).y * s;
+	acc1 += nearest(in1, uv).x * s + nearest(in1, uv).y * c;
+	acc2 += nearest(in1, uv).z * c - nearest(in1, uv).w * s;
+	acc3 += nearest(in1, uv).z * s + nearest(in1, uv).w * c;
+}
+
+scale = mix(1, 1 / N, inverse);
+out1 = vec(acc0, acc1, acc2, acc3) * scale;
