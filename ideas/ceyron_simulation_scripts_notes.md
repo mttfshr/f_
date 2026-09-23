@@ -279,3 +279,144 @@ one.
 This — the Jacobi scratch-patch test — is the actual next step for this
 whole thread, superseding the FFT round-trip fps test from finding #1's
 "where to resume" item as the higher-priority experiment to run first.
+
+## Addendum (2026-09-22) — "Rung 2": self-advected velocity + explicit viscosity, no projection
+
+Discussion only, no code, no scratch patch. Surfaced while reviewing this
+thread against the September 2026 Navier–Stokes Millennium result
+(OpenAI's claimed finite-time blowup proof for 3D NS). **That result
+changes nothing here:** it's a negative/blowup result (no new solver), it
+concerns 3D only (2D NS global regularity has been known since the
+1960s), and a discretized grid can't represent the fine-scale singular
+data anyway. The real constraints in this file (Jacobi pass count, no
+GL-space FFT, curl-on-`in3` failure) are all engineering, all unchanged.
+
+**The actual finding: `f_vf_advect` has no velocity state.** The vecfield
+arrives fresh from upstream every frame; only the dye (`prev_frame`)
+accumulates. Viscosity acts on velocity, so in the current architecture
+there's nothing for it to act on — `decay` fades dye, it doesn't thicken
+the fluid. This reframes "viscous fluid" as a velocity-state question
+first, a solver-cost question second.
+
+**Three rungs, only two previously recognized:**
+
+1. **Current** — dye advected by an external field. Viscous-looking only
+   via decay/blur on the dye.
+2. **New, middle rung (this addendum)** — velocity becomes its own
+   feedback state, advected by itself (backward-trace, same idiom as the
+   existing dye advection), plus explicit diffusion:
+   `u = u + nu*dt*laplacian(u)` (5-point stencil, one pass). This is
+   roughly viscous Burgers' equation — Navier–Stokes minus the pressure
+   term. Upstream vecfields enter as *forces* added to the velocity
+   state, not as the velocity itself.
+3. **Full Stam** — rung 2 plus pressure projection (Jacobi or FFT). Gated
+   on the Jacobi scratch-patch fps test above.
+
+**Why rung 2 might be cheap enough:** explicit diffusion is stable while
+`nu*dt/dx^2 <= 0.25` (2D, 5-point stencil). For low viscosity that fits
+in one pass per frame — no Poisson solve, no iteration. Plausible
+structure: a 2-stage `pix_chain` (velocity state: self-advect + diffuse +
+add force; dye state: the existing advection, now sampling the evolved
+velocity), each with its own `state`/`pass` feedback pair per the
+established `f_vf_advect` Pattern 1. Velocity state needs `float32`
+(same precision reasoning as the reverted confinement fold-in).
+
+**Expected character (reasoned, not observed):** without projection the
+velocity isn't divergence-free, so it forms smoothed shock-like fronts
+where flow converges, and thins where it diverges — not incompressible
+swirl. Could be a distinct, useful look in its own right rather than a
+degraded fluid. Unknown until scratch-tested.
+
+**The catch — high viscosity lands back on the Jacobi question.**
+Honey-like, visibly thick flow needs large `nu`, which breaks the explicit
+stability bound unless you take multiple explicit substeps per frame or
+switch to an implicit (Jacobi) diffusion solve. So rung 2 covers *low*
+viscosity cheaply; *high* viscosity shares rung 3's pass-count cost. The
+Jacobi fps test remains the gating experiment for really thick fluids
+either way.
+
+**Open questions before any spec:**
+- New module, or an evolution of `f_vf_advect`? Rung 2 changes what the
+  vecfield inlet *means* (force vs. velocity) — arguably a different
+  module, keeping `f_vf_advect`'s current passive-transport character
+  (and its `decay > 1.0` excitable mode) intact.
+- Does the velocity state get its own vecfield outlet (a producer that
+  evolves, feeding other `f_vf_` consumers)? Would be the first
+  self-evolving vecfield producer in the family.
+- How does force injection interact with `decay`-style velocity damping
+  — is damping needed at all once real diffusion exists, or does
+  unbounded forcing run away without it?
+- Does velocity self-advection hit the same unexplained neighbor-sampling
+  failure that sank curl-on-`in3`? Advection-style `sample(in3, src_uv)`
+  already works; the 5-point Laplacian is the untested part — the
+  multi-stage split noted in `ideas/vorticity_confinement.md` may apply.
+
+**Status:** scoped option, not scheduled. Cheapest first experiment:
+scratch-patch the velocity state alone (self-advect + one diffusion pass
++ a constant or `f_vf_vortex` force), visualize via `f_vf_split`, before
+wiring any dye stage.
+
+## Addendum (2026-09-22) — FFT dive: separable DFT, math verified in NumPy
+
+Two reframes from the discussion, then the first result.
+
+**Reframe 1: velocity doesn't need render resolution.** Stam-style solvers
+run velocity coarse (64²–256²) and carry dye/texture at full res. At 128² or
+256² the cost picture changes and power-of-2 is a free choice (internal
+resolution was already established as configurable, above).
+
+**Reframe 2: "~40 passes" was one implementation.** Options: multi-pass
+radix-2 Stockham (28 passes at 128², 32 at 256² for a 2D round trip);
+**separable naive DFT** (4 passes total, each a fixed-count loop of N
+`nearest()` samples per pixel — ~8.4M samples/frame at 128², ~67M at
+256², i.e. the same cost class as existing streak/glow loops at 640²);
+higher-radix hybrid; CPU `jit.fft` round trip. Separable DFT picked as the
+first candidate — structurally simplest, fits `f_`'s 1–4 pass shape.
+Packing: one float32 RGBA texture = (Re u, Im u, Re v, Im v). A fluid step
+is one round trip: advect (real space) → forward → diffusion+projection
+(one elementwise pass) → inverse.
+
+**Result: math is correct, verified without a patch.** New `tests/`
+directory (see `tests/README.md`) with a NumPy emulation of the jit.gl.pix
+execution model; `tests/test_fft_separable.py` mirrors the planned codeboxes
+pass-for-pass, float32 throughout. 9/9 pass at N=128 and 256: row DFT and 2D
+forward match `np.fft` (~5e-7 rel), forward+inverse nulls (~1e-5 abs),
+single-mode diffusion decays exactly as `exp(-ν·dt·k²)`, strong viscosity
+kills high modes in one pass (the honey case), projection deletes a pure
+gradient field and leaves a pure curl field untouched. Mutation-checked.
+Codebox findings carried forward: use `nearest()` at texel centers in the
+loop; compute the twiddle index as `mod(k*n, N)` before scaling to an angle
+(naive angle was ~10× worse even with NumPy's accurate `sin` — GPU `sin`
+will be worse still); signed wavenumber via `switch(idx < N*0.5, idx, idx - N)` with
+`idx = floor(norm.x * N)`. **Correction (2026-09-22, bench):** an earlier
+version of this line used GenExpr `cell` as the integer index — wrong on
+jit.gl.pix, where `cell = norm * (dim - 1)` (non-integer at texel
+centers). Caught by the test bench's coordinate probe before any codebox
+was written.
+
+**Still open (Max-only questions):** does a 128/256-iteration loop with
+`sample()`/`nearest()` compile in `jit.gl.pix` (unrolling/instruction
+limits), fps, GPU trig precision, running a chain at internal 128²/256²
+(`@adapt 0` + `@dim` believed, unverified), and the periodic-boundary
+(torus) aesthetic decision. Next step: one reusable test-bench patcher
+(codebox-file loader, float32 chain, fps readout, asyncread → disk export
+for numeric diff against the NumPy reference), then T1 on it.
+
+## Addendum (2026-09-22) — FFT T1/T2 answered on the GPU via the test bench
+
+The separable-DFT passes now run in `jit.gl.pix` through the new Max test
+bench (`.specify/test_bench/`, `tests/bench_fft.py`) and match NumPy: row
+pass at N=128 4.8e-7 rel vs `np.fft.fft`, full 2D forward 1–2e-7 rel vs
+`np.fft.fft2`, 2D forward+inverse round trip ~5e-6 abs; N=256 and N=512 also
+compile and match. So the "does a 128/256-iteration loop compile" question is
+closed — it does, comfortably. Angle reduction (`mod(k*n, N)`) confirmed ~12×
+more accurate on real GPU sin/cos. Codeboxes: `tests/bench/codeboxes/dft_x.gen`,
+`dft_y.gen`. **Cost (bench Phase 4, same day):** one DFT pass is 2.96 ms at 512²
+(so a 2D round trip ≈ 11.9 ms), and below the bench's resolution at 256²
+and 128² (< 0.5 ms/pass; extrapolated from N³ scaling ≈ 0.37 ms at 256²) —
+a full FFT round trip per frame is comfortably real-time at the 128–256²
+velocity-grid resolutions this was meant for. **Still open:** the spectral
+diffusion/projection pass on the GPU (math verified in NumPy, codebox not yet
+written), internal-resolution resampling inside a real module, and the torus
+decision. The Jacobi comparison now looks unnecessary: the FFT path is both exact
+(any viscosity, exact projection) and cheap enough at the target resolution.

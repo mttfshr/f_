@@ -124,7 +124,7 @@ continuous wrapping.
 ### Coordinate (Jitter-specific globals)
 `norm` — normalized UV [0,1] as vec2, current pixel position
 `snorm` — signed normalized UV [-1,1] as vec2
-`cell` — pixel coordinates [0, dim-1] as vec2
+`cell` — **NOT an integer index on jit.gl.pix: `cell = norm * (dim - 1)`** (bench-verified 2026-09-22; see Bench-Verified Facts). Integer index: `floor(norm * dim)`
 `dim` — pixel dimensions of render context as vec2 (e.g. vec(640, 480) — NOT normalized)
 
 ### Sampling
@@ -635,6 +635,60 @@ Do not use `dim` to get normalized output size — use `norm` for that.
 
 ---
 
+## Bench-Verified Facts (Max test bench, 2026-09-22)
+
+Measured numerically through the `f_` test bench (`tests/bench_*.py`,
+`.specify/test_bench/`), not inferred from docs or screenshots. Max 9,
+jit.gl.pix, float32.
+
+### `cell` is NOT an integer pixel index — it is `norm * (dim - 1)`
+At texel centers `cell.x` = 0.492, 1.477, … for dim 64 (exact to float32
+across the whole frame). Any codebox that needs an integer index (bin
+number, grid id, parity) must compute it: `i = floor(norm.x * dim.x)`.
+`norm` itself is exactly `(i + 0.5) / dim` (texel centers), and matrix row
+0 is where `norm.y` is smallest (no flip on readback).
+
+### Compile errors ARE catchable — but never wire `[error]` straight into `js`
+A gen compile failure posts `codebox: <message>` to the Max window (e.g.
+`codebox: addition op missing argument`) and `[error 1]` does output it.
+Wiring `[error]` directly into a `js` object recursed: js re-reported the
+incoming error, `[error]` caught that, until Max hit a stack overflow —
+which disables *all outlets in Max* until the yellow bar is cleared. Safe
+shape: `[error 1] → [deferlow] → [prepend some_name] → js`, with a handler
+that never posts or throws.
+
+### Long fixed-count loops compile fine
+128-, 256- and 512-iteration `for` loops with four `nearest()` reads per
+iteration compile and produce correct results (separable DFT vs `np.fft`:
+~1e-7 relative). Loop length is not a practical limit at these sizes.
+
+### Reduce trig arguments before `sin`/`cos`
+Computing a twiddle angle as `twopi * mod(k * n, N) / N` instead of
+`twopi * k * n / N` was ~12x more accurate on real GPU `sin`/`cos` at N=256
+(6.8e-7 vs 8.0e-6 relative). Large float32 angles lose precision before
+the trig function even runs.
+
+### jit.gl.pix object behavior (outside the codebox)
+- **Inlet count follows the gen patcher's `in` objects**, not only what
+  the codebox references: a `.genjit` with `in 1..3` (only `in 1` wired to
+  the codebox) gives a 3-inlet pix, and cords into inlets 1–2 survive and
+  deliver. Useful to keep inlet counts stable when swapping gen patchers
+  (`inputs` is read-only).
+- **A texture message sent to the pix (e.g. from js `message()`) lands on
+  input 0** regardless of `activeinput`; `sendinput N jit_gl_texture name`
+  did *not* set input N. Use physical cords for inputs 2+.
+- **A newly loaded gen compiles at its first render.** Params sent right
+  after `gen <name>` — and even on the next draw bang, which fires before
+  the render — hit "jit.gl.pix: invalid message <param>". Send params a
+  couple of frames later.
+- **Every texture message a pix receives triggers a render.** Sending it a
+  second texture per frame doubles the work downstream.
+- **Float32 readback is exact:** texture → `jit.matrix @type float32` via
+  the matrix's `jit_gl_texture` method, then `write` to `.jxf`, round-trips
+  values outside [0,1] bitwise. Matrix planes are ARGB.
+
+---
+
 ## Code Health Checklist
 
 When reviewing any codebox, scan for these in order:
@@ -647,6 +701,7 @@ When reviewing any codebox, scan for these in order:
 - [ ] **`vec4()` or `vec2()` constructors** — replace with `vec()`
 - [ ] **`select()`** — replace with `mix(a, b, step(...))` or `switch(cond, a, b)`
 - [ ] **`snoise()` or `cycle()`** — replace with sin hash or `sin(x * twopi)` respectively
+- [ ] **`cell` used as an integer index** — it is `norm * (dim - 1)` on jit.gl.pix; use `floor(norm.x * dim.x)` for integer indices
 - [ ] **Variable names shadowing operators** — `cell`, `in`, `norm`, `snorm`, `dim` as variable names produce silent wrong output; rename with suffix (e.g. `cell_idx`, `band_idx`)
 - [ ] **`boundmode` in GenExpr syntax** — silently ignored; use `fract()` or `wrap()` on coordinate before sampling
 - [ ] **`dim` used for normalized sizing** — `dim` returns pixel dimensions, not [0,1]; use `norm` for normalized coords
