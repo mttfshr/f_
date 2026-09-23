@@ -169,13 +169,52 @@ just reread the source in this session, stop and reread it first.
 
 ## Codebox Writing Workflow
 
-**Write codebox content as plain text, paste manually into Max.**
+**Verification follows the tiers in `.specify/constitution.md` → Verification
+Tiers (adopted 2026-09-22).** In short: numbers before eyes.
 
-This is the most token-efficient approach:
-- Claude writes the codebox code as a fenced text block
-- Matt pastes it into the codebox in Max
-- Verify the math works before building the wrapper JSON
-- Only write the full `definition.py` and run `build_patcher.py` when the codebox is confirmed working
+1. **Write the codebox as a file** — `src/f_name/codebox_<stage>.gen` —
+   from the start, not only after it's confirmed. The test bench loads that
+   exact file, so what gets verified is what ships.
+2. **Tier 1 (nontrivial math):** a NumPy mirror in `tests/test_f_name.py`,
+   float32, pass-for-pass, checked against independent ground truth;
+   mutation-check it once. `tests/gpu_sim.py` provides the jit.gl.pix model
+   (texel-center `norm`, sampling, float32 storage).
+3. **Tier 2 (numeric criteria exist):** `tests/bench_f_name.py`, copied from
+   `tests/templates/bench_module_template.py` — compiles clean, matches the
+   mirror, holds invariants (e.g. `bypass=1` is exact identity), and cost at
+   target resolutions if cost matters. Claude runs it via Desktop Commander;
+   Matt only needs Max with `tests/bench/bench.maxpat` open.
+4. **Tier 3:** scratch patch for expressive tuning, param ranges, visual
+   character, integration. For this tier the old flow still applies — Claude
+   writes the code as a fenced text block and Matt pastes it into Max.
+5. Only write the full `definition.py` and run `build_patcher.py` once the
+   codebox has passed the tiers that apply.
+
+**Bench coverage:** ≤3 inputs, all 4 outputs (`all_outputs=True`), float32
+or char (`pix_type=`), multi-frame feedback runs (`run_temporal`), cost
+(`measure`). Multi-stage modules: stage by stage. **After changing any shipped
+bpatcher,** run `tests/run.sh tests/test_module_contracts.py` (offline wiring)
+and `tests/bench.sh tests/bench_modules.py` (live contracts in `vs_render`).
+
+### Phase 0 template for codebox modules (tasks.md)
+
+```
+## Phase 0: Verification (BLOCKING)
+- [ ] T001 DECISION GATE — verification tiers: which apply (math mirror /
+      bench correctness / bench cost / scratch only) and why; record
+      "n/a because ..." for each skipped tier.
+- [ ] T002 Write src/f_name/codebox_<stage>.gen.
+- [ ] T003 (Tier 1) NumPy mirror in tests/test_f_name.py against independent
+      ground truth; mutation-check once.
+- [ ] T004 (Tier 2) tests/bench_f_name.py from the template: compiles clean,
+      GPU vs mirror, invariants. Record measured errors here.
+- [ ] T005 (Tier 2, if cost matters) bench cost at target resolutions.
+- [ ] T006 (Tier 3) scratch patch: expressive tuning, ranges, integration.
+```
+
+**Debugging an existing module:** if the question is "math or plumbing?",
+bench its codebox file in isolation first (a throwaway `bench_*.py` or a
+`benchclient.run_pass()` one-off) before opening the patch.
 
 ---
 ## Package Structure
@@ -808,10 +847,17 @@ course_seed 7
 The `route` object dispatches by name to the correct `live.dial` or `live.numbox`.
 `bypass` is handled by the jsui directly — it does not go through `route`.
 
+**Correction (bench-verified 2026-09-22):** the `bypass 1` control message
+above only works in 9 modules; in the 23 build-system modules `route` has no
+`bypass` entry and the message is dropped (`tests/bench_modules.py` prints the
+current list). Clicking the jsui (or sending it an int) works everywhere.
+Whether generated `route`s should carry `bypass` is an open decision.
+
 ---
 
 ## Checklist: New Patcher
 
+- [ ] **Verification tiers recorded** in tasks.md Phase 0 — `tests/bench_<name>.py` exists and passes, or the reason it doesn't apply is written down
 - [ ] File in `package/patchers/f_<name>.maxpat`
 - [ ] `"openinpresentation": 1`
 - [ ] `jit.gl.pix vsynth @name <prefix>_pix` — no `@dim`

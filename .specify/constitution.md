@@ -74,6 +74,52 @@ Each bpatcher moves through three stages, each with a distinct home:
 
 A bpatcher moves from `ideas/` to `docs/` when it is built and confirmed working. Nothing lives in `docs/` that isn't working.
 
+### Verification Tiers
+
+*Adopted 2026-09-22, after the Max test bench (`.specify/test_bench/`)
+proved out on the FFT work.* A scratch patch tests two things at once — is
+the math right, and does Max/the GPU run it — so failures can't be
+attributed. Verification is split into tiers, cheapest and most attributable
+first:
+
+1. **Math — NumPy mirror** (`tests/test_*.py`, `tests/run.sh`). A pass-for-
+   pass float32 mirror of the codebox, checked against *independent* ground
+   truth (analytic results, NumPy reference functions). For nontrivial math:
+   transforms, solvers, geometry, anything with a known reference. No Max.
+2. **Execution — test bench** (`tests/bench_*.py`, `tests/bench.sh`). The
+   module's real codebox file from `src/` runs on the GPU in a live Max and is
+   diffed numerically against tier 1 or against invariants (identity at
+   bypass, round trips, symmetries, ranges). Also catches compile errors, and
+   measures cost when cost is a question. Template:
+   `tests/templates/bench_module_template.py`.
+3. **Judgement — scratch patch** (`~/Vsynth/patterns/`). Expressive tuning,
+   parameter ranges, visual character, Vsynth integration, UI — what numbers
+   can't judge.
+
+**Rule of thumb:** if "correct" can be stated as numbers or invariants,
+verify it in tiers 1–2 before any scratch patch; if success is "it looks
+right", tier 3 is the test. Skip tiers 1–2 for trivial codeboxes, purely
+aesthetic changes and UI work — but say so.
+
+**Which tiers apply is a decision gate** — the first task of Phase 0 in a
+module's `tasks.md`, recorded with a reason for any tier skipped.
+
+**Debugging:** when the question is "math or plumbing?", bench the codebox
+in isolation before touching the patch.
+
+**Evidence standard:** a claim that something is "confirmed" or "verified"
+says how — bench (numeric), scratch patch (visual), or docs (unverified).
+Prefer bench evidence for claims about GenExpr/jit.gl.pix behavior.
+
+**What the bench covers** (since E1–E4, 2026-09-22): up to 3 inputs and all
+4 outputs, float32 or char, params, multi-frame runs with feedback (Pattern
+1), cost. Separately, **shipped bpatchers** are contract-tested: offline
+(`tests/test_module_contracts.py` — route → attrui → Param wiring) and live in
+Vsynth's real `vs_render` context (`tests/bench_modules.py` — params arrive,
+every outlet renders, bypass passes through). Run both after changing any
+shipped bpatcher. Not covered: whole multi-stage chains as one job (test
+stage by stage), `gen~` audio.
+
 ### Planning Workspace
 
 `.specify/` is a planning workspace, not a reference directory. It contains:
@@ -165,7 +211,8 @@ f_/
 ## Constraints
 
 1. **Don't break Vsynth compatibility** — all bpatchers must follow Vsynth signal flow conventions
-2. **Codebox before patcher** — write and verify GLSL in codebox text before building JSON structure
+2. **Codebox before patcher** — write the codebox as a file (`src/f_name/codebox_*.gen`) and verify it before building JSON structure, following the Verification Tiers
 3. **One bpatcher, one concern** — resist adding unrelated functionality to an existing bpatcher
 4. **Specs before building** — for any new bpatcher, write the spec (concept + params + signal chain) before opening Max
 5. **Tasks.md is the session anchor** — always update `.specify/f_name/tasks.md` at session end; also update README.md (project state) and HANDOFF.md (session notes)
+6. **Numbers before eyes** — if correctness can be stated as numbers or invariants, it is verified numerically (tiers 1–2) before a scratch patch judges it (tier 3)

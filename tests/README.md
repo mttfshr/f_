@@ -79,6 +79,33 @@ hit a save prompt. After regenerating, call `benchclient.reopen()`.
   `ms_per_pass` is only reported when `gpu_bound`; otherwise
   `ms_per_pass_upper_bound`. Throughput numbers for comparisons, not
   absolute GPU time.
+- `run_pass(..., all_outputs=True)` returns `[out1..out4]` (an unused outlet
+  comes back all zeros); `pix_type="char"` runs the pass as char (round-to-
+  nearest, clamped; read back scaled to 0..1).
+- `run_temporal(code, [in1, init_state, ...], steps=[1, 5, 20],
+  feedback=(from_out, to_in))` — multi-frame runs with a one-frame-delay
+  feedback loop (Pattern 1): step s reads step s-1's output from input
+  `to_in` (2 or 3). Returns `{step: [out1..out4]}`.
+
+## The module bench (shipped bpatchers)
+
+A second generated patch, `tests/bench/bench_module.maxpat` (ports
+7473/7474), runs **shipped** `f_` bpatchers inside Vsynth's real `vs_render`
+context. **Close Vsynth performance patches while it's open** — it creates
+the global `vsynth` context. `tests/bench_modules.py` loads each module (a
+fresh bench session per module), feeds it textures, sends every route
+parameter as a control message and reads the attribute back off the inner
+pix, exercises bypass (documented control message and the jsui), and
+captures every outlet. `tests/test_module_contracts.py` is its offline half:
+static route → attrui → Param wiring from the patch JSON, no Max needed.
+Both keep a registry of known issues (reported XFAIL with a pointer; a fixed
+one reports XPASS so the entry gets removed). Run both after changing any
+shipped bpatcher. Debugging hooks: `/probe` and a localhost-only `/eval`
+(`modulebench.bench_eval(js)`), which run inside the module bench.
+
+Open Max with **both** benches for the full `tests/bench.sh` run.
+
+**Adding a bench test for a module:** copy `tests/templates/bench_module_template.py` to `tests/bench_<module>.py`, point `CODEBOX` at the module's real `src/<module>/codebox_*.gen`, fill in the mirror/invariants. Which tests a module needs is decided per module (constitution: Verification Tiers).
 
 **Writing a bench codebox:** plain GenExpr text (see `bench/codeboxes/`).
 Up to 3 inputs (`in1..in3`); `Param` values arrive on frame 3. Remember the
@@ -109,5 +136,12 @@ Facts section).
   probe, plane order, compile-error capture, reload, two inputs
 - `bench_fft.py` -- FFT T1/T2 on the GPU vs NumPy (`dft_x`/`dft_y` codeboxes)
 - `bench_perf.py` -- rate control, scaling, repeatability, DFT cost
+- `bench_temporal.py` -- E4 feedback runs: step counter, accumulator, routing, char
+- `module_contract.py` + `test_module_contracts.py` -- offline wiring
+  contracts of every shipped bpatcher
+- `modulebench.py` + `bench_modules.py` -- live module contracts (module bench)
+- `templates/bench_module_template.py` -- starting point for a module's bench test
 - `bench/` -- `make_bench.py` (generates `bench.maxpat` and
-  `bench_default.genjit`), `bench.js`, `codeboxes/`
+  `bench_default.genjit`), `bench.js`, `codeboxes/`; module bench:
+  `make_module_bench.py` (generates `bench_module.maxpat` and
+  `bench_module_empty.maxpat`), `bench_module.js`
