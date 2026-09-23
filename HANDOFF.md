@@ -56,6 +56,50 @@ copies):
   early "cached re-emit" reading of the numbers was wrong and corrected by a
   decisive heavy-shader test.
 
+## Continued same day — bench made default, then extended (E3, E1, E2, E4)
+
+**Made the default workflow:** `.specify/constitution.md` "Verification
+Tiers" (math mirror → bench → scratch patch; "numbers before eyes"), the
+vsynth-bpatcher skill's codebox workflow + Phase 0 template, codebox-skill
+evidence levels, `tests/templates/bench_module_template.py`, project memory.
+
+**Extended, all four** (`.specify/test_bench/extensions.md`,
+`tasks_extensions.md`):
+- **E3 module contracts** — offline (`tests/test_module_contracts.py`, route
+  → attrui → Param wiring from patch JSON) and live
+  (`tests/bench_modules.py`: a second bench, `bench_module.maxpat`, running
+  shipped bpatchers inside Vsynth's real `vs_render`; params sent as control
+  messages and read back off the inner pix; bypass; every outlet). 32
+  modules, ~77 s. **Close Vsynth performance patches while the module bench
+  is open.**
+- **E1** all four outputs; **E2** char textures; **E4** multi-frame feedback
+  runs (`run_temporal`, Pattern 1, frame-exact).
+- Full regression green: offline 25/25, bench 29/29 (six suites).
+
+**Real bugs found in shipped modules (all unfixed, each held as XFAIL — the
+test flips to XPASS when fixed):**
+- `f_vf_fieldmap`, `f_vf_repulse`: Gain dial does nothing (dial → `attrui
+  strength`, codebox has `Param gain`) — same class as the old `mix_amt` bug.
+- `f_masonry`: route `brick_seed` drives the course_seed numbox, route
+  `course_seed` unconnected; `quantize` is a dead control (Param removed
+  2026-07-05, UI left behind).
+- **Documented `bypass 1` control message works in only 9 modules** — dropped
+  in all 23 build-system modules (their `route` has no `bypass`). Skill
+  corrected; whether generated routes should carry `bypass` is a decision.
+- `f_sirds`: bypass doesn't pass through (stage0 not bypassed) — new,
+  uninvestigated. `f_lens` bypass (already Parked) confirmed live.
+- `hue_range.js` calls outlet() beyond its outlet count; `autopattr @varname
+  X` is invalid syntax in Max 9 (masonry, mobius, stereo); `f_vf_fieldmap`'s
+  pix declares a non-existent `@boundmode` attribute.
+- Library-level: any module whose pix uses a fixed `@name` (not `#0_`)
+  can't exist twice in one Max session ("ob3d does not allow multiple
+  bindings") — e.g. two Glows in one Vsynth patch. Not yet counted.
+
+**Open, uninvestigated (per Matt: don't sink time):** loading ~30 modules into
+one bench session scrambled other modules' dial `_parameter_range`; a fresh
+session per module fixes it for testing. Suspect `range_tiers` modules. Could
+matter in a real Vsynth patch holding several f_ modules.
+
 ## Done
 
 - `ideas/ceyron_simulation_scripts_notes.md`: rung-2 addendum, FFT dive,
@@ -78,7 +122,13 @@ session's files by name.
 
 ## Next session — start here
 
-Two open threads; pick one:
+Three open threads; pick one:
+
+**0. Fix the module bugs the contract tests found** (list above). Cheap,
+concrete, each has a test already; fixing one should flip its XFAIL to XPASS
+(then delete the registry entry). Mind the never-regenerate list for
+`f_masonry` (hand-edit only). Decide the `bypass`-in-`route` question first —
+it touches every build-system module via `build_patcher.py`.
 
 **1. Fluid work, now unblocked.** Write the spectral pass codebox
 (diffusion + projection, math already verified in `test_fft_separable.py`)

@@ -11,6 +11,15 @@ Empirically verified operator reference for GenExpr code inside `jit.gl.pix` gen
 
 **Source of truth:** `/Users/matt/Github/f_/.specify/codebox.skill/tasks.md` — full test results.
 
+
+**Evidence levels (since 2026-09-22).** Entries here were mostly verified by
+eye in a scratch patch. The `f_` test bench (`tests/bench.sh`) can now verify
+GenExpr behavior *numerically* on the GPU — see "Bench-Verified Facts" below.
+When adding or revising an entry, say which kind of evidence backs it
+(bench / scratch patch / docs-only), and prefer the bench for anything that
+can be stated as numbers. A codebox under development should be checked with
+`benchclient.run_pass()` before being declared working.
+
 ---
 
 ## Language Model
@@ -686,6 +695,17 @@ the trig function even runs.
 - **Float32 readback is exact:** texture → `jit.matrix @type float32` via
   the matrix's `jit_gl_texture` method, then `write` to `.jxf`, round-trips
   values outside [0,1] bitwise. Matrix planes are ARGB.
+
+
+### More bench-verified facts (E1–E4, 2026-09-22)
+- **An unwired `out N` in a gen patcher compiles, keeps its outlet, and
+  emits an all-zero texture.** Handy for keeping outlet counts constant.
+- **char pix output quantizes round-to-nearest, clamped to [0, 1]** (not
+  floor). In a char feedback loop every step re-quantizes: increments below
+  0.5/255 per step never accumulate.
+- **Feedback into a non-left pix inlet is a clean one-frame delay** (the
+  Pattern 1 state/pass loop): stepping is frame-exact -- verified with an
+  exact counter over 20 steps and a closed-form decay accumulator.
 
 ---
 
