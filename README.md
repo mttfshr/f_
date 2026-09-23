@@ -61,6 +61,8 @@ Restart Max. The patches will be available in your file browser under `f_`.
 
 These patches are developed alongside personal Vsynth performance work and released as-is. They follow Vsynth conventions and are designed for Vsynth signal chains. If you know Max and Vsynth, you should be able to understand and modify the patches as needed.
 
+The table above lists the modules meant for use. `package/patchers/` also contains a few things it doesn't: `f_modules` (the module menu), `f_a_ripple` and `f_chladni_audio` (audio-domain, `gen~` rather than `jit.gl.pix`), and patchers that are built but not yet confirmed or documented — currently `f_ngon` and `f_vf_vorticity`. Treat anything not in the table as unfinished.
+
 There is no release schedule. Patches may change significantly as development continues.
 
 ## Repo Structure
@@ -70,8 +72,20 @@ This repo has six parts:
 - **`package/`** — the installable Max package: `patchers/`, `help/`, `javascript/`, `package-info.json`. This is the only folder Max needs (see Installation above).
 - **`build/`** — the build system used to generate patchers from definition files, plus supporting tools (helpfile generation via Claude API, interface auditing, migrations). Meant to be forked or read if you want to build your own `f_`-style bpatcher library. See `build/spec.md`.
 - **`src/`** — build-input files per module: `definition.py` (patcher definition), `codebox_*.gen` (confirmed codebox content), and per-module build scripts for modules whose build needs diverge from the general `build_patcher.py` path.
-- **`tests/`** — verification outside the patch, in two layers: NumPy mirrors of codebox math (`test_*.py`, `tests/run.sh`, no Max needed) and a Max test bench that runs a module's real codebox files on the GPU from Python and diffs the results numerically (`bench_*.py`, `tests/bench.sh`, needs Max open). Defined as the default verification workflow in `.specify/constitution.md` ("Verification Tiers"); how-to in `tests/README.md`; bench design in `.specify/test_bench/`.
+- **`tests/`** — verification that doesn't need a scratch patch, in two layers. **Math:** NumPy mirrors of codebox algorithms, checked against independent references (`test_*.py`, `tests/run.sh`, no Max needed). **Execution:** a Max test bench — one generated patch stays open in Max and is driven from Python over OSC, so a module's real `src/` codebox runs on the GPU and its output is diffed numerically, with compile errors caught and cost measured (`bench_*.py`, `tests/bench.sh`). A second bench loads *shipped* bpatchers inside Vsynth's own render context to check their contracts: that every parameter reaches the attribute it claims to, that bypass passes through, that every outlet renders. How-to in `tests/README.md`; design in `.specify/test_bench/`.
 - **`ideas/`, `.specify/`, `docs/`** — planning and reference material: half-formed module ideas (`ideas/`), specs/plans/ADRs for modules (`.specify/`), and as-built reference docs plus research notes on Vsynth/Max internals (`docs/`). `docs/f-reference/module-inventory.md` and `docs/vsynth-reference/module-inventory.md` are flat one-line-per-module capability maps (f_ layer and core Vsynth layer, respectively) — the fast way to answer "does something here already do X" without reading full per-module docs. `.specify/` root holds directories for modules under active development. `.specify/stable/f_name/` and `.specify/paused/f_name/` hold modules moved into those subdirectories once shipped-and-verified-with-nothing-outstanding (`stable/`) or shelved on a real open question, not to be resumed by default (`paused/`) — a reorganization into subdirectories, not a rename of the module's own directory. Once a module reaches `stable/`, its `.specify/` content there is archival reference (the ADR/decision history), not the active source of truth — that role passes to `docs/f-reference/f_name.md`, which should have already distilled anything from `spec.md`/`plan.md`/`tasks.md` worth keeping before the move. Kept public as a reference and conversation starter, not as polished documentation — expect dead ends, superseded approaches, and in-progress modules alongside finished ones.
 - **`skills/`** — [Claude](https://claude.ai) skills used to collaborate with Claude on this codebase: conventions for bpatcher structure (`vsynth-bpatcher`), GenExpr/`jit.gl.pix` gotchas (`jit-gen-codebox`), helpfile format (`f-helpfile`), and a notation system for describing patches in chat (`max-patch-notation`). Copy these into your own Claude setup (e.g. `claude-scaffold`-style skills directory) if you want a similar collaboration workflow — you'll want to adjust the hardcoded paths in `vsynth-bpatcher/SKILL.md` to match your own repo location.
 
 `tools/` also exists, holding one-off scripts from past development sessions — not part of the supported build system (see `tools/README.md`).
+
+## Development
+
+Modules are built from definition files (`src/` → `build/build_patcher.py` → `package/patchers/`) rather than patched by hand, so the structure stays consistent and reviewable as diffs.
+
+Verification happens in three tiers, cheapest and most attributable first — the full rationale is in `.specify/constitution.md`:
+
+1. **Math** — a NumPy mirror of the codebox, checked against independent ground truth. No Max.
+2. **Execution** — the real codebox file run on the GPU through the test bench and diffed numerically; shipped bpatchers additionally contract-tested for parameter wiring and bypass.
+3. **Judgement** — a scratch patch for what numbers can't judge: expressive tuning, parameter ranges, visual character, Vsynth integration.
+
+The reason for the split: a scratch patch tests two things at once — whether the math is right and whether Max and the GPU run it — so a failure can't be attributed to either. Separating them turned "this doesn't look right" into specific answers, and the contract tests found real bugs in shipped modules that no amount of looking would have surfaced.
