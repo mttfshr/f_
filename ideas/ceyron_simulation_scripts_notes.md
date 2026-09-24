@@ -420,3 +420,7 @@ diffusion/projection pass on the GPU (math verified in NumPy, codebox not yet
 written), internal-resolution resampling inside a real module, and the torus
 decision. The Jacobi comparison now looks unnecessary: the FFT path is both exact
 (any viscosity, exact projection) and cheap enough at the target resolution.
+
+## Addendum (2026-09-23) — Specced as `f_vf_fluid`
+
+The FFT path is now a spec: `.specify/f_vf_fluid/spec.md` (new velocity-solver module that outputs an evolving vecfield; dye left to existing consumers; 256² periodic first build; `project` 0–1 covers the rung-2 look). Decisions and open experiments are recorded there; this file remains the research background.
