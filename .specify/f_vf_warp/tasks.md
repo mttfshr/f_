@@ -151,16 +151,18 @@ docs/
 
 ---
 
-## Phase 6: Bug — `out2` ignores bypass
+## Phase 6: Bug — `out2` ignores bypass  ✅ RESOLVED 2026-09-23
 
-**Purpose:** With the module bypassed, `out2` (the vecfield outlet) still appears to change the direction of the incoming vecfield instead of passing it through untouched. Found through use 2026-07-17, not a documentation gap — a real behavior bug. Tracked here rather than only in `plan.md` so it isn't orphaned again.
+**Purpose:** With the module bypassed, `out2` (the isolated *warped source* layer — not a vecfield) came out vertically flipped instead of matching the source. Found through use 2026-07-17.
 
-- [ ] T047 Reproduce in isolation: feed a known static vecfield to in1, enable bypass, confirm `out2` differs from the input vecfield (rule out that this is expected behavior misread as a bug)
-- [ ] T048 Trace the codebox/gen wiring for `out2` — confirm whether `bypass` is referenced at all in the branch that produces `out2`, versus only gating `out1`
-- [ ] T049 Decide the correct bypassed behavior for `out2` (likely: pass the input vecfield through unmodified) and implement
-- [ ] T050 Re-verify T036-equivalent for `out2`: with bypass enabled, `out2` exactly matches the incoming vecfield regardless of `strength`
+**Root cause (bench-verified):** the bypass toggle set the pix's native `bypass` attribute, which skips the shader and passes outlets 2+ through flipped; the codebox's `mix(..., bypass)` never ran. Earlier task text calling `out2` "the vecfield outlet" was wrong — see `docs/f-reference/f_vf_warp.md`.
 
-**Checkpoint:** `out2` passes through unmodified when bypassed. Update `docs/f_vf_warp.md` if it documents current (buggy) behavior.
+- [x] T047 Reproduce: bench showed `bypassed_out2` == `in1` flipped vertically (max diff 0.0 vs `flipud(in1)`)
+- [x] T048 Trace: native bypass short-circuits the shader; `out1` was correct only because outlet 1 passes through cleanly
+- [x] T049 Decision (Matt): bypassed `out2` = unwarped source, like `out1`. Implemented: Param renamed `bypass_gate`, toggle wired `jsui → prepend param bypass_gate → pix` (attrui `obj-24` replaced), both outlets `mix(warped_sample, sample(in1, uv), bypass_gate)`. Hand-edited `.maxpat` + `definition.py` codebox; **do not regenerate** (shipped patch has hand edits, see comment in `definition.py`)
+- [x] T050 `tests/bench_modules.py` now checks `out2 == in1` under bypass for `f_vf_warp` (`BYPASS_PASSTHROUGH_OUTLETS`); passes
+
+**Checkpoint:** met — `out1` and `out2` both equal the source when bypassed.
 
 ---
 

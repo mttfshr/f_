@@ -33,24 +33,24 @@ from test_module_contracts import NOT_APPLICABLE
 ENV_NOISE = ("jpatcher: doesn't understand getattr",)
 
 KNOWN = {
-    ("f_vf_fieldmap", "param", "gain"): "gain dial -> attr strength (static: test_module_contracts)",
-    ("f_vf_fieldmap", "error", "jit.gl.pix: invalid message strength"): "same bug",
-    ("f_vf_fieldmap", "error", "jit.gl.pix: boundmode is not a valid attribute argument"):
-        "pix box declares @boundmode, not a jit.gl.pix attribute (found 2026-09-22; unfixed)",
-    ("f_vf_repulse", "param", "gain"): "gain dial -> attr strength (static)",
-    ("f_vf_repulse", "error", "jit.gl.pix: invalid message strength"): "same bug",
-    ("f_masonry", "error", "jit.gl.pix: invalid message quantize"): "same",
+    ("f_masonry", "error", "jit.gl.pix: invalid message quantize"):
+        "dead control: Param quantize removed 2026-07-05, UI left behind (masonry fixes deferred)",
     ("f_masonry", "error", "autopattr: varname is not a valid attribute argument"):
-        "`autopattr @varname X` isn't valid syntax in Max 9 (found 2026-09-22; unfixed)",
-    ("f_mobius", "error", "autopattr: varname is not a valid attribute argument"): "same",
-    ("f_stereo", "error", "autopattr: varname is not a valid attribute argument"): "same",
+        "`autopattr @varname X` isn't valid syntax in Max 9; the name belongs in the box's varname (fixed in mobius/stereo 2026-09-23; masonry deferred)",
     ("f_hue_processor", "error", "js: bad outlet index N [hue_range.js]"):
         "hue_range.js calls outlet() beyond its outlet count (found 2026-09-22; unfixed)",
-    ("f_lens", "bypass_out1", ""): "bypass reaches lens_pix only, not lens_halation (.specify/plan.md Parked)",
-    ("f_sirds", "bypass_out1", ""): "bypassed out1 != in1; stage0 not bypassed (found 2026-09-22; uninvestigated)",
 }
 
+# Secondary outlets that must equal in1 under bypass (out1 is always checked).
+# f_vf_warp out2 is the isolated warped layer; bypassed it degenerates to the
+# unwarped source, same as out1 (fixed 2026-09-23).
+BYPASS_PASSTHROUGH_OUTLETS = {"f_vf_warp": (2,)}
+
 _seen = set()
+# Informational only: whether the optional `bypass <0|1>` control *message*
+# reaches the pix. The toggle path (jsui -> attrui -> pix) is the supported
+# bypass and is what bypass_out1 above tests; only the oldest modules also
+# route the message.
 _bypass_msg = {"works": [], "no": []}
 
 
@@ -82,6 +82,15 @@ def module_issues(name):
             d = float(np.abs(byp - info["input"]).max())
             if d > 0:
                 issues.append(("bypass_out1", "", f"max |out1 - in1| = {d:.4g} under bypass"))
+        # secondary outlets that are also meant to pass the input through
+        for k in BYPASS_PASSTHROUGH_OUTLETS.get(name, ()):
+            bk = (r.get("arrays") or {}).get("bypassed", {}).get(k)
+            if bk is None:
+                issues.append((f"bypass_out{k}", "", "no bypassed frame captured"))
+            else:
+                d = float(np.abs(bk - info["input"]).max())
+                if d > 0:
+                    issues.append((f"bypass_out{k}", "", f"max |out{k} - in1| = {d:.4g} under bypass"))
     bm = r.get("bypass_msg_readback") or {}
     (_bypass_msg["works"] if bm and all(v == 1 for v in bm.values()) else _bypass_msg["no"]).append(name)
     return issues, r, info

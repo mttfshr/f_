@@ -505,7 +505,7 @@
                 "box": {
                     "id": "obj-21",
                     "maxclass": "attrui",
-                    "attr": "strength",
+                    "attr": "gain",
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [
@@ -541,7 +541,7 @@
                         50.0,
                         18.0
                     ],
-                    "text": "Strength",
+                    "text": "Gain",
                     "textjustification": 1
                 }
             },
@@ -1176,8 +1176,8 @@
         ],
         "parameters": {
             "obj-20": [
-                "strength",
-                "strength",
+                "gain",
+                "gain",
                 0
             ],
             "obj-23": [

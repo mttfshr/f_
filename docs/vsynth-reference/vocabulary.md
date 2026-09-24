@@ -131,7 +131,7 @@ From `patchers/vs_public_variables.txt`. Document self-describes as outdated —
 **Kevin's parameter naming conventions:**
 - Single-word lowercase: `freq`, `phase`, `speed`, `angle`, `bias`, `shape`
 - Two-letter modulation suffix: `fm`, `pm`, `bm`, `pwm`, `hm`, `sm`, `lm`, `am`
-- `enable` = module on/off. Kevin does NOT use `bypass` — f_ does.
+- `enable` = module on/off (forwarded by `routepass` to the pix's native `@enable`; not a passthrough). Kevin's convention is `enable`; only `vs_pixelator` / `vs_pixelator_2` also route a `bypass` message (to a `live.toggle`). f_ modules use a bypass toggle instead — the optional `bypass <0|1>` message is routed only in the 9 oldest f_ modules.
 
 ---
 

@@ -1,3 +1,11 @@
+# DO NOT REGENERATE f_vf_warp (2026-09-23). The shipped patcher is hand-edited
+# and differs from what build_patcher.py would emit from this file:
+#  - bypass toggle: jsui -> `prepend param bypass_gate` -> pix (drives the
+#    codebox Param below), NOT the generated jsui -> attrui @attr bypass.
+#    Native jit.gl.pix bypass skips the shader and passes secondary outlets
+#    through vertically flipped, so out2 could never respect bypass that way.
+#    The "bypass" param entry below therefore no longer matches the patch.
+#  - strength default 0.1 (this file says 0.0), vecfield label/comment styling.
 patcher = {
     "name":               "f_vf_warp",
 
@@ -47,7 +55,7 @@ patcher = {
     "codebox": """\
 Param strength(0.0);
 Param src_vecfield(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 uv = norm;
 
@@ -70,7 +78,7 @@ warped_uv = vec(warped_x, warped_y);
 
 // Output — sample inline, no stored vec component access
 warped_sample = sample(in1, warped_uv);
-out1 = mix(warped_sample, sample(in1, uv), bypass);
-out2 = warped_sample;
+out1 = mix(warped_sample, sample(in1, uv), bypass_gate);
+out2 = mix(warped_sample, sample(in1, uv), bypass_gate);
 """,
 }

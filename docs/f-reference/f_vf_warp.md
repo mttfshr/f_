@@ -20,7 +20,7 @@ in0 (texture + control) → routepass → vfwarp_pix in0   [source texture]
 in1 (f_vecfield texture, optional) → vs_inState → vfwarp_pix in1
 
 vfwarp_pix (@type char) → out0 (composite)
-vfwarp_pix                → out1 (warped -- see Known Bug below)
+vfwarp_pix                → out1 (warped layer; equals the unwarped source when bypassed)
 ```
 
 When in1 is unconnected, vs_inState delivers vs_black; `src_vecfield` system param suppresses the offset — output passes through source unwarped.
@@ -32,7 +32,7 @@ When in1 is unconnected, vs_inState delivers vs_black; `src_vecfield` system par
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `strength` | 0–1.5 | 0.0 | Warp depth. 0 = no warp, 1 = ±1 UV offset, up to 1.5 extrapolates further |
-| `bypass` | 0/1 | 0 | Passes source texture through unmodified on `out0` only -- see Known Bug below |
+| `bypass` | 0/1 | 0 | Passes the unwarped source through on both outlets (drives codebox Param `bypass_gate`, not the native `@bypass`) |
 
 **Prefix:** `vfwarp` — **Object name:** `vfwarp_pix`
 
@@ -55,9 +55,9 @@ Edge behavior: pixels displaced outside [0,1] UV clamp to edge — boundary pixe
 
 ---
 
-## Known Bug — bypass doesn't fully bypass
+## Bypass implementation (fixed 2026-09-23)
 
-**Confirmed 2026-07-17.** `out0` ("composite") correctly gates the warp via `mix(warped_sample, sample(in1, uv), bypass)` in the codebox. `out1` ("warped") does not — it's assigned unconditionally as `warped_sample`, with no `bypass` term at all. So toggling `bypass` on this module silences the warp on `out0` but `out1` keeps outputting the warped result regardless. Real bug, not a documentation gap — needs a follow-up task written into `.specify/f_vf_warp/tasks.md` before it's picked up (see `.specify/plan.md` Work Queue item 9). `f_vf_warp` stays active (not stable) until fixed.
+Earlier this module used the native `jit.gl.pix` `bypass` attribute like every other `f_` module. Native bypass skips the shader and passes outlets 2+ through **vertically flipped**, so the warped-layer outlet could never respect bypass. The toggle now drives a codebox Param (`jsui → prepend param bypass_gate → pix`), so both outlets run through the shader and `mix(warped_sample, sample(in1, uv), bypass_gate)` gates each. Verified on the module bench (`out1` and `out2` == source under bypass). The shipped patcher is hand-edited — **do not regenerate from `definition.py`** (see the comment there).
 
 ---
 

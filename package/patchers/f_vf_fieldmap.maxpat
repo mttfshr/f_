@@ -209,7 +209,7 @@
                         369.0,
                         22.0
                     ],
-                    "text": "jit.gl.pix vsynth @name fieldmap_pix @type float32 @boundmode 1",
+                    "text": "jit.gl.pix vsynth @name fieldmap_pix @type float32",
                     "varname": "fieldmap_pix"
                 }
             },
@@ -489,7 +489,7 @@
             },
             {
                 "box": {
-                    "attr": "strength",
+                    "attr": "gain",
                     "id": "obj-21",
                     "maxclass": "attrui",
                     "numinlets": 1,
@@ -527,7 +527,7 @@
                         50.0,
                         18.0
                     ],
-                    "text": "Strength",
+                    "text": "Gain",
                     "textjustification": 1
                 }
             },

@@ -313,7 +313,7 @@ Each bpatcher moves through three stages:
 10. **Texture outlet** (`outlet`, comment "texture out") ← pix out0
 11. **`moduleSize.js` chain** — for Vsynth module sizing (see below)
 12. **`parameters` block** at end of JSON — registers all params
-13. **`autopattr @varname <prefix>_autopattr`** — state save/restore (use in all patchers)
+13. **`autopattr`** with scripting name (box `varname`) `<prefix>_autopattr` — state save/restore (use in all patchers). The box text is plain `autopattr`; `autopattr @varname X` is *invalid* in Max 9 (the attribute is rejected and Max assigns a `u123456` name)
 
 ---
 
@@ -847,11 +847,24 @@ course_seed 7
 The `route` object dispatches by name to the correct `live.dial` or `live.numbox`.
 `bypass` is handled by the jsui directly — it does not go through `route`.
 
-**Correction (bench-verified 2026-09-22):** the `bypass 1` control message
-above only works in 9 modules; in the 23 build-system modules `route` has no
-`bypass` entry and the message is dropped (`tests/bench_modules.py` prints the
-current list). Clicking the jsui (or sending it an int) works everywhere.
-Whether generated `route`s should carry `bypass` is an open decision.
+**Decision (2026-09-23):** the bypass *toggle* (jsui → `attrui @attr bypass` → pix)
+is the supported bypass path and works in every module. The `bypass 1` control
+message is routed only in the 9 oldest modules (`f_channel_grader`, `f_droste`,
+`f_grain`, `f_hue_processor`, `f_luma_processor`, `f_masonry`, `f_mobius`,
+`f_stereo`, `f_tone_curve`); generated modules do not route it and this is not a
+defect — do not retrofit. (Core Vsynth's convention is `enable`; only
+`vs_pixelator`/`vs_pixelator_2` route `bypass`.)
+
+**Native bypass caveat (bench-verified 2026-09-23):** the toggle sets the pix's
+*native* `bypass` attribute, which skips the shader entirely and passes the
+input straight through. On outlet 1 that is exact; on outlets 2+ the input comes
+out **vertically flipped**, and any `mix(..., bypass)` in the codebox never runs.
+So a module with a secondary outlet cannot give it a meaningful bypass state
+through the native attribute. `f_vf_warp` avoids this by driving a differently
+named codebox Param instead (`jsui → prepend param bypass_gate → pix`) — that
+module is hand-edited and must not be regenerated. Multi-stage modules also need
+the bypass attrui wired to *every* pix stage, including stage 0 (`f_sirds` and
+`f_lens` were each missing one).
 
 ---
 
@@ -861,7 +874,7 @@ Whether generated `route`s should carry `bypass` is an open decision.
 - [ ] File in `package/patchers/f_<name>.maxpat`
 - [ ] `"openinpresentation": 1`
 - [ ] `jit.gl.pix vsynth @name <prefix>_pix` — no `@dim`
-- [ ] `autopattr @varname <prefix>_autopattr` present
+- [ ] `autopattr` box present with `varname` = `<prefix>_autopattr` (box text is just `autopattr`, no `@varname`)
 - [ ] `routepass jit_gl_texture jit_matrix` on inlet 0 — no param names on routepass
 - [ ] `route <params...>` separate from routepass — bypass NOT in route
 - [ ] routepass outlet 2 (unmatched) → route inlet 0

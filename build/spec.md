@@ -286,7 +286,7 @@ among ui_params, t = tier index).
 | `routepass jit_gl_texture jit_matrix` | peels texture from inlet |
 | `route <params...>` | dispatches named control messages; bypass absent |
 | `jit.gl.pix vsynth @name <object_name>` | shader core with embedded gen subpatcher |
-| `autopattr @varname <prefix>_autopattr` | state save/restore |
+| `autopattr` (box `varname` = `<prefix>_autopattr`; text has no `@varname`) | state save/restore |
 | `bypass_toggle.js` jsui | bypass UI; wired directly to pix, not through route |
 | `live.dial` per float param | with parameter_enable, varname |
 | `live.numbox` per int param | same wiring pattern as live.dial |

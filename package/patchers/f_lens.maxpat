@@ -32,7 +32,7 @@
                     "maxclass": "outlet",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 30.0, 500.0, 30.0, 30.0 ]
+                    "patching_rect": [ 30.0, 585.0, 30.0, 30.0 ]
                 }
             },
             {
@@ -42,7 +42,7 @@
                     "numinlets": 3,
                     "numoutlets": 3,
                     "outlettype": [ "", "", "" ],
-                    "patching_rect": [ 200.0, 90.0, 215.0, 22.0 ],
+                    "patching_rect": [ 249.0, 140.0, 215.0, 22.0 ],
                     "text": "routepass jit_gl_texture jit_matrix"
                 }
             },
@@ -195,7 +195,7 @@
                             }
                         ]
                     },
-                    "patching_rect": [ 200.0, 380.0, 244.0, 22.0 ],
+                    "patching_rect": [ 116.0, 448.0, 244.0, 22.0 ],
                     "text": "jit.gl.pix vsynth @name lens_pix @type char",
                     "varname": "lens_pix"
                 }
@@ -207,7 +207,7 @@
                     "numinlets": 1,
                     "numoutlets": 4,
                     "outlettype": [ "", "", "", "" ],
-                    "patching_rect": [ 500.0, 500.0, 56.0, 22.0 ],
+                    "patching_rect": [ 929.0, 514.0, 56.0, 22.0 ],
                     "restore": {
                         "aberration": [ 0.0 ],
                         "aberration_mod": [ 0.0 ],
@@ -282,7 +282,7 @@
                     "numinlets": 2,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 600.0, 80.0, 180.0, 22.0 ],
+                    "patching_rect": [ 764.0, 116.0, 180.0, 22.0 ],
                     "text": "getattr presentation_rect"
                 }
             },
@@ -293,7 +293,7 @@
                     "numinlets": 1,
                     "numoutlets": 2,
                     "outlettype": [ "", "" ],
-                    "patching_rect": [ 600.0, 110.0, 80.0, 22.0 ],
+                    "patching_rect": [ 708.0, 144.0, 80.0, 22.0 ],
                     "save": [ "#N", "thispatcher", ";", "#Q", "end", ";" ],
                     "text": "thispatcher"
                 }
@@ -305,7 +305,7 @@
                     "numinlets": 2,
                     "numoutlets": 2,
                     "outlettype": [ "", "" ],
-                    "patching_rect": [ 600.0, 140.0, 60.0, 22.0 ],
+                    "patching_rect": [ 735.0, 176.0, 60.0, 22.0 ],
                     "text": "zl slice 2"
                 }
             },
@@ -316,7 +316,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 600.0, 170.0, 80.0, 22.0 ],
+                    "patching_rect": [ 770.0, 222.0, 80.0, 22.0 ],
                     "text": "prepend tam"
                 }
             },
@@ -327,7 +327,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 600.0, 200.0, 100.0, 22.0 ],
+                    "patching_rect": [ 639.0, 170.0, 100.0, 22.0 ],
                     "saved_object_attributes": {
                         "filename": "moduleSize.js",
                         "parameter_enable": 0
@@ -374,7 +374,7 @@
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [ "" ],
-                    "patching_rect": [ 700.0, 62.0, 130.0, 22.0 ],
+                    "patching_rect": [ 774.0, 60.0, 130.0, 22.0 ],
                     "saved_object_attributes": {
                         "filename": "lens_toggle.js",
                         "parameter_enable": 0
@@ -470,7 +470,7 @@
                     "numinlets": 1,
                     "numoutlets": 2,
                     "outlettype": [ "", "" ],
-                    "patching_rect": [ 270.0, 80.0, 80.0, 22.0 ],
+                    "patching_rect": [ 295.5, 80.0, 80.0, 22.0 ],
                     "text": "vs_inState"
                 }
             },
@@ -1618,7 +1618,7 @@
                             }
                         ]
                     },
-                    "patching_rect": [ 200.0, 320.0, 271.0, 22.0 ],
+                    "patching_rect": [ 39.5, 507.0, 271.0, 22.0 ],
                     "text": "jit.gl.pix vsynth @name lens_halation @type char",
                     "varname": "lens_halation"
                 }
@@ -2096,6 +2096,14 @@
             {
                 "patchline": {
                     "destination": [ "obj-5", 0 ],
+                    "order": 0,
+                    "source": [ "obj-57", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-raw-17", 0 ],
+                    "order": 1,
                     "source": [ "obj-57", 0 ]
                 }
             },

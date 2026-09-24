@@ -912,8 +912,8 @@
               0.0
             ]
           },
-          "text": "autopattr @varname stereo_autopattr",
-          "varname": "u_stereo_autopattr"
+          "text": "autopattr",
+          "varname": "stereo_autopattr"
         }
       },
       {

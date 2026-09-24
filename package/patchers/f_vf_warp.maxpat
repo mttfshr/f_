@@ -172,7 +172,7 @@
                             },
                             {
                                 "box": {
-                                    "code": "Param strength(0.1);\nParam src_vecfield(0.0);\nParam bypass(0.0);\n\nuv = norm;\n\n// Sample field channels inline \u2014 never store vec and access component\nfield_x = sample(in2, uv).x;\nfield_y = sample(in2, uv).y;\n\n// Remap [0,1] \u2192 [-1,1], scale by strength\noffset_x = (field_x - 0.5) * 2.0 * strength;\noffset_y = (field_y - 0.5) * 2.0 * strength;\n\n// Suppress offset when vecfield inlet is unconnected (vs_black \u2192 field=0 \u2192 offset=-strength without this)\noffset_x = mix(0.0, offset_x, step(0.5, src_vecfield));\noffset_y = mix(0.0, offset_y, step(0.5, src_vecfield));\n\n// Displace UV and clamp to edge\nwarped_x = clamp(uv.x + offset_x, 0.0, 1.0);\nwarped_y = clamp(uv.y + offset_y, 0.0, 1.0);\nwarped_uv = vec(warped_x, warped_y);\n\n// Output \u2014 sample inline, no stored vec component access\nwarped_sample = sample(in1, warped_uv);\nout1 = mix(warped_sample, sample(in1, uv), bypass);\nout2 = warped_sample;\n",
+                                    "code": "Param strength(0.1);\nParam src_vecfield(0.0);\nParam bypass_gate(0.0);\n\nuv = norm;\n\n// Sample field channels inline \u2014 never store vec and access component\nfield_x = sample(in2, uv).x;\nfield_y = sample(in2, uv).y;\n\n// Remap [0,1] \u2192 [-1,1], scale by strength\noffset_x = (field_x - 0.5) * 2.0 * strength;\noffset_y = (field_y - 0.5) * 2.0 * strength;\n\n// Suppress offset when vecfield inlet is unconnected (vs_black \u2192 field=0 \u2192 offset=-strength without this)\noffset_x = mix(0.0, offset_x, step(0.5, src_vecfield));\noffset_y = mix(0.0, offset_y, step(0.5, src_vecfield));\n\n// Displace UV and clamp to edge\nwarped_x = clamp(uv.x + offset_x, 0.0, 1.0);\nwarped_y = clamp(uv.y + offset_y, 0.0, 1.0);\nwarped_uv = vec(warped_x, warped_y);\n\n// Output \u2014 sample inline, no stored vec component access\nwarped_sample = sample(in1, warped_uv);\nout1 = mix(warped_sample, sample(in1, uv), bypass_gate);\nout2 = mix(warped_sample, sample(in1, uv), bypass_gate);\n",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
@@ -705,8 +705,7 @@
             {
                 "box": {
                     "id": "obj-24",
-                    "maxclass": "attrui",
-                    "attr": "bypass",
+                    "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
                     "outlettype": [
@@ -718,7 +717,7 @@
                         131.0,
                         22.0
                     ],
-                    "style": ""
+                    "text": "prepend param bypass_gate"
                 }
             }
         ],

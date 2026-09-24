@@ -887,8 +887,8 @@
               0.5
             ]
           },
-          "text": "autopattr @varname mob_autopattr",
-          "varname": "u373010471"
+          "text": "autopattr",
+          "varname": "mob_autopattr"
         }
       },
       {

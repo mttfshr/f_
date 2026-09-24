@@ -695,6 +695,13 @@ the trig function even runs.
 - **Float32 readback is exact:** texture → `jit.matrix @type float32` via
   the matrix's `jit_gl_texture` method, then `write` to `.jxf`, round-trips
   values outside [0,1] bitwise. Matrix planes are ARGB.
+- **Native `@bypass` skips the shader and flips secondary outlets**
+  (module bench, 2026-09-23). With the native `bypass` attribute on, outlet 1
+  equals input 0 exactly, but outlets 2+ output input 0 **vertically
+  flipped** (exact `flipud`), and codebox logic like `mix(x, y, bypass)` never
+  executes. Seen on 11 shipped modules (two more multi-stage modules differ). To give secondary outlets a real bypass
+  state, drive a Param with a *different* name (`param bypass_gate 1`) and leave
+  the native attribute off.
 
 
 ### More bench-verified facts (E1–E4, 2026-09-22)

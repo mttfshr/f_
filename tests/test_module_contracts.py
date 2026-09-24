@@ -30,12 +30,6 @@ NOT_APPLICABLE = {
 
 # (module, kind, detail) -> pointer to where it's recorded
 KNOWN_ISSUES = {
-    ("f_vf_fieldmap", "bad_attr", "strength"):
-        "gain dial -> attrui strength, codebox has Param gain (found 2026-09-22 by this test; unfixed)",
-    ("f_vf_fieldmap", "cross_wired", "gain"): "same bug as above",
-    ("f_vf_repulse", "bad_attr", "strength"):
-        "gain dial -> attrui strength, codebox has Param gain (found 2026-09-22 by this test; unfixed)",
-    ("f_vf_repulse", "cross_wired", "gain"): "same bug as above",
     ("f_masonry", "bad_attr", "quantize"):
         "dead control: Param quantize removed 2026-07-05 (.specify/f_masonry/tasks.md E001), UI left behind",
     ("f_masonry", "unrouted", "course_seed"):
