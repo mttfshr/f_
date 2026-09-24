@@ -1,0 +1,48 @@
+// codebox_spec.gen -- f_vf_fluid stage 4: the spectral pass. Projection blend,
+// then exact viscous decay and linear drag, per Fourier bin.
+// Mirror: tests/fluid_mirror.spec(). 256x256 float32.
+//
+// Input in1 = spectral texture (R,G = Re,Im of u-hat; B,A = Re,Im of v-hat).
+// Wavevector k = 2*pi*signed_index (unit periodic domain).
+//   - projection uses OPERATOR wavenumbers that are zeroed at the Nyquist bin
+//     (odd functions of the index must vanish there or a real field gains an
+//     imaginary part; tests/test_fluid_mirror.py test_nyquist_keeps_field_real)
+//   - decay uses the full k^2: exp(-(viscosity*k^2 + drag)*dt); the k = 0 bin
+//     therefore only feels the drag
+//   - integer bin index is floor(norm * N), not `cell`
+//   - components accessed inline on nearest()
+//   - unary minus before a parenthesis mis-parses in GenExpr: `-(a + b) * c` is NOT
+//     -(a + b) * c (bench probe 2026-09-23); write `0 - (a + b) * c`
+Param viscosity(0);
+Param project(1);
+Param drag(0);
+Param dt(0.01);
+
+N = 256;
+bx = floor(norm.x * N);
+by = floor(norm.y * N);
+mx = switch(bx < N * 0.5, bx, bx - N);
+my = switch(by < N * 0.5, by, by - N);
+kx = twopi * mx;
+ky = twopi * my;
+k2 = kx * kx + ky * ky;
+kxo = switch(abs(mx) == N * 0.5, 0, kx);
+kyo = switch(abs(my) == N * 0.5, 0, ky);
+k2o = kxo * kxo + kyo * kyo;
+ik2 = switch(k2o > 0, 1 / max(k2o, 1e-30), 0);
+
+ur = nearest(in1, norm).x;
+ui = nearest(in1, norm).y;
+vr = nearest(in1, norm).z;
+vi = nearest(in1, norm).w;
+
+// Helmholtz projection: remove the component parallel to k
+dr = (kxo * ur + kyo * vr) * ik2;
+di = (kxo * ui + kyo * vi) * ik2;
+pur = ur - kxo * dr;
+pui = ui - kxo * di;
+pvr = vr - kyo * dr;
+pvi = vi - kyo * di;
+
+g = exp(0 - (viscosity * k2 + drag) * dt);
+out1 = vec(mix(ur, pur, project) * g, mix(ui, pui, project) * g, mix(vr, pvr, project) * g, mix(vi, pvi, project) * g);

@@ -702,6 +702,23 @@ the trig function even runs.
   executes. Seen on 11 shipped modules (two more multi-stage modules differ). To give secondary outlets a real bypass
   state, drive a Param with a *different* name (`param bypass_gate 1`) and leave
   the native attribute off.
+- **A unary minus before a parenthesis mis-parses** (bench control probe,
+  2026-09-23): `exp(-(v * k2 + drag) * dt)` evaluated as `-v*k2 + drag*dt`.
+  `0 - (v * k2 + drag) * dt` is correct. Write `0 - ...` in front of any
+  parenthesis or product (a bare `-1` literal is fine).
+- **A codebox cannot read an input texture's size**: `texdim()` is not defined,
+  `in1.dim` returns 0, and `dim` is the render context's. Manual bilinear taps
+  therefore need the size as a literal or a Param.
+- **Hardware `sample()` on this GPU**: exact bilinear at 1:1 and when
+  magnifying, but with 8-bit interpolation weights (~1e-3 for general
+  fractions), it clamps its neighbor taps (a `fract()`ed coordinate does not
+  wrap them: 0.5 error at a periodic seam), and it is **nearest-like when the
+  output is smaller than the source** (half a source texel off). A manual
+  4-tap with `wrap(x, 0, N)` on integer indices is exact and periodic (1e-6).
+- **`NaN == NaN` is TRUE on jit.gl.pix here**: an `x == x` NaN test does
+  nothing. `switch(abs(x) < 1e30, x, 0)` clears NaN and Inf.
+- **A `Param`-bounded `for` loop compiles and runs** on jit.gl.pix (row DFT
+  matched `np.fft` at N = 128 and 64), so a loop bound need not be a literal.
 
 
 ### More bench-verified facts (E1–E4, 2026-09-22)

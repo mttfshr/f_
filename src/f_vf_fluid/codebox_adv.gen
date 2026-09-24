@@ -1,0 +1,46 @@
+// codebox_adv.gen -- f_vf_fluid stage 1: self-advect the velocity state and add
+// the force. Mirror: tests/fluid_mirror.adv(). 256x256 float32.
+//
+// Inputs (jit.gl.pix inlets): in1 = `r draw` bang (unused; only triggers the
+// render every frame), in2 = force f_vecfield at render resolution (via
+// vs_inState), in3 = previous velocity state (R = u, B = v).
+// Output: vec(u, 0, v, 0) in decoded f_vecfield units.
+//
+// Carried findings (Phase 0, 2026-09-23):
+//   - the velocity is read with a manual 4-tap bilinear whose integer indices
+//     wrap with wrap(): the flow domain is periodic and hardware sample()
+//     clamps its neighbor tap (0.5 error at the seam)
+//   - hardware sample() is used ONLY for the force: a codebox cannot read an
+//     input texture's size, so manual taps are impossible there. It is exact at
+//     1:1 and when magnifying, nearest-like when minifying (E4, tier 3)
+//   - components are accessed inline on sample()/nearest(), never on a stored vec
+//   - never name a Param `bypass`; `force`, `dt` are fine
+Param dt(0.01);
+Param force(0.02);
+Param src_vecfield(0);
+
+N = 256;
+u = nearest(in3, norm).x;
+v = nearest(in3, norm).z;
+
+// departure point (continuous texel coordinates)
+fx = (norm.x - u * dt) * N - 0.5;
+fy = (norm.y - v * dt) * N - 0.5;
+x0 = floor(fx);
+y0 = floor(fy);
+tx = fx - x0;
+ty = fy - y0;
+xa = wrap(x0, 0, N);
+xb = wrap(x0 + 1, 0, N);
+ya = wrap(y0, 0, N);
+yb = wrap(y0 + 1, 0, N);
+p00 = vec((xa + 0.5) / N, (ya + 0.5) / N);
+p10 = vec((xb + 0.5) / N, (ya + 0.5) / N);
+p01 = vec((xa + 0.5) / N, (yb + 0.5) / N);
+p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
+au = mix(mix(nearest(in3, p00).x, nearest(in3, p10).x, tx), mix(nearest(in3, p01).x, nearest(in3, p11).x, tx), ty);
+av = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01).z, nearest(in3, p11).z, tx), ty);
+
+// force: decoded (p - 0.5) * 2, gated by src_vecfield (0 = inlet unconnected)
+gate = switch(src_vecfield >= 0.5, 1, 0);
+out1 = vec(au + force * (sample(in2, norm).x - 0.5) * 2 * gate, 0, av + force * (sample(in2, norm).y - 0.5) * 2 * gate, 0);

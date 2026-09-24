@@ -1,0 +1,46 @@
+// codebox_enc.gen -- f_vf_fluid stage 7: upsample the 256x256 velocity to the
+// render size, apply gain, clamp, encode as an f_vecfield, and apply the
+// bypass gate. Runs at RENDER resolution. Mirror: tests/fluid_mirror.enc().
+//
+// Inputs: in1 = `r draw` bang (unused; triggers every frame and gives this
+// pix the render-context size even when the force inlet is unconnected),
+// in2 = force f_vecfield at render resolution (via vs_inState), in3 = velocity
+// (R = u, B = v, 256x256).
+//   - the velocity is read with a manual periodic 4-tap (works for any output
+//     size, including smaller than 256 where hardware sample() would snap)
+//   - bypass_gate = 1 outputs the force unchanged, or an exactly neutral field
+//     when src_vecfield = 0 (vs_black is all zeros = decoded -1, so passing it
+//     through would be wrong)
+//   - Param is bypass_gate, never `bypass` (native pix attribute)
+Param gain(1);
+Param bypass_gate(0);
+Param src_vecfield(0);
+
+N = 256;
+fx = norm.x * N - 0.5;
+fy = norm.y * N - 0.5;
+x0 = floor(fx);
+y0 = floor(fy);
+tx = fx - x0;
+ty = fy - y0;
+xa = wrap(x0, 0, N);
+xb = wrap(x0 + 1, 0, N);
+ya = wrap(y0, 0, N);
+yb = wrap(y0 + 1, 0, N);
+p00 = vec((xa + 0.5) / N, (ya + 0.5) / N);
+p10 = vec((xb + 0.5) / N, (ya + 0.5) / N);
+p01 = vec((xa + 0.5) / N, (yb + 0.5) / N);
+p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
+au = mix(mix(nearest(in3, p00).x, nearest(in3, p10).x, tx), mix(nearest(in3, p01).x, nearest(in3, p11).x, tx), ty);
+av = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01).z, nearest(in3, p11).z, tx), ty);
+
+r = 0.5 + 0.5 * clamp(gain * au, -1, 1);
+g = 0.5 + 0.5 * clamp(gain * av, -1, 1);
+
+useforce = switch(src_vecfield >= 0.5, 1, 0);
+fr = mix(0.5, sample(in2, norm).x, useforce);
+fg = mix(0.5, sample(in2, norm).y, useforce);
+fb = mix(0.5, sample(in2, norm).z, useforce);
+fa = mix(1, sample(in2, norm).w, useforce);
+
+out1 = vec(mix(r, fr, bypass_gate), mix(g, fg, bypass_gate), mix(0.5, fb, bypass_gate), mix(1, fa, bypass_gate));

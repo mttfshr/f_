@@ -50,6 +50,8 @@ GPU verification.
 - Hardware `sample()`: clamps neighbor taps, 8-bit weights, and is nearest-like
   when minifying (Phase 0) — all interpolation here is manual (ADR-3).
 - `NaN == NaN` is true on this GPU; guard with `abs(x) < 1e30` (ADR-6).
+- **A unary minus before a parenthesis mis-parses** (`-(a + b) * c` ≠ −(a+b)·c);
+  write `0 - (a + b) * c` (Phase 1). A codebox cannot read an input texture's size.
 - Native `@bypass` skips the shader and flips outlets 2+ (this module uses a
   Param-based bypass gate instead — ADR-8).
 
@@ -214,13 +216,18 @@ GPU (`tests/bench_fluid_probes.py`, `tests/fluid_feasibility.py`):
 **Decision**: `adv` reads the velocity state, and `enc` reads the velocity for
 upsampling, with four `nearest()` taps whose integer indices wrap with
 `wrap(x, 0, N)` and a manual bilinear blend (`tests/bench/codeboxes/seam_tap4.gen`:
-1.3e-6 vs the periodic reference, seam included). The force is read the same
-way with clamped indices, so the GPU matches the mirror to float precision and
-the force downsample (render-res → 256², a minification) is explicit and
-filterable (E4) rather than accidental nearest.
+1.3e-6 vs the periodic reference, seam included; Phase 1: `adv` and `enc`
+match the mirror to 6.5e-7 and 9.4e-6). The force is the one exception (below).
 
-**Alternatives**: `sample()` + `fract()` (rejected, above); hardware
-`sample()` for the force (rejected: nearest-like when minifying, aliasing).
+**The force** is read with hardware `sample()`: a codebox cannot read an input
+texture's size (`texdim` is not defined; `in1.dim` returns 0), so manual taps
+are impossible there. Phase 1 measured it: exact at 1:1 and when magnifying
+(6.6e-7 vs the mirror), nearest-like when minifying — the common case, since
+render res is usually > 256² (0.44 max error vs a bilinear mirror on white
+noise). That is harmless for a smooth force; prefiltering it (a `Param`-supplied
+size or an extra stage) is E4, tier 3.
+
+**Alternatives**: `sample()` + `fract()` for the velocity (rejected, above).
 
 **Consequences**: +: exact, periodic, mirror-verifiable everywhere; −: 4–16
 `nearest()` reads per pixel in the cheap stages (negligible at 256²; `enc`
@@ -397,7 +404,10 @@ Maps to the spec's proposed phasing; blocks in brackets.
 - `fluid_mirror.py` + `test_fluid_mirror.py`: 16/16, mutation-checked.
 - **Checkpoint**: met. Findings table in `tasks.md`.
 
-### Phase 1: Solver stages on the bench [B]
+### Phase 1: Solver stages on the bench [B] — DONE 2026-09-23 (`tests/bench_fluid.py` 9/9)
+_Outcome: all stages match the mirror at float precision; 100 chained GPU frames
+within 3.1e-6 of the mirror; Taylor–Green 0.85% at frame 100; cost 2.4–2.8 ms/frame
+(NF-001 budget 3 ms). See tasks.md Findings._
 - Codeboxes: `adv`, `spec`, `enc`, baked DFTs (`gen_dft.py`), `ix` guards.
 - `bench_fluid.py`: per-stage GPU-vs-mirror, seam test, host-sequenced
   multi-frame, NaN-guard behavior, cost.
