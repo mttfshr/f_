@@ -1,164 +1,200 @@
 # HANDOFF
 
-_Session: 2026-09-22_
+_Session: 2026-09-23_ (previous handoff, 2026-09-22 — test bench build — is in git history)
 
 ## What happened
 
-Started as a design question — does the September 2026 Navier–Stokes
-Millennium result change the viscous-fluid shader ideas? — and turned into
-building testing infrastructure for the whole library.
+Worked **thread 0** from the last handoff: fix the module bugs the contract
+tests found. All of them are fixed except two deliberate non-changes (below).
+Both bench registries (`KNOWN` in `bench_modules.py`, `KNOWN_ISSUES` in
+`test_module_contracts.py`) are now **empty**. Final state: live module bench
+2/2 (0 unexpected issues, ~75 s), offline contract test 3/3.
 
-**Navier–Stokes: no change.** The result (OpenAI's claimed finite-time
-blowup for 3D NS, Clay still lists the problem active) is a blowup proof,
-not a solver; it's 3D-only (2D NS has been known smooth since the 1960s);
-and grids can't represent the singular data anyway. Recorded in
-`ideas/ceyron_simulation_scripts_notes.md`, which also got a scoped **"rung
-2"** option: `f_vf_advect` has no velocity state, so viscosity has nothing
-to act on — self-advected velocity + explicit diffusion (≈ viscous Burgers)
-is a cheap middle rung between today's module and full Stam.
+### Bypass: investigation, decisions, three real bugs
 
-**FFT thread, answered.** Reframes: velocity doesn't need render resolution
-(128–256² is standard), and "~40 passes" was one implementation — a
-*separable DFT* is 4 passes, each a fixed-count loop. Math verified in NumPy
-first (new `tests/`), then on the GPU through the new bench: row pass and
-full 2D FFT match `np.fft` to ~1e-7; N=128/256/512 all compile; cost 2.96
-ms/pass at 512², below the bench's resolution (< 0.5 ms) at 128–256². A full
-FFT round trip per frame is real-time at the resolutions it's for, which
-makes the planned Jacobi comparison look unnecessary.
+- **Core Vsynth's convention is `enable`, not `bypass`.** 78 of 100 `vs_`
+  modules open with `routepass enable jit_gl_texture jit_matrix`, which
+  forwards `enable` to the pix's native `@enable` (stops rendering; no
+  passthrough). Only `vs_pixelator` / `vs_pixelator_2` route a `bypass`
+  message (→ a `live.toggle`). `docs/vsynth-reference/vocabulary.md` had
+  said Kevin never uses `bypass`; corrected.
+- **"`bypass 1` message works in only 9 modules" is NOT a defect.** The 9 are
+  the oldest (`f_channel_grader`, `f_droste`, `f_grain`, `f_hue_processor`,
+  `f_luma_processor`, `f_masonry`, `f_mobius`, `f_stereo`, `f_tone_curve`).
+  The bypass *toggle* (jsui → `attrui @attr bypass` → pix) works in every
+  module and is the supported path. **Decision: don't retrofit the message
+  into generated modules' `route`.** Skill and bench wording corrected.
+- **Fixed three real bugs** (all bench-verified):
+  - `f_lens`: bypass attrui wasn't wired to `lens_halation` (tiltshift was
+    removed on purpose, so the chain is two pix). One patchline added.
+  - `f_sirds`: attrui wired to stages 1–12 but not stage 0. One patchline.
+  - `f_vf_warp`: `out2` ignored bypass — see next section for the real cause.
 
-**New infrastructure: two test layers** (Matt's prompt: stop getting bogged
-down building a patcher wrapper for every proof of concept).
-- **`tests/` math layer** — NumPy mirror of the jit.gl.pix execution model
-  (`gpu_sim.py`); codebox passes mirrored pass-for-pass, float32,
-  mutation-checked. `tests/run.sh`.
-- **Max test bench** — spec/plan/tasks in `.specify/test_bench/`, all 5
-  phases done. One generated patch (`tests/bench/bench.maxpat`) stays open;
-  Python drives it over OSC and swaps float32 `.jxf` files;
-  `benchclient.run_pass()` / `measure()`. `tests/bench.sh` 21/21. Found
-  `Cycling74/max-test` (Matt) and borrowed its conventions rather than the
-  package (aging, no Jitter coverage).
+### New finding: native `@bypass` flips secondary outlets
 
-**Real findings the bench produced** (all in the `jit-gen-codebox` skill's
-new "Bench-Verified Facts" section, in both the `f_` and `claude-scaffold`
-copies):
-- **GenExpr `cell` on jit.gl.pix is `norm * (dim - 1)`, not an integer
-  index** — caught by the coordinate probe *before* the FFT codebox was
-  written (the plan had used `cell` as the bin index). Integer index =
-  `floor(norm * dim)`.
-- Gen compile errors are catchable via `[error]` — but a direct
-  `[error] → js` wire recursed into a Max stack overflow that disabled every
-  outlet in Max (Matt cleared it). Fixed with `deferlow` + `prepend`.
-- jit.gl.pix inlet count follows the gen patcher's `in` objects; messages
-  to the pix land on input 0 regardless of `activeinput`; a new gen compiles
-  at its first render (params sent earlier fail); every received texture
-  triggers a render.
-- Performance: CPU/GPU overlap — frame ≈ max(overhead, K × pass cost). An
-  early "cached re-emit" reading of the numbers was wrong and corrected by a
-  decisive heavy-shader test.
+Under the native bypass attribute (what the toggle sets), the pix **skips the
+shader**: outlet 1 passes input 0 through exactly, but **outlets 2+ output
+input 0 vertically flipped** (exact `flipud`), and any `mix(..., bypass)` in
+the codebox never runs. That's why `f_vf_warp`'s `out2` "changed direction"
+when bypassed — and why the codebox `out1 = mix(..., bypass)` was dead code.
 
-## Continued same day — bench made default, then extended (E3, E1, E2, E4)
+- `f_vf_warp` fixed by **not using native bypass**: codebox Param renamed
+  `bypass_gate`, toggle wired `jsui → prepend param bypass_gate → pix`
+  (attrui `obj-24` replaced by that `prepend`), both outlets
+  `mix(warped_sample, sample(in1, uv), bypass_gate)`. Bench check added
+  (`BYPASS_PASSTHROUGH_OUTLETS = {"f_vf_warp": (2,)}`).
+- **11 other modules show the same flip** on outlets 2+: `f_caustic`,
+  `f_chladni`, `f_grain`, `f_masonry`, `f_stipple`, `f_vf_advect`,
+  `f_vf_chroma`, `f_vf_glow`, `f_vf_prism`, `f_vf_split`, `f_vf_streak`
+  (`f_vf_optical_flow` / `f_vf_seeds` differ but aren't flipped). **Not fixed —
+  Matt wants to eyeball each one.** Tracked as `.specify/plan.md` Work Queue
+  item 10 with a per-module/per-outlet checklist. Isolated-layer outlets
+  (glow/streak/prism/chroma/caustic) arguably shouldn't show the source at
+  all when bypassed — per-module decision.
+- Documented in `skills/vsynth-bpatcher/SKILL.md` ("Native bypass caveat")
+  and `skills/jit-gen-codebox/SKILL.md` (Bench-Verified Facts).
 
-**Made the default workflow:** `.specify/constitution.md` "Verification
-Tiers" (math mirror → bench → scratch patch; "numbers before eyes"), the
-vsynth-bpatcher skill's codebox workflow + Phase 0 template, codebox-skill
-evidence levels, `tests/templates/bench_module_template.py`, project memory.
+### Other fixes
 
-**Extended, all four** (`.specify/test_bench/extensions.md`,
-`tasks_extensions.md`):
-- **E3 module contracts** — offline (`tests/test_module_contracts.py`, route
-  → attrui → Param wiring from patch JSON) and live
-  (`tests/bench_modules.py`: a second bench, `bench_module.maxpat`, running
-  shipped bpatchers inside Vsynth's real `vs_render`; params sent as control
-  messages and read back off the inner pix; bypass; every outlet). 32
-  modules, ~77 s. **Close Vsynth performance patches while the module bench
-  is open.**
-- **E1** all four outputs; **E2** char textures; **E4** multi-frame feedback
-  runs (`run_temporal`, Pattern 1, frame-exact).
-- Full regression green: offline 25/25, bench 29/29 (six suites).
+- **Gain dials** (`f_vf_fieldmap`, `f_vf_repulse`): dial fed `attrui strength`
+  (pre-rename name); codebox has `Param gain`. Changed to `gain`; also the
+  stale "Strength" label → "Gain" in both, and the stale `strength` entry in
+  `f_vf_repulse`'s `parameters` block. Saved presets under `strength` won't
+  load (they never worked).
+- **`f_vf_fieldmap`**: removed invalid `@boundmode 1` from the pix box (only
+  ever in the hand-edited patch; `sample()` clamps by default anyway).
+- **`autopattr @varname X`** is invalid in Max 9. The name belongs in the box's
+  `varname` property. Fixed in `f_mobius`, `f_stereo`, `f_masonry` (box text is
+  now plain `autopattr`, `varname` = `<prefix>_autopattr`). Corrected the
+  notation in `skills/vsynth-bpatcher/SKILL.md` (2 places) and `build/spec.md`.
+  Older `.specify/stable/*` task lists still use the `@varname` shorthand
+  (archival, left alone).
+- **`f_masonry`** (hand-edited by script; never regenerate):
+  - Route off-by-one from when `bypass` was inserted: `brick_seed` drove the
+    `course_seed` numbox, the unmatched outlet drove `brick_seed`,
+    `course_seed` went nowhere. Every route token now wires to the control of
+    the same name.
+  - **`quantize` removed** (E001p, decided 2026-07-05, finally applied): dial,
+    label, attrui, the mod-matrix `prepend`/`focus` messages, route token,
+    restore + `parameters` entries, the matrix `params` list entry,
+    `masonry_toggle.js` names. Row 2 of the controls panel **reflowed to six
+    columns** (regularity/drift/skip/phase/speed_var each shifted left one
+    slot). **Layout is a visual guess — Matt to eyeball in Max.**
+  - The edit was done with a small span-based JSON text editor (delete
+    elements from the `boxes`/`lines` arrays, adjust route outlet indices,
+    everything else byte-preserved). Untracked copy: `scratch/edit_masonry.py`
+    — the `rebuild()` helper is a reusable pattern for surgical edits to the
+    big hand-built patchers.
+- **`hue_range.js`**: trailing global `calc()` called `outlet()` before the
+  object's outlets existed ("bad outlet index", 3× per load). Removed; behavior
+  unchanged (that call never produced output).
 
-**Real bugs found in shipped modules (all unfixed, each held as XFAIL — the
-test flips to XPASS when fixed):**
-- `f_vf_fieldmap`, `f_vf_repulse`: Gain dial does nothing (dial → `attrui
-  strength`, codebox has `Param gain`) — same class as the old `mix_amt` bug.
-- `f_masonry`: route `brick_seed` drives the course_seed numbox, route
-  `course_seed` unconnected; `quantize` is a dead control (Param removed
-  2026-07-05, UI left behind).
-- **Documented `bypass 1` control message works in only 9 modules** — dropped
-  in all 23 build-system modules (their `route` has no `bypass`). Skill
-  corrected; whether generated routes should carry `bypass` is a decision.
-- `f_sirds`: bypass doesn't pass through (stage0 not bypassed) — new,
-  uninvestigated. `f_lens` bypass (already Parked) confirmed live.
-- `hue_range.js` calls outlet() beyond its outlet count; `autopattr @varname
-  X` is invalid syntax in Max 9 (masonry, mobius, stereo); `f_vf_fieldmap`'s
-  pix declares a non-existent `@boundmode` attribute.
-- Library-level: any module whose pix uses a fixed `@name` (not `#0_`)
-  can't exist twice in one Max session ("ob3d does not allow multiple
-  bindings") — e.g. two Glows in one Vsynth patch. Not yet counted.
+### Deliberately NOT changed (Matt, 2026-09-23: leave as is)
 
-**Open, uninvestigated (per Matt: don't sink time):** loading ~30 modules into
-one bench session scrambled other modules' dial `_parameter_range`; a fresh
-session per module fixes it for testing. Suspect `range_tiers` modules. Could
-matter in a real Vsynth patch holding several f_ modules.
+`f_vf_advect`, `f_vf_optical_flow`, `f_vf_seeds` keep GPU stages running while
+bypassed ("bypass-leaves-active" in the bench). Their specs make this
+deliberate: advect's feedback loop stays warm through bypass; seeds' ADR 8
+gates bypass at the composite stage only; optical flow has per-stage bypass
+Params. Bench now prints "(by design)"; parked in `plan.md`. Revisit only if
+bypassed GPU cost matters live (optical flow: 5 of 8 stages; seeds: both
+search stages) — that would loosen the "state stays warm" behavior, so it's a
+design change, not a bug fix.
 
-## Done
+### Later same session: `f_vf_fluid` specced, planned, tasked
 
-- `ideas/ceyron_simulation_scripts_notes.md`: rung-2 addendum, FFT dive,
-  bench results (T1/T2 on GPU, cost), `cell` correction.
-- `tests/`: math layer (`gpu_sim.py`, `harness.py`, `test_fft_separable.py`,
-  `run.sh`) + bench toolchain (`jxf.py`, `genjit.py`, `benchclient.py`,
-  offline tests) + bench tests (`bench_control/selftest/fft/perf.py`,
-  `bench.sh`) + `bench/` (generator, `bench.js`, codeboxes incl.
-  `dft_x.gen`/`dft_y.gen`). `tests/README.md` documents both layers.
-- `.specify/test_bench/{spec,plan,tasks}.md` — all 34 tasks done, with the
-  as-built revisions recorded in plan ADRs.
-- `.gitignore`: `tests/jobs/`, `tests/bench/job_*.genjit`.
-- Skill: `jit-gen-codebox` Bench-Verified Facts (both copies).
+The fluid thread (thread 1 of the 9/22 handoff) moved from research to a
+full spec set in `.specify/f_vf_fluid/` (`spec.md`, `plan.md`, `tasks.md`;
+Work Queue item 11). **No code yet.**
 
-**Nothing committed yet.** The working tree also holds changes from before
-this session (`README.md`, `docs/vsynth-reference/module-inventory.md`,
-`package/demos/sampleplatter.maxpat`, `skills/vsynth-bpatcher/SKILL.md`,
-untracked `docs/f-reference/module-inventory.md`, `scratch/`) — stage this
-session's files by name.
+- **Decided** (with Matt): a *new* module — a spectral (FFT) velocity solver
+  that outputs an evolving vecfield; force vecfield in, velocity vecfield out.
+  **No dye inside** — feed `f_vf_advect`/`f_vf_warp`/etc. Internal 256²
+  (128² fallback), periodic boundaries, `project` 0–1 (0 = Burgers-like
+  "rung 2" look, 1 = divergence-free), output `gain` + clamp under the
+  `f_vecfield` contract.
+- **Plan highlights**: 8-stage `jit.gl.pix` chain (`pass → adv → fx → fy →
+  spec → iy → ix → enc`, `ix → pass` feedback); only the solver stages are
+  256² — the encode stage runs at **render resolution**, so consumers and the
+  module bench see an ordinary render-size vecfield; periodic self-advection
+  via a manual 4-tap bilinear (E-seam experiment to confirm); Nyquist bins
+  zeroed in the spectral operators (the old `pass_spectral` mirror doesn't do
+  this); **bypass is a Param gate on `enc` (`bypass_gate`), not native
+  `@bypass`**, passing the force through (or neutral when unconnected) while
+  the solver stays warm; dedicated `build_fluid.py` (like `build_advect.py`),
+  not a `build_patcher.py` schema extension.
+- **Multi-frame bench caveat**: the bench drives one codebox at a time, so the
+  100-frame whole-chain check is host-sequenced from Python (plan ADR-10).
+- **Highest risk**: Block C — does a `@adapt 0 @dim 256 256` pix work inside
+  Vsynth's render context, and what size is the render-res encode stage when
+  the force inlet is unconnected (`vs_black` dims)? Tasks T002–T004; findings
+  table at the end of `tasks.md`.
+
+## Warnings for next session
+
+- **Definitions have drifted from the shipped patchers — do not regenerate**
+  `f_vf_warp`, `f_lens`, `f_vf_fieldmap`, `f_vf_repulse`. A dry-run rebuild
+  rewrote whole files: `f_vf_warp` (`strength` default 0.1 in patch vs 0.0 in
+  definition, label/comment styling), `f_lens` (definition still builds the
+  removed tiltshift), `f_vf_fieldmap` (inlet counts, rects), `f_vf_repulse`
+  (codebox and labels differ). `plan.md`'s never-regenerate list now has
+  `f_vf_warp` and `f_lens`. **Open decision: add `f_vf_fieldmap` and
+  `f_vf_repulse` too**, or sync their definitions from the patches.
+  `f_vf_warp`'s `definition.py` carries a "DO NOT REGENERATE" comment.
+- **Before trusting a regen**: `build/py.sh build/build_patcher.py
+  src/<m>/definition.py && git diff -w --stat -- package/patchers/<m>.maxpat`;
+  `git checkout --` the file afterwards if the diff isn't tiny.
+- **Module bench "name already in use" errors** (`ob3d does not allow multiple
+  bindings`) mean another open patch — or stale bench state — already holds
+  modules with fixed `@name`s (caustic, lens, fieldmap, vortex, …). Close every
+  other patch and reopen `bench_module.maxpat` before running. Cost me two
+  false-alarm runs (108 BADs) this session.
+- Tooling: with Desktop Commander, scripts must live under an allowed path
+  (`/tmp` is not allowed; `scratch/` is). `create_file` writes to Claude's own
+  container, not the Mac.
+- Everything from this session is committed, including
+  `scratch/edit_masonry.py` and the `f_vf_fluid` spec/plan/tasks.
 
 ## Next session — start here
 
-Three open threads; pick one:
+Pick one:
 
-**0. Fix the module bugs the contract tests found** (list above). Cheap,
-concrete, each has a test already; fixing one should flip its XFAIL to XPASS
-(then delete the registry entry). Mind the never-regenerate list for
-`f_masonry` (hand-edit only). Decide the `bypass`-in-`route` question first —
-it touches every build-system module via `build_patcher.py`.
+**0. Work Queue item 10 — the 11 flipped secondary outlets.** Matt eyeballs each
+module's bypassed outlets in a real Vsynth patch, decides the bypassed state
+(source / black / unchanged / leave), then fix using the `f_vf_warp` recipe
+(drive a non-`bypass` Param; hand-edit). Extend `BYPASS_PASSTHROUGH_OUTLETS`
+only for outlets whose intended state is "equals input".
 
-**1. Fluid work, now unblocked.** Write the spectral pass codebox
-(diffusion + projection, math already verified in `test_fft_separable.py`)
-and verify it on the bench — that completes a GPU-verified FFT fluid step
-except for advection. Then an architecture discussion: rung 2 vs full
-spectral Stam as a module; internal-resolution resampling in a real
-bpatcher (`@adapt 0` + `@dim` — bench confirms `dim` works on the pix,
-untested inside Vsynth); the torus (wraparound boundary) decision.
+**1. `f_vf_fluid` — start Phase 0 of `.specify/f_vf_fluid/tasks.md`.** Suggested
+order: the in-Vsynth feasibility experiments (T002–T004: 256² pix + render-res
+encode stage; unconnected-force size) in parallel with the NumPy mirror
+(`tests/fluid_mirror.py`, `tests/test_fluid_mirror.py`, T008–T010). No stage
+codebox is written until the mirror passes.
 
-**2. `f_a_ripple` production UI polish** — carried forward unchanged from
-the 2026-09-15/16 session: DSP done and confirmed by ear; UI still plain
-flonums/toggles, not the `f_` convention. `ideas/f_a_build_process.md` has
-the reuse analysis. Then Phase 5 (docs/helpfile). Its loose ends
-(`carrier_phase` random not wired; modulated-band loop still fixed at 200
-iterations; T7b/T8 unstarted, not blocking) are unchanged — see git history
-of this file (2026-09-16 entry) for the detail.
+**2. `f_a_ripple` production UI polish** — unchanged: DSP done and confirmed by
+ear; UI still plain flonums/toggles, not the `f_` convention.
+`ideas/f_a_build_process.md` has the reuse analysis; then Phase 5 (docs/
+helpfile).
+
+**3. Definition drift cleanup** — decide, per module (`f_vf_warp`, `f_lens`,
+`f_vf_fieldmap`, `f_vf_repulse`), whether to sync `definition.py` from the
+patch or mark it archival and add to the never-regenerate list.
 
 ## Loose threads
 
-- **Two `jit-gen-codebox` skill copies have diverged both ways** (the `f_`
-  and `claude-scaffold` copies each have sections the other lacks — e.g. the
-  "`Param` named after a built-in operator" entry exists only in the
-  scaffold copy). Needs a reconciliation pass. The skill uploaded to
-  claude.ai is a third copy — re-upload after reconciling.
+- **Two `jit-gen-codebox` skill copies have diverged both ways** (`f_` and
+  `claude-scaffold`). This session added the native-bypass bullet to the `f_`
+  copy only. The claude.ai upload is a third copy — reconcile, then re-upload.
+- **Library-level, still uncounted:** any module whose pix uses a fixed `@name`
+  (not `#0_`) can't exist twice in one Max session — e.g. two Glows in one
+  Vsynth patch.
+- **Open, uninvestigated:** loading ~30 modules into one bench session
+  scrambled other modules' dial `_parameter_range` (suspect `range_tiers`
+  modules); a fresh session per module fixes it for testing.
 - **Bench intermittent:** one unexplained `ERROR` in
-  `bench_control.py::test_frames_arrive_during_job` (first full run of
-  Phase 4 only; six reruns clean). `tests/jobs/bench_last.log` now keeps
-  full output for next time.
-- `bench_src` (identity pix before slot 1) is kept but not proven
-  necessary — see `make_bench.py` comment.
-- Other tools could use the bench beyond fluids: any `f_` codebox can now be
-  verified numerically without a scratch patch (e.g. re-verifying the
-  UNVERIFIED `f_vf_vorticity`, or tracing `f_apollonian`'s `debug_ok`).
+  `bench_control.py::test_frames_arrive_during_job` (first Phase 4 run only).
+  `tests/jobs/bench_last.log` keeps full output.
+- `bench_src` (identity pix before slot 1) kept but not proven necessary.
+- Other tools could use the bench: re-verifying the UNVERIFIED
+  `f_vf_vorticity`, tracing `f_apollonian`'s `debug_ok`.
+- `f_droste` still lacks `autopattr` (plan.md Parked) — the fix is now known:
+  plain `autopattr` box with `varname` `droste_autopattr`.
