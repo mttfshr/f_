@@ -107,9 +107,9 @@ full spec set in `.specify/f_vf_fluid/` (`spec.md`, `plan.md`, `tasks.md`;
 Work Queue item 11), and **Phases 0, 1 and 2 are done** (T001–T033a): the NumPy
 mirror, the GPU/Vsynth feasibility experiments, all seven stage codeboxes proven
 on the bench, and the **module itself** (`package/patchers/f_vf_fluid.maxpat`,
-built by `src/f_vf_fluid/build_fluid.py`). **Open: T034**, Matt's smoke test in a
-real Vsynth patch (`f_vf_vortex → f_vf_fluid → f_vf_advect` on a source: motion should
-persist and fade after the vortex is disabled), then Phase 3 tuning.
+built by `src/f_vf_fluid/build_fluid.py`). T033 (parameters restore after save/reopen)
+and T034 (smoke test in a real Vsynth patch) were **confirmed by Matt**, and he judged the
+panel look good. Next: Phase 3 tuning.
 
 - **Decided** (with Matt): a *new* module — a spectral (FFT) velocity solver
   that outputs an evolving vecfield; force vecfield in, velocity vecfield out.
@@ -180,9 +180,8 @@ persist and fade after the vortex is disabled), then Phase 3 tuning.
     hand-edited, add it to the never-regenerate list. The bench's module-input size for
     it is 512 (`INPUT_SIZE` in `tests/bench_modules.py`) because the render context is
     512² and `enc` follows the context.
-  - **Not done / needs Matt in Max:** T034 (smoke test), the "parameters restore after
-    save/reopen" half of T033 (autopattr state), and the look of the panel (6 dials,
-    190×150; ranges and defaults are provisional, Phase 3).
+  - Confirmed by Matt in Max: T033, T034 and the panel look (6 dials, 190×150). Ranges
+    and defaults are still provisional (Phase 3).
 
 ## Warnings for next session
 

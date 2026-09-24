@@ -259,21 +259,20 @@ coexist; bypass check passes.
       bang on inlet 0 may trigger a render; inlets 1–2 must be cold): in the module bench
       run a known decaying state for K frames and check the amplitude ratio equals the
       single-step factor to the K-th power (a doubled update would square it).
-- [ ] T034 [US1] Smoke test in a scratch patch: `f_vf_vortex → f_vf_fluid →
+- [x] T034 [US1] Smoke test in a scratch patch: `f_vf_vortex → f_vf_fluid →
       f_vf_advect` on a source; disable the vortex and confirm the flow persists and
       fades (US1 independent test, judgement).
 
 **Checkpoint**: contracts and module bench green; two instances independent;
 bypass passes through / neutral; US1 smoke test works. Commit.
 
-**Phase 2 outcome (2026-09-23): met except T034 (Matt's smoke test in Vsynth).**
+**Phase 2 outcome (2026-09-23): met.** T033 (save/reopen restores parameters) and T034 (the `f_vf_vortex → f_vf_fluid → f_vf_advect` smoke test in a real Vsynth patch) were confirmed by Matt, who also judged the panel look good.
 `build_fluid.py` builds `package/patchers/f_vf_fluid.maxpat` (46 boxes, 46 lines) and
 self-verifies; the static contract test and the live module bench (33 modules) pass with
 no new `KNOWN` entries; `tests/bench_fluid_module.py` 3/3 (once-per-frame, two instances,
 fresh load). One real bug found and fixed on the way: **`vs_black` (all zeros = decoded −1)
 was injected as a force for the first ~10 frames after load** because `vs_inState`'s
-connected flag lags; fixed with a content check (B = 0.5) in `adv` and `enc`. T033's
-"parameters restore on save/reopen" half needs Matt in Max (autopattr state).
+connected flag lags; fixed with a content check (B = 0.5) in `adv` and `enc`. 
 
 ---
 

@@ -1,0 +1,46 @@
+{
+    "pattrstorage": {
+        "name": "Vsynth",
+        "slots": {
+            "1": {
+                "id": 1,
+                "data": {
+                    "vs_output[1]::lowr_y": [ 1.0 ],
+                    "vs_output[1]::lowr_x": [ 1.0 ],
+                    "vs_output[1]::lowl_y": [ 1.0 ],
+                    "vs_output[1]::lowl_x": [ 0.0 ],
+                    "vs_output[1]::uppr_y": [ 0.0 ],
+                    "vs_output[1]::uppr_x": [ 1.0 ],
+                    "vs_output[1]::uppl_y": [ 0.0 ],
+                    "vs_output[1]::uppl_x": [ 0.0 ],
+                    "vs_presets::5851.pre": [ -1 ],
+                    "f_vf_fluid::bypass": [ 0 ],
+                    "f_vf_fluid::drag": [ 1.0629921259842512 ],
+                    "f_vf_fluid::dt": [ 0.007480314960629925 ],
+                    "f_vf_fluid::force": [ 0.03149606299212598 ],
+                    "f_vf_fluid::gain": [ 0.31496062992125984 ],
+                    "f_vf_fluid::project": [ 0.8110236220472444 ],
+                    "f_vf_fluid::viscosity": [ 0.0003149606299212597 ],
+                    "f_vf_advect::bypass": [ 0 ],
+                    "f_vf_advect::decay": [ 0.958976377952756 ],
+                    "f_vf_advect::dt": [ 0.010393700787401573 ],
+                    "f_vf_advect::gain": [ 1.0 ],
+                    "f_vf_advect::injection": [ 0.016850393700787388 ],
+                    "f_vf_advect::mix_pct": [ 100.0 ],
+                    "f_vf_advect::mode": [ 2.0 ],
+                    "f_vf_advect::separate": [ 0.0 ],
+                    "vs_camera_fm::cam2_scale_freq_x": [ 0.0 ],
+                    "vs_camera_fm::can2_scale_freq_y": [ 0.0 ],
+                    "vs_camera_fm::cam_on[1]": [ 1.0 ],
+                    "vs_camera_fm::cam2_fm_x": [ 0.0 ],
+                    "vs_camera_fm::cam2_fm_y": [ 0.0 ],
+                    "f_vf_fieldmap::bypass": [ 0 ],
+                    "f_vf_fieldmap::gain": [ -4.346456692913373 ],
+                    "f_vf_fieldmap::rotate": [ -28.346456692913314 ],
+                    "f_vf_fieldmap::scale": [ -0.014110236220472212 ],
+                    "f_vf_fieldmap::thresh": [ 0.14173228346457023 ]
+                }
+            }
+        }
+    }
+}

@@ -420,7 +420,7 @@ within 3.1e-6 of the mirror; Taylor–Green 0.85% at frame 100; cost 2.4–2.8 m
   multi-frame, NaN-guard behavior, cost.
 - **Checkpoint**: spec success criteria 1–6 pass on the GPU path.
 
-### Phase 2: Build the module [D] — DONE 2026-09-23 except the Vsynth smoke test (T034) — stories US1, US2, US3, US5
+### Phase 2: Build the module [D] — DONE 2026-09-23 (T033/T034 confirmed by Matt) — stories US1, US2, US3, US5
 - `build_fluid.py` → patcher: 8 pix with `#0_` names, `vs_inState`, fan-out
   of the force, per-stage param targets (`dt`→`adv`,`spec`; `force`→`adv`;
   `viscosity`,`project`,`drag`→`spec`; `gain`,`bypass_gate`→`enc`;
