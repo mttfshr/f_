@@ -29,4 +29,5 @@ function calc() {
     outlet(0, center);
 }
 
-calc();
+// No calc() here: outlet() at global scope runs before the object's outlets exist
+// ("bad outlet index", 3x per load). Outputs are sent whenever low/high arrive on the inlets.

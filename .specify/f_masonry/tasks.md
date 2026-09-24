@@ -118,10 +118,15 @@ stepped/discrete-snap alternative (not something Matt asked for).
       quantize` or `quantize_mod_amt_a` declarations
 - [x] E001o Remove `quantize` row from spec.md param table; remove
       "scaled by quantize" note from `drift`'s row
-- [ ] E001p Production promotion still needs: remove `quantize`'s
-      `live.dial` + label from the patcher UI, remove its `route` entry,
-      remove its field from `definition.py`/build script — **NOT DONE**,
-      scratch-codebox-only so far
+- [x] E001p Production promotion: removed `quantize`'s `live.dial` + label,
+      its `attrui`, the `prepend`/`focus` mod-matrix messages, its `route`
+      token, restore/parameters entries, the `params` list entry and
+      `masonry_toggle.js` names — **DONE 2026-09-23**, hand-edited by script
+      (never regenerate `f_masonry`). Row 2 of the controls panel reflowed to
+      six columns (regularity/drift/skip/phase/speed_var shifted left one
+      slot). `definition.py` already had the field removed. Same pass fixed
+      the route off-by-one (`brick_seed` was driving the `course_seed` numbox,
+      the unmatched outlet drove `brick_seed`) and `autopattr @varname`.
 
 ### E001 — production merge bug found + fixed (2026-07-05)
 

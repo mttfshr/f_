@@ -30,11 +30,6 @@ NOT_APPLICABLE = {
 
 # (module, kind, detail) -> pointer to where it's recorded
 KNOWN_ISSUES = {
-    ("f_masonry", "bad_attr", "quantize"):
-        "dead control: Param quantize removed 2026-07-05 (.specify/f_masonry/tasks.md E001), UI left behind",
-    ("f_masonry", "unrouted", "course_seed"):
-        "route outlet unconnected; route brick_seed drives the course_seed numbox (found 2026-09-22; unfixed)",
-    ("f_masonry", "cross_wired", "brick_seed"): "same wiring bug as above",
 }
 
 _seen_known = set()

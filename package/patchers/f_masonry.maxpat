@@ -105,10 +105,10 @@
                     "id": "obj-5b",
                     "maxclass": "newobj",
                     "numinlets": 20,
-                    "numoutlets": 20,
-                    "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" ],
+                    "numoutlets": 19,
+                    "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" ],
                     "patching_rect": [ 50.0, 100.0, 1022.4, 22.0 ],
-                    "text": "route courses bond offset angle skip quantize regularity drift phase speed_var mortar softness width roundness bypass course_color brick_color course_seed brick_seed"
+                    "text": "route courses bond offset angle skip regularity drift phase speed_var mortar softness width roundness bypass course_color brick_color course_seed brick_seed"
                 }
             },
             {
@@ -133,7 +133,6 @@
                         "offset": [ 0.0 ],
                         "panel_toggle": [ 0.0 ],
                         "phase": [ 0.0 ],
-                        "quantize": [ 0.0 ],
                         "regularity": [ 1.0 ],
                         "roundness": [ 0.0 ],
                         "skip": [ 1.0 ],
@@ -141,8 +140,8 @@
                         "speed_var": [ 0.0 ],
                         "width": [ 0.9 ]
                     },
-                    "text": "autopattr @varname masonry_autopattr",
-                    "varname": "u945001373"
+                    "text": "autopattr",
+                    "varname": "masonry_autopattr"
                 }
             },
             {
@@ -597,7 +596,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 256.5, 156.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 178.0, 87.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 132.0, 87.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -631,62 +630,9 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 44.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 178.0, 71.0, 44.0, 18.0 ],
+                    "presentation_rect": [ 132.0, 71.0, 44.0, 18.0 ],
                     "text": "skip",
                     "varname": "lbl_skip"
-                }
-            },
-            {
-                "box": {
-                    "activedialcolor": [ 0.8, 0.8, 0.8, 1.0 ],
-                    "fontname": "Ableton Sans Light",
-                    "hint": "quantize",
-                    "id": "obj-25",
-                    "maxclass": "live.dial",
-                    "numinlets": 1,
-                    "numoutlets": 2,
-                    "outlettype": [ "", "float" ],
-                    "param_connect": "masonry_pix::quantize",
-                    "parameter_enable": 1,
-                    "patching_rect": [ 314.05263157894734, 162.0, 27.0, 43.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 48.0, 87.0, 27.0, 43.0 ],
-                    "saved_attribute_attributes": {
-                        "activedialcolor": {
-                            "expression": ""
-                        },
-                        "valueof": {
-                            "parameter_initial": [ 0.0 ],
-                            "parameter_initial_enable": 1,
-                            "parameter_linknames": 1,
-                            "parameter_longname": "quantize",
-                            "parameter_mmax": 1.0,
-                            "parameter_modmode": 3,
-                            "parameter_shortname": "quantize",
-                            "parameter_type": 0,
-                            "parameter_unitstyle": 1
-                        }
-                    },
-                    "showname": 0,
-                    "triangle": 1,
-                    "valuepopup": 1,
-                    "valuepopuplabel": 1,
-                    "varname": "quantize"
-                }
-            },
-            {
-                "box": {
-                    "fontname": "Ableton Sans Light",
-                    "fontsize": 9.5,
-                    "id": "lbl-obj-25",
-                    "maxclass": "comment",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [ 20.0, 20.0, 44.0, 18.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 48.0, 71.0, 44.0, 18.0 ],
-                    "text": "quantize",
-                    "varname": "lbl_quantize"
                 }
             },
             {
@@ -703,7 +649,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 362.0, 162.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 90.0, 87.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 48.0, 87.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -737,7 +683,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 44.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 90.0, 71.0, 44.0, 18.0 ],
+                    "presentation_rect": [ 48.0, 71.0, 44.0, 18.0 ],
                     "text": "regular",
                     "varname": "lbl_regularity"
                 }
@@ -756,7 +702,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 415.0, 156.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 132.0, 87.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 90.0, 87.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -791,7 +737,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 44.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 132.0, 71.0, 44.0, 18.0 ],
+                    "presentation_rect": [ 90.0, 71.0, 44.0, 18.0 ],
                     "text": "drift",
                     "varname": "lbl_drift"
                 }
@@ -810,7 +756,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 472.4842105263158, 156.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 220.0, 87.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 178.0, 87.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -844,7 +790,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 44.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 220.0, 71.0, 44.0, 18.0 ],
+                    "presentation_rect": [ 178.0, 71.0, 44.0, 18.0 ],
                     "text": "phase",
                     "varname": "lbl_phase"
                 }
@@ -863,7 +809,7 @@
                     "parameter_enable": 1,
                     "patching_rect": [ 526.5, 162.0, 27.0, 43.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 262.0, 87.0, 27.0, 43.0 ],
+                    "presentation_rect": [ 220.0, 87.0, 27.0, 43.0 ],
                     "saved_attribute_attributes": {
                         "activedialcolor": {
                             "expression": ""
@@ -897,7 +843,7 @@
                     "numoutlets": 0,
                     "patching_rect": [ 20.0, 20.0, 44.0, 18.0 ],
                     "presentation": 1,
-                    "presentation_rect": [ 262.0, 71.0, 44.0, 18.0 ],
+                    "presentation_rect": [ 220.0, 71.0, 44.0, 18.0 ],
                     "text": "spd.var",
                     "varname": "lbl_speed_var"
                 }
@@ -1284,18 +1230,6 @@
             },
             {
                 "box": {
-                    "attr": "quantize",
-                    "id": "obj-75",
-                    "maxclass": "attrui",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "parameter_enable": 0,
-                    "patching_rect": [ 314.05263157894734, 261.0, 158.4, 22.0 ]
-                }
-            },
-            {
-                "box": {
                     "attr": "regularity",
                     "id": "obj-76",
                     "maxclass": "attrui",
@@ -1565,7 +1499,7 @@
                     "numoutlets": 1,
                     "outlettype": [ "" ],
                     "patching_rect": [ -115.0, 303.5, 400.0, 35.0 ],
-                    "text": "params mortar drift offset speed_var regularity width phase softness roundness quantize course_color brick_color skip"
+                    "text": "params mortar drift offset speed_var regularity width phase softness roundness course_color brick_color skip"
                 }
             },
             {
@@ -1665,17 +1599,6 @@
                     "outlettype": [ "" ],
                     "patching_rect": [ 250.0, 824.0, 112.0, 22.0 ],
                     "text": "prepend roundness"
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-113",
-                    "maxclass": "newobj",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 370.0, 824.0, 101.0, 22.0 ],
-                    "text": "prepend quantize"
                 }
             },
             {
@@ -1913,17 +1836,6 @@
                     "outlettype": [ "" ],
                     "patching_rect": [ 728.0, 239.0, 100.0, 22.0 ],
                     "text": "focus roundness"
-                }
-            },
-            {
-                "box": {
-                    "id": "obj-165",
-                    "maxclass": "message",
-                    "numinlets": 2,
-                    "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 314.05263157894734, 216.0, 100.0, 22.0 ],
-                    "text": "focus quantize"
                 }
             },
             {
@@ -2199,12 +2111,6 @@
             {
                 "patchline": {
                     "destination": [ "obj-101", 1 ],
-                    "source": [ "obj-113", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-101", 1 ],
                     "source": [ "obj-114", 0 ]
                 }
             },
@@ -2325,12 +2231,6 @@
             {
                 "patchline": {
                     "destination": [ "obj-141", 0 ],
-                    "source": [ "obj-165", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-141", 0 ],
                     "source": [ "obj-166", 0 ]
                 }
             },
@@ -2416,27 +2316,6 @@
                     "destination": [ "obj-74", 0 ],
                     "order": 1,
                     "source": [ "obj-24", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-113", 0 ],
-                    "order": 0,
-                    "source": [ "obj-25", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-165", 0 ],
-                    "order": 2,
-                    "source": [ "obj-25", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-75", 0 ],
-                    "order": 1,
-                    "source": [ "obj-25", 0 ]
                 }
             },
             {
@@ -2699,86 +2578,80 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-25", 0 ],
+                    "destination": [ "obj-26", 0 ],
                     "source": [ "obj-5b", 5 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-26", 0 ],
+                    "destination": [ "obj-27", 0 ],
                     "source": [ "obj-5b", 6 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-27", 0 ],
+                    "destination": [ "obj-28", 0 ],
                     "source": [ "obj-5b", 7 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-28", 0 ],
+                    "destination": [ "obj-29", 0 ],
                     "source": [ "obj-5b", 8 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-29", 0 ],
+                    "destination": [ "obj-30", 0 ],
                     "source": [ "obj-5b", 9 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-30", 0 ],
+                    "destination": [ "obj-31", 0 ],
                     "source": [ "obj-5b", 10 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-31", 0 ],
+                    "destination": [ "obj-32", 0 ],
                     "source": [ "obj-5b", 11 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-32", 0 ],
+                    "destination": [ "obj-33", 0 ],
                     "source": [ "obj-5b", 12 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-33", 0 ],
-                    "source": [ "obj-5b", 13 ]
-                }
-            },
-            {
-                "patchline": {
                     "destination": [ "obj-35", 0 ],
-                    "source": [ "obj-5b", 15 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-36", 0 ],
-                    "source": [ "obj-5b", 16 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-8", 0 ],
                     "source": [ "obj-5b", 14 ]
                 }
             },
             {
                 "patchline": {
+                    "destination": [ "obj-36", 0 ],
+                    "source": [ "obj-5b", 15 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-8", 0 ],
+                    "source": [ "obj-5b", 13 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-90", 0 ],
-                    "source": [ "obj-5b", 18 ]
+                    "source": [ "obj-5b", 16 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-91", 0 ],
-                    "source": [ "obj-5b", 19 ]
+                    "source": [ "obj-5b", 17 ]
                 }
             },
             {
@@ -2821,12 +2694,6 @@
                 "patchline": {
                     "destination": [ "obj-7", 0 ],
                     "source": [ "obj-74", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-7", 0 ],
-                    "source": [ "obj-75", 0 ]
                 }
             },
             {
@@ -2969,7 +2836,6 @@
             "obj-22": [ "offset", "offset", 0 ],
             "obj-23": [ "angle", "angle", 0 ],
             "obj-24": [ "skip", "skip", 0 ],
-            "obj-25": [ "quantize", "quantize", 0 ],
             "obj-26": [ "regularity", "regularity", 0 ],
             "obj-27": [ "drift", "drift", 0 ],
             "obj-28": [ "phase", "phase", 0 ],

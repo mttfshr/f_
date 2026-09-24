@@ -33,18 +33,20 @@ from test_module_contracts import NOT_APPLICABLE
 ENV_NOISE = ("jpatcher: doesn't understand getattr",)
 
 KNOWN = {
-    ("f_masonry", "error", "jit.gl.pix: invalid message quantize"):
-        "dead control: Param quantize removed 2026-07-05, UI left behind (masonry fixes deferred)",
-    ("f_masonry", "error", "autopattr: varname is not a valid attribute argument"):
-        "`autopattr @varname X` isn't valid syntax in Max 9; the name belongs in the box's varname (fixed in mobius/stereo 2026-09-23; masonry deferred)",
-    ("f_hue_processor", "error", "js: bad outlet index N [hue_range.js]"):
-        "hue_range.js calls outlet() beyond its outlet count (found 2026-09-22; unfixed)",
 }
 
 # Secondary outlets that must equal in1 under bypass (out1 is always checked).
 # f_vf_warp out2 is the isolated warped layer; bypassed it degenerates to the
 # unwarped source, same as out1 (fixed 2026-09-23).
 BYPASS_PASSTHROUGH_OUTLETS = {"f_vf_warp": (2,)}
+
+# Multi-stage modules whose specs deliberately gate bypass at the final stage
+# only (feedback loops stay warm / intermediate stages need no gating):
+# f_vf_advect (plan.md: feedback keeps running through bypass),
+# f_vf_seeds (ADR 8: bypass applied only at the composite stage),
+# f_vf_optical_flow (per-stage bypass Params, see codebox_stage_e.gen header).
+# Any change is a GPU-cost decision, not a bug.
+PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow"}
 
 _seen = set()
 # Informational only: whether the optional `bypass <0|1>` control *message*
@@ -109,6 +111,8 @@ def test_live_module_contracts():
         line = f"    {name:22s} outs={(r.get('outputs') or {}).get('base')} pix={len(r.get('pix') or [])}"
         if idle:
             line += f" bypass-leaves-active={len(idle)}"
+            if name in PARTIAL_BYPASS_BY_DESIGN:
+                line += " (by design)"
         print(line)
         for kind, detail, why in issues:
             key = (name, kind, detail)
