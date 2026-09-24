@@ -319,6 +319,13 @@ there, then the chapter-specific files for depth.
   FluCoMa's `onsetslice~`/`onsetfeature~`/`ampslice~`/`ampgate~`) with output
   types tabulated, for designing a routing-matrix message protocol around
   what these modules actually emit.
+- **[walkthrough_and_capture.md](walkthrough_and_capture.md)** ⚪ — Public
+  walkthrough of `f_` on mattfisher.io (authored "stops" rather than the
+  current slideshow workbook) plus a proposed capture pipeline for recording
+  module clips, extending the OSC-driven test benches. Decided: recording is
+  in scope, and clip inputs are a per-clip mix of test inputs and own footage.
+  Everything else is proposed. Open: video capture path (benches only grab
+  single float32 frames today).
 
 ## Analysis utilities (`f_util_`)
 
