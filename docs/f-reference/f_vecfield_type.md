@@ -84,7 +84,7 @@ Any patch in the f_vecfield family must:
 1. Output `@type float32` texture
 2. Encode XY components in 0–1 range with 0.5 = zero
 3. Set B channel to 0.5, A channel to 1.0
-4. Use `vs_black` as the fallback for unconnected modulation inlets (produces 0.5 = zero modulation, consistent with the neutral field)
+4. Use `vs_black` as the fallback for unconnected modulation inlets — but note `vs_black` is **all zeros**, which decodes to a full −1 field, NOT the neutral 0.5. Gate it: with the `src_vecfield` flag from `vs_inState` (which lags ~180 ms at load/disconnect) and, for state-holding modules, also by content (a real vecfield has B = 0.5; `vs_black` has B = 0 — `f_vf_fluid` does this)
 5. Accept a texture inlet for structural modulation (what the inlet modulates is mode-specific — documented per patch)
 
 ---
@@ -97,7 +97,7 @@ Any patch with a vector field inlet must:
 2. Label the inlet clearly as accepting a vector field (e.g. `vec field` or `f_vecfield`)
 3. Decode via `(sample - 0.5) * 2.0` before any field computation
 4. Apply its own amount/strength parameter to scale the decoded field — do not assume producer magnitude is calibrated to the consumer's needs
-5. Use `vs_black` (all 0.5) as the fallback for an unconnected vector field inlet, producing zero field effect
+5. `vs_black` (all 0.0, decoding to −1) is the fallback for an unconnected vector field inlet — gate it with `src_vecfield` (see the producer note above) so it produces zero field effect
 
 ---
 

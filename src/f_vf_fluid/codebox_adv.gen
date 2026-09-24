@@ -41,6 +41,10 @@ p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
 au = mix(mix(nearest(in3, p00).x, nearest(in3, p10).x, tx), mix(nearest(in3, p01).x, nearest(in3, p11).x, tx), ty);
 av = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01).z, nearest(in3, p11).z, tx), ty);
 
-// force: decoded (p - 0.5) * 2, gated by src_vecfield (0 = inlet unconnected)
-gate = switch(src_vecfield >= 0.5, 1, 0);
+// force: decoded (p - 0.5) * 2. Gated by src_vecfield (0 = inlet unconnected) AND by the
+// texture's own content: a real f_vecfield has B = 0.5 (contract), while vs_black is
+// all zeros (decoded -1!). vs_inState's connected flag lags at load/disconnect, and a
+// bogus -1 force leaves a phantom uniform velocity that decays only as fast as drag
+// allows, so the flag alone is not enough (bench, 2026-09-23).
+gate = switch(src_vecfield >= 0.5, 1, 0) * switch(abs(sample(in2, norm).z - 0.5) < 0.25, 1, 0);
 out1 = vec(au + force * (sample(in2, norm).x - 0.5) * 2 * gate, 0, av + force * (sample(in2, norm).y - 0.5) * 2 * gate, 0);

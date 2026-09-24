@@ -46,7 +46,23 @@ BYPASS_PASSTHROUGH_OUTLETS = {"f_vf_warp": (2,)}
 # f_vf_seeds (ADR 8: bypass applied only at the composite stage),
 # f_vf_optical_flow (per-stage bypass Params, see codebox_stage_e.gen header).
 # Any change is a GPU-cost decision, not a bug.
-PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow"}
+PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
+                            "f_vf_fluid"}     # fluid: Param gate on enc, not native @bypass (plan ADR-8)
+
+# Modules whose output follows the render CONTEXT size (512x512 in the module bench), not the
+# input texture's: feed them an input of that size so the passthrough check is like for like.
+INPUT_SIZE = {"f_vf_fluid": 512}
+
+# Modules whose primary inlet takes a VECFIELD (B = 0.5, A = 1): a random-RGBA input is not one,
+# and f_vf_fluid (correctly) refuses a texture whose B is not ~0.5 as a force. Char-representable
+# k/255 values, B = 128/255, so a passthrough stays exact.
+VECFIELD_INPUT = {"f_vf_fluid"}
+
+
+def vecfield_input(n):
+    x = mb.test_input(n)
+    x[..., 2] = np.float32(128) / np.float32(255)
+    return x
 
 _seen = set()
 # Informational only: whether the optional `bypass <0|1>` control *message*
@@ -57,7 +73,8 @@ _bypass_msg = {"works": [], "no": []}
 
 
 def module_issues(name):
-    r, plan, info = mb.run_module(name)
+    n = INPUT_SIZE.get(name, 64)
+    r, plan, info = mb.run_module(name, n=n, first_input=vecfield_input(n) if name in VECFIELD_INPUT else None)
     issues = []
     if r["status"] == "stalled":
         issues.append(("stalled", "", str(r["errors"][-1:])))

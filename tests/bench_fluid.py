@@ -117,6 +117,10 @@ def test_T017_adv_matches_mirror():
         p = Params(dt=0.05, force=0.3, src_vecfield=src)
         err = np.max(np.abs(g_adv(st, force, p) - fm.adv(st, force, p.dt, p.force, p.src_vecfield)))
         check(f"adv {label}: max err vs mirror", err, tol)
+    black = np.zeros((256, 256, 4), F32)                      # vs_black: all zeros, B != 0.5
+    pblk = Params(dt=0.05, force=0.3, src_vecfield=1.0)
+    e = np.max(np.abs(g_adv(st, black, pblk) - fm.adv(st, None, pblk.dt, 0, 0)))
+    check("adv: vs_black with src=1 (lagging connected flag) adds nothing", e, 1e-5)
     force = rand_force(256, 256, 5)
     p0 = Params(dt=0.05, force=0.3, src_vecfield=0.0)
     off = g_adv(st, force, p0)
@@ -153,6 +157,9 @@ def test_T018_enc_matches_mirror():
     check("bypass, connected: force passes through", np.max(np.abs(byp - force)), 1e-6)
     neu = gpu("enc", [BANG, force, vel], dim=(120, 90), params={"gain": 1.0, "bypass_gate": 1.0, "src_vecfield": 0.0})
     check("bypass, unconnected: exactly neutral", np.max(np.abs(neu - fm.neutral(90, 120))), 0)
+    blk = gpu("enc", [BANG, np.zeros((90, 120, 4), F32), vel], dim=(120, 90),
+              params={"gain": 1.0, "bypass_gate": 1.0, "src_vecfield": 1.0})
+    check("bypass, vs_black with src=1 (lagging flag): exactly neutral", np.max(np.abs(blk - fm.neutral(90, 120))), 0)
 
 
 # ----------------------------------------------------------------- T019

@@ -255,6 +255,7 @@ def test_zero_in_zero_out():
     for label, force, src in (("unconnected", None, 0.0),
                               ("black texture, src=0", np.zeros((40, 48, 4), F32), 0.0),
                               ("random texture, src=0", rand_force(40, 48), 0.0),
+                              ("vs_black (all zeros), src=1", np.zeros((40, 48, 4), F32), 1.0),
                               ("neutral texture, src=1", neutral, 1.0)):
         p = Params(force=0.3, src_vecfield=src, viscosity=0.1, drag=0.1)
         st = fm.zero_state(n)
@@ -264,6 +265,25 @@ def test_zero_in_zero_out():
             assert np.max(np.abs(st)) == 0.0, f"{label}: state left zero"
             assert np.array_equal(out, neutral), f"{label}: outlet not exactly neutral"
         print(f"    ok   {label}: state == 0 and outlet == (0.5, 0.5, 0.5, 1) for 20 frames")
+
+
+def test_vs_black_is_never_a_force():
+    """Bench 2026-09-23: vs_inState's connected flag lags at load/disconnect, so an
+    unconnected inlet delivers vs_black (all ZEROS = decoded -1) while src_vecfield
+    is still 1. A real f_vecfield has B = 0.5; the content check must reject vs_black
+    even when the flag says 'connected'."""
+    n = 32
+    black = np.zeros((20, 24, 4), F32)
+    out = fm.adv(fm.zero_state(n), black, 0.01, 0.4, 1.0)
+    check("adv: vs_black with src=1 adds exactly nothing", np.max(np.abs(out)), 0)
+    vel = np.zeros((n, n, 4), F32)
+    vel[..., 0] = 0.3
+    byp = fm.enc(black, vel, 1.0, 1.0, 1.0)
+    check("enc bypass: vs_black with src=1 -> exactly neutral", np.max(np.abs(byp - fm.neutral(20, 24))), 0)
+    good = np.zeros((20, 24, 4), F32)
+    good[..., 0], good[..., 1], good[..., 2], good[..., 3] = 0.75, 0.25, 0.5, 1.0
+    check("adv: a real vecfield (B = 0.5) still injects", np.max(np.abs(
+        fm.adv(fm.zero_state(n), good, 0.01, 0.4, 1.0)[..., 0] - 0.2)), 1e-6)
 
 
 def seam_shift_error():

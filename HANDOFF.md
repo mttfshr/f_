@@ -104,9 +104,12 @@ design change, not a bug fix.
 
 The fluid thread (thread 1 of the 9/22 handoff) moved from research to a
 full spec set in `.specify/f_vf_fluid/` (`spec.md`, `plan.md`, `tasks.md`;
-Work Queue item 11), and **Phases 0 and 1 are done** (T001–T022): the NumPy
-mirror, the GPU/Vsynth feasibility experiments, and all seven stage codeboxes
-proven on the bench. **No patcher yet** (Phase 2).
+Work Queue item 11), and **Phases 0, 1 and 2 are done** (T001–T033a): the NumPy
+mirror, the GPU/Vsynth feasibility experiments, all seven stage codeboxes proven
+on the bench, and the **module itself** (`package/patchers/f_vf_fluid.maxpat`,
+built by `src/f_vf_fluid/build_fluid.py`). **Open: T034**, Matt's smoke test in a
+real Vsynth patch (`f_vf_vortex → f_vf_fluid → f_vf_advect` on a source: motion should
+persist and fade after the vortex is disabled), then Phase 3 tuning.
 
 - **Decided** (with Matt): a *new* module — a spectral (FFT) velocity solver
   that outputs an evolving vecfield; force vecfield in, velocity vecfield out.
@@ -158,6 +161,28 @@ proven on the bench. **No patcher yet** (Phase 2).
     smooth force; E4/tier 3 may add prefiltering). Velocity reads are manual
     periodic 4-tap.
   - New facts are in the `jit-gen-codebox` skill (f_ copy) and the tasks.md Findings.
+- **Phase 2 results:**
+  - `build_fluid.py` (imports shared chrome from `build/build_patcher.py`, reads UI
+    params from `definition.py`, self-verifies) → 46 boxes / 46 lines, 8 `#0_`-scoped
+    pix. Live module bench: **33 modules, 0 unexpected issues**; the module loads
+    first try inside `vs_render` and every param reaches the right stage (`dt` reaches
+    both `adv` and `spec`).
+  - `tests/bench_fluid_module.py` 3/3: the solver advances **exactly once per frame**
+    (1.000000), two instances are independent (unconnected one exactly neutral), fresh
+    load is exactly neutral at render size.
+  - **Bug found and fixed:** `vs_black` is all ZEROS (decoded −1; the contract doc
+    wrongly said 0.5 — corrected) and `vs_inState`'s connected flag lags ~180 ms at
+    load/disconnect, so the solver injected a −1 force for ~10 frames and kept a
+    phantom velocity (~−0.1 uniform). Fixed by a content check in `adv` and `enc`:
+    a real vecfield has B = 0.5, `vs_black` B = 0. Caveat added to the
+    `vsynth-bpatcher` skill; other state-holding modules could have the same issue.
+  - `f_vf_fluid` is a **hand-built module**: the script is the source of truth; once
+    hand-edited, add it to the never-regenerate list. The bench's module-input size for
+    it is 512 (`INPUT_SIZE` in `tests/bench_modules.py`) because the render context is
+    512² and `enc` follows the context.
+  - **Not done / needs Matt in Max:** T034 (smoke test), the "parameters restore after
+    save/reopen" half of T033 (autopattr state), and the look of the panel (6 dials,
+    190×150; ranges and defaults are provisional, Phase 3).
 
 ## Warnings for next session
 
@@ -194,17 +219,17 @@ module's bypassed outlets in a real Vsynth patch, decides the bypassed state
 (drive a non-`bypass` Param; hand-edit). Extend `BYPASS_PASSTHROUGH_OUTLETS`
 only for outlets whose intended state is "equals input".
 
-**1. `f_vf_fluid` — Phase 2 of `.specify/f_vf_fluid/tasks.md` (T023–T034): build
-the module.** Write `src/f_vf_fluid/definition.py` (metadata only) and
-`build_fluid.py` (dedicated script; wiring in plan ADR-1/ADR-2: `r draw` bangs on
-`adv`/`enc` inlet 0, force via `vs_inState` on inlet 1, `pass` feedback, Param
-`bypass_gate` on `enc`), then the contract tests and module bench (T031a per-module
-input size, T033a exactly-once-per-frame). Max was left running with both benches
-open (`open -a Max tests/bench/bench.maxpat` / `bench_module.maxpat` relaunches
+**1. `f_vf_fluid` — Phase 3 of `.specify/f_vf_fluid/tasks.md` (T035–T042): tuning
+in Vsynth** (after Matt's T034 smoke test): scratch patch with `f_vf_vortex`,
+`f_vf_flow`, `f_vf_repulse`, `f_vf_optical_flow` as force sources; set the
+`viscosity` curve/ranges/defaults, `project` default, decide the force filter (E4:
+hardware `sample()` is nearest-like when minifying), edge cases, soak, cost in a real
+patch, 256² vs 128². Max was left running with both benches open (`open -a Max tests/bench/bench.maxpat` / `bench_module.maxpat` relaunches
 them; `bc.ping()` tells you if they're up). Running a long bench file through the
 Desktop Commander tool can time out on the client side while the job keeps running;
 run it in the background and read `tests/jobs/bench_last.log`. `scratch/run_subset.py`
-runs chosen tests from `tests/bench_fluid.py`.
+runs chosen tests from `tests/bench_fluid.py`; `scratch/run_module.py <name>` runs one
+module through the live module bench and prints its issues.
 
 **2. `f_a_ripple` production UI polish** — unchanged: DSP done and confirmed by
 ear; UI still plain flonums/toggles, not the `f_` convention.

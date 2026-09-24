@@ -211,51 +211,51 @@ dedicated build script (plan ADR-9), then pass the module contracts.
 `tests/bench_modules.py` green with no new `KNOWN` entries; two instances
 coexist; bypass check passes.
 
-- [ ] T023 [P] [US5] Write `src/f_vf_fluid/definition.py`: metadata only (name, prefix
+- [x] T023 [P] [US5] Write `src/f_vf_fluid/definition.py`: metadata only (name, prefix
       `vffluid`, title, `signal_type` vecfield, outlets, params `force`, `dt`,
       `viscosity`, `project`, `drag`, `gain`, `bypass`, internal `src_vecfield` and
       `bypass_gate`, provisional ranges) so `build/extract_params.py`, docs and
       helpfile tooling work; header comment states the build script is the source.
-- [ ] T024 [US1] Write `src/f_vf_fluid/build_fluid.py` part 1: module chrome —
+- [x] T024 [US1] Write `src/f_vf_fluid/build_fluid.py` part 1: module chrome —
       identity/prefix constants, panel, title, `moduleSize` chain, `routepass`,
       `route` object and `autopattr` with `varname` `vffluid_autopattr` (plain
       `autopattr` text), importing helpers from `build/build_patcher.py`.
-- [ ] T025 [US1] `build_fluid.py` part 2: the eight `jit.gl.pix` boxes with `#0_`-scoped
+- [x] T025 [US1] `build_fluid.py` part 2: the eight `jit.gl.pix` boxes with `#0_`-scoped
       names (`#0_fluid_pass`, `_adv`, `_fx`, `_fy`, `_spec`, `_iy`, `_ix`, `_enc`),
       solver stages `@adapt 0 @dim 256 256 @type float32`, `enc` `@adapt 1
       @type float32`, gen subpatchers from the `codebox_*.gen` files, identity gen
       for `pass`.
-- [ ] T026 [US1] `build_fluid.py` part 3: wiring — `routepass out0 → vs_inState`; its
+- [x] T026 [US1] `build_fluid.py` part 3: wiring — `routepass out0 → vs_inState`; its
       texture output fans out to `adv`'s force inlet (inlet 1) and `enc`'s force inlet
       (inlet 1); `r draw` → inlet 0 of `adv` and of `enc` (plan ADR-2: they run every
       frame and `enc` takes the render-context size regardless of the force inlet);
       `vs_inState` out1 → `prepend param src_vecfield` → `adv` and `enc`; chain
       `pass → adv (inlet 2) → fx → fy → spec → iy → ix`; `ix → pass` feedback;
       `ix → enc` inlet 2; `enc` → outlet. Inlet/outlet orders exactly as plan ADR-1/ADR-2.
-- [ ] T027 [US2] [US3] `build_fluid.py` part 4: parameter UI and routing — dials,
+- [x] T027 [US2] [US3] `build_fluid.py` part 4: parameter UI and routing — dials,
       `attrui` per param with the plan ADR-9 stage targets (`dt`→`adv`,`spec`;
       `force`→`adv`; `viscosity`,`project`,`drag`→`spec`; `gain`→`enc`), route tokens,
       `parameters` block; canonical `gain` naming.
-- [ ] T028 [US5] `build_fluid.py` part 5: bypass — jsui → `prepend param bypass_gate`
+- [x] T028 [US5] `build_fluid.py` part 5: bypass — jsui → `prepend param bypass_gate`
       → `enc` (no native `attrui @attr bypass` anywhere in the patcher).
-- [ ] T029 [US5] Run `build/py.sh src/f_vf_fluid/build_fluid.py` → writes
+- [x] T029 [US5] Run `build/py.sh src/f_vf_fluid/build_fluid.py` → writes
       `package/patchers/f_vf_fluid.maxpat`; assert it parses and every route token
       wires to the same-named control (reuse the check used for `f_masonry`).
-- [ ] T030 [US5] Run `tests/run.sh tests/test_module_contracts.py`; fix wiring until no
+- [x] T030 [US5] Run `tests/run.sh tests/test_module_contracts.py`; fix wiring until no
       new `KNOWN_ISSUES` entries are needed.
-- [ ] T031 [US5] Add `f_vf_fluid` to `PARTIAL_BYPASS_BY_DESIGN` in `tests/bench_modules.py`
+- [x] T031 [US5] Add `f_vf_fluid` to `PARTIAL_BYPASS_BY_DESIGN` in `tests/bench_modules.py`
       (Param bypass gate, solver stays warm); run `tests/bench.sh tests/bench_modules.py`
       with the bench prerequisites (other patches closed); `bypass_out1` must pass
       and no `KNOWN` entry may be added.
-- [ ] T031a [US5] The module bench feeds 64² inputs but its render context is 512² and `enc`
+- [x] T031a [US5] The module bench feeds 64² inputs but its render context is 512² and `enc`
       follows the context, so `bypass_out1` cannot compare like with like: give
       `tests/bench_modules.py` a per-module input size (the context size for
       `f_vf_fluid`) so the passthrough check stays exact; no `KNOWN` entry.
-- [ ] T032 [US5] Two-instance check: two `f_vf_fluid` in one Vsynth patch run
+- [x] T032 [US5] Two-instance check: two `f_vf_fluid` in one Vsynth patch run
       independently with no "already in use" errors (FR-012); record the method used.
-- [ ] T033 [US1] Save/reopen check: parameters restore, solver starts from zero state,
+- [x] T033 [US1] Save/reopen check: parameters restore, solver starts from zero state,
       output finite (spec US5 scenario 3).
-- [ ] T033a [US1] Confirm the solver advances **exactly once per frame** (only the `r draw`
+- [x] T033a [US1] Confirm the solver advances **exactly once per frame** (only the `r draw`
       bang on inlet 0 may trigger a render; inlets 1–2 must be cold): in the module bench
       run a known decaying state for K frames and check the amplitude ratio equals the
       single-step factor to the K-th power (a doubled update would square it).
@@ -265,6 +265,15 @@ coexist; bypass check passes.
 
 **Checkpoint**: contracts and module bench green; two instances independent;
 bypass passes through / neutral; US1 smoke test works. Commit.
+
+**Phase 2 outcome (2026-09-23): met except T034 (Matt's smoke test in Vsynth).**
+`build_fluid.py` builds `package/patchers/f_vf_fluid.maxpat` (46 boxes, 46 lines) and
+self-verifies; the static contract test and the live module bench (33 modules) pass with
+no new `KNOWN` entries; `tests/bench_fluid_module.py` 3/3 (once-per-frame, two instances,
+fresh load). One real bug found and fixed on the way: **`vs_black` (all zeros = decoded −1)
+was injected as a force for the first ~10 frames after load** because `vs_inState`'s
+connected flag lags; fixed with a content check (B = 0.5) in `adv` and `enc`. T033's
+"parameters restore on save/reopen" half needs Matt in Max (autopattr state).
 
 ---
 
@@ -407,6 +416,12 @@ explicit resample), update the spec's Open Experiment 1, then continue.
 | T020 (multi-frame) | 100 host-sequenced frames (6 jobs/frame, ~0.09 s/job) from a Taylor–Green state: max \|GPU − mirror\| 3.1e-6 over all frames (peaks ~3e-6 around frames 30–60, then falls as the field decays). GPU Taylor–Green amplitude vs analytic: 0.17% / 0.61% / 0.85% at frames 10 / 50 / 100 — identical to the mirror. 30-frame force run: 5.8e-7. |
 | T021 (cost, ms/pass at 256²; enc at 1280×720) | adv ≤ 0.06–0.10 (upper bound), fx 0.52–0.54, fy 0.51–0.54, spec 0.10–0.13, iy 0.53–0.65, ix 0.54–0.65, enc 0.11–0.18. **Sum 2.38–2.76 ms/frame** over two runs (budget 3 ms): the four DFT passes are ~2.1–2.5 ms of it. 256² is viable on this measure; margin is ~10–20% and the in-a-real-patch cost (T041) is still to be measured. Runtime-selectable resolution (E5) was not benchmarked for cost. |
 | T022 (soak) | 100 frames each, host-sequenced, at three extremes: thick honey/big dt (|u|max 0.0028), inviscid/no drag/big dt (1.22), unprojected + uniform force (50): all finite, outlet in [0, 1]. (Shorter than the planned 300 frames: 3 × 100 frames = 1,800 jobs, ~3 min; the 10⁴-frame runs live in tier 1.) |
+| T023–T029 (build) | `definition.py` (metadata only) + `build_fluid.py` (imports the shared chrome helpers from `build/build_patcher.py`; reads UI params from `definition.py`; self-verifies unique ids, no dangling wires, every route token wired to the same-named control, 8 unique `#0_` pix names, no native `bypass` attrui). Output: 46 boxes, 46 lines. In the live module bench inside `vs_render` the module loads first try: 8 pix, every param reaches the right stage (`dt` reaches both `adv` and `spec`), 512² outlet. |
+| T030 / T031 / T031a | Static contract test 3/3 (33 modules). Live module bench: **33 modules, 0 unexpected issues**; `f_vf_fluid`: 8 pix, `bypass_out1` exact (the bench feeds it a 512² input, `INPUT_SIZE` in `bench_modules.py`, because the render context is 512²), listed in `PARTIAL_BYPASS_BY_DESIGN` (Param gate, native attribute never set). |
+| T033a (once per frame) | Uniform force, two captures 20 frames apart: **1.000000 updates per frame** (error 5e-6) under the drag hypothesis (0.90 if drag were 0). Only the `r draw` bang triggers `adv`; the force/state inlets are cold. A doubled update would read ~2. |
+| T032 (two instances) | Two `f_vf_fluid` in one patch: no errors ("already in use" would show); the force-connected one is driven (|R,G − 0.5| up to 0.17), the unconnected one is **exactly** neutral; both outlets 512². |
+| T033 (fresh load) | Unconnected inlet, fresh load: exactly neutral, render size — **after the fix below**. Before it: a uniform phantom velocity of about −0.04…−0.07 (R − 0.5) persisted at every warmup from 6 to 80 frames. |
+| **vs_black finding** | `vs_black` is **all zeros**, decoding to −1 (the contract doc said "all 0.5" — corrected). `vs_inState`'s connected flag lags ~180 ms at load/disconnect, so `src_vecfield = 1` briefly while the inlet is unconnected; the solver injected the −1 force for ~7–10 frames and the resulting phantom velocity decays only at the drag rate. Fix: gate the force by content in `codebox_adv.gen` and `codebox_enc.gen` — `abs(sample(in2, norm).z - 0.5) < 0.25` (a real `f_vecfield` has B = 0.5, `vs_black` B = 0) — mirrored in `fluid_mirror.py`, tested at tier 1 (17/17), on the stage bench, and in the module bench. Caveat added to the `vsynth-bpatcher` skill. |
 | T010 (mutation check) | All five mutations caught: Nyquist not zeroed, projection sign flipped, decay exponent wrong, drag dropped, advection clamps instead of wrapping. |
 | T016–T019 (bench errors) | |
 | T020 (multi-frame error growth) | |

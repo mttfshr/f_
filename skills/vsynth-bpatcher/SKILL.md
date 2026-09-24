@@ -382,6 +382,8 @@ Some patches accept additional optional texture inlets that modulate structural 
 
 **Key rule:** every optional texture inlet gets its own `vs_inState`. The `vs_black` fallback when unconnected produces zero modulation naturally — the codebox sees a black texture (all zeros) and the modulation term evaluates to zero. No special-casing needed.
 
+**Caveat for bipolar (`f_vecfield`, 0.5 = zero) inlets** (bench-verified 2026-09-23, `f_vf_fluid`): `vs_black` is all **zeros**, which decodes to a full −1 field, not neutral — gate the inlet with the `src_vecfield` flag from `vs_inState` outlet 1. That flag **lags ~180 ms at load and at disconnect** (it starts "connected"), so a module that *holds state* must also gate by content: a real `f_vecfield` has B = 0.5 and `vs_black` has B = 0 (`abs(sample(inN, norm).z - 0.5) < 0.25`). A stateless module only shows the flag lag as a brief glitch; a solver keeps a phantom velocity (~−0.1 uniform) that decays only as fast as its drag.
+
 **Wiring pattern (one optional modulation inlet):**
 ```
 bpatcher in1 → vs_inState in0

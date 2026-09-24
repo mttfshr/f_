@@ -37,7 +37,8 @@ av = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01
 r = 0.5 + 0.5 * clamp(gain * au, -1, 1);
 g = 0.5 + 0.5 * clamp(gain * av, -1, 1);
 
-useforce = switch(src_vecfield >= 0.5, 1, 0);
+// same content check as codebox_adv.gen: only a texture with B = 0.5 counts as a vecfield
+useforce = switch(src_vecfield >= 0.5, 1, 0) * switch(abs(sample(in2, norm).z - 0.5) < 0.25, 1, 0);
 fr = mix(0.5, sample(in2, norm).x, useforce);
 fg = mix(0.5, sample(in2, norm).y, useforce);
 fb = mix(0.5, sample(in2, norm).z, useforce);

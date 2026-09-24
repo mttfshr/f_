@@ -116,8 +116,9 @@ def adv(state, force, dt, force_gain, src_vecfield):
     out[..., 0], out[..., 2] = a[..., 0], a[..., 2]
     if force is not None and src_vecfield >= 0.5:
         f = sample(force, nx, ny)
-        out[..., 0] += F32(force_gain) * ((f[..., 0] - F32(0.5)) * F32(2.0))
-        out[..., 2] += F32(force_gain) * ((f[..., 1] - F32(0.5)) * F32(2.0))
+        valid = (np.abs(f[..., 2] - F32(0.5)) < F32(0.25)).astype(F32)   # vs_black has B = 0
+        out[..., 0] += F32(force_gain) * ((f[..., 0] - F32(0.5)) * F32(2.0)) * valid
+        out[..., 2] += F32(force_gain) * ((f[..., 1] - F32(0.5)) * F32(2.0)) * valid
     return store_float32(out)
 
 
@@ -156,7 +157,11 @@ def enc(force, velocity, gain, bypass_gate, src_vecfield, size=None):
     e[..., 2] = half
     e[..., 3] = F32(1.0)
     neut = neutral(h, w)
-    gated = force if (force is not None and src_vecfield >= 0.5) else neut
+    if force is not None and src_vecfield >= 0.5:
+        use = (np.abs(force[..., 2] - F32(0.5)) < F32(0.25))[..., None]    # per pixel: B = 0.5?
+        gated = np.where(use, force, neut)
+    else:
+        gated = neut
     return store_float32(mix(e, gated, bypass_gate))
 
 

@@ -187,6 +187,13 @@ velocity/state = `in3`.
   the solver running every frame instead of depending on `vs_inState`'s
   unconnected timer (~180 ms).
 
+**Force validity (Phase 2)**: the `src_vecfield` flag from `vs_inState` lags
+~180 ms at load/disconnect and `vs_black` is all zeros (decoded −1), so `adv`
+and `enc` also gate the force by content — a real `f_vecfield` has B = 0.5,
+`vs_black` has B = 0 (`abs(sample(in2, norm).z - 0.5) < 0.25`). Without it the
+solver injected a −1 force for the first ~10 frames and kept the phantom
+velocity (module bench, T033).
+
 **Alternatives**: expose the 256² texture directly (rejected: FR-014 wants
 consumers unchanged); adapt `enc` to the force texture (rejected: E1b).
 
@@ -413,7 +420,7 @@ within 3.1e-6 of the mirror; Taylor–Green 0.85% at frame 100; cost 2.4–2.8 m
   multi-frame, NaN-guard behavior, cost.
 - **Checkpoint**: spec success criteria 1–6 pass on the GPU path.
 
-### Phase 2: Build the module [D] — stories US1, US2, US3, US5
+### Phase 2: Build the module [D] — DONE 2026-09-23 except the Vsynth smoke test (T034) — stories US1, US2, US3, US5
 - `build_fluid.py` → patcher: 8 pix with `#0_` names, `vs_inState`, fan-out
   of the force, per-stage param targets (`dt`→`adv`,`spec`; `force`→`adv`;
   `viscosity`,`project`,`drag`→`spec`; `gain`,`bypass_gate`→`enc`;

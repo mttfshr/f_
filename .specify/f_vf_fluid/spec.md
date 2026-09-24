@@ -194,7 +194,10 @@ placed in one Vsynth patch run independently.
   as a **force** (decoded `(p - 0.5) * 2`, scaled by a `force` amount),
   added to the velocity state each frame. An unconnected inlet MUST
   contribute exactly zero force (same suppression pattern as
-  `src_vecfield` in `f_vf_warp`/`f_vf_advect`).
+  `src_vecfield` in `f_vf_warp`/`f_vf_advect`), **and a texture that is not a
+  vecfield (B ≠ 0.5, e.g. `vs_black`) MUST NOT count as a force even while
+  `vs_inState`'s connected flag still reads 1** (the flag lags ~180 ms at load
+  and disconnect; found 2026-09-23).
 - **FR-003**: The module MUST hold a persistent velocity state across frames
   in a one-frame feedback loop (established `f_vf_advect` Pattern 1) at an
   internal, fixed resolution of 256×256, `float32`.

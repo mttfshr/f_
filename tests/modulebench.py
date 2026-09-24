@@ -128,7 +128,7 @@ def make_wrapper(module_file, n_in, n_out):
                         "boxes": boxes, "lines": lines}}
 
 
-def run_module(name, n=64, warmup=10, settle=6, timeout_ms=15000, fresh=True):
+def run_module(name, n=64, warmup=10, settle=6, timeout_ms=15000, fresh=True, first_input=None):
     """Returns (result, plan, info). result carries readbacks and the list of
     captured outlets; captured arrays are in result['arrays'][tag][k].
 
@@ -150,7 +150,8 @@ def run_module(name, n=64, warmup=10, settle=6, timeout_ms=15000, fresh=True):
 
     job, job_dir = bc.new_job("module", warmup=warmup, settle=settle, timeout_ms=timeout_ms)
     job["wrapper"] = f"mjob_{job['id']}.maxpat"
-    inputs = [test_input(n)] + [neutral(n) for _ in range(max(n_in - 1, 0))]
+    inputs = [first_input if first_input is not None else test_input(n)] \
+        + [neutral(n) for _ in range(max(n_in - 1, 0))]
     job["inputs"] = []
     for i, arr in enumerate(inputs[:5]):
         fn = f"in{i + 1}.jxf"
