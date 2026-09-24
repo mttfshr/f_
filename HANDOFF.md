@@ -219,7 +219,18 @@ module's bypassed outlets in a real Vsynth patch, decides the bypassed state
 only for outlets whose intended state is "equals input".
 
 **1. `f_vf_fluid` — Phase 3 of `.specify/f_vf_fluid/tasks.md` (T035–T042): tuning
-in Vsynth** (after Matt's T034 smoke test): scratch patch with `f_vf_vortex`,
+in Vsynth.** Phase 2 is complete and Matt confirmed T033/T034 and the panel look.
+Suggested split, agreed at the end of the 2026-09-23 session:
+  - *Claude, offline, first:* (a) T036 the `viscosity` curve — the dial is linear 0–0.002,
+    but what matters is per-frame damping `nu*dt*k^2`; work out which nu range spans
+    "barely viscous" to "top octave dies in one frame" over the `dt` range and propose a
+    curve (probably a squared/cubed dial law) and default; (b) E4/T038 measure how much a
+    noisy force (optical flow) aliases under hardware `sample()` at typical render sizes and
+    whether a 2x2 box prefilter fixes it.
+  - *Matt, by eye:* ranges/defaults for `force`, `dt`, `drag`, `gain`, `project` (T037),
+    the tuning patch (T035), edge cases (T039), a 10-minute soak (T040), cost/fps in a real
+    patch (T041, bench says 2.2-2.8 ms/frame at 256^2), and the final verdict (T042).
+Details of the tuning patch: scratch patch with `f_vf_vortex`,
 `f_vf_flow`, `f_vf_repulse`, `f_vf_optical_flow` as force sources; set the
 `viscosity` curve/ranges/defaults, `project` default, decide the force filter (E4:
 hardware `sample()` is nearest-like when minifying), edge cases, soak, cost in a real
