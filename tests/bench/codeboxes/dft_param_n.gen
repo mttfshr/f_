@@ -1,0 +1,31 @@
+// dft_param_n.gen -- f_vf_fluid E5 probe (tasks.md T007): a row DFT whose
+// loop bound is a Param instead of a literal. If this compiles and matches
+// np.fft at more than one N, resolution could be selected at runtime without
+// swapping the gen. Otherwise N stays a build-time literal (see dft_x.gen).
+//
+// Packing (float32 RGBA): R,G = Re,Im of u; B,A = Re,Im of v.
+Param inverse(0);
+Param nlen(128);
+
+N = nlen;
+k = floor(norm.x * N);
+sgn = inverse * 2 - 1;
+
+acc0 = 0;
+acc1 = 0;
+acc2 = 0;
+acc3 = 0;
+
+for (n = 0; n < nlen; n += 1) {
+	uv = vec((n + 0.5) / N, norm.y);
+	ang = sgn * twopi * mod(k * n, N) / N;
+	c = cos(ang);
+	s = sin(ang);
+	acc0 += nearest(in1, uv).x * c - nearest(in1, uv).y * s;
+	acc1 += nearest(in1, uv).x * s + nearest(in1, uv).y * c;
+	acc2 += nearest(in1, uv).z * c - nearest(in1, uv).w * s;
+	acc3 += nearest(in1, uv).z * s + nearest(in1, uv).w * c;
+}
+
+scale = mix(1, 1 / N, inverse);
+out1 = vec(acc0, acc1, acc2, acc3) * scale;

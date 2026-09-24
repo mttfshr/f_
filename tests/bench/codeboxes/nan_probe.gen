@@ -1,0 +1,19 @@
+// nan_probe.gen -- f_vf_fluid E-nan probe (tasks.md T006): can GenExpr on
+// jit.gl.pix detect and clear NaN/Inf? Manufactures a NaN (0/0) and +Inf (1/0)
+// from a runtime zero, then tries the comparison-based guard planned for the
+// last inverse-DFT stage: keep x only when abs(x) < 1e30.
+//
+// out1 = the guard applied to (NaN, +Inf, a finite 0.25..0.75 ramp)
+//        -> expected (0, 0, ramp, 1) if the guard works
+// out2 = raw comparison results: (nn == nn, inf == inf, nn < 1e30, inf < 1e30)
+//        -> expected (0, 1, 0, 0) with IEEE semantics
+x = sample(in1, norm).x * 0;
+zero = norm.x * 0 + x;
+nn = zero / zero;
+pinf = 1 / zero;
+fin = 0.25 + 0.5 * norm.x;
+g_nan = switch(abs(nn) < 1e30, nn, 0);
+g_inf = switch(abs(pinf) < 1e30, pinf, 0);
+g_fin = switch(abs(fin) < 1e30, fin, 0);
+out1 = vec(g_nan, g_inf, g_fin, 1);
+out2 = vec(switch(nn == nn, 1, 0), switch(pinf == pinf, 1, 0), switch(nn < 1e30, 1, 0), switch(pinf < 1e30, 1, 0));

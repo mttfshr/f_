@@ -52,7 +52,7 @@ run first.
 
 ### Decision gate
 
-- [ ] T001 DECISION GATE — verification tiers, recorded here: **Tier 1 applies**
+- [x] T001 DECISION GATE — verification tiers, recorded here: **Tier 1 applies**
       (nontrivial numerics with analytic ground truth: Taylor–Green, projection,
       viscosity decay). **Tier 2 applies** (numeric criteria exist for every stage;
       cost matters — NF-001). **Tier 3 applies** (ranges, look, integration).
@@ -63,34 +63,37 @@ run first.
 
 ### Block C — in-Vsynth feasibility (highest risk; start first, in parallel with the math)
 
-- [ ] T002 [P] Build the scratch patch `~/Vsynth/patterns/fluid_dim_test.maxpat`:
+- [x] T002 [P] Build the scratch patch `~/Vsynth/patterns/fluid_dim_test.maxpat`:
       a `jit.gl.pix vsynth @adapt 0 @dim 256 256 @type float32` stage fed by a test
       source, and a downstream `jit.gl.pix vsynth @adapt 1 @type float32` stage
       that samples it (bilinear) — the solver/encode split of plan ADR-2. Not committed.
-- [ ] T003 E1 — with T002, record in "Findings" below: does the 256² stage run
+      **Done 2026-09-23 without a hand-built patch:** `tests/fluid_feasibility.py`
+      generates the scratch module and runs it through the module bench (inside
+      `vs_render`); it always deletes the scratch file afterwards.
+- [x] T003 E1 — with T002, record in "Findings" below: does the 256² stage run
       inside Vsynth's render context without errors; what dimensions does each
       stage report; does the render-res stage upsample it smoothly (no visible
       blockiness/edge artifacts)?
-- [ ] T004 E1b — with T002, disconnect the source so the stage sees `vs_black`
+- [x] T004 E1b — with T002, disconnect the source so the stage sees `vs_black`
       (via `vs_inState`): record the render-res stage's output size. If it is
       not render size, record the fallback (adapt to a Vsynth render-size source)
       and update plan ADR-2.
-- [ ] T005 [P] E-seam probes: write throwaway `tests/bench/codeboxes/seam_fract.gen`
+- [x] T005 [P] E-seam probes: write throwaway `tests/bench/codeboxes/seam_fract.gen`
       (`sample()` with `fract()` on the coordinate) and `seam_tap4.gen` (four
       wrapped `nearest()` taps, manual bilinear). Bench-compare both against the
       periodic reference (`gpu_sim.sample(..., wrap=True)`) on the two seam
       columns/rows; record which one matches and by how much (plan ADR-3).
-- [ ] T006 [P] E-nan probe: throwaway `tests/bench/codeboxes/nan_probe.gen` that
+- [x] T006 [P] E-nan probe: throwaway `tests/bench/codeboxes/nan_probe.gen` that
       produces a NaN (0/0) and passes it through `switch(x == x, x, 0)`; bench it;
       record whether GenExpr on `jit.gl.pix` detects NaN this way (plan ADR-6).
       If not, record the working alternative.
-- [ ] T007 [P] E5 (optional) — throwaway `tests/bench/codeboxes/dft_param_n.gen`:
+- [x] T007 [P] E5 (optional) — throwaway `tests/bench/codeboxes/dft_param_n.gen`:
       does a `Param`-bounded DFT loop compile and match `np.fft` at N = 128 and 256?
       Record; if yes, runtime resolution becomes possible later (does not change v1).
 
 ### Block A — NumPy mirror (tier 1)
 
-- [ ] T008 Write `tests/fluid_mirror.py`: float32 mirrors of every stage, importing
+- [x] T008 Write `tests/fluid_mirror.py`: float32 mirrors of every stage, importing
       `gpu_sim` and `pass_dft` from `tests/test_fft_separable.py` —
       `adv(state, force, dt, force_gain, src_vecfield)` (periodic bilinear + force),
       `spec(tex, viscosity, project, drag, dt)` (Nyquist-zeroed operator wavenumbers,
@@ -101,7 +104,7 @@ run first.
       `step(state, force, params)` composing pass → adv → fx → fy → spec → iy → ix.
       Provide an `np.fft`-backed fast path for long runs, asserted equal to the
       `pass_dft`-based step over 3 frames.
-- [ ] T009 Write `tests/test_fluid_mirror.py` (run with
+- [x] T009 Write `tests/test_fluid_mirror.py` (run with
       `tests/run.sh tests/test_fluid_mirror.py`), each check against *independent*
       truth: single-mode decay = `exp(-nu*dt*|k|^2)` within 1e-4 (SC1); projection of
       a random field leaves spectral divergence at numerical zero; pure-gradient force
@@ -110,13 +113,22 @@ run first.
       at N = 64 and 256 (SC3); energy non-increasing with no force (ν ≥ 0, drag ≥ 0);
       zero state + zero force → exactly neutral outlet on every frame (SC6);
       Nyquist bins: real input stays real (max |Im| < 1e-6) after a full step;
-      10⁴ frames at N = 64 at parameter extremes, all finite and in [0, 1] (SC5, tier 1).
-- [ ] T010 Mutation-check the mirror once: separately break (a) the Nyquist rule,
+      10⁴ frames at parameter extremes (N = 32 — the math is N-independent; N = 64 was ~4× slower), all finite and in [0, 1] (SC5, tier 1).
+- [x] T010 Mutation-check the mirror once: separately break (a) the Nyquist rule,
       (b) the projection sign, (c) the decay exponent, (d) the periodic wrap; each
       must make a named test fail. Record the results here.
 
 **Checkpoint**: T003/T004 answered in Findings; T009 green and mutation-checked;
 E-seam, E-nan (and optional E5) recorded. *BLOCKS Phase 1.*
+
+**Phase 0 outcome (2026-09-23): met.** `tests/test_fluid_mirror.py` 16/16 with all
+five mutations caught; `tests/bench_fluid_probes.py` 4/4; `tests/fluid_feasibility.py`
+answers E1/E1b/E1c. Two plan changes came out of it (ADR-2, ADR-3, ADR-6 updated):
+(1) `adv` and `enc` are triggered by `r draw` bangs on inlet 0 — an `enc` that adapts
+to the force texture is 1×1 when the inlet is unconnected (`vs_black`); (2) all
+interpolation is manual 4-tap reads and the NaN guard is `switch(abs(x) < 1e30, x, 0)`
+(hardware `sample()` clamps at the seam, has 8-bit weights, and is nearest-like when
+minifying; `NaN == NaN` is true on this GPU).
 
 ---
 
@@ -132,18 +144,22 @@ the GPU (plan Block B). Success criteria 1–6 must hold on the GPU path.
       `codebox_dft_ix.gen` from one template (axis and direction baked; `N = 256`
       as a literal appearing exactly twice; header notes "generated by gen_dft.py").
       `codebox_dft_ix.gen` additionally outputs `vec(Re u, 0, Re v, 0)` and replaces
-      non-finite values with 0 using the method confirmed in T006.
+      non-finite values with 0 using `switch(abs(x) < 1e30, x, 0)` (bench-verified in
+      T006; the `x == x` form does not work — `NaN == NaN` is true on this GPU).
 - [ ] T012 [P] [US1] Write `src/f_vf_fluid/codebox_adv.gen`: `Param dt`, `Param force`,
-      `Param src_vecfield`; in1 = previous velocity, in2 = force; backward
-      self-advection with the periodic interpolation chosen in T005; `+ force * F`
-      gated by `src_vecfield`; outputs `vec(u, 0, v, 0)`.
+      `Param src_vecfield`; in1 = `r draw` bang (unused), in2 = force, in3 = previous
+      velocity; backward self-advection with the manual periodic 4-tap read of
+      `tests/bench/codeboxes/seam_tap4.gen` (T005), force read with clamped 4-tap
+      taps (never hardware `sample()`, plan ADR-3); `+ force * F` gated by
+      `src_vecfield`; outputs `vec(u, 0, v, 0)`.
 - [ ] T013 [P] [US2] [US3] Write `src/f_vf_fluid/codebox_spec.gen`: `Param viscosity`,
       `Param project`, `Param drag`, `Param dt`; signed wavenumbers via
       `floor(norm * N)` (not `cell`); Nyquist bins zeroed in the operator; projection
       blend; combined decay factor per plan ADR-5. Avoid built-in operator names for Params.
 - [ ] T014 [P] [US1] Write `src/f_vf_fluid/codebox_enc.gen`: `Param gain`,
-      `Param bypass_gate`, `Param src_vecfield`; in1 = force (render res), in2 =
-      velocity (256²) sampled bilinear; encode `0.5 + 0.5 * clamp(gain * v, -1, 1)`,
+      `Param bypass_gate`, `Param src_vecfield`; in1 = `r draw` bang (unused; gives
+      the render-context size), in2 = force (render res), in3 = velocity (256²)
+      read with the periodic 4-tap; encode `0.5 + 0.5 * clamp(gain * v, -1, 1)`,
       B = 0.5, A = 1; gated output `mix(neutral, force, src_vecfield)` when bypassed.
 - [ ] T015 Create `tests/bench_fluid.py` from `tests/templates/bench_module_template.py`,
       pointing at the real `src/f_vf_fluid/codebox_*.gen` files; first test: every
@@ -151,11 +167,13 @@ the GPU (plan Block B). Success criteria 1–6 must hold on the GPU path.
 - [ ] T016 [US3] Bench `spec` vs the mirror at N = 256 over random spectral fields,
       `project` ∈ {0, 0.5, 1}, several viscosity/drag values; tol 1e-4. Record
       measured errors in Findings.
-- [ ] T017 [US1] Bench `adv` vs the mirror on random velocity + force, including the
-      seam rows/columns; `src_vecfield = 0` must add exactly zero force. tol 1e-4.
-- [ ] T018 [US1] Bench `enc` vs the mirror: bilinear upsample from 256² to a non-square
-      render size, gain, clamp to [0, 1], `bypass_gate = 1` returns the force exactly
-      when `src_vecfield = 1` and exactly neutral `(0.5, 0.5, 0.5, 1)` when 0.
+- [ ] T017 [US1] Bench `adv` (3 inputs: bang, force, state) vs the mirror on random
+      velocity + force, including the seam rows/columns; `src_vecfield = 0` must add
+      exactly zero force. tol 1e-4 (the 4-tap read should match to ~1e-6).
+- [ ] T018 [US1] Bench `enc` vs the mirror: periodic 4-tap upsample from 256² to a
+      non-square render size and to a size *smaller* than 256² (minification), gain,
+      clamp to [0, 1], `bypass_gate = 1` returns the force exactly when
+      `src_vecfield = 1` and exactly neutral `(0.5, 0.5, 0.5, 1)` when 0.
 - [ ] T019 [US2] Bench the four baked DFT codeboxes at N = 256: forward `fx`→`fy` vs
       `np.fft.fft2` within 2e-7 relative; full round trip `fx→fy→iy→ix` identity within
       1e-5 absolute; `ix` returns Im = 0 exactly and maps injected NaN/Inf to 0.
@@ -201,10 +219,12 @@ coexist; bypass check passes.
       @type float32`, gen subpatchers from the `codebox_*.gen` files, identity gen
       for `pass`.
 - [ ] T026 [US1] `build_fluid.py` part 3: wiring — `routepass out0 → vs_inState`; its
-      texture output fans out to `adv`'s force inlet and `enc` inlet 0; `vs_inState`
-      out1 → `prepend param src_vecfield` → `adv` and `enc`; chain
-      `pass → adv → fx → fy → spec → iy → ix`; `ix → pass` feedback; `ix → enc` inlet 1;
-      `enc` → outlet. Inlet/outlet orders exactly as plan ADR-1/ADR-2.
+      texture output fans out to `adv`'s force inlet (inlet 1) and `enc`'s force inlet
+      (inlet 1); `r draw` → inlet 0 of `adv` and of `enc` (plan ADR-2: they run every
+      frame and `enc` takes the render-context size regardless of the force inlet);
+      `vs_inState` out1 → `prepend param src_vecfield` → `adv` and `enc`; chain
+      `pass → adv (inlet 2) → fx → fy → spec → iy → ix`; `ix → pass` feedback;
+      `ix → enc` inlet 2; `enc` → outlet. Inlet/outlet orders exactly as plan ADR-1/ADR-2.
 - [ ] T027 [US2] [US3] `build_fluid.py` part 4: parameter UI and routing — dials,
       `attrui` per param with the plan ADR-9 stage targets (`dt`→`adv`,`spec`;
       `force`→`adv`; `viscosity`,`project`,`drag`→`spec`; `gain`→`enc`), route tokens,
@@ -220,10 +240,18 @@ coexist; bypass check passes.
       (Param bypass gate, solver stays warm); run `tests/bench.sh tests/bench_modules.py`
       with the bench prerequisites (other patches closed); `bypass_out1` must pass
       and no `KNOWN` entry may be added.
+- [ ] T031a [US5] The module bench feeds 64² inputs but its render context is 512² and `enc`
+      follows the context, so `bypass_out1` cannot compare like with like: give
+      `tests/bench_modules.py` a per-module input size (the context size for
+      `f_vf_fluid`) so the passthrough check stays exact; no `KNOWN` entry.
 - [ ] T032 [US5] Two-instance check: two `f_vf_fluid` in one Vsynth patch run
       independently with no "already in use" errors (FR-012); record the method used.
 - [ ] T033 [US1] Save/reopen check: parameters restore, solver starts from zero state,
       output finite (spec US5 scenario 3).
+- [ ] T033a [US1] Confirm the solver advances **exactly once per frame** (only the `r draw`
+      bang on inlet 0 may trigger a render; inlets 1–2 must be cold): in the module bench
+      run a known decaying state for K frames and check the amplitude ratio equals the
+      single-step factor to the K-th power (a doubled update would square it).
 - [ ] T034 [US1] Smoke test in a scratch patch: `f_vf_vortex → f_vf_fluid →
       f_vf_advect` on a source; disable the vortex and confirm the flow persists and
       fades (US1 independent test, judgement).
@@ -357,12 +385,13 @@ explicit resample), update the spec's Open Experiment 1, then continue.
 
 | Task | Finding |
 |---|---|
-| T003 (E1) | |
-| T004 (E1b) | |
-| T005 (E-seam) | |
-| T006 (E-nan) | |
-| T007 (E5) | |
-| T010 (mutation check) | |
+| T003 (E1) | **Pass.** `jit.gl.pix vsynth @adapt 0 @dim 256 256 @type float32` runs inside `vs_render`; reports `dim [256, 256]`, output 256² with the exact pattern (6e-8). A downstream `@adapt 1` stage adapts to its inlet-0 texture (64² input → 64²) and reads the 256² texture (2× magnification: bilinear exact to 6e-8; only the outermost ring differs from a periodic reference because `sample()` clamps). |
+| T004 (E1b) | **Failed for the original wiring.** With the inlet unconnected `vs_inState` delivers `vs_black`; a stage adapting to it is **1×1** (`dim [1, 1]`). Fix confirmed (E1c): trigger `enc` (and `adv`) with `r draw` on inlet 0 → output is the render-context size (512² in the bench) whether or not the inlet is connected. |
+| T005 (E-seam) | 4-tap (`seam_tap4.gen`): 1.3e-6 interior, 7.7e-7 on the seam vs the periodic reference. `sample()`+`fract()`: wrong on the wrap rows/column (0.52) and ~1e-3 elsewhere (8-bit GL weights). **Also found:** `sample()` is nearest-like when the output is *smaller* than the source (256→128/64/32: 1.84e-2 = half a source texel vs bilinear); exact bilinear at 1:1 and magnifying. → all interpolation is manual 4-tap (ADR-3). |
+| T006 (E-nan) | `switch(abs(x) < 1e30, x, 0)` maps NaN and +Inf to 0 and leaves finite values unchanged. **`NaN == NaN` is TRUE on this GPU**, so the originally planned `x == x` guard would not have worked. |
+| T007 (E5) | A `Param`-bounded DFT loop (`dft_param_n.gen`) compiles and matches the mirror at N = 128 and N = 64 (7e-8). Runtime-selectable resolution is possible; cost of a non-literal loop bound unmeasured. |
+| T009 (mirror tests) | 16/16. Single-mode decay 2.5e-7–4.2e-7 (N = 64, 256); projection identities 5–6e-7; spectral divergence 8e-8–1.3e-7; Nyquist \|Im\|/\|Re\| 1.2e-16; Taylor–Green amplitude error at frames 10/50/100: N = 64 0.7% / 2.6% / 3.5%, N = 256 0.17% / 0.6% / 0.85% (bounds bilinear advection's numerical dissipation); energy always drops even at ν = 0 (worst −0.36%/frame); 10⁴-frame runs finite in all five extreme cases (uniform force with no drag reaches \|u\| ≈ 5e3, clamped at the outlet). |
+| T010 (mutation check) | All five mutations caught: Nyquist not zeroed, projection sign flipped, decay exponent wrong, drag dropped, advection clamps instead of wrapping. |
 | T016–T019 (bench errors) | |
 | T020 (multi-frame error growth) | |
 | T021 (cost per stage / total) | |

@@ -1,0 +1,24 @@
+// seam_tap4.gen -- f_vf_fluid E-seam probe B (tasks.md T005): manual periodic
+// bilinear from four nearest() taps with wrapped integer indices. Same
+// fractional shift (0.37, 0.61) texels at N = 64 as seam_fract.gen.
+// Mirror: gpu_sim.sample(tex, nx - 0.37/64, ny - 0.61/64, wrap=True).
+N = 64;
+fx = norm.x * N - 0.37 - 0.5;
+fy = norm.y * N - 0.61 - 0.5;
+x0 = floor(fx);
+y0 = floor(fy);
+tx = fx - x0;
+ty = fy - y0;
+xa = wrap(x0, 0, N);
+xb = wrap(x0 + 1, 0, N);
+ya = wrap(y0, 0, N);
+yb = wrap(y0 + 1, 0, N);
+p00 = vec((xa + 0.5) / N, (ya + 0.5) / N);
+p10 = vec((xb + 0.5) / N, (ya + 0.5) / N);
+p01 = vec((xa + 0.5) / N, (yb + 0.5) / N);
+p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
+r = mix(mix(nearest(in1, p00).x, nearest(in1, p10).x, tx), mix(nearest(in1, p01).x, nearest(in1, p11).x, tx), ty);
+g = mix(mix(nearest(in1, p00).y, nearest(in1, p10).y, tx), mix(nearest(in1, p01).y, nearest(in1, p11).y, tx), ty);
+b = mix(mix(nearest(in1, p00).z, nearest(in1, p10).z, tx), mix(nearest(in1, p01).z, nearest(in1, p11).z, tx), ty);
+a = mix(mix(nearest(in1, p00).w, nearest(in1, p10).w, tx), mix(nearest(in1, p01).w, nearest(in1, p11).w, tx), ty);
+out1 = vec(r, g, b, a);

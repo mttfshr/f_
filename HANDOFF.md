@@ -104,7 +104,8 @@ design change, not a bug fix.
 
 The fluid thread (thread 1 of the 9/22 handoff) moved from research to a
 full spec set in `.specify/f_vf_fluid/` (`spec.md`, `plan.md`, `tasks.md`;
-Work Queue item 11). **No code yet.**
+Work Queue item 11), and **Phase 0 is done** (T001–T010): the NumPy mirror and
+the GPU/Vsynth feasibility experiments. No stage codeboxes or patcher yet.
 
 - **Decided** (with Matt): a *new* module — a spectral (FFT) velocity solver
   that outputs an evolving vecfield; force vecfield in, velocity vecfield out.
@@ -124,10 +125,25 @@ Work Queue item 11). **No code yet.**
   not a `build_patcher.py` schema extension.
 - **Multi-frame bench caveat**: the bench drives one codebox at a time, so the
   100-frame whole-chain check is host-sequenced from Python (plan ADR-10).
-- **Highest risk**: Block C — does a `@adapt 0 @dim 256 256` pix work inside
-  Vsynth's render context, and what size is the render-res encode stage when
-  the force inlet is unconnected (`vs_black` dims)? Tasks T002–T004; findings
-  table at the end of `tasks.md`.
+- **Phase 0 results** (details in the `tasks.md` Findings table):
+  - `tests/fluid_mirror.py` + `tests/test_fluid_mirror.py`: 16/16, five
+    mutations caught; Taylor–Green amplitude error at frame 100 is 0.85% at
+    N=256 (3.5% at N=64).
+  - A `@adapt 0 @dim 256 256` pix **works inside Vsynth's render context**
+    (`tests/fluid_feasibility.py` runs a generated scratch module through the
+    module bench and deletes it afterwards).
+  - **Plan changed**: a render-res stage that adapts to the force texture is
+    1×1 when the inlet is unconnected (`vs_black`); `adv` and `enc` are now
+    triggered by `r draw` bangs on inlet 0 (force = codebox `in2`, state/velocity
+    = `in3`), so `enc` takes the render-context size (512² in the bench) and the
+    solver runs every frame.
+  - **All interpolation is manual 4-tap** (hardware `sample()` clamps at the
+    seam, has 8-bit weights, and is nearest-like when minifying); **NaN guard is
+    `switch(abs(x) < 1e30, x, 0)`** (`NaN == NaN` is TRUE on this GPU).
+  - A `Param` loop bound works for the DFT (N=128, 64), so runtime resolution is
+    possible later; cost unmeasured.
+  - New tasks T031a (per-module bench input size: context is 512², bench feeds
+    64²) and T033a (solver advances exactly once per frame; hot/cold inlets).
 
 ## Warnings for next session
 
@@ -164,11 +180,14 @@ module's bypassed outlets in a real Vsynth patch, decides the bypassed state
 (drive a non-`bypass` Param; hand-edit). Extend `BYPASS_PASSTHROUGH_OUTLETS`
 only for outlets whose intended state is "equals input".
 
-**1. `f_vf_fluid` — start Phase 0 of `.specify/f_vf_fluid/tasks.md`.** Suggested
-order: the in-Vsynth feasibility experiments (T002–T004: 256² pix + render-res
-encode stage; unconnected-force size) in parallel with the NumPy mirror
-(`tests/fluid_mirror.py`, `tests/test_fluid_mirror.py`, T008–T010). No stage
-codebox is written until the mirror passes.
+**1. `f_vf_fluid` — Phase 1 of `.specify/f_vf_fluid/tasks.md` (T011–T022).**
+Write the stage codeboxes (`gen_dft.py` → four baked DFTs, `codebox_adv/spec/enc.gen`)
+and prove each on the bench against `tests/fluid_mirror.py` in
+`tests/bench_fluid.py` (copy `tests/templates/bench_module_template.py`). The
+mirror already exists and passes; the 4-tap read to copy is
+`tests/bench/codeboxes/seam_tap4.gen`. Max was left running with both benches open
+at the end of the session (`open -a Max tests/bench/bench.maxpat` /
+`bench_module.maxpat` relaunches them; `bc.ping()` tells you if they're up).
 
 **2. `f_a_ripple` production UI polish** — unchanged: DSP done and confirmed by
 ear; UI still plain flonums/toggles, not the `f_` convention.

@@ -47,6 +47,9 @@ GPU verification.
   never name a Param `bypass` on a pix that also uses native bypass.
 - Fixed `@name`s break a second instance → **all names `#0_`-scoped**.
 - A new gen compiles at its first render; params sent earlier fail.
+- Hardware `sample()`: clamps neighbor taps, 8-bit weights, and is nearest-like
+  when minifying (Phase 0) — all interpolation here is manual (ADR-3).
+- `NaN == NaN` is true on this GPU; guard with `abs(x) < 1e30` (ADR-6).
 - Native `@bypass` skips the shader and flips outlets 2+ (this module uses a
   Param-based bypass gate instead — ADR-8).
 
@@ -139,11 +142,11 @@ res.
 | # | Node | In | Does | Size |
 |---|---|---|---|---|
 | 0 | `pass` | `ix` | identity; holds last frame's velocity | 256² |
-| 1 | `adv` | `pass` (state), force | backward self-advection (periodic bilinear) + `force · F` | 256² |
+| 1 | `adv` | `r draw` bang (in0), force, `pass` (state) | backward self-advection (periodic 4-tap bilinear) + `force · F`; runs every frame even with no force | 256² |
 | 2–3 | `fx`,`fy` | prev | forward DFT x then y | 256² |
 | 4 | `spec` | `fy` | projection blend → viscosity·drag decay | 256² |
 | 5–6 | `iy`,`ix` | prev | inverse DFT y then x; `ix` outputs real part, zero Im, NaN-guarded | 256² |
-| 7 | `enc` | force (passthrough), `ix` | bilinear upsample, gain, clamp, encode, bypass gate | render |
+| 7 | `enc` | `r draw` bang (in0), force (passthrough), `ix` | periodic 4-tap upsample, gain, clamp, encode, bypass gate | render (from `r draw`) |
 
 **Rationale**: the minimal chain that matches the verified math; every stage
 is one codebox file and one test. **Alternatives**: merging `enc` into `ix`
@@ -159,39 +162,69 @@ and simpler to verify).
 
 **Context**: spec decisions — internal resolution independent of render
 size. Downstream consumers and the module bench both assume a render-size
-outlet; a 256² outlet would break the bench's `bypass_out1` shape check and
-risk consumers seeing a small texture.
+outlet.
 
-**Decision**: solver nodes `@adapt 0 @dim 256 256`; `enc` `@adapt 1` with its
-inlet 0 = the render-res force so it adapts to render size, inlet 1 = the
-256² velocity, sampled with bilinear.
+**Decision**: solver nodes `@adapt 0 @dim 256 256`; `enc` `@adapt 1` and
+**triggered by an `r draw` bang on its inlet 0**, with the force (from
+`vs_inState`) on inlet 1 and the 256² velocity on inlet 2. Likewise `adv`'s
+inlet 0 is an `r draw` bang, force on inlet 1, previous state on inlet 2.
+In the codeboxes the bang inlet is `in1` (unused), so force = `in2` and
+velocity/state = `in3`.
 
-**Rationale**: upsampling happens once, inside the module, and outputs are
-ordinary render-size textures. **Alternatives**: expose the 256² texture
-directly (rejected: FR-014 wants consumers unchanged, and bypass equality
-needs the same size as the input).
+**Evidence (Phase 0, `tests/fluid_feasibility.py`, inside Vsynth's real
+`vs_render` via the module bench)**:
+- A `@adapt 0 @dim 256 256 @type float32` pix runs inside `vs_render`, reports
+  `dim = [256, 256]`, and produces the exact pattern (error 6e-8) — **E1 passes**.
+- A render-res stage that adapts to a *texture* on inlet 0 takes that
+  texture's size. With the force inlet unconnected `vs_inState` delivers
+  `vs_black`, which is **1×1**, so such an `enc` would output 1×1 and a
+  decaying flow would vanish on disconnect — **E1b fails for the original
+  wiring**.
+- Triggering by `r draw` gives the render-context size (512×512 in the bench)
+  whether or not the inlet is connected — **E1c** — and the same trigger keeps
+  the solver running every frame instead of depending on `vs_inState`'s
+  unconnected timer (~180 ms).
 
-**Consequences**: −: `enc`'s size when the force inlet is *unconnected*
-depends on what `vs_inState` delivers (`vs_black`'s dimensions) — an open
-experiment (E1b). +: removes the "small texture downstream" risk from
-spec Open Experiment 1; what remains is whether a 256² pix works inside
-Vsynth's render context at all.
+**Alternatives**: expose the 256² texture directly (rejected: FR-014 wants
+consumers unchanged); adapt `enc` to the force texture (rejected: E1b).
 
-### ADR-3: Periodic self-advection with a manual 4-tap bilinear
+**Consequences**: +: the outlet is always a normal render-size vecfield and
+`vs_black`'s size never matters; −: (a) hot/cold inlet behavior must be
+confirmed in Block D — only inlet 0 should trigger a render, so the solver
+advances exactly once per frame (add a bench test); (b) the module bench
+feeds 64² inputs but its render context is 512², so `bypass_out1` needs an
+input at the context size for this module (Phase 2); (c) `enc` reads the
+velocity from `ix` in the same frame only if draw order allows — worst case a
+one-frame display latency, harmless.
 
-**Context**: the FFT domain is periodic; GL `sample()` clamps at edges, so
-`fract()` on the coordinate alone may leave a clamped seam at the wrap.
+### ADR-3: All interpolation is a manual 4-tap read (periodic where the domain is)
 
-**Decision**: `adv` samples the velocity with four `nearest()` reads whose
-integer indices wrap with `mod`, blended manually. Mirror:
-`gpu_sim.sample(..., wrap=True)`.
+**Context**: the FFT domain is periodic; GL `sample()` clamps its neighbor
+taps, and Phase 0 measured two more limits of hardware `sample()` on this
+GPU (`tests/bench_fluid_probes.py`, `tests/fluid_feasibility.py`):
+- `fract()` on the coordinate does **not** wrap the neighbor tap: error ≈ 0.52
+  on the wrap rows/column (E-seam).
+- Hardware bilinear weights are 8-bit: ≈ 1e-3 error for general fractions
+  (exact only at 0, 0.5, 0.25…).
+- **Minification is not bilinear**: whenever the output is smaller than the
+  source, `sample()` is off by half a source texel (behaves like nearest;
+  256→128/64/32 all show 1.84e-2 vs bilinear). It is exact bilinear at 1:1
+  and when magnifying.
 
-**Rationale**: exact periodicity, bench-verifiable. **Alternatives**:
-`sample()` + `fract()` — kept as an experiment (E-seam: compare both at the
-seam against the periodic reference; use the cheaper if it matches).
+**Decision**: `adv` reads the velocity state, and `enc` reads the velocity for
+upsampling, with four `nearest()` taps whose integer indices wrap with
+`wrap(x, 0, N)` and a manual bilinear blend (`tests/bench/codeboxes/seam_tap4.gen`:
+1.3e-6 vs the periodic reference, seam included). The force is read the same
+way with clamped indices, so the GPU matches the mirror to float precision and
+the force downsample (render-res → 256², a minification) is explicit and
+filterable (E4) rather than accidental nearest.
 
-**Consequences**: +: no edge artifacts in the flow; −: 4 reads instead of 1
-in a cheap 256² stage (negligible).
+**Alternatives**: `sample()` + `fract()` (rejected, above); hardware
+`sample()` for the force (rejected: nearest-like when minifying, aliasing).
+
+**Consequences**: +: exact, periodic, mirror-verifiable everywhere; −: 4–16
+`nearest()` reads per pixel in the cheap stages (negligible at 256²; `enc`
+runs at render res with 2 channels × 4 taps, still cheap).
 
 ### ADR-4: Four baked DFT codeboxes from one template
 
@@ -230,9 +263,12 @@ that range, chosen in tier-3 tuning; the codebox takes the physical `ν`.
 ### ADR-6: Containment — real part, NaN guard, clamp
 
 **Decision**: `ix` writes `vec(Re u, 0, Re v, 0)` (discarding numerical
-imaginary residue every frame so it cannot accumulate), replaces non-finite
-values with 0 (test via `x == x`, verified on the bench that GenExpr
-compares `NaN` as expected), and `enc` clamps the encoded result to [0, 1].
+imaginary residue every frame so it cannot accumulate) and replaces
+non-finite values with 0 using **`switch(abs(x) < 1e30, x, 0)`**. Bench-verified
+(E-nan, 2026-09-23): this clears both NaN and Inf and passes finite values
+unchanged, whereas the originally planned `x == x` test **does not work** —
+on this GPU `NaN == NaN` evaluates true. `enc` also clamps the encoded result
+to [0, 1].
 **Rationale**: a NaN entering the feedback loop persists forever
 (NF-003). **Consequence**: one extra compare per channel — negligible.
 
@@ -347,18 +383,19 @@ helpfile, `f_modules` menu slot (∇ marked), README + module-inventory rows.
 
 Maps to the spec's proposed phasing; blocks in brackets.
 
-### Phase 0: Experiments and math [A, C]
-- E1: does a `@adapt 0 @dim 256 256` `jit.gl.pix` run inside Vsynth, and does
-  a render-res pix downstream sample its output correctly? (Highest risk.)
-- E1b: what size is `enc`'s output when the force inlet is unconnected
-  (`vs_inState` → `vs_black`)? If small, fall back to a Vsynth-render-size
-  source for the `enc` adapt.
-- E-seam: `sample()`+`fract()` vs manual 4-tap at the periodic seam.
-- E4: force downsample filter — bilinear vs 2×2 box, on a noisy source.
-- E5 (optional): can the DFT loop bound be a `Param`?
-- Write `fluid_mirror.py` + `test_fluid_mirror.py`; pin down the Nyquist
-  rule, units and decay form.
-- **Checkpoint**: Block A green; C answers recorded. *Blocks Phase 1.*
+### Phase 0: Experiments and math [A, C] — DONE 2026-09-23
+- E1: **passes** — a `@adapt 0 @dim 256 256` pix runs inside Vsynth's render
+  context, exact output.
+- E1b: **failed for the original wiring** (`vs_black` is 1×1); fixed by `r draw`
+  triggers (ADR-2), confirmed as E1c.
+- E-seam: manual 4-tap is exact and periodic; `sample()`+`fract()` is not (ADR-3).
+- E-nan: `abs(x) < 1e30` guard works, `x == x` does not (ADR-6).
+- E5: a `Param` loop bound **compiles and matches** `np.fft` at N = 128 and 64
+  (7e-8) — runtime-selectable resolution is possible; its cost is unmeasured.
+- E4 (force downsample filter): still open for tier 3, but hardware `sample()`
+  minification is nearest-like, so any filtering is done manually (ADR-3).
+- `fluid_mirror.py` + `test_fluid_mirror.py`: 16/16, mutation-checked.
+- **Checkpoint**: met. Findings table in `tasks.md`.
 
 ### Phase 1: Solver stages on the bench [B]
 - Codeboxes: `adv`, `spec`, `enc`, baked DFTs (`gen_dft.py`), `ix` guards.
@@ -396,9 +433,9 @@ Maps to the spec's proposed phasing; blocks in brackets.
 - **Compile-time N**: the DFT loop bound is a literal (N = 256). 128² would
   be a regenerated set of codeboxes and a build-script constant; runtime
   selection is only possible if E5 succeeds.
-- **The unresolved dependencies** that could reshape the plan are exactly
-  E1/E1b (internal size inside Vsynth, unconnected-force size) — both in
-  Block C, run first.
+- **The dependencies that could have reshaped the plan** (E1/E1b: internal
+  size inside Vsynth, unconnected-force size) were resolved in Phase 0; E1b
+  did change the wiring (ADR-2: `r draw` triggers).
 - **Known limits carried from the spec**: periodic domain (no walls);
   semi-Lagrangian advection is dissipative (Taylor–Green bound is the
   measurement); no vorticity confinement; nothing here changes existing

@@ -1,0 +1,9 @@
+// seam_fract.gen -- f_vf_fluid E-seam probe A (tasks.md T005): does sample()
+// with fract() on the coordinate give a PERIODIC bilinear read at the seam?
+// Fractional shift of (0.37, 0.61) texels at N = 64, so bilinear neighbors
+// cross the seam on the first/last row and column. The GL sampler clamps its
+// neighbor taps, so a fract()ed coordinate cannot wrap the neighbor.
+N = 64;
+x = sample(in1, norm).x * 0;
+uv = vec(fract(norm.x - 0.37 / N + x), fract(norm.y - 0.61 / N));
+out1 = sample(in1, uv);

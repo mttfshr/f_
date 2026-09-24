@@ -298,7 +298,12 @@ placed in one Vsynth patch run independently.
 
 ---
 
-## Open Experiments (Phase 0 — resolve before committing to the plan)
+## Open Experiments (Phase 0 — resolved 2026-09-23 unless noted; results in tasks.md Findings)
+
+*Results: 1 passes; 1b failed for the original wiring and was fixed with `r draw`
+triggers (plan ADR-2); 2–3 (mirror side) done; 4 still tier 3 (hardware `sample()`
+minification is nearest-like, so filtering is manual); 5 feasible (a `Param` loop
+bound works); 6 still tier 3.*
 
 These are known unknowns with a cheap, defined test each; none blocks the
 spec.
