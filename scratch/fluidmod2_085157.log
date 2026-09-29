@@ -1,0 +1,26 @@
+test_T033a_solver_advances_once_per_frame
+    ...  warmup 12: velocity u at the centre (uniform force, gain 1): 1.946e-01
+    ...  warmup 32: velocity u at the centre (uniform force, gain 1): 5.558e-01
+    ...  updates per frame assuming no drag: 9.029e-01
+    ...  updates per frame assuming drag 0.5: 1.000e+00
+    ok   |updates per frame - 1| (a doubled update would read ~1): 1.933e-05  (tol 1e-01)
+  PASS  (5.01s)
+test_T032_two_instances_are_independent
+    ok   instance 1 (force connected) is driven away from neutral (must be > 0.01): 0.000e+00  (tol 0e+00)
+    ok   instance 2 (unconnected) is EXACTLY neutral: 0.000e+00  (tol 0e+00)
+    ...  instance 1 max |R,G - 0.5|: 1.626e-01
+    ...  both outlets are render size: 1.000e+00
+  PASS  (2.80s)
+test_T033_fresh_load_is_finite_and_starts_at_zero
+    ok   unconnected inlet, fresh load: outlet exactly neutral, render size: 0.000e+00  (tol 0e+00)
+  PASS  (2.17s)
+test_T038a_tap_grid_reduces_force_noise_through_the_module
+    ...  taps 1: high-frequency rms of the velocity field: 7.772e-03
+    ...  taps 1: peak |u| (must stay off the clamp): 2.181e-01
+    ...  taps 8: high-frequency rms of the velocity field: 3.935e-03
+    ...  taps 8: peak |u| (must stay off the clamp): 8.736e-02
+    ...  noise reduction taps 1 -> 8 (stage bench predicts ~4x at 4x minification): 1.975e+00
+    ok   tap grid must cut force noise by at least 1.5x (shortfall): 0.000e+00  (tol 0e+00)
+  PASS  (6.42s)
+
+4/4 passed

@@ -789,6 +789,28 @@ Check existing Vsynth patchers before choosing ranges:
 
 Angle codebox mapping: `theta = angle * (PI / 180.0)`
 
+### Not every parameter earns a panel slot
+
+A panel slot is for a **performable lever** — something with expressive range that
+Matt reaches for mid-performance. A parameter that is a *correctness* setting fails
+that bar even when it is real and measurable: internal filter quality, tap counts,
+iteration bounds. The tell is that it does nothing on typical input and, on the input
+where it matters, only makes the output more correct — there is no direction to push
+it for effect.
+
+Fix those in the shader at a measured default (`Param taps(8)`) and, if the trade-off
+should stay reachable by message, keep the route token and drop the widget:
+`"ui": False` on the param in `definition.py` (implemented in
+`src/f_vf_fluid/build_fluid.py` — it splits `routed` from `panel`, wires the route
+outlet straight to the attrui, and leaves the param out of the `parameters` block).
+Costs no slot, no label, no preset entry. Note the live module bench can no longer
+range-scale such a param's test value (no widget to read `parameter_range` from), so
+it sends a raw fraction — the wiring is still checked, the range is not.
+
+Precedent: `f_vf_fluid`'s `taps` was briefly a panel numbox (2026-09-28) and came off
+the next day. Also see `jit-gen-codebox` → "a fixed-`@dim` stage is a resampler" for
+why that parameter exists at all.
+
 ---
 
 ## Edit-View Layout (generated modules)

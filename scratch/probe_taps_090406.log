@@ -1,0 +1,2 @@
+warmup 12: repeat(taps 8 vs taps 8) = 0.0000   taps 1 vs taps 8 = 0.5507   field rms = 0.0000
+warmup 48: repeat(taps 8 vs taps 8) = 0.0000   taps 1 vs taps 8 = 0.3927   field rms = 0.0000

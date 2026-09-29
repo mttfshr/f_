@@ -20,8 +20,10 @@ Stage chain (plan ADR-1), solver stages at a fixed 256x256 float32:
   fx/fy/iy/ix  separable DFT      enc   render-res upsample + encode + bypass gate
 
 Ranges and defaults below are PROVISIONAL (tier-3 tuning is tasks.md T036-T037).
-`viscosity` is a 0..1 dial (shader maps it to a per-frame nu*dt, T036); `taps` is the
-force tap-grid size (T038a) shown as an int numbox, default 8.
+`viscosity` is a 0..1 dial (shader maps it to a per-frame nu*dt, T036). `taps` is the
+force tap-grid size (T038a): `"ui": False`, so it keeps its route token and reaches
+`adv` by control message, but takes no panel slot — it is a correctness setting fixed
+at 8 by GPU measurement, not a performable lever (decided 2026-09-29).
 """
 
 patcher = {
@@ -61,7 +63,7 @@ patcher = {
          "label": "Gain",
          "hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)"},
         {"name": "taps", "type": "int", "min": 1, "max": 16, "default": 8,
-         "label": "Taps",
+         "label": "Taps", "ui": False,
          "hint": "Force filter: taps x taps samples per solver texel. Higher = calmer noisy force at HD/4K but costs GPU (8 = ~0.4-0.7 ms, 16 = ~1.5 ms); 1 = off"},
 
         # Bypass toggle. Unlike every other f_ module this does NOT set the

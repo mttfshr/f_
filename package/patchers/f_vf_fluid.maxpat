@@ -2065,52 +2065,6 @@
 			},
 			{
 				"box": {
-					"id": "obj-38",
-					"maxclass": "live.numbox",
-					"fontname": "Ableton Sans Light",
-					"hint": "Force filter: taps x taps samples per solver texel. Higher = calmer noisy force at HD/4K but costs GPU (8 = ~0.4-0.7 ms, 16 = ~1.5 ms); 1 = off",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_fluid_adv::taps",
-					"parameter_enable": 1,
-					"patching_rect": [
-						350.0,
-						80.0,
-						44.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						41.0,
-						100.0,
-						34.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_initial": [
-								8.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "taps",
-							"parameter_mmax": 16.0,
-							"parameter_mmin": 1.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "taps",
-							"parameter_type": 0,
-							"parameter_unitstyle": 0
-						}
-					},
-					"varname": "taps"
-				}
-			},
-			{
-				"box": {
 					"id": "obj-39",
 					"maxclass": "attrui",
 					"attr": "taps",
@@ -2125,33 +2079,8 @@
 						108.0,
 						22.0
 					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-40",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						350.0,
-						130.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						29.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Taps",
-					"textjustification": 1,
-					"varname": "lbl_taps"
+					"style": "",
+					"varname": "taps"
 				}
 			},
 			{
@@ -2737,18 +2666,6 @@
 						6
 					],
 					"destination": [
-						"obj-38",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-38",
-						0
-					],
-					"destination": [
 						"obj-39",
 						0
 					]
@@ -2820,11 +2737,6 @@
 			"obj-35": [
 				"gain",
 				"gain",
-				0
-			],
-			"obj-38": [
-				"taps",
-				"taps",
 				0
 			],
 			"parameterbanks": {

@@ -746,6 +746,20 @@ the trig function even runs.
   inherits whatever the previous job set, not the codebox default. Pin every Param a
   measurement depends on (a cost test silently measured taps=16 after a loop that ended
   on 16).
+- **Generalisation (2026-09-29): a fixed-`@dim` stage is a resampler, whether you meant
+  it to be or not.** Any module with an internal fixed-resolution stage minifies every
+  input it reads from the render context, by render_size / internal_dim -- 4-15x at
+  HD/4K for a 256^2 grid. Combined with nearest-like minification above, one `sample()`
+  per texel then reads well under 1% of the source and aliases hard on noisy input.
+  The fix is generic and needs no source size: average a `taps x taps` grid at offsets
+  in NORMALISED coordinates. Treat this as a design consequence of choosing an internal
+  resolution, not as a fluid-specific detail -- the codebox cannot read an input's size
+  (no `texdim`), so nothing warns you.
+- **Prefiltering is a correctness setting, not a performance control.** It does nothing
+  on smooth inputs, and on noisy ones it only removes noise -- there is no expressive
+  range to perform. Fix it at a measured value in the shader (`Param taps(8)`); if the
+  cost/cleanliness trade needs to stay reachable, keep a route token and no panel slot
+  (`"ui": False` in `f_vf_fluid`'s `definition.py`) rather than spending a control.
 
 ---
 

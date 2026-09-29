@@ -107,9 +107,13 @@ def build():
     d = load_definition()
     prefix, title = d["prefix"], d["title"]
     pw, ph = float(d["presentation_width"]), float(d["presentation_height"])
-    ui = [p for p in d["params"] if p["type"] in ("float", "int")]
-    assert [p["name"] for p in ui] == list(TARGETS), "definition.py params must match TARGETS (order too)"
-    n_ui = len(ui)
+    # `routed` = everything with a route token (index order drives the obj ids).
+    # `panel` = the subset that gets a widget + label. A param with "ui": False
+    # (taps) keeps its token and its attrui but takes no presentation slot.
+    routed = [p for p in d["params"] if p["type"] in ("float", "int")]
+    assert [p["name"] for p in routed] == list(TARGETS), "definition.py params must match TARGETS (order too)"
+    panel = [p for p in routed if p.get("ui", True)]
+    n_ui = len(routed)
     bp_jsui, bp_pre = bp.bypass_jsui_id(n_ui), bp.bypass_pre_id(n_ui)
     enc = SID["enc"]
 
@@ -118,7 +122,7 @@ def build():
             numinlets=0, numoutlets=1, outlettype=[""], patching_rect=[30.0, 30.0, 30.0, 30.0]),
         *bp.outlet_boxes(d["outlets"]),
         bp.routepass_box(),
-        bp.route_box(ui),
+        bp.route_box(routed),
         *pix_boxes(),
         box(OBJ_INSTATE, maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["", ""],
             patching_rect=[200.0, 60.0, 80.0, 22.0], text="vs_inState"),
@@ -134,12 +138,20 @@ def build():
     ]
 
     extra_attruis = []                               # (attrui id, param name, stage key)
-    for n, p in enumerate(ui):
+    for n, p in enumerate(routed):
         stages = TARGETS[p["name"]]
-        widget = bp.numbox_box if p["type"] == "int" else bp.dial_box   # taps: int numbox
-        boxes.append(widget(n, p, SNAME[stages[0]]))
-        boxes.append(bp.attrui_box(bp.param_pre_id(n), p["name"], 50.0 + n * 50.0, 170.0 + n * 30.0))
-        boxes.append(bp.label_box(n, p))
+        attrui = bp.attrui_box(bp.param_pre_id(n), p["name"], 50.0 + n * 50.0, 170.0 + n * 30.0)
+        if p.get("ui", True):
+            widget = bp.numbox_box if p["type"] == "int" else bp.dial_box
+            boxes.append(widget(n, p, SNAME[stages[0]]))
+            boxes.append(attrui)
+            boxes.append(bp.label_box(n, p))
+        else:
+            # No widget and no label: the route outlet feeds the attrui directly.
+            # varname so verify()'s "route token -> box of the same name" check
+            # still has something to match (the widget usually carries it).
+            attrui["box"]["varname"] = p["name"]
+            boxes.append(attrui)
         for k, extra in enumerate(stages[1:]):
             aid = f"obj-{60 + len(extra_attruis)}"
             boxes.append(bp.attrui_box(aid, p["name"], 400.0, 170.0 + 30.0 * len(extra_attruis)))
@@ -179,15 +191,19 @@ def build():
         wire(bp.OBJ_ZLSLICE, 1, bp.OBJ_PRETAM, 0),
         wire(bp.OBJ_PRETAM, 0, bp.OBJ_MODULESIZE, 0),
     ]
-    for n, p in enumerate(ui):
-        lines.append(wire(bp.OBJ_ROUTE, n, bp.param_obj_id(n), 0))
-        lines.append(wire(bp.param_obj_id(n), 0, bp.param_pre_id(n), 0))
+    for n, p in enumerate(routed):
+        if p.get("ui", True):
+            lines.append(wire(bp.OBJ_ROUTE, n, bp.param_obj_id(n), 0))
+            lines.append(wire(bp.param_obj_id(n), 0, bp.param_pre_id(n), 0))
+        else:
+            lines.append(wire(bp.OBJ_ROUTE, n, bp.param_pre_id(n), 0))
         lines.append(wire(bp.param_pre_id(n), 0, SID[TARGETS[p["name"]][0]], 0))
     for aid, n, stage in extra_attruis:
         lines.append(wire(bp.param_obj_id(n), 0, aid, 0))
         lines.append(wire(aid, 0, SID[stage], 0))
 
-    params_block = {bp.param_obj_id(n): [p["name"], p["name"], 0] for n, p in enumerate(ui)}
+    params_block = {bp.param_obj_id(n): [p["name"], p["name"], 0]
+                    for n, p in enumerate(routed) if p.get("ui", True)}
     params_block["parameterbanks"] = {"0": {"index": 0, "name": "",
                                             "parameters": ["-"] * 8, "buttons": ["-"] * 8}}
     params_block["inherited_shortname"] = 1
