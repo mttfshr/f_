@@ -1,0 +1,14 @@
+HD taps= 1: adv  0.073 ms/pass (upper bound)   noise gain  5.97
+HD taps= 4: adv  0.244 ms/pass (GPU bound)   noise gain  1.49
+HD taps= 6: adv  0.429 ms/pass (GPU bound)   noise gain  1.21
+HD taps= 8: adv  0.557 ms/pass (GPU bound)   noise gain  1.01
+HD taps=10: adv  0.680 ms/pass (GPU bound)   noise gain  1.07
+HD taps=12: adv  0.959 ms/pass (GPU bound)   noise gain  1.05
+HD taps=16: adv  1.672 ms/pass (GPU bound)   noise gain  1.02
+4K taps= 1: adv  0.054 ms/pass (upper bound)   noise gain 11.51
+4K taps= 4: adv  0.079 ms/pass (GPU bound)   noise gain  2.87
+4K taps= 6: adv  0.510 ms/pass (GPU bound)   noise gain  1.91
+4K taps= 8: adv  0.711 ms/pass (GPU bound)   noise gain  1.44
+4K taps=10: adv  0.860 ms/pass (GPU bound)   noise gain  1.29
+4K taps=12: adv  1.035 ms/pass (GPU bound)   noise gain  1.19
+4K taps=16: adv  1.500 ms/pass (GPU bound)   noise gain  1.05

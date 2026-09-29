@@ -13,6 +13,8 @@ import sys
 import importlib.util
 from pathlib import Path
 
+import layout as edit_layout   # edit-view (patching_rect) layout pass -- .specify/build_layout/
+
 # ---------------------------------------------------------------------------
 # Styling constants
 # ---------------------------------------------------------------------------
@@ -190,7 +192,9 @@ def title_box(title):
 
 def signal_type_box(signal_type, title):
     """Small colored label rendered in the header, right of the title text."""
-    color = SIGNAL_TYPE_COLORS.get(signal_type, [0.6, 0.6, 0.6, 1.0])
+    # Colour is keyed on the first word, so "vecfield in" / "vecfield out" keep the
+    # vecfield colour (direction suffixes are free text; 2026-09-24).
+    color = SIGNAL_TYPE_COLORS.get(signal_type.split()[0], [0.6, 0.6, 0.6, 1.0])
     # Estimate title width to position label after it (approx 7px per char)
     title_w = max(40.0, len(title) * 7.2)
     return box(OBJ_SIGNAL_TYPE,
@@ -1016,7 +1020,52 @@ def wire(src_id, src_outlet, dst_id, dst_inlet):
 # Main builder
 # ---------------------------------------------------------------------------
 
-def build(defn):
+def assign_roles(ui_params, header_toggles, mod_inlets, outlets, pix_ids,
+                 bp_jsui_id, bp_pre_id):
+    """
+    {box_id: (role, idx)} for the edit-view layout pass (build/layout.py).
+    Kept separate from box() so box output is unchanged; roles are never serialized.
+    Ids that don't correspond to a box in this build are harmless (the pass keys off
+    the boxes actually present).  Boxes NOT listed here (raw_boxes) go to the overflow area.
+    """
+    r = {OBJ_INLET: ("inlet", None), OBJ_ROUTEPASS: ("routepass", None),
+         OBJ_ROUTE: ("route", None), OBJ_AUTOPATTR: ("autopattr", None),
+         OBJ_PANEL: ("panel", None), OBJ_TITLE: ("title", None),
+         OBJ_SIGNAL_TYPE: ("signal_type", None),
+         OBJ_LOADBANG: ("loadbang", None), OBJ_GETATTR: ("getattr", None),
+         OBJ_THISPATCHER: ("thispatcher", None), OBJ_ZLSLICE: ("zlslice", None),
+         OBJ_PRETAM: ("pretam", None), OBJ_MODULESIZE: ("modulesize", None),
+         OBJ_INSTATE: ("instate", None), OBJ_SRCMODE_PRE: ("srcmode_pre", None),
+         OBJ_PANEL_TOGGLE: ("panel_toggle", None),
+         OBJ_PANEL_TOGGLE_JS: ("panel_toggle_js", None),
+         "obj-20a": ("rdraw", None),          # `r draw` (source archetype), local id in build()
+         bp_jsui_id: ("bypass_jsui", None), bp_pre_id: ("bypass_pre", None)}
+    for i in range(len(outlets)):
+        r[outlet_obj_id(i)] = ("outlet", i)
+    for pid in pix_ids:
+        r[pid] = ("pix", None)
+    for n, p in enumerate(ui_params):
+        r[param_obj_id(n)] = ("ctl", n)
+        r[param_pre_id(n)] = ("pre", n)
+        r[param_label_id(n)] = ("label", n)
+        if p.get("range_tiers"):
+            r[range_menu_id(n)] = ("range_menu", n)
+            r[range_sel_id(n)] = ("range_sel", n)
+            for t in range(len(p["range_tiers"])):
+                r[range_msg_id(n, t)] = ("range_msg", (n, t))
+    if header_toggles:                       # header toggle takes the column after the params
+        k = len(ui_params)
+        r[OBJ_HEADER_TOGGLE] = ("ctl", k)
+        r[OBJ_HEADER_TOGGLE_LABEL] = ("label", k)
+        r[OBJ_HEADER_TOGGLE_PRE] = ("pre", k)
+    for i in range(len(mod_inlets)):
+        r[mod_inlet_obj_id(i)] = ("mod_inlet", i)
+        r[mod_instate_obj_id(i)] = ("mod_instate", i)
+        r[mod_state_pre_id(i)] = ("mod_statepre", i)
+    return r
+
+
+def build(defn, debug=None):
     name        = defn["name"]
     prefix      = defn["prefix"]
     title       = defn["title"]
@@ -1284,6 +1333,19 @@ def build(defn):
     # that need autopattr state persistence (must use the same remapped IDs
     # as the corresponding raw_boxes entries).
     params_block.update(defn.get("raw_parameters", {}))
+
+    # Edit-view layout pass (.specify/build_layout/spec.md): rewrites patching_rect ONLY.
+    # Opt out per module with "edit_layout": False in definition.py. Self-verifying:
+    # anything other than patching_rect changing raises.
+    if defn.get("edit_layout", True):
+        roles = assign_roles(ui_params, header_toggles, mod_inlets, outlets,
+                             [b["box"]["id"] for b in pix_boxes_to_add],
+                             bp_jsui_id, bp_pre_id)
+        snap = edit_layout.snapshot(boxes, lines)
+        edit_layout.layout_edit_view(boxes, lines, roles)
+        edit_layout.assert_unchanged(snap, boxes, lines)
+        if debug is not None:
+            debug["roles"] = roles          # tests/test_layout.py reads this; never serialized
 
     patcher = {
         "fileversion": 1,

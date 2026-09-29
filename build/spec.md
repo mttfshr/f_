@@ -411,6 +411,29 @@ bypass jsui rect:      [presentation_width - 22, 5, 18, 12]
 
 ---
 
+## Edit-View Layout
+
+**Implemented 2026-09-24** — `build/layout.py`, called at the end of `build()`; spec and decisions in
+`.specify/build_layout/spec.md`. The pass rewrites `patching_rect` only (never `presentation_rect`,
+ids, box order or lines; `assert_unchanged()` enforces it inside `build()`), placing boxes by role
+from the `{id: (role, idx)}` dict returned by `assign_roles()`:
+
+```
+signal strip : left rail (x=30): inlet y=20, routepass y=70, instate/r draw y=120
+               modulation band (x=260+170*i): mod inlet y=20, vs_inState y=70, state prepend y=120
+param lane   : column k centre x = 60 + 72*k   (label y=180 / route y=204 / control y=250 / attrui y=310)
+               route width = n_route*72 + 7 so outlet k sits over column k; attrui fixed 68 px wide
+pix stack    : y=380, layered +50 per level by cross-pix wires; outlets 50 below the deepest
+range tiers  : one block per range_tiers param below the outlets (msg -> dial wires go upward by design)
+service      : x >= max(lane, mod band, 700) + 60: moduleSize chain, autopattr, bypass, panel toggle, title, panel
+overflow     : raw_boxes (ids not in roles) moved as one block below everything
+```
+
+Definition key: `"edit_layout": False` opts a module out (default on). Verification:
+`tests/run.sh tests/test_layout.py`. Manual edit-view tweaks in Max are lost on regeneration.
+
+---
+
 ## Styling Constants
 
 ```python

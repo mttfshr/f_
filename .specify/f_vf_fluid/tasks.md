@@ -286,13 +286,37 @@ edge or disconnect artifacts.
 - [ ] T035 [US4] Build `~/Vsynth/patterns/fluid_tuning.maxpat` with `f_vf_vortex`,
       `f_vf_flow`, `f_vf_repulse` and `f_vf_optical_flow` (on video) as selectable force
       sources into `f_vf_fluid` → `f_vf_advect` / `f_vf_warp` / `f_vf_glow`. Not committed.
-- [ ] T036 [US2] Define the `viscosity` curve (UI → physical ν·dt, plan ADR-5 guidance)
+- [~] T036 [US2] Define the `viscosity` curve (UI → physical ν·dt, plan ADR-5 guidance)
       and set ranges/defaults for `dt`, `force`, `drag`, `gain`, `project` in
       `src/f_vf_fluid/definition.py` and the patcher; record the mapping in Findings.
+      **Viscosity curve DONE 2026-09-28** (dial 0–1, per-frame ν·dt = 1.6e-3·v³, default
+      0.085; codebox, mirror, definition, bench updated; see Findings). **Still open (by eye,
+      Matt):** ranges/defaults for `dt`, `force`, `drag`, `gain`, and the viscosity default
+      itself once heard.
 - [ ] T037 [US3] Judge `project` 0 vs 1 (shock-front vs swirl character); set its default.
-- [ ] T038 [US4] Final force-downsample filter decision (bilinear vs 2×2 box) on a noisy
+- [x] T038 [US4] Final force-downsample filter decision (bilinear vs 2×2 box) on a noisy
       source (`f_vf_optical_flow`); if it changes, update `src/f_vf_fluid/codebox_adv.gen`,
-      the mirror, and rerun T017/T020.
+      the mirror, and rerun T017/T020. **Study done 2026-09-28 (see Findings): the single
+      force tap aliases badly at HD/4K; fix = a k×k tap grid, see T038a.**
+- [~] T038a [US4] Implement the force tap grid in `codebox_adv.gen`: a `Param taps` loop
+      bound averaging taps offset in NORMALISED coordinates across the target texel
+      footprint (no source size needed); mirror gets the same tap model + a minified-force
+      case scored against an exact area average; rerun T017/T020, measure the `adv` cost,
+      decide the default from that cost. **DONE 2026-09-28: default `taps` = 8** (16 was
+      ideal but 1.2–1.7 ms, over the frame budget; see Findings). **Exposed on the panel**
+      (Matt's call 2026-09-28: it is the one live cost/cleanliness trade-off) as an int
+      numbox `taps`, 1–16, default 8, in row 2 slot 2 (definition.py + build_fluid.py
+      `TARGETS`, routed to `adv`; rebuilt, 49 boxes/lines; offline contract test 0 issues).
+      **Tier 3 INCONCLUSIVE (2026-09-28, Matt):** no visible or fps difference between taps 1
+      and 16 in his patch. Likely causes, none confirmed: the force was `f_vf_repulse` (smooth;
+      taps changes nothing by design), and Fluid was set to an undamped, saturating state
+      (dt ≈ 0 so drag·dt ≈ 0, Visc 0, Force 0.20, Gain 9.37 → output pinned at the clamp);
+      also ~1.5 ms of a 16.7 ms vsync-locked frame cannot move an fps counter. Not run: a
+      module-level check (module bench with a noisy force at taps 1 vs 8) — needs Matt's
+      patches closed. Re-test at Fluid defaults with `f_vf_optical_flow` as the force.
+      **Still open:** module bench on the rebuilt patcher; tier 3 by eye in Vsynth at
+      HD/4K on `f_vf_optical_flow` (does a noisy force now look calm? is 4K's 1.4× residual
+      noise acceptable, or raise `taps`?).
 - [ ] T039 [US4] Edge cases in Vsynth: a uniform force (`f_vf_flow`) settles to a bounded
       speed with `drag > 0`; disconnecting the force mid-run leaves no corner-offset
       artifact; resizing the render does not reset or corrupt the state.
@@ -425,5 +449,7 @@ explicit resample), update the spec's Open Experiment 1, then continue.
 | T016–T019 (bench errors) | |
 | T020 (multi-frame error growth) | |
 | T021 (cost per stage / total) | |
-| T036 (viscosity mapping) | |
+| T036 (viscosity mapping) | **Before:** the dial was ν∈[0, 0.002], linear, with the codebox taking physical ν and multiplying by `dt`. At its extreme (ν=0.002, dt=0.05) it only reached m_c≈16 (m_c = 1/(2π√(ν·dt)) = the mode index that e-folds per frame); mid-scale swirls (m≈8) still passed at 78–95% per frame, so "honey" was unreachable (a blobby look needs m_c≈4–6, ν·dt≈1e-3). Also `dt` moved the smoothness: sweeping dt 0.002→0.05 at a fixed dial moved m_c from 80 to 16. **After (2026-09-28, Matt chose "smoothing independent of dt"):** `viscosity` is a 0–1 dial and the shader computes per-frame `nu_dt = 1.6e-3·v³`, decay `exp(-(nu_dt·k² + drag·dt))`; `dt` is speed only, drag stays time-based. Anchors: dial 1.0 → m_c 3.98; default 0.085 → nu_dt 9.8e-7 (= the old default 1e-4×0.01, so nothing shifts until tuned by eye); dial 0.25 ≈ m_c 32, 0.5 ≈ m_c 11. Mirror `visc_to_nudt()`/`nudt_to_visc()`. Checks: `test_fluid_mirror.py` 19/19 (new: dial law, dt-independence; sixth mutation "viscosity coupled to dt again" caught; Taylor–Green unchanged at 0.85% off analytic, N=256 frame 100); `bench_fluid.py` 9/9 (spec vs mirror ≤1.9e-7 across the dial incl. v=1 and out-of-range v=2; 100 GPU frames within 3.0e-6 of the mirror; cost 2.15 ms/frame). Module rebuilt by `build_fluid.py` (patcher diff: shader text, dial hint, initial 0.085, max 1.0). **Not yet run:** module bench `bench_fluid_module.py` on the rebuilt patcher; Matt's look in Max. Saved `viscosity` values from before this change mean something different now (dial vs physical ν). |
+| T038 (force downsample, `scratch/e4_force_alias.py`, 2026-09-28) | Matt performs at HD/4K, so the force is minified into 256² by 4–7× (HD) / 8–15× (4K); a single tap reads <1% of the source pixels. Noise gain vs an ideal area average (1.0 = ideal), bilinear-tap model / nearest-tap model (hardware is nearest-like when minifying, so the truth is nearer the second): today's single tap **HD 3.8× / 5.9×, 4K 9.3× / 11.5×**; k×k tap grid: tap4 HD 1.1/1.5, 4K 1.9/2.9; tap8 HD 1.0/1.0, 4K 1.1/1.4; **tap16 HD 1.0/1.0, 4K 1.0/1.05**. Above-Nyquist sinusoids pass today's tap at ~full amplitude (mean 1.0) vs ≈0.1 with tap16. Smooth flow + 0.5σ pixel noise: rms error vs the noise-free flow ≈0.5 today vs ≈0.045 with tap16 (flow rms 1). Taps offset in normalised coordinates need no source size, so no Param size or extra stage is needed. Smooth producers (`f_vf_vortex`, `f_vf_flow`, `f_vf_repulse`) are unaffected. Limit no tap grid fixes: content just above the grid Nyquist still aliases even under the ideal box (worst-case output ≈0.57). Bench context is 512² so 4K cannot be verified there. → T038a. |
+| T038a (force tap grid, 2026-09-28) | Shader: `Param taps(8)`, nested `for` loop (expression bound `max(1, floor(taps))`) averaging `sample(in2, ...)` at normalised offsets; content gate stays on the centre tap. Mirror: `tap_weights()` / `force_taps()` = the same average in separable form (matches a literal brute-force translation to 6e-7). **Hardware confirmed on the GPU** (white-noise force, noise gain vs an exact area average; the nearest-tap model predicted these to 2 decimals): HD taps 1/4/8/16 = **5.97 / 1.49 / 1.01 / 1.02**; 4K = **11.6 / 2.88 / 1.44 / 1.05**. `adv` cost at an HD force: taps 1 = 0.05–0.08 ms, taps 8 = 0.36–0.7 ms, taps 12 ≈ 1.0, taps 16 = 1.2–1.7 ms (varies with GPU state run to run); 4K force costs about the same. **Default 8**: frame total 2.49 ms (budget 3), HD ≈ ideal, 4K 8× less noise than before (1.44× ideal); 16 would give 3.3–4.4 ms. Checks: mirror 22/22 (three new tests; seventh mutation "tap grid ignored" caught), bench 12 tests (taps=1 reproduces the old shader at 1:1 to 6e-7; taps=8/16 match the mirror at 1:1 and magnified to 1e-6; 100-frame chain still 3.0e-6). A `taps` Param was left un-pinned in the T021 cost test and inherited 16 from the previous job (the bench keeps attribute values between jobs), which briefly showed a bogus 4.35/3.31 ms total — fixed by pinning. Exposed as a panel control (int numbox, 1–16, default 8) the same day; the 190×150 panel had a free slot, no other control moved. Tap grid at 1:1 slightly blurs a very sharp 256² force (box of about one texel); `taps = 1` restores the exact old read. |
 | T041 (cost in a real patch; 256² vs 128²) | |

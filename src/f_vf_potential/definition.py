@@ -17,7 +17,7 @@ patcher = {
     "name":               "f_vf_potential",
     "prefix":             "vfpotential",
     "title":              "Potential",
-    "signal_type":        "vecfield",
+    "signal_type":        "vecfield in",
 
     "presentation_width":  190,
     "presentation_height": 100,

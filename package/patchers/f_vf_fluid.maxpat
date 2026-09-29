@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 6,
+					"numoutlets": 7,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -89,10 +90,10 @@
 					"patching_rect": [
 						200.0,
 						130.0,
-						252.0,
+						287.0,
 						22.0
 					],
-					"text": "route force dt viscosity project drag gain"
+					"text": "route force dt viscosity project drag gain taps"
 				}
 			},
 			{
@@ -266,7 +267,7 @@
 								"box": {
 									"id": "gen-obj-4",
 									"maxclass": "codebox",
-									"code": "// codebox_adv.gen -- f_vf_fluid stage 1: self-advect the velocity state and add\n// the force. Mirror: tests/fluid_mirror.adv(). 256x256 float32.\n//\n// Inputs (jit.gl.pix inlets): in1 = `r draw` bang (unused; only triggers the\n// render every frame), in2 = force f_vecfield at render resolution (via\n// vs_inState), in3 = previous velocity state (R = u, B = v).\n// Output: vec(u, 0, v, 0) in decoded f_vecfield units.\n//\n// Carried findings (Phase 0, 2026-09-23):\n//   - the velocity is read with a manual 4-tap bilinear whose integer indices\n//     wrap with wrap(): the flow domain is periodic and hardware sample()\n//     clamps its neighbor tap (0.5 error at the seam)\n//   - hardware sample() is used ONLY for the force: a codebox cannot read an\n//     input texture's size, so manual taps are impossible there. It is exact at\n//     1:1 and when magnifying, nearest-like when minifying (E4, tier 3)\n//   - components are accessed inline on sample()/nearest(), never on a stored vec\n//   - never name a Param `bypass`; `force`, `dt` are fine\nParam dt(0.01);\nParam force(0.02);\nParam src_vecfield(0);\n\nN = 256;\nu = nearest(in3, norm).x;\nv = nearest(in3, norm).z;\n\n// departure point (continuous texel coordinates)\nfx = (norm.x - u * dt) * N - 0.5;\nfy = (norm.y - v * dt) * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in3, p00).x, nearest(in3, p10).x, tx), mix(nearest(in3, p01).x, nearest(in3, p11).x, tx), ty);\nav = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01).z, nearest(in3, p11).z, tx), ty);\n\n// force: decoded (p - 0.5) * 2. Gated by src_vecfield (0 = inlet unconnected) AND by the\n// texture's own content: a real f_vecfield has B = 0.5 (contract), while vs_black is\n// all zeros (decoded -1!). vs_inState's connected flag lags at load/disconnect, and a\n// bogus -1 force leaves a phantom uniform velocity that decays only as fast as drag\n// allows, so the flag alone is not enough (bench, 2026-09-23).\ngate = switch(src_vecfield >= 0.5, 1, 0) * switch(abs(sample(in2, norm).z - 0.5) < 0.25, 1, 0);\nout1 = vec(au + force * (sample(in2, norm).x - 0.5) * 2 * gate, 0, av + force * (sample(in2, norm).y - 0.5) * 2 * gate, 0);\n",
+									"code": "// codebox_adv.gen -- f_vf_fluid stage 1: self-advect the velocity state and add\n// the force. Mirror: tests/fluid_mirror.adv(). 256x256 float32.\n//\n// Inputs (jit.gl.pix inlets): in1 = `r draw` bang (unused; only triggers the\n// render every frame), in2 = force f_vecfield at render resolution (via\n// vs_inState), in3 = previous velocity state (R = u, B = v).\n// Output: vec(u, 0, v, 0) in decoded f_vecfield units.\n//\n// Carried findings (Phase 0, 2026-09-23):\n//   - the velocity is read with a manual 4-tap bilinear whose integer indices\n//     wrap with wrap(): the flow domain is periodic and hardware sample()\n//     clamps its neighbor tap (0.5 error at the seam)\n//   - hardware sample() is used ONLY for the force: a codebox cannot read an\n//     input texture's size, so manual taps are impossible there. It is exact at\n//     1:1 and when magnifying, nearest-like when minifying, so a single tap at HD/4K\n//     aliases a noisy force badly (E4 study, tasks.md T038: noise gain 4-12x)\n//   - FORCE TAP GRID (T038a): the force is averaged over a taps x taps grid of hardware\n//     taps spread across the target texel footprint. Offsets are in NORMALISED\n//     coordinates, so no source size is needed. Default taps = 8: an ideal area average\n//     at HD (noise gain 1.01), within 1.4x of it at 4K (single tap: 6x / 11.5x), for\n//     ~0.6-0.7 ms. taps = 16 is ideal at both but costs ~1.5-1.7 ms, over the 3 ms frame\n//     budget; taps = 1 is the old single tap. Cost ~ 2*taps^2 fetches per texel\n//     (bench T021/T038a, tasks.md Findings).\n//     The content gate below stays on the single centre tap.\n//   - components are accessed inline on sample()/nearest(), never on a stored vec\n//   - never name a Param `bypass`; `force`, `dt` are fine\nParam dt(0.01);\nParam force(0.02);\nParam src_vecfield(0);\nParam taps(8);\n\nN = 256;\nu = nearest(in3, norm).x;\nv = nearest(in3, norm).z;\n\n// departure point (continuous texel coordinates)\nfx = (norm.x - u * dt) * N - 0.5;\nfy = (norm.y - v * dt) * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in3, p00).x, nearest(in3, p10).x, tx), mix(nearest(in3, p01).x, nearest(in3, p11).x, tx), ty);\nav = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01).z, nearest(in3, p11).z, tx), ty);\n\n// force: decoded (p - 0.5) * 2. Gated by src_vecfield (0 = inlet unconnected) AND by the\n// texture's own content: a real f_vecfield has B = 0.5 (contract), while vs_black is\n// all zeros (decoded -1!). vs_inState's connected flag lags at load/disconnect, and a\n// bogus -1 force leaves a phantom uniform velocity that decays only as fast as drag\n// allows, so the flag alone is not enough (bench, 2026-09-23).\ngate = switch(src_vecfield >= 0.5, 1, 0) * switch(abs(sample(in2, norm).z - 0.5) < 0.25, 1, 0);\n\n// force tap grid (components inline on sample(), never on a stored vec)\ntn = max(1, floor(taps));\nsumx = 0;\nsumy = 0;\nfor (a = 0; a < tn; a += 1) {\n  ox = ((a + 0.5) / tn - 0.5) / N;\n  for (b = 0; b < tn; b += 1) {\n    oy = ((b + 0.5) / tn - 0.5) / N;\n    sumx += sample(in2, vec(norm.x + ox, norm.y + oy)).x;\n    sumy += sample(in2, vec(norm.x + ox, norm.y + oy)).y;\n  }\n}\nfxa = sumx / (tn * tn);\nfya = sumy / (tn * tn);\nout1 = vec(au + force * (fxa - 0.5) * 2 * gate, 0, av + force * (fya - 0.5) * 2 * gate, 0);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -647,7 +648,7 @@
 								"box": {
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"code": "// codebox_spec.gen -- f_vf_fluid stage 4: the spectral pass. Projection blend,\n// then exact viscous decay and linear drag, per Fourier bin.\n// Mirror: tests/fluid_mirror.spec(). 256x256 float32.\n//\n// Input in1 = spectral texture (R,G = Re,Im of u-hat; B,A = Re,Im of v-hat).\n// Wavevector k = 2*pi*signed_index (unit periodic domain).\n//   - projection uses OPERATOR wavenumbers that are zeroed at the Nyquist bin\n//     (odd functions of the index must vanish there or a real field gains an\n//     imaginary part; tests/test_fluid_mirror.py test_nyquist_keeps_field_real)\n//   - decay uses the full k^2: exp(-(viscosity*k^2 + drag)*dt); the k = 0 bin\n//     therefore only feels the drag\n//   - integer bin index is floor(norm * N), not `cell`\n//   - components accessed inline on nearest()\n//   - unary minus before a parenthesis mis-parses in GenExpr: `-(a + b) * c` is NOT\n//     -(a + b) * c (bench probe 2026-09-23); write `0 - (a + b) * c`\nParam viscosity(0);\nParam project(1);\nParam drag(0);\nParam dt(0.01);\n\nN = 256;\nbx = floor(norm.x * N);\nby = floor(norm.y * N);\nmx = switch(bx < N * 0.5, bx, bx - N);\nmy = switch(by < N * 0.5, by, by - N);\nkx = twopi * mx;\nky = twopi * my;\nk2 = kx * kx + ky * ky;\nkxo = switch(abs(mx) == N * 0.5, 0, kx);\nkyo = switch(abs(my) == N * 0.5, 0, ky);\nk2o = kxo * kxo + kyo * kyo;\nik2 = switch(k2o > 0, 1 / max(k2o, 1e-30), 0);\n\nur = nearest(in1, norm).x;\nui = nearest(in1, norm).y;\nvr = nearest(in1, norm).z;\nvi = nearest(in1, norm).w;\n\n// Helmholtz projection: remove the component parallel to k\ndr = (kxo * ur + kyo * vr) * ik2;\ndi = (kxo * ui + kyo * vi) * ik2;\npur = ur - kxo * dr;\npui = ui - kxo * di;\npvr = vr - kyo * dr;\npvi = vi - kyo * di;\n\ng = exp(0 - (viscosity * k2 + drag) * dt);\nout1 = vec(mix(ur, pur, project) * g, mix(ui, pui, project) * g, mix(vr, pvr, project) * g, mix(vi, pvi, project) * g);\n",
+									"code": "// codebox_spec.gen -- f_vf_fluid stage 4: the spectral pass. Projection blend,\n// then exact viscous decay and linear drag, per Fourier bin.\n// Mirror: tests/fluid_mirror.spec(). 256x256 float32.\n//\n// Input in1 = spectral texture (R,G = Re,Im of u-hat; B,A = Re,Im of v-hat).\n// Wavevector k = 2*pi*signed_index (unit periodic domain).\n//   - projection uses OPERATOR wavenumbers that are zeroed at the Nyquist bin\n//     (odd functions of the index must vanish there or a real field gains an\n//     imaginary part; tests/test_fluid_mirror.py test_nyquist_keeps_field_real)\n//   - decay uses the full k^2: exp(-(nu_dt*k^2 + drag*dt)); the k = 0 bin\n//     therefore only feels the drag\n//   - `viscosity` is a 0..1 DIAL, not a physical nu (T036, 2026-09-28): the per-frame\n//     coefficient is nu_dt = 1.6e-3 * viscosity^3, so smoothness does not depend on dt\n//     (dt is speed only; drag stays time-based). Top of the dial ~ m_c 4, where m_c =\n//     1/(2*pi*sqrt(nu_dt)) is the mode index that e-folds per frame. Law and constants\n//     mirror tests/fluid_mirror.visc_to_nudt(); change both together.\n//   - integer bin index is floor(norm * N), not `cell`\n//   - components accessed inline on nearest()\n//   - unary minus before a parenthesis mis-parses in GenExpr: `-(a + b) * c` is NOT\n//     -(a + b) * c (bench probe 2026-09-23); write `0 - (a + b) * c`\nParam viscosity(0);\nParam project(1);\nParam drag(0);\nParam dt(0.01);\n\nN = 256;\nbx = floor(norm.x * N);\nby = floor(norm.y * N);\nmx = switch(bx < N * 0.5, bx, bx - N);\nmy = switch(by < N * 0.5, by, by - N);\nkx = twopi * mx;\nky = twopi * my;\nk2 = kx * kx + ky * ky;\nkxo = switch(abs(mx) == N * 0.5, 0, kx);\nkyo = switch(abs(my) == N * 0.5, 0, ky);\nk2o = kxo * kxo + kyo * kyo;\nik2 = switch(k2o > 0, 1 / max(k2o, 1e-30), 0);\n\nur = nearest(in1, norm).x;\nui = nearest(in1, norm).y;\nvr = nearest(in1, norm).z;\nvi = nearest(in1, norm).w;\n\n// Helmholtz projection: remove the component parallel to k\ndr = (kxo * ur + kyo * vr) * ik2;\ndi = (kxo * ui + kyo * vi) * ik2;\npur = ur - kxo * dr;\npui = ui - kxo * di;\npvr = vr - kyo * dr;\npvi = vi - kyo * di;\n\nnu_dt = 0.0016 * viscosity * viscosity * viscosity;\ng = exp(0 - (nu_dt * k2 + drag * dt));\nout1 = vec(mix(ur, pur, project) * g, mix(ui, pui, project) * g, mix(vr, pvr, project) * g, mix(vi, pvi, project) * g);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1657,7 +1658,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Kinematic viscosity: exact and stable at any value; high = honey, small scales die",
+					"hint": "Smoothing per frame (independent of dt): 0 = off, high = honey, only the biggest swirls survive",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1685,12 +1686,12 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.0001
+								0.085
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "viscosity",
-							"parameter_mmax": 0.002,
+							"parameter_mmax": 1.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "viscosity",
@@ -2065,6 +2066,97 @@
 			{
 				"box": {
 					"id": "obj-38",
+					"maxclass": "live.numbox",
+					"fontname": "Ableton Sans Light",
+					"hint": "Force filter: taps x taps samples per solver texel. Higher = calmer noisy force at HD/4K but costs GPU (8 = ~0.4-0.7 ms, 16 = ~1.5 ms); 1 = off",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_fluid_adv::taps",
+					"parameter_enable": 1,
+					"patching_rect": [
+						350.0,
+						80.0,
+						44.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						41.0,
+						100.0,
+						34.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_initial": [
+								8.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "taps",
+							"parameter_mmax": 16.0,
+							"parameter_mmin": 1.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "taps",
+							"parameter_type": 0,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "taps"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-39",
+					"maxclass": "attrui",
+					"attr": "taps",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350.0,
+						350.0,
+						108.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-40",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						350.0,
+						130.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Taps",
+					"textjustification": 1,
+					"varname": "lbl_taps"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-41",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2092,7 +2184,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-39",
+					"id": "obj-42",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2341,11 +2433,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-38",
+						"obj-41",
 						0
 					],
 					"destination": [
-						"obj-39",
+						"obj-42",
 						0
 					]
 				}
@@ -2353,7 +2445,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-39",
+						"obj-42",
 						0
 					],
 					"destination": [
@@ -2641,6 +2733,42 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-4",
+						6
+					],
+					"destination": [
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
+						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-39",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-23",
 						0
 					],
@@ -2692,6 +2820,11 @@
 			"obj-35": [
 				"gain",
 				"gain",
+				0
+			],
+			"obj-38": [
+				"taps",
+				"taps",
 				0
 			],
 			"parameterbanks": {

@@ -30,7 +30,7 @@
 					],
 					"patching_rect": [
 						30.0,
-						30.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					]
@@ -62,7 +62,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						100.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					]
@@ -78,7 +78,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						170.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					]
@@ -96,8 +96,8 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						90.0,
+						30.0,
+						70.0,
 						215.0,
 						22.0
 					],
@@ -123,9 +123,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						130.0,
-						630.0,
+						56.5,
+						204.0,
+						727.0,
 						22.0
 					],
 					"text": "route freq coarseness anisotropy angle zoom threshold colorize along_phase across_phase softness"
@@ -299,7 +299,7 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
+						30.0,
 						380.0,
 						200.0,
 						22.0
@@ -321,8 +321,8 @@
 						""
 					],
 					"patching_rect": [
-						500.0,
-						500.0,
+						1060.0,
+						100.0,
 						56.0,
 						22.0
 					],
@@ -353,8 +353,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						840.0,
+						260.0,
 						191.0,
 						157.0
 					],
@@ -377,8 +377,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						1060.0,
+						200.0,
 						80.0,
 						21.0
 					],
@@ -402,8 +402,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						50.0,
+						840.0,
+						20.0,
 						60.0,
 						22.0
 					],
@@ -420,8 +420,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						80.0,
+						840.0,
+						50.0,
 						180.0,
 						22.0
 					],
@@ -441,7 +441,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						840.0,
 						110.0,
 						80.0,
 						22.0
@@ -460,7 +460,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						840.0,
 						140.0,
 						60.0,
 						22.0
@@ -478,7 +478,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						840.0,
 						170.0,
 						80.0,
 						22.0
@@ -496,7 +496,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						840.0,
 						200.0,
 						100.0,
 						22.0
@@ -519,8 +519,8 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						60.0,
+						30.0,
+						120.0,
 						80.0,
 						22.0
 					],
@@ -537,8 +537,8 @@
 						""
 					],
 					"patching_rect": [
-						350.0,
-						60.0,
+						30.0,
+						150.0,
 						145.0,
 						22.0
 					],
@@ -566,8 +566,8 @@
 					"param_connect": "stipple_pix::freq",
 					"parameter_enable": 1,
 					"patching_rect": [
-						50.0,
-						80.0,
+						46.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -615,9 +615,9 @@
 						""
 					],
 					"patching_rect": [
-						50.0,
-						170.0,
-						108.0,
+						26.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -632,8 +632,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						50.0,
-						130.0,
+						35.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -645,7 +645,8 @@
 						18.0
 					],
 					"text": "Freq",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_freq"
 				}
 			},
 			{
@@ -669,8 +670,8 @@
 					"param_connect": "stipple_pix::coarseness",
 					"parameter_enable": 1,
 					"patching_rect": [
-						100.0,
-						80.0,
+						118.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -718,9 +719,9 @@
 						""
 					],
 					"patching_rect": [
-						100.0,
-						200.0,
-						150.0,
+						98.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -735,8 +736,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						100.0,
-						130.0,
+						107.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -748,7 +749,8 @@
 						18.0
 					],
 					"text": "Coarse.",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_coarseness"
 				}
 			},
 			{
@@ -772,8 +774,8 @@
 					"param_connect": "stipple_pix::anisotropy",
 					"parameter_enable": 1,
 					"patching_rect": [
-						150.0,
-						80.0,
+						190.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -821,9 +823,9 @@
 						""
 					],
 					"patching_rect": [
-						150.0,
-						230.0,
-						150.0,
+						170.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -838,8 +840,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						150.0,
-						130.0,
+						179.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -851,7 +853,8 @@
 						18.0
 					],
 					"text": "Aniso.",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_anisotropy"
 				}
 			},
 			{
@@ -875,8 +878,8 @@
 					"param_connect": "stipple_pix::angle",
 					"parameter_enable": 1,
 					"patching_rect": [
-						200.0,
-						80.0,
+						262.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -924,9 +927,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						260.0,
-						115.0,
+						242.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -941,8 +944,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						200.0,
-						130.0,
+						251.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -954,7 +957,8 @@
 						18.0
 					],
 					"text": "Angle",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_angle"
 				}
 			},
 			{
@@ -978,8 +982,8 @@
 					"param_connect": "stipple_pix::zoom",
 					"parameter_enable": 1,
 					"patching_rect": [
+						334.5,
 						250.0,
-						80.0,
 						27.0,
 						43.0
 					],
@@ -1027,9 +1031,9 @@
 						""
 					],
 					"patching_rect": [
-						250.0,
-						290.0,
-						108.0,
+						314.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1044,8 +1048,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						250.0,
-						130.0,
+						323.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1057,7 +1061,8 @@
 						18.0
 					],
 					"text": "Zoom",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_zoom"
 				}
 			},
 			{
@@ -1081,8 +1086,8 @@
 					"param_connect": "stipple_pix::threshold",
 					"parameter_enable": 1,
 					"patching_rect": [
-						300.0,
-						80.0,
+						406.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1130,9 +1135,9 @@
 						""
 					],
 					"patching_rect": [
-						300.0,
-						320.0,
-						143.0,
+						386.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1147,8 +1152,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						300.0,
-						130.0,
+						395.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1160,7 +1165,8 @@
 						18.0
 					],
 					"text": "Thresh.",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_threshold"
 				}
 			},
 			{
@@ -1184,8 +1190,8 @@
 					"param_connect": "stipple_pix::colorize",
 					"parameter_enable": 1,
 					"patching_rect": [
-						350.0,
-						80.0,
+						478.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1233,9 +1239,9 @@
 						""
 					],
 					"patching_rect": [
-						350.0,
-						350.0,
-						136.0,
+						458.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1250,8 +1256,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						350.0,
-						130.0,
+						467.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1263,7 +1269,8 @@
 						18.0
 					],
 					"text": "Colorize",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_colorize"
 				}
 			},
 			{
@@ -1287,8 +1294,8 @@
 					"param_connect": "stipple_pix::along_phase",
 					"parameter_enable": 1,
 					"patching_rect": [
-						400.0,
-						80.0,
+						550.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1336,9 +1343,9 @@
 						""
 					],
 					"patching_rect": [
-						400.0,
-						380.0,
-						157.0,
+						530.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1353,8 +1360,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						400.0,
-						130.0,
+						539.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1366,7 +1373,8 @@
 						18.0
 					],
 					"text": "Along",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_along_phase"
 				}
 			},
 			{
@@ -1390,8 +1398,8 @@
 					"param_connect": "stipple_pix::across_phase",
 					"parameter_enable": 1,
 					"patching_rect": [
-						450.0,
-						80.0,
+						622.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1439,9 +1447,9 @@
 						""
 					],
 					"patching_rect": [
-						450.0,
-						410.0,
-						164.0,
+						602.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1456,8 +1464,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						450.0,
-						130.0,
+						611.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1469,7 +1477,8 @@
 						18.0
 					],
 					"text": "Across",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_across_phase"
 				}
 			},
 			{
@@ -1493,8 +1502,8 @@
 					"param_connect": "stipple_pix::softness",
 					"parameter_enable": 1,
 					"patching_rect": [
-						500.0,
-						80.0,
+						694.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1542,9 +1551,9 @@
 						""
 					],
 					"patching_rect": [
-						500.0,
-						440.0,
-						136.0,
+						674.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1559,8 +1568,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						500.0,
-						130.0,
+						683.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1572,7 +1581,8 @@
 						18.0
 					],
 					"text": "Soft.",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_softness"
 				}
 			},
 			{
@@ -1588,8 +1598,8 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						169.0,
-						5.0,
+						1060.0,
+						130.0,
 						18.0,
 						12.0
 					],
@@ -1614,8 +1624,8 @@
 						""
 					],
 					"patching_rect": [
-						400.0,
-						60.0,
+						1060.0,
+						160.0,
 						131.0,
 						22.0
 					],

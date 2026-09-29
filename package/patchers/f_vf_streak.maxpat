@@ -30,7 +30,7 @@
 					],
 					"patching_rect": [
 						30.0,
-						30.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					]
@@ -62,7 +62,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						100.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					],
@@ -86,8 +86,8 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						90.0,
+						30.0,
+						70.0,
 						215.0,
 						22.0
 					],
@@ -108,9 +108,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						130.0,
-						273.0,
+						56.5,
+						204.0,
+						367.0,
 						22.0
 					],
 					"text": "route gain mix_pct length falloff color_shift"
@@ -285,7 +285,7 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
+						30.0,
 						380.0,
 						200.0,
 						22.0
@@ -307,8 +307,8 @@
 						""
 					],
 					"patching_rect": [
-						500.0,
-						500.0,
+						980.0,
+						100.0,
 						56.0,
 						22.0
 					],
@@ -339,8 +339,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						760.0,
+						260.0,
 						190.0,
 						100.0
 					],
@@ -363,8 +363,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						980.0,
+						200.0,
 						80.0,
 						21.0
 					],
@@ -393,8 +393,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						1070.0,
+						200.0,
 						60.0,
 						21.0
 					],
@@ -418,8 +418,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						50.0,
+						760.0,
+						20.0,
 						60.0,
 						22.0
 					],
@@ -436,8 +436,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						80.0,
+						760.0,
+						50.0,
 						180.0,
 						22.0
 					],
@@ -457,7 +457,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						760.0,
 						110.0,
 						80.0,
 						22.0
@@ -476,7 +476,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						760.0,
 						140.0,
 						60.0,
 						22.0
@@ -494,7 +494,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						760.0,
 						170.0,
 						80.0,
 						22.0
@@ -512,7 +512,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						760.0,
 						200.0,
 						100.0,
 						22.0
@@ -536,8 +536,8 @@
 						""
 					],
 					"patching_rect": [
-						90.0,
-						30.0,
+						260.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -554,8 +554,8 @@
 						""
 					],
 					"patching_rect": [
-						90.0,
-						80.0,
+						260.0,
+						70.0,
 						80.0,
 						22.0
 					],
@@ -572,8 +572,8 @@
 						""
 					],
 					"patching_rect": [
-						90.0,
-						130.0,
+						260.0,
+						120.0,
 						160.0,
 						22.0
 					],
@@ -601,8 +601,8 @@
 					"param_connect": "vfstreak_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						50.0,
-						80.0,
+						46.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -650,9 +650,9 @@
 						""
 					],
 					"patching_rect": [
-						50.0,
-						170.0,
-						108.0,
+						26.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -667,8 +667,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						50.0,
-						130.0,
+						35.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -680,7 +680,8 @@
 						18.0
 					],
 					"text": "Gain",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_gain"
 				}
 			},
 			{
@@ -698,8 +699,8 @@
 					"param_connect": "vfstreak_pix::mix_pct",
 					"parameter_enable": 1,
 					"patching_rect": [
-						100.0,
-						80.0,
+						110.0,
+						250.0,
 						44.0,
 						15.0
 					],
@@ -740,9 +741,9 @@
 						""
 					],
 					"patching_rect": [
-						100.0,
-						200.0,
-						129.0,
+						98.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -757,8 +758,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						100.0,
-						130.0,
+						107.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -770,7 +771,8 @@
 						18.0
 					],
 					"text": "Mix",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_mix_pct"
 				}
 			},
 			{
@@ -794,8 +796,8 @@
 					"param_connect": "vfstreak_pix::length",
 					"parameter_enable": 1,
 					"patching_rect": [
-						150.0,
-						80.0,
+						190.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -843,9 +845,9 @@
 						""
 					],
 					"patching_rect": [
-						150.0,
-						230.0,
-						122.0,
+						170.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -860,8 +862,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						150.0,
-						130.0,
+						179.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -873,7 +875,8 @@
 						18.0
 					],
 					"text": "Length",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_length"
 				}
 			},
 			{
@@ -897,8 +900,8 @@
 					"param_connect": "vfstreak_pix::falloff",
 					"parameter_enable": 1,
 					"patching_rect": [
-						200.0,
-						80.0,
+						262.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -946,9 +949,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						260.0,
-						129.0,
+						242.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -963,8 +966,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						200.0,
-						130.0,
+						251.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -976,7 +979,8 @@
 						18.0
 					],
 					"text": "Falloff",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_falloff"
 				}
 			},
 			{
@@ -1000,8 +1004,8 @@
 					"param_connect": "vfstreak_pix::color_shift",
 					"parameter_enable": 1,
 					"patching_rect": [
+						334.5,
 						250.0,
-						80.0,
 						27.0,
 						43.0
 					],
@@ -1049,9 +1053,9 @@
 						""
 					],
 					"patching_rect": [
-						250.0,
-						290.0,
-						157.0,
+						314.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1066,8 +1070,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						250.0,
-						130.0,
+						323.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1079,7 +1083,8 @@
 						18.0
 					],
 					"text": "Color",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_color_shift"
 				}
 			},
 			{
@@ -1095,8 +1100,8 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						168.0,
-						5.0,
+						980.0,
+						130.0,
 						18.0,
 						12.0
 					],
@@ -1121,8 +1126,8 @@
 						""
 					],
 					"patching_rect": [
-						400.0,
-						60.0,
+						980.0,
+						160.0,
 						131.0,
 						22.0
 					],

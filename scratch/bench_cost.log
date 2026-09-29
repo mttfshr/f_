@@ -1,0 +1,15 @@
+test_T021_cost_per_stage
+    ...  adv taps= 1 at a 1920x1080 force:   0.052 ms/pass  (chain 32, UPPER BOUND, not resolved)
+    ...  adv taps= 8 at a 1920x1080 force:   0.355 ms/pass  (chain 8, GPU bound)
+    ...  adv taps=16 at a 1920x1080 force:   1.188 ms/pass  (chain 8, GPU bound)
+    ...  adv     0.359 ms/pass  (chain 8, GPU bound)
+    ...  fx      0.501 ms/pass  (chain 8, GPU bound)
+    ...  fy      0.480 ms/pass  (chain 8, GPU bound)
+    ...  spec    0.068 ms/pass  (chain 32, UPPER BOUND, not resolved)
+    ...  iy      0.487 ms/pass  (chain 8, GPU bound)
+    ...  ix      0.512 ms/pass  (chain 8, GPU bound)
+    ...  enc     0.085 ms/pass  (chain 32, UPPER BOUND, not resolved)
+    ok   sum of stage costs (ms/frame) vs the 3 ms budget: 2.492e+00  (tol 3e+00)
+  PASS  (37.30s)
+
+1/1 passed

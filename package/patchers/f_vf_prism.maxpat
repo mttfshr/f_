@@ -30,7 +30,7 @@
 					],
 					"patching_rect": [
 						30.0,
-						30.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					]
@@ -62,7 +62,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						100.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					],
@@ -84,7 +84,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						170.0,
-						500.0,
+						452.0,
 						30.0,
 						30.0
 					]
@@ -102,8 +102,8 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						90.0,
+						30.0,
+						70.0,
 						215.0,
 						22.0
 					],
@@ -126,9 +126,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						130.0,
-						413.0,
+						56.5,
+						204.0,
+						511.0,
 						22.0
 					],
 					"text": "route reach spread threshold threshold_width feather gain mix_pct"
@@ -392,7 +392,7 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
+						30.0,
 						380.0,
 						200.0,
 						22.0
@@ -414,8 +414,8 @@
 						""
 					],
 					"patching_rect": [
-						500.0,
-						500.0,
+						1050.0,
+						100.0,
 						56.0,
 						22.0
 					],
@@ -446,8 +446,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						830.0,
+						260.0,
 						190.0,
 						160.0
 					],
@@ -470,8 +470,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						1050.0,
+						200.0,
 						80.0,
 						21.0
 					],
@@ -500,8 +500,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						1140.0,
+						200.0,
 						60.0,
 						21.0
 					],
@@ -525,8 +525,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						50.0,
+						830.0,
+						20.0,
 						60.0,
 						22.0
 					],
@@ -543,8 +543,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						80.0,
+						830.0,
+						50.0,
 						180.0,
 						22.0
 					],
@@ -564,7 +564,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						830.0,
 						110.0,
 						80.0,
 						22.0
@@ -583,7 +583,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						830.0,
 						140.0,
 						60.0,
 						22.0
@@ -601,7 +601,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						830.0,
 						170.0,
 						80.0,
 						22.0
@@ -619,7 +619,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						830.0,
 						200.0,
 						100.0,
 						22.0
@@ -643,8 +643,8 @@
 						""
 					],
 					"patching_rect": [
-						90.0,
-						30.0,
+						260.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -661,8 +661,8 @@
 						""
 					],
 					"patching_rect": [
-						90.0,
-						80.0,
+						260.0,
+						70.0,
 						80.0,
 						22.0
 					],
@@ -681,8 +681,8 @@
 						""
 					],
 					"patching_rect": [
-						150.0,
-						30.0,
+						430.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -699,8 +699,8 @@
 						""
 					],
 					"patching_rect": [
-						150.0,
-						80.0,
+						430.0,
+						70.0,
 						80.0,
 						22.0
 					],
@@ -719,8 +719,8 @@
 						""
 					],
 					"patching_rect": [
-						210.0,
-						30.0,
+						600.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -737,8 +737,8 @@
 						""
 					],
 					"patching_rect": [
-						210.0,
-						80.0,
+						600.0,
+						70.0,
 						80.0,
 						22.0
 					],
@@ -755,8 +755,8 @@
 						""
 					],
 					"patching_rect": [
-						90.0,
-						130.0,
+						260.0,
+						120.0,
 						160.0,
 						22.0
 					],
@@ -773,8 +773,8 @@
 						""
 					],
 					"patching_rect": [
-						150.0,
-						130.0,
+						430.0,
+						120.0,
 						160.0,
 						22.0
 					],
@@ -791,8 +791,8 @@
 						""
 					],
 					"patching_rect": [
-						210.0,
-						130.0,
+						600.0,
+						120.0,
 						160.0,
 						22.0
 					],
@@ -820,8 +820,8 @@
 					"param_connect": "vfprism_pix::reach",
 					"parameter_enable": 1,
 					"patching_rect": [
-						50.0,
-						80.0,
+						46.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -869,9 +869,9 @@
 						""
 					],
 					"patching_rect": [
-						50.0,
-						170.0,
-						115.0,
+						26.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -886,8 +886,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						50.0,
-						130.0,
+						35.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -899,7 +899,8 @@
 						18.0
 					],
 					"text": "Reach",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_reach"
 				}
 			},
 			{
@@ -923,8 +924,8 @@
 					"param_connect": "vfprism_pix::spread",
 					"parameter_enable": 1,
 					"patching_rect": [
-						100.0,
-						80.0,
+						118.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -972,9 +973,9 @@
 						""
 					],
 					"patching_rect": [
-						100.0,
-						200.0,
-						122.0,
+						98.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -989,8 +990,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						100.0,
-						130.0,
+						107.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1002,7 +1003,8 @@
 						18.0
 					],
 					"text": "Spread",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_spread"
 				}
 			},
 			{
@@ -1026,8 +1028,8 @@
 					"param_connect": "vfprism_pix::threshold",
 					"parameter_enable": 1,
 					"patching_rect": [
-						150.0,
-						80.0,
+						190.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1075,9 +1077,9 @@
 						""
 					],
 					"patching_rect": [
-						150.0,
-						230.0,
-						143.0,
+						170.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1092,8 +1094,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						150.0,
-						130.0,
+						179.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1105,7 +1107,8 @@
 						18.0
 					],
 					"text": "Threshold",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_threshold"
 				}
 			},
 			{
@@ -1129,8 +1132,8 @@
 					"param_connect": "vfprism_pix::threshold_width",
 					"parameter_enable": 1,
 					"patching_rect": [
-						200.0,
-						80.0,
+						262.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1178,9 +1181,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						260.0,
-						185.0,
+						242.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1195,8 +1198,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						200.0,
-						130.0,
+						251.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1208,7 +1211,8 @@
 						18.0
 					],
 					"text": "Gate Width",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_threshold_width"
 				}
 			},
 			{
@@ -1232,8 +1236,8 @@
 					"param_connect": "vfprism_pix::feather",
 					"parameter_enable": 1,
 					"patching_rect": [
+						334.5,
 						250.0,
-						80.0,
 						27.0,
 						43.0
 					],
@@ -1281,9 +1285,9 @@
 						""
 					],
 					"patching_rect": [
-						250.0,
-						290.0,
-						129.0,
+						314.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1298,8 +1302,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						250.0,
-						130.0,
+						323.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1311,7 +1315,8 @@
 						18.0
 					],
 					"text": "Feather",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_feather"
 				}
 			},
 			{
@@ -1335,8 +1340,8 @@
 					"param_connect": "vfprism_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						300.0,
-						80.0,
+						406.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1384,9 +1389,9 @@
 						""
 					],
 					"patching_rect": [
-						300.0,
-						320.0,
-						108.0,
+						386.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1401,8 +1406,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						300.0,
-						130.0,
+						395.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1414,7 +1419,8 @@
 						18.0
 					],
 					"text": "Gain",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_gain"
 				}
 			},
 			{
@@ -1432,8 +1438,8 @@
 					"param_connect": "vfprism_pix::mix_pct",
 					"parameter_enable": 1,
 					"patching_rect": [
-						350.0,
-						80.0,
+						470.0,
+						250.0,
 						44.0,
 						15.0
 					],
@@ -1474,9 +1480,9 @@
 						""
 					],
 					"patching_rect": [
-						350.0,
-						350.0,
-						129.0,
+						458.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1491,8 +1497,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						350.0,
-						130.0,
+						467.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1504,7 +1510,8 @@
 						18.0
 					],
 					"text": "Mix",
-					"textjustification": 1
+					"textjustification": 1,
+					"varname": "lbl_mix_pct"
 				}
 			},
 			{
@@ -1520,8 +1527,8 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						168.0,
-						5.0,
+						1050.0,
+						130.0,
 						18.0,
 						12.0
 					],
@@ -1546,8 +1553,8 @@
 						""
 					],
 					"patching_rect": [
-						400.0,
-						60.0,
+						1050.0,
+						160.0,
 						131.0,
 						22.0
 					],

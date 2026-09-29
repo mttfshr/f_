@@ -731,6 +731,22 @@ the trig function even runs.
   Pattern 1 state/pass loop): stepping is frame-exact -- verified with an
   exact counter over 20 steps and a closed-form decay accumulator.
 
+### More bench-verified facts (f_vf_fluid force taps, 2026-09-28)
+- **Hardware `sample()` is nearest-like when the source is larger than the pix
+  (minifying).** Measured with white noise: a single tap into 1920x1080 or 3840x2160
+  gave 5.97x / 11.6x the noise of an exact area average (the bilinear model predicts
+  3.8x / 9.3x; the nearest model, 5.9x / 11.5x, matches). Exact at 1:1 and magnified.
+  So any codebox reading a much larger texture needs its own averaging.
+- **A `for` loop bounded by an expression of a `Param`, nested, compiles and runs**
+  (`tn = max(1, floor(taps)); for (a = 0; a < tn; a += 1) { for (b = 0; ...`).
+  Averaging a taps x taps grid of `sample()` calls at offsets in NORMALISED
+  coordinates needs no texture size. Cost ~ taps^2: 8 taps = ~0.4-0.7 ms, 16 = 1.2-1.7 ms
+  for a 256^2 pix reading an HD/4K force. Components stay inline on each `sample()`.
+- **The bench keeps a `Param`'s last value between jobs.** A job that omits a Param
+  inherits whatever the previous job set, not the codebox default. Pin every Param a
+  measurement depends on (a cost test silently measured taps=16 after a loop that ended
+  on 16).
+
 ---
 
 ## Code Health Checklist

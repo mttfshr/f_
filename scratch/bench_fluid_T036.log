@@ -1,0 +1,93 @@
+test_T015_every_stage_compiles_and_runs
+    ok   adv: compiles, runs, output (256, 256) finite
+    ok   fx: compiles, runs, output (256, 256) finite
+    ok   fy: compiles, runs, output (256, 256) finite
+    ok   spec: compiles, runs, output (256, 256) finite
+    ok   iy: compiles, runs, output (256, 256) finite
+    ok   ix: compiles, runs, output (256, 256) finite
+    ok   enc: compiles, runs, output (90, 120) finite
+  PASS  (0.63s)
+test_T016_spec_matches_mirror
+    ok   spec visc=0 project=0 drag=0 dt=0.01: rel err vs mirror: 0.000e+00  (tol 1e-04)
+    ok   spec visc=0.25 project=0.5 drag=0.2 dt=0.01: rel err vs mirror: 9.260e-08  (tol 1e-04)
+    ok   spec visc=0.6 project=1 drag=0 dt=0.003: rel err vs mirror: 5.885e-08  (tol 1e-04)
+    ok   spec visc=1 project=1 drag=1 dt=0.05: rel err vs mirror: 9.150e-08  (tol 1e-04)
+    ok   spec visc=0.001 project=0.7 drag=0 dt=0.05: rel err vs mirror: 1.336e-07  (tol 1e-04)
+    ok   spec visc=0 project=1 drag=0 dt=0.01: rel err vs mirror: 1.928e-07  (tol 1e-04)
+    ok   spec visc=2 project=1 drag=0 dt=0.01: rel err vs mirror: 1.529e-08  (tol 1e-04)
+  PASS  (0.62s)
+test_T017_adv_matches_mirror
+    ok   adv force 256 (1:1): max err vs mirror: 6.482e-07  (tol 1e-04)
+    ok   adv force 128 (magnified 2x): max err vs mirror: 6.557e-07  (tol 1e-03)
+    ok   adv: vs_black with src=1 (lagging connected flag) adds nothing: 6.557e-07  (tol 1e-05)
+    ok   adv src_vecfield=0: equals the force-free mirror: 6.557e-07  (tol 1e-05)
+    ok   adv periodic seam: exact wrapped gather: 0.000e+00  (tol 1e-06)
+    ...  adv force 512 (MINIFIED 2x): max err vs bilinear mirror (nearest-like, informational): 4.363e-01
+  PASS  (0.62s)
+test_T018_enc_matches_mirror
+    ok   enc 90x120 gain=1.5 gate=0 src=1: max err vs mirror: 5.662e-07  (tol 1e-05)
+    ok   enc 90x120 gain=1.5 gate=1 src=1: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 90x120 gain=1.5 gate=1 src=0: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 90x120 gain=30 gate=0 src=1: max err vs mirror: 9.418e-06  (tol 1e-05)
+    ok   enc 90x120 gain=1 gate=0 src=0: max err vs mirror: 3.874e-07  (tol 1e-05)
+    ok   enc 60x100 gain=1.5 gate=0 src=1: max err vs mirror: 4.172e-07  (tol 1e-05)
+    ok   enc 60x100 gain=1.5 gate=1 src=1: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 60x100 gain=1.5 gate=1 src=0: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 60x100 gain=30 gate=0 src=1: max err vs mirror: 8.106e-06  (tol 1e-05)
+    ok   enc 60x100 gain=1 gate=0 src=0: max err vs mirror: 2.980e-07  (tol 1e-05)
+    ok   enc 256x256 gain=1.5 gate=0 src=1: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 256x256 gain=1.5 gate=1 src=1: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 256x256 gain=1.5 gate=1 src=0: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 256x256 gain=30 gate=0 src=1: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   enc 256x256 gain=1 gate=0 src=0: max err vs mirror: 0.000e+00  (tol 1e-05)
+    ok   bypass, connected: force passes through: 0.000e+00  (tol 1e-06)
+    ok   bypass, unconnected: exactly neutral: 0.000e+00  (tol 0e+00)
+    ok   bypass, vs_black with src=1 (lagging flag): exactly neutral: 0.000e+00  (tol 0e+00)
+  PASS  (1.67s)
+test_T019_dft_stages
+    ok   forward fx->fy u vs np.fft.fft2 (rel): 1.255e-07  (tol 1e-05)
+    ok   forward fx->fy v vs np.fft.fft2 (rel): 4.074e-07  (tol 1e-05)
+    ok   round trip fx->fy->iy->ix: |u' - u|: 8.583e-06  (tol 1e-05)
+    ok   round trip fx->fy->iy->ix: |v' - v|: 9.120e-06  (tol 1e-05)
+    ok   ix outputs Im = 0 exactly: 0.000e+00  (tol 0e+00)
+    ok   ix guard: contaminated row -> 0: 0.000e+00  (tol 0e+00)
+    ok   ix guard: other rows unchanged: 0.000e+00  (tol 0e+00)
+  PASS  (0.50s)
+test_T020_multiframe_matches_mirror_and_taylor_green
+    ...  frame 10: |GPU - mirror| (running max 1.61e-06): 1.431e-06
+    ok   GPU Taylor-Green frame 10: amplitude 0.8182 vs analytic 0.8196 (rel): 1.720e-03  (tol 5e-02)
+    ...  frame 20: |GPU - mirror| (running max 2.38e-06): 2.146e-06
+    ...  frame 30: |GPU - mirror| (running max 2.80e-06): 2.801e-06
+    ...  frame 40: |GPU - mirror| (running max 3.04e-06): 2.712e-06
+    ...  frame 50: |GPU - mirror| (running max 3.04e-06): 2.652e-06
+    ok   GPU Taylor-Green frame 50: amplitude 0.3675 vs analytic 0.3698 (rel): 6.143e-03  (tol 5e-02)
+    ...  frame 60: |GPU - mirror| (running max 3.04e-06): 2.533e-06
+    ...  frame 70: |GPU - mirror| (running max 3.04e-06): 2.280e-06
+    ...  frame 80: |GPU - mirror| (running max 3.04e-06): 1.878e-06
+    ...  frame 90: |GPU - mirror| (running max 3.04e-06): 1.654e-06
+    ...  frame 100: |GPU - mirror| (running max 3.04e-06): 1.475e-06
+    ok   GPU Taylor-Green frame 100: amplitude 0.1356 vs analytic 0.1367 (rel): 8.508e-03  (tol 5e-02)
+    ok   100 frames: max |GPU - mirror| over all frames: 3.040e-06  (tol 1e-04)
+    ...  100 frames x 6 jobs in 52s
+  PASS  (51.78s)
+test_T020b_force_path_in_the_loop
+    ok   30 frames with force: max |GPU - mirror|: 1.192e-06  (tol 1e-04)
+    ...  state magnitude after 30 frames (so the test is not vacuous): 5.559e-01
+  PASS  (15.25s)
+test_T021_cost_per_stage
+    ...  adv     0.058 ms/pass  (chain 32, UPPER BOUND, not resolved)
+    ...  fx      0.493 ms/pass  (chain 8, GPU bound)
+    ...  fy      0.484 ms/pass  (chain 8, GPU bound)
+    ...  spec    0.064 ms/pass  (chain 32, UPPER BOUND, not resolved)
+    ...  iy      0.470 ms/pass  (chain 8, GPU bound)
+    ...  ix      0.498 ms/pass  (chain 8, GPU bound)
+    ...  enc     0.080 ms/pass  (chain 32, UPPER BOUND, not resolved)
+    ok   sum of stage costs (ms/frame) vs the 3 ms budget: 2.148e+00  (tol 3e+00)
+  PASS  (29.61s)
+test_T022_soak_at_extremes
+    ok   thick honey, big dt: finite for 100 frames, |u|max = 0.00283, outlet in [0, 1]
+    ok   inviscid, no drag, big dt: finite for 100 frames, |u|max = 1.22, outlet in [0, 1]
+    ok   unprojected, uniform force: finite for 100 frames, |u|max = 50, outlet in [0, 1]
+  PASS  (155.11s)
+
+9/9 passed

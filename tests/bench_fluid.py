@@ -48,7 +48,7 @@ def gpu(stage, inputs, dim=None, params=None, timeout_ms=30000):
 
 def g_adv(state, force, p):
     return gpu("adv", [BANG, force, state], dim=(N, N),
-               params={"dt": p.dt, "force": p.force, "src_vecfield": p.src_vecfield})
+               params={"dt": p.dt, "force": p.force, "src_vecfield": p.src_vecfield, "taps": p.taps})
 
 
 def g_spec(tex, p):
@@ -99,12 +99,15 @@ def test_T015_every_stage_compiles_and_runs():
 
 def test_T016_spec_matches_mirror():
     tex = fm.fft2_np(rand_state(N, 6))                # white noise: Nyquist bins included
-    cases = [(0.0, 0.0, 0.0, 0.01), (0.05, 0.5, 0.2, 0.01), (0.3, 1.0, 0.0, 0.003),
-             (2.0, 1.0, 1.0, 0.05), (1e-5, 0.7, 0.0, 0.05), (0.0, 1.0, 0.0, 0.01)]
+    # `viscosity` is the 0..1 dial (nu_dt = 1.6e-3 * v^3, T036): cases span the dial,
+    # its top (v=1, m_c ~ 4), and one value beyond the range (2.0) as a stress case
+    cases = [(0.0, 0.0, 0.0, 0.01), (0.25, 0.5, 0.2, 0.01), (0.6, 1.0, 0.0, 0.003),
+             (1.0, 1.0, 1.0, 0.05), (1e-3, 0.7, 0.0, 0.05), (0.0, 1.0, 0.0, 0.01),
+             (2.0, 1.0, 0.0, 0.01)]
     for v, pr, dr, dt in cases:
         p = Params(viscosity=v, project=pr, drag=dr, dt=dt)
         err = rel(g_spec(tex, p), fm.spec(tex, v, pr, dr, dt))
-        check(f"spec nu={v:g} project={pr:g} drag={dr:g} dt={dt:g}: rel err vs mirror", err, 1e-4)
+        check(f"spec visc={v:g} project={pr:g} drag={dr:g} dt={dt:g}: rel err vs mirror", err, 1e-4)
 
 
 # ----------------------------------------------------------------- T017
@@ -115,7 +118,7 @@ def test_T017_adv_matches_mirror():
                                    ("force 128 (magnified 2x)", 128, 1.0, 1e-3)):
         force = rand_force(fsize, fsize, 4)
         p = Params(dt=0.05, force=0.3, src_vecfield=src)
-        err = np.max(np.abs(g_adv(st, force, p) - fm.adv(st, force, p.dt, p.force, p.src_vecfield)))
+        err = np.max(np.abs(g_adv(st, force, p) - fm.adv(st, force, p.dt, p.force, p.src_vecfield, p.taps)))
         check(f"adv {label}: max err vs mirror", err, tol)
     black = np.zeros((256, 256, 4), F32)                      # vs_black: all zeros, B != 0.5
     pblk = Params(dt=0.05, force=0.3, src_vecfield=1.0)
@@ -135,7 +138,7 @@ def test_T017_adv_matches_mirror():
     check("adv periodic seam: exact wrapped gather", np.max(np.abs(got[..., 0] - want[None, :])), 1e-6)
     big = rand_force(512, 512, 6)
     pb = Params(dt=0.05, force=0.3, src_vecfield=1.0)
-    e = np.max(np.abs(g_adv(st, big, pb) - fm.adv(st, big, pb.dt, pb.force, pb.src_vecfield)))
+    e = np.max(np.abs(g_adv(st, big, pb) - fm.adv(st, big, pb.dt, pb.force, pb.src_vecfield, pb.taps)))
     note("adv force 512 (MINIFIED 2x): max err vs bilinear mirror (nearest-like, informational)", e)
 
 
@@ -186,13 +189,66 @@ def test_T019_dft_stages():
     check("ix guard: other rows unchanged", np.max(np.abs(g[rows] - clean[rows])), 0)
 
 
+# ----------------------------------------------------------------- T038a
+
+def _area(n_src, n_dst=256):
+    bs = n_src / n_dst
+    lo = (np.arange(n_dst) * bs)[:, None]
+    j = np.arange(n_src)[None, :]
+    return np.clip(np.minimum(lo + bs, j + 1) - np.maximum(lo, j), 0, None) / bs
+
+
+def _force_tap_gains(fh, fw, seed):
+    """Measured on the GPU: noise the solver receives from a white-noise force of size
+    fw x fh, relative to an exact area average, for several tap grids."""
+    force = rand_force(fh, fw, seed)
+    st = fm.zero_state(N)
+    ideal = ((_area(fh) @ force[..., 0].astype(np.float64) @ _area(fw).T) - 0.5).std() * 2.0
+    gains = {}
+    for taps in (1, 4, 8, 16):
+        out = g_adv(st, force, Params(dt=0.0, force=1.0, src_vecfield=1.0, taps=taps))
+        gains[taps] = float(out[..., 0].std()) / ideal
+        print(f"    ...  {fw}x{fh} force, taps={taps:2d}: noise gain vs ideal area average {gains[taps]:5.2f}")
+    return force, st, gains
+
+
+def test_T038a_force_taps_on_gpu_hd():
+    """E4 on the real hardware at 1920x1080: one tap aliases (the hardware is
+    nearest-like when minifying), taps=16 matches an ideal area average; the GPU agrees
+    with the bilinear mirror where the hardware is exact (taps=16 averages it out)."""
+    force, st, gains = _force_tap_gains(1080, 1920, 21)
+    assert gains[1] > 3.0, f"single tap should alias at HD (gain {gains[1]:.2f})"
+    check("taps=16 noise gain within 20% of ideal", abs(gains[16] - 1.0), 0.20)
+    assert gains[1] > gains[4] > gains[8] * 0.99, "more taps must not add noise"
+    p = Params(dt=0.0, force=1.0, src_vecfield=1.0, taps=16)
+    err = np.max(np.abs(g_adv(st, force, p) - fm.adv(st, force, p.dt, p.force, p.src_vecfield, p.taps)))
+    note("HD taps=16: max |GPU - bilinear mirror| (informational)", err)
+
+
+def test_T038a_force_taps_on_gpu_4k():
+    """The same at 3840x2160 (needs a 133 MB texture transfer per job)."""
+    force, st, gains = _force_tap_gains(2160, 3840, 22)
+    assert gains[1] > 6.0, f"single tap should alias badly at 4K (gain {gains[1]:.2f})"
+    check("taps=16 noise gain within 20% of ideal", abs(gains[16] - 1.0), 0.20)
+    assert gains[1] > gains[4] > gains[8] * 0.99, "more taps must not add noise"
+
+
+def test_T038a_taps_1_is_the_old_behaviour():
+    """taps=1 must reproduce the pre-T038a shader exactly at 1:1 (single centre tap)."""
+    st = smooth_state(N, 3, amp=0.5)
+    force = rand_force(N, N, 4)
+    p = Params(dt=0.05, force=0.3, src_vecfield=1.0, taps=1)
+    err = np.max(np.abs(g_adv(st, force, p) - fm.adv(st, force, p.dt, p.force, p.src_vecfield, 1)))
+    check("adv taps=1 vs mirror at 1:1", err, 1e-4)
+
+
 # ----------------------------------------------------------------- T020
 
 def test_T020_multiframe_matches_mirror_and_taylor_green():
     """SC3/SC4 on the GPU path: 100 frames of the real stage chain (Python passes
     each stage's GPU output to the next) vs the mirror, from a Taylor-Green state."""
     dt, nu = 0.003, 0.084
-    p = Params(dt=dt, viscosity=nu, project=1.0, force=0.0, src_vecfield=0.0)
+    p = Params(dt=dt, viscosity=fm.nudt_to_visc(nu * dt), project=1.0, force=0.0, src_vecfield=0.0)
     st0 = taylor_green(N)
     g, m = st0, st0
     t0 = time.time()
@@ -219,7 +275,7 @@ def test_T020b_force_path_in_the_loop():
     sm = smooth_state(N, 8, amp=1.0)
     force[..., 0], force[..., 1] = 0.5 + 0.5 * sm[..., 0], 0.5 + 0.5 * sm[..., 2]
     force[..., 2], force[..., 3] = 0.5, 1.0
-    p = Params(dt=0.02, viscosity=0.02, project=0.8, drag=0.1, force=0.05, src_vecfield=1.0)
+    p = Params(dt=0.02, viscosity=0.4, project=0.8, drag=0.1, force=0.05, src_vecfield=1.0)
     g = m = fm.zero_state(N)
     for f in range(1, 31):
         g = g_step(g, force, p)
@@ -244,12 +300,18 @@ def test_T021_cost_per_stage():
     st = smooth_state(N, 1)
     spectral = fm.fft2_np(st)
     force720 = rand_force(720, 1280, 2)
-    plan = [("adv", [BANG, rand_force(N, N, 2), st], (N, N)), ("fx", [st], None), ("fy", [st], None),
+    forcehd = rand_force(1080, 1920, 2)      # the plan below runs adv at the shader default, taps = 8
+    for taps in (1, 8, 16):
+        ms, chain, bound = stage_cost("adv", [BANG, forcehd, st], (N, N), {"taps": taps})
+        print(f"    ...  adv taps={taps:2d} at a 1920x1080 force: {ms:7.3f} ms/pass  (chain {chain}, {'GPU bound' if bound else 'UPPER BOUND, not resolved'})")
+    plan = [("adv", [BANG, forcehd, st], (N, N)), ("fx", [st], None), ("fy", [st], None),
             ("spec", [spectral], None), ("iy", [spectral], None), ("ix", [spectral], None),
             ("enc", [BANG, force720, st], (1280, 720))]
     total = 0.0
     for stage, inputs, dim in plan:
-        ms, chain, bound = stage_cost(stage, inputs, dim)
+        # pin taps: the bench keeps the last attribute value between jobs, so an unset
+        # Param would inherit whatever the loop above left behind (it measured taps=16)
+        ms, chain, bound = stage_cost(stage, inputs, dim, {"taps": 8} if stage == "adv" else None)
         total += ms
         print(f"    ...  {stage:5s} {ms:7.3f} ms/pass  (chain {chain}, {'GPU bound' if bound else 'UPPER BOUND, not resolved'})")
     check("sum of stage costs (ms/frame) vs the 3 ms budget", total, 3.0)

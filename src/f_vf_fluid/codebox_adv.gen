@@ -12,12 +12,22 @@
 //     clamps its neighbor tap (0.5 error at the seam)
 //   - hardware sample() is used ONLY for the force: a codebox cannot read an
 //     input texture's size, so manual taps are impossible there. It is exact at
-//     1:1 and when magnifying, nearest-like when minifying (E4, tier 3)
+//     1:1 and when magnifying, nearest-like when minifying, so a single tap at HD/4K
+//     aliases a noisy force badly (E4 study, tasks.md T038: noise gain 4-12x)
+//   - FORCE TAP GRID (T038a): the force is averaged over a taps x taps grid of hardware
+//     taps spread across the target texel footprint. Offsets are in NORMALISED
+//     coordinates, so no source size is needed. Default taps = 8: an ideal area average
+//     at HD (noise gain 1.01), within 1.4x of it at 4K (single tap: 6x / 11.5x), for
+//     ~0.6-0.7 ms. taps = 16 is ideal at both but costs ~1.5-1.7 ms, over the 3 ms frame
+//     budget; taps = 1 is the old single tap. Cost ~ 2*taps^2 fetches per texel
+//     (bench T021/T038a, tasks.md Findings).
+//     The content gate below stays on the single centre tap.
 //   - components are accessed inline on sample()/nearest(), never on a stored vec
 //   - never name a Param `bypass`; `force`, `dt` are fine
 Param dt(0.01);
 Param force(0.02);
 Param src_vecfield(0);
+Param taps(8);
 
 N = 256;
 u = nearest(in3, norm).x;
@@ -47,4 +57,19 @@ av = mix(mix(nearest(in3, p00).z, nearest(in3, p10).z, tx), mix(nearest(in3, p01
 // bogus -1 force leaves a phantom uniform velocity that decays only as fast as drag
 // allows, so the flag alone is not enough (bench, 2026-09-23).
 gate = switch(src_vecfield >= 0.5, 1, 0) * switch(abs(sample(in2, norm).z - 0.5) < 0.25, 1, 0);
-out1 = vec(au + force * (sample(in2, norm).x - 0.5) * 2 * gate, 0, av + force * (sample(in2, norm).y - 0.5) * 2 * gate, 0);
+
+// force tap grid (components inline on sample(), never on a stored vec)
+tn = max(1, floor(taps));
+sumx = 0;
+sumy = 0;
+for (a = 0; a < tn; a += 1) {
+  ox = ((a + 0.5) / tn - 0.5) / N;
+  for (b = 0; b < tn; b += 1) {
+    oy = ((b + 0.5) / tn - 0.5) / N;
+    sumx += sample(in2, vec(norm.x + ox, norm.y + oy)).x;
+    sumy += sample(in2, vec(norm.x + ox, norm.y + oy)).y;
+  }
+}
+fxa = sumx / (tn * tn);
+fya = sumy / (tn * tn);
+out1 = vec(au + force * (fxa - 0.5) * 2 * gate, 0, av + force * (fya - 0.5) * 2 * gate, 0);

@@ -96,7 +96,7 @@ def test_fast_fft_path_matches_pass_dft():
     pass_dft mirror over a few full frames, force included."""
     n = 32
     force = rand_force(48, 40)
-    p = Params(dt=0.02, force=0.1, viscosity=0.05, project=0.7, drag=0.1)
+    p = Params(dt=0.02, force=0.1, viscosity=0.5, project=0.7, drag=0.1)
     a = b = rand_state(n, 3)
     for _ in range(3):
         a = fm.step(a, force, p, fft="np")
@@ -105,7 +105,8 @@ def test_fast_fft_path_matches_pass_dft():
 
 
 def test_single_mode_decay():
-    """SC1: a single Fourier mode decays by exactly exp(-(nu*|k|^2 + mu)*dt)."""
+    """SC1: a single Fourier mode decays by exactly exp(-(nu_dt*|k|^2 + mu*dt)),
+    nu_dt = the per-frame viscosity coefficient the dial maps to."""
     dt, mu = 0.01, 0.5
     for n in (64, 256):
         nx, ny, _, _ = grid(n, n)
@@ -113,15 +114,48 @@ def test_single_mode_decay():
         v = np.cos(TWOPI * 5 * nx).astype(F32)          # k = (5, 0): divergence-free
         st = np.zeros((n, n, 4), F32)
         st[..., 0], st[..., 2] = u, v
-        nu = np.log(2.0) / (dt * (TWOPI * 3) ** 2)      # mode 3 loses half its amplitude
+        nu_dt = np.log(2.0) / (TWOPI * 4) ** 2          # mode 4 loses half its amplitude per frame
+        nu = fm.nudt_to_visc(nu_dt)                     # the dial value that gives it
         for proj in (0.0, 1.0):
             out = spectral_roundtrip(st, nu, proj, mu, dt)
-            gu = np.exp(-(nu * (TWOPI * 3) ** 2 + mu) * dt)
-            gv = np.exp(-(nu * (TWOPI * 5) ** 2 + mu) * dt)
+            gu = np.exp(-(nu_dt * (TWOPI * 3) ** 2 + mu * dt))
+            gv = np.exp(-(nu_dt * (TWOPI * 5) ** 2 + mu * dt))
             check(f"N={n} project={proj:g} u decay (x{gu:.3f})",
                   np.max(np.abs(out[..., 0] - gu * u)), TOL)
             check(f"N={n} project={proj:g} v decay (x{gv:.3f})",
                   np.max(np.abs(out[..., 2] - gv * v)), TOL)
+
+
+def test_viscosity_dial_law():
+    """T036: dial 0..1 -> per-frame nu*dt = 1.6e-3 * v^3. Endpoints, monotone,
+    inverse, and the two anchors the design rests on: the default reproduces the old
+    default's nu*dt (1e-4 * 0.01 = 1e-6), and the top of the dial has m_c ~ 4
+    (m_c = 1/(2 pi sqrt(nu_dt)) = the mode index that e-folds per frame)."""
+    check("dial 0 -> nu_dt 0", abs(fm.visc_to_nudt(0.0)), 0.0)
+    vs = np.linspace(0, 1, 101)
+    nd = np.array([fm.visc_to_nudt(v) for v in vs])
+    check("monotone non-decreasing", float(np.max(np.maximum(nd[:-1] - nd[1:], 0))), 0.0)
+    check("inverse round trip", max(abs(fm.nudt_to_visc(fm.visc_to_nudt(v)) - v) for v in vs), 1e-9)
+    check("default dial 0.085 vs old default nu*dt 1e-6 (rel)",
+          abs(fm.visc_to_nudt(0.085) - 1e-6) / 1e-6, 0.03)
+    mc_top = 1.0 / (TWOPI * np.sqrt(fm.visc_to_nudt(1.0)))
+    check(f"top of dial m_c {mc_top:.2f} vs 4 (rel)", abs(mc_top - 4.0) / 4.0, 0.02)
+
+
+def test_smoothing_independent_of_dt():
+    """T036 design point: with drag = 0 the spectral pass depends only on the dial,
+    not on dt (dt is speed only). Drag stays time-based, so with viscosity = 0 the
+    decay must still follow dt."""
+    n = 64
+    st = rand_state(n, 7)
+    a = spectral_roundtrip(st, 0.6, 1.0, 0.0, 0.002)
+    b = spectral_roundtrip(st, 0.6, 1.0, 0.0, 0.05)
+    check("viscosity 0.6, drag 0: |out(dt=0.002) - out(dt=0.05)|", np.max(np.abs(a - b)), TOL)
+    c = spectral_roundtrip(st, 0.0, 1.0, 1.0, 0.002)
+    d = spectral_roundtrip(st, 0.0, 1.0, 1.0, 0.05)
+    diff = np.max(np.abs(c - d))
+    note("drag stays time-based: |out(dt=0.002) - out(dt=0.05)| at viscosity 0, drag 1", diff)
+    assert diff > 1e-3, "drag must still scale with dt"
 
 
 def test_drag_acts_on_mean_flow():
@@ -209,7 +243,7 @@ def test_taylor_green_decay():
     projection + viscosity). Bounds the numerical dissipation of bilinear
     advection. dt is small so a frame moves the flow < 0.2 texel at N=64."""
     dt, nu = 0.003, 0.084
-    p = Params(dt=dt, viscosity=nu, project=1.0, force=0.0, src_vecfield=0.0)
+    p = Params(dt=dt, viscosity=fm.nudt_to_visc(nu * dt), project=1.0, force=0.0, src_vecfield=0.0)
     for n in (64, 256):
         st0 = taylor_green(n)
         st = st0
@@ -237,7 +271,7 @@ def test_energy_never_grows_without_force():
         e_prev = e
     note("largest relative energy change in one frame (nu=0; <0 = always dropping)", worst)
     check("max relative energy increase per frame (nu=0)", max(worst, 0.0), 1e-4)
-    p2 = p.with_(viscosity=0.05, drag=0.2)
+    p2 = p.with_(viscosity=0.3, drag=0.2)
     st, e_prev = smooth_state(n, 2), None
     e_prev = fm.energy(st)
     for _ in range(50):
@@ -305,6 +339,61 @@ def seam_shift_error():
 
 def test_advection_is_periodic():
     check("integer-texel advection == circular shift", seam_shift_error(), 0)
+
+
+def test_force_tap_grid_matches_brute_force():
+    """T038a: the separable mirror of the force tap grid equals a literal translation of
+    the shader's nested loop (mean of taps x taps bilinear taps at normalised offsets),
+    for a minified, a 1:1 and a magnified force, non-square included."""
+    n = 32
+    nx, ny, _, _ = grid(n, n)
+    for (fh, fw) in ((90, 160), (n, n), (12, 20)):
+        force = rand_force(fh, fw, 5)
+        for taps in (1, 2, 4, 5):
+            want = np.zeros((n, n), np.float64)
+            for a in range(taps):
+                for b in range(taps):
+                    ox = ((a + 0.5) / taps - 0.5) / n
+                    oy = ((b + 0.5) / taps - 0.5) / n
+                    want += fm.sample(force, nx + ox, ny + oy)[..., 0]
+            want /= taps * taps
+            got, _ = fm.force_taps(force, taps, n, n)
+            check(f"force {fw}x{fh} taps={taps}: |separable - brute force|", np.max(np.abs(got - want)), 1e-5)
+
+
+def test_force_tap_grid_leaves_uniform_force_alone():
+    """A uniform force is unchanged by any tap grid (weights sum to 1, edge clamp
+    included), so taps changes nothing for f_vf_flow-style forces."""
+    for taps in (1, 3, 16):
+        f = np.zeros((70, 110, 4), F32)
+        f[..., 0], f[..., 1], f[..., 2], f[..., 3] = 0.8, 0.3, 0.5, 1.0
+        gx, gy = fm.force_taps(f, taps, 64, 64)
+        check(f"uniform force taps={taps}: max |x - 0.8|, |y - 0.3|",
+              max(np.max(np.abs(gx - 0.8)), np.max(np.abs(gy - 0.3))), 1e-6)
+
+
+def area_avg_matrix(n_src, n_dst=256):
+    bs = n_src / n_dst
+    lo = (np.arange(n_dst) * bs)[:, None]
+    j = np.arange(n_src)[None, :]
+    return np.clip(np.minimum(lo + bs, j + 1) - np.maximum(lo, j), 0, None) / bs
+
+
+def test_force_tap_grid_kills_aliasing_at_hd():
+    """T038a / E4: a noisy 1920x1080 force read through ONE tap puts several times too
+    much noise into the 256^2 solver; taps=16 matches an exact area average.
+    (Bilinear-tap model; the hardware is nearest-like when minifying, so it is worse
+    there -- bench_fluid.py measures the real thing.)"""
+    force = rand_force(1080, 1920, 9)
+    ideal = (area_avg_matrix(1080) @ force[..., 0].astype(np.float64) @ area_avg_matrix(1920).T).std()
+    gains = {}
+    for taps in (1, 4, 16):
+        gx, _ = fm.force_taps(force, taps, 256, 256)
+        gains[taps] = float(gx.std()) / ideal
+        note(f"HD noise gain vs ideal area average, taps={taps}", gains[taps])
+    assert gains[1] > 2.5, f"single tap should alias badly at HD (gain {gains[1]:.2f})"
+    check("taps=16 noise gain within 15% of ideal", abs(gains[16] - 1.0), 0.15)
+    assert gains[1] > gains[4] > gains[16] * 0.99, "more taps must not add noise"
 
 
 def test_force_injection():
@@ -407,11 +496,19 @@ def test_mutations_are_caught():
         di = (kxo * ui + kyo * vi) * inv
         return ur + kxo * dr, ui + kxo * di, vr + kyo * dr, vi + kyo * di
 
-    def decay_wrong(k2, nu, mu, dt):
-        return np.exp(-(F32(nu) * np.sqrt(k2) + F32(mu)) * F32(dt)).astype(F32)
+    def decay_wrong(k2, nu_dt, mu, dt):
+        return np.exp(-(F32(nu_dt) * np.sqrt(k2) + F32(mu) * F32(dt))).astype(F32)
 
-    def decay_no_drag(k2, nu, mu, dt):
-        return np.exp(-(F32(nu) * k2) * F32(dt)).astype(F32)
+    def decay_no_drag(k2, nu_dt, mu, dt):
+        return np.exp(-(F32(nu_dt) * k2)).astype(F32)
+
+    def decay_dt_coupled(k2, nu_dt, mu, dt):        # the pre-T036 law: dt multiplies viscosity again
+        return np.exp(-(F32(nu_dt) * k2 + F32(mu)) * F32(dt)).astype(F32)
+
+    orig_tap_weights = fm.tap_weights
+
+    def tap_weights_single(n_src, taps, n_dst):     # `taps` ignored: always the old single tap
+        return orig_tap_weights(n_src, 1, n_dst)
 
     orig_wavenumbers = fm.wavenumbers
     with patched(wavenumbers=wavenumbers_no_nyquist):
@@ -423,6 +520,10 @@ def test_mutations_are_caught():
         expect_fail("decay exponent wrong (|k| instead of |k|^2)", test_single_mode_decay)
     with patched(decay=decay_no_drag):
         expect_fail("drag dropped from the decay factor", test_drag_acts_on_mean_flow)
+    with patched(decay=decay_dt_coupled):
+        expect_fail("viscosity coupled to dt again", test_smoothing_independent_of_dt)
+    with patched(tap_weights=tap_weights_single):
+        expect_fail("force tap grid ignored (single tap)", test_force_tap_grid_kills_aliasing_at_hd)
     with patched(PERIODIC=False):
         expect_fail("advection clamps instead of wrapping", test_advection_is_periodic)
 

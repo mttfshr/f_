@@ -31,16 +31,36 @@ from test_fft_separable import fft2_passes, ifft2_passes
 
 PERIODIC = True          # mutation hook: False = clamp-to-edge interpolation
 
+# Viscosity dial law (T036, 2026-09-28). The user-facing `viscosity` is a 0..1 dial;
+# the shader maps it to the PER-FRAME coefficient nu*dt = VISC_MAX * v**VISC_EXP, so
+# smoothness no longer depends on dt (dt is speed only). VISC_MAX = 1.6e-3 puts the top
+# of the dial at m_c ~ 4 (only the biggest swirls survive one frame); the cube makes
+# equal dial steps roughly equal steps in log-smoothing across the usable range.
+# Keep in sync with codebox_spec.gen.
+VISC_MAX = 1.6e-3
+VISC_EXP = 3
+
+
+def visc_to_nudt(v):
+    """Dial value (0..1) -> per-frame nu*dt."""
+    return VISC_MAX * float(v) ** VISC_EXP
+
+
+def nudt_to_visc(nudt):
+    """Inverse of visc_to_nudt, for tests that want a specific physical nu*dt."""
+    return (float(nudt) / VISC_MAX) ** (1.0 / VISC_EXP)
+
 
 @dataclass(frozen=True)
 class Params:
     dt: float = 0.01            # self-advection step and decay exponent
     force: float = 0.02         # velocity gained per frame at full-scale force
-    viscosity: float = 0.0      # physical nu
+    viscosity: float = 0.0      # dial 0..1 -> per-frame nu*dt via visc_to_nudt()
     project: float = 1.0        # 0 = compressible, 1 = divergence-free
     drag: float = 0.0           # linear damping mu
     gain: float = 1.0           # output scale before encoding
     src_vecfield: float = 1.0   # 1 = force inlet connected
+    taps: float = 8.0           # force tap grid: taps x taps hardware taps per solver texel (1 = old single tap); shader default
     bypass_gate: float = 0.0    # 1 = pass the force through
 
     def with_(self, **kw):
@@ -72,9 +92,10 @@ def wavenumbers(h, w):
     return kx, ky, k2, kxo, kyo
 
 
-def decay(k2, nu, mu, dt):
-    """Exact viscous decay and linear drag in one factor."""
-    return np.exp(-(F32(nu) * k2 + F32(mu)) * F32(dt)).astype(F32)
+def decay(k2, nu_dt, mu, dt):
+    """Exact viscous decay and linear drag in one factor: exp(-(nu_dt*k^2 + mu*dt)).
+    nu_dt is the per-frame viscosity coefficient (already multiplied by dt)."""
+    return np.exp(-(F32(nu_dt) * k2 + F32(mu) * F32(dt))).astype(F32)
 
 
 def project_vec(ur, ui, vr, vi, kxo, kyo):
@@ -105,9 +126,44 @@ def neutral(h, w):
 
 # ------------------------------------------------------------------- stages
 
-def adv(state, force, dt, force_gain, src_vecfield):
+_TAPW = {}
+
+
+def tap_weights(n_src, taps, n_dst):
+    """Per-axis weights (n_dst x n_src) of the force tap grid (T038a, codebox_adv.gen).
+
+    The shader averages taps x taps hardware-bilinear taps at offsets
+    ((a + 0.5)/taps - 0.5)/n_dst (normalised) around each target texel centre. A bilinear
+    tap is a tensor product of 1D linear interpolations, so the grid average factorises:
+    result = Wy @ force @ Wx^T with these matrices (clamp-to-edge, like the hardware).
+    Exact same maths as the shader's nested loop, without 2*taps^2 array passes."""
+    n = max(1, int(np.floor(taps)))
+    key = (n_src, n, n_dst)
+    if key not in _TAPW:
+        rows = np.arange(n_dst)
+        centre = (rows + 0.5) / n_dst
+        wgt = np.zeros((n_dst, n_src), np.float64)
+        for a in range(n):
+            sx = (centre + ((a + 0.5) / n - 0.5) / n_dst) * n_src - 0.5
+            x0 = np.floor(sx).astype(int)
+            t = sx - x0
+            np.add.at(wgt, (rows, np.clip(x0, 0, n_src - 1)), 1.0 - t)
+            np.add.at(wgt, (rows, np.clip(x0 + 1, 0, n_src - 1)), t)
+        _TAPW[key] = (wgt / n).astype(F32)
+    return _TAPW[key]
+
+
+def force_taps(force, taps, h, w):
+    """The tap-grid-averaged force RG on an h x w solver grid, decoded 0..1 (not yet (p-0.5)*2)."""
+    fh, fw = force.shape[:2]
+    wy, wx = tap_weights(fh, taps, h), tap_weights(fw, taps, w)
+    return (wy @ force[..., 0] @ wx.T).astype(F32), (wy @ force[..., 1] @ wx.T).astype(F32)
+
+
+def adv(state, force, dt, force_gain, src_vecfield, taps=8.0):
     """Stage 1. Backward self-advection (semi-Lagrangian) then add force.
-    `force` is a render-res f_vecfield texture, or None (unconnected)."""
+    `force` is a render-res f_vecfield texture, or None (unconnected). The force RG is
+    read through the tap grid (`taps`), the content gate through the single centre tap."""
     h, w = state.shape[:2]
     nx, ny, _, _ = grid(h, w)
     u, v = state[..., 0], state[..., 2]
@@ -116,21 +172,23 @@ def adv(state, force, dt, force_gain, src_vecfield):
     out[..., 0], out[..., 2] = a[..., 0], a[..., 2]
     if force is not None and src_vecfield >= 0.5:
         f = sample(force, nx, ny)
+        fxa, fya = force_taps(force, taps, h, w)
         valid = (np.abs(f[..., 2] - F32(0.5)) < F32(0.25)).astype(F32)   # vs_black has B = 0
-        out[..., 0] += F32(force_gain) * ((f[..., 0] - F32(0.5)) * F32(2.0)) * valid
-        out[..., 2] += F32(force_gain) * ((f[..., 1] - F32(0.5)) * F32(2.0)) * valid
+        out[..., 0] += F32(force_gain) * ((fxa - F32(0.5)) * F32(2.0)) * valid
+        out[..., 2] += F32(force_gain) * ((fya - F32(0.5)) * F32(2.0)) * valid
     return store_float32(out)
 
 
 def spec(tex, viscosity, project, drag, dt):
-    """Stage 4. Projection blend, then decay exp(-(nu*|k|^2 + mu)*dt)."""
+    """Stage 4. Projection blend, then decay exp(-(nu_dt*|k|^2 + mu*dt)) where
+    nu_dt = visc_to_nudt(viscosity) (the dial law)."""
     h, w = tex.shape[:2]
     _, _, k2, kxo, kyo = wavenumbers(h, w)
     ur, ui, vr, vi = tex[..., 0], tex[..., 1], tex[..., 2], tex[..., 3]
     pr, pi_, qr, qi = project_vec(ur, ui, vr, vi, kxo, kyo)
     ur, ui, vr, vi = (mix(ur, pr, project), mix(ui, pi_, project),
                       mix(vr, qr, project), mix(vi, qi, project))
-    g = decay(k2, viscosity, drag, dt)
+    g = decay(k2, visc_to_nudt(viscosity), drag, dt)
     return store_float32(np.stack([ur * g, ui * g, vr * g, vi * g], -1))
 
 
@@ -192,7 +250,7 @@ def step(state, force, p, fft="np"):
     Returns the new velocity state. `fft` = "np" (fast) or "passes" (the
     real pass_dft mirror)."""
     fwd, inv = (fft2_np, ifft2_np) if fft == "np" else (fft2_passes, ifft2_passes)
-    a = adv(state, force, p.dt, p.force, p.src_vecfield)
+    a = adv(state, force, p.dt, p.force, p.src_vecfield, p.taps)
     s = spec(fwd(a), p.viscosity, p.project, p.drag, p.dt)
     return ix_cleanup(inv(s))
 

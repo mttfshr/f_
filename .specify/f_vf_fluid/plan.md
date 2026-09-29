@@ -231,8 +231,11 @@ texture's size (`texdim` is not defined; `in1.dim` returns 0), so manual taps
 are impossible there. Phase 1 measured it: exact at 1:1 and when magnifying
 (6.6e-7 vs the mirror), nearest-like when minifying — the common case, since
 render res is usually > 256² (0.44 max error vs a bilinear mirror on white
-noise). That is harmless for a smooth force; prefiltering it (a `Param`-supplied
-size or an extra stage) is E4, tier 3.
+noise). That is harmless for a smooth force but not for a noisy one at HD/4K
+(single tap = 6×/11.6× the noise of an area average). **Resolved 2026-09-28
+(T038a): a `taps × taps` grid of hardware taps at offsets in normalised coordinates,
+default `taps` = 8, exposed as a panel numbox (1–16)** — no source size, Param-supplied size or extra stage needed
+(cost ~0.4–0.7 ms; 16 would be ideal at 4K but 1.2–1.7 ms).
 
 **Alternatives**: `sample()` + `fract()` for the velocity (rejected, above).
 
@@ -269,10 +272,16 @@ different programs).
 3. **Decay**: multiply by `exp(−(ν·|k|² + μ)·dt)` — exact viscosity and
    drag in one factor; the k = 0 (mean-flow) bin only gets the drag term.
 
-**Parameter mapping**: physical `ν·dt·|k|²` is dimensionless; at N = 256 the
-top octave is `|k| ≈ 2π·64…128`, so "honey" (top octave dead in ~1 frame)
-needs `ν·dt ≈ 1e-5…1e-4`. The user-facing `viscosity` will be a curve onto
-that range, chosen in tier-3 tuning; the codebox takes the physical `ν`.
+**Parameter mapping (revised 2026-09-28, T036)**: physical `ν·dt·|k|²` is
+dimensionless; at N = 256 the top octave is `|k| ≈ 2π·64…128`. The original
+plan sized the range for "honey = top octave dead in ~1 frame" (`ν·dt ≈
+1e-5…1e-4`) with the codebox taking the physical `ν`; measured, that range topped
+out at m_c ≈ 16 (m_c = 1/(2π√(ν·dt)), the mode that e-folds per frame) and
+smoothness moved with `dt`. **Now:** the user-facing `viscosity` is a 0–1 dial and the
+shader takes the per-frame coefficient `nu_dt = 1.6e-3·v³` (top of dial ≈ m_c 4),
+decay `exp(-(nu_dt·k² + drag·dt))`. `dt` is speed only; drag stays time-based.
+Constants live in `codebox_spec.gen` and `tests/fluid_mirror.py` (`VISC_MAX`,
+`VISC_EXP`) and must change together.
 
 ### ADR-6: Containment — real part, NaN guard, clamp
 

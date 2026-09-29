@@ -791,6 +791,17 @@ Angle codebox mapping: `theta = angle * (PI / 180.0)`
 
 ---
 
+## Edit-View Layout (generated modules)
+
+`build_patcher.py` lays out the **edit view** (`patching_rect`) with `build/layout.py`, separately from the presentation view (added 2026-09-24; spec `.specify/build_layout/spec.md`). Roles are assigned by `assign_roles()` in `build_patcher.py`; the pass rewrites `patching_rect` only and self-verifies that nothing else changed. Zones: signal strip down the left rail (inlet, `routepass`, `vs_inState`), modulation inlets in a band to its right, one param column per `route` outlet (label header row / `route` box / control / attrui, pitch 72 px, attrui fixed 68 px wide), then the `jit.gl.pix` stack and outlets, range-tier blocks below, and the service objects (moduleSize chain, `autopattr`, bypass, panel toggle, title, background panel) at the far right. `raw_boxes` are moved as one block into an overflow area.
+
+- **Manual edit-view tweaks in Max are lost on regeneration** — layout is generated, not preserved.
+- Opt a module out with `"edit_layout": False` in `definition.py`.
+- Check with `tests/run.sh tests/test_layout.py` (0 overlaps / shared origins / upward wires over every definition; `presentation_rect` byte-identical to an un-laid build).
+- Applies only to modules actually regenerated from `definition.py`. Most shipped patchers have **drifted from their definitions** (2026-09-24 survey of 33 definitions) and are on the never-regenerate list or need their definition synced first — see `.specify/build_layout/tasks.md` T004.
+
+---
+
 ## moduleSize.js Chain
 
 Every bpatcher includes this chain to report its presentation size to Vsynth's module layout system:

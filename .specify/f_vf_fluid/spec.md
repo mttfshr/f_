@@ -204,7 +204,10 @@ placed in one Vsynth patch run independently.
 - **FR-004**: Each frame MUST self-advect the velocity (semi-Lagrangian,
   backward trace) with a `dt`-style step control, before the spectral pass.
 - **FR-005**: Viscosity MUST be applied as the exact spectral decay
-  `exp(-ν·dt·|k|²)`, stable for any ν ≥ 0.
+  `exp(-ν·dt·|k|²)`, stable for any ν ≥ 0. *(Clarified 2026-09-28, T036: the
+  user-facing `viscosity` is a 0–1 dial; the shader maps it to the per-frame
+  coefficient `ν·dt = 1.6e-3·v³`, so smoothness is independent of `dt`. The decay law
+  itself is unchanged. Drag stays time-based, `exp(-drag·dt)`.)*
 - **FR-006**: A `project` control in [0, 1] MUST blend the unprojected and
   Helmholtz-projected velocity; at 1 the projection MUST remove the
   divergent component exactly in Fourier space.

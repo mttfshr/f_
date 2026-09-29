@@ -20,6 +20,8 @@ Stage chain (plan ADR-1), solver stages at a fixed 256x256 float32:
   fx/fy/iy/ix  separable DFT      enc   render-res upsample + encode + bypass gate
 
 Ranges and defaults below are PROVISIONAL (tier-3 tuning is tasks.md T036-T037).
+`viscosity` is a 0..1 dial (shader maps it to a per-frame nu*dt, T036); `taps` is the
+force tap-grid size (T038a) shown as an int numbox, default 8.
 """
 
 patcher = {
@@ -46,9 +48,9 @@ patcher = {
         {"name": "dt", "type": "float", "min": 0.0, "max": 0.05, "default": 0.01,
          "label": "dt",
          "hint": "Self-advection step and the time step of viscosity/drag"},
-        {"name": "viscosity", "type": "float", "min": 0.0, "max": 0.002, "default": 0.0001,
+        {"name": "viscosity", "type": "float", "min": 0.0, "max": 1.0, "default": 0.085,
          "label": "Visc",
-         "hint": "Kinematic viscosity: exact and stable at any value; high = honey, small scales die"},
+         "hint": "Smoothing per frame (independent of dt): 0 = off, high = honey, only the biggest swirls survive"},
         {"name": "project", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Project",
          "hint": "0 = compressible (shock fronts), 1 = divergence-free swirl"},
@@ -58,6 +60,9 @@ patcher = {
         {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 1.0,
          "label": "Gain",
          "hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)"},
+        {"name": "taps", "type": "int", "min": 1, "max": 16, "default": 8,
+         "label": "Taps",
+         "hint": "Force filter: taps x taps samples per solver texel. Higher = calmer noisy force at HD/4K but costs GPU (8 = ~0.4-0.7 ms, 16 = ~1.5 ms); 1 = off"},
 
         # Bypass toggle. Unlike every other f_ module this does NOT set the
         # native pix @bypass attribute: the jsui drives the codebox Param

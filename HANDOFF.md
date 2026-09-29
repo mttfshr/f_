@@ -1,6 +1,79 @@
 # HANDOFF
 
-_Session: 2026-09-23_ (previous handoff, 2026-09-22 — test bench build — is in git history)
+_Session: 2026-09-28_ — `f_vf_fluid` Phase 3, offline half. The 2026-09-24 handoff
+(layout pass, drift survey, bypass work) follows unchanged below; 2026-09-23 is in git history.
+
+## This session (2026-09-28): `f_vf_fluid` viscosity curve + force tap grid
+
+Worked the offline half of thread 1. Two design decisions by Matt, both applied:
+**(1)** `viscosity` means smoothing *independent of `dt`* (option B); **(2)** `taps` is a
+**performable panel control**. Nothing is committed.
+
+- **T036 viscosity (done).** Measured first: the old dial (ν 0–0.002, linear, codebox took
+  physical ν) never reached "honey" (max m_c ≈ 16; m_c = 1/(2π√(ν·dt)) = the mode index that
+  e-folds per frame) and `dt` also moved the smoothness. Now `viscosity` is a **0–1 dial** and
+  `codebox_spec.gen` computes per-frame `nu_dt = 1.6e-3 · v³`; decay `exp(-(nu_dt·k² + drag·dt))`.
+  Dial 1.0 → m_c ≈ 4; 0.5 → ≈ 11; 0.25 → ≈ 32; **default 0.085** reproduces the old default
+  (ν·dt = 1e-6) so nothing shifts until tuned by eye. Mirror: `VISC_MAX`, `VISC_EXP`,
+  `visc_to_nudt()`, `nudt_to_visc()` in `tests/fluid_mirror.py` (change shader and mirror
+  together). **Saved `viscosity` values from before this change mean something different now.**
+- **T038/T038a force filtering (done, tier 3 inconclusive).** Matt performs at **HD/4K**, so the
+  force is minified 4–15× into the 256² grid. Study (`scratch/e4_force_alias.py`) and GPU
+  measurements agree: hardware `sample()` is **nearest-like** when minifying; a single tap gives
+  **6.0× (HD) / 11.6× (4K)** the noise of an exact area average. Fix: `codebox_adv.gen` averages a
+  `taps × taps` grid of hardware taps at offsets in *normalised* coordinates (no source size
+  needed). GPU noise gain, taps 1/4/8/16: HD 5.97/1.49/1.01/1.02, 4K 11.6/2.88/1.44/1.05. Cost of
+  `adv` ≈ 0.05 (1 tap) / 0.4–0.7 (8) / 1.2–1.7 ms (16) → **default 8**, frame total 2.49 ms (budget
+  3; 16 would give 3.3–4.4). Smooth forces (vortex/flow/repulse) are unchanged by design.
+- **`taps` on the panel.** Int `live.numbox`, 1–16, default 8, row 2 slot 2
+  (`definition.py` + `build_fluid.py` `TARGETS`; rebuilt: 49 boxes/lines, self-verified).
+  Cosmetic: it displays "1.00" (float) although the shader floors the value; fix would be
+  `parameter_type` 1 for int params in the shared `numbox_box` (affects other int params — check).
+- **Checks:** mirror `tests/test_fluid_mirror.py` **22/22** (new: dial law, dt-independence, tap grid
+  vs brute force, uniform force unchanged, HD aliasing; two new mutations caught); fluid bench
+  `tests/bench_fluid.py` **12 tests** (spec vs mirror ≤ 2e-7 across the dial; 100 frames within 3e-6;
+  tap grid on the GPU at HD and 4K; taps=1 reproduces the old shader; cost incl. tap grid);
+  offline contract test **0 issues / 33 modules**.
+- **Tier 3 result: nothing visible.** Matt saw no fps or visual difference between taps 1 and 16.
+  Likely (not confirmed): force was `f_vf_repulse` (smooth); Fluid was set to an undamped,
+  saturating state (dt ≈ 0 → drag·dt ≈ 0, Visc 0, Force 0.20, Gain 9.37, output pinned at the clamp);
+  ~1.5 ms of a 16.7 ms vsync-locked frame can't move an fps counter. **Not run:** the module bench
+  on the rebuilt patcher / a module-level check (noisy force, taps 1 vs 8) — needs Matt's patches
+  closed. Re-test at Fluid defaults with `f_vf_optical_flow` as the force.
+- **Docs updated:** `tasks.md` (T036 `[~]`, T038 `[x]`, T038a `[~]`, Findings rows), fluid `plan.md`
+  (ADR-5 mapping, force-sampling paragraph), fluid `spec.md` (FR-005 clarification), project
+  `.specify/plan.md` (item 11), `skills/jit-gen-codebox/SKILL.md` (three bench-verified facts, `f_` copy only).
+- **Uncommitted from this session:** `src/f_vf_fluid/{codebox_adv,codebox_spec}.gen`, `definition.py`,
+  `build_fluid.py`, `package/patchers/f_vf_fluid.maxpat`, `tests/{fluid_mirror,test_fluid_mirror,
+  bench_fluid}.py`, the docs above, plus untracked `scratch/{e4_force_alias,measure_adv_taps}.py` and
+  four `scratch/*.log` files. They overlap with the 09-24 layout-pass changes in the working tree. The
+  viscosity and taps edits touch the same files, so one commit is simpler than splitting.
+
+## Carried forward: definition/patch drift needs a tech-debt pass
+
+Built the edit-view layout pass (`.specify/build_layout/`) this session and, in the
+course of scoping "generated modules only" to a safe regen set, surveyed all 33
+`src/*/definition.py` against their shipped patchers. **Only 10 are in sync**
+(`f_ngon` plus the 9 now regenerated with the layout pass); **23 have drifted**:
+
+- **9** (group B, `.specify/build_layout/tasks.md`): the *definition* is behind the
+  patch — a param renamed/added by hand, a codebox edited, a panel resized
+  (`f_vf_flow`, `f_weave`, `f_vf_advect`, `f_vf_warp`, `f_lens`, `f_vf_fieldmap`,
+  `f_vf_repulse`, `f_vf_vorticity`, `f_vf_vortex_multi`).
+- **10** (group C): predate the builder or are hand-built; definitions are
+  after-the-fact transcriptions that don't match (`f_channel_grader`, `f_droste`,
+  `f_grain`, `f_hue_processor`, `f_luma_processor`, `f_mobius`, `f_tone_curve`,
+  `f_masonry`, `f_sirds`, `f_texrouter`).
+- **3**: own build scripts, not compared (`f_util_profile`, `f_vf_fluid`, `f_vf_seeds`).
+- **1**: `f_vf_vortex`, blocked on one decision (does its `r draw` box belong).
+
+Matt: "this is much better and it's clear I need to do a lot of cleanup... we
+probably should have a tech debt pass to bring everything current and resolve
+diffs." **Not scheduled yet** — no tasks.md written for it. When it is: the
+per-module classification and the diffing scripts already exist
+(`scratch/regen_drift_semantic.py`, `regen_drift_props.py`,
+`verify_regen_full.py`) and are the starting point, not `.specify/build_layout/`
+itself, whose scope is the layout pass only.
 
 ## What happened
 
@@ -185,6 +258,12 @@ panel look good. Next: Phase 3 tuning.
 
 ## Warnings for next session
 
+- **The bench keeps a `Param`'s last value between jobs.** A job that omits a Param inherits the
+  previous job's value, not the codebox default; pin every Param a measurement depends on (a cost
+  test measured `taps=16` and briefly reported a bogus 4.35 ms frame). Recorded in the skill.
+- **`f_vf_fluid` is script-built** (`src/f_vf_fluid/build_fluid.py` is the source of truth), the
+  patcher was regenerated twice this session and is still safe to regenerate; once it is hand-edited
+  it joins the never-regenerate list.
 - **Definitions have drifted from the shipped patchers — do not regenerate**
   `f_vf_warp`, `f_lens`, `f_vf_fieldmap`, `f_vf_repulse`. A dry-run rebuild
   rewrote whole files: `f_vf_warp` (`strength` default 0.1 in patch vs 0.0 in
@@ -218,28 +297,22 @@ module's bypassed outlets in a real Vsynth patch, decides the bypassed state
 (drive a non-`bypass` Param; hand-edit). Extend `BYPASS_PASSTHROUGH_OUTLETS`
 only for outlets whose intended state is "equals input".
 
-**1. `f_vf_fluid` — Phase 3 of `.specify/f_vf_fluid/tasks.md` (T035–T042): tuning
-in Vsynth.** Phase 2 is complete and Matt confirmed T033/T034 and the panel look.
-Suggested split, agreed at the end of the 2026-09-23 session:
-  - *Claude, offline, first:* (a) T036 the `viscosity` curve — the dial is linear 0–0.002,
-    but what matters is per-frame damping `nu*dt*k^2`; work out which nu range spans
-    "barely viscous" to "top octave dies in one frame" over the `dt` range and propose a
-    curve (probably a squared/cubed dial law) and default; (b) E4/T038 measure how much a
-    noisy force (optical flow) aliases under hardware `sample()` at typical render sizes and
-    whether a 2x2 box prefilter fixes it.
-  - *Matt, by eye:* ranges/defaults for `force`, `dt`, `drag`, `gain`, `project` (T037),
-    the tuning patch (T035), edge cases (T039), a 10-minute soak (T040), cost/fps in a real
-    patch (T041, bench says 2.2-2.8 ms/frame at 256^2), and the final verdict (T042).
-Details of the tuning patch: scratch patch with `f_vf_vortex`,
-`f_vf_flow`, `f_vf_repulse`, `f_vf_optical_flow` as force sources; set the
-`viscosity` curve/ranges/defaults, `project` default, decide the force filter (E4:
-hardware `sample()` is nearest-like when minifying), edge cases, soak, cost in a real
-patch, 256² vs 128². Max was left running with both benches open (`open -a Max tests/bench/bench.maxpat` / `bench_module.maxpat` relaunches
-them; `bc.ping()` tells you if they're up). Running a long bench file through the
-Desktop Commander tool can time out on the client side while the job keeps running;
-run it in the background and read `tests/jobs/bench_last.log`. `scratch/run_subset.py`
-runs chosen tests from `tests/bench_fluid.py`; `scratch/run_module.py <name>` runs one
-module through the live module bench and prints its issues.
+**1. `f_vf_fluid` — Phase 3 (T035–T042), what is left.** The offline half is done (see
+"This session"). Left, all by eye and Matt's: tuning patch (T035), `project` 0 vs 1 (T037),
+ranges/defaults for `force`, `dt`, `drag`, `gain` and the `viscosity` default now that the dial
+means something new (T036, rest), edge cases (T039), 10-minute soak (T040), cost/fps in a real
+patch (T041), final verdict (T042). **Start the tuning from Fluid's defaults** (Force 0.02,
+dt 0.01, Visc 0.085, Drag 0.5, Gain 1.0, Taps 8): extreme settings can saturate the output
+(drag is `drag·dt`, so it does nothing at dt ≈ 0) and hide everything. To judge `taps`, use a
+*noisy* force (`f_vf_optical_flow` on video) — smooth forces don't change. Claude-side leftovers:
+run the module bench on the rebuilt patcher and add a module-level noisy-force check
+(`bench_fluid_module.py`; needs Matt's other patches closed, the stage bench in Max is currently
+open). Operational: `open -a Max tests/bench/bench.maxpat` / `bench_module.maxpat` relaunches the
+benches and `bc.ping()` tells you if they're up; run long bench files in the background
+(`nohup uv run --no-project --with numpy python3 -u ...`) and poll the log, since the Desktop
+Commander client can time out while the job keeps running; `scratch/run_subset.py <test names>`
+runs chosen tests from `tests/bench_fluid.py`; `scratch/run_module.py <name>` runs one module
+through the live module bench.
 
 **2. `f_a_ripple` production UI polish** — unchanged: DSP done and confirmed by
 ear; UI still plain flonums/toggles, not the `f_` convention.
@@ -252,6 +325,10 @@ patch or mark it archival and add to the never-regenerate list.
 
 ## Loose threads
 
+- **Skill copies diverged further:** this session's three bench-verified facts (nearest-like
+  minification, nested `for` with an expression bound, bench Param persistence) went into the
+  `f_` copy of `jit-gen-codebox` only, like the native-bypass bullet last session.
+- **`taps` numbox shows "1.00"** — see "This session"; cosmetic, shared-builder change if done.
 - **Two `jit-gen-codebox` skill copies have diverged both ways** (`f_` and
   `claude-scaffold`). This session added the native-bypass bullet to the `f_`
   copy only. The claude.ai upload is a third copy — reconcile, then re-upload.

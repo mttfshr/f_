@@ -7,8 +7,13 @@
 //   - projection uses OPERATOR wavenumbers that are zeroed at the Nyquist bin
 //     (odd functions of the index must vanish there or a real field gains an
 //     imaginary part; tests/test_fluid_mirror.py test_nyquist_keeps_field_real)
-//   - decay uses the full k^2: exp(-(viscosity*k^2 + drag)*dt); the k = 0 bin
+//   - decay uses the full k^2: exp(-(nu_dt*k^2 + drag*dt)); the k = 0 bin
 //     therefore only feels the drag
+//   - `viscosity` is a 0..1 DIAL, not a physical nu (T036, 2026-09-28): the per-frame
+//     coefficient is nu_dt = 1.6e-3 * viscosity^3, so smoothness does not depend on dt
+//     (dt is speed only; drag stays time-based). Top of the dial ~ m_c 4, where m_c =
+//     1/(2*pi*sqrt(nu_dt)) is the mode index that e-folds per frame. Law and constants
+//     mirror tests/fluid_mirror.visc_to_nudt(); change both together.
 //   - integer bin index is floor(norm * N), not `cell`
 //   - components accessed inline on nearest()
 //   - unary minus before a parenthesis mis-parses in GenExpr: `-(a + b) * c` is NOT
@@ -44,5 +49,6 @@ pui = ui - kxo * di;
 pvr = vr - kyo * dr;
 pvi = vi - kyo * di;
 
-g = exp(0 - (viscosity * k2 + drag) * dt);
+nu_dt = 0.0016 * viscosity * viscosity * viscosity;
+g = exp(0 - (nu_dt * k2 + drag * dt));
 out1 = vec(mix(ur, pur, project) * g, mix(ui, pui, project) * g, mix(vr, pvr, project) * g, mix(vi, pvi, project) * g);

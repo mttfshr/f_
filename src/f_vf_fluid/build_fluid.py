@@ -60,7 +60,7 @@ SNAME = {k: v[1] for k, v in STAGES.items()}
 # UI parameter -> stage(s) whose codebox Param it sets (first entry = param_connect target)
 TARGETS = {
     "force": ["adv"], "dt": ["adv", "spec"], "viscosity": ["spec"],
-    "project": ["spec"], "drag": ["spec"], "gain": ["enc"],
+    "project": ["spec"], "drag": ["spec"], "gain": ["enc"], "taps": ["adv"],
 }
 
 
@@ -107,7 +107,7 @@ def build():
     d = load_definition()
     prefix, title = d["prefix"], d["title"]
     pw, ph = float(d["presentation_width"]), float(d["presentation_height"])
-    ui = [p for p in d["params"] if p["type"] == "float"]
+    ui = [p for p in d["params"] if p["type"] in ("float", "int")]
     assert [p["name"] for p in ui] == list(TARGETS), "definition.py params must match TARGETS (order too)"
     n_ui = len(ui)
     bp_jsui, bp_pre = bp.bypass_jsui_id(n_ui), bp.bypass_pre_id(n_ui)
@@ -136,7 +136,8 @@ def build():
     extra_attruis = []                               # (attrui id, param name, stage key)
     for n, p in enumerate(ui):
         stages = TARGETS[p["name"]]
-        boxes.append(bp.dial_box(n, p, SNAME[stages[0]]))
+        widget = bp.numbox_box if p["type"] == "int" else bp.dial_box   # taps: int numbox
+        boxes.append(widget(n, p, SNAME[stages[0]]))
         boxes.append(bp.attrui_box(bp.param_pre_id(n), p["name"], 50.0 + n * 50.0, 170.0 + n * 30.0))
         boxes.append(bp.label_box(n, p))
         for k, extra in enumerate(stages[1:]):
