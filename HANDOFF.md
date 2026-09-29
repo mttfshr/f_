@@ -1,11 +1,74 @@
 # HANDOFF
 
-_Session: 2026-09-29_ — `f_vf_fluid` Phase 3: bench block closed, `taps` off the panel,
-tuning patch built. The 2026-09-28 handoff follows unchanged below; 2026-09-23 is in git history.
+_Session: 2026-09-29b_ — skills consolidation finished: all eight Max/DSP skills
+single-sourced in `f_/skills/`, upload staleness now measurable. The earlier 2026-09-29
+entry (fluid Phase 3) and 2026-09-28 follow unchanged below; 2026-09-23 is in git history.
 
-## This session (2026-09-29): bench block, `taps` decision, T035 tuning patch
+## This session (2026-09-29b): skills consolidation closed
 
-Nothing is committed. Two sessions of changes now overlap in the working tree.
+Both repos committed and clean (`f_` `71a520d`, `claude-scaffold` `82fd11f`). **The earlier
+entries' "Nothing is committed" is stale** — that work went in as `97d2c5d` / `8b81ccb` /
+`0dac1a8` before this session.
+
+Closed both pieces carried from the previous session.
+
+- **Piece 1 — the three remaining scaffold-only Max skills: all three moved** into
+  `f_/skills/`, `claude-scaffold/skills/` symlinks back. Eight skills, eight symlinks,
+  all verified resolving.
+  - **The dividing line, decided:** *domain knowledge* (Max/Vsynth/audio DSP) lives in
+    `f_/skills/`; *generic workflow/process scaffolding* stays in claude-scaffold. The
+    handoff's proposed framing — this-repo conventions vs. all Max knowledge — doesn't
+    survive reading the files: all three name f_ modules in their own descriptions
+    (`max-advanced-object-methodology` exists because of `f_a_ripple` T7a,
+    `pfft-spectral-processing` is written for `f_a_decorrelate`, `maxpat-json-authoring`
+    for `f_a_` scratch work), so "f_-specific vs. generic Max" was never the cut that
+    separated them.
+  - What this buys: **the upload rule is now "everything in `f_/skills/`"**, no
+    per-skill judgement call.
+  - Also caught: last session's five symlinks had **never been committed** in
+    claude-scaffold. All eight are now committed as mode-120000 symlinks.
+- **Piece 2 — upload staleness: hole closed, uploads still outstanding.** Measured from
+  inside a claude.ai session (the uploaded copies are readable there, so this is fact,
+  not estimate):
+
+  | skill | uploaded | on disk |
+  |---|---|---|
+  | `jit-gen-codebox` | 390 | **848** |
+  | `vsynth-bpatcher` | 678 | **1010** |
+  | `f-helpfile` | 246 | **297** |
+  | `max-patch-notation` | 182 | 182 ✓ (hash-identical) |
+  | `gen-tilde-codebox` | — | 483 (never uploaded) |
+
+  The uploaded `jit-gen-codebox` is **under half** the reconciled one — it predates the
+  entire fluid thread. Any session working from the uploads has been running without the
+  last three sessions' findings.
+  - **`skills/check.sh` + `skills/MANIFEST.md`.** Chose a hash manifest over a date line
+    (a date needs remembering to bump; a hash is generated). **Key semantic:** the
+    manifest records the last-**uploaded** state, not current disk state — a hash taken
+    at edit time always matches and tells you nothing. `./skills/check.sh` reports drift;
+    `./skills/check.sh stamp` rewrites the manifest and is run **immediately after
+    uploading**. Both paths tested; no dependencies beyond `shasum`/`awk`.
+  - `MANIFEST.md` is **seeded with hashes of the actually-uploaded copies**, so its first
+    run reports real drift rather than a false all-clear. Current output: **7 of 8 need
+    upload** (`max-patch-notation` is the only one in sync, and its hash matched
+    byte-for-byte across container and disk — which cross-validates the seeding method).
+
+### Outstanding, Matt's: re-upload seven skills, then stamp
+
+Everything except `max-patch-notation`. Run `./skills/check.sh` for the list, upload, then
+`./skills/check.sh stamp`. Until stamped, the manifest correctly keeps reporting drift.
+
+Worth doing before the next codebox session specifically — `jit-gen-codebox` is the stale
+one that matters most.
+
+---
+
+_Session: 2026-09-29a_ — `f_vf_fluid` Phase 3: bench block closed, `taps` off the panel,
+tuning patch built.
+
+## Earlier session (2026-09-29a): bench block, `taps` decision, T035 tuning patch
+
+_(Committed as `8b81ccb` / `0dac1a8`; the "nothing is committed" note below is stale.)_
 
 - **Bench block, all green.** Module bench on the rebuilt patcher: `f_vf_fluid` 0 issues,
   8 pix, every param on its stage. `tests/bench_fluid_module.py` **3/3**. Full live
@@ -68,6 +131,9 @@ Nothing is committed. Two sessions of changes now overlap in the working tree.
     `pfft-spectral-processing` are still claude-scaffold-only but are f_-relevant.
 
 ### Carried to next session: finish the skills consolidation
+
+**[CLOSED 2026-09-29b — both pieces done; only Matt's re-upload remains. See the top
+entry. Original text kept below for the reasoning it records.]**
 
 Matt (2026-09-29): "we'll try to rectify everything next session." Two open pieces,
 neither started:
