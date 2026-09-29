@@ -298,23 +298,6 @@ across iterations (an accumulator, a sticky/latching flag like
 `active = active * escaped_this_iter`) — pre-declare it above the loop
 even though every read of it happens inside the loop body too.
 
-### `Param` named after a built-in operator (e.g. `mix`) — confirmed 2026-07-12
-Declaring a `Param` with the same name as a built-in codebox operator —
-`Param mix(100.0)`, then calling `mix(a, b, mix / 100.0)` on the same
-line — produced solid black output with a clean console on `f_vf_advect`.
-Same silent-failure shape as the `cell`/`norm`/`snorm`/`dim`/`in`/`inN`/
-`active` entries above: no compile error, just broken output, because
-the parser reads the name as the reserved operator token rather than the
-user's `Param`. **Fix: rename only the internal codebox identifier**
-(e.g. `mix` → `mix_pct`) — the UI-facing label, `attrui` `attr`,
-`live.numbox`/`live.dial` `varname`, and any external control-message
-keyword can keep the original name, since those live outside the
-codebox and aren't part of this collision. Treat any candidate `Param`
-name against the full operator list (`mix`, `step`, `clamp`,
-`smoothstep`, `sample`, `wrap`, `mod`, etc.) before using it — this is
-the same class of risk as the `active`/`inN` cases, not limited to those
-specific words.
-
 ### `active` as a variable name — silent collision, confirmed 2026-07-08
 Naming a scalar variable `active` (e.g. a sticky "is this pixel still
 iterating" flag, `active = active * escaped_this_iter`) produced solid
@@ -545,52 +528,6 @@ For masonry-style patterns where modulation must be identical across all pixels 
 course_uv = vec(0.5, (course_idx + 0.5) / course_scale);
 mod_val = sample(in2, course_uv).x;
 ```
-
-### Discrete-item gate is a bounding box, not the shape's silhouette (confirmed 2026-07-22)
-In any "seed/mark" style codebox — a position-based `gate` (rectangular
-region test against `along`/`across` vs. some `size`-derived half-extent)
-combined with a *separately sampled* shape texture that draws the actual
-visible silhouette inside that box — the gate box is almost always larger
-than the shape's own drawn content. Most of the box reads as black only
-because the shape tex itself is black there, not because the gate excludes
-it. This is easy to miss because the box and the shape's footprint look
-identical as long as everything inside the box is either the shape's color
-or black.
-
-The bug this causes: blending in any **per-seed constant value** (a color
-sampled once at the seed's own position, a per-seed id, anything that
-doesn't vary across the box's local UV space) using `gate` as the mask
-floods the *entire box* with that constant — not just the shape's visible
-pixels — because `gate` doesn't know where the shape actually is. If seed
-spacing is anywhere close to the gate's size, this reads as a full
-per-cell tessellation with hard box edges once rendered, easily mistaken
-for a Voronoi-cell bug elsewhere in the chain rather than a masking bug
-local to this codebox (empirically confirmed on `f_vf_seeds`'s hue/color
-Evolution 3 work — a per-seed sampled color, correctly gated by the wrong
-mask, produced a full-frame flat-colored Voronoi tessellation instead of
-the intended per-mark tint).
-
-**Fix: weight any per-seed constant by the shape's own alpha/luma, not
-just by `gate`.** `gate` confines *where marks can appear at all*;
-`shape_luma` (or the shape tex's own alpha channel) confines *where this
-specific mark is actually drawn* — those are two different masks, and
-per-seed constants need the second one, not the first:
-```
-// WRONG — floods the whole gate box with drive_color wherever gate=1,
-// not just where the shape is actually drawn
-blend = color_mode;
-final_r = mix(shape_r, drive_r, blend);
-mark_r = final_r * gate;
-
-// CORRECT — confine the constant swap to the shape's own footprint
-blend = color_mode * shape_luma;
-final_r = mix(shape_r, drive_r, blend);
-mark_r = final_r * gate;
-```
-This generalizes beyond color: any per-seed id, gradient sample, or other
-constant blended into a discrete-item codebox needs the same `shape_luma`
-(or shape alpha) weighting, not just `gate`, or it will bleed to the full
-bounding box rather than staying confined to the item's visible silhouette.
 
 ### `vec4 + vec4` addition on stored variables (confirmed GPU-correct 2026-07-15)
 Elementwise addition of two stored `vec4` variables (not component-sliced
@@ -846,3 +783,75 @@ When reviewing any codebox, scan for these in order:
 - [ ] **User-defined functions declared after main body** — functions must come before `Param` declarations and all statements; move them to the top
 - [ ] **`Param` accessed inside function body** — Params not visible inside functions; pass as explicit arguments instead
 - [ ] **`swiz` calls** — silently fails on GPU; use manual `vec(sample(...).z, sample(...).y, sample(...).x, 1.0)` instead
+
+---
+
+## gen~ / Audio-Domain Codebox — DIFFERENT COMPILER, DO NOT ASSUME GPU RULES TRANSFER
+
+**Everything above this section is `jit.gl.pix` GPU-path only.** `gen~`
+(audio-rate, CPU) is a different compiler with different rules. Source:
+`f_a_purr` (first `f_a_` audio module), 2026-07-27 — see
+`.specify/f_a_purr/plan.md` for full context. This section exists because
+importing GPU-path constraints wholesale into a `gen~` codebox is an easy
+mistake given how much codebox experience on this project is GPU-side, and
+at least one of the rules below is a direct **reversal** of a GPU-path rule.
+
+### `noise()` is valid in gen~ — reversal of the GPU rule
+On the `jit.gl.pix` GPU path, `noise()` compiles silently but always
+outputs black (see "Silent Failures" above) — the fix there is a sin hash.
+**In gen~, `noise()` is a real, working operator.** Do not reflexively
+swap it for a sin hash in audio-domain code; that GPU-path fix does not
+apply here and there is no reason to avoid the built-in.
+
+### A gen~ codebox needs at least one `in` object for `Param` messages to arrive
+Without an `in N` object present in the gen~ subpatcher — even when the
+codebox uses no signal input at all and every parameter arrives as a
+`Param` message — `Param` values never reach the codebox. The module
+compiles clean and runs, but is silent, with an empty console and no
+error pointing at the cause. Confirmed empirically after two incorrect
+assertions to the contrary during `f_a_purr` development.
+
+### `latch` zero-initializes regardless of any `History` initializer — deadlocks self-dependent feedback
+`latch` outputs 0 before its first trigger, ignoring whatever initial
+value a feeding `History` was declared with. In a self-dependent feedback
+loop (a per-cycle accumulator whose own held rate depends on a trigger
+that in turn depends on the accumulator advancing), this is a permanent
+deadlock: `latch` outputs 0, the accumulator never advances, so the
+trigger never fires, so `latch` never updates. **Use a self-referential
+conditional instead of `latch`:**
+```
+// WRONG — deadlocks permanently in a self-dependent feedback loop
+rate_h = latch(rate_target, trig);
+
+// CORRECT
+rate_h = trig ? rate_target : r_held;   // r_held read from History before this line
+```
+
+### Read every `History` into a local before writing it, when both happen in one block
+Reading and writing the same `History` variable within one expression
+block is the pattern that caused the `latch` failure above and is worth
+treating as a general precaution in gen~: read the held value into a
+local name first, use the local for computation, then write the
+`History` once, near the end of the block.
+```
+r_held = rate_h;                       // read first
+rate_target = ...;                     // compute using r_held
+rate_h = trig ? rate_target : r_held;  // write once, using the local for the untriggered case
+```
+Simple single-read-then-single-write History updates (e.g. a plain
+accumulator: `ph_acc = ph_prev + step; ...; ph_prev = ph_acc - trig;`)
+are fine without a separate local — this precaution matters most when the
+same History's old value is needed again *after* something else has
+already been computed from it, which is exactly the shape that broke with
+`latch`.
+
+### Codebox contents live under the `code` key in `.maxpat` JSON — not `text`
+If hand-writing or scripting a `.maxpat` file's codebox object, the
+key holding the GenExpr source is `code`. Writing to `text` instead
+produces a codebox that silently falls back to the default template —
+no error, just a codebox that isn't running the code you wrote. Cost
+real debugging time on `f_a_purr` before being traced to this. If a
+script writes `.maxpat` codeboxes programmatically, verify the key name
+directly rather than assuming; see `_build_purr_scratch.py` for a
+concrete case where this was wrong and is now flagged as stale/unsafe to
+run rather than blindly re-fixed and re-trusted.

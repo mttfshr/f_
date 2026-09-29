@@ -35,7 +35,8 @@ Nothing is committed. Two sessions of changes now overlap in the working tree.
   make `taps` visible. `vs_render` already carries `jit.fpsgui` and routes `dim`, so the
   HD/4K switch is three message boxes. Message boxes into Fluid: RESET-to-defaults,
   `taps 1/8/16`, `project 0./1.`.
-- **Skills (f_ copies only, diverging further from the other two).**
+- **Skills — two new entries** (written to `f_`, which is now the single source; see the
+  reconciliation bullet below).
   `jit-gen-codebox`: "a fixed-`@dim` stage is a resampler, whether you meant it to be or
   not" — the generalisation beyond fluid, since any internal fixed-resolution stage
   minifies its inputs 4–15× at HD/4K and no `texdim` exists to warn you.
@@ -43,6 +44,53 @@ Nothing is committed. Two sessions of changes now overlap in the working tree.
   recipe.
 - **Phase 3 reordered** to **T041 (cost) → T037 (`project`) → T036 rest → T039/T040 →
   T042.** Cost first: a fallback to 128² would invalidate anything tuned at 256².
+
+- **Skills: all copies reconciled and single-sourced (2026-09-29).** `f_/skills/` is now
+  the one source of truth; `claude-scaffold/skills/` symlinks into it for all five.
+  - `f-helpfile` and `vsynth-bpatcher` were **already symlinks** — the "three diverged
+    copies" loose thread was overstated for those two.
+  - `jit-gen-codebox` had genuinely diverged **both ways**, and the `f_` copy was the
+    worse one: it was missing the **`Param` named after a built-in operator (`mix`)**
+    finding — the reason `mix_pct` exists library-wide, cited by `.specify/plan.md`
+    item 1 — and the **discrete-item gate vs. silhouette** finding from `f_vf_seeds`.
+    Both restored. Merged copy is 848 lines; a header-level check confirms nothing from
+    either side was dropped (`scratch/reconcile_skills.py`, backup at
+    `scratch/jit-gen-codebox.bak.md`).
+  - The whole `## gen~ / Audio-Domain Codebox` section was **misfiled** in a
+    `jit.gl.pix` skill. Moved into `gen-tilde-codebox`, which did *not* already contain
+    it (so dropping it would have lost five findings, not deduplicated them).
+    `gen-tilde-codebox` moved from `claude-scaffold` into `f_/skills/` — f_ now holds
+    the audio modules, so it belongs here. 483 lines.
+  - `max-patch-notation` was a byte-identical duplicate; symlinked to stop it drifting.
+  - **Still to do, Matt:** re-upload to claude.ai (that third copy can't be symlinked).
+  - **Not moved, worth a decision:** `max-advanced-object-methodology` (referenced by
+    this project's own conventions), `maxpat-json-authoring` and
+    `pfft-spectral-processing` are still claude-scaffold-only but are f_-relevant.
+
+### Carried to next session: finish the skills consolidation
+
+Matt (2026-09-29): "we'll try to rectify everything next session." Two open pieces,
+neither started:
+
+1. **The three remaining claude-scaffold-only Max skills.** Decide per skill whether it
+   moves into `f_/skills/` (and gets symlinked back, like the five already done) or
+   stays scaffold-only. The same argument that moved `gen-tilde-codebox` applies to at
+   least two of them: `max-advanced-object-methodology` is cited by this project's own
+   conventions (read the help patch and bundled examples before architecting; build the
+   smallest verified increment; flag guesses as guesses), and `pfft-spectral-processing`
+   is directly `f_a_ripple`/`f_a_decorrelate` material. `maxpat-json-authoring` is the
+   least clear — it is generic Max tooling, not f_-specific. The real question underneath
+   is **what `f_/skills/` is for**: this-repo collaboration conventions only, or the home
+   for all Max/Vsynth knowledge with scaffold as a consumer. Answer that first; the moves
+   are mechanical afterwards.
+2. **The claude.ai uploads.** Symlinks fix the two checkouts but not the uploaded copies,
+   which are now the only place divergence can restart. Re-upload all five (and any of
+   the three above that move). Worth deciding whether the upload set should be pinned to
+   `f_/skills/` wholesale so "upload everything in that directory" is the whole rule.
+
+Also unresolved and related: nothing prevents an upload from going stale silently. If a
+cheap staleness check is wanted (a date line in each SKILL.md, or a hash manifest), that
+is a third piece to scope.
 
 ### Next session — Matt's by-eye work
 
@@ -383,10 +431,16 @@ patch or mark it archival and add to the never-regenerate list.
 - **Skill copies diverged further:** this session's three bench-verified facts (nearest-like
   minification, nested `for` with an expression bound, bench Param persistence) went into the
   `f_` copy of `jit-gen-codebox` only, like the native-bypass bullet last session.
+  **[SUPERSEDED 2026-09-29 — reconciled and single-sourced; see this session's entry.]**
 - **`taps` numbox shows "1.00"** — see "This session"; cosmetic, shared-builder change if done.
+  **[RESOLVED 2026-09-29 — the numbox is gone; `taps` came off the panel.]**
 - **Two `jit-gen-codebox` skill copies have diverged both ways** (`f_` and
   `claude-scaffold`). This session added the native-bypass bullet to the `f_`
   copy only. The claude.ai upload is a third copy — reconcile, then re-upload.
+  **[RESOLVED 2026-09-29 for the two checkouts — merged both directions and
+  symlinked; `f_` had been missing the `mix`-collision and discrete-item-gate
+  findings. The claude.ai upload is still outstanding, and the three remaining
+  scaffold-only Max skills are carried forward — see this session's entry.]**
 - **Library-level, still uncounted:** any module whose pix uses a fixed `@name`
   (not `#0_`) can't exist twice in one Max session — e.g. two Glows in one
   Vsynth patch.
