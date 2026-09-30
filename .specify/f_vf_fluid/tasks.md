@@ -436,9 +436,15 @@ edge or disconnect artifacts.
       round trip is byte-identical), the tool reports 0 labels to change, every menu entry
       resolves to a patcher, `test_module_contracts.py` 3/3. **Not yet checked in Max:**
       that the menu shows "Fluid ∇" and adds the bpatcher at the right size.
-- [ ] T048 Add the four build-schema gaps this module hit (inlet fan-out through
+- [x] T048 Add the four build-schema gaps this module hit (inlet fan-out through
       `vs_inState`, per-node `@dim`, multi-stage param targets, Param-based bypass) to
       `ideas/build_patcher_schema_gaps.md`.
+      **DONE 2026-09-29.** Appended as Gaps 3–6 in an addendum, each with the problem, the
+      workaround `build_fluid.py` uses, and a candidate fix; none attempted. Mechanism
+      details were checked against `build_fluid.py` and `build_pix_chain()` (a node emits
+      `@type` and `@adapt 1` only; `pix_target` takes a single id). Also recorded the fifth
+      item in `build_fluid.py`'s docstring (`r draw` triggers), the tie between Gap 6 and
+      plan Work Queue item 10, and that `f_vf_fluid` regenerates byte-identically.
 - [ ] T049 Update `.specify/plan.md`: Work Queue item 11 → status; add `f_vf_fluid` to the
       never-regenerate list if the patcher was hand-edited after the first build.
 - [ ] T050 Final regression: `tests/run.sh`, `tests/bench.sh` (both benches open),

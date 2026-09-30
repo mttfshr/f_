@@ -2,7 +2,8 @@
 
 _Created: 2026-07-15_
 _Status: Mostly DONE 2026-07-15 (same day) — see Resolution below. Kept as
-a record of the original problem and one still-open piece._
+a record of the original problem and one still-open piece. Addendum
+2026-09-29 (bottom) adds four more gaps (3–6) hit by `f_vf_fluid`, none started._
 
 ---
 
@@ -151,3 +152,101 @@ correct — but the principle stands). Needs a `dry_run` flag threaded
 through `build()` before this bites someone on a module where the
 generated content *isn't* what was wanted yet.
 
+
+
+---
+
+## Addendum (2026-09-29): four more gaps, hit by `f_vf_fluid`
+
+`f_vf_fluid` (an eight-stage `jit.gl.pix` chain) could not be expressed in the
+`pix_chain` schema, so it is built by a dedicated script,
+`src/f_vf_fluid/build_fluid.py` (plan ADR-9), which reuses `build_patcher.py`'s
+shared chrome helpers (panel, title, dials, `moduleSize` chain, autopattr) and
+replaces only the pix chain. Four gaps caused that. Unlike Gaps 1 and 2, **no
+fix has been attempted** and none is scheduled; they are logged so the next
+module of this shape finds the pattern, and so the decision to write a bespoke
+script is on record as a judgement and not an oversight. `definition.py` is
+metadata only for this module (it feeds docs, helpfile and param extraction
+and the bench's archetype lookup) — it is not an input to `build_patcher.py`.
+
+### Gap 3: module inlet fan-out through `vs_inState`
+
+**Problem:** the schema routes a module's texture inlet through `vs_inState`
+to the primary pix. Fluid's force vecfield has to reach **two** stages: `adv`
+(in1) and `enc` (in1), because `enc` needs the render-resolution force for its
+bypass passthrough. `vs_inState`'s connected flag also has to reach both
+(one `prepend param src_vecfield`, fanned out to each stage's inlet 0).
+
+**Workaround:** `build_fluid.py` wires `vs_inState`'s outlets to both stages
+explicitly.
+
+**Candidate fix:** a per-inlet list of destinations (`inlet_targets`, each a
+node id and inlet index), with the `src_vecfield` fan-out generated for every
+destination.
+
+### Gap 4: per-node `@dim` and `@adapt 0`
+
+**Problem:** a `pix_chain` node can emit `@type` (from `pix_type`) and
+`@adapt 1` (from `adapt: True`), and nothing else. Fluid's seven solver nodes
+need `@adapt 0 @dim 256 256 @type float32`, and only `enc` adapts. The schema
+has no way to emit `@adapt 0` or any `@dim`.
+
+**Workaround:** a `SOLVER_ATTRS` string in `build_fluid.py` is written into each
+node's object text.
+
+**Candidate fix:** either a `dim: [w, h]` key per node (plus an explicit
+`adapt: False`), or a free-form `pix_attrs` string appended to the object text.
+The free-form string is the smaller change and would also cover the next
+attribute someone needs.
+
+### Gap 5: multi-stage param targets
+
+**Problem:** `pix_target` takes a single `pix_chain` node id, and assumes one
+primary pix that the other params belong to. In Fluid no stage is "the" primary
+for the params: `dt` drives two stages (`adv` for the advection step, `spec` for
+the decay exponent), `viscosity`, `project` and `drag` drive `spec`, `gain`
+drives `enc`, and `force` and `taps` drive `adv`.
+
+**Workaround:** a `TARGETS` dict in `build_fluid.py`; the first stage listed is
+the one the param's own dial and attrui target, and each further stage gets an
+extra `attrui` box for the same param, fed from the same route output.
+
+**Candidate fix:** allow `pix_target` to be a list of node ids. The single-id
+case keeps working unchanged.
+
+### Gap 6: Param-based bypass
+
+**Problem:** the schema's `bypass` param type generates the standard jsui
+(`bypass_toggle.js`) driving the native pix `@bypass` attribute. Native bypass
+skips the whole shader, and (the `f_vf_warp` finding) flips secondary outlets.
+Fluid needs the opposite: the solver keeps running, a connected inlet passes
+the force through unmodified, and an unconnected one passes a neutral field
+(`vs_black` decodes to −1, not neutral). So the toggle drives a codebox Param
+on `enc` instead: jsui → `prepend param bypass_gate` → `enc`. The Param is
+deliberately never named `bypass` (plan ADR-8).
+
+**Workaround:** hand-wired in `build_fluid.py`; `bypass_gate` is declared as an
+`internal` param in `definition.py`.
+
+**Relationship to existing work:** this is the same mechanism as
+`f_vf_warp`'s hand-built `bypass_gate`, and the fix proposed for plan Work
+Queue item 10 (the flipped secondary outlets of 11 modules). If item 10 is
+picked up, a schema-level Param bypass (something like `bypass_mode: "param"`
+with a target stage and Param name) would cover Fluid, `f_vf_warp` and those
+modules together, and is probably the most valuable of the four to build
+first for that reason.
+
+### Also hit, not counted among the four: `r draw` triggers
+
+`build_fluid.py`'s docstring lists a fifth item: `adv` and `enc` take a bang
+from `r draw` on inlet 0, so the solver advances exactly once per frame and
+`enc` takes the render-context size even with the force inlet unconnected
+(plan ADR-2). The schema has no notion of a bang-triggered stage.
+
+### Consequence for regeneration
+
+`f_vf_fluid.maxpat` is regenerated by `python3 src/f_vf_fluid/build_fluid.py`,
+not by `build_patcher.py`, so none of these gaps makes a regeneration silently
+drop UI the way Gaps 1 and 2 could. It is **not** on the never-regenerate
+list: rebuilding on 2026-09-29 reproduced the committed patcher byte for byte,
+so it has not been hand-edited since its last build.
