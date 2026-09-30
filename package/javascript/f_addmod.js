@@ -12,8 +12,8 @@ var SIZES = {
     "droste":         [150,  89],
     "mobius":         [185,  90],
     "stereo":         [160,  90],
-    "lens":           [175, 155],
-    "caustic":        [190, 100],
+    "lens":           [231, 156],
+    "caustic":        [227, 100],
     "sirds":          [190, 130],
     "channel_grader": [150, 165],
     "hue_processor":  [150, 120],
@@ -23,7 +23,7 @@ var SIZES = {
     "util_profile":   [200, 120],
     "vf_vortex":      [196, 160],
     "vf_vortex_multi":[191, 284],
-    "vf_fieldmap":    [100,  80],
+    "vf_fieldmap":    [150,  88],
     "vf_warp":        [ 78,  90],
     "vf_streak":      [190, 100],
     "vf_advect":      [190, 150],
@@ -31,13 +31,13 @@ var SIZES = {
     "vf_glow":        [190, 120],
     "vf_repulse":     [165,  80],
     "vf_split":       [ 80,  80],
-    "vf_chroma":      [190, 100],
+    "vf_chroma":      [190, 180],
     "vf_prism":       [190, 160],
     "vf_potential":   [190, 100],
     "vf_flow":        [150,  80],
     "vf_seeds":       [190, 175],
     "vf_optical_flow":[190, 130],
-    "weave":          [220,  80]
+    "weave":          [220, 159]
 };
 
 function addmod(mod) {
