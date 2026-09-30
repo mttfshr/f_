@@ -434,8 +434,11 @@ edge or disconnect artifacts.
       rect; without it the fallback is 200×150) and `VECFIELD_MODULES` in the tool.
       Checked: `.maxpat` diff is only the two enum entries and two `mmax` lines (JSON
       round trip is byte-identical), the tool reports 0 labels to change, every menu entry
-      resolves to a patcher, `test_module_contracts.py` 3/3. **Not yet checked in Max:**
-      that the menu shows "Fluid ∇" and adds the bpatcher at the right size.
+      resolves to a patcher, `test_module_contracts.py` 3/3. **Checked in Max by Matt
+      (2026-09-29):** the `f_addmod.js` sizes look right except `vf_seeds` (was cropped;
+      fixed to 190×205, three dials sit below its 160 px panel) and `f_chladni`, which does
+      not appear when added from the menu. Chladni is parked, not diagnosed, and not
+      known to be related to this change; see HANDOFF "Outstanding".
 - [x] T048 Add the four build-schema gaps this module hit (inlet fan-out through
       `vs_inState`, per-node `@dim`, multi-stage param targets, Param-based bypass) to
       `ideas/build_patcher_schema_gaps.md`.

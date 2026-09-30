@@ -54,9 +54,10 @@ commit that records the live bench result). Task-level detail and Findings are i
   had drifted from the panel rects. `vf_advect` 190×130 → 190×150 (it was cropping 20 px),
   then `caustic` (→227×100), `lens` (→231×156), `vf_chroma` (→190×180), `vf_fieldmap`
   (→150×88), `weave` (→220×159), all previously *smaller* than their panels.
-  **Not changed:** `chladni` (table 299×234, panel 227×164) and `vf_seeds` (table 190×175,
-  panel 190×160, content out to 205 px), which are larger than their panels and need
-  Matt's eye; and content sticking out past the panel on `vf_optical_flow`, `vf_split`,
+  **Not changed at that point:** `chladni` (table 299×234, panel 227×164) and `vf_seeds`
+  (table 190×175, panel 190×160, content out to 205 px), which are larger than their
+  panels. `vf_seeds` was cropped and was fixed after Matt's check (see Outstanding);
+  `chladni` is a separate problem (it does not appear at all); and content sticking out past the panel on `vf_optical_flow`, `vf_split`,
   `vf_warp` and `vf_fieldmap`, which is a design question and not a stale number.
 - **T048:** the four build-schema gaps (inlet fan-out through `vs_inState`, per-node
   `@dim`/`@adapt 0`, multi-stage param targets, Param-based bypass) are Gaps 3–6 in
@@ -80,11 +81,26 @@ commit that records the live bench result). Task-level detail and Findings are i
 
 None of these is covered by any test, so they are manual Max checks.
 
-1. **In Max:** the menu shows "Fluid ∇" in ∇ Processors and adds a 190×150 bpatcher; add
-   `vf_advect`, `caustic`, `lens`, `vf_chroma`, `vf_fieldmap` and `weave` and confirm none
-   is cropped; open `f_vf_fluid.maxhelp` (built by script and **never opened**) and check
-   the layout.
-2. **Decide** the `chladni` and `vf_seeds` table sizes (larger than their panels).
+1. **`f_chladni` does not appear when added from the `f_modules` menu. Parked by Matt
+   ("come back to chladni"); not diagnosed.** What is established: only one
+   `f_chladni.maxpat` exists (nothing shadows it); its dependencies (`moduleSize.js`,
+   `bypass_toggle.js`) exist; the contract tests and live bench load it fine; this
+   session's changes did not touch it (the `f_modules.maxpat` diff is slot 5 only, and
+   the `chladni` entry in `f_addmod.js` is unchanged); the file was saved in Max after
+   its last generation (Max's compact JSON layout), so it has been hand-edited. **Not
+   known: whether it ever worked from the menu.** Leading hypothesis: Chladni is the
+   **only** entry in slot 0, so that menu has a single item, and if `live.menu` only
+   outputs on a change of selection it can never fire (the wiring is otherwise identical
+   to every other slot: disp menu → file menu → `prepend addmod` → gate → `js`). The
+   discriminating question is what Matt sees when he picks it: **nothing at all** (the
+   menu isn't firing) or **an empty/black box** (the bpatcher loads but fails).
+2. **Open `f_vf_fluid.maxhelp`** (built by script and **never opened**) and check the
+   layout.
+
+Resolved this session after Matt's check: all the `f_addmod.js` sizes he tried look right
+except `vf_seeds`, which was still cropped; fixed (`c0a0a71`, 190×205). Its three
+bottom dials (`size_mod`, `stretch_mod`, `color_mode`) sit at y 162–205, below the 160 px
+panel; extending the panel to match is a small module-design tidy, not done.
 
 Not started and unchanged: plan Work Queue item 10 (flipped secondary outlets, 11 modules).
 Optional: bring the `f_vecfield_type.md` producers table up to date; test `project` on a
