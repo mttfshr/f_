@@ -402,9 +402,18 @@ edge or disconnect artifacts.
 - [ ] T046 Generate the helpfile per `skills/f-helpfile/SKILL.md` (state check via
       `build/extract_params.py --all`; generation is in-session by hand) →
       `package/help/f_vf_fluid.maxhelp`.
-- [ ] T047 Register the module in the `f_modules` menu with the ∇ marking
+- [x] T047 Register the module in the `f_modules` menu with the ∇ marking
       (`tools/append_nabla_menu.py`: add to `VECFIELD_MODULES`; place under the ∇
       category that fits).
+      **DONE 2026-09-29, category per Matt: processor = slot 5, "∇ Processors".** Appended
+      (not inserted) as the last entry, `vf_fluid` / `Fluid ∇`, with `parameter_mmax` 9 → 10
+      in both menus: menu values are stored by index, so a mid-list insert would shift what
+      saved states load. Also `f_addmod.js` `SIZES["vf_fluid"] = [190, 150]` (the panel
+      rect; without it the fallback is 200×150) and `VECFIELD_MODULES` in the tool.
+      Checked: `.maxpat` diff is only the two enum entries and two `mmax` lines (JSON
+      round trip is byte-identical), the tool reports 0 labels to change, every menu entry
+      resolves to a patcher, `test_module_contracts.py` 3/3. **Not yet checked in Max:**
+      that the menu shows "Fluid ∇" and adds the bpatcher at the right size.
 - [ ] T048 Add the four build-schema gaps this module hit (inlet fan-out through
       `vs_inState`, per-node `@dim`, multi-stage param targets, Param-based bypass) to
       `ideas/build_patcher_schema_gaps.md`.

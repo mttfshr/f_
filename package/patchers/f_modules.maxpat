@@ -982,14 +982,15 @@
                                 "Glow \u2207",
                                 "Advect \u2207",
                                 "Chroma \u2207",
-                                "Optical Flow \u2207"
+                                "Optical Flow \u2207",
+                                "Fluid \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_disp",
-                            "parameter_mmax": 9,
+                            "parameter_mmax": 10,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1029,14 +1030,15 @@
                                 "vf_glow",
                                 "vf_advect",
                                 "vf_chroma",
-                                "vf_optical_flow"
+                                "vf_optical_flow",
+                                "vf_fluid"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_file",
-                            "parameter_mmax": 9,
+                            "parameter_mmax": 10,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

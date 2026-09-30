@@ -24,6 +24,7 @@ VECFIELD_MODULES = {
     "vf_streak",
     "vf_glow",
     "vf_advect",
+    "vf_fluid",
     "vf_chroma",
     "vf_split",
     "vf_potential",
