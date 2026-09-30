@@ -358,9 +358,15 @@ edge or disconnect artifacts.
       learning captured in `skills/jit-gen-codebox/SKILL.md` ("a fixed-`@dim` stage is a
       resampler") and `skills/vsynth-bpatcher/SKILL.md` ("Not every parameter earns a
       panel slot") — f_ copies only.
-- [ ] T039 [US4] Edge cases in Vsynth: a uniform force (`f_vf_flow`) settles to a bounded
+- [x] T039 [US4] Edge cases in Vsynth: a uniform force (`f_vf_flow`) settles to a bounded
       speed with `drag > 0`; disconnecting the force mid-run leaves no corner-offset
       artifact; resizing the render does not reset or corrupt the state.
+      **PASS 2026-09-29, Matt's call.** Uniform force: covered offline (the mirror runs
+      "uniform force, no drag", the worst case, for 10,000 frames: finite, outlet in
+      [0, 1]; drag only lowers it). Disconnect and resize were **not run** in Vsynth:
+      disconnect shares the `vs_black` content gate already confirmed for fresh load
+      (T033); resize is safe by design, since solver state is in fixed 256² textures and
+      only `enc` follows the render size.
 - [x] T040 Soak: run at parameter extremes for 10 minutes; output never NaN or stuck black
       (SC5, tier 3).
       **SKIPPED 2026-09-29, Matt's call.** Not run on the GPU. Tier 1 (SC5) stands: the mirror
