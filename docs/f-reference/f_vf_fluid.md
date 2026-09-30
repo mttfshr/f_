@@ -103,3 +103,12 @@ Domain: periodic unit square, wavevector `k = 2π · signed_index`. Velocity is 
 - **Containment.** `ix` discards the numerical imaginary residue every frame and replaces non-finite values with 0 (`abs(x) < 1e30` — `x == x` does not work on this GPU), so a NaN cannot persist in the feedback loop. `enc` clamps to [0, 1].
 - **Verification** (as of 2026-09-28): a NumPy mirror of every stage is checked against independent physics (single-mode decay, Taylor–Green vortex decay 0.85% off analytic at frame 100, divergence-free after projection, Nyquist and Hermitian symmetry, no NaN over 10⁴ frames at extremes), and each real codebox is checked on the GPU against the mirror, including a 100-frame host-sequenced run within 3e-6. The 10-minute in-Vsynth soak was not run.
 - See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract, `docs/f-reference/f_vf_advect.md` for the consumer this pairs with, and `.specify/f_vf_fluid/{spec,plan,tasks}.md` for the design record and findings.
+
+---
+
+## References
+
+The method is Fourier-domain incompressible flow on a periodic domain: a Helmholtz projection and exact viscous and drag decay applied per Fourier bin, with semi-Lagrangian (backward) self-advection in real space. It was implemented from the equations in development; the project record does not name a source implementation.
+
+- Taylor, G.I. & Green, A.E. (1937). "Mechanism of the Production of Small Eddies from Large Ones." Proc. R. Soc. Lond. A 158, 499–521. Used as verification, not as a source: the decay of a Taylor–Green vortex has a closed form, and the solver is tested against it (0.85% off analytic at frame 100, N = 256).
+- The force tap grid, the `viscosity` dial law, and the content gate on the force input were derived in development — not from any external source.

@@ -409,9 +409,21 @@ edge or disconnect artifacts.
       processor; short description).
       **DONE 2026-09-29.** Row placed after `f_vf_advect`; type "Processor" per the
       definition's archetype.
-- [ ] T046 Generate the helpfile per `skills/f-helpfile/SKILL.md` (state check via
+- [x] T046 Generate the helpfile per `skills/f-helpfile/SKILL.md` (state check via
       `build/extract_params.py --all`; generation is in-session by hand) →
       `package/help/f_vf_fluid.maxhelp`.
+      **DONE 2026-09-29, not yet opened in Max.** State check: Fluid "ready" before, "current"
+      after. Prerequisite from the skill: added a `## References` section to
+      `docs/f-reference/f_vf_fluid.md` (the record names no source implementation, so none is
+      cited; Taylor & Green 1937 is cited as verification only). Built by copying box
+      attributes from `f_vf_optical_flow.maxhelp` / `f_droste.maxhelp`, changing only ids,
+      rects and text. Chain: `vs_sources_main` → `f_vf_optical_flow` (force) → `f_vf_fluid`
+      → `vs_preview`; no LFO (no time inlet); one unwired "try feeding into `f_vf_advect` /
+      `f_vf_warp` / `f_vf_glow`" note, as the pipeline prompt asks for a field producer.
+      Bpatcher rects use the real panel sizes (190×130, 190×150), and the `parameters`
+      registry is omitted (Max regenerates it on first save). Restored
+      `build/helpfile_queue.json` after the state check rewrote it with ~2,100 lines of
+      unrelated pending entries.
 - [x] T047 Register the module in the `f_modules` menu with the ∇ marking
       (`tools/append_nabla_menu.py`: add to `VECFIELD_MODULES`; place under the ∇
       category that fits).
