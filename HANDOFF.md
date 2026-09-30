@@ -1,15 +1,16 @@
 # HANDOFF
 
-_Session: 2026-09-29c_ — `f_vf_fluid` Phase 3 closed (Matt's by-eye calls), Phase 4
-(docs and integration) done except the live half of T050. The 2026-09-29b entry
+_Session: 2026-09-29c_ — `f_vf_fluid` Phase 3 closed (Matt's by-eye calls) and Phase 4
+(docs and integration) done, regression green. The 2026-09-29b entry
 (skills consolidation) follows, then 2026-09-29a / 2026-09-28 unchanged; 2026-09-23 is
 in git history.
 
-## This session (2026-09-29c): `f_vf_fluid` Phase 3 closed, Phase 4 done bar the live regression
+## This session (2026-09-29c): `f_vf_fluid` Phase 3 closed, Phase 4 done
 
 Every step committed with a clean tree (`3179cdd`, `4ef8459`, `1fcd0f6`, `a5f4184`,
-`8f98636`, `ec2af07`, `38a13ea`, `d615cd1`, `3ac365b`, `9d4f23c`, and the commit
-carrying this entry). Task-level detail and Findings are in `.specify/f_vf_fluid/tasks.md`.
+`8f98636`, `ec2af07`, `38a13ea`, `d615cd1`, `3ac365b`, `9d4f23c`, `3d16918`, and the
+commit that records the live bench result). Task-level detail and Findings are in
+`.specify/f_vf_fluid/tasks.md`.
 
 ### Phase 3 (all Matt's calls, by eye in Vsynth)
 
@@ -66,23 +67,24 @@ carrying this entry). Task-level detail and Findings are in `.specify/f_vf_fluid
   list:** `build_fluid.py` reproduces the committed patcher byte for byte, so it has not
   been hand-edited since its last build. (If plan item 12's T017, adopting the layout pass
   in `build_fluid.py`, is done, regeneration will change `patching_rect` values.)
-- **T050 offline half done:** `tests/run.sh` passes all 7 files (fluid mirror 22/22,
-  module contracts 3/3, 33 modules, 0 unexpected issues); `KNOWN_ISSUES` and `KNOWN` are
-  both empty. **Live half not run:** `tests/bench.sh` exits 2, since Max is not open with
-  `tests/bench/bench.maxpat`.
+- **T050 regression green.** Offline: `tests/run.sh` passes all 7 files (fluid mirror
+  22/22, module contracts 3/3, 33 modules, 0 unexpected issues); `KNOWN_ISSUES` and
+  `KNOWN` are both empty. Live: `tests/bench.sh` first exited 2 (Max not open), then Matt
+  opened `tests/bench/bench.maxpat` and **reported the tests pass; I did not see that
+  output.** The Phase 4 checkpoint is met.
 - Gotcha for next time: `build/extract_params.py --all` (the T046 state check) **rewrites
   the tracked `build/helpfile_queue.json`** with ~2,100 lines of pending entries for other
   modules. I restored it and did not commit it.
 
 ### Outstanding, Matt's
 
-1. **Open Max with `tests/bench/bench.maxpat`, then run `tests/bench.sh`.** That is the last
-   thing between Phase 4 and its checkpoint ("regression-clean").
-2. **In Max:** the menu shows "Fluid ∇" in ∇ Processors and adds a 190×150 bpatcher; add
+None of these is covered by any test, so they are manual Max checks.
+
+1. **In Max:** the menu shows "Fluid ∇" in ∇ Processors and adds a 190×150 bpatcher; add
    `vf_advect`, `caustic`, `lens`, `vf_chroma`, `vf_fieldmap` and `weave` and confirm none
    is cropped; open `f_vf_fluid.maxhelp` (built by script and **never opened**) and check
    the layout.
-3. **Decide** the `chladni` and `vf_seeds` table sizes (larger than their panels).
+2. **Decide** the `chladni` and `vf_seeds` table sizes (larger than their panels).
 
 Not started and unchanged: plan Work Queue item 10 (flipped secondary outlets, 11 modules).
 Optional: bring the `f_vecfield_type.md` producers table up to date; test `project` on a

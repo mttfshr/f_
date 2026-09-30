@@ -452,21 +452,22 @@ edge or disconnect artifacts.
       run"). **Not added to the never-regenerate list:** `build_fluid.py` reproduces the
       committed `f_vf_fluid.maxpat` byte for byte (checked 2026-09-29), so it has not been
       hand-edited since its last build.
-- [~] T050 Final regression: `tests/run.sh`, `tests/bench.sh` (both benches open),
+- [x] T050 Final regression: `tests/run.sh`, `tests/bench.sh` (both benches open),
       `tests/test_module_contracts.py` — all green, `KNOWN` registries still empty.
       **Offline half DONE 2026-09-29:** `tests/run.sh` passes all 7 files (benchclient 3/3,
       fft_separable 9/9, fluid_mirror 22/22, genjit 4/4, jxf 6/6, layout 9/9,
       module_contracts 3/3; 33 modules, 0 unexpected issues); `KNOWN_ISSUES` and `KNOWN`
-      are both empty. **Not run: the live half.** `tests/bench.sh` exits 2 ("bench not
+      are both empty. **The live half was not run at first:** `tests/bench.sh` exited 2 ("bench not
       reachable, no /pong on UDP 7472") because Max is not open with
       `tests/bench/bench.maxpat`. Needs Matt to open it, then `tests/bench.sh`. The live
       benches load modules inside `vs_render`; they do not exercise the `f_modules` menu
       entry or the `f_addmod.js` sizes, which stay a manual check (see T047).
+      **Live half DONE 2026-09-29, per Matt ("tests pass") after opening the bench; the
+      output was not seen in this session.** Phase 4 checkpoint met.
 - [x] T051 Update `HANDOFF.md` and this file's checkboxes and Findings.
       **DONE 2026-09-29.** HANDOFF has a new 2026-09-29c entry and the stale "re-upload
       seven skills" item is closed; checkboxes updated; the three empty Findings rows now
-      point at the populated T016–T021 rows. The Phase 4 checkpoint ("regression-clean")
-      still waits on the live half of T050.
+      point at the populated T016–T021 rows.
 
 **Checkpoint**: module documented, listed, and regression-clean. Commit.
 
