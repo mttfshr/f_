@@ -296,8 +296,9 @@ edge or disconnect artifacts.
       `1920 1080` / `3840 2160`). Message boxes into Fluid's control inlet: a RESET to the
       Phase 2 defaults (the T038a inconclusive result came partly from an unknown
       saturating state), `taps 1/8/16`, `project 0./1.`. **Unused producers are not
-      disabled** — f_ modules use the bypass toggle, not Vsynth's `enable` — so T041
-      measures Fluid's cost *differentially*: fps with Fluid's bypass on vs off.
+      disabled** — f_ modules use the bypass toggle, not Vsynth's `enable`. (The plan here
+      was to measure Fluid's cost differentially, fps with bypass on vs off; that was
+      dropped, see T041: bypass gates only `enc`, so it cannot measure the solver.)
 - [~] T036 [US2] Define the `viscosity` curve (UI → physical ν·dt, plan ADR-5 guidance)
       and set ranges/defaults for `dt`, `force`, `drag`, `gain`, `project` in
       `src/f_vf_fluid/definition.py` and the patcher; record the mapping in Findings.
@@ -305,7 +306,15 @@ edge or disconnect artifacts.
       0.085; codebox, mirror, definition, bench updated; see Findings). **Still open (by eye,
       Matt):** ranges/defaults for `dt`, `force`, `drag`, `gain`, and the viscosity default
       itself once heard.
-- [ ] T037 [US3] Judge `project` 0 vs 1 (shock-front vs swirl character); set its default.
+- [x] T037 [US3] Judge `project` 0 vs 1 (shock-front vs swirl character); set its default.
+      **DONE 2026-09-29, Matt's call: leave as is** (stays on the panel, default 1). Matt
+      could not tell 0 from 1 on the force he tried. Not run: the discriminating test with a
+      compressive force (vortex with `convergence` up and `curl` 0, or `f_vf_repulse`), where
+      the Helmholtz projection should remove nearly all of the force at `project 1`. On
+      solenoidal forces (vortex with convergence 0, uniform `f_vf_flow`, mostly-rigid video
+      motion) no visible difference is expected, so this is not evidence the wiring is bad.
+      If `project` ever looks dead on a compressive force, check that the tuning patch's
+      RESET box doesn't also send `project`.
 - [x] T038 [US4] Final force-downsample filter decision (bilinear vs 2×2 box) on a noisy
       source (`f_vf_optical_flow`); if it changes, update `src/f_vf_fluid/codebox_adv.gen`,
       the mirror, and rerun T017/T020. **Study done 2026-09-28 (see Findings): the single
@@ -353,8 +362,14 @@ edge or disconnect artifacts.
       artifact; resizing the render does not reset or corrupt the state.
 - [ ] T040 Soak: run at parameter extremes for 10 minutes; output never NaN or stuck black
       (SC5, tier 3).
-- [ ] T041 Cost in a real patch: record fps with a typical chain against NF-001; decide
+- [x] T041 Cost in a real patch: record fps with a typical chain against NF-001; decide
       256² vs 128² (if 128², regenerate with `gen_dft.py`, rerun Phase 1 bench, rebuild).
+      **DONE 2026-09-29: 256² stays.** Matt, by fps counter at 3840×2160: `fluid_tuning.maxpat`
+      as built (four parallel consumer chains) ran ~42 fps; a single chain with Fluid ran
+      59–60. Fluid is in both, so the ~7 ms overrun is the three extra consumer chains, not
+      Fluid. The planned bypass on/off differential was dropped: `bypass_gate` only gates
+      `enc`, the solver stays warm by design (ADR-8), so it would have measured ~0.1–0.2 ms.
+      Margin unknown (59–60 is the vsync ceiling); Fluid's isolated cost was not measured.
 - [ ] T042 Matt judges SC7–SC8 (persistent swirl distinct from `f_vf_advect` alone;
       video-driven stirring works); record the verdict.
 
@@ -483,4 +498,4 @@ explicit resample), update the spec's Open Experiment 1, then continue.
 | T036 (viscosity mapping) | **Before:** the dial was ν∈[0, 0.002], linear, with the codebox taking physical ν and multiplying by `dt`. At its extreme (ν=0.002, dt=0.05) it only reached m_c≈16 (m_c = 1/(2π√(ν·dt)) = the mode index that e-folds per frame); mid-scale swirls (m≈8) still passed at 78–95% per frame, so "honey" was unreachable (a blobby look needs m_c≈4–6, ν·dt≈1e-3). Also `dt` moved the smoothness: sweeping dt 0.002→0.05 at a fixed dial moved m_c from 80 to 16. **After (2026-09-28, Matt chose "smoothing independent of dt"):** `viscosity` is a 0–1 dial and the shader computes per-frame `nu_dt = 1.6e-3·v³`, decay `exp(-(nu_dt·k² + drag·dt))`; `dt` is speed only, drag stays time-based. Anchors: dial 1.0 → m_c 3.98; default 0.085 → nu_dt 9.8e-7 (= the old default 1e-4×0.01, so nothing shifts until tuned by eye); dial 0.25 ≈ m_c 32, 0.5 ≈ m_c 11. Mirror `visc_to_nudt()`/`nudt_to_visc()`. Checks: `test_fluid_mirror.py` 19/19 (new: dial law, dt-independence; sixth mutation "viscosity coupled to dt again" caught; Taylor–Green unchanged at 0.85% off analytic, N=256 frame 100); `bench_fluid.py` 9/9 (spec vs mirror ≤1.9e-7 across the dial incl. v=1 and out-of-range v=2; 100 GPU frames within 3.0e-6 of the mirror; cost 2.15 ms/frame). Module rebuilt by `build_fluid.py` (patcher diff: shader text, dial hint, initial 0.085, max 1.0). **Not yet run:** module bench `bench_fluid_module.py` on the rebuilt patcher; Matt's look in Max. Saved `viscosity` values from before this change mean something different now (dial vs physical ν). |
 | T038 (force downsample, `scratch/e4_force_alias.py`, 2026-09-28) | Matt performs at HD/4K, so the force is minified into 256² by 4–7× (HD) / 8–15× (4K); a single tap reads <1% of the source pixels. Noise gain vs an ideal area average (1.0 = ideal), bilinear-tap model / nearest-tap model (hardware is nearest-like when minifying, so the truth is nearer the second): today's single tap **HD 3.8× / 5.9×, 4K 9.3× / 11.5×**; k×k tap grid: tap4 HD 1.1/1.5, 4K 1.9/2.9; tap8 HD 1.0/1.0, 4K 1.1/1.4; **tap16 HD 1.0/1.0, 4K 1.0/1.05**. Above-Nyquist sinusoids pass today's tap at ~full amplitude (mean 1.0) vs ≈0.1 with tap16. Smooth flow + 0.5σ pixel noise: rms error vs the noise-free flow ≈0.5 today vs ≈0.045 with tap16 (flow rms 1). Taps offset in normalised coordinates need no source size, so no Param size or extra stage is needed. Smooth producers (`f_vf_vortex`, `f_vf_flow`, `f_vf_repulse`) are unaffected. Limit no tap grid fixes: content just above the grid Nyquist still aliases even under the ideal box (worst-case output ≈0.57). Bench context is 512² so 4K cannot be verified there. → T038a. |
 | T038a (force tap grid, 2026-09-28) | Shader: `Param taps(8)`, nested `for` loop (expression bound `max(1, floor(taps))`) averaging `sample(in2, ...)` at normalised offsets; content gate stays on the centre tap. Mirror: `tap_weights()` / `force_taps()` = the same average in separable form (matches a literal brute-force translation to 6e-7). **Hardware confirmed on the GPU** (white-noise force, noise gain vs an exact area average; the nearest-tap model predicted these to 2 decimals): HD taps 1/4/8/16 = **5.97 / 1.49 / 1.01 / 1.02**; 4K = **11.6 / 2.88 / 1.44 / 1.05**. `adv` cost at an HD force: taps 1 = 0.05–0.08 ms, taps 8 = 0.36–0.7 ms, taps 12 ≈ 1.0, taps 16 = 1.2–1.7 ms (varies with GPU state run to run); 4K force costs about the same. **Default 8**: frame total 2.49 ms (budget 3), HD ≈ ideal, 4K 8× less noise than before (1.44× ideal); 16 would give 3.3–4.4 ms. Checks: mirror 22/22 (three new tests; seventh mutation "tap grid ignored" caught), bench 12 tests (taps=1 reproduces the old shader at 1:1 to 6e-7; taps=8/16 match the mirror at 1:1 and magnified to 1e-6; 100-frame chain still 3.0e-6). A `taps` Param was left un-pinned in the T021 cost test and inherited 16 from the previous job (the bench keeps attribute values between jobs), which briefly showed a bogus 4.35/3.31 ms total — fixed by pinning. Exposed as a panel control (int numbox, 1–16, default 8) the same day; the 190×150 panel had a free slot, no other control moved. Tap grid at 1:1 slightly blurs a very sharp 256² force (box of about one texel); `taps = 1` restores the exact old read. |
-| T041 (cost in a real patch; 256² vs 128²) | |
+| T041 (cost in a real patch; 256² vs 128²) | **256² stays (2026-09-29, Matt, fps counter, 3840×2160).** `fluid_tuning.maxpat` with four parallel consumer chains ≈ 42 fps (≈ 23.8 ms/frame); one chain with Fluid = 59–60 fps. Fluid is present in both, so the overrun is the extra consumer chains. If the single chain sits near 16.7 ms, each extra heavy consumer costs ≥ ~2.4 ms at 4K, the same order as Fluid, so 4K has room for Fluid plus about one heavy consumer. Not measured: Fluid's isolated cost and the real margin (59–60 is the vsync ceiling). Method note: bypass on/off cannot measure the solver, `bypass_gate` gates `enc` only (ADR-8), so the handoff's planned differential was replaced by a chain-count comparison. |
