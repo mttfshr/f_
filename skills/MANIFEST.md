@@ -4,13 +4,15 @@ State of each skill as of the last claude.ai upload.
 Regenerate with `./skills/check.sh stamp` immediately AFTER uploading.
 Check with `./skills/check.sh`.
 
-_Stamped: 2026-09-29 (seeded by hashing the live uploaded copies from inside a
-claude.ai session, not by stamping the repo -- so the drift it reports on first
-run is real)_
+_Stamped: 2026-09-29_
 
 | skill | sha256(12) | lines |
 |---|---|---|
-| `f-helpfile` | 4e2303d83b9e | 246 |
-| `jit-gen-codebox` | 47ee1356324f | 390 |
+| `f-helpfile` | b8b9aaf2ee63 | 297 |
+| `gen-tilde-codebox` | a7c74b051bcf | 483 |
+| `jit-gen-codebox` | 48dd34451e5d | 848 |
+| `max-advanced-object-methodology` | c6bddc6986bf | 125 |
 | `max-patch-notation` | 143cc18a4e05 | 182 |
-| `vsynth-bpatcher` | ea0b8040251a | 678 |
+| `maxpat-json-authoring` | de131d2d3608 | 117 |
+| `pfft-spectral-processing` | bdbd28827121 | 248 |
+| `vsynth-bpatcher` | 2b2f5097e4d6 | 1010 |
