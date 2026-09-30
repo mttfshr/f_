@@ -94,10 +94,10 @@ None of these is covered by any test, so they are manual Max checks.
    to every other slot: disp menu → file menu → `prepend addmod` → gate → `js`). The
    discriminating question is what Matt sees when he picks it: **nothing at all** (the
    menu isn't firing) or **an empty/black box** (the bpatcher loads but fails).
-2. **Open `f_vf_fluid.maxhelp`** (built by script and **never opened**) and check the
-   layout.
 
-Resolved this session after Matt's check: all the `f_addmod.js` sizes he tried look right
+
+Resolved this session: `f_vf_fluid.maxhelp` (built by script) was opened in Max by Matt, who
+reports the layout check passes. After Matt's menu check: all the `f_addmod.js` sizes he tried look right
 except `vf_seeds`, which was still cropped; fixed (`c0a0a71`, 190×205). Its three
 bottom dials (`size_mod`, `stretch_mod`, `color_mode`) sit at y 162–205, below the 160 px
 panel; extending the panel to match is a small module-design tidy, not done.

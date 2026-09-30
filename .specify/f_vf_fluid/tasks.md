@@ -412,7 +412,7 @@ edge or disconnect artifacts.
 - [x] T046 Generate the helpfile per `skills/f-helpfile/SKILL.md` (state check via
       `build/extract_params.py --all`; generation is in-session by hand) →
       `package/help/f_vf_fluid.maxhelp`.
-      **DONE 2026-09-29, not yet opened in Max.** State check: Fluid "ready" before, "current"
+      **DONE 2026-09-29. Opened in Max by Matt, who reports the layout check passes.** State check: Fluid "ready" before, "current"
       after. Prerequisite from the skill: added a `## References` section to
       `docs/f-reference/f_vf_fluid.md` (the record names no source implementation, so none is
       cited; Taylor & Green 1937 is cited as verification only). Built by copying box
