@@ -299,13 +299,14 @@ edge or disconnect artifacts.
       disabled** — f_ modules use the bypass toggle, not Vsynth's `enable`. (The plan here
       was to measure Fluid's cost differentially, fps with bypass on vs off; that was
       dropped, see T041: bypass gates only `enc`, so it cannot measure the solver.)
-- [~] T036 [US2] Define the `viscosity` curve (UI → physical ν·dt, plan ADR-5 guidance)
+- [x] T036 [US2] Define the `viscosity` curve (UI → physical ν·dt, plan ADR-5 guidance)
       and set ranges/defaults for `dt`, `force`, `drag`, `gain`, `project` in
       `src/f_vf_fluid/definition.py` and the patcher; record the mapping in Findings.
       **Viscosity curve DONE 2026-09-28** (dial 0–1, per-frame ν·dt = 1.6e-3·v³, default
-      0.085; codebox, mirror, definition, bench updated; see Findings). **Still open (by eye,
-      Matt):** ranges/defaults for `dt`, `force`, `drag`, `gain`, and the viscosity default
-      itself once heard.
+      0.085; codebox, mirror, definition, bench updated; see Findings). **DONE 2026-09-29,
+      Matt by eye: passes as is.** Defaults for `dt` (0.01), `force` (0.02), `drag` (0.5),
+      `gain` (1.0) and `viscosity` (0.085) all stay; ranges (0–0.05, 0–0.2, 0–5, 0–10, and
+      0–1 for viscosity) were not judged separately and stay as built. No regeneration.
 - [x] T037 [US3] Judge `project` 0 vs 1 (shock-front vs swirl character); set its default.
       **DONE 2026-09-29, Matt's call: leave as is** (stays on the panel, default 1). Matt
       could not tell 0 from 1 on the force he tried. Not run: the discriminating test with a
