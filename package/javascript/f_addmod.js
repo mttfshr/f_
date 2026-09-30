@@ -35,7 +35,7 @@ var SIZES = {
     "vf_prism":       [190, 160],
     "vf_potential":   [190, 100],
     "vf_flow":        [150,  80],
-    "vf_seeds":       [190, 175],
+    "vf_seeds":       [190, 205],
     "vf_optical_flow":[190, 130],
     "weave":          [220, 159]
 };
