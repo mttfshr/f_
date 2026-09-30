@@ -49,6 +49,7 @@ Restart Max. The patches will be available in your file browser under `f_`.
 | `f_vf_warp` | Processor | UV warp via f_vecfield -- displaces source texture along field streamlines |
 | `f_vf_streak` | Processor | Directional blur via f_vecfield -- accumulates source samples along streamlines; two outlets (composite / isolated streak layer) |
 | `f_vf_advect` | Processor | Temporal fluid advection via f_vecfield -- accumulates flow across frames; decay >1.0 gives excitable/amplifying character |
+| `f_vf_fluid` | Processor | Spectral incompressible-flow velocity solver -- force f_vecfield in, persistent evolving velocity f_vecfield out; viscosity, projection and drag controls; fixed 256x256 solver at any render size. Outputs a field, not an image: feed it to f_vf_advect / f_vf_warp / f_vf_glow |
 | `f_vf_glow` | Processor | Field-aligned directional blur via f_vecfield -- accumulates source samples along streamlines with exponential falloff; two outlets (composite / isolated glow layer) |
 | `f_vf_repulse` | Generator | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold; four accumulation modes (Cancel, Max, Abs Add, Turbulent) |
 | `f_vf_chroma` | Processor | Vecfield-driven chromatic aberration -- rainbow/hue-sweep streak along field direction; two outlets (composite / isolated layer) |

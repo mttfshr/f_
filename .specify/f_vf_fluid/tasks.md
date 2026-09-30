@@ -392,13 +392,23 @@ edge or disconnect artifacts.
 
 **Purpose**: Make the module a documented, listed member of the library.
 
-- [ ] T043 [P] Write `docs/f-reference/f_vf_fluid.md` (signal flow, stage table, parameters,
+- [x] T043 [P] Write `docs/f-reference/f_vf_fluid.md` (signal flow, stage table, parameters,
       periodic-domain and 256² notes, bypass behavior, cost).
-- [ ] T044 [P] Add `f_vf_fluid` to the producers table in
+      **DONE 2026-09-29.** Written from the plan ADRs, `definition.py`, the built patcher's
+      inlet/outlet layout (one inlet: force vecfield + control; one outlet) and the Findings
+      cost rows. Claims not yet observed are marked so (`project` on a compressive force;
+      the 10-minute soak). Also corrected the stale "PROVISIONAL" line in `definition.py`'s
+      docstring.
+- [x] T044 [P] Add `f_vf_fluid` to the producers table in
       `docs/f-reference/f_vecfield_type.md` and a row in
       `docs/f-reference/module-inventory.md`.
-- [ ] T045 [P] Add the README patch-table row in `README.md` (type: vecfield producer /
+      **DONE 2026-09-29.** Note: the producers table in `f_vecfield_type.md` was already
+      incomplete (it lists 5 modules and omits `f_vf_flow`, `f_vf_repulse`,
+      `f_vf_optical_flow`, `f_vf_seeds` and others); only Fluid's row was added.
+- [x] T045 [P] Add the README patch-table row in `README.md` (type: vecfield producer /
       processor; short description).
+      **DONE 2026-09-29.** Row placed after `f_vf_advect`; type "Processor" per the
+      definition's archetype.
 - [ ] T046 Generate the helpfile per `skills/f-helpfile/SKILL.md` (state check via
       `build/extract_params.py --all`; generation is in-session by hand) →
       `package/help/f_vf_fluid.maxhelp`.

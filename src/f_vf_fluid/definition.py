@@ -19,7 +19,8 @@ Stage chain (plan ADR-1), solver stages at a fixed 256x256 float32:
   adv  self-advect + force        spec  projection + viscosity + drag
   fx/fy/iy/ix  separable DFT      enc   render-res upsample + encode + bypass gate
 
-Ranges and defaults below are PROVISIONAL (tier-3 tuning is tasks.md T036-T037).
+Defaults were judged by eye in Vsynth and left as built (tasks.md T036, 2026-09-29);
+the ranges were not judged separately.
 `viscosity` is a 0..1 dial (shader maps it to a per-frame nu*dt, T036). `taps` is the
 force tap-grid size (T038a): `"ui": False`, so it keeps its route token and reaches
 `adv` by control message, but takes no panel slot — it is a correctness setting fixed
