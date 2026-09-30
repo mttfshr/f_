@@ -89,14 +89,20 @@ None of these is covered by any test, so they are manual Max checks.
    the `chladni` entry in `f_addmod.js` is unchanged); the file was saved in Max after
    its last generation (Max's compact JSON layout), so it has been hand-edited. **Not
    known: whether it ever worked from the menu.** **Update: picking it gives an empty
-   rectangle, so the menu does fire and the bpatcher is created; the single-item-menu
-   hypothesis is refuted.** The failure is in what the bpatcher loads. Also checked and
-   clean: the Max package `f_` is a symlink to the repo's `package/`, so Max reads the
+   rectangle, so something fires and a bpatcher is created. That does NOT refute the
+   single-item-menu hypothesis (I wrongly said it did): the menu could fire with a wrong
+   symbol, and `addmod` would still create a bpatcher, then fail to find
+   `f_<wrong>.maxpat` and leave it empty. Matt's view is that the single item is the
+   cause.** The rectangle's size tells the cases apart: **200×150** is the `SIZES`
+   fallback, so `addmod` got an unrecognised name (the menu sent a wrong symbol: the
+   single-item hypothesis); **299×234** is the `chladni` table entry, so the name was
+   right and the file failed to load. Also checked and clean: the Max package `f_` is a symlink to the repo's `package/`, so Max reads the
    repo file; `f_chladni.maxpat` has no duplicate ids or dangling wires (the same checks
    pass for `f_vf_advect`, `f_vf_fluid`, `caustic`); its presentation content sits at the
    origin like the working modules (panel 227×164, min x −8), so it is not an offset; its
-   appversion matches (9.1.4). **Next step: the Max console (Cmd-M) after adding Chladni
-   from the menu; its first error line should say why.** Also cheap: drop a bpatcher by
+   appversion matches (9.1.4). **Next step: the size of the empty rectangle (above); if it
+   is 299×234, the Max console (Cmd-M) after adding Chladni, whose first error line
+   should say why.** Also cheap: drop a bpatcher by
    hand pointing at `f_chladni.maxpat`. If that works too, the menu path is at fault; if
    it is also empty, the file is.
 
