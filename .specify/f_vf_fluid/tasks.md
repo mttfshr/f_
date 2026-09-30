@@ -361,8 +361,11 @@ edge or disconnect artifacts.
 - [ ] T039 [US4] Edge cases in Vsynth: a uniform force (`f_vf_flow`) settles to a bounded
       speed with `drag > 0`; disconnecting the force mid-run leaves no corner-offset
       artifact; resizing the render does not reset or corrupt the state.
-- [ ] T040 Soak: run at parameter extremes for 10 minutes; output never NaN or stuck black
+- [x] T040 Soak: run at parameter extremes for 10 minutes; output never NaN or stuck black
       (SC5, tier 3).
+      **SKIPPED 2026-09-29, Matt's call.** Not run on the GPU. Tier 1 (SC5) stands: the mirror
+      runs 10,000 frames at parameter extremes (`test_stability_at_extremes_10k_frames`),
+      state finite and outlet in [0, 1].
 - [x] T041 Cost in a real patch: record fps with a typical chain against NF-001; decide
       256² vs 128² (if 128², regenerate with `gen_dft.py`, rerun Phase 1 bench, rebuild).
       **DONE 2026-09-29: 256² stays.** Matt, by fps counter at 3840×2160: `fluid_tuning.maxpat`
@@ -371,8 +374,9 @@ edge or disconnect artifacts.
       Fluid. The planned bypass on/off differential was dropped: `bypass_gate` only gates
       `enc`, the solver stays warm by design (ADR-8), so it would have measured ~0.1–0.2 ms.
       Margin unknown (59–60 is the vsync ceiling); Fluid's isolated cost was not measured.
-- [ ] T042 Matt judges SC7–SC8 (persistent swirl distinct from `f_vf_advect` alone;
+- [x] T042 Matt judges SC7–SC8 (persistent swirl distinct from `f_vf_advect` alone;
       video-driven stirring works); record the verdict.
+      **PASS 2026-09-29, Matt.** SC7 and SC8 judged by eye in Vsynth; no notes recorded.
 
 **Checkpoint**: parameters final; success criteria 7–8 judged. Commit.
 
