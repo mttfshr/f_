@@ -105,6 +105,13 @@ None of these is covered by any test, so they are manual Max checks.
    should say why.** Also cheap: drop a bpatcher by
    hand pointing at `f_chladni.maxpat`. If that works too, the menu path is at fault; if
    it is also empty, the file is.
+   **Fix options if it turns out to be the menu (not started; discuss before building):**
+   (1) make `addmod` take the module from the menu's **index** instead of its symbol, for
+   slot 0 only (small, but slot 0 becomes a special case); (2) give slot 0 a second item
+   so it is an ordinary multi-item menu (needs a real second module; the obvious
+   candidate, `f_chladni_audio`, has no reference doc and is unverified, so do not add it
+   untested; appending keeps saved indices stable). **Matt asked to drop this for now
+   (2026-09-29): do not raise it unprompted.**
 
 
 Resolved this session: `f_vf_fluid.maxhelp` (built by script) was opened in Max by Matt, who
