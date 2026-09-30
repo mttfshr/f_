@@ -1,10 +1,96 @@
 # HANDOFF
 
-_Session: 2026-09-29b_ — skills consolidation finished: all eight Max/DSP skills
-single-sourced in `f_/skills/`, upload staleness now measurable. The earlier 2026-09-29
-entry (fluid Phase 3) and 2026-09-28 follow unchanged below; 2026-09-23 is in git history.
+_Session: 2026-09-29c_ — `f_vf_fluid` Phase 3 closed (Matt's by-eye calls), Phase 4
+(docs and integration) done except the live half of T050. The 2026-09-29b entry
+(skills consolidation) follows, then 2026-09-29a / 2026-09-28 unchanged; 2026-09-23 is
+in git history.
 
-## This session (2026-09-29b): skills consolidation closed
+## This session (2026-09-29c): `f_vf_fluid` Phase 3 closed, Phase 4 done bar the live regression
+
+Every step committed with a clean tree (`3179cdd`, `4ef8459`, `1fcd0f6`, `a5f4184`,
+`8f98636`, `ec2af07`, `38a13ea`, `d615cd1`, `3ac365b`, `9d4f23c`, and the commit
+carrying this entry). Task-level detail and Findings are in `.specify/f_vf_fluid/tasks.md`.
+
+### Phase 3 (all Matt's calls, by eye in Vsynth)
+
+- **T041 cost: 256² stays.** At 3840×2160 the tuning patch with four parallel consumer
+  chains ran ~42 fps; one chain with Fluid held 59–60. Fluid is in both, so the overrun
+  is the extra consumers. **The handoff's planned method was wrong and was dropped:**
+  fps with bypass on vs off cannot measure the solver, because `bypass_gate` gates only
+  `enc` and the solver stays warm by design (ADR-8); and at vsync a ~2.5 ms cost is
+  invisible until the frame overruns. The real margin is unmeasured (59–60 is the ceiling).
+- **T036 passes as is:** `dt` 0.01, `force` 0.02, `drag` 0.5, `gain` 1.0, `viscosity`
+  0.085. Ranges were not judged separately. No regeneration.
+- **T037 `project`: left as is** (on the panel, default 1). Matt could not tell 0 from 1
+  on the force he tried. That is expected on solenoidal forces (the projection only
+  removes the curl-free part), so it is not evidence of a wiring fault. **Not tried:** a
+  compressive force (vortex with `convergence`, or `f_vf_repulse`). If `project` ever
+  looks dead there, check that the tuning patch's RESET box doesn't also send `project`.
+- **T039 pass:** the uniform-force case is covered offline (mirror, 10,000 frames);
+  disconnect and resize were **not run** (reasoned safe: they share the `vs_black`
+  content gate already confirmed at fresh load, and solver state is in fixed 256²
+  textures). **T040 soak skipped. T042 pass.**
+
+### Phase 4
+
+- **T043–T045:** `docs/f-reference/f_vf_fluid.md` (new), a row each in the producers table
+  (`f_vecfield_type.md`) and `module-inventory.md`, and a README row. Claims not yet
+  observed are marked as such in the doc. `f_vecfield_type.md`'s producers table was
+  **already incomplete** (5 modules; omits `f_vf_flow`, `f_vf_repulse`,
+  `f_vf_optical_flow`, `f_vf_seeds`, …): only Fluid's row was added.
+- **T046 helpfile** `package/help/f_vf_fluid.maxhelp`, built by copying box attributes
+  from the optical-flow and droste helpfiles. Chain: `vs_sources_main` →
+  `f_vf_optical_flow` (force) → `f_vf_fluid` → `vs_preview`, plus an unwired "try feeding
+  into `f_vf_advect` / `f_vf_warp` / `f_vf_glow`" note. **References name no source
+  implementation, because the spec and plan record none** (Taylor & Green 1937 is cited
+  as verification only). If you worked from a published source, add it to both the doc
+  and the helpfile. The skill also required a `## References` section in the doc; added.
+- **T047 menu:** slot 5, **∇ Processors** (Matt's call), appended **last** (menu values are
+  stored by index, so a mid-list insert would shift what saved states load); `parameter_mmax`
+  9 → 10 in both menus; `VECFIELD_MODULES` updated. `f_addmod.js` also needed a `vf_fluid`
+  size entry (190×150).
+- **Found while doing T047, fixed with Matt's confirmation:** the `f_addmod.js` size table
+  had drifted from the panel rects. `vf_advect` 190×130 → 190×150 (it was cropping 20 px),
+  then `caustic` (→227×100), `lens` (→231×156), `vf_chroma` (→190×180), `vf_fieldmap`
+  (→150×88), `weave` (→220×159), all previously *smaller* than their panels.
+  **Not changed:** `chladni` (table 299×234, panel 227×164) and `vf_seeds` (table 190×175,
+  panel 190×160, content out to 205 px), which are larger than their panels and need
+  Matt's eye; and content sticking out past the panel on `vf_optical_flow`, `vf_split`,
+  `vf_warp` and `vf_fieldmap`, which is a design question and not a stale number.
+- **T048:** the four build-schema gaps (inlet fan-out through `vs_inState`, per-node
+  `@dim`/`@adapt 0`, multi-stage param targets, Param-based bypass) are Gaps 3–6 in
+  `ideas/build_patcher_schema_gaps.md`, with the workaround `build_fluid.py` uses and a
+  candidate fix for each; **none attempted**. Gap 6 is the same mechanism as plan Work Queue
+  item 10 (flipped secondary outlets), so a schema-level Param bypass would serve both.
+- **T049:** plan Work Queue item 11 updated. **`f_vf_fluid` is not on the never-regenerate
+  list:** `build_fluid.py` reproduces the committed patcher byte for byte, so it has not
+  been hand-edited since its last build. (If plan item 12's T017, adopting the layout pass
+  in `build_fluid.py`, is done, regeneration will change `patching_rect` values.)
+- **T050 offline half done:** `tests/run.sh` passes all 7 files (fluid mirror 22/22,
+  module contracts 3/3, 33 modules, 0 unexpected issues); `KNOWN_ISSUES` and `KNOWN` are
+  both empty. **Live half not run:** `tests/bench.sh` exits 2, since Max is not open with
+  `tests/bench/bench.maxpat`.
+- Gotcha for next time: `build/extract_params.py --all` (the T046 state check) **rewrites
+  the tracked `build/helpfile_queue.json`** with ~2,100 lines of pending entries for other
+  modules. I restored it and did not commit it.
+
+### Outstanding, Matt's
+
+1. **Open Max with `tests/bench/bench.maxpat`, then run `tests/bench.sh`.** That is the last
+   thing between Phase 4 and its checkpoint ("regression-clean").
+2. **In Max:** the menu shows "Fluid ∇" in ∇ Processors and adds a 190×150 bpatcher; add
+   `vf_advect`, `caustic`, `lens`, `vf_chroma`, `vf_fieldmap` and `weave` and confirm none
+   is cropped; open `f_vf_fluid.maxhelp` (built by script and **never opened**) and check
+   the layout.
+3. **Decide** the `chladni` and `vf_seeds` table sizes (larger than their panels).
+
+Not started and unchanged: plan Work Queue item 10 (flipped secondary outlets, 11 modules).
+Optional: bring the `f_vecfield_type.md` producers table up to date; test `project` on a
+compressive force.
+
+---
+
+## Earlier session (2026-09-29b): skills consolidation closed
 
 Both repos committed and clean (`f_` `71a520d`, `claude-scaffold` `82fd11f`). **The earlier
 entries' "Nothing is committed" is stale** — that work went in as `97d2c5d` / `8b81ccb` /
@@ -53,7 +139,10 @@ Closed both pieces carried from the previous session.
     upload** (`max-patch-notation` is the only one in sync, and its hash matched
     byte-for-byte across container and disk — which cross-validates the seeding method).
 
-### Outstanding, Matt's: re-upload seven skills, then stamp
+### ~~Outstanding, Matt's: re-upload seven skills, then stamp~~ — DONE
+
+Matt re-uploaded and ran `./skills/check.sh stamp` the same day (`3cb0bee`); `check.sh`
+now reports all eight skills current. The original wording follows for the record.
 
 Everything except `max-patch-notation`. Run `./skills/check.sh` for the list, upload, then
 `./skills/check.sh stamp`. Until stamped, the manifest correctly keeps reporting drift.

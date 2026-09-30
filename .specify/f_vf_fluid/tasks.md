@@ -445,11 +445,28 @@ edge or disconnect artifacts.
       `@type` and `@adapt 1` only; `pix_target` takes a single id). Also recorded the fifth
       item in `build_fluid.py`'s docstring (`r draw` triggers), the tie between Gap 6 and
       plan Work Queue item 10, and that `f_vf_fluid` regenerates byte-identically.
-- [ ] T049 Update `.specify/plan.md`: Work Queue item 11 → status; add `f_vf_fluid` to the
+- [x] T049 Update `.specify/plan.md`: Work Queue item 11 → status; add `f_vf_fluid` to the
       never-regenerate list if the patcher was hand-edited after the first build.
-- [ ] T050 Final regression: `tests/run.sh`, `tests/bench.sh` (both benches open),
+      **DONE 2026-09-29.** Item 11 now records Phase 3 and Phase 4 and drops two stale
+      statements (the "Next: by-eye tuning" ordering and "Block C is the first thing to
+      run"). **Not added to the never-regenerate list:** `build_fluid.py` reproduces the
+      committed `f_vf_fluid.maxpat` byte for byte (checked 2026-09-29), so it has not been
+      hand-edited since its last build.
+- [~] T050 Final regression: `tests/run.sh`, `tests/bench.sh` (both benches open),
       `tests/test_module_contracts.py` — all green, `KNOWN` registries still empty.
-- [ ] T051 Update `HANDOFF.md` and this file's checkboxes and Findings.
+      **Offline half DONE 2026-09-29:** `tests/run.sh` passes all 7 files (benchclient 3/3,
+      fft_separable 9/9, fluid_mirror 22/22, genjit 4/4, jxf 6/6, layout 9/9,
+      module_contracts 3/3; 33 modules, 0 unexpected issues); `KNOWN_ISSUES` and `KNOWN`
+      are both empty. **Not run: the live half.** `tests/bench.sh` exits 2 ("bench not
+      reachable, no /pong on UDP 7472") because Max is not open with
+      `tests/bench/bench.maxpat`. Needs Matt to open it, then `tests/bench.sh`. The live
+      benches load modules inside `vs_render`; they do not exercise the `f_modules` menu
+      entry or the `f_addmod.js` sizes, which stay a manual check (see T047).
+- [x] T051 Update `HANDOFF.md` and this file's checkboxes and Findings.
+      **DONE 2026-09-29.** HANDOFF has a new 2026-09-29c entry and the stale "re-upload
+      seven skills" item is closed; checkboxes updated; the three empty Findings rows now
+      point at the populated T016–T021 rows. The Phase 4 checkpoint ("regression-clean")
+      still waits on the live half of T050.
 
 **Checkpoint**: module documented, listed, and regression-clean. Commit.
 
@@ -540,9 +557,9 @@ explicit resample), update the spec's Open Experiment 1, then continue.
 | T033 (fresh load) | Unconnected inlet, fresh load: exactly neutral, render size — **after the fix below**. Before it: a uniform phantom velocity of about −0.04…−0.07 (R − 0.5) persisted at every warmup from 6 to 80 frames. |
 | **vs_black finding** | `vs_black` is **all zeros**, decoding to −1 (the contract doc said "all 0.5" — corrected). `vs_inState`'s connected flag lags ~180 ms at load/disconnect, so `src_vecfield = 1` briefly while the inlet is unconnected; the solver injected the −1 force for ~7–10 frames and the resulting phantom velocity decays only at the drag rate. Fix: gate the force by content in `codebox_adv.gen` and `codebox_enc.gen` — `abs(sample(in2, norm).z - 0.5) < 0.25` (a real `f_vecfield` has B = 0.5, `vs_black` B = 0) — mirrored in `fluid_mirror.py`, tested at tier 1 (17/17), on the stage bench, and in the module bench. Caveat added to the `vsynth-bpatcher` skill. |
 | T010 (mutation check) | All five mutations caught: Nyquist not zeroed, projection sign flipped, decay exponent wrong, drag dropped, advection clamps instead of wrapping. |
-| T016–T019 (bench errors) | |
-| T020 (multi-frame error growth) | |
-| T021 (cost per stage / total) | |
+| T016–T019 (bench errors) | See the separate T016, T017, T018 and T019 rows above. |
+| T020 (multi-frame error growth) | See the T020 (multi-frame) row above. |
+| T021 (cost per stage / total) | See the T021 row above (per stage, before `taps`) and the T038a and T041 rows (with `taps` 8, and in a real patch). |
 | T036 (viscosity mapping) | **Before:** the dial was ν∈[0, 0.002], linear, with the codebox taking physical ν and multiplying by `dt`. At its extreme (ν=0.002, dt=0.05) it only reached m_c≈16 (m_c = 1/(2π√(ν·dt)) = the mode index that e-folds per frame); mid-scale swirls (m≈8) still passed at 78–95% per frame, so "honey" was unreachable (a blobby look needs m_c≈4–6, ν·dt≈1e-3). Also `dt` moved the smoothness: sweeping dt 0.002→0.05 at a fixed dial moved m_c from 80 to 16. **After (2026-09-28, Matt chose "smoothing independent of dt"):** `viscosity` is a 0–1 dial and the shader computes per-frame `nu_dt = 1.6e-3·v³`, decay `exp(-(nu_dt·k² + drag·dt))`; `dt` is speed only, drag stays time-based. Anchors: dial 1.0 → m_c 3.98; default 0.085 → nu_dt 9.8e-7 (= the old default 1e-4×0.01, so nothing shifts until tuned by eye); dial 0.25 ≈ m_c 32, 0.5 ≈ m_c 11. Mirror `visc_to_nudt()`/`nudt_to_visc()`. Checks: `test_fluid_mirror.py` 19/19 (new: dial law, dt-independence; sixth mutation "viscosity coupled to dt again" caught; Taylor–Green unchanged at 0.85% off analytic, N=256 frame 100); `bench_fluid.py` 9/9 (spec vs mirror ≤1.9e-7 across the dial incl. v=1 and out-of-range v=2; 100 GPU frames within 3.0e-6 of the mirror; cost 2.15 ms/frame). Module rebuilt by `build_fluid.py` (patcher diff: shader text, dial hint, initial 0.085, max 1.0). **Not yet run:** module bench `bench_fluid_module.py` on the rebuilt patcher; Matt's look in Max. Saved `viscosity` values from before this change mean something different now (dial vs physical ν). |
 | T038 (force downsample, `scratch/e4_force_alias.py`, 2026-09-28) | Matt performs at HD/4K, so the force is minified into 256² by 4–7× (HD) / 8–15× (4K); a single tap reads <1% of the source pixels. Noise gain vs an ideal area average (1.0 = ideal), bilinear-tap model / nearest-tap model (hardware is nearest-like when minifying, so the truth is nearer the second): today's single tap **HD 3.8× / 5.9×, 4K 9.3× / 11.5×**; k×k tap grid: tap4 HD 1.1/1.5, 4K 1.9/2.9; tap8 HD 1.0/1.0, 4K 1.1/1.4; **tap16 HD 1.0/1.0, 4K 1.0/1.05**. Above-Nyquist sinusoids pass today's tap at ~full amplitude (mean 1.0) vs ≈0.1 with tap16. Smooth flow + 0.5σ pixel noise: rms error vs the noise-free flow ≈0.5 today vs ≈0.045 with tap16 (flow rms 1). Taps offset in normalised coordinates need no source size, so no Param size or extra stage is needed. Smooth producers (`f_vf_vortex`, `f_vf_flow`, `f_vf_repulse`) are unaffected. Limit no tap grid fixes: content just above the grid Nyquist still aliases even under the ideal box (worst-case output ≈0.57). Bench context is 512² so 4K cannot be verified there. → T038a. |
 | T038a (force tap grid, 2026-09-28) | Shader: `Param taps(8)`, nested `for` loop (expression bound `max(1, floor(taps))`) averaging `sample(in2, ...)` at normalised offsets; content gate stays on the centre tap. Mirror: `tap_weights()` / `force_taps()` = the same average in separable form (matches a literal brute-force translation to 6e-7). **Hardware confirmed on the GPU** (white-noise force, noise gain vs an exact area average; the nearest-tap model predicted these to 2 decimals): HD taps 1/4/8/16 = **5.97 / 1.49 / 1.01 / 1.02**; 4K = **11.6 / 2.88 / 1.44 / 1.05**. `adv` cost at an HD force: taps 1 = 0.05–0.08 ms, taps 8 = 0.36–0.7 ms, taps 12 ≈ 1.0, taps 16 = 1.2–1.7 ms (varies with GPU state run to run); 4K force costs about the same. **Default 8**: frame total 2.49 ms (budget 3), HD ≈ ideal, 4K 8× less noise than before (1.44× ideal); 16 would give 3.3–4.4 ms. Checks: mirror 22/22 (three new tests; seventh mutation "tap grid ignored" caught), bench 12 tests (taps=1 reproduces the old shader at 1:1 to 6e-7; taps=8/16 match the mirror at 1:1 and magnified to 1e-6; 100-frame chain still 3.0e-6). A `taps` Param was left un-pinned in the T021 cost test and inherited 16 from the previous job (the bench keeps attribute values between jobs), which briefly showed a bogus 4.35/3.31 ms total — fixed by pinning. Exposed as a panel control (int numbox, 1–16, default 8) the same day; the 190×150 panel had a free slot, no other control moved. Tap grid at 1:1 slightly blurs a very sharp 256² force (box of about one texel); `taps = 1` restores the exact old read. |
