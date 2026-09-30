@@ -88,12 +88,17 @@ None of these is covered by any test, so they are manual Max checks.
    session's changes did not touch it (the `f_modules.maxpat` diff is slot 5 only, and
    the `chladni` entry in `f_addmod.js` is unchanged); the file was saved in Max after
    its last generation (Max's compact JSON layout), so it has been hand-edited. **Not
-   known: whether it ever worked from the menu.** Leading hypothesis: Chladni is the
-   **only** entry in slot 0, so that menu has a single item, and if `live.menu` only
-   outputs on a change of selection it can never fire (the wiring is otherwise identical
-   to every other slot: disp menu → file menu → `prepend addmod` → gate → `js`). The
-   discriminating question is what Matt sees when he picks it: **nothing at all** (the
-   menu isn't firing) or **an empty/black box** (the bpatcher loads but fails).
+   known: whether it ever worked from the menu.** **Update: picking it gives an empty
+   rectangle, so the menu does fire and the bpatcher is created; the single-item-menu
+   hypothesis is refuted.** The failure is in what the bpatcher loads. Also checked and
+   clean: the Max package `f_` is a symlink to the repo's `package/`, so Max reads the
+   repo file; `f_chladni.maxpat` has no duplicate ids or dangling wires (the same checks
+   pass for `f_vf_advect`, `f_vf_fluid`, `caustic`); its presentation content sits at the
+   origin like the working modules (panel 227×164, min x −8), so it is not an offset; its
+   appversion matches (9.1.4). **Next step: the Max console (Cmd-M) after adding Chladni
+   from the menu; its first error line should say why.** Also cheap: drop a bpatcher by
+   hand pointing at `f_chladni.maxpat`. If that works too, the menu path is at fault; if
+   it is also empty, the file is.
 
 
 Resolved this session: `f_vf_fluid.maxhelp` (built by script) was opened in Max by Matt, who
