@@ -28,7 +28,7 @@ Background on the package layout and the choices behind it: `docs/max-reference/
 
 ## Patches
 
-Grouped by type, alphabetical within each group. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`.
+Every patcher in `package/patchers/` is listed here, grouped by type and alphabetical within each group. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`.
 
 ### Generators
 
@@ -36,12 +36,14 @@ Grouped by type, alphabetical within each group. The `f_vf_` modules work with f
 |---|---|
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes); audio companion patch included |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
+| `f_ngon` | ⚠ Unfinished. Regular N-gon generator / mask with a live-modulatable vertex count. Built, but not yet confirmed or documented |
 | `f_sirds` | Single Image Random Dot Stereogram -- strip-based real-time construction; depth texture drives displacement of a repeating pattern |
 | `f_vf_flow` | Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet |
 | `f_vf_repulse` | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold; four accumulation modes (Cancel, Max, Abs Add, Turbulent) |
 | `f_vf_seeds` | Discrete mark placement/orientation via f_vecfield and a shape tex -- Voronoi-style seed distribution with priority-generalized selection and multi-owner overlap (texture bombing); shape tex + mod tex inlets |
 | `f_vf_vortex` | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
+| `f_vf_vortex_multi_version` | ⚠ Undocumented. A second, differing file shipped beside `f_vf_vortex_multi`; unclear whether it is a superseded draft or an intentional alternate |
 | `f_weave` | Parametric line-mark texture -- continuous distance-field lines with per-line phase variation; optional vecfield + scalar-potential inlets |
 
 ### Generator / processor
@@ -73,22 +75,29 @@ Grouped by type, alphabetical within each group. The `f_vf_` modules work with f
 | `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time via feedback; feeds f_weave's scalar inlet |
 | `f_vf_prism` | Vecfield-driven spectral/prism separation -- luma-gated RGB displacement along field direction; two outlets (composite / isolated layer) |
 | `f_vf_streak` | Directional blur via f_vecfield -- accumulates source samples along streamlines; two outlets (composite / isolated streak layer) |
+| `f_vf_vorticity` | ⚠ Unverified. Vorticity-confinement ("curl amp") processor: adds back the fine swirl a field's curl implies. Do not treat as working |
 | `f_vf_warp` | UV warp via f_vecfield -- displaces source texture along field streamlines |
 
 ### Utilities
 
 | Patch | Description |
 |---|---|
+| `f_modules` | Module menu -- pick a module to add it to the patch as a bpatcher; categories marked ∇ hold vecfield modules |
 | `f_texrouter` | 4x4 texture routing matrix with preset system |
 | `f_util_matrix_2` | Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status |
 | `f_util_profile` | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
 | `f_vf_split` | Splits an f_vecfield's X/Y channels to two separate greyscale outlets, unipolar or bipolar |
 
+### Audio-domain (`gen~`)
+
+| Patch | Description |
+|---|---|
+| `f_a_ripple` | ⚠ Unfinished. Generator for the cross-frequency de-correlating ripple stimulus of Yukhnovich et al. (2025): a broadband harmonic carrier with a dynamic spectral ripple on one octave band. DSP confirmed by ear; the UI is still plain flonums and toggles, and there is no reference doc or helpfile yet |
+| `f_chladni_audio` | ⚠ Unverified. Audio-input companion for `f_chladni`: per its spec, a pitch follower drives `note` and an amplitude follower drives `amp`. No reference doc |
+
 ## Notes
 
 These patches are developed alongside personal Vsynth performance work and released as-is. They follow Vsynth conventions and are designed for Vsynth signal chains. If you know Max and Vsynth, you should be able to understand and modify the patches as needed.
-
-The tables above list the modules meant for use. `package/patchers/` also contains a few things it doesn't: `f_modules` (the module menu), `f_a_ripple` and `f_chladni_audio` (audio-domain, `gen~` rather than `jit.gl.pix`), and patchers that are built but not yet confirmed or documented — currently `f_ngon` and `f_vf_vorticity`. Treat anything not in the table as unfinished.
 
 There is no release schedule. Patches may change significantly as development continues.
 

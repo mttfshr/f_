@@ -11,7 +11,7 @@ A collection of bpatchers for [Vsynth](https://www.kevinkripper.com/vsynth) in [
 
 - Modules appear in Max's file browser under `f_`. Drop one into a Vsynth chain like any other Vsynth module.
 - `help/` has a help patch for many of the modules, and `examples/` has complete Vsynth patches that use them. Where an example has a saved preset, it sits next to it as `f_demo_<name>.json`.
-- Not every module in `patchers/` is finished. The full list of modules meant for use, with descriptions, is in the project README: https://github.com/mttfshr/f_
+- Every patcher in `patchers/` is listed, with a description, in the project README (https://github.com/mttfshr/f_). Entries marked ⚠ there are unfinished: don't rely on them.
 
 ## Notes
 
