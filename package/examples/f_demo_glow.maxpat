@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 579.0, 95.0, 1115.0, 829.0 ],
+        "rect": [ 736.0, 123.0, 1000.0, 890.0 ],
         "boxes": [
             {
                 "box": {
@@ -18,17 +18,17 @@
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
-                    "id": "obj-9",
+                    "id": "obj-17",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "f_lens.maxpat",
-                    "numinlets": 5,
+                    "name": "f_channel_grader.maxpat",
+                    "numinlets": 1,
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 871.0, 588.0, 175.0, 155.0 ],
-                    "varname": "f_lens[1]",
+                    "patching_rect": [ 358.0, 683.0, 150.0, 165.0 ],
+                    "varname": "f_channel_grader",
                     "viewvisibility": 1
                 }
             },
@@ -39,17 +39,17 @@
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
-                    "id": "obj-17",
+                    "id": "obj-13",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "vs_filter_hp4x.maxpat",
+                    "name": "vs_lfo.maxpat",
                     "numinlets": 1,
-                    "numoutlets": 1,
+                    "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 449.0, 302.0, 61.0, 71.0 ],
-                    "varname": "vs_filter_hp4x",
+                    "outlettype": [ "jit_gl_texture", "float" ],
+                    "patching_rect": [ 405.0, 582.0, 75.0, 73.5 ],
+                    "varname": "vs_lfo[2]",
                     "viewvisibility": 1
                 }
             },
@@ -64,13 +64,34 @@
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "vs_filter_lp4x.maxpat",
+                    "name": "vs_lfo.maxpat",
                     "numinlets": 1,
-                    "numoutlets": 1,
+                    "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 420.0, 500.0, 61.0, 71.0 ],
-                    "varname": "vs_filter_lp4x[1]",
+                    "outlettype": [ "jit_gl_texture", "float" ],
+                    "patching_rect": [ 304.0, 568.0, 75.0, 73.5 ],
+                    "varname": "vs_lfo[1]",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-11",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_lfo.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture", "float" ],
+                    "patching_rect": [ 212.0, 578.0, 75.0, 73.5 ],
+                    "varname": "vs_lfo",
                     "viewvisibility": 1
                 }
             },
@@ -85,12 +106,34 @@
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "vs_preview.maxpat",
-                    "numinlets": 1,
+                    "name": "vs_displacement.maxpat",
+                    "numinlets": 5,
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 639.0, 569.0, 191.0, 174.0 ],
+                    "patching_rect": [ 165.0, 670.0, 162.0, 119.0 ],
+                    "varname": "vs_displacement",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 0,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-9",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "f_weave.maxpat",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture" ],
+                    "patching_rect": [ 641.0, 568.0, 220.0, 80.0 ],
+                    "varname": "f_weave",
                     "viewvisibility": 1
                 }
             },
@@ -105,13 +148,13 @@
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "vs_filter_lp4x.maxpat",
+                    "name": "vs_fish_eye.maxpat",
                     "numinlets": 1,
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 562.0, 316.0, 61.0, 71.0 ],
-                    "varname": "vs_filter_lp4x",
+                    "patching_rect": [ 165.0, 849.0, 62.0, 38.0 ],
+                    "varname": "vs_fish_eye",
                     "viewvisibility": 1
                 }
             },
@@ -131,7 +174,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "" ],
-                    "patching_rect": [ 960.0, 21.5, 60.0, 60.0 ],
+                    "patching_rect": [ 632.0, 438.03125, 60.0, 60.0 ],
                     "varname": "vsc_center_ctrl",
                     "viewvisibility": 1
                 }
@@ -152,7 +195,7 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 722.8671875, 175.0, 220.0, 132.0 ],
+                    "patching_rect": [ 751.0, 177.0, 220.0, 132.0 ],
                     "varname": "vs_wfg_polarizer[2]",
                     "viewvisibility": 1
                 }
@@ -173,7 +216,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 237.5, 32.0, 175.0, 155.0 ],
+                    "patching_rect": [ 226.0, 25.0, 237.0, 163.0 ],
                     "varname": "f_lens",
                     "viewvisibility": 1
                 }
@@ -201,7 +244,7 @@
             },
             {
                 "box": {
-                    "autorestore": "glow-scratch.json",
+                    "autorestore": "f_demo_glow.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,
@@ -216,7 +259,16 @@
                         "vs_wfg_polarizer[1]::pm_range": -1,
                         "vs_wfg_polarizer[1]::lock_freq": -1,
                         "vs_wfg_polarizer[2]::pm_range": -1,
-                        "vs_wfg_polarizer[2]::lock_freq": -1
+                        "vs_wfg_polarizer[2]::lock_freq": -1,
+                        "vs_displacement::displacement_gui::displacement_angle_range": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_xm": -1,
+                        "vs_displacement::displacement_gui::displacement_y_range": -1,
+                        "vs_displacement::displacement_gui::displacement_x_range": -1,
+                        "vs_displacement::displacement_gui::displacement_anglemenu": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_ym": -1,
+                        "vs_lfo::lfo_freq_range": -1,
+                        "vs_lfo[1]::lfo_freq_range": -1,
+                        "vs_lfo[2]::lfo_freq_range": -1
                     },
                     "saved_object_attributes": {
                         "client_rect": [ 854, 172, 1208, 300 ],
@@ -244,7 +296,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 468.0, 193.0, 155.0, 96.0 ],
+                    "patching_rect": [ 528.0, 235.0, 155.0, 96.0 ],
                     "varname": "f_vf_fieldmap[1]",
                     "viewvisibility": 1
                 }
@@ -265,7 +317,7 @@
                     "numoutlets": 3,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 176.0, 487.0, 197.0, 157.0 ],
+                    "patching_rect": [ 176.0, 399.0, 196.0, 156.0 ],
                     "varname": "f_vf_advect",
                     "viewvisibility": 1
                 }
@@ -286,7 +338,7 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 168.0, 249.0, 198.0, 120.0 ],
+                    "patching_rect": [ 226.0, 203.0, 198.0, 120.0 ],
                     "varname": "f_vf_glow",
                     "viewvisibility": 1
                 }
@@ -328,7 +380,7 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 451.0, 14.25, 220.0, 132.0 ],
+                    "patching_rect": [ 492.0, 14.0, 220.0, 132.0 ],
                     "varname": "vs_wfg_polarizer",
                     "viewvisibility": 1
                 }
@@ -370,7 +422,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 412.0, 603.0, 191.0, 174.0 ],
+                    "patching_rect": [ 641.0, 670.0, 191.0, 174.0 ],
                     "viewvisibility": 1
                 }
             },
@@ -389,7 +441,7 @@
                     "numinlets": 0,
                     "numoutlets": 0,
                     "offset": [ 0.0, 0.0 ],
-                    "patching_rect": [ 6.0, 349.0, 101.0, 389.0 ],
+                    "patching_rect": [ 10.0, 334.0, 107.0, 395.0 ],
                     "viewvisibility": 1
                 }
             },
@@ -408,7 +460,7 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "offset": [ 0.0, 0.0 ],
-                    "patching_rect": [ 154.0, 670.0, 157.0, 22.0 ],
+                    "patching_rect": [ 148.0, 902.0, 157.0, 22.0 ],
                     "varname": "vs_output",
                     "viewvisibility": 1
                 }
@@ -456,21 +508,33 @@
         "lines": [
             {
                 "patchline": {
+                    "destination": [ "obj-7", 1 ],
+                    "source": [ "obj-11", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-7", 2 ],
+                    "source": [ "obj-12", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-7", 3 ],
+                    "source": [ "obj-13", 0 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-24", 1 ],
                     "order": 0,
-                    "source": [ "obj-12", 0 ]
+                    "source": [ "obj-14", 0 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-8", 0 ],
+                    "destination": [ "obj-9", 0 ],
                     "order": 1,
-                    "source": [ "obj-12", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-12", 0 ],
                     "source": [ "obj-14", 0 ]
                 }
             },
@@ -503,15 +567,7 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-22", 1 ],
-                    "order": 0,
-                    "source": [ "obj-17", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-7", 0 ],
-                    "order": 1,
+                    "destination": [ "obj-6", 0 ],
                     "source": [ "obj-17", 0 ]
                 }
             },
@@ -529,13 +585,21 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-24", 1 ]
+                    "destination": [ "obj-7", 0 ],
+                    "source": [ "obj-24", 0 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-6", 0 ],
+                    "destination": [ "obj-22", 1 ],
+                    "order": 1,
+                    "source": [ "obj-25", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-9", 1 ],
+                    "order": 0,
                     "source": [ "obj-25", 0 ]
                 }
             },
@@ -567,13 +631,50 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-17", 0 ],
+                    "destination": [ "obj-3", 0 ],
                     "source": [ "obj-6", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-17", 0 ],
+                    "source": [ "obj-7", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-28", 4 ],
+                    "order": 0,
+                    "source": [ "obj-9", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-8", 0 ],
+                    "order": 1,
+                    "source": [ "obj-9", 0 ]
                 }
             }
         ],
         "parameters": {
-            "obj-12::obj-51": [ "lpf_freq[2]", "Cutoff", 0 ],
+            "obj-11::obj-34": [ "live.dial[3]", "Freq", 0 ],
+            "obj-11::obj-35": [ "live.dial[2]", "Freq", 0 ],
+            "obj-11::obj-4": [ "lfo_freq__range", "live.text", 0 ],
+            "obj-11::obj-82": [ "lfo_wave", "lfo_wave", 0 ],
+            "obj-11::obj-9": [ "lfo_freq", "Freq", 0 ],
+            "obj-11::obj-97": [ "lfo_pw", "lfo_pw", 0 ],
+            "obj-12::obj-34": [ "live.dial[5]", "Freq", 0 ],
+            "obj-12::obj-35": [ "live.dial[4]", "Freq", 0 ],
+            "obj-12::obj-4": [ "lfo_freq__range[1]", "live.text", 0 ],
+            "obj-12::obj-82": [ "lfo_wave[1]", "lfo_wave", 0 ],
+            "obj-12::obj-9": [ "lfo_freq[1]", "Freq", 0 ],
+            "obj-12::obj-97": [ "lfo_pw[1]", "lfo_pw", 0 ],
+            "obj-13::obj-34": [ "live.dial[7]", "Freq", 0 ],
+            "obj-13::obj-35": [ "live.dial[6]", "Freq", 0 ],
+            "obj-13::obj-4": [ "lfo_freq__range[2]", "live.text", 0 ],
+            "obj-13::obj-82": [ "lfo_wave[2]", "lfo_wave", 0 ],
+            "obj-13::obj-9": [ "lfo_freq[2]", "Freq", 0 ],
+            "obj-13::obj-97": [ "lfo_pw[2]", "lfo_pw", 0 ],
             "obj-14::obj-20": [ "strength", "gain", 0 ],
             "obj-14::obj-23": [ "scale", "scale", 0 ],
             "obj-14::obj-28": [ "rotate", "rotate", 0 ],
@@ -608,7 +709,18 @@
             "obj-16::obj-65": [ "shape[1]", "Shape", 0 ],
             "obj-16::obj-71": [ "phase[1]", "Phase", 0 ],
             "obj-16::obj-72": [ "phase_time_switch[1]", "phase_time_switch", 0 ],
-            "obj-17::obj-51": [ "hpf_freq", "Cutoff", 0 ],
+            "obj-17::obj-11": [ "m_lift", "m_lift", 0 ],
+            "obj-17::obj-14": [ "m_gamma", "m_gamma", 0 ],
+            "obj-17::obj-15": [ "m_gain", "m_gain", 0 ],
+            "obj-17::obj-49": [ "r_lift", "r_lift", 0 ],
+            "obj-17::obj-58": [ "r_gamma", "r_gamma", 0 ],
+            "obj-17::obj-59": [ "r_gain", "r_gain", 0 ],
+            "obj-17::obj-67": [ "g_gain", "g_gain", 0 ],
+            "obj-17::obj-68": [ "g_gamma", "g_gamma", 0 ],
+            "obj-17::obj-69": [ "g_lift", "live.dial", 0 ],
+            "obj-17::obj-71": [ "b_gain", "b_gain", 0 ],
+            "obj-17::obj-72": [ "b_gamma", "b_gamma", 0 ],
+            "obj-17::obj-73": [ "b_lift", "b_lift", 0 ],
             "obj-1::obj-14": [ "live.menu[1]", "live.menu", 0 ],
             "obj-1::obj-16": [ "live.menu[2]", "live.menu", 0 ],
             "obj-1::obj-18": [ "live.menu[16]", "live.menu", 0 ],
@@ -652,19 +764,23 @@
             "obj-26::obj-45::obj-19": [ "live.numbox[2]", "live.numbox[1]", 0 ],
             "obj-26::obj-45::obj-32": [ "live.numbox", "live.numbox", 0 ],
             "obj-26::obj-45::obj-9": [ "live.numbox[3]", "live.numbox", 0 ],
+            "obj-28::obj-19d": [ "panel_toggle", "panel_toggle", 0 ],
             "obj-28::obj-20": [ "aberration", "aberration", 0 ],
-            "obj-28::obj-21": [ "distortion", "distortion", 0 ],
-            "obj-28::obj-22": [ "transmission", "transmission", 0 ],
-            "obj-28::obj-23": [ "tilt", "tilt", 0 ],
-            "obj-28::obj-24": [ "tilt_axis", "tilt_axis", 0 ],
-            "obj-28::obj-25": [ "tilt_pos", "tilt_pos", 0 ],
-            "obj-28::obj-26": [ "slope", "slope", 0 ],
-            "obj-28::obj-27": [ "mode[1]", "mode", 0 ],
-            "obj-28::obj-4": [ "panel_toggle", "panel_toggle", 0 ],
-            "obj-28::obj-60": [ "aberration_mod", "aberration_mod", 0 ],
-            "obj-28::obj-61": [ "distortion_mod", "distortion_mod", 0 ],
-            "obj-28::obj-62": [ "transmission_mod", "transmission_mod", 0 ],
-            "obj-28::obj-63": [ "surface_mod", "surface_mod", 0 ],
+            "obj-28::obj-23": [ "tilt", "distortion", 0 ],
+            "obj-28::obj-26": [ "slope", "transmission", 0 ],
+            "obj-28::obj-29": [ "aberration_mod", "aberration_mod", 0 ],
+            "obj-28::obj-300": [ "range_aberration", "range_aberration", 0 ],
+            "obj-28::obj-310": [ "range_distortion", "range_distortion", 0 ],
+            "obj-28::obj-32": [ "distortion_mod", "distortion_mod", 0 ],
+            "obj-28::obj-320": [ "range_transmission", "range_transmission", 0 ],
+            "obj-28::obj-35": [ "transmission_mod", "transmission_mod", 0 ],
+            "obj-28::obj-38": [ "surface_mod", "surface_mod", 0 ],
+            "obj-28::obj-390": [ "range_ghost_spacing", "range_ghost_spacing", 0 ],
+            "obj-28::obj-41": [ "ghost", "ghost", 0 ],
+            "obj-28::obj-44": [ "ghost_count", "ghost_count", 0 ],
+            "obj-28::obj-47": [ "ghost_spacing", "ghost_spacing", 0 ],
+            "obj-28::obj-50": [ "halation", "halation", 0 ],
+            "obj-28::obj-53": [ "halation_threshold", "halation_threshold", 0 ],
             "obj-29::obj-10": [ "bias[2]", "Bias", 0 ],
             "obj-29::obj-14": [ "bm[2]", "BM", 0 ],
             "obj-29::obj-17": [ "live.menu[21]", "live.menu", 0 ],
@@ -710,20 +826,34 @@
             "obj-5::obj-37": [ "f_module_7_file", "live.menu", 0 ],
             "obj-5::obj-8": [ "f_module_0_disp", "live.menu", 0 ],
             "obj-5::obj-9": [ "f_module_0_file", "live.menu", 0 ],
-            "obj-6::obj-51": [ "lpf_freq[1]", "Cutoff", 0 ],
-            "obj-9::obj-20": [ "aberration[1]", "aberration", 0 ],
-            "obj-9::obj-21": [ "distortion[1]", "distortion", 0 ],
-            "obj-9::obj-22": [ "transmission[1]", "transmission", 0 ],
-            "obj-9::obj-23": [ "tilt[1]", "tilt", 0 ],
-            "obj-9::obj-24": [ "tilt_axis[1]", "tilt_axis", 0 ],
-            "obj-9::obj-25": [ "tilt_pos[1]", "tilt_pos", 0 ],
-            "obj-9::obj-26": [ "slope[1]", "slope", 0 ],
-            "obj-9::obj-27": [ "mode[2]", "mode", 0 ],
-            "obj-9::obj-4": [ "panel_toggle[1]", "panel_toggle", 0 ],
-            "obj-9::obj-60": [ "aberration_mod[1]", "aberration_mod", 0 ],
-            "obj-9::obj-61": [ "distortion_mod[1]", "distortion_mod", 0 ],
-            "obj-9::obj-62": [ "transmission_mod[1]", "transmission_mod", 0 ],
-            "obj-9::obj-63": [ "surface_mod[1]", "surface_mod", 0 ],
+            "obj-6::obj-11": [ "pixelador_dim", "pixelador_dim", 0 ],
+            "obj-7::obj-22::obj-19": [ "displacement_angle", "Angle", 0 ],
+            "obj-7::obj-22::obj-29": [ "live.numbox[5]", "live.numbox", 0 ],
+            "obj-7::obj-22::obj-35": [ "displacement_zoom", "Zoom", 0 ],
+            "obj-7::obj-22::obj-4": [ "disp_ang_range", "angle", 0 ],
+            "obj-7::obj-22::obj-40": [ "displacement_y_m", "YM", 0 ],
+            "obj-7::obj-22::obj-42": [ "displacement_x_m", "XM", 0 ],
+            "obj-7::obj-22::obj-44": [ "displacement_zoom_m", "ZM", 0 ],
+            "obj-7::obj-22::obj-47": [ "displacement_angle_m", "AGLM", 0 ],
+            "obj-7::obj-22::obj-52": [ "MENU[1]", "angle", 0 ],
+            "obj-7::obj-22::obj-55": [ "MENU[2]", "angle", 0 ],
+            "obj-7::obj-22::obj-56": [ "MENU[3]", "angle", 0 ],
+            "obj-7::obj-22::obj-57": [ "MENU[4]", "angle", 0 ],
+            "obj-7::obj-22::obj-6": [ "offrot_x", "X", 0 ],
+            "obj-7::obj-22::obj-67": [ "menu", "angle", 0 ],
+            "obj-7::obj-22::obj-8": [ "displacement_y", "Y", 0 ],
+            "obj-7::obj-33": [ "displacement_init_point", "live.text", 2 ],
+            "obj-7::obj-49": [ "a_lock", "a_lock", 0 ],
+            "obj-7::obj-8": [ "displacement_polar", "live.text", 2 ],
+            "obj-7::obj-96": [ "displacement_boundmode", "live.menu", 0 ],
+            "obj-9::obj-20": [ "density", "density", 0 ],
+            "obj-9::obj-23": [ "angle[3]", "angle", 0 ],
+            "obj-9::obj-26": [ "weight", "weight", 0 ],
+            "obj-9::obj-29": [ "marklen", "marklen", 0 ],
+            "obj-9::obj-32": [ "regularity", "regularity", 0 ],
+            "obj-9::obj-35": [ "phase[3]", "phase", 0 ],
+            "obj-9::obj-50": [ "softness", "softness", 0 ],
+            "obj-9::obj-53": [ "shape[3]", "shape", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
@@ -733,8 +863,41 @@
                 }
             },
             "parameter_overrides": {
-                "obj-12::obj-51": {
-                    "parameter_longname": "lpf_freq[2]"
+                "obj-12::obj-34": {
+                    "parameter_longname": "live.dial[5]"
+                },
+                "obj-12::obj-35": {
+                    "parameter_longname": "live.dial[4]"
+                },
+                "obj-12::obj-4": {
+                    "parameter_longname": "lfo_freq__range[1]"
+                },
+                "obj-12::obj-82": {
+                    "parameter_longname": "lfo_wave[1]"
+                },
+                "obj-12::obj-9": {
+                    "parameter_longname": "lfo_freq[1]"
+                },
+                "obj-12::obj-97": {
+                    "parameter_longname": "lfo_pw[1]"
+                },
+                "obj-13::obj-34": {
+                    "parameter_longname": "live.dial[7]"
+                },
+                "obj-13::obj-35": {
+                    "parameter_longname": "live.dial[6]"
+                },
+                "obj-13::obj-4": {
+                    "parameter_longname": "lfo_freq__range[2]"
+                },
+                "obj-13::obj-82": {
+                    "parameter_longname": "lfo_wave[2]"
+                },
+                "obj-13::obj-9": {
+                    "parameter_longname": "lfo_freq[2]"
+                },
+                "obj-13::obj-97": {
+                    "parameter_longname": "lfo_pw[2]"
                 },
                 "obj-14::obj-20": {
                     "parameter_invisible": 0,
@@ -755,7 +918,7 @@
                     "parameter_longname": "live.toggle[3]"
                 },
                 "obj-15::obj-6": {
-                    "parameter_range": [ -1.0, 1.0 ]
+                    "parameter_range": [ -5.0, 5.0 ]
                 },
                 "obj-16::obj-10": {
                     "parameter_longname": "bias[1]"
@@ -799,6 +962,90 @@
                 },
                 "obj-16::obj-72": {
                     "parameter_longname": "phase_time_switch[1]"
+                },
+                "obj-17::obj-11": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-14": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-15": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-49": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-58": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-59": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-67": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-68": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-69": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-71": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-72": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-73": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
                 },
                 "obj-1::obj-14": {
                     "parameter_longname": "live.menu[1]"
@@ -920,54 +1167,21 @@
                 "obj-28::obj-20": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
+                    "parameter_range": [ -1.0, 1.0 ],
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-28::obj-21": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
+                "obj-28::obj-23": {
+                    "parameter_longname": "tilt",
+                    "parameter_range": [ -1.0, 1.0 ]
                 },
-                "obj-28::obj-22": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
+                "obj-28::obj-26": {
+                    "parameter_longname": "slope",
+                    "parameter_range": [ -1.0, 1.0 ]
                 },
-                "obj-28::obj-27": {
-                    "parameter_longname": "mode[1]"
-                },
-                "obj-28::obj-60": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-28::obj-61": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-28::obj-62": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-28::obj-63": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
+                "obj-28::obj-47": {
+                    "parameter_range": [ -1.0, 1.0 ]
                 },
                 "obj-29::obj-10": {
                     "parameter_longname": "bias[2]"
@@ -1015,83 +1229,85 @@
                 "obj-29::obj-72": {
                     "parameter_longname": "phase_time_switch[2]"
                 },
+                "obj-7::obj-22::obj-19": {
+                    "parameter_range": [ -180.0, 180.0 ]
+                },
+                "obj-7::obj-22::obj-29": {
+                    "parameter_longname": "live.numbox[5]"
+                },
+                "obj-7::obj-22::obj-40": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-7::obj-22::obj-42": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-7::obj-22::obj-47": {
+                    "parameter_range": [ -6.28, 6.28 ]
+                },
+                "obj-7::obj-22::obj-6": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-7::obj-22::obj-8": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
                 "obj-9::obj-20": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "aberration[1]",
                     "parameter_modmode": 3,
-                    "parameter_shortname": "aberration",
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-9::obj-21": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "distortion[1]",
-                    "parameter_modmode": 3,
-                    "parameter_shortname": "distortion",
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-9::obj-22": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "transmission[1]",
-                    "parameter_modmode": 3,
-                    "parameter_shortname": "transmission",
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
                 "obj-9::obj-23": {
-                    "parameter_longname": "tilt[1]"
-                },
-                "obj-9::obj-24": {
-                    "parameter_longname": "tilt_axis[1]"
-                },
-                "obj-9::obj-25": {
-                    "parameter_longname": "tilt_pos[1]"
+                    "parameter_invisible": 0,
+                    "parameter_longname": "angle[3]",
+                    "parameter_modmode": 3,
+                    "parameter_shortname": "angle",
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
                 },
                 "obj-9::obj-26": {
-                    "parameter_longname": "slope[1]"
-                },
-                "obj-9::obj-27": {
-                    "parameter_longname": "mode[2]"
-                },
-                "obj-9::obj-4": {
-                    "parameter_longname": "panel_toggle[1]"
-                },
-                "obj-9::obj-60": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "aberration_mod[1]",
                     "parameter_modmode": 3,
-                    "parameter_shortname": "aberration_mod",
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-61": {
+                "obj-9::obj-29": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "distortion_mod[1]",
                     "parameter_modmode": 3,
-                    "parameter_shortname": "distortion_mod",
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-62": {
+                "obj-9::obj-32": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "transmission_mod[1]",
                     "parameter_modmode": 3,
-                    "parameter_shortname": "transmission_mod",
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-63": {
+                "obj-9::obj-35": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "surface_mod[1]",
+                    "parameter_longname": "phase[3]",
                     "parameter_modmode": 3,
-                    "parameter_shortname": "surface_mod",
+                    "parameter_shortname": "phase",
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-9::obj-50": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-9::obj-53": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "shape[3]",
+                    "parameter_modmode": 3,
+                    "parameter_shortname": "shape",
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1

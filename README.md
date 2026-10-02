@@ -6,12 +6,20 @@ This repo is more than the patchers themselves — it also documents the process
 
 ## Installation
 
-Clone this repository, then place (or symlink) the `package` folder in your Max Packages directory, renamed to `f_`:
+You need Max 9 and the Vsynth package (see Requirements below).
 
-- **macOS:** `~/Documents/Max 9/Packages/f_` → `path/to/f_/package`
-- **Windows:** `Documents\Max 9\Packages\f_` → `path\to\f_\package`
+**To use the modules:** download `f_-<version>.zip` from this repository's GitHub Releases page and unzip it into your Max Packages folder (macOS: `~/Documents/Max 9/Packages/`, Windows: `Documents\Max 9\Packages\`). The zip contains a single `f_/` folder. Restart Max; the patches will be available in your file browser under `f_`. No release has been published yet, so until one is, use the developer install below.
 
-Restart Max. The patches will be available in your file browser under `f_`.
+**To develop, or to track the repo:** clone this repository somewhere *outside* Max's Packages folder, then symlink (or copy) its `package/` folder into Packages under the name `f_`:
+
+- **macOS:** `ln -s /path/to/f_/package "$HOME/Documents/Max 9/Packages/f_"`
+- **Windows:** link or copy `path\to\f_\package` to `Documents\Max 9\Packages\f_`
+
+Don't clone the repo directly into Packages. The repo root is not the package (the package is the `package/` subfolder), so Max would not find the patchers or the JavaScript.
+
+**To build a release zip:** `build/release.sh` zips the committed state of `package/` into `dist/`; `build/release.sh --working-tree` includes uncommitted edits (for test builds). The header of the script explains the naming and checks. Don't unzip a build into your Packages folder while `f_` there is a symlink to your checkout: it would write into your working tree.
+
+Background on the package layout and the choices behind it: `docs/max-reference/packaging.md`.
 
 ## Requirements
 
@@ -70,8 +78,8 @@ There is no release schedule. Patches may change significantly as development co
 
 This repo has six parts:
 
-- **`package/`** — the installable Max package: `patchers/`, `help/`, `javascript/`, `package-info.json`. This is the only folder Max needs (see Installation above).
-- **`build/`** — the build system used to generate patchers from definition files, plus supporting tools (helpfile generation via Claude API, interface auditing, migrations). Meant to be forked or read if you want to build your own `f_`-style bpatcher library. See `build/spec.md`.
+- **`package/`** — the installable Max package: `patchers/`, `help/`, `examples/`, `javascript/`, `package-info.json`, `readme.md`. This is the only folder Max needs (see Installation above).
+- **`build/`** — the build system used to generate patchers from definition files, plus supporting tools (helpfile generation via Claude API, interface auditing, migrations, the release zip script `release.sh`). Meant to be forked or read if you want to build your own `f_`-style bpatcher library. See `build/spec.md`.
 - **`src/`** — build-input files per module: `definition.py` (patcher definition), `codebox_*.gen` (confirmed codebox content), and per-module build scripts for modules whose build needs diverge from the general `build_patcher.py` path.
 - **`tests/`** — verification that doesn't need a scratch patch, in two layers. **Math:** NumPy mirrors of codebox algorithms, checked against independent references (`test_*.py`, `tests/run.sh`, no Max needed). **Execution:** a Max test bench — one generated patch stays open in Max and is driven from Python over OSC, so a module's real `src/` codebox runs on the GPU and its output is diffed numerically, with compile errors caught and cost measured (`bench_*.py`, `tests/bench.sh`). A second bench loads *shipped* bpatchers inside Vsynth's own render context to check their contracts: that every parameter reaches the attribute it claims to, that bypass passes through, that every outlet renders. How-to in `tests/README.md`; design in `.specify/test_bench/`.
 - **`ideas/`, `.specify/`, `docs/`** — planning and reference material: half-formed module ideas (`ideas/`), specs/plans/ADRs for modules (`.specify/`), and as-built reference docs plus research notes on Vsynth/Max internals (`docs/`). `docs/f-reference/module-inventory.md` and `docs/vsynth-reference/module-inventory.md` are flat one-line-per-module capability maps (f_ layer and core Vsynth layer, respectively) — the fast way to answer "does something here already do X" without reading full per-module docs. `.specify/` root holds directories for modules under active development. `.specify/stable/f_name/` and `.specify/paused/f_name/` hold modules moved into those subdirectories once shipped-and-verified-with-nothing-outstanding (`stable/`) or shelved on a real open question, not to be resumed by default (`paused/`) — a reorganization into subdirectories, not a rename of the module's own directory. Once a module reaches `stable/`, its `.specify/` content there is archival reference (the ADR/decision history), not the active source of truth — that role passes to `docs/f-reference/f_name.md`, which should have already distilled anything from `spec.md`/`plan.md`/`tasks.md` worth keeping before the move. Kept public as a reference and conversation starter, not as polished documentation — expect dead ends, superseded approaches, and in-progress modules alongside finished ones.

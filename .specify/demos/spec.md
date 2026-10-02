@@ -4,7 +4,7 @@ _Started 2026-07-19._
 
 ## Purpose
 
-Planning-only doc; patches themselves live in `package/demos/`, not here.
+Planning-only doc; patches themselves live in `package/examples/`, not here.
 
 Separate from `package/help/` (per-module `.maxhelp` reference, one
 module in isolation, Max's native help system) and from scratch work in
@@ -25,7 +25,7 @@ comparison where that clarifies the concept. Not bound by the
 
 ## Naming / location
 
-`package/demos/demo_<concept>.maxpat`. `demo_` prefix keeps them visually
+`package/examples/f_demo_<concept>.maxpat`. `demo_` prefix keeps them visually
 distinct from `package/patchers/` (the library itself) and
 `package/help/` (per-module reference) in a file browser.
 

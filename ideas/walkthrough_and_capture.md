@@ -12,7 +12,7 @@ noticing that the site's current shape doesn't serve a new goal: presenting
 - Goal: a public walkthrough of the `f_` work on mattfisher.io, not just a
   gallery of finished pieces.
 - Recording the media is part of this project. As of 2026-09-24 the repo has
-  demo patches (`package/demos/*.maxpat`, several with `.json` presets) but no
+  demo patches (`package/examples/f_demo_*.maxpat`, several with `.json` presets) but no
   rendered clips or stills.
 - Clip inputs are a **mix**: standard test inputs for some, own footage for
   others, chosen per clip by what that clip needs to show to make its
@@ -74,7 +74,7 @@ regenerable the same way, so they stay in sync when a module changes.
 live Max from Python: load a module in Vsynth's real `vs_render` context, feed
 it textures, send every route parameter as a control message, capture outlets,
 exchange data via per-job directories (`tests/benchclient.py`). A capture
-bench is a natural third sibling. `package/demos/*.json` presets are natural
+bench is a natural third sibling. `package/examples/f_demo_*.json` presets are natural
 starting states.
 
 **Capture manifest (one per stop that needs media):** module, preset/demo,

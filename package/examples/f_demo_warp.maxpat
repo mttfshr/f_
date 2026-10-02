@@ -34,7 +34,7 @@
             },
             {
                 "box": {
-                    "autorestore": "warp.json",
+                    "autorestore": "f_demo_warp.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,

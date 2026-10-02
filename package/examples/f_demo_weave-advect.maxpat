@@ -138,7 +138,7 @@
             },
             {
                 "box": {
-                    "autorestore": "seeds2.json",
+                    "autorestore": "f_demo_weave-advect.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,

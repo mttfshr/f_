@@ -809,7 +809,7 @@
             },
             {
                 "box": {
-                    "autorestore": "advect.json",
+                    "autorestore": "f_demo_advect.json",
                     "hidden": 1,
                     "id": "obj-11",
                     "linecount": 2,

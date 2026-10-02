@@ -1,9 +1,11 @@
 {
     "name": "f_",
-    "display_name": "f_",
+    "displayname": "f_",
     "version": "0.1.0",
     "author": "Matt Fisher",
-    "description": "Visual processing bpatchers for Vsynth",
-    "max_version_required": "9.0",
-    "tags": [ "video", "vsynth", "jitter", "effects", "gl" ]
+    "description": "Visual processing bpatchers for Vsynth: generators, processors and vector-field (f_vf_) modules. Requires the Vsynth package (by Kevin Kripper).",
+    "tags": [ "video", "vsynth", "jitter", "effects", "gl", "gen" ],
+    "website": "https://github.com/mttfshr/f_",
+    "max_version_min": "9.0.0",
+    "max_version_max": "none"
 }

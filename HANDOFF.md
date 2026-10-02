@@ -1,5 +1,81 @@
 # HANDOFF
 
+_Session: 2026-10-01_ — Package structure and Package Manager readiness, after Kevin
+Kripper (Vsynth's author) had trouble opening some patches. **Nothing is committed.** The
+2026-09-29c entry follows unchanged.
+
+## This session (2026-10-01): packaging
+
+Full research and reasoning: `docs/max-reference/packaging.md`. Summary:
+
+- **Cause of Kevin's trouble: not confirmed.** Leading candidate: the repo root is not the
+  package root, so `git clone` into `Packages/` leaves Max with no `patchers/` or
+  `package-info.json` at the top level. Checked and ruled out: no hardcoded `/Users/...`
+  paths, no unresolved dependencies (`vz.bfgener8r` is in Max's bundled Vizzie package).
+- **Layout decision (Matt): keep `package/` as a subfolder and ship a release zip** (not
+  restructure the repo root). Option B (repo root = package root, as av-toolbox does) is
+  still available if the registry wants it; it would need `docs/` renamed (reserved Max
+  folder name), every `package/...` path rewritten, and the symlink moved.
+- **`package/package-info.json`:** `display_name` to `displayname`, `max_version_required`
+  to `max_version_min` `9.0.0` (kept at Matt's call; **unverified on 9.0.x**, all patches
+  were saved in 9.1.4), `max_version_max`, `website`, Vsynth named in `description`. No `os`,
+  no `homepatcher` (the only candidate is the menu bpatcher).
+- **`demos/` to `package/examples/`**, all 16 demos and 11 presets prefixed `f_demo_`
+  (`git mv`, staged). Each patch differs from its original by one line (the `autorestore`
+  key); presets are byte-identical. Repaired stale `autorestore` names: `chladni`/`repulse`
+  pointed at non-existent `*-scratch.json`; `weave-advect` loaded `seeds2.json`; `general`
+  has no preset so its `autorestore` was removed. **Unverified in Max:** the renamed demos
+  open cleanly, and how Max treats a missing `autorestore` file. Max needs a restart to see
+  the new folder.
+- **`package/readme.md`** written (license section says "Not yet specified").
+- **`build/release.sh`** (+ `dist/` in `.gitignore`): zips the committed state of `package/`
+  into `dist/f_-<version>[-dev].zip` with a top-level `f_/`; `--working-tree` for test
+  builds (`-wip`). Tested: default, working-tree, tag mismatch, bad flag. Not tested:
+  installing a zip into Max. No tag or GitHub release exists yet.
+- **README** install section rewritten (zip for users, symlink for developers, do not clone
+  into Packages); Repo Structure lines updated.
+- Doc paths fixed: `.specify/demos/spec.md`, `ideas/walkthrough_and_capture.md`,
+  `skills/vsynth-bpatcher/SKILL.md`. **`./skills/check.sh` now reports `vsynth-bpatcher`
+  STALE: re-upload it, then `./skills/check.sh stamp`.**
+- **Caution:** `~/Documents/Max 9/Packages/f_` is a symlink to this repo's `package/`.
+  Never unzip a release there; it writes into the working tree.
+
+### `moduleSize.js`: kept, test still to run
+
+`package/javascript/moduleSize.js` is byte-identical to Vsynth's. With both installed, Max
+warns about duplicate files and uses ours. Deleting ours gave `js: can't find file
+moduleSize.js` even though Vsynth's copy is on the search path (most likely a stale cache,
+**not confirmed**), so it was restored. Test: delete it, **fully quit and relaunch Max**,
+open `f_droste` inside a Vsynth patch, read the console. If it still fails, keep our copy.
+Renaming it would touch 37 `.maxpat` files plus `build/build_patcher.py`.
+
+### Parked: console error `patcher: doesn't understand "getattr"`
+
+Appears with `moduleSize.js` present or absent, so it is not caused by the deletion test. The
+moduleSize chain is `loadbang` to `getattr presentation_rect` to `thispatcher` to `zl slice 2`
+to `prepend tam` to `js moduleSize.js`; Vsynth's `vs_displacement` has the same message, so it
+is Kevin's convention that `build_patcher.py` copies. Cause unknown. First test: open
+`vs_displacement.maxpat` directly and see whether it raises the same error (baseline). Matt
+parked this ("troubleshoot separately").
+
+### Outstanding
+
+1. **License** (Matt): asking Kevin whether `f_` counts as an adaptation of Vsynth (CC BY-NC
+   4.0). No license file yet.
+2. **`package/icon.png`** (500x500): needs an image from Matt, or a generated placeholder.
+3. **`moduleSize.js` restart test** (above).
+4. Questions for Kevin: how he installed it, his Max and Vsynth versions, the first console
+   error line when a patch fails.
+5. First tag (`v0.1.0`) and GitHub release; read the Cycling '74 submission form
+   (https://cycling74.com/support/submit-packages) before building anything around the
+   registry (how it ingests submissions is undocumented).
+6. Decide: `prism-masonry` has a preset but no `autorestore`, `streak` has no `pattrstorage`;
+   `help/streak-demo.json` is still in `help/`.
+7. Commit all of the above (nothing is committed). `ideas/f_vf_emulsion.md` is also
+   untracked but was not created this session.
+
+---
+
 _Session: 2026-09-29c_ — `f_vf_fluid` Phase 3 closed (Matt's by-eye calls) and Phase 4
 (docs and integration) done, regression green. The 2026-09-29b entry
 (skills consolidation) follows, then 2026-09-29a / 2026-09-28 unchanged; 2026-09-23 is

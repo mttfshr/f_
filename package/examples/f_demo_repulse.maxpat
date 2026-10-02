@@ -55,7 +55,7 @@
             },
             {
                 "box": {
-                    "autorestore": "repulse-scratch.json",
+                    "autorestore": "f_demo_repulse.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,

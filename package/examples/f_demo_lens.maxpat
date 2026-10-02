@@ -34,7 +34,7 @@
             },
             {
                 "box": {
-                    "autorestore": "lens.json",
+                    "autorestore": "f_demo_lens.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,

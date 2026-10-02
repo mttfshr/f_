@@ -55,7 +55,7 @@
             },
             {
                 "box": {
-                    "autorestore": "seeds2.json",
+                    "autorestore": "f_demo_seeds2.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,

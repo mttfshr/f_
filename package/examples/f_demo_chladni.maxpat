@@ -34,7 +34,7 @@
             },
             {
                 "box": {
-                    "autorestore": "chladni-scratch.json",
+                    "autorestore": "f_demo_chladni.json",
                     "hidden": 1,
                     "id": "obj-40",
                     "linecount": 2,

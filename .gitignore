@@ -14,3 +14,6 @@ __pycache__/
 tests/jobs/
 tests/bench/job_*.genjit
 tests/bench/mjob_*.maxpat
+
+# release zips (build/release.sh)
+dist/

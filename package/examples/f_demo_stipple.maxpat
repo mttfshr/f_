@@ -34,7 +34,7 @@
             },
             {
                 "box": {
-                    "autorestore": "stipple.json",
+                    "autorestore": "f_demo_stipple.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,

@@ -101,7 +101,7 @@ so there's no inference risk the way there is for a new codebox — Claude
 is just placing `bpatcher` boxes (`name`, `varname`, `patching_rect`) and
 `patchline` connections between documented inlets/outlets. Base the JSON
 structure on an existing file already in the repo (e.g.
-`package/demos/general.maxpat`) for the exact box/patchline schema Max
+`package/examples/f_demo_general.maxpat`) for the exact box/patchline schema Max
 expects, and validate the result parses (`python3 -c "import json;
 json.load(open(path))"`) before handing it off.
 
