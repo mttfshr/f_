@@ -74,6 +74,8 @@ Vsynth is CC BY-NC 4.0 (attribution, non-commercial). Open questions, not legal 
 
 ## Open items
 
+Tracked as tasks in `.specify/packaging/tasks.md`.
+
 - License choice (waiting on Kevin).
 - `package/icon.png` (500x500): not made; needs a design decision.
 - Confirm with Kevin how he installed it, his Max and Vsynth versions, and the first console error line when a patch fails.

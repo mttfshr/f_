@@ -1,8 +1,10 @@
 # HANDOFF
 
 _Session: 2026-10-01_ — Package structure and Package Manager readiness, after Kevin
-Kripper (Vsynth's author) had trouble opening some patches. **All of it is committed in
-`8af4c71`** (one commit, titled "cleanup"). The 2026-09-29c entry follows unchanged.
+Kripper (Vsynth's author) had trouble opening some patches. **All of it is committed**
+(`8af4c71`, a single commit titled "cleanup", then `2e014c7` removing `moduleSize.js`).
+The undone work is tracked in `.specify/packaging/tasks.md`. The 2026-09-29c entry follows
+unchanged.
 
 ## This session (2026-10-01): packaging
 
@@ -58,22 +60,33 @@ is Kevin's convention that `build_patcher.py` copies. Cause unknown. First test:
 `vs_displacement.maxpat` directly and see whether it raises the same error (baseline). Matt
 parked this ("troubleshoot separately").
 
+### Next step
+
+Open the renamed demos in Max (T008: `f_demo_chladni`, `f_demo_repulse`, `f_demo_general`, one
+preset-less demo) and read the console; then relay Kevin's answers (T011/T012). The first tag
+(`v0.1.0`) is blocked on the license and the icon.
+
 ### Outstanding
 
-1. **License** (Matt): asking Kevin whether `f_` counts as an adaptation of Vsynth (CC BY-NC
-   4.0). No license file yet.
-2. **`package/icon.png`** (500x500): needs an image from Matt, or a generated placeholder.
-3. ~~`moduleSize.js` restart test~~ — passed per Matt; copy removed (above).
-4. Questions for Kevin: how he installed it, his Max and Vsynth versions, the first console
-   error line when a patch fails.
-5. First tag (`v0.1.0`) and GitHub release; read the Cycling '74 submission form
-   (https://cycling74.com/support/submit-packages) before building anything around the
-   registry (how it ingests submissions is undocumented).
-6. Decide: `prism-masonry` has a preset but no `autorestore`, `streak` has no `pattrstorage`;
-   `help/streak-demo.json` is still in `help/`.
-7. ~~Commit all of the above~~ — done in `8af4c71`. That commit also swept in
-   `ideas/f_vf_emulsion.md`, which was not created this session. `vsynth-bpatcher` was
-   re-uploaded and stamped; `./skills/check.sh` reports all uploads current.
+The full list, with owners and blockers, is `.specify/packaging/tasks.md` (T008 to T020). In
+short: verify the renamed demos and a release-zip install in Max; ask Kevin (how he installed
+it, Max and Vsynth versions, first console error, the license question); choose a license;
+make `icon.png`; read the Cycling '74 submission form; tag and release `v0.1.0`; a few small
+decisions (`prism-masonry`/`streak` presets, `help/streak-demo.json`). **Not confirmed: that
+the old install layout was the cause of Kevin's trouble.** `max_version_min` 9.0.0 is
+unverified.
+
+### Loose threads
+
+- The `getattr` console error is parked (T019); it is independent of `moduleSize.js`.
+- Commit hygiene: `8af4c71` ("cleanup") bundled the whole packaging session, and also swept
+  in `ideas/f_vf_emulsion.md`, which was not created this session; `2e014c7` is "rm
+  modulesize.js". History was not rewritten.
+- The README's `build/` line says helpfile generation is "via Claude API", but `plan.md` says
+  `generate_helpfiles.py` no longer calls the API (T018; script not opened, so unverified).
+- No release zip has ever been installed into Max, and the Windows install line in the README
+  is untested (T009).
+- `skills/check.sh` reported all uploads current at the end of the session.
 
 ---
 
