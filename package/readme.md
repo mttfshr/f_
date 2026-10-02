@@ -19,7 +19,7 @@ These patches are developed alongside personal Vsynth performance work and relea
 
 ## Credits
 
-Built for Vsynth by Kevin Kripper. `javascript/moduleSize.js` is taken from Vsynth.
+Built for Vsynth by Kevin Kripper.
 
 ## License
 

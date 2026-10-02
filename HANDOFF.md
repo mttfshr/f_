@@ -1,8 +1,8 @@
 # HANDOFF
 
 _Session: 2026-10-01_ — Package structure and Package Manager readiness, after Kevin
-Kripper (Vsynth's author) had trouble opening some patches. **Nothing is committed.** The
-2026-09-29c entry follows unchanged.
+Kripper (Vsynth's author) had trouble opening some patches. **All of it is committed in
+`8af4c71`** (one commit, titled "cleanup"). The 2026-09-29c entry follows unchanged.
 
 ## This session (2026-10-01): packaging
 
@@ -21,7 +21,7 @@ Full research and reasoning: `docs/max-reference/packaging.md`. Summary:
   were saved in 9.1.4), `max_version_max`, `website`, Vsynth named in `description`. No `os`,
   no `homepatcher` (the only candidate is the menu bpatcher).
 - **`demos/` to `package/examples/`**, all 16 demos and 11 presets prefixed `f_demo_`
-  (`git mv`, staged). Each patch differs from its original by one line (the `autorestore`
+  (`git mv`). Each patch differs from its original by one line (the `autorestore`
   key); presets are byte-identical. Repaired stale `autorestore` names: `chladni`/`repulse`
   pointed at non-existent `*-scratch.json`; `weave-advect` loaded `seeds2.json`; `general`
   has no preset so its `autorestore` was removed. **Unverified in Max:** the renamed demos
@@ -40,14 +40,14 @@ Full research and reasoning: `docs/max-reference/packaging.md`. Summary:
 - **Caution:** `~/Documents/Max 9/Packages/f_` is a symlink to this repo's `package/`.
   Never unzip a release there; it writes into the working tree.
 
-### `moduleSize.js`: kept, test still to run
+### `moduleSize.js`: removed
 
-`package/javascript/moduleSize.js` is byte-identical to Vsynth's. With both installed, Max
-warns about duplicate files and uses ours. Deleting ours gave `js: can't find file
-moduleSize.js` even though Vsynth's copy is on the search path (most likely a stale cache,
-**not confirmed**), so it was restored. Test: delete it, **fully quit and relaunch Max**,
-open `f_droste` inside a Vsynth patch, read the console. If it still fails, keep our copy.
-Renaming it would touch 37 `.maxpat` files plus `build/build_patcher.py`.
+`package/javascript/moduleSize.js` was byte-identical to Vsynth's, and with both installed Max
+warned about duplicate files. A first delete gave `js: can't find file moduleSize.js` (most
+likely a stale cache, not confirmed); after a restart test **Matt reports the deletion is safe
+(as reported, not observed by Claude)**, so the copy is removed and `package/readme.md` no
+longer credits it. Patchers and `build/build_patcher.py` are unchanged: the box still says
+`js moduleSize.js` and Max now resolves Vsynth's copy. Last present in commit `8af4c71`.
 
 ### Parked: console error `patcher: doesn't understand "getattr"`
 
@@ -63,7 +63,7 @@ parked this ("troubleshoot separately").
 1. **License** (Matt): asking Kevin whether `f_` counts as an adaptation of Vsynth (CC BY-NC
    4.0). No license file yet.
 2. **`package/icon.png`** (500x500): needs an image from Matt, or a generated placeholder.
-3. **`moduleSize.js` restart test** (above).
+3. ~~`moduleSize.js` restart test~~ — passed per Matt; copy removed (above).
 4. Questions for Kevin: how he installed it, his Max and Vsynth versions, the first console
    error line when a patch fails.
 5. First tag (`v0.1.0`) and GitHub release; read the Cycling '74 submission form
@@ -71,8 +71,9 @@ parked this ("troubleshoot separately").
    registry (how it ingests submissions is undocumented).
 6. Decide: `prism-masonry` has a preset but no `autorestore`, `streak` has no `pattrstorage`;
    `help/streak-demo.json` is still in `help/`.
-7. Commit all of the above (nothing is committed). `ideas/f_vf_emulsion.md` is also
-   untracked but was not created this session.
+7. ~~Commit all of the above~~ — done in `8af4c71`. That commit also swept in
+   `ideas/f_vf_emulsion.md`, which was not created this session. `vsynth-bpatcher` was
+   re-uploaded and stamped; `./skills/check.sh` reports all uploads current.
 
 ---
 
