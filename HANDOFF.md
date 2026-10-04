@@ -1,13 +1,86 @@
 # HANDOFF
 
-_Session: 2026-10-02 to 2026-10-04_ — Package Manager research, the `f_Launch` homepatcher, and
-the licensing split. **All of it is committed in `de89863`** (one commit titled "license").
-Older sessions are condensed at the end of this file; the open packaging items (packaging/T008 to packaging/T011
-and the rest) are in `.specify/packaging/tasks.md`.
+_Latest session: 2026-10-04 (second)_ — build, tools and test cleanup, which turned into a project:
+**`.specify/build_cleanup/`** (spec and tasks; work-queue item 14 in `.specify/plan.md`). Five commits,
+listed below; the notes written at the end of the session are not committed yet. The session before
+it (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; committed in `de89863`)
+follows it. Older sessions are condensed at the end of this file; the open packaging items
+(packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
 
-## This session (2026-10-02 to 2026-10-04): `f_Launch` and licensing
+## This session (2026-10-04, second): build, tools and test cleanup
+
+A project, not a task: `.specify/build_cleanup/spec.md` and `tasks.md` (write IDs as
+`build_cleanup/T006`). Read `tasks.md` first; its top section has the measured state and the grouping
+of every module.
+
+### Decisions (Matt)
+
+- **`definition.py` is the source of truth.** A hand edit in Max must be written back into it,
+  extending the schema when it cannot yet express the edit.
+- **Layout belongs in `definition.py` too**, not formula-only: "the shape of definition.py is in
+  progress and we want it to hold whatever it needs to hold."
+- **The drift list is a stopgap**: a ratchet that only shrinks and is deleted when empty.
+- **The generic `overrides` block is approved** (not layout-only), to be piloted on `f_chladni`
+  and `f_vf_flow` (build_cleanup/T009 to T012).
+- **Matt (later, same day): commit on f_ projects.** The five Phase 0 commits and the two below were
+  made on that basis.
+
+### Done (Phase 0, five commits)
+
+- `1ab9ee5` removed 16 one-shot scripts (`tools/masonry/*`, `tools/util_profile/*`, five more in
+  `tools/`, `build/migrate_to_attrui.py`, which would have reverted `f_vf_warp`'s deliberate
+  `prepend param bypass_gate`). `tools/` now holds only the two menu scripts and its README.
+- `f933082` `tests/jobs/` had grown to 73 GB (14,171 job dirs, up to 134 MB each, never pruned);
+  deleted, and `benchclient.new_job()` now keeps the newest 50.
+- `8fc3ec6` `tests/bench.sh` runs a regression set by default; `--all` adds `bench_perf` and
+  `bench_fluid_probes`; `--list` prints the selection without Max.
+- `dc10d50` `build/audit_interface.py` merged into `tests/module_contract.py`: it now checks every
+  stage of every module (the audit only ever looked at the first pix). 9 documented `KNOWN_ISSUES`.
+- `52205e6` `build()` made pure (the toggle JS it used to overwrite comes back via `side_files`);
+  `build/drift.py`; the `tests/test_drift.py` ratchet and `tests/drift_baseline.json`.
+
+### Done, later the same day (Max open, first live bench run since Phase 0)
+
+- `18eb7cd` **`f_stereo` was broken on Max 9.2.0**: its codebox assigned `PI = ...`, which 9.2.0 refuses
+  to compile, so the pix produced nothing (20 module-bench issues, all in this one module). Renamed
+  the variable to `pi_val`. No definition exists for `f_stereo`, so carry it into one (build_cleanup/T007).
+- `ee43b7d` bench fixes: the module-bench files now reopen their own bench (they demanded it be open),
+  `bench.sh` only requires the codebox bench when needed, `bench_fluid_module` T038a warmup 48 to 24
+  (the integrating field saturated), and `bench_last.log` now starts with the Max version and date.
+- **Installed Max is 9.2.0; the patches were saved in 9.1.4.** See build_cleanup/T028 to T030.
+
+### State
+
+- `tests/run.sh`: 9 files, all green (`test_drift` 8/8, `test_module_contracts` 8/8 with 9 XFAILs).
+- **Live bench: green on Max 9.2.0**, full default run, 7/7 files (control 5, selftest 9, fft 5,
+  temporal 4, fluid 12, modules 2 across 33 modules, fluid_module 4). Job dirs held at the cap of 50.
+- **Drift: 11 of 40 shipped patchers reproduce from their definitions**; 21 drift, 7 have no
+  definition, 1 fails to build. Only `f_chladni` and `f_vf_flow` are cosmetic-only, so most drift
+  needs schema work, not just layout capture (the numbers and the four kinds of drift are in
+  `build_cleanup/tasks.md`).
+- **Everything is committed** (the notes in the commit after `ee43b7d`). `build_layout/tasks.md`
+  says Matt commits manually; Matt said later on 2026-10-04 to commit on f_ projects.
+
+### Next session
+
+1. **build_cleanup Phase 1** (`T006` to `T008`): pair renamed boxes in `build/drift.py` so an edited
+   label reports once as `old -> new`; decide the 7 definition-less patchers; settle the four
+   ambiguous Max-normalisation cases (`autopattr` varname, `param_connect`, inlet/outlet `index`).
+2. **Phase 2** (`T009` to `T012`): the generic `overrides` block (**approved**) and `--capture`,
+   piloted on `f_chladni` and `f_vf_flow`. Design the element-key scheme first and record it as an ADR
+   in `build/spec.md`.
+3. Then Phase 3 module by module, Phase 4 schema gaps (Param-bypass first), Phase 5 the generated
+   `f_modules` menu. The small loose ends are Phase 6.
+4. **Matt:** finish the `skills/vsynth-bpatcher/SKILL.md` upload and run `./skills/check.sh stamp`
+   (build_cleanup/T027). Then build_cleanup/T029 adds a `PI` gotcha to `jit-gen-codebox`: bundle that
+   into one more upload.
+5. Understand the Max 9.2.0 differences (build_cleanup/T030), starting with the fluid frame count.
+
+---
+
+## Previous session (2026-10-02 to 2026-10-04): `f_Launch` and licensing
 
 ### Done
 
@@ -53,21 +126,14 @@ all uploads current.
 tests and `package/patchers/f_masonry.maxpat` (see Loose threads). The three-way commit split
 suggested at the time was not used.
 
-### Next session (Matt's request): look closely at the build system and the tools
+### The build/tools review requested at the end of that session (now a project)
 
-Starting points, none started:
-- **The `build/` vs `tools/` boundary.** `tools/README.md` calls those scripts one-off and
-  unsupported; `build/` is the supported system (`build/spec.md` is the guide for others).
-  Which `tools/` scripts are really inseparable from `src/` (a likely license exception)?
-- **packaging/T022, a hazard:** `build/tools/f_modules/build_modules.py` still has the old 5-category
-  menu and its header says to run it to regenerate; running it would overwrite the shipped
-  8-category `f_modules.maxpat`. `tools/rebuild_modules_menu.py` has 8 categories but no
-  `f_vf_fluid`. The shipped patcher is the only accurate source.
-- **packaging/T018:** the README says helpfile generation is "via Claude API", `plan.md` says
-  `generate_helpfiles.py` no longer calls it. Script not opened.
-- `generate_launch.py` is the newest build script and a possible template for the pattern:
-  parse a source of truth, validate loudly, a `--check` mode, an offline test.
-- The definition/patch drift tech-debt pass (23 of 33 definitions drifted) is still undone.
+Done or moved into `.specify/build_cleanup/`: the `build/` vs `tools/` boundary (Phase 0: one-shot
+scripts removed, the two menu scripts left until they are replaced), packaging/T022 (the stale
+5-category menu script: `build_cleanup/T020`-`T021`), packaging/T018 (README says helpfile generation
+is "via Claude API", `plan.md` says it no longer is: `build_cleanup/T022`, still unopened), and the
+definition/patch drift tech-debt pass (the project itself). `generate_launch.py` was used as the
+template for the drift check and is the template for the menu generator.
 
 ### Outstanding, Matt's
 
@@ -134,15 +200,17 @@ Condensed from about 740 lines. The full text is in git: `git show de89863:HANDO
   Matt: do not raise unprompted. If picked up: the size of the empty rectangle (200×150 means
   a wrong symbol reached `addmod`; 299×234 means the file failed to load), then the Max
   console. Whether it ever worked from the menu is unknown.
-- **Definition/patch drift:** 23 of 33 `src/*/definition.py` differ from their shipped patchers
+- **Definition/patch drift** (superseded: now the `build_cleanup` project, with current numbers in
+  `.specify/build_cleanup/tasks.md`; `tests/drift_baseline.json` is the machine-readable list):
+  23 of 33 `src/*/definition.py` differ from their shipped patchers
   (9 definitions behind the patch, 10 predate the builder, 3 own build scripts, 1 blocked on
   `f_vf_vortex`). **Do not regenerate** `f_vf_warp`, `f_lens`, `f_vf_fieldmap`,
   `f_vf_repulse` or `f_masonry` (hand-edited); open decision whether to add fieldmap and
   repulse to `plan.md`'s never-regenerate list. Before trusting a regen:
   `build/py.sh build/build_patcher.py src/<m>/definition.py && git diff -w --stat --
   package/patchers/<m>.maxpat`, and `git checkout --` the file if the diff isn't tiny.
-  Starting points for a cleanup pass: `scratch/regen_drift_semantic.py`,
-  `regen_drift_props.py`, `verify_regen_full.py`. No tasks.md exists for it yet.
+  `build/drift.py` replaced the scratch drift scripts (`scratch/regen_drift_*.py` can go, see
+  build_cleanup/T025); the task list is `.specify/build_cleanup/tasks.md`.
 - `f_vf_fluid` is script-built (`src/f_vf_fluid/build_fluid.py`), safe to regenerate; once
   hand-edited it joins the never-regenerate list.
 - Build-schema gaps 3 to 6 are in `ideas/build_patcher_schema_gaps.md`, none attempted; gap 6
