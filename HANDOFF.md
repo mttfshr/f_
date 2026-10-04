@@ -55,6 +55,9 @@ of every module.
   tried and rejected (free-running frames broke secondary-output capture; running the two benches in
   parallel fails because Max error capture is global). Reasons and numbers are in `tests/README.md`;
   build_cleanup/T031 and T032.
+- **`tests/bench.sh --changed`** (uncommitted until the next commit): skips bench files whose inputs and Max/Vsynth
+  versions match their last green run; `bench_modules` runs only changed patchers. Offline-tested; **never run live**.
+  First use: one plain `tests/bench.sh` to seed `tests/jobs/bench_green.json`, then `--changed` (build_cleanup/T032b).
 - **Lead for the parked `getattr` console error:** it reaches the bench while `bench_module.maxpat`
   loads Vsynth (build_cleanup/T032).
 

@@ -17,6 +17,7 @@ Reported, not asserted:
 Run:  tests/bench.sh tests/bench_modules.py   (~3 s per module)
 """
 import re
+import os
 import sys
 
 import numpy as np
@@ -26,6 +27,10 @@ import modulebench as mb
 from harness import check, run
 from module_contract import shipped_modules
 from test_module_contracts import NOT_APPLICABLE
+
+# BENCH_MODULES=f_a,f_b limits the run to those modules (tests/bench.sh --changed
+# sets it when only some patchers changed). Empty means all.
+ONLY = {m for m in os.environ.get("BENCH_MODULES", "").split(",") if m}
 
 # Errors posted by the module's own size handling in this nesting
 # ("getattr presentation_rect" to thispatcher); whether Vsynth shows it too is
@@ -121,6 +126,8 @@ def test_live_module_contracts():
         name = path.stem
         if name in NOT_APPLICABLE or name.endswith("_version"):
             continue
+        if ONLY and name not in ONLY:
+            continue
         n += 1
         issues, r, info = module_issues(name)
         by = r.get("bypass_jsui_readback") or {}
@@ -139,14 +146,16 @@ def test_live_module_contracts():
             else:
                 unexpected.append(f"{name}: {kind} {detail} {why}")
                 print(f"      BAD   {kind} {detail} {why}")
-    print(f"    ({n} modules)")
+    print(f"    ({n} modules{', limited by BENCH_MODULES' if ONLY else ''})")
     print(f"    documented `bypass 1` control message works in {len(_bypass_msg['works'])}, "
           f"not in {len(_bypass_msg['no'])}: {_bypass_msg['no']}")
     check("unexpected live contract issues", len(unexpected), 0)
 
 
 def test_known_live_issues_still_present():
-    gone = sorted(set(KNOWN) - _seen)
+    # With BENCH_MODULES set, known issues of modules that were not run cannot show
+    # up, and must not be reported as fixed.
+    gone = sorted(k for k in set(KNOWN) - _seen if not ONLY or k[0] in ONLY)
     for key in gone:
         print(f"    XPASS {key} -- remove from KNOWN")
     check("known issues that now pass (remove them)", len(gone), 0)

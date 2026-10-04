@@ -19,6 +19,7 @@ and run fast enough."
     tests/run.sh                              # every tests/test_*.py
     tests/run.sh tests/test_fft_separable.py  # one file
     tests/bench.sh                            # regression set (needs the bench open)
+    tests/bench.sh --changed                  # only files whose inputs changed since their last green run
     tests/bench.sh --slow                     # the regression set plus its @slow tests
     tests/bench.sh --all                      # every bench_*.py, incl. perf and probes, and slow tests
     tests/bench.sh --list                     # show what would run (no Max needed)
@@ -28,6 +29,13 @@ The regression set is the `DEFAULT` list at the top of `tests/bench.sh`. It
 leaves out `bench_perf.py` (fps-based checks that can fail on a busy machine
 without a regression) and `bench_fluid_probes.py` (a Phase 0 record of
 bench-verified facts); `--all` adds them.
+
+`--changed` (`tests/benchdeps.py`) skips a bench file whose Python imports, data files and environment
+(Max and Vsynth versions) equal those of its last green run, and says why; `bench_modules` runs only the
+modules whose patcher changed (`BENCH_MODULES`). The record is `tests/jobs/bench_green.json` (local,
+gitignored): a passing file is recorded, a failing one is forgotten, so any plain `tests/bench.sh` run
+seeds it. A new `tests/bench_*.py` must be registered in `benchdeps.DATA` (a test enforces it). It does
+not see the GPU driver, macOS, or what else is open in Max, so run without `--changed` before a release.
 
 A test marked `@slow` (`harness.slow`) is skipped unless `--slow` or `--all` is given, and the
 skip is printed by name. Today that is `bench_fluid` T021 (cost against the 3 ms budget, ~45 s)
@@ -184,6 +192,7 @@ Facts section).
   regression gates: `bench_fluid_probes.py` (Phase 0 GPU probes; run with
   `--all`) and `fluid_feasibility.py` (Phase 0 module-bench feasibility
   study, no assertions, matches no runner)
+- `benchdeps.py` + `test_benchdeps.py` -- what `bench.sh --changed` runs (input hashing, decision table, record)
 - `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name)
 - `module_contract.py` + `test_module_contracts.py` -- offline wiring
   contracts of every shipped bpatcher: route -> attrui -> Param wiring, plus
