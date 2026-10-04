@@ -1,95 +1,101 @@
 # HANDOFF
 
-_Latest session: 2026-10-04 (second)_ — build, tools and test cleanup, which turned into a project:
-**`.specify/build_cleanup/`** (spec and tasks; work-queue item 14 in `.specify/plan.md`). Five commits,
-listed below; the notes written at the end of the session are not committed yet. The session before
-it (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; committed in `de89863`)
-follows it. Older sessions are condensed at the end of this file; the open packaging items
-(packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
+_Latest session: 2026-10-04 (second)_ — started as "look at `build/` and `tools/` as a whole: do we still
+need all the files, and should the build or test harness be refactored?" and became a project:
+**`.specify/build_cleanup/`** (spec and 33 tasks; work-queue item 14 in `.specify/plan.md`). Everything is
+committed (13 commits, below). The session before it (2026-10-02 to 2026-10-04: Package Manager research,
+`f_Launch`, licensing; `de89863`) follows it. Older sessions are condensed at the end of this file; the open
+packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
 
 ## This session (2026-10-04, second): build, tools and test cleanup
 
-A project, not a task: `.specify/build_cleanup/spec.md` and `tasks.md` (write IDs as
-`build_cleanup/T006`). Read `tasks.md` first; its top section has the measured state and the grouping
-of every module.
+A project, not a task: `.specify/build_cleanup/spec.md` and `tasks.md` (write IDs as `build_cleanup/T006`).
+Read `tasks.md` first; its top section has the measured drift state and the grouping of every module.
+
+### Start here
+
+- **Ask Matt what he wants to work on.** The session ended with him saying he had lost track of what he
+  wanted to do ("we've spent all afternoon on this"). The `build_cleanup` list below is the default only
+  if he has no other aim.
+- **How he wants to work:** slow things go in the background (`tests/bg.sh`), not foreground polling;
+  do not rerun the bench to re-verify your own changes (that is what `--changed` is for); discuss
+  architecture before code; committing on f_ projects is fine (he said so on 2026-10-04).
 
 ### Decisions (Matt)
 
-- **`definition.py` is the source of truth.** A hand edit in Max must be written back into it,
-  extending the schema when it cannot yet express the edit.
-- **Layout belongs in `definition.py` too**, not formula-only: "the shape of definition.py is in
-  progress and we want it to hold whatever it needs to hold."
+- **`definition.py` is the source of truth.** A hand edit in Max must be written back into it, extending
+  the schema when it cannot yet express the edit.
+- **Layout belongs in `definition.py` too**, not formula-only: "the shape of definition.py is in progress
+  and we want it to hold whatever it needs to hold."
 - **The drift list is a stopgap**: a ratchet that only shrinks and is deleted when empty.
-- **The generic `overrides` block is approved** (not layout-only), to be piloted on `f_chladni`
-  and `f_vf_flow` (build_cleanup/T009 to T012).
-- **Matt (later, same day): commit on f_ projects.** The five Phase 0 commits and the two below were
-  made on that basis.
+- **The generic `overrides` block is approved** (not layout-only), to be piloted on `f_chladni` and
+  `f_vf_flow` (build_cleanup/T009 to T012).
 
-### Done (Phase 0, five commits)
+### Done (13 commits, in order)
 
-- `1ab9ee5` removed 16 one-shot scripts (`tools/masonry/*`, `tools/util_profile/*`, five more in
-  `tools/`, `build/migrate_to_attrui.py`, which would have reverted `f_vf_warp`'s deliberate
-  `prepend param bypass_gate`). `tools/` now holds only the two menu scripts and its README.
-- `f933082` `tests/jobs/` had grown to 73 GB (14,171 job dirs, up to 134 MB each, never pruned);
-  deleted, and `benchclient.new_job()` now keeps the newest 50.
+- `1ab9ee5` removed 16 one-shot scripts (`tools/masonry/*`, `tools/util_profile/*`, five more in `tools/`,
+  `build/migrate_to_attrui.py`, which would have reverted `f_vf_warp`'s deliberate `prepend param
+  bypass_gate`). `tools/` now holds only the two menu scripts and its README.
+- `f933082` `tests/jobs/` had grown to 73 GB (14,171 job dirs, never pruned); deleted, and
+  `benchclient.new_job()` now keeps the newest 50.
 - `8fc3ec6` `tests/bench.sh` runs a regression set by default; `--all` adds `bench_perf` and
   `bench_fluid_probes`; `--list` prints the selection without Max.
-- `dc10d50` `build/audit_interface.py` merged into `tests/module_contract.py`: it now checks every
-  stage of every module (the audit only ever looked at the first pix). 9 documented `KNOWN_ISSUES`.
-- `52205e6` `build()` made pure (the toggle JS it used to overwrite comes back via `side_files`);
-  `build/drift.py`; the `tests/test_drift.py` ratchet and `tests/drift_baseline.json`.
-
-### Done, later the same day (Max open, first live bench run since Phase 0)
-
-- `18eb7cd` **`f_stereo` was broken on Max 9.2.0**: its codebox assigned `PI = ...`, which 9.2.0 refuses
-  to compile, so the pix produced nothing (20 module-bench issues, all in this one module). Renamed
-  the variable to `pi_val`. No definition exists for `f_stereo`, so carry it into one (build_cleanup/T007).
+- `dc10d50` `build/audit_interface.py` merged into `tests/module_contract.py`, which now checks every stage
+  of every module (the audit only looked at the first pix). 9 documented `KNOWN_ISSUES`.
+- `52205e6` `build()` made pure (the toggle JS comes back via `side_files`); `build/drift.py`; the
+  `tests/test_drift.py` ratchet and `tests/drift_baseline.json`.
+- `18eb7cd` **`f_stereo` was broken on Max 9.2.0**: its codebox assigned `PI = ...`, which 9.2.0 refuses to
+  compile, so its pix produced nothing (20 module-bench issues, all in this module). Renamed to `pi_val`.
+  It has no definition, so carry the fix into one (build_cleanup/T007).
 - `ee43b7d` bench fixes: the module-bench files now reopen their own bench (they demanded it be open),
-  `bench.sh` only requires the codebox bench when needed, `bench_fluid_module` T038a warmup 48 to 24
-  (the integrating field saturated), and `bench_last.log` now starts with the Max version and date.
-- **Installed Max is 9.2.0; the patches were saved in 9.1.4.** See build_cleanup/T028 to T030.
+  `bench.sh` requires the codebox bench only when needed, `bench_fluid_module` T038a warmup 48 to 24 (the
+  integrating field saturated), and `bench_last.log` starts with the Max version and date.
+- `649e640` the `build_cleanup` spec and task list, plan.md item 14, this file.
 - `d7fe787` **bench speed: the default `bench.sh` run goes from ~440 s to 188 s** by moving `bench_fluid`
-  T022 (soak, 190 s) and T021 (cost, 45 s) to an `@slow` tier (`--slow`, or `--all`). Two more ideas were
-  tried and rejected (free-running frames broke secondary-output capture; running the two benches in
-  parallel fails because Max error capture is global). Reasons and numbers are in `tests/README.md`;
-  build_cleanup/T031 and T032.
-- **`tests/bg.sh`** background runner: `start [offline|bench|all]` returns at once, then `status`, `log`, `stop`,
-  `list`; one bench run at a time; macOS notification on finish. Offline-tested with fake commands. It does not
-  isolate the bench from the user's Max session (focus, global error trap): build_cleanup/T033 (b) to (d).
-- **`tests/bench.sh --changed`** (uncommitted until the next commit): skips bench files whose inputs and Max/Vsynth
-  versions match their last green run; `bench_modules` runs only changed patchers. Offline-tested; **never run live**.
-  First use: one plain `tests/bench.sh` to seed `tests/jobs/bench_green.json`, then `--changed` (build_cleanup/T032b).
-- **Lead for the parked `getattr` console error:** it reaches the bench while `bench_module.maxpat`
-  loads Vsynth (build_cleanup/T032).
+  T022 (soak, 190 s) and T021 (cost, 45 s) to an `@slow` tier (`--slow`, or `--all`).
+- `5756370` recorded what was tried and rejected, with numbers, in `tests/README.md`: free-running frames
+  (4% faster, broke secondary-output capture), content-hashed gen names (no gain), running the two benches in
+  parallel (fails: Max error capture is global).
+- `2b13bc4` **`tests/bench.sh --changed`** (`tests/benchdeps.py`): skips bench files whose Python imports, data
+  files and Max/Vsynth versions match their last green run; `bench_modules` runs only the modules whose patcher
+  changed (`BENCH_MODULES`). Record in `tests/jobs/bench_green.json` (local, gitignored).
+- `23b47b8` parked the background-bench ideas as build_cleanup/T033.
+- `978caf4` **`tests/bg.sh`** background runner: `start [offline|bench|all]` returns at once (0.2 s), then
+  `status` (exit 0 passed, 1 failed, 2 running), `log`, `stop`, `list`; one bench run at a time; macOS
+  notification on finish.
 
 ### State
 
-- `tests/run.sh`: 9 files, all green (`test_drift` 8/8, `test_module_contracts` 8/8 with 9 XFAILs).
-- **Live bench: green on Max 9.2.0**, full default run, 7/7 files (control 5, selftest 9, fft 5,
-  temporal 4, fluid 12, modules 2 across 33 modules, fluid_module 4). Job dirs held at the cap of 50.
-- **Drift: 11 of 40 shipped patchers reproduce from their definitions**; 21 drift, 7 have no
-  definition, 1 fails to build. Only `f_chladni` and `f_vf_flow` are cosmetic-only, so most drift
-  needs schema work, not just layout capture (the numbers and the four kinds of drift are in
-  `build_cleanup/tasks.md`).
-- **Everything is committed** (the notes in the commit after `ee43b7d`). `build_layout/tasks.md`
-  says Matt commits manually; Matt said later on 2026-10-04 to commit on f_ projects.
+- **`tests/run.sh`: 12 files, all green** (last run through `tests/bg.sh`, 54 s).
+- **Live bench:** the last full default run was green on Max 9.2.0, 7/7 files, 188 s. Since then
+  `bench_modules.py` gained the `BENCH_MODULES` filter and `bench.sh` gained `--changed` and recording: those are
+  **tested offline only (19 + 10 tests, mutation-checked), never run against live Max.**
+  `tests/jobs/bench_green.json` does not exist yet: the first plain `tests/bench.sh` seeds it, then `--changed` works.
+- **`tests/bg.sh` does not isolate the bench from Matt's Max session**: reopening the bench still brings Max to
+  the front, and the bench's global error trap can pick up errors caused in Max meanwhile (build_cleanup/T033 b to d).
+- **Installed Max is 9.2.0; the patches were saved in 9.1.4** (build_cleanup/T028 to T030).
+- **Drift: 11 of 40 shipped patchers reproduce from their definitions**; 21 drift, 7 have no definition, 1 fails
+  to build. Only `f_chladni` and `f_vf_flow` are cosmetic-only, so most drift needs schema work, not just layout
+  capture (numbers and the four kinds of drift: `build_cleanup/tasks.md`).
+- **Skills:** `./skills/check.sh` showed `vsynth-bpatcher` STALE when this session ended (Matt was uploading it): run it, then `./skills/check.sh stamp` once the upload is current.
+- Lead for the parked `getattr` console error: it reaches the bench while `bench_module.maxpat` loads Vsynth
+  (build_cleanup/T032).
 
 ### Next session
 
-1. **build_cleanup Phase 1** (`T006` to `T008`): pair renamed boxes in `build/drift.py` so an edited
-   label reports once as `old -> new`; decide the 7 definition-less patchers; settle the four
-   ambiguous Max-normalisation cases (`autopattr` varname, `param_connect`, inlet/outlet `index`).
-2. **Phase 2** (`T009` to `T012`): the generic `overrides` block (**approved**) and `--capture`,
-   piloted on `f_chladni` and `f_vf_flow`. Design the element-key scheme first and record it as an ADR
-   in `build/spec.md`.
-3. Then Phase 3 module by module, Phase 4 schema gaps (Param-bypass first), Phase 5 the generated
-   `f_modules` menu. The small loose ends are Phase 6.
-4. **Matt:** finish the `skills/vsynth-bpatcher/SKILL.md` upload and run `./skills/check.sh stamp`
-   (build_cleanup/T027). Then build_cleanup/T029 adds a `PI` gotcha to `jit-gen-codebox`: bundle that
-   into one more upload.
-5. Understand the Max 9.2.0 differences (build_cleanup/T030), starting with the fluid frame count.
+1. **Ask Matt** what he wants to work on (see Start here).
+2. If it is the cleanup: **build_cleanup Phase 1** (`T006` to `T008`): pair renamed boxes in `build/drift.py` so
+   an edited label reports once as `old -> new`; decide the 7 definition-less patchers; settle the four ambiguous
+   Max-normalisation cases (`autopattr` varname, `param_connect`, inlet/outlet `index`).
+3. **Phase 2** (`T009` to `T012`): the `overrides` block (approved) and `--capture`, piloted on `f_chladni` and
+   `f_vf_flow`. Design the element-key scheme first and record it as an ADR in `build/spec.md`.
+4. Then Phase 3 module by module, Phase 4 schema gaps (Param-bypass first), Phase 5 the generated `f_modules`
+   menu, Phase 6 loose ends. Optional and only if wanted: build_cleanup/T032a (chain passes in one bench job) and
+   T033 b to d (focus, a dedicated Max instance).
+5. **Matt:** build_cleanup/T027 (skill upload and `check.sh stamp`), then T029 (a `PI` gotcha in `jit-gen-codebox`,
+   one more upload).
 
 ---
 
