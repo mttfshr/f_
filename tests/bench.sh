@@ -5,10 +5,16 @@
 # bench_fluid_module, which open tests/bench/bench_module.maxpat themselves
 # (close Vsynth performance patches first). Math-only tests: tests/run.sh.
 #
-#   tests/bench.sh                 regression set (DEFAULT below)
-#   tests/bench.sh --all           every bench_*.py (adds timing- and probe-style files)
+#   tests/bench.sh                 regression set (DEFAULT below), slow tests skipped
+#   tests/bench.sh --slow          the same files, plus their @slow tests
+#   tests/bench.sh --all           every bench_*.py, slow tests included
 #   tests/bench.sh --list          print what would run, then exit (no Max needed)
 #   tests/bench.sh tests/bench_control.py   just the named files
+#   BENCH_LOG=path                 write the log there instead of tests/jobs/bench_last.log
+#
+# Slow tests (harness.slow) are marked where they live and listed by name in each
+# file's output when skipped; at the moment: bench_fluid T021 (cost, ~45 s) and
+# T022 (soak, ~190 s).
 #
 # Not in the regression set, on purpose: bench_perf.py (fps-based checks that
 # can fail on a busy machine without a regression) and bench_fluid_probes.py
@@ -17,14 +23,16 @@ cd "$(dirname "$0")/.." || exit 1
 
 DEFAULT=(control selftest fft temporal fluid modules fluid_module)
 
-ALL=0; LIST=0; FILES=()
+ALL=0; LIST=0; SLOW=0; FILES=()
 for a in "$@"; do
   case "$a" in
-    --all)  ALL=1 ;;
+    --all)  ALL=1; SLOW=1 ;;
+    --slow) SLOW=1 ;;
     --list) LIST=1 ;;
     *)      FILES+=("$a") ;;
   esac
 done
+if [ "$SLOW" -eq 1 ]; then export BENCH_SLOW=1; fi
 if [ ${#FILES[@]} -eq 0 ]; then
   if [ "$ALL" -eq 1 ]; then
     FILES=(tests/bench_*.py)
@@ -60,7 +68,8 @@ fi
 set -- "${FILES[@]}"
 # full output (incl. tracebacks) always kept, even if the caller filters it
 mkdir -p tests/jobs
-LOG=tests/jobs/bench_last.log
+LOG="${BENCH_LOG:-tests/jobs/bench_last.log}"
+mkdir -p "$(dirname "$LOG")"
 # first line records what produced the log: results here depend on the Max build
 # (2026-10-04: Max 9.2.0 rejected an assignment to `PI` that earlier runs accepted)
 echo "# Max $(defaults read /Applications/Max.app/Contents/Info CFBundleShortVersionString 2>/dev/null || echo unknown), $(date '+%Y-%m-%d %H:%M')" > "$LOG"

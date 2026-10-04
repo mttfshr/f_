@@ -19,7 +19,8 @@ and run fast enough."
     tests/run.sh                              # every tests/test_*.py
     tests/run.sh tests/test_fft_separable.py  # one file
     tests/bench.sh                            # regression set (needs the bench open)
-    tests/bench.sh --all                      # every bench_*.py, incl. perf and probes
+    tests/bench.sh --slow                     # the regression set plus its @slow tests
+    tests/bench.sh --all                      # every bench_*.py, incl. perf and probes, and slow tests
     tests/bench.sh --list                     # show what would run (no Max needed)
     tests/bench.sh tests/bench_fft.py         # one file
 
@@ -27,6 +28,13 @@ The regression set is the `DEFAULT` list at the top of `tests/bench.sh`. It
 leaves out `bench_perf.py` (fps-based checks that can fail on a busy machine
 without a regression) and `bench_fluid_probes.py` (a Phase 0 record of
 bench-verified facts); `--all` adds them.
+
+A test marked `@slow` (`harness.slow`) is skipped unless `--slow` or `--all` is given, and the
+skip is printed by name. Today that is `bench_fluid` T021 (cost against the 3 ms budget, ~45 s)
+and T022 (soak at parameter extremes, ~190 s). Measured 2026-10-04: the default run is ~190 s
+with them skipped, ~440 s with them. Run them when a shader, the solver's parameters or the bench
+setup changes. A bench job costs ~107 ms regardless of its work (it waits for ~7 rendered frames at
+60 fps), which is why a 6-job solver frame costs ~0.64 s.
 
 Uses `uv` to supply NumPy in an ephemeral environment -- nothing installed
 system-wide. No pytest; each test file runs standalone via `harness.py`.
@@ -157,6 +165,7 @@ Facts section).
   regression gates: `bench_fluid_probes.py` (Phase 0 GPU probes; run with
   `--all`) and `fluid_feasibility.py` (Phase 0 module-bench feasibility
   study, no assertions, matches no runner)
+- `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name)
 - `module_contract.py` + `test_module_contracts.py` -- offline wiring
   contracts of every shipped bpatcher: route -> attrui -> Param wiring, plus
   per-pix checks on every stage (each codebox Param is driven and read, a

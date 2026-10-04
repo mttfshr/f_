@@ -23,7 +23,7 @@ import benchclient as bc
 import fluid_mirror as fm
 from fluid_mirror import Params
 from gpu_sim import F32
-from harness import check, note, run
+from harness import check, note, run, slow
 from test_fft_separable import make_image, pack, rel_err
 from test_fluid_mirror import rand_force, rand_state, smooth_state, taylor_green
 
@@ -294,6 +294,8 @@ def stage_cost(stage, inputs, dim, params=None):
     return r.get("ms_per_pass_upper_bound", float("nan")), chain, False
 
 
+@slow       # ~45 s (2026-10-04): a timing measurement against the 3 ms budget, so it is
+            # also the noisiest test here; run it when a shader or the bench setup changes
 def test_T021_cost_per_stage():
     """NF-001: solver stages at 256^2 + enc at a 1280x720 render size; the sum
     must fit the 3 ms/frame budget (else evaluate 128^2)."""
@@ -319,6 +321,9 @@ def test_T021_cost_per_stage():
 
 # ----------------------------------------------------------------- T022
 
+@slow       # ~190 s (2026-10-04), 45% of the default bench run: 3 cases x 100 host-sequenced
+            # frames, ~0.6 s each (6 bench jobs per frame, bound by render frames per job,
+            # not by the GPU). Run it when the solver math, its parameters or limits change.
 def test_T022_soak_at_extremes():
     """SC5 (GPU part): host-sequenced frames at parameter extremes stay finite."""
     rand = rand_force(N, N, 11)
