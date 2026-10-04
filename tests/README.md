@@ -37,6 +37,14 @@ gitignored): a passing file is recorded, a failing one is forgotten, so any plai
 seeds it. A new `tests/bench_*.py` must be registered in `benchdeps.DATA` (a test enforces it). It does
 not see the GPU driver, macOS, or what else is open in Max, so run without `--changed` before a release.
 
+**Background runs** (`tests/bg.sh`): `start [offline|bench|all]` returns at once and runs detached;
+`status` (exit 0 passed, 1 failed, 2 running, 3 none), `log`, `stop`, `list`. One bench run at a time (a
+lock); an offline run may overlap anything; `bench` defaults to `--changed`; a macOS notification when it
+finishes. Logs are in `tests/jobs/bg/` (gitignored). A bench run needs Max up with the bench open, else it
+fails fast with "bench not reachable" in its log. It does not isolate the bench from your Max session:
+reopening the bench still brings Max to the front, and the bench's global error trap can pick up errors you
+cause in Max meanwhile (`build_cleanup` T033).
+
 A test marked `@slow` (`harness.slow`) is skipped unless `--slow` or `--all` is given, and the
 skip is printed by name. Today that is `bench_fluid` T021 (cost against the 3 ms budget, ~45 s)
 and T022 (soak at parameter extremes, ~190 s). Measured 2026-10-04: the default run is ~190 s
@@ -192,6 +200,7 @@ Facts section).
   regression gates: `bench_fluid_probes.py` (Phase 0 GPU probes; run with
   `--all`) and `fluid_feasibility.py` (Phase 0 module-bench feasibility
   study, no assertions, matches no runner)
+- `bg.sh` + `test_bg.py` -- the background runner (start, status, log, stop, list; lock; fake-command tests)
 - `benchdeps.py` + `test_benchdeps.py` -- what `bench.sh --changed` runs (input hashing, decision table, record)
 - `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name)
 - `module_contract.py` + `test_module_contracts.py` -- offline wiring
