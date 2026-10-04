@@ -212,8 +212,16 @@ def hf_rms(u):
     return float(np.sqrt(np.mean((u - s / 9.0) ** 2)))
 
 
-def solve(force, taps, readback, warmup=48):
-    """One settled velocity field, decoded, with the settings proven to have landed."""
+def solve(force, taps, readback, warmup=24):
+    """One settled velocity field, decoded, with the settings proven to have landed.
+
+    warmup: the field integrates the force every frame (viscosity is 0 here), so
+    its magnitude grows with the number of frames Max renders. Measured 2026-10-04
+    on Max 9.2.0: max|u| = 0.47 at 16, 0.90 at 32, saturated (1.0) at 48. The old
+    default of 48 clamped there, though it passed when last run on 2026-09-29 (the
+    Max version used then was not recorded). 24 leaves headroom
+    (noise-rejection ratio 1.77 against the 1.5 limit; 1.57 at 32). The clamp
+    assertion below stays: if forces saturate again, this fails loudly."""
     r, arrays = run_wrapper(taps_wrapper(taps), [force], warmup=warmup, readback=readback)
     assert not r["errors"], r["errors"]
     out = arrays[1]
@@ -261,5 +269,7 @@ def test_T038a_tap_grid_reduces_force_noise_through_the_module():
 
 
 if __name__ == "__main__":
-    bc.require_bench(ports=bc.MODULE_PORTS, patch="bench_module.maxpat")
+    # run_wrapper reopens the bench on every call, so open it here rather than
+    # requiring it to be open (this also fails fast if Max isn't up).
+    bc.reopen(ports=bc.MODULE_PORTS, patch="bench_module.maxpat")
     sys.exit(run(globals()))

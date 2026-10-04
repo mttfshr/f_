@@ -153,5 +153,7 @@ def test_known_live_issues_still_present():
 
 
 if __name__ == "__main__":
-    bc.require_bench(ports=bc.MODULE_PORTS, patch="bench_module.maxpat")
+    # Each module reopens the bench itself (modulebench.run_module, fresh=True),
+    # so don't require it to be open: open it, which also fails fast if Max isn't up.
+    bc.reopen(ports=bc.MODULE_PORTS, patch="bench_module.maxpat")
     sys.exit(run(globals()))
