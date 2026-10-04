@@ -33,8 +33,27 @@ A test marked `@slow` (`harness.slow`) is skipped unless `--slow` or `--all` is 
 skip is printed by name. Today that is `bench_fluid` T021 (cost against the 3 ms budget, ~45 s)
 and T022 (soak at parameter extremes, ~190 s). Measured 2026-10-04: the default run is ~190 s
 with them skipped, ~440 s with them. Run them when a shader, the solver's parameters or the bench
-setup changes. A bench job costs ~107 ms regardless of its work (it waits for ~7 rendered frames at
-60 fps), which is why a 6-job solver frame costs ~0.64 s.
+setup changes. A bench job costs ~75-100 ms whatever its work (a stub job alone is ~12 ms; the rest is
+~7 rendered frames, file I/O, a shader compile and the Python-side file work, spread over many small
+parts), which is why a 6-job solver frame costs ~0.6 s.
+
+**Tried on 2026-10-04 and rejected; do not retry without a new idea:**
+
+- *Free-running frames for correctness jobs* (`displaylink 0`, `sync 0`, `fps 1000`, as performance
+  mode does). 4% faster (188 s to 180 s), and it broke `bench_selftest` and `bench_temporal`: secondary
+  outputs (`out2`, ...) came back `None`. Their GPU-to-CPU readback needs wall-clock time, so the
+  capture is not purely frame-synchronous.
+- *Content-hashed `.genjit` names, to avoid recompiling.* The same code repeated was ~20% faster
+  (59 ms against 75 ms per pass), but the real pattern, alternating stages, gained nothing (74 ms).
+  Outputs were bitwise identical either way.
+- *Running the codebox bench and the module bench concurrently* (separate ports, one Max). The module
+  group passed (101 s); the codebox group failed 15 assertions, all `jpatcher: doesn't understand
+  getattr`. The bench traps every Max error through one global route, so errors raised while the other
+  bench loads Vsynth land inside unrelated jobs. It needs per-bench error capture first. Both runners
+  also prune the same `tests/jobs/` to the newest 50, which would need an age floor.
+
+What is left is structural: a chain of passes in one job (T020's 100 solver frames), or running only
+the modules that changed (`bench_modules` is 33 forced reopens, ~75 s).
 
 Uses `uv` to supply NumPy in an ephemeral environment -- nothing installed
 system-wide. No pytest; each test file runs standalone via `harness.py`.

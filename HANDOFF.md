@@ -50,6 +50,13 @@ of every module.
   `bench.sh` only requires the codebox bench when needed, `bench_fluid_module` T038a warmup 48 to 24
   (the integrating field saturated), and `bench_last.log` now starts with the Max version and date.
 - **Installed Max is 9.2.0; the patches were saved in 9.1.4.** See build_cleanup/T028 to T030.
+- `d7fe787` **bench speed: the default `bench.sh` run goes from ~440 s to 188 s** by moving `bench_fluid`
+  T022 (soak, 190 s) and T021 (cost, 45 s) to an `@slow` tier (`--slow`, or `--all`). Two more ideas were
+  tried and rejected (free-running frames broke secondary-output capture; running the two benches in
+  parallel fails because Max error capture is global). Reasons and numbers are in `tests/README.md`;
+  build_cleanup/T031 and T032.
+- **Lead for the parked `getattr` console error:** it reaches the bench while `bench_module.maxpat`
+  loads Vsynth (build_cleanup/T032).
 
 ### State
 
