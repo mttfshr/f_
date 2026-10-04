@@ -1065,7 +1065,15 @@ def assign_roles(ui_params, header_toggles, mod_inlets, outlets, pix_ids,
     return r
 
 
-def build(defn, debug=None):
+def build(defn, debug=None, side_files=None):
+    """Build a patcher dict from a definition. Pure: nothing is written to disk.
+
+    Files the build also generates (today: the panel_toggle JS) are put into
+    `side_files`, a {Path: str} dict the caller may pass in; main() writes them
+    next to the patcher. Without it they are dropped, so a check or test that
+    only wants the patcher can never overwrite a shipped file."""
+    if side_files is None:
+        side_files = {}
     name        = defn["name"]
     prefix      = defn["prefix"]
     title       = defn["title"]
@@ -1151,13 +1159,12 @@ def build(defn, debug=None):
         pt = dict(panel_toggle)
         pt.setdefault("js_filename", f"{prefix}_toggle.js")
         boxes.extend(panel_toggle_boxes(pt, pw))
-        # Write the generated per-module toggle JS as a side effect —
-        # path is relative to this script's own location (build/../package/
-        # javascript/), not cwd, so it's correct regardless of how
-        # build_patcher.py is invoked.
+        # The generated per-module toggle JS is a side file: recorded for
+        # main() to write, never written here (build() is pure). Path is
+        # relative to this script (build/../package/javascript/), not cwd.
         js_content = panel_toggle_js_content(pt.get("front", []), pt.get("back", []))
         js_path = Path(__file__).parent.parent / "package" / "javascript" / pt["js_filename"]
-        js_path.write_text(js_content)
+        side_files[js_path] = js_content
 
     if archetype == "dual":
         boxes.extend(instate_boxes())
@@ -1382,15 +1389,19 @@ def main():
 
     def_path  = Path(sys.argv[1])
     defn      = load_definition(def_path)
-    result    = build(defn)
+    side_files = {}
+    result    = build(defn, side_files=side_files)
 
     repo_root = Path(__file__).parent.parent
     out_path  = repo_root / "package" / "patchers" / f"{defn['name']}.maxpat"
 
     with open(out_path, "w") as f:
         json.dump(result, f, indent="\t")
-
     print(f"Written: {out_path}")
+
+    for path, content in side_files.items():
+        Path(path).write_text(content)
+        print(f"Written: {path}")
 
 if __name__ == "__main__":
     main()

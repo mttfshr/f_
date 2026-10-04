@@ -564,6 +564,31 @@ extract_params.py f_name → generate_helpfiles.py f_name
 
 ---
 
+## Source of Truth and Drift
+
+`definition.py` is the source of truth for a module. If you change a patcher by
+hand in Max, write the change back into `definition.py` (extending the schema
+if it can't yet express it) so that rebuilding reproduces the patcher.
+
+`build/drift.py` checks this without writing anything: it builds each module
+in memory (`build_patcher.build` is pure; files a build also generates, such
+as the `panel_toggle` JS, come back in a `side_files` dict that only `main()`
+writes) and compares the result with the shipped patcher. Boxes are matched by
+identity (class, text, parameter name), not by id. `patching_rect` is ignored,
+since the edit-view layout is always regenerated. Differences Max introduces by
+itself on save (recomputed ports of a `newobj`, saved `restore`/`save` state,
+default-valued keys) are normalised away; everything else is drift. A module
+with its own `src/<name>/build_*.py` is built by that script's `build()`.
+
+```
+build/py.sh build/drift.py            # every shipped patcher
+build/py.sh build/drift.py -v f_lens  # with examples of each difference
+```
+
+`tests/test_drift.py` enforces the rule. A module must reproduce exactly unless
+it is listed in `tests/drift_baseline.json`, a list that may only shrink and is
+meant to be deleted once empty.
+
 ## Known Constraints
 
 - Max does not pick up external file edits while a patch is open — close without saving, reopen to load build script output

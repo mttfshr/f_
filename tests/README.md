@@ -163,6 +163,14 @@ Facts section).
   codebox-less pix is a pure identity pass, every gen in/out has a cord).
   Known issues live in `KNOWN_ISSUES` with a pointer each (XFAIL; a fixed one
   reports XPASS). Replaced `build/audit_interface.py`.
+- `drift.py` (in `build/`) + `test_drift.py` + `drift_baseline.json` -- the
+  definition.py ratchet: every shipped patcher is rebuilt from its definition
+  in memory and compared with the shipped file. A module must reproduce
+  exactly unless it is in the baseline, which may only shrink (drift growing,
+  shrinking without the baseline being lowered, or a module that now
+  reproduces all fail the test). Rewrite the baseline with
+  `python3 tests/test_drift.py --write-baseline`. See `build/spec.md`,
+  "Source of Truth and Drift".
 - `modulebench.py` + `bench_modules.py` -- live module contracts (module bench)
 - `templates/bench_module_template.py` -- starting point for a module's bench test
 - `bench/` -- `make_bench.py` (generates `bench.maxpat` and
