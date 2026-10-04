@@ -18,8 +18,15 @@ and run fast enough."
 
     tests/run.sh                              # every tests/test_*.py
     tests/run.sh tests/test_fft_separable.py  # one file
-    tests/bench.sh                            # every tests/bench_*.py (needs the bench open)
+    tests/bench.sh                            # regression set (needs the bench open)
+    tests/bench.sh --all                      # every bench_*.py, incl. perf and probes
+    tests/bench.sh --list                     # show what would run (no Max needed)
     tests/bench.sh tests/bench_fft.py         # one file
+
+The regression set is the `DEFAULT` list at the top of `tests/bench.sh`. It
+leaves out `bench_perf.py` (fps-based checks that can fail on a busy machine
+without a regression) and `bench_fluid_probes.py` (a Phase 0 record of
+bench-verified facts); `--all` adds them.
 
 Uses `uv` to supply NumPy in an ephemeral environment -- nothing installed
 system-wide. No pytest; each test file runs standalone via `harness.py`.
@@ -104,9 +111,11 @@ one reports XPASS so the entry gets removed). Run both after changing any
 shipped bpatcher. Debugging hooks: `/probe` and a localhost-only `/eval`
 (`modulebench.bench_eval(js)`), which run inside the module bench.
 
-Open Max with **both** benches for the full `tests/bench.sh` run.
+Open Max with `bench.maxpat` for `tests/bench.sh`. `bench_modules.py` and
+`bench_fluid_module.py` open `bench_module.maxpat` themselves, so close Vsynth
+performance patches before running them.
 
-**Adding a bench test for a module:** copy `tests/templates/bench_module_template.py` to `tests/bench_<module>.py`, point `CODEBOX` at the module's real `src/<module>/codebox_*.gen`, fill in the mirror/invariants. Which tests a module needs is decided per module (constitution: Verification Tiers).
+**Adding a bench test for a module:** copy `tests/templates/bench_module_template.py` to `tests/bench_<module>.py`, point `CODEBOX` at the module's real `src/<module>/codebox_*.gen`, fill in the mirror/invariants, and add it to `DEFAULT` in `tests/bench.sh` once it is a regression gate. Which tests a module needs is decided per module (constitution: Verification Tiers).
 
 **Writing a bench codebox:** plain GenExpr text (see `bench/codeboxes/`).
 Up to 3 inputs (`in1..in3`); `Param` values arrive on frame 3. Remember the
@@ -131,13 +140,23 @@ Facts section).
 - `benchclient.py` -- bench client: OSC, jobs, `run_pass`, `measure`, `reopen`
 - `test_jxf.py`, `test_genjit.py`, `test_benchclient.py` -- offline checks of
   the bench toolchain (against Max-shipped files / OSC spec bytes)
-- `bench.sh` -- runs `bench_*.py` against the live bench
+- `bench.sh` -- runs the bench regression set (`--all` for every `bench_*.py`)
 - `bench_control.py` -- control loop (ping, /busy, error reporting)
 - `bench_selftest.py` -- the bench's own plumbing: identity, coordinate
   probe, plane order, compile-error capture, reload, two inputs
 - `bench_fft.py` -- FFT T1/T2 on the GPU vs NumPy (`dft_x`/`dft_y` codeboxes)
 - `bench_perf.py` -- rate control, scaling, repeatability, DFT cost
 - `bench_temporal.py` -- E4 feedback runs: step counter, accumulator, routing, char
+- `fluid_mirror.py` + `test_fluid_mirror.py` -- NumPy mirror of every
+  `f_vf_fluid` stage and its offline tests
+- `bench_fluid.py` -- `f_vf_fluid` stage codeboxes on the GPU vs the mirror,
+  100-frame chain, cost (regression set)
+- `bench_fluid_module.py` -- `f_vf_fluid` inside Vsynth's render context:
+  once-per-frame update, two instances, fresh load, tap grid (regression set)
+- Records, kept because `.specify/f_vf_fluid/` cites them as evidence, not
+  regression gates: `bench_fluid_probes.py` (Phase 0 GPU probes; run with
+  `--all`) and `fluid_feasibility.py` (Phase 0 module-bench feasibility
+  study, no assertions, matches no runner)
 - `module_contract.py` + `test_module_contracts.py` -- offline wiring
   contracts of every shipped bpatcher
 - `modulebench.py` + `bench_modules.py` -- live module contracts (module bench)
