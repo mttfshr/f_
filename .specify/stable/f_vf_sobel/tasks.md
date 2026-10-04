@@ -16,7 +16,7 @@
 - [ ] T09 — Run build_patcher.py → patchers/f_vf_sobel.maxpat
 - [ ] T10 — Validate JSON: python3 -c "import json; json.load(open('patchers/f_vf_sobel.maxpat'))"
 - [ ] T11 — Open in Max, confirm patcher loads and renders correctly
-- [ ] T12 — Run audit_interface.py, resolve any warnings
+- [ ] T12 — Run `tests/run.sh tests/test_module_contracts.py` (replaced `audit_interface.py`), resolve any warnings
 
 ## Phase 3: Integration + registration
 

@@ -158,7 +158,11 @@ Facts section).
   `--all`) and `fluid_feasibility.py` (Phase 0 module-bench feasibility
   study, no assertions, matches no runner)
 - `module_contract.py` + `test_module_contracts.py` -- offline wiring
-  contracts of every shipped bpatcher
+  contracts of every shipped bpatcher: route -> attrui -> Param wiring, plus
+  per-pix checks on every stage (each codebox Param is driven and read, a
+  codebox-less pix is a pure identity pass, every gen in/out has a cord).
+  Known issues live in `KNOWN_ISSUES` with a pointer each (XFAIL; a fixed one
+  reports XPASS). Replaced `build/audit_interface.py`.
 - `modulebench.py` + `bench_modules.py` -- live module contracts (module bench)
 - `templates/bench_module_template.py` -- starting point for a module's bench test
 - `bench/` -- `make_bench.py` (generates `bench.maxpat` and

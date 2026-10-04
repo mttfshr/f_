@@ -46,7 +46,7 @@ _Last updated: 2026-06-17_
 - [ ] T114 Test `amp` param: sweep 0–1; confirm output scales correctly
 - [ ] T115 Test `ph0`: confirm global phase shift visible across all modes
 - [ ] T116 Test `view_mode`: confirm circular ↔ strip blend smooth
-- [ ] T117 Run `tools/py.sh tools/audit_interface.py patchers/f_chladni.maxpat`; resolve any issues
+- [ ] T117 Run `tests/run.sh tests/test_module_contracts.py` (replaced `audit_interface.py`); resolve any issues
 
 **Checkpoint**: Bpatcher verified in Max. Audit passing. Both outlets present.
 

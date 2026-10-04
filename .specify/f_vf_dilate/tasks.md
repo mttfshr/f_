@@ -18,7 +18,7 @@
 - [ ] T11 — Run build_patcher.py → patchers/f_vf_dilate.maxpat
 - [ ] T12 — Validate JSON
 - [ ] T13 — Open in Max, confirm loads and renders correctly
-- [ ] T14 — Run audit_interface.py, resolve warnings
+- [ ] T14 — Run `tests/run.sh tests/test_module_contracts.py` (replaced `audit_interface.py`), resolve warnings
 
 ## Phase 3: Integration + registration
 

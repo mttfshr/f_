@@ -122,7 +122,7 @@ Rewrite `.specify/f_chladni/definition.py` with:
 ### Phase 2: Build + Verify
 - Run `tools/build_patcher.py`
 - Verify in Max: note input selects mode, amp scales output, ph0 shifts pattern, view_mode blends, gain scales out3 without affecting out1/out2
-- Run audit_interface.py; resolve any issues
+- Run `tests/run.sh tests/test_module_contracts.py` (replaced `audit_interface.py`); resolve any issues
 
 ### Phase 3: Vecfield + Scalar Outlet Verification
 - Route out2 → f_caustic; verify convergence accumulates at nodal lines
