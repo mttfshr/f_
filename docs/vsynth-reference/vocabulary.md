@@ -1,5 +1,7 @@
 # Vsynth Vocabulary
 
+> Vsynth is by Kevin Kripper and is distributed under CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). These are notes about Vsynth, not part of it.
+
 **Status:** Populated from first analysis pass, 2026-05-31.
 
 **Purpose:** Named abstractions, send/receive conventions, what specific objects and terms mean in Vsynth context. Reduces reconstruction cost each session. Answers "what does X actually do?"

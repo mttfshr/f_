@@ -10,6 +10,7 @@ A collection of bpatchers for [Vsynth](https://www.kevinkripper.com/vsynth) in [
 ## Using the package
 
 - Modules appear in Max's file browser under `f_`. Drop one into a Vsynth chain like any other Vsynth module.
+- **f_Launch** (in Max's Extras menu, and behind the Launch button in the Package Manager) lists every module by category with a one-line description. A module's name opens its help patch when it has one; names without a help patch yet are greyed out.
 - `help/` has a help patch for many of the modules, and `examples/` has complete Vsynth patches that use them. Where an example has a saved preset, it sits next to it as `f_demo_<name>.json`.
 - Every patcher in `patchers/` is listed, with a description, in the project README (https://github.com/mttfshr/f_). Entries marked ⚠ there are unfinished: don't rely on them.
 
@@ -23,4 +24,4 @@ Built for Vsynth by Kevin Kripper.
 
 ## License
 
-Not yet specified.
+[CC BY-NC 4.0](license.md) with an additional permission: free to use, remix and share, including in paid professional work (performances, client projects, selling what you render), but not to sell the code itself. `f_` requires Vsynth, which has its own license; check its terms for your own use.

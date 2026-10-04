@@ -1,5 +1,7 @@
 # Vsynth Module Inventory
 
+> Vsynth is by Kevin Kripper and is distributed under CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). These are notes about Vsynth, not part of it.
+
 **Status:** Analysis complete — all priority modules read, 2026-05-31.
 
 **Purpose:** Flat reference of every Vsynth module with type, tier, inlet/outlet count, and one-line description. The capability map for f_ design: answers "does Vsynth already do X?"

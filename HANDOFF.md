@@ -1,12 +1,119 @@
 # HANDOFF
 
+_Session: 2026-10-02 to 2026-10-04_ — Package Manager research, the `f_Launch` homepatcher, and
+the licensing split. **Nothing from this session is committed** (files and suggested commits
+below). The 2026-10-01 entry follows unchanged; its Next step and Outstanding lists still apply
+for T008 to T011 except where this entry updates them.
+
+## This session (2026-10-02 to 2026-10-04): `f_Launch` and licensing
+
+### Done
+
+- **T014, submission research.** The Cycling '74 form asks for author, email, a link to a
+  downloadable package, a summary and a ready date, and says follow-up is likely. Package
+  Authoring Part 2: a ReadMe **and a License** must be in the package; `icon.png` is 500x500;
+  `homepatcher` is what the Package Manager's Launch button opens. Not documented anywhere
+  read: how the registry ingests an archive (confirm at submission; packages@cycling74.com).
+  Part 3 (refpages) was not read. Nothing requires the repo root to be the package, so the
+  `package/` subfolder + release zip approach stands.
+- **T021, `f_Launch` (Matt confirmed in Max: "looks great", not itemized).**
+  `build/generate_launch.py` parses the README Patches table and writes
+  `package/extras/f_Launch.maxpat`: 9 tabs (native subpatcher tabs, `showontab`), 40 modules,
+  20 clickable (textbutton to `loadunique <name>.maxhelp` to `pcontrol`) and 20 greyed (no
+  helpfile; a click on a missing helpfile fails silently in Max, tested). `--check` mode;
+  fails on unparseable rows, duplicates, README/patchers mismatch, descriptions over 110
+  chars. `package-info.json` now has `"homepatcher": "f_Launch.maxpat"` (a bare filename, as
+  in every installed package checked). `tests/test_launch.py` has 8 tests, including a drift
+  check against the shipped `f_modules.maxpat`.
+- **README Patches table** regrouped under the `f_modules` menu categories (Scope, Discrete,
+  Spatial, Optical, ∇ Generators, ∇ Processors, Color / Tone, Utilities, Audio) and 18
+  descriptions shortened to at most 110 chars. **It is now the source of truth for
+  `f_Launch`: after editing it, run `build/py.sh build/generate_launch.py`**; the test fails
+  if the committed file is stale.
+- **Licensing, decided, wording awaiting Matt's review (T012).** Rule in the root
+  `LICENSE.md`: everything is MIT except `package/`, `src/` and `.specify/`, which get
+  CC BY-NC 4.0 plus an additional permission for paid professional work (performances, client
+  work, selling rendered output, paid teaching; no selling or bundling the software). The
+  extra paragraph exists because CC's NonCommercial judges purpose of use, so a paid gig could
+  otherwise count as commercial. `package/license.md` is self-contained for the zip. The three
+  `docs/vsynth-reference/` files got a header note naming Vsynth's license. Details in
+  `docs/max-reference/packaging.md`.
+
+### State
+
+Full test suite green (8 files, no failures, about 36 s). `build/release.sh --working-tree`
+builds and the zip contains `extras/f_Launch.maxpat` and `license.md`. `./skills/check.sh`:
+all uploads current.
+
+### Uncommitted (nothing was committed)
+
+Modified: `.specify/packaging/tasks.md`, `README.md`, `docs/max-reference/packaging.md`,
+`docs/vsynth-reference/{module-inventory,patterns,vocabulary}.md`, `package/package-info.json`,
+`package/readme.md`, `package/patchers/f_masonry.maxpat` (see Loose threads). New:
+`LICENSE.md`, `build/generate_launch.py`, `package/extras/`, `package/license.md`,
+`tests/test_launch.py`, three files in `scratch/`.
+
+Suggested commits (README.md and package/readme.md each mix both topics; use `git add -p`):
+1. `Add f_Launch homepatcher, generated from the README Patches table`: generator, test,
+   `package/extras/`, `package-info.json`, the README table and `build/` line, the
+   `package/readme.md` f_Launch bullet.
+2. `Add licensing: MIT by default, product license for package/, src/ and .specify/`:
+   `LICENSE.md`, `package/license.md`, the License hunks of the two readmes,
+   `docs/vsynth-reference/*.md`.
+3. `Update packaging tasks and notes`: `tasks.md`, `packaging.md`, `HANDOFF.md`.
+
+### Next session (Matt's request): look closely at the build system and the tools
+
+Starting points, none started:
+- **The `build/` vs `tools/` boundary.** `tools/README.md` calls those scripts one-off and
+  unsupported; `build/` is the supported system (`build/spec.md` is the guide for others).
+  Which `tools/` scripts are really inseparable from `src/` (a likely license exception)?
+- **T022, a hazard:** `build/tools/f_modules/build_modules.py` still has the old 5-category
+  menu and its header says to run it to regenerate; running it would overwrite the shipped
+  8-category `f_modules.maxpat`. `tools/rebuild_modules_menu.py` has 8 categories but no
+  `f_vf_fluid`. The shipped patcher is the only accurate source.
+- **T018:** the README says helpfile generation is "via Claude API", `plan.md` says
+  `generate_helpfiles.py` no longer calls it. Script not opened.
+- `generate_launch.py` is the newest build script and a possible template for the pattern:
+  parse a source of truth, validate loudly, a `--check` mode, an offline test.
+- The definition/patch drift tech-debt pass (23 of 33 definitions drifted) is still undone.
+
+### Outstanding, Matt's
+
+T008 open the renamed demos in Max and read the console. T011 message to Kevin: install
+method, Max and Vsynth versions, first console error, and whether paid performance with
+Vsynth counts as commercial use under its license (not yet drafted). T012 review the license
+wording. T013 `icon.png` (500x500). Skim `ideas/`, `docs/`, `.specify/` and `src/` for
+third-party text before publishing (not audited). Resolve the five ⚠ rows before submission
+(`f_ngon`, `f_vf_vortex_multi_version`, `f_vf_vorticity`, `f_a_ripple`, `f_chladni_audio`);
+`f_Launch` lists them. T015 (tag `v0.1.0`) waits on T008, T012 and T013.
+
+### Loose threads
+
+- **`package/patchers/f_masonry.maxpat` shows modified and Claude did not edit it.** Max
+  re-saved it (appversion 9.1.4 to 9.2.0, new `restore_extra` data), probably while testing
+  `f_Launch` clicks. Never answered whether that was intended. Keep it out of the commits
+  unless it was; `git checkout -- package/patchers/f_masonry.maxpat` discards it.
+- `scratch/helpfile_open_test.maxpat`, `launch_tab_test.maxpat` and `build_launch_tab_test.py`
+  are the throwaway tests for the T021 mechanisms; keep or delete.
+- Matt's Max check of `f_Launch` was not itemized, so these are unconfirmed in detail: the
+  `∇` and `Color / Tone` tab labels, 9 tabs fitting the strip, and `;` `,` `"` and ⚠ rendering
+  in descriptions (fallback: change `display()` in the generator).
+- Dates: the license decisions were made 2026-10-04 (file timestamps); the f_Launch work was
+  2026-10-02 onward. Some task text says 2026-10-02 for work done in between.
+- License caveats: Matt's view that `f_` is not an adaptation of Vsynth is his reading and
+  Kevin has not been asked; not legal advice; CC advises against its licenses for software
+  (Vsynth uses one anyway).
+
+---
+
 _Session: 2026-10-01_ — Package structure and Package Manager readiness, after Kevin
 Kripper (Vsynth's author) had trouble opening some patches. **All of it is committed**
 (`8af4c71`, a single commit titled "cleanup", then `2e014c7` removing `moduleSize.js`).
 The undone work is tracked in `.specify/packaging/tasks.md`. The 2026-09-29c entry follows
 unchanged.
 
-## This session (2026-10-01): packaging
+## Earlier session (2026-10-01): packaging
 
 Full research and reasoning: `docs/max-reference/packaging.md`. Summary:
 

@@ -1,5 +1,7 @@
 # Vsynth Pattern Library
 
+> Vsynth is by Kevin Kripper and is distributed under CC BY-NC 4.0 (https://creativecommons.org/licenses/by-nc/4.0/). These are notes about Vsynth, not part of it.
+
 **Status:** Populated from analysis pass, 2026-05-31.
 
 **Purpose:** Recurring architectural patterns Kevin uses in Vsynth internals. Answers "how does Kevin solve X?" and "should f_ do the same?"

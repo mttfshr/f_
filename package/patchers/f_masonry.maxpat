@@ -3,8 +3,8 @@
         "fileversion": 1,
         "appversion": {
             "major": 9,
-            "minor": 1,
-            "revision": 4,
+            "minor": 2,
+            "revision": 0,
             "architecture": "x64",
             "modernui": 1
         },
@@ -104,7 +104,7 @@
                 "box": {
                     "id": "obj-5b",
                     "maxclass": "newobj",
-                    "numinlets": 20,
+                    "numinlets": 19,
                     "numoutlets": 19,
                     "outlettype": [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" ],
                     "patching_rect": [ 50.0, 100.0, 1022.4, 22.0 ],
@@ -140,6 +140,65 @@
                         "speed_var": [ 0.0 ],
                         "width": [ 0.9 ]
                     },
+                    "restore_extra": {
+                        "angle": {
+                            "id": "obj-23"
+                        },
+                        "bond": {
+                            "id": "obj-21"
+                        },
+                        "brick_color": {
+                            "id": "obj-36"
+                        },
+                        "brick_seed": {
+                            "id": "obj-91"
+                        },
+                        "bypass": {
+                            "id": "obj-8"
+                        },
+                        "course_color": {
+                            "id": "obj-35"
+                        },
+                        "course_seed": {
+                            "id": "obj-90"
+                        },
+                        "courses": {
+                            "id": "obj-20"
+                        },
+                        "drift": {
+                            "id": "obj-27"
+                        },
+                        "mortar": {
+                            "id": "obj-30"
+                        },
+                        "offset": {
+                            "id": "obj-22"
+                        },
+                        "panel_toggle": {
+                            "id": "obj-125"
+                        },
+                        "phase": {
+                            "id": "obj-28"
+                        },
+                        "regularity": {
+                            "id": "obj-26"
+                        },
+                        "roundness": {
+                            "id": "obj-33"
+                        },
+                        "skip": {
+                            "id": "obj-24"
+                        },
+                        "softness": {
+                            "id": "obj-31"
+                        },
+                        "speed_var": {
+                            "id": "obj-29"
+                        },
+                        "width": {
+                            "id": "obj-32"
+                        }
+                    },
                     "text": "autopattr",
                     "varname": "masonry_autopattr"
                 }
@@ -155,8 +214,8 @@
                         "fileversion": 1,
                         "appversion": {
                             "major": 9,
-                            "minor": 1,
-                            "revision": 4,
+                            "minor": 2,
+                            "revision": 0,
                             "architecture": "x64",
                             "modernui": 1
                         },

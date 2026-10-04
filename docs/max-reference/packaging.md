@@ -25,7 +25,7 @@ Reference layouts on the dev machine (verified): Vsynth, ease, Polish Your Pixel
 | No readme inside the package | `package/readme.md` |
 | `demos/` (not a recognised folder name) with generic file names on the global search path | `examples/`, every demo and preset prefixed `f_demo_` |
 | `javascript/moduleSize.js`, a byte-identical copy of Vsynth's own file | Removed (2026-10-01); Max resolves Vsynth's copy |
-| No `icon.png`, no license | **Still missing** (see Open items) |
+| No `icon.png`, no license | License added 2026-10-04 (see License research); `icon.png` **still missing** (see Open items) |
 
 `max_version_min` is `9.0.0` to match the README's long-standing claim. **Unverified:** all 76 patches were saved in Max 9.1.4, and nobody has tested them on 9.0.x. `9.1.4` is the only version known to work.
 
@@ -66,17 +66,17 @@ The official Package Manager is curated by Cycling '74; the documented route in 
 
 Each demo's `pattrstorage` box names its preset in a box-level `autorestore` key. Three demos named files that were not shipped (`chladni-scratch.json`, `repulse-scratch.json`, `glow-scratch.json`), while `chladni.json` and `repulse.json` shipped unreferenced, and `weave-advect` loaded `seeds2.json` (which holds `f_vf_seeds` data) instead of its own `weave-advect.json` (which holds `f_weave`/`f_vf_advect` data). Repointed during the `examples/` rename; `general` has no preset yet so its `autorestore` was removed. **Unverified:** how Max reacts to a missing `autorestore` file, and that the renamed demos open cleanly. `prism-masonry` (preset exists, no `autorestore`) and `streak` (no `pattrstorage`) were left unchanged on purpose; `help/streak-demo.json` was left in `help/`.
 
-## License research (decision pending)
+## License research and provisional decision
 
 Licenses of the 17 installed packages that ship a license file (dev machine only, not a survey): MIT (CidLink, ISF, Polish Your Pixels source, ease, vb.mi-objects), GPL v3 (Rhythm and Time Toolkit, av-toolbox), CC BY-NC-SA (ml.star, zsa.descriptors), BSD 3-Clause (FluidCorpusManipulation), CC BY-NC 4.0 (**Vsynth**), others custom or BSD-style. Ten installed packages have no license file.
 
-Vsynth is CC BY-NC 4.0 (attribution, non-commercial). Open questions, not legal advice: whether `f_` counts as an adaptation of Vsynth (it uses `vs_` abstractions and conventions, and until 2026-10-01 shipped a copy of one Vsynth file, `moduleSize.js`), and therefore whether NonCommercial carries over. **Matt is asking Kevin.** Until decided, `package/readme.md` says "Not yet specified" and no license file exists.
+Vsynth is CC BY-NC 4.0 (attribution, non-commercial). Open questions, not legal advice: whether `f_` counts as an adaptation of Vsynth (it uses `vs_` abstractions and conventions, and until 2026-10-01 shipped a copy of one Vsynth file, `moduleSize.js`), and therefore whether NonCommercial carries over. Matt's view is that `f_` is not an adaptation of Vsynth, so any license is open to him; Kevin has not been asked. **Decided (Matt, 2026-10-04; files drafted, uncommitted):** protect the product, encourage broad reuse of the scaffold and process. Everything is MIT except `package/`, `src/` and `.specify/`, which get CC BY-NC 4.0 plus an additional permission for paid professional work (performances, client work, selling rendered output, paid teaching; still no selling or bundling `f_` or modified copies). The permission exists because CC's NonCommercial definition looks at the purpose of the use, so a paid gig could otherwise count as commercial. Full texts and the rule are in the root `LICENSE.md`. `docs/vsynth-reference/` was audited 2026-10-04 (a verbatim check only): original prose, four small wiring sketches, no quoted Vsynth text, so it is MIT with a header note naming Vsynth's license. `ideas/`, the rest of `docs/`, `.specify/` and `src/` were not audited for third-party text. Exceptions to the rule get handled as they turn up. Not legal advice; as far as I know Creative Commons advises against its licenses for software, though Vsynth uses one.
 
 ## Open items
 
 Tracked as tasks in `.specify/packaging/tasks.md`.
 
-- License choice (waiting on Kevin).
+- License: decided 2026-10-04 (see above), awaiting Matt's review of the wording (T012); not committed; Kevin not asked; `ideas/`, `docs/`, `.specify/` and `src/` still to be skimmed for third-party text.
 - `package/icon.png` (500x500): not made; needs a design decision.
 - Confirm with Kevin how he installed it, his Max and Vsynth versions, and the first console error line when a patch fails.
 - First tag and GitHub release; read the submission form before building the release process around the registry.
