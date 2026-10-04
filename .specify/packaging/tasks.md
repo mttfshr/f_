@@ -1,5 +1,7 @@
 # Tasks: Package structure and Package Manager readiness
 
+_IDs in this file are local to it. Elsewhere (handoffs, commits, chat) write them as `packaging/T0xx`._
+
 **Reference**: `docs/max-reference/packaging.md` (research, decisions, evidence). Plan item: `.specify/plan.md` Work Queue 13.
 **Commits**: Matt commits manually. Done work is in `8af4c71` and `2e014c7`.
 
