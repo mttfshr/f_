@@ -10,6 +10,8 @@ OSC encoding is hand-rolled (string/int/float args only) to avoid a
 dependency. The bench writes result.json BEFORE replying /done.
 """
 import json
+import re
+import shutil
 import socket
 import struct
 import time
@@ -25,6 +27,7 @@ MODULE_PORTS = (7473, 7474)                          # tests/bench/bench_module.
 TESTS_DIR = Path(__file__).resolve().parent
 BENCH_DIR = TESTS_DIR / "bench"
 JOBS_DIR = TESTS_DIR / "jobs"
+JOBS_KEEP = 50          # newest job dirs kept; older ones pruned by new_job()
 
 
 class BenchUnreachable(RuntimeError):
@@ -167,12 +170,29 @@ def reopen(wait=15.0, ports=CODEBOX_PORTS, patch="bench.maxpat"):
 
 # ---------------------------------------------------------------- jobs
 
+_JOB_ID_RE = re.compile(r"^\d{8}_\d{6}_[0-9a-f]{6}$")
+
+
+def prune_jobs(jobs_dir, keep):
+    """Delete all but the newest `keep` job dirs under jobs_dir. Only dirs
+    named like job ids are touched (ids start with a timestamp, so name order
+    is age order); logs and anything else in jobs/ are left alone. Job dirs
+    can hold 100+ MB of float32 textures and were never cleaned (73 GB by
+    2026-10-04)."""
+    old = sorted(p for p in jobs_dir.iterdir()
+                 if p.is_dir() and _JOB_ID_RE.match(p.name))[:-keep]
+    for p in old:
+        shutil.rmtree(p, ignore_errors=True)
+    return len(old)
+
+
 def new_job(mode, **fields):
     """Create a job dir and return (job_dict, job_dir). Ids are unique and
     symbol-safe (they also name the job's .genjit, plan.md ADR-3)."""
     job_id = time.strftime("%Y%m%d_%H%M%S_") + uuid.uuid4().hex[:6]
     job_dir = JOBS_DIR / job_id
     job_dir.mkdir(parents=True, exist_ok=False)
+    prune_jobs(JOBS_DIR, JOBS_KEEP)
     job = {"id": job_id, "mode": mode, "timeout_ms": 10000}
     job.update(fields)
     return job, job_dir

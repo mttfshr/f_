@@ -7,7 +7,9 @@ Run:  tests/run.sh tests/test_benchclient.py
 """
 import socket
 import sys
+import tempfile
 import threading
+from pathlib import Path
 
 import benchclient
 from benchclient import Channel, osc_decode, osc_encode
@@ -67,6 +69,35 @@ def test_loopback_reply_matching():
     finally:
         t.join(timeout=2.0)
         fake.close()
+
+
+def test_prune_jobs_keeps_newest_and_leaves_other_files():
+    """Only job-id-named dirs are pruned, oldest first; logs and unrelated
+    dirs survive. new_job() prunes but never removes the dir it just made."""
+    with tempfile.TemporaryDirectory() as tmp:
+        jobs = Path(tmp)
+        ids = [f"2026092{d}_120000_{d:06x}" for d in range(1, 8)]     # 7 jobs, oldest first
+        for i in ids:
+            (jobs / i).mkdir()
+            (jobs / i / "big.jxf").write_bytes(b"x")
+        (jobs / "bench_last.log").write_text("log")
+        (jobs / "notes").mkdir()
+        removed = benchclient.prune_jobs(jobs, 3)
+        left = sorted(p.name for p in jobs.iterdir())
+        check("removed the 4 oldest", removed, 4)
+        check("newest 3 kept + log + unrelated dir",
+              0 if left == sorted(ids[-3:] + ["bench_last.log", "notes"]) else 1, 0)
+        check("keep >= count removes nothing", benchclient.prune_jobs(jobs, 99), 0)
+
+        old = (benchclient.JOBS_DIR, benchclient.JOBS_KEEP)
+        benchclient.JOBS_DIR, benchclient.JOBS_KEEP = jobs, 2
+        try:
+            _, job_dir = benchclient.new_job("test")
+            check("new job dir survives its own prune", 0 if job_dir.is_dir() else 1, 0)
+            n_jobs = sum(1 for p in jobs.iterdir() if p.is_dir() and p.name != "notes")
+            check("jobs dir held to JOBS_KEEP", n_jobs, 2)
+        finally:
+            benchclient.JOBS_DIR, benchclient.JOBS_KEEP = old
 
 
 if __name__ == "__main__":

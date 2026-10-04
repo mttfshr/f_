@@ -50,8 +50,9 @@ behavior in Jitter, `@adapt`/`@dim`. Those are what the bench is for.
 
 One generated patch, `tests/bench/bench.maxpat`, stays open in Max; Python
 drives it over OSC/UDP (7471 in, 7472 out) and exchanges data through files
-in a per-job directory under `tests/jobs/` (gitignored). All bench logic is
-in `tests/bench/bench.js`; the patch is only objects and wiring.
+in a per-job directory under `tests/jobs/` (gitignored; `new_job()` keeps the
+newest `JOBS_KEEP` = 50 and prunes older ones, since a job dir can hold 100+ MB).
+All bench logic is in `tests/bench/bench.js`; the patch is only objects and wiring.
 
 **Per session:** open Max, open `tests/bench/bench.maxpat` once (or, with
 Max already running, `benchclient.reopen()` does it). `tests/bench.sh`
