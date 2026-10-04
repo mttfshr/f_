@@ -572,3 +572,4 @@ extract_params.py f_name → generate_helpfiles.py f_name
 - `bypass` is not in the `route` object — handled by jsui directly
 - Internal params must not appear in UI, route, or parameters block
 - `vs_inState` outlet 1 fires only on connection state change, not every frame — correct behavior for a Param
+- Stale gen code or missing objects after a rebuild: `build/clear_max_cache.sh` clears Max 9's compiled object/package cache (Max must be closed; Max rescans packages on next launch, about a minute)

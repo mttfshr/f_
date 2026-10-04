@@ -12,7 +12,7 @@ Conventions for building `f_` utility bpatchers — visual processing modules fo
 
 Patches are generated from definition files via `build/build_patcher.py` — not hand-built from a template. The schema for definition files is in `build/spec.md`. This SKILL.md is the authoritative source of structural conventions; individual patcher files are outputs, not references.
 
-The repo splits build scripts into two directories: `build/` is the general, reusable build system (`build_patcher.py`, `extract_params.py`, `generate_helpfiles.py`, `audit_interface.py`, `migrate_to_attrui.py`, `spec.md`) meant to be presentable to other Vsynth module authors; `tools/` holds one-off, module-specific scripts (e.g. `tools/masonry/`, `tools/build_texrouter.py`) kept for reference, not permanent infrastructure. When writing a new general-purpose build utility, it belongs in `build/`; a surgical one-time fix for a single patcher belongs in `tools/`.
+The repo splits build scripts into two directories: `build/` is the general, reusable build system (`build_patcher.py`, `extract_params.py`, `generate_helpfiles.py`, `audit_interface.py`, `spec.md`) meant to be presentable to other Vsynth module authors; `tools/` holds only the `f_modules` menu-maintenance scripts, which are slated to be replaced by a generator. When writing a new general-purpose build utility, it belongs in `build/`. A surgical one-time fix for a single patcher is run from `scratch/` and not kept: once it has run, git history is the record.
 
 ---
 
@@ -233,9 +233,9 @@ f_/
   build/       — official build system (version controlled, presentable to other authors)
     build_patcher.py    — generates .maxpat from a definition file (see build/spec.md)
     spec.md             — build script spec
-    extract_params.py, generate_helpfiles.py, audit_interface.py, migrate_to_attrui.py
-  tools/       — one-off / module-specific scripts (version controlled, not build infra)
-    masonry/, util_profile/, build_texrouter.py, etc.
+    extract_params.py, generate_helpfiles.py, audit_interface.py
+  tools/       — f_modules menu-maintenance scripts only (not build infra; to be replaced)
+    rebuild_modules_menu.py, append_nabla_menu.py
   skills/      — Claude skills for collaborating on this repo (copies of the source
                  skills in claude-scaffold; this file's copy lives here)
   .specify/    — planning workspace: spec.md/plan.md/tasks.md only (version controlled — no longer gitignored)
