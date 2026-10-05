@@ -542,7 +542,8 @@
                         18.0
                     ],
                     "text": "Gain",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_gain"
                 }
             },
             {
@@ -645,7 +646,8 @@
                         18.0
                     ],
                     "text": "Reach",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_reach"
                 }
             },
             {
@@ -748,7 +750,8 @@
                         18.0
                     ],
                     "text": "Thresh",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_threshold"
                 }
             },
             {
@@ -845,7 +848,8 @@
                         18.0
                     ],
                     "text": "Mode",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_mode"
                 }
             },
             {

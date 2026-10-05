@@ -333,7 +333,8 @@
             36.0,
             18.0
           ],
-          "text": "Lon"
+          "text": "Lon",
+          "varname": "lbl_lon"
         }
       },
       {
@@ -435,7 +436,8 @@
             36.0,
             18.0
           ],
-          "text": "Lat"
+          "text": "Lat",
+          "varname": "lbl_lat"
         }
       },
       {
@@ -536,7 +538,8 @@
             36.0,
             18.0
           ],
-          "text": "Spin"
+          "text": "Spin",
+          "varname": "lbl_spin"
         }
       },
       {
@@ -638,7 +641,8 @@
             36.0,
             18.0
           ],
-          "text": "Proj"
+          "text": "Proj",
+          "varname": "lbl_proj"
         }
       },
       {

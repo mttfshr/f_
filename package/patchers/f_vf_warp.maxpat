@@ -671,7 +671,8 @@
                         18.0
                     ],
                     "text": "Strength",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_strength"
                 }
             },
             {

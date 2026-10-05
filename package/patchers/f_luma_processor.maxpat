@@ -374,7 +374,8 @@
             34.0,
             17.0
           ],
-          "text": "Falloff"
+          "text": "Falloff",
+          "varname": "lbl_edge_falloff"
         }
       },
       {
@@ -472,7 +473,8 @@
             27.0,
             17.0
           ],
-          "text": "Lum"
+          "text": "Lum",
+          "varname": "lbl_lum_shift"
         }
       },
       {
@@ -496,7 +498,8 @@
             27.0,
             17.0
           ],
-          "text": "Sat"
+          "text": "Sat",
+          "varname": "lbl_sat_amt"
         }
       },
       {

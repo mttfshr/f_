@@ -31,7 +31,7 @@
     "layout": 9,
     "lines_def_only": 4,
     "lines_patch_only": 5,
-    "props": 10
+    "props": 7
    },
    "status": "drift"
   },
@@ -42,7 +42,7 @@
     "boxes_renamed": 1,
     "code": 1,
     "layout": 27,
-    "props": 47
+    "props": 35
    },
    "status": "drift"
   },
@@ -55,7 +55,7 @@
     "layout": 9,
     "lines_def_only": 4,
     "lines_patch_only": 5,
-    "props": 37
+    "props": 34
    },
    "status": "drift"
   },
@@ -78,7 +78,7 @@
     "layout": 10,
     "lines_def_only": 5,
     "lines_patch_only": 7,
-    "props": 45
+    "props": 42
    },
    "status": "drift"
   },
@@ -126,7 +126,7 @@
     "layout": 11,
     "lines_def_only": 5,
     "lines_patch_only": 7,
-    "props": 19
+    "props": 15
    },
    "status": "drift"
   },
@@ -150,7 +150,7 @@
     "layout": 8,
     "lines_def_only": 5,
     "lines_patch_only": 8,
-    "props": 33
+    "props": 32
    },
    "status": "drift"
   },
@@ -180,29 +180,27 @@
    "counts": {
     "boxes_renamed": 1,
     "code": 1,
-    "props": 9
+    "props": 5
    },
    "status": "drift"
   },
   "f_vf_flow": {
    "counts": {
-    "props": 3
+    "props": 1
    },
    "status": "drift"
   },
   "f_vf_repulse": {
    "counts": {
     "boxes_renamed": 1,
-    "code": 1,
-    "props": 4
+    "code": 1
    },
    "status": "drift"
   },
   "f_vf_vortex": {
    "counts": {
     "boxes_def_only": 1,
-    "boxes_renamed": 1,
-    "props": 9
+    "boxes_renamed": 1
    },
    "status": "drift"
   },
@@ -210,8 +208,7 @@
    "counts": {
     "boxes_def_only": 2,
     "boxes_patch_only": 3,
-    "layout": 2,
-    "props": 17
+    "layout": 2
    },
    "status": "drift"
   },
@@ -220,7 +217,7 @@
     "boxes_def_only": 2,
     "boxes_patch_only": 2,
     "boxes_renamed": 1,
-    "props": 4
+    "props": 3
    },
    "status": "drift"
   },
@@ -229,8 +226,7 @@
     "boxes_def_only": 1,
     "boxes_patch_only": 1,
     "boxes_renamed": 1,
-    "code": 1,
-    "props": 1
+    "code": 1
    },
    "status": "drift"
   },
@@ -239,7 +235,7 @@
     "boxes_patch_only": 6,
     "code": 1,
     "layout": 1,
-    "props": 7
+    "props": 1
    },
    "status": "drift"
   }

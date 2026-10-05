@@ -556,7 +556,8 @@
                         18.0
                     ],
                     "text": "Confinement",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_confinement"
                 }
             },
             {

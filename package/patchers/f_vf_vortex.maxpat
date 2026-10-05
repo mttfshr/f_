@@ -819,7 +819,8 @@
                         18.0
                     ],
                     "text": "Cx",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_cx"
                 }
             },
             {
@@ -922,7 +923,8 @@
                         18.0
                     ],
                     "text": "Cy",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_cy"
                 }
             },
             {
@@ -1025,7 +1027,8 @@
                         18.0
                     ],
                     "text": "Converge",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_convergence"
                 }
             },
             {
@@ -1128,7 +1131,8 @@
                         18.0
                     ],
                     "text": "Curl",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_curl"
                 }
             },
             {
@@ -1231,7 +1235,8 @@
                         18.0
                     ],
                     "text": "Falloff",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_falloff"
                 }
             },
             {
@@ -1334,7 +1339,8 @@
                         18.0
                     ],
                     "text": "Cx Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_cx_amt"
                 }
             },
             {
@@ -1437,7 +1443,8 @@
                         18.0
                     ],
                     "text": "Cy Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_cy_amt"
                 }
             },
             {
@@ -1540,7 +1547,8 @@
                         18.0
                     ],
                     "text": "Conv Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_convergence_amt"
                 }
             },
             {
@@ -1643,7 +1651,8 @@
                         18.0
                     ],
                     "text": "Curl Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_curl_amt"
                 }
             },
             {

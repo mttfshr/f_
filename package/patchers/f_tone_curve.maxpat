@@ -125,7 +125,8 @@
             35.0,
             17.0
           ],
-          "text": "Falloff"
+          "text": "Falloff",
+          "varname": "lbl_edge_falloff"
         }
       },
       {

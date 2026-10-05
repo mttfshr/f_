@@ -165,7 +165,8 @@
                     "patching_rect": [ 15.0, 457.0, 30.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 153.0, 22.0, 30.0, 18.0 ],
-                    "text": "Fade"
+                    "text": "Fade",
+                    "varname": "lbl_fade"
                 }
             },
             {
@@ -595,7 +596,8 @@
                     "patching_rect": [ 10.0, 148.0, 35.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 42.00000125169754, 99.00000295042992, 35.0, 18.0 ],
-                    "text": "Dens"
+                    "text": "Dens",
+                    "varname": "lbl_density"
                 }
             },
             {
@@ -609,7 +611,8 @@
                     "patching_rect": [ 12.5, 168.0, 30.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 8.0, 99.0, 30.0, 18.0 ],
-                    "text": "Amt"
+                    "text": "Amt",
+                    "varname": "lbl_amount"
                 }
             },
             {
@@ -624,7 +627,8 @@
                     "patching_rect": [ 6.0, 417.0, 30.0, 29.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 184.0, 22.0, 37.5, 18.0 ],
-                    "text": "Freeze"
+                    "text": "Freeze",
+                    "varname": "lbl_persistence"
                 }
             },
             {
@@ -838,7 +842,8 @@
                     "patching_rect": [ 12.5, 250.0, 30.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 5.0, 22.0, 30.0, 18.0 ],
-                    "text": "Size"
+                    "text": "Size",
+                    "varname": "lbl_size"
                 }
             },
             {
@@ -852,7 +857,8 @@
                     "patching_rect": [ 5.0, 276.0, 32.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 41.00000011920929, 22.0, 32.0, 18.0 ],
-                    "text": "S.var"
+                    "text": "S.var",
+                    "varname": "lbl_size_var"
                 }
             },
             {
@@ -866,7 +872,8 @@
                     "patching_rect": [ 10.0, 301.0, 34.5, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 112.0, 22.0, 35.0, 18.0 ],
-                    "text": "Shape"
+                    "text": "Shape",
+                    "varname": "lbl_shape"
                 }
             },
             {
@@ -880,7 +887,8 @@
                     "patching_rect": [ 9.5, 325.0, 28.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 116.0, 99.0, 28.0, 18.0 ],
-                    "text": "Soft"
+                    "text": "Soft",
+                    "varname": "lbl_softness"
                 }
             },
             {
@@ -945,7 +953,8 @@
                     "patching_rect": [ 16.25, 345.0, 22.0, 29.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 77.0, 22.0, 31.0, 18.0 ],
-                    "text": "Jitter"
+                    "text": "Jitter",
+                    "varname": "lbl_jitter"
                 }
             },
             {
@@ -959,7 +968,8 @@
                     "patching_rect": [ 10.0, 119.0, 40.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 79.00000235438347, 99.00000295042992, 34.0, 18.0 ],
-                    "text": "Color"
+                    "text": "Color",
+                    "varname": "lbl_ch_diverge"
                 }
             },
             {
@@ -1025,7 +1035,8 @@
                     "patching_rect": [ 8.5, 385.0, 30.0, 29.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 151.0, 99.0, 35.333334386348724, 18.0 ],
-                    "text": "L.gate"
+                    "text": "L.gate",
+                    "varname": "lbl_luma_gate"
                 }
             },
             {
@@ -1089,7 +1100,8 @@
                     "patching_rect": [ 10.5, 195.0, 34.0, 18.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 187.0, 99.0, 34.0, 18.0 ],
-                    "text": "Displ"
+                    "text": "Displ",
+                    "varname": "lbl_displace"
                 }
             },
             {

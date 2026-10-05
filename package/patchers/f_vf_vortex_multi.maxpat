@@ -1000,7 +1000,8 @@
                         18.0
                     ],
                     "text": "S1 Cx",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s1_cx"
                 }
             },
             {
@@ -1102,7 +1103,8 @@
                         18.0
                     ],
                     "text": "S1 Cy",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s1_cy"
                 }
             },
             {
@@ -1204,7 +1206,8 @@
                         18.0
                     ],
                     "text": "S1 Conv",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s1_conv"
                 }
             },
             {
@@ -1307,7 +1310,8 @@
                         18.0
                     ],
                     "text": "S1 Curl",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s1_curl"
                 }
             },
             {
@@ -1409,7 +1413,8 @@
                         18.0
                     ],
                     "text": "S2 Cx",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s2_cx"
                 }
             },
             {
@@ -1511,7 +1516,8 @@
                         18.0
                     ],
                     "text": "S2 Cy",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s2_cy"
                 }
             },
             {
@@ -1613,7 +1619,8 @@
                         18.0
                     ],
                     "text": "S2 Conv",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s2_conv"
                 }
             },
             {
@@ -1716,7 +1723,8 @@
                         18.0
                     ],
                     "text": "S2 Curl",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s2_curl"
                 }
             },
             {
@@ -1818,7 +1826,8 @@
                         18.0
                     ],
                     "text": "S3 Cx",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s3_cx"
                 }
             },
             {
@@ -1920,7 +1929,8 @@
                         18.0
                     ],
                     "text": "S3 Cy",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s3_cy"
                 }
             },
             {
@@ -2022,7 +2032,8 @@
                         18.0
                     ],
                     "text": "S3 Conv",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s3_conv"
                 }
             },
             {
@@ -2125,7 +2136,8 @@
                         18.0
                     ],
                     "text": "S3 Curl",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_s3_curl"
                 }
             },
             {
@@ -2227,7 +2239,8 @@
                         18.0
                     ],
                     "text": "Falloff",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_falloff"
                 }
             },
             {
@@ -2329,7 +2342,8 @@
                         18.0
                     ],
                     "text": "Cx Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_cx_amt"
                 }
             },
             {
@@ -2431,7 +2445,8 @@
                         18.0
                     ],
                     "text": "Cy Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_cy_amt"
                 }
             },
             {
@@ -2533,7 +2548,8 @@
                         18.0
                     ],
                     "text": "Conv Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_conv_amt"
                 }
             },
             {
@@ -2635,7 +2651,8 @@
                         18.0
                     ],
                     "text": "Curl Amt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_curl_amt"
                 }
             },
             {

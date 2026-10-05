@@ -358,7 +358,8 @@
             35.0,
             18.0
           ],
-          "text": "Zoom"
+          "text": "Zoom",
+          "varname": "lbl_zoom"
         }
       },
       {
@@ -382,7 +383,8 @@
             35.0,
             18.0
           ],
-          "text": "Arms"
+          "text": "Arms",
+          "varname": "lbl_n_arms"
         }
       },
       {
@@ -406,7 +408,8 @@
             35.0,
             18.0
           ],
-          "text": "Twist"
+          "text": "Twist",
+          "varname": "lbl_twist"
         }
       },
       {

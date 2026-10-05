@@ -637,7 +637,8 @@
                         18.0
                     ],
                     "text": "Density",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_density"
                 }
             },
             {
@@ -739,7 +740,8 @@
                         18.0
                     ],
                     "text": "Angle",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_angle"
                 }
             },
             {
@@ -841,7 +843,8 @@
                         18.0
                     ],
                     "text": "Weight",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_weight"
                 }
             },
             {
@@ -943,7 +946,8 @@
                         18.0
                     ],
                     "text": "Marklen",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_marklen"
                 }
             },
             {
@@ -1045,7 +1049,8 @@
                         18.0
                     ],
                     "text": "Regularity",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_regularity"
                 }
             },
             {
@@ -1148,7 +1153,8 @@
                         18.0
                     ],
                     "text": "Phase",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_phase"
                 }
             },
             {

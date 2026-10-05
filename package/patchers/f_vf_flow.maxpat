@@ -594,7 +594,8 @@
                         18.0
                     ],
                     "text": "Angle",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_angle"
                 }
             },
             {
@@ -697,7 +698,8 @@
                         18.0
                     ],
                     "text": "Spread",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_spread"
                 }
             },
             {

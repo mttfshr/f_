@@ -528,7 +528,8 @@
                         18.0
                     ],
                     "text": "Gain",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_gain"
                 }
             },
             {
@@ -631,7 +632,8 @@
                         18.0
                     ],
                     "text": "Scale",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_scale"
                 }
             },
             {
@@ -782,7 +784,8 @@
                         18.0
                     ],
                     "text": "Rotate",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_rotate"
                 }
             },
             {
@@ -885,7 +888,8 @@
                         18.0
                     ],
                     "text": "Thresh",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_thresh"
                 }
             },
             {

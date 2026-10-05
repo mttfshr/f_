@@ -204,7 +204,8 @@
                     "patching_rect": [ 10.0, 353.0, 123.0, 17.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 1.75, 56.75, 34.0, 17.0 ],
-                    "text": "Falloff"
+                    "text": "Falloff",
+                    "varname": "lbl_edge_falloff"
                 }
             },
             {
@@ -284,7 +285,8 @@
                     "patching_rect": [ 34.0, 380.0, 121.0, 17.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 81.25, 56.5, 27.0, 17.0 ],
-                    "text": "Lum"
+                    "text": "Lum",
+                    "varname": "lbl_lum_shift"
                 }
             },
             {
@@ -298,7 +300,8 @@
                     "patching_rect": [ 13.0, 373.0, 117.0, 17.0 ],
                     "presentation": 1,
                     "presentation_rect": [ 44.5, 56.5, 25.5, 17.0 ],
-                    "text": "Sat"
+                    "text": "Sat",
+                    "varname": "lbl_sat_amt"
                 }
             },
             {
