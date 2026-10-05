@@ -54,6 +54,14 @@ BYPASS_PASSTHROUGH_OUTLETS = {"f_vf_warp": (2,)}
 PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
                             "f_vf_fluid"}     # fluid: Param gate on enc, not native @bypass (plan ADR-8)
 
+# Processors whose bypass is DOCUMENTED to output a neutral field, not to pass the input through,
+# so the strict `out1 == in1 under bypass` check does not apply. f_vf_optical_flow: "bypass
+# should mean output neutral field" (src/f_vf_optical_flow/definition.py header;
+# codebox_stage_e.gen header). The check only started to run for it when its definition moved
+# into src/ (build_cleanup T007), because modulebench.archetype() reads the definition there;
+# before that its archetype was unknown and it was silently skipped.
+NEUTRAL_BYPASS_BY_DESIGN = {"f_vf_optical_flow"}
+
 # Modules whose output follows the render CONTEXT size (512x512 in the module bench), not the
 # input texture's: feed them an input of that size so the passthrough check is like for like.
 INPUT_SIZE = {"f_vf_fluid": 512}
@@ -100,7 +108,7 @@ def module_issues(name):
                 for pix, v in vals.items():
                     if v is None or abs(float(v) - p["value"]) > 1e-4 * max(1.0, abs(p["value"])):
                         issues.append(("param", p["name"], f"{pix}.{a} = {v}, sent {p['value']:.6g}"))
-    if info["archetype"] == "processor":
+    if info["archetype"] == "processor" and name not in NEUTRAL_BYPASS_BY_DESIGN:
         byp = (r.get("arrays") or {}).get("bypassed", {}).get(1)
         if byp is not None:
             d = float(np.abs(byp - info["input"]).max())

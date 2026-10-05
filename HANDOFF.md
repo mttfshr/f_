@@ -14,10 +14,15 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
 - **Everything is committed, nothing is pushed** (`git log` from `cc5d543` to the commit after `9548306`):
   skills (T029), Phase 1, Phase 2, the never-regenerate list, the label varnames (T013a), the T013 definition
   write-backs, `f_vf_vorticity` parked. All eight skills are uploaded and stamped (`./skills/check.sh` clean).
-- **Run `tests/bench.sh --changed` once, in the background (`tests/bg.sh start`).** 14 shipped patchers gained
-  `lbl_*` comment varnames (T013a), so their module bench is due; expected green (a varname on a comment).
-  Not run because Matt does not want the bench rerun to re-verify one's own changes; this one is a real
-  change to shipped files, so it is worth the one run.
+- **Rerun `./bench.sh --changed` once more** (background: `tests/bg.sh start`). Matt ran it on 2026-10-05 after the
+  label varnames: everything passed except `f_vf_optical_flow` (`bypass_out1` 8.387), which was **not a regression
+  from a code change**: T007 moved its definition into `src/`, `modulebench.archetype()` reads the archetype from
+  `src/<name>/definition.py`, so the bench classified it as a `processor` for the first time and applied the strict
+  "out1 == in1 under bypass" check. Its bypass is documented to output a neutral field, so it is now in
+  `NEUTRAL_BYPASS_BY_DESIGN` (`tests/bench_modules.py`). `benchdeps.py` now includes the definition's archetype in
+  each module's tracked hash (it was invisible to `--changed` before), which invalidates every module's recorded
+  green once, so the rerun is a full `bench_modules` pass (about 75 to 90 s). All 14 label-varname patchers, `f_stereo`
+  and `f_vf_fluid` passed. Not run by Claude: Matt ran the bench; the exemption itself is unverified until that rerun.
 - **Questions waiting for Matt** (none open):
   1. ~~`f_sirds` bypass cord~~ **resolved:** not stray (Matt, 2026-10-05; I had wrongly inferred it from stage 0's
      codebox having no `bypass` Param). `build_sirds.py` now wires bypass into stage 0 too; the module is exact.

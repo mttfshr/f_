@@ -8,6 +8,7 @@ a renamed file that silently drops coverage.
 Offline (no Max). Run:  tests/run.sh tests/test_benchdeps.py
 """
 import contextlib
+import hashlib
 import io
 import os
 import re
@@ -111,6 +112,38 @@ def test_module_hashes_are_per_patcher():
         (root / "package/patchers/f_x.maxpat").write_text("x2")
         b = bd.module_hashes(root)
         _t("editing one patcher changes only its hash", b["f_x"] != a["f_x"] and b["f_y"] == a["f_y"])
+
+
+def test_a_modules_hash_includes_the_archetype_its_bench_reads_from_the_definition():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = _repo(tmp)
+        plain = bd.module_hashes(root)
+        _t("no definition: the hash is the plain patcher hash (an existing record stays valid)",
+           plain["f_x"] == hashlib.sha256((root / "package/patchers/f_x.maxpat").read_bytes()).hexdigest())
+        d = root / "src" / "f_x"
+        d.mkdir(parents=True)
+        (d / "definition.py").write_text('patcher = {"name": "f_x", "archetype": "processor", "title": "X"}\n')
+        a = bd.module_hashes(root)
+        _t("a definition with an archetype changes that module's hash", a["f_x"] != plain["f_x"])
+        _t("...and no other module's", a["f_y"] == plain["f_y"])
+        (d / "definition.py").write_text('patcher = {"name": "f_x", "archetype": "processor", "title": "Renamed",\n'
+                                         '           "params": [1, 2, 3]}\n')
+        _t("editing anything else in the definition does NOT change the hash (no needless reruns)",
+           bd.module_hashes(root)["f_x"] == a["f_x"])
+        (d / "definition.py").write_text('patcher = {"name": "f_x", "archetype": "source", "title": "X"}\n')
+        _t("changing the archetype DOES", bd.module_hashes(root)["f_x"] != a["f_x"])
+
+
+def test_benchdeps_reads_the_archetype_exactly_as_the_module_bench_does():
+    sys.path.insert(0, str(REPO / "tests"))
+    import modulebench as mb
+    n = 0
+    for d in sorted((REPO / "src").glob("f_*/definition.py")):
+        name = d.parent.name
+        _t(f"{name}: benchdeps and modulebench agree on the archetype",
+           bd.definition_archetype(REPO, name) == mb.archetype(name))
+        n += 1
+    _t("a useful number of definitions were compared", n >= 25)
 
 
 # ---- the decision table

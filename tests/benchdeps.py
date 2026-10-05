@@ -33,6 +33,7 @@ import ast
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -117,9 +118,27 @@ def input_hash(stem, root=ROOT, data=DATA):
     return h.hexdigest()
 
 
+def definition_archetype(root, name):
+    """The archetype tests/modulebench.py reads from src/<name>/definition.py (None if there is
+    none). The module bench's checks depend on it, but it lives in a definition, not the patcher,
+    so it has to be part of the module's hash or changing it would never trigger a rerun."""
+    d = Path(root) / "src" / name / "definition.py"
+    if d.exists():
+        m = re.search(r'"archetype"\s*:\s*"(\w+)"', d.read_text())
+        if m:
+            return m.group(1)
+    return None
+
+
 def module_hashes(root=ROOT):
-    return {p.stem: hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted((root / "package" / "patchers").glob("f_*.maxpat"))}
+    out = {}
+    for p in sorted((root / "package" / "patchers").glob("f_*.maxpat")):
+        h = hashlib.sha256(p.read_bytes())
+        arch = definition_archetype(root, p.stem)
+        if arch:                         # no definition, or none read: the plain patcher hash
+            h.update(f"\0archetype={arch}".encode())
+        out[p.stem] = h.hexdigest()
+    return out
 
 
 def detect_env():
