@@ -180,8 +180,7 @@
    "counts": {
     "boxes_renamed": 1,
     "code": 1,
-    "layout": 3,
-    "props": 11
+    "props": 9
    },
    "status": "drift"
   },
@@ -231,8 +230,7 @@
     "boxes_patch_only": 1,
     "boxes_renamed": 1,
     "code": 1,
-    "layout": 1,
-    "props": 4
+    "props": 1
    },
    "status": "drift"
   },

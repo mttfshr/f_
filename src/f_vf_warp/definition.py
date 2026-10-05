@@ -82,3 +82,10 @@ out1 = mix(warped_sample, sample(in1, uv), bypass_gate);
 out2 = mix(warped_sample, sample(in1, uv), bypass_gate);
 """,
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "signal_type": {"fontsize": 9.5, "textcolor": [0.35, 0.75, 0.95, 1.0]},
+    "strength.ctl": {"appearance": 1, "presentation_rect": [4.0, 38.0, 25.0, 23.0]},
+}
+# END overrides

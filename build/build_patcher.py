@@ -8,6 +8,7 @@ Usage:
 See build/spec.md for definition file schema.
 """
 
+import copy
 import json
 import sys
 import importlib.util
@@ -1065,6 +1066,60 @@ def assign_roles(ui_params, header_toggles, mod_inlets, outlets, pix_ids,
     return r
 
 
+def element_keys(roles, ui_params, header_toggles):
+    """{key: box_id}: a stable, name-based key for every generated box, for `overrides`.
+
+    Param-indexed roles use the parameter's NAME (`gain.ctl`, `gain.label`, `gain.pre`), not
+    its position, so reordering params does not move an override.  Singletons keep their
+    role name (`panel`, `title`, `signal_type`, `bypass_jsui`, `route`, ...); repeated ones
+    take an index (`outlet.0`, `mod_inlet.1`, `pix.0`).  raw_boxes have no key."""
+    names = [p["name"] for p in ui_params] + [p["name"] for p in header_toggles[:1]]
+    keys, pix_n = {}, 0
+    for box_id, (role, idx) in roles.items():
+        if role in ("ctl", "label", "pre", "range_menu", "range_sel"):
+            key = f"{names[idx]}.{role}"
+        elif role == "range_msg":
+            key = f"{names[idx[0]]}.range_msg.{idx[1]}"
+        elif role in ("outlet", "mod_inlet", "mod_instate", "mod_statepre"):
+            key = f"{role}.{idx}"
+        elif role == "pix":
+            key, pix_n = f"pix.{pix_n}", pix_n + 1
+        else:
+            key = role
+        if key in keys:
+            raise ValueError(f"duplicate element key {key!r} (parameter names must be unique)")
+        keys[key] = box_id
+    return keys
+
+
+# Properties an override may not set: identity, structure, and the edit-view layout
+# (patching_rect is regenerated every build, never hand-kept).
+OVERRIDE_DENY = {"id", "maxclass", "patching_rect", "patcher"}
+
+
+def apply_overrides(boxes, keys, overrides):
+    """Apply `definition["overrides"]` = {element_key: {property: value}} to the generated
+    boxes, in place.  A value of None removes the property.  Loud on every mistake: an
+    unknown element, an element that this build did not generate, a denied property."""
+    by_id = {b["box"]["id"]: b["box"] for b in boxes}
+    for key, props in overrides.items():
+        if key not in keys:
+            raise ValueError(f"overrides: unknown element {key!r}; known elements: {sorted(keys)}")
+        box = by_id.get(keys[key])
+        if box is None:
+            raise ValueError(f"overrides: element {key!r} is not part of this build")
+        if not isinstance(props, dict) or not props:
+            raise ValueError(f"overrides[{key!r}] must be a non-empty dict of properties")
+        for prop, value in props.items():
+            if prop in OVERRIDE_DENY:
+                raise ValueError(f"overrides[{key!r}]: {prop!r} cannot be overridden "
+                                 f"(denied: {sorted(OVERRIDE_DENY)})")
+            if value is None:
+                box.pop(prop, None)
+            else:
+                box[prop] = copy.deepcopy(value)
+
+
 def build(defn, debug=None, side_files=None):
     """Build a patcher dict from a definition. Pure: nothing is written to disk.
 
@@ -1341,18 +1396,27 @@ def build(defn, debug=None, side_files=None):
     # as the corresponding raw_boxes entries).
     params_block.update(defn.get("raw_parameters", {}))
 
+    # Roles, and from them the element keys that `overrides` address (build/spec.md,
+    # "Overrides").  Computed always: they must not depend on `edit_layout`.
+    roles = assign_roles(ui_params, header_toggles, mod_inlets, outlets,
+                         [b["box"]["id"] for b in pix_boxes_to_add],
+                         bp_jsui_id, bp_pre_id)
+    keys = element_keys(roles, ui_params, header_toggles)
+    if debug is not None:
+        debug["roles"] = roles              # tests/test_layout.py reads this; never serialized
+        debug["element_keys"] = keys
+    # Hand-tuned presentation state, applied to the generated boxes.  Before the layout
+    # pass, which only ever rewrites patching_rect (a property overrides may not touch).
+    if defn.get("overrides"):
+        apply_overrides(boxes, keys, defn["overrides"])
+
     # Edit-view layout pass (.specify/build_layout/spec.md): rewrites patching_rect ONLY.
     # Opt out per module with "edit_layout": False in definition.py. Self-verifying:
     # anything other than patching_rect changing raises.
     if defn.get("edit_layout", True):
-        roles = assign_roles(ui_params, header_toggles, mod_inlets, outlets,
-                             [b["box"]["id"] for b in pix_boxes_to_add],
-                             bp_jsui_id, bp_pre_id)
         snap = edit_layout.snapshot(boxes, lines)
         edit_layout.layout_edit_view(boxes, lines, roles)
         edit_layout.assert_unchanged(snap, boxes, lines)
-        if debug is not None:
-            debug["roles"] = roles          # tests/test_layout.py reads this; never serialized
 
     patcher = {
         "fileversion": 1,
@@ -1383,6 +1447,9 @@ def load_definition(path):
     return defn
 
 def main():
+    if "--capture" in sys.argv:             # build/capture.py: write hand-tuned state back
+        import capture
+        return capture.main([a for a in sys.argv[1:] if a != "--capture"])
     if len(sys.argv) < 2:
         print("Usage: python3 build/build_patcher.py src/f_<name>/definition.py")
         sys.exit(1)

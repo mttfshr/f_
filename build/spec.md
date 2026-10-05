@@ -585,9 +585,60 @@ build/py.sh build/drift.py            # every shipped patcher
 build/py.sh build/drift.py -v f_lens  # with examples of each difference
 ```
 
+Hand-tuned presentation state has a place to go: see "Overrides" below (`build/capture.py` writes it back).
+
 `tests/test_drift.py` enforces the rule. A module must reproduce exactly unless
 it is listed in `tests/drift_baseline.json`, a list that may only shrink and is
 meant to be deleted once empty.
+
+## Overrides: hand-tuned presentation state
+
+**Decision (ADR, 2026-10-05; generic scope approved by Matt 2026-10-04).** A definition may
+carry `patcher["overrides"] = {element_key: {property: value}}`: properties applied to the
+generated boxes after they are made. It is where hand-tuning done in Max (a compact dial, a
+moved jsui, a recoloured label, a resized panel) is written back, so the rule "write the change
+back into `definition.py`" has somewhere to put what the schema does not model.
+
+*Why.* Closing drift by extending the schema for every layout tweak does not scale, and
+leaving the tweak in the patch only loses it on the next regeneration. Scope is **generic**,
+not layout-only: any property, because the next tweak is as likely a colour or a font as a
+rect. What stays out is not a property list but an ownership rule (below).
+
+*Element keys* are name-based, from `assign_roles()`: `<param>.ctl`, `<param>.label`,
+`<param>.pre`, `<param>.range_menu`, `outlet.<i>`, `mod_inlet.<i>`, `pix.<i>`, and the singletons
+`panel`, `title`, `signal_type`, `bypass_jsui`, `route`, `autopattr`, ... Reordering params does
+not move an override (box ids, `obj-300+n*10`, do. They are not keys). `build/py.sh
+build/capture.py <definition.py> --keys` lists what a module has. `raw_boxes` have no key.
+
+*Applying* (`build_patcher.apply_overrides`, before the edit-view layout pass): any property
+except `id`, `maxclass`, `patching_rect` (regenerated every build) and `patcher`; `None`
+removes a property. **Loud on every mistake**: an unknown element, an element this build did
+not generate, a denied property, an empty dict. Values are deep-copied.
+
+*Capturing* (`build/capture.py`, also `build_patcher.py --capture`): builds the definition
+**without** its overrides, matches each generated box to the shipped patcher's by `drift.py`'s
+identity rules (so exactly what `drift.py` reports), and writes back the differences. It is
+idempotent (it always diffs against the build without overrides) and rewrites only the block
+between `# BEGIN overrides` and `# END overrides`; the rest of the file is never touched.
+
+*Ownership rule: capture takes presentation state only.* Captured: the presentation rect,
+colours, fonts, dial appearance (`capture.CAPTURE_KEYS`). **Refused, with the reason printed**:
+label text, hints, ranges/enums (the definition owns them: edit `params[]`), and `varname` and
+`param_connect` (the builder is ahead of the patch, or the patch was edited: regenerate; do
+not freeze it as an override). The pilot made the need concrete: of the drift left after
+Max's own normalisation, most was `lbl_*` comment varnames the builder now writes and
+Max-saved patches lack, and capturing that would have made the stale side permanent.
+
+*Limits.* Only modules built by `build_patcher.build` (not the four with their own
+`build_*.py`). Nested properties (inside `saved_attribute_attributes`) are reported, not
+captured. A comment's width and height are compared by nothing (Max re-fits them), so a
+captured comment rect carries Max's current size.
+
+*Pilot (build_cleanup T012).* `f_chladni` turned out to need nothing: Max's normalisation
+alone made it reproduce exactly. `f_vf_fieldmap` (panel size, jsui position, label colour and
+size) and `f_vf_warp` (compact dial, label colour) were captured: layout 3 -> 0 and 1 -> 0,
+props 11 -> 9 and 4 -> 1; the rest is what capture refuses. Tests: `tests/test_overrides.py`
+(10 tests, 14 mutants caught).
 
 ## Known Constraints
 
