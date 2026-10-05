@@ -329,6 +329,9 @@ def build():
         wire(PRIMARY, 0, OBJ_OUTLET, 0),
     ]
 
+    # bypass also reaches stage 0 (the shipped patch wires it; Matt, 2026-10-05: not a stray cord).
+    lines.append(wire(OBJ_BYPASS_ATTRUI, 0, STAGE_IDS[0], 0))  # bypass -> in0
+
     # Broadcast depth_factor, bypass, and depth texture to every
     # depth-driven stage (stage1..stage12) -- the reason this module
     # needed its own builder instead of tools/build_patcher.py.

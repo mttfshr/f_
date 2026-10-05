@@ -18,9 +18,9 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
   `lbl_*` comment varnames (T013a), so their module bench is due; expected green (a varname on a comment).
   Not run because Matt does not want the bench rerun to re-verify one's own changes; this one is a real
   change to shipped files, so it is worth the one run.
-- **Questions waiting for Matt** (none is blocking; 1 is open, 2 and 3 are diagnosed and waiting for a go-ahead):
-  1. `f_sirds`: the patch wires `bypass` into stage 0, whose codebox has no `bypass` Param, so the cord looks
-     stray. Remove it from the patch (probably right) or add it to `build_sirds.py`?
+- **Questions waiting for Matt** (none is blocking; 2 and 3 are diagnosed and waiting for a go-ahead):
+  1. ~~`f_sirds` bypass cord~~ **resolved:** not stray (Matt, 2026-10-05; I had wrongly inferred it from stage 0's
+     codebox having no `bypass` Param). `build_sirds.py` now wires bypass into stage 0 too; the module is exact.
   2. ~~`r draw`~~ **diagnosed 2026-10-05, fix not yet made.** For the `source` archetype the builder wires the pix
      from both `routepass` out 0 and an `r draw` box; the shipped `f_vf_vortex` and `f_vf_vortex_multi` (both
      finished and working) wire it from `routepass` alone. So `r draw` is a redundant extra trigger the schema
@@ -73,7 +73,7 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
 
 ### State of drift
 
-39 shipped patchers: **16 reproduce exactly**, 18 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
+39 shipped patchers: **17 reproduce exactly**, 17 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
 only in the patch 240, layout 136, boxes only in the definition 113, cords 103, renamed 22, code 9, pix ports 2.
 
 ## Previous session (2026-10-04, second): build, tools and test cleanup
