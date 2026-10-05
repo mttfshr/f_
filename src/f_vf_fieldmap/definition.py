@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "fieldmap",
     "object_name":        "fieldmap_pix",
     "title":              "Fieldmap",
-    "signal_type":        "vecfield",
+    "signal_type":        "vecfield out",
     "archetype":          "processor",
     "pix_type":           "float32",
 
@@ -15,10 +15,10 @@ patcher = {
     ],
 
     "params": [
-        {"name": "gain",     "type": "float", "min": -10.0, "max": 10.0, "default": 4.0,  "label": "Gain",   "hint": "Gradient magnitude scale. Negative inverts field direction."},
-        {"name": "scale",    "type": "float", "min": -0.05, "max": 0.05,  "default": 0.004, "label": "Scale",  "hint": "Central difference step size (normalized UV). Negative inverts gradient axis."},
-        {"name": "rotate",   "type": "float", "min": -180.0, "max": 180.0, "default": 0.0, "label": "Rotate", "hint": "Rotate field vector in degrees."},
-        {"name": "thresh",   "type": "float", "min": 0.0,  "max": 1.0,   "default": 0.0,  "label": "Thresh", "hint": "Suppress field below this luma threshold."},
+        {"name": "gain",     "type": "float", "min": -10.0, "max": 10.0, "default": 4.0,  "label": "Gain",   "hint": "Gradient magnitude scale. Calibrate to input contrast."},
+        {"name": "scale",    "type": "float", "min": -0.05, "max": 0.05,  "default": 0.004, "label": "Scale",  "hint": "Central difference step size (normalized UV). Low=fine, High=coarse."},
+        {"name": "rotate",   "type": "float", "min": -180.0, "max": 180.0, "default": 0.0, "label": "Rotate", "hint": "Rotate gradient vector in degrees."},
+        {"name": "thresh",   "type": "float", "min": -2.0,  "max": 2.0,   "default": 0.0,  "label": "Thresh", "hint": "Suppress field below source luma threshold."},
         {"name": "bypass",   "type": "bypass"},
     ],
 
@@ -52,8 +52,8 @@ field   = vec(clamp(gx2 * 0.5 + 0.5, 0.0, 1.0), clamp(gy2 * 0.5 + 0.5, 0.0, 1.0)
 neutral = vec(0.5, 0.5, 0.5, 1.0);
 
 threshed = mix(field, neutral, step(L_center, thresh));
-out1 = mix(threshed, neutral, bypass);
-""",
+
+out1 = mix(threshed, neutral, bypass);""",
 }
 
 # BEGIN overrides (build/capture.py rewrites only this block)

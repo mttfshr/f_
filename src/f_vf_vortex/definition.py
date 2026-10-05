@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "vf_vortex",
     "object_name":        "vf_vortex_pix",
     "title":              "Vortex",
-    "signal_type":        "vecfield",
+    "signal_type":        "vecfield out",
     "archetype":          "source",
     "pix_type":           "float32",
 

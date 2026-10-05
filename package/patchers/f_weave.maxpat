@@ -1304,7 +1304,8 @@
                         18.0
                     ],
                     "text": "Softness",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_softness"
                 }
             },
             {
@@ -1406,7 +1407,8 @@
                         18.0
                     ],
                     "text": "Shape",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_shape"
                 }
             }
         ],

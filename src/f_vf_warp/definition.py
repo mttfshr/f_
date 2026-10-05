@@ -27,7 +27,7 @@ patcher = {
     "prefix":             "vfwarp",
     "object_name":        "vfwarp_pix",
     "title":              "Warp",
-    "signal_type":        "vecfield",
+    "signal_type":        "vecfield in",
     "archetype":          "processor",
     "pix_type":           "char",
 
@@ -53,7 +53,7 @@ patcher = {
     ],
 
     "codebox": """\
-Param strength(0.0);
+Param strength(0.1);
 Param src_vecfield(0.0);
 Param bypass_gate(0.0);
 

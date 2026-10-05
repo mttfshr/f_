@@ -176,31 +176,15 @@
    },
    "status": "drift"
   },
-  "f_vf_fieldmap": {
-   "counts": {
-    "boxes_renamed": 1,
-    "code": 1,
-    "props": 5
-   },
-   "status": "drift"
-  },
   "f_vf_flow": {
    "counts": {
     "props": 1
    },
    "status": "drift"
   },
-  "f_vf_repulse": {
-   "counts": {
-    "boxes_renamed": 1,
-    "code": 1
-   },
-   "status": "drift"
-  },
   "f_vf_vortex": {
    "counts": {
-    "boxes_def_only": 1,
-    "boxes_renamed": 1
+    "boxes_def_only": 1
    },
    "status": "drift"
   },
@@ -216,7 +200,6 @@
    "counts": {
     "boxes_def_only": 2,
     "boxes_patch_only": 2,
-    "boxes_renamed": 1,
     "props": 3
    },
    "status": "drift"
@@ -224,18 +207,7 @@
   "f_vf_warp": {
    "counts": {
     "boxes_def_only": 1,
-    "boxes_patch_only": 1,
-    "boxes_renamed": 1,
-    "code": 1
-   },
-   "status": "drift"
-  },
-  "f_weave": {
-   "counts": {
-    "boxes_patch_only": 6,
-    "code": 1,
-    "layout": 1,
-    "props": 1
+    "boxes_patch_only": 1
    },
    "status": "drift"
   }

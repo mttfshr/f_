@@ -7,7 +7,7 @@ patcher = {
     "pix_type":           "char",
 
     "presentation_width":  220,
-    "presentation_height": 160,
+    "presentation_height": 159,
 
     "outlets": [
         {"comment": "texture out"},
@@ -28,6 +28,8 @@ patcher = {
         {"name": "marklen",    "type": "float", "min": 0.0,  "max": 0.5, "default": 0.3,  "hint": "Mark length along line direction."},
         {"name": "regularity", "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5,  "hint": "1=lines in phase (grid-like), 0=fully varied per-line offset."},
         {"name": "phase",      "type": "float", "min": -1.0, "max": 1.0, "default": 0.0,  "hint": "Animation phase — scrolls marks along line direction."},
+        {"name": "softness",   "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0,  "hint": "Edge softness — expands feather zone beyond mark edge (0=original hard smoothstep)."},
+        {"name": "shape",      "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "Mark profile — 0=flat-top rectangle, 1=raised cosine (calligraphic)."},
         {"name": "src_potential", "type": "internal"},
         {"name": "bypass",        "type": "bypass"},
     ],
@@ -39,6 +41,8 @@ Param weight(0.1);
 Param marklen(0.3);
 Param regularity(0.5);
 Param phase(0.0);
+Param softness(0.0);
+Param shape(0.0);
 Param src_potential(0.0);
 Param bypass(0.0);
 
@@ -80,9 +84,20 @@ line_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity,
 pos = along * density_scale + phase + line_hash;
 dist_to_mark = abs(fract(pos) - 0.5);
 
+// ─── Edge falloff (softness expands outer edge, inner stays at 0) ─────────────
+
+outer_across = weight + softness * weight;
+outer_along  = marklen + softness * marklen;
+edge_across = smoothstep(outer_across, 0.0, dist_to_line);
+edge_along  = smoothstep(outer_along,  0.0, dist_to_mark);
+
+// ─── Shape profile (flat-top → raised cosine) ─────────────────────────────────
+
+profile = mix(1.0, cos(clamp(dist_to_line / max(weight, 0.0001), 0.0, 1.0) * pi * 0.5), shape);
+
 // ─── Mark ────────────────────────────────────────────────────────────────────
 
-mark = smoothstep(weight, 0.0, dist_to_line) * smoothstep(marklen, 0.0, dist_to_mark);
+mark = edge_across * edge_along * profile;
 
 // ─── Output ───────────────────────────────────────────────────────────────────
 

@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "repulse",
     "object_name":        "repulse_pix",
     "title":              "Repulse",
-    "signal_type":        "vecfield",
+    "signal_type":        "vecfield out",
     "archetype":          "processor",
     "pix_type":           "float32",
 
@@ -29,7 +29,10 @@ Param threshold(0.3);
 Param mode(0.0);
 Param bypass(0.0);
 
-uv = norm;
+// Remap norm into [reach, 1-reach] so ring samples never go OOB
+// This zooms the sampled region to fill the full output texture
+zu = norm.x * (1.0 - 2.0 * reach) + reach;
+zv = norm.y * (1.0 - 2.0 * reach) + reach;
 
 // Precomputed unit vectors — 16 evenly spaced directions
 dx0  =  1.0000; dy0  =  0.0000;
@@ -50,40 +53,58 @@ dx14 =  0.7071; dy14 = -0.7071;
 dx15 =  0.9239; dy15 = -0.3827;
 
 // Sample luma at each ring position (Rec. 601)
-luma0  = sample(in1, vec(uv.x + dx0  * reach, uv.y + dy0  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx0  * reach, uv.y + dy0  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx0  * reach, uv.y + dy0  * reach)).z * 0.114;
-luma1  = sample(in1, vec(uv.x + dx1  * reach, uv.y + dy1  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx1  * reach, uv.y + dy1  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx1  * reach, uv.y + dy1  * reach)).z * 0.114;
-luma2  = sample(in1, vec(uv.x + dx2  * reach, uv.y + dy2  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx2  * reach, uv.y + dy2  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx2  * reach, uv.y + dy2  * reach)).z * 0.114;
-luma3  = sample(in1, vec(uv.x + dx3  * reach, uv.y + dy3  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx3  * reach, uv.y + dy3  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx3  * reach, uv.y + dy3  * reach)).z * 0.114;
-luma4  = sample(in1, vec(uv.x + dx4  * reach, uv.y + dy4  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx4  * reach, uv.y + dy4  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx4  * reach, uv.y + dy4  * reach)).z * 0.114;
-luma5  = sample(in1, vec(uv.x + dx5  * reach, uv.y + dy5  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx5  * reach, uv.y + dy5  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx5  * reach, uv.y + dy5  * reach)).z * 0.114;
-luma6  = sample(in1, vec(uv.x + dx6  * reach, uv.y + dy6  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx6  * reach, uv.y + dy6  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx6  * reach, uv.y + dy6  * reach)).z * 0.114;
-luma7  = sample(in1, vec(uv.x + dx7  * reach, uv.y + dy7  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx7  * reach, uv.y + dy7  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx7  * reach, uv.y + dy7  * reach)).z * 0.114;
-luma8  = sample(in1, vec(uv.x + dx8  * reach, uv.y + dy8  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx8  * reach, uv.y + dy8  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx8  * reach, uv.y + dy8  * reach)).z * 0.114;
-luma9  = sample(in1, vec(uv.x + dx9  * reach, uv.y + dy9  * reach)).x * 0.299 + sample(in1, vec(uv.x + dx9  * reach, uv.y + dy9  * reach)).y * 0.587 + sample(in1, vec(uv.x + dx9  * reach, uv.y + dy9  * reach)).z * 0.114;
-luma10 = sample(in1, vec(uv.x + dx10 * reach, uv.y + dy10 * reach)).x * 0.299 + sample(in1, vec(uv.x + dx10 * reach, uv.y + dy10 * reach)).y * 0.587 + sample(in1, vec(uv.x + dx10 * reach, uv.y + dy10 * reach)).z * 0.114;
-luma11 = sample(in1, vec(uv.x + dx11 * reach, uv.y + dy11 * reach)).x * 0.299 + sample(in1, vec(uv.x + dx11 * reach, uv.y + dy11 * reach)).y * 0.587 + sample(in1, vec(uv.x + dx11 * reach, uv.y + dy11 * reach)).z * 0.114;
-luma12 = sample(in1, vec(uv.x + dx12 * reach, uv.y + dy12 * reach)).x * 0.299 + sample(in1, vec(uv.x + dx12 * reach, uv.y + dy12 * reach)).y * 0.587 + sample(in1, vec(uv.x + dx12 * reach, uv.y + dy12 * reach)).z * 0.114;
-luma13 = sample(in1, vec(uv.x + dx13 * reach, uv.y + dy13 * reach)).x * 0.299 + sample(in1, vec(uv.x + dx13 * reach, uv.y + dy13 * reach)).y * 0.587 + sample(in1, vec(uv.x + dx13 * reach, uv.y + dy13 * reach)).z * 0.114;
-luma14 = sample(in1, vec(uv.x + dx14 * reach, uv.y + dy14 * reach)).x * 0.299 + sample(in1, vec(uv.x + dx14 * reach, uv.y + dy14 * reach)).y * 0.587 + sample(in1, vec(uv.x + dx14 * reach, uv.y + dy14 * reach)).z * 0.114;
-luma15 = sample(in1, vec(uv.x + dx15 * reach, uv.y + dy15 * reach)).x * 0.299 + sample(in1, vec(uv.x + dx15 * reach, uv.y + dy15 * reach)).y * 0.587 + sample(in1, vec(uv.x + dx15 * reach, uv.y + dy15 * reach)).z * 0.114;
+// Named UVs for OOB gate — clear semantics, no clamp artifact at edges
+su0  = zu + dx0  * reach; sv0  = zv + dy0  * reach;
+su1  = zu + dx1  * reach; sv1  = zv + dy1  * reach;
+su2  = zu + dx2  * reach; sv2  = zv + dy2  * reach;
+su3  = zu + dx3  * reach; sv3  = zv + dy3  * reach;
+su4  = zu + dx4  * reach; sv4  = zv + dy4  * reach;
+su5  = zu + dx5  * reach; sv5  = zv + dy5  * reach;
+su6  = zu + dx6  * reach; sv6  = zv + dy6  * reach;
+su7  = zu + dx7  * reach; sv7  = zv + dy7  * reach;
+su8  = zu + dx8  * reach; sv8  = zv + dy8  * reach;
+su9  = zu + dx9  * reach; sv9  = zv + dy9  * reach;
+su10 = zu + dx10 * reach; sv10 = zv + dy10 * reach;
+su11 = zu + dx11 * reach; sv11 = zv + dy11 * reach;
+su12 = zu + dx12 * reach; sv12 = zv + dy12 * reach;
+su13 = zu + dx13 * reach; sv13 = zv + dy13 * reach;
+su14 = zu + dx14 * reach; sv14 = zv + dy14 * reach;
+su15 = zu + dx15 * reach; sv15 = zv + dy15 * reach;
 
-// Thresholded weights
-w0  = max(luma0  - threshold, 0.0);
-w1  = max(luma1  - threshold, 0.0);
-w2  = max(luma2  - threshold, 0.0);
-w3  = max(luma3  - threshold, 0.0);
-w4  = max(luma4  - threshold, 0.0);
-w5  = max(luma5  - threshold, 0.0);
-w6  = max(luma6  - threshold, 0.0);
-w7  = max(luma7  - threshold, 0.0);
-w8  = max(luma8  - threshold, 0.0);
-w9  = max(luma9  - threshold, 0.0);
-w10 = max(luma10 - threshold, 0.0);
-w11 = max(luma11 - threshold, 0.0);
-w12 = max(luma12 - threshold, 0.0);
-w13 = max(luma13 - threshold, 0.0);
-w14 = max(luma14 - threshold, 0.0);
-w15 = max(luma15 - threshold, 0.0);
+luma0  = sample(in1, vec(su0,  sv0 )).x * 0.299 + sample(in1, vec(su0,  sv0 )).y * 0.587 + sample(in1, vec(su0,  sv0 )).z * 0.114;
+luma1  = sample(in1, vec(su1,  sv1 )).x * 0.299 + sample(in1, vec(su1,  sv1 )).y * 0.587 + sample(in1, vec(su1,  sv1 )).z * 0.114;
+luma2  = sample(in1, vec(su2,  sv2 )).x * 0.299 + sample(in1, vec(su2,  sv2 )).y * 0.587 + sample(in1, vec(su2,  sv2 )).z * 0.114;
+luma3  = sample(in1, vec(su3,  sv3 )).x * 0.299 + sample(in1, vec(su3,  sv3 )).y * 0.587 + sample(in1, vec(su3,  sv3 )).z * 0.114;
+luma4  = sample(in1, vec(su4,  sv4 )).x * 0.299 + sample(in1, vec(su4,  sv4 )).y * 0.587 + sample(in1, vec(su4,  sv4 )).z * 0.114;
+luma5  = sample(in1, vec(su5,  sv5 )).x * 0.299 + sample(in1, vec(su5,  sv5 )).y * 0.587 + sample(in1, vec(su5,  sv5 )).z * 0.114;
+luma6  = sample(in1, vec(su6,  sv6 )).x * 0.299 + sample(in1, vec(su6,  sv6 )).y * 0.587 + sample(in1, vec(su6,  sv6 )).z * 0.114;
+luma7  = sample(in1, vec(su7,  sv7 )).x * 0.299 + sample(in1, vec(su7,  sv7 )).y * 0.587 + sample(in1, vec(su7,  sv7 )).z * 0.114;
+luma8  = sample(in1, vec(su8,  sv8 )).x * 0.299 + sample(in1, vec(su8,  sv8 )).y * 0.587 + sample(in1, vec(su8,  sv8 )).z * 0.114;
+luma9  = sample(in1, vec(su9,  sv9 )).x * 0.299 + sample(in1, vec(su9,  sv9 )).y * 0.587 + sample(in1, vec(su9,  sv9 )).z * 0.114;
+luma10 = sample(in1, vec(su10, sv10)).x * 0.299 + sample(in1, vec(su10, sv10)).y * 0.587 + sample(in1, vec(su10, sv10)).z * 0.114;
+luma11 = sample(in1, vec(su11, sv11)).x * 0.299 + sample(in1, vec(su11, sv11)).y * 0.587 + sample(in1, vec(su11, sv11)).z * 0.114;
+luma12 = sample(in1, vec(su12, sv12)).x * 0.299 + sample(in1, vec(su12, sv12)).y * 0.587 + sample(in1, vec(su12, sv12)).z * 0.114;
+luma13 = sample(in1, vec(su13, sv13)).x * 0.299 + sample(in1, vec(su13, sv13)).y * 0.587 + sample(in1, vec(su13, sv13)).z * 0.114;
+luma14 = sample(in1, vec(su14, sv14)).x * 0.299 + sample(in1, vec(su14, sv14)).y * 0.587 + sample(in1, vec(su14, sv14)).z * 0.114;
+luma15 = sample(in1, vec(su15, sv15)).x * 0.299 + sample(in1, vec(su15, sv15)).y * 0.587 + sample(in1, vec(su15, sv15)).z * 0.114;
+
+// Thresholded weights with OOB gate (clear: out-of-frame positions contribute zero)
+w0  = max(luma0  - threshold, 0.0) * step(0., su0 ) * step(su0,  1.) * step(0., sv0 ) * step(sv0,  1.);
+w1  = max(luma1  - threshold, 0.0) * step(0., su1 ) * step(su1,  1.) * step(0., sv1 ) * step(sv1,  1.);
+w2  = max(luma2  - threshold, 0.0) * step(0., su2 ) * step(su2,  1.) * step(0., sv2 ) * step(sv2,  1.);
+w3  = max(luma3  - threshold, 0.0) * step(0., su3 ) * step(su3,  1.) * step(0., sv3 ) * step(sv3,  1.);
+w4  = max(luma4  - threshold, 0.0) * step(0., su4 ) * step(su4,  1.) * step(0., sv4 ) * step(sv4,  1.);
+w5  = max(luma5  - threshold, 0.0) * step(0., su5 ) * step(su5,  1.) * step(0., sv5 ) * step(sv5,  1.);
+w6  = max(luma6  - threshold, 0.0) * step(0., su6 ) * step(su6,  1.) * step(0., sv6 ) * step(sv6,  1.);
+w7  = max(luma7  - threshold, 0.0) * step(0., su7 ) * step(su7,  1.) * step(0., sv7 ) * step(sv7,  1.);
+w8  = max(luma8  - threshold, 0.0) * step(0., su8 ) * step(su8,  1.) * step(0., sv8 ) * step(sv8,  1.);
+w9  = max(luma9  - threshold, 0.0) * step(0., su9 ) * step(su9,  1.) * step(0., sv9 ) * step(sv9,  1.);
+w10 = max(luma10 - threshold, 0.0) * step(0., su10) * step(su10, 1.) * step(0., sv10) * step(sv10, 1.);
+w11 = max(luma11 - threshold, 0.0) * step(0., su11) * step(su11, 1.) * step(0., sv11) * step(sv11, 1.);
+w12 = max(luma12 - threshold, 0.0) * step(0., su12) * step(su12, 1.) * step(0., sv12) * step(sv12, 1.);
+w13 = max(luma13 - threshold, 0.0) * step(0., su13) * step(su13, 1.) * step(0., sv13) * step(sv13, 1.);
+w14 = max(luma14 - threshold, 0.0) * step(0., su14) * step(su14, 1.) * step(0., sv14) * step(sv14, 1.);
+w15 = max(luma15 - threshold, 0.0) * step(0., su15) * step(su15, 1.) * step(0., sv15) * step(sv15, 1.);
 
 fx = 0.0;
 fy = 0.0;
@@ -143,6 +164,6 @@ if (mode_i < 0.5) {
 field_x = clamp(fx * gain * 0.5 + 0.5, 0.0, 1.0);
 field_y = clamp(fy * gain * 0.5 + 0.5, 0.0, 1.0);
 
-out1 = mix(vec(field_x, field_y, 0.5, 1.0), sample(in1, uv), bypass);
+out1 = mix(vec(field_x, field_y, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
 """,
 }
