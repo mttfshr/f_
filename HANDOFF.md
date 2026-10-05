@@ -17,8 +17,8 @@ Full offline suite green (`tests/run.sh`, 13 files); no bench run was needed.
 - **Next: Phase 3** (T013 small group, T014 medium, T015 heavy). For each module the recipe is in tasks.md;
   the new fact is that two kinds of difference need different fixes: a stale or hand-edited *definition
   value* (edit `definition.py`) versus *the builder ahead of the patch* (the `lbl_*` comment varnames;
-  regenerate the patch). Ask Matt which modules are on the never-regenerate list before regenerating any
-  (`f_vf_fieldmap` and `f_vf_repulse` are an open question there).
+  regenerate the patch). The never-regenerate list (`.specify/plan.md`) is settled: `f_vf_warp`, `f_lens`, `f_vf_fieldmap`,
+  `f_vf_repulse` (the last two added 2026-10-05), `f_masonry`, `f_sirds`, `f_vf_advect`, `f_vf_seeds`, `f_grain`.
 - **How he wants to work** (unchanged): discuss architecture before code; slow things in the background; do
   not rerun the bench to re-verify your own changes.
 
