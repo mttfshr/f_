@@ -71,7 +71,6 @@ This table is also the source for the package's launcher patcher (`package/extra
 |---|---|
 | `f_vf_vortex` | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
-| `f_vf_vortex_multi_version` | ⚠ Undocumented. A second, differing copy beside `f_vf_vortex_multi`; draft or intentional alternate? |
 
 ### ∇ Processors
 

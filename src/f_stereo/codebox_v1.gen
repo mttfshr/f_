@@ -1,0 +1,58 @@
+Param lon(0.5);
+Param lat(0.5);
+Param spin(0.0);
+Param proj(0.0);
+Param bypass(0.0);
+Param circ(1.0);
+
+// 1. UV to centered complex plane
+zx = (norm.x - 0.5) * 2.0;
+zy = (norm.y - 0.5) * 2.0;
+
+// 2. Display projection: sphere point from screen UV
+r2 = zx*zx + zy*zy;
+
+// Stereographic
+denom = 1.0 + r2;
+sx_s = 2.0 * zx / denom;
+sy_s = 2.0 * zy / denom;
+sz_s = (1.0 - r2) / denom;
+
+// Orthographic
+sx_o = zx;
+sy_o = zy;
+sz_o = sqrt(max(1.0 - r2, 0.0));
+
+// Blend: 0 = ortho, 1 = stereo, outside range = extended effects
+sx = mix(sx_o, sx_s, proj);
+sy = mix(sy_o, sy_s, proj);
+sz = mix(sz_o, sz_s, proj);
+
+// 3. Rotation angles
+TWO_PI = 3.14159265359 * 2.0;
+pi_val = 3.14159265359;
+lon_a  = (lon - 0.5) * TWO_PI;
+lat_a  = (lat - 0.5) * pi_val;
+spin_a = spin * TWO_PI;
+
+ca = cos(lat_a);  sa = sin(lat_a);
+cb = cos(lon_a);  sb = sin(lon_a);
+cs = cos(spin_a); ss = sin(spin_a);
+
+// 4. R = Rz(spin) x Ry(lon) x Rx(lat)
+rx = cs*cb*sx + (cs*sb*sa - ss*ca)*sy + (cs*sb*ca + ss*sa)*sz;
+ry = ss*cb*sx + (ss*sb*sa + cs*ca)*sy + (ss*sb*ca - cs*sa)*sz;
+rz =   -sb*sx +              cb*sa*sy +              cb*ca*sz;
+
+// 5. Equirectangular sampling
+ux = atan2(ry, rx) / TWO_PI + 0.5;
+uy = asin(rz) / pi_val + 0.5;
+effect_out = sample(in1, vec(ux, uy, 0));
+
+// 6. Circular mask (optional)
+dist = length(vec(norm.x - 0.5, norm.y - 0.5));
+outside = step(0.5, dist);
+masked = mix(effect_out, vec(0, 0, 0, 1), outside * circ);
+
+// 7. Bypass
+out1 = mix(masked, sample(in1, norm), bypass);

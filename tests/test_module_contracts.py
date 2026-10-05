@@ -46,7 +46,7 @@ KNOWN_ISSUES = {
     ("f_vf_seeds", "undriven", "vfseeds_search_a.sentinel"): _SEEDS_NOTE,
     ("f_vf_seeds", "undriven", "vfseeds_search_b.sentinel"): _SEEDS_NOTE,
     ("f_vf_optical_flow", "unused", "#0_of_stage_a.bypass"):
-        "documented in .specify/f_vf_optical_flow/codebox_stage_a.gen's header: Param bypass is "
+        "documented in src/f_vf_optical_flow/codebox_stage_a.gen's header: Param bypass is "
         "declared but unused; this stage stays live under bypass by design "
         "(plan.md, 'Bypassed multi-stage modules keep running')",
 }

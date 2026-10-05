@@ -1479,62 +1479,6 @@
 										1.0
 									]
 								}
-							},
-							{
-								"box": {
-									"id": "obj-7",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										20.0,
-										140.0,
-										150.0,
-										20.0
-									],
-									"text": "f_vf_vortex_multi_version",
-									"textcolor": [
-										0.55,
-										0.55,
-										0.55,
-										1.0
-									],
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										70.0,
-										210.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-8",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										140.0,
-										150.0,
-										20.0
-									],
-									"text": "⚠ Undocumented. A second, differing copy beside f_vf_vortex_multi; draft or intentional alternate?",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										70.0,
-										720.0,
-										20.0
-									],
-									"textcolor": [
-										0.55,
-										0.55,
-										0.55,
-										1.0
-									]
-								}
 							}
 						],
 						"lines": [

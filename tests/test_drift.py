@@ -10,6 +10,9 @@ A module NOT in the baseline must reproduce exactly.  A module in it:
   - drift shrank                        -> FAIL: lower the baseline (see below)
   - now reproduces exactly              -> FAIL: remove it from the baseline
   - status changed (e.g. gained a definition) -> FAIL: update the baseline
+  - "out_of_scope" (needs a non-empty "reason") is an exemption for a module the schema
+    cannot express (audio, the menu, a draft utility).  It fails if the module gains a
+    src/<name>/definition.py, so an exemption cannot become permanent by accident.
 Shrinking fails on purpose, so every cleanup lands as a visible baseline diff.
 Blind spot: counts can't see one difference fixed and another introduced.
 
@@ -55,6 +58,9 @@ def load_baseline():
 
 def write_baseline():
     cur = {n: s for n, s in current().items() if s["status"] != "ok"}
+    for n, b in (load_baseline() if BASELINE.exists() else {}).items():
+        if b["status"] == "out_of_scope" and cur.get(n, {}).get("status") == "no_definition":
+            cur[n] = b                      # keep the exemption and its reason
     BASELINE.write_text(json.dumps({
         "_about": "definition.py ratchet (tests/test_drift.py). Modules whose patcher does not "
                   "yet reproduce from its definition, with the drift counts they are allowed. "
@@ -66,6 +72,13 @@ def write_baseline():
 
 def problems(cur, base):
     """List of human-readable problems for one module (empty = fine)."""
+    if base is not None and base["status"] == "out_of_scope":
+        if not str(base.get("reason", "")).strip():
+            return ["exempt as out_of_scope but no reason is recorded"]
+        if cur["status"] != "no_definition":
+            return [f"is exempt as out_of_scope but is now {cur['status']} (it has a definition): "
+                    f"remove the exemption"]
+        return []
     if base is None:
         if cur["status"] == "ok":
             return []
@@ -122,6 +135,22 @@ def test_problems_rules():
     _eq("baselined module now exact: flagged (remove it)", len(problems(ok, dict(drifted))), 1)
     _eq("status changed: flagged", len(problems({"status": "drift", "counts": {"layout": 1}},
                                                 {"status": "no_definition"})), 1)
+
+
+def test_out_of_scope_exemption_rules():
+    exempt = {"status": "out_of_scope", "reason": "gen~ audio; the schema has no audio archetype"}
+    nodef = {"status": "no_definition"}
+    _eq("exempt and still without a definition: fine", problems(nodef, dict(exempt)), [])
+    _eq("exempt but the module gained a definition: flagged",
+        len(problems({"status": "drift", "counts": {"layout": 1}}, dict(exempt))), 1)
+    _eq("exempt but the module now reproduces exactly: flagged",
+        len(problems({"status": "ok"}, dict(exempt))), 1)
+    _eq("exempt with no reason: flagged",
+        len(problems(nodef, {"status": "out_of_scope"})), 1)
+    _eq("exempt with a blank reason: flagged",
+        len(problems(nodef, {"status": "out_of_scope", "reason": "  "})), 1)
+    _eq("an unexempted module without a definition is still flagged",
+        len(problems(nodef, None)), 1)
 
 
 # ---- compare() itself: synthetic fixtures (bad cases must register, noise must not)
@@ -181,9 +210,9 @@ def test_compare_max_normalisation_is_not_drift_but_real_edits_are():
                           restore={"a": [0.0]}, save=["#N", "thispatcher"])
     _eq("Max-derived ports and saved state are not drift",
         _counts(_patcher([route()]), _patcher([shipped_route])), {})
-    _eq("a changed route argument list IS drift",
+    _eq("a changed route argument list IS drift (one renamed box, not two)",
         _counts(_patcher([route()]), _patcher([route(text="route a c")])),
-        {"boxes_def_only": 1, "boxes_patch_only": 1})
+        {"boxes_renamed": 1})
     att = {"id": "t", "maxclass": "attrui", "attr": "gain"}
     _eq("attrui style ''/missing and parameter_enable 0/missing are the same",
         _counts(_patcher([dict(att, style="", parameter_enable=0)]), _patcher([att])), {})
@@ -201,9 +230,11 @@ def test_compare_pix_io_and_code():
     _eq("pix port count change", _counts(base, _patcher([_pix("out1=in1;", ni=3)])), {"pix_io": 1})
     _eq("pix codebox edited", _counts(base, _patcher([_pix("out1=in1*2;")])), {"code": 1})
     other = _patcher([_pix("out1=in1;", text="jit.gl.pix vsynth @name q")])
-    got = _counts(base, other)
-    _eq("pix with different @name text registers as pix_io",
-        got.get("pix_io", 0) >= 1 and got.get("boxes_def_only", 0) == 1, True)
+    _eq("pix with a different @name is one renamed box; its ports and code still compare",
+        _counts(base, other), {"boxes_renamed": 1})
+    changed = _patcher([_pix("out1=in1*2;", ni=3, text="jit.gl.pix vsynth @name q")])
+    _eq("a renamed pix with different ports and code registers both",
+        _counts(base, changed), {"boxes_renamed": 1, "pix_io": 1, "code": 1})
 
 
 def test_compare_cords_between_matched_boxes():
@@ -217,6 +248,154 @@ def test_compare_cords_between_matched_boxes():
     d1, d2 = _box("c"), _box("d")       # identical identity: cords touching them are not compared
     _eq("cords on non-unique boxes are not compared",
         _counts(_patcher([d1, d2], [(("c", 0), ("d", 0))]), _patcher([d1, d2])), {})
+
+
+# ---- T006: the same element under a different identity is one `old -> new` line
+
+def _label(bid, text, rect=(4.0, 5.0, 30.0, 14.0), **kw):
+    b = {"id": bid, "maxclass": "comment", "text": text, "presentation": 1,
+         "presentation_rect": list(rect), "patching_rect": [0.0, 0.0, 1.0, 1.0]}
+    b.update(kw)
+    return b
+
+
+def test_compare_renamed_label_is_paired_and_reported_once():
+    old, new = _label("a", "Rotation"), _label("b", "Rot")
+    counts, ex = drift.compare(_patcher([old]), _patcher([new]))
+    _eq("an edited label is one renamed box, not a def-only plus a patch-only",
+        {k: v for k, v in counts.items() if v}, {"boxes_renamed": 1})
+    _eq("the example reads definition -> patch", ex["boxes_renamed"], ["comment:Rotation -> comment:Rot"])
+    _eq("the same label, other id: nothing",
+        _counts(_patcher([old]), _patcher([_label("z", "Rotation")])), {})
+
+
+def test_compare_pairing_is_conservative():
+    old = _label("a", "Rotation")
+    far = _label("b", "Rot", rect=(4.0, 40.0, 30.0, 14.0))
+    _eq("a label that moved far is not paired",
+        _counts(_patcher([old]), _patcher([far])), {"boxes_def_only": 1, "boxes_patch_only": 1})
+    dial_rect = _label("b", "Rot", rect=(4.0, 22.0, 27.0, 43.0))
+    _eq("a different maxclass at the same rect is not paired",
+        _counts(_patcher([_box("a")]), _patcher([dial_rect])),
+        {"boxes_def_only": 1, "boxes_patch_only": 1})
+    two_old = _patcher([_label("a", "A", rect=(4.0, 5.0, 30.0, 14.0)),
+                        _label("b", "B", rect=(6.0, 5.0, 30.0, 14.0))])
+    one_new = _patcher([_label("c", "C", rect=(5.0, 5.0, 30.0, 14.0))])
+    _eq("two candidates for one box: nothing is paired",
+        _counts(two_old, one_new), {"boxes_def_only": 2, "boxes_patch_only": 1})
+    off_panel = _label("b", "Rot", presentation=0)
+    _eq("boxes not on the presentation panel are not paired by position",
+        _counts(_patcher([old]), _patcher([off_panel])), {"boxes_def_only": 1, "boxes_patch_only": 1})
+
+
+def test_compare_a_renamed_box_is_still_compared_for_everything_but_its_identity():
+    old = _label("a", "Rotation")
+    _eq("a rename plus a colour change is a rename plus a prop",
+        _counts(_patcher([old]), _patcher([_label("b", "Rot", textcolor=[1.0, 0.0, 0.0, 1.0])])),
+        {"boxes_renamed": 1, "props": 1})
+    _eq("a rename plus a small move (inside the pairing tolerance) is a rename plus layout",
+        _counts(_patcher([old]), _patcher([_label("b", "Rot", rect=(7.0, 5.0, 30.0, 14.0))])),
+        {"boxes_renamed": 1, "layout": 1})
+
+
+def test_compare_cords_follow_a_renamed_box():
+    dial = _box("a")
+    built = _patcher([dial, _label("l", "Rotation")], [(("a", 0), ("l", 0))])
+    same = _patcher([_box("x"), _label("m", "Rot")], [(("x", 0), ("m", 0))])
+    _eq("a cord to a renamed box is the same cord", _counts(built, same), {"boxes_renamed": 1})
+    cordless = _patcher([_box("x"), _label("m", "Rot")])
+    _eq("a cord missing on the patch side still registers",
+        _counts(built, cordless), {"boxes_renamed": 1, "lines_def_only": 1})
+
+
+# ---- T008: what Max normalises (round-trip evidence, build/drift.py) versus what is real drift
+
+def _valueof(b, **kw):
+    v = b["saved_attribute_attributes"]["valueof"]
+    for k, val in kw.items():
+        if val is None:
+            v.pop(k, None)
+        else:
+            v[k] = val
+    return b
+
+
+def _numbox(bid="n", name="mix", **kw):
+    b = _box(bid, maxclass="live.numbox", name=name)
+    b["saved_attribute_attributes"]["valueof"].update({"parameter_type": 0, "parameter_unitstyle": 0})
+    return _valueof(b, **kw)
+
+
+def _port(bid, maxclass, label, index):
+    return {"id": bid, "maxclass": maxclass, "comment": label, "index": index, "numinlets": 0,
+            "numoutlets": 1, "outlettype": [""], "patching_rect": [30.0, 10.0, 30.0, 30.0]}
+
+
+def test_max_rewrites_are_not_drift():
+    _eq("inlet and outlet `index` (Max resets every one to 0) is not drift",
+        _counts(_patcher([_port("a", "inlet", "vecfield", 1), _port("b", "outlet", "streak", 2)]),
+                _patcher([_port("x", "inlet", "vecfield", 0), _port("y", "outlet", "streak", 0)])), {})
+    dial = lambda **kw: _patcher([_valueof(_box("a"), **kw)])
+    _eq("a dial's parameter_mmin 0.0 dropped by Max is not drift",
+        _counts(dial(parameter_mmin=0.0), dial(parameter_mmin=None)), {})
+    _eq("a dial's mmin 0.5 against no mmin IS drift",
+        _counts(dial(parameter_mmin=0.5), dial(parameter_mmin=None)), {"props": 1})
+    _eq("a dial's mmax 127.0 (its default) dropped by Max is not drift",
+        _counts(dial(parameter_mmax=127.0), dial(parameter_mmax=None)), {})
+    _eq("a dial's mmax 100.0 against no mmax IS drift (only the default is dropped)",
+        _counts(dial(parameter_mmax=100.0), dial(parameter_mmax=None)), {"props": 1})
+    num = lambda **kw: _patcher([_numbox(**kw)])
+    _eq("a numbox's mmin 0.0 dropped by Max is not drift",
+        _counts(num(parameter_mmin=0.0), num(parameter_mmin=None)), {})
+    _eq("a numbox's mmax 127.0 is NOT a dropped default (only a dial's is): IS drift",
+        _counts(num(parameter_mmax=127.0), num(parameter_mmax=None)), {"props": 1})
+    _eq("a float numbox written Int (unitstyle 0) that Max saves as Float (1) is not drift",
+        _counts(num(parameter_unitstyle=0), num(parameter_unitstyle=1)), {})
+    _eq("...in either direction",
+        _counts(num(parameter_unitstyle=1), num(parameter_unitstyle=0)), {})
+    _eq("a numbox with another unitstyle IS drift",
+        _counts(num(parameter_unitstyle=2), num(parameter_unitstyle=0)), {"props": 1})
+    _eq("an integer-type numbox's unitstyle is not rewritten: IS drift",
+        _counts(num(parameter_type=1, parameter_unitstyle=0), num(parameter_type=1, parameter_unitstyle=1)),
+        {"props": 1})
+    ap = {"id": "t", "maxclass": "newobj", "text": "autopattr", "numinlets": 1, "numoutlets": 4}
+    _eq("autopattr restore_extra (Max save state) is not drift",
+        _counts(_patcher([ap]), _patcher([dict(ap, restore_extra={"bypass": {"id": "obj-47"}})])), {})
+    txt = {"id": "d", "maxclass": "live.text", "text": "Fwd", "presentation": 1,
+           "presentation_rect": [1.0, 2.0, 35.0, 17.0], "fontsize": 9.5,
+           "saved_attribute_attributes": {"valueof": {"parameter_longname": "direction"}}}
+    nofont = {k: v for k, v in txt.items() if k != "fontsize"}
+    _eq("a live.text fontsize 9.5 dropped by Max is not drift",
+        _counts(_patcher([txt]), _patcher([nofont])), {})
+    _eq("a live.text fontsize 12 against none IS drift",
+        _counts(_patcher([dict(txt, fontsize=12.0)]), _patcher([nofont])), {"props": 1})
+
+
+def test_comment_size_is_fitted_by_max_but_position_is_structure():
+    base = _patcher([_label("a", "Lon", rect=(4.0, 5.0, 50.0, 18.0))])
+    _eq("a comment re-fitted to its text (width and height) is not drift",
+        _counts(base, _patcher([_label("b", "Lon", rect=(4.0, 5.0, 51.0, 21.0))])), {})
+    _eq("a comment that moved IS layout drift",
+        _counts(base, _patcher([_label("b", "Lon", rect=(9.0, 5.0, 50.0, 18.0))])), {"layout": 1})
+    dial = _box("a")
+    wider = _box("a", presentation_rect=[4.0, 22.0, 31.0, 43.0])
+    _eq("a dial's size is still layout (only comments are fitted)",
+        _counts(_patcher([dial]), _patcher([wider])), {"layout": 1})
+
+
+def test_what_max_preserves_stays_drift():
+    """Round-trip: Max kept all three of these exactly as built, so a difference is a real
+    edit (or a stale definition), never normalisation.  Pinned so nobody 'fixes' it away."""
+    ap = {"id": "t", "maxclass": "newobj", "text": "autopattr", "numinlets": 1, "numoutlets": 4,
+          "varname": "channel_grader_autopattr"}
+    _eq("autopattr varname (built x_autopattr, shipped u905020188) IS drift",
+        _counts(_patcher([ap]), _patcher([dict(ap, varname="u905020188")])), {"props": 1})
+    _eq("a dial's param_connect IS drift",
+        _counts(_patcher([_box("a", param_connect="grade_pix::x")]),
+                _patcher([_box("a", param_connect="jit.gl.pix_AA::x")])), {"props": 1})
+    _eq("a comment's varname (built lbl_zoom, shipped none) IS drift",
+        _counts(_patcher([_label("a", "Zoom", varname="lbl_zoom")]), _patcher([_label("b", "Zoom")])),
+        {"props": 1})
 
 
 def test_build_is_pure_and_returns_side_files():

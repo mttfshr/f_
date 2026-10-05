@@ -83,5 +83,5 @@ Sites at identical positions sum to roughly 3x single-site magnitude (clamped, n
 - Falloff is shared across all three sites (not per-site) — deliberate v1 scope limit, per spec.md's "Out of Scope."
 - No per-site modulation inlets in v1 — only the four global (all-sites) modulation inlets exist; per-site modulation is listed as a possible v2 addition following the f_vf_vortex pattern.
 - More than three sites, a Voronoi/nearest-site-wins combination mode, and built-in LFO/animation are explicitly out of scope for v1.
-- A second file, `patchers/f_vf_vortex_multi_version.maxpat`, exists alongside the primary `f_vf_vortex_multi.maxpat` — not documented here; confirm with Matt whether it's a superseded draft or an intentional alternate build before treating it as current.
+- A second, differing copy, `f_vf_vortex_multi_version.maxpat`, used to sit beside the primary patcher, undocumented. It was moved out of `package/patchers/` to `archive/` on 2026-10-05 (`build_cleanup/T007`), so it no longer ships; it is kept there, and in git history, in case it turns out to be wanted.
 - See `docs/f-reference/f_vecfield_type.md` for full type contract.
