@@ -18,11 +18,20 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
   `lbl_*` comment varnames (T013a), so their module bench is due; expected green (a varname on a comment).
   Not run because Matt does not want the bench rerun to re-verify one's own changes; this one is a real
   change to shipped files, so it is worth the one run.
-- **Questions waiting for Matt** (none is blocking; 1 to 3 are open):
+- **Questions waiting for Matt** (none is blocking; 1 is open, 2 and 3 are diagnosed and waiting for a go-ahead):
   1. `f_sirds`: the patch wires `bypass` into stage 0, whose codebox has no `bypass` Param, so the cord looks
      stray. Remove it from the patch (probably right) or add it to `build_sirds.py`?
-  2. `f_vf_vortex`: the `r draw` box exists only in the definition (the old open question).
-  3. `f_vf_vortex_multi`: `nodes` and a `bpatcher` exist only in the patch. Is that module unfinished too?
+  2. ~~`r draw`~~ **diagnosed 2026-10-05, fix not yet made.** For the `source` archetype the builder wires the pix
+     from both `routepass` out 0 and an `r draw` box; the shipped `f_vf_vortex` and `f_vf_vortex_multi` (both
+     finished and working) wire it from `routepass` alone. So `r draw` is a redundant extra trigger the schema
+     cannot yet omit. Proposed: a definition key (e.g. `"render_trigger": "inlet"`) that skips `r draw`, default
+     unchanged so `f_vf_fluid` (which ships `r draw`) is unaffected.
+  3. ~~`f_vf_vortex_multi` unfinished?~~ **Matt: it is finished** (2026-10-05). Its patch-only `nodes` object and
+     `vsc_center_ctrl` bpatcher are intentional: per-site position controls designed in its own spec (ADR-002,
+     `.specify/stable/f_vf_vortex_multi/`), injected after the build. `vsc_center_ctrl.maxpat` ships with the
+     Vsynth package (`Packages/Vsynth/patchers/`), not this repo, so it is a dependency, not a missing file.
+     Plan: `raw_boxes` for the two (no cords touch them), `signal_type` "vecfield out", the `render_trigger`
+     key above, and `build/capture.py` for its two layout differences.
   4. ~~Builder numbox unitstyle / port indexes~~ **decided yes and done** (T008a): the builder writes what Max
      writes, with a `check_port_order()` guard. The shipped patchers still carry the old values until each is
      regenerated or saved in Max; `f_sirds` and `f_vf_advect` (own scripts) still write their own `index`.
