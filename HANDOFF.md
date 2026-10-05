@@ -31,7 +31,7 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
   4. ~~Builder numbox unitstyle / port indexes~~ **decided yes and done** (T008a): the builder writes what Max
      writes, with a `check_port_order()` guard. The shipped patchers still carry the old values until each is
      regenerated or saved in Max; `f_sirds` and `f_vf_advect` (own scripts) still write their own `index`.
-- **Next: T014 medium group**, then T015 heavy. Suggested start: `f_mobius` and `f_vf_advect` (least structural
+- **Next: T014 medium group.** T015 (`f_masonry`, `f_texrouter`) is dropped: masonry will be refactored, texrouter is not in use (Matt, 2026-10-05). Suggested start: `f_mobius` and `f_vf_advect` (least structural
   drift; `f_vf_advect` is script-built and on the never-regenerate list). `f_channel_grader`, `f_hue_processor`,
   `f_luma_processor`, `f_tone_curve` need the shared-label grid layout (T018); `f_droste` has an extra `time_s`
   inlet. The recipe is at the top of Phase 3 in tasks.md.
