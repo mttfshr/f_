@@ -732,7 +732,8 @@ def mod_state_pre_boxes(mod_inlets):
 # Gen subpatcher builder
 # ---------------------------------------------------------------------------
 
-def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inlet=False):
+def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inlet=False,
+                   render_trigger="rdraw"):
     """
     mod_inlets: list of mod inlet dicts (from definition). When present,
     adds in 2, in 3, ... objects and wires them to codebox inlets 1, 2, ...
@@ -776,6 +777,9 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inl
     n_codebox_inlets = len(mod_inlets) if driving_inlet else 1 + len(mod_inlets)
 
     if archetype == "source" and not mod_inlets:
+        if render_trigger == "inlet":
+            raise ValueError('render_trigger "inlet" needs mod_inlets: without them the gen '
+                             "r draw is wired into the codebox, and omitting it is untested")
         # Original source: in 1 + r draw + codebox
         # r draw fires every render frame in the Vsynth GL context — required for
         # self-generating patches that need no upstream texture to render.
@@ -807,12 +811,15 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inl
         for k in range(n_outlets):
             lines.append({"patchline": {"destination": [f"gen-obj-{4 + k}", 0], "source": ["gen-obj-3", k]}})
     elif archetype == "source" and mod_inlets:
-        # Source with modulation inlets: add r draw for render trigger
-        boxes.append({"box": {
-            "id": "gen-obj-2", "maxclass": "newobj",
-            "numinlets": 0, "numoutlets": 1, "outlettype": [""],
-            "patching_rect": [120.0, 30.0, 40.0, 22.0], "text": "r draw"
-        }})
+        # Source with modulation inlets: add r draw for render trigger, unless the module
+        # is driven from its inlet alone (render_trigger "inlet"; it is not wired to the
+        # codebox, so omitting it changes nothing inside the gen patcher)
+        if render_trigger == "rdraw":
+            boxes.append({"box": {
+                "id": "gen-obj-2", "maxclass": "newobj",
+                "numinlets": 0, "numoutlets": 1, "outlettype": [""],
+                "patching_rect": [120.0, 30.0, 40.0, 22.0], "text": "r draw"
+            }})
         codebox_id = "gen-obj-3"
         codebox_outlettype = [""] * n_outlets
         boxes.append({"box": {
@@ -882,7 +889,8 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inl
 # jit.gl.pix box
 # ---------------------------------------------------------------------------
 
-def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False, driving_inlet=False):
+def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False, driving_inlet=False,
+            render_trigger="rdraw"):
     mod_inlets = mod_inlets or []
     outlets    = outlets or [{"comment": "texture out"}]
     type_attr  = f" @type {pix_type}" if pix_type else ""
@@ -894,7 +902,8 @@ def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, 
         maxclass="newobj",
         numinlets=n_outer_inlets, numoutlets=n_outlets + 1,
         outlettype=outlettype,
-        patcher=gen_subpatcher(codebox, archetype, mod_inlets, n_outlets, driving_inlet=driving_inlet),
+        patcher=gen_subpatcher(codebox, archetype, mod_inlets, n_outlets, driving_inlet=driving_inlet,
+                               render_trigger=render_trigger),
         patching_rect=[200.0, 380.0, max(200.0, len(object_name) * 8.0 + 80.0), 22.0],
         text=f"jit.gl.pix vsynth @name {object_name}{type_attr}{adapt_attr}",
         varname=object_name)
@@ -1152,6 +1161,16 @@ def build(defn, debug=None, side_files=None):
     mod_inlets  = defn.get("mod_inlets", [])
     outlets     = defn.get("outlets", [{"comment": "texture out"}])
 
+    # render_trigger (source archetype): "rdraw" (default) adds an `r draw` box wired to the pix
+    # as a per-frame render trigger; "inlet" omits it, so the module renders only when the
+    # texture arriving at its main inlet (routepass out 0) drives the pix.  Finished modules
+    # such as f_vf_vortex ship that way (build_cleanup T013, Matt 2026-10-05).
+    render_trigger = defn.get("render_trigger", "rdraw")
+    if render_trigger not in ("rdraw", "inlet"):
+        raise ValueError(f'render_trigger must be "rdraw" or "inlet", not {render_trigger!r}')
+    if render_trigger == "inlet" and defn.get("archetype") != "source":
+        raise ValueError('render_trigger "inlet" applies to the source archetype only')
+
     # Validate: vs_instate:False and state_param are mutually exclusive
     for mi in mod_inlets:
         if not mi.get("vs_instate", True) and mi.get("state_param"):
@@ -1204,7 +1223,8 @@ def build(defn, debug=None, side_files=None):
         pix_boxes_to_add = [pix_box(prefix, object_name, codebox, archetype,
                                     mod_inlets, pix_type, outlets,
                                     adapt=defn.get("pix_adapt", False),
-                                    driving_inlet=driving_inlet)]
+                                    driving_inlet=driving_inlet,
+                                    render_trigger=render_trigger)]
         extra_pix_lines  = []
         chain_id_to_obj  = {}
 
@@ -1240,7 +1260,7 @@ def build(defn, debug=None, side_files=None):
 
     # r draw for source archetype — wired to pix inlet 0 as render trigger
     OBJ_RDRAW = "obj-20a"
-    if archetype == "source":
+    if archetype == "source" and render_trigger == "rdraw":
         boxes.append(box(OBJ_RDRAW,
             maxclass="newobj", numinlets=0, numoutlets=1, outlettype=[""],
             patching_rect=[400.0, 30.0, 50.0, 22.0], text="r draw"))
@@ -1303,7 +1323,8 @@ def build(defn, debug=None, side_files=None):
         if not (defn.get("driving_inlet", False) and mod_inlets):
             lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
         # r draw → pix inlet 0 (render trigger for self-generating patches)
-        lines.append(wire("obj-20a", 0, primary_obj_id, 0))
+        if render_trigger == "rdraw":
+            lines.append(wire("obj-20a", 0, primary_obj_id, 0))
     else:
         # routepass out0 → primary pix
         lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))

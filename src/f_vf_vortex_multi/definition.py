@@ -3,8 +3,9 @@ patcher = {
     "prefix":             "vf_vortex_multi",
     "object_name":        "vf_vortex_multi_pix",
     "title":              "Vortex Multi",
-    "signal_type":        "vecfield",
+    "signal_type":        "vecfield out",
     "archetype":          "source",
+    "render_trigger":     "inlet",       # driven from its inlet; no `r draw` (as shipped)
     "pix_type":           "float32",
 
     "presentation_width":  190,
@@ -48,6 +49,53 @@ patcher = {
         {"name": "curl_amt",  "type": "float", "min": 0.0,  "max": 1.0,  "default": 0.0,  "label": "Curl Amt", "hint": "curl modulation depth (inlet 4)"},
         {"name": "bypass",    "type": "bypass"},
     ],
+
+    # The two position controls of the shipped patch, added by hand after the build (the module's
+    # own spec, ADR-002): a `nodes` object holding the three site positions, and Vsynth's
+    # vsc_center_ctrl bpatcher (the file ships with the Vsynth package). Verbatim, ids remapped.
+    "raw_boxes": [
+        {"box": {'disabledalpha': 1.0,
+         'id': 'obj-901',
+         'maxclass': 'nodes',
+         'nodenumber': 3,
+         'nodesnames': ['1', '2', '3'],
+         'nsize': [0.1, 0.1, 0.1],
+         'numinlets': 1,
+         'numoutlets': 3,
+         'outlettype': ['', '', ''],
+         'parameter_enable': 1,
+         'patching_rect': [184.25, 216.25, 100.0, 100.0],
+         'presentation': 1,
+         'presentation_rect': [210.5, 87.5, 68.5, 70.0],
+         'saved_attribute_attributes': {'valueof': {'parameter_invisible': 1,
+                                                    'parameter_longname': 'nodes',
+                                                    'parameter_modmode': 0,
+                                                    'parameter_shortname': 'nodes',
+                                                    'parameter_type': 3}},
+         'varname': 'nodes',
+         'xplace': [0.23357664233576642, 0.7591240875912408, 0.3357664233576642],
+         'yplace': [0.3146067415730337, 0.291970802919708, 0.708029197080292]}},
+        {"box": {'bgmode': 0,
+         'border': 0,
+         'clickthrough': 0,
+         'enablehscroll': 0,
+         'enablevscroll': 0,
+         'id': 'obj-902',
+         'lockeddragscroll': 0,
+         'lockedsize': 0,
+         'maxclass': 'bpatcher',
+         'name': 'vsc_center_ctrl.maxpat',
+         'numinlets': 1,
+         'numoutlets': 1,
+         'offset': [0.0, 0.0],
+         'outlettype': [''],
+         'patching_rect': [238.169921875, 97.294921875, 60.0, 60.0],
+         'presentation': 1,
+         'presentation_rect': [210.5, 21.0, 60.0, 60.0],
+         'varname': 'vsc_center_ctrl',
+         'viewvisibility': 1}},
+    ],
+    "raw_parameters": {"obj-901": ["nodes", "nodes", 0]},
 
     "codebox": """\
 Param s1_cx(0.3);
@@ -136,3 +184,11 @@ field_out = vec(R, G, 0.5, 1.0);
 out1 = mix(field_out, vec(0.5, 0.5, 0.5, 1.0), bypass);
 """,
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "bypass_jsui": {"presentation_rect": [168.0, 4.5, 18.0, 12.0]},
+    "signal_type": {"presentation_rect": [72.00000214576721, 0.0, 74.0, 21.0]},
+    "title": {"presentation_rect": [-1.3333333730697632, 0.0, 74.3333355486393, 21.0]},
+}
+# END overrides

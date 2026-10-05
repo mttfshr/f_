@@ -18,20 +18,12 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
   `lbl_*` comment varnames (T013a), so their module bench is due; expected green (a varname on a comment).
   Not run because Matt does not want the bench rerun to re-verify one's own changes; this one is a real
   change to shipped files, so it is worth the one run.
-- **Questions waiting for Matt** (none is blocking; 2 and 3 are diagnosed and waiting for a go-ahead):
+- **Questions waiting for Matt** (none open):
   1. ~~`f_sirds` bypass cord~~ **resolved:** not stray (Matt, 2026-10-05; I had wrongly inferred it from stage 0's
      codebox having no `bypass` Param). `build_sirds.py` now wires bypass into stage 0 too; the module is exact.
-  2. ~~`r draw`~~ **diagnosed 2026-10-05, fix not yet made.** For the `source` archetype the builder wires the pix
-     from both `routepass` out 0 and an `r draw` box; the shipped `f_vf_vortex` and `f_vf_vortex_multi` (both
-     finished and working) wire it from `routepass` alone. So `r draw` is a redundant extra trigger the schema
-     cannot yet omit. Proposed: a definition key (e.g. `"render_trigger": "inlet"`) that skips `r draw`, default
-     unchanged so `f_vf_fluid` (which ships `r draw`) is unaffected.
-  3. ~~`f_vf_vortex_multi` unfinished?~~ **Matt: it is finished** (2026-10-05). Its patch-only `nodes` object and
-     `vsc_center_ctrl` bpatcher are intentional: per-site position controls designed in its own spec (ADR-002,
-     `.specify/stable/f_vf_vortex_multi/`), injected after the build. `vsc_center_ctrl.maxpat` ships with the
-     Vsynth package (`Packages/Vsynth/patchers/`), not this repo, so it is a dependency, not a missing file.
-     Plan: `raw_boxes` for the two (no cords touch them), `signal_type` "vecfield out", the `render_trigger`
-     key above, and `build/capture.py` for its two layout differences.
+  2. ~~`r draw`~~ **done** (T013b): new schema key `render_trigger` (`"inlet"` omits `r draw`); `f_vf_vortex` exact.
+  3. ~~`f_vf_vortex_multi`~~ **done** (T013b): finished (Matt); `raw_boxes` for its `nodes` object and
+     `vsc_center_ctrl` bpatcher (the file ships with Vsynth), plus an overrides block; exact.
   4. ~~Builder numbox unitstyle / port indexes~~ **decided yes and done** (T008a): the builder writes what Max
      writes, with a `check_port_order()` guard. The shipped patchers still carry the old values until each is
      regenerated or saved in Max; `f_sirds` and `f_vf_advect` (own scripts) still write their own `index`.
@@ -73,7 +65,7 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
 
 ### State of drift
 
-39 shipped patchers: **17 reproduce exactly**, 17 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
+39 shipped patchers: **19 reproduce exactly**, 15 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
 only in the patch 240, layout 136, boxes only in the definition 113, cords 103, renamed 22, code 9, pix ports 2.
 
 ## Previous session (2026-10-04, second): build, tools and test cleanup

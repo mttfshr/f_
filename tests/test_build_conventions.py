@@ -6,6 +6,9 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
   - every inlet/outlet is written with index 0; Max rewrites every index to 0 and orders the
     ports by patching_rect x, so the x order must BE the port order (check_port_order)
 
+  - `render_trigger` (source archetype): "rdraw" (default) adds an `r draw` render trigger,
+    "inlet" omits it, as the finished f_vf_vortex / f_vf_vortex_multi ship (T013)
+
     tests/run.sh tests/test_build_conventions.py
 """
 import sys
@@ -103,6 +106,86 @@ def test_build_runs_the_port_order_check():
         bp.check_port_order = real
     _eq("build() calls check_port_order exactly once, on the finished box list", len(calls), 1)
     _eq("...with the whole patcher's boxes", calls[0] > 20, True)
+
+
+# ---- render_trigger
+
+def _source(**extra):
+    d = {"name": "f_s", "prefix": "s", "object_name": "s_pix", "title": "Src", "signal_type": "vecfield out",
+         "archetype": "source", "pix_type": "float32", "presentation_width": 160, "presentation_height": 90,
+         "outlets": [{"comment": "vecfield"}],
+         "mod_inlets": [{"label": "a mod", "state_param": "src_a"}],
+         "params": [{"name": "g", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5, "label": "G", "hint": "g"},
+                    {"name": "src_a", "type": "internal"}, {"name": "bypass", "type": "bypass"}],
+         "codebox": "Param g(0.5);\nParam src_a(0);\nParam bypass(0.0);\nout1 = vec(g, g, 0.5, 1.0);"}
+    d.update(extra)
+    return d
+
+
+def _rdraw_facts(defn):
+    p = bp.build(defn)["patcher"]
+    top = [b["box"] for b in p["boxes"]]
+    pix = [b for b in top if str(b.get("text", "")).startswith("jit.gl.pix")][0]
+    rdraw = [b for b in top if b.get("text") == "r draw"]
+    to_pix = [(ln["patchline"]["source"][0], ln["patchline"]["source"][1]) for ln in p["lines"]
+              if ln["patchline"]["destination"] == [pix["id"], 0]]
+    inner = [x["box"] for x in pix["patcher"]["boxes"]]
+    inner_lines = sorted((tuple(ln["patchline"]["source"]), tuple(ln["patchline"]["destination"]))
+                         for ln in pix["patcher"]["lines"])
+    return {"top_rdraw": len(rdraw), "from_rdraw": sum(1 for src, _ in to_pix if rdraw and src == rdraw[0]["id"]),
+            "from_routepass": sum(1 for src, _ in to_pix if src == bp.OBJ_ROUTEPASS),
+            "inner_rdraw": sum(1 for b in inner if b.get("text") == "r draw"), "inner_lines": inner_lines}
+
+
+def test_render_trigger_default_adds_r_draw():
+    f = _rdraw_facts(_source())
+    _eq("default: a top-level `r draw` box", f["top_rdraw"], 1)
+    _eq("default: wired to the pix", f["from_rdraw"], 1)
+    _eq("default: routepass drives the pix too", f["from_routepass"], 1)
+    _eq("default: an `r draw` inside the gen patcher", f["inner_rdraw"], 1)
+    _eq("an explicit \"rdraw\" is the default", _rdraw_facts(_source(render_trigger="rdraw")), f)
+
+
+def test_render_trigger_inlet_omits_r_draw_everywhere_and_nothing_else():
+    dflt, inl = _rdraw_facts(_source()), _rdraw_facts(_source(render_trigger="inlet"))
+    _eq("inlet: no top-level `r draw` box", inl["top_rdraw"], 0)
+    _eq("inlet: no cord from it", inl["from_rdraw"], 0)
+    _eq("inlet: routepass still drives the pix", inl["from_routepass"], 1)
+    _eq("inlet: no `r draw` inside the gen patcher", inl["inner_rdraw"], 0)
+    _eq("inlet: the gen patcher's cords are unchanged (the inner r draw was free-standing)",
+        inl["inner_lines"], dflt["inner_lines"])
+    base = bp.build(_source())["patcher"]["boxes"]
+    new = bp.build(_source(render_trigger="inlet"))["patcher"]["boxes"]
+    top_diff = [b["box"].get("text") for b in base if b["box"]["id"] not in {x["box"]["id"] for x in new}]
+    _eq("exactly one top-level box differs: the `r draw`", top_diff, ["r draw"])
+
+
+def test_render_trigger_is_loud():
+    def raises(label, defn, fragment):
+        try:
+            bp.build(defn)
+        except ValueError as e:
+            check(label, 0 if fragment in str(e) else 1, 0)
+        else:
+            check(label + " (nothing was raised)", 1, 0)
+    raises("an unknown value", _source(render_trigger="timer"), "must be")
+    proc = _defn()
+    proc["render_trigger"] = "inlet"
+    raises("\"inlet\" on a processor", proc, "source archetype only")
+    raises("\"inlet\" on a source without mod_inlets", _source(render_trigger="inlet", mod_inlets=[]), "needs mod_inlets")
+
+
+def test_the_vortex_modules_ship_without_r_draw_and_keep_their_hand_built_controls():
+    for name in ("f_vf_vortex", "f_vf_vortex_multi"):
+        built, _ = drift.build_module(name)
+        texts = [b["box"].get("text") for b in built["patcher"]["boxes"]]
+        _eq(f"{name}: no `r draw`", "r draw" in texts, False)
+    built, _ = drift.build_module("f_vf_vortex_multi")
+    classes = [b["box"]["maxclass"] for b in built["patcher"]["boxes"]]
+    _eq("f_vf_vortex_multi keeps its nodes object and vsc_center_ctrl bpatcher (raw_boxes)",
+        ("nodes" in classes, "bpatcher" in classes), (True, True))
+    _eq("...and the nodes object's saved state is in the parameters block",
+        "obj-901" in built["patcher"]["parameters"], True)
 
 
 def test_every_shipped_definition_builds_with_ports_in_order():

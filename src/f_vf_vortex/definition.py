@@ -5,6 +5,7 @@ patcher = {
     "title":              "Vortex",
     "signal_type":        "vecfield out",
     "archetype":          "source",
+    "render_trigger":     "inlet",       # driven from its inlet; no `r draw` (as shipped)
     "pix_type":           "float32",
 
     "presentation_width":  196,

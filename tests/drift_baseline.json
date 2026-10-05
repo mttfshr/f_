@@ -176,20 +176,6 @@
    },
    "status": "drift"
   },
-  "f_vf_vortex": {
-   "counts": {
-    "boxes_def_only": 1
-   },
-   "status": "drift"
-  },
-  "f_vf_vortex_multi": {
-   "counts": {
-    "boxes_def_only": 2,
-    "boxes_patch_only": 3,
-    "layout": 2
-   },
-   "status": "drift"
-  },
   "f_vf_vorticity": {
    "counts": {
     "boxes_def_only": 2,

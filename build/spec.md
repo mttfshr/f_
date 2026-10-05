@@ -199,6 +199,14 @@ feed a custom `lens_tiltcenter.js` transform before reaching
 one object" shape. The param's actual UI/wiring is then supplied via
 `raw_boxes`/`raw_lines`.
 
+**`render_trigger`** (added 2026-10-05; `"rdraw"` default, or `"inlet"`; `source` archetype only) —
+a source module normally gets an `r draw` box wired to the pix as a per-frame render trigger (and a
+free-standing `r draw` inside the gen patcher). `"inlet"` omits both, so the module renders only when
+the texture arriving at its main inlet (`routepass` out 0) drives the pix. The finished `f_vf_vortex`
+and `f_vf_vortex_multi` ship that way. Loud on an unknown value, on a non-`source` archetype, and on
+a source without `mod_inlets` (there the gen `r draw` is wired into the codebox and omitting it is
+untested). The default is unchanged, so `f_vf_fluid` and `f_vf_seeds` are unaffected.
+
 **`outlet_source_override`** (added 2026-07-15) — `{outlet_index:
 anything}`; skips the schema's automatic primary-pix→outlet wire for
 that outlet index. Use when one or more `raw_boxes` objects sit between
