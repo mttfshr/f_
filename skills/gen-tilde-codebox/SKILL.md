@@ -29,6 +29,11 @@ facts, until independently confirmed in a gen~ codebox:**
 - `active` as a variable name colliding
 - Variables first assigned inside a `for` loop being out of scope after it
 - `Param` named `mix` colliding with the `mix()` operator
+- Assigning to a predefined constant (`PI = ...`) failing to compile: found
+  on Max 9.2.0 in a `jit.gl.pix` codebox (whole pix dead, params report
+  "invalid message"). Plausibly the same compiler rule applies in `gen~`,
+  but it has not been tried here. Don't assign to `pi`, `twopi`, etc.;
+  use another variable name.
 
 None of these have broken a gen~ codebox in this project yet, but none have
 been deliberately tested here either — if one of these patterns is suspected

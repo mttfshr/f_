@@ -181,6 +181,8 @@ literals when testing boundmode behavior.
 ### Constants
 `pi` `twopi` `halfpi` `e` `phi` `sqrt2` `DEGTORAD` `RADTODEG`
 
+Read-only: never assign to these (`PI = 3.14159...` fails to compile on Max 9.2.0, see Silent Failures).
+
 ### Parameters
 `Param name(default)` — declares a named parameter controllable from outside gen patcher
 
@@ -333,6 +335,26 @@ pre-declaration and comma-assignment pairing, suspect the variable's
 *name* next, not just its update pattern — this was the second such
 collision found in one session, so treat this as a real class of risk
 whenever introducing a new named flag/state variable, not a one-off.
+
+### Assigning to a predefined constant (`PI = ...`) — compile failure on Max 9.2.0, confirmed 2026-10-04
+`f_stereo`'s codebox contained `PI = 3.14159265359;`. Saved and working
+under Max 9.1.4, it **fails to compile on Max 9.2.0**: the whole
+`jit.gl.pix` produces nothing, and every `Param` message sent to it
+reports "invalid message" (20 contract-test issues, all from this one
+line). Same shape as the collisions above — the symptom (dead output,
+params that "don't exist") points away from the cause — except that
+here the cause is a line the same patch ran fine on an earlier build.
+Assigning to a name Gen predefines (the constants list under
+"Constants") is not accepted by 9.2.0's compiler. **Fix: use a
+different variable name** (`pi_val`, used in `f_stereo`), or read the
+lowercase built-in `pi` / `twopi` directly instead of redefining it.
+Two cautions: (1) the 9.2.0 compile strictness differs from 9.1.4, so
+a patch that "worked when it was saved" is not evidence its codebox is
+valid on the installed Max; the bench's per-module contract test is
+what caught this. (2) Only `PI` was observed. That any *other*
+predefined name (`e`, `phi`, `twopi`, `halfpi`, ...) is rejected the
+same way is a reasonable inference, **not tested** — treat all of them
+as read-only and never assign to them.
 
 ---
 
