@@ -1,51 +1,71 @@
 # HANDOFF
 
-_Latest session: 2026-10-05_ — `build_cleanup` **Phases 1 and 2 done** (T006 to T012, T027, T029), **committed** (`cc5d543`, `e9fd36f`, `9bbc82c`, then this handoff). The session before it (2026-10-04, second: the cleanup project itself, 13 commits) is condensed below, and the one before that (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; `de89863`) follows it. The open packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
+_Latest session: 2026-10-05_ — `build_cleanup` **Phases 1 and 2 done, Phase 3 started** (T013 small group partly closed), everything committed, nothing pushed. The session before it (2026-10-04, second: the cleanup project itself, 13 commits) is condensed below, and the one before that (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; `de89863`) follows it. The open packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
 
-## This session (2026-10-05): build_cleanup Phases 1 and 2
+## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3
 
-Read `.specify/build_cleanup/tasks.md` first (status line and T006 to T012 carry the detail and the evidence).
-Full offline suite green (`tests/run.sh`, 13 files); no bench run was needed.
+Read `.specify/build_cleanup/tasks.md` first (status line, T006 to T013a carry the detail and the evidence).
+Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, and it should be: see "Start here".
 
 ### Start here
 
-- **Everything is committed, nothing is pushed.** `cc5d543` skills (T029, MANIFEST restamped); `e9fd36f` Phase 1
-  (T006 to T008); `9bbc82c` Phase 2 (overrides, capture). All three skills are uploaded and stamped
-  (`./skills/check.sh` reports all current).
-- **Next: Phase 3** (T013 small group, T014 medium, T015 heavy). For each module the recipe is in tasks.md;
-  the new fact is that two kinds of difference need different fixes: a stale or hand-edited *definition
-  value* (edit `definition.py`) versus *the builder ahead of the patch* (the `lbl_*` comment varnames;
-  regenerate the patch). The never-regenerate list (`.specify/plan.md`) is settled: `f_vf_warp`, `f_lens`, `f_vf_fieldmap`,
-  `f_vf_repulse` (the last two added 2026-10-05), `f_masonry`, `f_sirds`, `f_vf_advect`, `f_vf_seeds`, `f_grain`.
+- **Everything is committed, nothing is pushed** (`git log` from `cc5d543` to the commit after `9548306`):
+  skills (T029), Phase 1, Phase 2, the never-regenerate list, the label varnames (T013a), the T013 definition
+  write-backs, `f_vf_vorticity` parked. All eight skills are uploaded and stamped (`./skills/check.sh` clean).
+- **Run `tests/bench.sh --changed` once, in the background (`tests/bg.sh start`).** 14 shipped patchers gained
+  `lbl_*` comment varnames (T013a), so their module bench is due; expected green (a varname on a comment).
+  Not run because Matt does not want the bench rerun to re-verify one's own changes; this one is a real
+  change to shipped files, so it is worth the one run.
+- **Questions waiting for Matt** (none is blocking):
+  1. `f_sirds`: the patch wires `bypass` into stage 0, whose codebox has no `bypass` Param, so the cord looks
+     stray. Remove it from the patch (probably right) or add it to `build_sirds.py`?
+  2. `f_vf_vortex`: the `r draw` box exists only in the definition (the old open question).
+  3. `f_vf_vortex_multi`: `nodes` and a `bpatcher` exist only in the patch. Is that module unfinished too?
+  4. The builder writes a float numbox with unitstyle 0 and every port with index N; Max rewrites them to 1
+     and 0 on first save (T008). Should the builder write what Max writes, so a re-save changes nothing? It
+     would change the six shipped `mix_pct` numboxes.
+- **Next: T014 medium group**, then T015 heavy. Suggested start: `f_mobius` and `f_vf_advect` (least structural
+  drift; `f_vf_advect` is script-built and on the never-regenerate list). `f_channel_grader`, `f_hue_processor`,
+  `f_luma_processor`, `f_tone_curve` need the shared-label grid layout (T018); `f_droste` has an extra `time_s`
+  inlet. The recipe is at the top of Phase 3 in tasks.md.
+- **Rule of thumb that came out of this session:** when the patch is the newer side, edit the *definition* to
+  match it (hints, ranges, codebox, `signal_type`, extra params); when the builder is the newer side and the
+  difference is additive and lossless, edit the *patch* surgically (the label varnames). Never regenerate a
+  patch on the never-regenerate list (`.specify/plan.md`: `f_vf_warp`, `f_lens`, `f_vf_fieldmap`,
+  `f_vf_repulse`, `f_masonry`, `f_sirds`, `f_vf_advect`, `f_vf_seeds`, `f_grain`). Verify a surgical patch edit
+  by parsing the result: it must equal the old content plus exactly the intended change.
 - **How he wants to work** (unchanged): discuss architecture before code; slow things in the background; do
-  not rerun the bench to re-verify your own changes.
+  not rerun the bench to re-verify your own changes; he is fine with Claude committing on f_ projects.
 
 ### What changed
 
 - **T006** `build/drift.py` pairs renamed boxes (`boxes_renamed`, reported once as `definition -> patch`).
 - **T008, by a live Max round-trip done with Matt** (Max 9.2.0; procedure in tasks.md, repeatable for T030).
-  The 11 "exact" modules are NOT round-trip evidence: Max never re-saved them. Max normalises inlet/outlet
+  The 11 "exact" modules were NOT round-trip evidence: Max never re-saved them. Max normalises inlet/outlet
   `index`, a dial's `mmin` 0.0 / `mmax` 127.0, a numbox's `mmin` 0.0, a float numbox's unitstyle 0 to 1,
   comment width/height, `restore_extra`, live.text fontsize 9.5. Max preserves the autopattr varname, a
-  dial's `param_connect` and a comment's `varname`, so those stay drift (pinned by tests). Consequence for
-  Matt to decide: the first Max save of any exact module rewrites some builder output (the six `mix_pct`
-  numboxes); the builder could write unitstyle 1 and index 0 itself, which changes shipped patchers.
+  dial's `param_connect` and a comment's `varname`, so those stay drift (pinned by tests).
 - **T007** `f_stereo` has a definition (hand-built, pre-schema, 19 props / 11 layout / cord differences left);
   `f_vf_optical_flow` moved into `src/` and reproduces exactly; `f_vf_vortex_multi_version` is in `archive/`
   (README row removed, `f_Launch` regenerated to 39 modules); five modules are `out_of_scope` in the baseline
   with recorded reasons; `f_util_profile`'s stale definition was deleted.
 - **Phase 2** `overrides`: ADR in `build/spec.md`; `element_keys` / `apply_overrides` in `build_patcher.py`;
   `build/capture.py` (`--dry-run`, `--keys`); capture takes presentation state only and refuses, with the
-  reason, label text, hints, ranges, `varname`, `param_connect`. Piloted on `f_vf_fieldmap` and `f_vf_warp`
-  (not `f_chladni`, which needed nothing, nor `f_vf_flow`, which has nothing capturable).
+  reason, label text, hints, ranges, `varname`, `param_connect`. Piloted on `f_vf_fieldmap` and `f_vf_warp`.
 - **T029** the `PI = ...` compile failure on Max 9.2.0 is in both codebox skills.
+- **T013a** the `lbl_<param>` label varnames (the builder writes them so the panel-toggle JS can address
+  labels) were added to the 70 label comments in 14 patchers that lacked them, by a verified surgical edit.
+- **T013** definitions written back from the patches: `f_vf_repulse`, `f_vf_fieldmap`, `f_weave` now reproduce
+  exactly (`f_vf_repulse`'s shipped codebox is a real behaviour change: zoom remap, out-of-bounds gate, neutral
+  output under bypass). `f_vf_fieldmap` and `f_vf_repulse` joined the never-regenerate list. `f_vf_vorticity`
+  is parked: the module was never completed (README marks it ⚠). `f_vf_warp` only has `bypass_gate` left (T017).
 
 ### State of drift
 
-39 shipped patchers: 13 reproduce exactly, 21 drift, 5 `out_of_scope`. Remaining counts: props 350, boxes
-only in the patch 246, layout 137, boxes only in the definition 113, cords 103, renamed 27, code 13, pix ports 2.
+39 shipped patchers: **16 reproduce exactly**, 18 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
+only in the patch 240, layout 136, boxes only in the definition 113, cords 103, renamed 22, code 9, pix ports 2.
 
 ## Previous session (2026-10-04, second): build, tools and test cleanup
 
