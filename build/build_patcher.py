@@ -116,7 +116,7 @@ def outlet_boxes(outlets):
     for i, o in enumerate(outlets):
         obj_id = outlet_obj_id(i)
         kwargs = dict(
-            maxclass="outlet", comment=o.get("comment", "texture out"), index=i,
+            maxclass="outlet", comment=o.get("comment", "texture out"), index=0,
             numinlets=1, numoutlets=0,
             patching_rect=[30.0 + i * 70.0, 500.0, 30.0, 30.0])
         if o.get("color"):
@@ -472,7 +472,7 @@ def numbox_box(n, p, object_name):
                 "parameter_modmode": 3,
                 "parameter_shortname": p["name"],
                 "parameter_type": 0,
-                "parameter_unitstyle": 0
+                "parameter_unitstyle": 1
             }
         },
         varname=p["name"])
@@ -659,7 +659,7 @@ def mod_inlet_boxes(mod_inlets, driving_inlet=False):
             inlet_id = mod_inlet_obj_id(i)
             index    = i if driving_inlet else i + 1
             boxes.append(box(inlet_id,
-                maxclass="inlet", comment=label, index=index,
+                maxclass="inlet", comment=label, index=0,
                 numinlets=0, numoutlets=1, outlettype=[""],
                 patching_rect=[30.0 + index * 60.0, 30.0, 30.0, 30.0]))
         if use_instate:
@@ -1120,6 +1120,20 @@ def apply_overrides(boxes, keys, overrides):
                 box[prop] = copy.deepcopy(value)
 
 
+def check_port_order(boxes):
+    """Max rewrites every inlet/outlet `index` to 0 on save and orders ports by patching_rect
+    x (build_cleanup/T008 round-trip), so the builder writes index 0 and the x order IS the
+    port order.  Raise if the generated ports are not in strictly increasing x order, which
+    would silently reorder them the first time the patcher is opened in Max."""
+    for mc in ("inlet", "outlet"):
+        ports = [(b["box"]["id"], b["box"]["patching_rect"][0]) for b in boxes
+                 if b["box"].get("maxclass") == mc]
+        xs = [x for _, x in ports]
+        if xs != sorted(xs) or len(set(xs)) != len(xs):
+            raise ValueError(f"{mc}s must have strictly increasing patching_rect x, in port "
+                             f"order (Max orders ports by x): {ports}")
+
+
 def build(defn, debug=None, side_files=None):
     """Build a patcher dict from a definition. Pure: nothing is written to disk.
 
@@ -1417,6 +1431,8 @@ def build(defn, debug=None, side_files=None):
         snap = edit_layout.snapshot(boxes, lines)
         edit_layout.layout_edit_view(boxes, lines, roles)
         edit_layout.assert_unchanged(snap, boxes, lines)
+
+    check_port_order(boxes)
 
     patcher = {
         "fileversion": 1,

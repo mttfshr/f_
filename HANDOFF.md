@@ -18,14 +18,14 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
   `lbl_*` comment varnames (T013a), so their module bench is due; expected green (a varname on a comment).
   Not run because Matt does not want the bench rerun to re-verify one's own changes; this one is a real
   change to shipped files, so it is worth the one run.
-- **Questions waiting for Matt** (none is blocking):
+- **Questions waiting for Matt** (none is blocking; 1 to 3 are open):
   1. `f_sirds`: the patch wires `bypass` into stage 0, whose codebox has no `bypass` Param, so the cord looks
      stray. Remove it from the patch (probably right) or add it to `build_sirds.py`?
   2. `f_vf_vortex`: the `r draw` box exists only in the definition (the old open question).
   3. `f_vf_vortex_multi`: `nodes` and a `bpatcher` exist only in the patch. Is that module unfinished too?
-  4. The builder writes a float numbox with unitstyle 0 and every port with index N; Max rewrites them to 1
-     and 0 on first save (T008). Should the builder write what Max writes, so a re-save changes nothing? It
-     would change the six shipped `mix_pct` numboxes.
+  4. ~~Builder numbox unitstyle / port indexes~~ **decided yes and done** (T008a): the builder writes what Max
+     writes, with a `check_port_order()` guard. The shipped patchers still carry the old values until each is
+     regenerated or saved in Max; `f_sirds` and `f_vf_advect` (own scripts) still write their own `index`.
 - **Next: T014 medium group**, then T015 heavy. Suggested start: `f_mobius` and `f_vf_advect` (least structural
   drift; `f_vf_advect` is script-built and on the never-regenerate list). `f_channel_grader`, `f_hue_processor`,
   `f_luma_processor`, `f_tone_curve` need the shared-label grid layout (T018); `f_droste` has an extra `time_s`

@@ -591,6 +591,19 @@ Hand-tuned presentation state has a place to go: see "Overrides" below (`build/c
 it is listed in `tests/drift_baseline.json`, a list that may only shrink and is
 meant to be deleted once empty.
 
+## The builder writes what Max writes
+
+So that opening a built patcher in Max and saving it changes nothing (decided with Matt
+2026-10-05, from the build_cleanup/T008 round-trip): a float-type `live.numbox` is written with
+`parameter_unitstyle` 1 (Float), as Max rewrites 0 to 1; and every inlet and outlet is written
+with `index` 0, as Max rewrites every index to 0 and orders the ports by `patching_rect` x.
+Because the x order is then the port order, `check_port_order()` runs at the end of every build
+and raises if the generated inlets or outlets are not in strictly increasing x order, which would
+silently reorder them on the first save in Max. `build/drift.py` keeps treating the old values as
+equal to the new ones, since patchers built before this still ship them (and Max rewrites them on
+first save). Not yet done: the script-built modules (`f_sirds`, `f_vf_advect`) still write their own
+`index` values, and the shipped patchers keep the old values until each is regenerated or saved in Max.
+
 ## Overrides: hand-tuned presentation state
 
 **Decision (ADR, 2026-10-05; generic scope approved by Matt 2026-10-04).** A definition may
