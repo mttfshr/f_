@@ -1,20 +1,58 @@
 # HANDOFF
 
-_Latest session: 2026-10-04 (second)_ — started as "look at `build/` and `tools/` as a whole: do we still
-need all the files, and should the build or test harness be refactored?" and became a project:
-**`.specify/build_cleanup/`** (spec and 33 tasks; work-queue item 14 in `.specify/plan.md`). Everything is
-committed (13 commits, below). The session before it (2026-10-02 to 2026-10-04: Package Manager research,
-`f_Launch`, licensing; `de89863`) follows it. Older sessions are condensed at the end of this file; the open
-packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
+_Latest session: 2026-10-05_ — `build_cleanup` **Phases 1 and 2 done** (T006 to T012, T027, T029), **committed** (`cc5d543`, `e9fd36f`, `9bbc82c`, then this handoff). The session before it (2026-10-04, second: the cleanup project itself, 13 commits) is condensed below, and the one before that (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; `de89863`) follows it. The open packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
 
-## This session (2026-10-04, second): build, tools and test cleanup
+## This session (2026-10-05): build_cleanup Phases 1 and 2
+
+Read `.specify/build_cleanup/tasks.md` first (status line and T006 to T012 carry the detail and the evidence).
+Full offline suite green (`tests/run.sh`, 13 files); no bench run was needed.
+
+### Start here
+
+- **Everything is committed, nothing is pushed.** `cc5d543` skills (T029, MANIFEST restamped); `e9fd36f` Phase 1
+  (T006 to T008); `9bbc82c` Phase 2 (overrides, capture). All three skills are uploaded and stamped
+  (`./skills/check.sh` reports all current).
+- **Next: Phase 3** (T013 small group, T014 medium, T015 heavy). For each module the recipe is in tasks.md;
+  the new fact is that two kinds of difference need different fixes: a stale or hand-edited *definition
+  value* (edit `definition.py`) versus *the builder ahead of the patch* (the `lbl_*` comment varnames;
+  regenerate the patch). Ask Matt which modules are on the never-regenerate list before regenerating any
+  (`f_vf_fieldmap` and `f_vf_repulse` are an open question there).
+- **How he wants to work** (unchanged): discuss architecture before code; slow things in the background; do
+  not rerun the bench to re-verify your own changes.
+
+### What changed
+
+- **T006** `build/drift.py` pairs renamed boxes (`boxes_renamed`, reported once as `definition -> patch`).
+- **T008, by a live Max round-trip done with Matt** (Max 9.2.0; procedure in tasks.md, repeatable for T030).
+  The 11 "exact" modules are NOT round-trip evidence: Max never re-saved them. Max normalises inlet/outlet
+  `index`, a dial's `mmin` 0.0 / `mmax` 127.0, a numbox's `mmin` 0.0, a float numbox's unitstyle 0 to 1,
+  comment width/height, `restore_extra`, live.text fontsize 9.5. Max preserves the autopattr varname, a
+  dial's `param_connect` and a comment's `varname`, so those stay drift (pinned by tests). Consequence for
+  Matt to decide: the first Max save of any exact module rewrites some builder output (the six `mix_pct`
+  numboxes); the builder could write unitstyle 1 and index 0 itself, which changes shipped patchers.
+- **T007** `f_stereo` has a definition (hand-built, pre-schema, 19 props / 11 layout / cord differences left);
+  `f_vf_optical_flow` moved into `src/` and reproduces exactly; `f_vf_vortex_multi_version` is in `archive/`
+  (README row removed, `f_Launch` regenerated to 39 modules); five modules are `out_of_scope` in the baseline
+  with recorded reasons; `f_util_profile`'s stale definition was deleted.
+- **Phase 2** `overrides`: ADR in `build/spec.md`; `element_keys` / `apply_overrides` in `build_patcher.py`;
+  `build/capture.py` (`--dry-run`, `--keys`); capture takes presentation state only and refuses, with the
+  reason, label text, hints, ranges, `varname`, `param_connect`. Piloted on `f_vf_fieldmap` and `f_vf_warp`
+  (not `f_chladni`, which needed nothing, nor `f_vf_flow`, which has nothing capturable).
+- **T029** the `PI = ...` compile failure on Max 9.2.0 is in both codebox skills.
+
+### State of drift
+
+39 shipped patchers: 13 reproduce exactly, 21 drift, 5 `out_of_scope`. Remaining counts: props 350, boxes
+only in the patch 246, layout 137, boxes only in the definition 113, cords 103, renamed 27, code 13, pix ports 2.
+
+## Previous session (2026-10-04, second): build, tools and test cleanup
 
 A project, not a task: `.specify/build_cleanup/spec.md` and `tasks.md` (write IDs as `build_cleanup/T006`).
 Read `tasks.md` first; its top section has the measured drift state and the grouping of every module.
 
-### Start here
+### Start here (as it was then)
 
 - **Ask Matt what he wants to work on.** The session ended with him saying he had lost track of what he
   wanted to do ("we've spent all afternoon on this"). The `build_cleanup` list below is the default only
