@@ -1,11 +1,11 @@
-# DO NOT REGENERATE f_vf_warp (2026-09-23). The shipped patcher is hand-edited
-# and differs from what build_patcher.py would emit from this file:
-#  - bypass toggle: jsui -> `prepend param bypass_gate` -> pix (drives the
-#    codebox Param below), NOT the generated jsui -> attrui @attr bypass.
-#    Native jit.gl.pix bypass skips the shader and passes secondary outlets
-#    through vertically flipped, so out2 could never respect bypass that way.
-#    The "bypass" param entry below therefore no longer matches the patch.
-#  - strength default 0.1 (this file says 0.0), vecfield label/comment styling.
+# f_vf_warp.  Since 2026-10-05 (build_cleanup T017) this definition reproduces the shipped
+# patcher exactly: `bypass_mode: "param"` writes the hand-made bypass wiring
+# (jsui -> `prepend param bypass_gate` -> pix, driving the codebox Param below) instead of the
+# native jsui -> attrui @attr bypass.  Native jit.gl.pix bypass skips the shader and passes
+# secondary outlets through vertically flipped, so out2 could never respect bypass that way.
+# plan.md still lists the module as never-regenerate until Matt takes it off; nothing needs
+# regenerating, because the patcher already equals what this builds.
+# strength default 0.1, vecfield label/comment styling: in the definition and `overrides`.
 patcher = {
     "name":               "f_vf_warp",
 
@@ -30,6 +30,11 @@ patcher = {
     "signal_type":        "vecfield in",
     "archetype":          "processor",
     "pix_type":           "char",
+
+    # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
+    # not the native @bypass: native bypass skips the shader and flips secondary outlets.  Both
+    # outlets mix to the input texture, so a bypassed module is a passthrough (Matt, 2026-10-05).
+    "bypass_mode":        "param",
 
     "presentation_width":  78,
     "presentation_height": 90,

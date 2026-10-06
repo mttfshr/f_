@@ -168,6 +168,43 @@ patcher = {
 # modmode 0 and an auto scripting name; the panel toggle's default enum labels). Loud on an unknown
 # element, an element with no saved valueof block, or a denied property. Added 2026-10-05, T014.
 #
+# Multi-stage keys (build_cleanup T016/T017, 2026-10-05; all explicit and default-off, loud on a
+# mistake; tests/test_build_multistage.py).  A "node" below is a pix_chain node id or the id of a
+# raw_boxes object; an unknown one raises.
+#
+#   Per pix_chain node "pix_attrs": str -- the node's attributes as one verbatim string, written after
+#   `@name X` in place of the generated `@type` / `@adapt` ("@adapt 0 @dim 256 256 @type float32").
+#   Loud if given with pix_type or adapt, if empty, or if it sets @name.
+#
+#   Per param "pix_target": a node id (unchanged) OR a list of node ids.  With a list the widget's
+#   param_connect and its own attrui name the FIRST stage; each further stage gets an extra attrui
+#   (ids obj-700+) fed from the widget.  Loud on an unknown node, a repeat, or an empty list.
+#
+#   Per float/int param "ui": False -- the param keeps its route token and an attrui (varname = the
+#   param name) fed straight from the route, but gets no widget, no label, no panel slot and no entry in
+#   the parameters block (f_vf_fluid's `taps`, a codebox setting that is not performable).
+#
+#   Top-level "inlet_fanout": {"texture": [[node, inlet], ...], "state": [node, ...], "state_param": name}
+#   -- the module's texture inlet reaches several stages: routepass out 0 -> vs_inState (the only route
+#   for the texture; the default feed of the primary pix is replaced), vs_inState out 0 -> each listed
+#   (node, inlet), and vs_inState out 1 (connected flag) -> `prepend param <state_param>` (default
+#   src_mode) -> inlet 0 of each node in "state".  Without "state" no prepend box is built.  Works with
+#   any archetype.
+#
+#   Top-level "draw_triggers": node | [node, ...] -- one `r draw` box (obj-20a) feeding inlet 0 of each
+#   stage, so it advances once per frame; shared with the source archetype's own render trigger (a cord
+#   the archetype already makes is not doubled).
+#
+#   Top-level "bypass_mode": "native" (default) | "param".  "param": the bypass jsui -> `prepend param
+#   <bypass_param>` -> the stage(s) in "bypass_target" (default the primary; a node or a list), instead of
+#   jsui -> attrui @attr bypass.  Native jit.gl.pix bypass skips the shader and flips secondary outlets
+#   (f_vf_warp finding, plan.md item 10), so a module that needs every outlet to pass the input through
+#   drives a codebox Param instead.  "bypass_param" defaults to "bypass_gate" and may not be "bypass".
+#   The builder checks that each target's codebox declares `Param <bypass_param>(`; the codebox must
+#   itself implement the passthrough (e.g. `out1 = mix(effect, in1, bypass_gate)` on every outlet).
+#   bypass_param / bypass_target without bypass_mode "param" are loud.  Convention (Matt, 2026-10-05):
+#   a bypassed module is a PASSTHROUGH on every outlet.
+#
 # range_tiers: the `_parameter_range` message text writes each bound the way Max writes a float in a
 # message box ("1." not "1.0", "-5." not "-5.0", "0." for zero; others as their shortest repr "0.2").
 # The builder used to write "1.0", which Max rewrites on load. Fixed 2026-10-05 (f_lens, f_vf_vorticity).

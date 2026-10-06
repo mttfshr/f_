@@ -50,13 +50,6 @@
     "props": 3
    },
    "status": "drift"
-  },
-  "f_vf_warp": {
-   "counts": {
-    "boxes_def_only": 1,
-    "boxes_patch_only": 1
-   },
-   "status": "drift"
   }
  }
 }

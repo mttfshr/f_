@@ -10,6 +10,7 @@ See build/spec.md for definition file schema.
 
 import copy
 import json
+import re
 import sys
 import importlib.util
 from pathlib import Path
@@ -338,15 +339,19 @@ def modulesize_boxes():
             text="js moduleSize.js"),
     ]
 
-def instate_boxes():
-    return [
+def instate_boxes(state_param="src_mode", with_pre=True):
+    out = [
         box(OBJ_INSTATE,
             maxclass="newobj", numinlets=1, numoutlets=2, outlettype=["",""],
             patching_rect=[200.0, 60.0, 80.0, 22.0], text="vs_inState"),
-        box(OBJ_SRCMODE_PRE,
-            maxclass="newobj", numinlets=1, numoutlets=1, outlettype=[""],
-            patching_rect=[350.0, 60.0, 145.0, 22.0], text="prepend param src_mode"),
     ]
+    if with_pre:
+        text = f"prepend param {state_param}"
+        out.append(box(OBJ_SRCMODE_PRE,
+            maxclass="newobj", numinlets=1, numoutlets=1, outlettype=[""],
+            patching_rect=[350.0, 60.0, 145.0 if state_param == "src_mode" else len(text) * 6.6, 22.0],
+            text=text))
+    return out
 
 def range_tier_boxes(n, p):
     """
@@ -1045,6 +1050,17 @@ def build_pix_chain(defn, def_dir):
         n_out      = node["n_outlets"]
         type_attr  = f" @type {pix_type}" if pix_type else ""
         adapt_attr = " @adapt 1" if adapt else ""
+        # pix_attrs: the node's attributes as one verbatim string, in place of the generated
+        # `@type` / `@adapt` (f_vf_fluid's solver stages: "@adapt 0 @dim 256 256 @type float32").
+        if "pix_attrs" in node:
+            pa = node["pix_attrs"]
+            if not isinstance(pa, str) or not pa.strip():
+                raise ValueError(f"pix_chain node '{node['id']}': pix_attrs must be a non-empty string, not {pa!r}")
+            if pix_type or adapt:
+                raise ValueError(f"pix_chain node '{node['id']}': pix_attrs replaces pix_type/adapt; give one or the other")
+            if "@name" in pa:
+                raise ValueError(f"pix_chain node '{node['id']}': pix_attrs must not set @name (the node's `name` does)")
+            type_attr, adapt_attr = " " + pa.strip(), ""
         outlettype = ["jit_gl_texture"] * n_out + [""]
 
         gen_spec = node.get("gen", "")
@@ -1396,6 +1412,105 @@ def build(defn, debug=None, side_files=None):
         extra_pix_lines  = []
         chain_id_to_obj  = {}
 
+    # ---------------------------------------------------------------------------
+    # Multi-stage schema keys (build_cleanup T016/T017, 2026-10-05).  All default-off.
+    #   pix_target: str | list   a param drives one stage, or several (the first one is the stage
+    #                            its widget's param_connect names; each further one gets an extra
+    #                            attrui fed from the widget)
+    #   ui: False (per param)    a route token and an attrui with no widget, label or panel slot
+    #   inlet_fanout             the module's texture inlet reaches several stages (see below)
+    #   draw_triggers            stages that take a bang from `r draw` on inlet 0
+    #   bypass_mode: "param"     the bypass toggle drives a codebox Param, not the native @bypass
+    # A node reference is a pix_chain node id or the id of a raw_boxes object; anything else is loud.
+    # ---------------------------------------------------------------------------
+    raw_ids = {b["box"]["id"] for b in defn.get("raw_boxes", [])}
+
+    def node_ref(ref, what):
+        if not isinstance(ref, str) or not ref:
+            raise ValueError(f"{what}: a node reference must be a non-empty string, not {ref!r}")
+        if ref in chain_id_to_obj:
+            return chain_id_to_obj[ref]
+        if ref in raw_ids:
+            return ref
+        raise ValueError(f"{what}: unknown node {ref!r} (pix_chain ids: {sorted(chain_id_to_obj)}; "
+                         f"raw_boxes ids: {sorted(raw_ids)})")
+
+    def node_refs(spec, what):
+        """str | list of str -> list of object ids (non-empty, no repeats)."""
+        items = [spec] if isinstance(spec, str) else spec
+        if not isinstance(items, list) or not items:
+            raise ValueError(f"{what}: must be a node id or a non-empty list of node ids, not {spec!r}")
+        out = [node_ref(r, what) for r in items]
+        if len(set(out)) != len(out):
+            raise ValueError(f"{what}: repeats a node ({spec!r})")
+        return out
+
+    def pix_targets_of(p):
+        """The object ids a param drives: [primary] by default, else its pix_target node(s)."""
+        pt = p.get("pix_target")
+        if pt is None:
+            return [primary_obj_id]
+        if isinstance(pt, str):                       # the single-id form, unchanged: a chain id, else a literal id
+            return [chain_id_to_obj.get(pt, pt)]
+        return node_refs(pt, f"param '{p['name']}': pix_target")
+
+    for p in all_params:
+        if "ui" in p and not isinstance(p["ui"], bool):
+            raise ValueError(f"param '{p['name']}': ui must be True or False, not {p['ui']!r}")
+        if p.get("ui") is False and p["type"] not in ("float", "int"):
+            raise ValueError(f"param '{p['name']}': ui False applies to float and int params only")
+        if isinstance(p.get("pix_target"), list):
+            pix_targets_of(p)                         # validates the list
+
+    inlet_fanout = defn.get("inlet_fanout")
+    fan_texture, fan_state, fan_param = [], [], "src_mode"
+    if inlet_fanout is not None:
+        if not isinstance(inlet_fanout, dict) or set(inlet_fanout) - {"texture", "state", "state_param"}:
+            raise ValueError("inlet_fanout must be {'texture': [[node, inlet], ...], 'state': [node, ...], "
+                             f"'state_param': name}}, not {inlet_fanout!r}")
+        tex = inlet_fanout.get("texture")
+        if (not isinstance(tex, list) or not tex
+                or not all(isinstance(t, (list, tuple)) and len(t) == 2 and isinstance(t[1], int) for t in tex)):
+            raise ValueError("inlet_fanout.texture must be a non-empty list of [node, inlet] pairs")
+        fan_texture = [(node_ref(n_, "inlet_fanout.texture"), i_) for n_, i_ in tex]
+        fan_state = node_refs(inlet_fanout["state"], "inlet_fanout.state") if inlet_fanout.get("state") else []
+        fan_param = inlet_fanout.get("state_param", "src_mode")
+        if not isinstance(fan_param, str) or not fan_param.isidentifier():
+            raise ValueError(f"inlet_fanout.state_param must be a Param name, not {fan_param!r}")
+
+    draw_triggers = defn.get("draw_triggers")
+    draw_targets = node_refs(draw_triggers, "draw_triggers") if draw_triggers is not None else []
+
+    # bypass_mode "param": jsui -> `prepend param <bypass_param>` -> the target stage(s); the target's
+    # codebox must declare that Param (else the toggle would silently do nothing).  The Param is never
+    # named `bypass`: that is the native attribute, and the whole point of this mode is to avoid it.
+    bypass_mode = defn.get("bypass_mode", "native")
+    if bypass_mode not in ("native", "param"):
+        raise ValueError(f'bypass_mode must be "native" or "param", not {bypass_mode!r}')
+    bypass_param = defn.get("bypass_param", "bypass_gate")
+    bypass_targets = [primary_obj_id]
+    if bypass_mode == "native":
+        if "bypass_param" in defn or "bypass_target" in defn:
+            raise ValueError('bypass_param / bypass_target apply to bypass_mode "param" only')
+    else:
+        if not isinstance(bypass_param, str) or not bypass_param.isidentifier() or bypass_param == "bypass":
+            raise ValueError(f"bypass_param must be a Param name other than 'bypass', not {bypass_param!r}")
+        if "bypass_target" in defn:
+            bypass_targets = node_refs(defn["bypass_target"], "bypass_target")
+        # find each target's codebox text (single pix: the definition's; chain node: its .gen file)
+        codes = {}
+        if pix_chain:
+            for nd in pix_chain:
+                oid = chain_id_to_obj[nd["id"]]
+                gp = nd.get("gen", "")
+                codes[oid] = "" if gp == "pass" else (Path(defn.get("_def_path", ".")).parent / gp).read_text()
+        else:
+            codes[primary_obj_id] = defn["codebox"]
+        for oid in bypass_targets:
+            if oid in codes and not re.search(rf"\bParam\s+{re.escape(bypass_param)}\s*\(", codes[oid]):
+                raise ValueError(f"bypass_mode 'param': the codebox of {oid} does not declare "
+                                 f"`Param {bypass_param}(...)`, so the toggle would do nothing")
+
     # Build boxes — pix must come before bypass jsui (param_connect dependency)
     boxes = []
     boxes.append(inlet_box(inlet_comment))
@@ -1423,12 +1538,12 @@ def build(defn, debug=None, side_files=None):
         js_path = Path(__file__).parent.parent / "package" / "javascript" / pt["js_filename"]
         side_files[js_path] = js_content
 
-    if archetype == "dual":
-        boxes.extend(instate_boxes())
+    if archetype == "dual" or inlet_fanout is not None:
+        boxes.extend(instate_boxes(fan_param, with_pre=(inlet_fanout is None or bool(fan_state))))
 
-    # r draw for source archetype — wired to pix inlet 0 as render trigger
+    # r draw — the source archetype's render trigger, and/or per-stage draw_triggers
     OBJ_RDRAW = "obj-20a"
-    if archetype == "source" and render_trigger == "rdraw":
+    if (archetype == "source" and render_trigger == "rdraw") or draw_targets:
         boxes.append(box(OBJ_RDRAW,
             maxclass="newobj", numinlets=0, numoutlets=1, outlettype=[""],
             patching_rect=[400.0, 30.0, 50.0, 22.0], text="r draw"))
@@ -1444,8 +1559,21 @@ def build(defn, debug=None, side_files=None):
     # (f_lens) has no known @name here and keeps the primary's, as before.
     chain_names = {nd["id"]: nd["name"] for nd in (pix_chain or [])}
     connect_name = legacy.get("pix_varname", object_name)            # what param_connect names
+    extra_attruis = []                         # (attrui id, param index, target obj id): pix_target lists
     for n, p in enumerate(ui_params):
-        pname = chain_names.get(p.get("pix_target"), connect_name)    # the pix this control drives
+        pt_ = p.get("pix_target")
+        pname = chain_names.get(pt_[0] if isinstance(pt_, list) else pt_, connect_name)   # the pix this control drives
+        if p.get("ui") is False:
+            # route token + attrui, no widget / label / panel slot (f_vf_fluid's `taps`); the attrui
+            # carries the param's varname so a route token still has a box of its name to reach
+            attr_ = attrui_box(param_pre_id(n), p["name"], 50.0 + n * 50.0, 170.0 + n * 30.0)
+            attr_["box"]["varname"] = p["name"]
+            boxes.append(attr_)
+            for extra in pix_targets_of(p)[1:]:
+                aid = f"obj-{700 + len(extra_attruis)}"
+                boxes.append(attrui_box(aid, p["name"], 400.0, 170.0 + 30.0 * len(extra_attruis)))
+                extra_attruis.append((aid, n, extra))
+            continue
         if p["type"] == "float" and p.get("widget") == "numbox":
             # opt-in override for the library's mix/dry-wet crossfade
             # convention (vsynth-bpatcher/SKILL.md) -- live.numbox instead
@@ -1475,6 +1603,10 @@ def build(defn, debug=None, side_files=None):
         if p.get("pix_wire", True):
             boxes.append(attrui_box(param_pre_id(n), p["name"],
                                     50.0 + n * 50.0, 170.0 + n * 30.0))
+            for extra in pix_targets_of(p)[1:]:     # pix_target list: one more attrui per further stage
+                aid = f"obj-{700 + len(extra_attruis)}"
+                boxes.append(attrui_box(aid, p["name"], 400.0, 170.0 + 30.0 * len(extra_attruis)))
+                extra_attruis.append((aid, n, extra))
         if p["type"] != "text_button" and not ("label" in p and p["label"] is None):
             boxes.append(label_box(n, p))   # "label": None = no label box (a shared or hand-made label)
         if p.get("range_tiers"):
@@ -1489,7 +1621,13 @@ def build(defn, debug=None, side_files=None):
 
     # bypass jsui and prepend LAST — must come after pix in boxes list
     boxes.append(bypass_jsui_box(bp_jsui_id, object_name, pw, legacy.get("bypass_jsui_saved")))
-    boxes.append(bypass_attrui_box(bp_pre_id))
+    if bypass_mode == "param":
+        # not the native attribute: a `prepend param <name>` that sets a codebox Param (T017)
+        ptxt = f"prepend param {bypass_param}"
+        boxes.append(box(bp_pre_id, maxclass="newobj", numinlets=1, numoutlets=1, outlettype=[""],
+                         patching_rect=[400.0, 60.0, len(ptxt) * 5.24, 22.0], text=ptxt))
+    else:
+        boxes.append(bypass_attrui_box(bp_pre_id))
 
     # Build patchlines
     lines = []
@@ -1497,7 +1635,17 @@ def build(defn, debug=None, side_files=None):
     # inlet → routepass (route_first: inlet → route)
     lines.append(wire(OBJ_INLET, 0, OBJ_ROUTE if route_first else OBJ_ROUTEPASS, 0))
 
-    if archetype == "dual":
+    if inlet_fanout is not None:
+        # routepass out0 → vs_inState → the stages in inlet_fanout.texture (cold inlets); vs_inState's
+        # connected flag → prepend param <state_param> → inlet 0 of each stage in inlet_fanout.state
+        lines.append(wire(OBJ_ROUTEPASS, 0, OBJ_INSTATE, 0))
+        for node_, inlet_ in fan_texture:
+            lines.append(wire(OBJ_INSTATE, 0, node_, inlet_))
+        if fan_state:
+            lines.append(wire(OBJ_INSTATE, 1, OBJ_SRCMODE_PRE, 0))
+            for node_ in fan_state:
+                lines.append(wire(OBJ_SRCMODE_PRE, 0, node_, 0))
+    elif archetype == "dual":
         # routepass out0 → vs_inState → primary pix
         lines.append(wire(OBJ_ROUTEPASS, 0, OBJ_INSTATE, 0))
         lines.append(wire(OBJ_INSTATE, 0, primary_obj_id, 0))
@@ -1516,6 +1664,12 @@ def build(defn, debug=None, side_files=None):
     else:
         # routepass out0 → primary pix
         lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
+
+    # draw_triggers: `r draw` → inlet 0 of each listed stage (once per frame; f_vf_fluid)
+    for node_ in draw_targets:
+        w_ = wire(OBJ_RDRAW, 0, node_, 0)
+        if w_ not in lines:                       # the source archetype may already feed the primary
+            lines.append(w_)
 
     # route_reject_to_pix: the route's reject outlet → the primary pix
     if route_reject_to_pix:
@@ -1544,7 +1698,8 @@ def build(defn, debug=None, side_files=None):
 
     # bypass jsui → prepend bypass → primary pix
     lines.append(wire(bp_jsui_id, 0, bp_pre_id, 0))
-    lines.append(wire(bp_pre_id, 0, primary_obj_id, 0))
+    for node_ in bypass_targets:                 # native: the primary pix; param mode: bypass_target
+        lines.append(wire(bp_pre_id, 0, node_, 0))
     if route_bypass:                 # route's `bypass` outlet → the jsui, so the message flips the toggle
         lines.append(wire(OBJ_ROUTE, 0, bp_jsui_id, 0))
 
@@ -1578,8 +1733,11 @@ def build(defn, debug=None, side_files=None):
         # targeting a manually-declared raw_boxes object (e.g. f_lens's
         # halation pix), without requiring the primary pix itself to be
         # restructured into a pix_chain.
-        pt = p.get("pix_target")
-        target = chain_id_to_obj.get(pt, pt) if pt else primary_obj_id
+        target = pix_targets_of(p)[0]      # a pix_target list: the first stage; the rest get extra attruis
+        if p.get("ui") is False:           # no widget: the route outlet feeds the attrui directly
+            lines.append(wire(OBJ_ROUTE, n + rb, param_pre_id(n), 0))
+            lines.append(wire(param_pre_id(n), 0, target, 0))
+            continue
         lines.append(wire(OBJ_ROUTE, n + rb, param_obj_id(n), 0))
         if p.get("pix_wire", True):
             lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
@@ -1592,6 +1750,12 @@ def build(defn, debug=None, side_files=None):
                 lines.append(wire(range_sel_id(n), t, range_msg_id(n, t), 0))
                 lines.append(wire(range_msg_id(n, t), 0, param_obj_id(n), 0))
 
+    # extra attruis of pix_target lists: fed from the widget (the route outlet when there is none)
+    for aid_, n_, target_ in extra_attruis:
+        src_ = (OBJ_ROUTE, n_ + rb) if ui_params[n_].get("ui") is False else (param_obj_id(n_), 0)
+        lines.append(wire(src_[0], src_[1], aid_, 0))
+        lines.append(wire(aid_, 0, target_, 0))
+
     # route outlets → header toggles → prepends → primary pix
     if header_toggles:
         ht_outlet = len(ui_params) + rb   # header toggles come after ui_params in route
@@ -1602,7 +1766,8 @@ def build(defn, debug=None, side_files=None):
     # parameters block — grid params + header toggles (not bypass jsui)
     params_block = {}
     for n, p in enumerate(ui_params):
-        params_block[param_obj_id(n)] = [p["name"], p["name"], 0]
+        if p.get("ui") is not False:
+            params_block[param_obj_id(n)] = [p["name"], p["name"], 0]
     if header_toggles:
         params_block[OBJ_HEADER_TOGGLE] = [header_toggles[0]["name"], header_toggles[0]["name"], 0]
     if panel_toggle:
