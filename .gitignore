@@ -17,3 +17,7 @@ tests/bench/mjob_*.maxpat
 
 # release zips (build/release.sh)
 dist/
+
+# helpfile pipeline state (build/extract_params.py writes it, build/generate_helpfiles.py reads it):
+# derived from the definitions and from file mtimes, so it differs per machine and every run rewrites it
+build/helpfile_queue.json
