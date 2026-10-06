@@ -180,7 +180,7 @@
 							},
 							{
 								"box": {
-									"code": "Param freq(5.0);\nParam angle(0.0);\nParam anisotropy(0.5);\nParam threshold(0.5);\nParam softness(0.1);\nParam along_phase(0.0);\nParam across_phase(0.0);\nParam zoom(1.0);\nParam colorize(0.0);\nParam coarseness(1.0);\nParam src_mode(0.0);\nParam bypass(0.0);\n\n// Coordinate frame\ntheta = angle * (3.14159265 / 180.0);\ncx = cos(theta);\nsx = sin(theta);\nalong = norm.x * cx + norm.y * sx;\nacross = -norm.x * sx + norm.y * cx;\n\n// Phase offset\nalong_d = along + along_phase;\nacross_d = across + across_phase;\n\n// Zoom applied to base coords only\nzoomed_along = along_d / max(zoom, 0.001);\nzoomed_across = across_d / max(zoom, 0.001);\n\n// Input sample\ninput_luma = sample(in1, norm).r;\nsrc_col = sample(in1, norm);\n\n// Displacement: warp zoomed coords by input luma (always computed)\nwarp = input_luma * threshold;\nalong_disp = zoomed_along + warp;\nacross_disp = zoomed_across + warp * 0.5;\n\n// Coarseness: scales down the large prime to increase grain period\nprime_scale = 43758.5 / max(coarseness, 1.0);\n\n// Parallel (sin-based) hash \u2014 uses base (non-displaced) coords\nh_par_raw = sin(zoomed_along * freq * prime_scale);\nh_parallel = h_par_raw - floor(h_par_raw);\n\n// Isotropic (arithmetic) hash \u2014 uses base coords\nh_iso_raw = sin((zoomed_along * 127.1 + zoomed_across * 311.7) * prime_scale);\nh_iso = h_iso_raw - floor(h_iso_raw);\n\n// Anisotropy blend\nhash_field = mix(h_iso, h_parallel, anisotropy);\n\n// Source mode: threshold against hash field directly\nlo = threshold - softness * 0.5;\nhi = threshold + softness * 0.5;\nsource_stipple = smoothstep(lo, hi, hash_field);\n\n// Processor/dither: input luma compared against hash field\ndither_stipple = smoothstep(hash_field - softness * 0.5, hash_field + softness * 0.5, input_luma + threshold - 0.5);\n\n// Select stipple by src_mode\nstipple = mix(source_stipple, dither_stipple, src_mode);\n\n// Output color (composite)\nmono_out = vec(stipple, stipple, stipple, 1.0);\ncolor_out = vec(src_col.r * stipple, src_col.g * stipple, src_col.b * stipple, 1.0);\nresult = mix(mono_out, color_out, colorize * src_mode);\n\n// Stipple mask (raw scalar)\nmask_out = vec(stipple, stipple, stipple, 1.0);\n\n// Displaced source: source sampled at displacement-warped UV\ndisp_uv = vec(along_disp / max(zoom, 0.001), across_disp / max(zoom, 0.001));\n// Reconstruct screen UV from rotated displaced coords\ndisp_x = disp_uv.x * cx - disp_uv.y * sx;\ndisp_y = disp_uv.x * sx + disp_uv.y * cx;\ndisp_screen = vec(clamp(disp_x, 0.0, 1.0), clamp(disp_y, 0.0, 1.0));\ndisplaced_out = sample(in1, disp_screen);\n\n// Bypass\nsource_bp = vec(0.0, 0.0, 0.0, 1.0);\nproc_bp = src_col;\nbypass_out = mix(source_bp, proc_bp, src_mode);\n\nout1 = mix(result, bypass_out, bypass);\nout2 = mix(mask_out, bypass_out, bypass);\nout3 = mix(displaced_out, bypass_out, bypass);\n",
+									"code": "Param freq(5.0);\nParam angle(0.0);\nParam anisotropy(0.5);\nParam threshold(0.5);\nParam softness(0.1);\nParam along_phase(0.0);\nParam across_phase(0.0);\nParam zoom(1.0);\nParam colorize(0.0);\nParam coarseness(1.0);\nParam src_mode(0.0);\nParam bypass_gate(0.0);\n\n// Coordinate frame\ntheta = angle * (3.14159265 / 180.0);\ncx = cos(theta);\nsx = sin(theta);\nalong = norm.x * cx + norm.y * sx;\nacross = -norm.x * sx + norm.y * cx;\n\n// Phase offset\nalong_d = along + along_phase;\nacross_d = across + across_phase;\n\n// Zoom applied to base coords only\nzoomed_along = along_d / max(zoom, 0.001);\nzoomed_across = across_d / max(zoom, 0.001);\n\n// Input sample\ninput_luma = sample(in1, norm).r;\nsrc_col = sample(in1, norm);\n\n// Displacement: warp zoomed coords by input luma (always computed)\nwarp = input_luma * threshold;\nalong_disp = zoomed_along + warp;\nacross_disp = zoomed_across + warp * 0.5;\n\n// Coarseness: scales down the large prime to increase grain period\nprime_scale = 43758.5 / max(coarseness, 1.0);\n\n// Parallel (sin-based) hash \u2014 uses base (non-displaced) coords\nh_par_raw = sin(zoomed_along * freq * prime_scale);\nh_parallel = h_par_raw - floor(h_par_raw);\n\n// Isotropic (arithmetic) hash \u2014 uses base coords\nh_iso_raw = sin((zoomed_along * 127.1 + zoomed_across * 311.7) * prime_scale);\nh_iso = h_iso_raw - floor(h_iso_raw);\n\n// Anisotropy blend\nhash_field = mix(h_iso, h_parallel, anisotropy);\n\n// Source mode: threshold against hash field directly\nlo = threshold - softness * 0.5;\nhi = threshold + softness * 0.5;\nsource_stipple = smoothstep(lo, hi, hash_field);\n\n// Processor/dither: input luma compared against hash field\ndither_stipple = smoothstep(hash_field - softness * 0.5, hash_field + softness * 0.5, input_luma + threshold - 0.5);\n\n// Select stipple by src_mode\nstipple = mix(source_stipple, dither_stipple, src_mode);\n\n// Output color (composite)\nmono_out = vec(stipple, stipple, stipple, 1.0);\ncolor_out = vec(src_col.r * stipple, src_col.g * stipple, src_col.b * stipple, 1.0);\nresult = mix(mono_out, color_out, colorize * src_mode);\n\n// Stipple mask (raw scalar)\nmask_out = vec(stipple, stipple, stipple, 1.0);\n\n// Displaced source: source sampled at displacement-warped UV\ndisp_uv = vec(along_disp / max(zoom, 0.001), across_disp / max(zoom, 0.001));\n// Reconstruct screen UV from rotated displaced coords\ndisp_x = disp_uv.x * cx - disp_uv.y * sx;\ndisp_y = disp_uv.x * sx + disp_uv.y * cx;\ndisp_screen = vec(clamp(disp_x, 0.0, 1.0), clamp(disp_y, 0.0, 1.0));\ndisplaced_out = sample(in1, disp_screen);\n\n// Bypass\nsource_bp = vec(0.0, 0.0, 0.0, 1.0);\nproc_bp = src_col;\nbypass_out = mix(source_bp, proc_bp, src_mode);\n\n// bypass_out is the source when connected, black when not (src_mode): the dual-module passthrough.\nout1 = mix(result, bypass_out, bypass_gate);\nout2 = mix(mask_out, bypass_out, bypass_gate);\nout3 = mix(displaced_out, bypass_out, bypass_gate);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -321,7 +321,7 @@
 						""
 					],
 					"patching_rect": [
-						1060.0,
+						1063.5,
 						100.0,
 						56.0,
 						22.0
@@ -353,7 +353,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						840.0,
+						843.5,
 						260.0,
 						191.0,
 						157.0
@@ -377,7 +377,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1060.0,
+						1063.5,
 						200.0,
 						80.0,
 						21.0
@@ -402,7 +402,7 @@
 						""
 					],
 					"patching_rect": [
-						840.0,
+						843.5,
 						20.0,
 						60.0,
 						22.0
@@ -420,7 +420,7 @@
 						""
 					],
 					"patching_rect": [
-						840.0,
+						843.5,
 						50.0,
 						180.0,
 						22.0
@@ -441,7 +441,7 @@
 						""
 					],
 					"patching_rect": [
-						840.0,
+						843.5,
 						110.0,
 						80.0,
 						22.0
@@ -460,7 +460,7 @@
 						""
 					],
 					"patching_rect": [
-						840.0,
+						843.5,
 						140.0,
 						60.0,
 						22.0
@@ -478,7 +478,7 @@
 						""
 					],
 					"patching_rect": [
-						840.0,
+						843.5,
 						170.0,
 						80.0,
 						22.0
@@ -496,7 +496,7 @@
 						""
 					],
 					"patching_rect": [
-						840.0,
+						843.5,
 						200.0,
 						100.0,
 						22.0
@@ -1598,7 +1598,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1060.0,
+						1063.5,
 						130.0,
 						18.0,
 						12.0
@@ -1616,20 +1616,19 @@
 			{
 				"box": {
 					"id": "obj-51",
-					"maxclass": "attrui",
-					"attr": "bypass",
+					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
 						""
 					],
 					"patching_rect": [
-						1060.0,
+						1063.5,
 						160.0,
 						131.0,
 						22.0
 					],
-					"style": ""
+					"text": "prepend param bypass_gate"
 				}
 			}
 		],

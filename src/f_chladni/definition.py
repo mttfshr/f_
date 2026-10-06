@@ -99,7 +99,7 @@ Param spread(0.3);
 Param mode(0.0);
 Param view_mode(0.0);
 Param gain(1.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 // --- Bessel zeros ---
 z0 = 2.4048; z1 = 3.8317; z2 = 5.1356; z3 = 6.3802;
@@ -176,9 +176,12 @@ vf_out = vec(gx/gmag * 0.5 + 0.5, gy/gmag * 0.5 + 0.5, 0.0, 1.0);
 mag_out = clamp(abs(total) * gain, 0.0, 1.0);
 
 // --- Outputs ---
-out1 = mix(luma_out, vec(0.0, 0.0, 0.0, 1.0), bypass);
-out2 = mix(vf_out,   vec(0.5, 0.5, 0.0, 1.0), bypass);
-out3 = mix(vec(mag_out, mag_out, mag_out, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+// bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
+// A pure generator (no texture input), so its passthrough is the neutral value of each outlet:
+// black for the textures, 0.5/0.5 for the vecfield.
+out1 = mix(luma_out, vec(0.0, 0.0, 0.0, 1.0), bypass_gate);
+out2 = mix(vf_out,   vec(0.5, 0.5, 0.0, 1.0), bypass_gate);
+out3 = mix(vec(mag_out, mag_out, mag_out, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass_gate);
 """
 
 patcher = {
@@ -190,6 +193,11 @@ patcher = {
     "signal_type": "vecfield out",
 
     "pix_type":           "float32",
+
+    # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
+    # not the native @bypass, which skips the shader and flips secondary outlets.  Every outlet
+    # mixes to its passthrough, so a bypassed module is a passthrough (Matt, 2026-10-05; plan.md item 10).
+    "bypass_mode":        "param",
 
     "presentation_width":  227,
     "presentation_height": 164,

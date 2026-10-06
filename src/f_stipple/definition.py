@@ -16,7 +16,7 @@ Param zoom(1.0);
 Param colorize(0.0);
 Param coarseness(1.0);
 Param src_mode(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 // Coordinate frame
 theta = angle * (3.14159265 / 180.0);
@@ -88,9 +88,10 @@ source_bp = vec(0.0, 0.0, 0.0, 1.0);
 proc_bp = src_col;
 bypass_out = mix(source_bp, proc_bp, src_mode);
 
-out1 = mix(result, bypass_out, bypass);
-out2 = mix(mask_out, bypass_out, bypass);
-out3 = mix(displaced_out, bypass_out, bypass);
+// bypass_out is the source when connected, black when not (src_mode): the dual-module passthrough.
+out1 = mix(result, bypass_out, bypass_gate);
+out2 = mix(mask_out, bypass_out, bypass_gate);
+out3 = mix(displaced_out, bypass_out, bypass_gate);
 """
 
 patcher = {
@@ -102,6 +103,11 @@ patcher = {
 
     # Archetype: "source", "processor", or "dual"
     "archetype":           "dual",
+
+    # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
+    # not the native @bypass, which skips the shader and flips secondary outlets.  Every outlet
+    # mixes to its passthrough, so a bypassed module is a passthrough (Matt, 2026-10-05; plan.md item 10).
+    "bypass_mode":        "param",
 
     # Presentation panel size
     "presentation_width":  191,

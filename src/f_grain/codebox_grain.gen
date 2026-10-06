@@ -2,7 +2,7 @@ Param src_mode(0.0);
 Param density(0.5);
 Param amount(0.5);
 Param era_clock(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 Param size(0.0);
 Param size_var(0.0);
 Param shape(0.5);
@@ -193,8 +193,9 @@ gb *= luma_mod;
 composited = vec(src_displaced.r + gr, src_displaced.g + gg, src_displaced.b + gb, src_displaced.a);
 raw = vec(grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, 1.0);
 
-// bypass
-effective_bp = 1.0 - bypass;
-out1 = mix(src, composited, effective_bp);
-out2 = raw;
-out3 = mix(src, src_displaced, effective_bp);
+// bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
+// The source when it is connected, black when it is not (src_mode): the dual-module convention.
+bypass_px = mix(vec(0.0, 0.0, 0.0, 1.0), sample(in1, uv), src_mode);
+out1 = mix(composited, bypass_px, bypass_gate);
+out2 = mix(raw, bypass_px, bypass_gate);
+out3 = mix(src_displaced, bypass_px, bypass_gate);

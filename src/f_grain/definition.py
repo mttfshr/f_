@@ -33,6 +33,11 @@ patcher = {
     # Archetype: vs_inState gates src_mode
     "archetype":           "dual",
     "pix_type":            "char",
+
+    # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
+    # not the native @bypass, which skips the shader and flips secondary outlets.  Every outlet
+    # mixes to its passthrough, so a bypassed module is a passthrough (Matt, 2026-10-05; plan.md item 10).
+    "bypass_mode":        "param",
     "route_bypass":        True,    # the oldest modules route a `bypass 0/1` message to the toggle
     "route_first":         True,    # inlet -> route, route reject -> routepass (see above)
     "inlet_comment":       "",
