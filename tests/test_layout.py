@@ -177,6 +177,28 @@ def test_route_first_puts_routepass_below_the_route_and_wires_downward():
     check("default layout is unchanged: the pix at Y_PIX", abs(pix["patching_rect"][1] - layout.Y_PIX), 0)
 
 
+def test_the_service_area_clears_a_route_box_that_is_wider_than_the_lane():
+    # long token names: the route text (6.5 px per character) is far wider than its 72 px lane columns
+    names = [f"a_rather_long_parameter_name_{i}" for i in range(6)]
+    d = _lane_defn(params=[{"name": n, "type": "float", "min": 0.0, "max": 1.0, "default": 0.5, "label": n[-3:], "hint": n}
+                           for n in names] + [{"name": "bypass", "type": "bypass"}],
+                   codebox="".join(f"Param {n}(0.5);\n" for n in names) + "Param bypass(0.0);\nout1 = in1;")
+    dbg = {}
+    p = bp.build(d, debug=dbg)["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    route = top[bp.OBJ_ROUTE]
+    right = route["patching_rect"][0] + route["patching_rect"][2]
+    lane_right = layout.LANE_X0 + 5 * layout.PITCH + layout.PITCH
+    check("the scenario is real: the route box runs past where the lane columns end",
+          0 if right > lane_right + layout.SERV_GAP else 1, 0)
+    ms = [b for b in top.values() if b.get("text") == "js moduleSize.js"][0]
+    check("the moduleSize script starts clear of the route box's right edge",
+          0 if ms["patching_rect"][0] >= right else 1, 0)
+    a = layout.audit(p["boxes"], p["lines"], dbg["roles"])
+    check("no overlaps", len(a["overlaps"]), 0)
+    check("no upward wires", len(a["upward"]), 0)
+
+
 def _build_all(edit_layout_on):
     """{name: (result, roles)} for every definition that builds through build_patcher."""
     out = {}

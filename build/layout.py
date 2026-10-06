@@ -177,10 +177,12 @@ def layout_edit_view(boxes, lines, roles):
     off = 1 if route_bypass else 0
     n_cols = max(n_cols, len(grp.get("ctl", [])) + off, len(grp.get("label", [])) + off)
 
+    route_right = 0.0                                  # the route's right edge: the service area clears it
     for bx in one("route"):
         w = n_cols * PITCH + 7.0
         w = max(w, len(bx.get("text", "")) * 6.5)     # never clip below the text
         _put(bx, x=cx(0) - 3.5, y=Y_ROUTE, w=w)
+        route_right = cx(0) - 3.5 + w
     for k, bid in grp.get("label", []):
         _put_centered(by_id[bid], cx(k + off), Y_HEADER, COL_W)
     for k, bid in grp.get("ctl", []):
@@ -227,6 +229,7 @@ def layout_edit_view(boxes, lines, roles):
     # ---- service area ---------------------------------------------------------
     x_a = max(cx(n_cols - 1) + PITCH,
               (MOD_X0 + n_mod * MOD_PITCH) if n_mod else 0.0,
+              route_right,
               700.0) + SERV_GAP
     x_b = x_a + SERV_COL_B
     for role, x, y in (("loadbang", x_a, 20.0), ("getattr", x_a, 50.0),

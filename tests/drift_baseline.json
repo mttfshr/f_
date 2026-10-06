@@ -9,16 +9,6 @@
    "reason": "MSP audio-analysis patch (meter~/number~, hand-laid UI, no pix codebox); the schema has no audio archetype.",
    "status": "out_of_scope"
   },
-  "f_lens": {
-   "counts": {
-    "boxes_def_only": 25,
-    "boxes_patch_only": 9,
-    "layout": 17,
-    "lines_patch_only": 2,
-    "props": 18
-   },
-   "status": "drift"
-  },
   "f_masonry": {
    "counts": {
     "boxes_def_only": 24,
@@ -70,8 +60,6 @@
   },
   "f_vf_vorticity": {
    "counts": {
-    "boxes_def_only": 2,
-    "boxes_patch_only": 2,
     "props": 3
    },
    "status": "drift"

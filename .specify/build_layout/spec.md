@@ -103,6 +103,14 @@ detects the route -> routepass cord and puts `routepass` and `vs_inState` below 
 cord and everything after it runs downward. Without it nothing changes. Test:
 `test_route_first_puts_routepass_below_the_route_and_wires_downward` (processor and dual).
 
+## Addendum 2026-10-05: the service area clears the route box
+
+The route box is never clipped below its text (`len(text) * 6.5`), which is wider than its lane columns
+(72 px each) when token names are long. The service area (`x_a`) used to look at the lane columns only,
+so it could start inside the route box (f_lens, once its tilt-shift tokens were gone: `moduleSize.js` at
+x=1000 inside a route that ran to x=1090). `x_a` is now at least the route box's right edge plus the
+service gap. Test: `test_the_service_area_clears_a_route_box_that_is_wider_than_the_lane`.
+
 ## Non-goals
 
 Presentation layout changes; retrofitting hand-edited modules; gen-subpatcher layout;

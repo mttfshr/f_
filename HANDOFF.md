@@ -51,8 +51,14 @@ Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite gree
 - **Coordination note:** while I was working, uncommitted work from an *interrupted earlier session* (`pix_context`, `label: None`, `capture_raw.py`, and a
   test file with a SyntaxError) appeared in the tree; Matt confirmed the connection had dropped. I finished and committed it (`d8e32ac`). If a half-finished
   session ever leaves changes again: check `git status` and timestamps before editing, and do not overwrite them.
-- **Next:** `f_lens` is the only module left in T014 (it has `raw_boxes`/`raw_ui` already; its definition still builds the removed tiltshift). Then Phase 4
-  (schema gaps: Param-bypass first), Phase 5 (the generated `f_modules` menu). The colour modules
+- **`f_lens` closed; T014 is complete (28 of 39 exact, baseline 11).** Its definition was the 2026-07-15 dry run and still built the tilt-shift stage the patch
+  dropped on 2026-09-23; now it reproduces the patch (untouched). Builder fix on the way: **`_parameter_range` messages are written Max-style** (`1.` not `1.0`),
+  which also shrinks `f_vf_vorticity`'s drift; `legacy` gained **`element_box` / `element_valueof`** (any element by override key); the **layout pass now keeps
+  the service area clear of a wide route box** (an overlap that was hidden by the tilt tokens).
+- **Still drifting (baseline 11):** `f_masonry` (T015), `f_stereo` (its remaining items are now expressible with `legacy`: a quick win), `f_texrouter`, `f_vf_flow`
+  (props 1), `f_vf_vorticity` (props 3), `f_vf_warp` (1 box / 1 box); five modules are out of scope.
+- **Next:** the quick wins (`f_stereo`, `f_vf_flow`, `f_vf_vorticity`, `f_vf_warp` are each a few differences), then Phase 4 (schema gaps, Param-bypass first), Phase 5
+  (the generated `f_modules` menu). Nothing needs Max right now: every patch changed in T014's last stretch is untouched. The colour modules
   and `f_grain` also route `bypass`, so `route_bypass` is available to them.
 
 ## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3

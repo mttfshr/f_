@@ -162,6 +162,15 @@ patcher = {
 # initial value), "control_box" ({param: {box property: value}}; None removes the property: e.g. a dial
 # whose param_connect was removed by hand; cannot set id, maxclass, patching_rect or patcher). Loud on an
 # unknown key or a wrong shape. Added 2026-10-05, T014 (the four oldest colour modules).
+# "element_valueof" ({element key: {valueof key: value}}) and "element_box" ({element key: {property:
+# value}}) do the same for ANY generated element by its override key ("aberration.range_menu",
+# "panel_toggle"), applied after `overrides` (f_lens: range menus Max saved with an explicit mmax,
+# modmode 0 and an auto scripting name; the panel toggle's default enum labels). Loud on an unknown
+# element, an element with no saved valueof block, or a denied property. Added 2026-10-05, T014.
+#
+# range_tiers: the `_parameter_range` message text writes each bound the way Max writes a float in a
+# message box ("1." not "1.0", "-5." not "-5.0", "0." for zero; others as their shortest repr "0.2").
+# The builder used to write "1.0", which Max rewrites on load. Fixed 2026-10-05 (f_lens, f_vf_vorticity).
 #
 # raw_boxes / raw_lines / raw_parameters for a module are best derived, not typed:
 # `build/py.sh build/capture_raw.py src/f_x/definition.py` writes `raw_ui.json` next to the

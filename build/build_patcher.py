@@ -410,17 +410,24 @@ def range_tier_boxes(n, p):
     msgs = []
     for t, tier in enumerate(tiers):
         lower, upper = tier_bounds(tier)
-        # Preserve exact legacy text for unipolar tiers ("0." not "0.0.");
-        # bipolar tiers interpolate the lower bound directly.
-        lower_str = "0." if lower == 0 else str(lower)
+        # Both bounds the way Max writes a float in a message box (`_max_float_text`): a whole number
+        # is "1." not "1.0".  (The builder used to write "1.0" for the upper bound and every bipolar
+        # lower bound, which Max rewrites on load: f_lens and f_vf_vorticity both showed it as drift.)
         msgs.append(box(range_msg_id(n, t),
             maxclass="message",
             numinlets=2, numoutlets=1, outlettype=[""],
             patching_rect=[500.0 + n * 120.0 + t * 150.0, 280.0 + t * 30.0,
                            134.0, 22.0],
-            text=f"_parameter_range {lower_str} {upper}"))
+            text=f"_parameter_range {_max_float_text(lower)} {_max_float_text(upper)}"))
 
     return [menu, sel] + msgs
+
+
+def _max_float_text(x):
+    """A float as Max writes it in a message box: a whole number is "1." (not "1.0", "-1." not "-1.0",
+    "0." not "0.0"); anything else is its shortest repr ("0.2", "1.5")."""
+    x = float(x)
+    return f"{int(x)}." if x == int(x) else repr(x)
 
 
 def _hint_kw(p):
@@ -1261,7 +1268,9 @@ def build(defn, debug=None, side_files=None):
     # legacy: state of objects that were re-created in Max, kept so a patch can stay byte-faithful
     # instead of being regenerated: {"pix_varname": str, "autopattr_varname": str,
     # "bypass_jsui_saved": dict, "control_valueof": {param: {valueof key: value or None}},
-    # "control_box": {param: {box property: value or None}}}.  The pix
+    # "control_box": {param: {box property: value or None}},
+    # "element_valueof" / "element_box": the same for ANY generated element by its override key
+    # ("aberration.range_menu", "panel_toggle"), applied after `overrides`}.  The pix
     # varname is also what every control's param_connect names (that is how Max wrote it).
     # `control_valueof` patches a control's saved `valueof` (None removes a key): leftovers such as a
     # default shortname or a missing initial value.  Default-off; delete an entry when the module is
@@ -1269,10 +1278,11 @@ def build(defn, debug=None, side_files=None):
     legacy = defn.get("legacy", {})
     if not isinstance(legacy, dict):
         raise ValueError(f"legacy must be a dict, not {legacy!r}")
-    unknown = sorted(set(legacy) - {"pix_varname", "autopattr_varname", "bypass_jsui_saved", "control_valueof", "control_box"})
+    unknown = sorted(set(legacy) - {"pix_varname", "autopattr_varname", "bypass_jsui_saved", "control_valueof", "control_box",
+                              "element_valueof", "element_box"})
     if unknown:
         raise ValueError(f"legacy: unknown key(s) {unknown} (allowed: pix_varname, autopattr_varname, "
-                         f"bypass_jsui_saved, control_valueof, control_box)")
+                         f"bypass_jsui_saved, control_valueof, control_box, element_valueof, element_box)")
     cvo = legacy.get("control_valueof", {})
     if not isinstance(cvo, dict) or not all(isinstance(k, str) and isinstance(v, dict) for k, v in cvo.items()):
         raise ValueError("legacy.control_valueof must be {param name: {valueof key: value}}")
@@ -1287,6 +1297,10 @@ def build(defn, debug=None, side_files=None):
         raise ValueError(f"legacy.control_box names params that do not exist: {no_param}")
     if any(k in ("id", "maxclass", "patching_rect", "patcher") for v in cbx.values() for k in v):
         raise ValueError("legacy.control_box cannot set id, maxclass, patching_rect or patcher")
+    for lk in ("element_valueof", "element_box"):
+        ev = legacy.get(lk, {})
+        if not isinstance(ev, dict) or not all(isinstance(k, str) and isinstance(v, dict) and v for k, v in ev.items()):
+            raise ValueError(f"legacy.{lk} must be {{element key: {{property: value}}}} (non-empty dicts)")
     for k in ("pix_varname", "autopattr_varname"):
         if k in legacy and (not isinstance(legacy[k], str) or not legacy[k]):
             raise ValueError(f"legacy.{k} must be a non-empty string, not {legacy[k]!r}")
@@ -1628,6 +1642,25 @@ def build(defn, debug=None, side_files=None):
     # pass, which only ever rewrites patching_rect (a property overrides may not touch).
     if defn.get("overrides"):
         apply_overrides(boxes, keys, defn["overrides"])
+    # legacy.element_box / element_valueof: re-created-object leftovers on any element (after overrides)
+    if legacy.get("element_box"):
+        apply_overrides(boxes, keys, legacy["element_box"])
+    if legacy.get("element_valueof"):
+        by_id = {b["box"]["id"]: b["box"] for b in boxes}
+        for key, vals in legacy["element_valueof"].items():
+            if key not in keys:
+                raise ValueError(f"legacy.element_valueof: unknown element {key!r}; known elements: {sorted(keys)}")
+            box_ = by_id.get(keys[key])
+            if box_ is None:
+                raise ValueError(f"legacy.element_valueof: element {key!r} is not part of this build")
+            vo = box_.get("saved_attribute_attributes", {}).get("valueof")
+            if vo is None:
+                raise ValueError(f"legacy.element_valueof: element {key!r} has no saved valueof block")
+            for k, v in vals.items():
+                if v is None:
+                    vo.pop(k, None)
+                else:
+                    vo[k] = copy.deepcopy(v)
 
     # Edit-view layout pass (.specify/build_layout/spec.md): rewrites patching_rect ONLY.
     # Opt out per module with "edit_layout": False in definition.py. Self-verifying:

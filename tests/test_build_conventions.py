@@ -20,6 +20,8 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
     per-param `color_expression`: the oldest modules' re-created-object state, T014 (f_channel_grader)
   - `"color_expression": None` (no activedialcolor entry) and `legacy.control_box` (top-level box
     properties of a control): f_hue_processor / f_luma_processor / f_tone_curve, T014
+  - range-tier `_parameter_range` messages written the way Max writes floats ("1." not "1.0"), and
+    `legacy.element_box` / `legacy.element_valueof` (any element by its override key): f_lens, T014
   - `route_bypass`: `bypass` is the first `route` token, wired to the bypass jsui, and every param
     outlet is one higher; off (the default) changes nothing (T014)
 
@@ -817,6 +819,107 @@ def test_the_band_editor_colour_modules_build_as_they_ship():
         _eq(f"{name}: no bypass-message cord is missing (route outlet 0 reaches the jsui)",
             any(ln["patchline"]["source"] == [bp.OBJ_ROUTE, 0]
                 and top[ln["patchline"]["destination"][0]]["maxclass"] == "jsui" for ln in p["lines"]), True)
+
+
+# ---- range-tier message text, legacy.element_*  (f_lens)
+
+def test_max_float_text_is_max_style():
+    f = bp._max_float_text
+    _eq("whole numbers get a trailing dot, not .0",
+        [f(0), f(0.0), f(1.0), f(-1.0), f(10.0), f(-5.0), f(100.0)], ["0.", "0.", "1.", "-1.", "10.", "-5.", "100."])
+    _eq("everything else is its shortest repr", [f(0.2), f(1.5), f(-0.5), f(0.25), f(0.1)],
+        ["0.2", "1.5", "-0.5", "0.25", "0.1"])
+
+
+def test_range_tier_messages_are_written_max_style_for_unipolar_and_bipolar_tiers():
+    def texts(tiers):
+        d = _defn()
+        d["params"][0]["range_tiers"] = tiers
+        return sorted(b["text"] for b in _boxes_of(d) if b.get("maxclass") == "message" and b["text"].startswith("_parameter_range"))
+    _eq("bipolar tuples", texts([(-1.0, 1.0), (-2.0, 2.0), (-10.0, 10.0)]),
+        ["_parameter_range -1. 1.", "_parameter_range -10. 10.", "_parameter_range -2. 2."])
+    _eq("unipolar floats, whole and fractional", texts([0.2, 1.0, 10.0]),
+        ["_parameter_range 0. 0.2", "_parameter_range 0. 1.", "_parameter_range 0. 10."])
+    _eq("a fractional bipolar tier", texts([(-0.5, 0.5), (-1.0, 1.0)]), ["_parameter_range -0.5 0.5", "_parameter_range -1. 1."])
+
+
+def _elements(defn):
+    dbg = {}
+    p = bp.build(defn, debug=dbg)["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    return top, dbg["element_keys"]
+
+
+def test_legacy_element_box_and_valueof_patch_any_element_by_its_override_key():
+    def tiered(**legacy):
+        d = _defn()
+        d["params"][0]["range_tiers"] = [(-1.0, 1.0), (-2.0, 2.0)]
+        d["legacy"] = legacy
+        return d
+    top0, keys0 = _elements(tiered())
+    menu0 = top0[keys0["g.range_menu"]]
+    top, keys = _elements(tiered(element_box={"g.range_menu": {"varname": "live.menu[1]"}},
+                                 element_valueof={"g.range_menu": {"parameter_mmax": 1, "parameter_modmode": 0}}))
+    menu = top[keys["g.range_menu"]]
+    _eq("varname set (unset by default), mmax and modmode added to the saved valueof",
+        (menu0.get("varname"), menu.get("varname"),
+         menu["saved_attribute_attributes"]["valueof"].get("parameter_mmax"),
+         menu["saved_attribute_attributes"]["valueof"].get("parameter_modmode")),
+        (None, "live.menu[1]", 1, 0))
+    _eq("everything else on that menu is unchanged",
+        {k: v for k, v in menu.items() if k not in ("varname", "saved_attribute_attributes")},
+        {k: v for k, v in menu0.items() if k not in ("varname", "saved_attribute_attributes")})
+    _eq("and no other element changed",
+        sorted(i for i in top if top[i] != top0.get(i) and i != keys["g.range_menu"]), [])
+    top2, keys2 = _elements(tiered(element_valueof={"g.range_menu": {"parameter_enum": None}}))
+    _eq("None removes a valueof key",
+        "parameter_enum" in top2[keys2["g.range_menu"]]["saved_attribute_attributes"]["valueof"], False)
+
+    def raises(label, legacy, fragment):
+        try:
+            bp.build(dict(tiered(), legacy=legacy))
+        except ValueError as e:
+            check(label, 0 if fragment in str(e) else 1, 0)
+        else:
+            check(label + " (nothing was raised)", 1, 0)
+    raises("element_box: unknown element", {"element_box": {"nope.ctl": {"varname": "x"}}}, "unknown element")
+    raises("element_valueof: unknown element", {"element_valueof": {"nope.ctl": {"a": 1}}}, "unknown element")
+    raises("element_box: wrong shape", {"element_box": {"g.ctl": "x"}}, "element_box")
+    raises("element_valueof: empty dict", {"element_valueof": {"g.ctl": {}}}, "element_valueof")
+    raises("element_valueof: an element with no saved valueof", {"element_valueof": {"g.label": {"a": 1}}}, "no saved valueof")
+    raises("element_box: a denied property", {"element_box": {"g.ctl": {"id": "obj-1"}}}, "cannot be overridden")
+
+
+def test_f_lens_builds_from_its_definition_as_it_ships():
+    built, _ = drift.build_module("f_lens")
+    p = built["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    route = top[bp.OBJ_ROUTE]
+    _eq("no tilt-shift tokens in the route (it moved to f_focus)",
+        [t for t in route["text"].split() if t in ("tilt", "tilt_axis", "tilt_pos", "slope", "mode")], [])
+    _eq("two pix: the primary lens pix and the raw halation pix",
+        sorted(b["text"] for b in top.values() if str(b.get("text", "")).startswith("jit.gl.pix")),
+        ["jit.gl.pix vsynth @name lens_halation @type char", "jit.gl.pix vsynth @name lens_pix @type char"])
+    cords = {(tuple(ln["patchline"]["source"]), tuple(ln["patchline"]["destination"])) for ln in p["lines"]}
+    _eq("the chain is lens pix -> halation -> outlet (no direct pix -> outlet cord)",
+        (((bp.OBJ_PIX, 0), ("obj-raw-17", 0)) in cords, (("obj-raw-17", 0), (bp.OBJ_OUTLET, 0)) in cords,
+         ((bp.OBJ_PIX, 0), (bp.OBJ_OUTLET, 0)) in cords), (True, True, False))
+    byp = [i for i, b in top.items() if b["maxclass"] == "attrui" and b.get("attr") == "bypass"][0]
+    _eq("the bypass attrui feeds both pix (the 2026-09-23 fix)",
+        (((byp, 0), (bp.OBJ_PIX, 0)) in cords, ((byp, 0), ("obj-raw-17", 0)) in cords), (True, True))
+    _eq("the range messages are Max-style",
+        sorted(b["text"] for b in top.values() if b["maxclass"] == "message" and b["text"].startswith("_parameter_range")),
+        ["_parameter_range -1. 1."] * 4 + ["_parameter_range -10. 10."] + ["_parameter_range -2. 2."] * 2 + ["_parameter_range -5. 5."] * 2)
+    toggle = [b for b in top.values() if b["maxclass"] == "live.text"
+              and b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == "panel_toggle"][0]
+    _eq("the panel toggle keeps Max's default enum labels (its visible labels are text / texton)",
+        (toggle["saved_attribute_attributes"]["valueof"]["parameter_enum"], toggle["text"], toggle["texton"]),
+        (["val1", "val2"], "lens", "field"))
+    menus = {b["saved_attribute_attributes"]["valueof"]["parameter_longname"]: (b.get("varname"), b["saved_attribute_attributes"]["valueof"]["parameter_mmax"])
+             for b in top.values() if b["maxclass"] == "live.menu" and "range_" in b["saved_attribute_attributes"]["valueof"]["parameter_longname"]}
+    _eq("the range menus carry Max's auto names and item-count mmax",
+        menus, {"range_aberration": ("live.menu", 2), "range_distortion": ("live.menu[1]", 1),
+                "range_transmission": ("live.menu[2]", 1), "range_ghost_spacing": ("live.menu[3]", 1)})
 
 
 if __name__ == "__main__":

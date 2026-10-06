@@ -1,31 +1,16 @@
 # f_lens patcher definition
 # Input to build/build_patcher.py
-# Last updated: 2026-07-15 (v2 in progress — ghost images added; tilt-shift
-# now correctly represented via raw_ui + raw_boxes/raw_lines, replacing
-# the previous inaccurate "internal" placeholder declarations)
+# Last updated: 2026-10-05 (build_cleanup T014): brought back in line with the shipped patcher.
 #
-# Tilt-shift (tilt/tilt_axis/tilt_pos/slope/mode) has real UI and route
-# dispatch, but targets a secondary object (jit.fx.cf.tiltshift) via
-# bespoke per-param transform logic (lens_tiltcenter.js combining
-# tilt_axis+tilt_pos; a sel-based dispatch for mode) that doesn't fit a
-# generic schema -- declared here as "raw_ui" params (reserve a route
-# outlet, no generated UI) plus verbatim raw_boxes/raw_lines/raw_parameters
-# extracted from the working live patcher, ID-remapped to the obj-raw-N
-# namespace to avoid colliding with anything the schema generates. See
-# ideas/build_patcher_schema_gaps.md for the full background, and
-# raw_tiltshift.json (sibling file) for the extracted content itself.
-#
-# Slated for full removal once f_focus ships (see .specify/f_focus/) --
-# at that point this whole raw_ui/raw_boxes block should be deleted
-# outright, not "fixed further."
+# The tilt-shift stage was removed from the patch on 2026-09-23 (it moved to f_focus), so the chain is
+# two pix: the primary lens_pix, then lens_halation (a raw pix, raw_halation.json), which feeds
+# the outlet. Everything else is generic: the optical dials with their range tiers, the ghost
+# params, four mod inlets, and the front/back panel toggle.
 
 import json
 from pathlib import Path
 
-_raw = json.loads((Path(__file__).parent / "raw_tiltshift.json").read_text())
-_raw_halation = json.loads((Path(__file__).parent / "raw_halation.json").read_text())
-_raw["raw_boxes"] = _raw["raw_boxes"] + _raw_halation["raw_boxes"]
-_raw["raw_lines"] = _raw["raw_lines"] + _raw_halation["raw_lines"]
+_raw = json.loads((Path(__file__).parent / "raw_halation.json").read_text())
 
 CODEBOX = """\
 Param aberration(0.0);
@@ -151,14 +136,6 @@ patcher = {
          "pix_target": "obj-raw-17"},
         {"name": "halation_threshold", "type": "float", "min": 0.0, "max": 1.0, "default": 0.7, "label": "Hal Thresh", "hint": "Luma gate point -- regions above this bloom.",
          "pix_target": "obj-raw-17"},
-        # raw_ui: real UI + route dispatch, but targets jit.fx.cf.tiltshift
-        # (a secondary object) via raw_boxes/raw_lines below, not the
-        # primary pix. See module docstring above.
-        {"name": "tilt",            "type": "raw_ui"},
-        {"name": "tilt_axis",       "type": "raw_ui"},
-        {"name": "tilt_pos",        "type": "raw_ui"},
-        {"name": "slope",           "type": "raw_ui"},
-        {"name": "mode",            "type": "raw_ui"},
         {"name": "bypass",          "type": "bypass"},
     ],
 
@@ -183,7 +160,6 @@ patcher = {
     # broader UI density refactor.
     "panel_toggle": {
         "front": ["aberration", "distortion", "transmission",
-                  "tilt", "tilt_axis", "tilt_pos", "slope", "mode",
                   "ghost", "ghost_count", "ghost_spacing",
                   "halation", "halation_threshold"],
         "back": ["aberration_mod", "distortion_mod", "transmission_mod", "surface_mod"],
@@ -192,14 +168,56 @@ patcher = {
     },
 
     # Skip the schema's automatic primary-pix -> outlet0 wire for outlet 0 --
-    # the chain is lens_pix -> halation -> tiltshift -> outlet0 (halation
-    # inserted 2026-07-15). All three hops are supplied explicitly via
-    # raw_lines (see raw_tiltshift.json + raw_halation.json).
-    "outlet_source_override": {0: "tiltshift"},
+    # the chain is lens_pix -> halation -> outlet0, and both hops are supplied
+    # explicitly via raw_lines (raw_halation.json).
+    "outlet_source_override": {0: "halation"},
 
     "raw_boxes":      _raw["raw_boxes"],
     "raw_lines":      _raw["raw_lines"],
-    "raw_parameters": _raw["raw_parameters"],
+    "raw_parameters": {},
+
+    # What Max wrote when it saved these controls (build/spec.md, "legacy"): each range menu got an
+    # explicit parameter_mmax (its item count - 1: aberration has 3 tiers, the others 2), parameter_modmode 0
+    # and an auto scripting name; the panel toggle kept Max's default enum labels (its visible labels are
+    # its text / texton). Delete an entry when the module is next regenerated.
+    "legacy": {
+        "element_box": {"aberration.range_menu":   {"varname": "live.menu"},
+                        "distortion.range_menu":    {"varname": "live.menu[1]"},
+                        "transmission.range_menu":  {"varname": "live.menu[2]"},
+                        "ghost_spacing.range_menu": {"varname": "live.menu[3]"}},
+        "element_valueof": {"aberration.range_menu":   {"parameter_mmax": 2, "parameter_modmode": 0},
+                            "distortion.range_menu":    {"parameter_mmax": 1, "parameter_modmode": 0},
+                            "transmission.range_menu":  {"parameter_mmax": 1, "parameter_modmode": 0},
+                            "ghost_spacing.range_menu": {"parameter_mmax": 1, "parameter_modmode": 0},
+                            "panel_toggle":             {"parameter_enum": ["val1", "val2"]}},
+    },
 
     "codebox": CODEBOX,
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "aberration_mod.ctl": {"hidden": 1},
+    "aberration_mod.label": {"hidden": 1},
+    "distortion_mod.ctl": {"hidden": 1},
+    "distortion_mod.label": {"hidden": 1, "presentation_rect": [152.0, 20.0, 50.0, 18.0]},
+    "ghost.ctl": {"presentation_rect": [3.0, 100.0, 27.0, 43.0]},
+    "ghost.label": {"presentation_rect": [-11.0, 82.0, 50.0, 18.0]},
+    "ghost_count.ctl": {"presentation_rect": [93.0, 106.0, 34.0, 15.0]},
+    "ghost_count.label": {"presentation_rect": [85.0, 84.0, 50.0, 18.0]},
+    "ghost_spacing.ctl": {"presentation_rect": [47.0, 100.0, 27.0, 43.0]},
+    "ghost_spacing.label": {"presentation_rect": [36.0, 82.0, 50.0, 18.0]},
+    "halation.ctl": {"presentation_rect": [86.0, 38.0, 27.0, 43.0]},
+    "halation.label": {"presentation_rect": [75.0, 20.0, 50.0, 18.0]},
+    "halation_threshold.ctl": {"presentation_rect": [123.0, 38.0, 27.0, 43.0]},
+    "halation_threshold.label": {"presentation_rect": [112.0, 20.0, 52.0, 18.0]},
+    "panel": {"presentation_rect": [0.0, 0.0, 231.0, 156.0]},
+    "surface_mod.ctl": {"hidden": 1},
+    "surface_mod.label": {"hidden": 1, "presentation_rect": [33.0, 82.0, 50.0, 18.0]},
+    "transmission.ctl": {"presentation_rect": [148.0, 100.0, 27.0, 43.0]},
+    "transmission.label": {"presentation_rect": [136.0, 82.0, 50.0, 18.0]},
+    "transmission.range_menu": {"presentation_rect": [191.0, 82.0, 16.0, 15.0]},
+    "transmission_mod.ctl": {"hidden": 1},
+    "transmission_mod.label": {"hidden": 1, "presentation_rect": [0.0, 82.0, 52.0, 18.0]},
+}
+# END overrides
