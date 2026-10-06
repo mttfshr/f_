@@ -9,7 +9,8 @@ Per module, asserted:
   - no unexpected Max errors (environment noise and known issues excluded)
   - every route parameter with a known range, sent as a control message,
     reads back unchanged on its target pix attribute
-  - processors: under bypass (jsui, i.e. a click), out1 == in1 exactly
+  - bypass (jsui, i.e. a click): a processor's out1 == in1 exactly, and every outlet listed
+    in BYPASS_EXPECT shows what that table says (tests/test_bench_expect.py keeps it complete)
 Reported, not asserted:
   - whether the documented `bypass 1` control message works
   - pix objects the bypass leaves active
@@ -40,21 +41,85 @@ ENV_NOISE = ("jpatcher: doesn't understand getattr",)
 KNOWN = {
 }
 
-# Secondary outlets that must equal in1 under bypass (out1 is always checked).
-# f_vf_warp out2 is the isolated warped layer; bypassed it degenerates to the
-# unwarped source, same as out1 (fixed 2026-09-23).  Every module moved to
-# `bypass_mode: "param"` (plan.md item 10, Matt's 2026-10-05 passthrough rule) lists its
-# secondary outlets here.
-BYPASS_PASSTHROUGH_OUTLETS = {
-    "f_vf_warp": (2,),
-    "f_vf_glow": (2,),
-    "f_vf_streak": (2,),
-    "f_vf_chroma": (2,),
-    "f_vf_prism": (2,),     # out3 passes the vecfield input (neutral if unconnected), not in1: unchecked here
-    "f_caustic": (2,),
-    "f_vf_split": (2,),
-    "f_vf_advect": (2,),    # out3 passes the vecfield input (neutral if unconnected), not in1: unchecked here
+# What each outlet must show under bypass: {module: {outlet: expectation}}.  A processor's
+# out1 is checked as `in1` without being listed (the implicit default, see module_issues);
+# every other outlet of a module moved to `bypass_mode: "param"` (plan.md item 10, Matt's
+# 2026-10-05 passthrough rule) is listed here, and tests/test_bench_expect.py fails when one
+# is missing.  The bench feeds in1 random char-representable RGBA and every other inlet
+# neutral grey (128/255 in all four channels, modulebench.neutral).  Expectations:
+#   ("in", k)            equals the texture fed to inlet k, exactly
+#   ("vec", k, tol)      the vecfield passthrough of inlet k: (R, G, 0.5, 1.0); a char outlet
+#                        cannot hold 0.5 exactly, hence the tolerance there
+#   ("const", rgba, tol) a constant (a module with no texture input, bypassed to neutral values)
+# Expectations other than ("in", 1) for f_stipple, f_grain, f_chladni and the out3 of
+# f_vf_prism / f_vf_advect were derived from the codeboxes (2026-10-06) and are not yet seen
+# green live: the first live run validates them.
+IN1 = ("in", 1)
+BYPASS_EXPECT = {
+    "f_vf_warp": {2: IN1},      # out2 is the isolated warped layer; bypassed it is the unwarped source (fixed 2026-09-23)
+    "f_vf_glow": {2: IN1},
+    "f_vf_streak": {2: IN1},
+    "f_vf_chroma": {2: IN1},
+    "f_vf_prism": {2: IN1, 3: ("vec", 2, 0.0042)},     # out3: the vecfield input (neutral 0.5 if unconnected)
+    "f_caustic": {2: IN1},
+    "f_vf_split": {2: IN1},
+    "f_vf_advect": {2: IN1, 3: ("vec", 2, 1e-5)},      # out3: the vecfield input (neutral 0.5 if unconnected)
+    "f_masonry": {2: IN1},                              # out2 is the brick mask
+    "f_stipple": {1: IN1, 2: IN1, 3: IN1},              # dual: the source when connected, black when not
+    "f_grain": {1: IN1, 2: IN1, 3: IN1},                # dual: the source when connected, black when not
+    "f_chladni": {                                      # generator, no texture input: neutral values
+        1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # luma: black
+        2: ("const", (0.5, 0.5, 0.0, 1.0), 0.0),        # vecfield: zero vector
+        3: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # magnitude: black
+    },
 }
+
+
+def bypass_expected(spec, inputs):
+    """(expected array or colour, tolerance) for one BYPASS_EXPECT entry; inputs maps inlet -> array."""
+    kind = spec[0]
+    if kind == "in":
+        return inputs[spec[1]], 0.0
+    if kind == "vec":
+        a = inputs[spec[1]].copy()
+        a[..., 2] = np.float32(0.5)
+        a[..., 3] = np.float32(1.0)
+        return a, spec[2]
+    if kind == "const":
+        return np.array(spec[1], np.float32), spec[2]
+    raise ValueError(f"unknown bypass expectation {spec!r}")
+
+
+def bypass_issues(name, info, n, bypassed):
+    """The bypass findings for one module, as module_issues() tuples.  `bypassed` maps
+    outlet number -> captured frame; info carries archetype, n_in and the first input.
+    Pure (no Max), so tests/test_bench_expect.py can exercise it with synthetic frames."""
+    issues = []
+    expect = dict(BYPASS_EXPECT.get(name, {}))
+    implicit = set()
+    if info["archetype"] == "processor" and name not in NEUTRAL_BYPASS_BY_DESIGN and 1 not in expect:
+        expect[1] = IN1                     # a processor's out1 is its input under bypass, always
+        implicit.add(1)                     # (and is skipped silently when no frame was captured)
+    ins = {1: info["input"]}
+    for k in range(2, info["n_in"] + 1):
+        ins[k] = mb.neutral(n)              # what run_module feeds every inlet after the first
+    for k, spec in sorted(expect.items()):
+        got = bypassed.get(k)
+        if got is None:
+            if k not in implicit:
+                issues.append((f"bypass_out{k}", "", "no bypassed frame captured"))
+            continue
+        want, tol = bypass_expected(spec, ins)
+        if spec[0] != "const" and want.shape != got.shape:
+            issues.append((f"bypass_out{k}", "", f"bypassed frame is {got.shape}, expected {want.shape}"))
+            continue
+        d = float(np.abs(got - want).max())
+        if d > tol:
+            mean = lambda a: np.round(np.asarray(a, np.float64).reshape(-1, 4).mean(axis=0), 4).tolist()
+            issues.append((f"bypass_out{k}", "",
+                           f"max |out{k} - expected {spec[0]}{spec[1]}| = {d:.4g} under bypass (tol {tol:g}); "
+                           f"mean out {mean(got)}, mean expected {mean(np.broadcast_to(want, got.shape))}"))
+    return issues
 
 # Multi-stage modules whose specs deliberately gate bypass at the final stage
 # only (feedback loops stay warm / intermediate stages need no gating):
@@ -119,21 +184,7 @@ def module_issues(name):
                 for pix, v in vals.items():
                     if v is None or abs(float(v) - p["value"]) > 1e-4 * max(1.0, abs(p["value"])):
                         issues.append(("param", p["name"], f"{pix}.{a} = {v}, sent {p['value']:.6g}"))
-    if info["archetype"] == "processor" and name not in NEUTRAL_BYPASS_BY_DESIGN:
-        byp = (r.get("arrays") or {}).get("bypassed", {}).get(1)
-        if byp is not None:
-            d = float(np.abs(byp - info["input"]).max())
-            if d > 0:
-                issues.append(("bypass_out1", "", f"max |out1 - in1| = {d:.4g} under bypass"))
-        # secondary outlets that are also meant to pass the input through
-        for k in BYPASS_PASSTHROUGH_OUTLETS.get(name, ()):
-            bk = (r.get("arrays") or {}).get("bypassed", {}).get(k)
-            if bk is None:
-                issues.append((f"bypass_out{k}", "", "no bypassed frame captured"))
-            else:
-                d = float(np.abs(bk - info["input"]).max())
-                if d > 0:
-                    issues.append((f"bypass_out{k}", "", f"max |out{k} - in1| = {d:.4g} under bypass"))
+    issues += bypass_issues(name, info, n, (r.get("arrays") or {}).get("bypassed", {}))
     bm = r.get("bypass_msg_readback") or {}
     (_bypass_msg["works"] if bm and all(v == 1 for v in bm.values()) else _bypass_msg["no"]).append(name)
     return issues, r, info
