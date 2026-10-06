@@ -234,8 +234,8 @@ f_/
     build_patcher.py    — generates .maxpat from a definition file (see build/spec.md)
     spec.md             — build script spec
     extract_params.py, generate_helpfiles.py
-  tools/       — f_modules menu-maintenance scripts only (not build infra; to be replaced)
-    rebuild_modules_menu.py, append_nabla_menu.py
+    generate_menu.py    — generates f_modules.maxpat and f_addmod.js's SIZES from src/f_modules/menu.py
+    generate_launch.py  — generates f_Launch.maxpat from the README Patches table
   skills/      — Claude skills for collaborating on this repo (copies of the source
                  skills in claude-scaffold; this file's copy lives here)
   .specify/    — planning workspace: spec.md/plan.md/tasks.md only (version controlled — no longer gitignored)
@@ -713,11 +713,9 @@ vecfield outlet surfaced to users in two places:
    value `[0.302, 0.325, 0.463, 1.0]` to match the rest of the library —
    `build_patcher.py` doesn't do this automatically for non-exact-match
    signal_type strings.
-2. **`f_modules` menu**: add the module's bare filename (e.g. `"chladni"`)
-   to `tools/append_nabla_menu.py`'s `VECFIELD_MODULES` set, then rerun
-   the script — appends `" ∇"` to its display label. Note the script's
-   `PATH` constant points at `package/patchers/f_modules.maxpat` (repo
-   reorg location, not the old `patchers/` path).
+2. **`f_modules` menu**: in `src/f_modules/menu.py` give the module's entry the
+   vecfield flag (`("Chladni", "chladni", True)`), then run
+   `build/py.sh build/generate_menu.py` — the flag appends `" ∇"` to its display label.
 
 Established 2026-07-12 via `f_chladni`'s `out3`/vecfield labeling pass —
 see HANDOFF.md and `.specify/f_chladni/plan.md` for the concrete example.
@@ -1000,12 +998,12 @@ Key decisions:
 
 ### Adding a New Module
 
-**`f_modules.maxpat` has no build script** — unlike production module patchers, it's fully hand-built JSON, edited directly via small one-off Python scripts in `tools/` (e.g. `tools/rebuild_modules_menu.py`, `tools/append_nabla_menu.py`) that load/mutate/rewrite the JSON. These are one-off per edit, not a reusable generator — see `tools/README.md`. (An earlier `build_modules.py` script, now at `build/tools/f_modules/build_modules.py`, is no longer how this file is maintained.)
+**`f_modules.maxpat` and the `SIZES` table of `f_addmod.js` are generated** (build_cleanup T021, 2026-10-05) by `build/generate_menu.py` from `src/f_modules/menu.py`: never hand-edit either file. `build/py.sh build/generate_menu.py --check` exits 1 if either is stale.
 
-Two things need updating when a module is added:
+To add a module, add one entry to `src/f_modules/menu.py` and regenerate:
 
-1. **`package/patchers/f_modules.maxpat`** — add the module's display name + filename to the appropriate category's menu, via a small script or direct JSON edit. `python3 -c "import json; json.load(open('package/patchers/f_modules.maxpat'))"` to validate after.
-2. **`javascript/f_addmod.js`** — add entry to `SIZES` dict: `"filename": [w, h]`. Get the size from the module's `presentation_rect` on its background panel.
+1. **`CATEGORIES`** — `(display, module, vecfield)` in the right category. The category labels and members must match the README Patches table (the table `f_Launch` is generated from); the generator fails loudly if they differ, if the patcher does not exist, or if a shipped patcher is neither in the menu nor in `NOT_IN_MENU` (with a reason). A ∇ category takes vecfield modules only.
+2. **Size** — nothing to do: it is the module's presentation panel rect, rounded. Add a `SIZE_OVERRIDES` entry (with a reason) only for a module whose content extends past its panel; an override equal to the panel size fails the check as stale.
 
 ### Why No f_menu Wrapper
 
@@ -1013,7 +1011,7 @@ The original design had `f_menu.maxpat` as a thin bpatcher wrapper around `f_mod
 
 ### Editing Warning
 
-Since there's no build script, edits happen directly against the live `.maxpat` JSON via small one-off scripts (see above) — always `git diff` before and after to confirm the change is exactly what was intended, and nothing else. Max reformats the file on open and may alter typography attributes, so a manual typography edit made in Max should be treated as the new source of truth — don't let a stale script overwrite it later. This file previously had a `build_modules.py` generator that overwrote it completely on every run; that workflow is no longer in use (see "Adding a New Module" above).
+The generator reproduces the shipped patcher byte for byte, so a regeneration with unchanged data changes nothing (`git diff` it anyway). A tweak made by hand in Max is lost on the next regeneration and shows up as a stale file in `--check`: write it into `build/generate_menu.py` (the box templates) or `src/f_modules/menu.py` (the data) instead. The earlier one-off scripts in `tools/` and `build/tools/f_modules/build_modules.py` (the old 5-category generator) are deleted; they are in git history.
 
 ### Module Categories
 

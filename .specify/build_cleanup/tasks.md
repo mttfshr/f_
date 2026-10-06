@@ -82,8 +82,8 @@ These come from the Phase 3 work; take them in the order the modules need them. 
 
 ## Phase 5: Generate the `f_modules` menu
 
-- [ ] T020 Decide the menu's source: its own definition (categories, order, labels, sizes for `f_addmod.js`, the nabla marks), versus extending the README Patches table that `generate_launch.py` already parses. Ideally the menu and `f_Launch` derive from the same data. Settle `plan.md`'s open `f_vf_vortex_multi` / category questions as part of it.
-- [ ] T021 Write the generator (follow `generate_launch.py`: validate loudly, `--check`, offline test), then delete `tools/rebuild_modules_menu.py`, `tools/append_nabla_menu.py`, `build/tools/f_modules/build_modules.py`, and `tools/`. This closes `packaging/T022` (the old 5-category script that would overwrite the shipped 8-category menu).
+- [x] T020 **Done 2026-10-05.** Decide the menu's source: its own definition (categories, order, labels, sizes for `f_addmod.js`, the nabla marks), versus extending the README Patches table that `generate_launch.py` already parses. Ideally the menu and `f_Launch` derive from the same data. Settle `plan.md`'s open `f_vf_vortex_multi` / category questions as part of it.
+- [x] T021 **Done 2026-10-05.** Write the generator (follow `generate_launch.py`: validate loudly, `--check`, offline test), then delete `tools/rebuild_modules_menu.py`, `tools/append_nabla_menu.py`, `build/tools/f_modules/build_modules.py`, and `tools/`. This closes `packaging/T022` (the old 5-category script that would overwrite the shipped 8-category menu).
 
 ## Phase 6: Remaining loose ends
 
