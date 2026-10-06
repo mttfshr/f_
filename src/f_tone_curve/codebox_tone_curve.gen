@@ -1,0 +1,36 @@
+Param shadows(0.0);
+Param midtones(0.0);
+Param highlights(0.0);
+Param low_mid(0.33);
+Param mid_high(0.66);
+Param bypass(0.0);
+Param edge_falloff(0.1);
+
+uv = norm;
+src = sample(in1, uv);
+r = src.r; g = src.g; b = src.b;
+
+// guard against handle inversion
+lm = min(low_mid, mid_high);
+mh = max(low_mid, mid_high);
+
+// luminance for band weighting
+lum = 0.299 * r + 0.587 * g + 0.114 * b;
+
+// band weights — sum to 1.0
+sw = 1.0 - smoothstep(lm - edge_falloff, lm + edge_falloff, lum);
+hw = smoothstep(mh - edge_falloff, mh + edge_falloff, lum);
+mw = max(1.0 - sw - hw, 0.0);
+
+// additive lift weighted by band
+lift_amt = shadows * sw + midtones * mw + highlights * hw;
+
+ro = clamp(r + lift_amt, 0.0, 1.0);
+go = clamp(g + lift_amt, 0.0, 1.0);
+bo = clamp(b + lift_amt, 0.0, 1.0);
+
+effective = 1.0 - bypass;
+out1 = vec(mix(r, ro, effective),
+           mix(g, go, effective),
+           mix(b, bo, effective),
+           src.a);

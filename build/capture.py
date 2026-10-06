@@ -42,7 +42,7 @@ CAPTURE_KEYS = {
     "presentation_rect", "fontsize", "fontname", "textcolor", "bgcolor", "bordercolor",
     "textjustification", "linecount", "appearance", "triangle", "shownumber", "showname",
     "needlemode", "activedialcolor", "valuepopup", "valuepopuplabel", "hidden", "border",
-    "background", "tricolor",
+    "background", "tricolor", "suppressinlet",
     # a live.text's own colours and corner rounding (added 2026-10-05, f_stereo's hand-built
     # `circ` toggle; theme colours Max writes explicitly once they are set by hand)
     "activebgcolor", "activebgoncolor", "activetextcolor", "activetextoncolor", "rounded",
@@ -134,7 +134,7 @@ def plan(def_path, shipped_path=None):
         # No rename exemption here (drift.py skips a renamed box's text only so a rename is
         # not counted twice): a label renamed in Max must be reported as not captured.
         for prop, rv, sv in drift.prop_diffs(mc, r, s):
-            if prop in CAPTURE_KEYS:
+            if prop in CAPTURE_KEYS or (mc == "comment" and prop == "numinlets"):   # a comment's hidden inlet
                 props[prop] = sv                       # None removes the property
             else:
                 not_captured.append((key, prop, rv, sv))

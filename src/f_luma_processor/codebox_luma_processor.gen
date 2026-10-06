@@ -1,0 +1,61 @@
+Param low_mid(0.33);
+Param mid_high(0.66);
+Param edge_falloff(0.1);
+Param sat_amt(0.0);
+Param lum_shift(0.0);
+Param hue_shift(0.0);
+Param bypass(0.0);
+
+uv = norm;
+src = sample(in1, uv);
+r = src.r; g = src.g; b = src.b;
+
+// RGB -> HSV
+cmax = max(max(r, g), b);
+cmin = min(min(r, g), b);
+delta = cmax - cmin;
+
+// hue
+hue = 0.0;
+s1 = step(0.00001, delta);
+hr = (g - b) / max(delta, 0.00001);
+hg = 2.0 + (b - r) / max(delta, 0.00001);
+hb = 4.0 + (r - g) / max(delta, 0.00001);
+hue = step(cmax, r + 0.00001) * hr
+    + step(cmax, g + 0.00001) * hg
+    + (1.0 - step(cmax, r + 0.00001)) * (1.0 - step(cmax, g + 0.00001)) * hb;
+hue = (hue / 6.0 + 1.0) - floor(hue / 6.0 + 1.0);
+
+// sat, val
+sat = s1 * delta / max(cmax, 0.00001);
+val = cmax;
+
+// luma for mask (pre-op, on raw pixel)
+lum = 0.299 * r + 0.587 * g + 0.114 * b;
+
+// flat-top luma mask — same smoothstep pattern as tone_curve
+lm = min(low_mid, mid_high);
+mh = max(low_mid, mid_high);
+ef = edge_falloff;
+mask = smoothstep(lm - ef, lm + ef, lum) * (1.0 - smoothstep(mh - ef, mh + ef, lum));
+
+// HSV operations
+sat_out = clamp(sat + sat_amt * mask, 0.0, 1.0);
+val_out = clamp(val + lum_shift * mask, 0.0, 1.0);
+hue_out = hue + (hue_shift / 360.0) * mask;
+hue_out = hue_out - floor(hue_out);
+
+// HSV -> RGB (branch-free)
+h6 = hue_out * 6.0;
+kr = abs(h6 - 3.0) - 1.0;
+kg = 2.0 - abs(h6 - 2.0);
+kb = 2.0 - abs(h6 - 4.0);
+ro = val_out * mix(1.0, clamp(kr, 0.0, 1.0), sat_out);
+go = val_out * mix(1.0, clamp(kg, 0.0, 1.0), sat_out);
+bo = val_out * mix(1.0, clamp(kb, 0.0, 1.0), sat_out);
+
+effective = 1.0 - bypass;
+out1 = vec(mix(r, ro, effective),
+           mix(g, go, effective),
+           mix(b, bo, effective),
+           src.a);

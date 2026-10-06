@@ -253,6 +253,25 @@ def test_capture_takes_a_text_buttons_colours_and_rounding_but_not_its_labels():
             True)
 
 
+def test_capture_takes_a_comments_hidden_inlet_but_not_another_elements_numinlets():
+    def edit(out, keys):
+        t = _box(out, keys, "title")
+        t["numinlets"], t["suppressinlet"] = 0, 1                  # a comment saved with its inlet suppressed
+    with tempfile.TemporaryDirectory() as tmp:
+        dp, sp = _scene(tmp, edit)
+        pl = capture.capture(dp, sp, out=lambda *_: None)
+        _eq("the title's numinlets and suppressinlet are captured", pl["captured"], {"title": {"numinlets": 0, "suppressinlet": 1}})
+        _eq("after capture the rebuild reproduces the patcher exactly", _drift_after(dp, sp), {})
+
+    def structural(out, keys):
+        _box(out, keys, "a.ctl")["numinlets"] = 2                    # a dial's numinlets is structure, not tuning
+    with tempfile.TemporaryDirectory() as tmp:
+        dp, sp = _scene(tmp, structural)
+        pl = capture.capture(dp, sp, out=lambda *_: None)
+        _eq("a non-comment numinlets is refused, not captured",
+            ("a.ctl" in pl["captured"], ("a.ctl", "numinlets") in {(k, p) for k, p, _, _ in pl["not_captured"]}), (False, True))
+
+
 def test_capture_keeps_an_override_whose_element_left_the_shipped_patch():
     def edit(out, keys):
         gone = keys["b.label"]

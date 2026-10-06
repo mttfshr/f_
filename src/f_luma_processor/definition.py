@@ -1,85 +1,74 @@
 # f_luma_processor patcher definition
-# Input to tools/build_patcher.py
-# Last updated: 2026-06-15
+#
+# Rewritten 2026-10-05 (build_cleanup T014) from the shipped, hand-built patcher.
+#
+# The generic part (the dials the builder can make exactly, the routing, bypass, the moduleSize chain)
+# comes from the builder. The rest is a hand-built band editor and is carried verbatim in
+# `raw_ui.json` (derived by build/capture_raw.py): the `falloff` dial (its widget varname differs from its Param, `edge_falloff`), the `Rot` label, the two band numboxes `low_mid` / `mid_high` (route tokens), one more numbox, and a hand-built band-editor jsui.
+# The dial / label positions are an `overrides` block (build/capture.py).
+#
+# `legacy` preserves what Max wrote when it re-created these objects, so the shipped patch stays
+# byte-faithful and need not be regenerated: see build/spec.md, "legacy".
+import json
+from pathlib import Path
 
-CODEBOX = """\
-Param low_mid(0.33);
-Param mid_high(0.66);
-Param edge_falloff(0.1);
-Param sat_amt(0.0);
-Param lum_shift(0.0);
-Param hue_shift(0.0);
-Param bypass(0.0);
+_HERE = Path(__file__).parent
+_RAW = json.loads((_HERE / "raw_ui.json").read_text()) if (_HERE / "raw_ui.json").exists() else {}
 
-uv = norm;
-src = sample(in1, uv);
-r = src.r; g = src.g; b = src.b;
-
-cmax = max(max(r, g), b);
-cmin = min(min(r, g), b);
-delta = cmax - cmin;
-
-hue = 0.0;
-s1 = step(0.00001, delta);
-hr = (g - b) / max(delta, 0.00001);
-hg = 2.0 + (b - r) / max(delta, 0.00001);
-hb = 4.0 + (r - g) / max(delta, 0.00001);
-hue = step(cmax, r + 0.00001) * hr
-    + step(cmax, g + 0.00001) * hg
-    + (1.0 - step(cmax, r + 0.00001)) * (1.0 - step(cmax, g + 0.00001)) * hb;
-hue = (hue / 6.0 + 1.0) - floor(hue / 6.0 + 1.0);
-
-sat = s1 * delta / max(cmax, 0.00001);
-val = cmax;
-
-lum = 0.299 * r + 0.587 * g + 0.114 * b;
-
-lm = min(low_mid, mid_high);
-mh = max(low_mid, mid_high);
-ef = edge_falloff;
-mask = smoothstep(lm - ef, lm + ef, lum) * (1.0 - smoothstep(mh - ef, mh + ef, lum));
-
-sat_out = clamp(sat + sat_amt * mask, 0.0, 1.0);
-val_out = clamp(val + lum_shift * mask, 0.0, 1.0);
-hue_out = hue + (hue_shift / 360.0) * mask;
-hue_out = hue_out - floor(hue_out);
-
-h6 = hue_out * 6.0;
-kr = abs(h6 - 3.0) - 1.0;
-kg = 2.0 - abs(h6 - 2.0);
-kb = 2.0 - abs(h6 - 4.0);
-ro = val_out * mix(1.0, clamp(kr, 0.0, 1.0), sat_out);
-go = val_out * mix(1.0, clamp(kg, 0.0, 1.0), sat_out);
-bo = val_out * mix(1.0, clamp(kb, 0.0, 1.0), sat_out);
-
-effective = 1.0 - bypass;
-out1 = vec(mix(r, ro, effective),
-           mix(g, go, effective),
-           mix(b, bo, effective),
-           src.a);
-"""
 
 patcher = {
     "name":        "f_luma_processor",
-    "prefix":      "luma_processor",
+    "prefix":      "luma",
     "object_name": "luma_pix",
     "title":       "Luma Processor",
     "archetype":   "processor",
+    "pix_type":    "char",
+    "pix_context": "drawto",        # jit.gl.pix @name luma_pix @drawto vsynth @type char
+    "route_bypass": True,           # the oldest modules route a `bypass 0/1` message to the toggle
+    "route_reject_to_pix": True,    # ...and send what no route token claims to the pix
 
-    "presentation_width":  227,
-    "presentation_height": 164,
+    "presentation_width":  150,
+    "presentation_height": 120,
 
+    # Params in the shipped route order (bypass, sat_amt, lum_shift, hue_shift, edge_falloff, low_mid,
+    # mid_high); the raw_ui params come last, as they do in the route.
     "params": [
-        {"name": "low_mid",      "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.33,  "label": "Lo/Mid",  "hint": "Lower boundary of midtone band (luma 0-1)"},
-        {"name": "mid_high",     "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.66,  "label": "Mid/Hi",  "hint": "Upper boundary of midtone band (luma 0-1)"},
-        {"name": "edge_falloff", "type": "float", "min": 0.0,    "max": 0.5,   "default": 0.1,   "label": "Falloff", "hint": "Smoothstep falloff width at band edges"},
-        {"name": "sat_amt",      "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0,   "label": "Sat",     "hint": "-1=full desaturate  0=unchanged  1=full boost"},
-        {"name": "lum_shift",    "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0,   "label": "Lum",     "hint": "Additive luminance shift within band"},
-        {"name": "hue_shift",    "type": "float", "min": -180.0, "max": 180.0, "default": 0.0,   "label": "Hue",     "hint": "Hue rotation within band in degrees"},
-        {"name": "bypass",       "type": "bypass"},
+        {"name": "sat_amt",   "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0, "label": "Sat", "hint": "Saturation", "color_expression": None},
+        {"name": "lum_shift", "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0, "label": "Lum", "hint": "Luminosity", "color_expression": None},
+        {"name": "hue_shift", "type": "float", "min": -180.0, "max": 180.0, "default": 0.0, "label": None,  "hint": "Hue rotation", "color_expression": None},
+        {"name": "edge_falloff", "type": "raw_ui"},
+        {"name": "low_mid",      "type": "raw_ui"},
+        {"name": "mid_high",     "type": "raw_ui"},
+        {"name": "bypass", "type": "bypass"},
     ],
 
-    "outlets": [{"comment": "composite"}],
+    "outlets": [{"comment": 'texture'}],
+    "inlet_comment": 'texture / control',
 
-    "codebox": CODEBOX,
+    # newline="": a shipped codebox can carry CRLF line endings, which text mode would convert
+    "codebox": (_HERE / "codebox_luma_processor.gen").open(newline="").read(),
+
+    "legacy": {
+        "pix_varname":       "jit.gl.pix_AA",
+        "autopattr_varname": "u099020110",
+        "bypass_jsui_saved": {"valueof": {"parameter_invisible": 1, "parameter_longname": "bypass", "parameter_modmode": 4,
+                                          "parameter_shortname": "bypass", "parameter_type": 1, "parameter_unitstyle": 0}},
+    },
+
+    "raw_boxes":      _RAW.get("raw_boxes", []),
+    "raw_lines":      _RAW.get("raw_lines", []),
+    "raw_parameters": _RAW.get("raw_parameters", {}),
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "bypass_jsui": {"presentation_rect": [129.0, 4.0, 18.0, 12.0]},
+    "hue_shift.ctl": {"activedialcolor": None, "needlemode": 2, "presentation_rect": [116.33333680033684, 70.00000208616257, 27.0, 43.0]},
+    "lum_shift.ctl": {"activedialcolor": None, "presentation_rect": [80.66666907072067, 70.00000208616257, 27.0, 43.0]},
+    "lum_shift.label": {"fontsize": 9.0, "presentation_rect": [82.33333578705788, 56.666668355464935, 27.0, 17.0], "textjustification": None},
+    "panel": {"background": None, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
+    "sat_amt.ctl": {"activedialcolor": None, "presentation_rect": [43.00000128149986, 69.66666874289513, 27.0, 43.0]},
+    "sat_amt.label": {"fontsize": 9.0, "presentation_rect": [44.66666799783707, 56.666668355464935, 27.0, 17.0], "textjustification": None},
+    "title": {"fontsize": None, "numinlets": 0, "presentation_rect": [-0.25, 1.0000000298023224, 97.0, 21.0], "suppressinlet": 1},
+}
+# END overrides

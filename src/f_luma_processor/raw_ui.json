@@ -1,0 +1,570 @@
+{
+ "raw_boxes": [
+  {
+   "box": {
+    "activebgcolor": [
+     0.0784313725490196,
+     0.0784313725490196,
+     0.0784313725490196,
+     1.0
+    ],
+    "fontname": "Ableton Sans Light",
+    "id": "obj-901",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "parameter_enable": 1,
+    "patching_rect": [
+     158.75,
+     366.0,
+     46.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     1.0,
+     99.25,
+     34.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "activebgcolor": {
+      "expression": ""
+     },
+     "valueof": {
+      "parameter_longname": "live.numbox[2]",
+      "parameter_mmax": 1.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "live.numbox",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "live.numbox[2]"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 8.0,
+    "id": "obj-902",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     241.0,
+     165.5,
+     111.0,
+     16.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     89.66666933894157,
+     43.666667968034744,
+     15.0,
+     16.0
+    ],
+    "text": "hi"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 8.0,
+    "id": "obj-903",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     226.0,
+     150.5,
+     111.0,
+     16.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     42.375,
+     43.625,
+     22.166666626930237,
+     16.0
+    ],
+    "text": "low"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-904",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "jit.gl.pix_AA::mid_high",
+    "parameter_enable": 1,
+    "patching_rect": [
+     252.0,
+     599.0,
+     44.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     103.75,
+     44.125,
+     44.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_initial": [
+       0.66
+      ],
+      "parameter_linknames": 1,
+      "parameter_longname": "mid_high",
+      "parameter_mmax": 1.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "mid_high",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "mid_high"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-905",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "jit.gl.pix_AA::low_mid",
+    "parameter_enable": 1,
+    "patching_rect": [
+     23.0,
+     605.0,
+     44.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     1.0000000298023224,
+     44.000001311302185,
+     44.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_initial": [
+       0.3299999999999983
+      ],
+      "parameter_initial_enable": 1,
+      "parameter_linknames": 1,
+      "parameter_longname": "low_mid",
+      "parameter_mmax": 1.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "low_mid",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "low_mid"
+   }
+  },
+  {
+   "box": {
+    "appearance": 1,
+    "fontname": "Ableton Sans Light",
+    "hint": "Edge falloff",
+    "id": "obj-906",
+    "maxclass": "live.dial",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "jit.gl.pix_AA::edge_falloff",
+    "parameter_enable": 1,
+    "patching_rect": [
+     168.25,
+     315.20000475645065,
+     25.0,
+     23.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     5.75,
+     75.75,
+     25.0,
+     23.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_longname": "edge_falloff",
+      "parameter_mmax": 1.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "edge_falloff",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "showname": 0,
+    "shownumber": 0,
+    "valuepopup": 1,
+    "valuepopuplabel": 1,
+    "varname": "falloff"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 9.0,
+    "id": "obj-907",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     211.0,
+     135.5,
+     123.0,
+     17.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     1.75,
+     56.75,
+     34.0,
+     17.0
+    ],
+    "text": "Falloff",
+    "varname": "lbl_edge_falloff"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 9.0,
+    "id": "obj-908",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     226.0,
+     150.5,
+     116.0,
+     17.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     118.66667020320892,
+     56.666668355464935,
+     25.0,
+     17.0
+    ],
+    "text": "Rot"
+   }
+  },
+  {
+   "box": {
+    "border": 0,
+    "filename": "luma_rslider.js",
+    "hint": "Hue band selection",
+    "id": "obj-909",
+    "maxclass": "jsui",
+    "numinlets": 3,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     48.00000071525574,
+     547.2000081539154,
+     212.00000315904617,
+     33.600000500679016
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     3.000000089406967,
+     24.000000715255737,
+     142.33333757519722,
+     19.333333909511566
+    ],
+    "valuepopup": 1,
+    "valuepopuplabel": 1
+   }
+  },
+  {
+   "box": {
+    "id": "obj-910",
+    "maxclass": "attrui",
+    "attr": "edge_falloff",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "patching_rect": [
+     252.00000375509262,
+     486.4000072479248,
+     155.0,
+     22.0
+    ],
+    "style": ""
+   }
+  },
+  {
+   "box": {
+    "id": "obj-911",
+    "maxclass": "attrui",
+    "attr": "mid_high",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "patching_rect": [
+     249.5,
+     688.5,
+     142.0,
+     22.0
+    ],
+    "style": ""
+   }
+  },
+  {
+   "box": {
+    "id": "obj-912",
+    "maxclass": "attrui",
+    "attr": "low_mid",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "patching_rect": [
+     84.5,
+     673.5,
+     137.0,
+     22.0
+    ],
+    "style": ""
+   }
+  }
+ ],
+ "raw_lines": [
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-912",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-911",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-910",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-909",
+     2
+    ],
+    "source": [
+     "obj-904",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-910",
+     0
+    ],
+    "source": [
+     "obj-906",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-901",
+     0
+    ],
+    "source": [
+     "obj-906",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-912",
+     0
+    ],
+    "source": [
+     "obj-909",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-911",
+     0
+    ],
+    "source": [
+     "obj-909",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-904",
+     0
+    ],
+    "source": [
+     "obj-909",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-905",
+     0
+    ],
+    "source": [
+     "obj-909",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-904",
+     0
+    ],
+    "source": [
+     "obj-4",
+     6
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-906",
+     0
+    ],
+    "source": [
+     "obj-4",
+     4
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-905",
+     0
+    ],
+    "source": [
+     "obj-4",
+     5
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-906",
+     0
+    ],
+    "source": [
+     "obj-901",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-909",
+     0
+    ],
+    "source": [
+     "obj-905",
+     0
+    ]
+   }
+  }
+ ],
+ "raw_parameters": {
+  "obj-904": [
+   "mid_high",
+   "mid_high",
+   0
+  ],
+  "obj-906": [
+   "edge_falloff",
+   "edge_falloff",
+   0
+  ],
+  "obj-901": [
+   "live.numbox[2]",
+   "live.numbox",
+   0
+  ],
+  "obj-905": [
+   "low_mid",
+   "low_mid",
+   0
+  ]
+ }
+}

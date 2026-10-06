@@ -1,95 +1,72 @@
 # f_hue_processor patcher definition
-# Input to tools/build_patcher.py
-# Last updated: 2026-06-15
+#
+# Rewritten 2026-10-05 (build_cleanup T014) from the shipped, hand-built patcher.
+#
+# The generic part (the dials the builder can make exactly, the routing, bypass, the moduleSize chain)
+# comes from the builder. The rest is a hand-built band editor and is carried verbatim in
+# `raw_ui.json` (derived by build/capture_raw.py): the `falloff` dial (its widget varname differs from its Param, `edge_falloff`), the `Rot` label, the two band numboxes `hue_lower` / `hue_upper`, one more numbox, and the `hue_rslider.js` band editor with its `hue_range.js` helper.
+# The dial / label positions are an `overrides` block (build/capture.py).
+#
+# `legacy` preserves what Max wrote when it re-created these objects, so the shipped patch stays
+# byte-faithful and need not be regenerated: see build/spec.md, "legacy".
+import json
+from pathlib import Path
 
-CODEBOX = """\
-Param hue_center(120.0);
-Param hue_lower(36.0);
-Param hue_upper(36.0);
-Param edge_falloff(10.0);
-Param sat_amt(0.0);
-Param lum_shift(0.0);
-Param hue_shift(0.0);
-Param bypass(0.0);
+_HERE = Path(__file__).parent
+_RAW = json.loads((_HERE / "raw_ui.json").read_text()) if (_HERE / "raw_ui.json").exists() else {}
 
-uv = norm;
-src = sample(in1, uv);
-rg = src.r; gg = src.g; bg = src.b;
-
-cmax = max(rg, max(gg, bg));
-cmin = min(rg, min(gg, bg));
-delta = cmax - cmin;
-safe_delta = max(delta, 0.001);
-safe_cmax  = max(cmax, 0.001);
-
-hue_r = mod((gg - bg) / safe_delta, 6.0) / 6.0;
-hue_g = ((bg - rg) / safe_delta + 2.0) / 6.0;
-hue_b = ((rg - gg) / safe_delta + 4.0) / 6.0;
-
-r_is_max = step(gg, rg) * step(bg, rg);
-g_is_max = step(bg, gg) * (1.0 - r_is_max);
-
-hue = mix(mix(hue_b, hue_g, g_is_max), hue_r, r_is_max);
-hue = fract(hue + 1.0);
-
-S = delta / safe_cmax;
-V = cmax;
-
-hue_c   = hue_center / 360.0;
-lower_n = hue_lower  / 360.0;
-upper_n = hue_upper  / 360.0;
-fall_n  = max(edge_falloff / 360.0, 0.00001);
-
-signed_dist = mod(hue - hue_c + 0.5, 1.0) - 0.5;
-
-upper_mask = 1.0 - smoothstep(upper_n, upper_n + fall_n, max( signed_dist, 0.0));
-lower_mask = 1.0 - smoothstep(lower_n, lower_n + fall_n, max(-signed_dist, 0.0));
-
-sat_gate = smoothstep(0.05, 0.15, S);
-hue_mask = upper_mask * lower_mask * sat_gate;
-
-blended_H = fract(hue + (hue_shift / 360.0) * hue_mask);
-blended_S = clamp(S + sat_amt * hue_mask, 0.0, 1.0);
-blended_V = clamp(V + lum_shift * hue_mask, 0.0, 1.0);
-
-h6    = blended_H * 6.0;
-r_hsv = clamp(abs(h6 - 3.0) - 1.0, 0.0, 1.0);
-g_hsv = clamp(2.0 - abs(h6 - 2.0), 0.0, 1.0);
-b_hsv = clamp(2.0 - abs(h6 - 4.0), 0.0, 1.0);
-
-ro = blended_V * mix(1.0, r_hsv, blended_S);
-go = blended_V * mix(1.0, g_hsv, blended_S);
-bo = blended_V * mix(1.0, b_hsv, blended_S);
-
-effective = 1.0 - bypass;
-out1 = vec(mix(rg, ro, effective),
-           mix(gg, go, effective),
-           mix(bg, bo, effective),
-           src.a);
-"""
 
 patcher = {
     "name":        "f_hue_processor",
-    "prefix":      "hue_processor",
-    "object_name": "hue_pix",
+    "prefix":      "hp",
+    "object_name": "hp_pix",
     "title":       "Hue Processor",
     "archetype":   "processor",
+    "pix_type":    "char",
+    "pix_context": "drawto",        # jit.gl.pix @name hp_pix @drawto vsynth @type char
+    "route_bypass": True,           # the oldest modules route a `bypass 0/1` message to the toggle
+    "route_reject_to_pix": True,    # ...and send what no route token claims to the pix
 
-    "presentation_width":  227,
-    "presentation_height": 164,
+    "presentation_width":  150,
+    "presentation_height": 120,
 
+    # Params in the shipped route order (bypass, sat_amt, lum_shift, hue_shift, edge_falloff). The raw_ui
+    # params come last, as they do in the route; the band parameters have no route token (internal).
     "params": [
-        {"name": "hue_center",   "type": "float", "min": 0.0,    "max": 360.0, "default": 120.0, "label": "Center",  "hint": "Hue band center in degrees"},
-        {"name": "hue_lower",    "type": "float", "min": 0.0,    "max": 180.0, "default": 36.0,  "label": "Lower",   "hint": "Flat-top extent below center in degrees"},
-        {"name": "hue_upper",    "type": "float", "min": 0.0,    "max": 180.0, "default": 36.0,  "label": "Upper",   "hint": "Flat-top extent above center in degrees"},
-        {"name": "edge_falloff", "type": "float", "min": 0.0,    "max": 90.0,  "default": 10.0,  "label": "Falloff", "hint": "Smoothstep falloff width in degrees -- 0=hard edge"},
-        {"name": "sat_amt",      "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0,   "label": "Sat",     "hint": "-1=full desaturate  0=unchanged  1=full boost"},
-        {"name": "lum_shift",    "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0,   "label": "Lum",     "hint": "Additive luminance shift within band"},
-        {"name": "hue_shift",    "type": "float", "min": -180.0, "max": 180.0, "default": 0.0,   "label": "Hue",     "hint": "Hue rotation within band in degrees"},
-        {"name": "bypass",       "type": "bypass"},
+        {"name": "sat_amt",   "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0, "label": "Sat", "hint": "Saturation", "color_expression": None},
+        {"name": "lum_shift", "type": "float", "min": -1.0,   "max": 1.0,   "default": 0.0, "label": "Lum", "hint": "Luminosity", "color_expression": None},
+        {"name": "hue_shift", "type": "float", "min": -180.0, "max": 180.0, "default": 0.0, "label": None,  "hint": "Hue rotation", "color_expression": None},
+        {"name": "edge_falloff", "type": "raw_ui"},
+        {"name": "hue_center", "type": "internal"},
+        {"name": "hue_lower",  "type": "internal"},
+        {"name": "hue_upper",  "type": "internal"},
+        {"name": "bypass", "type": "bypass"},
     ],
 
-    "outlets": [{"comment": "composite"}],
+    "outlets": [{"comment": ''}],
+    "inlet_comment": '',
 
-    "codebox": CODEBOX,
+    # newline="": a shipped codebox can carry CRLF line endings, which text mode would convert
+    "codebox": (_HERE / "codebox_hue_processor.gen").open(newline="").read(),
+
+    "legacy": {
+        "pix_varname":       "jit.gl.pix_AA",
+        "autopattr_varname": "u099020110",
+    },
+
+    "raw_boxes":      _RAW.get("raw_boxes", []),
+    "raw_lines":      _RAW.get("raw_lines", []),
+    "raw_parameters": _RAW.get("raw_parameters", {}),
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "hue_shift.ctl": {"activedialcolor": None, "needlemode": 2, "presentation_rect": [116.25, 70.0, 27.0, 43.0]},
+    "lum_shift.ctl": {"activedialcolor": None, "presentation_rect": [79.75, 70.0, 27.0, 43.0]},
+    "lum_shift.label": {"fontsize": 9.0, "presentation_rect": [81.25, 56.5, 27.0, 17.0], "textjustification": None},
+    "panel": {"background": None, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
+    "sat_amt.ctl": {"activedialcolor": None, "presentation_rect": [42.0, 69.75, 27.0, 43.0]},
+    "sat_amt.label": {"fontsize": 9.0, "presentation_rect": [44.5, 56.5, 25.5, 17.0], "textjustification": None},
+    "title": {"fontsize": None, "numinlets": 0, "presentation_rect": [-0.3333333432674408, 1.0000000298023224, 88.0, 21.0], "suppressinlet": 1},
+}
+# END overrides

@@ -1,0 +1,649 @@
+{
+ "raw_boxes": [
+  {
+   "box": {
+    "activebgcolor": [
+     0.0784313725490196,
+     0.0784313725490196,
+     0.0784313725490196,
+     1.0
+    ],
+    "fontname": "Ableton Sans Light",
+    "id": "obj-901",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "parameter_enable": 1,
+    "patching_rect": [
+     432.0,
+     89.00000357627869,
+     46.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     1.0,
+     99.25,
+     34.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "activebgcolor": {
+      "expression": ""
+     },
+     "valueof": {
+      "parameter_longname": "live.numbox[2]",
+      "parameter_mmax": 360.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "live.numbox",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "live.numbox[2]"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 8.0,
+    "id": "obj-902",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     52.0,
+     426.0,
+     111.0,
+     16.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     89.75,
+     43.75,
+     15.0,
+     16.0
+    ],
+    "text": "hi"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 8.0,
+    "id": "obj-903",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     19.0,
+     438.0,
+     111.0,
+     16.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     42.375,
+     43.625,
+     22.166666626930237,
+     16.0
+    ],
+    "text": "low"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-904",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "jit.gl.pix_AA::hue_upper",
+    "parameter_enable": 1,
+    "patching_rect": [
+     279.0,
+     526.0,
+     44.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     103.75,
+     44.125,
+     44.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_initial": [
+       156.0
+      ],
+      "parameter_initial_enable": 1,
+      "parameter_linknames": 1,
+      "parameter_longname": "hue_upper",
+      "parameter_mmax": 360.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "hue_upper",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "hue_upper"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-905",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "jit.gl.pix_AA::hue_lower",
+    "parameter_enable": 1,
+    "patching_rect": [
+     77.0,
+     531.0,
+     44.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     1.0000000298023224,
+     44.000001311302185,
+     44.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_initial": [
+       84.0
+      ],
+      "parameter_linknames": 1,
+      "parameter_longname": "hue_lower",
+      "parameter_mmax": 360.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "hue_lower",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "hue_lower"
+   }
+  },
+  {
+   "box": {
+    "appearance": 1,
+    "fontname": "Ableton Sans Light",
+    "hint": "Edge falloff",
+    "id": "obj-906",
+    "maxclass": "live.dial",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "jit.gl.pix_AA::edge_falloff",
+    "parameter_enable": 1,
+    "patching_rect": [
+     408.0,
+     85.00000357627869,
+     25.0,
+     23.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     5.75,
+     75.75,
+     25.0,
+     23.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_longname": "edge_falloff",
+      "parameter_mmax": 180.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "edge_falloff",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "showname": 0,
+    "shownumber": 0,
+    "valuepopup": 1,
+    "valuepopuplabel": 1,
+    "varname": "falloff"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 9.0,
+    "id": "obj-907",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     10.0,
+     353.0,
+     123.0,
+     17.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     1.75,
+     56.75,
+     34.0,
+     17.0
+    ],
+    "text": "Falloff",
+    "varname": "lbl_edge_falloff"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 9.0,
+    "id": "obj-908",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     37.0,
+     411.0,
+     116.0,
+     17.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     118.75,
+     56.5,
+     25.0,
+     17.0
+    ],
+    "text": "Rot"
+   }
+  },
+  {
+   "box": {
+    "border": 0,
+    "filename": "hue_rslider.js",
+    "hint": "Hue band selection",
+    "id": "obj-909",
+    "maxclass": "jsui",
+    "numinlets": 3,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     48.0,
+     560.0,
+     434.0,
+     41.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     3.0,
+     24.0,
+     142.2500004172325,
+     19.5
+    ],
+    "valuepopup": 1,
+    "valuepopuplabel": 1
+   }
+  },
+  {
+   "box": {
+    "id": "obj-910",
+    "maxclass": "newobj",
+    "numinlets": 2,
+    "numoutlets": 3,
+    "outlettype": [
+     "",
+     "",
+     ""
+    ],
+    "patching_rect": [
+     115.0,
+     642.0,
+     372.0,
+     22.0
+    ],
+    "saved_object_attributes": {
+     "filename": "hue_range.js",
+     "parameter_enable": 0
+    },
+    "text": "js hue_range.js"
+   }
+  },
+  {
+   "box": {
+    "attr": "edge_falloff",
+    "id": "obj-911",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     418.66667914390564,
+     128.00000381469727,
+     155.0,
+     22.0
+    ]
+   }
+  },
+  {
+   "box": {
+    "attr": "hue_upper",
+    "id": "obj-912",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     468.0,
+     697.0,
+     151.0,
+     22.0
+    ]
+   }
+  },
+  {
+   "box": {
+    "attr": "hue_lower",
+    "id": "obj-913",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     284.0,
+     687.0,
+     149.0,
+     22.0
+    ]
+   }
+  },
+  {
+   "box": {
+    "attr": "hue_center",
+    "id": "obj-914",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     110.5,
+     692.0,
+     153.0,
+     22.0
+    ]
+   }
+  }
+ ],
+ "raw_lines": [
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-913",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-912",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-911",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-909",
+     1
+    ],
+    "source": [
+     "obj-904",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-913",
+     0
+    ],
+    "source": [
+     "obj-910",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-912",
+     0
+    ],
+    "source": [
+     "obj-910",
+     2
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-914",
+     0
+    ],
+    "source": [
+     "obj-910",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-911",
+     0
+    ],
+    "source": [
+     "obj-906",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-909",
+     2
+    ],
+    "source": [
+     "obj-906",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-901",
+     0
+    ],
+    "source": [
+     "obj-906",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-904",
+     0
+    ],
+    "source": [
+     "obj-909",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-910",
+     1
+    ],
+    "source": [
+     "obj-909",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-910",
+     0
+    ],
+    "source": [
+     "obj-909",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-905",
+     0
+    ],
+    "source": [
+     "obj-909",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-906",
+     0
+    ],
+    "source": [
+     "obj-4",
+     4
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-906",
+     0
+    ],
+    "source": [
+     "obj-901",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-909",
+     0
+    ],
+    "source": [
+     "obj-905",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-914",
+     0
+    ]
+   }
+  }
+ ],
+ "raw_parameters": {
+  "obj-904": [
+   "hue_upper",
+   "hue_upper",
+   0
+  ],
+  "obj-906": [
+   "edge_falloff",
+   "edge_falloff",
+   0
+  ],
+  "obj-901": [
+   "live.numbox[2]",
+   "live.numbox",
+   0
+  ],
+  "obj-905": [
+   "hue_lower",
+   "hue_lower",
+   0
+  ]
+ }
+}

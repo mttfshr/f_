@@ -435,11 +435,19 @@ def _hint_kw(p):
 def _color_expression(p):
     """A dial's `activedialcolor` theme expression ("themecolor.live_record"), "" unless the param
     says otherwise.  The resolved RGB is a presentation property (overrides); this is the string Max
-    saves beside it, which `build/capture.py` cannot carry (it lives in saved_attribute_attributes)."""
+    saves beside it, which `build/capture.py` cannot carry (it lives in saved_attribute_attributes).
+    `"color_expression": None` writes no `activedialcolor` entry at all (a dial Max saved without one)."""
     e = p.get("color_expression", "")
-    if not isinstance(e, str):
-        raise ValueError(f"param '{p['name']}': color_expression must be a string, not {e!r}")
-    return e
+    if e is not None and not isinstance(e, str):
+        raise ValueError(f"param '{p['name']}': color_expression must be a string or None, not {e!r}")
+    return e or ""
+
+
+def _dial_saved(p, saved):
+    """`saved` without its activedialcolor entry when the param says `"color_expression": None`."""
+    if "color_expression" in p and p["color_expression"] is None:
+        saved = {k: v for k, v in saved.items() if k != "activedialcolor"}
+    return saved
 
 
 def _modmode(p):
@@ -468,7 +476,7 @@ def dial_box(n, p, object_name):
         patching_rect=[50.0 + n * 50.0, 80.0, 27.0, 43.0],
         presentation=1,
         presentation_rect=[x, y, 27.0, 43.0],
-        saved_attribute_attributes={
+        saved_attribute_attributes=_dial_saved(p, {
             "activedialcolor": {"expression": _color_expression(p)},
             "valueof": {
                 "parameter_initial": [float(p["default"])],
@@ -482,7 +490,7 @@ def dial_box(n, p, object_name):
                 "parameter_type": 0,
                 "parameter_unitstyle": 1
             }
-        },
+        }),
         showname=0, triangle=1, valuepopup=1, valuepopuplabel=1,
         varname=p["name"])
 
@@ -1252,7 +1260,8 @@ def build(defn, debug=None, side_files=None):
 
     # legacy: state of objects that were re-created in Max, kept so a patch can stay byte-faithful
     # instead of being regenerated: {"pix_varname": str, "autopattr_varname": str,
-    # "bypass_jsui_saved": dict, "control_valueof": {param: {valueof key: value or None}}}.  The pix
+    # "bypass_jsui_saved": dict, "control_valueof": {param: {valueof key: value or None}},
+    # "control_box": {param: {box property: value or None}}}.  The pix
     # varname is also what every control's param_connect names (that is how Max wrote it).
     # `control_valueof` patches a control's saved `valueof` (None removes a key): leftovers such as a
     # default shortname or a missing initial value.  Default-off; delete an entry when the module is
@@ -1260,16 +1269,24 @@ def build(defn, debug=None, side_files=None):
     legacy = defn.get("legacy", {})
     if not isinstance(legacy, dict):
         raise ValueError(f"legacy must be a dict, not {legacy!r}")
-    unknown = sorted(set(legacy) - {"pix_varname", "autopattr_varname", "bypass_jsui_saved", "control_valueof"})
+    unknown = sorted(set(legacy) - {"pix_varname", "autopattr_varname", "bypass_jsui_saved", "control_valueof", "control_box"})
     if unknown:
         raise ValueError(f"legacy: unknown key(s) {unknown} (allowed: pix_varname, autopattr_varname, "
-                         f"bypass_jsui_saved, control_valueof)")
+                         f"bypass_jsui_saved, control_valueof, control_box)")
     cvo = legacy.get("control_valueof", {})
     if not isinstance(cvo, dict) or not all(isinstance(k, str) and isinstance(v, dict) for k, v in cvo.items()):
         raise ValueError("legacy.control_valueof must be {param name: {valueof key: value}}")
     no_param = sorted(set(cvo) - {p["name"] for p in defn["params"]})
     if no_param:
         raise ValueError(f"legacy.control_valueof names params that do not exist: {no_param}")
+    cbx = legacy.get("control_box", {})
+    if not isinstance(cbx, dict) or not all(isinstance(k, str) and isinstance(v, dict) for k, v in cbx.items()):
+        raise ValueError("legacy.control_box must be {param name: {box property: value}}")
+    no_param = sorted(set(cbx) - {p["name"] for p in defn["params"]})
+    if no_param:
+        raise ValueError(f"legacy.control_box names params that do not exist: {no_param}")
+    if any(k in ("id", "maxclass", "patching_rect", "patcher") for v in cbx.values() for k in v):
+        raise ValueError("legacy.control_box cannot set id, maxclass, patching_rect or patcher")
     for k in ("pix_varname", "autopattr_varname"):
         if k in legacy and (not isinstance(legacy[k], str) or not legacy[k]):
             raise ValueError(f"legacy.{k} must be a non-empty string, not {legacy[k]!r}")
@@ -1435,6 +1452,12 @@ def build(defn, debug=None, side_files=None):
                     vo.pop(k, None)
                 else:
                     vo[k] = copy.deepcopy(v)
+        if p["name"] in cbx:                       # legacy.control_box: patch top-level box properties
+            for k, v in cbx[p["name"]].items():
+                if v is None:
+                    boxes[-1]["box"].pop(k, None)
+                else:
+                    boxes[-1]["box"][k] = copy.deepcopy(v)
         if p.get("pix_wire", True):
             boxes.append(attrui_box(param_pre_id(n), p["name"],
                                     50.0 + n * 50.0, 170.0 + n * 30.0))

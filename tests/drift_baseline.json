@@ -9,19 +9,6 @@
    "reason": "MSP audio-analysis patch (meter~/number~, hand-laid UI, no pix codebox); the schema has no audio archetype.",
    "status": "out_of_scope"
   },
-  "f_hue_processor": {
-   "counts": {
-    "boxes_def_only": 9,
-    "boxes_patch_only": 10,
-    "boxes_renamed": 2,
-    "code": 1,
-    "layout": 9,
-    "lines_def_only": 4,
-    "lines_patch_only": 5,
-    "props": 34
-   },
-   "status": "drift"
-  },
   "f_lens": {
    "counts": {
     "boxes_def_only": 25,
@@ -29,19 +16,6 @@
     "layout": 17,
     "lines_patch_only": 2,
     "props": 18
-   },
-   "status": "drift"
-  },
-  "f_luma_processor": {
-   "counts": {
-    "boxes_def_only": 6,
-    "boxes_patch_only": 8,
-    "boxes_renamed": 2,
-    "code": 1,
-    "layout": 10,
-    "lines_def_only": 5,
-    "lines_patch_only": 7,
-    "props": 42
    },
    "status": "drift"
   },
@@ -77,19 +51,6 @@
     "layout": 1,
     "pix_io": 1,
     "props": 3
-   },
-   "status": "drift"
-  },
-  "f_tone_curve": {
-   "counts": {
-    "boxes_def_only": 8,
-    "boxes_patch_only": 10,
-    "boxes_renamed": 2,
-    "code": 1,
-    "layout": 8,
-    "lines_def_only": 5,
-    "lines_patch_only": 8,
-    "props": 32
    },
    "status": "drift"
   },

@@ -18,6 +18,8 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
     no attrui and no pix cord), `inlet_comment`, and an outlet `hint`: f_grain's shape (T014)
   - `legacy` (pix_varname, autopattr_varname, bypass_jsui_saved, control_valueof), `route_reject_to_pix`,
     per-param `color_expression`: the oldest modules' re-created-object state, T014 (f_channel_grader)
+  - `"color_expression": None` (no activedialcolor entry) and `legacy.control_box` (top-level box
+    properties of a control): f_hue_processor / f_luma_processor / f_tone_curve, T014
   - `route_bypass`: `bypass` is the first `route` token, wired to the bypass jsui, and every param
     outlet is one higher; off (the default) changes nothing (T014)
 
@@ -737,6 +739,84 @@ def test_f_channel_grader_builds_from_its_definition_as_it_ships():
     _eq("m_lift has no initial value, g_lift keeps Max's default shortname",
         ("parameter_initial" in dials["m_lift"]["saved_attribute_attributes"]["valueof"],
          dials["g_lift"]["saved_attribute_attributes"]["valueof"]["parameter_shortname"]), (False, "live.dial"))
+
+
+# ---- color_expression None, legacy.control_box (the three band-editor colour modules)
+
+def test_color_expression_none_omits_the_activedialcolor_entry():
+    d = _defn()
+    d["params"][0]["color_expression"] = None
+    got, base = _controls(d), _controls(_defn())
+    has = lambda c: "activedialcolor" in c["saved_attribute_attributes"]
+    _eq("None: no activedialcolor entry; unset: the empty one is still written; a numbox is unaffected",
+        (has(got["g"]), has(base["g"]), has(got["mix_pct"])), (False, True, False))
+    _eq("the rest of that dial's saved block is untouched",
+        {k: v for k, v in got["g"]["saved_attribute_attributes"].items()},
+        {k: v for k, v in base["g"]["saved_attribute_attributes"].items() if k != "activedialcolor"})
+    d2 = _defn()
+    d2["params"][0]["color_expression"] = "themecolor.live_record"
+    _eq("a string still sets it", _controls(d2)["g"]["saved_attribute_attributes"]["activedialcolor"]["expression"],
+        "themecolor.live_record")
+
+
+def test_legacy_control_box_sets_and_removes_top_level_properties_of_the_named_control():
+    d = _defn()
+    d["legacy"] = {"control_box": {"g": {"param_connect": None, "hint": "custom"}, "n": {"annotation": "x"}}}
+    got, base = _controls(d), _controls(_defn())
+    _eq("g: param_connect removed, hint replaced", ("param_connect" in got["g"], got["g"]["hint"]), (False, "custom"))
+    _eq("n: a new property is added", got["n"].get("annotation"), "x")
+    _eq("mix_pct is untouched", got["mix_pct"], base["mix_pct"])
+    _eq("and g keeps every other property",
+        {k: v for k, v in got["g"].items() if k not in ("param_connect", "hint")},
+        {k: v for k, v in base["g"].items() if k not in ("param_connect", "hint")})
+
+    def raises(label, cb, fragment):
+        try:
+            bp.build(dict(_defn(), legacy={"control_box": cb}))
+        except ValueError as e:
+            check(label, 0 if fragment in str(e) else 1, 0)
+        else:
+            check(label + " (nothing was raised)", 1, 0)
+    raises("wrong shape", {"g": "x"}, "control_box")
+    raises("a param that does not exist", {"zzz": {"hint": "x"}}, "do not exist")
+    for forbidden in ("id", "maxclass", "patching_rect", "patcher"):
+        raises(f"forbidden property {forbidden!r}", {"g": {forbidden: 1}}, "cannot set")
+
+
+def test_the_band_editor_colour_modules_build_as_they_ship():
+    for name, tokens, dials, raw_n in (
+        ("f_hue_processor", "bypass sat_amt lum_shift hue_shift edge_falloff", {"sat_amt", "lum_shift", "hue_shift"}, 14),
+        ("f_luma_processor", "bypass sat_amt lum_shift hue_shift edge_falloff low_mid mid_high",
+         {"sat_amt", "lum_shift", "hue_shift"}, 12),
+        ("f_tone_curve", "bypass shadows midtones highlights edge_falloff low_mid mid_high",
+         {"shadows", "midtones", "highlights", "edge_falloff"}, 11),
+    ):
+        built, _ = drift.build_module(name)
+        p = built["patcher"]
+        top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+        route = top[bp.OBJ_ROUTE]
+        _eq(f"{name}: route tokens", " ".join(route["text"].split()[1:]), tokens)
+        n = len(route["text"].split()) - 1
+        _eq(f"{name}: the reject outlet feeds the pix, and the route has that outlet",
+            (route["numoutlets"], any(ln["patchline"]["source"] == [bp.OBJ_ROUTE, n]
+                                      and ln["patchline"]["destination"] == [bp.OBJ_PIX, 0] for ln in p["lines"])),
+            (n + 1, True))
+        pix = top[bp.OBJ_PIX]
+        _eq(f"{name}: the old @drawto pix form and the re-created varname",
+            (pix["text"].startswith("jit.gl.pix @name ") and "@drawto vsynth" in pix["text"], pix["varname"]),
+            (True, "jit.gl.pix_AA"))
+        generic = {b["varname"] for i, b in top.items()
+                   if b["maxclass"] == "live.dial" and i[4:].isdigit() and int(i[4:]) < 901}
+        _eq(f"{name}: the generated dials (ids below the raw range) are the ones the builder can make exactly",
+            generic, dials)
+        raw = [i for i in top if i.startswith("obj-9") and i[4:].isdigit() and int(i[4:]) >= 901]
+        _eq(f"{name}: raw boxes obj-901..", sorted(raw), [f"obj-{n}" for n in range(901, 901 + raw_n)])
+        _eq(f"{name}: no generated dial has an activedialcolor entry (these dials never had one)",
+            [v for v in (b for b in top.values() if b["maxclass"] == "live.dial")
+             if "activedialcolor" in v.get("saved_attribute_attributes", {})], [])
+        _eq(f"{name}: no bypass-message cord is missing (route outlet 0 reaches the jsui)",
+            any(ln["patchline"]["source"] == [bp.OBJ_ROUTE, 0]
+                and top[ln["patchline"]["destination"][0]]["maxclass"] == "jsui" for ln in p["lines"]), True)
 
 
 if __name__ == "__main__":

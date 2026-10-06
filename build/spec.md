@@ -145,6 +145,8 @@ patcher = {
 # Optional "color_expression": str on a float (dial) param -- the theme expression Max saves beside the
 # dial's activedialcolor ("themecolor.live_record"); "" by default. The resolved RGB is a presentation
 # property (overrides); capture cannot carry this one (it lives in saved_attribute_attributes).
+# `"color_expression": None` writes no `activedialcolor` entry at all (a dial Max saved without one:
+# the band-editor colour modules' dials).
 #
 # Top-level "route_reject_to_pix": True -- the route's reject (unmatched) outlet feeds the primary pix's
 # inlet 0, so messages no route token claims reach the pix; adds the reject outlet to the route box.
@@ -157,7 +159,9 @@ patcher = {
 # every control's param_connect names it, as Max wrote it; single-pix modules only), "autopattr_varname"
 # (e.g. "u905020188"), "bypass_jsui_saved" (the jsui's inert saved_attribute_attributes block, verbatim),
 # "control_valueof" ({param: {valueof key: value}}; None removes the key: a default shortname, a missing
-# initial value). Loud on an unknown key or a wrong shape. Added 2026-10-05, T014 (f_channel_grader).
+# initial value), "control_box" ({param: {box property: value}}; None removes the property: e.g. a dial
+# whose param_connect was removed by hand; cannot set id, maxclass, patching_rect or patcher). Loud on an
+# unknown key or a wrong shape. Added 2026-10-05, T014 (the four oldest colour modules).
 #
 # raw_boxes / raw_lines / raw_parameters for a module are best derived, not typed:
 # `build/py.sh build/capture_raw.py src/f_x/definition.py` writes `raw_ui.json` next to the

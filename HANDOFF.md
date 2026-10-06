@@ -42,7 +42,17 @@ Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite gree
   is `raw_ui.json` (14 raw boxes). New explicit builder keys: **`route_first`** (inlet -> route, reject -> routepass), per-param **`pix_wire: False`**,
   **`inlet_comment`**, outlet **`hint`**; the layout pass learned `route_first`. Shipped warts left as is: `fade` and `ch_diverge` tooltips say
   "Temporal persistence…", and `shape`'s tooltip describes an aspect ratio its 0..1 range does not have. The codebox has CRLF endings (read with `newline=""`).
-- **Next:** the rest of T014 (the four colour modules need T018's shared-label grid first; `f_lens`). The colour modules
+- **The four oldest colour modules closed (`f_channel_grader`, `f_hue_processor`, `f_luma_processor`, `f_tone_curve`; 27 of 39 exact), shipped patches
+  untouched (no Max check or bench needed).** T018's "shared-label grid" was one module's layout, not a schema: only `f_channel_grader` is a grid; the other
+  three are hand-built band editors, done with the raw recipe. **New tool `build/capture_raw.py`** derives a module's `raw_ui.json` from the shipped patch.
+  **New key `legacy`** preserves what Max wrote when it re-created objects (pix varname `jit.gl.pix_AA` that every dial's `param_connect` follows, auto-named
+  `autopattr`s, the bypass jsui's inert block, a few control leftovers) so the patches need not be regenerated: regenerating would rename the autopattr,
+  which could affect preset recall (unverifiable offline). Also `route_reject_to_pix`, per-param `color_expression`, `pix_context`, `"label": None`.
+- **Coordination note:** while I was working, uncommitted work from an *interrupted earlier session* (`pix_context`, `label: None`, `capture_raw.py`, and a
+  test file with a SyntaxError) appeared in the tree; Matt confirmed the connection had dropped. I finished and committed it (`d8e32ac`). If a half-finished
+  session ever leaves changes again: check `git status` and timestamps before editing, and do not overwrite them.
+- **Next:** `f_lens` is the only module left in T014 (it has `raw_boxes`/`raw_ui` already; its definition still builds the removed tiltshift). Then Phase 4
+  (schema gaps: Param-bypass first), Phase 5 (the generated `f_modules` menu). The colour modules
   and `f_grain` also route `bypass`, so `route_bypass` is available to them.
 
 ## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3
