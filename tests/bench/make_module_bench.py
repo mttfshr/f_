@@ -21,35 +21,18 @@ Run:  python3 tests/bench/make_module_bench.py
 import json
 from pathlib import Path
 
+from patchbuild import Patch, patcher_dict
+
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "bench_module.maxpat"
 EMPTY = HERE / "bench_module_empty.maxpat"
 N_IN = 5          # module inlets supported (main + up to 4 mod inlets)
 N_OUT = 4         # module outlets captured
 
-boxes, lines = [], []
-
-
-def obj(oid, text, n_in, n_out, rect, outlettype=None, varname=None):
-    box = {"id": oid, "maxclass": "newobj", "text": text, "numinlets": n_in,
-           "numoutlets": n_out, "patching_rect": [float(v) for v in rect]}
-    if n_out:
-        box["outlettype"] = outlettype or [""] * n_out
-    if varname:
-        box["varname"] = varname
-    boxes.append({"box": box})
-
-
-def wire(s, so, d, di):
-    lines.append({"patchline": {"source": [s, so], "destination": [d, di]}})
-
-
-def patcher(bxs, lns, rect=(100.0, 100.0, 900.0, 640.0)):
-    return {"patcher": {"fileversion": 1,
-                        "appversion": {"major": 9, "minor": 1, "revision": 4,
-                                       "architecture": "x64", "modernui": 1},
-                        "classnamespace": "box", "rect": list(rect),
-                        "boxes": bxs, "lines": lns}}
+_p = Patch()                       # obj / wire and the patcher wrapper live in patchbuild.py (shared with make_bench.py)
+boxes, lines = _p.boxes, _p.lines
+obj, wire = _p.obj, _p.wire
+patcher = patcher_dict
 
 
 boxes.append({"box": {"id": "c-title", "maxclass": "comment", "numinlets": 1, "numoutlets": 0,
