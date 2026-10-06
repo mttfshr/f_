@@ -40,6 +40,12 @@ patcher = {
     # Archetype — processor: source texture on in0
     "archetype": "processor",
 
+    # Bypass drives the codebox Param `bypass_gate` of the state stage (jsui -> `prepend param bypass_gate`
+    # -> state pix), not the native @bypass, which skips the shader and flips out2/out3.  Every outlet
+    # mixes to its passthrough, so a bypassed module is a passthrough (Matt, 2026-10-05; plan.md item 10).
+    # bypass_target defaults to the primary (state); the pass stage has no outlets to gate.
+    "bypass_mode": "param",
+
     # Multi-pix chain
     "pix_chain": [
         {

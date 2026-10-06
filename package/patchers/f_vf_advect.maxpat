@@ -198,7 +198,7 @@
                             },
                             {
                                 "box": {
-                                    "code": "Param dt(0.02);\nParam decay(0.95);\nParam injection(0.05);\nParam gain(1.0);\nParam mix_pct(100.0);\nParam bypass(0.0);\nParam src_vecfield(0.0);\n\nuv = norm;\n\n// Vecfield: sample inline (no stored variable component access)\nfx = (sample(in2, uv).x - 0.5) * 2.0;\nfy = (sample(in2, uv).y - 0.5) * 2.0;\n\n// Suppress displacement when vecfield unconnected (src_vecfield = 0)\nconnected = step(0.5, src_vecfield);\nfx = fx * connected;\nfy = fy * connected;\n\n// Backward-displaced UV, clamped to edge\nsrc_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));\n\n// Advect previous frame, add source injection\nadvected = sample(in3, src_uv) * decay;\nresult = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);\n\n// Wet/dry, then bypass\ndriven = clamp(result * gain, 0.0, 1.0);\nmixed = mix(sample(in1, uv), driven, mix_pct / 100.0);\nout1 = mix(mixed, sample(in1, uv), bypass);\nout2 = result;\n\n// --- 3rd outlet: gradient of accumulated flow (luma-reduced central\n// difference on the feedback texture in3, per ADR 6 / spec.md's\n// 2026-07-11 reframe -- result itself is a per-pixel value, not a\n// resamplable texture within this pass, so in3 (the previous frame's\n// accumulation, the same signal result derives from) stands in as the\n// best available proxy for \"shape of the accumulated flow\" ) ---\ngrad_scale = 0.004;\ngrad_gain  = 4.0;\n\nL_right = sample(in3, vec(uv.x + grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x + grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x + grad_scale, uv.y)).z * 0.114;\nL_left  = sample(in3, vec(uv.x - grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x - grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x - grad_scale, uv.y)).z * 0.114;\nL_down  = sample(in3, vec(uv.x, uv.y + grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y + grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y + grad_scale)).z * 0.114;\nL_up    = sample(in3, vec(uv.x, uv.y - grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y - grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y - grad_scale)).z * 0.114;\n\ngx = (L_right - L_left) * grad_gain;\ngy = (L_down  - L_up)   * grad_gain;\n\nfield   = vec(clamp(gx * 0.5 + 0.5, 0.0, 1.0), clamp(gy * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);\n\nout3 = field;  // always live -- feedback loop keeps running during bypass, out3 shouldn't flatten\n",
+                                    "code": "Param dt(0.02);\nParam decay(0.95);\nParam injection(0.05);\nParam gain(1.0);\nParam mix_pct(100.0);\nParam bypass_gate(0.0);\nParam src_vecfield(0.0);\n\nuv = norm;\n\n// Vecfield: sample inline (no stored variable component access)\nfx = (sample(in2, uv).x - 0.5) * 2.0;\nfy = (sample(in2, uv).y - 0.5) * 2.0;\n\n// Suppress displacement when vecfield unconnected (src_vecfield = 0)\nconnected = step(0.5, src_vecfield);\nfx = fx * connected;\nfy = fy * connected;\n\n// Backward-displaced UV, clamped to edge\nsrc_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));\n\n// Advect previous frame, add source injection\nadvected = sample(in3, src_uv) * decay;\nresult = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);\n\n// Wet/dry, then bypass (bypass_mode \"param\"): passthrough on every outlet (Matt, 2026-10-05).\n// out1 feeds the pass stage, so the feedback loop carries the source while bypassed.\ndriven = clamp(result * gain, 0.0, 1.0);\nmixed = mix(sample(in1, uv), driven, mix_pct / 100.0);\nout1 = mix(mixed, sample(in1, uv), bypass_gate);\nout2 = mix(result, sample(in1, uv), bypass_gate);\n\n// --- 3rd outlet: gradient of accumulated flow (luma-reduced central\n// difference on the feedback texture in3, per ADR 6 / spec.md's\n// 2026-07-11 reframe -- result itself is a per-pixel value, not a\n// resamplable texture within this pass, so in3 (the previous frame's\n// accumulation, the same signal result derives from) stands in as the\n// best available proxy for \"shape of the accumulated flow\" ) ---\ngrad_scale = 0.004;\ngrad_gain  = 4.0;\n\nL_right = sample(in3, vec(uv.x + grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x + grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x + grad_scale, uv.y)).z * 0.114;\nL_left  = sample(in3, vec(uv.x - grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x - grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x - grad_scale, uv.y)).z * 0.114;\nL_down  = sample(in3, vec(uv.x, uv.y + grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y + grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y + grad_scale)).z * 0.114;\nL_up    = sample(in3, vec(uv.x, uv.y - grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y - grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y - grad_scale)).z * 0.114;\n\ngx = (L_right - L_left) * grad_gain;\ngy = (L_down  - L_up)   * grad_gain;\n\nfield   = vec(clamp(gx * 0.5 + 0.5, 0.0, 1.0), clamp(gy * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);\n\n// bypassed: the vecfield input passed through (neutral 0.5 when it is unconnected)\nout3 = mix(field, vec(mix(0.5, sample(in2, uv).x, connected), mix(0.5, sample(in2, uv).y, connected), 0.5, 1.0), bypass_gate);\n",
                                     "fontface": 0,
                                     "fontname": "<Monospaced>",
                                     "fontsize": 12.0,
@@ -1424,21 +1424,13 @@
             },
             {
                 "box": {
-                    "attr": "bypass",
                     "id": "obj-39",
-                    "maxclass": "attrui",
+                    "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 1,
-                    "outlettype": [
-                        ""
-                    ],
-                    "parameter_enable": 0,
-                    "patching_rect": [
-                        400.0,
-                        60.0,
-                        131.0,
-                        22.0
-                    ]
+                    "outlettype": [ "" ],
+                    "patching_rect": [ 400.0, 60.0, 131.0, 22.0 ],
+                    "text": "prepend param bypass_gate"
                 }
             },
             {

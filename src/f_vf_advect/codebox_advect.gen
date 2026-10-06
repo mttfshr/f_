@@ -3,7 +3,7 @@ Param decay(0.95);
 Param injection(0.05);
 Param gain(1.0);
 Param mix_pct(100.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 Param src_vecfield(0.0);
 
 uv = norm;
@@ -24,11 +24,12 @@ src_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));
 advected = sample(in3, src_uv) * decay;
 result = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);
 
-// Wet/dry, then bypass
+// Wet/dry, then bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
+// out1 feeds the pass stage, so the feedback loop carries the source while bypassed.
 driven = clamp(result * gain, 0.0, 1.0);
 mixed = mix(sample(in1, uv), driven, mix_pct / 100.0);
-out1 = mix(mixed, sample(in1, uv), bypass);
-out2 = result;
+out1 = mix(mixed, sample(in1, uv), bypass_gate);
+out2 = mix(result, sample(in1, uv), bypass_gate);
 
 // --- 3rd outlet: gradient of accumulated flow (luma-reduced central
 // difference on the feedback texture in3, per ADR 6 / spec.md's
@@ -49,4 +50,5 @@ gy = (L_down  - L_up)   * grad_gain;
 
 field   = vec(clamp(gx * 0.5 + 0.5, 0.0, 1.0), clamp(gy * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
 
-out3 = field;  // always live -- feedback loop keeps running during bypass, out3 shouldn't flatten
+// bypassed: the vecfield input passed through (neutral 0.5 when it is unconnected)
+out3 = mix(field, vec(mix(0.5, sample(in2, uv).x, connected), mix(0.5, sample(in2, uv).y, connected), 0.5, 1.0), bypass_gate);
