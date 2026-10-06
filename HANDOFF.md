@@ -35,8 +35,8 @@ Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite gree
   never-regenerate list. New explicit builder keys: **`route_name`** (advect's `mix_pct` numbox answers to `mix`; most modules' to `mix_pct`:
   an unresolved message-API inconsistency), **`"hint": None`**; and a **fix: `param_connect` follows `pix_target`**. That fix exposed that
   **`f_vf_optical_flow`'s 8 support-stage dials were bound to the wrong pix** (`stage_a`); I corrected those strings in its shipped patch
-  (parse-verified, nothing else changed). Advect's patch only gained 7 `lbl_*` label varnames. **Matt: look at `f_vf_advect` and
-  `f_vf_optical_flow` in Max, then `./bench.sh --changed`** (close patches holding an instance of either first).
+  (parse-verified, nothing else changed). Advect's patch only gained 7 `lbl_*` label varnames. `./bench.sh --changed` green (2/2, Matt). **Matt: still
+  to look at `f_vf_advect` and `f_vf_optical_flow` in Max.**
 - **Next:** the rest of T014 (the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). The colour modules
   and `f_grain` also route `bypass`, so `route_bypass` is available to them.
 
