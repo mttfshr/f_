@@ -4,7 +4,7 @@ State of each skill as of the last claude.ai upload.
 Regenerate with `./skills/check.sh stamp` immediately AFTER uploading.
 Check with `./skills/check.sh`.
 
-_Stamped: 2026-10-05_
+_Stamped: 2026-10-06_
 
 | skill | sha256(12) | lines |
 |---|---|---|
@@ -15,4 +15,4 @@ _Stamped: 2026-10-05_
 | `max-patch-notation` | 143cc18a4e05 | 182 |
 | `maxpat-json-authoring` | 53404d0c35ba | 137 |
 | `pfft-spectral-processing` | bdbd28827121 | 248 |
-| `vsynth-bpatcher` | 53bdbe0c0abf | 1033 |
+| `vsynth-bpatcher` | c9623c691b01 | 1042 |
