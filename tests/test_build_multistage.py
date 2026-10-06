@@ -291,5 +291,66 @@ def test_f_vf_warp_uses_param_bypass_and_reproduces_exactly():
          any(b.get("attr") == "bypass" for b in boxes)), (True, False))
 
 
+def test_f_vf_fluid_builds_from_its_definition_with_the_old_scripts_invariants():
+    """build_fluid.py is gone (T019); its verify() checks live on here."""
+    _eq("no per-module build script is left to be preferred over the definition",
+        drift.builder_script("f_vf_fluid"), None)
+    _eq("f_vf_fluid reproduces from its definition", drift.report("f_vf_fluid")["status"], "ok")
+    built, how = drift.build_module("f_vf_fluid")
+    _eq("built through the generic path", how, "definition")
+    p = built["patcher"]
+    boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    cords = {(tuple(ln["patchline"]["source"]), tuple(ln["patchline"]["destination"])) for ln in p["lines"]}
+    pix = {b["varname"]: b for b in boxes.values() if str(b.get("text", "")).startswith("jit.gl.pix")}
+    _eq("eight pix, all #0-scoped and unique",
+        (len(pix), sorted(pix) == sorted(set(pix)), all(n.startswith("#0_") for n in pix)), (8, True, True))
+    solver = [n for n in pix if n != "#0_fluid_enc"]
+    _eq("seven solver stages are @adapt 0 @dim 256 256 float32",
+        all("@adapt 0 @dim 256 256 @type float32" in pix[n]["text"] for n in solver), True)
+    _eq("enc follows the render size", pix["#0_fluid_enc"]["text"].endswith("@adapt 1 @type float32"), True)
+    _eq("no native bypass attribute anywhere", any(b.get("attr") == "bypass" for b in boxes.values()), False)
+    _eq("the bypass toggle drives enc's Param",
+        any(b.get("text") == "prepend param bypass_gate" for b in boxes.values()), True)
+    _eq("route tokens in definition order, taps last",
+        boxes[bp.OBJ_ROUTE]["text"].split()[1:], ["force", "dt", "viscosity", "project", "drag", "gain", "taps"])
+    taps_n = 6
+    _eq("taps has no widget and no label, only its attrui",
+        (bp.param_obj_id(taps_n) in boxes, bp.param_label_id(taps_n) in boxes, bp.param_pre_id(taps_n) in boxes),
+        (False, False, True))
+    dt_attruis = [i for i, b in boxes.items() if b.get("maxclass") == "attrui" and b.get("attr") == "dt"]
+    _eq("dt reaches two stages through two attruis", len(dt_attruis), 2)
+    enc, adv = bp.OBJ_PIX, pix["#0_fluid_adv"]["id"]
+    _eq("the force inlet reaches adv and enc cold inlets, and r draw triggers both",
+        ((bp.OBJ_INSTATE, 0), (adv, 1)) in cords and ((bp.OBJ_INSTATE, 0), (enc, 1)) in cords
+        and (("obj-20a", 0), (adv, 0)) in cords and (("obj-20a", 0), (enc, 0)) in cords, True)
+    _eq("the feedback edge ix -> pass exists",
+        ((pix["#0_fluid_ix"]["id"], 0), (pix["#0_fluid_pass"]["id"], 0)) in cords, True)
+
+
+# ---- the edit-view layout of the new boxes
+
+def test_fanout_and_extra_attruis_lay_out_without_overlap_or_upward_cords():
+    import layout
+    d = chain_defn(inlet_fanout={"texture": [["first", 1], ["main", 1]], "state": ["first", "main"],
+                                 "state_param": "src_vec"},
+                   draw_triggers=["first", "main"])
+    d["params"][0]["pix_target"] = ["main", "first"]
+    dbg = {}
+    p = bp.build(d, debug=dbg)["patcher"]
+    roles = dbg["roles"]
+    a = layout.audit(p["boxes"], p["lines"], roles)
+    _eq("no overlaps, shared origins or upward cords", (a["overlaps"], a["same_origin"], a["upward"]), ([], [], []))
+    boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    _eq("r draw sits beside vs_inState, not on it",
+        boxes["obj-20a"]["patching_rect"][:2] != boxes[bp.OBJ_INSTATE]["patching_rect"][:2], True)
+    extra = [i for i, r in roles.items() if r[0] == "pre_extra"]
+    pre = boxes[bp.param_pre_id(0)]["patching_rect"]
+    ex = boxes[extra[0]]["patching_rect"]
+    _eq("the extra attrui is in its param's column, below the first attrui",
+        (len(extra), abs((ex[0] + ex[2] / 2) - (pre[0] + pre[2] / 2)) < 1.0, ex[1] > pre[1]), (1, True, True))
+    keys = bp.element_keys(roles, [q for q in d["params"] if q["type"] in ("float", "int")], [])
+    _eq("the extra attrui has a stable override key", "dt.pre_extra.0" in keys, True)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

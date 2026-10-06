@@ -154,7 +154,8 @@ def layout_edit_view(boxes, lines, roles):
     for bx in one("srcmode_pre"):
         _put(bx, MARGIN, y_is + SERV_STEP)
     for bx in one("rdraw"):
-        _put(bx, MARGIN, Y_ROW3)
+        # beside vs_inState when there is one (inlet_fanout + draw_triggers), else in its own slot
+        _put(bx, MARGIN + (100.0 if grp.get("instate") else 0.0), Y_ROW3)
 
     n_mod = 0
     for role, y in (("mod_inlet", Y_INLET), ("mod_instate", Y_ROW2), ("mod_statepre", Y_ROW3)):
@@ -190,6 +191,9 @@ def layout_edit_view(boxes, lines, roles):
     for k, bid in grp.get("pre", []):
         _put(by_id[bid], w=ATTRUI_W)
         _put_centered(by_id[bid], cx(k + off), Y_PRE)
+    for (n, j), bid in grp.get("pre_extra", []):      # a pix_target list's further attruis: under their column
+        _put(by_id[bid], w=ATTRUI_W)
+        _put_centered(by_id[bid], cx(n + off), Y_PRE + 34.0 + 24.0 * j)
     if route_bypass:
         for bx in one("bypass_jsui"):
             _put_centered(bx, cx(0), Y_CTL, COL_W)

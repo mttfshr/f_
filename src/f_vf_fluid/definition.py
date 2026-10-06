@@ -1,14 +1,15 @@
 """
 f_vf_fluid — definition.py
 
-METADATA ONLY. This file feeds the docs/helpfile/param-extraction tooling
-(build/extract_params.py, docs pipeline) and the bench's archetype lookup, and
-build_fluid.py reads the UI parameter specs from here. It is NOT the input of
-build/build_patcher.py: the patcher is built by src/f_vf_fluid/build_fluid.py
-(plan ADR-9 — an eight-stage chain that the generic pix_chain schema cannot
-express: inlet fan-out through vs_inState, `r draw` triggers, per-stage @dim,
-params reaching several stages, a Param-based bypass gate).
-
+The full definition of the module: build/build_patcher.py builds the shipped patcher from it
+(build_cleanup T019, 2026-10-05; until then src/f_vf_fluid/build_fluid.py did, plan ADR-9, because
+the generic schema could not express an eight-stage chain).  The keys that made it expressible
+(build_cleanup T016/T017; build/spec.md "Multi-stage keys"): per-node `pix_attrs`, `pix_target` lists,
+`ui: False` for `taps`, `inlet_fanout` (the force inlet reaches `adv` and `enc` through vs_inState),
+`draw_triggers` (`r draw` -> `adv` and `enc`) and `bypass_mode: "param"` (the bypass toggle drives the
+codebox Param `bypass_gate` on `enc`, never the native @bypass, plan ADR-8).
+This file also feeds the docs/helpfile/param-extraction tooling (build/extract_params.py) and the
+bench's archetype lookup.
 Spectral (FFT) incompressible-flow VELOCITY SOLVER, a vecfield producer:
 a force vecfield goes in, an evolving velocity vecfield comes out. Dye/texture
 transport is left to f_vf_advect and friends fed from the outlet.
@@ -80,4 +81,50 @@ patcher = {
         # Driven by the bypass jsui (`prepend param bypass_gate`), never by the route
         {"name": "bypass_gate", "type": "internal"},
     ],
+
+    # ---- the chain (build/spec.md "Multi-stage keys") ----------------------------------------------
+    #   r draw -> adv (in0), enc (in0)        force -> vs_inState -> adv (in1), enc (in1)
+    #   pass -> adv (in2) -> fx -> fy -> spec -> iy -> ix -> pass   (feedback)
+    #                                               ix -> enc (in2) -> outlet
+    # Solver stages are @adapt 0 @dim 256 256 float32; only `enc` follows the render size (the
+    # primary, and the one outlet).  The `r draw` bang on `enc` makes it take the render-context
+    # size even with the force inlet unconnected (plan ADR-2).
+    "inlet_comment": "force vecfield / control",
+    "inlet_fanout": {"texture": [["adv", 1], ["enc", 1]],
+                     "state": ["adv", "enc"], "state_param": "src_vecfield"},
+    "draw_triggers": ["adv", "enc"],
+    "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
+
+    "pix_chain": [
+        {"id": "pass", "name": "#0_fluid_pass", "gen": "pass",                 "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
+        {"id": "adv",  "name": "#0_fluid_adv",  "gen": "codebox_adv.gen",     "n_inlets": 3, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
+        {"id": "fx",   "name": "#0_fluid_fx",   "gen": "codebox_dft_fx.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
+        {"id": "fy",   "name": "#0_fluid_fy",   "gen": "codebox_dft_fy.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
+        {"id": "spec", "name": "#0_fluid_spec", "gen": "codebox_spec.gen",    "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
+        {"id": "iy",   "name": "#0_fluid_iy",   "gen": "codebox_dft_iy.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
+        {"id": "ix",   "name": "#0_fluid_ix",   "gen": "codebox_dft_ix.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
+        {"id": "enc",  "name": "#0_fluid_enc",  "gen": "codebox_enc.gen",     "n_inlets": 3, "n_outlets": 1,
+         "pix_attrs": "@adapt 1 @type float32", "primary": True},
+    ],
+    "pix_wires": [
+        ["pass", 0, "adv", 2],      # previous state
+        ["adv", 0, "fx", 0], ["fx", 0, "fy", 0], ["fy", 0, "spec", 0],
+        ["spec", 0, "iy", 0], ["iy", 0, "ix", 0],
+        ["ix", 0, "pass", 0],       # feedback edge
+        ["ix", 0, "enc", 2],        # velocity -> encode (cold)
+    ],
 }
+
+# UI parameter -> the stage(s) whose codebox Param it sets (the first is the control's param_connect target).
+_STAGES_OF = {"force": "adv", "dt": ["adv", "spec"], "viscosity": "spec", "project": "spec",
+              "drag": "spec", "gain": "enc", "taps": "adv"}
+for _p in patcher["params"]:
+    if _p["name"] in _STAGES_OF:
+        _p["pix_target"] = _STAGES_OF[_p["name"]]

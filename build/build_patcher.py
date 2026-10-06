@@ -1112,7 +1112,7 @@ def wire(src_id, src_outlet, dst_id, dst_inlet):
 # ---------------------------------------------------------------------------
 
 def assign_roles(ui_params, header_toggles, mod_inlets, outlets, pix_ids,
-                 bp_jsui_id, bp_pre_id):
+                 bp_jsui_id, bp_pre_id, extra_attruis=()):
     """
     {box_id: (role, idx)} for the edit-view layout pass (build/layout.py).
     Kept separate from box() so box output is unchanged; roles are never serialized.
@@ -1149,6 +1149,10 @@ def assign_roles(ui_params, header_toggles, mod_inlets, outlets, pix_ids,
         r[OBJ_HEADER_TOGGLE] = ("ctl", k)
         r[OBJ_HEADER_TOGGLE_LABEL] = ("label", k)
         r[OBJ_HEADER_TOGGLE_PRE] = ("pre", k)
+    seen = {}                                # extra attruis of pix_target lists: (param index, k-th extra)
+    for aid, n, _ in extra_attruis:
+        r[aid] = ("pre_extra", (n, seen.setdefault(n, 0)))
+        seen[n] += 1
     for i in range(len(mod_inlets)):
         r[mod_inlet_obj_id(i)] = ("mod_inlet", i)
         r[mod_instate_obj_id(i)] = ("mod_instate", i)
@@ -1170,6 +1174,8 @@ def element_keys(roles, ui_params, header_toggles):
             key = f"{names[idx]}.{role}"
         elif role == "range_msg":
             key = f"{names[idx[0]]}.range_msg.{idx[1]}"
+        elif role == "pre_extra":
+            key = f"{names[idx[0]]}.pre_extra.{idx[1]}"
         elif role in ("outlet", "mod_inlet", "mod_instate", "mod_statepre"):
             key = f"{role}.{idx}"
         elif role == "pix":
@@ -1798,7 +1804,7 @@ def build(defn, debug=None, side_files=None):
     # "Overrides").  Computed always: they must not depend on `edit_layout`.
     roles = assign_roles(ui_params, header_toggles, mod_inlets, outlets,
                          [b["box"]["id"] for b in pix_boxes_to_add],
-                         bp_jsui_id, bp_pre_id)
+                         bp_jsui_id, bp_pre_id, extra_attruis)
     keys = element_keys(roles, ui_params, header_toggles)
     if debug is not None:
         debug["roles"] = roles              # tests/test_layout.py reads this; never serialized
