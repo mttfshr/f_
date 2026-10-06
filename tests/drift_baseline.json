@@ -89,7 +89,7 @@
   "f_stereo": {
    "counts": {
     "boxes_renamed": 1,
-    "props": 4
+    "props": 3
    },
    "status": "drift"
   },
@@ -124,20 +124,6 @@
   "f_util_profile": {
    "reason": "js-driven CPU luminance profiler (moduleSize/profile_rows/profile_cols js plus live.* controls); not expressible in the schema. Its stale definition.py (1 June, failed to build) was deleted on purpose on 2026-10-05; it is in git history.",
    "status": "out_of_scope"
-  },
-  "f_vf_advect": {
-   "counts": {
-    "boxes_def_only": 2,
-    "boxes_patch_only": 6,
-    "boxes_renamed": 3,
-    "code": 1,
-    "layout": 4,
-    "lines_def_only": 1,
-    "lines_patch_only": 1,
-    "pix_io": 1,
-    "props": 4
-   },
-   "status": "drift"
   },
   "f_vf_flow": {
    "counts": {

@@ -882,7 +882,8 @@
                         18.0
                     ],
                     "text": "dt",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_dt"
                 }
             },
             {
@@ -984,7 +985,8 @@
                         18.0
                     ],
                     "text": "Decay",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_decay"
                 }
             },
             {
@@ -1085,7 +1087,8 @@
                         18.0
                     ],
                     "text": "Inject",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_injection"
                 }
             },
             {
@@ -1187,7 +1190,8 @@
                         18.0
                     ],
                     "text": "Gain",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_gain"
                 }
             },
             {
@@ -1289,7 +1293,8 @@
                         18.0
                     ],
                     "text": "Separate",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_separate"
                 }
             },
             {
@@ -1384,7 +1389,8 @@
                         18.0
                     ],
                     "text": "Mode",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_mode"
                 }
             },
             {
@@ -1502,10 +1508,10 @@
             },
             {
                 "box": {
-                    "id": "obj-92",
-                    "maxclass": "comment",
                     "fontname": "Ableton Sans Light",
                     "fontsize": 9.5,
+                    "id": "obj-92",
+                    "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
@@ -1522,7 +1528,8 @@
                         18.0
                     ],
                     "text": "Mix",
-                    "textjustification": 1
+                    "textjustification": 1,
+                    "varname": "lbl_mix_pct"
                 }
             },
             {

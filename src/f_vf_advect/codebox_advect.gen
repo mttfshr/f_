@@ -1,7 +1,8 @@
 Param dt(0.02);
 Param decay(0.95);
 Param injection(0.05);
-Param mix_amt(1.0);
+Param gain(1.0);
+Param mix_pct(100.0);
 Param bypass(0.0);
 Param src_vecfield(0.0);
 
@@ -24,6 +25,28 @@ advected = sample(in3, src_uv) * decay;
 result = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);
 
 // Wet/dry, then bypass
-mixed = mix(sample(in1, uv), result, mix_amt);
+driven = clamp(result * gain, 0.0, 1.0);
+mixed = mix(sample(in1, uv), driven, mix_pct / 100.0);
 out1 = mix(mixed, sample(in1, uv), bypass);
 out2 = result;
+
+// --- 3rd outlet: gradient of accumulated flow (luma-reduced central
+// difference on the feedback texture in3, per ADR 6 / spec.md's
+// 2026-07-11 reframe -- result itself is a per-pixel value, not a
+// resamplable texture within this pass, so in3 (the previous frame's
+// accumulation, the same signal result derives from) stands in as the
+// best available proxy for "shape of the accumulated flow" ) ---
+grad_scale = 0.004;
+grad_gain  = 4.0;
+
+L_right = sample(in3, vec(uv.x + grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x + grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x + grad_scale, uv.y)).z * 0.114;
+L_left  = sample(in3, vec(uv.x - grad_scale, uv.y)).x * 0.299 + sample(in3, vec(uv.x - grad_scale, uv.y)).y * 0.587 + sample(in3, vec(uv.x - grad_scale, uv.y)).z * 0.114;
+L_down  = sample(in3, vec(uv.x, uv.y + grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y + grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y + grad_scale)).z * 0.114;
+L_up    = sample(in3, vec(uv.x, uv.y - grad_scale)).x * 0.299 + sample(in3, vec(uv.x, uv.y - grad_scale)).y * 0.587 + sample(in3, vec(uv.x, uv.y - grad_scale)).z * 0.114;
+
+gx = (L_right - L_left) * grad_gain;
+gy = (L_down  - L_up)   * grad_gain;
+
+field   = vec(clamp(gx * 0.5 + 0.5, 0.0, 1.0), clamp(gy * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
+
+out3 = field;  // always live -- feedback loop keeps running during bypass, out3 shouldn't flatten

@@ -30,7 +30,14 @@ Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite gree
   the codebox comment; `plan.md`'s "droste missing autopattr" entry was stale and is removed. The bypass jsui's saved `valueof` was
   dropped on the (untested) assumption it is inert: still on `f_channel_grader`, `f_luma_processor`, `f_stereo`, `f_texrouter`,
   `f_tone_curve`. **Matt looked at `f_droste` in Max: checks out (2026-10-05).** `./bench.sh --changed` green too (`bench_modules` 2/2, Matt, 2026-10-05).
-- **Next:** the rest of T014 (`f_vf_advect`, the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). The colour modules
+- **`f_vf_advect` closed, `build_advect.py` deleted** (22 of 39 exact; Matt said yes to the plan). The codebox/definition/script were all behind the
+  patch (July gain/mix/mode/separate/3rd-outlet work was hand-edited into it). Now `build_patcher.py` reproduces it alone, and it is off the
+  never-regenerate list. New explicit builder keys: **`route_name`** (advect's `mix_pct` numbox answers to `mix`; most modules' to `mix_pct`:
+  an unresolved message-API inconsistency), **`"hint": None`**; and a **fix: `param_connect` follows `pix_target`**. That fix exposed that
+  **`f_vf_optical_flow`'s 8 support-stage dials were bound to the wrong pix** (`stage_a`); I corrected those strings in its shipped patch
+  (parse-verified, nothing else changed). Advect's patch only gained 7 `lbl_*` label varnames. **Matt: look at `f_vf_advect` and
+  `f_vf_optical_flow` in Max, then `./bench.sh --changed`** (close patches holding an instance of either first).
+- **Next:** the rest of T014 (the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). The colour modules
   and `f_grain` also route `bypass`, so `route_bypass` is available to them.
 
 ## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3

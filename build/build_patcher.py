@@ -131,10 +131,16 @@ def routepass_box():
         patching_rect=[200.0, 90.0, 215.0, 22.0],
         text="routepass jit_gl_texture jit_matrix")
 
+def route_token(p):
+    """The message name a param answers to on the control inlet: its `route_name` if it has one,
+    else its `name`.  f_vf_advect's `mix_pct` numbox answers to `mix` (route_name), as it ships."""
+    return p.get("route_name", p["name"])
+
+
 def route_box(ui_params, route_bypass=False):
     # route_bypass: `bypass` is the first route token, so a `bypass 0/1` message reaches the bypass
     # jsui (build() wires route outlet 0 to it) and every param outlet is one higher.
-    names = " ".join((["bypass"] if route_bypass else []) + [p["name"] for p in ui_params])
+    names = " ".join((["bypass"] if route_bypass else []) + [route_token(p) for p in ui_params])
     n = len(ui_params) + (1 if route_bypass else 0)
     return box(OBJ_ROUTE,
         maxclass="newobj",
@@ -414,6 +420,15 @@ def range_tier_boxes(n, p):
     return [menu, sel] + msgs
 
 
+def _hint_kw(p):
+    """A control's `hint` keyword.  A param with no "hint" key gets hint "" (what the builder has
+    always written, and what the shipped builder-made patchers contain).  `"hint": None` writes no
+    hint key at all, for hand-made controls whose shipped patch has none (f_vf_advect's dials,
+    f_stereo's toggle)."""
+    h = p.get("hint", "")
+    return {} if h is None else {"hint": h}
+
+
 def _modmode(p):
     """A float/int param's `parameter_modmode`: 3 (relative modulation, the dial standard) unless
     the param says otherwise, e.g. `"modmode": 0` (none) for f_droste's integer-sensitive n_arms.
@@ -433,7 +448,7 @@ def dial_box(n, p, object_name):
         maxclass="live.dial",
         activedialcolor=DIAL_COLOR,
         fontname=FONT,
-        hint=p.get("hint", ""),
+        **_hint_kw(p),
         numinlets=1, numoutlets=2, outlettype=["", "float"],
         param_connect=f"{object_name}::{p['name']}",
         parameter_enable=1,
@@ -466,7 +481,7 @@ def numbox_box(n, p, object_name):
     return box(param_obj_id(n),
         maxclass="live.numbox",
         fontname=FONT,
-        hint=p.get("hint", ""),
+        **_hint_kw(p),
         numinlets=1, numoutlets=2, outlettype=["", "float"],
         param_connect=f"{object_name}::{p['name']}",
         parameter_enable=1,
@@ -502,7 +517,7 @@ def text_button_box(n, p, object_name):
         maxclass="live.text",
         fontname=FONT,
         fontsize=FONT_LABEL,
-        hint=p.get("hint", ""),
+        **_hint_kw(p),
         numinlets=1, numoutlets=2, outlettype=["", ""],
         param_connect=f"{object_name}::{p['name']}",
         parameter_enable=1,
@@ -542,7 +557,7 @@ def menu_box(n, p, object_name):
     return box(param_obj_id(n),
         maxclass="live.menu",
         fontname=FONT,
-        hint=p.get("hint", ""),
+        **_hint_kw(p),
         numinlets=1, numoutlets=3, outlettype=["", "", "float"],
         param_connect=f"{object_name}::{p['name']}",
         parameter_enable=1,
@@ -597,7 +612,7 @@ def header_toggle_box(p, object_name, pw):
     return box(OBJ_HEADER_TOGGLE,
         maxclass="live.toggle",
         fontname=FONT,
-        hint=p.get("hint", ""),
+        **_hint_kw(p),
         numinlets=1, numoutlets=1, outlettype=[""],
         param_connect=f"{object_name}::{p['name']}",
         parameter_enable=1,
@@ -1191,6 +1206,22 @@ def build(defn, debug=None, side_files=None):
         raise ValueError(f"route_bypass must be True or False, not {route_bypass!r}")
     rb = 1 if route_bypass else 0    # route outlet offset: outlet 0 is `bypass` when it is routed
 
+    # route_name (per param): the message the control answers to, when it is not the param's name.
+    # It is a route token, so it must be one word, unique, and not `bypass` (reserved).
+    tokens = [route_token(p) for p in all_params if p["type"] in ("float", "int", "menu", "text_button",
+                                                                   "header_toggle", "raw_ui")]
+    for p in all_params:
+        if "route_name" in p:
+            t = p["route_name"]
+            if not isinstance(t, str) or t != t.strip() or len(t.split()) != 1:
+                raise ValueError(f"param '{p['name']}': route_name must be a single word, not {t!r}")
+            if t == "bypass":
+                raise ValueError(f"param '{p['name']}': route_name cannot be 'bypass' (reserved for the bypass toggle)")
+    dup = sorted({t for t in tokens if tokens.count(t) > 1})
+    if dup:
+        raise ValueError(f"route tokens must be unique, but {dup} appear more than once "
+                         f"(a param's name, or its route_name)")
+
     # Validate: vs_instate:False and state_param are mutually exclusive
     for mi in mod_inlets:
         if not mi.get("vs_instate", True) and mi.get("state_param"):
@@ -1290,21 +1321,26 @@ def build(defn, debug=None, side_files=None):
         boxes.extend(mod_inlet_boxes(mod_inlets, driving_inlet=defn.get("driving_inlet", False)))
         boxes.extend(mod_state_pre_boxes(mod_inlets))
 
-    # Per-param boxes (grid — float and int only)
+    # Per-param boxes (grid — float and int only).  A control's param_connect names the pix it
+    # drives: the @name of its `pix_target` node when that is a pix_chain node (f_vf_advect's
+    # `separate` / `mode` drive the pass pix), else the primary pix.  A raw-object pix_target
+    # (f_lens) has no known @name here and keeps the primary's, as before.
+    chain_names = {nd["id"]: nd["name"] for nd in (pix_chain or [])}
     for n, p in enumerate(ui_params):
+        pname = chain_names.get(p.get("pix_target"), object_name)    # the pix this control drives
         if p["type"] == "float" and p.get("widget") == "numbox":
             # opt-in override for the library's mix/dry-wet crossfade
             # convention (vsynth-bpatcher/SKILL.md) -- live.numbox instead
             # of the float-param default live.dial
-            boxes.append(numbox_box(n, p, object_name))
+            boxes.append(numbox_box(n, p, pname))
         elif p["type"] == "float":
-            boxes.append(dial_box(n, p, object_name))
+            boxes.append(dial_box(n, p, pname))
         elif p["type"] == "int":
-            boxes.append(numbox_box(n, p, object_name))
+            boxes.append(numbox_box(n, p, pname))
         elif p["type"] == "menu":
-            boxes.append(menu_box(n, p, object_name))
+            boxes.append(menu_box(n, p, pname))
         elif p["type"] == "text_button":
-            boxes.append(text_button_box(n, p, object_name))
+            boxes.append(text_button_box(n, p, pname))
         boxes.append(attrui_box(param_pre_id(n), p["name"],
                                 50.0 + n * 50.0, 170.0 + n * 30.0))
         if p["type"] != "text_button":

@@ -11,6 +11,9 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
 
   - per-param `modmode` (default 3, relative modulation; `0` for f_droste's n_arms): dials and numboxes,
     loud outside 0-4 (T014)
+  - per-param `route_name` (the message a control answers to, when not its name: f_vf_advect's `mix`),
+    `"hint": None` (no hint key, for hand-made controls), and `param_connect` naming the pix a control
+    actually drives (`pix_target`): T014
   - `route_bypass`: `bypass` is the first `route` token, wired to the bypass jsui, and every param
     outlet is one higher; off (the default) changes nothing (T014)
 
@@ -348,6 +351,134 @@ def test_f_droste_has_its_time_s_inlet_and_a_dial_with_modulation_off():
              b["saved_attribute_attributes"]["valueof"]["parameter_modmode"]
              for b in top if b["maxclass"] == "live.dial"}
     _eq("only n_arms has modulation off", modes, {"zoom": 3, "n_arms": 0, "twist": 3, "rotation": 3})
+
+
+# ---- route_name, hint None, param_connect follows pix_target
+
+def _route(defn):
+    p = bp.build(defn)["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    r = top[bp.OBJ_ROUTE]
+    out = {}
+    for ln in p["lines"]:
+        pl = ln["patchline"]
+        if pl["source"][0] == bp.OBJ_ROUTE:
+            out[pl["source"][1]] = top[pl["destination"][0]].get("varname")
+    return r["text"].split()[1:], out
+
+
+def test_route_name_changes_the_token_not_the_control_it_reaches():
+    d = _defn()
+    d["params"][1]["route_name"] = "mix"          # mix_pct answers to `mix`
+    tokens, out = _route(d)
+    _eq("the token is the route_name", tokens, ["g", "mix", "n"])
+    _eq("and its outlet still reaches the mix_pct control", [out[i] for i in range(3)], ["g", "mix_pct", "n"])
+    _eq("without it the token is the name (unchanged)", _route(_defn())[0], ["g", "mix_pct", "n"])
+    d2 = _defn()
+    d2["route_bypass"] = True
+    d2["params"][1]["route_name"] = "mix"
+    t2, o2 = _route(d2)
+    _eq("with route_bypass the shift still holds", (t2, [o2[i] for i in range(1, 4)]),
+        (["bypass", "g", "mix", "n"], ["g", "mix_pct", "n"]))
+
+
+def test_route_name_is_loud():
+    def raises(label, mutate, fragment):
+        d = _defn()
+        mutate(d)
+        try:
+            bp.build(d)
+        except ValueError as e:
+            check(label, 0 if fragment in str(e) else 1, 0)
+        else:
+            check(label + " (nothing was raised)", 1, 0)
+    raises("two words", lambda d: d["params"][0].update(route_name="a b"), "single word")
+    raises("empty", lambda d: d["params"][0].update(route_name=""), "single word")
+    raises("surrounding space (one word after split, but not a clean token)",
+           lambda d: d["params"][0].update(route_name=" x"), "single word")
+    raises("not a string", lambda d: d["params"][0].update(route_name=3), "single word")
+    raises("bypass is reserved", lambda d: d["params"][0].update(route_name="bypass"), "reserved")
+    raises("a token that duplicates another param's name", lambda d: d["params"][0].update(route_name="n"), "unique")
+    raises("two params sharing a route_name",
+           lambda d: (d["params"][0].update(route_name="x"), d["params"][2].update(route_name="x")), "unique")
+
+
+def test_hint_none_writes_no_hint_key_and_unset_still_writes_an_empty_one():
+    def hints(**per_param):
+        d = _defn()
+        for i, h in per_param.items():
+            d["params"][int(i[1:])]["hint"] = h
+        d["params"].insert(3, {"name": "m", "type": "menu", "options": ["a", "b"], "default": 0, "label": "M"})
+        d["codebox"] = "Param m(0.0);\n" + d["codebox"]
+        got = {}
+        for b in _boxes_of(d):
+            v = b.get("saved_attribute_attributes", {}).get("valueof", {})
+            if v.get("parameter_longname") in ("g", "mix_pct", "n", "m"):
+                got[v["parameter_longname"]] = b.get("hint", "<no key>")
+        return got
+    base = hints()
+    _eq("a param with a hint keeps it; one with none still gets \"\" (the builder's long-standing output)",
+        (base["g"], base["mix_pct"], base["n"], base["m"]), ("g", "m", "n", ""))
+    none = hints(p0=None, p1=None, p2=None)
+    _eq("\"hint\": None omits the key (dial, numbox, int numbox); an unset menu hint is unchanged",
+        (none["g"], none["mix_pct"], none["n"], none["m"]), ("<no key>", "<no key>", "<no key>", ""))
+    d = _defn()
+    d["params"].insert(0, {"name": "m", "type": "menu", "options": ["a", "b"], "default": 0, "label": "M", "hint": None})
+    d["codebox"] = "Param m(0.0);\n" + d["codebox"]
+    menu = [b for b in _boxes_of(d) if b.get("varname") == "m"][0]
+    _eq("a menu honours hint None too", "hint" in menu, False)
+
+
+def test_param_connect_names_the_pix_a_control_drives():
+    built, _ = drift.build_module("f_vf_advect")
+    top = [b["box"] for b in built["patcher"]["boxes"]]
+    pc = {b["varname"]: b["param_connect"] for b in top
+          if b.get("param_connect") and b.get("varname") and b["maxclass"] != "jsui"}
+    _eq("separate and mode drive the pass pix, and param_connect says so",
+        (pc["separate"], pc["mode"]), ("#0_advect_pass::separate", "#0_advect_pass::mode"))
+    _eq("the rest name the primary pix",
+        {k: v for k, v in pc.items() if k not in ("separate", "mode")},
+        {k: f"#0_advect_pix::{k}" for k in ("dt", "decay", "injection", "gain", "mix_pct")})
+    d = _defn()
+    d["params"][0]["pix_target"] = "obj-raw-9"       # a raw object id: its @name is unknown here
+    pcs = {b["varname"]: b["param_connect"] for b in _boxes_of(d) if b.get("param_connect") and b.get("varname")}
+    _eq("a raw-object pix_target keeps naming the primary pix, as before", pcs["g"], "t_pix::g")
+    # a control built AFTER a pix_target one must not inherit its target (the pix name is per control)
+    d3 = _defn()
+    d3["params"][0]["pix_target"] = "obj-raw-9"
+    d3["params"].insert(1, {"name": "tog", "type": "header_toggle", "label": "T", "hint": "t", "default": 0,
+                            "min": 0, "max": 1})
+    d3["codebox"] = "Param tog(0.0);\n" + d3["codebox"]
+    after = {b["varname"]: b["param_connect"] for b in _boxes_of(d3) if b.get("param_connect") and b.get("varname")}
+    _eq("the header toggle and the controls after a pix_target one still name the primary pix",
+        (after["tog"], after["mix_pct"], after["n"]), ("t_pix::tog", "t_pix::mix_pct", "t_pix::n"))
+    # ...and the same on a real pix_chain: a header toggle added after advect's `separate` / `mode`
+    # (which target the pass pix) must still name the PRIMARY pix, not the pass pix
+    import copy
+    adv = copy.deepcopy(bp.load_definition(ROOT / "src" / "f_vf_advect" / "definition.py"))
+    adv["params"].insert(-1, {"name": "tog", "type": "header_toggle", "label": "T", "hint": "t", "default": 0,
+                              "min": 0, "max": 1})
+    tog = [b["box"] for b in bp.build(adv)["patcher"]["boxes"] if b["box"].get("varname") == "tog"][0]
+    _eq("on a pix_chain too: a control after the pass-pix ones names the primary pix",
+        tog["param_connect"], "#0_advect_pix::tog")
+
+
+def test_f_vf_advect_builds_from_its_definition_as_it_ships():
+    built, _ = drift.build_module("f_vf_advect")
+    p = built["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    tokens = top[bp.OBJ_ROUTE]["text"].split()[1:]
+    _eq("route tokens, `mix` for the mix_pct numbox",
+        tokens, ["dt", "decay", "injection", "gain", "mix", "separate", "mode"])
+    outs = sorted((b["comment"] for b in top.values() if b["maxclass"] == "outlet"))
+    _eq("three outlets", outs, ["advected", "composite", "vecfield"])
+    pix = [b for b in top.values() if str(b.get("text", "")).startswith("jit.gl.pix")]
+    _eq("both pix are float32 @adapt 1", sorted(b["text"] for b in pix),
+        ["jit.gl.pix vsynth @name #0_advect_pass @type float32 @adapt 1",
+         "jit.gl.pix vsynth @name #0_advect_pix @type float32 @adapt 1"])
+    _eq("the menu offers Ride / Hold / Snap",
+        [b["saved_attribute_attributes"]["valueof"]["parameter_enum"] for b in top.values()
+         if b.get("varname") == "mode"], [["Ride", "Hold", "Snap"]])
 
 
 if __name__ == "__main__":

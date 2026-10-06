@@ -1677,7 +1677,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::gain",
+					"param_connect": "#0_of_stage_c::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						100.0,
@@ -1781,7 +1781,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::mask_lo",
+					"param_connect": "#0_of_stage_c::mask_lo",
 					"parameter_enable": 1,
 					"patching_rect": [
 						150.0,
@@ -1885,7 +1885,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::mask_hi",
+					"param_connect": "#0_of_stage_c::mask_hi",
 					"parameter_enable": 1,
 					"patching_rect": [
 						200.0,
@@ -1989,7 +1989,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::decay",
+					"param_connect": "#0_of_stage_d::decay",
 					"parameter_enable": 1,
 					"patching_rect": [
 						250.0,
@@ -2093,7 +2093,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::injection",
+					"param_connect": "#0_of_stage_d::injection",
 					"parameter_enable": 1,
 					"patching_rect": [
 						300.0,
@@ -2197,7 +2197,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::step",
+					"param_connect": "#0_of_stage_b_h::step",
 					"parameter_enable": 1,
 					"patching_rect": [
 						350.0,
@@ -2301,7 +2301,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::reach",
+					"param_connect": "#0_of_stage_e::reach",
 					"parameter_enable": 1,
 					"patching_rect": [
 						400.0,
@@ -2399,7 +2399,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_of_stage_a::mix_pct",
+					"param_connect": "#0_of_stage_e::mix_pct",
 					"parameter_enable": 1,
 					"patching_rect": [
 						450.0,

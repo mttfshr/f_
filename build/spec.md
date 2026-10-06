@@ -107,6 +107,20 @@ patcher = {
 # as on f_droste's n_arms (a fractional arm count does not tile). Added 2026-10-05, build_cleanup
 # T014. Loud outside 0-4.
 
+# Optional on any control param: "route_name": str -- the message the control answers to on the
+# control inlet, when it is not the param's name (f_vf_advect's `mix_pct` numbox answers to `mix`,
+# as it ships; most modules' `mix_pct` answers to `mix_pct`). One word, unique among the route
+# tokens, not `bypass`; loud otherwise. Added 2026-10-05, T014.
+#
+# Optional "hint": str. A param with no "hint" key gets hint "" (long-standing output, and what the
+# shipped builder-made patchers contain); `"hint": None` writes no hint key at all, for hand-made
+# controls whose shipped patch has none (f_vf_advect's dials, f_stereo's toggle). Added 2026-10-05.
+#
+# "pix_target" (pix_chain node id) also decides the control's `param_connect`: it names that node's
+# @name, not the primary pix's (f_vf_advect's `separate` / `mode` drive the pass pix). A raw-object
+# pix_target keeps naming the primary pix. Fixed 2026-10-05: the builder used to name the primary pix
+# for every control, so f_vf_optical_flow's support-stage dials were bound to a pix without the Param.
+
 # Menu param — renders as live.menu with labelled options, outputs integer 0-N
 {"name": str, "type": "menu", "options": [str, ...], "default": int, "hint": str}
 

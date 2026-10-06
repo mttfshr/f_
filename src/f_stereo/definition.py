@@ -29,7 +29,7 @@ patcher = {
         {"name": "lat",    "type": "float", "min": -1.0, "max": 1.0, "default": 0.5, "label": "Lat",  "hint": "lat"},
         {"name": "spin",   "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "label": "Spin", "hint": "spin"},
         {"name": "proj",   "type": "float", "min": -2.0, "max": 2.0, "default": 0.0, "label": "Proj", "hint": "proj"},
-        {"name": "circ",   "type": "text_button", "options": ["full", "mask"], "default": 1, "label": "Circ"},
+        {"name": "circ",   "type": "text_button", "options": ["full", "mask"], "default": 1, "label": "Circ", "hint": None},
         {"name": "bypass", "type": "bypass"},
     ],
 
