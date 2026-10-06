@@ -109,6 +109,46 @@ def test_unknown_boxes_go_to_overflow_as_one_block():
     check("overflow is below the placed boxes", 0 if u1[1] > 20.0 + 30.0 else 1, 0)
 
 
+def _lane_defn(**extra):
+    d = {"name": "f_t", "prefix": "t", "object_name": "t_pix", "title": "Test", "archetype": "processor",
+         "pix_type": "char", "presentation_width": 160, "presentation_height": 90,
+         "params": [{"name": n, "type": "float", "min": 0.0, "max": 1.0, "default": 0.5, "label": n, "hint": n}
+                    for n in ("a", "b", "c")] + [{"name": "bypass", "type": "bypass"}],
+         "codebox": "Param a(0.5);\nParam b(0.5);\nParam c(0.5);\nParam bypass(0.0);\nout1 = in1 * a;"}
+    d.update(extra)
+    return d
+
+
+def test_route_bypass_keeps_each_route_outlet_over_its_control_and_wires_downward():
+    for rb in (False, True):
+        dbg = {}
+        p = bp.build(_lane_defn(route_bypass=rb), debug=dbg)["patcher"]
+        roles = dbg["roles"]
+        top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+        route = top[bp.OBJ_ROUTE]
+        tokens = route["text"].split()[1:]
+        centre = lambda b: b["patching_rect"][0] + b["patching_rect"][2] / 2.0
+        col = lambda b: round((centre(b) - layout.LANE_X0) / layout.PITCH)
+        # the control of param n is in the lane column of ITS route token
+        for n, name in enumerate(("a", "b", "c")):
+            ctl = top[bp.param_obj_id(n)]
+            check(f"route_bypass={rb}: control {name!r} is in the column of its route token",
+                  abs(col(ctl) - tokens.index(name)), 0)
+            lab = top[bp.param_label_id(n)]
+            check(f"route_bypass={rb}: label {name!r} is in the same column",
+                  abs(col(lab) - tokens.index(name)), 0)
+        a = layout.audit(p["boxes"], p["lines"], roles)
+        check(f"route_bypass={rb}: no upward wires", len(a["upward"]), 0)
+        check(f"route_bypass={rb}: no overlaps", len(a["overlaps"]), 0)
+        if rb:
+            jsui = [b for b in top.values() if b.get("maxclass") == "jsui"][0]
+            check("the bypass jsui is in lane column 0, under the route",
+                  abs(col(jsui)) + (0 if jsui["patching_rect"][1] > route["patching_rect"][1] else 1), 0)
+            pre = top[bp.bypass_pre_id(3)]
+            check("its prepend is in column 0 too, below the jsui",
+                  abs(col(pre)) + (0 if pre["patching_rect"][1] > jsui["patching_rect"][1] else 1), 0)
+
+
 def _build_all(edit_layout_on):
     """{name: (result, roles)} for every definition that builds through build_patcher."""
     out = {}

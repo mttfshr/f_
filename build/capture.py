@@ -43,6 +43,9 @@ CAPTURE_KEYS = {
     "textjustification", "linecount", "appearance", "triangle", "shownumber", "showname",
     "needlemode", "activedialcolor", "valuepopup", "valuepopuplabel", "hidden", "border",
     "background", "tricolor",
+    # a live.text's own colours and corner rounding (added 2026-10-05, f_stereo's hand-built
+    # `circ` toggle; theme colours Max writes explicitly once they are set by hand)
+    "activebgcolor", "activebgoncolor", "activetextcolor", "activetextoncolor", "rounded",
 }
 
 WHY_NOT = {

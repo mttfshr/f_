@@ -131,9 +131,11 @@ def routepass_box():
         patching_rect=[200.0, 90.0, 215.0, 22.0],
         text="routepass jit_gl_texture jit_matrix")
 
-def route_box(ui_params):
-    names = " ".join(p["name"] for p in ui_params)
-    n = len(ui_params)
+def route_box(ui_params, route_bypass=False):
+    # route_bypass: `bypass` is the first route token, so a `bypass 0/1` message reaches the bypass
+    # jsui (build() wires route outlet 0 to it) and every param outlet is one higher.
+    names = " ".join((["bypass"] if route_bypass else []) + [p["name"] for p in ui_params])
+    n = len(ui_params) + (1 if route_bypass else 0)
     return box(OBJ_ROUTE,
         maxclass="newobj",
         numinlets=1, numoutlets=n, outlettype=[""] * n,
@@ -1171,6 +1173,14 @@ def build(defn, debug=None, side_files=None):
     if render_trigger == "inlet" and defn.get("archetype") != "source":
         raise ValueError('render_trigger "inlet" applies to the source archetype only')
 
+    # route_bypass: the `bypass 1` control message is routed to the bypass jsui, as in the nine
+    # oldest modules.  Off by default: generated modules do not route it (skills/vsynth-bpatcher
+    # decision 2026-09-23); the key exists so the oldest modules reproduce from their definitions.
+    route_bypass = defn.get("route_bypass", False)
+    if not isinstance(route_bypass, bool):
+        raise ValueError(f"route_bypass must be True or False, not {route_bypass!r}")
+    rb = 1 if route_bypass else 0    # route outlet offset: outlet 0 is `bypass` when it is routed
+
     # Validate: vs_instate:False and state_param are mutually exclusive
     for mi in mod_inlets:
         if not mi.get("vs_instate", True) and mi.get("state_param"):
@@ -1233,7 +1243,7 @@ def build(defn, debug=None, side_files=None):
     boxes.append(inlet_box())
     boxes.extend(outlet_boxes(outlets))
     boxes.append(routepass_box())
-    boxes.append(route_box(route_params))
+    boxes.append(route_box(route_params, route_bypass))
     boxes.extend(pix_boxes_to_add)
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
@@ -1350,6 +1360,8 @@ def build(defn, debug=None, side_files=None):
     # bypass jsui → prepend bypass → primary pix
     lines.append(wire(bp_jsui_id, 0, bp_pre_id, 0))
     lines.append(wire(bp_pre_id, 0, primary_obj_id, 0))
+    if route_bypass:                 # route's `bypass` outlet → the jsui, so the message flips the toggle
+        lines.append(wire(OBJ_ROUTE, 0, bp_jsui_id, 0))
 
     # panel_toggle → js → thispatcher (reuses the same thispatcher object
     # modulesize already wires up for its own getattr flow — a thispatcher
@@ -1383,7 +1395,7 @@ def build(defn, debug=None, side_files=None):
         # restructured into a pix_chain.
         pt = p.get("pix_target")
         target = chain_id_to_obj.get(pt, pt) if pt else primary_obj_id
-        lines.append(wire(OBJ_ROUTE, n, param_obj_id(n), 0))
+        lines.append(wire(OBJ_ROUTE, n + rb, param_obj_id(n), 0))
         lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
         lines.append(wire(param_pre_id(n), 0, target, 0))
         if p.get("range_tiers"):
@@ -1396,7 +1408,7 @@ def build(defn, debug=None, side_files=None):
 
     # route outlets → header toggles → prepends → primary pix
     if header_toggles:
-        ht_outlet = len(ui_params)   # header toggles come after ui_params in route
+        ht_outlet = len(ui_params) + rb   # header toggles come after ui_params in route
         lines.append(wire(OBJ_ROUTE, ht_outlet, OBJ_HEADER_TOGGLE, 0))
         lines.append(wire(OBJ_HEADER_TOGGLE, 0, OBJ_HEADER_TOGGLE_PRE, 0))
         lines.append(wire(OBJ_HEADER_TOGGLE_PRE, 0, primary_obj_id, 0))

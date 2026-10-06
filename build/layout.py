@@ -15,6 +15,10 @@ Geometry (all constants below):
   param lane   : one column per route outlet, pitch PITCH; per column top->bottom:
                  label (header row) / [route box row] / control / attrui
                  route width = n*PITCH + 7 so outlet k sits over column k
+                 route_bypass (route's first token is `bypass`): column 0 is the bypass outlet's,
+                 holding the bypass jsui (control row) and its prepend (attrui row); the params
+                 start at column 1, so each route outlet still sits over its control and every
+                 cord runs downward
   pix stack    : jit.gl.pix nodes layered by their cross-pix wires, then the outlets
   range tiers  : one block per range_tiers param, below the outlets
   service      : moduleSize chain, autopattr, bypass, panel toggle, title, panel --
@@ -153,18 +157,29 @@ def layout_edit_view(boxes, lines, roles):
             n_cols = max(n_cols, i + 1)
     n_cols = max(n_cols, 1)
     cx = lambda k: LANE_X0 + k * PITCH
+    # route_bypass: `bypass` is the route's first token, so its outlet 0 owns lane column 0 and
+    # the params' columns start one over (n_cols already counts the token).
+    route_bypass = any(bx.get("text", "").split()[1:2] == ["bypass"] for bx in one("route"))
+    off = 1 if route_bypass else 0
+    n_cols = max(n_cols, len(grp.get("ctl", [])) + off, len(grp.get("label", [])) + off)
 
     for bx in one("route"):
         w = n_cols * PITCH + 7.0
         w = max(w, len(bx.get("text", "")) * 6.5)     # never clip below the text
         _put(bx, x=cx(0) - 3.5, y=Y_ROUTE, w=w)
     for k, bid in grp.get("label", []):
-        _put_centered(by_id[bid], cx(k), Y_HEADER, COL_W)
+        _put_centered(by_id[bid], cx(k + off), Y_HEADER, COL_W)
     for k, bid in grp.get("ctl", []):
-        _put_centered(by_id[bid], cx(k), Y_CTL, COL_W)
+        _put_centered(by_id[bid], cx(k + off), Y_CTL, COL_W)
     for k, bid in grp.get("pre", []):
         _put(by_id[bid], w=ATTRUI_W)
-        _put_centered(by_id[bid], cx(k), Y_PRE)
+        _put_centered(by_id[bid], cx(k + off), Y_PRE)
+    if route_bypass:
+        for bx in one("bypass_jsui"):
+            _put_centered(bx, cx(0), Y_CTL, COL_W)
+        for bx in one("bypass_pre"):
+            _put(bx, w=ATTRUI_W)
+            _put_centered(bx, cx(0), Y_PRE)
 
     # ---- pix stack + outlets --------------------------------------------------
     pix_ids = [i for _, i in grp.get("pix", [])]
@@ -207,6 +222,8 @@ def layout_edit_view(boxes, lines, roles):
                        ("autopattr", x_b, 100.0), ("bypass_jsui", x_b, 130.0),
                        ("bypass_pre", x_b, 160.0), ("title", x_b, 200.0),
                        ("signal_type", x_b + 90.0, 200.0), ("panel", x_a, 260.0)):
+        if route_bypass and role in ("bypass_jsui", "bypass_pre"):
+            continue                         # placed in lane column 0 above
         for bx in one(role):
             _put(bx, x, y)
 

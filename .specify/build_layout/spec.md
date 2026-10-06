@@ -86,6 +86,15 @@ script-generated and not yet hand-edited.
   `range_tiers`, `mod_inlets`, `panel_toggle`, `header_toggle`, multi-outlet).
   Remember Max does not reload changed files: close and reopen.
 
+## Addendum 2026-10-05: `route_bypass`
+
+When the definition sets `route_bypass` (`build/spec.md`), `bypass` is the route's first token and its
+outlet 0 is wired to the bypass jsui. The pass detects it from the route text. Lane column 0 then
+belongs to that outlet: the bypass jsui sits in the control row and its prepend in the attrui row of
+column 0, and the params start at column 1, so each route outlet still sits over its own control and
+no cord runs upward (the service-area position, above the route row, would make the route -> jsui cord
+upward). Without the flag nothing changes. Tests: `test_route_bypass_keeps_each_route_outlet_over_its_control_and_wires_downward`.
+
 ## Non-goals
 
 Presentation layout changes; retrofitting hand-edited modules; gen-subpatcher layout;

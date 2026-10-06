@@ -207,6 +207,13 @@ and `f_vf_vortex_multi` ship that way. Loud on an unknown value, on a non-`sourc
 a source without `mod_inlets` (there the gen `r draw` is wired into the codebox and omitting it is
 untested). The default is unchanged, so `f_vf_fluid` and `f_vf_seeds` are unaffected.
 
+**`route_bypass`** (added 2026-10-05; `True` or `False`, default `False`; build_cleanup/T014) —
+`bypass` becomes the first token of the `route` (`route bypass cx cy ...`), its outlet 0 is wired to
+the bypass jsui, and every param (and header-toggle) outlet is one higher, so a `bypass 0/1` message
+sent to the module flips the toggle. The nine oldest modules route it and the skill's 2026-09-23
+decision is not to retrofit it into generated ones, so the default stays off; the key exists so the
+oldest modules reproduce from their definitions. Loud on a non-boolean value.
+
 **`outlet_source_override`** (added 2026-07-15) — `{outlet_index:
 anything}`; skips the schema's automatic primary-pix→outlet wire for
 that outlet index. Use when one or more `raw_boxes` objects sit between

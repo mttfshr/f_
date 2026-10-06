@@ -1,8 +1,32 @@
 # HANDOFF
 
-_Latest session: 2026-10-05_ — `build_cleanup` **Phases 1 and 2 done, Phase 3 started** (T013 small group partly closed), everything committed, nothing pushed. The session before it (2026-10-04, second: the cleanup project itself, 13 commits) is condensed below, and the one before that (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; `de89863`) follows it. The open packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
+_Latest session: 2026-10-05_ — `build_cleanup` **Phases 1 and 2 done, Phase 3 in progress** (T013 small group partly closed; **T014 started: `f_mobius` and `f_stereo`, see the next section**), nothing pushed. The session before it (2026-10-04, second: the cleanup project itself, 13 commits) is condensed below, and the one before that (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; `de89863`) follows it. The open packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
+
+## Later the same day (2026-10-05): T014 started, `f_mobius` and `f_stereo`
+
+Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite green (14 files), `./bench.sh --changed` green (33 modules,
+0 unexpected issues, 2/2; it also seeded a fresh green record). **Not yet done: Matt's look at `f_mobius` and `f_stereo` in Max.**
+
+- **New schema key `route_bypass`** (`build/spec.md`; default off, generated modules unchanged): `bypass` becomes the first `route`
+  token, wired to the bypass jsui, every param outlet one higher. It exists because the nine oldest modules route a `bypass 0/1`
+  message (skills/vsynth-bpatcher decision 2026-09-23, "do not retrofit"); the bench's `bypass 1` line confirms it works in exactly those 9.
+  The layout pass learned it (`build/layout.py`: lane column 0 is the bypass outlet's, params start at column 1; addendum in
+  `.specify/build_layout/spec.md`). `pix_type` already existed (my first read of `@type char` as a schema gap was wrong).
+- **`f_mobius` closed and regenerated** (20 of 39 reproduce exactly). **Matt chose to drop its second `control` inlet** (there since the
+  first commit; it fed the same `route` the first inlet's `routepass` already feeds, so it added no capability) and with it the
+  `routepass` out 1 (`jit_matrix`) -> pix cord, which only `f_mobius` and `f_stereo` had. Verified by `drift.compare` against the
+  committed file: only the inlet, that cord and five `lbl_*` varnames differ.
+- **`f_stereo`: same removal, but a surgical edit, not a regenerate** (parse-dump, 43 deleted lines, nothing else): its hand-built `circ`
+  full/mask toggle differs from what the builder writes in ways nobody has checked in Max. Its definition gained `route_bypass`, lost
+  `signal_type`, and has an overrides block. **`capture.py` now also takes a live.text's four `active*color` props and `rounded`** (Matt
+  asked what they were, then said proceed). Left in the baseline (renamed 1, props 4): `circ`'s `param_connect`, its saved `valueof`
+  (shipped parameter_type 2 / enum val1,val2 vs builder type 1 / full,mask: needs Max before anyone regenerates), the bypass jsui's inert saved `valueof`.
+- **Bench pitfall hit again:** the first `--changed` run failed on `f_stereo` with `name stereo_pix already in use` because patches holding an
+  `f_stereo` instance were open in Max (its help, four demos). Close every other patch and reopen `tests/bench/bench.maxpat` first.
+- **Next:** the rest of T014 (`f_droste`, `f_vf_advect`, the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). Most of
+  the colour modules and `f_droste`, `f_grain` also route `bypass`, so `route_bypass` is now available to them.
 
 ## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3
 
@@ -69,7 +93,7 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
 
 ### State of drift
 
-39 shipped patchers: **19 reproduce exactly**, 15 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
+(As of the earlier part of this day; later today it is 20 of 39 after `f_mobius`, see the previous section.) 39 shipped patchers: **19 reproduce exactly**, 15 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
 only in the patch 240, layout 136, boxes only in the definition 113, cords 103, renamed 22, code 9, pix ports 2.
 
 ## Previous session (2026-10-04, second): build, tools and test cleanup

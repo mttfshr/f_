@@ -219,6 +219,40 @@ def test_capture_refuses_to_freeze_definition_owned_or_builder_ahead_differences
             "layout" not in left and left.get("props", 0) >= 3, True)
 
 
+def test_capture_takes_a_text_buttons_colours_and_rounding_but_not_its_labels():
+    src = DEF_SOURCE.replace(
+        '        {"name": "bypass", "type": "bypass"},',
+        '        {"name": "m", "type": "text_button", "options": ["full", "mask"], "default": 1,'
+        ' "label": "M", "hint": "m"},\n        {"name": "bypass", "type": "bypass"},'
+    ).replace("Param bypass(0.0);", "Param m(1.0);\\nParam bypass(0.0);")
+
+    def tune(out, keys):
+        b = _box(out, keys, "m.ctl")
+        b["activebgcolor"] = [0.07, 0.06, 0.06, 1.0]
+        b["activebgoncolor"] = [0.07, 0.06, 0.06, 1.0]
+        b["activetextcolor"] = [0.76, 0.76, 0.76, 1.0]
+        b["activetextoncolor"] = [0.66, 0.66, 0.66, 1.0]
+        b["rounded"] = 4.0
+    with tempfile.TemporaryDirectory() as tmp:
+        dp, sp = _scene(tmp, tune, definition=src)
+        _eq("before capture the hand-set colours are drift", bool(_drift_after(dp, sp)), True)
+        pl = capture.capture(dp, sp, out=lambda *_: None)
+        _eq("the four colours and the rounding are captured, on the toggle only",
+            {k: sorted(v) for k, v in pl["captured"].items()},
+            {"m.ctl": ["activebgcolor", "activebgoncolor", "activetextcolor", "activetextoncolor", "rounded"]})
+        _eq("after capture, rebuilding from the definition reproduces the patcher exactly",
+            _drift_after(dp, sp), {})
+
+    def relabel(out, keys):
+        _box(out, keys, "m.ctl")["texton"] = "changed in Max"       # the button's label: a definition value
+    with tempfile.TemporaryDirectory() as tmp:
+        dp, sp = _scene(tmp, relabel, definition=src)
+        pl = capture.capture(dp, sp, out=lambda *_: None)
+        _eq("a live.text's label text is still refused, not captured",
+            ("m.ctl", "texton") in {(k, p) for k, p, _, _ in pl["not_captured"]} and "m.ctl" not in pl["captured"],
+            True)
+
+
 def test_capture_keeps_an_override_whose_element_left_the_shipped_patch():
     def edit(out, keys):
         gone = keys["b.label"]

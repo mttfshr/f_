@@ -9,6 +9,9 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
   - `render_trigger` (source archetype): "rdraw" (default) adds an `r draw` render trigger,
     "inlet" omits it, as the finished f_vf_vortex / f_vf_vortex_multi ship (T013)
 
+  - `route_bypass`: `bypass` is the first `route` token, wired to the bypass jsui, and every param
+    outlet is one higher; off (the default) changes nothing (T014)
+
     tests/run.sh tests/test_build_conventions.py
 """
 import sys
@@ -199,6 +202,94 @@ def test_every_shipped_definition_builds_with_ports_in_order():
                 _eq(f"{name}: {mc} index", idx <= {0}, True)
     print(f"    ({n} definitions built)")
     _eq("a useful number of definitions were checked", n >= 25, True)
+
+
+# ---- route_bypass
+
+def _route_facts(defn):
+    p = bp.build(defn)["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    route = top[bp.OBJ_ROUTE]
+    from_route = sorted((ln["patchline"]["source"][1], ln["patchline"]["destination"][0])
+                        for ln in p["lines"] if ln["patchline"]["source"][0] == bp.OBJ_ROUTE)
+    jsui = [i for i, b in top.items() if b.get("maxclass") == "jsui"][0]
+    return {"text": route["text"], "numoutlets": route["numoutlets"], "from_route": from_route,
+            "jsui": jsui, "top": top, "lines": p["lines"]}
+
+
+def test_route_bypass_default_is_off_and_unchanged():
+    d = _route_facts(_defn())
+    _eq("default: no bypass token", d["text"], "route g mix_pct n")
+    _eq("default: nothing from the route reaches the bypass jsui",
+        any(dst == d["jsui"] for _, dst in d["from_route"]), False)
+    _eq("an explicit False is the default", _route_facts(dict(_defn(), route_bypass=False))["from_route"],
+        d["from_route"])
+
+
+def test_route_bypass_adds_the_token_the_cord_and_shifts_every_outlet():
+    on = _route_facts(dict(_defn(), route_bypass=True))
+    off = _route_facts(_defn())
+    _eq("bypass is the first token", on["text"], "route bypass g mix_pct n")
+    _eq("one more route outlet", on["numoutlets"], off["numoutlets"] + 1)
+    _eq("outlet 0 goes to the bypass jsui", [dst for i, dst in on["from_route"] if i == 0], [on["jsui"]])
+    # the invariant that matters: whatever a route token names is what its outlet feeds
+    tokens = on["text"].split()[1:]
+    ctl_name = {bp.param_obj_id(n): b["varname"] for n, b in enumerate(
+        [on["top"][bp.param_obj_id(k)] for k in range(3)])}
+    for i, dst in on["from_route"]:
+        if dst in ctl_name:
+            _eq(f"outlet {i} (token {tokens[i]!r}) feeds the control of that name", ctl_name[dst], tokens[i])
+    _eq("every param is still fed exactly once", sorted(d for _, d in on["from_route"] if d in ctl_name),
+        sorted(ctl_name))
+    shifted = [(i - 1, dst) for i, dst in on["from_route"] if i > 0]
+    _eq("the param cords are the default's, one outlet up", shifted, off["from_route"])
+
+
+def test_route_bypass_shifts_the_header_toggle_outlet_too():
+    def toggle_source(**extra):
+        d = _defn()
+        d["params"].insert(3, {"name": "tog", "type": "header_toggle", "label": "T", "hint": "t", "default": 0,
+                                "min": 0, "max": 1})
+        d["codebox"] = "Param tog(0.0);\n" + d["codebox"]
+        d.update(extra)
+        f = _route_facts(d)
+        tokens = f["text"].split()[1:]
+        return tokens, [i for i, dst in f["from_route"] if dst == bp.OBJ_HEADER_TOGGLE]
+    for rb in (False, True):
+        tokens, outs = toggle_source(route_bypass=rb)
+        _eq(f"route_bypass={rb}: the header toggle's outlet is the one named `tog`",
+            [tokens[i] for i in outs], ["tog"])
+
+
+def test_route_bypass_changes_nothing_else():
+    on = bp.build(dict(_defn(), route_bypass=True))["patcher"]
+    off = bp.build(_defn())["patcher"]
+    # patching_rect is the layout pass's (it moves the controls over by one lane column; see
+    # tests/test_layout.py), so compare everything else
+    no_rect = lambda b: {k: v for k, v in b.items() if k != "patching_rect"}
+    on_boxes = {b["box"]["id"]: no_rect(b["box"]) for b in on["boxes"]}
+    off_boxes = {b["box"]["id"]: no_rect(b["box"]) for b in off["boxes"]}
+    _eq("the same boxes", sorted(on_boxes), sorted(off_boxes))
+    diff = sorted(i for i in on_boxes if on_boxes[i] != off_boxes[i])
+    _eq("only the route box differs (apart from patching_rect)", diff, [bp.OBJ_ROUTE])
+    keyed = lambda lines: sorted((tuple(ln["patchline"]["source"]), tuple(ln["patchline"]["destination"]))
+                                 for ln in lines if ln["patchline"]["source"][0] != bp.OBJ_ROUTE)
+    _eq("every cord that does not leave the route is identical", keyed(on["lines"]), keyed(off["lines"]))
+
+
+def test_route_bypass_is_loud():
+    try:
+        bp.build(dict(_defn(), route_bypass="yes"))
+    except ValueError as e:
+        check("a non-boolean value", 0 if "route_bypass" in str(e) else 1, 0)
+    else:
+        check("a non-boolean value (nothing was raised)", 1, 0)
+
+
+def test_f_mobius_routes_bypass_as_shipped():
+    built, _ = drift.build_module("f_mobius")
+    texts = [b["box"].get("text") for b in built["patcher"]["boxes"]]
+    _eq("f_mobius builds its `route bypass ...`", "route bypass cx cy rotate zoom invert" in texts, True)
 
 
 if __name__ == "__main__":
