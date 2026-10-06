@@ -918,8 +918,18 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inl
 # jit.gl.pix box
 # ---------------------------------------------------------------------------
 
+def pix_text(name, type_attr, adapt_attr, pix_context="arg"):
+    """The jit.gl.pix object text.  Default: the context as the first argument
+    (`jit.gl.pix vsynth @name X ...`, what the builder has always written).  "drawto": the older
+    form with the context as an attribute (`jit.gl.pix @name X @drawto vsynth ...`) that the
+    oldest modules ship with (f_channel_grader, f_hue_processor, f_luma_processor, f_tone_curve)."""
+    if pix_context == "drawto":
+        return f"jit.gl.pix @name {name} @drawto vsynth{type_attr}{adapt_attr}"
+    return f"jit.gl.pix vsynth @name {name}{type_attr}{adapt_attr}"
+
+
 def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False, driving_inlet=False,
-            render_trigger="rdraw"):
+            render_trigger="rdraw", pix_context="arg"):
     mod_inlets = mod_inlets or []
     outlets    = outlets or [{"comment": "texture out"}]
     type_attr  = f" @type {pix_type}" if pix_type else ""
@@ -934,7 +944,7 @@ def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, 
         patcher=gen_subpatcher(codebox, archetype, mod_inlets, n_outlets, driving_inlet=driving_inlet,
                                render_trigger=render_trigger),
         patching_rect=[200.0, 380.0, max(200.0, len(object_name) * 8.0 + 80.0), 22.0],
-        text=f"jit.gl.pix vsynth @name {object_name}{type_attr}{adapt_attr}",
+        text=pix_text(object_name, type_attr, adapt_attr, pix_context),
         varname=object_name)
 
 # ---------------------------------------------------------------------------
@@ -1030,7 +1040,7 @@ def build_pix_chain(defn, def_dir):
             outlettype=outlettype,
             patcher=gen,
             patching_rect=[200.0, y_rect, max(200.0, len(name) * 8.0 + 80.0), 22.0],
-            text=f"jit.gl.pix vsynth @name {name}{type_attr}{adapt_attr}",
+            text=pix_text(name, type_attr, adapt_attr, defn.get("pix_context", "arg")),
             varname=name))
 
     # Cross-pix wires from pix_wires spec
@@ -1215,6 +1225,11 @@ def build(defn, debug=None, side_files=None):
     if not isinstance(route_first, bool):
         raise ValueError(f"route_first must be True or False, not {route_first!r}")
 
+    # pix_context: how the jit.gl.pix object text names its context, "arg" (default) or "drawto".
+    pix_context = defn.get("pix_context", "arg")
+    if pix_context not in ("arg", "drawto"):
+        raise ValueError(f'pix_context must be "arg" or "drawto", not {pix_context!r}')
+
     # inlet_comment: the main inlet's comment, "texture / control" unless the module differs.
     inlet_comment = defn.get("inlet_comment", "texture / control")
     if not isinstance(inlet_comment, str):
@@ -1296,7 +1311,8 @@ def build(defn, debug=None, side_files=None):
                                     mod_inlets, pix_type, outlets,
                                     adapt=defn.get("pix_adapt", False),
                                     driving_inlet=driving_inlet,
-                                    render_trigger=render_trigger)]
+                                    render_trigger=render_trigger,
+                                    pix_context=pix_context)]
         extra_pix_lines  = []
         chain_id_to_obj  = {}
 
@@ -1365,8 +1381,8 @@ def build(defn, debug=None, side_files=None):
         if p.get("pix_wire", True):
             boxes.append(attrui_box(param_pre_id(n), p["name"],
                                     50.0 + n * 50.0, 170.0 + n * 30.0))
-        if p["type"] != "text_button":
-            boxes.append(label_box(n, p))
+        if p["type"] != "text_button" and not ("label" in p and p["label"] is None):
+            boxes.append(label_box(n, p))   # "label": None = no label box (a shared or hand-made label)
         if p.get("range_tiers"):
             boxes.extend(range_tier_boxes(n, p))
 

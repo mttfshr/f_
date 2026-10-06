@@ -133,6 +133,18 @@ patcher = {
 # Top-level "inlet_comment": str -- the main inlet's comment (default "texture / control"; f_grain's is
 # empty). An outlet dict may carry "hint": str (the outlet's tooltip; f_grain's `grain mask` has "Raw").
 # Added 2026-10-05.
+#
+# "label": None on a control param: no label box is built for it (a shared or hand-made label is
+# carried by raw_boxes instead). A param with no "label" key still gets its default label.
+#
+# Top-level "pix_context": "arg" (default) or "drawto" -- how the jit.gl.pix object text names its
+# context: `jit.gl.pix vsynth @name X ...` or the older `jit.gl.pix @name X @drawto vsynth ...` that
+# the oldest modules ship with (f_channel_grader, f_hue_processor, f_luma_processor, f_tone_curve).
+# Applies to every pix of a pix_chain too. Loud on any other value.
+#
+# raw_boxes / raw_lines / raw_parameters for a module are best derived, not typed:
+# `build/py.sh build/capture_raw.py src/f_x/definition.py` writes `raw_ui.json` next to the
+# definition (see its docstring and f_grain/definition.py for the pattern).
 
 # Menu param — renders as live.menu with labelled options, outputs integer 0-N
 {"name": str, "type": "menu", "options": [str, ...], "default": int, "hint": str}
