@@ -29,7 +29,7 @@ Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite gree
   `raw_boxes`/`raw_lines`; new per-param key **`modmode`** (0-4, default 3) for `n_arms`' deliberately-off modulation; em dashes in
   the codebox comment; `plan.md`'s "droste missing autopattr" entry was stale and is removed. The bypass jsui's saved `valueof` was
   dropped on the (untested) assumption it is inert: still on `f_channel_grader`, `f_luma_processor`, `f_stereo`, `f_texrouter`,
-  `f_tone_curve`. **Matt looked at `f_droste` in Max: checks out (2026-10-05).** Run `./bench.sh --changed` (close patches holding an `f_droste` first) if not yet done.
+  `f_tone_curve`. **Matt looked at `f_droste` in Max: checks out (2026-10-05).** `./bench.sh --changed` green too (`bench_modules` 2/2, Matt, 2026-10-05).
 - **Next:** the rest of T014 (`f_vf_advect`, the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). The colour modules
   and `f_grain` also route `bypass`, so `route_bypass` is available to them.
 
