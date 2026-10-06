@@ -1,10 +1,34 @@
 # HANDOFF
 
-_Latest session: 2026-10-05 (two long sessions)_ — `build_cleanup` **Phases 1, 2, 5 and 6 are done, Phase 4's T016 and T017 are done, and T019 is half done (`f_vf_fluid` absorbed; `f_sirds` deliberately left alone, `f_vf_seeds` not assessed).** 31 of 39 shipped patchers reproduce exactly from their `definition.py`; the drift baseline is 8 (`f_masonry`, `f_texrouter`, `f_vf_vorticity`, five out of scope). Everything is committed (last commit `bc190bb` when this was written), nothing is pushed.
+_Latest session: 2026-10-06 (two sessions; the newest section below supersedes the older ones where they differ)_ — `build_cleanup` **Phases 1, 2, 5 and 6 are done, Phase 4 is done except `f_sirds` (T019: fluid, advect and seeds absorbed; `f_sirds` deliberately left alone), and plan item 10 is 11 of 11.** 31 of 39 shipped patchers reproduce exactly from their `definition.py`; the drift baseline is 8 (`f_masonry`, `f_texrouter`, `f_vf_vorticity`, five out of scope). Everything is committed (last commit `bc190bb` when this was written), nothing is pushed.
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
 
-## 2026-10-06 session: plan item 10 rollout done for 10 of 11 modules; seeds (T019) and T026 NOT started
+## 2026-10-06, second session: masonry bypass, bench table, seeds (T019) and T026 done (offline suite green, bench green)
+
+**Commits:** `75dc017` (masonry + bench table), `53563e3` (seeds), `11f9d38` (T026 Python half). Offline suite green after each; `drift.py` 31 of 39 (baseline 8, unchanged); `generate_menu.py --check` / `generate_launch.py --check` up to date. No shipped patcher was regenerated; the only shipped patcher edited is `f_masonry.maxpat` (9-line surgical diff).
+
+**Live check done by Matt, same day: `tests/bench.sh tests/bench_modules.py` ran all 33 modules, 0 unexpected issues.** So the new `BYPASS_EXPECT` expectations hold live (stipple/grain/chladni/masonry out2/prism out3/advect out3). Side note: `BENCH_MODULES=...` did not narrow the run (all 33 ran); not investigated.
+
+**What changed**
+- **`f_masonry`: `bypass_mode: "param"`**, both outlets mix to `sample(in1, norm)` (nothing connected reads black, as under native bypass). Plan item 10 is 11 of 11.
+- **`tests/bench_modules.py`: `BYPASS_EXPECT`** replaces `BYPASS_PASSTHROUGH_OUTLETS`; `bypass_issues()` is pure. **`tests/test_bench_expect.py`** fails if a `bypass_mode: "param"` module has an outlet with no expectation (a new Param-bypass module MUST extend the table) and exercises the comparator offline.
+- **`f_vf_seeds` builds from `src/f_vf_seeds/definition.py`**; `build_seeds_multistage.py` is deleted. Seven new builder keys (all default-off and loud; `build/spec.md` "T019 keys"; `tests/test_build_seeds_keys.py`): pix_chain `gen_code`; param `pix_shared_attrui`, `pix_attr`, `range_menu_outlet`; native `bypass_target` (it used to be loud in native mode); `outlet_source`; mod_inlets `fanout` / `state_nodes`. The two quirks of the script-built patch (no `param_connect` on the dials, no `lbl_` label varnames) are carried by `legacy.control_box` / `legacy.element_box`. The definition uses `archetype: "source"` with `render_trigger: "inlet"` (also reproduces exactly) so the bench still treats seeds as a generator.
+- **Builder bug fixed:** support pix ids `obj-50+` collided with the dial/attrui/label ids from ten widgets up (seeds has 13), silently garbling cords. `chain_id_base` moves the base only on collision (no other module's ids changed) and `build()` now fails on any duplicate box id. Lesson: when a rebuild's cords look absurd, check ids before suspecting the schema.
+- **T026:** the two bench-patch generators share `tests/bench/patchbuild.py`, byte-identical output (`tests/test_bench_patchbuild.py`). **The JS half is closed as won't-do**: the 11 "shared" functions are not identical (see `build_cleanup/tasks.md` T026).
+- Every new test and key was mutation-checked (17 + 29 + 10 + 10 mutants, all caught at the end; several first runs found real test gaps, e.g. `1 == 1.0` in Python hides a missing float conversion: compare serialized JSON).
+
+**Waiting on Matt**
+1. **Vsynth eyeball of the 11 param-bypass modules** (every outlet = source, vecfield outlets = the input field; masonry is new). The offline suite and the bench prove wiring and values, not how it looks.
+2. **The GPU-cost decision** (below): unchanged, still open.
+3. **Re-upload `skills/vsynth-bpatcher`** then `./skills/check.sh stamp`: the skill does not yet mention the seven T019 keys, `chain_id_base` or `BYPASS_EXPECT`, so it is more stale than before (I did not edit it; do that first).
+
+**Next, suggested**
+1. The above. Then Phase 3 leftovers: `f_masonry` refactor (T015: it still drifts, 24 boxes only in the definition / 61 only in the patch; the definition's CODEBOX is now the shipped text, so `capture_raw.py` is the way), `f_texrouter`, `f_vf_vorticity`.
+2. `f_sirds` stays off-limits (Matt).
+3. `scratch/` has untracked one-shot helpers: `rollout_param_bypass.py`, `masonry_param_bypass.py`, `masonry_def_writeback.py`, `patch_builder_t019.py`, `seeds_measure.py` (measures a candidate definition against the shipped patch with uncapped drift examples), `seeds_cand/`, and the reusable mutation harnesses `mutate_bench_expect.py`, `mutate_builder_t019.py`, `mutate_seeds_def.py`, `mutate_patchbuild.py` (each runs the baseline first, restores the file, clears `__pycache__`). Commit the harnesses or fold them into T025's decision; delete the rest. `skills/MANIFEST.md` is Matt's: leave it.
+
+## 2026-10-06 first session: plan item 10 rollout done for 10 of 11 modules (superseded above for masonry, seeds and T026)
 
 **Done, four commits** (`ca02912`, `5f41a78`, `0274043`, `8627fce`; offline suite green after each, `drift.py` still 31 of 39): `f_vf_glow` (pilot), `f_vf_streak`, `f_vf_chroma`, `f_vf_prism`, `f_caustic`, `f_vf_split`, `f_stipple`, `f_chladni`, `f_grain`, `f_vf_advect` now use `bypass_mode: "param"` with a codebox `Param bypass_gate` and a passthrough on every outlet. The rule, details per module and what is left are in plan.md item 10 (read that paragraph). Short version: an outlet mixes to the input of its own signal kind, else its neutral value; isolated-layer outlets show the SOURCE; prism/advect out3 show the vecfield INPUT (neutral if unconnected). **Not touched: `f_masonry`** (hand-built, drifting, due a refactor).
 
