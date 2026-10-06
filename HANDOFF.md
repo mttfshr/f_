@@ -7,7 +7,7 @@ _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Writ
 ## Later the same day (2026-10-05): T014 started, `f_mobius` and `f_stereo`
 
 Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite green (14 files), `./bench.sh --changed` green (33 modules,
-0 unexpected issues, 2/2; it also seeded a fresh green record). **Not yet done: Matt's look at `f_mobius` and `f_stereo` in Max.**
+0 unexpected issues, 2/2; it also seeded a fresh green record). **Matt's look at `f_mobius` and `f_stereo` in Max: passed (2026-10-05).**
 
 - **New schema key `route_bypass`** (`build/spec.md`; default off, generated modules unchanged): `bypass` becomes the first `route`
   token, wired to the bypass jsui, every param outlet one higher. It exists because the nine oldest modules route a `bypass 0/1`
