@@ -798,9 +798,9 @@ it for effect.
 
 Fix those in the shader at a measured default (`Param taps(8)`) and, if the trade-off
 should stay reachable by message, keep the route token and drop the widget:
-`"ui": False` on the param in `definition.py` (implemented in
-`src/f_vf_fluid/build_fluid.py` — it splits `routed` from `panel`, wires the route
-outlet straight to the attrui, and leaves the param out of the `parameters` block).
+`"ui": False` on the param in `definition.py` (a builder key since 2026-10-05, T016: the
+route outlet goes straight to an attrui carrying the param's varname, and the param is
+left out of the `parameters` block).
 Costs no slot, no label, no preset entry. Note the live module bench can no longer
 range-scale such a param's test value (no widget to read `parameter_range` from), so
 it sends a raw fraction — the wiring is still checked, the range is not.
@@ -839,6 +839,7 @@ A hand-built module is typically a generic part the builder makes (dials, routin
 - Top level: `route_bypass` (`bypass` is the first route token, wired to the jsui), `route_first` (inlet to route, reject outlet to `routepass`), `route_reject_to_pix`, `inlet_comment`, `pix_context` (`"drawto"` writes the older `jit.gl.pix @name X @drawto vsynth` text), `legacy`.
 - Per param: `modmode` (0-4, default 3), `route_name` (the message a control answers to), `"hint": None` (no hint key; unset still writes `""`), `pix_wire: False` (no attrui, no pix cord), `color_expression` (a dial's theme-colour string; `None` omits the entry), `"label": None`. Per outlet: `hint`.
 - `param_connect` names the pix a control actually drives (`pix_target`), not always the primary. `_parameter_range` message bounds are written the way Max does (`1.` not `1.0`).
+- **Multi-stage keys (T016/T017, 2026-10-05; `tests/test_build_multistage.py`).** A "node" is a `pix_chain` id or a `raw_boxes` id; an unknown one raises. Per `pix_chain` node `pix_attrs` (the attributes as one verbatim string after `@name`, replacing the generated `@type`/`@adapt`; loud with `pix_type`/`adapt`, empty, or `@name`). Per param `pix_target` as a node id OR a list (the widget's `param_connect` and own attrui name the FIRST stage, each further stage gets one extra attrui fed from the widget; a list makes one attrui per extra stage, not one attrui with many cords) and `ui: False` (route token + attrui, no widget/label/panel slot/`parameters` entry). Top level `inlet_fanout` (`{"texture": [[node, inlet], ...], "state": [node, ...], "state_param": name}`: routepass -> `vs_inState` -> each listed inlet, and the connected flag -> `prepend param <name>` -> inlet 0 of each `state` node; replaces the default feed of the primary) and `draw_triggers` (one `r draw`, obj-20a, to inlet 0 of each listed stage so a stage advances once per frame). The layout pass puts `r draw` beside `vs_inState` and gives the extra attruis their own role (`pre_extra`, override key `<param>.pre_extra.<k>`). `f_vf_fluid` is built from its `definition.py` with all of them. **Not yet expressible (why `f_sirds` still has `build_sirds.py`):** a templated per-node codebox, a module inlet fanned out to many stages, a plain non-`vs_inState` feed, native bypass to a target list, and ONE attrui whose cords reach many stages.
 - **`legacy`** preserves what Max wrote when it re-created objects, so a patch can stay byte-faithful instead of being regenerated: the pix varname (`jit.gl.pix_AA`, which every dial's `param_connect` then follows), an auto-named `autopattr` (`u905020188`), the bypass jsui's inert saved block, and leftovers on single controls or elements (`control_valueof`, `control_box`, `element_valueof`, `element_box`). Regenerating would rename the `autopattr`, which could affect preset recall, and that cannot be verified offline. Delete an entry when the module is next regenerated.
 
 ---
@@ -917,8 +918,17 @@ input straight through. On outlet 1 that is exact; on outlets 2+ the input comes
 out **vertically flipped**, and any `mix(..., bypass)` in the codebox never runs.
 So a module with a secondary outlet cannot give it a meaningful bypass state
 through the native attribute. `f_vf_warp` avoids this by driving a differently
-named codebox Param instead (`jsui → prepend param bypass_gate → pix`) — that
-module is hand-edited and must not be regenerated. Multi-stage modules also need
+named codebox Param instead (`jsui → prepend param bypass_gate → pix`). Since
+2026-10-05 (T017) that is a builder key: top level `"bypass_mode": "param"`, with
+`bypass_param` (default `bypass_gate`, never `bypass`) and `bypass_target` (default the
+primary; a node id or a list for a multi-stage module). The builder refuses a target
+whose codebox does not declare `Param <bypass_param>(`, because the toggle would then do
+nothing; the codebox itself must implement the passthrough on EVERY outlet
+(`out1 = mix(effect, in1, bypass_gate)`, likewise `out2`...).
+
+**Convention (Matt, 2026-10-05): a bypassed module is a passthrough on every outlet.**
+`f_vf_warp` and `f_vf_fluid` follow it; the 11 modules of plan.md item 10 do not yet.
+`f_vf_warp`'s definition now reproduces the shipped patch, so it is no longer a special case. Multi-stage modules also need
 the bypass attrui wired to *every* pix stage, including stage 0 (`f_sirds` and
 `f_lens` were each missing one).
 
