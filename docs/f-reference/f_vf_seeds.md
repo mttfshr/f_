@@ -117,23 +117,22 @@ this can't be tuned into a graded fader.
 
 ## Build
 
-**Not built via `tools/build_patcher.py`.** Same category of limitation
-as `f_sirds`: `param_connect` (Live's per-object parameter binding) only
-binds a dial to one named pix object, but most params here need to reach
-*two* differently-named stages at once (e.g. `density` → both search
-halves). Built instead via a dedicated script:
+Until 2026-10-06 the generic builder could not express this module: `param_connect` (Live's
+per-object parameter binding) binds a dial to one named pix object, but most params here reach *two*
+differently-named stages at once (e.g. `density` → both search
+halves). It is built by `build/build_patcher.py` from `src/f_vf_seeds/definition.py` (build_cleanup
+T019, 2026-10-06; before that a dedicated script, `build_seeds_multistage.py`, did):
 
 ```
-.specify/f_vf_seeds/definition.py               — documented source of truth
-.specify/f_vf_seeds/codebox_seeds_search.gen     — Stage 1a/1b template (salts via .format())
-.specify/f_vf_seeds/codebox_seeds_merge.gen      — Stage 1c
-.specify/f_vf_seeds/codebox_seeds_render.gen     — Stage 2/3 template
-.specify/f_vf_seeds/codebox_seeds_composite.gen  — Stage 4
-.specify/f_vf_seeds/build_seeds_multistage.py    — generates patchers/f_vf_seeds.maxpat
+src/f_vf_seeds/definition.py               -- the definition: params, the six-stage chain, the wiring
+src/f_vf_seeds/codebox_seeds_search.gen     -- Stage 1a/1b template (salts via .format(), rendered by the definition)
+src/f_vf_seeds/codebox_seeds_merge.gen      -- Stage 1c
+src/f_vf_seeds/codebox_seeds_render.gen     -- Stage 2/3 template
+src/f_vf_seeds/codebox_seeds_composite.gen  -- Stage 4
 ```
 
-Run: `python3 .specify/f_vf_seeds/build_seeds_multistage.py`
-Validate: `python3 -c "import json; json.load(open('patchers/f_vf_seeds.maxpat'))"`
+The shipped patcher is on the never-regenerate list. To check that the definition still describes it:
+`build/py.sh build/drift.py -v f_vf_seeds` (must say ok; `tests/test_build_seeds_keys.py` also asserts it).
 
 ## Key Findings
 

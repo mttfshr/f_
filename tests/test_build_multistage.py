@@ -265,7 +265,9 @@ def test_bypass_mode_is_loud():
         raises(_b(bypass_mode="param", bypass_param="bypass"), "other than 'bypass'"), True)
     _eq("bypass_param not a name", raises(_b(bypass_mode="param", bypass_param="a b"), "Param name"), True)
     _eq("bypass_param without param mode", raises(_b(bypass_param="bypass_gate"), 'bypass_mode "param" only'), True)
-    _eq("bypass_target without param mode", raises(_b(bypass_target="main"), 'bypass_mode "param" only'), True)
+    _eq("bypass_target in native mode is allowed (T019: the attrui @bypass fans to those stages)",
+        bool(bp.build(chain_defn(bypass_target="main"))), True)
+    _eq("an unknown native bypass_target is loud", raises(_b(bypass_target="zz"), "unknown node"), True)
     _eq("an unknown bypass_target", raises(_b(bypass_mode="param", bypass_target="zz"), "unknown node"), True)
     bad = chain_defn(bypass_mode="param")
     bad["pix_chain"][1]["gen"] = "n.gen"          # the primary's codebox has no Param bypass_gate

@@ -205,6 +205,44 @@ patcher = {
 #   bypass_param / bypass_target without bypass_mode "param" are loud.  Convention (Matt, 2026-10-05):
 #   a bypassed module is a PASSTHROUGH on every outlet.
 #
+# T019 keys (f_vf_seeds, 2026-10-06; same rules: explicit, default-off, loud; tests/test_build_seeds_keys.py):
+#
+#   Per pix_chain node "gen_code": str -- the node's codebox as an inline string, in place of a `gen`
+#   filename (f_vf_seeds' two search halves are one template rendered with different hash salts, which the
+#   definition does itself).  Loud with `gen` as well, or if empty / not a string.  A bypass_mode "param"
+#   target that is a gen_code node is checked for its Param like any other.
+#
+#   Per param "pix_shared_attrui": True -- with a pix_target LIST, ONE attrui feeds every listed stage
+#   (no obj-700+ extras), instead of one attrui per stage.  Loud without a list of two or more, with
+#   ui False / pix_wire False, or on a non-bool.
+#
+#   Per param "pix_attr": str -- the attrui is bound to this attribute instead of the param's name (f_vf_seeds'
+#   `bomb` reaches the bombing stage's `active_blend`); the widget, route token and varname keep the param's
+#   name.  Loud on a non-identifier, on the param's own name, or with pix_wire False.
+#
+#   Per param "range_menu_outlet": 0 | 1 | 2 -- the live.menu outlet that feeds the range `sel` (default 0;
+#   f_vf_seeds ships outlet 2).  Loud outside 0-2 and on a param with no range_tiers.
+#
+#   Top-level "bypass_target" in NATIVE mode (it used to be loud there): the toggle's attrui @bypass is wired
+#   to each listed stage instead of only the primary (f_vf_seeds: the merge and composite stages).
+#   "bypass_param" is still loud in native mode.
+#
+#   Top-level "outlet_source": {outlet_index: [node, node_outlet]} -- that bpatcher outlet is fed by the
+#   named stage's outlet instead of the primary's (f_vf_seeds' seed coord comes from the merge stage).  Loud
+#   on an outlet that does not exist, on a stage outlet it lacks, on an unknown node, or together with
+#   outlet_source_override for the same outlet.
+#
+#   Per mod_inlets entry "fanout": [[node, inlet], ...] and "state_nodes": [node, ...] -- the inlet's
+#   vs_inState output 0 goes to each (node, inlet) instead of the primary pix, and its `prepend param
+#   <state_param>` goes to each listed node's inlet 0 instead of the primary ([] builds the prepend and
+#   leaves it unconnected: f_vf_seeds' vestigial src_vecfield).  state_nodes needs a state_param.  Loud on an
+#   empty or malformed fanout, an unknown node, a repeat, or an unknown key in the entry.
+#
+#   build() itself: a support pix node's id is obj-50+ unless the per-param objects (dial, attrui, label per
+#   widget, then the bypass pair) reach it -- from ten widgets up they do, and a support pix with a dial's id
+#   silently garbled every cord naming it.  The base then moves to the first id after the bypass pair
+#   (`chain_id_base`); below ten widgets nothing changes.  Any duplicate box id now fails the build.
+#
 # range_tiers: the `_parameter_range` message text writes each bound the way Max writes a float in a
 # message box ("1." not "1.0", "-5." not "-5.0", "0." for zero; others as their shortest repr "0.2").
 # The builder used to write "1.0", which Max rewrites on load. Fixed 2026-10-05 (f_lens, f_vf_vorticity).

@@ -733,7 +733,7 @@ def mod_state_pre_id(i):
     """prepend param <state_param> for modulation inlet i (when state_param present)."""
     return f"obj-{100 + i * 3 + 2}"
 
-def mod_inlet_lines(mod_inlets, driving_inlet=False):
+def mod_inlet_lines(mod_inlets, driving_inlet=False, fan=None):
     """Wire each modulation inlet → (vs_inState →) pix inlet N.
     vs_instate defaults True. When False, inlet wires directly to pix (no vs_inState).
     If a mod_inlet has a 'state_param' key, also wire vs_inState out1
@@ -748,6 +748,11 @@ def mod_inlet_lines(mod_inlets, driving_inlet=False):
     from an external texture (e.g. f_vf_seeds), not for optional secondary
     modulation on an otherwise self-sufficient generator (e.g. f_vf_vortex,
     where pix inlet 0 is control-only and mod_inlets start at inlet 1).
+
+    fan: {inlet index: {"texture": [(node id, inlet), ...], "state": [node id, ...]}} -- resolved by
+    build() from a mod_inlet's "fanout" / "state_nodes" keys (multi-stage modules, T019).  "texture"
+    replaces the default single feed of the primary pix; "state" replaces the primary as the target
+    of the `prepend param <state_param>` (an empty list: the box is built, nothing follows it).
     """
     lines = []
     offset = 0 if driving_inlet else 1
@@ -761,18 +766,23 @@ def mod_inlet_lines(mod_inlets, driving_inlet=False):
         # inlet-0 wire in this case (would double-feed pix inlet 0).
         is_driving_primary = driving_inlet and i == 0
         source_id = OBJ_ROUTEPASS if is_driving_primary else mod_inlet_obj_id(i)
+        f_ = (fan or {}).get(i, {})
+        tex_targets = f_.get("texture") or [(OBJ_PIX, i + offset)]
         if use_instate:
-            # source → vs_inState → pix inlet i+offset
+            # source → vs_inState → pix inlet i+offset (or the "fanout" stages)
             lines.append(wire(source_id, 0, instate_id, 0))
-            lines.append(wire(instate_id, 0, OBJ_PIX, i + offset))
+            for node_, inlet_ in tex_targets:
+                lines.append(wire(instate_id, 0, node_, inlet_))
             # optional state_param feedback
             if mi.get("state_param"):
                 pre_id = mod_state_pre_id(i)
                 lines.append(wire(instate_id, 1, pre_id, 0))
-                lines.append(wire(pre_id, 0, OBJ_PIX, 0))
+                for node_ in (f_["state"] if "state" in f_ else [OBJ_PIX]):
+                    lines.append(wire(pre_id, 0, node_, 0))
         else:
             # source → pix inlet i+offset directly (no vs_inState)
-            lines.append(wire(source_id, 0, OBJ_PIX, i + offset))
+            for node_, inlet_ in tex_targets:
+                lines.append(wire(source_id, 0, node_, inlet_))
     return lines
 
 def mod_state_pre_boxes(mod_inlets):
@@ -1004,14 +1014,23 @@ def gen_identity():
     }
 
 
-def chain_pix_obj_id(node):
-    """Return obj-id for a pix_chain node. Primary → OBJ_PIX; support → obj-50+."""
+def chain_id_base(n_ui_params):
+    """First obj id of the support pix nodes: obj-50, unless the per-param objects (dial, attrui,
+    label per widget, then the bypass pair) reach it -- from 10 widgets up they occupy obj-50 and
+    beyond, and a support pix with the same id silently garbles the patcher (f_vf_seeds, 13
+    widgets, T019).  The base then moves to the first id after the bypass pair.  Below 10 widgets it
+    is 50, so every existing module's ids are unchanged."""
+    return max(50, UI_PARAM_BASE + n_ui_params * 3 + 2)
+
+
+def chain_pix_obj_id(node, base=50):
+    """Return obj-id for a pix_chain node. Primary → OBJ_PIX; support → obj-<base>+."""
     if node["primary"]:
         return OBJ_PIX
-    return f"obj-{50 + node['_support_index']}"
+    return f"obj-{base + node['_support_index']}"
 
 
-def build_pix_chain(defn, def_dir):
+def build_pix_chain(defn, def_dir, id_base=50):
     """
     Build boxes and cross-pix wires for a pix_chain definition.
 
@@ -1036,7 +1055,10 @@ def build_pix_chain(defn, def_dir):
             node["_support_index"] = support_idx
             support_idx += 1
 
-    id_to_obj      = {node["id"]: chain_pix_obj_id(node) for node in chain}
+    if id_base + support_idx > 100:
+        raise ValueError(f"pix_chain: {support_idx} support nodes from obj-{id_base} would reach the "
+                         f"module-inlet ids (obj-100+); too many widgets and stages for the id scheme")
+    id_to_obj      = {node["id"]: chain_pix_obj_id(node, id_base) for node in chain}
     primary_node   = next(n for n in chain if n["primary"])
     primary_obj_id = id_to_obj[primary_node["id"]]
 
@@ -1064,7 +1086,17 @@ def build_pix_chain(defn, def_dir):
         outlettype = ["jit_gl_texture"] * n_out + [""]
 
         gen_spec = node.get("gen", "")
-        if gen_spec == "pass":
+        if "gen_code" in node:
+            # gen_code: the node's codebox as an inline string, in place of a `gen` filename (T019: the
+            # two search halves of f_vf_seeds are one template rendered with different hash salts, which
+            # a definition can do itself)
+            if gen_spec:
+                raise ValueError(f"pix_chain node '{node['id']}': give gen or gen_code, not both")
+            if not isinstance(node["gen_code"], str) or not node["gen_code"].strip():
+                raise ValueError(f"pix_chain node '{node['id']}': gen_code must be a non-empty string")
+            gen = gen_subpatcher(node["gen_code"], "processor",
+                                 mod_inlets=[{}] * (n_in - 1), n_outlets=n_out)
+        elif gen_spec == "pass":
             gen = gen_identity()
         else:
             cb_path = def_dir / gen_spec
@@ -1395,7 +1427,7 @@ def build(defn, debug=None, side_files=None):
     if pix_chain:
         # Multi-pix path
         def_dir = Path(defn.get("_def_path", ".")).parent
-        chain_boxes, chain_lines, primary_obj_id, primary_node, chain_id_to_obj = build_pix_chain(defn, def_dir)
+        chain_boxes, chain_lines, primary_obj_id, primary_node, chain_id_to_obj = build_pix_chain(defn, def_dir, chain_id_base(len(ui_params)))
         object_name = primary_node["name"]   # @name of primary pix — used for param_connect
         archetype   = defn.get("archetype", "processor")
         pix_boxes_to_add = chain_boxes
@@ -1467,6 +1499,62 @@ def build(defn, debug=None, side_files=None):
             raise ValueError(f"param '{p['name']}': ui False applies to float and int params only")
         if isinstance(p.get("pix_target"), list):
             pix_targets_of(p)                         # validates the list
+        # T019 (f_vf_seeds): one attrui reaching several stages, an attrui bound to another attribute
+        # than the param's name, and a range menu read from another outlet
+        if "pix_shared_attrui" in p:
+            if not isinstance(p["pix_shared_attrui"], bool):
+                raise ValueError(f"param '{p['name']}': pix_shared_attrui must be True or False, "
+                                 f"not {p['pix_shared_attrui']!r}")
+            if p["pix_shared_attrui"] and not (isinstance(p.get("pix_target"), list) and len(p["pix_target"]) > 1):
+                raise ValueError(f"param '{p['name']}': pix_shared_attrui needs a pix_target list of "
+                                 f"two or more stages")
+            if p["pix_shared_attrui"] and (p.get("ui") is False or p.get("pix_wire", True) is False):
+                raise ValueError(f"param '{p['name']}': pix_shared_attrui cannot be combined with "
+                                 f"ui False or pix_wire False")
+        if "pix_attr" in p:
+            if not isinstance(p["pix_attr"], str) or not p["pix_attr"].isidentifier():
+                raise ValueError(f"param '{p['name']}': pix_attr must be an attribute name, not {p['pix_attr']!r}")
+            if p["pix_attr"] == p["name"]:
+                raise ValueError(f"param '{p['name']}': pix_attr equals the param name; drop it")
+            if p.get("pix_wire", True) is False:
+                raise ValueError(f"param '{p['name']}': pix_attr needs an attrui; not with pix_wire False")
+        if "range_menu_outlet" in p:
+            if not p.get("range_tiers"):
+                raise ValueError(f"param '{p['name']}': range_menu_outlet applies to a param with range_tiers")
+            if p["range_menu_outlet"] not in (0, 1, 2) or isinstance(p["range_menu_outlet"], bool):
+                raise ValueError(f"param '{p['name']}': range_menu_outlet must be 0, 1 or 2 (the "
+                                 f"live.menu's outlets), not {p['range_menu_outlet']!r}")
+
+    def extra_stages(p):
+        """The stages of a pix_target list that get an attrui of their own (none when shared)."""
+        return [] if p.get("pix_shared_attrui") else pix_targets_of(p)[1:]
+
+    # mod_inlets "fanout" / "state_nodes" (T019): a mod inlet's texture, and its connected-flag prepend,
+    # reach several stages instead of the primary pix.
+    mod_fan = {}
+    for i_, mi_ in enumerate(mod_inlets or []):
+        what = f"mod_inlets[{i_}]"
+        unknown = set(mi_) - {"label", "vs_instate", "state_param", "fanout", "state_nodes"}
+        if unknown:
+            raise ValueError(f"{what}: unknown key(s) {sorted(unknown)}")
+        if "fanout" in mi_:
+            fo = mi_["fanout"]
+            if (not isinstance(fo, list) or not fo
+                    or not all(isinstance(t, (list, tuple)) and len(t) == 2 and isinstance(t[1], int)
+                               and not isinstance(t[1], bool) and t[1] >= 0 for t in fo)):
+                raise ValueError(f"{what}.fanout must be a non-empty list of [node, inlet] pairs")
+            mod_fan.setdefault(i_, {})["texture"] = [(node_ref(n_, f"{what}.fanout"), k_) for n_, k_ in fo]
+        if "state_nodes" in mi_:
+            if not mi_.get("state_param"):
+                raise ValueError(f"{what}.state_nodes needs a state_param (it names where the "
+                                 f"`prepend param <state_param>` goes)")
+            sn = mi_["state_nodes"]
+            if not isinstance(sn, list):
+                raise ValueError(f"{what}.state_nodes must be a list of node ids ([] = nowhere), not {sn!r}")
+            targets_ = [node_ref(n_, f"{what}.state_nodes") for n_ in sn]
+            if len(set(targets_)) != len(targets_):
+                raise ValueError(f"{what}.state_nodes repeats a node ({sn!r})")
+            mod_fan.setdefault(i_, {})["state"] = targets_
 
     inlet_fanout = defn.get("inlet_fanout")
     fan_texture, fan_state, fan_param = [], [], "src_mode"
@@ -1496,8 +1584,12 @@ def build(defn, debug=None, side_files=None):
     bypass_param = defn.get("bypass_param", "bypass_gate")
     bypass_targets = [primary_obj_id]
     if bypass_mode == "native":
-        if "bypass_param" in defn or "bypass_target" in defn:
-            raise ValueError('bypass_param / bypass_target apply to bypass_mode "param" only')
+        if "bypass_param" in defn:
+            raise ValueError('bypass_param applies to bypass_mode "param" only')
+        if "bypass_target" in defn:
+            # native, several stages (T019, f_vf_seeds): the toggle's attrui @bypass is wired to each
+            # listed stage instead of only the primary
+            bypass_targets = node_refs(defn["bypass_target"], "bypass_target")
     else:
         if not isinstance(bypass_param, str) or not bypass_param.isidentifier() or bypass_param == "bypass":
             raise ValueError(f"bypass_param must be a Param name other than 'bypass', not {bypass_param!r}")
@@ -1509,7 +1601,10 @@ def build(defn, debug=None, side_files=None):
             for nd in pix_chain:
                 oid = chain_id_to_obj[nd["id"]]
                 gp = nd.get("gen", "")
-                codes[oid] = "" if gp == "pass" else (Path(defn.get("_def_path", ".")).parent / gp).read_text()
+                if "gen_code" in nd:
+                    codes[oid] = nd["gen_code"]
+                else:
+                    codes[oid] = "" if gp == "pass" else (Path(defn.get("_def_path", ".")).parent / gp).read_text()
         else:
             codes[primary_obj_id] = defn["codebox"]
         for oid in bypass_targets:
@@ -1572,12 +1667,12 @@ def build(defn, debug=None, side_files=None):
         if p.get("ui") is False:
             # route token + attrui, no widget / label / panel slot (f_vf_fluid's `taps`); the attrui
             # carries the param's varname so a route token still has a box of its name to reach
-            attr_ = attrui_box(param_pre_id(n), p["name"], 50.0 + n * 50.0, 170.0 + n * 30.0)
+            attr_ = attrui_box(param_pre_id(n), p.get("pix_attr", p["name"]), 50.0 + n * 50.0, 170.0 + n * 30.0)
             attr_["box"]["varname"] = p["name"]
             boxes.append(attr_)
-            for extra in pix_targets_of(p)[1:]:
+            for extra in extra_stages(p):
                 aid = f"obj-{700 + len(extra_attruis)}"
-                boxes.append(attrui_box(aid, p["name"], 400.0, 170.0 + 30.0 * len(extra_attruis)))
+                boxes.append(attrui_box(aid, p.get("pix_attr", p["name"]), 400.0, 170.0 + 30.0 * len(extra_attruis)))
                 extra_attruis.append((aid, n, extra))
             continue
         if p["type"] == "float" and p.get("widget") == "numbox":
@@ -1607,11 +1702,11 @@ def build(defn, debug=None, side_files=None):
                 else:
                     boxes[-1]["box"][k] = copy.deepcopy(v)
         if p.get("pix_wire", True):
-            boxes.append(attrui_box(param_pre_id(n), p["name"],
+            boxes.append(attrui_box(param_pre_id(n), p.get("pix_attr", p["name"]),
                                     50.0 + n * 50.0, 170.0 + n * 30.0))
-            for extra in pix_targets_of(p)[1:]:     # pix_target list: one more attrui per further stage
+            for extra in extra_stages(p):           # pix_target list: one more attrui per further stage
                 aid = f"obj-{700 + len(extra_attruis)}"
-                boxes.append(attrui_box(aid, p["name"], 400.0, 170.0 + 30.0 * len(extra_attruis)))
+                boxes.append(attrui_box(aid, p.get("pix_attr", p["name"]), 400.0, 170.0 + 30.0 * len(extra_attruis)))
                 extra_attruis.append((aid, n, extra))
         if p["type"] != "text_button" and not ("label" in p and p["label"] is None):
             boxes.append(label_box(n, p))   # "label": None = no label box (a shared or hand-made label)
@@ -1694,13 +1789,35 @@ def build(defn, debug=None, side_files=None):
     # pix→raw-object and raw-object→outlet wires are supplied via raw_lines
     # instead. Added 2026-07-15, see raw_ui_params note above.
     outlet_overrides = defn.get("outlet_source_override", {})
+    # outlet_source: {outlet_index: [node, node_outlet]} -- this outlet is fed by that stage's outlet
+    # instead of the primary's (f_vf_seeds' seed coord comes from the merge stage; T019)
+    outlet_source = defn.get("outlet_source", {})
+    if not isinstance(outlet_source, dict):
+        raise ValueError(f"outlet_source must be {{outlet_index: [node, node_outlet]}}, not {outlet_source!r}")
+    chain_n_out = {nd_["id"]: nd_["n_outlets"] for nd_ in (pix_chain or [])}
+    outlet_src_wires = {}
+    for oi_, spec_ in outlet_source.items():
+        if not isinstance(oi_, int) or isinstance(oi_, bool) or not 0 <= oi_ < len(outlets):
+            raise ValueError(f"outlet_source: outlet {oi_!r} does not exist (the module has {len(outlets)})")
+        if oi_ in outlet_overrides:
+            raise ValueError(f"outlet_source: outlet {oi_} is also in outlet_source_override; give one")
+        if (not isinstance(spec_, (list, tuple)) or len(spec_) != 2 or not isinstance(spec_[1], int)
+                or isinstance(spec_[1], bool) or spec_[1] < 0):
+            raise ValueError(f"outlet_source[{oi_}] must be [node, node_outlet], not {spec_!r}")
+        if spec_[0] in chain_n_out and spec_[1] >= chain_n_out[spec_[0]]:
+            raise ValueError(f"outlet_source[{oi_}]: node {spec_[0]!r} has {chain_n_out[spec_[0]]} "
+                             f"outlet(s), not an outlet {spec_[1]}")
+        outlet_src_wires[oi_] = (node_ref(spec_[0], f"outlet_source[{oi_}]"), spec_[1])
     for i in range(len(outlets)):
-        if i not in outlet_overrides:
+        if i in outlet_src_wires:
+            lines.append(wire(outlet_src_wires[i][0], outlet_src_wires[i][1], outlet_obj_id(i), 0))
+        elif i not in outlet_overrides:
             lines.append(wire(primary_obj_id, i, outlet_obj_id(i), 0))
 
     # modulation inlets → (vs_inState →) primary pix
     if mod_inlets:
-        lines.extend(mod_inlet_lines(mod_inlets, driving_inlet=defn.get("driving_inlet", False)))
+        lines.extend(mod_inlet_lines(mod_inlets, driving_inlet=defn.get("driving_inlet", False),
+                                     fan=mod_fan))
 
     # bypass jsui → prepend bypass → primary pix
     lines.append(wire(bp_jsui_id, 0, bp_pre_id, 0))
@@ -1748,9 +1865,12 @@ def build(defn, debug=None, side_files=None):
         if p.get("pix_wire", True):
             lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
             lines.append(wire(param_pre_id(n), 0, target, 0))
+            if p.get("pix_shared_attrui"):          # ONE attrui fans out to every stage of the list
+                for shared_ in pix_targets_of(p)[1:]:
+                    lines.append(wire(param_pre_id(n), 0, shared_, 0))
         if p.get("range_tiers"):
-            # menu → sel
-            lines.append(wire(range_menu_id(n), 0, range_sel_id(n), 0))
+            # menu → sel (outlet 0 unless range_menu_outlet names another)
+            lines.append(wire(range_menu_id(n), p.get("range_menu_outlet", 0), range_sel_id(n), 0))
             # sel outN → messageN → dial
             for t in range(len(p["range_tiers"])):
                 lines.append(wire(range_sel_id(n), t, range_msg_id(n, t), 0))
@@ -1842,6 +1962,16 @@ def build(defn, debug=None, side_files=None):
         edit_layout.assert_unchanged(snap, boxes, lines)
 
     check_port_order(boxes)
+
+    # Two boxes with one id garble every cord that names it, and nothing downstream says so
+    # (f_vf_seeds' 13 dials landed on the support pix ids, T019): fail the build instead.
+    seen_ids = {}
+    for b_ in boxes:
+        bid = b_["box"]["id"]
+        if bid in seen_ids:
+            raise ValueError(f"duplicate box id {bid}: {seen_ids[bid]} and "
+                             f"{b_['box'].get('varname') or b_['box'].get('text') or b_['box'].get('maxclass')}")
+        seen_ids[bid] = b_["box"].get("varname") or b_["box"].get("text") or b_["box"].get("maxclass")
 
     patcher = {
         "fileversion": 1,
