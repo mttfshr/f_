@@ -19,6 +19,8 @@ _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Writ
 - Every new test and key was mutation-checked (17 + 29 + 10 + 10 mutants, all caught at the end; several first runs found real test gaps, e.g. `1 == 1.0` in Python hides a missing float conversion: compare serialized JSON).
 
 **Waiting on Matt**
+**Status (Matt, end of the 2026-10-06 sessions): the four items below, plus the untracked helpers in `scratch/`, are all "done for now" (closed, not reopened by the next session unless Matt does).** No outcome was recorded for any of them: the Vsynth look is NOT recorded as passed or failed, the GPU-cost question has no decision (the caveat below stays as written), `fluid-scratch.json` / `.maxpat` was not declared disposable (kept), and the six untracked `scratch/` files (`rollout_param_bypass.py`, `seeds_measure.py`, four `mutate_*.py`) were left as they are, untracked. Deleting the untracked ones is permanent.
+
 1. **Vsynth eyeball of the 11 param-bypass modules** (every outlet = source, vecfield outlets = the input field; masonry is new). The offline suite and the bench prove wiring and values, not how it looks.
 2. **The GPU-cost decision** (below): unchanged, still open.
 3. **Re-upload `skills/vsynth-bpatcher`** then `./skills/check.sh stamp`: the skill does not yet mention the seven T019 keys, `chain_id_base` or `BYPASS_EXPECT`, so it is more stale than before (I did not edit it; do that first).
