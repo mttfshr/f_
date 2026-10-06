@@ -149,6 +149,34 @@ def test_route_bypass_keeps_each_route_outlet_over_its_control_and_wires_downwar
                   abs(col(pre)) + (0 if pre["patching_rect"][1] > jsui["patching_rect"][1] else 1), 0)
 
 
+def test_route_first_puts_routepass_below_the_route_and_wires_downward():
+    for arch in ("processor", "dual"):
+        extra = {}
+        if arch == "dual":
+            extra = {"params": _lane_defn()["params"][:3] + [{"name": "src_mode", "type": "internal"},
+                                                              {"name": "bypass", "type": "bypass"}],
+                     "codebox": "Param a(0.5);\nParam b(0.5);\nParam c(0.5);\nParam src_mode(0.0);\n"
+                                "Param bypass(0.0);\nout1 = in1 * a;"}
+        dbg = {}
+        p = bp.build(_lane_defn(route_first=True, archetype=arch, **extra), debug=dbg)["patcher"]
+        top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+        y = lambda i: top[i]["patching_rect"][1]
+        check(f"{arch}: routepass sits below the route row", 0 if y(bp.OBJ_ROUTEPASS) > y(bp.OBJ_ROUTE) else 1, 0)
+        check(f"{arch}: the pix sits below routepass", 0 if y(bp.OBJ_PIX) > y(bp.OBJ_ROUTEPASS) else 1, 0)
+        if arch == "dual":
+            check("dual: vs_inState is between routepass and the pix",
+                  0 if y(bp.OBJ_ROUTEPASS) < y(bp.OBJ_INSTATE) < y(bp.OBJ_PIX) else 1, 0)
+        a = layout.audit(p["boxes"], p["lines"], dbg["roles"])
+        check(f"{arch}: no upward wires", len(a["upward"]), 0)
+        check(f"{arch}: no overlaps", len(a["overlaps"]), 0)
+    dbg = {}
+    p = bp.build(_lane_defn(), debug=dbg)["patcher"]
+    rp = [b["box"] for b in p["boxes"] if b["box"]["id"] == bp.OBJ_ROUTEPASS][0]
+    pix = [b["box"] for b in p["boxes"] if b["box"]["id"] == bp.OBJ_PIX][0]
+    check("default layout is unchanged: routepass at the strip's second row", abs(rp["patching_rect"][1] - layout.Y_ROW2), 0)
+    check("default layout is unchanged: the pix at Y_PIX", abs(pix["patching_rect"][1] - layout.Y_PIX), 0)
+
+
 def _build_all(edit_layout_on):
     """{name: (result, roles)} for every definition that builds through build_patcher."""
     out = {}

@@ -22,17 +22,6 @@
    "reason": "MSP audio-analysis patch (meter~/number~, hand-laid UI, no pix codebox); the schema has no audio archetype.",
    "status": "out_of_scope"
   },
-  "f_grain": {
-   "counts": {
-    "boxes_def_only": 3,
-    "boxes_patch_only": 16,
-    "boxes_renamed": 1,
-    "code": 1,
-    "layout": 27,
-    "props": 35
-   },
-   "status": "drift"
-  },
   "f_hue_processor": {
    "counts": {
     "boxes_def_only": 9,

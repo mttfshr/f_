@@ -37,7 +37,12 @@ Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite gree
   **`f_vf_optical_flow`'s 8 support-stage dials were bound to the wrong pix** (`stage_a`); I corrected those strings in its shipped patch
   (parse-verified, nothing else changed). Advect's patch only gained 7 `lbl_*` label varnames. `./bench.sh --changed` green (2/2, Matt). **Matt: still
   to look at `f_vf_advect` and `f_vf_optical_flow` in Max.**
-- **Next:** the rest of T014 (the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). The colour modules
+- **`f_grain` closed (23 of 39 exact; Matt chose option A)**, **and the shipped patch is untouched** (so no Max check or bench is needed). Its
+  definition is rewritten from the patch; the bespoke logic (persistence/era-clock chain, second route + numboxes, edge-mode umenu, second `r draw`)
+  is `raw_ui.json` (14 raw boxes). New explicit builder keys: **`route_first`** (inlet -> route, reject -> routepass), per-param **`pix_wire: False`**,
+  **`inlet_comment`**, outlet **`hint`**; the layout pass learned `route_first`. Shipped warts left as is: `fade` and `ch_diverge` tooltips say
+  "Temporal persistence…", and `shape`'s tooltip describes an aspect ratio its 0..1 range does not have. The codebox has CRLF endings (read with `newline=""`).
+- **Next:** the rest of T014 (the four colour modules need T018's shared-label grid first; `f_lens`). The colour modules
   and `f_grain` also route `bypass`, so `route_bypass` is available to them.
 
 ## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3

@@ -95,6 +95,14 @@ column 0, and the params start at column 1, so each route outlet still sits over
 no cord runs upward (the service-area position, above the route row, would make the route -> jsui cord
 upward). Without the flag nothing changes. Tests: `test_route_bypass_keeps_each_route_outlet_over_its_control_and_wires_downward`.
 
+## Addendum 2026-10-05: `route_first`
+
+When the route's reject outlet feeds `routepass` (`route_first` in `build/spec.md`; f_grain), the pass
+detects the route -> routepass cord and puts `routepass` and `vs_inState` below the param lane
+(`Y_PRE + 50`, then +50), and moves the pix stack down by `RF_PIX_SHIFT` (100) to make room, so that
+cord and everything after it runs downward. Without it nothing changes. Test:
+`test_route_first_puts_routepass_below_the_route_and_wires_downward` (processor and dual).
+
 ## Non-goals
 
 Presentation layout changes; retrofitting hand-edited modules; gen-subpatcher layout;

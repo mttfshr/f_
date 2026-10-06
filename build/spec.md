@@ -120,6 +120,19 @@ patcher = {
 # @name, not the primary pix's (f_vf_advect's `separate` / `mode` drive the pass pix). A raw-object
 # pix_target keeps naming the primary pix. Fixed 2026-10-05: the builder used to name the primary pix
 # for every control, so f_vf_optical_flow's support-stage dials were bound to a pix without the Param.
+#
+# Optional "pix_wire": False on a control param: it keeps its route outlet and its widget but gets no
+# attrui and no cord to a pix; the module wires it itself via raw_boxes / raw_lines (f_grain's
+# `persistence` dial feeds an era-clock chain, not a Param). Loud on a non-boolean. Added 2026-10-05.
+#
+# Top-level "route_first": True -- the control inlet feeds the `route`, and the route's reject
+# (unmatched) outlet feeds `routepass`, the reverse of the default (inlet -> routepass -> route).
+# Adds the reject outlet to the route box. f_grain ships that way; no other module does. Loud on a
+# non-boolean. Added 2026-10-05.
+#
+# Top-level "inlet_comment": str -- the main inlet's comment (default "texture / control"; f_grain's is
+# empty). An outlet dict may carry "hint": str (the outlet's tooltip; f_grain's `grain mask` has "Raw").
+# Added 2026-10-05.
 
 # Menu param — renders as live.menu with labelled options, outputs integer 0-N
 {"name": str, "type": "menu", "options": [str, ...], "default": int, "hint": str}

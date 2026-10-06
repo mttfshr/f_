@@ -14,6 +14,8 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
   - per-param `route_name` (the message a control answers to, when not its name: f_vf_advect's `mix`),
     `"hint": None` (no hint key, for hand-made controls), and `param_connect` naming the pix a control
     actually drives (`pix_target`): T014
+  - `route_first` (inlet -> route, route reject -> routepass), per-param `pix_wire: False` (a control with
+    no attrui and no pix cord), `inlet_comment`, and an outlet `hint`: f_grain's shape (T014)
   - `route_bypass`: `bypass` is the first `route` token, wired to the bypass jsui, and every param
     outlet is one higher; off (the default) changes nothing (T014)
 
@@ -479,6 +481,112 @@ def test_f_vf_advect_builds_from_its_definition_as_it_ships():
     _eq("the menu offers Ride / Hold / Snap",
         [b["saved_attribute_attributes"]["valueof"]["parameter_enum"] for b in top.values()
          if b.get("varname") == "mode"], [["Ride", "Hold", "Snap"]])
+
+
+# ---- route_first, pix_wire, inlet_comment, outlet hint (f_grain)
+
+def _cords(defn):
+    p = bp.build(defn)["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    return top, {(tuple(ln["patchline"]["source"]), tuple(ln["patchline"]["destination"])) for ln in p["lines"]}
+
+
+def test_route_first_reverses_the_topology_and_adds_the_reject_outlet():
+    top0, c0 = _cords(_defn())
+    _eq("default: inlet -> routepass, routepass unmatched -> route",
+        ((("obj-1", 0), (bp.OBJ_ROUTEPASS, 0)) in c0, ((bp.OBJ_ROUTEPASS, 2), (bp.OBJ_ROUTE, 0)) in c0), (True, True))
+    top1, c1 = _cords(dict(_defn(), route_first=True))
+    n = len(top1[bp.OBJ_ROUTE]["text"].split()) - 1
+    _eq("route_first: inlet -> route", ((bp.OBJ_INLET, 0), (bp.OBJ_ROUTE, 0)) in c1, True)
+    _eq("route_first: no inlet -> routepass", ((bp.OBJ_INLET, 0), (bp.OBJ_ROUTEPASS, 0)) in c1, False)
+    _eq("route_first: the reject outlet (one past the last token) -> routepass",
+        ((bp.OBJ_ROUTE, n), (bp.OBJ_ROUTEPASS, 0)) in c1, True)
+    _eq("route_first: no routepass unmatched -> route", ((bp.OBJ_ROUTEPASS, 2), (bp.OBJ_ROUTE, 0)) in c1, False)
+    _eq("the route box has the extra (reject) outlet", top1[bp.OBJ_ROUTE]["numoutlets"], n + 1)
+    _eq("default route box has none", top0[bp.OBJ_ROUTE]["numoutlets"], n)
+    top2, c2 = _cords(dict(_defn(), route_first=True, route_bypass=True))
+    n2 = len(top2[bp.OBJ_ROUTE]["text"].split()) - 1
+    _eq("with route_bypass the reject outlet moves up with the tokens",
+        (n2, ((bp.OBJ_ROUTE, n2), (bp.OBJ_ROUTEPASS, 0)) in c2, top2[bp.OBJ_ROUTE]["numoutlets"]), (n + 1, True, n2 + 1))
+    try:
+        bp.build(dict(_defn(), route_first="yes"))
+    except ValueError as e:
+        check("a non-boolean route_first", 0 if "route_first" in str(e) else 1, 0)
+    else:
+        check("a non-boolean route_first (nothing was raised)", 1, 0)
+    gone = {c for c in c0 if c not in c1}
+    _eq("exactly the two default cords are replaced",
+        sorted(gone), sorted({((bp.OBJ_INLET, 0), (bp.OBJ_ROUTEPASS, 0)), ((bp.OBJ_ROUTEPASS, 2), (bp.OBJ_ROUTE, 0))}))
+
+
+def test_pix_wire_false_leaves_a_control_with_a_route_outlet_and_nothing_else():
+    d = _defn()
+    d["params"][0]["pix_wire"] = False                     # the `g` dial
+    top, cords = _cords(d)
+    dial = bp.param_obj_id(0)
+    _eq("the dial and its label still exist", (dial in top, bp.param_label_id(0) in top), (True, True))
+    _eq("but no attrui for it", bp.param_pre_id(0) in top, False)
+    _eq("its route outlet still reaches the dial", ((bp.OBJ_ROUTE, 0), (dial, 0)) in cords, True)
+    _eq("and the dial has no cord going anywhere", [c for c in cords if c[0][0] == dial], [])
+    _eq("the other params keep their attrui and cords",
+        all(bp.param_pre_id(k) in top and ((bp.param_obj_id(k), 0), (bp.param_pre_id(k), 0)) in cords for k in (1, 2)), True)
+    base_top, _ = _cords(_defn())
+    _eq("the only box that disappears is that attrui", sorted(set(base_top) - set(top)), [bp.param_pre_id(0)])
+    bad = _defn()
+    bad["params"][0]["pix_wire"] = "no"
+    try:
+        bp.build(bad)
+    except ValueError as e:
+        check("a non-boolean pix_wire", 0 if "pix_wire" in str(e) else 1, 0)
+    else:
+        check("a non-boolean pix_wire (nothing was raised)", 1, 0)
+
+
+def test_inlet_comment_and_outlet_hint():
+    def inlet(defn):
+        return [b for b in _boxes_of(defn) if b["maxclass"] == "inlet"][0]["comment"]
+    _eq("default inlet comment", inlet(_defn()), "texture / control")
+    _eq("custom inlet comment", inlet(dict(_defn(), inlet_comment="control")), "control")
+    _eq("an empty inlet comment is honoured", inlet(dict(_defn(), inlet_comment="")), "")
+    try:
+        bp.build(dict(_defn(), inlet_comment=3))
+    except ValueError as e:
+        check("a non-string inlet_comment", 0 if "inlet_comment" in str(e) else 1, 0)
+    else:
+        check("a non-string inlet_comment (nothing was raised)", 1, 0)
+    d = _defn()
+    d["outlets"][1]["hint"] = "Raw"
+    outs = {b["comment"]: b for b in _boxes_of(d) if b["maxclass"] == "outlet"}
+    _eq("an outlet hint is written, and only where given",
+        (outs["aux"].get("hint"), "hint" in outs["composite"], "hint" in outs["third"]), ("Raw", False, False))
+
+
+def test_f_grain_builds_from_its_definition_as_it_ships():
+    built, _ = drift.build_module("f_grain")
+    p = built["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    route = top[bp.OBJ_ROUTE]
+    _eq("the route, with `edge_mode_menu` for the umenu and the numbox routes last",
+        route["text"], "route bypass density amount persistence fade size size_var shape softness jitter "
+                       "ch_diverge luma_gate displace edge_mode_menu field sv_seed")
+    cords = {(tuple(ln["patchline"]["source"]), tuple(ln["patchline"]["destination"])) for ln in p["lines"]}
+    _eq("control-first: inlet -> route, reject outlet -> routepass",
+        (((bp.OBJ_INLET, 0), (bp.OBJ_ROUTE, 0)) in cords, ((bp.OBJ_ROUTE, 16), (bp.OBJ_ROUTEPASS, 0)) in cords),
+        (True, True))
+    inlet = [b for b in top.values() if b["maxclass"] == "inlet"][0]
+    _eq("the inlet has no comment", inlet["comment"], "")
+    pers = [i for i, b in top.items() if b.get("varname") == "persistence"][0]
+    _eq("persistence is a dial with no attrui: its only cord goes into the era-clock chain",
+        sorted(top[d[0]].get("text", top[d[0]]["maxclass"]) for (s, d) in cords if s[0] == pers),
+        ["expr pow(1.0 - $f1\\, 2.0)"])
+    raw = sorted(i for i in top if i.startswith("obj-9") and len(i) == 7 and i[5:].isdigit() and int(i[4:]) >= 901)
+    _eq("14 raw boxes, obj-901..obj-914", raw, [f"obj-{n}" for n in range(901, 915)])
+    _eq("the raw numboxes and the umenu are in the parameters block",
+        sorted(k for k in p["parameters"] if k in raw), ["obj-901", "obj-906", "obj-912"])
+    outs = {b["comment"]: b for b in top.values() if b["maxclass"] == "outlet"}
+    _eq("the grain mask outlet has its hint", outs["grain mask"].get("hint"), "Raw")
+    _eq("two `r draw`: one into the persistence chain, one into the pix",
+        sorted(b["text"] for b in top.values() if b.get("text") == "r draw"), ["r draw", "r draw"])
 
 
 if __name__ == "__main__":

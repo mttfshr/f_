@@ -23,6 +23,9 @@ Geometry (all constants below):
   range tiers  : one block per range_tiers param, below the outlets
   service      : moduleSize chain, autopattr, bypass, panel toggle, title, panel --
                  to the right of everything else
+  route_first  : when the route's reject outlet feeds routepass (build_patcher `route_first`), the
+                 routepass / vs_inState strip sits BELOW the param lane and the pix stack moves down
+                 to make room, so that cord and everything after it runs downward
 """
 import copy
 from collections import defaultdict
@@ -41,6 +44,7 @@ Y_ROUTE    = 204.0
 Y_CTL      = 250.0
 Y_PRE      = 310.0
 Y_PIX      = 380.0
+RF_PIX_SHIFT = 100.0  # route_first: the pix stack moves down this far to fit routepass / vs_inState
 PIX_STEP   = 50.0    # vertical step between pix layers
 PIX_GAP    = 20.0    # horizontal gap between pix in one layer
 OUT_GAP    = 50.0
@@ -130,15 +134,25 @@ def layout_edit_view(boxes, lines, roles):
     def one(role):
         return [by_id[i] for _, i in grp.get(role, [])]
 
+    # route_first: a cord from the route to routepass.  routepass (and what hangs off it) then has
+    # to sit below the route row, or that cord would run upward.
+    route_ids = {i for _, i in grp.get("route", [])}
+    rp_ids = {i for _, i in grp.get("routepass", [])}
+    route_first = any(ln["patchline"]["source"][0] in route_ids and ln["patchline"]["destination"][0] in rp_ids
+                      for ln in lines)
+    y_rp = Y_PRE + 50.0 if route_first else Y_ROW2            # routepass
+    y_is = y_rp + 50.0 if route_first else Y_ROW3             # vs_inState
+    y_pix0 = Y_PIX + (RF_PIX_SHIFT if route_first else 0.0)
+
     # ---- signal strip -------------------------------------------------------
     for bx in one("inlet"):
         _put(bx, MARGIN, Y_INLET)
     for bx in one("routepass"):
-        _put(bx, MARGIN, Y_ROW2)
+        _put(bx, MARGIN, y_rp)
     for bx in one("instate"):
-        _put(bx, MARGIN, Y_ROW3)
+        _put(bx, MARGIN, y_is)
     for bx in one("srcmode_pre"):
-        _put(bx, MARGIN, Y_ROW3 + SERV_STEP)
+        _put(bx, MARGIN, y_is + SERV_STEP)
     for bx in one("rdraw"):
         _put(bx, MARGIN, Y_ROW3)
 
@@ -183,16 +197,16 @@ def layout_edit_view(boxes, lines, roles):
 
     # ---- pix stack + outlets --------------------------------------------------
     pix_ids = [i for _, i in grp.get("pix", [])]
-    y_bottom = Y_PIX
+    y_bottom = y_pix0
     if pix_ids:
         layer = _pix_layers(pix_ids, lines)
         x_next = defaultdict(lambda: MARGIN)
         for pid in pix_ids:
             L = layer[pid]
             bx = by_id[pid]
-            _put(bx, x_next[L], Y_PIX + L * PIX_STEP)
+            _put(bx, x_next[L], y_pix0 + L * PIX_STEP)
             x_next[L] += _rect(bx)[2] + PIX_GAP
-            y_bottom = max(y_bottom, Y_PIX + L * PIX_STEP + _rect(bx)[3])
+            y_bottom = max(y_bottom, y_pix0 + L * PIX_STEP + _rect(bx)[3])
     y_out = y_bottom + OUT_GAP
     for i, bid in grp.get("outlet", []):
         _put(by_id[bid], MARGIN + i * OUT_PITCH, y_out)

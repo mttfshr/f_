@@ -93,9 +93,9 @@ def range_msg_id(n, t):  return f"obj-{300 + n * 10 + 2 + t}"
 def box(id, **kwargs):
     return {"box": {"id": id, **kwargs}}
 
-def inlet_box():
+def inlet_box(comment="texture / control"):
     return box(OBJ_INLET,
-        maxclass="inlet", comment="texture / control", index=0,
+        maxclass="inlet", comment=comment, index=0,
         numinlets=0, numoutlets=1, outlettype=[""],
         patching_rect=[30.0, 30.0, 30.0, 30.0])
 
@@ -121,6 +121,8 @@ def outlet_boxes(outlets):
             patching_rect=[30.0 + i * 70.0, 500.0, 30.0, 30.0])
         if o.get("color"):
             kwargs["tricolor"] = o["color"]
+        if o.get("hint"):
+            kwargs["hint"] = o["hint"]
         boxes.append(box(obj_id, **kwargs))
     return boxes
 
@@ -137,11 +139,11 @@ def route_token(p):
     return p.get("route_name", p["name"])
 
 
-def route_box(ui_params, route_bypass=False):
+def route_box(ui_params, route_bypass=False, reject=False):
     # route_bypass: `bypass` is the first route token, so a `bypass 0/1` message reaches the bypass
     # jsui (build() wires route outlet 0 to it) and every param outlet is one higher.
     names = " ".join((["bypass"] if route_bypass else []) + [route_token(p) for p in ui_params])
-    n = len(ui_params) + (1 if route_bypass else 0)
+    n = len(ui_params) + (1 if route_bypass else 0) + (1 if reject else 0)   # reject: the unmatched outlet
     return box(OBJ_ROUTE,
         maxclass="newobj",
         numinlets=1, numoutlets=n, outlettype=[""] * n,
@@ -1206,6 +1208,25 @@ def build(defn, debug=None, side_files=None):
         raise ValueError(f"route_bypass must be True or False, not {route_bypass!r}")
     rb = 1 if route_bypass else 0    # route outlet offset: outlet 0 is `bypass` when it is routed
 
+    # route_first: the control inlet feeds the `route` and the route's unmatched (reject) outlet
+    # feeds `routepass`, the reverse of the default (inlet -> routepass -> route).  f_grain ships
+    # that way; no other module does.  Adds the reject outlet to the route box.
+    route_first = defn.get("route_first", False)
+    if not isinstance(route_first, bool):
+        raise ValueError(f"route_first must be True or False, not {route_first!r}")
+
+    # inlet_comment: the main inlet's comment, "texture / control" unless the module differs.
+    inlet_comment = defn.get("inlet_comment", "texture / control")
+    if not isinstance(inlet_comment, str):
+        raise ValueError(f"inlet_comment must be a string, not {inlet_comment!r}")
+
+    # pix_wire (per param): False = the control gets its route outlet and widget but no attrui
+    # and no cord to a pix; the module wires it itself via raw_boxes/raw_lines (f_grain's
+    # `persistence` feeds the era-clock chain, not a Param).
+    for p in defn["params"]:
+        if "pix_wire" in p and not isinstance(p["pix_wire"], bool):
+            raise ValueError(f"param '{p['name']}': pix_wire must be True or False, not {p['pix_wire']!r}")
+
     # route_name (per param): the message the control answers to, when it is not the param's name.
     # It is a route token, so it must be one word, unique, and not `bypass` (reserved).
     tokens = [route_token(p) for p in all_params if p["type"] in ("float", "int", "menu", "text_button",
@@ -1281,10 +1302,10 @@ def build(defn, debug=None, side_files=None):
 
     # Build boxes — pix must come before bypass jsui (param_connect dependency)
     boxes = []
-    boxes.append(inlet_box())
+    boxes.append(inlet_box(inlet_comment))
     boxes.extend(outlet_boxes(outlets))
     boxes.append(routepass_box())
-    boxes.append(route_box(route_params, route_bypass))
+    boxes.append(route_box(route_params, route_bypass, route_first))
     boxes.extend(pix_boxes_to_add)
     boxes.append(autopattr_box(prefix))
     boxes.append(panel_box(pw, ph))
@@ -1341,8 +1362,9 @@ def build(defn, debug=None, side_files=None):
             boxes.append(menu_box(n, p, pname))
         elif p["type"] == "text_button":
             boxes.append(text_button_box(n, p, pname))
-        boxes.append(attrui_box(param_pre_id(n), p["name"],
-                                50.0 + n * 50.0, 170.0 + n * 30.0))
+        if p.get("pix_wire", True):
+            boxes.append(attrui_box(param_pre_id(n), p["name"],
+                                    50.0 + n * 50.0, 170.0 + n * 30.0))
         if p["type"] != "text_button":
             boxes.append(label_box(n, p))
         if p.get("range_tiers"):
@@ -1362,8 +1384,8 @@ def build(defn, debug=None, side_files=None):
     # Build patchlines
     lines = []
 
-    # inlet → routepass
-    lines.append(wire(OBJ_INLET, 0, OBJ_ROUTEPASS, 0))
+    # inlet → routepass (route_first: inlet → route)
+    lines.append(wire(OBJ_INLET, 0, OBJ_ROUTE if route_first else OBJ_ROUTEPASS, 0))
 
     if archetype == "dual":
         # routepass out0 → vs_inState → primary pix
@@ -1385,8 +1407,11 @@ def build(defn, debug=None, side_files=None):
         # routepass out0 → primary pix
         lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
 
-    # routepass out2 (unmatched) → route
-    lines.append(wire(OBJ_ROUTEPASS, 2, OBJ_ROUTE, 0))
+    # routepass out2 (unmatched) → route (route_first: route's reject outlet → routepass)
+    if route_first:
+        lines.append(wire(OBJ_ROUTE, len(route_params) + rb, OBJ_ROUTEPASS, 0))
+    else:
+        lines.append(wire(OBJ_ROUTEPASS, 2, OBJ_ROUTE, 0))
 
     # primary pix outN → outletN (one wire per outlet), unless overridden.
     # outlet_source_override: {outlet_index: raw_object_id} — when a raw_boxes
@@ -1442,8 +1467,9 @@ def build(defn, debug=None, side_files=None):
         pt = p.get("pix_target")
         target = chain_id_to_obj.get(pt, pt) if pt else primary_obj_id
         lines.append(wire(OBJ_ROUTE, n + rb, param_obj_id(n), 0))
-        lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
-        lines.append(wire(param_pre_id(n), 0, target, 0))
+        if p.get("pix_wire", True):
+            lines.append(wire(param_obj_id(n), 0, param_pre_id(n), 0))
+            lines.append(wire(param_pre_id(n), 0, target, 0))
         if p.get("range_tiers"):
             # menu → sel
             lines.append(wire(range_menu_id(n), 0, range_sel_id(n), 0))

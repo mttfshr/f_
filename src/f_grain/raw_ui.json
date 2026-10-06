@@ -1,0 +1,643 @@
+{
+ "raw_boxes": [
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "id": "obj-901",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "grain_pix::field",
+    "parameter_enable": 1,
+    "patching_rect": [
+     1212.0,
+     106.5,
+     44.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     77.0,
+     80.0,
+     31.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_longname": "field",
+      "parameter_mmax": 5.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "field",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "field_1"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-902",
+    "maxclass": "newobj",
+    "numinlets": 3,
+    "numoutlets": 3,
+    "outlettype": [
+     "",
+     "",
+     ""
+    ],
+    "patching_rect": [
+     1194.0,
+     228.0,
+     120.0,
+     22.0
+    ],
+    "text": "route field sv_seed"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-903",
+    "maxclass": "newobj",
+    "numinlets": 0,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "patching_rect": [
+     271.0,
+     506.0,
+     50.0,
+     22.0
+    ],
+    "text": "r draw"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-904",
+    "maxclass": "newobj",
+    "numinlets": 2,
+    "numoutlets": 1,
+    "outlettype": [
+     "float"
+    ],
+    "patching_rect": [
+     303.0,
+     547.0,
+     28.0,
+     22.0
+    ],
+    "text": "f"
+   }
+  },
+  {
+   "box": {
+    "attr": "era_clock",
+    "id": "obj-905",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     334.0,
+     630.0,
+     160.0,
+     22.0
+    ]
+   }
+  },
+  {
+   "box": {
+    "bgcolor": [
+     0.0196078431372549,
+     0.0196078431372549,
+     0.0196078431372549,
+     0.0
+    ],
+    "bgfillcolor_angle": 270.0,
+    "bgfillcolor_autogradient": 0.0,
+    "bgfillcolor_color": [
+     0.0196078431372549,
+     0.0196078431372549,
+     0.0196078431372549,
+     0.0
+    ],
+    "bgfillcolor_color1": [
+     0.058823529411764705,
+     0.058823529411764705,
+     0.058823529411764705,
+     1.0
+    ],
+    "bgfillcolor_color2": [
+     0.158640689195807,
+     0.158640642399981,
+     0.158640654628478,
+     1.0
+    ],
+    "bgfillcolor_proportion": 0.5,
+    "bgfillcolor_type": "color",
+    "fontname": "Ableton Sans Light",
+    "id": "obj-906",
+    "items": [
+     "Clear",
+     ",",
+     "Clamp",
+     ",",
+     "Wrap",
+     ",",
+     "Mirror"
+    ],
+    "maxclass": "umenu",
+    "numinlets": 1,
+    "numoutlets": 3,
+    "outlettype": [
+     "int",
+     "",
+     ""
+    ],
+    "parameter_enable": 1,
+    "patching_rect": [
+     1131.6875,
+     102.5,
+     115.0,
+     23.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     210.0,
+     97.0,
+     23.5,
+     23.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_initial": [
+       2
+      ],
+      "parameter_initial_enable": 1,
+      "parameter_linknames": 1,
+      "parameter_longname": "edge_mode_menu",
+      "parameter_mmax": 3.0,
+      "parameter_modmode": 0,
+      "parameter_shortname": "edge_mode_menu",
+      "parameter_type": 1,
+      "parameter_unitstyle": 0
+     }
+    },
+    "varname": "edge_mode_menu"
+   }
+  },
+  {
+   "box": {
+    "attr": "edge_mode",
+    "id": "obj-907",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     1138.0,
+     172.0,
+     157.0,
+     22.0
+    ]
+   }
+  },
+  {
+   "box": {
+    "id": "obj-908",
+    "maxclass": "newobj",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "patching_rect": [
+     324.0,
+     506.0,
+     180.0,
+     22.0
+    ],
+    "text": "expr pow(1.0 - $f1\\, 2.0)"
+   }
+  },
+  {
+   "box": {
+    "id": "obj-909",
+    "maxclass": "newobj",
+    "numinlets": 2,
+    "numoutlets": 1,
+    "outlettype": [
+     "float"
+    ],
+    "patching_rect": [
+     310.375,
+     589.0,
+     32.0,
+     22.0
+    ],
+    "text": "+ 0."
+   }
+  },
+  {
+   "box": {
+    "id": "obj-910",
+    "maxclass": "newobj",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "float",
+     "float"
+    ],
+    "patching_rect": [
+     350.0,
+     551.0,
+     42.0,
+     22.0
+    ],
+    "text": "t f f"
+   }
+  },
+  {
+   "box": {
+    "attr": "field",
+    "id": "obj-911",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     1226.0,
+     263.0,
+     140.0,
+     22.0
+    ]
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "id": "obj-912",
+    "maxclass": "live.numbox",
+    "numinlets": 1,
+    "numoutlets": 2,
+    "outlettype": [
+     "",
+     "float"
+    ],
+    "param_connect": "grain_pix::sv_seed",
+    "parameter_enable": 1,
+    "patching_rect": [
+     1280.5625,
+     106.5,
+     44.0,
+     15.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     38.00000011920929,
+     80.0,
+     34.0,
+     15.0
+    ],
+    "saved_attribute_attributes": {
+     "valueof": {
+      "parameter_initial": [
+       0.0
+      ],
+      "parameter_initial_enable": 1,
+      "parameter_longname": "sv_seed",
+      "parameter_mmax": 5.0,
+      "parameter_modmode": 3,
+      "parameter_shortname": "sv_seed",
+      "parameter_type": 0,
+      "parameter_unitstyle": 1
+     }
+    },
+    "varname": "sv_seed"
+   }
+  },
+  {
+   "box": {
+    "attr": "sv_seed",
+    "id": "obj-913",
+    "maxclass": "attrui",
+    "numinlets": 1,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "parameter_enable": 0,
+    "patching_rect": [
+     1274.0,
+     301.0,
+     152.0,
+     22.0
+    ]
+   }
+  },
+  {
+   "box": {
+    "id": "obj-914",
+    "maxclass": "newobj",
+    "numinlets": 0,
+    "numoutlets": 1,
+    "outlettype": [
+     ""
+    ],
+    "patching_rect": [
+     498.00001484155655,
+     677.3333535194397,
+     48.0,
+     22.0
+    ],
+    "text": "r draw"
+   }
+  }
+ ],
+ "raw_lines": [
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-905",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-908",
+     0
+    ],
+    "source": [
+     "obj-26",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-911",
+     0
+    ],
+    "source": [
+     "obj-901",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-907",
+     0
+    ],
+    "source": [
+     "obj-906",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-907",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-904",
+     1
+    ],
+    "source": [
+     "obj-908",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-910",
+     0
+    ],
+    "source": [
+     "obj-909",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-905",
+     0
+    ],
+    "source": [
+     "obj-910",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-909",
+     1
+    ],
+    "source": [
+     "obj-910",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-904",
+     0
+    ],
+    "source": [
+     "obj-903",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-911",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-913",
+     0
+    ],
+    "source": [
+     "obj-912",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-913",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-902",
+     0
+    ],
+    "source": [
+     "obj-3",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-901",
+     0
+    ],
+    "source": [
+     "obj-902",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-912",
+     0
+    ],
+    "source": [
+     "obj-902",
+     1
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-901",
+     0
+    ],
+    "source": [
+     "obj-4",
+     14
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-906",
+     0
+    ],
+    "source": [
+     "obj-4",
+     13
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-912",
+     0
+    ],
+    "source": [
+     "obj-4",
+     15
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-909",
+     0
+    ],
+    "source": [
+     "obj-904",
+     0
+    ]
+   }
+  },
+  {
+   "patchline": {
+    "destination": [
+     "obj-5",
+     0
+    ],
+    "source": [
+     "obj-914",
+     0
+    ]
+   }
+  }
+ ],
+ "raw_parameters": {
+  "obj-901": [
+   "field",
+   "field",
+   0
+  ],
+  "obj-906": [
+   "edge_mode_menu",
+   "edge_mode_menu",
+   0
+  ],
+  "obj-912": [
+   "sv_seed",
+   "sv_seed",
+   0
+  ]
+ }
+}
