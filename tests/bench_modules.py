@@ -48,6 +48,11 @@ KNOWN = {
 BYPASS_PASSTHROUGH_OUTLETS = {
     "f_vf_warp": (2,),
     "f_vf_glow": (2,),
+    "f_vf_streak": (2,),
+    "f_vf_chroma": (2,),
+    "f_vf_prism": (2,),     # out3 passes the vecfield input (neutral if unconnected), not in1: unchecked here
+    "f_caustic": (2,),
+    "f_vf_split": (2,),
 }
 
 # Multi-stage modules whose specs deliberately gate bypass at the final stage

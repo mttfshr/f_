@@ -14,7 +14,7 @@ Param threshold_width(0.1);
 Param strength(0.8);
 Param direction(0.0);
 Param src_vecfield(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 uv = norm;
 
@@ -89,8 +89,8 @@ comp_r = clamp(src_r + streak_r * strength, 0.0, 1.0);
 comp_g = clamp(src_g + streak_g * strength, 0.0, 1.0);
 comp_b = clamp(src_b + streak_b * strength, 0.0, 1.0);
 
-// bypass
-out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
+// bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass_gate);
 
-// isolated streak outlet — zeroed on bypass
-out2 = mix(vec(streak_r, streak_g, streak_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+// isolated streak outlet — the source when bypassed
+out2 = mix(vec(streak_r, streak_g, streak_b, 1.0), vec(src_r, src_g, src_b, src_a), bypass_gate);

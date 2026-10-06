@@ -7,6 +7,11 @@ patcher = {
     "archetype":          "processor",
     "pix_type":           "float32",
 
+    # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
+    # not the native @bypass, which skips the shader and flips secondary outlets.  Every outlet
+    # mixes to its passthrough, so a bypassed module is a passthrough (Matt, 2026-10-05; plan.md item 10).
+    "bypass_mode":        "param",
+
     "presentation_width":  80,
     "presentation_height": 80,
 
@@ -23,7 +28,7 @@ patcher = {
 
     "codebox": """\
 Param bipolar(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 r = sample(in1, norm).x;
 g = sample(in1, norm).y;
@@ -34,7 +39,7 @@ g_out = mix(g, g * 2.0 - 1.0, bipolar);
 x_ch = vec(r_out, r_out, r_out, 1.0);
 y_ch = vec(g_out, g_out, g_out, 1.0);
 
-out1 = mix(x_ch, sample(in1, norm), bypass);
-out2 = mix(y_ch, sample(in1, norm), bypass);
+out1 = mix(x_ch, sample(in1, norm), bypass_gate);
+out2 = mix(y_ch, sample(in1, norm), bypass_gate);
 """,
 }

@@ -56,7 +56,7 @@ Param mix_pct(100.0);
 Param src_vecfield(0.0);
 Param src_length_mod(0.0);
 Param src_width_mod(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 uv = norm;
 
@@ -176,8 +176,9 @@ comp_r = mix(src_r, driven_r, mix_pct / 100.0);
 comp_g = mix(src_g, driven_g, mix_pct / 100.0);
 comp_b = mix(src_b, driven_b, mix_pct / 100.0);
 
-out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
-out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+// bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass_gate);
+out2 = mix(vec(prism_r, prism_g, prism_b, 1.0), vec(src_r, src_g, src_b, src_a), bypass_gate);
 
 // --- out3: gate-weighted dispersion direction (ADR1) ---
 // Each channel's own displacement vector (the rotation of the field
@@ -201,4 +202,5 @@ out3_scale = 8.0;
 out3_x = clamp(combined_x * out3_scale * 0.5 + 0.5, 0.0, 1.0);
 out3_y = clamp(combined_y * out3_scale * 0.5 + 0.5, 0.0, 1.0);
 
-out3 = mix(vec(out3_x, out3_y, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
+// bypassed: the vecfield input passed through (neutral 0.5 when it is unconnected)
+out3 = mix(vec(out3_x, out3_y, 0.5, 1.0), vec(mix(0.5, raw_x, connected), mix(0.5, raw_y, connected), 0.5, 1.0), bypass_gate);

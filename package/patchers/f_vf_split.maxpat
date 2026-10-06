@@ -154,7 +154,7 @@
 							},
 							{
 								"box": {
-									"code": "Param bipolar(0.0);\nParam bypass(0.0);\n\nr = sample(in1, norm).x;\ng = sample(in1, norm).y;\n\nr_out = mix(r, r * 2.0 - 1.0, bipolar);\ng_out = mix(g, g * 2.0 - 1.0, bipolar);\n\nx_ch = vec(r_out, r_out, r_out, 1.0);\ny_ch = vec(g_out, g_out, g_out, 1.0);\n\nout1 = mix(x_ch, sample(in1, norm), bypass);\nout2 = mix(y_ch, sample(in1, norm), bypass);\n",
+									"code": "Param bipolar(0.0);\nParam bypass_gate(0.0);\n\nr = sample(in1, norm).x;\ng = sample(in1, norm).y;\n\nr_out = mix(r, r * 2.0 - 1.0, bipolar);\ng_out = mix(g, g * 2.0 - 1.0, bipolar);\n\nx_ch = vec(r_out, r_out, r_out, 1.0);\ny_ch = vec(g_out, g_out, g_out, 1.0);\n\nout1 = mix(x_ch, sample(in1, norm), bypass_gate);\nout2 = mix(y_ch, sample(in1, norm), bypass_gate);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -602,8 +602,7 @@
 			{
 				"box": {
 					"id": "obj-24",
-					"maxclass": "attrui",
-					"attr": "bypass",
+					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -615,7 +614,7 @@
 						131.0,
 						22.0
 					],
-					"style": ""
+					"text": "prepend param bypass_gate"
 				}
 			}
 		],

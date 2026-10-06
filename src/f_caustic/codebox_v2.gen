@@ -15,7 +15,7 @@ Param scale(0.3);
 Param softness(0.3);
 Param color_shift(0.0);
 Param mix_pct(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 uv = norm;
 
@@ -185,8 +185,8 @@ composite = vec(clamp(src_r + caustic_r, 0.0, 1.0),
                 1.0);
 
 source_pass = vec(src_r, src_g, src_b, 1.0);
-black = vec(0.0, 0.0, 0.0, 1.0);
 
 composited = mix(source_pass, composite, mix_pct / 100.0);
-out1 = mix(composited, source_pass, bypass);
-out2 = mix(caustic_out, black, bypass);
+// bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
+out1 = mix(composited, source_pass, bypass_gate);
+out2 = mix(caustic_out, source_pass, bypass_gate);

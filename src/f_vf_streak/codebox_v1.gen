@@ -13,7 +13,7 @@ Param length(0.15);
 Param falloff(0.0);
 Param color_shift(0.0);
 Param src_vecfield(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 uv = norm;
 
@@ -142,8 +142,9 @@ src_g = sample(in1, uv).y;
 src_b = sample(in1, uv).z;
 src_px = vec(src_r, src_g, src_b, 1.0);
 
-// out2: isolated streak layer — black on bypass
-out2 = mix(streak_layer, vec(0.0, 0.0, 0.0, 1.0), bypass);
+// bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
+// out2: isolated streak layer — the source when bypassed
+out2 = mix(streak_layer, src_px, bypass_gate);
 
 // out1: driven = complete effect-applied state (source + streak*gain);
 // mix is a plain continuous blend toward that state, not spatial
@@ -155,4 +156,4 @@ composite = vec(mix(src_r, driven_r, mix_pct / 100.0),
                 mix(src_g, driven_g, mix_pct / 100.0),
                 mix(src_b, driven_b, mix_pct / 100.0),
                 1.0);
-out1 = mix(composite, src_px, bypass);
+out1 = mix(composite, src_px, bypass_gate);
