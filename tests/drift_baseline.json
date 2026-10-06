@@ -5,19 +5,6 @@
    "reason": "gen~ audio generator (no jit.gl.pix, no presentation UI); the schema has no audio archetype. Spec in .specify/f_a_ripple/. Revisit if an audio archetype is added.",
    "status": "out_of_scope"
   },
-  "f_channel_grader": {
-   "counts": {
-    "boxes_def_only": 14,
-    "boxes_patch_only": 5,
-    "boxes_renamed": 2,
-    "code": 1,
-    "layout": 14,
-    "lines_def_only": 12,
-    "lines_patch_only": 13,
-    "props": 44
-   },
-   "status": "drift"
-  },
   "f_chladni_audio": {
    "reason": "MSP audio-analysis patch (meter~/number~, hand-laid UI, no pix codebox); the schema has no audio archetype.",
    "status": "out_of_scope"

@@ -150,15 +150,16 @@ def route_box(ui_params, route_bypass=False, reject=False):
         patching_rect=[200.0, 130.0, max(150.0, len(names) * 7.0), 22.0],
         text=f"route {names}")
 
-def autopattr_box(prefix):
+def autopattr_box(prefix, varname=None):
     return box(OBJ_AUTOPATTR,
         maxclass="newobj",
         numinlets=1, numoutlets=4, outlettype=["", "", "", ""],
         patching_rect=[500.0, 500.0, 56.0, 22.0],
         text="autopattr",
-        varname=f"{prefix}_autopattr")
+        varname=varname or f"{prefix}_autopattr")
 
-def bypass_jsui_box(obj_id, object_name, pw):
+def bypass_jsui_box(obj_id, object_name, pw, saved=None):
+    extra = {"saved_attribute_attributes": copy.deepcopy(saved)} if saved else {}
     return box(obj_id,
         maxclass="jsui",
         filename="bypass_toggle.js",
@@ -168,7 +169,7 @@ def bypass_jsui_box(obj_id, object_name, pw):
         patching_rect=[pw - 22.0, 5.0, 18.0, 12.0],
         presentation_rect=[pw - 22.0, 5.0, 18.0, 12.0],
         valuepopuplabel=1,
-        varname="bypass")
+        varname="bypass", **extra)
 
 def bypass_attrui_box(obj_id):
     return box(obj_id,
@@ -431,6 +432,16 @@ def _hint_kw(p):
     return {} if h is None else {"hint": h}
 
 
+def _color_expression(p):
+    """A dial's `activedialcolor` theme expression ("themecolor.live_record"), "" unless the param
+    says otherwise.  The resolved RGB is a presentation property (overrides); this is the string Max
+    saves beside it, which `build/capture.py` cannot carry (it lives in saved_attribute_attributes)."""
+    e = p.get("color_expression", "")
+    if not isinstance(e, str):
+        raise ValueError(f"param '{p['name']}': color_expression must be a string, not {e!r}")
+    return e
+
+
 def _modmode(p):
     """A float/int param's `parameter_modmode`: 3 (relative modulation, the dial standard) unless
     the param says otherwise, e.g. `"modmode": 0` (none) for f_droste's integer-sensitive n_arms.
@@ -458,7 +469,7 @@ def dial_box(n, p, object_name):
         presentation=1,
         presentation_rect=[x, y, 27.0, 43.0],
         saved_attribute_attributes={
-            "activedialcolor": {"expression": ""},
+            "activedialcolor": {"expression": _color_expression(p)},
             "valueof": {
                 "parameter_initial": [float(p["default"])],
                 "parameter_initial_enable": 1,
@@ -929,7 +940,7 @@ def pix_text(name, type_attr, adapt_attr, pix_context="arg"):
 
 
 def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False, driving_inlet=False,
-            render_trigger="rdraw", pix_context="arg"):
+            render_trigger="rdraw", pix_context="arg", varname=None):
     mod_inlets = mod_inlets or []
     outlets    = outlets or [{"comment": "texture out"}]
     type_attr  = f" @type {pix_type}" if pix_type else ""
@@ -945,7 +956,7 @@ def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, 
                                render_trigger=render_trigger),
         patching_rect=[200.0, 380.0, max(200.0, len(object_name) * 8.0 + 80.0), 22.0],
         text=pix_text(object_name, type_attr, adapt_attr, pix_context),
-        varname=object_name)
+        varname=varname or object_name)
 
 # ---------------------------------------------------------------------------
 # Multi-pix chain support
@@ -1225,10 +1236,47 @@ def build(defn, debug=None, side_files=None):
     if not isinstance(route_first, bool):
         raise ValueError(f"route_first must be True or False, not {route_first!r}")
 
+    # route_reject_to_pix: the route's reject (unmatched) outlet feeds the primary pix's inlet 0, so
+    # messages no route token claims reach the pix.  The oldest modules ship that way.  It uses the
+    # reject outlet, so it cannot be combined with route_first.
+    route_reject_to_pix = defn.get("route_reject_to_pix", False)
+    if not isinstance(route_reject_to_pix, bool):
+        raise ValueError(f"route_reject_to_pix must be True or False, not {route_reject_to_pix!r}")
+    if route_reject_to_pix and route_first:
+        raise ValueError("route_reject_to_pix and route_first both use the route's reject outlet")
+
     # pix_context: how the jit.gl.pix object text names its context, "arg" (default) or "drawto".
     pix_context = defn.get("pix_context", "arg")
     if pix_context not in ("arg", "drawto"):
         raise ValueError(f'pix_context must be "arg" or "drawto", not {pix_context!r}')
+
+    # legacy: state of objects that were re-created in Max, kept so a patch can stay byte-faithful
+    # instead of being regenerated: {"pix_varname": str, "autopattr_varname": str,
+    # "bypass_jsui_saved": dict, "control_valueof": {param: {valueof key: value or None}}}.  The pix
+    # varname is also what every control's param_connect names (that is how Max wrote it).
+    # `control_valueof` patches a control's saved `valueof` (None removes a key): leftovers such as a
+    # default shortname or a missing initial value.  Default-off; delete an entry when the module is
+    # next regenerated.
+    legacy = defn.get("legacy", {})
+    if not isinstance(legacy, dict):
+        raise ValueError(f"legacy must be a dict, not {legacy!r}")
+    unknown = sorted(set(legacy) - {"pix_varname", "autopattr_varname", "bypass_jsui_saved", "control_valueof"})
+    if unknown:
+        raise ValueError(f"legacy: unknown key(s) {unknown} (allowed: pix_varname, autopattr_varname, "
+                         f"bypass_jsui_saved, control_valueof)")
+    cvo = legacy.get("control_valueof", {})
+    if not isinstance(cvo, dict) or not all(isinstance(k, str) and isinstance(v, dict) for k, v in cvo.items()):
+        raise ValueError("legacy.control_valueof must be {param name: {valueof key: value}}")
+    no_param = sorted(set(cvo) - {p["name"] for p in defn["params"]})
+    if no_param:
+        raise ValueError(f"legacy.control_valueof names params that do not exist: {no_param}")
+    for k in ("pix_varname", "autopattr_varname"):
+        if k in legacy and (not isinstance(legacy[k], str) or not legacy[k]):
+            raise ValueError(f"legacy.{k} must be a non-empty string, not {legacy[k]!r}")
+    if "bypass_jsui_saved" in legacy and not isinstance(legacy["bypass_jsui_saved"], dict):
+        raise ValueError("legacy.bypass_jsui_saved must be a dict")
+    if "pix_varname" in legacy and defn.get("pix_chain"):
+        raise ValueError("legacy.pix_varname applies to a single-pix module, not a pix_chain")
 
     # inlet_comment: the main inlet's comment, "texture / control" unless the module differs.
     inlet_comment = defn.get("inlet_comment", "texture / control")
@@ -1312,7 +1360,8 @@ def build(defn, debug=None, side_files=None):
                                     adapt=defn.get("pix_adapt", False),
                                     driving_inlet=driving_inlet,
                                     render_trigger=render_trigger,
-                                    pix_context=pix_context)]
+                                    pix_context=pix_context,
+                                    varname=legacy.get("pix_varname"))]
         extra_pix_lines  = []
         chain_id_to_obj  = {}
 
@@ -1321,9 +1370,9 @@ def build(defn, debug=None, side_files=None):
     boxes.append(inlet_box(inlet_comment))
     boxes.extend(outlet_boxes(outlets))
     boxes.append(routepass_box())
-    boxes.append(route_box(route_params, route_bypass, route_first))
+    boxes.append(route_box(route_params, route_bypass, route_first or route_reject_to_pix))
     boxes.extend(pix_boxes_to_add)
-    boxes.append(autopattr_box(prefix))
+    boxes.append(autopattr_box(prefix, legacy.get("autopattr_varname")))
     boxes.append(panel_box(pw, ph))
     boxes.append(title_box(title))
     signal_type = defn.get("signal_type")
@@ -1363,8 +1412,9 @@ def build(defn, debug=None, side_files=None):
     # `separate` / `mode` drive the pass pix), else the primary pix.  A raw-object pix_target
     # (f_lens) has no known @name here and keeps the primary's, as before.
     chain_names = {nd["id"]: nd["name"] for nd in (pix_chain or [])}
+    connect_name = legacy.get("pix_varname", object_name)            # what param_connect names
     for n, p in enumerate(ui_params):
-        pname = chain_names.get(p.get("pix_target"), object_name)    # the pix this control drives
+        pname = chain_names.get(p.get("pix_target"), connect_name)    # the pix this control drives
         if p["type"] == "float" and p.get("widget") == "numbox":
             # opt-in override for the library's mix/dry-wet crossfade
             # convention (vsynth-bpatcher/SKILL.md) -- live.numbox instead
@@ -1378,6 +1428,13 @@ def build(defn, debug=None, side_files=None):
             boxes.append(menu_box(n, p, pname))
         elif p["type"] == "text_button":
             boxes.append(text_button_box(n, p, pname))
+        if p["name"] in cvo:                       # legacy.control_valueof: patch the saved valueof
+            vo = boxes[-1]["box"]["saved_attribute_attributes"]["valueof"]
+            for k, v in cvo[p["name"]].items():
+                if v is None:
+                    vo.pop(k, None)
+                else:
+                    vo[k] = copy.deepcopy(v)
         if p.get("pix_wire", True):
             boxes.append(attrui_box(param_pre_id(n), p["name"],
                                     50.0 + n * 50.0, 170.0 + n * 30.0))
@@ -1389,12 +1446,12 @@ def build(defn, debug=None, side_files=None):
     # Header toggle boxes (e.g. proc_mode) — rendered in header, wired via route
     if header_toggles:
         p = header_toggles[0]   # currently only one supported
-        boxes.append(header_toggle_box(p, object_name, pw))
+        boxes.append(header_toggle_box(p, connect_name, pw))
         boxes.append(header_toggle_label_box(p, pw))
         boxes.append(attrui_box(OBJ_HEADER_TOGGLE_PRE, p["name"], 500.0, 230.0))
 
     # bypass jsui and prepend LAST — must come after pix in boxes list
-    boxes.append(bypass_jsui_box(bp_jsui_id, object_name, pw))
+    boxes.append(bypass_jsui_box(bp_jsui_id, object_name, pw, legacy.get("bypass_jsui_saved")))
     boxes.append(bypass_attrui_box(bp_pre_id))
 
     # Build patchlines
@@ -1422,6 +1479,10 @@ def build(defn, debug=None, side_files=None):
     else:
         # routepass out0 → primary pix
         lines.append(wire(OBJ_ROUTEPASS, 0, primary_obj_id, 0))
+
+    # route_reject_to_pix: the route's reject outlet → the primary pix
+    if route_reject_to_pix:
+        lines.append(wire(OBJ_ROUTE, len(route_params) + rb, primary_obj_id, 0))
 
     # routepass out2 (unmatched) → route (route_first: route's reject outlet → routepass)
     if route_first:

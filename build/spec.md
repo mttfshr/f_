@@ -142,6 +142,23 @@ patcher = {
 # the oldest modules ship with (f_channel_grader, f_hue_processor, f_luma_processor, f_tone_curve).
 # Applies to every pix of a pix_chain too. Loud on any other value.
 #
+# Optional "color_expression": str on a float (dial) param -- the theme expression Max saves beside the
+# dial's activedialcolor ("themecolor.live_record"); "" by default. The resolved RGB is a presentation
+# property (overrides); capture cannot carry this one (it lives in saved_attribute_attributes).
+#
+# Top-level "route_reject_to_pix": True -- the route's reject (unmatched) outlet feeds the primary pix's
+# inlet 0, so messages no route token claims reach the pix; adds the reject outlet to the route box.
+# The oldest modules ship that way. Cannot be combined with route_first (both use the reject outlet).
+#
+# Top-level "legacy": {...} -- state of objects that were re-created in Max, preserved so a patch can
+# stay byte-faithful instead of being regenerated (regenerating would rename the autopattr, which could
+# affect preset recall, and nothing can verify that offline). Default-off; delete an entry when the
+# module is next regenerated. Keys: "pix_varname" (the pix's scripting name, e.g. "jit.gl.pix_AA";
+# every control's param_connect names it, as Max wrote it; single-pix modules only), "autopattr_varname"
+# (e.g. "u905020188"), "bypass_jsui_saved" (the jsui's inert saved_attribute_attributes block, verbatim),
+# "control_valueof" ({param: {valueof key: value}}; None removes the key: a default shortname, a missing
+# initial value). Loud on an unknown key or a wrong shape. Added 2026-10-05, T014 (f_channel_grader).
+#
 # raw_boxes / raw_lines / raw_parameters for a module are best derived, not typed:
 # `build/py.sh build/capture_raw.py src/f_x/definition.py` writes `raw_ui.json` next to the
 # definition (see its docstring and f_grain/definition.py for the pattern).

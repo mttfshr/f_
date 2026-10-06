@@ -16,11 +16,14 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
     actually drives (`pix_target`): T014
   - `route_first` (inlet -> route, route reject -> routepass), per-param `pix_wire: False` (a control with
     no attrui and no pix cord), `inlet_comment`, and an outlet `hint`: f_grain's shape (T014)
+  - `legacy` (pix_varname, autopattr_varname, bypass_jsui_saved, control_valueof), `route_reject_to_pix`,
+    per-param `color_expression`: the oldest modules' re-created-object state, T014 (f_channel_grader)
   - `route_bypass`: `bypass` is the first `route` token, wired to the bypass jsui, and every param
     outlet is one higher; off (the default) changes nothing (T014)
 
     tests/run.sh tests/test_build_conventions.py
 """
+import copy
 import sys
 from pathlib import Path
 
@@ -587,6 +590,153 @@ def test_f_grain_builds_from_its_definition_as_it_ships():
     _eq("the grain mask outlet has its hint", outs["grain mask"].get("hint"), "Raw")
     _eq("two `r draw`: one into the persistence chain, one into the pix",
         sorted(b["text"] for b in top.values() if b.get("text") == "r draw"), ["r draw", "r draw"])
+
+
+# ---- legacy, route_reject_to_pix, color_expression (f_channel_grader)
+
+def _controls(defn):
+    return {b["varname"]: b for b in _boxes_of(defn) if b.get("maxclass") in ("live.dial", "live.numbox")}
+
+
+def test_legacy_is_default_off_and_each_entry_does_only_its_job():
+    base = bp.build(_defn())["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in base["boxes"]}
+    _eq("default: pix varname is the object name, autopattr is <prefix>_autopattr, jsui has no saved block",
+        (top[bp.OBJ_PIX]["varname"], top[bp.OBJ_AUTOPATTR]["varname"],
+         "saved_attribute_attributes" in [b for b in top.values() if b["maxclass"] == "jsui"][0]),
+        ("t_pix", "t_autopattr", False))
+    d = _defn()
+    d["legacy"] = {"pix_varname": "jit.gl.pix_AA", "autopattr_varname": "u123",
+                   "bypass_jsui_saved": {"valueof": {"parameter_invisible": 1}}}
+    new = bp.build(d)["patcher"]
+    nt = {b["box"]["id"]: b["box"] for b in new["boxes"]}
+    pix = nt[bp.OBJ_PIX]
+    _eq("pix varname changes, its @name does not", (pix["varname"], "@name t_pix" in pix["text"]),
+        ("jit.gl.pix_AA", True))
+    _eq("every control's param_connect follows the pix varname",
+        sorted({b["param_connect"].split("::")[0] for b in nt.values() if b.get("param_connect")}), ["jit.gl.pix_AA"])
+    _eq("autopattr varname", nt[bp.OBJ_AUTOPATTR]["varname"], "u123")
+    jsui = [b for b in nt.values() if b["maxclass"] == "jsui"][0]
+    _eq("the jsui's saved block, verbatim", jsui["saved_attribute_attributes"], {"valueof": {"parameter_invisible": 1}})
+    d["legacy"]["bypass_jsui_saved"]["valueof"]["parameter_invisible"] = 9
+    _eq("and a copy: editing the definition afterwards does not reach the built box",
+        jsui["saved_attribute_attributes"]["valueof"]["parameter_invisible"], 1)
+    only = [i for i in nt if nt[i] != top.get(i)]
+    _eq("nothing else changed (the same boxes, only pix / autopattr / jsui / param_connect ones differ)",
+        sorted(set(only) - {bp.OBJ_PIX, bp.OBJ_AUTOPATTR} - {i for i, b in nt.items()
+                                                              if b.get("param_connect") or b["maxclass"] == "jsui"}), [])
+
+
+def test_legacy_control_valueof_patches_only_the_named_control_and_none_removes():
+    d = _defn()
+    d["legacy"] = {"control_valueof": {"g": {"parameter_shortname": "live.dial"},
+                                       "n": {"parameter_initial": None, "parameter_initial_enable": None}}}
+    got, base = _controls(d), _controls(_defn())
+    v = lambda c, k: c["saved_attribute_attributes"]["valueof"].get(k, "<absent>")
+    _eq("g: the shortname is replaced", (v(got["g"], "parameter_shortname"), v(base["g"], "parameter_shortname")),
+        ("live.dial", "g"))
+    _eq("n: the two initial keys are removed", (v(got["n"], "parameter_initial"), v(got["n"], "parameter_initial_enable")),
+        ("<absent>", "<absent>"))
+    _eq("mix_pct is untouched", got["mix_pct"]["saved_attribute_attributes"], base["mix_pct"]["saved_attribute_attributes"])
+    _eq("and g's other valueof keys are untouched",
+        {k: x for k, x in got["g"]["saved_attribute_attributes"]["valueof"].items() if k != "parameter_shortname"},
+        {k: x for k, x in base["g"]["saved_attribute_attributes"]["valueof"].items() if k != "parameter_shortname"})
+
+
+def test_legacy_is_loud():
+    def raises(label, legacy, fragment, extra=None):
+        d = dict(_defn(), legacy=legacy)
+        if extra:
+            d.update(extra)
+        try:
+            bp.build(d)
+        except ValueError as e:
+            check(label, 0 if fragment in str(e) else 1, 0)
+        else:
+            check(label + " (nothing was raised)", 1, 0)
+    raises("not a dict", ["pix_varname"], "must be a dict")
+    raises("an unknown key", {"pix_varnam": "x"}, "unknown key")
+    raises("an empty pix_varname", {"pix_varname": ""}, "pix_varname")
+    raises("a non-string autopattr_varname", {"autopattr_varname": 3}, "autopattr_varname")
+    raises("a non-dict jsui block", {"bypass_jsui_saved": "x"}, "bypass_jsui_saved")
+    raises("control_valueof of the wrong shape", {"control_valueof": {"g": "x"}}, "control_valueof")
+    raises("control_valueof naming a param that does not exist", {"control_valueof": {"zzz": {"a": 1}}}, "do not exist")
+    adv = copy.deepcopy(bp.load_definition(ROOT / "src" / "f_vf_advect" / "definition.py"))
+    adv["legacy"] = {"pix_varname": "x"}
+    try:
+        bp.build(adv)
+    except ValueError as e:
+        check("pix_varname on a pix_chain", 0 if "pix_chain" in str(e) else 1, 0)
+    else:
+        check("pix_varname on a pix_chain (nothing was raised)", 1, 0)
+
+
+def test_route_reject_to_pix_adds_the_outlet_and_the_cord():
+    top0, c0 = _cords(_defn())
+    top1, c1 = _cords(dict(_defn(), route_reject_to_pix=True))
+    n = len(top1[bp.OBJ_ROUTE]["text"].split()) - 1
+    _eq("the reject outlet (one past the last token) -> the pix", ((bp.OBJ_ROUTE, n), (bp.OBJ_PIX, 0)) in c1, True)
+    _eq("the route box has the extra outlet; default has not", (top1[bp.OBJ_ROUTE]["numoutlets"], top0[bp.OBJ_ROUTE]["numoutlets"]), (n + 1, n))
+    _eq("it is the only cord added", sorted(c1 - c0), [((bp.OBJ_ROUTE, n), (bp.OBJ_PIX, 0))])
+    _eq("and the normal topology is kept (inlet -> routepass, routepass unmatched -> route)",
+        (((bp.OBJ_INLET, 0), (bp.OBJ_ROUTEPASS, 0)) in c1, ((bp.OBJ_ROUTEPASS, 2), (bp.OBJ_ROUTE, 0)) in c1), (True, True))
+    top2, c2 = _cords(dict(_defn(), route_reject_to_pix=True, route_bypass=True))
+    n2 = len(top2[bp.OBJ_ROUTE]["text"].split()) - 1
+    _eq("with route_bypass the reject index moves up with the tokens", ((bp.OBJ_ROUTE, n2), (bp.OBJ_PIX, 0)) in c2, True)
+    for label, d, frag in (("with route_first", dict(_defn(), route_reject_to_pix=True, route_first=True), "both use"),
+                           ("non-boolean", dict(_defn(), route_reject_to_pix="yes"), "route_reject_to_pix")):
+        try:
+            bp.build(d)
+        except ValueError as e:
+            check(f"route_reject_to_pix {label}", 0 if frag in str(e) else 1, 0)
+        else:
+            check(f"route_reject_to_pix {label} (nothing was raised)", 1, 0)
+
+
+def test_color_expression_sets_the_dial_theme_string_only():
+    d = _defn()
+    d["params"][0]["color_expression"] = "themecolor.live_record"
+    got, base = _controls(d), _controls(_defn())
+    ex = lambda c: c["saved_attribute_attributes"].get("activedialcolor", {}).get("expression", "<none>")
+    _eq("the dial gets it; an unset dial keeps \"\"; a numbox has no activedialcolor",
+        (ex(got["g"]), ex(base["g"]), ex(got["mix_pct"]), ex(got["n"])),
+        ("themecolor.live_record", "", "<none>", "<none>"))
+    bad = _defn()
+    bad["params"][0]["color_expression"] = 3
+    try:
+        bp.build(bad)
+    except ValueError as e:
+        check("a non-string color_expression", 0 if "color_expression" in str(e) else 1, 0)
+    else:
+        check("a non-string color_expression (nothing was raised)", 1, 0)
+
+
+def test_f_channel_grader_builds_from_its_definition_as_it_ships():
+    built, _ = drift.build_module("f_channel_grader")
+    p = built["patcher"]
+    top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    pix = top[bp.OBJ_PIX]
+    _eq("the pix text is the old @drawto form, and its varname is the re-created one",
+        (pix["text"], pix["varname"]), ("jit.gl.pix @name cg_pix @drawto vsynth @type char", "jit.gl.pix_AA"))
+    dials = {b["varname"]: b for b in top.values() if b["maxclass"] == "live.dial"}
+    _eq("12 dials, all bound to that varname", (len(dials), {b["param_connect"].split("::")[0] for b in dials.values()}),
+        (12, {"jit.gl.pix_AA"}))
+    labels = sorted(b["text"] for b in top.values() if b["maxclass"] == "comment" and b["text"] in ("Lift", "Gam", "Gain"))
+    _eq("three shared row labels (raw) and no per-dial labels", (labels, [b for b in top if b.startswith("obj-") and top[b]["maxclass"] == "comment" and top[b].get("varname", "").startswith("lbl_")]),
+        (["Gain", "Gam", "Lift"], []))
+    route = top[bp.OBJ_ROUTE]
+    _eq("route: bypass first, one reject outlet that feeds the pix",
+        (route["text"].split()[1], route["numoutlets"],
+         any(ln["patchline"]["source"] == [bp.OBJ_ROUTE, 13] and ln["patchline"]["destination"] == [bp.OBJ_PIX, 0]
+             for ln in p["lines"])), ("bypass", 14, True))
+    _eq("autopattr keeps its auto name", top[bp.OBJ_AUTOPATTR]["varname"], "u905020188")
+    ex = lambda v: dials[v]["saved_attribute_attributes"]["activedialcolor"]["expression"]
+    _eq("the rows keep their theme colours (R, G, B; Master has none)",
+        (ex("r_gain"), ex("g_lift"), ex("b_gamma"), ex("m_gain")),
+        ("themecolor.live_record", "themecolor.live_macro_assignment", "themecolor.live_prelisten", ""))
+    _eq("m_lift has no initial value, g_lift keeps Max's default shortname",
+        ("parameter_initial" in dials["m_lift"]["saved_attribute_attributes"]["valueof"],
+         dials["g_lift"]["saved_attribute_attributes"]["valueof"]["parameter_shortname"]), (False, "live.dial"))
 
 
 if __name__ == "__main__":

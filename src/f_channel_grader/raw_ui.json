@@ -1,0 +1,78 @@
+{
+ "raw_boxes": [
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 9.5,
+    "id": "obj-901",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     54.0,
+     119.0,
+     28.0,
+     18.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     1.5,
+     119.0,
+     28.0,
+     18.0
+    ],
+    "text": "Gain"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 9.5,
+    "id": "obj-902",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     33.5,
+     69.0,
+     44.0,
+     18.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     3.0,
+     74.0,
+     29.0,
+     18.0
+    ],
+    "text": "Gam"
+   }
+  },
+  {
+   "box": {
+    "fontname": "Ableton Sans Light",
+    "fontsize": 9.5,
+    "id": "obj-903",
+    "maxclass": "comment",
+    "numinlets": 1,
+    "numoutlets": 0,
+    "patching_rect": [
+     62.5,
+     34.0,
+     24.0,
+     18.0
+    ],
+    "presentation": 1,
+    "presentation_rect": [
+     5.5,
+     29.0,
+     24.0,
+     18.0
+    ],
+    "text": "Lift"
+   }
+  }
+ ],
+ "raw_lines": [],
+ "raw_parameters": {}
+}
