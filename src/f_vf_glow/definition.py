@@ -7,6 +7,11 @@ patcher = {
     "archetype":          "processor",
     "pix_type":           "char",
 
+    # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
+    # not the native @bypass, which skips the shader and flips out2.  Both outlets mix to the
+    # source, so a bypassed module is a passthrough (Matt, 2026-10-05; plan.md item 10).
+    "bypass_mode":        "param",
+
     "presentation_width":  190,
     "presentation_height": 120,
 

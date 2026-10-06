@@ -10,7 +10,7 @@ Param gain(0.8);
 Param mix_pct(0.0);
 Param color_mix(0.0);
 Param direction(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 uv = norm;
 // sample source at current pixel
 src_r = sample(in1, uv).x;
@@ -68,8 +68,11 @@ driven_b = clamp(src_b + glow_b * gain, 0.0, 1.0);
 comp_r = mix(src_r, driven_r, mix_pct / 100.0);
 comp_g = mix(src_g, driven_g, mix_pct / 100.0);
 comp_b = mix(src_b, driven_b, mix_pct / 100.0);
-// bypass
-out1 = mix(vec(comp_r, comp_g, comp_b, src_a), vec(src_r, src_g, src_b, src_a), bypass);
-// isolated glow outlet (zeroed on bypass)
-glow_out = mix(vec(glow_r, glow_g, glow_b, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+// bypass: passthrough on every outlet (Matt, 2026-10-05). bypass_gate is driven by the
+// bypass toggle via `prepend param bypass_gate` (bypass_mode "param"), not the native @bypass,
+// which would skip the shader and flip out2.
+src_px = vec(src_r, src_g, src_b, src_a);
+out1 = mix(vec(comp_r, comp_g, comp_b, src_a), src_px, bypass_gate);
+// isolated glow outlet: the source when bypassed
+glow_out = mix(vec(glow_r, glow_g, glow_b, 1.0), src_px, bypass_gate);
 out2 = glow_out;

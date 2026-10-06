@@ -42,8 +42,13 @@ KNOWN = {
 
 # Secondary outlets that must equal in1 under bypass (out1 is always checked).
 # f_vf_warp out2 is the isolated warped layer; bypassed it degenerates to the
-# unwarped source, same as out1 (fixed 2026-09-23).
-BYPASS_PASSTHROUGH_OUTLETS = {"f_vf_warp": (2,)}
+# unwarped source, same as out1 (fixed 2026-09-23).  Every module moved to
+# `bypass_mode: "param"` (plan.md item 10, Matt's 2026-10-05 passthrough rule) lists its
+# secondary outlets here.
+BYPASS_PASSTHROUGH_OUTLETS = {
+    "f_vf_warp": (2,),
+    "f_vf_glow": (2,),
+}
 
 # Multi-stage modules whose specs deliberately gate bypass at the final stage
 # only (feedback loops stay warm / intermediate stages need no gating):
