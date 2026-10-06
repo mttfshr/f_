@@ -25,8 +25,13 @@ Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite gree
   (shipped parameter_type 2 / enum val1,val2 vs builder type 1 / full,mask: needs Max before anyone regenerates), the bypass jsui's inert saved `valueof`.
 - **Bench pitfall hit again:** the first `--changed` run failed on `f_stereo` with `name stereo_pix already in use` because patches holding an
   `f_stereo` instance were open in Max (its help, four demos). Close every other patch and reopen `tests/bench/bench.maxpat` first.
-- **Next:** the rest of T014 (`f_droste`, `f_vf_advect`, the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). Most of
-  the colour modules and `f_droste`, `f_grain` also route `bypass`, so `route_bypass` is now available to them.
+- **`f_droste` closed and regenerated** (21 of 39 exact; Matt said yes to the plan). Kept its `time_s` scalar inlet (real feature) as
+  `raw_boxes`/`raw_lines`; new per-param key **`modmode`** (0-4, default 3) for `n_arms`' deliberately-off modulation; em dashes in
+  the codebox comment; `plan.md`'s "droste missing autopattr" entry was stale and is removed. The bypass jsui's saved `valueof` was
+  dropped on the (untested) assumption it is inert: still on `f_channel_grader`, `f_luma_processor`, `f_stereo`, `f_texrouter`,
+  `f_tone_curve`. **Matt: look at `f_droste` in Max and run `./bench.sh --changed`** (close patches holding an `f_droste` first).
+- **Next:** the rest of T014 (`f_vf_advect`, the colour modules need T018's shared-label grid, `f_lens`, `f_grain`). The colour modules
+  and `f_grain` also route `bypass`, so `route_bypass` is available to them.
 
 ## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3
 

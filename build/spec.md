@@ -102,6 +102,11 @@ patcher = {
 # Int param — renders as live.numbox
 {"name": str, "type": "int", "min": int, "max": int, "default": int, "hint": str}
 
+# Optional on a float or int param (dial / numbox): "modmode": int 0-4 -- the control's
+# parameter_modmode. Default 3 (relative modulation, the dial standard); 0 turns modulation off,
+# as on f_droste's n_arms (a fractional arm count does not tile). Added 2026-10-05, build_cleanup
+# T014. Loud outside 0-4.
+
 # Menu param — renders as live.menu with labelled options, outputs integer 0-N
 {"name": str, "type": "menu", "options": [str, ...], "default": int, "hint": str}
 

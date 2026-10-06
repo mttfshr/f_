@@ -9,6 +9,8 @@ Matt 2026-10-05), so a patcher opened and saved in Max changes nothing:
   - `render_trigger` (source archetype): "rdraw" (default) adds an `r draw` render trigger,
     "inlet" omits it, as the finished f_vf_vortex / f_vf_vortex_multi ship (T013)
 
+  - per-param `modmode` (default 3, relative modulation; `0` for f_droste's n_arms): dials and numboxes,
+    loud outside 0-4 (T014)
   - `route_bypass`: `bypass` is the first `route` token, wired to the bypass jsui, and every param
     outlet is one higher; off (the default) changes nothing (T014)
 
@@ -290,6 +292,62 @@ def test_f_mobius_routes_bypass_as_shipped():
     built, _ = drift.build_module("f_mobius")
     texts = [b["box"].get("text") for b in built["patcher"]["boxes"]]
     _eq("f_mobius builds its `route bypass ...`", "route bypass cx cy rotate zoom invert" in texts, True)
+
+
+# ---- modmode
+
+def _modmodes(defn):
+    out = {}
+    for b in _boxes_of(defn):
+        v = b.get("saved_attribute_attributes", {}).get("valueof")
+        if b.get("maxclass") in ("live.dial", "live.numbox") and v:
+            out[v["parameter_longname"]] = v["parameter_modmode"]
+    return out
+
+
+def _boxes_of(defn):
+    return [b["box"] for b in bp.build(defn)["patcher"]["boxes"]]
+
+
+def test_modmode_defaults_to_relative_and_a_param_can_turn_it_off():
+    _eq("default: every dial and numbox is 3", _modmodes(_defn()), {"g": 3, "mix_pct": 3, "n": 3})
+    d = _defn()
+    d["params"][0]["modmode"] = 0          # a dial
+    d["params"][2]["modmode"] = 0          # an int numbox
+    _eq("only the params that say so change (dial and numbox)", _modmodes(d), {"g": 0, "mix_pct": 3, "n": 0})
+    d2 = _defn()
+    d2["params"][1]["modmode"] = 4         # a float numbox
+    _eq("any of Max's 0-4 is passed through", _modmodes(d2), {"g": 3, "mix_pct": 4, "n": 3})
+
+
+def test_modmode_is_loud_outside_0_to_4():
+    for bad in (5, -1, 3.0, "0", True, None):
+        d = _defn()
+        d["params"][0]["modmode"] = bad
+        try:
+            bp.build(d)
+        except ValueError as e:
+            check(f"modmode {bad!r} is refused, naming the param", 0 if "'g'" in str(e) and "modmode" in str(e) else 1, 0)
+        else:
+            check(f"modmode {bad!r} (nothing was raised)", 1, 0)
+
+
+def test_f_droste_has_its_time_s_inlet_and_a_dial_with_modulation_off():
+    built, _ = drift.build_module("f_droste")
+    top = [b["box"] for b in built["patcher"]["boxes"]]
+    inlets = sorted((b["patching_rect"][0], b.get("comment")) for b in top if b["maxclass"] == "inlet")
+    _eq("two inlets, in port order: the texture / control inlet, then time_s",
+        [c for _, c in inlets], ["texture / control", "time_s"])
+    attr = [b for b in top if b["maxclass"] == "attrui" and b.get("attr") == "time_s"]
+    _eq("one attrui for time_s", len(attr), 1)
+    inlet = [b for b in top if b.get("comment") == "time_s"][0]
+    cords = {(ln["patchline"]["source"][0], ln["patchline"]["destination"][0]) for ln in built["patcher"]["lines"]}
+    _eq("inlet -> attrui -> the pix", ((inlet["id"], attr[0]["id"]) in cords, (attr[0]["id"], bp.OBJ_PIX) in cords),
+        (True, True))
+    modes = {b["saved_attribute_attributes"]["valueof"]["parameter_longname"]:
+             b["saved_attribute_attributes"]["valueof"]["parameter_modmode"]
+             for b in top if b["maxclass"] == "live.dial"}
+    _eq("only n_arms has modulation off", modes, {"zoom": 3, "n_arms": 0, "twist": 3, "rotation": 3})
 
 
 if __name__ == "__main__":

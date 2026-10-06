@@ -414,6 +414,16 @@ def range_tier_boxes(n, p):
     return [menu, sel] + msgs
 
 
+def _modmode(p):
+    """A float/int param's `parameter_modmode`: 3 (relative modulation, the dial standard) unless
+    the param says otherwise, e.g. `"modmode": 0` (none) for f_droste's integer-sensitive n_arms.
+    Max's modes are 0-4; anything else is a typo, so it is loud."""
+    m = p.get("modmode", 3)
+    if isinstance(m, bool) or not isinstance(m, int) or not 0 <= m <= 4:
+        raise ValueError(f"param '{p['name']}': modmode must be an integer 0-4, not {m!r}")
+    return m
+
+
 def dial_box(n, p, object_name):
     col = n % 5
     row = n // 5
@@ -439,7 +449,7 @@ def dial_box(n, p, object_name):
                 "parameter_longname": p["name"],
                 "parameter_mmax": float(p["max"]),
                 "parameter_mmin": float(p["min"]),
-                "parameter_modmode": 3,
+                "parameter_modmode": _modmode(p),
                 "parameter_shortname": p["name"],
                 "parameter_type": 0,
                 "parameter_unitstyle": 1
@@ -471,7 +481,7 @@ def numbox_box(n, p, object_name):
                 "parameter_longname": p["name"],
                 "parameter_mmax": float(p["max"]),
                 "parameter_mmin": float(p["min"]),
-                "parameter_modmode": 3,
+                "parameter_modmode": _modmode(p),
                 "parameter_shortname": p["name"],
                 "parameter_type": 0,
                 "parameter_unitstyle": 1
