@@ -21,7 +21,7 @@ that never reference each other:
   is painted behind the top-left of the edit view, exactly where the objects pile up
 
 Result: running the build produces a messy edit view. Baseline measured 2026-09-24
-with `scratch/edit_layout_audit.py` (overlapping `patching_rect` pairs):
+with `scratch/edit_layout_audit.py` (deleted 2026-10-06; in git history, `git log --diff-filter=D -- scratch/edit_layout_audit.py`) (overlapping `patching_rect` pairs):
 f_droste 13, f_vf_fluid 33, f_stipple 38, f_vf_glow 39, f_vf_prism 62,
 f_masonry (hand-edited, for reference) 150.
 
@@ -80,7 +80,7 @@ script-generated and not yet hand-edited.
   boxes except the background panel; every wire flows downward (dst y > src y);
   no two boxes share an origin; `presentation_rect` **byte-identical** before/after the
   pass for every generated module; box IDs, order and lines unchanged.
-- **Regression metric:** overlap-pair count from `scratch/edit_layout_audit.py`
+- **Regression metric:** overlap-pair count from `layout.audit()` in `build/layout.py` (asserted in `tests/test_layout.py`); the standalone reporter that first measured it, `scratch/edit_layout_audit.py`, was deleted 2026-10-06 (in git history, `git log --diff-filter=D -- scratch/edit_layout_audit.py`)
   (promote into `tests/`) must reach 0 for every generated module.
 - **Tier 3 — Matt's eyes** in Max on a representative set (single-pix, `pix_chain`,
   `range_tiers`, `mod_inlets`, `panel_toggle`, `header_toggle`, multi-outlet).
