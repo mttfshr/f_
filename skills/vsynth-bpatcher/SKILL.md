@@ -820,7 +820,28 @@ why that parameter exists at all.
 - **Manual edit-view tweaks in Max are lost on regeneration** — layout is generated, not preserved.
 - Opt a module out with `"edit_layout": False` in `definition.py`.
 - Check with `tests/run.sh tests/test_layout.py` (0 overlaps / shared origins / upward wires over every definition; `presentation_rect` byte-identical to an un-laid build).
-- Applies only to modules actually regenerated from `definition.py`. Most shipped patchers have **drifted from their definitions** (2026-09-24 survey of 33 definitions) and are on the never-regenerate list or need their definition synced first — see `.specify/build_layout/tasks.md` T004.
+- Applies only to modules actually regenerated from `definition.py`. As of 2026-10-05, 28 of 39 shipped patchers reproduce exactly from their definitions (`build/drift.py`; the rest are listed in `tests/drift_baseline.json`); hand-built ones are on the never-regenerate list in `.specify/plan.md`. See the next section.
+- Two layout rules added 2026-10-05: with `route_first` (the route's reject outlet feeds `routepass`) the `routepass` / `vs_inState` strip sits below the param lane and the pix stack moves down 100 px; and the service area always starts clear of the route box's right edge (the route box is never clipped below its text, so with long token names it is wider than its lane).
+
+---
+
+## Reproducing a Shipped Module from Its Definition (drift workflow, 2026-10-05)
+
+`src/<module>/definition.py` is meant to be the single source of truth. `build/drift.py` rebuilds every module and compares it with the shipped patcher; `tests/drift_baseline.json` is a ratchet that only shrinks (project: `.specify/build_cleanup/`). For a module that drifts:
+
+1. `build/py.sh build/drift.py -v f_x` shows what differs.
+2. If the patch is the newer side, edit the **definition** to match (hints, ranges, labels, the codebox byte for byte: read a `.gen` file with `newline=""`, some shipped codeboxes have CRLF endings). If the builder is newer and the difference is additive and lossless, edit the **patch** surgically (parse, change, dump, and verify the result equals the old content plus exactly that change).
+3. `build/capture.py` writes presentation state (rects, colours, fonts, a live.text's colours) into the definition's `overrides` block. `build/capture_raw.py` writes everything the builder cannot make into `raw_ui.json` beside the definition (`raw_boxes` / `raw_lines` / `raw_parameters`; the definition reads it, see `src/f_grain/definition.py`). Capture refuses label text, hints, ranges, `varname`, `param_connect`: those are definition values or `legacy`.
+4. A module that reproduces exactly needs no regeneration. Never regenerate a hand-built module (list in `.specify/plan.md`).
+
+A hand-built module is typically a generic part the builder makes (dials, routing, bypass, moduleSize chain) plus a bespoke part carried verbatim in `raw_ui.json`. `f_grain` (era-clock chain, second route, umenu) and the band-editor colour modules (`f_hue_processor`, `f_luma_processor`, `f_tone_curve`) are examples; `f_channel_grader` is the only true shared-label grid (`"label": None` plus three raw row labels).
+
+**Builder keys added 2026-10-05 for hand-built modules** (explicit and default-off; full text in `build/spec.md`):
+
+- Top level: `route_bypass` (`bypass` is the first route token, wired to the jsui), `route_first` (inlet to route, reject outlet to `routepass`), `route_reject_to_pix`, `inlet_comment`, `pix_context` (`"drawto"` writes the older `jit.gl.pix @name X @drawto vsynth` text), `legacy`.
+- Per param: `modmode` (0-4, default 3), `route_name` (the message a control answers to), `"hint": None` (no hint key; unset still writes `""`), `pix_wire: False` (no attrui, no pix cord), `color_expression` (a dial's theme-colour string; `None` omits the entry), `"label": None`. Per outlet: `hint`.
+- `param_connect` names the pix a control actually drives (`pix_target`), not always the primary. `_parameter_range` message bounds are written the way Max does (`1.` not `1.0`).
+- **`legacy`** preserves what Max wrote when it re-created objects, so a patch can stay byte-faithful instead of being regenerated: the pix varname (`jit.gl.pix_AA`, which every dial's `param_connect` then follows), an auto-named `autopattr` (`u905020188`), the bypass jsui's inert saved block, and leftovers on single controls or elements (`control_valueof`, `control_box`, `element_valueof`, `element_box`). Regenerating would rename the `autopattr`, which could affect preset recall, and that cannot be verified offline. Delete an entry when the module is next regenerated.
 
 ---
 
@@ -881,6 +902,8 @@ course_seed 7
 
 The `route` object dispatches by name to the correct `live.dial` or `live.numbox`.
 `bypass` is handled by the jsui directly — it does not go through `route`.
+
+A control normally answers to its param's name, but a param can set `route_name`: `f_vf_advect`'s `mix_pct` numbox answers to `mix`, while most modules' `mix_pct` answers to `mix_pct`. That inconsistency is real and unresolved (a `mix 50` message works on one and not the other); check how the dry/wet modules differ before unifying them.
 
 **Decision (2026-09-23):** the bypass *toggle* (jsui → `attrui @attr bypass` → pix)
 is the supported bypass path and works in every module. The `bypass 1` control

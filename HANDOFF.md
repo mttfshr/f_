@@ -1,107 +1,55 @@
 # HANDOFF
 
-_Latest session: 2026-10-05_ — `build_cleanup` **Phases 1 and 2 done, Phase 3 in progress** (T013 small group partly closed; **T014 started: `f_mobius` and `f_stereo`, see the next section**), nothing pushed. The session before it (2026-10-04, second: the cleanup project itself, 13 commits) is condensed below, and the one before that (2026-10-02 to 2026-10-04: Package Manager research, `f_Launch`, licensing; `de89863`) follows it. The open packaging items (packaging/T008 to packaging/T011 and the rest) are in `.specify/packaging/tasks.md`.
+_Latest session: 2026-10-05 (one long session)_ — `build_cleanup` **Phases 1 and 2 done, and Phase 3's T014 (the medium group) complete.** 28 of 39 shipped patchers now reproduce exactly from their `definition.py`; the drift baseline is 11 (six drifting, five out of scope). Everything is committed (last code commit `becd99f`), nothing is pushed.
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
 
-## Later the same day (2026-10-05): T014 started, `f_mobius` and `f_stereo`
+## Start here (for the next conversation)
 
-Detail and evidence: `.specify/build_cleanup/tasks.md`, T014. Offline suite green (14 files), `./bench.sh --changed` green (33 modules,
-0 unexpected issues, 2/2; it also seeded a fresh green record). **Matt's look at `f_mobius` and `f_stereo` in Max: passed (2026-10-05).**
+**State.** Offline suite green (`tests/run.sh`, 15 files, exit 0). `build/py.sh build/drift.py` says 28 of 39 exact. The last bench run was green (Matt, `./bench.sh --changed`, `bench_modules` 2/2). Since then only definitions, tests, docs and layout/builder code changed; **no shipped patch has changed since that bench run, so nothing needs Max right now.** The per-module evidence is the T014 paragraph in `.specify/build_cleanup/tasks.md`.
 
-- **New schema key `route_bypass`** (`build/spec.md`; default off, generated modules unchanged): `bypass` becomes the first `route`
-  token, wired to the bypass jsui, every param outlet one higher. It exists because the nine oldest modules route a `bypass 0/1`
-  message (skills/vsynth-bpatcher decision 2026-09-23, "do not retrofit"); the bench's `bypass 1` line confirms it works in exactly those 9.
-  The layout pass learned it (`build/layout.py`: lane column 0 is the bypass outlet's, params start at column 1; addendum in
-  `.specify/build_layout/spec.md`). `pix_type` already existed (my first read of `@type char` as a schema gap was wrong).
-- **`f_mobius` closed and regenerated** (20 of 39 reproduce exactly). **Matt chose to drop its second `control` inlet** (there since the
-  first commit; it fed the same `route` the first inlet's `routepass` already feeds, so it added no capability) and with it the
-  `routepass` out 1 (`jit_matrix`) -> pix cord, which only `f_mobius` and `f_stereo` had. Verified by `drift.compare` against the
-  committed file: only the inlet, that cord and five `lbl_*` varnames differ.
-- **`f_stereo`: same removal, but a surgical edit, not a regenerate** (parse-dump, 43 deleted lines, nothing else): its hand-built `circ`
-  full/mask toggle differs from what the builder writes in ways nobody has checked in Max. Its definition gained `route_bypass`, lost
-  `signal_type`, and has an overrides block. **`capture.py` now also takes a live.text's four `active*color` props and `rounded`** (Matt
-  asked what they were, then said proceed). Left in the baseline (renamed 1, props 4): `circ`'s `param_connect`, its saved `valueof`
-  (shipped parameter_type 2 / enum val1,val2 vs builder type 1 / full,mask: needs Max before anyone regenerates), the bypass jsui's inert saved `valueof`.
-- **Bench pitfall hit again:** the first `--changed` run failed on `f_stereo` with `name stereo_pix already in use` because patches holding an
-  `f_stereo` instance were open in Max (its help, four demos). Close every other patch and reopen `tests/bench/bench.maxpat` first.
-- **`f_droste` closed and regenerated** (21 of 39 exact; Matt said yes to the plan). Kept its `time_s` scalar inlet (real feature) as
-  `raw_boxes`/`raw_lines`; new per-param key **`modmode`** (0-4, default 3) for `n_arms`' deliberately-off modulation; em dashes in
-  the codebox comment; `plan.md`'s "droste missing autopattr" entry was stale and is removed. The bypass jsui's saved `valueof` was
-  dropped on the (untested) assumption it is inert: still on `f_channel_grader`, `f_luma_processor`, `f_stereo`, `f_texrouter`,
-  `f_tone_curve`. **Matt looked at `f_droste` in Max: checks out (2026-10-05).** `./bench.sh --changed` green too (`bench_modules` 2/2, Matt, 2026-10-05).
-- **`f_vf_advect` closed, `build_advect.py` deleted** (22 of 39 exact; Matt said yes to the plan). The codebox/definition/script were all behind the
-  patch (July gain/mix/mode/separate/3rd-outlet work was hand-edited into it). Now `build_patcher.py` reproduces it alone, and it is off the
-  never-regenerate list. New explicit builder keys: **`route_name`** (advect's `mix_pct` numbox answers to `mix`; most modules' to `mix_pct`:
-  an unresolved message-API inconsistency), **`"hint": None`**; and a **fix: `param_connect` follows `pix_target`**. That fix exposed that
-  **`f_vf_optical_flow`'s 8 support-stage dials were bound to the wrong pix** (`stage_a`); I corrected those strings in its shipped patch
-  (parse-verified, nothing else changed). Advect's patch only gained 7 `lbl_*` label varnames. `./bench.sh --changed` green (2/2, Matt). **Matt: still
-  to look at `f_vf_advect` and `f_vf_optical_flow` in Max.**
-- **`f_grain` closed (23 of 39 exact; Matt chose option A)**, **and the shipped patch is untouched** (so no Max check or bench is needed). Its
-  definition is rewritten from the patch; the bespoke logic (persistence/era-clock chain, second route + numboxes, edge-mode umenu, second `r draw`)
-  is `raw_ui.json` (14 raw boxes). New explicit builder keys: **`route_first`** (inlet -> route, reject -> routepass), per-param **`pix_wire: False`**,
-  **`inlet_comment`**, outlet **`hint`**; the layout pass learned `route_first`. Shipped warts left as is: `fade` and `ch_diverge` tooltips say
-  "Temporal persistence…", and `shape`'s tooltip describes an aspect ratio its 0..1 range does not have. The codebox has CRLF endings (read with `newline=""`).
-- **The four oldest colour modules closed (`f_channel_grader`, `f_hue_processor`, `f_luma_processor`, `f_tone_curve`; 27 of 39 exact), shipped patches
-  untouched (no Max check or bench needed).** T018's "shared-label grid" was one module's layout, not a schema: only `f_channel_grader` is a grid; the other
-  three are hand-built band editors, done with the raw recipe. **New tool `build/capture_raw.py`** derives a module's `raw_ui.json` from the shipped patch.
-  **New key `legacy`** preserves what Max wrote when it re-created objects (pix varname `jit.gl.pix_AA` that every dial's `param_connect` follows, auto-named
-  `autopattr`s, the bypass jsui's inert block, a few control leftovers) so the patches need not be regenerated: regenerating would rename the autopattr,
-  which could affect preset recall (unverifiable offline). Also `route_reject_to_pix`, per-param `color_expression`, `pix_context`, `"label": None`.
-- **Coordination note:** while I was working, uncommitted work from an *interrupted earlier session* (`pix_context`, `label: None`, `capture_raw.py`, and a
-  test file with a SyntaxError) appeared in the tree; Matt confirmed the connection had dropped. I finished and committed it (`d8e32ac`). If a half-finished
-  session ever leaves changes again: check `git status` and timestamps before editing, and do not overwrite them.
-- **`f_lens` closed; T014 is complete (28 of 39 exact, baseline 11).** Its definition was the 2026-07-15 dry run and still built the tilt-shift stage the patch
-  dropped on 2026-09-23; now it reproduces the patch (untouched). Builder fix on the way: **`_parameter_range` messages are written Max-style** (`1.` not `1.0`),
-  which also shrinks `f_vf_vorticity`'s drift; `legacy` gained **`element_box` / `element_valueof`** (any element by override key); the **layout pass now keeps
-  the service area clear of a wide route box** (an overlap that was hidden by the tilt tokens).
-- **Still drifting (baseline 11):** `f_masonry` (T015), `f_stereo` (its remaining items are now expressible with `legacy`: a quick win), `f_texrouter`, `f_vf_flow`
-  (props 1), `f_vf_vorticity` (props 3), `f_vf_warp` (1 box / 1 box); five modules are out of scope.
-- **Next:** the quick wins (`f_stereo`, `f_vf_flow`, `f_vf_vorticity`, `f_vf_warp` are each a few differences), then Phase 4 (schema gaps, Param-bypass first), Phase 5
-  (the generated `f_modules` menu). Nothing needs Max right now: every patch changed in T014's last stretch is untouched. The colour modules
-  and `f_grain` also route `bypass`, so `route_bypass` is available to them.
+**Waiting on Matt**
+1. **Look at `f_vf_advect` and `f_vf_optical_flow` in Max** (the bench passed, but nobody has looked). `f_vf_optical_flow`'s 8 support-stage dials had their `param_connect` corrected to bind to their own stage (it was bound to `stage_a`, a pix without those Params); `f_vf_advect`'s patch gained 7 `lbl_*` label varnames.
+2. **Re-upload two skills, then `./skills/check.sh stamp`:** `skills/vsynth-bpatcher` (new section "Reproducing a Shipped Module from Its Definition", the builder keys, the `legacy` rationale) and `skills/maxpat-json-authoring` (surgical-edit recipe). `./skills/check.sh` reports both STALE. Do not stamp before uploading.
 
-## This session (2026-10-05): build_cleanup Phases 1 and 2, start of Phase 3
+**Open questions for Matt** (none blocks work)
+- `f_vf_advect`'s `mix_pct` numbox answers to `mix` on the control inlet, but most modules' `mix_pct` answers to `mix_pct`. The `route_name` key records the difference; check how the dry/wet modules differ before unifying.
+- `f_grain` ships three wrong or odd tooltips (`fade` and `ch_diverge` both say "Temporal persistence…"; `shape` describes an aspect ratio its 0..1 range does not have). Left as shipped; fixing means editing the patch and the definition together.
+- `f_droste`'s bypass jsui lost its inert saved block when it was regenerated (assumed inert because it has no `parameter_enable`; never tested in Max). Easy to revert if wrong.
+- `f_grain` and `f_lens` could now come off plan.md's never-regenerate list (their definitions reproduce the patches), as `f_vf_advect` did; regenerating gains nothing.
+
+**Next, in suggested order**
+1. **Quick wins in the baseline** (each a few differences): `f_stereo` (the circ toggle's `param_connect` and saved block and the bypass jsui's inert block are now expressible with `legacy.control_box` / `control_valueof` / `bypass_jsui_saved`), `f_vf_flow` (1 property), `f_vf_vorticity` (3 properties; the module was never completed, README marks it ⚠), `f_vf_warp` (1 box each way; its Param-based bypass needs T017). `f_masonry` (T015, will be refactored) and `f_texrouter` (shipped, not in use) stay as recorded exceptions.
+2. **Phase 4:** T016 (inlet fan-out, per-node pix attributes, `r draw` triggers) and T017 (Param-based bypass; `f_vf_warp` is the user), then T019 (absorb the remaining script-built modules; `build_advect.py` is done and deleted).
+3. **Phase 5:** T020 and T021 (the generated `f_modules` menu), then the packaging questions (T022, T023), T025 (delete the `scratch/` regen scripts), T026 (optional, needs Max).
+
+**What changed this session, in one list** (each is documented in `build/spec.md`, `.specify/build_layout/spec.md`, and the skill):
+- **Definitions now reproduce the patch** for `f_mobius`, `f_droste`, `f_vf_advect`, `f_grain`, `f_lens` and the four oldest colour modules; `f_stereo` is partly done. Most patches were **not** regenerated: hand-built ones stay as shipped and their definition describes them.
+- **New tools:** `build/capture_raw.py` (derives a module's `raw_ui.json` from the shipped patch); `build/capture.py` also takes a live.text's colours, `suppressinlet` and a comment's `numinlets`.
+- **New builder keys** (all explicit, default-off): top level `route_bypass`, `route_first`, `route_reject_to_pix`, `inlet_comment`, `pix_context`, `legacy` (`pix_varname`, `autopattr_varname`, `bypass_jsui_saved`, `control_valueof`, `control_box`, `element_valueof`, `element_box`); per param `modmode`, `route_name`, `"hint": None`, `pix_wire: False`, `color_expression`, `"label": None`; per outlet `hint`.
+- **Builder fixes:** `param_connect` follows `pix_target` (this exposed `f_vf_optical_flow`'s mis-bound dials); `_parameter_range` message bounds are Max-style (`1.` not `1.0`); the layout pass places `routepass` below the lane for `route_first`, puts the bypass jsui in lane column 0 for `route_bypass`, and keeps the service area clear of a wide route box.
+- **`legacy` exists because** every oldest module carries artefacts of objects Max re-created (pix varname `jit.gl.pix_AA`, auto-named `autopattr`s, an inert saved block on the bypass jsui). Regenerating would rename the `autopattr`, which could affect preset recall, and nothing can verify that offline. T018's "shared-label grid" was one module's layout (`f_channel_grader`), not a schema.
+
+**Rules of thumb**
+- When the patch is the newer side, edit the *definition* to match it. When the builder is the newer side and the difference is additive and lossless, edit the *patch* surgically: parse, change, dump, and verify the result equals the old content plus exactly the change (`skills/maxpat-json-authoring`). A module that reproduces exactly needs no regeneration; never regenerate a hand-built one (list in `.specify/plan.md`).
+- A hand-built module is the generic part from the builder plus the bespoke part in `raw_ui.json` (`capture_raw.py`), presentation state in `overrides` (`capture.py`), Max leftovers in `legacy`.
+- Mutation-check every new test: break the code in each way you can think of and confirm a test fails. For a mutant in a *definition*, include `tests/test_drift.py` in the run, because the drift ratchet is the guard there.
+- Do not rerun the bench to re-verify your own changes; do not add a module to the drift baseline (it only shrinks).
+
+**Pitfalls hit this session**
+- **Bench name collision:** close every patch holding an instance of the module (its help, demos) and reopen `tests/bench/bench.maxpat` before `./bench.sh --changed`, or it fails with `name X already in use`.
+- **Desktop Commander refuses any shell command that contains the bare token `dd`** (the disk-dump command), even as a Python variable name or inside quoted text: "Command not allowed", and nothing runs. Pick another variable name, and write text that mentions it with the file-writing tool, not a heredoc. (Writing this very note through a heredoc triggered it.)
+- **That tool only writes inside allowed directories** (`/Users/matt/Github`, not `/tmp`): stage files under the repo's `scratch/`.
+- **Heredoc edit scripts:** anchors must match exactly. An `AssertionError` leaves files unwritten, but a *following* `git commit` line still runs unless you chain it with `&&`. Once a commit claimed records that had not been written (amended). Verify a written test file parses (`python3 -c "import ast; ast.parse(...)"`): escaped quotes in a heredoc caused a `SyntaxError`.
+- **Codeboxes can have CRLF endings** (`f_grain`, `f_tone_curve`): read a `.gen` file with `newline=""`.
+- **Check for a half-finished earlier session before editing:** when a connection drops, work can be left uncommitted in the tree. Look at `git status` and file timestamps first and do not overwrite it (this session found and finished one: `d8e32ac`).
+- A route box is never narrower than its text (6.5 px per character): with long token names it is wider than its lane.
+
+**How he wants to work:** discuss architecture before code; slow things in the background; he is fine with Claude committing on f_ projects; start each conversation by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
+
+## Earlier today (2026-10-05): Phases 1 and 2 detail
 
 Read `.specify/build_cleanup/tasks.md` first (status line, T006 to T013a carry the detail and the evidence).
-Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, and it should be: see "Start here".
-
-### Start here
-
-- **Everything is committed, nothing is pushed** (`git log` from `cc5d543` to the commit after `9548306`):
-  skills (T029), Phase 1, Phase 2, the never-regenerate list, the label varnames (T013a), the T013 definition
-  write-backs, `f_vf_vorticity` parked. All eight skills are uploaded and stamped (`./skills/check.sh` clean).
-- **The bench is green** (Matt, `./bench.sh --changed`, 2026-10-05, Max 9.2.0): `bench_modules` 2/2 in 73.7 s with 0
-  unexpected live contract issues, `bench_fluid_module` 4/4. The first run that day had failed only on
-  `f_vf_optical_flow` (`bypass_out1` 8.387): not a code regression, T007 moved its definition into `src/`, so
-  `modulebench.archetype()` classified it as a `processor` for the first time and applied the strict "out1 == in1
-  under bypass" check. Its bypass is documented to output a neutral field, so it is in `NEUTRAL_BYPASS_BY_DESIGN`
-  (`tests/bench_modules.py`), now verified. `benchdeps.py` folds each definition's archetype into its module's
-  tracked hash, so a definition change that flips an archetype now reruns that module. This also confirms the 14
-  label-varname patchers, `f_stereo` and the builder changes are fine in live Max.
-- **Questions waiting for Matt** (none open):
-  1. ~~`f_sirds` bypass cord~~ **resolved:** not stray (Matt, 2026-10-05; I had wrongly inferred it from stage 0's
-     codebox having no `bypass` Param). `build_sirds.py` now wires bypass into stage 0 too; the module is exact.
-  2. ~~`r draw`~~ **done** (T013b): new schema key `render_trigger` (`"inlet"` omits `r draw`); `f_vf_vortex` exact.
-  3. ~~`f_vf_vortex_multi`~~ **done** (T013b): finished (Matt); `raw_boxes` for its `nodes` object and
-     `vsc_center_ctrl` bpatcher (the file ships with Vsynth), plus an overrides block; exact.
-  4. ~~Builder numbox unitstyle / port indexes~~ **decided yes and done** (T008a): the builder writes what Max
-     writes, with a `check_port_order()` guard. The shipped patchers still carry the old values until each is
-     regenerated or saved in Max; `f_sirds` and `f_vf_advect` (own scripts) still write their own `index`.
-- **Next: T014 medium group.** T015 (`f_masonry`, `f_texrouter`) is dropped: masonry will be refactored, texrouter is not in use (Matt, 2026-10-05). Suggested start: `f_mobius` and `f_vf_advect` (least structural
-  drift; `f_vf_advect` is script-built and on the never-regenerate list). `f_channel_grader`, `f_hue_processor`,
-  `f_luma_processor`, `f_tone_curve` need the shared-label grid layout (T018); `f_droste` has an extra `time_s`
-  inlet. The recipe is at the top of Phase 3 in tasks.md.
-- **Rule of thumb that came out of this session:** when the patch is the newer side, edit the *definition* to
-  match it (hints, ranges, codebox, `signal_type`, extra params); when the builder is the newer side and the
-  difference is additive and lossless, edit the *patch* surgically (the label varnames). Never regenerate a
-  patch on the never-regenerate list (`.specify/plan.md`: `f_vf_warp`, `f_lens`, `f_vf_fieldmap`,
-  `f_vf_repulse`, `f_masonry`, `f_sirds`, `f_vf_advect`, `f_vf_seeds`, `f_grain`). Verify a surgical patch edit
-  by parsing the result: it must equal the old content plus exactly the intended change.
-- **How he wants to work** (unchanged): discuss architecture before code; slow things in the background; do
-  not rerun the bench to re-verify your own changes; he is fine with Claude committing on f_ projects.
-
-### What changed
 
 - **T006** `build/drift.py` pairs renamed boxes (`boxes_renamed`, reported once as `definition -> patch`).
 - **T008, by a live Max round-trip done with Matt** (Max 9.2.0; procedure in tasks.md, repeatable for T030).
@@ -123,11 +71,6 @@ Full offline suite green (`tests/run.sh`, 13 files). **The bench was not run**, 
   exactly (`f_vf_repulse`'s shipped codebox is a real behaviour change: zoom remap, out-of-bounds gate, neutral
   output under bypass). `f_vf_fieldmap` and `f_vf_repulse` joined the never-regenerate list. `f_vf_vorticity`
   is parked: the module was never completed (README marks it ⚠). `f_vf_warp` only has `bypass_gate` left (T017).
-
-### State of drift
-
-(As of the earlier part of this day; later today it is 20 of 39 after `f_mobius`, see the previous section.) 39 shipped patchers: **19 reproduce exactly**, 15 drift, 5 `out_of_scope`. Remaining counts: props 274, boxes
-only in the patch 240, layout 136, boxes only in the definition 113, cords 103, renamed 22, code 9, pix ports 2.
 
 ## Previous session (2026-10-04, second): build, tools and test cleanup
 

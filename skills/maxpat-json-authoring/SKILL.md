@@ -115,3 +115,23 @@ file that "changed on disk since you last read it" as the current,
 authoritative state (per the harness's own file-changed notice), not
 something to revert or treat as corruption — Max round-tripping its own
 save format is not the same thing as an error.
+
+---
+
+## Surgical edit of a Max-saved file: parse, change, dump, verify (2026-10-05)
+
+To change a few things in a `.maxpat` Max has saved (rename a varname, remove a cord, correct a
+`param_connect`), do not hand-edit text and do not regenerate. Parse the JSON, change it, dump it, and
+prove the result:
+
+1. **Find the formatting that round-trips byte for byte before trusting a dump.** `json.loads` the file and
+   try `json.dumps(d, indent=N, ensure_ascii=A)` for N in 2, 4, `"\t"` and A in False, True until the
+   output equals the file's text (seen: tab and `ensure_ascii=False`; 4 and `ensure_ascii=True`; 2 and
+   `ensure_ascii=False`). If none match, the diff will be noisy; say so rather than hide it.
+2. **Prove the change is exactly the intended change:** apply the inverse to a deep copy of the new data and
+   assert it equals the old data. Assert counts too (one box fewer, two cords fewer, and so on).
+3. Max writes keys sorted. When you add a key to a box, re-sort that box's keys so the diff shows only the
+   addition (a box Max did not write may have unsorted keys; re-sorting it changes the diff but not the data).
+4. Check the diff with `git diff -w --stat`: a surgical edit is a handful of lines, not hundreds.
+5. Anything that references box ids (`parameters` blocks, cords) must still resolve; removing a box means
+   removing every cord that touches it, and checking nothing else names it.
