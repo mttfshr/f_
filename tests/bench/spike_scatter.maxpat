@@ -68,16 +68,17 @@
         "box": {
           "id": "rt",
           "maxclass": "newobj",
-          "text": "route d weight psize n fy r bypass k h snap jit latn taps",
+          "text": "route d weight psize n fy r bypass k h snap jit latn taps detail",
           "numinlets": 1,
-          "numoutlets": 14,
+          "numoutlets": 15,
           "patching_rect": [
             20.0,
             60.0,
-            540.0,
+            600.0,
             22.0
           ],
           "outlettype": [
+            "",
             "",
             "",
             "",
@@ -586,6 +587,119 @@
             20.0
           ]
         }
+      },
+      {
+        "box": {
+          "id": "dsel",
+          "maxclass": "newobj",
+          "text": "select 1 2 3 4 5",
+          "numinlets": 1,
+          "numoutlets": 6,
+          "patching_rect": [
+            620.0,
+            60.0,
+            130.0,
+            22.0
+          ],
+          "outlettype": [
+            "bang",
+            "bang",
+            "bang",
+            "bang",
+            "bang",
+            ""
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "dstep1",
+          "maxclass": "message",
+          "text": "psize 2, snap 1, h 1, jit 0, taps 1, r 256, latn 362, weight 0.5001, n 362",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            620.0,
+            100.0,
+            420.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "dstep2",
+          "maxclass": "message",
+          "text": "psize 2, snap 1, h 1, jit 0, taps 1, r 512, latn 724, weight 0.5001, n 724",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            620.0,
+            130.0,
+            420.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "dstep3",
+          "maxclass": "message",
+          "text": "psize 2, snap 1, h 1, jit 0, taps 1, r 768, latn 1086, weight 0.5001, n 1086",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            620.0,
+            160.0,
+            420.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "dstep4",
+          "maxclass": "message",
+          "text": "psize 2, snap 1, h 1, jit 0, taps 1, r 1024, latn 1448, weight 0.5001, n 1448",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            620.0,
+            190.0,
+            420.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "dstep5",
+          "maxclass": "message",
+          "text": "psize 2, snap 1, h 1, jit 0, taps 1, r 1024, latn 2048, weight 0.2500, n 2048",
+          "numinlets": 2,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            620.0,
+            220.0,
+            420.0,
+            22.0
+          ]
+        }
       }
     ],
     "lines": [
@@ -605,7 +719,7 @@
         "patchline": {
           "source": [
             "rt",
-            13
+            14
           ],
           "destination": [
             "slabS",
@@ -1065,6 +1179,138 @@
           ],
           "destination": [
             "shader",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "rt",
+            13
+          ],
+          "destination": [
+            "dsel",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dsel",
+            0
+          ],
+          "destination": [
+            "dstep1",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dstep1",
+            0
+          ],
+          "destination": [
+            "rt",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dsel",
+            1
+          ],
+          "destination": [
+            "dstep2",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dstep2",
+            0
+          ],
+          "destination": [
+            "rt",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dsel",
+            2
+          ],
+          "destination": [
+            "dstep3",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dstep3",
+            0
+          ],
+          "destination": [
+            "rt",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dsel",
+            3
+          ],
+          "destination": [
+            "dstep4",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dstep4",
+            0
+          ],
+          "destination": [
+            "rt",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dsel",
+            4
+          ],
+          "destination": [
+            "dstep5",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "dstep5",
+            0
+          ],
+          "destination": [
+            "rt",
             0
           ]
         }

@@ -217,7 +217,7 @@ Facts section).
   cost, frame lag; stages `s0 s1 s2 s2b s3 s3b`, and from 2026-10-07 `s4` (single-mesh
   cost sweep), `s5` (corner-snap equals size 3), `s6` (fixed n, capture size varied: separates
   vertex, fill and contention), `s7` (coarse capture + upscale quality), `s8` (lattice jitter),
-  `s9` (gobo / source aliasing), `s10` (the tone-map + upscale stage behind the scatter, `spike_scatter_tone.maxpat`); timings vary up to 2x between runs, compare within a run), and `gather_proto.py`
+  `s9` (gobo / source aliasing), `s10` (the tone-map + upscale stage behind the scatter, `spike_scatter_tone.maxpat`), `s11` (`detail N` equals the explicit parameter messages); timings vary up to 2x between runs, compare within a run), and `gather_proto.py`
   (generator and CODEBOX-bench runner for the multi-start gather: compile
   ladder, size/cost measurement, `make_code_fn(..., bil=True)` is the working
   version; needs `scratch/caustic_fidelity.py` and

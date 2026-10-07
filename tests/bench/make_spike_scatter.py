@@ -10,7 +10,7 @@ vertex-texture-fetch shader, textures adapted through jit.gl.slab @rectangle 0),
 the node captures float32, the drawable is a point grid with additive blending, and the shader
 (spike_scatter.jxs) lands each point at u + d*F(u).
 
-  inlet 0   control messages + source texture   (d, weight, psize, n, bypass; jit_gl_texture)
+  inlet 0   control messages + source texture   (d, weight, psize, n, bypass; detail 1..5; jit_gl_texture)
   inlet 1   f_vecfield texture
   outlet 0  the node's captured float32 texture
 
@@ -56,7 +56,7 @@ port("in1", "inlet", [400, 20, 30, 22])
 port("out0", "outlet", [620, 520, 30, 22])
 
 # control messages out of inlet 0; the reject outlet carries everything else (the texture message)
-obj("rt", "route d weight psize n fy r bypass k h snap jit latn taps", 1, 14, [20, 60, 540, 22])
+obj("rt", "route d weight psize n fy r bypass k h snap jit latn taps detail", 1, 15, [20, 60, 600, 22])
 wire("in0", 0, "rt", 0)
 
 # texture adapters: normalised 2D float32, as in vs_xyz_disp (a vertex program wants sampler2D)
@@ -64,7 +64,7 @@ obj("slabS", "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32", 1, 2, [2
     ["jit_gl_texture", ""])
 obj("slabF", "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32", 1, 2, [400, 110, 300, 22],
     ["jit_gl_texture", ""])
-wire("rt", 13, "slabS", 0)
+wire("rt", 14, "slabS", 0)
 if not CHAIN:
     wire("in1", 0, "slabF", 0)
 
@@ -202,6 +202,21 @@ if CHAIN:
     wire("upix", 0, "out1", 0)
     wire("upix", 0, "refpix", 0)
     wire("refpix", 0, "out2", 0)
+
+# detail N (N = 1..5): the quality / cost ladder, ONE message that sets the whole lattice: capture size r,
+# points per capture pixel, and the matching n, latn and weight, with the footprint fixed at the shipped look
+# (corner-snap, size 2, regular lattice, one source read). n goes LAST so the (big) lattice is rebuilt once and
+# never at an intermediate size. Each step is a message box fed back into the route input.
+DETAIL = [(256, 2), (512, 2), (768, 2), (1024, 2), (1024, 4)]      # (capture size, points per capture pixel)
+obj("dsel", "select 1 2 3 4 5", 1, 6, [620, 60, 130, 22], ["bang"] * 5 + [""])
+wire("rt", 13, "dsel", 0)
+for i, (r_, ppp_) in enumerate(DETAIL):
+    n_ = int(round(r_ * ppp_ ** 0.5))
+    w_ = (r_ / n_) ** 2
+    message(f"dstep{i + 1}", f"psize 2, snap 1, h 1, jit 0, taps 1, r {r_}, latn {n_}, weight {w_:.4f}, n {n_}",
+            [620, 100 + 30 * i, 420, 22])
+    wire("dsel", i, f"dstep{i + 1}", 0)
+    wire(f"dstep{i + 1}", 0, "rt", 0)
 
 if TONEV:
     # Display-stage test (spike S10): the tone-map + upscale stage of scratch/build_scatter_look.py, fed by the

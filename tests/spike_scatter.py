@@ -766,6 +766,36 @@ def stage_s10_tone(flips):
               f"expected mean {b.mean():.4f}; Pearson vs NumPy {r_:.4f}, max |diff| {np.abs(a - b).max():.4f}")
 
 
+DETAIL_STEPS = [(256, 2), (512, 2), (768, 2), (1024, 2), (1024, 4)]   # as make_spike_scatter.py's `detail` ladder
+
+
+def stage_s11_detail(flips):
+    """S11: `detail N` must set exactly what the equivalent hand-written parameter sequence sets: for each step,
+    one job sends the individual messages and one sends `detail N`; the captures must be identical."""
+    print("\n== S11: `detail N` against the equivalent explicit parameter messages ==")
+    fy = -1.0 if tuple(flips) == (True, True) else 1.0
+    d = 1.0 * cf.first_fold_distance()
+    src, fld = np.asarray(gradient_src(), F32), np.asarray(cf.field_texture(), F32)
+    for i, (r, ppp) in enumerate(DETAIL_STEPS, 1):
+        n = int(round(r * ppp ** 0.5))
+        w = float(f"{(r / n) ** 2:.4f}")                      # the patch's message boxes write 4 decimals
+        manual = [["fy", fy], ["d", d], ["psize", 2], ["snap", 1.0], ["h", 1.0], ["jit", 0.0], ["taps", 1.0],
+                  ["r", r], ["latn", n], ["weight", w], ["n", n]]
+        via = [["fy", fy], ["d", d], ["detail", i]]
+        res_a, out_a = run(src, fld, manual, timeout_ms=240000)
+        res_b, out_b = run(src, fld, via, timeout_ms=240000)
+        ea = len(res_a.get("errors") or []) + len(res_b.get("errors") or [])
+        a, b = out_a.get("bypassed"), out_b.get("bypassed")
+        if a is None or b is None:
+            print(f"  step {i} ({r}^2, {ppp}/px, n={n}): FAIL capture missing (errors {ea})")
+            continue
+        diff = np.abs(a.astype(np.float64) - b.astype(np.float64))
+        print(f"  step {i} ({r}^2, {ppp} pts/px, n={n}, {n * n / 1e6:5.2f} M pts): capture {b.shape[1]}x{b.shape[0]}, "
+              f"max|diff| {diff.max():.6f}, mean RGB {b[..., :3].reshape(-1, 3).mean(0).round(3)}, errors {ea}"
+              f"  {'IDENTICAL' if diff.max() == 0 else ''}", flush=True)
+    run(white(), np.asarray(cf.field_texture(), F32), [["n", 64], ["r", 256]], settle=6)
+
+
 def stage_s5_snap(flips):
     """S5: is the corner-snapped size-2 point the same image as the size-3 point? (n=1536 into 256^2.)
     Controls: size 2 WITHOUT snap should lose energy (round points: only centres within 1 px are covered)."""
@@ -826,6 +856,8 @@ def main():
         stage_s9_gobo(flips)
     if "s10" in stages:
         stage_s10_tone(flips)
+    if "s11" in stages:
+        stage_s11_detail(flips)
 
 
 if __name__ == "__main__":
