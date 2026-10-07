@@ -1,0 +1,24 @@
+module bench not open: reopening (Max comes to the front)
+
+== S0 / S0b: identity and orientation ==
+  [S0/S0b] status=ok frames=133 elapsed=2246 ms errors=0
+  base capture: shape (256, 256, 4), mean RGB [0.496 0.496 0.248], max 0.992
+  S0 identity (d=0, n=256, weight=1): relative error vs NumPy emulation, per (up_flip, out_flip):
+     up=0 out=0  rel_err = 0.0000
+     up=0 out=1  rel_err = 0.6000
+     up=1 out=0  rel_err = 0.6000
+     up=1 out=1  rel_err = 0.0000
+  S0b shift (d=0.25, F=(0.3,0.5), n=256):
+     up=0 out=0  rel_err = 0.5915
+     up=0 out=1  rel_err = 0.5977
+     up=1 out=0  rel_err = 0.5283
+     up=1 out=1  rel_err = 0.0025
+  best = up_flip 1, out_flip 1 (error 0.0025 vs runner-up 0.5283: distinct)
+
+== S10: tone map + upscale stage behind the scatter (bench, known inputs) ==
+  [S10] status=error frames=142 elapsed=2457 ms errors=2
+      max error: codebox: function definitions not allowed here (function definitions must precede all statements)
+      max error: codebox: function definitions not allowed here (function definitions must precede all statements)
+  raw capture (outlet 0): shape (512, 512, 4), mean RGB [0.4834 0.488  0.241 ], max 23.010
+  tone, live attrs (@adapt 0 @dim 1920 1080): shape (1080, 1920, 4), mean RGB [0. 0. 0.], max 0.000, alpha mean 0.000; expected mean 0.3472; Pearson vs NumPy nan, max |diff| 0.9685
+  tone, default attrs: shape (512, 512, 4), mean RGB [0. 0. 0.], max 0.000, alpha mean 0.000; expected mean 0.3470; Pearson vs NumPy nan, max |diff| 0.9707

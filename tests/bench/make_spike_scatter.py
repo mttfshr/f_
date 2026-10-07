@@ -24,7 +24,8 @@ from patchbuild import APPVERSION, Patch, patcher_dict
 
 HERE = Path(__file__).resolve().parent
 CHAIN = "--chain" in sys.argv       # variant for the frame-lag test (spike S3b): see the end of the file
-OUT = HERE / ("spike_scatter_chain.maxpat" if CHAIN else "spike_scatter.maxpat")
+TONEV = "--tone" in sys.argv        # variant for the display-stage test (spike S10): see the end of the file
+OUT = HERE / ("spike_scatter_chain.maxpat" if CHAIN else "spike_scatter_tone.maxpat" if TONEV else "spike_scatter.maxpat")
 
 p = Patch()
 obj, wire = p.obj, p.wire
@@ -160,7 +161,7 @@ p.comment("note", "scatter spike: see tests/spike_scatter.py. d weight psize n v
                   "inlet 0 texture = source, inlet 1 = f_vecfield.", [20, 460, 560, 20])
 
 
-def pix_box(oid, code, rect):
+def pix_box(oid, code, rect, attrs="@type float32"):
     """An inline jit.gl.pix with a one-codebox gen patcher (the structure build_patcher.py writes)."""
     def sub_box(i, **kw):
         kw.update({"id": f"gen-obj-{i}", "patching_rect": [30.0, 30.0 + 60 * i, 200.0, 22.0]})
@@ -173,7 +174,7 @@ def pix_box(oid, code, rect):
                      sub_box(3, maxclass="newobj", numinlets=1, numoutlets=0, text="out 1")],
            "lines": [{"patchline": {"source": ["gen-obj-1", 0], "destination": ["gen-obj-2", 0]}},
                      {"patchline": {"source": ["gen-obj-2", 0], "destination": ["gen-obj-3", 0]}}]}
-    boxes.append({"box": {"id": oid, "maxclass": "newobj", "text": "jit.gl.pix vsynth @type float32",
+    boxes.append({"box": {"id": oid, "maxclass": "newobj", "text": f"jit.gl.pix vsynth {attrs}",
                           "numinlets": 1, "numoutlets": 2, "outlettype": ["jit_gl_texture", ""],
                           "patching_rect": [float(v) for v in rect], "patcher": sub}})
 
@@ -201,6 +202,29 @@ if CHAIN:
     wire("upix", 0, "out1", 0)
     wire("upix", 0, "refpix", 0)
     wire("refpix", 0, "out2", 0)
+
+if TONEV:
+    # Display-stage test (spike S10): the tone-map + upscale stage of scratch/build_scatter_look.py, fed by the
+    # node's captured texture. outlet 1 = the stage with the LIVE patch's attributes (@adapt 0 @dim 1920 1080),
+    # outlet 2 = the same code with default attributes. outlet 0 (the raw capture) is unchanged.
+    TONE_CODE = ("tm(v, ex) {\n"                      # function definitions must PRECEDE all statements,
+                 "\tt = v / (1.0 + v);\n"             # and a Param declaration is a statement
+                 "\treturn pow(t, ex);\n"
+                 "}\n"
+                 "Param lev(1.0);\n"
+                 "Param expo(0.7);\n"
+                 "r = tm(sample(in1, norm).x * lev, expo);\n"
+                 "g = tm(sample(in1, norm).y * lev, expo);\n"
+                 "b = tm(sample(in1, norm).z * lev, expo);\n"
+                 "out1 = vec(r, g, b, 1.0);\n")
+    pix_box("tone", TONE_CODE, [700, 440, 300, 22], "@type float32 @adapt 0 @dim 1920 1080")
+    pix_box("tone2", TONE_CODE, [700, 480, 300, 22], "@type float32")
+    port("out1", "outlet", [660, 560, 30, 22])
+    port("out2", "outlet", [700, 560, 30, 22])
+    wire("node", 0, "tone", 0)
+    wire("node", 0, "tone2", 0)
+    wire("tone", 0, "out1", 0)
+    wire("tone2", 0, "out2", 0)
 
 if __name__ == "__main__":
     with open(OUT, "w") as f:

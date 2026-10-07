@@ -719,6 +719,53 @@ def stage_s9_gobo(flips):
     run(white(), tex512, [["n", 64], ["r", 256], ["taps", 1.0]], settle=6)
 
 
+def resize_bilinear(img, H, W):
+    """Bilinear resize of an (h, w, c) array to (H, W, c), pixel centres aligned (what sample(in1, norm) does
+    when magnifying)."""
+    h, w = img.shape[:2]
+    ys = np.clip((np.arange(H) + 0.5) * h / H - 0.5, 0, h - 1)
+    xs = np.clip((np.arange(W) + 0.5) * w / W - 0.5, 0, w - 1)
+    y0, x0 = np.floor(ys).astype(int), np.floor(xs).astype(int)
+    y1, x1 = np.minimum(y0 + 1, h - 1), np.minimum(x0 + 1, w - 1)
+    ty, tx = (ys - y0)[:, None, None], (xs - x0)[None, :, None]
+    a = img[y0][:, x0] * (1 - tx) + img[y0][:, x1] * tx
+    b = img[y1][:, x0] * (1 - tx) + img[y1][:, x1] * tx
+    return a * (1 - ty) + b * ty
+
+
+def stage_s10_tone(flips):
+    """S10: does the display stage (tone map + upscale, scratch/build_scatter_look.py) work behind the scatter?
+    spike_scatter_tone.maxpat adds two copies of it to the node's output: outlet 1 with the live patch's
+    attributes (@adapt 0 @dim 1920 1080), outlet 2 with default attributes. Reference: the NumPy tone curve
+    applied to the raw capture (outlet 0) and bilinearly resized."""
+    print("\n== S10: tone map + upscale stage behind the scatter (bench, known inputs) ==")
+    fy = -1.0 if tuple(flips) == (True, True) else 1.0
+    d = 1.0 * cf.first_fold_distance()
+    r, n = 512, 724
+    params = [["r", r], ["psize", 2], ["snap", 1.0], ["h", 1.0], ["jit", 0.0], ["taps", 1.0], ["latn", n],
+              ["weight", (r / n) ** 2], ["fy", fy], ["d", d], ["n", n]]
+    src = np.asarray(gradient_src(), F32)
+    result, out = run(src, np.asarray(cf.field_texture(), F32), params, module="spike_scatter_tone.maxpat",
+                      n_out=3, multi=True, timeout_ms=180000)
+    report(result, "S10")
+    o = out.get("bypassed")
+    if not o or not all(k in o for k in (1, 2, 3)):
+        print("  FAIL: captures missing:", None if not o else sorted(o))
+        return
+    raw = o[1].astype(np.float64)
+    print(f"  raw capture (outlet 0): shape {raw.shape}, mean RGB {raw[..., :3].reshape(-1, 3).mean(0).round(4)}, "
+          f"max {raw[..., :3].max():.3f}")
+    for k, name in ((2, "live attrs (@adapt 0 @dim 1920 1080)"), (3, "default attrs")):
+        t = o[k].astype(np.float64)
+        ref = resize_bilinear(raw, t.shape[0], t.shape[1])[..., :3]
+        ref = (ref / (1.0 + ref)) ** 0.7                      # lev = 1, expo = 0.7
+        a, b = t[..., :3].ravel(), ref.ravel()
+        r_ = float(np.corrcoef(a, b)[0, 1]) if a.std() > 0 and b.std() > 0 else float("nan")
+        print(f"  tone, {name}: shape {t.shape}, mean RGB {t[..., :3].reshape(-1, 3).mean(0).round(4)}, "
+              f"max {t[..., :3].max():.3f}, alpha mean {t[..., 3].mean():.3f}; "
+              f"expected mean {b.mean():.4f}; Pearson vs NumPy {r_:.4f}, max |diff| {np.abs(a - b).max():.4f}")
+
+
 def stage_s5_snap(flips):
     """S5: is the corner-snapped size-2 point the same image as the size-3 point? (n=1536 into 256^2.)
     Controls: size 2 WITHOUT snap should lose energy (round points: only centres within 1 px are covered)."""
@@ -777,6 +824,8 @@ def main():
         stage_s8_jitter(flips)
     if "s9" in stages:
         stage_s9_gobo(flips)
+    if "s10" in stages:
+        stage_s10_tone(flips)
 
 
 if __name__ == "__main__":
