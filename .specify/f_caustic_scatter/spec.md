@@ -182,8 +182,8 @@ through the **module bench**, not the codebox bench (a `.jxs` shader is not a pi
 - Q: Gather or scatter for the sheets mode? -> A: **Scatter** (Matt: "the numbers strongly suggest the gl method").
   The gather stays in `tests/` as the fallback.
 - Q: The 1-frame lag? -> A: Accepted (the library already has them elsewhere); Phase 0 spike 1 is closed.
-- Q: How is the lattice resolution set? -> A: **MVP: a fixed internal capture size** (about 0.5 to 1 M pixels,
-  2 points per capture pixel, so about 1 M points), upscaled bilinearly to the output, not a scale relative to the
+- Q: How is the lattice resolution set? -> A: **MVP: a fixed internal capture size** (Matt's default look: a 1024^2
+  capture, 4 points per capture pixel, so about 4.2 M points; the 512^2 / 2-point preset, about 1 M points, is the cheap fallback), upscaled bilinearly to the output, not a scale relative to the
   output. Output resolution then changes sharpness, not cost. The exact size, and non-square captures, are chosen in Phase 1.
 - Settled by the density spikes (`ideas/optics_map.md`, "Findings: scatter density, cost and detail"): regular
   lattice (jitter is a net loss), corner-snap with `point_size 2` (bit-identical to size 3), one bilinear source read
