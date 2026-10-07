@@ -1,11 +1,10 @@
 # Spec addendum: f_caustic "sheets" mode (GPU forward scatter)
 
 _Created: 2026-10-06. Rewritten 2026-10-07 as an addendum to `f_caustic` (it began as a separate-module draft)._
-_Status: Draft for review. Nothing here is built. The behaviour below was measured in the 2026-10-06 and
+_Status: Decisions resolved 2026-10-07; ready for Phase 1 (technical plan, tasks, build). Nothing here is built. The behaviour below was measured in the 2026-10-06 and
 2026-10-07 spikes (`tests/spike_scatter.py` stages `s0`-`s11`, `tests/bench/spike_scatter*.maxpat`,
 `spike_scatter.jxs`, `scratch/scatter_spike_*`) and recorded in `ideas/optics_map.md` ("Findings: scatter
-feasibility spike", "Findings: scatter density, cost and detail"). Items marked **[DECIDE]** carry a
-recommendation and need Matt's answer before Phase 1._
+feasibility spike", "Findings: scatter density, cost and detail"). The seven items that were marked [DECIDE] were resolved on 2026-10-07 (Matt: "go with your recommendations"); see Decisions at the end._
 
 Concept: `ideas/f_lumia.md`, `ideas/optics_map.md`. Existing module: `docs/f-reference/f_caustic.md`,
 `src/f_caustic/definition.py`.
@@ -28,7 +27,7 @@ twice that distance, the overlapping translucent folded sheets that the 8-tap ga
 scatter's shader is a GLSL 1.20 `.jxs` vertex + fragment pair drawn by `jit.gl.mesh` into a `jit.gl.node` (as
 Vsynth's own `vs_xyz_disp` does with `vtfk.jxs`), because a pix codebox is a per-pixel gather and cannot scatter.
 Composite, tone map, mode selection and bypass stay in normal pix stages. Record the deviation in the constitution
-when the mode ships (**[DECIDE]** wording).
+when the mode ships (wording: Decisions, item 7).
 
 ---
 
@@ -109,12 +108,12 @@ Existing parameters keep their names, ranges and defaults. Added parameters are 
 | Param | Mode | Description |
 |---|---|---|
 | `mode` **new** | both | `soft` (the existing gather, default, so existing patches are unchanged) or `sheets`. A live.tab or menu |
-| `scale` | both | soft: streamline trace distance (existing). sheets: the propagation distance `d`, UV per unit field. **[DECIDE]** Share the one parameter, so switching mode keeps the geometry (recommended; range 0-1 covers the `d` values tried, 0.02-0.5) |
-| `gain` | both | brightness. sheets: scales the illuminance into the tone curve; an internal constant makes the same slider value comparable across modes (calibrate in Phase 1) **[DECIDE]** (alternative: a different default per mode, which the builder cannot express) |
+| `scale` | both | soft: streamline trace distance (existing). sheets: the propagation distance `d`, UV per unit field. **Decided:** one shared parameter, so switching mode keeps the geometry (range 0-1 covers the `d` values tried, 0.02-0.5) |
+| `gain` | both | brightness. sheets: scales the illuminance into the tone curve; an internal constant makes the same slider value comparable across modes (calibrate in Phase 1). **Decided:** one parameter with an internal constant (the alternative, a different default per mode, cannot be expressed by the builder) |
 | `mix_pct` | both | dry/wet, unchanged (0-100, default 0) |
 | `softness` | soft | unchanged; ignored in sheets mode |
 | `color_shift` | soft | unchanged; ignored in sheets mode |
-| `detail` **new** | sheets | 1-5, the ladder above. Default 5 (Matt's M3 Max look). **[DECIDE]** Whether the module default should be a safer 3 for an M1 |
+| `detail` **new** | sheets | 1-5, the ladder above. **Decided:** default 5 (Matt's look); an M1 user steps down the ladder |
 | `bypass` | both | unchanged: passthrough on every outlet |
 
 Not built (v1): `edge: wrap` (untested), per-channel dispersion, an analytic glass.
@@ -126,7 +125,7 @@ Unchanged from `f_caustic`: inlet 0 control, inlet 1 light source (`vs_inState`)
 
 **Unconnected vecfield in sheets mode must be silent too** (composite = source, layer = black). An unbound
 float32 input reads 0, which decodes to `F = -1` and would throw a displaced copy of the source, so this needs
-explicit handling. **[DECIDE]** Recommended: a guard in the sheets composite stage that treats a field texture
+explicit handling. **Decided:** a guard in the sheets composite stage that treats a field texture
 which is exactly 0 at several fixed sample points as absent (real vecfields encode zero as 0.5), and zeroes the
 light. Phase 1 verifies how an unconnected pix input actually reads in Vsynth first.
 
@@ -147,8 +146,7 @@ select pix (Param sheets_gate: picks soft or sheets per outlet) ─┬─ out0 c
 ```
 
 - **Selection in a pix, not by routing.** The select stage picks between the two branches with a `Param`, as the
-  library does elsewhere, so no routing object touches a texture message. **[DECIDE]** (alternative: `gate`s as in
-  `f_texrouter`; Matt used `gswitch` UI objects in the look patch).
+  library does elsewhere, so no routing object touches a texture message. **Decided** (the alternatives, `gate`s as in `f_texrouter` or the `gswitch` UI objects Matt used in the look patch, were not chosen).
 - **The inactive branch is disabled** (`@enable 0` on the soft pix in sheets mode; the node and mesh in soft
   mode) and the lattice is only built while the mode is `sheets` (rebuilt on `detail`). In soft mode the module
   costs what it costs today plus one select pass.
@@ -161,7 +159,7 @@ select pix (Param sheets_gate: picks soft or sheets per outlet) ─┬─ out0 c
   out1    = mix(clamp(exposed, 0, 1), black, bypass_gate)         // caustic layer, as soft (clamped)
   ```
   Tone curve as tried in the look patch (Matt's first-look default, never tuned): `t = v / (1 + v)`, `out = t^0.7`.
-  **[DECIDE]** Keep it, or expose the exponent.
+  **Decided:** keep it; the exponent is not exposed in v1.
 - **A non-square output is handled in UV space.** The capture is square and maps the UV square; the composite
   stretches it to the output, so geometry is consistent (the look patch ran a 16:9 output from a square capture).
   The distance `scale` is anisotropic in pixels exactly as in the soft path.
@@ -237,19 +235,31 @@ Tier decision: tier 1 (NumPy mirror) and tier 2 (module bench) apply; tier 3 for
 - Q: M1 / performance machine? -> A: This M3 Max or an M1; the M1 measurement is skipped.
 - Settled by the density spikes (`optics_map.md`): regular lattice, corner-snap with `point_size 2`, one bilinear
   source read, a 48-byte lattice is fine at these counts.
+- Q: The seven open decisions? -> A: **All as recommended** (Matt: "go with your recommendations"); see Decisions.
 
 ---
 
-## Open questions (all marked [DECIDE] above; recommendations in place)
+## Decisions (resolved 2026-10-07; Matt: "go with your recommendations")
 
-1. Share `scale` as the distance in both modes (recommended).
-2. `gain` across modes: an internal constant (recommended) or per-mode defaults.
-3. Tone curve: keep `t^0.7` over Reinhard, or expose the exponent.
-4. Module default `detail`: 5 (Matt's look) or a safer 3.
-5. Selection: a select pix with a `Param` (recommended) or `gate`s.
-6. Unconnected vecfield guard in the sheets composite (recommended; verify unconnected-input behaviour first).
-7. Constitution wording for the codebox-first deviation.
+1. **`scale` is shared** as the distance in both modes (soft: trace distance; sheets: the propagation distance), so
+   switching mode keeps the geometry. Range 0-1, default 0.3 as today.
+2. **`gain` is one parameter** (default 0.5 as today); the sheets branch applies an internal constant so the same
+   slider value gives comparable brightness (calibrated in Phase 1).
+3. **Tone curve:** `t = v / (1 + v)`, `out = t^0.7`, as tried in the look patch. The exponent is not exposed in v1.
+4. **`detail` defaults to 5** (Matt's look, 1024² capture, 4 points per capture pixel); a weaker machine steps down
+   the ladder (1-5).
+5. **Mode selection is a select pix driven by a `Param`**, not routing objects; the inactive branch is disabled.
+6. **Unconnected vecfield in sheets mode is silent** (composite = source, layer black) through a guard in the
+   sheets composite that treats a field texture reading exactly 0 at several fixed points as absent. Phase 1 first
+   verifies how an unconnected pix input reads in Vsynth.
+7. **Constitution wording** (apply when the mode ships, through the amend-constitution workflow): the line
+   "**Codebox-first** — GLSL logic lives in jit.gl.pix codeboxes; patchers are thin wrappers" gains: "One exception
+   class: an effect that needs a many-to-one write (scatter) may draw a `jit.gl.mesh` with a `.jxs` shader into a
+   `jit.gl.node`, as Vsynth's own `vs_xyz_disp` does; everything around it (composite, tone map, mode selection,
+   bypass) stays in pix codeboxes", and "GLSL in codebox, not inline" gains "(exception: see Codebox-first)".
+   Constraint 3 (one bpatcher, one concern) is met: both modes are the same concern, redistributing light through a
+   vecfield, and Matt chose a second mode over a separate module.
 
-Phase 1 verification tasks (not decisions): the shader found from `package/code/`; an unconnected pix input in
-Vsynth; the builder accepting the node/mesh/slab scene as `raw_boxes`; cost on the target machine with an
+Phase 1 verification tasks (not decisions): the shader found from a new `package/code/` folder; an unconnected pix
+input in Vsynth; the builder accepting the node/mesh/slab scene as `raw_boxes`; cost on the target machine with an
 interleaved method.
