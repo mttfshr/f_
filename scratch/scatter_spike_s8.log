@@ -1,0 +1,51 @@
+
+== S0 / S0b: identity and orientation ==
+  [S0/S0b] status=ok frames=133 elapsed=2251 ms errors=0
+  base capture: shape (256, 256, 4), mean RGB [0.496 0.496 0.248], max 0.992
+  S0 identity (d=0, n=256, weight=1): relative error vs NumPy emulation, per (up_flip, out_flip):
+     up=0 out=0  rel_err = 0.0000
+     up=0 out=1  rel_err = 0.6000
+     up=1 out=0  rel_err = 0.6000
+     up=1 out=1  rel_err = 0.0000
+  S0b shift (d=0.25, F=(0.3,0.5), n=256):
+     up=0 out=0  rel_err = 0.5915
+     up=0 out=1  rel_err = 0.5977
+     up=1 out=0  rel_err = 0.5283
+     up=1 out=1  rel_err = 0.0025
+  best = up_flip 1, out_flip 1 (error 0.0025 vs runner-up 0.5283: distinct)
+
+== S8: lattice jitter vs moire (reference 16 pts/px, 1024^2, unjittered) ==
+  -- d = 3.5 d*   (dim region = 54% of the interior)
+     s  pts/px  jit | vs ref @1024: r / IoU | dim-region RMS residual / mean | structure score (white noise ~1.3)
+     1     1   0.0 |    0.9880 / 0.885          |         1.124                |         3.41
+     1     1   1.0 |    0.9689 / 0.745          |         1.298                |         1.51
+     2     1   0.0 |    0.9546 / 0.879          |         0.952                |         3.02
+     2     1   1.0 |    0.9439 / 0.787          |         1.131                |         2.81
+     2     2   0.0 |    0.9579 / 0.899          |         0.786                |         3.01
+     2     2   1.0 |    0.9537 / 0.851          |         0.909                |         2.91
+     4     1   0.0 |    0.8985 / 0.788          |         1.465                |         3.70
+     4     1   1.0 |    0.8851 / 0.711          |         1.604                |         3.69
+     4     2   0.0 |    0.9026 / 0.809          |         1.351                |         3.73
+     4     2   1.0 |    0.8974 / 0.762          |         1.434                |         3.70
+/Users/matt/Github/f_/tests/spike_scatter.py:601: RuntimeWarning: Mean of empty slice
+  rms = float(np.sqrt((e[dim] ** 2).mean()) / max(ref[dim].mean(), 1e-12))
+/Users/matt/.cache/uv/archive-v0/_ttub1XuM4zXnTXuAFFet/lib/python3.12/site-packages/numpy/_core/_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+/Users/matt/Github/f_/tests/spike_scatter.py:553: RuntimeWarning: Mean of empty slice
+  x = np.where(region, e - e[region].mean(), 0.0)
+/Users/matt/Github/f_/tests/spike_scatter.py:559: RuntimeWarning: divide by zero encountered in log10
+  return float(np.log10(v.max() / max(np.median(v), 1e-30)))
+  -- d = 1.0 d*   (dim region = 0% of the interior)
+     s  pts/px  jit | vs ref @1024: r / IoU | dim-region RMS residual / mean | structure score (white noise ~1.3)
+     1     1   0.0 |    0.9909 / 0.910          |           nan                |         -inf
+     1     1   1.0 |    0.8691 / 0.587          |           nan                |         -inf
+     2     1   0.0 |    0.9953 / 0.953          |           nan                |         -inf
+     2     1   1.0 |    0.9452 / 0.738          |           nan                |         -inf
+     2     2   0.0 |    0.9981 / 0.978          |           nan                |         -inf
+     2     2   1.0 |    0.9822 / 0.849          |           nan                |         -inf
+     4     1   0.0 |    0.9896 / 0.947          |           nan                |         -inf
+     4     1   1.0 |    0.9320 / 0.719          |           nan                |         -inf
+     4     2   0.0 |    0.9929 / 0.968          |           nan                |         -inf
+     4     2   1.0 |    0.9745 / 0.847          |           nan                |         -inf
+  figure: /Users/matt/Github/f_/scratch/scatter_spike_s8_3p5dstar.png
+  figure: /Users/matt/Github/f_/scratch/scatter_spike_s8_1p0dstar.png

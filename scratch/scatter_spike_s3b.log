@@ -1,0 +1,35 @@
+
+== S0 / S0b: identity and orientation ==
+  [S0/S0b] status=ok frames=133 elapsed=2247 ms errors=0
+  base capture: shape (256, 256, 4), mean RGB [0.496 0.496 0.248], max 0.992
+  S0 identity (d=0, n=256, weight=1): relative error vs NumPy emulation, per (up_flip, out_flip):
+     up=0 out=0  rel_err = 0.0000
+     up=0 out=1  rel_err = 0.6000
+     up=1 out=0  rel_err = 0.6000
+     up=1 out=1  rel_err = 0.0000
+  S0b shift (d=0.25, F=(0.3,0.5), n=256):
+     up=0 out=0  rel_err = 0.5915
+     up=0 out=1  rel_err = 0.5977
+     up=1 out=0  rel_err = 0.5283
+     up=1 out=1  rel_err = 0.0025
+  best = up_flip 1, out_flip 1 (error 0.0025 vs runner-up 0.5283: distinct)
+
+== S3b: frame lag of pix -> node(mesh) -> capture vs pix -> pix (counter decode) ==
+  decode table: mean R of the scatter for c = 0, 1, 39: 0.4980, 0.4949, 0.3766 (step -0.00311 per frame; the capture noise floor is far below that)
+  [S3b job 0] status=ok frames=63 elapsed=1175 ms errors=0
+     job 0: counter seen by upstream pix = 20, by pix->pix reference = 20, by scatter output = 19   -> lag vs upstream pix: reference +0, scatter +1 frames
+  [S3b job 1] status=ok frames=64 elapsed=1154 ms errors=0
+     job 1: counter seen by upstream pix = 21, by pix->pix reference = 21, by scatter output = 20   -> lag vs upstream pix: reference +0, scatter +1 frames
+  [S3b job 2] status=ok frames=65 elapsed=1154 ms errors=0
+     job 2: counter seen by upstream pix = 22, by pix->pix reference = 22, by scatter output = 21   -> lag vs upstream pix: reference +0, scatter +1 frames
+  [S3b job 3] status=ok frames=66 elapsed=1177 ms errors=0
+     job 3: counter seen by upstream pix = 23, by pix->pix reference = 23, by scatter output = 22   -> lag vs upstream pix: reference +0, scatter +1 frames
+  [S3b job 4] status=ok frames=67 elapsed=1176 ms errors=0
+     job 4: counter seen by upstream pix = 24, by pix->pix reference = 24, by scatter output = 23   -> lag vs upstream pix: reference +0, scatter +1 frames
+  [S3b job 5] status=ok frames=68 elapsed=1207 ms errors=0
+     job 5: counter seen by upstream pix = 25, by pix->pix reference = 25, by scatter output = 24   -> lag vs upstream pix: reference +0, scatter +1 frames
+  [S3b job 6] status=ok frames=69 elapsed=1245 ms errors=0
+     job 6: counter seen by upstream pix = 26, by pix->pix reference = 26, by scatter output = 25   -> lag vs upstream pix: reference +0, scatter +1 frames
+  [S3b job 7] status=ok frames=70 elapsed=1243 ms errors=0
+     job 7: counter seen by upstream pix = 27, by pix->pix reference = 27, by scatter output = 26   -> lag vs upstream pix: reference +0, scatter +1 frames
+  summary over 8 captures: pix->pix reference lag values [0]; scatter lag values [1] (frames behind the upstream pix)

@@ -184,6 +184,31 @@ substantially move a file in `ideas/`, update its entry here too.
   "already very full"). Name TBD. Field-driven half needs hemisphere-aligning
   the vecfield to the static axis before blending (axis is a line, not a
   direction) — mechanism worked out, not yet built.
+- **[f_lumia.md](f_lumia.md)** ⚪ — Lumia-style animated caustics: light through
+  irregular glass modelled as a height field -> `f_vf_fieldmap` -> `f_caustic`
+  (+ optional `f_vf_warp` of the source, same field), animation via evolving
+  height, rotation, throw distance. Warp vs. caustic distinction written up;
+  `f_vf_fluid` flagged as a trap (`project` removes the convergence caustic
+  needs). Untested. Decided 2026-10-06: two modules, `f_vf_glass` (producer)
+  and `f_caustic_scatter` (consumer, sheet regime); draft specs in `.specify/`.
+- **[f_vf_glass.md](f_vf_glass.md)** ⏸ ON HOLD (2026-10-06) — Animated analytic glass height field ->
+  f_vecfield producer (mode-sum families: modes, fluted, hobnail, hex; evolve /
+  drift / rotate; outlets vecfield, height, focus). Chosen 2026-10-06 as a
+  separate producer so one glass feeds warp, prism, caustic and the scatter
+  module together. Draft spec: `.specify/f_vf_glass/spec.md`. Untested; open
+  questions include the time source and regime normalisation.
+- **[optics_map.md](optics_map.md)** 🔵 — Map of the light-transport concept
+  across modules (medium -> dispersion -> scatter -> camera -> persistence),
+  the "share one field" compounding principle, a by-phenomenon chart of
+  have / compose / build / research / skip, constraints, a proposed
+  research order, and the result of research item 1 (NumPy check of
+  `f_caustic` vs photon-counting truth: it is the first-order term only, does
+  not focus with distance, no fold lines; physical caustics at larger
+  distance become overlapping translucent sheets, which needs scatter), and
+  the scatter feasibility spike run in Max (GPU point scatter inside Vsynth's
+  render context matches the truth, r 0.994 at 3.5 d*; one frame of lag vs
+  pix chains; cost and untested items listed). Map plus findings, not a spec;
+  built from the inventory, not per-module docs.
 - **[f_raster.md](f_raster.md)** ⚪ — Resolution-as-parameter: downsample/
   upsample with independent interpolation mode, for deliberate pixelation and
   as a pre-filter/anti-aliasing utility feeding UV-transformers (droste,

@@ -1,0 +1,50 @@
+
+== S0 / S0b: identity and orientation ==
+  [S0/S0b] status=ok frames=133 elapsed=2236 ms errors=0
+  base capture: shape (256, 256, 4), mean RGB [0.496 0.496 0.248], max 0.992
+  S0 identity (d=0, n=256, weight=1): relative error vs NumPy emulation, per (up_flip, out_flip):
+     up=0 out=0  rel_err = 0.0000
+     up=0 out=1  rel_err = 0.6000
+     up=1 out=0  rel_err = 0.6000
+     up=1 out=1  rel_err = 0.0000
+  S0b shift (d=0.25, F=(0.3,0.5), n=256):
+     up=0 out=0  rel_err = 0.5915
+     up=0 out=1  rel_err = 0.5977
+     up=1 out=0  rel_err = 0.5283
+     up=1 out=1  rel_err = 0.0025
+  best = up_flip 1, out_flip 1 (error 0.0025 vs runner-up 0.5283: distinct)
+
+== S9: gobo / source aliasing (glass 3.5 d*; source 1024^2; compare after box-down to 256^2) ==
+  -- zone plate   (reference mean 0.497, source mean 0.500)
+     s  lattice n  taps | @256: r      rel RMS   | @1024: r
+     1   1024      1  |   0.9997     0.035   |   0.9846
+     1   1024      4  |   0.9998     0.035   |   0.9849
+     2    724      1  |   0.9953     0.161   |   0.9460
+     2    724      4  |   0.9954     0.160   |   0.9459
+     4    362      1  |   0.9703     0.389   |   0.8767
+     4    362      4  |   0.9734     0.376   |   0.8796
+  -- checker 1px   (reference mean 0.497, source mean 0.500)
+     s  lattice n  taps | @256: r      rel RMS   | @1024: r
+     1   1024      1  |   0.9996     0.044   |   0.9783
+     1   1024      4  |   0.9998     0.031   |   0.9868
+     2    724      1  |   0.9958     0.149   |   0.9556
+     2    724      4  |   0.9962     0.142   |   0.9566
+     4    362      1  |   0.9772     0.343   |   0.9003
+     4    362      4  |   0.9780     0.338   |   0.9013
+  -- checker 3px   (reference mean 0.497, source mean 0.500)
+     s  lattice n  taps | @256: r      rel RMS   | @1024: r
+     1   1024      1  |   0.9996     0.046   |   0.9799
+     1   1024      4  |   0.9997     0.040   |   0.9825
+     2    724      1  |   0.9948     0.167   |   0.9331
+     2    724      4  |   0.9946     0.171   |   0.9321
+     4    362      1  |   0.9707     0.387   |   0.8613
+     4    362      4  |   0.9715     0.383   |   0.8622
+  -- checker 8px   (reference mean 0.497, source mean 0.500)
+     s  lattice n  taps | @256: r      rel RMS   | @1024: r
+     1   1024      1  |   0.9997     0.043   |   0.9823
+     1   1024      4  |   0.9997     0.040   |   0.9831
+     2    724      1  |   0.9932     0.204   |   0.9286
+     2    724      4  |   0.9932     0.206   |   0.9282
+     4    362      1  |   0.9613     0.472   |   0.8342
+     4    362      4  |   0.9616     0.473   |   0.8345
+  figure: /Users/matt/Github/f_/scratch/scatter_spike_s9.png

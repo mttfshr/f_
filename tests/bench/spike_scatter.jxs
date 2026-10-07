@@ -1,0 +1,99 @@
+<jittershader name="spike_scatter">
+	<description>Scatter spike: each grid point (glass sample u) is displaced to u + d*F(u) by a vecfield texture read in the VERTEX program, and splats weight*source(u) there with a bilinear (tent) footprint computed in the fragment program from the point's exact sub-pixel position. Additive blending in the node capture turns splat density into illuminance (a forward-scattered caustic). GLSL 1.20 on purpose: the same profile as Vsynth's own vtfk.jxs. Draw with @point_size 3 so the round point footprint covers every pixel centre within +-1 px of the point (spike S1: a size-1 round point deposits into a pixel only if its centre is within 0.5 px, which aliases against the lattice).</description>
+	<param name="tex0" type="int" default="0" />
+	<param name="tex1" type="int" default="1" />
+	<param name="d" type="float" default="0.0" />
+	<param name="weight" type="float" default="1.0" />
+	<param name="fy" type="float" default="1.0" />
+	<param name="res" type="float" default="256.0" />
+	<param name="h" type="float" default="1.0" />
+	<param name="snap" type="float" default="0.0" />
+	<param name="jit" type="float" default="0.0" />
+	<param name="latn" type="float" default="256.0" />
+	<param name="taps" type="float" default="1.0" />
+	<language name="glsl" version="1.2">
+		<bind param="tex0" program="vp" />
+		<bind param="tex1" program="vp" />
+		<bind param="d" program="vp" />
+		<bind param="weight" program="vp" />
+		<bind param="fy" program="vp" />
+		<bind param="res" program="vp" />
+		<bind param="snap" program="vp" />
+		<bind param="jit" program="vp" />
+		<bind param="latn" program="vp" />
+		<bind param="taps" program="vp" />
+		<bind param="h" program="fp" />
+		<program name="vp" type="vertex">
+<![CDATA[
+#version 120
+
+uniform sampler2D tex0;   // source (gobo / light), sampled at the glass point u
+uniform sampler2D tex1;   // f_vecfield: RG = F * 0.5 + 0.5
+uniform float d;          // propagation distance, in UV units per unit field
+uniform float weight;     // intensity per splat
+uniform float fy;         // multiplies F.y: -1 undoes the texture-upload flip (measured, spike S0b)
+uniform float res;        // capture size in pixels (square)
+uniform float snap;       // 1: place the point at the nearest pixel corner (use point_size 2); weights stay exact
+uniform float jit;        // lattice jitter in cells: 0 = regular, 1 = uniform over the whole cell
+uniform float latn;       // lattice size n (cells = n - 1): index recovery for the hash, and the cell size
+uniform float taps;       // source reads per point: 1 = one bilinear read, 4 = box prefilter at +-1/4 cell
+
+varying vec4 col;
+varying vec2 ppx;         // the point's exact position in window pixels
+
+vec2 hash22(vec2 p)                          // Hoskins' sine-free hash: no precision cliff at index ~4000
+{
+	vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+	q += dot(q, q.yzx + 33.33);
+	return fract((q.xx + q.yz) * q.zy);
+}
+
+void main(void)
+{
+	// plane gridshape spans [-1, 1]; u is the glass point in [0, 1]
+	vec2 u = gl_Vertex.xy * 0.5 + 0.5;
+	if (jit > 0.0) {
+		vec2 idx = floor(u * (latn - 1.0) + 0.5);                 // integer lattice index
+		u += (hash22(idx) - 0.5) * jit / (latn - 1.0);           // stay within the point's own cell
+	}
+	vec2 f = (texture2D(tex1, u).xy - 0.5) * 2.0;
+	f.y *= fy;
+	vec2 x = u + d * f;                        // where the ray lands
+
+	vec4 c0;
+	if (taps > 1.5) {
+		float q = 0.25 / (latn - 1.0);                                  // a quarter of a lattice cell, in uv
+		c0 = 0.25 * (texture2D(tex0, u + vec2(q, q)) + texture2D(tex0, u + vec2(-q, q))
+		           + texture2D(tex0, u + vec2(q, -q)) + texture2D(tex0, u + vec2(-q, -q)));
+	} else {
+		c0 = texture2D(tex0, u);
+	}
+	col = c0 * weight;
+	ppx = x * res;
+	vec2 xs = (snap > 0.5) ? floor(ppx + 0.5) / res : x;   // pixel corner: a size-2 point there covers its 4 neighbours
+	gl_Position = vec4(xs * 2.0 - 1.0, 0.0, 1.0);   // straight to clip space: no camera involved
+}
+]]>
+		</program>
+		<program name="fp" type="fragment">
+<![CDATA[
+#version 120
+
+uniform float h;          // tent half-width in pixels (1.0 = bilinear); needs point_size >= 2h + 1
+
+varying vec4 col;
+varying vec2 ppx;
+
+void main(void)
+{
+	// tent weights: the point's weight is shared bilinearly among the four nearest pixel centres,
+	// so energy is conserved and the result does not depend on the point's sub-pixel phase
+	vec2 off = abs(gl_FragCoord.xy - ppx);
+	vec2 t = max(vec2(0.0), vec2(1.0) - off / h);
+	float w = t.x * t.y / (h * h);                 // energy-normalised: h = 1 is exactly the bilinear tent
+	gl_FragColor = col * w;
+}
+]]>
+		</program>
+	</language>
+</jittershader>

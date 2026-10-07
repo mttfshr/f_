@@ -34,7 +34,7 @@ caustic_pix (@type float32) out2 → caustic layer (isolated)
 |---|---|---|---|
 | `mix_pct` | 0–100% | 0.0 | Wet/dry crossfade toward the fully-composited (source+caustic) state — `composited = mix(source_pass, composite, mix_pct)`. Renamed from `strength` 2026-07-12 (gain/mix rollout); range capped to true 0–100% (dropping the old 0–1.5 extrapolation zone). Rendered as `live.numbox`; internal Param named `mix_pct` to avoid colliding with the codebox's `mix()` operator. |
 | `gain` | 0–2.0 | 0.5 | Caustic brightness scale. Renamed from `intensity` 2026-07-12 to match the library-wide gain/mix naming convention. |
-| `scale` | 0–1.0 | 0.3 | Streamline trace distance (`step_size = scale / 8`). 0 = no trace, no caustic. |
+| `scale` | 0–1.0 | 0.3 | Streamline trace distance (`step_size = scale / 8`): how far the 8 samples spread along the field. It moves where the samples are taken; it does not change the brightness weight (`max(-div, 0)` depends on position only). At 0 all 8 samples land on the pixel itself, so the layer is the undisplaced divergence-weighted source at full strength, **not** an empty layer (verified against a NumPy mirror, 2026-10-06; see `ideas/optics_map.md`). |
 | `softness` | 0–1.0 | 0.3 | Band sharpness via smoothstep on accumulated luma. 0 = hard bright lines. 1 = diffuse glow. |
 | `color_shift` | 0–1.0 | 0.0 | Chromatic dispersion — R/B channels sampled with offset step sizes along the streamline. 0 = monochrome bands. |
 | `bypass` | 0/1 | 0 | out1 passes source unmodified; out2 goes black. |

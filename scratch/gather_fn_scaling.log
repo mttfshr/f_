@@ -1,0 +1,10 @@
+== does a function-based program scale past 4 starts? (d = 3.5 d*, G=6, T=6, S=2; GPU vs NumPy mirror, same tol)
+  M= 4  (158 lines,  6.2 KB): compiled: errors 0; GPU vs mirror r = 0.7815, mean GPU 0.7477 vs mirror 1.0268; vs truth: GPU r 0.638 IoU 0.506, mirror r 0.865 IoU 0.718
+         function version vs unrolled version, same M=4: r = 1.00000, max |diff| = 0.0000
+  M= 6  (194 lines,  8.2 KB): compiled: errors 0; GPU vs mirror r = 0.8027, mean GPU 0.8557 vs mirror 1.0652; vs truth: GPU r 0.682 IoU 0.574, mirror r 0.872 IoU 0.702
+  M= 8  (238 lines, 10.8 KB): compiled: errors 0; GPU vs mirror r = 0.8101, mean GPU 0.9410 vs mirror 1.0786; vs truth: GPU r 0.704 IoU 0.597, mirror r 0.869 IoU 0.685
+  M=12  (350 lines, 17.4 KB): DID NOT COMPILE: status error, errors 8: lua: runtime error:
+   (bench returned a stale image: reopening it)
+  M=16  (494 lines, 26.1 KB): DID NOT COMPILE: status error, errors 8: lua: runtime error:
+   (bench returned a stale image: reopening it)
+  M=24  (878 lines, 49.5 KB): DID NOT COMPILE: status error, errors 8: lua: runtime error:

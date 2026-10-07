@@ -1,0 +1,15 @@
+largest N that compiles (first failure just above):
+  F  statements in one function body   : works up to 250, fails by 260
+  T  statements at the top level        : works up to 250, fails by 260
+   (bench returned a stale image: reopening it)
+   (bench returned a stale image: reopening it)
+  L  statements in one for-loop body     : works up to 680, fails by 700
+   (bench returned a stale image: reopening it)
+  P  statements packed 5 per line (F)   : works up to 250, fails by 260
+
+K functions of 150 statements each (each alone is under the single-function limit):
+  K = 1: total 150 statements -> compiled
+  K = 2: total 300 statements -> compiled
+  K = 3: total 450 statements -> compiled
+  K = 4: total 600 statements -> FAILED
+   (bench returned a stale image: reopening it)

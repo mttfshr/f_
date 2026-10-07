@@ -1,0 +1,27 @@
+
+== S0 / S0b: identity and orientation ==
+  [S0/S0b] status=ok frames=133 elapsed=2241 ms errors=0
+  base capture: shape (256, 256, 4), mean RGB [0.496 0.496 0.248], max 0.992
+  S0 identity (d=0, n=256, weight=1): relative error vs NumPy emulation, per (up_flip, out_flip):
+     up=0 out=0  rel_err = 0.0000
+     up=0 out=1  rel_err = 0.6000
+     up=1 out=0  rel_err = 0.6000
+     up=1 out=1  rel_err = 0.0000
+  S0b shift (d=0.25, F=(0.3,0.5), n=256):
+     up=0 out=0  rel_err = 0.5915
+     up=0 out=1  rel_err = 0.5977
+     up=1 out=0  rel_err = 0.5283
+     up=1 out=1  rel_err = 0.0025
+  best = up_flip 1, out_flip 1 (error 0.0025 vs runner-up 0.5283: distinct)
+
+== S6: fixed n=4096 (16.8 M points); capture size varies; ms per frame, 2 reps each ==
+  size-3 footprint                     r= 512 ( 64.0 pts/px):  47.38  65.44  mean  56.41 ms = 3.36 ms per M pts  errors 0
+  size-3 footprint                     r=1024 ( 16.0 pts/px):  30.89  27.25  mean  29.07 ms = 1.73 ms per M pts  errors 0
+  size-3 footprint                     r=2048 (  4.0 pts/px):  23.08  20.86  mean  21.97 ms = 1.31 ms per M pts  errors 0
+  size-3 footprint                     r=4096 (  1.0 pts/px):  18.29  19.13  mean  18.71 ms = 1.12 ms per M pts  (at/near the cap)  errors 0
+  corner-snap, size 2                  r= 512 ( 64.0 pts/px):  55.69  55.78  mean  55.74 ms = 3.32 ms per M pts  errors 0
+  corner-snap, size 2                  r=1024 ( 16.0 pts/px):  36.19  53.16  mean  44.68 ms = 2.66 ms per M pts  errors 0
+  corner-snap, size 2                  r=2048 (  4.0 pts/px):  21.46  24.84  mean  23.15 ms = 1.38 ms per M pts  errors 0
+  corner-snap, size 2                  r=4096 (  1.0 pts/px):  16.86  16.65  mean  16.76 ms = 1.00 ms per M pts  (at/near the cap)  errors 0
+  size 1 (vertex only; energy wrong)   r=1024 ( 16.0 pts/px):  16.69  32.60  mean  24.65 ms = 1.47 ms per M pts  errors 0
+  size 1 (vertex only; energy wrong)   r=4096 (  1.0 pts/px):  16.31  16.48  mean  16.39 ms = 0.98 ms per M pts  (at/near the cap)  errors 0

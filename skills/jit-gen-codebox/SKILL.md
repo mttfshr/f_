@@ -848,6 +848,61 @@ the trig function even runs.
 
 ---
 
+### More bench-verified facts (caustic gather / scatter spike, 2026-10-06)
+
+Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Findings: multi-guess gather").
+
+- **`sample()` is NOT bilinear when its coordinate is data-dependent and jumps between neighbouring pixels.**
+  Texture filtering chooses magnify or minify from the coordinate's screen-space derivative; above about one
+  texel per pixel it falls back to the NEAREST minification filter. So any dependent read whose coordinate differs
+  by more than a texel from pixel to pixel (Newton starts from different cells, ray marching, fractal iteration,
+  a gather with jumpy candidates) reads the texture piecewise-constant: error up to half a texel of variation
+  (median 6e-3 against 2e-5 at pixel-aligned coordinates, on a field changing 0.06 per texel). Smooth warps
+  (coordinate = uv + smooth offset) stay bilinear. This is the same mechanism as the "nearest-like when the source
+  is larger than the pix" fact above. It is silent: no error, plausible output, and iterations that never converge.
+  **Fix: interpolate by hand from four exact `nearest()` taps** (costs about 3.7x the reads of one `sample()`):
+  ```
+  fxy(u, v) {                       // texture side W (here 256); returns the decoded field (x, y)
+    tx = u * 256.0 - 0.5;  ty = v * 256.0 - 0.5;
+    ix = floor(tx);  iy = floor(ty);  ax = tx - ix;  ay = ty - iy;
+    x0c = (ix + 0.5) / 256.0;  x1c = (ix + 1.5) / 256.0;  y0c = (iy + 0.5) / 256.0;  y1c = (iy + 1.5) / 256.0;
+    px = (nearest(in2, vec(x0c, y0c)).x * (1.0 - ax) + nearest(in2, vec(x1c, y0c)).x * ax) * (1.0 - ay)
+       + (nearest(in2, vec(x0c, y1c)).x * (1.0 - ax) + nearest(in2, vec(x1c, y1c)).x * ax) * ay;
+    py = (same with .y);
+    return (px - 0.5) * 2.0, (py - 0.5) * 2.0;
+  }
+  fx, fy = fxy(wu, wv);
+  ```
+  With this the GPU equalled a float32 NumPy mirror to r = 1.0000. The hardware's own interpolation precision is
+  not the problem (8-bit weights: error median 2e-5, max 1.2e-4). If a GPU result disagrees with the mirror only
+  where coordinates are jumpy, suspect this before float32 arithmetic (a step-for-step float32 mirror was identical
+  to the float64 one).
+- **The codebox parser has a STATEMENT budget** ("lua: [string DSL.Parser]: stack overflow (too many captures)").
+  Bisected: about **250 statements** in one function body or at the top level (260 fails), about **450 for the
+  whole program** (450 compiled, 458 failed), a `for` loop body tolerates more (680). It is not bytes or lines: 600
+  one-statement lines and 120 lines packed five to a line behave the same, and a complicated 11 KB program
+  compiled where a 7.7 KB file of 600 simple statements failed. A loop's iteration count does not matter (the
+  long-loop fact above is about iterations, not statements). A function body is counted once however often it is
+  called, and a call is one statement, so repeated code belongs in functions. `require("file")` works (below) but
+  **adds no budget**: it is a textual include (2 required files of 150 statements compile, 4 fail, like the same
+  code inline).
+- **After that failure the bench is wedged**: every later job returns a STALE image (the same one, whatever the
+  code) with no error, until `benchclient.reopen()`. Before trusting a result after any compile failure, probe with
+  a known-good codebox (`tests/gather_proto.ensure_healthy`).
+- **Functions work inside a codebox, including the cases that matter:** a function body can call
+  `sample(in2, ...)` and `nearest(in2, ...)`, contain `for` loops with local variables (declare them before the
+  loop), and return several values (`return a, b;` received as `x, y = f(...)`). A program using a function is
+  bit-identical to the unrolled one (r = 1.00000). Params are still not visible inside: pass them in.
+- **`require("name")` loads `name.genexpr`** from the search path (it resolved from the bench's own folder) and a
+  required function can sample `in2`.
+- **`step(a, b)` with two literal constants folds the opposite way** (`step(0.3, 0.5)` gives 0, not 1). With
+  variables, `norm` or Params it follows GLSL, `step(edge, x)` = `x >= edge`, which is what the examples above
+  assume. Never test `step` with two literals, and write comparisons as `1.0 - step(b, a)` for `a < b`.
+- **Cost reference:** an empty `out1 = in1` pass measures about 2.1-2.5 ms per frame on the bench (CPU overhead
+  floor), so `measure` readings below that are upper bounds, not costs.
+
+---
+
 ## Code Health Checklist
 
 When reviewing any codebox, scan for these in order:
@@ -859,6 +914,9 @@ When reviewing any codebox, scan for these in order:
 - [ ] **Component assignment on stored variables (write)** — `z.x = ...` is a hard "invalid left-hand expression" compile error; use separate scalar variables (`zx`, `zy`) instead of one vector-like variable with component fields
 - [ ] **`vec4()` or `vec2()` constructors** — replace with `vec()`
 - [ ] **`select()`** — replace with `mix(a, b, step(...))` or `switch(cond, a, b)`
+- [ ] **`sample()` at jumpy, data-dependent coordinates** (iteration, ray marching, a gather over candidates) — reads NEAREST, not bilinear, whenever the coordinate changes by more than ~1 texel between neighbouring pixels; interpolate by hand from four `nearest()` taps (bench-verified 2026-10-06, see above)
+- [ ] **Statement count** — about 250 per function body or top level, about 450 for the whole program (not bytes, not lines); over that the parser fails with "stack overflow (too many captures)" and wedges the bench; move repeated code into functions (a call is one statement); `require` adds no budget
+- [ ] **`step()` with two literal arguments** — folds reversed (`step(0.3, 0.5)` = 0); keep one argument a variable or Param
 - [ ] **`snoise()` or `cycle()`** — replace with sin hash or `sin(x * twopi)` respectively
 - [ ] **`cell` used as an integer index** — it is `norm * (dim - 1)` on jit.gl.pix; use `floor(norm.x * dim.x)` for integer indices
 - [ ] **Variable names shadowing operators** — `cell`, `in`, `norm`, `snorm`, `dim` as variable names produce silent wrong output; rename with suffix (e.g. `cell_idx`, `band_idx`)

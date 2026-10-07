@@ -1,8 +1,55 @@
 # HANDOFF
 
-_Latest session: 2026-10-06 (two sessions; the newest section below supersedes the older ones where they differ)_ — `build_cleanup` **Phases 1, 2, 5 and 6 are done, Phase 4 is done except `f_sirds` (T019: fluid, advect and seeds absorbed; `f_sirds` deliberately left alone), and plan item 10 is 11 of 11.** 31 of 39 shipped patchers reproduce exactly from their `definition.py`; the drift baseline is 8 (`f_masonry`, `f_texrouter`, `f_vf_vorticity`, five out of scope). Everything is committed (last commit `bc190bb` when this was written), nothing is pushed.
+_Latest session: 2026-10-06 (three sessions; the NEWEST section below is a different workstream, the optics / Lumia research, and is NOT committed; the two older sections are `build_cleanup` and supersede each other as before)_ — `build_cleanup` **Phases 1, 2, 5 and 6 are done, Phase 4 is done except `f_sirds` (T019: fluid, advect and seeds absorbed; `f_sirds` deliberately left alone), and plan item 10 is 11 of 11.** 31 of 39 shipped patchers reproduce exactly from their `definition.py`; the drift baseline is 8 (`f_masonry`, `f_texrouter`, `f_vf_vorticity`, five out of scope). Everything in the `build_cleanup` work is committed (last commit `bc190bb` when it was written), nothing is pushed; **the optics research of the third session is not committed** (list in the newest section).
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
+
+## 2026-10-06, third session: optics research for a Lumia-type effect (RESEARCH ONLY; NOTHING COMMITTED; no module built)
+
+**Goal and outcome.** Matt asked for a Lumia-type module (a texture in, light through animated glass out). The session produced research, two draft specs and one open decision, no module. Everything is in `ideas/optics_map.md` (read its "Findings" sections first; they hold every number and caveat) and `ideas/f_lumia.md`.
+
+**Decisions (Matt)**
+- **`f_vf_glass` is ON HOLD** (idea + spec kept, marked): Vsynth already ships smooth morphing sources (`vs_noise_2/3/s`, `vs_chemical_osc`, `vs_filter_lp*`), and a smooth height through `f_vf_fieldmap` already makes a valid glass (checked in NumPy: even 8-bit height gives the same caustics; fieldmap's UV inset only stretches the field).
+- **The sheet regime goes into `f_caustic` as a second mode**, not a separate module: soft = today's path, untouched; sheets = new path beside it; a small selector picks the outlet source; the inactive branch should be disabled. "Lumia" is the look, not a module name.
+- **The METHOD for the sheets mode is OPEN: scatter or multi-start gather.** Numbers against the photon-counting truth at 3.5x the first-fold distance d*:
+
+| | existing `f_caustic` | multi-start gather (pix codebox, hand-made bilinear; G6 M4 T6 S2, tol 3e-4) | GPU scatter (GL scene) |
+|---|---|---|---|
+| agreement r | 0.51 | 0.930 (1.000 at 1 d*, 0.960 at 2 d*) | 0.994 (0.999 at 0.6 and 1 d*) |
+| bright-line overlap | 0.20 | 0.840 | 0.926 |
+| cost | cheap | 4.4 ms/pass at 256², 11 ms at 512² (4 starts); 7.8 / 19.8 ms with 8 starts; grows with pixels | held the 60 fps cap up to 6.55 M points into 1024²; headroom unmeasured |
+| integration | none | ordinary shader; fits builder and tests; no lag, no memory grid; parser budget ~450 statements (8 starts fit, maybe 16-24 with more function-izing) | `jit.gl.node` + `gridshape` matrix + `jit.gl.mesh` points + `.jxs`; 1 frame behind pix chains; 48 B/vertex lattice; `fy = -1` flip; bypass needs a pix stage after it |
+
+**Findings that outlive the decision** (all bench-verified unless marked; now in `skills/jit-gen-codebox/SKILL.md`)
+- **`sample()` is nearest, not bilinear, when its coordinate is data-dependent and jumps between neighbouring pixels** (filtering picks magnify/minify from the screen-space derivative). Fix: four exact `nearest()` taps (~3.7x the reads). This was the entire "GPU worse than NumPy" mystery. **Not audited:** whether any shipped module reads `sample()` at jumpy computed coordinates.
+- **Codebox parser statement budget:** ~250 per function body / top level, ~450 whole program (not bytes or lines), for-loop bodies tolerate more; `require` adds none; functions help (a call is one statement). A failure **wedges the bench** (stale image, no error) until `reopen()`.
+- Functions can sample `in2`, loop and multi-return; `require("name")` loads `name.genexpr`; `step()` with two literal constants folds reversed.
+- Scatter, measured: float32 additive accumulation exact (no clamp); texture upload and capture readback each flip vertically (net upright, field Y inverted: `fy = -1`); `gridshape` has no `@draw_mode` and `@poly_mode 2 2` draws each vertex ~6x (use matrix output into a points mesh); GL points are round (size-1 loses ~21% energy; tent splat with `point_size 3`); ~4 points per pixel is the quality plateau; frame lag vs pix chains is exactly 1.
+- Not causes of the gap, so do not chase them again: float32 arithmetic, 8-bit interpolation weights, candidate selection, the Newton step.
+- `docs/f-reference/f_caustic.md` was wrong about `scale` 0 (it is the undisplaced divergence-weighted layer, not empty): fixed.
+
+**Files, ALL UNCOMMITTED** (`git status`)
+- Modified: `docs/f-reference/f_caustic.md` (the `scale` row), `ideas/INDEX.md`, `skills/jit-gen-codebox/SKILL.md`, `tests/README.md`, this file.
+- New, tracked-worthy: `ideas/optics_map.md`, `ideas/f_lumia.md`, `ideas/f_vf_glass.md`, `.specify/f_vf_glass/spec.md` (ON HOLD), `.specify/f_caustic_scatter/spec.md` (still a separate-module draft with a "superseded in part" note), `tests/spike_scatter.py`, `tests/gather_proto.py`, `tests/bench/{make_spike_scatter.py, spike_scatter.jxs, spike_scatter.maxpat, spike_scatter_chain.maxpat}` (records, not regression gates; `tests/README.md` lists them).
+- **Untracked `scratch/` that the tests/ records import:** `caustic_fidelity.py`, `multi_guess_gather2.py` (and `float32_mirror.py`, `gather_debug.py` for the gap hunt). Commit those with the records or the records will not run. Also in `scratch/`: the other research scripts (`multi_guess_gather.py`, `glass_vs_fieldmap*.py`, `require_probe.py`, `parser_limit_probe.py`), PNGs and `*.log` outputs; curate or delete as you like (nothing else depends on them).
+
+**State of Max and the bench.** Nothing is running. The CODEBOX bench is open in Max (reopened many times); the module bench was closed to avoid contention (`gather_proto.ensure_codebox_bench` closes it). Max reached ~3 GB resident during the big-lattice sweep: restart it if it feels sluggish. Do not leave a Vsynth performance patch open while either bench runs.
+
+**Do first next session (suggested order)**
+1. **Decide gather vs scatter.** Cheapest evidence first: (a) the **cell-Jacobian experiment**: take the slopes from the same four taps as the field value (one `fxy` call per Newton step instead of five); estimated ~5x fewer Newton-stage reads but it changes the slope definition, so check accuracy against 0.930 / 0.840 first (NumPy, then bench); if cost falls to ~1 ms at 256² the gather becomes attractive. (b) A **scratch patch to look at real sheets** on Vsynth sources (`vs_noise_*` or `vs_chemical_osc` -> `vs_filter_lp*` -> `f_vf_fieldmap` -> `f_caustic`, plus the scatter spike's chain): all numbers so far are against physics, nobody has judged the look; needs Matt's eyes. (c) If scatter: its Phase 0 spikes (lag via `@layer`, 12 B/vertex lattice, real chain + render-size adapt, source aliasing / gobo = highest risk, headroom beyond the 60 fps cap).
+2. **Rewrite `.specify/f_caustic_scatter/spec.md` as an addendum to `f_caustic`** (mode switch; shared `scale` = distance, `gain`, `mix`, `bypass`; soft-only `softness` / `color_shift`; new `detail`; `gain` default per mode). Do this after step 1.
+3. **Commit** the research (see Files; mind the scratch imports).
+
+**Open decisions and loose threads**
+- HDR/tone-map policy (illuminance peaks ~18x mean), `edge: wrap`, where the `.jxs` lives (Max search path), the codebox-first deviation wording in the constitution (if scatter), the mode's name/UI, whether the lattice is built only when sheets mode is on.
+- `docs/f-reference/f_caustic.md`: the `bypass` row is stale (says out2 goes black; since 2026-10-06 bypass passes the source on every outlet). Not edited.
+- `.specify/plan.md` and README were NOT updated: no module is in the build queue, no patcher status changed, and `.specify/`'s README description already covers new directories.
+- **Skills:** `jit-gen-codebox` changed this session and is the only stale skill (`./skills/check.sh` says so; the others are ok). Re-upload it, then `./skills/check.sh stamp`. I did not touch `skills/MANIFEST.md`. (The older note below about re-uploading `vsynth-bpatcher` for the T019 keys no longer shows as stale; I did not check whether the skill text covers those keys.)
+
+**Process lessons from this session** (so they are not relearned)
+- A mismatch between a NumPy mirror and the GPU is not automatically the GPU's fault, and the first hypothesis was wrong three times (float32, interpolation weights, then my own probe forgetting to pass `d`). Bisect by program stage with a tiny known-good probe at each step, and test one hypothesis at a time.
+- Numbers from a program that never compiled look like valid measurements (flat 330-650 fps). Always confirm the output is correct, and probe the bench after any compile failure, before trusting a timing.
+- The project's float32-mirror rule is right, but here a float32 mirror was identical to float64; the discrepancy was in an execution-model fact the mirror did not model (`gpu_sim.sample` is always bilinear).
 
 ## 2026-10-06, second session: masonry bypass, bench table, seeds (T019) and T026 done (offline suite green, bench green)
 

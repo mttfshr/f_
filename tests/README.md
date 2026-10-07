@@ -137,6 +137,14 @@ hit a save prompt. After regenerating, call `benchclient.reopen()`.
   feedback=(from_out, to_in))` — multi-frame runs with a one-frame-delay
   feedback loop (Pattern 1): step s reads step s-1's output from input
   `to_in` (2 or 3). Returns `{step: [out1..out4]}`.
+- **A codebox compile failure can wedge the bench** (seen 2026-10-06 with the
+  parser's "stack overflow (too many captures)" on a program over ~450
+  statements, see `skills/jit-gen-codebox`): every later job then returns the
+  SAME stale image, whatever the code, with no error, until
+  `benchclient.reopen()`. A long session that may compile something large
+  should probe with a known-good codebox before trusting a result
+  (`gather_proto.ensure_healthy` does this and reopens). `measure` readings
+  under the empty-pass floor (~2.1-2.5 ms per frame here) are upper bounds.
 
 ## The module bench (shipped bpatchers)
 
@@ -200,6 +208,18 @@ Facts section).
   regression gates: `bench_fluid_probes.py` (Phase 0 GPU probes; run with
   `--all`) and `fluid_feasibility.py` (Phase 0 module-bench feasibility
   study, no assertions, matches no runner)
+- Records for `ideas/optics_map.md` (the caustic / Lumia research, 2026-10-06),
+  not regression gates, matching no runner: `spike_scatter.py` plus
+  `bench/make_spike_scatter.py`, `bench/spike_scatter.jxs`,
+  `bench/spike_scatter.maxpat` and `bench/spike_scatter_chain.maxpat`
+  (GPU point-scatter caustic on the MODULE bench with a custom wrapper:
+  identity, orientation flips, float accumulation, truth agreement, density,
+  cost, frame lag; stages `s0 s1 s2 s2b s3 s3b`), and `gather_proto.py`
+  (generator and CODEBOX-bench runner for the multi-start gather: compile
+  ladder, size/cost measurement, `make_code_fn(..., bil=True)` is the working
+  version; needs `scratch/caustic_fidelity.py` and
+  `scratch/multi_guess_gather2.py` as its NumPy mirror and truth, which are
+  untracked)
 - `bg.sh` + `test_bg.py` -- the background runner (start, status, log, stop, list; lock; fake-command tests)
 - `benchdeps.py` + `test_benchdeps.py` -- what `bench.sh --changed` runs (input hashing, decision table, record)
 - `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name)

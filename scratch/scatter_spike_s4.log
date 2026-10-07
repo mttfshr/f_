@@ -1,0 +1,44 @@
+
+== S0 / S0b: identity and orientation ==
+  [S0/S0b] status=ok frames=133 elapsed=2235 ms errors=0
+  base capture: shape (256, 256, 4), mean RGB [0.496 0.496 0.248], max 0.992
+  S0 identity (d=0, n=256, weight=1): relative error vs NumPy emulation, per (up_flip, out_flip):
+     up=0 out=0  rel_err = 0.0000
+     up=0 out=1  rel_err = 0.6000
+     up=1 out=0  rel_err = 0.6000
+     up=1 out=1  rel_err = 0.0000
+  S0b shift (d=0.25, F=(0.3,0.5), n=256):
+     up=0 out=0  rel_err = 0.5915
+     up=0 out=1  rel_err = 0.5977
+     up=1 out=0  rel_err = 0.5283
+     up=1 out=1  rel_err = 0.0025
+  best = up_flip 1, out_flip 1 (error 0.0025 vs runner-up 0.5283: distinct)
+
+== S4: one-pass cost above the cap (single mesh; cap 16.7 ms; glass at 3.5 d*; 48 B/vertex) ==
+  size-3 footprint      r= 512 n= 1536 ( 2.36 M pts,  9.0 pts/px,   113 MB):   16.81 ms/frame  (at the cap: within budget, cost unknown)  errors 0
+  size-3 footprint      r= 512 n= 2048 ( 4.19 M pts, 16.0 pts/px,   201 MB):   15.94 ms/frame  (at the cap: within budget, cost unknown)  errors 0
+  size-3 footprint      r= 512 n= 2560 ( 6.55 M pts, 25.0 pts/px,   315 MB):   26.37 ms/frame    errors 0
+  size-3 footprint      r= 512 n= 3072 ( 9.44 M pts, 36.0 pts/px,   453 MB):   30.67 ms/frame    errors 0
+     -> size-3 footprint      r=512: slope over the cap = 1.49 ms per million points (2 points)
+  size-3 footprint      r=1024 n= 2560 ( 6.55 M pts,  6.2 pts/px,   315 MB):   16.54 ms/frame  (at the cap: within budget, cost unknown)  errors 0
+  size-3 footprint      r=1024 n= 3072 ( 9.44 M pts,  9.0 pts/px,   453 MB):   28.66 ms/frame    errors 0
+  size-3 footprint      r=1024 n= 3584 (12.85 M pts, 12.2 pts/px,   617 MB):   39.88 ms/frame    errors 0
+  size-3 footprint      r=1024 n= 4096 (16.78 M pts, 16.0 pts/px,   805 MB):   44.58 ms/frame    errors 0
+     -> size-3 footprint      r=1024: slope over the cap = 2.14 ms per million points (3 points)
+  corner-snap, size 2   r= 512 n= 1536 ( 2.36 M pts,  9.0 pts/px,   113 MB):   16.42 ms/frame  (at the cap: within budget, cost unknown)  errors 0
+  corner-snap, size 2   r= 512 n= 2048 ( 4.19 M pts, 16.0 pts/px,   201 MB):   16.29 ms/frame  (at the cap: within budget, cost unknown)  errors 0
+  corner-snap, size 2   r= 512 n= 2560 ( 6.55 M pts, 25.0 pts/px,   315 MB):   16.40 ms/frame  (at the cap: within budget, cost unknown)  errors 0
+  corner-snap, size 2   r= 512 n= 3072 ( 9.44 M pts, 36.0 pts/px,   453 MB):   26.21 ms/frame    errors 0
+  corner-snap, size 2   r=1024 n= 2560 ( 6.55 M pts,  6.2 pts/px,   315 MB):   16.35 ms/frame  (at the cap: within budget, cost unknown)  errors 0
+  corner-snap, size 2   r=1024 n= 3072 ( 9.44 M pts,  9.0 pts/px,   453 MB):   23.17 ms/frame    errors 0
+  corner-snap, size 2   r=1024 n= 3584 (12.85 M pts, 12.2 pts/px,   617 MB):   23.42 ms/frame    errors 0
+  corner-snap, size 2   r=1024 n= 4096 (16.78 M pts, 16.0 pts/px,   805 MB):   45.85 ms/frame    errors 0
+     -> corner-snap, size 2   r=1024: slope over the cap = 3.16 ms per million points (3 points)
+
+  projection (slope x points; conservative, the slope was measured at 9-16 pts/px):
+    size-3 footprint      (fit at r=512): 1 pts/px at 1080p (2.1 M): 3.1 ms, 2 pts/px at 1080p (4.1 M): 6.2 ms, 4 pts/px at 1080p (8.3 M): 12.3 ms
+    size-3 footprint      (fit at r=1024): 1 pts/px at 1080p (2.1 M): 4.4 ms, 2 pts/px at 1080p (4.1 M): 8.9 ms, 4 pts/px at 1080p (8.3 M): 17.8 ms
+    corner-snap, size 2   (fit at r=1024): 1 pts/px at 1080p (2.1 M): 6.5 ms, 2 pts/px at 1080p (4.1 M): 13.1 ms, 4 pts/px at 1080p (8.3 M): 26.1 ms
+
+  noise check, same config three times (size-3, r=1024, n=3072):
+    21.82, 25.28, 20.41 ms   errors 0

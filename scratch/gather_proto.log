@@ -1,0 +1,37 @@
+== size ladder: does it compile AND match the NumPy mirror? (d = 3.5 d*, central 96x96 crop, S as listed)
+  G=4 M=2 T=3 S=1  (153 lines, 6 KB): compiled, output differs from mirror: errors 0; GPU vs mirror r = 0.5452, mean GPU 0.3843 vs mirror 0.5690; vs truth: GPU r 0.393 IoU 0.324, mirror r 0.732 IoU 0.722
+  G=6 M=3 T=4 S=1  (194 lines, 9 KB): compiled, output differs from mirror: errors 0; GPU vs mirror r = 0.5733, mean GPU 0.5588 vs mirror 0.9222; vs truth: GPU r 0.430 IoU 0.398, mirror r 0.832 IoU 0.768
+  G=6 M=4 T=6 S=2  (237 lines, 11 KB): compiled, output differs from mirror: errors 0; GPU vs mirror r = 0.7815, mean GPU 0.7477 vs mirror 1.0268; vs truth: GPU r 0.638 IoU 0.506, mirror r 0.865 IoU 0.718
+  G=6 M=4 T=8 S=2  (237 lines, 11 KB): compiled, output differs from mirror: errors 0; GPU vs mirror r = 0.7812, mean GPU 0.7740 vs mirror 1.0319; vs truth: GPU r 0.640 IoU 0.508, mirror r 0.862 IoU 0.699
+  G=6 M=5 T=6 S=2  (282 lines, 14 KB): DID NOT COMPILE: status error, errors 8: lua: runtime error:
+
+== cost (codebox bench, uncapped; K chained copies; ms per pass only when GPU-bound)
+   measured for every config that COMPILES; the output of these configs is still below the NumPy mirror,
+   so this is the cost of the shader's structure, not yet of a correct gather
+  reference  out1 = in1   256^2  chain 8: fps 400  (frame 2.50 ms, baseline K=0 2.35 ms)
+  reference  out1 = in1   512^2  chain 8: fps 474  (frame 2.11 ms, baseline K=0 1.99 ms)
+   (bench returned a stale image: reopening it)
+  G=4 M=2 T=3 S=1  256^2  chain 1: fps 584  <= 2.10 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  256^2  chain 4: fps 612  <= 0.52 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  256^2  chain 8: fps 564  <= 0.29 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  256^2  chain 16: fps 537  <= 0.16 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  256^2  chain 32: fps 487  <= 0.09 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  512^2  chain 1: fps 431  <= 3.43 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  512^2  chain 4: fps 495  <= 0.64 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  512^2  chain 8: fps 483  <= 0.30 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  512^2  chain 16: fps 487  <= 0.11 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=4 M=2 T=3 S=1  512^2  chain 32: fps 485  <= 0.07 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  256^2  chain 1: fps 599  <= 1.63 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  256^2  chain 4: fps 547  <= 0.40 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  256^2  chain 8: fps 587  <= 0.22 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  256^2  chain 16: fps 511  <= 0.13 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  256^2  chain 32: fps 574  <= 0.06 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  512^2  chain 1: fps 624  <= 1.92 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  512^2  chain 4: fps 480  <= 0.58 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=3 T=4 S=1  512^2  chain 8: fps 266  0.47 ms/pass (GPU-bound)  [ok, errors 0]
+  G=6 M=4 T=6 S=2  256^2  chain 1: fps 538  <= 1.57 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=4 T=6 S=2  256^2  chain 4: fps 201  1.25 ms/pass (GPU-bound)  [ok, errors 0]
+  G=6 M=4 T=6 S=2  512^2  chain 1: fps 294  3.40 ms/pass (GPU-bound)  [ok, errors 0]
+  G=6 M=4 T=8 S=2  256^2  chain 1: fps 530  <= 1.88 ms/pass (not GPU-bound)  [ok, errors 0]
+  G=6 M=4 T=8 S=2  256^2  chain 4: fps 165  1.52 ms/pass (GPU-bound)  [ok, errors 0]
+  G=6 M=4 T=8 S=2  512^2  chain 1: fps 245  4.08 ms/pass (GPU-bound)  [ok, errors 0]

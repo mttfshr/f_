@@ -1,0 +1,11 @@
+height range -0.0485..0.0458 (x0.0160); peak |F| 0.90; d* = 0.0592
+fieldmap gain needed to recover the physical gradient = range / (2 s); the module's gain range is -10..10
+
+neighbour distance s = 0.012: gain 3.9 (in the module's range); field error vs analytic: float32 0.1570, 8-bit 0.1577
+   d = 1.0 d*:  float32 vs analytic  r 0.9336 IoU 0.682   |   8-bit vs analytic  r 0.9306 IoU 0.675   |   8-bit vs float32  r 0.9965
+   d = 3.5 d*:  float32 vs analytic  r 0.7745 IoU 0.533   |   8-bit vs analytic  r 0.7757 IoU 0.517   |   8-bit vs float32  r 0.9941
+
+neighbour distance s = 0.024: gain 2.0 (in the module's range); field error vs analytic: float32 0.3081, 8-bit 0.3082
+   d = 1.0 d*:  float32 vs analytic  r 0.8240 IoU 0.497   |   8-bit vs analytic  r 0.8233 IoU 0.497   |   8-bit vs float32  r 0.9990
+   d = 3.5 d*:  float32 vs analytic  r 0.5985 IoU 0.322   |   8-bit vs analytic  r 0.5996 IoU 0.320   |   8-bit vs float32  r 0.9986
+

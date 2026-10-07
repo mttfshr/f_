@@ -1,0 +1,16 @@
+ok  R1 require a tiny helper file                              got [0.6, 0.0, 0.0] expect [0.6, 0.0, 0.0]  errors 0
+ok  R2 required function samples in2                           got [0.4859, 0.0, 0.0] expect [0.4858, 0.0, 0.0]  errors 0
+   (R3 body: 19.1 KB, 1500 statements)
+BAD R3 required BIG function (should work if parsed apart)     got [0.5383, 0.6567, 0.5] expect [0.15, 0.0, 0.0]  errors 6 | lua: runtime error:
+   (bench returned a stale image: reopening it)
+ok  R4 split program M= 6 (main  5.8 KB + required 2.4 KB): compiled; vs the same program with the function inline: r = 1.00000, max|diff| = 0.0000
+ok  R4 split program M= 8 (main  8.3 KB + required 2.4 KB): compiled; vs the same program with the function inline: r = 1.00000, max|diff| = 0.0000
+BAD R4 split program M=10 (main 11.3 KB + required 2.4 KB): no usable output | lua: runtime error:
+   (bench returned a stale image: reopening it)
+BAD R4 split program M=12 (main 14.9 KB + required 2.4 KB): no usable output | lua: runtime error:
+   (bench returned a stale image: reopening it)
+BAD R4 split program M=16 (main 23.6 KB + required 2.4 KB): no usable output | lua: runtime error:
+   (bench returned a stale image: reopening it)
+BAD CONTROL the same big body INLINE (expected to fail)        got [0.5383, 0.6567, 0.5] expect [0.15, 0.0, 0.0]  errors 6 | lua: runtime error:
+   control failed as expected
+   (bench returned a stale image: reopening it)

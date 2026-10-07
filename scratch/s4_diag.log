@@ -1,0 +1,6 @@
+  tiny lattice 64^2 (4k pts), K=32     -> pure per-mesh overhead?:  107.7 ms/frame (errors 0)
+  tiny lattice 64^2 (4k pts), K=8      -> same, smaller K:  -27.1 ms/frame (errors 0)
+  1M pts, psize 1 (no fill), K=16      -> vertex/CPU side only:   16.2 ms/frame (errors 0)
+  1M pts, psize 3, K=16 (repeat A):   47.3 ms/frame (errors 0)
+  1M pts, psize 3, K=16 (repeat B):   39.6 ms/frame (errors 0)
+  1M pts, psize 3, K=4, again          -> noise at the cap:   16.4 ms/frame (errors 0)
