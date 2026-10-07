@@ -12,7 +12,7 @@ _Research background: `ideas/optics_map.md`, `ideas/f_lumia.md`; spike records `
 
 Add a second mode to `f_caustic`: **sheets**, a GPU forward scatter (a lattice of points displaced through the
 vecfield and splatted additively into a float32 capture), beside the existing 8-tap gather, which stays
-byte-for-byte untouched. The module keeps its three inlets and two outlets. New parameters: `mode` (soft | sheets,
+byte-for-byte untouched. The module keeps its two inlets (texture + control, vecfield) and two outlets. New parameters: `mode` (soft | sheets,
 default soft) and `detail` (1-5, the capture-size / density ladder, default 5). `scale`, `gain`, `mix_pct` and
 `bypass` are shared.
 
@@ -61,7 +61,7 @@ pass. The `detail` ladder is the escape hatch for weaker machines.
 
 ## Constitution Check
 
-- ✅ **1. Vsynth compatibility**: three inlets and two outlets unchanged; `vs_inState` on the source, none on the
+- ✅ **1. Vsynth compatibility**: two inlets and two outlets unchanged; `vs_inState` on the source texture, none on the
   vecfield; the scene draws in the `vsynth` context like `vs_xyz_disp`.
 - ✅ **2. Codebox before patcher**: composite and select codeboxes are written and bench-verified as files before any
   structure is built (Phases 2 and 4); the shader is verified in the module bench (a `.jxs` is not a pix codebox).

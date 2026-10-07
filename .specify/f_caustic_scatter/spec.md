@@ -120,8 +120,10 @@ Not built (v1): `edge: wrap` (untested), per-channel dispersion, an analytic gla
 
 ## Inlets / Outlets
 
-Unchanged from `f_caustic`: inlet 0 control, inlet 1 light source (`vs_inState`), inlet 2 vecfield (no
-`vs_inState`: unconnected = silent). Outlet 0 composite; outlet 1 isolated caustic layer.
+Unchanged from `f_caustic`: **two inlets, two outlets**. Inlet 0 carries the light-source texture AND the control
+messages (`routepass`; `vs_inState` on the texture); inlet 1 is the vecfield (no `vs_inState`: unconnected =
+silent). Outlet 0 composite; outlet 1 isolated caustic layer. (An earlier draft of this spec, copied from the stale
+`docs/f-reference/f_caustic.md` signal-flow section, said three inlets; the shipped patcher has two.)
 
 **Unconnected vecfield in sheets mode must be silent too** (composite = source, layer = black). An unbound
 float32 input reads 0, which decodes to `F = -1` and would throw a displaced copy of the source, so this needs
@@ -134,11 +136,11 @@ light. Phase 1 verifies how an unconnected pix input actually reads in Vsynth fi
 ## Signal flow
 
 ```
-in0 (control) ─ routepass ─ route <params> ─ (existing) ─ + mode / detail handling
-in1 (source, vs_inState) ─┬─ caustic_pix in1 ............... (existing soft path, untouched)
-in2 (vecfield) ───────────┤
-                          ├─ caustic_pix in2
-                          └─ slab(float32, @rectangle 0) x2 ─ scatter scene (node, mesh, .jxs)
+inlet 0 (texture + control) ─ routepass ─┬─ route <params> ─ (existing) ─ + mode / detail handling
+                                          └─ vs_inState ─┬─ caustic_pix in1 ....... (existing soft path, untouched)
+                                                         └─ slab(float32, @rectangle 0) source ─┐
+inlet 1 (vecfield, no vs_inState) ───────┬─ caustic_pix in2                                      ├─ scatter scene
+                                          └─ slab(float32, @rectangle 0) field ───────────────────┘   (node, mesh, .jxs)
 caustic_pix  out1 composite, out2 layer ────────────────────────┐
 sheets composite pix (tone map, bilinear upscale to the source's size, mix, bypass) ─┤
 select pix (Param sheets_gate: picks soft or sheets per outlet) ─┬─ out0 composite
