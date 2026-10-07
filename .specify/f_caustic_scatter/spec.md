@@ -1,168 +1,216 @@
-# Spec: f_caustic_scatter (working name)
+# Spec addendum: f_caustic "sheets" mode (GPU forward scatter)
 
-_Created: 2026-10-06_
-_Status: Draft — Phase 0 spikes and decisions pending (see Open Questions). Nothing here is built; the
-behaviour below was measured in the 2026-10-06 spike (`tests/spike_scatter.py`, `tests/bench/spike_scatter.*`,
-`scratch/scatter_spike_*.log`) and recorded in `ideas/optics_map.md`, "Findings: scatter feasibility spike"._
+_Created: 2026-10-06. Rewritten 2026-10-07 as an addendum to `f_caustic` (it began as a separate-module draft)._
+_Status: Draft for review. Nothing here is built. The behaviour below was measured in the 2026-10-06 and
+2026-10-07 spikes (`tests/spike_scatter.py` stages `s0`-`s11`, `tests/bench/spike_scatter*.maxpat`,
+`spike_scatter.jxs`, `scratch/scatter_spike_*`) and recorded in `ideas/optics_map.md` ("Findings: scatter
+feasibility spike", "Findings: scatter density, cost and detail"). Items marked **[DECIDE]** carry a
+recommendation and need Matt's answer before Phase 1._
 
-Concept: `ideas/f_lumia.md`, `ideas/optics_map.md`. Producer for its field: `.specify/f_vf_glass/`.
+Concept: `ideas/f_lumia.md`, `ideas/optics_map.md`. Existing module: `docs/f-reference/f_caustic.md`,
+`src/f_caustic/definition.py`.
 
-**Working name.** `f_caustic` (the gather) stays. This module is its forward-scatter counterpart. "f_lumia"
-is the look (the umbrella idea, a preset or demo patch), not this module's name. Rename before build if
-something better turns up.
-
----
-
-## What it does
-
-Forward-scatters light through a vecfield. A lattice of points ("glass samples") is displaced to
-`u + d * F(u)` by the vecfield and each point deposits a bilinear splat of `weight * source(u)` there with
-additive blending into a float32 capture. Accumulated splat density is illuminance: thin bright fold lines up
-to about the first fold, and, beyond about twice that distance, the overlapping translucent folded sheets
-that a gather (`f_caustic`) cannot form at any setting (measured: gather r = 0.51 against photon-counting
-truth at 3.5 d*, scatter r = 0.994).
-
-**Consumer in the f_vecfield family.** Vecfield in, source in, light out. Not a producer: the glass is
-`f_vf_glass` (or any vecfield: `f_vf_fieldmap`, `f_chladni`, ...).
-
-**Deliberate deviation from "codebox-first".** The constitution says GLSL lives in `jit.gl.pix` codeboxes.
-The scatter's shader is a GLSL 1.20 `.jxs` vertex+fragment pair drawn by `jit.gl.mesh` into a
-`jit.gl.node` (as Vsynth's own `vs_xyz_disp` does with `vtfk.jxs`), because a pix codebox is a
-per-pixel gather and cannot scatter. Everything else (composite, tone map, bypass) stays in a normal pix
-stage. The deviation is recorded here and should be recorded in the constitution when the module ships.
+**This is not a new module.** `f_caustic` gains a second mode. The gather (soft) path is **untouched**; the sheets
+path is added beside it; the inactive branch is disabled; one stage picks the outlets. `f_vf_glass` stays on hold
+(any vecfield works: `f_vf_fieldmap`, `f_chladni`, `f_vf_vortex`, ...).
 
 ---
 
-## Algorithm
+## What the sheets mode does
 
-### Scene (in a `jit.gl.node vsynth @capture 1 @type float32`, drawn each frame)
+Forward-scatters light through the vecfield. A lattice of points ("glass samples") is displaced to
+`u + scale * F(u)` and each deposits a bilinear splat of `weight * source(u)` there, additively, into a float32
+capture. Accumulated splat density is illuminance: thin fold lines up to about the first fold and, beyond about
+twice that distance, the overlapping translucent folded sheets that the 8-tap gather cannot form at any setting
+(measured against photon-counting truth at 3.5 d*: gather r = 0.51, scatter r = 0.994).
 
-- **Lattice.** `n × n` points from `jit.gl.gridshape @matrixoutput 1 @automatic 0` into
-  `jit.gl.mesh @draw_mode points`. (Measured: gridshape's own `@poly_mode 2 2` emits each vertex about 6
-  times; `@draw_mode` is not valid on gridshape. The matrix into a points mesh gives multiplicity exactly 1.)
-  Points are at `u_i = i/(n-1)`.
+**Deliberate deviation from "codebox-first".** The constitution says GLSL lives in `jit.gl.pix` codeboxes. The
+scatter's shader is a GLSL 1.20 `.jxs` vertex + fragment pair drawn by `jit.gl.mesh` into a `jit.gl.node` (as
+Vsynth's own `vs_xyz_disp` does with `vtfk.jxs`), because a pix codebox is a per-pixel gather and cannot scatter.
+Composite, tone map, mode selection and bypass stay in normal pix stages. Record the deviation in the constitution
+when the mode ships (**[DECIDE]** wording).
+
+---
+
+## Algorithm (as built in the spike and shown to work)
+
+### Scene (a `jit.gl.node vsynth @capture 1 @type float32`, drawn each frame)
+
+- **Lattice.** `n x n` points from `jit.gl.gridshape @matrixoutput 1 @automatic 0` into
+  `jit.gl.mesh @draw_mode points` (multiplicity exactly 1; gridshape's own poly modes emit each vertex about 6
+  times). 12 planes, 48 bytes per vertex. Points at `u_i = i/(n-1)`. Regular lattice: jitter was tested and is a
+  net loss (grain for moire; r drops 1-13%).
 - **Vertex program** (GLSL 1.20, vertex texture fetch on float32 textures):
   ```
   u   = gl_Vertex.xy * 0.5 + 0.5
-  F   = (texture2D(field, u).xy - 0.5) * 2;   F.y *= fy
-  x   = u + d * F
-  col = texture2D(source, u) * weight
+  F   = (texture2D(field, u).xy - 0.5) * 2;   F.y *= -1           // orientation baked (see below)
+  x   = u + scale * F
+  col = texture2D(source, u) * weight                              // ONE bilinear read per point
   ppx = x * res
-  gl_Position = (x * 2 - 1, 0, 1)             // straight to clip space; no camera
+  xs  = floor(ppx + 0.5) / res                                     // corner snap
+  gl_Position = (xs * 2 - 1, 0, 1)                                 // straight to clip space: no camera
   ```
-- **Fragment program:** tent weight `max(0, 1-|dx|) * max(0, 1-|dy|)` from `gl_FragCoord.xy - ppx`; output
-  `col * w`. Draw with `point_size 3` (round footprint of radius 1.5 covers every pixel centre within ±1 px).
+- **Fragment program:** tent weight `max(0, 1-|dx|) * max(0, 1-|dy|)` from `gl_FragCoord.xy - ppx` (the
+  UNsnapped position), output `col * w`. **`point_size 2`** with the corner snap: a size-2 round point on a pixel
+  corner covers exactly the four pixel centres the tent can reach, and the image is bit-identical to `point_size 3`
+  (spike S5), at roughly half the fragments.
 - **Blend:** additive (`blend_mode 1 1`), `depth_enable 0`, `lighting_enable 0`, node `@erase_color 0 0 0 0`.
-- **Weight:** `weight = (R / n)²`, so a uniform source of 1 gives mean illuminance 1 for points that stay
-  inside the viewport.
-- **Texture adapters:** incoming source and field go through `jit.gl.slab @rectangle 0 @type float32`
-  (normalised 2D float32, as `vs_xyz_disp` does; `@type float32` is set explicitly).
+- **Weight:** `weight = (capture / n)^2`, so a uniform source of 1 has mean illuminance 1.
+- **Texture adapters:** source and field go through `jit.gl.slab @rectangle 0 @type float32` (normalised 2D
+  float32, as `vs_xyz_disp` does).
+- **Shader simplifications for the module:** the spike shader's experiment uniforms (`h`, `jit`, `latn`, `taps`)
+  and the `snap` switch are removed; snap, size 2, a regular lattice and one source read are fixed. `fy` is baked.
+
+**Orientation.** Texture upload and capture each flip vertically, so the field's Y is inverted; `fy = -1`
+restores the pix-chain convention (r = 1.0000 against the matrix-space mirror in the bench). **Confirmed live
+2026-10-07:** in a real Vsynth chain with a real `f_vf_fieldmap` upstream Matt did not need the flip.
+
+### The `detail` ladder (a setup control)
+
+`detail` is a five-step ladder, not a free resolution. Each step is a capture size and points per capture pixel;
+one message sets `capture`, `n`, `weight` (n last, so the lattice is rebuilt once and never at an intermediate
+size). Verified by bench stage `s11` (each step identical to the equivalent explicit messages, max|diff| 0).
+
+| `detail` | capture | points / capture px | points | lattice (48 B/vertex) |
+|---|---|---|---|---|
+| 1 | 256² | 2 | 0.13 M | 6 MB |
+| 2 | 512² | 2 | 0.52 M | 25 MB |
+| 3 | 768² | 2 | 1.18 M | 57 MB |
+| 4 | 1024² | 2 | 2.10 M | 101 MB |
+| 5 | 1024² | 4 | 4.19 M | 201 MB |
+
+The capture is a **fixed internal size** (square), independent of the Vsynth render size; the composite stage
+upscales it bilinearly to the output. Output resolution therefore changes sharpness, not cost (4K costs the same
+as 1080p). Changing `detail` rebuilds the lattice on the CPU, which hitches at the high steps: it is a setup
+control, not something to automate during a performance. Matt's default look is step 5; the cheap fallback is
+step 2. Matt judged the presets "different, none worse, all useful" (2026-10-07), so the ladder is a creative
+control as well as a cost control.
 
 ### Measured facts the design depends on
 
 | Fact | Measurement |
 |---|---|
-| Orientation | texture upload and capture readback each flip vertically (net upright), so the field's Y is inverted; `fy = -1` restores the pix-chain convention (r = 1.0000 against the matrix-space mirror) |
-| Point footprint | a GL point deposits `π (size/2)²` of energy (0.777, 3.126, 7.009 for sizes 1, 2, 3); a size-1 point aliases against the lattice and loses about 21%. The tent splat conserves energy |
+| Point footprint | a GL point deposits `pi (size/2)^2` of energy (0.777, 3.126, 7.009 for sizes 1, 2, 3); the tent splat conserves energy; size 2 plus the corner snap equals size 3 exactly |
 | Float accumulation | exact, no clamp at 1.0: 4096 points on one pixel sum to 4096.0 |
-| Density | quality plateau by about 4 points per pixel (r 0.9985 at 1 d*, 0.9937 at 3.5 d*) |
-| Cost | realistic glass at 3.5 d* held the 60 fps cap up to 6.55 M points into a 1024² capture (headroom unknown: the cap hides it); worst case, all points on one pixel, about 88 ns per point |
-| Memory | gridshape matrix is 12 planes, 48 bytes per vertex (about 200 MB at 2048²) |
-| Lag | node/mesh/capture path is exactly 1 frame behind an upstream pix (8 of 8 captures); pix → pix lags 0 |
-| Dynamic range | peak illuminance about 18× the mean on the test glass |
-
-### Composite (a normal pix stage, builder-made)
-
-`light` (float32 illuminance) in, source in:
-```
-exposed = tonemap(light * gain)                  // curve is an open question; out1 keeps raw float
-driven  = clamp(src + exposed, 0, 1)             // additive over the source, as f_caustic / f_vf_streak
-out0    = mix(mix(src, driven, mix_pct / 100), src, bypass_gate)     // composite
-out1    = mix(light, src, bypass_gate)                               // isolated light layer
-```
-This stage hosts `Param bypass_gate`, so the builder's `bypass_mode: "param"` applies.
+| Density | at a full-size capture the quality plateau is about 4 points per pixel (r 0.9998 at 3.5 d*); at 1 point per pixel a regular lattice shows a visible moire cross-hatch that Pearson barely registers |
+| Coarse capture | quality against a 16 points-per-pixel reference at 1024²: see the S7 table in `optics_map.md` (e.g. 512², 2 per pixel: r 0.998 at 1 d*, 0.958 at 3.5 d*; the loss is resolution, not noise) |
+| Source aliasing | small at a lattice about 0.7x the source (r 0.993-0.996 after a box-down); a 4-tap prefilter does nothing; `texture2D` in a vertex program has no mip selection |
+| Cost | density-driven (blend contention): at 16.8 M points 1 point per pixel is about 17-22 ms, 16 per pixel 29-69 ms; vertex work about 1 ms per million points; **timings vary up to 2x between runs**. Rough estimate on an M3 Max: step 5 about 5-9 ms (only ever observed to fit the 16.7 ms cap); an M1 is unmeasured (guess: 3-5x slower) |
+| Memory | gridshape matrix 12 planes, 48 bytes per vertex |
+| Lag | node/mesh/capture is exactly 1 frame behind an upstream pix (8 of 8 captures); **accepted** (the library already has such lags) |
+| Dynamic range | peak illuminance about 18x the mean on the test glass |
 
 ---
 
-## Inlets
+## Parameters
 
-| Inlet | Type | Label | Required | Description |
-|---|---|---|---|---|
-| 0 | texture + control | texture | Yes | source (gobo / light); control messages |
-| 1 | f_vecfield texture | vecfield | No | the glass field (float32, RG = XY, 0.5 = zero) |
+Existing parameters keep their names, ranges and defaults. Added parameters are marked **new**.
 
-Unconnected vecfield: output the source unchanged (suppress via `src_vecfield`, as `f_vf_warp` does).
-Unconnected source: output black.
-
-## Outlets
-
-| Outlet | Type | Comment | Description |
-|---|---|---|---|
-| 0 | texture | composite | source + tone-mapped light, `mix` |
-| 1 | texture (float32) | light | isolated illuminance layer |
-
-## Parameters (proposed; ranges and defaults to be set in Phase 0/1)
-
-| Param | Type | Description |
+| Param | Mode | Description |
 |---|---|---|
-| `distance` | float | propagation distance `d`, UV per unit field. The thin-line regime is up to about `d*`, sheets beyond about 2 `d*`, where `d* = 1 / (most negative Hessian eigenvalue)` of the field (`optics_map.md`). Units to be revisited with `f_vf_glass` normalisation |
-| `gain` | float | exposure into the tone map |
-| `mix` | numbox 0–100 | dry/wet, canonical naming (default 0 per the 2026-07-12 convention) |
-| `detail` | discrete | points per pixel (e.g. 1, 2, 4, 8). Sets lattice size `n` from the capture size; changing it rebuilds the lattice matrix, so it is not a continuous control |
-| `resolution` | discrete | capture size relative to the Vsynth render size (cost is points × fragments, not pixels) |
-| `edge` | choice | `clip` (points leaving the viewport are lost; measured) or `wrap` (re-enter opposite side; not yet tested) |
-| `bypass` | toggle | passthrough on every outlet |
+| `mode` **new** | both | `soft` (the existing gather, default, so existing patches are unchanged) or `sheets`. A live.tab or menu |
+| `scale` | both | soft: streamline trace distance (existing). sheets: the propagation distance `d`, UV per unit field. **[DECIDE]** Share the one parameter, so switching mode keeps the geometry (recommended; range 0-1 covers the `d` values tried, 0.02-0.5) |
+| `gain` | both | brightness. sheets: scales the illuminance into the tone curve; an internal constant makes the same slider value comparable across modes (calibrate in Phase 1) **[DECIDE]** (alternative: a different default per mode, which the builder cannot express) |
+| `mix_pct` | both | dry/wet, unchanged (0-100, default 0) |
+| `softness` | soft | unchanged; ignored in sheets mode |
+| `color_shift` | soft | unchanged; ignored in sheets mode |
+| `detail` **new** | sheets | 1-5, the ladder above. Default 5 (Matt's M3 Max look). **[DECIDE]** Whether the module default should be a safer 3 for an M1 |
+| `bypass` | both | unchanged: passthrough on every outlet |
 
-`fy` is not a user control: it is baked in (`-1`).
+Not built (v1): `edge: wrap` (untested), per-channel dispersion, an analytic glass.
 
----
+## Inlets / Outlets
 
-## Signal Flow
+Unchanged from `f_caustic`: inlet 0 control, inlet 1 light source (`vs_inState`), inlet 2 vecfield (no
+`vs_inState`: unconnected = silent). Outlet 0 composite; outlet 1 isolated caustic layer.
 
-```
-in0: source + control ─ routepass ─ slab(float32, @rectangle 0) ──────────────┐
-in1: vecfield (vs_inState) ─────── slab(float32, @rectangle 0) ──────────────┤
-        scatter scene (raw_boxes): gridshape matrix → mesh points (+ .jxs) → float32 node
-                                                                              │
-        composite pix (builder-made; bypass_gate, mix, tone map)
-                                   ├ out0 composite
-                                   └ out1 light
-```
+**Unconnected vecfield in sheets mode must be silent too** (composite = source, layer = black). An unbound
+float32 input reads 0, which decodes to `F = -1` and would throw a displaced copy of the source, so this needs
+explicit handling. **[DECIDE]** Recommended: a guard in the sheets composite stage that treats a field texture
+which is exactly 0 at several fixed sample points as absent (real vecfields encode zero as 0.5), and zeroes the
+light. Phase 1 verifies how an unconnected pix input actually reads in Vsynth first.
 
 ---
 
-## Acceptance Criteria
+## Signal flow
 
-Tier decision is Phase 0, task 1: tier 1 applies (non-trivial math with a known reference); tier 2 applies
-through the **module bench**, not the codebox bench (a `.jxs` shader is not a pix codebox); tier 3 for the look.
+```
+in0 (control) ─ routepass ─ route <params> ─ (existing) ─ + mode / detail handling
+in1 (source, vs_inState) ─┬─ caustic_pix in1 ............... (existing soft path, untouched)
+in2 (vecfield) ───────────┤
+                          ├─ caustic_pix in2
+                          └─ slab(float32, @rectangle 0) x2 ─ scatter scene (node, mesh, .jxs)
+caustic_pix  out1 composite, out2 layer ────────────────────────┐
+sheets composite pix (tone map, bilinear upscale to the source's size, mix, bypass) ─┤
+select pix (Param sheets_gate: picks soft or sheets per outlet) ─┬─ out0 composite
+                                                                 └─ out1 caustic layer
+```
 
-1. **Tier 1 (NumPy mirror, offline).** Promote the spike emulation (`ref_scatter`) and the photon-counting
-   truth to `tests/`: tent weights sum to 1; energy conserved; identity at `d = 0`; agreement with truth.
-2. **Tier 2 (module bench).** Targets set just below the measured values:
-   - identity (`d = 0`) matches the mirror, relative error ≤ 1e-3 (measured 0.0000);
-   - energy conserved for in-viewport points to within 0.5% (measured within 0.1%);
-   - N points on one pixel sum to N within 0.1% (measured exact);
-   - truth agreement at ≥ 4 points per pixel: r ≥ 0.99 at 0.6 and 1.0 d*, r ≥ 0.98 at 3.5 d*
-     (measured 0.9985 / 0.9937 at 4 per pixel, 1 d* / 3.5 d*);
-   - orientation: matches the matrix-space mirror, r ≥ 0.999, with `fy` baked in;
+- **Selection in a pix, not by routing.** The select stage picks between the two branches with a `Param`, as the
+  library does elsewhere, so no routing object touches a texture message. **[DECIDE]** (alternative: `gate`s as in
+  `f_texrouter`; Matt used `gswitch` UI objects in the look patch).
+- **The inactive branch is disabled** (`@enable 0` on the soft pix in sheets mode; the node and mesh in soft
+  mode) and the lattice is only built while the mode is `sheets` (rebuilt on `detail`). In soft mode the module
+  costs what it costs today plus one select pass.
+- **Composite (sheets).** `light` (float32 illuminance, capture-sized) and `src` in; the pix follows the source's
+  size (`@adapt 1`, no fixed `@dim`), reads `light` with `sample(in, norm)` (bilinear upscale):
+  ```
+  exposed = tone(light * gain)                    // see the curve below
+  driven  = clamp(src + exposed, 0, 1)            // additive over the source, as the soft path
+  out0    = mix(mix(src, driven, mix_pct / 100), src, bypass_gate)
+  out1    = mix(clamp(exposed, 0, 1), black, bypass_gate)         // caustic layer, as soft (clamped)
+  ```
+  Tone curve as tried in the look patch (Matt's first-look default, never tuned): `t = v / (1 + v)`, `out = t^0.7`.
+  **[DECIDE]** Keep it, or expose the exponent.
+- **A non-square output is handled in UV space.** The capture is square and maps the UV square; the composite
+  stretches it to the output, so geometry is consistent (the look patch ran a 16:9 output from a square capture).
+  The distance `scale` is anisotropic in pixels exactly as in the soft path.
+- **The shader** lives in a new `package/code/` folder (Vsynth's precedent: `Vsynth/code/vtfk.jxs`).
+  Phase 1 verifies the shader is found from the module bench and from a patch outside the package.
+- **Per-instance names.** The scene's node and shader names use `#0` (unique per instance), so several `f_caustic`
+  instances can coexist in one patch. (The collision seen between the spike's bench and a live patch was the shared
+  `vsynth` render context, not the names.)
+
+---
+
+## Acceptance criteria
+
+Tier decision: tier 1 (NumPy mirror) and tier 2 (module bench) apply; tier 3 for the look.
+
+1. **Soft mode unchanged.** Soft-mode output is identical to the current module (bench against a recorded
+   baseline, r = 1.0000), the existing contract, bypass and drift tests pass, and cost in soft mode is within one
+   select pass of today's.
+2. **Tier 1 (NumPy mirror, offline).** Promote the spike emulation (`ref_scatter`) and the photon-counting truth
+   to `tests/`: tent weights sum to 1; energy conserved; identity at `scale = 0`; agreement with truth.
+3. **Tier 2 (module bench), sheets mode.** Targets set just below the measured values:
+   - identity (`scale = 0`) matches the mirror, relative error <= 1e-3 (measured 0.0000);
+   - energy conserved for in-viewport points to within 0.5%; N points on one pixel sum to N within 0.1%;
+   - orientation matches the matrix-space mirror, r >= 0.999, with the flip baked;
+   - `detail N` is identical to the explicit messages for every step (the `s11` check, promoted);
+   - quality against the 16-per-pixel reference (Pearson r at 1 d* / 3.5 d*, from the S7 table): step 5 >= 0.995 /
+     0.995; step 4 >= 0.995 / 0.995; step 2 >= 0.995 / 0.95; step 1 >= 0.99 / 0.89; **step 3 (768²) is unmeasured:
+     measure, then set**;
+   - the tone-map and upscale stage matches its NumPy curve (the `s10` check, promoted: r = 1.0000);
+   - unconnected vecfield: composite = source, layer black;
    - bypass: passthrough on every outlet; `BYPASS_EXPECT` extended (`tests/test_bench_expect.py` enforces);
-   - lag: 1 frame documented, or removed if the `@layer` spike succeeds, and asserted either way;
-   - cost: default `detail` / `resolution` hold the frame budget; headroom measured beyond the cap
-     (open: how, since the bench paces at 60 fps).
-3. **Contract and drift:** `tests/test_module_contracts.py`, `tests/bench_modules.py` and `build/drift.py`
-   pass (the contract tests assume pix stages with Param wiring; the node/mesh/slab objects are raw and
-   `pix_wire: False` controls follow the `f_grain` precedent; confirm in Phase 0).
-4. **Tier 3 (scratch patch).** Fed by `f_vf_glass` through a real chain in a real Vsynth patch: the sheets
-   appear, `distance` and `gain` ranges feel right, the tone curve reads well on stage.
+   - lag: 1 frame documented and asserted;
+   - cost: the default step holds the frame budget on the target machine; headroom measured beyond the cap with a
+     better method than the K-meshes multiplier, which failed (run-to-run variation up to 2x: interleave A/B).
+4. **Contract and drift:** `tests/test_module_contracts.py`, `tests/bench_modules.py` and `build/drift.py` pass
+   (the scene's node, mesh and slab objects are raw boxes and follow the `f_grain` / `f_lens` precedent).
+5. **Tier 3 (live).** Matt, on real video in a real chain: the sheets appear, `scale` and `gain` ranges feel right,
+   the mode switch and the `detail` hitch are acceptable, two instances coexist. First look (2026-10-07): the
+   presets looked different, none worse, all useful.
 
 ---
 
-## Out of Scope (v1)
+## Out of scope (v1)
 
-- Per-channel dispersion (three draws with different `d`, or a colour mask); candidate for v2.
-- An analytic-glass mode (glass evaluated in the vertex shader, no field texture).
+- Per-channel dispersion (three draws with different `scale`, or a colour mask); candidate for v2.
+- `edge: wrap`; an analytic-glass mode (glass evaluated in the vertex shader, no field texture).
 - Multi-bounce, total internal reflection, volumetric light.
-- Anything that needs scatter without GL (not possible in a pix codebox).
+- Removing the 1-frame lag (accepted).
+- An M1 measurement and a per-machine default (skipped by Matt 2026-10-07; the `detail` ladder is the escape hatch).
 
 ---
 
@@ -170,58 +218,38 @@ through the **module bench**, not the codebox bench (a `.jxs` shader is not a pi
 
 ### Session 2026-10-06
 
-- Q: Consumer only, or own the glass? → A: Consumer only; the glass is a separate `f_vf_glass` producer
-  (Matt), so one glass can feed warp, prism, caustic and this module together.
-- Q: Pursue the sheet-regime scatter module rather than only a better gather? → A: Yes (Matt).
-- Q: How is the GL scene built? → A: Builder `definition.py` for UI, params, bypass and layout, with the
-  scene in `raw_boxes` / `raw_lines` (`f_lens`, `f_grain`, `f_vf_vortex_multi` use them); a normal pix
-  stage after the node hosts the bypass. (Proposed; Phase 0 confirms the contract tests accept it.)
+- Q: Consumer only, or own the glass? -> A: Consumer only; `f_vf_glass` stays a separate producer, on hold (Matt).
+- Q: Pursue the sheet regime rather than only a better gather? -> A: Yes (Matt). It becomes a second mode of `f_caustic`.
+- Q: How is the GL scene built? -> A: Builder `definition.py` for UI, params, bypass and layout, with the scene in
+  `raw_boxes` / `raw_lines` (`f_lens`, `f_grain`, `f_vf_vortex_multi` use them); normal pix stages host the
+  composite, the selection and the bypass.
 
 ### Session 2026-10-07
 
 - Q: Gather or scatter for the sheets mode? -> A: **Scatter** (Matt: "the numbers strongly suggest the gl method").
-  The gather stays in `tests/` as the fallback.
-- Q: The 1-frame lag? -> A: Accepted (the library already has them elsewhere); Phase 0 spike 1 is closed.
-- Q: How is the lattice resolution set? -> A: **MVP: a fixed internal capture size** (Matt's default look: a 1024^2
-  capture, 4 points per capture pixel, so about 4.2 M points; the 512^2 / 2-point preset, about 1 M points, is the cheap fallback), upscaled bilinearly to the output, not a scale relative to the
-  output. Output resolution then changes sharpness, not cost. The exact size, and non-square captures, are chosen in Phase 1.
-- Settled by the density spikes (`ideas/optics_map.md`, "Findings: scatter density, cost and detail"): regular
-  lattice (jitter is a net loss), corner-snap with `point_size 2` (bit-identical to size 3), one bilinear source read
-  (a 4-tap prefilter does not help), and a 48-byte lattice is fine at these counts (Phase 0 spike 2 is not needed for the MVP).
+  The multi-start gather stays in `tests/` as the fallback.
+- Q: The 1-frame lag? -> A: Accepted.
+- Q: How is the lattice resolution set? -> A: **A fixed internal capture size** (not a scale relative to the output),
+  exposed as the `detail` 1-5 ladder; Matt's default look is a 1024² capture with 4 points per capture pixel (step 5),
+  the cheap fallback step 2. Built and verified in the spike (`s11`).
+- Q: Which look? -> A: Matt tried the presets in a live chain: they look different, none worse, all useful.
+- Q: Orientation? -> A: The flip is baked; Matt did not need the `fy 1` override live.
+- Q: M1 / performance machine? -> A: This M3 Max or an M1; the M1 measurement is skipped.
+- Settled by the density spikes (`optics_map.md`): regular lattice, corner-snap with `point_size 2`, one bilinear
+  source read, a 48-byte lattice is fine at these counts.
 
 ---
 
-## Open Questions
+## Open questions (all marked [DECIDE] above; recommendations in place)
 
-**Superseded in part (2026-10-06, later):** Matt wants the sheet regime as a **second mode of `f_caustic`**, not
-a separate module, and `f_vf_glass` is on hold. This draft still describes a separate scatter module and must be
-rewritten as an addendum to `f_caustic` (add, don't modify: the soft path stays untouched; a selector picks the
-output; the inactive branch should be disabled). The **method** for the sheets mode is open: scatter (this
-spec; best quality; GL scene, 1-frame lag, lattice memory) or a **multi-start gather** (an ordinary pix
-codebox; r 0.94–0.95 at 2–3.5 d* with 16–36 starts and 2x2 samples per pixel, missing 3–5% of the light and
-sharing less of the bright lines than scatter, at about 5,800 texture reads per pixel; see `ideas/optics_map.md`,
-"Findings: multi-guess gather"). Decide after measuring the gather's real cost in Max and its accuracy when
-reading field textures instead of the analytic field.
+1. Share `scale` as the distance in both modes (recommended).
+2. `gain` across modes: an internal constant (recommended) or per-mode defaults.
+3. Tone curve: keep `t^0.7` over Reinhard, or expose the exponent.
+4. Module default `detail`: 5 (Matt's look) or a safer 3.
+5. Selection: a select pix with a `Param` (recommended) or `gate`s.
+6. Unconnected vecfield guard in the sheets composite (recommended; verify unconnected-input behaviour first).
+7. Constitution wording for the codebox-first deviation.
 
-**Update 2026-10-07:** the method is decided (scatter, fixed internal capture size; see Clarifications). Of the five spikes below, 1 (lag) is closed (accepted), 2 (lattice memory) is not needed at MVP counts, 4 (source aliasing) and 5 (headroom) are answered for a square capture (`ideas/optics_map.md`); **3 (real integration, render-size adaptation, non-square) is still open**, and the cost numbers need a re-measure with a better method (run-to-run variation was up to 2x).
-
-Phase 0 spikes, each small and bench-attributable:
-
-1. **Lag.** Does a different `@layer` ordering of the node remove the 1-frame lag? If not, accept and document.
-2. **Lattice memory.** Can a 3-plane (12-byte) lattice, built another way, replace the 48-byte gridshape matrix?
-3. **Real integration.** Behaviour with a real `f_vf_fieldmap` / `f_vf_glass` upstream, in a real Vsynth patch,
-   and adapting the node to Vsynth's render size (the spike used a fixed `@adapt 0 @dim`).
-4. **Source aliasing.** The source is sampled once per lattice point, so a detailed gobo aliases on a coarse
-   lattice. Is `texture2DLod` with mipmaps, or a prefilter pass, needed? Highest risk to image quality.
-5. **Headroom.** The bench's 60 fps pacing hides the real margin; find the point where it breaks (larger
-   lattice or capture) to size `detail` / `resolution` defaults.
-
-Decisions:
-
-- **Tone map and HDR policy:** which curve, and whether out2 stays raw float (peaks about 18× the mean).
-- **`edge: wrap`:** worth building? Untested; needs `fract` in the vertex program and agrees with the
-  periodic test glass.
-- **Shader file location:** `.jxs` must be on Max's search path; Vsynth keeps its own in its package `code/`.
-  Where f_ puts it is unchecked.
-- **Name:** `f_caustic_scatter` is a placeholder.
-- **Constitution wording:** how to record the codebox-first deviation.
+Phase 1 verification tasks (not decisions): the shader found from `package/code/`; an unconnected pix input in
+Vsynth; the builder accepting the node/mesh/slab scene as `raw_boxes`; cost on the target machine with an
+interleaved method.
