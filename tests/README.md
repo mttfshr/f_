@@ -214,12 +214,15 @@ Facts section).
   `bench/spike_scatter.maxpat` and `bench/spike_scatter_chain.maxpat`
   (GPU point-scatter caustic on the MODULE bench with a custom wrapper:
   identity, orientation flips, float accumulation, truth agreement, density,
-  cost, frame lag; stages `s0 s1 s2 s2b s3 s3b`), and `gather_proto.py`
+  cost, frame lag; stages `s0 s1 s2 s2b s3 s3b`, and from 2026-10-07 `s4` (single-mesh
+  cost sweep), `s5` (corner-snap equals size 3), `s6` (fixed n, capture size varied: separates
+  vertex, fill and contention), `s7` (coarse capture + upscale quality), `s8` (lattice jitter),
+  `s9` (gobo / source aliasing); timings vary up to 2x between runs, compare within a run), and `gather_proto.py`
   (generator and CODEBOX-bench runner for the multi-start gather: compile
   ladder, size/cost measurement, `make_code_fn(..., bil=True)` is the working
   version; needs `scratch/caustic_fidelity.py` and
   `scratch/multi_guess_gather2.py` as its NumPy mirror and truth, which are
-  untracked)
+  tracked in `scratch/` since 2026-10-07)
 - `bg.sh` + `test_bg.py` -- the background runner (start, status, log, stop, list; lock; fake-command tests)
 - `benchdeps.py` + `test_benchdeps.py` -- what `bench.sh --changed` runs (input hashing, decision table, record)
 - `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name)

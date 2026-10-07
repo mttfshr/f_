@@ -1,10 +1,46 @@
 # HANDOFF
 
-_Latest session: 2026-10-06 (three sessions; the NEWEST section below is a different workstream, the optics / Lumia research, and is NOT committed; the two older sections are `build_cleanup` and supersede each other as before)_ — `build_cleanup` **Phases 1, 2, 5 and 6 are done, Phase 4 is done except `f_sirds` (T019: fluid, advect and seeds absorbed; `f_sirds` deliberately left alone), and plan item 10 is 11 of 11.** 31 of 39 shipped patchers reproduce exactly from their `definition.py`; the drift baseline is 8 (`f_masonry`, `f_texrouter`, `f_vf_vorticity`, five out of scope). Everything in the `build_cleanup` work is committed (last commit `bc190bb` when it was written), nothing is pushed; **the optics research of the third session is not committed** (list in the newest section).
+_Newest session: 2026-10-07 (the first section below): scatter chosen for the `f_caustic` sheets mode, density / cost / detail spikes done, no module built. The 2026-10-06 line that follows covers the older sessions._
+
+_Latest session: 2026-10-06 (three sessions; the newest is a different workstream, the optics / Lumia research, committed on 2026-10-07 and continued in the 2026-10-07 section below; the two older sections are `build_cleanup` and supersede each other as before)_ — `build_cleanup` **Phases 1, 2, 5 and 6 are done, Phase 4 is done except `f_sirds` (T019: fluid, advect and seeds absorbed; `f_sirds` deliberately left alone), and plan item 10 is 11 of 11.** 31 of 39 shipped patchers reproduce exactly from their `definition.py`; the drift baseline is 8 (`f_masonry`, `f_texrouter`, `f_vf_vorticity`, five out of scope). Everything in the `build_cleanup` work is committed (last commit `bc190bb` when it was written), nothing is pushed; the optics research of the third session was committed on 2026-10-07 (`26df9b6`).
 
 _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Write the directory with the ID, e.g. `packaging/T021` means `.specify/packaging/tasks.md`._
 
-## 2026-10-06, third session: optics research for a Lumia-type effect (RESEARCH ONLY; NOTHING COMMITTED; no module built)
+## 2026-10-07: scatter chosen for the `f_caustic` sheets mode; density, cost and detail spikes (RESEARCH; no module built; committed)
+
+**Decisions (Matt)**
+- **The sheets mode uses the GPU scatter** ("the numbers strongly suggest the gl method for sheets"); the multi-start gather stays in `tests/` as the fallback.
+- **The 1-frame lag is accepted** ("we do 1 frame lag in many places").
+- **MVP: a fixed internal capture size** (about 0.5 to 1 M pixels, 2 points per capture pixel, bilinear upscale to the output), not a scale relative to the output: 4K then costs the same as 1080p and only looks softer. There is no `detail` parameter in the MVP.
+
+**Results** (all numbers and caveats in `ideas/optics_map.md`, "Findings: scatter density, cost and detail"; records `tests/spike_scatter.py` stages `s4` to `s9`, logs and figures in `scratch/scatter_spike_s*`)
+- A K-meshes load multiplier to see past the 60 fps cap was NOT linear (negative and 100 ms-noisy periods): discarded and removed.
+- Cost is driven by points per pixel (blend contention), not point count: at a fixed 16.8 M points, 1 point per pixel is about 17 to 22 ms, 16 per pixel 29 to 69 ms; vertex work is about 1 ms per million points or less. **Timings vary up to 2x between runs** (same config 69, 29, 45 ms), a few percent within a run.
+- Corner-snap + `point_size 2` is bit-identical to `point_size 3`; a speed-up was not established.
+- Coarse capture + bilinear upscale: `s = 2` (half size) at 2 points per capture pixel is r 0.998 at 1 d* and 0.958 at 3.5 d* against a 16 points-per-pixel reference; the loss is resolution, not noise. About 1 M points at 1080p, roughly 1 to 2.5 ms plus the upscale pass on this M3 Max.
+- At 1 point per capture pixel there is a visible lattice moire (Pearson barely sees it); 2 is clean. Lattice jitter trades it for grain and is a net loss. A 4-tap source prefilter does nothing (r changes under 0.001, 0.003 at most). Source aliasing (zone plate, checkers) is small at `s = 2`.
+
+**Files.** New or changed: `tests/spike_scatter.py` (stages `s4` to `s9`), `tests/bench/make_spike_scatter.py` and `spike_scatter.jxs` (uniforms `h`, `snap`, `jit`, `latn`, `taps`; the K meshes were added and removed), `scratch/s4_diag.py`, the `scratch/scatter_spike_s*` logs and figures, `ideas/optics_map.md`, `.specify/f_caustic_scatter/spec.md` (a Session 2026-10-07 note and an update line), `.specify/plan.md` (item 15), `tests/README.md`. Commit `26df9b6` ("2026-10-07") swept in everything of the session plus Matt's own `package/examples/f_demo_glow.*` Max 9.2.0 re-save and the `skills/MANIFEST.md` stamp; the write-up is the commit after it.
+
+**Do first next session**
+1. Rewrite `.specify/f_caustic_scatter/spec.md` as an addendum to `f_caustic` (its body still describes a separate module): mode switch, shared `scale` / `gain` / `mix` / `bypass`, soft-only `softness` / `color_shift`, the fixed internal capture size, `gain` default per mode, the HDR / tone-map policy (peaks about 18x the mean).
+2. Close Phase 0 spike 3: a real chain with a real `f_vf_fieldmap` upstream, adapting to the render size and a non-square capture (every spike is square), where the `.jxs` lives (a package `jitter-shaders` folder is the first thing to check), and the upscale pass's own cost.
+3. **Matt's eyes:** a scratch patch with real video through Vsynth sources -> `f_vf_fieldmap` -> the scatter chain, judged at the `s = 2` default and 3.5 d*. Nobody has seen the look in context.
+4. Re-measure cost with a better method before fixing any budget (interleave A/B, several runs, note the thermal state; a calibrated ballast pass whose knee shifts is the untried idea). The machine is an M3 Max; a performance machine may be weaker.
+
+**Open decisions:** the capture size value and its aspect, tone map and HDR policy, `edge: wrap`, the mode's name and UI, where the `.jxs` lives, whether the lattice is built only when the sheets mode is on.
+
+**State of Max and the bench.** Nothing is running; the module bench is open in Max (the spike runs reopen it). Lattices up to 800 MB were released at the end of each stage; restart Max if it feels sluggish. Do not leave a Vsynth performance patch open while the bench runs.
+
+**Process lessons** (so they are not relearned)
+- Validate a new timing method on a known-cheap and a known-linear case before trusting it: the K-meshes multiplier gave plausible-looking numbers that were noise plus per-mesh overhead.
+- Timings repeat within a run and not between runs (up to 2x): compare configs inside one run, interleave A/B, and keep the raw numbers.
+- Pearson r is nearly blind to lattice moire, and the spectral "structure score" conflates moire with the upscale residual: look at the picture (the figure files) before concluding anything about visual quality.
+- A vertex-stage `texture2D` has no derivatives or mip selection: the source read is one bilinear tap per point.
+
+## 2026-10-06, third session: optics research for a Lumia-type effect (RESEARCH ONLY; committed 2026-10-07; no module built)
+
+_Superseded in part by the 2026-10-07 section above: scatter was chosen over the gather and the lag is accepted, so its "Do first" items 1 and 2 are done or replaced._
 
 **Goal and outcome.** Matt asked for a Lumia-type module (a texture in, light through animated glass out). The session produced research, two draft specs and one open decision, no module. Everything is in `ideas/optics_map.md` (read its "Findings" sections first; they hold every number and caveat) and `ideas/f_lumia.md`.
 
@@ -28,7 +64,7 @@ _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Writ
 - Not causes of the gap, so do not chase them again: float32 arithmetic, 8-bit interpolation weights, candidate selection, the Newton step.
 - `docs/f-reference/f_caustic.md` was wrong about `scale` 0 (it is the undisplaced divergence-weighted layer, not empty): fixed.
 
-**Files, ALL UNCOMMITTED** (`git status`)
+**Files (committed 2026-10-07, `26df9b6`)**
 - Modified: `docs/f-reference/f_caustic.md` (the `scale` row), `ideas/INDEX.md`, `skills/jit-gen-codebox/SKILL.md`, `tests/README.md`, this file.
 - New, tracked-worthy: `ideas/optics_map.md`, `ideas/f_lumia.md`, `ideas/f_vf_glass.md`, `.specify/f_vf_glass/spec.md` (ON HOLD), `.specify/f_caustic_scatter/spec.md` (still a separate-module draft with a "superseded in part" note), `tests/spike_scatter.py`, `tests/gather_proto.py`, `tests/bench/{make_spike_scatter.py, spike_scatter.jxs, spike_scatter.maxpat, spike_scatter_chain.maxpat}` (records, not regression gates; `tests/README.md` lists them).
 - **Untracked `scratch/` that the tests/ records import:** `caustic_fidelity.py`, `multi_guess_gather2.py` (and `float32_mirror.py`, `gather_debug.py` for the gap hunt). Commit those with the records or the records will not run. Also in `scratch/`: the other research scripts (`multi_guess_gather.py`, `glass_vs_fieldmap*.py`, `require_probe.py`, `parser_limit_probe.py`), PNGs and `*.log` outputs; curate or delete as you like (nothing else depends on them).
@@ -38,13 +74,13 @@ _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Writ
 **Do first next session (suggested order)**
 1. **Decide gather vs scatter.** Cheapest evidence first: (a) the **cell-Jacobian experiment**: take the slopes from the same four taps as the field value (one `fxy` call per Newton step instead of five); estimated ~5x fewer Newton-stage reads but it changes the slope definition, so check accuracy against 0.930 / 0.840 first (NumPy, then bench); if cost falls to ~1 ms at 256² the gather becomes attractive. (b) A **scratch patch to look at real sheets** on Vsynth sources (`vs_noise_*` or `vs_chemical_osc` -> `vs_filter_lp*` -> `f_vf_fieldmap` -> `f_caustic`, plus the scatter spike's chain): all numbers so far are against physics, nobody has judged the look; needs Matt's eyes. (c) If scatter: its Phase 0 spikes (lag via `@layer`, 12 B/vertex lattice, real chain + render-size adapt, source aliasing / gobo = highest risk, headroom beyond the 60 fps cap).
 2. **Rewrite `.specify/f_caustic_scatter/spec.md` as an addendum to `f_caustic`** (mode switch; shared `scale` = distance, `gain`, `mix`, `bypass`; soft-only `softness` / `color_shift`; new `detail`; `gain` default per mode). Do this after step 1.
-3. **Commit** the research (see Files; mind the scratch imports).
+3. ~~Commit the research~~ done 2026-10-07 (`26df9b6`; the scratch imports are tracked).
 
 **Open decisions and loose threads**
 - HDR/tone-map policy (illuminance peaks ~18x mean), `edge: wrap`, where the `.jxs` lives (Max search path), the codebox-first deviation wording in the constitution (if scatter), the mode's name/UI, whether the lattice is built only when sheets mode is on.
 - `docs/f-reference/f_caustic.md`: the `bypass` row is stale (says out2 goes black; since 2026-10-06 bypass passes the source on every outlet). Not edited.
 - `.specify/plan.md` and README were NOT updated: no module is in the build queue, no patcher status changed, and `.specify/`'s README description already covers new directories.
-- **Skills:** `jit-gen-codebox` changed this session and is the only stale skill (`./skills/check.sh` says so; the others are ok). Re-upload it, then `./skills/check.sh stamp`. I did not touch `skills/MANIFEST.md`. (The older note below about re-uploading `vsynth-bpatcher` for the T019 keys no longer shows as stale; I did not check whether the skill text covers those keys.)
+- **Skills:** `jit-gen-codebox` changed this session and is the only stale skill (`./skills/check.sh` says so; the others are ok). Re-upload it, then `./skills/check.sh stamp`. (Done by Matt on 2026-10-07: `check.sh` reports all uploads current.) I did not touch `skills/MANIFEST.md`. (The older note below about re-uploading `vsynth-bpatcher` for the T019 keys no longer shows as stale; I did not check whether the skill text covers those keys.)
 
 **Process lessons from this session** (so they are not relearned)
 - A mismatch between a NumPy mirror and the GPU is not automatically the GPU's fault, and the first hypothesis was wrong three times (float32, interpolation weights, then my own probe forgetting to pass `d`). Bisect by program stage with a tiny known-good probe at each step, and test one hypothesis at a time.
@@ -157,7 +193,7 @@ _Task IDs are per directory: each `.specify/<dir>/tasks.md` starts at T001. Writ
 - **Check for a half-finished earlier session before editing:** when a connection drops, work can be left uncommitted in the tree. Look at `git status` and file timestamps first and do not overwrite it (this session found and finished one: `d8e32ac`).
 - A route box is never narrower than its text (6.5 px per character): with long token names it is wider than its lane.
 
-**How he wants to work:** discuss architecture before code; slow things in the background; he is fine with Claude committing on f_ projects; start each conversation by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
+**How he wants to work:** discuss architecture before code; slow things in the background; he is fine with Claude committing on f_ projects (a commit that sweeps in files Claude did not work on is just a save checkpoint: a plain message, nothing elaborate); start each conversation by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
 
 ## Earlier today (2026-10-05): Phases 1 and 2 detail
 

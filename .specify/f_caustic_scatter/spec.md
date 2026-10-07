@@ -177,6 +177,18 @@ through the **module bench**, not the codebox bench (a `.jxs` shader is not a pi
   scene in `raw_boxes` / `raw_lines` (`f_lens`, `f_grain`, `f_vf_vortex_multi` use them); a normal pix
   stage after the node hosts the bypass. (Proposed; Phase 0 confirms the contract tests accept it.)
 
+### Session 2026-10-07
+
+- Q: Gather or scatter for the sheets mode? -> A: **Scatter** (Matt: "the numbers strongly suggest the gl method").
+  The gather stays in `tests/` as the fallback.
+- Q: The 1-frame lag? -> A: Accepted (the library already has them elsewhere); Phase 0 spike 1 is closed.
+- Q: How is the lattice resolution set? -> A: **MVP: a fixed internal capture size** (about 0.5 to 1 M pixels,
+  2 points per capture pixel, so about 1 M points), upscaled bilinearly to the output, not a scale relative to the
+  output. Output resolution then changes sharpness, not cost. The exact size, and non-square captures, are chosen in Phase 1.
+- Settled by the density spikes (`ideas/optics_map.md`, "Findings: scatter density, cost and detail"): regular
+  lattice (jitter is a net loss), corner-snap with `point_size 2` (bit-identical to size 3), one bilinear source read
+  (a 4-tap prefilter does not help), and a 48-byte lattice is fine at these counts (Phase 0 spike 2 is not needed for the MVP).
+
 ---
 
 ## Open Questions
@@ -190,6 +202,8 @@ codebox; r 0.94–0.95 at 2–3.5 d* with 16–36 starts and 2x2 samples per pix
 sharing less of the bright lines than scatter, at about 5,800 texture reads per pixel; see `ideas/optics_map.md`,
 "Findings: multi-guess gather"). Decide after measuring the gather's real cost in Max and its accuracy when
 reading field textures instead of the analytic field.
+
+**Update 2026-10-07:** the method is decided (scatter, fixed internal capture size; see Clarifications). Of the five spikes below, 1 (lag) is closed (accepted), 2 (lattice memory) is not needed at MVP counts, 4 (source aliasing) and 5 (headroom) are answered for a square capture (`ideas/optics_map.md`); **3 (real integration, render-size adaptation, non-square) is still open**, and the cost numbers need a re-measure with a better method (run-to-run variation was up to 2x).
 
 Phase 0 spikes, each small and bench-attributable:
 

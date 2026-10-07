@@ -99,6 +99,7 @@ Gobos are not missing: any texture generator (`f_weave`, `f_stipple`, `f_masonry
 ## Research priorities (proposed order, not decided)
 
 1. **Caustic fidelity. DONE 2026-10-06 (NumPy mirror only, not run in Max): see "Findings: caustic fidelity" below.**
+   **Sheets mode decided 2026-10-07: GPU scatter at a fixed internal capture size (see "Findings: scatter density, cost and detail").**
 2. **Glass generator.** One scratch session: check the `jit.gl.bfg` time axis, try `f_chladni` luma as glass, write a fluted/hobnail height codebox.
 3. **Thin-film palette.** Cheap and probably high payoff; the oil wheel is also a classic of the same light-show lineage as Lumia.
 4. **Fourier optics on the existing DFT.** High risk, high reward. Only start with a specific target (a starburst, or a bokeh shape from an aperture texture).
@@ -167,6 +168,48 @@ Gobos are not missing: any texture generator (`f_weave`, `f_stipple`, `f_masonry
 **Not tested:** a non-white source (gobo placement), per-channel dispersion, `f_vecfield` sources from a real producer (the spike used a texture file and a counter pix), the module inside a full Vsynth chain, headroom beyond the 60 fps cap, 1080p/4K captures, `@layer` settings as a possible cure for the 1-frame lag, wrap-around at the borders (the emulation and truth treat edges differently from the clip), and a second glass seed.
 
 **Verdict.** Feasible, and it is the only route found that reproduces the sheet regime. The open risks are the 1-frame lag against pix-chain consumers (warp and caustic from one field would be a frame apart), the lattice memory, and untested gobo/dispersion. It is not a drop-in for `f_caustic`: a scatter module owns a GL scene (node, mesh, shader, lattice), so it is closer in kind to `vs_xyz_disp` than to the f_ pix modules.
+
+## Findings: scatter density, cost and detail (2026-10-07)
+
+**Decisions (Matt).** The sheets mode of `f_caustic` is built on the **GPU scatter** ("the numbers strongly suggest the gl method"); the multi-start gather stays in `tests/` as the fallback. The 1-frame lag is accepted (the library already has them elsewhere). **MVP: a fixed internal capture size**, not a scale relative to the output, so the output resolution changes sharpness and not cost (as `f_vf_fluid` fixes its internal 256^2).
+
+**What was measured.** Records, not regression gates: `tests/spike_scatter.py` stages `s4` to `s9`, driving `tests/bench/spike_scatter.maxpat` (`make_spike_scatter.py`) and `spike_scatter.jxs`. The shader gained `h` (tent half-width), `snap` (corner snap), `jit` and `latn` (lattice jitter) and `taps` (source prefilter); the patch takes them as `h snap jit latn taps` tokens. Logs and figures: `scratch/scatter_spike_s4*.log` to `s9`, `scatter_spike_s7_*`, `s8_*`, `s9.png`. All on one M3 Max (30 GPU cores), Max 9.2.0, glass seed 7, `d = 3.5 d*` unless stated.
+
+**1. A load multiplier did not work, so its numbers were discarded.** Drawing the lattice K times per frame (K gated meshes) to push the cost past the bench's 60 fps cap gave periods that were not linear in K: a 4 k-point lattice read 107.7 ms at K = 32 and -27 ms at K = 8, and the same 1 M-point config read 47.3 and 39.6 ms on repeat. Each mesh carries overhead that is not GPU fill. The K meshes were removed from the generator. The lesson: validate a new timing method on a known-cheap and a known-linear case first.
+
+**2. Corner-snap with `point_size 2` is the same image as `point_size 3`, bit for bit** (n = 1536 into 256^2: max |diff| 0.0000, sum ratio 1.0000, peak 18.59 for both). The vertex shader snaps the point to its nearest pixel corner and the fragment shader keeps weighting by the unsnapped position; a size-2 round point on a corner covers exactly the four pixel centres the tent can reach (distance 0.707 < 1). Control: size 2 without the snap loses 2.5% of the energy. It is free to adopt. **A speed-up was not established**: it looked 2x faster at 16 points per pixel in one run and slower in the next.
+
+**3. Cost is driven by points per pixel (blend contention), not by point count.** Fixed n = 4096 (16.8 M points), capture size varied, ms per frame, two runs (A / B):
+
+| points per pixel | size-3 footprint | corner-snap, size 2 | size 1 (vertex only) |
+|---|---|---|---|
+| 64 | 71 / 56 | 61 / 56 | not run |
+| 16 | 69 / 29 | 35 / 45 | 20 / 25 |
+| 4 | 37 / 22 | 24 / 23 | not run |
+| 1 | 22 / 19 | 17 / 17 | 16 / 16 |
+
+Vertex work is cheap (16.8 M points at size 1 and 1 point per pixel sit at the 16.7 ms cap, so about 1 ms per million points or less); the rest is fill and contention. At 1.0 to 2.2 ms per million points for 1 to 4 points per pixel (this machine only), and excluding the upscale pass: 1 M points about 1 to 2.5 ms, 2 M points about 2 to 5 ms, 4 M points about 4 to 9 ms. **Run-to-run variation is up to 2x on the same config** (size-3, 1024^2, 16 points per pixel read 69, 29 and 45 ms in three runs); two reps within one run agree to a few percent. Treat all of these as an order of magnitude and compare within a run. The earlier sweep's slope fits (S4) are not trustworthy.
+
+**4. A coarse internal capture plus a bilinear upscale keeps most of the quality.** Reference = 16 points per pixel at 1024^2; Pearson r / top-8% IoU against it at 1024^2; `s` = capture at 1/`s` of the reference; `p` = points per capture pixel:
+
+| `s`, `p` | M points at 1080p | 1 d*: r / IoU | 3.5 d*: r / IoU |
+|---|---|---|---|
+| 1, 1 | 2.07 | 0.9909 / 0.910 | 0.9880 / 0.885 |
+| 1, 4 | 8.29 | 0.9992 / 0.983 | 0.9998 / 0.987 |
+| 2, 1 | 0.52 | 0.9953 / 0.953 | 0.9546 / 0.879 |
+| 2, 2 | 1.04 | 0.9981 / 0.978 | 0.9579 / 0.899 |
+| 2, 4 | 2.07 | 0.9986 / 0.989 | 0.9583 / 0.901 |
+| 4, 2 | 0.26 | 0.9929 / 0.968 | 0.9026 / 0.809 |
+
+At `s = 2` the loss is resolution, not noise: `p` barely changes r (0.955 to 0.958 at 3.5 d*) because the thin bright lines soften; density matters mainly at `s = 1`, where it is pure noise. Distance matters: 3.5 d* has thinner lines and loses more (0.958 against 0.998 at 1 d* for `s = 2, p = 2`). Viewed after a box-down to 256^2, every `s = 2` row is at about 0.996 or better. **Looking at the picture matters**: `p = 1` shows a visible lattice moire (a cross-hatch in the dim regions) that Pearson barely registers (0.9546 against 0.9583 for `p = 1` against 4 at 3.5 d*); `p = 2` at `s = 2` looked clean; `s = 4` is clean but soft.
+
+**5. Lattice jitter (a hash offset within each point's own cell) is a net loss.** It trades the moire for grain and lowers every score: at `s = 2, p = 2` r 0.9579 to 0.9537 (3.5 d*) and 0.9981 to 0.9822 (1 d*); at `s = 1, p = 1`, 1 d*, 0.991 to 0.869. A regular lattice at 2 points per capture pixel is the better estimator. The spectral "structure score" built to measure moire (log10 of the residual power spectrum's peak over median) did not discriminate at `s >= 2`, because the upscale residual is itself structured: do not reuse it. (The 1 d* dim-region mask came out empty, so only 3.5 d* has the dim-region columns.)
+
+**6. Source aliasing (gobo) is smaller than feared.** A zone plate and 1, 3 and 8 px checkerboards on a 1024^2 source, through the 3.5 d* glass, compared after a box-down to 256^2: at `s = 2, p = 2` (lattice n = 724, about 0.7x the source) r = 0.993 to 0.996 and the pictures look like the reference (the only visible artefact is faint streaking on the 1 px checker, which is Nyquist-level noise); `s = 4` (n = 362) loses the finest structure and shows dim speckle (r = 0.961 to 0.978). **A 4-tap box prefilter in the vertex shader changed r by under 0.001 on most sources and by 0.003 at most (zone plate, `s = 4`)**, and costs four reads per point: do not adopt it. (`texture2D` in a vertex program has no derivatives, so the source read is a single bilinear tap per point; `texture2DLod` with mipmaps was not tried.)
+
+**Design these numbers support for the MVP:** a fixed internal capture of about 0.5 to 1 M pixels (960 x 540 is 0.52 M) with 2 points per capture pixel (about 1 M points), a regular lattice, corner-snap with `point_size 2`, one bilinear source read, and a bilinear upscale to the output. Roughly 1 to 2.5 ms plus the upscale pass at that size on this machine, softer than full resolution at long distances, and 4K costs the same as 1080p. The lattice at that size is about 50 MB (48 bytes per vertex), so the 12-byte lattice is not needed yet.
+
+**Not established:** non-square captures and adapting to Vsynth's render size (the spike is square throughout; the sizes above are square equivalents); real video or colour sources, and a second glass seed or distance for the source test; the absolute cost on a weaker performance machine; whether `@layer` can remove the lag (moot: accepted); the `.jxs` search path inside the package; the upscale pass's own cost; and any look at the result inside a real Vsynth chain (all numbers are against a reference or the physics, nobody has judged the look in context).
 
 ## Findings: multi-guess gather (a pull method for the sheet regime) (2026-10-06, NumPy only)
 
