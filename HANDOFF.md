@@ -15,7 +15,6 @@ _Updated 2026-10-07._
 
 - Live check on real video: `scale` and `gain` ranges, the Detail hitch, two instances in one patch, the look
 - Open `f_caustic.maxhelp` in Max and check the layout (never opened there)
-- Re-upload the `jit-gen-codebox` skill, then `./skills/check.sh stamp`
 
 ## One thing to know
 
