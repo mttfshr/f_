@@ -50,13 +50,15 @@ def settings_wrapper(module, n_in, n_out, settings, delay_ms=200):
     boxes, lines = w["patcher"]["boxes"], w["patcher"]["lines"]
     boxes.append({"box": {"id": "lb", "maxclass": "newobj", "text": "loadbang", "numinlets": 1, "numoutlets": 1,
                           "outlettype": ["bang"], "patching_rect": [320.0, 20.0, 60.0, 22.0]}})
-    boxes.append({"box": {"id": "dl", "maxclass": "newobj", "text": f"delay {delay_ms}", "numinlets": 2, "numoutlets": 1,
-                          "outlettype": ["bang"], "patching_rect": [320.0, 48.0, 70.0, 22.0]}})
-    boxes.append({"box": {"id": "setmsg", "maxclass": "message", "text": settings, "numinlets": 2, "numoutlets": 1,
-                          "outlettype": [""], "patching_rect": [320.0, 76.0, 420.0, 22.0]}})
-    lines.append({"patchline": {"source": ["lb", 0], "destination": ["dl", 0]}})
-    lines.append({"patchline": {"source": ["dl", 0], "destination": ["setmsg", 0]}})
-    lines.append({"patchline": {"source": ["setmsg", 0], "destination": ["mod", 0]}})
+    for i, text in enumerate([settings] if isinstance(settings, str) else list(settings)):
+        # one delay per message, all from the loadbang: 200 ms, 700 ms, 1200 ms ... (a switch-and-back needs time between)
+        boxes.append({"box": {"id": f"dl{i}", "maxclass": "newobj", "text": f"delay {delay_ms + 500 * i}", "numinlets": 2,
+                              "numoutlets": 1, "outlettype": ["bang"], "patching_rect": [320.0 + 150 * i, 48.0, 70.0, 22.0]}})
+        boxes.append({"box": {"id": f"setmsg{i}", "maxclass": "message", "text": text, "numinlets": 2, "numoutlets": 1,
+                              "outlettype": [""], "patching_rect": [320.0 + 150 * i, 76.0, 420.0, 22.0]}})
+        lines.append({"patchline": {"source": ["lb", 0], "destination": [f"dl{i}", 0]}})
+        lines.append({"patchline": {"source": [f"dl{i}", 0], "destination": [f"setmsg{i}", 0]}})
+        lines.append({"patchline": {"source": [f"setmsg{i}", 0], "destination": ["mod", 0]}})
     return w
 
 

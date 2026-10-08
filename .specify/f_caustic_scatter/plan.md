@@ -158,8 +158,9 @@ needed.
 **Consequences**: + the sheets composite stays free of bypass; - two stages carry the Param.
 
 ### ADR-5: The inactive branch is disabled; the lattice exists only in sheets mode
-**Decision**: switching mode sends `enable` to the node, the mesh and the sheets stages (1 in sheets mode) and the
-inverse to `caustic_pix`; entering sheets mode sends the current `detail`, which builds the lattice; entering soft
+**Decision**: switching mode sends `enable` to the node, the mesh and the sheets stage (1 in sheets mode); the soft stage
+stays ENABLED in both modes (the select stages render on its output, and a disabled stage emits nothing: found on the
+bench, T028; the soft pass is cheap, the cost is the scatter); entering sheets mode sends the current `detail`, which builds the lattice; entering soft
 mode does not free it (a rebuild costs a hitch) but nothing draws. A fresh module loads in soft mode with no lattice.
 **Alternatives**: always build the lattice: rejected, 200 MB at step 5 for nothing in soft mode.
 **Consequences**: + soft mode costs nothing extra in memory; - the first switch to sheets hitches (documented,

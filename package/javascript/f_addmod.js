@@ -21,7 +21,7 @@ var SIZES = {
     "vf_prism":       [190, 160],
     "vf_vortex":      [196, 160],
     "vf_vortex_multi":[191, 284],
-    "caustic":        [227, 100],
+    "caustic":        [227, 122],
     "vf_fieldmap":    [150,  88],
     "vf_flow":        [150,  80],
     "vf_repulse":     [165,  80],

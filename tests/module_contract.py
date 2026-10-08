@@ -43,6 +43,10 @@ _PARAM_RE = re.compile(r"\bParam\s+([A-Za-z_]\w*)\s*\(")
 TRAVERSE_TOKENS = {"t", "trigger", "prepend", "scale", "zl", "pack", "pak", "int", "i",
                    "float", "f", "expr", "+", "*", "/", "-", "!-", "!/", "round", "clip",
                    "gate", "change", "speedlim", "deferlow", "defer"}
+# Pure message routers / selectors. Passing THROUGH one is legitimate when asking "does this route token go anywhere"
+# (f_caustic's scene control entry and its `detail` ladder), but NOT when following an attrui to its target: a route
+# renames the message, and an attrui's attribute name must equal a pix Param. So it is opt-in (through_routes).
+ROUTING_TOKENS = {"route", "select", "sel"}
 PASS_THROUGH = ("live.dial", "live.numbox", "live.menu", "live.toggle", "flonum",
                 "number", "toggle", "umenu")
 
@@ -53,6 +57,19 @@ def _text(box):
 
 def _is_pix(box):
     return box.get("maxclass") == "newobj" and _text(box).startswith("jit.gl.pix")
+
+
+# A module with a raw GL scene (f_caustic's sheets mode: a jit.gl.node capture, a points mesh and a .jxs shader) drives
+# it with route objects whose tokens are messages into the scene, not pix parameters. That is a valid destination.
+GL_SCENE = ("jit.gl.shader", "jit.gl.node", "jit.gl.gridshape", "jit.gl.mesh", "jit.gl.slab")
+
+
+def _is_gl_scene(box):
+    return box.get("maxclass") == "newobj" and _text(box).startswith(GL_SCENE)
+
+
+def _is_message_sink(box):
+    return _is_pix(box) or _is_gl_scene(box)
 
 
 def pix_params(box):
@@ -145,7 +162,7 @@ class Module:
             for d, _ in self.out.get((bid, o), []):
                 yield d
 
-    def reach(self, starts, stop, max_depth=6):
+    def reach(self, starts, stop, max_depth=6, through_routes=False):
         """BFS from start ids; collect ids where stop(box) is true (not
         traversed past). Passes only through lightweight UI / message objects."""
         found, seen = [], set(starts)
@@ -159,15 +176,16 @@ class Module:
                 box = self.boxes[nxt]
                 if stop(box):
                     found.append(nxt)
-                elif depth < max_depth and self._traversable(box):
+                elif depth < max_depth and self._traversable(box, through_routes):
                     q.append((nxt, depth + 1))
         return found
 
-    def _traversable(self, box):
+    def _traversable(self, box, through_routes=False):
         mc, t = box.get("maxclass"), _text(box)
         if mc in PASS_THROUGH or mc in ("message", "jsui"):
             return True
-        return mc == "newobj" and (t.split() or [""])[0] in TRAVERSE_TOKENS
+        head = (t.split() or [""])[0]
+        return mc == "newobj" and (head in TRAVERSE_TOKENS or (through_routes and head in ROUTING_TOKENS))
 
     # ---- facts
     def pix(self):
@@ -256,8 +274,8 @@ class Module:
                 hits = [s for s in starts if self.boxes[s].get("maxclass") == "attrui"]
                 hits += self.reach(starts, stop=lambda b: b.get("maxclass") == "attrui")
                 attrs = sorted({attr_of[h] for h in hits})
-                direct = [s for s in starts if _is_pix(self.boxes[s])]
-                direct += self.reach(starts, stop=_is_pix)
+                direct = [s for s in starts if _is_message_sink(self.boxes[s])]
+                direct += self.reach(starts, stop=_is_message_sink, through_routes=True)
                 if attrs:
                     report["route_map"][name] = attrs
                 elif direct:

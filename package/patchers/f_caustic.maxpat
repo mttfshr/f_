@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						452.0,
+						502.0,
 						30.0,
 						30.0
 					]
@@ -57,12 +57,12 @@
 					"id": "obj-201",
 					"maxclass": "outlet",
 					"comment": "caustic",
-					"index": 1,
+					"index": 0,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
 						100.0,
-						452.0,
+						502.0,
 						30.0,
 						30.0
 					],
@@ -99,8 +99,10 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 5,
+					"numoutlets": 7,
 					"outlettype": [
+						"",
+						"",
 						"",
 						"",
 						"",
@@ -110,10 +112,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						367.0,
+						511.0,
 						22.0
 					],
-					"text": "route mix_pct gain scale softness color_shift"
+					"text": "route mix_pct gain scale softness color_shift mode detail"
 				}
 			},
 			{
@@ -296,6 +298,572 @@
 			},
 			{
 				"box": {
+					"id": "obj-50",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 3,
+					"outlettype": [
+						"jit_gl_texture",
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_caustic sheets mode: COMPOSITE stage (spec .specify/f_caustic_scatter/spec.md, \"Composite (sheets)\")\n//\n// in1 = light-source texture. The composite is built over it and this pix FOLLOWS ITS SIZE (@adapt 1, no fixed @dim)\n// in2 = the scatter node's float32 illuminance capture: square, fixed size (the `detail` step), HDR. Read with\n//       sample(in2, norm), which upscales it bilinearly to the output size\n// in3 = f_vecfield, read ONLY by the unconnected-field guard\n//\n// out1 = composite  mix(source, clamp(source + light, 0, 1), mix_pct / 100)\n// out2 = caustic layer, tone mapped and clamped (the same meaning as the soft path's out2)\n//\n// Bypass is NOT handled here: the select stage applies it last (plan ADR-4), so this stage has no bypass_gate.\n//\n// Skill checklist (skills/jit-gen-codebox; the look-patch tone stage broke on the first two):\n//   - functions are defined BEFORE every statement, and a Param declaration is a statement\n//   - components (.x .y .z) are read INLINE on sample(), never on a stored variable\n//   - no Param is named after a built-in (mix, step, ...); no variable named cell/in/norm/snorm/dim\n//   - Param values are not visible inside a function body: pass them as arguments\n\ntm(v, ex) {\n\tt = v / (1.0 + v);\n\treturn pow(t, ex);\n}\n\nParam gain(0.5);\nParam mix_pct(0.0);\n\n// One brightness slider across both modes: `gain` keeps its meaning and the sheets branch applies this constant\n// (calibrated against the soft layer in task T034; 2.0 makes the default gain 0.5 equal the look-patch's lev = 1).\nk_sheets = 2.0;\nexpo = 0.7;          // the tone curve's exponent (Matt's look-patch default, spec Decisions item 3; not exposed)\n\nuv = norm;\n\n// Unconnected-vecfield guard (spec Decisions item 6; probe T008: an unconnected pix inlet reads a constant\n// (0, 0, 0, 1), black WITH alpha 1, so the test must use R and G only). Real vecfields encode zero as 0.5, so a\n// texture that is exactly 0 in R and G at four fixed points is \"no field\": zero the light, keep the source.\nfsum = sample(in3, vec(0.25, 0.25)).x + sample(in3, vec(0.25, 0.25)).y\n     + sample(in3, vec(0.75, 0.25)).x + sample(in3, vec(0.75, 0.25)).y\n     + sample(in3, vec(0.25, 0.75)).x + sample(in3, vec(0.25, 0.75)).y\n     + sample(in3, vec(0.75, 0.75)).x + sample(in3, vec(0.75, 0.75)).y;\npresent = fsum > 0.0;\n\ncaustic_r = tm(sample(in2, uv).x * gain * k_sheets, expo) * present;\ncaustic_g = tm(sample(in2, uv).y * gain * k_sheets, expo) * present;\ncaustic_b = tm(sample(in2, uv).z * gain * k_sheets, expo) * present;\n\ncaustic_out = vec(clamp(caustic_r, 0.0, 1.0),\n                  clamp(caustic_g, 0.0, 1.0),\n                  clamp(caustic_b, 0.0, 1.0),\n                  1.0);\n\nsrc_r = sample(in1, uv).x;\nsrc_g = sample(in1, uv).y;\nsrc_b = sample(in1, uv).z;\n\ncomposite = vec(clamp(src_r + caustic_r, 0.0, 1.0),\n                clamp(src_g + caustic_g, 0.0, 1.0),\n                clamp(src_b + caustic_b, 0.0, 1.0),\n                1.0);\n\nsource_pass = vec(src_r, src_g, src_b, 1.0);\n\nout1 = mix(source_pass, composite, mix_pct / 100.0);\nout2 = caustic_out;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 3,
+									"numoutlets": 2,
+									"outlettype": [
+										"",
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-4",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										82.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 2"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-4",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										1
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						250.0,
+						380.0,
+						216.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_caustic_sheets @type float32 @adapt 1 @enable 0",
+					"varname": "#0_caustic_sheets"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-51",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_caustic: SELECT stage for the composite (spec .specify/f_caustic_scatter/spec.md, plan ADR-3 / ADR-4)\n//\n// in1 = the SOFT branch's composite (the first outlet of caustic_pix)\n// in2 = the SHEETS branch's composite (the first outlet of sheets_pix)\n// in3 = the light source (for bypass)\n//\n// sheets_gate 0 returns in1 EXACTLY, 1 returns in2 (mix(a, b, 0) = a in float32, so soft mode is bit-identical to the\n// module before the sheets mode existed). bypass_gate then mixes to the source: a bypassed module is a passthrough on\n// every outlet (\"every outlet mixes to its passthrough\", Matt 2026-10-05), in either mode.\n// This stage is split in two (one per outlet) so each fits the codebox bench's three inputs (constitution 2).\n// NOTE: keep the text o-u-t-<digit> out of comments in this file: the bench counts it to size the codebox.\n//\n// Skill checklist: no functions here; components read INLINE on sample(); no Param named after a built-in.\n\nParam sheets_gate(0.0);\nParam bypass_gate(0.0);\n\nuv = norm;\npicked = mix(sample(in1, uv), sample(in2, uv), sheets_gate);\nsource_pass = vec(sample(in3, uv).x, sample(in3, uv).y, sample(in3, uv).z, 1.0);\nout1 = mix(picked, source_pass, bypass_gate);\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 3,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						430.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_caustic_selc @type float32 @adapt 1",
+					"varname": "#0_caustic_selc"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-52",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_caustic: SELECT stage for the caustic layer (spec .specify/f_caustic_scatter/spec.md, plan ADR-3 / ADR-4)\n//\n// in1 = the SOFT branch's caustic layer (the second outlet of caustic_pix)\n// in2 = the SHEETS branch's caustic layer (the second outlet of sheets_pix)\n// in3 = the light source (for bypass)\n//\n// sheets_gate 0 returns in1 EXACTLY, 1 returns in2 (mix(a, b, 0) = a in float32, so soft mode is bit-identical to the\n// module before the sheets mode existed). bypass_gate then mixes to the source: a bypassed module is a passthrough on\n// every outlet (\"every outlet mixes to its passthrough\", Matt 2026-10-05), in either mode.\n// This stage is split in two (one per outlet) so each fits the codebox bench's three inputs (constitution 2).\n// NOTE: keep the text o-u-t-<digit> out of comments in this file: the bench counts it to size the codebox.\n//\n// Skill checklist: no functions here; components read INLINE on sample(); no Param named after a built-in.\n\nParam sheets_gate(0.0);\nParam bypass_gate(0.0);\n\nuv = norm;\npicked = mix(sample(in1, uv), sample(in2, uv), sheets_gate);\nsource_pass = vec(sample(in3, uv).x, sample(in3, uv).y, sample(in3, uv).z, 1.0);\nout1 = mix(picked, source_pass, bypass_gate);\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 3,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						250.0,
+						430.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_caustic_sell @type float32 @adapt 1",
+					"varname": "#0_caustic_sell"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-6",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -342,14 +910,14 @@
 						760.0,
 						260.0,
 						227.0,
-						100.0
+						122.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						227.0,
-						100.0
+						122.0
 					],
 					"proportion": 0.5
 				}
@@ -526,10 +1094,29 @@
 			},
 			{
 				"box": {
+					"id": "obj-17",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						120.0,
+						80.0,
+						22.0
+					],
+					"text": "vs_inState"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-100",
 					"maxclass": "inlet",
 					"comment": "vecfield",
-					"index": 1,
+					"index": 0,
 					"numinlets": 0,
 					"numoutlets": 1,
 					"outlettype": [
@@ -583,7 +1170,7 @@
 							"parameter_modmode": 3,
 							"parameter_shortname": "mix_pct",
 							"parameter_type": 0,
-							"parameter_unitstyle": 0
+							"parameter_unitstyle": 1
 						}
 					},
 					"varname": "mix_pct"
@@ -645,7 +1232,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Caustic brightness scale. Renamed from intensity 2026-07-12 to match the library-wide gain/mix naming convention.",
+					"hint": "Caustic brightness scale. Renamed from intensity 2026-07-12 to match the library-wide gain/mix naming convention. Both modes (the sheets mode applies an internal constant so the same value reads comparably).",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -749,7 +1336,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "",
+					"hint": "Soft mode: the streamline trace distance. Sheets mode: the propagation distance of the scatter, in UV per unit field (sheets fold over at larger values).",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -853,7 +1440,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "",
+					"hint": "Soft mode only (ignored in sheets mode).",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -957,7 +1544,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "",
+					"hint": "Soft mode only (ignored in sheets mode).",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1053,6 +1640,163 @@
 			{
 				"box": {
 					"id": "obj-35",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Soft: the 8-tap gather (thin bright lines). Sheets: a GPU forward scatter that forms overlapping folded sheets at larger Scale.",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "caustic_pix::mode",
+					"parameter_enable": 1,
+					"patching_rect": [
+						390.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						101.0,
+						80.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Soft",
+								"Sheets"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "mode",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "mode",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "mode"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-37",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						395.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						2.0,
+						84.0,
+						40.0,
+						18.0
+					],
+					"text": "Mode",
+					"textjustification": 1,
+					"varname": "lbl_mode"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-38",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Sheets mode: capture size and points per pixel (a quality / cost ladder; the output size does not change the cost). Changing it rebuilds the lattice: set it up, do not automate it.",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "caustic_pix::detail",
+					"parameter_enable": 1,
+					"patching_rect": [
+						462.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						94.0,
+						101.0,
+						126.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"1: 256 sq 2/px",
+								"2: 512 sq 2/px",
+								"3: 768 sq 2/px",
+								"4: 1024 sq 2/px",
+								"5: 1024 sq 4/px"
+							],
+							"parameter_initial": [
+								4.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "detail",
+							"parameter_mmax": 4.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "detail",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "detail"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-40",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						467.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						92.0,
+						84.0,
+						50.0,
+						18.0
+					],
+					"text": "Detail",
+					"textjustification": 1,
+					"varname": "lbl_detail"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-41",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1080,7 +1824,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-36",
+					"id": "obj-42",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1094,6 +1838,642 @@
 						22.0
 					],
 					"text": "prepend param bypass_gate"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-920",
+					"maxclass": "newobj",
+					"text": "route scale weight r n detail",
+					"numinlets": 1,
+					"numoutlets": 6,
+					"outlettype": [
+						"",
+						"",
+						"",
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						632.0,
+						360.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-901",
+					"maxclass": "newobj",
+					"text": "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						692.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-902",
+					"maxclass": "newobj",
+					"text": "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patching_rect": [
+						410.0,
+						692.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-903",
+					"maxclass": "newobj",
+					"text": "route out_name",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						732.0,
+						100.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-904",
+					"maxclass": "newobj",
+					"text": "route out_name",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						410.0,
+						732.0,
+						100.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-905",
+					"maxclass": "newobj",
+					"text": "join",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						30.0,
+						772.0,
+						60.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-906",
+					"maxclass": "newobj",
+					"text": "prepend texture",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						30.0,
+						812.0,
+						110.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-907",
+					"maxclass": "newobj",
+					"text": "r draw",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						190.0,
+						662.0,
+						50.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-908",
+					"maxclass": "message",
+					"text": "getout_name",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						190.0,
+						692.0,
+						90.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-909",
+					"maxclass": "newobj",
+					"text": "jit.gl.node vsynth @capture 1 @name #0.node @type float32 @adapt 0 @dim 1024 1024 @erase_color 0 0 0 0 @enable 0",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"jit_gl_texture",
+						"",
+						""
+					],
+					"patching_rect": [
+						410.0,
+						872.0,
+						400.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-910",
+					"maxclass": "newobj",
+					"text": "jit.gl.shader vsynth @name #0.sc @file f_caustic_sheets.jxs",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						872.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-911",
+					"maxclass": "newobj",
+					"text": "jit.gl.gridshape vsynth @shape plane @dim 2 2 @matrixoutput 1 @automatic 0",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_matrix",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						972.0,
+						400.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-912",
+					"maxclass": "newobj",
+					"text": "jit.gl.mesh #0.node @draw_mode points @shader #0.sc @blend_enable 1 @blend_mode 1 1 @depth_enable 0 @point_size 2 @color 1 1 1 1 @lighting_enable 0 @enable 0",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						1012.0,
+						600.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-921",
+					"maxclass": "newobj",
+					"text": "prepend param scale",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						30.0,
+						922.0,
+						130.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-922",
+					"maxclass": "newobj",
+					"text": "prepend param weight",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						170.0,
+						922.0,
+						140.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-923",
+					"maxclass": "newobj",
+					"text": "prepend param res",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						320.0,
+						922.0,
+						120.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-924",
+					"maxclass": "message",
+					"text": "dim $1 $1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						450.0,
+						922.0,
+						70.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-925",
+					"maxclass": "message",
+					"text": "dim $1 $1, bang",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						530.0,
+						922.0,
+						110.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-930",
+					"maxclass": "newobj",
+					"text": "select 1 2 3 4 5",
+					"numinlets": 1,
+					"numoutlets": 6,
+					"outlettype": [
+						"bang",
+						"bang",
+						"bang",
+						"bang",
+						"bang",
+						""
+					],
+					"patching_rect": [
+						650.0,
+						632.0,
+						130.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-931",
+					"maxclass": "message",
+					"text": "r 256, weight 0.5001, n 362",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						650.0,
+						672.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-932",
+					"maxclass": "message",
+					"text": "r 512, weight 0.5001, n 724",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						650.0,
+						702.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-933",
+					"maxclass": "message",
+					"text": "r 768, weight 0.5001, n 1086",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						650.0,
+						732.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-934",
+					"maxclass": "message",
+					"text": "r 1024, weight 0.5001, n 1448",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						650.0,
+						762.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-935",
+					"maxclass": "message",
+					"text": "r 1024, weight 0.2500, n 2048",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						650.0,
+						792.0,
+						330.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-947",
+					"maxclass": "newobj",
+					"text": "prepend scale",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						30.0,
+						592.0,
+						100.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-942",
+					"maxclass": "newobj",
+					"text": "+ 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					],
+					"patching_rect": [
+						810.0,
+						622.0,
+						40.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-943",
+					"maxclass": "newobj",
+					"text": "t i i",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"int",
+						"int"
+					],
+					"patching_rect": [
+						810.0,
+						652.0,
+						50.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-944",
+					"maxclass": "newobj",
+					"text": "i 5",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					],
+					"patching_rect": [
+						890.0,
+						682.0,
+						50.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-945",
+					"maxclass": "newobj",
+					"text": "gate 1 0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						810.0,
+						712.0,
+						70.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-946",
+					"maxclass": "newobj",
+					"text": "prepend detail",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						810.0,
+						742.0,
+						100.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-950",
+					"maxclass": "newobj",
+					"text": "t i i i i",
+					"numinlets": 1,
+					"numoutlets": 4,
+					"outlettype": [
+						"int",
+						"int",
+						"int",
+						"int"
+					],
+					"patching_rect": [
+						710.0,
+						632.0,
+						90.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-951",
+					"maxclass": "newobj",
+					"text": "prepend param sheets_gate",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						710.0,
+						772.0,
+						170.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-952",
+					"maxclass": "message",
+					"text": "enable $1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						710.0,
+						812.0,
+						70.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-955",
+					"maxclass": "newobj",
+					"text": "select 1",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						""
+					],
+					"patching_rect": [
+						710.0,
+						912.0,
+						60.0,
+						22.0
+					]
 				}
 			}
 		],
@@ -1117,7 +2497,67 @@
 						0
 					],
 					"destination": [
+						"obj-17",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
 						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-51",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-52",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-901",
 						0
 					]
 				}
@@ -1137,7 +2577,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-5",
+						"obj-51",
 						0
 					],
 					"destination": [
@@ -1149,8 +2589,8 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-5",
-						1
+						"obj-52",
+						0
 					],
 					"destination": [
 						"obj-201",
@@ -1173,11 +2613,23 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-35",
+						"obj-100",
 						0
 					],
 					"destination": [
-						"obj-36",
+						"obj-50",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-100",
+						0
+					],
+					"destination": [
+						"obj-902",
 						0
 					]
 				}
@@ -1185,12 +2637,96 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-36",
+						"obj-41",
+						0
+					],
+					"destination": [
+						"obj-42",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-42",
 						0
 					],
 					"destination": [
 						"obj-5",
 						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-42",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-42",
+						0
+					],
+					"destination": [
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-5",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-5",
+						1
+					],
+					"destination": [
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-50",
+						0
+					],
+					"destination": [
+						"obj-51",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-50",
+						1
+					],
+					"destination": [
+						"obj-52",
+						1
 					]
 				}
 			},
@@ -1293,6 +2829,18 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-21",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-4",
 						1
 					],
@@ -1322,6 +2870,18 @@
 					],
 					"destination": [
 						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-50",
 						0
 					]
 				}
@@ -1433,6 +2993,654 @@
 						0
 					]
 				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						5
+					],
+					"destination": [
+						"obj-35",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						6
+					],
+					"destination": [
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-901",
+						1
+					],
+					"destination": [
+						"obj-903",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-902",
+						1
+					],
+					"destination": [
+						"obj-904",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-903",
+						0
+					],
+					"destination": [
+						"obj-905",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-904",
+						0
+					],
+					"destination": [
+						"obj-905",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-905",
+						0
+					],
+					"destination": [
+						"obj-906",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-907",
+						0
+					],
+					"destination": [
+						"obj-908",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-908",
+						0
+					],
+					"destination": [
+						"obj-901",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-908",
+						0
+					],
+					"destination": [
+						"obj-902",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-911",
+						0
+					],
+					"destination": [
+						"obj-912",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-906",
+						0
+					],
+					"destination": [
+						"obj-912",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-920",
+						0
+					],
+					"destination": [
+						"obj-921",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-920",
+						1
+					],
+					"destination": [
+						"obj-922",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-920",
+						2
+					],
+					"destination": [
+						"obj-923",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-920",
+						2
+					],
+					"destination": [
+						"obj-924",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-920",
+						3
+					],
+					"destination": [
+						"obj-925",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-921",
+						0
+					],
+					"destination": [
+						"obj-910",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-922",
+						0
+					],
+					"destination": [
+						"obj-910",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-923",
+						0
+					],
+					"destination": [
+						"obj-910",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-924",
+						0
+					],
+					"destination": [
+						"obj-909",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-925",
+						0
+					],
+					"destination": [
+						"obj-911",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-920",
+						4
+					],
+					"destination": [
+						"obj-930",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-930",
+						0
+					],
+					"destination": [
+						"obj-931",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-931",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-930",
+						1
+					],
+					"destination": [
+						"obj-932",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-932",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-930",
+						2
+					],
+					"destination": [
+						"obj-933",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-933",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-930",
+						3
+					],
+					"destination": [
+						"obj-934",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-934",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-930",
+						4
+					],
+					"destination": [
+						"obj-935",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-935",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-909",
+						0
+					],
+					"destination": [
+						"obj-50",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						0
+					],
+					"destination": [
+						"obj-947",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-947",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
+						"obj-942",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-942",
+						0
+					],
+					"destination": [
+						"obj-943",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-943",
+						1
+					],
+					"destination": [
+						"obj-944",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-943",
+						0
+					],
+					"destination": [
+						"obj-945",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-945",
+						0
+					],
+					"destination": [
+						"obj-946",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-944",
+						0
+					],
+					"destination": [
+						"obj-946",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-946",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-35",
+						0
+					],
+					"destination": [
+						"obj-950",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-950",
+						3
+					],
+					"destination": [
+						"obj-945",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-950",
+						3
+					],
+					"destination": [
+						"obj-951",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-951",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-951",
+						0
+					],
+					"destination": [
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-950",
+						2
+					],
+					"destination": [
+						"obj-952",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-952",
+						0
+					],
+					"destination": [
+						"obj-909",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-952",
+						0
+					],
+					"destination": [
+						"obj-912",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-952",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-950",
+						0
+					],
+					"destination": [
+						"obj-955",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-955",
+						0
+					],
+					"destination": [
+						"obj-944",
+						0
+					]
+				}
 			}
 		],
 		"parameters": {
@@ -1459,6 +3667,16 @@
 			"obj-32": [
 				"color_shift",
 				"color_shift",
+				0
+			],
+			"obj-35": [
+				"mode",
+				"mode",
+				0
+			],
+			"obj-38": [
+				"detail",
+				"detail",
 				0
 			],
 			"parameterbanks": {

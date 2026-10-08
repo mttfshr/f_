@@ -29,7 +29,7 @@
 # (Phase 0 record of bench-verified facts, not a gate for shipped modules).
 cd "$(dirname "$0")/.." || exit 1
 
-DEFAULT=(control selftest fft temporal fluid modules fluid_module)
+DEFAULT=(control selftest fft temporal fluid caustic_codebox modules fluid_module caustic_sheets)
 
 ALL=0; LIST=0; SLOW=0; CHANGED=0; FILES=()
 for a in "$@"; do
@@ -80,7 +80,7 @@ if [ "$LIST" -eq 1 ]; then printf '%s\n' "${FILES[@]}"; exit 0; fi
 NEEDS_CODEBOX=0
 for f in "${FILES[@]}"; do
   case "$f" in
-    */bench_modules.py|*/bench_fluid_module.py|bench_modules.py|bench_fluid_module.py) ;;
+    */bench_modules.py|*/bench_fluid_module.py|*/bench_caustic_sheets.py|bench_modules.py|bench_fluid_module.py|bench_caustic_sheets.py) ;;
     *) NEEDS_CODEBOX=1 ;;
   esac
 done

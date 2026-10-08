@@ -149,8 +149,8 @@ select stages, one per outlet (Param sheets_gate picks soft or sheets; bypass_ga
 
 - **Selection in a pix, not by routing.** The select stage picks between the two branches with a `Param`, as the
   library does elsewhere, so no routing object touches a texture message. **Decided** (the alternatives, `gate`s as in `f_texrouter` or the `gswitch` UI objects Matt used in the look patch, were not chosen).
-- **The inactive branch is disabled** (`@enable 0` on the soft pix in sheets mode; the node and mesh in soft
-  mode) and the lattice is only built while the mode is `sheets` (rebuilt on `detail`). In soft mode the module
+- **The sheets branch is disabled in soft mode** (`@enable 0` on the node, the mesh and the sheets pix). The soft stage is NOT
+  disabled in sheets mode: the select stages render on its output, and a disabled stage emits nothing (found on the bench) and the lattice is only built while the mode is `sheets` (rebuilt on `detail`). In soft mode the module
   costs what it costs today plus one select pass.
 - **Composite (sheets).** `light` (float32 illuminance, capture-sized) and `src` in; the pix follows the source's
   size (`@adapt 1`, no fixed `@dim`), reads `light` with `sample(in, norm)` (bilinear upscale):

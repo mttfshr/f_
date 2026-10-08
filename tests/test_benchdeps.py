@@ -348,7 +348,8 @@ def test_bench_sh_changed_skips_green_files_and_lists_the_rest():
         env = {"BENCH_GREEN": str(green)}
         r = _bench_sh(env, "--changed", "--list")
         listed = r.stdout.split()
-        _t("empty record: --changed --list names all 7 default files", len(listed) == 7)
+        default = re.search(r"DEFAULT=\(([^)]*)\)", (REPO / "tests/bench.sh").read_text()).group(1).split()
+        _t(f"empty record: --changed --list names all {len(default)} default files (bench.sh DEFAULT)", len(listed) == len(default))
         files = {}
         env_now = bd.detect_env()
         default = re.search(r"^DEFAULT=\(([^)]*)\)", (REPO / "tests/bench.sh").read_text(), re.M).group(1).split()
@@ -371,9 +372,9 @@ def test_bench_sh_changed_skips_green_files_and_lists_the_rest():
            sorted(r.stdout.split()) == ["tests/bench_fft.py", "tests/bench_fluid_module.py"])
         r = _bench_sh(env, "--changed", "--slow", "--list")
         _t("--slow: every file whose green run skipped slow tests runs",
-           len(r.stdout.split()) == 7)
+           len(r.stdout.split()) == len(default))
         r = _bench_sh(env, "--list")
-        _t("without --changed: all 7, the record is ignored", len(r.stdout.split()) == 7)
+        _t(f"without --changed: all {len(default)}, the record is ignored", len(r.stdout.split()) == len(default))
 
 
 def _fails(fn):

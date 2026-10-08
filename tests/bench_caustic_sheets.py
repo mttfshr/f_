@@ -13,6 +13,7 @@ Orientation: the inputs reach the GPU as matrices, so the mirror runs with the f
 Needs Max with tests/bench/bench_module.maxpat open and every Vsynth performance patch CLOSED.
 Run:  tests/bench.sh tests/bench_caustic_sheets.py
 """
+import os
 import sys
 
 import numpy as np
@@ -21,6 +22,8 @@ from pathlib import Path
 
 import benchclient as bc
 import caustic_runner as cr
+import modulebench as mb
+import record_caustic_baseline as rb
 import scatter_mirror as sm
 import scatter_truth as st
 from harness import check, note, run
@@ -179,7 +182,19 @@ FLOORS = {(1, 1.0): 0.99, (1, 3.5): 0.89, (2, 1.0): 0.995, (2, 3.5): 0.95, (3, 1
           (4, 1.0): 0.995, (4, 3.5): 0.995, (5, 1.0): 0.998, (5, 3.5): 0.998}
 
 
+def release_lattice():
+    """A tiny job so Max drops the large lattice (the spike's stages end the same way)."""
+    go([sm.white(), st.field_texture()], explicit(0.0, 256, 64))
+
+
 def test_T020_quality_of_every_step_against_the_reference():
+    try:
+        _quality_of_every_step()
+    finally:
+        release_lattice()
+
+
+def _quality_of_every_step():
     tex, dstar = st.field_texture(), st.first_fold_distance()
     for frac in (1.0, 3.5):
         d = frac * dstar
@@ -206,10 +221,102 @@ def test_T021_the_default_step_fits_the_frame_budget():
     for i in range(1, 6):
         ms = cr.period_ms([sm.white(), tex], [["scale", dstar], ["detail", i]], STANDALONE, n_out=3)
         note(f"step {i}: frame period ms (the cap is {cr.CAP_MS:.1f})", ms)
+        # a stalled run gave -4417 ms here and "passed" (a negative period trivially fits the budget): refuse it
+        assert 5.0 < ms < 100.0, f"step {i}: invalid frame period {ms:.1f} ms (a stalled bench?): not a measurement"
         if i == 5:
             check("step 5: frame period over the budget (ms above 1.15 x the cap)", max(0.0, ms - 1.15 * cr.CAP_MS), 0.0)
 
 
+# ======================================================================= the REAL module (tasks T027, T028)
+MODULE = "f_caustic.maxpat"
+BASELINE = Path(__file__).resolve().parent / "baselines" / "f_caustic_soft.npz"
+
+
+def module(settings, warmup=60):
+    """The real f_caustic through the module bench; `settings` (a string or a list) sent by the wrapper, read 'base'."""
+    res, out = cr.run([sm.gradient_src(512), st.field_texture()], [], MODULE, n_out=2, settings=settings, warmup=warmup)
+    errs = [e for e in (res.get("errors") or []) if "getattr" not in e]
+    assert not errs, f"max errors: {errs[:3]}"
+    arrs = out.get("base")
+    assert arrs and 1 in arrs and 2 in arrs, f"captures missing: {sorted(arrs) if arrs else None}"
+    return arrs[1], arrs[2]
+
+
+def vs_baseline(name, comp, layer):
+    """0.0 when the captures are bit-identical to the recorded baseline, else the max |difference| of the 128^2 copies."""
+    base = np.load(BASELINE)
+    worst = 0.0
+    for k, a in ((1, comp), (2, layer)):
+        if rb.sha(a) == str(base[f"{name}_out{k}_sha"]):
+            continue
+        worst = max(worst, float(np.abs(rb.block_down(a) - base[f"{name}_out{k}_128"]).max()), 1e-12)
+    return worst
+
+
+def test_T027_soft_mode_is_bit_identical_to_the_baseline():
+    """The module before the sheets mode existed (tests/baselines/f_caustic_soft.npz, recorded first): 5 parameter sets."""
+    for name, values in rb.SETS.items():
+        comp, layer = module(rb.settings_of(values))
+        check(f"{name}: |module - baseline| (0 = bit-identical)", vs_baseline(name, comp, layer), 0.0)
+
+
+ENABLE_JS = """
+var m = moduleSubpatcher(), r = {};
+collect(m, function (o) { return o.maxclass === "jit.gl.pix" || o.maxclass === "jit.gl.node" || o.maxclass === "jit.gl.mesh"; }, [])
+  .forEach(function (o) { var n = String(o.getattr("name") || o.varname); r[o.maxclass + " " + n] = o.getattr("enable"); });
+r;
+"""
+
+
+def enables():
+    """{'jit.gl.pix caustic_pix': 1, ...}: the enable attribute of every GL object in the module just run."""
+    return mb.bench_eval(ENABLE_JS)["value"]
+
+
+def enabled(state, fragment):
+    hits = [v for k, v in state.items() if fragment in k]
+    assert hits, f"no object matching {fragment!r} in {sorted(state)}"
+    return bool(hits[0])
+
+
+def test_T028_soft_mode_leaves_the_sheets_branch_disabled():
+    module(rb.settings_of(rb.SETS["B_wet"]))
+    st_ = enables()
+    note("enable state in soft mode", len(st_))
+    assert enabled(st_, "caustic_pix"), st_
+    for frag in ("caustic_sheets", "jit.gl.node", "jit.gl.mesh"):
+        assert not enabled(st_, frag), f"{frag} should be disabled in soft mode: {st_}"
+
+
+def test_T028_sheets_mode_through_the_module_equals_the_standalone():
+    """Same scatter, same composite, selected by the gate: identical to the standalone's two outlets."""
+    tex, dstar = st.field_texture(), st.first_fold_distance()
+    d = 1.0 * dstar
+    comp, layer = module(f"scale {d}, gain 0.5, mix_pct 100, mode 1", warmup=180)
+    state = enables()
+    # the soft stage stays enabled in sheets mode ON PURPOSE: the select stages render on its output (a disabled stage
+    # emits nothing and they would starve; found here)
+    assert enabled(state, "caustic_pix"), f"the soft stage must stay enabled (it triggers the select stages): {state}"
+    for frag in ("caustic_sheets", "jit.gl.node", "jit.gl.mesh"):
+        assert enabled(state, frag), f"{frag} should be enabled in sheets mode: {state}"
+    _, s_comp, s_layer = go([sm.gradient_src(512), tex], [["scale", d], ["gain", 0.5], ["mix_pct", 100.0], ["detail", 5]])
+    note("layer max (the light is there)", float(layer[..., :3].max()))
+    assert layer[..., :3].max() > 0.2, "the module's caustic layer is black in sheets mode"
+    check("module composite vs standalone composite: max|diff|", float(np.abs(comp.astype(np.float64) - s_comp).max()), 0.0)
+    check("module layer vs standalone layer: max|diff|", float(np.abs(layer.astype(np.float64) - s_layer).max()), 0.0)
+
+
+def test_T028_switching_back_to_soft_restores_the_baseline():
+    tex, dstar = st.field_texture(), st.first_fold_distance()
+    values = rb.SETS["B_wet"]
+    comp, layer = module(["mode 1, scale %g, gain 0.5, mix_pct 100" % dstar, rb.settings_of(values) + ", mode 0"], warmup=200)
+    check("sheets then soft: |module - baseline B| (0 = bit-identical)", vs_baseline("B_wet", comp, layer), 0.0)
+    state = enables()
+    assert enabled(state, "caustic_pix") and not enabled(state, "caustic_sheets"), state
+
+
 if __name__ == "__main__":
     cr.ensure_bench()
-    sys.exit(run(globals()))
+    only = [t for t in os.environ.get("ONLY", "").split(",") if t]
+    ns = {k: v for k, v in globals().items() if not (k.startswith("test_") and only and not any(o in k for o in only))}
+    sys.exit(run(ns))

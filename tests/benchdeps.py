@@ -47,6 +47,7 @@ _MACHINERY = ["tests/bench/bench.js", "tests/bench/bench.maxpat",
 _MODULE_BENCH = ["tests/bench/bench_module.js", "tests/bench/bench_module.maxpat",
                  "tests/bench/bench_module_empty.maxpat", "package/javascript/*.js"]
 _FLUID_CODEBOXES = ["src/f_vf_fluid/codebox_*.gen"]
+_CAUSTIC = ["src/f_caustic/codebox_*.gen", "package/code/f_caustic_sheets.jxs", "src/f_caustic/scatter_scene.py"]
 
 # Data inputs per bench file, globs relative to the repo root. Python imports are
 # derived, so they are not listed here. Every tests/bench_*.py needs an entry.
@@ -60,6 +61,8 @@ DATA = {
     "bench_fluid_probes": _MACHINERY + _FLUID_CODEBOXES,
     "bench_modules": _MODULE_BENCH,            # plus one patcher per module, see PER_MODULE
     "bench_fluid_module": _MODULE_BENCH + ["package/patchers/f_vf_fluid.maxpat"] + _FLUID_CODEBOXES,
+    "bench_caustic_codebox": _MACHINERY + _CAUSTIC,
+    "bench_caustic_sheets": _MODULE_BENCH + _CAUSTIC + ["tests/bench/caustic_sheets_standalone.maxpat"],
 }
 PER_MODULE = {"bench_modules"}                 # also tracked per patcher in package/patchers/
 

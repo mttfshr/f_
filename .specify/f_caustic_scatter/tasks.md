@@ -173,22 +173,22 @@ package/help/f_caustic.maxhelp                                                  
   `tests/bench_caustic_codebox.py`: gate 0 returns the soft input exactly, gate 1 the sheets input, bypass gives the source on
   BOTH outlets (as the soft path does), linear in the gate (8 of 8 checks). Found: the bench counts `outN` tokens in comment
   text to size the codebox, so keep them out of comments.
-- [ ] T024 [US3] Add the mode network to `scatter_scene.py`: `mode` menu output -> `prepend param sheets_gate` to the select
-  stage; `enable` to the node, mesh and sheets stage (1 in sheets mode) and its inverse to `caustic_pix`; entering
+- [x] T024 [US3] Add the mode network to `scatter_scene.py`: `mode` menu output -> `prepend param sheets_gate` to the select
+  stage; `enable` to the node, mesh and sheets stage (1 in sheets mode; the soft stage stays enabled, see plan ADR-5); entering
   sheets mode resends the current `detail` (which builds the lattice); soft mode builds nothing.
-- [ ] T025 [US3] Extend `src/f_caustic/definition.py`: add `pix_chain` (keep `caustic_pix` as the primary with its name and
+- [x] T025 [US3] Extend `src/f_caustic/definition.py`: add `pix_chain` (keep `caustic_pix` as the primary with its name and
   gen unchanged; add `sheets_pix`, `select_comp` and `select_layer`), `pix_wires`, the `mode` (menu: soft, sheets, default soft) and
   `detail` (menu 1-5, default 5, `pix_wire: False`) params, the fanouts and `outlet_source_override` as settled in
   T011, and `raw_*` from `raw_ui.json`. Every existing param, default and range stays as it is.
-- [ ] T026 [US3] Build: `build/py.sh build/build_patcher.py src/f_caustic/definition.py`; run `build/py.sh build/drift.py`;
+- [x] T026 [US3] Build: `build/py.sh build/build_patcher.py src/f_caustic/definition.py`; run `build/py.sh build/drift.py`;
   review every difference; update `tests/drift_baseline.json` only for the intended ones.
-- [ ] T027 [US3] Soft-mode identity: the rebuilt module vs `tests/baselines/f_caustic_soft.npz` for every recorded parameter
+- [x] T027 [US3] Soft-mode identity: the rebuilt module vs `tests/baselines/f_caustic_soft.npz` for every recorded parameter
   set (r = 1.0000 on both outlets).
-- [ ] T028 [US3] Mode-switch bench: sheets mode through the real module equals the standalone output; switching back to
+- [x] T028 [US3] Mode-switch bench: sheets mode through the real module equals the standalone output; switching back to
   soft restores the baseline output exactly; disabled branches are not drawing (the inactive branch's enable is 0).
-- [ ] T029 [US3] Update `tests/module_contract.py`, `tests/test_module_contracts.py` and the `f_caustic` entry in
+- [x] T029 [US3] Update `tests/module_contract.py`, `tests/test_module_contracts.py` and the `f_caustic` entry in
   `tests/bench_modules.py` (`BYPASS_EXPECT`) for the new stages and outlet sources until `./tests/run.sh` is green.
-- [ ] T030 [US3] Commit.
+- [x] T030 [US3] Commit.
 
 **Checkpoint**: the module has both modes; soft is provably unchanged; the whole offline suite is green.
 
