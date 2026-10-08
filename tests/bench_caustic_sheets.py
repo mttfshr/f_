@@ -315,6 +315,67 @@ def test_T028_switching_back_to_soft_restores_the_baseline():
     assert enabled(state, "caustic_pix") and not enabled(state, "caustic_sheets"), state
 
 
+# ================================================================== shared behaviours (tasks T031-T035)
+def module_tags(settings, inputs=None, n_in=None, warmup=180):
+    """Both module-bench captures from one job: 'base' (settings applied, bypass off) and 'bypassed' (the timeline's end,
+    after the bypass test)."""
+    inputs = inputs if inputs is not None else [sm.gradient_src(512), st.field_texture()]
+    res, out = cr.run(inputs, [], MODULE, n_out=2, n_in=n_in, settings=settings, warmup=warmup)
+    errs = [e for e in (res.get("errors") or []) if "getattr" not in e]
+    assert not errs, f"max errors: {errs[:3]}"
+    assert out.get("base") and out.get("bypassed"), f"captures missing: {sorted(out)}"
+    return out["base"], out["bypassed"]
+
+
+def test_T031_bypass_is_a_passthrough_on_both_outlets_in_both_modes():
+    src = sm.gradient_src(512)
+    dstar = st.first_fold_distance()
+    for mode in (0, 1):
+        base, byp = module_tags(f"scale {dstar}, gain 0.5, mix_pct 100, mode {mode}")
+        note(f"mode {mode}: the caustic layer's max with bypass off", float(base[2][..., :3].max()))
+        assert base[2][..., :3].max() > 0.05, f"mode {mode}: no light with bypass off: the test would prove nothing"
+        for k, name in ((1, "composite"), (2, "layer")):
+            check(f"mode {mode}, bypass: {name} outlet == the source, max|diff|",
+                  float(np.abs(byp[k][..., :3].astype(np.float64) - src[..., :3]).max()), 1e-6)
+            check(f"mode {mode}, bypass: {name} outlet alpha is 1", abs(float(byp[k][..., 3].min()) - 1.0), 0.0)
+
+
+def test_T032_an_unconnected_vecfield_is_silent_in_sheets_mode():
+    """Only the source is connected: the sheets composite's guard reads the field inlet as absent (probe T008)."""
+    src = sm.gradient_src(512)
+    base, _ = module_tags(f"scale {st.first_fold_distance()}, gain 0.5, mix_pct 100, mode 1", inputs=[src], n_in=1)
+    check("no field: composite == source, max|diff|", float(np.abs(base[1][..., :3].astype(np.float64) - src[..., :3]).max()), 1e-6)
+    check("no field: max of the caustic layer", float(base[2][..., :3].max()), 1e-6)
+
+
+def luma(a):
+    return float((a[..., 0] * 0.299 + a[..., 1] * 0.587 + a[..., 2] * 0.114).mean())
+
+
+def test_T034_default_brightness_is_comparable_across_modes():
+    """The same default gain and scale: the sheets layer's mean luma within 2x of the soft layer's (the sheets branch's
+    internal constant, codebox_sheets.gen k_sheets, is calibrated for this)."""
+    settings = "scale 0.3, gain 0.5, mix_pct 100"
+    soft = luma(module_tags(settings + ", mode 0")[0][2])
+    sheets = luma(module_tags(settings + ", mode 1")[0][2])
+    note("soft layer mean luma", soft)
+    note("sheets layer mean luma", sheets)
+    ratio = sheets / soft
+    note("sheets / soft", ratio)
+    assert 0.5 <= ratio <= 2.0, f"brightness differs by {ratio:.2f}x between modes: recalibrate k_sheets"
+
+
+def test_T035_both_modes_fit_the_frame_budget_through_the_module():
+    """Fits / does-not-fit only (a cost below the 60 fps cap is invisible to the bench; the model is spike S6's)."""
+    inputs = [sm.gradient_src(512), st.field_texture()]
+    for label, params in (("soft", [["mix_pct", 100.0], ["mode", 0]]),
+                          ("sheets, default step 5", [["mix_pct", 100.0], ["scale", 0.3], ["mode", 1]])):
+        ms = cr.period_ms(inputs, params, MODULE, n_out=2)
+        note(f"{label}: frame period ms (the cap is {cr.CAP_MS:.1f})", ms)
+        assert 5.0 < ms < 100.0, f"{label}: invalid frame period {ms:.1f} ms (a stalled bench?)"
+        check(f"{label}: ms over 1.15 x the cap", max(0.0, ms - 1.15 * cr.CAP_MS), 0.0)
+
+
 if __name__ == "__main__":
     cr.ensure_bench()
     only = [t for t in os.environ.get("ONLY", "").split(",") if t]

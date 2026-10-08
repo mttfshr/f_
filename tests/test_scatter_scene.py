@@ -53,5 +53,21 @@ def test_every_raw_cord_has_real_endpoints():
     check("cords with a missing box or an out-of-range port in the built module", len(bad), 0.0)
 
 
+def test_every_gl_object_name_is_scoped_per_instance():
+    """Two f_caustic instances must not share a node, shader or pix name (`#0` is unique per instance). The one
+    exception is the soft stage's `caustic_pix`, a fixed name the module has always had: it is kept so the soft path is
+    bit-identical (task T027), and it is the one thing a live two-instance check (T037) has to look at."""
+    boxes, _ = built()
+    unscoped = []
+    for b in boxes.values():
+        text = b.get("text") or ""
+        if text.startswith("jit.gl.") and "@name " in text and "@name #0" not in text:
+            unscoped.append(text.split("@name ")[1].split()[0])
+        if text.startswith("jit.gl.mesh") and " #0." not in text:
+            unscoped.append("mesh target: " + text.split()[1])
+    check("GL objects whose name is not #0-scoped (expected: only caustic_pix)", len([u for u in unscoped if u != "caustic_pix"]), 0.0)
+    assert unscoped.count("caustic_pix") == 1, unscoped
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))
