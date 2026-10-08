@@ -142,9 +142,9 @@ inlet 0 (texture + control) ─ routepass ─┬─ route <params> ─ (existing
 inlet 1 (vecfield, no vs_inState) ───────┬─ caustic_pix in2                                      ├─ scatter scene
                                           └─ slab(float32, @rectangle 0) field ───────────────────┘   (node, mesh, .jxs)
 caustic_pix  out1 composite, out2 layer ────────────────────────┐
-sheets composite pix (tone map, bilinear upscale to the source's size, mix, bypass) ─┤
-select pix (Param sheets_gate: picks soft or sheets per outlet) ─┬─ out0 composite
-                                                                 └─ out1 caustic layer
+sheets composite pix (tone map, bilinear upscale to the source's size, mix) ───────────┤
+select stages, one per outlet (Param sheets_gate picks soft or sheets; bypass_gate) ─┬─ outlet 0 composite
+                                                                                     └─ outlet 1 caustic layer
 ```
 
 - **Selection in a pix, not by routing.** The select stage picks between the two branches with a `Param`, as the
@@ -157,9 +157,12 @@ select pix (Param sheets_gate: picks soft or sheets per outlet) ─┬─ out0 c
   ```
   exposed = tone(light * gain)                    // see the curve below
   driven  = clamp(src + exposed, 0, 1)            // additive over the source, as the soft path
-  out0    = mix(mix(src, driven, mix_pct / 100), src, bypass_gate)
-  out1    = mix(clamp(exposed, 0, 1), black, bypass_gate)         // caustic layer, as soft (clamped)
+  out1    = mix(src, driven, mix_pct / 100)                       // composite
+  out2    = clamp(exposed, 0, 1)                                  // caustic layer (as the soft path: clamped)
   ```
+  Bypass and the soft / sheets pick are NOT here: the two select stages (one per outlet) apply them. Under bypass
+  every outlet mixes to the source, the layer outlet too ("every outlet mixes to its passthrough", Matt 2026-10-05;
+  the soft codebox does exactly this), in either mode.
   Tone curve as tried in the look patch (Matt's first-look default, never tuned): `t = v / (1 + v)`, `out = t^0.7`.
   **Decided:** keep it; the exponent is not exposed in v1.
 - **A non-square output is handled in UV space.** The capture is square and maps the UV square; the composite

@@ -18,8 +18,8 @@ default soft) and `detail` (1-5, the capture-size / density ladder, default 5). 
 
 Technically: the existing `caustic_pix` (primary pix, soft) is joined by a raw GL scene (a `jit.gl.node` capture
 holding a points `jit.gl.mesh` drawn with a `.jxs` shader), a **sheets composite pix** (tone map, bilinear upscale
-to the source's size, additive composite, unconnected-vecfield guard) and a **select pix** (a `Param` picks soft or
-sheets per outlet and applies bypass). The inactive branch is disabled; the lattice exists only in sheets mode.
+to the source's size, additive composite, unconnected-vecfield guard) and two **select stages** (one per outlet; each a `Param`-driven pick of soft or
+sheets that also applies bypass). The inactive branch is disabled; the lattice exists only in sheets mode.
 Everything numeric is verified in NumPy (tier 1) and on the module bench (tier 2) before the look is judged
 (tier 3).
 
@@ -83,7 +83,8 @@ src/f_caustic/
   definition.py            # EXTENDED: pix_chain (3 nodes), mode / detail params, raw scene     — Phase 4
   codebox_v2.gen           # soft path: UNCHANGED
   codebox_sheets.gen       # sheets composite: tone, upscale, additive composite, guard         — Phase 2
-  codebox_select.gen       # select: mode gate, bypass                                          — Phase 4
+  codebox_select_comp.gen  # select, composite outlet: mode gate, bypass                       — Phase 4
+  codebox_select_layer.gen # select, caustic-layer outlet: mode gate, bypass                    — Phase 4
   scatter_scene.py         # generates raw_ui.json: scene, detail network, mode network         — Phase 2
   raw_ui.json              # generated (raw_boxes / raw_lines / raw_parameters)                 — Phase 2
 package/code/f_caustic_sheets.jxs                        # the shader (new folder)            — Phase 2
@@ -135,9 +136,11 @@ generated and verified in the spike; typing the boxes in `definition.py`: reject
 **Consequences**: + one source of truth, regenerable; - the first build must be checked against drift carefully
 (raw boxes that the builder does not know are matched as "extra").
 
-### ADR-3: Mode selection happens in a select pix, driven by a `Param`
-**Decision**: `select_pix` takes soft composite, soft layer, sheets composite, sheets layer (and the source for
-bypass) and outputs the two outlets by `Param sheets_gate`. No routing object touches a texture message.
+### ADR-3: Mode selection happens in select pix stages, driven by a `Param`
+**Decision**: two select stages, one per outlet (`select_comp`: soft composite, sheets composite, source; `select_layer`:
+soft layer, sheets layer, source), each picks by `Param sheets_gate` and applies bypass. They are two, not one,
+because the codebox bench takes at most three input textures and constitution 2 says a codebox is verified there
+before it is wired (T023). No routing object touches a texture message.
 **Alternatives**: `gate` objects as in `f_texrouter`, `gswitch` UI objects (used in the look patch), `switch`:
 rejected, a Param needs no routing and works with the builder's bypass convention.
 **Consequences**: + soft mode adds one cheap pass; soft output is `mix(a, b, 0)`, exact in float32; - the soft
@@ -145,10 +148,11 @@ branch's outputs now feed a stage instead of the outlets, so the contract and be
 
 ### ADR-4: Bypass is applied once, in the select stage
 **Context**: the builder drives `bypass_gate` on the primary pix; the sheets stages would each need it.
-**Decision**: the select stage applies `bypass_gate` as the last step (`mix(selected, src, bypass_gate)` on the
-composite; the layer goes to black), so a bypassed module is a passthrough in either mode. `caustic_pix` keeps its
+**Decision**: each select stage applies `bypass_gate` as the last step (`mix(selected, src, bypass_gate)`, on the composite AND on
+the layer, as the soft path does: "every outlet mixes to its passthrough", Matt 2026-10-05), so a bypassed module is a
+passthrough on both outlets in either mode. `caustic_pix` keeps its
 own `bypass_gate` (untouched, driven by the builder as today).
-**Mechanism (verified, T009)**: `bypass_target: ["caustic", "select"]` wires the bypass toggle's
+**Mechanism (verified, T009)**: `bypass_target` (probed with `["caustic", "select"]`; the module uses `["caustic", "select_comp", "select_layer"]`) wires the bypass toggle's
 `prepend param bypass_gate` to both stages (each codebox must declare `Param bypass_gate(...)`); no raw fallback is
 needed.
 **Consequences**: + the sheets composite stays free of bypass; - two stages carry the Param.
@@ -207,7 +211,7 @@ orientation, quality per step, tone/upscale, unconnected-field guard).
 ### Block C: `detail` ladder and mode network
 **Dependencies**: Block B.
 **Builds**: the `detail` select-and-message network and the mode / enable network in the scene generator;
-`codebox_select.gen`; the `mode` and `detail` params.
+`codebox_select_comp.gen` and `codebox_select_layer.gen`; the `mode` and `detail` params.
 **Why this block**: the controls only make sense around a working path; they are the part that reshapes the module.
 **Verification checkpoint**: `detail N` identical to the explicit messages for all five steps; mode switch toggles
 enables and the select gate as intended (bench).

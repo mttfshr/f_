@@ -1,0 +1,45 @@
+# Max 9.2.0 (e9c80e453de), 2026-10-07 17:35
+=== tests/bench_caustic_codebox.py
+test_T013_composite_compiles_and_runs
+    ...  max of out1 (composite): 1.000e+00
+    ...  max of out2 (caustic layer): 9.610e-01
+  PASS  (0.44s)
+test_T013_composite_matches_mirror
+    ok   composite out1 max|GPU - mirror| (gain 0.5, mix 100.0): 1.407e-07  (tol 1e-06)
+    ok   layer     out2 max|GPU - mirror| (gain 0.5, mix 100.0): 1.407e-07  (tol 1e-06)
+    ok   composite out1 max|GPU - mirror| (gain 1.0, mix 60.0): 1.227e-07  (tol 1e-06)
+    ok   layer     out2 max|GPU - mirror| (gain 1.0, mix 60.0): 1.482e-07  (tol 1e-06)
+    ok   composite out1 max|GPU - mirror| (gain 0.2, mix 100.0): 1.490e-07  (tol 1e-06)
+    ok   layer     out2 max|GPU - mirror| (gain 0.2, mix 100.0): 1.490e-07  (tol 1e-06)
+  PASS  (0.74s)
+test_T013_mix_zero_is_the_source
+    ok   mix 0: |out1 - source|: 0.000e+00  (tol 1e-05)
+  PASS  (0.39s)
+test_T013_zero_gain_gives_no_light
+    ok   gain 0: max of the caustic layer: 0.000e+00  (tol 1e-06)
+  PASS  (0.40s)
+test_T013_unconnected_vecfield_is_silent
+    ok   no field: |out1 - source|: 0.000e+00  (tol 1e-05)
+    ok   no field: max of the caustic layer: 0.000e+00  (tol 1e-06)
+  PASS  (0.39s)
+test_T023_select_gate_picks_a_branch_exactly
+    ok   select comp: gate 0 returns the soft input, max|diff|: 0.000e+00  (tol 0e+00)
+    ok   select comp: gate 1 returns the sheets input, max|diff|: 0.000e+00  (tol 0e+00)
+    ok   select layer: gate 0 returns the soft input, max|diff|: 0.000e+00  (tol 0e+00)
+    ok   select layer: gate 1 returns the sheets input, max|diff|: 0.000e+00  (tol 0e+00)
+  PASS  (0.53s)
+test_T023_select_bypass_is_the_source_in_both_modes
+    ok   select comp: bypass, gate 0: max|out - source|: 0.000e+00  (tol 0e+00)
+    ok   select comp: bypass, gate 0: alpha is 1: 0.000e+00  (tol 0e+00)
+    ok   select comp: bypass, gate 1: max|out - source|: 0.000e+00  (tol 0e+00)
+    ok   select comp: bypass, gate 1: alpha is 1: 0.000e+00  (tol 0e+00)
+    ok   select layer: bypass, gate 0: max|out - source|: 0.000e+00  (tol 0e+00)
+    ok   select layer: bypass, gate 0: alpha is 1: 0.000e+00  (tol 0e+00)
+    ok   select layer: bypass, gate 1: max|out - source|: 0.000e+00  (tol 0e+00)
+    ok   select layer: bypass, gate 1: alpha is 1: 0.000e+00  (tol 0e+00)
+  PASS  (0.54s)
+test_T023_select_is_linear_in_the_gate
+    ok   select comp: gate 0.25: max|out - (0.75 a + 0.25 b)|: 5.960e-08  (tol 1e-06)
+  PASS  (0.13s)
+
+8/8 passed

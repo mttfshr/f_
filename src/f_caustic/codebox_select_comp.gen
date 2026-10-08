@@ -1,0 +1,21 @@
+// f_caustic: SELECT stage for the composite (spec .specify/f_caustic_scatter/spec.md, plan ADR-3 / ADR-4)
+//
+// in1 = the SOFT branch's composite (the first outlet of caustic_pix)
+// in2 = the SHEETS branch's composite (the first outlet of sheets_pix)
+// in3 = the light source (for bypass)
+//
+// sheets_gate 0 returns in1 EXACTLY, 1 returns in2 (mix(a, b, 0) = a in float32, so soft mode is bit-identical to the
+// module before the sheets mode existed). bypass_gate then mixes to the source: a bypassed module is a passthrough on
+// every outlet ("every outlet mixes to its passthrough", Matt 2026-10-05), in either mode.
+// This stage is split in two (one per outlet) so each fits the codebox bench's three inputs (constitution 2).
+// NOTE: keep the text o-u-t-<digit> out of comments in this file: the bench counts it to size the codebox.
+//
+// Skill checklist: no functions here; components read INLINE on sample(); no Param named after a built-in.
+
+Param sheets_gate(0.0);
+Param bypass_gate(0.0);
+
+uv = norm;
+picked = mix(sample(in1, uv), sample(in2, uv), sheets_gate);
+source_pass = vec(sample(in3, uv).x, sample(in3, uv).y, sample(in3, uv).z, 1.0);
+out1 = mix(picked, source_pass, bypass_gate);

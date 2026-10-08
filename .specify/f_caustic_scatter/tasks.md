@@ -26,7 +26,8 @@ src/f_caustic/
   definition.py            # EXTENDED (pix_chain x3, mode / detail params, raw scene)      — T025
   codebox_v2.gen           # soft path: UNCHANGED
   codebox_sheets.gen       # sheets composite                                              — T013
-  codebox_select.gen       # select stage                                                  — T023
+  codebox_select_comp.gen  # select stage, composite outlet                                — T023
+  codebox_select_layer.gen # select stage, caustic-layer outlet                            — T023
   scatter_scene.py         # generates raw_ui.json (scene, detail network, mode network)   — T014, T018, T024
   raw_ui.json              # generated                                                     — T014
 package/code/f_caustic_sheets.jxs                                                          — T012
@@ -167,14 +168,16 @@ package/help/f_caustic.maxhelp                                                  
 
 ### Implementation for User Story 3
 
-- [ ] T023 [P] [US3] Write `src/f_caustic/codebox_select.gen` (header checklist; `Param sheets_gate`; four texture inputs plus
-  the source; `bypass_gate`): verify on the codebox bench that gate 0 returns the soft inputs exactly, gate 1 the
-  sheets inputs, and bypass gives the source on the composite and black on the layer.
+- [x] T023 [P] [US3] Write `src/f_caustic/codebox_select_comp.gen` and `codebox_select_layer.gen` (two stages, one per outlet, because the
+  codebox bench takes three inputs; header checklist; `Param sheets_gate`, `bypass_gate`): verified on the codebox bench in
+  `tests/bench_caustic_codebox.py`: gate 0 returns the soft input exactly, gate 1 the sheets input, bypass gives the source on
+  BOTH outlets (as the soft path does), linear in the gate (8 of 8 checks). Found: the bench counts `outN` tokens in comment
+  text to size the codebox, so keep them out of comments.
 - [ ] T024 [US3] Add the mode network to `scatter_scene.py`: `mode` menu output -> `prepend param sheets_gate` to the select
   stage; `enable` to the node, mesh and sheets stage (1 in sheets mode) and its inverse to `caustic_pix`; entering
   sheets mode resends the current `detail` (which builds the lattice); soft mode builds nothing.
 - [ ] T025 [US3] Extend `src/f_caustic/definition.py`: add `pix_chain` (keep `caustic_pix` as the primary with its name and
-  gen unchanged; add `sheets_pix` and `select_pix`), `pix_wires`, the `mode` (menu: soft, sheets, default soft) and
+  gen unchanged; add `sheets_pix`, `select_comp` and `select_layer`), `pix_wires`, the `mode` (menu: soft, sheets, default soft) and
   `detail` (menu 1-5, default 5, `pix_wire: False`) params, the fanouts and `outlet_source_override` as settled in
   T011, and `raw_*` from `raw_ui.json`. Every existing param, default and range stays as it is.
 - [ ] T026 [US3] Build: `build/py.sh build/build_patcher.py src/f_caustic/definition.py`; run `build/py.sh build/drift.py`;
@@ -199,7 +202,7 @@ package/help/f_caustic.maxhelp                                                  
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Bypass in both modes: passthrough on every outlet (composite = source, layer = black); extend the
+- [ ] T031 [US4] Bypass in both modes: passthrough on every outlet (both outlets = the source, as the soft path does); extend the
   `BYPASS_EXPECT` entry; native `@bypass` is not used.
 - [ ] T032 [US4] Unconnected vecfield in sheets mode: composite = source and layer black (the T008 guard); unconnected source:
   black.
