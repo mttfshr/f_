@@ -119,6 +119,17 @@ A size-2 point on a pixel corner covers exactly the four pixel centres the tent 
 - **Unconnected inputs:** an unconnected vecfield inlet reads a constant (0, 0, 0, 1) (black with alpha 1), which would decode to a strong field. The sheets composite treats a field that is exactly 0 in R and G at four fixed points as absent, so the module stays silent.
 - **Tests:** tier 1 `tests/test_scatter_mirror.py` (NumPy mirror and photon-counting truth); the codebox bench `tests/bench_caustic_codebox.py`; the module bench `tests/bench_caustic_sheets.py` (soft identity against `tests/baselines/f_caustic_soft.npz`, the scatter, the ladder, bypass, unconnected field, brightness, the budget); `tests/test_scatter_scene.py` (the generated scene agrees with a real build).
 
+## References
+
+**Both modes are derived in development.** No code, formulation or constant was taken from another implementation.
+
+- **Soft mode** (backward streamline accumulation weighted by `max(-div, 0)`): an original construction; the divergence-weighting idea is the usual Jacobian argument for caustic brightness.
+- **Sheets mode** (forward scatter of a lattice of glass samples through the field, with splat density read as illuminance; a corner-snapped bilinear splat; a fixed-capture quality ladder): an original construction, developed and measured in the 2026-10-06 and 2026-10-07 spikes (`tests/spike_scatter.py`, `ideas/optics_map.md`). The photon-counting ground truth used to test it (`tests/scatter_truth.py`) is the plain idea of histogramming where rays land.
+- **Background only (not a source):** the forward-scatter-and-count approach is the idea behind photon mapping, and the gather belongs to the family of backward-tracing methods. Neither was consulted for the implementation.
+  - Jensen, H. W. (1996). "Global Illumination Using Photon Maps." Rendering Techniques '96 (Eurographics Workshop on Rendering).
+  - Watt, M. (1990). "Light-Water Interaction using Backward Beam Tracing." Computer Graphics (SIGGRAPH '90 Proceedings).
+- **In-house precedent for the scatter's mechanism:** Vsynth's own `vs_xyz_disp` / `vtfk.jxs` draw points with a vertex-stage texture fetch into a `jit.gl.node`, the same structure the sheets scene follows; the shader code itself is original.
+
 ### History of the soft path
 
 - **2026-07-11:** `definition.py` had pointed at `codebox_v3.gen`, a stray earlier single-inlet draft that never read `in2`; deleted, `definition.py` now points at `codebox_v2.gen`.

@@ -76,7 +76,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Optical caustic via backward streamline accumulation along a vecfield",
+                    "text": "Optical caustic -- Soft: streamlines along a vecfield; Sheets: a GPU scatter that folds into sheets",
                     "varname": "autohelp_top_digest[3]"
                 }
             },
@@ -99,14 +99,14 @@
                         15.0,
                         150.0,
                         270.0,
-                        122.0
+                        160.0
                     ],
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "External Control Messages\n\nmix_pct [0.0 \u2013 100.0]\ngain [0.0 \u2013 2.0]\nscale [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]\ncolor_shift [0.0 \u2013 1.0]\nbypass [0 / 1]",
+                    "text": "External Control Messages\n\nmode [0 / 1]  (0 Soft, 1 Sheets)\nmix_pct [0.0 \u2013 100.0]\ngain [0.0 \u2013 2.0]\nscale [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]  (Soft only)\ncolor_shift [0.0 \u2013 1.0]  (Soft only)\ndetail [0 \u2013 4]  (Sheets only: step 1\u20135)",
                     "textjustification": 0
                 }
             },
@@ -121,11 +121,11 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        315.0,
+                        350.0,
                         270.0,
-                        160.0
+                        270.0
                     ],
-                    "text": "References\n\nBackward streamline accumulation:\nderived in development -- not from any\nexternal source.\n\nSee docs/f-reference/f_caustic.md for the\nfull algorithm and parameter reference, and\ndocs/f-reference/f_vecfield_type.md for the\nf_vecfield type contract."
+                    "text": "References\n\nSoft mode (backward streamline\naccumulation): derived in development --\nnot from any external source.\n\nSheets mode (forward scatter; splat density\nis illuminance): derived in development.\nBackground only, nothing taken from them:\nphoton mapping, Jensen (1996), \"Global\nIllumination Using Photon Maps\"; backward\nbeam tracing, Watt (1990), \"Light-Water\nInteraction using Backward Beam Tracing\".\n\nSee docs/f-reference/f_caustic.md for the\nmeasurements and the full algorithm."
                 }
             },
             {
@@ -196,9 +196,9 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        293.75,
-                        154.0,
-                        91.0
+                        250.0,
+                        227.0,
+                        122.0
                     ],
                     "varname": "f_caustic",
                     "viewvisibility": 1
@@ -227,7 +227,7 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        404.75,
+                        385.0,
                         236.0,
                         249.0
                     ],
@@ -252,12 +252,12 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        500.0,
-                        300.0,
-                        190.0,
-                        55.0
+                        338.0,
+                        160.0,
+                        296.0,
+                        78.0
                     ],
-                    "text": "Feed vecfield into inlet 2 from:\nf_vf_vortex (converging ring) or\nf_vf_fieldmap (noise ridge bands)"
+                    "text": "Feed a vecfield into the second inlet from:\nf_vf_vortex (converging ring) or\nf_vf_fieldmap (noise ridge bands).\nMode Soft: thin bright lines. Mode Sheets:\nfolded sheets (raise Scale)."
                 }
             }
         ],

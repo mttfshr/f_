@@ -232,7 +232,7 @@ package/help/f_caustic.maxhelp                                                  
   `f_caustic` on real video; Matt checks the mode switch, `scale` / `gain` ranges, the `detail` hitch, two
   instances, and the default look.
 - [x] T038 [P] Update `docs/f-reference/f_caustic.md`: both modes, the new params, the signal flow, outlets, the cost note; also fix its stale signal-flow section (it describes three inlets; the patcher has two: texture + control, and the vecfield).
-- [ ] T039 [P] Regenerate `package/help/f_caustic.maxhelp` through `build/generate_helpfiles.py` and the helpfile queue.
+- [x] T039 (done 2026-10-07: edited in place; the diff is 15 lines; follows the library's vecfield-consumer pattern, a hint comment and no wired field source; `docs/f-reference/f_caustic.md` gained the `## References` section the skill requires; **not yet opened in Max**: check the layout there) [P] Regenerate `package/help/f_caustic.maxhelp` through `build/generate_helpfiles.py` and the helpfile queue.
 - [x] T040 Apply the constitution amendment (spec, Decisions item 7) to `.specify/constitution.md` through the
   amend-constitution workflow.
 - [x] T041 (done: the README row, which also regenerated `package/extras/f_Launch.maxpat` (the row feeds the launcher; 110-char limit), and two findings added to `skills/jit-gen-codebox/SKILL.md`; **Matt must re-upload that skill and run `./skills/check.sh stamp`**) Update `README.md` (the `f_caustic` row), `HANDOFF.md` and `.specify/plan.md` item 15; add any new

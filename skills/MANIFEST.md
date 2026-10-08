@@ -10,7 +10,7 @@ _Stamped: 2026-10-07_
 |---|---|---|
 | `f-helpfile` | b8b9aaf2ee63 | 297 |
 | `gen-tilde-codebox` | a838e0d3451b | 488 |
-| `jit-gen-codebox` | 443345300ba5 | 928 |
+| `jit-gen-codebox` | c161c400dd77 | 942 |
 | `max-advanced-object-methodology` | c6bddc6986bf | 125 |
 | `max-patch-notation` | 143cc18a4e05 | 182 |
 | `maxpat-json-authoring` | 53404d0c35ba | 137 |
