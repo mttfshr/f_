@@ -44,8 +44,9 @@ SETS = {
 TOKENS = ("mix_pct", "gain", "scale", "softness", "color_shift")
 
 
-def params_of(values):
-    return [[t, float(v)] for t, v in zip(TOKENS, values)]
+def settings_of(values):
+    """One message-box string: each control message is sent into the module's inlet 0 by the wrapper's loadbang."""
+    return ", ".join(f"{t} {float(v):g}" for t, v in zip(TOKENS, values))
 
 
 def sha(a):
@@ -59,9 +60,9 @@ def block_down(a, n=128):
 
 
 def capture(src, fld, values):
-    result, out = cr.run([src, fld], params_of(values), MODULE, n_out=2)
+    result, out = cr.run([src, fld], [], MODULE, n_out=2, settings=settings_of(values), warmup=60)
     errs = cr.report(result, "baseline job")
-    arrs = out.get("bypassed")
+    arrs = out.get("base")                      # captured after the wrapper applied the settings (not 'bypassed')
     if not arrs or 1 not in arrs or 2 not in arrs:
         raise RuntimeError(f"captures missing: {sorted(arrs) if arrs else None} (errors {errs[:2]})")
     return arrs[1], arrs[2], errs
@@ -85,6 +86,11 @@ def main():
             data[f"{name}_out{k}_128"] = block_down(a)
             print(f"   outlet {k}: shape {a.shape}, mean RGB {a[..., :3].reshape(-1, 3).mean(0).round(4)}, "
                   f"max {a[..., :3].max():.4f}, sha {sha(a)[:12]}")
+    layer_hashes = {str(data[f"{n}_out2_sha"]) for n in SETS}
+    if len(layer_hashes) < 2:
+        raise RuntimeError("every parameter set produced the same layer outlet: the settings never reached the "
+                           "module (or the wrong capture was read); refusing to record this as a baseline")
+    print(f"\nsanity: {len(layer_hashes)} distinct layer outputs across {len(SETS)} parameter sets")
     print("\n== determinism: set B again")
     comp2, layer2, _ = capture(src, fld, SETS["B_wet"])
     same = (sha(comp2) == str(data["B_wet_out1_sha"]), sha(layer2) == str(data["B_wet_out2_sha"]))

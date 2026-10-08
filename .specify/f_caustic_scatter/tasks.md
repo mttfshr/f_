@@ -52,11 +52,11 @@ package/help/f_caustic.maxhelp                                                  
 
 **Purpose**: Protect the soft path before anything changes.
 
-- [ ] T001 Write `tests/record_caustic_baseline.py` and record `tests/baselines/f_caustic_soft.npz`: the UNMODIFIED
+- [x] T001 Write `tests/record_caustic_baseline.py` and record `tests/baselines/f_caustic_soft.npz`: the UNMODIFIED
   `package/patchers/f_caustic.maxpat` through the module bench with fixed inputs (a gradient source and a
   deterministic vecfield) at the defaults and four non-default parameter sets (`scale`, `softness`, `color_shift`,
   `gain`, `mix_pct`), both outlets saved per set. Commit the `.npz`.
-- [ ] T002 Run `./tests/run.sh` and the `f_caustic` module-bench entry (`tests/bench_modules.py`) and record the green
+- [x] T002 Run `./tests/run.sh` and the `f_caustic` module-bench entry (`tests/bench_modules.py`) and record the green
   counts as the "before" state in HANDOFF.md.
 
 **Checkpoint**: a committed baseline and a recorded green state; `package/patchers/f_caustic.maxpat` still untouched.
@@ -84,7 +84,7 @@ package/help/f_caustic.maxhelp                                                  
   bench, and record whether `jit.gl.shader` finds it; if not, try the other candidate folders Vsynth uses. Record
   the result and the chosen location in HANDOFF.md. (Matt checks one case from a patch outside the repo if the
   bench result is positive.)
-- [ ] T008 Spike V2, unconnected pix input: a probe pix (`tests/bench/probe_unconnected_input.maxpat`) reads its second
+- [x] T008 Spike V2, unconnected pix input: a probe pix (`tests/bench/probe_unconnected_input.maxpat`) reads its second
   inlet while only the first is connected; capture what it reads (zero, last frame, undefined). Record the result:
   it decides the unconnected-vecfield guard (spec Decisions item 6).
 - [x] T009 Spike V3a, builder multi-stage targets: build a throwaway two-stage definition in

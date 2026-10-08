@@ -1,0 +1,39 @@
+
+== A_defaults: {'mix_pct': 0.0, 'gain': 0.5, 'scale': 0.3, 'softness': 0.3, 'color_shift': 0.0}
+  [baseline job] status=error frames=161 elapsed=2781 ms errors=1
+      max error: jpatcher: doesn't understand getattr
+   outlet 1: shape (512, 512, 4), mean RGB [0.5  0.5  0.25], max 0.9990, sha 8800c93bc007
+   outlet 2: shape (512, 512, 4), mean RGB [0.1978 0.2039 0.1235], max 1.0000, sha 5c63e0e54096
+
+== B_wet: {'mix_pct': 100.0, 'gain': 0.5, 'scale': 0.3, 'softness': 0.3, 'color_shift': 0.0}
+  [baseline job] status=error frames=161 elapsed=2762 ms errors=1
+      max error: jpatcher: doesn't understand getattr
+   outlet 1: shape (512, 512, 4), mean RGB [0.5999 0.5995 0.3451], max 1.0000, sha bfad9883db18
+   outlet 2: shape (512, 512, 4), mean RGB [0.1978 0.2039 0.1235], max 1.0000, sha 5c63e0e54096
+
+== C_sharp: {'mix_pct': 100.0, 'gain': 1.0, 'scale': 0.6, 'softness': 0.0, 'color_shift': 0.0}
+  [baseline job] status=error frames=161 elapsed=2778 ms errors=1
+      max error: jpatcher: doesn't understand getattr
+   outlet 1: shape (512, 512, 4), mean RGB [0.6286 0.6257 0.3689], max 1.0000, sha 91ae868e3eca
+   outlet 2: shape (512, 512, 4), mean RGB [0.2513 0.2546 0.1565], max 1.0000, sha 646cd86b953e
+
+== D_diffuse: {'mix_pct': 60.0, 'gain': 0.8, 'scale': 0.2, 'softness': 1.0, 'color_shift': 0.5}
+  [baseline job] status=error frames=161 elapsed=2779 ms errors=1
+      max error: jpatcher: doesn't understand getattr
+   outlet 1: shape (512, 512, 4), mean RGB [0.5692 0.5672 0.3284], max 0.9996, sha 52637f5da321
+   outlet 2: shape (512, 512, 4), mean RGB [0.2386 0.2458 0.1797], max 1.0000, sha fb11b3473e79
+
+== E_strong: {'mix_pct': 100.0, 'gain': 2.0, 'scale': 1.0, 'softness': 0.3, 'color_shift': 0.3}
+  [baseline job] status=error frames=161 elapsed=2782 ms errors=1
+      max error: jpatcher: doesn't understand getattr
+   outlet 1: shape (512, 512, 4), mean RGB [0.6491 0.6467 0.4055], max 1.0000, sha 376c26eaf0df
+   outlet 2: shape (512, 512, 4), mean RGB [0.3061 0.3126 0.2108], max 1.0000, sha 6a13373f78c3
+
+sanity: 4 distinct layer outputs across 5 parameter sets
+
+== determinism: set B again
+  [baseline job] status=error frames=161 elapsed=2775 ms errors=1
+      max error: jpatcher: doesn't understand getattr
+   identical hashes on a repeat run: composite True, layer True
+
+wrote /Users/matt/Github/f_/tests/baselines/f_caustic_soft.npz (1.02 MB)
