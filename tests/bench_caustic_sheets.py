@@ -200,6 +200,9 @@ def _quality_of_every_step():
         d = frac * dstar
         ref, _, _ = go([sm.white(), tex], explicit(d, 1024, 4096))
         ref = ref[..., 0].astype(np.float64)
+        # free the ~800 MB reference lattice (16.8 M points) NOW, before the five step jobs and before the second reference
+        # is built: on a full `bench.sh` run this job twice timed out (Max stalled, probably memory pressure)
+        release_lattice()
         mask = np.kron(st.interior(d), np.ones((4, 4), bool))
         for i in range(1, 6):
             r, ppp, n, w = step_of(i)

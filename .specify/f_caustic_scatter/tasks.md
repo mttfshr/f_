@@ -238,7 +238,7 @@ package/help/f_caustic.maxhelp                                                  
 - [x] T041 (done: the README row, which also regenerated `package/extras/f_Launch.maxpat` (the row feeds the launcher; 110-char limit), and two findings added to `skills/jit-gen-codebox/SKILL.md`; **Matt must re-upload that skill and run `./skills/check.sh stamp`**) Update `README.md` (the `f_caustic` row), `HANDOFF.md` and `.specify/plan.md` item 15; add any new
   fact to `skills/jit-gen-codebox/SKILL.md` only if one was found, then `./skills/check.sh` (Matt re-uploads, then
   `stamp`).
-- [ ] T042 (PROGRESS: offline 237/237, drift unchanged, the release zip ships `code/f_caustic_sheets.jxs`; the full `tests/bench.sh` regression set has not been re-run end to end, only its files individually) Final `./tests/run.sh`, `build/py.sh build/drift.py`, `build/release.sh --working-tree` dry run; commit.
+- [x] T042 (DONE 2026-10-07: offline 237/237; drift unchanged; the release zip ships `code/f_caustic_sheets.jxs`; `tests/bench.sh --changed` ends with every bench file green on record, `bench_caustic_sheets` 18/18. Note: T020's 16.8 M-point reference jobs stalled Max on 2 of 3 full runs before the lattice was freed after each reference; since then it passes, but it is the suite's most resource-fragile test) Final `./tests/run.sh`, `build/py.sh build/drift.py`, `build/release.sh --working-tree` dry run; commit.
 
 ---
 
