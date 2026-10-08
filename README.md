@@ -150,3 +150,14 @@ The reason for the split: a scratch patch tests two things at once — whether t
 ## License
 
 The repo has two licenses. The product (the package, its source and the specs) is CC BY-NC 4.0 with an extra permission for paid professional work: use it, remix it and get paid for what you make with it, but don't sell the software. Everything else (the build system, tests, AI-aided workflow, documentation and ideas) is MIT. See [LICENSE.md](LICENSE.md). `f_` requires Vsynth, which has its own license.
+
+## Working with Claude (session rules)
+
+Neither of us can see token usage, so the session is paced by things we can both count.
+
+- **One phase, or one coherent group of tasks, per turn.** Then stop with three lines: what is done, what is committed, what is next, and wait for a go. Matt decides whether to continue or start fresh.
+- **Count tool calls.** Suggest a new session after each commit checkpoint, or around 25-30 tool calls, whichever comes first.
+- **No test or bench runs without asking.** The exception is one named test for the thing just changed. Always `-q`: `tests/run.sh -q`, `tests/bench.sh --changed -q`. No re-runs after doc-only edits.
+- **No polling loops.** Start a long run and ask Matt to say when it is done.
+- **State lives in the repo, not the chat:** `.specify/<module>/tasks.md` (the record), `HANDOFF.md` (a short scratch note), and a commit at every checkpoint. A fresh session starts by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
+- **Commits:** a plain message is fine for files Claude did not work on (a save checkpoint). Chain a commit to the edit that precedes it, so a failed edit cannot be committed.
