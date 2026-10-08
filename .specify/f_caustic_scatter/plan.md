@@ -115,6 +115,11 @@ script (ADR-1).
 `outlet_source_override`, raw scene).
 **Alternatives**: a dedicated `build_caustic.py` (the `f_vf_fluid` precedent): rejected unless a verification task
 (T009, T010) shows the builder cannot target multiple stages for one param or override outlet sources with a pix node.
+**Verified 2026-10-07 (T009, T010)** by building a throwaway definition in-process (`scratch/probe_builder_targets.py`):
+`pix_target` lists feed one param's attrui to several stages; `bypass_target` reaches several stages; `outlet_source`
+(not `outlet_source_override`, which is for raw boxes) feeds both outlets from a `pix_chain` node; a `mod_inlets`
+`fanout` reaches pix nodes and a raw box without `vs_inState`; `inlet_fanout` carries the texture through
+`vs_inState` into pix nodes and a raw box. Every `pix_chain` node needs an explicit `primary` flag.
 **Consequences**: + drift, contracts, helpfile pipeline keep working; - the builder's multi-stage keys are newer
 (2026-10-05) and `f_caustic` becomes one of their heaviest users.
 
@@ -142,8 +147,9 @@ branch's outputs now feed a stage instead of the outlets, so the contract and be
 **Decision**: the select stage applies `bypass_gate` as the last step (`mix(selected, src, bypass_gate)` on the
 composite; the layer goes to black), so a bypassed module is a passthrough in either mode. `caustic_pix` keeps its
 own `bypass_gate` (untouched, driven by the builder as today).
-**Fallback**: if the builder cannot drive `bypass_gate` to a second pix (T009), a raw `prepend param bypass_gate`
-feeds the select stage.
+**Mechanism (verified, T009)**: `bypass_target: ["caustic", "select"]` wires the bypass toggle's
+`prepend param bypass_gate` to both stages (each codebox must declare `Param bypass_gate(...)`); no raw fallback is
+needed.
 **Consequences**: + the sheets composite stays free of bypass; - two stages carry the Param.
 
 ### ADR-5: The inactive branch is disabled; the lattice exists only in sheets mode

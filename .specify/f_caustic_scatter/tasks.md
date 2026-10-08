@@ -69,15 +69,15 @@ package/help/f_caustic.maxhelp                                                  
 
 ⚠️ CRITICAL: no story work until the checkpoint.
 
-- [ ] T003 [P] Create `tests/scatter_truth.py`: promote the functions the mirror needs from `scratch/caustic_fidelity.py`
+- [x] T003 [P] Create `tests/scatter_truth.py`: promote the functions the mirror needs from `scratch/caustic_fidelity.py`
   (`field_texture`, `first_fold_distance`, `truth`, `interior`, `pearson`, `top_iou`) so `tests/` no longer imports
   from `scratch/` for this module.
-- [ ] T004 [P] Create `tests/scatter_mirror.py`: promote `ref_scatter`, `box_down`, `upscale`, `resize_bilinear` and the
+- [x] T004 [P] Create `tests/scatter_mirror.py`: promote `ref_scatter`, `box_down`, `upscale`, `resize_bilinear` and the
   tone curve (`t = v/(1+v)`, `t^0.7`) from `tests/spike_scatter.py`.
-- [ ] T005 Create `tests/test_scatter_mirror.py` (tier 1, offline, NumPy only): tent weights sum to 1; energy conserved;
+- [x] T005 Create `tests/test_scatter_mirror.py` (tier 1, offline, NumPy only): tent weights sum to 1; energy conserved;
   identity at `scale = 0`; N points on one pixel sum to N; truth agreement at 4 points per pixel (r >= 0.99 at
   1 d* and 3.5 d*); the tone curve's properties. Add it to `tests/run.sh` if the suite lists files.
-- [ ] T006 Confirm the promoted mirror reproduces the recorded spike numbers (r 0.9985 at 1 d*, 0.9937 at 3.5 d* for 4
+- [x] T006 Confirm the promoted mirror reproduces the recorded spike numbers (r 0.9985 at 1 d*, 0.9937 at 3.5 d* for 4
   points per pixel) inside `tests/test_scatter_mirror.py`.
 - [ ] T007 Spike V1, shader search path: place a probe copy of the shader at `package/code/f_caustic_sheets_probe.jxs`,
   load it from a probe bpatcher (`tests/bench/probe_shader_path.maxpat`) that is NOT beside it, run it in the module
@@ -87,11 +87,11 @@ package/help/f_caustic.maxhelp                                                  
 - [ ] T008 Spike V2, unconnected pix input: a probe pix (`tests/bench/probe_unconnected_input.maxpat`) reads its second
   inlet while only the first is connected; capture what it reads (zero, last frame, undefined). Record the result:
   it decides the unconnected-vecfield guard (spec Decisions item 6).
-- [ ] T009 Spike V3a, builder multi-stage targets: build a throwaway two-stage definition in
+- [x] T009 Spike V3a, builder multi-stage targets: build a throwaway two-stage definition in
   `scratch/probe_builder_targets.py` that gives one param (`gain`) and `bypass` to two `pix_chain` stages through
   `pix_target` lists, build it into a temp directory, and read the cords. Record whether `bypass_gate` reaches both
   stages or needs the raw `prepend param` fallback (plan, ADR-4).
-- [ ] T010 Spike V3b, builder routing: in the same throwaway, test `outlet_source_override` with a `pix_chain` node (not a
+- [x] T010 Spike V3b, builder routing: in the same throwaway, test `outlet_source_override` with a `pix_chain` node (not a
   raw box) feeding both outlets, and `mod_inlets` `fanout` into a `raw_boxes` id. Record what works.
 - [ ] T011 Decide ADR-1 from T007-T010: stay declarative, or fall back to a dedicated `src/f_caustic/build_caustic.py`.
   Write the outcome into plan.md (ADR-1, ADR-4, ADR-7), delete the probes that served their purpose, commit.
