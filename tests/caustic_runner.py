@@ -96,3 +96,16 @@ def report(result, label):
     for e in errs[:6]:
         print(f"      max error: {e[:200]}")
     return errs
+
+
+CAP_MS = 1000.0 / 60.0           # the bench paces frames at 60 fps: a pass cheaper than this is invisible to it
+
+
+def period_ms(inputs, params, module, n_out=2, n_in=None):
+    """Frame period in ms: the slope between a short and a long job (cancels the one-off lattice build). A value at
+    or under CAP_MS only means "within the frame budget": the bench cannot see a cost below its own pacing."""
+    kw = dict(n_out=n_out, n_in=n_in, timeout_ms=300000, warmup=12)
+    r1, _ = run(inputs, params, module, settle=12, **kw)
+    r2, _ = run(inputs, params, module, settle=48, **kw)
+    df = r2["frames_rendered"] - r1["frames_rendered"]
+    return (r2["elapsed_ms"] - r1["elapsed_ms"]) / df if df > 0 else float("nan")

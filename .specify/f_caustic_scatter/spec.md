@@ -187,9 +187,7 @@ Tier decision: tier 1 (NumPy mirror) and tier 2 (module bench) apply; tier 3 for
    - energy conserved for in-viewport points to within 0.5%; N points on one pixel sum to N within 0.1%;
    - orientation matches the matrix-space mirror, r >= 0.999, with the flip baked;
    - `detail N` is identical to the explicit messages for every step (the `s11` check, promoted);
-   - quality against the 16-per-pixel reference (Pearson r at 1 d* / 3.5 d*, from the S7 table): step 5 >= 0.995 /
-     0.995; step 4 >= 0.995 / 0.995; step 2 >= 0.995 / 0.95; step 1 >= 0.99 / 0.89; **step 3 (768²) is unmeasured:
-     measure, then set**;
+   - quality against the 16-per-pixel reference (Pearson r at 1 d* / 3.5 d*, from the S7 table): step 5 >= 0.998 / 0.998; step 4 >= 0.995 / 0.995; step 3 >= 0.998 / 0.975 (measured 2026-10-07: 0.9990 / 0.9820, IoU 0.979 / 0.939); step 2 >= 0.995 / 0.95; step 1 >= 0.99 / 0.89;
    - the tone-map and upscale stage matches its NumPy curve (the `s10` check, promoted: r = 1.0000);
    - unconnected vecfield: composite = source, layer black;
    - bypass: passthrough on every outlet; `BYPASS_EXPECT` extended (`tests/test_bench_expect.py` enforces);

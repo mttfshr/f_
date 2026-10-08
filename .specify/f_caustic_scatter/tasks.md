@@ -142,15 +142,18 @@ package/help/f_caustic.maxhelp                                                  
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Add the `detail` select-and-message network (steps from the spec table; `n` last) to `scatter_scene.py`.
-- [ ] T019 [US2] Extend `tests/bench_caustic_sheets.py` part 2: each of the five steps identical to the explicit messages
+- [x] T018 [US2] Add the `detail` select-and-message network (steps from the spec table; `n` last) to `scatter_scene.py`.
+- [x] T019 [US2] Extend `tests/bench_caustic_sheets.py` part 2: each of the five steps identical to the explicit messages
   (max|diff| 0; the `s11` check promoted).
-- [ ] T020 [US2] Measure quality for all five steps against the 16-points-per-pixel reference at 1 d* and 3.5 d*, including
+- [x] T020 [US2] Measure quality for all five steps against the 16-points-per-pixel reference at 1 d* and 3.5 d*, including
   step 3 (768², unmeasured): set its floor just below the measurement, record it in the spec's table and in
   `tests/bench_caustic_sheets.py` (floors from the spec: 5 and 4 >= 0.995; 2 >= 0.995 / 0.95; 1 >= 0.99 / 0.89).
-- [ ] T021 [P] [US2] Write `tests/bench_caustic_sheets_cost.py` (not a gate): steps 1-5, three interleaved runs each, ratios
-  within a run; record the table in HANDOFF.md and the spec ("timings vary up to 2x between runs").
-- [ ] T022 [US2] Commit.
+- [x] T021 [US2] **Re-scoped:** the plan was an interleaved timing comparison of the steps, but every step is below the bench's
+  60 fps cap, which hides any cost under it (why the spike needed 16.8 M points), so an A/B would report "at the cap" five times.
+  Done instead in `tests/bench_caustic_sheets.py` (`test_T021_...`): each step's frame period is measured and printed (all 16-17 ms,
+  i.e. at the cap) and the default step 5 is asserted to fit the budget (16.1 ms; the limit is 1.15 x the cap). The cost MODEL stays
+  spike S6's (density-driven, timings vary up to 2x between runs). No `bench_caustic_sheets_cost.py` file.
+- [x] T022 [US2] Commit.
 
 **Checkpoint**: the ladder works standalone and its floors are tests, not prose.
 

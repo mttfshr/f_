@@ -17,11 +17,16 @@ import sys
 
 import numpy as np
 
+from pathlib import Path
+
 import benchclient as bc
 import caustic_runner as cr
 import scatter_mirror as sm
 import scatter_truth as st
 from harness import check, note, run
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src" / "f_caustic"))
+import scatter_scene as sc                        # noqa: E402  (the `detail` ladder: one source of truth)
 
 STANDALONE = "caustic_sheets_standalone.maxpat"
 F32 = np.float32
@@ -144,6 +149,65 @@ def test_T016_tone_and_upscale_follow_the_source_size():
     check("composite: max |GPU - NumPy|", float(np.abs(comp[..., :3] - ref_comp).max()), 5e-3)
     a, b = layer[..., :3].ravel().astype(np.float64), np.clip(ex, 0, 1).ravel()
     check("layer: 1 - Pearson r vs NumPy", 1.0 - float(np.corrcoef(a, b)[0, 1]), 1e-4)
+
+
+def step_of(i):
+    r, ppp = sc.DETAIL[i - 1]
+    n = int(round(r * ppp ** 0.5))
+    return r, ppp, n, float(f"{(r / n) ** 2:.4f}")           # the ladder's messages write the weight with 4 decimals
+
+
+def test_T019_detail_steps_equal_the_explicit_messages():
+    """`detail N` must set exactly what the explicit messages set (the `s11` check, promoted)."""
+    tex, dstar = st.field_texture(), st.first_fold_distance()
+    src = sm.gradient_src()
+    for i in range(1, 6):
+        r, ppp, n, w = step_of(i)
+        assert sc.detail_message(r, ppp) == f"r {r}, weight {w:.4f}, n {n}", sc.detail_message(r, ppp)
+        a, _, _ = go([src, tex], explicit(dstar, r, n, w))
+        b, _, _ = go([src, tex], [["scale", dstar], ["detail", i]])
+        diff = float(np.abs(a.astype(np.float64) - b.astype(np.float64)).max())
+        note(f"step {i} ({r}^2, {ppp} pts/px, n={n}): capture {b.shape[1]}x{b.shape[0]}, max|diff|", diff)
+        assert b.shape[0] == r, f"step {i} should capture {r}^2, got {b.shape}"
+        check(f"step {i}: max|explicit - detail|", diff, 0.0)
+
+
+# Pearson r of each step against the 16-points-per-pixel reference at 1024^2, interior mask (spec table). A floor is
+# the measured value rounded DOWN just below it; step 3 (768^2) was unmeasured and is measured here.
+# measured 2026-10-07 (1 d* / 3.5 d*): step 1 .9929/.9026, 2 .9981/.9579, 3 .9990/.9820, 4 .9979/.9977, 5 .9992/.9998
+FLOORS = {(1, 1.0): 0.99, (1, 3.5): 0.89, (2, 1.0): 0.995, (2, 3.5): 0.95, (3, 1.0): 0.998, (3, 3.5): 0.975,
+          (4, 1.0): 0.995, (4, 3.5): 0.995, (5, 1.0): 0.998, (5, 3.5): 0.998}
+
+
+def test_T020_quality_of_every_step_against_the_reference():
+    tex, dstar = st.field_texture(), st.first_fold_distance()
+    for frac in (1.0, 3.5):
+        d = frac * dstar
+        ref, _, _ = go([sm.white(), tex], explicit(d, 1024, 4096))
+        ref = ref[..., 0].astype(np.float64)
+        mask = np.kron(st.interior(d), np.ones((4, 4), bool))
+        for i in range(1, 6):
+            r, ppp, n, w = step_of(i)
+            cap, _, _ = go([sm.white(), tex], [["scale", d], ["detail", i]])
+            c = cap[..., 0].astype(np.float64)
+            up = sm.upscale(c, 1024 // r) if 1024 % r == 0 else sm.resize_bilinear(c[..., None], 1024, 1024)[..., 0]
+            rr = st.pearson(up[mask], ref[mask])
+            note(f"step {i} ({r}^2, {ppp}/px) at {frac} d*: r vs the reference / IoU {st.top_iou(up[mask], ref[mask]):.3f}", rr)
+            floor = FLOORS.get((i, frac))
+            if floor is not None:
+                check(f"step {i} at {frac} d*: floor shortfall (r >= {floor})", max(0.0, floor - rr), 0.0)
+
+
+def test_T021_the_default_step_fits_the_frame_budget():
+    """Step 5 (the default look) holds the bench's 60 fps pacing. Everything below the cap is invisible to the bench,
+    so this is a fits / does-not-fit check, NOT a cost measurement (the cost model is spike S6's: density-driven,
+    timings vary up to 2x between runs; see optics_map.md). Each step is measured, only step 5 is asserted."""
+    tex, dstar = st.field_texture(), st.first_fold_distance()
+    for i in range(1, 6):
+        ms = cr.period_ms([sm.white(), tex], [["scale", dstar], ["detail", i]], STANDALONE, n_out=3)
+        note(f"step {i}: frame period ms (the cap is {cr.CAP_MS:.1f})", ms)
+        if i == 5:
+            check("step 5: frame period over the budget (ms above 1.15 x the cap)", max(0.0, ms - 1.15 * cr.CAP_MS), 0.0)
 
 
 if __name__ == "__main__":
