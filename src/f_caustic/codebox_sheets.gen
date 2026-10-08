@@ -1,0 +1,64 @@
+// f_caustic sheets mode: COMPOSITE stage (spec .specify/f_caustic_scatter/spec.md, "Composite (sheets)")
+//
+// in1 = light-source texture. The composite is built over it and this pix FOLLOWS ITS SIZE (@adapt 1, no fixed @dim)
+// in2 = the scatter node's float32 illuminance capture: square, fixed size (the `detail` step), HDR. Read with
+//       sample(in2, norm), which upscales it bilinearly to the output size
+// in3 = f_vecfield, read ONLY by the unconnected-field guard
+//
+// out1 = composite  mix(source, clamp(source + light, 0, 1), mix_pct / 100)
+// out2 = caustic layer, tone mapped and clamped (the same meaning as the soft path's out2)
+//
+// Bypass is NOT handled here: the select stage applies it last (plan ADR-4), so this stage has no bypass_gate.
+//
+// Skill checklist (skills/jit-gen-codebox; the look-patch tone stage broke on the first two):
+//   - functions are defined BEFORE every statement, and a Param declaration is a statement
+//   - components (.x .y .z) are read INLINE on sample(), never on a stored variable
+//   - no Param is named after a built-in (mix, step, ...); no variable named cell/in/norm/snorm/dim
+//   - Param values are not visible inside a function body: pass them as arguments
+
+tm(v, ex) {
+	t = v / (1.0 + v);
+	return pow(t, ex);
+}
+
+Param gain(0.5);
+Param mix_pct(0.0);
+
+// One brightness slider across both modes: `gain` keeps its meaning and the sheets branch applies this constant
+// (calibrated against the soft layer in task T034; 2.0 makes the default gain 0.5 equal the look-patch's lev = 1).
+k_sheets = 2.0;
+expo = 0.7;          // the tone curve's exponent (Matt's look-patch default, spec Decisions item 3; not exposed)
+
+uv = norm;
+
+// Unconnected-vecfield guard (spec Decisions item 6; probe T008: an unconnected pix inlet reads a constant
+// (0, 0, 0, 1), black WITH alpha 1, so the test must use R and G only). Real vecfields encode zero as 0.5, so a
+// texture that is exactly 0 in R and G at four fixed points is "no field": zero the light, keep the source.
+fsum = sample(in3, vec(0.25, 0.25)).x + sample(in3, vec(0.25, 0.25)).y
+     + sample(in3, vec(0.75, 0.25)).x + sample(in3, vec(0.75, 0.25)).y
+     + sample(in3, vec(0.25, 0.75)).x + sample(in3, vec(0.25, 0.75)).y
+     + sample(in3, vec(0.75, 0.75)).x + sample(in3, vec(0.75, 0.75)).y;
+present = fsum > 0.0;
+
+caustic_r = tm(sample(in2, uv).x * gain * k_sheets, expo) * present;
+caustic_g = tm(sample(in2, uv).y * gain * k_sheets, expo) * present;
+caustic_b = tm(sample(in2, uv).z * gain * k_sheets, expo) * present;
+
+caustic_out = vec(clamp(caustic_r, 0.0, 1.0),
+                  clamp(caustic_g, 0.0, 1.0),
+                  clamp(caustic_b, 0.0, 1.0),
+                  1.0);
+
+src_r = sample(in1, uv).x;
+src_g = sample(in1, uv).y;
+src_b = sample(in1, uv).z;
+
+composite = vec(clamp(src_r + caustic_r, 0.0, 1.0),
+                clamp(src_g + caustic_g, 0.0, 1.0),
+                clamp(src_b + caustic_b, 0.0, 1.0),
+                1.0);
+
+source_pass = vec(src_r, src_g, src_b, 1.0);
+
+out1 = mix(source_pass, composite, mix_pct / 100.0);
+out2 = caustic_out;

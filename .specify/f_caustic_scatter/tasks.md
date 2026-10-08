@@ -112,7 +112,7 @@ package/help/f_caustic.maxhelp                                                  
 - [ ] T012 [P] [US1] Write `package/code/f_caustic_sheets.jxs` from `tests/bench/spike_scatter.jxs` per plan ADR-7: remove the
   `h`, `jit`, `latn`, `taps` and `snap` uniforms; fix the corner snap, `point_size 2`, one source read and
   `F.y *= -1`; keep `scale` (the distance), `weight` and `res`.
-- [ ] T013 [P] [US1] Write `src/f_caustic/codebox_sheets.gen` (header checklist: functions before `Param`; components inline
+- [x] T013 [P] [US1] Write `src/f_caustic/codebox_sheets.gen` (header checklist: functions before `Param`; components inline
   on `sample()`; no `Param` named after a built-in): tone curve, `sample(in, norm)` upscale, additive composite,
   `mix_pct`, the unconnected-field guard chosen in T008, both outputs. Verify it compiles and matches the NumPy
   tone/composite on the codebox bench before it goes anywhere.

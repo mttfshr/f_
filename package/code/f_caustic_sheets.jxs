@@ -1,0 +1,59 @@
+<jittershader name="f_caustic_sheets">
+	<description>f_caustic sheets mode (forward scatter). Each lattice point (glass sample u) is displaced to u + scale*F(u) by a vecfield texture read in the VERTEX program and splats weight*source(u) there with a bilinear (tent) footprint computed in the fragment program from the point's exact sub-pixel position. Additive blending in the node capture turns splat density into illuminance (a forward-scattered caustic). The point is snapped to its nearest pixel corner and drawn with @point_size 2, which covers exactly the four pixel centres the tent can reach (bit-identical to point_size 3 at roughly half the fragments, spike S5). The field's Y is flipped (texture upload and capture each flip vertically, spike S0b). GLSL 1.20 on purpose: the same profile as Vsynth's own vtfk.jxs. Spec: .specify/f_caustic_scatter/spec.md</description>
+	<param name="tex0" type="int" default="0" />
+	<param name="tex1" type="int" default="1" />
+	<param name="scale" type="float" default="0.3" />
+	<param name="weight" type="float" default="1.0" />
+	<param name="res" type="float" default="1024.0" />
+	<language name="glsl" version="1.2">
+		<bind param="tex0" program="vp" />
+		<bind param="tex1" program="vp" />
+		<bind param="scale" program="vp" />
+		<bind param="weight" program="vp" />
+		<bind param="res" program="vp" />
+		<program name="vp" type="vertex">
+<![CDATA[
+#version 120
+
+uniform sampler2D tex0;   // source (gobo / light), sampled ONCE at the glass point u (bilinear)
+uniform sampler2D tex1;   // f_vecfield: RG = F * 0.5 + 0.5 (0.5 = zero)
+uniform float scale;      // propagation distance, UV units per unit field (the module's `scale`)
+uniform float weight;     // intensity per splat: (capture / n)^2, so a uniform source of 1 has mean illuminance 1
+uniform float res;        // capture size in pixels (square)
+
+varying vec4 col;
+varying vec2 ppx;         // the point's exact position in window pixels
+
+void main(void)
+{
+	// the plane gridshape spans [-1, 1]; u is the glass point in [0, 1]
+	vec2 u = gl_Vertex.xy * 0.5 + 0.5;
+	vec2 f = (texture2D(tex1, u).xy - 0.5) * 2.0;
+	f.y *= -1.0;                               // orientation baked: upload and capture each flip vertically
+	vec2 x = u + scale * f;                    // where the ray lands
+
+	col = texture2D(tex0, u) * weight;
+	ppx = x * res;
+	vec2 xs = floor(ppx + 0.5) / res;          // nearest pixel corner: a size-2 point there covers its four neighbours
+	gl_Position = vec4(xs * 2.0 - 1.0, 0.0, 1.0);   // straight to clip space: no camera involved
+}
+]]>
+		</program>
+		<program name="fp" type="fragment">
+<![CDATA[
+#version 120
+
+varying vec4 col;
+varying vec2 ppx;
+
+void main(void)
+{
+	// tent weights: the point's weight is shared bilinearly among the four nearest pixel centres, from the point's
+	// UNsnapped position, so energy is conserved and the result does not depend on the sub-pixel phase
+	vec2 t = max(vec2(0.0), vec2(1.0) - abs(gl_FragCoord.xy - ppx));
+	gl_FragColor = col * (t.x * t.y);
+}
+]]>
+		</program>
+	</language>
+</jittershader>
