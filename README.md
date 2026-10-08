@@ -76,7 +76,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 
 | Patch | Description |
 |---|---|
-| `f_caustic` | Optical caustic -- streamlines accumulated by field convergence; composited / isolated outlets |
+| `f_caustic` | Optical caustic -- Soft (streamlines) or Sheets (GPU scatter, folded sheets); composited / isolated outlets |
 | `f_vf_advect` | Temporal fluid advection via f_vecfield -- accumulates flow across frames; decay >1.0 is excitable |
 | `f_vf_chroma` | Vecfield-driven chromatic aberration -- rainbow streak along field direction; composite / isolated outlets |
 | `f_vf_fieldmap` | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |

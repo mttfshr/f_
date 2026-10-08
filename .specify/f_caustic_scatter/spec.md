@@ -194,7 +194,7 @@ Tier decision: tier 1 (NumPy mirror) and tier 2 (module bench) apply; tier 3 for
    - the tone-map and upscale stage matches its NumPy curve (the `s10` check, promoted: r = 1.0000);
    - unconnected vecfield: composite = source, layer black;
    - bypass: passthrough on every outlet; `BYPASS_EXPECT` extended (`tests/test_bench_expect.py` enforces);
-   - lag: 1 frame documented and asserted;
+   - lag: 1 frame, documented and ACCEPTED (Matt, 2026-10-07); not asserted through the module (task T043 dropped);
    - cost: the default step holds the frame budget on the target machine; headroom measured beyond the cap with a
      better method than the K-meshes multiplier, which failed (run-to-run variation up to 2x: interleave A/B).
 4. **Contract and drift:** `tests/test_module_contracts.py`, `tests/bench_modules.py` and `build/drift.py` pass

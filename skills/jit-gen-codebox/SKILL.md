@@ -170,6 +170,13 @@ caused by the stored-variable silent failure on `oob_u` — `sample(in1, vec(oob
 was silently sampling at `norm.x` instead of `oob_u`. Always use literals or verify with
 literals when testing boundmode behavior.
 
+### An unconnected `jit.gl.pix` inlet reads a constant (0, 0, 0, 1) — verified 2026-10-07
+
+An inlet nothing is cabled to does not read stale data or garbage: `sample(in2, norm)` returns black **with alpha 1**
+(probe: a 2-inlet pix with only inlet 0 connected; one distinct value across the whole image). A guard that wants to
+know "is this input absent?" must test the colour channels, not alpha. (f_caustic's sheets composite treats a vecfield
+that is exactly 0 in R and G at four fixed points as absent: real vecfields encode zero as 0.5.)
+
 ### Color (Jitter-specific)
 `hsl2rgb(vec)` — convert HSL to RGB, preserving alpha
 `rgb2hsl(vec)` — convert RGB to HSL, preserving alpha
@@ -357,6 +364,13 @@ same way is a reasonable inference, **not tested** — treat all of them
 as read-only and never assign to them.
 
 ---
+
+## Codebox bench: do not write `outN` in a comment (hard error, 2026-10-07)
+
+The codebox bench sizes the codebox from the `outN` tokens in its text, **comments included**. A one-output codebox
+whose header comment says "(the second outlet of caustic_pix is out2)" is built with two outputs, and the job fails with
+`codebox: patchcord outlet out of range: deleting patchcord`. Reword the comment ("the second outlet"); the same goes
+for `inN` mentions if a stage's input count is read from the text. (Found verifying f_caustic's select stages.)
 
 ## Hard Errors ("operator X not defined")
 

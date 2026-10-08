@@ -16,7 +16,7 @@ The package is a collaboration artifact — its structure and conventions are de
 - A collection of **Vsynth-compatible bpatchers**, each self-contained and independently usable
 - Developed **alongside performance work** — real needs drive new bpatchers
 - **Open-ended** in scope — no fixed feature set, new bpatchers are added as needed
-- **Codebox-first** — GLSL logic lives in jit.gl.pix codeboxes; patchers are thin wrappers
+- **Codebox-first** — GLSL logic lives in jit.gl.pix codeboxes; patchers are thin wrappers. One exception class: an effect that needs a many-to-one write (scatter), which a per-pixel codebox cannot express, may draw a `jit.gl.mesh` with a `.jxs` shader into a `jit.gl.node`, as Vsynth's own `vs_xyz_disp` does; everything around it (composite, tone map, mode selection, bypass) stays in pix codeboxes. (First and so far only use: `f_caustic`'s sheets mode, 2026-10-07.)
 - **Signal-chain oriented** — each bpatcher has defined inputs, outputs, and parameter contracts
 - Designed to be **understood and modified** by anyone who knows Max and Vsynth
 
@@ -38,7 +38,7 @@ Every bpatcher in `patchers/` follows the vsynth-bpatcher skill conventions:
 - `routepass` pattern for parameter routing
 - `moduleSize` chain for UI sizing
 - Single Vsynth inlet; parameters via message
-- GLSL in codebox, not inline
+- GLSL in codebox, not inline (exception: see Codebox-first)
 
 ### Naming Convention: f_vf_ prefix for vecfield producers
 
