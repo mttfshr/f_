@@ -18,4 +18,4 @@ _Updated 2026-10-07._
 
 ## One thing to know
 
-`test_T020` is the heaviest bench test (two 16.8 M-point lattices). If it times out, run it alone: `ONLY=T020 python3 tests/bench_caustic_sheets.py`.
+Routine runs: `tests/run.sh -q` and `tests/bench.sh --changed -q` print one line per file and full detail only for failures (the full bench output still goes to `tests/jobs/bench_last.log`). `test_T020` is the heaviest bench test (two 16.8 M-point lattices). If it times out, run it alone: `ONLY=T020 python3 tests/bench_caustic_sheets.py`.

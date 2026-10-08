@@ -246,3 +246,11 @@ Facts section).
   `bench_default.genjit`), `bench.js`, `codeboxes/`; module bench:
   `make_module_bench.py` (generates `bench_module.maxpat` and
   `bench_module_empty.maxpat`), `bench_module.js`
+
+## Quiet mode
+
+`tests/run.sh -q [files]` and `tests/bench.sh -q [flags]` (harness env var `TEST_QUIET=1`) print **one line per test file**
+(`ok   test_x.py: 7/7`) and a final verdict. A passing test prints nothing; a failing test prints its whole output and the
+traceback. Normal mode is unchanged. Under `bench.sh -q` the full output, passes included, still goes to the log
+(`tests/jobs/bench_last.log`, or `BENCH_LOG`), and the "skip ... unchanged since green" lines collapse to one count.
+The exit status is the same in both modes, and it is what decides a green run on record. Prefer `-q` for routine runs.

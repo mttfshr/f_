@@ -31,13 +31,14 @@ cd "$(dirname "$0")/.." || exit 1
 
 DEFAULT=(control selftest fft temporal fluid caustic_codebox modules fluid_module caustic_sheets)
 
-ALL=0; LIST=0; SLOW=0; CHANGED=0; FILES=()
+ALL=0; LIST=0; SLOW=0; CHANGED=0; QUIET=0; FILES=()
 for a in "$@"; do
   case "$a" in
     --all)     ALL=1; SLOW=1 ;;
     --slow)    SLOW=1 ;;
     --changed) CHANGED=1 ;;
     --list)    LIST=1 ;;
+    -q|--quiet) QUIET=1; export TEST_QUIET=1 ;;   # one line per file; the full output still goes to the log
     *)         FILES+=("$a") ;;
   esac
 done
@@ -61,7 +62,15 @@ fi
 MODS=()
 if [ "$CHANGED" -eq 1 ]; then
   PLAN_ARGS=(); if [ "$SLOW" -eq 1 ]; then PLAN_ARGS+=(--slow); fi
-  PLAN=$(python3 tests/benchdeps.py plan "${PLAN_ARGS[@]}" "${FILES[@]}") || exit 3
+  PLAN_ERR=$(mktemp "${TMPDIR:-/tmp}/benchplan.XXXXXX")
+  PLAN=$(python3 tests/benchdeps.py plan "${PLAN_ARGS[@]}" "${FILES[@]}" 2>"$PLAN_ERR") || { cat "$PLAN_ERR" >&2; rm -f "$PLAN_ERR"; exit 3; }
+  if [ "$QUIET" -eq 1 ]; then
+    n=$(grep -c '^skip ' "$PLAN_ERR"); [ "$n" -gt 0 ] && echo "skipped $n unchanged bench files (green on record)"
+    grep -v '^skip ' "$PLAN_ERR" >&2
+  else
+    cat "$PLAN_ERR" >&2
+  fi
+  rm -f "$PLAN_ERR"
   FILES=()
   while IFS=$'\t' read -r f m; do
     if [ -n "$f" ]; then FILES+=("$f"); MODS+=("$m"); fi
@@ -98,6 +107,7 @@ mkdir -p "$(dirname "$LOG")"
 # first line records what produced the log: results here depend on the Max build
 # (2026-10-04: Max 9.2.0 rejected an assignment to `PI` that earlier runs accepted)
 echo "# Max $(defaults read /Applications/Max.app/Contents/Info CFBundleShortVersionString 2>/dev/null || echo unknown), $(date '+%Y-%m-%d %H:%M')" > "$LOG"
+if [ "$QUIET" -eq 1 ]; then export TEST_FULL_LOG="$LOG"; fi    # quiet on screen, complete in the log
 status=0
 i=0
 for f in "${FILES[@]}"; do
@@ -106,7 +116,8 @@ for f in "${FILES[@]}"; do
   # inputs as they are NOW, so an edit made during the run is never recorded as tested
   snap=$(mktemp "${TMPDIR:-/tmp}/benchsnap.XXXXXX")
   python3 tests/benchdeps.py snapshot "$f" > "$snap" 2>/dev/null
-  echo "=== $f${mods:+ (modules: $mods)}" | tee -a "$LOG"
+  if [ "$QUIET" -eq 1 ]; then echo "=== $f${mods:+ (modules: $mods)}" >> "$LOG"
+  else echo "=== $f${mods:+ (modules: $mods)}" | tee -a "$LOG"; fi
   if [ -n "$mods" ]; then export BENCH_MODULES="$mods"; else unset BENCH_MODULES; fi
   "${PY[@]}" "$f" 2>&1 | tee -a "$LOG"
   if [ "${PIPESTATUS[0]}" -eq 0 ]; then
@@ -121,4 +132,7 @@ for f in "${FILES[@]}"; do
   rm -f "$snap"
 done
 unset BENCH_MODULES
+if [ "$QUIET" -eq 1 ]; then
+  if [ "$status" -eq 0 ]; then echo "bench: all selected files passed"; else echo "bench: FAILED (full log: $LOG)"; fi
+fi
 exit $status
