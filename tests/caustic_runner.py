@@ -28,10 +28,20 @@ F32 = np.float32
 WARMUP, SETTLE = 30, 24
 
 
+def refresh_file_db(wait=4.0):
+    """Max's file database does not see files created after launch until `max.refresh()` has run (it works a few
+    seconds later for folders already on the search path; a NEW folder needs a relaunch: task T007)."""
+    import time
+    import modulebench as mb
+    mb.bench_eval("try { max.refresh(); } catch (e) {} 'ok';")
+    time.sleep(wait)
+
+
 def ensure_bench():
     if not bc.ping(2.0, ports=bc.MODULE_PORTS):
         print("module bench not open: reopening (Max comes to the front)")
         bc.reopen(wait=40.0, ports=bc.MODULE_PORTS, patch="bench_module.maxpat")
+    refresh_file_db()
 
 
 def settings_wrapper(module, n_in, n_out, settings, delay_ms=200):

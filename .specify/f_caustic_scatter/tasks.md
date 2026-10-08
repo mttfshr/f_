@@ -39,6 +39,7 @@ tests/
   test_scatter_mirror.py   # tier 1                                                        — T006
   bench_caustic_sheets.py  # tier 2                                                        — T016 onward
   bench_caustic_sheets_cost.py   # interleaved cost (not a gate)                           — T021
+  bench_caustic_codebox.py # tier 2, codebox bench: the sheets composite and select codeboxes   — T013, T023
   bench/caustic_sheets_standalone.maxpat   # generated standalone wrapper                  — T015
   bench/probe_*.maxpat     # throwaway feasibility probes                                  — T007, T008
 docs/f-reference/f_caustic.md                                                              — T038
@@ -109,25 +110,25 @@ package/help/f_caustic.maxhelp                                                  
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Write `package/code/f_caustic_sheets.jxs` from `tests/bench/spike_scatter.jxs` per plan ADR-7: remove the
+- [x] T012 [P] [US1] Write `package/code/f_caustic_sheets.jxs` from `tests/bench/spike_scatter.jxs` per plan ADR-7: remove the
   `h`, `jit`, `latn`, `taps` and `snap` uniforms; fix the corner snap, `point_size 2`, one source read and
   `F.y *= -1`; keep `scale` (the distance), `weight` and `res`.
 - [x] T013 [P] [US1] Write `src/f_caustic/codebox_sheets.gen` (header checklist: functions before `Param`; components inline
   on `sample()`; no `Param` named after a built-in): tone curve, `sample(in, norm)` upscale, additive composite,
   `mix_pct`, the unconnected-field guard chosen in T008, both outputs. Verify it compiles and matches the NumPy
   tone/composite on the codebox bench before it goes anywhere.
-- [ ] T014 [US1] Write `src/f_caustic/scatter_scene.py`: generate the scene (node, mesh, gridshape, slabs for source and
+- [x] T014 [US1] Write `src/f_caustic/scatter_scene.py`: generate the scene (node, mesh, gridshape, slabs for source and
   field, `jit.gl.shader`, `prepend param` boxes) with `#0`-scoped names, writing `src/f_caustic/raw_ui.json` in the
   shape `src/f_grain/definition.py` reads. Reuse the construction in `tests/bench/make_spike_scatter.py` (which stays
   as the record).
-- [ ] T015 [US1] Make `scatter_scene.py --standalone` emit `tests/bench/caustic_sheets_standalone.maxpat`: the scene plus
+- [x] T015 [US1] Make `scatter_scene.py --standalone` emit `tests/bench/caustic_sheets_standalone.maxpat`: the scene plus
   `sheets_pix` as a bpatcher the module bench can load (the `spike_scatter.maxpat` precedent), so this phase never
   touches `f_caustic`.
-- [ ] T016 [US1] Write `tests/bench_caustic_sheets.py` part 1 (standalone): identity at `scale = 0` vs the mirror
+- [x] T016 [US1] Write `tests/bench_caustic_sheets.py` part 1 (standalone): identity at `scale = 0` vs the mirror
   (<= 1e-3); energy within 0.5%; N points on one pixel within 0.1%; orientation vs the mirror (r >= 0.999);
   truth agreement at step 5 (r >= 0.995 at 1 d* and 3.5 d*); tone and upscale vs NumPy at 512² and 1920 x 1080
-  (r >= 0.9999, the `s10` check promoted); 1-frame lag asserted (the `s3b` check promoted).
-- [ ] T017 [US1] Run T016, fix what fails, commit.
+  (the `s10` check promoted; measured 1.3e-8 in 1 - r, max difference 2.7e-3 from the hardware's 8-bit bilinear weights). **The 1-frame-lag assertion is NOT in this suite: it moved to T043.**
+- [x] T017 [US1] Run T016, fix what fails, commit.
 
 **Checkpoint**: sheets mode is correct standalone; Matt can open the standalone wrapper if he wants to see it.
 
@@ -205,6 +206,7 @@ package/help/f_caustic.maxhelp                                                  
   layer's mean luma is within 2x of the soft layer's; record the constant in `codebox_sheets.gen` and the spec.
 - [ ] T035 [US4] Cost through the real module with the interleaved method: soft mode vs the Phase 0 baseline (the select
   pass only), step 5 vs step 2; record in HANDOFF.md. No single timing is a gate.
+- [ ] T043 [US4] Assert the 1-frame lag on the real module: promote the `s3b` check (an upstream pix encodes a frame counter in the field; compare the counters the scatter and a plain pix -> pix reference see; the scatter is exactly 1 frame behind, 8 of 8 captures in the spike) into `tests/bench_caustic_sheets.py`; it needs a chain variant of the module or the standalone, as `tests/bench/spike_scatter_chain.maxpat` is for the spike.
 - [ ] T036 [US4] Commit.
 
 **Checkpoint**: every tier-2 criterion in the spec passes; HANDOFF records the cost numbers.
