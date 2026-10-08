@@ -79,7 +79,7 @@ package/help/f_caustic.maxhelp                                                  
   1 d* and 3.5 d*); the tone curve's properties. Add it to `tests/run.sh` if the suite lists files.
 - [x] T006 Confirm the promoted mirror reproduces the recorded spike numbers (r 0.9985 at 1 d*, 0.9937 at 3.5 d* for 4
   points per pixel) inside `tests/test_scatter_mirror.py`.
-- [ ] T007 Spike V1, shader search path: place a probe copy of the shader at `package/code/f_caustic_sheets_probe.jxs`,
+- [x] T007 Spike V1, shader search path: place a probe copy of the shader at `package/code/f_caustic_sheets_probe.jxs`,
   load it from a probe bpatcher (`tests/bench/probe_shader_path.maxpat`) that is NOT beside it, run it in the module
   bench, and record whether `jit.gl.shader` finds it; if not, try the other candidate folders Vsynth uses. Record
   the result and the chosen location in HANDOFF.md. (Matt checks one case from a patch outside the repo if the
@@ -93,7 +93,7 @@ package/help/f_caustic.maxhelp                                                  
   stages or needs the raw `prepend param` fallback (plan, ADR-4).
 - [x] T010 Spike V3b, builder routing: in the same throwaway, test `outlet_source_override` with a `pix_chain` node (not a
   raw box) feeding both outlets, and `mod_inlets` `fanout` into a `raw_boxes` id. Record what works.
-- [ ] T011 Decide ADR-1 from T007-T010: stay declarative, or fall back to a dedicated `src/f_caustic/build_caustic.py`.
+- [x] T011 Decide ADR-1 from T007-T010: stay declarative, or fall back to a dedicated `src/f_caustic/build_caustic.py`.
   Write the outcome into plan.md (ADR-1, ADR-4, ADR-7), delete the probes that served their purpose, commit.
 
 **Checkpoint**: the mirror is green; all four spikes are answered in writing; ADR-1 is settled (or the fallback chosen).

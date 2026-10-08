@@ -115,6 +115,7 @@ script (ADR-1).
 `outlet_source_override`, raw scene).
 **Alternatives**: a dedicated `build_caustic.py` (the `f_vf_fluid` precedent): rejected unless a verification task
 (T009, T010) shows the builder cannot target multiple stages for one param or override outlet sources with a pix node.
+**Settled 2026-10-07 (T011): declarative `definition.py`; no dedicated build script.**
 **Verified 2026-10-07 (T009, T010)** by building a throwaway definition in-process (`scratch/probe_builder_targets.py`):
 `pix_target` lists feed one param's attrui to several stages; `bypass_target` reaches several stages; `outlet_source`
 (not `outlet_source_override`, which is for raw boxes) feeds both outlets from a `pix_chain` node; a `mod_inlets`
@@ -169,8 +170,12 @@ stretches the UV square, as in the look patch (the soft path is also UV-space).
 **Decision**: `f_caustic_sheets.jxs` is the spike shader with the experiment uniforms removed (`h`, `jit`, `latn`,
 `taps`, `snap`): corner snap, size 2, regular lattice, one source read and the orientation flip are fixed. `scale`
 (distance), `weight` and `res` remain uniforms. Names `#0`-scoped.
-**Verification**: the shader must be found from `package/code/` in the module bench and from a patch outside the
-package (T007).
+**Verified 2026-10-07 (T007):** after Max is relaunched, a file in `package/code/` is found on the search path (a JS
+`File()` lookup, with Vsynth's `vtfk.jxs` as the positive control and a bogus name as the negative one). Two facts for
+developers: Max does not add a NEW folder to the search path until it is relaunched (`max.refresh()` only rescans
+folders already on the path), and the bench does not report `jit.gl.shader` load failures (a nonexistent shader file
+raised no error), so the shader's loading is verified by **non-black output** in the module bench, not by an empty
+error list. The final check from a patch outside the repo is part of the live check (T037).
 
 ### ADR-8: Testing split
 **Tier 1**: `tests/scatter_mirror.py` (promoted `ref_scatter` and truth), offline. **Tier 2**: `tests/bench_caustic_sheets.py`
