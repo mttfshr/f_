@@ -9,8 +9,50 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 426.0, 95.0, 1268.0, 877.0 ],
+        "rect": [ 426.0, 106.0, 1268.0, 877.0 ],
         "boxes": [
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-12",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_lfo.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture", "float" ],
+                    "patching_rect": [ 1025.0, 40.0, 75.0, 73.5 ],
+                    "varname": "vs_lfo",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-6",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_displacement.maxpat",
+                    "numinlets": 5,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture" ],
+                    "patching_rect": [ 957.0, 140.0, 162.0, 119.0 ],
+                    "varname": "vs_displacement",
+                    "viewvisibility": 1
+                }
+            },
             {
                 "box": {
                     "bgmode": 0,
@@ -295,7 +337,14 @@
                         "vs_wfg_polarizer::pm_range": -1,
                         "vs_wfg_polarizer::lock_freq": -1,
                         "vs_wfg_polarizer[1]::pm_range": -1,
-                        "vs_wfg_polarizer[1]::lock_freq": -1
+                        "vs_wfg_polarizer[1]::lock_freq": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_ym": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_xm": -1,
+                        "vs_displacement::displacement_gui::displacement_y_range": -1,
+                        "vs_displacement::displacement_gui::displacement_x_range": -1,
+                        "vs_displacement::displacement_gui::displacement_angle_range": -1,
+                        "vs_displacement::displacement_gui::displacement_anglemenu": -1,
+                        "vs_lfo::lfo_freq_range": -1
                     },
                     "saved_object_attributes": {
                         "client_rect": [ 854, 172, 1208, 300 ],
@@ -393,6 +442,12 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-6", 3 ],
+                    "source": [ "obj-12", 0 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-9", 0 ],
                     "source": [ "obj-15", 0 ]
                 }
@@ -411,14 +466,14 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-16", 0 ],
+                    "destination": [ "obj-18", 0 ],
                     "order": 1,
                     "source": [ "obj-17", 1 ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-18", 0 ],
+                    "destination": [ "obj-6", 0 ],
                     "order": 0,
                     "source": [ "obj-17", 1 ]
                 }
@@ -433,6 +488,12 @@
                 "patchline": {
                     "destination": [ "obj-16", 0 ],
                     "source": [ "obj-21", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-16", 0 ],
+                    "source": [ "obj-6", 0 ]
                 }
             },
             {
@@ -473,6 +534,12 @@
             "obj-11::obj-23": [ "scale[1]", "scale", 0 ],
             "obj-11::obj-28": [ "rotate", "rotate", 0 ],
             "obj-11::obj-31": [ "thresh", "thresh", 0 ],
+            "obj-12::obj-34": [ "live.dial[3]", "Freq", 0 ],
+            "obj-12::obj-35": [ "live.dial[2]", "Freq", 0 ],
+            "obj-12::obj-4": [ "lfo_freq__range", "live.text", 0 ],
+            "obj-12::obj-82": [ "lfo_wave", "lfo_wave", 0 ],
+            "obj-12::obj-9": [ "lfo_freq", "Freq", 0 ],
+            "obj-12::obj-97": [ "lfo_pw", "lfo_pw", 0 ],
             "obj-15::obj-19d": [ "panel_toggle", "panel_toggle", 0 ],
             "obj-15::obj-20": [ "aberration", "aberration", 0 ],
             "obj-15::obj-23": [ "distortion", "distortion", 0 ],
@@ -577,6 +644,25 @@
             "obj-5::obj-52": [ "live.menu[21]", "live.menu", 0 ],
             "obj-5::obj-53": [ "live.menu[22]", "live.menu", 0 ],
             "obj-5::obj-56": [ "live.menu[25]", "live.menu", 0 ],
+            "obj-6::obj-22::obj-19": [ "displacement_angle", "Angle", 0 ],
+            "obj-6::obj-22::obj-29": [ "live.numbox[5]", "live.numbox", 0 ],
+            "obj-6::obj-22::obj-35": [ "displacement_zoom", "Zoom", 0 ],
+            "obj-6::obj-22::obj-4": [ "disp_ang_range", "angle", 0 ],
+            "obj-6::obj-22::obj-40": [ "displacement_y_m", "YM", 0 ],
+            "obj-6::obj-22::obj-42": [ "displacement_x_m", "XM", 0 ],
+            "obj-6::obj-22::obj-44": [ "displacement_zoom_m", "ZM", 0 ],
+            "obj-6::obj-22::obj-47": [ "displacement_angle_m", "AGLM", 0 ],
+            "obj-6::obj-22::obj-52": [ "MENU[1]", "angle", 0 ],
+            "obj-6::obj-22::obj-55": [ "MENU[2]", "angle", 0 ],
+            "obj-6::obj-22::obj-56": [ "MENU[3]", "angle", 0 ],
+            "obj-6::obj-22::obj-57": [ "MENU[4]", "angle", 0 ],
+            "obj-6::obj-22::obj-6": [ "offrot_x", "X", 0 ],
+            "obj-6::obj-22::obj-67": [ "menu", "angle", 0 ],
+            "obj-6::obj-22::obj-8": [ "displacement_y", "Y", 0 ],
+            "obj-6::obj-33": [ "displacement_init_point", "live.text", 2 ],
+            "obj-6::obj-49": [ "a_lock", "a_lock", 0 ],
+            "obj-6::obj-8": [ "displacement_polar", "live.text", 2 ],
+            "obj-6::obj-96": [ "displacement_boundmode", "live.menu", 0 ],
             "obj-7::obj-20": [ "mix_pct", "mix_pct", 0 ],
             "obj-7::obj-23": [ "gain", "gain", 0 ],
             "obj-7::obj-26": [ "scale", "scale", 0 ],
@@ -947,6 +1033,27 @@
                 },
                 "obj-5::obj-56": {
                     "parameter_longname": "live.menu[25]"
+                },
+                "obj-6::obj-22::obj-19": {
+                    "parameter_range": [ -180.0, 180.0 ]
+                },
+                "obj-6::obj-22::obj-29": {
+                    "parameter_longname": "live.numbox[5]"
+                },
+                "obj-6::obj-22::obj-40": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-6::obj-22::obj-42": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-6::obj-22::obj-47": {
+                    "parameter_range": [ -6.28, 6.28 ]
+                },
+                "obj-6::obj-22::obj-6": {
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-6::obj-22::obj-8": {
+                    "parameter_range": [ -1.0, 1.0 ]
                 },
                 "obj-7::obj-20": {
                     "parameter_invisible": 0,

@@ -917,6 +917,25 @@ Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Fin
 
 ---
 
+### More bench-verified facts (caustic resolution/detail cost spike, 2026-10-08)
+
+`tests/spike_caustic_res_cost.py`; see `.specify/f_caustic_scatter/tasks.md` T046.
+
+- **The MODULE bench's `period_ms` (`caustic_runner.py`/`cr.period_ms`, real `vs_render` context) is a different
+  instrument from the codebox bench's `measure`, with its own floor: it is vsync-locked at `cr.CAP_MS` (~16.7 ms,
+  60 fps). A module cheaper than that reads as ~16.7 ms regardless of its true cost — the same failure shape as
+  the codebox bench's CPU-overhead floor above, different number, different cause (display vsync, not per-job
+  overhead). A set of `period_ms` readings that all cluster at ~16.7 ms across configs that should differ (e.g. a
+  cost-scaling parameter swept end to end) means "all cheaper than the floor," not "no effect" — push the inputs
+  (bigger textures, more points, stacked module instances) until readings clear 16.7 ms before concluding a
+  parameter has no cost impact.
+- **A single `period_ms` sample is noisy — up to ~2x run to run**, independent of and worse than the floor issue
+  above (seen as wildly non-monotonic readings, e.g. a *higher* detail step timing faster than a lower one on one
+  draw). The first job after `cr.ensure_bench()` reopens the module bench is particularly unreliable (cold-GPU-state
+  artifact). Take 3+ samples per config and use the median, never a single draw, before comparing configs.
+
+---
+
 ## Code Health Checklist
 
 When reviewing any codebox, scan for these in order:
