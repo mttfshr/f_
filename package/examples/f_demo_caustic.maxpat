@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 646.0, 95.0, 1268.0, 877.0 ],
+        "rect": [ 426.0, 95.0, 1268.0, 877.0 ],
         "boxes": [
             {
                 "box": {
@@ -291,7 +291,6 @@
                     "numoutlets": 1,
                     "outlettype": [ "" ],
                     "patching_rect": [ 105.0, 186.0, 138.0, 35.0 ],
-                    "presentation_linecount": 2,
                     "priority": {
                         "vs_wfg_polarizer::pm_range": -1,
                         "vs_wfg_polarizer::lock_freq": -1,
@@ -305,7 +304,7 @@
                         "storage_rect": [ 766, 44, 1220, 302 ]
                     },
                     "text": "pattrstorage @greedy 1 @changemode 1",
-                    "varname": "f_demo_caustic"
+                    "varname": "Vsynth"
                 }
             },
             {
@@ -609,6 +608,14 @@
             "obj-9::obj-32": [ "separate", "separate", 0 ],
             "obj-9::obj-35": [ "mode[1]", "mode", 0 ],
             "obj-9::obj-90": [ "mix_pct[1]", "mix_pct", 0 ],
+            "parameterbanks": {
+                "0": {
+                    "index": 0,
+                    "name": "",
+                    "parameters": [ "-", "-", "-", "-", "-", "-", "-", "-" ],
+                    "buttons": [ "-", "-", "-", "-", "-", "-", "-", "-" ]
+                }
+            },
             "parameter_overrides": {
                 "obj-11::obj-20": {
                     "parameter_invisible": 0,
