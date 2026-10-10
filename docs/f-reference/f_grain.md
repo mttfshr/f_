@@ -40,7 +40,7 @@ Parameters routed via `route bypass density amount persistence fade size size_va
 
 ## Loose Threads
 
-- `softness`'s `live.dial` range is `0.0-5.0` with no custom min, unlike `shape`/`jitter` which both got tuned ranges -- appears to be an untuned Max default, never corrected. The codebox only uses it meaningfully in `[0,1]` (`feather = mix(0.02, 0.5, softness)`); values beyond ~1.0 just keep extrapolating with no new effect. Not urgent, but a real inconsistency.
+- ~~`softness`'s `live.dial` range is `0.0-5.0`~~ -- **FIXED 2026-10-09** (`.specify/f_grain/tasks.md` T002). The codebox only ever reads `softness` meaningfully in `[0,1]` (`feather = mix(0.02, 0.5, softness)`); hand-edited the shipped `.maxpat`'s dial (`parameter_mmax` 5.0 -> 1.0, `obj-31`) and `src/f_grain/definition.py` to match, surgically (this module is on the never-regenerate list).
 - This module predates `build_patcher.py` (patcher added 2026-05-23, build system added 2026-05-30). `src/f_grain/definition.py` was written after the fact (2026-07-05) as a record of the real `.maxpat`, not a generator for it -- **never regenerate this module via `build_patcher.py`.**
 
 ## Source File

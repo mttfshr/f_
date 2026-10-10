@@ -56,7 +56,7 @@ patcher = {
         {"name": "size",        "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "label": "Size",   "hint": "Grain size"},
         {"name": "size_var",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "label": "S.var",  "hint": "Grain size variation"},
         {"name": "shape",       "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5, "label": "Shape",  "hint": "Grain aspect ratio (-1=portrait 0=square 1=landscape)"},
-        {"name": "softness",    "type": "float", "min": 0.0,  "max": 5.0, "default": 0.0, "label": "Soft",   "hint": "Grain edge softness"},
+        {"name": "softness",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "label": "Soft",   "hint": "Grain edge softness"},
         {"name": "jitter",      "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0, "label": "Jitter", "hint": "Grain position jitter (0=grid 1=scattered)"},
         {"name": "ch_diverge",  "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "label": "Color",  "hint": "Temporal persistence (0=boil 1=frozen)"},
         {"name": "luma_gate",   "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "L.gate", "hint": "Luma gate: bipolar (-1=shadows 0=uniform +1=highlights)"},
