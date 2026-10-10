@@ -15,8 +15,13 @@
 #   - the edge_mode umenu and its attrui;
 #   - a second `r draw`, wired to the pix.
 # The routing is control-first (route_first): the inlet feeds the route, and the route's reject
-# outlet feeds routepass. The patch is hand-edited and on plan.md's never-regenerate list: this
-# definition exists so drift can be checked and so the module is recorded; do not regenerate.
+# outlet feeds routepass.
+#
+# Taken OFF the never-regenerate list 2026-10-09 (.specify/f_grain/tasks.md T003): the comment
+# above used to say never regenerate this module, but `build/drift.py -v f_grain` shows it already
+# reproducing the shipped patch byte for byte -- the bespoke parts are fully captured by raw_ui.json
+# and the T019-era builder keys, same mechanism other once-hand-built modules (f_vf_seeds) were
+# absorbed through. So this definition is the generator again, not just a drift record.
 import json
 from pathlib import Path
 
@@ -49,7 +54,8 @@ patcher = {
     # Params, in the shipped route order (the order of the route tokens is the param order).
     "params": [
         {"name": "density",     "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5, "label": "Dens",   "hint": "Grain density"},
-        {"name": "amount",      "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0, "label": "Amt",    "hint": "Grain amount (blend weight)"},
+        {"name": "gain",        "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0, "label": "Gain",
+         "hint": "Grain intensity (unbounded). Renamed from amount 2026-10-09 (T003) to match the library-wide gain/mix convention."},
         {"name": "persistence", "type": "float", "min": 0.0,  "max": 1.0, "default": 1.0, "label": "Freeze", "hint": "Temporal persistence (0=boil 1=frozen)",
          "pix_wire": False},
         {"name": "fade",        "type": "float", "min": 0.0,  "max": 4.0, "default": 0.0, "label": "Fade",   "hint": "Temporal persistence (0=boil 1=frozen)"},
@@ -65,6 +71,13 @@ patcher = {
         {"name": "edge_mode",   "type": "raw_ui", "route_name": "edge_mode_menu"},
         {"name": "field",       "type": "raw_ui"},
         {"name": "sv_seed",     "type": "raw_ui"},
+        # mix_pct MUST be last among routed params (after every raw_ui one too): both
+        # `persistence`'s era-clock chain AND `field`/`sv_seed`'s second route are raw, hand-
+        # captured wiring hardcoded to a fixed outlet-index on the shared `route` object --
+        # inserting mix_pct anywhere before them shifts that index and silently detaches them
+        # (build/drift.py + tests/test_module_contracts.py caught both, 2026-10-09 T003).
+        {"name": "mix_pct",     "type": "float", "min": 0.0,  "max": 100.0, "default": 100.0, "label": "Mix", "widget": "numbox",
+         "hint": "Dry/wet crossfade toward the fully-composited (displaced-source + grain) state. New 2026-10-09 (T003); default 100 keeps the module's prior look unchanged. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator."},
         {"name": "era_clock",   "type": "internal"},  # driven by the persistence chain
         {"name": "src_mode",    "type": "internal"},  # driven by vs_inState
         {"name": "bypass",      "type": "bypass"},
@@ -87,8 +100,8 @@ patcher = {
 
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
-    "amount.ctl": {"presentation_rect": [6.0, 115.0, 27.0, 43.0]},
-    "amount.label": {"presentation_rect": [8.0, 99.0, 30.0, 18.0], "textjustification": None},
+    "gain.ctl": {"presentation_rect": [6.0, 115.0, 27.0, 43.0]},
+    "gain.label": {"presentation_rect": [8.0, 99.0, 30.0, 18.0], "textjustification": None},
     "bypass_jsui": {"presentation_rect": [208.00000309944153, 5.600000083446503, 18.0, 12.0], "valuepopuplabel": None},
     "ch_diverge.ctl": {"presentation_rect": [79.0, 115.0, 27.0, 43.0]},
     "ch_diverge.label": {"presentation_rect": [79.00000235438347, 99.00000295042992, 34.0, 18.0], "textjustification": None},

@@ -1,6 +1,7 @@
 Param src_mode(0.0);
 Param density(0.5);
-Param amount(0.5);
+Param gain(0.5);
+Param mix_pct(100.0);
 Param era_clock(0.0);
 Param bypass_gate(0.0);
 Param size(0.0);
@@ -177,10 +178,11 @@ visible = step(1.0 - density, grain_r);
 // displacement gated to grain shape only
 src_displaced = mix(src, sample(in1, uv_d), visible * soft_falloff * grain_intensity * disp_mask);
 
-// apply grain_sign (stable polarity per cell) scaled by ch_diverge for color
-gr = grain_sign * visible * soft_falloff * grain_intensity * amount;
-gg = (grain_sign + col_g * ch_diverge) * visible * soft_falloff * grain_intensity * amount;
-gb = (grain_sign + col_b * ch_diverge) * visible * soft_falloff * grain_intensity * amount;
+// apply grain_sign (stable polarity per cell) scaled by ch_diverge for color, and gain
+// (unbounded intensity -- renamed from amount 2026-10-09, T003, gain/mix convention)
+gr = grain_sign * visible * soft_falloff * grain_intensity * gain;
+gg = (grain_sign + col_g * ch_diverge) * visible * soft_falloff * grain_intensity * gain;
+gb = (grain_sign + col_b * ch_diverge) * visible * soft_falloff * grain_intensity * gain;
 
 // luma gate: bipolar (-1=shadows +1=highlights 0=uniform)
 luma = 0.299*src.r + 0.587*src.g + 0.114*src.b;
@@ -190,7 +192,17 @@ luma_mod = mix(1.0, luma_weight, clamp(abs(luma_gate) * 2.0, 0.0, 1.0));
 gr *= luma_mod;
 gg *= luma_mod;
 gb *= luma_mod;
-composited = vec(src_displaced.r + gr, src_displaced.g + gg, src_displaced.b + gb, src_displaced.a);
+
+// gain/mix convention (T003): driven = the complete composited state (source included),
+// mix_pct a plain crossfade toward it -- NOT a bare effect layer (vsynth-bpatcher skill,
+// "Canonical naming: gain vs mix" -- a sparse layer double-images under a uniform crossfade).
+driven_r = clamp(src_displaced.r + gr, 0.0, 1.0);
+driven_g = clamp(src_displaced.g + gg, 0.0, 1.0);
+driven_b = clamp(src_displaced.b + gb, 0.0, 1.0);
+composited = vec(mix(src_displaced.r, driven_r, mix_pct / 100.0),
+                  mix(src_displaced.g, driven_g, mix_pct / 100.0),
+                  mix(src_displaced.b, driven_b, mix_pct / 100.0),
+                  src_displaced.a);
 raw = vec(grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, 1.0);
 
 // bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
