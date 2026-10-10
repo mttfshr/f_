@@ -102,10 +102,6 @@ IDs are per directory: `f_grain/T001`.
   (16/16), `tests/test_layout.py` (12/12) all pass with no unrouted/
   bad_attr/undriven/unused findings.
 
-  **Live check (Matt, 2026-10-10): confirmed, done.** Opened in Max,
-  repositioned `mix_pct`'s numbox/label and nudged `ch_diverge`'s dial and
-  the panel size while there. Captured that hand-tuned presentation state
-  back into `definition.py` via `build/capture.py` (51 properties, 32
-  elements -- same panel/dial/label tweaks as any other override capture,
-  nothing codebox-side) so a rebuild reproduces it; `drift.py -v f_grain`
-  back to reproducing exactly. T003 fully closed.
+  **Still open**: Matt to eyeball the module live in Max (Tier 3) to
+  confirm `mix_pct` crossfades as expected and nothing else regressed
+  visually — offline tests cover wiring/drift, not appearance.
