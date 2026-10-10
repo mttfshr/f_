@@ -1,26 +1,28 @@
 """
-scatter_scene.py -- generates the raw GL scene of the f_caustic sheets mode (.specify/f_caustic_scatter/plan.md,
-ADR-2: derived by a script, not typed or captured by hand). Tasks T014, T015 (and the `detail` network of T018).
+scatter_scene.py -- generates the raw GL scene of f_caustic (.specify/f_caustic_scatter/plan.md, ADR-2: derived by
+a script, not typed or captured by hand). Tasks T014, T015. Soft mode, the mode menu, the detail menu and the two
+select stages were all removed 2026-10-10: this is now the module's only path, always built at the old "detail 5"
+step (1024 sq, 4 points/px) -- see docs/f-reference/f_caustic.md and the decision note in
+.specify/f_caustic_scatter/tasks.md.
 
 The scene is a jit.gl.node capture holding a points jit.gl.mesh drawn with package/code/f_caustic_sheets.jxs:
   slabS / slabF   source and field -> normalised 2D float32 (as Vsynth's vs_xyz_disp does)
   route out_name  the slabs' output names -> `texture <src> <field>` on the mesh, refreshed every frame
   grid -> mesh    a plane gridshape as a MATRIX into a points mesh: every lattice point is exactly one vertex
   node            the float32 capture (the illuminance); its outlet 0 is the scene's output
-  obj-920         ONE CONTROL ENTRY: `route scale weight r n detail`. scale / weight -> shader params, r -> the
-                  shader's `res` and the node's dim, n -> the lattice size (rebuilds the matrix), detail N ->
-                  one of five messages that set r, weight and n together, n LAST so the big lattice is built
-                  once and never at an intermediate size (the ladder, spec table).
+  obj-920         ONE CONTROL ENTRY: `route scale weight r n`. scale / weight -> shader params, r -> the shader's
+                  `res` and the node's dim, n -> the lattice size (rebuilds the matrix, n LAST so the big lattice
+                  is built once and never at an intermediate size). weight/r/n are sent once, at load, by a fixed
+                  message (FIXED_DETAIL below); only `scale` changes live, from the module's Scale dial.
 The module's builder aims its params' attruis at obj-920 (`pix_target`), and the standalone test patch sends the
 same messages into its inlet 0, so the two have the same interface.
 
-The MODULE layer (module_layer) adds what only the module has: adapters from the builder's menu params (`mode`, `detail`),
-the mode network (enable / disable the branches, the select stages' gate, the lattice built only in sheets mode) and the
-cords to the builder's own pix stages, whose ids are fixed by the builder (the primary is obj-5; the support stages follow
-in pix_chain order from obj-50: sheets, select_comp, select_layer).
+The MODULE layer (module_layer) adds what only the module has: the cord from the builder's Scale dial into the
+control entry, and the cord from the scene's capture into the composite pix's second inlet. The composite pix is
+the chain's only (and so primary) stage, fixed by the builder at obj-5.
 
-Only the lattice size is built from messages: at load the grid is 2 x 2 and nothing is built until `n` or
-`detail` arrives (a module in soft mode never builds the 200 MB lattice).
+The scene is built enabled and the lattice is built once at load (a fixed message into the control entry, n
+last) -- no live rebuild, no mode-gated enable/disable.
 
 Run:
   python3 src/f_caustic/scatter_scene.py                 write src/f_caustic/raw_ui.json (the module's raw layer)
@@ -35,8 +37,9 @@ REPO = HERE.parent.parent
 
 NODE = "#0.node"
 SHADER = "#0.sc"
-CAPTURE0 = 1024                      # initial capture size (the default `detail` step's); `r` changes it
-DETAIL = [(256, 2), (512, 2), (768, 2), (1024, 2), (1024, 4)]     # (capture size, points per capture pixel)
+CAPTURE0 = 1024                      # capture size -- now fixed (was the default `detail` step's)
+FIXED_DETAIL = (1024, 4)             # (capture size, points per capture pixel) -- the old ladder's step 5, now the
+                                      # only setting; see docs/f-reference/f_caustic.md "Parameters"
 CTRL = "obj-920"                     # the control entry (a raw box id; the builder targets it)
 APPVERSION = {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1}
 
@@ -69,10 +72,10 @@ def detail_message(r, ppp):
     return f"r {r}, weight {(r / n) ** 2:.4f}, n {n}"          # n LAST: the lattice is rebuilt once
 
 
-def scene(g, extra_tokens=(), enabled=True):
+def scene(g, extra_tokens=()):
     """Add the scene to Graph g. extra_tokens: more `route` tokens the standalone test patch handles (gain,
-    mix_pct); their outlets follow the scene's five. Returns the ids the caller wires to."""
-    tokens = ("scale", "weight", "r", "n", "detail") + tuple(extra_tokens)
+    mix_pct); their outlets follow the scene's four. Returns the ids the caller wires to."""
+    tokens = ("scale", "weight", "r", "n") + tuple(extra_tokens)
     g.obj(CTRL, "route " + " ".join(tokens), 1, len(tokens) + 1, [20, 60, 60 + 60 * len(tokens), 22])
 
     # texture adapters: normalised 2D float32 (a vertex program wants a sampler2D)
@@ -97,15 +100,15 @@ def scene(g, extra_tokens=(), enabled=True):
     g.wire("obj-908", 0, "obj-901", 0)
     g.wire("obj-908", 0, "obj-902", 0)
 
-    # the capture, the shader, the lattice and the mesh
+    # the capture, the shader, the lattice and the mesh -- always enabled (there is no other mode to gate against)
     g.obj("obj-909", f"jit.gl.node vsynth @capture 1 @name {NODE} @type float32 @adapt 0 "
-                     f"@dim {CAPTURE0} {CAPTURE0} @erase_color 0 0 0 0{'' if enabled else ' @enable 0'}", 1, 3, [400, 300, 400, 22],
+                     f"@dim {CAPTURE0} {CAPTURE0} @erase_color 0 0 0 0", 1, 3, [400, 300, 400, 22],
           ["jit_gl_texture", "", ""])
     g.obj("obj-910", f"jit.gl.shader vsynth @name {SHADER} @file f_caustic_sheets.jxs", 1, 2, [20, 300, 330, 22])
     g.obj("obj-911", "jit.gl.gridshape vsynth @shape plane @dim 2 2 @matrixoutput 1 @automatic 0", 1, 2,
           [20, 400, 400, 22], ["jit_matrix", ""])
     g.obj("obj-912", f"jit.gl.mesh {NODE} @draw_mode points @shader {SHADER} @blend_enable 1 @blend_mode 1 1 "
-                     f"@depth_enable 0 @point_size 2 @color 1 1 1 1 @lighting_enable 0{'' if enabled else ' @enable 0'}", 1, 2,
+                     f"@depth_enable 0 @point_size 2 @color 1 1 1 1 @lighting_enable 0", 1, 2,
           [20, 440, 600, 22], ["", ""])
     g.wire("obj-911", 0, "obj-912", 0)
     g.wire("obj-906", 0, "obj-912", 0)
@@ -126,14 +129,12 @@ def scene(g, extra_tokens=(), enabled=True):
     g.wire("obj-924", 0, "obj-909", 0)
     g.wire("obj-925", 0, "obj-911", 0)
 
-    # the `detail` ladder: one message sets r, weight and n (n last), fed back into the control entry
-    g.obj("obj-930", "select 1 2 3 4 5", 1, 6, [640, 60, 130, 22], ["bang"] * 5 + [""])
-    g.wire(CTRL, 4, "obj-930", 0)
-    for i, (r, ppp) in enumerate(DETAIL):
-        mid = f"obj-93{i + 1}"
-        g.msg(mid, detail_message(r, ppp), [640, 100 + 30 * i, 330, 22])
-        g.wire("obj-930", i, mid, 0)
-        g.wire(mid, 0, CTRL, 0)
+    # the lattice is built once, at load: r, weight and n (n last) sent into the control entry by a loadbang.
+    # There is no ladder any more -- FIXED_DETAIL is the only setting there ever was a reason to use (2026-10-10).
+    g.obj("obj-935", "loadbang", 0, 1, [640, 60, 70, 22], ["bang"])
+    g.msg("obj-936", detail_message(*FIXED_DETAIL), [640, 100, 330, 22])
+    g.wire("obj-935", 0, "obj-936", 0)
+    g.wire("obj-936", 0, CTRL, 0)
     return {"ctrl": CTRL, "source_slab": "obj-901", "field_slab": "obj-902", "node": "obj-909",
             "reject_outlet": len(tokens)}
 
@@ -171,13 +172,13 @@ def standalone():
     g.port("out0", "outlet", [20, 560, 30, 22])
     g.port("out1", "outlet", [120, 560, 30, 22])
     g.port("out2", "outlet", [220, 560, 30, 22])
-    ids = scene(g, extra_tokens=("gain", "mix_pct", "bypass"))     # `bypass`: the module bench sends one; swallow it
+    ids = scene(g, extra_tokens=("gain", "mix_pct", "bypass"))
     rej = ids["reject_outlet"]
     # the texture message is the control route's reject outlet
     g.wire("in0", 0, CTRL, 0)
     g.wire(CTRL, rej, "obj-901", 0)
     g.wire("in1", 0, "obj-902", 0)
-    # the composite stage: in1 = source, in2 = the capture, in3 = the field; gain / mix_pct as pix Params
+    # the composite stage: in1 = source, in2 = the capture, in3 = the field; gain / mix_pct / bypass as pix Params
     code = (HERE / "codebox_sheets.gen").read_text()
     sheets_pix(g, "obj-950", code, [20, 500, 520, 22])
     g.wire(CTRL, rej, "obj-950", 0)               # source texture (also what makes the stage render each frame)
@@ -185,10 +186,13 @@ def standalone():
     g.wire("in1", 0, "obj-950", 2)                # the field
     g.obj("obj-951", "prepend param gain", 1, 1, [560, 450, 130, 22])
     g.obj("obj-952", "prepend param mix_pct", 1, 1, [700, 450, 140, 22])
-    g.wire(CTRL, 5, "obj-951", 0)
-    g.wire(CTRL, 6, "obj-952", 0)
+    g.obj("obj-953", "prepend param bypass_gate", 1, 1, [850, 450, 160, 22])
+    g.wire(CTRL, 4, "obj-951", 0)
+    g.wire(CTRL, 5, "obj-952", 0)
+    g.wire(CTRL, 6, "obj-953", 0)
     g.wire("obj-951", 0, "obj-950", 0)
     g.wire("obj-952", 0, "obj-950", 0)
+    g.wire("obj-953", 0, "obj-950", 0)
     g.wire(ids["node"], 0, "out0", 0)
     g.wire("obj-950", 0, "out1", 0)
     g.wire("obj-950", 1, "out2", 0)
@@ -196,66 +200,33 @@ def standalone():
                         "rect": [100.0, 100.0, 1040.0, 620.0], "boxes": g.boxes, "lines": g.lines}}
 
 
-# ids the builder assigns (build/spec.md: the primary pix is obj-5; support pix are obj-50, obj-51, ... in pix_chain order,
-# excluding the primary). tests/test_scatter_scene.py checks them against a real build of the definition.
-SOFT, SHEETS, SEL_COMP, SEL_LAYER = "obj-5", "obj-50", "obj-51", "obj-52"
-DEFAULT_DETAIL = 5
-# builder-made widgets whose OUTLETS the module layer taps directly (an attrui aimed at a non-pix box would drop the value:
-# it learns its attribute from the object it is cabled to). tests/test_scatter_scene.py checks these ids in a real build.
-DIAL_SCALE, MENU_MODE, MENU_DETAIL = "obj-26", "obj-35", "obj-38"
+# id the builder assigns the chain's one (and so primary) pix stage (build/spec.md: the primary pix is always
+# obj-5). tests/test_scatter_scene.py checks it against a real build of the definition.
+SHEETS = "obj-5"
+# the builder-made Scale dial's OUTLET, tapped directly (an attrui aimed at a non-pix box would drop the value:
+# it learns its attribute from the object it is cabled to -- and `scale` here drives the scene's raw control
+# entry, not a Param on the composite codebox, so it carries `pix_wire: False` in definition.py and gets no
+# attrui). tests/test_scatter_scene.py checks this id in a real build.
+DIAL_SCALE = "obj-26"
 
 
 def module_layer(g):
     """The module-only raw boxes and cords, added to the scene (see the module docstring)."""
-    # the capture is the sheets stage's second inlet (in2); its first inlet (the source) and third (the field) come
-    # from the builder's own fanouts (inlet_fanout / mod_inlets fanout in definition.py)
+    # the capture is the composite stage's second inlet (in2); its first inlet (the source) and third (the field)
+    # come from the builder's own fanouts (inlet_fanout / mod_inlets in definition.py)
     g.wire("obj-909", 0, SHEETS, 1)
 
-    # --- adapters. The builder's `scale` dial and its `mode` / `detail` menus (pix_wire False: no attrui) are tapped at
-    # their outlets: scale -> `scale <v>` into the control entry; mode (0 soft, 1 sheets) straight into the mode
-    # network; detail (a menu index 0..4) + 1 -> the ladder's step 1..5
+    # the builder's Scale dial is tapped at its outlet: scale -> `scale <v>` into the control entry.
     g.obj("obj-947", "prepend scale", 1, 1, [20, 20, 100, 22])
     g.wire(DIAL_SCALE, 0, "obj-947", 0)
     g.wire("obj-947", 0, CTRL, 0)
-    g.obj("obj-942", "+ 1", 2, 1, [800, 50, 40, 22], ["int"])             # -> the ladder's step 1..5
-    g.wire(MENU_DETAIL, 0, "obj-942", 0)
-    g.obj("obj-943", "t i i", 1, 2, [800, 80, 50, 22], ["int", "int"])
-    g.obj("obj-944", f"i {DEFAULT_DETAIL}", 2, 1, [880, 110, 50, 22], ["int"])   # the stored step (cold right inlet)
-    g.obj("obj-945", "gate 1 0", 2, 1, [800, 140, 70, 22])                # passes a detail change only in sheets mode
-    g.obj("obj-946", "prepend detail", 1, 1, [800, 170, 100, 22])
-    g.wire("obj-942", 0, "obj-943", 0)
-    g.wire("obj-943", 1, "obj-944", 1)          # store first (the right outlet fires first)...
-    g.wire("obj-943", 0, "obj-945", 1)          # ...then pass it on if the gate is open
-    g.wire("obj-945", 0, "obj-946", 0)
-    g.wire("obj-944", 0, "obj-946", 0)          # the stored step, when the mode becomes sheets
-    g.wire("obj-946", 0, CTRL, 0)
-
-    # --- the mode network. `t i i i i` fires right to left: gate and select gate, then the enables of the SHEETS branch,
-    # and LAST the stored detail (which builds the lattice, in sheets mode only).
-    g.obj("obj-950", "t i i i i", 1, 4, [700, 60, 90, 22], ["int"] * 4)
-    g.obj("obj-951", "prepend param sheets_gate", 1, 1, [700, 200, 170, 22])
-    g.msg("obj-952", "enable $1", [700, 240, 70, 22])
-    g.obj("obj-955", "select 1", 1, 2, [700, 340, 60, 22], ["bang", ""])
-    g.wire(MENU_MODE, 0, "obj-950", 0)
-    g.wire("obj-950", 3, "obj-945", 0)          # the detail gate
-    g.wire("obj-950", 3, "obj-951", 0)
-    g.wire("obj-951", 0, SEL_COMP, 0)
-    g.wire("obj-951", 0, SEL_LAYER, 0)
-    g.wire("obj-950", 2, "obj-952", 0)
-    for target in ("obj-909", "obj-912", SHEETS):       # the node, the mesh and the sheets stage
-        g.wire("obj-952", 0, target, 0)
-    # NOT disabled in sheets mode: the soft stage. The select stages render when a texture arrives on their FIRST inlet,
-    # which is the soft stage's output, and a disabled stage emits nothing: they would starve and the module would output
-    # nothing (found on the bench, T028). The soft pass is cheap; the cost is the scatter, which IS disabled in soft mode.
-    g.wire("obj-950", 0, "obj-955", 0)
-    g.wire("obj-955", 0, "obj-944", 0)          # mode 1 -> output the stored step -> `detail N` -> the lattice
 
 
 def raw_ui():
-    """The module's raw layer: the scene (starting DISABLED, so soft mode costs nothing), the adapters and the mode
-    network, with the cords among them and to the builder's pix stages."""
+    """The module's raw layer: the scene (always enabled -- there is no other mode to gate against) and the one
+    cord module_layer adds, to the builder's pix stage."""
     g = Graph()
-    scene(g, enabled=False)
+    scene(g)
     module_layer(g)
     return {"raw_boxes": g.boxes, "raw_lines": g.lines, "raw_parameters": {}}
 

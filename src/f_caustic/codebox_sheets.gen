@@ -8,7 +8,8 @@
 // out1 = composite  mix(source, clamp(source + light, 0, 1), mix_pct / 100)
 // out2 = caustic layer, tone mapped and clamped (the same meaning as the soft path's out2)
 //
-// Bypass is NOT handled here: the select stage applies it last (plan ADR-4), so this stage has no bypass_gate.
+// This is now the module's only stage (soft mode and the select stages were removed 2026-10-10), so bypass is
+// handled HERE: bypass_gate mixes both outlets to the source last ("every outlet mixes to its passthrough").
 //
 // Skill checklist (skills/jit-gen-codebox; the look-patch tone stage broke on the first two):
 //   - functions are defined BEFORE every statement, and a Param declaration is a statement
@@ -23,11 +24,14 @@ tm(v, ex) {
 
 Param gain(0.5);
 Param mix_pct(0.0);
+Param expo(0.7);
+Param bypass_gate(0.0);
 
-// One brightness slider across both modes: `gain` keeps its meaning and the sheets branch applies this constant
-// (calibrated against the soft layer in task T034; 2.0 makes the default gain 0.5 equal the look-patch's lev = 1).
+// `gain` keeps its meaning from the soft-mode era; the sheets branch applies this constant (calibrated against the
+// old soft layer in task T034; 2.0 made the default gain 0.5 equal the look-patch's lev = 1).
 k_sheets = 2.0;
-expo = 0.7;          // the tone curve's exponent (Matt's look-patch default, spec Decisions item 3; not exposed)
+// expo: the tone curve's exponent -- was a fixed internal constant (0.7, the look-patch default, spec Decisions
+// item 3) until 2026-10-10, now a user Param (lower = highlights compress harder, higher = more contrast).
 
 uv = norm;
 
@@ -60,5 +64,6 @@ composite = vec(clamp(src_r + caustic_r, 0.0, 1.0),
 
 source_pass = vec(src_r, src_g, src_b, 1.0);
 
-out1 = mix(source_pass, composite, mix_pct / 100.0);
-out2 = caustic_out;
+wet = mix(source_pass, composite, mix_pct / 100.0);
+out1 = mix(wet, source_pass, bypass_gate);
+out2 = mix(caustic_out, source_pass, bypass_gate);
