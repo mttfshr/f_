@@ -1626,7 +1626,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Optical caustic -- Soft (streamlines) or Sheets (GPU scatter, folded sheets); composited / isolated outlets",
+									"text": "Optical caustic -- GPU forward scatter forming folded sheets; composited / isolated outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

@@ -1,52 +1,56 @@
 # f_caustic
 
 **Type:** Processor (f_vecfield consumer)
-**Status:** Working. Two modes since 2026-10-07: **Soft** (the original 8-tap gather, unchanged) and **Sheets** (a GPU forward scatter). The soft mode is bit-identical to the module before the sheets mode existed (verified on the module bench against a baseline recorded first).
+**Status:** Working. One path: a GPU forward scatter ("sheets"). The module originally had a second mode (a
+backward-gather "soft" path) and a `detail` quality ladder; both were removed 2026-10-10 -- Matt found no reason
+to run anything but the heaviest `detail` step, so the choice and the ladder were both dead weight. See History
+below and the decision note in `.specify/f_caustic_scatter/tasks.md`.
 
 ---
 
 ## What it does
 
-An optical caustic processor. Takes a light-source image and a vecfield (the refracting medium) and redistributes the source's brightness according to the field. Two outlets: the composite (source + caustic, additive) and the isolated caustic layer.
+An optical caustic processor. Takes a light-source image and a vecfield (the refracting medium) and redistributes
+the source's brightness according to the field: a lattice of points ("glass samples") is displaced through the
+field and each deposits a small bilinear splat of the source's colour, additively, into a float32 capture. Splat
+density is illuminance, so the overlapping translucent folded sheets that give the module its name appear at
+larger `scale`. Two outlets: the composite (source + caustic, additive) and the isolated caustic layer.
 
-Structurally requires a coherent vecfield — patching a non-field texture into the vecfield inlet will produce output but not meaningful caustic structure. Unlike most f_vf_ consumers, the vecfield inlet has **no `vs_inState` fallback**: unconnected = silent passthrough on the composite outlet and black on the caustic-layer outlet, in **both** modes, not a misleading default caustic.
+Structurally requires a coherent vecfield -- patching a non-field texture into the vecfield inlet will produce
+output but not meaningful caustic structure. The vecfield inlet has **no `vs_inState` fallback**: unconnected =
+silent passthrough on the composite outlet and black on the caustic-layer outlet, not a misleading default
+caustic.
 
-Compatible with any f_vf_ producer — pairs naturally with f_vf_vortex (sink topology produces a bright ring at the convergence zone) and f_vf_fieldmap (noise-derived caustic bands along ridge lines).
-
-### Soft mode (default)
-
-Backward streamline accumulation: bright bands build up where the field converges (negative divergence); diverging zones contribute nothing. Eight fixed samples, so it forms **thin bright lines** up to roughly the first fold of the field and cannot form the overlapping folded sheets beyond it.
-
-### Sheets mode
-
-A forward scatter: a lattice of points ("glass samples") is displaced through the field and each deposits a small bilinear splat of the source's colour, additively, into a float32 capture. Splat density is illuminance, so at larger `scale` the **overlapping translucent folded sheets** appear that the gather cannot form at any setting. Measured against photon-counting ground truth at 3.5 times the first-fold distance: the gather correlates at r = 0.51, the scatter at r above 0.99 (0.9997 at the default `detail` step) (spec: `.specify/f_caustic_scatter/spec.md`; evidence: `ideas/optics_map.md`).
+Compatible with any f_vf_ producer -- pairs naturally with f_vf_vortex (sink topology produces a bright ring at
+the convergence zone) and f_vf_fieldmap (noise-derived caustic bands along ridge lines). Matt pairs it with
+f_vf_prism downstream (caustic -> prism) for chromatic dispersion -- see Parameters, `expo`/history below for why
+that replaced a built-in color control rather than the module growing one.
 
 ---
 
 ## Signal Flow
 
-The module has **two inlets and two outlets**.
+The module has **two inlets and two outlets**, both going through the one pix stage.
 
 ```
-inlet 0 (texture + control) → routepass → route <params> → live.dials / menus → prepend param <name> → stages
-                                         └ vs_inState ─┬→ caustic_pix (soft)        in1 = light source
-                                                       ├→ sheets composite          in1 = light source
-                                                       ├→ both select stages        in1 = light source (for bypass)
+inlet 0 (texture + control) → routepass → route <params> → live.dials / menu → prepend param <name> → caustic
+                                         └ vs_inState ─┬→ caustic (light source, in1)
                                                        └→ scene source slab (jit.gl.slab, float32)
-inlet 1 (f_vecfield, texture) — no vs_inState ─┬→ caustic_pix                         in2 = field
-                                               ├→ sheets composite                    in3 = field (unconnected-field guard)
+inlet 1 (f_vecfield, texture) — no vs_inState ─┬→ caustic (field, in3)
                                                └→ scene field slab (jit.gl.slab, float32)
 
-the sheets scene (a jit.gl.node capture @type float32 holding a points jit.gl.mesh drawn with
-package/code/f_caustic_sheets.jxs) → sheets composite in2 = the float32 illuminance capture
+the scene (a jit.gl.node capture @type float32 holding a points jit.gl.mesh drawn with
+package/code/f_caustic_sheets.jxs) → caustic in2 = the float32 illuminance capture
 
-caustic_pix out1 → select_comp in2        sheets composite out1 → select_comp in3
-caustic_pix out2 → select_layer in2       sheets composite out2 → select_layer in3
-select_comp  → outlet 0  (composite)      select_layer → outlet 1  (isolated caustic layer)
+caustic (codebox_sheets.gen) out1 → outlet 0  (composite)
+caustic (codebox_sheets.gen) out2 → outlet 1  (isolated caustic layer)
 ```
 
-- The two **select stages** (one per outlet) pick the soft or the sheets branch with `Param sheets_gate` and apply bypass last. They render when a texture arrives on their first inlet, which is the soft stage's output: **the soft stage therefore stays enabled in both modes** (a disabled stage emits nothing and the select stages would starve). The expensive part is the scatter, and *that* branch (the node, the mesh and the sheets composite) is disabled in soft mode.
-- The scene is raw boxes generated by `src/f_caustic/scatter_scene.py` into `src/f_caustic/raw_ui.json`; regenerate it with `python3 src/f_caustic/scatter_scene.py` before a build.
+- `caustic` is the chain's only (and so primary) pix stage. Bypass is a `Param bypass_gate` declared directly in
+  `codebox_sheets.gen`, mixing both outlets to the source last ("every outlet mixes to its passthrough").
+- The scene is raw boxes generated by `src/f_caustic/scatter_scene.py` into `src/f_caustic/raw_ui.json`;
+  regenerate it with `python3 src/f_caustic/scatter_scene.py` before a build. It is always enabled and its
+  lattice is built once, at patcher load, by a fixed message (there is no live rebuild any more).
 
 ---
 
@@ -54,43 +58,18 @@ select_comp  → outlet 0  (composite)      select_layer → outlet 1  (isolated
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `mode` | Soft / Sheets | Soft | Which branch the outlets show. Switching to Sheets enables the scatter branch and builds the lattice; switching back disables it. |
-| `mix_pct` | 0–100% | 0.0 | Wet/dry crossfade toward the fully-composited (source+caustic) state — `composited = mix(source_pass, composite, mix_pct)`. Both modes. Rendered as `live.numbox`; the internal Param is named `mix_pct` to avoid colliding with the codebox's `mix()` operator. |
-| `gain` | 0–2.0 | 0.5 | Caustic brightness. Both modes; the sheets branch applies an internal constant (`k_sheets = 2.0` in `codebox_sheets.gen`) so the default 0.5 gives about the look of the look-patch prototype. At the defaults the sheets layer's mean luma is 1.55 times the soft layer's (measured, test glass). |
-| `scale` | 0–1.0 | 0.3 | **Soft:** the streamline trace distance (`step_size = scale / 8`); it moves where the 8 samples are taken and does not change the brightness weight. At 0 the layer is the undisplaced divergence-weighted source at full strength, **not** an empty layer. **Sheets:** the propagation distance of the scatter, in UV per unit field; sheets fold over as it grows. One parameter, so switching mode keeps the geometry. |
-| `softness` | 0–1.0 | 0.3 | **Soft only** (ignored in sheets mode). Band sharpness via smoothstep on accumulated luma. |
-| `color_shift` | 0–1.0 | 0.0 | **Soft only** (ignored in sheets mode). Chromatic dispersion. |
-| `detail` | 1–5 | 5 | **Sheets only.** The quality / cost ladder: capture size and points per capture pixel — 1: 256², 2/px (0.13 M points); 2: 512², 2/px (0.52 M); 3: 768², 2/px (1.2 M); 4: 1024², 2/px (2.1 M); 5: 1024², 4/px (4.2 M). A **fixed internal capture size**: the output resolution changes sharpness, not cost (4K costs what 1080p does). The steps look different from each other, not merely better or worse. **Changing it rebuilds the lattice on the CPU and hitches at the high steps: set it up, do not automate it.** |
-| `bypass` | 0/1 | 0 | Passthrough on **both** outlets (both give the source), in either mode ("every outlet mixes to its passthrough"). Implemented as a `Param` (`bypass_gate`), not the native `@bypass`. |
+| `mix_pct` | 0–100% | 0.0 | Wet/dry crossfade toward the fully-composited (source+caustic) state — `composited = mix(source_pass, composite, mix_pct)`. Rendered as `live.numbox`; the internal Param is named `mix_pct` to avoid colliding with the codebox's `mix()` operator. |
+| `gain` | 0–2.0 | 0.5 | Caustic brightness. The codebox applies an internal constant (`k_sheets = 2.0` in `codebox_sheets.gen`) calibrated so the default 0.5 reads about like the original look-patch prototype. |
+| `scale` | 0–1.0 | 0.3 | The propagation distance of the scatter, in UV per unit field; sheets fold over as it grows. `pix_wire: False` in `definition.py` — the dial feeds the raw scene's control entry (`scatter_scene.py`), not a Param on `codebox_sheets.gen`. |
+| `expo` | 0.3–1.5 | 0.7 | Tone-curve exponent for the caustic layer's exposure curve, `(v / (1 + v)) ^ expo` — lower compresses highlights harder, higher keeps more contrast. Was a fixed internal constant (the look-patch default) until 2026-10-10, now exposed. |
+| `bypass` | 0/1 | 0 | Passthrough on **both** outlets (both give the source) — implemented as a `Param` (`bypass_gate`) in `codebox_sheets.gen` itself, not the native `@bypass`. |
 
-**Prefix:** `caustic` — **Soft stage object name:** `caustic_pix` (a fixed name, kept so the soft path stays identical; the other stages' names are instance-scoped `#0_...`).
+**Prefix:** `caustic` — **Object name:** `#0_caustic_sheets` (instance-scoped; no fixed name any more — that
+convention belonged to the old soft stage, kept only so it stayed bit-identical across the sheets-mode rollout).
 
 ---
 
 ## Algorithm
-
-### Soft
-
-At each pixel, 8 fixed backward steps trace opposite the field direction (step count is a compile-time constant):
-
-```
-step_size = scale / 8.0
-for n in 0..7:
-    field_n   = (sample(field_tex, pos_n) - 0.5) * 2.0
-    div_n     = central-difference divergence of the field at pos_n (h = 1/512)
-    weight_n  = max(-div_n, 0.0)                      // only convergence accumulates
-    src_n.r   = sample(source, pos_n + field_n * color_shift * step_size).r
-    src_n.g   = sample(source, pos_n).g
-    src_n.b   = sample(source, pos_n - field_n * color_shift * step_size).b
-    pos_(n+1) = pos_n - field_n * step_size
-
-caustic = (Σ weight_n * src_n) / 8 * gain
-caustic *= smoothstep(0, softness + 0.001, luma(caustic))   // softness gate
-composite = clamp(source + caustic, 0, 1)                     // additive layer
-composited = mix(source, composite, mix_pct / 100)             // wet/dry crossfade
-```
-
-### Sheets
 
 ```
 // vertex program (package/code/f_caustic_sheets.jxs, GLSL 1.20), one lattice point per glass sample u:
@@ -100,42 +79,79 @@ col = texture2D(source, u) * weight                         // one bilinear sour
 position snapped to the nearest pixel corner, drawn with point_size 2
 // fragment: a bilinear (tent) weight from the UNsnapped position; additive blending into the float32 capture
 
-// sheets composite (codebox_sheets.gen): the capture is upscaled bilinearly to the source's size
-exposed = (v / (1 + v)) ^ 0.7   with v = capture * gain * 2.0, zeroed when the field inlet reads as unconnected
-composite = mix(source, clamp(source + exposed, 0, 1), mix_pct / 100);  layer = clamp(exposed, 0, 1)
+// composite (codebox_sheets.gen): the capture is upscaled bilinearly to the source's size
+exposed = (v / (1 + v)) ^ expo   with v = capture * gain * 2.0, zeroed when the field inlet reads as unconnected
+wet = mix(source, clamp(source + exposed, 0, 1), mix_pct / 100)
+composite = mix(wet, source, bypass_gate);  layer = mix(clamp(exposed, 0, 1), source, bypass_gate)
 ```
 
-A size-2 point on a pixel corner covers exactly the four pixel centres the tent can reach, so the result is bit-identical to a size-3 point at about half the fragments. A regular lattice is used: jitter trades moiré for grain and lowers every quality score. At 1 point per capture pixel a regular lattice shows a faint cross-hatch moiré; at 2 or more it is clean.
+A size-2 point on a pixel corner covers exactly the four pixel centres the tent can reach, so the result is
+bit-identical to a size-3 point at about half the fragments. A regular lattice is used: jitter trades moiré for
+grain and lowers every quality score. At 1 point per capture pixel a regular lattice shows a faint cross-hatch
+moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per capture pixel counting both axes — see
+`FIXED_DETAIL` in `scatter_scene.py`) is clean.
 
 ---
 
 ## Notes
 
-- **Where the sheets scene lives:** the shader is `package/code/f_caustic_sheets.jxs` (Vsynth keeps its own in its package `code/` folder). **Max adds a *new* package folder to its search path only at launch**, so after the first checkout containing `package/code/`, relaunch Max once. (Users who install the package get the folder from the start.)
-- **Latency:** the scatter is exactly **one frame** behind an upstream pix chain (measured in the spike, 8 of 8 captures). That is accepted. One thing is *not* measured: the select stages are triggered by the soft stage's output, so depending on message order within a frame the sheets result may land one frame later still. It was judged not worth a dedicated test.
-- **Memory:** the lattice is 48 bytes per vertex (the matrix is 12 planes of float32): about 200 MB at `detail` 5. It exists only after the first switch to Sheets.
-- **Cost** is driven by points per pixel (blend contention), not by the point count; vertex work is about 1 ms per million points or less. On an M3 Max the default step holds the frame budget; timings from the spike varied up to 2x between runs, and no M1 number exists. If a machine struggles, step `detail` down.
-- **Two instances:** every new stage is `#0`-scoped, but the soft stage keeps its fixed name `caustic_pix`. Two `f_caustic` instances in one patch are not yet checked live.
-- **Unconnected inputs:** an unconnected vecfield inlet reads a constant (0, 0, 0, 1) (black with alpha 1), which would decode to a strong field. The sheets composite treats a field that is exactly 0 in R and G at four fixed points as absent, so the module stays silent.
-- **Tests:** tier 1 `tests/test_scatter_mirror.py` (NumPy mirror and photon-counting truth); the codebox bench `tests/bench_caustic_codebox.py`; the module bench `tests/bench_caustic_sheets.py` (soft identity against `tests/baselines/f_caustic_soft.npz`, the scatter, the ladder, bypass, unconnected field, brightness, the budget); `tests/test_scatter_scene.py` (the generated scene agrees with a real build).
+- **Where the scene lives:** the shader is `package/code/f_caustic_sheets.jxs` (Vsynth keeps its own in its
+  package `code/` folder). **Max adds a *new* package folder to its search path only at launch**, so after the
+  first checkout containing `package/code/`, relaunch Max once. (Users who install the package get the folder
+  from the start.)
+- **Latency:** the scatter is exactly **one frame** behind an upstream pix chain (measured in the spike, 8 of 8
+  captures). That is accepted.
+- **Memory:** the lattice is 48 bytes per vertex (the matrix is 12 planes of float32): about 200 MB, fixed. This
+  cost is now unconditional — before 2026-10-10 it only existed once the module was switched into sheets mode;
+  with soft mode gone, every `f_caustic` instance carries it.
+- **Cost** is driven by points per pixel (blend contention), not by the point count; vertex work is about 1 ms
+  per million points or less. On an M3 Max the fixed setting holds the frame budget; timings from the spike
+  varied up to 2x between runs, and no M1 number exists. There is no lighter setting to fall back to any more —
+  the old `detail` ladder's "step it down if a machine struggles" escape hatch went with the menu.
+- **Two instances:** every stage is `#0`-scoped now (the old fixed-name soft stage is gone). Two `f_caustic`
+  instances in one patch are not yet checked live.
+- **Unconnected inputs:** an unconnected vecfield inlet reads a constant (0, 0, 0, 1) (black with alpha 1), which
+  would decode to a strong field. The composite stage treats a field that is exactly 0 in R and G at four fixed
+  points as absent, so the module stays silent.
+- **Tests:** stale as of this doc's rewrite — `tests/bench_caustic_sheets.py`'s soft-identity check and
+  `tests/baselines/f_caustic_soft.npz` test a branch that no longer exists, and `tests/test_scatter_scene.py`
+  still references ids (`SOFT`, `SEL_COMP`, `SEL_LAYER`, `MENU_MODE`, `MENU_DETAIL`) that aren't in the build any
+  more. Not yet reworked — see `.specify/f_caustic_scatter/tasks.md`'s 2026-10-10 entry.
 
 ## References
 
-**Both modes are derived in development.** No code, formulation or constant was taken from another implementation.
+**Derived in development.** No code, formulation or constant was taken from another implementation.
 
-- **Soft mode** (backward streamline accumulation weighted by `max(-div, 0)`): an original construction; the divergence-weighting idea is the usual Jacobian argument for caustic brightness.
-- **Sheets mode** (forward scatter of a lattice of glass samples through the field, with splat density read as illuminance; a corner-snapped bilinear splat; a fixed-capture quality ladder): an original construction, developed and measured in the 2026-10-06 and 2026-10-07 spikes (`tests/spike_scatter.py`, `ideas/optics_map.md`). The photon-counting ground truth used to test it (`tests/scatter_truth.py`) is the plain idea of histogramming where rays land.
-- **Background only (not a source):** the forward-scatter-and-count approach is the idea behind photon mapping, and the gather belongs to the family of backward-tracing methods. Neither was consulted for the implementation.
-  - Jensen, H. W. (1996). "Global Illumination Using Photon Maps." Rendering Techniques '96 (Eurographics Workshop on Rendering).
-  - Watt, M. (1990). "Light-Water Interaction using Backward Beam Tracing." Computer Graphics (SIGGRAPH '90 Proceedings).
-- **In-house precedent for the scatter's mechanism:** Vsynth's own `vs_xyz_disp` / `vtfk.jxs` draw points with a vertex-stage texture fetch into a `jit.gl.node`, the same structure the sheets scene follows; the shader code itself is original.
+- **Sheets mode** (forward scatter of a lattice of glass samples through the field, with splat density read as
+  illuminance; a corner-snapped bilinear splat; a fixed-capture quality step): an original construction, developed
+  and measured in the 2026-10-06 and 2026-10-07 spikes (`tests/spike_scatter.py`, `ideas/optics_map.md`). Measured
+  against photon-counting ground truth at 3.5 times the first-fold distance: r above 0.99 (0.9997 at the fixed
+  `detail` step) (spec: `.specify/f_caustic_scatter/spec.md`; evidence: `ideas/optics_map.md`). The photon-counting
+  ground truth used to test it (`tests/scatter_truth.py`) is the plain idea of histogramming where rays land.
+- **Background only (not a source):** the forward-scatter-and-count approach is the idea behind photon mapping.
+  Not consulted for the implementation.
+  - Jensen, H. W. (1996). "Global Illumination Using Photon Maps." Rendering Techniques '96 (Eurographics
+    Workshop on Rendering).
+- **In-house precedent for the scatter's mechanism:** Vsynth's own `vs_xyz_disp` / `vtfk.jxs` draw points with a
+  vertex-stage texture fetch into a `jit.gl.node`, the same structure the sheets scene follows; the shader code
+  itself is original.
 
-### History of the soft path
+### History
 
-- **2026-07-11:** `definition.py` had pointed at `codebox_v3.gen`, a stray earlier single-inlet draft that never read `in2`; deleted, `definition.py` now points at `codebox_v2.gen`.
-- **2026-07-12 gain/mix rollout:** `strength` renamed `mix_pct` (range capped to true 0–100%, `live.numbox`) and `intensity` renamed `gain`, matching the library-wide convention.
-- **2026-07-19:** a stale hardcoded `.specify/f_caustic/` path in `definition.py` fixed to `src/f_caustic/codebox_v2.gen`.
+- **2026-10-10:** soft mode (the 8-tap backward-gather, `codebox_v2.gen`, plus the earlier superseded
+  `codebox_v1.gen`), the `mode` and `detail` menus, and the two select stages (`codebox_select_comp.gen`,
+  `codebox_select_layer.gen`) all removed — sheets-only now, fixed at the old step-5 detail. `softness` and
+  `color_shift` (soft-only) removed with it; Matt is rebuilding that look as a `f_caustic` → `f_vf_prism` chain
+  instead. `expo` (the tone-curve exponent) exposed as a new param in the same pass. Full record:
+  `.specify/f_caustic_scatter/tasks.md`.
+- **2026-10-07/08:** sheets mode built and shipped alongside soft mode as a second, selectable branch. Live-tested
+  by Matt 2026-10-08: read clearly better than soft. `gain`/`scale` both got `range_tiers` menus.
+- **2026-07-11:** `definition.py` had pointed at a stray earlier single-inlet draft (`codebox_v3.gen`, since
+  deleted) that never read `in2`.
+- **2026-07-12 gain/mix rollout:** `strength` renamed `mix_pct` (range capped to true 0–100%, `live.numbox`) and
+  `intensity` renamed `gain`, matching the library-wide convention.
 - `@type float32` overrides the processor default of `char` — accumulation benefits from float32 headroom.
-- Divergence sign convention confirmed: f_vf_vortex sink topology (positive convergence) produces negative divergence at the fixed point, which produces bright bands.
-- No `in3` surface texture — deferred.
+- Divergence sign convention (soft mode, historical): f_vf_vortex sink topology (positive convergence) produced
+  negative divergence at the fixed point, which produced bright bands. No longer applicable with soft mode gone,
+  kept here as a pointer for anyone reading old history.
 - See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract.

@@ -292,3 +292,41 @@ package/help/f_caustic.maxhelp                                                  
 - Stop at any checkpoint to validate independently.
 - The bench and any live Vsynth patch share the `vsynth` render context: close one before running the other.
 - Commit after each phase checkpoint.
+
+---
+
+## 2026-10-10: Soft mode removed -- sheets is now the only path
+
+Reverses the coexistence design this file specced (US1-US4 above all assumed two branches, a `mode` menu, and a
+live `detail` ladder). Matt's call: sheets reads clearly better in every case he's tried, and he found no reason
+to run `detail` at anything but the top step (1024 sq, 4 points/px -- the old step 5), so the choice between modes
+and the quality ladder were both dead weight.
+
+- Soft mode (`codebox_v2.gen`, the 8-tap gather) deleted, along with `codebox_v1.gen` (the earlier single-inlet
+  draft it had already superseded).
+- The two select stages (`codebox_select_comp.gen`, `codebox_select_layer.gen`) deleted -- they existed only to
+  pick a branch and apply bypass last; with one branch left there is nothing to pick. `bypass_gate` now lives
+  directly in `codebox_sheets.gen`.
+- The `mode` and `detail` menus removed from `definition.py`'s params; `scatter_scene.py`'s mode-gate network
+  (enable/disable on mode switch) and the 5-step `detail` ladder (menu -> `select` -> one of five messages)
+  removed with them. The scene now builds enabled from load, and the lattice is built once via a fixed loadbang
+  message at the old step 5 -- see `FIXED_DETAIL` in `scatter_scene.py`.
+- `softness` and `color_shift` (soft-only params) removed. Matt is rebuilding that look as a `f_caustic` ->
+  `f_vf_prism` chain in a demo patch instead, so no sheets-mode chromatic-dispersion replacement was added here.
+- New `expo` param: the tone-curve exponent (`(v/(1+v))^expo`) was a fixed internal constant (0.7); now a user
+  dial, 0.3-1.5, default 0.7 (unchanged look on upgrade).
+- Consequence worth remembering: the ~200 MB lattice and the scatter cost, previously conditional on being in
+  sheets mode, are now unconditional -- every `f_caustic` instance costs this. Accepted (Matt's call); the
+  ladder's "step detail down if a machine struggles" escape hatch is also gone with the menu.
+- Panel re-laid-out by the builder's default edit-view pass after `mode`/`detail`/`softness`/`color_shift` left;
+  Matt reviewed the presentation layout live and it's fine as generated -- no `build/capture.py` pass needed.
+- Verified so far: JSON-valid build; traced the real built wiring (not just the definition) and caught/fixed one
+  bug that way -- the vecfield fanout had been copied from the old `caustic` (soft) stage's inlet index (1)
+  instead of the new composite's field inlet (2). No bench run yet.
+- Still open, not yet done: `docs/f-reference/f_caustic.md` rewrite (single-mode shape, not a trim of the old
+  two-mode doc), the `README.md` patch-table one-liner, and the test surface -- `tests/bench_caustic_sheets.py`'s
+  soft-identity check and `tests/baselines/f_caustic_soft.npz` are now testing a branch that doesn't exist,
+  `tests/test_scatter_scene.py` still references `SOFT`/`SEL_COMP`/`SEL_LAYER`/`MENU_MODE`/`MENU_DETAIL`, and
+  `tests/bench_caustic_codebox.py` / `tests/record_caustic_baseline.py` / `tests/spike_caustic_res_cost.py` all
+  predate this and haven't been checked against it.
+- Commit: `90cee74`.
