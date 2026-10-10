@@ -1,12 +1,14 @@
 """
-bench_caustic_codebox.py -- the f_caustic sheets-mode codeboxes (src/f_caustic/) on the GPU through the codebox
-bench, diffed against the NumPy mirror (tests/scatter_mirror.py). Tasks T013 (composite) and T023 (select) of
+bench_caustic_codebox.py -- the f_caustic composite codebox (src/f_caustic/codebox_sheets.gen) on the GPU through
+the codebox bench, diffed against the NumPy mirror (tests/scatter_mirror.py). Task T013 of
 .specify/f_caustic_scatter/tasks.md. Constitution 2: a codebox is verified here BEFORE it is wired into a module.
+Updated 2026-10-10: the select codeboxes (T023) are gone with soft mode -- there is nothing left to select
+between, so bypass_gate now lives directly in this codebox, and `expo` (the tone-curve exponent) is a Param
+instead of a fixed constant. Both are covered below in place of the old T023 select tests.
 
-Select (codebox_select_comp.gen / codebox_select_layer.gen, T023): in1 = soft branch, in2 = sheets branch, in3 = source;
-  sheets_gate picks a branch exactly, bypass_gate mixes to the source.
 Composite (codebox_sheets.gen): in1 = source, in2 = the float32 illuminance capture (smaller, HDR), in3 = vecfield.
-  tone map, bilinear upscale, additive composite, mix_pct, and the unconnected-field guard.
+  tone map (`expo`), bilinear upscale, additive composite, mix_pct, the unconnected-field guard, and bypass_gate
+  (mixes both outlets to the source last).
 
 Needs Max with tests/bench/bench.maxpat open (codebox bench).
 Run:  tests/bench.sh tests/bench_caustic_codebox.py
@@ -23,10 +25,9 @@ from harness import check, note, run
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "f_caustic"
 SHEETS = (SRC / "codebox_sheets.gen").read_text()
-SELECTS = {"comp": (SRC / "codebox_select_comp.gen").read_text(), "layer": (SRC / "codebox_select_layer.gen").read_text()}
 N = 512                       # source / output size
 R = 256                       # the illuminance capture's size
-K, EXPO = 2.0, 0.7            # the codebox's internal constants
+K, EXPO = 2.0, 0.7            # the codebox's internal / default constants
 
 
 def gpu(code, inputs, params, dim=(N, N)):
@@ -42,13 +43,16 @@ def light_capture():
     return sm.ref_scatter(sm.white(), tex, 3.5 * dstar, 4 * R, 1.0 / 16.0, r=R)
 
 
-def sheets_ref(src, light, field, gain, mix):
+def sheets_ref(src, light, field, gain, mix, expo=EXPO, bypass=0.0):
     L = sm.resize_bilinear(light.astype(np.float64), src.shape[0], src.shape[1])[..., :3]
     present = float(field[..., 0].sum() + field[..., 1].sum() > 0.0)      # the guard (4 points) for these test fields
-    ex = sm.tone(L, lev=gain * K, expo=EXPO) * present
+    ex = sm.tone(L, lev=gain * K, expo=expo) * present
     s3 = src[..., :3].astype(np.float64)
     comp = np.clip(s3 + ex, 0.0, 1.0)
-    return s3 * (1 - mix / 100.0) + comp * (mix / 100.0), np.clip(ex, 0.0, 1.0)
+    wet = s3 * (1.0 - mix / 100.0) + comp * (mix / 100.0)
+    out1 = s3 * bypass + wet * (1.0 - bypass)
+    out2 = s3 * bypass + np.clip(ex, 0.0, 1.0) * (1.0 - bypass)
+    return out1, out2
 
 
 def err(a, b):
@@ -93,36 +97,26 @@ def test_T013_unconnected_vecfield_is_silent():
     check("no field: max of the caustic layer", float(outs[1][..., :3].max()), 1e-6)
 
 
-def rand_tex(seed, n=N):
-    rng = np.random.default_rng(seed)
-    a = rng.random((n, n, 4)).astype(np.float32)
-    a[..., 3] = 1.0
-    return a
+def test_T013_expo_changes_the_tone_curve():
+    """`expo` was a fixed internal constant (0.7) until 2026-10-10; now a Param -- check the GPU actually reads it,
+    at the default and away from it."""
+    src, light, fld = sm.gradient_src(N), light_capture(), st.field_texture()
+    for expo in (0.4, 0.7, 1.2):
+        outs, _ = gpu(SHEETS, [src, light, fld], {"gain": 0.5, "mix_pct": 100.0, "expo": expo})
+        ref1, ref2 = sheets_ref(src, light, fld, 0.5, 100.0, expo=expo)
+        check(f"composite out1 max|GPU - mirror| (expo {expo})", err(outs[0], ref1), 1e-6)
+        check(f"layer     out2 max|GPU - mirror| (expo {expo})", err(outs[1], ref2), 1e-6)
 
 
-def test_T023_select_gate_picks_a_branch_exactly():
-    a, b, src = rand_tex(1), rand_tex(2), rand_tex(3)
-    for name, code in SELECTS.items():
-        o0, _ = gpu(code, [a, b, src], {"sheets_gate": 0.0, "bypass_gate": 0.0})
-        o1, _ = gpu(code, [a, b, src], {"sheets_gate": 1.0, "bypass_gate": 0.0})
-        check(f"select {name}: gate 0 returns the soft input, max|diff|", err(o0[0], a[..., :3].astype(np.float64)), 0.0)
-        check(f"select {name}: gate 1 returns the sheets input, max|diff|", err(o1[0], b[..., :3].astype(np.float64)), 0.0)
-
-
-def test_T023_select_bypass_is_the_source_in_both_modes():
-    a, b, src = rand_tex(4), rand_tex(5), rand_tex(6)
-    for name, code in SELECTS.items():
-        for gate in (0.0, 1.0):
-            o, _ = gpu(code, [a, b, src], {"sheets_gate": gate, "bypass_gate": 1.0})
-            check(f"select {name}: bypass, gate {gate:g}: max|out - source|", err(o[0], src[..., :3].astype(np.float64)), 0.0)
-            check(f"select {name}: bypass, gate {gate:g}: alpha is 1", abs(float(o[0][..., 3].min()) - 1.0), 0.0)
-
-
-def test_T023_select_is_linear_in_the_gate():
-    a, b, src = rand_tex(7), rand_tex(8), rand_tex(9)
-    o, _ = gpu(SELECTS["comp"], [a, b, src], {"sheets_gate": 0.25, "bypass_gate": 0.0})
-    ref = 0.75 * a[..., :3].astype(np.float64) + 0.25 * b[..., :3].astype(np.float64)
-    check("select comp: gate 0.25: max|out - (0.75 a + 0.25 b)|", err(o[0], ref), 1e-6)
+def test_T013_bypass_is_the_source_on_both_outlets():
+    """bypass_gate used to live in the (now-deleted) select stages; it is a Param on this codebox directly now."""
+    src, light, fld = sm.gradient_src(N), light_capture(), st.field_texture()
+    outs, _ = gpu(SHEETS, [src, light, fld], {"gain": 0.5, "mix_pct": 100.0, "bypass_gate": 1.0})
+    ref1, ref2 = sheets_ref(src, light, fld, 0.5, 100.0, bypass=1.0)
+    check("bypass: out1 (composite) max|GPU - source|", err(outs[0], ref1), 1e-6)
+    check("bypass: out2 (layer) max|GPU - source|", err(outs[1], ref2), 1e-6)
+    check("bypass: out1 alpha is 1", abs(float(outs[0][..., 3].min()) - 1.0), 0.0)
+    check("bypass: out2 alpha is 1", abs(float(outs[1][..., 3].min()) - 1.0), 0.0)
 
 
 if __name__ == "__main__":

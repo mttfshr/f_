@@ -96,11 +96,10 @@
         "box": {
           "id": "obj-920",
           "maxclass": "newobj",
-          "text": "route scale weight r n detail gain mix_pct bypass",
+          "text": "route scale weight r n gain mix_pct bypass",
           "numinlets": 1,
-          "numoutlets": 9,
+          "numoutlets": 8,
           "outlettype": [
-            "",
             "",
             "",
             "",
@@ -113,7 +112,7 @@
           "patching_rect": [
             20.0,
             60.0,
-            540.0,
+            480.0,
             22.0
           ]
         }
@@ -435,102 +434,25 @@
       },
       {
         "box": {
-          "id": "obj-930",
+          "id": "obj-935",
           "maxclass": "newobj",
-          "text": "select 1 2 3 4 5",
-          "numinlets": 1,
-          "numoutlets": 6,
+          "text": "loadbang",
+          "numinlets": 0,
+          "numoutlets": 1,
           "outlettype": [
-            "bang",
-            "bang",
-            "bang",
-            "bang",
-            "bang",
-            ""
+            "bang"
           ],
           "patching_rect": [
             640.0,
             60.0,
-            130.0,
+            70.0,
             22.0
           ]
         }
       },
       {
         "box": {
-          "id": "obj-931",
-          "maxclass": "message",
-          "text": "r 256, weight 0.5001, n 362",
-          "numinlets": 2,
-          "numoutlets": 1,
-          "outlettype": [
-            ""
-          ],
-          "patching_rect": [
-            640.0,
-            100.0,
-            330.0,
-            22.0
-          ]
-        }
-      },
-      {
-        "box": {
-          "id": "obj-932",
-          "maxclass": "message",
-          "text": "r 512, weight 0.5001, n 724",
-          "numinlets": 2,
-          "numoutlets": 1,
-          "outlettype": [
-            ""
-          ],
-          "patching_rect": [
-            640.0,
-            130.0,
-            330.0,
-            22.0
-          ]
-        }
-      },
-      {
-        "box": {
-          "id": "obj-933",
-          "maxclass": "message",
-          "text": "r 768, weight 0.5001, n 1086",
-          "numinlets": 2,
-          "numoutlets": 1,
-          "outlettype": [
-            ""
-          ],
-          "patching_rect": [
-            640.0,
-            160.0,
-            330.0,
-            22.0
-          ]
-        }
-      },
-      {
-        "box": {
-          "id": "obj-934",
-          "maxclass": "message",
-          "text": "r 1024, weight 0.5001, n 1448",
-          "numinlets": 2,
-          "numoutlets": 1,
-          "outlettype": [
-            ""
-          ],
-          "patching_rect": [
-            640.0,
-            190.0,
-            330.0,
-            22.0
-          ]
-        }
-      },
-      {
-        "box": {
-          "id": "obj-935",
+          "id": "obj-936",
           "maxclass": "message",
           "text": "r 1024, weight 0.2500, n 2048",
           "numinlets": 2,
@@ -540,7 +462,7 @@
           ],
           "patching_rect": [
             640.0,
-            220.0,
+            100.0,
             330.0,
             22.0
           ]
@@ -638,7 +560,7 @@
               {
                 "box": {
                   "maxclass": "codebox",
-                  "code": "// f_caustic sheets mode: COMPOSITE stage (spec .specify/f_caustic_scatter/spec.md, \"Composite (sheets)\")\n//\n// in1 = light-source texture. The composite is built over it and this pix FOLLOWS ITS SIZE (@adapt 1, no fixed @dim)\n// in2 = the scatter node's float32 illuminance capture: square, fixed size (the `detail` step), HDR. Read with\n//       sample(in2, norm), which upscales it bilinearly to the output size\n// in3 = f_vecfield, read ONLY by the unconnected-field guard\n//\n// out1 = composite  mix(source, clamp(source + light, 0, 1), mix_pct / 100)\n// out2 = caustic layer, tone mapped and clamped (the same meaning as the soft path's out2)\n//\n// Bypass is NOT handled here: the select stage applies it last (plan ADR-4), so this stage has no bypass_gate.\n//\n// Skill checklist (skills/jit-gen-codebox; the look-patch tone stage broke on the first two):\n//   - functions are defined BEFORE every statement, and a Param declaration is a statement\n//   - components (.x .y .z) are read INLINE on sample(), never on a stored variable\n//   - no Param is named after a built-in (mix, step, ...); no variable named cell/in/norm/snorm/dim\n//   - Param values are not visible inside a function body: pass them as arguments\n\ntm(v, ex) {\n\tt = v / (1.0 + v);\n\treturn pow(t, ex);\n}\n\nParam gain(0.5);\nParam mix_pct(0.0);\n\n// One brightness slider across both modes: `gain` keeps its meaning and the sheets branch applies this constant\n// (calibrated against the soft layer in task T034; 2.0 makes the default gain 0.5 equal the look-patch's lev = 1).\nk_sheets = 2.0;\nexpo = 0.7;          // the tone curve's exponent (Matt's look-patch default, spec Decisions item 3; not exposed)\n\nuv = norm;\n\n// Unconnected-vecfield guard (spec Decisions item 6; probe T008: an unconnected pix inlet reads a constant\n// (0, 0, 0, 1), black WITH alpha 1, so the test must use R and G only). Real vecfields encode zero as 0.5, so a\n// texture that is exactly 0 in R and G at four fixed points is \"no field\": zero the light, keep the source.\nfsum = sample(in3, vec(0.25, 0.25)).x + sample(in3, vec(0.25, 0.25)).y\n     + sample(in3, vec(0.75, 0.25)).x + sample(in3, vec(0.75, 0.25)).y\n     + sample(in3, vec(0.25, 0.75)).x + sample(in3, vec(0.25, 0.75)).y\n     + sample(in3, vec(0.75, 0.75)).x + sample(in3, vec(0.75, 0.75)).y;\npresent = fsum > 0.0;\n\ncaustic_r = tm(sample(in2, uv).x * gain * k_sheets, expo) * present;\ncaustic_g = tm(sample(in2, uv).y * gain * k_sheets, expo) * present;\ncaustic_b = tm(sample(in2, uv).z * gain * k_sheets, expo) * present;\n\ncaustic_out = vec(clamp(caustic_r, 0.0, 1.0),\n                  clamp(caustic_g, 0.0, 1.0),\n                  clamp(caustic_b, 0.0, 1.0),\n                  1.0);\n\nsrc_r = sample(in1, uv).x;\nsrc_g = sample(in1, uv).y;\nsrc_b = sample(in1, uv).z;\n\ncomposite = vec(clamp(src_r + caustic_r, 0.0, 1.0),\n                clamp(src_g + caustic_g, 0.0, 1.0),\n                clamp(src_b + caustic_b, 0.0, 1.0),\n                1.0);\n\nsource_pass = vec(src_r, src_g, src_b, 1.0);\n\nout1 = mix(source_pass, composite, mix_pct / 100.0);\nout2 = caustic_out;\n",
+                  "code": "// f_caustic sheets mode: COMPOSITE stage (spec .specify/f_caustic_scatter/spec.md, \"Composite (sheets)\")\n//\n// in1 = light-source texture. The composite is built over it and this pix FOLLOWS ITS SIZE (@adapt 1, no fixed @dim)\n// in2 = the scatter node's float32 illuminance capture: square, fixed size (the `detail` step), HDR. Read with\n//       sample(in2, norm), which upscales it bilinearly to the output size\n// in3 = f_vecfield, read ONLY by the unconnected-field guard\n//\n// out1 = composite  mix(source, clamp(source + light, 0, 1), mix_pct / 100)\n// out2 = caustic layer, tone mapped and clamped (the same meaning as the soft path's out2)\n//\n// This is now the module's only stage (soft mode and the select stages were removed 2026-10-10), so bypass is\n// handled HERE: bypass_gate mixes both outlets to the source last (\"every outlet mixes to its passthrough\").\n//\n// Skill checklist (skills/jit-gen-codebox; the look-patch tone stage broke on the first two):\n//   - functions are defined BEFORE every statement, and a Param declaration is a statement\n//   - components (.x .y .z) are read INLINE on sample(), never on a stored variable\n//   - no Param is named after a built-in (mix, step, ...); no variable named cell/in/norm/snorm/dim\n//   - Param values are not visible inside a function body: pass them as arguments\n\ntm(v, ex) {\n\tt = v / (1.0 + v);\n\treturn pow(t, ex);\n}\n\nParam gain(0.5);\nParam mix_pct(0.0);\nParam expo(0.7);\nParam bypass_gate(0.0);\n\n// `gain` keeps its meaning from the soft-mode era; the sheets branch applies this constant (calibrated against the\n// old soft layer in task T034; 2.0 made the default gain 0.5 equal the look-patch's lev = 1).\nk_sheets = 2.0;\n// expo: the tone curve's exponent -- was a fixed internal constant (0.7, the look-patch default, spec Decisions\n// item 3) until 2026-10-10, now a user Param (lower = highlights compress harder, higher = more contrast).\n\nuv = norm;\n\n// Unconnected-vecfield guard (spec Decisions item 6; probe T008: an unconnected pix inlet reads a constant\n// (0, 0, 0, 1), black WITH alpha 1, so the test must use R and G only). Real vecfields encode zero as 0.5, so a\n// texture that is exactly 0 in R and G at four fixed points is \"no field\": zero the light, keep the source.\nfsum = sample(in3, vec(0.25, 0.25)).x + sample(in3, vec(0.25, 0.25)).y\n     + sample(in3, vec(0.75, 0.25)).x + sample(in3, vec(0.75, 0.25)).y\n     + sample(in3, vec(0.25, 0.75)).x + sample(in3, vec(0.25, 0.75)).y\n     + sample(in3, vec(0.75, 0.75)).x + sample(in3, vec(0.75, 0.75)).y;\npresent = fsum > 0.0;\n\ncaustic_r = tm(sample(in2, uv).x * gain * k_sheets, expo) * present;\ncaustic_g = tm(sample(in2, uv).y * gain * k_sheets, expo) * present;\ncaustic_b = tm(sample(in2, uv).z * gain * k_sheets, expo) * present;\n\ncaustic_out = vec(clamp(caustic_r, 0.0, 1.0),\n                  clamp(caustic_g, 0.0, 1.0),\n                  clamp(caustic_b, 0.0, 1.0),\n                  1.0);\n\nsrc_r = sample(in1, uv).x;\nsrc_g = sample(in1, uv).y;\nsrc_b = sample(in1, uv).z;\n\ncomposite = vec(clamp(src_r + caustic_r, 0.0, 1.0),\n                clamp(src_g + caustic_g, 0.0, 1.0),\n                clamp(src_b + caustic_b, 0.0, 1.0),\n                1.0);\n\nsource_pass = vec(src_r, src_g, src_b, 1.0);\n\nwet = mix(source_pass, composite, mix_pct / 100.0);\nout1 = mix(wet, source_pass, bypass_gate);\nout2 = mix(caustic_out, source_pass, bypass_gate);\n",
                   "numinlets": 3,
                   "numoutlets": 2,
                   "outlettype": [
@@ -784,6 +706,24 @@
             700.0,
             450.0,
             140.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "obj-953",
+          "maxclass": "newobj",
+          "text": "prepend param bypass_gate",
+          "numinlets": 1,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            850.0,
+            450.0,
+            160.0,
             22.0
           ]
         }
@@ -1033,127 +973,19 @@
       {
         "patchline": {
           "source": [
-            "obj-920",
-            4
-          ],
-          "destination": [
-            "obj-930",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-930",
-            0
-          ],
-          "destination": [
-            "obj-931",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-931",
-            0
-          ],
-          "destination": [
-            "obj-920",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-930",
-            1
-          ],
-          "destination": [
-            "obj-932",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-932",
-            0
-          ],
-          "destination": [
-            "obj-920",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-930",
-            2
-          ],
-          "destination": [
-            "obj-933",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-933",
-            0
-          ],
-          "destination": [
-            "obj-920",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-930",
-            3
-          ],
-          "destination": [
-            "obj-934",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-934",
-            0
-          ],
-          "destination": [
-            "obj-920",
-            0
-          ]
-        }
-      },
-      {
-        "patchline": {
-          "source": [
-            "obj-930",
-            4
-          ],
-          "destination": [
             "obj-935",
             0
+          ],
+          "destination": [
+            "obj-936",
+            0
           ]
         }
       },
       {
         "patchline": {
           "source": [
-            "obj-935",
+            "obj-936",
             0
           ],
           "destination": [
@@ -1178,7 +1010,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            8
+            7
           ],
           "destination": [
             "obj-901",
@@ -1202,7 +1034,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            8
+            7
           ],
           "destination": [
             "obj-950",
@@ -1238,7 +1070,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            5
+            4
           ],
           "destination": [
             "obj-951",
@@ -1250,10 +1082,22 @@
         "patchline": {
           "source": [
             "obj-920",
-            6
+            5
           ],
           "destination": [
             "obj-952",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "obj-920",
+            6
+          ],
+          "destination": [
+            "obj-953",
             0
           ]
         }
@@ -1274,6 +1118,18 @@
         "patchline": {
           "source": [
             "obj-952",
+            0
+          ],
+          "destination": [
+            "obj-950",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "obj-953",
             0
           ],
           "destination": [
