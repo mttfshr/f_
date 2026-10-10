@@ -7,14 +7,32 @@ IDs are per directory: `f_grain/T001`.
 
 ---
 
-- **T001 — perf: baseline cost + bypass-guard check.** No cost measurement
-  exists for `f_grain` (no `bench_grain.py` / spike script). Add one (same
-  shape as `tests/spike_caustic_res_cost.py`), get a frame-cost baseline at
-  HD and 4K, and check whether a shader-side guard on the heavy loop under
-  `bypass_gate` recovers any of the cost that native bypass used to save —
-  the same open question HANDOFF already raised for `f_caustic` and the
-  other five Param-bypass modules, just not yet asked of `f_grain`
-  specifically.
+- [x] **T001 — perf: baseline cost + bypass-guard check. DONE 2026-10-09.**
+  Added `tests/spike_grain_cost.py` (diagnostic, not a regression test —
+  same shape as `tests/spike_caustic_res_cost.py`): measures the real
+  `codebox_grain.gen` via `benchclient.measure` at HD/4K, and separately
+  measures an in-memory guarded variant (early-out on `bypass_gate > 0.5`
+  around the per-grain Voronoi search) to see what a shader-side guard
+  would recover — the guarded variant is measurement-only, never written
+  back to `src/f_grain/codebox_grain.gen`.
+
+  **Result: same outcome as `f_caustic`'s T046 spike.** Even chained 128x
+  at 4K, `measure()` never clears the bench's CPU-overhead/vsync floor
+  (`gpu_bound` false at every chain tried: 8, 32, 128) — the reported
+  numbers are upper bounds that keep shrinking as `floor / chain`, not real
+  per-pass costs, so the module's true GPU cost is unmeasurably far below
+  the floor at both HD and 4K. Baseline (`bypass_gate=0` vs `=1`) and the
+  guarded variant read identical within noise at every chain/size tried
+  (see log below) — there is no measurable amount of frame time for a
+  shader-side `bypass_gate` guard to recover at these resolutions. Not
+  "no effect," per the jit-gen-codebox skill's caution — just below what
+  this bench can resolve; chain would need to go well past 128 (slow to
+  compile) to say more, and isn't worth it given `f_caustic`'s identical
+  finding already settled the cross-module question. No further action.
+
+  Chain=128 log (HD / 4K, ms/pass upper bound, all flagged not-gpu_bound):
+  baseline bypass=0/1: 0.048 / 0.048 (HD), 0.187 / 0.187 (4K); guarded
+  bypass=0/1: 0.050 / 0.047 (HD), 0.188 / 0.188 (4K).
 
 - [x] **T002 — convention: `softness` range is untuned. DONE 2026-10-09.**
   `live.dial` range was `0.0-5.0`; the codebox only uses `softness`
