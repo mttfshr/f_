@@ -160,4 +160,5 @@ Neither of us can see token usage, so the session is paced by things we can both
 - **No test or bench runs without asking.** The exception is one named test for the thing just changed. Always `-q`: `tests/run.sh -q`, `tests/bench.sh --changed -q`. No re-runs after doc-only edits.
 - **No polling loops.** Start a long run and ask Matt to say when it is done.
 - **State lives in the repo, not the chat:** `.specify/<module>/tasks.md` (the record), `HANDOFF.md` (a short scratch note), and a commit at every checkpoint. A fresh session starts by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
+- **Modules in `.specify/paused/` are excluded from analysis and planning.** They're paused for a reason; don't treat them as blockers, candidates, or examples when scoping a spike or feature elsewhere in the library. If a paused module's own resumption is genuinely in scope, that's a separate, explicit decision — not something to fold into unrelated planning (2026-10-11).
 - **Commits:** a plain message is fine for files Claude did not work on (a save checkpoint). Chain a commit to the edit that precedes it, so a failed edit cannot be committed.

@@ -282,7 +282,11 @@ already in `ideas/`.
 - #8 is speculative and research-grade; pairs with `vorticity_confinement.md`
   and `ceyron_simulation_scripts_notes.md`'s open questions about what's
   actually affordable at real-time rates.
-- #9 is genuinely new territory, not represented anywhere else in `ideas/`.
+- #9's structure-tensor producer thread has its own hub doc now,
+  [f_tensorfield.md](f_tensorfield.md) (2026-10-10) — producer concept
+  NumPy-spiked, three candidate consumers assessed, nothing built, several
+  open questions. The glyph-field/photoelastic sub-ideas remain untouched
+  there.
 - #10 is a diagnostic for `f_droste`/`f_mobius`/`f_poincare` and the most
   direct way to settle #6 empirically — build this before worrying about
   the others. **Spiked 2026-10-10 for `f_mobius`** (`tests/spike_mobius_vecfield_transform.py`):

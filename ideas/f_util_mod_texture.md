@@ -379,3 +379,15 @@ Recorded so they are not re-litigated.
   They plausibly want item-identity space *and* pixel space, which is
   exactly two — but that should be checked against `f_grain` /
   `f_stipple` / `f_vf_seeds` rather than assumed.
+- **Does the base/depth/texture triple need a fourth element — an
+  optional confidence-gate source?** Raised 2026-10-11 via the
+  tensor-field thread (`ideas/f_tensorfield.md` open question 15): a
+  structure tensor's anisotropy output is a per-pixel "how much does the
+  field data mean here" signal, distinct from the depth scalar's
+  performer-intent meaning ("how much do I want this param to respond").
+  The proposed shape keeps both — `effective_depth = depth_dial *
+  confidence_sample` — rather than letting one replace the other, which
+  would lose the performer's ability to mute/ride the effect independent
+  of content. If this becomes a real pattern, the declaration format
+  (whichever open question above settles it) should probably have a slot
+  for an optional fourth binding, not just base/depth/texture.
