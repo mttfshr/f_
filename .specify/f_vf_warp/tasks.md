@@ -166,6 +166,30 @@ docs/
 
 ---
 
+## Maintenance pass (2026-10-09)
+
+Run via `.specify/maintenance/SKILL.md`; full findings in
+`.specify/maintenance/status.json`. This module came out clean relative to
+everything else audited so far — bypass fix (T048-T050 above) is
+confirmed and the reference doc already documents it accurately, unlike
+`f_masonry`/`f_vf_advect`'s stale docs. Two small items:
+
+- [ ] T051 **Bench: record the tier-1 skip decision explicitly.** No
+  NumPy mirror exists, but the codebox is linear remap + clamp + single
+  sample — about as textbook-trivial as a codebox gets, and the
+  constitution explicitly permits skipping tiers 1-2 for trivial cases
+  "but say so." Nobody has said so in writing; add the one-line decision
+  to `plan.md` rather than leaving it implicit.
+- [ ] T052 **Convention decision gate: does `strength` need the gain/mix
+  split?** Same open question filed for `f_grain`'s `amount`
+  (`.specify/f_grain/tasks.md` T003) — `strength` here is a single
+  0-1.5 param doing the same blend-weight-ish job the six rolled-out
+  modules split into `gain`+`mix`. Now two modules outside that rollout
+  with the same shape of question; worth deciding once, generally,
+  rather than module by module.
+
+---
+
 ## Dependencies
 
 **Phase dependencies (strict):**

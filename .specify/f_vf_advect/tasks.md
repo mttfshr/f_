@@ -28,7 +28,30 @@ accumulated flow) — see plan.md for full detail.
 - [x] T143 Added general `Param`-name-collides-with-operator finding to `jit-gen-codebox` skill
 - [x] T144 Renamed `SKILL.md`/ideas-doc convention from working name `wet` to `mix` per Matt's explicit call
 
+## Phase 7: Maintenance pass (2026-10-09) — reopened from `.specify/stable/`
 
+Folder moved back from `stable/` per `.specify/maintenance/SKILL.md`: a module
+gaining new maintenance tasks isn't "nothing outstanding" anymore. Full
+findings (perf/bench/convention) recorded in `.specify/maintenance/status.json`.
+
+- [ ] T145 **Convention — `docs/f-reference/f_vf_advect.md` is badly stale.**
+  It still describes the pre-rollout module: `strength` (not `gain` +
+  `mix_pct`), no `separate`, no `mode`, and only two outlets (the 3rd
+  outlet — vecfield gradient of accumulated flow, shipped in Phase 5 above
+  — isn't mentioned at all). The signal-flow diagram and algorithm
+  pseudocode are both stale against the current codebox. Rewrite the doc
+  from the current `src/f_vf_advect/definition.py` + `codebox_advect.gen`.
+- [ ] T146 **Perf — no cost measurement exists for this module.** Bypass
+  deliberately keeps the feedback loop warm (by design, plan.md "Bypassed
+  multi-stage modules keep running") so this isn't an open bug the way the
+  six heavy Param-bypass modules are — but there's still no recorded
+  frame-cost number for the two-pix chain at HD/4K. Add one.
+- [ ] T147 **Bench decision gate — does tier 1 apply here?** Module
+  predates Verification Tiers (adopted 2026-09-22); no Phase 0 decision was
+  ever recorded for it. Unlike `f_grain`, the math has a clean closed-form
+  check already written down in the reference doc (equilibrium amplitude
+  ≈ `injection / (1 - decay)`), so a NumPy mirror looks cheap and
+  worthwhile here — decide whether to add one or record why not.
 
 ## Expected Artifacts
 

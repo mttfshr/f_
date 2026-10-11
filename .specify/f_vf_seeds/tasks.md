@@ -506,3 +506,36 @@ single seed's own gate box.
 **Do not re-litigate with Matt whether this is real** — confirmed
 directly, multiple times, via isolated mask-output testing. Next
 session's job is root-causing it, not re-confirming it exists.
+
+
+---
+
+## Maintenance pass (2026-10-09)
+
+Run via `.specify/maintenance/SKILL.md`; full findings in
+`.specify/maintenance/status.json`. Folder moved back from `stable/`.
+This module is unusually well self-documented already (Key Findings/Open
+Questions in the reference doc cover most of what a fresh audit would
+otherwise surface) — one real, previously-unflagged gap found:
+
+- [ ] MAINT1 **Bench, high priority: native bypass on multi-outlet stages
+  has never been checked against the known flip bug.** `bypass_target:
+  ["1c", "4"]` uses the native `@bypass` attribute (deliberately, per ADR
+  8 — search/render stages keep running) on Stage 1c (3 outlets) and
+  Stage 4 (2 outlets). `f_vf_warp`'s T047-T050 (this same `.specify/`
+  tree) found and fixed exactly this failure mode elsewhere: native
+  bypass skips the shader and passes secondary outlets through
+  **vertically flipped**. `f_vf_seeds` has no `BYPASS_EXPECT` entry in
+  `tests/bench_modules.py` at all, so whether outlet 1 (mask) or outlet 2
+  (seed coord) comes out flipped under bypass has never actually been
+  tested here — it's simply unknown, not confirmed either way. Given
+  there's a known precedent for this exact bug in this exact
+  configuration, this is worth checking before assuming the deliberate
+  native-bypass choice is safe as shipped.
+- [ ] MAINT2 **Perf: the two fps questions this module's own doc already
+  flags have no automated tracking.** "60+fps confirmed... at the current
+  K=2/N=2 configuration; not tested beyond that" and "compositing depth
+  beyond N=2 not attempted" are both in Open Questions already — not a
+  new finding, just never promoted to an actual bench entry. Worth a
+  `bench_modules.py`/cost-script addition so these stop being anecdotal
+  claims from one manual test session.

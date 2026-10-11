@@ -38,6 +38,39 @@ Active work: M002 — three-space modulation inlets (slot, brick, pixel).
 
 ---
 
+## Maintenance pass (2026-10-09)
+
+Run via `.specify/maintenance/SKILL.md`. Full findings in
+`.specify/maintenance/status.json`. Deliberately does NOT duplicate the
+already-open items above (E001l's dial-range mismatch, E001r/E001s's
+pending regression re-run, E001t's skill-update decision, or the dead
+`quantize` control already in Loose Threads) — those are already tracked.
+New findings only:
+
+- [ ] MAINT1 **Convention, high-priority — bypass doc contradicts shipped
+  behavior.** `docs/f-reference/f_masonry.md`'s param table says bypass
+  "Outputs transparent black (mix to (0,0,0,0))". That was true before
+  commit `75dc017` (2026-10-06): bypass now drives a codebox
+  `bypass_gate` Param and *both* outlets mix to `sample(in1, norm)` (the
+  source), per plan.md's passthrough rule. The doc describes a behavior
+  that was deliberately replaced three days before this audit. Rewrite
+  that row (and check the Taxonomy note's "bypasses to black" framing,
+  which may now also be wrong depending on what it's describing).
+- [ ] MAINT2 **Perf — no cost measurement, and never assessed for the
+  bypass-cost question.** `f_masonry` is one of the 11 `bypass_mode:
+  "param"` modules, same as the six heavy ones named in HANDOFF's "Open:
+  GPU cost" note, but it wasn't one of the six actually discussed there —
+  looks like an oversight rather than a deliberate exclusion. No
+  dedicated cost measurement exists either. Worth both: a baseline number
+  and folding into that same open GPU-cost question.
+- [ ] MAINT3 **Bench decision gate — tier 1 never decided.** Predates
+  Verification Tiers (2026-09-22); no Phase 0 record either way. Unlike
+  `f_vf_advect`, there's no obvious closed-form check (it's a visual/
+  judgment case, closer to `f_grain`) — likely a legitimate tier-1 skip,
+  but record that decision rather than leaving it implicit.
+
+---
+
 ## Remaining Tasks
 
 ### R001b-fix — pix/autopattr varname cleanup (cosmetic)

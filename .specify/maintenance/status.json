@@ -1,0 +1,146 @@
+{
+  "f_grain": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement exists for this module at all (no bench_grain.py / spike script, unlike f_caustic). Compounded by the known open item: bypass_mode is 'param' (one of the six heavy modules from the 2026-09/10 rollout), so bypass no longer skips the shader, and whether a guard around the heavy loop would help is unmeasured here specifically."
+    },
+    "bench": {
+      "status": "flagged",
+      "note": "drift.py: clean, not in drift_baseline.json. BYPASS_EXPECT entry present and correct (1/2/3 -> source passthrough). Tier 1 (NumPy mirror) was never decided on -- module predates Verification Tiers (adopted 2026-09-22) and no Phase 0 decision gate exists recording whether tier 1 applies or is a deliberate skip. Separately, bench_modules.py's own header comment still says f_grain's BYPASS_EXPECT entries are 'not yet seen green live', but plan.md records Matt's 2026-10-06 live run as 0 unexpected issues across all 33 modules -- the code comment is stale against that."
+    },
+    "convention": {
+      "status": "flagged",
+      "note": "'amount' (0-2, blend weight) was never migrated to the gain/mix split that f_chladni/f_vf_advect/f_vf_prism/f_caustic/f_vf_glow/f_vf_streak got in the 2026-07-17 rollout -- open question whether grain's generator role makes that split inapplicable or whether it's just unfinished. Bypass passthrough: correct, matches the 2026-10-05 rule. 'softness' range is 0.0-5.0 but the codebox only uses [0,1] meaningfully (already self-documented in docs/f-reference/f_grain.md as 'not urgent, but a real inconsistency'). docs/f-reference/f_grain.md last updated 2026-05-25 -- predates both the 2026-10-05 definition.py rewrite and the 2026-10-06 bypass rollout, neither reflected there. Module is still on the never-regenerate list by policy though its definition now reproduces the patch exactly (not in drift_baseline.json) -- same technical state f_vf_advect was in before it came off the list."
+    },
+    "tasks_filed": [".specify/f_grain/T001", ".specify/f_grain/T002", ".specify/f_grain/T003"]
+  },
+  "f_vf_advect": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement exists for this two-pix feedback module. Not an open bug the way the six heavy Param-bypass modules are, though: plan.md already records 'bypassed multi-stage modules keep running' (feedback stays warm) as deliberate, by-design behavior for this module specifically -- the gap here is purely the missing number, not an unresolved tradeoff."
+    },
+    "bench": {
+      "status": "flagged",
+      "note": "drift.py: clean, off the never-regenerate list since 2026-10-05 (definition.py reproduces the patch exactly). BYPASS_EXPECT present and correct (2->in1, 3->vecfield passthrough); confirmed live in Matt's 2026-10-06 run per plan.md, though bench_modules.py's header comment (shared with f_grain/f_vf_prism) still says 'not yet seen green live' -- same stale comment flagged in the f_grain audit, not re-filed as a separate task. Tier 1 (NumPy mirror): none exists; module predates Verification Tiers. Unlike f_grain this one has a ready closed-form check already written into the reference doc (equilibrium amplitude), so it's a cheaper add if Matt wants it."
+    },
+    "convention": {
+      "status": "flagged",
+      "note": "Naming (gain/mix_pct), bypass passthrough (warm feedback by design), and never-regenerate status are all correct and current. Real finding: docs/f-reference/f_vf_advect.md is substantially stale -- still describes the pre-rollout module (a single 'strength' param, no 'separate', no 'mode', only two outlets), missing the 3rd outlet (vecfield gradient, shipped Phase 5) and the gain/mix split (shipped Phase 6) entirely. Signal-flow diagram and algorithm pseudocode both stale against the current codebox."
+    },
+    "tasks_filed": [".specify/f_vf_advect/T145", ".specify/f_vf_advect/T146", ".specify/f_vf_advect/T147"]
+  },
+  "f_masonry": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement exists. Also: f_masonry is bypass_mode 'param' (one of the 11-module 2026-10-06 rollout) but was never named among the six modules HANDOFF flags for the open 'bypass no longer skips the shader' question -- looks like an oversight, not a deliberate exclusion, since the same mechanism applies."
+    },
+    "bench": {
+      "status": "flagged",
+      "note": "In tests/drift_baseline.json as 'drift' (large counts: hand-built mod-matrix UI, already well understood, refactor already deferred per Matt's 2026-10-05 call -- not news). BYPASS_EXPECT present for out2. Tier 1 (NumPy mirror): never decided; predates Verification Tiers. Unlike f_vf_advect there's no obvious closed-form check here -- this is a visual/judgment case like f_grain, so a documented deliberate skip is the likely right call, just never recorded. Module's own tasks.md already carries real open items (E001l dial-range mismatch, E001r/E001s pending regression re-run, E001t skill-update decision) -- not duplicated here."
+    },
+    "convention": {
+      "status": "fail",
+      "note": "docs/f-reference/f_masonry.md's bypass row says 'Outputs transparent black (mix to (0,0,0,0))' -- this was true before commit 75dc017 (2026-10-06), which moved bypass to a codebox bypass_gate Param with both outlets mixing to source, per the library-wide passthrough rule. The doc describes behavior that was deliberately replaced three days before this audit; worth noting the doc's header date (2026-07-05) is also stale against its own Loose Threads content (dated 2026-07-19). No gain/mix params exist on this module at all (no blend-with-source concept documented) -- plausibly a non-issue given f_masonry is a pure generator, not flagged as a task."
+    },
+    "tasks_filed": [".specify/f_masonry/MAINT1", ".specify/f_masonry/MAINT2", ".specify/f_masonry/MAINT3"]
+  },
+  "f_sirds": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement at all, and a real unresolved risk at scale: 13 chained jit.gl.pix stages (longest chain in the library), with the module's own doc saying cook-order delay-freedom was confirmed at 4 stages but 'not independently re-verified' at the actual shipped 13. Standout finding of this batch -- directly on the performance axis Matt cares most about."
+    },
+    "bench": {
+      "status": "fail",
+      "note": "Zero coverage of any kind -- f_sirds does not appear anywhere in tests/ (confirmed via content search). Not in drift_baseline.json at all, not even as an explicit out_of_scope entry the way its custom-builder siblings (f_a_ripple, f_util_profile, f_util_matrix_2) are. No BYPASS_EXPECT entry. No tier 1 mirror. Its bypass mechanism predates the bypass_gate Param convention (broadcasts a route_bypass-style (1.0-bypass) multiply to all 13 stages directly), so it was never part of the 2026-10-06 rollout either."
+    },
+    "convention": {
+      "status": "fail",
+      "note": "docs/f-reference/f_sirds.md's Build section documents the source of truth at .specify/f_sirds/definition.py / build_sirds.py -- those files are actually at src/f_sirds/. The doc's own 'Run:' instruction would fail as written. Predates the src/ vs .specify/ layout split."
+    },
+    "tasks_filed": [".specify/f_sirds/T001", ".specify/f_sirds/T002", ".specify/f_sirds/T003"]
+  },
+  "f_vf_vorticity": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement exists, mechanically same gap as everything else audited -- but unlike f_sirds there's no evidence this module actually has a performance problem (single codebox, no multi-stage chain). Its real issue is correctness/verification, not speed."
+    },
+    "bench": {
+      "status": "fail",
+      "note": "No tasks.md existed for this module at all before this pass -- only spec.md/plan.md. Genuinely zero bench coverage (confirmed via content search; the only 'vorticity' hits in tests/ are an incidental name used as a menu-generator test fixture). This is not a new discovery: plan.md's root Paused/blocked section and its Test Infrastructure workstream both already name this module as needing exactly this re-verification -- it just never became an actual task. drift_baseline.json already tracks 3 prop-count drift, unrelated to the verification question."
+    },
+    "convention": {
+      "status": "flagged",
+      "note": "Bypass implementation (bare Param bypass(0.0), no bypass_mode key, mixes to raw sample(in1,norm)) predates both the native-@bypass and bypass_gate-Param conventions -- built 2026-07-06, before either was settled. Needs reconciling with whatever's current when/if this module resumes. No codebox_*.gen file (codebox is an inline string in definition.py, unlike every other audited module) -- noted, not flagged as an issue, may be a legitimate choice for a single small codebox."
+    },
+    "tasks_filed": [".specify/paused/f_vf_vorticity/T001", ".specify/paused/f_vf_vorticity/T002"]
+  },
+  "f_vf_warp": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement exists (mechanical gap, same as every module audited so far), but real risk looks low: docs/f-reference/f_vf_warp.md already states the architecture is single-pass, single-sample, O(1) per pixel. Lowest-priority perf gap of this batch."
+    },
+    "bench": {
+      "status": "flagged",
+      "note": "drift.py: clean, definition.py reproduces the patch exactly since 2026-10-05 and says so in its own header comment (still on the never-regenerate policy list regardless -- third module this audit has found in that exact state, after f_grain and partially f_vf_advect before it left the list; worth a single batch review of the whole never-regenerate list rather than re-raising per module). BYPASS_EXPECT present and correct. No tier-1 mirror, but the codebox (linear remap + clamp + one sample) is about as trivial as they get -- constitution explicitly permits skipping tiers 1-2 for trivial cases 'but say so', and nobody has said so in writing yet."
+    },
+    "convention": {
+      "status": "pass",
+      "note": "Bypass fix (2026-09-23) confirmed correct and the reference doc accurately documents it -- the cleanest module audited this batch. Only open item: 'strength' (0-1.5) was never migrated to the gain/mix split, same open question as f_grain's 'amount' -- now two modules with the same shape of gap, suggesting a general decision is overdue rather than a per-module one."
+    },
+    "tasks_filed": [".specify/f_vf_warp/T051", ".specify/f_vf_warp/T052"]
+  },
+  "f_vf_seeds": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "flagged",
+      "note": "Unusually well self-documented already -- its own Open Questions already state '60+fps confirmed at K=2/N=2; not tested beyond that' and 'compositing depth beyond N=2 not attempted'. Not a new finding, just never promoted from a manual claim to an automated/regression-tracked measurement."
+    },
+    "bench": {
+      "status": "fail",
+      "note": "drift.py clean. No BYPASS_EXPECT entry in bench_modules.py at all -- and this module's bypass_target deliberately uses the native @bypass attribute on multi-outlet stages (1c: 3 outlets, 4: 2 outlets), per ADR 8 (search/render stages keep running). f_vf_warp's own T047-T050 found and fixed exactly this failure mode (native bypass flips secondary outlets) elsewhere in this same bypass_target style. Whether f_vf_seeds' outlet 1 (mask) or outlet 2 (seed coord) comes out flipped under bypass has never been tested -- unknown, not confirmed safe."
+    },
+    "convention": {
+      "status": "pass",
+      "note": "Extremely thorough, current documentation (Key Findings/Open Questions already cover most of what a fresh audit would surface). Native-bypass-on-multi-outlet-stages design choice is deliberate and well-documented (ADR 8), consistent with the library-wide 'bypassed multi-stage modules keep running' decision. No gain/mix issue (generator, no source blend)."
+    },
+    "tasks_filed": [".specify/f_vf_seeds/MAINT1", ".specify/f_vf_seeds/MAINT2"]
+  },
+  "f_vf_fieldmap": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement exists. Low real risk: single-pass, 5-sample central difference, architecturally simple like f_vf_warp."
+    },
+    "bench": {
+      "status": "flagged",
+      "note": "drift.py clean. No BYPASS_EXPECT entry, though lower risk than most gaps found this week -- single outlet, so no multi-outlet native-bypass flip risk applies. Predates Verification Tiers, no decision recorded -- but unlike most modules audited, this one has an easy, obvious tier-1 candidate (central-difference gradient against a known analytic input), worth actually building rather than just recording a skip."
+    },
+    "convention": {
+      "status": "fail",
+      "note": "docs/f-reference/f_vf_fieldmap.md's thresh range says 0-1; definition.py actually has min=-2.0, max=2.0, with real (undocumented) behavior at those extremes (luma is 0-1, so thresh>1 suppresses everywhere, thresh<0 never suppresses). Minor: bypass Param is named plain 'bypass' not 'bypass_gate' like the rest of the library's Param-driven bypass modules."
+    },
+    "tasks_filed": [".specify/f_vf_fieldmap/T024", ".specify/f_vf_fieldmap/T025"]
+  },
+  "f_vf_repulse": {
+    "last_audited": "2026-10-09",
+    "perf": {
+      "status": "fail",
+      "note": "No cost measurement. 16 ring samples + luma dot product per pixel, single-pass -- moderate sample count, one of the more sample-heavy single-pass generators audited, though nowhere near f_sirds' multi-stage-chain risk."
+    },
+    "bench": {
+      "status": "fail",
+      "note": "No tasks.md/plan.md existed before this pass -- only spec.md, whose own status note says audit and build sign-off are still open. No BYPASS_EXPECT entry -- and this exact gap is why the convention finding below went uncaught: an automated bypass check would have caught the doc/code mismatch immediately. No tier-1 mirror (16-sample ring + 4-mode branch is nontrivial; could go either way on whether to build one or record a deliberate skip)."
+    },
+    "convention": {
+      "status": "fail",
+      "note": "docs/f-reference/f_vf_repulse.md states bypass passes the raw source texture through (mix(field, sample(in1,uv), bypass)) and explicitly flags this as a deliberate divergence from the rest of the vecfield family, 'worth confirming intentional.' The actual shipped codebox mixes to a NEUTRAL field (vec(0.5,0.5,0.5,1.0)), matching f_vf_vortex/f_vf_vortex_multi exactly -- there is no divergence; the doc describes code that isn't what ships, and its own flagged open question is answered incorrectly as a result. Standout finding of this batch."
+    },
+    "tasks_filed": [".specify/f_vf_repulse/T001", ".specify/f_vf_repulse/T002", ".specify/f_vf_repulse/T003"]
+  }
+}

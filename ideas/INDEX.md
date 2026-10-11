@@ -44,6 +44,27 @@ substantially move a file in `ideas/`, update its entry here too.
 
 ## Vector field family (`f_vf_*`, `f_vecfield`)
 
+- **[vector_field_math_concepts.md](vector_field_math_concepts.md)** 🔵 —
+  Concepts pulled from re-reads of the Wikipedia vector-field and tensor-field
+  articles, each paired with where it might cash out in `f_`: singularity
+  index as an explicit control (ties to Poincaré–Hopf/hairy-ball on the
+  circular-screen domain), central fields as their own simple generator mode,
+  Helmholtz gradient/curl decomposition, streamline vs. pathline vs.
+  streakline as a user-facing toggle (reframes `f_vf_smear`'s LIC candidate),
+  the Lie bracket as a zero-build composition experiment, whether UV warpers
+  (`f_droste`/`f_mobius`/`f_poincare`) transform a piped-through vecfield
+  correctly or just resample it (possible latent bug, cheap to check),
+  conservative-field path-independence as a free NumPy correctness test,
+  deliberate finite-time blow-up as a design axis, tensor fields
+  (glyph/ellipse visualization, unoriented line fields, anisotropic
+  structure-aware blur, photoelastic stress-fringe optics) as the next rung
+  up from vector fields, Tissot's indicatrix as a distortion diagnostic for
+  the UV warpers, the Jacobian determinant as adaptive anti-aliasing
+  (possible way around `line_edge_antialiasing.md`'s GenExpr-derivatives
+  block), the covariant derivative as a correctness warning for
+  `f_sharmonics`/circular-screen gradient work, and authoring UV distortion
+  from a metric tensor instead of a closed-form transform. Research notes,
+  not specs — cross-reference before building any of them.
 - **[f_vecfield.md](f_vecfield.md)** 🟢 — The family's type contract (float32,
   RG=XY, 0.5=zero) and roadmap hub. Producers built: `f_vf_vortex(_multi)`,
   `f_vf_fieldmap`. Consumers built: `f_caustic`, `f_vf_warp`, `f_vf_streak`.
@@ -382,6 +403,19 @@ there, then the chapter-specific files for depth.
 
 ## Standalone research
 
+- **[wind_as_interface.md](wind_as_interface.md)** 🔵 — Brainstorm for a
+  sewn, inflatable, translucent rear-projection dome deliberately designed
+  to deform gently in wind: the reframe from correcting geometry to
+  picking content that degrades gracefully under uncontrolled movement
+  (`f_vf_vortex`/`f_vf_fluid`/`f_caustic`/`f_grain` fit by nature), the
+  escalation to actually sensing live deformation (fabric wrinkles as a
+  structure-tensor phenomenon, same math as `vector_field_math_concepts.md`
+  §9's line fields), why that needs distributed processing (camera CV and
+  GPU-heavy Vsynth contend for the same resources on one machine), and a
+  comparison of sensing routes — camera+CV streaming a small field texture
+  over NDI vs. distributed IMU nodes (candidate part: Adafruit
+  LSM6DS3TR-C, 6-DoF, STEMMA QT) sending OSC over WiFi vs. a plain
+  anemometer. Mulling-over notes, nothing decided or built.
 - **[entrainment.md](entrainment.md)** 🔵 — Research brief on light/frequency
   altered-state induction (ganzfeld/ganzflicker, SSVEP/photic driving,
   Dreamachine lineage) with an EEG (Muse Athena) angle for measuring real

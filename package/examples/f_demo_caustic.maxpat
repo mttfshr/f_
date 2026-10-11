@@ -48,7 +48,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 957.0, 140.0, 162.0, 119.0 ],
+                    "patching_rect": [ 1010.0, 139.0, 162.0, 119.0 ],
                     "varname": "vs_displacement",
                     "viewvisibility": 1
                 }
@@ -338,12 +338,12 @@
                         "vs_wfg_polarizer::lock_freq": -1,
                         "vs_wfg_polarizer[1]::pm_range": -1,
                         "vs_wfg_polarizer[1]::lock_freq": -1,
-                        "vs_displacement::displacement_gui::displacement_scale_ym": -1,
-                        "vs_displacement::displacement_gui::displacement_scale_xm": -1,
-                        "vs_displacement::displacement_gui::displacement_y_range": -1,
-                        "vs_displacement::displacement_gui::displacement_x_range": -1,
-                        "vs_displacement::displacement_gui::displacement_angle_range": -1,
                         "vs_displacement::displacement_gui::displacement_anglemenu": -1,
+                        "vs_displacement::displacement_gui::displacement_x_range": -1,
+                        "vs_displacement::displacement_gui::displacement_y_range": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_xm": -1,
+                        "vs_displacement::displacement_gui::displacement_scale_ym": -1,
+                        "vs_displacement::displacement_gui::displacement_angle_range": -1,
                         "vs_lfo::lfo_freq_range": -1
                     },
                     "saved_object_attributes": {
@@ -392,7 +392,7 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "offset": [ 0.0, 0.0 ],
-                    "patching_rect": [ 340.0, 833.0, 157.0, 22.0 ],
+                    "patching_rect": [ 170.0, 809.0, 157.0, 22.0 ],
                     "varname": "vs_output[1]",
                     "viewvisibility": 1
                 }
@@ -572,21 +572,22 @@
             "obj-16::obj-65": [ "shape[1]", "Shape", 0 ],
             "obj-16::obj-71": [ "phase[1]", "Phase", 0 ],
             "obj-16::obj-72": [ "phase_time_switch[1]", "phase_time_switch", 0 ],
-            "obj-17::obj-11": [ "density", "density", 0 ],
-            "obj-17::obj-13": [ "amount", "amount", 0 ],
-            "obj-17::obj-15": [ "persistence", "persistence", 0 ],
-            "obj-17::obj-2": [ "fade", "fade", 0 ],
-            "obj-17::obj-25": [ "size", "size", 0 ],
-            "obj-17::obj-27": [ "size_var", "size_var", 0 ],
-            "obj-17::obj-29": [ "shape[2]", "shape", 0 ],
-            "obj-17::obj-31": [ "softness[1]", "softness", 0 ],
-            "obj-17::obj-37": [ "jitter", "jitter", 0 ],
-            "obj-17::obj-40": [ "ch_diverge", "ch_diverge", 0 ],
-            "obj-17::obj-43": [ "field", "field", 0 ],
-            "obj-17::obj-60": [ "luma_gate", "luma_gate", 0 ],
-            "obj-17::obj-63": [ "displace", "displace", 0 ],
-            "obj-17::obj-71": [ "edge_mode_menu", "edge_mode_menu", 0 ],
-            "obj-17::obj-82": [ "sv_seed", "sv_seed", 0 ],
+            "obj-17::obj-20": [ "density", "density", 0 ],
+            "obj-17::obj-23": [ "gain[3]", "gain", 0 ],
+            "obj-17::obj-26": [ "persistence", "persistence", 0 ],
+            "obj-17::obj-29": [ "shape[3]", "fade", 0 ],
+            "obj-17::obj-32": [ "size", "size", 0 ],
+            "obj-17::obj-35": [ "size_var", "size_var", 0 ],
+            "obj-17::obj-38": [ "shape[2]", "shape", 0 ],
+            "obj-17::obj-41": [ "softness[1]", "softness", 0 ],
+            "obj-17::obj-44": [ "jitter", "jitter", 0 ],
+            "obj-17::obj-47": [ "ch_diverge", "ch_diverge", 0 ],
+            "obj-17::obj-50": [ "luma_gate", "luma_gate", 0 ],
+            "obj-17::obj-53": [ "displace", "displace", 0 ],
+            "obj-17::obj-56": [ "mix_pct[2]", "mix_pct", 0 ],
+            "obj-17::obj-901": [ "field", "field", 0 ],
+            "obj-17::obj-906": [ "edge_mode_menu", "edge_mode_menu", 0 ],
+            "obj-17::obj-912": [ "sv_seed", "sv_seed", 0 ],
             "obj-1::obj-10": [ "vs_preset_name", "vs_preset_name", 0 ],
             "obj-1::obj-11": [ "live.text[5]", "live.text", 0 ],
             "obj-1::obj-15": [ "live.tab", "live.tab", 0 ],
@@ -853,36 +854,16 @@
                 "obj-16::obj-72": {
                     "parameter_longname": "phase_time_switch[1]"
                 },
-                "obj-17::obj-11": {
+                "obj-17::obj-20": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-13": {
+                "obj-17::obj-23": {
                     "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-17::obj-2": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-17::obj-25": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-17::obj-27": {
-                    "parameter_invisible": 0,
+                    "parameter_longname": "gain[3]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
@@ -890,13 +871,35 @@
                 },
                 "obj-17::obj-29": {
                     "parameter_invisible": 0,
+                    "parameter_longname": "shape[3]",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-32": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-35": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-38": {
+                    "parameter_invisible": 0,
                     "parameter_longname": "shape[2]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-31": {
+                "obj-17::obj-41": {
                     "parameter_invisible": 0,
                     "parameter_longname": "softness[1]",
                     "parameter_modmode": 3,
@@ -904,42 +907,50 @@
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-37": {
+                "obj-17::obj-44": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-40": {
+                "obj-17::obj-47": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-43": {
+                "obj-17::obj-50": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-60": {
+                "obj-17::obj-53": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-63": {
+                "obj-17::obj-56": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "mix_pct[2]",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-17::obj-901": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-17::obj-82": {
+                "obj-17::obj-912": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,

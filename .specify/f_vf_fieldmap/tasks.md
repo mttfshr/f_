@@ -116,3 +116,33 @@
 - If `strength` default needs adjustment after T009: update `.specify/f_vf_fieldmap/spec.md` clarifications and plan ADR 3 before writing definition.py in T012.
 - `scale` lower bound 0.001 approaches sub-pixel; GPU interpolation handles it gracefully but gradient becomes noisy. Note in docs if observed during T007.
 - Total tasks: 23
+
+
+---
+
+## Maintenance pass (2026-10-09)
+
+Run via `.specify/maintenance/SKILL.md`; full findings in
+`.specify/maintenance/status.json`. Folder moved back from `stable/`.
+
+- [ ] T024 **Convention: `thresh` range in the doc doesn't match what's
+  shipped.** `docs/f-reference/f_vf_fieldmap.md`'s param table says
+  `thresh` is `0–1`; `definition.py`/the shipped codebox actually has
+  `min: -2.0, max: 2.0`. The wider range has real, undocumented behavior
+  at the extremes (luma is 0-1, so `thresh > 1` suppresses the field
+  everywhere, `thresh < 0` never suppresses it) — fix whichever is wrong
+  (narrow the range, or document what the full range actually does).
+  Separately, minor: the bypass `Param` here is named plain `bypass`,
+  not `bypass_gate` like the rest of the library's Param-driven bypass
+  modules — cosmetic, but worth matching for consistency next time this
+  file is touched.
+- [ ] T025 **Bench: no contract/bypass entry, and a clean tier-1
+  candidate exists.** Not in `tests/bench_modules.py`'s `BYPASS_EXPECT`
+  table at all (lower risk than most gaps found this week — single
+  outlet, so there's no multi-outlet native-bypass flip risk to begin
+  with — but still unverified by anything automated). Also predates
+  Verification Tiers with no decision recorded; unlike most modules
+  audited so far, this one has an easy, obvious tier-1 mirror (central-
+  difference gradient against a known analytic input, e.g. a linear
+  ramp or sinusoid texture) — a good one to actually build rather than
+  just record a skip decision for.
