@@ -274,6 +274,93 @@ assumed-excluded. (`f_vf_vorticity` is not evaluated at all — it's in
 
 ---
 
+## Beyond the vecfield-consumer audit: a three-part heuristic for built modules (2026-10-11)
+
+The audit above only covers modules that already have a vecfield inlet. A
+broader test, run against the full `module-inventory.md` rather than just
+that subset: does a built module (1) fight a vector that secretly has no
+sign, (2) want a diagnostic ellipse (ties to `vector_field_math_concepts.md`
+#10, Tissot's indicatrix), or (3) flatten a genuinely second-order/curvature
+quantity to a scalar? Five real hits, one of them already measured with
+hard numbers:
+
+- **`f_caustic` — strongest hit, already evidenced.** `optics_map.md`'s own
+  caustic-fidelity research already diagnosed this without naming it as a
+  tensor problem: the module weights its accumulation by divergence
+  (`-div F`), the *trace* of the local Jacobian. Its own root-cause note —
+  "a saddle (eigenvalues of opposite sign) can have zero divergence while
+  sitting exactly on a fold. The divergence weight sees none of that." — is
+  exactly a scalar standing in for a tensor. The det-gather and GPU-scatter
+  experiments that *did* reproduce folds worked because they used the full
+  Jacobian (`det(I + d·J)`), eigenvalues and all, not its trace. Worth
+  amending this file's own audit table above: not just "sign-sensitive,
+  inferred" for `f_caustic`, but a measured trace-vs-full-tensor fidelity
+  gap with numbers already in hand.
+- **`f_stipple` — confirms Open Question 13.** No vecfield inlet today, but
+  its own `anisotropy`/`angle` params already mean almost exactly what the
+  tensor's eigenvalue-anisotropy and principal-angle outlets mean —
+  currently global dials, not per-pixel. Strongest *semantic* match in the
+  library; still needs new inlets, not free plumbing.
+- **`f_stereo` — new, not previously flagged anywhere.** The Tissot-
+  indicatrix diagnostic (`vector_field_math_concepts.md` #10) was spiked
+  against `f_mobius` and `f_droste` but never pointed at `f_stereo`, despite
+  being the same shape of module — a parametrically blended UV transform
+  (ortho↔stereographic). Orthographic projection is not conformal;
+  stereographic is — so sweeping `f_stereo`'s blend parameter sweeps the
+  indicatrix from a genuine ellipse toward a perfect circle, exactly the
+  diagnostic already built for the other two warpers, just never run here.
+- **`f_lens` — a prediction, not yet checked.** `f_anamorph_unnamed.md`
+  already established `f_lens`'s distortion math is locally isotropic at
+  every pixel (`warp_cx`/`warp_cy` share one multiplier), which predicts its
+  Tissot indicatrix is always a circle — the same negative result
+  `f_mobius` got, never actually spiked for `f_lens`. Also why
+  `optics_map.md`'s astigmatism/field-curvature row is stuck at "Research":
+  astigmatism is direction-dependent defocus, and the module's current math
+  is structurally incapable of producing it without becoming genuinely
+  tensor-valued.
+- **`f_masonry` — marginal, by proxy only.** Doesn't hold a tensor quantity
+  itself, but is a named beneficiary of idea #11 (Jacobian-determinant-
+  driven adaptive AA) once that's built, since `line_edge_antialiasing.md`
+  already flags its mortar lines as sharing `f_weave`'s aliasing bug.
+
+Everything else in `module-inventory.md` — the tonal-grading modules, the
+routing/utility layer, and the vecfield producers (vortex/flow/repulse/
+optical-flow all carry a legitimate sign, not a line-field ambiguity) —
+doesn't fit any of the three criteria. Logged so it isn't re-checked.
+
+## Paused-module check (2026-10-11): no unblocks found
+
+Read every spec/plan in `.specify/paused/` against this same question —
+would a tensor-field representation release any of these stalls? No. Each
+paused module's actual blocker is orthogonal to representation type:
+
+- **`f_apollonian`/`f_poincare`** — both blocked on the same bug (plan.md
+  ADR-8): accumulated Möbius-transform composition/parity-tracking in the
+  iterated-inversion math. An algebra correctness bug in the fold logic
+  itself, not a missing tensor quantity. One soft, non-blocking connection
+  worth remembering for later: `f_poincare`'s real hyperbolic curvature is
+  explicitly out of scope for its current phase, and once the parity bug is
+  fixed, `vector_field_math_concepts.md` #13 (author a UV warp from a
+  metric tensor field directly, rather than a closed-form formula) is a
+  plausible path to genuine curvature — but that's a future phase, not
+  today's stall.
+- **`f_stereogram`** — blocked on a Vsynth architecture limit (intra-frame
+  multi-pass render-to-texture), unrelated to field representation. Already
+  explicitly decided that its depth input is scalar, not vecfield-typed
+  (correctly — depth has no 2D direction to encode).
+- **`f_vf_chroma`** (the paused streak-effect draft, distinct from the
+  simpler R/B-split version already shipped) — blocked on an averaging-vs.
+  first-hit-loop architecture question and a `build_patcher.py` 3-option
+  toggle bug. Not a representation problem.
+- **`f_vf_vorticity`** — blocked on whether curl + vorticity-gradient fit in
+  one codebox pass or need a multi-stage chain. Curl/vorticity carries a
+  genuine sign (rotation direction), not a line-field ambiguity — no fit
+  for this family's math anyway.
+- **`f_focus`** — not actually blocked; Phase 1 ships standalone. The
+  deferred part (tilt/axis extraction from `f_lens`) is a scalar focus/CoC
+  map, already checked above (`f_lens_tiltshift_split.md`) and ruled out as
+  a tensor fit.
+
 ## Open questions
 
 1. **Outlet 1 (raw tensor) range/normalization.** Spiked (above);

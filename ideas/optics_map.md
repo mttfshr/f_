@@ -61,6 +61,7 @@ Status: **Have** = shipped; **Compose** = existing modules, no new code; **Build
 | Diffraction (starbursts, Airy, gratings) | Research | PSF = Fourier transform of the aperture; a GPU DFT is already verified (`f_vf_fluid`) |
 | Laser speckle | Research | Same machinery: squared magnitude of the FFT of random phase |
 | Interference / moire | Compose or Build | Two `f_weave` instances; `f_moire` is a scratchpad idea |
+| Photoelastic stress-fringe interference | Research | Real stressed-glass fringes come from a stress tensor warping optical properties directionally — genuinely new territory for `f_lens`/`f_caustic`/`f_vf_prism`, not a mode of anything shipped; no producer/consumer sketched (`vector_field_math_concepts.md` #9, `f_tensorfield.md`'s "Future, not pursued") |
 
 **Dispersion**
 
@@ -84,7 +85,7 @@ Status: **Have** = shipped; **Compose** = existing modules, no new code; **Build
 | Phenomenon | Status | Notes |
 |---|---|---|
 | Depth of field / bokeh | Build | Aperture-shaped disc taps (`f_ngon` as a possible aperture shape); needs a focus map, the open question that shelved `f_focus` |
-| Coma, astigmatism, field curvature | Research | May partly exist in `f_lens`: check |
+| Coma, astigmatism, field curvature | Research | May partly exist in `f_lens`: check. Astigmatism is itself a tensor-valued aberration (direction-dependent defocus, not a scalar blur radius) — cross-ref `f_tensorfield.md`'s raw-tensor outlet and `vector_field_math_concepts.md` #9 if this is ever pursued; not scoped or wired anywhere yet |
 | Anamorphic | Compose / Build | `f_anamorph_unnamed.md` |
 
 Gobos are not missing: any texture generator (`f_weave`, `f_stipple`, `f_masonry`, `f_ngon`) is already a gobo source.
@@ -341,4 +342,4 @@ A concept doc, or a "light transport" demo patch (one field feeding warp, causti
 
 ## Related
 
-`f_lumia.md`, `f_caustic.md`, `f_lens.md`, `f_lens_tiltshift_split.md`, `f_anamorph_unnamed.md`, `godray_radial_accumulation.md`, `glow_profile_and_afterimage.md`, `spectral_rainbow_colormap.md`, `f_vecfield.md`, `gpu_gems_research.md`, `entrainment.md` (color-organs lineage).
+`f_lumia.md`, `f_caustic.md`, `f_lens.md`, `f_lens_tiltshift_split.md`, `f_anamorph_unnamed.md`, `godray_radial_accumulation.md`, `glow_profile_and_afterimage.md`, `spectral_rainbow_colormap.md`, `f_vecfield.md`, `f_tensorfield.md`, `vector_field_math_concepts.md`, `gpu_gems_research.md`, `entrainment.md` (color-organs lineage).

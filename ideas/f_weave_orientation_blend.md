@@ -40,6 +40,20 @@ fall back to base automatically). More correct, bigger change to the block.
 Matt was unsure which would feel better in practice — this is explicitly an
 empirical question, not one to resolve by reasoning alone.
 
+## Tensor-field framing (cross-ref, added 2026-10-11)
+This bug is the structural case `vector_field_math_concepts.md` #9 names
+directly: thread orientation has no sign — a fiber at 30° and one at 210°
+are the same line — so vector-add + renormalize is fighting the
+representation, not just the blend math. Fix B's `atan2`-based angular
+blend is closer but still starts from a signed vector; the structurally
+correct fix is the angle-doubled (2θ) encoding `f_tensorfield.md`'s
+`f_tf_structure` producer already uses for exactly this reason — no sign
+to normalize away in the first place. This doesn't settle which fix to
+ship here (still the empirical A/B below), but Fix B and
+`f_tensorfield.md`'s Open Question 6 share the identical blocker —
+GenExpr `atan2` safety in `jit.gl.pix`, unverified in either place —
+so whoever checks it first closes it for both files.
+
 ## Next step
 Scratch patch with both mechanisms wired side-by-side/switchable, same
 video→flow source used in the original screenshot, A/B live before

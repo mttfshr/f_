@@ -68,6 +68,26 @@ conversation (2026-07-15), reusable here directly:
 
 ---
 
+## Cross-reference: same line/axis problem as tensor fields (added 2026-10-11)
+
+Step 3's hemisphere-align hack (`step(0.0, dot) * 2.0 - 1.0`, then flip)
+is a from-scratch solution to a problem `vector_field_math_concepts.md`
+#9 names generally: a squeeze axis is a line, not a direction, so a
+signed-vector representation needs this kind of manual sign-correction
+before blending at all. `f_tensorfield.md`'s `f_tf_structure` producer
+encodes exactly this class of quantity natively — angle-doubled (2θ)
+storage, no sign to re-align by construction, same underlying fix
+`f_weave_orientation_blend.md` arrived at independently for the same
+reason. Not a drop-in replacement here — this module's field-driven half
+still wants a vecfield inlet by its own stated reasoning (closer to the
+`f_vf_` consumer family than to a tensor consumer) — but worth a second
+look once `f_tensorfield.md`'s outlet 2 and its `atan2`-safety open
+question (its #6) are both settled: the align-then-blend mechanism above
+might simplify to a direct angle-doubled blend with no hemisphere step
+at all.
+
+---
+
 ## Rough param contract (candidate, not locked)
 
 | Param | Range | Default | Description |

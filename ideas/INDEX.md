@@ -308,11 +308,18 @@ there, then the chapter-specific files for depth.
 
 - **[ceyron_simulation_scripts_notes.md](ceyron_simulation_scripts_notes.md)**
   🔵 — First-pass read of Felix Köhler's CFD/spectral-method reference scripts.
-  **Real finding:** FFT-based Stable Fluids makes diffusion and pressure
-  projection each a single elementwise Fourier-space op — reopens the
-  "too expensive for real-time" conclusion in `vorticity_confinement.md`,
-  *if* GPU FFT is available. Checked: `jit.fft` exists but isn't GL-space —
-  open question, not resolved.
+  **FFT-based Stable Fluids thread resolved and shipped (2026-10-11 update):**
+  no GL-space FFT in Jitter, but a separable-DFT alternative was verified in
+  NumPy then on the GPU test bench (round trip ~5e-6 abs error, ~3ms/pass at
+  512², real-time at the 128–256² target) and specced/built as `f_vf_fluid`
+  — no longer open. **Two threads still genuinely unprocessed:** 2D Lattice
+  Boltzmann (D2Q9) obstacle-aware flow (bigger build, real architecture
+  question — is genuine obstacle-aware flow worth the multi-texture
+  collision+streaming complexity, given `f_vf_repulse` already fakes
+  obstacle behavior more cheaply) and a Kuramoto-Sivashinsky 2D chaotic
+  generator (self-sustaining worm/fingerprint patterns, no external forcing
+  needed — needs a stability scratch-test of its stiff 4th-order PDE before
+  any real commitment).
 - **[slab_chain_architecture.md](slab_chain_architecture.md)** 🧰 — Stub for a
   second architectural track: true multi-pass GLSL slab chains
   (`jit.gl.slab`/`pass`/`node` ping-pong), needed for FFT Stable Fluids,
