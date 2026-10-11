@@ -25,13 +25,18 @@ This document is orientation, not execution. It names active workstreams, states
 2. **`f_vf_optical_flow`.** Phases 0–4 done 2026-07-18 (real Lucas-Kanade, replacing a ruled-out frame-diff approach). Phase 5 open: axis-aligned content makes the 2×2 solve singular (real aperture-problem limitation, not a tuning issue) — fix is confidence-gated spatial fill, mechanism (isotropic blur vs. directional propagation) undecided. `.specify/f_vf_optical_flow/tasks.md` T034–T038. Not yet stable/registered.
 3. **Edit-view layout pass for `build_patcher.py`.** Implemented 2026-09-24 (`build/layout.py`, zone-based, 0 overlaps across 30 buildable definitions). 10 of 33 modules regenerated with it so far; the rest have drifted from their definitions and weren't touched (Matt's call). Open: Matt's look at the 10 in Max (constants are first guesses), whether to sync the drifted definitions or leave them, `build_fluid.py` adoption.
 4. **Packaging / Package Manager readiness.** Started 2026-10-01. Done: `package-info.json` fixed, `examples/` renamed+repaired, `release.sh`, README install section. Open: license (asking Kevin re: Vsynth adaptation/CC BY-NC), `icon.png`, first tag/release, how the C74 registry ingests submissions (unread), `max_version_min` unverified. `.specify/packaging/tasks.md`.
-5. **Vecfield-aware `f_mobius` warp.** Specced 2026-10-10, not built. `f_mobius`
-   naively resamples a piped-through vecfield instead of transforming it (both its
-   paths are conformal; characterized via `tests/spike_mobius_vecfield_transform.py` —
-   up to 180° direction error near the `invert` path's singularity). Open
-   question before any build: new module vs. a mode/second outlet on
-   `f_mobius`, and whether `f_droste`/`f_poincare` need the same treatment
-   (their maps aren't guaranteed conformal — see spec). `.specify/f_mobius_vecfield/spec.md`.
+5. **Vecfield-aware UV warps (`f_mobius`, `f_droste`).** Specced 2026-10-10,
+   not built. Both naively resample a piped-through vecfield instead of
+   transforming it. `f_mobius` is conformal (both paths), so the fix is a
+   complex division; characterized via `tests/spike_mobius_vecfield_transform.py` —
+   up to 180° direction error near the `invert` path's singularity. `f_droste`
+   is essentially never conformal (its log-polar step scales radial/angular
+   axes by different constants for any practical zoom — a first
+   hand-derivation predicted otherwise and was wrong), so it needs a full
+   2x2 matrix solve instead; characterized via `tests/spike_droste_conformality.py`.
+   Open question before any build: new module vs. a mode/second outlet,
+   per-module (the two fixes aren't the same shape). `f_poincare` has no
+   codebox to check yet. `.specify/f_mobius_vecfield/spec.md`.
 6. **Build/tools/test cleanup — `definition.py` as source of truth.** Ongoing multi-phase project since 2026-10-04. Core rule: a hand edit in Max must be written back into `definition.py`; `tests/test_drift.py` ratchets a shrinking "can't regenerate yet" baseline (`tests/drift_baseline.json`). Current count: **32 of 39 shipped patchers reproduce exactly from their definitions; baseline 7** (`f_grain` came off 2026-10-09, same way `f_vf_advect` did earlier). Remaining baseline + hand-built modules are listed in the Build system section below — that list *is* the live task queue for this project now; check any module with `build/py.sh build/drift.py -v <name>`. `.specify/build_cleanup/tasks.md`.
 
 ---
@@ -41,7 +46,13 @@ This document is orientation, not execution. It names active workstreams, states
 - **`f_focus`** — SHELVED 2026-07-17. Phase 0 (feasibility) confirmed working, but shelved on a "does this warrant existing" question: as scoped it's a pure UI/state wrapper around one stock native object with zero added processing. Resume only if Phase 2's content-driven focus-map blur gets picked up, or a concrete gap in using the native object bare surfaces. `.specify/f_focus/{spec,plan,tasks}.md`.
 - **`f_apollonian`** — SHELVED. Real unresolved contradiction: `use_mapped=2` vs `=4` disagree on the same regions; `debug_ok`'s step/mix logic is the prime suspect, not yet traced. Do not trust prior "confirmed working" language in this module's history without independent re-verification (wrongly marked confirmed twice already). `.specify/f_apollonian/plan.md` ADR-8.
 - **`f_vf_vorticity`** ("curl amp") — built, status genuinely UNVERIFIED. Do not register in the module menu or build on top of it. Needs independent re-verification from scratch.
-- **`f_poincare`** — SHELVED (Matt's call, 2026-07-12). Phases 0–2 confirmed working, closed-form {p,q} formula derived for {4,5}. Phase 3 (real texture sampling) not resumed unless Matt explicitly asks.
+- **`f_poincare`** — Planned, not yet specced (corrected 2026-10-10: this
+  entry previously claimed "Phases 0–2 confirmed working, closed-form {p,q}
+  formula derived for {4,5}," but no file in the repo backs that up, and
+  Matt confirmed it's stale rather than pointing to where that work lives —
+  see `.specify/f_mobius_vecfield/spec.md`'s f_poincare section). Concept,
+  key design questions, and build-sequence notes live in `ideas/f_poincare.md`;
+  no codebox exists yet. Not resumed/started unless Matt explicitly asks.
 - **`f_vf_advect` / vorticity-confinement fold-in** — attempted, reverted; confinement never worked despite exhaustive elimination. If resumed, try a dedicated multi-stage `pix_chain` splitting curl computation from confinement-force computation (never tried). `ideas/vorticity_confinement.md`.
 
 ---

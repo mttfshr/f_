@@ -2,6 +2,18 @@
 
 _Updated 2026-10-10._
 
+## Ideas: two loose ends closed — Mobius+Droste spec merged, f_poincare doc corrected
+
+- `.specify/f_mobius_vecfield/spec.md` expanded (Matt's call) to cover both
+  `f_mobius` (conformal, complex division) and `f_droste` (not conformal,
+  needs a full 2x2 matrix solve) as one vecfield-aware-UV-warp workstream —
+  previously the f_droste finding was HANDOFF-only. `plan.md` item 5 updated
+  to match.
+- `plan.md`'s paused/blocked `f_poincare` entry corrected (Matt confirmed
+  stale, not pointing elsewhere): it claimed "Phases 0–2 confirmed working,
+  closed-form {p,q} formula derived," which no file in the repo backs up.
+  Now reads "Planned, not yet specced," matching `ideas/f_poincare.md`.
+
 ## Ideas: #7 conservative-field test, Mobius spec, f_droste conformality check
 
 Follow-up to the Lie-bracket/Mobius session below, same day. Three pieces:
