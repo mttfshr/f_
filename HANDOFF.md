@@ -2,6 +2,50 @@
 
 _Updated 2026-10-10._
 
+## Ideas: #7 conservative-field test, Mobius spec, f_droste conformality check
+
+Follow-up to the Lie-bracket/Mobius session below, same day. Three pieces:
+
+- **#7 conservative-field check, done as a real test** (not a spike):
+  `tests/test_conservative_field.py`, registered, passes via `tests/run.sh`.
+  Mirrors `f_vf_fieldmap`'s actual gradient codebox, integrates its output
+  around several closed loops at the module's default `rotate=0` (max
+  |circulation|/perimeter 3.3e-5, well under a 2e-3 tolerance). Includes a
+  negative control (rotate=90°, which breaks conservativeness in general)
+  to prove the check has real discriminating power, not a trivial pass —
+  first attempt's control loop happened to sit on a symmetry point of the
+  synthetic source where circulation cancels even for the rotated field
+  (confirmed empirically, not assumed); fixed by using a different loop set.
+- **Mobius vecfield-correctness: specced, not built** (Matt's call). New
+  `.specify/f_mobius_vecfield/spec.md` — problem statement, the correct
+  transform's math (`v' = v_source/g'(z)`), and open questions (new module
+  vs. mode on `f_mobius`, whether this generalizes). Added to `plan.md`'s
+  work queue as item 5.
+- **f_droste conformality, checked numerically**
+  (`tests/spike_droste_conformality.py`, diagnostic, not a regression gate):
+  a first hand-derivation (written into the spec before running anything)
+  predicted `f_droste` was conformal at `twist=0, n_arms=1` — **wrong**,
+  caught by actually running the finite-difference check. Real cause: the
+  log-polar step scales its radial axis by `1/log(zoom)` and angular axis
+  by `1/(2*pi)` — different constants for any `zoom` where
+  `log(zoom) != 2*pi` (≈535, outside the UI range), making the module
+  essentially never conformal regardless of `twist`/`n_arms`. Measured
+  eccentricity 9.065 at `zoom=2.0` baseline, matching `2*pi/log(2)` exactly;
+  isolating the effect (`zoom` tuned so `log(zoom)=2*pi`) drives it to
+  exactly 1.000000, confirming the mechanism rather than inferring it.
+  Also hit and fixed a finite-difference artifact: one of the four original
+  test points sat exactly on `atan2`'s branch cut and gave a bogus
+  derivative (693x "eccentricity") — not a nonconformality finding, a
+  numerical artifact, caught by cross-checking against the other three
+  points before trusting the number. `f_poincare` has **no codebox to
+  check** — `ideas/f_poincare.md` is still "Planned, not specced";
+  `plan.md`'s "closed-form {p,q} formula derived" claim doesn't correspond
+  to any file found in this repo — flagged as a possible stale reference in
+  the spec rather than assumed correct. `scratch/droste_conformality_spike.png`.
+
+Spec updated with the corrected f_droste finding before committing, so it
+doesn't carry the wrong initial claim forward.
+
 ## Ideas: two vector-field spikes built and run (research, no production code changed)
 
 Built and ran the two cheapest items flagged in `ideas/vector_field_math_concepts.md`

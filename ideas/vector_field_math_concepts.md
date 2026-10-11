@@ -275,7 +275,10 @@ already in `ideas/`.
   (`tests/spike_lie_bracket.py`, `scratch/lie_bracket_spike.png`); #6
   confirmed true from source (`f_mobius` naively resamples a piped-through
   vecfield) and characterized via #10, see below.
-- #7 is a test-infrastructure addition, not a module.
+- #7 is a test-infrastructure addition, not a module. **Done 2026-10-10**:
+  `tests/test_conservative_field.py`, a real registered test against
+  `f_vf_fieldmap`'s gradient output, with a negative control proving it can
+  actually detect a non-conservative field.
 - #8 is speculative and research-grade; pairs with `vorticity_confinement.md`
   and `ceyron_simulation_scripts_notes.md`'s open questions about what's
   actually affordable at real-time rates.
@@ -286,9 +289,13 @@ already in `ideas/`.
   both its paths are conformal, so its true indicatrix is always a circle,
   never an ellipse — the honest diagnostic turned out to be a local-scale
   heatmap, not drawn ellipses (`scratch/mobius_vecfield_rotate_zoom.png`,
-  `scratch/mobius_vecfield_invert.png`). `f_droste`/`f_poincare` not yet
-  checked — their maps may not be purely conformal, worth re-deriving rather
-  than assuming this result carries over.
+  `scratch/mobius_vecfield_invert.png`). **`f_droste` checked 2026-10-10**
+  (`tests/spike_droste_conformality.py`): essentially never conformal (its
+  log-polar step scales radial/angular axes by different constants for any
+  practical `zoom`), confirmed via a real elliptical indicatrix — does NOT
+  carry over f_mobius's circle-only result. See `.specify/f_mobius_vecfield/spec.md`
+  open question #2 for the full derivation. `f_poincare` has no codebox yet
+  to check.
 - #11 connects to `line_edge_antialiasing.md` and `f_raster.md`; possibly a
   way around the GenExpr-screen-space-derivatives block noted there.
 - #12 is a correctness warning for `f_sharmonics`/circular-screen gradient
