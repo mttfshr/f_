@@ -1,6 +1,21 @@
 # HANDOFF
 
-## Maintenance workstream: all 25 remaining modules audited (Tiers A–G executed)
+## Review-and-squash of the day's stack; helpfiles closed; build_cleanup closed; suite fully green
+
+_2026-10-12 (evening session)._
+
+Six commits reviewed and squashed from the day's accumulated work (the `f_demo_caustic2.maxpat` checkpoint got its own `2026-10-12` message per Matt; `scratch/experiments/` left untracked as his live web-shim work), then three workstreams executed:
+
+**Helpfiles (commits f0de0e0, c161780).** The T011–T021 boxes were misleading — all 11 helpfiles already existed from the 2026-07-19 pipeline regen, but re-verification against definitions found three with stale External Control blocks (grain: dead `amount` + missing gain/mix + wrong softness range; lens: five dead tilt-shift params removed with the f_focus move; tone_curve: control block didn't match shipped params at all). T004 closed: References sections written for all 12 remaining docs (original derivations labeled; texrouter's records its T022 assessment). T022: deliberately no helpfile (dead module, no archetype). Then a second pass: 14 shipped GPU modules had NO helpfile at all (grey in f_Launch) — generated via new `build/make_missing_helpfiles.py` from the f_vf_vortex template (one extractor bug caught in verification: pix-chain object names picked up as params). `f_Launch.maxpat` regenerated: **34 of 39 clickable** (5 deliberate: audio x2, the menu, texrouter, util_matrix draft). **Owed: one Max session opening the 14 new + 3 corrected helpfiles to confirm demos/layout live** — the text-only edits are verified offline, but the spec's open-in-Max step hasn't run.
+
+**build_cleanup (commit e434afa).** Phase 3 drift-closing completed: `f_vf_vorticity` was the last drifted module — regenerated after writing back its one real hand state (saved default `confinement=0.1`), deep-diffed clean. **32 of 39 reproduce exactly; baseline 7.** T016/T017 verified closed (shipped with the f_vf_fluid absorption; boxes were unticked). T032b live-verified: seeded a plain bench run, `--changed` then correctly skipped everything with accurate per-module records. **The bench run surfaced a Max crash from 20:01 that day** (retired crash report on disk): ~25 tests failed with `bad object` on two attempts; `benchclient.reopen()` cannot heal a crashed instance — full quit + relaunch of Max fixed it, 12/12 green after. Four pre-existing offline failures (all from the 2026-10-09/10 f_grain commits, committed without a full suite run) found and fixed: the f_grain route test still expected `amount`; raw_ui.json stale vs the hand-saved patcher; f_addmod.js stale (grain panel size); test_harness broken under `run.sh -q` (TEST_QUIET leaked into the harness-under-test). **Offline suite: 23/23 files green.**
+
+### Left for Matt
+
+- Everything from today's six workstreams is committed; working tree clean except `scratch/experiments/` (live WIP, untracked).
+- One Max session owed, three things in it: open the 17 touched helpfiles (14 new, 3 corrected) to confirm demos/layout; look at the regenerated `f_vf_vorticity` patcher (its only behavioral change is the default 0.1 the shipped patch already had); re-check `f_demo_caustic2.maxpat` at your leisure.
+- The one Max operational lesson worth keeping: **reopen() is not the recovery for a crashed Max instance** (only for the stale-capture wedge) — quit and relaunch. Recorded in build_cleanup/tasks.md T032b.
+- Standing next-session picks, unchanged from earlier today: the glow+prism+streak+chladni profiling afternoon (maintenance's highest-value item), or tensor-field OQ2 (outlet packing, needs you).
 
 _2026-10-12._
 
