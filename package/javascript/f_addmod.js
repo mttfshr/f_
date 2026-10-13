@@ -9,7 +9,7 @@ var SIZES = {
     "chladni":        [299, 234],
     "masonry":        [342, 241],
     "stipple":        [191, 157],
-    "grain":          [227, 164],
+    "grain":          [232, 176],
     "weave":          [220, 159],
     "vf_seeds":       [190, 205],
     "mobius":         [185,  90],

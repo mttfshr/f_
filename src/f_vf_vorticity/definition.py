@@ -27,7 +27,7 @@ patcher = {
     "params": [
         {
             "name": "confinement", "type": "float",
-            "min": 0.0, "max": 1.0, "default": 0.0,
+            "min": 0.0, "max": 1.0, "default": 0.1,   # shipped patch boots at 0.1 (its saved pattr state, written back 2026-10-12; was 0.0)
             "hint": "Turbulence amount — vorticity confinement force strength. Effective range varies by source field; see range_tiers.",
             "label": "Confinement",
             "range_tiers": [0.1, 1.0, 10.0],

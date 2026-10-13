@@ -574,11 +574,11 @@ def test_f_grain_builds_from_its_definition_as_it_ships():
     top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
     route = top[bp.OBJ_ROUTE]
     _eq("the route, with `edge_mode_menu` for the umenu and the numbox routes last",
-        route["text"], "route bypass density amount persistence fade size size_var shape softness jitter "
-                       "ch_diverge luma_gate displace edge_mode_menu field sv_seed")
+        route["text"], "route bypass density gain persistence fade size size_var shape softness jitter "
+                       "ch_diverge luma_gate displace mix_pct edge_mode_menu field sv_seed")
     cords = {(tuple(ln["patchline"]["source"]), tuple(ln["patchline"]["destination"])) for ln in p["lines"]}
     _eq("control-first: inlet -> route, reject outlet -> routepass",
-        (((bp.OBJ_INLET, 0), (bp.OBJ_ROUTE, 0)) in cords, ((bp.OBJ_ROUTE, 16), (bp.OBJ_ROUTEPASS, 0)) in cords),
+        (((bp.OBJ_INLET, 0), (bp.OBJ_ROUTE, 0)) in cords, ((bp.OBJ_ROUTE, 17), (bp.OBJ_ROUTEPASS, 0)) in cords),
         (True, True))
     inlet = [b for b in top.values() if b["maxclass"] == "inlet"][0]
     _eq("the inlet has no comment", inlet["comment"], "")

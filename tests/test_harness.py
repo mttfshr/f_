@@ -24,10 +24,13 @@ def _run(namespace, slow_on):
     else:
         os.environ.pop("BENCH_SLOW", None)
     buf = io.StringIO()
+    import harness as _h
+    saved_quiet, _h.QUIET = _h.QUIET, False   # the assertions below expect non-quiet output, even under run.sh -q
     try:
         with redirect_stdout(buf):
             code = run(namespace)
     finally:
+        _h.QUIET = saved_quiet
         if old is None:
             os.environ.pop("BENCH_SLOW", None)
         else:
