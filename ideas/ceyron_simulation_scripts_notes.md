@@ -146,6 +146,30 @@ complexity of a multi-texture, multi-pass collision+stream architecture.
 This would be a materially bigger build than anything currently in `f_`
 — worth a real architecture discussion, not a quick add, if pursued.
 
+**ARCHITECTURE EVALUATED 2026-10-12** (`tests/spike_lbm_d2q9_architecture.py`,
+NumPy, full D2Q9 pipeline in the pix-chain stage shape): **fits the
+chained-jit.gl.pix-objects pattern — no slab/GLSL track needed.** The
+streaming step is a pure gather (roll by +e_i = one directional texture
+sample per lattice direction, same idiom as `f_vf_streak`), BGK
+collision/equilibrium/macro fuse into one local codebox, obstacle
+bounce-back is a mask-driven local swap (the mod-texture inlet pattern),
+and 9 channels/cell pack into 3 RGBA planes ping-ponged through the same
+`pass` feedback idiom `f_vf_fluid` uses. Roughly 2 solver codeboxes +
+encode vs fluid's 7 stages, at 3x the state bandwidth. Two correctness
+traps found and recorded in the spike (stream-direction sign; bounce-
+back must read pre-collision values — both silently produce garbage
+rather than loud failures). Two real constraints surfaced: (1) a
+*periodic* domain with an obstacle is genuinely unstable at the
+reference's omega ~ 1.97 (stable only to omega ~ 1.8, i.e. lower Re) —
+the reference's channel in/outflow BCs are load-bearing for stability at
+Re 80, so a module wanting the vortex street needs open-boundary edge
+handling, not the periodic wrap fluid gets for free; (2) shedding is
+slow to develop at performance resolutions (weak wake after 12k steps
+at 300x50 — the reference skips its first 5000 of 15000 steps before
+plotting). Whether the build is *worth it* vs `f_vf_repulse` fakery is
+unchanged — still Matt's judgement call — but "does it need a new
+architecture" is now answered: no.
+
 ## 3. Kuramoto-Sivashinsky (2D) — a candidate for a genuinely new
 generator module
 
@@ -182,6 +206,30 @@ without adaptive timestepping (KS is famously stiff) — this is the kind
 of thing that would need an "experiment before building" scratch test,
 not a reasoning-from-the-couch answer.
 
+**SCRATCH TEST RUN 2026-10-12** (`tests/spike_ks_stability.py`, NumPy,
+N=256, L=50 — the notebook's own parameters): the stiffness question
+has a decisive two-part answer. **(1) Real-space explicit FD is dead on
+arrival** for a per-frame module: the biharmonic term bounds the
+timestep at dt ~ 5e-5 (measured, matching the O(dx^4) theory bound) —
+**~2000 substeps** to match the notebook's dt=0.1 of evolution per
+frame. No stencil variant rescues this; the 4th-order term is the wall.
+**(2) The spectral treatment fits `f_vf_fluid`'s exact stage shape and
+runs one step per frame:** linear part (lap + lap^2) exactly integrated
+per Fourier bin — the same per-bin exp() decay `spec` already does,
+with rate K2(K2-1) (growth below the KS band, decay above) — and only
+the |grad u|^2 nonlinearity explicit in real space. The simple scheme
+holds dt ~ 0.076 (600-step soak) vs the notebook's ETDRK 0.1, and at
+safe dt the field self-sustains chaotically with zero forcing
+(measured: evolving, bounded, unfrozen over 600 frames). **One
+mandatory containment found:** the |grad u|^2 nonlinearity integrates
+domain-negative, so the field mean drifts secularly (measured -0.2 to
+-15 over 200 steps) — the k=0 Fourier bin must be zeroed each step
+(one bin, trivial inside the spectral stage, same class of fix as
+fluid's Nyquist zeroing). Cost shape: roughly two codeboxes over
+fluid's chain (a gradient-nonlinearity stage before the DFTs; `spec`
+generalizes directly). The stiffness question is closed: buildable in
+the chained-pix pattern, real-time, no slab track, no adaptive stepping.
+
 ## 4. Confirmations / no-fits, briefly
 
 - **`stable_fluids_python_simple.py`** (non-FFT, CG-based diffusion +
@@ -211,14 +259,19 @@ Three real threads opened, one answered:
    picked up, is a scratch-patch fps measurement of the
    readback→`jit.fft`→upload round-trip cost, before any decision about
    whether it's usable at all.
-2. 2D LBM (D2Q9) as a possible new obstacle-aware flow module — real
-   architecture discussion needed (multi-texture packing, collision +
-   streaming pass structure) before any code. Bigger scope than a
-   typical `f_` module addition.
+2. 2D LBM (D2Q9) as a possible new obstacle-aware flow module —
+   **architecture evaluated 2026-10-12: fits the chained-pix pattern, no
+   slab track** (see finding #2 above; two correctness traps and two
+   real constraints recorded there). Remaining question is value, not
+   architecture: is genuine obstacle-aware flow worth 3-plane state and
+   open-boundary edge handling vs `f_vf_repulse`'s cheap fakery —
+   Matt's judgement call, not scheduled.
 3. Kuramoto-Sivashinsky as a new self-sustaining chaotic generator
-   module — needs a scratch-patch stability test of the biharmonic
-   finite-difference stencil before any real commitment; the numerical
-   stiffness question is real and unresolved.
+   module — **stability scratch test run 2026-10-12: spectral
+   pix-chain shape is real-time-stable, one step per frame, no adaptive
+   stepping** (see finding #3 above, incl. the mandatory k=0 zeroing).
+   Cleared to spec whenever Matt wants it; real-space FD is ruled out
+   (~2000 substeps/frame).
 
 None of these are scheduled. Captured here per Matt's request, ready to
 pick up whenever.

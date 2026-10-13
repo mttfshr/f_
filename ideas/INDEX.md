@@ -312,20 +312,22 @@ there, then the chapter-specific files for depth.
   no GL-space FFT in Jitter, but a separable-DFT alternative was verified in
   NumPy then on the GPU test bench (round trip ~5e-6 abs error, ~3ms/pass at
   512², real-time at the 128–256² target) and specced/built as `f_vf_fluid`
-  — no longer open. **Two threads still genuinely unprocessed:** 2D Lattice
-  Boltzmann (D2Q9) obstacle-aware flow (bigger build, real architecture
-  question — is genuine obstacle-aware flow worth the multi-texture
-  collision+streaming complexity, given `f_vf_repulse` already fakes
-  obstacle behavior more cheaply) and a Kuramoto-Sivashinsky 2D chaotic
-  generator (self-sustaining worm/fingerprint patterns, no external forcing
-  needed — needs a stability scratch-test of its stiff 4th-order PDE before
-  any real commitment).
-- **[slab_chain_architecture.md](slab_chain_architecture.md)** 🧰 — Stub for a
-  second architectural track: true multi-pass GLSL slab chains
-  (`jit.gl.slab`/`pass`/`node` ping-pong), needed for FFT Stable Fluids,
-  Lattice Boltzmann, possibly Kuramoto-Sivashinsky. Explicit gate before
-  promoting to spec: current gain/mix rollout closed out, a concrete first
-  target chosen, a scratch-patch spike confirming ping-pong behavior in Max 9.
+  — no longer open. **Both remaining threads evaluated 2026-10-12 (spike
+  scripts in tests/): 2D Lattice Boltzmann (D2Q9) fits the chained-pix
+  pattern — no slab track; two correctness traps and two real constraints
+  (periodic+obstacle unstable at omega ~ 1.97; slow shedding at perf
+  resolutions) recorded; remaining question is value vs `f_vf_repulse`, not
+  architecture. Kuramoto-Sivashinsky: real-space FD dead (~2000 substeps/
+  frame), but the spectral `f_vf_fluid`-shape is stable one-step-per-frame
+  (dt ~ 0.076) with a mandatory k=0 mean-zeroing — cleared to spec whenever
+  wanted.**
+- **[slab_chain_architecture.md](slab_chain_architecture.md)** 🧰 —
+  **RETIRED 2026-10-12.** Was the stub for a second architectural track
+  (true multi-pass GLSL slab chains). FFT fluids shipped without it
+  (`f_vf_fluid`, chained pix objects), and the 2026-10-12 spikes proved
+  its two remaining candidates (LBM, Kuramoto-Sivashinsky) also fit the
+  ordinary pix pattern — no justification left. Kept as the decision
+  record; do not build on it.
 - **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** — see Vector field family
   above (cross-listed).
 - **[f_cymascope.md](f_cymascope.md)** — see Conformal geometry above

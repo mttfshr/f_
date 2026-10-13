@@ -1,6 +1,7 @@
 # slab chain architecture (stub)
 
-Status: unspecced, unscheduled. Not touching plan.md.
+Status: RETIRED 2026-10-12 — no remaining justification (see Conclusion
+in "Why this exists"). Kept as the decision record.
 
 ## Why this exists
 
@@ -19,20 +20,32 @@ pipelines with ping-pong textures and per-pass uniforms — something a
   objects *is* multi-pass, at least for this case — "cannot do
   multi-pass" should have read "cannot do multi-pass in one object."
 - 2D Lattice Boltzmann D2Q9 (`ceyron_simulation_scripts_notes.md`) —
-  given the above, worth re-asking whether this also fits the ordinary
-  chained-pix-objects pattern before assuming it needs this track.
-  Not re-evaluated; flagging the assumption, not resolving it. LBM's
-  multi-channel distribution state (9 values/cell, proposed packing
-  into ~3 RGBA textures) may or may not fit the same `pass`-node
-  feedback idiom `f_vf_fluid` just proved out — genuinely unknown
-  until checked.
-- Possibly Kuramoto-Sivashinsky, depending on stepping scheme — same
-  re-ask applies.
+  **answered 2026-10-12: does NOT need this track.**
+  `tests/spike_lbm_d2q9_architecture.py` ran the full D2Q9 pipeline in
+  the chained-pix stage shape: streaming is a pure gather (directional
+  texture samples, the `f_vf_streak` idiom), collision/equilibrium fuse
+  into one local codebox, bounce-back is a mask-driven local swap, 9
+  channels/cell pack into 3 RGBA planes on the same `pass` feedback
+  idiom. Two real constraints recorded in the notes file (periodic +
+  obstacle is unstable at omega ~ 1.97 — open channel boundaries are
+  load-bearing for the vortex street; shedding is slow at performance
+  resolutions), but neither is an architecture-track constraint.
+- Kuramoto-Sivashinsky (`ceyron_simulation_scripts_notes.md`) —
+  **answered 2026-10-12: does NOT need this track.**
+  `tests/spike_ks_stability.py` measured real-space explicit FD at
+  ~2000 substeps/frame (dead) and the spectral linear-exact +
+  explicit-nonlinear scheme — `f_vf_fluid`'s exact stage shape —
+  stable at one step per frame (dt ~ 0.076 vs the reference ETDRK's
+  0.1), with one mandatory k=0 mean-zeroing per step. Buildable in
+  the ordinary pix pattern.
 
-This is a candidate second architectural track alongside the existing
-pix/GenExpr bpatcher pattern, not a replacement for it — but its
-remaining justification is now LBM/KS alone, not FFT fluids, and even
-that is unconfirmed rather than assumed.
+**Conclusion (2026-10-12): with LBM and KS both confirmed to fit the
+ordinary chained-pix-objects pattern, this track has no remaining
+justification.** FFT fluids shipped without it; LBM and KS are now
+proven not to need it. Keep this file as the record of why the track
+was considered and retired; do not specced/build anything on it unless
+a future idea surfaces that genuinely needs per-pass GLSL uniforms
+beyond what chained `jit.gl.pix` objects provide.
 
 ## Core technical difference from f_ pix pattern
 
