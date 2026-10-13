@@ -27,7 +27,7 @@ Flat ordered task list. One helpfile per session or batch simple ones together.
 - [x] T019 — f_hue_processor.maxhelp ✅ verified 2026-10-12 (control list matches the shipped definition incl. jsui-driven band params)
 - [x] T020 — f_luma_processor.maxhelp ✅ verified 2026-10-12
 - [x] T021 — f_tone_curve.maxhelp ✅ corrected 2026-10-12: control block had drifted from the shipped params (shadows/midtones/highlights bipolar, edge_falloff 0–1, crossovers 0–1) — fixed against definition.py + raw_ui.json
-- [x] T022 — f_texrouter.maxhelp — assessed 2026-10-12, deliberately NOT made: module confirmed not in use (Matt, 2026-10-09); no codebox, no standard params (16 matrix cells driven by message), no pipeline archetype. Assessment recorded in docs/f-reference/f_texrouter.md's References section. Revisit only if the deprecate-vs-keep decision lands on "keep."
+- [x] T023 — Helpfiles for the remaining shipped GPU modules (2026-10-12): 14 written (f_vf_advect, f_vf_chroma, f_vf_flow, f_vf_glow, f_vf_potential, f_vf_prism, f_vf_repulse, f_vf_seeds, f_vf_split, f_vf_vortex_multi, f_vf_vorticity, f_weave, f_ngon, f_sirds) via build/make_missing_helpfiles.py from the f_vf_vortex template structure; param lists AST-extracted from definition.py (internal/raw_ui params omitted, bypass last). f_Launch.maxpat regenerated: 34 of 39 modules now clickable (was 20). Deliberately still grey: f_a_ripple + f_chladni_audio (audio, no help archetype), f_modules (the menu itself), f_texrouter (confirmed not in use; T022 assessment), f_util_matrix_2 (unfinished draft). f_vf_vorticity's and f_ngon's helpfiles carry their README ⚠ caveats inline; f_vf_chroma's carries the paused-retool note. Same Max-verification session owed as the T011–T021 batch above (demos/layout live).
 
 ---
 
