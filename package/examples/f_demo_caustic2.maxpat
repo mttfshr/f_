@@ -9,8 +9,28 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 220.0, 106.0, 1407.0, 826.0 ],
+        "rect": [ 111.0, 104.0, 1407.0, 826.0 ],
         "boxes": [
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-17",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_preview.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture" ],
+                    "patching_rect": [ 297.0, 175.0, 112.0, 102.02620087336243 ],
+                    "viewvisibility": 1
+                }
+            },
             {
                 "box": {
                     "bgmode": 1,
@@ -27,7 +47,7 @@
                     "numoutlets": 3,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 450.0, 581.0, 190.0, 160.0 ],
+                    "patching_rect": [ 450.0, 598.0, 190.0, 160.0 ],
                     "varname": "f_vf_prism",
                     "viewvisibility": 1
                 }
@@ -88,7 +108,7 @@
                     "numoutlets": 1,
                     "outlettype": [ "" ],
                     "patching_rect": [ 1021.0, 749.0, 123.0, 22.0 ],
-                    "text": "0.020007"
+                    "text": "0.035229"
                 }
             },
             {
@@ -532,6 +552,14 @@
             {
                 "patchline": {
                     "destination": [ "obj-13", 0 ],
+                    "order": 1,
+                    "source": [ "obj-7", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-17", 0 ],
+                    "order": 0,
                     "source": [ "obj-7", 0 ]
                 }
             },
@@ -653,18 +681,23 @@
             "obj-8::obj-20": [ "mix_pct", "mix_pct", 0 ],
             "obj-8::obj-23": [ "gain", "gain", 0 ],
             "obj-8::obj-26": [ "scale[1]", "scale", 0 ],
-            "obj-8::obj-29": [ "softness", "softness", 0 ],
+            "obj-8::obj-29": [ "softness", "expo", 0 ],
             "obj-8::obj-310": [ "range_gain", "range_gain", 0 ],
-            "obj-8::obj-32": [ "color_shift", "color_shift", 0 ],
             "obj-8::obj-320": [ "range_scale", "range_scale", 0 ],
-            "obj-8::obj-35": [ "mode", "mode", 0 ],
-            "obj-8::obj-38": [ "detail", "detail", 0 ],
             "obj-9::obj-20": [ "force", "force", 0 ],
             "obj-9::obj-23": [ "dt", "dt", 0 ],
             "obj-9::obj-26": [ "viscosity", "viscosity", 0 ],
             "obj-9::obj-29": [ "project", "project", 0 ],
             "obj-9::obj-32": [ "drag", "drag", 0 ],
             "obj-9::obj-35": [ "gain[2]", "gain", 0 ],
+            "parameterbanks": {
+                "0": {
+                    "index": 0,
+                    "name": "",
+                    "parameters": [ "-", "-", "-", "-", "-", "-", "-", "-" ],
+                    "buttons": [ "-", "-", "-", "-", "-", "-", "-", "-" ]
+                }
+            },
             "parameter_overrides": {
                 "obj-11::obj-20": {
                     "parameter_invisible": 0,
@@ -894,13 +927,7 @@
                 },
                 "obj-8::obj-29": {
                     "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-8::obj-32": {
-                    "parameter_invisible": 0,
+                    "parameter_longname": "softness",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
