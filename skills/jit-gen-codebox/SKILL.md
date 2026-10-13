@@ -115,6 +115,17 @@ continuous wrapping.
 ### Trigonometry
 `sin` `cos` `tan` `asin` `acos` `atan` `atan2` `sinh` `cosh` `tanh`
 
+**`atan2` confirmed GPU-safe including the decode use case (2026-10-12):**
+`tests/spike_atan2_safety.py` verified it on *decoded sampled-texture*
+input (the vecfield-decode pattern, stronger than the analytic-coords
+precedent above): all four quadrants match `np.arctan2` to 5.6e-7 rad,
+the ±π branch cut is correctly wrapped (adjacent-texel 2π jumps, no
+cross-cut interpolation smearing), and the half-angle and doubled-angle
+round-trip identities pass. **One quirk:** at the degenerate cut boundary
+(`Fy == 0, Fx < 0`) the GPU returns +π where IEEE `atan2(-0, -x)` gives
+−π — benign for angle work (±π is the same line), but a NumPy mirror
+diffing GPU output must wrap-compare at that line.
+
 ### Range / Interpolation
 `clamp` `wrap` `fold` `mix` `smoothstep` `step`
 

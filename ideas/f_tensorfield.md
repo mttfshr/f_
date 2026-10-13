@@ -292,10 +292,26 @@ hard numbers:
   sitting exactly on a fold. The divergence weight sees none of that." — is
   exactly a scalar standing in for a tensor. The det-gather and GPU-scatter
   experiments that *did* reproduce folds worked because they used the full
-  Jacobian (`det(I + d·J)`), eigenvalues and all, not its trace. Worth
-  amending this file's own audit table above: not just "sign-sensitive,
-  inferred" for `f_caustic`, but a measured trace-vs-full-tensor fidelity
-  gap with numbers already in hand.
+  Jacobian (`det(I + d·J)`), eigenvalues and all, not its trace. **Now
+  measured, 2026-10-12** (`tests/spike_caustic_trace_vs_jacobian.py`,
+  same glass/truth as the fidelity research; seeds 7 and 3 agree): the trace
+  weight and the local
+  full-Jacobian gain never disagree at the top-8% level at d* — the
+  saddle-on-a-fold scenario optics_map.md raised does *not* occur on this
+  smooth periodic glass (near-fold pixels coincide with strong negative
+  divergence, so the trace sees them). The real deficit is structural,
+  inside the 53–55% of interior pixels that are saddles at d*: there the
+  trace weight correlates with photon-counting truth at r ≈ 0.52–0.69
+  vs the full Jacobian's r ≈ 0.60–0.80 (and IoU 0.28–0.38 vs 0.28–0.42).
+  In the defocus and focus partitions the two are equivalent (focus:
+  0.62/0.66 and 0.52/0.53 — the trace is nearly all the signal there).
+  Caveat that bounds the whole comparison: past the first fold (3.5 d*)
+  the one-branch local det gain collapses (r ≈ 0.15–0.20, *worse* than
+  the trace's 0.46–0.56) — the full Jacobian is only a better weight
+  below d*, and multi-branch handling, not the tensor representation, is
+  the binding constraint further out. So the audit-table amendment this
+  buys is: "sign-sensitive, inferred" gains a measured
+  saddle-partition-only fidelity gap, not a blanket one.
 - **`f_stipple` — confirms Open Question 13.** No vecfield inlet today, but
   its own `anisotropy`/`angle` params already mean almost exactly what the
   tensor's eigenvalue-anisotropy and principal-angle outlets mean —
@@ -380,15 +396,24 @@ paused module's actual blocker is orthogonal to representation type:
    strongest *second* candidates for outlet 3 specifically (two free
    inlets each, no plumbing). `f_vf_streak` needs real architecture work
    first; not a good first target.
-6. **GenExpr `atan2` safety in `jit.gl.pix` — unverified, blocks the
-   decode entirely.** Nothing in this library has confirmed `atan2`
-   behaves safely in a jit.gl.pix codebox. `f_weave_orientation_blend.md`'s
-   candidate fix B flagged the identical requirement and never closed
-   it. Needs its own small verification pass (per
-   `max-advanced-object-methodology`) before any consumer codebox can
-   use the decode. Blocks every consumer in the audit table above that
-   needs a literal recovered angle — which, per Open Question 10, may
-   not be all of them.
+6. **GenExpr `atan2` safety in `jit.gl.pix` — VERIFIED SAFE, 2026-10-12**
+   (`tests/spike_atan2_safety.py` + `tests/bench/codeboxes/atan2_safety.gen`,
+   live on the GPU bench). Compiles, runs clean, no bench errors. On
+   *decoded sampled-texture* input (the actual decode use case, stronger
+   than the skill file's analytic-coords precedent): max wrap-aware error
+   vs `np.arctan2` 5.6e-7 rad across all four quadrants; pixels near the
+   branch cut match their own pixel-centre truth (no cross-cut smearing,
+   5.5e-7 rad), and 24,934 adjacent-texel pairs correctly jump ~2π at the
+   cut — properly wrapped, not interpolated. The decode shapes consumers
+   need all pass: half-angle `0.5·atan2` (2.8e-7 rad excl. one degenerate
+   texel) and the doubled round trip `atan2(sin t, cos t) == t` (7.8e-7
+   rad). **One real caveat, measured:** at the cut boundary itself
+   (`Fy == 0, Fx < 0`) the GPU returns +π where IEEE `atan2(-0, -x)` is
+   −π — a ±π convention difference at the single most degenerate input.
+   Benign for consumers (±π is the same line direction; and blends use
+   vectors/doubled components, never the literal value), but a downstream
+   NumPy mirror diffing against GPU output must wrap-compare there.
+   Blocks nothing: outlet 2's decode is cleared to build.
 7. **Mod-texture unipolar/bipolar convention — inherited, not new.**
    `named_mod_textures.md` already flags "the unipolar/bipolar divergence
    between `f_masonry` and Kevin's `vs_displacement`" as unresolved and
@@ -519,8 +544,8 @@ Question 2 before that one closes.
   ideally travel through; its own open verification items (pix-hop
   failure, T4 live, T6) gate both the wiring-only consumers and the
   type-tagging idea in open question 8.
-- `f_weave_orientation_blend.md` — shares open question 6 (`atan2`
-  safety in GenExpr), unresolved there first.
+- `f_weave_orientation_blend.md` — shared open question 6 (`atan2`
+  safety in GenExpr); **verified safe 2026-10-12**, both files updated.
 - `tests/spike_structure_tensor_range.py`, `scratch/structure_tensor_range.png`
   — the NumPy spike backing the findings above.
 - `f_vf_sobel` (`.specify/stable/f_vf_sobel/spec.md`) — the verified
@@ -533,10 +558,11 @@ Question 2 before that one closes.
 Not a build plan yet. Two different kinds of next step are live at once,
 per the Scope note above, and shouldn't be conflated:
 
-- **Phase 1 (survey) still open:** the `atan2` verification (open question
-  6) is the highest-leverage item — it blocks every consumer that needs a
-  literal recovered angle, is cheap to check, and several other open
-  questions (9, 11) are downstream of it or of similar codebox reads.
+- **Phase 1 (survey) still open:** ~~the `atan2` verification (open
+  question 6) is the highest-leverage item~~ — done 2026-10-12, verified
+  GPU-safe (see open question 6). What's left: the remaining open
+  questions (9, 11, 13's consumer-design passes) are codebox reads and
+  per-module checks, no longer blocked by the decode.
 - **Phase 2 (per-module finesse) hasn't started on purpose.** Open
   questions 12–14 are real designs, not wiring, and the packing corollary
   they surfaced (RGBA convenience outlet) feeds back into Phase 1's own

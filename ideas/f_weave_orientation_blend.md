@@ -49,10 +49,16 @@ blend is closer but still starts from a signed vector; the structurally
 correct fix is the angle-doubled (2θ) encoding `f_tensorfield.md`'s
 `f_tf_structure` producer already uses for exactly this reason — no sign
 to normalize away in the first place. This doesn't settle which fix to
-ship here (still the empirical A/B below), but Fix B and
+ship here (still the empirical A/B below). ~~Fix B and
 `f_tensorfield.md`'s Open Question 6 share the identical blocker —
 GenExpr `atan2` safety in `jit.gl.pix`, unverified in either place —
-so whoever checks it first closes it for both files.
+so whoever checks it first closes it for both files.~~ **Closed
+2026-10-12: `atan2` verified GPU-safe on decoded sampled-texture input**
+(`tests/spike_atan2_safety.py`, all four quadrants to 5.6e-7 rad,
+branch cut correctly wrapped, half-angle and doubled round trip both
+pass; one ±π convention quirk at the degenerate `Fy == 0, Fx < 0`
+boundary — benign for blending). Fix B is unblocked; the live A/B below
+is now purely the empirical taste question it always was.
 
 ## Next step
 Scratch patch with both mechanisms wired side-by-side/switchable, same
