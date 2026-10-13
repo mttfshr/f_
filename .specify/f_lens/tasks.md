@@ -284,3 +284,14 @@ history:
 - T037 is notable: this will be the first `docs/f-reference/f_lens.md` ever written for this module — v1 shipped without it. Worth flagging to Matt as its own small piece of debt being paid down here, not just a formality.
 - **Anamorphic removed from scope entirely, 2026-07-15** (both static and field-driven variants) — moved to `ideas/f_anamorph_unnamed.md`. Original Phase 3 kept struck-through above for history. Task numbers T023–T030 are permanently retired from this file's v2 section, not reused.
 - Commit after Phase 0 (decisions recorded), after each of Phases 1–2, and after Phase 5.
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+- [ ] T046: Decide the open tilt-shift split
+  (ideas/f_lens_tiltshift_split.md: split / keep / blur-engine —
+  undecided). The module otherwise passes all three axes; its
+  known-incomplete definition (tilt-shift targets jit.fx.cf.tiltshift
+  and panel_toggle are recorded schema gaps per
+  ideas/build_patcher_schema_gaps.md) is documented and deliberate.

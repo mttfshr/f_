@@ -12,19 +12,19 @@ the audited module's own `.specify/<name>/tasks.md` (see `SKILL.md`
 ## Queue
 
 Full prioritization across all 25 remaining modules: `plan.md` (Tiers
-A-G). This section is just the immediately-next slice of it, so a session
-in a hurry doesn't have to read the whole plan to know what's next.
-Standing priority, overrides the generically-computed tier order in
-`SKILL.md` while it's recorded here. 9 modules audited so far (2026-10-09):
-`f_grain`, `f_vf_advect`, `f_masonry`, `f_sirds`, `f_vf_vorticity`,
-`f_vf_warp`, `f_vf_seeds`, `f_vf_fieldmap`, `f_vf_repulse`.
+A-G). **All tiers executed 2026-10-12** — the whole remaining set is
+now audited (34 modules in status.json: the 2026-10-09 nine plus all
+25 from this pass). The plan's snapshot ordering is spent; if a new
+pass is wanted, re-derive per SKILL.md's live selection algorithm (or
+re-snapshot plan.md if the shipped-module list has changed).
 
-- [ ] Next (`plan.md` Tier A): `f_vf_glow`, `f_vf_prism`, `f_vf_streak`,
-  `f_vf_chroma` — check why `f_vf_chroma` is in `paused/` first (flagged
-  in `plan.md`, not yet understood).
-- [ ] Then Tier B: `f_chladni`, `f_stipple`, `f_vf_split` — same
-  Param-bypass oversight risk `f_masonry` turned up.
-- [ ] `f_caustic` stays out of the queue entirely while sheets mode is
+Standing priority from the 2026-10-12 pass, for whoever picks up the
+filed tasks:
+- Highest-value single session: the **glow + prism + streak + chladni
+  profiling session** (all four flagged the same shape: unmeasured
+  cost, no bypass guard on unrolled/looping codeboxes — one bench
+  afternoon covers T036-class items across four modules).
+- `f_caustic` stays out of the queue entirely while sheets mode is
   active (`HANDOFF.md`) — re-add once that settles.
 
 ## Cross-cutting observations (not yet actioned anywhere)
@@ -49,3 +49,24 @@ real decision, just not one tied to a single module's tasks.md:
   entry in `drift_baseline.json` (96 patch-only boxes) — worth an actual
   decision (deprecate/remove vs. quietly let it keep drifting) rather
   than leaving it in limbo.
+- **bench_modules.py's "not yet seen green live" header comment is
+  dead** (found across Tiers A–B; the 2026-10-09 f_grain audit saw it
+  first): the 2026-10-06 live run was 33/33, 0 unexpected issues
+  (plan.md), so the derived BYPASS_EXPECT entries HAVE been seen green.
+  One-line comment fix in tests/bench_modules.py — folded into
+  f_vf_prism T001 rather than filed per-module.
+- **Dead preset keys in package/examples/** (Tier A finding): demo
+  files preset pre-rename param names (`f_vf_warp::strength`,
+  `f_vf_seeds::strength`) that silently no-op on shipped modules.
+  Filed as f_vf_streak T055 as a sweep; if the sweep finds more, the
+  fix is mechanical (grep + rename to `gain`).
+- **"No tier-1 mirror, no recorded skip decision" is the single most
+  common audit result** (12+ modules): modules built before
+  Verification Tiers have neither coverage nor a written deliberate
+  skip. Not worth filing per-module everywhere — the interesting
+  subset is where a mirror is cheap and meaningful (vortex family:
+  promotable NumPy mirror already exists in spike_lie_bracket.py;
+  chladni: closed-form modal field; optical_flow stages c/e). Those
+  got tasks. The rest are candidates for a single written triviality/
+  skip-decision pass, same shape as the never-regenerate list cleanup
+  above.

@@ -281,3 +281,18 @@ without degrading already-confident regions. → Proceed to Phase 6.
 - The most likely point of real difficulty is T010 (5×5 ceiling risk) — treat a ceiling hit as an expected possible outcome with a known response (split further), not a surprise requiring re-architecture.
 - T025 is the task most likely to produce an honest "not fully done" result even after everything else passes — that's expected given ADR-3's deliberate single-scale-only scope, not a sign something went wrong.
 - Phase 5 (Stage E) exists because the axis-aligned aperture-problem case is a real, permanent characteristic of single-scale LK, not something more tuning of Stage A-D would fix — confirmed by testing the same WFG at multiple angles (flat vecfield at 0°/90°, real flow at 5°) and by swapping the WFG for other sources with the same result, ruling out a source-specific cause before treating it as a module-internal limitation worth fixing.
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+- [ ] T039: Tier-1 NumPy mirror for at least stage_c's solve and
+  stage_e's fill (both pure per-pixel math, directly mirrorable).
+  T025 (fast-motion single-scale breakdown test) and T026 (post-Stage-D
+  confidence-outlet recheck) remain the carried-open items from the
+  original build. Audit note for the record: the aperture-problem
+  mechanism decision is RESOLVED (directional propagation, T034 gate,
+  2026-07-18) — .specify/plan.md item 2's "mechanism undecided" line
+  is stale; and definition.py's hand-computed obj-ids (stage_c="obj-53",
+  bypass_pre_id=obj-48, fan-out obj-39/27/30) are a standing
+  maintenance hazard to remember in any future edit.

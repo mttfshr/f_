@@ -116,3 +116,18 @@ docs/
 - Commit after Phase 1 complete (codebox validated), after Phase 2 complete (patcher generated), after Phase 4 complete (docs done)
 - Build script lives in `~/Vsynth/patterns/` — unversioned, dev artifact only
 - The `vortex-scratch.maxpat` codebox edits in Phase 1 are done interactively in Max, not via build script
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+_This module moved off .specify/stable/ this session: the audit filed
+one actionable item (.specify/maintenance/SKILL.md's stable/ bar)._
+
+- [ ] T037: Promote a tier-1 NumPy mirror for the two vortex generators
+  (this module + f_vf_vortex_multi, folded into one task):
+  tests/spike_lie_bracket.py:28 already contains a `vortex_field()`
+  NumPy mirror of the codebox math — promote it to a regression-tier
+  test (verify convergence/curl/position params against the codebox at
+  a few param points). Generators are otherwise covered only by the
+  live contract suite.

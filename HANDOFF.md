@@ -1,6 +1,79 @@
 # HANDOFF
 
-_Updated 2026-10-11._
+## Maintenance workstream: all 25 remaining modules audited (Tiers A–G executed)
+
+_2026-10-12._
+
+Executed the full `.specify/maintenance/plan.md` prioritization in one pass — every shipped module not yet audited is now in `status.json` (34 total: the 2026-10-09 nine plus today's 25). Six parallel read-only scouts gathered per-tier facts (no GPU benches run; the one offline test exercised, `test_fluid_mirror.py`, ran 22/22 green); every load-bearing claim was spot-verified before recording, which caught **three scout errors** (prism's spec was *not* a stale chroma copy-paste — it was rewritten 2026-07-11 with its own correction note; the claimed streak-demo.json doesn't exist — the dead preset keys live in f_demo_warp.json/f_demo_seeds*.json instead; weave's tasks.md is partially maintained, not a time capsule).
+
+- **The plan's flagged pre-check resolved:** `f_vf_chroma` is paused mid-retool, not a doc gap — shipped v10 doesn't achieve the module's stated goal (accumulation averages the rainbow to gray); continuity.md records the closest-emitter/painter-model direction. Also: `direction=Bi` is unreachable from UI (build_patcher hardcodes 2-option toggles), and it still has `strength` (never in the gain/mix rollout, skip never recorded). Tasks filed in place in paused/.
+- **The perf headline:** glow, prism, streak, chroma and chladni all run their heavy codeboxes full-cost while bypassed, unmeasured — glow/chroma's 48-step loops, prism's 33 unrolled gate samples, streak's 8-step march, chladni's ~5 modal evaluations/pixel. One profiling afternoon covers all five (recorded as the standing priority in the workstream queue). stipple and vf_split confirmed trivial (the plan's "likely lightweight" hunch was right — chladni was the sleeper).
+- **Real findings beyond the mechanical:** the hue band-drag bug is confirmed pure folklore (now f_hue_processor/T001–2, with the jsui loop-back guard pinned as the mechanism); `f_vf_potential` settles tensorfield OQ11 — it integrates field *magnitude*, axis-blind, so the audit table's "assumed excluded" is wrong; `f_vf_flow` and `f_vf_potential` have unasserted bypass behavior (dual/processor archetype mismatches, one-line BYPASS_EXPECT additions filed); f_stereo remains the only warper never pointed at the existing Tissot diagnostic; the hue doc's parameter-routing description doesn't match the shipped definition.
+- **Folder moves per the stable/ bar:** f_vf_glow, f_vf_vortex, f_stipple came off `.specify/stable/` (they gained tasks; f_stipple also already carried nine open items). f_mobius and f_stereo stay on stable/ with single investigation tasks filed in place.
+- **22 tasks filed across 15 modules** (ids cross-referenced in status.json); fresh tasks.md folders created for f_hue_processor, f_ngon, f_vf_potential, f_vf_flow, f_vf_split, f_tone_curve, f_vf_prism, f_a_ripple. Three new cross-cutting observations recorded in the workstream's own tasks.md (dead bench header comment, dead preset keys, the tier-1-skip-decision gap as the most common result).
+
+### Left for Matt
+
+- Nothing in the workstream queue is blocking. The single highest-value pickup is the **glow+prism+streak+chladni profiling session**; the cheapest is the f_stereo Tissot spike (reuses existing diagnostics).
+- Two stale-doc clusters worth a docs-only commit: f_vf_glow.md / f_stipple.md / f_vf_split.md / f_hue_processor.md rows (filed as tasks, not fixed inline — fixes are future tasks per the protocol).
+- Note: the `.specify/plan.md` Work Queue was NOT edited (protocol rule) — if any finding warrants a work-queue item, that's your call. Candidates: the never-regenerate-list cleanup and the general gain/mix decision, both already recorded as cross-cutting observations.
+
+_2026-10-12._
+
+Executed the two threads `ideas/ceyron_simulation_scripts_notes.md` left "genuinely unprocessed" — and the outcome decides an architecture question, not just two module candidacies.
+
+- **New:** `tests/spike_ks_stability.py` and `tests/spike_lbm_d2q9_architecture.py` (NumPy diagnostics, not registered in benchdeps), both 3/3 and 2/2 green against their own measured criteria.
+- **KS verdict: real-space explicit FD is dead (dt_max ≈ 5e-5 at 256², ~2000 substeps/frame — matches the O(dx^4) theory bound), but the spectral `f_vf_fluid`-shape is stable one step per frame** (linear part exact per Fourier bin with rate K2(K2−1); only |∇u|² explicit; dt ≈ 0.076 measured vs the reference ETDRK's 0.1; self-sustaining chaos verified over 600 frames with zero forcing). **One mandatory containment found:** the |∇u|² nonlinearity integrates domain-negative — the field mean drifts secularly (−0.2 → −15 measured) and the k=0 bin must be zeroed each step (one bin, same class as fluid's Nyquist zeroing). Cleared to spec whenever wanted.
+- **LBM verdict: fits the chained-pix pattern, no slab track.** Streaming is a pure gather (the `f_vf_streak` directional-sample idiom), collision/equilibrium fuse into one local codebox, bounce-back is a mask-driven swap, 9 channels/cell → 3 RGBA planes on the same `pass` feedback. **Two silent-garbage correctness traps recorded in the spike** (stream-direction sign — uniform flow hides it, the obstacle exposes it; bounce-back must read pre-collision values — post-collision values blow up in ~40 steps). **Two real constraints:** periodic+obstacle is unstable at the reference's ω≈1.97 (stable to ~1.8) — the channel in/outflow BCs are load-bearing, so a vortex-street module needs open-boundary edge handling; and shedding is slow to develop at performance resolutions (weak wake at 12k steps, 300×50 — the reference skips its first 5000 of 15000). Value vs `f_vf_repulse` fakery remains Matt's judgement call.
+- **`slab_chain_architecture.md` RETIRED.** Its premise was already weakened by `f_vf_fluid` shipping without it; LBM and KS were its only remaining candidates, and both are now proven not to need it. File updated with the conclusion and a status header; INDEX updated. Nothing should be built on that track unless a future idea genuinely needs per-pass GLSL uniforms.
+- Docs updated where the claims live: `ceyron_simulation_scripts_notes.md` (both findings inline + resume-points rewritten), `slab_chain_architecture.md` (retired), `INDEX.md`.
+
+### Left for Matt
+
+- Two module candidacies are now architecture-cleared with real numbers: **KS generator** (ready to spec — the "self-sustaining chaotic generator" slot nothing in the library fills; the spike's k=0 zeroing and the dt ceiling are the design inputs) and **LBM obstacle flow** (cleared architecturally, but the periodic-domain instability + slow shedding constraints mean the module shape is a design question — and whether it beats `f_vf_repulse` for practical use is still open).
+- Uncommitted: the two spike scripts plus the edited docs (`HANDOFF.md`, `ideas/ceyron_simulation_scripts_notes.md`, `ideas/slab_chain_architecture.md`, `ideas/INDEX.md`), on top of the still-uncommitted atan2 and caustic sessions below. Consider a single review-and-squash commit soon — three sessions of results are now stacked in the working tree.
+
+_2026-10-12._
+
+The highest-leverage Phase 1 item from the tensor-field sessions below — GenExpr `atan2` safety in `jit.gl.pix`, the shared blocker of `f_tensorfield.md` OQ6, `f_weave_orientation_blend.md` Fix B, and `f_anamorph_unnamed.md`'s field-driven half — is **closed: verified safe**, live on the GPU bench.
+
+- **New:** `tests/spike_atan2_safety.py` + `tests/bench/codeboxes/atan2_safety.gen`. The codebox decodes a sampled vecfield texture (the actual consumer pattern — the skill file's prior `atan2` precedent only covered analytic coords) and outputs four probes: θ, θ/2, the doubled-angle round trip, and a sign(Fx) cross-check. Four tests against independent `np.arctan2` truth, 4/4 green.
+- **Results:** compiles/runs clean, no bench errors; max wrap-aware error 5.6e-7 rad across all quadrants; branch cut correctly wrapped (24,934 adjacent-texel 2π jumps, and near-cut pixels match their own pixel-centre truth — no sampling smearing); half-angle decode 2.8e-7 rad; `atan2(sin t, cos t) == t` to 7.8e-7 rad.
+- **One real, measured quirk:** at the degenerate cut boundary (`Fy == 0, Fx < 0`) the GPU returns +π where IEEE `atan2(-0, -x)` is −π. Benign for every consumer use (±π is the same line; blends use vectors/doubled components), but any NumPy mirror diffing GPU output must wrap-compare at that line. Pinned in the skill file's Trigonometry section alongside the other bench-verified facts.
+- **Bench notes for whoever runs this again:** one run wedged the bench ("bad object" stale-capture failure mode, already documented in tests/README) after an edit changed the codebox mid-session — `benchclient.reopen()` fixed it; and three of the four tests' first drafts failed on *test-side* bugs (a wrap-aware diff applied where a raw diff was needed, a mis-decoded channel scale, a string passed to `harness.note`) — worth remembering that a red here is as likely to be the harness as the GPU.
+- **Docs closed:** `f_tensorfield.md` OQ6 rewritten as verified (with the quirk), Phase 1's "highest-leverage item" pointer marked done, cross-ref updated; `f_weave_orientation_blend.md`'s identical blocker struck through with the result — its Fix A/B is now purely the live empirical A/B it always was; `f_anamorph_unnamed.md`'s cross-ref updated (the angle-doubled simplification now waits only on OQ2, outlet packing); skill file's `atan2` entry strengthened from "listed as valid" to the measured decode-case verification.
+
+### Left for Matt
+
+- OQ6 blocks nothing anymore. The natural next steps it unblocked, in the files' own priority order: the `f_weave` orientation A/B scratch patch (empirical taste question, needs your eyes on the live result), and tensor-field OQ2 (outlet 2/3 packing — the remaining gate before Phase 2 per-module work).
+- Uncommitted: the two spike files plus the five edited docs (`HANDOFF.md`, `ideas/f_tensorfield.md`, `ideas/f_weave_orientation_blend.md`, `ideas/f_anamorph_unnamed.md`, `skills/jit-gen-codebox/SKILL.md`). Same review-and-squash convention as the sessions below.
+
+_2026-10-12._
+
+Executed the "cheap, well-scoped next experiment" from the two sessions below: quantify what `f_caustic`'s divergence (trace) weight misses vs the full Jacobian. New `tests/spike_caustic_trace_vs_jacobian.py` (NumPy diagnostic, not registered in benchdeps), reusing `scratch/caustic_fidelity.py`'s test glass, analytic Jacobian, and photon-counting truth. Seeds 7 and 3 agree throughout.
+
+- **The headline negative result: optics_map.md's saddle-on-a-fold scenario does not occur on this glass.** The trace weight and the local full-Jacobian gain 1/|det(I+d·J)| have *identical* top-8% sets at d* (zero disagreement pixels in either direction) — near-fold pixels coincide with strong negative divergence, so the trace sees them fine. Finding 3's mechanism ("a saddle can have zero divergence while sitting exactly on a fold") is a true statement about the representation but not the measured failure mode here.
+- **The real, measured gap is saddle structure, not fold detection.** At d*, 53–55% of interior pixels are saddles; within that partition the trace weight correlates with truth at r 0.52–0.69 vs the full Jacobian's 0.60–0.80 (top-8% IoU 0.28–0.38 vs 0.28–0.42). In the focus and defocus partitions the two are equivalent — the trace is nearly all the signal there.
+- **The full Jacobian is not a drop-in better weight past the first fold.** At 3.5 d* the one-branch local det gain collapses to r 0.15–0.20, *worse* than the trace's 0.46–0.56 — consistent with the existing finding that multi-branch handling (multi-guess gather, scatter) is what works there, not weight completeness. The full Jacobian is only the better weight below d*.
+- Cross-checked: the spike's trace-gain-at-3.5d* numbers reproduce the fidelity table's "first-order only" row exactly (same quantity, independent code path).
+- Docs amended where the claims live: `ideas/optics_map.md` finding 3 now carries the measurement, and `ideas/f_tensorfield.md`'s "strongest hit" bullet is amended from "a blanket fidelity gap with numbers in hand" to the accurate saddle-partition-only gap, plus the 3.5 d* reversal caveat. The audit-table amendment it promised is recorded there rather than editing the table itself (the numbers bound the claim; the table's "sign-sensitive, inferred" verdict is unchanged by them).
+
+### Left for Matt
+
+- Nothing forces a module change — this measures the representation gap, it doesn't decide that `f_caustic` should grow a tensor inlet. If tensor-field work resumes, the next lever these numbers point at is the saddle partition (55% of pixels, the one place the trace measurably loses structure).
+- Uncommitted (docs + one new diagnostic script): `HANDOFF.md`, `ideas/f_tensorfield.md`, `ideas/optics_map.md`, `tests/spike_caustic_trace_vs_jacobian.py`. Same review-and-squash convention as the sessions below.
+
+## web_shim_candidates: exportcode trial executed (research, no canonical files touched)
+
+_2026-10-12._
+
+The concrete next step flagged in the 2026-10-11 gates digest — running `exportcode webgl` / `exportcode isf` on one simple module — is done. Reconnaissance only, no go/no-go call made. Everything lives in `scratch/experiments/web_shim_trial/` (incl. full `REPORT.md`); nothing committed.
+
+- **Test subject: f_vf_split** — chosen for conceptual simplicity, not line count (2 `sample()` reads + 2 `mix()` calls; fewest params of any gen-based module). f_texrouter is smaller but has no codebox, so nothing for exportcode to export.
+- **Both targets succeeded.** `exportcode webgl` → TWGL-based `.html`; `exportcode isf` → valid `.fs` (ISF JSON header declares params + image inputs, GLSL body matches the codebox math). Runtime-verified: the html loads in headless Chromium with twgl-full.min.js v4.4.0 (pinned per maxref), shader compiles/links, `gl.getError()==0`, rAF loop draws, zero console entries (only expected headless camera-permission denials).
+- **Real gaps vs. in-Max behavior** (details in REPORT.md): (1) outlet collapse — the shader computes both X and Y channels but assigns `gl_FragColor` twice, so only the last outlet survives; every multi-outlet module loses the rest; (2) inputs hardwired to webcam, no hook for a different source; (3) params become one-shot uniforms (no UI — an ISF host would expose them, raw webgl won't); (4) 8-bit RGBA, not the module's float32; (5) no `r draw` clock — free-running rAF.
+- **Trial mechanics:** the UDP bench can't send arbitrary messages, so the driver was a js-driven throwaway patcher (repo's `f_addmod.js` pattern). Two quirks worth remembering: js property assignment for `exportfolder` silently doesn't register — the message form works; and hand-written .maxpat JSON lost 4 patchcords on load in Max 9.2.0, so objects were built programmatically from js instead.
+- **Open questions for whoever picks this up:** is the outlet collapse inherent to exportcode or would another path (jxs) preserve multi-outlet? Do feedback/`dim` modules (f_vf_advect, f_vf_fluid, f_caustic) export at all? Is 8-bit quantization acceptable for the vecfield family or are float textures required? Is ISF the practical shim (free param UI) with the webgl html as demo only? None tested beyond this one module.
 
 ## Ideas: tensor-field cross-references (weave/anamorph/optics), built-module heuristic audit, paused-module check, two stale-doc corrections (research, no code)
 

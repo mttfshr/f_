@@ -32,3 +32,14 @@ _Last updated: 2026-05-26_
 - [ ] T017: Write docs/f_mobius.md (as-built: params, signal chain, usage, known behaviors)
 - [x] T018: Update README.md — status to ✅ Working
 - [ ] T019: Update HANDOFF.md
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+- [ ] T020: Resolve the open "f_mobius performance gap" note in
+  ideas/scratchpad.md (limited in use, missing animation-friendly
+  handles — never profiled): a param/handle audit pass. Filed here
+  rather than moving the folder: one investigation task doesn't by
+  itself drop the module below stable/'s bar — if it turns into real
+  work, move it off stable/ then (.specify/maintenance/SKILL.md).

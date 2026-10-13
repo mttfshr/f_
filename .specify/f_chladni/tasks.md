@@ -100,3 +100,30 @@ and confirmed in Max.
 - [ ] T132 Update `HANDOFF.md`
 
 **Checkpoint**: Docs consistent with as-built state. Build complete.
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+- [ ] T138: Profile whether a bypass_gate guard (or a cheaper gradient)
+  is worth it: the vecfield outlet's central-difference gradient calls
+  modal_A/modal_B 4 more times on top of the center evaluation — ~5
+  full modal evaluations per pixel (each 8+ cos/exp/atan2 terms), all
+  running full cost while bypassed. This is the one genuinely heavy
+  param-bypass codebox among the Tier-B trio (stipple/split are
+  single-pass trivial kernels where a guard would save ~nothing).
+  Same profiling session as glow/prism/streak would cover it.
+- [ ] T139: Record a tier-1 decision: the closed-form modal field is
+  directly NumPy-mirrorable (mode A blend + mode B Gaussian-resonance
+  weights, plus the gradient), or write the deliberate skip. Also fix
+  the stale definition.py path reference in this file (now
+  src/f_chladni/definition.py).
+- [ ] T140: (f_chladni_audio) Do T124: verify with a mic that note
+  tracks pitch and amp responds to dynamics — that single unchecked
+  task is the whole content of README's ⚠ "Unverified" on the companion
+  patch.
+- [ ] T141: (f_chladni_audio) Write docs/f-reference/f_chladni_audio.md
+  — it does not exist, and this is the only shipped module with a
+  README row but no reference doc. Also close out the stale T122
+  (sigmund~→note mapping documentation) and mark T123 done (the patch
+  exists in package/patchers/).

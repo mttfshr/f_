@@ -142,3 +142,21 @@
 - Max does not pick up external file edits while patch is open — close without saving, then reopen to load build script output
 - If build script produces a patch that crashes Max on load, read the saved .maxpat JSON before editing — object IDs shift on every save
 - `proc_mode` auto-detect via alpha channel assumes upstream texture has alpha > 0 — verify this holds for Vsynth WFG outputs
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+_This module moved off .specify/stable/ this session: the audit filed
+one actionable item, and this file already carried genuinely open
+items (T034–T038 integration/frame-rate checks — T038 is the never-run
+cost check — and T039–T042 docs/commit), which themselves put it below
+stable/'s nothing-outstanding bar._
+
+- [ ] T043: Refresh docs/f-reference/f_stipple.md against the shipped
+  definition.py: param defaults mismatch (doc says coarseness 1.0 /
+  freq 5.0; shipped code says 20.0 / 2.0 — anyone dialing "back to
+  spec" gets different grain), the doc describes a proc_mode
+  dither/displacement toggle that was removed (out3 displacement is
+  always-on per the definition header comment), and it predates both
+  the 2026-10-05 definition rewrite and the 2026-10-06 bypass rollout.

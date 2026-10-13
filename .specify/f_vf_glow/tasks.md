@@ -215,3 +215,28 @@ out2 = glow_out;
 - T032 depends on T030 (validate after regenerating f_modules)
 
 No parallel opportunities — this build is inherently sequential due to the scratch-patch-first workflow.
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+_This module moved off .specify/stable/ this session: the audit found
+actionable items, and a module with open tasks doesn't meet stable/'s
+nothing-outstanding bar (.specify/maintenance/SKILL.md)._
+
+- [ ] T036: Profile the 48-tap accumulation loop's cost and A/B an
+  early-exit guard under param bypass. bypass_gate currently only
+  mixes at the end — the loop runs full cost while bypassed (the known
+  open item from plan.md's "Open: GPU cost", unmeasured for this
+  module). Two open ideas name it: ideas/incremental_gaussian_taps.md
+  (unprofiled; also names prism/streak) and
+  ideas/glow_profile_and_afterimage.md (3 more tabled ideas). A single
+  profiling session could cover glow + prism + streak together.
+- [ ] T037: Refresh docs/f-reference/f_vf_glow.md — it still documents
+  `strength` (renamed gain/mix_pct 2026-07-17) and the pre-2026-10-05
+  bypass behavior ("out1 passes source; out1 goes black" — the rule is
+  now all-outlets passthrough). One doc pass.
+- [ ] T038: Record a tier-1-skip decision (or build the trivial
+  closed-form mirror: falloff weights + zero-vector field →
+  passthrough). The module predates Verification Tiers with no
+  recorded decision — same shape as f_grain/f_vf_advect's finding.

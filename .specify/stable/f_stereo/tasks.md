@@ -45,3 +45,17 @@ _Last updated: 2026-05-26_
 - [ ] T021: Write docs/f_stereo.md (as-built: params, signal chain, usage, known behaviors)
 - [ ] T022: Update README.md — status to ✅ Working
 - [ ] T023: Update HANDOFF.md
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+- [ ] T024: Run the existing Tissot-indicatrix diagnostic
+  (tests/spike_mobius_vecfield_transform.py /
+  tests/spike_droste_conformality.py are the precedents) against
+  f_stereo — the only warper of the three with a non-conformal end of
+  its blend, so the only one where the indicatrix is actually
+  interesting (expect the ellipse→circle sweep as proj blends
+  ortho↔stereo). ideas/f_tensorfield.md:320 flags this as never run.
+  Filed in place per the stable/ rule above (single investigation
+  task; move the folder if it grows).

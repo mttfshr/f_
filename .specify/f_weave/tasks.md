@@ -179,3 +179,20 @@ out1 = mix(vec(mark, mark, mark, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
 - vecfield scale factor from T030: document in definition.py codebox comments
 - Phase 2 vecfield decode: use inline sample() — no stored vec component access
   (GenExpr silent failure: `v = sample(...); v.x` → 0)
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+- [ ] T055: Close out / correct this task file: it was abandoned
+  mid-build — shipped phases sit unchecked (10 checked / 31 open,
+  including "write definition.py" and "commit" long since done) and
+  T034's "Archetype: generator" line contradicts the shipped
+  definition.py ("processor"). One honest pass to mark reality.
+- [ ] T056: Update docs/f-reference/discrete_item_conventions.md's
+  f_weave section — it self-declares stale (softness/shape description
+  predates the 2026-07-05 shipped param list). While there: the
+  orientation-blend live A/B (ideas/f_weave_orientation_blend.md Fix
+  A vs B — atan2 blocker closed 2026-10-12, only the empirical A/B
+  remains) is the module's one open design item; keep it tracked in
+  the ideas file until you want it on this queue.

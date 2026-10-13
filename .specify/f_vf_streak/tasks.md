@@ -208,3 +208,22 @@ docs/
 - If normalization produces a brightness artifact when sweeping falloff, the w_sum calculation may have a float precision issue — verify each wN is computed correctly for n=0..7.
 - T017/T018 are the build system branch point — resolve before writing any other Phase 2 tasks. If build_patcher.py needs extension, that work belongs in a separate session, not inline here.
 - Commit after Phase 3 checkpoint and again after Phase 5.
+
+---
+
+## Maintenance (2026-10-12 audit)
+
+- [ ] T054: Profile the 8-step streamline march (24 source + 16 field
+  samples per pixel, unrolled) including the bypassed full-cost
+  question — no measurement exists; fold into the glow/prism profiling
+  session. Note: ideas/incremental_gaussian_taps.md says "worth
+  checking f_vf_streak" for the tap pattern, but v1's weights are
+  closed-form mix() calls outside any loop — that idea doesn't apply
+  here (flagged stale in the audit, not re-filed).
+- [ ] T055: Sweep package/examples/ for dead preset keys — renamed
+  modules' old param names still preset in shipped demo files
+  (confirmed instances: `f_vf_warp::strength` in f_demo_warp.json,
+  `f_vf_seeds::strength` in f_demo_seeds.json / f_demo_seeds2.json;
+  both modules renamed to gain 2026-07-17). The presets silently
+  no-op on the shipped modules. Check all example json/maxpat files
+  for the same class.
