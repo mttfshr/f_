@@ -38,6 +38,12 @@ Parameters routed via `route bypass r_lift r_gamma r_gain g_lift g_gamma g_gain 
 
 - None known.
 
+## References
+
+Per-channel lift/gamma/gain/offset color grading is standard colorist practice; the four-band param naming and layout are this library's own convention. No external source was consulted. The dense twelve-dial panel is the shipped legacy design, deliberately reproduced.
+
+See `docs/f-reference/f_channel_grader.md` (this file) for the full parameter reference.
+
 ## Source File
 
 `patchers/f_channel_grader.maxpat`

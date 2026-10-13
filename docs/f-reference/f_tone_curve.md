@@ -32,6 +32,12 @@ Parameters routed via `route bypass shadows midtones highlights edge_falloff low
 
 - None known. Shares `low_mid` / `mid_high` / `edge_falloff` convention with `f_luma_processor` — consider whether these should always match when used in sequence.
 
+## References
+
+The three-band smoothstep lift implemented here is an original construction; no external source was consulted. Despite the name, it is not a curve editor -- `ideas/lut_curve_and_color_controls.md` records both the naming critique and the dependent-texture 1x256 LUT successor design (flagged by Matt as "wants this pursued for real").
+
+See `docs/f-reference/f_tone_curve.md` (this file) for the full parameter reference; see the ideas file for the LUT direction.
+
 ## Source File
 
 `patchers/f_tone_curve.maxpat`

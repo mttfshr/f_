@@ -101,6 +101,14 @@ The original 8-mode filterbank architecture (`m0amp`–`m7amp`, `z0`–`z7`,
 single-resonance reframe. See `.specify/f_chladni/spec.md` for the full
 rationale and the superseded-parameter list.
 
+## References
+
+The large-x Bessel-function asymptotic approximation of circular-membrane modal interference is standard physics (Chladni plate modes); no specific source was consulted beyond the classical formulation. The radial standing-wave model with edge reflection (`reflectamt`), the angular harmonic terms `cos(n*theta + ph0)`, and mode B's Gaussian resonance weighting are this module's own construction.
+
+The audio companion patch (`f_chladni_audio`: sigmund~ pitch -> `note`, peakamp~ -> `amp`) is original wiring; its verification task remains open (`.specify/f_chladni/T140`).
+
+See `docs/f-reference/f_chladni.md` (this file) for the full algorithm, outlet contract, and companion-patch notes.
+
 ## Source File
 
 `package/patchers/f_chladni.maxpat`

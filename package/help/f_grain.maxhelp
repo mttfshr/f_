@@ -100,7 +100,7 @@
                         270.0,
                         274.5
                     ],
-                    "text": "External Control Messages\n\ndensity [0.0 \u2013 1.0]\namount [0.0 \u2013 2.0]\npersistence [0.0 \u2013 1.0]\nfade [0.0 \u2013 4.0]\nsize [0.0 \u2013 1.0]\nsize_var [0.0 \u2013 1.0]\nshape [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 5.0]\njitter [0.0 \u2013 2.0]\nch_diverge [0.0 \u2013 1.0]\nluma_gate [-1.0 \u2013 1.0]\ndisplace [0.0 \u2013 0.5]\nedge_mode [Clear/Clamp/Wrap/Mirror]\nfield [0.0 \u2013 5.0]\nsv_seed [0.0 \u2013 5.0]\nbypass [0 / 1]",
+                    "text": "External Control Messages\n\ndensity [0.0 \u2013 1.0]\ngain [0.0 \u2013 2.0]\nmix [0.0 \u2013 100.0]\npersistence [0.0 \u2013 1.0]\nfade [0.0 \u2013 4.0]\nsize [0.0 \u2013 1.0]\nsize_var [0.0 \u2013 1.0]\nshape [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]\njitter [0.0 \u2013 2.0]\nch_diverge [0.0 \u2013 1.0]\nluma_gate [-1.0 \u2013 1.0]\ndisplace [0.0 \u2013 0.5]\nedge_mode [Clear/Clamp/Wrap/Mirror]\nfield [0.0 \u2013 5.0]\nsv_seed [0.0 \u2013 5.0]\nbypass [0 / 1]",
                     "linecount": 18,
                     "saved_attribute_attributes": {
                         "textcolor": {

@@ -67,6 +67,14 @@ Coordinate frame rotates by `angle` into `along`/`across` axes (with `aspect` co
 - Target-list partitioning for the three modulation inlets is a working hypothesis (structural params → slot space, appearance params → brick/pixel space), not finalized — see `.specify/f_masonry/spec.md`'s Open Questions.
 - Angle compensation for slot-mod sampling when `angle≠0` is deferred (sample coordinate doesn't currently correct for rotation).
 
+## References
+
+Brick-wall bond patterns (running bond, Flemish bond, etc.) are classical masonry; the per-course offset arithmetic is elementary. The implementation is an original construction: the ADR-7 candidate-search algorithm (hash-seeded per-course candidates with bond constraints), the three modulation-inlet contract, and the continuous distance-field line placement (never grid-quantized) were all derived during development.
+
+This module predates the build system and carries hand-built UI: `src/f_masonry/definition.py` reproduces the shipped patch but regeneration destroyed the UI once -- it is on the never-regenerate list (`tests/drift_baseline.json` documents the deliberate drift). Known loose threads (incl. a dead `quantize` control left in the live `.maxpat`, unwired since the 2026-07-05 redesign) are in Notes above.
+
+See `docs/f-reference/f_masonry.md` (this file) for the full ADR-7 algorithm and the modulation contract.
+
 ## Source File
 
 `patchers/f_masonry.maxpat`

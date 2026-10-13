@@ -119,3 +119,11 @@ f_stereo is agnostic to what feeds it. Tested upstream:
 **proj outside 0–1:** Extended distortion effects are discovered, not designed. Treat as expressive territory but expect uncontrolled behavior. May be scaled back in a future revision.
 
 **Aspect ratio:** Assumes square output context. In a non-square Vsynth context, the circular mask and projection would become elliptical. Verified working correctly in standard square Vsynth context.
+
+## References
+
+Stereographic and orthographic projection are classical cartography and complex analysis -- stereographic projection is conformal (angle-preserving), orthographic is not; the blend between them is this module's own construction. No specific source was consulted; the equirectangular sampling (`atan2`/`asin`) is the standard sphere-unwrapping mapping.
+
+The rotation model (`Ry(lon)`, `Rx(lat)`, `Rz(spin)`) and the `vs_flipy` -> `vs_poltocar` recipe for radially symmetric sources (which must land their symmetry axis at a pole, not the equator) were derived and verified during this module's development. `atan2` in this GPU context was numerically verified against NumPy on 2026-10-12 (`tests/spike_atan2_safety.py`).
+
+See `docs/f-reference/f_stereo.md` (this file) for the full rotation model, equirectangular sampling, and the radially-symmetric-source recipe.

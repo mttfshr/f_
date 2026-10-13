@@ -100,7 +100,7 @@
                         270.0,
                         137.25
                     ],
-                    "text": "External Control Messages\n\nshadows [-1.0 \u2013 1.0]\nmidtones [-1.0 \u2013 1.0]\nhighlights [-1.0 \u2013 1.0]\nlow_mid [0.0 \u2013 1.0]\nmid_high [0.0 \u2013 1.0]\nedge_falloff [0.0 \u2013 0.5]\nbypass [0 / 1]",
+                    "text": "External Control Messages\n\nshadows [-1.0 \u2013 1.0]\nmidtones [-1.0 \u2013 1.0]\nhighlights [-1.0 \u2013 1.0]\nlow_mid [0.0 \u2013 1.0]\nmid_high [0.0 \u2013 1.0]\nedge_falloff [0.0 \u2013 1.0]\nbypass [0 / 1]",
                     "linecount": 9,
                     "saved_attribute_attributes": {
                         "textcolor": {

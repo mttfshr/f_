@@ -66,6 +66,14 @@ Displaced-source output (out2) resamples the input at UV coordinates rotated bac
 - ~~`proc_mode` (dither vs. displacement sub-mode) described in spec.md as a separate exposed param — the shipped codebox instead computes displacement unconditionally into out2 and blends dither vs. source-mode stippling via `src_mode` only. If a live dither/displacement toggle is wanted, it isn't currently wired as its own param.~~ **Resolved 2026-10-12 (maintenance audit, against the current definition.py):** the `proc_mode` header toggle was removed outright — displacement is always available on out3; `src_mode` (source vs. processor) is the only mode param. The doc's param-default rows above were also corrected that day (freq 2.0, coarseness 20.0 — the shipped defaults, previously misdocumented as 5.0/1.0).
 - Source-mode alpha handling flagged as unverified in spec.md — not reconfirmed since.
 
+## References
+
+Hash-field stippling is an original construction: two orthogonal hash fields (a sin-based directional hash and an arithmetic isotropic hash) blended by `anisotropy`. No external source was consulted. The dual-mode auto-detection (source vs processor via `vs_inState`) follows the `f_grain` convention.
+
+The hash constants (large prime multipliers, `coarseness` scaling) were tuned during development; the displacement mode's `input_luma * threshold` warp is this module's own. The removed `proc_mode` header toggle (displacement is always available on out3 since the 2026-10-05 rewrite) is documented in the Notes above.
+
+See `docs/f-reference/f_stipple.md` (this file) for the full dual-mode algorithm and the source/processor auto-detection.
+
 ## Source File
 
 `patchers/f_stipple.maxpat`

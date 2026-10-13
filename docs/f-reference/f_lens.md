@@ -112,6 +112,14 @@ Unconnected `in1`/`in2`/`in3`/`in4` on `lens_pix` sample as black; at default `*
 - Anamorphic (static + field-driven directional squeeze) was considered for v2 and deliberately moved out to its own future module — see `ideas/f_anamorph_unnamed.md`. Not in scope for `f_lens`.
 - `panel_toggle` (front="lens"/back="field") is real, generated infrastructure now (`build_patcher.py`'s `panel_toggle` schema key) — not hand-built JSON anymore, though it started that way in v1.
 
+## References
+
+Filmic lens effects are modeled from first principles rather than a specific source: radial distortion (barrel/pincushish), wavelength-dependent aberration, transmission falloff, and ghost imaging (4-tap reflective cascade) are each standard optics concepts composed here originally. Halation's `pix_target` compositing and the tilt-shift's delegation to `jit.fx.cf.tiltshift` (a recorded schema gap, `ideas/build_patcher_schema_gaps.md`) are this module's own architecture.
+
+Known bug, documented in Notes: bypass gates `lens_pix` only -- halation and tilt-shift stay live regardless. Tilt-shift is slated for extraction to `f_focus` once that module ships (`ideas/f_lens_tiltshift_split.md`).
+
+See `docs/f-reference/f_lens.md` (this file) for the full algorithm and signal chain.
+
 ## Source File
 
 `package/patchers/f_lens.maxpat` — built from `src/f_lens/definition.py` (+ `raw_tiltshift.json`, `raw_halation.json`, `codebox_lens.gen`, `codebox_halation.gen`) via `build/build_patcher.py`.

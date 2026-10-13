@@ -53,3 +53,9 @@ Non-obvious behaviors worth knowing if modifying the patch:
 **cell_val ordering is safe by construction**: `unpack` fires right-to-left — V always reaches `cell_val` before R triggers the index calculation. Ordering is deterministic in Max's single-threaded scheduler.
 
 **Preset slot 0**: Ships pre-stored as identity (diagonal). After any rebuild, recall identity state then send `store 0` to `router_pattrstorage` to restore this.
+
+## References
+
+The 4x4 routing matrix is pure message-domain Max wiring (gates + pattrstorage presets); no mathematical or external source is involved. The construction is original. The right-to-left `unpack` ordering that makes `cell_val` safe and the identity-preset slot-0 convention are documented above.
+
+**Status note (2026-10-09, Matt):** this module is confirmed not in use. It is not audited by the maintenance workstream on that basis; its status line above is historical. Whether it is deprecated/removed or keeps drifting (it has the largest drift entry in `tests/drift_baseline.json`, 96 patch-only boxes) is an open decision recorded in `.specify/maintenance/tasks.md`. A helpfile was assessed (helpfiles T022, 2026-10-12) and deliberately not made: the module has no codebox, no params of the standard kind (16 matrix cells driven by message), and the helpfile pipeline has no archetype for it -- if it is kept at all, its helpfile would have to be hand-built outside the template.

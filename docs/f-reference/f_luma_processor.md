@@ -32,6 +32,12 @@ Parameters routed via `route bypass sat_amt lum_shift hue_shift edge_falloff low
 
 - None known. Parallel structure to `f_hue_processor` — changes to one often suggest parallel changes to the other.
 
+## References
+
+Luminance-selective processing is the structural parallel of `f_hue_processor`'s band logic applied to luma instead of hue; both were developed in-house, no external source consulted. The low/mid/high band split shares the `low_mid`/`mid_high`/`edge_falloff` convention that `f_tone_curve` also uses.
+
+See `docs/f-reference/f_luma_processor.md` (this file) for the full parameter reference.
+
 ## Source File
 
 `patchers/f_luma_processor.maxpat`
