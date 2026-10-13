@@ -36,7 +36,7 @@ When in1 is unconnected, vs_inState delivers vs_black; `src_vecfield` system par
 | `length` | 0–20 | 0.15 | Streamline trace distance in UV space. Controls streak reach. |
 | `falloff` | 0–2.5 | 0.0 | 0 = uniform directional blur. 1 = linear trailing smear. >1 = negative tail weights (expressive artifact territory). |
 | `color_shift` | 0–20 | 0.0 | Chromatic separation along streak direction. 0 = none. |
-| `bypass` | 0/1 | 0 | out0 passes source; out1 goes black. |
+| `bypass` | 0/1 | 0 | out0 passes source; out1 (isolated streak layer) passes the **source**, not black, per the 2026-10-05 all-outlets-passthrough rule. |
 
 **Prefix:** `vfstreak` — **Object name:** `vfstreak_pix`
 
@@ -63,7 +63,7 @@ driven = source + streak * gain                    // fully-composited state
 composite = mix(source, driven, mix_pct / 100)      // wet/dry crossfade
 
 out1 = mix(composite, source, bypass)
-out2 = mix(streak, black, bypass)
+out2 = mix(streak, source, bypass)                   // all-outlets passthrough (2026-10-05)
 ```
 
 Step count is fixed at 8. Field vectors are suppressed by `src_vecfield` when inlet is unconnected.

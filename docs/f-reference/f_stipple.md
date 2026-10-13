@@ -18,8 +18,8 @@ Two orthogonal hash fields — a sin-based directional hash and an arithmetic is
 
 | Name | Type | Range | Default | Description |
 |------|------|-------|---------|-------------|
-| `freq` | float | 0.0–20.0 | 5.0 | Hash field spatial frequency |
-| `coarseness` | float | 1.0–100.0 | 1.0 | Grain period scale — higher = chunkier grains |
+| `freq` | float | 0.0–20.0 | 2.0 | Hash field spatial frequency |
+| `coarseness` | float | 1.0–100.0 | 20.0 | Grain period scale — higher = chunkier grains |
 | `anisotropy` | float | 0.0–4.0 | 0.5 | 0=isotropic grain, 1=parallel lines, >1=expressive aliasing |
 | `angle` | float | -360–360 | 0.0 | Orientation of along/across coordinate frame |
 | `zoom` | float | 0.1–4.0 | 1.0 | Scales viewport into hash field — same character, bigger or smaller |
@@ -63,7 +63,7 @@ Displaced-source output (out2) resamples the input at UV coordinates rotated bac
 
 ## Loose Threads
 
-- `proc_mode` (dither vs. displacement sub-mode) described in spec.md as a separate exposed param — the shipped codebox instead computes displacement unconditionally into out2 and blends dither vs. source-mode stippling via `src_mode` only. If a live dither/displacement toggle is wanted, it isn't currently wired as its own param.
+- ~~`proc_mode` (dither vs. displacement sub-mode) described in spec.md as a separate exposed param — the shipped codebox instead computes displacement unconditionally into out2 and blends dither vs. source-mode stippling via `src_mode` only. If a live dither/displacement toggle is wanted, it isn't currently wired as its own param.~~ **Resolved 2026-10-12 (maintenance audit, against the current definition.py):** the `proc_mode` header toggle was removed outright — displacement is always available on out3; `src_mode` (source vs. processor) is the only mode param. The doc's param-default rows above were also corrected that day (freq 2.0, coarseness 20.0 — the shipped defaults, previously misdocumented as 5.0/1.0).
 - Source-mode alpha handling flagged as unverified in spec.md — not reconfirmed since.
 
 ## Source File

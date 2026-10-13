@@ -1,7 +1,7 @@
 # f_weave
 
 **Type:** Generator (with optional vecfield + scalar-potential inlets)
-**Status:** Working — **not yet listed in README.md's patch table; found undocumented during a docs audit (2026-07-05). HANDOFF.md records an open "can't put my finger on it yet" quality concern from Matt — see Notes.**
+**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. Open design items: the orientation-blend A/B (`ideas/f_weave_orientation_blend.md` — Fix B unblocked by the 2026-10-12 atan2 verification; only the live empirical A/B remains) and Matt's recorded quality concern (see Notes).
 
 ---
 

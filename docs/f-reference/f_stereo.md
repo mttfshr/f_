@@ -31,6 +31,7 @@ Takes a flat texture and wraps it onto a sphere. The sphere can be rotated in th
 - Orthographic = natural globe feel, edges gently foreshortened
 - Stereographic = conformal, edges expanded
 - Values outside 0–1 produce extended distortions that are expressive but uncontrolled — treat as beta territory for now
+- Maintenance note (2026-10-12): the blend's ends differ in conformality — stereographic is conformal, orthographic is not — which makes this the one module of the three warpers (mobius, droste, stereo) where a Tissot-indicatrix sweep would actually distinguish behavior. The diagnostic exists for the other two (`tests/spike_mobius_vecfield_transform.py`, `tests/spike_droste_conformality.py`) but has never been run against this module; filed as `.specify/stable/f_stereo/T024`.
 
 **xy encoder convention:** lon → x-axis, lat → y-axis. Named float messages on in1: `lon 0.4`, `lat 0.6`.
 
@@ -67,7 +68,7 @@ Angle mappings:
 
 At default values (lon=0.5, lat=0.5, spin=0) all angles are zero → identity transform → equatorial view, radially symmetric texture appears symmetric.
 
-No singularity guard needed: the forward stereographic projection step is removed. Equirectangular sampling via atan2/asin is well-behaved everywhere on the sphere.
+No singularity guard needed: the forward stereographic projection step is removed. Equirectangular sampling via atan2/asin is well-behaved everywhere on the sphere. (`atan2` in this exact GPU context — GenExpr codebox in `jit.gl.pix`, applied to decoded sampled-texture coordinates — was verified numerically correct 2026-10-12, `tests/spike_atan2_safety.py`: all quadrants to 5.6e-7 rad vs `np.arctan2`, branch cut correctly wrapped; one benign +π-vs−π convention quirk at the degenerate `y==0, x<0` boundary that a NumPy mirror would wrap-compare.)
 
 ---
 

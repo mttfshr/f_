@@ -1,7 +1,7 @@
 # f_vf_glow
 
 **Type:** Processor (f_vecfield consumer)
-**Status:** Complete
+**Status:** Complete — gain/mix rollout applied 2026-07-12; doc refreshed 2026-10-12 against the shipped codebox (a maintenance audit found it stale on both counts)
 
 ---
 
@@ -36,10 +36,11 @@ When in1 is unconnected, vs_inState delivers vs_black; raw field value near (0,0
 |---|---|---|---|
 | `radius` | 0–0.2 | 0.01 | UV step size per accumulation step. Controls spatial extent of glow. |
 | `falloff` | 0–0.05 | 0.002 | Exponential decay coefficient per step. Higher = tighter glow. |
-| `strength` | 0–1 | 0.8 | Wet/dry mix of glow layer into out0. out1 unaffected. |
+| `gain` | 0–2 | 0.8 | Glow intensity — scales the glow layer's contribution into the driven (fully-composited) state. Renamed from `strength` 2026-07-12 (gain/mix rollout). |
+| `mix` | 0–100% | 0% | Continuous crossfade toward the driven state (`mix_pct` internally), off by default. |
 | `color_mix` | 0–1 | 0.0 | 0 = full-color glow; 1 = luma-only (neutral/white) glow. |
 | `direction` | 0–2 | 0 | 0 = bidirectional, 1 = forward only (trail), 2 = backward only (lead). |
-| `bypass` | 0/1 | 0 | out0 passes source; out1 goes black. |
+| `bypass` | 0/1 | 0 | out0 and out1 both pass through (source on out0; out1's bypassed value is the unprocessed source, per the 2026-10-05 all-outlets-passthrough rule). The 48-step accumulation loop still runs at full cost while bypassed — known open cost item (see Notes). |
 
 **Prefix:** `vfglow` — **Object name:** `vfglow_pix`
 
@@ -76,8 +77,9 @@ for i in 1..48:
 glow = accumulated / total_weight
 glow_rgb = mix(glow.rgb, luma(glow), color_mix)
 
-out0 = mix(src + glow * strength, src, bypass)
-out1 = mix(glow, black, bypass)
+driven = clamp(src + glow * gain, 0, 1)             // gain/mix rollout, 2026-07-12
+out0 = mix(driven, src, max(bypass, 1 - mix_pct))   // mix_pct is the blend toward driven
+out1 = mix(glow, src, bypass)                       // all-outlets passthrough (2026-10-05)
 ```
 
 Step count is fixed at 48. Jitter amplitude is 0.1 steps (±0.05), enough to eliminate banding without visible noise.
@@ -111,9 +113,10 @@ Modulation is additive and scales with `radius`: `radius_eff = radius + mod * ra
 Forward/backward distinction is most visible with f_vf_vortex where the rotational direction is clear.
 
 ### Typical expressive ranges
-`radius` 0.005–0.05, `falloff` 0.001–0.01, `strength` 0.5–1.0. Extreme `radius` (>0.1) with low `falloff` (<0.001) produces long comet-tail streaks — expressive at high `direction` values with an asymmetric vortex field.
+`radius` 0.005–0.05, `falloff` 0.001–0.01, `gain` 0.5–1.0. Extreme `radius` (>0.1) with low `falloff` (<0.001) produces long comet-tail streaks — expressive at high `direction` values with an asymmetric vortex field.
 
 - See `docs/f-reference/f_vecfield_type.md` for f_vecfield type contract
+- **2026-10-12 maintenance audit:** this doc was found stale (documented `strength`, pre-rollout bypass behavior); corrected the same day. One open cost item recorded in `.specify/f_vf_glow/T036`: the 48-step accumulation loop runs at full cost while bypassed (bypass_gate only mixes the final result — no early-exit guard), unprofiled. Flagged alongside prism/streak/chladni for a single profiling session.
 
 ---
 

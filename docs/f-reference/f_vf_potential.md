@@ -1,7 +1,7 @@
 # f_vf_potential
 
 **Type:** Processor (f_vecfield consumer), temporal / has memory
-**Status:** Working — **not yet listed in README.md's patch table; found undocumented during a docs audit (2026-07-05)**
+**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated); maintenance-audited 2026-10-12
 
 ---
 
@@ -43,9 +43,8 @@ potential_pix out0 → out0 (scalar potential)
 ## Notes
 
 - Temporal module — has memory across frames, same architectural family as `f_vf_advect` (ping-pong `pass`/`state` pix pair, `@adapt` on both stages).
-- No `.specify/f_vf_potential/spec.md` exists — this doc is derived entirely from `definition.py`'s header comment, `pix_chain`, and param list. `codebox_potential.gen` was not independently reviewed for this doc — read it directly before relying on exact algorithm details.
-- The `color` mod inlet (`src_color`) suggests the accumulator can be informed by or tint against a color texture in addition to the vecfield, but the exact mechanism isn't documented anywhere outside the codebox itself — worth clarifying with Matt or reading `codebox_potential.gen` if this module comes back into active use.
-- Not in `README.md`'s patch table — added as a finding of this documentation pass, not yet cross-checked into README.
+- **2026-10-12 maintenance audit — codebox now read, and the review note above can be retired:** `codebox_potential.gen` integrates field **magnitude** only (`field_mag = sqrt(fx² + fy²)` accumulated with `dt`/`decay`) — it does not integrate the vector path or direction. Consequence: the module is **axis-blind** — a field and its 180° flip produce identical output. This settles `ideas/f_tensorfield.md`'s open question 11 (previously "assumed excluded" in the tensor-consumer audit table; now recorded as affected, magnitude-only). The optional color inlet tints/gates the same accumulation per its channel luma; no directional mechanism anywhere.
+- **Bypass behavior (audit finding):** bypassed, the module outputs the neutral (0,0,0,1), not an input passthrough, despite declaring archetype "processor" — the implicit `out1 == in1` contract check doesn't cover this module. A BYPASS_EXPECT entry to assert it is filed as `.specify/f_vf_potential/T001`.
 
 ## Source File
 

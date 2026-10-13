@@ -1,7 +1,7 @@
 # f_vf_flow
 
 **Type:** Generator (f_vecfield producer), dual-mode
-**Status:** Working — **not yet listed in README.md's patch table; found undocumented during a docs audit (2026-07-05)**
+**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated); maintenance-audited 2026-10-12
 
 ---
 
