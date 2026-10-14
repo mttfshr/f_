@@ -96,21 +96,27 @@ and derives a 2×2 symmetric structure tensor from its local gradient — the
 classic computer-vision technique for local orientation *and* how strongly
 that orientation is expressed.
 
-**Three outlets, one computed pass** (not a producer + separate bridge
+**Two outlets, one computed pass** (not a producer + separate bridge
 module — the eigendecomposition of a 2×2 symmetric matrix is cheap and
-closed-form, no reason to force an extra patch-cord hop):
+closed-form, no reason to force an extra patch-cord hop). **DECIDED
+2026-10-13 (Matt): the packed-convenience shape (Open Question 2's
+"fourth producer-outlet shape"), not the original three-way split.**
 
 1. **Raw tensor** (Jxx, Jxy, Jyy packed). Full information, lossless. No
    consumer today; this is what a future glyph-field renderer or
    photoelastic module would need.
-2. **Principal-axis direction**, f_vecfield-contract texture (RG=XY,
-   0.5=zero), but encoded via **angle-doubling** (2θ) rather than a naive
-   eigenvector-as-vector conversion — doubling makes θ and θ+π map to the
-   same stored value, so there's no arbitrary sign choice flipping
-   discontinuously in storage. (This fixes the *storage* ambiguity only —
-   see Open Questions for what it does and doesn't fix for consumers.)
-3. **Eigenvalues**, ordinary scalar texture — leaning trace+anisotropy
-   (λ1+λ2, λ1−λ2) over raw λ1/λ2, see spike findings below.
+2. **Decoded convenience, packed RGBA**: R=cos 2θ, G=sin 2θ, B=trace
+   (λ1+λ2), A=anisotropy (λ1−λ2). Direction is still angle-doubled in
+   R/G exactly as before — doubling makes θ and θ+π map to the same
+   stored value, so there's no arbitrary sign choice flipping
+   discontinuously in storage (this fixes the *storage* ambiguity only —
+   see Open Questions for what it does and doesn't fix for consumers).
+   Replaces the earlier plan's separate direction and eigenvalue
+   outlets: every real candidate consumer so far (`f_vf_glow`: trace +
+   anisotropy; `f_stipple`: direction + anisotropy) wants a packed pair
+   from this exact set, so one consumer takes one inlet and reads
+   whichever channels its own math needs, rather than the producer
+   pre-committing to which two-or-three values travel together.
 
 **Explicitly rejected alternative:** smuggling tensor data into unused
 vecfield channels on existing producers (e.g. the B channel `f_mobius`
@@ -379,10 +385,24 @@ paused module's actual blocker is orthogonal to representation type:
 
 ## Open questions
 
+> **Terminology note (2026-10-13):** questions 2, 5, 6, 7, and 9 below
+> were written against the original three-outlet plan (1=raw tensor,
+> 2=direction, 3=eigenvalues). That plan is superseded — see the Producer
+> concept section above and the Packing corollary resolution below. Read
+> them with this mapping: old outlet 2 (direction) is now the R/G
+> channels of the new outlet 2 (packed convenience); old outlet 3
+> (eigenvalues/trace+anisotropy) is now that same outlet's B/A channels.
+> Nothing below needed re-deciding on the merits — the content and
+> representation choices stand, only the outlet count changed — but a
+> literal "outlet 3" or "outlet 2 only" reference is stale until these
+> items get a terminology pass.
+
 1. **Outlet 1 (raw tensor) range/normalization.** Spiked (above);
    provisional `strength` ~10–15 needs live-Max confirmation.
-2. **Outlet 3 representation.** Leaning trace+anisotropy over raw λ1/λ2
-   (spike evidence above), not fully closed.
+2. **Outlet 3 representation — RESOLVED 2026-10-13 (Matt), via the
+   packing decision below.** Trace+anisotropy, not raw λ1/λ2 (spike
+   evidence above) — and now not a separate outlet at all, but the B/A
+   channels of outlet 2's packed convenience RGBA.
 3. **Gradient operator.** Sobel (reusing the verified `f_vf_sobel`
    kernel) used in the spike; Scharr comparison deferred, not blocking
    unless Sobel proves insufficiently sharp for fine grain/weave-scale
@@ -513,16 +533,17 @@ paused module's actual blocker is orthogonal to representation type:
     consequence (does the base/depth/texture triple need a fourth,
     optional confidence-gate-source element).
 
-**Packing corollary, surfaced by 12 and 13 together:** `f_vf_glow` wants
-trace+anisotropy packed together (one inlet, two uses); `f_stipple` wants
-direction+anisotropy packed together. Between the two, there's a case for
-a fourth producer-outlet shape not previously considered — a single RGBA
-"decoded convenience" outlet (R=cos2θ, G=sin2θ, B=trace, A=anisotropy)
-alongside the raw-tensor outlet, so each consumer takes one inlet and
-unpacks whichever channels its own math needs, rather than the producer
-pre-committing to a two-vs-three-outlet split before Phase 2 reveals which
-combinations consumers actually want. Worth weighing against Open
-Question 2 before that one closes.
+**Packing corollary, surfaced by 12 and 13 together — DECIDED 2026-10-13
+(Matt): adopted.** `f_vf_glow` wants trace+anisotropy packed together
+(one inlet, two uses); `f_stipple` wants direction+anisotropy packed
+together. Between the two, there's a case for a fourth producer-outlet
+shape not previously considered — a single RGBA "decoded convenience"
+outlet (R=cos2θ, G=sin2θ, B=trace, A=anisotropy) alongside the
+raw-tensor outlet, so each consumer takes one inlet and unpacks whichever
+channels its own math needs, rather than the producer pre-committing to a
+two-vs-three-outlet split before Phase 2 reveals which combinations
+consumers actually want. This is now the producer's shape (see Producer
+concept, above) and closes Open Question 2 — see its resolution note.
 
 ---
 
@@ -564,11 +585,15 @@ per the Scope note above, and shouldn't be conflated:
   questions (9, 11, 13's consumer-design passes) are codebox reads and
   per-module checks, no longer blocked by the decode.
 - **Phase 2 (per-module finesse) hasn't started on purpose.** Open
-  questions 12–14 are real designs, not wiring, and the packing corollary
-  they surfaced (RGBA convenience outlet) feeds back into Phase 1's own
-  Open Question 2 — so the honest order is: keep closing Phase 1 items,
-  let the outlet-count/packing question settle, *then* start Phase 2
-  one module at a time, starting wherever the fit is tightest
-  (`f_vf_glow`'s direction-blend and `f_stipple`'s anisotropy/angle both
-  look like strong first candidates once there's something stable to
-  build against).
+  questions 12–14 are real designs, not wiring, but the gate they were
+  waiting on is now clear: the packing corollary (RGBA convenience
+  outlet) is decided and closes Phase 1's own Open Question 2
+  (2026-10-13, Matt — see Producer concept, above). What's left before
+  Phase 2 starts in earnest is the remaining Phase-1 codebox reads
+  (open questions 9, 11) plus a terminology pass on the items the
+  Terminology note above flags as written against the old outlet count
+  — not a design decision anymore, just bookkeeping. Then Phase 2, one
+  module at a time, starting wherever the fit is tightest (`f_vf_glow`'s
+  direction-blend and `f_stipple`'s anisotropy/angle both look like
+  strong first candidates now that there's something stable to build
+  against).
