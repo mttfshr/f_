@@ -1,6 +1,19 @@
 # f_weave — orientation response to vecfield input
 
-## Status: open, needs a live scratch-patch A/B before deciding
+## Status: RESOLVED 2026-10-13 (Matt)
+
+Decision, after the live scratch-patch A/B (`scratch/experiments/f_weave_orientation_ab/`):
+**not a one-time pick between Fix A and Fix B — ship both, as live dials.**
+`f_weave` now has `field_amount` (depth, 0–2, default 1.0 = original implicit
+depth) and `fix_blend` (0 = Fix A/vector-add+renormalize, 1 = Fix B/true
+angular blend via `atan2`, continuous between). This is "performable" by
+design, per Matt — the A/B question turned out not to need a winner.
+Shipped in `src/f_weave/definition.py`, regenerated, drift-clean. See
+`docs/f-reference/f_weave.md` for the final algorithm.
+
+The scratch patch stays in `scratch/experiments/f_weave_orientation_ab/` as
+the record of how the two mechanisms were built and compared, not as a
+live-vs-shipped reference anymore (the real module now has both built in).
 
 ## The observation
 Matt fed `f_weave` a video→optical-flow vecfield on `in1`. Output was dense,
@@ -61,9 +74,10 @@ boundary — benign for blending). Fix B is unblocked; the live A/B below
 is now purely the empirical taste question it always was.
 
 ## Next step
-Scratch patch with both mechanisms wired side-by-side/switchable, same
+~~Scratch patch with both mechanisms wired side-by-side/switchable, same
 video→flow source used in the original screenshot, A/B live before
-committing to either.
+committing to either.~~ Done 2026-10-13 — see Status above. No next step;
+closed.
 
 ## Relationship to other open f_weave threads
 This is a separate axis from the already-open orientation A/B naming

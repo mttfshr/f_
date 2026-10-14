@@ -1,7 +1,7 @@
 # f_weave
 
 **Type:** Generator (with optional vecfield + scalar-potential inlets)
-**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. Open design items: the orientation-blend A/B (`ideas/f_weave_orientation_blend.md` — Fix B unblocked by the 2026-10-12 atan2 verification; only the live empirical A/B remains) and Matt's recorded quality concern (see Notes).
+**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. Orientation-blend A/B resolved 2026-10-13 (Matt): not a one-time pick, both mechanisms ship as live `field_amount`/`fix_blend` dials (`ideas/f_weave_orientation_blend.md`). Matt's recorded quality concern is still open (see Notes).
 
 ---
 
@@ -40,6 +40,8 @@ weave_pix out0 → out0 (texture out)
 | `marklen` | 0–0.5 | 0.3 | Mark length along line direction |
 | `regularity` | 0–1 | 0.5 | 1=lines in phase (grid-like), 0=fully varied per-line offset |
 | `phase` | -1–1 | 0.0 | Animation phase — scrolls marks along line direction |
+| `field_amount` | 0–2 | 1.0 | Vecfield (in1) orientation-contribution depth. 1.0 reproduces the original (pre-2026-10-13) implicit depth exactly. |
+| `fix_blend` | 0–1 | 0.0 | Orientation mechanism crossfade: 0 = vector-add + renormalize, 1 = true angular blend (`atan2`-based). Live performance control, not a fixed choice — see `ideas/f_weave_orientation_blend.md`. |
 | `src_potential` | internal | — | Driven by vs_inState on the scalar-potential inlet; not user-facing |
 | `bypass` | 0/1 | 0 | Outputs black |
 
@@ -50,9 +52,21 @@ weave_pix out0 → out0 (texture out)
 ## Algorithm
 
 ```
-// orientation: base angle plus vecfield perturbation (in1)
+// orientation: two mechanisms, crossfaded by fix_blend (resolved 2026-10-13)
 vx, vy = sample(vecfield, uv) - 0.5
-cs = cos(angle*π) + (-vy); sn = sin(angle*π) + vx
+base_angle = angle*π
+
+// Mechanism A (fix_blend=0): vector-add + renormalize, field_amount-scaled
+csA = cos(base_angle) + field_amount*(-vy); snA = sin(base_angle) + field_amount*vx
+normalize (csA, snA)
+
+// Mechanism B (fix_blend=1): true angular blend via atan2, weighted by
+// field_amount (depth) and field magnitude (confidence)
+field_angle = atan2(vx, -vy)
+blend_angle = base_angle + wrap(field_angle - base_angle) * clamp(field_amount * |field| * 2, 0, 1)
+csB = cos(blend_angle); snB = sin(blend_angle)
+
+cs = mix(csA, csB, fix_blend); sn = mix(snA, snB, fix_blend)
 normalize (cs, sn)
 across_rot = uv.x*cs + uv.y*sn
 along      = uv.x*(-sn) + uv.y*cs

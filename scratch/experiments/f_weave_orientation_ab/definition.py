@@ -1,0 +1,137 @@
+patcher = {
+    "name":               "f_weave_oab",
+    "prefix":             "weave_oab",
+    "object_name":        "weave_oab_pix",
+    "title":              "Weave OAB (scratch)",
+    "archetype":          "processor",
+    "pix_type":           "char",
+
+    "presentation_width":  220,
+    "presentation_height": 219,
+
+    "outlets": [
+        {"comment": "texture out"},
+    ],
+
+    "mod_inlets": [
+        {
+            "label":       "scalar in",
+            "vs_instate":  True,
+            "state_param": "src_potential",
+        },
+    ],
+
+    "params": [
+        {"name": "density",      "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5,  "hint": "Line spacing and mark frequency (log-mapped)."},
+        {"name": "angle",        "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "Global line orientation (0-1 maps to 0-pi)."},
+        {"name": "weight",       "type": "float", "min": 0.0,  "max": 0.5, "default": 0.1,  "hint": "Line thickness."},
+        {"name": "marklen",      "type": "float", "min": 0.0,  "max": 0.5, "default": 0.3,  "hint": "Mark length along line direction."},
+        {"name": "regularity",   "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5,  "hint": "1=grid-like, 0=fully varied."},
+        {"name": "phase",        "type": "float", "min": -1.0, "max": 1.0, "default": 0.0,  "hint": "Animation phase."},
+        {"name": "softness",     "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0,  "hint": "Edge softness."},
+        {"name": "shape",        "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "Mark profile."},
+        {"name": "field_amount", "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0,  "hint": "SCRATCH: field-contribution depth. 1.0 = shipped f_weave's implicit depth. Shared by both mechanisms below."},
+        {"name": "fix_blend",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "SCRATCH: 0 = vector-add+renormalize (Fix A), 1 = true angular blend via atan2 (Fix B). Crossfade live."},
+        {"name": "src_potential", "type": "internal"},
+        {"name": "bypass",        "type": "bypass"},
+    ],
+
+    "codebox": """\
+Param density(0.5);
+Param angle(0.0);
+Param weight(0.1);
+Param marklen(0.3);
+Param regularity(0.5);
+Param phase(0.0);
+Param softness(0.0);
+Param shape(0.0);
+Param field_amount(1.0);
+Param fix_blend(0.0);
+Param src_potential(0.0);
+Param bypass(0.0);
+
+// ─── Orientation (SCRATCH: two mechanisms, continuously crossfadable) ─────────
+// See ideas/f_weave_orientation_blend.md. field_amount=1.0, fix_blend=0.0
+// reproduces shipped f_weave's orientation block exactly.
+
+vx = sample(in1, norm).x - 0.5;
+vy = sample(in1, norm).y - 0.5;
+
+base_angle = angle * pi;
+base_cs = cos(base_angle);
+base_sn = sin(base_angle);
+
+// Mechanism A (Fix A): vector-add + renormalize, field term scaled by field_amount.
+csA = base_cs + field_amount * (-vy);
+snA = base_sn + field_amount * vx;
+magA = sqrt(csA * csA + snA * snA);
+csA = csA / max(magA, 0.0001);
+snA = snA / max(magA, 0.0001);
+
+// Mechanism B (Fix B): true angular blend. Field angle via atan2 (verified GPU-safe
+// on decoded sampled-texture input, tests/spike_atan2_safety.py), same (cs,sn)-space
+// sign convention as mechanism A's addition direction. Weighted by field_amount
+// (depth) and field magnitude (confidence) so near-zero field falls back to base.
+field_mag = sqrt(vx * vx + vy * vy);
+field_angle = atan2(vx, -vy);
+d = field_angle - base_angle;
+d = d - 2.0 * pi * floor((d + pi) / (2.0 * pi));
+weight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0);
+blend_angle = base_angle + d * weight_b;
+csB = cos(blend_angle);
+snB = sin(blend_angle);
+
+// Crossfade A -> B.
+cs = mix(csA, csB, fix_blend);
+sn = mix(snA, snB, fix_blend);
+mag = sqrt(cs * cs + sn * sn);
+cs = cs / max(mag, 0.0001);
+sn = sn / max(mag, 0.0001);
+
+across_rot = norm.x * cs + norm.y * sn;
+along      = norm.x * (-sn) + norm.y * cs;
+
+// ─── Scalar potential override ────────────────────────────────────────────────
+
+across_pot = sample(in2, norm).x;
+across = mix(across_rot, across_pot, src_potential);
+
+// ─── Density scale (log-mapped) ───────────────────────────────────────────────
+
+density_scale = pow(2.0, density * 5.0 - 1.0);
+
+// ─── Distance to nearest line ─────────────────────────────────────────────────
+
+dist_to_line = abs(fract(across * density_scale) - 0.5);
+
+// ─── Per-line phase offset ────────────────────────────────────────────────────
+
+line_idx = floor(across * density_scale);
+line_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));
+pos = along * density_scale + phase + line_hash;
+dist_to_mark = abs(fract(pos) - 0.5);
+
+// ─── Edge falloff (softness expands outer edge, inner stays at 0) ─────────────
+
+outer_across = weight + softness * weight;
+outer_along  = marklen + softness * marklen;
+edge_across = smoothstep(outer_across, 0.0, dist_to_line);
+edge_along  = smoothstep(outer_along,  0.0, dist_to_mark);
+
+// ─── Shape profile (flat-top → raised cosine) ─────────────────────────────────
+
+profile = mix(1.0, cos(clamp(dist_to_line / max(weight, 0.0001), 0.0, 1.0) * pi * 0.5), shape);
+
+// ─── Mark ────────────────────────────────────────────────────────────────────
+
+mark = edge_across * edge_along * profile;
+
+// ─── Output ───────────────────────────────────────────────────────────────────
+
+cr = mix(1.0, sample(in2, norm).x, src_potential);
+cg = mix(1.0, sample(in2, norm).y, src_potential);
+cb = mix(1.0, sample(in2, norm).z, src_potential);
+
+out1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+""",
+}
