@@ -289,9 +289,21 @@ history:
 
 ## Maintenance (2026-10-12 audit)
 
-- [ ] T046: Decide the open tilt-shift split
-  (ideas/f_lens_tiltshift_split.md: split / keep / blur-engine —
-  undecided). The module otherwise passes all three axes; its
-  known-incomplete definition (tilt-shift targets jit.fx.cf.tiltshift
-  and panel_toggle are recorded schema gaps per
-  ideas/build_patcher_schema_gaps.md) is documented and deliberate.
+- [x] T046: Decide the open tilt-shift split — **RESOLVED 2026-10-13
+  (retroactively; the split itself happened 2026-09-23).** Tilt-shift
+  (`jit.fx.cf.tiltshift`) was removed from `f_lens`'s chain on
+  2026-09-23 and moved toward `f_focus` (currently `.specify/paused/
+  f_focus/`, not yet built/shipped). This closes questions 1 and 3 in
+  `ideas/f_lens_tiltshift_split.md` (split: yes; no lightweight
+  tilt-shift kept in `f_lens`). Questions 2 and 4 (blur-engine choice,
+  naming) remain open but are now `f_focus`'s own unscheduled work,
+  decoupled from `f_lens`'s readiness. `f_lens` v2 (ghost images +
+  halation) is complete and closed; no further v2-style expansion is
+  planned for now.
+
+## Status (2026-10-13)
+
+v1 + v2 scope (aberration, distortion, transmission, ghost images,
+halation, spatial modulation) is shipped, drift-clean, and documented.
+Tilt-shift has moved on to `f_focus` (paused). No open architecture
+questions remain for `f_lens` itself. Module is stable.

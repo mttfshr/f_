@@ -62,7 +62,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 
 | Patch | Description |
 |---|---|
-| `f_lens` | Filmic lens -- aberration, distortion, transmission, tilt-shift, ghost images, halation, spatial modulation |
+| `f_lens` | Filmic lens -- aberration, distortion, transmission, ghost images, halation, spatial modulation |
 | `f_vf_prism` | Vecfield-driven prism separation -- luma-gated RGB displacement along the field; composite / isolated outlets |
 
 ### ∇ Generators

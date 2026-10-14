@@ -80,6 +80,23 @@ is ever built, so expectations are set honestly from the start.
 
 ## Status
 
+**RESOLVED (retroactively) 2026-10-13** — questions 1 and 3 above are
+closed: tilt-shift (`jit.fx.cf.tiltshift`) was removed from `f_lens`'s
+chain on 2026-09-23 and moved toward a new module, `f_focus`
+(`.specify/paused/f_focus/` — planned but not yet built/shipped).
+`f_lens` does not keep a lightweight tilt-shift after the split. The
+naming question (4) is also settled in practice — `f_focus`, not
+`f_tiltshift`, is the name in use in `.specify/paused/`. Question 2
+(blur-engine choice: keep `jit.fx.cf.tiltshift` as-is, add a focus-map
+gather-blur alongside it, or replace it) remains genuinely open, but is
+now `f_focus`'s own unscheduled future work, decoupled from `f_lens`.
+`f_lens` v2 (ghost images + halation) is complete; no further
+expansion of `f_lens` itself is planned for now.
+
+Original (now superseded) framing kept below for history.
+
+---
+
 Tabled — real open architecture question, not yet decided, not yet
 scratch-tested. Surfaced independently by Matt before this chapter read;
 the chapter mainly supplied one concrete direction (content-driven focus
@@ -127,8 +144,6 @@ needs *a* scalar, not specifically a camera-space one.
 
 ## Where to resume
 
-Architecture/naming decision (open questions 1-4 above) is the actual
-next step, before any file touches production code — consistent with
-"discuss architecture before writing code." No spec file created yet
-for a prospective new module; this file is the holding place until that
-decision is made.
+Closed for `f_lens` — see Status above. Any future work on question 2
+(blur-engine choice for `f_focus`) resumes in `.specify/paused/f_focus/`,
+not here.

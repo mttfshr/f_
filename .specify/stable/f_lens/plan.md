@@ -78,9 +78,33 @@ ideas file rather than lost — real design work, just relocated.
 
 ---
 
+## ADR-7: v2 closed, no further expansion planned; tilt-shift split retroactively confirmed (2026-10-13)
+
+**Context:** Tilt-shift (`jit.fx.cf.tiltshift`) was actually removed
+from `f_lens`'s chain on 2026-09-23, toward a new module `f_focus`
+(`.specify/paused/f_focus/`, not yet built) — see
+`ideas/f_lens_tiltshift_split.md` for the full reasoning. That removal
+predates this ADR; this entry just records it against the plan and
+closes the loop (task T046 had still been tracking it as "undecided").
+
+**Decision:** `f_lens` v2 scope is ghost images + halation (ADR-6),
+tilt-shift split out (confirmed above), anamorphic removed (ADR-6
+Addendum). Matt: mark v2 abandoned for now — no further v2-style
+expansion of `f_lens` is planned. Module moves to `.specify/stable/`.
+
+**Consequences:** `f_lens`'s current, final effect set is chromatic
+aberration, barrel/pincushion distortion, transmission vignette, ghost
+images, halation, and spatial modulation — not tilt-shift (moved on)
+and not anamorphic (relocated to `ideas/f_anamorph_unnamed.md`).
+`README.md`'s `f_lens` row corrected to match. Any future tilt-shift/
+focus-blur work happens in `f_focus`, independently, whenever Matt
+picks it back up — not tracked against `f_lens` anymore.
+
+---
+
 ## Summary
 
-f_lens is a three-inlet texture processor simulating the experiential qualities of an imperfect physical lens. The core work is a jit.gl.pix codebox implementing four effect families (chromatic aberration, barrel/pincushion distortion, transmission vignette, and tilt-shift blur) modulated by two optional control textures. The plan phases codebox development as a sequence of independently verifiable effects, followed by a Python build script generating the patcher wrapper.
+f_lens is a three-inlet texture processor simulating the experiential qualities of an imperfect physical lens. The core work is a jit.gl.pix codebox implementing chromatic aberration, barrel/pincushion distortion, transmission vignette, ghost images, and halation, modulated by optional control textures. Tilt-shift (originally part of this set) was split out 2026-09-23 toward a separate, not-yet-built module, `f_focus`. The plan phases codebox development as a sequence of independently verifiable effects, followed by a Python build script generating the patcher wrapper.
 
 The critical early question — whether jit.gl.pix supports three texture inlets in the Vsynth context — is the first thing verified. Everything else depends on this.
 
