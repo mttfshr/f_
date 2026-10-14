@@ -1,6 +1,13 @@
 {
  "_about": "definition.py ratchet (tests/test_drift.py). Modules whose patcher does not yet reproduce from its definition, with the drift counts they are allowed. Only ever shrinks; delete this file when empty. Regenerate with `python3 tests/test_drift.py --write-baseline`.",
  "modules": {
+  "f_a_decorrelate": {
+   "reason": "pfft~ audio processor (external subpatch f_a_decorrelate_inner.maxpat loaded by name; no jit.gl.pix, no presentation UI); the schema has no audio archetype. Spec in .specify/f_a_decorrelate/. Revisit if an audio archetype is added.",
+   "status": "out_of_scope"
+  },
+  "f_a_decorrelate_inner": {
+   "status": "no_definition"
+  },
   "f_a_ripple": {
    "reason": "gen~ audio generator (no jit.gl.pix, no presentation UI); the schema has no audio archetype. Spec in .specify/f_a_ripple/. Revisit if an audio archetype is added.",
    "status": "out_of_scope"

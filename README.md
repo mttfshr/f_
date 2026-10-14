@@ -114,6 +114,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | Patch | Description |
 |---|---|
 | `f_a_ripple` | ⚠ Unfinished. De-correlating ripple stimulus (Yukhnovich et al. 2025); DSP done, UI and docs pending |
+| `f_a_decorrelate` | ⚠ Unfinished. De-correlating modulation as a processor (audio in → out, pfft~); DSP done, packaging pending |
 | `f_chladni_audio` | ⚠ Unverified. Audio-input companion for `f_chladni`: pitch drives `note`, amplitude `amp`. No reference doc |
 
 ## Notes

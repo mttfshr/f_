@@ -29,6 +29,10 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 README = REPO_ROOT / "README.md"
 PATCHERS_DIR = REPO_ROOT / "package" / "patchers"
+# pfft~ subpatches load by NAME from the same folder as their parent
+# (pfft-spectral-processing skill: pfft~ cannot embed its subpatch inline) --
+# dependencies, not modules: no README row, exempt from module checks.
+NOT_MODULES = {"f_a_decorrelate_inner"}
 HELP_DIR = REPO_ROOT / "package" / "help"
 OUT = REPO_ROOT / "package" / "extras" / "f_Launch.maxpat"
 
@@ -79,7 +83,7 @@ def validate(groups):
     for heading, rows in groups:
         if not rows:
             problems.append(f"empty group: {heading!r}")
-    on_disk = {p.stem for p in PATCHERS_DIR.glob("*.maxpat")}
+    on_disk = {p.stem for p in PATCHERS_DIR.glob("*.maxpat")} - NOT_MODULES
     for n in sorted(set(names) - on_disk):
         problems.append(f"in README table but no package/patchers/{n}.maxpat")
     for n in sorted(on_disk - set(names)):

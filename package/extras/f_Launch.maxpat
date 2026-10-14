@@ -3981,7 +3981,7 @@
 										150.0,
 										20.0
 									],
-									"text": "f_chladni_audio",
+									"text": "f_a_decorrelate",
 									"textcolor": [
 										0.55,
 										0.55,
@@ -4009,11 +4009,67 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Audio-input companion for f_chladni: pitch drives note, amplitude amp. No reference doc",
+									"text": "⚠ Unfinished. De-correlating modulation as a processor (audio in → out, pfft~); DSP done, packaging pending",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										42.0,
+										720.0,
+										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-6",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										20.0,
+										140.0,
+										150.0,
+										20.0
+									],
+									"text": "f_chladni_audio",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										70.0,
+										210.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-7",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										140.0,
+										150.0,
+										20.0
+									],
+									"text": "⚠ Unverified. Audio-input companion for f_chladni: pitch drives note, amplitude amp. No reference doc",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										70.0,
 										720.0,
 										20.0
 									],

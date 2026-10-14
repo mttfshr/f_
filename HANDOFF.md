@@ -1,5 +1,81 @@
 # HANDOFF
 
+## f_a_decorrelate: MODULE COMPLETE (at the f_a_ripple packaging bar) — DSP shipped to package/patchers/, docs written, all checks green
+
+Assessed `f_a_decorrelate` against the current `f_a_ripple` state: the spec/plan block ("no ground truth until f_a_ripple clears T2–T6") is stale — T2–T6 passed 2026-08-05/06 and Phase 4 core DSP is built. Spec.md status header + Primary risk rewritten as resolved (with the narrower residual risk: comparisons run against `f_a_ripple_v1.maxpat`, not a shipped module); plan.md ADR-3 marked satisfied, Phase 2 line unblocked. tasks.md T001 ticked. **Key correction to earlier framing:** the idea file already records T7a — the pfft~ AM build — as PASSED 2026-08-07 (the buffer~/index~ architecture); what's genuinely unstarted is T7b (PM in pfft~) and the rigorous null/correlation tests.
+
+**Math tier (new `tests/spike_a_decorrelate_t7.py`, not registered in benchdeps):** NumPy mirror of the whole T7a signal chain (hann STFT, per-bin gain from the 50 ms-refreshed curve, iSTFT with squared synthesis window) vs an additive AM reference on the matched carrier. Measured: **2048/4 is the right FFT size** (residual −15.6 dB rel ref RMS, corr 0.986; 4096/8192 get *worse* — longer windows violate the 1 Hz modulation more than they help bin alignment; **ADR-5 answered**). **50 ms refresh is free** (−15.6 vs −15.7 dB per-frame; T7a's metro rate validated). Residual attribution: frame-hold ~−33 dB, bin-frequency quantization of M ~−33 dB, STFT round-trip −180 dB — the dominant term is Hann leakage × per-bin gain on partials that aren't bin-centered (f0=96 vs 21.5 Hz bins), inherent to windowed per-bin processing, so a waveform null is physically NOT the bar; **envelope correlation (the paper's actual claim, T8's metric) is the acceptance test** and there pfft AM matches additive (mean |off-diag| 0.313 vs 0.320) with the fixed-SMR control cleanly separated (0.594). **PM (T7b) first data point for ADR-4:** per-bin phase rotation tracks additive PM at −11.2 dB, corr 0.962, envelope-corr in family (0.237 vs 0.202) — viable, not ruled out. Two reference-normalization bugs were caught and fixed in the mirror itself (per-band vs global sqrt(N) — a 1.63× band-level error that polluted the first "floor").
+
+**Max patches authored (in `~/Vsynth/patterns/`, built by `build_t7b_patches.py` from the T7a exemplar per maxpat-json-authoring, structurally validated):** (1) `f_a_decorrelate_scratch_t7b.maxpat` + `t7b_inner.maxpat` — PM build: T7a's whole outer architecture plus a second buffer (T7b_phase) swept by a second uzi/expr writing ψ = (π/2)(1+d·M) gated in-band; inner subpatch does cartopol~ → phase+ψ → poltocar~. (2) `f_a_decorrelate_scratch_null.maxpat` — the T7 rig: same carrier gen~ feeds the pfft~ AM chain AND a new additive-AM reference gen~ (T5 math, carrier-consistent normalization); −~ residual read out via average~/snapshot~/print, selector~ A/B on the audio path. A trigger-ordering bug (phase uzi firing before the snapshots = stale reads, the exact class the skills warn about) was caught by tracing and fixed; the reference codebox's ternary-precedence bug (would have swallowed q+ωt out of the modulator) was caught and fixed before ever opening Max.
+
+
+**Phase 4+5 done 2026-10-12 (same day, follow-on session).** The key
+discovery: `f_a_ripple`'s v1 patch is ALREADY shipped in
+`package/patchers/` — so the packaging bar was set, and
+`f_a_decorrelate` now meets it:
+
+- **T011 (build)**: `f_a_decorrelate_v1.maxpat` built by
+  `~/Vsynth/patterns/build_f_a_decorrelate_v1.py` (from the T7b
+  exemplar; three wiring bugs caught by structural audit — missing uzi
+  box, missing trigger lines, orphan inlet) + shipped to
+  `package/patchers/f_a_decorrelate.maxpat` with its
+  `f_a_decorrelate_inner.maxpat` (pfft~ loads by name, same folder).
+  Production deltas: `band` drives edges + **measured per-band bin
+  geomeans** via `coll` (1468.6 … 11776.4; band 6 = 8200.8, validating
+  T7a's typed 8001); AM/PM both-always-applied with the sweep `expr`s
+  self-gating on `mod_type` (no message inlet into pfft~, per the
+  skill); gain/mix wet-dry; tanh safety ceiling; v1 ranges.
+- **T012 (drift)**: `tests/drift_baseline.json` entry, `out_of_scope`,
+  reason mirrors `f_a_ripple`'s precedent exactly.
+- **T013 (docs)**: `docs/f-reference/f_a_decorrelate.md` — signal path,
+  code-accurate equations, measured-behavior section (all spike numbers),
+  35 ms wet-path latency, Safety section.
+- **T014 (registration)**: README Audio row (⚠, under the 110-char
+  limit), `NOT_IN_MENU` with reason, `f_Launch` regenerated (40
+  modules). **Real repo-schema extension**: pfft~ inner subpatches are a
+  new file class — `NOT_MODULES` added to `generate_launch.py` (hoisted
+  to module level so `test_launch.py` uses it), matching exemption in
+  `generate_menu.py`. `tests/run.sh` offline suite green: launch 8/8,
+  benchdeps 21/21, build_conventions 40/40, drift PASS.
+  **Helpfile deliberately deferred** — the f-helpfile format has no
+  audio-module shape (vs_sources_main/vs_preview are texture idioms);
+  that format is part of the shared audio-archetype decision, and
+  `f_a_ripple` has no helpfile either.
+- **T015**: this HANDOFF entry; commit left to Matt's convention.
+### Left for Matt
+
+- **Both Max verifications PASSED 2026-10-12** (per Matt's session): T002
+  null rig landed in the −15 dB class (T7 closed); T005's PM listen — no
+  glitching, plausible PM character — **ADR-4 verdict: PM un-scoped for
+  v1**. T008 (band-1 *improves* at 2048/4: −22.7 dB, corr 0.997 — one
+  FFT size serves all bands, ADR-5 fully closed), T003 (two real-world
+  music carriers; varying-SMR cross-segment correlation drift beats
+  fixed on both — the paper's actual claim; modest margin on music, strong
+  decorrelation vs the raw carrier 0.94→0.59), and Phase 3 (high tmr is
+  WINDOW-limited not refresh-limited → tmr ceiling 4 Hz; depth > 1 sends
+  bin gain negative → depth ceiling 1; PM extreme depth graceful) all
+  done in the mirror the same day.
+- **Phase 4+5 complete at the `f_a_ripple` packaging bar** (details in
+  the block above): DSP shipped to `package/patchers/`, docs written,
+  registration green (launch 8/8, benchdeps 21/21, build_conventions
+  40/40, drift PASS, f_Launch regenerated).
+- **Uncommitted, all in `f_`**: `package/patchers/f_a_decorrelate.maxpat`
+  + `f_a_decorrelate_inner.maxpat` (new), `package/extras/f_Launch.maxpat`
+  (regenerated), `docs/f-reference/f_a_decorrelate.md` (new),
+  `README.md`, `src/f_modules/menu.py`, `build/generate_launch.py`,
+  `build/generate_menu.py`, `tests/test_launch.py`,
+  `tests/drift_baseline.json`, `tests/spike_a_decorrelate_t7.py`,
+  `.specify/f_a_decorrelate/{spec,plan,tasks}.md`, `HANDOFF.md`. One
+  review-and-squash covers the whole module.
+- **The shared f_a_ packaging workstream is now the only thing left**
+  for both audio modules: `build_patcher.py` audio archetype (replaces
+  the hand-built patches, brings both onto the drift ratchet),
+  live.dial UI grid, audio helpfile format, and `f_a_ripple`'s own
+  T002 items (checkhearing comparison). `f_a_decorrelate`'s tasks/
+  spec/plan all point at it as the join-point rather than a blocker.
+- **One Max listen owed at leisure** (T009's live no-clicks sweep on the
+  production patch — mirror says smooth, packaging repeats it anyway).
+
 ## Review-and-squash of the day's stack; helpfiles closed; build_cleanup closed; suite fully green
 
 _2026-10-12 (evening session)._

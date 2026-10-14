@@ -85,7 +85,9 @@ def test_every_module_listed_exactly_once():
     want = {n for _, rows in _groups() for n, _ in rows}
     check("modules listed but not in the README, or in the README but not listed", len(set(listed) ^ want), 0)
     check("module names listed more than once", len(listed) - len(set(listed)), 0)
-    on_disk = {p.stem for p in gl.PATCHERS_DIR.glob("*.maxpat")}
+    # pfft~ inner subpatches are dependencies (gl.NOT_MODULES convention),
+    # not modules -- exempt like generate_launch.validate does.
+    on_disk = {p.stem for p in gl.PATCHERS_DIR.glob("*.maxpat")} - gl.NOT_MODULES
     check("modules listed but not in package/patchers, or the reverse", len(set(listed) ^ on_disk), 0)
 
 

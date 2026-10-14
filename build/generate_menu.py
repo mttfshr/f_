@@ -101,7 +101,9 @@ def validate(menu, groups):
     for m in sorted({x for x in modules if modules.count(x) > 1}):
         problems.append(f"module listed twice: {m}")
 
-    on_disk = {p.stem for p in PATCHERS_DIR.glob("*.maxpat")}
+    # pfft~ inner subpatches are dependencies (loaded by name), not modules
+    NOT_MODULES = {"f_a_decorrelate_inner"}
+    on_disk = {p.stem for p in PATCHERS_DIR.glob("*.maxpat")} - NOT_MODULES
     for m in modules:
         if f"f_{m}" not in on_disk:
             problems.append(f"menu entry {m}: no package/patchers/f_{m}.maxpat")
