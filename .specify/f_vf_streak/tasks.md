@@ -220,6 +220,15 @@ docs/
   checking f_vf_streak" for the tap pattern, but v1's weights are
   closed-form mix() calls outside any loop — that idea doesn't apply
   here (flagged stale in the audit, not re-filed).
+
+- [x] T054a (2026-10-13): Profiled on the live bench
+  (`tests/spike_four_module_cost.py`, 512², chain=128, median of 3):
+  ~0.0150 ms/pass active, ~0.0162 ms/pass bypassed — **not GPU-bound
+  even at chain=128** (upper-bound figures only, below the bench's
+  CPU-overhead floor at this resolution/chain). The 8-step march (24+16
+  samples/pixel) is confirmed negligible at practical resolution
+  regardless of bypass state; no shader-side guard is warranted.
+
 - [ ] T055: Sweep package/examples/ for dead preset keys — renamed
   modules' old param names still preset in shipped demo files
   (confirmed instances: `f_vf_warp::strength` in f_demo_warp.json,

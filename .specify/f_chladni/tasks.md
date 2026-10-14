@@ -113,6 +113,16 @@ and confirmed in Max.
   param-bypass codebox among the Tier-B trio (stipple/split are
   single-pass trivial kernels where a guard would save ~nothing).
   Same profiling session as glow/prism/streak would cover it.
+
+- [x] T138a (2026-10-13): Profiled on the live bench
+  (`tests/spike_four_module_cost.py`, 512², chain=128, median of 3):
+  ~0.0199 ms/pass active, ~0.0243 ms/pass bypassed — **not GPU-bound
+  even at chain=128** (upper-bound figures only, below the bench's
+  CPU-overhead floor at this resolution/chain). The ~5 modal
+  evaluations/pixel are confirmed negligible at practical resolution
+  regardless of bypass state; no bypass_gate guard or cheaper gradient
+  is warranted on cost grounds alone.
+
 - [ ] T139: Record a tier-1 decision: the closed-form modal field is
   directly NumPy-mirrorable (mode A blend + mode B Gaussian-resonance
   weights, plus the gradient), or write the deliberate skip. Also fix

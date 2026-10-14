@@ -16,3 +16,12 @@ task tracking lived in plan.md phases. Ids start at T001._
   ideas/incremental_gaussian_taps.md names prism's "per-tap exp()" —
   stale, shipped v17 uses precomputed constant weights w0–w5; correct
   the idea file when touching it.
+
+- [x] T001a (2026-10-13): Profiled on the live bench
+  (`tests/spike_four_module_cost.py`, 512², chain=128, median of 3):
+  ~0.0169 ms/pass active, ~0.0151 ms/pass bypassed — **not GPU-bound
+  even at chain=128** (upper-bound figures only, below the bench's
+  ~2–3.5 ms CPU-overhead floor at this resolution/chain). The 33 gate
+  samples are confirmed negligible at practical resolution regardless
+  of bypass state; no shader-side guard is warranted. The bench header
+  staleness note above is unrelated and still open.

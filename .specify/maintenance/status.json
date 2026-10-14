@@ -43,7 +43,7 @@
     "last_audited": "2026-10-09",
     "perf": {
       "status": "flagged",
-      "note": "param bypass but heavy shader unprofiled; not among HANDOFF's heavy six \u2014 the oversight this tier exists for"
+      "note": "param bypass but heavy shader unprofiled; not among HANDOFF's heavy six — the oversight this tier exists for"
     },
     "bench": {
       "status": "fail",
@@ -162,10 +162,10 @@
     "tasks_filed": []
   },
   "f_vf_glow": {
-    "last_audited": "2026-10-12",
+    "last_audited": "2026-10-13",
     "perf": {
-      "status": "fail",
-      "note": "no cost measurement for 48-tap accumulation; no early-exit under bypass; incremental_gaussian_taps.md + glow_profile_and_afterimage.md both name it"
+      "status": "flagged",
+      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): 0.0573 ms/pass active, 0.0582 ms/pass bypassed, GPU-bound -- bypass_gate confirmed NOT to skip the 48-tap loop (no savings). Absolute cost is small for one instance (~0.3% of a 60fps frame); early-exit guard A/B not built this session, left open at .specify/f_vf_glow/T036 (deprioritized given the low absolute cost)"
     },
     "bench": {
       "status": "flagged",
@@ -176,15 +176,17 @@
       "note": "gain/mix correct in code; docs/f-reference/f_vf_glow.md stale (documents strength + black-out2 bypass, predates 2026-10-05 rule)"
     },
     "tasks_filed": [
-      ".specify/stable/f_vf_glow/T001",
-      ".specify/stable/f_vf_glow/T002"
+      ".specify/f_vf_glow/T036",
+      ".specify/f_vf_glow/T037",
+      ".specify/f_vf_glow/T038",
+      ".specify/f_vf_glow/T036a"
     ]
   },
   "f_vf_prism": {
-    "last_audited": "2026-10-12",
+    "last_audited": "2026-10-13",
     "perf": {
-      "status": "fail",
-      "note": "no cost measurement; 33 unrolled gate samples run full cost while bypassed; incremental_gaussian_taps.md names it (stale re per-tap exp: shipped v17 uses constant weights)"
+      "status": "flagged",
+      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): ~0.0169 ms/pass active, ~0.0151 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 33 unrolled gate samples confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip them, but no guard is warranted on cost grounds. See .specify/f_vf_prism/T001a"
     },
     "bench": {
       "status": "flagged",
@@ -195,14 +197,15 @@
       "note": "gain/mix_pct correct; all 3 outlets passthrough incl float32 out3; spec.md rewritten 2026-07-11 and current (continuity.md stale by one version)"
     },
     "tasks_filed": [
-      ".specify/f_vf_prism/T001"
+      ".specify/f_vf_prism/T001",
+      ".specify/f_vf_prism/T001a"
     ]
   },
   "f_vf_streak": {
-    "last_audited": "2026-10-12",
+    "last_audited": "2026-10-13",
     "perf": {
-      "status": "fail",
-      "note": "no cost measurement; 8-step march (24 src + 16 field samples/pixel) unguarded under bypass; incremental_gaussian_taps idea doesn't apply (weights closed-form)"
+      "status": "flagged",
+      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): ~0.0150 ms/pass active, ~0.0162 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 8-step march (24 src + 16 field samples/pixel) confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip it, but no guard is warranted on cost grounds. See .specify/f_vf_streak/T054a"
     },
     "bench": {
       "status": "flagged",
@@ -210,18 +213,19 @@
     },
     "convention": {
       "status": "flagged",
-      "note": "gain/mix_pct correct; dead preset key class exists in package/examples (f_vf_warp::strength in f_demo_warp.json; f_vf_seeds::strength in f_demo_seeds*.json \u2014 renamed modules' old param)"
+      "note": "gain/mix_pct correct; dead preset key class exists in package/examples (f_vf_warp::strength in f_demo_warp.json; f_vf_seeds::strength in f_demo_seeds*.json — renamed modules' old param)"
     },
     "tasks_filed": [
       ".specify/f_vf_streak/T054",
-      ".specify/f_vf_streak/T055"
+      ".specify/f_vf_streak/T055",
+      ".specify/f_vf_streak/T054a"
     ]
   },
   "f_vf_chroma": {
     "last_audited": "2026-10-12",
     "perf": {
       "status": "fail",
-      "note": "48-step loop w/ per-step hsl2rgb x3 + gated samples, no guard under bypass \u2014 heaviest of the four; no cost measurement"
+      "note": "48-step loop w/ per-step hsl2rgb x3 + gated samples, no guard under bypass — heaviest of the four; no cost measurement"
     },
     "bench": {
       "status": "flagged",
@@ -229,7 +233,7 @@
     },
     "convention": {
       "status": "fail",
-      "note": "still uses strength (0-2), left out of 2026-07-17 rollout, never recorded as deliberate skip; direction=Bi unreachable from UI (build_patcher 2-option toggle limit); spec.md + docs/f-reference predate v10; PAUSED mid-retool \u2014 shipped v10 does not achieve stated goal (rainbow washes out to gray), continuity.md records closest-emitter as next direction"
+      "note": "still uses strength (0-2), left out of 2026-07-17 rollout, never recorded as deliberate skip; direction=Bi unreachable from UI (build_patcher 2-option toggle limit); spec.md + docs/f-reference predate v10; PAUSED mid-retool — shipped v10 does not achieve stated goal (rainbow washes out to gray), continuity.md records closest-emitter as next direction"
     },
     "tasks_filed": [
       ".specify/paused/f_vf_chroma/T001",
@@ -238,10 +242,10 @@
     ]
   },
   "f_chladni": {
-    "last_audited": "2026-10-12",
+    "last_audited": "2026-10-13",
     "perf": {
       "status": "flagged",
-      "note": "no cost measurement; ~5 full modal evaluations/pixel (mode A/B + 4-point gradient) run full cost under param bypass \u2014 the one genuinely heavy Tier-B codebox"
+      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): ~0.0199 ms/pass active, ~0.0243 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). ~5 full modal evaluations/pixel confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip them, but no guard/cheaper-gradient is warranted on cost grounds. See .specify/f_chladni/T138a"
     },
     "bench": {
       "status": "flagged",
@@ -253,6 +257,7 @@
     },
     "tasks_filed": [
       ".specify/f_chladni/T138",
+      ".specify/f_chladni/T138a",
       ".specify/f_chladni/T139"
     ]
   },
@@ -260,7 +265,7 @@
     "last_audited": "2026-10-12",
     "perf": {
       "status": "fail",
-      "note": "no cost measurement; moot in practice \u2014 single-pass branch-free kernel, ~4 hashes + 3 samples, no loop"
+      "note": "no cost measurement; moot in practice — single-pass branch-free kernel, ~4 hashes + 3 samples, no loop"
     },
     "bench": {
       "status": "flagged",
@@ -278,7 +283,7 @@
     "last_audited": "2026-10-12",
     "perf": {
       "status": "fail",
-      "note": "no cost measurement; no perf angle \u2014 two samples + two mixes, cheapest non-identity shader in library"
+      "note": "no cost measurement; no perf angle — two samples + two mixes, cheapest non-identity shader in library"
     },
     "bench": {
       "status": "flagged",
@@ -286,7 +291,7 @@
     },
     "convention": {
       "status": "flagged",
-      "note": "bypass/mix correct; minor: docs/f-reference/f_vf_split.md still says 'not yet listed in README' \u2014 it is listed"
+      "note": "bypass/mix correct; minor: docs/f-reference/f_vf_split.md still says 'not yet listed in README' — it is listed"
     },
     "tasks_filed": [
       ".specify/f_vf_split/T001"
@@ -300,11 +305,11 @@
     },
     "bench": {
       "status": "fail",
-      "note": "no tier1/tier2 coverage of any kind; fold convergence criterion untested; README \u26a0 Unfinished is accurate \u2014 no spec exists, ideas/f_ngon.md carries 5 open pre-spec questions"
+      "note": "no tier1/tier2 coverage of any kind; fold convergence criterion untested; README ⚠ Unfinished is accurate — no spec exists, ideas/f_ngon.md carries 5 open pre-spec questions"
     },
     "convention": {
       "status": "pass",
-      "note": "definition regenerated identically 2026-09-24 (T012) \u2014 the one module of 33 that did; 3 params + bypass, single-outlet mix passthrough correct"
+      "note": "definition regenerated identically 2026-09-24 (T012) — the one module of 33 that did; 3 params + bypass, single-outlet mix passthrough correct"
     },
     "tasks_filed": [
       ".specify/f_ngon/T001",
@@ -392,7 +397,7 @@
     },
     "convention": {
       "status": "pass",
-      "note": "mix_pct rollout name correct; per-stage bypass verified; aperture mechanism RESOLVED (directional propagation, 2026-07-18) \u2014 plan.md item 2's 'mechanism undecided' is stale; hand-computed obj-ids in definition are a known maintenance hazard"
+      "note": "mix_pct rollout name correct; per-stage bypass verified; aperture mechanism RESOLVED (directional propagation, 2026-07-18) — plan.md item 2's 'mechanism undecided' is stale; hand-computed obj-ids in definition are a known maintenance hazard"
     },
     "tasks_filed": [
       ".specify/f_vf_optical_flow/T039"
@@ -402,7 +407,7 @@
     "last_audited": "2026-10-12",
     "perf": {
       "status": "flagged",
-      "note": "no cost measurement beyond contract suite; open ideas name it (line_edge_antialiasing.md \u2014 UV-space edge width worsens with density)"
+      "note": "no cost measurement beyond contract suite; open ideas name it (line_edge_antialiasing.md — UV-space edge width worsens with density)"
     },
     "bench": {
       "status": "flagged",
@@ -437,7 +442,7 @@
     "last_audited": "2026-10-12",
     "perf": {
       "status": "flagged",
-      "note": "scratchpad carries open 'f_mobius performance gap' note (limited in use, missing animation handles) \u2014 never profiled"
+      "note": "scratchpad carries open 'f_mobius performance gap' note (limited in use, missing animation handles) — never profiled"
     },
     "bench": {
       "status": "flagged",
@@ -459,7 +464,7 @@
     },
     "bench": {
       "status": "fail",
-      "note": "no tier1/tier2/spike of any kind; Tissot-indicatrix diagnostic exists for mobius/droste and was never pointed at f_stereo \u2014 the only warper of the three with a non-conformal blend end, so the one where it's interesting"
+      "note": "no tier1/tier2/spike of any kind; Tissot-indicatrix diagnostic exists for mobius/droste and was never pointed at f_stereo — the only warper of the three with a non-conformal blend end, so the one where it's interesting"
     },
     "convention": {
       "status": "pass",
@@ -545,11 +550,11 @@
     },
     "bench": {
       "status": "flagged",
-      "note": "no tier1 mirror; bypass outputs neutral (0,0,0,1) not passthrough while archetype says processor \u2014 needs BYPASS_EXPECT or NEUTRAL_BYPASS_BY_DESIGN entry; live contract suite passed anyway (last log), so place it explicitly"
+      "note": "no tier1 mirror; bypass outputs neutral (0,0,0,1) not passthrough while archetype says processor — needs BYPASS_EXPECT or NEUTRAL_BYPASS_BY_DESIGN entry; live contract suite passed anyway (last log), so place it explicitly"
     },
     "convention": {
       "status": "flagged",
-      "note": "settles tensorfield OQ11: integrates field MAGNITUDE (sqrt(fx^2+fy^2)), axis-blind \u2014 a 180-flipped field gives identical output; audit-table 'assumed excluded' framing wrong"
+      "note": "settles tensorfield OQ11: integrates field MAGNITUDE (sqrt(fx^2+fy^2)), axis-blind — a 180-flipped field gives identical output; audit-table 'assumed excluded' framing wrong"
     },
     "tasks_filed": [
       ".specify/f_vf_potential/T001",
@@ -564,7 +569,7 @@
     },
     "bench": {
       "status": "fail",
-      "note": "no tier1/tier2; archetype dual so implicit out1==in1 check never applies \u2014 bypass-to-neutral (0.5,0.5,0.5,1) completely unasserted, unlike sibling generator f_chladni which has explicit const entries"
+      "note": "no tier1/tier2; archetype dual so implicit out1==in1 check never applies — bypass-to-neutral (0.5,0.5,0.5,1) completely unasserted, unlike sibling generator f_chladni which has explicit const entries"
     },
     "convention": {
       "status": "pass",
@@ -582,11 +587,11 @@
     },
     "bench": {
       "status": "flagged",
-      "note": "no tier1 mirror (all verification was Max-side scratch); correctly NOT_APPLICABLE in contracts + out_of_scope in drift (audio archetype absent \u2014 reason verified still accurate); spec has one unchecked acceptance box (perceptual comparison vs checkhearing.org)"
+      "note": "no tier1 mirror (all verification was Max-side scratch); correctly NOT_APPLICABLE in contracts + out_of_scope in drift (audio archetype absent — reason verified still accurate); spec has one unchecked acceptance box (perceptual comparison vs checkhearing.org)"
     },
     "convention": {
       "status": "pass",
-      "note": "gain/mix correctly N/A; README \u26a0 row honest; no audio archetype on the horizon (tracked at f_a_purr T026 + ideas/f_a_build_process.md)"
+      "note": "gain/mix correctly N/A; README ⚠ row honest; no audio archetype on the horizon (tracked at f_a_purr T026 + ideas/f_a_build_process.md)"
     },
     "tasks_filed": [
       ".specify/f_a_ripple/T001",
@@ -601,11 +606,11 @@
     },
     "bench": {
       "status": "flagged",
-      "note": "no tier1/tier2 (audio, none apply); T124 (mic verification: note tracks pitch, amp tracks dynamics) unchecked \u2014 the entire README \u26a0 'Unverified' content; no reference doc (only shipped module without one)"
+      "note": "no tier1/tier2 (audio, none apply); T124 (mic verification: note tracks pitch, amp tracks dynamics) unchecked — the entire README ⚠ 'Unverified' content; no reference doc (only shipped module without one)"
     },
     "convention": {
       "status": "pass",
-      "note": "README \u26a0 honest; menu exemption deliberate (is the regression-test fixture); no pix conventions apply"
+      "note": "README ⚠ honest; menu exemption deliberate (is the regression-test fixture); no pix conventions apply"
     },
     "tasks_filed": [
       ".specify/f_chladni/T140",

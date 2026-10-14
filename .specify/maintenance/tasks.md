@@ -20,14 +20,24 @@ re-snapshot plan.md if the shipped-module list has changed).
 
 Standing priority from the 2026-10-12 pass, for whoever picks up the
 filed tasks:
-- Highest-value single session: the **glow + prism + streak + chladni
-  profiling session** (all four flagged the same shape: unmeasured
-  cost, no bypass guard on unrolled/looping codeboxes — one bench
-  afternoon covers T036-class items across four modules).
+- ~~Highest-value single session: the **glow + prism + streak + chladni
+  profiling session**~~ — **done 2026-10-13**, see Cross-cutting
+  observations below for the result and decision.
 - `f_caustic` stays out of the queue entirely while sheets mode is
   active (`HANDOFF.md`) — re-add once that settles.
 
 ## Cross-cutting observations (not yet actioned anywhere)
+
+- **Early-exit bypass guards for glow/prism/streak/chladni: profiled
+  2026-10-13, not worth building.** Live-bench measurement
+  (`tests/spike_four_module_cost.py`) found prism/streak/chladni don't
+  even register as GPU-bound at chain=128 (cost negligible regardless
+  of bypass), and glow — the one that did resolve as GPU-bound — costs
+  ~0.06 ms/pass either way, ~0.3% of a 60fps frame for one instance.
+  Matt's decision: not worth a shader-side early-exit guard per module
+  on these numbers. Don't re-open per-module; revisit only if a
+  *general* reason to build early-exit guards across modules turns up
+  (e.g. many chained instances in a real patch), not module-by-module.
 
 Patterns that showed up across more than one module's audit — each is a
 real decision, just not one tied to a single module's tasks.md:
