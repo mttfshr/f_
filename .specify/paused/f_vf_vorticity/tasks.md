@@ -31,3 +31,28 @@ not a resumption.
   settled; whichever path this module takes when resumed, reconcile the
   bypass mechanism with whatever's current then, since neither existing
   pattern matches exactly.
+
+- **T003 — DONE 2026-10-13. `confinement` range_tiers corrected from a
+  live Max check, not assumed.** Matt opened the regenerated patcher in
+  Max (the 2026-10-12 build_cleanup pass) and reports it's "working
+  great" — the first real, live engagement with this module since it was
+  marked UNVERIFIED. One concrete finding came out of it: the provisional
+  `range_tiers: [0.1, 1.0, 10.0]` (flagged in the definition.py comment
+  as "pending Phase 3 chain testing") had a third tier (10.0) that
+  exceeded the param's own declared `max: 1.0` — never reachable
+  cleanly. Changed to `[0.1, 1.0]` — fine (0-0.1) and coarse (0-1), the
+  two ranges Matt actually wants. `definition.py` edited,
+  `build/build_patcher.py src/f_vf_vorticity/definition.py` regenerated
+  the shipped patcher, `build/drift.py -v f_vf_vorticity` confirms clean
+  (1 of 1 reproduces exactly). **Confirmed in Max 2026-10-13 (Matt): the
+  two-tier range select works as expected** (an earlier "looks disabled"
+  report turned out to be a stale already-open window, not a real bug).
+  This finding is closed.
+
+  **Bigger open question this raises, for Matt, not decided here:** T001
+  above (and `plan.md`'s root Paused/blocked entry) say this module is
+  "genuinely UNVERIFIED... needs independent re-verification from
+  scratch." Does today's live Max check count as that re-verification, or
+  does the bar still require the NumPy-mirror math-tier bench T001 asks
+  for before this comes off `paused/`? T002's bypass-convention mismatch
+  is also still unresolved either way.

@@ -574,8 +574,7 @@
 						"valueof": {
 							"parameter_enum": [
 								"0.1",
-								"1.0",
-								"10.0"
+								"1.0"
 							],
 							"parameter_longname": "range_confinement",
 							"parameter_shortname": "range_confinement",
@@ -589,9 +588,8 @@
 					"id": "obj-301",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
 						"",
 						""
 					],
@@ -601,7 +599,7 @@
 						60.0,
 						22.0
 					],
-					"text": "sel 0 1 2"
+					"text": "sel 0 1"
 				}
 			},
 			{
@@ -638,24 +636,6 @@
 						22.0
 					],
 					"text": "_parameter_range 0. 1."
-				}
-			},
-			{
-				"box": {
-					"id": "obj-304",
-					"maxclass": "message",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						30.0,
-						662.0,
-						134.0,
-						22.0
-					],
-					"text": "_parameter_range 0. 10."
 				}
 			},
 			{
@@ -927,30 +907,6 @@
 				"patchline": {
 					"source": [
 						"obj-303",
-						0
-					],
-					"destination": [
-						"obj-20",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-301",
-						2
-					],
-					"destination": [
-						"obj-304",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-304",
 						0
 					],
 					"destination": [

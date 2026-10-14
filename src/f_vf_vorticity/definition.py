@@ -22,15 +22,17 @@ patcher = {
     # baseline curl (vortex/repulse/flow all read very differently at
     # the same confinement value) — range_tiers per Matt's call
     # (2026-07-06), same convenience mechanism as f_vf_seeds' field_gain.
-    # Tier values are provisional pending Phase 3 chain testing
-    # (f_vf_advect / f_caustic) — see plan.md ADR-5.
+    # Tier values confirmed by Matt live in Max (2026-10-13), replacing
+    # the provisional [0.1, 1.0, 10.0] set: two tiers, fine (0-0.1) and
+    # coarse (0-1), matching the param's own 0-1 max — the old 10.0 tier
+    # exceeded max and was never reachable cleanly.
     "params": [
         {
             "name": "confinement", "type": "float",
             "min": 0.0, "max": 1.0, "default": 0.1,   # shipped patch boots at 0.1 (its saved pattr state, written back 2026-10-12; was 0.0)
             "hint": "Turbulence amount — vorticity confinement force strength. Effective range varies by source field; see range_tiers.",
             "label": "Confinement",
-            "range_tiers": [0.1, 1.0, 10.0],
+            "range_tiers": [0.1, 1.0],
         },
         {"name": "bypass", "type": "bypass"},
     ],
