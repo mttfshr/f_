@@ -262,16 +262,17 @@ Three real threads opened, one answered:
 2. 2D LBM (D2Q9) as a possible new obstacle-aware flow module —
    **architecture evaluated 2026-10-12: fits the chained-pix pattern, no
    slab track** (see finding #2 above; two correctness traps and two
-   real constraints recorded there). Remaining question is value, not
-   architecture: is genuine obstacle-aware flow worth 3-plane state and
-   open-boundary edge handling vs `f_vf_repulse`'s cheap fakery —
-   Matt's judgement call, not scheduled.
+   real constraints recorded there). Value question answered 2026-10-13
+   (Matt: "spec it") — **specced as `f_vf_lbm`** (working name,
+   `.specify/f_vf_lbm/spec.md`). Phase 0 (both solver codeboxes on the
+   bench, channel-BC codebox, safe-omega measurement) not started.
 3. Kuramoto-Sivashinsky as a new self-sustaining chaotic generator
    module — **stability scratch test run 2026-10-12: spectral
    pix-chain shape is real-time-stable, one step per frame, no adaptive
    stepping** (see finding #3 above, incl. the mandatory k=0 zeroing).
-   Cleared to spec whenever Matt wants it; real-space FD is ruled out
-   (~2000 substeps/frame).
+   **Specced 2026-10-13 as `f_ks`** (working name, `.specify/f_ks/spec.md`),
+   per Matt's "spec it". Phase 0 (spectral step on the GPU bench) not
+   started.
 
 None of these are scheduled. Captured here per Matt's request, ready to
 pick up whenever.
