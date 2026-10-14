@@ -1,5 +1,55 @@
 # HANDOFF
 
+## 2026-10-13 session: f_weave dual-dial shipped, f_ks/f_vf_lbm specced, f_grain + f_lens → stable/, helpfile sizing+content audit, glow/prism/streak/chladni profiled
+
+- **f_weave**: orientation A/B resolved as "ship both" — `field_amount`
+  (mechanism depth) and `fix_blend` (A/B crossfade) are now live,
+  performable dials, not a one-time pick. `src/f_weave/definition.py`,
+  regenerated, drift-clean. `ideas/f_weave_orientation_blend.md`
+  RESOLVED.
+- **f_ks** (Kuramoto-Sivashinsky generator) and **f_vf_lbm** (D2Q9
+  lattice-Boltzmann obstacle flow): both fully specced
+  (`.specify/f_ks/spec.md`, `.specify/f_vf_lbm/spec.md`). Phase 0 (GPU
+  bench) not started for either.
+- **f_grain** and **f_lens** moved to `.specify/stable/`. f_lens v2
+  (ghost images + halation) closed; tilt-shift split confirmed
+  retroactive (it actually moved to the still-unbuilt `f_focus` on
+  2026-09-23 — tracking docs had gone stale, now corrected).
+  `README.md`'s f_lens row fixed (dropped stale "tilt-shift").
+- **Helpfile sizing fix, 17 modules** (every bpatcher had been
+  hardcoded to one module's footprint) + new `skills/module-preflight/`
+  skill (mechanical checklist + a content judgment gate the sizing fix
+  didn't cover). **Content audit** of those 17 against that gate:
+  `ideas/f_helpfile_content_audit_2026-10-13.md` — 4 clean, worst three
+  `f_sirds` (bad citation, doesn't match its own doc), `f_vf_vorticity`
+  (recipe omits the one fact that makes it usable), `f_vf_glow` (its
+  own doc has ready-made recipes never carried into the helpfile).
+  Audit only, by design — no rewrites yet.
+- **f_vf_vorticity**: confinement `range_tiers` fixed to [0.1, 1.0],
+  confirmed working live in Max.
+- **glow/prism/streak/chladni GPU-profiled live** — first real cost
+  measurement any of the four ever had. All cheap in absolute terms
+  (glow ~0.06ms/pass, the only one that resolved GPU-bound; the other
+  three didn't even register as GPU-bound at chain=128).
+  `bypass_gate` confirmed to not skip the heavy loop on any of them,
+  but **not worth building an early-exit guard now** (Matt's call) —
+  see `.specify/maintenance/tasks.md`'s cross-cutting observations.
+  `status.json` updated for all four.
+- **Tier 5 deferred on purpose, untouched**: web_shim go/no-go,
+  packaging readiness, stale caustic spike reference.
+
+### Left for Matt
+
+- `f_focus` (tilt-shift's new home): still paused, never built — no
+  urgency, just not forgotten.
+- `f_vf_glow` early-exit guard: shelved; revisit only if a *general*
+  reason to build these across modules shows up, not glow-specific.
+- The 13 non-clean modules in the helpfile content audit (3 worst + 10
+  mild/moderate): real rewrite work, deliberately not started this
+  session.
+- `f_ks` / `f_vf_lbm`: both need their Phase 0 GPU bench before any
+  further design work.
+
 ## f_a_decorrelate: MODULE COMPLETE (at the f_a_ripple packaging bar) — DSP shipped to package/patchers/, docs written, all checks green
 
 Assessed `f_a_decorrelate` against the current `f_a_ripple` state: the spec/plan block ("no ground truth until f_a_ripple clears T2–T6") is stale — T2–T6 passed 2026-08-05/06 and Phase 4 core DSP is built. Spec.md status header + Primary risk rewritten as resolved (with the narrower residual risk: comparisons run against `f_a_ripple_v1.maxpat`, not a shipped module); plan.md ADR-3 marked satisfied, Phase 2 line unblocked. tasks.md T001 ticked. **Key correction to earlier framing:** the idea file already records T7a — the pfft~ AM build — as PASSED 2026-08-07 (the buffer~/index~ architecture); what's genuinely unstarted is T7b (PM in pfft~) and the rigorous null/correlation tests.
