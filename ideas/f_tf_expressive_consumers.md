@@ -217,6 +217,29 @@ brushed metal).
   where the lobe snaps from round to a thin line — needs the same smooth falloff
   tensormap's own coherence channel already provides, not a hard threshold.
 
+**`f_tf_glow`** — tensor-inlet, sign-safe bidirectional variant of `f_vf_glow`:
+accumulates along the local ellipse major axis in two opposed segments instead of one
+signed direction, radius driven by the eigenvalue ratio, weight by coherence.
+- *Tensor-native test:* borderline, and worth being honest about it. A vecfield-inlet
+  version already exists conceptually (`f_vf_glow` fed through `f_tf_axisflow`) and
+  gives bidirectional glow along one axis — that's most of the look. What the tensor
+  form adds is coherence-as-exposure (radius/weight scale with per-pixel confidence,
+  not a performer gate) and lobe width from the eigenvalue ratio rather than a fixed
+  kernel. If a shipped version only reads the axis and sets radius from a dial, it's
+  the `f_tf_glint` problem again — a view wearing a tensor costume. Flagged
+  view-adjacent rather than claimed as clean full-tensor.
+- *Performer touches:* `length`, `gain`, `gate_floor` (trace floor below which glow
+  is suppressed, same convention as tensormap's own coherence handling).
+- *Chains:* downstream of `f_tf_smooth`; reuses `f_vf_glow`'s existing free `in2`
+  radius-mod inlet (already wired for exactly this kind of per-pixel modulation per
+  the hub doc's Q12 note) rather than needing new plumbing.
+- *Cost:* same bounded 8–16-tap bidirectional accumulation loop `f_vf_glow` already
+  runs at video rate — no new cost class, just a different drive signal.
+- *Failure modes:* near-zero coherence everywhere blooms isotropically if the trace
+  floor isn't gated — same fallback discipline as `f_tf_glint`; stays stateless (no
+  temporal feedback inside the module itself) so it can't self-oscillate the way a
+  fed-back accumulator could.
+
 ### Tensor producers from non-image sources
 
 These make the renderers above playable independent of camera/video content — arguably
@@ -237,6 +260,29 @@ strategy doc's own brainstorm note.
   cost class as `f_vf_fieldmap`'s own central-difference gradient. One pass.
 - *Chains:* `f_vf_fluid -> f_tf_jacobian -> f_tf_smooth -> f_tf_aniso_blur` or
   `-> f_tf_glint` (Chain C below).
+
+**`f_tf_motion`** — strain tensor from `f_vf_optical_flow` specifically, rather than
+"any vecfield" in the abstract: `f_tf_jacobian`'s symmetric part applied to a real,
+already-built producer.
+- *Why it matters:* `f_vf_optical_flow`'s out0 is a standard 0.5-centered vecfield —
+  confirmed from its reference doc, not assumed, so no range-adapter is needed between
+  it and a Jacobian stage. Its out1 already carries a raw confidence determinant and a
+  double-angle-encoded ambiguous axis (the aperture-problem signal), so a strain-tensor
+  consumer downstream should gate on that existing confidence rather than reinventing
+  one. The performance hook is direct: point a camera at a performer, and their
+  movement's shear/stretch axis becomes the structure every full-tensor renderer in
+  this file consumes — `f_tf_hatch` marks or `f_tf_glyph` glyphs that visibly follow
+  how someone moves, not just that they moved.
+- *Cost:* same central-difference Jacobian pass as `f_tf_jacobian`, downstream of a
+  producer that's already running its own confidence-gated spatial fill — no extra
+  stage needed to handle the aperture problem, it arrives pre-filled.
+- *Failure modes:* inherits `f_vf_optical_flow`'s own honest limitations (confidence
+  is per-scene empirical, not analytically calibrated; borders need its masking
+  margin) — a strain tensor built on low-confidence input is low-confidence structure,
+  and should carry that through rather than presenting false certainty.
+- *Chains:* `f_vf_optical_flow -> f_tf_motion -> f_tf_smooth -> f_tf_hatch` — a fourth,
+  camera-but-not-content-driven chain alongside the three below: structure from how the
+  scene moves, not what it looks like.
 
 **`f_tf_hessian`** — Hessian-of-a-scalar tensor, for ridge/valley structure rather than
 edge structure (per the Frangi precedent above).
@@ -298,16 +344,21 @@ consumer vocabulary. Lowest priority to build (depends on an unspecced producer,
 `f_tf_jacobian`) but the most novel-looking output of the three, since nothing
 currently in the library renders flow *shear* as a texture.
 
-**Single next module, best expressive value for effort: `f_tf_glyph`.** Cheapest build
-(closed-form, no loop); the only module here that validates the raw-tensor decode path
-end to end (nothing else has touched outlet 0 yet); known-legible, known-cheap
-elsewhere per the G'MIC precedent — low technical risk. Permanently earns its keep as
-the debug tool every other module in this file will want while being tuned, which the
-strategy doc already anticipated.
+**Single next module, best expressive value for effort: `f_tf_smooth`.** Revised
+from an earlier draft of this doc, which picked `f_tf_glyph` first on the strength of
+"validates the raw-tensor decode path" — a real but narrower reason than this one:
+`f_tf_smooth` is the prerequisite every full-tensor renderer in this file silently
+needs before it can run on live video without flickering, it's nearly free to build
+(one feedback pass, no loops), and its own control — `release` — is itself a
+performable gesture (grain/inertia), not just plumbing. Cheapest-to-prove, load-bearing
+for everything downstream, and playable in its own right: all three reasons point the
+same way.
 
-**Second pick: `f_tf_smooth`.** Not for its own look, but because it's the
-prerequisite every renderer here silently needs for live video, and it's nearly free to
-build.
+**Second pick: `f_tf_glyph`.** Still the right second build — closed-form, no loop,
+the only module here that validates the raw-tensor decode path end to end, and cheap
+enough to double as the debug tap every other module in this file will want while
+being tuned. Just no longer the first thing to build, since it has nothing stable to
+decode from on live video until `f_tf_smooth` exists upstream of it.
 
 **Flagged as a view in disguise:** the orientation-selective mask (performance-gestures
 section above), and any version of `f_tf_glint` whose lobe shape is set by a performer
@@ -343,6 +394,15 @@ most worth a second look before committing architecture).
    field the way `tensormap` does. Unclear what the input would even be in this
    library's idiom (sparse marks from `f_vf_seeds`? a point cloud generator?) — noted
    here so it isn't lost, not assessed for fit.
+7. **Centralized eigenvalue decode, or per-consumer in-pixel decode of outlet 0?**
+   Every full-tensor consumer in this file (`f_tf_glyph`, `f_tf_sharpen`, `f_tf_hatch`,
+   `f_tf_glint`, `f_tf_glow`) needs λ1/λ2 and the axis, not just outlet 0's raw
+   Jxx/Jxy/Jyy. Decoding it independently inside each consumer is simple per-module but
+   repeats the same sqrt+atan2 work everywhere; a single decode stage (a "decoded
+   convenience" outlet on `f_tf_tensormap`, or a standalone `f_tf_decode` module)
+   computes it once and makes every consumer downstream a pure ellipse-consumer. This
+   decides the inlet shape for most of the modules above, so it's worth settling before
+   specifying any of them, not after the first one is built.
 
 ---
 
