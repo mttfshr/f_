@@ -94,7 +94,7 @@ symmetric: split it into a symmetric strain tensor (this family) and a scalar cu
 | 9 | **Cross-hatch** from one image: layer 1 along, layer 2 across | View x2 | two axisflow instances (Along, Across) | two `f_weave` or `f_vf_seeds` layers | Cheap trick, untried |
 | 10 | **Orientation as color** (hue = angle, sat = coherence, value = trace): diagnostic and art | View (color) | small viewer module | feed `f_hue_processor` to select edges by orientation; or display | Speculative |
 | 11 | **Defect/singularity map**: low coherence but real trace marks points where orientation winds | View (scalar) | unpacker variant | `f_vf_seeds` placement, sparkle/particle emitters | Speculative, interesting |
-| 12 | **Anisotropic blur / coherence-enhancing smoothing / Kuwahara painterly** | **Full tensor** | new consumer module | the tensor-native module itself (needs both eigenvalues for the kernel ellipse) | Idea; the strongest argument for keeping the type |
+| 12 | **Anisotropic blur / coherence-enhancing smoothing** (Kuwahara painterly is already shipped, see Prior art) | **Full tensor** | new consumer module | the tensor-native module itself (needs both eigenvalues for the kernel ellipse) | Idea; the strongest argument for keeping the type |
 | 13 | **Glyph/ellipse field renderer** (ellipses, crosses, hatch ticks per cell; works for any tensor source) | **Full tensor** | new consumer module | itself; doubles as the universal tensor debugger | Idea (hub "Future") |
 | 14 | **Temporal smoothing** of the tensor: stable flow from jittery video | **Operator** | new `f_tf_` module (feedback average in tensor space) | between tensormap and any view | Idea; tensors average correctly, vectors do not |
 | 15 | **Mix / combine** two tensor fields (crossfade, add the structure of two sources) | **Operator** | new `f_tf_mix` (analog of `f_vf_mix`) | between producers and views | Idea |
@@ -112,6 +112,7 @@ symmetric: split it into a symmetric strain tensor (this family) and a scalar cu
 | `f_tf_color` (orientation to hue) | View (color) | 10 | Tiny; mostly a debug and look tool |
 | `f_tf_glyph` | Full-tensor consumer | 13, 18 | Real design work; universal tensor debugger |
 | `f_tf_aniso_blur` | Full-tensor consumer | 12 | Real design work; the standout "needs the type" candidate |
+| `f_tf_kuwahara` (tensor-in variant; only if strokes should follow an edited or authored orientation field) | Full-tensor consumer | 12 | Heavy; `jit.fx.cf.kuwahara` already gives the image-driven look |
 | `f_tf_smooth` (temporal) and `f_tf_mix` | Operators | 14, 15, 16 | Feedback pass / two-input blend; cheap once the encoding contract is fixed |
 | metric-tensor and Jacobian producers | New sources | 17, 18, 19 | Separate producer specs; reuse the contract |
 
@@ -121,6 +122,39 @@ unpacker, which says "views are the interface". Rows 12-16 are what actually jus
 the cheapest to prove and the most useful on live video; anisotropic blur (12) is the most
 distinctive look. If none of 12-16 appeals, that is the "collapse" signal from the strategy
 above.
+
+## Prior art: `jit.fx.cf.kuwahara` (assessed 2026-10-16)
+
+Max ships a **generalized anisotropic Kuwahara filter** in Jitter Tools
+(`Jitter Tools/code/fx/`, a `jit.gl.slab` chain written in GLSL). Read from source:
+
+- **Algorithm:** the standard anisotropic Kuwahara (Kyprianidis et al.) in the polynomial-weight
+  form adapted from Garrett Gunnell's MIT-licensed implementation (credited in the shader
+  header). 8 sectors, per-sector mean and variance, ellipse-shaped window from the local
+  tensor, sectors weighted by 1/(1 + (hardness * variance)^9).
+- **Internal tensor:** its own pass computes a 3x3 Sobel structure tensor on **RGB** (per-channel
+  dot products, so it sees chroma edges a luma-only tensor misses), then a fixed-sigma (2)
+  Gaussian pre-blur (radius `pre_blur`, 0-10). Ellipse anisotropy comes from coherence
+  `(l1-l2)/(l1+l2)`, exactly the quantity our packed outlet carries.
+- **Controls:** `sharpness`, `hardness`, `kernel_size` (2-20), `pre_blur` (0-10). One texture
+  inlet; the tensor is neither an input nor an output.
+- **Cost:** brute-force nested loops over a window up to about 2*kernel radius per side, 8
+  sectors per tap; heavy at high `kernel_size`.
+
+**Coverage verdict.** The *look* is fully covered; do not rebuild it. What it cannot do:
+1. Take a tensor in. Its tensor is computed inside and cannot be edited, mixed, temporally
+   smoothed, rotated or replaced, so strokes can only follow the image's own edges. A tensor-in
+   variant could make strokes follow an **authored or processed orientation field** (a swirl from
+   a vortex field turned into an axis field, a temporally smoothed tensor for stable video, two
+   sources combined). That is the only real reason to write our own, and it is a creative
+   extension, not a duplicate.
+2. Share a tensor with other modules. Running it alongside the tensormap computes the structure
+   twice.
+
+Side notes it raises: our tensormap is luma-only, so a colour-aware (RGB) option would catch chroma
+edges (worth a `tensormap` v2 note); its Gaussian pre-blur vs our box radius is a smoothing-kernel
+choice we could revisit. Attribution rule if we ever adapt it: cite Kyprianidis et al. and Gunnell
+(MIT) in the docs and helpfile.
 
 ## Consequence for hub Q12 (`f_vf_glow` anisotropy inlet)
 
@@ -157,8 +191,8 @@ follow as needed to keep full-tensor consumers stable on live video. The glow an
      the integration should follow the field step by step, choosing each step's sign by
      continuity with the previous step (the proper way to follow an axis field, no seam).
      Medium risk, most useful look.
-   - Anisotropic Kuwahara (painterly; ellipse-shaped sectors from both eigenvalues): the most
-     distinctive look and the heaviest (sector x tap loops); probably a later phase.
+   - Anisotropic Kuwahara (painterly): **already shipped by Max as `jit.fx.cf.kuwahara`**, see
+     "Prior art" below. Only a tensor-in variant would be new.
 4. **Stability on video.** Per-frame structure tensors jitter; a temporal tensor smoother
    (operator, row 14) may be a prerequisite for the video use, not a nicety.
 5. **Naming.** `f_tf_` + verb, parallel to how `f_vf_` consumers are named by what they do.
