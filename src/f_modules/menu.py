@@ -79,6 +79,8 @@ CATEGORIES = [
         ("Split", "vf_split", True),
         ("Potential", "vf_potential", True),
         ("Matrix 2", "util_matrix_2", False),
+        ("Tensor Map", "tf_tensormap", False),
+        ("Axis Flow", "tf_axisflow", False),
     ]),
 ]
 

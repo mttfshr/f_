@@ -10,7 +10,7 @@ var SIZES = {
     "masonry":        [342, 241],
     "stipple":        [191, 157],
     "grain":          [232, 176],
-    "weave":          [220, 159],
+    "weave":          [220, 219],
     "vf_seeds":       [190, 205],
     "mobius":         [185,  90],
     "stereo":         [160,  90],
@@ -40,7 +40,9 @@ var SIZES = {
     "util_profile":   [200, 120],
     "vf_split":       [ 80,  80],
     "vf_potential":   [190, 100],
-    "util_matrix_2":  [230, 120]
+    "util_matrix_2":  [230, 120],
+    "tf_tensormap":   [100,  80],
+    "tf_axisflow":    [150, 100]
 };
 // END SIZES
 

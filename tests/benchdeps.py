@@ -63,6 +63,8 @@ DATA = {
     "bench_fluid_module": _MODULE_BENCH + ["package/patchers/f_vf_fluid.maxpat"] + _FLUID_CODEBOXES,
     "bench_caustic_codebox": _MACHINERY + _CAUSTIC,
     "bench_caustic_sheets": _MODULE_BENCH + _CAUSTIC + ["tests/bench/caustic_sheets_standalone.maxpat"],
+    "bench_tf_tensormap": _MACHINERY + ["src/f_tf_tensormap/codebox_*.gen"],
+    "bench_tf_axisflow": _MACHINERY + ["src/f_tf_axisflow/codebox_*.gen"],
 }
 PER_MODULE = {"bench_modules"}                 # also tracked per patcher in package/patchers/
 

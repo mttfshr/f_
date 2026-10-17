@@ -1350,7 +1350,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Filmic lens -- aberration, distortion, transmission, tilt-shift, ghost images, halation, spatial modulation",
+									"text": "Filmic lens -- aberration, distortion, transmission, ghost images, halation, spatial modulation",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3527,7 +3527,7 @@
 										150.0,
 										20.0
 									],
-									"text": "f_util_matrix_2",
+									"text": "f_tf_tensormap",
 									"textcolor": [
 										0.55,
 										0.55,
@@ -3555,7 +3555,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status",
+									"text": "⚠ Unverified. Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3574,48 +3574,57 @@
 							{
 								"box": {
 									"id": "obj-8",
-									"maxclass": "textbutton",
+									"maxclass": "comment",
 									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
+									"numoutlets": 0,
 									"patching_rect": [
 										20.0,
 										200.0,
 										150.0,
-										22.0
+										20.0
 									],
-									"text": "f_util_profile",
+									"text": "f_tf_axisflow",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										96.0,
+										98.0,
 										210.0,
-										22.0
+										20.0
 									]
 								}
 							},
 							{
 								"box": {
 									"id": "obj-9",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
 									"patching_rect": [
-										20.0,
-										228.0,
-										230.0,
-										22.0
+										260.0,
+										200.0,
+										150.0,
+										20.0
 									],
-									"text": "loadunique f_util_profile.maxhelp"
+									"text": "⚠ Unverified. Tensor map axis to a seam-free vecfield: flow along or across image edges",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										98.0,
+										720.0,
+										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									]
 								}
 							},
 							{
@@ -3625,17 +3634,23 @@
 									"numinlets": 1,
 									"numoutlets": 0,
 									"patching_rect": [
+										20.0,
 										260.0,
-										200.0,
 										150.0,
 										20.0
 									],
-									"text": "CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation",
+									"text": "f_util_matrix_2",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
 									"presentation": 1,
 									"presentation_rect": [
-										230.0,
-										98.0,
-										720.0,
+										10.0,
+										126.0,
+										210.0,
 										20.0
 									]
 								}
@@ -3643,53 +3658,6 @@
 							{
 								"box": {
 									"id": "obj-11",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										260.0,
-										150.0,
-										22.0
-									],
-									"text": "f_vf_potential",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										124.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-12",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										288.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_vf_potential.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-13",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -3699,19 +3667,25 @@
 										150.0,
 										20.0
 									],
-									"text": "Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet",
+									"text": "Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										126.0,
 										720.0,
 										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
 									]
 								}
 							},
 							{
 								"box": {
-									"id": "obj-14",
+									"id": "obj-12",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -3728,7 +3702,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_split",
+									"text": "f_util_profile",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -3740,7 +3714,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-15",
+									"id": "obj-13",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -3753,12 +3727,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_split.maxhelp"
+									"text": "loadunique f_util_profile.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-16",
+									"id": "obj-14",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -3768,11 +3742,149 @@
 										150.0,
 										20.0
 									],
-									"text": "Splits an f_vecfield's X/Y channels to two separate greyscale outlets, unipolar or bipolar",
+									"text": "CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										154.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-15",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										380.0,
+										150.0,
+										22.0
+									],
+									"text": "f_vf_potential",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										180.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-16",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										408.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_vf_potential.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-17",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										380.0,
+										150.0,
+										20.0
+									],
+									"text": "Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										182.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-18",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										440.0,
+										150.0,
+										22.0
+									],
+									"text": "f_vf_split",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										208.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-19",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										468.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_vf_split.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-20",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										440.0,
+										150.0,
+										20.0
+									],
+									"text": "Splits an f_vecfield's X/Y channels to two separate greyscale outlets, unipolar or bipolar",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										210.0,
 										720.0,
 										20.0
 									]
@@ -3783,11 +3895,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-8",
+										"obj-12",
 										0
 									],
 									"destination": [
-										"obj-9",
+										"obj-13",
 										0
 									]
 								}
@@ -3795,7 +3907,7 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-9",
+										"obj-13",
 										0
 									],
 									"destination": [
@@ -3807,11 +3919,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-11",
+										"obj-15",
 										0
 									],
 									"destination": [
-										"obj-12",
+										"obj-16",
 										0
 									]
 								}
@@ -3819,7 +3931,7 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-12",
+										"obj-16",
 										0
 									],
 									"destination": [
@@ -3831,11 +3943,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-14",
+										"obj-18",
 										0
 									],
 									"destination": [
-										"obj-15",
+										"obj-19",
 										0
 									]
 								}
@@ -3843,7 +3955,7 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-15",
+										"obj-19",
 										0
 									],
 									"destination": [

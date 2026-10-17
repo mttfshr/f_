@@ -1,0 +1,44 @@
+// f_tf_axisflow: tensormap outlet 1 (packed axis) -> signed vecfield, with no
+// atan2 and no sign choice. Mirrors tests/test_tf_axisflow.py axisflow().
+//
+// in1 = f_tf_tensormap outlet 1: R,G = (cos2t, sin2t)*0.5+0.5, B = trace, A = coherence.
+// theta is the dominant GRADIENT direction (across the edge). With
+// g = (cos t, sin t) and the reference r = (cos phi, sin phi):
+//   across = (g.r) g = 0.5 * ((1+c2) rx + s2 ry,  s2 rx + (1-c2) ry)
+//   along  = r - across            (mode 0, default; |along| = |sin(t-phi)|)
+// Invalid input -> neutral: isotropic pixels (c2=s2=0) and vs_black / an
+// unconnected inlet (decodes to c2=s2=-1, length sqrt2). Valid packed input
+// has |(c2,s2)| <= 1, so a content guard (length >= 1.05 invalid) needs no plumbing.
+// Output is an f_vecfield: R,G = v*0.5+0.5, B = 0.5, A = 1. The pixel-space
+// direction of v is preserved on non-square frames (units: short side).
+// bypass_gate (module bypass, bypass_mode "param"; NOT the native @bypass):
+// neutral vecfield. pix_type float32 required.
+Param angle(0.0);
+Param mode(0.0);
+Param gain(1.0);
+Param gate(1.0);
+Param width(640.0);    // frame size in pixels; `dim` reads 1 live, so Params
+Param height(480.0);
+Param bypass_gate(0.0);
+
+t = nearest(in1, norm);
+c2 = (t.x - 0.5) * 2.0;
+s2 = (t.y - 0.5) * 2.0;
+len = sqrt(c2*c2 + s2*s2);
+ok = step(0.000001, len) * (1.0 - step(1.05, len));
+
+ref_ang = angle * pi / 180.0;   // not `phi`: predefined constant in GenExpr
+rx = cos(ref_ang);
+ry = sin(ref_ang);
+ax = 0.5 * ((1.0 + c2)*rx + s2*ry);
+ay = 0.5 * (s2*rx + (1.0 - c2)*ry);
+vx = mix(rx - ax, ax, mode);
+vy = mix(ry - ay, ay, mode);
+
+mag = ok * gain * mix(1.0, t.w, gate);
+sh = min(width, height);
+
+fx = clamp(vx * mag * sh / width * 0.5 + 0.5, 0.0, 1.0);
+fy = clamp(vy * mag * sh / height * 0.5 + 0.5, 0.0, 1.0);
+
+out1 = mix(vec(fx, fy, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass_gate);

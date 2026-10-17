@@ -1291,14 +1291,16 @@
                                 "Profile",
                                 "Split \u2207",
                                 "Potential \u2207",
-                                "Matrix 2"
+                                "Matrix 2",
+                                "Tensor Map",
+                                "Axis Flow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_disp",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1333,14 +1335,16 @@
                                 "util_profile",
                                 "vf_split",
                                 "vf_potential",
-                                "util_matrix_2"
+                                "util_matrix_2",
+                                "tf_tensormap",
+                                "tf_axisflow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_file",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

@@ -63,6 +63,11 @@ BYPASS_EXPECT = {
     "f_vf_prism": {2: IN1, 3: ("vec", 2, 0.0042)},     # out3: the vecfield input (neutral 0.5 if unconnected)
     "f_caustic": {2: IN1},
     "f_vf_split": {2: IN1},
+    "f_tf_axisflow": {1: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6)},   # bypass_gate: neutral vecfield
+    "f_tf_tensormap": {                                 # producer: bypass = zero tensor on both outlets, not a passthrough
+        1: ("const", (0.0, 0.5, 0.0, 1.0), 1e-6),      # raw tensor: zero tensor
+        2: ("const", (0.5, 0.5, 0.0, 0.0), 1e-6),      # packed: neutral direction, no trace, no coherence
+    },
     "f_vf_advect": {2: IN1, 3: ("vec", 2, 1e-5)},      # out3: the vecfield input (neutral 0.5 if unconnected)
     "f_masonry": {2: IN1},                              # out2 is the brick mask
     "f_stipple": {1: IN1, 2: IN1, 3: IN1},              # dual: the source when connected, black when not
@@ -128,6 +133,7 @@ def bypass_issues(name, info, n, bypassed):
 # f_vf_optical_flow (per-stage bypass Params, see codebox_stage_e.gen header).
 # Any change is a GPU-cost decision, not a bug.
 PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
+                            "f_tf_tensormap",   # bypass_gate on stage_c only; stages A/B keep running (spec: Parameters)
                             "f_vf_fluid"}     # fluid: Param gate on enc, not native @bypass (plan ADR-8)
 
 # Processors whose bypass is DOCUMENTED to output a neutral field, not to pass the input through,
@@ -136,7 +142,7 @@ PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
 # codebox_stage_e.gen header). The check only started to run for it when its definition moved
 # into src/ (build_cleanup T007), because modulebench.archetype() reads the definition there;
 # before that its archetype was unknown and it was silently skipped.
-NEUTRAL_BYPASS_BY_DESIGN = {"f_vf_optical_flow"}
+NEUTRAL_BYPASS_BY_DESIGN = {"f_vf_optical_flow", "f_tf_tensormap", "f_tf_axisflow"}
 
 # Modules whose output follows the render CONTEXT size (512x512 in the module bench), not the
 # input texture's: feed them an input of that size so the passthrough check is like for like.
