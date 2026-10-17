@@ -675,15 +675,15 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						100.0,
-						80.0
+						154.0,
+						84.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						100.0,
-						80.0
+						154.0,
+						84.0
 					],
 					"proportion": 0.5
 				}
@@ -717,7 +717,7 @@
 					"id": "obj-8",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
-					"fontsize": 12.0,
+					"fontsize": 9.5,
 					"textcolor": [
 						0.85,
 						0.55,
@@ -734,8 +734,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						70.0,
-						2.5,
+						62.0,
+						3.0,
 						60.0,
 						18.0
 					],
@@ -1325,7 +1325,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						78.0,
+						129.0,
 						5.0,
 						18.0,
 						12.0

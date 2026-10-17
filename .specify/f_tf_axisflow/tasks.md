@@ -26,9 +26,9 @@ _Created: 2026-10-16_
 - [ ] T015 Matt: load in Max (T036 equivalent), panel width fits the controls.
 
 ## Phase 4: docs
-- [ ] T016 `docs/f-reference/f_tf_axisflow.md`; helpfile + module-preflight.
-- [ ] T017 Hub doc: exclusion list points at the bridge; consumer table; HANDOFF entry.
-- [ ] T018 Naming entry for `f_tf_` in README/constitution (shared with tensormap T042).
+- [x] T016 `docs/f-reference/f_tf_axisflow.md`; helpfile + module-preflight.
+- [x] T017 Hub doc: exclusion list points at the bridge; consumer table; HANDOFF entry.
+- [x] T018 Naming entry for `f_tf_` in README/constitution (shared with tensormap T042).
 - [ ] T019 Commit only f_tf_* files (Matt commits; suggest message).
 
 ## Notes (2026-10-16)

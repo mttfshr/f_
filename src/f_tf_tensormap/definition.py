@@ -39,8 +39,8 @@ patcher = {
     "bypass_mode": "param",
     "bypass_target": "c",
 
-    "presentation_width":  100,
-    "presentation_height": 80,
+    "presentation_width":  154,
+    "presentation_height": 84,
 
     "pix_chain": [
         {
@@ -140,4 +140,10 @@ patcher = {
         },
         {"name": "bypass", "type": "bypass"},
     ],
+}
+
+# Layout (2026-10-16, Matt: panel too narrow, width/height cropped): the four controls run to x ~ 150.
+patcher["overrides"] = {
+    "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
+    "signal_type": {"fontsize": 9.5, "presentation_rect": [62.0, 3.0, 60.0, 18.0]},
 }

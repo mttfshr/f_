@@ -112,7 +112,7 @@ closed-form, no reason to force an extra patch-cord hop). **DECIDED
    consumer today; this is what a future glyph-field renderer or
    photoelastic module would need.
 2. **Decoded convenience, packed RGBA**: R=cos 2θ, G=sin 2θ, B=trace
-   (λ1+λ2), A=anisotropy (λ1−λ2). Direction is still angle-doubled in
+   (λ1+λ2), A=coherence ((λ1−λ2)/(λ1+λ2), normalized, 0–1). Direction is still angle-doubled in
    R/G exactly as before — doubling makes θ and θ+π map to the same
    stored value, so there's no arbitrary sign choice flipping
    discontinuously in storage (this fixes the *storage* ambiguity only —
@@ -256,6 +256,17 @@ covered only by convention (document `f_vf_glow`'s `direction=bidirectional`
 requirement, don't patch a tensor-sourced field into `f_vf_warp`), which
 is discipline, not enforcement — see the named-mod-texture tagging
 discussion below for a possible mechanism, not pursued yet.
+
+### Bridge: `f_tf_axisflow` (2026-10-16)
+
+The exclusion list below bans wiring tensormap outlet 1 *directly* into
+sign-sensitive consumers. `f_tf_axisflow` is the sanctioned way in: it
+projects a reference angle onto the edge line (no `atan2`, no sign choice,
+no seam) and outputs an ordinary vecfield, so every module on the list
+can take **its** output. Spec: `.specify/f_tf_axisflow/spec.md`. Verified
+live driving `f_vf_advect` (2026-10-16). The "decode+redouble" steps
+mentioned for individual consumers above are not needed when going
+through the bridge.
 
 ### Explicit exclusion list
 
@@ -645,7 +656,7 @@ paused module's actual blocker is orthogonal to representation type:
 (one inlet, two uses); `f_stipple` wants direction+anisotropy packed
 together. Between the two, there's a case for a fourth producer-outlet
 shape not previously considered — a single RGBA "decoded convenience"
-outlet (R=cos2θ, G=sin2θ, B=trace, A=anisotropy) alongside the
+outlet (R=cos2θ, G=sin2θ, B=trace, A=coherence) alongside the
 raw-tensor outlet, so each consumer takes one inlet and unpacks whichever
 channels its own math needs, rather than the producer pre-committing to a
 two-vs-three-outlet split before Phase 2 reveals which combinations
@@ -706,8 +717,11 @@ per the Scope note above, and shouldn't be conflated:
   gate can reuse that shape. So Q12 is designed (see above, "zero-new-UI
   scope") and Q13/Q14 stay open, still waiting on the UI-density question
   to resolve (or on their own codebox reads, for Q14).
-- **What actually blocks building Q12's design: `f_tf_tensormap` doesn't
-  exist yet.** It's concept-only — nothing in `.specify/`. Writing its
-  spec (producer outlets, params, `strength` default from the spike
-  findings above) is the real next step, not further Phase 2 module
-  design; Q12's design can sit ready until then.
+- **Q12 is no longer blocked (2026-10-16):** `f_tf_tensormap` is built
+  (`.specify/f_tf_tensormap/`, `docs/f-reference/f_tf_tensormap.md`), and
+  `f_tf_axisflow` (`.specify/f_tf_axisflow/`) is the sanctioned route from
+  its outlet 1 into sign-sensitive vecfield consumers. Q12's tasks are in
+  `.specify/f_vf_glow/tasks.md` (T039-T043). One correction to the design
+  above: it samples the anisotropy inlet's `.x`; tensormap outlet 1 carries
+  coherence in **A** (`.w`) and trace in B, so the gate must read `.w`
+  when fed from outlet 1.

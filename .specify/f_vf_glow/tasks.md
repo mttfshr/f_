@@ -254,3 +254,16 @@ nothing-outstanding bar (.specify/maintenance/SKILL.md)._
   if a general reason to build early-exit guards emerges across modules
   (not specific to glow's chained-instance case) — not a standing TODO
   against this module alone.
+
+## Phase 5: Tensor anisotropy inlet (hub Q12; unblocked 2026-10-16)
+
+`f_tf_tensormap` now exists, so the zero-new-UI design in
+`ideas/f_tensorfield.md` Q12 can be built. Design stands, with one change:
+tensormap outlet 1 carries **coherence in A (`.w`)**, not `.x`, so the gate
+reads `sample(in4, uv).w`.
+
+- [ ] T039 Add a third `mod_inlets` entry `{"label": "anisotropy", "state_param": "src_anisotropy"}` in `definition.py`; rebuild; update contract tests.
+- [ ] T040 Codebox: `Param src_anisotropy(0.0); aniso = mix(1.0, sample(in4, uv).w, src_anisotropy); fwd_weight = mix(1.0, fwd_mode, aniso); bwd_weight = mix(1.0, bwd_mode, aniso);` Connection detection MUST use `src_anisotropy` (an unconnected inlet samples 0, but the neutral here is 1.0).
+- [ ] T041 Tier-1 mirror of the weight maths (direction 0 unchanged; low coherence pulls modes 1/2 to the bidirectional floor) and a bench parity check.
+- [ ] T042 Live check: `f_tf_tensormap` outlet 1 -> glow anisotropy inlet at `direction` 1 and 2; unconnected = unchanged from today.
+- [ ] T043 Docs: `docs/f-reference/f_vf_glow.md` (new inlet), helpfile, README note. Deferred (do not build): a performer-facing gain dial (waits for `mod_depth_ui_density.md`).

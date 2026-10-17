@@ -58,6 +58,17 @@ The `f_vf_` prefix signals to users that the primary output is a vecfield textur
 
 The type contract is documented in `docs/f-reference/f_vecfield_type.md`.
 
+### Naming Convention: f_tf_ prefix for tensor-field modules
+
+Bpatchers that produce or transform **tensor-field textures** (structure tensor: raw and packed, see `docs/f-reference/f_tensor_type.md`) use the `f_tf_` prefix, parallel to `f_vf_`:
+
+```
+f_tf_tensormap      — scalar texture → structure tensor (raw + packed)
+f_tf_axisflow       — packed tensor → seam-free vecfield (the bridge into f_vf_ consumers)
+```
+
+Neither tensor outlet is an f_vecfield; f_tf_axisflow (which outputs a vecfield) is the only sanctioned route from the tensor family into sign-sensitive consumers.
+
 ---
 
 ## Development Approach
@@ -203,6 +214,8 @@ f_/
 | `f_vf_vortex` | Single fixed-point vortex field — f_vecfield producer | Working (renamed from f_vortex) |
 | `f_vf_vortex_multi` | Three-site additive vortex field — f_vecfield producer | Working (renamed from f_vortex_multi) |
 | `f_vf_fieldmap` | Scalar texture → vecfield via central difference gradient | Working |
+| `f_tf_tensormap` | Scalar texture → structure tensor (raw + packed direction/trace/coherence) | Built 2026-10-16, live-checked |
+| `f_tf_axisflow` | Packed tensor → seam-free vecfield (along/across edges) | Built 2026-10-16, live-checked |
 | `f_vf_warp` | UV warp via f_vecfield | Working |
 | `f_vf_streak` | Directional blur via f_vecfield — dual outlet | Working |
 

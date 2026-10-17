@@ -41,8 +41,8 @@ var SIZES = {
     "vf_split":       [ 80,  80],
     "vf_potential":   [190, 100],
     "util_matrix_2":  [230, 120],
-    "tf_tensormap":   [100,  80],
-    "tf_axisflow":    [150, 100]
+    "tf_tensormap":   [154,  84],
+    "tf_axisflow":    [154, 124]
 };
 // END SIZES
 

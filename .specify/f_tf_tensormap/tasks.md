@@ -124,12 +124,12 @@ docs/f-reference/f_tf_tensormap.md, f_tensor_type.md   — Phase 5
 
 **Purpose:** Promote from spec to working everywhere, and unblock the first consumer.
 
-- [ ] T039 Write `docs/f-reference/f_tf_tensormap.md`: param table, signal chain, calibration table by input type (from T023), the A-is-coherence note and its noisy-at-low-B caveat.
-- [ ] T040 Write `docs/f-reference/f_tensor_type.md`, the encoding contract and sibling of `f_vecfield_type.md`: outlet 0 and outlet 1 channel layouts, the 0.5-zero convention for signed channels, why angle-doubled, and the decode rule consumers must follow (and which consumers must never receive outlet 1's R/G, per the hub's exclusion list).
-- [ ] T041 Helpfile via the `f-helpfile` skill, then the `skills/module-preflight/` checklist and its **content judgment gate** (the sizing fix alone didn't cover content; `f_sirds`, `f_vf_vorticity`, `f_vf_glow` failed it).
-- [ ] T042 Update `README.md` (status table, build queue), `docs/f-reference/module-inventory.md`, and the constitution (Current Bpatchers; naming-convention entry for the family prefix if T002 settled one).
-- [ ] T043 Update `ideas/f_tensorfield.md`: producer built, Phase 2's blocker cleared. Add the `f_vf_glow` anisotropy-inlet work (hub Q12 design) as tasks in `.specify/f_vf_glow/tasks.md` so the first consumer has a place to start.
-- [ ] T044 Update `HANDOFF.md` (short; task-level detail lives here).
+- [x] T039 **(2026-10-16)** Write `docs/f-reference/f_tf_tensormap.md`: param table, signal chain, calibration table by input type (from T023), the A-is-coherence note and its noisy-at-low-B caveat.
+- [x] T040 **(2026-10-16)** Write `docs/f-reference/f_tensor_type.md`, the encoding contract and sibling of `f_vecfield_type.md`: outlet 0 and outlet 1 channel layouts, the 0.5-zero convention for signed channels, why angle-doubled, and the decode rule consumers must follow (and which consumers must never receive outlet 1's R/G, per the hub's exclusion list).
+- [~] T041 **(2026-10-16: helpfile generated, mechanical preflight green; judgment gate is Matt: open in Max)** Helpfile via the `f-helpfile` skill, then the `skills/module-preflight/` checklist and its **content judgment gate** (the sizing fix alone didn't cover content; `f_sirds`, `f_vf_vorticity`, `f_vf_glow` failed it).
+- [x] T042 **(2026-10-16: constitution naming entry + Current Bpatchers rows, module-inventory rows; README row done earlier)** Update `README.md` (status table, build queue), `docs/f-reference/module-inventory.md`, and the constitution (Current Bpatchers; naming-convention entry for the family prefix if T002 settled one).
+- [x] T043 **(2026-10-16: hub updated; glow Q12 tasks T039-T043 in .specify/f_vf_glow/tasks.md, with the .w channel correction)** Update `ideas/f_tensorfield.md`: producer built, Phase 2's blocker cleared. Add the `f_vf_glow` anisotropy-inlet work (hub Q12 design) as tasks in `.specify/f_vf_glow/tasks.md` so the first consumer has a place to start.
+- [x] T044 **(2026-10-16)** Update `HANDOFF.md` (short; task-level detail lives here).
 - [ ] T045 Commit. Suggested split: spec/plan/tasks; tests and codeboxes; patcher and registration; docs. Plain message style per the repo's recent history.
 
 **Checkpoint:** Docs written, README updated, git clean.

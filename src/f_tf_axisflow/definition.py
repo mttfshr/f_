@@ -22,8 +22,8 @@ patcher = {
     "pix_type":    "float32",
     "bypass_mode": "param",
 
-    "presentation_width":  150,
-    "presentation_height": 100,
+    "presentation_width":  154,
+    "presentation_height": 124,
 
     "codebox": (_HERE / "codebox_axisflow.gen").open(newline="").read(),
 
@@ -53,4 +53,22 @@ patcher = {
          "hint": "Render height in pixels. Set to the real frame height."},
         {"name": "bypass", "type": "bypass"},
     ],
+}
+
+# Layout: row 1 = angle, gain, gate dials + mode menu; row 2 = width, height numboxes.
+patcher["overrides"] = {
+    "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
+    "signal_type": {"fontsize": 9.5, "presentation_rect": [62.0, 3.0, 60.0, 18.0]},
+    "angle.ctl":      {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
+    "angle.label":  {"presentation_rect": [-8.0, 20.0, 50.0, 18.0]},
+    "gain.ctl":       {"presentation_rect": [41.0, 38.0, 27.0, 43.0]},
+    "gain.label":   {"presentation_rect": [30.0, 20.0, 50.0, 18.0]},
+    "gate.ctl":       {"presentation_rect": [78.0, 38.0, 27.0, 43.0]},
+    "gate.label":   {"presentation_rect": [66.0, 20.0, 50.0, 18.0]},
+    "mode.ctl":       {"presentation_rect": [108.0, 38.0, 44.0, 15.0]},
+    "mode.label":   {"presentation_rect": [96.0, 20.0, 50.0, 18.0]},
+    "width.ctl":      {"presentation_rect": [4.0, 104.0, 34.0, 15.0]},
+    "width.label":  {"presentation_rect": [-8.0, 86.0, 50.0, 18.0]},
+    "height.ctl":     {"presentation_rect": [50.0, 104.0, 34.0, 15.0]},
+    "height.label": {"presentation_rect": [38.0, 86.0, 50.0, 18.0]},
 }

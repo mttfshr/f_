@@ -262,15 +262,15 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						150.0,
-						100.0
+						154.0,
+						124.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						150.0,
-						100.0
+						154.0,
+						124.0
 					],
 					"proportion": 0.5
 				}
@@ -304,7 +304,7 @@
 					"id": "obj-8",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
-					"fontsize": 12.0,
+					"fontsize": 9.5,
 					"textcolor": [
 						0.302,
 						0.325,
@@ -321,8 +321,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						62.8,
-						2.5,
+						62.0,
+						3.0,
 						60.0,
 						18.0
 					],
@@ -468,9 +468,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						0.0,
-						52.0,
-						45.0,
+						108.0,
+						38.0,
+						44.0,
 						15.0
 					],
 					"saved_attribute_attributes": {
@@ -531,7 +531,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						96.0,
 						20.0,
 						50.0,
 						18.0
@@ -569,7 +569,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						4.0,
 						38.0,
 						27.0,
 						43.0
@@ -635,7 +635,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						-8.0,
 						20.0,
 						50.0,
 						18.0
@@ -673,7 +673,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						41.0,
 						38.0,
 						27.0,
 						43.0
@@ -739,7 +739,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						30.0,
 						20.0,
 						50.0,
 						18.0
@@ -777,7 +777,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						78.0,
 						38.0,
 						27.0,
 						43.0
@@ -843,7 +843,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						66.0,
 						20.0,
 						50.0,
 						18.0
@@ -875,8 +875,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						38.0,
+						4.0,
+						104.0,
 						34.0,
 						15.0
 					],
@@ -934,8 +934,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
-						20.0,
+						-8.0,
+						86.0,
 						50.0,
 						18.0
 					],
@@ -966,8 +966,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
-						100.0,
+						50.0,
+						104.0,
 						34.0,
 						15.0
 					],
@@ -1025,8 +1025,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
-						82.0,
+						38.0,
+						86.0,
 						50.0,
 						18.0
 					],
@@ -1054,7 +1054,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						128.0,
+						129.0,
 						5.0,
 						18.0,
 						12.0
