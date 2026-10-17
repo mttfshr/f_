@@ -374,10 +374,11 @@ most worth a second look before committing architecture).
    mechanism). Worth a quick GPU-budget gut check before any spec; it's the one idea
    here that might not fit the single-codebox, bounded-loop shape everything else in
    the family uses.
-2. **Does `f_tf_smooth` get built before or alongside the first renderer?** Cheap and
-   load-bearing, but building it in isolation means no real consumer to validate it
-   against live flicker; building it alongside `f_tf_glyph` means two Phase-0 decision
-   gates in one module pass.
+2. **Does `f_tf_smooth` get its own Phase-0 pass, or ride along with `f_tf_glyph`?**
+   Now the single best next module rather than second pick, so this is closer to settled
+   than it was: build it first, on its own, since nothing else can be validated against
+   live flicker until it exists. `f_tf_glyph` becomes the first thing to build on top of
+   it, not a co-requisite needing its own simultaneous gate.
 3. **`f_tf_jacobian`/`f_tf_hessian` as producers** — worth a NumPy spike now, or
    deferred until a full-tensor consumer exists to justify them? Cheap to spike but
    currently nothing downstream to feed; Chain C depends on both existing.
@@ -385,9 +386,9 @@ most worth a second look before committing architecture).
    the paused `mod_depth_ui_density.md` question (new dials on an already-dense panel)
    wearing a tensor-family label? Cheap to build but, like `f_stipple` (hub Q13), might
    inherit that blocker rather than sidestep it the way `f_vf_glow`'s Q12 did.
-5. **Should `f_tf_glyph` get a Phase 0 decision-gate task now**, independent of
-   everything else in this file, so it's live-testable in a scratch patch before any of
-   the others get designed in detail?
+5. **Should `f_tf_glyph` get a Phase 0 decision-gate task now**, right after
+   `f_tf_smooth`, so it's live-testable in a scratch patch before any of the others get
+   designed in detail?
 6. **Tensor voting (Medioni) as a producer mode** — surfaced by the prior-art survey,
    not otherwise considered: grows structure from sparse/noisy points by letting
    tensors accumulate via votes, rather than deriving a tensor from a dense gradient
