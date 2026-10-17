@@ -172,6 +172,19 @@ already has the velocity solver; adding a φ advection step to it is small. Stir
 a sharp boundary for a few hundred frames and see whether it survives or turns
 to mush. That answer gates the build.
 
+**A second candidate fix, from the tensor-field exploration, worth mirroring
+alongside anti-diffusion before picking one.** Anti-diffusion fights isotropic
+smearing with an inverse term that can go unstable. The alternative is to stop
+diffusing isotropically in the first place: a structure tensor computed from
+φ's own local gradient (same construction as `ideas/vector_field_math_concepts.md`
+§9's image-structure-tensor example) gives, at each point, the direction the
+interface is running and how sharp it still is there. Blurring φ anisotropically
+against that tensor — hard along the filament, almost none across it — is the
+standard coherence-enhancing-diffusion fix for "repeated blur passes erase fine
+structure," and it is a stabilizing choice (less blur where structure is strong)
+rather than a destabilizing one (negative diffusion). Candidate replacement or
+companion for the sharpening term; same NumPy-mirror test decides between them.
+
 ## Why a separate module, not `f_vf_fluid` v2
 
 `f_vf_fluid` is verified, documented, stable, and reproduced byte-for-byte by

@@ -60,7 +60,7 @@ are the same line — so vector-add + renormalize is fighting the
 representation, not just the blend math. Fix B's `atan2`-based angular
 blend is closer but still starts from a signed vector; the structurally
 correct fix is the angle-doubled (2θ) encoding `f_tensorfield.md`'s
-`f_tf_structure` producer already uses for exactly this reason — no sign
+`f_tf_tensormap` producer already uses for exactly this reason — no sign
 to normalize away in the first place. This doesn't settle which fix to
 ship here (still the empirical A/B below). ~~Fix B and
 `f_tensorfield.md`'s Open Question 6 share the identical blocker —

@@ -11,7 +11,7 @@ slab/GLSL track needed. Matt: "spec it" (2026-10-13)._
 **Working name — not settled.** `f_vf_lbm` names the technique (parallels
 `f_vf_fluid`'s generic naming); `f_vf_karman` or `f_vf_obstacle` would
 name the visual result instead (parallels `f_chladni`'s naming style).
-Flagging rather than deciding, same as `f_tf_structure` in
+Flagging rather than deciding, same as `f_tf_tensormap` in
 `ideas/f_tensorfield.md`.
 
 ---

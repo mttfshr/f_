@@ -58,7 +58,7 @@ physics-name convention) is a placeholder; see Clarifications.
 ### Open, not yet decided
 
 - **Naming.** `f_ks` is a placeholder (see header). Flagging rather than
-  deciding, same as `f_tf_structure` was flagged in `ideas/f_tensorfield.md`.
+  deciding, same as `f_tf_tensormap` was flagged in `ideas/f_tensorfield.md`.
 - **Output encoding.** `u`'s dynamic range is bounded but not naturally
   [0,1] (spike's soaks show `max|u|` in the low-to-mid single digits at
   the measured safe `dt`, but this hasn't been tuned for how it should

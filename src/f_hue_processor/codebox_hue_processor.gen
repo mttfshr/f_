@@ -1,6 +1,6 @@
 Param hue_center(120.0);   // degrees 0–360
 Param hue_lower(36.0);     // degrees below center, flat top extent
-Param hue_upper(36.0);     // degrees above center, flat top extent
+Param hue_upper(156.0);    // degrees above center, flat top extent (confirmed by Matt 2026-10-15, matching the shipped band's real asserted value)
 Param edge_falloff(10.0);  // degrees, 0 = hard edge
 Param sat_amt(0.0);        // -1.0 = full desaturate, 0 = unchanged, 1.0 = full boost
 Param lum_shift(0.0);      // -1.0 to 1.0, additive to V within band

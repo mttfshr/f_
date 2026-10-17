@@ -1,6 +1,12 @@
 patcher = {
     "name":               "f_vf_vorticity",
     "prefix":             "vfvorticity",
+    # 2026-10-15: tried "#0_vfvorticity_pix" here on a theory that duplicate bpatcher
+    # instances were colliding on a flat jit.gl.pix @name in the same Jitter GL context.
+    # REVERTED same day -- made a single instance stop working entirely (worse than the
+    # original bug, which at least passed the vecfield through). The #0-substitution
+    # theory is not confirmed and needs more diagnosis before touching this again; see
+    # HANDOFF.md / Matt for the live symptom this was chasing.
     "object_name":        "vfvorticity_pix",
     "title":              "Vorticity",
     "signal_type":        "vecfield in/out",
@@ -26,6 +32,15 @@ patcher = {
     # the provisional [0.1, 1.0, 10.0] set: two tiers, fine (0-0.1) and
     # coarse (0-1), matching the param's own 0-1 max — the old 10.0 tier
     # exceeded max and was never reachable cleanly.
+    # Codebox literal `Param confinement(...)` default fixed 2026-10-15 to
+    # match this 0.1 (was still 0.0, left over from before the 2026-10-12
+    # pattr fix). The two had drifted apart, and jit.gl.pix drops any param
+    # message sent before its gen's first-render compile (bench-verified,
+    # jit-gen-codebox skill) — so the live.dial's correct 0.1 init message
+    # could silently fail to land, leaving a freshly-loaded instance stuck
+    # at the codebox's own 0.0 (fully inert, confinement has no effect at
+    # all). Keeping the codebox literal equal to this default means the
+    # module boots correct even when that init message is dropped.
     "params": [
         {
             "name": "confinement", "type": "float",
@@ -54,7 +69,7 @@ curl_at(u, v, sx, sy) {
     return (fy_r - fy_l) / (2.0 * sx) - (fx_t - fx_b) / (2.0 * sy);
 }
 
-Param confinement(0.0);
+Param confinement(0.1);
 Param bypass(0.0);
 
 sx = 1.0 / dim.x;

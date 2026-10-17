@@ -5,7 +5,7 @@
 # proc_mode header toggle removed — displacement is always available on out3
 
 CODEBOX = """\
-Param freq(5.0);
+Param freq(2.0);
 Param angle(0.0);
 Param anisotropy(0.5);
 Param threshold(0.5);
@@ -14,7 +14,7 @@ Param along_phase(0.0);
 Param across_phase(0.0);
 Param zoom(1.0);
 Param colorize(0.0);
-Param coarseness(1.0);
+Param coarseness(20.0);
 Param src_mode(0.0);
 Param bypass_gate(0.0);
 

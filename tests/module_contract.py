@@ -120,6 +120,39 @@ def param_is_read(box, name):
     return bool(re.search(r"\b" + re.escape(name) + r"\b", code))
 
 
+_NUM = r"[-+]?[\d.]+(?:[eE][-+]?\d+)?"
+
+
+def codebox_param_default(box, name):
+    """The literal default in this pix's own `Param name(X);` declaration,
+    or None if that Param isn't declared (or its default isn't a plain
+    number -- an expression there is out of scope for this check)."""
+    m = re.search(r"\bParam\s+" + re.escape(name) + r"\s*\(\s*(" + _NUM + r")\s*\)", pix_code(box))
+    return float(m.group(1)) if m else None
+
+
+def widget_initial(box):
+    """A live.dial/live.numbox's load-time value, from `parameter_initial`
+    -- None if the widget doesn't set one (parameter_initial_enable off) or
+    isn't a plain numeric control (e.g. a live.menu enum)."""
+    if box.get("maxclass") not in ("live.dial", "live.numbox"):
+        return None
+    valueof = (box.get("saved_attribute_attributes") or {}).get("valueof") or {}
+    if not valueof.get("parameter_initial_enable"):
+        return None
+    vals = valueof.get("parameter_initial")
+    return float(vals[0]) if vals else None
+
+
+def widget_names(box):
+    """The names this widget answers to, for matching it to an attrui's
+    `attr` -- its own varname plus parameter_longname/shortname, if set."""
+    valueof = (box.get("saved_attribute_attributes") or {}).get("valueof") or {}
+    names = {n for n in (box.get("varname"), valueof.get("parameter_longname"),
+                         valueof.get("parameter_shortname")) if n}
+    return names
+
+
 def gen_ports(box):
     """({N of `in N`}, {N of `out N`}) objects in a pix's gen patcher."""
     ins, outs = set(), set()
@@ -248,9 +281,25 @@ class Module:
         params = {bid: pix_params(b) for bid, b in pix.items()}
         report = {"module": self.name, "pix": {pix_name(b): sorted(params[bid]) for bid, b in pix.items()},
                   "route_map": {}, "route_direct": [], "unrouted": [], "bad_attr": [], "non_pix_targets": [],
-                  "unconnected_attrui": [], "bypass": None}
+                  "unconnected_attrui": [], "default_mismatch": [], "bypass": None}
 
-        # attrui -> target validity
+        # attrui -> target validity, and (the widget answering to this attr's name)
+        # vs. (target pix's own codebox Param literal) load-time default agreement --
+        # the f_vf_vorticity confinement bug: a widget's parameter_initial can be
+        # silently dropped (jit.gl.pix rejects a param sent before its gen's first
+        # render), so the codebox's own default is what a freshly-loaded instance
+        # actually boots at. The two must agree or "unverified" is where it stays.
+        #
+        # Matched by NAME (varname/parameter_longname/shortname == attr), not by
+        # wire reachability: a band-editor control (f_luma_processor, f_tone_curve)
+        # drives its attrui from a jsui, with the live.numbox as a synced readout
+        # the dataflow graph never actually reaches from widget to attrui -- and a
+        # bespoke persistence chain (f_grain's era_clock) tunnels a reachability
+        # search through unrelated objects over enough hops to hit the wrong widget.
+        # Name matching is also just correct per convention: a dial's `varname` and
+        # its attrui's `attr` name the same param (vsynth-bpatcher skill), same as
+        # the codebox's own `Param` declaration.
+        all_widgets = [b for b in self.boxes.values() if widget_initial(b) is not None]
         attr_of = {}
         for aid, a in self.attruis().items():
             attr = a.get("attr")
@@ -258,12 +307,20 @@ class Module:
             targets = self.attrui_targets(aid)
             if not targets:
                 report["unconnected_attrui"].append(attr)
+            feeders = [b for b in all_widgets if attr in widget_names(b)]
+            widget_default = widget_initial(feeders[0]) if len(feeders) == 1 else None
             for t in targets:
                 tb = self.boxes[t]
                 if _is_pix(tb):
                     if attr not in params[t] and attr not in PIX_BUILTINS:
                         report["bad_attr"].append({"attr": attr, "pix": pix_name(tb),
                                                    "pix_params": sorted(params[t])})
+                    if widget_default is not None:
+                        code_default = codebox_param_default(tb, attr)
+                        if code_default is not None and abs(code_default - widget_default) > 1e-9:
+                            report["default_mismatch"].append({
+                                "pix": pix_name(tb), "param": attr,
+                                "codebox_default": code_default, "widget_default": widget_default})
                 else:
                     report["non_pix_targets"].append({"attr": attr, "target": _text(tb)[:60] or tb.get("maxclass")})
 

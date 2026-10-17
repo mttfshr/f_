@@ -53,6 +53,13 @@ KNOWN_ISSUES = {
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE
 
+# default_mismatch: f_masonry (mortar/width) and f_hue_processor (hue_upper) were initially
+# flagged here pending Matt's call on which side -- dial or codebox literal -- was stale.
+# Resolved 2026-10-15: masonry's shipped dial (0.5/0.5) confirmed as an intentional hand
+# tune, not drift; hue_processor's hue_upper confirmed at 156.0 (its real asserted band
+# value, not the codebox's old base literal of 36.0). Both codebox literals/definition.py
+# defaults were updated to match, so these no longer need an entry here.
+
 _seen_known = set()
 
 
@@ -68,6 +75,9 @@ def _issues(report, pix_param_union):
     for kind in ("undriven", "unused"):
         for d in report[kind]:
             issues.append((kind, f"{d['pix']}.{d['param']}"))
+    for d in report["default_mismatch"]:
+        issues.append(("default_mismatch",
+                        f"{d['pix']}.{d['param']} (dial {d['widget_default']} vs codebox {d['codebox_default']})"))
     for nm in report["no_codebox"]:
         issues.append(("no_codebox", nm))
     for gap in report["port_gaps"]:
@@ -251,6 +261,51 @@ def test_unused_param_detected_and_comments_dont_count_as_use():
     sub = _synth([_pix("Param gain(1);\nParam gainer(1);\nout1 = in1 * gainer;")], []).analyze()
     check("a longer name does not count as use of a shorter one",
           0 if _ids(sub, "unused") == ["gain"] else 1, 0)
+
+
+def _dial(bid, initial, varname="gain"):
+    return _box(bid, "live.dial", outlets=2, varname=varname, saved_attribute_attributes={
+        "valueof": {"parameter_initial": [initial], "parameter_initial_enable": 1}})
+
+
+def test_default_mismatch_detected_between_dial_init_and_codebox_literal():
+    """The f_vf_vorticity bug: a live.dial's parameter_initial (what the UI
+    says the module should boot at) disagreeing with the codebox's own
+    `Param name(X)` literal (what it silently boots at if that init message
+    is ever dropped -- jit.gl.pix rejects a param sent before first render,
+    see jit-gen-codebox skill). Both values are real and present; they just
+    have to agree, or the module's true boot state is whichever one a given
+    load happens to land on."""
+    attr = _box("at", "attrui", attr="gain")
+
+    mismatched = _synth([_pix("Param gain(0.0);\nout1 = in1 * gain;"), attr, _dial("dl", 0.1)],
+                        [("dl", 0, "at", 0), ("at", 0, "p", 0)]).analyze()
+    check("dial init 0.1 vs codebox literal 0.0 is flagged",
+          0 if [(d["pix"], d["param"]) for d in mismatched["default_mismatch"]] == [("x_pix", "gain")] else 1, 0)
+
+    matched = _synth([_pix("Param gain(0.1);\nout1 = in1 * gain;"), attr, _dial("dl", 0.1)],
+                     [("dl", 0, "at", 0), ("at", 0, "p", 0)]).analyze()
+    check("dial init matching the codebox literal is quiet", len(matched["default_mismatch"]), 0)
+
+    no_init = _synth([_pix("Param gain(0.0);\nout1 = in1 * gain;"), attr,
+                      _box("dl", "live.dial", outlets=2)],
+                     [("dl", 0, "at", 0), ("at", 0, "p", 0)]).analyze()
+    check("a dial with no parameter_initial isn't asserting a boot value -- quiet",
+          len(no_init["default_mismatch"]), 0)
+
+    jsui_fed = _synth([_pix("Param gain(0.0);\nout1 = in1 * gain;"), attr, _dial("dl", 0.1),
+                       _box("js", "jsui")],
+                      [("js", 0, "at", 0), ("at", 0, "p", 0)]).analyze()
+    check("matched by name, not by wire -- a band-editor control whose attrui is "
+          "wired from a jsui (f_luma_processor's real shape), with the dial itself "
+          "unwired, is still caught",
+          0 if [(d["pix"], d["param"]) for d in jsui_fed["default_mismatch"]] == [("x_pix", "gain")] else 1, 0)
+
+    ambiguous = _synth([_pix("Param gain(0.0);\nout1 = in1 * gain;"), attr,
+                        _dial("d1", 0.1), _dial("d2", 0.2)],
+                       [("d1", 0, "at", 0), ("at", 0, "p", 0)]).analyze()
+    check("two widgets answering to the same name is ambiguous -- quiet, not a guess",
+          len(ambiguous["default_mismatch"]), 0)
 
 
 def test_no_codebox_allows_only_a_pure_identity_pass():

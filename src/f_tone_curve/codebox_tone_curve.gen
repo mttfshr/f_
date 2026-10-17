@@ -1,10 +1,14 @@
 Param shadows(0.0);
 Param midtones(0.0);
 Param highlights(0.0);
+// mid_high literal fixed 2026-10-15: 0.66 -> 0.67, matching the real shipped dial
+// (low_mid's 0.33/0.67 are the true thirds split; low_mid's own literal already
+// agreed). See f_vf_vorticity's confinement bug / module_contract.py's
+// default_mismatch check for why codebox-vs-dial agreement matters here.
 Param low_mid(0.33);
-Param mid_high(0.66);
+Param mid_high(0.67);
 Param bypass(0.0);
-Param edge_falloff(0.1);
+Param edge_falloff(0.0);
 
 uv = norm;
 src = sample(in1, uv);

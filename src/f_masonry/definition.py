@@ -38,7 +38,7 @@ Param angle(0.0);
 Param courses(8.0);
 Param bond(8.0);
 Param offset(0.0);
-Param mortar(0.2);
+Param mortar(0.5);  // confirmed by Matt 2026-10-15: shipped dial's 0.5 is an intentional hand tune, not drift
 Param softness(0.0);
 Param regularity(1.0);
 Param drift(0.0);
@@ -46,7 +46,7 @@ Param phase(0.0);
 Param speed_var(0.0);
 Param skip(1.0);
 Param bypass_gate(0.0);
-Param width(0.9);
+Param width(0.5);  // confirmed by Matt 2026-10-15: shipped dial's 0.5 is an intentional hand tune, not drift
 Param roundness(0.0);
 Param course_color(0.0);
 Param brick_color(0.0);
@@ -309,9 +309,9 @@ patcher = {
         {"name": "drift",        "type": "float", "min": 0.0,    "max": 4.0,   "default": 0.0,  "label": "Drift",     "hint": "Per-course along-axis drift amount"},
         {"name": "phase",        "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.0,  "label": "Phase",     "hint": "Per-course phase offset -- primary animation target"},
         {"name": "speed_var",    "type": "float", "min": 0.0,    "max": 10.0,  "default": 0.0,  "label": "Speed Var", "hint": "Per-course speed variation when animated"},
-        {"name": "mortar",       "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.2,  "label": "Mortar",    "hint": "Gap width between bricks"},
+        {"name": "mortar",       "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.5,  "label": "Mortar",    "hint": "Gap width between bricks"},
         {"name": "softness",     "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.0,  "label": "Softness",  "hint": "Edge feathering -- 0=hard  >0=smooth"},
-        {"name": "width",        "type": "float", "min": -2.0,   "max": 2.0,   "default": 0.9,  "label": "Width",     "hint": "Brick aspect ratio scale in across-axis"},
+        {"name": "width",        "type": "float", "min": -2.0,   "max": 2.0,   "default": 0.5,  "label": "Width",     "hint": "Brick aspect ratio scale in across-axis"},
         {"name": "roundness",    "type": "float", "min": -2.0,   "max": 2.0,   "default": 0.0,  "label": "Round",     "hint": "0=rectangular  1=circular/oval bricks"},
         {"name": "course_color", "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.0,  "label": "C.Color",   "hint": "Per-course color randomization amount"},
         {"name": "brick_color",  "type": "float", "min": 0.0,    "max": 1.0,   "default": 0.0,  "label": "B.Color",   "hint": "Per-brick color randomization amount"},

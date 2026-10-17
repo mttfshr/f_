@@ -74,7 +74,7 @@ Step 3's hemisphere-align hack (`step(0.0, dot) * 2.0 - 1.0`, then flip)
 is a from-scratch solution to a problem `vector_field_math_concepts.md`
 #9 names generally: a squeeze axis is a line, not a direction, so a
 signed-vector representation needs this kind of manual sign-correction
-before blending at all. `f_tensorfield.md`'s `f_tf_structure` producer
+before blending at all. `f_tensorfield.md`'s `f_tf_tensormap` producer
 encodes exactly this class of quantity natively — angle-doubled (2θ)
 storage, no sign to re-align by construction, same underlying fix
 `f_weave_orientation_blend.md` arrived at independently for the same

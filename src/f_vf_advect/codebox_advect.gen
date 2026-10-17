@@ -1,6 +1,12 @@
-Param dt(0.02);
-Param decay(0.95);
-Param injection(0.05);
+// dt/decay/injection literals fixed 2026-10-15 to match definition.py's declared
+// defaults (0.01/0.97/0.02) -- they'd drifted to 0.02/0.95/0.05. jit.gl.pix drops
+// a param sent before its gen's first-render compile (bench-verified, jit-gen-codebox
+// skill), so a freshly-loaded instance can silently boot at the codebox's own stale
+// literal instead of the dial's intended value; see f_vf_vorticity's confinement bug
+// for the full mechanism, and tests/module_contract.py's default_mismatch check.
+Param dt(0.01);
+Param decay(0.97);
+Param injection(0.02);
 Param gain(1.0);
 Param mix_pct(100.0);
 Param bypass_gate(0.0);

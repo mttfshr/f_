@@ -58,7 +58,7 @@ patcher = {
     ],
 
     "codebox": """\
-Param strength(0.1);
+Param strength(0.0);
 Param src_vecfield(0.0);
 Param bypass_gate(0.0);
 

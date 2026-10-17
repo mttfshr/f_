@@ -184,6 +184,17 @@ makes possible that a vector field structurally can't:**
   a fringe-pattern shader shaped by tensor anisotropy rather than by
   distance from a light source — a different visual species from anything
   currently in the optics chain.
+- **Anisotropic interface preservation — a candidate fix for `f_vf_emulsion`'s
+  open technical risk.** `ideas/f_vf_emulsion.md`'s φ field is advected every
+  frame and semi-Lagrangian advection diffuses it, which risks smearing the
+  oil/smoke interface into mush faster than the flow can fold it into
+  filaments. That doc's current answer is an anti-diffusion term, flagged as
+  unstable. A structure tensor built from φ's own gradient (this section's
+  image-structure-tensor construction, applied to φ instead of to a texture)
+  would let a blur pass stay sharp along the interface and only smooth across
+  it — stabilizing, not destabilizing, and the same coherence-enhancing
+  mechanism as the anisotropic-blur bullet above. Worth NumPy-mirroring
+  alongside the anti-diffusion approach before building either.
 - **Confidence-scaled marks for the discrete-item family.** `f_vf_seeds`/
   `f_grain` orient marks from a vecfield but have no sense of how *sure*
   that orientation is. A tensor input would let mark shape (not just angle)
