@@ -24,7 +24,7 @@
 
 - Module-preflight judgment gate for both modules: open each helpfile in Max, check the layout is not
   cropped and the digest/recipe make sense (mechanical checks are green).
-- Tensormap T036: confirm the widened panel after reopening Max. (T037/T038 passed live per Matt, 2026-10-16.)
+- Tensormap T036-T038 all passed live per Matt (2026-10-16); nothing left on the tensormap but the helpfile judgment gate.
 - Pre-existing failures not from this work: `test_drift` (f_vf_advect code drift, f_masonry baseline
   shrank) and `generate_menu --check` (vorticity/modules/audio patchers) come from uncommitted edits
   outside f_tf_.
