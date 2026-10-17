@@ -1,7 +1,7 @@
 """
 spike_structure_tensor_range.py -- what's the actual numeric range of
 Jxx/Jxy/Jyy (and the eigenvalues/anisotropy derived from them) for the
-f_tf_structure producer (.specify/f_tf_structure/spec.md), across a few
+f_tf_tensormap producer (.specify/f_tf_tensormap/spec.md), across a few
 representative input regimes? This is open question 1 in that spec:
 gradient energy is unbounded and scales with input contrast and smoothing
 radius -- same category of problem f_vf_fieldmap solved with its `strength`

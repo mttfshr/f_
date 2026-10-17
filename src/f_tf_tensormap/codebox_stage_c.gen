@@ -1,0 +1,54 @@
+// Stage C (f_tf_tensormap): closed-form 2x2 eigen of the smoothed tensor
+// and both outlet encodings. in1 = stage B_v out1 (Jxx, Jxy, Jyy raw).
+// Mirrors tests/test_tf_tensormap.py stage_c.
+//
+//   out1 (module outlet 0, raw tensor):
+//        (Jxx*strength, Jxy*strength*0.5 + 0.5, Jyy*strength, 1)
+//   out2 (module outlet 1, packed convenience):
+//        (cos2t*0.5+0.5, sin2t*0.5+0.5, clamp(trace*strength), coherence)
+//        coherence = sqrt((Jxx-Jyy)^2 + 4 Jxy^2) / trace, in [0,1], no gain
+//   Isotropic pixels (trace < eps_trace): out2 = (0.5, 0.5, 0, 0).
+//   Direction-undefined pixels (root < eps_trace): R=G=0.5, B and A real.
+//   bypass_gate (module bypass, bypass_mode "param"; NOT the native @bypass,
+//   which would skip the shader and flip secondary outlets): both outlets
+//   forced to the zero-tensor neutral values.
+// eps_trace is provisional (T019 sets it from the measured noise floor).
+// pix_type float32 required. Outlet wiring + bypass supplied via
+// definition.py raw_lines (f_vf_optical_flow stage_c precedent).
+Param strength(100.0);
+Param bypass_gate(0.0);
+
+eps_trace = 0.000001;
+
+jxx = nearest(in1, norm).x;
+jxy = nearest(in1, norm).y;
+jyy = nearest(in1, norm).z;
+
+trace = jxx + jyy;
+diff = jxx - jyy;
+root = sqrt(diff*diff + 4.0*jxy*jxy);
+theta = 0.5 * atan2(2.0*jxy, diff);
+iso = 1.0 - step(eps_trace, trace);
+// Direction is also undefined where root ~ 0 (equal eigenvalues, e.g.
+// Jxx=Jyy, Jxy=0): GPU atan2(0,0) != NumPy's 0 (bench 2026-10-16), so
+// force R=G=0.5 there too; B and A keep their real values.
+iso_dir = max(iso, 1.0 - step(eps_trace, root));
+
+coh = clamp(root / max(trace, eps_trace), 0.0, 1.0);
+c2 = cos(2.0*theta) * 0.5 + 0.5;
+s2 = sin(2.0*theta) * 0.5 + 0.5;
+tr = clamp(trace * strength, 0.0, 1.0);
+
+n_r = mix(c2, 0.5, iso_dir);
+n_g = mix(s2, 0.5, iso_dir);
+n_b = mix(tr, 0.0, iso);
+n_a = mix(coh, 0.0, iso);
+
+out1 = vec(mix(jxx*strength, 0.0, bypass_gate),
+           mix(jxy*strength*0.5 + 0.5, 0.5, bypass_gate),
+           mix(jyy*strength, 0.0, bypass_gate),
+           1.0);
+out2 = vec(mix(n_r, 0.5, bypass_gate),
+           mix(n_g, 0.5, bypass_gate),
+           mix(n_b, 0.0, bypass_gate),
+           mix(n_a, 0.0, bypass_gate));

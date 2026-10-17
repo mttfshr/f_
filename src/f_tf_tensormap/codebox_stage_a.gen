@@ -1,0 +1,41 @@
+// Stage A (f_tf_tensormap): Rec.601 luma -> 3x3 Sobel -> per-pixel
+// gradient products. in1 = source. Mirrors tests/test_tf_tensormap.py
+// stage_a (nearest taps at one-texel offsets, clamp-to-edge). Sobel kernel
+// from .specify/stable/f_vf_sobel/spec.md.
+//
+// Outputs are RAW, unbounded float32 (pix_type float32 required on this
+// node): out1 = (gx*gx, gx*gy, gy*gy, 1). gx*gy is signed -- no offset.
+//
+// The module bypass is a Param on stage_c only (bypass_gate); stages A and B
+// keep running under bypass by design (nothing downstream reads them).
+// All sample components are read inline -- never store-then-slice.
+
+// Frame size in pixels as Params: `dim` reads 1 inside live Vsynth
+// jit.gl.pix objects (probe patch tf_probe.maxpat, 2026-10-16), so 1/dim.x
+// gave a zero offset and a zero gradient. Set width/height to the render
+// size so one tap step is exactly one square pixel.
+Param width(640.0);
+Param height(480.0);
+dx = 1.0 / width;
+dy = 1.0 / height;
+// Explicit edge clamp: the bench GPU WRAPS out-of-range coordinates
+// (tf_tensormap diag 2026-10-16), so clamp-to-edge is done here, in the
+// shader, to the first/last texel centre -- independent of texture wrap.
+xl = clamp(norm.x - dx, 0.5*dx, 1.0 - 0.5*dx);
+xr = clamp(norm.x + dx, 0.5*dx, 1.0 - 0.5*dx);
+yt = clamp(norm.y - dy, 0.5*dy, 1.0 - 0.5*dy);
+yb = clamp(norm.y + dy, 0.5*dy, 1.0 - 0.5*dy);
+
+l_tl = nearest(in1, vec(xl, yt)).x*0.299 + nearest(in1, vec(xl, yt)).y*0.587 + nearest(in1, vec(xl, yt)).z*0.114;
+l_tc = nearest(in1, vec(norm.x, yt)).x*0.299 + nearest(in1, vec(norm.x, yt)).y*0.587 + nearest(in1, vec(norm.x, yt)).z*0.114;
+l_tr = nearest(in1, vec(xr, yt)).x*0.299 + nearest(in1, vec(xr, yt)).y*0.587 + nearest(in1, vec(xr, yt)).z*0.114;
+l_ml = nearest(in1, vec(xl, norm.y)).x*0.299      + nearest(in1, vec(xl, norm.y)).y*0.587      + nearest(in1, vec(xl, norm.y)).z*0.114;
+l_mr = nearest(in1, vec(xr, norm.y)).x*0.299      + nearest(in1, vec(xr, norm.y)).y*0.587      + nearest(in1, vec(xr, norm.y)).z*0.114;
+l_bl = nearest(in1, vec(xl, yb)).x*0.299 + nearest(in1, vec(xl, yb)).y*0.587 + nearest(in1, vec(xl, yb)).z*0.114;
+l_bc = nearest(in1, vec(norm.x, yb)).x*0.299 + nearest(in1, vec(norm.x, yb)).y*0.587 + nearest(in1, vec(norm.x, yb)).z*0.114;
+l_br = nearest(in1, vec(xr, yb)).x*0.299 + nearest(in1, vec(xr, yb)).y*0.587 + nearest(in1, vec(xr, yb)).z*0.114;
+
+gx = (l_tr - l_tl) + 2.0*(l_mr - l_ml) + (l_br - l_bl);
+gy = (l_bl + 2.0*l_bc + l_br) - (l_tl + 2.0*l_tc + l_tr);
+
+out1 = vec(gx*gx, gx*gy, gy*gy, 1.0);

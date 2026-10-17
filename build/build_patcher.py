@@ -30,6 +30,7 @@ BORDER_COLOR = [0.0, 0.03529411765, 0.2274509804, 1.0]
 # Signal type label colors (used in header next to title)
 SIGNAL_TYPE_COLORS = {
     "vecfield": [ 0.302, 0.325, 0.463, 1.000 ],   
+    "tensor":   [ 0.850, 0.550, 0.200, 1.000 ],   # f_tf_ family (structure tensor), distinct from vecfield
 }
 OBJ_SIGNAL_TYPE = "obj-8"  # reserved ID for signal type label
 
@@ -498,6 +499,7 @@ def dial_box(n, p, object_name):
                 "parameter_mmax": float(p["max"]),
                 "parameter_mmin": float(p["min"]),
                 "parameter_modmode": _modmode(p),
+                **({"parameter_exponent": float(p["exponent"])} if "exponent" in p else {}),
                 "parameter_shortname": p["name"],
                 "parameter_type": 0,
                 "parameter_unitstyle": 1

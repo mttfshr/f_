@@ -1,6 +1,6 @@
 # f_tensorfield — Tensor Field Family
 
-_Created: 2026-10-10. Started as a draft spec (`.specify/f_tf_structure/`),
+_Created: 2026-10-10. Started as a draft spec (`.specify/f_tf_structure/`, the working name then),
 moved here 2026-10-10 once it became clear the content was overwhelmingly
 open questions and cross-references, not settled architecture — eight open
 questions against a handful of "likely safe, not yet confirmed"s is an
@@ -88,7 +88,13 @@ regenerate) rather than being independent of it.
 
 ---
 
-## Producer concept: `f_tf_structure`
+## Producer concept: `f_tf_tensormap`
+
+> **Promoted to a spec 2026-10-16:** `.specify/f_tf_tensormap/spec.md`
+> (Draft; renamed from `f_tf_structure` the same day, outlet order and
+> bounded-loop smoothing decided by Matt, plan and tasks written). That file is now the source of truth for the producer's
+> outlets, encodings, params and acceptance criteria; this section stays
+> as the design history. Where they differ, the spec wins.
 
 A structure-tensor producer: the tensor-field family's analog to
 `f_vf_fieldmap` in the vecfield family. Takes any scalar-dominant texture
@@ -177,8 +183,9 @@ actual numeric range before guessing a `strength` default. Figure:
   undefined — matching the index-type singularities
   `vector_field_math_concepts.md` #1 predicts. Trace cleanly separates
   structured ridges from flat regions. Leaning this confirms trace+
-  anisotropy as the right outlet-3 representation, not just a guess —
-  not fully closed, worth confirming against an actual consumer.
+  anisotropy as the right representation for outlet 2's B/A channels,
+  not just a guess — not fully closed, worth confirming against an
+  actual consumer.
 - **Provisional `strength` default:** ~10–15× (brings typical-content
   trace p95 into a ~0.5–1.0 range) — needs live-Max visual confirmation,
   not locked in from a NumPy number alone.
@@ -203,26 +210,26 @@ table (it takes a vecfield input) but is paused and unverified
 project-wide — excluded, not assessed, not treated as a blocker for
 anything here.
 
-| Module | Free mod inlet for outlet 3 | Outlet 2 sign-safety | Confidence |
+| Module | Free mod inlet for outlet 2 (B/A: trace+anisotropy) | Outlet 2 sign-safety (R/G: direction) | Confidence |
 |---|---|---|---|
 | `f_vf_glow` | **Yes** — `radius mod`, unused | Axis-blind in `direction=bidirectional` (default); sign-sensitive in fwd/back modes | Confirmed, prior session |
 | `f_vf_chroma` | **Yes, two** — `hue mod`, `dispersion mod`, both unused | Likely sign-sensitive — R/B offset in opposite directions along the local vector; flipping sign swaps which channel shifts which way | Inferred only |
 | `f_vf_prism` | **Yes, two** — `reach mod`, `spread mod`, both unused | Likely sign-sensitive — same luma-gated-RGB-split logic as chroma | Inferred only |
-| `f_vf_seeds` | **Yes** — `mod tex`, already feeds `size_mod`/`stretch_mod` | Depends on the *shape tex* supplied, not the module alone — symmetric marks (ellipse/dash) are axis-blind, directional marks (arrow/comet) are sign-sensitive | Not yet confirmed — needs `codebox_seeds_render.gen` read |
+| `f_vf_seeds` | **Yes** — `mod tex`, already feeds `size_mod`/`stretch_mod` | Depends on the *shape tex* supplied AND on `phase` — symmetric marks (ellipse/dash) at `phase=0` are axis-blind, directional marks (arrow/comet) or any nonzero `phase` are sign-sensitive. Orientation is built from a genuine, non-doubled angle either way, so outlet 2's R/G needs a decode+redouble step at the consumer regardless of which case applies | Confirmed 2026-10-16 |
 | `f_vf_streak` | No | Sign-sensitive — one-directional algorithm, no bidirectional mode | Confirmed |
 | `f_vf_warp` | No | Sign-sensitive — single-sample UV displacement | Inferred |
 | `f_caustic` | No (vecfield inlet itself has no connected-state tracking — unconnected is silent, not a default field) | Sign-sensitive — backward streamline accumulation toward convergence zones | Inferred |
 | `f_vf_advect` | No | Sign-sensitive — temporal accumulation along a direction, same shape as caustic/warp. **Missing from the exclusion list below until now.** | Inferred |
-| `f_vf_potential` | No (2nd inlet is `color`, a texture, not a scalar) | **Genuinely open** — if it integrates field *magnitude* rather than walking the vector path, it could turn out axis-blind. Don't assume excluded. | Unknown — needs a codebox read |
+| `f_vf_potential` | No (2nd inlet is `color`, a texture, not a scalar) | Sign-sensitive — per-frame increment is magnitude-only (`field_mag*dt`), but the backward-advect lookup position (`src_uv = uv - (fx,fy)*dt`) depends on direction; an axis field's branch-cut would corrupt the temporal trail the same way it would for `f_vf_fluid` | Confirmed 2026-10-16 |
 | `f_weave` | No — bare `in1` already carries the vecfield (no `vs_instate` tracking, unlike other consumers), `in2` already carries scalar-potential/color | Sign-sensitive — vector-add+renormalize blend (the known `f_weave_orientation_blend.md` bug) reacts sharply to a local axis flip | Inferred |
 | `f_vf_fluid` | No — the vecfield *is* the primary inlet (force input), same `in1`-is-the-field pattern as `f_vf_fieldmap` | Sign-sensitive — force adds velocity in the force's direction each frame; an axis field would force the solver toward the branch cut's two opposite directions on alternating frames/pixels. Temporal, so a bad sample doesn't just mis-render once, it corrupts the persistent state | Inferred, new row |
 | `f_vf_split` | No — same `in1`-is-the-field pattern; outputs raw X/Y channels | **Not sign-sensitive in a meaningful sense — it's a decode-adjacent utility, not an effect.** Feeding outlet 2 directly into `f_vf_split` (bipolar mode) returns `cos(2θ)` and `sin(2θ)` as two separate scalar textures with no `atan2` involved at all. For any downstream use that only needs the raw doubled components (not a literal recovered angle), this sidesteps Open Question 6 entirely | New row, mechanically obvious once named |
 
 Two follow-on findings from this pass:
 
-- **`f_vf_chroma`/`f_vf_prism` are the best-positioned outlet-3 targets in
-  the whole library** — two free scalar inlets each, zero new plumbing,
-  not previously considered.
+- **`f_vf_chroma`/`f_vf_prism` are the best-positioned B/A (trace+anisotropy)
+  targets in the whole library** — two free scalar inlets each, zero new
+  plumbing, not previously considered.
 - **`f_vf_split` suggests the angle-doubled encoding might not need full
   `atan2` decoding everywhere.** Some consumer designs could work directly
   off `(cos 2θ, sin 2θ)` as a bipolar pair rather than recovering θ itself
@@ -252,16 +259,20 @@ discussion below for a possible mechanism, not pursued yet.
 
 ### Explicit exclusion list
 
-Outlet 2 must not reach sign-sensitive consumers regardless of the above:
-`f_vf_warp` (displacement direction), `f_caustic` (refraction direction),
-`f_vf_advect` (temporal accumulation along a direction — added 2026-10-11,
-missing from the first pass of this list), `f_vf_fluid` (force direction,
-also temporal), `f_vf_chroma`/`f_vf_prism` (channel-split direction, pending
-confirmation). `f_vf_potential` is deliberately *not* on this list — see
-the audit table above, its safety is genuinely unresolved rather than
-assumed-excluded. (`f_vf_vorticity` is not evaluated at all — it's in
-`.specify/paused/`, excluded from this analysis per the standing
-2026-10-11 convention, not placed on either list.)
+Outlet 2's R/G (direction) channels must not reach sign-sensitive
+consumers regardless of the above: `f_vf_warp` (displacement direction),
+`f_caustic` (refraction direction), `f_vf_advect` (temporal accumulation
+along a direction — added 2026-10-11, missing from the first pass of
+this list), `f_vf_fluid` (force direction, also temporal),
+`f_vf_potential` (backward-advect lookup direction, also temporal —
+confirmed 2026-10-16, moved here from "genuinely open"), `f_vf_seeds`
+(orientation frame built from a genuine, non-doubled angle — confirmed
+2026-10-16; symmetric-shape/`phase=0` case is axis-blind but still can't
+take R/G directly without a decode+redouble step), `f_vf_chroma`/
+`f_vf_prism` (channel-split direction, pending confirmation). (`f_vf_vorticity`
+is not evaluated at all — it's in `.specify/paused/`, excluded from this
+analysis per the standing 2026-10-11 convention, not placed on either
+list.)
 
 ### Future, not pursued
 
@@ -396,6 +407,11 @@ paused module's actual blocker is orthogonal to representation type:
 > representation choices stand, only the outlet count changed — but a
 > literal "outlet 3" or "outlet 2 only" reference is stale until these
 > items get a terminology pass.
+>
+> **Terminology pass completed 2026-10-16.** All literal "outlet 3"
+> references in this doc are now written as outlet 2's B/A
+> (trace+anisotropy) channels; "outlet 2" references are clarified as
+> its R/G (direction) channels where the distinction matters.
 
 1. **Outlet 1 (raw tensor) range/normalization.** Spiked (above);
    provisional `strength` ~10–15 needs live-Max confirmation.
@@ -407,15 +423,17 @@ paused module's actual blocker is orthogonal to representation type:
    kernel) used in the spike; Scharr comparison deferred, not blocking
    unless Sobel proves insufficiently sharp for fine grain/weave-scale
    structure once a real consumer exists.
-4. **Module naming.** `f_tf_structure` is a working name only — `tf`
-   prefix for the family (parallel to `vf`) proposed here, not settled
-   project-wide.
+4. **Module naming — RESOLVED 2026-10-16 (Matt): `f_tf_tensormap`** (it
+   was `f_tf_structure` until then). `tf` is the family prefix, parallel
+   to `vf`; module prefix `tensormap`. The constitution's naming table
+   still needs an `f_tf_` entry (tasks T042).
 5. **First consumer to validate against.** `f_vf_glow` still looks like
-   the right target — wiring-only on outlet 3, wiring+decode-only on
-   outlet 2 (bidirectional mode). `f_vf_chroma`/`f_vf_prism` are now the
-   strongest *second* candidates for outlet 3 specifically (two free
-   inlets each, no plumbing). `f_vf_streak` needs real architecture work
-   first; not a good first target.
+   the right target — wiring-only on the B/A (trace+anisotropy)
+   channels, wiring+decode-only on the R/G (direction) channels
+   (bidirectional mode). `f_vf_chroma`/`f_vf_prism` are now the
+   strongest *second* candidates for the B/A channels specifically (two
+   free inlets each, no plumbing). `f_vf_streak` needs real
+   architecture work first; not a good first target.
 6. **GenExpr `atan2` safety in `jit.gl.pix` — VERIFIED SAFE, 2026-10-12**
    (`tests/spike_atan2_safety.py` + `tests/bench/codeboxes/atan2_safety.gen`,
    live on the GPU bench). Compiles, runs clean, no bench errors. On
@@ -437,10 +455,10 @@ paused module's actual blocker is orthogonal to representation type:
 7. **Mod-texture unipolar/bipolar convention — inherited, not new.**
    `named_mod_textures.md` already flags "the unipolar/bipolar divergence
    between `f_masonry` and Kevin's `vs_displacement`" as unresolved and
-   blocking. Outlet 3's final range can't be locked to something that
-   behaves sensibly in `f_vf_glow`'s radius mod inlet or `f_vf_seeds`'
-   `size_mod`/`stretch_mod` without reading what those inlets actually
-   expect, per consumer.
+   blocking. The B/A (trace+anisotropy) channels' final range can't be
+   locked to something that behaves sensibly in `f_vf_glow`'s radius mod
+   inlet or `f_vf_seeds`' `size_mod`/`stretch_mod` without reading what
+   those inlets actually expect, per consumer.
 8. **Could named-mod-texture tags double as a type declaration, not just
    a routing role?** Raised by Matt 2026-10-10. Tagging by *type*
    (`vecfield_flow` vs. `vecfield_axis` vs. `tensor_raw`, plain Vsynth
@@ -458,12 +476,26 @@ paused module's actual blocker is orthogonal to representation type:
    ordering are gating correctness, not convenience. Not pursued
    further; belongs in `named_mod_textures.md`'s own thread once its
    prerequisite verification work is done.
-9. **`f_vf_seeds` sign-sensitivity — needs a direct codebox read.**
-   The ideas-doc sketch's `taper` param (which would make orientation
-   sign-sensitive) doesn't appear in the shipped param list at all —
-   good sign, but "likely safe" isn't "confirmed safe." Needs reading
-   `codebox_seeds.gen`/`codebox_seeds_render.gen` directly before outlet
-   2 is wired there.
+9. **`f_vf_seeds` sign-sensitivity — RESOLVED 2026-10-16, confirmed via
+   codebox read.** `taper` indeed doesn't exist in the shipped param
+   list, but that's not what settles this. Both `codebox_seeds.gen` and
+   `codebox_seeds_render.gen` build the local `(along, across)` frame
+   directly from raw `vx/vy` via `fcs=vx/mag, fsn=vy/mag` — a genuine
+   full-angle basis, not an angle-doubled one. Two consequences: (1)
+   `phase` (default 0, but a live performable dial) shifts `along`
+   asymmetrically (`along_shifted = along - phase*marklen_eff`), so any
+   nonzero phase makes the mark sign-sensitive regardless of shape
+   symmetry; (2) even at `phase=0`, only shape textures symmetric under
+   180° rotation (ellipse/dash) are axis-blind — directional shapes
+   (arrow/comet) read the flipped side of the shape tex when the sign
+   flips. Matches the audit table's existing characterization exactly,
+   now confirmed rather than inferred. **Consequence for wiring:**
+   outlet 2's R/G (doubled cos2θ/sin2θ) can't be fed to this inlet
+   directly in either case — the codebox expects a genuine signed
+   vector, not a doubled one, so a decode-and-redouble step (recover θ,
+   re-emit `cos θ, sin θ`) is required at the consumer regardless of
+   phase/shape, and even after that decode, nonzero `phase` keeps this
+   sign-sensitive by design, not just by convention.
 10. **Does any real use case need the raw decoded angle, or would
     `(cos 2θ, sin 2θ)` as a bipolar pair suffice?** Raised by the
     2026-10-11 audit, via `f_vf_split`: if a consumer's modulation target
@@ -472,22 +504,97 @@ paused module's actual blocker is orthogonal to representation type:
     Open Question 6's `atan2` block entirely for that consumer. Not
     assessed per-module yet — would need checking against each
     candidate's actual math, not just its I/O shape.
-11. **`f_vf_potential`: does it integrate direction or only magnitude?**
-    Raised by the 2026-10-11 audit. If its time-integration only
-    accumulates field *magnitude* (speed) rather than walking the vector
-    path, it could be axis-blind rather than excluded — current framing
-    assumed the latter without checking. Needs a codebox read
-    (`.specify/f_vf_potential/` or its `.gen` file) before it's placed on
-    either list with any confidence.
+11. **`f_vf_potential`: does it integrate direction or only magnitude —
+    RESOLVED 2026-10-16, confirmed via codebox read: both, in different
+    places.** `codebox_potential.gen` shows the per-frame *increment* is
+    magnitude-only (`potential = prev*decay + field_mag*dt`,
+    `field_mag = sqrt(fx²+fy²)`) — exactly the axis-blind case the
+    question hoped for. But the backward-advect step that decides
+    *where* `prev` is sampled from is direction-dependent:
+    `src_uv = uv - (fx,fy)*dt`. An axis field's branch-cut ambiguity
+    would make that lookup position flip between two directions
+    frame-to-frame (or pixel-to-pixel near the cut) even though the
+    amount added each frame wouldn't change — the same temporal-state
+    corruption shape already flagged for `f_vf_fluid`, not a new
+    failure mode. **Moved to the exclusion list** (sign-sensitive,
+    temporal) rather than staying genuinely open.
 12. **`f_vf_glow`'s `direction` as a continuous, per-pixel anisotropy-driven
-    blend instead of a flat 3-way enum.** Raised by Matt 2026-10-11. The
-    codebox already computes `fwd_weight`/`bwd_weight` branchlessly from
-    `direction` via `step()` — nothing architectural stops those from
-    being continuous, spatially-varying values instead of one of three
-    fixed presets. Low anisotropy (direction untrustworthy, e.g. near a
-    singularity) could push the blend toward bidirectional/safe
-    automatically; high anisotropy could let it lean directional. A
-    concrete, real design — not wiring — held open pending Phase 2.
+    blend instead of a flat 3-way enum — RESOLVED 2026-10-16 (design),
+    zero-new-UI scope.** Raised by Matt 2026-10-11; designed 2026-10-16
+    as the first Phase 2 module, chosen specifically because it needs no
+    new panel dial and so isn't blocked behind the paused
+    `mod_depth_ui_density.md` question the way `f_stipple` (Q13) is.
+    Grounded against the real `codebox_v1.gen`/`definition.py` (not a
+    sketch): `fwd_mode`/`bwd_mode` are already computed branchlessly from
+    `direction` via `step()`; this design only continuizes the weight
+    that reaches the accumulation loop, `direction` itself keeps its
+    current meaning and default.
+
+    **Only touches outlet 2's B/A (anisotropy) channel — not R/G.** This
+    is a confidence gate on the *existing* vecfield inlet's trustworthiness,
+    not a rewiring of the direction source. The R/G decode-and-redouble
+    problem (open questions 6/9/10) is a fully separate, still-blocked
+    piece of work and isn't touched here.
+
+    **New mod_inlet, no new dial** — `anisotropy`, a fourth texture inlet
+    (`in4`), following the exact precedent `radius mod` already sets in
+    this same module (a mod_inlet with no separate depth dial of its
+    own):
+    ```python
+    "mod_inlets": [
+        {"label": "vecfield", "state_param": "src_vecfield"},
+        {"label": "radius mod"},
+        {"label": "anisotropy", "state_param": "src_anisotropy"},
+    ],
+    ```
+
+    **Connection detection must use `state_param`, not a content
+    heuristic — this is the one real correctness catch.** An unconnected
+    texture inlet samples as black (0), but the neutral/no-op value this
+    gate needs when nothing is patched in is `1.0` (full confidence,
+    reproducing current behavior exactly). Glow's own vecfield inlet
+    gets away with a content heuristic (`field_suppress = step(0.02,
+    raw_x+raw_y)`) only because zero is *also* the correct neutral value
+    for a flow field — that coincidence doesn't hold here, and reusing it
+    would silently force every existing `direction=1`/`2` patch toward
+    bidirectional-safe the moment nothing's wired in. `src_anisotropy` as
+    a `state_param` (the same mechanism `f_vf_potential` already uses
+    correctly: `connected = step(0.5, src_vecfield)`) sidesteps this
+    cleanly — declared in `mod_inlets` above but unused in `f_vf_glow`'s
+    own vecfield inlet today, so this is the first time the module
+    actually exercises it.
+
+    **Codebox change:**
+    ```c
+    Param src_anisotropy(0.0);
+    ...
+    // existing, unchanged:
+    fwd_mode = 1.0 - step(1.5, direction);
+    bwd_mode = 1.0 - step(0.5, direction) + step(1.5, direction);
+
+    // new:
+    aniso = mix(1.0, sample(in4, uv).x, src_anisotropy);  // 1.0 = full confidence, unconnected default
+    fwd_weight = mix(1.0, fwd_mode, aniso);                // 1.0,1.0 = safe bidirectional floor
+    bwd_weight = mix(1.0, bwd_mode, aniso);
+    ```
+    At `direction=0`, `fwd_mode=bwd_mode=1` already, so `aniso` is a
+    no-op — bidirectional stays axis-blind exactly as the audit table
+    already says. At `direction=1`/`2`, low anisotropy continuously pulls
+    the pixel back toward the bidirectional floor; high anisotropy lets
+    the chosen one-directional mode fully apply. Linear mix chosen to
+    match the codebox's own existing branchless/mix idiom throughout —
+    no gamma/curve param, which would itself be a new dial.
+
+    **Explicitly deferred, not part of this design:** (a) a
+    performer-facing gain dial on top of `aniso` (Q15's "nice to have,
+    not required") — waits for `mod_depth_ui_density.md`; (b) wiring
+    outlet 2's R/G into `in2` at all, which needs the decode+redouble
+    step `f_vf_seeds` (Q9) already showed is mandatory, not optional.
+
+    **Blocked on, before this is buildable:** `f_tf_tensormap` (the
+    producer) doesn't exist in `.specify/` yet — concept-only. This
+    design can sit ready, but specifying the producer is the real next
+    step, not this module.
 13. **`f_stipple`'s `anisotropy` and `angle` as tensor-driven per-pixel
     params instead of flat dials.** Raised by Matt 2026-10-11. Not a
     vecfield consumer today (no inlet at all), but its own `anisotropy`
@@ -556,7 +663,7 @@ concept, above) and closes Open Question 2 — see its resolution note.
 - `f_vecfield.md` — the sibling family's hub doc and type-contract
   precedent (float32, RG=XY, 0.5=zero); this family's outlet 2 reuses
   that contract's storage shape with a different sign convention.
-- `module_taxonomy_standardization.md` — `f_tf_structure`'s single
+- `module_taxonomy_standardization.md` — `f_tf_tensormap`'s single
   driving inlet follows the `driving_inlet` distinction this file
   established; also the precedent for "two things sharing a label while
   meaning differently" as a real, already-seen bug shape (motivates
@@ -579,21 +686,28 @@ concept, above) and closes Open Question 2 — see its resolution note.
 Not a build plan yet. Two different kinds of next step are live at once,
 per the Scope note above, and shouldn't be conflated:
 
-- **Phase 1 (survey) still open:** ~~the `atan2` verification (open
-  question 6) is the highest-leverage item~~ — done 2026-10-12, verified
-  GPU-safe (see open question 6). What's left: the remaining open
-  questions (9, 11, 13's consumer-design passes) are codebox reads and
-  per-module checks, no longer blocked by the decode.
-- **Phase 2 (per-module finesse) hasn't started on purpose.** Open
-  questions 12–14 are real designs, not wiring, but the gate they were
-  waiting on is now clear: the packing corollary (RGBA convenience
-  outlet) is decided and closes Phase 1's own Open Question 2
-  (2026-10-13, Matt — see Producer concept, above). What's left before
-  Phase 2 starts in earnest is the remaining Phase-1 codebox reads
-  (open questions 9, 11) plus a terminology pass on the items the
-  Terminology note above flags as written against the old outlet count
-  — not a design decision anymore, just bookkeeping. Then Phase 2, one
-  module at a time, starting wherever the fit is tightest (`f_vf_glow`'s
-  direction-blend and `f_stipple`'s anisotropy/angle both look like
-  strong first candidates now that there's something stable to build
-  against).
+- **Phase 1 (survey) — CLOSED 2026-10-16.** The `atan2` verification
+  (open question 6) was done 2026-10-12, verified GPU-safe. The two
+  remaining codebox reads are done: open question 9 (`f_vf_seeds`) and
+  open question 11 (`f_vf_potential`) are both resolved and both landed
+  sign-sensitive — `f_vf_potential` moved onto the explicit exclusion
+  list, `f_vf_seeds` confirmed as needing a decode+redouble step
+  regardless of shape/phase. The terminology pass flagged at the top of
+  Open Questions is also done — no stale "outlet 3" references remain.
+  Open question 13's consumer-design pass is Phase 2 work, not Phase 1,
+  and stays open below.
+- **Phase 2 (per-module finesse) — started 2026-10-16, deliberately
+  narrow.** Checked Q12/Q13 against the paused `mod_depth_ui_density.md`
+  question first: `f_stipple` (Q13) genuinely inherits that blocker (no
+  mod-inlet machinery exists for `anisotropy`/`angle` today, so wiring
+  them means new base+depth dials on an already-dense panel); `f_vf_glow`
+  (Q12) doesn't, because `radius mod` already establishes a mod_inlet
+  with no separate depth dial in this exact module, and Q12's confidence
+  gate can reuse that shape. So Q12 is designed (see above, "zero-new-UI
+  scope") and Q13/Q14 stay open, still waiting on the UI-density question
+  to resolve (or on their own codebox reads, for Q14).
+- **What actually blocks building Q12's design: `f_tf_tensormap` doesn't
+  exist yet.** It's concept-only — nothing in `.specify/`. Writing its
+  spec (producer outlets, params, `strength` default from the spike
+  findings above) is the real next step, not further Phase 2 module
+  design; Q12's design can sit ready until then.

@@ -71,7 +71,7 @@ substantially move a file in `ideas/`, update its entry here too.
   Points out remaining territory: `f_vf_turbulence`, `f_vf_chladni`,
   masking/scalar-extraction, advection, modulation.
 - **[f_tensorfield.md](f_tensorfield.md)** ⚪ — Tensor field family hub,
-  sibling to `f_vecfield.md`. Producer concept `f_tf_structure` (structure
+  sibling to `f_vecfield.md`. Producer concept `f_tf_tensormap` (structure
   tensor from image gradient, three outlets: raw tensor / angle-doubled
   principal-axis direction / eigenvalues) NumPy-spiked
   (`tests/spike_structure_tensor_range.py`) but nothing built. Started as a

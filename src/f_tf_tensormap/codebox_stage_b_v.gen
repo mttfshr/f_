@@ -1,0 +1,23 @@
+// Stage B_v (f_tf_tensormap): vertical bounded-loop box smooth. in1 =
+// stage B_h out1. Same structure as stage_b_h; see its header. Mirrors
+// tests/test_tf_tensormap.py stage_b (axis 1). Output is the smoothed
+// structure tensor (Jxx, Jxy, Jyy), raw float32.
+Param radius(3.0);
+Param height(480.0);  // frame height in pixels; `dim` reads 1 live, so it is a Param
+
+dy = 1.0 / height;
+acc_xx = 0.0;
+acc_xy = 0.0;
+acc_yy = 0.0;
+cnt = 0.0;
+for (i = -16; i <= 16; i += 1) {
+    wt = step(abs(i), radius);
+    py = clamp(norm.y + i*dy, 0.5*dy, 1.0 - 0.5*dy);
+    acc_xx = acc_xx + wt * nearest(in1, vec(norm.x, py)).x;
+    acc_xy = acc_xy + wt * nearest(in1, vec(norm.x, py)).y;
+    acc_yy = acc_yy + wt * nearest(in1, vec(norm.x, py)).z;
+    cnt = cnt + wt;
+}
+inv = 1.0 / max(cnt, 1.0);
+
+out1 = vec(acc_xx*inv, acc_xy*inv, acc_yy*inv, 1.0);
