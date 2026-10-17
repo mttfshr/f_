@@ -131,14 +131,39 @@ low-confidence behaviour*: fall back to symmetric (bidirectional) glow instead o
 a taste decision, so the next step is one live test (tensormap -> axisflow -> glow in2) before
 building anything. Tasks T039-T043 in `.specify/f_vf_glow/tasks.md` stay parked until then.
 
-## The decision (Matt)
+## The decision (Matt) -- RESOLVED 2026-10-16
 
-Is there a tensor-space operator or full-tensor consumer actually wanted (temporal smoothing,
-anisotropic blur, hatching)?
-- **Yes** -> keep the type; build views around it (scalar unpacker next), build the wanted
-  operator/consumer as the justification.
-- **No** -> fold the views into the tensormap (vecfield + scalar outlets) and drop the
-  adapters.
+**Focus on full-tensor consumers.** The tensor type stays; the views (axisflow, a later
+unpacker) are support, not the goal. First targets come from rows 12-13 of Table 1 (anisotropic
+smoothing/painterly filters, glyph renderer); operators (row 14-16, temporal smoothing first)
+follow as needed to keep full-tensor consumers stable on live video. The glow anisotropy inlet
+(Q12) stays parked.
+
+### Direction: full-tensor consumers (open architecture questions, to settle before any spec)
+
+1. **Which input outlet.** Outlet 0 (raw Jxx, Jxy, Jyy) is unclamped float32, scaled by the
+   tensormap's `strength`, and has no consumer yet; it is the natural full-tensor input.
+   Eigenvalue *ratios* and the axis are scale-free; only absolute-energy gating depends on
+   `strength`. Outlet 1 (theta, trace, coherence) carries the same information except where B
+   (trace) clamps at 1.
+2. **Inlet shape.** Source image in one inlet, tensor in another (precedent: `f_vf_glow`
+   tex + vecfield).
+3. **Candidates and rough cost/risk.**
+   - `f_tf_glyph` (ellipse/line glyph per cell): one closed-form pass, no loops; validates raw
+     decode; doubles as the universal tensor debugger and the tool for Tissot/metric-tensor
+     fields later. Low risk.
+   - `f_tf_aniso_blur` (structure-aligned smoothing: integrate the source along the edge line
+     with length set by coherence): bounded loop (glow-like, ~16-48 taps). For curved contours
+     the integration should follow the field step by step, choosing each step's sign by
+     continuity with the previous step (the proper way to follow an axis field, no seam).
+     Medium risk, most useful look.
+   - Anisotropic Kuwahara (painterly; ellipse-shaped sectors from both eigenvalues): the most
+     distinctive look and the heaviest (sector x tap loops); probably a later phase.
+4. **Stability on video.** Per-frame structure tensors jitter; a temporal tensor smoother
+   (operator, row 14) may be a prerequisite for the video use, not a nicety.
+5. **Naming.** `f_tf_` + verb, parallel to how `f_vf_` consumers are named by what they do.
+6. **Verification.** Tier 1 NumPy mirror each (synthetic constant-orientation stripes: blur
+   preserves along, smooths across; glyph axes match eigh), then bench, then live.
 
 ## Related
 
