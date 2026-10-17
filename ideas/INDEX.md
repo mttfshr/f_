@@ -70,15 +70,17 @@ substantially move a file in `ideas/`, update its entry here too.
   `f_vf_fieldmap`. Consumers built: `f_caustic`, `f_vf_warp`, `f_vf_streak`.
   Points out remaining territory: `f_vf_turbulence`, `f_vf_chladni`,
   masking/scalar-extraction, advection, modulation.
-- **[f_tensorfield.md](f_tensorfield.md)** ⚪ — Tensor field family hub,
-  sibling to `f_vecfield.md`. Producer concept `f_tf_tensormap` (structure
-  tensor from image gradient, three outlets: raw tensor / angle-doubled
-  principal-axis direction / eigenvalues) NumPy-spiked
-  (`tests/spike_structure_tensor_range.py`) but nothing built. Started as a
-  `.specify/` draft spec, moved here 2026-10-10 — too many open questions
-  (GenExpr `atan2` safety, the mod-texture unipolar/bipolar convention,
-  whether named-mod-texture tags could double as a type declaration) to
-  meet the spec bar yet.
+- **[f_tensorfield.md](f_tensorfield.md)** 🟡 — Tensor field family hub,
+  sibling to `f_vecfield.md`. `f_tf_tensormap` (structure tensor: raw +
+  packed direction/trace/coherence) and `f_tf_axisflow` (tensor -> seam-free
+  vecfield bridge) are built and live-checked (2026-10-16; specs in
+  `.specify/`). The hub still holds the design history, the full consumer
+  audit and open questions Q12-Q15 (glow anisotropy inlet, stipple, grain).
+- **[f_tf_tensor_strategy.md](f_tf_tensor_strategy.md)** 🔵 — Open question
+  (2026-10-16): what is the tensor type for if every consumer needs an
+  adapter? Views vs tensor-space operators vs full-tensor consumers; rule for
+  how consumers take tensor data; decision pending on whether to keep the type
+  or fold the views into the tensormap.
 - **[f_vf_seeds.md](f_vf_seeds.md)** ⚪ — Discrete-item generator: marks at
   hash-stable seed points, oriented by an incoming vecfield (wind-barb/ink
   look). Reference implementation for the discrete-item family's inlet

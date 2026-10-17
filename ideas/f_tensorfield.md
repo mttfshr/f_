@@ -667,6 +667,8 @@ concept, above) and closes Open Question 2 — see its resolution note.
 
 ## Cross-references
 
+- `f_tf_tensor_strategy.md` — 2026-10-16: what the tensor type is for vs. adapter views; rule for
+  how consumers take tensor data; reframes Q12 around a live axisflow-into-glow test first.
 - `vector_field_math_concepts.md` #9 — origin of this whole thread; its
   own "Where this connects" note previously called tensor fields
   "genuinely new territory, not represented anywhere else in `ideas/`" —
