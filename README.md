@@ -104,8 +104,8 @@ This table is also the source for the package's launcher patcher (`package/extra
 |---|---|
 | `f_modules` | Module menu -- pick a module to add it to the patch as a bpatcher; categories marked ∇ hold vecfield modules |
 | `f_texrouter` | 4x4 texture routing matrix with preset system |
-| `f_tf_tensormap` | ⚠ Unverified. Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1) |
-| `f_tf_axisflow` | ⚠ Unverified. Tensor map axis to a seam-free vecfield: flow along or across image edges |
+| `f_tf_tensormap` | Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1) |
+| `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
 | `f_util_matrix_2` | Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status |
 | `f_util_profile` | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
 | `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet |

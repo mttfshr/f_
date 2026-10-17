@@ -3574,7 +3574,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1)",
+									"text": "Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3643,7 +3643,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Tensor map axis to a seam-free vecfield: flow along or across image edges",
+									"text": "Tensor map axis to a seam-free vecfield: flow along or across image edges",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
