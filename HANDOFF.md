@@ -24,8 +24,7 @@
 
 - Module-preflight judgment gate for both modules: open each helpfile in Max, check the layout is not
   cropped and the digest/recipe make sense (mechanical checks are green).
-- Tensormap T036/T037/T038: add from the menu, confirm the widened panel, `outlet 1 -> f_vf_split`
-  (cos2t/sin2t appear as scalars), 90-degree rotate negates them.
+- Tensormap T036: confirm the widened panel after reopening Max. (T037/T038 passed live per Matt, 2026-10-16.)
 - Pre-existing failures not from this work: `test_drift` (f_vf_advect code drift, f_masonry baseline
   shrank) and `generate_menu --check` (vorticity/modules/audio patchers) come from uncommitted edits
   outside f_tf_.

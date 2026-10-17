@@ -113,8 +113,8 @@ docs/f-reference/f_tf_tensormap.md, f_tensor_type.md   — Phase 5
 
 **Purpose:** There is no consumer yet. Prove the outlets are usable.
 
-- [ ] T037 Wire outlet 1 into `f_vf_split` (bipolar mode); confirm `cos(2theta)` and `sin(2theta)` appear as two scalar textures with no `atan2` involved (hub audit table, `f_vf_split` row).
-- [ ] T038 Rotate the test input by 90 degrees; confirm the doubled components negate. Confirm outlet 0's Jxy sign flips under a mirror flip. Three-patch chain `jit.gl.bfg -> f_tf_tensormap -> f_vf_split` is the working demo.
+- [x] T037 **(2026-10-16: Matt: pass, live. Note: the screenshot showed VF Split fed from Axis Flow, not tensormap outlet 1, so the cos2t/sin2t reading itself was not seen; the chain was verified live via axisflow, advect and split.)** Wire outlet 1 into `f_vf_split` (bipolar mode); confirm `cos(2theta)` and `sin(2theta)` appear as two scalar textures with no `atan2` involved (hub audit table, `f_vf_split` row).
+- [x] T038 **(2026-10-16: Matt: pass, live)** Rotate the test input by 90 degrees; confirm the doubled components negate. Confirm outlet 0's Jxy sign flips under a mirror flip. Three-patch chain `jit.gl.bfg -> f_tf_tensormap -> f_vf_split` is the working demo.
 
 **Checkpoint:** Both outlets confirmed meaningful on real content in a real chain. → Proceed to Phase 5.
 
