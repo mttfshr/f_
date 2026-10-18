@@ -2,7 +2,7 @@
 
 **Type:** Processor (f_vecfield producer, tensor input)
 **Status:** Built 2026-10-16; mirror and bench tests green, live-checked with `f_vf_advect`. Helpfile pending.
-**2026-10-17:** `gain` made signed and an optional per-pixel reference-vecfield inlet added (mirror 24/24; the new bench cases are written but not yet run; not yet checked live).
+**2026-10-17:** `gain` made signed and an optional per-pixel reference-vecfield inlet added (mirror 24/24; bench 9/9 on the GPU 2026-10-17; not yet checked live).
 
 ---
 
@@ -101,7 +101,7 @@ Sweep `angle` to move where the flow fades. `gate` at 1 keeps flat or noisy area
 
 ## Notes
 
-- Tests: `tests/test_tf_axisflow.py` (NumPy mirror, 24 tests, including a mutation check that catches along/across swapped, and the signed-gain and reference-inlet cases) and `tests/bench_tf_axisflow.py` (GPU parity, 9 tests; the four signed-gain and reference cases are written but not yet run). Spec, plan, tasks: `.specify/f_tf_axisflow/`.
+- Tests: `tests/test_tf_axisflow.py` (NumPy mirror, 24 tests, including a mutation check that catches along/across swapped, and the signed-gain and reference-inlet cases) and `tests/bench_tf_axisflow.py` (GPU parity, 9 tests, all green 2026-10-17, including the signed-gain and reference cases). Spec, plan, tasks: `.specify/f_tf_axisflow/`.
 - `phi` is a predefined GenExpr constant and cannot be assigned; the codebox uses `ref_ang`.
 - Deferred: a `normalize` mode that keeps full magnitude at the cost of a seam, trace gating.
 

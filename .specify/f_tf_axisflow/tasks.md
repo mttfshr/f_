@@ -41,7 +41,7 @@ rotates it, unconnected = old behaviour; title-bar label left as `T_ in ∇ out`
   pixel-space decode; `angle` rotates. Codebox + mirror `axisflow(ref=...)` in step; patcher rebuilt (pix has 2 inlets).
 - [x] T022 Mirror tests: 16 -> 24 (negative gain, constant ref == dial, angle rotates ref, magnitude scales, absent ref
   falls back, per-pixel brute force, seamlessness bound, 16:9 pass-through). `tests/run.sh -q tests/test_tf_axisflow.py` 24/24.
-- [ ] T023 Bench: cases written (negative gain, reference inlet, black ref == dial, 16:9 reference); `run_case` now feeds
+- [x] T023 (bench 9/9, 2026-10-17; the sample() tolerance worry did not materialise) Bench: cases written (negative gain, reference inlet, black ref == dial, 16:9 reference); `run_case` now feeds
   in2. NOT RUN: ask Matt (bench.maxpat open). One open point: in2 uses `sample()` (bilinear, so a lower-res fluid
   output reads smoothly); same-size bench inputs should be exact, but if TOL 2e-5 fails check 8-bit sample weights first.
 - [ ] T024 Full offline suite once (`tests/run.sh -q`): the rebuild touched only f_tf_axisflow, but the contract /

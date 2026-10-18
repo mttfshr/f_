@@ -341,7 +341,7 @@ remap of the landing position, driven like `scale` (control-entry token, `pix_wi
 - [x] E03 Definition: `edge` menu param; patcher rebuilt (menu at x 148-193 inside the 227 px frame).
 - [x] E04 Tests: `scatter_mirror.edge_remap` + 3 mirror tests (hand-tabulated remap, light kept / lost, where it goes) -> 10/10;
   `test_scatter_scene.py` guards the menu id, items and that the menu feeds only the tap -> 5/5.
-- [ ] E05 Bench (ask Matt first; bench_module.maxpat open, Vsynth patches closed): `test_T040_edge_modes_match_the_mirror`,
+- [x] E05 (bench 14/14, 2026-10-17) Bench (ask Matt first; bench_module.maxpat open, Vsynth patches closed): `test_T040_edge_modes_match_the_mirror`,
   `test_T040_off_is_the_default_behaviour` written in `tests/bench_caustic_sheets.py`; the first sends modes 1,2,3,0 so
   the scene is left on Off (the bench keeps Params between jobs). Tolerance 2e-3 is a guess.
 - [ ] E06 Full offline suite once (`tests/run.sh -q`) and `build/py.sh build/drift.py -v f_caustic`: only the two named

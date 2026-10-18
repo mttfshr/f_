@@ -1,6 +1,6 @@
 # HANDOFF
 
-## 2026-10-17 (night, later): f_caustic `edge` mode — UNCOMMITTED (on top of the Axis Flow entry below)
+## 2026-10-17 (night, later): f_caustic `edge` mode — committed in `656eaeb`
 
 - **Built:** `f_caustic` has an `Edge` menu: Off (default, unchanged) / Wrap / Mirror / Clamp. Remap of the landing position
   in the vertex shader (`package/code/f_caustic_sheets.jxs`, uniform `edge`), driven like `scale`: new `edge` token in the
@@ -10,18 +10,16 @@
   off-frame and it would still lose light). Wrap/Mirror splats straddling the frame edge still lose their off-frame half
   (~0.3% in the tests).
 - **Run:** `tests/run.sh -q tests/test_scatter_mirror.py` 10/10 (3 new: hand-tabulated remap, light kept/lost, where it goes)
-  and `tests/test_scatter_scene.py` 5/5 (1 new). **Not run:** the bench (`test_T040_*` written; the first one sends modes
-  1,2,3,0 because the bench keeps Params between jobs; tolerance 2e-3 is a guess), the full offline suite,
-  `drift.py -v f_caustic`, anything in Max.
+  and `tests/test_scatter_scene.py` 5/5 (1 new). **Bench ran 2026-10-17:** `bench_caustic_sheets.py` 14/14 (edge 1/2/3 match the mirror to 3e-6..1e-5; Off 1.06e-3, identical to the edge-less mirror, so a border snapping-vs-clipping gap that predates edge mode; the test sends modes 1,2,3,0 because the bench keeps Params between jobs). **Not run:** the full offline suite, `drift.py -v f_caustic`, anything in Max.
 - **Helpfile** (`package/help/f_caustic.maxhelp`) not updated. Docs: `docs/f-reference/f_caustic.md` (param row, algorithm
   line, History); tasks: `.specify/f_caustic_scatter/tasks.md` E01-E08.
 - **Still proposed, not approved:** optional `f_vf_fluid` `drift` Param scaling the k=0 (mean-flow) bin.
-- Uncommitted from this step: `package/code/f_caustic_sheets.jxs`, `src/f_caustic/{definition.py,scatter_scene.py,raw_ui.json}`,
+- Files in this step (all committed): `package/code/f_caustic_sheets.jxs`, `src/f_caustic/{definition.py,scatter_scene.py,raw_ui.json}`,
   `package/patchers/f_caustic.maxpat`, `tests/bench/caustic_sheets_standalone.maxpat`,
   `tests/{scatter_mirror,test_scatter_mirror,test_scatter_scene,bench_caustic_sheets}.py`, `docs/f-reference/f_caustic.md`,
   `.specify/f_caustic_scatter/tasks.md`, `HANDOFF.md`.
 
-## 2026-10-17 (night): Axis Flow signed gain + per-pixel reference inlet — UNCOMMITTED
+## 2026-10-17 (night): Axis Flow signed gain + per-pixel reference inlet — committed in `0bdf1c6`
 
 - The evening stack below is now committed as `edaa18a` (99 files). Left out on purpose and still uncommitted:
   `package/examples/f_demo_sampleplatter.maxpat` and `scratch/tensor-scratch.maxpat`. The "UNCOMMITTED / HEAD is
@@ -36,12 +34,11 @@
   falls back to the dial; aspect-converted to pixel space). Codebox `in2`, definition `mod_inlets`, mirror
   `axisflow(ref=...)`, patcher rebuilt (pix has 2 inlets; `lens_toggle.js` restored). Docs + tasks T020-T027 written.
   Label left as `T_ in ∇ out`.
-- **Run:** `tests/run.sh -q tests/test_tf_axisflow.py` 24/24 (was 16). **Not run:** the bench (4 new cases written in
-  `tests/bench_tf_axisflow.py`, ask first), the full offline suite, anything in Max.
+- **Run:** `tests/run.sh -q tests/test_tf_axisflow.py` 24/24 (was 16). **Bench ran 2026-10-17:** `bench_tf_axisflow.py` 9/9. **Not run:** the full offline suite, anything in Max.
 - **Helpfile:** only the `gain` range was corrected; text for the new inlet is not written.
 - **Proposed, not approved to build:** `f_caustic` `edge` menu (off / wrap / mirror / clamp, vertex shader; default off)
   and an optional `f_vf_fluid` `drift` Param scaling the k=0 bin (1 = today).
-- Uncommitted from this step: `src/f_tf_axisflow/{codebox_axisflow.gen,definition.py}`, `package/patchers/f_tf_axisflow.maxpat`,
+- Files in this step (all committed): `src/f_tf_axisflow/{codebox_axisflow.gen,definition.py}`, `package/patchers/f_tf_axisflow.maxpat`,
   `package/help/f_tf_axisflow.maxhelp`, `docs/f-reference/f_tf_axisflow.md`, `.specify/f_tf_axisflow/tasks.md`,
   `tests/{test,bench}_tf_axisflow.py`, `HANDOFF.md`.
 
