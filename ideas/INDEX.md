@@ -1,6 +1,7 @@
 # Ideas Index
 
-_Created: 2026-09-17._ A refresher map of `ideas/` (59 files) so you don't have
+_Created: 2026-09-17; last brought current 2026-10-18 (75 notes plus one parked
+script)._ A refresher map of `ideas/` so you don't have
 to reread everything to remember where a thread stands. Grouped by theme, not
 date. Each entry: one-line gist + status. When a file's own status line is
 more precise than what's here, trust the file — this index is a pointer, not
@@ -17,24 +18,32 @@ substantially move a file in `ideas/`, update its entry here too.
 
 ## Active right now
 
+- **[f_tensorfield.md](f_tensorfield.md)** 🟡 — The tensor family hub (details under
+  Vector field family below). Seven `f_tf_` modules built and bench-verified; the open
+  items are tier-3 live-feel gates and Q16/Q17.
 - **[f_a_spectral_ripple.md](f_a_spectral_ripple.md)** 🟡 — Cross-frequency
   de-correlating tinnitus stimulus generator (Yukhnovich et al. 2025). T1–T7
-  scratch-verified; shipped as first production build
-  `package/patchers/f_a_ripple.maxpat` (see repo HANDOFF.md). Open: UI polish
-  to `f_` visual convention, Phase 5 docs/helpfile, T7b (PM in `pfft~`) and T8
-  (cross-frequency correlation check) — neither gates v1.
-- **[f_a_build_process.md](f_a_build_process.md)** ⚪ — Scoped follow-up: can
-  `build_patcher.py` extend to `f_a_` (audio) modules, or does audio need its
-  own builder? Analysis done (UI-grid half reusable, `gen_subpatcher`/`pix_box`
-  half is not); not started. Blocks nothing yet, but next thing both
-  `f_a_ripple` and `f_a_purr` will want once DSP is stable.
+  verified; shipped as `package/patchers/f_a_ripple.maxpat` and, as the `pfft~`
+  processor `f_a_decorrelate` (2026-10-12, at the `f_a_ripple` packaging bar; PM
+  un-scoped for v1, ADR-4). Both are still ⚠ in the README. Open: UI to `f_`
+  convention, docs/helpfile, `f_a_ripple` T002 (checkhearing comparison), T8.
+- **[f_a_build_process.md](f_a_build_process.md)** ⚪ — Can `build_patcher.py` extend
+  to `f_a_` (audio) modules, or does audio need its own builder? Analysis done
+  (UI-grid half reusable, `gen_subpatcher`/`pix_box` half is not). **The wider
+  audio-integration question was TABLED 2026-10-18** (HANDOFF): options are a
+  hand-built sibling family made official, an audio archetype in the builder, or
+  control-rate bridge modules only (lean: first + third, defer the second). Three
+  questions to Matt unanswered. Small items that don't wait on it: how the module
+  bench treats `f_a_*` (since decided: XFAIL), and the README "unfinished" marker
+  vs `f_a_decorrelate`'s spec saying "complete".
 
 ## Audio modules (`f_a_` prefix)
 
 - **[f_a_purr.md](f_a_purr.md)** 🟡 — Fully parametric cat-purr synthesis
   (glottal click → pulse train → breath cycle → resonance → behavioral
   scheduler, 6 layers). Layers 0–2/4 + resonator verified in scratch. Q2, Q4,
-  Q6, Q7 still open. First `f_a_` module; established the prefix.
+  Q6, Q7 still open; the build-pipeline gate (T026) is held with the tabled
+  audio-integration question. First `f_a_` module; established the prefix.
 - **[f_a_breath_phase.md](f_a_breath_phase.md)** ⚪ — Input utility: read
   wearer's breathing (contact mic/piezo, plain `adc~`, no MIDI bridge needed)
   and drive a downstream generator's phase directly. Pure ideation, no signal
@@ -66,10 +75,13 @@ substantially move a file in `ideas/`, update its entry here too.
   from a metric tensor instead of a closed-form transform. Research notes,
   not specs — cross-reference before building any of them.
 - **[f_vecfield.md](f_vecfield.md)** 🟢 — The family's type contract (float32,
-  RG=XY, 0.5=zero) and roadmap hub. Producers built: `f_vf_vortex(_multi)`,
-  `f_vf_fieldmap`. Consumers built: `f_caustic`, `f_vf_warp`, `f_vf_streak`.
-  Points out remaining territory: `f_vf_turbulence`, `f_vf_chladni`,
-  masking/scalar-extraction, advection, modulation.
+  RG=XY, 0.5=zero) and roadmap hub. The roadmap
+  sections predate most of the build-out: since then `f_vf_flow`, `f_vf_fluid`,
+  `f_vf_repulse`, `f_vf_optical_flow` (sources) and `f_vf_glow`, `f_vf_advect`,
+  `f_vf_prism`, `f_vf_potential`, `f_vf_split` (consumers) joined the originals
+  (`f_vf_vortex(_multi)`, `f_vf_fieldmap`, `f_caustic`, `f_vf_warp`, `f_vf_streak`).
+  The README Patches table is the current module list; `f_vf_chroma` and
+  `f_vf_vorticity` are paused.
 - **[f_tensorfield.md](f_tensorfield.md)** 🟡 — Tensor field family hub (sibling to
   `f_vecfield.md`): status of the seven built `f_tf_` modules, decisions, live open
   questions (Q12-Q17) and the vecfield-consumer audit. The active working doc.
@@ -79,21 +91,23 @@ substantially move a file in `ideas/`, update its entry here too.
 - **[f_tf_research.md](f_tf_research.md)** ⚪ — Stable evidence for the tensor family: the
   tensor-native test, prior art, the jit.fx platform audit, kuwahara, and GPU/decode facts
   from the builds.
-- **[f_vf_seeds.md](f_vf_seeds.md)** ⚪ — Discrete-item generator: marks at
+- **[f_vf_seeds.md](f_vf_seeds.md)** 🟢 — Built. Discrete-item generator: marks at
   hash-stable seed points, oriented by an incoming vecfield (wind-barb/ink
   look). Reference implementation for the discrete-item family's inlet
-  architecture and "identity coordinate" output.
+  architecture and "identity coordinate" output. Evolution 3 (color-driving
+  texture, which absorbed `f_dither_grain`) shipped; the idea note is the
+  original capture.
 - **[f_vf_mix.md](f_vf_mix.md)** ⚪ — Infrastructure: blend two vecfields
   (additive / crossfade) before a consumer. Not built; build when a real
   chain needs it.
 - **[f_vf_channelmap.md](f_vf_channelmap.md)** ⚪ — Reinterpret any two
   texture channels directly as vecfield XY (no gradient math) — inverse of
   `f_vf_split`. Supersedes and absorbs the deleted `f_vf_normal.md`.
-- **[f_vf_optical_flow.md](f_vf_optical_flow.md)** ⚪ — Derive a vecfield from
-  motion between frames. Cheap frame-diff approximation **tested and ruled
-  out** (2026-07-17, structural reason: gradient-of-a-trail points the wrong
-  way, not a tuning problem). Real Lucas-Kanade optical flow is the only path
-  left, not started — biggest remaining build in the family if pursued.
+- **[f_vf_optical_flow.md](f_vf_optical_flow.md)** 🟢 — Derive a vecfield from
+  motion between frames. Built as Lucas-Kanade (confidence-gated, aperture-problem
+  fill, two outlets). The note is the pre-build idea plus the record of the cheap
+  frame-diff approximation being **tested and ruled out** (2026-07-17, structural
+  reason: gradient-of-a-trail points the wrong way, not a tuning problem).
 - **[f_vf_smear.md](f_vf_smear.md)** ⚪ — True continuous streamline blur
   (fixes the visible discrete-sample banding in `f_vf_streak` at long
   lengths). LIC single-pass or multipass-iterative; LIC flagged as the
@@ -101,23 +115,32 @@ substantially move a file in `ideas/`, update its entry here too.
 - **[f_vf_temporal_smooth.md](f_vf_temporal_smooth.md)** ⚪ — Parked:
   frame-to-frame inertia/lag applied to any vecfield (one-pole lowpass, but
   per-vector). Deliberately spun out of `f_vf_advect` rather than becoming its
-  3rd outlet.
+  3rd outlet. (Its tensor-side sibling `f_tf_smooth` is built.)
+- **[f_vf_emulsion.md](f_vf_emulsion.md)** ⚪ — Surfaced 2026-09-29: two materials
+  (oil and smoke) in one flow, sharpened to "what happens when they collide and
+  begin to mix" as a vecfield problem rather than image compositing. Would be a
+  **fork of `f_vf_fluid`**, not a v2: the solver's parameters live in real space
+  (`force`, `dt`, `gain`, cheap to vary per pixel) and in the spectral stage
+  (structural). Idea only, not specced, not named.
 - **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** ⚪ — Vecfield producer from
   the Wilson-Cowan neural-mass model (E/I reaction-diffusion) — targets the
   classic funnel/spiral/lattice/cobweb hallucination-form taxonomy
   (Ermentrout-Cowan). Needs `jit.gl.node @capture 1` self-recursion, not a
   stateless pix chain.
-- **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** ⚪ — Open
-  bug/question: `f_weave`'s vecfield-driven orientation uses vector-add +
-  renormalize (non-proportional response); candidate fix is true angular
-  blend via `atan2`. Needs a live A/B scratch test, not decided.
+- **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** 🟢 — **RESOLVED
+  2026-10-13: ship both.** `f_weave`'s vecfield-driven orientation used vector-add +
+  renormalize (non-proportional response); the true angular blend via `atan2` (GPU
+  safety verified 2026-10-12) is now one end of a performable `fix_blend` crossfade,
+  with `field_amount` setting depth. Both dials are live in `src/f_weave/definition.py`.
 - **[dry_wet_gain_and_novel_field_outlet.md](dry_wet_gain_and_novel_field_outlet.md)**
   🧰 — Design discussion (no module chosen yet): reframe additive-layer
   modules (`f_vf_glow/chroma/prism/streak`, `f_caustic`) with separate `gain`
   (can exceed 1.0) + `mix` (0–100% crossfade) controls, vs. the true
   replacement-shape modules (`f_mobius/droste/lens/warp`) which already map
   cleanly to `mix(src, processed, wet)`. "Add a vecfield 3rd outlet" idea
-  scoped but unresolved.
+  scoped but unresolved. The gain/mix rollout is per-module and still open in
+  places: `f_grain` closed the question 2026-10-09 (T003); `f_vf_warp` T052 asks the
+  same thing and was open at the 10-11 gates digest, so that precedent may answer it.
 
 ## Conformal / non-Euclidean geometry
 
@@ -130,12 +153,14 @@ substantially move a file in `ideas/`, update its entry here too.
   is simultaneously a Nyquist/sampling-rate isocontour. Directly informs
   `f_poincare`'s and `f_raster`'s design (supersampling shrinks the zone but
   can't eliminate it).
-- **[f_poincare.md](f_poincare.md)** ⚪ — Poincaré disk hyperbolic tiling as a
+- **[f_poincare.md](f_poincare.md)** ⏸ PAUSED (`.specify/paused/`; blocked on a
+  Möbius-composition parity-tracking bug, ADR-8) — Poincaré disk hyperbolic tiling as a
   UV processor. Shares Möbius-transform DNA with `f_mobius`/`f_stereo`. Open:
   {p,q} tessellation choice, fundamental-domain mapping, singularity handling
   (see droste_singularity). Vecfield-masking noted as a natural way to make
   the visible region dynamic rather than disk-shaped.
-- **[f_apollonian.md](f_apollonian.md)** ⚪ — Apollonian gasket via iterated
+- **[f_apollonian.md](f_apollonian.md)** ⏸ PAUSED (`.specify/paused/`, same
+  algebra bug as `f_poincare`) — Apollonian gasket via iterated
   circle inversion; shares a Möbius-iteration core with `f_poincare` (maybe
   one module, maybe two — undecided). Three Shadertoy references reviewed in
   detail; fixed-iteration loops confirmed GPU-safe, `break`/early-exit
@@ -144,7 +169,8 @@ substantially move a file in `ideas/`, update its entry here too.
 - **[f_apollonian_reference_glsl.md](f_apollonian_reference_glsl.md)** 🔵 —
   Raw reference GLSL (ebanflo-derived Shadertoy) backing the analysis above.
   Not prose — keep as a code reference, not a read-through.
-- **[f_ngon.md](f_ngon.md)** ⚪ — Live N-gon generator, discovered as a
+- **[f_ngon.md](f_ngon.md)** 🟡 — Built but ⚠ unfinished/unconfirmed in the README
+  (`.specify/f_ngon/`). Live N-gon generator, discovered as a
   byproduct of `f_poincare`'s kaleidoscope diagnostics (alternating-mirror
   reflection settles into a regular 2·n-gon). A real sign-inversion bug was
   found and fixed along the way (documented, in case it recurs elsewhere).
@@ -170,19 +196,24 @@ substantially move a file in `ideas/`, update its entry here too.
   (fields of discrete marks) differing only in arrangement topology. Defines
   the four control layers (global arrangement / local arrangement / item
   character / item orientation) every family member should expose.
-- **[f_weave.md](f_weave.md)** ⚪ — Linear/banded woven texture, orientation
+- **[f_weave.md](f_weave.md)** 🟢 — Built (the note's own "Status: Idea" header is
+  stale). Linear/banded woven texture, orientation
   field generalizes denim→canvas→fingerprint→rope by curl/continuity.
   **Hard requirement:** must be a distance field, not a smoothstep boundary
   — the reference implementation proving that fix (masonry has the same bug
   but is already built and harder to refactor).
 - **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** — see
-  Vector field family above (cross-listed, it's a `f_weave` bug).
-- **[f_dither_grain.md](f_dither_grain.md)** ⚪ — Ordered dithering reframed
+  Vector field family above (cross-listed; resolved 2026-10-13).
+- **[f_dither_grain.md](f_dither_grain.md)** ⏸ SUPERSEDED 2026-07-21 — folded into
+  `f_vf_seeds` as Evolution 3 (shipped); `.specify/f_dither_grain/` is history only.
+  (The 10-11 gates digest still listed its T001/T002 as blocking; its tasks file says
+  superseded.) Ordered dithering reframed
   as an `f_grain`-family processor: per-cell hue selection via a `t` vs.
   jittered threshold `d` test, reusing grain's density/size/shape vocabulary.
   Vecfield driver deliberately decoupled from the hue-boundary test for v1.
 - **[f_grain_size_mod.md](f_grain_size_mod.md)** ⚪ — Small, scoped, designed
-  (not built): a plain mod-texture inlet blending into `f_grain`'s
+  (still not built: no `size_mod` in `src/f_grain/definition.py`, checked 2026-10-18;
+  `f_grain` itself moved to `.specify/stable/` 2026-10-13): a plain mod-texture inlet blending into `f_grain`'s
   `cell_size` calc. Shape-tex and vecfield-steering alternatives were
   considered and explicitly ruled out first.
 - **[seed_distribution_beyond_grid.md](seed_distribution_beyond_grid.md)**
@@ -199,11 +230,19 @@ substantially move a file in `ideas/`, update its entry here too.
 
 ## Optics, lens, color
 
-- **[f_lens.md](f_lens.md)** 🟢 — Built and working; future-directions note.
-  Open: inter-reflection/ghost images (own bpatcher candidate,
-  `f_interreflect`), anamorphic character (now split out, see below),
-  halation.
-- **[f_lens_tiltshift_split.md](f_lens_tiltshift_split.md)** 🔵 — Diagnoses
+- **[f_lens.md](f_lens.md)** 🟢 — Built and working; moved to `.specify/stable/`
+  2026-10-13 with v2 (ghost images + halation) closed. Tilt-shift left for `f_focus`
+  (paused, never built). The note's future-directions list predates that; anamorphic
+  character is split out (see below).
+- **[f_caustic.md](f_caustic.md)** 🟢 — Future-directions note for `f_caustic`
+  (last updated 2026-06-09, before most of its history): `in3` surface texture, inline
+  radial fallback, flare/diffraction as separate bpatchers, color shift. Since then
+  `color_shift` and three other params were removed (2026-10-10) and an `edge` menu
+  (Off/Wrap/Mirror/Clamp) added (2026-10-17); the module is in `.specify/stable/` and
+  `docs/f-reference/f_caustic.md` now exists (the note still says "to be written").
+- **[f_lens_tiltshift_split.md](f_lens_tiltshift_split.md)** 🔵 — **Resolved
+  retroactively 2026-10-13:** the split happened (tilt-shift moved to `f_focus` on
+  2026-09-23; tracking docs had gone stale). Diagnoses
   *why* `f_lens` doesn't get reached for in practice: it bundles a coupled
   radial codebox (aberration/distortion/transmission) with an uncoupled
   `jit.fx.cf.tiltshift` object that shares no mental model. GPU Gems Ch. 23
@@ -221,6 +260,9 @@ substantially move a file in `ideas/`, update its entry here too.
   `f_vf_fluid` flagged as a trap (`project` removes the convergence caustic
   needs). Untested. Decided 2026-10-06: two modules, `f_vf_glass` (producer)
   and `f_caustic_scatter` (consumer, sheet regime); draft specs in `.specify/`.
+  Since then: `f_vf_glass` went on hold the same day, and the scatter work was folded
+  into `f_caustic` as an addendum (`edge` mode, 2026-10-17) instead of shipping as its
+  own module. `.specify/f_caustic_scatter/` still reads as standalone.
 - **[f_vf_glass.md](f_vf_glass.md)** ⏸ ON HOLD (2026-10-06) — Animated analytic glass height field ->
   f_vecfield producer (mode-sum families: modes, fluted, hobnail, hex; evolve /
   drift / rotate; outlets vecfield, height, focus). Chosen 2026-10-06 as a
@@ -298,7 +340,9 @@ there, then the chapter-specific files for depth.
   (~20–80 Jacobi iterations each, judged impractical at live multi-module
   resolutions — logged so it isn't re-litigated). Portable addition: vorticity
   confinement (S:38.5.1) — see `ceyron_simulation_scripts_notes.md` for the
-  finding that reopens the cost assumption via FFT.
+  finding that reopens the cost assumption via FFT. Built as `f_vf_vorticity`
+  (now paused; the README says do not treat it as working), while `f_vf_fluid` took
+  the FFT route and shipped.
 - **[voronoi_vs_texture_bombing.md](voronoi_vs_texture_bombing.md)** — see
   Discrete-item family above (cross-listed).
 - **[spectral_rainbow_colormap.md](spectral_rainbow_colormap.md)** — see
@@ -320,7 +364,8 @@ there, then the chapter-specific files for depth.
   architecture. Kuramoto-Sivashinsky: real-space FD dead (~2000 substeps/
   frame), but the spectral `f_vf_fluid`-shape is stable one-step-per-frame
   (dt ~ 0.076) with a mandatory k=0 mean-zeroing — cleared to spec whenever
-  wanted.**
+  wanted.** **Both then fully specced 2026-10-13** (`.specify/f_ks/spec.md`,
+  `.specify/f_vf_lbm/spec.md`); Phase 0 GPU bench not started for either.
 - **[slab_chain_architecture.md](slab_chain_architecture.md)** 🧰 —
   **RETIRED 2026-10-12.** Was the stub for a second architectural track
   (true multi-pass GLSL slab chains). FFT fluids shipped without it
@@ -371,6 +416,16 @@ there, then the chapter-specific files for depth.
   mode (a bare pass-through `jit.gl.pix` didn't render; going straight
   through did). Mostly obsoletes `f_util_mod_texture.md` as the leading
   plan. UI follow-on: `ideas/mod_depth_ui_density.md`.
+- **[f_helpfile_content_audit_2026-10-13.md](f_helpfile_content_audit_2026-10-13.md)** 🔵 —
+  Audit-only pass of 17 helpfiles' *content* (the same day's sizing fix was layout
+  only) against `skills/module-preflight`'s judgment gate: 4 clean, 13 need work.
+  Worst three: `f_sirds` (bad citation, doesn't match its own doc), `f_vf_vorticity`
+  (recipe omits the one fact that makes it usable), `f_vf_glow` (its doc's recipes
+  never reached the helpfile). No rewrites done; deliberately not started.
+- **[type_dots.js](type_dots.js)** 🧰 — Parked script, not a note: one `jsui` drawing
+  the two module type dots as triangle / disc / square. Dropped 2026-10-17 for the
+  plain circles that shipped ("reads as noisy"); copy to `package/javascript/` and set
+  `TYPE_DOTS = "jsui"` in `build_patcher.py` to use it.
 - **[genjit_abstraction_library.md](genjit_abstraction_library.md)** 🧰 —
   Idea: shared `.genjit` function library for math duplicated across codeboxes
   (Bessel modes, polar setup, sin-hash). Explicitly deferred until 2–3 modules'
@@ -379,10 +434,14 @@ there, then the chapter-specific files for depth.
   running in-browser for mattfisher.io demos. **Key finding:** Max already
   exports `jit.gl.pix`/`jit.gen` codeboxes to ISF, JXS, or **WebGL**
   (standalone `.html` + TWGL) directly — no hand-translation needed. WebGL
-  export is untested; known Max-forum history of `exportcode` producing
-  broken output (`full_source_code` is the undocumented workaround). Next
-  concrete step: try `exportcode webgl` on one simple shipped module
-  (`f_droste` or `f_mobius`).
+  export was tried once (2026-10-12, below); known Max-forum history of `exportcode` producing
+  broken output (`full_source_code` is the undocumented workaround). **Trial run
+  2026-10-12 on `f_vf_split`** (`scratch/experiments/web_shim_trial/REPORT.md`,
+  uncommitted): both the WebGL and ISF exports compile and run. Gaps: multi-outlet
+  modules collapse to the last outlet, inputs are hardwired to the webcam, params are
+  one-shot uniforms, 8-bit instead of float32, free-running clock. No go/no-go made;
+  whether feedback modules (`f_vf_advect`, `f_vf_fluid`, `f_caustic`) export at all is
+  untested.
 - **[dry_wet_gain_and_novel_field_outlet.md](dry_wet_gain_and_novel_field_outlet.md)**
   — see Vector field family above (cross-listed).
 - **[CV_TRIGGER_INVENTORY.md](CV_TRIGGER_INVENTORY.md)** 🔵 — Catalog of
@@ -451,6 +510,23 @@ there, then the chapter-specific files for depth.
   cycle. Named target: feed a loop's phase into `f_masonry`'s brick
   modulation. Untested — GPU texture-array phase reads vs. CPU seek-based
   playback is the open technical fork.
+- **[f_texture_sampler.md](f_texture_sampler.md)** ⚪ — Working name. An MPC-style
+  sampler for video, textures and fields (captured 2026-10-18 from "is there a video
+  equivalent of a sampler?"). Splits into A, live capture / freeze / loop on a texture
+  ring buffer (Vsynth's `vs_frame_delay` / `jit.gl.textureset` is the precedent), and
+  B, a pad-triggered clip bank (mostly control logic over movie playback). Includes a
+  memory-budget table, the library-specific angle of recording and replaying float32
+  vecfields, and the pad / choke / envelope control layer. Option A doubles as the
+  feasibility test for `f_loop_to_cycle` (indexable GPU-resident frames). Nothing
+  tried in Max; lean is a small probe on A first.
+- **[variable_framerate.md](variable_framerate.md)** ⚪ — Captured 2026-10-18 from "can
+  breath or an oscillator drive the frame rate?". Separates render rate (`jit.world`
+  `fps` / `interval`, capped at the display refresh with vsync, slower is allowed;
+  stutter look) from content time (per-module `dt` / rate / phase step; smooth at a
+  steady frame rate). Notes that `f_` state advances per `r draw`, not per second, so a
+  slower render clock slows every module and stretches frame-counted smoothers
+  (`vs_bline`). Three breath mappings: to render interval, to read-head position
+  (a held breath freezes the picture), to a shared `time_scale`. Nothing tried in Max.
 - **[vsynth_gaps.md](vsynth_gaps.md)** 🔵 — Strategic gap analysis across Vsynth:
   texture-analysis→control (partially filled), temporal synthesis (high
   priority — `f_cymascope` is the natural next move), non-rectilinear
@@ -471,10 +547,11 @@ there, then the chapter-specific files for depth.
 
 ## Notable cross-file relationships worth remembering
 
-- **`f_util_mod_texture.md` vs `named_mod_textures.md`** — the newer,
-  unverified hypothesis would obsolete most of the older, shipped-code-backed
-  convention. Don't design new mod-inlet UI against either until
-  `named_mod_textures.md`'s tests run.
+- **`f_util_mod_texture.md` vs `named_mod_textures.md`** — the newer
+  mechanism's T1–T3 passed live (2026-09-17), so it has displaced most of the older,
+  shipped-code-backed convention. T4–T6 (and the unexplained "pix hop" failure) are
+  still owed before any `build_patcher.py` change; don't design new mod-inlet UI
+  against either until then.
 - **`droste_singularity.md`** underlies both `f_poincare.md` (same boundary
   math) and `f_raster.md` (supersampling shrinks but never eliminates it).
 - **`f_apollonian.md` / `f_poincare.md` / `f_ngon.md` / `f_conformal_fill.md`**
@@ -484,3 +561,12 @@ there, then the chapter-specific files for depth.
   the standalone files exist only where a chapter produced a real, portable
   finding (confirmed no-fits stay logged in the backlog file itself, not
   spun out).
+- **`f_texture_sampler.md` / `f_loop_to_cycle.md` / `temporal_synthesis_architecture.md`**
+  (`docs/max-reference/`) — one open question seen from three sides: can a pix read
+  arbitrary frames from a GPU-resident texture store (Pattern 2, `jit.gl.textureset`)?
+  The sampler's option A would answer it for the other two; none has been tried yet.
+- **`variable_framerate.md` / `f_a_breath_phase.md` / `f_texture_sampler.md`** — breath
+  phase as a read position into a stored loop is the cleanest mapping in the
+  variable-frame-rate note, and it answers the breath note's open "does a hold freeze
+  phase?" question (the picture holds). Depends on the same frame-store question as the
+  sampler and `f_loop_to_cycle.md`.

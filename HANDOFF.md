@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-18 (10:55): `ideas/INDEX.md` brought current; docs only, nothing run
+
+- **What changed in `ideas/INDEX.md`** (checked against this file, the README, `.specify/`, `.specify/stable/` and `.specify/paused/`): four files were unindexed and are now listed (`f_caustic.md`, `f_vf_emulsion.md`, `f_helpfile_content_audit_2026-10-13.md`, `type_dots.js`); `f_tensorfield` added to "Active right now"; the audio entries rewritten for the tabled integration question and `f_a_decorrelate`'s shipping.
+- **Status corrections:** built (`f_vf_seeds`, `f_vf_optical_flow`, `f_weave`, `f_ngon` as ⚠); resolved (`f_weave_orientation_blend`, `f_lens_tiltshift_split`); paused (`f_poincare`, `f_apollonian`); superseded (`f_dither_grain`, folded into `f_vf_seeds` Evolution 3); `f_lens` to stable; `f_ks` and `f_vf_lbm` specced; web-shim trial recorded; vorticity noted as built-but-paused; the `f_util_mod_texture` / `named_mod_textures` cross-reference updated (T1-T3 passed).
+- **Judgment calls to know about:** the 2026-10-11 gates digest disagrees with the repo in two places (`f_dither_grain` Phase 0 listed as blocking although its tasks file says superseded; `f_a_spectral_ripple` T7b listed as newly unblocked although 10-12 un-scoped PM for v1). INDEX follows the repo and says so. `f_grain_size_mod` confirmed still unbuilt by searching `src/f_grain/definition.py`.
+- **Not touched, still stale in their own files:** `f_weave.md` header ("Status: Idea"), `f_caustic.md` ("docs to be written"), `.specify/f_caustic_scatter/` (reads as standalone; the work was folded into `f_caustic`). INDEX flags each.
+- **Uncommitted:** `ideas/INDEX.md`, `HANDOFF.md`. Still not part of any commit: `package/examples/f_demo_sampleplatter.maxpat`, `scratch/tensor-scratch.maxpat`.
+
 ## 2026-10-18 (10:15): `tests/` Phase C closed (check history, deferrals), spelling pass, bench patch comments, GenExpr interpreter note; one commit
 
 - **Phase C closed** (`.specify/test_bench/tasks_restructure.md`). Done: tf mirrors, `check.sh`, and the **check history**: every `harness.check` appends to
