@@ -1,5 +1,24 @@
 # HANDOFF
 
+## 2026-10-18: audio modules - integration question TABLED (Matt, 08:40)
+
+- **State (read, not run):** `f_a_ripple` (gen~ stimulus, DSP done, UI/docs pending), `f_a_decorrelate` + `_inner` (pfft~ processor; its
+  spec says "module complete 2026-10-12" but the README still says unfinished / packaging pending: they disagree), `f_chladni_audio`
+  (sigmund~/peakamp~ -> f_chladni `note`/`amp`; verification T140 open). Ideas only: `f_a_purr`, `f_a_spectral_ripple`; queued `f_cymascope`.
+  Today they are `NOT_IN_MENU`, drift `out_of_scope`, hand-built (scripts live OUTSIDE the repo in `~/Vsynth/patterns/`), and the module
+  bench loads them as video modules (the 4 `f_a_decorrelate` errors).
+- **Why it is hard:** texture modules chain via jit.gl.pix messages, audio via MSP cables, so audio can sit beside the video modules but
+  never plug into them. Integration = shared conventions / tooling / menu plus control-rate bridges, not signal-chain interop.
+- **Options discussed:** (1) sibling family, hand-built, made official (build scripts into the repo, own menu or none); (2) an audio
+  archetype in `build_patcher.py` (full parity, biggest cost, little reuse across gen~ vs pfft~); (3) bridge only: audio-to-control
+  modules (envelope / pitch / bands -> named messages) starting from `f_chladni_audio`, research modules possibly elsewhere.
+  Claude's lean: 1 + 3, defer 2 until a third hand-built module shows repeated cost.
+- **Questions for Matt (unanswered):** do you perform with these inside Vsynth patches (audio-reactive video) or use them standalone?
+  Should the tinnitus stimulus and the purr stay in this repo long-term? Should audio be in the `f_modules` menu at all (the purr
+  tasks T026 / T028 hold the same gates)?
+- **Small items that do not wait on that:** decide how the module bench treats `f_a_*` (exclude, or record as known issues); bring
+  `build_f_a_decorrelate_v1.py` into the repo; reconcile the README's "unfinished" marker with the spec's "complete".
+
 ## 2026-10-18 (benches): Fluid drift + module benches green; one regression of mine reverted
 
 - **Ran with Max and `bench.maxpat` open** (logs `/tmp/bf*_full.log`): `bench_fluid.py` 11/11 (2 slow skipped: T021 cost, T022 soak)
