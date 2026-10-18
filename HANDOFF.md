@@ -30,10 +30,12 @@
   the catalog's remaining items (mix when chain B assembles; glow = merged into parked Q12;
   glint deferred; jacobian/motion/hessian spike-on-demand; authored behind the UI-density
   gate).
-- Not committed. Working tree holds: 5× (`.specify/f_tf_<m>/` triad + codeboxes + definition),
-  `src/f_tf_<m>/` (built layout), `package/patchers/f_tf_<m>.maxpat`, `package/help/*` (5),
-  `tests/{test,bench}_tf_<m>.py` (10), docs rows (`module-inventory.md`, README, launch,
-  `f_tensor_type.md` rules 5-6). Pre-existing failures untouched (see below).
+- Committed (`cd80627` specs+codeboxes, `2cef6fb` tests, `6f0efe9` build+patchers,
+  `693417b` docs/README/HANDOFF/skills). Working tree clean. Covers: 5× `.specify/f_tf_<m>/`
+  triad + codeboxes + definition, `src/f_tf_<m>/` (built layout),
+  `package/patchers/f_tf_<m>.maxpat`, `package/help/*` (5), `tests/{test,bench}_tf_<m>.py`
+  (10), docs rows (`module-inventory.md`, README, launch, `f_tensor_type.md` rules 5-6).
+  Pre-existing failures untouched (see below).
 - **Live-verification round (2026-10-17 evening, ask-approved benches + module bench):**
   - **`build/build_patcher.py` processor branch now honors `driving_inlet`** (the session's
     main find): the old unconditional `gen-obj-1 → codebox[0]` line referenced an `in 1` box
@@ -54,6 +56,17 @@
     `("in_a1", N)` expect form for rgb-only bypass mixes.
   - Module bench state: the only remaining BADs are `f_a_decorrelate`'s audio wiring (4
     rows, pre-existing) — everything else, including all five new modules, green.
+
+### Left for Matt
+
+- Tensor `ideas/` docs consolidated 2026-10-17 into `ideas/f_tensorfield.md` (hub, status
+  table), `ideas/f_tf_backlog.md` and `ideas/f_tf_research.md`; the eight earlier docs are
+  retired (last at commit `693417b`). Two new open items live in the hub: Q16 (strength is
+  not on the wire, bites `f_tf_aniso_blur`) and Q17 (hatch E1 masks a possible `atan2` NaN
+  with `* (1 - iso)`, unlike glyph's `+1e-7` bias).
+- Tier-3 live-feel gates above (release default, glyph variant menu, sharpen dial/rename,
+  aniso_blur kernel family, hatch commit-curve + hairpin probe) are all still open and
+  explicit, not silently resolved.
 
 ## 2026-10-16 session: f_tf_tensormap + f_tf_axisflow built, live-checked, documented
 
