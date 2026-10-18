@@ -100,5 +100,31 @@ def test_prune_jobs_keeps_newest_and_leaves_other_files():
             benchclient.JOBS_DIR, benchclient.JOBS_KEEP = old
 
 
+def test_prune_after_run_is_tighter_than_the_in_run_cap():
+    """The in-run cap must stay high (tests prepare many jobs before running the first), the end-of-run
+    prune is what keeps tests/jobs/ small: it keeps JOBS_KEEP_AFTER_RUN dirs, touches only job-named dirs,
+    and does nothing on a directory that is already small."""
+    check("the end-of-run keep is below the in-run cap",
+          0 if 1 <= benchclient.JOBS_KEEP_AFTER_RUN < benchclient.JOBS_KEEP else 1, 0)
+    keep = benchclient.JOBS_KEEP_AFTER_RUN
+    with tempfile.TemporaryDirectory() as tmp:
+        jobs = Path(tmp)
+        ids = [f"20260901_1200{n:02d}_{n:06x}" for n in range(keep + 5)]    # keep + 5 jobs, oldest first
+        for i in ids:
+            (jobs / i).mkdir()
+        (jobs / "bench_green.json").write_text("{}")
+        (jobs / "bg").mkdir()
+        old = benchclient.JOBS_DIR
+        benchclient.JOBS_DIR = jobs
+        try:
+            check("removes everything but the newest keep", benchclient.prune_jobs_after_run(), 5)
+            left = sorted(p.name for p in jobs.iterdir())
+            check("newest dirs + the record + the unrelated dir survive",
+                  0 if left == sorted(ids[-keep:] + ["bench_green.json", "bg"]) else 1, 0)
+            check("a second call removes nothing", benchclient.prune_jobs_after_run(), 0)
+        finally:
+            benchclient.JOBS_DIR = old
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

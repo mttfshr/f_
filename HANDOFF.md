@@ -11,7 +11,8 @@
 - **My regression, reverted:** the first `bench_fluid` run had 4 failures (T017, T019, T020, T020b: `FileNotFoundError` in a job
   dir) because `JOBS_KEEP = 8` (`2f6e6d1`) prunes jobs that are still live: those tests prepare more than 8 before running the
   first. Back to 50, with a comment in `benchclient.py` saying why. The 1 GB cleanup stands, but `tests/jobs/` refills over bench
-  runs; the safe way to keep it small is to prune to a few AFTER a bench run finishes (nothing in flight), not a lower cap. Not built.
+  runs. **Now built:** `tests/bench.sh` prunes `tests/jobs/` to `JOBS_KEEP_AFTER_RUN = 8` dirs after an ALL-GREEN run (a failed run
+  keeps its dirs, up to 50, for debugging). Verified end to end: 50 dirs / 260 MB -> 8 / 864 KB, logs and `bench_green.json` kept.
 - Not run this morning: the axisflow / caustic benches (green on 10-17, unchanged since), the slow Fluid tests.
 
 ## 2026-10-18: helpfile text written; offline suite 30/30; GPU benches NOT run (Max not running)

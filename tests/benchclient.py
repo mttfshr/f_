@@ -29,6 +29,9 @@ BENCH_DIR = TESTS_DIR / "bench"
 JOBS_DIR = TESTS_DIR / "jobs"
 JOBS_KEEP = 50          # newest job dirs kept; older ones pruned by new_job(). NOT lower: some tests (bench_fluid T017/T019/T020/T020b)
                         # prepare more than 8 jobs before running the first, and a smaller cap deletes a live job's dir (FileNotFoundError)
+# After a bench run in which EVERY file passed, nothing is in flight and nothing needs debugging, so tests/bench.sh shrinks
+# tests/jobs/ to this many job dirs (prune_jobs_after_run). A failed run keeps its job dirs (up to JOBS_KEEP) for debugging.
+JOBS_KEEP_AFTER_RUN = 8
 
 
 class BenchUnreachable(RuntimeError):
@@ -185,6 +188,12 @@ def prune_jobs(jobs_dir, keep):
     for p in old:
         shutil.rmtree(p, ignore_errors=True)
     return len(old)
+
+
+def prune_jobs_after_run():
+    """Shrink tests/jobs/ to JOBS_KEEP_AFTER_RUN job dirs. Only for the end of an all-green bench run (tests/bench.sh):
+    never call it while any job could still be prepared or read. Returns how many dirs it removed."""
+    return prune_jobs(JOBS_DIR, JOBS_KEEP_AFTER_RUN)
 
 
 def new_job(mode, **fields):

@@ -132,6 +132,12 @@ for f in "${FILES[@]}"; do
   rm -f "$snap"
 done
 unset BENCH_MODULES
+# An all-green run leaves nothing in flight and nothing to debug: shrink tests/jobs/ (job dirs hold ~4 MB captures each, ~1 GB at the
+# in-run cap). A failed run keeps them. benchclient.JOBS_KEEP_AFTER_RUN says how many stay.
+if [ "$status" -eq 0 ]; then
+  pruned=$("${PY[@]}" -c "import sys; sys.path.insert(0, 'tests'); import benchclient as b; print(b.prune_jobs_after_run())" 2>/dev/null)
+  if [ -n "$pruned" ] && [ "$pruned" != "0" ]; then echo "bench: pruned $pruned job dirs from tests/jobs/ (all green)"; fi
+fi
 if [ "$QUIET" -eq 1 ]; then
   if [ "$status" -eq 0 ]; then echo "bench: all selected files passed"; else echo "bench: FAILED (full log: $LOG)"; fi
 fi
