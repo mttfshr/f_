@@ -1,5 +1,12 @@
 # HANDOFF
 
+## 2026-10-18 (11:30): Claude directions moved from README to `CLAUDE.md`; two new idea notes; docs only, nothing run
+
+- **`CLAUDE.md` (new, repo root)** now holds the session rules that were README's "Working with Claude (session rules)" section, moved verbatim; README no longer has that section (168 -> 157 lines, Patches table untouched). Older entries below that cite "README's session rules" mean `CLAUDE.md`. Four more maintainer notes moved out of the README into `CLAUDE.md` sections: the Patches-table sentence (110-character descriptions, regenerate the launcher), the `f_modules` menu-generation paragraph, the Development write-back / drift / `capture.py` rule, and the helpfile rule (written in a Claude session, never by an API call). README's "Repo Structure" was restructured into a folder table plus one subsection per part (content kept; README now 215 lines). **Known stale in the README, left alone:** it says the skills folder has "Eight of them" but `skills/` has ten (`bench-test-authoring` and `module-preflight` are not listed), and Installation points at "the development instructions", which the Development section does not contain.
+- **Chat sessions do not auto-load `CLAUDE.md`** (Claude Code does). The startup list in the project instructions (README, HANDOFF, plan) needs `CLAUDE.md` added, or the rules will not be read there.
+- **New notes, indexed (INDEX now 75):** `ideas/f_texture_sampler.md` (MPC-style sampler; option A on `jit.gl.textureset` is also the feasibility test for `f_loop_to_cycle`) and `ideas/variable_framerate.md` (render rate vs content time; includes the freeze-a-WFG-and-drive-its-phase route). Nothing built or run; Max facts from the C74 reference pages, Vsynth facts from the repo docs.
+- **Uncommitted:** `CLAUDE.md`, `README.md`, `ideas/INDEX.md`, `ideas/f_texture_sampler.md`, `ideas/variable_framerate.md`, `HANDOFF.md`; still also `package/examples/f_demo_sampleplatter.maxpat`, `scratch/tensor-scratch.maxpat` (not part of this).
+
 ## 2026-10-18 (10:55): `ideas/INDEX.md` brought current; docs only, nothing run
 
 - **What changed in `ideas/INDEX.md`** (checked against this file, the README, `.specify/`, `.specify/stable/` and `.specify/paused/`): four files were unindexed and are now listed (`f_caustic.md`, `f_vf_emulsion.md`, `f_helpfile_content_audit_2026-10-13.md`, `type_dots.js`); `f_tensorfield` added to "Active right now"; the audio entries rewritten for the tabled integration question and `f_a_decorrelate`'s shipping.

@@ -8,7 +8,7 @@ This repo is more than the patchers themselves — it also documents the process
 
 You need Max 9 and the Vsynth package (see Requirements below).
 
-There's no release yet. It's not stable enought for that. I will eventually make this installable via Max's Package Manager, but for now you need to clone the repository and symlink or copy its `package/` folder into your Max Packages folder as described in the development instructions.
+There's no release yet. It's not stable enough for that. I will eventually make this installable via Max's Package Manager, but for now you need to clone the repository and symlink or copy its `package/` folder into your Max Packages folder as described in the development instructions.
 
 Please note that this repository is intended for development and experimentation. The modules may change, and there is no guarantee of stability or backward compatibility. I won't be posting a changelog with breaking changes until some time in the future.
 
@@ -21,7 +21,7 @@ Please note that this repository is intended for development and experimentation
 
 Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category. The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it takes or produces a vecfield, a T_ means the same for a tensor), plus Audio for the `gen~` modules; a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`. The `f_tf_` modules work with `f_tensor` textures produced by `f_tf_tensormap` (`docs/f-reference/f_tensor_type.md`).
 
-This table is also the source for the package's launcher patcher (`package/extras/f_Launch.maxpat`, opened by the Package Manager's Launch button and the Extras menu), which lists every module on one tab per group below. Keep each description to 110 characters, and after editing the table run `build/py.sh build/generate_launch.py` to regenerate the launcher (`tests/run.sh tests/build/test_launch.py` fails if it is stale).
+This table is also the source for the package's launcher patcher (`package/extras/f_Launch.maxpat`, opened by the Package Manager's Launch button and the Extras menu), which lists every module on one tab per group below.
 
 ### Scope
 
@@ -45,7 +45,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 |---|---|
 | `f_droste` | Log-polar spiral transform -- Droste / Escher-style recursive zoom |
 | `f_mobius` | Mobius transformation UV-space processor |
-| `f_ngon` | ⚠ Unfinished. Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented |
+| `f_ngon` | Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented |
 | `f_sirds` | Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern |
 | `f_stereo` | Stereographic projection display layer |
 
@@ -128,20 +128,79 @@ There is no release schedule. Patches may change significantly as development co
 
 ## Repo Structure
 
-This repo has six parts:
+This repo has six parts. The map first, details below.
 
-- **`package/`** — the installable Max package: `patchers/`, `help/`, `examples/`, `extras/`, `javascript/`, `package-info.json`, `readme.md`. This is the only folder Max needs (see Installation above).
-- **`build/`** — the build system used to generate patchers from definition files, plus supporting tools (helpfile prompt assembly (`generate_helpfiles.py` only builds the prompt; the helpfile itself is written in a Claude session, never by an API call from a script), `drift.py`, which checks that each shipped patcher still equals what its definition builds, `capture.py`, which writes hand-tuned presentation state from a shipped patcher back into its definition, `capture_raw.py`, which writes the boxes and cords the builder cannot produce into a `raw_ui.json` beside the definition, the release zip script `release.sh`, `generate_launch.py`, which builds the `f_Launch` homepatcher from the Patches table above, and `generate_menu.py`, which builds the `f_modules` menu from `src/f_modules/menu.py`). Meant to be forked or read if you want to build your own `f_`-style bpatcher library. See `build/spec.md`.
-- **`src/`** — build-input files per module: `definition.py` (patcher definition), `codebox_*.gen` (confirmed codebox content), and per-module build scripts for modules whose build needs diverge from the general `build_patcher.py` path.
-- **`tests/`** — verification that doesn't need a scratch patch, in two layers. **Math:** NumPy mirrors of codebox algorithms, checked against independent references (`test_*.py`, `tests/run.sh`, no Max needed); the same offline layer statically checks every shipped patcher's wiring (every control reaches the Param it claims to, every Param is driven and read). **Execution:** a Max test bench — one generated patch stays open in Max and is driven from Python over OSC, so a module's real `src/` codebox runs on the GPU and its output is diffed numerically, with compile errors caught and cost measured (`bench_*.py`, `tests/bench.sh`). A second bench loads *shipped* bpatchers inside Vsynth's own render context to check their contracts: that every parameter reaches the attribute it claims to, that bypass passes through, that every outlet renders. How-to in `tests/README.md`; design in `.specify/test_bench/`.
-- **`ideas/`, `.specify/`, `docs/`** — planning and reference material: half-formed module ideas (`ideas/`), specs/plans/ADRs for modules (`.specify/`), and as-built reference docs plus research notes on Vsynth/Max internals (`docs/`). `docs/f-reference/module-inventory.md` and `docs/vsynth-reference/module-inventory.md` are flat one-line-per-module capability maps (f_ layer and core Vsynth layer, respectively) — the fast way to answer "does something here already do X" without reading full per-module docs. `.specify/` root holds directories for modules under active development. `.specify/stable/f_name/` and `.specify/paused/f_name/` hold modules moved into those subdirectories once shipped-and-verified-with-nothing-outstanding (`stable/`) or shelved on a real open question, not to be resumed by default (`paused/`) — a reorganization into subdirectories, not a rename of the module's own directory. Once a module reaches `stable/`, its `.specify/` content there is archival reference (the ADR/decision history), not the active source of truth — that role passes to `docs/f-reference/f_name.md`, which should have already distilled anything from `spec.md`/`plan.md`/`tasks.md` worth keeping before the move. Kept public as a reference and conversation starter, not as polished documentation — expect dead ends, superseded approaches, and in-progress modules alongside finished ones.
-- **`skills/`** — [Claude](https://claude.ai) skills used to collaborate with Claude on this codebase. Eight of them, covering Max/Vsynth/audio-DSP domain knowledge: conventions for bpatcher structure (`vsynth-bpatcher`), GenExpr/`jit.gl.pix` gotchas (`jit-gen-codebox`), the audio-domain equivalent for `gen~` (`gen-tilde-codebox`), `pfft~` spectral processing (`pfft-spectral-processing`), the read-the-help-patch-first workflow for unfamiliar Max objects (`max-advanced-object-methodology`), hand-authoring `.maxpat` JSON without a live Max (`maxpat-json-authoring`), helpfile format (`f-helpfile`), and a notation system for describing patches in chat (`max-patch-notation`). The dividing line: domain knowledge lives here, generic workflow/process scaffolding does not. This directory is the single source of truth — other checkouts symlink here rather than keeping copies, after two of them silently diverged in both directions. Uploaded copies can't be symlinked, so `skills/MANIFEST.md` records the last-uploaded state and `skills/check.sh` reports drift (`check.sh stamp` after re-uploading). Copy these into your own Claude setup (e.g. `claude-scaffold`-style skills directory) if you want a similar collaboration workflow — you'll want to adjust the hardcoded paths in `vsynth-bpatcher/SKILL.md` to match your own repo location.
+| Folder | What it holds |
+|---|---|
+| `package/` | The installable Max package. The only folder Max needs. |
+| `build/` | The build system that generates patchers from definition files. |
+| `src/` | Build inputs, per module. |
+| `tests/` | Verification: math mirrors and a Max test bench. |
+| `ideas/`, `.specify/`, `docs/` | Planning and reference material. |
+| `skills/` | Claude skills used to collaborate on this codebase. |
 
-The `f_modules` menu (`package/patchers/f_modules.maxpat`) and the size table in `package/javascript/f_addmod.js` are generated, like `f_Launch`: edit `src/f_modules/menu.py` and run `build/py.sh build/generate_menu.py` (`--check` reports a stale file). One-off scripts from earlier sessions were removed; they remain in git history.
+### `package/`
+
+The installable Max package, and the only folder Max needs (see Installation above). It holds `patchers/`, `help/`, `examples/`, `extras/`, `javascript/`, `package-info.json` and `readme.md`.
+
+### `build/`
+
+The build system that generates patchers from definition files, plus supporting tools. Meant to be forked or read if you want to build your own `f_`-style bpatcher library. See `build/spec.md`.
+
+- `build_patcher.py` — builds a patcher from a module's definition.
+- `generate_helpfiles.py` — builds the helpfile prompt.
+- `drift.py` — checks that each shipped patcher still equals what its definition builds.
+- `capture.py` — writes hand-tuned presentation state from a shipped patcher back into its definition.
+- `capture_raw.py` — writes the boxes and cords the builder cannot produce into a `raw_ui.json` beside the definition.
+- `release.sh` — the release zip script.
+- `generate_launch.py` — builds the `f_Launch` homepatcher from the Patches table above.
+- `generate_menu.py` — builds the `f_modules` menu from `src/f_modules/menu.py`.
+
+### `src/`
+
+Build inputs, per module:
+
+- `definition.py` — the patcher definition.
+- `codebox_*.gen` — confirmed codebox content.
+- Per-module build scripts, for modules whose build needs diverge from the general `build_patcher.py` path.
+
+### `tests/`
+
+Verification that doesn't need a scratch patch, in two layers:
+
+- **Math** — NumPy mirrors of codebox algorithms, checked against independent references (`test_*.py`, `tests/run.sh`, no Max needed). The same offline layer statically checks every shipped patcher's wiring: every control reaches the Param it claims to, and every Param is driven and read.
+- **Execution** — a Max test bench. One generated patch stays open in Max and is driven from Python over OSC, so a module's real `src/` codebox runs on the GPU and its output is diffed numerically, with compile errors caught and cost measured (`bench_*.py`, `tests/bench.sh`). A second bench loads *shipped* bpatchers inside Vsynth's own render context to check their contracts: every parameter reaches the attribute it claims to, bypass passes through, and every outlet renders.
+
+How-to in `tests/README.md`; design in `.specify/test_bench/`.
+
+### `ideas/`, `.specify/`, `docs/`
+
+Planning and reference material. Kept public as a reference and conversation starter, not as polished documentation: expect dead ends, superseded approaches, and in-progress modules alongside finished ones.
+
+- **`ideas/`** — half-formed module ideas.
+- **`.specify/`** — specs, plans and ADRs for modules. The root holds modules under active development. Two subdirectories hold the rest, a reorganization rather than a rename of the module's own directory:
+  - `.specify/stable/f_name/` — shipped and verified with nothing outstanding. Its content there is archival reference (the ADR and decision history); the active source of truth passes to `docs/f-reference/f_name.md`, which should already have distilled anything worth keeping from `spec.md`, `plan.md` and `tasks.md` before the move.
+  - `.specify/paused/f_name/` — shelved on a real open question, not to be resumed by default.
+- **`docs/`** — as-built reference docs, plus research notes on Vsynth/Max internals. `docs/f-reference/module-inventory.md` and `docs/vsynth-reference/module-inventory.md` are flat one-line-per-module capability maps (the `f_` layer and the core Vsynth layer, respectively): the fast way to answer "does something here already do X" without reading full per-module docs.
+
+### `skills/`
+
+[Claude](https://claude.ai) skills used to collaborate with Claude on this codebase. Eight of them, covering Max/Vsynth/audio-DSP domain knowledge:
+
+- `vsynth-bpatcher` — conventions for bpatcher structure.
+- `jit-gen-codebox` — GenExpr/`jit.gl.pix` gotchas.
+- `gen-tilde-codebox` — the audio-domain equivalent for `gen~`.
+- `pfft-spectral-processing` — `pfft~` spectral processing.
+- `max-advanced-object-methodology` — the read-the-help-patch-first workflow for unfamiliar Max objects.
+- `maxpat-json-authoring` — hand-authoring `.maxpat` JSON without a live Max.
+- `f-helpfile` — helpfile format.
+- `max-patch-notation` — a notation system for describing patches in chat.
+
+The dividing line: domain knowledge lives here, generic workflow/process scaffolding does not. This directory is the single source of truth — other checkouts symlink here rather than keeping copies, after two of them silently diverged in both directions. Uploaded copies can't be symlinked, so `skills/MANIFEST.md` records the last-uploaded state and `skills/check.sh` reports drift (`check.sh stamp` after re-uploading). Copy these into your own Claude setup (e.g. `claude-scaffold`-style skills directory) if you want a similar collaboration workflow — you'll want to adjust the hardcoded paths in `vsynth-bpatcher/SKILL.md` to match your own repo location.
 
 ## Development
 
-Modules are built from definition files (`src/` → `build/build_patcher.py` → `package/patchers/`) rather than patched by hand, so the structure stays consistent and reviewable as diffs. `definition.py` is the source of truth: a change made by hand in Max has to be written back into it. `tests/build/test_drift.py` enforces that; the modules that don't yet reproduce from their definitions are listed in `tests/build/drift_baseline.json`, a list that only shrinks. Hand-tuning the schema doesn't model (a compact dial, a moved jsui, a label color) is written back into the definition's `overrides` block by `build/capture.py`; see `build/spec.md`.
+Modules are built from definition files (`src/` → `build/build_patcher.py` → `package/patchers/`) rather than patched by hand, so the structure stays consistent and reviewable as diffs.
 
 Verification happens in three tiers, cheapest and most attributable first — the full rationale is in `.specify/constitution.md`:
 
@@ -154,15 +213,3 @@ The reason for the split: a scratch patch tests two things at once — whether t
 ## License
 
 The repo has two licenses. The product (the package, its source and the specs) is CC BY-NC 4.0 with an extra permission for paid professional work: use it, remix it and get paid for what you make with it, but don't sell the software. Everything else (the build system, tests, AI-aided workflow, documentation and ideas) is MIT. See [LICENSE.md](LICENSE.md). `f_` requires Vsynth, which has its own license.
-
-## Working with Claude (session rules)
-
-Neither of us can see token usage, so the session is paced by things we can both count.
-
-- **One phase, or one coherent group of tasks, per turn.** Then stop with three lines: what is done, what is committed, what is next, and wait for a go. Matt decides whether to continue or start fresh.
-- **Count tool calls.** Suggest a new session after each commit checkpoint, or around 25-30 tool calls, whichever comes first.
-- **No test or bench runs without asking.** The exception is one named test for the thing just changed. Always `-q`: `tests/run.sh -q`, `tests/bench.sh --changed -q`. No re-runs after doc-only edits.
-- **No polling loops.** Start a long run and ask Matt to say when it is done.
-- **State lives in the repo, not the chat:** `.specify/<module>/tasks.md` (the record), `HANDOFF.md` (a short scratch note), and a commit at every checkpoint. A fresh session starts by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
-- **Modules in `.specify/paused/` are excluded from analysis and planning.** They're paused for a reason; don't treat them as blockers, candidates, or examples when scoping a spike or feature elsewhere in the library. If a paused module's own resumption is genuinely in scope, that's a separate, explicit decision — not something to fold into unrelated planning (2026-10-11).
-- **Commits:** a plain message is fine for files Claude did not work on (a save checkpoint). Chain a commit to the edit that precedes it, so a failed edit cannot be committed.
