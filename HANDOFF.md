@@ -19,7 +19,7 @@
   spike transpiling `f_tf_axisflow`. Effort figures in it are estimates.
 - **Verified:** full default bench 396 s green at 09:57, BEFORE the spelling pass, the harness hook and the comment regeneration. Offline suite 31/31 green (57 s) after the
   spelling pass, the harness hook and the comment regeneration; after the last analyzer fixes only `test_checkhist` (10/10), `test_benchdeps` and
-  `test_bench_patchbuild` were re-run. **No bench run since**: the next `tests/bench.sh -q` re-seeds `--changed` and is the first to record GPU values in the history. Ask first.
+  `test_bench_patchbuild` were re-run. **Bench run 10:15-10:22 on `50a01f6`: full default set green, 396 s** (`bg-20261018-101546-bench.gn5a`; Max still had the old, uncommented bench patch open). It re-seeded `--changed` and gave the history its first GPU values: 583 measured checks seen recently, 27 at or above 50% of tolerance, 0 rising. Tightest GPU ones: `bench_fluid` T018 encode vs mirror 9.4e-06 against 1e-05 (94%), T019 DFT round trip 9.1e-06 against 1e-05 (91%), `bench_tf_hatch` E3 sweep 9.35e-03 against 1e-02 (93%), `bench_caustic_sheets` T016 5.2e-03 against 6e-03 (87%). All pass; use `checkhist.py report` for the rest.
 - **Not in the commit:** `package/examples/f_demo_sampleplatter.maxpat`, `scratch/tensor-scratch.maxpat`.
 
 ## 2026-10-18 (later still): `tests/` Phase C, part 1: tf mirrors extracted, `check.sh` added; benches NOT run; NOT committed
