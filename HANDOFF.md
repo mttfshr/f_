@@ -11,10 +11,18 @@
 - **Run:** `tests/run.sh -q tests/test_fluid_mirror.py` 25/25 (3 new tests against closed forms, 2 new mutations caught).
   **Not run:** `bench_fluid.py` (`test_T060_drift_matches_mirror` written; `g_spec` now pins `drift` because the bench keeps
   Params between jobs), `bench_fluid_module.py`, the full offline suite (contract / drift / conventions tests untouched
-  since the last full run), anything in Max. Fluid's own task numbering already ran to T051, so the new ids are T060.
+  since the last full run). **Matt checked the Drift dial live in his chain: works great.** Fluid's own task numbering already ran to T051, so the new ids are T060.
 - **Not done:** the Fluid helpfile (`package/help/f_vf_fluid.maxhelp`) has no Drift entry. Docs: `docs/f-reference/f_vf_fluid.md`
   (param row, algorithm line, a `drift` note); tasks: `.specify/f_vf_fluid/tasks.md`.
 - Supersedes the "still open: optional `f_vf_fluid` `drift` Param" line in the entry below.
+- **Next (session close, 2026-10-17):** with `bench.maxpat` open and the performance patch closed, run `tests/bench.sh -q tests/bench_fluid.py`
+  (T060) and a module bench for hatch's new out2 row; then one full `tests/run.sh -q > /tmp/offline.log 2>&1` (send output to a file:
+  a tool timeout lost it once); then helpfile text for Axis Flow's reference inlet, Caustic's Edge menu and Fluid's Drift.
+- **Loose threads:** Axis Flow at Gate 0 gives full-strength flow to any faint gradient (noise); its title-bar label still
+  reads `T_ in ∇ out` though it now also takes a vecfield; Caustic Off differs from the NumPy mirror by 1.06e-3 at the frame
+  border (snapping vs clipping, predates edge mode); the crowded title bars (`f_vf_split`, `f_vf_warp`, `f_tf_axisflow`),
+  Tensormap/Map naming and Utilities placement from the earlier entry are still undecided; `f_demo_sampleplatter.maxpat` and
+  `scratch/tensor-scratch.maxpat` are deliberately uncommitted (not from this session).
 
 ## 2026-10-17 (late): offline suite back to green; repo cleanup
 
