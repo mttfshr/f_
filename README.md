@@ -8,18 +8,9 @@ This repo is more than the patchers themselves — it also documents the process
 
 You need Max 9 and the Vsynth package (see Requirements below).
 
-**To use the modules:** download `f_-<version>.zip` from this repository's GitHub Releases page and unzip it into your Max Packages folder (macOS: `~/Documents/Max 9/Packages/`, Windows: `Documents\Max 9\Packages\`). The zip contains a single `f_/` folder. Restart Max; the patches will be available in your file browser under `f_`. No release has been published yet, so until one is, use the developer install below.
+There's no release yet. It's not stable enought for that. I will eventually make this installable via Max's Package Manager, but for now you need to clone the repository and symlink or copy its `package/` folder into your Max Packages folder as described in the development instructions.
 
-**To develop, or to track the repo:** clone this repository somewhere *outside* Max's Packages folder, then symlink (or copy) its `package/` folder into Packages under the name `f_`:
-
-- **macOS:** `ln -s /path/to/f_/package "$HOME/Documents/Max 9/Packages/f_"`
-- **Windows:** link or copy `path\to\f_\package` to `Documents\Max 9\Packages\f_`
-
-Don't clone the repo directly into Packages. The repo root is not the package (the package is the `package/` subfolder), so Max would not find the patchers or the JavaScript.
-
-**To build a release zip:** `build/release.sh` zips the committed state of `package/` into `dist/`; `build/release.sh --working-tree` includes uncommitted edits (for test builds). The header of the script explains the naming and checks. Don't unzip a build into your Packages folder while `f_` there is a symlink to your checkout: it would write into your working tree.
-
-Background on the package layout and the choices behind it: `docs/max-reference/packaging.md`.
+Please note that this repository is intended for development and experimentation. The modules may change, and there is no guarantee of stability or backward compatibility. I won't be posting a changelog with breaking changes until some time in the future.
 
 ## Requirements
 
@@ -95,19 +86,19 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_vf_optical_flow` | Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets |
 | `f_vf_repulse` | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes |
 | `f_vf_streak` | Directional blur via f_vecfield -- accumulates along streamlines; composite / isolated streak outlets |
-| `f_vf_vorticity` | ⚠ Unverified. Vorticity-confinement ("curl amp") processor. Do not treat as working |
+| `f_vf_vorticity` | Vorticity-confinement ("curl amp") processor. Do not treat as working |
 | `f_vf_warp` | UV warp via f_vecfield -- displaces source texture along field streamlines |
 
 ### T_ Tensor
 
 | Patch | Description |
 |---|---|
-| `f_tf_aniso_blur` | ⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
+| `f_tf_aniso_blur` | Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
 | `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
-| `f_tf_glyph` | ⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
-| `f_tf_hatch` | ⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
-| `f_tf_sharpen` | ⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed |
-| `f_tf_smooth` | ⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames |
+| `f_tf_glyph` | Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
+| `f_tf_hatch` | Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
+| `f_tf_sharpen` | Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed |
+| `f_tf_smooth` | One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames |
 | `f_tf_tensormap` | Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1) |
 
 ### Utilities
