@@ -57,7 +57,21 @@ Storing (cos θ, sin θ) of an unoriented axis forces an arbitrary sign, and the
 2. **To drive them, go through `f_tf_axisflow`**, which turns the axis into a continuous vecfield without picking a sign.
 3. **Axis-blind uses are fine as-is:** B (trace) and A (coherence) as scalar mattes or modulation inputs; `f_vf_split` on outlet 1 returns cos 2θ and sin 2θ as scalar textures.
 4. **A consumer that needs θ itself** decodes `θ = 0.5 * atan2(G', R')` (G', R' decoded to -1..1). GenExpr `atan2` on sampled-texture input is verified safe on the GPU, with a benign ±pi difference exactly at the branch cut. The recovered θ flips by 180° where the true axis crosses vertical; use it only where the algorithm is symmetric to that.
-5. **Unconnected inputs** are `vs_black` (all zeros), which decodes to c2 = s2 = -1, not neutral. Gate on content or the in-state flag; `f_tf_axisflow` rejects |(c2, s2)| > 1.05.
+5. **Unconnected inputs** are `vs_black` (all zeros), which decodes to c2 = s2 = -1, not neutral. Gate on content or the in-state flag; `f_tf_axisflow` rejects |(c2, s2)| > 1.05. **The same trap exists on outlet 0 in a different form** (found 2026-10-17 during glyph/aniso_blur spec coordination): all-zeros through the outlet 0 decode gives Jxy = -1/strength - i.e. trace 0 but root = 2/strength, lambda1 = 1/strength, lambda2 = -1/strength, a non-SPD phantom with a plausible atan2(-2, 0) axis. It *looks like structure* to any gate on eigenvalue energy; a trace-gated consumer is incidentally safe, an energy-gated consumer needs the SPD/root test as its primary unconnected-input defense (see `.specify/f_tf_aniso_blur/spec.md` "Unconnected-tensor guard").
+6. **Two GPU-math facts from the 2026-10-17 tier-2 bench runs** (full evidence in
+   `.specify/f_tf_glyph/plan.md` ADR-2 amendment): (a) **runtime `atan2(0,0)` returns NaN**
+   on the bench GPU — never feed it possibly-(0,0) args; bias the denominator arg (+1e-7)
+   instead of guarding after (a `mix()` with a NaN operand propagates the NaN: NaN·0 = NaN).
+   (b) **`sample()` is NOT bilinear when its coordinate is data-dependent and jumps** between
+   neighbouring pixels (hardware minification falls back to nearest) — decodes sampled at
+   cell-lattice coordinates need the four-tap `nearest()` hand-bilinear idiom
+   (`skills/jit-gen-codebox`). Residual cross-implementation tolerance: 8-bit interpolation
+   weights give ~2e-4 per stacked read.
+   **Refactor record (same session):** the rule is not glyph-specific — `f_tf_aniso_blur`'s
+   cell-centre read and every kernel tap read at cell-coherent coordinates had the same
+   latent silent-fallback (its 64×64 bench passed on boundary-fraction luck). Both reads now
+   use the four-tap idiom; the 97×64 spot-check went from silently broken to 4.4e-6. Any
+   future consumer reading at cell/lattice coordinates copies the idiom from the start.
 
 ---
 

@@ -201,7 +201,22 @@ follow as needed to keep full-tensor consumers stable on live video. The glow an
 
 ## Related
 
+- `ideas/f_tf_expressive_consumers.md` (2026-10-17): the follow-on research pass this decision prompted — new full-tensor
+  consumer candidates (`f_tf_glow`, `f_tf_hatch`, `f_tf_exaggerate`, `f_tf_metric`, `f_tf_motion`,
+  `f_tf_author`), performance chains, ranking, and the open central-decode-vs-per-consumer-decode
+  inlet question.
 - `ideas/f_tensorfield.md` (hub, consumer audit, Q12-Q15), `docs/f-reference/f_tensor_type.md`
+- **Bench session 2026-10-17 (five consumers to tier-2):** two GPU-math facts entered the
+  family contract (`f_tensor_type.md` rules 5-6, evidence in `.specify/f_tf_glyph/plan.md`
+  ADR-2 amendment): runtime `atan2(0,0)` = NaN on the bench GPU (fix: bias the denominator
+  argument, +1e-7 — never guard with mix() after; the glyph const-content failure is the
+  evidence), and `sample()`'s nearest-fallback on data-dependent jumping coordinates (fix:
+  the four-tap `nearest()` idiom; aniso_blur's lattice reads refactored same-day, 97×64
+  spot-check 4.4e-6 after). **Known unknown, do not build on it:** tensormap's stage C
+  survives flat content via `mix(NaN, 0.5, iso)` while glyph's identical-shape
+  `mix(NaN, 0.0, flag)` did not clear the NaN — compiler select/fold behavior, unresolved;
+  tensormap stays untouched (verified + live-checked); every new consumer uses the
+  bias-at-source idiom.
 - `ideas/named_mod_textures.md` (a shared-inlet tag mechanism could replace per-module inlets
   entirely; gated on its own open verification items)
 - `ideas/mod_depth_ui_density.md` (why new dials are expensive)

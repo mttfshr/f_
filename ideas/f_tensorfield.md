@@ -667,6 +667,10 @@ concept, above) and closes Open Question 2 — see its resolution note.
 
 ## Cross-references
 
+- `ideas/f_tf_expressive_consumers.md` (2026-10-17): new full-tensor consumer candidates
+  (`f_tf_glow`, `f_tf_hatch`, `f_tf_exaggerate`, `f_tf_metric`, `f_tf_motion`, `f_tf_author`),
+  performance chains, ranking, and the open central-decode-vs-per-consumer-decode inlet
+  question.
 - `f_tf_tensor_strategy.md` — 2026-10-16: what the tensor type is for vs. adapter views; rule for
   how consumers take tensor data; reframes Q12 around a live axisflow-into-glow test first.
 - `vector_field_math_concepts.md` #9 — origin of this whole thread; its
