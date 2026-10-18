@@ -10,7 +10,7 @@ import os
 import sys
 from contextlib import redirect_stdout
 
-from harness import check, run, slow
+from harness import check, run, skip, slow
 
 
 def _t(label, cond):
@@ -26,11 +26,13 @@ def _run(namespace, slow_on):
     buf = io.StringIO()
     import harness as _h
     saved_quiet, _h.QUIET = _h.QUIET, False   # the assertions below expect non-quiet output, even under run.sh -q
+    saved_skipped = list(_h.SKIPPED)
     try:
         with redirect_stdout(buf):
             code = run(namespace)
     finally:
         _h.QUIET = saved_quiet
+        _h.SKIPPED[:] = saved_skipped
         if old is None:
             os.environ.pop("BENCH_SLOW", None)
         else:
@@ -84,6 +86,19 @@ def test_the_environment_is_restored():
     before = os.environ.get("BENCH_SLOW")
     _run(_namespace([]), slow_on=True)
     _t("BENCH_SLOW is as it was", os.environ.get("BENCH_SLOW") == before)
+
+
+def test_skip_is_counted_as_skipped_and_the_reason_is_printed():
+    def test_runs():
+        pass
+
+    def test_skips():
+        skip("Max not found")
+
+    code, out = _run({"test_runs": test_runs, "test_skips": test_skips}, False)
+    _t("a skip is not a failure", code == 0)
+    _t("it is not counted as a pass", "1/2 passed, 1 skipped" in out)
+    _t("the reason is printed", "skipped: test_skips: Max not found" in out)
 
 
 if __name__ == "__main__":

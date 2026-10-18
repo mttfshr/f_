@@ -14,13 +14,14 @@
 #   all       offline, then bench --changed               both always run
 #
 # One bench run at a time (a lock); an offline run may overlap anything. A run
-# keeps its log and status in tests/jobs/bg/<id>/ (gitignored) and sends a macOS
+# keeps its log and status in tests/.state/bg/<id>/ (gitignored) and sends a macOS
 # notification when it finishes (BG_NO_NOTIFY=1 silences it). Starting a bench
 # run needs Max up with the bench open, the same as bench.sh; if not, the run
 # fails fast with "bench not reachable" in its log.
 cd "$(dirname "$0")/.." || exit 1
+. tests/_log.sh
 
-BG_DIR="${BG_DIR:-tests/jobs/bg}"
+BG_DIR="${BG_DIR:-tests/.state/bg}"
 OFFLINE_CMD="${BG_OFFLINE_CMD:-tests/run.sh}"
 BENCH_CMD="${BG_BENCH_CMD:-tests/bench.sh}"
 
@@ -49,6 +50,7 @@ resolve() {
 if [ "${1:-}" = "_run" ]; then
   dir=$2; kind=$3; shift 3
   {
+    log_header "bg $kind" "$*"
     case "$kind" in
       offline) $OFFLINE_CMD "$@"; rc=$? ;;
       bench)   if [ $# -eq 0 ]; then set -- --changed; fi; $BENCH_CMD "$@"; rc=$? ;;

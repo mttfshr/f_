@@ -38,7 +38,14 @@ ONLY = {m for m in os.environ.get("BENCH_MODULES", "").split(",") if m}
 # unverified.
 ENV_NOISE = ("jpatcher: doesn't understand getattr",)
 
+# Known live issues, XFAIL with a pointer: {(module, kind, detail): why}. An entry that no longer occurs is reported as XPASS and
+# must be removed (test_known_live_issues_still_present).
+_AUDIO_NOTE = ("an audio (pfft~) module loaded here as a video module, so inlet~/outlet~/expr have no home: "
+               "not a bug in the module; see HANDOFF.md 2026-10-18 'audio modules - integration question TABLED'")
 KNOWN = {
+    ("f_a_decorrelate", "error", "inlet~: inlet~: No such object"): _AUDIO_NOTE,
+    ("f_a_decorrelate", "error", "outlet~: outlet~: No such object"): _AUDIO_NOTE,
+    ("f_a_decorrelate", "error", "expr: inlet: wrong message or type"): _AUDIO_NOTE,   # posted twice; one key
 }
 
 # What each outlet must show under bypass: {module: {outlet: expectation}}.  A processor's

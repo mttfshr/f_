@@ -8,6 +8,8 @@ Run:  tests/bench.sh tests/bench_control.py
 """
 import sys
 
+import numpy as np
+
 import benchclient
 from benchclient import Channel, new_job, run_job
 from harness import check, note, run
@@ -23,6 +25,18 @@ def test_stub_roundtrip():
     check("status ok", 0 if result.get("status") == "ok" else 1, 0)
     check("result id matches job", 0 if result.get("id") == job["id"] else 1, 0)
     check("no errors", len(result.get("errors", [])), 0)
+
+
+def test_unsupplied_params_reset_to_their_defaults():
+    """A4: the bench keeps Params between jobs, so a job that does not supply a Param must still start from the
+    codebox's default (benchclient.with_param_defaults), not from the previous job's value."""
+    code = "Param k(0.25);\nout1 = vec(k, k, k, 1.0);"
+    src = np.zeros((16, 16, 4), np.float32)
+    src[..., 3] = 1.0
+    set_out, _ = benchclient.run_pass(code, [src], params={"k": 0.75})
+    check("a supplied param is applied (k = 0.75)", abs(float(set_out[..., 0].mean()) - 0.75), 1e-3)
+    reset_out, _ = benchclient.run_pass(code, [src])
+    check("an unsupplied param is back at its default (k = 0.25)", abs(float(reset_out[..., 0].mean()) - 0.25), 1e-3)
 
 
 def test_frames_arrive_during_job():

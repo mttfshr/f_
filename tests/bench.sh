@@ -11,7 +11,13 @@
 #   tests/bench.sh --all           every bench_*.py, slow tests included
 #   tests/bench.sh --list          print what would run, then exit (no Max needed)
 #   tests/bench.sh tests/bench_control.py   just the named files
-#   BENCH_LOG=path                 write the log there instead of tests/jobs/bench_last.log
+#   BENCH_LOG=path                 write the log there instead of tests/logs/<timestamp>-bench.log
+#   MAX_APP=/path/Max.app          the Max install (default /Applications/Max.app)
+#
+# Every run writes tests/logs/<timestamp>-bench.log (tests/_log.sh; `tests/logs/latest-bench` is the newest):
+# full output plus a header with Max version, git SHA, dirty flag and flags. Before each file that uses
+# the codebox bench, `tests/benchclient.py health` probes it with a known-good codebox and reopens it
+# if the answer is a stale image (a wedged bench returns stale frames with no error).
 #
 # --changed (tests/benchdeps.py): a file whose Python imports, data files and
 # environment (Max and Vsynth versions) equal those of its last green run is
@@ -28,8 +34,10 @@
 # can fail on a busy machine without a regression) and bench_fluid_probes.py
 # (Phase 0 record of bench-verified facts, not a gate for shipped modules).
 cd "$(dirname "$0")/.." || exit 1
+. tests/_log.sh
 
-DEFAULT=(control selftest fft temporal fluid caustic_codebox modules fluid_module caustic_sheets)
+DEFAULT=(control selftest fft temporal fluid caustic_codebox modules fluid_module caustic_sheets
+         tf_tensormap tf_axisflow tf_smooth tf_glyph tf_sharpen tf_aniso_blur tf_hatch)   # tf_*: added 2026-10-18 (tests/.specify restructure A7), time not yet measured
 
 ALL=0; LIST=0; SLOW=0; CHANGED=0; QUIET=0; FILES=()
 for a in "$@"; do
@@ -86,12 +94,15 @@ if [ "$LIST" -eq 1 ]; then printf '%s\n' "${FILES[@]}"; exit 0; fi
 # The codebox bench (bench.maxpat) must be open for every file except the two
 # module-bench files, which open their own bench; with only those selected there
 # is nothing to require.
+needs_codebox() {
+  case "$1" in
+    */bench_modules.py|*/bench_fluid_module.py|*/bench_caustic_sheets.py|bench_modules.py|bench_fluid_module.py|bench_caustic_sheets.py) return 1 ;;
+  esac
+  return 0
+}
 NEEDS_CODEBOX=0
 for f in "${FILES[@]}"; do
-  case "$f" in
-    */bench_modules.py|*/bench_fluid_module.py|*/bench_caustic_sheets.py|bench_modules.py|bench_fluid_module.py|bench_caustic_sheets.py) ;;
-    *) NEEDS_CODEBOX=1 ;;
-  esac
+  if needs_codebox "$f"; then NEEDS_CODEBOX=1; fi
 done
 
 PY=(uv run --no-project --with numpy python3)
@@ -102,11 +113,7 @@ if [ "$NEEDS_CODEBOX" -eq 1 ] && \
 fi
 # full output (incl. tracebacks) always kept, even if the caller filters it
 mkdir -p tests/jobs
-LOG="${BENCH_LOG:-tests/jobs/bench_last.log}"
-mkdir -p "$(dirname "$LOG")"
-# first line records what produced the log: results here depend on the Max build
-# (2026-10-04: Max 9.2.0 rejected an assignment to `PI` that earlier runs accepted)
-echo "# Max $(defaults read /Applications/Max.app/Contents/Info CFBundleShortVersionString 2>/dev/null || echo unknown), $(date '+%Y-%m-%d %H:%M')" > "$LOG"
+log_open bench "${*:-none}"          # sets LOG; first line = Max version, git SHA, dirty flag, flags
 if [ "$QUIET" -eq 1 ]; then export TEST_FULL_LOG="$LOG"; fi    # quiet on screen, complete in the log
 status=0
 i=0
@@ -119,6 +126,14 @@ for f in "${FILES[@]}"; do
   if [ "$QUIET" -eq 1 ]; then echo "=== $f${mods:+ (modules: $mods)}" >> "$LOG"
   else echo "=== $f${mods:+ (modules: $mods)}" | tee -a "$LOG"; fi
   if [ -n "$mods" ]; then export BENCH_MODULES="$mods"; else unset BENCH_MODULES; fi
+  if needs_codebox "$f"; then          # a wedged bench returns stale images with no error: probe, reopen if needed
+    hout=$("${PY[@]}" tests/benchclient.py health 2>&1); hrc=$?
+    [ -n "$hout" ] && { echo "$hout"; echo "$hout" >> "$LOG"; }
+    if [ "$hrc" -ne 0 ]; then
+      echo "bench unhealthy before $f: not run" | tee -a "$LOG"
+      status=1; python3 tests/benchdeps.py forget "$f"; rm -f "$snap"; continue
+    fi
+  fi
   "${PY[@]}" "$f" 2>&1 | tee -a "$LOG"
   if [ "${PIPESTATUS[0]}" -eq 0 ]; then
     REC_ARGS=(--snapshot "$snap")

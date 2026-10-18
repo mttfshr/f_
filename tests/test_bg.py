@@ -223,8 +223,27 @@ def test_run_dirs_are_safe_from_the_job_pruner_and_from_git():
         _, ident = sb.start("offline"); sb.wait(ident)
         _t("a run id does not look like a bench job id (prune_jobs would delete those)",
            benchclient._JOB_ID_RE.match(ident) is None)
-    r = subprocess.run(["git", "check-ignore", "-q", "tests/jobs/bg/bg-x-offline.AAAA/log"], cwd=REPO)
+    r = subprocess.run(["git", "check-ignore", "-q", "tests/.state/bg/bg-x-offline.AAAA/log"], cwd=REPO)
     _t("the default run directory is gitignored", r.returncode == 0)
+
+
+def test_log_helper_writes_header_links_and_prunes_per_kind():
+    with tempfile.TemporaryDirectory() as tmp:
+        for n in range(25):
+            (Path(tmp) / f"20260101-0000{n:02d}-offline.log").write_text("old")
+        for n in range(3):
+            (Path(tmp) / f"20260101-0000{n:02d}-bench.log").write_text("old")
+        env = dict(os.environ, TEST_LOGS_DIR=tmp, MAX_APP="/nonexistent/Max.app")
+        r = subprocess.run(["bash", "-c", ". tests/_log.sh; log_open offline '-q a.py'; echo \"$LOG\""],
+                           cwd=REPO, env=env, capture_output=True, text=True)
+        log = Path(r.stdout.strip().splitlines()[-1]) if r.stdout.strip() else Path(tmp) / "missing"
+        first = log.read_text().splitlines()[0] if log.exists() else ""
+        _t("the header names kind, Max, git and flags",
+           first.startswith("# offline | Max unknown | git ") and "flags: -q a.py" in first)
+        _t("the newest 20 offline logs are kept", len(list(Path(tmp).glob("[0-9]*-offline.log"))) == 20)
+        _t("another kind's logs are untouched", len(list(Path(tmp).glob("[0-9]*-bench.log"))) == 3)
+        _t("latest and latest-offline point at the new log",
+           (Path(tmp) / "latest").resolve() == log.resolve() == (Path(tmp) / "latest-offline").resolve())
 
 
 if __name__ == "__main__":

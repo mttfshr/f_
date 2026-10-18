@@ -313,9 +313,11 @@ def test_f_vf_fluid_builds_from_its_definition_with_the_old_scripts_invariants()
     _eq("no native bypass attribute anywhere", any(b.get("attr") == "bypass" for b in boxes.values()), False)
     _eq("the bypass toggle drives enc's Param",
         any(b.get("text") == "prepend param bypass_gate" for b in boxes.values()), True)
-    _eq("route tokens in definition order, taps last",
-        boxes[bp.OBJ_ROUTE]["text"].split()[1:], ["force", "dt", "viscosity", "project", "drag", "gain", "drift", "taps"])
-    taps_n = 7                      # force dt viscosity project drag gain drift taps (drift added 2026-10-17)
+    defn = bp.load_definition(drift.definition_path("f_vf_fluid"))
+    tokens = boxes[bp.OBJ_ROUTE]["text"].split()[1:]
+    _eq("route tokens are the definition's routed params, in definition order, taps last",
+        (tokens, tokens[-1]), ([p["name"] for p in defn["params"] if p["type"] not in ("bypass", "internal")], "taps"))
+    taps_n = tokens.index("taps")   # by name: a param added before taps (drift, 2026-10-17) no longer breaks this test
     _eq("taps has no widget and no label, only its attrui",
         (bp.param_obj_id(taps_n) in boxes, bp.param_label_id(taps_n) in boxes, bp.param_pre_id(taps_n) in boxes),
         (False, False, True))

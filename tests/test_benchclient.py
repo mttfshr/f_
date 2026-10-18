@@ -13,7 +13,7 @@ from pathlib import Path
 
 import benchclient
 from benchclient import Channel, osc_decode, osc_encode
-from harness import check, run
+from harness import check, run, skip
 
 
 def test_encode_matches_spec_bytes():
@@ -47,8 +47,7 @@ def test_loopback_reply_matching():
         fake.bind((benchclient.HOST, benchclient.TO_BENCH_PORT))
     except OSError:
         fake.close()
-        print("    SKIP (bench port in use -- the real bench is probably open)")
-        return
+        skip("bench port in use -- the real bench is probably open")
     fake.settimeout(2.0)
 
     def serve():
@@ -124,6 +123,65 @@ def test_prune_after_run_is_tighter_than_the_in_run_cap():
             check("a second call removes nothing", benchclient.prune_jobs_after_run(), 0)
         finally:
             benchclient.JOBS_DIR = old
+
+
+_DECLARATIONS = """
+// Param ghost(9);
+Param a(0.5);
+Param b(1, min=0, max=2);  /* Param ghost2(3); */
+Param c(1e-3);
+Param d;
+Param e(PI);
+Param bypass_gate(0.0);
+out1 = vec(a, b, c, 1);
+"""
+
+
+def _param_default_problems(defaults_fn, merge_fn):
+    """Everything wrong with a pair of implementations, as a list of strings ([] = correct)."""
+    bad = []
+    want = {"a": 0.5, "b": 1.0, "c": 1e-3, "bypass_gate": 0.0}
+    got = defaults_fn(_DECLARATIONS)
+    if got != want:
+        bad.append(f"declarations parsed as {got}, want {want}")
+    merged = merge_fn(_DECLARATIONS, {"a": 0.9, "extra": 2.0})
+    if merged.get("a") != 0.9:
+        bad.append("a supplied value did not win over the default")
+    if merged.get("b") != 1.0:
+        bad.append("an unsupplied param did not get its default")
+    if merged.get("extra") != 2.0:
+        bad.append("a param the caller supplied was dropped")
+    if "ghost" in merged or "ghost2" in merged or "d" in merged or "e" in merged:
+        bad.append("a commented-out or default-less Param was sent")
+    if merge_fn(_DECLARATIONS, None).get("a") != 0.5:
+        bad.append("params=None did not give the defaults")
+    return bad
+
+
+def test_param_defaults_come_from_the_codebox_and_the_caller_wins():
+    """A4: bench jobs send the codebox's own Param defaults for anything the test did not supply."""
+    problems = _param_default_problems(benchclient.param_defaults, benchclient.with_param_defaults)
+    for p in problems:
+        print("    problem:", p)
+    check("problems with the real implementation", len(problems), 0)
+
+
+def test_the_param_default_checks_catch_broken_implementations():
+    """Mutation check on the check itself: each broken variant must be reported."""
+    pd, wpd = benchclient.param_defaults, benchclient.with_param_defaults
+    mutants = {
+        "defaults override the caller": (pd, lambda code, p: {**(p or {}), **pd(code)}),
+        "no defaults are added": (pd, lambda code, p: dict(p or {})),
+        "caller params are dropped": (pd, lambda code, p: pd(code)),
+        "comments are not stripped": (lambda code: benchclient._PARAM_RE and {
+            n: float(a.split(",")[0]) for n, a in benchclient._PARAM_RE.findall(code)
+            if a.split(",")[0].strip().replace(".", "").replace("e-", "").isdigit()}, wpd),
+        "only the first Param is read": (lambda code: dict(list(pd(code).items())[:1]), lambda code, p: wpd(code, p)),
+    }
+    missed = [name for name, (d, m) in mutants.items() if not _param_default_problems(d, m)]
+    for name in missed:
+        print("    not caught:", name)
+    check("mutants the checks let through", len(missed), 0)
 
 
 if __name__ == "__main__":

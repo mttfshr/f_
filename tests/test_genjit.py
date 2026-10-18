@@ -9,10 +9,9 @@ import os
 import sys
 
 from genjit import count_ports, make_genjit
-from harness import check, run
+from harness import check, max_path, run, skip
 
-MAX_EXAMPLE = ("/Applications/Max.app/Contents/Resources/Examples/"
-               "jitter-examples/gen/pinch.genjit")
+MAX_EXAMPLE = max_path("Contents", "Resources", "Examples", "jitter-examples", "gen", "pinch.genjit")
 BOX_KEYS = {"id", "maxclass", "numinlets", "numoutlets", "patching_rect"}
 
 
@@ -31,8 +30,7 @@ def _wiring_errors(patcher):
 
 def test_structure_matches_shipped_example():
     if not os.path.exists(MAX_EXAMPLE):
-        print("    SKIP (Max example not found)")
-        return
+        skip(f"Max example not found at {MAX_EXAMPLE} (set MAX_APP)")
     ref = json.load(open(MAX_EXAMPLE))
     gen = make_genjit("out1 = in1;")
     check("top level is {'patcher'} like the example",

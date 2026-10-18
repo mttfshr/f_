@@ -146,6 +146,28 @@ def ping(timeout=1.0, ports=CODEBOX_PORTS):
             return False
 
 
+def ensure_healthy(ports=CODEBOX_PORTS, patch="bench.maxpat", wait=40.0):
+    """A compile failure (seen 2026-10-06: the parser stack overflow on an oversized program) can wedge the
+    bench so later jobs return a STALE image whatever the code is, with no error. Probe with a known-good
+    codebox and reopen the bench if the answer is wrong (twice at most). Returns True if it had to reopen.
+    tests/bench.sh runs this before every file that uses the codebox bench: `benchclient.py health`."""
+    import numpy as np
+    probe = np.zeros((16, 16, 4), np.float32)
+    probe[..., 3] = 1.0
+    reopened = False
+    for _ in range(2):
+        try:
+            out, _rep = run_pass("out1 = vec(0.25, 0.5, 0.75, 1.0);", [probe], timeout_ms=15000)
+        except BenchTimeout:
+            out = None
+        if out is not None and abs(out[..., 0].mean() - 0.25) < 1e-3 and abs(out[..., 2].mean() - 0.75) < 1e-3:
+            return reopened
+        print("   (bench returned a stale image or no answer: reopening it)", flush=True)
+        reopen(wait=wait, ports=ports, patch=patch)
+        reopened = True
+    raise RuntimeError("bench still unhealthy after reopening")
+
+
 def require_bench(ports=CODEBOX_PORTS, patch="bench.maxpat"):
     if not ping(ports=ports):
         raise BenchUnreachable(
@@ -241,15 +263,42 @@ def run_job(job, job_dir, channel=None, ports=CODEBOX_PORTS):
         return go(ch)
 
 
+# ---------------------------------------------------------------- param defaults
+
+_PARAM_RE = re.compile(r"\bParam\s+([A-Za-z_]\w*)\s*\(([^)]*)\)")
+_COMMENT_RE = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
+
+
+def param_defaults(code):
+    """{name: default} for every `Param name(default, ...)` in a codebox, comments ignored. Only plain numeric
+    defaults count: `Param x;` and `Param x(PI)` have none that can be sent, so they are left out."""
+    out = {}
+    for name, args in _PARAM_RE.findall(_COMMENT_RE.sub("", code)):
+        try:
+            out[name] = float(args.split(",")[0].strip())
+        except ValueError:
+            pass
+    return out
+
+
+def with_param_defaults(code, params):
+    """The params a job sends: the codebox's own defaults, overridden by what the caller supplied. The bench keeps
+    Params between jobs (found three times: caustic, aniso/sharpen, fluid), so a param a test does not supply
+    would otherwise carry the previous job's value; sending the default makes every job start from the codebox's
+    own state. Only declared Params are added, and an undeclared one is an "invalid message"."""
+    return {**param_defaults(code), **(params or {})}
+
+
 # ---------------------------------------------------------------- passes
 
 def _prepare(code, inputs, dim, mode, **fields):
-    """Create a job dir with inputs, code.gen and this job's .genjit."""
+    """Create a job dir with inputs, code.gen and this job's .genjit. Unsupplied Params are reset to their defaults."""
     import jxf
     from genjit import write_genjit
 
     if not inputs:
         raise ValueError("needs at least one input (in1 drives rendering)")
+    fields["params"] = with_param_defaults(code, fields.get("params"))
     h, w = inputs[0].shape[:2]
     dim = dim or (w, h)
     job, job_dir = new_job(mode, dim=[int(dim[0]), int(dim[1])], type="float32", **fields)
@@ -378,3 +427,25 @@ def measure(code, inputs, dim=None, chain=1, params=None, warmup=30,
             result["ms_per_pass_upper_bound"] = result["frame_ms_k0"] / chain
     result["job_dir"] = str(job_dir)
     return result
+
+
+# ---------------------------------------------------------------- command line (tests/bench.sh)
+
+def _main(argv):
+    cmd = argv[0] if argv else ""
+    if cmd == "ping":
+        return 0 if ping() else 1
+    if cmd == "health":
+        try:
+            ensure_healthy()
+        except (BenchUnreachable, BenchTimeout, RuntimeError) as e:
+            print(f"bench unhealthy: {e}")
+            return 1
+        return 0
+    print("usage: benchclient.py ping | health")
+    return 2
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(_main(sys.argv[1:]))

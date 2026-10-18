@@ -32,7 +32,7 @@ bench-verified facts); `--all` adds them.
 
 `--changed` (`tests/benchdeps.py`) skips a bench file whose Python imports, data files and environment
 (Max and Vsynth versions) equal those of its last green run, and says why; `bench_modules` runs only the
-modules whose patcher changed (`BENCH_MODULES`). The record is `tests/jobs/bench_green.json` (local,
+modules whose patcher changed (`BENCH_MODULES`). The record is `tests/.state/bench_green.json` (local,
 gitignored): a passing file is recorded, a failing one is forgotten, so any plain `tests/bench.sh` run
 seeds it. A new `tests/bench_*.py` must be registered in `benchdeps.DATA` (a test enforces it). It does
 not see the GPU driver, macOS, or what else is open in Max, so run without `--changed` before a release.
@@ -40,7 +40,7 @@ not see the GPU driver, macOS, or what else is open in Max, so run without `--ch
 **Background runs** (`tests/bg.sh`): `start [offline|bench|all]` returns at once and runs detached;
 `status` (exit 0 passed, 1 failed, 2 running, 3 none), `log`, `stop`, `list`. One bench run at a time (a
 lock); an offline run may overlap anything; `bench` defaults to `--changed`; a macOS notification when it
-finishes. Logs are in `tests/jobs/bg/` (gitignored). A bench run needs Max up with the bench open, else it
+finishes. Run state is in `tests/.state/bg/` (gitignored). A bench run needs Max up with the bench open, else it
 fails fast with "bench not reachable" in its log. It does not isolate the bench from your Max session:
 reopening the bench still brings Max to the front, and the bench's global error trap can pick up errors you
 cause in Max meanwhile (`build_cleanup` T033).
@@ -108,7 +108,7 @@ All bench logic is in `tests/bench/bench.js`; the patch is only objects and wiri
 **Per session:** open Max, open `tests/bench/bench.maxpat` once (or, with
 Max already running, `benchclient.reopen()` does it). `tests/bench.sh`
 fails fast with "bench not reachable" if it isn't open. Full output of the
-last bench run is always in `tests/jobs/bench_last.log`.
+last bench run is always in `tests/logs/latest-bench` (see Logs and state, below).
 
 **Don't edit or save `bench.maxpat`** — it's generated
 (`python3 tests/bench/make_bench.py`), and unsaved edits make `reopen()`
@@ -144,8 +144,13 @@ hit a save prompt. After regenerating, call `benchclient.reopen()`.
   SAME stale image, whatever the code, with no error, until
   `benchclient.reopen()`. A long session that may compile something large
   should probe with a known-good codebox before trusting a result
-  (`gather_proto.ensure_healthy` does this and reopens). `measure` readings
+  (`benchclient.ensure_healthy` does this and reopens; `tests/bench.sh` runs it before every codebox-bench file). `measure` readings
   under the empty-pass floor (~2.1-2.5 ms per frame here) are upper bounds.
+- **Params are reset per job** (`benchclient.with_param_defaults`, used by `run_pass`, `run_temporal` and `measure`): the
+  bench keeps Params between jobs (found three times: caustic, aniso/sharpen, fluid), so every job now sends the codebox's own
+  `Param name(default)` for any Param the test did not supply. Only declared Params are added; a Param with no plain numeric
+  default (`Param x;`, `Param x(PI)`) is left alone. Offline checks, with a mutation check of the checks, are in
+  `test_benchclient.py`; the live one is `bench_control.py::test_unsupplied_params_reset_to_their_defaults`.
 
 ## The module bench (shipped bpatchers)
 
@@ -178,7 +183,7 @@ Facts section).
 ## Files
 
 - `gpu_sim.py` -- jit.gl.pix execution-model emulation (grid, sampling, storage)
-- `harness.py` -- minimal runner
+- `harness.py` -- minimal runner (`skip(reason)`, `max_path()`, `MAX_APP`)
 - `test_fft_separable.py` -- separable-DFT FFT plan, T1-T3 correctness
   (see `ideas/ceyron_simulation_scripts_notes.md`, 2026-09-22 addenda).
   Mutation-checked 2026-09-22: half-texel sampling offset, unsigned
@@ -193,6 +198,7 @@ Facts section).
 - `test_jxf.py`, `test_genjit.py`, `test_benchclient.py` -- offline checks of
   the bench toolchain (against Max-shipped files / OSC spec bytes)
 - `bench.sh` -- runs the bench regression set (`--all` for every `bench_*.py`)
+- `run.sh`, `bg.sh`, `_log.sh` -- the offline runner (per-file timing table), background runs, and the log helper all three share
 - `bench_control.py` -- control loop (ping, /busy, error reporting)
 - `bench_selftest.py` -- the bench's own plumbing: identity, coordinate
   probe, plane order, compile-error capture, reload, two inputs
@@ -226,7 +232,7 @@ Facts section).
   tracked in `scratch/` since 2026-10-07)
 - `bg.sh` + `test_bg.py` -- the background runner (start, status, log, stop, list; lock; fake-command tests)
 - `benchdeps.py` + `test_benchdeps.py` -- what `bench.sh --changed` runs (input hashing, decision table, record)
-- `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name)
+- `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name) and `skip(reason)`
 - `module_contract.py` + `test_module_contracts.py` -- offline wiring
   contracts of every shipped bpatcher: route -> attrui -> Param wiring, plus
   per-pix checks on every stage (each codebox Param is driven and read, a
@@ -248,10 +254,28 @@ Facts section).
   `make_module_bench.py` (generates `bench_module.maxpat` and
   `bench_module_empty.maxpat`), `bench_module.js`
 
+## Logs, state and interpreters
+
+- **`tests/logs/`** (gitignored): every `run.sh`, `bench.sh` and `bg.sh` run writes `<timestamp>-<kind>.log` (kinds `offline`,
+  `bench`; a `bg.sh` run keeps its own log in `tests/.state/bg/<id>/` and the runs it starts write theirs here). `latest` and
+  `latest-<kind>` point at the newest; the newest 20 of each kind are kept. The first line records the Max version, the git
+  SHA, whether the tree had uncommitted changes, and the flags, because results depend on all four. `run.sh` also writes a
+  per-file timing table and prints the total and the three slowest files.
+- **`tests/.state/`** (gitignored, durable): `bench_green.json` (what `--changed` trusts) and `bg/` (background-run state).
+  **`tests/jobs/`** is cache only: per-job directories, safe to delete while no run is in flight.
+- **`MAX_APP`** (default `/Applications/Max.app`) names the Max install for the log header, the environment hash and the two
+  offline tests that read Max-shipped files (`test_jxf`, `test_genjit`); without Max they report SKIPPED with the reason
+  instead of passing silently (`harness.skip`).
+- **Which interpreter runs what:** `run.sh` and `bench.sh` run everything with `uv run --no-project --with numpy python3`,
+  except `benchdeps.py`, which `bench.sh` calls with the bare system `python3`, so it imports only the standard library
+  (`test_benchdeps.py` enforces that).
+- The generated `bench/job_*.genjit` and `bench/mjob_*.maxpat` stay in `tests/bench/` (gitignored): Max resolves a job's gen
+  and a module wrapper by name from the bench patcher's folder.
+
 ## Quiet mode
 
 `tests/run.sh -q [files]` and `tests/bench.sh -q [flags]` (harness env var `TEST_QUIET=1`) print **one line per test file**
 (`ok   test_x.py: 7/7`) and a final verdict. A passing test prints nothing; a failing test prints its whole output and the
 traceback. Normal mode is unchanged. Under `bench.sh -q` the full output, passes included, still goes to the log
-(`tests/jobs/bench_last.log`, or `BENCH_LOG`), and the "skip ... unchanged since green" lines collapse to one count.
+(`tests/logs/latest-bench`, or `BENCH_LOG`), and the "skip ... unchanged since green" lines collapse to one count.
 The exit status is the same in both modes, and it is what decides a green run on record. Prefer `-q` for routine runs.

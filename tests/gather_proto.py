@@ -284,24 +284,9 @@ def ensure_codebox_bench(bc):
     bc.reopen(wait=40.0)
 
 
-def ensure_healthy(bc):
-    """A compile failure (seen 2026-10-06: the parser stack overflow on an oversized program) can wedge the
-    bench so later jobs return a STALE image whatever the code is, with no error. Probe with a known-good
-    codebox before every configuration and reopen the bench if the answer is wrong."""
-    probe = np.zeros((16, 16, 4), np.float32)
-    probe[..., 3] = 1.0
-    for _ in range(2):
-        out, _rep = bc.run_pass("out1 = vec(0.25, 0.5, 0.75, 1.0);", [probe], timeout_ms=15000)
-        if out is not None and abs(out[..., 0].mean() - 0.25) < 1e-3 and abs(out[..., 2].mean() - 0.75) < 1e-3:
-            return
-        print("   (bench returned a stale image: reopening it)", flush=True)
-        bc.reopen(wait=40.0)
-    raise RuntimeError("bench still unhealthy after reopening")
-
-
 def check(bc, cf, mg, code, G, M, T, S, fr, field, white, tol=1e-3):
     """Run one pass and compare with the NumPy mirror. Returns (matches_mirror, compiled_and_ran, text)."""
-    ensure_healthy(bc)
+    bc.ensure_healthy()
     d = fr * cf.first_fold_distance()
     img, rep = bc.run_pass(code, [white, field], dim=(256, 256), params={"d": d, "peak": 0.9, "tol": tol}, timeout_ms=90000)
     errs = rep.get("errors") or []
@@ -355,7 +340,7 @@ def main():
         print(f"  reference  out1 = in1   {dim}^2  chain 8: fps {r0.get('fps', 0):.0f}  "
               f"(frame {r0.get('frame_ms', float('nan')):.2f} ms, baseline K=0 {r0.get('frame_ms_k0', float('nan')):.2f} ms)", flush=True)
     for (G, M, T, S) in good:
-        ensure_healthy(bc)
+        bc.ensure_healthy()
         for dim in (256, 512):
             code = make_code(G, M, T, S, fsize=dim)
             win = np.ones((dim, dim, 4), np.float32)

@@ -19,7 +19,7 @@ import tempfile
 from pathlib import Path
 
 import benchdeps as bd
-from harness import check, run
+from harness import check, run, skip
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -216,7 +216,7 @@ def test_record_green_full_and_partial():
 
 def test_record_file_is_robust_and_atomic():
     with tempfile.TemporaryDirectory() as tmp:
-        path = Path(tmp) / "jobs" / "bench_green.json"
+        path = Path(tmp) / ".state" / "bench_green.json"
         _t("missing file: nothing known green", bd.load_record(path) == {})
         bd.save_record({"f": {"inputs": "h"}}, path)
         _t("round trip", bd.load_record(path) == {"f": {"inputs": "h"}})
@@ -458,8 +458,9 @@ def test_bench_sh_records_a_pass_and_forgets_a_failure():
         _t("--slow exports BENCH_SLOW to the test", "BENCH_SLOW=[1]" in r.stdout)
         r = _bench_sh(_glue_env(tmp, 0), "--changed", "--slow", f)
         _t("a --slow pass is recorded as slow-green", "nothing to run" in r.stdout)
-        _t("the log starts with the Max version and date",
-           (Path(tmp) / "log.txt").read_text().startswith("# Max "))
+        head = (Path(tmp) / "log.txt").read_text().splitlines()[0]
+        _t("the log starts with kind, Max version, git SHA, dirty flag, flags and date",
+           re.match(r"# bench \| Max .+ \| git \S+ \((clean|dirty)\) \| flags: .+ \| \d{4}-\d\d-\d\d \d\d:\d\d$", head) is not None)
 
 
 def test_bench_sh_passes_only_the_changed_modules_and_records_them():
@@ -483,6 +484,31 @@ def test_bench_sh_passes_only_the_changed_modules_and_records_them():
         _t("once it passed, its new hash is recorded: nothing left to run", "nothing to run" in r.stdout)
         r = _bench_sh(_glue_env(tmp, 0), f)
         _t("a plain run is not limited to any module", "BENCH_MODULES=[]" in r.stdout)
+
+
+def test_the_default_record_is_state_not_cache():
+    """The green record is durable state (tests/.state/), not part of the tests/jobs/ cache."""
+    if os.environ.get("BENCH_GREEN"):
+        skip("BENCH_GREEN overrides the record path")
+    _t("default record path", bd.RECORD == REPO / "tests" / ".state" / "bench_green.json")
+    r = subprocess.run(["git", "check-ignore", "-q", "tests/.state/bench_green.json"], cwd=REPO)
+    _t("and it is gitignored", r.returncode == 0)
+
+
+def test_benchdeps_runs_on_the_bare_system_python():
+    """bench.sh calls benchdeps.py with the system python3, not under uv, so it may import only the standard library."""
+    std = getattr(sys, "stdlib_module_names", None)
+    if std is None:
+        skip("needs Python 3.10+ for sys.stdlib_module_names")
+    import ast
+    tree = ast.parse((REPO / "tests" / "benchdeps.py").read_text())
+    names = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import):
+            names |= {a.name.split(".")[0] for a in n.names}
+        elif isinstance(n, ast.ImportFrom) and n.module:
+            names.add(n.module.split(".")[0])
+    check("imports outside the standard library", len(sorted(names - set(std))), 0)
 
 
 if __name__ == "__main__":

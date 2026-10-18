@@ -913,7 +913,7 @@ Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Fin
   code inline).
 - **After that failure the bench is wedged**: every later job returns a STALE image (the same one, whatever the
   code) with no error, until `benchclient.reopen()`. Before trusting a result after any compile failure, probe with
-  a known-good codebox (`tests/gather_proto.ensure_healthy`).
+  a known-good codebox (`tests/benchclient.ensure_healthy`).
 - **Functions work inside a codebox, including the cases that matter:** a function body can call
   `sample(in2, ...)` and `nearest(in2, ...)`, contain `for` loops with local variables (declare them before the
   loop), and return several values (`return a, b;` received as `x, y = f(...)`). A program using a function is

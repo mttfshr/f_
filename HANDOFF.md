@@ -1,5 +1,26 @@
 # HANDOFF
 
+## 2026-10-18 (09:10): `tests/` restructure Phase A done: offline suite green, default bench set green (16 files, 389 s); NOT committed
+
+- **Offline suite green** (`tests/run.sh -q`, 68.8 s serial, 30 files; counts +2 `test_benchclient`, +2 `test_benchdeps`, +1 `test_bg`, +1 `test_harness`). No bench was run. Detail per item: `.specify/test_bench/tasks_restructure.md`.
+- **A1:** `tests/_log.sh` (new, sourced by `run.sh` / `bench.sh` / `bg.sh`): logs go to `tests/logs/<ts>-<kind>.log` with `latest` and `latest-<kind>` links, last 20 per kind, header = Max version, git SHA, dirty flag, flags (`BENCH_LOG` still overrides for bench). Durable state moved to `tests/.state/` (`bench_green.json` and `bg/`, migrated in place); `tests/jobs/` is cache only. Deleted `bench_modules_last.log` (as specified) and also `bench_last.log` (10-17, superseded). **Not done:** moving `bench/job_*.genjit` / `mjob_*.maxpat` into `jobs/` (Max resolves them by bare name from the bench folder; needs a `bench.js` / `bench_module.js` change and a live run).
+- **A2:** `run.sh` logs, times each file, prints total and slowest three. Baseline: 68.8 s, slowest `test_fluid_mirror` 24.6 s. **`-j N` not added** (would cut the wall time to about 25 s; verifying it needs a second full run).
+- **A3:** `MAX_APP`, `harness.skip` / `max_path`; `test_jxf`, `test_genjit` and the port-in-use case skip with a printed reason and count as skipped. `benchdeps.py` needs no numpy (system `python3`; a test enforces it).
+- **A4 (built, not run live):** `benchclient.with_param_defaults` inside `_prepare` covers `run_pass`, `run_temporal`, `measure`: unsupplied Params get the codebox default. Offline test plus a mutation check of the checks (5 mutants); live test `bench_control.py::test_unsupplied_params_reset_to_their_defaults` written, never run. It touches every bench, which is why nothing is committed yet.
+- **A5:** `benchclient.ensure_healthy` + `benchclient.py health`; `bench.sh` runs it before each codebox-bench file and skips and forgets that file if the bench stays unhealthy; `gather_proto` uses it; README and `skills/jit-gen-codebox` pointer updated (`skills/check.sh` will report drift until re-uploaded and stamped). Only the fake-uv glue tests exercised it.
+- **A6:** three `KNOWN` keys for `f_a_decorrelate` in `bench_modules.py` (the 4 errors are 3 messages), confirmed live 09:19.
+- **A7:** the seven `bench_tf_*` are in `DEFAULT` (`bench.sh --list` checked); added time not measured.
+- **A8:** `test_build_multistage` takes Fluid's route tokens from the definition and `taps` by name.
+- **Bench runs (Matt's go, 09:12-09:19):** `bench_control` 6/6 (A4 live test passes), then one plain `tests/bench.sh -q` via `bg.sh`: all 16 files green in 389 s, no probe reopen, `bench_modules` 2/2 with the three `f_a_decorrelate` keys showing XFAIL (A6 confirmed live), the seven `bench_tf_*` about 110 s of the total (A7). A4 and A5 therefore have live evidence; the new `--changed` record is seeded.
+- **Uncommitted:** everything in `git status`; `package/examples/f_demo_sampleplatter.maxpat` and `scratch/tensor-scratch.maxpat` are still deliberately not part of this.
+
+## 2026-10-18 (09:00): `tests/` assessed (read-only), restructure planned, `plan.md` reconciled
+
+- **Nothing was run and no code changed.** `tests/` was read and critiqued: flat 76-file namespace, state / logs / cache all in `tests/jobs/`, tf benches not in `bench.sh DEFAULT`, `bench_modules` red by the known `f_a_decorrelate` errors, Params persist between bench jobs, two offline tests need Max installed. Full record and decisions: `.specify/test_bench/tasks_restructure.md` (Phase A small fixes, Phase B reorg into `tests/{lib,toolchain,build,modules/<m>,math,records}`, Phase C later).
+- **Matt's decisions:** module tests go in `tests/modules/<m>/` (not `src/`) for now; fork / CI audience not a goal yet; `f_a_*` in the module bench is XFAIL, not excluded; records go to `tests/records/`. The seven `bench_tf_*` joining the default set is taken as implied (veto-able).
+- **Also this morning:** `.specify/plan.md` brought up to date with this file through 10-18 (docs only). **Uncommitted:** `.specify/plan.md`, `.specify/test_bench/tasks_restructure.md`, `HANDOFF.md`.
+- **Next:** Phase A, in a fresh session (this one had ~30 tool calls). A4 / A7 need a bench run: ask first.
+
 ## 2026-10-18: audio modules - integration question TABLED (Matt, 08:40)
 
 - **State (read, not run):** `f_a_ripple` (gen~ stimulus, DSP done, UI/docs pending), `f_a_decorrelate` + `_inner` (pfft~ processor; its

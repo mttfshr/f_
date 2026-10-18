@@ -13,11 +13,11 @@ import tempfile
 
 import numpy as np
 
-from harness import check, run
+from harness import check, max_path, run, skip
 from jxf import (JxfError, read_jxf, read_rgba, write_jxf, write_rgba,
                  matrix_to_rgba, rgba_to_matrix)
 
-MAX_JXF = "/Applications/Max.app/Contents/Resources/C74/help/jitter/matrix1.jxf"
+MAX_JXF = max_path("Contents", "Resources", "C74", "help", "jitter", "matrix1.jxf")
 
 
 def _tmp():
@@ -29,8 +29,7 @@ def _tmp():
 def test_parse_max_written_file():
     """Header fields and first cells as read from the raw bytes by hand."""
     if not os.path.exists(MAX_JXF):
-        print("    SKIP (Max not installed at default path)")
-        return
+        skip(f"Max not found at {MAX_JXF} (set MAX_APP)")
     m = read_jxf(MAX_JXF)
     check("shape == (240, 320, 2) [H, W, planes]", 0 if m.shape == (240, 320, 2) else 1, 0)
     check("dtype int32 (LONG)", 0 if m.dtype == np.int32 else 1, 0)

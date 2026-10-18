@@ -8,7 +8,7 @@ and the environment (Max and Vsynth versions, which changed results on
 2026-10-04). If all of those equal what they were at the file's last green run,
 running it again tells you nothing new, so --changed skips it and says so.
 
-State lives in tests/jobs/bench_green.json (gitignored, local to a checkout;
+State lives in tests/.state/bench_green.json (gitignored, local to a checkout;
 BENCH_GREEN=path overrides it, which the tests use):
 {"files": {"bench_fluid": {"inputs": <hash>, "env": "...", "slow": false,
 "when": "...", "modules": {...}}}}. An entry is written only after a file passes
@@ -40,7 +40,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-RECORD = Path(os.environ.get("BENCH_GREEN") or ROOT / "tests" / "jobs" / "bench_green.json")
+RECORD = Path(os.environ.get("BENCH_GREEN") or ROOT / "tests" / ".state" / "bench_green.json")
 
 _MACHINERY = ["tests/bench/bench.js", "tests/bench/bench.maxpat",
               "tests/bench/bench_default.genjit", "tests/bench/codeboxes/*.gen"]
@@ -158,7 +158,8 @@ def detect_env():
             return subprocess.run(cmd, capture_output=True, text=True, timeout=10).stdout.strip()
         except Exception:
             return ""
-    max_v = sh("defaults", "read", "/Applications/Max.app/Contents/Info", "CFBundleShortVersionString")
+    max_app = os.environ.get("MAX_APP", "/Applications/Max.app")
+    max_v = sh("defaults", "read", max_app + "/Contents/Info", "CFBundleShortVersionString")
     vs = "unknown"
     try:
         vs = json.load(open(os.path.expanduser(

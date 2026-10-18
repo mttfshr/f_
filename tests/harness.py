@@ -18,6 +18,23 @@ import traceback
 QUIET = os.environ.get("TEST_QUIET") == "1"
 FULL_LOG = os.environ.get("TEST_FULL_LOG")
 
+# The Max install the offline tests compare against (MAX_APP overrides the default; tests/_log.sh and benchdeps.py read the same variable).
+MAX_APP = os.environ.get("MAX_APP", "/Applications/Max.app")
+SKIPPED = []        # (test name, reason) of every test that called skip(); printed in the summary, never silent
+
+
+class Skip(Exception):
+    """Raised by skip(): the test did not run, for a stated reason. Counted as skipped, not passed."""
+
+
+def skip(reason):
+    raise Skip(reason)
+
+
+def max_path(*parts):
+    """A path inside the Max install ($MAX_APP, default /Applications/Max.app)."""
+    return os.path.join(MAX_APP, *parts)
+
 
 def slow(fn):
     """Mark a test as slow. Skipped by run() unless BENCH_SLOW=1 (tests/bench.sh
@@ -45,6 +62,9 @@ def _run_quiet(name, fn):
     with contextlib.redirect_stdout(buf):
         try:
             fn()
+        except Skip as e:
+            verdict, detail = "SKIP", f"  SKIP  {e}\n"
+            SKIPPED.append((name, str(e)))
         except AssertionError as e:
             verdict, detail = "FAIL", f"  FAIL  {e}\n"
         except Exception:
@@ -52,7 +72,7 @@ def _run_quiet(name, fn):
     if FULL_LOG:
         with open(FULL_LOG, "a") as f:
             f.write(f"{name}\n{buf.getvalue()}  {verdict}  ({time.time() - t0:.2f}s)\n{detail if verdict != 'PASS' else ''}")
-    if verdict == "PASS":
+    if verdict in ("PASS", "SKIP"):
         return 0
     print(name)
     sys.stdout.write(buf.getvalue())
@@ -61,6 +81,7 @@ def _run_quiet(name, fn):
 
 
 def run(namespace):
+    SKIPPED.clear()
     tests = [(k, v) for k, v in namespace.items()
              if k.startswith("test_") and callable(v)]
     with_slow = os.environ.get("BENCH_SLOW") == "1"
@@ -76,6 +97,9 @@ def run(namespace):
         try:
             fn()
             print(f"  PASS  ({time.time() - t0:.2f}s)")
+        except Skip as e:
+            SKIPPED.append((name, str(e)))
+            print(f"  SKIP  {e}")
         except AssertionError as e:
             failed += 1
             print(f"  FAIL  {e}")
@@ -86,9 +110,13 @@ def run(namespace):
     if QUIET:
         label = os.path.basename(sys.argv[0]) or "tests"
         extra = f"  (skipped slow: {len(skipped)})" if skipped else ""
-        print(f"{'ok  ' if not failed else 'FAIL'} {label}: {len(tests) - failed}/{len(tests)}{extra}")
+        if SKIPPED:
+            extra += "  (skipped: " + "; ".join(f"{n}: {r}" for n, r in SKIPPED) + ")"
+        print(f"{'ok  ' if not failed else 'FAIL'} {label}: {len(tests) - failed - len(SKIPPED)}/{len(tests)}{extra}")
         return 1 if failed else 0
-    print(f"\n{len(tests) - failed}/{len(tests)} passed")
+    print(f"\n{len(tests) - failed - len(SKIPPED)}/{len(tests)} passed" + (f", {len(SKIPPED)} skipped" if SKIPPED else ""))
+    for n, r in SKIPPED:
+        print(f"skipped: {n}: {r}")
     if skipped:
         print(f"skipped (slow): {', '.join(skipped)}  -- run with tests/bench.sh --slow")
     return 1 if failed else 0
