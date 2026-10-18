@@ -2,6 +2,7 @@
 
 **Type:** Processor (f_vecfield producer, tensor input)
 **Status:** Built 2026-10-16; mirror and bench tests green, live-checked with `f_vf_advect`. Helpfile pending.
+**2026-10-17:** `gain` made signed and an optional per-pixel reference-vecfield inlet added (mirror 24/24; the new bench cases are written but not yet run; not yet checked live).
 
 ---
 
@@ -29,12 +30,33 @@ No `atan2`, no branch cut: the output is as smooth as the input, and replacing t
 
 **The trade-off:** |along| = |sin(θ - φ)|. Flow is full strength where an edge runs parallel to `angle` and fades smoothly to zero where an edge is perpendicular to it. That fade is the price of having no seam.
 
+## Reference direction: a dial, or a per-pixel field (2026-10-17)
+
+By default the reference `r` is one direction, set by `angle`, so the whole frame is pushed the same way. Since `r . along = sin^2(theta - phi) >= 0`, the flow never opposes `angle`, and over randomly oriented edges it averages half of `gain` toward it. That net drift is the "one-sided" feel, and a downstream solver such as `f_vf_fluid` (whose mean flow is damped only by `drag`) accumulates it.
+
+The optional second inlet takes a vecfield and uses it as `r` per pixel. The projection is linear in `r`, so:
+
+- The flow follows the image edges but takes its sign from the reference. Feed it `f_vf_vortex` or `f_vf_fluid` and the frame no longer drifts one way.
+- The reference is **not normalized**: flow strength scales with `|r|`, so a zero reference (a vortex core) gives no flow, and the reference doubles as a spatial gain map.
+- `angle` rotates the whole reference field.
+- The output is never rougher than the reference (projection cannot increase the difference between neighbours), so the reference's own singularities are the only place a seam can come from.
+- Unconnected, or anything that is not a real f_vecfield (the inlet is read as a vecfield only where B is within 0.25 of 0.5, the same content gate `f_vf_fluid` uses on its force), the module behaves exactly as before with `angle` as a constant direction.
+- Aspect: the reference arrives in normalized screen units and is converted to pixel space (with `width`/`height`) before projecting, so on a non-square frame an edge running along the reference returns the reference unchanged.
+
+`gain` is signed (-4 to 4); negative reverses the flow.
+
+```
+f_tf_tensormap -(outlet 1)-> f_tf_axisflow -> f_vf_fluid / f_vf_advect
+f_vf_vortex ---------------> f_tf_axisflow (inlet 1, reference)
+```
+
 ---
 
 ## Signal Flow
 
 ```
 in0 (tensormap outlet 1) -> axisflow_pix -> out0 (vecfield, @type float32)
+in1 (optional reference vecfield, no vs_inState) ->  axisflow_pix in2
 ```
 
 One pass, no loops, no state.
@@ -46,8 +68,8 @@ One pass, no loops, no state.
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `mode` | Along / Across | Along | Along: flow follows the edges. Across: flow crosses them (gradient direction). |
-| `angle` | -180-180 deg | 0 | Reference direction. Where the fade-to-zero lands. |
-| `gain` | 0-10 | 1 | Output amplitude. Units are the short side of the frame, so consumers usually want small values. |
+| `angle` | -180-180 deg | 0 | Reference direction. Where the fade-to-zero lands. With a reference vecfield connected it rotates that field instead. |
+| `gain` | -4-4 | 1 | Signed output amplitude: negative reverses the flow. Units are the short side of the frame, so consumers usually want small values. |
 | `gate` | 0-1 | 1 | 0 = ignore coherence; 1 = scale flow by the tensormap's coherence, so only confident structure moves. |
 | `width` | 64-8192 | 640 | Render width in pixels. Set to the real frame width. |
 | `height` | 64-8192 | 480 | Render height in pixels. Set to the real frame height. |
@@ -79,9 +101,9 @@ Sweep `angle` to move where the flow fades. `gate` at 1 keeps flat or noisy area
 
 ## Notes
 
-- Tests: `tests/test_tf_axisflow.py` (NumPy mirror, 16 tests, including a mutation check that catches along/across swapped) and `tests/bench_tf_axisflow.py` (GPU parity, 5 tests). Spec, plan, tasks: `.specify/f_tf_axisflow/`.
+- Tests: `tests/test_tf_axisflow.py` (NumPy mirror, 24 tests, including a mutation check that catches along/across swapped, and the signed-gain and reference-inlet cases) and `tests/bench_tf_axisflow.py` (GPU parity, 9 tests; the four signed-gain and reference cases are written but not yet run). Spec, plan, tasks: `.specify/f_tf_axisflow/`.
 - `phi` is a predefined GenExpr constant and cannot be assigned; the codebox uses `ref_ang`.
-- Deferred: per-pixel reference direction (a second inlet), a `normalize` mode that keeps full magnitude at the cost of a seam, trace gating.
+- Deferred: a `normalize` mode that keeps full magnitude at the cost of a seam, trace gating.
 
 ---
 

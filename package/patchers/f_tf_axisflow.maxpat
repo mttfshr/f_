@@ -100,7 +100,7 @@
 				"box": {
 					"id": "obj-5",
 					"maxclass": "newobj",
-					"numinlets": 1,
+					"numinlets": 2,
 					"numoutlets": 2,
 					"outlettype": [
 						"jit_gl_texture",
@@ -143,13 +143,31 @@
 							},
 							{
 								"box": {
-									"code": "// f_tf_axisflow: tensormap outlet 1 (packed axis) -> signed vecfield, with no\n// atan2 and no sign choice. Mirrors tests/test_tf_axisflow.py axisflow().\n//\n// in1 = f_tf_tensormap outlet 1: R,G = (cos2t, sin2t)*0.5+0.5, B = trace, A = coherence.\n// theta is the dominant GRADIENT direction (across the edge). With\n// g = (cos t, sin t) and the reference r = (cos phi, sin phi):\n//   across = (g.r) g = 0.5 * ((1+c2) rx + s2 ry,  s2 rx + (1-c2) ry)\n//   along  = r - across            (mode 0, default; |along| = |sin(t-phi)|)\n// Invalid input -> neutral: isotropic pixels (c2=s2=0) and vs_black / an\n// unconnected inlet (decodes to c2=s2=-1, length sqrt2). Valid packed input\n// has |(c2,s2)| <= 1, so a content guard (length >= 1.05 invalid) needs no plumbing.\n// Output is an f_vecfield: R,G = v*0.5+0.5, B = 0.5, A = 1. The pixel-space\n// direction of v is preserved on non-square frames (units: short side).\n// bypass_gate (module bypass, bypass_mode \"param\"; NOT the native @bypass):\n// neutral vecfield. pix_type float32 required.\nParam angle(0.0);\nParam mode(0.0);\nParam gain(1.0);\nParam gate(1.0);\nParam width(640.0);    // frame size in pixels; `dim` reads 1 live, so Params\nParam height(480.0);\nParam bypass_gate(0.0);\n\nt = nearest(in1, norm);\nc2 = (t.x - 0.5) * 2.0;\ns2 = (t.y - 0.5) * 2.0;\nlen = sqrt(c2*c2 + s2*s2);\nok = step(0.000001, len) * (1.0 - step(1.05, len));\n\nref_ang = angle * pi / 180.0;   // not `phi`: predefined constant in GenExpr\nrx = cos(ref_ang);\nry = sin(ref_ang);\nax = 0.5 * ((1.0 + c2)*rx + s2*ry);\nay = 0.5 * (s2*rx + (1.0 - c2)*ry);\nvx = mix(rx - ax, ax, mode);\nvy = mix(ry - ay, ay, mode);\n\nmag = ok * gain * mix(1.0, t.w, gate);\nsh = min(width, height);\n\nfx = clamp(vx * mag * sh / width * 0.5 + 0.5, 0.0, 1.0);\nfy = clamp(vy * mag * sh / height * 0.5 + 0.5, 0.0, 1.0);\n\nout1 = mix(vec(fx, fy, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass_gate);\n",
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_tf_axisflow: tensormap outlet 1 (packed axis) -> signed vecfield, with no\n// atan2 and no sign choice. Mirrors tests/test_tf_axisflow.py axisflow().\n//\n// in1 = f_tf_tensormap outlet 1: R,G = (cos2t, sin2t)*0.5+0.5, B = trace, A = coherence.\n// theta is the dominant GRADIENT direction (across the edge). With\n// g = (cos t, sin t) and the reference r = (cos phi, sin phi):\n//   across = (g.r) g = 0.5 * ((1+c2) rx + s2 ry,  s2 rx + (1-c2) ry)\n//   along  = r - across            (mode 0, default; |along| = |sin(t-phi)|)\n// Invalid input -> neutral: isotropic pixels (c2=s2=0) and vs_black / an\n// unconnected inlet (decodes to c2=s2=-1, length sqrt2). Valid packed input\n// has |(c2,s2)| <= 1, so a content guard (length >= 1.05 invalid) needs no plumbing.\n// Output is an f_vecfield: R,G = v*0.5+0.5, B = 0.5, A = 1. The pixel-space\n// direction of v is preserved on non-square frames (units: short side).\n// bypass_gate (module bypass, bypass_mode \"param\"; NOT the native @bypass):\n// neutral vecfield. pix_type float32 required.\n// in2 = OPTIONAL reference vecfield (f_vecfield: R,G = v*0.5+0.5, B = 0.5). Where it reads as a\n// real vecfield (B within 0.25 of 0.5; vs_black / an unconnected inlet has B = 0 -- the same\n// content gate f_vf_fluid uses on its force) the reference r is that vector, rotated by `angle`\n// and decoded to PIXEL space (x width/short, y height/short). It is left UNNORMALIZED: the\n// projection is linear in r, so |r| scales the flow (a zero reference gives no flow) and the\n// output is exactly as smooth as the reference. Elsewhere r = (cos angle, sin angle), as before.\n// gain is SIGNED: negative reverses the flow.\nParam angle(0.0);\nParam mode(0.0);\nParam gain(1.0);\nParam gate(1.0);\nParam width(640.0);    // frame size in pixels; `dim` reads 1 live, so Params\nParam height(480.0);\nParam bypass_gate(0.0);\n\nt = nearest(in1, norm);\nc2 = (t.x - 0.5) * 2.0;\ns2 = (t.y - 0.5) * 2.0;\nlen = sqrt(c2*c2 + s2*s2);\nok = step(0.000001, len) * (1.0 - step(1.05, len));\n\nref_ang = angle * pi / 180.0;   // not `phi`: predefined constant in GenExpr\nca = cos(ref_ang);\nsa = sin(ref_ang);\nsh = min(width, height);\nuse_ref = 1.0 - step(0.25, abs(sample(in2, norm).z - 0.5));\npx = (sample(in2, norm).x - 0.5) * 2.0 * width / sh;\npy = (sample(in2, norm).y - 0.5) * 2.0 * height / sh;\nrx = mix(ca, ca * px - sa * py, use_ref);\nry = mix(sa, sa * px + ca * py, use_ref);\nax = 0.5 * ((1.0 + c2)*rx + s2*ry);\nay = 0.5 * (s2*rx + (1.0 - c2)*ry);\nvx = mix(rx - ax, ax, mode);\nvy = mix(ry - ay, ay, mode);\n\nmag = ok * gain * mix(1.0, t.w, gate);\n\nfx = clamp(vx * mag * sh / width * 0.5 + 0.5, 0.0, 1.0);\nfy = clamp(vy * mag * sh / height * 0.5 + 0.5, 0.0, 1.0);\n\nout1 = mix(vec(fx, fy, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass_gate);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 1,
+									"numinlets": 2,
 									"numoutlets": 1,
 									"outlettype": [
 										""
@@ -187,6 +205,18 @@
 									],
 									"source": [
 										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
 										0
 									]
 								}
@@ -512,6 +542,25 @@
 			},
 			{
 				"box": {
+					"id": "obj-100",
+					"maxclass": "inlet",
+					"comment": "reference vecfield (optional)",
+					"index": 0,
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						20.0,
+						30.0,
+						30.0
+					]
+				}
+			},
+			{
+				"box": {
 					"id": "obj-20",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
@@ -617,7 +666,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Reference direction in degrees. Flow is strongest where an edge runs parallel to it and fades to zero where an edge is perpendicular to it (Along).",
+					"hint": "Reference direction in degrees. Flow is strongest where an edge runs parallel to it and fades to zero where an edge is perpendicular to it (Along). With a reference vecfield connected it rotates that field instead.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -721,7 +770,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Output amplitude. Vecfield units are the short side of the frame, so consumers usually want small values.",
+					"hint": "Signed output amplitude: negative reverses the flow. Vecfield units are the short side of the frame, so consumers usually want small values.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -754,8 +803,8 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "gain",
-							"parameter_mmax": 10.0,
-							"parameter_mmin": 0.0,
+							"parameter_mmax": 4.0,
+							"parameter_mmin": -4.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "gain",
 							"parameter_type": 0,
@@ -1193,6 +1242,18 @@
 					"destination": [
 						"obj-2",
 						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-100",
+						0
+					],
+					"destination": [
+						"obj-5",
+						1
 					]
 				}
 			},

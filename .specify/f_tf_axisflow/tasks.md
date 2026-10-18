@@ -31,6 +31,28 @@ _Created: 2026-10-16_
 - [x] T018 Naming entry for `f_tf_` in README/constitution (shared with tensormap T042).
 - [ ] T019 Commit only f_tf_* files (Matt commits; suggest message).
 
+## Phase 5: signed gain + per-pixel reference inlet (2026-10-17)
+Why: Axis Flow's flow always has a component along `angle` (mean 0.5 x gain over random edges), and
+`f_vf_fluid` accumulates that mean flow (only `drag` damps k=0), so chains drift one way; Matt also wants
+negative gain in performance. Decisions (Matt): gain range -4..4; reference inlet unnormalized, `angle`
+rotates it, unconnected = old behaviour; title-bar label left as `T_ in ∇ out`.
+- [x] T020 Signed `gain` (-4..4, default 1): definition range + hint; codebox already unclamped.
+- [x] T021 Reference inlet: `mod_inlets` (vs_instate False) -> codebox `in2`; B-gate (|B-0.5|<0.25) absent test;
+  pixel-space decode; `angle` rotates. Codebox + mirror `axisflow(ref=...)` in step; patcher rebuilt (pix has 2 inlets).
+- [x] T022 Mirror tests: 16 -> 24 (negative gain, constant ref == dial, angle rotates ref, magnitude scales, absent ref
+  falls back, per-pixel brute force, seamlessness bound, 16:9 pass-through). `tests/run.sh -q tests/test_tf_axisflow.py` 24/24.
+- [ ] T023 Bench: cases written (negative gain, reference inlet, black ref == dial, 16:9 reference); `run_case` now feeds
+  in2. NOT RUN: ask Matt (bench.maxpat open). One open point: in2 uses `sample()` (bilinear, so a lower-res fluid
+  output reads smoothly); same-size bench inputs should be exact, but if TOL 2e-5 fails check 8-bit sample weights first.
+- [ ] T024 Full offline suite once (`tests/run.sh -q`): the rebuild touched only f_tf_axisflow, but the contract /
+  drift / conventions tests have not been re-run since.
+- [ ] T025 Helpfile: only the `gain` range was corrected (0-10 -> -4..4); text for the second inlet and the
+  reference behaviour is not written (generated in-session; judgement gate is Matt's).
+- [ ] T026 Matt: load in Max; the panel width (154) is unchanged, check the new inlet position and the cable to it.
+- [ ] T027 Matt live: tensormap -> axisflow (ref = f_vf_vortex) -> f_vf_fluid; sweep `angle`, negative gain.
+- Related, not built: f_caustic `edge` mode (off / wrap / mirror / clamp, vertex-shader) and an optional f_vf_fluid
+  `drift` Param scaling the k=0 bin. Both proposed 2026-10-17, neither approved to build yet.
+
 ## Notes (2026-10-16)
 - Mirror 16/16 (`tests/test_tf_axisflow.py`); bench 5/5 (`tests/bench_tf_axisflow.py`); contract/bench_expect/launch/benchdeps green; bench_modules shows f_tf_axisflow clean (its only failure is the 4 pre-existing f_a_decorrelate errors).
 - Spec correction found while writing the mirror: the tensormap theta is the across-edge gradient axis, so "along" is the complement projector (|v_along| = |sin(theta-phi)|). Design sketch had these swapped; spec/plan fixed.

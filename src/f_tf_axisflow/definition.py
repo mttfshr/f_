@@ -8,6 +8,9 @@
 #
 # `dim` reads 1 inside live jit.gl.pix (see f_tf_tensormap), so width/height are Params, used
 # for the aspect conversion that keeps the vector's pixel-space direction.
+#
+# Second (optional) inlet = per-pixel reference direction: a vecfield replaces the `angle` dial's
+# constant r, `angle` then rotating it; unconnected, the module is exactly as before. Gain is signed.
 from pathlib import Path
 
 _HERE = Path(__file__).parent
@@ -27,6 +30,12 @@ patcher = {
 
     "codebox": (_HERE / "codebox_axisflow.gen").open(newline="").read(),
 
+    # Optional per-pixel reference direction (2026-10-17): outer inlet 1 -> codebox in2, wired
+    # straight to the pix like f_caustic's field inlet (no vs_inState: the codebox gates on B).
+    "mod_inlets": [
+        {"label": "reference vecfield (optional)", "vs_instate": False},
+    ],
+
     "outlets": [
         {"comment": "vecfield",
          "hint": "Signed vecfield: R,G = v*0.5+0.5, B = 0.5, A = 1. The reference direction projected onto the edge line (Along) or the gradient axis (Across); no seam. Neutral = (0.5, 0.5, 0.5, 1)."},
@@ -38,10 +47,10 @@ patcher = {
          "hint": "Along: flow follows the edges. Across: flow crosses them (gradient direction)."},
         {"name": "angle", "type": "float", "min": -180.0, "max": 180.0, "default": 0.0,
          "label": "Angle",
-         "hint": "Reference direction in degrees. Flow is strongest where an edge runs parallel to it and fades to zero where an edge is perpendicular to it (Along)."},
-        {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 1.0,
+         "hint": "Reference direction in degrees. Flow is strongest where an edge runs parallel to it and fades to zero where an edge is perpendicular to it (Along). With a reference vecfield connected it rotates that field instead."},
+        {"name": "gain", "type": "float", "min": -4.0, "max": 4.0, "default": 1.0,
          "label": "Gain",
-         "hint": "Output amplitude. Vecfield units are the short side of the frame, so consumers usually want small values."},
+         "hint": "Signed output amplitude: negative reverses the flow. Vecfield units are the short side of the frame, so consumers usually want small values."},
         {"name": "gate", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Gate",
          "hint": "0 = ignore coherence; 1 = scale flow by coherence so it follows only confident structure."},

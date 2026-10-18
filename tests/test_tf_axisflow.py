@@ -33,21 +33,30 @@ EPS_LEN = F32(1e-6)
 # --- mirror shader -----------------------------------------------------
 
 def axisflow(t, angle=0.0, mode=0, gain=1.0, gate=1.0, width=64.0, height=64.0,
-             bypass=0.0, swap=False):
-    """The codebox, in NumPy. t: packed tensormap outlet 1 (H,W,4). Returns vecfield RGBA."""
+             bypass=0.0, swap=False, ref=None):
+    """The codebox, in NumPy. t: packed tensormap outlet 1 (H,W,4). Returns vecfield RGBA.
+    ref: optional per-pixel reference vecfield (H,W,4, in2); None = the `angle` dial's constant r."""
     c2 = (t[..., 0] - F32(0.5)) * F32(2)
     s2 = (t[..., 1] - F32(0.5)) * F32(2)
     ln = np.sqrt(c2 * c2 + s2 * s2)
     ok = (ln >= EPS_LEN).astype(F32) * (ln < LEN_MAX).astype(F32)   # iso and vs_black -> 0
     phi = F32(angle) * F32(np.pi) / F32(180)
-    rx, ry = F32(np.cos(phi)), F32(np.sin(phi))
+    ca, sa = F32(np.cos(phi)), F32(np.sin(phi))
+    sh = F32(min(width, height))
+    if ref is None:
+        rx, ry = ca, sa
+    else:                       # per-pixel reference: B gate (vs_black -> 0), pixel space, rotated
+        use = (np.abs(ref[..., 2] - F32(0.5)) < F32(0.25)).astype(F32)
+        px = (ref[..., 0] - F32(0.5)) * F32(2) * F32(width) / sh
+        py = (ref[..., 1] - F32(0.5)) * F32(2) * F32(height) / sh
+        rx = ca + (ca * px - sa * py - ca) * use
+        ry = sa + (sa * px + ca * py - sa) * use
     ax = F32(0.5) * ((F32(1) + c2) * rx + s2 * ry)        # across: (g.r) g
     ay = F32(0.5) * (s2 * rx + (F32(1) - c2) * ry)
     m = F32(1 - mode) if swap else F32(mode)
     vx = (rx - ax) * (F32(1) - m) + ax * m                # mode 0 = along = r - across
     vy = (ry - ay) * (F32(1) - m) + ay * m
     mag = ok * F32(gain) * ((F32(1) - F32(gate)) + F32(gate) * t[..., 3])
-    sh = F32(min(width, height))
     o = g.texture(*c2.shape)
     o[..., 0] = np.clip(vx * mag * sh / F32(width) * F32(0.5) + F32(0.5), 0, 1)
     o[..., 1] = np.clip(vy * mag * sh / F32(height) * F32(0.5) + F32(0.5), 0, 1)
@@ -258,6 +267,137 @@ def test_mutation_swapped_modes_is_detected():
     if not (bad > 0.3 and good < 5e-3):
         raise AssertionError(f"mutation not detected: good={good:.3e}, swapped={bad:.3e}")
     print("    ok   along/across swap is caught by the ramp check")
+
+
+# --- signed gain (2026-10-17) ------------------------------------------
+
+def test_negative_gain_reverses_the_flow():
+    worst = 0.0
+    for gain in (0.25, 0.5, 1.0, 3.0):                  # 3.0 clamps: the clamp is symmetric
+        px, py = dec(axisflow(pack(70), angle=20, gate=0.0, gain=gain))
+        nx, ny = dec(axisflow(pack(70), angle=20, gate=0.0, gain=-gain))
+        worst = max(worst, abs(float(px[0, 0] + nx[0, 0])), abs(float(py[0, 0] + ny[0, 0])))
+    check("gain -g == minus gain +g (incl. clamped)", worst, 1e-6)
+    vx, vy = dec(axisflow(pack(70), angle=20, gate=0.0, gain=0.0))
+    check("gain 0 -> neutral", abs(float(vx[0, 0])) + abs(float(vy[0, 0])), 1e-6)
+
+
+# --- per-pixel reference inlet (2026-10-17) ----------------------------
+
+def refvec(vx, vy, shape=(4, 4)):
+    """Constant reference f_vecfield; (vx, vy) is the DECODED vector, normalized screen units."""
+    r = g.texture(*shape)
+    r[..., 0] = F32(vx * 0.5 + 0.5)
+    r[..., 1] = F32(vy * 0.5 + 0.5)
+    r[..., 2] = F32(0.5)
+    r[..., 3] = F32(1.0)
+    return g.store_float32(r)
+
+
+def test_constant_reference_equals_the_dial():
+    """Square frame: a constant reference (cos a, sin a) with angle 0 is the dial at angle a."""
+    worst = 0.0
+    for th in ANGLES:
+        for a in range(-180, 180, 30):
+            for mode in (0, 1):
+                dial = axisflow(pack(th), angle=a, mode=mode, gate=0.0)
+                ref = axisflow(pack(th), angle=0, mode=mode, gate=0.0,
+                               ref=refvec(np.cos(np.deg2rad(a)), np.sin(np.deg2rad(a))))
+                worst = max(worst, float(np.abs(dial - ref).max()))
+    check("constant reference == dial (square frame)", worst, 5e-6)
+
+
+def test_angle_rotates_the_reference():
+    worst = 0.0
+    for th in ANGLES:
+        for a in range(-180, 180, 30):
+            dial = axisflow(pack(th), angle=a, gate=0.0)
+            rot = axisflow(pack(th), angle=a, gate=0.0, ref=refvec(1.0, 0.0))
+            worst = max(worst, float(np.abs(dial - rot).max()))
+    check("angle rotates a (1,0) reference onto the dial direction", worst, 5e-6)
+
+
+def test_reference_magnitude_scales_the_flow():
+    fx, fy = dec(axisflow(pack(30), angle=0, gate=0.0, gain=0.5, ref=refvec(1.0, 0.0)))
+    hx, hy = dec(axisflow(pack(30), angle=0, gate=0.0, gain=0.5, ref=refvec(0.5, 0.0)))
+    check("half-length reference -> half the flow",
+          abs(float(hx[0, 0] - fx[0, 0] / 2)) + abs(float(hy[0, 0] - fy[0, 0] / 2)), 5e-6)
+    zx, zy = dec(axisflow(pack(30), angle=0, gate=0.0, ref=refvec(0.0, 0.0)))
+    check("zero reference -> no flow", abs(float(zx[0, 0])) + abs(float(zy[0, 0])), 1e-6)
+
+
+def test_absent_reference_falls_back_to_the_dial():
+    black = g.texture(4, 4)
+    black[...] = np.array([0, 0, 0, 1], F32)            # vs_black: an unconnected inlet
+    worst = 0.0
+    for th in ANGLES:
+        for a in (0, 40, -120):
+            for mode in (0, 1):
+                a0 = axisflow(pack(th), angle=a, mode=mode, gate=0.0)
+                a1 = axisflow(pack(th), angle=a, mode=mode, gate=0.0, ref=black)
+                worst = max(worst, float(np.abs(a0 - a1).max()))
+    check("vs_black reference == no reference", worst, 1e-7)
+
+
+def _swirl(n):
+    """Rigid swirl reference (decoded components within +-0.8) on an n x n frame."""
+    y, x = np.mgrid[0:n, 0:n]
+    cx, cy = (x + 0.5) / n - 0.5, (y + 0.5) / n - 0.5
+    vx, vy = -cy * 1.6, cx * 1.6
+    r = g.texture(n, n)
+    r[..., 0] = (vx * 0.5 + 0.5).astype(F32)
+    r[..., 1] = (vy * 0.5 + 0.5).astype(F32)
+    r[..., 2] = F32(0.5)
+    r[..., 3] = F32(1.0)
+    return g.store_float32(r), vx, vy
+
+
+def test_per_pixel_reference_matches_bruteforce():
+    """Every pixel: r - (g.r) g with that pixel's own r and own axis, built without packing."""
+    n = 32
+    y, x = np.mgrid[0:n, 0:n]
+    th = np.deg2rad((x * 7 + y * 13) % 180)
+    t = g.texture(n, n)
+    t[..., 0] = (np.cos(2 * th) * 0.5 + 0.5).astype(F32)
+    t[..., 1] = (np.sin(2 * th) * 0.5 + 0.5).astype(F32)
+    t[..., 2] = F32(0.5)
+    t[..., 3] = F32(1.0)
+    ref, rvx, rvy = _swirl(n)
+    out = axisflow(g.store_float32(t), gate=0.0, width=float(n), height=float(n), ref=ref)
+    vx, vy = dec(out)
+    gx, gy = np.cos(th), np.sin(th)
+    dot = gx * rvx + gy * rvy
+    worst = max(float(np.abs(vx - (rvx - dot * gx)).max()), float(np.abs(vy - (rvy - dot * gy)).max()))
+    check("per-pixel r and axis vs brute force (max abs)", worst, 5e-6)
+
+
+def test_reference_flow_is_seamless():
+    """The projection is a contraction, so the output is never rougher than the reference:
+    adjacent-pixel jumps in v are bounded by those in r (no seam is introduced)."""
+    n = 32
+    ref, _, _ = _swirl(n)
+    for th in (0, 33, 90, 150):
+        t = pack(th, shape=(n, n))
+        vx, vy = dec(axisflow(t, gate=0.0, width=float(n), height=float(n), ref=ref))
+        rx, ry = dec(ref)
+        dv = max(float(np.hypot(np.diff(vx, axis=1), np.diff(vy, axis=1)).max()),
+                 float(np.hypot(np.diff(vx, axis=0), np.diff(vy, axis=0)).max()))
+        dr = max(float(np.hypot(np.diff(rx, axis=1), np.diff(ry, axis=1)).max()),
+                 float(np.hypot(np.diff(rx, axis=0), np.diff(ry, axis=0)).max()))
+        check(f"max neighbour jump in v <= in r (axis {th})", max(dv - dr, 0.0), 1e-5)
+
+
+def test_reference_passes_through_when_the_edge_is_parallel():
+    """16:9: where the edge runs along the reference, the reference comes back unchanged."""
+    W, H = 1920.0, 1080.0
+    worst = 0.0
+    for vx, vy in ((0.3, 0.4), (-0.5, 0.2), (0.0, 0.7), (0.6, 0.0)):
+        rpx, rpy = vx * W / H, vy                     # pixel-space direction (short side = H)
+        th = np.degrees(np.arctan2(rpy, rpx)) + 90.0  # gradient axis perpendicular to it
+        o = axisflow(pack(th), angle=0, gate=0.0, width=W, height=H, ref=refvec(vx, vy))
+        dx, dy = dec(o)
+        worst = max(worst, abs(float(dx[0, 0]) - vx), abs(float(dy[0, 0]) - vy))
+    check("parallel edge returns the reference (16:9)", worst, 1e-5)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,13 @@
 // direction of v is preserved on non-square frames (units: short side).
 // bypass_gate (module bypass, bypass_mode "param"; NOT the native @bypass):
 // neutral vecfield. pix_type float32 required.
+// in2 = OPTIONAL reference vecfield (f_vecfield: R,G = v*0.5+0.5, B = 0.5). Where it reads as a
+// real vecfield (B within 0.25 of 0.5; vs_black / an unconnected inlet has B = 0 -- the same
+// content gate f_vf_fluid uses on its force) the reference r is that vector, rotated by `angle`
+// and decoded to PIXEL space (x width/short, y height/short). It is left UNNORMALIZED: the
+// projection is linear in r, so |r| scales the flow (a zero reference gives no flow) and the
+// output is exactly as smooth as the reference. Elsewhere r = (cos angle, sin angle), as before.
+// gain is SIGNED: negative reverses the flow.
 Param angle(0.0);
 Param mode(0.0);
 Param gain(1.0);
@@ -28,15 +35,20 @@ len = sqrt(c2*c2 + s2*s2);
 ok = step(0.000001, len) * (1.0 - step(1.05, len));
 
 ref_ang = angle * pi / 180.0;   // not `phi`: predefined constant in GenExpr
-rx = cos(ref_ang);
-ry = sin(ref_ang);
+ca = cos(ref_ang);
+sa = sin(ref_ang);
+sh = min(width, height);
+use_ref = 1.0 - step(0.25, abs(sample(in2, norm).z - 0.5));
+px = (sample(in2, norm).x - 0.5) * 2.0 * width / sh;
+py = (sample(in2, norm).y - 0.5) * 2.0 * height / sh;
+rx = mix(ca, ca * px - sa * py, use_ref);
+ry = mix(sa, sa * px + ca * py, use_ref);
 ax = 0.5 * ((1.0 + c2)*rx + s2*ry);
 ay = 0.5 * (s2*rx + (1.0 - c2)*ry);
 vx = mix(rx - ax, ax, mode);
 vy = mix(ry - ay, ay, mode);
 
 mag = ok * gain * mix(1.0, t.w, gate);
-sh = min(width, height);
 
 fx = clamp(vx * mag * sh / width * 0.5 + 0.5, 0.0, 1.0);
 fy = clamp(vy * mag * sh / height * 0.5 + 0.5, 0.0, 1.0);

@@ -105,7 +105,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nmode [Along/Across]\nangle [-180 \u2013 180]\ngain [0 \u2013 10]\ngate [0 \u2013 1]\nwidth [64 \u2013 8192]\nheight [64 \u2013 8192]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nmode [Along/Across]\nangle [-180 \u2013 180]\ngain [-4 \u2013 4]\ngate [0 \u2013 1]\nwidth [64 \u2013 8192]\nheight [64 \u2013 8192]\nbypass [0 / 1]",
      "fontsize": 12.0,
      "linecount": 9
     }
