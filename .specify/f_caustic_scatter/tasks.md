@@ -346,6 +346,6 @@ remap of the landing position, driven like `scale` (control-entry token, `pix_wi
   the scene is left on Off (the bench keeps Params between jobs). Tolerance 2e-3 is a guess.
 - [ ] E06 Full offline suite once (`tests/run.sh -q`) and `build/py.sh build/drift.py -v f_caustic`: only the two named
   tests above were run.
-- [ ] E07 Matt live: tensormap -> axisflow -> fluid -> caustic with Edge = Wrap / Mirror / Clamp; look at the border seam in
+- [x] E07 (passed, Matt 2026-10-17) Matt live: tensormap -> axisflow -> fluid -> caustic with Edge = Wrap / Mirror / Clamp; look at the border seam in
   Wrap, and whether Mirror's doubled border density reads well. Check the Edge menu's position and label in the panel.
 - [ ] E08 `docs/f-reference/f_caustic.md` updated; the helpfile (`package/help/f_caustic.maxhelp`) is not.

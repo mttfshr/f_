@@ -2,6 +2,12 @@
 
 ## 2026-10-17 (late): offline suite back to green; repo cleanup
 
+- **Checked live in Max by Matt (all passed):** Axis Flow's new inlet position, Caustic's Edge menu position, the chain with
+  Edge on Wrap and `f_vf_vortex` into Axis Flow's reference inlet, and the `angle` / negative-gain sweep. This supersedes
+  the "not run in Max" notes in the two entries below; tasks T026/T027 and E07 are ticked. Still open: helpfile text for
+  both (Axis Flow's new inlet, Caustic's Edge menu), the optional `f_vf_fluid` `drift` Param, a live `bench_modules` run
+  for hatch's new out2 row.
+
 - **Full offline suite ran once** (`tests/run.sh -q`, 30 files): 27 passed, 3 failed, all from earlier work, now fixed.
   Re-run of just those three: `test_bench_expect` 10/10, `test_drift` 16/16, `test_build_multistage` 11/11. The full
   suite was NOT re-run after the fixes.
