@@ -22,7 +22,21 @@ def flip(a, on):
     return a[::-1] if on else a
 
 
-def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0):
+def edge_remap(X, edge, r=R):
+    """The shader's landing-position remap (package/code/f_caustic_sheets.jxs): 0 off (unchanged: a landing outside
+    the frame is clipped later, with its light), 1 wrap (fract), 2 mirror (reflect, period 2), 3 clamp (to half a
+    pixel inside the frame, so the whole splat stays in it)."""
+    X = np.asarray(X, F32)
+    if edge == 1:
+        return X - np.floor(X)
+    if edge == 2:
+        return F32(1.0) - np.abs(F32(1.0) - np.mod(X, F32(2.0)))
+    if edge == 3:
+        return np.clip(X, F32(0.5) / F32(r), F32(1.0) - F32(0.5) / F32(r))
+    return X
+
+
+def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0, edge=0):
     """What the shader should do. Lattice u_i = i/(n-1) (a plane gridshape spans [-1, 1] inclusive), textures
     sampled bilinear/clamp, each point splatted with a bilinear (tent) footprint, additive. (A plain size-1 GL
     point is round and deposits only if its centre is within 0.5 px of a pixel centre: it aliased against the
@@ -35,6 +49,7 @@ def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0)
     f = (g.sample(flip(field, up_flip), U, V)[..., :2] - F32(0.5)) * F32(2.0)
     X = U + F32(d) * f[..., 0]
     Y = V + F32(d) * f[..., 1] * F32(fy)
+    X, Y = edge_remap(X, edge, r), edge_remap(Y, edge, r)       # edge mode (2026-10-17); 0 = unchanged
     # tent (bilinear) splat, as the fragment shader does: pixel k gets 1 - |k + 0.5 - x*r| (if > 0)
     # a point whose CENTRE is outside the viewport is clipped whole (GL clips a point by its centre)
     centre_in = (X >= 0) & (X <= 1) & (Y >= 0) & (Y <= 1)

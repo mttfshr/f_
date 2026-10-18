@@ -102,5 +102,59 @@ def test_resize_matches_integer_upscale():
     check("a constant stays constant", np.abs(sm.resize_bilinear(c, 30, 50) - 0.37).max(), 1e-12)
 
 
+# --- edge mode (2026-10-17) --------------------------------------------
+
+def test_edge_remap_matches_hand_tabulated_values():
+    """Tabulated by hand, not through the function: wrap = fract, mirror = reflect with period 2, clamp = half a
+    pixel inside the frame (so the whole splat stays in it), off = unchanged."""
+    r = 100
+    h = 0.5 / r
+    x = np.array([-1.3, -0.25, 0.0, 0.4, 1.0, 1.25, 2.7], F32)
+    expect = {0: list(x),
+              1: [0.7, 0.75, 0.0, 0.4, 0.0, 0.25, 0.7],
+              2: [0.7, 0.25, 0.0, 0.4, 1.0, 0.75, 0.7],
+              3: [h, h, h, 0.4, 1 - h, 1 - h, 1 - h]}
+    for e, want in expect.items():
+        err = np.abs(sm.edge_remap(x, e, r) - np.array(want, F32)).max()
+        check(f"edge {e}: remap vs hand-tabulated values (max abs)", float(err), 2e-6)
+
+
+def test_edge_modes_keep_the_light_and_off_loses_it():
+    """A uniform push of +0.4 sends the last 40% of the lattice out of the frame. Off loses their light; wrap,
+    mirror and clamp keep it. (The first and last lattice rows sit exactly on the frame's top and bottom edges, so
+    every mode loses about 0.3% to those half tents: the tolerance covers it.)"""
+    n, r, w = 300, 256, 0.7
+    fld, total = sm.uniform_field(1.0, 0.0), n * n * w
+    share = {}
+    for e in (0, 1, 2, 3):
+        img = sm.ref_scatter(sm.white(), fld, 0.4, n, w, r=r, edge=e)
+        share[e] = float(img[..., 0].sum()) / total
+        note(f"edge {e}: image sum / lattice energy", share[e])
+    check("off keeps about 60% of the light", abs(share[0] - 0.6), 0.02)
+    for e, name in ((1, "wrap"), (2, "mirror"), (3, "clamp")):
+        check(f"{name} loses (fraction of the light)", 1.0 - share[e], 0.02)
+
+
+def test_edge_modes_put_the_light_where_they_say():
+    """Same push. Off leaves the left 38% of the frame empty (nothing lands there). Wrap fills it with the 40% that
+    left on the right. Mirror folds it back instead, doubling the density near the right edge. Clamp piles it onto
+    the last pixel column."""
+    n, r, w = 300, 256, 0.7
+    fld, total = sm.uniform_field(1.0, 0.0), n * n * w
+    img = {e: sm.ref_scatter(sm.white(), fld, 0.4, n, w, r=r, edge=e)[..., 0] for e in (0, 1, 2, 3)}
+    left = lambda a: float(a[:, : int(0.38 * r)].sum()) / total
+    near_right = lambda a: float(a[:, int(0.65 * r): int(0.95 * r)].mean())
+    check("off: share of light in the left 38% of the frame", left(img[0]), 0.01)
+    check("wrap: left 38% holds the light that left on the right (|share - 0.38|)", abs(left(img[1]) - 0.38), 0.02)
+    check("mirror: left 38% stays empty", left(img[2]), 0.01)
+    ratio = near_right(img[2]) / near_right(img[0])
+    note("mirror / off density in the right strip", ratio)
+    check("mirror doubles the density near the right edge (|ratio - 2|)", abs(ratio - 2.0), 0.1)
+    check("clamp: left 38% stays empty", left(img[3]), 0.01)
+    col = float(img[3][:, -1].sum()) / total
+    note("clamp: share of all light in the last pixel column", col)
+    check("clamp: the last column holds the 40% that left (|share - 0.4|)", abs(col - 0.4), 0.02)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

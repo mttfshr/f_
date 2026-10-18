@@ -96,10 +96,11 @@
         "box": {
           "id": "obj-920",
           "maxclass": "newobj",
-          "text": "route scale weight r n gain mix_pct bypass",
+          "text": "route scale weight r n edge gain mix_pct bypass",
           "numinlets": 1,
-          "numoutlets": 8,
+          "numoutlets": 9,
           "outlettype": [
+            "",
             "",
             "",
             "",
@@ -112,7 +113,7 @@
           "patching_rect": [
             20.0,
             60.0,
-            480.0,
+            540.0,
             22.0
           ]
         }
@@ -390,6 +391,24 @@
           ],
           "patching_rect": [
             310.0,
+            350.0,
+            120.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "obj-926",
+          "maxclass": "newobj",
+          "text": "prepend param edge",
+          "numinlets": 1,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            640.0,
             350.0,
             120.0,
             22.0
@@ -913,6 +932,18 @@
       {
         "patchline": {
           "source": [
+            "obj-920",
+            4
+          ],
+          "destination": [
+            "obj-926",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "obj-921",
             0
           ],
@@ -938,6 +969,18 @@
         "patchline": {
           "source": [
             "obj-923",
+            0
+          ],
+          "destination": [
+            "obj-910",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "obj-926",
             0
           ],
           "destination": [
@@ -1010,7 +1053,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            7
+            8
           ],
           "destination": [
             "obj-901",
@@ -1034,7 +1077,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            7
+            8
           ],
           "destination": [
             "obj-950",
@@ -1070,7 +1113,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            4
+            5
           ],
           "destination": [
             "obj-951",
@@ -1082,7 +1125,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            5
+            6
           ],
           "destination": [
             "obj-952",
@@ -1094,7 +1137,7 @@
         "patchline": {
           "source": [
             "obj-920",
-            6
+            7
           ],
           "destination": [
             "obj-953",

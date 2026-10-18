@@ -1,6 +1,51 @@
 # HANDOFF
 
-## 2026-10-17 (evening): f_modules menu, title-bar labels, type dots, tensor sizing — UNCOMMITTED
+## 2026-10-17 (night, later): f_caustic `edge` mode — UNCOMMITTED (on top of the Axis Flow entry below)
+
+- **Built:** `f_caustic` has an `Edge` menu: Off (default, unchanged) / Wrap / Mirror / Clamp. Remap of the landing position
+  in the vertex shader (`package/code/f_caustic_sheets.jxs`, uniform `edge`), driven like `scale`: new `edge` token in the
+  scene's control entry (`scatter_scene.py` `BASE_TOKENS`, `prepend param edge`), tapped at the builder's menu outlet
+  (`MENU_EDGE = "obj-32"`, guarded by `test_scatter_scene.py`). Definition param `edge` (`pix_wire: False`); raw layer,
+  standalone bench patch and `f_caustic.maxpat` regenerated. Clamp is inset half a pixel (on the border half the tent falls
+  off-frame and it would still lose light). Wrap/Mirror splats straddling the frame edge still lose their off-frame half
+  (~0.3% in the tests).
+- **Run:** `tests/run.sh -q tests/test_scatter_mirror.py` 10/10 (3 new: hand-tabulated remap, light kept/lost, where it goes)
+  and `tests/test_scatter_scene.py` 5/5 (1 new). **Not run:** the bench (`test_T040_*` written; the first one sends modes
+  1,2,3,0 because the bench keeps Params between jobs; tolerance 2e-3 is a guess), the full offline suite,
+  `drift.py -v f_caustic`, anything in Max.
+- **Helpfile** (`package/help/f_caustic.maxhelp`) not updated. Docs: `docs/f-reference/f_caustic.md` (param row, algorithm
+  line, History); tasks: `.specify/f_caustic_scatter/tasks.md` E01-E08.
+- **Still proposed, not approved:** optional `f_vf_fluid` `drift` Param scaling the k=0 (mean-flow) bin.
+- Uncommitted from this step: `package/code/f_caustic_sheets.jxs`, `src/f_caustic/{definition.py,scatter_scene.py,raw_ui.json}`,
+  `package/patchers/f_caustic.maxpat`, `tests/bench/caustic_sheets_standalone.maxpat`,
+  `tests/{scatter_mirror,test_scatter_mirror,test_scatter_scene,bench_caustic_sheets}.py`, `docs/f-reference/f_caustic.md`,
+  `.specify/f_caustic_scatter/tasks.md`, `HANDOFF.md`.
+
+## 2026-10-17 (night): Axis Flow signed gain + per-pixel reference inlet — UNCOMMITTED
+
+- The evening stack below is now committed as `edaa18a` (99 files). Left out on purpose and still uncommitted:
+  `package/examples/f_demo_sampleplatter.maxpat` and `scratch/tensor-scratch.maxpat`. The "UNCOMMITTED / HEAD is
+  `b3b53cc`" paragraph under the next heading is stale.
+- **Why:** Matt ran cam → Map → Smooth → Axis Flow → Fluid → Caustic live. Flow felt one-sided; Caustic `scale` sent
+  pixels out of frame. Cause is compound: Axis Flow's output always has a component along `angle` (mean 0.5 x gain
+  over random edges; at Gate 0 every faint gradient gets full flow), `f_vf_fluid` adds the force in physical space
+  and its k=0 (mean) bin is skipped by the projection and damped only by `drag` (about 127 frames' worth of a steady
+  push at drag 0.79, dt 0.01), and Caustic's forward scatter clips whatever lands outside the frame.
+- **Built (Matt approved the design):** `f_tf_axisflow` `gain` is signed (-4..4, default 1); new optional second
+  inlet = per-pixel reference vecfield (unnormalized, so |r| scales the flow; `angle` rotates it; B-gate absent test
+  falls back to the dial; aspect-converted to pixel space). Codebox `in2`, definition `mod_inlets`, mirror
+  `axisflow(ref=...)`, patcher rebuilt (pix has 2 inlets; `lens_toggle.js` restored). Docs + tasks T020-T027 written.
+  Label left as `T_ in ∇ out`.
+- **Run:** `tests/run.sh -q tests/test_tf_axisflow.py` 24/24 (was 16). **Not run:** the bench (4 new cases written in
+  `tests/bench_tf_axisflow.py`, ask first), the full offline suite, anything in Max.
+- **Helpfile:** only the `gain` range was corrected; text for the new inlet is not written.
+- **Proposed, not approved to build:** `f_caustic` `edge` menu (off / wrap / mirror / clamp, vertex shader; default off)
+  and an optional `f_vf_fluid` `drift` Param scaling the k=0 bin (1 = today).
+- Uncommitted from this step: `src/f_tf_axisflow/{codebox_axisflow.gen,definition.py}`, `package/patchers/f_tf_axisflow.maxpat`,
+  `package/help/f_tf_axisflow.maxhelp`, `docs/f-reference/f_tf_axisflow.md`, `.specify/f_tf_axisflow/tasks.md`,
+  `tests/{test,bench}_tf_axisflow.py`, `HANDOFF.md`.
+
+## 2026-10-17 (evening): f_modules menu, title-bar labels, type dots, tensor sizing — committed in `edaa18a`
 
 **State.** HEAD is `b3b53cc`; everything below is uncommitted (about 99 modified files plus new ones). A commit-all
 would also sweep in two files that are not part of this work: `package/examples/f_demo_sampleplatter.maxpat`

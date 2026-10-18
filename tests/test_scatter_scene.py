@@ -43,6 +43,21 @@ def test_the_builder_ids_the_raw_cords_name_are_the_ones_in_the_build():
           float(not (b.get("maxclass") == "live.dial" and b.get("varname") == "scale")), 0.0)
 
 
+def test_the_edge_menu_the_raw_cords_tap_is_the_one_in_the_build():
+    """`edge` is a shader uniform driven through the scene's control entry, so the builder's Edge live.menu is
+    tapped at its outlet (like the Scale dial). Its id is the builder's, so check it, and that it feeds nothing
+    else (pix_wire False: no attrui, no cord to a pix)."""
+    boxes, lines = built()
+    b = boxes.get(sc.MENU_EDGE, {})
+    check(f"{sc.MENU_EDGE} is not the live.menu 'edge' scatter_scene.py taps",
+          float(not (b.get("maxclass") == "live.menu" and b.get("varname") == "edge")), 0.0)
+    items = b.get("saved_attribute_attributes", {}).get("valueof", {}).get("parameter_enum", [])
+    check("the Edge menu items are not off / wrap / mirror / clamp, in that order (the shader reads the index)",
+          float(items != ["Off", "Wrap", "Mirror", "Clamp"]), 0.0)
+    wired = [l["patchline"]["destination"][0] for l in lines if l["patchline"]["source"][0] == sc.MENU_EDGE]
+    check("the Edge menu feeds something other than the one `prepend edge` tap", float(wired != ["obj-949"]), 0.0)
+
+
 def test_every_raw_cord_has_real_endpoints():
     boxes, lines = built()
     bad = []

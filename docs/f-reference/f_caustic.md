@@ -62,6 +62,7 @@ caustic (codebox_sheets.gen) out2 → outlet 1  (isolated caustic layer)
 | `gain` | 0–2.0 | 0.5 | Caustic brightness. The codebox applies an internal constant (`k_sheets = 2.0` in `codebox_sheets.gen`) calibrated so the default 0.5 reads about like the original look-patch prototype. |
 | `scale` | 0–1.0 | 0.3 | The propagation distance of the scatter, in UV per unit field; sheets fold over as it grows. `pix_wire: False` in `definition.py` — the dial feeds the raw scene's control entry (`scatter_scene.py`), not a Param on `codebox_sheets.gen`. |
 | `expo` | 0.3–1.5 | 0.7 | Tone-curve exponent for the caustic layer's exposure curve, `(v / (1 + v)) ^ expo` — lower compresses highlights harder, higher keeps more contrast. Was a fixed internal constant (the look-patch default) until 2026-10-10, now exposed. |
+| `edge` | Off / Wrap / Mirror / Clamp | Off | Where a ray that lands outside the frame goes. **Off**: it is clipped away with its light (the original behaviour; a one-way field starves the opposite side). **Wrap**: it re-enters on the opposite side (`fract`), so nothing is lost and no band is starved; the natural choice for a periodic field such as `f_vf_fluid`'s. **Mirror**: it reflects at the border (doubles the density near it). **Clamp**: it piles onto the border pixels, clamped half a pixel inside so the whole splat stays in the frame. Like `scale`, a shader uniform on the scene's control entry (`pix_wire: False`), tapped at the menu's outlet. Added 2026-10-17. |
 | `bypass` | 0/1 | 0 | Passthrough on **both** outlets (both give the source) — implemented as a `Param` (`bypass_gate`) in `codebox_sheets.gen` itself, not the native `@bypass`. |
 
 **Prefix:** `caustic` — **Object name:** `#0_caustic_sheets` (instance-scoped; no fixed name any more — that
@@ -75,6 +76,7 @@ convention belonged to the old soft stage, kept only so it stayed bit-identical 
 // vertex program (package/code/f_caustic_sheets.jxs, GLSL 1.20), one lattice point per glass sample u:
 F   = (texture2D(field, u).xy - 0.5) * 2;  F.y *= -1       // the flip is baked: upload and capture each flip vertically
 x   = u + scale * F                                         // where the ray lands
+x   = edge_remap(x, edge)                                   // 0 off (unchanged: outside rays are clipped), 1 fract(x), 2 1 - |1 - mod(x, 2)|, 3 clamp(x, 0.5/res, 1 - 0.5/res)
 col = texture2D(source, u) * weight                         // one bilinear source read; weight = (capture / n)^2
 position snapped to the nearest pixel corner, drawn with point_size 2
 // fragment: a bilinear (tent) weight from the UNsnapped position; additive blending into the float32 capture
@@ -138,6 +140,7 @@ moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per cap
 
 ### History
 
+- **2026-10-17:** `edge` menu added (Off / Wrap / Mirror / Clamp, default Off = unchanged behaviour). Why: with a one-way field (e.g. tensor `f_tf_axisflow` into `f_vf_fluid`) a larger `scale` sent the light out of the frame, losing it on one side and starving the other. The remap is in the vertex shader (`package/code/f_caustic_sheets.jxs`, uniform `edge`), driven through the scene's control entry like `scale` (new `edge` token, `prepend param edge`; raw layer regenerated, `MENU_EDGE = obj-32` in `scatter_scene.py`, guarded by a test). Clamp insets half a pixel: on the border itself half of the tent falls off-frame and it would still lose light. Mirror test: `tests/scatter_mirror.py` `edge_remap` + 3 tests (10/10), scene test 5/5; bench cases `test_T040_*` written, not yet run; not yet checked live. A splat straddling the frame edge in Wrap/Mirror still loses its off-frame half (about 0.3% in the tests).
 - **2026-10-10:** soft mode (the 8-tap backward-gather, `codebox_v2.gen`, plus the earlier superseded
   `codebox_v1.gen`), the `mode` and `detail` menus, and the two select stages (`codebox_select_comp.gen`,
   `codebox_select_layer.gen`) all removed — sheets-only now, fixed at the old step-5 detail. `softness` and

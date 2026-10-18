@@ -10,10 +10,11 @@ The scene is a jit.gl.node capture holding a points jit.gl.mesh drawn with packa
   route out_name  the slabs' output names -> `texture <src> <field>` on the mesh, refreshed every frame
   grid -> mesh    a plane gridshape as a MATRIX into a points mesh: every lattice point is exactly one vertex
   node            the float32 capture (the illuminance); its outlet 0 is the scene's output
-  obj-920         ONE CONTROL ENTRY: `route scale weight r n`. scale / weight -> shader params, r -> the shader's
-                  `res` and the node's dim, n -> the lattice size (rebuilds the matrix, n LAST so the big lattice
-                  is built once and never at an intermediate size). weight/r/n are sent once, at load, by a fixed
-                  message (FIXED_DETAIL below); only `scale` changes live, from the module's Scale dial.
+  obj-920         ONE CONTROL ENTRY: `route scale weight r n edge`. scale / weight / edge -> shader params, r -> the
+                  shader's `res` and the node's dim, n -> the lattice size (rebuilds the matrix, n LAST so the big
+                  lattice is built once and never at an intermediate size). weight/r/n are sent once, at load, by a
+                  fixed message (FIXED_DETAIL below); `scale` and `edge` change live, from the module's Scale dial
+                  and Edge menu (edge: 0 off, 1 wrap, 2 mirror, 3 clamp; added 2026-10-17).
 The module's builder aims its params' attruis at obj-920 (`pix_target`), and the standalone test patch sends the
 same messages into its inlet 0, so the two have the same interface.
 
@@ -41,6 +42,7 @@ CAPTURE0 = 1024                      # capture size -- now fixed (was the defaul
 FIXED_DETAIL = (1024, 4)             # (capture size, points per capture pixel) -- the old ladder's step 5, now the
                                       # only setting; see docs/f-reference/f_caustic.md "Parameters"
 CTRL = "obj-920"                     # the control entry (a raw box id; the builder targets it)
+BASE_TOKENS = ("scale", "weight", "r", "n", "edge")   # the scene's own `route` tokens, in outlet order (edge: 2026-10-17)
 APPVERSION = {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1}
 
 
@@ -75,7 +77,7 @@ def detail_message(r, ppp):
 def scene(g, extra_tokens=()):
     """Add the scene to Graph g. extra_tokens: more `route` tokens the standalone test patch handles (gain,
     mix_pct); their outlets follow the scene's four. Returns the ids the caller wires to."""
-    tokens = ("scale", "weight", "r", "n") + tuple(extra_tokens)
+    tokens = BASE_TOKENS + tuple(extra_tokens)
     g.obj(CTRL, "route " + " ".join(tokens), 1, len(tokens) + 1, [20, 60, 60 + 60 * len(tokens), 22])
 
     # texture adapters: normalised 2D float32 (a vertex program wants a sampler2D)
@@ -117,6 +119,7 @@ def scene(g, extra_tokens=()):
     g.obj("obj-921", "prepend param scale", 1, 1, [20, 350, 130, 22])
     g.obj("obj-922", "prepend param weight", 1, 1, [160, 350, 140, 22])
     g.obj("obj-923", "prepend param res", 1, 1, [310, 350, 120, 22])
+    g.obj("obj-926", "prepend param edge", 1, 1, [640, 350, 120, 22])
     g.msg("obj-924", "dim $1 $1", [440, 350, 70, 22])
     g.msg("obj-925", "dim $1 $1, bang", [520, 350, 110, 22])
     g.wire(CTRL, 0, "obj-921", 0)
@@ -124,7 +127,8 @@ def scene(g, extra_tokens=()):
     g.wire(CTRL, 2, "obj-923", 0)
     g.wire(CTRL, 2, "obj-924", 0)
     g.wire(CTRL, 3, "obj-925", 0)
-    for src in ("obj-921", "obj-922", "obj-923"):
+    g.wire(CTRL, 4, "obj-926", 0)
+    for src in ("obj-921", "obj-922", "obj-923", "obj-926"):
         g.wire(src, 0, "obj-910", 0)
     g.wire("obj-924", 0, "obj-909", 0)
     g.wire("obj-925", 0, "obj-911", 0)
@@ -187,9 +191,10 @@ def standalone():
     g.obj("obj-951", "prepend param gain", 1, 1, [560, 450, 130, 22])
     g.obj("obj-952", "prepend param mix_pct", 1, 1, [700, 450, 140, 22])
     g.obj("obj-953", "prepend param bypass_gate", 1, 1, [850, 450, 160, 22])
-    g.wire(CTRL, 4, "obj-951", 0)
-    g.wire(CTRL, 5, "obj-952", 0)
-    g.wire(CTRL, 6, "obj-953", 0)
+    nb = len(BASE_TOKENS)                         # gain / mix_pct / bypass follow the scene's own tokens
+    g.wire(CTRL, nb, "obj-951", 0)
+    g.wire(CTRL, nb + 1, "obj-952", 0)
+    g.wire(CTRL, nb + 2, "obj-953", 0)
     g.wire("obj-951", 0, "obj-950", 0)
     g.wire("obj-952", 0, "obj-950", 0)
     g.wire("obj-953", 0, "obj-950", 0)
@@ -208,6 +213,10 @@ SHEETS = "obj-5"
 # entry, not a Param on the composite codebox, so it carries `pix_wire: False` in definition.py and gets no
 # attrui). tests/test_scatter_scene.py checks this id in a real build.
 DIAL_SCALE = "obj-26"
+# the builder-made Edge live.menu's OUTLET (its index 0-3), tapped the same way: `edge` is a shader uniform on the
+# scene, not a Param on the composite codebox, so the param carries `pix_wire: False`. Checked in a real build by
+# tests/test_scatter_scene.py.
+MENU_EDGE = "obj-32"
 
 
 def module_layer(g):
@@ -220,6 +229,11 @@ def module_layer(g):
     g.obj("obj-947", "prepend scale", 1, 1, [20, 20, 100, 22])
     g.wire(DIAL_SCALE, 0, "obj-947", 0)
     g.wire("obj-947", 0, CTRL, 0)
+
+    # the builder's Edge menu is tapped at its outlet: index -> `edge <i>` into the control entry
+    g.obj("obj-949", "prepend edge", 1, 1, [140, 20, 100, 22])
+    g.wire(MENU_EDGE, 0, "obj-949", 0)
+    g.wire("obj-949", 0, CTRL, 0)
 
 
 def raw_ui():

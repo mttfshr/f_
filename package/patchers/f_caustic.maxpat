@@ -99,8 +99,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 4,
+					"numoutlets": 5,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -109,10 +110,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						295.0,
+						367.0,
 						22.0
 					],
-					"text": "route mix_pct gain scale expo"
+					"text": "route mix_pct gain scale expo edge"
 				}
 			},
 			{
@@ -1253,6 +1254,85 @@
 			{
 				"box": {
 					"id": "obj-32",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Where light goes when a ray lands outside the frame. Off: it is lost (the original behaviour). Wrap: it re-enters on the opposite side, so nothing is lost and no band is starved. Mirror: it reflects at the border. Clamp: it piles onto the border pixels. Added 2026-10-17 (Matt).",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_caustic_sheets::edge",
+					"parameter_enable": 1,
+					"patching_rect": [
+						318.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						148.0,
+						52.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Off",
+								"Wrap",
+								"Mirror",
+								"Clamp"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "edge",
+							"parameter_mmax": 3.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "edge",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "edge"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-34",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						323.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Edge",
+					"textjustification": 1,
+					"varname": "lbl_edge"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-35",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1280,7 +1360,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-33",
+					"id": "obj-36",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1300,10 +1380,11 @@
 				"box": {
 					"id": "obj-920",
 					"maxclass": "newobj",
-					"text": "route scale weight r n",
+					"text": "route scale weight r n edge",
 					"numinlets": 1,
-					"numoutlets": 5,
+					"numoutlets": 6,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -1313,7 +1394,7 @@
 					"patching_rect": [
 						30.0,
 						784.0,
-						300.0,
+						360.0,
 						22.0
 					]
 				}
@@ -1599,6 +1680,24 @@
 			},
 			{
 				"box": {
+					"id": "obj-926",
+					"maxclass": "newobj",
+					"text": "prepend param edge",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						650.0,
+						1074.0,
+						120.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
 					"id": "obj-924",
 					"maxclass": "message",
 					"text": "dim $1 $1",
@@ -1681,6 +1780,24 @@
 					],
 					"patching_rect": [
 						30.0,
+						744.0,
+						100.0,
+						22.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-949",
+					"maxclass": "newobj",
+					"text": "prepend edge",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						150.0,
 						744.0,
 						100.0,
 						22.0
@@ -1800,11 +1917,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-32",
+						"obj-35",
 						0
 					],
 					"destination": [
-						"obj-33",
+						"obj-36",
 						0
 					]
 				}
@@ -1812,7 +1929,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-33",
+						"obj-36",
 						0
 					],
 					"destination": [
@@ -2148,6 +2265,18 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-4",
+						4
+					],
+					"destination": [
+						"obj-32",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-901",
 						1
 					],
@@ -2328,6 +2457,18 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-920",
+						4
+					],
+					"destination": [
+						"obj-926",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-921",
 						0
 					],
@@ -2353,6 +2494,18 @@
 				"patchline": {
 					"source": [
 						"obj-923",
+						0
+					],
+					"destination": [
+						"obj-910",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-926",
 						0
 					],
 					"destination": [
@@ -2444,6 +2597,30 @@
 						0
 					]
 				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-949",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-949",
+						0
+					],
+					"destination": [
+						"obj-920",
+						0
+					]
+				}
 			}
 		],
 		"parameters": {
@@ -2465,6 +2642,11 @@
 			"obj-29": [
 				"expo",
 				"expo",
+				0
+			],
+			"obj-32": [
+				"edge",
+				"edge",
 				0
 			],
 			"parameterbanks": {

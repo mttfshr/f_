@@ -56,9 +56,9 @@ def explicit(scale, r, n, weight=None, extra=()):
     return [["scale", float(scale)], ["r", r], ["weight", float(w)], *[list(e) for e in extra], ["n", n]]
 
 
-def mirror(src, fld, scale, n, r, w=None):
+def mirror(src, fld, scale, n, r, w=None, edge=0):
     w = (r / n) ** 2 if w is None else w
-    return sm.ref_scatter(src, fld, scale, n, w, True, True, r=r, fy=-1.0)
+    return sm.ref_scatter(src, fld, scale, n, w, True, True, r=r, fy=-1.0, edge=edge)
 
 
 def test_T016_renders_light_and_the_shader_loads():
@@ -71,6 +71,25 @@ def test_T016_renders_light_and_the_shader_loads():
     note("capture mean (a uniform source of 1 has mean 1)", light[..., :3].mean())
     assert light.shape[0] == sc.FIXED_DETAIL[0], f"should capture {sc.FIXED_DETAIL[0]}^2, got {light.shape}"
     assert light[..., :3].max() > 2.0, "the capture is black or flat: the shader did not draw"
+
+
+def test_T040_edge_modes_match_the_mirror():
+    """`edge` (0 off, 1 wrap, 2 mirror, 3 clamp) reaches the shader: a uniform push of +0.4 sends the last 40% of
+    the lattice out of the frame, and the GPU capture matches the NumPy remap in all four modes. The bench keeps
+    Params between jobs, so the modes run 1, 2, 3 and then 0: the last job leaves the scene on Off for every test
+    after this one (T016's tests never send `edge`)."""
+    src, fld, r, n = sm.white(), sm.uniform_field(1.0, 0.0), 256, 1024
+    for e in (1, 2, 3, 0):
+        light, _, _ = go([src, fld], explicit(0.4, r, n, extra=[["edge", e]]))
+        check(f"edge {e}: relative error vs the mirror", sm.rel_err(light, mirror(src, fld, 0.4, n, r, edge=e)), 2e-3)
+
+
+def test_T040_off_is_the_default_behaviour():
+    """edge 0 must be exactly the pre-edge-mode scatter: the same job with edge pinned to 0 and with the identity
+    check's mirror (no edge argument at all)."""
+    src, fld, r, n = sm.white(), sm.uniform_field(1.0, 0.0), 256, 1024
+    light, _, _ = go([src, fld], explicit(0.4, r, n, extra=[["edge", 0]]))
+    check("edge 0 vs the original (edge-less) mirror", sm.rel_err(light, sm.ref_scatter(src, fld, 0.4, n, (r / n) ** 2, True, True, r=r, fy=-1.0)), 2e-3)
 
 
 def test_T016_identity_at_zero_scale():

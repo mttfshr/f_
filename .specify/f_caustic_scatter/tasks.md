@@ -330,3 +330,22 @@ and the quality ladder were both dead weight.
   `tests/bench_caustic_codebox.py` / `tests/record_caustic_baseline.py` / `tests/spike_caustic_res_cost.py` all
   predate this and haven't been checked against it.
 - Commit: `90cee74`.
+
+## 2026-10-17: edge mode (Off / Wrap / Mirror / Clamp)
+Why: a one-way field (tensor axis flow into the spectral fluid) made `scale` push light out of the frame: lost on one
+side, starved on the other. Matt asked for an edge mode. Decisions: four modes, default Off (unchanged), a vertex-shader
+remap of the landing position, driven like `scale` (control-entry token, `pix_wire: False`).
+- [x] E01 Shader: uniform `edge`, remap before the splat (clamp inset half a pixel so the splat stays in frame).
+- [x] E02 Scene: `edge` token in `BASE_TOKENS`, `prepend param edge`, module tap `MENU_EDGE = obj-32`; standalone test
+  patch outlet indices now derived from `len(BASE_TOKENS)`; `raw_ui.json` + `caustic_sheets_standalone.maxpat` regenerated.
+- [x] E03 Definition: `edge` menu param; patcher rebuilt (menu at x 148-193 inside the 227 px frame).
+- [x] E04 Tests: `scatter_mirror.edge_remap` + 3 mirror tests (hand-tabulated remap, light kept / lost, where it goes) -> 10/10;
+  `test_scatter_scene.py` guards the menu id, items and that the menu feeds only the tap -> 5/5.
+- [ ] E05 Bench (ask Matt first; bench_module.maxpat open, Vsynth patches closed): `test_T040_edge_modes_match_the_mirror`,
+  `test_T040_off_is_the_default_behaviour` written in `tests/bench_caustic_sheets.py`; the first sends modes 1,2,3,0 so
+  the scene is left on Off (the bench keeps Params between jobs). Tolerance 2e-3 is a guess.
+- [ ] E06 Full offline suite once (`tests/run.sh -q`) and `build/py.sh build/drift.py -v f_caustic`: only the two named
+  tests above were run.
+- [ ] E07 Matt live: tensormap -> axisflow -> fluid -> caustic with Edge = Wrap / Mirror / Clamp; look at the border seam in
+  Wrap, and whether Mirror's doubled border density reads well. Check the Edge menu's position and label in the panel.
+- [ ] E08 `docs/f-reference/f_caustic.md` updated; the helpfile (`package/help/f_caustic.maxhelp`) is not.

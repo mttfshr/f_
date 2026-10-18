@@ -67,6 +67,9 @@ patcher = {
          "hint": "The propagation distance of the scatter, in UV per unit field -- sheets fold over at larger values. Range menu added 2026-10-08 (Matt): default tier is the original 0-1, second tier opens 0-2.5; above 1.0 is less tested than the default range."},
         {"name": "expo",        "type": "float", "min": 0.3, "max": 1.5, "default": 0.7,  "label": "Expo",
          "hint": "Tone-curve exponent for the caustic layer's exposure curve, (v/(1+v))^expo -- lower compresses highlights harder, higher keeps more contrast. Was a fixed internal constant (0.7, the look-patch default) until 2026-10-10, now exposed."},
+        {"name": "edge",        "type": "menu", "options": ["Off", "Wrap", "Mirror", "Clamp"], "default": 0, "label": "Edge",
+         "pix_wire": False,      # drives the scene's control entry like `scale` (a shader uniform), tapped at the menu's outlet
+         "hint": "Where light goes when a ray lands outside the frame. Off: it is lost (the original behaviour). Wrap: it re-enters on the opposite side, so nothing is lost and no band is starved. Mirror: it reflects at the border. Clamp: it piles onto the border pixels. Added 2026-10-17 (Matt)."},
         {"name": "bypass",      "type": "bypass"},
     ],
 
