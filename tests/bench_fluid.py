@@ -53,7 +53,7 @@ def g_adv(state, force, p):
 
 def g_spec(tex, p):
     return gpu("spec", [tex], params={"viscosity": p.viscosity, "project": p.project,
-                                      "drag": p.drag, "dt": p.dt})
+                                      "drag": p.drag, "dt": p.dt, "drift": p.drift})   # the bench keeps Params between jobs: pin them all
 
 
 def g_step(state, force, p):
@@ -108,6 +108,20 @@ def test_T016_spec_matches_mirror():
         p = Params(viscosity=v, project=pr, drag=dr, dt=dt)
         err = rel(g_spec(tex, p), fm.spec(tex, v, pr, dr, dt))
         check(f"spec visc={v:g} project={pr:g} drag={dr:g} dt={dt:g}: rel err vs mirror", err, 1e-4)
+
+
+def test_T060_drift_matches_mirror():
+    """`drift` scales only the k = 0 bin: the real spec codebox against the mirror at drift 0 / 0.3 / 0.5 / 1, on
+    white noise plus a mean (so the k = 0 bin is large). Every g_spec call pins drift, and the loop ends on 1 (the
+    default), so nothing after this inherits a stale value."""
+    st = rand_state(N, 6)
+    st[..., 0] += np.float32(0.3)
+    st[..., 2] -= np.float32(0.2)
+    tex = fm.fft2_np(st)
+    for d in (0.0, 0.3, 0.5, 1.0):
+        p = Params(viscosity=0.25, project=1.0, drag=0.2, dt=0.01, drift=d)
+        err = rel(g_spec(tex, p), fm.spec(tex, 0.25, 1.0, 0.2, 0.01, d))
+        check(f"spec drift={d:g}: rel err vs mirror", err, 1e-4)
 
 
 # ----------------------------------------------------------------- T017

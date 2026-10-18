@@ -63,9 +63,9 @@ def rand_force(h, w, seed=1):
     return t
 
 
-def spectral_roundtrip(state, viscosity, project, drag, dt):
+def spectral_roundtrip(state, viscosity, project, drag, dt, drift=1.0):
     """spec stage only, between the fast FFTs (isolates stage 4)."""
-    s = fm.spec(fm.fft2_np(state), viscosity, project, drag, dt)
+    s = fm.spec(fm.fft2_np(state), viscosity, project, drag, dt, drift)
     return fm.ifft2_np(s)
 
 
@@ -168,6 +168,64 @@ def test_drag_acts_on_mean_flow():
     g = np.exp(-mu * dt)
     check("mean u x exp(-mu dt)", np.max(np.abs(out[..., 0] - g * 0.4)), TOL)
     check("mean v x exp(-mu dt)", np.max(np.abs(out[..., 2] - g * -0.25)), TOL)
+
+
+def test_drift_scales_only_the_mean_bin():
+    """`drift` multiplies the k = 0 bin by drift**(1/16) per frame and nothing else: on a random field with a
+    mean, the difference between drift 1 and drift d is a spatial constant equal to (1 - d**(1/16)) x the
+    decayed mean (closed form, not through the mirror's own pow)."""
+    n, dt, mu, d = 64, 0.02, 0.7, 0.3
+    st = rand_state(n, 11)
+    st[..., 0] += F32(0.3)
+    st[..., 2] -= F32(0.2)
+    off = spectral_roundtrip(st, 0.5, 1.0, mu, dt)
+    on = spectral_roundtrip(st, 0.5, 1.0, mu, dt, drift=d)
+    diff = off - on
+    for c, name in ((0, "u"), (2, "v")):
+        ch = diff[..., c].astype(np.float64)
+        mean = st[..., c].astype(np.float64).mean()
+        want = np.exp(-mu * dt) * mean * (1.0 - np.exp(np.log(d) / 16.0))
+        check(f"{name}: drift 1 minus drift {d} is spatially constant (std)", ch.std(), TOL)
+        check(f"{name}: and equals (1 - d^(1/16)) x the decayed mean", abs(ch.mean() - want), TOL)
+
+
+def test_drift_dial_law():
+    """drift 1 is exactly off, drift 0 zeroes the mean flow in one frame, drift 0.5 halves it in 16 frames
+    (drag 0, so nothing else acts on it)."""
+    n = 32
+    st = np.zeros((n, n, 4), F32)
+    st[..., 0], st[..., 2] = 0.4, -0.25
+    one = spectral_roundtrip(st, 0.0, 1.0, 0.0, 0.01, drift=1.0)
+    check("drift 1: mean flow unchanged", np.max(np.abs(one - st)[..., [0, 2]]), TOL)
+    zero = spectral_roundtrip(st, 0.0, 1.0, 0.0, 0.01, drift=0.0)
+    check("drift 0: mean flow zeroed in one frame", np.max(np.abs(zero[..., [0, 2]])), TOL)
+    cur = st
+    for _ in range(16):
+        cur = spectral_roundtrip(cur, 0.0, 1.0, 0.0, 0.01, drift=0.5)
+    check("drift 0.5: mean u halved after 16 frames", np.max(np.abs(cur[..., 0] - 0.2)), 1e-4)
+    check("drift 0.5: mean v halved after 16 frames", np.max(np.abs(cur[..., 2] + 0.125)), 1e-4)
+
+
+def test_drift_stops_a_uniform_force_accumulating():
+    """The point of the control: a steady uniform force builds the mean flow up to g m a / (1 - g m) frames' worth
+    (g = exp(-drag dt), m = drift**(1/16), a = the per-frame push). Drift 1 reaches the ~127-frame steady state at
+    drag 0.79 (about 1.26 against a push of 0.01 a frame); drift 0 never lets it start; drift 0.5 holds it to ~0.19."""
+    n = 16
+    force = np.zeros((n, n, 4), F32)
+    force[..., 0], force[..., 1], force[..., 2], force[..., 3] = 0.75, 0.5, 0.5, 1.0   # decoded (+0.5, 0)
+    p = Params(dt=0.01, force=0.02, drag=0.79, viscosity=0.0, project=1.0)
+    a = 0.02 * 0.5
+    g = np.exp(-0.79 * 0.01)
+    for d, frames in ((1.0, 900), (0.5, 900), (0.0, 6)):
+        s = fm.zero_state(n)
+        for _ in range(frames):
+            s = fm.step(s, force, p.with_(drift=d))
+        u, v = float(s[..., 0].astype(np.float64).mean()), float(np.abs(s[..., 2]).max())
+        m = d ** (1.0 / 16.0)
+        want = g * m * a / (1.0 - g * m)
+        note(f"drift {d:g}: mean u after {frames} frames / steady state", (u, want))
+        check(f"drift {d:g}: mean u vs the closed form (abs)", abs(u - want), max(0.01 * want, 1e-5))
+        check(f"drift {d:g}: no spurious v flow", v, 1e-5)
 
 
 def gradient_curl_case(n):
@@ -522,6 +580,10 @@ def test_mutations_are_caught():
         expect_fail("drag dropped from the decay factor", test_drag_acts_on_mean_flow)
     with patched(decay=decay_dt_coupled):
         expect_fail("viscosity coupled to dt again", test_smoothing_independent_of_dt)
+    with patched(drift_factor=lambda d: F32(1.0)):
+        expect_fail("drift ignored", test_drift_scales_only_the_mean_bin)
+    with patched(drift_factor=lambda d: F32(d)):
+        expect_fail("drift applied linearly instead of d**(1/16)", test_drift_dial_law)
     with patched(tap_weights=tap_weights_single):
         expect_fail("force tap grid ignored (single tap)", test_force_tap_grid_kills_aliasing_at_hd)
     with patched(PERIODIC=False):

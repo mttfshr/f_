@@ -64,6 +64,9 @@ patcher = {
         {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 1.0,
          "label": "Gain",
          "hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)"},
+        {"name": "drift", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
+         "label": "Drift",
+         "hint": "How much frame-wide drift (the uniform part of the flow) is allowed to build up. 1 = all of it (the original behaviour), 0 = none (the average flow is zeroed every frame), in between it fades out over a few dozen frames. Swirls are untouched."},
         {"name": "taps", "type": "int", "min": 1, "max": 16, "default": 8,
          "label": "Taps", "ui": False,
          "hint": "Force filter: taps x taps samples per solver texel. Higher = calmer noisy force at HD/4K but costs GPU (8 = ~0.4-0.7 ms, 16 = ~1.5 ms); 1 = off"},
@@ -124,7 +127,7 @@ patcher = {
 
 # UI parameter -> the stage(s) whose codebox Param it sets (the first is the control's param_connect target).
 _STAGES_OF = {"force": "adv", "dt": ["adv", "spec"], "viscosity": "spec", "project": "spec",
-              "drag": "spec", "gain": "enc", "taps": "adv"}
+              "drag": "spec", "gain": "enc", "taps": "adv", "drift": "spec"}
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:
         _p["pix_target"] = _STAGES_OF[_p["name"]]

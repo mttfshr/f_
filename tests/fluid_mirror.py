@@ -62,6 +62,7 @@ class Params:
     src_vecfield: float = 1.0   # 1 = force inlet connected
     taps: float = 8.0           # force tap grid: taps x taps hardware taps per solver texel (1 = old single tap); shader default
     bypass_gate: float = 0.0    # 1 = pass the force through
+    drift: float = 1.0          # k = 0 (mean-flow) bin: per-frame multiplier drift ** (1/16); 1 = off, 0 = zeroed every frame
 
     def with_(self, **kw):
         return replace(self, **kw)
@@ -96,6 +97,12 @@ def decay(k2, nu_dt, mu, dt):
     """Exact viscous decay and linear drag in one factor: exp(-(nu_dt*k^2 + mu*dt)).
     nu_dt is the per-frame viscosity coefficient (already multiplied by dt)."""
     return np.exp(-(F32(nu_dt) * k2 + F32(mu) * F32(dt))).astype(F32)
+
+
+def drift_factor(drift):
+    """The per-frame multiplier of the k = 0 bin (the frame-wide mean flow): drift ** (1/16), so 1 -> 1 (off),
+    0 -> 0 (zeroed every frame), and drift = 0.5 halves the mean flow in 16 frames (drag aside)."""
+    return F32(drift) ** F32(0.0625)
 
 
 def project_vec(ur, ui, vr, vi, kxo, kyo):
@@ -179,16 +186,18 @@ def adv(state, force, dt, force_gain, src_vecfield, taps=8.0):
     return store_float32(out)
 
 
-def spec(tex, viscosity, project, drag, dt):
+def spec(tex, viscosity, project, drag, dt, drift=1.0):
     """Stage 4. Projection blend, then decay exp(-(nu_dt*|k|^2 + mu*dt)) where
-    nu_dt = visc_to_nudt(viscosity) (the dial law)."""
+    nu_dt = visc_to_nudt(viscosity) (the dial law); the k = 0 bin (element [0, 0]) is
+    additionally scaled by drift_factor(drift)."""
     h, w = tex.shape[:2]
     _, _, k2, kxo, kyo = wavenumbers(h, w)
     ur, ui, vr, vi = tex[..., 0], tex[..., 1], tex[..., 2], tex[..., 3]
     pr, pi_, qr, qi = project_vec(ur, ui, vr, vi, kxo, kyo)
     ur, ui, vr, vi = (mix(ur, pr, project), mix(ui, pi_, project),
                       mix(vr, qr, project), mix(vi, qi, project))
-    g = decay(k2, visc_to_nudt(viscosity), drag, dt)
+    g = decay(k2, visc_to_nudt(viscosity), drag, dt).copy()
+    g[0, 0] = g[0, 0] * drift_factor(drift)          # the k = 0 bin only (bx = by = 0)
     return store_float32(np.stack([ur * g, ui * g, vr * g, vi * g], -1))
 
 
@@ -251,7 +260,7 @@ def step(state, force, p, fft="np"):
     real pass_dft mirror)."""
     fwd, inv = (fft2_np, ifft2_np) if fft == "np" else (fft2_passes, ifft2_passes)
     a = adv(state, force, p.dt, p.force, p.src_vecfield, p.taps)
-    s = spec(fwd(a), p.viscosity, p.project, p.drag, p.dt)
+    s = spec(fwd(a), p.viscosity, p.project, p.drag, p.dt, p.drift)
     return ix_cleanup(inv(s))
 
 

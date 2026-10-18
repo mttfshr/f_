@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 7,
+					"numoutlets": 8,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -90,10 +91,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						511.0,
+						583.0,
 						22.0
 					],
-					"text": "route force dt viscosity project drag gain taps"
+					"text": "route force dt viscosity project drag gain drift taps"
 				}
 			},
 			{
@@ -646,7 +647,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_spec.gen -- f_vf_fluid stage 4: the spectral pass. Projection blend,\n// then exact viscous decay and linear drag, per Fourier bin.\n// Mirror: tests/fluid_mirror.spec(). 256x256 float32.\n//\n// Input in1 = spectral texture (R,G = Re,Im of u-hat; B,A = Re,Im of v-hat).\n// Wavevector k = 2*pi*signed_index (unit periodic domain).\n//   - projection uses OPERATOR wavenumbers that are zeroed at the Nyquist bin\n//     (odd functions of the index must vanish there or a real field gains an\n//     imaginary part; tests/test_fluid_mirror.py test_nyquist_keeps_field_real)\n//   - decay uses the full k^2: exp(-(nu_dt*k^2 + drag*dt)); the k = 0 bin\n//     therefore only feels the drag\n//   - `viscosity` is a 0..1 DIAL, not a physical nu (T036, 2026-09-28): the per-frame\n//     coefficient is nu_dt = 1.6e-3 * viscosity^3, so smoothness does not depend on dt\n//     (dt is speed only; drag stays time-based). Top of the dial ~ m_c 4, where m_c =\n//     1/(2*pi*sqrt(nu_dt)) is the mode index that e-folds per frame. Law and constants\n//     mirror tests/fluid_mirror.visc_to_nudt(); change both together.\n//   - integer bin index is floor(norm * N), not `cell`\n//   - components accessed inline on nearest()\n//   - unary minus before a parenthesis mis-parses in GenExpr: `-(a + b) * c` is NOT\n//     -(a + b) * c (bench probe 2026-09-23); write `0 - (a + b) * c`\n// viscosity/drag literals fixed 2026-10-15 to match definition.py's declared defaults\n// (0.085/0.5) -- they'd drifted to 0 (fully inert: see f_vf_vorticity's confinement\n// bug / tests/module_contract.py's default_mismatch check for the mechanism).\nParam viscosity(0.085);\nParam project(1);\nParam drag(0.5);\nParam dt(0.01);\n\nN = 256;\nbx = floor(norm.x * N);\nby = floor(norm.y * N);\nmx = switch(bx < N * 0.5, bx, bx - N);\nmy = switch(by < N * 0.5, by, by - N);\nkx = twopi * mx;\nky = twopi * my;\nk2 = kx * kx + ky * ky;\nkxo = switch(abs(mx) == N * 0.5, 0, kx);\nkyo = switch(abs(my) == N * 0.5, 0, ky);\nk2o = kxo * kxo + kyo * kyo;\nik2 = switch(k2o > 0, 1 / max(k2o, 1e-30), 0);\n\nur = nearest(in1, norm).x;\nui = nearest(in1, norm).y;\nvr = nearest(in1, norm).z;\nvi = nearest(in1, norm).w;\n\n// Helmholtz projection: remove the component parallel to k\ndr = (kxo * ur + kyo * vr) * ik2;\ndi = (kxo * ui + kyo * vi) * ik2;\npur = ur - kxo * dr;\npui = ui - kxo * di;\npvr = vr - kyo * dr;\npvi = vi - kyo * di;\n\nnu_dt = 0.0016 * viscosity * viscosity * viscosity;\ng = exp(0 - (nu_dt * k2 + drag * dt));\nout1 = vec(mix(ur, pur, project) * g, mix(ui, pui, project) * g, mix(vr, pvr, project) * g, mix(vi, pvi, project) * g);\n",
+									"code": "// codebox_spec.gen -- f_vf_fluid stage 4: the spectral pass. Projection blend,\n// then exact viscous decay and linear drag, per Fourier bin.\n// Mirror: tests/fluid_mirror.spec(). 256x256 float32.\n//\n// Input in1 = spectral texture (R,G = Re,Im of u-hat; B,A = Re,Im of v-hat).\n// Wavevector k = 2*pi*signed_index (unit periodic domain).\n//   - projection uses OPERATOR wavenumbers that are zeroed at the Nyquist bin\n//     (odd functions of the index must vanish there or a real field gains an\n//     imaginary part; tests/test_fluid_mirror.py test_nyquist_keeps_field_real)\n//   - decay uses the full k^2: exp(-(nu_dt*k^2 + drag*dt)); the k = 0 bin\n//     therefore only feels the drag\n//   - `drift` (2026-10-17) scales ONLY the k = 0 bin (the frame-wide mean flow: the slowest-decaying\n//     mode, since projection and viscosity both skip it) by drift^(1/16) per frame. 1 = off (today's\n//     behaviour), 0 = zeroed every frame, between = the mean flow decays with a half-life of about\n//     11 / -ln(drift) frames on top of drag. Mirror: tests/fluid_mirror.drift_factor().\n//   - `viscosity` is a 0..1 DIAL, not a physical nu (T036, 2026-09-28): the per-frame\n//     coefficient is nu_dt = 1.6e-3 * viscosity^3, so smoothness does not depend on dt\n//     (dt is speed only; drag stays time-based). Top of the dial ~ m_c 4, where m_c =\n//     1/(2*pi*sqrt(nu_dt)) is the mode index that e-folds per frame. Law and constants\n//     mirror tests/fluid_mirror.visc_to_nudt(); change both together.\n//   - integer bin index is floor(norm * N), not `cell`\n//   - components accessed inline on nearest()\n//   - unary minus before a parenthesis mis-parses in GenExpr: `-(a + b) * c` is NOT\n//     -(a + b) * c (bench probe 2026-09-23); write `0 - (a + b) * c`\n// viscosity/drag literals fixed 2026-10-15 to match definition.py's declared defaults\n// (0.085/0.5) -- they'd drifted to 0 (fully inert: see f_vf_vorticity's confinement\n// bug / tests/module_contract.py's default_mismatch check for the mechanism).\nParam viscosity(0.085);\nParam project(1);\nParam drag(0.5);\nParam dt(0.01);\nParam drift(1.0);\n\nN = 256;\nbx = floor(norm.x * N);\nby = floor(norm.y * N);\nmx = switch(bx < N * 0.5, bx, bx - N);\nmy = switch(by < N * 0.5, by, by - N);\nkx = twopi * mx;\nky = twopi * my;\nk2 = kx * kx + ky * ky;\nkxo = switch(abs(mx) == N * 0.5, 0, kx);\nkyo = switch(abs(my) == N * 0.5, 0, ky);\nk2o = kxo * kxo + kyo * kyo;\nik2 = switch(k2o > 0, 1 / max(k2o, 1e-30), 0);\n\nur = nearest(in1, norm).x;\nui = nearest(in1, norm).y;\nvr = nearest(in1, norm).z;\nvi = nearest(in1, norm).w;\n\n// Helmholtz projection: remove the component parallel to k\ndr = (kxo * ur + kyo * vr) * ik2;\ndi = (kxo * ui + kyo * vi) * ik2;\npur = ur - kxo * dr;\npui = ui - kxo * di;\npvr = vr - kyo * dr;\npvi = vi - kyo * di;\n\nnu_dt = 0.0016 * viscosity * viscosity * viscosity;\ndc = (1 - step(0.5, bx)) * (1 - step(0.5, by));\ng = exp(0 - (nu_dt * k2 + drag * dt)) * mix(1, pow(drift, 0.0625), dc);\nout1 = vec(mix(ur, pur, project) * g, mix(ui, pui, project) * g, mix(vr, pvr, project) * g, mix(vi, pvi, project) * g);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -2130,9 +2131,68 @@
 			},
 			{
 				"box": {
+					"id": "obj-38",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "How much frame-wide drift (the uniform part of the flow) is allowed to build up. 1 = all of it (the original behaviour), 0 = none (the average flow is zeroed every frame), in between it fades out over a few dozen frames. Swirls are untouched.",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_fluid_spec::drift",
+					"parameter_enable": 1,
+					"patching_rect": [
+						478.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						41.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								1.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "drift",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "drift",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "drift"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-39",
 					"maxclass": "attrui",
-					"attr": "taps",
+					"attr": "drift",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2144,13 +2204,58 @@
 						68.0,
 						22.0
 					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-40",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						467.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Drift",
+					"textjustification": 1,
+					"varname": "lbl_drift"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-42",
+					"maxclass": "attrui",
+					"attr": "taps",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						530.0,
+						310.0,
+						68.0,
+						22.0
+					],
 					"style": "",
 					"varname": "taps"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-41",
+					"id": "obj-44",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2178,7 +2283,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-42",
+					"id": "obj-45",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2331,11 +2436,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-44",
 						0
 					],
 					"destination": [
-						"obj-42",
+						"obj-45",
 						0
 					]
 				}
@@ -2343,7 +2448,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-42",
+						"obj-45",
 						0
 					],
 					"destination": [
@@ -2731,6 +2836,18 @@
 						6
 					],
 					"destination": [
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
 						"obj-39",
 						0
 					]
@@ -2740,6 +2857,30 @@
 				"patchline": {
 					"source": [
 						"obj-39",
+						0
+					],
+					"destination": [
+						"obj-54",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						7
+					],
+					"destination": [
+						"obj-42",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-42",
 						0
 					],
 					"destination": [
@@ -2802,6 +2943,11 @@
 			"obj-35": [
 				"gain",
 				"gain",
+				0
+			],
+			"obj-38": [
+				"drift",
+				"drift",
 				0
 			],
 			"parameterbanks": {

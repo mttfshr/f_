@@ -1,5 +1,21 @@
 # HANDOFF
 
+## 2026-10-17 (last): `f_vf_fluid` `drift` Param — committed, bench NOT run
+
+- **Built (Matt: "build it now"):** `Param drift` (0-1, default 1 = unchanged) on the `spec` stage scales only the k = 0 bin
+  (the frame-wide mean flow) by `drift^(1/16)` per frame: 1 off, 0 zeroed every frame, 0.5 halves it in 16 frames (drag aside).
+  Why: the projection and viscosity skip k = 0, only `drag` damps it, and the force is added in physical space, so a
+  one-way force builds it up (~127 frames' worth at drag 0.79, dt 0.01). Codebox `codebox_spec.gen`, mirror
+  (`drift_factor()`, `spec(..., drift)`, `Params.drift`), definition (`drift` after `gain`, targets `spec`), patcher rebuilt
+  (a Drift dial at row 2 x 41 beside Gain; nothing else moved; `lens_toggle.js` restored).
+- **Run:** `tests/run.sh -q tests/test_fluid_mirror.py` 25/25 (3 new tests against closed forms, 2 new mutations caught).
+  **Not run:** `bench_fluid.py` (`test_T060_drift_matches_mirror` written; `g_spec` now pins `drift` because the bench keeps
+  Params between jobs), `bench_fluid_module.py`, the full offline suite (contract / drift / conventions tests untouched
+  since the last full run), anything in Max. Fluid's own task numbering already ran to T051, so the new ids are T060.
+- **Not done:** the Fluid helpfile (`package/help/f_vf_fluid.maxhelp`) has no Drift entry. Docs: `docs/f-reference/f_vf_fluid.md`
+  (param row, algorithm line, a `drift` note); tasks: `.specify/f_vf_fluid/tasks.md`.
+- Supersedes the "still open: optional `f_vf_fluid` `drift` Param" line in the entry below.
+
 ## 2026-10-17 (late): offline suite back to green; repo cleanup
 
 - **Checked live in Max by Matt (all passed):** Axis Flow's new inlet position, Caustic's Edge menu position, the chain with

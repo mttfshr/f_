@@ -9,6 +9,10 @@
 //     imaginary part; tests/test_fluid_mirror.py test_nyquist_keeps_field_real)
 //   - decay uses the full k^2: exp(-(nu_dt*k^2 + drag*dt)); the k = 0 bin
 //     therefore only feels the drag
+//   - `drift` (2026-10-17) scales ONLY the k = 0 bin (the frame-wide mean flow: the slowest-decaying
+//     mode, since projection and viscosity both skip it) by drift^(1/16) per frame. 1 = off (today's
+//     behaviour), 0 = zeroed every frame, between = the mean flow decays with a half-life of about
+//     11 / -ln(drift) frames on top of drag. Mirror: tests/fluid_mirror.drift_factor().
 //   - `viscosity` is a 0..1 DIAL, not a physical nu (T036, 2026-09-28): the per-frame
 //     coefficient is nu_dt = 1.6e-3 * viscosity^3, so smoothness does not depend on dt
 //     (dt is speed only; drag stays time-based). Top of the dial ~ m_c 4, where m_c =
@@ -25,6 +29,7 @@ Param viscosity(0.085);
 Param project(1);
 Param drag(0.5);
 Param dt(0.01);
+Param drift(1.0);
 
 N = 256;
 bx = floor(norm.x * N);
@@ -53,5 +58,6 @@ pvr = vr - kyo * dr;
 pvi = vi - kyo * di;
 
 nu_dt = 0.0016 * viscosity * viscosity * viscosity;
-g = exp(0 - (nu_dt * k2 + drag * dt));
+dc = (1 - step(0.5, bx)) * (1 - step(0.5, by));
+g = exp(0 - (nu_dt * k2 + drag * dt)) * mix(1, pow(drift, 0.0625), dc);
 out1 = vec(mix(ur, pur, project) * g, mix(ui, pui, project) * g, mix(vr, pvr, project) * g, mix(vi, pvi, project) * g);
