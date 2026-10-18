@@ -1,5 +1,19 @@
 # HANDOFF
 
+## 2026-10-18 (benches): Fluid drift + module benches green; one regression of mine reverted
+
+- **Ran with Max and `bench.maxpat` open** (logs `/tmp/bf*_full.log`): `bench_fluid.py` 11/11 (2 slow skipped: T021 cost, T022 soak)
+  including the new drift case T060; `bench_fluid_module.py` 4/4 on the rebuilt Fluid patcher; `bench_modules.py` ran ALL 42
+  modules (an inline `BENCH_MODULES=` has no effect without `--changed`) and failed 1/2 on **4 `f_a_decorrelate` errors only**
+  (`inlet~` / `outlet~` "No such object", `expr: inlet: wrong message or type` x2): an audio module (committed 10-13) loaded in
+  the video module bench, not from this work and not in the known-issues list. Decide: exclude `f_a_*` from the module bench or
+  record them as known issues. Hatch's new out2 bypass row held (its line has no BAD).
+- **My regression, reverted:** the first `bench_fluid` run had 4 failures (T017, T019, T020, T020b: `FileNotFoundError` in a job
+  dir) because `JOBS_KEEP = 8` (`2f6e6d1`) prunes jobs that are still live: those tests prepare more than 8 before running the
+  first. Back to 50, with a comment in `benchclient.py` saying why. The 1 GB cleanup stands, but `tests/jobs/` refills over bench
+  runs; the safe way to keep it small is to prune to a few AFTER a bench run finishes (nothing in flight), not a lower cap. Not built.
+- Not run this morning: the axisflow / caustic benches (green on 10-17, unchanged since), the slow Fluid tests.
+
 ## 2026-10-18: helpfile text written; offline suite 30/30; GPU benches NOT run (Max not running)
 
 - **Offline suite** (`tests/run.sh -q > /tmp/offline2.log`): 29/30 on the first run. The one failure was `test_build_multistage`,
@@ -60,8 +74,7 @@
   - `generate_menu --check` is clean at HEAD (the old note about vorticity / modules / audio patchers is stale; the
     "checks failed" text in the suite log is `test_generate_menu`'s deliberate bad-input cases).
 - **Cleanup (`2f6e6d1`):** `tests/jobs/` cleared (1.0 GB, regenerable), stray bench files and two `dist/` zips deleted,
-  `JOBS_KEEP` 50 -> 8. A module-bench run makes many jobs, so a failure early in a run is pruned by the end: raise it
-  temporarily to debug.
+  `JOBS_KEEP` 50 -> 8, REVERTED 2026-10-18 (see the top entry: some bench_fluid tests prepare more than 8 jobs before running the first).
 - Still uncommitted and not part of any of this: `package/examples/f_demo_sampleplatter.maxpat`,
   `scratch/tensor-scratch.maxpat`.
 

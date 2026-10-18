@@ -27,7 +27,8 @@ MODULE_PORTS = (7473, 7474)                          # tests/bench/bench_module.
 TESTS_DIR = Path(__file__).resolve().parent
 BENCH_DIR = TESTS_DIR / "bench"
 JOBS_DIR = TESTS_DIR / "jobs"
-JOBS_KEEP = 8           # newest job dirs kept; older ones pruned by new_job() (50 held ~1 GB: each job dir has ~4 MB captures)
+JOBS_KEEP = 50          # newest job dirs kept; older ones pruned by new_job(). NOT lower: some tests (bench_fluid T017/T019/T020/T020b)
+                        # prepare more than 8 jobs before running the first, and a smaller cap deletes a live job's dir (FileNotFoundError)
 
 
 class BenchUnreachable(RuntimeError):
