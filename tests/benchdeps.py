@@ -65,6 +65,11 @@ DATA = {
     "bench_caustic_sheets": _MODULE_BENCH + _CAUSTIC + ["tests/bench/caustic_sheets_standalone.maxpat"],
     "bench_tf_tensormap": _MACHINERY + ["src/f_tf_tensormap/codebox_*.gen"],
     "bench_tf_axisflow": _MACHINERY + ["src/f_tf_axisflow/codebox_*.gen"],
+    "bench_tf_smooth": _MACHINERY + ["src/f_tf_smooth/codebox_*.gen"],
+    "bench_tf_glyph": _MACHINERY + ["src/f_tf_glyph/codebox_*.gen"],
+    "bench_tf_sharpen": _MACHINERY + ["src/f_tf_sharpen/codebox_sharpen.gen"],
+    "bench_tf_aniso_blur": _MACHINERY + ["src/f_tf_aniso_blur/codebox_aniso.gen"],
+    "bench_tf_hatch": _MACHINERY + ["src/f_tf_hatch/codebox_*.gen"],
 }
 PER_MODULE = {"bench_modules"}                 # also tracked per patcher in package/patchers/
 

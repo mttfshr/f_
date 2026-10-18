@@ -68,6 +68,11 @@ BYPASS_EXPECT = {
         1: ("const", (0.0, 0.5, 0.0, 1.0), 1e-6),      # raw tensor: zero tensor
         2: ("const", (0.5, 0.5, 0.0, 0.0), 1e-6),      # packed: neutral direction, no trace, no coherence
     },
+    "f_tf_smooth": {1: IN1},                            # bypass = exact passthrough of the inlet tensor (ADR-4), not a freeze
+    "f_tf_glyph": {1: ("in_a1", 2)},                    # bypass_gate = source passthrough of inlet 2; outlet alpha is the contractual A=1 (mix has no alpha arm)
+    "f_tf_aniso_blur": {1: ("in", 2)},                  # bypass = passthrough of the module's in2 — rgb AND alpha (the bypass mix has an alpha arm; the harness neutral's alpha 0.502 passes through exactly)
+    "f_tf_hatch": {1: ("const", (0.0, 0.0, 0.0, 1.0), 1e-6)},
+                                                        # bypass = the module neutral (black, A=1 per family convention; spec: Outputs the module neutral)
     "f_vf_advect": {2: IN1, 3: ("vec", 2, 1e-5)},      # out3: the vecfield input (neutral 0.5 if unconnected)
     "f_masonry": {2: IN1},                              # out2 is the brick mask
     "f_stipple": {1: IN1, 2: IN1, 3: IN1},              # dual: the source when connected, black when not
@@ -85,6 +90,12 @@ def bypass_expected(spec, inputs):
     kind = spec[0]
     if kind == "in":
         return inputs[spec[1]], 0.0
+    if kind == "in_a1":
+        # passthrough of inlet N with the outlet contract's alpha 1 forced:
+        # modules whose bypass mixes rgb only (A=1 outlets per f_tensor_type.md).
+        a = inputs[spec[1]].copy()
+        a[..., 3] = np.float32(1.0)
+        return a, 0.0
     if kind == "vec":
         a = inputs[spec[1]].copy()
         a[..., 2] = np.float32(0.5)
@@ -134,6 +145,8 @@ def bypass_issues(name, info, n, bypassed):
 # Any change is a GPU-cost decision, not a bug.
 PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
                             "f_tf_tensormap",   # bypass_gate on stage_c only; stages A/B keep running (spec: Parameters)
+                            "f_tf_hatch",       # bypass_gate on stage e3 only; E1/E2 keep decoding (spec: Parameters)
+                            "f_tf_aniso_blur",  # single codebox; bypass_gate inside the pass (spec: bypass = passthrough of inlet 1)
                             "f_vf_fluid"}     # fluid: Param gate on enc, not native @bypass (plan ADR-8)
 
 # Processors whose bypass is DOCUMENTED to output a neutral field, not to pass the input through,

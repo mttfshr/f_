@@ -35,7 +35,7 @@ def check(label, value, tol):
 
 
 def note(label, value):
-    print(f"    ...  {label}: {float(value):.3e}")
+    print(f"    ...  {label}: {value}")
 
 
 def _run_quiet(name, fn):
