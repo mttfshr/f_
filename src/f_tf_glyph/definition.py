@@ -30,13 +30,13 @@ patcher = {
     "prefix":      "glyph",
     "object_name": "#0_glyph_pix",
     "title":       "Glyph",
-    "signal_type": "tensor in",
+    "signal_type": "T_ in",
     "archetype":   "processor",
     "driving_inlet": True,
     "bypass_mode": "param",
 
-    "presentation_width":  154,
-    "presentation_height": 84,
+    "presentation_width":  190,
+    "presentation_height": 150,
 
     "codebox": (_HERE / "codebox_glyph.gen").open(newline="").read(),
 
@@ -124,9 +124,6 @@ patcher = {
     ],
 }
 
-# Layout: six controls in two rows under the title (mirrors tensormap's panel
-# proportions: four dials, one numbox pair row).
-patcher["overrides"] = {
-    "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
-    "signal_type": {"fontsize": 9.5, "presentation_rect": [62.0, 3.0, 60.0, 18.0]},
-}
+# Layout: six controls in two rows under the title, on the library's 5-column,
+# 190 px grid (the frame was 154 x 84 and cropped the right dials and the second row).
+patcher["overrides"] = {}

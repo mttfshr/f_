@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "split",
     "object_name":        "split_pix",
     "title":              "VF Split",
-    "signal_type":        "vecfield in",
+    "signal_type":        "∇ in",
     "archetype":          "processor",
     "pix_type":           "float32",
 

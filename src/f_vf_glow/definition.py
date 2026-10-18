@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "vfglow",
     "object_name":        "vfglow_pix",
     "title":              "Glow",
-    "signal_type":        "vecfield",
+    "signal_type":        "∇ in",
     "archetype":          "processor",
     "pix_type":           "char",
 

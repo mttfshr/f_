@@ -74,6 +74,6 @@ patcher["overrides"] = {
     "midtones.ctl": {"activedialcolor": None, "presentation_rect": [79.00000235438347, 73.33333551883698, 27.0, 43.0]},
     "panel": {"background": None, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
     "shadows.ctl": {"activedialcolor": None, "presentation_rect": [42.66666793823242, 73.33333551883698, 27.0, 43.0]},
-    "title": {"presentation_rect": [2.0000000596046448, 2.6666667461395264, 94.0, 21.0]},
+    "title": {"presentation_rect": [10.5, 2.6666667461395264, 102.5, 21.0]},
 }
 # END overrides

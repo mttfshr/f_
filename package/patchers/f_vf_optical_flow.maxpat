@@ -30,7 +30,7 @@
 					],
 					"patching_rect": [
 						30.0,
-						30.0,
+						20.0,
 						30.0,
 						30.0
 					]
@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						500.0,
+						802.0,
 						30.0,
 						30.0
 					]
@@ -57,12 +57,12 @@
 					"id": "obj-201",
 					"maxclass": "outlet",
 					"comment": "confidence",
-					"index": 1,
+					"index": 0,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
 						100.0,
-						500.0,
+						802.0,
 						30.0,
 						30.0
 					]
@@ -80,8 +80,8 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						90.0,
+						30.0,
+						70.0,
 						215.0,
 						22.0
 					],
@@ -106,9 +106,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						130.0,
-						427.0,
+						56.5,
+						204.0,
+						655.0,
 						22.0
 					],
 					"text": "route scale gain mask_lo mask_hi decay injection step reach mix_pct"
@@ -191,7 +191,7 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
+						30.0,
 						380.0,
 						200.0,
 						22.0
@@ -398,8 +398,8 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
-						380.0,
+						30.0,
+						430.0,
 						200.0,
 						22.0
 					],
@@ -576,8 +576,8 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
-						440.0,
+						30.0,
+						480.0,
 						200.0,
 						22.0
 					],
@@ -754,8 +754,8 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
-						500.0,
+						30.0,
+						530.0,
 						200.0,
 						22.0
 					],
@@ -932,8 +932,8 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
-						560.0,
+						30.0,
+						580.0,
 						200.0,
 						22.0
 					],
@@ -1081,8 +1081,8 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
-						620.0,
+						30.0,
+						630.0,
 						200.0,
 						22.0
 					],
@@ -1167,8 +1167,8 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
-						680.0,
+						30.0,
+						730.0,
 						224.0,
 						22.0
 					],
@@ -1316,8 +1316,8 @@
 						]
 					},
 					"patching_rect": [
-						200.0,
-						740.0,
+						30.0,
+						680.0,
 						200.0,
 						22.0
 					],
@@ -1338,8 +1338,8 @@
 						""
 					],
 					"patching_rect": [
-						500.0,
-						500.0,
+						991.5,
+						100.0,
 						56.0,
 						22.0
 					],
@@ -1370,8 +1370,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						771.5,
+						260.0,
 						190.0,
 						130.0
 					],
@@ -1394,16 +1394,16 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						991.5,
+						200.0,
 						80.0,
 						21.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-1.5,
+						10.5,
 						0.0,
-						80.0,
+						92.0,
 						21.0
 					],
 					"text": "Optical Flow"
@@ -1414,29 +1414,94 @@
 					"id": "obj-8",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
-					"fontsize": 12.0,
+					"fontsize": 11.0,
 					"textcolor": [
-						0.302,
-						0.325,
-						0.463,
+						0.35,
+						0.75,
+						0.95,
 						1.0
 					],
+					"textjustification": 2,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						20.0,
-						20.0,
+						1081.5,
+						200.0,
 						60.0,
 						21.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						84.4,
-						2.5,
-						60.0,
-						18.0
+						94.0,
+						0.9,
+						70.0,
+						21.0
 					],
-					"text": "vecfield"
+					"text": "\u2207 out"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19f",
+					"maxclass": "panel",
+					"background": 0,
+					"bgcolor": [
+						0.28,
+						0.28,
+						0.28,
+						1.0
+					],
+					"border": 0,
+					"mode": 0,
+					"hint": "Takes: no vecfield or tensor",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						991.5,
+						232.0,
+						5.0,
+						5.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						5.0,
+						5.0,
+						5.0
+					],
+					"rounded": 6
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19g",
+					"maxclass": "panel",
+					"background": 0,
+					"bgcolor": [
+						0.35,
+						0.75,
+						0.95,
+						1.0
+					],
+					"border": 0,
+					"mode": 0,
+					"hint": "Outputs: vecfield",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						1011.5,
+						232.0,
+						5.0,
+						5.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						12.0,
+						5.0,
+						5.0
+					],
+					"rounded": 6
 				}
 			},
 			{
@@ -1449,8 +1514,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						50.0,
+						771.5,
+						20.0,
 						60.0,
 						22.0
 					],
@@ -1467,8 +1532,8 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
-						80.0,
+						771.5,
+						50.0,
 						180.0,
 						22.0
 					],
@@ -1488,7 +1553,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						771.5,
 						110.0,
 						80.0,
 						22.0
@@ -1507,7 +1572,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						771.5,
 						140.0,
 						60.0,
 						22.0
@@ -1525,7 +1590,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						771.5,
 						170.0,
 						80.0,
 						22.0
@@ -1543,7 +1608,7 @@
 						""
 					],
 					"patching_rect": [
-						600.0,
+						771.5,
 						200.0,
 						100.0,
 						22.0
@@ -1576,8 +1641,8 @@
 					"param_connect": "#0_of_stage_a::scale",
 					"parameter_enable": 1,
 					"patching_rect": [
-						50.0,
-						80.0,
+						46.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1625,9 +1690,9 @@
 						""
 					],
 					"patching_rect": [
-						50.0,
-						170.0,
-						115.0,
+						26.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1642,8 +1707,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						50.0,
-						130.0,
+						35.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1680,8 +1745,8 @@
 					"param_connect": "#0_of_stage_c::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
-						100.0,
-						80.0,
+						118.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1729,9 +1794,9 @@
 						""
 					],
 					"patching_rect": [
-						100.0,
-						200.0,
-						108.0,
+						98.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1746,8 +1811,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						100.0,
-						130.0,
+						107.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1784,8 +1849,8 @@
 					"param_connect": "#0_of_stage_c::mask_lo",
 					"parameter_enable": 1,
 					"patching_rect": [
-						150.0,
-						80.0,
+						190.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1833,9 +1898,9 @@
 						""
 					],
 					"patching_rect": [
-						150.0,
-						230.0,
-						129.0,
+						170.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1850,8 +1915,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						150.0,
-						130.0,
+						179.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1888,8 +1953,8 @@
 					"param_connect": "#0_of_stage_c::mask_hi",
 					"parameter_enable": 1,
 					"patching_rect": [
-						200.0,
-						80.0,
+						262.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -1937,9 +2002,9 @@
 						""
 					],
 					"patching_rect": [
-						200.0,
-						260.0,
-						129.0,
+						242.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -1954,8 +2019,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						200.0,
-						130.0,
+						251.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -1992,8 +2057,8 @@
 					"param_connect": "#0_of_stage_d::decay",
 					"parameter_enable": 1,
 					"patching_rect": [
+						334.5,
 						250.0,
-						80.0,
 						27.0,
 						43.0
 					],
@@ -2041,9 +2106,9 @@
 						""
 					],
 					"patching_rect": [
-						250.0,
-						290.0,
-						115.0,
+						314.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -2058,8 +2123,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						250.0,
-						130.0,
+						323.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -2096,8 +2161,8 @@
 					"param_connect": "#0_of_stage_d::injection",
 					"parameter_enable": 1,
 					"patching_rect": [
-						300.0,
-						80.0,
+						406.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -2145,9 +2210,9 @@
 						""
 					],
 					"patching_rect": [
-						300.0,
-						320.0,
-						143.0,
+						386.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -2162,8 +2227,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						300.0,
-						130.0,
+						395.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -2200,8 +2265,8 @@
 					"param_connect": "#0_of_stage_b_h::step",
 					"parameter_enable": 1,
 					"patching_rect": [
-						350.0,
-						80.0,
+						478.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -2249,9 +2314,9 @@
 						""
 					],
 					"patching_rect": [
-						350.0,
-						350.0,
-						108.0,
+						458.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -2266,8 +2331,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						350.0,
-						130.0,
+						467.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -2304,8 +2369,8 @@
 					"param_connect": "#0_of_stage_e::reach",
 					"parameter_enable": 1,
 					"patching_rect": [
-						400.0,
-						80.0,
+						550.5,
+						250.0,
 						27.0,
 						43.0
 					],
@@ -2353,9 +2418,9 @@
 						""
 					],
 					"patching_rect": [
-						400.0,
-						380.0,
-						115.0,
+						530.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -2370,8 +2435,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						400.0,
-						130.0,
+						539.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -2402,8 +2467,8 @@
 					"param_connect": "#0_of_stage_e::mix_pct",
 					"parameter_enable": 1,
 					"patching_rect": [
-						450.0,
-						80.0,
+						614.0,
+						250.0,
 						44.0,
 						15.0
 					],
@@ -2427,7 +2492,7 @@
 							"parameter_modmode": 3,
 							"parameter_shortname": "mix_pct",
 							"parameter_type": 0,
-							"parameter_unitstyle": 0
+							"parameter_unitstyle": 1
 						}
 					},
 					"varname": "mix_pct"
@@ -2444,9 +2509,9 @@
 						""
 					],
 					"patching_rect": [
-						450.0,
-						410.0,
-						129.0,
+						602.0,
+						310.0,
+						68.0,
 						22.0
 					],
 					"style": ""
@@ -2461,8 +2526,8 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						450.0,
-						130.0,
+						611.0,
+						180.0,
 						50.0,
 						18.0
 					],
@@ -2491,8 +2556,8 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						168.0,
-						5.0,
+						991.5,
+						130.0,
 						18.0,
 						12.0
 					],
@@ -2517,8 +2582,8 @@
 						""
 					],
 					"patching_rect": [
-						400.0,
-						60.0,
+						991.5,
+						160.0,
 						131.0,
 						22.0
 					],

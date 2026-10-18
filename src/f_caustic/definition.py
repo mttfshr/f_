@@ -22,7 +22,7 @@ patcher = {
     "name":               "f_caustic",
     "prefix":             "caustic",
     "title":              "Caustic",
-    "signal_type":        "vecfield",
+    "signal_type":        "∇ in",
     "archetype":          "processor",
 
     # Bypass drives the codebox Param `bypass_gate` (in codebox_sheets.gen itself now -- there is no second stage

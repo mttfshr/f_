@@ -124,7 +124,7 @@ patcher = {
     "title":              "Seeds",
     "archetype":          "source",         # a generator: no source inlet, bypass = black
     "render_trigger":     "inlet",          # no `r draw`: the module renders when the shape tex / vecfield arrive (as shipped)
-    "signal_type":        "vecfield",
+    "signal_type":        "∇ in",
     "presentation_width":  190,
     "presentation_height": 160,
     "inlet_comment":      "shape tex / control",

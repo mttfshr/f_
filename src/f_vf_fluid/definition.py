@@ -32,7 +32,7 @@ patcher = {
     "name":               "f_vf_fluid",
     "prefix":             "vffluid",
     "title":              "Fluid",
-    "signal_type":        "vecfield",
+    "signal_type":        "∇ in/out",
 
     "presentation_width":  190,
     "presentation_height": 150,

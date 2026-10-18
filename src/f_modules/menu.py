@@ -9,13 +9,19 @@ generated file, edit this and regenerate:
 (build_cleanup T020/T021, 2026-10-05.  Replaces tools/rebuild_modules_menu.py and
 tools/append_nabla_menu.py, which hard-coded this table and edited the patcher in place.)
 
-CATEGORIES  [(label, [(display, module, vecfield), ...]), ...]
+MARKS  {kind: suffix}
+    The type marks.  A module's display label gets the suffix of every kind it carries, vecfield
+    first: "Caustic \u2207", "Smooth T_", "Axis Flow \u2207 T_".  A category whose label starts with a
+    mark (a nabla, or "T_") holds only modules that carry that kind.
+
+CATEGORIES  [(label, [(display, module, kinds), ...]), ...]
     In menu order.  `module` is the name without the f_ prefix (the file is f_<module>.maxpat).
-    `vecfield` True appends the nabla mark to the display label: the module takes or produces an
-    f_vecfield.  The category labels and their membership must match the README Patches table
-    (the same table build/generate_launch.py reads); a category whose label starts with a nabla
-    holds vecfield modules only.  The module order WITHIN a category is the menu's own (by visual
-    character, newest last), not the README's alphabetical order.
+    `kinds` is a tuple of mark kinds the module takes or produces: V (an f_vecfield), T (an f_tensor,
+    see docs/f-reference/f_tensor_type.md), VT (both: f_tf_axisflow reads a tensor and writes a
+    vecfield), or N (neither).  The category labels and their membership must match the README
+    Patches table (the same table build/generate_launch.py reads), in the same order.  The module
+    order WITHIN a category is the menu's own (by visual character, newest last; the T_ category
+    runs in pipeline order), not the README's alphabetical order.
 
 SIZE_OVERRIDES  {module: ([w, h], reason)}
     f_addmod.js inserts a module as a bpatcher of this size.  The size is the module's presentation
@@ -26,66 +32,73 @@ NOT_IN_MENU  {module: reason}
     Every shipped patcher must be in a category or here, so a new module cannot be forgotten.
 """
 
-NABLA = " \u2207"
+MARKS = {"vec": " \u2207", "tensor": " T_"}
+
+N = ()
+V = ("vec",)
+T = ("tensor",)
+VT = ("vec", "tensor")
 
 CATEGORIES = [
     ("Scope", [
-        ("Chladni", "chladni", True),
+        ("Chladni", "chladni", V),
     ]),
     ("Discrete", [
-        ("Masonry", "masonry", False),
-        ("Stipple", "stipple", False),
-        ("Grain", "grain", False),
-        ("Weave", "weave", True),
-        ("Seeds", "vf_seeds", True),
+        ("Masonry", "masonry", N),
+        ("Stipple", "stipple", N),
+        ("Grain", "grain", N),
+        ("Weave", "weave", V),
+        ("Seeds", "vf_seeds", V),
     ]),
     ("Spatial", [
-        ("Mobius", "mobius", False),
-        ("Stereo", "stereo", False),
-        ("SIRDS", "sirds", False),
-        ("Droste", "droste", False),
-        ("Ngon", "ngon", False),
+        ("Mobius", "mobius", N),
+        ("Stereo", "stereo", N),
+        ("SIRDS", "sirds", N),
+        ("Droste", "droste", N),
+        ("Ngon", "ngon", N),
     ]),
     ("Optical", [
-        ("Lens", "lens", False),
-        ("Prism", "vf_prism", True),
-    ]),
-    ("\u2207 Generators", [
-        ("Vortex", "vf_vortex", True),
-        ("Vortex Multi", "vf_vortex_multi", True),
-    ]),
-    ("\u2207 Processors", [
-        ("Caustic", "caustic", True),
-        ("Fieldmap", "vf_fieldmap", True),
-        ("Flow", "vf_flow", True),
-        ("Repulse", "vf_repulse", True),
-        ("Warp", "vf_warp", True),
-        ("Streak", "vf_streak", True),
-        ("Glow", "vf_glow", True),
-        ("Advect", "vf_advect", True),
-        ("Chroma", "vf_chroma", True),
-        ("Optical Flow", "vf_optical_flow", True),
-        ("Fluid", "vf_fluid", True),
+        ("Lens", "lens", N),
+        ("Prism", "vf_prism", V),
     ]),
     ("Color / Tone", [
-        ("Channel Grader", "channel_grader", False),
-        ("Hue Processor", "hue_processor", False),
-        ("Luma Processor", "luma_processor", False),
-        ("Tone Curve", "tone_curve", False),
+        ("Channel Grader", "channel_grader", N),
+        ("Hue Processor", "hue_processor", N),
+        ("Luma Processor", "luma_processor", N),
+        ("Tone Curve", "tone_curve", N),
+    ]),
+    ("\u2207 Generators", [
+        ("Vortex", "vf_vortex", V),
+        ("Vortex Multi", "vf_vortex_multi", V),
+    ]),
+    ("\u2207 Processors", [
+        ("Caustic", "caustic", V),
+        ("Fieldmap", "vf_fieldmap", V),
+        ("Flow", "vf_flow", V),
+        ("Repulse", "vf_repulse", V),
+        ("Warp", "vf_warp", V),
+        ("Streak", "vf_streak", V),
+        ("Glow", "vf_glow", V),
+        ("Advect", "vf_advect", V),
+        ("Chroma", "vf_chroma", V),
+        ("Optical Flow", "vf_optical_flow", V),
+        ("Fluid", "vf_fluid", V),
+    ]),
+    ("T_ Tensor", [
+        ("Tensormap", "tf_tensormap", T),
+        ("Smooth", "tf_smooth", T),
+        ("Sharpen", "tf_sharpen", T),
+        ("Aniso Blur", "tf_aniso_blur", T),
+        ("Hatch", "tf_hatch", T),
+        ("Glyph", "tf_glyph", T),
+        ("Axis Flow", "tf_axisflow", VT),
     ]),
     ("Utilities", [
-        ("Tex Router", "texrouter", False),
-        ("Profile", "util_profile", False),
-        ("Split", "vf_split", True),
-        ("Potential", "vf_potential", True),
-        ("Matrix 2", "util_matrix_2", False),
-        ("Tensor Map", "tf_tensormap", False),
-        ("Axis Flow", "tf_axisflow", False),
-        ("Tensor Smooth", "tf_smooth", False),
-        ("Tensor Glyph", "tf_glyph", False),
-        ("Tensor Sharpen", "tf_sharpen", False),
-        ("Tensor Aniso Blur", "tf_aniso_blur", False),
-        ("Tensor Hatch", "tf_hatch", False),
+        ("Tex Router", "texrouter", N),
+        ("Profile", "util_profile", N),
+        ("Split", "vf_split", V),
+        ("Potential", "vf_potential", V),
+        ("Matrix 2", "util_matrix_2", N),
     ]),
 ]
 

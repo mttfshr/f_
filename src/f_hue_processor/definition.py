@@ -67,6 +67,6 @@ patcher["overrides"] = {
     "panel": {"background": None, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
     "sat_amt.ctl": {"activedialcolor": None, "presentation_rect": [42.0, 69.75, 27.0, 43.0]},
     "sat_amt.label": {"fontsize": 9.0, "presentation_rect": [44.5, 56.5, 25.5, 17.0], "textjustification": None},
-    "title": {"fontsize": None, "numinlets": 0, "presentation_rect": [-0.3333333432674408, 1.0000000298023224, 88.0, 21.0], "suppressinlet": 1},
+    "title": {"fontsize": None, "numinlets": 0, "presentation_rect": [10.5, 1.0000000298023224, 98.8, 21.0], "suppressinlet": 1},
 }
 # END overrides

@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "repulse",
     "object_name":        "repulse_pix",
     "title":              "Repulse",
-    "signal_type":        "vecfield out",
+    "signal_type":        "∇ out",
     "archetype":          "processor",
     "pix_type":           "float32",
 

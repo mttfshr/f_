@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "vfchroma",
     "object_name":        "vfchroma_pix",
     "title":              "Chroma",
-    "signal_type":        "vecfield in",
+    "signal_type":        "∇ in",
     "archetype":          "processor",
     "pix_type":           "char",
 

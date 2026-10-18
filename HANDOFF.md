@@ -1,5 +1,103 @@
 # HANDOFF
 
+## 2026-10-17 (evening): f_modules menu, title-bar labels, type dots, tensor sizing — UNCOMMITTED
+
+**State.** HEAD is `b3b53cc`; everything below is uncommitted (about 99 modified files plus new ones). A commit-all
+would also sweep in two files that are not part of this work: `package/examples/f_demo_sampleplatter.maxpat`
+(modified earlier, see the 10-12 notes) and `scratch/tensor-scratch.maxpat` (untracked, Matt's). `ideas/type_dots.js`
+is new and mine (a parked script, below). Suggested split if committing in pieces: (1) menu + README + launcher,
+(2) title-bar labels + titles + dots, (3) tensor module sizing + helpfile embeds, (4) audit fixes + tests + skill/docs.
+
+**What exists now (all as built; Matt approved the look of labels, dots, and tensor sizing from screenshots)**
+- **f_modules menu.** Order: Scope, Discrete, Spatial, Optical, **Color / Tone**, ∇ Generators, ∇ Processors,
+  **T_ Tensor**, Utilities. The seven `f_tf_` modules moved out of Utilities into `T_ Tensor` (pipeline order, no
+  "Tensor " prefix: Tensormap, Smooth, Sharpen, Aniso Blur, Hatch, Glyph, Axis Flow). `src/f_modules/menu.py`: each
+  entry's third field is a tuple of kinds (`N`, `V`, `T`, `VT`) against a `MARKS` table (` ∇`, ` T_`), not a bool;
+  a `T_` category may hold only tensor modules. README Patches table reordered to match, f_Launch regenerated (10
+  tabs, 47 modules). Nine categories no longer fit the 380 px panel the 19 example patches embed it at, so the slot
+  pitch is 39 px (`SLOT`, generate_menu.py) and a check fails if the menu outgrows `PANEL_H`.
+- **Title-bar label** on every typed module: marks plus direction, no words: `∇ in`, `∇ out`, `∇ in/out`, `T_ in`,
+  `T_ out`, `T_ in/out`, `T_ in ∇ out` (axisflow). 11 pt, right-justified in a 70 px box whose right edge is 4 px
+  left of the bypass button, y 0.9 (same baseline as the 12 pt title); ∇ = advect's cyan `[0.35, 0.75, 0.95]`,
+  `T_` = amber `[0.85, 0.55, 0.2]`. Rule in `signal_type_box` (build_patcher.py; follows a `bypass_jsui` override);
+  the 11 per-module `signal_type` overrides were deleted. Titles lost "Tensor": "Sharpen", "Smooth", "Map".
+- **Type dots** on every module (43): two stacked round 5 px panels left of the name, top = type it takes, bottom
+  = type it outputs; cyan vecfield, amber tensor, dim grey `[0.28]` neither (untyped modules: two grey). Read from
+  the label by `parse_signal_type`; tooltip "Takes: X" / "Outputs: Y". Foreground panels (`background` 0,
+  `rounded` 6, ids `obj-19f` / `obj-19g`, element keys `dot_in` / `dot_out`): a `background` 1 panel is drawn UNDER
+  the frame and vanishes. Every module name starts at x 10.5 (8 hand-placed title overrides updated: mobius, grain,
+  tone_curve, vortex_multi, hue, channel_grader, stereo, luma). Frame border stays dark blue.
+- **Tried and dropped** (do not redo without a reason): (a) frame border coloured by type (`BORDER_BY_TYPE = False`
+  in build_patcher.py brings it back); (b) shaped dots, tensor round / vecfield square, then ONE jsui
+  (`type_dots.js`) drawing triangle / disc / square: Matt, "reads as noisy, it was better with just circles". The
+  jsui style is still in the builder (`TYPE_DOTS = "jsui"`) and the script is parked at `ideas/type_dots.js` (copy
+  it to `package/javascript/` to use it). Last seen problems: Max gave the jsui a larger box than set (fixed with
+  fixed geometry) and the disc looked shaved top-left (1 px margin added, effect never confirmed).
+- **Tensor modules un-cropped**: `f_tf_glyph`, `f_tf_hatch` (190 x 150) and `f_tf_aniso_blur` (190 x 122) shipped
+  on a 154 x 84 frame sized for tensormap and lost their right-hand dials and lower rows; now the library's 190 px,
+  5-column panel with the bypass button at its default x (168). Menu `SIZES` regenerated; the three helpfile
+  embeds widened to 190 (glyph's also 150 tall, boxes below it moved down 10 px).
+- **In/out audit from the code** (read from the shipped patchers' embedded codeboxes, NOT from labels and NOT from
+  `src/*/codebox_v*.gen`, which hold historical versions: prism 17, chroma 10): `f_vf_advect` and `f_vf_prism` each
+  have a third outlet that is a vecfield, so both are `∇ in/out` (were `∇ in`). Everything else matched. Not typed:
+  `f_vf_optical_flow`'s "confidence" outlet (determinant + doubled-angle axis, neither encoding), `f_vf_seeds`' "seed
+  coord" (a coordinate grid), `f_vf_split` / `f_vf_potential` (scalar outputs), `f_texrouter` (type-agnostic),
+  `f_mobius` / `droste` / `stereo` (resample a piped-through vecfield without interpreting it).
+- **Colour vision** (Machado 2009 simulation, cyan / amber / dim grey on black): cyan vs amber differ by deltaE
+  88-98 under protan, deutan and tritan; contrast vs black cyan >= 9.5:1, amber >= 6.8:1, grey 2.3:1 (dim by
+  design). Weak spot only total colour blindness (cyan and amber have near-equal lightness). The dots are colour-only;
+  the text label (mark + in/out) is the colour-independent cue.
+
+**How it was applied (to redo or extend)**
+- 37 modules regenerated with `python3 build/build_patcher.py src/f_<m>/definition.py` (every menu module except
+  the six below, plus `f_vf_vorticity`). That rebuild always rewrites `package/javascript/lens_toggle.js`
+  differently (the committed one lists the removed tilt-shift objects: stale, harmless); restore it with
+  `git checkout -- package/javascript/lens_toggle.js`.
+- Six patched IN PLACE, never regenerated: `f_vf_advect` (its definition lacks the `#0_` pix name, see below),
+  `f_masonry`, `f_texrouter`, `f_util_matrix_2`, `f_util_profile` (hand-built, no definition), `f_sirds` (own build
+  script `src/f_sirds/build_sirds.py`, mirrored by hand). masonry and texrouter pin their dots with
+  `dot_in` / `dot_out` overrides in their definitions.
+- `build/drift.py` gives the dots panels (ids obj-19f / 19g) their own identity ("type dot in/out") so they cannot
+  hide the frame panel from the matcher (with two unlabelled extra panels the frame stopped being unique, which made
+  the masonry / texrouter baselines look lowered; those two are at their real values: texrouter props 3 / layout 1,
+  masonry layout 17; masonry props 22 stays, that shrink predates this work). `type_dots.js` keeps an identity for
+  the jsui style. Three tests (test_build_conventions x3, test_layout) select the bypass jsui by filename.
+- New tests in `tests/test_generate_menu.py` (15/15): label marks equal menu kinds; label geometry and colour; dots
+  (colour, size, column, foreground, dark border); an outlet the module names vecfield / tensor must be a label
+  output; tensor modules not cropped by frame or helpfile embed; direction table. Also green: conventions 40/40,
+  layout 12/12, overrides 12/12, capture_raw 8/8, module_contracts 9/9.
+- `skills/vsynth-bpatcher/SKILL.md` updated (entry format, kinds, labels, dots, audit rule); `skills/check.sh` will
+  report drift against the last upload until it is re-uploaded and stamped.
+
+**Never looked at in Max** (all of it built and tested offline): the regenerated `f_modules` menu itself (39 px
+spacing, `T_ Tensor`, labels); the widened helpfile embeds; crowded title bars below.
+
+**Waiting on Matt**
+- **Crowded title bars** (rough width estimate): `f_vf_split` (80 px panel, "VF Split") and `f_vf_warp` (78 px) have
+  the label text running into the name; `f_tf_axisflow` is touching. Widening split/warp to about 100 px (or
+  dropping the text label there, or renaming "VF Split" to "Split") fixes it; widening changes the module's
+  footprint in patches, so not done.
+- **Content past the frame, not touched**: `f_vf_optical_flow` 13 px at the bottom (frame 190 x 130); `f_vf_warp` and
+  `f_vf_split` label boxes 22-25 px past the right edge; 1.5-3.5 px of label-box slack on `f_grain` and
+  `f_vf_fieldmap` (almost certainly fine). `f_mobius`: its first dial's box touches the lower dot by about 2 px.
+- **Names**: the menu says "Tensormap", the module title says "Map". Helpfile headings and prose still say "Tensor
+  Map", "Tensor Smooth", etc. (`build/make_tf_helpfiles.py`, `package/help/f_tf_*.maxhelp`); not touched.
+- Utilities placement (now Tex Router, Profile, Split, Potential, Matrix 2) is still undecided.
+- Whether and how to commit, and whether to leave out the two files that are not part of this work.
+
+**Parked (Matt, 2026-10-17): light themes.** Some users will want a light Max theme; the library is built for dark.
+Known: every module frame is a self-painted black panel with fixed RGB borders and labels, so cyan / amber stay
+legible on it under any Max theme; the live.* widgets and a few patchers (f_modules, channel_grader, tone_curve,
+stereo) do follow `themecolor`. Unknown: how the widgets look on that black panel under a light theme (never
+looked), and whether a package can add its own named theme colours (theme files list only Max's ids). Options: A =
+pin widget colours so modules stay dark in every theme (cheap), B = a real light palette (large; type colours need a
+darker blue). First step when picked up: switch Max to a light theme and look at a few modules; optionally centralize
+module colours in one builder palette table (type colours as a dark / light pair), which changes no output today.
+
+**Pre-existing, not from this work**: `test_drift` fails only on `f_vf_advect` (code drift: the patcher's pix is
+named `#0_advect_pix`, its definition is not; fix by writing the `#0_` name into the definition) and
+`test_build_multistage.py` fails only its "f_vf_advect still reproduces" assertion, same cause.
+
 ## 2026-10-17 session: five f_tf consumers built to tier-2 (bench-verified, tier-3 pending)
 
 - **Built, offline-verified, bench-verified** (tier-1 mirrors 19/20/20 + sharpen 15 + glyph 14;

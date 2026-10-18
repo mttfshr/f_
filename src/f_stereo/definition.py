@@ -81,6 +81,6 @@ patcher["overrides"] = {
     "proj.label": {"presentation_rect": [120.0, 24.0, 36.0, 18.0], "textjustification": None},
     "spin.ctl": {"presentation_rect": [82.66666666666667, 40.0, 27.0, 43.0]},
     "spin.label": {"presentation_rect": [82.0, 24.0, 36.0, 18.0], "textjustification": None},
-    "title": {"linecount": 2, "presentation_rect": [0.0, 1.0, 101.5, 21.0]},
+    "title": {"linecount": 2, "presentation_rect": [10.5, 1.0, 112.0, 21.0]},
 }
 # END overrides

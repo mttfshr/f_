@@ -9,7 +9,7 @@ patcher = {
     # HANDOFF.md / Matt for the live symptom this was chasing.
     "object_name":        "vfvorticity_pix",
     "title":              "Vorticity",
-    "signal_type":        "vecfield in/out",
+    "signal_type":        "∇ in/out",
     "archetype":          "processor",
     "pix_type":           "float32",
 

@@ -141,7 +141,7 @@ def test_route_bypass_keeps_each_route_outlet_over_its_control_and_wires_downwar
         check(f"route_bypass={rb}: no upward wires", len(a["upward"]), 0)
         check(f"route_bypass={rb}: no overlaps", len(a["overlaps"]), 0)
         if rb:
-            jsui = [b for b in top.values() if b.get("maxclass") == "jsui"][0]
+            jsui = [b for b in top.values() if b.get("maxclass") == "jsui" and b.get("filename") == "bypass_toggle.js"][0]
             check("the bypass jsui is in lane column 0, under the route",
                   abs(col(jsui)) + (0 if jsui["patching_rect"][1] > route["patching_rect"][1] else 1), 0)
             pre = top[bp.bypass_pre_id(3)]

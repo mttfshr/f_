@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "vfprism",
     "object_name":        "vfprism_pix",
     "title":              "Prism",
-    "signal_type":        "vecfield",
+    "signal_type":        "∇ in/out",
     "archetype":          "processor",
     "pix_type":           "char",
 

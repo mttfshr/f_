@@ -13,7 +13,7 @@
 			100.0,
 			100.0,
 			960.0,
-			418.0
+			390.0
 		],
 		"gridsize": [
 			15.0,
@@ -50,7 +50,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -206,7 +206,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -734,7 +734,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1262,7 +1262,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1495,6 +1495,441 @@
 						170.0,
 						22.0
 					],
+					"text": "p \"Color / Tone\"",
+					"varname": "tab_color_tone",
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "box",
+						"rect": [
+							0.0,
+							26.0,
+							960.0,
+							364.0
+						],
+						"openinpresentation": 1,
+						"gridsize": [
+							15.0,
+							15.0
+						],
+						"enablevscroll": 1,
+						"enablehscroll": 0,
+						"showontab": 1,
+						"boxes": [
+							{
+								"box": {
+									"id": "obj-1",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										420.0,
+										20.0,
+										60.0,
+										22.0
+									],
+									"text": "pcontrol"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-2",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										20.0,
+										150.0,
+										22.0
+									],
+									"text": "f_channel_grader",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										12.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-3",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										48.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_channel_grader.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-4",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										20.0,
+										150.0,
+										20.0
+									],
+									"text": "Per-channel color grading",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										14.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-5",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										80.0,
+										150.0,
+										22.0
+									],
+									"text": "f_hue_processor",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										40.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-6",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										108.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_hue_processor.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-7",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										80.0,
+										150.0,
+										20.0
+									],
+									"text": "Hue-selective processing",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										42.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-8",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										140.0,
+										150.0,
+										22.0
+									],
+									"text": "f_luma_processor",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										68.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-9",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										168.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_luma_processor.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-10",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										140.0,
+										150.0,
+										20.0
+									],
+									"text": "Luminance-selective processing",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										70.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-11",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										200.0,
+										150.0,
+										22.0
+									],
+									"text": "f_tone_curve",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										96.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-12",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										228.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_tone_curve.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-13",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										200.0,
+										150.0,
+										20.0
+									],
+									"text": "Tone curve adjustment",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										98.0,
+										720.0,
+										20.0
+									]
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"source": [
+										"obj-2",
+										0
+									],
+									"destination": [
+										"obj-3",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-3",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-5",
+										0
+									],
+									"destination": [
+										"obj-6",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-6",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-8",
+										0
+									],
+									"destination": [
+										"obj-9",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-9",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-11",
+										0
+									],
+									"destination": [
+										"obj-12",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-12",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							}
+						]
+					}
+				}
+			},
+			{
+				"box": {
+					"id": "obj-6",
+					"maxclass": "newobj",
+					"numinlets": 0,
+					"numoutlets": 0,
+					"patching_rect": [
+						980.0,
+						40.0,
+						170.0,
+						22.0
+					],
 					"text": "p \"∇ Generators\"",
 					"varname": "tab_generators",
 					"patcher": {
@@ -1511,7 +1946,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1734,12 +2169,12 @@
 			},
 			{
 				"box": {
-					"id": "obj-6",
+					"id": "obj-7",
 					"maxclass": "newobj",
 					"numinlets": 0,
 					"numoutlets": 0,
 					"patching_rect": [
-						980.0,
+						1170.0,
 						40.0,
 						170.0,
 						22.0
@@ -1760,7 +2195,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2913,18 +3348,18 @@
 			},
 			{
 				"box": {
-					"id": "obj-7",
+					"id": "obj-8",
 					"maxclass": "newobj",
 					"numinlets": 0,
 					"numoutlets": 0,
 					"patching_rect": [
-						1170.0,
+						1360.0,
 						40.0,
 						170.0,
 						22.0
 					],
-					"text": "p \"Color / Tone\"",
-					"varname": "tab_color_tone",
+					"text": "p \"T_ Tensor\"",
+					"varname": "tab_t_tensor",
 					"patcher": {
 						"fileversion": 1,
 						"appversion": {
@@ -2939,7 +3374,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2987,7 +3422,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_channel_grader",
+									"text": "f_tf_aniso_blur",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -3012,7 +3447,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_channel_grader.maxhelp"
+									"text": "loadunique f_tf_aniso_blur.maxhelp"
 								}
 							},
 							{
@@ -3027,7 +3462,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Per-channel color grading",
+									"text": "⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3056,7 +3491,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_hue_processor",
+									"text": "f_tf_axisflow",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -3081,7 +3516,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_hue_processor.maxhelp"
+									"text": "loadunique f_tf_axisflow.maxhelp"
 								}
 							},
 							{
@@ -3096,7 +3531,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Hue-selective processing",
+									"text": "Tensor map axis to a seam-free vecfield: flow along or across image edges",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3125,7 +3560,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_luma_processor",
+									"text": "f_tf_glyph",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -3150,7 +3585,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_luma_processor.maxhelp"
+									"text": "loadunique f_tf_glyph.maxhelp"
 								}
 							},
 							{
@@ -3165,7 +3600,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Luminance-selective processing",
+									"text": "⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3194,7 +3629,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_tone_curve",
+									"text": "f_tf_hatch",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -3219,7 +3654,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_tone_curve.maxhelp"
+									"text": "loadunique f_tf_hatch.maxhelp"
 								}
 							},
 							{
@@ -3234,11 +3669,218 @@
 										150.0,
 										20.0
 									],
-									"text": "Tone curve adjustment",
+									"text": "⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										98.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-14",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										260.0,
+										150.0,
+										22.0
+									],
+									"text": "f_tf_sharpen",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										124.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-15",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										288.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_tf_sharpen.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-16",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										260.0,
+										150.0,
+										20.0
+									],
+									"text": "⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										126.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-17",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										320.0,
+										150.0,
+										22.0
+									],
+									"text": "f_tf_smooth",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										152.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-18",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										348.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_tf_smooth.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-19",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										320.0,
+										150.0,
+										20.0
+									],
+									"text": "⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										154.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-20",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										380.0,
+										150.0,
+										22.0
+									],
+									"text": "f_tf_tensormap",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										180.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-21",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										408.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_tf_tensormap.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-22",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										380.0,
+										150.0,
+										20.0
+									],
+									"text": "Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1)",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										182.0,
 										720.0,
 										20.0
 									]
@@ -3341,6 +3983,78 @@
 										0
 									]
 								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-14",
+										0
+									],
+									"destination": [
+										"obj-15",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-15",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-17",
+										0
+									],
+									"destination": [
+										"obj-18",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-18",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-20",
+										0
+									],
+									"destination": [
+										"obj-21",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-21",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
 							}
 						]
 					}
@@ -3348,12 +4062,12 @@
 			},
 			{
 				"box": {
-					"id": "obj-8",
+					"id": "obj-9",
 					"maxclass": "newobj",
 					"numinlets": 0,
 					"numoutlets": 0,
 					"patching_rect": [
-						1360.0,
+						1550.0,
 						40.0,
 						170.0,
 						22.0
@@ -3374,7 +4088,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -3443,7 +4157,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Module menu -- pick a module to add it to the patch as a bpatcher; categories marked ∇ hold vecfield modules",
+									"text": "Module menu -- pick a module to add it as a bpatcher; ∇ marks vecfield categories, T_ tensor ones",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3518,495 +4232,12 @@
 							{
 								"box": {
 									"id": "obj-6",
-									"maxclass": "textbutton",
+									"maxclass": "comment",
 									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
+									"numoutlets": 0,
 									"patching_rect": [
 										20.0,
 										140.0,
-										150.0,
-										22.0
-									],
-									"text": "f_tf_tensormap",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										68.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-7",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										168.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_tf_tensormap.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-8",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										140.0,
-										150.0,
-										20.0
-									],
-									"text": "Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1)",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										70.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-9",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										200.0,
-										150.0,
-										22.0
-									],
-									"text": "f_tf_axisflow",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										96.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-10",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										228.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_tf_axisflow.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-11",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										200.0,
-										150.0,
-										20.0
-									],
-									"text": "Tensor map axis to a seam-free vecfield: flow along or across image edges",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										98.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-12",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										260.0,
-										150.0,
-										22.0
-									],
-									"text": "f_tf_smooth",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										124.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-13",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										288.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_tf_smooth.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-14",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										260.0,
-										150.0,
-										20.0
-									],
-									"text": "⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										126.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-15",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										320.0,
-										150.0,
-										22.0
-									],
-									"text": "f_tf_glyph",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										152.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-16",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										348.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_tf_glyph.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-17",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										320.0,
-										150.0,
-										20.0
-									],
-									"text": "⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool)",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										154.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-18",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										380.0,
-										150.0,
-										22.0
-									],
-									"text": "f_tf_sharpen",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										180.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-19",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										408.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_tf_sharpen.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-20",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										380.0,
-										150.0,
-										20.0
-									],
-									"text": "⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										182.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-21",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										440.0,
-										150.0,
-										22.0
-									],
-									"text": "f_tf_aniso_blur",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										208.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-22",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										468.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_tf_aniso_blur.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-23",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										440.0,
-										150.0,
-										20.0
-									],
-									"text": "⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										210.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-24",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										500.0,
-										150.0,
-										22.0
-									],
-									"text": "f_tf_hatch",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										236.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-25",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										528.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_tf_hatch.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-26",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										500.0,
-										150.0,
-										20.0
-									],
-									"text": "⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots)",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										238.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-27",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										20.0,
-										560.0,
 										150.0,
 										20.0
 									],
@@ -4020,7 +4251,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										266.0,
+										70.0,
 										210.0,
 										20.0
 									]
@@ -4028,13 +4259,13 @@
 							},
 							{
 								"box": {
-									"id": "obj-28",
+									"id": "obj-7",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
 									"patching_rect": [
 										260.0,
-										560.0,
+										140.0,
 										150.0,
 										20.0
 									],
@@ -4042,7 +4273,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
-										266.0,
+										70.0,
 										720.0,
 										20.0
 									],
@@ -4056,7 +4287,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-29",
+									"id": "obj-8",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -4069,7 +4300,7 @@
 									"fontsize": 12.0,
 									"patching_rect": [
 										20.0,
-										620.0,
+										200.0,
 										150.0,
 										22.0
 									],
@@ -4077,7 +4308,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										292.0,
+										96.0,
 										210.0,
 										22.0
 									]
@@ -4085,7 +4316,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-30",
+									"id": "obj-9",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -4094,7 +4325,7 @@
 									],
 									"patching_rect": [
 										20.0,
-										648.0,
+										228.0,
 										230.0,
 										22.0
 									],
@@ -4103,13 +4334,13 @@
 							},
 							{
 								"box": {
-									"id": "obj-31",
+									"id": "obj-10",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
 									"patching_rect": [
 										260.0,
-										620.0,
+										200.0,
 										150.0,
 										20.0
 									],
@@ -4117,7 +4348,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
-										294.0,
+										98.0,
 										720.0,
 										20.0
 									]
@@ -4125,7 +4356,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-32",
+									"id": "obj-11",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -4138,7 +4369,7 @@
 									"fontsize": 12.0,
 									"patching_rect": [
 										20.0,
-										680.0,
+										260.0,
 										150.0,
 										22.0
 									],
@@ -4146,7 +4377,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										320.0,
+										124.0,
 										210.0,
 										22.0
 									]
@@ -4154,7 +4385,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-33",
+									"id": "obj-12",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -4163,7 +4394,7 @@
 									],
 									"patching_rect": [
 										20.0,
-										708.0,
+										288.0,
 										230.0,
 										22.0
 									],
@@ -4172,13 +4403,13 @@
 							},
 							{
 								"box": {
-									"id": "obj-34",
+									"id": "obj-13",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
 									"patching_rect": [
 										260.0,
-										680.0,
+										260.0,
 										150.0,
 										20.0
 									],
@@ -4186,7 +4417,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
-										322.0,
+										126.0,
 										720.0,
 										20.0
 									]
@@ -4194,7 +4425,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-35",
+									"id": "obj-14",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -4207,7 +4438,7 @@
 									"fontsize": 12.0,
 									"patching_rect": [
 										20.0,
-										740.0,
+										320.0,
 										150.0,
 										22.0
 									],
@@ -4215,7 +4446,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										348.0,
+										152.0,
 										210.0,
 										22.0
 									]
@@ -4223,7 +4454,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-36",
+									"id": "obj-15",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -4232,7 +4463,7 @@
 									],
 									"patching_rect": [
 										20.0,
-										768.0,
+										348.0,
 										230.0,
 										22.0
 									],
@@ -4241,13 +4472,13 @@
 							},
 							{
 								"box": {
-									"id": "obj-37",
+									"id": "obj-16",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
 									"patching_rect": [
 										260.0,
-										740.0,
+										320.0,
 										150.0,
 										20.0
 									],
@@ -4255,7 +4486,7 @@
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
-										350.0,
+										154.0,
 										720.0,
 										20.0
 									]
@@ -4266,23 +4497,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-6",
+										"obj-8",
 										0
 									],
 									"destination": [
-										"obj-7",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-7",
-										0
-									],
-									"destination": [
-										"obj-1",
+										"obj-9",
 										0
 									]
 								}
@@ -4294,7 +4513,7 @@
 										0
 									],
 									"destination": [
-										"obj-10",
+										"obj-1",
 										0
 									]
 								}
@@ -4302,11 +4521,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-10",
+										"obj-11",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-12",
 										0
 									]
 								}
@@ -4318,7 +4537,7 @@
 										0
 									],
 									"destination": [
-										"obj-13",
+										"obj-1",
 										0
 									]
 								}
@@ -4326,11 +4545,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-13",
+										"obj-14",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-15",
 										0
 									]
 								}
@@ -4339,162 +4558,6 @@
 								"patchline": {
 									"source": [
 										"obj-15",
-										0
-									],
-									"destination": [
-										"obj-16",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-16",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-18",
-										0
-									],
-									"destination": [
-										"obj-19",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-19",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-21",
-										0
-									],
-									"destination": [
-										"obj-22",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-22",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-24",
-										0
-									],
-									"destination": [
-										"obj-25",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-25",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-29",
-										0
-									],
-									"destination": [
-										"obj-30",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-30",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-32",
-										0
-									],
-									"destination": [
-										"obj-33",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-33",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-35",
-										0
-									],
-									"destination": [
-										"obj-36",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-36",
 										0
 									],
 									"destination": [
@@ -4509,12 +4572,12 @@
 			},
 			{
 				"box": {
-					"id": "obj-9",
+					"id": "obj-10",
 					"maxclass": "newobj",
 					"numinlets": 0,
 					"numoutlets": 0,
 					"patching_rect": [
-						1550.0,
+						1740.0,
 						40.0,
 						170.0,
 						22.0
@@ -4535,7 +4598,7 @@
 							0.0,
 							26.0,
 							960.0,
-							392.0
+							364.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [

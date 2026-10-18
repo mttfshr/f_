@@ -42,3 +42,10 @@ patcher = {
         "Preset system: pattrstorage stores/recalls named routing configurations."
     ),
 }
+
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "dot_in": {"presentation_rect": [4.0, 3.5, 5.0, 5.0]},
+    "dot_out": {"presentation_rect": [4.0, 10.5, 5.0, 5.0]},
+}
+# END overrides

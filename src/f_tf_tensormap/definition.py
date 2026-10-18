@@ -33,8 +33,8 @@ patcher = {
     "name":        "f_tf_tensormap",
     "prefix":      "tensormap",
     "object_name": "tensormap_pix",
-    "title":       "Tensor Map",
-    "signal_type": "tensor out",
+    "title":       "Map",
+    "signal_type": "T_ out",
     "archetype":   "processor",
     "bypass_mode": "param",
     "bypass_target": "c",
@@ -145,5 +145,4 @@ patcher = {
 # Layout (2026-10-16, Matt: panel too narrow, width/height cropped): the four controls run to x ~ 150.
 patcher["overrides"] = {
     "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
-    "signal_type": {"fontsize": 9.5, "presentation_rect": [62.0, 3.0, 60.0, 18.0]},
 }

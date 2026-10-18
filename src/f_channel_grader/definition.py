@@ -88,6 +88,6 @@ patcher["overrides"] = {
     "r_gain.ctl": {"activedialcolor": [1.0, 0.349019607843137, 0.372549019607843, 1.0], "presentation_rect": [28.5, 115.5, 27.0, 43.0]},
     "r_gamma.ctl": {"activedialcolor": [1.0, 0.349019607843137, 0.372549019607843, 1.0], "presentation_rect": [28.5, 71.5, 27.0, 43.0]},
     "r_lift.ctl": {"activedialcolor": [1.0, 0.349019607843137, 0.372549019607843, 1.0], "presentation_rect": [28.5, 25.5, 27.0, 43.0]},
-    "title": {"fontsize": None, "presentation_rect": [1.5, 3.5, 91.0, 21.0]},
+    "title": {"fontsize": None, "presentation_rect": [10.5, 3.5, 100.0, 21.0]},
 }
 # END overrides

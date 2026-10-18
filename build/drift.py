@@ -111,7 +111,15 @@ def _longname(b):
 
 
 def signature(b):
-    label = b.get("text") or b.get("comment") or ""
+    # The generated type dots (type_dots.js) are a jsui next to the bypass jsui: with no text both would be
+    # (jsui, "", "") and unmatched boxes would pair wrongly.  Only type_dots.js gets its script name as identity;
+    # every other jsui keeps its old identity, so the existing baselines (masonry's extra brick-UI jsui) mean what
+    # they meant before.
+    label = b.get("text") or b.get("comment") or ("type_dots.js" if b.get("filename") == "type_dots.js" else "") or ""
+    # The type dots are two small panels next to the frame panel: unlabelled, all three would be (panel, "", ""),
+    # so the frame stopped being a unique identity and its differences were hidden.  Their ids are reserved.
+    if not label and b.get("maxclass") == "panel" and b.get("id") in ("obj-19f", "obj-19g"):
+        label = "type dot " + ("in" if b["id"] == "obj-19f" else "out")
     return (b.get("maxclass", "?"), str(label)[:40], _longname(b) or b.get("attr") or "")
 
 

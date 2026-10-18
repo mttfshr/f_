@@ -18,7 +18,7 @@ patcher = {
     "title":              "Flow",
     "archetype":          "dual",
     "pix_type":           "float32",
-    "signal_type":        "vecfield out",
+    "signal_type":        "∇ out",
 
     "presentation_width":  150,
     "presentation_height": 80,

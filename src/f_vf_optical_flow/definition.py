@@ -59,7 +59,7 @@ patcher = {
     "name":        "f_vf_optical_flow",
     "prefix":      "opticalflow",
     "title":       "Optical Flow",
-    "signal_type": "vecfield",
+    "signal_type": "∇ out",
     "archetype":   "processor",
 
     "presentation_width":  190,

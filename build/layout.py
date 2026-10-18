@@ -242,7 +242,8 @@ def layout_edit_view(boxes, lines, roles):
                        ("panel_toggle", x_b, 20.0), ("panel_toggle_js", x_b, 60.0),
                        ("autopattr", x_b, 100.0), ("bypass_jsui", x_b, 130.0),
                        ("bypass_pre", x_b, 160.0), ("title", x_b, 200.0),
-                       ("signal_type", x_b + 90.0, 200.0), ("panel", x_a, 260.0)):
+                       ("signal_type", x_b + 90.0, 200.0), ("dot_in", x_b, 232.0), ("type_dots", x_b, 232.0),
+                       ("dot_out", x_b + 20.0, 232.0), ("panel", x_a, 260.0)):
         if route_bypass and role in ("bypass_jsui", "bypass_pre"):
             continue                         # placed in lane column 0 above
         for bx in one(role):

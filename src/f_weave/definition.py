@@ -3,6 +3,7 @@ patcher = {
     "prefix":             "weave",
     "object_name":        "weave_pix",
     "title":              "Weave",
+    "signal_type":        "\u2207 in",
     "archetype":          "processor",
     "pix_type":           "char",
 

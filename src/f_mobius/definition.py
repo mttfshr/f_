@@ -78,7 +78,7 @@ patcher["overrides"] = {
     "invert.label": {"presentation_rect": [148.0, 64.0, 36.0, 18.0], "textjustification": None},
     "rotate.ctl": {"presentation_rect": [78.0, 20.0, 27.0, 43.0]},
     "rotate.label": {"presentation_rect": [78.0, 64.0, 36.0, 18.0], "textjustification": None},
-    "title": {"presentation_rect": [8.0, 5.0, 80.0, 21.0]},
+    "title": {"presentation_rect": [10.5, 5.0, 82.5, 21.0]},
     "zoom.ctl": {"presentation_rect": [113.0, 20.0, 27.0, 43.0]},
     "zoom.label": {"presentation_rect": [113.0, 64.0, 36.0, 18.0], "textjustification": None},
 }

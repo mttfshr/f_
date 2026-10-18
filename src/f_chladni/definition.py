@@ -190,7 +190,7 @@ patcher = {
     "object_name": "chladni_pix",
     "title":       "Chladni",
     "archetype":   "generator",
-    "signal_type": "vecfield out",
+    "signal_type": "∇ out",
 
     "pix_type":           "float32",
 

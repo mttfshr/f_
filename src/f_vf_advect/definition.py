@@ -31,7 +31,7 @@ patcher = {
     "name":               "f_vf_advect",
     "prefix":             "vfadvect",
     "title":              "Advect",
-    "signal_type":        "vecfield in",
+    "signal_type":        "∇ in/out",
 
     # Presentation
     "presentation_width":  190,
@@ -116,6 +116,5 @@ patcher = {
 
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
-    "signal_type": {"fontsize": 9.5, "textcolor": [0.35, 0.75, 0.95, 1.0]},
 }
 # END overrides

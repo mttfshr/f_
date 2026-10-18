@@ -30,7 +30,7 @@ _REAL_LOAD_MENU = g.load_menu          # tests below replace g.load_menu; fresh_
 def fresh_menu(**patch):
     m = _REAL_LOAD_MENU()
     d = {"CATEGORIES": copy.deepcopy(m.CATEGORIES), "SIZE_OVERRIDES": copy.deepcopy(m.SIZE_OVERRIDES),
-         "NOT_IN_MENU": copy.deepcopy(m.NOT_IN_MENU), "NABLA": m.NABLA}
+         "NOT_IN_MENU": copy.deepcopy(m.NOT_IN_MENU), "MARKS": copy.deepcopy(m.MARKS)}
     d.update(patch)
     return SimpleNamespace(**d)
 
@@ -82,9 +82,9 @@ def test_the_menu_patcher_is_wired_the_way_f_addmod_expects():
     for slot, (label, items) in enumerate(menu.CATEGORIES):
         disp = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_disp"][0]
         file = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_file"][0]
-        _eq(f"{label}: displays carry the nabla mark exactly when vecfield",
+        _eq(f"{label}: displays carry the mark of every kind the module takes or produces",
             disp["saved_attribute_attributes"]["valueof"]["parameter_enum"],
-            [d + (menu.NABLA if vf else "") for d, _, vf in items])
+            [d + "".join(mark for kind, mark in menu.MARKS.items() if kind in kinds) for d, _, kinds in items])
         _eq(f"{label}: the file menu lists the module names",
             file["saved_attribute_attributes"]["valueof"]["parameter_enum"], [m for _, m, _ in items])
         _eq(f"{label}: both menus have mmax = items - 1",
@@ -96,6 +96,168 @@ def test_the_menu_patcher_is_wired_the_way_f_addmod_expects():
     _eq("each file menu's second outlet -> prepend addmod -> gate inlet 1",
         all(any(s[0] == i and d == ("obj-4", 1) for s, d in cords) for i in prepends) and len(prepends) == len(menu.CATEGORIES), True)
     _eq("every live.menu is a saved parameter", all(i in p["parameters"] for i, b in boxes.items() if b["maxclass"] == "live.menu"), True)
+
+
+_ONE = "(?:\u2207|T_) (?:in|out|in/out)"
+TITLE_LABEL = re.compile(f"^{_ONE}(?: {_ONE})?$")
+
+
+def title_labels(module):
+    """The type labels in a patcher's title bar: presentation comments in the top rows that mention a type."""
+    p = json.loads((g.PATCHERS_DIR / f"f_{module}.maxpat").read_text())["patcher"]
+    out = []
+    for b in p["boxes"]:
+        b = b["box"]
+        r = b.get("presentation_rect") or [0, 99, 0, 0]
+        if b.get("maxclass") == "comment" and b.get("presentation") and r[1] < 26 \
+                and re.search("vecfield|tensor|\u2207|T_", str(b.get("text", ""))):
+            out.append(b["text"])
+    return out
+
+
+def test_title_bar_labels_use_marks_for_in_and_out_and_agree_with_the_menu_kinds():
+    menu = g.load_menu()
+    for _, items in menu.CATEGORIES:
+        for _, m, kinds in items:
+            found = title_labels(m)
+            if not kinds:
+                _eq(f"{m}: no type marks in the menu, none in the title bar", found, [])
+                continue
+            _eq(f"{m}: exactly one type label in the title bar", len(found), 1)
+            text = found[0]
+            _eq(f"{m}: {text!r} reads as marks with in / out / in/out, never the words vecfield or tensor",
+                bool(TITLE_LABEL.match(text)), True)
+            marks = ({"vec"} if "\u2207" in text else set()) | ({"tensor"} if "T_" in text else set())
+            _eq(f"{m}: the title-bar marks equal the menu kinds", marks, set(kinds))
+
+
+def test_title_bar_labels_say_the_right_direction_for_the_tensor_family():
+    want = {"tf_tensormap": "T_ out", "tf_smooth": "T_ in/out", "tf_sharpen": "T_ in/out",
+            "tf_aniso_blur": "T_ in", "tf_hatch": "T_ in", "tf_glyph": "T_ in",
+            "tf_axisflow": "T_ in \u2207 out", "vf_fluid": "\u2207 in/out", "vf_warp": "\u2207 in",
+            "vf_vortex": "\u2207 out", "weave": "\u2207 in",
+            "vf_advect": "\u2207 in/out", "vf_prism": "\u2207 in/out"}   # their 3rd outlets carry a vecfield (code audit 2026-10-17)
+    for m, text in want.items():
+        _eq(f"{m}: title-bar label", title_labels(m), [text])
+
+
+def test_a_module_with_an_outlet_named_vecfield_or_tensor_says_so_on_its_output_side():
+    """The audit that caught advect and prism (a third outlet that is a vecfield, labelled only "in") was done by
+    reading the code.  This keeps the cheap part of it: an outlet the module itself names vecfield / tensor means
+    the title-bar label must have that mark on its output side (out or in/out)."""
+    menu = g.load_menu()
+    for _, items in menu.CATEGORIES:
+        for _, m, _ in items:
+            p = json.loads((g.PATCHERS_DIR / f"f_{m}.maxpat").read_text())["patcher"]
+            names = " ".join(str(b["box"].get("comment", "")) for b in p["boxes"] if b["box"].get("maxclass") == "outlet").lower()
+            labels = title_labels(m)
+            outs = {mark for mark, d in re.findall("(\u2207|T_) (in/out|in|out)", labels[0] if labels else "") if d in ("out", "in/out")}
+            if "vecfield" in names:
+                _eq(f"{m}: an outlet is named vecfield, so the label outputs \u2207", "\u2207" in outs, True)
+            if "tensor" in names:
+                _eq(f"{m}: an outlet is named tensor, so the label outputs T_", "T_" in outs, True)
+
+
+def title_label_boxes(module):
+    p = json.loads((g.PATCHERS_DIR / f"f_{module}.maxpat").read_text())["patcher"]
+    boxes = [b["box"] for b in p["boxes"]]
+    labels = [b for b in boxes if b.get("maxclass") == "comment" and b.get("presentation")
+              and (b.get("presentation_rect") or [0, 99])[1] < 26 and TITLE_LABEL.match(str(b.get("text", "")))]
+    button = [b for b in boxes if b.get("maxclass") == "jsui" and b.get("varname") == "bypass" and b.get("presentation")]
+    return labels, button
+
+
+def test_title_bar_labels_share_one_look_and_one_place():
+    VEC, TENSOR = [0.35, 0.75, 0.95, 1.0], [0.85, 0.55, 0.2, 1.0]
+    menu = g.load_menu()
+    for _, items in menu.CATEGORIES:
+        for _, m, kinds in items:
+            if not kinds:
+                continue
+            labels, button = title_label_boxes(m)
+            _eq(f"{m}: one label and one bypass button", (len(labels), len(button)), (1, 1))
+            L, rect = labels[0], labels[0]["presentation_rect"]
+            _eq(f"{m}: 11 pt", L["fontsize"], 11.0)
+            _eq(f"{m}: right-justified", L.get("textjustification"), 2)
+            _eq(f"{m}: on the title's baseline (y 0.9 under the 12 pt title at y 0), 70 x 21", (rect[1], rect[2], rect[3]), (0.9, 70.0, 21.0))
+            _eq(f"{m}: right edge 4 px left of the bypass button", round(rect[0] + rect[2], 1), round(button[0]["presentation_rect"][0] - 4.0, 1))
+            want = VEC if L["text"].startswith("\u2207") else TENSOR
+            _eq(f"{m}: colour follows the first mark", [round(c, 3) for c in L["textcolor"]], want)
+
+
+def frame_border(module):
+    p = json.loads((g.PATCHERS_DIR / f"f_{module}.maxpat").read_text())["patcher"]
+    panels = [b["box"] for b in p["boxes"] if b["box"].get("maxclass") == "panel" and b["box"].get("presentation")]
+    big = max(panels, key=lambda b: b["presentation_rect"][2] * b["presentation_rect"][3])
+    return [round(c, 3) for c in big["bordercolor"]]
+
+
+def title_bar_dots(module):
+    """(top dot, bottom dot, the module-name comments sitting right of them, every box id) of a patcher."""
+    p = json.loads((g.PATCHERS_DIR / f"f_{module}.maxpat").read_text())["patcher"]
+    boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
+    names = [b for b in boxes.values() if b.get("maxclass") == "comment" and b.get("presentation")
+             and b["presentation_rect"][0] == 10.5 and b["presentation_rect"][1] < 8]
+    return boxes.get("obj-19f"), boxes.get("obj-19g"), names, boxes
+
+
+def test_the_type_dots_show_what_each_module_takes_and_outputs():
+    """Two stacked round dots left of the module name on EVERY module: top = the type it takes, bottom = the type
+    it outputs (cyan vecfield, amber tensor, dim grey neither), read from the title-bar label.  They are foreground
+    panels (a background-layer panel is drawn under the frame and vanishes).  The frame border stays dark blue."""
+    DARK, VEC, TENSOR, GREY = [0.0, 0.035, 0.227, 1.0], [0.35, 0.75, 0.95, 1.0], [0.85, 0.55, 0.2, 1.0], [0.28, 0.28, 0.28, 1.0]
+    colour = {"\u2207": VEC, "T_": TENSOR, None: GREY}
+    menu = g.load_menu()
+    for _, items in menu.CATEGORIES:
+        for _, m, kinds in items:
+            labels = title_labels(m)
+            ins = outs = None
+            for mark, direction in re.findall("(\u2207|T_) (in/out|in|out)", labels[0] if labels else ""):
+                ins = mark if direction in ("in", "in/out") else ins
+                outs = mark if direction in ("out", "in/out") else outs
+            d_in, d_out, names, boxes = title_bar_dots(m)
+            _eq(f"{m}: both dots exist and one module name sits to their right", (d_in is not None, d_out is not None, len(names)), (True, True, 1))
+            _eq(f"{m}: top dot = what it takes ({ins or 'neither'})", [round(c, 3) for c in d_in["bgcolor"]], colour[ins])
+            _eq(f"{m}: bottom dot = what it outputs ({outs or 'neither'})", [round(c, 3) for c in d_out["bgcolor"]], colour[outs])
+            r_in, r_out = d_in["presentation_rect"], d_out["presentation_rect"]
+            _eq(f"{m}: 5 px dots in one column at x 4, stacked 7 px apart", (r_in[2:], r_out[2:], r_in[0], r_out[0], round(r_out[1] - r_in[1], 3)),
+                ([5.0, 5.0], [5.0, 5.0], 4.0, 4.0, 7.0))
+            _eq(f"{m}: both dots are round", (d_in.get("rounded"), d_out.get("rounded")), (6, 6))
+            _eq(f"{m}: dots are in the foreground layer", (d_in.get("background"), d_out.get("background")), (0, 0))
+            _eq(f"{m}: frame border is the standard dark blue", frame_border(m), DARK)
+
+
+def content_extent(path):
+    """((frame w, frame h), (right edge, bottom edge) of everything else shown in presentation)."""
+    boxes = [b["box"] for b in json.loads(path.read_text())["patcher"]["boxes"]]
+    frame = max((b for b in boxes if b.get("maxclass") == "panel" and b.get("presentation")),
+                key=lambda b: b["presentation_rect"][2] * b["presentation_rect"][3])
+    right = bottom = 0.0
+    for b in boxes:
+        if b is frame or not b.get("presentation") or not b.get("presentation_rect"):
+            continue
+        r = b["presentation_rect"]
+        right, bottom = max(right, r[0] + r[2]), max(bottom, r[1] + r[3])
+    return tuple(frame["presentation_rect"][2:]), (right, bottom)
+
+
+def test_the_tensor_modules_are_not_cropped_by_their_frame_or_their_helpfile_embed():
+    """f_tf_glyph / hatch / aniso_blur shipped on a 154 x 84 frame and lost their right-hand dials and second row.
+    Content may poke 1.5 px past the frame (the 50 px label boxes centre their text); the helpfile's bpatcher
+    must be at least as large as the frame."""
+    menu = g.load_menu()
+    for _, items in menu.CATEGORIES:
+        for _, m, _ in items:
+            if not m.startswith("tf_"):
+                continue
+            (fw, fh), (right, bottom) = content_extent(g.PATCHERS_DIR / f"f_{m}.maxpat")
+            _eq(f"{m}: content (to {right:.1f} x {bottom:.1f}) fits the {fw:.0f} x {fh:.0f} frame",
+                (right <= fw + 1.5, bottom <= fh + 1.5), (True, True))
+            help_boxes = [b["box"] for b in json.loads((ROOT / "package" / "help" / f"f_{m}.maxhelp").read_text())["patcher"]["boxes"]]
+            embed = [b for b in help_boxes if b.get("maxclass") == "bpatcher" and b.get("name") == f"f_{m}.maxpat"]
+            _eq(f"{m}: one embed in its helpfile", len(embed), 1)
+            ew, eh = embed[0]["patching_rect"][2:]
+            _eq(f"{m}: helpfile embed ({ew:.0f} x {eh:.0f}) is at least the frame size", (ew >= fw, eh >= fh), (True, True))
 
 
 def test_the_old_menu_scripts_are_gone():
@@ -113,10 +275,10 @@ def test_validate_catches_each_kind_of_mistake():
     m = fresh_menu()
     cats = lambda: copy.deepcopy(m.CATEGORIES)
 
-    c = cats(); c[0][1].append(("Weave2", "weave", True))
+    c = cats(); c[0][1].append(("Weave2", "weave", ("vec",)))
     _eq("a module in two categories", "module listed twice: weave" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
-    c = cats(); c[0][1][0] = ("Ghost", "ghost", True)
+    c = cats(); c[0][1][0] = ("Ghost", "ghost", ("vec",))
     t = problem_text(fresh_menu(CATEGORIES=c))
     _eq("a menu entry with no patcher", "no package/patchers/f_ghost.maxpat" in t, True)
 
@@ -137,14 +299,35 @@ def test_validate_catches_each_kind_of_mistake():
         "f_masonry is in menu category 'Spatial' but in another README group" in t
         and "f_masonry is in README group 'Discrete' but not in that menu category" in t, True)
 
-    c = cats(); c[4][1][0] = ("Vortex", "vf_vortex", False)
-    _eq("a nabla category with an unflagged module", "not flagged vecfield" in problem_text(fresh_menu(CATEGORIES=c)), True)
+    c = cats(); i = [lab for lab, _ in c].index("\u2207 Generators"); c[i][1][0] = ("Vortex", "vf_vortex", ())
+    _eq("a nabla category with an unflagged module", "not flagged vec" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
-    c = cats(); c[1][1].append(("Stipple", "texrouter", False))
+    c = cats(); i = [lab for lab, _ in c].index("T_ Tensor"); c[i][1][0] = ("Tensormap", "tf_tensormap", ())
+    _eq("a T_ category with an unflagged module",
+        "in the tensor category 'T_ Tensor' but not flagged tensor" in problem_text(fresh_menu(CATEGORIES=c)), True)
+
+    c = cats(); i = [lab for lab, _ in c].index("T_ Tensor"); c[i][1][0] = ("Tensormap", "tf_tensormap", ("vec",))
+    _eq("a vecfield-only module does not satisfy a T_ category",
+        "not flagged tensor" in problem_text(fresh_menu(CATEGORIES=c)), True)
+
+    c = cats(); i = [lab for lab, _ in c].index("T_ Tensor")
+    _eq("a module that takes a tensor and makes a vecfield carries both marks and may sit in T_ (f_tf_axisflow)",
+        [e[2] for e in c[i][1] if e[1] == "tf_axisflow"], [("vec", "tensor")])
+
+    c = cats(); c[1][1].append(("Stipple", "texrouter", ()))
     _eq("two entries shown with the same name", "two entries are shown as 'Stipple'" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
     c = cats(); c[0] = (c[0][0], [])
     _eq("an empty category", "empty category" in problem_text(fresh_menu(CATEGORIES=c)), True)
+
+    old_slot = g.SLOT
+    try:
+        g.SLOT = 43.0                      # the pitch before the T_ category: nine categories no longer fit
+        t = problem_text(fresh_menu())
+    finally:
+        g.SLOT = old_slot
+    _eq("a menu taller than its panel is refused (the examples embed it at that size)",
+        "the menu panel is 380 px" in t, True)
 
     skip = dict(m.NOT_IN_MENU); skip["f_vf_vorticity"] = "  "
     _eq("NOT_IN_MENU without a reason", "needs a reason" in problem_text(fresh_menu(NOT_IN_MENU=skip)), True)
@@ -172,9 +355,12 @@ def test_validate_catches_each_kind_of_mistake():
     c = cats(); c[1] = (c[0][0], c[1][1])
     _eq("two categories with the same label", "duplicate category: 'Scope'" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
-    for label, bad, needle in (("a non-bool vecfield flag", [("L", [("A", "chladni", "yes")])], "a menu entry must be"),
+    for label, bad, needle in (("a string where the kinds tuple goes", [("L", [("A", "chladni", "yes")])], "a menu entry must be"),
+                               ("the old bool vecfield flag", [("L", [("A", "chladni", True)])], "a menu entry must be"),
+                               ("a mark kind that does not exist", [("L", [("A", "chladni", ("spin",))])], "a menu entry must be"),
+                               ("a mark kind listed twice", [("L", [("A", "chladni", ("vec", "vec"))])], "a menu entry must be"),
                                ("a 2-tuple entry", [("L", [("A", "chladni")])], "a menu entry must be"),
-                               ("an empty display name", [("L", [("", "chladni", True)])], "a menu entry must be"),
+                               ("an empty display name", [("L", [("", "chladni", ("vec",))])], "a menu entry must be"),
                                ("a category that is not a pair", ["L"], "a category must be"),
                                ("a category list that is empty", [], "non-empty list")):
         msg = ""

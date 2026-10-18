@@ -128,7 +128,7 @@ def test_build_runs_the_port_order_check():
 # ---- render_trigger
 
 def _source(**extra):
-    d = {"name": "f_s", "prefix": "s", "object_name": "s_pix", "title": "Src", "signal_type": "vecfield out",
+    d = {"name": "f_s", "prefix": "s", "object_name": "s_pix", "title": "Src", "signal_type": "\u2207 out",
          "archetype": "source", "pix_type": "float32", "presentation_width": 160, "presentation_height": 90,
          "outlets": [{"comment": "vecfield"}],
          "mod_inlets": [{"label": "a mod", "state_param": "src_a"}],
@@ -226,7 +226,7 @@ def _route_facts(defn):
     route = top[bp.OBJ_ROUTE]
     from_route = sorted((ln["patchline"]["source"][1], ln["patchline"]["destination"][0])
                         for ln in p["lines"] if ln["patchline"]["source"][0] == bp.OBJ_ROUTE)
-    jsui = [i for i, b in top.items() if b.get("maxclass") == "jsui"][0]
+    jsui = [i for i, b in top.items() if b.get("maxclass") == "jsui" and b.get("filename") == "bypass_toggle.js"][0]
     return {"text": route["text"], "numoutlets": route["numoutlets"], "from_route": from_route,
             "jsui": jsui, "top": top, "lines": p["lines"]}
 
@@ -607,7 +607,7 @@ def test_legacy_is_default_off_and_each_entry_does_only_its_job():
     top = {b["box"]["id"]: b["box"] for b in base["boxes"]}
     _eq("default: pix varname is the object name, autopattr is <prefix>_autopattr, jsui has no saved block",
         (top[bp.OBJ_PIX]["varname"], top[bp.OBJ_AUTOPATTR]["varname"],
-         "saved_attribute_attributes" in [b for b in top.values() if b["maxclass"] == "jsui"][0]),
+         "saved_attribute_attributes" in [b for b in top.values() if b["maxclass"] == "jsui" and b.get("filename") == "bypass_toggle.js"][0]),
         ("t_pix", "t_autopattr", False))
     d = _defn()
     d["legacy"] = {"pix_varname": "jit.gl.pix_AA", "autopattr_varname": "u123",
@@ -620,7 +620,7 @@ def test_legacy_is_default_off_and_each_entry_does_only_its_job():
     _eq("every control's param_connect follows the pix varname",
         sorted({b["param_connect"].split("::")[0] for b in nt.values() if b.get("param_connect")}), ["jit.gl.pix_AA"])
     _eq("autopattr varname", nt[bp.OBJ_AUTOPATTR]["varname"], "u123")
-    jsui = [b for b in nt.values() if b["maxclass"] == "jsui"][0]
+    jsui = [b for b in nt.values() if b["maxclass"] == "jsui" and b.get("filename") == "bypass_toggle.js"][0]
     _eq("the jsui's saved block, verbatim", jsui["saved_attribute_attributes"], {"valueof": {"parameter_invisible": 1}})
     d["legacy"]["bypass_jsui_saved"]["valueof"]["parameter_invisible"] = 9
     _eq("and a copy: editing the definition afterwards does not reach the built box",

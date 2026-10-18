@@ -18,7 +18,9 @@ Checks (any failure aborts, nothing is written):
     - the categories match the README Patches table (the table f_Launch is generated from):
       the same labels, the same order, the same members; README groups the menu does not show
       (Audio) hold only NOT_IN_MENU modules
-    - a category whose label starts with a nabla holds vecfield modules only
+    - a category whose label starts with a type mark (a nabla, or T_) holds only modules of that kind
+    - the menu fits its panel: the categories, at the slot pitch, must end inside PANEL_H, because
+      the example patches embed the menu at about that size and would clip the last category
     - every size override differs from the module's panel size (else it is stale)
     - every menu module has a presentation panel to take its size from
 """
@@ -46,11 +48,25 @@ SIZES_END = "// END SIZES"
 
 GREY_TEXT = [0.45098039215686275, 0.47058823529411764, 0.5764705882352941, 1.0]
 PRES_W = 89.66666933894157          # presentation width of the menu column, as Max saved it
+PANEL_H = 380                       # presentation height of the menu column (the examples embed it at about this)
+MENU_TOP = 25.0                     # y of the first category's label
+SLOT = 39.0                         # vertical pitch between categories (was 43 before the T_ category)
+SLOT_CONTENT = 38.0                 # one category's label + menu: 21 + 17
 DEFAULT_SIZE = [200, 150]           # what f_addmod.js falls back to for an unlisted module
 
 
 class MenuError(Exception):
     pass
+
+
+def valid_kinds(kinds, marks):
+    return isinstance(kinds, tuple) and all(isinstance(k, str) and k in marks for k in kinds) \
+        and len(set(kinds)) == len(kinds)
+
+
+def shown_label(display, kinds, marks):
+    """The display name plus the suffix of every kind the module carries, in MARKS order."""
+    return display + "".join(mark for kind, mark in marks.items() if kind in kinds)
 
 
 def load_menu():
@@ -88,14 +104,20 @@ def validate(menu, groups):
         shown = []
         for item in items:
             if not (isinstance(item, tuple) and len(item) == 3 and isinstance(item[0], str) and item[0]
-                    and isinstance(item[1], str) and item[1] and isinstance(item[2], bool)):
-                raise MenuError(f"a menu entry must be (display, module, vecfield: bool), not {item!r}")
+                    and isinstance(item[1], str) and item[1] and valid_kinds(item[2], menu.MARKS)):
+                raise MenuError(f"a menu entry must be (display, module, kinds: tuple of {sorted(menu.MARKS)}), "
+                                f"not {item!r}")
             shown.append(item[0])
             modules.append(item[1])
-            if label.startswith("\u2207") and not item[2]:
-                problems.append(f"{item[1]}: in the nabla category {label!r} but not flagged vecfield")
+            for kind, mark in menu.MARKS.items():
+                if label.startswith(mark.strip()) and kind not in item[2]:
+                    problems.append(f"{item[1]}: in the {kind} category {label!r} but not flagged {kind}")
         for d in sorted({x for x in shown if shown.count(x) > 1}):
             problems.append(f"{label!r}: two entries are shown as {d!r}")
+    needed = MENU_TOP + SLOT * (len(cats) - 1) + SLOT_CONTENT
+    if needed > PANEL_H:
+        problems.append(f"{len(cats)} categories need {needed:g} px but the menu panel is {PANEL_H} px (the examples "
+                        f"embed it at that size): reduce SLOT, or grow the panel and re-size the embeds")
     for lab in sorted({x for x in labels if labels.count(x) > 1}):
         problems.append(f"duplicate category: {lab!r}")
     for m in sorted({x for x in modules if modules.count(x) > 1}):
@@ -182,7 +204,7 @@ def head_boxes():
         {"background": 1, "bgcolor": [0.0, 0.0, 0.0, 1.0], "border": 2,
          "bordercolor": [0.0, 0.03529411765, 0.2274509804, 1.0], "id": "obj-1", "maxclass": "panel",
          "mode": 0, "numinlets": 1, "numoutlets": 0, "patching_rect": [0.0, 0.0, 160.0, 340.0],
-         "presentation": 1, "presentation_rect": [0.0, 0.0, 96.0, 380.0], "rounded": 6},
+         "presentation": 1, "presentation_rect": [0.0, 0.0, 96.0, float(PANEL_H)], "rounded": 6},
         {"fontface": 2, "fontname": "Ableton Sans Light", "fontsize": 12.5, "id": "obj-2",
          "maxclass": "comment", "numinlets": 1, "numoutlets": 0, "patching_rect": [3.0, 4.0, 156.0, 21.0],
          "presentation": 1, "presentation_rect": [3.0, 4.0, PRES_W, 21.0], "text": "f_",
@@ -209,8 +231,8 @@ def build_patcher(menu):
     for slot, (label, items) in enumerate(menu.CATEGORIES):
         comment_id, disp_id, file_id, prepend_id = (f"obj-{obj_n + k}" for k in range(4))
         obj_n += 4
-        y = 25.0 + 43.0 * slot
-        shown = [d + (menu.NABLA if vf else "") for d, _, vf in items]
+        y = MENU_TOP + SLOT * slot
+        shown = [shown_label(d, k, menu.MARKS) for d, _, k in items]
         files = [m for _, m, _ in items]
         mmax = len(items) - 1
 

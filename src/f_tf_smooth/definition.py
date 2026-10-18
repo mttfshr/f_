@@ -34,8 +34,8 @@ patcher = {
     "name":        "f_tf_smooth",
     "prefix":      "smooth",
     "object_name": "#0_smooth_pix",
-    "title":       "Tensor Smooth",
-    "signal_type": "tensor out",
+    "title":       "Smooth",
+    "signal_type": "T_ in/out",
     "archetype":   "processor",
     "bypass_mode": "param",
 
@@ -105,5 +105,4 @@ patcher = {
 # Layout mirrors f_tf_tensormap (same 154x84 panel; release dial + bypass jsui).
 patcher["overrides"] = {
     "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
-    "signal_type": {"fontsize": 9.5, "presentation_rect": [62.0, 3.0, 60.0, 18.0]},
 }

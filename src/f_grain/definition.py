@@ -131,6 +131,6 @@ patcher["overrides"] = {
     "size_var.label": {"presentation_rect": [41.00000011920929, 22.0, 32.0, 18.0], "textjustification": None},
     "softness.ctl": {"presentation_rect": [116.0, 115.0, 27.0, 43.0]},
     "softness.label": {"presentation_rect": [116.0, 99.0, 28.0, 18.0], "textjustification": None},
-    "title": {"fontsize": None, "presentation_rect": [4.0, 0.5, 60.0, 21.0]},
+    "title": {"fontsize": None, "presentation_rect": [10.5, 0.5, 66.5, 21.0]},
 }
 # END overrides

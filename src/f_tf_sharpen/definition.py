@@ -26,8 +26,8 @@ patcher = {
     "name":        "f_tf_sharpen",
     "prefix":      "sharpen",
     "object_name": "#0_sharpen_pix",
-    "title":       "Tensor Sharpen",
-    "signal_type": "tensor out",
+    "title":       "Sharpen",
+    "signal_type": "T_ in/out",
     "archetype":   "processor",
     "pix_type":    "float32",
     "bypass_mode": "param",
@@ -57,7 +57,6 @@ patcher = {
 # Layout: single dial in row 1; matches the one/two-param module shape.
 patcher["overrides"] = {
     "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
-    "signal_type": {"fontsize": 9.5, "presentation_rect": [62.0, 3.0, 60.0, 18.0]},
     "sharpen.ctl":  {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
     "sharpen.label": {"presentation_rect": [-8.0, 20.0, 50.0, 18.0]},
 }

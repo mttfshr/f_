@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "fieldmap",
     "object_name":        "fieldmap_pix",
     "title":              "Fieldmap",
-    "signal_type":        "vecfield out",
+    "signal_type":        "∇ out",
     "archetype":          "processor",
     "pix_type":           "float32",
 
@@ -60,6 +60,5 @@ out1 = mix(threshed, neutral, bypass);""",
 patcher["overrides"] = {
     "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
     "panel": {"presentation_rect": [0.0, 0.0, 150.0, 88.0]},
-    "signal_type": {"fontsize": 9.5, "presentation_rect": [56.0, 3.0, 60.0, 18.0], "textcolor": [0.35, 0.75, 0.95, 1.0]},
 }
 # END overrides

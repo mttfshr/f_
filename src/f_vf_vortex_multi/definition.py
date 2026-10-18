@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "vf_vortex_multi",
     "object_name":        "vf_vortex_multi_pix",
     "title":              "Vortex Multi",
-    "signal_type":        "vecfield out",
+    "signal_type":        "∇ out",
     "archetype":          "source",
     "render_trigger":     "inlet",       # driven from its inlet; no `r draw` (as shipped)
     "pix_type":           "float32",
@@ -188,7 +188,6 @@ out1 = mix(field_out, vec(0.5, 0.5, 0.5, 1.0), bypass);
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
     "bypass_jsui": {"presentation_rect": [168.0, 4.5, 18.0, 12.0]},
-    "signal_type": {"presentation_rect": [72.00000214576721, 0.0, 74.0, 21.0]},
-    "title": {"presentation_rect": [-1.3333333730697632, 0.0, 74.3333355486393, 21.0]},
+    "title": {"presentation_rect": [10.5, 0.0, 86.2, 21.0]},
 }
 # END overrides

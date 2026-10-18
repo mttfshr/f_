@@ -288,13 +288,77 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-0.3333333432674408,
+						10.5,
 						1.0000000298023224,
-						88.0,
+						98.8,
 						21.0
 					],
 					"text": "Hue Processor",
 					"suppressinlet": 1
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19f",
+					"maxclass": "panel",
+					"background": 0,
+					"bgcolor": [
+						0.28,
+						0.28,
+						0.28,
+						1.0
+					],
+					"border": 0,
+					"mode": 0,
+					"hint": "Takes: no vecfield or tensor",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						980.0,
+						232.0,
+						5.0,
+						5.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						6.000000029802322,
+						5.0,
+						5.0
+					],
+					"rounded": 6
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19g",
+					"maxclass": "panel",
+					"background": 0,
+					"bgcolor": [
+						0.28,
+						0.28,
+						0.28,
+						1.0
+					],
+					"border": 0,
+					"mode": 0,
+					"hint": "Outputs: no vecfield or tensor",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						1000.0,
+						232.0,
+						5.0,
+						5.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						13.000000029802322,
+						5.0,
+						5.0
+					],
+					"rounded": 6
 				}
 			},
 			{

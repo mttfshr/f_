@@ -704,20 +704,41 @@ is a vecfield. A module with a *mixed* outlet set — e.g. `f_chladni`
 (luma + vecfield + magnitude) — keeps its plain name but still needs the
 vecfield outlet surfaced to users in two places:
 
-1. **Header label** (`definition.py`): set `"signal_type"` to a free-text
-   direction string — `"vecfield in"`, `"vecfield out"`, or
-   `"vecfield in/out"` — not the bare `"vecfield"` (that plain string is
-   reserved for actual `f_vf_`-prefixed producers/consumers whose *entire*
-   output/input is vecfield-typed; it also happens to be the only key
-   `SIGNAL_TYPE_COLORS` matches, so a directional string always renders
-   grey `[0.6,0.6,0.6,1]` on first build). After building, hand-fix the
-   header comment box (`obj-8`) `textcolor` to the library's standard
-   value `[0.302, 0.325, 0.463, 1.0]` to match the rest of the library —
-   `build_patcher.py` doesn't do this automatically for non-exact-match
-   signal_type strings.
+1. **Header label** (`definition.py`): set `"signal_type"` to the types that go
+   in and out, written as marks: `"∇ in"`, `"∇ out"` or `"∇ in/out"` for a
+   vecfield, `"T_ in"`, `"T_ out"` or `"T_ in/out"` for a tensor, and both
+   marks for a bridge (`f_tf_axisflow` reads `"T_ in ∇ out"`). The words
+   "vecfield" and "tensor" are not used in the title bar (since 2026-10-17).
+   `build_patcher.py` draws it 11 pt, right-justified in a 70 px box whose
+   right edge sits 4 px left of the bypass button (`button_x`: `pw - 22`, or the
+   `bypass_jsui` override's x), at y 0.9 so the baseline matches the 12 pt
+   title, and colours it by its first mark (∇ = advect's cyan
+   `[0.35, 0.75, 0.95, 1.0]`, `T_` = the tensor amber). There is nothing to
+   hand-fix, and no per-module `signal_type` override is needed (the old ones
+   were removed 2026-10-17). **Every module also gets two type dots** left of the name (`dot_box`, ids `obj-19f` / `obj-19g`, element
+   keys `dot_in` / `dot_out`): round 5 px panels in one column at x 4, 7 px apart. The top one is the type the
+   module takes and the bottom one the type it outputs: cyan vecfield, amber tensor, dim grey `DOT_NONE` for
+   neither, read from the label by `parse_signal_type`, so a module with no `signal_type` gets two grey dots.
+   They must be FOREGROUND panels (`background` 0): a background-layer panel is drawn under the frame panel
+   and disappears. Shapes (tensor round, vecfield triangle, none square) were tried, first as panels and then
+   as one `jsui`, and read as noisy: the dots are all round. The jsui style is still in the builder
+   (`TYPE_DOTS = "jsui"`) with its script parked at `ideas/type_dots.js`. "Outputs a vecfield" means ANY outlet
+   that carries one, including a pass-through (f_vf_advect and f_vf_prism have a third outlet that is one:
+   they are `∇ in/out`); decide a module's label from the code in the shipped patcher, not from
+   `src/*/codebox_v*.gen` (historical versions) or the docs. Every module name starts at
+   `TITLE_X` (10.5) to leave room for them; a definition that overrides the
+   title must keep that x (and widen the box). A module whose title is hand-placed
+   can pin its dots with `dot_in` / `dot_out` presentation_rect overrides
+   (f_masonry and f_texrouter do). The frame border stays dark blue
+   (`BORDER_BY_TYPE = False`; setting it True restores the tried-and-dropped
+   border colouring). A long module title on a narrow panel can still
+   run into the label; shorten the title, not the label. `tests/test_generate_menu.py` checks that the
+   marks in every menu module's label equal that module's menu kinds, so the
+   title bar and the menu cannot drift apart.
 2. **`f_modules` menu**: in `src/f_modules/menu.py` give the module's entry the
-   vecfield flag (`("Chladni", "chladni", True)`), then run
-   `build/py.sh build/generate_menu.py` — the flag appends `" ∇"` to its display label.
+   vecfield kind (`("Chladni", "chladni", V)`, with `V = ("vec",)` defined in `menu.py`), then run
+   `build/py.sh build/generate_menu.py` — the kind appends `" ∇"` to its display label. A tensor
+   module takes `T` (`" T_"`); a module that reads a tensor and writes a vecfield takes `VT`.
 
 Established 2026-07-12 via `f_chladni`'s `out3`/vecfield labeling pass —
 see HANDOFF.md and `.specify/f_chladni/plan.md` for the concrete example.
@@ -1017,7 +1038,7 @@ Key decisions:
 
 To add a module, add one entry to `src/f_modules/menu.py` and regenerate:
 
-1. **`CATEGORIES`** — `(display, module, vecfield)` in the right category. The category labels and members must match the README Patches table (the table `f_Launch` is generated from); the generator fails loudly if they differ, if the patcher does not exist, or if a shipped patcher is neither in the menu nor in `NOT_IN_MENU` (with a reason). A ∇ category takes vecfield modules only.
+1. **`CATEGORIES`** — `(display, module, kinds)` in the right category, where `kinds` is `N` (neither), `V` (vecfield), `T` (tensor) or `VT` (both). The category labels and members must match the README Patches table (the table `f_Launch` is generated from); the generator fails loudly if they differ, if the patcher does not exist, or if a shipped patcher is neither in the menu nor in `NOT_IN_MENU` (with a reason). A ∇ category takes only modules that carry the vecfield kind, and a `T_` category only the tensor kind. The menu must also fit the 380 px panel the example patches embed it at: nine categories fit at the 39 px slot pitch, and the generator fails the check if a tenth would not (reduce the pitch, or grow the panel and re-size the embeds).
 2. **Size** — nothing to do: it is the module's presentation panel rect, rounded. Add a `SIZE_OVERRIDES` entry (with a reason) only for a module whose content extends past its panel; an override equal to the panel size fails the check as stale.
 
 ### Why No f_menu Wrapper
@@ -1030,17 +1051,18 @@ The generator reproduces the shipped patcher byte for byte, so a regeneration wi
 
 ### Module Categories
 
-Reorganized 2026-07-10 by visual character rather than generator/processor archetype — menu category doesn't have to equal module type. "∇"-prefixed categories are entirely vecfield-typed; individual module labels also get a "∇" suffix if they take or produce an `f_vecfield` texture, even outside those two categories.
+Reorganized 2026-07-10 by visual character rather than generator/processor archetype — menu category doesn't have to equal module type. "∇"-prefixed categories are entirely vecfield-typed, and the `T_ Tensor` category (2026-10-17) is entirely tensor-typed; individual module labels also get a "∇" or " T_" suffix if they take or produce an `f_vecfield` or `f_tensor` texture, even outside those categories. Color / Tone sits above the vecfield groups (2026-10-17).
 
 | Category | Modules |
 |---|---|
 | Scope | Chladni |
 | Discrete | Masonry, Stipple, Grain, Weave, Seeds |
-| Spatial | Mobius, Stereo, SIRDS, Droste |
+| Spatial | Mobius, Stereo, SIRDS, Droste, Ngon |
 | Optical | Lens, Prism |
-| ∇ Generators | Vortex, Vortex Multi |
-| ∇ Processors | Caustic, Fieldmap, Flow, Repulse, Warp, Streak, Glow, Advect, Chroma |
 | Color / Tone | Channel Grader, Hue Processor, Luma Processor, Tone Curve |
+| ∇ Generators | Vortex, Vortex Multi |
+| ∇ Processors | Caustic, Fieldmap, Flow, Repulse, Warp, Streak, Glow, Advect, Chroma, Optical Flow, Fluid |
+| T_ Tensor | Tensormap, Smooth, Sharpen, Aniso Blur, Hatch, Glyph, Axis Flow (carries both ∇ and T_) |
 | Utilities | Tex Router, Profile, Split, Potential, Matrix 2 |
 
 `f_apollonian`, `f_poincare`, and `f_vf_vorticity` are intentionally excluded (unshipped/unverified — see HANDOFF.md).

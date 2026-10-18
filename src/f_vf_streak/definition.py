@@ -3,7 +3,7 @@ patcher = {
     "prefix":             "vfstreak",
     "object_name":        "vfstreak_pix",
     "title":              "Streak",
-    "signal_type":        "vecfield",
+    "signal_type":        "∇ in",
     "archetype":          "processor",
     "pix_type":           "char",
 

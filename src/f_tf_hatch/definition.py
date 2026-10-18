@@ -44,13 +44,13 @@ patcher = {
     # OUTLETS themselves are ordinary luma/texture renders (marks, not field
     # data): not tensor-typed -- plan ADR-7's note; per-outlet comments carry
     # the encoding hint so they are never wired as tensor/vecfield.
-    "signal_type": "tensor out",
+    "signal_type": "T_ in",
     "archetype":   "processor",
     "bypass_mode": "param",
     "bypass_target": "e3",
 
-    "presentation_width":  154,
-    "presentation_height": 84,
+    "presentation_width":  190,
+    "presentation_height": 150,
 
     "pix_chain": [
         {
@@ -170,9 +170,7 @@ patcher = {
     ],
 }
 
-# Layout (mirrors the tensormap panel: 154x84, controls run to x ~ 150).
-patcher["overrides"] = {
-    "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
-    "signal_type": {"fontsize": 9.5, "presentation_rect": [62.0, 3.0, 60.0, 18.0]},
-}
+# Layout: the library's 5-column, 190 px grid (controls run to x ~ 180, two dial rows); the
+# frame was 154 x 84 and cropped them.
+patcher["overrides"] = {}
 # END overrides

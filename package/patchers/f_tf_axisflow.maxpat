@@ -291,9 +291,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-1.5,
+						10.5,
 						0.0,
-						80.0,
+						92.0,
 						21.0
 					],
 					"text": "Axis Flow"
@@ -304,13 +304,14 @@
 					"id": "obj-8",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
+					"fontsize": 11.0,
 					"textcolor": [
-						0.302,
-						0.325,
-						0.463,
+						0.85,
+						0.55,
+						0.2,
 						1.0
 					],
+					"textjustification": 2,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
@@ -321,12 +322,76 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						62.0,
-						3.0,
-						60.0,
-						18.0
+						55.0,
+						0.9,
+						70.0,
+						21.0
 					],
-					"text": "vecfield out"
+					"text": "T_ in \u2207 out"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19f",
+					"maxclass": "panel",
+					"background": 0,
+					"bgcolor": [
+						0.85,
+						0.55,
+						0.2,
+						1.0
+					],
+					"border": 0,
+					"mode": 0,
+					"hint": "Takes: tensor",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						980.0,
+						232.0,
+						5.0,
+						5.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						5.0,
+						5.0,
+						5.0
+					],
+					"rounded": 6
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19g",
+					"maxclass": "panel",
+					"background": 0,
+					"bgcolor": [
+						0.35,
+						0.75,
+						0.95,
+						1.0
+					],
+					"border": 0,
+					"mode": 0,
+					"hint": "Outputs: vecfield",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						1000.0,
+						232.0,
+						5.0,
+						5.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						12.0,
+						5.0,
+						5.0
+					],
+					"rounded": 6
 				}
 			},
 			{

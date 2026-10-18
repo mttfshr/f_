@@ -28,7 +28,7 @@ Background on the package layout and the choices behind it: `docs/max-reference/
 
 ## Patches
 
-Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category. The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it is a vecfield module), plus Audio for the `gen~` modules; a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`.
+Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category. The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it takes or produces a vecfield, a T_ means the same for a tensor), plus Audio for the `gen~` modules; a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`. The `f_tf_` modules work with `f_tensor` textures produced by `f_tf_tensormap` (`docs/f-reference/f_tensor_type.md`).
 
 This table is also the source for the package's launcher patcher (`package/extras/f_Launch.maxpat`, opened by the Package Manager's Launch button and the Extras menu), which lists every module on one tab per group below. Keep each description to 110 characters, and after editing the table run `build/py.sh build/generate_launch.py` to regenerate the launcher (`tests/run.sh tests/test_launch.py` fails if it is stale).
 
@@ -65,6 +65,15 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_lens` | Filmic lens -- aberration, distortion, transmission, ghost images, halation, spatial modulation |
 | `f_vf_prism` | Vecfield-driven prism separation -- luma-gated RGB displacement along the field; composite / isolated outlets |
 
+### Color / Tone
+
+| Patch | Description |
+|---|---|
+| `f_channel_grader` | Per-channel color grading |
+| `f_hue_processor` | Hue-selective processing |
+| `f_luma_processor` | Luminance-selective processing |
+| `f_tone_curve` | Tone curve adjustment |
+
 ### ∇ Generators
 
 | Patch | Description |
@@ -89,28 +98,24 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_vf_vorticity` | ⚠ Unverified. Vorticity-confinement ("curl amp") processor. Do not treat as working |
 | `f_vf_warp` | UV warp via f_vecfield -- displaces source texture along field streamlines |
 
-### Color / Tone
+### T_ Tensor
 
 | Patch | Description |
 |---|---|
-| `f_channel_grader` | Per-channel color grading |
-| `f_hue_processor` | Hue-selective processing |
-| `f_luma_processor` | Luminance-selective processing |
-| `f_tone_curve` | Tone curve adjustment |
+| `f_tf_aniso_blur` | ⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
+| `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
+| `f_tf_glyph` | ⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
+| `f_tf_hatch` | ⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
+| `f_tf_sharpen` | ⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed |
+| `f_tf_smooth` | ⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames |
+| `f_tf_tensormap` | Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1) |
 
 ### Utilities
 
 | Patch | Description |
 |---|---|
-| `f_modules` | Module menu -- pick a module to add it to the patch as a bpatcher; categories marked ∇ hold vecfield modules |
+| `f_modules` | Module menu -- pick a module to add it as a bpatcher; ∇ marks vecfield categories, T_ tensor ones |
 | `f_texrouter` | 4x4 texture routing matrix with preset system |
-| `f_tf_tensormap` | Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1) |
-| `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
-| `f_tf_smooth` | ⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames |
-| `f_tf_glyph` | ⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
-| `f_tf_sharpen` | ⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed |
-| `f_tf_aniso_blur` | ⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
-| `f_tf_hatch` | ⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
 | `f_util_matrix_2` | Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status |
 | `f_util_profile` | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
 | `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet |

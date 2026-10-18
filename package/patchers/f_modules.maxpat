@@ -316,14 +316,14 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         3.0,
-                        68.0,
+                        64.0,
                         176.0,
                         21.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
                         2.0,
-                        68.0,
+                        64.0,
                         89.66666933894157,
                         21.0
                     ],
@@ -367,7 +367,7 @@
                     "presentation": 1,
                     "presentation_rect": [
                         3.0,
-                        89.0,
+                        85.0,
                         89.66666933894157,
                         17.0
                     ],
@@ -468,14 +468,14 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         3.0,
-                        111.0,
+                        103.0,
                         176.0,
                         21.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
                         2.0,
-                        111.0,
+                        103.0,
                         89.66666933894157,
                         21.0
                     ],
@@ -519,7 +519,7 @@
                     "presentation": 1,
                     "presentation_rect": [
                         3.0,
-                        132.0,
+                        124.0,
                         89.66666933894157,
                         17.0
                     ],
@@ -620,14 +620,14 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         3.0,
-                        154.0,
+                        142.0,
                         176.0,
                         21.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
                         2.0,
-                        154.0,
+                        142.0,
                         89.66666933894157,
                         21.0
                     ],
@@ -671,7 +671,7 @@
                     "presentation": 1,
                     "presentation_rect": [
                         3.0,
-                        175.0,
+                        163.0,
                         89.66666933894157,
                         17.0
                     ],
@@ -766,18 +766,18 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         3.0,
-                        197.0,
+                        181.0,
                         176.0,
                         21.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
                         2.0,
-                        197.0,
+                        181.0,
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "\u2207 Generators",
+                    "text": "Color / Tone",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -817,7 +817,7 @@
                     "presentation": 1,
                     "presentation_rect": [
                         3.0,
-                        218.0,
+                        202.0,
                         89.66666933894157,
                         17.0
                     ],
@@ -827,15 +827,17 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Vortex \u2207",
-                                "Vortex Multi \u2207"
+                                "Channel Grader",
+                                "Hue Processor",
+                                "Luma Processor",
+                                "Tone Curve"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_disp",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -866,15 +868,17 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "vf_vortex",
-                                "vf_vortex_multi"
+                                "channel_grader",
+                                "hue_processor",
+                                "luma_processor",
+                                "tone_curve"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_file",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -912,18 +916,18 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         3.0,
-                        240.0,
+                        220.0,
                         176.0,
                         21.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
                         2.0,
-                        240.0,
+                        220.0,
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "\u2207 Processors",
+                    "text": "\u2207 Generators",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -963,7 +967,7 @@
                     "presentation": 1,
                     "presentation_rect": [
                         3.0,
-                        261.0,
+                        241.0,
                         89.66666933894157,
                         17.0
                     ],
@@ -973,24 +977,15 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Caustic \u2207",
-                                "Fieldmap \u2207",
-                                "Flow \u2207",
-                                "Repulse \u2207",
-                                "Warp \u2207",
-                                "Streak \u2207",
-                                "Glow \u2207",
-                                "Advect \u2207",
-                                "Chroma \u2207",
-                                "Optical Flow \u2207",
-                                "Fluid \u2207"
+                                "Vortex \u2207",
+                                "Vortex Multi \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_disp",
-                            "parameter_mmax": 10,
+                            "parameter_mmax": 1,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1021,24 +1016,15 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "caustic",
-                                "vf_fieldmap",
-                                "vf_flow",
-                                "vf_repulse",
-                                "vf_warp",
-                                "vf_streak",
-                                "vf_glow",
-                                "vf_advect",
-                                "vf_chroma",
-                                "vf_optical_flow",
-                                "vf_fluid"
+                                "vf_vortex",
+                                "vf_vortex_multi"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_file",
-                            "parameter_mmax": 10,
+                            "parameter_mmax": 1,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1076,18 +1062,18 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         3.0,
-                        283.0,
+                        259.0,
                         176.0,
                         21.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
                         2.0,
-                        283.0,
+                        259.0,
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Color / Tone",
+                    "text": "\u2207 Processors",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -1127,7 +1113,7 @@
                     "presentation": 1,
                     "presentation_rect": [
                         3.0,
-                        304.0,
+                        280.0,
                         89.66666933894157,
                         17.0
                     ],
@@ -1137,17 +1123,24 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Channel Grader",
-                                "Hue Processor",
-                                "Luma Processor",
-                                "Tone Curve"
+                                "Caustic \u2207",
+                                "Fieldmap \u2207",
+                                "Flow \u2207",
+                                "Repulse \u2207",
+                                "Warp \u2207",
+                                "Streak \u2207",
+                                "Glow \u2207",
+                                "Advect \u2207",
+                                "Chroma \u2207",
+                                "Optical Flow \u2207",
+                                "Fluid \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_6_disp",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 10,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1178,17 +1171,24 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "channel_grader",
-                                "hue_processor",
-                                "luma_processor",
-                                "tone_curve"
+                                "caustic",
+                                "vf_fieldmap",
+                                "vf_flow",
+                                "vf_repulse",
+                                "vf_warp",
+                                "vf_streak",
+                                "vf_glow",
+                                "vf_advect",
+                                "vf_chroma",
+                                "vf_optical_flow",
+                                "vf_fluid"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_6_file",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 10,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1226,18 +1226,18 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         3.0,
-                        326.0,
+                        298.0,
                         176.0,
                         21.0
                     ],
                     "presentation": 1,
                     "presentation_rect": [
                         2.0,
-                        326.0,
+                        298.0,
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Utilities",
+                    "text": "T_ Tensor",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -1277,7 +1277,7 @@
                     "presentation": 1,
                     "presentation_rect": [
                         3.0,
-                        347.0,
+                        319.0,
                         89.66666933894157,
                         17.0
                     ],
@@ -1287,25 +1287,20 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Tex Router",
-                                "Profile",
-                                "Split \u2207",
-                                "Potential \u2207",
-                                "Matrix 2",
-                                "Tensor Map",
-                                "Axis Flow",
-                                "Tensor Smooth",
-                                "Tensor Glyph",
-                                "Tensor Sharpen",
-                                "Tensor Aniso Blur",
-                                "Tensor Hatch"
+                                "Tensormap T_",
+                                "Smooth T_",
+                                "Sharpen T_",
+                                "Aniso Blur T_",
+                                "Hatch T_",
+                                "Glyph T_",
+                                "Axis Flow \u2207 T_"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_disp",
-                            "parameter_mmax": 11,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1336,25 +1331,20 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "texrouter",
-                                "util_profile",
-                                "vf_split",
-                                "vf_potential",
-                                "util_matrix_2",
                                 "tf_tensormap",
-                                "tf_axisflow",
                                 "tf_smooth",
-                                "tf_glyph",
                                 "tf_sharpen",
                                 "tf_aniso_blur",
-                                "tf_hatch"
+                                "tf_hatch",
+                                "tf_glyph",
+                                "tf_axisflow"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_file",
-                            "parameter_mmax": 11,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1375,6 +1365,158 @@
                     "patching_rect": [
                         3.0,
                         3200.0,
+                        100.0,
+                        22.0
+                    ],
+                    "text": "prepend addmod"
+                }
+            },
+            {
+                "box": {
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 12.0,
+                    "id": "obj-39",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        3.0,
+                        337.0,
+                        176.0,
+                        21.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        2.0,
+                        337.0,
+                        89.66666933894157,
+                        21.0
+                    ],
+                    "text": "Utilities",
+                    "textcolor": [
+                        0.45098039215686275,
+                        0.47058823529411764,
+                        0.5764705882352941,
+                        1.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "appearance": 1,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 11.0,
+                    "id": "obj-40",
+                    "lcdcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
+                    "maxclass": "live.menu",
+                    "numinlets": 1,
+                    "numoutlets": 3,
+                    "outlettype": [
+                        "",
+                        "",
+                        "float"
+                    ],
+                    "parameter_enable": 1,
+                    "parameter_mappable": 0,
+                    "patching_rect": [
+                        3.0,
+                        1400.0,
+                        154.0,
+                        17.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        3.0,
+                        358.0,
+                        89.66666933894157,
+                        17.0
+                    ],
+                    "saved_attribute_attributes": {
+                        "lcdcolor": {
+                            "expression": "themecolor.live_arranger_grid_tiles"
+                        },
+                        "valueof": {
+                            "parameter_enum": [
+                                "Tex Router",
+                                "Profile",
+                                "Split \u2207",
+                                "Potential \u2207",
+                                "Matrix 2"
+                            ],
+                            "parameter_initial": [
+                                0.0
+                            ],
+                            "parameter_invisible": 2,
+                            "parameter_longname": "f_module_8_disp",
+                            "parameter_mmax": 4,
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "live.menu",
+                            "parameter_type": 2
+                        }
+                    },
+                    "varname": "live.menu[16]"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-41",
+                    "maxclass": "live.menu",
+                    "numinlets": 1,
+                    "numoutlets": 3,
+                    "outlettype": [
+                        "",
+                        "",
+                        "float"
+                    ],
+                    "parameter_enable": 1,
+                    "parameter_mappable": 0,
+                    "patching_rect": [
+                        3.0,
+                        2300.0,
+                        154.0,
+                        15.0
+                    ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_enum": [
+                                "texrouter",
+                                "util_profile",
+                                "vf_split",
+                                "vf_potential",
+                                "util_matrix_2"
+                            ],
+                            "parameter_initial": [
+                                0.0
+                            ],
+                            "parameter_invisible": 2,
+                            "parameter_longname": "f_module_8_file",
+                            "parameter_mmax": 4,
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "live.menu",
+                            "parameter_type": 2
+                        }
+                    },
+                    "varname": "live.menu[17]"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-42",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        3.0,
+                        3300.0,
                         100.0,
                         22.0
                     ],
@@ -1706,6 +1848,42 @@
                         1
                     ]
                 }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-40",
+                        0
+                    ],
+                    "destination": [
+                        "obj-41",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-41",
+                        1
+                    ],
+                    "destination": [
+                        "obj-42",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-42",
+                        0
+                    ],
+                    "destination": [
+                        "obj-4",
+                        1
+                    ]
+                }
             }
         ],
         "parameters": {
@@ -1786,6 +1964,16 @@
             ],
             "obj-37": [
                 "f_module_7_file",
+                "live.menu",
+                0
+            ],
+            "obj-40": [
+                "f_module_8_disp",
+                "live.menu",
+                0
+            ],
+            "obj-41": [
+                "f_module_8_file",
                 "live.menu",
                 0
             ],
