@@ -87,7 +87,7 @@ open question (its #6) are both settled: the align-then-blend mechanism above
 might simplify to a direct angle-doubled blend with no hemisphere step at all.
 
 **Update 2026-10-12: the `atan2` half of that condition is settled —
-verified GPU-safe** (`tests/spike_atan2_safety.py`: correct on decoded
+verified GPU-safe** (`tests/records/spike_atan2_safety.py`: correct on decoded
 sampled-texture input across all quadrants to 5.6e-7 rad, branch cut
 properly wrapped, one benign ±π quirk at the `Fy==0, Fx<0` boundary).
 The angle-doubled simplification still waits on outlet 2's

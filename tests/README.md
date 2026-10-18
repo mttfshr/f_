@@ -8,33 +8,33 @@ and run fast enough."
 
 ## Two layers
 
-- **Math tests** (`tests/test_*.py`, `tests/run.sh`) — NumPy only, run
+- **Math tests** (`tests/**/test_*.py`, `tests/run.sh`) — NumPy only, run
   anywhere. Settle the math before Max is involved.
-- **Bench tests** (`tests/bench_*.py`, `tests/bench.sh`) — run codeboxes on
+- **Bench tests** (`tests/**/bench_*.py`, `tests/bench.sh`) — run codeboxes on
   the GPU in a live Max through the test bench and diff the results against
   the NumPy mirrors. Spec/plan/tasks: `.specify/test_bench/`.
 
 ## Run
 
-    tests/run.sh                              # every tests/test_*.py
-    tests/run.sh tests/test_fft_separable.py  # one file
+    tests/run.sh                              # every tests/**/test_*.py
+    tests/run.sh tests/math/test_fft_separable.py  # one file
     tests/bench.sh                            # regression set (needs the bench open)
     tests/bench.sh --changed                  # only files whose inputs changed since their last green run
     tests/bench.sh --slow                     # the regression set plus its @slow tests
     tests/bench.sh --all                      # every bench_*.py, incl. perf and probes, and slow tests
     tests/bench.sh --list                     # show what would run (no Max needed)
-    tests/bench.sh tests/bench_fft.py         # one file
+    tests/bench.sh tests/math/bench_fft.py         # one file
 
 The regression set is the `DEFAULT` list at the top of `tests/bench.sh`. It
 leaves out `bench_perf.py` (fps-based checks that can fail on a busy machine
 without a regression) and `bench_fluid_probes.py` (a Phase 0 record of
 bench-verified facts); `--all` adds them.
 
-`--changed` (`tests/benchdeps.py`) skips a bench file whose Python imports, data files and environment
+`--changed` (`tests/lib/benchdeps.py`) skips a bench file whose Python imports, data files and environment
 (Max and Vsynth versions) equal those of its last green run, and says why; `bench_modules` runs only the
 modules whose patcher changed (`BENCH_MODULES`). The record is `tests/.state/bench_green.json` (local,
 gitignored): a passing file is recorded, a failing one is forgotten, so any plain `tests/bench.sh` run
-seeds it. A new `tests/bench_*.py` must be registered in `benchdeps.DATA` (a test enforces it). It does
+seeds it. A new `tests/**/bench_*.py` must be registered in `benchdeps.DATA` (a test enforces it). It does
 not see the GPU driver, macOS, or what else is open in Max, so run without `--changed` before a release.
 
 **Background runs** (`tests/bg.sh`): `start [offline|bench|all]` returns at once and runs detached;
@@ -157,11 +157,11 @@ hit a save prompt. After regenerating, call `benchclient.reopen()`.
 A second generated patch, `tests/bench/bench_module.maxpat` (ports
 7473/7474), runs **shipped** `f_` bpatchers inside Vsynth's real `vs_render`
 context. **Close Vsynth performance patches while it's open** — it creates
-the global `vsynth` context. `tests/bench_modules.py` loads each module (a
+the global `vsynth` context. `tests/contracts/bench_modules.py` loads each module (a
 fresh bench session per module), feeds it textures, sends every route
 parameter as a control message and reads the attribute back off the inner
 pix, exercises bypass (documented control message and the jsui), and
-captures every outlet. `tests/test_module_contracts.py` is its offline half:
+captures every outlet. `tests/contracts/test_module_contracts.py` is its offline half:
 static route → attrui → Param wiring from the patch JSON, no Max needed.
 Both keep a registry of known issues (reported XFAIL with a pointer; a fixed
 one reports XPASS so the entry gets removed). Run both after changing any
@@ -245,7 +245,7 @@ Facts section).
   exactly unless it is in the baseline, which may only shrink (drift growing,
   shrinking without the baseline being lowered, or a module that now
   reproduces all fail the test). Rewrite the baseline with
-  `python3 tests/test_drift.py --write-baseline`. See `build/spec.md`,
+  `python3 tests/build/test_drift.py --write-baseline`. See `build/spec.md`,
   "Source of Truth and Drift".
 - `modulebench.py` + `bench_modules.py` -- live module contracts (module bench)
 - `templates/bench_module_template.py` -- starting point for a module's bench test

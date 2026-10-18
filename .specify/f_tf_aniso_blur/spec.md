@@ -129,7 +129,7 @@ out = acc / totalweight
 **Why half-angle math without `atan2`:** the raw tensor stores J entries, not
 the packed doubled angle. `atan2` on *decoded sampled-texture input* is
 verified safe on the GPU (`f_tensor_type.md` consumer rule 4,
-`tests/spike_atan2_safety.py`), but the module does not need it at all: the
+`tests/records/spike_atan2_safety.py`), but the module does not need it at all: the
 across-edge axis is `(diff, 2·Jxy)` normalized by `root`, and the along-edge
 axis is its perpendicular — the same closed-form the tensormap's own stage C
 uses to build `(cos 2θ, sin 2θ)`. The line field is unoriented (θ and θ+π are

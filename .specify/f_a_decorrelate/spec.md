@@ -89,7 +89,7 @@ Maps to T7–T8 in `ideas/f_a_spectral_ripple.md`.
 - [x] T7 — `f_a_decorrelate` fed a synthetic harmonic complex matching
       `f_a_ripple`'s carrier, AM mode, same parameters → output closely
       matches `f_a_ripple`'s AM output. **NumPy tier done
-      2026-10-12** (`tests/spike_a_decorrelate_t7.py`): at 2048/4 the
+      2026-10-12** (`tests/records/spike_a_decorrelate_t7.py`): at 2048/4 the
       per-bin chain tracks the additive reference at −15.6 dB residual,
       corr 0.986 — and a waveform *null* is provably not the right bar:
       Hann leakage × per-bin gain on non-bin-centered partials is an
@@ -113,7 +113,7 @@ Maps to T7–T8 in `ideas/f_a_spectral_ripple.md`.
       (music's correlations are already nonstationary); the chain's
       dominant real-world effect is decorrelation vs the raw carrier
       (0.94→0.59, 0.77→0.45). Numbers and method in
-      `tests/spike_a_decorrelate_t7.py`._
+      `tests/records/spike_a_decorrelate_t7.py`._
 - [x] Bin-resolution artifacts at the low end of the band (4.5 cyc/oct ripple
       density across 1–2 kHz is fine relative to typical bin spacing) are
       either absent or characterised. **Characterised 2026-10-12**: band 6

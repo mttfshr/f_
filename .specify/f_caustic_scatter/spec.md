@@ -2,7 +2,7 @@
 
 _Created: 2026-10-06. Rewritten 2026-10-07 as an addendum to `f_caustic` (it began as a separate-module draft)._
 _Status: Decisions resolved 2026-10-07; ready for Phase 1 (technical plan, tasks, build). Nothing here is built. The behaviour below was measured in the 2026-10-06 and
-2026-10-07 spikes (`tests/spike_scatter.py` stages `s0`-`s11`, `tests/bench/spike_scatter*.maxpat`,
+2026-10-07 spikes (`tests/records/spike_scatter.py` stages `s0`-`s11`, `tests/bench/spike_scatter*.maxpat`,
 `spike_scatter.jxs`, `scratch/scatter_spike_*`) and recorded in `ideas/optics_map.md` ("Findings: scatter
 feasibility spike", "Findings: scatter density, cost and detail"). The seven items that were marked [DECIDE] were resolved on 2026-10-07 (Matt: "go with your recommendations"); see Decisions at the end._
 
@@ -193,11 +193,11 @@ Tier decision: tier 1 (NumPy mirror) and tier 2 (module bench) apply; tier 3 for
    - quality against the 16-per-pixel reference (Pearson r at 1 d* / 3.5 d*, from the S7 table): step 5 >= 0.998 / 0.998; step 4 >= 0.995 / 0.995; step 3 >= 0.998 / 0.975 (measured 2026-10-07: 0.9990 / 0.9820, IoU 0.979 / 0.939); step 2 >= 0.995 / 0.95; step 1 >= 0.99 / 0.89;
    - the tone-map and upscale stage matches its NumPy curve (the `s10` check, promoted: r = 1.0000);
    - unconnected vecfield: composite = source, layer black;
-   - bypass: passthrough on every outlet; `BYPASS_EXPECT` extended (`tests/test_bench_expect.py` enforces);
+   - bypass: passthrough on every outlet; `BYPASS_EXPECT` extended (`tests/contracts/test_bench_expect.py` enforces);
    - lag: 1 frame, documented and ACCEPTED (Matt, 2026-10-07); not asserted through the module (task T043 dropped);
    - cost: the default step holds the frame budget on the target machine; headroom measured beyond the cap with a
      better method than the K-meshes multiplier, which failed (run-to-run variation up to 2x: interleave A/B).
-4. **Contract and drift:** `tests/test_module_contracts.py`, `tests/bench_modules.py` and `build/drift.py` pass
+4. **Contract and drift:** `tests/contracts/test_module_contracts.py`, `tests/contracts/bench_modules.py` and `build/drift.py` pass
    (the scene's node, mesh and slab objects are raw boxes and follow the `f_grain` / `f_lens` precedent).
 5. **Tier 3 (live).** Matt, on real video in a real chain: the sheets appear, `scale` and `gain` ranges feel right,
    the mode switch and the `detail` hitch are acceptable, two instances coexist. First look (2026-10-07): the

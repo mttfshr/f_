@@ -133,7 +133,7 @@ folded into state.
 ## Dependency Blocks
 
 ### Block 1: Recurrence settled in NumPy
-**Builds:** `tests/test_tf_smooth.py` — per-channel one-pole over synthetic tensor
+**Builds:** `tests/modules/tf_smooth/test_tf_smooth.py` — per-channel one-pole over synthetic tensor
 sequences; the opposite-axis reinforcement invariant; decay-curve check `out(N+k) =
 B + (A−B)·release^k`.
 **Verification:** mirror passes on flat/edge/synthetic sequences; mutation check (swap

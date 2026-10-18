@@ -121,7 +121,7 @@ A **conservative field** has the property that the line integral around any
 closed loop is zero — path doesn't matter, only endpoints. This is a free
 correctness test for anything claiming to be a gradient field (central
 fields, `f_vf_fieldmap`'s output): numerically integrate the candidate field
-around a closed loop in the NumPy test layer (`tests/gpu_sim.py`) and confirm
+around a closed loop in the NumPy test layer (`tests/lib/gpu_sim.py`) and confirm
 it nets to ~zero. Cheap, falls directly into the existing math-tier test
 infrastructure, and would catch a mislabeled or buggy "gradient field" before
 it reaches the GPU bench tier.
@@ -283,11 +283,11 @@ already in `ideas/`.
 - #5 and #6 are cheap to investigate with zero new code — good candidates
   for a short scratch session before anything bigger. **Spiked 2026-10-10**
   (NumPy, not Max — see `HANDOFF.md`): #5 confirmed visibly non-commuting
-  (`tests/spike_lie_bracket.py`, `scratch/lie_bracket_spike.png`); #6
+  (`tests/records/spike_lie_bracket.py`, `scratch/lie_bracket_spike.png`); #6
   confirmed true from source (`f_mobius` naively resamples a piped-through
   vecfield) and characterized via #10, see below.
 - #7 is a test-infrastructure addition, not a module. **Done 2026-10-10**:
-  `tests/test_conservative_field.py`, a real registered test against
+  `tests/math/test_conservative_field.py`, a real registered test against
   `f_vf_fieldmap`'s gradient output, with a negative control proving it can
   actually detect a non-conservative field.
 - #8 is speculative and research-grade; pairs with `vorticity_confinement.md`
@@ -300,12 +300,12 @@ already in `ideas/`.
   there.
 - #10 is a diagnostic for `f_droste`/`f_mobius`/`f_poincare` and the most
   direct way to settle #6 empirically — build this before worrying about
-  the others. **Spiked 2026-10-10 for `f_mobius`** (`tests/spike_mobius_vecfield_transform.py`):
+  the others. **Spiked 2026-10-10 for `f_mobius`** (`tests/records/spike_mobius_vecfield_transform.py`):
   both its paths are conformal, so its true indicatrix is always a circle,
   never an ellipse — the honest diagnostic turned out to be a local-scale
   heatmap, not drawn ellipses (`scratch/mobius_vecfield_rotate_zoom.png`,
   `scratch/mobius_vecfield_invert.png`). **`f_droste` checked 2026-10-10**
-  (`tests/spike_droste_conformality.py`): essentially never conformal (its
+  (`tests/records/spike_droste_conformality.py`): essentially never conformal (its
   log-polar step scales radial/angular axes by different constants for any
   practical `zoom`), confirmed via a real elliptical indicatrix — does NOT
   carry over f_mobius's circle-only result. See `.specify/f_mobius_vecfield/spec.md`

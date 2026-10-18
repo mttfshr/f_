@@ -1,5 +1,5 @@
 """s4_diag.py -- is the S4 load multiplier (K meshes) linear, or does each mesh carry fixed overhead?
-Throwaway diagnostic for tests/spike_scatter.py stage S4. Run:
+Throwaway diagnostic for tests/records/spike_scatter.py stage S4. Run:
   uv run --no-project --with numpy --with matplotlib python3 scratch/s4_diag.py
 """
 import sys

@@ -160,7 +160,7 @@ docs/
 - [x] T047 Reproduce: bench showed `bypassed_out2` == `in1` flipped vertically (max diff 0.0 vs `flipud(in1)`)
 - [x] T048 Trace: native bypass short-circuits the shader; `out1` was correct only because outlet 1 passes through cleanly
 - [x] T049 Decision (Matt): bypassed `out2` = unwarped source, like `out1`. Implemented: Param renamed `bypass_gate`, toggle wired `jsui → prepend param bypass_gate → pix` (attrui `obj-24` replaced), both outlets `mix(warped_sample, sample(in1, uv), bypass_gate)`. Hand-edited `.maxpat` + `definition.py` codebox; **do not regenerate** (shipped patch has hand edits, see comment in `definition.py`)
-- [x] T050 `tests/bench_modules.py` now checks `out2 == in1` under bypass for `f_vf_warp` (`BYPASS_PASSTHROUGH_OUTLETS`); passes
+- [x] T050 `tests/contracts/bench_modules.py` now checks `out2 == in1` under bypass for `f_vf_warp` (`BYPASS_PASSTHROUGH_OUTLETS`); passes
 
 **Checkpoint:** met — `out1` and `out2` both equal the source when bypassed.
 

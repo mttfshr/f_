@@ -58,7 +58,7 @@ package/help/f_caustic.maxhelp                                                  
   `package/patchers/f_caustic.maxpat` through the module bench with fixed inputs (a gradient source and a
   deterministic vecfield) at the defaults and four non-default parameter sets (`scale`, `softness`, `color_shift`,
   `gain`, `mix_pct`), both outlets saved per set. Commit the `.npz`.
-- [x] T002 Run `./tests/run.sh` and the `f_caustic` module-bench entry (`tests/bench_modules.py`) and record the green
+- [x] T002 Run `./tests/run.sh` and the `f_caustic` module-bench entry (`tests/contracts/bench_modules.py`) and record the green
   counts as the "before" state in HANDOFF.md.
 
 **Checkpoint**: a committed baseline and a recorded green state; `package/patchers/f_caustic.maxpat` still untouched.
@@ -71,16 +71,16 @@ package/help/f_caustic.maxhelp                                                  
 
 ⚠️ CRITICAL: no story work until the checkpoint.
 
-- [x] T003 [P] Create `tests/scatter_truth.py`: promote the functions the mirror needs from `scratch/caustic_fidelity.py`
+- [x] T003 [P] Create `tests/modules/caustic/scatter_truth.py`: promote the functions the mirror needs from `scratch/caustic_fidelity.py`
   (`field_texture`, `first_fold_distance`, `truth`, `interior`, `pearson`, `top_iou`) so `tests/` no longer imports
   from `scratch/` for this module.
-- [x] T004 [P] Create `tests/scatter_mirror.py`: promote `ref_scatter`, `box_down`, `upscale`, `resize_bilinear` and the
-  tone curve (`t = v/(1+v)`, `t^0.7`) from `tests/spike_scatter.py`.
-- [x] T005 Create `tests/test_scatter_mirror.py` (tier 1, offline, NumPy only): tent weights sum to 1; energy conserved;
+- [x] T004 [P] Create `tests/modules/caustic/scatter_mirror.py`: promote `ref_scatter`, `box_down`, `upscale`, `resize_bilinear` and the
+  tone curve (`t = v/(1+v)`, `t^0.7`) from `tests/records/spike_scatter.py`.
+- [x] T005 Create `tests/modules/caustic/test_scatter_mirror.py` (tier 1, offline, NumPy only): tent weights sum to 1; energy conserved;
   identity at `scale = 0`; N points on one pixel sum to N; truth agreement at 4 points per pixel (r >= 0.99 at
   1 d* and 3.5 d*); the tone curve's properties. Add it to `tests/run.sh` if the suite lists files.
 - [x] T006 Confirm the promoted mirror reproduces the recorded spike numbers (r 0.9985 at 1 d*, 0.9937 at 3.5 d* for 4
-  points per pixel) inside `tests/test_scatter_mirror.py`.
+  points per pixel) inside `tests/modules/caustic/test_scatter_mirror.py`.
 - [x] T007 Spike V1, shader search path: place a probe copy of the shader at `package/code/f_caustic_sheets_probe.jxs`,
   load it from a probe bpatcher (`tests/bench/probe_shader_path.maxpat`) that is NOT beside it, run it in the module
   bench, and record whether `jit.gl.shader` finds it; if not, try the other candidate folders Vsynth uses. Record
@@ -125,7 +125,7 @@ package/help/f_caustic.maxhelp                                                  
 - [x] T015 [US1] Make `scatter_scene.py --standalone` emit `tests/bench/caustic_sheets_standalone.maxpat`: the scene plus
   `sheets_pix` as a bpatcher the module bench can load (the `spike_scatter.maxpat` precedent), so this phase never
   touches `f_caustic`.
-- [x] T016 [US1] Write `tests/bench_caustic_sheets.py` part 1 (standalone): identity at `scale = 0` vs the mirror
+- [x] T016 [US1] Write `tests/modules/caustic/bench_caustic_sheets.py` part 1 (standalone): identity at `scale = 0` vs the mirror
   (<= 1e-3); energy within 0.5%; N points on one pixel within 0.1%; orientation vs the mirror (r >= 0.999);
   truth agreement at step 5 (r >= 0.995 at 1 d* and 3.5 d*); tone and upscale vs NumPy at 512² and 1920 x 1080
   (the `s10` check promoted; measured 1.3e-8 in 1 - r, max difference 2.7e-3 from the hardware's 8-bit bilinear weights). **The 1-frame-lag assertion is NOT in this suite: it moved to T043.**
@@ -144,14 +144,14 @@ package/help/f_caustic.maxhelp                                                  
 ### Implementation for User Story 2
 
 - [x] T018 [US2] Add the `detail` select-and-message network (steps from the spec table; `n` last) to `scatter_scene.py`.
-- [x] T019 [US2] Extend `tests/bench_caustic_sheets.py` part 2: each of the five steps identical to the explicit messages
+- [x] T019 [US2] Extend `tests/modules/caustic/bench_caustic_sheets.py` part 2: each of the five steps identical to the explicit messages
   (max|diff| 0; the `s11` check promoted).
 - [x] T020 [US2] Measure quality for all five steps against the 16-points-per-pixel reference at 1 d* and 3.5 d*, including
   step 3 (768², unmeasured): set its floor just below the measurement, record it in the spec's table and in
-  `tests/bench_caustic_sheets.py` (floors from the spec: 5 and 4 >= 0.995; 2 >= 0.995 / 0.95; 1 >= 0.99 / 0.89).
+  `tests/modules/caustic/bench_caustic_sheets.py` (floors from the spec: 5 and 4 >= 0.995; 2 >= 0.995 / 0.95; 1 >= 0.99 / 0.89).
 - [x] T021 [US2] **Re-scoped:** the plan was an interleaved timing comparison of the steps, but every step is below the bench's
   60 fps cap, which hides any cost under it (why the spike needed 16.8 M points), so an A/B would report "at the cap" five times.
-  Done instead in `tests/bench_caustic_sheets.py` (`test_T021_...`): each step's frame period is measured and printed (all 16-17 ms,
+  Done instead in `tests/modules/caustic/bench_caustic_sheets.py` (`test_T021_...`): each step's frame period is measured and printed (all 16-17 ms,
   i.e. at the cap) and the default step 5 is asserted to fit the budget (16.1 ms; the limit is 1.15 x the cap). The cost MODEL stays
   spike S6's (density-driven, timings vary up to 2x between runs). No `bench_caustic_sheets_cost.py` file.
 - [x] T022 [US2] Commit.
@@ -170,7 +170,7 @@ package/help/f_caustic.maxhelp                                                  
 
 - [x] T023 [P] [US3] Write `src/f_caustic/codebox_select_comp.gen` and `codebox_select_layer.gen` (two stages, one per outlet, because the
   codebox bench takes three inputs; header checklist; `Param sheets_gate`, `bypass_gate`): verified on the codebox bench in
-  `tests/bench_caustic_codebox.py`: gate 0 returns the soft input exactly, gate 1 the sheets input, bypass gives the source on
+  `tests/modules/caustic/bench_caustic_codebox.py`: gate 0 returns the soft input exactly, gate 1 the sheets input, bypass gives the source on
   BOTH outlets (as the soft path does), linear in the gate (8 of 8 checks). Found: the bench counts `outN` tokens in comment
   text to size the codebox, so keep them out of comments.
 - [x] T024 [US3] Add the mode network to `scatter_scene.py`: `mode` menu output -> `prepend param sheets_gate` to the select
@@ -181,13 +181,13 @@ package/help/f_caustic.maxhelp                                                  
   `detail` (menu 1-5, default 5, `pix_wire: False`) params, the fanouts and `outlet_source_override` as settled in
   T011, and `raw_*` from `raw_ui.json`. Every existing param, default and range stays as it is.
 - [x] T026 [US3] Build: `build/py.sh build/build_patcher.py src/f_caustic/definition.py`; run `build/py.sh build/drift.py`;
-  review every difference; update `tests/drift_baseline.json` only for the intended ones.
+  review every difference; update `tests/build/drift_baseline.json` only for the intended ones.
 - [x] T027 [US3] Soft-mode identity: the rebuilt module vs `tests/baselines/f_caustic_soft.npz` for every recorded parameter
   set (r = 1.0000 on both outlets).
 - [x] T028 [US3] Mode-switch bench: sheets mode through the real module equals the standalone output; switching back to
   soft restores the baseline output exactly; disabled branches are not drawing (the inactive branch's enable is 0).
-- [x] T029 [US3] Update `tests/module_contract.py`, `tests/test_module_contracts.py` and the `f_caustic` entry in
-  `tests/bench_modules.py` (`BYPASS_EXPECT`) for the new stages and outlet sources until `./tests/run.sh` is green.
+- [x] T029 [US3] Update `tests/lib/module_contract.py`, `tests/contracts/test_module_contracts.py` and the `f_caustic` entry in
+  `tests/contracts/bench_modules.py` (`BYPASS_EXPECT`) for the new stages and outlet sources until `./tests/run.sh` is green.
 - [x] T030 [US3] Commit.
 
 **Checkpoint**: the module has both modes; soft is provably unchanged; the whole offline suite is green.
@@ -216,7 +216,7 @@ package/help/f_caustic.maxhelp                                                  
   pass only), step 5 vs step 2; record in HANDOFF.md. No single timing is a gate.
 - [~] T043 [US4] **DROPPED (Matt, 2026-10-07: "1 frame is fine").** The lag is documented as accepted, not asserted through the module. One unknown stays
   unmeasured and is written into the reference doc: the select stages are triggered by the soft stage's output, so depending on message
-  order the sheets result could land one EXTRA frame behind. The spike's `s3b` (`tests/spike_scatter.py`) remains the record of the 1-frame lag
+  order the sheets result could land one EXTRA frame behind. The spike's `s3b` (`tests/records/spike_scatter.py`) remains the record of the 1-frame lag
   of the scatter itself.
 - [x] T036 [US4] Commit.
 
@@ -241,7 +241,7 @@ package/help/f_caustic.maxhelp                                                  
 - [x] T042 (DONE 2026-10-07: offline 237/237; drift unchanged; the release zip ships `code/f_caustic_sheets.jxs`; `tests/bench.sh --changed` ends with every bench file green on record, `bench_caustic_sheets` 18/18. Note: T020's 16.8 M-point reference jobs stalled Max on 2 of 3 full runs before the lattice was freed after each reference; since then it passes, but it is the suite's most resource-fragile test) Final `./tests/run.sh`, `build/py.sh build/drift.py`, `build/release.sh --working-tree` dry run; commit.
 - [x] T044 [DECIDE] `gain` range select (Matt, 2026-10-08): a discrete menu, not a continuous 0-2 dial — `[0.1, 1.0, 2.0]`. **DONE 2026-10-08:** `"range_tiers": [0.1, 1.0, 2.0]` added to `gain` in `definition.py`; `scatter_scene.py` + `build_patcher.py` regenerated; `build/drift.py -v f_caustic` clean; `tests/run.sh` green for every caustic-related file (`test_scatter_mirror` 7/7, `test_scatter_scene` 4/4, `test_module_contracts` 8/8, `test_overrides` 12/12, `test_layout` 12/12, `test_drift` 16/16). Not opened in Max yet.
 - [x] T045 [DECIDE] `scale` extended range (Matt, 2026-10-08): push past 1.0, to around 2.5; **confirmed available in both modes** (Matt, 2026-10-08) rather than gated to sheets. **DONE 2026-10-08:** `"range_tiers": [1.0, 2.5]` added to `scale` in `definition.py` (tier 1 = original 0-1, tier 2 = 0-2.5); same build/regen/test pass as T044. Soft mode above 1.0 remains untested by Matt — worth a look next time the module is open in Max.
-- [x] T046 Investigate: `detail` barely moves frame rate; Vsynth *output* resolution clearly does (Matt, 2026-10-08). **DONE 2026-10-08:** `tests/spike_caustic_res_cost.py` (diagnostic, not a regression gate) swept `detail` {1, 5} x source size {512^2, 1920x1080, 3840x2160} through the real module (sheets mode) via `cr.period_ms`. First pass (1 sample/cell) was noisy/non-monotonic — cold-bench warmup artifact. Repeated with 3 samples/cell, median: every cell lands at the vsync floor (~16.7 ms, tight ±0.1-0.3 ms spread) regardless of `detail` or size, 4K included — `f_caustic` alone never clears 60 fps in isolation at this config. Conclusion: the composite/select `@adapt 1` resolution-scaling cost is real (per the architecture read) but too small on its own to explain what Matt saw live; the live slowdown is more likely this module's real but modest per-resolution cost compounding on top of an already-near-budget full performance patch, not something specific to `f_caustic`'s own architecture. The bench can't see that (it isolates one module). Matt is checking his demo patch directly for the actual expensive chain; not pursuing further here unless that points back at `f_caustic`.
+- [x] T046 Investigate: `detail` barely moves frame rate; Vsynth *output* resolution clearly does (Matt, 2026-10-08). **DONE 2026-10-08:** `tests/records/spike_caustic_res_cost.py` (diagnostic, not a regression gate) swept `detail` {1, 5} x source size {512^2, 1920x1080, 3840x2160} through the real module (sheets mode) via `cr.period_ms`. First pass (1 sample/cell) was noisy/non-monotonic — cold-bench warmup artifact. Repeated with 3 samples/cell, median: every cell lands at the vsync floor (~16.7 ms, tight ±0.1-0.3 ms spread) regardless of `detail` or size, 4K included — `f_caustic` alone never clears 60 fps in isolation at this config. Conclusion: the composite/select `@adapt 1` resolution-scaling cost is real (per the architecture read) but too small on its own to explain what Matt saw live; the live slowdown is more likely this module's real but modest per-resolution cost compounding on top of an already-near-budget full performance patch, not something specific to `f_caustic`'s own architecture. The bench can't see that (it isolates one module). Matt is checking his demo patch directly for the actual expensive chain; not pursuing further here unless that points back at `f_caustic`.
 - [x] T047 [DECIDED 2026-10-08: leave as-is, no code change] `color_shift` / `softness` stay visible but inert in Sheets mode — expected per spec (soft-only params), not a bug. Matt: "leave color/softness alone for now."
 
 ---
@@ -324,10 +324,10 @@ and the quality ladder were both dead weight.
   bug that way -- the vecfield fanout had been copied from the old `caustic` (soft) stage's inlet index (1)
   instead of the new composite's field inlet (2). No bench run yet.
 - Still open, not yet done: `docs/f-reference/f_caustic.md` rewrite (single-mode shape, not a trim of the old
-  two-mode doc), the `README.md` patch-table one-liner, and the test surface -- `tests/bench_caustic_sheets.py`'s
+  two-mode doc), the `README.md` patch-table one-liner, and the test surface -- `tests/modules/caustic/bench_caustic_sheets.py`'s
   soft-identity check and `tests/baselines/f_caustic_soft.npz` are now testing a branch that doesn't exist,
-  `tests/test_scatter_scene.py` still references `SOFT`/`SEL_COMP`/`SEL_LAYER`/`MENU_MODE`/`MENU_DETAIL`, and
-  `tests/bench_caustic_codebox.py` / `tests/record_caustic_baseline.py` / `tests/spike_caustic_res_cost.py` all
+  `tests/modules/caustic/test_scatter_scene.py` still references `SOFT`/`SEL_COMP`/`SEL_LAYER`/`MENU_MODE`/`MENU_DETAIL`, and
+  `tests/modules/caustic/bench_caustic_codebox.py` / `tests/record_caustic_baseline.py` / `tests/records/spike_caustic_res_cost.py` all
   predate this and haven't been checked against it.
 - Commit: `90cee74`.
 
@@ -342,7 +342,7 @@ remap of the landing position, driven like `scale` (control-entry token, `pix_wi
 - [x] E04 Tests: `scatter_mirror.edge_remap` + 3 mirror tests (hand-tabulated remap, light kept / lost, where it goes) -> 10/10;
   `test_scatter_scene.py` guards the menu id, items and that the menu feeds only the tap -> 5/5.
 - [x] E05 (bench 14/14, 2026-10-17) Bench (ask Matt first; bench_module.maxpat open, Vsynth patches closed): `test_T040_edge_modes_match_the_mirror`,
-  `test_T040_off_is_the_default_behaviour` written in `tests/bench_caustic_sheets.py`; the first sends modes 1,2,3,0 so
+  `test_T040_off_is_the_default_behaviour` written in `tests/modules/caustic/bench_caustic_sheets.py`; the first sends modes 1,2,3,0 so
   the scene is left on Off (the bench keeps Params between jobs). Tolerance 2e-3 is a guess.
 - [ ] E06 Full offline suite once (`tests/run.sh -q`) and `build/py.sh build/drift.py -v f_caustic`: only the two named
   tests above were run.

@@ -143,14 +143,14 @@ self-diagnosing (marks everywhere at a doubled angle), never blessed.
 ## Notes
 
 - Built by the parallel T001 build (2026-10-17): NumPy mirror
-  `tests/test_tf_hatch.py` (20/20 pass — eigh cross-check ≤4.8e-7 on λ,
+  `tests/modules/tf_hatch/test_tf_hatch.py` (20/20 pass — eigh cross-check ≤4.8e-7 on λ,
   ≤3.6e-7 rad on axis; commit invariants; family mechanics; three mutation
-  checks), cost spike `tests/spike_tf_hatch_costshape.py` (branch T chosen;
+  checks), cost spike `tests/records/spike_tf_hatch_costshape.py` (branch T chosen;
   model ≤2.7 ms/1080p vs the ~0.9 ms/pass bench floor), codeboxes
   `src/f_tf_hatch/codebox_stage_e{1,2_T,3}.gen`, definition.py
   (`src/f_tf_hatch/definition.py`) → `package/patchers/f_tf_hatch.maxpat`
   (JSON-valid).
-- **Tier-2 bench (`tests/bench_tf_hatch.py`) and tier-3 scratch patch are
+- **Tier-2 bench (`tests/modules/tf_hatch/bench_tf_hatch.py`) and tier-3 scratch patch are
   pending** — the bench file is written and registered (in benchdeps.DATA via
   `.specify/f_tf_hatch/REGISTRATION_NOTES.md`) but not yet run; the cost
   model's PROVISIONAL-CLOSED gate and the provisional defaults resolve

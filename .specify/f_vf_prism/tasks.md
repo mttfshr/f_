@@ -18,7 +18,7 @@ task tracking lived in plan.md phases. Ids start at T001._
   the idea file when touching it.
 
 - [x] T001a (2026-10-13): Profiled on the live bench
-  (`tests/spike_four_module_cost.py`, 512², chain=128, median of 3):
+  (`tests/records/spike_four_module_cost.py`, 512², chain=128, median of 3):
   ~0.0169 ms/pass active, ~0.0151 ms/pass bypassed — **not GPU-bound
   even at chain=128** (upper-bound figures only, below the bench's
   ~2–3.5 ms CPU-overhead floor at this resolution/chain). The 33 gate

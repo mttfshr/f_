@@ -2,10 +2,10 @@
 
 One section per shared file. These are the exact lines the parent should apply
 when integrating glyph; this module owns nothing outside `.specify/f_tf_glyph/`,
-`tests/test_tf_glyph.py`, `tests/bench_tf_glyph.py`,
+`tests/modules/tf_glyph/test_tf_glyph.py`, `tests/modules/tf_glyph/bench_tf_glyph.py`,
 `docs/f-reference/f_tf_glyph.md`.
 
-## tests/benchdeps.py — DATA dict
+## tests/lib/benchdeps.py — DATA dict
 
 Add one entry (mirrors the tensormap/axisflow pattern). **Path updated by the
 parent's layout normalization 2026-10-17** (codebox + definition moved to
@@ -45,7 +45,7 @@ tensormap row style:
 Inventory row and HANDOFF line: status "buildable, tier-1 mirror green (14/14),
 tier-2 bench written but not run, tier-3 live judgement pending Matt".
 
-## tests/bench_modules.py — BYPASS_EXPECT
+## tests/contracts/bench_modules.py — BYPASS_EXPECT
 
 **PENDING — not performed** (shared file). Once the module is registered for the
 module bench, add:

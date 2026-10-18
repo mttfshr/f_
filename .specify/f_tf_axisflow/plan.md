@@ -46,11 +46,11 @@ the *unit-length* property of valid input. Open: the guard at `len > 1.05` vs th
 
 ## Verification (same three tiers as the tensormap)
 
-1. **Mirror** `tests/test_tf_axisflow.py` (NumPy): sweep θ, φ against a brute-force
+1. **Mirror** `tests/modules/tf_axisflow/test_tf_axisflow.py` (NumPy): sweep θ, φ against a brute-force
    `atan2`-and-sign reference for |v| and direction up to sign; invariance under θ → θ+π;
    along + across = r; iso → neutral; unconnected (`R=G=0`) → neutral; aspect 16:9 on a 45°
    axis preserves the pixel direction; chain test with the tensormap mirror on stripes/ramps.
-2. **Bench** `tests/bench_tf_axisflow.py`: codebox vs mirror, incl. clamp, iso, black input,
+2. **Bench** `tests/modules/tf_axisflow/bench_tf_axisflow.py`: codebox vs mirror, incl. clamp, iso, black input,
    aspect; bypass const in `BYPASS_EXPECT`.
 3. **Live**: scratch patch tensormap → axisflow → `f_vf_advect`, noise source, sweep `angle`.
 
@@ -64,7 +64,7 @@ the *unit-length* property of valid input. Open: the guard at `len > 1.05` vs th
 
 ## Files
 
-`src/f_tf_axisflow/{definition.py,codebox_axisflow.gen}`, `tests/test_tf_axisflow.py`,
-`tests/bench_tf_axisflow.py`, `tests/benchdeps.py` entry, `src/f_modules/menu.py` +
-README row + generators, `tests/bench_modules.py` BYPASS_EXPECT + NEUTRAL_BYPASS_BY_DESIGN not
+`src/f_tf_axisflow/{definition.py,codebox_axisflow.gen}`, `tests/modules/tf_axisflow/test_tf_axisflow.py`,
+`tests/modules/tf_axisflow/bench_tf_axisflow.py`, `tests/lib/benchdeps.py` entry, `src/f_modules/menu.py` +
+README row + generators, `tests/contracts/bench_modules.py` BYPASS_EXPECT + NEUTRAL_BYPASS_BY_DESIGN not
 needed (full bypass), docs.

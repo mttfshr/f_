@@ -115,8 +115,8 @@ moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per cap
 - **Unconnected inputs:** an unconnected vecfield inlet reads a constant (0, 0, 0, 1) (black with alpha 1), which
   would decode to a strong field. The composite stage treats a field that is exactly 0 in R and G at four fixed
   points as absent, so the module stays silent.
-- **Tests:** stale as of this doc's rewrite — `tests/bench_caustic_sheets.py`'s soft-identity check and
-  `tests/baselines/f_caustic_soft.npz` test a branch that no longer exists, and `tests/test_scatter_scene.py`
+- **Tests:** stale as of this doc's rewrite — `tests/modules/caustic/bench_caustic_sheets.py`'s soft-identity check and
+  `tests/baselines/f_caustic_soft.npz` test a branch that no longer exists, and `tests/modules/caustic/test_scatter_scene.py`
   still references ids (`SOFT`, `SEL_COMP`, `SEL_LAYER`, `MENU_MODE`, `MENU_DETAIL`) that aren't in the build any
   more. Not yet reworked — see `.specify/f_caustic_scatter/tasks.md`'s 2026-10-10 entry.
 
@@ -126,10 +126,10 @@ moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per cap
 
 - **Sheets mode** (forward scatter of a lattice of glass samples through the field, with splat density read as
   illuminance; a corner-snapped bilinear splat; a fixed-capture quality step): an original construction, developed
-  and measured in the 2026-10-06 and 2026-10-07 spikes (`tests/spike_scatter.py`, `ideas/optics_map.md`). Measured
+  and measured in the 2026-10-06 and 2026-10-07 spikes (`tests/records/spike_scatter.py`, `ideas/optics_map.md`). Measured
   against photon-counting ground truth at 3.5 times the first-fold distance: r above 0.99 (0.9997 at the fixed
   `detail` step) (spec: `.specify/f_caustic_scatter/spec.md`; evidence: `ideas/optics_map.md`). The photon-counting
-  ground truth used to test it (`tests/scatter_truth.py`) is the plain idea of histogramming where rays land.
+  ground truth used to test it (`tests/modules/caustic/scatter_truth.py`) is the plain idea of histogramming where rays land.
 - **Background only (not a source):** the forward-scatter-and-count approach is the idea behind photon mapping.
   Not consulted for the implementation.
   - Jensen, H. W. (1996). "Global Illumination Using Photon Maps." Rendering Techniques '96 (Eurographics
@@ -140,7 +140,7 @@ moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per cap
 
 ### History
 
-- **2026-10-17:** `edge` menu added (Off / Wrap / Mirror / Clamp, default Off = unchanged behaviour). Why: with a one-way field (e.g. tensor `f_tf_axisflow` into `f_vf_fluid`) a larger `scale` sent the light out of the frame, losing it on one side and starving the other. The remap is in the vertex shader (`package/code/f_caustic_sheets.jxs`, uniform `edge`), driven through the scene's control entry like `scale` (new `edge` token, `prepend param edge`; raw layer regenerated, `MENU_EDGE = obj-32` in `scatter_scene.py`, guarded by a test). Clamp insets half a pixel: on the border itself half of the tent falls off-frame and it would still lose light. Mirror test: `tests/scatter_mirror.py` `edge_remap` + 3 tests (10/10), scene test 5/5; bench 14/14 on 2026-10-17 including `test_T040_*` (edge 1/2/3 match the mirror to 3e-6..1e-5; Off 1.06e-3, the same as the edge-less mirror: a border snapping-vs-clipping gap that predates edge mode); checked live by Matt 2026-10-17 (Edge menu position, Wrap in the tensor chain). A splat straddling the frame edge in Wrap/Mirror still loses its off-frame half (about 0.3% in the tests).
+- **2026-10-17:** `edge` menu added (Off / Wrap / Mirror / Clamp, default Off = unchanged behaviour). Why: with a one-way field (e.g. tensor `f_tf_axisflow` into `f_vf_fluid`) a larger `scale` sent the light out of the frame, losing it on one side and starving the other. The remap is in the vertex shader (`package/code/f_caustic_sheets.jxs`, uniform `edge`), driven through the scene's control entry like `scale` (new `edge` token, `prepend param edge`; raw layer regenerated, `MENU_EDGE = obj-32` in `scatter_scene.py`, guarded by a test). Clamp insets half a pixel: on the border itself half of the tent falls off-frame and it would still lose light. Mirror test: `tests/modules/caustic/scatter_mirror.py` `edge_remap` + 3 tests (10/10), scene test 5/5; bench 14/14 on 2026-10-17 including `test_T040_*` (edge 1/2/3 match the mirror to 3e-6..1e-5; Off 1.06e-3, the same as the edge-less mirror: a border snapping-vs-clipping gap that predates edge mode); checked live by Matt 2026-10-17 (Edge menu position, Wrap in the tensor chain). A splat straddling the frame edge in Wrap/Mirror still loses its off-frame half (about 0.3% in the tests).
 - **2026-10-10:** soft mode (the 8-tap backward-gather, `codebox_v2.gen`, plus the earlier superseded
   `codebox_v1.gen`), the `mode` and `detail` menus, and the two select stages (`codebox_select_comp.gen`,
   `codebox_select_layer.gen`) all removed — sheets-only now, fixed at the old step-5 detail. `softness` and

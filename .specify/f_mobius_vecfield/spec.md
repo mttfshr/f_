@@ -25,7 +25,7 @@ The two modules differ enough in their math that they need different fixes
 
 ### f_mobius
 
-Characterized in `tests/spike_mobius_vecfield_transform.py` (2026-10-10,
+Characterized in `tests/records/spike_mobius_vecfield_transform.py` (2026-10-10,
 diagnostic only, no production code changed — see `HANDOFF.md`):
 
 - Both of `f_mobius`'s paths are conformal (holomorphic): `rotate+zoom` is
@@ -45,7 +45,7 @@ division** — see below.
 
 ### f_droste
 
-Checked numerically in `tests/spike_droste_conformality.py` (2026-10-10,
+Checked numerically in `tests/records/spike_droste_conformality.py` (2026-10-10,
 finite-difference Jacobian against the real codebox — a hand-derivation
 attempt first and got this wrong, worth remembering before trusting algebra
 over a direct check next time):
@@ -118,7 +118,7 @@ isn't a single complex number — it's a real 2x2 Jacobian `J(z)`, and the
 carried vector is `v' = J(z)^{-1} · v` (an actual 2x2 linear solve, not a
 scalar division).
 
-`tests/spike_droste_conformality.py` computes `J(z)` via finite differences
+`tests/records/spike_droste_conformality.py` computes `J(z)` via finite differences
 (central difference, `h=1e-4`, straight against the codebox's own function)
 — robust for a diagnostic, but **not yet reduced to a closed form**. The
 codebox's `droste_T` is an explicit function of `(norm.x, norm.y)` via
@@ -177,9 +177,9 @@ cost).
 
 ## References
 
-- `tests/spike_mobius_vecfield_transform.py`, `scratch/mobius_vecfield_rotate_zoom.png`,
+- `tests/records/spike_mobius_vecfield_transform.py`, `scratch/mobius_vecfield_rotate_zoom.png`,
   `scratch/mobius_vecfield_invert.png` — the f_mobius characterization.
-- `tests/spike_droste_conformality.py`, `scratch/droste_conformality_spike.png`
+- `tests/records/spike_droste_conformality.py`, `scratch/droste_conformality_spike.png`
   — the f_droste characterization.
 - `ideas/vector_field_math_concepts.md` #6, #10.
 - `src/f_mobius/definition.py`, `src/f_droste/definition.py`,

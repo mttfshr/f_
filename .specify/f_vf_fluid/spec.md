@@ -5,7 +5,7 @@ _Status: Draft — not yet built_
 _Origin: `ideas/ceyron_simulation_scripts_notes.md` (FFT thread, 2026-07-03
 → 2026-09-22). Separable-DFT passes verified on the GPU through the test
 bench; spectral diffusion/projection verified in NumPy
-(`tests/test_fft_separable.py`). Architecture discussed and decided
+(`tests/math/test_fft_separable.py`). Architecture discussed and decided
 2026-09-23._
 
 ---
@@ -168,7 +168,7 @@ instances in one patch.
 
 **Why this priority**: required for it to be usable, not the point of it.
 
-**Independent Test**: the module contract bench (`tests/bench_modules.py`)
+**Independent Test**: the module contract bench (`tests/contracts/bench_modules.py`)
 and offline contract test pass with no XFAIL entries added; two instances
 placed in one Vsynth patch run independently.
 

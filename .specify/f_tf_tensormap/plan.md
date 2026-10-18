@@ -29,7 +29,7 @@ Most of the risk is not the math (a NumPy spike exists and `atan2` is bench-veri
 **Build method:** NumPy mirror (tier 1) -> codeboxes on the bench (tier 2) -> scratch patch (tier 3) -> `definition.py` -> `tools/build_patcher.py`
 **Output:** `package/patchers/f_tf_tensormap.maxpat`
 **Gradient kernel:** verified Sobel, `.specify/stable/f_vf_sobel/spec.md`
-**Mirror precedent:** `tests/spike_structure_tensor_range.py` (vectorized NumPy; reused as an independent cross-check, not as the mirror)
+**Mirror precedent:** `tests/records/spike_structure_tensor_range.py` (vectorized NumPy; reused as an independent cross-check, not as the mirror)
 **GPU budget:** performance runs at HD or 4K on an M3 Max or an M1; the M1 is unmeasured (ways-of-working). Costs measured here are M3 Max numbers and say so.
 
 ---
@@ -169,12 +169,12 @@ Where the codeboxes live (`src/<name>/` vs `.specify/f_tf_tensormap/`) follows w
 
 ### Block 1: Math settled in NumPy
 **Dependencies:** none
-**Builds:** `tests/test_tf_tensormap.py`, one mirror function per stage
+**Builds:** `tests/modules/tf_tensormap/test_tf_tensormap.py`, one mirror function per stage
 **Verification:** matches `np.linalg.eigh` and analytic ramps; cross-checks against the spike implementation; one mutation check
 
 ### Block 2: Codeboxes on the bench
 **Dependencies:** Block 1
-**Builds:** four `codebox_*.gen` files, `tests/bench_tf_tensormap.py`
+**Builds:** four `codebox_*.gen` files, `tests/modules/tf_tensormap/bench_tf_tensormap.py`
 **Verification:** each stage compiles and matches its mirror on the GPU; border rows checked; cost measured per stage and for the chain
 
 ### Block 3: Judgement on real content

@@ -140,7 +140,7 @@ view of the consumer's own output.
 
 Expected trivially cheap: one tensor tap + one source tap + closed-form math,
 ~84 codebox statements (the capture ceiling is ~450). Per-pass cost to be
-recorded by `tests/bench_tf_glyph.py` at 1080p/4K when the bench runs; the
+recorded by `tests/modules/tf_glyph/bench_tf_glyph.py` at 1080p/4K when the bench runs; the
 cost gate is resolved provisionally against the tensormap floor
 (~0.9 ms per pass at 1080p, R_MAX 16) — gate PROVISIONAL-OPEN, resolving
 experiment = the bench `test_cost_1080p_and_4k`.
@@ -148,9 +148,9 @@ experiment = the bench `test_cost_1080p_and_4k`.
 ## Notes
 
 - Spec/plan/tasks: `.specify/f_tf_glyph/`. Tier-1 mirror:
-  `tests/test_tf_glyph.py` (14 tests, green 2026-10-17: λ1/λ2/θ vs
+  `tests/modules/tf_glyph/test_tf_glyph.py` (14 tests, green 2026-10-17: λ1/λ2/θ vs
   `np.linalg.eigh` ≤ 1.2e-7 / 2.4e-7 rad, gain-free identity exact, mutation
-  caught). Tier-2 bench: `tests/bench_tf_glyph.py` — **run and green 6/6
+  caught). Tier-2 bench: `tests/modules/tf_glyph/bench_tf_glyph.py` — **run and green 6/6
   (2026-10-17)**; the live findings that shook out (family rules 5–6 of
   `f_tensor_type.md`; plan ADR-2 amendment): runtime `atan2(0,0)` = NaN
   (fixed at source with a +1e-7 denominator bias), `sample()` nearest-

@@ -94,7 +94,7 @@ RECT_POSITION_ONLY = {"comment"}
 #   comment size  60x18 -> 61x21 (autofit to the text); x and y untouched.
 #   restore_extra written on autopattr (state).     fontsize  live.text 9.5 dropped.
 # What Max did NOT change, so a difference on any of these is a real edit or a stale
-# definition, and stays drift (tests/test_drift.py pins each one):
+# definition, and stays drift (tests/build/test_drift.py pins each one):
 #   the autopattr `varname` (builder `x_autopattr`; shipped `u905020188`), a dial's
 #   `param_connect`, a comment's `varname`.
 # Seen but deliberately not encoded: Max also writes live.text theme colours

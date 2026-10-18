@@ -16,6 +16,12 @@
 LOGS_DIR="${TEST_LOGS_DIR:-tests/logs}"
 LOGS_KEEP=20
 
+# Import path for every test file: tests/lib (shared libraries, incl. paths.py), each test directory and
+# build/. Replaces the per-file sys.path.insert hacks. Run a single file with tests/py.sh.
+TESTS_PYPATH="$PWD/tests/lib:$PWD/tests/toolchain:$PWD/tests/contracts:$PWD/tests/build:$PWD/tests/math:$PWD/tests/records:$PWD/build"
+for _d in "$PWD"/tests/modules/*/; do TESTS_PYPATH="$TESTS_PYPATH:${_d%/}"; done
+export PYTHONPATH="$TESTS_PYPATH${PYTHONPATH:+:$PYTHONPATH}"
+
 max_version() {
   defaults read "${MAX_APP:-/Applications/Max.app}/Contents/Info" CFBundleShortVersionString 2>/dev/null || echo unknown
 }

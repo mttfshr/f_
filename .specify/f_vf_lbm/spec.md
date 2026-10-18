@@ -4,7 +4,7 @@ _Created: 2026-10-13_
 _Status: Draft — not yet built_
 _Origin: `ideas/ceyron_simulation_scripts_notes.md` section 2 (2D Lattice
 Boltzmann, D2Q9, obstacle bounce-back). Architecture question resolved
-by `tests/spike_lbm_d2q9_architecture.py` (NumPy, 2026-10-12): fits the
+by `tests/records/spike_lbm_d2q9_architecture.py` (NumPy, 2026-10-12): fits the
 chained-`jit.gl.pix` pattern `f_vf_fluid` already proved out — no
 slab/GLSL track needed. Matt: "spec it" (2026-10-13)._
 
@@ -18,7 +18,7 @@ Flagging rather than deciding, same as `f_tf_tensormap` in
 
 ## Clarifications
 
-### Carried from the spike (`tests/spike_lbm_d2q9_architecture.py`)
+### Carried from the spike (`tests/records/spike_lbm_d2q9_architecture.py`)
 
 - **Architecture: fits the chained-pix pattern, no slab/GLSL track.**
   State packs into **3 RGBA `float32` planes** (9 D2Q9 distributions:
@@ -191,7 +191,7 @@ canonical parameter names, multiple independent instances.
 **Why this priority**: required for it to be usable, not the point of
 the module.
 
-**Independent Test**: module contract bench (`tests/bench_modules.py`);
+**Independent Test**: module contract bench (`tests/contracts/bench_modules.py`);
 two instances in one patch run independently with independent obstacle
 masks.
 

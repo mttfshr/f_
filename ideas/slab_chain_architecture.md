@@ -21,7 +21,7 @@ pipelines with ping-pong textures and per-pass uniforms — something a
   multi-pass" should have read "cannot do multi-pass in one object."
 - 2D Lattice Boltzmann D2Q9 (`ceyron_simulation_scripts_notes.md`) —
   **answered 2026-10-12: does NOT need this track.**
-  `tests/spike_lbm_d2q9_architecture.py` ran the full D2Q9 pipeline in
+  `tests/records/spike_lbm_d2q9_architecture.py` ran the full D2Q9 pipeline in
   the chained-pix stage shape: streaming is a pure gather (directional
   texture samples, the `f_vf_streak` idiom), collision/equilibrium fuse
   into one local codebox, bounce-back is a mask-driven local swap, 9
@@ -32,7 +32,7 @@ pipelines with ping-pong textures and per-pass uniforms — something a
   resolutions), but neither is an architecture-track constraint.
 - Kuramoto-Sivashinsky (`ceyron_simulation_scripts_notes.md`) —
   **answered 2026-10-12: does NOT need this track.**
-  `tests/spike_ks_stability.py` measured real-space explicit FD at
+  `tests/records/spike_ks_stability.py` measured real-space explicit FD at
   ~2000 substeps/frame (dead) and the spectral linear-exact +
   explicit-nonlinear scheme — `f_vf_fluid`'s exact stage shape —
   stable at one step per frame (dt ~ 0.076 vs the reference ETDRK's

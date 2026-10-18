@@ -91,7 +91,7 @@ changed here.
 - **FR-007** Aspect conversion: identity when `width` = `height`; the pixel direction of v is
   preserved otherwise.
 - **FR-008** Bypass MUST output the neutral vecfield via a `bypass_gate` Param (not the native
-  `@bypass`), registered in `tests/bench_modules.py` `BYPASS_EXPECT`.
+  `@bypass`), registered in `tests/contracts/bench_modules.py` `BYPASS_EXPECT`.
 - **FR-009** Vector magnitude MUST stay within the encodable range [−1, 1] for gain ≤ 1
   (|v| ≤ 1 and the aspect scale ≤ 1 guarantee it); the output is clamped for higher gain.
 

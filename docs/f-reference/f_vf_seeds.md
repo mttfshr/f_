@@ -132,7 +132,7 @@ src/f_vf_seeds/codebox_seeds_composite.gen  -- Stage 4
 ```
 
 The shipped patcher is on the never-regenerate list. To check that the definition still describes it:
-`build/py.sh build/drift.py -v f_vf_seeds` (must say ok; `tests/test_build_seeds_keys.py` also asserts it).
+`build/py.sh build/drift.py -v f_vf_seeds` (must say ok; `tests/build/test_build_seeds_keys.py` also asserts it).
 
 ## Key Findings
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run bench tests (tests/bench_*.py) against the live Max test bench.
+# Run bench tests (tests/**/bench_*.py) against the live Max test bench.
 # Needs Max running. tests/bench/bench.maxpat must be open (benchclient.reopen()
 # opens it) for every file except the module-bench files, bench_modules and
 # bench_fluid_module, which open tests/bench/bench_module.maxpat themselves
@@ -10,16 +10,16 @@
 #   tests/bench.sh --slow          the same files, plus their @slow tests
 #   tests/bench.sh --all           every bench_*.py, slow tests included
 #   tests/bench.sh --list          print what would run, then exit (no Max needed)
-#   tests/bench.sh tests/bench_control.py   just the named files
+#   tests/bench.sh tests/toolchain/bench_control.py   just the named files
 #   BENCH_LOG=path                 write the log there instead of tests/logs/<timestamp>-bench.log
 #   MAX_APP=/path/Max.app          the Max install (default /Applications/Max.app)
 #
 # Every run writes tests/logs/<timestamp>-bench.log (tests/_log.sh; `tests/logs/latest-bench` is the newest):
 # full output plus a header with Max version, git SHA, dirty flag and flags. Before each file that uses
-# the codebox bench, `tests/benchclient.py health` probes it with a known-good codebox and reopens it
+# the codebox bench, `tests/lib/benchclient.py health` probes it with a known-good codebox and reopens it
 # if the answer is a stale image (a wedged bench returns stale frames with no error).
 #
-# --changed (tests/benchdeps.py): a file whose Python imports, data files and
+# --changed (tests/lib/benchdeps.py): a file whose Python imports, data files and
 # environment (Max and Vsynth versions) equal those of its last green run is
 # skipped, with the reason printed; bench_modules runs only the modules whose
 # patcher changed. Without --changed everything selected runs, and every file that
@@ -36,8 +36,8 @@
 cd "$(dirname "$0")/.." || exit 1
 . tests/_log.sh
 
-DEFAULT=(control selftest fft temporal fluid caustic_codebox modules fluid_module caustic_sheets
-         tf_tensormap tf_axisflow tf_smooth tf_glyph tf_sharpen tf_aniso_blur tf_hatch)   # tf_*: added 2026-10-18 (tests/.specify restructure A7), time not yet measured
+# The regression set is every bench file declaring GROUP = "regression" (run order: ORDER); see
+# `python3 tests/lib/benchdeps.py list --group regression`. Groups: regression | record | perf.
 
 ALL=0; LIST=0; SLOW=0; CHANGED=0; QUIET=0; FILES=()
 for a in "$@"; do
@@ -53,16 +53,11 @@ done
 if [ "$SLOW" -eq 1 ]; then export BENCH_SLOW=1; fi
 if [ ${#FILES[@]} -eq 0 ]; then
   if [ "$ALL" -eq 1 ]; then
-    FILES=(tests/bench_*.py)
+    GROUP_ARGS=()
   else
-    for n in "${DEFAULT[@]}"; do
-      if [ ! -f "tests/bench_$n.py" ]; then
-        echo "DEFAULT names a missing file: tests/bench_$n.py (update DEFAULT in tests/bench.sh)" >&2
-        exit 1
-      fi
-      FILES+=("tests/bench_$n.py")
-    done
+    GROUP_ARGS=(--group regression)
   fi
+  while IFS= read -r f; do [ -n "$f" ] && FILES+=("$f"); done < <(python3 tests/lib/benchdeps.py list "${GROUP_ARGS[@]}")
 fi
 
 # --changed: keep only what needs to run; MODS[i] is a comma list of modules for
@@ -71,7 +66,7 @@ MODS=()
 if [ "$CHANGED" -eq 1 ]; then
   PLAN_ARGS=(); if [ "$SLOW" -eq 1 ]; then PLAN_ARGS+=(--slow); fi
   PLAN_ERR=$(mktemp "${TMPDIR:-/tmp}/benchplan.XXXXXX")
-  PLAN=$(python3 tests/benchdeps.py plan "${PLAN_ARGS[@]}" "${FILES[@]}" 2>"$PLAN_ERR") || { cat "$PLAN_ERR" >&2; rm -f "$PLAN_ERR"; exit 3; }
+  PLAN=$(python3 tests/lib/benchdeps.py plan "${PLAN_ARGS[@]}" "${FILES[@]}" 2>"$PLAN_ERR") || { cat "$PLAN_ERR" >&2; rm -f "$PLAN_ERR"; exit 3; }
   if [ "$QUIET" -eq 1 ]; then
     n=$(grep -c '^skip ' "$PLAN_ERR"); [ "$n" -gt 0 ] && echo "skipped $n unchanged bench files (green on record)"
     grep -v '^skip ' "$PLAN_ERR" >&2
@@ -107,7 +102,7 @@ done
 
 PY=(uv run --no-project --with numpy python3)
 if [ "$NEEDS_CODEBOX" -eq 1 ] && \
-   ! "${PY[@]}" -c "import sys; sys.path.insert(0, 'tests'); import benchclient; sys.exit(0 if benchclient.ping() else 1)"; then
+   ! "${PY[@]}" -c "import sys; import benchclient; sys.exit(0 if benchclient.ping() else 1)"; then
   echo "bench not reachable -- open Max and tests/bench/bench.maxpat (no /pong on UDP 7472)"
   exit 2
 fi
@@ -122,16 +117,16 @@ for f in "${FILES[@]}"; do
   [ "$mods" = "-" ] && mods=""
   # inputs as they are NOW, so an edit made during the run is never recorded as tested
   snap=$(mktemp "${TMPDIR:-/tmp}/benchsnap.XXXXXX")
-  python3 tests/benchdeps.py snapshot "$f" > "$snap" 2>/dev/null
+  python3 tests/lib/benchdeps.py snapshot "$f" > "$snap" 2>/dev/null
   if [ "$QUIET" -eq 1 ]; then echo "=== $f${mods:+ (modules: $mods)}" >> "$LOG"
   else echo "=== $f${mods:+ (modules: $mods)}" | tee -a "$LOG"; fi
   if [ -n "$mods" ]; then export BENCH_MODULES="$mods"; else unset BENCH_MODULES; fi
   if needs_codebox "$f"; then          # a wedged bench returns stale images with no error: probe, reopen if needed
-    hout=$("${PY[@]}" tests/benchclient.py health 2>&1); hrc=$?
+    hout=$("${PY[@]}" tests/lib/benchclient.py health 2>&1); hrc=$?
     [ -n "$hout" ] && { echo "$hout"; echo "$hout" >> "$LOG"; }
     if [ "$hrc" -ne 0 ]; then
       echo "bench unhealthy before $f: not run" | tee -a "$LOG"
-      status=1; python3 tests/benchdeps.py forget "$f"; rm -f "$snap"; continue
+      status=1; python3 tests/lib/benchdeps.py forget "$f"; rm -f "$snap"; continue
     fi
   fi
   "${PY[@]}" "$f" 2>&1 | tee -a "$LOG"
@@ -139,10 +134,10 @@ for f in "${FILES[@]}"; do
     REC_ARGS=(--snapshot "$snap")
     if [ "$SLOW" -eq 1 ]; then REC_ARGS+=(--slow); fi
     if [ -n "$mods" ]; then REC_ARGS+=(--modules "$mods"); fi
-    python3 tests/benchdeps.py record "$f" "${REC_ARGS[@]}"
+    python3 tests/lib/benchdeps.py record "$f" "${REC_ARGS[@]}"
   else
     status=1
-    python3 tests/benchdeps.py forget "$f"
+    python3 tests/lib/benchdeps.py forget "$f"
   fi
   rm -f "$snap"
 done
@@ -150,7 +145,7 @@ unset BENCH_MODULES
 # An all-green run leaves nothing in flight and nothing to debug: shrink tests/jobs/ (job dirs hold ~4 MB captures each, ~1 GB at the
 # in-run cap). A failed run keeps them. benchclient.JOBS_KEEP_AFTER_RUN says how many stay.
 if [ "$status" -eq 0 ]; then
-  pruned=$("${PY[@]}" -c "import sys; sys.path.insert(0, 'tests'); import benchclient as b; print(b.prune_jobs_after_run())" 2>/dev/null)
+  pruned=$("${PY[@]}" -c "import sys; import benchclient as b; print(b.prune_jobs_after_run())" 2>/dev/null)
   if [ -n "$pruned" ] && [ "$pruned" != "0" ]; then echo "bench: pruned $pruned job dirs from tests/jobs/ (all green)"; fi
 fi
 if [ "$QUIET" -eq 1 ]; then

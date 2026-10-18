@@ -169,7 +169,7 @@ patcher = {
 # element, an element with no saved valueof block, or a denied property. Added 2026-10-05, T014.
 #
 # Multi-stage keys (build_cleanup T016/T017, 2026-10-05; all explicit and default-off, loud on a
-# mistake; tests/test_build_multistage.py).  A "node" below is a pix_chain node id or the id of a
+# mistake; tests/build/test_build_multistage.py).  A "node" below is a pix_chain node id or the id of a
 # raw_boxes object; an unknown one raises.
 #
 #   Per pix_chain node "pix_attrs": str -- the node's attributes as one verbatim string, written after
@@ -205,7 +205,7 @@ patcher = {
 #   bypass_param / bypass_target without bypass_mode "param" are loud.  Convention (Matt, 2026-10-05):
 #   a bypassed module is a PASSTHROUGH on every outlet.
 #
-# T019 keys (f_vf_seeds, 2026-10-06; same rules: explicit, default-off, loud; tests/test_build_seeds_keys.py):
+# T019 keys (f_vf_seeds, 2026-10-06; same rules: explicit, default-off, loud; tests/build/test_build_seeds_keys.py):
 #
 #   Per pix_chain node "gen_code": str -- the node's codebox as an inline string, in place of a `gen`
 #   filename (f_vf_seeds' two search halves are one template rendered with different hash salts, which the
@@ -594,7 +594,7 @@ overflow     : raw_boxes (ids not in roles) moved as one block below everything
 ```
 
 Definition key: `"edit_layout": False` opts a module out (default on). Verification:
-`tests/run.sh tests/test_layout.py`. Manual edit-view tweaks in Max are lost on regeneration.
+`tests/run.sh tests/build/test_layout.py`. Manual edit-view tweaks in Max are lost on regeneration.
 
 ---
 
@@ -751,8 +751,8 @@ build/py.sh build/drift.py -v f_lens  # with examples of each difference
 
 Hand-tuned presentation state has a place to go: see "Overrides" below (`build/capture.py` writes it back).
 
-`tests/test_drift.py` enforces the rule. A module must reproduce exactly unless
-it is listed in `tests/drift_baseline.json`, a list that may only shrink and is
+`tests/build/test_drift.py` enforces the rule. A module must reproduce exactly unless
+it is listed in `tests/build/drift_baseline.json`, a list that may only shrink and is
 meant to be deleted once empty.
 
 ## The builder writes what Max writes
@@ -814,7 +814,7 @@ captured comment rect carries Max's current size.
 *Pilot (build_cleanup T012).* `f_chladni` turned out to need nothing: Max's normalisation
 alone made it reproduce exactly. `f_vf_fieldmap` (panel size, jsui position, label colour and
 size) and `f_vf_warp` (compact dial, label colour) were captured: layout 3 -> 0 and 1 -> 0,
-props 11 -> 9 and 4 -> 1; the rest is what capture refuses. Tests: `tests/test_overrides.py`
+props 11 -> 9 and 4 -> 1; the rest is what capture refuses. Tests: `tests/build/test_overrides.py`
 (10 tests, 14 mutants caught).
 
 ## Known Constraints

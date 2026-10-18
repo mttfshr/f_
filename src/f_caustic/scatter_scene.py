@@ -206,16 +206,16 @@ def standalone():
 
 
 # id the builder assigns the chain's one (and so primary) pix stage (build/spec.md: the primary pix is always
-# obj-5). tests/test_scatter_scene.py checks it against a real build of the definition.
+# obj-5). tests/modules/caustic/test_scatter_scene.py checks it against a real build of the definition.
 SHEETS = "obj-5"
 # the builder-made Scale dial's OUTLET, tapped directly (an attrui aimed at a non-pix box would drop the value:
 # it learns its attribute from the object it is cabled to -- and `scale` here drives the scene's raw control
 # entry, not a Param on the composite codebox, so it carries `pix_wire: False` in definition.py and gets no
-# attrui). tests/test_scatter_scene.py checks this id in a real build.
+# attrui). tests/modules/caustic/test_scatter_scene.py checks this id in a real build.
 DIAL_SCALE = "obj-26"
 # the builder-made Edge live.menu's OUTLET (its index 0-3), tapped the same way: `edge` is a shader uniform on the
 # scene, not a Param on the composite codebox, so the param carries `pix_wire: False`. Checked in a real build by
-# tests/test_scatter_scene.py.
+# tests/modules/caustic/test_scatter_scene.py.
 MENU_EDGE = "obj-32"
 
 

@@ -2,10 +2,10 @@
 
 One section per shared file. These are the exact diff-style lines the parent
 should apply when integrating aniso_blur; this module owns nothing outside
-`.specify/f_tf_aniso_blur/`, `tests/test_tf_aniso_blur.py`,
-`tests/bench_tf_aniso_blur.py`, `docs/f-reference/f_tf_aniso_blur.md`.
+`.specify/f_tf_aniso_blur/`, `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py`,
+`tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py`, `docs/f-reference/f_tf_aniso_blur.md`.
 
-## tests/harness.py — SHARED, EDITED (one change, disclosed)
+## tests/lib/harness.py — SHARED, EDITED (one change, disclosed)
 
 `note(label, value)` hardened from `{float(value):.3e}` to `{value}` (it
 now accepts numeric and string values; all prior numeric-note output keeps
@@ -14,10 +14,10 @@ its format via the callers' own formatting — regression-green: test_harness
 re-run after the change). Reason: the tier-1 mirror's ADR-2 gate data and
 T010 pairing notes are string-typed (e.g. `"0.0529 -> 0.0045 (std 0.291)"`),
 which the strict-float note crashed on. If the parent prefers the strict
-form, re-format my note() calls in `tests/test_tf_aniso_blur.py` to float-
+form, re-format my note() calls in `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py` to float-
 only and revert the harness line — one-file change either way.
 
-## tests/benchdeps.py — DATA dict
+## tests/lib/benchdeps.py — DATA dict
 
 Add one entry (mirrors the tensormap/axisflow pattern):
 
@@ -28,8 +28,8 @@ Add one entry (mirrors the tensormap/axisflow pattern):
 `src/f_tf_aniso_blur/` per the shipped-layout normalization; the DATA line above
 reflects the applied path.
 
-Required: `tests/test_benchdeps.py::test_every_real_bench_file_is_registered_and_its_globs_match`
-currently FAILS on the first check (`every tests/bench_*.py has a DATA
+Required: `tests/toolchain/test_benchdeps.py::test_every_real_bench_file_is_registered_and_its_globs_match`
+currently FAILS on the first check (`every tests/**/bench_*.py has a DATA
 entry`) until this line lands — the only shared-suite red this module's
 deliverables produce. Note: there is no `bench_tf_glyph` entry in DATA
 either (glyph's triad left the same gap), so the parent's registration pass
@@ -65,7 +65,7 @@ needed; re-run the build command at the new path.
   `@name aniso_blur_pix` (gen: in 1, in 2, codebox, out 1). `signal_type
   "tensor in"` picks up tensormap T030's amber colour (first-word key; no
   build_patcher change needed).
-- `tests/test_module_contracts.py` (offline, no Max needed — ran it):
+- `tests/contracts/test_module_contracts.py` (offline, no Max needed — ran it):
   **f_tf_aniso_blur is GREEN** (this module produces no BAD entries;
   the run's only BADs are f_tf_glyph's undriven width/height and
   f_tf_hatch's undriven strength / unused coherence_gate — sibling triads'
@@ -110,7 +110,7 @@ already carries modifications to this file and to
 `docs/f-reference/f_tensor_type.md` / `ideas/f_tf_tensor_strategy.md` from
 the OTHER triads' coordination — apply this line alongside, don't overwrite.
 
-## tests/bench_modules.py — BYPASS_EXPECT
+## tests/contracts/bench_modules.py — BYPASS_EXPECT
 
 **PENDING — not performed** (shared file + bench). When the module joins
 the module bench, add an entry expressing that bypass = EXACT passthrough of
@@ -129,12 +129,12 @@ the Files list: `test_tf_aniso_blur.py -- tier-1 mirror of f_tf_aniso_blur
 
 ## Shared-test status (for the parent's convenience, no edits needed here)
 
-- `tests/test_drift.py`: the new module is not in drift_baseline.json; the
+- `tests/build/test_drift.py`: the new module is not in drift_baseline.json; the
   test walks baseline-registered modules, so an unregistered NEW patcher is
   invisible to it — the parent's registration pass adds it, and it must
   reproduce from `definition.py` (verified reproducible as of this build;
   the built .maxpat is a byte-child of this definition).
-- `tests/test_module_contracts.py`: static route→attrui→Param
+- `tests/contracts/test_module_contracts.py`: static route→attrui→Param
   wiring checks over the built patcher JSON; the built JSON's wiring above
   is the expected-green shape, but the RUN is the parent's (offline and
   cheap — runnable any time after registration).

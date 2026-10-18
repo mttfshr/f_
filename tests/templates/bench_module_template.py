@@ -10,8 +10,8 @@ Run:  tests/bench.sh tests/bench_<module>.py
 Bench coverage: <=3 inputs, all 4 outputs (run_pass(all_outputs=True)),
 float32 or char (pix_type=), multi-frame feedback runs (bc.run_temporal),
 cost (bc.measure). Multi-stage modules: stage by stage. The shipped
-bpatcher's wiring is covered separately by tests/test_module_contracts.py
-and tests/bench_modules.py.
+bpatcher's wiring is covered separately by tests/contracts/test_module_contracts.py
+and tests/contracts/bench_modules.py.
 """
 import sys
 from pathlib import Path
@@ -22,7 +22,7 @@ import benchclient as bc
 from gpu_sim import grid                 # norm / integer-index grids, bench-verified
 from harness import check, note, run
 
-REPO = Path(__file__).resolve().parent.parent
+from paths import REPO   # tests/lib is on PYTHONPATH (tests/_log.sh)
 # TODO: the module's real codebox -- test the shipped file, not a copy
 CODEBOX = REPO / "src" / "f_MODULE" / "codebox_MAIN.gen"
 TOL = 1e-4

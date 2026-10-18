@@ -116,7 +116,7 @@ Phase 0 in `tasks.md`.
    equals the divergence of that gradient; encode/decode round trip; periodicity (`rotate` 0, integer `scale`):
    `field(0, y) = field(1, y)`; `h` continuous in `phase`.
 2. **Tier 2 (bench, real codebox).** All three outlets against the mirror in float32; neutral values at
-   bypass; shipped-patcher contract (`tests/test_module_contracts.py`, `tests/bench_modules.py`) and drift
+   bypass; shipped-patcher contract (`tests/contracts/test_module_contracts.py`, `tests/contracts/bench_modules.py`) and drift
    (`build/drift.py`) pass.
 3. **Tier 3 (scratch patch).** Into `f_vf_warp`, `f_vf_prism` and `f_caustic`: families look distinct, no pops
    when `phase` is swept, ranges sensible. Judgement, not numbers.

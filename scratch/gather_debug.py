@@ -1,5 +1,5 @@
 """
-gather_debug.py -- localise the GPU-vs-mirror mismatch of tests/gather_proto.py.
+gather_debug.py -- localise the GPU-vs-mirror mismatch of tests/records/gather_proto.py.
 
 Runs the generated codebox in two debug modes (S = 1, one sample per pixel at the pixel centre) and compares each
 intermediate with a direct NumPy computation of the same quantity:
@@ -13,7 +13,7 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "tests"))
+sys.path[:0] = [os.path.join(HERE, "..", "tests", d) for d in ("lib", "records")]
 sys.path.insert(0, HERE)
 import benchclient as bc            # noqa: E402
 import caustic_fidelity as cf       # noqa: E402

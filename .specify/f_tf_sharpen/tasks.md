@@ -38,7 +38,7 @@ docs/f-reference/f_tf_sharpen.md — Phase 5
   *Confirmed 2026-10-17, no amendment: all three apply. The owner constraint (no live
   bench / no scratch session this pass) leaves tier 1 green and tier 2/3 pending — see
   Phase 1/2 tasks.*
-- [x] T002 *[done 2026-10-17]* Write `tests/test_tf_sharpen.py`: decode mirror (f_tensor out0 contract decode,
+- [x] T002 *[done 2026-10-17]* Write `tests/modules/tf_sharpen/test_tf_sharpen.py`: decode mirror (f_tensor out0 contract decode,
   parametrized on strength), closed-form eigen, gap op per plan ADR-2 (`g = max(γ,0)`),
   re-encode. One function, ground truth via `np.linalg.eigh` on random symmetric
   matrices (include near-isotropic and diagonal-only cases, per tensormap T006 pattern).
@@ -81,7 +81,7 @@ docs/f-reference/f_tf_sharpen.md — Phase 5
 - [x] T009 *[done 2026-10-17: (a) drop_max caught 0.3 (b−a label swap); (b) gap-swap caught 0.34 axis rotation; both mutants fail the suite]* Mutation checks: (a) drop `max(γ,0)` → T006 fails; (b) gap sign error → T003
   or T004 fails. One is enough per tests/README if both are cheap. Both included;
   T006's labelled-Rayleigh check (see its row) is what makes (a) detectable at all.
-- [x] T010 *[done 2026-10-17: `tests/run.sh tests/test_tf_sharpen.py -q` → ok 15/15; errors ~1e-7 class except T006's bitwise 0; both mutations caught]* Run `tests/run.sh tests/test_tf_sharpen.py -q` in background; record errors.
+- [x] T010 *[done 2026-10-17: `tests/run.sh tests/modules/tf_sharpen/test_tf_sharpen.py -q` → ok 15/15; errors ~1e-7 class except T006's bitwise 0; both mutations caught]* Run `tests/run.sh tests/modules/tf_sharpen/test_tf_sharpen.py -q` in background; record errors.
 
 **Checkpoint:** mirror clean, no-swap hazard guarded, scale behavior recorded.
 → Phase 1.
@@ -112,13 +112,13 @@ docs/f-reference/f_tf_sharpen.md — Phase 5
   the tests compare rgb + alpha-vs-contract separately. Round-trip at gamma=1: rgb exact
   (1e-6 tol), alpha = 1 everywhere; no-axis-flip held at every gamma on the GPU; floor rows
   untouched at gamma in {0, 4}; cost recorded at chain 8: 1080p/4k upper bounds logged in
-  tests/bench_tf_sharpen.py test_cost (no loop, one tap — the PROVISIONAL-OPEN cost gate's
+  tests/modules/tf_sharpen/bench_tf_sharpen.py test_cost (no loop, one tap — the PROVISIONAL-OPEN cost gate's
   number is in).]* Bench vs mirror with `all_outputs=True` at gamma in {0, 0.5, 1, 2, 4} on
   synthetic tensor textures (flat, single edge, noise). Record gamma=1 round-trip error
-  explicitly. `tests/bench_tf_sharpen.py` written (parity, floor, invariants rows).
+  explicitly. `tests/modules/tf_sharpen/bench_tf_sharpen.py` written (parity, floor, invariants rows).
 - [x] T013 [BENCHED 2026-10-17, same run: floor rows pass — trace below eps → output == input
   exactly, at every gamma; the vs blocks untouched at gamma 4.]
-- [x] T014 *[exact entry supplied in .specify/f_tf_sharpen/REGISTRATION_NOTES.md (owner-only file, not edited here); glob existence verified against the enforced test]* Register `tests/bench_tf_sharpen.py` in `tests/benchdeps.DATA`; not DEFAULT
+- [x] T014 *[exact entry supplied in .specify/f_tf_sharpen/REGISTRATION_NOTES.md (owner-only file, not edited here); glob existence verified against the enforced test]* Register `tests/modules/tf_sharpen/bench_tf_sharpen.py` in `tests/lib/benchdeps.DATA`; not DEFAULT
   until Matt says regression gate.
 
 **Checkpoint:** GPU parity recorded including the round-trip number. → Phase 2.
@@ -158,7 +158,7 @@ gates stay open; shipped provisional values recorded in their task rows.*
   plan "Files"), not `src/` — build_patcher resolves relative codebox paths against the
   definition's own directory either way; the tasks prose's 'src/' is tensormap's layout.
 - [ ] T021 *[PENDING PARENT — menu registration is a shared-file edit; exact content in REGISTRATION_NOTES]* Menu registration (`build/generate_menu.py`; note placement, taste call).
-- [ ] T022 *[PENDING PARENT — needs the module in the drift harness; definition + built patcher are ready. Offline sanity done: the build reproduced from the definition it was just built from; `tests/test_drift.py` run is the parent's]* Drift check: reproduces from definition.py; baseline untouched.
+- [ ] T022 *[PENDING PARENT — needs the module in the drift harness; definition + built patcher are ready. Offline sanity done: the build reproduced from the definition it was just built from; `tests/build/test_drift.py` run is the parent's]* Drift check: reproduces from definition.py; baseline untouched.
 - [ ] T023 *[PENDING PARENT — BYPASS_EXPECT entry content supplied in REGISTRATION_NOTES; running the contract tests registers the module first]* Contract tests offline; BYPASS_EXPECT passthrough entry; bench registration
   per T014. **Ask before any bench run.**
 - [ ] T024 *[PENDING MATT — live session]* Close/reopen in Max; load in Vsynth; panel/params/neutrals confirmed (Matt).

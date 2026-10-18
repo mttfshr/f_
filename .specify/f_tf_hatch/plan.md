@@ -95,7 +95,7 @@ gate (`ideas/f_tf_triage.md`: "decided by a NumPy spike + cost estimate, not by 
 triage"). Nothing in the docs picks a branch.
 
 > **AMENDMENT (T001, 2026-10-17): BRANCH T (tileable distance-field) chosen.**
-> The spike (`tests/spike_tf_hatch_costshape.py`, NumPy-only — no bench, no
+> The spike (`tests/records/spike_tf_hatch_costshape.py`, NumPy-only — no bench, no
 > codebox before the gate) implemented both branches on three synthetic fields
 > (concentric-ring/tangential-axis, isotropic blob, authored waves) at 96x128:
 >
@@ -273,7 +273,7 @@ glyph's plan ADR-6 (trace ≥ gate draws, below = no-mark) — cited; hatch's
 >   `np.linalg.eigh` cross-check — the tensormap mirror's method, T006
 >   there). Mutation check required (T008).
 > - **Tier 2 (bench) — applies, WRITTEN-NOT-RUN in this build's scope.**
->   `tests/bench_tf_hatch.py` + the three codeboxes are written and
+>   `tests/modules/tf_hatch/bench_tf_hatch.py` + the three codeboxes are written and
 >   registered (in benchdeps.DATA via REGISTRATION_NOTES.md), per the
 >   parent-side hard constraint: never executed here. The bench, with the
 >   spike's model as its prediction, is the gate's PROVISIONAL-CLOSED
@@ -298,9 +298,9 @@ glyph's plan ADR-6 (trace ≥ gate draws, below = no-mark) — cited; hatch's
 
 **Decision:**
 
-- **Tier 0 (cost spike: `tests/spike_tf_hatch_costshape.py`) applies FIRST** — this is
+- **Tier 0 (cost spike: `tests/records/spike_tf_hatch_costshape.py`) applies FIRST** — this is
   OQ1's gate itself, NumPy-only, ahead of everything.
-- **Tier 1 (NumPy mirror: `tests/test_tf_hatch.py`) applies** — the commit curve, the
+- **Tier 1 (NumPy mirror: `tests/modules/tf_hatch/test_tf_hatch.py`) applies** — the commit curve, the
   family pattern math (density log map, phase scroll, regularity hash, softness
   smoothstep), and the decode invariants all have independent ground truth (analytic
   fields; NumPy `np.linalg.eigh` cross-check, as the tensormap mirror used).
@@ -372,14 +372,14 @@ falsifies the dot->line continuum.
 
 ### Block 0: Cost-shape spike (OQ1 gate) — BLOCKING, FIRST
 **Dependencies:** none
-**Builds:** `tests/spike_tf_hatch_costshape.py` (both branches at small scale; cost
+**Builds:** `tests/records/spike_tf_hatch_costshape.py` (both branches at small scale; cost
 model per branch; per-pixel sample/loop counts; comparison vs known bench floors)
 **Verification:** gate record in tasks.md: branch picked with numbers; unchosen branch
 file names removed from this plan; ADR-1 amended with measured evidence.
 
 ### Block 1: Tier-1 mirror (math + commit curve, branch-specific pattern math)
 **Dependencies:** Block 0 (E2 branch decided)
-**Builds:** `tests/test_tf_hatch.py` — E1 mirror (decode, commit, guard); E2 mirror
+**Builds:** `tests/modules/tf_hatch/test_tf_hatch.py` — E1 mirror (decode, commit, guard); E2 mirror
 (branch pattern: distance-field math or seed/march, family density/phase/regularity
 hashes); E3 mirror (profile, tone gate if OQ2 kept it, encode)
 **Verification:** analytic ground truth (rotated synthetic tensor fields; eigh
@@ -408,8 +408,8 @@ march behavior (branch S) observed on curved synthetic fields.
 **Builds:** `definition.py`; `build/build_patcher.py` output; menu registration
 **Verification:** loads in Vsynth; params addressable; both outlets render; bypass and
 unconnected give the neutral; drift-clean; contract tests green (`tests/
-test_module_contracts.py`, `tests/bench_modules.py` BYPAss table entry; add to
-`tests/benchdeps.DATA`; do NOT add to `tests/bench.sh` DEFAULT until Matt says it is a
+test_module_contracts.py`, `tests/contracts/bench_modules.py` BYPAss table entry; add to
+`tests/lib/benchdeps.DATA`; do NOT add to `tests/bench.sh` DEFAULT until Matt says it is a
 regression gate — the tensormap T021 discipline).
 
 ### Block 5: Docs and handoff

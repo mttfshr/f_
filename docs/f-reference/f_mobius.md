@@ -61,7 +61,7 @@ Edge wrapping uses `fract` (tiling), not mirroring — differs from the mirror-e
 
 Mobius transformations (`z -> (az + b) / (cz + d)`) are classical complex analysis: they map circles and lines to circles and lines and preserve angles. The four composing transformations (translation, rotation, scale, inversion) and the complex-arithmetic encoding are textbook material; no specific source was consulted.
 
-The blend parameter (`blend` between transform and identity) and the invert-range interaction are this module's own additions. The vecfield-transform question (whether the module could output the transform's Jacobian as a field instead of resampling) was investigated and closed during development: resample is the correct mechanism (`tests/spike_mobius_vecfield_transform.py`, 2026-07).
+The blend parameter (`blend` between transform and identity) and the invert-range interaction are this module's own additions. The vecfield-transform question (whether the module could output the transform's Jacobian as a field instead of resampling) was investigated and closed during development: resample is the correct mechanism (`tests/records/spike_mobius_vecfield_transform.py`, 2026-07).
 
 See `docs/f-reference/f_mobius.md` (this file) for the full algorithm and loose threads (invert range, singularity guard).
 

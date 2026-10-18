@@ -5,7 +5,7 @@ The full definition of the module: build/build_patcher.py builds the shipped pat
 (build_cleanup T019, 2026-10-06; until then src/f_vf_seeds/build_seeds_multistage.py did, because the
 generic schema could not express a six-stage chain whose params fan out to several differently named
 pix objects).  The keys that made it expressible (build/spec.md, "Multi-stage keys"; each default-off
-and loud, tests/test_build_seeds_keys.py): pix_chain `gen_code`, per-param `pix_shared_attrui`,
+and loud, tests/build/test_build_seeds_keys.py): pix_chain `gen_code`, per-param `pix_shared_attrui`,
 `pix_attr` and `range_menu_outlet`, native `bypass_target`, `outlet_source`, and `fanout` /
 `state_nodes` on mod_inlets; earlier ones: `pix_target` lists, `inlet_fanout`, `legacy`.
 This file also feeds the docs/helpfile/param-extraction tooling (build/extract_params.py) and the

@@ -165,7 +165,7 @@
     "last_audited": "2026-10-13",
     "perf": {
       "status": "flagged",
-      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): 0.0573 ms/pass active, 0.0582 ms/pass bypassed, GPU-bound -- bypass_gate confirmed NOT to skip the 48-tap loop (no savings). Absolute cost is small for one instance (~0.3% of a 60fps frame); early-exit guard A/B not built this session, left open at .specify/f_vf_glow/T036 (deprioritized given the low absolute cost)"
+      "note": "measured 2026-10-13 (tests/records/spike_four_module_cost.py, 512^2, chain=128): 0.0573 ms/pass active, 0.0582 ms/pass bypassed, GPU-bound -- bypass_gate confirmed NOT to skip the 48-tap loop (no savings). Absolute cost is small for one instance (~0.3% of a 60fps frame); early-exit guard A/B not built this session, left open at .specify/f_vf_glow/T036 (deprioritized given the low absolute cost)"
     },
     "bench": {
       "status": "flagged",
@@ -186,7 +186,7 @@
     "last_audited": "2026-10-13",
     "perf": {
       "status": "flagged",
-      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): ~0.0169 ms/pass active, ~0.0151 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 33 unrolled gate samples confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip them, but no guard is warranted on cost grounds. See .specify/f_vf_prism/T001a"
+      "note": "measured 2026-10-13 (tests/records/spike_four_module_cost.py, 512^2, chain=128): ~0.0169 ms/pass active, ~0.0151 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 33 unrolled gate samples confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip them, but no guard is warranted on cost grounds. See .specify/f_vf_prism/T001a"
     },
     "bench": {
       "status": "flagged",
@@ -205,7 +205,7 @@
     "last_audited": "2026-10-13",
     "perf": {
       "status": "flagged",
-      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): ~0.0150 ms/pass active, ~0.0162 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 8-step march (24 src + 16 field samples/pixel) confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip it, but no guard is warranted on cost grounds. See .specify/f_vf_streak/T054a"
+      "note": "measured 2026-10-13 (tests/records/spike_four_module_cost.py, 512^2, chain=128): ~0.0150 ms/pass active, ~0.0162 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 8-step march (24 src + 16 field samples/pixel) confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip it, but no guard is warranted on cost grounds. See .specify/f_vf_streak/T054a"
     },
     "bench": {
       "status": "flagged",
@@ -245,7 +245,7 @@
     "last_audited": "2026-10-13",
     "perf": {
       "status": "flagged",
-      "note": "measured 2026-10-13 (tests/spike_four_module_cost.py, 512^2, chain=128): ~0.0199 ms/pass active, ~0.0243 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). ~5 full modal evaluations/pixel confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip them, but no guard/cheaper-gradient is warranted on cost grounds. See .specify/f_chladni/T138a"
+      "note": "measured 2026-10-13 (tests/records/spike_four_module_cost.py, 512^2, chain=128): ~0.0199 ms/pass active, ~0.0243 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). ~5 full modal evaluations/pixel confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip them, but no guard/cheaper-gradient is warranted on cost grounds. See .specify/f_chladni/T138a"
     },
     "bench": {
       "status": "flagged",

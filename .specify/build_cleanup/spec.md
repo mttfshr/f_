@@ -27,8 +27,8 @@ regenerated at any time without losing anything.
 - **`build()` is pure.** Only `main()` and named generators write files.
 - **Ratchets, not registries.** A known-issue list has a pointer per entry,
   fails when something new appears, and fails when an entry is fixed (so it
-  gets removed). Examples: `KNOWN_ISSUES` in `tests/test_module_contracts.py`,
-  `tests/drift_baseline.json`.
+  gets removed). Examples: `KNOWN_ISSUES` in `tests/contracts/test_module_contracts.py`,
+  `tests/build/drift_baseline.json`.
 - **Generated artifacts are generated.** Menu, launcher (`generate_launch.py`
   is the template: parse a source of truth, validate loudly, `--check`, an
   offline test), helpfile queue.
@@ -38,7 +38,7 @@ regenerated at any time without losing anything.
 
 ## Done when
 
-- `tests/drift_baseline.json` is empty and deleted; every shipped patcher has a
+- `tests/build/drift_baseline.json` is empty and deleted; every shipped patcher has a
   `src/<name>/definition.py` and reproduces from it (or from its declared builder).
 - `tools/` is gone (menu generated), and no script other than `build_patcher.py`
   `main()` and the named generators can overwrite a shipped patcher.

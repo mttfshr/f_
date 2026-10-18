@@ -8,8 +8,8 @@ IDs are per directory: `f_grain/T001`.
 ---
 
 - [x] **T001 — perf: baseline cost + bypass-guard check. DONE 2026-10-09.**
-  Added `tests/spike_grain_cost.py` (diagnostic, not a regression test —
-  same shape as `tests/spike_caustic_res_cost.py`): measures the real
+  Added `tests/records/spike_grain_cost.py` (diagnostic, not a regression test —
+  same shape as `tests/records/spike_caustic_res_cost.py`): measures the real
   `codebox_grain.gen` via `benchclient.measure` at HD/4K, and separately
   measures an in-memory guarded variant (early-out on `bypass_gate > 0.5`
   around the per-grain Voronoi search) to see what a shader-side guard
@@ -98,8 +98,8 @@ IDs are per directory: `f_grain/T001`.
   makes systematically safe.
 
   Verified clean after the fix: `build/drift.py -v f_grain` reproduces
-  exactly; `tests/test_module_contracts.py` (8/8), `tests/test_drift.py`
-  (16/16), `tests/test_layout.py` (12/12) all pass with no unrouted/
+  exactly; `tests/contracts/test_module_contracts.py` (8/8), `tests/build/test_drift.py`
+  (16/16), `tests/build/test_layout.py` (12/12) all pass with no unrouted/
   bad_attr/undriven/unused findings.
 
   **Live check (Matt, 2026-10-10): confirmed, done.** Opened in Max,

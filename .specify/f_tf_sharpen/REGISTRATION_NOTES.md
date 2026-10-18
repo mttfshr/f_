@@ -6,15 +6,15 @@ apply. Nothing in a shared file was edited by this module.
 
 ---
 
-## `tests/benchdeps.py` — DATA registration (T014)
+## `tests/lib/benchdeps.py` — DATA registration (T014)
 
-Enforced by `tests/test_benchdeps.py::test_every_real_bench_file_is_registered_and_its_globs_match`
-(`on_disk <= set(bd.DATA)`); `tests/benchdeps.input_files` also *errors on a dead glob*
+Enforced by `tests/toolchain/test_benchdeps.py::test_every_real_bench_file_is_registered_and_its_globs_match`
+(`on_disk <= set(bd.DATA)`); `tests/lib/benchdeps.input_files` also *errors on a dead glob*
 (MissingInputs), so the glob below is verified to exist.
 
 ```diff
---- a/tests/benchdeps.py
-+++ b/tests/benchdeps.py
+--- a/tests/lib/benchdeps.py
++++ b/tests/lib/benchdeps.py
 @@
      "bench_tf_tensormap": _MACHINERY + ["src/f_tf_tensormap/codebox_*.gen"],
      "bench_tf_axisflow": _MACHINERY + ["src/f_tf_axisflow/codebox_*.gen"],
@@ -25,7 +25,7 @@ Enforced by `tests/test_benchdeps.py::test_every_real_bench_file_is_registered_a
 **Path update (parent, 2026-10-17):** the codebox and definition were moved from
 `.specify/f_tf_sharpen/` to `src/f_tf_sharpen/` per the shipped-layout
 normalization (tensormap/axisflow precedent); the DATA glob and build command
-now point there (already applied in `tests/benchdeps.py`).
+now point there (already applied in `tests/lib/benchdeps.py`).
 
 Note: the original `.specify/`-pointing rationale is obsolete after the parent's
 `src/` normalization — the glob now follows the shipped-module convention
@@ -45,7 +45,7 @@ Parent-owned; needs at build/integration time:
   `f_tf_sharpen | tensor out | Eigengap exaggerator/relaxer (contrast dial on
   anisotropy; axis untouched, trace fixed) | Draft`.
 - `HANDOFF.md`: built-module entry once parent registers.
-- `tests/test_module_contracts.py` BYPASS_EXPECT: `f_tf_sharpen` → passthrough
+- `tests/contracts/test_module_contracts.py` BYPASS_EXPECT: `f_tf_sharpen` → passthrough
   (output == input at bypass; the module has one outlet).
 
 No exact diff supplied for these: menu/inventory formats are the parent's live
@@ -82,7 +82,7 @@ eigenvalues — caught by the tier-1 mirror's trace-invariance test, T003.)*
   Cost model vs tensormap's published floors (~0.9 ms per pass at 1080p, R_MAX 16):
   sharpen has no loop and one texture read — expected at or under the tensormap
   single-pass floor, i.e. ~0.9 ms upper bound at 1080p. Resolving experiment:
-  `bc.measure(code(), [rand(1080,1920)], chain=8)` in `tests/bench_tf_sharpen.py`
+  `bc.measure(code(), [rand(1080,1920)], chain=8)` in `tests/modules/tf_sharpen/bench_tf_sharpen.py`
   (add a `test_cost` when the gate is exercised).
 
 ---
@@ -94,6 +94,6 @@ eigenvalues — caught by the tier-1 mirror's trace-invariance test, T003.)*
   `python3 build/build_patcher.py .specify/f_tf_sharpen/definition.py`
   → `package/patchers/f_tf_sharpen.maxpat` (written; `json.load` VALID)
 - codebox: `.specify/f_tf_sharpen/codebox_sharpen.gen`
-- tests: `tests/test_tf_sharpen.py` (tier 1, green 15/15), `tests/bench_tf_sharpen.py`
+- tests: `tests/modules/tf_sharpen/test_tf_sharpen.py` (tier 1, green 15/15), `tests/modules/tf_sharpen/bench_tf_sharpen.py`
   (tier 2, written, never executed)
 - reference doc: `docs/f-reference/f_tf_sharpen.md` (Status: Draft)

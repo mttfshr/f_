@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mutation check of the T019 builder keys: tests/test_build_seeds_keys.py + test_build_multistage.py
+"""Mutation check of the T019 builder keys: tests/build/test_build_seeds_keys.py + test_build_multistage.py
 against build/build_patcher.py.  Baseline must be green; every mutant must turn a test red; always restored."""
 import hashlib
 import os
@@ -65,7 +65,7 @@ M = [  # (label, old, new, expected_count)
     ("range_menu_outlet without tiers allowed", 'if not p.get("range_tiers"):\n                raise ValueError(f"param \'{p[\'name\']}\': range_menu_outlet applies',
      'if False:\n                raise ValueError(f"param \'{p[\'name\']}\': range_menu_outlet applies', 1),
 ]
-TESTS = ["tests/test_build_seeds_keys.py", "tests/test_build_multistage.py"]
+TESTS = ["tests/build/test_build_seeds_keys.py", "tests/build/test_build_multistage.py"]
 
 
 def run_tests():

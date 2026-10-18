@@ -27,7 +27,7 @@ its confidence with it. Proven in the tier-1 mirror: a gradient that flips
 sign every frame (the same edge seen from opposite ends) leaves the smoothed
 tensor exactly unchanged, while a signed-vector (vecfield) one-pole on the
 same alternation collapses to 25% of its magnitude within three frames
-(`tests/test_tf_smooth.py`). Same argument the hub doc makes for tensor-space
+(`tests/modules/tf_smooth/test_tf_smooth.py`). Same argument the hub doc makes for tensor-space
 spatial smoothing, applied over time.
 
 **What it is not:** a new algorithm. `jit.fx.tp.filter` is shipped platform
@@ -126,7 +126,7 @@ stability, per channel, everywhere in the frame.
 
 ## Notes
 
-- Tier-1 mirror: `tests/test_tf_smooth.py` (12 tests) — decay theorem against
+- Tier-1 mirror: `tests/modules/tf_smooth/test_tf_smooth.py` (12 tests) — decay theorem against
   the closed form at release {0, 0.3, 0.5, 0.9, 0.99} over 50 frames
   (worst abs err 3.8e-6), line-field invariance (alternating θ/θ+180° gives a
   bitwise-constant output), opposite-axis reinforcement (sign-flipping
@@ -138,7 +138,7 @@ stability, per channel, everywhere in the frame.
   (sign-flip, swapped weights, clamped feedback — the clamp bug is invisible
   on 0-1 content and caught only on unbounded values, which is why ADR-3 is a
   test).
-- Tier-2 bench: `tests/bench_tf_smooth.py` — WRITTEN, NOT RUN (needs the bench
+- Tier-2 bench: `tests/modules/tf_smooth/bench_tf_smooth.py` — WRITTEN, NOT RUN (needs the bench
   open; run pending Matt). Frame-boundary round-trip of unbounded values
   (Jxx = 4.0 in → A·release out the next frame, no re-clamp), 5-frame
   recurrence vs mirror, release-0 GPU-exact passthrough, bypass, cost.

@@ -13,7 +13,7 @@ own carrier. The paper gestures at this version and never builds it; it is
 the one that behaves like the rest of `f_`.
 
 `f_a_ripple` is the ground truth: every correctness criterion was measured
-against its additive synthesis (`tests/spike_a_decorrelate_t7.py`, the NumPy
+against its additive synthesis (`tests/records/spike_a_decorrelate_t7.py`, the NumPy
 mirror of this exact chain).
 
 ## Signal path
@@ -37,7 +37,7 @@ documented there as failing four ways and must not be re-attempted).
 The gain/phase curves are precomputed message-rate: `metro 50` →
 trigger-ordered `snapshot~`s → `uzi` × 1024 bins → `expr` → `peek~` into the
 named buffers. 50 ms refresh measured free at the v1 `tmr` ceiling (−15.6 vs
-−15.7 dB per-frame, `tests/spike_a_decorrelate_t7.py`).
+−15.7 dB per-frame, `tests/records/spike_a_decorrelate_t7.py`).
 
 **`band` drives the constants**: a `coll` lookup holds each band's edges and
 its *measured bin geomean* (2048/44.1 kHz; band 6: 5700–11000 Hz, geomean
@@ -104,7 +104,7 @@ unbounded — `gain` is a trim, not a limiter.
 
 ## Verification provenance
 
-All numbers above: `tests/spike_a_decorrelate_t7.py` (NumPy mirror of this
+All numbers above: `tests/records/spike_a_decorrelate_t7.py` (NumPy mirror of this
 exact chain, incl. band-1, real-world-carrier and parameter-sweep sections)
 plus the 2026-10-12 Max session (null rig + PM listen, tasks.md T002/T005).
 Spec/plan record: `.specify/f_a_decorrelate/`.

@@ -67,7 +67,7 @@ run first.
       a `jit.gl.pix vsynth @adapt 0 @dim 256 256 @type float32` stage fed by a test
       source, and a downstream `jit.gl.pix vsynth @adapt 1 @type float32` stage
       that samples it (bilinear) — the solver/encode split of plan ADR-2. Not committed.
-      **Done 2026-09-23 without a hand-built patch:** `tests/fluid_feasibility.py`
+      **Done 2026-09-23 without a hand-built patch:** `tests/records/fluid_feasibility.py`
       generates the scratch module and runs it through the module bench (inside
       `vs_render`); it always deletes the scratch file afterwards.
 - [x] T003 E1 — with T002, record in "Findings" below: does the 256² stage run
@@ -93,8 +93,8 @@ run first.
 
 ### Block A — NumPy mirror (tier 1)
 
-- [x] T008 Write `tests/fluid_mirror.py`: float32 mirrors of every stage, importing
-      `gpu_sim` and `pass_dft` from `tests/test_fft_separable.py` —
+- [x] T008 Write `tests/modules/fluid/fluid_mirror.py`: float32 mirrors of every stage, importing
+      `gpu_sim` and `pass_dft` from `tests/math/test_fft_separable.py` —
       `adv(state, force, dt, force_gain, src_vecfield)` (periodic bilinear + force),
       `spec(tex, viscosity, project, drag, dt)` (Nyquist-zeroed operator wavenumbers,
       projection blend, `exp(-(nu*|k|^2 + mu)*dt)` decay; k = 0 bin only gets drag),
@@ -104,8 +104,8 @@ run first.
       `step(state, force, params)` composing pass → adv → fx → fy → spec → iy → ix.
       Provide an `np.fft`-backed fast path for long runs, asserted equal to the
       `pass_dft`-based step over 3 frames.
-- [x] T009 Write `tests/test_fluid_mirror.py` (run with
-      `tests/run.sh tests/test_fluid_mirror.py`), each check against *independent*
+- [x] T009 Write `tests/modules/fluid/test_fluid_mirror.py` (run with
+      `tests/run.sh tests/modules/fluid/test_fluid_mirror.py`), each check against *independent*
       truth: single-mode decay = `exp(-nu*dt*|k|^2)` within 1e-4 (SC1); projection of
       a random field leaves spectral divergence at numerical zero; pure-gradient force
       → velocity ≈ 0, pure-curl force unchanged (SC2); `project` = 0.5 equals the
@@ -121,8 +121,8 @@ run first.
 **Checkpoint**: T003/T004 answered in Findings; T009 green and mutation-checked;
 E-seam, E-nan (and optional E5) recorded. *BLOCKS Phase 1.*
 
-**Phase 0 outcome (2026-09-23): met.** `tests/test_fluid_mirror.py` 16/16 with all
-five mutations caught; `tests/bench_fluid_probes.py` 4/4; `tests/fluid_feasibility.py`
+**Phase 0 outcome (2026-09-23): met.** `tests/modules/fluid/test_fluid_mirror.py` 16/16 with all
+five mutations caught; `tests/records/bench_fluid_probes.py` 4/4; `tests/records/fluid_feasibility.py`
 answers E1/E1b/E1c. Two plan changes came out of it (ADR-2, ADR-3, ADR-6 updated):
 (1) `adv` and `enc` are triggered by `r draw` bangs on inlet 0 — an `enc` that adapts
 to the force texture is 1×1 when the inlet is unconnected (`vs_black`); (2) all
@@ -137,7 +137,7 @@ minifying; `NaN == NaN` is true on this GPU).
 **Purpose**: Turn the mirrored stages into real codebox files and prove each on
 the GPU (plan Block B). Success criteria 1–6 must hold on the GPU path.
 
-**Independent Test**: `tests/bench.sh tests/bench_fluid.py` passes.
+**Independent Test**: `tests/bench.sh tests/modules/fluid/bench_fluid.py` passes.
 
 - [x] T011 [P] [US2] Write `src/f_vf_fluid/gen_dft.py` and run it to produce
       `src/f_vf_fluid/codebox_dft_fx.gen`, `codebox_dft_fy.gen`, `codebox_dft_iy.gen`,
@@ -162,7 +162,7 @@ the GPU (plan Block B). Success criteria 1–6 must hold on the GPU path.
       the render-context size), in2 = force (render res), in3 = velocity (256²)
       read with the periodic 4-tap; encode `0.5 + 0.5 * clamp(gain * v, -1, 1)`,
       B = 0.5, A = 1; gated output `mix(neutral, force, src_vecfield)` when bypassed.
-- [x] T015 Create `tests/bench_fluid.py` from `tests/templates/bench_module_template.py`,
+- [x] T015 Create `tests/modules/fluid/bench_fluid.py` from `tests/templates/bench_module_template.py`,
       pointing at the real `src/f_vf_fluid/codebox_*.gen` files; first test: every
       codebox compiles with no Max errors (`test_compiles_and_runs` per stage).
 - [x] T016 [US3] Bench `spec` vs the mirror at N = 256 over random spectral fields,
@@ -194,7 +194,7 @@ the GPU (plan Block B). Success criteria 1–6 must hold on the GPU path.
 **Checkpoint**: SC1–SC6 pass on the GPU path (with measured errors and cost
 recorded). Commit. *BLOCKS Phase 2.*
 
-**Phase 1 outcome (2026-09-23): met.** `tests/bench_fluid.py` 9/9 (~6 min). All seven
+**Phase 1 outcome (2026-09-23): met.** `tests/modules/fluid/bench_fluid.py` 9/9 (~6 min). All seven
 stage codeboxes in `src/f_vf_fluid/` match the mirror at float precision; the 100-frame
 chained GPU run tracks the mirror to 3.1e-6 and Taylor–Green decays within 0.85% of
 analytic at frame 100; total cost 2.4–2.8 ms/frame at 256² (budget 3 ms). One GenExpr
@@ -207,8 +207,8 @@ parsing quirk found and fixed on the way: `-(a + b) * c` mis-parses (see Finding
 **Purpose**: Assemble the eight-stage patcher from the verified codeboxes with a
 dedicated build script (plan ADR-9), then pass the module contracts.
 
-**Independent Test**: `tests/test_module_contracts.py` and
-`tests/bench_modules.py` green with no new `KNOWN` entries; two instances
+**Independent Test**: `tests/contracts/test_module_contracts.py` and
+`tests/contracts/bench_modules.py` green with no new `KNOWN` entries; two instances
 coexist; bypass check passes.
 
 - [x] T023 [P] [US5] Write `src/f_vf_fluid/definition.py`: metadata only (name, prefix
@@ -241,15 +241,15 @@ coexist; bypass check passes.
 - [x] T029 [US5] Run `build/py.sh src/f_vf_fluid/build_fluid.py` → writes
       `package/patchers/f_vf_fluid.maxpat`; assert it parses and every route token
       wires to the same-named control (reuse the check used for `f_masonry`).
-- [x] T030 [US5] Run `tests/run.sh tests/test_module_contracts.py`; fix wiring until no
+- [x] T030 [US5] Run `tests/run.sh tests/contracts/test_module_contracts.py`; fix wiring until no
       new `KNOWN_ISSUES` entries are needed.
-- [x] T031 [US5] Add `f_vf_fluid` to `PARTIAL_BYPASS_BY_DESIGN` in `tests/bench_modules.py`
-      (Param bypass gate, solver stays warm); run `tests/bench.sh tests/bench_modules.py`
+- [x] T031 [US5] Add `f_vf_fluid` to `PARTIAL_BYPASS_BY_DESIGN` in `tests/contracts/bench_modules.py`
+      (Param bypass gate, solver stays warm); run `tests/bench.sh tests/contracts/bench_modules.py`
       with the bench prerequisites (other patches closed); `bypass_out1` must pass
       and no `KNOWN` entry may be added.
 - [x] T031a [US5] The module bench feeds 64² inputs but its render context is 512² and `enc`
       follows the context, so `bypass_out1` cannot compare like with like: give
-      `tests/bench_modules.py` a per-module input size (the context size for
+      `tests/contracts/bench_modules.py` a per-module input size (the context size for
       `f_vf_fluid`) so the passthrough check stays exact; no `KNOWN` entry.
 - [x] T032 [US5] Two-instance check: two `f_vf_fluid` in one Vsynth patch run
       independently with no "already in use" errors (FR-012); record the method used.
@@ -269,7 +269,7 @@ bypass passes through / neutral; US1 smoke test works. Commit.
 **Phase 2 outcome (2026-09-23): met.** T033 (save/reopen restores parameters) and T034 (the `f_vf_vortex → f_vf_fluid → f_vf_advect` smoke test in a real Vsynth patch) were confirmed by Matt, who also judged the panel look good.
 `build_fluid.py` builds `package/patchers/f_vf_fluid.maxpat` (46 boxes, 46 lines) and
 self-verifies; the static contract test and the live module bench (33 modules) pass with
-no new `KNOWN` entries; `tests/bench_fluid_module.py` 3/3 (once-per-frame, two instances,
+no new `KNOWN` entries; `tests/modules/fluid/bench_fluid_module.py` 3/3 (once-per-frame, two instances,
 fresh load). One real bug found and fixed on the way: **`vs_black` (all zeros = decoded −1)
 was injected as a force for the first ~10 frames after load** because `vs_inState`'s
 connected flag lags; fixed with a content check (B = 0.5) in `adv` and `enc`. 
@@ -456,7 +456,7 @@ edge or disconnect artifacts.
       committed `f_vf_fluid.maxpat` byte for byte (checked 2026-09-29), so it has not been
       hand-edited since its last build.
 - [x] T050 Final regression: `tests/run.sh`, `tests/bench.sh` (both benches open),
-      `tests/test_module_contracts.py` — all green, `KNOWN` registries still empty.
+      `tests/contracts/test_module_contracts.py` — all green, `KNOWN` registries still empty.
       **Offline half DONE 2026-09-29:** `tests/run.sh` passes all 7 files (benchclient 3/3,
       fft_separable 9/9, fluid_mirror 22/22, genjit 4/4, jxf 6/6, layout 9/9,
       module_contracts 3/3; 33 modules, 0 unexpected issues); `KNOWN_ISSUES` and `KNOWN`

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mutation check for tests/test_bench_expect.py against tests/bench_modules.py.
+"""Mutation check for tests/contracts/test_bench_expect.py against tests/contracts/bench_modules.py.
 Baseline must be green first; every mutant must turn the test red; the file is always restored."""
 import hashlib
 import os
@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-TARGET = REPO / "tests/bench_modules.py"
+TARGET = REPO / "tests/contracts/bench_modules.py"
 orig = TARGET.read_text()
 sha = hashlib.sha256(orig.encode()).hexdigest()
 
@@ -37,7 +37,7 @@ def run_tests():
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PATH="/opt/homebrew/bin:" + os.environ["PATH"])
     for p in (REPO / "tests").rglob("__pycache__"):
         subprocess.run(["rm", "-rf", str(p)])
-    r = subprocess.run(["uv", "run", "--no-project", "--with", "numpy", "python3", "tests/test_bench_expect.py"],
+    r = subprocess.run(["uv", "run", "--no-project", "--with", "numpy", "python3", "tests/contracts/test_bench_expect.py"],
                        cwd=REPO, env=env, capture_output=True, text=True)
     return r.returncode
 

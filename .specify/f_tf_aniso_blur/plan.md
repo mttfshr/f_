@@ -32,7 +32,7 @@ under ~450 lines (`skills/jit-gen-codebox`) fighting the tap count, and the
 strength-coupling story the decode inherits from tensormap's gain.
 
 Unlike the tensormap, a NumPy spike already exists for the family idiom
-(its mirror `tests/test_tf_tensormap.py` verified the eigen decode forms);
+(its mirror `tests/modules/tf_tensormap/test_tf_tensormap.py` verified the eigen decode forms);
 the new math here is the kernel and its gating, which the tier-1 mirror owns.
 
 ## Technical Context
@@ -280,7 +280,7 @@ doc record in `f_tensor_type.md` rule 6's refactor note.
 ### Block 1: Kernel math settled in NumPy, both families
 **Dependencies:** none (the decode idiom is cited, not re-derived; the glyph
 ADR-2 citation is read-only).
-**Builds:** `tests/test_tf_aniso_blur.py` — decode+eigen reuse, both kernel
+**Builds:** `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py` — decode+eigen reuse, both kernel
 families as mirror functions, the gate model (ADR-3), the isotropic fallback
 and SPD guard, brute-force weighted-sum reference, analytic synthetic-tensor
 inputs.
@@ -293,7 +293,7 @@ one mutation check.
 **Dependencies:** Block 1.
 **Builds:** both candidate codeboxes (`codebox_aniso_line.gen`,
 `codebox_aniso_grid.gen`) if the gate needs a live cost comparison, or the
-one chosen codebox if the NumPy spike is decisive; `tests/bench_tf_aniso_blur.py`.
+one chosen codebox if the NumPy spike is decisive; `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py`.
 **Verification:** compiles under the statement budget; matches the tier-1
 mirror on the GPU per channel; texel-clamp border behavior confirmed;
 per-family cost measured at 1080p and 4K (M1 caveat); ADR-2 decision
@@ -369,14 +369,14 @@ plan as an addendum below.
 > mean abs 0.0362; family (b) 5×5 grid mean abs 0.0300; the densified
 > (129-tap) family (a) reference closes to 1.1e-2 max/3e-4 mean relative to
 > the delivered 49-tap kernel — the delivered kernel's own discretization
-> datum, banding data in `tests/test_tf_aniso_blur.py`
+> datum, banding data in `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py`
 > (test_adr2_family_b_ellipse_grid_reference). Family (a)'s transverse
 > weights are continuous (3-point rule), not dotted: the banding magnitude
 > is in the 0.03 mean-abs class on unit-contrast noise, not cf.directional's
 > 3-tap structure.
 >
 > **The experiment that closes the gate:** T013/T014 on the bench
-> (`tests/bench_tf_aniso_blur.py`, written, not run) — compile both
+> (`tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py`, written, not run) — compile both
 > codeboxes, parity each against its mirror including borders, measure
 > `bc.measure` at 1080p and 4K across the `length` range (M1 unmeasured —
 > say so), then compare against family (b)'s cost at matched tap count and

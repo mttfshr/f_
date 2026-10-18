@@ -11,7 +11,7 @@ file (`tests/bench/bench.js`) that owns all sequencing. The patch stays
 open; Python triggers jobs over OSC/UDP and exchanges data through files in
 a per-job directory. Codeboxes arrive as generated `.genjit` files loaded
 via `jit.gl.pix`'s `gen` attribute; textures move as float32 `.jxf`. Python
-(`tests/jxf.py`, `tests/genjit.py`, `tests/benchclient.py`) writes jobs,
+(`tests/lib/jxf.py`, `tests/lib/genjit.py`, `tests/lib/benchclient.py`) writes jobs,
 waits, reads results and diffs against the NumPy mirrors.
 
 Facts established from Max 9's own reference docs and shipped files
@@ -95,7 +95,7 @@ loaded file makes Max try to reload it and post "could not find gen
 patcher").
 
 **Consequences:** Self-test 3 is the gate for this ADR. The genjit
-generator is a small standalone function in `tests/genjit.py` (not an
+generator is a small standalone function in `tests/lib/genjit.py` (not an
 import of `build_patcher.gen_subpatcher`, whose archetype/mod-inlet logic
 is module-specific), structurally cross-checked against a shipped Max
 example.
@@ -108,7 +108,7 @@ directions; image formats are 8-bit.
 **Decision:** Inputs: Python writes `inN.jxf` (`FL32`, 4 planes) →
 `jit.matrix @type float32 @planecount 4` `read` → `jit.gl.texture @type
 float32`. Output: pass output texture → `jit.matrix @type float32` via its
-`jit_gl_texture` method → `write out.jxf`. `tests/jxf.py` owns read/write
+`jit_gl_texture` method → `write out.jxf`. `tests/lib/jxf.py` owns read/write
 and converts to/from the RGBA `(H, W, 4)` arrays `gpu_sim.py` uses.
 
 **Consequences:** Two unknowns handled by self-tests, not assumed: (1)
@@ -127,7 +127,7 @@ Bench → Python on UDP 7472: `/pong`, `/done <job dir>`, `/busy <job dir>`
 (as built: replies carry the job *dir* the request named, so a refused job
 is identifiable without the bench having parsed it).
 The bench writes `result.json` *before* sending `/done`. Minimal OSC
-encode/decode is hand-rolled in `tests/benchclient.py` (string args only,
+encode/decode is hand-rolled in `tests/lib/benchclient.py` (string args only,
 ~30 lines) — no `python-osc` dependency. Ports are constants in one place
 on each side.
 
@@ -195,7 +195,7 @@ empirically verified facts about `norm`/`cell`.
 **Context:** `tests/run.sh` must stay runnable anywhere (no Max). Bench
 tests need Max open.
 
-**Decision:** Bench tests are named `tests/bench_*.py` and run via
+**Decision:** Bench tests are named `tests/**/bench_*.py` and run via
 `tests/bench.sh`; `tests/run.sh` keeps running only `test_*.py`. Offline
 parts of the bench toolchain (`jxf.py`, `genjit.py`, OSC encoding) get
 ordinary `test_*.py` coverage — including parsing Max's shipped
@@ -300,7 +300,7 @@ tests/
   test_jxf.py            offline: round trip + parse Max's matrix1.jxf
   test_genjit.py         offline: structure vs shipped example
   test_benchclient.py    offline: OSC encode/decode round trip
-  bench.sh               runs tests/bench_*.py (needs Max + bench open)
+  bench.sh               runs tests/**/bench_*.py (needs Max + bench open)
   bench_selftest.py      Story 1: identity, probe, broken, reload
   bench_fft.py           Story 2: FFT T1 (row pass N=128) vs NumPy
   bench_perf.py          Story 3: fps, K chains

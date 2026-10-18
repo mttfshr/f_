@@ -139,7 +139,7 @@ change (step-sign continuity), recorded as spec OQ6.
 **Cost:** cost scales with TAPS_MAX (the compile-time loop), not any dial.
 Cost model vs the tensormap bench floor (~0.9 ms/pass at 1080p, R_MAX 16):
 the 49-tap pass is the same loop-cost class (PROVISIONAL — bench
-measurement pending, `tests/bench_tf_aniso_blur.py` written; M1 unmeasured,
+measurement pending, `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py` written; M1 unmeasured,
 same caveat as tensormap).
 
 ---
@@ -177,10 +177,10 @@ for the exact circular reference at the same length budget.
 
 ## Notes
 
-- Tier-1 mirror: `tests/test_tf_aniso_blur.py` (19/19; independent ground
+- Tier-1 mirror: `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py` (19/19; independent ground
   truths: `np.linalg.eigvalsh`, a densified brute quadrature, a dense area
   Gaussian, an independent isotropic reference). Tier-2:
-  `tests/bench_tf_aniso_blur.py` (written; **not yet run** — bench-gated).
+  `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py` (written; **not yet run** — bench-gated).
   Spec/plan/tasks: `.specify/f_tf_aniso_blur/`.
 - Kernel-family decision (fixed-tap line integration vs ellipse grid) is
   plan ADR-2, RESOLVED PROVISIONAL-OPEN: family (a) ships; the exact bench

@@ -6,7 +6,7 @@ behavior and a tensor-consumer fact that closes a filed open question.
 Ids start at T001._
 
 - [ ] T001: Add a BYPASS_EXPECT entry (or NEUTRAL_BYPASS_BY_DESIGN
-  listing) for f_vf_potential in tests/bench_modules.py. The module
+  listing) for f_vf_potential in tests/contracts/bench_modules.py. The module
   declares archetype "processor" but its bypass outputs the neutral
   (0,0,0,1), not input passthrough — the implicit out1==in1 check
   shouldn't silently pass or silently skip; one line makes the

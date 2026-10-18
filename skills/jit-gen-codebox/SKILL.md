@@ -116,7 +116,7 @@ continuous wrapping.
 `sin` `cos` `tan` `asin` `acos` `atan` `atan2` `sinh` `cosh` `tanh`
 
 **`atan2` confirmed GPU-safe including the decode use case (2026-10-12):**
-`tests/spike_atan2_safety.py` verified it on *decoded sampled-texture*
+`tests/records/spike_atan2_safety.py` verified it on *decoded sampled-texture*
 input (the vecfield-decode pattern, stronger than the analytic-coords
 precedent above): all four quadrants match `np.arctan2` to 5.6e-7 rad,
 the ±π branch cut is correctly wrapped (adjacent-texel 2π jumps, no
@@ -756,7 +756,7 @@ Do not use `dim` to get normalized output size — use `norm` for that.
 
 ## Bench-Verified Facts (Max test bench, 2026-09-22)
 
-Measured numerically through the `f_` test bench (`tests/bench_*.py`,
+Measured numerically through the `f_` test bench (`tests/**/bench_*.py`,
 `.specify/test_bench/`), not inferred from docs or screenshots. Max 9,
 jit.gl.pix, float32.
 
@@ -913,7 +913,7 @@ Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Fin
   code inline).
 - **After that failure the bench is wedged**: every later job returns a STALE image (the same one, whatever the
   code) with no error, until `benchclient.reopen()`. Before trusting a result after any compile failure, probe with
-  a known-good codebox (`tests/benchclient.ensure_healthy`).
+  a known-good codebox (`tests/lib/benchclient.ensure_healthy`).
 - **Functions work inside a codebox, including the cases that matter:** a function body can call
   `sample(in2, ...)` and `nearest(in2, ...)`, contain `for` loops with local variables (declare them before the
   loop), and return several values (`return a, b;` received as `x, y = f(...)`). A program using a function is
@@ -930,7 +930,7 @@ Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Fin
 
 ### More bench-verified facts (caustic resolution/detail cost spike, 2026-10-08)
 
-`tests/spike_caustic_res_cost.py`; see `.specify/f_caustic_scatter/tasks.md` T046.
+`tests/records/spike_caustic_res_cost.py`; see `.specify/f_caustic_scatter/tasks.md` T046.
 
 - **The MODULE bench's `period_ms` (`caustic_runner.py`/`cr.period_ms`, real `vs_render` context) is a different
   instrument from the codebox bench's `measure`, with its own floor: it is vsync-locked at `cr.CAP_MS` (~16.7 ms,
@@ -947,7 +947,7 @@ Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Fin
 
 ### More bench-verified facts (glyph/aniso tensor consumers, 2026-10-17)
 
-Probes: `tests/bench_tf_glyph.py`, `tests/bench_tf_aniso_blur.py`; evidence in
+Probes: `tests/modules/tf_glyph/bench_tf_glyph.py`, `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py`; evidence in
 `.specify/f_tf_glyph/plan.md` ADR-2 amendment and `docs/f-reference/f_tensor_type.md` rules 5–6.
 
 - **RUNTIME `atan2(0, 0)` returns NaN on this GPU (compile-time literals fold to 0).**
@@ -974,7 +974,7 @@ Probes: `tests/bench_tf_glyph.py`, `tests/bench_tf_aniso_blur.py`; evidence in
   not found: deleting patchcord" on load; the codebox's untapped input typed dead: "type is
   not a sampler") made the module render its inlet texture UNCHANGED, "irrespective of any
   dial". The codebox bench never sees this (it wraps code in its own genjit) — only the
-  module bench (`tests/bench_modules.py`) instantiates the shipped patcher as Max does. A
+  module bench (`tests/contracts/bench_modules.py`) instantiates the shipped patcher as Max does. A
   live module "acting like a passthrough" = suspect the gen graph / compile first, the math
   second.
 - **Ob3D `@name` bindings are context-global and collide**: instantiating two copies of a

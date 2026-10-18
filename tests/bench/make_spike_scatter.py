@@ -2,7 +2,7 @@
 make_spike_scatter.py -- generate tests/bench/spike_scatter.maxpat, the bpatcher for the scatter
 feasibility spike (ideas/optics_map.md, "Findings: caustic fidelity"; ideas/f_lumia.md).
 
-Not a shipped module and not part of the regression bench: it is loaded by tests/spike_scatter.py
+Not a shipped module and not part of the regression bench: it is loaded by tests/records/spike_scatter.py
 through the module bench's wrapper mechanism, inside Vsynth's real vs_render context.
 
 Structure follows Vsynth's own vs_xyz_disp.maxpat (a jit.gl.node capture holding a mesh drawn with a
@@ -20,6 +20,7 @@ import json
 import sys
 from pathlib import Path
 
+import sys as _sys; _sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))   # patchbuild lives in tests/lib
 from patchbuild import APPVERSION, Patch, patcher_dict
 
 HERE = Path(__file__).resolve().parent
@@ -137,7 +138,7 @@ wire("prepH", 0, "shader", 0)
 # snap (spike S5): 1 = the vertex shader snaps each point to its nearest pixel CORNER (the fragment
 # shader still weights by the unsnapped position), so a size-2 point covers exactly the four pixels
 # the tent can reach, instead of a size-3 point's ~9. `k` (a K-meshes load multiplier, spike S4) was
-# tried and removed: its period measurements were not linear in K (tests/spike_scatter.py, S4 notes).
+# tried and removed: its period measurements were not linear in K (tests/records/spike_scatter.py, S4 notes).
 obj("prepSn", "prepend param snap", 1, 1, [920, 350, 110, 22])
 wire("rt", 9, "prepSn", 0)
 wire("prepSn", 0, "shader", 0)
@@ -157,7 +158,7 @@ obj("prepTp", "prepend param taps", 1, 1, [1280, 350, 110, 22])
 wire("rt", 12, "prepTp", 0)
 wire("prepTp", 0, "shader", 0)
 
-p.comment("note", "scatter spike: see tests/spike_scatter.py. d weight psize n via inlet 0; "
+p.comment("note", "scatter spike: see tests/records/spike_scatter.py. d weight psize n via inlet 0; "
                   "inlet 0 texture = source, inlet 1 = f_vecfield.", [20, 460, 560, 20])
 
 

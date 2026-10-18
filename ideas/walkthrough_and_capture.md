@@ -73,7 +73,7 @@ regenerable the same way, so they stay in sync when a module changes.
 7471/7472) and module bench (`bench_module.maxpat`, 7473/7474) already drive a
 live Max from Python: load a module in Vsynth's real `vs_render` context, feed
 it textures, send every route parameter as a control message, capture outlets,
-exchange data via per-job directories (`tests/benchclient.py`). A capture
+exchange data via per-job directories (`tests/lib/benchclient.py`). A capture
 bench is a natural third sibling. `package/examples/f_demo_*.json` presets are natural
 starting states.
 

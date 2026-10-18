@@ -28,6 +28,7 @@ Run:  tests/run.sh tests/bench/make_bench.py   (or plain python3; stdlib only)
 import json
 from pathlib import Path
 
+import sys as _sys; _sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))   # patchbuild lives in tests/lib
 from patchbuild import Patch, patcher_dict
 
 OUT = Path(__file__).resolve().parent / "bench.maxpat"
@@ -126,7 +127,7 @@ patcher = patcher_dict(boxes, lines, (100.0, 100.0, 780.0, 660.0))
 
 if __name__ == "__main__":
     import sys
-    sys.path.insert(0, str(OUT.parent.parent))          # tests/
+    sys.path.insert(0, str(OUT.parent.parent / "lib"))  # tests/lib
     from genjit import write_genjit
     write_genjit(OUT.parent / "bench_default.genjit", "out1 = in1;", min_inputs=3, min_outputs=4)
     with open(OUT, "w") as f:

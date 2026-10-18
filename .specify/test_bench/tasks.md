@@ -34,25 +34,25 @@ tests/
 **Purpose:** Everything that can be verified without Max, verified first.
 
 - [x] T001 Add `tests/jobs/` and `tests/bench/job_*.genjit` to `.gitignore`
-- [x] T002 Write `tests/jxf.py`: `write_jxf(path, rgba)` / `read_jxf(path)`
+- [x] T002 Write `tests/lib/jxf.py`: `write_jxf(path, rgba)` / `read_jxf(path)`
   for `FL32` 4-plane matrices per plan's decoded format; also read
   `LONG`/`CHAR` for the format check. Keep plane-order and row-order
   conversion in two clearly named functions with a `PROVISIONAL` comment —
   resolved in T021.
-- [x] T003 Write `tests/test_jxf.py`: write→read round trip is bitwise exact;
+- [x] T003 Write `tests/toolchain/test_jxf.py`: write→read round trip is bitwise exact;
   parsing `/Applications/Max.app/Contents/Resources/C74/help/jitter/matrix1.jxf`
   yields type LONG, 2 planes, dims 320×240, and a chunk-size check that
   matches file size. Mutation-check once (e.g. flip endianness → test fails).
   Done 2026-09-22. Mutation-checked: little-endian reader → Max-file cell check fails (6.7e7 off).
-- [x] T004 Write `tests/genjit.py`: `make_genjit(codebox_text, n_inputs,
+- [x] T004 Write `tests/lib/genjit.py`: `make_genjit(codebox_text, n_inputs,
   n_outputs) -> dict` producing a gen patcher with `in 1..n`, one codebox,
   `out 1..m`, wired. Standalone; don't import `build/build_patcher.py`.
-- [x] T005 Write `tests/test_genjit.py`: generated JSON has the same
+- [x] T005 Write `tests/toolchain/test_genjit.py`: generated JSON has the same
   top-level structure/keys as a shipped example
   (`Examples/jitter-examples/gen/pinch.genjit`), codebox text embedded
   verbatim, inlet/outlet counts and patchlines correct.
 - [x] T006 Write OSC encode/decode (string args only) in
-  `tests/benchclient.py`, plus `tests/test_benchclient.py` round-tripping
+  `tests/lib/benchclient.py`, plus `tests/toolchain/test_benchclient.py` round-tripping
   `/ping`, `/run <path with spaces>`, `/done <id>`.
 - [x] T007 Run `tests/run.sh`; all offline tests plus existing
   `test_fft_separable.py` pass.
@@ -86,11 +86,11 @@ from the terminal.
   2026-09-22: opened in Matt's running Max session via `open -a Max` (Claude, with the session live). Loads and runs — every Phase 1 check passes through it, so the JS, udp objects, world and draw-bang path all instantiated. **Confirmed by Matt:** Max console clean at load — no object or patchline errors.
 - [x] T011 Implement `ping()` and the `/run` round trip in
   `benchclient.py`, with reachability timeout (1 s) and per-job timeout.
-- [x] T012 Write `tests/bench.sh` (runs `tests/bench_*.py` via `uv`).
+- [x] T012 Write `tests/bench.sh` (runs `tests/**/bench_*.py` via `uv`).
 - [x] T013 Verify from the terminal: ping succeeds with the bench open; a
   stub `/run` round-trips; with the bench closed, ping fails fast with
   "bench not reachable"; a second `/run` during an active job gets `/busy`.
-  Done 2026-09-22, `tests/bench_control.py` 5/5: ping; stub round trip; frames reach `bench.js` during a job; second `/run` refused with `/busy`, first completes, refused job writes nothing; missing `job.json` → `status: error` naming the file. Bench-closed case: `tests/bench.sh` failed fast in 1.4 s with the "bench not reachable" message, exit 2. **Finding:** 177 draw bangs in 1.5 s (~118 fps) with `jit.world @enable 1` and default `fps 30` — the world is running display-synced (likely displaylink on a 120 Hz display), not at the `fps` attribute. Phase 4 must set rate control explicitly (T027).
+  Done 2026-09-22, `tests/toolchain/bench_control.py` 5/5: ping; stub round trip; frames reach `bench.js` during a job; second `/run` refused with `/busy`, first completes, refused job writes nothing; missing `job.json` → `status: error` naming the file. Bench-closed case: `tests/bench.sh` failed fast in 1.4 s with the "bench not reachable" message, exit 2. **Finding:** 177 draw bangs in 1.5 s (~118 fps) with `jit.world @enable 1` and default `fps 30` — the world is running display-synced (likely displaylink on a 120 Hz display), not at the `fps` attribute. Phase 4 must set rate control explicitly (T027).
 
 **Checkpoint:** terminal ↔ bench control loop works with no manual action
 in Max. → Commit. → Phase 2.
@@ -141,9 +141,9 @@ in Max. → Commit. → Phase 2.
   the probe) and, if they differ from the sim, into `gpu_sim.py`'s
   documented conventions. Re-run `tests/run.sh` — math tests still pass.
   Done: `jxf.py` PROVISIONAL removed with evidence cited; `gpu_sim.py` conventions documented as bench-verified, `grid()`'s indices relabeled as integer indices (not `cell`), new `jitter_cell()` reproduces Jitter's `cell`. `tests/run.sh` still green.
-- [x] T022 Write `tests/bench_selftest.py` encoding T017–T020 as repeatable
+- [x] T022 Write `tests/toolchain/bench_selftest.py` encoding T017–T020 as repeatable
   checks with printed measurements.
-  Done: `tests/bench_selftest.py` 7/7 (identity, probe incl. non-square, plane order, broken → error, error isolation + recovery, reload, two inputs). With `bench_control.py`: 12/12 via `tests/bench.sh`. **Two-input path took three attempts:** `activeinput N` + `jit_gl_texture` (landed on input 0 — output was exactly `in2 + (0,0,0,10)`), then `sendinput N jit_gl_texture` (input stayed default), then the structural fix: every bench `.genjit` carries `in 1..3` (`make_genjit(min_inputs=3)`) and slots start from a committed 3-input `bench_default.genjit`, so inlet counts never change and inputs 2–3 are plain physical cords.
+  Done: `tests/toolchain/bench_selftest.py` 7/7 (identity, probe incl. non-square, plane order, broken → error, error isolation + recovery, reload, two inputs). With `bench_control.py`: 12/12 via `tests/bench.sh`. **Two-input path took three attempts:** `activeinput N` + `jit_gl_texture` (landed on input 0 — output was exactly `in2 + (0,0,0,10)`), then `sendinput N jit_gl_texture` (input stayed default), then the structural fix: every bench `.genjit` carries `in 1..3` (`make_genjit(min_inputs=3)`) and slots start from a committed 3-input `bench_default.genjit`, so inlet counts never change and inputs 2–3 are plain physical cords.
 
 **Checkpoint:** all four self-tests pass from `tests/bench.sh`, evidence
 recorded in this file. → Commit. → Phase 3.
@@ -159,10 +159,10 @@ recorded in this file. → Commit. → Phase 3.
   `jit-gen-codebox` checklist (inline component access, no stored-vector
   `.x`, etc.).
   Done 2026-09-22: `tests/bench/codeboxes/dft_x.gen`, plus `dft_y.gen` (not planned — cheap, and it lets T2's full 2D forward/round trip run on the GPU too). Uses `floor(norm.x * N)` for the bin index per the Phase 2 `cell` finding; `Param inverse(0)` selects direction and 1/N scale. Compiled clean on first load.
-- [x] T024 Write `tests/bench_fft.py`: same input as the NumPy test, run
+- [x] T024 Write `tests/math/bench_fft.py`: same input as the NumPy test, run
   `dft_x.gen` at 128², diff against `pass_dft` output and against
   `np.fft.fft`; print errors with `harness.check`.
-  Done: `tests/bench_fft.py` (5 tests).
+  Done: `tests/math/bench_fft.py` (5 tests).
 - [x] T025 Run it. Record the outcome — any of these is a real T1 answer:
   matches within tolerance / compiles but numerically off (by how much) /
   compile error (text) / black output / stall. If precision is off, note
@@ -184,8 +184,8 @@ recorded in this file. → Commit. → Phase 3.
   time `frames` draw bangs; then a K=0 baseline; report both.
   Done 2026-09-22. Rate control = world `displaylink 0` + `sync 0` + `fps 1000` for the job, restored after (verified: ~388 fps during, back to display-synced ~119 after). Throughput ceiling with no GPU work is ~300–600 fps (Max per-frame overhead ~2–3.5 ms; baseline varies run to run by up to ~2×, so it's only used to classify runs, not subtracted). **Two bugs found and fixed on the way:** (1) params sent with `gen` raced the new gen's compile ("invalid message inverse") — a new gen compiles at its first *render*, and the draw bang precedes the render, so params now go out at frame 3 (both modes; capture/measure start after); (2) an interim per-frame "kick" (js re-sending `bench_tex1` to slot 1) doubled downstream work — every texture message triggers a render — and was removed. Added `bench_src` (identity pix before slot 1) so slot 1 is fed exactly like slots 2..K.
 - [x] T028 Implement `measure()` in `benchclient.py`; write
-  `tests/bench_perf.py`.
-  Done: `benchclient.measure()` + `tests/bench_perf.py` (4 tests). **Measurement model corrected mid-phase:** frame time ≈ max(CPU overhead, K × pass cost) — CPU/GPU overlap — not overhead + K × cost. An early reading of the numbers as "slot 1 re-emits a cached result" was wrong; a decisive test (8000-iteration sin loop at 512², ~9 ms GPU) gave K=1 8.8 ms, K=2 17.3 ms: slot 1 recomputes every frame, cost is linear once GPU-bound. So: `ms_per_pass = frame_ms / K` only when `gpu_bound` (fps < 0.75 × baseline); otherwise an upper bound `frame_ms_k0 / K`. The plan's baseline-subtraction formula was dropped.
+  `tests/toolchain/bench_perf.py`.
+  Done: `benchclient.measure()` + `tests/toolchain/bench_perf.py` (4 tests). **Measurement model corrected mid-phase:** frame time ≈ max(CPU overhead, K × pass cost) — CPU/GPU overlap — not overhead + K × cost. An early reading of the numbers as "slot 1 re-emits a cached result" was wrong; a decisive test (8000-iteration sin loop at 512², ~9 ms GPU) gave K=1 8.8 ms, K=2 17.3 ms: slot 1 recomputes every frame, cost is linear once GPU-bound. So: `ms_per_pass = frame_ms / K` only when `gpu_bound` (fps < 0.75 × baseline); otherwise an upper bound `frame_ms_k0 / K`. The plan's baseline-subtraction formula was dropped.
 - [x] T029 Verify: identity at K=1 vs K=8; repeat each twice — agree
   within 10%.
   **PASS.** Heavy codebox K=1 9.19 ms → K=2 17.02 ms (ratio 1.85, within tolerance of linear). Repeats 8.55 / 8.62 ms (0.9% apart; spec asks ≤10%). Identity K=1 vs K=8 is NOT a meaningful test — identity is far below the overhead, so fps is overhead noise; replaced by the heavy-codebox scaling test.

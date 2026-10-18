@@ -81,7 +81,7 @@ Resolved; each is recorded where it is implemented. Change one only by an explic
   or not blocked at all (`f_focus`). None is a representation problem.
 - **Producer design history lives in the tensormap spec** (`.specify/f_tf_tensormap/spec.md`) and
   reference (`docs/f-reference/f_tf_tensormap.md`, including "Calibration by input type").
-  The 2026-10-10 spike (`tests/spike_structure_tensor_range.py`) fixed the `strength` regime;
+  The 2026-10-10 spike (`tests/records/spike_structure_tensor_range.py`) fixed the `strength` regime;
   the shipped default is 100. Gradient operator: Sobel (the verified `f_vf_sobel` kernel);
   Scharr comparison deferred until a consumer proves Sobel too soft for fine structure.
 
@@ -243,7 +243,7 @@ curvature quantity to a scalar? Five hits:
 
 - **`f_caustic`: strongest, with numbers.** It weights by divergence (the trace of the local
   Jacobian), but a fold needs the full Jacobian's eigenvalues. Measured 2026-10-12
-  (`tests/spike_caustic_trace_vs_jacobian.py`): the trace weight and the local full-Jacobian gain
+  (`tests/records/spike_caustic_trace_vs_jacobian.py`): the trace weight and the local full-Jacobian gain
   have identical top-8% sets at the fold distance d*, so optics_map's "saddle on a fold" scenario
   does **not** occur on this glass. The real gap is in the 53-55% of interior pixels that are
   saddles at d*: trace correlates with photon-count truth at r 0.52-0.69 against the full
@@ -275,8 +275,8 @@ re-checked.
 - `f_weave_orientation_blend.md`: the 2-theta encoding is the correct fix for weave's blend bug;
   its `atan2` blocker is closed. `f_anamorph_unnamed.md`: same line-not-direction problem.
 - `optics_map.md`: caustic fidelity measurements; photoelastic and astigmatism rows.
-- Spikes: `tests/spike_structure_tensor_range.py`, `tests/spike_atan2_safety.py`,
-  `tests/spike_caustic_trace_vs_jacobian.py`.
+- Spikes: `tests/records/spike_structure_tensor_range.py`, `tests/records/spike_atan2_safety.py`,
+  `tests/records/spike_caustic_trace_vs_jacobian.py`.
 
 ---
 

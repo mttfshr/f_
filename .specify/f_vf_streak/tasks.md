@@ -222,7 +222,7 @@ docs/
   here (flagged stale in the audit, not re-filed).
 
 - [x] T054a (2026-10-13): Profiled on the live bench
-  (`tests/spike_four_module_cost.py`, 512², chain=128, median of 3):
+  (`tests/records/spike_four_module_cost.py`, 512², chain=128, median of 3):
   ~0.0150 ms/pass active, ~0.0162 ms/pass bypassed — **not GPU-bound
   even at chain=128** (upper-bound figures only, below the bench's
   CPU-overhead floor at this resolution/chain). The 8-step march (24+16

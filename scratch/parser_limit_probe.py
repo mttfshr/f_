@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent / "tests"))
+sys.path[:0] = [str(HERE.parent / "tests" / d) for d in ("lib", "records")]
 sys.path.insert(0, str(HERE))
 import benchclient as bc            # noqa: E402
 import gather_proto as gp           # noqa: E402

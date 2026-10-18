@@ -310,7 +310,7 @@ background via `tests/bg.sh`; **ask before any bench run** (ways-of-working).
 
 ### Block 1: Decode + draw math settled in NumPy
 **Dependencies:** none
-**Builds:** `tests/test_tf_glyph.py` — mirror of the ADR-2 decode, ADR-4 lattice,
+**Builds:** `tests/modules/tf_glyph/test_tf_glyph.py` — mirror of the ADR-2 decode, ADR-4 lattice,
 ADR-5 aspect, ADR-6 gate, and the ellipse cover function; ground truth
 `np.linalg.eigh`, analytic ramps, gain-free identity check, one mutation check.
 **Verification:** eigh agreement, ramp angles, aspect ratios, gain-invariance,
@@ -318,8 +318,8 @@ gate floor; one injected bug caught.
 
 ### Block 2: Codebox on the bench
 **Dependencies:** Block 1
-**Builds:** `codebox_glyph.gen`, `tests/bench_tf_glyph.py` (registered in
-`tests/benchdeps.DATA`; not in `bench.sh DEFAULT` until Matt makes it a gate).
+**Builds:** `codebox_glyph.gen`, `tests/modules/tf_glyph/bench_tf_glyph.py` (registered in
+`tests/lib/benchdeps.DATA`; not in `bench.sh DEFAULT` until Matt makes it a gate).
 **Verification:** compiles well under the statement budget; matches the mirror
 channel-by-channel incl. border cells (texel-centre clamp confirmed for cell
 sampling); bypass/unconnected behaviors; per-pass cost at 1080p/4K recorded.

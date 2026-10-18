@@ -30,7 +30,7 @@ filed tasks:
 
 - **Early-exit bypass guards for glow/prism/streak/chladni: profiled
   2026-10-13, not worth building.** Live-bench measurement
-  (`tests/spike_four_module_cost.py`) found prism/streak/chladni don't
+  (`tests/records/spike_four_module_cost.py`) found prism/streak/chladni don't
   even register as GPU-bound at chain=128 (cost negligible regardless
   of bypass), and glow — the one that did resolve as GPU-bound — costs
   ~0.06 ms/pass either way, ~0.3% of a 60fps frame for one instance.
@@ -63,7 +63,7 @@ real decision, just not one tied to a single module's tasks.md:
   dead** (found across Tiers A–B; the 2026-10-09 f_grain audit saw it
   first): the 2026-10-06 live run was 33/33, 0 unexpected issues
   (plan.md), so the derived BYPASS_EXPECT entries HAVE been seen green.
-  One-line comment fix in tests/bench_modules.py — folded into
+  One-line comment fix in tests/contracts/bench_modules.py — folded into
   f_vf_prism T001 rather than filed per-module.
 - **Dead preset keys in package/examples/** (Tier A finding): demo
   files preset pre-rename param names (`f_vf_warp::strength`,

@@ -1,9 +1,9 @@
 ---
 name: bench-test-authoring
-description: How to author tier-2 test files for the Max test bench (tests/bench_*.py) and the module contract bench (tests/bench_modules.py) without rediscovering their harness conventions the hard way. Read before writing any new bench file. Exists because 2026-10-17's five-module batch shipped three bench files whose tests assumed mechanisms the harness does not have (per-step input swaps), and because two sibling sessions deleted each other's bench files over a layout assumption — the failures were test-authoring failures, not module failures.
+description: How to author tier-2 test files for the Max test bench (tests/**/bench_*.py) and the module contract bench (tests/contracts/bench_modules.py) without rediscovering their harness conventions the hard way. Read before writing any new bench file. Exists because 2026-10-17's five-module batch shipped three bench files whose tests assumed mechanisms the harness does not have (per-step input swaps), and because two sibling sessions deleted each other's bench files over a layout assumption — the failures were test-authoring failures, not module failures.
 ---
 
-# Bench test authoring (tests/bench_*.py, tests/bench_modules.py)
+# Bench test authoring (tests/**/bench_*.py, tests/contracts/bench_modules.py)
 
 **Cost asymmetry:** a bench run costs minutes and asks the owner for permission; a wrong
 assumption costs a misleading FAIL (or worse, a green that measured nothing). The harness
@@ -16,7 +16,7 @@ conventions below are load-bearing — hold to them.
    the same `in1`+`in2`. A test that compares step s against `frames_in[s-1]` measures the
    harness, not the module. To test a changing world: **chain single-step
    `run_temporal` jobs**, seeding each job's state input with the previous job's captured
-   output. (Done this way in `tests/bench_tf_smooth.py` — the decay-theorem and
+   output. (Done this way in `tests/modules/tf_smooth/bench_tf_smooth.py` — the decay-theorem and
    bypass-invariance rows compare chained outputs against a NumPy sequence model.)
 
 2. **The bench keeps a `Param`'s last value between jobs.** A job that omits a Param
@@ -25,7 +25,7 @@ conventions below are load-bearing — hold to them.
    parity readings, anything). Symptom if you don't: a test that passes in isolation
    and fails when run after another file — e.g. a "default" job inheriting `bypass_gate=1`
    from a prior run's bypass test and measuring the raw source instead of the filter
-   (this exact failure hit `tests/bench_tf_aniso_blur.py` 2026-10-17).
+   (this exact failure hit `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py` 2026-10-17).
 
 3. **The codebox compile caches nothing across jobs, but Params persist** — a fresh
    compile resets declared defaults only for params the job names. The skill's
@@ -33,7 +33,7 @@ conventions below are load-bearing — hold to them.
    at the test-file layer: build param dicts from a single `PINNED` base dict + the case's
    deltas, not from ad-hoc dicts.
 
-4. **BYPASS_EXPECT forms** (`tests/bench_modules.py.bypass_expected`): `("in", k)` = outlet
+4. **BYPASS_EXPECT forms** (`tests/contracts/bench_modules.py.bypass_expected`): `("in", k)` = outlet
    equals harness inlet k bit-exact; `("in_a1", k)` = inlet k with alpha forced to 1 (for
    modules whose bypass mixes rgb only — outlet contract A=1); `("vec", k, tol)` = vecfield
    neutral override; `("const", (r,g,b,a), tol)` = fixed color. Processors not in the table
@@ -56,7 +56,7 @@ conventions below are load-bearing — hold to them.
    contract's clamp, not the operator. Encode at strength 1 (or a strength that keeps the
    encoded values in range) and prove gain-commutation as its own row.
 
-6. **`tests/benchdeps.py` DATA: glob the codebox path `src/<module>/codebox_*.gen`.** When a
+6. **`tests/lib/benchdeps.py` DATA: glob the codebox path `src/<module>/codebox_*.gen`.** When a
    bench file changes, its DATA entry's fingerprint changes — that is the registration
    contract. Do NOT delete other modules' bench files when a sibling's registration glob
    disagrees with an on-disk path: shared-file conflicts get reported to the parent session
@@ -90,9 +90,9 @@ conventions below are load-bearing — hold to them.
 ## The module bench is the only thing that tests the SHIPPED patcher
 
 The codebox bench wraps code in its own genjit wrapper — it cannot see a broken builder
-wiring. The module contract bench (`tests/bench_modules.py`) instantiates the SHIPPED
+wiring. The module contract bench (`tests/contracts/bench_modules.py`) instantiates the SHIPPED
 patchers as Max does. A module can be 30/30 green on its own bench and still ship broken
 (this exact shape: the 2026-10-17 builder driving_inlet gap — "patchcord source not
 found" + "type is not a sampler" on load, then the module passthroughs its first texture
-irrespective of any dial). Run `tests/bench_modules.py` before declaring any builder-touching
+irrespective of any dial). Run `tests/contracts/bench_modules.py` before declaring any builder-touching
 change done.

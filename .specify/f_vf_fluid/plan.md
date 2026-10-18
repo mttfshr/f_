@@ -32,7 +32,7 @@ GPU verification.
 **Reused, already verified**: separable-DFT codeboxes
 (`tests/bench/codeboxes/dft_x.gen`, `dft_y.gen`, GPU-matched to `np.fft` at
 ~1e-7); `pass_dft`/`pass_spectral` NumPy mirrors
-(`tests/test_fft_separable.py`); `gpu_sim.py`; the `f_vf_advect`
+(`tests/math/test_fft_separable.py`); `gpu_sim.py`; the `f_vf_advect`
 `state`/`pass` feedback pattern (Pattern 1); `vs_inState` +
 `src_vecfield` unconnected-inlet suppression.
 
@@ -173,7 +173,7 @@ inlet 0 is an `r draw` bang, force on inlet 1, previous state on inlet 2.
 In the codeboxes the bang inlet is `in1` (unused), so force = `in2` and
 velocity/state = `in3`.
 
-**Evidence (Phase 0, `tests/fluid_feasibility.py`, inside Vsynth's real
+**Evidence (Phase 0, `tests/records/fluid_feasibility.py`, inside Vsynth's real
 `vs_render` via the module bench)**:
 - A `@adapt 0 @dim 256 256 @type float32` pix runs inside `vs_render`, reports
   `dim = [256, 256]`, and produces the exact pattern (error 6e-8) — **E1 passes**.
@@ -210,7 +210,7 @@ one-frame display latency, harmless.
 
 **Context**: the FFT domain is periodic; GL `sample()` clamps its neighbor
 taps, and Phase 0 measured two more limits of hardware `sample()` on this
-GPU (`tests/bench_fluid_probes.py`, `tests/fluid_feasibility.py`):
+GPU (`tests/records/bench_fluid_probes.py`, `tests/records/fluid_feasibility.py`):
 - `fract()` on the coordinate does **not** wrap the neighbor tap: error ≈ 0.52
   on the wrap rows/column (E-seam).
 - Hardware bilinear weights are 8-bit: ≈ 1e-3 error for general fractions
@@ -280,7 +280,7 @@ out at m_c ≈ 16 (m_c = 1/(2π√(ν·dt)), the mode that e-folds per frame) an
 smoothness moved with `dt`. **Now:** the user-facing `viscosity` is a 0–1 dial and the
 shader takes the per-frame coefficient `nu_dt = 1.6e-3·v³` (top of dial ≈ m_c 4),
 decay `exp(-(nu_dt·k² + drag·dt))`. `dt` is speed only; drag stays time-based.
-Constants live in `codebox_spec.gen` and `tests/fluid_mirror.py` (`VISC_MAX`,
+Constants live in `codebox_spec.gen` and `tests/modules/fluid/fluid_mirror.py` (`VISC_MAX`,
 `VISC_EXP`) and must change together.
 
 ### ADR-6: Containment — real part, NaN guard, clamp
@@ -343,14 +343,14 @@ never-regenerate list.
 
 ### ADR-10: Verification strategy
 
-1. **Tier 1 (no Max)** — `tests/fluid_mirror.py` mirrors each stage and a
-   `step()` composing them. `tests/test_fluid_mirror.py` checks against
+1. **Tier 1 (no Max)** — `tests/modules/fluid/fluid_mirror.py` mirrors each stage and a
+   `step()` composing them. `tests/modules/fluid/test_fluid_mirror.py` checks against
    *independent* truth: single-mode decay `exp(−νk²·dt)`; **Taylor–Green**
    decay `exp(−2νk²t)` over 100 frames (≤ 5%); divergence-free after
    projection; gradient field deleted / curl field preserved; energy
    non-increasing with no force; zero-in/zero-out exactness; Nyquist and
    Hermitian-symmetry preservation; no NaN over 10⁴ frames at extremes.
-2. **Tier 2 (bench)** — `tests/bench_fluid.py` runs each real codebox file on
+2. **Tier 2 (bench)** — `tests/modules/fluid/bench_fluid.py` runs each real codebox file on
    the GPU against the mirror: `spec`, `adv` (incl. the periodic seam), `enc`,
    the four baked DFTs at N = 256; then a **host-sequenced multi-frame run**
    (Python feeds each stage's output to the next, 100 frames) against the
@@ -358,8 +358,8 @@ never-regenerate list.
    single codebox only; GPU-resident feedback timing is already covered by
    the existing Pattern-1 tests and re-checked in the real module. Cost:
    `bc.measure` per stage at 256², summed against NF-001.
-3. **Module contracts** — `tests/test_module_contracts.py` (static) and
-   `tests/bench_modules.py` (live, inside `vs_render`) with **no** new
+3. **Module contracts** — `tests/contracts/test_module_contracts.py` (static) and
+   `tests/contracts/bench_modules.py` (live, inside `vs_render`) with **no** new
    `KNOWN` entries.
 4. **Tier 3 (judgement)** — scratch patch in `~/Vsynth/patterns/`: ranges,
    defaults, look, `f_vf_optical_flow`-driven stirring, cost in a real patch.
@@ -420,7 +420,7 @@ Maps to the spec's proposed phasing; blocks in brackets.
 - `fluid_mirror.py` + `test_fluid_mirror.py`: 16/16, mutation-checked.
 - **Checkpoint**: met. Findings table in `tasks.md`.
 
-### Phase 1: Solver stages on the bench [B] — DONE 2026-09-23 (`tests/bench_fluid.py` 9/9)
+### Phase 1: Solver stages on the bench [B] — DONE 2026-09-23 (`tests/modules/fluid/bench_fluid.py` 9/9)
 _Outcome: all stages match the mirror at float precision; 100 chained GPU frames
 within 3.1e-6 of the mirror; Taylor–Green 0.85% at frame 100; cost 2.4–2.8 ms/frame
 (NF-001 budget 3 ms). See tasks.md Findings._

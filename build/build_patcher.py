@@ -2027,7 +2027,7 @@ def build(defn, debug=None, side_files=None):
                          bp_jsui_id, bp_pre_id, extra_attruis)
     keys = element_keys(roles, ui_params, header_toggles)
     if debug is not None:
-        debug["roles"] = roles              # tests/test_layout.py reads this; never serialized
+        debug["roles"] = roles              # tests/build/test_layout.py reads this; never serialized
         debug["element_keys"] = keys
     # Hand-tuned presentation state, applied to the generated boxes.  Before the layout
     # pass, which only ever rewrites patching_rect (a property overrides may not touch).

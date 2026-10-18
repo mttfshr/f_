@@ -104,14 +104,14 @@ scale factor to prove the commutation.
 ## Dependency Blocks
 
 ### Block 1: Math settled in NumPy
-**Builds:** `tests/test_tf_sharpen.py` — decode/eigen/gap/re-encode mirror; trace
+**Builds:** `tests/modules/tf_sharpen/test_tf_sharpen.py` — decode/eigen/gap/re-encode mirror; trace
 invariance; axis invariance; no-swap-on-relax; scale-commutation (ADR-4); mutation
 checks (drop the max(γ,0); swap the gap sign).
 **Verification:** `np.linalg.eigh` agreement; measured round-trip error recorded.
 
 ### Block 2: Codebox on the bench
 **Dependencies:** Block 1.
-**Builds:** `codebox_sharpen.gen`, `tests/bench_tf_sharpen.py`.
+**Builds:** `codebox_sharpen.gen`, `tests/modules/tf_sharpen/bench_tf_sharpen.py`.
 **Verification:** γ=1 bit-drift measured (target: < 1e-6 relative, recorded); exaggerate/
 relax/floor rows from the spec reproduced on GPU; branch-cut pixels behave (decode via
 closed-form eigen of the raw components — no atan2 needed at all, which sidesteps the

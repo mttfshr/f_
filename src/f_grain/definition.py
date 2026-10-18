@@ -75,7 +75,7 @@ patcher = {
         # `persistence`'s era-clock chain AND `field`/`sv_seed`'s second route are raw, hand-
         # captured wiring hardcoded to a fixed outlet-index on the shared `route` object --
         # inserting mix_pct anywhere before them shifts that index and silently detaches them
-        # (build/drift.py + tests/test_module_contracts.py caught both, 2026-10-09 T003).
+        # (build/drift.py + tests/contracts/test_module_contracts.py caught both, 2026-10-09 T003).
         {"name": "mix_pct",     "type": "float", "min": 0.0,  "max": 100.0, "default": 100.0, "label": "Mix", "widget": "numbox",
          "hint": "Dry/wet crossfade toward the fully-composited (displaced-source + grain) state. New 2026-10-09 (T003); default 100 keeps the module's prior look unchanged. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator."},
         {"name": "era_clock",   "type": "internal"},  # driven by the persistence chain

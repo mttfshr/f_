@@ -78,7 +78,7 @@ point**: trace 0 hits the floor at every γ, so output = input exactly.
 
 The operator is linear in the components; the outlet-0 encoding clamps R/B to [0,1].
 Where γ·coherence > 1 the linear result pushes λ1′ above 1 or λ2′ below 0 and the encode
-clamp saturates (mirror `tests/test_tf_sharpen.py::test_encode_clamp_beyond_linear_range`).
+clamp saturates (mirror `tests/modules/tf_sharpen/test_tf_sharpen.py::test_encode_clamp_beyond_linear_range`).
 Inside the linear range the trace is preserved to float32 tolerance
 (measured: worst 1.2e-7 over γ ∈ {0, 0.25, 0.5, 1, 2, 4}) and the axis (cos 2θ, sin 2θ)
 is unchanged (worst 1.2e-6 pre-clamp). Whether extreme-γ saturation matters is a
@@ -115,7 +115,7 @@ live confirmation pending). Insert/remove-at-γ=1 is free: raw in, raw out.
 
 ## Notes
 
-- Tier-1 NumPy mirror: `tests/test_tf_sharpen.py` (15/15 pass, 2026-10-17; ground truth
+- Tier-1 NumPy mirror: `tests/modules/tf_sharpen/test_tf_sharpen.py` (15/15 pass, 2026-10-17; ground truth
   `np.linalg.eigh`, labelled-Rayleigh no-swap check, two mutation checks — dropped
   `max(γ,0)` and swapped gap sign — both caught). Spec/plan/tasks: `.specify/f_tf_sharpen/`.
 - Spec prose sign slip (caught by the mirror's trace invariance test, 2026-10-17): the
@@ -123,7 +123,7 @@ live confirmation pending). Insert/remove-at-γ=1 is free: raw in, raw out.
   and breaks trace preservation. The trace-preserving form is the PLUS sign for both
   eigenvalues (as above). Corrected in the codebox/mirror/docs; spec text fixed via
   `.specify/f_tf_sharpen/REGISTRATION_NOTES.md`.
-- Tier-2 bench file exists (`tests/bench_tf_sharpen.py`, registered in benchdeps per
+- Tier-2 bench file exists (`tests/modules/tf_sharpen/bench_tf_sharpen.py`, registered in benchdeps per
   T014) — **not yet executed**; needs the live bench (owner-gated, ask before running).
 - The obvious no-swap test is vacuous: `np.linalg.eigh` sorts, so it can never see a
   swap. The mirror checks labelled Rayleigh quotients along the input's major axis —

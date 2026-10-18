@@ -53,7 +53,7 @@ ids in the module's own tasks file — see "Output and stopping point"
 below for exactly where that lives (it's never a shared file; tasks
 always live with their module). This file is a record of *whether a
 pass happened and what it found*, not a duplicate of
-`tests/drift_baseline.json`, the README's ⚠ markers, or `ideas/` — read
+`tests/build/drift_baseline.json`, the README's ⚠ markers, or `ideas/` — read
 those live each run rather than mirroring them here, so this file can't
 go stale against them.
 
@@ -66,7 +66,7 @@ first:
    generalisation" section, currently: `f_masonry`, `f_sirds`,
    `f_vf_seeds`, `f_grain`, `f_vf_warp`, `f_vf_fieldmap`, `f_vf_repulse`)
    — drift here is invisible to `drift.py` by construction.
-2. Listed in `tests/drift_baseline.json` — definition doesn't reproduce
+2. Listed in `tests/build/drift_baseline.json` — definition doesn't reproduce
    the shipped patch. Read the file live; don't copy its contents here.
 3. Marked ⚠ in `README.md`'s Patches table (unfinished / unverified /
    undocumented).
@@ -109,14 +109,14 @@ by asking whether to spend it, rather than spending it automatically.
 
 ### 2. Bench coverage
 
-- Tier 1 (NumPy mirror, `tests/test_*.py`) exists and last ran green?
+- Tier 1 (NumPy mirror, `tests/**/test_*.py`) exists and last ran green?
   Running the single relevant tier-1 test now is fine (offline, fast,
   no GPU) — this isn't the kind of run the hard constraint is about.
 - Tier 2 (GPU bench) exists for this module? Don't run it — that needs
   asking first. Note whether it exists and when it last reportedly ran.
-- Contract test / `BYPASS_EXPECT` entry present in `tests/bench_modules.py`?
+- Contract test / `BYPASS_EXPECT` entry present in `tests/contracts/bench_modules.py`?
 - `drift.py` clean for this module, or present in
-  `tests/drift_baseline.json` with a documented reason (check the reason
+  `tests/build/drift_baseline.json` with a documented reason (check the reason
   is still accurate, not just that an entry exists).
 
 ### 3. Convention

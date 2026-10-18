@@ -55,7 +55,7 @@ the branch choice changes what tier 2 would even measure.
 
 - [x] T001 **DECISION GATE (FIRST): cost shape — stroke-marching (S) vs tileable
       distance-field pattern (T).** **DECIDED 2026-10-17: branch T.** NumPy spike
-      `tests/spike_tf_hatch_costshape.py` implemented BOTH branches on three synthetic
+      `tests/records/spike_tf_hatch_costshape.py` implemented BOTH branches on three synthetic
       fields (concentric rings, iso blob, authored waves). Cost model: T = 3 passes,
       0 loops, ~6 taps/pixel, ~85 statements → ≤2.7 ms at 1080p against tensormap's
       ~0.9 ms/pass floor; S = ≥5 passes, 75-90 taps/pixel, loop-carried march state,
@@ -78,7 +78,7 @@ the branch choice changes what tier 2 would even measure.
       = out-of-v1 cross-hatch scope) plus the build's no-live-session constraint;
       recorded PROVISIONAL in ADR-6 with inlet-1-luma as the v2 pointer, spec
       inlet-1 row decline carried in REGISTRATION_NOTES.md.
-- [x] T003 **(done 2026-10-17: E1 mirror written in tests/test_tf_hatch.py -- decode copied VERBATIM from glyph plan ADR-2 (including the tan(2*theta) gain-free identity comment and the theta+180 symmetry caveat), coherence normalized, eps_trace = 1e-6 cited from tensormap ADR-6/T019; eigh cross-check on 300 random SPD tensors incl. diagonal-only and near-iso cases: lambda err <=4.8e-7, axis err (mod pi) <=3.6e-7)** Create `tests/test_tf_hatch.py`; write the E1 mirror: decode from a raw
+- [x] T003 **(done 2026-10-17: E1 mirror written in tests/modules/tf_hatch/test_tf_hatch.py -- decode copied VERBATIM from glyph plan ADR-2 (including the tan(2*theta) gain-free identity comment and the theta+180 symmetry caveat), coherence normalized, eps_trace = 1e-6 cited from tensormap ADR-6/T019; eigh cross-check on 300 random SPD tensors incl. diagonal-only and near-iso cases: lambda err <=4.8e-7, axis err (mod pi) <=3.6e-7)** Create `tests/modules/tf_hatch/test_tf_hatch.py`; write the E1 mirror: decode from a raw
       tensor sample by copying the canonical idiom verbatim from
       `.specify/f_tf_glyph/plan.md` ADR-2 (decode per `f_tensor_type.md` outlet 0,
       closed-form eigen, `theta = 0.5*atan2(2*Jxy, diff)` gradient axis,
@@ -110,7 +110,7 @@ the branch choice changes what tier 2 would even measure.
       with `MARCH_MAX` weight gating per tensormap ADR-3's idiom). Either way:
       `phase` scroll, `regularity` stagger, `softness` feather per
       `docs/f-reference/discrete_item_conventions.md`.
-- [x] T007 **(done 2026-10-17: all asserted in tests/test_tf_hatch.py -- zero tensor + tensormap neutral render exactly black both outlets; ramp axis vs analytic mod pi (worst 1.5e-7 rad on 45-deg fixture; render-level ridge checks at 64-px frame quantization floor ~10 deg, sub-degree checks carried by the axis-MAP tests); commit endpoints by the formula invariant (al/(aw*ds) = aspect, cap formula to 0.01, dot aspect 1e-5, commit 0 renders nothing); contrast independence (identical renders at contrast 0.1/1.0, <=1e-5); strength invariance (100 vs 30/500 renders, <=1e-4); 90-deg rotation equivariance (axis map 2.4e-7, render <=2e-3); angle_offset +-1 exact-rotated layouts (<=9e-6) -- eps_trace=1e-6 re-validated for this path: a 1-LSB edge trace ~3.9e-3 survives the guard at 1e-6)** Invariants from the spec's acceptance criteria: zero tensor ⇒ black both
+- [x] T007 **(done 2026-10-17: all asserted in tests/modules/tf_hatch/test_tf_hatch.py -- zero tensor + tensormap neutral render exactly black both outlets; ramp axis vs analytic mod pi (worst 1.5e-7 rad on 45-deg fixture; render-level ridge checks at 64-px frame quantization floor ~10 deg, sub-degree checks carried by the axis-MAP tests); commit endpoints by the formula invariant (al/(aw*ds) = aspect, cap formula to 0.01, dot aspect 1e-5, commit 0 renders nothing); contrast independence (identical renders at contrast 0.1/1.0, <=1e-5); strength invariance (100 vs 30/500 renders, <=1e-4); 90-deg rotation equivariance (axis map 2.4e-7, render <=2e-3); angle_offset +-1 exact-rotated layouts (<=9e-6) -- eps_trace=1e-6 re-validated for this path: a 1-LSB edge trace ~3.9e-3 survives the guard at 1e-6)** Invariants from the spec's acceptance criteria: zero tensor ⇒ black both
       outlets; axis correctness on a known-angle synthetic field (φ+90° strokes, ~1e-6
       rad); commit endpoints (aspect = elongation+1 at commit 1, exactly 1 at commit 0
       regardless of the `elongation` dial); contrast independence (same edge at 0.1
@@ -120,8 +120,8 @@ the branch choice changes what tier 2 would even measure.
 - [x] T008 **(done 2026-10-17: three mutation vehicles, all caught -- (1) gradient-axis-instead-of-along-axis at phi 45: bug axis err pi/2 (1.571) vs truth 6e-9; (2) dropped eps_trace guard via unguarded root/trace coherence: mean commit 1.0 vs truth 0 (the -1/s-Jxy artifact path, f_tensor_type.md rule 5); (3) commit-multiplier removed from aspect: the truth's near-iso render stays < 0.05 ink while the bug renders full marks -- detection via the commit-weighted fade-in)** Mutation check once (tests/README convention): inject a plausible bug
       (drop the eps guard; use gradient-angle θ instead of along-axis θ+90°; tie mark
       aspect to `elongation` without the commit multiplier) and confirm a test fails.
-- [x] T009 **(done 2026-10-17: `TEST_QUIET=1 uv run python3 tests/test_tf_hatch.py` -- 20/20 pass; key measured errors: eigh lam 3.6e-7 / axis 3.6e-7 rad; ramp axis 1.5e-7 rad; commit steps <=3.2e-2 = the analytic slope bound; density log map <=1e-6; phase scroll 0.2 -> 4.5 ~ 4.5 px err 0.47, 0.5 -> 11.3 ~ 11.3 px err 0.31; reg-1 lock offset <=0.9 px; zero-tensor black <=1e-7; strength-invariance <=1e-4; rot equiv <=3e-3 rad)** Run the tier-1 suite once in the background (`tests/run.sh
-      tests/test_tf_hatch.py -q`); record measured errors in this file's notes as the
+- [x] T009 **(done 2026-10-17: `TEST_QUIET=1 uv run python3 tests/modules/tf_hatch/test_tf_hatch.py` -- 20/20 pass; key measured errors: eigh lam 3.6e-7 / axis 3.6e-7 rad; ramp axis 1.5e-7 rad; commit steps <=3.2e-2 = the analytic slope bound; density log map <=1e-6; phase scroll 0.2 -> 4.5 ~ 4.5 px err 0.47, 0.5 -> 11.3 ~ 11.3 px err 0.31; reg-1 lock offset <=0.9 px; zero-tensor black <=1e-7; strength-invariance <=1e-4; rot equiv <=3e-3 rad)** Run the tier-1 suite once in the background (`tests/run.sh
+      tests/modules/tf_hatch/test_tf_hatch.py -q`); record measured errors in this file's notes as the
       tensormap T011 did.
 
 **Checkpoint:** Branch chosen with numbers (T001); tiers recorded (T002); mirror
@@ -145,8 +145,8 @@ benched stage by stage (tests/README); one pass per job.
       coordinate to texel centres in-shader (bench GPU wraps out-of-range reads,
       tensormap T012 finding).
 - [x] T011 *[BENCHED 2026-10-17 (M3 Max), ask-approved: E1 rows all pass in the 6/6 final sweep: decode ca/sa 4-7e-7, commit 5-10e-7, iso exact, borders 3e-7, zero-tensor iso=1/axis-unset exact, angle-offset ±1 sweeps ≤ 1e-3.]* Bench E1 against the mirror (register `tests/bench_hatch.py` against the
-      stage; **ask before the bench run**; register in `tests/benchdeps.DATA`).
-      **PENDING BENCH** (this build writes + registers `tests/bench_tf_hatch.py`
+      stage; **ask before the bench run**; register in `tests/lib/benchdeps.DATA`).
+      **PENDING BENCH** (this build writes + registers `tests/modules/tf_hatch/bench_tf_hatch.py`
       per the parent constraint, never executes it; the DATA row is prepared in
       REGISTRATION_NOTES.md). Border rows and the eps-guard boundary checked
       explicitly in the written tests.
@@ -194,13 +194,13 @@ benched stage by stage (tests/README); one pass per job.
   1080p (chain far under the family's single-pass floor; the T001
   PROVISIONAL-CLOSED gate's resolving numbers are in. M1 unmeasured per convention).]*
   **Cost record:** per-stage and chain cost at 1080p and 4K (`bc.measure`,
-      `tests/bench_perf.py` precedent), reporting ms/pass upper bounds where not
+      `tests/toolchain/bench_perf.py` precedent), reporting ms/pass upper bounds where not
       gpu_bound, with the M1-unmeasured caveat stated (ways-of-working). Compare the
       measured chain against T001's model; if reality is materially worse than
       modeled, STOP and re-open the T001 gate rather than shipping a degraded branch
       silently (plan Phase-1 exit criterion). (written in
       bench_tf_hatch.py test_cost_per_stage_and_chain)
-- [x] T017 **(done 2026-10-17: tests/bench_tf_hatch.py assembled (per-stage parity +
+- [x] T017 **(done 2026-10-17: tests/modules/tf_hatch/bench_tf_hatch.py assembled (per-stage parity +
       param sweeps + cost, E3 via all_outputs=True); the benchdeps.DATA row is
       prepared in REGISTRATION_NOTES.md (the parent applies it); NOT added to
       tests/bench.sh DEFAULT -- the tensormap T021 discipline)** Assemble the full `tests/bench_hatch.py` from
@@ -289,12 +289,12 @@ hatch look on real chains.
       shared files; the exact rows -- menu entry + README line -- are prepared in
       REGISTRATION_NOTES.md).
 - [ ] T028 Drift check: the new patcher reproduces from `definition.py` with no
-      baseline additions (`tests/test_drift.py`). **PENDING PARENT** (the drift
+      baseline additions (`tests/build/test_drift.py`). **PENDING PARENT** (the drift
       ratchet + its baseline are shared; the built patcher is at
       package/patchers/f_tf_hatch.maxpat, JSON-valid, ready for the ratchet).
-- [ ] T029 Contract tests: offline `tests/test_module_contracts.py`; add the module to
-      `tests/bench_modules.py`'s `BYPASS_EXPECT` table (neutral on both outlets at
-      bypass); run `tests/bench_tf_hatch.py` green. Run in the background; **ask
+- [ ] T029 Contract tests: offline `tests/contracts/test_module_contracts.py`; add the module to
+      `tests/contracts/bench_modules.py`'s `BYPASS_EXPECT` table (neutral on both outlets at
+      bypass); run `tests/modules/tf_hatch/bench_tf_hatch.py` green. Run in the background; **ask
       before the bench run**. **PENDING PARENT** (the BYPASS_EXPECT row is prepared
       in REGISTRATION_NOTES.md; the bench test file is written, never executed here).
 - [ ] T030 Close and reopen in Max (open patches never auto-update), load in a Vsynth

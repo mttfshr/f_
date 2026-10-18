@@ -242,7 +242,7 @@ nothing-outstanding bar (.specify/maintenance/SKILL.md)._
   recorded decision — same shape as f_grain/f_vf_advect's finding.
 
 - [x] T036a (2026-10-13): Profiled on the live bench
-  (`tests/spike_four_module_cost.py`, 512², chain=128, median of 3):
+  (`tests/records/spike_four_module_cost.py`, 512², chain=128, median of 3):
   **0.0573 ms/pass active, 0.0582 ms/pass bypassed** — GPU-bound at
   this config (the only one of the glow/prism/streak/chladni group that
   resolved as GPU-bound rather than an upper bound). Confirms

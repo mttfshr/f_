@@ -3,7 +3,7 @@
 _Created: 2026-10-13_
 _Status: Draft — not yet built_
 _Origin: `ideas/ceyron_simulation_scripts_notes.md` section 3 (Kuramoto-
-Sivashinsky). Stability question resolved by `tests/spike_ks_stability.py`
+Sivashinsky). Stability question resolved by `tests/records/spike_ks_stability.py`
 (NumPy, 2026-10-12): real-space finite-difference is dead on arrival
 (~2000 substeps/frame); the spectral-linear/explicit-nonlinear shape
 `f_vf_fluid` already uses is real-time-stable, one step per frame. Matt:
@@ -16,7 +16,7 @@ physics-name convention) is a placeholder; see Clarifications.
 
 ## Clarifications
 
-### Carried from the spike (`tests/spike_ks_stability.py`)
+### Carried from the spike (`tests/records/spike_ks_stability.py`)
 
 - **Method: spectral, not real-space FD.** Linear part (`lap + lap^2`)
   integrated exactly per Fourier bin (`rate = K2 - K2^2`, the same
@@ -166,7 +166,7 @@ library provides.
 **Why this priority**: required for it to be usable, not the point of
 the module.
 
-**Independent Test**: module contract bench (`tests/bench_modules.py`);
+**Independent Test**: module contract bench (`tests/contracts/bench_modules.py`);
 two instances in one patch run independently.
 
 **Acceptance Scenarios**:

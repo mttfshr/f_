@@ -73,7 +73,7 @@ the ADR-2 gate compares implementations on the bench, not descriptions.
   recorded (see T010/A005 and plan ADR-2 addendum); gate PROVISIONAL-OPEN.
 - [x] T003 Read `.specify/f_tf_glyph/plan.md` ADR-2 (the canonical decode
   idiom; its tasks.md TG003 finalizes it) and the tensormap mirror
-  `tests/test_tf_tensormap.py` stage C function. Verify the idiom's decode
+  `tests/modules/tf_tensormap/test_tf_tensormap.py` stage C function. Verify the idiom's decode
   lines against this spec's Field Architecture section: same closed forms.
   If any divergence between idiom and spec is found, resolve it with
   GlyphTriad's owner before proceeding — the idiom is the family standard.
@@ -84,7 +84,7 @@ the ADR-2 gate compares implementations on the bench, not descriptions.
   difference is that this module needs the AXIS VECTOR, which this mirror
   derives from the doubled-angle terms via half-angle identities (no atan2
   at all — see tasks.md Notes below). No divergence to resolve.
-- [x] T004 Write `tests/test_tf_aniso_blur.py` skeleton + decode mirror:
+- [x] T004 Write `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py` skeleton + decode mirror:
   raw-tensor decode (R/s, (G−0.5)·2/s, B/s), closed-form eigen
   (trace/diff/root/λ1/λ2/coherence), across-edge axis (diff, 2·Jxy)/root, the
   along-edge perpendicular, the SPD guard (λ2 < 0 by more than float noise →
@@ -179,7 +179,7 @@ the ADR-2 gate compares implementations on the bench, not descriptions.
   (0.40, on a weak-Jxy step-edge fixture at strength 1 — on the default
   100-gain fixture G ≫ 0.5 and the offset error is proportionally nothing:
   fixture choice recorded); skipped weight normalization (5.01).
-- [x] T010 Run `tests/run.sh tests/test_tf_aniso_blur.py -q` once in the
+- [x] T010 Run `tests/run.sh tests/modules/tf_aniso_blur/test_tf_aniso_blur.py -q` once in the
   background; record measured errors and the coupling measurement (ADR-3:
   how W responds to tensormap `strength` at fixed `strength_scale`) in this
   file's notes.
@@ -198,7 +198,7 @@ the ADR-2 gate compares implementations on the bench, not descriptions.
   but carries the cheaper isotropic fallback and the cf.directional
   artifact precedent; the ADR-2 gate stays PROVISIONAL-OPEN (bench cost
   would close it). — NOTE: one shared-file edit was needed to run at all:
-  `tests/harness.py`'s note() hardened to accept string values (disclosed,
+  `tests/lib/harness.py`'s note() hardened to accept string values (disclosed,
   with regression evidence, in REGISTRATION_NOTES.md — revert instruction
   included there if the parent prefers the strict form).
 
@@ -263,11 +263,11 @@ ADR-2 with cost and compile facts.
   wraps out-of-range reads, tensormap T012 finding). `length` = 0 identity,
   `width_gate` = 0 and `floor` = 1 exact-iso, bypass passthrough,
   vs_black-tensor input takes the guard path.
-  — [PENDING BENCH Matt] the test exists (`tests/bench_tf_aniso_blur.py`:
+  — [PENDING BENCH Matt] the test exists (`tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py`:
   compile+capture, knob-extreme parity, guard cases vs the iso reference,
   border-row coverage, bypass) — not run; offline parity stands in until
   then (T011 note).
-- [ ] T014 **Cost measurement** (`bc.measure`, tests/bench_perf.py
+- [ ] T014 **Cost measurement** (`bc.measure`, tests/toolchain/bench_perf.py
   precedent): 1080p and 4K, M3 Max (M1 unmeasured — say so), for both
   families across the `length` range. Report ms per pass only where
   `gpu_bound`, else the upper bound, and say that. This is the ADR-2 gate's
@@ -285,15 +285,15 @@ ADR-2 with cost and compile facts.
   — [PENDING BENCH Matt — PROVISIONAL-OPEN] family (a) chosen provisionally
   by the owner; the addendum carries the artifact data AND the exact
   resolving experiment.
-- [ ] T016 Assemble `tests/bench_tf_aniso_blur.py` from
+- [ ] T016 Assemble `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py` from
   `tests/templates/bench_module_template.py` pointing at the chosen
-  codebox; register in `tests/benchdeps.DATA` (a test enforces this). Do
+  codebox; register in `tests/lib/benchdeps.DATA` (a test enforces this). Do
   **not** add it to `DEFAULT` in `tests/bench.sh` until Matt says it is a
   regression gate.
   — DONE (file written, `CODEBOX` points at the real
   `.specify/f_tf_aniso_blur/codebox_aniso.gen`); the benchdeps.DATA entry
   is a shared-file edit — exact line recorded in REGISTRATION_NOTES.md
-  (tests/test_benchdeps.py's global check makes it a parent-registration
+  (tests/toolchain/test_benchdeps.py's global check makes it a parent-registration
   item; not added to bench.sh DEFAULT).
 
 **Checkpoint:** Chosen kernel compiles, matches its mirror incl. borders,
@@ -374,7 +374,7 @@ values replaced. → Proceed to Phase 3.
   default outlet wiring (comment "smoothed source", automatic primary->out
   cord) is exactly right for an ordinary color texture: no signal_type tag
   (OQ1 resolved: default; confirmed from the built JSON). Offline contract
-  check (`tests/test_module_contracts.py`, plain run): this module is GREEN
+  check (`tests/contracts/test_module_contracts.py`, plain run): this module is GREEN
   (route→attrui→Param wiring all verified; the only remaining BADs are
   f_tf_glyph's undriven width/height and f_tf_hatch's two items — sibling
   triads' registrations, not this module's).
@@ -395,15 +395,15 @@ values replaced. → Proceed to Phase 3.
   scripts no longer exist); README row (⚠ Unverified).
   — [PENDING PARENT: shared files] exact lines recorded in
   REGISTRATION_NOTES.md (menu entry, README row).
-- [ ] T025 Drift check (`tests/test_drift.py`): the new patcher reproduces
+- [ ] T025 Drift check (`tests/build/test_drift.py`): the new patcher reproduces
   from `definition.py` with no baseline additions.
   — [PENDING PARENT: test_drift.py walks every SHIPPED patcher from
   drift_baseline.json; this module is newly built and unregistered — the
   parent's registration pass adds it; the built .maxpat is verified
   JSON-valid and wiring-checked (T023)].
 - [ ] T026 Contract tests (background; **ask before any bench run**):
-  offline `tests/test_module_contracts.py`; add the module to
-  `tests/bench_modules.py`'s `BYPASS_EXPECT` (bypass = passthrough of
+  offline `tests/contracts/test_module_contracts.py`; add the module to
+  `tests/contracts/bench_modules.py`'s `BYPASS_EXPECT` (bypass = passthrough of
   inlet 1, not a neutral — different table comment than tensormap's).
   — [PENDING PARENT: shared files + bench] the BYPASS_EXPECT entry is
   recorded in REGISTRATION_NOTES.md (`"f_tf_aniso_blur":

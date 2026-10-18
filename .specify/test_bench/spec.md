@@ -73,7 +73,7 @@ reload) and inspect the reports.
 3. **Given** two consecutive jobs with different codeboxes, **When** the
    second runs, **Then** its output reflects the second codebox, not stale
    state from the first.
-4. **Given** the identity result, **When** compared with `tests/gpu_sim.py`'s
+4. **Given** the identity result, **When** compared with `tests/lib/gpu_sim.py`'s
    conventions, **Then** the sim's y-orientation convention is confirmed or
    corrected to match Jitter.
 
@@ -96,7 +96,7 @@ against `test_fft_separable.py`'s `pass_dft` output.
    back with status, captured output file, and any errors.
 2. **Given** the captured output, **When** the Python side diffs it against
    the NumPy reference, **Then** it prints measured error against a
-   tolerance, same style as `tests/harness.py`.
+   tolerance, same style as `tests/lib/harness.py`.
 3. **Given** a job whose codebox compiles but produces wrong numbers,
    **When** diffed, **Then** the failure is reported with measured error,
    distinguishable from a compile/run failure.
@@ -169,7 +169,7 @@ end and exits nonzero on failure.
 - **FR-009**: The Python side MUST enforce a per-job timeout and a
   reachability check.
 - **FR-010**: Test results MUST print measured error values, not just
-  pass/fail (consistent with `tests/harness.py`).
+  pass/fail (consistent with `tests/lib/harness.py`).
 - **FR-011**: The bench MUST reset between jobs so no state (textures,
   compiled code, params) leaks from one job to the next.
 

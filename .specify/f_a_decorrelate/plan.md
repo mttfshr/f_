@@ -40,7 +40,7 @@ phase with windowing and frame-boundary effects in ways the additive
 synthesis does not. Ship AM only in v1; treat PM as blocked on the T7-style
 comparison, not as "probably fine, ship it and see."
 
-**First data point 2026-10-12** (`tests/spike_a_decorrelate_t7.py`, NumPy
+**First data point 2026-10-12** (`tests/records/spike_a_decorrelate_t7.py`, NumPy
 mirror of the full per-bin chain): per-bin phase rotation ψ=(π/2)(1+d·M)
 tracks the additive PM reference (T6's code-accurate depth) at −11.2 dB
 residual, corr 0.962, and its envelope de-correlation (T8's metric) is in
@@ -66,7 +66,7 @@ typical FFT sizes). No size is chosen here — determining a workable size (or
 concluding low bands need a different FFT size than high bands) is part of
 Phase 2, not a prerequisite decision.
 
-**Answered 2026-10-12** (`tests/spike_a_decorrelate_t7.py`): **2048/overlap 4**.
+**Answered 2026-10-12** (`tests/records/spike_a_decorrelate_t7.py`): **2048/overlap 4**.
 Measured residual vs the additive AM reference at f0=96, band 6: 2048/4 gives
 −15.6 dB (corr 0.986); 4096 (−13.0 dB) and 8192 (−9.5 dB) are strictly
 worse — longer windows hold the gain curve longer than the 1 Hz temporal
@@ -103,7 +103,7 @@ would still produce correct output in both domains.
 - **Phase 1 — concept and interface.** Complete. `ideas/f_a_spectral_
   ripple.md`, this spec.
 - **Phase 2 — scratch verification.** **COMPLETE 2026-10-12.** NumPy
-  tier (`tests/spike_a_decorrelate_t7.py`): FFT size settled (2048/4,
+  tier (`tests/records/spike_a_decorrelate_t7.py`): FFT size settled (2048/4,
   ADR-5 — including the band-1 tail: one size serves all bands), 50 ms
   gain-curve refresh shown free (−15.6 vs −15.7 dB per-frame), PM's
   first data point measured (ADR-4), envelope-correlation on synthetic

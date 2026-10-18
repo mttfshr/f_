@@ -1,8 +1,8 @@
 #!/bin/bash
 # Run f_ math tests in an ephemeral NumPy environment via uv -- nothing is
-# installed system-wide. No args: run every tests/test_*.py.
+# installed system-wide. No args: run every tests/**/test_*.py.
 #   tests/run.sh
-#   tests/run.sh tests/test_fft_separable.py
+#   tests/run.sh tests/math/test_fft_separable.py
 #   tests/run.sh -q [files]     quiet: one line per file, full detail only for failures
 #
 # Every run writes tests/logs/<timestamp>-offline.log (tests/_log.sh): full output,
@@ -19,7 +19,7 @@ for a in "$@"; do
   esac
 done
 set -- "${ARGS[@]}"
-if [ $# -eq 0 ]; then set -- tests/test_*.py; fi
+if [ $# -eq 0 ]; then set -- $(find tests -name 'test_*.py' -not -path '*/__pycache__/*' -not -path 'tests/jobs/*' | sort); fi
 log_open offline "${FLAGS:-none}"
 if [ "$QUIET" -eq 1 ]; then export TEST_FULL_LOG="$LOG"; fi   # quiet on screen, complete in the log
 

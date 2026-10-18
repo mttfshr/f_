@@ -27,7 +27,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 BENCH = HERE.parent / "tests" / "bench"
-sys.path.insert(0, str(BENCH))
+sys.path.insert(0, str(BENCH.parent / "lib"))   # patchbuild moved to tests/lib
 from patchbuild import APPVERSION, Patch, patcher_dict   # noqa: E402
 
 OUT_DIR = Path.home() / "Vsynth" / "patterns" / "scatter_look"

@@ -30,7 +30,7 @@ Background on the package layout and the choices behind it: `docs/max-reference/
 
 Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category. The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it takes or produces a vecfield, a T_ means the same for a tensor), plus Audio for the `gen~` modules; a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`. The `f_tf_` modules work with `f_tensor` textures produced by `f_tf_tensormap` (`docs/f-reference/f_tensor_type.md`).
 
-This table is also the source for the package's launcher patcher (`package/extras/f_Launch.maxpat`, opened by the Package Manager's Launch button and the Extras menu), which lists every module on one tab per group below. Keep each description to 110 characters, and after editing the table run `build/py.sh build/generate_launch.py` to regenerate the launcher (`tests/run.sh tests/test_launch.py` fails if it is stale).
+This table is also the source for the package's launcher patcher (`package/extras/f_Launch.maxpat`, opened by the Package Manager's Launch button and the Extras menu), which lists every module on one tab per group below. Keep each description to 110 characters, and after editing the table run `build/py.sh build/generate_launch.py` to regenerate the launcher (`tests/run.sh tests/build/test_launch.py` fails if it is stale).
 
 ### Scope
 
@@ -150,7 +150,7 @@ The `f_modules` menu (`package/patchers/f_modules.maxpat`) and the size table in
 
 ## Development
 
-Modules are built from definition files (`src/` → `build/build_patcher.py` → `package/patchers/`) rather than patched by hand, so the structure stays consistent and reviewable as diffs. `definition.py` is the source of truth: a change made by hand in Max has to be written back into it. `tests/test_drift.py` enforces that; the modules that don't yet reproduce from their definitions are listed in `tests/drift_baseline.json`, a list that only shrinks. Hand-tuning the schema doesn't model (a compact dial, a moved jsui, a label colour) is written back into the definition's `overrides` block by `build/capture.py`; see `build/spec.md`.
+Modules are built from definition files (`src/` → `build/build_patcher.py` → `package/patchers/`) rather than patched by hand, so the structure stays consistent and reviewable as diffs. `definition.py` is the source of truth: a change made by hand in Max has to be written back into it. `tests/build/test_drift.py` enforces that; the modules that don't yet reproduce from their definitions are listed in `tests/build/drift_baseline.json`, a list that only shrinks. Hand-tuning the schema doesn't model (a compact dial, a moved jsui, a label colour) is written back into the definition's `overrides` block by `build/capture.py`; see `build/spec.md`.
 
 Verification happens in three tiers, cheapest and most attributable first — the full rationale is in `.specify/constitution.md`:
 

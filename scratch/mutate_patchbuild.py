@@ -1,7 +1,7 @@
 import hashlib, os, subprocess, sys
 from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
-T = REPO / "tests/bench/patchbuild.py"
+T = REPO / "tests/lib/patchbuild.py"
 orig = T.read_text(); sha = hashlib.sha256(orig.encode()).hexdigest()
 M = [("rect not floated in obj", '"patching_rect": [float(v) for v in rect]}\n        if n_out', '"patching_rect": list(rect)}\n        if n_out'),
      ("outlettype always written", "        if n_out:\n            box[\"outlettype\"]", "        if True:\n            box[\"outlettype\"]"),
@@ -17,7 +17,7 @@ def run():
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PATH="/opt/homebrew/bin:" + os.environ["PATH"])
     for p in REPO.rglob("__pycache__"):
         if ".git" not in p.parts: subprocess.run(["rm", "-rf", str(p)])
-    return subprocess.run(["uv","run","--no-project","--with","numpy","python3","tests/test_bench_patchbuild.py"],cwd=REPO,env=env,capture_output=True,text=True).returncode
+    return subprocess.run(["tests/py.sh","tests/toolchain/test_bench_patchbuild.py"],cwd=REPO,env=env,capture_output=True,text=True).returncode
 try:
     if run(): sys.exit("ABORT baseline red")
     print("baseline green"); surv = []

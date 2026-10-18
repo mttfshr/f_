@@ -25,7 +25,7 @@ gaining real tasks. Full findings in `.specify/maintenance/status.json`.
   matches convention").
 
 - **T002 — bench: no contract coverage, and this exact gap is why T001
-  went unnoticed.** No `BYPASS_EXPECT` entry in `tests/bench_modules.py`
+  went unnoticed.** No `BYPASS_EXPECT` entry in `tests/contracts/bench_modules.py`
   — a single automated check of "does out1 equal a neutral field under
   bypass" would have caught the doc/code mismatch in T001 immediately
   instead of it sitting undiscovered. No tier-1 mirror either (predates

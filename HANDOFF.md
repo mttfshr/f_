@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-18 (09:55): `tests/` restructure Phase B (B1-B3, most of B4) done; B5, B6 and the final README open
+
+- **Moved (78 `git mv`, table in `.specify/test_bench/path_map.tsv`; OLD `tests/<file>` PATHS IN THE ENTRIES BELOW ARE STALE: use the table):** `tests/{lib,toolchain,contracts,build,math,records}/` and `tests/modules/{fluid,caustic,tf_*}/`. Entry scripts (`run.sh`, `bench.sh`, `bg.sh`, `_log.sh`) stay at the top, plus the new `tests/py.sh <file>` (runs one file with the test import path).
+- **Imports:** `_log.sh` exports `PYTHONPATH`; `tests/lib/paths.py` gives `REPO` / `TESTS` / `BENCH`; the 32 `sys.path.insert` hacks are gone (the ones aimed at `scratch/` and `src/` stay). **Discovery:** `run.sh` globs `tests/**/test_*.py`; bench files declare `GROUP` / `ORDER`, `benchdeps.py list --group regression` replaces `bench.sh DEFAULT` (same 16 files, same order; `--all` lists 18).
+- **Verified:** `tests/run.sh` via `bg.sh`: all 30 files green, 69 s (same file count and per-file counts as Phase A). Benches NOT run: `bench.sh --list` matches, but no live run since the move.
+- **Not done:** B5 (README Files list is still the old flat one; `tests/README.md` needs the new layout), **B6 cannot be a plain move**: `fluid_mirror`, `bench_fluid`, `bench_fluid_probes` and `bench_perf` import from `test_fft_separable` and `bench_perf` from `bench_fft`, so the DFT helpers must be extracted to `lib/` (or the mirror) first.
+- **Known leftovers:** `src/f_weave/definition.py:75` keeps the old `tests/spike_atan2_safety.py` path (inside a shipped codebox comment; changing it drifts the patcher); `skills/*` were edited, so `skills/check.sh` reports drift until re-uploaded and stamped; `bench_module_template.py` now does `from paths import REPO`.
+
 ## 2026-10-18 (09:10): `tests/` restructure Phase A done: offline suite green, default bench set green (16 files, 389 s); NOT committed
 
 - **Offline suite green** (`tests/run.sh -q`, 68.8 s serial, 30 files; counts +2 `test_benchclient`, +2 `test_benchdeps`, +1 `test_bg`, +1 `test_harness`). No bench was run. Detail per item: `.specify/test_bench/tasks_restructure.md`.

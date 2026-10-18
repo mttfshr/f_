@@ -3,7 +3,7 @@
 _Created: 2026-10-07_
 _Spec: `.specify/f_caustic_scatter/spec.md` (what and why, the measured numbers, the seven resolved decisions;
 this file is HOW only)_
-_Research background: `ideas/optics_map.md`, `ideas/f_lumia.md`; spike records `tests/spike_scatter.py`
+_Research background: `ideas/optics_map.md`, `ideas/f_lumia.md`; spike records `tests/records/spike_scatter.py`
 (stages `s0`-`s11`), `tests/bench/spike_scatter*.maxpat`, `spike_scatter.jxs`_
 
 ---
@@ -29,7 +29,7 @@ Everything numeric is verified in NumPy (tier 1) and on the module bench (tier 2
 
 **Stack**: Max 9.2, Vsynth, `jit.gl.pix` + GenExpr codeboxes (`float32`) for composite and select; GLSL 1.20
 `.jxs` vertex + fragment shader for the scatter (the one constitution deviation, spec "What the sheets mode does");
-Python 3 (NumPy) for the mirror and truth; the module bench (`tests/bench*`, `tests/spike_scatter.py` is the
+Python 3 (NumPy) for the mirror and truth; the module bench (`tests/bench*`, `tests/records/spike_scatter.py` is the
 runner precedent) for GPU verification; the declarative builder (`src/f_caustic/definition.py` ->
 `build/build_patcher.py` -> `package/patchers/f_caustic.maxpat`).
 
@@ -183,9 +183,9 @@ raised no error), so the shader's loading is verified by **non-black output** in
 error list. The final check from a patch outside the repo is part of the live check (T037).
 
 ### ADR-8: Testing split
-**Tier 1**: `tests/scatter_mirror.py` (promoted `ref_scatter` and truth), offline. **Tier 2**: `tests/bench_caustic_sheets.py`
+**Tier 1**: `tests/modules/caustic/scatter_mirror.py` (promoted `ref_scatter` and truth), offline. **Tier 2**: `tests/modules/caustic/bench_caustic_sheets.py`
 on the module bench, one function per acceptance bullet; the `s10` and `s11` checks are promoted into it; the existing
-`tests/bench_modules.py` `BYPASS_EXPECT` entry and the contract tests keep passing. **Tier 3**: Matt on real video.
+`tests/contracts/bench_modules.py` `BYPASS_EXPECT` entry and the contract tests keep passing. **Tier 3**: Matt on real video.
 The cost check uses an interleaved A/B method, not the K-meshes multiplier (it failed).
 
 ---
@@ -199,7 +199,7 @@ unconnected pix input, builder multi-stage targets, builder routing), and the pr
 **Why this block**: ADR-1's builder choice and the unconnected-vecfield guard both rest on facts we do not have yet,
 and "soft mode unchanged" is only checkable against a baseline recorded first.
 **Verification checkpoint**: baseline file committed; the three spikes each answered in writing (HANDOFF) with their
-fallback chosen; `tests/test_scatter_mirror.py` green.
+fallback chosen; `tests/modules/caustic/test_scatter_mirror.py` green.
 
 ### Block B: Scene, shader and sheets composite (module-bench only)
 **Dependencies**: Block A.

@@ -137,7 +137,7 @@ Run via `.specify/maintenance/SKILL.md`; full findings in
   modules — cosmetic, but worth matching for consistency next time this
   file is touched.
 - [ ] T025 **Bench: no contract/bypass entry, and a clean tier-1
-  candidate exists.** Not in `tests/bench_modules.py`'s `BYPASS_EXPECT`
+  candidate exists.** Not in `tests/contracts/bench_modules.py`'s `BYPASS_EXPECT`
   table at all (lower risk than most gaps found this week — single
   outlet, so there's no multi-outlet native-bypass flip risk to begin
   with — but still unverified by anything automated). Also predates

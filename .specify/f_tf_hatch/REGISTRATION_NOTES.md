@@ -6,7 +6,7 @@ the shared files directly (parent-side hard constraint: hatch touches only
 section per shared file, exact diff-style content; the parent applies or
 declines each.
 
-## tests/benchdeps.py (DATA table)
+## tests/lib/benchdeps.py (DATA table)
 
 ```python
     "bench_tf_hatch": _MACHINERY + ["src/f_tf_hatch/codebox_*.gen"],
@@ -15,7 +15,7 @@ declines each.
 always runs and never records bench_tf_hatch; a test in test_benchdeps.py
 enforces the entry.)
 
-## tests/bench_modules.py (BYPASS_EXPECT table)
+## tests/contracts/bench_modules.py (BYPASS_EXPECT table)
 
 ```python
     "f_tf_hatch": {"outlets": {"out0": "black", "out1": "black"},
@@ -109,9 +109,9 @@ discipline):
   `src/f_tf_hatch/codebox_stage_e2_T.gen` (layout, branch T),
   `src/f_tf_hatch/codebox_stage_e3.gen` (profile+compose+encode). Branch S
   files (e2_S_p1/p2) deleted at the T001 gate, never stubbed.
-- **tests:** `tests/test_tf_hatch.py` (tier-1 mirror, 20/20 pass),
-  `tests/spike_tf_hatch_costshape.py` (T001 gate),
-  `tests/bench_tf_hatch.py` (tier 2 — WRITTEN-NOT-RUN).
-- **drift note:** the built patcher is new (not in `tests/drift_baseline.json`);
-  `tests/test_drift.py` must reproduce it cleanly from the definition before
+- **tests:** `tests/modules/tf_hatch/test_tf_hatch.py` (tier-1 mirror, 20/20 pass),
+  `tests/records/spike_tf_hatch_costshape.py` (T001 gate),
+  `tests/modules/tf_hatch/bench_tf_hatch.py` (tier 2 — WRITTEN-NOT-RUN).
+- **drift note:** the built patcher is new (not in `tests/build/drift_baseline.json`);
+  `tests/build/test_drift.py` must reproduce it cleanly from the definition before
   the baseline is touched (the parent owns baseline edits).

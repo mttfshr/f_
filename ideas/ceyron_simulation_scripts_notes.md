@@ -146,7 +146,7 @@ complexity of a multi-texture, multi-pass collision+stream architecture.
 This would be a materially bigger build than anything currently in `f_`
 — worth a real architecture discussion, not a quick add, if pursued.
 
-**ARCHITECTURE EVALUATED 2026-10-12** (`tests/spike_lbm_d2q9_architecture.py`,
+**ARCHITECTURE EVALUATED 2026-10-12** (`tests/records/spike_lbm_d2q9_architecture.py`,
 NumPy, full D2Q9 pipeline in the pix-chain stage shape): **fits the
 chained-jit.gl.pix-objects pattern — no slab/GLSL track needed.** The
 streaming step is a pure gather (roll by +e_i = one directional texture
@@ -206,7 +206,7 @@ without adaptive timestepping (KS is famously stiff) — this is the kind
 of thing that would need an "experiment before building" scratch test,
 not a reasoning-from-the-couch answer.
 
-**SCRATCH TEST RUN 2026-10-12** (`tests/spike_ks_stability.py`, NumPy,
+**SCRATCH TEST RUN 2026-10-12** (`tests/records/spike_ks_stability.py`, NumPy,
 N=256, L=50 — the notebook's own parameters): the stiffness question
 has a decisive two-part answer. **(1) Real-space explicit FD is dead on
 arrival** for a per-frame module: the biharmonic term bounds the
@@ -432,7 +432,7 @@ is one round trip: advect (real space) → forward → diffusion+projection
 
 **Result: math is correct, verified without a patch.** New `tests/`
 directory (see `tests/README.md`) with a NumPy emulation of the jit.gl.pix
-execution model; `tests/test_fft_separable.py` mirrors the planned codeboxes
+execution model; `tests/math/test_fft_separable.py` mirrors the planned codeboxes
 pass-for-pass, float32 throughout. 9/9 pass at N=128 and 256: row DFT and 2D
 forward match `np.fft` (~5e-7 rel), forward+inverse nulls (~1e-5 abs),
 single-mode diffusion decays exactly as `exp(-ν·dt·k²)`, strong viscosity
@@ -459,7 +459,7 @@ for numeric diff against the NumPy reference), then T1 on it.
 ## Addendum (2026-09-22) — FFT T1/T2 answered on the GPU via the test bench
 
 The separable-DFT passes now run in `jit.gl.pix` through the new Max test
-bench (`.specify/test_bench/`, `tests/bench_fft.py`) and match NumPy: row
+bench (`.specify/test_bench/`, `tests/math/bench_fft.py`) and match NumPy: row
 pass at N=128 4.8e-7 rel vs `np.fft.fft`, full 2D forward 1–2e-7 rel vs
 `np.fft.fft2`, 2D forward+inverse round trip ~5e-6 abs; N=256 and N=512 also
 compile and match. So the "does a 128/256-iteration loop compile" question is

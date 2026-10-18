@@ -46,7 +46,7 @@ _Last updated: 2026-06-17_
 - [ ] T114 Test `amp` param: sweep 0–1; confirm output scales correctly
 - [ ] T115 Test `ph0`: confirm global phase shift visible across all modes
 - [ ] T116 Test `view_mode`: confirm circular ↔ strip blend smooth
-- [ ] T117 Run `tests/run.sh tests/test_module_contracts.py` (replaced `audit_interface.py`); resolve any issues
+- [ ] T117 Run `tests/run.sh tests/contracts/test_module_contracts.py` (replaced `audit_interface.py`); resolve any issues
 
 **Checkpoint**: Bpatcher verified in Max. Audit passing. Both outlets present.
 
@@ -115,7 +115,7 @@ and confirmed in Max.
   Same profiling session as glow/prism/streak would cover it.
 
 - [x] T138a (2026-10-13): Profiled on the live bench
-  (`tests/spike_four_module_cost.py`, 512², chain=128, median of 3):
+  (`tests/records/spike_four_module_cost.py`, 512², chain=128, median of 3):
   ~0.0199 ms/pass active, ~0.0243 ms/pass bypassed — **not GPU-bound
   even at chain=128** (upper-bound figures only, below the bench's
   CPU-overhead floor at this resolution/chain). The ~5 modal

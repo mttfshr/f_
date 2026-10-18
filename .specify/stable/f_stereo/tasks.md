@@ -51,8 +51,8 @@ _Last updated: 2026-05-26_
 ## Maintenance (2026-10-12 audit)
 
 - [ ] T024: Run the existing Tissot-indicatrix diagnostic
-  (tests/spike_mobius_vecfield_transform.py /
-  tests/spike_droste_conformality.py are the precedents) against
+  (tests/records/spike_mobius_vecfield_transform.py /
+  tests/records/spike_droste_conformality.py are the precedents) against
   f_stereo — the only warper of the three with a non-conformal end of
   its blend, so the only one where the indicatrix is actually
   interesting (expect the ellipse→circle sweep as proj blends

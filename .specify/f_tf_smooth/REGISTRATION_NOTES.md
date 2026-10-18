@@ -8,15 +8,15 @@ module owns only:
   Params `release` (provisional 0.5, gate OQ1 open) and `bypass_gate`;
   ADR-3: no clamp anywhere in the feedback path).
 - `src/f_tf_smooth/codebox_render.gen` — the render passthrough node.
-- `tests/test_tf_smooth.py` — tier-1 mirror, 12/12 green, incl. the
+- `tests/modules/tf_smooth/test_tf_smooth.py` — tier-1 mirror, 12/12 green, incl. the
   decay-theorem and opposite-axis-reinforcement tests.
-- `tests/bench_tf_smooth.py` — tier-2 bench, WRITTEN, NOT RUN (needs the
+- `tests/modules/tf_smooth/bench_tf_smooth.py` — tier-2 bench, WRITTEN, NOT RUN (needs the
   bench open; run pending Matt).
 - `docs/f-reference/f_tf_smooth.md` — draft reference doc.
 
-## tests/benchdeps.py — DATA registration (tasks T014)
+## tests/lib/benchdeps.py — DATA registration (tasks T014)
 
-Enforced by `tests/test_benchdeps.py::test_every_real_bench_file_is_registered_and_its_globs_match`.
+Enforced by `tests/toolchain/test_benchdeps.py::test_every_real_bench_file_is_registered_and_its_globs_match`.
 Exact line to add (mirror of the tensormap/axisflow entries; verified no dead
 glob — `benchdeps.input_files("bench_tf_smooth")` resolves):
 
@@ -31,11 +31,11 @@ NOT added to `tests/bench.sh` DEFAULT (T014: not a regression gate until Matt
 says so). NOTE: an earlier draft of this session edited benchdeps.py directly;
 that edit has been reverted — the file at `.specify/f_tf_glyph/`'s sibling
 bench entries must not silently absorb this module's line; the parent applies
-it. (`tests/bench_tf_glyph.py` and `tests/bench_tf_sharpen.py` were transient
+it. (`tests/modules/tf_glyph/bench_tf_glyph.py` and `tests/modules/tf_sharpen/bench_tf_sharpen.py` were transient
 strays from sibling sessions and were removed; they must be re-created by
 their own owners if wanted, alongside their own DATA lines.)
 
-## tests/bench_modules.py — BYPASS_EXPECT (tasks T023)
+## tests/contracts/bench_modules.py — BYPASS_EXPECT (tasks T023)
 
 Once the module patcher is registered for the module bench, add:
 

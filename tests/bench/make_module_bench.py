@@ -21,6 +21,7 @@ Run:  python3 tests/bench/make_module_bench.py
 import json
 from pathlib import Path
 
+import sys as _sys; _sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))   # patchbuild lives in tests/lib
 from patchbuild import Patch, patcher_dict
 
 HERE = Path(__file__).resolve().parent

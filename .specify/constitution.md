@@ -93,11 +93,11 @@ the math right, and does Max/the GPU run it — so failures can't be
 attributed. Verification is split into tiers, cheapest and most attributable
 first:
 
-1. **Math — NumPy mirror** (`tests/test_*.py`, `tests/run.sh`). A pass-for-
+1. **Math — NumPy mirror** (`tests/**/test_*.py`, `tests/run.sh`). A pass-for-
    pass float32 mirror of the codebox, checked against *independent* ground
    truth (analytic results, NumPy reference functions). For nontrivial math:
    transforms, solvers, geometry, anything with a known reference. No Max.
-2. **Execution — test bench** (`tests/bench_*.py`, `tests/bench.sh`). The
+2. **Execution — test bench** (`tests/**/bench_*.py`, `tests/bench.sh`). The
    module's real codebox file from `src/` runs on the GPU in a live Max and is
    diffed numerically against tier 1 or against invariants (identity at
    bypass, round trips, symmetries, ranges). Also catches compile errors, and
@@ -125,8 +125,8 @@ Prefer bench evidence for claims about GenExpr/jit.gl.pix behavior.
 **What the bench covers** (since E1–E4, 2026-09-22): up to 3 inputs and all
 4 outputs, float32 or char, params, multi-frame runs with feedback (Pattern
 1), cost. Separately, **shipped bpatchers** are contract-tested: offline
-(`tests/test_module_contracts.py` — route → attrui → Param wiring) and live in
-Vsynth's real `vs_render` context (`tests/bench_modules.py` — params arrive,
+(`tests/contracts/test_module_contracts.py` — route → attrui → Param wiring) and live in
+Vsynth's real `vs_render` context (`tests/contracts/bench_modules.py` — params arrive,
 every outlet renders, bypass passes through). Run both after changing any
 shipped bpatcher. Not covered: whole multi-stage chains as one job (test
 stage by stage), `gen~` audio.

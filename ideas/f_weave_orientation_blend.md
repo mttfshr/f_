@@ -67,7 +67,7 @@ ship here (still the empirical A/B below). ~~Fix B and
 GenExpr `atan2` safety in `jit.gl.pix`, unverified in either place —
 so whoever checks it first closes it for both files.~~ **Closed
 2026-10-12: `atan2` verified GPU-safe on decoded sampled-texture input**
-(`tests/spike_atan2_safety.py`, all four quadrants to 5.6e-7 rad,
+(`tests/records/spike_atan2_safety.py`, all four quadrants to 5.6e-7 rad,
 branch cut correctly wrapped, half-angle and doubled round trip both
 pass; one ±π convention quirk at the degenerate `Fy == 0, Fx < 0`
 boundary — benign for blending). Fix B is unblocked; the live A/B below

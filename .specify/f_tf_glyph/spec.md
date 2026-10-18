@@ -101,7 +101,7 @@ theta = 0.5 * atan2(2.0*Jxy, diff)      // GRADIENT direction (across the edge);
 The ellipse is drawn in the glyph's own local frame (rotation carries the axis), so
 the recovered θ only needs to be symmetric to θ+180° — which the angle-doubled
 encoding guarantees by construction (`f_tensor_type.md` §"Why angle-doubled"). The
-benign ±pi atan2 branch-cut difference (verified in `tests/spike_atan2_safety.py`,
+benign ±pi atan2 branch-cut difference (verified in `tests/records/spike_atan2_safety.py`,
 cited in the tensormap spec) is invisible here for the same reason.
 
 **Decode honesty note (from the brief's sign/branch-cut paragraph):** θ = 0.5·atan2

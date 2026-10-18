@@ -51,7 +51,7 @@ root  = sqrt(diff*diff + 4*Jxy*Jxy)
 lambda1 = 0.5 * (trace + root)        // larger eigenvalue
 lambda2 = 0.5 * (trace - root)
 coherence = root / trace              // = (lambda1-lambda2)/(lambda1+lambda2), in [0,1]; 0 where trace ~ 0
-                                      // (normalized, as in tests/spike_structure_tensor_range.py; contrast-independent)
+                                      // (normalized, as in tests/records/spike_structure_tensor_range.py; contrast-independent)
 theta   = 0.5 * atan2(2*Jxy, diff)    // principal (across-edge) axis
 ```
 
@@ -79,7 +79,7 @@ A = coherence                               // already in [0,1]; no gain
 
 **Why angle-doubling:** the structure tensor describes an unoriented LINE field, where theta and theta+pi are the same structure. Storing (cos 2theta, sin 2theta) removes the arbitrary sign choice that would otherwise flip discontinuously in storage.
 
-**What this spec does NOT promise consumers:** that outlet 1's R/G can be fed to an ordinary vecfield inlet. It cannot. A consumer must decode theta = 0.5 * atan2(G', R') and re-emit a vector, and sign-sensitive consumers must not receive it at all (hub doc: "Explicit exclusion list"). GenExpr atan2 on decoded sampled-texture input is VERIFIED SAFE on the GPU (2026-10-12, `tests/spike_atan2_safety.py`); the one measured caveat is a +pi/-pi convention difference exactly at the branch cut, which is benign (same line direction).
+**What this spec does NOT promise consumers:** that outlet 1's R/G can be fed to an ordinary vecfield inlet. It cannot. A consumer must decode theta = 0.5 * atan2(G', R') and re-emit a vector, and sign-sensitive consumers must not receive it at all (hub doc: "Explicit exclusion list"). GenExpr atan2 on decoded sampled-texture input is VERIFIED SAFE on the GPU (2026-10-12, `tests/records/spike_atan2_safety.py`); the one measured caveat is a +pi/-pi convention difference exactly at the branch cut, which is benign (same line direction).
 
 **No auto-normalization:** gradient energy scales with input contrast squared. `strength` is the user-facing calibration, same tradeoff `f_vf_fieldmap` accepted, avoiding the multi-pass reduce a frame-level normalization would need.
 

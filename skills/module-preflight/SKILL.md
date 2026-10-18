@@ -34,14 +34,14 @@ don't override, fix it.
 - [ ] **Drift.** `build/py.sh build/drift.py -v f_name` -- the shipped
   patcher reproduces from `definition.py`, or the module is deliberately on
   the never-regenerate list (`.specify/plan.md` Build system section) with a
-  reason, or it has an `out_of_scope` entry in `tests/drift_baseline.json`
+  reason, or it has an `out_of_scope` entry in `tests/build/drift_baseline.json`
   with a reason mirroring an existing precedent (see `f_a_ripple`/
   `f_a_decorrelate`'s entries).
 - [ ] **Test suite.** `tests/run.sh` green for anything that touches this
   module: its own `bench_*`/`test_*` files, `build_conventions`, and the
   full launch/menu suite.
 - [ ] **Menu + launcher registration.** `build/generate_menu.py` and
-  `build/generate_launch.py --check` both pass; `tests/test_launch.py`
+  `build/generate_launch.py --check` both pass; `tests/build/test_launch.py`
   green. The module appears once, in the right category, clickable iff it
   has a helpfile.
 - [ ] **README row.** One line in the README Patches table, <=110 chars,

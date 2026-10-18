@@ -5,17 +5,17 @@
 | Task | State | Evidence |
 |---|---|---|
 | T001 tier gate | DONE | Confirmed plan ADR-5: tier 1 applies (closed-form recurrence), tier 2 applies (feedback round-trip; bench written, run pending), tier 3 applies (release default/ceiling). |
-| T002 mirror | DONE | `tests/test_tf_smooth.py`; per-channel one-pole over (H,W,4) float32 frames, f_tensor out0 encoding helpers; pure arithmetic, no gpu_sim needed. |
+| T002 mirror | DONE | `tests/modules/tf_smooth/test_tf_smooth.py`; per-channel one-pole over (H,W,4) float32 frames, f_tensor out0 encoding helpers; pure arithmetic, no gpu_sim needed. |
 | T003 decay theorem | DONE | Closed form `out(k)=B+(A−B)·release^k` vs float32 powers; release {0,0.3,0.5,0.9,0.99}, k≤50: worst abs err 3.8e-6 (tol 1e-5). |
 | T004 line-field | DONE | Alternating θ/θ+180° inputs give bitwise-constant output; decoded axis preserved 0 rad. |
 | T005 opposite-axis reinforcement | DONE | Sign-flipping gradients: tensor output exactly the input (drift 0) while vecfield control collapses to 0.42 of \|v\| (25%); crossed-camp 90° alternation settles to the analytic period-2 blend (2/3 own + 1/3 other camp) with full preserved trace; hot/cold half-frame test: 0 pixels below min input coherence. |
 | T006 neutrals | DONE | Unconnected (zero tensor) decays dirty history geometrically to neutral (1.8e-10 at k=40, r=0.5); bypass = bitwise passthrough per frame; channels bitwise independent. |
 | T007 mutations | DONE | sign-flip err 6.8, swapped-weights err 3.0, clamp-feedback err 2.7 — decay-theorem catches all; clamp bug invisible on 0-1 content, caught on unbounded (err 1.5 at Jxx=4). |
-| T008 run | DONE | `tests/run.sh tests/test_tf_smooth.py`: **12/12 pass**. |
+| T008 run | DONE | `tests/run.sh tests/modules/tf_smooth/test_tf_smooth.py`: **12/12 pass**. |
 | T009 precedent read | DONE | f_vf_advect (src/f_vf_advect/definition.py two-domain pix_wires loop), f_vf_optical_flow (outlet_source_override/raw_lines), f_lens read; codeboxes placed src/f_tf_smooth/ per built-module layout (recorded as plan ADR-6). |
 | T010 codebox_state.gen | DONE | `src/f_tf_smooth/codebox_state.gen`: Param release(0.5)/bypass_gate(0.0); one-pole `mix(prev,new,1−release)`; no clamp (ADR-3), no decode/atan2; PROVISIONAL release noted. |
 | T011 codebox_render.gen | DONE | `src/f_tf_smooth/codebox_render.gen`: `out1 = sample(in1, norm)` passthrough; separate render node kept per ADR-2. |
-| T012 bench round-trip | PENDING bench | Written in tests/bench_tf_smooth.py (`test_frame_boundary_unbounded_round_trip`); parent runs when the bench is open. |
+| T012 bench round-trip | PENDING bench | Written in tests/modules/tf_smooth/bench_tf_smooth.py (`test_frame_boundary_unbounded_round_trip`); parent runs when the bench is open. |
 | T013 bench recurrence | PENDING bench | Written (`test_recurrence_matches_mirror_over_frames`, 5 frames, release 0 exact-identity case). |
 | T014 benchdeps registration | DONE (parent-applies) | Line `"bench_tf_smooth": _MACHINERY + ["src/f_tf_smooth/codebox_*.gen"],` recorded in REGISTRATION_NOTES.md (shared file, parent-owned); I verified the glob resolves and left benchdeps.py unmodified. Not in bench.sh DEFAULT. |
 | T015–T017 (Phase 2) | PENDING Matt | Scratch/feel tier out of scope per owner directive. |
@@ -37,11 +37,11 @@
 - Codeboxes in `src/` not `.specify/` — matches the built-patcher layout tenmap/axisflow actually use; documented in plan ADR-6.
 - T005's "settled output constant" sub-check replaced by the analytic period-2 fixed-point check — a one-pole on a period-2 input settles to period-2; the constant-output expectation was mathematically wrong for two different axes; the test asserts the closed-form blend instead (stronger).
 - Vecfield-collapse assertion loosened from <15% to <50%-within-3-frames — measured collapse is 25% at release 0.5 under geometric decay; the original bound was never true at release 0.5.
-- `tests/benchdeps.py` NOT edited (owner rule); exact line delivered in REGISTRATION_NOTES.md instead; two sibling stray files (bench_tf_glyph.py, bench_tf_sharpen.py) were removed after they tripped the benchdeps completeness test.
+- `tests/lib/benchdeps.py` NOT edited (owner rule); exact line delivered in REGISTRATION_NOTES.md instead; two sibling stray files (bench_tf_glyph.py, bench_tf_sharpen.py) were removed after they tripped the benchdeps completeness test.
 
 ## Test results
 
-`tests/run.sh tests/test_tf_smooth.py`: 12/12 pass. Key numbers: decay theorem worst 3.8e-6 abs (r=0.99, k=50); vecfield control magnitude 0.42 vs |v| 1.68; clamp mutation 1.5 first-step error at Jxx=4. No bench run performed (parent-owned).
+`tests/run.sh tests/modules/tf_smooth/test_tf_smooth.py`: 12/12 pass. Key numbers: decay theorem worst 3.8e-6 abs (r=0.99, k=50); vecfield control magnitude 0.42 vs |v| 1.68; clamp mutation 1.5 first-step error at Jxx=4. No bench run performed (parent-owned).
 
 ## Phase 3 addendum (built on parent instruction 2026-10-17)
 

@@ -526,7 +526,7 @@ otherwise surface) — one real, previously-unflagged gap found:
   tree) found and fixed exactly this failure mode elsewhere: native
   bypass skips the shader and passes secondary outlets through
   **vertically flipped**. `f_vf_seeds` has no `BYPASS_EXPECT` entry in
-  `tests/bench_modules.py` at all, so whether outlet 1 (mask) or outlet 2
+  `tests/contracts/bench_modules.py` at all, so whether outlet 1 (mask) or outlet 2
   (seed coord) comes out flipped under bypass has never actually been
   tested here — it's simply unknown, not confirmed either way. Given
   there's a known precedent for this exact bug in this exact

@@ -26,8 +26,8 @@ Design (from discovery, 2026-09-22):
   triggers bypass both via the documented `bypass 1` control message and via
   the bypass jsui (`msg_int`).
 
-- [x] T101 Static contract checker `tests/module_contract.py` + offline suite
-  `tests/test_module_contracts.py` over every shipped module; known issues
+- [x] T101 Static contract checker `tests/lib/module_contract.py` + offline suite
+  `tests/contracts/test_module_contracts.py` over every shipped module; known issues
   reported as XFAIL with a pointer, not silently skipped.
   Done: 32 modules checked, 0 unexpected. **Real bugs found:** `f_vf_fieldmap` and `f_vf_repulse` Gain dial → `attrui strength`, codebox has `Param gain` (dial does nothing — same class as the old `mix_amt` bug); `f_masonry` route `brick_seed` drives the course_seed numbox and route `course_seed` is unconnected; `f_masonry` `quantize` is a dead control (Param removed 2026-07-05, UI left). Self-check proves the checker catches the original `mix_amt` bug.
 - [x] T102 Module bench patch generator + `bench_module.js` (load wrapper,
@@ -49,7 +49,7 @@ Design (from discovery, 2026-09-22):
   Done. **Finding:** the documented `bypass 1` control message (vsynth-bpatcher skill, Control Message Convention) works in 9 modules and does nothing in 23 — essentially every build-system module (`route` has no `bypass`). jsui bypass works everywhere; processors pass through exactly except `f_lens` (known) and `f_sirds` (new, uninvestigated). Multi-pix modules leave feedback/intermediate pix unbypassed (advect/potential pass pix, optical_flow, seeds) with correct out1 where checkable.
 - [x] T107 Run across all modules; triage findings (real bugs vs test
   assumptions); record.
-  Done: `tests/bench_modules.py` 2/2 (32 modules, ~77 s). Other new findings, all XFAIL with notes: `hue_range.js` bad outlet index; `autopattr @varname` invalid in Max 9 (masonry/mobius/stereo); `f_vf_fieldmap` pix declares invalid `@boundmode`. Environment noise excluded: `jpatcher: doesn't understand getattr` from modules' own `getattr presentation_rect` (whether Vsynth shows it too: unverified).
+  Done: `tests/contracts/bench_modules.py` 2/2 (32 modules, ~77 s). Other new findings, all XFAIL with notes: `hue_range.js` bad outlet index; `autopattr @varname` invalid in Max 9 (masonry/mobius/stereo); `f_vf_fieldmap` pix declares invalid `@boundmode`. Environment noise excluded: `jpatcher: doesn't understand getattr` from modules' own `getattr presentation_rect` (whether Vsynth shows it too: unverified).
 
 ## E1 — Multiple outputs
 - [x] T111 **DECISION GATE:** unwired `out N` in a gen patcher keeps the outlet?
@@ -74,4 +74,4 @@ Design (from discovery, 2026-09-22):
 
 - [x] T132 Feedback path (out K → identity pass → in J, one-frame delay) +
   time-series capture; self-test against a NumPy-stepped accumulator.
-  Done: `switch 4` picks the feedback outlet -> `bench_fb` identity pix -> `gate 2` into slot 1 in2/in3 (non-left inlets store without rendering -> one-frame delay). `run_temporal(code, inputs, steps, feedback=(out, in))`; consecutive-step captures supported. `tests/bench_temporal.py` 4/4: step counter, closed-form decay accumulator, out2->in3 routing, char feedback re-quantizing each step.
+  Done: `switch 4` picks the feedback outlet -> `bench_fb` identity pix -> `gate 2` into slot 1 in2/in3 (non-left inlets store without rendering -> one-frame delay). `run_temporal(code, inputs, steps, feedback=(out, in))`; consecutive-step captures supported. `tests/toolchain/bench_temporal.py` 4/4: step counter, closed-form decay accumulator, out2->in3 routing, char feedback re-quantizing each step.

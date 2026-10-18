@@ -30,16 +30,16 @@ docs/f-reference/f_tf_smooth.md  — Phase 5
 
 ---
 
-## Phase 0: Gates + NumPy mirror (BLOCKING) — COMPLETE 2026-10-17 (12/12, `tests/run.sh tests/test_tf_smooth.py`)
+## Phase 0: Gates + NumPy mirror (BLOCKING) — COMPLETE 2026-10-17 (12/12, `tests/run.sh tests/modules/tf_smooth/test_tf_smooth.py`)
 
 - [x] T001 **DECISION GATE: verification tiers.** Confirmed as written in plan ADR-5: tier 1 applies (one-pole recurrence has closed-form ground truth), tier 2 applies (feedback round-trip on the real GPU; bench written, run pending Matt), tier 3 applies (`release` default/ceiling is a feel judgement).
-- [x] T002 **(done 2026-10-17)** Write `tests/test_tf_smooth.py` — per-channel one-pole mirror over (H,W,4) float32 frames; pure array arithmetic, no gpu_sim texture reads needed (recurrence only). Mirror is `smooth_step`/`run_sequence`; encoding helpers per `f_tensor_type.md` out0.
+- [x] T002 **(done 2026-10-17)** Write `tests/modules/tf_smooth/test_tf_smooth.py` — per-channel one-pole mirror over (H,W,4) float32 frames; pure array arithmetic, no gpu_sim texture reads needed (recurrence only). Mirror is `smooth_step`/`run_sequence`; encoding helpers per `f_tensor_type.md` out0.
 - [x] T003 **(done: worst abs error 3.8e-6 over release {0, 0.3, 0.5, 0.9, 0.99}, k<=50; tol 1e-5)** Ground truth, decay theorem: closed form `out(k) = B + (A-B)*release^k` checked against float32 powers (not the recurrence). Includes release-0 exact passthrough and unbounded-value decay (Jxx=4.0 in; ADR-3 no-clamp proven numerically).
 - [x] T004 **(done: alternating theta / theta+180 deg frames give bitwise-constant output; decoded axis preserved 0 rad)** Invariant, line-field stability — encoding-continuity check; catches accidental decode/atan2.
 - [x] T005 **(done: opposite-sign flicker leaves the output exactly the input tensor (drift 0) while the vecfield one-pole control on the same alternation drops to 0.42 of |v| (25%); crossed-camp 90-degree alternation settles to the analytic period-2 blend (2/3 own camp + 1/3 other) with full preserved trace; hot/cold half-frame test: zero pixels fall below min input coherence)** Invariant, opposite-axis reinforcement — the tensor-native row as numbers.
 - [x] T006 **(done: unconnected zero-tensor input decays a dirty history geometrically to neutral (1.8e-10 after 40 frames at release 0.5); bypass = bitwise-exact passthrough every frame; channels independent bitwise)** Neutral checks.
 - [x] T007 **(done: sign-flip err 6.8, swapped-weights err 3.0, clamped-feedback err 2.7 — all caught by the decay-theorem check; the clamp bug is invisible on 0-1 content and caught on unbounded content (first-step err 1.5 at Jxx=4), which is why ADR-3 is a test)** Mutation check once.
-- [x] T008 **(done 2026-10-17: 12/12 pass; measured errors inline above; run direct — fast, bg.sh unneeded)** Run `tests/run.sh tests/test_tf_smooth.py -q`; results recorded.
+- [x] T008 **(done 2026-10-17: 12/12 pass; measured errors inline above; run direct — fast, bg.sh unneeded)** Run `tests/run.sh tests/modules/tf_smooth/test_tf_smooth.py -q`; results recorded.
 
 **Checkpoint:** recurrence proven; invariants encoded; mutation caught. → Proceed to Phase 1.
 
@@ -71,10 +71,10 @@ docs/f-reference/f_tf_smooth.md  — Phase 5
   2.39 ms upper bound; final confirm 6/6.]* Bench the full recurrence against the mirror
   over 5 frames of alternating input (`all_outputs=True`): error ≈ 1e-7 tolerance; confirm
   release 0 is exact passthrough on the GPU. **Ask before the bench run.**
-- [x] T014 Register `tests/bench_tf_smooth.py` in `tests/benchdeps.DATA` (template:
+- [x] T014 Register `tests/modules/tf_smooth/bench_tf_smooth.py` in `tests/lib/benchdeps.DATA` (template:
   `tests/templates/bench_module_template.py`); not in `bench.sh` DEFAULT until Matt calls
   it a regression gate. done — registration line required is
-  `"bench_tf_smooth": _MACHINERY + ["src/f_tf_smooth/codebox_*.gen"],` in tests/benchdeps.py DATA (parent owns shared files; recorded in .specify/f_tf_smooth/REGISTRATION_NOTES.md); bench file written from tests/templates/bench_module_template.py, not in bench.sh DEFAULT.
+  `"bench_tf_smooth": _MACHINERY + ["src/f_tf_smooth/codebox_*.gen"],` in tests/lib/benchdeps.py DATA (parent owns shared files; recorded in .specify/f_tf_smooth/REGISTRATION_NOTES.md); bench file written from tests/templates/bench_module_template.py, not in bench.sh DEFAULT.
 
 **Checkpoint:** feedback proven on the GPU, including unbounded values. → Proceed to
 Phase 2.
@@ -105,8 +105,8 @@ Phase 2.
 - [x] T019 **(done 2026-10-17: src/f_tf_smooth/definition.py — two-node pix_chain [state primary with codebox_state.gen, render support with codebox_render.gen], pix_wires [state→render, render→state-in2 feedback], bypass_mode "param" targeting the primary state pix [ADR-4 passthrough, not freeze], single outlet carrying the raw tensor via outlet_source_override {0: "render"} + raw_lines, signal_type "tensor out" amber, params release [0-1, default 0.5 PROVISIONAL] + bypass.)** Write `definition.py`.
 - [x] T020 **(done 2026-10-17: invocation `python3 build/build_patcher.py src/f_tf_smooth/definition.py` from repo root [tensormap T032 path confirmed]; → package/patchers/f_tf_smooth.maxpat; JSON-validated VALID.)** Build; validate the JSON.
 - [ ] T021 Register in the modules menu [PENDING parent registration — exact line in REGISTRATION_NOTES.md Utilities section]: `src/f_modules/menu.py` → `build/generate_menu.py`; README row (⚠ Unverified); category is a taste call.
-- [x] T022 **(done 2026-10-17: f_tf_smooth reproduces from its definition with ZERO drift problems via test_drift's own `problems(current()['f_tf_smooth'], None)` → []; not in the baseline. Pre-existing unrelated failures remain: f_masonry baseline shrink, f_tf_glyph/f_tf_sharpen missing src definitions, f_vf_advect hand edit.)** Drift check (`tests/test_drift.py`).
-- [ ] T023 Contract tests offline (`tests/test_module_contracts.py`); add BYPASS_EXPECT
+- [x] T022 **(done 2026-10-17: f_tf_smooth reproduces from its definition with ZERO drift problems via test_drift's own `problems(current()['f_tf_smooth'], None)` → []; not in the baseline. Pre-existing unrelated failures remain: f_masonry baseline shrink, f_tf_glyph/f_tf_sharpen missing src definitions, f_vf_advect hand edit.)** Drift check (`tests/build/test_drift.py`).
+- [ ] T023 Contract tests offline (`tests/contracts/test_module_contracts.py`); add BYPASS_EXPECT
   entry (passthrough semantics). Bench registration per T014; **ask before any bench run**.
   [Offline part done 2026-10-17: f_tf_smooth-specific analysis is CLEAN — pix params release+bypass_gate both driven, none unused, route_map {release: [release]}, no default_mismatch, no port gaps, bypass reaches the primary. Full-suite check is blocked by PRE-EXISTING failures from sibling modules (f_tf_glyph undriven width/height; also f_vf_advect, f_masonry) — not this module's. BYPASS_EXPECT line still pending parent (REGISTRATION_NOTES.md, bench_modules.py section).]
 - [ ] T024 Close and reopen in Max; load in a Vsynth session; confirm panel, params,

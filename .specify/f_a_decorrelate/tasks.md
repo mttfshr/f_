@@ -4,7 +4,7 @@ _Last updated: 2026-10-12_
 **Spec**: `.specify/f_a_decorrelate/spec.md`
 **Plan**: `.specify/f_a_decorrelate/plan.md`
 **Idea file**: `ideas/f_a_spectral_ripple.md` (scratch-test log T1–T8)
-**NumPy mirror**: `tests/spike_a_decorrelate_t7.py` (the measured evidence)
+**NumPy mirror**: `tests/records/spike_a_decorrelate_t7.py` (the measured evidence)
 
 > Created by the 2026-10-12 assessment pass (T001–T007) when the folder had
 > only spec.md + plan.md. T001 (stale-block refresh) and T004 (bin-artifact
@@ -67,7 +67,7 @@ structurally validated (no duplicate ids, no dangling cords).
   matrix on a real-world carrier (music, voice, room tone) through the
   null rig's pfft chain — record the carrier into a `buffer~` the mirror
   can ingest, or run the analysis on a recorded file
-  (`tests/spike_a_decorrelate_t7.py`'s `envelope_corr` is the metric).
+  (`tests/records/spike_a_decorrelate_t7.py`'s `envelope_corr` is the metric).
   Synthetic-carrier half already done: pfft AM 0.313 vs additive 0.320,
   fixed-SMR control cleanly separated at 0.594. _**Done 2026-10-12**,
   two real-world music carriers (12 s each, 44.1 kHz mono, decoded from
@@ -100,7 +100,7 @@ is next; T008 already done below.
   ripple across 1–2 kHz against 21.5 Hz bins — run the mirror's
   size-sweep at band 1 to check whether low bands need a different FFT
   size than 2048 (plan.md ADR-5's open tail). _**Done 2026-10-12**
-  (now a permanent section of `tests/spike_a_decorrelate_t7.py`):
+  (now a permanent section of `tests/records/spike_a_decorrelate_t7.py`):
   band 1 IMPROVES at 2048/4 — −22.7 dB, corr 0.997 (vs band 6's
   −15.6/0.986; 10 partials vs 59). Envelope-corr matches its additive
   reference (0.350 vs 0.363) and the fixed-SMR control separates even
@@ -111,7 +111,7 @@ is next; T008 already done below.
   to 4.5 cyc/oct as the idea file predicted._
 - [x] T009 Free-parameter sanity sweep: depth, tmr, smr_range swept in
   the mirror against matched additive references at each setting
-  (permanent `run_phase3()` section of `tests/spike_a_decorrelate_t7.py`).
+  (permanent `run_phase3()` section of `tests/records/spike_a_decorrelate_t7.py`).
   **Findings**: degradation is smooth and monotonic in every direction —
   depth 0.5→1.5 costs ~8 dB, smr_range 0→6 costs ~4 dB, all without
   discontinuities; **depth > 1 sends the bin gain negative** (1+d·M < 0
@@ -168,7 +168,7 @@ repeats the listen at packaging anyway.
   definition path replaces the hand-built patch; until then this ships
   the same way f_a_ripple does.
 - [x] T012 Drift story — **decided 2026-10-12, matching `f_a_ripple`'s
-  precedent**: added to `tests/drift_baseline.json` as `out_of_scope`
+  precedent**: added to `tests/build/drift_baseline.json` as `out_of_scope`
   with the reason ("pfft~ audio processor, external subpatch loaded by
   name, no jit.gl.pix; schema has no audio archetype — revisit if one is
   added"). `test_drift.py` passes. When the archetype lands, this entry
@@ -194,7 +194,7 @@ workstream is the *shared* remaining item, not this module's alone.
   checks extended for the new dependency-file class: `NOT_MODULES`
   (pfft~ inner subpatch — loaded by name, not a module) in
   `generate_launch.py` + the matching exemption in `generate_menu.py`
-  and `tests/test_launch.py`. `tests/run.sh` offline suite green
+  and `tests/build/test_launch.py`. `tests/run.sh` offline suite green
   (launch 8/8, benchdeps 21/21, build_conventions 40/40). **Helpfile
   deliberately not written**: the `f-helpfile` format is
   Vsynth-texture-oriented (`vs_sources_main`/`vs_preview`); an audio-

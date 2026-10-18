@@ -23,10 +23,10 @@ Source of truth: `src/f_vf_split/definition.py` (read only, never modified).
 ## How the trial was run
 
 `exportcode` is a message to a live `jit.gl.pix` in a running Max — the repo's
-UDP bench (`tests/benchclient.py`) can't send arbitrary messages, so a
+UDP bench (`tests/lib/benchclient.py`) can't send arbitrary messages, so a
 self-driving throwaway patcher was built in the scratch dir
 (`build_js_trial.py` → `split_export_js.maxpat` + `export_trial.js`):
-loadbang → js builds `jit.gl.pix` (genjit via `tests/genjit.py`, same wrapper
+loadbang → js builds `jit.gl.pix` (genjit via `tests/lib/genjit.py`, same wrapper
 the bench uses) → sends `exportcode webgl`, waits 2 s, sends `exportcode isf`,
 waits 2 s, closes its own window (Max's live session is the user's; never
 quit). Status appended to `_status.json` per phase.
@@ -126,7 +126,7 @@ the `.fs` is the ISF-format artifact.
 
 - `build_export_trial.py`, `build_js_trial.py` — trial builders (throwaway)
 - `export_trial.js`, `split_export_js.maxpat` — the working driver
-- `split_export.genjit` — f_vf_split codebox wrapped via tests/genjit.py
+- `split_export.genjit` — f_vf_split codebox wrapped via tests/lib/genjit.py
 - `_exports/split_export.genjit.html` + `.fs` — the exported artifacts
 - `_status.json` — verbatim phase log quoted above
 - First-attempt `split_export.maxpat` (JSON-loader casualties) kept for the

@@ -167,7 +167,7 @@ the flow can fold it into filaments.** If it does, the whole thing reads as a
 blur rather than as mixing, and the fix is an anti-diffusion term that is
 fiddly and can go unstable.
 
-**Test it in the NumPy mirror before any module exists.** `tests/fluid_mirror.py`
+**Test it in the NumPy mirror before any module exists.** `tests/modules/fluid/fluid_mirror.py`
 already has the velocity solver; adding a φ advection step to it is small. Stir
 a sharp boundary for a few hundred frames and see whether it survives or turns
 to mush. That answer gates the build.

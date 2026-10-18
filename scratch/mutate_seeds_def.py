@@ -19,7 +19,7 @@ def run():
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PATH="/opt/homebrew/bin:" + os.environ["PATH"])
     for p in REPO.rglob("__pycache__"):
         if ".git" not in p.parts: subprocess.run(["rm", "-rf", str(p)])
-    for t in ("tests/test_build_seeds_keys.py", "tests/test_drift.py"):
+    for t in ("tests/build/test_build_seeds_keys.py", "tests/build/test_drift.py"):
         r = subprocess.run(["uv","run","--no-project","--with","numpy","python3",t],cwd=REPO,env=env,capture_output=True,text=True)
         if r.returncode: return r.returncode
     return 0

@@ -2,7 +2,7 @@
 float32_mirror.py -- is the GPU/NumPy gap of the multi-start gather float32 arithmetic?
 
 The earlier mirror (multi_guess_gather2.py) did its arithmetic in float64 and only read the texture in float32. The
-project's rule is a pass-for-pass FLOAT32 mirror, so this redoes the exact program tests/gather_proto.make_code_fn
+project's rule is a pass-for-pass FLOAT32 mirror, so this redoes the exact program tests/records/gather_proto.make_code_fn
 generates with every intermediate rounded to float32 (dtype switch: float64 = the old behaviour, as a sanity check).
 Same config as the GPU test: G=6, M=4, T=6, S=2, field texture 256^2 = output 256^2, central 96x96 crop.
 
@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent / "tests"))
+sys.path[:0] = [str(HERE.parent / "tests" / d) for d in ("lib", "records")]
 sys.path.insert(0, str(HERE))
 import caustic_fidelity as cf       # noqa: E402
 import gather_proto as gp           # noqa: E402

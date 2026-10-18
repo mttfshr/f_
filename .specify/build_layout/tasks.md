@@ -2,7 +2,7 @@
 
 **Spec**: `.specify/build_layout/spec.md`
 **Build order**: Sequential. Complete each phase before the next.
-**Commits**: Matt commits manually, after each verified phase. Suggested split: (1) `build/layout.py` + `tests/test_layout.py`, (2) `build/build_patcher.py` wiring + docs, (3) the six regenerated patchers (`git diff --stat` reviewed; only `patching_rect` + inert label `varname`s changed).
+**Commits**: Matt commits manually, after each verified phase. Suggested split: (1) `build/layout.py` + `tests/build/test_layout.py`, (2) `build/build_patcher.py` wiring + docs, (3) the six regenerated patchers (`git diff --stat` reviewed; only `patching_rect` + inert label `varname`s changed).
 
 **Status 2026-09-24:** Phases 0–2 done, Phase 3 done for the ten modules that can be regenerated safely (six + four group-A) (T014 = Matt's eyes in Max, pending), Phase 4 done except T017/T018 decisions.
 
@@ -31,8 +31,8 @@
 
 ## Phase 1: Offline — no Max
 
-- [x] T005 `layout.audit()` (overlaps, shared origins, upward wires) lives in `build/layout.py`; invariants asserted in `tests/test_layout.py`. `scratch/edit_layout_audit.py` (deleted 2026-10-06; in git history, `git log --diff-filter=D -- scratch/edit_layout_audit.py`) remains as the standalone reporter for shipped files.
-- [x] T006 `tests/test_layout.py` — 9/9. Synthetic cases with mutation checks (overlap, shared origin, upward wire, `presentation_rect` change, line/order change all detected) plus whole-corpus tests. Also mutation-checked against the real corpus: `PITCH=20` → 864 overlaps caught; `Y_PRE` above the control → upward wires caught.
+- [x] T005 `layout.audit()` (overlaps, shared origins, upward wires) lives in `build/layout.py`; invariants asserted in `tests/build/test_layout.py`. `scratch/edit_layout_audit.py` (deleted 2026-10-06; in git history, `git log --diff-filter=D -- scratch/edit_layout_audit.py`) remains as the standalone reporter for shipped files.
+- [x] T006 `tests/build/test_layout.py` — 9/9. Synthetic cases with mutation checks (overlap, shared origin, upward wire, `presentation_rect` change, line/order change all detected) plus whole-corpus tests. Also mutation-checked against the real corpus: `PITCH=20` → 864 overlaps caught; `Y_PRE` above the control → upward wires caught.
 - [x] T007 `build/layout.py` written (constants block, zone placement, param-lane columns, route width = n×pitch, panel moved to the service area, overflow block).
 - [x] T008 Baseline (overlapping pairs, shipped patchers before): `f_droste` 13, `f_vf_fluid` 33, `f_stipple` 38, `f_vf_glow` 39, `f_vf_prism` 62, `f_masonry` 150. After: 0 for every definition that builds through `build_patcher.py` (30 checked; `f_lens`'s raw-box-only findings are reported, not asserted).
 

@@ -69,7 +69,7 @@ csA = csA / max(magA, 0.0001);
 snA = snA / max(magA, 0.0001);
 
 // Mechanism B (Fix B): true angular blend. Field angle via atan2 (verified GPU-safe
-// on decoded sampled-texture input, tests/spike_atan2_safety.py), same (cs,sn)-space
+// on decoded sampled-texture input, tests/records/spike_atan2_safety.py), same (cs,sn)-space
 // sign convention as mechanism A's addition direction. Weighted by field_amount
 // (depth) and field magnitude (confidence) so near-zero field falls back to base.
 field_mag = sqrt(vx * vx + vy * vy);
