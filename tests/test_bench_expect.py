@@ -50,7 +50,7 @@ def problems_in_table(table):
                 out.append(f"{where}: the module has {n_out} outlets")
                 continue
             kind = spec[0] if isinstance(spec, tuple) and spec else None
-            if kind == "in" and len(spec) == 2:
+            if kind in ("in", "in_a1") and len(spec) == 2:      # in_a1: passthrough of inlet N with alpha forced to 1
                 inlet, tol = spec[1], 0.0
             elif kind == "vec" and len(spec) == 3:
                 inlet, tol = spec[1], spec[2]

@@ -1,5 +1,26 @@
 # HANDOFF
 
+## 2026-10-17 (late): offline suite back to green; repo cleanup
+
+- **Full offline suite ran once** (`tests/run.sh -q`, 30 files): 27 passed, 3 failed, all from earlier work, now fixed.
+  Re-run of just those three: `test_bench_expect` 10/10, `test_drift` 16/16, `test_build_multistage` 11/11. The full
+  suite was NOT re-run after the fixes.
+  - `f_vf_advect` code drift: the shipped patcher lacked the 6-line header comment its source codebox has (the 10-15
+    default-literals note). It was never the `#0_` name: the definition already carries it, so the older "pre-existing"
+    notes below are stale. Fixed by replacing that one embedded codebox string as text. Regenerating instead gives a
+    ~2000-line whitespace diff (the Max-saved file is not byte-reproducible by the builder's JSON writer), so the
+    one-line edit is deliberate.
+  - `test_bench_expect`: the validator now accepts `("in_a1", N)` (the form `bench_modules.py` already used for
+    `f_tf_glyph`), and `f_tf_hatch` has a BYPASS_EXPECT row for out2 (its codebox sets `out2 = out1`, so the same neutral).
+    The out2 row is derived from the codebox and NOT yet confirmed by a live `bench_modules` run.
+  - `generate_menu --check` is clean at HEAD (the old note about vorticity / modules / audio patchers is stale; the
+    "checks failed" text in the suite log is `test_generate_menu`'s deliberate bad-input cases).
+- **Cleanup (`2f6e6d1`):** `tests/jobs/` cleared (1.0 GB, regenerable), stray bench files and two `dist/` zips deleted,
+  `JOBS_KEEP` 50 -> 8. A module-bench run makes many jobs, so a failure early in a run is pruned by the end: raise it
+  temporarily to debug.
+- Still uncommitted and not part of any of this: `package/examples/f_demo_sampleplatter.maxpat`,
+  `scratch/tensor-scratch.maxpat`.
+
 ## 2026-10-17 (night, later): f_caustic `edge` mode — committed in `656eaeb`
 
 - **Built:** `f_caustic` has an `Edge` menu: Off (default, unchanged) / Wrap / Mirror / Clamp. Remap of the landing position

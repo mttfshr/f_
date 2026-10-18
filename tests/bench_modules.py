@@ -71,7 +71,8 @@ BYPASS_EXPECT = {
     "f_tf_smooth": {1: IN1},                            # bypass = exact passthrough of the inlet tensor (ADR-4), not a freeze
     "f_tf_glyph": {1: ("in_a1", 2)},                    # bypass_gate = source passthrough of inlet 2; outlet alpha is the contractual A=1 (mix has no alpha arm)
     "f_tf_aniso_blur": {1: ("in", 2)},                  # bypass = passthrough of the module's in2 — rgb AND alpha (the bypass mix has an alpha arm; the harness neutral's alpha 0.502 passes through exactly)
-    "f_tf_hatch": {1: ("const", (0.0, 0.0, 0.0, 1.0), 1e-6)},
+    "f_tf_hatch": {1: ("const", (0.0, 0.0, 0.0, 1.0), 1e-6),
+                   2: ("const", (0.0, 0.0, 0.0, 1.0), 1e-6)},   # out2 (mark mask) = out1 in codebox_stage_e3.gen, so the same neutral
                                                         # bypass = the module neutral (black, A=1 per family convention; spec: Outputs the module neutral)
     "f_vf_advect": {2: IN1, 3: ("vec", 2, 1e-5)},      # out3: the vecfield input (neutral 0.5 if unconnected)
     "f_masonry": {2: IN1},                              # out2 is the brick mask
