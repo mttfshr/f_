@@ -1,0 +1,75 @@
+// Stage E1 (f_tf_hatch): eigen decode + commit + guard. in1 = the TENSOR
+// (f_tf_tensormap outlet 0, raw float32; f_tensor_type.md encoding).
+// Mirrors tests/test_tf_hatch.py stage_e1. Intermediate texture, NEVER an
+// outlet; unbounded float32 (plan ADR-4 -- no clamp, no 0.5-offset here).
+//
+// out1 = (ca, sa, commit, iso):
+//   (ca, sa)     cos/sin of the commit-frame axis:
+//                axis = theta + pi/2 + angle_offset*pi/2
+//   commit       the commit curve (smoothstep in the normalized eigengap;
+//                PROVISIONAL knees C_LO/C_HI -- OQ3 open, tier-3 confirms)
+//   iso          1 = direction-undefined/zero tensor (eps_trace guard,
+//                tensormap ADR-6/T019 value cited): axis UNSET (ca=sa=0),
+//                commit 0 -- never an atan2 artifact (plan ADR-5)
+//
+// DECODE IDIOM: copied VERBATIM from .specify/f_tf_glyph/plan.md ADR-2
+// (the canonical block; do not re-derive):
+//   in: t = sample(tensor_tex, clamp(cell_uv_to_texel))  // tensormap ADR-5 clamp
+//   encoding: f_tensor_type.md outlet 0 - R>=0 G:0.5=zero B>=0 A=1 (all x strength)
+//   Jxx = t.r / strength; Jxy = (t.g - 0.5)*2.0/strength; Jyy = t.b/strength;
+//   trace = Jxx + Jyy; diff = Jxx - Jyy; root = sqrt(diff*diff + 4.0*Jxy*Jxy);
+//   lambda1 = 0.5*(trace + root); lambda2 = 0.5*(trace - root);
+//   theta = 0.5*atan2(2.0*Jxy, diff);      // GRADIENT axis; along = theta + pi/2
+//   ... 0.5*atan2 confines theta to (-pi/2, pi/2]; safe ONLY for consumers
+//   symmetric to theta+180 deg (hatch IS: an unoriented line pattern).
+// Coherence normalization is TENSormap's (its plan ADR-2, not glyph's):
+//   coherence = (lambda1-lambda2)/(lambda1+lambda2) -- gain-free.
+// Sample coordinate: the read is AT norm (texel centred, always in-bounds);
+// the clamp is kept for the in-shader rule (tensormap T012 finding).
+//
+// NOTE: this stage reads strength and angle_offset; commit knees C_LO/C_HI
+// are constants here (OQ3 provisional) -- coherence_gate rides C_LO.
+
+Param strength(100.0);
+Param angle_offset(0.0);
+Param coherence_gate(0.25);
+
+eps_trace = 0.000001;
+C_HI = 1.0;    // commit saturates at coherence 1 (C_LO is coherence_gate, a live Param above)
+
+uv = vec(clamp(norm.x, 0.0, 1.0), clamp(norm.y, 0.0, 1.0));
+t = sample(in1, uv);
+
+// --- decode (glyph ADR-2 verbatim) ---
+jxx = t.r / strength;
+jxy = (t.g - 0.5) * 2.0 / strength;
+jyy = t.b / strength;
+trace = jxx + jyy;
+diff = jxx - jyy;
+root = sqrt(diff*diff + 4.0*jxy*jxy);
+theta = 0.5 * atan2(2.0*jxy, diff);   // gradient axis (across the edge)
+
+iso = 1.0 - step(eps_trace, trace);   // 1 = zero/undefined tensor
+// the -1-Jxy artifact of an all-zeros read (f_tensor_type.md rule 5) also
+// has trace 0: the SAME guard catches it (root 2/strength, phantom axis --
+// never written: ca/sa stay (0, 0) below).
+
+// coherence, gain-free (tensormap plan ADR-2):
+coh = clamp(root / max(trace, eps_trace), 0.0, 1.0);
+
+// commit curve (PROVISIONAL smoothstep in the normalized eigengap, OQ3):
+// coherence_gate is the performer's commit floor: coherence at/below it
+// renders nothing (spec: the gate rides the knee, not a separate AND-mask,
+// so crossing the floor is continuous -- the no-seam guarantee).
+x = (coh - max(coherence_gate, 0.0)) / max(C_HI - max(coherence_gate, 0.0), 0.000001);
+x = clamp(x, 0.0, 1.0);
+commit = x*x*(3.0 - 2.0*x) * (1.0 - iso);
+
+// commit-frame axis: along-structure + the performer rotation. The axis is
+// an UNORIENTED line (theta+180 is the same line): the offset wraps cleanly
+// (mod pi), the acceptance criterion's no-seam property.
+eff = theta + halfpi + angle_offset * halfpi * 2.0 * 0.5;  // = +offset*pi/2
+ca = cos(eff) * (1.0 - iso);
+sa = sin(eff) * (1.0 - iso);
+
+out1 = vec(ca, sa, commit, iso);

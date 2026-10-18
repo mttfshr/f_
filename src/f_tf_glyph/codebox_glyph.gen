@@ -1,0 +1,187 @@
+// f_tf_glyph -- single-stage glyph renderer, tensor family consumer #1.
+// Mirrors tests/test_tf_glyph.py glyph(). One pass: ADR-4 cell lookup ->
+// ADR-2 decode (plan ADR-2 is the family's canonical decode idiom; sharpen,
+// aniso_blur and hatch copy THIS block verbatim with a citation comment) ->
+// ADR-6 gate -> closed-form ellipse ring draw, ADR-5 aspect/radius.
+// pix_type float32 required. tint: ADR-7 provisional (TG019 pending).
+//
+// in1 = f_tf_tensormap OUTLET 0 only (f_tensor_type.md contract):
+//   R = Jxx*strength (>=0), G = Jxy*strength*0.5 + 0.5 (0.5 = zero), B = Jyy*strength (>=0), A = 1.
+//   Feeding outlet 1 (angle-doubled packed) decodes a visibly wrong double-spread
+//   glyph field -- a wiring error, documented, not a runtime sniff (plan ADR-3).
+// in2 = source texture, tint only; unconnected reads (0,0,0,1) (bench-verified
+//   2026-10-07) -> tap luma 0 -> ink stays the neutral white. Geometry never
+//   reads in2 (plan ADR-7).
+//
+// Gain-free: aspect and axis use ratios of R, G-0.5, B (common strength factor
+// cancels); the glyph RADIUS comes from `scale`, never from absolute lambdas
+// (ADR-5): sweeping tensormap's strength changes NOTHING here.
+// All-zeros unconnected tensor decodes to Jxy*strength = -1 -> phantom lambda1,
+//   lambda2 = -1 -- incidentally safe here because the TRACE is still exactly 0
+//   and the eps_trace floor keeps the gate closed (TG007; energy-gated consumers
+//   need an SPD guard instead -- see f_tensor_type.md consumer rule 5).
+// CAVEAT (plan ADR-2, required by the idiom): 0.5*atan2 confines theta to
+//   (-pi/2, pi/2]; an unoriented line at theta and theta+180deg renders
+//   identically here, so the caveat is inert -- but any sign-sensitive consumer
+//   copying this block must route through f_tf_axisflow instead.
+// Cell sampling is clamped to texel centres (tensormap ADR-5: the bench GPU
+//   WRAPS out-of-range reads).
+// ADR-8: ellipse-only v1. Cross/tick are scratch-only one-constant swaps
+//   (tier, gate PROVISIONAL-OPEN, TG016); no debug-tint modes (gate open,
+//   TG018) -- the v1 resolution is recorded, both stay scratch variants.
+// bypass_gate (module bypass, bypass_mode "param"; NOT the native @bypass):
+//   passthrough of the source at the current pixel.
+// GATE PROVISIONAL-OPEN (bench decides, TG020): the six defaults below
+//   (grid 24, scale 0.8, thickness 0.15, softness 0.1, gate 0.05,
+//   max_aspect 8) are the spec's provisional values. Resolving experiment:
+//   bench cost model vs the tensormap floor (~0.9 ms/pass, 1080p, R_MAX 16)
+//   -- expected trivially cheap (two taps, closed form) -- then tier-3 live
+//   judgement; the dial ranges stay per spec spec.md Parameters.
+Param grid(24.0);          // cells across (2-256)
+Param glyph_scale(0.8);    // glyph radius relative to the cell (0-2)
+Param thickness(0.15);     // stroke fraction of radius (0-1)
+Param softness(0.1);       // edge falloff (0-1)
+Param gate(0.05);          // delivered-trace draw threshold (0-1)
+Param max_aspect(8.0);     // aspect clamp (1-32)
+Param width(640.0);        // render size; `dim` reads 1 live (tensormap ADR-5
+Param height(480.0);       //   finding, texel Params precedent)
+Param bypass_gate(0.0);
+
+eps_trace = 0.000001;      // tensormap ADR-6 convention (eps_trace, T019 there)
+
+// --- bypass: passthrough (glyph = passthrough per the family contract) ------
+src_here_r = sample(in2, norm).r;
+src_here_g = sample(in2, norm).g;
+src_here_b = sample(in2, norm).b;
+bp_r = clamp(src_here_r, 0.0, 1.0);
+bp_g = clamp(src_here_g, 0.0, 1.0);
+bp_b = clamp(src_here_b, 0.0, 1.0);
+
+// --- ADR-4: uniform lattice cell centre, clamped to texel centres -----------
+gx_idx = floor(norm.x * grid);
+gy_idx = floor(norm.y * grid);
+cu = (gx_idx + 0.5) / grid;
+cv = (gy_idx + 0.5) / grid;
+tu = clamp(cu, 0.5 / width, 1.0 - 0.5 / width);
+tv = clamp(cv, 0.5 / height, 1.0 - 0.5 / height);
+
+// --- ADR-2: canonical decode idiom (copied verbatim; plan ADR-2 owns it) ----
+// CELL-SAMPLE READ (2026-10-17, live finding): the tensor read's coordinate is
+// DATA-DEPENDENT and JUMPS more than a texel per pixel at the cell boundaries
+// (tu teleports by 1/grid every cell step, crossing >1 texel whenever
+// texel-per-cell < 1 texel/pixel), so hardware sample() falls back to its
+// NEAREST minification filter here (skills/jit-gen-codebox: "sample() is NOT
+// bilinear when its coordinate is data-dependent and jumps between
+// neighbouring pixels"). Fix per that doc: interpolate by hand from four
+// exact nearest() taps. Size 1:1 (tex = pix dim here), so this is exact.
+// (The family-canonical ADR-2 TEXT above stays as-is for the IDIOM — the
+// canonical block's `sample(tensor_tex, clamp(cell_uv_to_texel))` line gains
+// this four-tap note at the next idiom review; per-consumer decode math is
+// unchanged.)
+tx = tu * width - 0.5;
+ty = tv * height - 0.5;
+ix = floor(tx);
+iy = floor(ty);
+ax = tx - ix;
+ay = ty - iy;
+// nearest() takes NORMALIZED coords (like sample): tap at each neighbour's
+// texel centre. (2026-10-17 correction: the first draft passed raw texel
+// indices + 0.5, which the sampler reads as uv ~72 — clamped to the last
+// texel, so every interior tap read the frame border.)
+ux0 = clamp(ix, 0.0, width - 1.0);
+uy0 = clamp(iy, 0.0, height - 1.0);
+ux1 = clamp(ix + 1.0, 0.0, width - 1.0);
+uy1 = clamp(iy + 1.0, 0.0, height - 1.0);
+t00 = nearest(in1, vec((ux0 + 0.5) / width, (uy0 + 0.5) / height));
+t10 = nearest(in1, vec((ux1 + 0.5) / width, (uy0 + 0.5) / height));
+t01 = nearest(in1, vec((ux0 + 0.5) / width, (uy1 + 0.5) / height));
+t11 = nearest(in1, vec((ux1 + 0.5) / width, (uy1 + 0.5) / height));
+t_r = t00.r * (1.0 - ax) * (1.0 - ay) + t10.r * ax * (1.0 - ay)
+    + t01.r * (1.0 - ax) * ay + t11.r * ax * ay;
+t_g = t00.g * (1.0 - ax) * (1.0 - ay) + t10.g * ax * (1.0 - ay)
+    + t01.g * (1.0 - ax) * ay + t11.g * ax * ay;
+t_b = t00.b * (1.0 - ax) * (1.0 - ay) + t10.b * ax * (1.0 - ay)
+    + t01.b * (1.0 - ax) * ay + t11.b * ax * ay;
+jxy2_s = (t_g - 0.5) * 4.0;                // 2*Jxy*strength (gain-free below)
+diff_s = t_r - t_b;                        // (Jxx - Jyy)*strength
+root_s = sqrt(max(diff_s*diff_s + jxy2_s*jxy2_s, 0.0));
+trace_s = t_r + t_b;                       // trace * strength (gate units)
+// atan2 NaN guard (live finding 2026-10-17): RUNTIME atan2(0,0) on this AMD
+// GPU returns NaN (compile-time literals fold to 0; runtime (0,0) does NOT —
+// probe: bisect read theta=NaN at jxy2_s=0, diff_s=0, every dim). A mix()-
+// based guard CANNOT clear it (NaN*0 = NaN arithmetic), and GenExpr has no
+// isnan(). Fix at the source: a tiny positive bias on the denominator arg
+// means (0,0) never reaches atan2. Where |diff_s| >> 1e-7 the bias is
+// invisible; where |diff_s| ~ 0 the tensor is near-isotropic (aspect ~ 1),
+// the ring is rotation-invariant, and the swung angle renders identically.
+// (Tensormap's flat-pixel mix() neutral passes its bench the same way this
+// would NOT have caught it: its live content had no exact-degenerate pixels —
+// this codebox gets constants in the probe path, so the fix goes here.)
+theta = 0.5 * atan2(jxy2_s, diff_s + 1e-7);  // GRADIENT axis; along = theta + pi/2
+// Gain-free identities (strength is a common factor on R, G-0.5, B):
+//   tan(2*theta) = 2*(t_g-0.5)/(t_r - t_b);   aspect = (trace+root)/(trace-root)
+// CAVEAT: 0.5*atan2 confines theta to (-pi/2, pi/2]; a near-vertical axis
+// decodes sign-flipped. Safe ONLY for consumers symmetric to theta+180deg
+// (glyphs, blur, hatch, sharpen, coherence). Sign-sensitive consumers must
+// route through f_tf_axisflow (f_tensor_type.md consumer rule 2).
+
+// --- ADR-5: aspect from the ratio (gain-free), radius from scale ------------
+lam2_s = max(trace_s - root_s, eps_trace);
+ratio = max((trace_s + root_s) / lam2_s, 1.0);
+aspect = clamp(sqrt(ratio), 1.0, max_aspect);
+// GATE PROVISIONAL-OPEN (spec OQ3, tier-3 confirms): gain-free radius.
+// Fallback design if tier 3 says size-meaning matters: radius from lam1 with
+// an explicit strength echo param -- recorded in plan ADR-5, not built.
+
+// --- ADR-6: gate (draw threshold in delivered units, eps floor) -------------
+visible = step(max(gate, eps_trace), trace_s);
+
+// --- draw: closed-form ellipse ring in the rotated local frame (no loops) ---
+along_ang = theta + halfpi;
+ca = cos(along_ang);
+sa = sin(along_ang);
+dxp = norm.x - cu;
+dyp = norm.y - cv;
+along = dxp * ca + dyp * sa;
+across = -dxp * sa + dyp * ca;
+cellsize = 1.0 / grid;
+rmaj = glyph_scale * cellsize * 0.5;       // semi-major axis
+bmin = rmaj / max(aspect, 0.000001);       // semi-minor
+dd = sqrt(max((along / rmaj) * (along / rmaj) + (across / bmin) * (across / bmin), 0.0));
+d = (dd - 1.0) * bmin;                     // approx SDF of the ring
+hw = thickness * rmaj * 0.5;
+soft = max(softness * rmaj, 0.000001);
+cover = 1.0 - smoothstep(hw, hw + soft, abs(d));
+
+// --- tint: ADR-7 provisional, source luma modulates a white ink -------------
+// tint at the cell centre: same data-dependent-jump situation as the tensor
+// read above — same four-tap nearest() fix (normalized tap coords).
+u0x = clamp(ix, 0.0, width - 1.0);
+u0y = clamp(iy, 0.0, height - 1.0);
+u1x = clamp(ix + 1.0, 0.0, width - 1.0);
+u1y = clamp(iy + 1.0, 0.0, height - 1.0);
+s00 = nearest(in2, vec((u0x + 0.5) / width, (u0y + 0.5) / height));
+s10 = nearest(in2, vec((u1x + 0.5) / width, (u0y + 0.5) / height));
+s01 = nearest(in2, vec((u0x + 0.5) / width, (u1y + 0.5) / height));
+s11 = nearest(in2, vec((u1x + 0.5) / width, (u1y + 0.5) / height));
+src_l_r = s00.r * (1.0 - ax) * (1.0 - ay) + s10.r * ax * (1.0 - ay)
+        + s01.r * (1.0 - ax) * ay + s11.r * ax * ay;
+src_l_g = s00.g * (1.0 - ax) * (1.0 - ay) + s10.g * ax * (1.0 - ay)
+        + s01.g * (1.0 - ax) * ay + s11.g * ax * ay;
+src_l_b = s00.b * (1.0 - ax) * (1.0 - ay) + s10.b * ax * (1.0 - ay)
+        + s01.b * (1.0 - ax) * ay + s11.b * ax * ay;
+src_luma = src_l_r * 0.299 + src_l_g * 0.587 + src_l_b * 0.114;
+ink_r = 1.0 + (src_l_r - 1.0) * src_luma;
+ink_g = 1.0 + (src_l_g - 1.0) * src_luma;
+ink_b = 1.0 + (src_l_b - 1.0) * src_luma;
+
+cv_mask = cover * visible;
+out_r = ink_r * cv_mask;
+out_g = ink_g * cv_mask;
+out_b = ink_b * cv_mask;
+
+// final stage: clamp/encode here only (family hard rule; no upstream stages)
+out1 = vec(mix(clamp(out_r, 0.0, 1.0), bp_r, bypass_gate),
+           mix(clamp(out_g, 0.0, 1.0), bp_g, bypass_gate),
+           mix(clamp(out_b, 0.0, 1.0), bp_b, bypass_gate),
+           1.0);

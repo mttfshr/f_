@@ -1,0 +1,89 @@
+// Stage E3 (f_tf_hatch): mark render + compose + encode (the ONLY stage
+// that clamps/encodes -- hard rule, plan ADR-4). in1 = stage E2's aux2.
+// Mirrors tests/test_tf_hatch.py stage_e3.
+//
+// The f_weave algorithm (docs/f-reference/f_weave.md; its definition.py is
+// the shipped form) adapted to the per-pixel axis and the commit-driven
+// aspect. Cited verbatim where reused:
+//   density log map    density_scale = pow(2, density*5 - 1)
+//   line hash          line_hash = fract(sin(line_idx*127.1)*43758.5453)
+//                                  * (1 - regularity)
+//   edge form          outer = weight*(1 + softness); edge =
+//                      smoothstep(outer, 0.0, dist)   [softness EXPANDS the
+//                      outer edge multiplicatively; inner edge at 0; no
+//                      zero-denominator case at softness 0]
+//   softness clamp     softness <= 0.49 (weave's ceiling)
+//
+// Aspect -- plan ADR-9 (pitch units, capped at dash saturation):
+//   aspect  = 1 + elongation*commit           [commit 0 -> dot, commit 1 ->
+//                                              elongation+1 until saturation]
+//   aw      = weight / sqrt(aspect)           [across half-width, u units]
+//   al      = min(weight*density_scale*sqrt(aspect), 0.5)
+//                                             [along half-length, pos units;
+//                                              the 0.5 cap = dashes merge;
+//                                              aspect_max = (0.5/(w*ds))^2]
+//
+// Commit-weighted intensity: commit 0 -> NO marks (not full-brightness
+// dots) -- the no-seam-at-the-gate requirement (spike finding; the dot
+// character lives above the gate via the aspect squeeze, OQ3's
+// 'dots persist vs blank' resolved as fade-in, tier-3 confirms).
+//
+// out1 = module OUTLET 0: hatch output (luma marks on black, A=1); color is
+// downstream's job (weave convention). out2 = module OUTLET 1: mark mask
+// (same luma, no encode mix -- the discrete-family convention).
+// Bypass (bypass_mode "param"): black on both outlets (plan ADR-5; bypass
+// lives here, the last stage, like tensormap's).
+//
+// Tone (OQ2): OUT of v1 -- no tone inlet, no density-band layering (plan
+// ADR-6's T002 record); the v2 pointer is inlet-1-luma.
+
+Param density(0.5);
+Param weight(0.1);
+Param softness(0.05);
+Param elongation(3.0);
+Param phase(0.0);
+Param regularity(0.5);
+Param bypass_gate(0.0);
+
+soft = min(softness, 0.49);
+
+u = nearest(in1, norm).x;
+v = nearest(in1, norm).y;
+commit = nearest(in1, norm).z;
+iso = nearest(in1, norm).w;
+
+density_scale = pow(2.0, density * 5.0 - 1.0);
+
+aspect = 1.0 + elongation * commit;
+sqrt_aspect = sqrt(max(aspect, 1.0));
+aw = weight / sqrt_aspect;
+al = min(weight * density_scale * sqrt_aspect, 0.5);
+
+// across-line distance field (in the local frame)
+dist_to_line = abs(fract(u * density_scale) - 0.5);
+
+// per-line phase offset (weave's hash, cited; iso pixels never render)
+line_idx = floor(u * density_scale);
+line_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));
+pos = v * density_scale + phase + line_hash;
+dist_to_mark = abs(fract(pos) - 0.5);
+
+// edge falloff (cited: outer expands, inner at 0)
+outer_across = aw * (1.0 + soft);
+outer_along  = al * (1.0 + soft);
+edge_across = smoothstep(outer_across, 0.0, dist_to_line);
+edge_along  = smoothstep(outer_along,  0.0, dist_to_mark);
+
+// the mark: weave's product, commit-weighted intensity, iso-gated
+mark = edge_across * edge_along * (1.0 - iso) * commit;
+
+// compose + encode: luma marks on black (color downstream's job), the only
+// clamp in the module; bypass -> black on both outlets
+// out1 = module OUTLET 0: hatch output (luma marks on black, A=1); color is
+// the tint; the bypass = the module neutral (black) with the outlet contract's
+// alpha 1 preserved (2026-10-17: the first draft multiplied the whole vec by
+// (1-bypass), dropping alpha to 0 under bypass — against f_tensor_type.md's
+// outlets-are-A=1 rule and the BYPASS_EXPECT row).
+out1 = vec(mix(mark, 0.0, bypass_gate), mix(mark, 0.0, bypass_gate),
+           mix(mark, 0.0, bypass_gate), 1.0);
+out2 = out1;

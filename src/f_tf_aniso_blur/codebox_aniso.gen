@@ -1,0 +1,236 @@
+// f_tf_aniso_blur -- single-stage coherence-enhancing smoother, tensor
+// family consumer #2. One pass: ADR-2 decode (glyph plan ADR-2 is the
+// family's canonical decode idiom; this module copies it with the citation
+// below and consumes the AXIS, not the angle) -> ADR-3 gates -> family (a)
+// kernel (fixed-tap straight-axis line integration with per-tap transverse
+// offset) -> weighted accumulation -> normalization. Mirrors
+// tests/test_tf_aniso_blur.py aniso_pass.
+// pix_type float32 required (stage output unbounded -- this is a smoother,
+// not a coder; the family hard rule).
+//
+// Kernel shape (plan ADR-2, family (a), RESOLVED PROVISIONAL 2026-10-17 by
+// the owner: the bench cost experiment cannot run in this build):
+//   GATE PROVISIONAL-OPEN -- kernel family (a) fixed-tap straight-axis line
+//   integration with per-tap transverse offset (the cf.directional audit
+//   shape, made tensor-driven), bounded loop, weights gated per tap
+//   (tensormap ADR-3); the deciding bench experiment: cost measurement
+//   (bc.measure, 1080p + 4K, M3 Max) of the shipped codebox vs the family
+//   (b) ellipse-grid variant at matched budget, then Matt's artifact call
+//   (family (a) shows cf.directional-style tap banding on smooth content;
+//   the NumPy artifact data recorded in tasks.md T010: family (a) mean abs
+//   0.0362 vs family (b) 0.0300 against the continuous area Gaussian at the
+//   default kernel). Curved-axis integration is OUT (plan ADR-4, straight
+//   axis in v1).
+//   Kernel geometry (T005): centre tap + 8 stations per side at
+//   u = +-(k-0.5) px, along weight exp(-2u^2/L^2), each station three
+//   transverse taps (t = 0, +-D/2 px) at the discrete-Gaussian rule
+//   (1/4, 1/2, 1/4). 49 samples max = TAPS_MAX; cost scales with TAPS_MAX,
+//   not the dial (tensormap ADR-3 fact).
+//
+// in1 = f_tf_tensormap OUTLET 0 only (f_tensor_type.md contract):
+//   R = Jxx*strength (>=0), G = Jxy*strength*0.5 + 0.5 (0.5 = zero),
+//   B = Jyy*strength (>=0), A = 1. Feeding outlet 1 (angle-doubled packed)
+//   or a vecfield is a wiring error: documented, not sniffed (glyph ADR-3).
+// in2 = source texture, the content to smooth; unconnected reads black ->
+//   output black (spec acceptance).
+// Unconnected TENSOR (vs_black, all zeros): decodes Jxy*strength = -1 ->
+//   trace 0 with lambda1 = 1/strength phantom energy and lambda2 negative
+//   (non-SPD). This is an ENERGY-GATED consumer (W on lambda1), so the SPD
+//   test is the primary defence, not trace alone (f_tensor_type.md consumer
+//   rule 5; found jointly with the glyph triad 2026-10-17). A non-SPD or
+//   black tensor pixel behaves exactly as an isotropic pixel: the gates
+//   bypass the energy gate and take L = length, D = L (plain isotropic blur
+//   of the length budget). NOT provisional.
+// Bypass: bypass_mode "param" (NOT the native @bypass): exact passthrough
+//   of inlet 1 (family contract: this module has no encoding to neutralize).
+// Sample coordinates are CLAMPED to texel centres in-shader on every tap
+//   (tensormap ADR-5: the bench GPU WRAPS out-of-range reads).
+// All sample components read inline -- never store-then-slice. All floats
+// unclamped between stages of the math; only the guard (a route, not a
+// range clamp) and the sample-coordinate clamp exist.
+Param strength_scale(0.5);   // energy -> length gate gain (0-2) PROVISIONAL
+Param length(4.0);           // kernel semi-length in px (0-8: TAPS_MAX=49
+                             //   = 1 + 2*8 stations * 3 transverse taps)
+                             //   PROVISIONAL
+Param width_gate(0.5);       // coherence-response gate (0-1) PROVISIONAL
+Param floor_pct(0.25);       // width floor fraction (0-1) PROVISIONAL
+                             //   (`floor` collides with the GenExpr floor()
+                             //   operator: renamed per the glyph_scale
+                             //   precedent, wire name floor_pct)
+Param strength(100.0);       // tensormap's strength dial, for the G-decode
+                             // (the G-channel trap: the raw G carries
+                             // Jxy*strength*0.5+0.5 -- the decode needs
+                             // the value tensormap was dialed to; spec OQ3
+                             // option (a): document the pairing, tier 3
+                             // calibrates the two together)
+Param width(640.0);          // render size; `dim` reads 1 live (tensormap
+Param height(480.0);         //   T012 finding, texel Params precedent);
+                             //   these set the one-pixel tap step
+Param bypass_gate(0.0);
+
+eps_trace = 0.000001;        // tensormap ADR-6 convention
+eps_spd = 0.0001;            // SPD slack (float32 noise floor)
+eps_root = 0.000001;         // axis-undefined floor (equal eigenvalues)
+taps = 8;                    // compile-time station count per side;
+                             // TAPS_MAX = 1 + 2*taps*3 = 49
+
+// --- bypass: exact passthrough of inlet 1 (family contract) --------------
+bp = sample(in2, clamp(norm, vec(0.5/width, 0.5/height),
+                       vec(1.0 - 0.5/width, 1.0 - 0.5/height)));
+
+// --- ADR-2 decode idiom (copied from .specify/f_tf_glyph/plan.md ADR-2,
+//     cite-not-rederive; delivered-units form as the built glyph codebox
+//     carries it) ----------------------------------------------------------
+t_r = nearest(in1, norm).r;                 // inline access only
+t_g = nearest(in1, norm).g;
+t_b = nearest(in1, norm).b;
+jxy_s = (t_g - 0.5) * 2.0 / strength;       // Jxy (signed; 0.5 = zero)
+jxx_s = t_r / strength;
+jyy_s = t_b / strength;
+trace = jxx_s + jyy_s;
+diff = jxx_s - jyy_s;
+root = sqrt(max(diff*diff + 4.0*jxy_s*jxy_s, 0.0));
+lambda1 = 0.5*(trace + root);
+lambda2 = 0.5*(trace - root);
+coh = clamp(root / max(trace, eps_trace), 0.0, 1.0);
+// CAVEAT (idiom ADR-2): no atan2 here at all. The doubled-angle vector is
+// (diff, 2*jxy_s)/root; the kernel needs the HALF-angle axis:
+//   cos(theta) = sqrt((1 + diff/root)/2)
+//   sin(theta) = sign(2*jxy_s) * sqrt((1 - diff/root)/2)
+// (the theta+180 caveat from the idiom is inert: the kernel is bilateral.)
+
+// --- ADR-3 gates + the SPD/trace guard (NOT provisional) ------------------
+// lambda2 < -eps_spd -> 1 (a < b forms kept step(edge, x) = x >= edge):
+spd_bad2 = 1.0 - step(-eps_spd, lambda2);
+guard = max(spd_bad2, 1.0 - step(eps_trace, trace));
+// axis-undefined pixels (root ~ 0, e.g. lambda1 == lambda2) take D = L too
+dir_undef = 1.0 - step(eps_root, root);
+
+w_en = min(1.0, lambda1 * strength_scale);           // energy -> length
+l_len = max(length * w_en, 0.0);                     // px semi-length
+l_f = mix(l_len, max(length, 0.0), max(guard, 0.0)); // guard bypasses W
+d_calc = max(l_f * max(floor_pct, 1.0 - width_gate * coh), 0.0);
+d_f = mix(max(d_calc, 0.0), l_f, max(max(guard, dir_undef), 0.0));
+
+// circularity snap: D >= L means the pixel is isotropic BY MEASUREMENT;
+// drop the axis (fixed frame) so the fallback equals the isotropic
+// reference EXACTLY (tests/test_tf_aniso_blur.py, circ convention).
+circ = step(0.999999, min(d_f / max(l_f, 1e-6), 1.0));
+
+inv_root = 1.0 / max(root, eps_root);
+axis_x = sqrt(max(1.0 + diff * inv_root, 0.0) * 0.5);
+// sign(2*jxy_s) with sign(0) -> + : GenExpr sign() at 0 returns 0, so:
+s_sign = 2.0*step(0.0, 2.0*jxy_s) - 1.0;
+axis_y = s_sign * sqrt(max(1.0 - diff * inv_root, 0.0) * 0.5);
+// along-edge axis: the perpendicular
+v_x = mix(-axis_y, 1.0, circ);
+v_y = mix(axis_x, 0.0, circ);
+a_x = mix(axis_x, 0.0, circ);
+a_y = mix(axis_y, 1.0, circ);
+
+inv_ll2 = 2.0 / max(l_f*l_f, 1e-12);        // 2/L^2, the along gaussian
+sig_d = max(0.5*d_f, 1e-6);                 // transverse sigma = D/2 px
+ux_lo = 0.5/width; ux_hi = 1.0 - 0.5/width;
+uy_lo = 0.5/height; uy_hi = 1.0 - 0.5/height;
+
+// --- kernel: bounded loop, compile-time taps, weight-gated (cost scales
+//     with TAPS_MAX, not the dial -- say so in the docs) ------------------
+acc_r = 0.0; acc_g = 0.0; acc_b = 0.0; acc_a = 0.0; wsum = 0.0;
+
+// centre tap (u = 0, t = 0, weight 1)
+cu_c = clamp(norm.x, ux_lo, ux_hi);
+cv_c = clamp(norm.y, uy_lo, uy_hi);
+// 2026-10-17 refactor (glyph's live finding, family rule 6b): c_m/s_m read
+// at CELL-COHERENT coordinates — constant within a cell, teleporting by
+// width/length texels at cell-boundary pixels — which drops the hardware
+// sampler to nearest there (silent, dim-dependent luck). The four-tap
+// nearest() hand-bilinear idiom is exact everywhere; costs 3.7x per read
+// (still trivial: ~0.2 ms/pass class recorded in the bench).
+c_tx = cu_c * width - 0.5;
+c_ty = cv_c * height - 0.5;
+c_ix = floor(c_tx);
+c_iy = floor(c_ty);
+c_ax = c_tx - c_ix;
+c_ay = c_ty - c_iy;
+c_x0 = clamp(c_ix, 0.0, width - 1.0);
+c_y0 = clamp(c_iy, 0.0, height - 1.0);
+c_x1 = clamp(c_ix + 1.0, 0.0, width - 1.0);
+c_y1 = clamp(c_iy + 1.0, 0.0, height - 1.0);
+c00 = nearest(in2, vec((c_x0 + 0.5) / width, (c_y0 + 0.5) / height));
+c10 = nearest(in2, vec((c_x1 + 0.5) / width, (c_y0 + 0.5) / height));
+c01 = nearest(in2, vec((c_x0 + 0.5) / width, (c_y1 + 0.5) / height));
+c11 = nearest(in2, vec((c_x1 + 0.5) / width, (c_y1 + 0.5) / height));
+c_r = c00.r * (1.0 - c_ax) * (1.0 - c_ay) + c10.r * c_ax * (1.0 - c_ay)
+    + c01.r * (1.0 - c_ax) * c_ay + c11.r * c_ax * c_ay;
+c_g = c00.g * (1.0 - c_ax) * (1.0 - c_ay) + c10.g * c_ax * (1.0 - c_ay)
+    + c01.g * (1.0 - c_ax) * c_ay + c11.g * c_ax * c_ay;
+c_b = c00.b * (1.0 - c_ax) * (1.0 - c_ay) + c10.b * c_ax * (1.0 - c_ay)
+    + c01.b * (1.0 - c_ax) * c_ay + c11.b * c_ax * c_ay;
+c_a = c00.a * (1.0 - c_ax) * (1.0 - c_ay) + c10.a * c_ax * (1.0 - c_ay)
+    + c01.a * (1.0 - c_ax) * c_ay + c11.a * c_ax * c_ay;
+acc_r = c_r; acc_g = c_g; acc_b = c_b; acc_a = c_a;
+wsum = 1.0;
+
+// stations k = 1..8 per side at u = +-(k-0.5) px; three transverse taps
+for (kk = 0; kk < 2.0 * taps; kk += 1.0) {
+    // k = 1..taps; su = +1 then -1
+    k = floor(kk * 0.5) + 1.0;
+    su = 1.0 - 2.0 * mod(kk, 2.0);
+    umag = k - 0.5;
+    g_u = exp(-(umag*umag) * inv_ll2) / 1.0;   // 1 px station mass
+    for (ts = 0; ts < 3.0; ts += 1.0) {
+        // t = 0, +sig_d, -sig_d; weights 0.5 / 0.25 / 0.25
+        tsign = ts - 1.0;
+        tr_off = tsign * sig_d;                    // renamed: t was shadowed by the four-tap's t_px family, and GenExpr hoists one namespace
+        wgt = g_u * mix(0.25, 0.5, step(0.5, 1.0 - abs(tsign)));
+        // tap offset in px -> normalized units (1 px = 1/width, 1/height)
+        ox_norm = (umag*su*v_x + tr_off*a_x) / width;
+        oy_norm = (umag*su*v_y + tr_off*a_y) / height;
+        tap_u = clamp(norm.x + ox_norm, ux_lo, ux_hi);
+        tap_v = clamp(norm.y + oy_norm, uy_lo, uy_hi);
+        // four-tap idiom per tap (see the centre-tap note above): within a
+        // cell the tap slides smoothly (norm + fixed ox), and at the 1-px
+        // cell-boundary bands the hardware sampler would drop to nearest
+        // (dim-luck). This keeps the parity with the mirror exact at any dim.
+        t_px = tap_u * width - 0.5;
+        t_py = tap_v * height - 0.5;
+        t_ix = floor(t_px);
+        t_iy = floor(t_py);
+        t_ax = t_px - t_ix;
+        t_ay = t_py - t_iy;
+        t_x0 = clamp(t_ix, 0.0, width - 1.0);
+        t_y0 = clamp(t_iy, 0.0, height - 1.0);
+        t_x1 = clamp(t_ix + 1.0, 0.0, width - 1.0);
+        t_y1 = clamp(t_iy + 1.0, 0.0, height - 1.0);
+        w00 = sample(in2, vec((t_x0 + 0.5) / width, (t_y0 + 0.5) / height));
+        w10 = sample(in2, vec((t_x1 + 0.5) / width, (t_y0 + 0.5) / height));
+        w01 = sample(in2, vec((t_x0 + 0.5) / width, (t_y1 + 0.5) / height));
+        w11 = sample(in2, vec((t_x1 + 0.5) / width, (t_y1 + 0.5) / height));
+        s_m_r = w00.r * (1.0 - t_ax) * (1.0 - t_ay) + w10.r * t_ax * (1.0 - t_ay)
+              + w01.r * (1.0 - t_ax) * t_ay + w11.r * t_ax * t_ay;
+        s_m_g = w00.g * (1.0 - t_ax) * (1.0 - t_ay) + w10.g * t_ax * (1.0 - t_ay)
+              + w01.g * (1.0 - t_ax) * t_ay + w11.g * t_ax * t_ay;
+        s_m_b = w00.b * (1.0 - t_ax) * (1.0 - t_ay) + w10.b * t_ax * (1.0 - t_ay)
+              + w01.b * (1.0 - t_ax) * t_ay + w11.b * t_ax * t_ay;
+        s_m_a = w00.a * (1.0 - t_ax) * (1.0 - t_ay) + w10.a * t_ax * (1.0 - t_ay)
+              + w01.a * (1.0 - t_ax) * t_ay + w11.a * t_ax * t_ay;
+        acc_r += wgt * s_m_r;
+        acc_g += wgt * s_m_g;
+        acc_b += wgt * s_m_b;
+        acc_a += wgt * s_m_a;
+        wsum += wgt;
+    }
+}
+
+inv_sum = 1.0 / max(wsum, 1e-6);
+out_r = acc_r * inv_sum;
+out_g = acc_g * inv_sum;
+out_b = acc_b * inv_sum;
+out_a = acc_a * inv_sum;
+
+// no clamp on the output values (smoother, not a coder; family hard rule).
+// bypass is exact passthrough of inlet 1:
+out1 = vec(mix(out_r, bp.r, bypass_gate),
+           mix(out_g, bp.g, bypass_gate),
+           mix(out_b, bp.b, bypass_gate),
+           mix(out_a, bp.a, bypass_gate));

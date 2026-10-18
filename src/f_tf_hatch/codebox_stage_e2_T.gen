@@ -1,0 +1,39 @@
+// Stage E2 (f_tf_hatch): mark layout -- branch T (tileable distance-field
+// pattern, f_weave mechanics in the per-pixel local frame; chosen at the
+// T001 cost-shape gate, plan ADR-1 amendment). in1 = stage E1's aux.
+// Mirrors tests/test_tf_hatch.py stage_e2. Intermediate texture, NEVER an
+// outlet; unbounded float32 (plan ADR-4).
+//
+// out1 = (u, v, commit, iso):
+//   (u, v)   the pixel rotated into its local (across, along) frame --
+//            across = -sa*norm.x + ca*norm.y, along = ca*norm.x + sa*norm.y
+//            (the frame is E1's commit-frame axis, angle_offset applied)
+//   commit, iso   passthrough (E3 renders the profile against them)
+//
+// All coordinates are norm reads (sample at the pixel itself: no taps; the
+// per-pixel frame lives in the aux texture). Closed form, no loop. The
+// GATE PROVISIONAL-OPEN points recorded here:
+//   - dash PHASE continuity under hairpin curvature: the dist_to_mark field
+//     is built per-pixel from (u, v) straight-ray coordinates, so dash phase
+//     resets where the axis turns fast relative to the along-frame. The
+//     spike MEASURED this (ridge-err trend 24.9 -> 64.0 deg over ring
+//     spacing 8 -> 64); tier-3 judges the look; mitigations (elongation/
+//     weight tuning now; a phase-scan pass later) are recorded in ADR-1.
+//   - regularity's hash is computed IN E3 (per-line, weave's published
+//     form) -- E2 carries no hash state.
+
+// (no params on this stage: density/weight/softness/elongation/phase/
+// regularity are E3's; commit/gate/offset/strength are E1's)
+
+ca2 = nearest(in1, norm).x;
+sa2 = nearest(in1, norm).y;
+commit = nearest(in1, norm).z;
+iso = nearest(in1, norm).w;
+
+// texel-centre clamp rule (tensormap T012): the coordinate is exactly norm,
+// which is always in-bounds on the render grid -- the clamp is a no-op kept
+// for the rule.
+u = (-sa2 * norm.x + ca2 * norm.y);
+v = ( ca2 * norm.x + sa2 * norm.y);
+
+out1 = vec(u, v, commit, iso);

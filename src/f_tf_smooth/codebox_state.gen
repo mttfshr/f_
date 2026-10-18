@@ -1,0 +1,35 @@
+// State pix (f_tf_smooth): the temporal one-pole recurrence, per channel, in
+// tensor space. in1 = this frame's raw tensor (f_tensor_type.md outlet-0
+// encoding, unchanged by smoothing); in2 = previous frame's blended output
+// (feedback loop, see codebox_render.gen + definition.py pix_wires).
+// Mirrors tests/test_tf_smooth.py smooth_step exactly.
+//
+//   T' = T_new + release * (T_prev - T_new)
+//
+// ADR-3: NO clamp anywhere. Raw tensor values are unbounded floats (strong
+// edges give Jxx*strength >> 1); clipping inside a feedback loop creates
+// stuck-at-boundary artifacts. The outlet encoding IS the inlet encoding
+// (raw tensor passthrough), so this module never encodes or clamps at all.
+// No decode, no atan2: this codebox is 4-channel arithmetic only.
+//
+// ADR-4: bypass_gate (module bypass, bypass_mode "param"; NOT the native
+// @bypass, which would skip the shader and flip feedback semantics) is an
+// exact passthrough with the feedback IGNORED -- not a freeze of the last
+// smoothed frame. On an unconnected inlet (vs_black = zero tensor) the
+// feedback decays naturally to the zero-tensor neutral instead of holding a
+// stale field.
+//
+// GATE PROVISIONAL-OPEN (spec OQ1 / tasks T016): release default 0.5 and the
+// dial ceiling are PROVISIONAL, pending tier-3 judgement on live noise.
+// The shipped literal follows definition.py's declared default (0.5).
+Param release(0.5);
+Param bypass_gate(0.0);
+
+new_t = sample(in1, norm);            // inline access (stored-variable .x silent-fails)
+prev_t = sample(in2, norm);
+
+// Per-channel one-pole. mix(a, b, w) = a + w*(b - a): blend(prev, new, 1-release)
+// = new + release*(prev - new) with no float32 reorder surprises.
+out1 = mix(prev_t, new_t, -release + 1.0);
+// ADR-4 bypass: passthrough of the inlet, feedback ignored.
+out1 = mix(out1, new_t, bypass_gate);

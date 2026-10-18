@@ -1,0 +1,84 @@
+// f_tf_sharpen: eigengap exaggerator/relaxer on the raw f_tensor outlet-0
+// encoding. in1 = tensormap out0 (R>=0, G:0.5=zero, B>=0, A=1, all * strength).
+// Per pixel: decode to components, scale the eigengap by g = max(gamma, 0)
+// around the isotropic trace/2 ball while holding trace fixed, re-encode.
+// Mirrors tests/test_tf_sharpen.py sharpen().
+//
+//   J' = g*J + (1 - g) * (trace/2) * I        (plan ADR-2, no eigenvalue swap:
+//    lambda1' = trace/2 + g*(lambda1 - trace/2)
+//    lambda2' = trace/2 + g*(lambda2 - trace/2)   PLUS sign for both --
+//      NOTE the spec prose's MINUS form for lambda2' is a sign slip; the
+//      trace-preserving form is the plus sign, mirror T003/T005 confirm)
+//    Jxy' = g*Jxy
+//
+// gamma = 1 is the bit-exact identity (the mix collapses away); gamma > 1
+// exaggerates anisotropy, gamma < 1 relaxes toward isotropy; gamma = 0 is the
+// exact isotropic tensor with trace preserved. The axis rides through in
+// component space -- NO atan2 anywhere (glyph plan ADR-2 decode idiom, copied
+// verbatim below; gradient-axis/across convention rides unused since we never
+// reconstruct an angle).
+//
+// GATE PROVISIONAL-OPEN (spec OQ1): dial mapping one-sided 0-4 default 1.0
+// shipped here; a bipolar remap in definition.py would need this comment
+// updated. GATE PROVISIONAL-OPEN (spec OQ4): name f_tf_sharpen; a rename is
+// one find-replace across this file/definition.py/docs before live shipping.
+//
+// STRENGTH/FLOOR CAVEAT (plan ADR-3/ADR-4, T008): eps_trace = 1e-6 is an
+// absolute threshold in ENCODED units (post-strength), so the effective
+// pre-gain floor is eps/strength -- floor depth depends on the producing
+// tensormap's strength dial. Below the floor, output == input exactly (a
+// fixed point: vs_black and tensormap's zero-tensor neutral both qualify).
+// "Flat regions pass through unchanged by design."
+//
+// Encode contract: final stage clamps R/B to [0,1] (diagonals unipolar) and G
+// to [0,1] around its 0.5 zero. Beyond the linear range (gamma*coherence > 1
+// can drive lambda2' below 0 / lambda1' above 1) the clamp saturates and trace
+// is no longer preserved there -- recorded in tests/test_tf_sharpen.py
+// (test_encode_clamp_beyond_linear_range); tier-3 judgement decides whether
+// extreme-gamma users care. bypass_gate (module bypass, bypass_mode "param";
+// NOT the native @bypass): exact passthrough.
+// pix_type float32 required (tensormap ADR-2 convention).
+Param sharpen(1.0);
+Param bypass_gate(0.0);
+
+// --- decode: glyph plan ADR-2 idiom, copied verbatim (citation, not
+// re-derivation). In-place on the sampled components; the idiom's strength
+// division is dropped because sharpen consumes the STRENGTH-SCALED form
+// directly and its operator is positively homogeneous in the components
+// (plan ADR-4: gamma scales components; a global strength factor commutes,
+// proven at T007 in encoded units).
+//   t = sample(tensor_tex, clamp(cell_uv_to_texel))   // tensormap ADR-5 clamp
+//   // encoding: f_tensor_type.md outlet 0 -- R>=0 G:0.5=zero B>=0 A=1 (all x strength)
+t = nearest(in1, norm);
+Jxx = t.x;
+Jxy = (t.y - 0.5) * 2.0;
+Jyy = t.z;
+//   Gain-free identities (strength is a common factor on R, G-0.5, B):
+//     tan(2*theta) = 2*(t.g-0.5)/(t.r - t.b);   aspect = (trace+root)/(trace-root)
+//   CAVEAT: 0.5*atan2 confines theta to (-pi/2, pi/2]; a near-vertical axis
+//   decodes sign-flipped. Safe ONLY for consumers symmetric to theta+180 deg
+//   (glyphs, blur, hatch, sharpen, coherence). Sign-sensitive consumers must
+//   route through f_tf_axisflow (f_tensor_type.md consumer rule 2).
+
+// --- gap scale in component space (identical algebra, no eigen solve) ---
+trace = Jxx + Jyy;
+iso_part = (1.0 - sharpen) * 0.5 * trace;   // sharpen < 0 never occurs (max below)
+g = max(sharpen, 0.0);                       // relax branch: identity-mix, never a
+                                             // negative gap (spec OQ2; drop this max
+                                             // and gamma < 0 swaps the eigenvalues --
+                                             // caught by mirror T006/T009a)
+ox = g * Jxx + iso_part;                     // == trace/2 + g*(Jxx - trace/2)
+oy = g * Jxy * 0.5 + 0.5;                    // cross term scales with the gap
+oz = g * Jyy + iso_part;                     // == trace/2 + g*(Jyy - trace/2)
+
+// --- floor gate (fixed internal eps, plan ADR-3; NOT a param) ---
+eps_trace = 0.000001;
+below_floor = 1.0 - step(eps_trace, trace);  // 1 where trace < eps
+ox = mix(ox, Jxx, below_floor);              // exact passthrough below the floor
+oy = mix(oy, t.y, below_floor);
+oz = mix(oz, Jyy, below_floor);
+
+// --- re-encode: outlet-0 contract; ONLY the final stage clamps ---
+out1 = mix(vec(clamp(ox, 0.0, 1.0), clamp(oy, 0.0, 1.0), clamp(oz, 0.0, 1.0), 1.0),
+           in1,                              // bypass: exact passthrough
+           bypass_gate);

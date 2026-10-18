@@ -1,0 +1,9 @@
+// Render pix (f_tf_smooth): passthrough. The state pix owns the feedback
+// computation; this node only surfaces its output to the module outlet and
+// the visible draw, the two-domain f_vf_advect wiring (plan ADR-2). Kept as
+// a separate gen file (not folded into the state codebox) because the state
+// pix's outlet also feeds the feedback loop; separating "compute" from
+// "present" keeps the outlet independent of the feedback node's own timing,
+// same shape as f_vf_advect's pass/state pair. No params, no clamps, no
+// decode -- the raw tensor passes through untouched.
+out1 = sample(in1, norm);   // inline access (stored-variable .x silent-fails)
