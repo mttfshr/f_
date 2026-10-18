@@ -1293,14 +1293,19 @@
                                 "Potential \u2207",
                                 "Matrix 2",
                                 "Tensor Map",
-                                "Axis Flow"
+                                "Axis Flow",
+                                "Tensor Smooth",
+                                "Tensor Glyph",
+                                "Tensor Sharpen",
+                                "Tensor Aniso Blur",
+                                "Tensor Hatch"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_disp",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 11,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1337,14 +1342,19 @@
                                 "vf_potential",
                                 "util_matrix_2",
                                 "tf_tensormap",
-                                "tf_axisflow"
+                                "tf_axisflow",
+                                "tf_smooth",
+                                "tf_glyph",
+                                "tf_sharpen",
+                                "tf_aniso_blur",
+                                "tf_hatch"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_file",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 11,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

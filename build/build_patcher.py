@@ -921,7 +921,18 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inl
             lines.append({"patchline": {"destination": [f"gen-obj-{4 + k}", 0], "source": [codebox_id, k]}})
     else:
         # processor and dual
-        n_codebox_inlets = 1 + len(mod_inlets)
+        # 2026-10-17 fix (live session, five f_tf modules): this branch now
+        # honors driving_inlet exactly like the source branch — the previous
+        # unconditional `gen-obj-1 → codebox[0]` line referenced an `in 1`
+        # box that driving_inlet never creates ("patchcord source not
+        # found: deleting patchcord" on load), and with n_codebox_inlets =
+        # 1 + len(mod_inlets) the LAST gen inlet (in 2) landed on an
+        # unconnected codebox input, breaking the sampler type at compile
+        # ("type is not a sampler") → the pix fell back to passthrough of
+        # its first texture. Fix: mirror gen_subpatcher's driving_inlet
+        # conventions — no gen-obj-1, in_num = i+1, codebox inlets =
+        # len(mod_inlets), cb_offset = 0.
+        n_codebox_inlets = len(mod_inlets) if driving_inlet else 1 + len(mod_inlets)
         codebox_id = "gen-obj-2"
         codebox_outlettype = [""] * n_outlets
         boxes.append({"box": {
@@ -939,10 +950,12 @@ def gen_subpatcher(codebox, archetype, mod_inlets=None, n_outlets=1, driving_inl
                 "patching_rect": [22.0 + k * 60.0, 490.0, 35.0, 22.0],
                 "text": f"out {k + 1}"
             }})
-        lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
+        if not driving_inlet:
+            lines.append({"patchline": {"destination": [codebox_id, 0], "source": ["gen-obj-1", 0]}})
+        cb_offset = 0 if driving_inlet else 1
         for i in range(len(mod_inlets)):
             gen_in_id = f"gen-obj-{10 + i}"
-            lines.append({"patchline": {"destination": [codebox_id, i + 1], "source": [gen_in_id, 0]}})
+            lines.append({"patchline": {"destination": [codebox_id, i + cb_offset], "source": [gen_in_id, 0]}})
         for k in range(n_outlets):
             lines.append({"patchline": {"destination": [f"gen-obj-{3 + k}", 0], "source": [codebox_id, k]}})
 

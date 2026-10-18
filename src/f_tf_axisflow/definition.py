@@ -15,7 +15,7 @@ _HERE = Path(__file__).parent
 patcher = {
     "name":        "f_tf_axisflow",
     "prefix":      "axisflow",
-    "object_name": "axisflow_pix",
+    "object_name": "#0_axisflow_pix",
     "title":       "Axis Flow",
     "signal_type": "vecfield out",
     "archetype":   "processor",

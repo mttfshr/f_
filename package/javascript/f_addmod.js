@@ -42,7 +42,12 @@ var SIZES = {
     "vf_potential":   [190, 100],
     "util_matrix_2":  [230, 120],
     "tf_tensormap":   [154,  84],
-    "tf_axisflow":    [154, 124]
+    "tf_axisflow":    [154, 124],
+    "tf_smooth":      [154,  84],
+    "tf_glyph":       [154,  84],
+    "tf_sharpen":     [154,  84],
+    "tf_aniso_blur":  [154,  84],
+    "tf_hatch":       [154,  84]
 };
 // END SIZES
 

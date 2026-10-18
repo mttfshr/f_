@@ -211,8 +211,8 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name axisflow_pix @type float32",
-					"varname": "axisflow_pix"
+					"text": "jit.gl.pix vsynth @name #0_axisflow_pix @type float32",
+					"varname": "#0_axisflow_pix"
 				}
 			},
 			{
@@ -458,7 +458,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "axisflow_pix::mode",
+					"param_connect": "#0_axisflow_pix::mode",
 					"parameter_enable": 1,
 					"patching_rect": [
 						30.0,
@@ -559,7 +559,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "axisflow_pix::angle",
+					"param_connect": "#0_axisflow_pix::angle",
 					"parameter_enable": 1,
 					"patching_rect": [
 						118.5,
@@ -663,7 +663,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "axisflow_pix::gain",
+					"param_connect": "#0_axisflow_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						190.5,
@@ -767,7 +767,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "axisflow_pix::gate",
+					"param_connect": "#0_axisflow_pix::gate",
 					"parameter_enable": 1,
 					"patching_rect": [
 						262.5,
@@ -865,7 +865,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "axisflow_pix::width",
+					"param_connect": "#0_axisflow_pix::width",
 					"parameter_enable": 1,
 					"patching_rect": [
 						326.0,
@@ -956,7 +956,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "axisflow_pix::height",
+					"param_connect": "#0_axisflow_pix::height",
 					"parameter_enable": 1,
 					"patching_rect": [
 						398.0,

@@ -81,6 +81,11 @@ CATEGORIES = [
         ("Matrix 2", "util_matrix_2", False),
         ("Tensor Map", "tf_tensormap", False),
         ("Axis Flow", "tf_axisflow", False),
+        ("Tensor Smooth", "tf_smooth", False),
+        ("Tensor Glyph", "tf_glyph", False),
+        ("Tensor Sharpen", "tf_sharpen", False),
+        ("Tensor Aniso Blur", "tf_aniso_blur", False),
+        ("Tensor Hatch", "tf_hatch", False),
     ]),
 ]
 
