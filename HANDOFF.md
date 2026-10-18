@@ -1,5 +1,60 @@
 # HANDOFF
 
+## 2026-10-17 session: five f_tf consumers built to tier-2 (bench-verified, tier-3 pending)
+
+- **Built, offline-verified, bench-verified** (tier-1 mirrors 19/20/20 + sharpen 15 + glyph 14;
+  tier-2 benches all 6/6, final 5-file sweep re-confirmed, ask-approved per the standing rule):
+  `f_tf_smooth` (one-pole tensor feedback, chain A's stabilizer), `f_tf_glyph` (glyph-field
+  renderer + family debug tap), `f_tf_sharpen` (eigengap operator), `f_tf_aniso_blur`
+  (structure-aligned smoother, straight-axis v1), `f_tf_hatch` (orientation-committed hatch,
+  branch-T distance-field mechanics). All registered: menu (Utilities group), README ⚠ rows,
+  module-inventory, launch patcher + `package/help/*.maxhelp` (five new helpfiles via a
+  `make_helpfiles5.py`-shaped run of the make_missing_helpfiles helpers; helpfile judgment
+  gate still yours), benchdeps.DATA (not bench.sh DEFAULT), BYPASS_EXPECT rows.
+- **Tier-2 live GPU findings, now family property** (`docs/f-reference/f_tensor_type.md`
+  consumer rules 5-6; full evidence `.specify/f_tf_glyph/plan.md` ADR-2 amendment):
+  (a) runtime `atan2(0,0)` = NaN (constants fold to 0; runtime does not; mix() can't clear
+  NaN); the fix is a +1e-7 atan2-denominator bias. (b) `sample()` drops to nearest when its
+  coordinate is data-dependent and jumps (the skill's four-tap `nearest()` idiom fixes it).
+  (c) the interpolated-read residual is the 8-bit-weight ceiling (~2e-4 stacked). (d) the
+  bench keeps Params between jobs — every bench param dict must pin its params (aniso's and
+  sharpen's runs prove it; also fixed key-mapping bugs in their mirror wrappers and an
+  outlet-0 strength-clamp fixture bug in sharpen's bench).
+- **Gates still open (all explicit, none silently resolved)**: smooth `release` default/range
+  (T016, tier 3); glyph variant menu + debug tints (look, tier 3); sharpen dial mapping +
+  possible rename (T016/T017, tier 3); aniso_blur kernel family (b) revisit if the bench cost
+  experiment says family (a) isn't enough; hatch commit-curve shape + hairpin-hazard probe
+  (needs bench); helpfile judgment gate for the five; `bench.sh DEFAULT` registration
+  decision.
+- **Next builds per confirmed triage order**: nothing in the confirmed build-order remains —
+  the catalog's remaining items (mix when chain B assembles; glow = merged into parked Q12;
+  glint deferred; jacobian/motion/hessian spike-on-demand; authored behind the UI-density
+  gate).
+- Not committed. Working tree holds: 5× (`.specify/f_tf_<m>/` triad + codeboxes + definition),
+  `src/f_tf_<m>/` (built layout), `package/patchers/f_tf_<m>.maxpat`, `package/help/*` (5),
+  `tests/{test,bench}_tf_<m>.py` (10), docs rows (`module-inventory.md`, README, launch,
+  `f_tensor_type.md` rules 5-6). Pre-existing failures untouched (see below).
+- **Live-verification round (2026-10-17 evening, ask-approved benches + module bench):**
+  - **`build/build_patcher.py` processor branch now honors `driving_inlet`** (the session's
+    main find): the old unconditional `gen-obj-1 → codebox[0]` line referenced an `in 1` box
+    that driving_inlet builds never create — Max deleted the cord on load, the codebox's last
+    input typed dead, the compile failed ("patchcord source not found", "type is not a
+    sampler"), and the pix silently fell back to passthrough of its first texture. That was
+    the built modules' live "acts like a passthrough" behavior Matt reported. All five
+    `f_tf_` patchers rebuilt; module bench green on all five.
+  - **Pix object names now `#0_`-prefixed** on all five + `f_tf_axisflow` (shipped 10-16,
+    had it too): Ob3D bindings are context-global — two live instances of a bare-named module
+    collide ("name X_pix already in use"), and the loser's params go unset ("no attribute").
+    tensormap's `#0_` names were the in-repo precedent.
+  - **`f_tf_hatch` e3 bypass now preserves alpha 1** (bypass = neutral-black under the
+    outlets-are-A=1 rule; the whole-vec multiply dropped alpha to 0) — codebox + mirror in
+    step, tier-1 still 20/20.
+  - **BYPASS_EXPECT rows corrected to each module's true bypass source** (glyph/aniso =
+    inlet 2, hatch = neutral const; smooth/sharpen = inlet 1 — those two pass as-is); new
+    `("in_a1", N)` expect form for rgb-only bypass mixes.
+  - Module bench state: the only remaining BADs are `f_a_decorrelate`'s audio wiring (4
+    rows, pre-existing) — everything else, including all five new modules, green.
+
 ## 2026-10-16 session: f_tf_tensormap + f_tf_axisflow built, live-checked, documented
 
 - **f_tf_tensormap** (structure tensor: raw outlet 0, packed cos2t/sin2t/trace/coherence outlet 1) and

@@ -440,11 +440,13 @@ Key points:
 ## jit.gl.pix Declaration
 
 ```
-jit.gl.pix vsynth @name <prefix>_pix
+jit.gl.pix vsynth @name #0_<prefix>_pix
 ```
 
 - First positional arg `vsynth` = drawto context
-- `@name <prefix>_pix` = scripting name, used by `param_connect`
+- `@name #0_<prefix>_pix` = scripting name, used by `param_connect`; the `#0_` prefix makes
+  the Ob3D binding per-instance (bare `<prefix>_pix` collides when two instances are live in
+  one context — see the checklist note, 2026-10-17)
 - `numinlets: 1` — single message inlet; all params arrive as messages
 - No `@dim` attribute — let Vsynth context set dimensions
 
@@ -960,6 +962,8 @@ the bypass attrui wired to *every* pix stage, including stage 0 (`f_sirds` and
 - [ ] **Optional modulation inlets:** each has its own `vs_inState`; pix `numinlets`, gen `in N`, and codebox `numinlets` all incremented together
 - [ ] **Dual-mode generator:** `vs_inState` on inlet 0; outlet 0 → pix in0, outlet 1 → `prepend param src_mode` → pix in0 (src_mode is system-driven, not user-facing — `prepend` is correct here, not attrui)
 - [ ] **Dual-mode generator:** `src_mode` absent from `route`, UI objects, and `parameters` block
+- [ ] **Pix object name is `#0_<prefix>_pix`** (hash-zero prefix, 2026-10-17) — Ob3D bindings are context-global; two live instances of a bare-named module collide ("name X_pix already in use. ob3d does not allow multiple bindings") and the loser's params go unset ("no attribute ... on target pix") — which shows up live as the module rendering its first texture passthrough. The shipped multi-stage modules (`#0_tm_stage_a`...) had the right form all along; single-pix definitions get it too. `param_connect` continues to target the *name text* as written in the definition.
+- [ ] **`driving_inlet` processors single-pix** — when a `processor`/`dual`-archetype definition sets `driving_inlet: True`, its gen has NO `in 1`-as-bang-tap box: the primary texture rides mod_inlets[0] and the codebox has exactly `len(mod_inlets)` inlets (the multi-stage/pix_chain branch handles this; build_patcher's processor branch does too since 2026-10-17). Symptom of the old gap, if seen anywhere: "patchcord source not found: deleting patchcord" + "type is not a sampler" on load, and the module behaves as a passthrough. If a definition needs the bang-only-tap shape, do NOT set driving_inlet.
 
 ---
 

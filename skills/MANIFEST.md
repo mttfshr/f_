@@ -16,3 +16,4 @@ _Stamped: 2026-10-08_
 | `maxpat-json-authoring` | 53404d0c35ba | 137 |
 | `pfft-spectral-processing` | bdbd28827121 | 248 |
 | `vsynth-bpatcher` | c9623c691b01 | 1042 |
+| `bench-test-authoring` | — | — |

@@ -945,6 +945,52 @@ Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Fin
   draw). The first job after `cr.ensure_bench()` reopens the module bench is particularly unreliable (cold-GPU-state
   artifact). Take 3+ samples per config and use the median, never a single draw, before comparing configs.
 
+### More bench-verified facts (glyph/aniso tensor consumers, 2026-10-17)
+
+Probes: `tests/bench_tf_glyph.py`, `tests/bench_tf_aniso_blur.py`; evidence in
+`.specify/f_tf_glyph/plan.md` ADR-2 amendment and `docs/f-reference/f_tensor_type.md` rules 5–6.
+
+- **RUNTIME `atan2(0, 0)` returns NaN on this GPU (compile-time literals fold to 0).**
+  `theta = 0.5 * atan2(0.0, 0.0)` in a probe read 0/1 exactly (constant-folded, host-side);
+  the same expression on runtime-zero values sampled from a texture read NaN — and a
+  constant-isotropic tensor region (Jxx = Jyy, Jxy = 0: any flat, edge-free stretch of
+  content) rendered an all-black frame with a clean console, NaN propagating through
+  `cos`/`sin`. **A `mix()` guard cannot clear it**: mix(NaN, safe, 1) = NaN·0 + safe·1 —
+  NaN·0 is still NaN in the arithmetic expansion. GenExpr has no `isnan()`. Note the skill's
+  own "NaN == NaN is TRUE" fact above (confirmed live this session: `(a == a)` read 0.0... i.e.
+  TRUE for NaN, so that test cannot detect NaN here). **Fix at the source — never let (0,0)
+  reach atan2:** bias the denominator argument (`atan2(y, x + 1e-7)`); where the bias matters
+  the tensor is near-isotropic (aspect ≈ 1), so the swung angle renders identically in
+  anything rotation-symmetric. Same idiom family-wide; do not build module guards on
+  mix-clears-NaN assumptions (see the tensormap known-unknown below).
+- **`nearest()` takes NORMALIZED coordinates, same as `sample()`** — the 2026-10-06 four-tap
+  idiom above says `(ix + 0.5) / 256.0`; a first-draft refactor passed RAW texel indices
+  (`ix + 0.5` in texel units) and every interior tap read texture coords ~89 → clamped to the
+  last texel: the whole frame silently read the frame border. Symptom: a bilinear-blend
+  result that looks like an edge-smeared version of the truth. If taps disagree with the
+  mirror by a large coordinate-scale shift, check units before checking math.
+- **A codebox compile ERROR inside a SHIPPED patcher (jit.gl.pix) falls back to passthrough
+  of its first texture** — live session 2026-10-17: a broken gen graph ("patchcord source
+  not found: deleting patchcord" on load; the codebox's untapped input typed dead: "type is
+  not a sampler") made the module render its inlet texture UNCHANGED, "irrespective of any
+  dial". The codebox bench never sees this (it wraps code in its own genjit) — only the
+  module bench (`tests/bench_modules.py`) instantiates the shipped patcher as Max does. A
+  live module "acting like a passthrough" = suspect the gen graph / compile first, the math
+  second.
+- **Ob3D `@name` bindings are context-global and collide**: instantiating two copies of a
+  module whose pix is bare-named (`sharpen_pix`) in one GL context errors "name already in
+  use. ob3d does not allow multiple bindings" and the loser's Params go unset ("no attribute
+  ... on target pix") — the failing instance renders its inlet passthrough. Fix: prefix
+  module-bound pix names with `#0_` (`#0_sharpen_pix`) — Max substitutes the bpatcher's
+  instance id, making each instance's binding unique. The shipped multi-stage modules did
+  this all along; single-pix definitions must too. (The module bench itself exercises this
+  by keeping a live instance while instantiating fresh ones.)
+- **The tensormap known-unknown (do not build on it):** tensormap's stage C survives flat
+  content with `mix(NaN, 0.5, iso_dir)` while glyph's identical-shape `mix(NaN, 0.0, flag)`
+  did not clear the NaN — the compiler's select/fold behavior on `mix` with a computed-NaN
+  operand is not characterized. Tensormap is verified + live-checked and stays as-is; every
+  NEW consumer uses the bias-at-source idiom above instead of a mix guard.
+
 ---
 
 ## Code Health Checklist
@@ -959,6 +1005,8 @@ When reviewing any codebox, scan for these in order:
 - [ ] **`vec4()` or `vec2()` constructors** — replace with `vec()`
 - [ ] **`select()`** — replace with `mix(a, b, step(...))` or `switch(cond, a, b)`
 - [ ] **`sample()` at jumpy, data-dependent coordinates** (iteration, ray marching, a gather over candidates) — reads NEAREST, not bilinear, whenever the coordinate changes by more than ~1 texel between neighbouring pixels; interpolate by hand from four `nearest()` taps (bench-verified 2026-10-06, see above)
+- [ ] **`nearest()` tap coordinates normalized** — the four-tap idiom's taps take `(ix + 0.5) / width` UVs, NOT raw texel indices; raw indices silently read the frame border after the sampler's clamp (found 2026-10-17 refactoring a codebox)
+- [ ] **`atan2` fed possibly-(0,0) runtime args** — NaN; fix by biasing a denominator argument (+1e-7), not by guarding after (mix propagates NaN; no `isnan()`; `x == x` is TRUE even for NaN so that test is useless) — see the 2026-10-17 bench-facts section
 - [ ] **Statement count** — about 250 per function body or top level, about 450 for the whole program (not bytes, not lines); over that the parser fails with "stack overflow (too many captures)" and wedges the bench; move repeated code into functions (a call is one statement); `require` adds no budget
 - [ ] **`step()` with two literal arguments** — folds reversed (`step(0.3, 0.5)` = 0); keep one argument a variable or Param
 - [ ] **`snoise()` or `cycle()`** — replace with sin hash or `sin(x * twopi)` respectively
