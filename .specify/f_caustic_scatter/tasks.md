@@ -348,4 +348,5 @@ remap of the landing position, driven like `scale` (control-entry token, `pix_wi
   tests above were run.
 - [x] E07 (passed, Matt 2026-10-17) Matt live: tensormap -> axisflow -> fluid -> caustic with Edge = Wrap / Mirror / Clamp; look at the border seam in
   Wrap, and whether Mirror's doubled border density reads well. Check the Edge menu's position and label in the panel.
-- [ ] E08 `docs/f-reference/f_caustic.md` updated; the helpfile (`package/help/f_caustic.maxhelp`) is not.
+- [x] E08 `docs/f-reference/f_caustic.md` updated; helpfile (2026-10-18) refreshed: it still listed the removed mode / softness /
+  color_shift / detail, so the parameter list, digest, note and References were rewritten and `edge` added. Matt's look in Max pending.

@@ -61,7 +61,7 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 14.0,
                     "id": "h-2",
-                    "linecount": 2,
+                    "linecount": 1,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
@@ -76,7 +76,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Optical caustic -- Soft: streamlines along a vecfield; Sheets: a GPU scatter that folds into sheets",
+                    "text": "Optical caustic -- a vecfield bends the light into folded, translucent sheets",
                     "varname": "autohelp_top_digest[3]"
                 }
             },
@@ -99,14 +99,14 @@
                         15.0,
                         150.0,
                         270.0,
-                        160.0
+                        142
                     ],
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "External Control Messages\n\nmode [0 / 1]  (0 Soft, 1 Sheets)\nmix_pct [0.0 \u2013 100.0]\ngain [0.0 \u2013 2.0]\nscale [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]  (Soft only)\ncolor_shift [0.0 \u2013 1.0]  (Soft only)\ndetail [0 \u2013 4]  (Sheets only: step 1\u20135)",
+                    "text": "External Control Messages\n\nmix_pct [0.0 \u2013 100.0]\ngain [0.0 \u2013 2.0]\nscale [0.0 \u2013 1.0]\nexpo [0.3 \u2013 1.5]\nedge [0 \u2013 3]  (0 Off, 1 Wrap, 2 Mirror, 3 Clamp)\nbypass [0 / 1]",
                     "textjustification": 0
                 }
             },
@@ -115,17 +115,17 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 12.0,
                     "id": "r-1",
-                    "linecount": 8,
+                    "linecount": 13,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        350.0,
+                        332,
                         270.0,
-                        270.0
+                        210
                     ],
-                    "text": "References\n\nSoft mode (backward streamline\naccumulation): derived in development --\nnot from any external source.\n\nSheets mode (forward scatter; splat density\nis illuminance): derived in development.\nBackground only, nothing taken from them:\nphoton mapping, Jensen (1996), \"Global\nIllumination Using Photon Maps\"; backward\nbeam tracing, Watt (1990), \"Light-Water\nInteraction using Backward Beam Tracing\".\n\nSee docs/f-reference/f_caustic.md for the\nmeasurements and the full algorithm."
+                    "text": "References\n\nForward scatter (a lattice of points displaced\nthrough the field; splat density is\nilluminance): derived in development.\nBackground only, nothing taken from them:\nphoton mapping, Jensen (1996), \"Global\nIllumination Using Photon Maps\"; backward\nbeam tracing, Watt (1990), \"Light-Water\nInteraction using Backward Beam Tracing\".\n\nSee docs/f-reference/f_caustic.md for the\nmeasurements and the full algorithm."
                 }
             },
             {
@@ -247,17 +247,17 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 12.0,
                     "id": "d-9",
-                    "linecount": 3,
+                    "linecount": 6,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         338.0,
-                        160.0,
+                        152,
                         296.0,
-                        78.0
+                        96
                     ],
-                    "text": "Feed a vecfield into the second inlet from:\nf_vf_vortex (converging ring) or\nf_vf_fieldmap (noise ridge bands).\nMode Soft: thin bright lines. Mode Sheets:\nfolded sheets (raise Scale)."
+                    "text": "Feed a vecfield into the second inlet from:\nf_vf_vortex (converging ring) or\nf_vf_fieldmap (noise ridge bands).\nRaise Scale to fold the light into sheets.\nEdge: what happens to light that lands\noutside the frame (Off loses it)."
                 }
             }
         ],

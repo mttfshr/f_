@@ -1,5 +1,19 @@
 # HANDOFF
 
+## 2026-10-18: helpfile text written; offline suite 30/30; GPU benches NOT run (Max not running)
+
+- **Offline suite** (`tests/run.sh -q > /tmp/offline2.log`): 29/30 on the first run. The one failure was `test_build_multistage`,
+  which hardcodes Fluid's route tokens and taps's param index; both were stale once `drift` was added (taps is index 7 now).
+  Fixed, 11/11. The helpfile-reading tests were re-run after the helpfile edits: `test_generate_menu` 15/15, `test_launch` 8/8.
+- **Helpfiles** (text only, no new objects): Axis Flow (second-inlet + negative-gain note, bpatcher numinlets 2), Fluid (`drift`
+  line, References nudged down 17 px), Caustic (its parameter list still had the mode / softness / color_shift / detail removed on
+  10-10; now mix_pct, gain, scale, expo, edge, bypass; digest, note and References refreshed). **Matt's look in Max is the
+  judgement gate:** the Axis Flow note is 6 lines (x 500, 110 px) and the Caustic note starts at y 152.
+- **GPU benches NOT run:** Max was not running this morning, and starting it myself risks auto-opening a performance patch.
+  With Max up, `tests/bench/bench.maxpat` open and performance patches closed: `tests/bench.sh -q tests/bench_fluid.py` (T060, the
+  drift case) and, for hatch's new out2 bypass row, `BENCH_MODULES=f_tf_hatch tests/bench.sh -q tests/bench_modules.py`.
+  Not re-run: `bench_fluid_module.py` for the rebuilt Fluid patcher.
+
 ## 2026-10-17 (last): `f_vf_fluid` `drift` Param — committed, bench NOT run
 
 - **Built (Matt: "build it now"):** `Param drift` (0-1, default 1 = unchanged) on the `spec` stage scales only the k = 0 bin

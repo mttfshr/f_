@@ -46,8 +46,8 @@ rotates it, unconnected = old behaviour; title-bar label left as `T_ in ∇ out`
   output reads smoothly); same-size bench inputs should be exact, but if TOL 2e-5 fails check 8-bit sample weights first.
 - [ ] T024 Full offline suite once (`tests/run.sh -q`): the rebuild touched only f_tf_axisflow, but the contract /
   drift / conventions tests have not been re-run since.
-- [ ] T025 Helpfile: only the `gain` range was corrected (0-10 -> -4..4); text for the second inlet and the
-  reference behaviour is not written (generated in-session; judgement gate is Matt's).
+- [x] T025 Helpfile (2026-10-18): `gain` range corrected, a note on the optional second inlet and negative gain added,
+  bpatcher numinlets 2. Text only; Matt's look in Max (the judgement gate) is still to do.
 - [x] T026 (passed, Matt 2026-10-17) Matt: load in Max; the panel width (154) is unchanged, check the new inlet position and the cable to it.
 - [x] T027 (passed, Matt 2026-10-17) Matt live: tensormap -> axisflow (ref = f_vf_vortex) -> f_vf_fluid; sweep `angle`, negative gain.
 - Related, not built: f_caustic `edge` mode (off / wrap / mirror / clamp, vertex-shader) and an optional f_vf_fluid

@@ -314,8 +314,8 @@ def test_f_vf_fluid_builds_from_its_definition_with_the_old_scripts_invariants()
     _eq("the bypass toggle drives enc's Param",
         any(b.get("text") == "prepend param bypass_gate" for b in boxes.values()), True)
     _eq("route tokens in definition order, taps last",
-        boxes[bp.OBJ_ROUTE]["text"].split()[1:], ["force", "dt", "viscosity", "project", "drag", "gain", "taps"])
-    taps_n = 6
+        boxes[bp.OBJ_ROUTE]["text"].split()[1:], ["force", "dt", "viscosity", "project", "drag", "gain", "drift", "taps"])
+    taps_n = 7                      # force dt viscosity project drag gain drift taps (drift added 2026-10-17)
     _eq("taps has no widget and no label, only its attrui",
         (bp.param_obj_id(taps_n) in boxes, bp.param_label_id(taps_n) in boxes, bp.param_pre_id(taps_n) in boxes),
         (False, False, True))

@@ -92,7 +92,7 @@
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
 					"id": "d-8",
-					"linecount": 12,
+					"linecount": 11,
 					"maxclass": "comment",
 					"numinlets": 1,
 					"numoutlets": 0,
@@ -100,14 +100,14 @@
 						15.0,
 						150.0,
 						270.0,
-						154.0
+						171.0
 					],
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\nforce [0.0 – 0.2]\ndt [0.0 – 0.05]\nviscosity [0.0 – 1.0]\nproject [0.0 – 1.0]\ndrag [0.0 – 5.0]\ngain [0.0 – 10.0]\ntaps [1 – 16]\nbypass [0 / 1]"
+					"text": "External Control Messages\n\nforce [0.0 – 0.2]\ndt [0.0 – 0.05]\nviscosity [0.0 – 1.0]\nproject [0.0 – 1.0]\ndrag [0.0 – 5.0]\ngain [0.0 – 10.0]\ndrift [0.0 – 1.0]\ntaps [1 – 16]\nbypass [0 / 1]"
 				}
 			},
 			{
@@ -121,7 +121,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						15.0,
-						344.0,
+						361.0,
 						270.0,
 						300.0
 					],

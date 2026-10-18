@@ -159,7 +159,7 @@
      "id": "d-4",
      "maxclass": "bpatcher",
      "name": "f_tf_axisflow.maxpat",
-     "numinlets": 1,
+     "numinlets": 2,
      "numoutlets": 1,
      "outlettype": [
       "jit_gl_texture"
@@ -225,7 +225,7 @@
       500.0,
       188.0,
       210.0,
-      51.0
+      110.0
      ],
      "fontface": 0,
      "fontname": "Ableton Sans Light",
@@ -236,9 +236,9 @@
       0.0
      ],
      "bubble": 1,
-     "text": "Input: Tensor Map outlet 1. Output goes\nto a vecfield inlet (e.g. Advect in2).",
+     "text": "Input: Tensor Map outlet 1. Output goes\nto a vecfield inlet (e.g. Advect in2).\nOptional 2nd inlet: a vecfield (e.g.\nVortex) as the reference direction per\npixel; Angle rotates it. Negative Gain\nreverses the flow.",
      "fontsize": 12.0,
-     "linecount": 2
+     "linecount": 6
     }
    }
   ],
