@@ -213,7 +213,7 @@ for the exact circular reference at the same length budget.
 - Weickert, J. (1999). "Coherence-enhancing diffusion of colour images."
   Pattern Recognition and Image Analysis 9.
 - `jit.fx.cf.directional` (Cycling '74): the 3-tap line-integral precedent
-  this kernel family generalizes (`ideas/f_tf_jitfx_audit.md` §2.1).
+  this kernel family generalizes (`ideas/f_tf_research.md` §4).
 - The 49-tap discretization, the discrete-Gaussian transverse rule, the
   half-angle axis identities and the gate model are this library's own; no
   code was taken from other implementations.

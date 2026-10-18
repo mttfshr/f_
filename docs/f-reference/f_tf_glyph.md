@@ -178,4 +178,4 @@ experiment = the bench `test_cost_1080p_and_4k`.
 - G'MIC `-structuretensors` + `-eigen` + `-display_tensors`: an ellipse per
   tensor cell, the literal ancestor of this module's look.
 - `jit.fx.cf.kuwahara` — C74's shipped per-consumer in-pixel decode precedent
-  (`ideas/f_tf_jitfx_audit.md` §2.1).
+  (`ideas/f_tf_research.md` §4).

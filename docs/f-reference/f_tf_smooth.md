@@ -31,8 +31,8 @@ same alternation collapses to 25% of its magnitude within three frames
 spatial smoothing, applied over time.
 
 **What it is not:** a new algorithm. `jit.fx.tp.filter` is shipped platform
-coverage of the same two-pole recurrence math (`ideas/f_tf_jitfx_audit.md`
-§2.2 source-read, `out2 = in0·a0 + in1·a1 + in2·a2 − in3·b1 − in4·b2`). This
+coverage of the same two-pole recurrence math (`ideas/f_tf_research.md`
+§4 source-read, `out2 = in0·a0 + in1·a1 + in2·a2 − in3·b1 − in4·b2`). This
 module's contribution is semantics/integration: the one-knob performable
 release gesture, the family's float32 guarantees, the exact f_tensor inlet
 contract, and correct neutral behavior (`jit.fx.tp.filter` garbage-in-

@@ -70,17 +70,15 @@ substantially move a file in `ideas/`, update its entry here too.
   `f_vf_fieldmap`. Consumers built: `f_caustic`, `f_vf_warp`, `f_vf_streak`.
   Points out remaining territory: `f_vf_turbulence`, `f_vf_chladni`,
   masking/scalar-extraction, advection, modulation.
-- **[f_tensorfield.md](f_tensorfield.md)** 🟡 — Tensor field family hub,
-  sibling to `f_vecfield.md`. `f_tf_tensormap` (structure tensor: raw +
-  packed direction/trace/coherence) and `f_tf_axisflow` (tensor -> seam-free
-  vecfield bridge) are built and live-checked (2026-10-16; specs in
-  `.specify/`). The hub still holds the design history, the full consumer
-  audit and open questions Q12-Q15 (glow anisotropy inlet, stipple, grain).
-- **[f_tf_tensor_strategy.md](f_tf_tensor_strategy.md)** 🔵 — Open question
-  (2026-10-16): what is the tensor type for if every consumer needs an
-  adapter? Views vs tensor-space operators vs full-tensor consumers; rule for
-  how consumers take tensor data; decision pending on whether to keep the type
-  or fold the views into the tensormap.
+- **[f_tensorfield.md](f_tensorfield.md)** 🟡 — Tensor field family hub (sibling to
+  `f_vecfield.md`): status of the seven built `f_tf_` modules, decisions, live open
+  questions (Q12-Q17) and the vecfield-consumer audit. The active working doc.
+- **[f_tf_backlog.md](f_tf_backlog.md)** 🟡 — The tensor family's unbuilt candidates (mix,
+  glint, jacobian, motion, hessian, authored, metric, ...) with entry conditions, v2 ideas
+  for built modules, and what chains A-D still miss.
+- **[f_tf_research.md](f_tf_research.md)** ⚪ — Stable evidence for the tensor family: the
+  tensor-native test, prior art, the jit.fx platform audit, kuwahara, and GPU/decode facts
+  from the builds.
 - **[f_vf_seeds.md](f_vf_seeds.md)** ⚪ — Discrete-item generator: marks at
   hash-stable seed points, oriented by an incoming vecfield (wind-barb/ink
   look). Reference implementation for the discrete-item family's inlet

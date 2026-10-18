@@ -161,7 +161,7 @@ self-diagnosing (marks everywhere at a doubled angle), never blessed.
   safe under that (an unoriented line pattern is symmetric to θ+180°); the
   decode caveat is recorded in the codebox (glyph ADR-2 verbatim).
 - Spec, plan, tasks: `.specify/f_tf_hatch/`; triage/build-order context in
-  `ideas/f_tf_triage.md`, `ideas/f_tf_build_brief.md`.
+  `ideas/f_tf_backlog.md`, `ideas/f_tensorfield.md`.
 
 ---
 

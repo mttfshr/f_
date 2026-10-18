@@ -141,4 +141,4 @@ live confirmation pending). Insert/remove-at-γ=1 is free: raw in, raw out.
   eigenvalue-ratio stability logic behind the floor gate.
 - The isotropic-mix form of the relax branch follows the glyph plan's strength-cancellation
   identity (`.specify/f_tf_glyph/plan.md` ADR-2); the eigengap operator itself is this
-  library's own (audit `ideas/f_tf_jitfx_audit.md` §3: eigen-gap operators are open ground).
+  library's own (audit `ideas/f_tf_research.md` §4: eigen-gap operators are open ground).
