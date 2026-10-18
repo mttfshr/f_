@@ -94,7 +94,7 @@ patcher = {
             "hint": "Feedback coefficient: T' = T_new + release*(T_prev - T_new). "
                     "0 = passthrough (no residue from frame 1); higher = longer memory "
                     "(0.3 light, 0.5 default, 0.9 heavy inertia). PROVISIONAL default "
-                    "and ceiling -- OQ1 gate open, tier-3 judgement on live noise "
+                    "and ceiling -- OQ1 gate open, tier-3 judgment on live noise "
                     "pending (same discipline as tensormap's strength calibration).",
             "label": "Release",
         },

@@ -1,7 +1,7 @@
 """
 gather_debug.py -- localise the GPU-vs-mirror mismatch of tests/records/gather_proto.py.
 
-Runs the generated codebox in two debug modes (S = 1, one sample per pixel at the pixel centre) and compares each
+Runs the generated codebox in two debug modes (S = 1, one sample per pixel at the pixel center) and compares each
 intermediate with a direct NumPy computation of the same quantity:
   sel     the first of the M best coarse candidates: its residual and its offset from the pixel
   newton  where Newton from that first candidate ends after T steps, and whether it accepted it (|g| < TOL)

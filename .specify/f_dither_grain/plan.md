@@ -91,7 +91,7 @@ first build (see spec.md).
 
 ### ADR-4: Low-saturation fallback via `f_hue_processor`'s known-good gate
 
-**Context:** Hue angle is undefined/numerically unstable for near-grey
+**Context:** Hue angle is undefined/numerically unstable for near-gray
 pixels, which the driving texture will inevitably contain in normal
 use.
 
@@ -102,7 +102,7 @@ and the dither test entirely.
 **Consequences:** No new saturation-handling design needed — mechanism
 already proven working elsewhere in the library. What's still open:
 *which* fallback target to use below the gate (a single designated hue,
-or a neutral/grey grain) — genuinely empirical, not resolvable by
+or a neutral/gray grain) — genuinely empirical, not resolvable by
 discussion, so it's a Phase 0 decision gate (`tasks.md` T001) rather
 than settled here.
 

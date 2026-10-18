@@ -56,7 +56,7 @@ vecfield complexity is added.
 confirmed.
 
 - [ ] T001 **DECISION GATE:** low-saturation fallback target — designated
-  hue vs. neutral/grey grain. Per spec.md's Hue-boundary model, not
+  hue vs. neutral/gray grain. Per spec.md's Hue-boundary model, not
   resolvable by discussion alone; build both as a quick toggle in the
   scratch patch and judge which reads better once real (or
   low-saturation authored test) content is running through it. Document

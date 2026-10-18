@@ -2,7 +2,7 @@
 genjit.py -- turn codebox text into a .genjit file (a standalone gen patcher
 for jit.gl.pix's `gen` attribute; see .specify/test_bench/plan.md ADR-3).
 
-Structure modelled on Max's shipped examples
+Structure modeled on Max's shipped examples
 (Examples/jitter-examples/gen/pinch.genjit) and on build_patcher.py's
 gen_subpatcher: `in 1..n` objects wired to codebox inlets 0..n-1, codebox
 outlets wired to `out 1..m`. Params are declared inside the codebox with

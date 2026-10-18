@@ -32,7 +32,7 @@ GPU verification.
 **Reused, already verified**: separable-DFT codeboxes
 (`tests/bench/codeboxes/dft_x.gen`, `dft_y.gen`, GPU-matched to `np.fft` at
 ~1e-7); `pass_dft`/`pass_spectral` NumPy mirrors
-(`tests/math/test_fft_separable.py`); `gpu_sim.py`; the `f_vf_advect`
+(`tests/records/fft_separable.py`); `gpu_sim.py`; the `f_vf_advect`
 `state`/`pass` feedback pattern (Pattern 1); `vs_inState` +
 `src_vecfield` unconnected-inlet suppression.
 
@@ -98,7 +98,7 @@ src/f_vf_fluid/
   codebox_enc.gen          # stage 7: upsample + encode + gain + bypass gate (render res)
 tests/
   fluid_mirror.py          # NumPy mirror of every stage + full step (imports gpu_sim,
-                           #   pass_dft/pass_spectral from test_fft_separable)
+                           #   pass_dft/pass_spectral from fft_separable)
   test_fluid_mirror.py     # tier 1: Taylor–Green, projection, energy, Nyquist, stability
   bench_fluid.py           # tier 2: each stage on the GPU vs the mirror; multi-frame; cost
 docs/f-reference/f_vf_fluid.md        # reference doc (Phase 4)
@@ -233,7 +233,7 @@ are impossible there. Phase 1 measured it: exact at 1:1 and when magnifying
 render res is usually > 256² (0.44 max error vs a bilinear mirror on white
 noise). That is harmless for a smooth force but not for a noisy one at HD/4K
 (single tap = 6×/11.6× the noise of an area average). **Resolved 2026-09-28
-(T038a): a `taps × taps` grid of hardware taps at offsets in normalised coordinates,
+(T038a): a `taps × taps` grid of hardware taps at offsets in normalized coordinates,
 default `taps` = 8, exposed as a panel numbox (1–16)** — no source size, Param-supplied size or extra stage needed
 (cost ~0.4–0.7 ms; 16 would be ideal at 4K but 1.2–1.7 ms).
 
@@ -361,7 +361,7 @@ never-regenerate list.
 3. **Module contracts** — `tests/contracts/test_module_contracts.py` (static) and
    `tests/contracts/bench_modules.py` (live, inside `vs_render`) with **no** new
    `KNOWN` entries.
-4. **Tier 3 (judgement)** — scratch patch in `~/Vsynth/patterns/`: ranges,
+4. **Tier 3 (judgment)** — scratch patch in `~/Vsynth/patterns/`: ranges,
    defaults, look, `f_vf_optical_flow`-driven stirring, cost in a real patch.
 
 ---

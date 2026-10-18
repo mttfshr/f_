@@ -236,7 +236,7 @@ def test_T028_module_equals_the_standalone_scatter():
     check("module layer vs standalone layer: max|diff|", float(np.abs(layer.astype(np.float64) - s_layer).max()), 0.0)
 
 
-# ================================================================== shared behaviours (tasks T031, T032)
+# ================================================================== shared behaviors (tasks T031, T032)
 def module_tags(settings, inputs=None, n_in=None, warmup=180):
     """Both module-bench captures from one job: 'base' (settings applied, bypass off) and 'bypassed' (the timeline's end,
     after the bypass test)."""

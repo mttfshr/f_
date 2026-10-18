@@ -6,7 +6,7 @@ numerically. (Template: tests/templates/bench_module_template.py.)
 STATUS 2026-10-17 (owner build directive: NO bench run this build):
 WRITTEN, NOT RUN. Every bc.* call below needs Max with
 tests/bench/bench.maxpat open and is gated PROVISIONAL-OPEN. The NumPy
-mirror of this exact pass is verified 19/19 in tests/modules/tf_aniso_blur/test_tf_aniso_blur.py
+mirror of this exact pass is verified 19/19 in tests/modules/tf_aniso_blur/tf_aniso_blur_mirror.py
 (aniso_pass == codebox_aniso.gen's text parity: verified statement-by-
 statement against a formula-exact reconstruction at 1.8e-7 float32 noise).
 When bench time arrives, run:  tests/bench.sh tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py
@@ -14,7 +14,7 @@ When bench time arrives, run:  tests/bench.sh tests/modules/tf_aniso_blur/bench_
 Bench coverage here: compile + capture, GPU vs mirror per channel across the
 guard cases (vs_black / neutral / non-SPD / degenerate), knob extremes
 (length 0 identity, width_gate 0 and floor 1 exact-iso, bypass passthrough),
-border rows/cols (the texel-centre clamp: the bench GPU WRAPS out-of-range
+border rows/cols (the texel-center clamp: the bench GPU WRAPS out-of-range
 reads, tensormap ADR-5), and cost (bc.measure at 256/640 -- the ADR-2 gate's
 cost number; ms_per_pass only where gpu_bound, else the upper bound, said).
 """
@@ -50,12 +50,12 @@ def rand(h, w, lo=0.0, hi=1.0, seed=0):
 
 
 # ---------------------------------------------------------------- reference
-# The NumPy mirror lives in tests/modules/tf_aniso_blur/test_tf_aniso_blur.py (verified against
+# The NumPy mirror lives in tests/modules/tf_aniso_blur/tf_aniso_blur_mirror.py (verified against
 # independent ground truth there: eigvalsh, brute quadrature, iso reference).
 # Import it lazily so this file stays importable without a bench session.
 
 def mirror(tensor, source, **params):
-    import test_tf_aniso_blur as T
+    import tf_aniso_blur_mirror as T
     return T.aniso_pass(
         tensor, source,
         s_scale=params.get("strength_scale", 0.5),
@@ -117,12 +117,12 @@ def test_matches_mirror_at_knobs():
 
 def test_guard_cases_gpu():
     """vs_black / neutral / non-SPD / degenerate all take the guard path and
-    equal the isotropic reference -- the energy-gated consumer's defence,
+    equal the isotropic reference -- the energy-gated consumer's defense,
     now on the GPU."""
     src = rand(64, 64, seed=3)
     p = {"strength_scale": 0.5, "length": 4.0, "width_gate": 0.5, "floor_pct": 0.25,
          "strength": 100.0, "width": 64.0, "height": 64.0, "bypass_gate": 0.0}  # pinned
-    import test_tf_aniso_blur as T
+    import tf_aniso_blur_mirror as T
     black = np.zeros((64, 64, 4), np.float32)
     neutral = _tensor_tex(64, 64, 0.0, 0.0, 0.0)
     non_spd = _tensor_tex(64, 64, 1.0, 1.0, 0.1)
@@ -136,7 +136,7 @@ def test_guard_cases_gpu():
 
 
 def test_borders_clamped():
-    """Border rows/cols: the in-shader texel-centre clamp makes the bench's
+    """Border rows/cols: the in-shader texel-center clamp makes the bench's
     out-of-range WRAP behavior irrelevant -- verify, don't argue (tensormap
     ADR-5; the kernel reaches 8 px into the frame)."""
     src = rand(64, 64, seed=4)

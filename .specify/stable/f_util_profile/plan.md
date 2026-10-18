@@ -116,7 +116,7 @@ Goal: prove the GPU→CPU→GPU round trip works in a Vsynth context.
 4. Confirm: asyncread fires, JS receives matrix, dimensions are correct.
 5. Add `jit.gl.texture @adapt 0 @dim 1 128` downstream of JS.
 6. JS writes a flat test matrix (all 0.5) → texture → `jit.pwindow 1×128`.
-7. Confirm: output texture visible, correct dimensions, flat grey.
+7. Confirm: output texture visible, correct dimensions, flat gray.
 
 Completion gate: JS receives real matrix data from asyncread, outputs a
 visible 1×128 texture.
@@ -148,7 +148,7 @@ Completion gate: profile output visibly reflects upstream texture structure;
 
 ---
 
-### Phase 3 — bypass (freeze) behaviour
+### Phase 3 — bypass (freeze) behavior
 
 Goal: bypass holds last computed profile.
 

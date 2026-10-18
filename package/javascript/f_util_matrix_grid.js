@@ -5,7 +5,7 @@
 // Inlets:
 //   0 — control messages:
 //         params <name1> <name2> ...        — rebuild param rows
-//         bypass <0|1>                      — grey out all cells
+//         bypass <0|1>                      — gray out all cells
 //         clear                             — zero all amounts
 //         set <source_idx> <param> <amount> — set a cell programmatically
 //         strip                             — enter single-row strip mode

@@ -254,7 +254,7 @@ param that makes the module's headline feature work.
 **Verdict: pass.**
 
 A small utility, and the helpfile is appropriately minimal rather than
-padded: digest ("Splits a vecfield's X/Y channels to two greyscale
+padded: digest ("Splits a vecfield's X/Y channels to two grayscale
 outlets, unipolar or bipolar") and recipe ("Utility -- inspect vecfield
 channels.") both say exactly what the module is and isn't overclaiming
 a "for" framing it doesn't need. References point at the doc and the

@@ -21,7 +21,7 @@
 | T015–T017 (Phase 2) | PENDING Matt | Scratch/feel tier out of scope per owner directive. |
 | T018–T024 (Phase 3) | PENDING | definition.py/registration/contract/live checks are Phase 3; not reached in this assignment's scope. |
 | T025 (Phase 4) | PENDING | Live integration. |
-| T026–T029 (Phase 5) | Partly pre-staged | docs/f-reference/f_tf_smooth.md written as "Status: Draft — codebox tier-2 bench and tier-3 live judgement pending"; menu/inventory/HANDOFF are parent-owned (lines in REGISTRATION_NOTES.md). |
+| T026–T029 (Phase 5) | Partly pre-staged | docs/f-reference/f_tf_smooth.md written as "Status: Draft — codebox tier-2 bench and tier-3 live judgment pending"; menu/inventory/HANDOFF are parent-owned (lines in REGISTRATION_NOTES.md). |
 
 ## Acceptance criteria (per parent's six)
 
@@ -45,7 +45,7 @@
 
 ## Phase 3 addendum (built on parent instruction 2026-10-17)
 
-- `src/f_tf_smooth/definition.py` WRITTEN: two-node pix_chain (`state` primary @codebox_state.gen 2-in/1-out; `render` support @codebox_render.gen 1-in/1-out), `pix_wires` [["state",0,"render",0],["render",0,"state",1]] (the feedback loop), `outlet_source_override` {0: "render"} + raw_lines obj-50→outlet0, bypass_mode "param" (bypass_gate → primary state pix, ADR-4 passthrough not freeze), signal_type "tensor out" (amber, tensormap T030 colour), params release (0–1, default 0.5, PROVISIONAL OQ1 gate comment in hint) + bypass; panel 154×84, tensormap-style overrides.
+- `src/f_tf_smooth/definition.py` WRITTEN: two-node pix_chain (`state` primary @codebox_state.gen 2-in/1-out; `render` support @codebox_render.gen 1-in/1-out), `pix_wires` [["state",0,"render",0],["render",0,"state",1]] (the feedback loop), `outlet_source_override` {0: "render"} + raw_lines obj-50→outlet0, bypass_mode "param" (bypass_gate → primary state pix, ADR-4 passthrough not freeze), signal_type "tensor out" (amber, tensormap T030 color), params release (0–1, default 0.5, PROVISIONAL OQ1 gate comment in hint) + bypass; panel 154×84, tensormap-style overrides.
 - Build: `python3 build/build_patcher.py src/f_tf_smooth/definition.py` from repo root → `package/patchers/f_tf_smooth.maxpat`; `python3 -c "import json; json.load(open('package/patchers/f_tf_smooth.maxpat'))"` → VALID.
 - Built wiring verified in the JSON: routepass→state in0; release dial→attrui→state in0; bypass_gate prepend→state in0; state out0→render in0; render out0→state in2 (feedback) AND render out0→outlet 0; outlet correctly sourced from the render node, not the primary.
 - Contract analysis (offline, module_contract on the built patcher): f_tf_smooth CLEAN — params release+bypass_gate both driven, none unused, route_map {release: [release]}, no default_mismatch, no port_gaps, bypass reaches the primary. (The full `test_module_contracts.py` suite shows pre-existing sibling failures — f_tf_glyph undriven width/height, f_vf_advect, f_masonry — not from this module.)

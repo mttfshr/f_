@@ -235,9 +235,9 @@ def test_capture_takes_a_text_buttons_colours_and_rounding_but_not_its_labels():
         b["rounded"] = 4.0
     with tempfile.TemporaryDirectory() as tmp:
         dp, sp = _scene(tmp, tune, definition=src)
-        _eq("before capture the hand-set colours are drift", bool(_drift_after(dp, sp)), True)
+        _eq("before capture the hand-set colors are drift", bool(_drift_after(dp, sp)), True)
         pl = capture.capture(dp, sp, out=lambda *_: None)
-        _eq("the four colours and the rounding are captured, on the toggle only",
+        _eq("the four colors and the rounding are captured, on the toggle only",
             {k: sorted(v) for k, v in pl["captured"].items()},
             {"m.ctl": ["activebgcolor", "activebgoncolor", "activetextcolor", "activetextoncolor", "rounded"]})
         _eq("after capture, rebuilding from the definition reproduces the patcher exactly",

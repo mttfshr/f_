@@ -69,7 +69,7 @@ patcher = {
          "hint": "Tone-curve exponent for the caustic layer's exposure curve, (v/(1+v))^expo -- lower compresses highlights harder, higher keeps more contrast. Was a fixed internal constant (0.7, the look-patch default) until 2026-10-10, now exposed."},
         {"name": "edge",        "type": "menu", "options": ["Off", "Wrap", "Mirror", "Clamp"], "default": 0, "label": "Edge",
          "pix_wire": False,      # drives the scene's control entry like `scale` (a shader uniform), tapped at the menu's outlet
-         "hint": "Where light goes when a ray lands outside the frame. Off: it is lost (the original behaviour). Wrap: it re-enters on the opposite side, so nothing is lost and no band is starved. Mirror: it reflects at the border. Clamp: it piles onto the border pixels. Added 2026-10-17 (Matt)."},
+         "hint": "Where light goes when a ray lands outside the frame. Off: it is lost (the original behavior). Wrap: it re-enters on the opposite side, so nothing is lost and no band is starved. Mirror: it reflects at the border. Clamp: it piles onto the border pixels. Added 2026-10-17 (Matt)."},
         {"name": "bypass",      "type": "bypass"},
     ],
 

@@ -55,7 +55,7 @@ def _tabs(d):
 
 
 def _name_boxes(tab):
-    """The per-row name boxes: a textbutton (clickable) or a grey comment (no helpfile)."""
+    """The per-row name boxes: a textbutton (clickable) or a gray comment (no helpfile)."""
     return [b["box"] for b in tab["patcher"]["boxes"]
             if b["box"].get("presentation_rect", [None])[0] == gl.NAME_X]
 
@@ -111,7 +111,7 @@ def test_clickable_iff_helpfile_and_wired():
                 ok = (len(msgs) == 1 and msgs[0]["text"] == f"loadunique {name}.maxhelp"
                       and any(boxes[y]["text"] == "pcontrol" for y in out.get(msgs[0]["id"], [])))
                 unwired += 0 if ok else 1
-    check("names whose clickable/greyed state disagrees with helpfile existence", wrong_kind, 0)
+    check("names whose clickable/grayed state disagrees with helpfile existence", wrong_kind, 0)
     check("buttons not wired button -> loadunique <name>.maxhelp -> pcontrol", unwired, 0)
 
 

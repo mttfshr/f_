@@ -25,7 +25,7 @@ noisy live one without flicker.
 
 - **Weakest "needs the type" case.** Component-wise crossfade of two float32 textures is
   mathematically stock xfade. A dedicated module is justified by guarantees, not math: float32
-  `@type`, family labelling, and neutral handling.
+  `@type`, family labeling, and neutral handling.
 - **Neutral rule for the spec:** an unconnected side must contribute `(0, 0.5, 0, 1)`, never
   all-zeros (zeros decode to a non-SPD phantom, `f_tf_research.md` section 6).
 - **Entry condition:** spec it when chain B is actually being assembled, after two real consumers
@@ -82,7 +82,7 @@ Keep the curl-scalar split in the spike scope so the decision has full informati
 ### `f_tf_motion` — joins the jacobian spike
 
 The same strain math applied to `f_vf_optical_flow`. Its contract is confirmed (not assumed):
-out0 is a standard 0.5-centred vecfield, so no range adapter is needed; out1 carries a raw
+out0 is a standard 0.5-centered vecfield, so no range adapter is needed; out1 carries a raw
 confidence determinant and a double-angle ambiguous axis (the aperture-problem signal), so gate
 on that instead of inventing confidence. Performance hook: a performer's movement axis becomes
 the structure every renderer draws. Inherits optical flow's honest limits (confidence is

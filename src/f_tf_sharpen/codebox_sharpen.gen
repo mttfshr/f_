@@ -34,7 +34,7 @@
 // to [0,1] around its 0.5 zero. Beyond the linear range (gamma*coherence > 1
 // can drive lambda2' below 0 / lambda1' above 1) the clamp saturates and trace
 // is no longer preserved there -- recorded in tests/test_tf_sharpen.py
-// (test_encode_clamp_beyond_linear_range); tier-3 judgement decides whether
+// (test_encode_clamp_beyond_linear_range); tier-3 judgment decides whether
 // extreme-gamma users care. bypass_gate (module bypass, bypass_mode "param";
 // NOT the native @bypass): exact passthrough.
 // pix_type float32 required (tensormap ADR-2 convention).

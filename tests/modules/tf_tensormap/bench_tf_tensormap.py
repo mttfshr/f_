@@ -2,7 +2,7 @@
 bench_tf_tensormap.py -- Tier 2 verification for f_tf_tensormap: the real
 stage codeboxes (src/f_tf_tensormap/codebox_*.gen) run on the GPU through the
 Max test bench and are diffed against the NumPy mirror in
-tests/modules/tf_tensormap/test_tf_tensormap.py, one stage per job (multi-stage modules are
+tests/modules/tf_tensormap/tf_tensormap_mirror.py, one stage per job (multi-stage modules are
 benched stage by stage). Tasks T012-T016, T018-T021.
 
 Needs Max with tests/bench/bench.maxpat open.
@@ -19,7 +19,7 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run
-import test_tf_tensormap as m          # the tier-1 mirror
+import tf_tensormap_mirror as m          # the tier-1 mirror
 
 REPO = _paths.REPO
 SRC = REPO / "src" / "f_tf_tensormap"

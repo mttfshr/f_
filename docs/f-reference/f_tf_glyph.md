@@ -1,7 +1,7 @@
 # f_tf_glyph
 
 **Type:** Processor (f_tensor consumer — the family's first tensor renderer)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgement pending. Tier-1 mirror green (14/14, 2026-10-17); bench file written but not run; defaults provisional (tasks TG020); variant menu / debug tints unresolved for v2 (gates open).
+**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending. Tier-1 mirror green (14/14, 2026-10-17); bench file written but not run; defaults provisional (tasks TG020); variant menu / debug tints unresolved for v2 (gates open).
 
 ---
 
@@ -36,8 +36,8 @@ in1 (source tint) ─┴→ stage_glyph (one jit.gl.pix):
 ```
 
 Single stage, stateless, no loops anywhere (plan ADR-4: the uniform lattice
-makes cell lookup exact arithmetic). Cell centres are sampled with in-shader
-clamping to texel centres — the bench GPU wraps out-of-range reads (tensormap
+makes cell lookup exact arithmetic). Cell centers are sampled with in-shader
+clamping to texel centers — the bench GPU wraps out-of-range reads (tensormap
 ADR-5).
 
 ---
@@ -47,7 +47,7 @@ ADR-5).
 | Inlet | Content |
 |---|---|
 | 0 | **Raw tensor, `f_tf_tensormap` outlet 0 exactly** — `f_tensor_type.md` contract: R = Jxx·strength, G = Jxy·strength·0.5 + 0.5 (0.5 = zero), B = Jyy·strength, A = 1. The driving input; control messages ride the same inlet. |
-| 1 | Source texture for tint (luma-modulated ink at the cell centre). Optional; geometry never depends on it. Unconnected renders the neutral white ink. |
+| 1 | Source texture for tint (luma-modulated ink at the cell center). Optional; geometry never depends on it. Unconnected renders the neutral white ink. |
 
 **Inlet contract (plan ADR-3):** inlet 0 accepts tensormap **outlet 0** only.
 Feeding **outlet 1** (the angle-doubled packed encoding) decodes a visibly
@@ -74,7 +74,7 @@ diagnoses on sight, but never wire it. Nothing mechanically sniffs the input.
 | `max_aspect` | 1-32 | 8 | Clamp so near-degenerate λ2 can't draw infinitely thin spikes. |
 | `bypass` | 0/1 | 0 | **Passthrough of the source texture** at the current pixel — not a neutral frame (glyph = passthrough per the family contract). |
 
-**Every default above is provisional**, pending the live judgement tier
+**Every default above is provisional**, pending the live judgment tier
 (tasks TG020). The shipped dial is named `glyph_scale` on the wire because the
 codebox's internal identifier avoids the GenExpr `scale()` operator collision.
 
@@ -105,13 +105,13 @@ Note the θ+180° symmetry caveat in the idiom text: an unoriented line at θ an
 θ+180° renders identically for glyphs, but a future consumer that is *not*
 axis-symmetric must not copy it blindly.
 
-## Key behaviours
+## Key behaviors
 
 - **Gain-free (ADR-5).** Glyph orientation, aspect and presence are computed
   from ratios of the decoded terms; the common `strength` factor cancels. The
   glyph *radius* comes from `glyph_scale` × cellsize, not from absolute
   eigenvalues — **sweeping tensormap's `strength` changes nothing here.**
-  (Fallback if live judgement says size-meaning matters: λ1-driven radius with
+  (Fallback if live judgment says size-meaning matters: λ1-driven radius with
   a `strength` echo param; recorded in plan ADR-5, not built.)
 - **Gate (ADR-6).** A cell draws only where the decoded trace ≥ `gate`. Below
   it: nothing drawn. Isotropic-but-traceable cells (λ1 ≈ λ2 with real trace)
@@ -124,7 +124,7 @@ axis-symmetric must not copy it blindly.
   menu; cross/tick would be closed-form distance swaps kept as scratch-only
   experiments (plan ADR-8). No debug-tint modes (spec OQ2 gate also open).
 - **Marks confined to their cells:** every drawn pixel lies within
-  `glyph_scale·cellsize/2` (+ the softness falloff) of its own cell centre.
+  `glyph_scale·cellsize/2` (+ the softness falloff) of its own cell center.
 
 ## Typical use
 
@@ -162,9 +162,9 @@ experiment = the bench `test_cost_1080p_and_4k`.
   two instances of the module are live at once (the bench found this class
   2026-10-17; `axisflow` carried it too and was renamed same day).
 - Bench GPU wraps out-of-range texture reads; cell-tap coordinates are clamped
-  in-shader to texel centres (tensormap ADR-5).
+  in-shader to texel centers (tensormap ADR-5).
 - `dim` reads 1 inside live jit.gl.pix, so `width`/`height` are Params (the
-  tensormap precedent); they enter only through the texel-centre clamp.
+  tensormap precedent); they enter only through the texel-center clamp.
 - The decode idiom's custodian is this module's plan ADR-2; guard its text.
 - Unconnected `jit.gl.pix` inlets read (0,0,0,1) (bench-verified 2026-10-07);
   for inlet 1 that lands on luma 0 → neutral white ink, as intended.

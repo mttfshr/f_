@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Splits a vecfield's X/Y channels to two greyscale outlets, unipolar or bipolar",
+					"text": "Splits a vecfield's X/Y channels to two grayscale outlets, unipolar or bipolar",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"

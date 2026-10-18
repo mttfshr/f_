@@ -245,7 +245,7 @@ Phases map to the blocks and to `tasks.md` (Phase 0 Setup, 1 Foundational, 2 US1
 - **Phase 2 US1 (Block B)**: sheets mode renders correctly (the MVP).
 - **Phase 3 US2 (Block C, part)**: the `detail` ladder.
 - **Phase 4 US3 (Block C part, Block D)**: the mode switch, the extended definition, soft mode unchanged.
-- **Phase 5 US4 (Block D)**: shared behaviours: bypass in both modes, unconnected vecfield, instances.
+- **Phase 5 US4 (Block D)**: shared behaviors: bypass in both modes, unconnected vecfield, instances.
 - **Phase 6 Polish (Block E)**: live check, docs, constitution, release notes.
 
 ---

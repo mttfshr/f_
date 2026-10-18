@@ -2,12 +2,12 @@
 bench_fft.py -- FFT T1 (and T2) through the Max test bench: the separable-DFT
 codeboxes run on the GPU in jit.gl.pix and are diffed against NumPy
 (.specify/test_bench/tasks.md T023-T026; math reference:
-tests/math/test_fft_separable.py). One pass per job (spec decision): multi-pass
+tests/records/fft_separable.py). One pass per job (spec decision): multi-pass
 results chain job outputs into the next job's input.
 
-Run:  tests/bench.sh tests/math/bench_fft.py
+Run:  tests/bench.sh tests/records/bench_fft.py
 """
-GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
+GROUP = "record"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
 ORDER = 30
 
 import paths as _paths
@@ -18,19 +18,9 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run
-from test_fft_separable import make_image, pack, pass_dft, rel_err
+from dft_mirror import dft_codebox as codebox, make_image, pack, pass_dft, rel_err
 
-CB = _paths.BENCH / "codeboxes"
 TOL = 1e-4
-
-
-def codebox(axis, n=128, naive_angle=False):
-    code = (CB / f"dft_{axis}.gen").read_text()
-    assert code.count("128") == 2, "N must appear exactly twice (see codebox header)"
-    code = code.replace("128", str(n))
-    if naive_angle:
-        code = code.replace("mod(k * n, N)", "(k * n)")
-    return code
 
 
 def gpu_pass(tex, axis, inverse=0, n=None, naive_angle=False):

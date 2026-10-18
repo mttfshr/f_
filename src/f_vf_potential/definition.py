@@ -2,7 +2,7 @@
 f_vf_potential — definition.py
 
 Scalar potential field integrator. Takes a vecfield (float32 RG) and accumulates
-field magnitude over time via ping-pong feedback. Output is a 0-1 scalar (greyscale)
+field magnitude over time via ping-pong feedback. Output is a 0-1 scalar (grayscale)
 whose level sets are isolines of integrated flow — directly usable as f_weave
 scalar inlet to produce curved isoline texture.
 

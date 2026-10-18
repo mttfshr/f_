@@ -13,7 +13,7 @@
 # inlet 1 (this module has no encoding of its own to neutralize: family
 # bypass contract "bypassed module is a PASSTHROUGH", not a neutral frame).
 #
-# Header signal_type "tensor in" reuses the amber `tensor` colour added by
+# Header signal_type "tensor in" reuses the amber `tensor` color added by
 # tensormap T030 (SIGNAL_TYPE_COLORS is keyed on the first word only). The
 # OUTLET is an ordinary color texture (spec OQ1): no signal-type novelty,
 # default outlet wiring is right.
@@ -28,7 +28,7 @@
 # jit.gl.pix (tensormap T012 finding): they set the one-pixel tap step.
 #
 # All kernel/gate defaults are PROVISIONAL (spec Parameters table; tier-2
-# bench + tier-3 live judgement pending Matt): strength_scale 0.5,
+# bench + tier-3 live judgment pending Matt): strength_scale 0.5,
 # length 4, width_gate 0.5, floor 0.25. See the codebox header for the
 # ADR-2 PROVISIONAL-OPEN gate note.
 

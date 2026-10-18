@@ -3,7 +3,7 @@ _Session: 2026-05-19 — pre-design research for texture routing matrix_
 
 ## Purpose
 
-Catalogue what exists on-system for converting continuous audio signals (CV) into
+Catalog what exists on-system for converting continuous audio signals (CV) into
 discrete routing commands. Goal: design the matrix message protocol around what
 these modules naturally output, not the other way around.
 

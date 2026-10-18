@@ -94,7 +94,7 @@ T003's real-world matrices on file (both music carriers). **Phase 2
 complete — spec.md Acceptance fully evidenced.** Phase 3 (T009/T010)
 is next; T008 already done below.
 
-## Phase 3: Parameter characterisation
+## Phase 3: Parameter characterization
 
 - [x] T008 Band-1 sweep (the deferred half of T004): the 4.5 cyc/oct
   ripple across 1–2 kHz against 21.5 Hz bins — run the mirror's
@@ -190,7 +190,7 @@ workstream is the *shared* remaining item, not this module's alone.
 - [x] T014 Registration — done to the same bar `f_a_ripple` ships at:
   README Audio table row (⚠, ≤110 chars), `NOT_IN_MENU` entry in
   `src/f_modules/menu.py` with reason, `f_Launch` regenerated (40
-  modules, f_a_decorrelate greyed = no helpfile), and the generators'
+  modules, f_a_decorrelate grayed = no helpfile), and the generators'
   checks extended for the new dependency-file class: `NOT_MODULES`
   (pfft~ inner subpatch — loaded by name, not a module) in
   `generate_launch.py` + the matching exemption in `generate_menu.py`

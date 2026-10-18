@@ -43,9 +43,36 @@ def slow(fn):
     return fn
 
 
+# Every check() result is also appended to tests/.state/check_results.jsonl (see tests/lib/checkhist.py) when a runner
+# set TEST_RUN_ID, so measured errors and tolerance headroom can be tracked over runs. RECORD=False turns that off
+# (test_harness does, so its fake checks never reach the history). _CURRENT says which file and test is running.
+RECORD = True
+_CURRENT = {"file": None, "test": None}
+
+
+def _record(label, value, tol):
+    if not RECORD:
+        return
+    try:
+        import checkhist
+        checkhist.record(_CURRENT["file"], _CURRENT["test"], label, value, tol)
+    except Exception:
+        pass   # the history is a convenience: it must never fail or slow a check
+
+
+def _relfile(path):
+    if not path:
+        return None
+    try:
+        return os.path.relpath(os.path.realpath(path), os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    except Exception:
+        return os.path.basename(str(path))
+
+
 def check(label, value, tol):
     value = float(value)
     ok = value <= tol
+    _record(label, value, tol)
     print(f"    {'ok ' if ok else 'BAD'}  {label}: {value:.3e}  (tol {tol:.0e})")
     if not ok:
         raise AssertionError(f"{label}: {value:.3e} > {tol:.0e}")
@@ -88,7 +115,9 @@ def run(namespace):
     skipped = [k for k, v in tests if getattr(v, "slow", False) and not with_slow]
     tests = [(k, v) for k, v in tests if k not in skipped]
     failed = 0
+    _CURRENT["file"] = _relfile(namespace.get("__file__"))
     for name, fn in tests:
+        _CURRENT["test"] = name
         if QUIET:
             failed += _run_quiet(name, fn)
             continue

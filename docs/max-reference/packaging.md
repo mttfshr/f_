@@ -20,10 +20,10 @@ Reference layouts on the dev machine (verified): Vsynth, ease, Polish Your Pixel
 
 | Was | Now |
 |---|---|
-| Manifest keys `display_name`, `max_version_required` (not recognised, so ignored) | `displayname`, `max_version_min` `9.0.0`, `max_version_max` `none` |
+| Manifest keys `display_name`, `max_version_required` (not recognized, so ignored) | `displayname`, `max_version_min` `9.0.0`, `max_version_max` `none` |
 | No `website`; no Vsynth dependency noted | `website` set; `description` says it requires Vsynth |
 | No readme inside the package | `package/readme.md` |
-| `demos/` (not a recognised folder name) with generic file names on the global search path | `examples/`, every demo and preset prefixed `f_demo_` |
+| `demos/` (not a recognized folder name) with generic file names on the global search path | `examples/`, every demo and preset prefixed `f_demo_` |
 | `javascript/moduleSize.js`, a byte-identical copy of Vsynth's own file | Removed (2026-10-01); Max resolves Vsynth's copy |
 | No `icon.png`, no license | License added 2026-10-04 (see License research); `icon.png` **still missing** (see Open items) |
 

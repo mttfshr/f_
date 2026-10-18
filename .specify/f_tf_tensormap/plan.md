@@ -53,7 +53,7 @@ tests/
   spike_tf_tensormap_cost.py   only if the cost gate needs it               (Phase 1)
 
 ~/Vsynth/patterns/ (not in repo)
-  tf_tensormap_scratch.maxpat   tier 3 judgement                             (Phase 2)
+  tf_tensormap_scratch.maxpat   tier 3 judgment                             (Phase 2)
 
 docs/f-reference/
   f_tf_tensormap.md        as-built reference                                (Phase 5)
@@ -99,7 +99,7 @@ Where the codeboxes live (`src/<name>/` vs `.specify/f_tf_tensormap/`) follows w
 
 **Decision (Matt, 2026-10-16):** bounded loop, weight `step(abs(i), radius)` per tap, normalized by the actual tap count. `R_MAX` is chosen by the cost spike (T016/T017). If cost is too high the answer is a smaller `R_MAX`, i.e. a narrower `radius` range, not a different algorithm. The strided-taps alternative is dropped.
 
-**Resolved (Matt, 2026-10-16): `R_MAX` = 16, `radius` in pixels, range 0-16.** Bench (M3 Max, 1080p): R_MAX 8 and 16 each cost under ~0.87 ms per smoothing pass (CPU-bound upper bound); R_MAX 32 costs ~1.9 ms. 4K and full-chain cost still to measure; M1 unmeasured. Also found: the bench GPU wraps out-of-range reads, so every stage clamps coordinates to texel centres in-shader (ADR-5).
+**Resolved (Matt, 2026-10-16): `R_MAX` = 16, `radius` in pixels, range 0-16.** Bench (M3 Max, 1080p): R_MAX 8 and 16 each cost under ~0.87 ms per smoothing pass (CPU-bound upper bound); R_MAX 32 costs ~1.9 ms. 4K and full-chain cost still to measure; M1 unmeasured. Also found: the bench GPU wraps out-of-range reads, so every stage clamps coordinates to texel centers in-shader (ADR-5).
 
 **Rationale:** The loop is an exact box blur, so it matches the spike and the mirror and the tier-1 ground truth is clean. Strided taps are cheaper but under-sample (gaps) at large radius and change the filter's meaning; they are only worth it if cost forces it.
 
@@ -177,7 +177,7 @@ Where the codeboxes live (`src/<name>/` vs `.specify/f_tf_tensormap/`) follows w
 **Builds:** four `codebox_*.gen` files, `tests/modules/tf_tensormap/bench_tf_tensormap.py`
 **Verification:** each stage compiles and matches its mirror on the GPU; border rows checked; cost measured per stage and for the chain
 
-### Block 3: Judgement on real content
+### Block 3: Judgment on real content
 **Dependencies:** Block 2
 **Builds:** scratch patch only
 **Verification:** `strength` and `radius` defaults feel usable on bfg Perlin / Voronoi / fbm; B/A separate structure from flat regions
@@ -202,7 +202,7 @@ Record the tier gate and the naming decision (made), write the NumPy mirror and 
 ### Phase 1: Codeboxes on the bench (BLOCKING)
 Write the four stages against the mirror, one at a time. Pick `R_MAX` by measurement (ADR-3: bounded loop is decided). Exit: every stage matches its mirror on the GPU, border behavior confirmed, cost recorded.
 
-### Phase 2: Scratch patch, judgement tier
+### Phase 2: Scratch patch, judgment tier
 Calibrate `strength` and `radius`, look at B/A on real content, try a throwaway decode preview. Exit: provisional values in the spec become real, or the spec says why they did not.
 
 ### Phase 3: definition.py and build

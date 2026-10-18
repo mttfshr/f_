@@ -20,7 +20,7 @@ _RAW = json.loads((_HERE / "raw_ui.json").read_text()) if (_HERE / "raw_ui.json"
 def _dial(name, hint, color=None):
     d = {"name": name, "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": None, "hint": hint}
     if color:
-        d["color_expression"] = color      # the row's theme colour; the RGB itself is in `overrides`
+        d["color_expression"] = color      # the row's theme color; the RGB itself is in `overrides`
     return d
 
 

@@ -123,6 +123,30 @@ wire("fb", 0, "fbgate", 1)
 wire("fbgate", 0, "p1", 1)
 wire("fbgate", 1, "p1", 2)
 
+# Developer comments: what each element is for. Text only, no wiring, so the bench is unchanged.
+comment("c-udp", "OSC/UDP in (7471) from Python (benchclient.py)", [20, 75, 125, 40])
+comment("c-err", "[error] -> deferlow -> prepend: Max errors (gen compile errors etc.) reach js. deferlow stops "
+        "a feedback loop that overflowed the stack (2026-09-22).", [320, 120, 300, 42])
+comment("c-world", "jit.world bench_ctx: the GL context every texture and pix object here shares. "
+        "Its draw bang is the frame clock.", [540, 50, 240, 45])
+comment("c-tbb", "t b b: right = frame count in js (first), left = bang bench_tex1", [300, 87, 230, 28])
+comment("c-js", "js bench.js: all the logic. Parses a job from OSC, writes its .genjit, sets params, counts "
+        "frames, captures the result, replies through udpsend (7472).", [190, 172, 420, 40])
+comment("c-inputs", "bench_inK matrix -> bench_texK texture: the test inputs (K = 1..3). tex1 goes through bench_src "
+        "into slot 1; tex2 / tex3 are corded into inlets 1 / 2 of every slot (delivery by message failed, 2026-09-22).",
+        [20, 203, 740, 26])
+comment("c-src", "bench_src: identity pass upstream of slot 1", [430, 297, 330, 20])
+comment("c-slots", "bench_p1..p8: the slots. Each job's .genjit loads into them; slots 2..8 start bypassed and are "
+        "enabled for chained measurements. Every slot has 3 inlets and 4 outlets (counts never change).",
+        [20, 610, 400, 45])
+comment("c-gates", "bench_gateK -> bench_outK: capture taps on slot 1's 4 outlets (out 1 = bench_gate / bench_out). "
+        "js opens a gate on the chosen frame so the matrix holds that frame; it is then written to the job directory.",
+        [450, 386, 520, 30])
+comment("c-fbsel", "E4 feedback: bench_fbsel picks which slot-1 outlet feeds back", [550, 422, 480, 22])
+comment("c-fb", "bench_fb: identity pass that copies it", [790, 457, 300, 20])
+comment("c-fbgate", "bench_fbgate routes the copy into slot 1 inlet 1 or 2. Non-left pix inlets store without "
+        "rendering, so slot 1 reads the previous frame: a one-frame delay.", [520, 492, 520, 35])
+
 patcher = patcher_dict(boxes, lines, (100.0, 100.0, 780.0, 660.0))
 
 if __name__ == "__main__":

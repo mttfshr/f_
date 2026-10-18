@@ -6,8 +6,8 @@
 //   bottom shape = the type the module outputs
 //   vec    = filled inverted triangle, cyan   (the nabla in the title-bar label)
 //   tensor = filled disc,              amber  (an ellipse)
-//   none   = filled square,            dim grey
-// Shape AND colour carry the type, so the dots still read without colour vision.
+//   none   = filled square,            dim gray
+// Shape AND color carry the type, so the dots still read without color vision.
 // Size intended: 7 x 14 px in presentation mode (two 5 px shapes, 2 px apart, 1 px margin all round).
 // Generated into every patcher by build/build_patcher.py (type_dots_box); edit the look here.
 

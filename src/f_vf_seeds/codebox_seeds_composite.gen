@@ -7,7 +7,7 @@
 // Stage 2/3's output is discarded either way once composited, so no
 // bypass gating needed upstream for the mark-color path (plan.md ADR 8).
 //
-// out2 = mark mask (comp_a as greyscale, matching the ORIGINAL
+// out2 = mark mask (comp_a as grayscale, matching the ORIGINAL
 // single-codebox contract's separate mask outlet).
 
 Param bypass(0.0);

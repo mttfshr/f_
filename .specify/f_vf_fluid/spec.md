@@ -5,7 +5,7 @@ _Status: Draft — not yet built_
 _Origin: `ideas/ceyron_simulation_scripts_notes.md` (FFT thread, 2026-07-03
 → 2026-09-22). Separable-DFT passes verified on the GPU through the test
 bench; spectral diffusion/projection verified in NumPy
-(`tests/math/test_fft_separable.py`). Architecture discussed and decided
+(`tests/records/fft_separable.py`). Architecture discussed and decided
 2026-09-23._
 
 ---
@@ -141,7 +141,7 @@ into the force inlet makes the fluid respond to video motion, an obstacle
 pattern, a steady wind or a luma landscape.
 
 **Why this priority**: the expressive payoff, but it depends on US1–US3 and
-is a tier-3 (judgement) test.
+is a tier-3 (judgment) test.
 
 **Independent Test**: a scratch Vsynth patch with each producer in turn;
 each visibly drives the flow, none produces artifacts at the frame edge or
@@ -246,7 +246,7 @@ placed in one Vsynth patch run independently.
   every parameter range under sustained force (bench temporal run).
 - **NF-004**: Verification follows the constitution's tiers: NumPy mirror of
   the whole step (math), bench with frame-exact multi-frame feedback runs
-  (execution), then a scratch patch for tuning (judgement).
+  (execution), then a scratch patch for tuning (judgment).
 
 ---
 
@@ -264,7 +264,7 @@ placed in one Vsynth patch run independently.
    codeboxes matches the NumPy mirror within 1e-4 over 100 frames.
 5. **Stable:** no NaN/Inf after 10,000 frames at parameter extremes.
 6. **Zero in, zero out:** neutral field exactly, on every frame.
-7. **Expressive (tier 3, Matt's judgement):** `f_vf_vortex → f_vf_fluid →
+7. **Expressive (tier 3, Matt's judgment):** `f_vf_vortex → f_vf_fluid →
    f_vf_advect` produces persistent swirling flow visibly distinct from
    `f_vf_advect` alone, and `f_vf_optical_flow → f_vf_fluid` stirs the flow
    from video motion.

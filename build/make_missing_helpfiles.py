@@ -214,7 +214,7 @@ MODULES = {
         n_in=5),
     "f_vf_split": dict(
         title="Vf Split",
-        digest="Splits a vecfield's X/Y channels to two greyscale outlets, unipolar or bipolar",
+        digest="Splits a vecfield's X/Y channels to two grayscale outlets, unipolar or bipolar",
         recipe="Utility -- inspect vecfield channels.",
         references="References\n\nSee docs/f-reference/f_vf_split.md and\ndocs/f-reference/f_vecfield_type.md.",
         n_in=2),

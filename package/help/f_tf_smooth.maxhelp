@@ -135,7 +135,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "References\n\nOne-pole recurrence on the tensor's raw components;\nstandard. Tensor-space framing: opposite-edge axes\nreinforce instead of cancelling (the f_tensorfield\nhub's argument). jit.fx.tp.filter is the stock\nrecurrence \u2014 this module is its performable\nre-shape (see docs note).\n\nSee docs/f-reference/f_tf_smooth.md.",
+     "text": "References\n\nOne-pole recurrence on the tensor's raw components;\nstandard. Tensor-space framing: opposite-edge axes\nreinforce instead of canceling (the f_tensorfield\nhub's argument). jit.fx.tp.filter is the stock\nrecurrence \u2014 this module is its performable\nre-shape (see docs note).\n\nSee docs/f-reference/f_tf_smooth.md.",
      "fontsize": 12.0,
      "linecount": 10
     }

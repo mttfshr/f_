@@ -146,7 +146,7 @@ patcher = {
 # dial's activedialcolor ("themecolor.live_record"); "" by default. The resolved RGB is a presentation
 # property (overrides); capture cannot carry this one (it lives in saved_attribute_attributes).
 # `"color_expression": None` writes no `activedialcolor` entry at all (a dial Max saved without one:
-# the band-editor colour modules' dials).
+# the band-editor color modules' dials).
 #
 # Top-level "route_reject_to_pix": True -- the route's reject (unmatched) outlet feeds the primary pix's
 # inlet 0, so messages no route token claims reach the pix; adds the reject outlet to the route box.
@@ -161,7 +161,7 @@ patcher = {
 # "control_valueof" ({param: {valueof key: value}}; None removes the key: a default shortname, a missing
 # initial value), "control_box" ({param: {box property: value}}; None removes the property: e.g. a dial
 # whose param_connect was removed by hand; cannot set id, maxclass, patching_rect or patcher). Loud on an
-# unknown key or a wrong shape. Added 2026-10-05, T014 (the four oldest colour modules).
+# unknown key or a wrong shape. Added 2026-10-05, T014 (the four oldest color modules).
 # "element_valueof" ({element key: {valueof key: value}}) and "element_box" ({element key: {property:
 # value}}) do the same for ANY generated element by its override key ("aberration.range_menu",
 # "panel_toggle"), applied after `overrides` (f_lens: range menus Max saved with an explicit mmax,
@@ -251,7 +251,7 @@ patcher = {
 # `build/py.sh build/capture_raw.py src/f_x/definition.py` writes `raw_ui.json` next to the
 # definition (see its docstring and f_grain/definition.py for the pattern).
 
-# Menu param — renders as live.menu with labelled options, outputs integer 0-N
+# Menu param — renders as live.menu with labeled options, outputs integer 0-N
 {"name": str, "type": "menu", "options": [str, ...], "default": int, "hint": str}
 
 # Internal param — present in codebox, no UI object, absent from parameters block
@@ -585,7 +585,7 @@ from the `{id: (role, idx)}` dict returned by `assign_roles()`:
 ```
 signal strip : left rail (x=30): inlet y=20, routepass y=70, instate/r draw y=120
                modulation band (x=260+170*i): mod inlet y=20, vs_inState y=70, state prepend y=120
-param lane   : column k centre x = 60 + 72*k   (label y=180 / route y=204 / control y=250 / attrui y=310)
+param lane   : column k center x = 60 + 72*k   (label y=180 / route y=204 / control y=250 / attrui y=310)
                route width = n_route*72 + 7 so outlet k sits over column k; attrui fixed 68 px wide
 pix stack    : y=380, layered +50 per level by cross-pix wires; outlets 50 below the deepest
 range tiers  : one block per range_tiers param below the outlets (msg -> dial wires go upward by design)
@@ -741,7 +741,7 @@ writes) and compares the result with the shipped patcher. Boxes are matched by
 identity (class, text, parameter name), not by id. `patching_rect` is ignored,
 since the edit-view layout is always regenerated. Differences Max introduces by
 itself on save (recomputed ports of a `newobj`, saved `restore`/`save` state,
-default-valued keys) are normalised away; everything else is drift. A module
+default-valued keys) are normalized away; everything else is drift. A module
 with its own `src/<name>/build_*.py` is built by that script's `build()`.
 
 ```
@@ -778,7 +778,7 @@ back into `definition.py`" has somewhere to put what the schema does not model.
 
 *Why.* Closing drift by extending the schema for every layout tweak does not scale, and
 leaving the tweak in the patch only loses it on the next regeneration. Scope is **generic**,
-not layout-only: any property, because the next tweak is as likely a colour or a font as a
+not layout-only: any property, because the next tweak is as likely a color or a font as a
 rect. What stays out is not a property list but an ownership rule (below).
 
 *Element keys* are name-based, from `assign_roles()`: `<param>.ctl`, `<param>.label`,
@@ -799,11 +799,11 @@ idempotent (it always diffs against the build without overrides) and rewrites on
 between `# BEGIN overrides` and `# END overrides`; the rest of the file is never touched.
 
 *Ownership rule: capture takes presentation state only.* Captured: the presentation rect,
-colours, fonts, dial appearance (`capture.CAPTURE_KEYS`). **Refused, with the reason printed**:
+colors, fonts, dial appearance (`capture.CAPTURE_KEYS`). **Refused, with the reason printed**:
 label text, hints, ranges/enums (the definition owns them: edit `params[]`), and `varname` and
 `param_connect` (the builder is ahead of the patch, or the patch was edited: regenerate; do
 not freeze it as an override). The pilot made the need concrete: of the drift left after
-Max's own normalisation, most was `lbl_*` comment varnames the builder now writes and
+Max's own normalization, most was `lbl_*` comment varnames the builder now writes and
 Max-saved patches lack, and capturing that would have made the stale side permanent.
 
 *Limits.* Only modules built by `build_patcher.build` (not the four with their own
@@ -811,9 +811,9 @@ Max-saved patches lack, and capturing that would have made the stale side perman
 captured. A comment's width and height are compared by nothing (Max re-fits them), so a
 captured comment rect carries Max's current size.
 
-*Pilot (build_cleanup T012).* `f_chladni` turned out to need nothing: Max's normalisation
-alone made it reproduce exactly. `f_vf_fieldmap` (panel size, jsui position, label colour and
-size) and `f_vf_warp` (compact dial, label colour) were captured: layout 3 -> 0 and 1 -> 0,
+*Pilot (build_cleanup T012).* `f_chladni` turned out to need nothing: Max's normalization
+alone made it reproduce exactly. `f_vf_fieldmap` (panel size, jsui position, label color and
+size) and `f_vf_warp` (compact dial, label color) were captured: layout 3 -> 0 and 1 -> 0,
 props 11 -> 9 and 4 -> 1; the rest is what capture refuses. Tests: `tests/build/test_overrides.py`
 (10 tests, 14 mutants caught).
 

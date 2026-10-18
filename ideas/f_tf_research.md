@@ -47,7 +47,7 @@ Condensed from the 19-row table in the 2026-10-16 strategy note. **Status as of 
 | 4-7 | Coherence/trace/orientation-select as plain scalar textures into mod inlets, `f_util_matrix_2`, grain/stipple density | View (scalar) | **Not built**: needs `f_tf_unpack`. Assumption unverified: existing mod inlets read `.x`, so B/A are unreachable without it |
 | 8 | Marks aligned to structure | View + full tensor | `f_vf_seeds`/`f_weave` via axisflow (built path); `f_tf_hatch` is the full-tensor version (built); stipple needs new inlets (hub Q13) |
 | 9 | Cross-hatch: two axisflow instances (Along, Across) into two mark layers | View x2 | Untried, cheap |
-| 10 | Orientation as colour (hue = angle, sat = coherence, value = trace) | View | Speculative; `f_tf_glyph` debug tints are the nearest built thing |
+| 10 | Orientation as color (hue = angle, sat = coherence, value = trace) | View | Speculative; `f_tf_glyph` debug tints are the nearest built thing |
 | 11 | Defect/singularity map (low coherence, real trace) | View | Speculative, interesting |
 | 12 | Anisotropic blur / coherence-enhancing smoothing | Full tensor | Built (`f_tf_aniso_blur`) |
 | 13 | Glyph field, universal tensor debugger | Full tensor | Built (`f_tf_glyph`) |
@@ -84,7 +84,7 @@ coherence or orientation field.** The only structure tensor in the ecosystem is
 | `jit.fx.cf.directional` | source | 3-tap directional blur, direction is a uniform vec2 plus static grain; no coherence, no eigen |
 | `jit.fx.cf.tiltshift`, `pixelsorting`, `sobel`, `repos` | refpage / source | Parametric or axis-aligned; `sobel` is magnitude only; `repos` is the one shipped field-as-content warp |
 | `jit.fx.ge.flowfield` | source | Only shipped direction-field mark drawer: geometry-shader line strips reading channel B. Not buildable from gen |
-| `jit.fx.tp.filter` | source | Two-pole temporal filter over MRT feedback, storage-agnostic channels: the same recurrence as `f_tf_smooth`, as a colour-pipeline tool (five knobs, no tensor gating, no `@type` guarantee) |
+| `jit.fx.tp.filter` | source | Two-pole temporal filter over MRT feedback, storage-agnostic channels: the same recurrence as `f_tf_smooth`, as a color-pipeline tool (five knobs, no tensor gating, no `@type` guarantee) |
 | `jit.fx.cf.bilateral`, `blur`, `radial`, `wake`, `conway` | source / refpage | Isotropic. No coherence-enhancing diffusion, DoG or elliptical kernel anywhere |
 | `jit.fx.co.glow`, `jit.gl.pass` bloom | source / refpage | `co.glow` is an isotropic composite formula; `jit.gl.pass` needs jit.world's 3D context, unusable in Vsynth bpatcher chains |
 | Hatch / stipple / halftone / engraving | web scout | **Nothing ships.** `ge.lineinterp`, `ge.randlines` are line primitives from point data |
@@ -103,7 +103,7 @@ builds:
   precedent is re-shaping base recurrences into semantic modules (`f_vf_temporal_smooth`).
 - **`f_tf_mix` vs stock xfades:** component-wise crossfade of two float32 textures is exactly
   tensor-space mixing, the weakest "needs the type" case in the catalog. Its differentiators
-  are float32 guarantees, family labelling and **neutral handling**: an unconnected side must
+  are float32 guarantees, family labeling and **neutral handling**: an unconnected side must
   contribute `(0, 0.5, 0, 1)`, not zeros (zeros decode to a non-SPD phantom, see section 6).
 - **`f_tf_glint` and `f_tf_glow`:** tensor-native only if lobe width / radius comes from
   per-pixel coherence rather than a dial; otherwise view-in-disguise.
@@ -146,15 +146,15 @@ plan's ADR-2 amendment.
 - **Non-SPD phantom.** All-zeros through the outlet-0 decode gives `Jxy = -1/strength`: trace 0
   but `lambda1 = 1/strength`, `lambda2 = -1/strength`, with a plausible `atan2` axis. It looks
   like structure to any gate on eigenvalue energy. Trace-gated consumers are incidentally
-  safe; energy-gated ones need an SPD test as the primary unconnected-input defence.
+  safe; energy-gated ones need an SPD test as the primary unconnected-input defense.
 - **Runtime `atan2(0,0)` is NaN** on the bench GPU, while constants fold to 0. Bias the
   denominator argument (`+1e-7`); a `mix()` after the fact cannot clear a NaN (NaN * 0 = NaN).
 - **`sample()` falls back to nearest** when its coordinate is data-dependent and jumps between
-  neighbouring pixels. Use the four-tap `nearest()` hand-bilinear idiom.
+  neighboring pixels. Use the four-tap `nearest()` hand-bilinear idiom.
 - **Interpolation residual** is the 8-bit weight ceiling: about 2e-4 per stacked read.
 - **Known unknown:** tensormap's stage C survives flat content via `mix(NaN, 0.5, iso)` while
   glyph's identical-shape `mix(NaN, 0.0, flag)` did not clear the NaN. Compiler select/fold
-  behaviour, unresolved. Tensormap is verified and live-checked, so it was left alone.
+  behavior, unresolved. Tensormap is verified and live-checked, so it was left alone.
 
 ---
 
@@ -221,7 +221,7 @@ in transit and are listed by name only.
 Collected by the original research pass:
 
 - [Anisotropic Diffusion in ITK](https://arxiv.org/pdf/1503.00992)
-- [Weickert, Coherence-enhancing diffusion of colour images](https://www.mia.uni-saarland.de/weickert/Abstracts/ced-col.html)
+- [Weickert, Coherence-enhancing diffusion of color images](https://www.mia.uni-saarland.de/weickert/Abstracts/ced-col.html)
 - [Weickert, Coherence-Enhancing Diffusion Filtering](https://datalearner.com/academic/journal-papers/0920-5691/volumes-and-issues/31/paper-detail/12739)
 - [Kyprianidis, Kang, Doellner, Image and Video Abstraction by Anisotropic Kuwahara Filtering](https://umsl.edu/~kangh/Papers/kang_cgf09.pdf)
 - [Kyprianidis, Semmo, Kang, Doellner, Anisotropic Kuwahara Filtering with Polynomial Weighting Functions](https://diglib.eg.org/items/9865e5fe-3d23-470e-8cf6-e571bebafb9b/full)

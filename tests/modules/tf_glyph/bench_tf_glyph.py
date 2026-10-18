@@ -1,7 +1,7 @@
 """
 bench_tf_glyph.py -- Tier 2 verification for f_tf_glyph: the real codebox
 (src/f_tf_glyph/codebox_glyph.gen) on the GPU through the Max test bench,
-diffed against the NumPy mirror in tests/modules/tf_glyph/test_tf_glyph.py. Tasks TG012-TG014.
+diffed against the NumPy mirror in tests/modules/tf_glyph/tf_glyph_mirror.py. Tasks TG012-TG014.
 
 Recreated 2026-10-17: an earlier draft was deleted by a sibling session's
 file cleanup along with its own report (recorded in
@@ -23,7 +23,7 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run
-import test_tf_glyph as m           # the tier-1 mirror
+import tf_glyph_mirror as m           # the tier-1 mirror
 
 REPO = _paths.REPO
 SRC = REPO / "src" / "f_tf_glyph"

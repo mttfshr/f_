@@ -12,7 +12,7 @@ Four checks against independent NumPy truth (not a mirror of GenExpr):
       np.arctan2 at the same texel to float32/bilinear precision, across
       all four quadrants -- proves branch and quadrant are right.
   T3  branch-cut locality: pixels adjacent to the +/-pi cut agree with
-      the analytic value at their own pixel centre (no smearing across
+      the analytic value at their own pixel center (no smearing across
       the cut from the GPU's interpolation), and the cut itself lands
       where atan2's math says (theta jumps between adjacent texels).
   T4  the decode shapes consumers need: half-angle theta/2 (the tensor
@@ -44,7 +44,7 @@ def cb(name):
 def vecfield_texture():
     """A vecfield texture whose directions cover all quadrants densely and
     non-uniformly (golden-angle sweep), so no quadrant boundary sits on a
-    texel centre and the +/-pi cut crosses texel interiors at generic
+    texel center and the +/-pi cut crosses texel interiors at generic
     angles."""
     i = np.arange(N * N, dtype=np.float64)
     # golden-angle spiral in index space: dense, aperiodic, all quadrants
@@ -74,7 +74,7 @@ def test_T2_full_range_value_fidelity():
     out, rep = bc.run_pass(cb("atan2_safety"), [tex])
     assert rep["status"] == "ok" and not rep.get("errors"), rep
     theta_gpu = out[..., 0].astype(np.float64) * TAU - np.pi
-    # independent truth at the *pixel centre* coordinates the codebox
+    # independent truth at the *pixel center* coordinates the codebox
     # sampled (norm maps texel i to (i+0.5)/N; in1 is read at norm, which
     # for a same-size input is the identity texel)
     theta_np = np.arctan2(fy, fx)
@@ -97,7 +97,7 @@ def test_T3_branch_cut_locality():
     theta_np = np.arctan2(fy, fx)
     d = np.abs(np.mod(theta_gpu - theta_np + np.pi, TAU) - np.pi)
     # pixels whose analytic value is near the cut: their GPU value must
-    # still match their own pixel-centre truth (no cross-cut smearing)
+    # still match their own pixel-center truth (no cross-cut smearing)
     near_cut = np.abs(np.abs(theta_np) - np.pi) < 0.2
     harness.note("pixels within 0.2 rad of the cut", int(near_cut.sum()))
     assert near_cut.sum() > 500, "test texture didn't put enough pixels near the cut"

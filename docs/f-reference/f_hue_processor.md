@@ -5,7 +5,7 @@ _Status: Working, with a known open UI bug (see Loose Threads)_
 
 ## Concept
 
-Hue-selective processing. Isolates a flat-topped hue band — centered on `hue_center`, extending `hue_lower` degrees below and `hue_upper` degrees above, with a `edge_falloff`-degree smoothstep at each boundary — and applies saturation, luminance, and hue-rotation adjustments only within that band. A low-saturation gate (`smoothstep(0.05, 0.15, S)`) suppresses the effect on near-grey pixels regardless of hue, avoiding hue-selection noise in desaturated regions.
+Hue-selective processing. Isolates a flat-topped hue band — centered on `hue_center`, extending `hue_lower` degrees below and `hue_upper` degrees above, with a `edge_falloff`-degree smoothstep at each boundary — and applies saturation, luminance, and hue-rotation adjustments only within that band. A low-saturation gate (`smoothstep(0.05, 0.15, S)`) suppresses the effect on near-gray pixels regardless of hue, avoiding hue-selection noise in desaturated regions.
 
 ## Parameters
 

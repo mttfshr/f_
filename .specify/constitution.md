@@ -103,7 +103,7 @@ first:
    bypass, round trips, symmetries, ranges). Also catches compile errors, and
    measures cost when cost is a question. Template:
    `tests/templates/bench_module_template.py`.
-3. **Judgement — scratch patch** (`~/Vsynth/patterns/`). Expressive tuning,
+3. **Judgment — scratch patch** (`~/Vsynth/patterns/`). Expressive tuning,
    parameter ranges, visual character, Vsynth integration, UI — what numbers
    can't judge.
 

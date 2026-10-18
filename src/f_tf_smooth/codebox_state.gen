@@ -20,7 +20,7 @@
 // stale field.
 //
 // GATE PROVISIONAL-OPEN (spec OQ1 / tasks T016): release default 0.5 and the
-// dial ceiling are PROVISIONAL, pending tier-3 judgement on live noise.
+// dial ceiling are PROVISIONAL, pending tier-3 judgment on live noise.
 // The shipped literal follows definition.py's declared default (0.5).
 Param release(0.5);
 Param bypass_gate(0.0);

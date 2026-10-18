@@ -632,6 +632,141 @@
           ],
           "varname": "bench_mcap4"
         }
+      },
+      {
+        "box": {
+          "id": "c-udp",
+          "maxclass": "comment",
+          "text": "OSC/UDP in (7473) from Python (benchclient.py)",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            20.0,
+            75.0,
+            125.0,
+            40.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-err",
+          "maxclass": "comment",
+          "text": "Max errors -> js (deferlow avoids an error feedback loop)",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            280.0,
+            100.0,
+            135.0,
+            45.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-draw",
+          "maxclass": "comment",
+          "text": "r draw: Vsynth's frame tick -> js inlet 2",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            300.0,
+            75.0,
+            115.0,
+            25.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-vsctl",
+          "maxclass": "comment",
+          "text": "Vsynth control (enable) by cord: a js message to a bpatcher does not reach its inlet",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            525.0,
+            50.0,
+            260.0,
+            30.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-vsrender",
+          "maxclass": "comment",
+          "text": "vs_render: Vsynth's real renderer. Creates the vsynth context, the draw clock and vs_black. Close Vsynth patches while this bench is open.",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            420.0,
+            203.0,
+            360.0,
+            26.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-js",
+          "maxclass": "comment",
+          "text": "js bench_module.js: loads each job's wrapper into the slot, sends inputs and control messages, opens the capture gates, replies through udpsend (7474).",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            190.0,
+            182.0,
+            220.0,
+            45.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-inputs",
+          "maxclass": "comment",
+          "text": "bench_mmatK -> bench_mtexK: textures for module inputs 1-5 (main + up to 4 mod inlets), delivered to the module through r bench_minK inside the wrapper.",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            20.0,
+            203.0,
+            390.0,
+            26.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-slot",
+          "maxclass": "comment",
+          "text": "bench_mslot: cordless bpatcher. js loads the per-job wrapper here (script sendbox replace); the wrapper holds the module wired to r bench_minK / s bench_moutK.",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            20.0,
+            375.0,
+            225.0,
+            60.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-outs",
+          "maxclass": "comment",
+          "text": "r bench_moutK -> gate -> bench_mcapK: capture of each module outlet (up to 4). js opens the gates for the capture frame and closes them after.",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            250.0,
+            398.0,
+            600.0,
+            30.0
+          ]
+        }
       }
     ],
     "lines": [

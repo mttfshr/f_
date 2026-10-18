@@ -58,7 +58,7 @@ py = norm.y * density_scale;
 icx = floor(px);
 icy = floor(py);
 
-// ── 3x3 neighbourhood candidate search — now with per-candidate field sample ─
+// ── 3x3 neighborhood candidate search — now with per-candidate field sample ─
 
 ncx = icx-1.0; ncy = icy-1.0;
 jxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;

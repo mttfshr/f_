@@ -12,7 +12,7 @@ below and the decision note in `.specify/f_caustic_scatter/tasks.md`.
 
 An optical caustic processor. Takes a light-source image and a vecfield (the refracting medium) and redistributes
 the source's brightness according to the field: a lattice of points ("glass samples") is displaced through the
-field and each deposits a small bilinear splat of the source's colour, additively, into a float32 capture. Splat
+field and each deposits a small bilinear splat of the source's color, additively, into a float32 capture. Splat
 density is illuminance, so the overlapping translucent folded sheets that give the module its name appear at
 larger `scale`. Two outlets: the composite (source + caustic, additive) and the isolated caustic layer.
 
@@ -62,7 +62,7 @@ caustic (codebox_sheets.gen) out2 → outlet 1  (isolated caustic layer)
 | `gain` | 0–2.0 | 0.5 | Caustic brightness. The codebox applies an internal constant (`k_sheets = 2.0` in `codebox_sheets.gen`) calibrated so the default 0.5 reads about like the original look-patch prototype. |
 | `scale` | 0–1.0 | 0.3 | The propagation distance of the scatter, in UV per unit field; sheets fold over as it grows. `pix_wire: False` in `definition.py` — the dial feeds the raw scene's control entry (`scatter_scene.py`), not a Param on `codebox_sheets.gen`. |
 | `expo` | 0.3–1.5 | 0.7 | Tone-curve exponent for the caustic layer's exposure curve, `(v / (1 + v)) ^ expo` — lower compresses highlights harder, higher keeps more contrast. Was a fixed internal constant (the look-patch default) until 2026-10-10, now exposed. |
-| `edge` | Off / Wrap / Mirror / Clamp | Off | Where a ray that lands outside the frame goes. **Off**: it is clipped away with its light (the original behaviour; a one-way field starves the opposite side). **Wrap**: it re-enters on the opposite side (`fract`), so nothing is lost and no band is starved; the natural choice for a periodic field such as `f_vf_fluid`'s. **Mirror**: it reflects at the border (doubles the density near it). **Clamp**: it piles onto the border pixels, clamped half a pixel inside so the whole splat stays in the frame. Like `scale`, a shader uniform on the scene's control entry (`pix_wire: False`), tapped at the menu's outlet. Added 2026-10-17. |
+| `edge` | Off / Wrap / Mirror / Clamp | Off | Where a ray that lands outside the frame goes. **Off**: it is clipped away with its light (the original behavior; a one-way field starves the opposite side). **Wrap**: it re-enters on the opposite side (`fract`), so nothing is lost and no band is starved; the natural choice for a periodic field such as `f_vf_fluid`'s. **Mirror**: it reflects at the border (doubles the density near it). **Clamp**: it piles onto the border pixels, clamped half a pixel inside so the whole splat stays in the frame. Like `scale`, a shader uniform on the scene's control entry (`pix_wire: False`), tapped at the menu's outlet. Added 2026-10-17. |
 | `bypass` | 0/1 | 0 | Passthrough on **both** outlets (both give the source) — implemented as a `Param` (`bypass_gate`) in `codebox_sheets.gen` itself, not the native `@bypass`. |
 
 **Prefix:** `caustic` — **Object name:** `#0_caustic_sheets` (instance-scoped; no fixed name any more — that
@@ -87,7 +87,7 @@ wet = mix(source, clamp(source + exposed, 0, 1), mix_pct / 100)
 composite = mix(wet, source, bypass_gate);  layer = mix(clamp(exposed, 0, 1), source, bypass_gate)
 ```
 
-A size-2 point on a pixel corner covers exactly the four pixel centres the tent can reach, so the result is
+A size-2 point on a pixel corner covers exactly the four pixel centers the tent can reach, so the result is
 bit-identical to a size-3 point at about half the fragments. A regular lattice is used: jitter trades moiré for
 grain and lowers every quality score. At 1 point per capture pixel a regular lattice shows a faint cross-hatch
 moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per capture pixel counting both axes — see
@@ -140,7 +140,7 @@ moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per cap
 
 ### History
 
-- **2026-10-17:** `edge` menu added (Off / Wrap / Mirror / Clamp, default Off = unchanged behaviour). Why: with a one-way field (e.g. tensor `f_tf_axisflow` into `f_vf_fluid`) a larger `scale` sent the light out of the frame, losing it on one side and starving the other. The remap is in the vertex shader (`package/code/f_caustic_sheets.jxs`, uniform `edge`), driven through the scene's control entry like `scale` (new `edge` token, `prepend param edge`; raw layer regenerated, `MENU_EDGE = obj-32` in `scatter_scene.py`, guarded by a test). Clamp insets half a pixel: on the border itself half of the tent falls off-frame and it would still lose light. Mirror test: `tests/modules/caustic/scatter_mirror.py` `edge_remap` + 3 tests (10/10), scene test 5/5; bench 14/14 on 2026-10-17 including `test_T040_*` (edge 1/2/3 match the mirror to 3e-6..1e-5; Off 1.06e-3, the same as the edge-less mirror: a border snapping-vs-clipping gap that predates edge mode); checked live by Matt 2026-10-17 (Edge menu position, Wrap in the tensor chain). A splat straddling the frame edge in Wrap/Mirror still loses its off-frame half (about 0.3% in the tests).
+- **2026-10-17:** `edge` menu added (Off / Wrap / Mirror / Clamp, default Off = unchanged behavior). Why: with a one-way field (e.g. tensor `f_tf_axisflow` into `f_vf_fluid`) a larger `scale` sent the light out of the frame, losing it on one side and starving the other. The remap is in the vertex shader (`package/code/f_caustic_sheets.jxs`, uniform `edge`), driven through the scene's control entry like `scale` (new `edge` token, `prepend param edge`; raw layer regenerated, `MENU_EDGE = obj-32` in `scatter_scene.py`, guarded by a test). Clamp insets half a pixel: on the border itself half of the tent falls off-frame and it would still lose light. Mirror test: `tests/modules/caustic/scatter_mirror.py` `edge_remap` + 3 tests (10/10), scene test 5/5; bench 14/14 on 2026-10-17 including `test_T040_*` (edge 1/2/3 match the mirror to 3e-6..1e-5; Off 1.06e-3, the same as the edge-less mirror: a border snapping-vs-clipping gap that predates edge mode); checked live by Matt 2026-10-17 (Edge menu position, Wrap in the tensor chain). A splat straddling the frame edge in Wrap/Mirror still loses its off-frame half (about 0.3% in the tests).
 - **2026-10-10:** soft mode (the 8-tap backward-gather, `codebox_v2.gen`, plus the earlier superseded
   `codebox_v1.gen`), the `mode` and `detail` menus, and the two select stages (`codebox_select_comp.gen`,
   `codebox_select_layer.gen`) all removed — sheets-only now, fixed at the old step-5 detail. `softness` and

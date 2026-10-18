@@ -82,7 +82,7 @@ def test_pix_shared_attrui_is_one_attrui_for_every_stage():
         _eq(f"pix_shared_attrui is loud with {label}", raises(lambda: bp.build(bad), needle), True)
     off = copy.deepcopy(d)
     off["params"][0]["pix_shared_attrui"] = False
-    _eq("False is the default behaviour (two attruis)", len(attrui_ids(top_and_cords(off)[0], "dt")), 2)
+    _eq("False is the default behavior (two attruis)", len(attrui_ids(top_and_cords(off)[0], "dt")), 2)
 
 
 # ---- pix_attr

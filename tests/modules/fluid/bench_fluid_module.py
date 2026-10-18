@@ -16,7 +16,7 @@ render context (tasks.md T032, T033, T033a), through the module bench.
          energy in the velocity field at taps 8 than at taps 1. The render
          context is 512^2, but the force texture size is independent of it, so
          minification is testable here; 4K (3840^2, ~236 MB over jxf) is not,
-         and stays a tier-3 judgement.
+         and stays a tier-3 judgment.
 
 Needs Max with tests/bench/bench_module.maxpat open (other patches closed).
 Run:  tests/bench.sh tests/modules/fluid/bench_fluid_module.py
@@ -165,7 +165,7 @@ def test_T033a_solver_advances_once_per_frame():
         assert out.shape[:2] == (SIZE, SIZE)
         c = out[SIZE // 2, SIZE // 2]
         us[warmup] = 2.0 * (float(c[0]) - 0.5)                 # gain 1: encoded R = 0.5 + 0.5*u
-        note(f"warmup {warmup}: velocity u at the centre (uniform force, gain 1)", us[warmup])
+        note(f"warmup {warmup}: velocity u at the center (uniform force, gain 1)", us[warmup])
     assert 0.0 < us[12] < us[32] < 1.0, f"velocity must grow and stay below the clamp: {us}"
     dframes = 32 - 12
     best = None

@@ -23,7 +23,7 @@ import numpy as np
 import benchclient as bc
 from gpu_sim import F32, grid, sample
 from harness import check, note, run
-from test_fft_separable import make_image, pack, pass_dft, rel_err
+from dft_mirror import make_image, pack, pass_dft, rel_err
 
 CB = _paths.BENCH / "codeboxes"
 

@@ -20,7 +20,7 @@ gradient jitter settles into a stable field while real motion still tracks throu
 
 **Why tensor space and not "temporal filter on a texture":** opposite axes that trade
 places frame-to-frame (flicker between two edge camps) average into a stable tensor
-rather than cancelling into mush; and the field carries its confidence with it. This is
+rather than canceling into mush; and the field carries its confidence with it. This is
 the same argument the hub doc makes for tensor-space spatial smoothing
 (`ideas/f_tensorfield.md`, "What a tensor can do that a vecfield cannot" — "Averages
 correctly"), applied over time.
@@ -78,7 +78,7 @@ and this module must not re-encode them (single-source-of-truth on encoding).
 
 | Param | UI | Range | Default | Notes |
 |---|---|---|---|---|
-| `release` | live.dial | 0–1 (0.999 max?) | 0.5 provisional | Feedback coefficient. 0 = passthrough (neutral). Higher = longer memory. The family's one-knob gesture: ride it from 0 (reactive) to 0.9+ (heavy inertia). Default and top-of-range are tier-3 judgements (T0xx). |
+| `release` | live.dial | 0–1 (0.999 max?) | 0.5 provisional | Feedback coefficient. 0 = passthrough (neutral). Higher = longer memory. The family's one-knob gesture: ride it from 0 (reactive) to 0.9+ (heavy inertia). Default and top-of-range are tier-3 judgments (T0xx). |
 | `bypass` | jsui (bypass_toggle.js) | 0/1 | 0 | Standard bypass: passthrough of inlet to outlet, no feedback mixing. |
 
 **Tensor mix inlet** (design consideration, to resolve in Phase 0): a second tensor inlet
@@ -123,7 +123,7 @@ closed-form ground truth); tier 2 applies (feedback wiring on real GPU); tier 3 
   regions) gives out(N+k) = B + (A−B)·release^k per channel, to mirror tolerance.
 - **Line-field invariance:** smoothing does not invent orientation: an input sequence
   alternating axis θ and θ+180° (identical tensors, angle-doubled) stays constant, and the
-  output axis matches the input axis, not a cancelled average.
+  output axis matches the input axis, not a canceled average.
 - **Opposite-axis reinforcement:** synthetic: two constant regions per frame alternating
   90° axis (crossed gradients) — output coherence stays high (tensors reinforce) where a
   vecfield version would collapse to zero magnitude between frames. This is the tensor-
@@ -151,7 +151,7 @@ closed-form ground truth); tier 2 applies (feedback wiring on real GPU); tier 3 
 
 1. **`release` default and range ceiling.** Provisional 0.5, dial 0–1. What the top of the
    range should actually be (0.99 flickers with float32; 0.999 near-freezes) is a tier-3
-   judgement on live noise — same shape as tensormap's `strength` calibration (T023 there).
+   judgment on live noise — same shape as tensormap's `strength` calibration (T023 there).
 2. **Warp/UV: does feedback survive stage rendering at differing sizes?** [INFERENCE] The
    module is fixed-size internally; tensormap emits whatever it renders. If the tensormap
    and smoother sizes disagree, the feedback texture resamples — acceptable (float32

@@ -38,7 +38,7 @@ SIGNAL_W   = 70.0          # label box width; the text is right-justified inside
 SIGNAL_GAP = 4.0           # space between the label's right edge and the bypass button
 SIGNAL_Y   = 0.9           # puts an 11 pt label on the baseline of the 12 pt title (which sits at y = 0)
 # The type dots (2026-10-17): two stacked dots left of the module name.  Top = the type the module takes,
-# bottom = the type it outputs: cyan vecfield, amber tensor, dim grey neither.
+# bottom = the type it outputs: cyan vecfield, amber tensor, dim gray neither.
 TITLE_X    = 10.5          # every module name starts here, to the right of the dots
 TITLE_W    = 92.0
 DOT_SIZE   = 5.0
@@ -46,10 +46,10 @@ DOT_GAP    = 2.0
 DOT_X      = 4.0
 DOT_PAD    = 1.0           # the type_dots jsui box is the shapes plus this margin all round
 DOT_Y0     = 5.0           # first dot's top below the title box's top (the 12 px bypass-button band: y 5..17)
-DOT_NONE   = [0.28, 0.28, 0.28, 1.0]   # dim grey: no vecfield or tensor on that side
+DOT_NONE   = [0.28, 0.28, 0.28, 1.0]   # dim gray: no vecfield or tensor on that side
 DOT_KIND   = {"\u2207": "vecfield", "T_": "tensor"}
-BORDER_BY_TYPE = False     # True colours the frame border by type too (tried 2026-10-17, replaced by the dots)
-TYPE_DOTS  = "panels"       # "panels": two round panels, cyan / amber / dim grey (Matt, 2026-10-17);
+BORDER_BY_TYPE = False     # True colors the frame border by type too (tried 2026-10-17, replaced by the dots)
+TYPE_DOTS  = "panels"       # "panels": two round panels, cyan / amber / dim gray (Matt, 2026-10-17);
                            # "jsui": ONE type_dots.js jsui drawing triangle / disc / square: tried, read as noisy; the script is parked in
                            # ideas/type_dots.js (copy it to package/javascript/ to use this style)
 DOT_ARG    = {"\u2207": "vec", "T_": "tensor"}
@@ -205,7 +205,7 @@ def bypass_attrui_box(obj_id):
         style="")
 
 def border_color_for(signal_type):
-    """The frame's border colour: the colour of the module's type mark when the title-bar label carries exactly
+    """The frame's border color: the color of the module's type mark when the title-bar label carries exactly
     one kind (\u2207 = vecfield, T_ = tensor), else the standard dark blue (no label; or both kinds, the bridge
     f_tf_axisflow, which is left on the standard border for now).  2026-10-17."""
     if not BORDER_BY_TYPE:
@@ -239,8 +239,8 @@ def title_box(title):
 def signal_type_box(signal_type, button_x):
     """The type label in the title bar: 11 pt, right-justified, ending SIGNAL_GAP left of the bypass button
     (button_x = the button's left edge: pw - 22 by default, or wherever the definition's overrides put it)."""
-    # Colour is keyed on the first word, i.e. the first type mark: "\u2207 in" and "\u2207 out" are the
-    # vecfield colour, "T_ in" the tensor colour, and "T_ in \u2207 out" is tensor-coloured (direction
+    # Color is keyed on the first word, i.e. the first type mark: "\u2207 in" and "\u2207 out" are the
+    # vecfield color, "T_ in" the tensor color, and "T_ in \u2207 out" is tensor-colored (direction
     # and the second mark are free text; 2026-09-24, marks instead of words 2026-10-17).
     color = SIGNAL_TYPE_COLORS.get(signal_type.split()[0], [0.6, 0.6, 0.6, 1.0])
     right = button_x - SIGNAL_GAP
@@ -284,7 +284,7 @@ def dot_box(obj_id, mark, side, title_y):
 
 def type_dots_box(obj_id, in_mark, out_mark, title_y):
     """Both type dots as one jsui: package/javascript/type_dots.js draws a filled triangle (vecfield), a disc
-    (tensor) or a grey square (neither) for what the module takes (top) and outputs (bottom)."""
+    (tensor) or a gray square (neither) for what the module takes (top) and outputs (bottom)."""
     what = lambda m: DOT_KIND.get(m, "no vecfield or tensor")
     return box(obj_id,
         maxclass="jsui",
@@ -1525,7 +1525,7 @@ def build(defn, debug=None, side_files=None):
         pix_boxes_to_add = chain_boxes
         extra_pix_lines  = chain_lines
     else:
-        # Single-pix path (existing behaviour)
+        # Single-pix path (existing behavior)
         object_name = defn["object_name"]
         archetype   = defn["archetype"]
         codebox     = defn["codebox"]

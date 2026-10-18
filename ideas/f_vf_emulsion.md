@@ -53,7 +53,7 @@ along the mask gradient. Rejected for this purpose. It is what would need
 
 **Tier 2 — spatially varying `drag` from a map inlet.** Cheapest real win,
 ~0.1 ms. Still a *static* map: "this corner of the screen is honey" is
-architecture, not behaviour. Kept as a fallback, not the answer.
+architecture, not behavior. Kept as a fallback, not the answer.
 
 **Tier 3 — spatially varying viscosity, approximated.** Solve spectrally at
 ν_min, blur after `ix`, mix by the map. One separable blur pair, ~0.3–0.6 ms.
@@ -81,7 +81,7 @@ is the loop `f_vf_fluid` does not have. A static map cannot produce it.
 
 So: a scalar **φ(x) ∈ [0,1]** — 0 is smoke, 1 is oil — as a second state field
 inside the solver, advected by `u` every frame the way `u` advects itself. The
-solver's local behaviour is a function of φ; φ is a function of where the flow
+solver's local behavior is a function of φ; φ is a function of where the flow
 has carried it. One velocity field, one fluid, two materials in it.
 
 ### Terms, by cost
@@ -129,13 +129,13 @@ failure modes bracket it:
 
 - φ relaxes fast → a slightly weird dye layer, none of the structure.
 - φ strictly conserved (the physical default — advection conserves) → a minute
-  of performing leaves uniform grey emulsion with no way back.
+  of performing leaves uniform gray emulsion with no way back.
 
 Every interesting state is between those and is **transient**, which is a
 problem if it is not controllable. The relaxation rate is the dial you would
 ride during a set. **Open sub-question, genuinely undecided:** what
 "equilibrium" means — a fixed value, the frame average, or the current
-injection. Those are three quite different behaviours.
+injection. Those are three quite different behaviors.
 
 **2. Contrast depth — one macro dial.** A single scalar scaling the whole
 difference between the materials at once (viscosity ratio, buoyancy, drag),
@@ -243,6 +243,6 @@ the linear blend of the decoded fields — no conversion needed):
   parameter semantics, cost figures, the `vs_black` content-gate caveat.
 - `.specify/f_vf_fluid/{spec,plan,tasks}.md` — design record and findings.
 - `docs/f-reference/f_vecfield_type.md` — the type contract φ's outlet would
-  have to honour if exposed.
+  have to honor if exposed.
 - `ideas/named_mod_textures.md`, `.specify/plan.md` "UI density" and
   "f_util_matrix" entries — the inlet/mod-texture convention this depends on.

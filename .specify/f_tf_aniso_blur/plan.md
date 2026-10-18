@@ -54,7 +54,7 @@ lines, gain-free identities, θ+180° caveat, axisflow pointer; its tasks.md
 TG003 finalizes it before Phase 1. This plan cites it rather than re-derives;
 any divergence found in Phase 1 goes back to the idiom owner. The prose
 anchor is glyph's own spec §Field Architecture.
-**Per-tap texture sampling must clamp to texel centres in-shader** (bench
+**Per-tap texture sampling must clamp to texel centers in-shader** (bench
 GPU wraps out-of-range reads; `docs/f-reference/f_tf_tensormap.md` Notes,
 tensormap ADR-5). For a kernel that samples up to ~16 px from the center this
 is not a border nicety: the clamp is on *every* tap, via the same
@@ -81,7 +81,7 @@ tests/
   bench_tf_aniso_blur.py   tier 2, real codebox on the GPU                 (Phase 1)
 
 ~/Vsynth/patterns/ (not in repo)
-  tf_aniso_blur_scratch.maxpat   tier 3 judgement                          (Phase 2)
+  tf_aniso_blur_scratch.maxpat   tier 3 judgment                          (Phase 2)
 
 docs/f-reference/
   f_tf_aniso_blur.md  as-built reference                                   (Phase 5)
@@ -172,7 +172,7 @@ statement-budget arithmetic: ~10 statements/tap × 16 ≈ 160, comfortably
 under 450); tap weights are gated by the live knobs via
 `step()`/multiplier (cost scales with TAPS_MAX, not the dial — the tensormap
 fact worth repeating to Matt in this module's docs); coordinates clamped to
-texel centres in-shader; floats unclamped until the (absent) final encode.
+texel centers in-shader; floats unclamped until the (absent) final encode.
 
 ### ADR-3: The gate model — trace-gated energy, coherence-gated shape
 
@@ -224,7 +224,7 @@ one first loses nothing. Specifying curvature now would reopen the kernel-
 shape decision under a harder constraint for no confirmed need.
 
 **Consequences:** Curved corners get slightly *cut* on real content rather
-than smoothed around. Tier-3 judgement includes looking at exactly this
+than smoothed around. Tier-3 judgment includes looking at exactly this
 artifact and recording whether it is acceptable on real material — that is
 the evidence that decides whether the curved question ever reopens.
 
@@ -241,7 +241,7 @@ the evidence that decides whether the curved question ever reopens.
 - **Tier 2 (bench) applies.** One real codebox to compile; the statement
   budget is a compile-time fact to measure, not assume; cost at 1080p/4K on
   M3 Max (M1 unmeasured) is an open question for the ADR-2 gate; the texel-
-  centre clamp behavior vs the bench's wrap must be verified, not argued
+  center clamp behavior vs the bench's wrap must be verified, not argued
   (tensormap ADR-5 precedent).
 - **Tier 3 (scratch patch) applies.** `strength_scale`, `length`,
   `width_gate`, `floor` defaults on real content; the curved-corner-cut
@@ -256,15 +256,15 @@ to re-verify a change.
 
 **Context:** the bench verified parity at 64×64, but glyph's live finding
 (family rule 6b) showed `sample()` silently drops to nearest when its
-coordinate is data-dependent and jumps between neighbouring pixels. This
-module's centre tap and every kernel tap read at **cell-coherent**
+coordinate is data-dependent and jumps between neighboring pixels. This
+module's center tap and every kernel tap read at **cell-coherent**
 coordinates — constant within a cell (length/width texels apart), teleporting
 at the 1-px cell-boundary bands. The 64×64 bench green was boundary-fraction
 luck, not safety: a 97×64 spot-check measured the fallback live.
 
-**Decision:** all reads of `in2` (centre tap and in-loop taps) use the
+**Decision:** all reads of `in2` (center tap and in-loop taps) use the
 four-tap `nearest()` hand-bilinear idiom (`skills/jit-gen-codebox`).
-Coordinates derived in texel space, taps at normalized texel centres, weights
+Coordinates derived in texel space, taps at normalized texel centers, weights
 (1−ax)(1−ay)...-form; the loop's taps read straight-line four terms (no
 nested loop). Cost: 4× the reads per tap; the recorded per-pass floor was
 ~0.2 ms (E-class) — the 49-tap kernel now runs ~196 reads/pixel, still far
@@ -299,7 +299,7 @@ mirror on the GPU per channel; texel-clamp border behavior confirmed;
 per-family cost measured at 1080p and 4K (M1 caveat); ADR-2 decision
 recorded with the numbers.
 
-### Block 3: Judgement on real content
+### Block 3: Judgment on real content
 **Dependencies:** Block 2.
 **Builds:** scratch patch only.
 **Verification:** the four defaults on bfg Perlin/Voronoi/fbm and a live
@@ -345,18 +345,18 @@ plan as an addendum below.
 >
 > **Chosen: family (a), fixed-tap straight-axis line integration with
 > per-tap transverse offset** — the `cf.directional` audit shape made
-> tensor-driven. Geometry as built (T005): centre tap + 8 half-integer 1 px
+> tensor-driven. Geometry as built (T005): center tap + 8 half-integer 1 px
 > stations per side (u = ±0.5..±7.5), station along-mass g(u) = exp(−2u²/L²)
 > (mid-point quadrature of the continuous Gaussian: 1e-4 relative vs its own
 > integral — the 1-px lattice IS the converged kernel), each station three
 > transverse taps (t = 0, ±D/2 px) at the discrete-Gaussian rule (1/4, 1/2,
 > 1/4). 49 samples = TAPS_MAX; bounded loop, weights gated per tap
-> (tensormap ADR-3); coordinates clamped to texel centres in-shader on
+> (tensormap ADR-3); coordinates clamped to texel centers in-shader on
 > every tap (ADR-5).
 >
 > **Mirror-side cost model vs the tensormap bench floor** (~0.9 ms/pass at
 > 1080p R_MAX 16, `docs/f-reference/f_tf_tensormap.md`): the kernel loop is
-> 48 samples of one texture + 1 centre + 1 tensor `nearest` read — the same
+> 48 samples of one texture + 1 center + 1 tensor `nearest` read — the same
 > order as tensormap's 16-tap stage B loop (33 samples), so the model
 > predicts a single pass in the same ~0.9 ms/pass class at 1080p, well
 > under the statement budget (the shipped codebox is ~77 statements vs the
@@ -384,7 +384,7 @@ plan as an addendum below.
 > artifact report favors the other; the shipped file stays family (a)
 > until then.
 
-### Phase 2: Scratch patch, judgement tier
+### Phase 2: Scratch patch, judgment tier
 Defaults, floor-boundary look, corner-cut artifact, strength pairing. Exit:
 provisional parameter table replaced with live values, or the spec says why
 they did not.

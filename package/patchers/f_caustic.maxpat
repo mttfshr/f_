@@ -1256,7 +1256,7 @@
 					"id": "obj-32",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
-					"hint": "Where light goes when a ray lands outside the frame. Off: it is lost (the original behaviour). Wrap: it re-enters on the opposite side, so nothing is lost and no band is starved. Mirror: it reflects at the border. Clamp: it piles onto the border pixels. Added 2026-10-17 (Matt).",
+					"hint": "Where light goes when a ray lands outside the frame. Off: it is lost (the original behavior). Wrap: it re-enters on the opposite side, so nothing is lost and no band is starved. Mirror: it reflects at the border. Clamp: it piles onto the border pixels. Added 2026-10-17 (Matt).",
 					"numinlets": 1,
 					"numoutlets": 3,
 					"outlettype": [

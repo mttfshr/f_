@@ -117,7 +117,7 @@ docs/
 **Purpose:** Confirm build_patcher.py dual-outlet support, then author definition file.
 
 - [ ] T017 Read `tools/build_patcher.py` — check whether dual gen outlet (two `out N` objects, two pix outlets, two bpatcher outlets) is supported via definition.py keys; look for any `dual_outlet`, `num_outlets`, or similar configuration
-- [ ] T018 If dual outlet is NOT supported natively: write `.specify/f_vf_streak/build_streak.py` modelled on `.specify/f_caustic/build_caustic.py` — adapt for f_vf_streak params (strength, length, falloff, color_shift), prefix `vfstreak`, vs_inState on in1 with src_vecfield state param
+- [ ] T018 If dual outlet is NOT supported natively: write `.specify/f_vf_streak/build_streak.py` modeled on `.specify/f_caustic/build_caustic.py` — adapt for f_vf_streak params (strength, length, falloff, color_shift), prefix `vfstreak`, vs_inState on in1 with src_vecfield state param
 - [ ] T019 If dual outlet IS supported natively: write `.specify/f_vf_streak/definition.py` with appropriate dual-outlet key; skip T018
 - [ ] T020 Set presentation rect width — four dials + two outlet triangles requires wider than standard 78px; target ~120px wide; verify against moduleSize.js by checking similar multi-param patchers (f_caustic uses 190px as reference)
 - [ ] T021 Confirm params in definition/build script: `strength` (live.dial, 0–1, default 0.3), `length` (live.dial, 0–0.5, default 0.15), `falloff` (live.dial, 0–1, default 0.0), `color_shift` (live.dial, 0–1, default 0.0), `src_vecfield` (internal/hidden), `bypass`

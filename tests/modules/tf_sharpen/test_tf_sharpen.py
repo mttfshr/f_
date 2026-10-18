@@ -39,57 +39,12 @@ HERE = Path(__file__).resolve().parent
 
 from harness import check, note, run  # noqa: E402
 import gpu_sim as g  # noqa: E402
-
-F32 = np.float32
-EPS_TRACE = F32(1e-6)   # plan ADR-3: tensormap T019 convention, encoded units
-H = W = 32
-
-nx, ny, _, _ = g.grid(H, W)
-
-
-# --- mirror -------------------------------------------------------------
-
-def sharpen(t, sharpen=1.0, eps=EPS_TRACE, clip=True, mutate=None, bypass=False):
-    """One pass of the planned codebox. t: outlet-0-format RGBA texture.
-
-    mutate: None | "drop_max" (T009a: gamma used without max(gamma, 0))
-            | "swap"    (T009b: gap sign error == swapped diagonals).
-    bypass: module bypass -> exact passthrough (spec acceptance row).
-    Floor gate: trace < eps -> exact passthrough of the sampled input.
-    """
-    s = g.nearest(t, nx, ny)
-    xx = s[..., 0]
-    xy = (s[..., 1] - F32(0.5)) * F32(2)
-    yy = s[..., 2]
-    tr = xx + yy
-    gam = F32(sharpen) if mutate == "drop_max" else np.maximum(F32(sharpen), F32(0))
-    iso_part = (F32(1) - gam) * F32(0.5) * tr
-    if mutate == "swap":
-        ox = gam * yy + iso_part
-        oz = gam * xx + iso_part
-    else:
-        ox = gam * xx + iso_part
-        oz = gam * yy + iso_part
-    oy = gam * xy * F32(0.5) + F32(0.5)
-    out = g.texture(H, W)
-    if clip:
-        out[..., 0] = np.clip(ox, 0, 1)
-        out[..., 1] = np.clip(oy, 0, 1)
-        out[..., 2] = np.clip(oz, 0, 1)
-    else:
-        out[..., 0], out[..., 1], out[..., 2] = ox, oy, oz
-    out[..., 3] = F32(1)
-    iso = tr < eps
-    # floor/vs_black passthrough: rgb exactly the input's, but the OUTLET
-    # contract is A = 1 always (f_tensor_type.md outlet 0) — the codebox's
-    # vec(..., 1.0) never transmits the incoming alpha; the mirror matches
-    # (2026-10-17: the first draft copied s[iso] whole, keeping the
-    # vs_black block's alpha 0 — a one-per-block false diff on the bench).
-    out[iso, :3] = s[iso, :3]
-    out[iso, 3] = F32(1)
-    if bypass:
-        out[...] = s                  # exact passthrough (module bypass)
-    return g.store_float32(out)
+from tf_sharpen_mirror import (
+    F32,
+    H,
+    W,
+    sharpen,
+)
 
 
 # --- helpers ------------------------------------------------------------
@@ -237,7 +192,7 @@ def test_coherence_mapping():
 # --- T006: no eigenvalue swap on relax (ADR-2 hazard) ----------------------
 
 def rayleigh_along_input_axes(xx, xy, yy, c2_in, s2_in):
-    """Labelled eigenvalues: output energy along the input's major axis (a) and
+    """Labeled eigenvalues: output energy along the input's major axis (a) and
     its perpendicular (b). eigh sorts, so it cannot detect a swap; this can.
     a = xx*(1+c2)/2 + s2*xy + yy*(1-c2)/2;  b swaps c2 -> -c2, s2 -> -s2."""
     a = xx * (F32(1) + c2_in) / F32(2) + s2_in * xy + yy * (F32(1) - c2_in) / F32(2)
@@ -355,7 +310,7 @@ def test_encode_clamp_beyond_linear_range():
 def test_mutation_dropped_max_is_caught():
     # T009a: without max(gamma, 0), gamma = -0.5 keeps a negative gap: the
     # eigenvalues swap (the input's minor axis becomes the output's major) and
-    # T006's labelled no-swap invariant fails.
+    # T006's labeled no-swap invariant fails.
     tex = tensor_tex(0.8, 0.2, 0.7)
     c2_in, s2_in = axis_cs(*components(tex))
     xx, xy, yy = components(sharpen(tex, sharpen=-0.5, mutate="drop_max", clip=False))

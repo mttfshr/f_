@@ -6,6 +6,78 @@ math right? does Max/GPU run it?) and failures can't be attributed. Settle the
 math here; the scratch patch then answers only "does known-correct code compile
 and run fast enough."
 
+## The idea, and what it does and doesn't prove
+
+A `jit.gl.pix` codebox is a GPU fragment program: a pure function from input textures and Params to
+one output color per pixel, run for every pixel in parallel. That makes it unusually easy to
+re-express on the CPU, and the whole test strategy rests on three separate questions, each answered
+by a different tool, so a failure points at one cause:
+
+1. **Is the algorithm right?** Answered in NumPy, with no Max. We write a *mirror*: a plain Python
+   function per codebox pass that takes `(H, W, 4)` float32 arrays and computes every pixel at once.
+   We then check the mirror against **independent ground truth** (`np.fft` for the fluid solver,
+   closed forms for the solver's drift term, photon counting for caustics, analytic angles for the
+   tensor modules), never against a second copy of the same logic.
+2. **Does the real codebox do what the mirror does?** Answered by the bench. The shipped `.gen`
+   file runs on the actual GPU inside a live Max, the frame is read back, and it is diffed against
+   the mirror, pixel by pixel, with the measured error printed.
+3. **Does it look and feel right?** Not measurable here. That is a scratch patch and your eyes
+   (expressive tuning, ranges, Vsynth integration).
+
+**What "emulating with NumPy" means.** `tests/lib/gpu_sim.py` models the parts of the execution
+model a mirror needs: texel-center coordinates (`norm = (i + 0.5) / dim`, array index `[row, col]`
+with row 0 where `norm.y` is smallest), `nearest()` and bilinear `sample()` with clamp or wrap,
+float32 arithmetic throughout (so precision problems the GPU will have show up on the CPU too), and
+`store_char` for 8-bit textures. It is **not** a GenExpr interpreter. Nothing parses the codebox:
+a mirror is a hand translation, written to follow the shader (same fixed-count loops, one function
+per pass, every read through `gpu_sim.sample` / `nearest`). Two consequences follow. A mirror can
+be wrong about the shader, and nothing offline will notice; only the bench diff (question 2)
+closes that gap. And a mirror that shares a wrong convention with the code under test cannot catch
+it, which is why the ground truth in question 1 must be independent.
+
+**How we know the simulator's own conventions are right.** They were each verified against Max 9
+`jit.gl.pix` with probe codeboxes, not assumed: `norm`, the row orientation, and the fact that
+GenExpr's `cell` is `norm * (dim - 1)`, not an integer index (bench-verified 2026-09-22, probe
+exact to float32). Findings like this are pinned in `gpu_sim.py`'s docstring and in
+`skills/jit-gen-codebox`, so the mirror follows what the GPU does rather than what the docs imply.
+
+**Fidelity: what has been measured.** Agreement depends on the operation, so there is no single
+number; the tolerance for each check is printed beside its measured error (`harness.check`).
+Measured examples, from the bench runs recorded in `HANDOFF.md`:
+
+- Plain float32 arithmetic and trig: very tight. `atan2` as used on a sampled vecfield matched
+  NumPy to about 6e-7 rad over all quadrants.
+- Multi-stage solvers: the shipped DFT stages match `np.fft.fft2` to 1e-5 at N=256; the caustic
+  scatter's edge modes match their mirror to roughly 3e-6 to 1e-5.
+- Interpolated reads of float textures have a floor: the GPU filters with 8-bit weights, so
+  bilinear results sit about 2e-4 away from an exact float32 interpolation once stacked.
+  A tolerance below that fails for a reason that is not a bug.
+- Known, deliberate gaps (each explained where it is recorded): at the `atan2` branch cut the GPU
+  returns +pi where IEEE gives -pi, so comparisons there must wrap; a border pixel case where the
+  GPU snaps and the mirror clips (about 1e-3 in `f_caustic` with edge mode off).
+
+**Where the GPU disagrees with the textbook (found on the bench, so now rules).** Runtime
+`atan2(0, 0)` is NaN, though constants fold to 0; `sample()` falls back to nearest when its
+coordinate is data-dependent and jumps; `phi` is a predefined constant and assigning it fails the
+whole compile. These could not have been found by the mirror alone. They are the reason the bench
+exists.
+
+**Honest limits.**
+
+- A green bench run means the codebox ran, was captured, and matched the mirror on the inputs
+  the test fed it. It says nothing about inputs it did not feed it. Test inputs are chosen to hit
+  branches (degenerate points, seams, extremes), and tests are mutation-checked once (inject a
+  plausible bug, confirm a test fails) to show they can fail at all.
+- `report["status"] == "ok"` means *ran and captured*, nothing more. Numeric correctness is only
+  ever judged by the diff.
+- The bench runs shaders in isolation at test resolutions, so it cannot see compile limits at
+  Vsynth scale, fps under a real chain, GPU driver differences or `@adapt`/`@dim` behavior. The
+  bench also keeps Params between jobs, so every test pins the Params it depends on.
+- It does not replace tier 3. A module can match its mirror to 1e-6 and still look wrong.
+
+For how these map to the repo's verification tiers (math, execution, judgment), see the root
+`README.md` and `.specify/constitution.md`.
+
 ## Two layers
 
 - **Math tests** (`tests/**/test_*.py`, `tests/run.sh`) — NumPy only, run
@@ -17,15 +89,18 @@ and run fast enough."
 ## Run
 
     tests/run.sh                              # every tests/**/test_*.py
-    tests/run.sh tests/math/test_fft_separable.py  # one file
+    tests/run.sh tests/toolchain/test_gpu_sim.py   # one file
     tests/bench.sh                            # regression set (needs the bench open)
     tests/bench.sh --changed                  # only files whose inputs changed since their last green run
     tests/bench.sh --slow                     # the regression set plus its @slow tests
     tests/bench.sh --all                      # every bench_*.py, incl. perf and probes, and slow tests
     tests/bench.sh --list                     # show what would run (no Max needed)
-    tests/bench.sh tests/math/bench_fft.py         # one file
+    tests/bench.sh tests/modules/fluid/bench_fluid.py  # one file
+    tests/check.sh quick                      # offline suite only: the before-commit check, no Max
+    tests/check.sh full                       # quick, then bench.sh --changed -q (needs the bench open)
 
-The regression set is the `DEFAULT` list at the top of `tests/bench.sh`. It
+The regression set is every bench file that declares `GROUP = "regression"` (ordered by its `ORDER`;
+`tests/lib/benchdeps.py list --group regression` prints it). It
 leaves out `bench_perf.py` (fps-based checks that can fail on a busy machine
 without a regression) and `bench_fluid_probes.py` (a Phase 0 record of
 bench-verified facts); `--all` adds them.
@@ -172,7 +247,7 @@ Open Max with `bench.maxpat` for `tests/bench.sh`. `bench_modules.py` and
 `bench_fluid_module.py` open `bench_module.maxpat` themselves, so close Vsynth
 performance patches before running them.
 
-**Adding a bench test for a module:** copy `tests/templates/bench_module_template.py` to `tests/bench_<module>.py`, point `CODEBOX` at the module's real `src/<module>/codebox_*.gen`, fill in the mirror/invariants, and add it to `DEFAULT` in `tests/bench.sh` once it is a regression gate. Which tests a module needs is decided per module (constitution: Verification Tiers).
+**Adding a bench test for a module:** copy `tests/templates/bench_module_template.py` to `tests/modules/<module>/bench_<module>.py`, point `CODEBOX` at the module's real `src/<module>/codebox_*.gen`, fill in the mirror/invariants, register it in `benchdeps.DATA`, and declare `GROUP = "regression"` (and an `ORDER`) once it is a regression gate. Which tests a module needs is decided per module (constitution: Verification Tiers).
 
 **Writing a bench codebox:** plain GenExpr text (see `bench/codeboxes/`).
 Up to 3 inputs (`in1..in3`); `Param` values arrive on frame 3. Remember the
@@ -182,77 +257,81 @@ Facts section).
 
 ## Files
 
-- `gpu_sim.py` -- jit.gl.pix execution-model emulation (grid, sampling, storage)
-- `harness.py` -- minimal runner (`skip(reason)`, `max_path()`, `MAX_APP`)
-- `test_fft_separable.py` -- separable-DFT FFT plan, T1-T3 correctness
-  (see `ideas/ceyron_simulation_scripts_notes.md`, 2026-09-22 addenda).
-  Mutation-checked 2026-09-22: half-texel sampling offset, unsigned
-  wavenumbers, and wrong inverse sign are each caught. Known weak test:
-  `test_projection_random_field_divergence_free` shares `signed_k` with the
-  code under test, so it passes even with wrong wavenumbers; the
-  gradient/curl projection test is the one that catches that class of bug.
-- `jxf.py` -- Jitter `.jxf` read/write <-> RGBA float32 (format decoded from
-  a Max-shipped file; conventions bench-verified)
-- `genjit.py` -- codebox text -> `.genjit` gen patcher
-- `benchclient.py` -- bench client: OSC, jobs, `run_pass`, `measure`, `reopen`
-- `test_jxf.py`, `test_genjit.py`, `test_benchclient.py` -- offline checks of
-  the bench toolchain (against Max-shipped files / OSC spec bytes)
-- `bench.sh` -- runs the bench regression set (`--all` for every `bench_*.py`)
-- `run.sh`, `bg.sh`, `_log.sh` -- the offline runner (per-file timing table), background runs, and the log helper all three share
-- `bench_control.py` -- control loop (ping, /busy, error reporting)
-- `bench_selftest.py` -- the bench's own plumbing: identity, coordinate
-  probe, plane order, compile-error capture, reload, two inputs
-- `bench_fft.py` -- FFT T1/T2 on the GPU vs NumPy (`dft_x`/`dft_y` codeboxes)
-- `bench_perf.py` -- rate control, scaling, repeatability, DFT cost
-- `bench_temporal.py` -- E4 feedback runs: step counter, accumulator, routing, char
-- `fluid_mirror.py` + `test_fluid_mirror.py` -- NumPy mirror of every
-  `f_vf_fluid` stage and its offline tests
-- `bench_fluid.py` -- `f_vf_fluid` stage codeboxes on the GPU vs the mirror,
-  100-frame chain, cost (regression set)
-- `bench_fluid_module.py` -- `f_vf_fluid` inside Vsynth's render context:
-  once-per-frame update, two instances, fresh load, tap grid (regression set)
-- Records, kept because `.specify/f_vf_fluid/` cites them as evidence, not
-  regression gates: `bench_fluid_probes.py` (Phase 0 GPU probes; run with
-  `--all`) and `fluid_feasibility.py` (Phase 0 module-bench feasibility
-  study, no assertions, matches no runner)
-- Records for `ideas/optics_map.md` (the caustic / Lumia research, 2026-10-06),
-  not regression gates, matching no runner: `spike_scatter.py` plus
-  `bench/make_spike_scatter.py`, `bench/spike_scatter.jxs`,
-  `bench/spike_scatter.maxpat` and `bench/spike_scatter_chain.maxpat`
-  (GPU point-scatter caustic on the MODULE bench with a custom wrapper:
-  identity, orientation flips, float accumulation, truth agreement, density,
-  cost, frame lag; stages `s0 s1 s2 s2b s3 s3b`, and from 2026-10-07 `s4` (single-mesh
-  cost sweep), `s5` (corner-snap equals size 3), `s6` (fixed n, capture size varied: separates
-  vertex, fill and contention), `s7` (coarse capture + upscale quality), `s8` (lattice jitter),
-  `s9` (gobo / source aliasing), `s10` (the tone-map + upscale stage behind the scatter, `spike_scatter_tone.maxpat`), `s11` (`detail N` equals the explicit parameter messages); timings vary up to 2x between runs, compare within a run), and `gather_proto.py`
-  (generator and CODEBOX-bench runner for the multi-start gather: compile
-  ladder, size/cost measurement, `make_code_fn(..., bil=True)` is the working
-  version; needs `scratch/caustic_fidelity.py` and
-  `scratch/multi_guess_gather2.py` as its NumPy mirror and truth, which are
-  tracked in `scratch/` since 2026-10-07)
-- `bg.sh` + `test_bg.py` -- the background runner (start, status, log, stop, list; lock; fake-command tests)
-- `benchdeps.py` + `test_benchdeps.py` -- what `bench.sh --changed` runs (input hashing, decision table, record)
-- `test_harness.py` -- the runner's `@slow` marker (skipped by default, skip printed by name) and `skip(reason)`
-- `module_contract.py` + `test_module_contracts.py` -- offline wiring
-  contracts of every shipped bpatcher: route -> attrui -> Param wiring, plus
-  per-pix checks on every stage (each codebox Param is driven and read, a
-  codebox-less pix is a pure identity pass, every gen in/out has a cord).
-  Known issues live in `KNOWN_ISSUES` with a pointer each (XFAIL; a fixed one
-  reports XPASS). Replaced `build/audit_interface.py`.
-- `drift.py` (in `build/`) + `test_drift.py` + `drift_baseline.json` -- the
-  definition.py ratchet: every shipped patcher is rebuilt from its definition
-  in memory and compared with the shipped file. A module must reproduce
-  exactly unless it is in the baseline, which may only shrink (drift growing,
-  shrinking without the baseline being lowered, or a module that now
-  reproduces all fail the test). Rewrite the baseline with
-  `python3 tests/build/test_drift.py --write-baseline`. See `build/spec.md`,
-  "Source of Truth and Drift".
-- `modulebench.py` + `bench_modules.py` -- live module contracts (module bench)
-- `templates/bench_module_template.py` -- starting point for a module's bench test
-- `bench/` -- `make_bench.py` (generates `bench.maxpat` and
-  `bench_default.genjit`), `bench.js`, `codeboxes/`; module bench:
-  `make_module_bench.py` (generates `bench_module.maxpat` and
-  `bench_module_empty.maxpat`), `bench_module.js`
+Entry scripts stay at the top of `tests/`; everything else lives in a directory named for what it is. Imports
+need no `sys.path` edits: the runners export `PYTHONPATH` (`lib/`, every test directory, `build/`), and
+`tests/py.sh <file>` runs one file the same way. Stem names are unique repo-wide, so `benchdeps.DATA` is keyed by
+stem. The old-path to new-path table for the 2026-10-18 move is `.specify/test_bench/path_map.tsv`.
+
+- `run.sh`, `bench.sh`, `bg.sh`, `check.sh`, `_log.sh`, `py.sh` -- the offline runner (finds `tests/**/test_*.py`, per-file timing
+  table), the bench runner, background runs, the log helper the first three share, a one-file runner, and `check.sh quick|full` (offline suite; or offline plus the changed benches).
+- `lib/` -- shared code, no tests of its own except through `toolchain/`:
+  - `gpu_sim.py` jit.gl.pix execution-model emulation (grid, sampling, storage); `harness.py` minimal runner
+    (`check`, `slow`, `skip(reason)`, `max_path()`, `MAX_APP`); `paths.py` `REPO` / `TESTS` / `BENCH`
+  - `dft_mirror.py` the separable-DFT mirror (`pass_dft`, `fft2_passes`, `ifft2_passes`), `pack` / `make_image` / `rel_err`,
+    and `dft_codebox` (the bench's `dft_x` / `dft_y` test codebox at size N); used by the fluid mirror and benches
+  - `benchclient.py` bench client (OSC, jobs, `run_pass`, `run_temporal`, `measure`, `reopen`, `ensure_healthy`,
+    `with_param_defaults`); `modulebench.py` and `module_contract.py` the module bench's client and the offline wiring
+    contracts (`KNOWN_ISSUES` are XFAIL with a pointer; a fixed one reports XPASS)
+  - `benchdeps.py` what `bench.sh --changed` runs (input hashing, decision table, record, `list --group`);
+    stdlib only, run under the system `python3`
+  - `jxf.py` Jitter `.jxf` read/write <-> RGBA float32; `genjit.py` codebox text -> `.genjit`; `patchbuild.py`
+    patch-building helpers for the bench generators
+- `toolchain/` -- tests of the harness itself and the bench of the bench: `test_harness`, `test_gpu_sim` (the emulator's sampling), `test_benchclient`,
+  `test_benchdeps`, `test_bg`, `test_jxf`, `test_genjit`, `test_bench_patchbuild` (offline), `bench_control` (ping,
+  /busy, error reporting, Param reset), `bench_selftest` (identity, coordinate probe, plane order, compile-error
+  capture, reload, two inputs), `bench_temporal` (feedback runs: step counter, accumulator, routing, char),
+  `bench_perf` (rate control, scaling, repeatability, DFT cost; group `perf`, not in the regression set).
+- `build/` -- tests of the `build/` tooling, all offline: `test_drift` (the definition.py ratchet: every shipped
+  patcher is rebuilt from its definition in memory and compared with the shipped file; a module must reproduce
+  exactly unless it is in `drift_baseline.json`, which may only shrink; rewrite it with
+  `python3 tests/build/test_drift.py --write-baseline`; see `build/spec.md`, "Source of Truth and Drift"),
+  `test_build_conventions`, `test_build_multistage`, `test_build_seeds_keys`, `test_capture_raw`,
+  `test_generate_menu`, `test_launch`, `test_layout`, `test_overrides`.
+- `contracts/` -- cross-module checks of every shipped bpatcher: `test_module_contracts` (offline route -> attrui ->
+  Param wiring from the patch JSON, plus per-pix checks), `test_bench_expect` (the bypass-expectation table), and
+  `bench_modules` (live, on the module bench; `--changed` runs only the modules whose patcher changed).
+- `modules/<m>/` -- one directory per module with its own verification, moved as-is (mirror extraction is Phase C):
+  - `fluid/` -- `fluid_mirror.py` (NumPy mirror of every `f_vf_fluid` stage) + `test_fluid_mirror.py`;
+    `bench_fluid.py` (stage codeboxes on the GPU vs the mirror, 100-frame chain, cost) and `bench_fluid_module.py`
+    (inside Vsynth's render context: once-per-frame update, two instances, fresh load, tap grid)
+  - `caustic/` -- `scatter_mirror.py`, `scatter_truth.py`, `caustic_runner.py`, `test_scatter_mirror.py`,
+    `test_scatter_scene.py`, `bench_caustic_codebox.py`, `bench_caustic_sheets.py`
+  - `tf_tensormap/ tf_axisflow/ tf_smooth/ tf_glyph/ tf_sharpen/ tf_aniso_blur/ tf_hatch/` -- each holds
+    `tf_<m>_mirror.py` (the NumPy mirror of the shader, which the bench imports), `test_tf_<m>.py` (tier-1 tests) and
+    `bench_tf_<m>.py` (tier-2 bench). Mirror names carry the module name because every test directory shares one
+    import path, so a bare `mirror.py` would collide
+- `math/` -- standalone NumPy math tests with no module of their own: `test_conservative_field.py`.
+- `records/` -- evidence that `.specify/` and `ideas/` docs cite, not regression gates, matching no default runner
+  (a bench among them has `GROUP = "record"` and runs under `--all`):
+  - Fluid Phase 0: `bench_fluid_probes.py` (GPU probes), `fluid_feasibility.py` (module-bench feasibility study, no
+    assertions), and the separable-DFT pair `fft_separable.py` (NumPy correctness, T1-T3; run with
+    `tests/py.sh`, no longer in the offline suite) and `bench_fft.py` (the DFT codeboxes on the GPU). Mutation-checked
+    2026-09-22: half-texel sampling offset, unsigned wavenumbers, and wrong inverse sign are each caught. Known weak
+    test: `test_projection_random_field_divergence_free` shares `signed_k` with the code under test, so it passes even
+    with wrong wavenumbers; the gradient/curl projection test is the one that catches that class of bug (see
+    `ideas/ceyron_simulation_scripts_notes.md`, 2026-09-22 addenda). The mirror itself lives in `lib/dft_mirror.py`.
+  - Caustic / Lumia research for `ideas/optics_map.md` (2026-10-06): `spike_scatter.py` plus `bench/make_spike_scatter.py`,
+    `bench/spike_scatter.jxs` and the `bench/spike_scatter*.maxpat` patchers (GPU point-scatter caustic on the MODULE bench
+    with a custom wrapper: identity, orientation flips, float accumulation, truth agreement, density, cost, frame lag;
+    stages `s0 s1 s2 s2b s3 s3b`, and from 2026-10-07 `s4` single-mesh cost sweep, `s5` corner-snap equals size 3,
+    `s6` fixed n with capture size varied (separates vertex, fill and contention), `s7` coarse capture + upscale
+    quality, `s8` lattice jitter, `s9` gobo / source aliasing, `s10` the tone-map + upscale stage, `s11` `detail N`
+    equals the explicit parameter messages; timings vary up to 2x between runs, compare within a run);
+    `gather_proto.py` (generator and codebox-bench runner for the multi-start gather: compile ladder, size/cost
+    measurement, `make_code_fn(..., bil=True)` is the working version; needs `scratch/caustic_fidelity.py` and
+    `scratch/multi_guess_gather2.py` as its NumPy mirror and truth); `spike_caustic_res_cost.py`,
+    `spike_caustic_trace_vs_jacobian.py`
+  - Vector-field and tensor research: `spike_lie_bracket`, `spike_mobius_vecfield_transform`,
+    `spike_droste_conformality`, `spike_structure_tensor_range`, `spike_atan2_safety`, `spike_tf_hatch_costshape`
+  - Other: `spike_ks_stability`, `spike_lbm_d2q9_architecture`, `spike_a_decorrelate_t7`, `spike_grain_cost`,
+    `spike_four_module_cost`
+- `templates/bench_module_template.py` -- starting point for a module's bench test.
+- `bench/` -- the generated bench patches and their scripts: `make_bench.py` (generates `bench.maxpat` and
+  `bench_default.genjit`), `bench.js`, `codeboxes/` (plain GenExpr test codeboxes, including `dft_x/dft_y/dft_param_n`);
+  module bench: `make_module_bench.py` (generates `bench_module.maxpat` and `bench_module_empty.maxpat`),
+  `bench_module.js`; the spike patchers named above, and `caustic_sheets_standalone.maxpat`. They stay here because
+  Max resolves them by bare name from this folder.
+- `.state/`, `jobs/`, `logs/` -- generated, gitignored (see below).
 
 ## Logs, state and interpreters
 
@@ -271,6 +350,17 @@ Facts section).
   (`test_benchdeps.py` enforces that).
 - The generated `bench/job_*.genjit` and `bench/mjob_*.maxpat` stay in `tests/bench/` (gitignored): Max resolves a job's gen
   and a module wrapper by name from the bench patcher's folder.
+
+**Check history** (`tests/lib/checkhist.py`): every `harness.check(label, value, tol)` also appends one JSON line
+to `tests/.state/check_results.jsonl` (gitignored, per machine: GPU and Max versions change the numbers), tagged with
+run id, kind (offline or bench), git SHA, dirty flag and Max version. `run.sh` and `bench.sh` turn it on through
+`tests/_log.sh`; a bare `tests/py.sh` run does not write. The last 30 runs of each kind are kept. Read it with
+`python3 tests/lib/checkhist.py report`: each check is judged on its own latest value (if it was seen in the last 10
+runs of its kind) and flagged `tight` when it passes but uses at least 50% of its tolerance, or `rising` when it is
+more than 2x the median of its earlier runs. Booleans and counts (integer value against an integer tolerance) and
+values over tolerance (real failures fail the run; `test_mutations_are_caught` feeds broken code through `check()` on
+purpose) are left out. `tests/check.sh full` ends with the one-line summary. Only `check()` calls are recorded, not
+plain `assert`s. A failing check is recorded before it raises.
 
 ## Quiet mode
 

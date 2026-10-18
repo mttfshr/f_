@@ -7,7 +7,7 @@
 
 ## What it does
 
-Splits an f_vecfield's X and Y channels out to two separate greyscale outlets — the R channel (X component) to out0, the G channel (Y component) to out1. A small utility for feeding a vecfield's individual axes into consumers that expect plain scalar textures (e.g. `jit.gl.bfg`-style scalar-only chains, or per-axis further processing) rather than a combined RG vecfield.
+Splits an f_vecfield's X and Y channels out to two separate grayscale outlets — the R channel (X component) to out0, the G channel (Y component) to out1. A small utility for feeding a vecfield's individual axes into consumers that expect plain scalar textures (e.g. `jit.gl.bfg`-style scalar-only chains, or per-axis further processing) rather than a combined RG vecfield.
 
 `bipolar` selects the output encoding: Unipolar passes the raw 0–1 sample through unchanged (matching the field's stored encoding); Bipolar remaps to -1–1 (`x*2-1`), i.e. the field's actual decoded signed value.
 
@@ -18,8 +18,8 @@ Splits an f_vecfield's X and Y channels out to two separate greyscale outlets �
 ```
 in1 (f_vecfield texture) → split_pix in1
 
-split_pix (@type float32) out0 (X channel, greyscale) → out0
-split_pix (@type float32) out1 (Y channel, greyscale) → out1
+split_pix (@type float32) out0 (X channel, grayscale) → out0
+split_pix (@type float32) out1 (Y channel, grayscale) → out1
 ```
 
 ---

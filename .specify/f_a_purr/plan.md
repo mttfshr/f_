@@ -19,7 +19,7 @@ its open `f_bio_` question. The defining characteristic is the audio domain,
 not the biological source.
 
 ### ADR-2 — Everything in one gen~; scheduler in the patcher
-Layers 0–4 live in a single `gen~` codebox. Layer 5 (behavioural) is a Max
+Layers 0–4 live in a single `gen~` codebox. Layer 5 (behavioral) is a Max
 patcher-level scheduler.
 
 Breath lives inside `gen~` rather than being passed in: per-cycle jitter needs
@@ -53,7 +53,7 @@ excluded.
 ### ADR-5 — Hand-rolled two-pole resonator, not `biquad`/`svf`
 Uses only operators empirically verified working in this codebox: `History`,
 `cos`, `twopi`, `samplerate`, arithmetic. Chosen after several assumed
-operator behaviours turned out to be wrong; the cost of a stdlib filter object
+operator behaviors turned out to be wrong; the cost of a stdlib filter object
 misbehaving mid-debug outweighs the convenience.
 
 Input scaled by `(1 - q)` so output level stays roughly constant as `res_q`
@@ -77,7 +77,7 @@ reach it, even when the code uses no signal input.** Without it, `Param`
 values never arrive and the module is silent with an empty console. Found
 empirically after two incorrect assertions to the contrary.
 
-**`latch` initialises to 0 regardless of any `History` initialiser feeding
+**`latch` initializes to 0 regardless of any `History` initializer feeding
 it.** In a self-dependent feedback loop this deadlocks permanently: `latch`
 outputs 0 before the first trigger, the accumulator never advances, so the
 trigger never fires, so `latch` never updates. Use the self-referential
@@ -104,7 +104,7 @@ template. Cost several exchanges of misdirected debugging.
 - **Phase 1 — concept and interface.** Complete. `ideas/f_a_purr.md`.
 - **Phase 2 — scratch verification.** Partial. Layers 0/1 + resonator
   confirmed audible. Layers 2 and 4 not yet built. Jitter bands unresolved.
-- **Phase 3 — parameter characterisation.** Not started. Blocked on resolving
+- **Phase 3 — parameter characterization.** Not started. Blocked on resolving
   the primary risk in spec.md.
 - **Phase 4 — production build.** Not started. No `definition.py` equivalent
   exists for `f_a_` modules; build path must be decided. Scoped (not solved)

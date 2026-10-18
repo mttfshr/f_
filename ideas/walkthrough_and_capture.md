@@ -38,7 +38,7 @@ Folio view has no way to express that.
   `f_caustic`, `f_vf_warp`, `f_vf_streak`, `f_weave`, etc. — a producer→consumer
   graph, and the graph is the interesting part
 - A process story: patchers generated from `src/` definitions, three-tier
-  verification (NumPy math → GPU test bench → scratch-patch judgement),
+  verification (NumPy math → GPU test bench → scratch-patch judgment),
   contract-tested shipped modules, Claude skills. The README already frames the
   repo as "a reference and conversation starter"; the process is arguably its
   most distinctive public content.
@@ -87,7 +87,7 @@ Max, writes the clip. Re-run when the module changes.
 1. **Reference clips, scripted** — short muted loops for the ~40 modules.
    Make the catalog and the producer→consumer chapter legible.
 2. **Hero pieces, hand-recorded** — real performance chains and finished
-   work. Need judgement, not a script. Existing Vimeo pipeline and
+   work. Need judgment, not a script. Existing Vimeo pipeline and
    collections on mattfisher.io already fit these. Audio-reactive modules
    (`f_chladni`, `f_a_ripple`, anything needing live audio) probably land here.
 

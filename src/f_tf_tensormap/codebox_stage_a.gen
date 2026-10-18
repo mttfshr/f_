@@ -20,7 +20,7 @@ dx = 1.0 / width;
 dy = 1.0 / height;
 // Explicit edge clamp: the bench GPU WRAPS out-of-range coordinates
 // (tf_tensormap diag 2026-10-16), so clamp-to-edge is done here, in the
-// shader, to the first/last texel centre -- independent of texture wrap.
+// shader, to the first/last texel center -- independent of texture wrap.
 xl = clamp(norm.x - dx, 0.5*dx, 1.0 - 0.5*dx);
 xr = clamp(norm.x + dx, 0.5*dx, 1.0 - 0.5*dx);
 yt = clamp(norm.y - dy, 0.5*dy, 1.0 - 0.5*dy);

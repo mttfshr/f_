@@ -55,7 +55,7 @@ Traces to GPU Gems Ch. 20 ("Texture Bombing") throughout — see References.
 | Outlet | Description |
 |---|---|
 | 0 | Mark color — composited rank-1-over-rank-2, gated by mark footprint |
-| 1 | Mark mask — luma of composited mark, greyscale |
+| 1 | Mark mask — luma of composited mark, grayscale |
 | 2 | Seed coord — **rank 1's UV position only.** Rank 2 isn't exposed here; this preserves the pre-Evolution-2 contract exactly (there was only ever one rank before) |
 
 ## Architecture

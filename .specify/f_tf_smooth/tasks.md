@@ -32,7 +32,7 @@ docs/f-reference/f_tf_smooth.md  — Phase 5
 
 ## Phase 0: Gates + NumPy mirror (BLOCKING) — COMPLETE 2026-10-17 (12/12, `tests/run.sh tests/modules/tf_smooth/test_tf_smooth.py`)
 
-- [x] T001 **DECISION GATE: verification tiers.** Confirmed as written in plan ADR-5: tier 1 applies (one-pole recurrence has closed-form ground truth), tier 2 applies (feedback round-trip on the real GPU; bench written, run pending Matt), tier 3 applies (`release` default/ceiling is a feel judgement).
+- [x] T001 **DECISION GATE: verification tiers.** Confirmed as written in plan ADR-5: tier 1 applies (one-pole recurrence has closed-form ground truth), tier 2 applies (feedback round-trip on the real GPU; bench written, run pending Matt), tier 3 applies (`release` default/ceiling is a feel judgment).
 - [x] T002 **(done 2026-10-17)** Write `tests/modules/tf_smooth/test_tf_smooth.py` — per-channel one-pole mirror over (H,W,4) float32 frames; pure array arithmetic, no gpu_sim texture reads needed (recurrence only). Mirror is `smooth_step`/`run_sequence`; encoding helpers per `f_tensor_type.md` out0.
 - [x] T003 **(done: worst abs error 3.8e-6 over release {0, 0.3, 0.5, 0.9, 0.99}, k<=50; tol 1e-5)** Ground truth, decay theorem: closed form `out(k) = B + (A-B)*release^k` checked against float32 powers (not the recurrence). Includes release-0 exact passthrough and unbounded-value decay (Jxx=4.0 in; ADR-3 no-clamp proven numerically).
 - [x] T004 **(done: alternating theta / theta+180 deg frames give bitwise-constant output; decoded axis preserved 0 rad)** Invariant, line-field stability — encoding-continuity check; catches accidental decode/atan2.
@@ -81,7 +81,7 @@ Phase 2.
 
 ---
 
-## Phase 2: Scratch patch, judgement tier
+## Phase 2: Scratch patch, judgment tier
 
 **Purpose:** `release`'s dial is a feel question.
 

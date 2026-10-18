@@ -22,11 +22,11 @@ If built as two modules, likely candidates for a shared `.genexpr` helper librar
 
 Three shaders reviewed. Not portable verbatim (different language/runtime — GLSL fragment shader vs. GenExpr codebox) but the mechanism translates directly.
 
-**1. "Colourful Apollonian III" fork chain** (FabriceNeyret2 / mla lineage) — N=3 ring-of-circles + central circle, 20-iteration fixed loop, one optional user-driven "final inversion" via an interaction point, colored by iteration depth (`cos(depth * 0.5 + ...)`). Also demonstrates the whole gasket embedded as a texture on a raymarched 3D torus-of-disks surface — confirms the gasket render can be composited as a 2D layer inside a larger scene, not just full-frame.
+**1. "Colorful Apollonian III" fork chain** (FabriceNeyret2 / mla lineage) — N=3 ring-of-circles + central circle, 20-iteration fixed loop, one optional user-driven "final inversion" via an interaction point, colored by iteration depth (`cos(depth * 0.5 + ...)`). Also demonstrates the whole gasket embedded as a texture on a raymarched 3D torus-of-disks surface — confirms the gasket render can be composited as a 2D layer inside a larger scene, not just full-frame.
 
 **2. "Apollonian Gasket" (ebanflo-derived)** — N=3 ring + central circle, 100-iteration fixed loop, `invert()`/`checkinverse()` split into a reusable pair (probe-and-conditionally-invert). Live `iTime`-driven rotation of the ring circles' positions. Three keyboard-toggled alternate boundary mappings: half-plane→disk, invert-in-unit-disk, and an inverse Joukovsky transform. Mouse-driven circle inversion applied to the whole field before the gasket loop runs.
 
-**3. "Ford circles + final inversion"** — simplest of the three. 8-iteration fixed loop, no early exit inside the loop (runs the full 8 every pixel, unconditionally: invert, swap x/y, `mod`-wrap x). Produces the Ford circles fractal as a byproduct pattern (grey), then applies **one final, live-animated circle inversion** (center + radius driven by `iTime` or mouse-drag) to get "any Apollonian gasket" (black) from the fixed Ford construction.
+**3. "Ford circles + final inversion"** — simplest of the three. 8-iteration fixed loop, no early exit inside the loop (runs the full 8 every pixel, unconditionally: invert, swap x/y, `mod`-wrap x). Produces the Ford circles fractal as a byproduct pattern (gray), then applies **one final, live-animated circle inversion** (center + radius driven by `iTime` or mouse-drag) to get "any Apollonian gasket" (black) from the fixed Ford construction.
 
 ## Key findings from this review
 

@@ -159,7 +159,7 @@ Two small outlet-contract gaps surfaced and were resolved during T020
 one output, but the pre-Evolution-2 module had 3 outlets (`mark color`,
 `mark mask`, `seed coord`). Matt's call: keep all 3 for backward
 compatibility. `mark mask` — added as Stage 4's second output (`comp_a`
-greyscale, same bypass-to-black behavior as before). `seed coord` —
+grayscale, same bypass-to-black behavior as before). `seed coord` —
 added as Stage 1c's third output, in the ORIGINAL zero-padded format
 (`gx, gy, 0, 1`, not the internal `dx/dy`-carrying format Stage 2/3
 consume), wired directly to the outer module's outlet 2, bypassing

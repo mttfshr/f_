@@ -106,7 +106,7 @@ paper's prose says.
 
 ## Licensing — check before porting any code
 
-The deposit is **CC BY-NC-SA 4.0**. That is a copyleft, non-commercial licence,
+The deposit is **CC BY-NC-SA 4.0**. That is a copyleft, non-commercial license,
 and it covers the MATLAB stimulus code. A Max patch that is a *translation* of
 that code is a derivative work and would inherit BY-NC-SA — which is
 incompatible with releasing it in a public `f_` repo under permissive terms,
@@ -114,8 +114,8 @@ and the NC clause is awkward for anything performed or sold.
 
 The clean path is **independent reimplementation from the paper's published
 equations** (the article is separately open access under a Creative Commons
-licence, and mathematical methods described in a paper aren't themselves
-restricted by the data deposit's licence). That means: use the MATLAB to
+license, and mathematical methods described in a paper aren't themselves
+restricted by the data deposit's license). That means: use the MATLAB to
 *resolve ambiguities and verify output*, not as a source to transcribe. The
 equations are already transcribed above from the paper, which is the right
 provenance — keep it that way, and don't paste MATLAB structure into the
@@ -156,7 +156,7 @@ Outside the modulated band, and for the modulation type not in use:
 **Octave position and the varying ripple rate:**
 
 ```
-Fₙ   = log2( n·f0 / c )        // harmonic's octave distance from band centre c
+Fₙ   = log2( n·f0 / c )        // harmonic's octave distance from band center c
 S(t) = μ + r · sin( p + 2π ν t )   // time-varying spectral modulation rate
 ```
 
@@ -170,7 +170,7 @@ requirement.
 
 **Band selection.** Modulation is applied to one octave from a fixed set of
 seven: 1–2, 1.4–2.8, 2–4, 2.8–5.7, 4–8, 5.7–11, 8–16 kHz. The band chosen is
-the one that places the matched tinnitus frequency closest to its centre. The
+the one that places the matched tinnitus frequency closest to its center. The
 sham condition uses the nearest *non*-tinnitus octave (usually below). Matching
 is deliberately approximate — tolerance to inexact matching is one of the
 method's stated advantages.
@@ -193,14 +193,14 @@ that produced the trial's 84 files and is stated to reproduce them exactly.
 `farpn.m` (fixed-amplitude random-phase noise via brickwall iFFT) and
 `wind_ramp.m` are Griffiths/Newcastle Auditory Group toolbox helpers.
 `wind.m` is byte-identical to `wind_ramp.m`; `freqfilter.m` and
-`phase_randomise.m` are toolbox leftovers, unused by this pipeline.
+`phase_randomize.m` are toolbox leftovers, unused by this pipeline.
 
 ### The three T1 questions, answered
 
 - **`q` and `p` are redrawn per 4 s stimulus**, not per file — both are local to
   `mod_ripple`, which is called once per stimulus inside the 900-iteration loop.
 - **`c` is the geometric mean of the modulated harmonics' frequencies**, not the
-  band centre. The code computes `log2(fi/min(fi))` then subtracts its own mean,
+  band center. The code computes `log2(fi/min(fi))` then subtracts its own mean,
   which is algebraically `log2(fi / geomean(fi))`. Because harmonics are
   uniformly spaced in *linear* frequency, their geometric mean sits ≈ 0.557
   octaves above the band's lower edge, not 0.5 — and it shifts slightly with f0,
@@ -219,7 +219,7 @@ the prose repeats it. The driver calls `mod_ripple(f0_tmp, 0, ...)` — the seco
 argument is `rand_phase`, and it is **0**. The function then builds `pmat` as
 zeros. Every harmonic starts in sine phase, which makes the carrier an
 impulse-like peaky waveform rather than the noise-like one random phase gives:
-different crest factor, different timbre, different clipping behaviour. The
+different crest factor, different timbre, different clipping behavior. The
 capability is in the function and was not used. Anyone reimplementing from the
 paper alone would build the wrong carrier.
 
@@ -234,7 +234,7 @@ Paper: `sin(2π[ωt + FₙS(t)] + q)`. Code: `sin(2π(phase_off + ωt + FₙS(t)
 and wraps ~6.3 times. Since it is a uniform random offset either way, the
 consequence is nil — but the equation as printed is not the equation as run.
 
-**4. `Fₙ` is mean-centred over harmonics, not band-centred.** See above. A
+**4. `Fₙ` is mean-centered over harmonics, not band-centered.** See above. A
 constant offset in `Fₙ` is *not* a constant phase offset in the modulator,
 because `Fₙ` is multiplied by the time-varying `S(t)` — a 0.057-octave shift
 adds `0.057·S(t)` cycles, swinging over roughly 0.09–0.43 cycles across the 8 s
@@ -252,13 +252,13 @@ character.
   band* as a staircase, not as a smooth curve — eight discrete gains.
 - **Correction gains** are `[0, 0, 0.125, 0.375, 0.625, 0.875, 1, 1]` × the
   profile's max dB (0/15/30/45), applied as `10^(dB/20)`. Each band takes the
-  template value at its own geometric centre (the even-indexed quarter-octave
+  template value at its own geometric center (the even-indexed quarter-octave
   frequencies), which is a tidy detail worth copying.
 - **The correction is boost-only** — no compensating cut — so a severe-HL file
   is substantially louder overall than a normal-hearing one. The driver has to
-  peak-normalise to avoid clipping. Any Max build needs the same guard.
+  peak-normalize to avoid clipping. Any Max build needs the same guard.
 - **Level target: RMS 0.01.** `loud = 0.1` scaled by `loud/(10·std)`. The author
-  flags it `%%%%% Needs optimising`.
+  flags it `%%%%% Needs optimizing`.
 - **Per-band ramping is a mathematical no-op.** The code sums each band, ramps
   each band separately, then sums the bands — and since the ramp is the same
   linear multiply for every band, this is identical to ramping the final sum
@@ -279,20 +279,20 @@ character.
 - **900 stimuli × 4 s = 3600 s.** Confirms the paper's hour-long files and
   confirms the earlier inference that the deposit's 3:20 files are the
   "demonstration of principle" set, not what participants heard.
-- **`dur_range = [4,4]`** — the driver supports randomised per-stimulus duration
+- **`dur_range = [4,4]`** — the driver supports randomized per-stimulus duration
   (rounded to 0.1 s) and was deliberately pinned to a constant 4 s. Likewise
   `files_per_category = 1`, annotated *"higher number will reduce repetitiveness
   and predictability."* The author's own view is that the fixed 4 s block
   structure is a knob, and a slightly uncomfortable one. Relevant to Q2.
 
-### The commented-out SMR line is not a behaviour change
+### The commented-out SMR line is not a behavior change
 
 `mod_ripple` carries a superseded line for `s`, and the driver carries a
 superseded call using `smr = [3,6], scyc = 4`. Easy to misread as "the trial
 used different values." It didn't: the old form was
 `mean(smr) + |diff(smr)|·sin(2π·t/(2·scyc))` = `4.5 + 3·sin(2π t/8)`, and the
 new form with `[1.5,7.5], scyc = 8` is `4.5 + 3·sin(2π t/8)`. Identical output.
-The fix re-parameterised `smr` from an opaque pair into an honest
+The fix re-parameterized `smr` from an opaque pair into an honest
 [min, max] and made `scyc` mean the actual cycle duration. **So the trial's SMR
 really is μ = 4.5 cyc/oct, r = 3, 8 s cycle**, matching the paper.
 
@@ -310,7 +310,7 @@ none: sₙ(t) = sin(2π fₙ t)                      (harmonics outside the band
 
 with `d = 1`, `ω = 1 Hz`, `μ = 4.5 cyc/oct`, `r = 3`, `scyc = 8 s`, all
 harmonics in sine phase, each scaled by its band's hearing-correction gain,
-summed, RMS-normalised to 0.01, then given 1 s raised-cosine ramps.
+summed, RMS-normalized to 0.01, then given 1 s raised-cosine ramps.
 
 ## What the study actually found
 
@@ -470,7 +470,7 @@ constraint (it could crossfade, overlap, or drift f0 continuously). Deviating
 means no longer running the studied stimulus. Decide deliberately.
 
 **Partially answered 2026-08-04 by the code.** The driver exposes `dur_range`
-as a *range* with per-stimulus randomisation and rounding, then pins it to
+as a *range* with per-stimulus randomization and rounding, then pins it to
 `[4,4]`; and `files_per_category` carries the author's own note that raising it
 *"will reduce repetitiveness and predictability."* So the fixed 4 s block is a
 knob the author built and chose not to turn, and he was already uneasy about

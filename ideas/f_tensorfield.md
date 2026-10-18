@@ -27,7 +27,7 @@ ordinary-looking vecfields that are not interchangeable (the bug shape
 ## Module status (as of 2026-10-17; the README rows and HANDOFF are the source of truth)
 
 Verification tiers: 1 = NumPy mirror, 2 = Max test bench (+ module contract bench), 3 = live
-judgement in a scratch patch. All seven are registered (menu, README, launcher, inventory).
+judgment in a scratch patch. All seven are registered (menu, README, launcher, inventory).
 
 | Module | Role | Tier 1 | Tier 2 | Tier 3 / open gates |
 |---|---|---|---|---|
@@ -143,7 +143,7 @@ in `.specify/f_vf_glow/tasks.md` are all unticked. Design, grounded in `codebox_
   `{"label": "anisotropy", "state_param": "src_anisotropy"}` (a fourth texture inlet, `in4`).
 - **Connection detection must use `state_param`, not a content heuristic.** An unconnected
   texture inlet samples 0, but this gate's neutral is 1.0 (full confidence, reproducing today's
-  behaviour). Glow's vecfield inlet gets away with a content heuristic only because 0 is also the
+  behavior). Glow's vecfield inlet gets away with a content heuristic only because 0 is also the
   right neutral for a flow field.
 - Codebox, with the coherence read corrected to `.w` (tensormap outlet 1 carries coherence in A and
   trace in B):
@@ -161,7 +161,7 @@ in `.specify/f_vf_glow/tasks.md` are all unticked. Design, grounded in `codebox_
   `in2` (needs the seeds-style decode-and-redouble).
 - The 2026-10-16 strategy note proposed one live test first (tensormap -> axisflow -> glow in2),
   since axisflow's `gate` already scales flow to zero at low coherence. A dedicated inlet only adds
-  a different low-confidence behaviour (fall back to symmetric glow instead of none), which is a
+  a different low-confidence behavior (fall back to symmetric glow instead of none), which is a
   taste call. That test is not recorded as done.
 
 **Q13. `f_stipple`'s `anisotropy` / `angle` as tensor-driven per-pixel params.** Tightest semantic
@@ -222,7 +222,7 @@ direction channels.
 | `f_caustic` | No (the vecfield inlet has no connected-state tracking) | Sign-sensitive (backward streamline accumulation) | Inferred |
 | `f_vf_advect` | No | Sign-sensitive (temporal accumulation along a direction) | Inferred |
 | `f_vf_potential` | No (2nd inlet is `color`) | Sign-sensitive (backward-advect lookup, temporal) | Confirmed 2026-10-16 |
-| `f_weave` | No (`in1` already carries the vecfield, `in2` scalar/colour) | Sign-sensitive (the known vector-add-renormalize blend bug) | Inferred |
+| `f_weave` | No (`in1` already carries the vecfield, `in2` scalar/color) | Sign-sensitive (the known vector-add-renormalize blend bug) | Inferred |
 | `f_vf_fluid` | No (the vecfield is the force input, `in1`) | Sign-sensitive; temporal, so a bad sample corrupts persistent state | Inferred |
 | `f_vf_split` | No | **Decode-adjacent utility, not an effect**: outlet 1 into bipolar mode yields cos2t and sin2t as scalar textures with no `atan2` | Mechanically obvious once named |
 

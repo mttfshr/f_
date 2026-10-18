@@ -24,7 +24,7 @@ The Möbius transformations that tile hyperbolic space are closely related to f_
 - **Tessellation type:** Which hyperbolic tessellation? The {p,q} notation (p-gon faces meeting q at each vertex) parameterizes the space. {4,5}, {5,4}, {3,7} are Escher's choices. Should this be a fixed choice, a discrete selector, or a continuous parameter?
 - **Fundamental domain:** How is the input texture mapped onto the fundamental domain? Stretch to fill, preserve aspect ratio, tile internally?
 - **Animation:** Möbius transformation parameters controlling "camera position" in hyperbolic space — analogous to droste's rotation param. The viewer can travel through the tiling.
-- **Relationship to f_mobius:** f_mobius applies a single arbitrary Möbius transformation. f_poincare applies a group of them (the hyperbolic tessellation group). Is f_poincare a specialisation of f_mobius or a separate patch?
+- **Relationship to f_mobius:** f_mobius applies a single arbitrary Möbius transformation. f_poincare applies a group of them (the hyperbolic tessellation group). Is f_poincare a specialization of f_mobius or a separate patch?
 - **Singularity behavior:** The boundary of the disk is at infinity — behavior near the edge needs careful handling. The droste singularity notes apply here directly. See `ideas/droste_singularity.md`.
 
 ---

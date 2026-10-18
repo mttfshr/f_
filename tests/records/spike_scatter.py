@@ -91,8 +91,8 @@ def flip(a, on):
 def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0):
     """What the shader should do. Lattice u_i = i/(n-1) (a plane gridshape spans [-1, 1] inclusive),
     textures sampled bilinear/clamp, each point splatted with a bilinear (tent) footprint, additive.
-    (A plain size-1 GL point is round and deposits only if its centre is within 0.5 px of a pixel
-    centre: it aliased against the lattice and lost ~21% of the energy, spike S1.)
+    (A plain size-1 GL point is round and deposits only if its center is within 0.5 px of a pixel
+    center: it aliased against the lattice and lost ~21% of the energy, spike S1.)
     up_flip: texture memory = flipud(matrix); out_flip: matrix = flipud(framebuffer).
     fy multiplies the field's Y (the shader's `fy` uniform)."""
     t = (np.arange(n, dtype=np.float64) / (n - 1)).astype(F32)
@@ -101,7 +101,7 @@ def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0)
     X = U + F32(d) * f[..., 0]
     Y = V + F32(d) * f[..., 1] * F32(fy)
     # tent (bilinear) splat, as the fragment shader does: pixel k gets 1 - |k + 0.5 - x*r| (if > 0)
-    # a point whose CENTRE is outside the viewport is clipped whole (GL clips a point by its centre)
+    # a point whose CENTER is outside the viewport is clipped whole (GL clips a point by its center)
     centre_in = (X >= 0) & (X <= 1) & (Y >= 0) & (Y <= 1)
     fx, fyy = X * F32(r) - F32(0.5), Y * F32(r) - F32(0.5)
     x0, y0 = np.floor(fx), np.floor(fyy)
@@ -179,7 +179,7 @@ def stage_s0_s0b():
 def stage_s1(flips):
     print("\n== S1: float32 accumulation (4096 points, one pixel) ==")
     up, out_flip = flips
-    n, tx, ty = 64, (100 + 0.5) / R, (150 + 0.5) / R          # target at a pixel centre
+    n, tx, ty = 64, (100 + 0.5) / R, (150 + 0.5) / R          # target at a pixel center
     nx, ny, _, _ = g.grid(TEX, TEX)
     gl_field = np.zeros((TEX, TEX, 4), F32)                    # F(u) = T - u, in GL space, d = 1
     gl_field[..., 0] = (tx - nx) / 2 + 0.5
@@ -456,7 +456,7 @@ def box_down(img, f):
 
 
 def upscale(img, s):
-    """Bilinear upscale by an integer factor, pixel centres aligned (output i <-> capture (i+.5)/s-.5)."""
+    """Bilinear upscale by an integer factor, pixel centers aligned (output i <-> capture (i+.5)/s-.5)."""
     if s == 1:
         return img
     h = img.shape[0]
@@ -536,7 +536,7 @@ def stage_s7_coarse(flips):
                     ax[r_, c].set_xticks([])
                     ax[r_, c].set_yticks([])
             ax[0, 0].set_ylabel("full 1024^2", fontsize=8)
-            ax[1, 0].set_ylabel("centre crop 1:1", fontsize=8)
+            ax[1, 0].set_ylabel("center crop 1:1", fontsize=8)
             fig.tight_layout()
             fp = _paths.REPO / "scratch" / f"scatter_spike_s7_{str(fr).replace('.', 'p')}dstar.png"
             fig.savefig(fp, dpi=80)
@@ -631,7 +631,7 @@ def stage_s8_jitter(flips):
 
 
 def gobo_sources(n=1024):
-    """Fine-detail sources at n^2: a zone plate (frequency rises from 0 at the centre to Nyquist at the
+    """Fine-detail sources at n^2: a zone plate (frequency rises from 0 at the center to Nyquist at the
     mid-edges) and checkerboards with 1, 3 and 8 px squares."""
     yy, xx = np.mgrid[0:n, 0:n].astype(np.float64)
     yc, xc = yy - (n - 1) / 2.0, xx - (n - 1) / 2.0
@@ -720,7 +720,7 @@ def stage_s9_gobo(flips):
 
 
 def resize_bilinear(img, H, W):
-    """Bilinear resize of an (h, w, c) array to (H, W, c), pixel centres aligned (what sample(in1, norm) does
+    """Bilinear resize of an (h, w, c) array to (H, W, c), pixel centers aligned (what sample(in1, norm) does
     when magnifying)."""
     h, w = img.shape[:2]
     ys = np.clip((np.arange(H) + 0.5) * h / H - 0.5, 0, h - 1)
@@ -798,7 +798,7 @@ def stage_s11_detail(flips):
 
 def stage_s5_snap(flips):
     """S5: is the corner-snapped size-2 point the same image as the size-3 point? (n=1536 into 256^2.)
-    Controls: size 2 WITHOUT snap should lose energy (round points: only centres within 1 px are covered)."""
+    Controls: size 2 WITHOUT snap should lose energy (round points: only centers within 1 px are covered)."""
     print("\n== S5: corner-snap + size 2 vs size 3 (identical image expected) ==")
     n = 1536
     w = (R / n) ** 2

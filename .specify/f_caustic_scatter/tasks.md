@@ -15,7 +15,7 @@ setup, foundational and polish.
 - **US1** Sheets mode renders correct light (the MVP; proven standalone, before the module changes)
 - **US2** The `detail` ladder sets capture size and density in one message
 - **US3** `f_caustic` has a mode switch; soft mode is unchanged
-- **US4** Shared behaviours hold in both modes (bypass, unconnected inputs, instances, gain, cost)
+- **US4** Shared behaviors hold in both modes (bypass, unconnected inputs, instances, gain, cost)
 
 ---
 
@@ -194,7 +194,7 @@ package/help/f_caustic.maxhelp                                                  
 
 ---
 
-## Phase 5: User Story 4 - Shared behaviours (Priority: P4)
+## Phase 5: User Story 4 - Shared behaviors (Priority: P4)
 
 **Goal**: bypass, unconnected inputs, multiple instances, brightness and cost behave in both modes.
 

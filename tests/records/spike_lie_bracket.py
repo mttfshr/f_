@@ -103,7 +103,7 @@ def main():
     print(f"mean |A-then-B minus B-then-A| = {mean_abs:.5f}")
     print(f"max  |A-then-B minus B-then-A| = {max_abs:.5f}")
     print("(0 would mean the two warp orders commute exactly; the article's "
-          "Lie bracket is precisely this non-cancelling remainder)")
+          "Lie bracket is precisely this non-canceling remainder)")
 
     try:
         import matplotlib

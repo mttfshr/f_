@@ -16,8 +16,8 @@ shapes, not assume "no audio inlet" as an `f_a_` invariant.
 `Mₙ(t)` — the same modulation matrix `f_a_ripple` computes per-harmonic — is
 instead computed per-FFT-bin and applied as either a bin gain multiplier (AM)
 or a bin phase rotation (PM). `Fₙ` becomes bin log-frequency relative to the
-band's geometric centre, matching `f_a_ripple`'s ADR-3 correction (mean-
-centred over the modulated *bins in this case*, not the nominal band centre).
+band's geometric center, matching `f_a_ripple`'s ADR-3 correction (mean-
+centered over the modulated *bins in this case*, not the nominal band center).
 
 ### ADR-3 — `f_a_ripple` is a hard dependency, not a parallel effort
 Despite being separate projects/specs, `f_a_decorrelate`'s scratch tests (T7,
@@ -117,7 +117,7 @@ would still produce correct output in both domains.
   margin modest; the strong real-world effect is decorrelation vs the
   raw carrier, 0.94→0.59). All evidence in spec.md's ticked boxes;
   tasks.md Phase 2b checkpoint MET.
-- **Phase 3 — parameter characterisation.** **COMPLETE 2026-10-12
+- **Phase 3 — parameter characterization.** **COMPLETE 2026-10-12
   (mirror)**: `run_phase3()` in the spike. Bands: one FFT size (2048/4)
   serves all (T008). Parameters (T009): smooth monotonic degradation in
   depth/smr_range/tmr — no discontinuities; **depth > 1 sends the bin

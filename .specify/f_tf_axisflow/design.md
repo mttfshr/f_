@@ -16,7 +16,7 @@ design is the sanctioned way to get a tensor-derived field into those consumers.
 
 Recovering a vector from an axis needs a sign choice. The classic route is
 `θ = 0.5·atan2(s2, c2)`, then `(cos θ, sin θ)`. θ is confined to (−π/2, π/2], so the
-vector flips sign wherever the axis crosses vertical. That is a hard seam: neighbouring
+vector flips sign wherever the axis crosses vertical. That is a hard seam: neighboring
 pixels flow in opposite directions, and advect accumulates or tears along it. Picking a
 different convention only moves the seam.
 

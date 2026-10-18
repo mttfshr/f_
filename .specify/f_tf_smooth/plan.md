@@ -147,7 +147,7 @@ bench's own frame-advance mechanics: how `vs_inState`/`srcSmoothTensor` behaves 
 bench harness is the thing to confirm, mirroring how `f_vf_advect`'s bench was built);
 float32 round-trip of unbounded values (Jxx = 4.0 in -> 4.0 out the next frame).
 
-### Block 3: Scratch patch, judgement
+### Block 3: Scratch patch, judgment
 **Dependencies:** Block 2.
 **Builds:** scratch patch only.
 **Verification:** `release` default and ceiling on jit.gl.bfg-driven live noise; the

@@ -18,7 +18,7 @@ density without changing grid scale.
 ## What f_grain and f_vf_seeds currently do
 
 Both are **Voronoi-partitioned**, not overlap-bombed. `f_vf_seeds`' 3x3
-neighbourhood search computes squared distance to all 9 candidate seeds
+neighborhood search computes squared distance to all 9 candidate seeds
 and collapses to a single nearest seed (`best_gx`/`best_gy`) via a
 `step`/`mix` chain — this *is* a distance-based priority rule, just
 implicit in "nearest wins" rather than an explicit priority value. Only

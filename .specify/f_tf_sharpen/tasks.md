@@ -59,12 +59,12 @@ docs/f-reference/f_tf_sharpen.md — Phase 5
   what the codebox computes before its final-stage encode; tests measure there.
 - [x] T005 *[done 2026-10-17: 3.6e-7 / 0.0 / 1.5e-7]* Coherence mapping test: γ=2 on a coherence-0.5 tensor gives 1.0; γ=0 gives 0;
   γ=0.5 gives 0.25 (linear in the gap — measured, not assumed). Linear confirmed.
-- [x] T006 *[done 2026-10-17: no labelled swap, 0.0e0, for every γ in 0..4]* **No-swap-on-relax test (ADR-2, the correctness hazard):** for every γ in the
+- [x] T006 *[done 2026-10-17: no labeled swap, 0.0e0, for every γ in 0..4]* **No-swap-on-relax test (ADR-2, the correctness hazard):** for every γ in the
   candidate dial range, λ1' ≥ λ2' holds (no eigenvalue swap → no 90° axis flip), and
   γ=0 gives exactly the isotropic tensor (both λ = trace/2). Implementation note: the
-  check uses labelled Rayleigh quotients along the input's major/perpendicular axes —
+  check uses labeled Rayleigh quotients along the input's major/perpendicular axes —
   a plain eigh sort cannot detect a swap (it sorts), so the obvious implementation of
-  this test is vacuous; the mutation check (T009a) relies on the same labelled form.
+  this test is vacuous; the mutation check (T009a) relies on the same labeled form.
 - [x] T007 *[done 2026-10-17: relative disagreement 2.9e-7 at k ∈ {1,10,1000}; floor-gate break measured at the exact analytic delta 2.0e-6]* Scale-commutation test (ADR-4): the operator commutes with a uniform scale
   factor on the input (eigen ratios are scale-free except the floor gate); verify on
   tensors scaled by 1, 10, 1000. Floor behavior recorded in spec Notes (T008).
@@ -80,7 +80,7 @@ docs/f-reference/f_tf_sharpen.md — Phase 5
   Caveat belongs in the reference doc (owner constraint: reference doc is ours).
 - [x] T009 *[done 2026-10-17: (a) drop_max caught 0.3 (b−a label swap); (b) gap-swap caught 0.34 axis rotation; both mutants fail the suite]* Mutation checks: (a) drop `max(γ,0)` → T006 fails; (b) gap sign error → T003
   or T004 fails. One is enough per tests/README if both are cheap. Both included;
-  T006's labelled-Rayleigh check (see its row) is what makes (a) detectable at all.
+  T006's labeled-Rayleigh check (see its row) is what makes (a) detectable at all.
 - [x] T010 *[done 2026-10-17: `tests/run.sh tests/modules/tf_sharpen/test_tf_sharpen.py -q` → ok 15/15; errors ~1e-7 class except T006's bitwise 0; both mutations caught]* Run `tests/run.sh tests/modules/tf_sharpen/test_tf_sharpen.py -q` in background; record errors.
 
 **Checkpoint:** mirror clean, no-swap hazard guarded, scale behavior recorded.
@@ -125,7 +125,7 @@ docs/f-reference/f_tf_sharpen.md — Phase 5
 
 ---
 
-## Phase 2: Scratch patch, judgement tier
+## Phase 2: Scratch patch, judgment tier
 
 *OUT OF SCOPE this pass (owner constraint 2026-10-17): no live Max session. All three
 gates stay open; shipped provisional values recorded in their task rows.*
@@ -177,7 +177,7 @@ gates stay open; shipped provisional values recorded in their task rows.*
 
 ## Phase 5: Docs and handoff
 
-- [x] T027 *[written 2026-10-17: docs/f-reference/f_tf_sharpen.md, "Status: Draft — codebox tier-2 bench and tier-3 live judgement pending", tensormap doc structure mirrored; carries the gap math, no-axis-flip guarantee, strength/floor table, linearity/clamp section, no-atan2 note, name-provisional note]* `docs/f-reference/f_tf_sharpen.md` (or renamed): params, the gap math, the
+- [x] T027 *[written 2026-10-17: docs/f-reference/f_tf_sharpen.md, "Status: Draft — codebox tier-2 bench and tier-3 live judgment pending", tensormap doc structure mirrored; carries the gap math, no-axis-flip guarantee, strength/floor table, linearity/clamp section, no-atan2 note, name-provisional note]* `docs/f-reference/f_tf_sharpen.md` (or renamed): params, the gap math, the
   no-axis-flip guarantee, the strength-floor caveat, "no atan2 needed" implementation note.
 - [ ] T028 *[PENDING PARENT — rows' content supplied in REGISTRATION_NOTES (menu.py, README, module-inventory, HANDOFF are shared)]* module-inventory row, README row, HANDOFF.
 - [ ] T029 *[PENDING — no commits by constraint]* Commit. Suggested split: triad; tests + codebox; patcher + registration; docs.

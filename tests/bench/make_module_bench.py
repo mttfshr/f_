@@ -87,6 +87,24 @@ for k in range(1, N_OUT + 1):
     wire(f"rout{k}", 0, f"gate{k}", 1)
     wire(f"gate{k}", 0, f"cap{k}", 0)
 
+# Developer comments: what each element is for. Text only, no wiring, so the bench is unchanged.
+comment = _p.comment
+comment("c-udp", "OSC/UDP in (7473) from Python (benchclient.py)", [20, 75, 125, 40])
+comment("c-err", "Max errors -> js (deferlow avoids an error feedback loop)", [280, 100, 135, 45])
+comment("c-draw", "r draw: Vsynth's frame tick -> js inlet 2", [300, 75, 115, 25])
+comment("c-vsctl", "Vsynth control (enable) by cord: a js message to a bpatcher does not reach its inlet",
+        [525, 50, 260, 30])
+comment("c-vsrender", "vs_render: Vsynth's real renderer. Creates the vsynth context, the draw clock and "
+        "vs_black. Close Vsynth patches while this bench is open.", [420, 203, 360, 26])
+comment("c-js", "js bench_module.js: loads each job's wrapper into the slot, sends inputs and control messages, "
+        "opens the capture gates, replies through udpsend (7474).", [190, 182, 220, 45])
+comment("c-inputs", "bench_mmatK -> bench_mtexK: textures for module inputs 1-5 (main + up to 4 mod inlets), "
+        "delivered to the module through r bench_minK inside the wrapper.", [20, 203, 390, 26])
+comment("c-slot", "bench_mslot: cordless bpatcher. js loads the per-job wrapper here (script sendbox replace); "
+        "the wrapper holds the module wired to r bench_minK / s bench_moutK.", [20, 375, 225, 60])
+comment("c-outs", "r bench_moutK -> gate -> bench_mcapK: capture of each module outlet (up to 4). js opens the "
+        "gates for the capture frame and closes them after.", [250, 398, 600, 30])
+
 if __name__ == "__main__":
     with open(OUT, "w") as f:
         json.dump(patcher(boxes, lines), f, indent=2)

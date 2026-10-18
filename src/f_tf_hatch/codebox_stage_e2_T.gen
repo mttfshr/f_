@@ -30,7 +30,7 @@ sa2 = nearest(in1, norm).y;
 commit = nearest(in1, norm).z;
 iso = nearest(in1, norm).w;
 
-// texel-centre clamp rule (tensormap T012): the coordinate is exactly norm,
+// texel-center clamp rule (tensormap T012): the coordinate is exactly norm,
 // which is always in-bounds on the render grid -- the clamp is a no-op kept
 // for the rule.
 u = (-sa2 * norm.x + ca2 * norm.y);

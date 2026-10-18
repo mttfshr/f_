@@ -21,9 +21,9 @@ convention after the build — see the build-path note below.)
 
 ## build/build_patcher.py
 
-No change needed. `"signal_type": "tensor in"` works today: the colour is keyed
+No change needed. `"signal_type": "tensor in"` works today: the color is keyed
 on the first word (`SIGNAL_TYPE_COLORS.get(signal_type.split()[0], ...)`), so
-`tensor in` picks up the amber tensor colour tensormap T030 added. Confirmed by
+`tensor in` picks up the amber tensor color tensormap T030 added. Confirmed by
 reading `build/build_patcher.py:209-214`; nothing to register.
 
 ## Module menu registration (src/f_modules/menu.py → build/generate_menu.py)
@@ -43,7 +43,7 @@ tensormap row style:
 ```
 
 Inventory row and HANDOFF line: status "buildable, tier-1 mirror green (14/14),
-tier-2 bench written but not run, tier-3 live judgement pending Matt".
+tier-2 bench written but not run, tier-3 live judgment pending Matt".
 
 ## tests/contracts/bench_modules.py — BYPASS_EXPECT
 

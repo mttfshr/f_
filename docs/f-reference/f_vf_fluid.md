@@ -61,7 +61,7 @@ Solver stages are `@adapt 0 @dim 256 256 @type float32`. The four DFT codeboxes 
 | `project` | 0–1 | 1 | 0 = compressible (shock fronts), 1 = divergence-free swirl. |
 | `drag` | 0–5 | 0.5 | Linear damping. Keeps sustained or uniform force bounded. |
 | `gain` | 0–10 | 1.0 | Output scale on the velocity before encoding (clamped to the vecfield range). |
-| `drift` | 0–1 | 1 | How much frame-wide drift (the uniform part of the flow) is allowed to build up. 1 = all of it (the original behaviour); 0 = none, the average flow is zeroed every frame; in between it fades with a half-life of about 11 / −ln(drift) frames on top of `drag` (0.5 → 16 frames, 0.1 → 5, 0.9 → 105). Swirls are untouched. Added 2026-10-17. |
+| `drift` | 0–1 | 1 | How much frame-wide drift (the uniform part of the flow) is allowed to build up. 1 = all of it (the original behavior); 0 = none, the average flow is zeroed every frame; in between it fades with a half-life of about 11 / −ln(drift) frames on top of `drag` (0.5 → 16 frames, 0.1 → 5, 0.9 → 105). Swirls are untouched. Added 2026-10-17. |
 | `taps` | 1–16 | 8 | Force filter: `taps × taps` samples per solver texel. Control message only — no panel slot. |
 | `src_vecfield` | internal | — | Driven by `vs_inState` (1 = force inlet connected). Not user-facing. |
 | `bypass_gate` | internal | — | Driven by the bypass jsui, not by the route. Not user-facing. |

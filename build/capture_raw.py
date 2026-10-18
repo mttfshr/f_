@@ -2,7 +2,7 @@
 capture_raw.py -- write the parts of a shipped patcher that the builder does not produce into
 `raw_ui.json` next to the module's definition.py, for `raw_boxes` / `raw_lines` / `raw_parameters`
 (build/spec.md, "Raw boxes").  The third use of the same recipe (f_droste by hand, f_grain by a
-throwaway script, then the colour modules), so it is a tool now.
+throwaway script, then the color modules), so it is a tool now.
 
     build/py.sh build/capture_raw.py src/f_grain/definition.py             # write raw_ui.json
     build/py.sh build/capture_raw.py src/f_grain/definition.py --dry-run   # show, don't write

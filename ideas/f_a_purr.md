@@ -36,7 +36,7 @@ loop or resynthesise harmonically. Any looped recording is caught by the ear
 within a few cycles.
 
 Realism comes from the modulation stack, not from click fidelity. Per-cycle
-irregularity, per-breath asymmetry, and per-minute behavioural drift are what
+irregularity, per-breath asymmetry, and per-minute behavioral drift are what
 make it read as alive.
 
 ## Layer Architecture
@@ -48,7 +48,7 @@ make it read as alive.
 | 2 | Breath cycle — asymmetric two-ramp phase, ~0.3–0.5 Hz | ~2–3s |
 | 3 | Resonance — parallel biquad bank, chest + tract formants | static-ish |
 | 4 | Breath noise — filtered, gated by breath envelope | ~2–3s |
-| 5 | Behavioural — stochastic meow/chirp scheduler, slow state drift | minutes |
+| 5 | Behavioral — stochastic meow/chirp scheduler, slow state drift | minutes |
 
 ### Established principles
 
@@ -152,10 +152,10 @@ two-ramp asymmetric model:
 
 The two modules run this in **opposite directions**. `f_breath_phase` recovers
 the phase from a noisy sensor signal — hence its open questions about trough
-detection, smoothing constants, and held-breath behaviour. `f_a_purr` generates
+detection, smoothing constants, and held-breath behavior. `f_a_purr` generates
 it, so none of those problems exist.
 
-Honouring the same convention makes them interchangeable at the same downstream
+Honoring the same convention makes them interchangeable at the same downstream
 socket, which gives two useful consequences:
 
 - `f_a_purr` is a clean synthetic test signal for developing `f_breath_phase`
@@ -196,7 +196,7 @@ listening pass against the now-complete engine).
 ## Open Questions
 
 ### Q1. RESOLVED — gen~ / patcher boundary
-Layers 0–4 built into a single `gen~` codebox; layer 5 (behavioural) remains
+Layers 0–4 built into a single `gen~` codebox; layer 5 (behavioral) remains
 a patcher-level scheduler, not yet built. Breath lives inside `gen~` as
 planned — the per-cycle jitter reads it sample-accurately, and phase is
 emitted on the second physical outlet anyway.

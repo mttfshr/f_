@@ -365,15 +365,15 @@ def test_bench_sh_changed_skips_green_files_and_lists_the_rest():
         _t("everything green: nothing to run, exit 0",
            r.returncode == 0 and "nothing to run" in r.stdout and r.stdout.count(".py") == 0)
         _t("--changed with a record never needs Max (no preflight)", "not reachable" not in r.stdout)
-        files.pop("bench_fft")
+        files.pop("bench_selftest")
         bd.save_record(files, green)
         r = _bench_sh(env, "--changed", "--list")
-        _t("one record removed: only that file is listed", r.stdout.split() == ["tests/math/bench_fft.py"])
+        _t("one record removed: only that file is listed", r.stdout.split() == ["tests/toolchain/bench_selftest.py"])
         files["bench_fluid_module"]["env"] = "Max 0.0.1; Vsynth 0"
         bd.save_record(files, green)
         r = _bench_sh(env, "--changed", "--list")
         _t("a different environment on record: that file runs too",
-           sorted(r.stdout.split()) == ["tests/math/bench_fft.py", "tests/modules/fluid/bench_fluid_module.py"])
+           sorted(r.stdout.split()) == ["tests/modules/fluid/bench_fluid_module.py", "tests/toolchain/bench_selftest.py"])
         r = _bench_sh(env, "--changed", "--slow", "--list")
         _t("--slow: every file whose green run skipped slow tests runs",
            len(r.stdout.split()) == len(default))
@@ -408,7 +408,7 @@ def test_a_module_subset_run_does_not_call_other_modules_known_issues_fixed():
         failed = _fails(bm.test_known_live_issues_still_present)   # f_b ran and did not show it: fixed
         _t("the module did run and the issue is gone: reported (remove it from KNOWN)", failed)
         bm.ONLY = set()
-        failed = _fails(bm.test_known_live_issues_still_present)   # full run: unchanged behaviour
+        failed = _fails(bm.test_known_live_issues_still_present)   # full run: unchanged behavior
         _t("a full run still reports every known issue that is gone", failed)
     finally:
         bm.ONLY = saved[0]

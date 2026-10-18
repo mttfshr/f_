@@ -30,9 +30,12 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 
 from harness import check, note, run  # noqa: E402
-
-F32 = np.float32
-H = W = 8
+from tf_smooth_mirror import (
+    F32,
+    H,
+    W,
+    run_sequence,
+)
 RELEASES = (F32(0.0), F32(0.3), F32(0.5), F32(0.9), F32(0.99))
 
 
@@ -84,37 +87,6 @@ def coherence(tex):
 # --- the mirror ----------------------------------------------------------
 
 BUGS = (None, "sign_flip", "weights_swapped", "clamp_feedback")
-
-
-def smooth_step(prev_state, new_in, release, bypass=False, bug=None):
-    """One frame of the recurrence, per channel, float32.
-
-    T' = T_new + release * (T_prev - T_new)
-    bypass=1: exact passthrough, feedback ignored (plan ADR-4) -- NOT a freeze.
-    bug=None is the real mirror; the other values are the T007 mutations.
-    """
-    if bug == "sign_flip":
-        out = new_in - release * (prev_state - new_in)
-    elif bug == "weights_swapped":
-        out = release * new_in + (F32(1.0) - release) * prev_state
-    elif bug == "clamp_feedback":
-        out = new_in + release * (np.clip(prev_state, 0.0, 1.0) - new_in)
-    else:
-        out = new_in + release * (prev_state - new_in)
-    return np.where(bypass, new_in, out).astype(F32)
-
-
-def run_sequence(frames, release, init=None, bypass=False, bug=None):
-    """Run the recurrence over a list of frames. init: state before frame 0
-    (the bench's run_temporal 'initial state' texture); default zero tensor."""
-    if init is None:
-        init = np.zeros((H, W, 4), F32)
-    outs = []
-    state = init.astype(F32)
-    for f in frames:
-        state = smooth_step(state, f.astype(F32), F32(release), bypass, bug)
-        outs.append(state)
-    return outs
 
 
 # --- T003: decay theorem -------------------------------------------------
@@ -182,7 +154,7 @@ def test_alternating_opposite_gradient_axis_is_constant():
     stores an IDENTICAL raw tensor (angle-doubled encoding). Feeding the two
     constructions alternately must give a constant output equal to the tensor
     itself -- and the decoded output axis must be the input axis, not a
-    cancelled average. Catches any accidental decode/atan2 in the pipeline."""
+    canceled average. Catches any accidental decode/atan2 in the pipeline."""
     s = F32(100.0)
     gx, gy = F32(2.0), F32(-1.0)
     t_pos = encode_tensor(gx * gx, gx * gy, gy * gy, s)   # from (gx, gy)
@@ -220,7 +192,7 @@ def test_alternating_two_true_axes_keeps_both_after_blend():
     check("crossed-camp trace survives blending (sum of parts)",
           abs(tr - 1.05), 1e-4)
     # A one-pole on a PERIOD-2 input settles to a period-2 output (this is
-    # the honest behaviour; the invariant is that it never collapses or
+    # the honest behavior; the invariant is that it never collapses or
     # overshoots: both settled states stay between the two input tensors'
     # componentwise extremes, and the two states are complementary).
     late = np.stack(list(outs[-6:]))

@@ -1,7 +1,7 @@
 """
 bench_tf_axisflow.py -- Tier 2 verification for f_tf_axisflow: the real codebox
 (src/f_tf_axisflow/codebox_axisflow.gen) on the GPU through the Max test bench,
-diffed against the NumPy mirror in tests/modules/tf_axisflow/test_tf_axisflow.py. Task T008-T009.
+diffed against the NumPy mirror in tests/modules/tf_axisflow/tf_axisflow_mirror.py. Task T008-T009.
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh tests/modules/tf_axisflow/bench_tf_axisflow.py
@@ -17,7 +17,7 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run
-import test_tf_axisflow as m           # the tier-1 mirror
+import tf_axisflow_mirror as m           # the tier-1 mirror
 
 REPO = _paths.REPO
 SRC = REPO / "src" / "f_tf_axisflow"
@@ -120,7 +120,7 @@ def test_reference_inlet_matches_mirror():
 
 
 def test_black_reference_equals_the_dial():
-    """An unconnected in2 (vs_black) must give the original dial behaviour exactly."""
+    """An unconnected in2 (vs_black) must give the original dial behavior exactly."""
     t = packed(48, 48, seed=8)
     out, _ = run_case(t, angle=70, gate=0)
     dial = m.axisflow(t, angle=70, gate=0.0, width=48.0, height=48.0, ref=None)

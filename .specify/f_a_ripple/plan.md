@@ -73,20 +73,20 @@ preserves the ability to later expose arbitrary/asymmetric bandwidth (a
 free-parameter direction flagged in the idea file) without restructuring.
 
 ### ADR-5 — Hearing correction folded in as a per-half-octave gain staircase
-Reproduces the MATLAB's actual behaviour (piecewise-linear staircase,
+Reproduces the MATLAB's actual behavior (piecewise-linear staircase,
 boost-only, values `[0, 0, .125, .375, .625, .875, 1, 1] × profile_dB`) rather
 than the paper's Fig. 1 caption, which doesn't match the code (see idea file,
 discrepancy 5). Folded into `f_a_ripple` rather than split out as a standalone
-`f_a_tilt` (idea file Q6) — decided in favour of self-containment, since the
+`f_a_tilt` (idea file Q6) — decided in favor of self-containment, since the
 correction is structurally simple (8 fixed gains) and splitting it buys
 nothing for v1's scope.
 
-### ADR-6 — Boost-only correction requires peak normalisation
+### ADR-6 — Boost-only correction requires peak normalization
 Because `hearing_profile` only ever boosts, a severe-HL configuration is
 substantially louder than normal-hearing at the same `depth`/`gain`. The
-MATLAB driver peak-normalises per file after rendering. `f_a_ripple` must
+MATLAB driver peak-normalizes per file after rendering. `f_a_ripple` must
 apply an equivalent safety ceiling by construction (a limiter or continuous
-peak-tracking normalisation on the output), not merely document a recommended
+peak-tracking normalization on the output), not merely document a recommended
 level — an additive synth with ~150 partials and depth-1 AM has an easy path
 to unexpectedly loud output if partial count or profile changes. This is a
 non-negotiable per the idea file's Safety section.
@@ -113,7 +113,7 @@ file, Licensing.
   patches — the diagonal, drifting stripe pattern matched the paper's
   Fig. 3C character. See spec.md T5/T6 entries for what was and wasn't
   walked through point-by-point in that spectrogram pass.
-- **Phase 3 — parameter characterisation.** Effectively complete
+- **Phase 3 — parameter characterization.** Effectively complete
   2026-09-16, at the pragmatic bar spec.md's Acceptance section actually
   asks for (not a deep characterization project — see HANDOFF's
   mid-session reframe). **CPU measurement done 2026-09-15** — not a

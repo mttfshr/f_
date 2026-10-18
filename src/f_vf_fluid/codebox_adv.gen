@@ -15,13 +15,13 @@
 //     1:1 and when magnifying, nearest-like when minifying, so a single tap at HD/4K
 //     aliases a noisy force badly (E4 study, tasks.md T038: noise gain 4-12x)
 //   - FORCE TAP GRID (T038a): the force is averaged over a taps x taps grid of hardware
-//     taps spread across the target texel footprint. Offsets are in NORMALISED
+//     taps spread across the target texel footprint. Offsets are in NORMALIZED
 //     coordinates, so no source size is needed. Default taps = 8: an ideal area average
 //     at HD (noise gain 1.01), within 1.4x of it at 4K (single tap: 6x / 11.5x), for
 //     ~0.6-0.7 ms. taps = 16 is ideal at both but costs ~1.5-1.7 ms, over the 3 ms frame
 //     budget; taps = 1 is the old single tap. Cost ~ 2*taps^2 fetches per texel
 //     (bench T021/T038a, tasks.md Findings).
-//     The content gate below stays on the single centre tap.
+//     The content gate below stays on the single center tap.
 //   - components are accessed inline on sample()/nearest(), never on a stored vec
 //   - never name a Param `bypass`; `force`, `dt` are fine
 Param dt(0.01);

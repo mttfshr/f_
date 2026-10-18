@@ -1,7 +1,7 @@
 # f_tf_aniso_blur
 
 **Type:** Processor (tensor consumer)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgement pending
+**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending
 
 ---
 
@@ -99,7 +99,7 @@ gain channel, or ratio gating) reopen — do not "fix" it silently.
 | `height` | 64–8192 | 480 | Render height in pixels — same. |
 | `bypass` | 0/1 | 0 | Exact passthrough of inlet 1. |
 
-All four effect-knob defaults are **provisional** (tier-3 judgement pending);
+All four effect-knob defaults are **provisional** (tier-3 judgment pending);
 `length`'s range top is set by the kernel's compile-time tap budget:
 TAPS_MAX = 49 = 1 + 2·8 stations × 3 transverse taps.
 
@@ -113,7 +113,7 @@ TAPS_MAX and weights unused taps to zero — same fact as tensormap's
 
 49 taps per pixel, oriented along the decoded structure axis:
 
-- centre tap, weight 1;
+- center tap, weight 1;
 - 8 stations per side at half-integer 1-pixel spacing (±0.5 … ±7.5 px),
   station weight `exp(−2u²/L²)` — L is the Gaussian semi-length;
 - each station: 3 transverse taps at t = 0, ±D/2 px with the
@@ -190,7 +190,7 @@ for the exact circular reference at the same length budget.
   abs 0.0362 vs family (b) 0.0300 against the continuous area Gaussian at
   the default kernel).
 - Bench GPU wraps out-of-range texture reads: every tap's sample coordinate
-  is clamped to texel centres in-shader (`f_tf_tensormap.md` Notes,
+  is clamped to texel centers in-shader (`f_tf_tensormap.md` Notes,
   tensormap ADR-5).
 - **All texture reads use the four-tap `nearest()` hand-bilinear idiom**
   (2026-10-17 post-bench refactor, plan ADR-6): the cell-coherent read
@@ -210,7 +210,7 @@ for the exact circular reference at the same length budget.
 
 - Weickert, J. (1998). "Coherence-enhancing diffusion filtering." IJCV 31.
   (CED; the isotropic fallback discipline and eigenvalue ordering.)
-- Weickert, J. (1999). "Coherence-enhancing diffusion of colour images."
+- Weickert, J. (1999). "Coherence-enhancing diffusion of color images."
   Pattern Recognition and Image Analysis 9.
 - `jit.fx.cf.directional` (Cycling '74): the 3-tap line-integral precedent
   this kernel family generalizes (`ideas/f_tf_research.md` §4).

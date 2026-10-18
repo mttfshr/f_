@@ -266,7 +266,7 @@ Bpatchers whose **primary output is an f_vecfield texture** (float32, RG=XY, 0.5
 Current f_vf_ family (float32 `f_vecfield` producers/consumers — see README's patch table for full descriptions):
 - Producers: `f_vf_vortex`, `f_vf_vortex_multi`, `f_vf_flow`, `f_vf_fieldmap`, `f_vf_repulse`
 - Processors (consume + re-emit a vecfield): `f_vf_potential`, `f_vf_warp`, `f_vf_streak`, `f_vf_advect`, `f_vf_glow`, `f_vf_chroma`, `f_vf_prism`
-- Utility: `f_vf_split` (splits X/Y channels to greyscale, does not re-emit a vecfield)
+- Utility: `f_vf_split` (splits X/Y channels to grayscale, does not re-emit a vecfield)
 - Also consumes a vecfield without the prefix: `f_caustic`, `f_lens` (field inlet), `f_vf_seeds` (shape/mod tex inlets)
 - `f_vf_vorticity` exists as a built module but is explicitly **not confirmed working** — do not treat it as shipped (see HANDOFF.md)
 
@@ -712,13 +712,13 @@ vecfield outlet surfaced to users in two places:
    `build_patcher.py` draws it 11 pt, right-justified in a 70 px box whose
    right edge sits 4 px left of the bypass button (`button_x`: `pw - 22`, or the
    `bypass_jsui` override's x), at y 0.9 so the baseline matches the 12 pt
-   title, and colours it by its first mark (∇ = advect's cyan
+   title, and colors it by its first mark (∇ = advect's cyan
    `[0.35, 0.75, 0.95, 1.0]`, `T_` = the tensor amber). There is nothing to
    hand-fix, and no per-module `signal_type` override is needed (the old ones
    were removed 2026-10-17). **Every module also gets two type dots** left of the name (`dot_box`, ids `obj-19f` / `obj-19g`, element
    keys `dot_in` / `dot_out`): round 5 px panels in one column at x 4, 7 px apart. The top one is the type the
-   module takes and the bottom one the type it outputs: cyan vecfield, amber tensor, dim grey `DOT_NONE` for
-   neither, read from the label by `parse_signal_type`, so a module with no `signal_type` gets two grey dots.
+   module takes and the bottom one the type it outputs: cyan vecfield, amber tensor, dim gray `DOT_NONE` for
+   neither, read from the label by `parse_signal_type`, so a module with no `signal_type` gets two gray dots.
    They must be FOREGROUND panels (`background` 0): a background-layer panel is drawn under the frame panel
    and disappears. Shapes (tensor round, vecfield triangle, none square) were tried, first as panels and then
    as one `jsui`, and read as noisy: the dots are all round. The jsui style is still in the builder
@@ -731,7 +731,7 @@ vecfield outlet surfaced to users in two places:
    can pin its dots with `dot_in` / `dot_out` presentation_rect overrides
    (f_masonry and f_texrouter do). The frame border stays dark blue
    (`BORDER_BY_TYPE = False`; setting it True restores the tried-and-dropped
-   border colouring). A long module title on a narrow panel can still
+   border coloring). A long module title on a narrow panel can still
    run into the label; shorten the title, not the label. `tests/build/test_generate_menu.py` checks that the
    marks in every menu module's label equal that module's menu kinds, so the
    title bar and the menu cannot drift apart.
@@ -852,15 +852,15 @@ why that parameter exists at all.
 
 1. `build/py.sh build/drift.py -v f_x` shows what differs.
 2. If the patch is the newer side, edit the **definition** to match (hints, ranges, labels, the codebox byte for byte: read a `.gen` file with `newline=""`, some shipped codeboxes have CRLF endings). If the builder is newer and the difference is additive and lossless, edit the **patch** surgically (parse, change, dump, and verify the result equals the old content plus exactly that change).
-3. `build/capture.py` writes presentation state (rects, colours, fonts, a live.text's colours) into the definition's `overrides` block. `build/capture_raw.py` writes everything the builder cannot make into `raw_ui.json` beside the definition (`raw_boxes` / `raw_lines` / `raw_parameters`; the definition reads it, see `src/f_grain/definition.py`). Capture refuses label text, hints, ranges, `varname`, `param_connect`: those are definition values or `legacy`.
+3. `build/capture.py` writes presentation state (rects, colors, fonts, a live.text's colors) into the definition's `overrides` block. `build/capture_raw.py` writes everything the builder cannot make into `raw_ui.json` beside the definition (`raw_boxes` / `raw_lines` / `raw_parameters`; the definition reads it, see `src/f_grain/definition.py`). Capture refuses label text, hints, ranges, `varname`, `param_connect`: those are definition values or `legacy`.
 4. A module that reproduces exactly needs no regeneration. Never regenerate a hand-built module (list in `.specify/plan.md`).
 
-A hand-built module is typically a generic part the builder makes (dials, routing, bypass, moduleSize chain) plus a bespoke part carried verbatim in `raw_ui.json`. `f_grain` (era-clock chain, second route, umenu) and the band-editor colour modules (`f_hue_processor`, `f_luma_processor`, `f_tone_curve`) are examples; `f_channel_grader` is the only true shared-label grid (`"label": None` plus three raw row labels).
+A hand-built module is typically a generic part the builder makes (dials, routing, bypass, moduleSize chain) plus a bespoke part carried verbatim in `raw_ui.json`. `f_grain` (era-clock chain, second route, umenu) and the band-editor color modules (`f_hue_processor`, `f_luma_processor`, `f_tone_curve`) are examples; `f_channel_grader` is the only true shared-label grid (`"label": None` plus three raw row labels).
 
 **Builder keys added 2026-10-05 for hand-built modules** (explicit and default-off; full text in `build/spec.md`):
 
 - Top level: `route_bypass` (`bypass` is the first route token, wired to the jsui), `route_first` (inlet to route, reject outlet to `routepass`), `route_reject_to_pix`, `inlet_comment`, `pix_context` (`"drawto"` writes the older `jit.gl.pix @name X @drawto vsynth` text), `legacy`.
-- Per param: `modmode` (0-4, default 3), `route_name` (the message a control answers to), `"hint": None` (no hint key; unset still writes `""`), `pix_wire: False` (no attrui, no pix cord), `color_expression` (a dial's theme-colour string; `None` omits the entry), `"label": None`. Per outlet: `hint`.
+- Per param: `modmode` (0-4, default 3), `route_name` (the message a control answers to), `"hint": None` (no hint key; unset still writes `""`), `pix_wire: False` (no attrui, no pix cord), `color_expression` (a dial's theme-color string; `None` omits the entry), `"label": None`. Per outlet: `hint`.
 - `param_connect` names the pix a control actually drives (`pix_target`), not always the primary. `_parameter_range` message bounds are written the way Max does (`1.` not `1.0`).
 - **Multi-stage keys (T016/T017, 2026-10-05; `tests/build/test_build_multistage.py`).** A "node" is a `pix_chain` id or a `raw_boxes` id; an unknown one raises. Per `pix_chain` node `pix_attrs` (the attributes as one verbatim string after `@name`, replacing the generated `@type`/`@adapt`; loud with `pix_type`/`adapt`, empty, or `@name`). Per param `pix_target` as a node id OR a list (the widget's `param_connect` and own attrui name the FIRST stage, each further stage gets one extra attrui fed from the widget; a list makes one attrui per extra stage, not one attrui with many cords) and `ui: False` (route token + attrui, no widget/label/panel slot/`parameters` entry). Top level `inlet_fanout` (`{"texture": [[node, inlet], ...], "state": [node, ...], "state_param": name}`: routepass -> `vs_inState` -> each listed inlet, and the connected flag -> `prepend param <name>` -> inlet 0 of each `state` node; replaces the default feed of the primary) and `draw_triggers` (one `r draw`, obj-20a, to inlet 0 of each listed stage so a stage advances once per frame). The layout pass puts `r draw` beside `vs_inState` and gives the extra attruis their own role (`pre_extra`, override key `<param>.pre_extra.<k>`). `f_vf_fluid` is built from its `definition.py` with all of them. **Gaps that kept `f_sirds` and `f_vf_seeds` on custom scripts:** a templated per-node codebox, a module inlet fanned out to many stages, a plain non-`vs_inState` feed, native bypass to a target list, and ONE attrui whose cords reach many stages. The T019 keys in the next bullet (2026-10-06) closed them for `f_vf_seeds`; `f_sirds` has NOT been reassessed against them (Matt: leave it, `build_sirds.py` stays).
 - **T019 keys (2026-10-06; `build/spec.md` "T019 keys"; `tests/build/test_build_seeds_keys.py`), all default-off and loud; `f_vf_seeds` is built from its `definition.py` with them and `build_seeds_multistage.py` is gone.** Per `pix_chain` node `gen_code` (the codebox as an inline string instead of a `gen` filename, so a definition can render a template, e.g. hash salts, itself; loud with `gen`, empty, or not a string; the param-bypass `Param` check reads it too). Per param `pix_shared_attrui: True` (with a `pix_target` LIST: ONE attrui reaches every listed stage, no obj-700+ extras; loud without a list of two or more, with `ui: False` or `pix_wire: False`), `pix_attr` (bind the attrui to another attribute than the param's name, e.g. `bomb` -> `active_blend`; the widget, route token and varname keep the param's name) and `range_menu_outlet` (0, 1 or 2: which `live.menu` outlet feeds the range `sel`, default 0; needs `range_tiers`). Top level native `bypass_target` (a node id or list: the `@bypass` attrui is wired to each instead of only the primary; `bypass_param` stays loud in native mode) and `outlet_source` (`{outlet_index: [node, node_outlet]}`: that outlet comes from the named stage, not the primary; loud on a missing outlet, a stage outlet it lacks, or together with `outlet_source_override`). Per `mod_inlets` entry `fanout` (`[[node, inlet], ...]`: its `vs_inState` output, or the inlet itself with `vs_instate: False`, goes there instead of to the primary) and `state_nodes` (`[node, ...]`, `[]` = built but connected to nothing: where its `prepend param <state_param>` goes; needs a `state_param`); an unknown key in a `mod_inlets` entry is loud. **Builder fix found on the way:** support pix nodes get `obj-50+`, which collided with the per-param dial/attrui/label ids from ten widgets up (seeds has 13) and silently garbled cords; `chain_id_base` now moves the base clear of them only when they would collide (nothing else changed) and `build()` fails on any duplicate box id. If a rebuild's cords look absurd, check ids first. A definition that cannot be regenerated byte-for-byte can still carry its script-era quirks through `legacy` (seeds: `control_box` removes `param_connect`, `element_box` removes the `lbl_` label varnames).

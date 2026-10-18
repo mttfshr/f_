@@ -97,7 +97,7 @@ RECT_POSITION_ONLY = {"comment"}
 # definition, and stays drift (tests/build/test_drift.py pins each one):
 #   the autopattr `varname` (builder `x_autopattr`; shipped `u905020188`), a dial's
 #   `param_connect`, a comment's `varname`.
-# Seen but deliberately not encoded: Max also writes live.text theme colours
+# Seen but deliberately not encoded: Max also writes live.text theme colors
 # (activebgcolor, bgoncolor, ...) explicitly.  They equal the theme default, but a manual
 # recolour looks the same and the theme differs between Max builds, so they stay drift.
 # Repeat the round-trip on a new Max build before trusting these lists there (build_cleanup/T030).
@@ -198,7 +198,7 @@ def _layout_rects(mc, ra, sa):
 
 def prop_diffs(mc, r, s, skip=()):
     """[(key, built_value, shipped_value)] between matched boxes r (built) and s (shipped),
-    after Max's normalisation.  The single definition of a property difference: compare()
+    after Max's normalization.  The single definition of a property difference: compare()
     counts these and build/capture.py writes them back."""
     r, s = _canon(r), _canon(s)
     out = []

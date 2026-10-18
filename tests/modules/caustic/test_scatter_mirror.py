@@ -47,7 +47,7 @@ def test_energy_conserved():
 
 def test_identity_at_zero_distance():
     """d = 0 with a lattice 4x finer than the capture: the image is the source resampled at the capture's pixel
-    centres (a smooth source, border pixels excluded)."""
+    centers (a smooth source, border pixels excluded)."""
     src, r, n = sm.gradient_src(), 256, 1024
     img = sm.ref_scatter(src, sm.uniform_field(0.0, 0.0), 0.0, n, (r / n) ** 2, r=r)
     nx, ny, _, _ = g.grid(r, r)

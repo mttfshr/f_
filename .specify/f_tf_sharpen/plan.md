@@ -117,7 +117,7 @@ relax/floor rows from the spec reproduced on GPU; branch-cut pixels behave (deco
 closed-form eigen of the raw components — no atan2 needed at all, which sidesteps the
 branch-cut class entirely: record as a plan finding).
 
-### Block 3: Scratch patch, judgement
+### Block 3: Scratch patch, judgment
 **Dependencies:** Block 2.
 **Builds:** scratch only.
 **Verification:** dial feel across the range on live tensormap output; γ sweep on glyph

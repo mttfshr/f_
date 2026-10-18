@@ -165,7 +165,7 @@ Confirm build_patcher.py supports dual gen outlets, then author definition.py.
 **Work:**
 - Inspect `tools/build_patcher.py` to determine if dual-outlet gen subpatcher is supported natively
   - If yes: use `definition.py` with a `dual_outlet: true` key (or equivalent)
-  - If no: write a custom `build_streak.py` modelled on `build_caustic.py`
+  - If no: write a custom `build_streak.py` modeled on `build_caustic.py`
 - Author definition file:
   - `archetype: "processor"`
   - `pix_type: "char"`

@@ -1,6 +1,6 @@
 // luma_rslider.js
 // Luminance range selector for tone_curve bpatcher.
-// Greyscale strip with two draggable handles defining the midtones band.
+// Grayscale strip with two draggable handles defining the midtones band.
 // out0 = low_mid, out1 = mid_high (both 0.0–1.0)
 autowatch = 1;
 inlets  = 3;   // 0 = set_low, 1 = set_high (suppress output), 2 = edge_falloff
@@ -38,7 +38,7 @@ function paint() {
     mgraphics.rectangle(0, 0, w, h);
     mgraphics.fill();
 
-    // greyscale gradient strip — smoothstep dimming mirrors Gen codebox band weights
+    // grayscale gradient strip — smoothstep dimming mirrors Gen codebox band weights
     var ef = edge_falloff;
     for (var i = 0; i < w; i++) {
         var brightness = i / w;

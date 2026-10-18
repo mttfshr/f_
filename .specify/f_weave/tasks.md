@@ -139,7 +139,7 @@ out1 = mix(vec(mark, mark, mark, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
       `python3 -c "import json; json.load(open('patchers/f_weave.maxpat'))"`
 - [ ] T037 Open in Max; verify patch loads without errors
 - [ ] T038 Verify all params respond: density, angle, weight, marklen, regularity, phase
-- [ ] T039 Verify bypass toggles correctly (output → mid-grey)
+- [ ] T039 Verify bypass toggles correctly (output → mid-gray)
 - [ ] T040 Verify UI layout in presentation mode
 - [ ] T041 Commit: `feat: add f_weave generator (codebox + patcher)`
 

@@ -5,7 +5,7 @@ of src/f_caustic/codebox_sheets.gen. NumPy only; no Max.
 
   ref_scatter     what the shader does: a lattice displaced through the field and tent-splatted, additively
   box_down        2D block-mean down-sampling (the comparison resolution)
-  upscale         bilinear upscale by an integer factor, pixel centres aligned
+  upscale         bilinear upscale by an integer factor, pixel centers aligned
   resize_bilinear bilinear resize to any size (what sample(in, norm) does when magnifying)
   tone            the sheets composite's tone curve: t = v / (1 + v), out = t ** 0.7
 """
@@ -39,7 +39,7 @@ def edge_remap(X, edge, r=R):
 def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0, edge=0):
     """What the shader should do. Lattice u_i = i/(n-1) (a plane gridshape spans [-1, 1] inclusive), textures
     sampled bilinear/clamp, each point splatted with a bilinear (tent) footprint, additive. (A plain size-1 GL
-    point is round and deposits only if its centre is within 0.5 px of a pixel centre: it aliased against the
+    point is round and deposits only if its center is within 0.5 px of a pixel center: it aliased against the
     lattice and lost ~21% of the energy, spike S1; the corner-snapped size-2 point of the module equals the
     tent exactly, spike S5.)
     up_flip: texture memory = flipud(matrix); out_flip: matrix = flipud(framebuffer).
@@ -51,7 +51,7 @@ def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0,
     Y = V + F32(d) * f[..., 1] * F32(fy)
     X, Y = edge_remap(X, edge, r), edge_remap(Y, edge, r)       # edge mode (2026-10-17); 0 = unchanged
     # tent (bilinear) splat, as the fragment shader does: pixel k gets 1 - |k + 0.5 - x*r| (if > 0)
-    # a point whose CENTRE is outside the viewport is clipped whole (GL clips a point by its centre)
+    # a point whose CENTER is outside the viewport is clipped whole (GL clips a point by its center)
     centre_in = (X >= 0) & (X <= 1) & (Y >= 0) & (Y <= 1)
     fx, fyy = X * F32(r) - F32(0.5), Y * F32(r) - F32(0.5)
     x0, y0 = np.floor(fx), np.floor(fyy)
@@ -82,7 +82,7 @@ def box_down(img, f):
 
 
 def upscale(img, s):
-    """Bilinear upscale by an integer factor, pixel centres aligned (output i <-> capture (i+.5)/s-.5)."""
+    """Bilinear upscale by an integer factor, pixel centers aligned (output i <-> capture (i+.5)/s-.5)."""
     if s == 1:
         return img
     h = img.shape[0]
@@ -95,7 +95,7 @@ def upscale(img, s):
 
 
 def resize_bilinear(img, H, W):
-    """Bilinear resize of an (h, w, c) array to (H, W, c), pixel centres aligned (what sample(in1, norm) does
+    """Bilinear resize of an (h, w, c) array to (H, W, c), pixel centers aligned (what sample(in1, norm) does
     when magnifying)."""
     h, w = img.shape[:2]
     ys = np.clip((np.arange(H) + 0.5) * h / H - 0.5, 0, h - 1)

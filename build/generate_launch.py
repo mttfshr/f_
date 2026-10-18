@@ -5,7 +5,7 @@ generate_launch.py -- generate package/extras/f_Launch.maxpat from the README Pa
 f_Launch is the package homepatcher (package-info.json "homepatcher"): the Package Manager
 "Launch" button and the Extras menu open it. One tab per README group, one row per module.
 A module with package/help/<name>.maxhelp gets a clickable name that opens that helpfile
-(textbutton -> "loadunique <name>.maxhelp" -> pcontrol); a module without one gets plain grey
+(textbutton -> "loadunique <name>.maxhelp" -> pcontrol); a module without one gets plain gray
 text, because a click on a missing helpfile fails silently in Max.
 
 Source of truth: the README "## Patches" table. Never hand-edit f_Launch.maxpat -- edit the
@@ -38,7 +38,7 @@ OUT = REPO_ROOT / "package" / "extras" / "f_Launch.maxpat"
 
 MAX_DESC = 110
 APP = {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1}
-GREY = [0.55, 0.55, 0.55, 1.0]
+GRAY = [0.55, 0.55, 0.55, 1.0]
 
 # Layout (pixels). One-liners are at most 110 characters: about 720 px at 12 pt.
 ROW_H, TOP = 28, 12
@@ -136,7 +136,7 @@ def build_tab(rows):
             n += 2
         else:
             boxes.append({"box": {"id": f"obj-{n}", "maxclass": "comment", "numinlets": 1, "numoutlets": 0,
-                                  "patching_rect": [20.0, py, 150.0, 20.0], "text": name, "textcolor": GREY,
+                                  "patching_rect": [20.0, py, 150.0, 20.0], "text": name, "textcolor": GRAY,
                                   "presentation": 1,
                                   "presentation_rect": [float(NAME_X), y + 2, float(NAME_W), 20.0]}})
             n += 1
@@ -144,7 +144,7 @@ def build_tab(rows):
                     "patching_rect": [260.0, py, 150.0, 20.0], "text": display(desc),
                     "presentation": 1, "presentation_rect": [float(DESC_X), y + 2, float(DESC_W), 20.0]}
         if not clickable:
-            desc_box["textcolor"] = GREY
+            desc_box["textcolor"] = GRAY
         boxes.append({"box": desc_box})
         n += 1
     return boxes, lines
@@ -177,7 +177,7 @@ def generate():
     rows = [(n, d) for _, g in groups for n, d in g]
     clickable = sum((HELP_DIR / f"{n}.maxhelp").exists() for n, _ in rows)
     summary = (f"{len(groups)} tabs, {len(rows)} modules: {clickable} clickable, "
-               f"{len(rows) - clickable} greyed (no helpfile), {sum('⚠' in d for _, d in rows)} marked ⚠")
+               f"{len(rows) - clickable} grayed (no helpfile), {sum('⚠' in d for _, d in rows)} marked ⚠")
     return text, summary
 
 

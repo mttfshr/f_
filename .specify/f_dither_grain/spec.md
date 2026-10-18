@@ -136,11 +136,11 @@ grain-morphology machinery is superseded.
   since the driving texture actually encodes hue (a live color source,
   not a synthetic scalar), order is derived from hue-wheel angle, not
   authored/typed order.
-- Q: How does the saturation-undefined edge case (near-grey pixels)
+- Q: How does the saturation-undefined edge case (near-gray pixels)
   get handled? → A: Precedent already exists in `f_hue_processor`'s
   `smoothstep(0.05, 0.15, S)` low-saturation gate. Same mechanism
   applies here: below the gate, skip bracket-finding/dither entirely
-  and fall back to a single designated hue or a neutral/grey grain.
+  and fall back to a single designated hue or a neutral/gray grain.
   Which fallback reads better is not yet decided — empirical, see
   Phase 0 decision gates in `tasks.md`.
 
@@ -180,7 +180,7 @@ topology-preserving.
   later addition, not required for Phase 0/1.
 - **Low-saturation fallback:** below a `f_hue_processor`-style
   saturation gate, skip the hue-angle-based bracket/dither test
-  entirely. Fallback target (designated hue vs. neutral/grey) not yet
+  entirely. Fallback target (designated hue vs. neutral/gray) not yet
   decided — decision gate in `tasks.md`.
 
 ---

@@ -41,7 +41,7 @@ out0 — texture (char, luminance weave output)
 | marklen    | float | 0–1   | 0.3     | Mark length along line — controls along-line mark extent |
 | regularity | float | 0–1   | 0.5     | 1=all lines in phase (grid-like rows), 0=fully varied per-line offset |
 | phase      | float | any   | 0.0     | Animation — scrolls marks along line direction |
-| bypass     | bool  | 0/1   | 0       | Standard bypass — outputs mid-grey (0.5) |
+| bypass     | bool  | 0/1   | 0       | Standard bypass — outputs mid-gray (0.5) |
 
 **Note:** `regularity` must be clamped to [0,1] in codebox — values outside this range
 produce unpredictable hash behavior.

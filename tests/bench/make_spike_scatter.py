@@ -60,7 +60,7 @@ port("out0", "outlet", [620, 520, 30, 22])
 obj("rt", "route d weight psize n fy r bypass k h snap jit latn taps detail", 1, 15, [20, 60, 600, 22])
 wire("in0", 0, "rt", 0)
 
-# texture adapters: normalised 2D float32, as in vs_xyz_disp (a vertex program wants sampler2D)
+# texture adapters: normalized 2D float32, as in vs_xyz_disp (a vertex program wants sampler2D)
 obj("slabS", "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32", 1, 2, [20, 110, 300, 22],
     ["jit_gl_texture", ""])
 obj("slabF", "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32", 1, 2, [400, 110, 300, 22],

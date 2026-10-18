@@ -15,7 +15,7 @@ _Created: 2026-10-16_
 - [x] T008 `tests/modules/tf_axisflow/bench_tf_axisflow.py` + `benchdeps.py` entry (ask Matt before running; bench.maxpat open).
 - [x] T009 Bench: parity vs mirror incl. iso, black, aspect, bypass_gate.
 
-## Phase 2: scratch patch (judgement)
+## Phase 2: scratch patch (judgment)
 - [~] T010 (skipped 2026-10-16: the module itself is the live test) Scratch patch tensormap → axisflow → `f_vf_advect`, noise source.
 - [ ] T011 Matt: sweep `angle`, `gate`, `mode`; confirm no seam; decide defaults and `normalize`.
 
@@ -35,7 +35,7 @@ _Created: 2026-10-16_
 Why: Axis Flow's flow always has a component along `angle` (mean 0.5 x gain over random edges), and
 `f_vf_fluid` accumulates that mean flow (only `drag` damps k=0), so chains drift one way; Matt also wants
 negative gain in performance. Decisions (Matt): gain range -4..4; reference inlet unnormalized, `angle`
-rotates it, unconnected = old behaviour; title-bar label left as `T_ in ∇ out`.
+rotates it, unconnected = old behavior; title-bar label left as `T_ in ∇ out`.
 - [x] T020 Signed `gain` (-4..4, default 1): definition range + hint; codebox already unclamped.
 - [x] T021 Reference inlet: `mod_inlets` (vs_instate False) -> codebox `in2`; B-gate (|B-0.5|<0.25) absent test;
   pixel-space decode; `angle` rotates. Codebox + mirror `axisflow(ref=...)` in step; patcher rebuilt (pix has 2 inlets).
@@ -47,7 +47,7 @@ rotates it, unconnected = old behaviour; title-bar label left as `T_ in ∇ out`
 - [ ] T024 Full offline suite once (`tests/run.sh -q`): the rebuild touched only f_tf_axisflow, but the contract /
   drift / conventions tests have not been re-run since.
 - [x] T025 Helpfile (2026-10-18): `gain` range corrected, a note on the optional second inlet and negative gain added,
-  bpatcher numinlets 2. Text only; Matt's look in Max (the judgement gate) is still to do.
+  bpatcher numinlets 2. Text only; Matt's look in Max (the judgment gate) is still to do.
 - [x] T026 (passed, Matt 2026-10-17) Matt: load in Max; the panel width (154) is unchanged, check the new inlet position and the cable to it.
 - [x] T027 (passed, Matt 2026-10-17) Matt live: tensormap -> axisflow (ref = f_vf_vortex) -> f_vf_fluid; sweep `angle`, negative gain.
 - Related, not built: f_caustic `edge` mode (off / wrap / mirror / clamp, vertex-shader) and an optional f_vf_fluid

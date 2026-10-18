@@ -15,9 +15,9 @@ import sys
 import numpy as np
 
 import benchclient as bc
-from bench_fft import codebox
+from dft_mirror import dft_codebox as codebox
 from harness import check, note, run
-from test_fft_separable import make_image, pack
+from dft_mirror import make_image, pack
 
 # ~9 ms of GPU work at 512^2: far above the bench's CPU overhead (~2-3.5 ms)
 HEAVY = """acc = 0;

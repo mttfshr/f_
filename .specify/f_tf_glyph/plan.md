@@ -26,7 +26,7 @@ Risk is low and mostly visual: the decode math has independent ground truth
 (`np.linalg.eigh`), the axis math reuses tensormap's stage C verbatim, and the
 draw is one rotation plus a smoothstep — `f_weave`'s mark-rendering pattern
 (`ideas/f_vf_seeds.md` §"Mark rendering") applied in a rotated cell frame. The open
-questions are judgement calls (variant menu, tint behavior, gain-free vs
+questions are judgment calls (variant menu, tint behavior, gain-free vs
 gain-scaled radius), i.e. tier-3 questions, plus one small plan-level fork (ADR-4/5).
 
 ## Technical Context
@@ -40,14 +40,14 @@ the ceiling the design is wrong, not the budget.
 **Encode contract:** `docs/f-reference/f_tensor_type.md` outlet 0 (cited, never
 re-derived in code comments beyond the decode block itself).
 **Producer:** `docs/f-reference/f_tf_tensormap.md`; tensormap plan ADR-5 (bench GPU
-wraps out-of-range reads → clamp sample coords to texel centres in-shader) and
+wraps out-of-range reads → clamp sample coords to texel centers in-shader) and
 ADR-6 (eps_trace neutral rule) are inherited behaviors.
 **Lookup precedent:** `ideas/f_vf_seeds.md` — nearest-seed solve and "sample the
 field at the seed position, not the pixel".
 **Decode precedent:** `jit.fx.cf.kuwahara` in-consumer eigen decode, cited with
 source evidence from `ideas/f_tf_jitfx_audit.md` §2.1.
 **GPU budget:** M3 Max measured, M1 unmeasured (ways-of-working); expect tensormap
-stage-C-class cost (closed form, one texture read of the tensor per cell centre
+stage-C-class cost (closed form, one texture read of the tensor per cell center
 plus the source tap).
 
 ## Files
@@ -65,7 +65,7 @@ tests/
   bench_tf_glyph.py   tier 2, real codebox on the GPU                               (Phase 2)
 
 ~/Vsynth/patterns/ (not in repo)
-  tf_glyph_scratch.maxpat   tier 3 judgement — variants, tint, debug modes          (Phase 3)
+  tf_glyph_scratch.maxpat   tier 3 judgment — variants, tint, debug modes          (Phase 3)
 
 docs/f-reference/
   f_tf_glyph.md       as-built reference                                            (Phase 5)
@@ -76,7 +76,7 @@ docs/f-reference/
 ### ADR-1: Single-stage, closed-form codebox; no chain
 
 **Context:** tensormap needed four stages because smoothing is a windowed sum.
-Glyph needs one tensor read at a cell centre, a closed-form eigen solve, and a
+Glyph needs one tensor read at a cell center, a closed-form eigen solve, and a
 closed-form distance test. No accumulation, no neighborhood of texture samples
 beyond the lookup.
 
@@ -144,7 +144,7 @@ change, not a consumer rewrite — consumers keep working, the idiom note gets a
    (the cell (2,6) read texel (22,90) pure where the mirror's bilinear read a blend; worst
    diff 0.98). Fixed with the skill doc's four-tap `nearest()` hand-bilinear idiom (tensor
    read AND tint read). First draft of that fix passed RAW texel indices as tap coords —
-   wrong: `nearest()` takes normalized texel-centre coords, same as `sample`.
+   wrong: `nearest()` takes normalized texel-center coords, same as `sample`.
 3. **Residual GPU-vs-mirror after fixes: 2.3e-4 at the 49-tap extreme** — the hardware's own
    interpolation weights are 8-bit (skill: "median 2e-5, max 1.2e-4" per read; this kernel
    stacks several reads). Bench tolerance aligned (2e-4 class); invisible in render.
@@ -176,14 +176,14 @@ the header level.
 **Consequences:** Test fixtures build outlet-0-format textures; the bench tests
 decode from that format only.
 
-### ADR-4: Jitter-free grid; cell centre = arithmetic lookup (no neighbor search)
+### ADR-4: Jitter-free grid; cell center = arithmetic lookup (no neighbor search)
 
 **Context:** `f_vf_seeds` runs a bounded 3×3 nearest-seed search because its seeds
 jitter. `f_tf_glyph` does not (currently) promise jitter, and the spec's "no
 loops" claim is a hard family rule.
 
 **Decision:** Cells are a uniform `grid × grid` lattice over the frame: cell
-centre = `(floor(p * grid) + 0.5) / grid`, no texture-space search, no loop at
+center = `(floor(p * grid) + 0.5) / grid`, no texture-space search, no loop at
 all. `jitter` stays out of v1. If a future revision wants jitter, the correct
 mechanism is the bounded 3×3 search (`f_vf_seeds.md` Q4 precedent) as a v2
 change with its own ADR — not baked in speculatively.
@@ -264,7 +264,7 @@ texture, so it takes in 0 and control rides with it, tensormap-style).
 **Rationale:** Primary-content-first mirrors `driving_inlet`; source-tint is
 auxiliary by design (spec: geometry must never depend on it).
 
-**Consequences:** Tint pass reads in 1 at the cell centre too (one luma/color
+**Consequences:** Tint pass reads in 1 at the cell center too (one luma/color
 tap); no fallback chain beyond the vs_black neutral.
 
 ### ADR-8: Variant and debug-mode plumbing built shape-generic, menu shipping deferred
@@ -296,12 +296,12 @@ only; the scratch builds may carry extra branches that never enter `src/`.
   aspect, and the cell lattice is exactly mirrorable. Also verifies the
   gain-free identity and the gate behavior numerically.
 - **Tier 2 (bench): applies.** One real codebox to compile; border/clamp
-  behavior (tensormap ADR-5) must be re-confirmed for THIS module's cell-centre
-  sampling; cost measured (a single cell-centre tap makes it trivially cheap,
+  behavior (tensormap ADR-5) must be re-confirmed for THIS module's cell-center
+  sampling; cost measured (a single cell-center tap makes it trivially cheap,
   but it is still recorded, not assumed).
 - **Tier 3 (scratch patch): applies.** Glyph look, variant choice, tint
   behavior, `gate`/`grid`/`scale`/`thickness`/`softness`/`max_aspect` defaults
-  and the legibility-through-smooth/sharpen debug role are all judgement.
+  and the legibility-through-smooth/sharpen debug role are all judgment.
 
 **Consequence:** Test discipline as always: one affected test at a time, `-q`,
 background via `tests/bg.sh`; **ask before any bench run** (ways-of-working).
@@ -321,10 +321,10 @@ gate floor; one injected bug caught.
 **Builds:** `codebox_glyph.gen`, `tests/modules/tf_glyph/bench_tf_glyph.py` (registered in
 `tests/lib/benchdeps.DATA`; not in `bench.sh DEFAULT` until Matt makes it a gate).
 **Verification:** compiles well under the statement budget; matches the mirror
-channel-by-channel incl. border cells (texel-centre clamp confirmed for cell
+channel-by-channel incl. border cells (texel-center clamp confirmed for cell
 sampling); bypass/unconnected behaviors; per-pass cost at 1080p/4K recorded.
 
-### Block 3: Judgement on real content (tier 3)
+### Block 3: Judgment on real content (tier 3)
 **Dependencies:** Block 2
 **Builds:** `~/Vsynth/patterns/tf_glyph_scratch.maxpat` only — variants
 (ellipse/cross/tick via the ADR-8 constant), tint behavior, debug-tint
@@ -359,11 +359,11 @@ injected bug is caught.
 
 ### Phase 1: Codebox on the bench (BLOCKING)
 Write `codebox_glyph.gen` against the mirror; compile; bench diff channel-by-channel
-incl. border cells; confirm clamp behavior for cell-centre taps; measure cost at
+incl. border cells; confirm clamp behavior for cell-center taps; measure cost at
 1080p/4K and register the bench file. Exit: matches mirror on the GPU; borders exact;
 cost recorded; statement budget confirmed comfortably under the ceiling.
 
-### Phase 2: Scratch patch, judgement tier
+### Phase 2: Scratch patch, judgment tier
 Variants via ADR-8 constants; tint behavior; debug-tint feasibility; calibrate
 `grid`/`scale`/`thickness`/`softness`/`gate`/`max_aspect` defaults; the
 debug-sidecar check. Exit: every spec Open Question 1/2/3/4 decided or explicitly

@@ -127,8 +127,8 @@ def test_route_bypass_keeps_each_route_outlet_over_its_control_and_wires_downwar
         top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
         route = top[bp.OBJ_ROUTE]
         tokens = route["text"].split()[1:]
-        centre = lambda b: b["patching_rect"][0] + b["patching_rect"][2] / 2.0
-        col = lambda b: round((centre(b) - layout.LANE_X0) / layout.PITCH)
+        center = lambda b: b["patching_rect"][0] + b["patching_rect"][2] / 2.0
+        col = lambda b: round((center(b) - layout.LANE_X0) / layout.PITCH)
         # the control of param n is in the lane column of ITS route token
         for n, name in enumerate(("a", "b", "c")):
             ctl = top[bp.param_obj_id(n)]

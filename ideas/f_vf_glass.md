@@ -7,7 +7,7 @@ _Status: ON HOLD (2026-10-06, Matt). Vsynth already ships smooth, morphing sourc
 
 ## Why it exists
 
-The light-through-glass work (`f_lumia.md`, `optics_map.md`) modelled glass as a **height field**: its
+The light-through-glass work (`f_lumia.md`, `optics_map.md`) modeled glass as a **height field**: its
 slope deflects light, its curvature focuses it. Everything downstream (warp, caustic, dispersion, streak)
 reads the same vecfield, the gradient of that height. Today that field has to be assembled from a
 `jit.gl.bfg` noise (or another scalar) into `f_vf_fieldmap`, and animation is whatever the noise source
@@ -67,7 +67,7 @@ ripples (radial waves), Fresnel rings.
   plain `phase` param that a user can automate or LFO, plus an internal counter chain fed by `r draw`
   (as the 2026-10-06 lag spike used) for the free-running `evolve`.
 
-## Regime normalisation (idea, untested)
+## Regime normalization (idea, untested)
 
 Measured: the first fold forms at `d* = 1 / (most negative Hessian eigenvalue)`; the thin-line regime is
 `d` up to about `d*`, the translucent-sheet regime is beyond about 2 `d*` (`optics_map.md`). Because the
@@ -121,7 +121,7 @@ Consequence: a smooth float32 (or even 8-bit) height already makes a valid glass
 texture does not guarantee is smoothness (a hard edge is infinite curvature, and there is no blur module in
 f_), and bounded curvature. So the genuinely new capability is a **smooth, evolving height generator**; the
 vecfield outlet is a convenience (one pass instead of two, no inset, exact `focus`), not a quality gain.
-The one thing a texture route cannot offer is regime normalisation, because that needs the generator's own
+The one thing a texture route cannot offer is regime normalization, because that needs the generator's own
 parameters; whether it is worth having is untested. The spec already carries a `height` outlet, so the
 module can be used either way; the open design question is whether the vecfield outlet earns its place.
 
@@ -135,18 +135,18 @@ Not tested: textures with hard edges or noise, other glass seeds, a fieldmap run
   module a superset of the fieldmap use case? Not decided; keep out of v1 unless wanted.
 - What is `focus` exactly: divergence (what `f_caustic` weights) or a Hessian determinant? The determinant
   needs a distance, so it belongs to a consumer; divergence is distance-free.
-- Mode count and cost in a pix codebox, and `|F| <= 1` clipping behaviour at high `gain` (soft limit?).
+- Mode count and cost in a pix codebox, and `|F| <= 1` clipping behavior at high `gain` (soft limit?).
 - The one-frame lag of the scatter module against same-frame pix consumers (`optics_map.md`): visible on
   fast glass motion when warp and caustic share one glass.
 
 ## Verification plan (tiers, per the constitution)
 
 1. **Math, NumPy mirror:** analytic gradient and Hessian against central differences of `h`; encode/decode
-   round trip; periodicity for integer vectors; continuity of `h` in `phase`; if normalisation is adopted,
+   round trip; periodicity for integer vectors; continuity of `h` in `phase`; if normalization is adopted,
    the predicted `d*` against the photon-counting truth in `scratch/caustic_fidelity.py` (same glass family).
 2. **Execution, test bench:** the real codebox against the mirror, every outlet, bypass passthrough
    (neutral field 0.5/0.5 on the vecfield outlet, black on scalars, per the 2026-10-05 convention).
-3. **Judgement, scratch patch:** feed `f_vf_warp`, `f_vf_prism`, `f_caustic` and look; judge evolve rates,
+3. **Judgment, scratch patch:** feed `f_vf_warp`, `f_vf_prism`, `f_caustic` and look; judge evolve rates,
    ranges and which families are worth keeping.
 
 ## Related

@@ -290,7 +290,7 @@ def test_compare_pairing_is_conservative():
 
 def test_compare_a_renamed_box_is_still_compared_for_everything_but_its_identity():
     old = _label("a", "Rotation")
-    _eq("a rename plus a colour change is a rename plus a prop",
+    _eq("a rename plus a color change is a rename plus a prop",
         _counts(_patcher([old]), _patcher([_label("b", "Rot", textcolor=[1.0, 0.0, 0.0, 1.0])])),
         {"boxes_renamed": 1, "props": 1})
     _eq("a rename plus a small move (inside the pairing tolerance) is a rename plus layout",
@@ -308,7 +308,7 @@ def test_compare_cords_follow_a_renamed_box():
         _counts(built, cordless), {"boxes_renamed": 1, "lines_def_only": 1})
 
 
-# ---- T008: what Max normalises (round-trip evidence, build/drift.py) versus what is real drift
+# ---- T008: what Max normalizes (round-trip evidence, build/drift.py) versus what is real drift
 
 def _valueof(b, **kw):
     v = b["saved_attribute_attributes"]["valueof"]
@@ -385,7 +385,7 @@ def test_comment_size_is_fitted_by_max_but_position_is_structure():
 
 def test_what_max_preserves_stays_drift():
     """Round-trip: Max kept all three of these exactly as built, so a difference is a real
-    edit (or a stale definition), never normalisation.  Pinned so nobody 'fixes' it away."""
+    edit (or a stale definition), never normalization.  Pinned so nobody 'fixes' it away."""
     ap = {"id": "t", "maxclass": "newobj", "text": "autopattr", "numinlets": 1, "numoutlets": 4,
           "varname": "channel_grader_autopattr"}
     _eq("autopattr varname (built x_autopattr, shipped u905020188) IS drift",

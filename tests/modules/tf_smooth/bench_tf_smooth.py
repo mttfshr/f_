@@ -2,7 +2,7 @@
 bench_tf_smooth.py -- Tier 2 verification for f_tf_smooth: the real codeboxes
 (src/f_tf_smooth/codebox_state.gen, codebox_render.gen) run on the GPU
 through the Max test bench and are diffed against the NumPy mirror in
-tests/modules/tf_smooth/test_tf_smooth.py. Feedback is driven with bc.run_temporal (identity
+tests/modules/tf_smooth/tf_smooth_mirror.py. Feedback is driven with bc.run_temporal (identity
 pass pix feeding the state pix's in2, the f_vf_advect two-domain pattern).
 Tasks T012-T014.
 
@@ -20,7 +20,7 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run
-import test_tf_smooth as m          # the tier-1 mirror
+import tf_smooth_mirror as m          # the tier-1 mirror
 
 REPO = _paths.REPO
 SRC = REPO / "src" / "f_tf_smooth"

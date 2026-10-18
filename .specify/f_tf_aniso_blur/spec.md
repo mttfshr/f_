@@ -175,7 +175,7 @@ pixel. See Open Questions 4.
 and gate scalars are floats and are unclamped *between stages* of the math —
 the single pass is one codebox, and the only clamps inside it are:
 1. the tensor decode's SPD/RNG guard (above) — not a range clamp;
-2. **sample coordinates clamped to texel centres in-shader**, because the
+2. **sample coordinates clamped to texel centers in-shader**, because the
    bench GPU wraps out-of-range reads (`f_tf_tensormap.md` Notes; tensormap
    ADR-5 outcome);
 3. sample *weights* bounded by construction (positive, sum-normalized).
@@ -289,7 +289,7 @@ reference weighted-sum implementation in NumPy). Tier 2 (bench) applies: the
 real codebox(es) must compile, cost at HD/4K is an open question, and
 texture-coordinate clamping must be verified against the wrap behavior. Tier
 3 (scratch patch) applies: the `strength_scale`/`length`/`width_gate`/`floor`
-defaults are live-content judgements. The tier gate is recorded as Phase 0's
+defaults are live-content judgments. The tier gate is recorded as Phase 0's
 first task in tasks.md.
 
 - **Flat source, flat tensor (both black):** with the zero-texture tensor
@@ -365,7 +365,7 @@ first task in tasks.md.
 - **Bypass:** outlet equals inlet 1 exactly, bitwise-passthrough semantics.
 - **Loads in Vsynth** and outlet 0 renders in `vs_render` (the shipped-
   bpatcher contract tests).
-- **Judgement tier (scratch patch):** the anisotropic look separates from the
+- **Judgment tier (scratch patch):** the anisotropic look separates from the
   isotropic look on real content — ridges/edges stay crisp while flat areas
   smooth; `floor` prevents a visible boundary between the two regimes;
   provisional defaults read sensibly on bfg Perlin/Voronoi/fbm and on a real
@@ -466,7 +466,7 @@ first task in tasks.md.
    chosen (Out of Scope item 2) but constrains both: tap weights positive,
    sum-normalized, bounded-loop compile-time TAPS_MAX, transverse extent
    from the coherence-derived width gate, coordinates clamped to texel
-   centres in-shader.
+   centers in-shader.
 
 ---
 

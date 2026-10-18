@@ -45,6 +45,12 @@ log_open() {
     LOG="$LOGS_DIR/$(date +%Y%m%d-%H%M%S)-$kind.log"
   fi
   log_header "$kind" "$flags" > "$LOG"
+  # Context for tests/lib/checkhist.py: harness.check() appends each result to tests/.state/check_results.jsonl.
+  # The history keeps the last 30 runs per kind; a failed prune never blocks a run.
+  export TEST_RUN_ID="$(date +%Y%m%d-%H%M%S)-$kind-$$" TEST_RUN_KIND="$kind"
+  export TEST_RUN_GIT="$(git rev-parse --short HEAD 2>/dev/null || echo nogit)" TEST_RUN_MAX="$(max_version)"
+  if [ -n "$(git status --porcelain 2>/dev/null | head -1)" ]; then export TEST_RUN_DIRTY=dirty; else export TEST_RUN_DIRTY=clean; fi
+  python3 tests/lib/checkhist.py prune >/dev/null 2>&1 || true
   case "$LOG" in
     "$LOGS_DIR"/*)
       ln -sf "$(basename "$LOG")" "$LOGS_DIR/latest-$kind"

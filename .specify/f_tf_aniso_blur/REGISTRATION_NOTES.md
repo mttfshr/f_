@@ -10,7 +10,7 @@ should apply when integrating aniso_blur; this module owns nothing outside
 `note(label, value)` hardened from `{float(value):.3e}` to `{value}` (it
 now accepts numeric and string values; all prior numeric-note output keeps
 its format via the callers' own formatting — regression-green: test_harness
-4/4, test_tf_tensormap 18/18, test_tf_glyph 14/14, test_fft_separable 9/9
+4/4, test_tf_tensormap 18/18, test_tf_glyph 14/14, fft_separable 9/9
 re-run after the change). Reason: the tier-1 mirror's ADR-2 gate data and
 T010 pairing notes are string-typed (e.g. `"0.0529 -> 0.0045 (std 0.291)"`),
 which the strict-float note crashed on. If the parent prefers the strict
@@ -63,7 +63,7 @@ needed; re-run the build command at the new path.
   in1); outlet 0 = pix out 0 direct (automatic primary→outlet wire,
   correct for an ordinary color texture, spec OQ1); 1 jit.gl.pix
   `@name aniso_blur_pix` (gen: in 1, in 2, codebox, out 1). `signal_type
-  "tensor in"` picks up tensormap T030's amber colour (first-word key; no
+  "tensor in"` picks up tensormap T030's amber color (first-word key; no
   build_patcher change needed).
 - `tests/contracts/test_module_contracts.py` (offline, no Max needed — ran it):
   **f_tf_aniso_blur is GREEN** (this module produces no BAD entries;
@@ -97,7 +97,7 @@ the tensormap/glyph row style:
 ```
 
 Inventory row and HANDOFF line: status "buildable, tier-1 mirror green
-(19/19), tier-2 bench written but not run, tier-3 live judgement pending
+(19/19), tier-2 bench written but not run, tier-3 live judgment pending
 Matt; ADR-2 kernel-family gate PROVISIONAL-OPEN".
 
 ## ideas/f_tensorfield.md (hub)

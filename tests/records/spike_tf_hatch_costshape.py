@@ -225,7 +225,7 @@ def hairpin_error(mask, alpha, h=96, w=128, px=1, margin=10):
     dash's own endpoint gradients as misoriented reads 0.83 even on a perfect
     dashed straight stroke (calibrated: 0.00 full band, 0.83 dashed) -- noise,
     not signal. What the hazard actually claims is that on tight curvature the
-    dashes STOP READING AS LINES: neighbouring marks no longer align into a
+    dashes STOP READING AS LINES: neighboring marks no longer align into a
     coherent stroke. The metric therefore measures the ridge orientation of
     the BLURRED mask (structure tensor of _box(mask, 1), blurred enough to
     join dashes) against the decoded axis, as lines (mod pi), averaged over

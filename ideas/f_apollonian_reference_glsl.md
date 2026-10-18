@@ -17,7 +17,7 @@ const float N = 3.0;
 const int max_iterations = 100;
 const float pi = 3.14159265;
 // Circles are represented as vec3(x,y,r2) where
-// (x,y) is the centre and r2 is the squared radius.
+// (x,y) is the center and r2 is the squared radius.
 // Invert pos in circle c
 vec2 invert(vec2 pos, vec3 c) {
   vec2 p = pos-c.xy;

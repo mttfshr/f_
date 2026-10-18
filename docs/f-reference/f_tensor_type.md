@@ -63,12 +63,12 @@ Storing (cos θ, sin θ) of an unoriented axis forces an arbitrary sign, and the
    on the bench GPU — never feed it possibly-(0,0) args; bias the denominator arg (+1e-7)
    instead of guarding after (a `mix()` with a NaN operand propagates the NaN: NaN·0 = NaN).
    (b) **`sample()` is NOT bilinear when its coordinate is data-dependent and jumps** between
-   neighbouring pixels (hardware minification falls back to nearest) — decodes sampled at
+   neighboring pixels (hardware minification falls back to nearest) — decodes sampled at
    cell-lattice coordinates need the four-tap `nearest()` hand-bilinear idiom
    (`skills/jit-gen-codebox`). Residual cross-implementation tolerance: 8-bit interpolation
    weights give ~2e-4 per stacked read.
    **Refactor record (same session):** the rule is not glyph-specific — `f_tf_aniso_blur`'s
-   cell-centre read and every kernel tap read at cell-coherent coordinates had the same
+   cell-center read and every kernel tap read at cell-coherent coordinates had the same
    latent silent-fallback (its 64×64 bench passed on boundary-fraction luck). Both reads now
    use the four-tap idiom; the 97×64 spot-check went from silently broken to 4.4e-6. Any
    future consumer reading at cell/lattice coordinates copies the idiom from the start.

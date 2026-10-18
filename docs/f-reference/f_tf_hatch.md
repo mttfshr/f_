@@ -1,12 +1,12 @@
 # f_tf_hatch
 
 **Type:** Processor (f_tensor consumer, renderer)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgement pending
+**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending
 (built 2026-10-17 as the fifth module of the tensor-family build order:
 smooth → glyph → sharpen → aniso_blur → **hatch**; the mirror and cost
 spike are green, the bench file is written and registered but not yet run
 [INFERENCE: the module's provisional defaults remain provisional — the
-tensormap cycle applies], live judgement pending).
+tensormap cycle applies], live judgment pending).
 
 ---
 
@@ -77,7 +77,7 @@ Upstream contract.
 ## Parameters
 
 All defaults below are **provisional** — the tensormap precedent applies:
-they lock at the tier-3 judgement (tasks T020, pending) with live
+they lock at the tier-3 judgment (tasks T020, pending) with live
 replacements recorded in the spec's Open Questions.
 
 | Param | Range | Default | Description |
@@ -107,7 +107,7 @@ measured tap step needed — the aspect `dim`-reads-1 caveat does not apply).
 
 Neither outlet is a tensor or a vecfield — they are rendered marks, not field
 data (don't feed them to tensor consumers). The header `signal_type` label
-reads "tensor out" (the family colour) as the tensormap precedent's header
+reads "tensor out" (the family color) as the tensormap precedent's header
 tag; the outlets themselves are plain luma textures.
 
 **Commit semantics (the one design constant):** mark intensity is multiplied

@@ -39,7 +39,7 @@ function paint() {
     mgraphics.rectangle(0, 0, w, h);
     mgraphics.fill();
 
-    // greyscale gradient strip — smoothstep dimming mirrors Gen codebox band weights
+    // grayscale gradient strip — smoothstep dimming mirrors Gen codebox band weights
     var ef = edge_falloff;
     for (var i = 0; i < w; i++) {
         var brightness = i / w;

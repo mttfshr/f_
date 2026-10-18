@@ -28,7 +28,7 @@ import fluid_mirror as fm
 from fluid_mirror import Params
 from gpu_sim import F32
 from harness import check, note, run, slow
-from test_fft_separable import make_image, pack, rel_err
+from dft_mirror import make_image, pack, rel_err
 from test_fluid_mirror import rand_force, rand_state, smooth_state, taylor_green
 
 SRC = _paths.REPO / "src" / "f_vf_fluid"
@@ -252,7 +252,7 @@ def test_T038a_force_taps_on_gpu_4k():
 
 
 def test_T038a_taps_1_is_the_old_behaviour():
-    """taps=1 must reproduce the pre-T038a shader exactly at 1:1 (single centre tap)."""
+    """taps=1 must reproduce the pre-T038a shader exactly at 1:1 (single center tap)."""
     st = smooth_state(N, 3, amp=0.5)
     force = rand_force(N, N, 4)
     p = Params(dt=0.05, force=0.3, src_vecfield=1.0, taps=1)

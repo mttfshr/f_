@@ -1,7 +1,7 @@
 # Spec addendum: f_caustic "sheets" mode (GPU forward scatter)
 
 _Created: 2026-10-06. Rewritten 2026-10-07 as an addendum to `f_caustic` (it began as a separate-module draft)._
-_Status: Decisions resolved 2026-10-07; ready for Phase 1 (technical plan, tasks, build). Nothing here is built. The behaviour below was measured in the 2026-10-06 and
+_Status: Decisions resolved 2026-10-07; ready for Phase 1 (technical plan, tasks, build). Nothing here is built. The behavior below was measured in the 2026-10-06 and
 2026-10-07 spikes (`tests/records/spike_scatter.py` stages `s0`-`s11`, `tests/bench/spike_scatter*.maxpat`,
 `spike_scatter.jxs`, `scratch/scatter_spike_*`) and recorded in `ideas/optics_map.md` ("Findings: scatter
 feasibility spike", "Findings: scatter density, cost and detail"). The seven items that were marked [DECIDE] were resolved on 2026-10-07 (Matt: "go with your recommendations"); see Decisions at the end._
@@ -51,11 +51,11 @@ when the mode ships (wording: Decisions, item 7).
   ```
 - **Fragment program:** tent weight `max(0, 1-|dx|) * max(0, 1-|dy|)` from `gl_FragCoord.xy - ppx` (the
   UNsnapped position), output `col * w`. **`point_size 2`** with the corner snap: a size-2 round point on a pixel
-  corner covers exactly the four pixel centres the tent can reach, and the image is bit-identical to `point_size 3`
+  corner covers exactly the four pixel centers the tent can reach, and the image is bit-identical to `point_size 3`
   (spike S5), at roughly half the fragments.
 - **Blend:** additive (`blend_mode 1 1`), `depth_enable 0`, `lighting_enable 0`, node `@erase_color 0 0 0 0`.
 - **Weight:** `weight = (capture / n)^2`, so a uniform source of 1 has mean illuminance 1.
-- **Texture adapters:** source and field go through `jit.gl.slab @rectangle 0 @type float32` (normalised 2D
+- **Texture adapters:** source and field go through `jit.gl.slab @rectangle 0 @type float32` (normalized 2D
   float32, as `vs_xyz_disp` does).
 - **Shader simplifications for the module:** the spike shader's experiment uniforms (`h`, `jit`, `latn`, `taps`)
   and the `snap` switch are removed; snap, size 2, a regular lattice and one source read are fixed. `fy` is baked.
@@ -207,7 +207,7 @@ Tier decision: tier 1 (NumPy mirror) and tier 2 (module bench) apply; tier 3 for
 
 ## Out of scope (v1)
 
-- Per-channel dispersion (three draws with different `scale`, or a colour mask); candidate for v2.
+- Per-channel dispersion (three draws with different `scale`, or a color mask); candidate for v2.
 - `edge: wrap`; an analytic-glass mode (glass evaluated in the vertex shader, no field texture).
 - Multi-bounce, total internal reflection, volumetric light.
 - Removing the 1-frame lag (accepted).

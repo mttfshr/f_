@@ -98,7 +98,7 @@ Also: coherence (A) as a "where is structure" matte; trace (B) as a strength map
 ## Notes
 
 - Built in `tests/modules/tf_tensormap/test_tf_tensormap.py` (NumPy mirror, 18 tests) and `tests/modules/tf_tensormap/bench_tf_tensormap.py` (GPU parity per stage, 8 tests). Spec, plan, tasks: `.specify/f_tf_tensormap/`.
-- Bench GPU wraps out-of-range texture reads; the codeboxes clamp coordinates in-shader to the first/last texel centre.
+- Bench GPU wraps out-of-range texture reads; the codeboxes clamp coordinates in-shader to the first/last texel center.
 - GPU `atan2(0,0)` differs from NumPy's, hence the explicit neutral R = G where the direction is undefined.
 - The A channel is coherence, not raw λ1-λ2 (plan ADR-2).
 - Hub and consumer audit: `ideas/f_tensorfield.md`.

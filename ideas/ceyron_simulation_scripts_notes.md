@@ -167,7 +167,7 @@ handling, not the periodic wrap fluid gets for free; (2) shedding is
 slow to develop at performance resolutions (weak wake after 12k steps
 at 300x50 — the reference skips its first 5000 of 15000 steps before
 plotting). Whether the build is *worth it* vs `f_vf_repulse` fakery is
-unchanged — still Matt's judgement call — but "does it need a new
+unchanged — still Matt's judgment call — but "does it need a new
 architecture" is now answered: no.
 
 ## 3. Kuramoto-Sivashinsky (2D) — a candidate for a genuinely new
@@ -432,7 +432,7 @@ is one round trip: advect (real space) → forward → diffusion+projection
 
 **Result: math is correct, verified without a patch.** New `tests/`
 directory (see `tests/README.md`) with a NumPy emulation of the jit.gl.pix
-execution model; `tests/math/test_fft_separable.py` mirrors the planned codeboxes
+execution model; `tests/records/fft_separable.py` mirrors the planned codeboxes
 pass-for-pass, float32 throughout. 9/9 pass at N=128 and 256: row DFT and 2D
 forward match `np.fft` (~5e-7 rel), forward+inverse nulls (~1e-5 abs),
 single-mode diffusion decays exactly as `exp(-ν·dt·k²)`, strong viscosity
@@ -459,7 +459,7 @@ for numeric diff against the NumPy reference), then T1 on it.
 ## Addendum (2026-09-22) — FFT T1/T2 answered on the GPU via the test bench
 
 The separable-DFT passes now run in `jit.gl.pix` through the new Max test
-bench (`.specify/test_bench/`, `tests/math/bench_fft.py`) and match NumPy: row
+bench (`.specify/test_bench/`, `tests/records/bench_fft.py`) and match NumPy: row
 pass at N=128 4.8e-7 rel vs `np.fft.fft`, full 2D forward 1–2e-7 rel vs
 `np.fft.fft2`, 2D forward+inverse round trip ~5e-6 abs; N=256 and N=512 also
 compile and match. So the "does a 128/256-iteration loop compile" question is

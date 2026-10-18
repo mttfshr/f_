@@ -1,10 +1,10 @@
 """Scratch: generate scratch/launch_tab_test.maxpat (T021 mechanism test, not the real generator).
 Tests: native subpatcher tabs (showontab), awkward tab labels, textbutton -> loadunique -> pcontrol
-from inside a subpatcher, presentation-only rows, a greyed (no-helpfile) row."""
+from inside a subpatcher, presentation-only rows, a grayed (no-helpfile) row."""
 import json, os
 
 APP = {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1}
-GREY = [0.55, 0.55, 0.55, 1.0]
+GRAY = [0.55, 0.55, 0.55, 1.0]
 HELP = "/Users/matt/Github/f_/package/help"
 
 def tab_patcher(rows):
@@ -30,12 +30,12 @@ def tab_patcher(rows):
         else:
             boxes.append({"box": {"id": f"obj-{n}", "maxclass": "comment", "numinlets": 1, "numoutlets": 0,
                                   "patching_rect": [20.0, 20.0 + 60 * i, 150.0, 20.0], "text": name,
-                                  "textcolor": GREY, "presentation": 1,
+                                  "textcolor": GRAY, "presentation": 1,
                                   "presentation_rect": [10.0, float(y + 2), 160.0, 20.0]}})
             n += 1
         boxes.append({"box": {"id": f"obj-{n}", "maxclass": "comment", "numinlets": 1, "numoutlets": 0,
                               "patching_rect": [260.0, 20.0 + 60 * i, 150.0, 20.0], "text": desc,
-                              "textcolor": [0.1, 0.1, 0.1, 1.0] if has_help else GREY,
+                              "textcolor": [0.1, 0.1, 0.1, 1.0] if has_help else GRAY,
                               "presentation": 1, "presentation_rect": [180.0, float(y + 2), 520.0, 20.0]}})
         n += 1
     return {"fileversion": 1, "appversion": APP, "classnamespace": "box", "rect": [0.0, 26.0, 720.0, 140.0],
@@ -43,9 +43,9 @@ def tab_patcher(rows):
 
 TABS = [
     ("p Generators", "tab_gen", [("f_masonry", "Parametric masonry texture -- courses, bond, mortar, drift, color"),
-                                 ("f_ngon", "WARN Unfinished. Regular N-gon generator / mask (greyed: no helpfile)")]),
+                                 ("f_ngon", "WARN Unfinished. Regular N-gon generator / mask (grayed: no helpfile)")]),
     ('p "Generator / processor"', "tab_genproc", [("f_grain", "Stochastic grain field with per-grain displacement and luma gating")]),
-    ("p Audio-domain", "tab_audio", [("f_a_ripple", "WARN Unfinished. De-correlating ripple stimulus (greyed: no helpfile)")]),
+    ("p Audio-domain", "tab_audio", [("f_a_ripple", "WARN Unfinished. De-correlating ripple stimulus (grayed: no helpfile)")]),
 ]
 root_boxes = []
 for i, (text, var, rows) in enumerate(TABS):

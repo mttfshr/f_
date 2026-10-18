@@ -63,7 +63,7 @@ physics-name convention) is a placeholder; see Clarifications.
   [0,1] (spike's soaks show `max|u|` in the low-to-mid single digits at
   the measured safe `dt`, but this hasn't been tuned for how it should
   map to a displayable field). Hard clamp, soft `tanh`-style compression,
-  or auto-ranging are all open — this is tier-3 (Matt's judgement),
+  or auto-ranging are all open — this is tier-3 (Matt's judgment),
   deferred to Phase 2.
 - **Forcing inlet.** The ideas file frames KS as needing *no* forcing to
   stay interesting, but doesn't rule out an optional perturbation inlet
@@ -258,7 +258,7 @@ two instances in one patch run independently.
 6. **Never frozen:** no seed (including immediately after a reset) sits
    at a fixed point — state changes meaningfully between any two
    snapshots 100+ frames apart.
-7. **Expressive (tier 3, Matt's judgement):** the pattern is genuinely
+7. **Expressive (tier 3, Matt's judgment):** the pattern is genuinely
    organic/worm-like, visibly distinct from every existing `f_`
    generator, and the `rate` control changes felt speed without
    changing character unpleasantly (e.g. without introducing visible

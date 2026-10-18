@@ -55,8 +55,8 @@ tests/
   `tests/lib/benchclient.py`, plus `tests/toolchain/test_benchclient.py` round-tripping
   `/ping`, `/run <path with spaces>`, `/done <id>`.
 - [x] T007 Run `tests/run.sh`; all offline tests plus existing
-  `test_fft_separable.py` pass.
-  Done 2026-09-22: 21/21 offline (test_benchclient 3, test_fft_separable 9, test_genjit 3, test_jxf 6).
+  `fft_separable.py` pass.
+  Done 2026-09-22: 21/21 offline (test_benchclient 3, fft_separable 9, test_genjit 3, test_jxf 6).
 
 **Checkpoint:** offline toolchain green. → Commit. → Phase 1.
 
@@ -124,7 +124,7 @@ in Max. → Commit. → Phase 2.
 - [x] T018 **Self-test 1b — probe + const:** check `norm = (cell + 0.5)/dim`
   exactly; find which matrix row holds `norm.y ≈ 0`; from `const`, find
   which plane holds R/G/B/A.
-  **PASS, with one real finding.** Planes are ARGB (const → raw `[4,1,2,3]`); no row flip (`norm.y` smallest at matrix row 0); `norm = (i+0.5)/dim` exactly; non-square 64×32 correct (no w/h swap). **Finding: GenExpr `cell` on jit.gl.pix is NOT an integer index — it is `norm * (dim - 1)`** (0.492, 1.477, … at dim 64; exact to float32 across the frame). Integer index = `floor(norm * dim)`. This invalidated the planned FFT codebox's `switch(cell < N*0.5, …)` signed-wavenumber line before it was written — corrected in the ceyron notes and `test_fft_separable.py`.
+  **PASS, with one real finding.** Planes are ARGB (const → raw `[4,1,2,3]`); no row flip (`norm.y` smallest at matrix row 0); `norm = (i+0.5)/dim` exactly; non-square 64×32 correct (no w/h swap). **Finding: GenExpr `cell` on jit.gl.pix is NOT an integer index — it is `norm * (dim - 1)`** (0.492, 1.477, … at dim 64; exact to float32 across the frame). Integer index = `floor(norm * dim)`. This invalidated the planned FFT codebox's `switch(cell < N*0.5, …)` signed-wavenumber line before it was written — corrected in the ceyron notes and `fft_separable.py`.
 - [x] T019 **DECISION GATE — error capture:** run `broken.gen`. Does the
   gen compile error reach `error`? If yes → `status: error` with text,
   done. If no → implement the plan's fallback detection
@@ -152,17 +152,17 @@ recorded in this file. → Commit. → Phase 3.
 
 ## Phase 3: FFT T1 through the bench — spec Story 2
 
-- [x] T023 Translate `test_fft_separable.pass_dft` (axis x) into
+- [x] T023 Translate `dft_mirror.pass_dft` (axis x) into
   `codeboxes/dft_x.gen`, N as a hard constant (128), carrying the three
   findings: `nearest()` at texel centers, `mod(k*n, N)` before scaling to
   an angle, signed index via `switch`. Health-check against the
   `jit-gen-codebox` checklist (inline component access, no stored-vector
   `.x`, etc.).
   Done 2026-09-22: `tests/bench/codeboxes/dft_x.gen`, plus `dft_y.gen` (not planned — cheap, and it lets T2's full 2D forward/round trip run on the GPU too). Uses `floor(norm.x * N)` for the bin index per the Phase 2 `cell` finding; `Param inverse(0)` selects direction and 1/N scale. Compiled clean on first load.
-- [x] T024 Write `tests/math/bench_fft.py`: same input as the NumPy test, run
+- [x] T024 Write `tests/records/bench_fft.py`: same input as the NumPy test, run
   `dft_x.gen` at 128², diff against `pass_dft` output and against
   `np.fft.fft`; print errors with `harness.check`.
-  Done: `tests/math/bench_fft.py` (5 tests).
+  Done: `tests/records/bench_fft.py` (5 tests).
 - [x] T025 Run it. Record the outcome — any of these is a real T1 answer:
   matches within tolerance / compiles but numerically off (by how much) /
   compile error (text) / black output / stall. If precision is off, note

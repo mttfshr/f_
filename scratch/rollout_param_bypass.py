@@ -8,7 +8,7 @@ OLD = the committed file (git HEAD), NEW = the working-tree file the builder jus
 Result = OLD plus exactly two kinds of change taken from NEW:
   1. the `code` of any codebox that differs;
   2. the bypass box (jsui -> attrui @attr bypass becomes jsui -> `prepend param <gate>`).
-Differences in Max-normalised keys (inlet/outlet `index`, `parameter_unitstyle`) are ignored (kept as
+Differences in Max-normalized keys (inlet/outlet `index`, `parameter_unitstyle`) are ignored (kept as
 shipped).  ANY other difference aborts with a report, and the working-tree file is left untouched
 (restore it with `git checkout -- <file>`).  Cords must be identical.
 
@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-NORMALISED = {"index", "parameter_unitstyle"}
+NORMALIZED = {"index", "parameter_unitstyle"}
 
 
 def dump(obj):
@@ -45,7 +45,7 @@ def walk_boxes(patcher, path=()):
 
 def strip(v):
     if isinstance(v, dict):
-        return {k: strip(x) for k, x in v.items() if k not in NORMALISED}
+        return {k: strip(x) for k, x in v.items() if k not in NORMALIZED}
     if isinstance(v, list):
         return [strip(x) for x in v]
     return v
@@ -181,7 +181,7 @@ def main():
         if accept_layout and "patching_rect" in diff:
             rects.append((p, ob["patching_rect"], nb["patching_rect"]))
             diff.discard("patching_rect")
-        extra = diff - NORMALISED
+        extra = diff - NORMALIZED
         if extra:
             problems.append(f"{'/'.join(map(str, p))}: unexpected differing keys {sorted(extra)}")
     if problems:

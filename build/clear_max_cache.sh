@@ -16,7 +16,7 @@ echo ""
 read -p "Delete Max cache files? Max must be closed. [y/N] " confirm
 
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-    echo "Cancelled."
+    echo "Canceled."
     exit 0
 fi
 

@@ -1,7 +1,7 @@
 # f_tf_sharpen
 
 **Type:** Processor (f_tensor stage — raw in, raw out)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgement pending (Phase 1 execution and Phase 2 scratch are owner-gated; tier-1 mirror green 15/15, 2026-10-17).
+**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending (Phase 1 execution and Phase 2 scratch are owner-gated; tier-1 mirror green 15/15, 2026-10-17).
 
 ---
 
@@ -49,7 +49,7 @@ sidesteps the ±π branch-cut class entirely.
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `sharpen` | 0–4 (linear, one-sided, provisional) | 1.0 | The gap multiplier γ. 1 = neutral; <1 relaxes toward isotropy; >1 exaggerates. Dial mapping is a live-judgement gate (spec OQ1): the alternative is bipolar −2/+2 mapped through the same math, or a log curve around 1. |
+| `sharpen` | 0–4 (linear, one-sided, provisional) | 1.0 | The gap multiplier γ. 1 = neutral; <1 relaxes toward isotropy; >1 exaggerates. Dial mapping is a live-judgment gate (spec OQ1): the alternative is bipolar −2/+2 mapped through the same math, or a log curve around 1. |
 | `bypass` | 0/1 | 0 | Exact passthrough (codebox `bypass_gate`, not the native @bypass). |
 
 **No `floor` dial** (plan ADR-3): the trace floor below which the operator passes the
@@ -82,7 +82,7 @@ clamp saturates (mirror `tests/modules/tf_sharpen/test_tf_sharpen.py::test_encod
 Inside the linear range the trace is preserved to float32 tolerance
 (measured: worst 1.2e-7 over γ ∈ {0, 0.25, 0.5, 1, 2, 4}) and the axis (cos 2θ, sin 2θ)
 is unchanged (worst 1.2e-6 pre-clamp). Whether extreme-γ saturation matters is a
-tier-3 judgement item.
+tier-3 judgment item.
 
 ## The strength/floor caveat
 
@@ -116,7 +116,7 @@ live confirmation pending). Insert/remove-at-γ=1 is free: raw in, raw out.
 ## Notes
 
 - Tier-1 NumPy mirror: `tests/modules/tf_sharpen/test_tf_sharpen.py` (15/15 pass, 2026-10-17; ground truth
-  `np.linalg.eigh`, labelled-Rayleigh no-swap check, two mutation checks — dropped
+  `np.linalg.eigh`, labeled-Rayleigh no-swap check, two mutation checks — dropped
   `max(γ,0)` and swapped gap sign — both caught). Spec/plan/tasks: `.specify/f_tf_sharpen/`.
 - Spec prose sign slip (caught by the mirror's trace invariance test, 2026-10-17): the
   spec's original `λ2' = trace/2 − gap·(λ2 − trace/2)` collapses λ1′==λ2′ for every γ≠1
@@ -126,7 +126,7 @@ live confirmation pending). Insert/remove-at-γ=1 is free: raw in, raw out.
 - Tier-2 bench file exists (`tests/modules/tf_sharpen/bench_tf_sharpen.py`, registered in benchdeps per
   T014) — **not yet executed**; needs the live bench (owner-gated, ask before running).
 - The obvious no-swap test is vacuous: `np.linalg.eigh` sorts, so it can never see a
-  swap. The mirror checks labelled Rayleigh quotients along the input's major axis —
+  swap. The mirror checks labeled Rayleigh quotients along the input's major axis —
   note for anyone extending the tests.
 - The name is provisional (spec OQ4): `f_tf_sharpen` collides with image-sharpening
   vocabulary. Renaming is one find-replace across definition.py/codebox/docs before

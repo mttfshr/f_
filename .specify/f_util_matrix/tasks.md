@@ -76,7 +76,7 @@ _Plan_: `.specify/f_util_matrix/plan.md`
 - [x] T012 Wire: 2 texture inlets → 2 texture outlets (passthrough)
 - [x] T013 Wire: control inlet → route bypass params → jsui
 - [x] T014 Wire: jsui → outlet 2 (mod assignments); bypass handled inside jsui ondrag
-- [x] T015 Wire: bypass → prepend bypass → jsui (grey overlay + drag suppression)
+- [x] T015 Wire: bypass → prepend bypass → jsui (gray overlay + drag suppression)
 - [x] T016 Inlet order: 0=control, 1=source A, 2=source B; outlet 2=mod assignments
 - [x] T017 Open in Max, confirm no load errors
 - [x] T018 Send params mortar drift on inlet 0 → grid rebuilds correctly

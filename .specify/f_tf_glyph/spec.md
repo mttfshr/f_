@@ -49,9 +49,9 @@ canonical decode idiom for the whole family**; sharpen, aniso_blur and hatch cop
 rather than re-derive it.
 
 **One glyph per cell, coherent per glyph, not per pixel.** Each pixel looks up its
-grid cell's centre by a bounded neighbor search (the `f_vf_seeds` precedent,
+grid cell's center by a bounded neighbor search (the `f_vf_seeds` precedent,
 `ideas/f_vf_seeds.md` §"Architecture": 3×3 neighborhood search gives the nearest
-seed/cell; `ideas/f_vf_seeds.md` Q4) and reads the tensor *at the cell centre*
+seed/cell; `ideas/f_vf_seeds.md` Q4) and reads the tensor *at the cell center*
 (`ideas/f_vf_seeds.md`: sample the field at the seed position — stable, identity —
 not at the current pixel; per-pixel orientation shears the mark). Result: each glyph
 has one orientation, one aspect, one gate decision. **No loops anywhere in the glyph
@@ -67,7 +67,7 @@ plan ADR-4).
 // --- canonical decode idiom (family ADR; cited, not re-derived) ---
 // encoding: docs/f-reference/f_tensor_type.md, outlet 0:
 //   R = Jxx*strength (>=0), G = Jxy*strength*0.5 + 0.5, B = Jyy*strength (>=0), A = 1
-// sample the raw tensor at the cell centre, coords clamped to texel centres in-shader
+// sample the raw tensor at the cell center, coords clamped to texel centers in-shader
 t = sample(in_tensor, cell_uv)          // bench GPU wraps out-of-range reads (tensormap ADR-5)
 Jxx = t.r / strength; Jxy = (t.g - 0.5) * 2.0 / strength; Jyy = t.b / strength
 trace = Jxx + Jyy;  diff = Jxx - Jyy
@@ -135,14 +135,14 @@ glyph's *geometry* reads the tensor while its *look* may read the source.
 
 `@type float32`. Stage outputs are unbounded internally; only the final stage clamps
 (the family hard rule, tensormap plan ADR-4). Whether a second outlet (e.g. the
-`f_vf_seeds`-style identity-coordinate texture — each pixel's cell centre UV) is
+`f_vf_seeds`-style identity-coordinate texture — each pixel's cell center UV) is
 worth exposing is an open question, not scoped by default.
 
 ## Parameters
 
 | Param | UI | Range | Default | Notes |
 |---|---|---|---|---|
-| `grid` | live.dial | 2-256 (cells across) | 24 | Cell spacing — "the real control" (`f_tf_expressive_consumers.md`). Provisional; set by Phase 2 judgement, not guessed. |
+| `grid` | live.dial | 2-256 (cells across) | 24 | Cell spacing — "the real control" (`f_tf_expressive_consumers.md`). Provisional; set by Phase 2 judgment, not guessed. |
 | `scale` | live.dial | 0-2 | 0.8 | Glyph radius relative to the cell: 1.0 = glyphs touch. |
 | `thickness` | live.dial | 0-1 (fraction of radius) | 0.15 | Stroke weight of the ellipse ring / cross arm width. |
 | `softness` | live.dial | 0-1 | 0.1 | Edge falloff, per the f_weave convention (independent of thickness). |
@@ -196,14 +196,14 @@ first task of Phase 0 in tasks.md.
   outlet 0 where vs_black is the exact zero tensor neutral, but the gate must still
   hold) renders an empty field, no crash.
 - **Grid invariants:** `grid` = frame-width cells makes one glyph per pixel row band
-  behave as expected; cell centres land where the neighbor search says they do
+  behave as expected; cell centers land where the neighbor search says they do
   (checked against the mirror).
 - **Bypass and unconnected inlets:** bypass outputs the neutral; unconnected tensor
   inlet renders empty (gated), unconnected source inlet renders untinted glyphs —
   no crash, no black frame.
 - **Loads in Vsynth**, outlet renders in `vs_render`, drift-clean, contract tests
   green (the shipped-bpatcher contract).
-- **Judgement tier (scratch patch):** glyph field on bfg Perlin/Voronoi/fbm reads
+- **Judgment tier (scratch patch):** glyph field on bfg Perlin/Voronoi/fbm reads
   structure direction and anisotropy correctly at a glance; `grid`/`scale`/`thickness`
   defaults feel usable; the field remains legible when fed through
   `f_tf_smooth`/`f_tf_sharpen` (the debug-role test). This is the live confirmation

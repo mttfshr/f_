@@ -4,8 +4,8 @@ test_tf_glyph.py -- tier-1 NumPy mirror of f_tf_glyph
 
 Mirrors the single-stage codebox (codebox_glyph.gen) exactly as GenExpr:
 
-  cell lookup   ADR-4 uniform lattice, cell centre = (floor(norm*grid)+0.5)/grid,
-                sampled with gpu_sim.sample at coords clamped to texel centres
+  cell lookup   ADR-4 uniform lattice, cell center = (floor(norm*grid)+0.5)/grid,
+                sampled with gpu_sim.sample at coords clamped to texel centers
                 (tensormap ADR-5: the bench GPU wraps out-of-range reads)
   decode        plan ADR-2 idiom, gain-free form: the tensor terms are used in
                 their delivered units (R, G-0.5, B share the common `strength`
@@ -15,7 +15,7 @@ Mirrors the single-stage codebox (codebox_glyph.gen) exactly as GenExpr:
                 delivered-units ratio; radius = scale * cellsize / 2; closed-form
                 ring distance + smoothstep cover (f_weave convention)
   tint          ADR-7 provisional: ink = mix(white, source rgb, source luma) at
-                the cell centre (TG019 gate pending; source never moves geometry)
+                the cell center (TG019 gate pending; source never moves geometry)
   bypass        passthrough of the source texture (glyph = passthrough, per the
                 2026-10-17 build directive; NOT a neutral composite)
 
@@ -39,52 +39,17 @@ HERE = Path(__file__).resolve().parent
 
 from harness import check, note, run  # noqa: E402
 import gpu_sim as g  # noqa: E402
-
-F32 = np.float32
-H = W = 64
-GRID = 4                      # coarse lattice so cells are many texels wide
-EPS_TRACE = F32(1e-6)         # tensormap ADR-6 convention, inherited (T019 there)
-DEF = dict(scale=0.8, thickness=0.15, softness=0.1, gate=0.05, max_aspect=8.0)
-
-
-# --- decode idiom, gain-free (plan ADR-2; the codebox copies this verbatim) --
-
-def decode_cells(t_s, max_aspect):
-    """t_s: sampled tensor RGBA in delivered (strength-scaled) units.
-    Returns trace_s, root_s, theta, aspect (all mirrors of the codebox)."""
-    r = t_s[..., 0]
-    gg = t_s[..., 1]
-    b = t_s[..., 2]
-    jxy2_s = (gg - F32(0.5)) * F32(4.0)        # = 2*Jxy*strength  (2*Jxy_s)
-    diff_s = r - b                             # = (Jxx - Jyy)*strength
-    root_s = np.sqrt(diff_s * diff_s + jxy2_s * jxy2_s).astype(F32)
-    trace_s = r + b
-    theta = F32(0.5) * np.arctan2(jxy2_s, diff_s).astype(F32)
-    # degenerate-direction guard (codebox parity, 2026-10-17): the exact-
-    # diagonal tensor (|jxy2|+|diff| == 0) has an undefined direction; the
-    # GPU's atan2(0,0) NaNs there. NumPy returns 0 (benign), but the mirror
-    # keeps the same guard so the two stay lockstep and the test asserts it.
-    theta = np.where((np.abs(jxy2_s) + np.abs(diff_s)) <= F32(1e-9),
-                     F32(0.0), theta).astype(F32)
-    lam2 = np.maximum(trace_s - root_s, EPS_TRACE)
-    ratio = (trace_s + root_s) / lam2
-    aspect = np.clip(np.sqrt(np.maximum(ratio, F32(1.0))), F32(1.0),
-                     F32(max_aspect)).astype(F32)
-    return trace_s, root_s, theta, aspect
-
-
-# --- full pass mirror -------------------------------------------------------
-
-def sm(e0, e1, x):
-    """GLSL smoothstep edge semantics (edge0 < edge1 form, as the codebox
-    writes it: 1 - smoothstep(hw, hw+soft, |d|))."""
-    t = np.clip((x - e0) / (e1 - e0), 0.0, 1.0)
-    return (t * t * (F32(3.0) - F32(2.0) * t)).astype(F32)
-
-
-def _luma601(tex):
-    return (F32(0.299) * tex[..., 0] + F32(0.587) * tex[..., 1]
-            + F32(0.114) * tex[..., 2]).astype(F32)
+from tf_glyph_mirror import (
+    DEF,
+    EPS_TRACE,
+    F32,
+    GRID,
+    H,
+    W,
+    decode_cells,
+    glyph,
+    sm,
+)
 
 
 def tensor_tex(h, w, jxx, jxy, jyy, strength=F32(1.0)):
@@ -95,76 +60,6 @@ def tensor_tex(h, w, jxx, jxy, jyy, strength=F32(1.0)):
     tex[..., 2] = jyy * strength
     tex[..., 3] = F32(1.0)
     return g.store_float32(tex)
-
-
-def glyph(tensor, source=None, grid=GRID, scale=DEF["scale"],
-          thickness=DEF["thickness"], softness=DEF["softness"],
-          gate=DEF["gate"], max_aspect=DEF["max_aspect"], bypass_gate=0.0,
-          tex_w=W, tex_h=H):
-    """Mirror of codebox_glyph.gen, one pass, float32 end to end."""
-    h, w = tensor.shape[:2]
-    nx, ny, _, _ = g.grid(h, w)
-
-    # bypass: passthrough of the source at the current pixel
-    if bypass_gate:
-        src_px = g.sample(source if source is not None else tensor,
-                          nx, ny)
-        out = g.texture(h, w)
-        out[..., 0] = np.clip(src_px[..., 0], 0.0, 1.0)
-        out[..., 1] = np.clip(src_px[..., 1], 0.0, 1.0)
-        out[..., 2] = np.clip(src_px[..., 2], 0.0, 1.0)
-        out[..., 3] = F32(1.0)
-        return g.store_float32(out)
-
-    # ADR-4 lattice: cell centres, clamped to texel centres (tensormap ADR-5)
-    cell = np.floor(nx * F32(grid)).astype(F32)
-    celly = np.floor(ny * F32(grid)).astype(F32)
-    cu = (cell + F32(0.5)) / F32(grid)
-    cv = (celly + F32(0.5)) / F32(grid)
-    tu = np.clip(cu, F32(0.5) / F32(tex_w), F32(1.0) - F32(0.5) / F32(tex_w)
-                 ).astype(F32)
-    tv = np.clip(cv, F32(0.5) / F32(tex_h), F32(1.0) - F32(0.5) / F32(tex_h)
-                 ).astype(F32)
-
-    t_s = g.sample(tensor, tu, tv)                       # tensor at cell centre
-    trace_s, _, theta, aspect = decode_cells(t_s, max_aspect)
-
-    # ADR-6 gate, in delivered units; eps_trace floor makes the all-zeros
-    # unconnected case render empty even at gate 0 (TG007)
-    visible = (trace_s >= np.maximum(F32(gate), EPS_TRACE)).astype(F32)
-
-    # local glyph frame: rotate (pixel - cell centre) by -(theta + pi/2)
-    a = theta + F32(np.pi / 2)
-    ca, sa = np.cos(a).astype(F32), np.sin(a).astype(F32)
-    dxp = (nx - cu).astype(F32)
-    dyp = (ny - cv).astype(F32)
-    along = (dxp * ca + dyp * sa).astype(F32)
-    across = (-dxp * sa + dyp * ca).astype(F32)
-
-    cellsize = F32(1.0 / grid)
-    rmaj = (F32(scale) * cellsize * F32(0.5)).astype(F32)
-    bmin = (rmaj / aspect).astype(F32)
-    e = np.sqrt((along / rmaj) ** 2 + (across / bmin) ** 2).astype(F32)
-    d = ((e - F32(1.0)) * bmin).astype(F32)
-    hw = (F32(0.5) * F32(thickness) * rmaj).astype(F32)
-    soft = np.maximum(F32(softness) * rmaj, F32(1e-6)).astype(F32)
-    cover = (F32(1.0) - sm(hw, hw + soft, np.abs(d))).astype(F32)
-
-    # tint (ADR-7 provisional, TG019 pending): ink from the source at the cell
-    # centre; an unconnected (black) source leaves the neutral white ink.
-    if source is None:
-        source = np.zeros((h, w, 4), F32)
-    src = g.sample(source, tu, tv)
-    src_l = _luma601(src)[..., None]
-    ink = (F32(1.0) + (src[..., :3] - F32(1.0)) * src_l).astype(F32)
-
-    rgb = ink * (cover * visible)[..., None]
-    out = g.texture(h, w)
-    out[..., 0] = np.clip(rgb[..., 0], F32(0.0), F32(1.0))
-    out[..., 1] = np.clip(rgb[..., 1], F32(0.0), F32(1.0))
-    out[..., 2] = np.clip(rgb[..., 2], F32(0.0), F32(1.0))
-    out[..., 3] = F32(1.0)
-    return g.store_float32(out)
 
 
 # --- test fixtures ----------------------------------------------------------
@@ -199,7 +94,7 @@ def _angdiff_mod_pi(a, b):
 # --- TG006: eigen ground truth ----------------------------------------------
 
 def cell_tensor(tex, grid=GRID):
-    """Sample tex at every cell centre (H,W pixels -> per-pixel cell value)."""
+    """Sample tex at every cell center (H,W pixels -> per-pixel cell value)."""
     nx, ny, _, _ = g.grid(*tex.shape[:2])
     cu = (np.floor(nx * F32(grid)) + F32(0.5)) / F32(grid)
     cv = (np.floor(ny * F32(grid)) + F32(0.5)) / F32(grid)
@@ -211,7 +106,7 @@ def test_decode_matches_eigh():
     t_s = cell_tensor(tex)
     trace_s, root_s, theta, aspect = decode_cells(t_s, DEF["max_aspect"])
     # independent ground truth per cell: np.linalg.eigh on the DECODED tensor
-    # (the tensor sampled at the same cell centre the mirror reads)
+    # (the tensor sampled at the same cell center the mirror reads)
     jxx_s = cell_tensor(np.stack([jxx] * 4, -1))
     jxy_s = cell_tensor(np.stack([jxy] * 4, -1))
     jyy_s = cell_tensor(np.stack([jyy] * 4, -1))
@@ -379,9 +274,9 @@ def test_lattice_cell_centres():
     cu = (np.floor(nx * F32(GRID)) + F32(0.5)) / F32(GRID)
     expect_u = np.floor(nx * F32(GRID)) * F32(1.0 / GRID) + F32(0.5 / GRID)
     err = float(np.abs(cu - expect_u).max())
-    check("cell centre formula", err, 0.0)
+    check("cell center formula", err, 0.0)
     # every drawn pixel lies within scale*cellsize/2 (+ 1.5px falloff) of its
-    # own cell centre -- marks never bleed into neighbouring cells
+    # own cell center -- marks never bleed into neighboring cells
     tex, _, _, _ = rand_tensor(seed=4)
     out = glyph(tex)
     cw = W // GRID
@@ -393,7 +288,7 @@ def test_lattice_cell_centres():
     rad = F32(DEF['scale'] * cw / 2 + 2.0)
     dmax = float(np.hypot(xs - cx, ys - cy).max())
     check("marks confined to their cells", dmax, float(rad))
-    # and the mark is centred: per-cell drawn-pixel centroid near the centre
+    # and the mark is centered: per-cell drawn-pixel centroid near the center
     cent = out[..., 0] > 0.5
     worst = 0.0
     for iy in range(GRID):
@@ -404,7 +299,7 @@ def test_lattice_cell_centres():
                 d = np.hypot(ys.mean() - (cw - 1) / 2, xs.mean() - (cw - 1) / 2)
                 worst = max(worst, float(d))
     note("worst per-cell centroid offset (px, ellipse ring bias ok)", worst)
-    check("marks centred in cells", worst, cw / 4)
+    check("marks centered in cells", worst, cw / 4)
 
 
 def test_cover_reference_values():

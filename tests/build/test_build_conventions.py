@@ -87,7 +87,7 @@ def test_every_port_is_index_zero_and_in_x_order():
         xs = [b["patching_rect"][0] for b in ports]
         _eq(f"the {mc}s are in strictly increasing x order, so Max keeps the port order",
             xs == sorted(xs) and len(set(xs)) == len(xs), True)
-        _eq(f"...and the {mc}s are labelled in the intended order",
+        _eq(f"...and the {mc}s are labeled in the intended order",
             [b["comment"] for b in ports],
             ["texture / control", "a mod", "b mod"] if mc == "inlet" else ["composite", "aux", "third"])
 
@@ -435,7 +435,7 @@ def test_hint_none_writes_no_hint_key_and_unset_still_writes_an_empty_one():
     d["params"].insert(0, {"name": "m", "type": "menu", "options": ["a", "b"], "default": 0, "label": "M", "hint": None})
     d["codebox"] = "Param m(0.0);\n" + d["codebox"]
     menu = [b for b in _boxes_of(d) if b.get("varname") == "m"][0]
-    _eq("a menu honours hint None too", "hint" in menu, False)
+    _eq("a menu honors hint None too", "hint" in menu, False)
 
 
 def test_param_connect_names_the_pix_a_control_drives():
@@ -554,7 +554,7 @@ def test_inlet_comment_and_outlet_hint():
         return [b for b in _boxes_of(defn) if b["maxclass"] == "inlet"][0]["comment"]
     _eq("default inlet comment", inlet(_defn()), "texture / control")
     _eq("custom inlet comment", inlet(dict(_defn(), inlet_comment="control")), "control")
-    _eq("an empty inlet comment is honoured", inlet(dict(_defn(), inlet_comment="")), "")
+    _eq("an empty inlet comment is honored", inlet(dict(_defn(), inlet_comment="")), "")
     try:
         bp.build(dict(_defn(), inlet_comment=3))
     except ValueError as e:
@@ -735,7 +735,7 @@ def test_f_channel_grader_builds_from_its_definition_as_it_ships():
              for ln in p["lines"])), ("bypass", 14, True))
     _eq("autopattr keeps its auto name", top[bp.OBJ_AUTOPATTR]["varname"], "u905020188")
     ex = lambda v: dials[v]["saved_attribute_attributes"]["activedialcolor"]["expression"]
-    _eq("the rows keep their theme colours (R, G, B; Master has none)",
+    _eq("the rows keep their theme colors (R, G, B; Master has none)",
         (ex("r_gain"), ex("g_lift"), ex("b_gamma"), ex("m_gain")),
         ("themecolor.live_record", "themecolor.live_macro_assignment", "themecolor.live_prelisten", ""))
     _eq("m_lift has no initial value, g_lift keeps Max's default shortname",
@@ -743,7 +743,7 @@ def test_f_channel_grader_builds_from_its_definition_as_it_ships():
          dials["g_lift"]["saved_attribute_attributes"]["valueof"]["parameter_shortname"]), (False, "live.dial"))
 
 
-# ---- color_expression None, legacy.control_box (the three band-editor colour modules)
+# ---- color_expression None, legacy.control_box (the three band-editor color modules)
 
 def test_color_expression_none_omits_the_activedialcolor_entry():
     d = _defn()

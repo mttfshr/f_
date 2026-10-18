@@ -1,5 +1,40 @@
 # HANDOFF
 
+## 2026-10-18 (10:15): `tests/` Phase C closed (check history, deferrals), spelling pass, bench patch comments, GenExpr interpreter note; one commit
+
+- **Phase C closed** (`.specify/test_bench/tasks_restructure.md`). Done: tf mirrors, `check.sh`, and the **check history**: every `harness.check` appends to
+  `tests/.state/check_results.jsonl` (gitignored, last 30 runs per kind; run context exported by `_log.sh`). `python3 tests/lib/checkhist.py report` flags
+  `tight` (passing, at least 50% of tolerance) and `rising` (more than 2x its median); `check.sh full` prints the summary line. `tests/toolchain/test_checkhist.py`
+  10/10, mutation-checked. **Deferred on purpose, each recorded:** shared tf helper, CI, `src/<m>/` co-location.
+- **First use found two design flaws, both fixed:** the report was full of deliberate failures (`test_mutations_are_caught`) and boolean checks, and a one-file run
+  made every earlier check look stale. Now booleans, counts and over-tolerance values are skipped, and a check is current if seen in the last 10 runs.
+  **First real flag: `tf_hatch` "commit continuous at gate" passes at 99% of its tolerance (3.17e-2 vs 3e-2)**; 15 more are above 50% (`report --top 20`).
+- **Spelling pass (American English):** about 650 replacements in 197 tracked files (docs, code, shipped patchers and codeboxes together so drift stays clean).
+  Left alone on purpose: underscore identifiers (`vs_grey` names a Vsynth abstraction, `GREY_TEXT`, `centre_in`, test names), the `greyc` URL, `scratch/experiments/`.
+  `skills/check.sh` reports drift until the skills are re-uploaded and stamped.
+- **Bench patch comments:** `make_bench.py` and `make_module_bench.py` now add 12 and 9 comment boxes saying what each element is for; `bench.maxpat` and
+  `bench_module.maxpat` regenerated (verified: only comments added, no box changed, wiring identical). **Max still has the old bench open: `benchclient.reopen()`
+  loads the commented one.** The comments on the slots, the capture gates and the module-bench wrapper describe the code as read, not as observed live: glance at them.
+- **New idea note:** `ideas/genexpr_interpreter.md` (indexed). Worth thinking about, not worth building yet; suggests a tally of failure kinds and a one-session
+  spike transpiling `f_tf_axisflow`. Effort figures in it are estimates.
+- **Verified:** full default bench 396 s green at 09:57, BEFORE the spelling pass, the harness hook and the comment regeneration. Offline suite 31/31 green (57 s) after the
+  spelling pass, the harness hook and the comment regeneration; after the last analyzer fixes only `test_checkhist` (10/10), `test_benchdeps` and
+  `test_bench_patchbuild` were re-run. **No bench run since**: the next `tests/bench.sh -q` re-seeds `--changed` and is the first to record GPU values in the history. Ask first.
+- **Not in the commit:** `package/examples/f_demo_sampleplatter.maxpat`, `scratch/tensor-scratch.maxpat`.
+
+## 2026-10-18 (later still): `tests/` Phase C, part 1: tf mirrors extracted, `check.sh` added; benches NOT run; NOT committed
+
+- **Mirrors:** each `modules/tf_<m>/` now has `tf_<m>_mirror.py` (the functions the bench imports plus what they need), and `bench_tf_<m>.py` imports that instead of the test file; the tests import the names back. Same test counts on all seven offline files. The module bench import check and a static check that every `m.<name>` the benches use exists in its mirror both pass; no bench was run.
+- **`tests/check.sh quick|full`:** quick = offline suite, full = quick + `bench.sh --changed -q`.
+- **Bench cost to expect once:** `--changed` hashes a bench's imports, so this restructure (moves, `dft_mirror`, these mirrors) makes the next `tests/bench.sh --changed` rerun the fluid, caustic, tf and toolchain benches whose imports moved. After one green run it is quiet again.
+- **Not done (Phase C leftovers, judged low value):** shared tf encode / run / diff helper (13-21 lines of overlap), `check()` results to JSONL, CI, `src/<m>/` co-location.
+
+## 2026-10-18 (later): `tests/` Phase B complete (B5, B6); NOT committed
+
+- **B5:** `tests/README.md` Files section rewritten for the new layout. **B6:** DFT helpers + `dft_codebox` extracted to `tests/lib/dft_mirror.py`; `test_fft_separable` -> `tests/records/fft_separable.py` (renamed, so `run.sh` no longer collects it; run with `tests/py.sh`), `bench_fft` -> `tests/records/bench_fft.py` (`GROUP = "record"`). Ported: sampling sanity -> new `tests/toolchain/test_gpu_sim.py`, angle-reduction precision -> `test_fluid_mirror` (26 tests now). GPU angle test not ported: `bench_fluid` T019 already checks the shipped stages at 1e-5 on N=256.
+- **Verified:** offline suite via `bg.sh`: 30 files (one out, one in), 29 green on the first run; the one failure was `test_benchdeps` popping `bench_fft` from the default set, now `bench_selftest`, 23/23 on re-run. Not re-run as a whole after that one test edit. `benchdeps list --group regression` = 15 files (was 16, minus `bench_fft`), `--all` = 18; the importers (`bench_perf`, `bench_fft`, `bench_fluid`, `bench_fluid_probes`) import cleanly. **No bench run** since B6 (the last full default bench, 390 s green, was before it).
+- **Left:** `src/f_vf_fluid/codebox_dft_*.gen` / `gen_dft.py` comments still cite the old path (shipped codeboxes, so editing drifts the patcher). Phase B is otherwise closed; Phase C is unscheduled. **Uncommitted:** everything under `tests/`, the docs path rewrites, `HANDOFF.md`; `f_demo_sampleplatter.maxpat` and `scratch/tensor-scratch.maxpat` are still not part of this.
+
 ## 2026-10-18 (09:55): `tests/` restructure Phase B (B1-B3, most of B4) done; B5, B6 and the final README open
 
 - **Moved (78 `git mv`, table in `.specify/test_bench/path_map.tsv`; OLD `tests/<file>` PATHS IN THE ENTRIES BELOW ARE STALE: use the table):** `tests/{lib,toolchain,contracts,build,math,records}/` and `tests/modules/{fluid,caustic,tf_*}/`. Entry scripts (`run.sh`, `bench.sh`, `bg.sh`, `_log.sh`) stay at the top, plus the new `tests/py.sh <file>` (runs one file with the test import path).
@@ -71,7 +106,7 @@
 - **Helpfiles** (text only, no new objects): Axis Flow (second-inlet + negative-gain note, bpatcher numinlets 2), Fluid (`drift`
   line, References nudged down 17 px), Caustic (its parameter list still had the mode / softness / color_shift / detail removed on
   10-10; now mix_pct, gain, scale, expo, edge, bypass; digest, note and References refreshed). **Matt's look in Max is the
-  judgement gate:** the Axis Flow note is 6 lines (x 500, 110 px) and the Caustic note starts at y 152.
+  judgment gate:** the Axis Flow note is 6 lines (x 500, 110 px) and the Caustic note starts at y 152.
 - **GPU benches NOT run:** Max was not running this morning, and starting it myself risks auto-opening a performance patch.
   With Max up, `tests/bench/bench.maxpat` open and performance patches closed: `tests/bench.sh -q tests/bench_fluid.py` (T060, the
   drift case) and, for hatch's new out2 bypass row, `BENCH_MODULES=f_tf_hatch tests/bench.sh -q tests/bench_modules.py`.
@@ -191,12 +226,12 @@ is new and mine (a parked script, below). Suggested split if committing in piece
   `T_` = amber `[0.85, 0.55, 0.2]`. Rule in `signal_type_box` (build_patcher.py; follows a `bypass_jsui` override);
   the 11 per-module `signal_type` overrides were deleted. Titles lost "Tensor": "Sharpen", "Smooth", "Map".
 - **Type dots** on every module (43): two stacked round 5 px panels left of the name, top = type it takes, bottom
-  = type it outputs; cyan vecfield, amber tensor, dim grey `[0.28]` neither (untyped modules: two grey). Read from
+  = type it outputs; cyan vecfield, amber tensor, dim gray `[0.28]` neither (untyped modules: two gray). Read from
   the label by `parse_signal_type`; tooltip "Takes: X" / "Outputs: Y". Foreground panels (`background` 0,
   `rounded` 6, ids `obj-19f` / `obj-19g`, element keys `dot_in` / `dot_out`): a `background` 1 panel is drawn UNDER
   the frame and vanishes. Every module name starts at x 10.5 (8 hand-placed title overrides updated: mobius, grain,
   tone_curve, vortex_multi, hue, channel_grader, stereo, luma). Frame border stays dark blue.
-- **Tried and dropped** (do not redo without a reason): (a) frame border coloured by type (`BORDER_BY_TYPE = False`
+- **Tried and dropped** (do not redo without a reason): (a) frame border colored by type (`BORDER_BY_TYPE = False`
   in build_patcher.py brings it back); (b) shaped dots, tensor round / vecfield square, then ONE jsui
   (`type_dots.js`) drawing triangle / disc / square: Matt, "reads as noisy, it was better with just circles". The
   jsui style is still in the builder (`TYPE_DOTS = "jsui"`) and the script is parked at `ideas/type_dots.js` (copy
@@ -212,10 +247,10 @@ is new and mine (a parked script, below). Suggested split if committing in piece
   `f_vf_optical_flow`'s "confidence" outlet (determinant + doubled-angle axis, neither encoding), `f_vf_seeds`' "seed
   coord" (a coordinate grid), `f_vf_split` / `f_vf_potential` (scalar outputs), `f_texrouter` (type-agnostic),
   `f_mobius` / `droste` / `stereo` (resample a piped-through vecfield without interpreting it).
-- **Colour vision** (Machado 2009 simulation, cyan / amber / dim grey on black): cyan vs amber differ by deltaE
-  88-98 under protan, deutan and tritan; contrast vs black cyan >= 9.5:1, amber >= 6.8:1, grey 2.3:1 (dim by
-  design). Weak spot only total colour blindness (cyan and amber have near-equal lightness). The dots are colour-only;
-  the text label (mark + in/out) is the colour-independent cue.
+- **Color vision** (Machado 2009 simulation, cyan / amber / dim gray on black): cyan vs amber differ by deltaE
+  88-98 under protan, deutan and tritan; contrast vs black cyan >= 9.5:1, amber >= 6.8:1, gray 2.3:1 (dim by
+  design). Weak spot only total color blindness (cyan and amber have near-equal lightness). The dots are color-only;
+  the text label (mark + in/out) is the color-independent cue.
 
 **How it was applied (to redo or extend)**
 - 37 modules regenerated with `python3 build/build_patcher.py src/f_<m>/definition.py` (every menu module except
@@ -231,8 +266,8 @@ is new and mine (a parked script, below). Suggested split if committing in piece
   the masonry / texrouter baselines look lowered; those two are at their real values: texrouter props 3 / layout 1,
   masonry layout 17; masonry props 22 stays, that shrink predates this work). `type_dots.js` keeps an identity for
   the jsui style. Three tests (test_build_conventions x3, test_layout) select the bypass jsui by filename.
-- New tests in `tests/test_generate_menu.py` (15/15): label marks equal menu kinds; label geometry and colour; dots
-  (colour, size, column, foreground, dark border); an outlet the module names vecfield / tensor must be a label
+- New tests in `tests/test_generate_menu.py` (15/15): label marks equal menu kinds; label geometry and color; dots
+  (color, size, column, foreground, dark border); an outlet the module names vecfield / tensor must be a label
   output; tensor modules not cropped by frame or helpfile embed; direction table. Also green: conventions 40/40,
   layout 12/12, overrides 12/12, capture_raw 8/8, module_contracts 9/9.
 - `skills/vsynth-bpatcher/SKILL.md` updated (entry format, kinds, labels, dots, audit rule); `skills/check.sh` will
@@ -258,10 +293,10 @@ spacing, `T_ Tensor`, labels); the widened helpfile embeds; crowded title bars b
 Known: every module frame is a self-painted black panel with fixed RGB borders and labels, so cyan / amber stay
 legible on it under any Max theme; the live.* widgets and a few patchers (f_modules, channel_grader, tone_curve,
 stereo) do follow `themecolor`. Unknown: how the widgets look on that black panel under a light theme (never
-looked), and whether a package can add its own named theme colours (theme files list only Max's ids). Options: A =
-pin widget colours so modules stay dark in every theme (cheap), B = a real light palette (large; type colours need a
+looked), and whether a package can add its own named theme colors (theme files list only Max's ids). Options: A =
+pin widget colors so modules stay dark in every theme (cheap), B = a real light palette (large; type colors need a
 darker blue). First step when picked up: switch Max to a light theme and look at a few modules; optionally centralize
-module colours in one builder palette table (type colours as a dark / light pair), which changes no output today.
+module colors in one builder palette table (type colors as a dark / light pair), which changes no output today.
 
 **Pre-existing, not from this work**: `test_drift` fails only on `f_vf_advect` (code drift: the patcher's pix is
 named `#0_advect_pix`, its definition is not; fix by writing the `#0_` name into the definition) and
@@ -498,7 +533,7 @@ _2026-10-12 (evening session)._
 
 Six commits reviewed and squashed from the day's accumulated work (the `f_demo_caustic2.maxpat` checkpoint got its own `2026-10-12` message per Matt; `scratch/experiments/` left untracked as his live web-shim work), then three workstreams executed:
 
-**Helpfiles (commits f0de0e0, c161780).** The T011–T021 boxes were misleading — all 11 helpfiles already existed from the 2026-07-19 pipeline regen, but re-verification against definitions found three with stale External Control blocks (grain: dead `amount` + missing gain/mix + wrong softness range; lens: five dead tilt-shift params removed with the f_focus move; tone_curve: control block didn't match shipped params at all). T004 closed: References sections written for all 12 remaining docs (original derivations labeled; texrouter's records its T022 assessment). T022: deliberately no helpfile (dead module, no archetype). Then a second pass: 14 shipped GPU modules had NO helpfile at all (grey in f_Launch) — generated via new `build/make_missing_helpfiles.py` from the f_vf_vortex template (one extractor bug caught in verification: pix-chain object names picked up as params). `f_Launch.maxpat` regenerated: **34 of 39 clickable** (5 deliberate: audio x2, the menu, texrouter, util_matrix draft). **Owed: one Max session opening the 14 new + 3 corrected helpfiles to confirm demos/layout live** — the text-only edits are verified offline, but the spec's open-in-Max step hasn't run.
+**Helpfiles (commits f0de0e0, c161780).** The T011–T021 boxes were misleading — all 11 helpfiles already existed from the 2026-07-19 pipeline regen, but re-verification against definitions found three with stale External Control blocks (grain: dead `amount` + missing gain/mix + wrong softness range; lens: five dead tilt-shift params removed with the f_focus move; tone_curve: control block didn't match shipped params at all). T004 closed: References sections written for all 12 remaining docs (original derivations labeled; texrouter's records its T022 assessment). T022: deliberately no helpfile (dead module, no archetype). Then a second pass: 14 shipped GPU modules had NO helpfile at all (gray in f_Launch) — generated via new `build/make_missing_helpfiles.py` from the f_vf_vortex template (one extractor bug caught in verification: pix-chain object names picked up as params). `f_Launch.maxpat` regenerated: **34 of 39 clickable** (5 deliberate: audio x2, the menu, texrouter, util_matrix draft). **Owed: one Max session opening the 14 new + 3 corrected helpfiles to confirm demos/layout live** — the text-only edits are verified offline, but the spec's open-in-Max step hasn't run.
 
 **build_cleanup (commit e434afa).** Phase 3 drift-closing completed: `f_vf_vorticity` was the last drifted module — regenerated after writing back its one real hand state (saved default `confinement=0.1`), deep-diffed clean. **32 of 39 reproduce exactly; baseline 7.** T016/T017 verified closed (shipped with the f_vf_fluid absorption; boxes were unticked). T032b live-verified: seeded a plain bench run, `--changed` then correctly skipped everything with accurate per-module records. **The bench run surfaced a Max crash from 20:01 that day** (retired crash report on disk): ~25 tests failed with `bad object` on two attempts; `benchclient.reopen()` cannot heal a crashed instance — full quit + relaunch of Max fixed it, 12/12 green after. Four pre-existing offline failures (all from the 2026-10-09/10 f_grain commits, committed without a full suite run) found and fixed: the f_grain route test still expected `amount`; raw_ui.json stale vs the hand-saved patcher; f_addmod.js stale (grain panel size); test_harness broken under `run.sh -q` (TEST_QUIET leaked into the harness-under-test). **Offline suite: 23/23 files green.**
 
@@ -531,7 +566,7 @@ Executed the two threads `ideas/ceyron_simulation_scripts_notes.md` left "genuin
 
 - **New:** `tests/spike_ks_stability.py` and `tests/spike_lbm_d2q9_architecture.py` (NumPy diagnostics, not registered in benchdeps), both 3/3 and 2/2 green against their own measured criteria.
 - **KS verdict: real-space explicit FD is dead (dt_max ≈ 5e-5 at 256², ~2000 substeps/frame — matches the O(dx^4) theory bound), but the spectral `f_vf_fluid`-shape is stable one step per frame** (linear part exact per Fourier bin with rate K2(K2−1); only |∇u|² explicit; dt ≈ 0.076 measured vs the reference ETDRK's 0.1; self-sustaining chaos verified over 600 frames with zero forcing). **One mandatory containment found:** the |∇u|² nonlinearity integrates domain-negative — the field mean drifts secularly (−0.2 → −15 measured) and the k=0 bin must be zeroed each step (one bin, same class as fluid's Nyquist zeroing). Cleared to spec whenever wanted.
-- **LBM verdict: fits the chained-pix pattern, no slab track.** Streaming is a pure gather (the `f_vf_streak` directional-sample idiom), collision/equilibrium fuse into one local codebox, bounce-back is a mask-driven swap, 9 channels/cell → 3 RGBA planes on the same `pass` feedback. **Two silent-garbage correctness traps recorded in the spike** (stream-direction sign — uniform flow hides it, the obstacle exposes it; bounce-back must read pre-collision values — post-collision values blow up in ~40 steps). **Two real constraints:** periodic+obstacle is unstable at the reference's ω≈1.97 (stable to ~1.8) — the channel in/outflow BCs are load-bearing, so a vortex-street module needs open-boundary edge handling; and shedding is slow to develop at performance resolutions (weak wake at 12k steps, 300×50 — the reference skips its first 5000 of 15000). Value vs `f_vf_repulse` fakery remains Matt's judgement call.
+- **LBM verdict: fits the chained-pix pattern, no slab track.** Streaming is a pure gather (the `f_vf_streak` directional-sample idiom), collision/equilibrium fuse into one local codebox, bounce-back is a mask-driven swap, 9 channels/cell → 3 RGBA planes on the same `pass` feedback. **Two silent-garbage correctness traps recorded in the spike** (stream-direction sign — uniform flow hides it, the obstacle exposes it; bounce-back must read pre-collision values — post-collision values blow up in ~40 steps). **Two real constraints:** periodic+obstacle is unstable at the reference's ω≈1.97 (stable to ~1.8) — the channel in/outflow BCs are load-bearing, so a vortex-street module needs open-boundary edge handling; and shedding is slow to develop at performance resolutions (weak wake at 12k steps, 300×50 — the reference skips its first 5000 of 15000). Value vs `f_vf_repulse` fakery remains Matt's judgment call.
 - **`slab_chain_architecture.md` RETIRED.** Its premise was already weakened by `f_vf_fluid` shipping without it; LBM and KS were its only remaining candidates, and both are now proven not to need it. File updated with the conclusion and a status header; INDEX updated. Nothing should be built on that track unless a future idea genuinely needs per-pass GLSL uniforms.
 - Docs updated where the claims live: `ceyron_simulation_scripts_notes.md` (both findings inline + resume-points rewritten), `slab_chain_architecture.md` (retired), `INDEX.md`.
 
@@ -545,7 +580,7 @@ _2026-10-12._
 The highest-leverage Phase 1 item from the tensor-field sessions below — GenExpr `atan2` safety in `jit.gl.pix`, the shared blocker of `f_tensorfield.md` OQ6, `f_weave_orientation_blend.md` Fix B, and `f_anamorph_unnamed.md`'s field-driven half — is **closed: verified safe**, live on the GPU bench.
 
 - **New:** `tests/spike_atan2_safety.py` + `tests/bench/codeboxes/atan2_safety.gen`. The codebox decodes a sampled vecfield texture (the actual consumer pattern — the skill file's prior `atan2` precedent only covered analytic coords) and outputs four probes: θ, θ/2, the doubled-angle round trip, and a sign(Fx) cross-check. Four tests against independent `np.arctan2` truth, 4/4 green.
-- **Results:** compiles/runs clean, no bench errors; max wrap-aware error 5.6e-7 rad across all quadrants; branch cut correctly wrapped (24,934 adjacent-texel 2π jumps, and near-cut pixels match their own pixel-centre truth — no sampling smearing); half-angle decode 2.8e-7 rad; `atan2(sin t, cos t) == t` to 7.8e-7 rad.
+- **Results:** compiles/runs clean, no bench errors; max wrap-aware error 5.6e-7 rad across all quadrants; branch cut correctly wrapped (24,934 adjacent-texel 2π jumps, and near-cut pixels match their own pixel-center truth — no sampling smearing); half-angle decode 2.8e-7 rad; `atan2(sin t, cos t) == t` to 7.8e-7 rad.
 - **One real, measured quirk:** at the degenerate cut boundary (`Fy == 0, Fx < 0`) the GPU returns +π where IEEE `atan2(-0, -x)` is −π. Benign for every consumer use (±π is the same line; blends use vectors/doubled components), but any NumPy mirror diffing GPU output must wrap-compare at that line. Pinned in the skill file's Trigonometry section alongside the other bench-verified facts.
 - **Bench notes for whoever runs this again:** one run wedged the bench ("bad object" stale-capture failure mode, already documented in tests/README) after an edit changed the codebox mid-session — `benchclient.reopen()` fixed it; and three of the four tests' first drafts failed on *test-side* bugs (a wrap-aware diff applied where a raw diff was needed, a mis-decoded channel scale, a string passed to `harness.note`) — worth remembering that a red here is as likely to be the harness as the GPU.
 - **Docs closed:** `f_tensorfield.md` OQ6 rewritten as verified (with the quirk), Phase 1's "highest-leverage item" pointer marked done, cross-ref updated; `f_weave_orientation_blend.md`'s identical blocker struck through with the result — its Fix A/B is now purely the live empirical A/B it always was; `f_anamorph_unnamed.md`'s cross-ref updated (the angle-doubled simplification now waits only on OQ2, outlet packing); skill file's `atan2` entry strengthened from "listed as valid" to the measured decode-case verification.

@@ -215,7 +215,7 @@ substantially move a file in `ideas/`, update its entry here too.
   the vecfield to the static axis before blending (axis is a line, not a
   direction) — mechanism worked out, not yet built.
 - **[f_lumia.md](f_lumia.md)** ⚪ — Lumia-style animated caustics: light through
-  irregular glass modelled as a height field -> `f_vf_fieldmap` -> `f_caustic`
+  irregular glass modeled as a height field -> `f_vf_fieldmap` -> `f_caustic`
   (+ optional `f_vf_warp` of the source, same field), animation via evolving
   height, rotation, throw distance. Warp vs. caustic distinction written up;
   `f_vf_fluid` flagged as a trap (`project` removes the convergence caustic
@@ -226,7 +226,7 @@ substantially move a file in `ideas/`, update its entry here too.
   drift / rotate; outlets vecfield, height, focus). Chosen 2026-10-06 as a
   separate producer so one glass feeds warp, prism, caustic and the scatter
   module together. Draft spec: `.specify/f_vf_glass/spec.md`. Untested; open
-  questions include the time source and regime normalisation.
+  questions include the time source and regime normalization.
 - **[optics_map.md](optics_map.md)** 🔵 — Map of the light-transport concept
   across modules (medium -> dispersion -> scatter -> camera -> persistence),
   the "share one field" compounding principle, a by-phenomenon chart of
@@ -335,6 +335,13 @@ there, then the chapter-specific files for depth.
 
 ## Build process, architecture & conventions
 
+- **[genexpr_interpreter.md](genexpr_interpreter.md)** 🔵 — Analysis (2026-10-18),
+  no decision: would a GenExpr interpreter / NumPy transpiler replace the hand-written
+  mirrors, and what would it cost? Not worth building yet (the benefit that is specific
+  to it, ending mirror translation errors, is unevidenced; the costly findings were GPU
+  quirks it could not have found). Suggests a tally of failure kinds plus a one-session
+  spike on `f_tf_axisflow`.
+
 - **[build_patcher_schema_gaps.md](build_patcher_schema_gaps.md)** 🧰 —
   Mostly resolved same-day (2026-07-15). Two schema gaps found regenerating
   `f_lens` from `definition.py`: downstream-target params (UI/route dispatch
@@ -378,7 +385,7 @@ there, then the chapter-specific files for depth.
   (`f_droste` or `f_mobius`).
 - **[dry_wet_gain_and_novel_field_outlet.md](dry_wet_gain_and_novel_field_outlet.md)**
   — see Vector field family above (cross-listed).
-- **[CV_TRIGGER_INVENTORY.md](CV_TRIGGER_INVENTORY.md)** 🔵 — Catalogue of
+- **[CV_TRIGGER_INVENTORY.md](CV_TRIGGER_INVENTORY.md)** 🔵 — Catalog of
   on-system CV→trigger modules (`upshot_attackdetection`, `bonk~`,
   FluCoMa's `onsetslice~`/`onsetfeature~`/`ampslice~`/`ampgate~`) with output
   types tabulated, for designing a routing-matrix message protocol around

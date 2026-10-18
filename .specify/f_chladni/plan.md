@@ -90,7 +90,7 @@ inventing a new one.
 Block 0: Scratch patch → determines mode selection behavior, MIDI range, and gain default for out3
 Block 1: definition.py rewrite → depends on Block 0 decisions
 Block 2: Build + verify bpatcher → depends on Block 1
-Block 3: Vecfield + scalar outlet verification → depends on Block 2 (needs f_caustic routing for out2, downstream greyscale consumer for out3)
+Block 3: Vecfield + scalar outlet verification → depends on Block 2 (needs f_caustic routing for out2, downstream grayscale consumer for out3)
 Block 4: Companion patches → depends on Block 2 interface being stable
 Block 5: Docs + registration → wraps up all blocks
 ```
@@ -127,7 +127,7 @@ Rewrite `.specify/f_chladni/definition.py` with:
 ### Phase 3: Vecfield + Scalar Outlet Verification
 - Route out2 → f_caustic; verify convergence accumulates at nodal lines
 - Route out2 → f_vf_warp; verify source texture warps toward nodal lines
-- Route out3 into a greyscale-consuming module (e.g. as a `f_weave` scalar inlet, matching `f_vf_potential`'s existing signal-chain precedent); verify it tracks amp/note independently of out1/out2 and confirm bypass goes black
+- Route out3 into a grayscale-consuming module (e.g. as a `f_weave` scalar inlet, matching `f_vf_potential`'s existing signal-chain precedent); verify it tracks amp/note independently of out1/out2 and confirm bypass goes black
 - Document signal chain recipes
 
 ### Phase 4: Companion Patches

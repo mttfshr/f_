@@ -200,7 +200,7 @@ Regardless of branch: per-mark footprint in the local frame, family profile
 `discrete_item_conventions.md`), elongated along the local axis by the commit-driven
 elongation, gated by tone, composed, and encoded. This is the only stage that clamps or
 encodes; every internal texture stays unbounded float32 (Hard rule; tensormap plan
-ADR-4). Any coordinate used to sample a texture is clamped in-shader to texel centres —
+ADR-4). Any coordinate used to sample a texture is clamped in-shader to texel centers —
 the bench GPU wraps out-of-range reads (found 2026-10-16, tensormap T012).
 
 **Tone handling is Open Question 2, not committed:** an engraving hatch is tone-gated
@@ -354,7 +354,7 @@ Numbers first. Tiers 1-2 verify these before any scratch patch
   stale frame.
 - **Loads in Vsynth** and both outlets render in `vs_render` (shipped-bpatcher contract
   tests, per the tensormap lifecycle).
-- **Judgement tier (scratch patch):** commit's line→dot rounding reads as intended on
+- **Judgment tier (scratch patch):** commit's line→dot rounding reads as intended on
   the smooth→sharpen→hatch chain (structure = strokes, noise/isotropic = dots or
   blank per the gate), and the provisional `density`/`coherence_gate`/`elongation`
   defaults are confirmed live or corrected in the spec — this is what the provisional
@@ -405,7 +405,7 @@ Numbers first. Tiers 1-2 verify these before any scratch patch
    (commit/axis debug, pairing with `f_tf_glyph`) earns its place or stays a scratch
    patch preview only (the `f_vf_split`-style tap, per `f_tensor_type.md` rule 3).
 6. **Defaults.** All provisional values in Parameters are locked in Phase 2/3 gates
-   (T-tier-3 judgement + Matt's call), with measured replacements recorded here, the
+   (T-tier-3 judgment + Matt's call), with measured replacements recorded here, the
    tensormap way.
 7. **M1 caveat.** All cost numbers in this triad are stated at the bench's measured
    floor (M3 Max unless noted); M1 is unmeasured per ways-of-working. Carry this into

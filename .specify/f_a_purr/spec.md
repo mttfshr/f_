@@ -25,7 +25,7 @@ timescales (per-click, per-breath, per-minute), not from click fidelity.
 **In scope for v1:** layers 0–4 (click, pulse train, breath, resonance,
 breath noise). Two outlets: audio, breath phase.
 
-**Out of scope for v1:** layer 5 (behavioural meow/chirp scheduler).
+**Out of scope for v1:** layer 5 (behavioral meow/chirp scheduler).
 Deferred — it is a scheduler, not DSP, and belongs in the patcher.
 
 **Explicitly not built:** any visual coupling. `f_a_purr` is an audio module.

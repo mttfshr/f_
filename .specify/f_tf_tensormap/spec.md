@@ -158,7 +158,7 @@ Numbers first, per the constitution's Verification Tiers. Tiers 1-2 apply (this 
 - **Bypass:** both outlets output the zero-tensor neutral.
 - **Unconnected inlet:** zero-tensor neutral, no crash, no black frame.
 - **Loads in Vsynth** and both outlets render in `vs_render` (the shipped-bpatcher contract tests).
-- **Judgement tier (scratch patch):** with `jit.gl.bfg` in, outlet 1's B/A channels visibly separate structured ridges from flat regions, and `strength` default reads sensibly. This is the live confirmation the provisional `strength` default is waiting on.
+- **Judgment tier (scratch patch):** with `jit.gl.bfg` in, outlet 1's B/A channels visibly separate structured ridges from flat regions, and `strength` default reads sensibly. This is the live confirmation the provisional `strength` default is waiting on.
 
 ---
 

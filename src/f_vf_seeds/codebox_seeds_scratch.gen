@@ -28,9 +28,9 @@ py = norm.y * density_scale;
 icx = floor(px);
 icy = floor(py);
 
-// ── 3x3 neighbourhood seed search ────────────────────────────────────────────
+// ── 3x3 neighborhood seed search ────────────────────────────────────────────
 // For each candidate cell, compute jittered seed position and squared distance.
-// best_gx/best_gy = seed identity UV (normalised screen coords of seed centre).
+// best_gx/best_gy = seed identity UV (normalized screen coords of seed center).
 
 ncx = icx-1.0; ncy = icy-1.0;
 jxA = fract(sin(ncx*127.1 + ncy*311.7)*43758.5453) - 0.5;
@@ -105,7 +105,7 @@ dxI = norm.x - sxI; dyI = norm.y - syI;
 dI = dxI*dxI + dyI*dyI;
 
 // ── Find nearest seed ─────────────────────────────────────────────────────────
-// best_gx/gy: identity UV of winning seed (normalised screen position)
+// best_gx/gy: identity UV of winning seed (normalized screen position)
 // best_dx/dy: pixel offset from that seed (in norm space)
 
 best_d=dA; best_gx=sxA; best_gy=syA; best_dx=dxA; best_dy=dyA;
@@ -134,7 +134,7 @@ field_mag = sqrt(vx*vx + vy*vy);
 vx = vx * strength;
 vy = vy * strength;
 
-// normalised orientation basis (cs, sn)
+// normalized orientation basis (cs, sn)
 mag = max(sqrt(vx*vx + vy*vy), 0.0001);
 cs = vx / mag;
 sn = vy / mag;

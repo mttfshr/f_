@@ -56,7 +56,7 @@ KNOWN = {
 # every other outlet of a module moved to `bypass_mode: "param"` (plan.md item 10, Matt's
 # 2026-10-05 passthrough rule) is listed here, and tests/contracts/test_bench_expect.py fails when one
 # is missing.  The bench feeds in1 random char-representable RGBA and every other inlet
-# neutral grey (128/255 in all four channels, modulebench.neutral).  Expectations:
+# neutral gray (128/255 in all four channels, modulebench.neutral).  Expectations:
 #   ("in", k)            equals the texture fed to inlet k, exactly
 #   ("vec", k, tol)      the vecfield passthrough of inlet k: (R, G, 0.5, 1.0); a char outlet
 #                        cannot hold 0.5 exactly, hence the tolerance there
@@ -97,7 +97,7 @@ BYPASS_EXPECT = {
 
 
 def bypass_expected(spec, inputs):
-    """(expected array or colour, tolerance) for one BYPASS_EXPECT entry; inputs maps inlet -> array."""
+    """(expected array or color, tolerance) for one BYPASS_EXPECT entry; inputs maps inlet -> array."""
     kind = spec[0]
     if kind == "in":
         return inputs[spec[1]], 0.0

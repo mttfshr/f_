@@ -85,7 +85,7 @@ node (`outlet_source_override` {0: "render"} + raw_lines obj-50→obj-2).
 Params `release` (0–1, default 0.5, PROVISIONAL; gate OQ1 open) and `bypass`
 (type bypass, bypass_mode "param", bypass_target the primary = state pix,
 ADR-4 passthrough). Single outlet, signal_type "tensor out" with the amber
-tensor colour (tensormap T030 precedent). Contract analysis on the built
+tensor color (tensormap T030 precedent). Contract analysis on the built
 patcher is CLEAN (both params driven, none unused, bypass reaches the
 primary); drift check: zero problems for f_tf_smooth.
 

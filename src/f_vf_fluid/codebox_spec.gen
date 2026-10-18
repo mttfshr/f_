@@ -11,7 +11,7 @@
 //     therefore only feels the drag
 //   - `drift` (2026-10-17) scales ONLY the k = 0 bin (the frame-wide mean flow: the slowest-decaying
 //     mode, since projection and viscosity both skip it) by drift^(1/16) per frame. 1 = off (today's
-//     behaviour), 0 = zeroed every frame, between = the mean flow decays with a half-life of about
+//     behavior), 0 = zeroed every frame, between = the mean flow decays with a half-life of about
 //     11 / -ln(drift) frames on top of drag. Mirror: tests/fluid_mirror.drift_factor().
 //   - `viscosity` is a 0..1 DIAL, not a physical nu (T036, 2026-09-28): the per-frame
 //     coefficient is nu_dt = 1.6e-3 * viscosity^3, so smoothness does not depend on dt

@@ -56,7 +56,7 @@ Scratch work lives at `~/Vsynth/patterns/` (not version controlled).
 
 - [ ] T015 Create `.specify/f_vf_glow/definition.py` — patcher dict with confirmed codebox text, archetype, name, all params
 - [ ] T016 Add `outlets` key: `[{"label": "composite", "color": "green"}, {"label": "glow layer", "color": "cyan"}]`
-- [ ] T017 Add inlet definitions: in0 = `texture / control` (standard), in1 = `vecfield` (float32, cyan label), in2 = `radius mod` (grey label); all three with `vs_instate: true`
+- [ ] T017 Add inlet definitions: in0 = `texture / control` (standard), in1 = `vecfield` (float32, cyan label), in2 = `radius mod` (gray label); all three with `vs_instate: true`
 - [ ] T018 Add all six params to definition.py params block with correct ranges and defaults from spec
 - [ ] T019 Run `tools/py.sh tools/build_patcher.py .specify/f_vf_glow/definition.py patchers/f_vf_glow.maxpat`
 - [ ] T020 Validate JSON: `python3 -c "import json; json.load(open('patchers/f_vf_glow.maxpat'))"` — must pass with no error

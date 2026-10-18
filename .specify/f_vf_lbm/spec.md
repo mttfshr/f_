@@ -294,7 +294,7 @@ masks.
 6. **Stable:** no NaN/Inf after 10,000+ frames at the documented safe
    parameter range, obstacle present.
 7. **Expressive, with the risk named up front (tier 3, Matt's
-   judgement):** the wake needs to read as genuine shedding, not a faint
+   judgment):** the wake needs to read as genuine shedding, not a faint
    wobble — the spike's own 300×50/12,000-step run only achieved a weak
    disturbance (probe std 0.0085 vs. inflow 0.04). Success here may
    require a longer warm-up, a different resolution, or accepting a
@@ -372,7 +372,7 @@ masks.
   territory like `f_vf_advect`/`f_vf_fluid`), pass the module contract
   bench.
 - **Phase 2** — scratch-patch tuning: obstacle shapes, inflow/`omega`
-  range, and the shedding-quality judgement call (tier 3) — this is
+  range, and the shedding-quality judgment call (tier 3) — this is
   where User Story 1's real success/failure gets decided.
 - **Phase 3** — reference doc, helpfile, `f_modules` menu placement
   (vecfield Generators/Producers per the existing labeling convention),

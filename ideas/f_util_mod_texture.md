@@ -72,7 +72,7 @@ Unused ones sit at zero — a multiply-add against zero is free on GPU.
 
 **Caveat added 2026-07-29:** the formula above is written in
 `f_masonry`'s *unipolar* form (black = neutral). Kevin's canonical
-Vsynth modules use a *bipolar* form (0.5 grey = neutral, via
+Vsynth modules use a *bipolar* form (0.5 gray = neutral, via
 `scale 0. 1. -1. 1.` before the depth multiply). That conflict is
 unresolved and must be settled before this becomes a convention — see
 "Scalar modulation vs. texture modulation" below. Also note this
@@ -142,7 +142,7 @@ scalars and mod depths side by side.
 
 **Bipolar remap (important).** Every mod texture in `vs_displacement`
 passes through `scale 0. 1. -1. 1.` before being multiplied by its
-depth. So **0.5 grey is neutral** and the texture is a *signed
+depth. So **0.5 gray is neutral** and the texture is a *signed
 deviation* — consistent with the `f_vf_` family's 0.5-is-zero-vector
 convention.
 

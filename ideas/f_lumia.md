@@ -31,7 +31,7 @@ Per the inventory `f_caustic` is not marked temporal, so all motion would come f
 
 ## Other physical elements
 
-- **Dispersion:** real glass bends colours differently. `f_vf_chroma` / `f_vf_prism` split colour along the field and look like the right tools (isolated layers available).
+- **Dispersion:** real glass bends colors differently. `f_vf_chroma` / `f_vf_prism` split color along the field and look like the right tools (isolated layers available).
 - **Laser source:** same chain with a point or thin line as the source; expect speckled bright filaments.
 - **Beam divergence:** a projector or laser diverges from a point, a flat source texture does not. A radial term added to the glass field (maybe `f_vf_vortex` with convergence only) could stand in. Untested.
 - **Glow / halation:** `f_vf_glow`, `f_lens` halation for the diffused-screen quality.
@@ -54,7 +54,7 @@ Scratch chain in `~/Vsynth/patterns/`: slowly evolving smooth height -> `f_vf_fi
 
 **Latest direction (Matt, 2026-10-06):** `f_vf_glass` is **on hold** (Vsynth already ships smooth, morphing
 sources: `vs_noise_*`, `vs_chemical_osc`, low-pass filters), and the sheet regime goes into `f_caustic` as a
-**second mode** rather than a separate module (soft = today's behaviour, unchanged; sheets = new). The method
+**second mode** rather than a separate module (soft = today's behavior, unchanged; sheets = new). The method
 for the sheets mode is **open**: scatter (GL scene; best quality; 1-frame lag, memory) or a multi-start gather
 (ordinary pix codebox; weaker; heavy per-pixel cost). The spec in `.specify/f_caustic_scatter/` still describes
 the separate-module scatter draft and needs rewriting as an addendum to `f_caustic`.

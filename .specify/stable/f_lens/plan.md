@@ -265,7 +265,7 @@ Build minimal scratch patches in `~/Vsynth/patterns/` (not in repo) to determine
 
 Document findings and chosen architecture in ADR-1 before proceeding.
 
-**Checkpoint:** Internal architecture decided. Available objects catalogued. Vsynth compatibility confirmed. → Proceed to Phase 1.
+**Checkpoint:** Internal architecture decided. Available objects cataloged. Vsynth compatibility confirmed. → Proceed to Phase 1.
 
 ---
 

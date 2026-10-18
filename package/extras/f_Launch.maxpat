@@ -4482,7 +4482,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Splits an f_vecfield's X/Y channels to two separate greyscale outlets, unipolar or bipolar",
+									"text": "Splits an f_vecfield's X/Y channels to two separate grayscale outlets, unipolar or bipolar",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

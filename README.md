@@ -119,7 +119,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_util_matrix_2` | Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status |
 | `f_util_profile` | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
 | `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet |
-| `f_vf_split` | Splits an f_vecfield's X/Y channels to two separate greyscale outlets, unipolar or bipolar |
+| `f_vf_split` | Splits an f_vecfield's X/Y channels to two separate grayscale outlets, unipolar or bipolar |
 
 ### Audio (`gen~`)
 
@@ -150,13 +150,13 @@ The `f_modules` menu (`package/patchers/f_modules.maxpat`) and the size table in
 
 ## Development
 
-Modules are built from definition files (`src/` → `build/build_patcher.py` → `package/patchers/`) rather than patched by hand, so the structure stays consistent and reviewable as diffs. `definition.py` is the source of truth: a change made by hand in Max has to be written back into it. `tests/build/test_drift.py` enforces that; the modules that don't yet reproduce from their definitions are listed in `tests/build/drift_baseline.json`, a list that only shrinks. Hand-tuning the schema doesn't model (a compact dial, a moved jsui, a label colour) is written back into the definition's `overrides` block by `build/capture.py`; see `build/spec.md`.
+Modules are built from definition files (`src/` → `build/build_patcher.py` → `package/patchers/`) rather than patched by hand, so the structure stays consistent and reviewable as diffs. `definition.py` is the source of truth: a change made by hand in Max has to be written back into it. `tests/build/test_drift.py` enforces that; the modules that don't yet reproduce from their definitions are listed in `tests/build/drift_baseline.json`, a list that only shrinks. Hand-tuning the schema doesn't model (a compact dial, a moved jsui, a label color) is written back into the definition's `overrides` block by `build/capture.py`; see `build/spec.md`.
 
 Verification happens in three tiers, cheapest and most attributable first — the full rationale is in `.specify/constitution.md`:
 
 1. **Math** — a NumPy mirror of the codebox, checked against independent ground truth. No Max.
 2. **Execution** — the real codebox file run on the GPU through the test bench and diffed numerically; shipped bpatchers additionally contract-tested for parameter wiring and bypass.
-3. **Judgement** — a scratch patch for what numbers can't judge: expressive tuning, parameter ranges, visual character, Vsynth integration.
+3. **Judgment** — a scratch patch for what numbers can't judge: expressive tuning, parameter ranges, visual character, Vsynth integration.
 
 The reason for the split: a scratch patch tests two things at once — whether the math is right and whether Max and the GPU run it — so a failure can't be attributed to either. Separating them turned "this doesn't look right" into specific answers, and the contract tests found real bugs in shipped modules that no amount of looking would have surfaced.
 

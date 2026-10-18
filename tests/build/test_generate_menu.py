@@ -142,7 +142,7 @@ def test_title_bar_labels_say_the_right_direction_for_the_tensor_family():
 
 
 def test_a_module_with_an_outlet_named_vecfield_or_tensor_says_so_on_its_output_side():
-    """The audit that caught advect and prism (a third outlet that is a vecfield, labelled only "in") was done by
+    """The audit that caught advect and prism (a third outlet that is a vecfield, labeled only "in") was done by
     reading the code.  This keeps the cheap part of it: an outlet the module itself names vecfield / tensor means
     the title-bar label must have that mark on its output side (out or in/out)."""
     menu = g.load_menu()
@@ -182,7 +182,7 @@ def test_title_bar_labels_share_one_look_and_one_place():
             _eq(f"{m}: on the title's baseline (y 0.9 under the 12 pt title at y 0), 70 x 21", (rect[1], rect[2], rect[3]), (0.9, 70.0, 21.0))
             _eq(f"{m}: right edge 4 px left of the bypass button", round(rect[0] + rect[2], 1), round(button[0]["presentation_rect"][0] - 4.0, 1))
             want = VEC if L["text"].startswith("\u2207") else TENSOR
-            _eq(f"{m}: colour follows the first mark", [round(c, 3) for c in L["textcolor"]], want)
+            _eq(f"{m}: color follows the first mark", [round(c, 3) for c in L["textcolor"]], want)
 
 
 def frame_border(module):
@@ -203,10 +203,10 @@ def title_bar_dots(module):
 
 def test_the_type_dots_show_what_each_module_takes_and_outputs():
     """Two stacked round dots left of the module name on EVERY module: top = the type it takes, bottom = the type
-    it outputs (cyan vecfield, amber tensor, dim grey neither), read from the title-bar label.  They are foreground
+    it outputs (cyan vecfield, amber tensor, dim gray neither), read from the title-bar label.  They are foreground
     panels (a background-layer panel is drawn under the frame and vanishes).  The frame border stays dark blue."""
-    DARK, VEC, TENSOR, GREY = [0.0, 0.035, 0.227, 1.0], [0.35, 0.75, 0.95, 1.0], [0.85, 0.55, 0.2, 1.0], [0.28, 0.28, 0.28, 1.0]
-    colour = {"\u2207": VEC, "T_": TENSOR, None: GREY}
+    DARK, VEC, TENSOR, GRAY = [0.0, 0.035, 0.227, 1.0], [0.35, 0.75, 0.95, 1.0], [0.85, 0.55, 0.2, 1.0], [0.28, 0.28, 0.28, 1.0]
+    color = {"\u2207": VEC, "T_": TENSOR, None: GRAY}
     menu = g.load_menu()
     for _, items in menu.CATEGORIES:
         for _, m, kinds in items:
@@ -217,8 +217,8 @@ def test_the_type_dots_show_what_each_module_takes_and_outputs():
                 outs = mark if direction in ("out", "in/out") else outs
             d_in, d_out, names, boxes = title_bar_dots(m)
             _eq(f"{m}: both dots exist and one module name sits to their right", (d_in is not None, d_out is not None, len(names)), (True, True, 1))
-            _eq(f"{m}: top dot = what it takes ({ins or 'neither'})", [round(c, 3) for c in d_in["bgcolor"]], colour[ins])
-            _eq(f"{m}: bottom dot = what it outputs ({outs or 'neither'})", [round(c, 3) for c in d_out["bgcolor"]], colour[outs])
+            _eq(f"{m}: top dot = what it takes ({ins or 'neither'})", [round(c, 3) for c in d_in["bgcolor"]], color[ins])
+            _eq(f"{m}: bottom dot = what it outputs ({outs or 'neither'})", [round(c, 3) for c in d_out["bgcolor"]], color[outs])
             r_in, r_out = d_in["presentation_rect"], d_out["presentation_rect"]
             _eq(f"{m}: 5 px dots in one column at x 4, stacked 7 px apart", (r_in[2:], r_out[2:], r_in[0], r_out[0], round(r_out[1] - r_in[1], 3)),
                 ([5.0, 5.0], [5.0, 5.0], 4.0, 4.0, 7.0))
@@ -243,7 +243,7 @@ def content_extent(path):
 
 def test_the_tensor_modules_are_not_cropped_by_their_frame_or_their_helpfile_embed():
     """f_tf_glyph / hatch / aniso_blur shipped on a 154 x 84 frame and lost their right-hand dials and second row.
-    Content may poke 1.5 px past the frame (the 50 px label boxes centre their text); the helpfile's bpatcher
+    Content may poke 1.5 px past the frame (the 50 px label boxes center their text); the helpfile's bpatcher
     must be at least as large as the frame."""
     menu = g.load_menu()
     for _, items in menu.CATEGORIES:

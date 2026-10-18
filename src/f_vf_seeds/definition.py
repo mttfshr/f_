@@ -45,18 +45,18 @@ Per-pixel behavior:
   6. Composites rank 1 over rank 2
 
 Key decisions: no internal mark geometry (shape character comes from the shape tex inlet); color
-passthrough from the shape tex (out 1 = full-colour mark, out 2 = luma mask); passthrough when no shape is
+passthrough from the shape tex (out 1 = full-color mark, out 2 = luma mask); passthrough when no shape is
 connected (src_shape=0 -> mark=0); `stretch` 0 = uniform+aperture, 1 = deform; taper and softness live in
 the shape generator; the module is a generator, not a processor (no source inlet); field_priority /
-field_gain generalise seed selection from nearest-distance to a blendable priority incorporating vecfield
+field_gain generalize seed selection from nearest-distance to a blendable priority incorporating vecfield
 magnitude (0 = pixel-identical to before 2026-07-04); out 1's alpha is the mark luma, not 1.0 (so black
 shape-tex background reads as transparent); `bomb` behaves as an on/off toggle, not a graded fader (the real
 priority magnitude scales with density/jitter/field_gain/field_priority, so no fixed sentinel constant
 stays correctly scaled -- confirmed empirically, plan.md's toggle-behavior addendum).
 
 Inlets:  0 shape tex + control (the driving inlet) | 1 vecfield (float32 RG, drives mark orientation per
-         seed) | 2 mod tex (sampled at seed UV) | 3 colour driving texture (Evolution 3, optional)
-Outlets: 0 mark colour (rank 1 over rank 2, gated by the footprint) | 1 mark mask (luma, greyscale) |
+         seed) | 2 mod tex (sampled at seed UV) | 3 color driving texture (Evolution 3, optional)
+Outlets: 0 mark color (rank 1 over rank 2, gated by the footprint) | 1 mark mask (luma, grayscale) |
          2 seed coord (rank 1's UV position only)
 Bypass:  black/transparent output (generator convention): Stage 1c and Stage 4 take the native @bypass.
 """

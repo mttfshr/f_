@@ -8,7 +8,7 @@
 - [`f_vecfield_type.md`](f_vecfield_type.md) — the shared vector-field texture format (float32, RG=XY, 0.5=zero). Most "can module A feed module B" questions reduce to "does A produce a coherent f_vecfield and does B consume one," not just "are both texture in/out."
 - [`discrete_item_conventions.md`](discrete_item_conventions.md) — shared param vocabulary (`density`, `phase`, `size`+`stretch`, `softness`, `shape`) across the grid/mark-placement modules (f_grain, f_masonry, f_weave, f_vf_seeds), including where the same name means different things per module.
 
-**Reading the I/O column:** `tex` = plain texture, `vecfield` = f_vecfield (float32 RG, coherent field — see contract doc), `scalar` = single-channel greyscale signal. `→` separates input(s) from output(s). **temporal** = has frame-to-frame memory (ping-pong feedback), so behavior depends on accumulated history, not just the current frame's inputs.
+**Reading the I/O column:** `tex` = plain texture, `vecfield` = f_vecfield (float32 RG, coherent field — see contract doc), `scalar` = single-channel grayscale signal. `→` separates input(s) from output(s). **temporal** = has frame-to-frame memory (ping-pong feedback), so behavior depends on accumulated history, not just the current frame's inputs.
 
 **See also:** [`docs/vsynth-reference/module-inventory.md`](../vsynth-reference/module-inventory.md) — the same kind of flat capability map, one layer down, for core Vsynth (`vs_`) modules. Check there too before assuming a new f_ module is needed — the answer is sometimes a core Vsynth module (e.g. `vs_displacement` for a dumb two-channel UV push, no field coherence needed).
 
@@ -48,7 +48,7 @@ Output a coherent f_vecfield (or, for f_chladni, an f_vecfield alongside other o
 | `f_vf_fieldmap` | tex (scalar-dominant) → vecfield | Converts *any* scalar/noise texture into a vecfield via spatial gradient (central difference). The generic "turn a texture into a field" adapter — feed it `jit.gl.bfg` noise, grain, luma, anything |
 | `f_tf_tensormap` | tex (scalar-dominant) → raw tensor + packed tensor | Structure tensor of any scalar texture (Sobel, box-smoothed outer products, closed-form eigen): raw Jxx/Jxy/Jyy and packed cos2θ/sin2θ/trace/coherence. Outlet 1 is angle-doubled, NOT a vecfield. Cost scales with fixed R_MAX 16, not `radius`
 | `f_tf_axisflow` | packed tensor → vecfield | Bridge from `f_tf_tensormap` outlet 1: projects a reference angle onto the edge line (or its normal), so flow follows image structure with no sign seam. Feeds `f_vf_advect`, warp, caustic... Needs `width`/`height` set
-| `f_tf_smooth` | raw tensor → raw tensor, **temporal** | One-pole tensor-space smoother ("inertia"): feedback average per component, so opposite axes reinforce instead of cancelling and confidence rides along. `release` is the performable knob; bypass is exact passthrough (not a freeze). Chain A's stabilizer stage
+| `f_tf_smooth` | raw tensor → raw tensor, **temporal** | One-pole tensor-space smoother ("inertia"): feedback average per component, so opposite axes reinforce instead of canceling and confidence rides along. `release` is the performable knob; bypass is exact passthrough (not a freeze). Chain A's stabilizer stage
 | `f_tf_glyph` | raw tensor + tex → tex | Glyph-field renderer: one closed-form ellipse per grid cell, aspect from the eigenvalue ratio, axis from the tensor, gated on trace. Doubles as the family's universal debug view
 | `f_tf_sharpen` | raw tensor → raw tensor | Eigengap operator: scales the eigenvalue gap at fixed trace and untouched axis — commits or relaxes anisotropy with one dial. Not image sharpening
 | `f_tf_aniso_blur` | raw tensor + tex → tex | Coherence-enhancing smoother: integrates the source along the tensor's major axis, ellipse width from the eigenvalue ratio, isotropic fallback (Weickert rationale). Straight-axis v1
@@ -96,7 +96,7 @@ No visual effect of their own — plumbing between other modules.
 | `f_texrouter` | up to 4 tex → up to 4 tex | 4×4 texture routing matrix with named presets. ⚠ bypass = freeze (holds last frame), not passthrough — differs from every other f_ module's bypass convention |
 | `f_util_matrix_2` | 2 tex (sources) + consumer param list → 2 tex passthrough + mod messages | CV-matrix-style modulation router — one source drives one destination column, textbook Eurorack patch-matrix semantics. ⚠ draft status, open design questions unresolved |
 | `f_util_profile` | tex → row profile tex + column profile tex | CPU-side dual-axis luminance profiler — collapses a texture to a 1D row-mean and column-mean signal for driving per-row/per-column modulation (e.g. into `f_masonry`'s course/column inlets) |
-| `f_vf_split` | vecfield → scalar + scalar | Splits a vecfield's X and Y channels into two separate greyscale textures, unipolar or bipolar encoding — for feeding a field's individual axes into scalar-only consumers |
+| `f_vf_split` | vecfield → scalar + scalar | Splits a vecfield's X and Y channels into two separate grayscale textures, unipolar or bipolar encoding — for feeding a field's individual axes into scalar-only consumers |
 
 ---
 

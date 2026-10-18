@@ -24,7 +24,7 @@
 //   (-pi/2, pi/2]; an unoriented line at theta and theta+180deg renders
 //   identically here, so the caveat is inert -- but any sign-sensitive consumer
 //   copying this block must route through f_tf_axisflow instead.
-// Cell sampling is clamped to texel centres (tensormap ADR-5: the bench GPU
+// Cell sampling is clamped to texel centers (tensormap ADR-5: the bench GPU
 //   WRAPS out-of-range reads).
 // ADR-8: ellipse-only v1. Cross/tick are scratch-only one-constant swaps
 //   (tier, gate PROVISIONAL-OPEN, TG016); no debug-tint modes (gate open,
@@ -36,7 +36,7 @@
 //   max_aspect 8) are the spec's provisional values. Resolving experiment:
 //   bench cost model vs the tensormap floor (~0.9 ms/pass, 1080p, R_MAX 16)
 //   -- expected trivially cheap (two taps, closed form) -- then tier-3 live
-//   judgement; the dial ranges stay per spec spec.md Parameters.
+//   judgment; the dial ranges stay per spec spec.md Parameters.
 Param grid(24.0);          // cells across (2-256)
 Param glyph_scale(0.8);    // glyph radius relative to the cell (0-2)
 Param thickness(0.15);     // stroke fraction of radius (0-1)
@@ -57,7 +57,7 @@ bp_r = clamp(src_here_r, 0.0, 1.0);
 bp_g = clamp(src_here_g, 0.0, 1.0);
 bp_b = clamp(src_here_b, 0.0, 1.0);
 
-// --- ADR-4: uniform lattice cell centre, clamped to texel centres -----------
+// --- ADR-4: uniform lattice cell center, clamped to texel centers -----------
 gx_idx = floor(norm.x * grid);
 gy_idx = floor(norm.y * grid);
 cu = (gx_idx + 0.5) / grid;
@@ -72,7 +72,7 @@ tv = clamp(cv, 0.5 / height, 1.0 - 0.5 / height);
 // texel-per-cell < 1 texel/pixel), so hardware sample() falls back to its
 // NEAREST minification filter here (skills/jit-gen-codebox: "sample() is NOT
 // bilinear when its coordinate is data-dependent and jumps between
-// neighbouring pixels"). Fix per that doc: interpolate by hand from four
+// neighboring pixels"). Fix per that doc: interpolate by hand from four
 // exact nearest() taps. Size 1:1 (tex = pix dim here), so this is exact.
 // (The family-canonical ADR-2 TEXT above stays as-is for the IDIOM — the
 // canonical block's `sample(tensor_tex, clamp(cell_uv_to_texel))` line gains
@@ -84,8 +84,8 @@ ix = floor(tx);
 iy = floor(ty);
 ax = tx - ix;
 ay = ty - iy;
-// nearest() takes NORMALIZED coords (like sample): tap at each neighbour's
-// texel centre. (2026-10-17 correction: the first draft passed raw texel
+// nearest() takes NORMALIZED coords (like sample): tap at each neighbor's
+// texel center. (2026-10-17 correction: the first draft passed raw texel
 // indices + 0.5, which the sampler reads as uv ~72 — clamped to the last
 // texel, so every interior tap read the frame border.)
 ux0 = clamp(ix, 0.0, width - 1.0);
@@ -154,7 +154,7 @@ soft = max(softness * rmaj, 0.000001);
 cover = 1.0 - smoothstep(hw, hw + soft, abs(d));
 
 // --- tint: ADR-7 provisional, source luma modulates a white ink -------------
-// tint at the cell centre: same data-dependent-jump situation as the tensor
+// tint at the cell center: same data-dependent-jump situation as the tensor
 // read above — same four-tap nearest() fix (normalized tap coords).
 u0x = clamp(ix, 0.0, width - 1.0);
 u0y = clamp(iy, 0.0, height - 1.0);

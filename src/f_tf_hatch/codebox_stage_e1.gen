@@ -24,7 +24,7 @@
 //   symmetric to theta+180 deg (hatch IS: an unoriented line pattern).
 // Coherence normalization is TENSormap's (its plan ADR-2, not glyph's):
 //   coherence = (lambda1-lambda2)/(lambda1+lambda2) -- gain-free.
-// Sample coordinate: the read is AT norm (texel centred, always in-bounds);
+// Sample coordinate: the read is AT norm (texel centered, always in-bounds);
 // the clamp is kept for the in-shader rule (tensormap T012 finding).
 //
 // NOTE: this stage reads strength and angle_offset; commit knees C_LO/C_HI

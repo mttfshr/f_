@@ -4,7 +4,7 @@ float32 (plan ADR-1/-5/-6, .specify/f_vf_fluid/).
 
 Chain:   pass -> adv -> fx -> fy -> spec -> iy -> ix -> enc      (ix -> pass)
   adv   self-advect the velocity state (PERIODIC bilinear) and add force
-  fx/fy forward separable DFT            (test_fft_separable.pass_dft)
+  fx/fy forward separable DFT            (dft_mirror.pass_dft)
   spec  projection blend + exact viscosity/drag decay
   iy/ix inverse DFT; ix keeps only the real part and zaps non-finite values
   enc   periodic bilinear upsample, gain, clamp, f_vecfield encode, bypass gate
@@ -27,7 +27,7 @@ from dataclasses import dataclass, replace
 import numpy as np
 
 from gpu_sim import F32, TWOPI, grid, sample, store_float32
-from test_fft_separable import fft2_passes, ifft2_passes
+from dft_mirror import fft2_passes, ifft2_passes
 
 PERIODIC = True          # mutation hook: False = clamp-to-edge interpolation
 
@@ -140,7 +140,7 @@ def tap_weights(n_src, taps, n_dst):
     """Per-axis weights (n_dst x n_src) of the force tap grid (T038a, codebox_adv.gen).
 
     The shader averages taps x taps hardware-bilinear taps at offsets
-    ((a + 0.5)/taps - 0.5)/n_dst (normalised) around each target texel centre. A bilinear
+    ((a + 0.5)/taps - 0.5)/n_dst (normalized) around each target texel center. A bilinear
     tap is a tensor product of 1D linear interpolations, so the grid average factorises:
     result = Wy @ force @ Wx^T with these matrices (clamp-to-edge, like the hardware).
     Exact same maths as the shader's nested loop, without 2*taps^2 array passes."""
@@ -148,10 +148,10 @@ def tap_weights(n_src, taps, n_dst):
     key = (n_src, n, n_dst)
     if key not in _TAPW:
         rows = np.arange(n_dst)
-        centre = (rows + 0.5) / n_dst
+        center = (rows + 0.5) / n_dst
         wgt = np.zeros((n_dst, n_src), np.float64)
         for a in range(n):
-            sx = (centre + ((a + 0.5) / n - 0.5) / n_dst) * n_src - 0.5
+            sx = (center + ((a + 0.5) / n - 0.5) / n_dst) * n_src - 0.5
             x0 = np.floor(sx).astype(int)
             t = sx - x0
             np.add.at(wgt, (rows, np.clip(x0, 0, n_src - 1)), 1.0 - t)
@@ -170,7 +170,7 @@ def force_taps(force, taps, h, w):
 def adv(state, force, dt, force_gain, src_vecfield, taps=8.0):
     """Stage 1. Backward self-advection (semi-Lagrangian) then add force.
     `force` is a render-res f_vecfield texture, or None (unconnected). The force RG is
-    read through the tap grid (`taps`), the content gate through the single centre tap."""
+    read through the tap grid (`taps`), the content gate through the single center tap."""
     h, w = state.shape[:2]
     nx, ny, _, _ = grid(h, w)
     u, v = state[..., 0], state[..., 2]

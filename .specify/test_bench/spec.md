@@ -12,7 +12,7 @@ attributed (the `f_vf_advect` confinement saga, `f_apollonian`'s stale
 compile state, `f_a_ripple`'s screenshot misreadings).
 
 The two questions are now split. **Math** is settled in NumPy first
-(`tests/`, see `tests/README.md` — `test_fft_separable.py` is the first
+(`tests/`, see `tests/README.md` — `fft_separable.py` is the first
 user). **Execution** is this bench: one reusable Max patch that runs a
 known-correct codebox and reports back numbers, driven from the terminal so
 the whole loop (write codebox → NumPy test → Max run → numeric diff) can run
@@ -37,7 +37,7 @@ Infrastructure, not a module. Not registered in `f_modules`, not shipped in
 - **Bench stays open, triggered remotely.** Matt opens Max and the bench
   once per session; runs are triggered over OSC/UDP. No Max relaunch per test.
 - **Python owns the knowledge, Max only executes.** Inputs, reference
-  outputs, and pass/fail judgement live on the Python side. The bench is a
+  outputs, and pass/fail judgment live on the Python side. The bench is a
   dumb runner with no per-test logic.
 - **Correctness mode is one pass per job.** Multi-pass algorithms run pass
   by pass, each output feeding the next job, so a numeric failure points at
@@ -88,7 +88,7 @@ FFT T1 question (does a fixed 128-iteration loop compile and match NumPy)
 is the first real use.
 
 **Independent Test**: run the separable-DFT row pass at N=128 and diff
-against `test_fft_separable.py`'s `pass_dft` output.
+against `fft_separable.py`'s `pass_dft` output.
 
 **Acceptance Scenarios**:
 1. **Given** a codebox, input files, a resolution, and param values,
@@ -224,7 +224,7 @@ end and exits nonzero on failure.
 
 - Running inside Vsynth's render context or through real bpatchers
   (module-level integration testing).
-- Visual/perceptual judgement — the bench reports numbers only.
+- Visual/perceptual judgment — the bench reports numbers only.
 - Audio (`gen~`) testing, though the same pattern could extend there later.
 - CI or unattended runs without Max already open.
 - A GenExpr-to-NumPy interpreter (possible later step, see `tests/README.md`

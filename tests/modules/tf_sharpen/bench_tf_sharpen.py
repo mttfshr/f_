@@ -1,7 +1,7 @@
 """
 bench_tf_sharpen.py -- Tier 2 verification for f_tf_sharpen: the real codebox
 (src/f_tf_sharpen/codebox_sharpen.gen) on the GPU through the Max test bench,
-diffed against the NumPy mirror in tests/modules/tf_sharpen/test_tf_sharpen.py. Tasks T012-T014.
+diffed against the NumPy mirror in tests/modules/tf_sharpen/tf_sharpen_mirror.py. Tasks T012-T014.
 
 Recreated 2026-10-17: an earlier draft was deleted by a sibling session's
 file cleanup along with its own report (recorded in
@@ -23,7 +23,7 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run
-import test_tf_sharpen as m          # the tier-1 mirror
+import tf_sharpen_mirror as m          # the tier-1 mirror
 
 REPO = _paths.REPO
 SRC = REPO / "src" / "f_tf_sharpen"

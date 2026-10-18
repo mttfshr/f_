@@ -5,7 +5,7 @@ Scratch check for the f_vf_glass question (2026-10-06). Uses the test glass of c
 (seed 7, 5 cosine modes). Scenarios, all producing an f_vecfield texture (512^2):
   A  analytic gradient (what an analytic f_vf_glass would output)
   B  height as a FLOAT32 texture through a fieldmap emulation (central difference at +-s, bilinear)
-  C  the same height quantised to 8 bits (a char texture) through the same fieldmap emulation
+  C  the same height quantized to 8 bits (a char texture) through the same fieldmap emulation
 Each is scored by the caustic it produces (NumPy scatter emulation, 16 points per pixel):
 B against A (cost of the fieldmap route), C against B (cost of 8-bit), at 1.0 and 3.5 d*.
 
@@ -91,7 +91,7 @@ def main():
         Bx, By = fieldmap(luma_tex(L01), gain, s)
         Cx, Cy = fieldmap(luma_tex(L8), gain, s)
         B, C = to_tex(Bx, By), to_tex(Cx, Cy)
-        print(f"neighbour distance s = {s}: gain {gain:.1f} ({'in' if gain <= 10 else 'OUT OF'} the module's range); "
+        print(f"neighbor distance s = {s}: gain {gain:.1f} ({'in' if gain <= 10 else 'OUT OF'} the module's range); "
               f"field error vs analytic: float32 {rms_rel(np.stack([Bx, By]), np.stack([ax, ay])):.4f}, "
               f"8-bit {rms_rel(np.stack([Cx, Cy]), np.stack([ax, ay])):.4f}")
         for fr in (1.0, 3.5):

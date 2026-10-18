@@ -39,7 +39,7 @@ The optional second inlet takes a vecfield and uses it as `r` per pixel. The pro
 - The flow follows the image edges but takes its sign from the reference. Feed it `f_vf_vortex` or `f_vf_fluid` and the frame no longer drifts one way.
 - The reference is **not normalized**: flow strength scales with `|r|`, so a zero reference (a vortex core) gives no flow, and the reference doubles as a spatial gain map.
 - `angle` rotates the whole reference field.
-- The output is never rougher than the reference (projection cannot increase the difference between neighbours), so the reference's own singularities are the only place a seam can come from.
+- The output is never rougher than the reference (projection cannot increase the difference between neighbors), so the reference's own singularities are the only place a seam can come from.
 - Unconnected, or anything that is not a real f_vecfield (the inlet is read as a vecfield only where B is within 0.25 of 0.5, the same content gate `f_vf_fluid` uses on its force), the module behaves exactly as before with `angle` as a constant direction.
 - Aspect: the reference arrives in normalized screen units and is converted to pixel space (with `width`/`height`) before projecting, so on a non-square frame an edge running along the reference returns the reference unchanged.
 

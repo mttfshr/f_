@@ -11,8 +11,8 @@
 # source texture at the current pixel (glyph = passthrough per the family
 # contract), NOT the native @bypass.
 #
-# Header signal_type "tensor in" reuses the amber `tensor` colour added by
-# tensormap T030 (the colour is keyed on the first word only).
+# Header signal_type "tensor in" reuses the amber `tensor` color added by
+# tensormap T030 (the color is keyed on the first word only).
 #
 # Param names on the wire match the codebox Params exactly; `scale` is
 # renamed `glyph_scale` inside the codebox because `scale` collides with the
@@ -45,7 +45,7 @@ patcher = {
          "hint": "One closed-form ellipse glyph per grid cell over the raw tensor: "
                  "orientation from the decoded axis (along the edge), aspect from the "
                  "eigenvalue ratio, drawn only where trace >= gate. Tinted by the "
-                 "source luma at the cell centre. Gain-free: sweeping tensormap's "
+                 "source luma at the cell center. Gain-free: sweeping tensormap's "
                  "strength changes nothing here. Bypass = source passthrough."},
     ],
 
@@ -65,7 +65,7 @@ patcher = {
             "label": "Grid",
             "hint": "Cells across (the glyph lattice is grid x grid). The real control: "
                     "24 = coarse debug read, 64+ = dense texture. PROVISIONAL default "
-                    "-- live judgement pending (tasks TG020).",
+                    "-- live judgment pending (tasks TG020).",
         },
         {
             "name": "glyph_scale", "type": "float",

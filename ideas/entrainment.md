@@ -163,4 +163,4 @@ Constraints worth noting: VR refresh rate sets a ceiling on stimulus frequencies
 - Can theta increase during ganzflicker be reliably detected with Muse electrode positions?
 - What is the minimum session duration for effects to emerge at different Hz values?
 - Closed-loop (EEG → stimulus) vs open-loop (fixed stimulus, EEG observed): which is more interesting as a research tool? As a performance instrument?
-- How does color (hue, saturation) interact with entrainment? Most research uses white/grey fields; colored flicker is underexplored.
+- How does color (hue, saturation) interact with entrainment? Most research uses white/gray fields; colored flicker is underexplored.

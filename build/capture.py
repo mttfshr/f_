@@ -13,7 +13,7 @@ each generated box is matched to the shipped patcher's box by drift.py's identit
 every matched element the differences (drift.prop_diffs and layout_differs, so exactly what
 `drift.py` reports) are split in two:
 
-  captured      presentation properties (CAPTURE_KEYS): the presentation rect, colours, fonts,
+  captured      presentation properties (CAPTURE_KEYS): the presentation rect, colors, fonts,
                 dial appearance.  These are written to `patcher["overrides"][<element key>]`.
   not captured  everything else, each printed with the reason: label text, hints, ranges and
                 enums (the definition owns them: edit params[]), and `varname`/`param_connect`
@@ -43,8 +43,8 @@ CAPTURE_KEYS = {
     "textjustification", "linecount", "appearance", "triangle", "shownumber", "showname",
     "needlemode", "activedialcolor", "valuepopup", "valuepopuplabel", "hidden", "border",
     "background", "tricolor", "suppressinlet",
-    # a live.text's own colours and corner rounding (added 2026-10-05, f_stereo's hand-built
-    # `circ` toggle; theme colours Max writes explicitly once they are set by hand)
+    # a live.text's own colors and corner rounding (added 2026-10-05, f_stereo's hand-built
+    # `circ` toggle; theme colors Max writes explicitly once they are set by hand)
     "activebgcolor", "activebgoncolor", "activetextcolor", "activetextoncolor", "rounded",
 }
 
@@ -62,7 +62,7 @@ WHY_NOT = {
 
 
 def _why_not(prop):
-    return WHY_NOT.get(prop, "not a presentation property (captured: presentation_rect, colours, "
+    return WHY_NOT.get(prop, "not a presentation property (captured: presentation_rect, colors, "
                              "fonts, dial appearance)")
 
 

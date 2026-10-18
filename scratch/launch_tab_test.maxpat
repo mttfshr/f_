@@ -192,7 +192,7 @@
 										150.0,
 										20.0
 									],
-									"text": "WARN Unfinished. Regular N-gon generator / mask (greyed: no helpfile)",
+									"text": "WARN Unfinished. Regular N-gon generator / mask (grayed: no helpfile)",
 									"textcolor": [
 										0.55,
 										0.55,
@@ -493,7 +493,7 @@
 										150.0,
 										20.0
 									],
-									"text": "WARN Unfinished. De-correlating ripple stimulus (greyed: no helpfile)",
+									"text": "WARN Unfinished. De-correlating ripple stimulus (grayed: no helpfile)",
 									"textcolor": [
 										0.55,
 										0.55,

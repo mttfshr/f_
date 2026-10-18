@@ -6,7 +6,7 @@ step (1024 sq, 4 points/px) -- see docs/f-reference/f_caustic.md and the decisio
 .specify/f_caustic_scatter/tasks.md.
 
 The scene is a jit.gl.node capture holding a points jit.gl.mesh drawn with package/code/f_caustic_sheets.jxs:
-  slabS / slabF   source and field -> normalised 2D float32 (as Vsynth's vs_xyz_disp does)
+  slabS / slabF   source and field -> normalized 2D float32 (as Vsynth's vs_xyz_disp does)
   route out_name  the slabs' output names -> `texture <src> <field>` on the mesh, refreshed every frame
   grid -> mesh    a plane gridshape as a MATRIX into a points mesh: every lattice point is exactly one vertex
   node            the float32 capture (the illuminance); its outlet 0 is the scene's output
@@ -80,7 +80,7 @@ def scene(g, extra_tokens=()):
     tokens = BASE_TOKENS + tuple(extra_tokens)
     g.obj(CTRL, "route " + " ".join(tokens), 1, len(tokens) + 1, [20, 60, 60 + 60 * len(tokens), 22])
 
-    # texture adapters: normalised 2D float32 (a vertex program wants a sampler2D)
+    # texture adapters: normalized 2D float32 (a vertex program wants a sampler2D)
     g.obj("obj-901", "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32", 1, 2, [20, 120, 330, 22],
           ["jit_gl_texture", ""])
     g.obj("obj-902", "jit.gl.slab vsynth @inputs 1 @rectangle 0 @type float32", 1, 2, [400, 120, 330, 22],

@@ -1,7 +1,7 @@
 # f_tf_smooth
 
 **Type:** Processor (f_tensor in → f_tensor out)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgement pending
+**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending
 
 ---
 
@@ -22,7 +22,7 @@ chain works on live video without this stabilizer stage.
 
 **Why tensor space and not "temporal filter on a texture":** opposite axes
 that trade places frame-to-frame (flicker between two edge camps) average
-into a stable tensor rather than cancelling into mush, and the field carries
+into a stable tensor rather than canceling into mush, and the field carries
 its confidence with it. Proven in the tier-1 mirror: a gradient that flips
 sign every frame (the same edge seen from opposite ends) leaves the smoothed
 tensor exactly unchanged, while a signed-vector (vecfield) one-pole on the
@@ -77,10 +77,10 @@ float32 and are never exposed as outlets.
 and only history is softened (release-only; there is no attack curve — attack
 shaping would dull real structure and is the v2 door per spec Out of Scope).
 Default 0.5 and the top of the range are **PROVISIONAL**: the OQ1 gate is
-open pending tier-3 judgement on live noise (same discipline as tensormap's
+open pending tier-3 judgment on live noise (same discipline as tensormap's
 strength calibration; the shipped default is the spec's provisional value).
 
-**Decay behaviour** (the number to reason with, verified in the mirror): a
+**Decay behavior** (the number to reason with, verified in the mirror): a
 one-frame step from tensor A to constant B gives `out(k) = B + (A−B)·release^k`
 per channel — release 0.5 halves the residual every frame; release 0.9 takes
 ~22 frames to reach 10% residual; release 0.99 is near-frozen (~1% per frame
@@ -105,7 +105,7 @@ module must not re-encode it.
   and the consumer downstream.
 - **NaN persistence caveat (ADR-3's cost):** a degenerate input (NaN) persists
   forever in the feedback. That is a debug situation, not a performance
-  behaviour; the bypass recovers it (bypass = passthrough, so a clean source
+  behavior; the bypass recovers it (bypass = passthrough, so a clean source
   flushes the state).
 
 ---

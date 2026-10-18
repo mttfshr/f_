@@ -40,7 +40,7 @@ f_/
 - [x] T005 Confirmed asyncread output format: char (0–255) — verified from vs_envelope.maxpat which divides by 255. JS must normalize. Noted in plan.md.
 - [x] T006 Add `jit.gl.texture @adapt 0 @dim 1 128 @name profile_tex` downstream of JS
 - [x] T007 JS writes flat 0.5 test matrix to outlet → `jit.gl.texture` → `jit.pwindow @size 512 4`
-- [x] T008 Confirmed: 640×640 char 4-plane matrix, pwindow flat grey. Round trip proven.
+- [x] T008 Confirmed: 640×640 char 4-plane matrix, pwindow flat gray. Round trip proven.
 
 **Checkpoint**: JS receives real matrix data from asyncread; outputs a visible 1×128 texture.
 

@@ -151,7 +151,7 @@ normalization baked into the module.
 
 ### New outlet
 
-- Out 3: unsigned scalar texture (greyscale) — magnitude of raw modal
+- Out 3: unsigned scalar texture (grayscale) — magnitude of raw modal
   interference, gain-scaled and clamped to `[0,1]`. Bypass behavior:
   black (`vec(0,0,0,1)`), consistent with `out1`'s bypass convention.
 

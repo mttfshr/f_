@@ -113,7 +113,7 @@ the ADR-2 gate compares implementations on the bench, not descriptions.
   `step()`-style, cost scales with TAPS_MAX not the dial). Both
   fully-unrolled (no loop) and bounded-loop variants parameterized, since
   the codebox can use either.
-  — done, shape settled as: centre tap (weight 1) + 8 half-integer 1 px
+  — done, shape settled as: center tap (weight 1) + 8 half-integer 1 px
   stations per side (u = ±0.5..±7.5), station along-mass g(u) = exp(−2u²/L²)
   (mid-point quadrature of the continuous Gaussian: 1e-4 relative vs its own
   integral, so the 1-px lattice IS the converged kernel), each station with
@@ -244,7 +244,7 @@ ADR-2 with cost and compile facts.
   `codebox_aniso.gen` (single file per the single-stage ADR-1; the tasks
   prose predates that ADR's single-file plan), family (a), ~77 statements
   (vs ~450 ceiling), decode idiom cited verbatim from glyph plan ADR-2,
-  SPD/trace guard, circularity snap, texel-centre clamps on every tap,
+  SPD/trace guard, circularity snap, texel-center clamps on every tap,
   bypass passthrough. Its parity against the mirror is verified OFFLINE
   (formula-exact reconstruction: 1.8e-7 float32 noise across guard cases,
   knob extremes, all orientations) — the ON-BENCH parts (true compile,
@@ -259,7 +259,7 @@ ADR-2 with cost and compile facts.
   NOT built (owner: family (a) ships provisionally; building the grid
   codebox without bench evidence would pre-decide the gate).
 - [x] T013 [BENCHED 2026-10-17 (M3 Max), ask-approved: 6/6 pass, re-confirmed in the final 5-file sweep. Two bench-harness findings en route (module unaffected, mirrors green): (a) PARAM PERSISTENCE — the bench keeps a Param's last value between jobs (skill doc); a default-only job inherited bypass_gate=1 from a prior run's bypass test and compared the RAW source (the whole-frame 0.52 diff); every param dict is now pinned (the 'params persist' hazard is now a bench-file comment); (b) the mirror-wrapper's key mapping bug (floor → floor_pct) — the mirror read its own default where the GPU got the job's floor_pct. Parity: default 45° cohered at 1.3e-4, long-kernel extreme 1.86e-4 = the documented 8-bit interpolation-weight stacking; guard rows (vs_black/neutral/non-SPD) == iso reference exactly; borders exact; bypass exact.]* Bench parity: each compiled codebox vs its mirror, per channel,
-  including border rows/columns (texel-centre clamp in-shader; the bench GPU
+  including border rows/columns (texel-center clamp in-shader; the bench GPU
   wraps out-of-range reads, tensormap T012 finding). `length` = 0 identity,
   `width_gate` = 0 and `floor` = 1 exact-iso, bypass passthrough,
   vs_black-tensor input takes the guard path.
@@ -304,7 +304,7 @@ T013/T014/T015 stay open for Matt.
 
 ---
 
-## Phase 2: Scratch patch, judgement tier
+## Phase 2: Scratch patch, judgment tier
 
 > **PENDING MATT (out of this build's scope, per the owner directive):**
 > the whole tier (T017-T020) needs a live Vsynth session; none of it was
@@ -467,7 +467,7 @@ session in this build).
   diverging copy; family rule from the glyph plan), unconnected-inlet
   behaviors, cost facts with the M1 caveat, and the straight-axis v1
   constraint stated so nobody mistakes it for a bug.
-  — done: "Status: Draft — codebox tier-2 bench and tier-3 live judgement
+  — done: "Status: Draft — codebox tier-2 bench and tier-3 live judgment
   pending" per the owner directive; structure mirrors the tensormap
   reference doc; the strength-pairing note CITES tensormap's calibration
   section and f_tensor_type.md rather than restating them (one explanation).

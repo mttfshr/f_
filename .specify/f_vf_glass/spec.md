@@ -91,7 +91,7 @@ goes to its neutral value: vecfield 0.5/0.5, `height` black, `focus` 0.5. Needs 
 
 Not every parameter earns a panel slot (skill: "Not every parameter earns a panel slot"). A candidate cut:
 panel gets `type`, `gain`, `scale`, `phase`, `rotate`; `seed`, `modes`, `drift_*` stay message-only. The
-default `gain` depends on the regime-normalisation decision.
+default `gain` depends on the regime-normalization decision.
 
 ---
 
@@ -119,8 +119,8 @@ Phase 0 in `tasks.md`.
    bypass; shipped-patcher contract (`tests/contracts/test_module_contracts.py`, `tests/contracts/bench_modules.py`) and drift
    (`build/drift.py`) pass.
 3. **Tier 3 (scratch patch).** Into `f_vf_warp`, `f_vf_prism` and `f_caustic`: families look distinct, no pops
-   when `phase` is swept, ranges sensible. Judgement, not numbers.
-4. If regime normalisation is adopted: the predicted first-fold distance matches the photon-counting truth
+   when `phase` is swept, ranges sensible. Judgment, not numbers.
+4. If regime normalization is adopted: the predicted first-fold distance matches the photon-counting truth
    (`scratch/caustic_fidelity.py` machinery) to within an agreed tolerance.
 
 ---
@@ -130,7 +130,7 @@ Phase 0 in `tasks.md`.
 - Audio input (modulate `phase` / `gain` from the patch).
 - An upstream scalar as base height (that is `f_vf_fieldmap`'s job).
 - Families that are not mode sums: lens array, rain-glass ripples, Fresnel rings.
-- A reduction pass over the field (the analytic bound makes it unnecessary if normalisation is adopted).
+- A reduction pass over the field (the analytic bound makes it unnecessary if normalization is adopted).
 
 ---
 
@@ -152,15 +152,15 @@ Phase 0 in `tasks.md`.
   difference is its UV inset, a registration stretch. So the new capability is the smooth, evolving height
   generator; the vecfield outlet saves a pass and removes the inset but is not a quality gain. Options: keep
   all three outlets (as drafted); height-only generator feeding `f_vf_fieldmap` (then not an `f_vf_` module);
-  or vecfield primary only if regime normalisation is adopted (the one thing a texture route cannot do).
+  or vecfield primary only if regime normalization is adopted (the one thing a texture route cannot do).
   A scratch chain (height codebox → `f_vf_fieldmap` → consumers) is the cheap test before building.
 - **Time source:** a pix codebox has no confirmed clock. A plain automatable `phase`, an internal
   `r draw` counter chain (as used in the 2026-10-06 lag spike), or both?
 - **`jit.gl.bfg` time axis:** the refpage lists a two-component `@offset`; confirm in Max whether a usable
   third axis exists, since that changes how much this module adds.
-- **Regime normalisation:** scale the field so a consumer's `distance` is in units of the first fold? Needs
+- **Regime normalization:** scale the field so a consumer's `distance` is in units of the first fold? Needs
   a convention a consumer can know (the vecfield type carries only RG) and an answer to the `|F| <= 1` limit.
-- **`height` mapping to 0..1:** fixed bound from the amplitudes, or a normalised range?
+- **`height` mapping to 0..1:** fixed bound from the amplitudes, or a normalized range?
 - **`focus` definition:** divergence (distance-free; what `f_caustic` weights) vs a Hessian determinant
   (needs a distance; belongs to a consumer).
 - **Soft limit vs hard clamp** at `|F| = 1`.

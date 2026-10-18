@@ -74,7 +74,7 @@ the branch choice changes what tier 2 would even measure.
       parent constraint); tier 3 applies, pending Matt. Nothing skipped. **Tone
       sub-decision (OQ2, decided here so E3 is designable): tone stays OUT of v1**
       — the spike's evidence (one more `norm` tap is cheap, but the tone-gating
-      look is a live judgement, and density-band layering is a second mark system
+      look is a live judgment, and density-band layering is a second mark system
       = out-of-v1 cross-hatch scope) plus the build's no-live-session constraint;
       recorded PROVISIONAL in ADR-6 with inlet-1-luma as the v2 pointer, spec
       inlet-1 row decline carried in REGISTRATION_NOTES.md.
@@ -100,7 +100,7 @@ the branch choice changes what tier 2 would even measure.
 - [x] T005 **(done 2026-10-17: both forms measured over uniform/bimodal/noise-tailed eigengap distributions; recorded as mean-commit/activation-coverage numbers in test output, e.g. uniform: mean commit 0.42, frac>0.5 0.38; bimodal: 0.49/0.50; noise-tailed: 0.52/0.49; the smoothstep form's low-gap suppression (deeper off below the gate) carried the best structure/noise separation and stays the provisional choice, with tier-3 (T020) holding the live decision; OQ3 remains open)** Commit-curve sweep (feeds OQ3): sweep the curve form over synthetic
       eigengap distributions (uniform, bimodal, noise-tailed) and report which form
       separates structure from noise best at fixed gate; record findings in the
-      tasks-notes and hold the decision for the tier-3 judgement (T020) — do not close
+      tasks-notes and hold the decision for the tier-3 judgment (T020) — do not close
       OQ3 in NumPy alone.
 - [x] T006 **(done 2026-10-17, branch T per T001: f_weave mechanics adapted to the per-pixel axis, cited verbatim where reused -- density log map `pow(2, density*5-1)`, line hash `fract(sin(line_idx*127.1)*43758.5453)*(1-regularity)`, smoothstep profile with softness clamped 0.49; phase scroll verified (0.02 -> ~1.4 px shift at defaults, pitch-normalized), regularity endpoints verified (1 phase-locked across lines, 0 staggered, hash stable call-to-call), softness verified (widens both axes, coverage +>30%))** Family-mechanics mirrors (branch-conditional on the T001 pick):
       branch T — the `f_weave` distance-field algorithm adapted to a per-pixel rotated
@@ -142,7 +142,7 @@ benched stage by stage (tests/README); one pass per job.
       intermediate float32 texture (commit, along-axis components or angle, aux), no
       clamp, no exposure as an outlet. Keep well under the statement budget
       (`skills/jit-gen-codebox`: ~250/function, ~450/program). Clamp every sampled
-      coordinate to texel centres in-shader (bench GPU wraps out-of-range reads,
+      coordinate to texel centers in-shader (bench GPU wraps out-of-range reads,
       tensormap T012 finding).
 - [x] T011 *[BENCHED 2026-10-17 (M3 Max), ask-approved: E1 rows all pass in the 6/6 final sweep: decode ca/sa 4-7e-7, commit 5-10e-7, iso exact, borders 3e-7, zero-tensor iso=1/axis-unset exact, angle-offset ±1 sweeps ≤ 1e-3.]* Bench E1 against the mirror (register `tests/bench_hatch.py` against the
       stage; **ask before the bench run**; register in `tests/lib/benchdeps.DATA`).
@@ -213,7 +213,7 @@ cost recorded against the gate's model; branch validated. → Proceed to Phase 2
 
 ---
 
-## Phase 2: Scratch patch, judgement tier (tier 3)
+## Phase 2: Scratch patch, judgment tier (tier 3)
 
 **Purpose:** The things numbers can't judge: the commit character, defaults, and the
 hatch look on real chains.
@@ -272,7 +272,7 @@ hatch look on real chains.
       not the primary (tensormap fans `radius` to two stages; seeds' params reach
       multiple search stages). Also confirm where codebox files are actually expected
       to live. Record the facts in the notes.
-- [x] T024 **(DECIDED 2026-10-17: header signal_type "tensor out" -- the amber `tensor` colour ALREADY in build_patcher.py SIGNAL_TYPE_COLORS (tensormap T030), the family header tag; the OUTLETS are ordinary luma/texture renders, NOT tensor-typed (they are marks, not field data, plan ADR-7) -- carried via per-outlet comment/hint text; recorded in REGISTRATION_NOTES.md's T024 section + the docs page outlets table note)** **DECISION GATE (cheap, precedent-driven): outlet `signal_type` labels**
+- [x] T024 **(DECIDED 2026-10-17: header signal_type "tensor out" -- the amber `tensor` color ALREADY in build_patcher.py SIGNAL_TYPE_COLORS (tensormap T030), the family header tag; the OUTLETS are ordinary luma/texture renders, NOT tensor-typed (they are marks, not field data, plan ADR-7) -- carried via per-outlet comment/hint text; recorded in REGISTRATION_NOTES.md's T024 section + the docs page outlets table note)** **DECISION GATE (cheap, precedent-driven): outlet `signal_type` labels**
       (the tensormap T030 analog). Confirm how `build_patcher.py` labels these outlets
       for a discrete-item render module (ordinary luma/texture outputs, NOT
       tensor-typed — they are marks, not field data; plan ADR-7) and record it.
@@ -330,14 +330,14 @@ Phase 6.
       paragraph, the branch record (T won the T001 gate, one sentence + the ADR-1
       pointer), the cost/model paragraph with the M1 caveat, the upstream-contract
       section; header Status: "Draft -- codebox tier-2 bench and tier-3 live
-      judgement pending", mirroring the tensormap doc's structure)** Write `docs/f-reference/f_tf_hatch.md`: param table (with the locked
+      judgment pending", mirroring the tensormap doc's structure)** Write `docs/f-reference/f_tf_hatch.md`: param table (with the locked
       defaults), signal chain, the commit/cosmetics note (line→dot rounding explained
       in one paragraph), the branch record (which mechanism won T001 and why — one
       sentence, cited), cost paragraph with the M1 caveat, and the upstream-contract
       section (smooth recommended upstream; hatch stateless).
 - [ ] T034 Helpfile via the `f-helpfile` skill, then the `skills/module-preflight/`
       checklist including its **content judgment gate** (the gate that caught
-      `f_sirds`/`f_vf_vorticity`/`f_vf_glow` before). **PENDING MATT (live judgement
+      `f_sirds`/`f_vf_vorticity`/`f_vf_glow` before). **PENDING MATT (live judgment
       gate; the reference doc the helpfile draws from is written, T033).**
 - [ ] T035 Update `README.md` (status table, build queue row already added in T027 —
       clear the ⚠), `docs/f-reference/module-inventory.md`, and the constitution's

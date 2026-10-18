@@ -45,7 +45,7 @@ as ADR-1.
 ### ADR-1: Ford-circles construction chosen as the first target, not the ring+central-circle construction
 
 **Context**: `ideas/f_apollonian.md` reviewed three reference shaders.
-Two (`Colourful Apollonian III` lineage, ebanflo-derived) build the gasket
+Two (`Colorful Apollonian III` lineage, ebanflo-derived) build the gasket
 via an N=3 ring of tangent circles plus a central circle, testing
 containment against each of N+1 circles per iteration and inverting into
 whichever one contains the current point. The third (Ford circles) builds

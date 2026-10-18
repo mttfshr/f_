@@ -9,7 +9,7 @@ A throwaway prototype, not a module: nothing here ships. It runs on the CODEBOX 
 Per output pixel:  S*S sub-samples (a gather must integrate over the pixel); per sub-sample: G*G coarse
 points around the pixel, each tested with |u + d F(u) - x|; the M best become Newton starts; T damped
 Newton steps each, then accept / de-duplicate / sum 1/|det(I + d J)|.
-in1 = source (unused here), in2 = f_vecfield texture (RG = F * 0.5 + 0.5). out1 = illuminance (grey).
+in1 = source (unused here), in2 = f_vecfield texture (RG = F * 0.5 + 0.5). out1 = illuminance (gray).
 The field is read with wrap-around (u - floor(u)), as the NumPy mirror does.
 
 FINDING 2026-10-06 (first attempt, `make_code_unrolled`): fully unrolled (G=6, M=6, T=8, S=2 = 1,810 lines,
@@ -36,7 +36,7 @@ TEMPS = ("wu wv fx fy xpx xpy xmx xmy ypx ypy ymx ymy gx gy na nb nc nd m11 m12 
 
 
 def _fetch(prefix="", uu="wu", vv="wv", k=256.0, bil=False):
-    """GenExpr lines that read field and slopes at (uu, vv): fx fy and the four neighbours.
+    """GenExpr lines that read field and slopes at (uu, vv): fx fy and the four neighbors.
     k = 1 / (2 * hh) = fsize / 2 (central-difference scale). bil=True reads through the hand-made bilinear
     function fxy() (four exact nearest() taps) instead of sample(): see the FINDING in make_code_fn."""
     if bil:
@@ -225,7 +225,7 @@ def _make_code_fn_core(G=6, M=6, T=8, S=2, fsize=256):
 
 # ------------------------------------------------------------------ hand-made bilinear (the fix)
 # FINDING 2026-10-06 (bisected on the bench, see ideas/optics_map.md): jit.gl.pix `sample()` does NOT stay bilinear
-# when the coordinate is data-dependent and jumps between neighbouring pixels (Newton starts from different coarse
+# when the coordinate is data-dependent and jumps between neighboring pixels (Newton starts from different coarse
 # cells, ray marching, any dependent read). Texture filtering chooses magnify/minify from the coordinate's
 # screen-space derivative; above ~1 texel per pixel it falls back to the NEAREST minification filter, so the field
 # is read piecewise-constant (error up to half a texel of variation: median 6e-3 against 2e-5 at pixel-aligned
@@ -260,8 +260,8 @@ def make_code_fn(G=6, M=6, T=8, S=2, fsize=256, bil=False):
 
 # ------------------------------------------------------------------ the run
 def analytic_field(cf, n):
-    """The test glass's f_vecfield as an n x n float32 texture (RG = F * 0.5 + 0.5), sampled at texel centres.
-    It must be the same size as the pix output: a larger source is read nearest-neighbour (bench-verified)."""
+    """The test glass's f_vecfield as an n x n float32 texture (RG = F * 0.5 + 0.5), sampled at texel centers.
+    It must be the same size as the pix output: a larger source is read nearest-neighbor (bench-verified)."""
     c = (np.arange(n) + 0.5) / n
     X, Y = np.meshgrid(c, c)
     fx, fy = cf.field(X, Y)[:2]

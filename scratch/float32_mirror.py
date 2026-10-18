@@ -3,7 +3,7 @@ float32_mirror.py -- is the GPU/NumPy gap of the multi-start gather float32 arit
 
 The earlier mirror (multi_guess_gather2.py) did its arithmetic in float64 and only read the texture in float32. The
 project's rule is a pass-for-pass FLOAT32 mirror, so this redoes the exact program tests/records/gather_proto.make_code_fn
-generates with every intermediate rounded to float32 (dtype switch: float64 = the old behaviour, as a sanity check).
+generates with every intermediate rounded to float32 (dtype switch: float64 = the old behavior, as a sanity check).
 Same config as the GPU test: G=6, M=4, T=6, S=2, field texture 256^2 = output 256^2, central 96x96 crop.
 
 Compared against the photon-counting truth, and pixel-by-pixel against the actual GPU image from the bench.
@@ -32,8 +32,8 @@ def run(d, tol, dt, field):
     f = dt
     lo, hi = CROP
     n = 256
-    centres = ((np.arange(n, dtype=np.float64) + 0.5) / n).astype(f)
-    cy_, cx_ = np.meshgrid(centres[lo:hi], centres[lo:hi], indexing="ij")     # rows = y, cols = x
+    centers = ((np.arange(n, dtype=np.float64) + 0.5) / n).astype(f)
+    cy_, cx_ = np.meshgrid(centers[lo:hi], centers[lo:hi], indexing="ij")     # rows = y, cols = x
     X0, Y0 = cx_.ravel(), cy_.ravel()
     hh = f(1.0 / FSIZE)
     kk_slope = f(FSIZE / 2.0)

@@ -165,7 +165,7 @@ shared chrome helpers (panel, title, dials, `moduleSize` chain, autopattr) and
 replaces only the pix chain. Four gaps caused that. Unlike Gaps 1 and 2, **no
 fix has been attempted** and none is scheduled; they are logged so the next
 module of this shape finds the pattern, and so the decision to write a bespoke
-script is on record as a judgement and not an oversight. `definition.py` is
+script is on record as a judgment and not an oversight. `definition.py` is
 metadata only for this module (it feeds docs, helpfile and param extraction
 and the bench's archetype lookup) — it is not an input to `build_patcher.py`.
 

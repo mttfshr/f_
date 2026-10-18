@@ -1,5 +1,5 @@
 """
-test_fft_separable.py -- correctness of the separable-DFT approach to a
+fft_separable.py -- correctness of the separable-DFT approach to a
 GL-space FFT for f_ (ideas/ceyron_simulation_scripts_notes.md, 2026-09-22).
 
 Mirrors the planned codebox structure pass-for-pass:
@@ -13,61 +13,26 @@ Domain: periodic unit square, so wavevector k = 2*pi*signed_index.
 Covers T1-T3 of the FFT plan for *correctness only*. Compile limits, fps and
 GPU trig precision are NOT covered -- those stay Max questions.
 
-Run:  tests/run.sh tests/math/test_fft_separable.py
+RECORD (2026-10-18): Phase 0 of f_vf_fluid, no longer in the offline suite (the file is not
+test_*-named). The mirror and helpers moved to tests/lib/dft_mirror.py; the sampling check
+became tests/toolchain/test_gpu_sim.py and the angle-reduction check lives in
+tests/modules/fluid/test_fluid_mirror.py. pass_spectral / signed_k stay here.
+
+Run:  tests/py.sh tests/records/fft_separable.py
 """
 import sys
 
 import numpy as np
 
-from gpu_sim import F32, TWOPI, grid, nearest, sample, store_float32, texture
-from harness import check, note, run
+from dft_mirror import cplx, fft2_passes, ifft2_passes, make_image, pack, pass_dft, rel_err
+from gpu_sim import F32, TWOPI, grid, nearest, store_float32
+from harness import check, run
 
 SIZES = (128, 256)
 TOL = 1e-4
 
 
 # ---------------------------------------------------------------- shader mirrors
-
-def pass_dft(tex, axis, inverse=False, reduce_angle=True):
-    """Mirror of the planned DFT codebox (axis would be a Param or a constant
-    per stage). Each output pixel computes one bin along `axis` for its own
-    row/column by looping over all N input texels on that line."""
-    h, w = tex.shape[:2]
-    nx, ny, cx, cy = grid(h, w)
-    n_len = w if axis == "x" else h
-    # this pixel's integer bin index. In the codebox: floor(norm.x * N) --
-    # NOT `cell`, which jit.gl.pix defines as norm*(dim-1) (bench-verified
-    # 2026-09-22, see gpu_sim.py).
-    k = cx if axis == "x" else cy
-    sgn = F32(1.0) if inverse else F32(-1.0)
-    acc = np.zeros((h, w, 4), F32)
-    for n in range(n_len):                        # for (n = 0; n < N; n += 1)
-        t = F32((n + 0.5) / n_len)                # texel center of input n
-        s = nearest(tex, t, ny) if axis == "x" else nearest(tex, nx, t)
-        idx = k * F32(n)
-        if reduce_angle:
-            idx = np.mod(idx, F32(n_len))         # exact while k*n < 2^24
-        ang = sgn * TWOPI * idx / F32(n_len)
-        c = np.cos(ang)
-        sn = np.sin(ang)
-        # complex multiply-accumulate: (a + ib)(c + is)
-        acc[..., 0] += s[..., 0] * c - s[..., 1] * sn
-        acc[..., 1] += s[..., 0] * sn + s[..., 1] * c
-        acc[..., 2] += s[..., 2] * c - s[..., 3] * sn
-        acc[..., 3] += s[..., 2] * sn + s[..., 3] * c
-    if inverse:
-        acc /= F32(n_len)
-    return store_float32(acc)
-
-
-def fft2_passes(tex, **kw):
-    return pass_dft(pass_dft(tex, "x", **kw), "y", **kw)
-
-
-def ifft2_passes(tex, **kw):
-    return pass_dft(pass_dft(tex, "y", inverse=True, **kw), "x",
-                    inverse=True, **kw)
-
 
 def signed_k(cell, n):
     """GenExpr: idx = floor(norm.x * n); switch(idx < n*0.5, idx, idx - n)
@@ -99,46 +64,7 @@ def pass_spectral(tex, nu_dt=0.0, project=False):
 
 # ---------------------------------------------------------------- helpers
 
-def pack(u, v=None):
-    tex = texture(*u.shape)
-    tex[..., 0] = u
-    if v is not None:
-        tex[..., 2] = v
-    return tex
-
-
-def make_image(h, w, seed=1):
-    rng = np.random.default_rng(seed)
-    nx, ny, _, _ = grid(h, w)
-    img = (0.5 + 0.25 * np.sin(TWOPI * 3 * nx) * np.cos(TWOPI * 5 * ny)
-           + 0.2 * rng.random((h, w)))
-    return img.astype(F32)
-
-
-def cplx(tex, which):
-    c = 0 if which == "u" else 2
-    return tex[..., c].astype(np.float64) + 1j * tex[..., c + 1]
-
-
-def rel_err(a, ref):
-    return np.max(np.abs(a - ref)) / np.max(np.abs(ref))
-
-
 # ---------------------------------------------------------------- tests
-
-def test_sim_sampling_sanity():
-    """The emulator itself: texel-center reads are exact, bilinear midpoint
-    blends, wrap indexes around. If this fails nothing else means anything."""
-    rng = np.random.default_rng(0)
-    tex = rng.random((8, 8, 4)).astype(F32)
-    nx, ny, _, _ = grid(8, 8)
-    check("nearest @ texel centers", np.max(np.abs(nearest(tex, nx, ny) - tex)), 0)
-    check("sample @ texel centers", np.max(np.abs(sample(tex, nx, ny) - tex)), 1e-6)
-    mid = sample(tex, F32(1 / 8), F32(0.5 / 8))
-    check("bilinear midpoint", np.max(np.abs(mid - 0.5 * (tex[0, 0] + tex[0, 1]))), 1e-6)
-    wrapped = nearest(tex, F32(-0.01), F32(0.5 / 8), wrap=True)
-    check("wrap to last column", np.max(np.abs(wrapped - tex[0, 7])), 0)
-
 
 def test_T1_row_dft_matches_numpy():
     for n in SIZES:
@@ -227,20 +153,6 @@ def test_projection_random_field_divergence_free():
         div = np.abs(kx * uh + ky * vh)
         ref = np.max(np.sqrt(kx ** 2 + ky ** 2) * np.sqrt(np.abs(uh) ** 2 + np.abs(vh) ** 2))
         check(f"N={n} spectral divergence after projection (rel)", np.max(div) / ref, TOL)
-
-
-def test_angle_reduction_precision():
-    """Twiddle angle 2*pi*k*n/N: computing k*n mod N first keeps the argument
-    small. Naive float32 angles reach ~2*pi*N; report the difference. NumPy's
-    sin is far more accurate than GPU sin, so the naive number here is a
-    best case -- the GPU will be worse."""
-    n = 256
-    u = make_image(n, n, 8)
-    ref = np.fft.fft(u.astype(np.float64), axis=1)
-    reduced = rel_err(cplx(pass_dft(pack(u), "x", reduce_angle=True), "u"), ref)
-    naive = rel_err(cplx(pass_dft(pack(u), "x", reduce_angle=False), "u"), ref)
-    note(f"N={n} naive angle rel err", naive)
-    check(f"N={n} reduced angle rel err", reduced, TOL)
 
 
 if __name__ == "__main__":

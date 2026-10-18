@@ -148,7 +148,7 @@ Since the driving texture is a live hue source, this resolves to
 
 ## Low-saturation edge case (open, with a known-good precedent)
 
-Hue angle is undefined/numerically unstable for near-grey (low
+Hue angle is undefined/numerically unstable for near-gray (low
 saturation) pixels — the driving texture will inevitably have some.
 `f_hue_processor` already solved exactly this problem for hue-selective
 processing: a `smoothstep(0.05, 0.15, S)` low-saturation gate suppresses
@@ -157,9 +157,9 @@ whatever the (unstable) hue reading says.
 
 Same fix should apply here directly: below the saturation gate, skip
 bracket-finding/dither entirely and fall back to a single designated
-hue (or a neutral/grey grain) rather than letting unstable hue readings
+hue (or a neutral/gray grain) rather than letting unstable hue readings
 drive boundary placement. Not yet decided which fallback (designated
-hue vs. grey) reads better — worth testing both once Phase 0a is
+hue vs. gray) reads better — worth testing both once Phase 0a is
 running.
 
 ## Other open questions, not yet decided

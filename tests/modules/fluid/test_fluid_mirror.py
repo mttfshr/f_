@@ -13,7 +13,7 @@ import sys
 import numpy as np
 
 import fluid_mirror as fm
-import test_fft_separable as tf
+from dft_mirror import cplx, make_image, pack, pass_dft, rel_err
 from fluid_mirror import Params
 from gpu_sim import F32, TWOPI, grid
 from harness import check, note, run
@@ -102,6 +102,21 @@ def test_fast_fft_path_matches_pass_dft():
         a = fm.step(a, force, p, fft="np")
         b = fm.step(b, force, p, fft="passes")
     check("3 frames: |np path - pass_dft path|", np.max(np.abs(a - b)), 1e-4)
+
+
+def test_angle_reduction_precision():
+    """Twiddle angle 2*pi*k*n/N: computing k*n mod N first keeps the argument
+    small (the shipped codebox_dft_* do this). Naive float32 angles reach
+    ~2*pi*N; report the difference. NumPy's sin is far more accurate than GPU
+    sin, so the naive number here is a best case; the GPU side is covered by
+    bench_fluid T019 (shipped stages vs np.fft.fft2 at 1e-5)."""
+    n = 256
+    u = make_image(n, n, 8)
+    ref = np.fft.fft(u.astype(np.float64), axis=1)
+    reduced = rel_err(cplx(pass_dft(pack(u), "x", reduce_angle=True), "u"), ref)
+    naive = rel_err(cplx(pass_dft(pack(u), "x", reduce_angle=False), "u"), ref)
+    note(f"N={n} naive angle rel err", naive)
+    check(f"N={n} reduced angle rel err", reduced, 1e-4)
 
 
 def test_single_mode_decay():
@@ -401,7 +416,7 @@ def test_advection_is_periodic():
 
 def test_force_tap_grid_matches_brute_force():
     """T038a: the separable mirror of the force tap grid equals a literal translation of
-    the shader's nested loop (mean of taps x taps bilinear taps at normalised offsets),
+    the shader's nested loop (mean of taps x taps bilinear taps at normalized offsets),
     for a minified, a 1:1 and a magnified force, non-square included."""
     n = 32
     nx, ny, _, _ = grid(n, n)

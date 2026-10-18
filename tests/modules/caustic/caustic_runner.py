@@ -7,7 +7,7 @@ Needs Max with tests/bench/bench_module.maxpat open and every Vsynth performance
 live patch share the `vsynth` render context). Each job: a module bpatcher in a wrapper, textures fed to its
 inlets, params sent as control messages (all of them, every job: the bench keeps a Param's last value between jobs).
 Tags in the result: 'base' = captured at frame W+1, BEFORE the job's own `params` are sent; 'bypassed' = captured
-at the END of the bench timeline, after the bypass test (a module that honours bypass shows a passthrough there).
+at the END of the bench timeline, after the bypass test (a module that honors bypass shows a passthrough there).
 Neither is "after the params, bypass off". To measure that, pass `settings=`: a message-box string that the
 wrapper's loadbang sends 200 ms after load (so after the first renders: a Param sent before a pix's first render is
 lost), and read the 'base' tag (the precedent: tests/modules/fluid/bench_fluid_module.py `taps_wrapper`). A spike module that

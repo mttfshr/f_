@@ -340,7 +340,7 @@ Decision gates for ADR-3 fallbacks and the error-capture route live here.
 ### Block 3: FFT T1 through the bench (spec Story 2)
 **Dependencies:** Block 2.
 **Builds:** `codeboxes/dft_x.gen` (GenExpr translation of
-`test_fft_separable.pass_dft`, carrying the three findings: `nearest()` at
+`dft_mirror.pass_dft`, carrying the three findings: `nearest()` at
 texel centers, `mod(k*n, N)` before the angle, signed wavenumber via
 `switch`); `bench_fft.py`.
 **Verification:** either a printed float32 error vs NumPy within tolerance,

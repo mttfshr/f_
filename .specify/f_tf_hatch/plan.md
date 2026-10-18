@@ -76,7 +76,7 @@ tests/
   bench_tf_hatch.py             tier 2, real codeboxes on the GPU (WRITTEN, not executed)
 
 ~/Vsynth/patterns/ (not in repo)
-  tf_hatch_scratch.maxpat       tier 3 judgement (Phase 2 — pending Matt)
+  tf_hatch_scratch.maxpat       tier 3 judgment (Phase 2 — pending Matt)
 
 docs/f-reference/
   f_tf_hatch.md                 as-built reference                          (Phase 6)
@@ -236,7 +236,7 @@ loop depth depends only on constants. The bench GPU wraps out-of-range sampling.
 **Decision:** If branch S is picked, any march loop compiles to a fixed `MARCH_MAX`
 with live tap weight `step(i, march_len)` gating, normalized as in tensormap's radius
 idiom, and cost scales with `MARCH_MAX` not with any dial. Every stage stays
-`@type float32` with no clamp or 0.5-offset; clamping to texel centres in-shader on
+`@type float32` with no clamp or 0.5-offset; clamping to texel centers in-shader on
 every texture coordinate; only E3 clamps/encodes outputs.
 
 **Consequences:** Same known-fact report as tensormap: turning the response dial down
@@ -278,14 +278,14 @@ glyph's plan ADR-6 (trace ≥ gate draws, below = no-mark) — cited; hatch's
 >   parent-side hard constraint: never executed here. The bench, with the
 >   spike's model as its prediction, is the gate's PROVISIONAL-CLOSED
 >   resolver (T013/T016 pending bench).
-> - **Tier 3 (scratch patch, live judgement) — applies, PENDING MATT**
+> - **Tier 3 (scratch patch, live judgment) — applies, PENDING MATT**
 >   (Phase 2/4 out of this build's scope; the provisional
 >   `coherence_gate`/`density`/`elongation` defaults stay provisional).
 >
 > **Tone (OQ2) sub-decision — OUT of v1, recorded:** spike evidence —
 > branch T's per-pixel budget has room for one more `norm` tap (a tone luma
 > read is ~free in cost), BUT (a) the tone-gating look (where marks appear
-> in the tonal landscape) is a live-tier judgement call, not a NumPy-
+> in the tonal landscape) is a live-tier judgment call, not a NumPy-
 > decidable one, and (b) the density-band engraving scheme is a second
 > mark system (cross-hatch layers), which the spec puts out of v1 scope.
 > The spec's inlet-1 PROVISIONAL row is declined: inlets stay single in v1,
@@ -309,7 +309,7 @@ glyph's plan ADR-6 (trace ≥ gate draws, below = no-mark) — cited; hatch's
   (the bench GPU wraps out-of-range coords — clamp in-shader, tensormap T012 finding).
 - **Tier 3 (scratch patch) applies** — commit/density/gate/elongation defaults on real
   chains (smooth→sharpen→hatch when those upstream modules exist; tensormap-only if
-  they do not yet), the line→dot character judgement. **Ask before any bench run**
+  they do not yet), the line→dot character judgment. **Ask before any bench run**
   (ways-of-working); tier-1 NumPy runs are cheap and need no ask.
 
 **Consequence:** No tier is skipped; the gate record in tasks.md states this with
@@ -394,7 +394,7 @@ statement budget; cost measured per stage and chain at 1080p and 4K; `bypass` +
 unconnected behavior (bench-level where testable — bypass mix may need Phase 5's
 module-level test, the tensormap T018 precedent).
 
-### Block 3: Judgement on real content
+### Block 3: Judgment on real content
 **Dependencies:** Block 2; (upstream ideally `f_tf_smooth` + `f_tf_sharpen`, else
 tensormap-only + caveat)
 **Builds:** `~/Vsynth/patterns/tf_hatch_scratch.maxpat`
@@ -451,8 +451,8 @@ If E2/E3 as spec'd exceed the ~450-statement program ceiling in combination, spl
 the `f_vf_seeds` precedent (its single-compile discovery, ADR 8 there). This phase is a
 gate-shaped task rather than always-run work.
 
-### Phase 4: Scratch patch, judgement tier
-Defaults, commit-character judgement, density sweep, the line→dot rounding under
+### Phase 4: Scratch patch, judgment tier
+Defaults, commit-character judgment, density sweep, the line→dot rounding under
 `coherence_gate`, moire check between hatch frequency and glyph-grid (`grid_size`)-
 scale features (expressive_consumers hatch failure modes), and the upstream-chain look
 (smooth first if it has shipped). Exit: provisional defaults replaced or confirmed, recorded

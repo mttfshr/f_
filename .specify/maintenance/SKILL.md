@@ -63,7 +63,7 @@ Computed fresh each run from live sources, never hardcoded, highest risk
 first:
 
 1. On the never-regenerate / hand-built list (`plan.md` "Build system
-   generalisation" section, currently: `f_masonry`, `f_sirds`,
+   generalization" section, currently: `f_masonry`, `f_sirds`,
    `f_vf_seeds`, `f_grain`, `f_vf_warp`, `f_vf_fieldmap`, `f_vf_repulse`)
    — drift here is invisible to `drift.py` by construction.
 2. Listed in `tests/build/drift_baseline.json` — definition doesn't reproduce

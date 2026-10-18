@@ -26,12 +26,16 @@ def _run(namespace, slow_on):
     buf = io.StringIO()
     import harness as _h
     saved_quiet, _h.QUIET = _h.QUIET, False   # the assertions below expect non-quiet output, even under run.sh -q
+    saved_record, _h.RECORD = _h.RECORD, False   # the fake tests' checks must not reach the check history
+    saved_current = dict(_h._CURRENT)
     saved_skipped = list(_h.SKIPPED)
     try:
         with redirect_stdout(buf):
             code = run(namespace)
     finally:
         _h.QUIET = saved_quiet
+        _h.RECORD = saved_record
+        _h._CURRENT.update(saved_current)
         _h.SKIPPED[:] = saved_skipped
         if old is None:
             os.environ.pop("BENCH_SLOW", None)

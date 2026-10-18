@@ -185,7 +185,7 @@ literals when testing boundmode behavior.
 
 An inlet nothing is cabled to does not read stale data or garbage: `sample(in2, norm)` returns black **with alpha 1**
 (probe: a 2-inlet pix with only inlet 0 connected; one distinct value across the whole image). A guard that wants to
-know "is this input absent?" must test the colour channels, not alpha. (f_caustic's sheets composite treats a vecfield
+know "is this input absent?" must test the color channels, not alpha. (f_caustic's sheets composite treats a vecfield
 that is exactly 0 in R and G at four fixed points as absent: real vecfields encode zero as 0.5.)
 
 ### Color (Jitter-specific)
@@ -849,20 +849,20 @@ the trig function even runs.
   So any codebox reading a much larger texture needs its own averaging.
 - **A `for` loop bounded by an expression of a `Param`, nested, compiles and runs**
   (`tn = max(1, floor(taps)); for (a = 0; a < tn; a += 1) { for (b = 0; ...`).
-  Averaging a taps x taps grid of `sample()` calls at offsets in NORMALISED
+  Averaging a taps x taps grid of `sample()` calls at offsets in NORMALIZED
   coordinates needs no texture size. Cost ~ taps^2: 8 taps = ~0.4-0.7 ms, 16 = 1.2-1.7 ms
   for a 256^2 pix reading an HD/4K force. Components stay inline on each `sample()`.
 - **The bench keeps a `Param`'s last value between jobs.** A job that omits a Param
   inherits whatever the previous job set, not the codebox default. Pin every Param a
   measurement depends on (a cost test silently measured taps=16 after a loop that ended
   on 16).
-- **Generalisation (2026-09-29): a fixed-`@dim` stage is a resampler, whether you meant
+- **Generalization (2026-09-29): a fixed-`@dim` stage is a resampler, whether you meant
   it to be or not.** Any module with an internal fixed-resolution stage minifies every
   input it reads from the render context, by render_size / internal_dim -- 4-15x at
   HD/4K for a 256^2 grid. Combined with nearest-like minification above, one `sample()`
   per texel then reads well under 1% of the source and aliases hard on noisy input.
   The fix is generic and needs no source size: average a `taps x taps` grid at offsets
-  in NORMALISED coordinates. Treat this as a design consequence of choosing an internal
+  in NORMALIZED coordinates. Treat this as a design consequence of choosing an internal
   resolution, not as a fluid-specific detail -- the codebox cannot read an input's size
   (no `texdim`), so nothing warns you.
 - **Prefiltering is a correctness setting, not a performance control.** It does nothing
@@ -877,7 +877,7 @@ the trig function even runs.
 
 Measured on the codebox bench; probes and numbers in `ideas/optics_map.md` ("Findings: multi-guess gather").
 
-- **`sample()` is NOT bilinear when its coordinate is data-dependent and jumps between neighbouring pixels.**
+- **`sample()` is NOT bilinear when its coordinate is data-dependent and jumps between neighboring pixels.**
   Texture filtering chooses magnify or minify from the coordinate's screen-space derivative; above about one
   texel per pixel it falls back to the NEAREST minification filter. So any dependent read whose coordinate differs
   by more than a texel from pixel to pixel (Newton starts from different cells, ray marching, fractal iteration,
@@ -1004,7 +1004,7 @@ When reviewing any codebox, scan for these in order:
 - [ ] **Component assignment on stored variables (write)** — `z.x = ...` is a hard "invalid left-hand expression" compile error; use separate scalar variables (`zx`, `zy`) instead of one vector-like variable with component fields
 - [ ] **`vec4()` or `vec2()` constructors** — replace with `vec()`
 - [ ] **`select()`** — replace with `mix(a, b, step(...))` or `switch(cond, a, b)`
-- [ ] **`sample()` at jumpy, data-dependent coordinates** (iteration, ray marching, a gather over candidates) — reads NEAREST, not bilinear, whenever the coordinate changes by more than ~1 texel between neighbouring pixels; interpolate by hand from four `nearest()` taps (bench-verified 2026-10-06, see above)
+- [ ] **`sample()` at jumpy, data-dependent coordinates** (iteration, ray marching, a gather over candidates) — reads NEAREST, not bilinear, whenever the coordinate changes by more than ~1 texel between neighboring pixels; interpolate by hand from four `nearest()` taps (bench-verified 2026-10-06, see above)
 - [ ] **`nearest()` tap coordinates normalized** — the four-tap idiom's taps take `(ix + 0.5) / width` UVs, NOT raw texel indices; raw indices silently read the frame border after the sampler's clamp (found 2026-10-17 refactoring a codebox)
 - [ ] **`atan2` fed possibly-(0,0) runtime args** — NaN; fix by biasing a denominator argument (+1e-7), not by guarding after (mix propagates NaN; no `isnan()`; `x == x` is TRUE even for NaN so that test is useless) — see the 2026-10-17 bench-facts section
 - [ ] **Statement count** — about 250 per function body or top level, about 450 for the whole program (not bytes, not lines); over that the parser fails with "stack overflow (too many captures)" and wedges the bench; move repeated code into functions (a call is one statement); `require` adds no budget

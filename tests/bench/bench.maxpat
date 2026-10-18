@@ -718,6 +718,186 @@
           ],
           "varname": "bench_fbgate"
         }
+      },
+      {
+        "box": {
+          "id": "c-udp",
+          "maxclass": "comment",
+          "text": "OSC/UDP in (7471) from Python (benchclient.py)",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            20.0,
+            75.0,
+            125.0,
+            40.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-err",
+          "maxclass": "comment",
+          "text": "[error] -> deferlow -> prepend: Max errors (gen compile errors etc.) reach js. deferlow stops a feedback loop that overflowed the stack (2026-09-22).",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            320.0,
+            120.0,
+            300.0,
+            42.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-world",
+          "maxclass": "comment",
+          "text": "jit.world bench_ctx: the GL context every texture and pix object here shares. Its draw bang is the frame clock.",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            540.0,
+            50.0,
+            240.0,
+            45.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-tbb",
+          "maxclass": "comment",
+          "text": "t b b: right = frame count in js (first), left = bang bench_tex1",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            300.0,
+            87.0,
+            230.0,
+            28.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-js",
+          "maxclass": "comment",
+          "text": "js bench.js: all the logic. Parses a job from OSC, writes its .genjit, sets params, counts frames, captures the result, replies through udpsend (7472).",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            190.0,
+            172.0,
+            420.0,
+            40.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-inputs",
+          "maxclass": "comment",
+          "text": "bench_inK matrix -> bench_texK texture: the test inputs (K = 1..3). tex1 goes through bench_src into slot 1; tex2 / tex3 are corded into inlets 1 / 2 of every slot (delivery by message failed, 2026-09-22).",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            20.0,
+            203.0,
+            740.0,
+            26.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-src",
+          "maxclass": "comment",
+          "text": "bench_src: identity pass upstream of slot 1",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            430.0,
+            297.0,
+            330.0,
+            20.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-slots",
+          "maxclass": "comment",
+          "text": "bench_p1..p8: the slots. Each job's .genjit loads into them; slots 2..8 start bypassed and are enabled for chained measurements. Every slot has 3 inlets and 4 outlets (counts never change).",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            20.0,
+            610.0,
+            400.0,
+            45.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-gates",
+          "maxclass": "comment",
+          "text": "bench_gateK -> bench_outK: capture taps on slot 1's 4 outlets (out 1 = bench_gate / bench_out). js opens a gate on the chosen frame so the matrix holds that frame; it is then written to the job directory.",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            450.0,
+            386.0,
+            520.0,
+            30.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-fbsel",
+          "maxclass": "comment",
+          "text": "E4 feedback: bench_fbsel picks which slot-1 outlet feeds back",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            550.0,
+            422.0,
+            480.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-fb",
+          "maxclass": "comment",
+          "text": "bench_fb: identity pass that copies it",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            790.0,
+            457.0,
+            300.0,
+            20.0
+          ]
+        }
+      },
+      {
+        "box": {
+          "id": "c-fbgate",
+          "maxclass": "comment",
+          "text": "bench_fbgate routes the copy into slot 1 inlet 1 or 2. Non-left pix inlets store without rendering, so slot 1 reads the previous frame: a one-frame delay.",
+          "numinlets": 1,
+          "numoutlets": 0,
+          "patching_rect": [
+            520.0,
+            492.0,
+            520.0,
+            35.0
+          ]
+        }
       }
     ],
     "lines": [

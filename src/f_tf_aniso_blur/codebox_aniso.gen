@@ -21,7 +21,7 @@
 //   0.0362 vs family (b) 0.0300 against the continuous area Gaussian at the
 //   default kernel). Curved-axis integration is OUT (plan ADR-4, straight
 //   axis in v1).
-//   Kernel geometry (T005): centre tap + 8 stations per side at
+//   Kernel geometry (T005): center tap + 8 stations per side at
 //   u = +-(k-0.5) px, along weight exp(-2u^2/L^2), each station three
 //   transverse taps (t = 0, +-D/2 px) at the discrete-Gaussian rule
 //   (1/4, 1/2, 1/4). 49 samples max = TAPS_MAX; cost scales with TAPS_MAX,
@@ -36,14 +36,14 @@
 // Unconnected TENSOR (vs_black, all zeros): decodes Jxy*strength = -1 ->
 //   trace 0 with lambda1 = 1/strength phantom energy and lambda2 negative
 //   (non-SPD). This is an ENERGY-GATED consumer (W on lambda1), so the SPD
-//   test is the primary defence, not trace alone (f_tensor_type.md consumer
+//   test is the primary defense, not trace alone (f_tensor_type.md consumer
 //   rule 5; found jointly with the glyph triad 2026-10-17). A non-SPD or
 //   black tensor pixel behaves exactly as an isotropic pixel: the gates
 //   bypass the energy gate and take L = length, D = L (plain isotropic blur
 //   of the length budget). NOT provisional.
 // Bypass: bypass_mode "param" (NOT the native @bypass): exact passthrough
 //   of inlet 1 (family contract: this module has no encoding to neutralize).
-// Sample coordinates are CLAMPED to texel centres in-shader on every tap
+// Sample coordinates are CLAMPED to texel centers in-shader on every tap
 //   (tensormap ADR-5: the bench GPU WRAPS out-of-range reads).
 // All sample components read inline -- never store-then-slice. All floats
 // unclamped between stages of the math; only the guard (a route, not a
@@ -137,7 +137,7 @@ uy_lo = 0.5/height; uy_hi = 1.0 - 0.5/height;
 //     with TAPS_MAX, not the dial -- say so in the docs) ------------------
 acc_r = 0.0; acc_g = 0.0; acc_b = 0.0; acc_a = 0.0; wsum = 0.0;
 
-// centre tap (u = 0, t = 0, weight 1)
+// center tap (u = 0, t = 0, weight 1)
 cu_c = clamp(norm.x, ux_lo, ux_hi);
 cv_c = clamp(norm.y, uy_lo, uy_hi);
 // 2026-10-17 refactor (glyph's live finding, family rule 6b): c_m/s_m read
@@ -188,7 +188,7 @@ for (kk = 0; kk < 2.0 * taps; kk += 1.0) {
         oy_norm = (umag*su*v_y + tr_off*a_y) / height;
         tap_u = clamp(norm.x + ox_norm, ux_lo, ux_hi);
         tap_v = clamp(norm.y + oy_norm, uy_lo, uy_hi);
-        // four-tap idiom per tap (see the centre-tap note above): within a
+        // four-tap idiom per tap (see the center-tap note above): within a
         // cell the tap slides smoothly (norm + fixed ox), and at the 1-px
         // cell-boundary bands the hardware sampler would drop to nearest
         // (dim-luck). This keeps the parity with the mirror exact at any dim.

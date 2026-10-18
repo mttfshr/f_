@@ -2,7 +2,7 @@
 # Run f_ math tests in an ephemeral NumPy environment via uv -- nothing is
 # installed system-wide. No args: run every tests/**/test_*.py.
 #   tests/run.sh
-#   tests/run.sh tests/math/test_fft_separable.py
+#   tests/run.sh tests/toolchain/test_gpu_sim.py
 #   tests/run.sh -q [files]     quiet: one line per file, full detail only for failures
 #
 # Every run writes tests/logs/<timestamp>-offline.log (tests/_log.sh): full output,

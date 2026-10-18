@@ -39,8 +39,8 @@ patcher = {
     "prefix":      "hatch",
     "object_name": "#0_hatch_pix",
     "title":       "Hatch",
-    # Header signal_type: the tensor-family amber "tensor" colour (tensormap
-    # T030 added the colour; build_patcher.py SIGNAL_TYPE_COLORS). The
+    # Header signal_type: the tensor-family amber "tensor" color (tensormap
+    # T030 added the color; build_patcher.py SIGNAL_TYPE_COLORS). The
     # OUTLETS themselves are ordinary luma/texture renders (marks, not field
     # data): not tensor-typed -- plan ADR-7's note; per-outlet comments carry
     # the encoding hint so they are never wired as tensor/vecfield.

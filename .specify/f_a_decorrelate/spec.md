@@ -4,7 +4,7 @@ _Created: 2026-08-04_
 _Status: **Module complete 2026-10-12, at the `f_a_ripple` packaging bar.**
 Phase 2: all four acceptance boxes ticked (T7 Max+mirror, T8 synthetic +
 two real-world music carriers — varying-SMR correlation drift beats
-fixed on both, the paper's actual claim; bin artifacts characterised; PM
+fixed on both, the paper's actual claim; bin artifacts characterized; PM
 verified equivalent-enough, ADR-4 un-scoped). Phase 3: parameters swept,
 v1 scope decided (AM+PM, depth 0–1, tmr 0.1–4 Hz, 2048/4). Phase 4: DSP
 built and shipped — `package/patchers/f_a_decorrelate.maxpat` +
@@ -116,7 +116,7 @@ Maps to T7–T8 in `ideas/f_a_spectral_ripple.md`.
       `tests/records/spike_a_decorrelate_t7.py`._
 - [x] Bin-resolution artifacts at the low end of the band (4.5 cyc/oct ripple
       density across 1–2 kHz is fine relative to typical bin spacing) are
-      either absent or characterised. **Characterised 2026-10-12**: band 6
+      either absent or characterized. **Characterized 2026-10-12**: band 6
       attribution (dominant term is leakage × gain, not bin spacing) and
       band 1 closed the same day — band 1 actually IMPROVES at 2048/4
       (−22.7 dB, corr 0.997; 10 partials vs band 6's 59), envelope-corr
