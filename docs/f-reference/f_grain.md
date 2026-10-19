@@ -5,35 +5,35 @@ _Status: Working_
 
 ## Concept
 
-Stochastic grain field with per-grain displacement and luma gating. Generates a field of randomized grains whose position, size, shape, and color are driven by the input texture's luminance. A persistent feedback layer allows grains to accumulate or decay over time.
+Stochastic grain field with per-grain displacement and luma gating. Generates a field of randomized grains whose position, size, and shape are driven by a voronoi hash field; the input texture's luminance (via `luma_gate`) only modulates the grains' intensity, and their color is randomized per cell rather than picked from the texture. A persistent feedback layer allows grains to accumulate or decay over time.
 
 ## Parameters
 
 | Name | Type | Description |
 |------|------|-------------|
 | `bypass` | toggle | Bypass processing |
-| `density` | float | Number of grains per field |
+| `density` | float | Gates which fixed-grid cells show a grain |
 | `gain` | float | Grain intensity (unbounded, 0-2). Renamed from `amount` 2026-10-09 (T003) to match the library-wide gain/mix convention. |
 | `persistence` | float | Temporal persistence — 0 = boil, 1 = frozen |
-| `fade` | float | Fade rate of accumulated grains |
+| `fade` | float | Width of each grain era's in/out fade envelope |
 | `size` | float | Base grain size |
 | `size_var` | float | Grain size variance (randomization) |
-| `shape` | float | Grain shape (circular → elongated) |
+| `shape` | float | Grain shape blend: voronoi cell outline (0) → circle (1) |
 | `softness` | float | Grain edge softness |
 | `jitter` | float | Positional jitter / displacement amount |
 | `ch_diverge` | float | Per-channel color divergence |
-| `luma_gate` | float | Luminance threshold for grain placement |
+| `luma_gate` | float | Bipolar luma weighting of grain intensity (-1 = shadows, 0 = uniform, +1 = highlights) |
 | `displace` | float | Displacement magnitude |
 | `edge_mode` | int | Edge handling mode (Clear/Clamp/Wrap/Mirror) |
-| `field` | float | Field scale |
-| `sv_seed` | int | Random seed for grain field |
+| `field` | float | Jitter seed position — interpolates smoothly between voronoi jitter topologies |
+| `sv_seed` | int | Seed for per-cell size variation, smoothly interpolated |
 | `mix_pct` | float | Dry/wet crossfade (0-100%) toward the fully-composited (displaced-source + grain) state. New 2026-10-09 (T003); default 100 keeps the module's prior look unchanged. Internal codebox `Param` named `mix_pct`, not `mix`, to avoid colliding with the codebox's `mix()` operator. |
 
 ## Signal Chain
 
 ```
 texture in → jit.gl.pix (grain field codebox)
-           → feedback accumulation
+           → era-clock persistence (no feedback loop)
            → texture out
 ```
 

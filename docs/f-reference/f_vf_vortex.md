@@ -42,7 +42,7 @@ vortex_pix (@type float32) → out0
 | `curl_amt` | 0–1 | 0.0 | curl modulation depth (inlet 4) |
 | `bypass` | 0/1 | 0 | Outputs neutral field (all 0.5) |
 
-**Prefix:** `vortex` — **Object name:** `vortex_pix`
+**Prefix:** `vf_vortex` — **Object name:** `vf_vortex_pix`
 
 ---
 

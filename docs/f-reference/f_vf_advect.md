@@ -9,7 +9,7 @@
 
 Temporal fluid advection. Each frame, samples the source texture backward along the vecfield and feeds it through a one-frame feedback loop — content injected into the field spreads, advects, and dissipates across many frames rather than being displaced once. Unlike f_vf_streak/f_vf_warp (stateless single-pass), f_vf_advect's visual character depends on accumulated history, not just the current frame — genuinely excitable/amplifying at `decay > 1.0`.
 
-Architecture: two chained `jit.gl.pix` inside one bpatcher (Pattern 1, shared with any other temporal f_ module) — `pass_pix` holds the previous frame's advected output as a stable texture reference (GL's one-frame pipeline latency makes this stable) and applies the `separate`/`mode` chroma stage to it; `advect_pix` reads the source, the vecfield, and the previous frame, and computes the new state.
+Architecture: two chained `jit.gl.pix` inside one bpatcher (Pattern 1, shared with any other temporal f_ module) — `pass_pix` holds the previous frame's composite output as a stable texture reference (GL's one-frame pipeline latency makes this stable) and applies the `separate`/`mode` chroma stage to it; `advect_pix` reads the source, the vecfield, and the previous frame, and computes the new state.
 
 Compatible with any f_vf_ producer on the vecfield inlet.
 
@@ -74,7 +74,7 @@ Backward displacement (pulling from source rather than pushing to destination) a
 
 - `injection`/`decay` reach an equilibrium amplitude at typical settings — no runaway blowout at defaults, confirmed empirically.
 - `mix` is the final wet/dry lever, independent of `injection`: `injection` controls what enters the flow; `mix` controls how much of the *output* is flow vs. raw source. `gain` scales the accumulated flow before blending.
-- Bypass does not reset the feedback loop — `pass_pix` keeps updating underneath, so disabling bypass resumes from the accumulated state rather than a fresh black frame.
-- No wrap/mirror at the UV edge (clamp-to-edge); no divergence correction (incompressible-flow mass conservation is not enforced — density variation is treated as expressive, not a bug); no explicit reset trigger (`decay=0` gives an effective instant reset).
+- Bypass does not collapse the feedback loop to black, but the state stage's first outlet feeds `pass_pix` the raw source while bypassed, so the accumulated flow is replaced by source content over time rather than preserved — bypassing for many frames flushes it.
+- No wrap/mirror at the UV edge (clamp-to-edge); no divergence correction (incompressible-flow mass conservation is not enforced — density variation is treated as expressive, not a bug); no explicit reset trigger (the decay dial floors at 0.8, so there is no instant-reset value; only patching the param below the dial range clears the frame in one pass).
 - `dt` upper bound (0.05 in `definition.py`, described as provisional 0.1 in spec.md) may still be revisited — a dial-range change only, not an architecture change.
 - See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract.

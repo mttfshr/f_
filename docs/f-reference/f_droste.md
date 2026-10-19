@@ -13,7 +13,7 @@ Log-polar spiral transform producing Droste / Escher-style recursive zoom effect
 |------|------|-------------|
 | `bypass` | toggle | Bypass processing — 0/1 |
 | `zoom` | float | Zoom scale — rate of logarithmic zoom — 1.1–100.0 |
-| `n_arms` | int | Number of spiral arms — 1–16 |
+| `n_arms` | float | Number of spiral arms — 1–16 |
 | `twist` | float | Twist amount — angular winding per zoom cycle — -8.0–8.0 |
 | `rotation` | float | Global rotation offset — 0.0–1.0 |
 | `time_s` | float | Animation driver — scalar signal, use LFO data outlet — continuous |

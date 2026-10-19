@@ -19,7 +19,7 @@ top of this or registering it in `f_modules.maxpat`.
 A standalone vecfield-to-vecfield processor implementing vorticity
 confinement (GPU Gems 1, Ch. 38, S:38.5.1 — Harris/Stam). Consumes an
 f_vecfield, computes its vorticity (curl), and adds a corrective force —
-perpendicular to the gradient of vorticity magnitude — back into the
+perpendicular to the gradient of vorticity — back into the
 field. Restores fine-scale swirling motion without a full diffusion/
 projection solve (deliberately out of scope for `f_vf_advect` — 20-80
 Jacobi iterations per timestep, too expensive for live multi-module use;
@@ -90,13 +90,13 @@ confirmed in scratch testing.
 
 ## Build
 
-Standard single-codebox path via `tools/build_patcher.py`:
+Standard single-codebox path via `build/build_patcher.py`:
 
 ```
-.specify/f_vf_vorticity/definition.py   — documented source of truth, codebox inline
+src/f_vf_vorticity/definition.py        — documented source of truth, codebox inline
 ```
 
-Run: `tools/py.sh tools/build_patcher.py .specify/f_vf_vorticity/definition.py`
+Run: `build/py.sh build/build_patcher.py src/f_vf_vorticity/definition.py`
 Validate: `python3 -c "import json; json.load(open('patchers/f_vf_vorticity.maxpat'))"`
 
 ## Key Findings

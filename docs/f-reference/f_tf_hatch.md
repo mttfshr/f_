@@ -4,9 +4,10 @@
 **Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending
 (built 2026-10-17 as the fifth module of the tensor-family build order:
 smooth → glyph → sharpen → aniso_blur → **hatch**; the mirror and cost
-spike are green, the bench file is written and registered but not yet run
-[INFERENCE: the module's provisional defaults remain provisional — the
-tensormap cycle applies], live judgment pending).
+spike are green, and the tier-2 bench ran green (2026-10-17; each stage
+~0.2 ms/pass at 1080p); the module's provisional defaults remain
+provisional — the tensormap cycle applies, with the tier-3 live
+judgment pending).
 
 ---
 
@@ -90,6 +91,7 @@ replacements recorded in the spec's Open Questions.
 | `angle_offset` | −1–1 | 0 | Rotates the pattern relative to the decoded axis; ±1 ⇒ ±90° (spans the distinct layouts of an unoriented axis field) |
 | `phase` | −1–1 | 0 | Scrolls marks along the stroke axis (phase 1.0 = one full dash pitch); the family-standard animation entry |
 | `regularity` | 0–1 | 0.5 | Per-line dash stagger (weave's hash form): 1 = lines in phase (grid-like), 0 = fully staggered, hash-stable across frames |
+| `strength` | 1-1000 | 100 | Gain the producing tensormap applied to the tensor; the decode divides it back out - match it to the feeding tensormap (log dial, like tensormap's) |
 | `bypass` | 0/1 | 0 | Black on both outlets (bypass_mode "param", like the tensormap's) |
 
 **Prefix:** `hatch` — **Object name:** `hatch_pix` — **Type:** `@type float32`
@@ -107,7 +109,7 @@ measured tap step needed — the aspect `dim`-reads-1 caveat does not apply).
 
 Neither outlet is a tensor or a vecfield — they are rendered marks, not field
 data (don't feed them to tensor consumers). The header `signal_type` label
-reads "tensor out" (the family color) as the tensormap precedent's header
+reads "T_ in" (the tensor-family color) as the tensormap precedent's header
 tag; the outlets themselves are plain luma textures.
 
 **Commit semantics (the one design constant):** mark intensity is multiplied

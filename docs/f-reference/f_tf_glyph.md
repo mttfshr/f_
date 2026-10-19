@@ -22,7 +22,7 @@ Processor archetype, requires input. Not a generator.
 
 ## Why tensor-native
 
-Glyph aspect is λ1/λ2 — collapse the tensor to a vecfield and you get a line
+Glyph aspect is √(λ1/λ2) — collapse the tensor to a vecfield and you get a line
 with no sense of "how anisotropic"; to a scalar and you get a dot with no
 orientation. The second eigenvalue is load-bearing.
 
@@ -138,7 +138,7 @@ view of the consumer's own output.
 
 ## Cost
 
-Expected trivially cheap: one tensor tap + one source tap + closed-form math,
+Expected trivially cheap: one four-tap nearest() interpolation per texture read (eight taps total) + closed-form math,
 ~84 codebox statements (the capture ceiling is ~450). Per-pass cost measured by `tests/modules/tf_glyph/bench_tf_glyph.py` (2026-10-17):
 ~2.39 ms per pass at 1080p and ~6.96 ms at 4K, both upper bounds (bench frame floor,
 not GPU-bound; the tensormap T016 convention) — the default-resolution question

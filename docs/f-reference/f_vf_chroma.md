@@ -40,7 +40,7 @@ vfchroma_pix (@type char) out1 → chroma layer (isolated)
 | `falloff` | 0–0.01 | 0.002 | Decay rate along streak — higher = shorter, sharper streak |
 | `threshold` | 0–1 | 0.8 | Luma gate floor — only pixels above this emit streak |
 | `threshold_width` | 0–0.5 | 0.1 | Softness of the luma gate |
-| `strength` | 0–2.0 | 0.8 | Streak intensity — crossfade depth on out0. **Not renamed in the 2026-07-12 gain/mix rollout** (the module was paused; deliberate-skip status was never recorded — maintenance audit 2026-10-12). |
+| `strength` | 0–2.0 | 0.8 | Streak intensity — added over the source on out0 (additive, not crossfaded). **Not renamed in the 2026-07-12 gain/mix rollout** (the module was paused; deliberate-skip status was never recorded — maintenance audit 2026-10-12). |
 | `direction` | menu (Fwd/Bwd/Bi) | Fwd | Forward: streak away from source; Backward: toward source; Bi: both. **Known bug:** Bi is unreachable from the UI — `build_patcher.py` hardcodes 2-option text_button wiring (parameter_mmax=1.0, reads options[0]/options[1] only). Filed with the retool work. |
 | `src_vecfield`, `src_hue_mod`, `src_dispersion_mod` | internal | — | vs_inState connection gates; not user-facing |
 | `bypass` | 0/1 | 0 | out0 → source; out1 → the source per the 2026-10-05 all-outlets-passthrough rule (the doc's earlier "out1 → black" predates it). The 48-step accumulation loop runs at full cost while bypassed (heaviest unguarded loop of the vecfield-blur family — see Notes). |

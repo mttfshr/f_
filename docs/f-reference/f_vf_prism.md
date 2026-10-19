@@ -7,7 +7,7 @@
 
 ## What it does
 
-Field-driven spectral/prism separation: displaces R/G/B channel samples outward along the vecfield direction by `reach`, spread apart angularly by `spread`, then gates the effect by a luma `threshold` at the sample position so only bright source regions cast prism color. `feather` blends between hard RGB separation and a smooth spectral gradient. Two outlets, matching the f_caustic/f_vf_streak/f_vf_chroma/f_vf_glow convention: composite (additive over source on out0 via `strength`) and the isolated prism layer.
+Field-driven spectral/prism separation: displaces R/G/B channel samples outward along the vecfield direction by `reach`, spread apart angularly by `spread`, then gates the effect by a `threshold` on each channel's own displaced value at each of its 11 blurred tap positions, so only bright source regions cast prism color. `feather` blends between hard RGB separation and a smooth spectral gradient. Two outlets, matching the f_caustic/f_vf_streak/f_vf_chroma/f_vf_glow convention: composite (additive over source on out0 via `strength`) and the isolated prism layer.
 
 Closely related to f_vf_chroma (same family of vecfield-driven chromatic effects) but adds the luma-gated threshold/feather mechanic — prism color appears specifically where bright source content meets the field, rather than uniformly everywhere the field is nonzero.
 

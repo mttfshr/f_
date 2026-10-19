@@ -107,7 +107,7 @@ moiré; the module's fixed setting (2 points per pixel at 1024², i.e. 4 per cap
   cost is now unconditional — before 2026-10-10 it only existed once the module was switched into sheets mode;
   with soft mode gone, every `f_caustic` instance carries it.
 - **Cost** is driven by points per pixel (blend contention), not by the point count; vertex work is about 1 ms
-  per million points or less. On an M3 Max the fixed setting holds the frame budget; timings from the spike
+  per million points or less. On an M3 Max the fixed setting alone measures about 21-23 ms per frame, roughly 1.3x the 16.7 ms 60 fps budget (the tier-2 tests use a widened FRAME_BUDGET_MULT for it); timings from the spike
   varied up to 2x between runs, and no M1 number exists. There is no lighter setting to fall back to any more —
   the old `detail` ladder's "step it down if a machine struggles" escape hatch went with the menu.
 - **Two instances:** every stage is `#0`-scoped now (the old fixed-name soft stage is gone). Two `f_caustic`

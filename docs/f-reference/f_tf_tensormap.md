@@ -1,7 +1,7 @@
 # f_tf_tensormap
 
 **Type:** Processor (f_tensor producer)
-**Status:** Built 2026-10-16; mirror and bench tests green, live-checked on noise. Helpfile pending.
+**Status:** Built 2026-10-16; mirror and bench tests green, live-checked on noise. Helpfile built (2026-10-16).
 
 ---
 

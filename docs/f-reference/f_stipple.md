@@ -23,7 +23,7 @@ Two orthogonal hash fields — a sin-based directional hash and an arithmetic is
 | `anisotropy` | float | 0.0–4.0 | 0.5 | 0=isotropic grain, 1=parallel lines, >1=expressive aliasing |
 | `angle` | float | -360–360 | 0.0 | Orientation of along/across coordinate frame |
 | `zoom` | float | 0.1–4.0 | 1.0 | Scales viewport into hash field — same character, bigger or smaller |
-| `threshold` | float | 0.0–2.0 | 0.5 | Dither bias (dither mode) / displacement amount (displacement mode) |
+| `threshold` | float | 0.0–2.0 | 0.5 | Dither bias in processor mode; also scales the always-on luma displacement |
 | `colorize` | float | 0.0–1.0 | 0.0 | Processor only: 0=monochrome dither output, 1=inherit input color |
 | `along_phase` | float | -1.0–1.0 | 0.0 | Hash field offset along angle axis; drive externally for drift |
 | `across_phase` | float | -1.0–1.0 | 0.0 | Hash field offset perpendicular to angle axis; drive externally for drift |
@@ -50,7 +50,7 @@ Three outlets: composite (color-graded stipple), stipple mask (raw scalar), and 
 
 ## Algorithm
 
-Coordinate frame rotates by `angle` into `along`/`across` axes; `along_phase`/`across_phase` offset the field for drift. `coarseness` scales the hash's large prime multiplier down to lengthen the grain period. Two hash fields — `h_parallel` (sin-based, directional) and `h_iso` (arithmetic, combining both axes) — blend via `anisotropy`. In dither mode, the field is thresholded against `threshold ± softness/2` directly; in displacement mode, `along`/`across` are warped by `input_luma * threshold` before the field is evaluated. `src_mode` selects between them:
+Coordinate frame rotates by `angle` into `along`/`across` axes; `along_phase`/`across_phase` offset the field for drift. `coarseness` scales the hash's large prime multiplier down to lengthen the grain period. Two hash fields — `h_parallel` (sin-based, directional) and `h_iso` (arithmetic, combining both axes) — blend via `anisotropy`. The stipple field is always evaluated at the unwarped base coordinates: in source mode it is thresholded against `threshold ± softness/2` directly, and in processor mode the incoming luma (biased by `threshold - 0.5`) is compared against the field. `src_mode` selects between them; the `input_luma * threshold` warp feeds only the displaced-source output and runs regardless of `src_mode`:
 
 ```
 lo = threshold - softness*0.5; hi = threshold + softness*0.5;

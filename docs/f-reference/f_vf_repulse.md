@@ -35,7 +35,7 @@ Pure processor: single texture inlet, single vecfield outlet, no feedback/textur
 | `reach` | -0.5–0.5 | 0.1 | Ring sample radius, normalized UV. Negative samples inside shapes. |
 | `threshold` | -1–1 | 0.3 | Luma threshold for repulsion contribution. Negative = repulse from dark regions. |
 | `mode` | menu (0–3) | 0 | Accumulation mode — Cancel / Max / Abs Add / Turbulent. |
-| `bypass` | 0/1 | 0 | Passes input texture through unchanged (not a neutral field — matches source, per codebox `mix(field, sample(in1,uv), bypass)`). |
+| `bypass` | 0/1 | 0 | Passes a neutral vecfield through unchanged (per codebox `mix(vec(field_x, field_y, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass)`). |
 
 **Prefix:** `repulse` — **Object name:** `repulse_pix`
 

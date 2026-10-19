@@ -19,7 +19,7 @@ A parametric masonry texture generator — courses (horizontal bands), bond (bri
 | `offset` | float | 0.0–1.0 | 0.0 | Per-course stagger — 0.5 = half-brick running bond |
 | `angle` | float | -360–360 | 0.0 | Field rotation in degrees |
 | `skip` | float | 0.0–1.0 | 1.0 | Fraction of courses that are visible (course presence gate) |
-| `regularity` | float | 0.0–1.0 | 1.0 | 1=regular grid, 0=random mark positions at same density |
+| `regularity` | float | 0.0–1.0 | 1.0 | 1=nearest-wins even grid, 0=priority bias letting candidates win contested territory (uneven spacing, density not preserved) |
 | `drift` | float | 0.0–4.0 | 0.0 | Per-course along-axis drift amount |
 | `phase` | float | 0.0–1.0 | 0.0 | Per-course phase offset — primary animation target (drive with vs_lfo) |
 | `speed_var` | float | 0.0–10.0 | 0.0 | Per-course speed variation when animated; 0 = all courses move together |

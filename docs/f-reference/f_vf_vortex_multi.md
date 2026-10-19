@@ -47,7 +47,7 @@ Site position inlets (`vsc_center_ctrl`-driven, injected post-build at indices 5
 | `cy_amt` | 0–1 | 0.0 | Global cy modulation depth (inlet 2) |
 | `conv_amt` | 0–1 | 0.0 | Global convergence modulation depth (inlet 3) |
 | `curl_amt` | 0–1 | 0.0 | Global curl modulation depth (inlet 4) |
-| `bypass` | 0/1 | 0 | Outputs neutral field (all 0.5) |
+| `bypass` | 0/1 | 0 | Outputs the neutral field (0.5, 0.5, 0.5, 1.0) |
 
 **Prefix:** `vf_vortex_multi` — **Object name:** `vf_vortex_multi_pix`
 

@@ -45,7 +45,7 @@ in1 (jit_gl_texture) → jit.gl.pix [stereo_pix] → out1 (jit_gl_texture)
 
 The codebox implements the full pipeline:
 1. UV → centered complex plane
-2. Inverse stereographic projection → unit sphere (sx, sy, sz)
+2. Inverse projection to the unit sphere (sx, sy, sz) — an orthographic↔stereographic blend set by `proj`
 3. Rotation R = Rz(spin) × Ry(lon) × Rx(lat) applied as inlined scalar arithmetic
 4. Equirectangular sampling: `ux = atan2(ry, rx) / TWO_PI + 0.5`, `uy = asin(rz) / PI + 0.5`
 5. Hard circular mask via `step(0.5, dist)` — outside disk → black

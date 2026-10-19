@@ -5,7 +5,7 @@ _Status: Working_
 
 ## Concept
 
-A UV-space processor applying a Möbius-family transformation to the sampling coordinates of an incoming texture — the texture itself is unchanged, but where each pixel samples from moves according to the transform. Möbius transformations map circles to circles and preserve angles, so the warp stays geometrically coherent (no pinching, no shearing) even at extreme settings.
+A UV-space processor applying a Möbius-family transformation to the sampling coordinates of an incoming texture — the texture itself is unchanged, but where each pixel samples from moves according to the transform. Möbius transformations map circles to circles and preserve angles, so at the blend endpoints the warp stays geometrically coherent (no pinching, no shearing) even at extreme settings.
 
 Two paths blend via `invert`: a rotation+zoom path (identity at defaults) and a complex-inversion path (`1/z`). At `invert=0` the effect is pure rotation/zoom; at `invert=1`, full inversion (center and edges trade places); the 0.2–0.8 range produces loxodromic (hyperbolic spiral) motion — the primary expressive territory.
 

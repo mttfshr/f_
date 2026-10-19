@@ -9,7 +9,7 @@
 
 Parametric line-mark texture generator. Structure is a family of parallel lines running in a direction set by `angle`, with soft marks placed at continuous intervals along each line. Lines are defined as continuous distance fields (`fract`-based), never grid-quantized — this is the key architectural distinction from `f_masonry`: `f_masonry` uses `band_idx`/`slot` as real grid identity (courses and bond), while in `f_weave` the analogous `floor()` term is used *only* as a hash seed for per-line phase variation, never as slot structure. This gives clean UV-transform compatibility (confirmed droste-safe — marks compress toward a Droste singularity without the aliasing `f_masonry`'s grid approach would produce).
 
-Output is luminance only — color is downstream's job (`f_channel_grader`, colorize elsewhere, etc).
+Output is luminance (white marks) unless the scalar-potential inlet (in2) is engaged, in which case marks are tinted by that texture's RGB — otherwise color is downstream's job (`f_channel_grader`, colorize elsewhere, etc).
 
 **Taxonomy note (carried from HANDOFF):** despite being labeled `archetype: "processor"` in `definition.py`, f_weave is self-sufficient like f_masonry — no real content dependency on a texture inlet, generator behavior. Flagged alongside f_masonry for correction whenever `build_modules.py`'s CATEGORIES get refined.
 
@@ -83,7 +83,14 @@ line_hash = fract(sin(line_idx*127.1)*43758.5453) * (1 - regularity)
 pos = along * density_scale + phase + line_hash
 dist_to_mark = |fract(pos) - 0.5|
 
-mark = smoothstep(weight, 0, dist_to_line) * smoothstep(marklen, 0, dist_to_mark)
+// softness expands the feather zone beyond the mark edge; the inner edge stays at weight
+outer_across = weight + softness*weight
+outer_along  = marklen + softness*marklen
+edge = smoothstep(outer_across, 0, dist_to_line) * smoothstep(outer_along, 0, dist_to_mark)
+
+// shape: 0=flat-top rectangle (smoothstep result), 1=raised cosine across the line
+profile = mix(1, cos(clamp(dist_to_line / max(weight, 0.0001), 0, 1) * pi * 0.5), shape)
+mark = edge * profile
 
 // color: white unless potential inlet connected, in which case tinted by its RGB
 cr,cg,cb = mix(1, sample(potential, uv).rgb, src_potential)
@@ -98,7 +105,7 @@ out1 = mix(vec(cr*mark, cg*mark, cb*mark, 1), vec(0,0,0,1), bypass)
 - **A second inlet (`scalar potential`, `src_potential`) exists in the shipped module with no corresponding entry anywhere in `spec.md`.** This inlet can fully override the `across` coordinate (rather than perturb it) and also tints output color from white to the potential texture's RGB — a capability not mentioned in the spec at all. This is very likely intended to pair with the also-undocumented `f_vf_potential` module (see `docs/f-reference/f_vf_potential.md`), whose own header comment states exactly this pairing (`f_vf_repulse → f_vf_potential → f_weave (scalar in)`). Treat `spec.md`'s Phase 2/3/4 checklists as stale relative to what's actually built.
 - Per HANDOFF.md: Matt flagged f_weave with a vague, unresolved quality concern ("can't put my finger on it yet") — logged as a separate open thread from the `f_grain`/`f_vf_seeds` grid-rigidity discussion, explicitly not assumed related until checked.
 - `swing`, `continuity`, and `beats`/`period` (Euclidean rhythm) were all deliberately dropped in Phase 1 — each pulls toward grid/slot structure, which conflicts with the continuous-distance-field architecture that makes this module Droste-safe. See `spec.md`'s "What Was Dropped and Why" for the reasoning if revisiting any of them.
-- Not in `README.md`'s patch table — added as a finding of this documentation pass, not yet cross-checked into README.
+- Listed in `README.md`'s patch table under Generators.
 
 ## Source File
 

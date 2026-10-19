@@ -88,8 +88,8 @@ documented source of truth even though it isn't literally consumed by
 Run: `python3 .specify/f_sirds/build_sirds.py`
 Validate: `python3 -c "import json; json.load(open('patchers/f_sirds.maxpat'))"`
 
-Registered in `f_modules` under Processors — `.specify/f_modules/build_modules.py`
-and `javascript/f_addmod.js`'s `SIZES` dict (`"sirds": [190, 130]`).
+Registered in `f_modules` under Processors — `build/generate_menu.py`
+from `src/f_modules/menu.py`, and `javascript/f_addmod.js`'s `SIZES` dict (`"sirds": [190, 130]`).
 
 ## Key Findings
 

@@ -39,7 +39,7 @@ where `env = sqrt(2/(π*r))`.
 | Outlet | Content | Bypass behavior |
 |---|---|---|
 | `out1` | luma — nodal line pattern (`1 - clamp(sqrt(abs(total))*linesharpness, 0, 1)`) | black |
-| `out2` | float32 f_vecfield — central-difference gradient of `total`, unit-normalized (0.5=zero vector); points toward nodal lines | neutral (0.5, 0.5) |
+| `out2` | float32 f_vecfield — central-difference gradient of `total`, unit-normalized (0.5=zero vector); raw gradient of total, pointing toward antinodes | neutral (0.5, 0.5) |
 | `out3` | unsigned magnitude scalar — `clamp(abs(total) * gain, 0, 1)`; raw modal interference energy, distinct from both other outlets (out1 is lossily compressed via `sqrt`, out2 discards magnitude entirely) | black |
 
 `out3` was added 2026-07-12 per `.specify/f_chladni/plan.md` Decision 7 —

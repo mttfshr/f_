@@ -129,7 +129,7 @@ Suggested starting point:
 - f_vf_vortex: `curl=0, converge=-0.5 to -1.0`, position centered
 - f_vf_glow: `direction=0` (bidirectional), `radius=0.02`, `falloff=0.002`
 
-For texture-driven bloom (glow radiates from bright image regions rather than a fixed point), try `f_vf_fieldmap` on a blurred or low-frequency source texture — fieldmap's gradient output points outward from bright regions along luminance isolines, approximating a divergence field driven by image content.
+For texture-driven bloom (glow radiates from bright image regions rather than a fixed point), try `f_vf_fieldmap` on a blurred or low-frequency source texture — fieldmap's gradient output points uphill toward brighter regions, perpendicular to luminance isolines, approximating an image-content-driven field.
 
 ### Comet tails / trailing streaks
 - f_vf_vortex: high curl, moderate converge

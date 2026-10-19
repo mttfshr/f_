@@ -1,7 +1,7 @@
 # f_tf_sharpen
 
 **Type:** Processor (f_tensor stage — raw in, raw out)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending (Phase 1 execution and Phase 2 scratch are owner-gated; tier-1 mirror green 15/15, 2026-10-17).
+**Status:** Draft — tier-3 live judgment pending (owner-gated; tier-1 mirror green 15/15 and tier-2 bench green 6/6, 2026-10-17).
 
 ---
 
@@ -20,8 +20,8 @@ Jxy' = γ·Jxy,   θ' = θ                (axis rides through untouched)
 - **γ > 1:** anisotropy exaggerated — hesitant edges commit toward line-like tensors.
 - **γ < 1:** the field relaxes toward the isotropic identity; γ = 0 is the exact
   isotropic tensor with the trace preserved.
-- **γ = 1:** bit-exact passthrough (measured 0.0 in the tier-1 mirror; asserted again
-  on the GPU in the bench file).
+- **γ = 1:** passthrough (0.0 in the tier-1 mirror; the GPU round-trip in the bench is
+  exact within its 1e-6 tolerance).
 
 It is the tensor-space analog of a contrast dial applied to the anisotropy axis rather
 than the luminance axis. Every downstream renderer's character shifts with it (`f_tf_glyph`

@@ -9,7 +9,9 @@ Placement and orientation engine for discrete marks. Stable seed points
 distributed across the frame (jittered grid, hash-stable), each rendered
 by sampling an external shape texture in seed-local UV space, oriented by
 a vecfield sampled at that seed's position. No internal mark geometry —
-shape character comes entirely from the shape tex inlet.
+shape character comes from the shape tex inlet, with an optional
+color driving texture (Evolution 3, sampled once per seed and
+blended in via `color_mode`) able to replace its color.
 
 Two evolutions beyond the original single-owner-per-pixel design, both
 2026-07-04/05:
@@ -49,6 +51,7 @@ Traces to GPU Gems Ch. 20 ("Texture Bombing") throughout — see References.
 | 0 | texture (required, driving) | Shape tex — mark footprint, oriented rightward, centered, any color. Combined with all control messages on this same physical inlet per Vsynth convention. |
 | 1 | texture (required) | Vecfield — float32 RG, drives mark orientation and (via `mag_weight`/priority) mark growth and selection |
 | 2 | texture (optional) | Mod tex — sampled at seed UV, per-seed weight/marklen modulation |
+| 3 | texture (optional) | Color driving texture — sampled once per seed at its position, blended against the shape tex's color via `color_mode` (Evolution 3) |
 
 ## Outlets
 

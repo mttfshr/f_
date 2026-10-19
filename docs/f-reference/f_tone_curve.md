@@ -30,7 +30,7 @@ Parameters routed via `route bypass shadows midtones highlights edge_falloff low
 
 ## Loose Threads
 
-- None known. Shares `low_mid` / `mid_high` / `edge_falloff` convention with `f_luma_processor` — consider whether these should always match when used in sequence.
+- None known. Uses the same low_mid / mid_high / edge_falloff parameters as f_luma_processor, but with different defaults (this module's edge_falloff default is 0.0, while luma_processor's is 0.1); consider whether these should always match when used in sequence.
 
 ## References
 
