@@ -36,7 +36,8 @@ vfprism_pix (@type char) out1 → prism layer (isolated)
 | `threshold` | 0–1 | 0.7 | Luma gate — only bright pixels at sample position cast prism color |
 | `threshold_width` | 0–0.5 | 0.1 | Softness of the luma gate — blob boundary edge |
 | `feather` | 0–0.5 | 0.1 | Inter-channel blend — 0=hard RGB separation, high=smooth spectral gradient |
-| `strength` | 0–2.0 | 1.0 | Prism intensity — additive over source on out0 |
+| `gain` | 0–2.0 | 1.0 | Prism intensity — additive over source, before mix |
+| `mix` | 0–100% | 100% | Continuous blend toward the fully-composited (source + effect) state, not spatial masking (`mix_pct` internally). |
 | `src_vecfield`, `src_length_mod`, `src_width_mod` | internal | — | vs_inState connection gates; not user-facing |
 | `bypass` | 0/1 | 0 | Standard bypass |
 

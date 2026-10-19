@@ -1,15 +1,15 @@
 # f_lens — Bpatcher Spec
 
 _Last updated: 2026-07-16_
-_Status: Working. v2 (ghost images, halation) shipped and verified in Max 2026-07-15/16. Tilt-shift confirmed live and working (resolves this doc's own prior "not yet wired" uncertainty — directly confirmed against the shipped patcher, not assumed)._
+_Status: Working. v2 (ghost images, halation) shipped and verified in Max 2026-07-15/16. The tilt-shift stage was removed 2026-09-23 (see Moved out below)._
 
 ## Concept
 
-A filmic lens processor simulating the experiential qualities of an imperfect physical lens — evocative, not physically-accurate optics. Combines radially-symmetric aberration/distortion/transmission (vignette), texture-driven modulation, a surface-emboss displacement inlet, axially-asymmetric tilt-shift focus, inter-reflection ghost images, and halation glow. Chain position: processor, placed anywhere between a source and downstream display layer.
+A filmic lens processor simulating the experiential qualities of an imperfect physical lens — evocative, not physically-accurate optics. Combines radially-symmetric aberration/distortion/transmission (vignette), texture-driven modulation, a surface-emboss displacement inlet, inter-reflection ghost images, and halation glow. Chain position: processor, placed anywhere between a source and downstream display layer.
 
 Internally two objects in series: `lens_pix` (aberration/distortion/transmission/ghost/mod-inlets) → `lens_halation` (glow) → outlet. The tilt-shift stage was removed from the patch on 2026-09-23 and moved to `f_focus`, which has not shipped.
 
-**Moved out:** the tilt-shift stage (`tilt`/`tilt_axis`/`tilt_pos`/`slope`/`mode` and the `jit.fx.cf.tiltshift` object) was removed from this module on 2026-09-23 and moved toward `f_focus` (`.specify/paused/f_focus/`), which has not shipped. The tilt parameter rows and tilt-shift wiring described elsewhere in this doc are stale.
+**Moved out:** the tilt-shift stage (`tilt`/`tilt_axis`/`tilt_pos`/`slope`/`mode` and the `jit.fx.cf.tiltshift` object) was removed from this module on 2026-09-23 and moved toward `f_focus` (`.specify/paused/f_focus/`), which has not shipped.
 
 ## Parameters
 
@@ -27,11 +27,6 @@ Internally two objects in series: `lens_pix` (aberration/distortion/transmission
 | `ghost_spacing` | float | -1.0–1.0 | 0.3 | ±1/±5 | Offset scale between ghost taps. Negative mirrors ghosts inward through center. |
 | `halation` | float | 0.0–1.0 | 0.0 | — | Halation glow intensity, additive, warm-tinted, luma-gated |
 | `halation_threshold` | float | 0.0–1.0 | 0.7 | — | Luma gate point; regions above this bloom |
-| `tilt` | float | 0.0–1.0 | 0.0 | — | Focal-plane tilt (`jit.fx.cf.tiltshift`'s `blur_amount`) |
-| `tilt_axis` | float | 0.0–1.0 | 0.0 | — | Tilt band angle (`angle`) |
-| `tilt_pos` | float | 0.0–1.0 | 0.5 | — | Tilt band position along axis (`center`) |
-| `slope` | float | 0.0–1.0 | 0.5 | — | Sharp-to-blurred transition sharpness (`slope`) |
-| `mode` | enum (live.text) | linear/radial | linear | — | Focus shape (`mode`) |
 | `bypass` | bypass | 0/1 | 0 | — | Standard bypass — raw texture passthrough |
 
 ## Signal Chain
@@ -47,11 +42,9 @@ in3 (transmission mod texture) → lens_pix in4
 in4 (surface/gradient texture) → lens_pix in5
 
 lens_pix out0 → lens_halation in0
-lens_halation out0 → jit.fx.cf.tiltshift in0
-jit.fx.cf.tiltshift out0 → out0
+lens_halation out0 → out0
 ```
 
-`tilt`/`tilt_axis`/`tilt_pos`/`slope` route to `jit.fx.cf.tiltshift` via attrui, matching its own attribute names directly (Max/Jitter attrui messages bind by name to whichever object receives them, regardless of which object declared the matching `Param`/attribute). `tilt_axis`/`tilt_pos` additionally pass through a `js lens_tiltcenter.js` transform before reaching `jit.fx.cf.tiltshift` (combines the two into whatever `center`/`angle` actually needs — not a direct 1:1 param mapping). `mode` dispatches via `sel 0 1` to two literal `"mode linear"`/`"mode radial"` messages.
 
 `ghost`/`halation`/`halation_threshold` are normal params routed directly to their respective pix's matching-named `Param`, same mechanism as `aberration`/`distortion`/etc. — `ghost` targets `lens_pix`, `halation`/`halation_threshold` target `lens_halation` (a separate `jit.gl.pix` object, not `lens_pix`).
 
@@ -107,19 +100,18 @@ Unconnected `in1`/`in2`/`in3`/`in4` on `lens_pix` sample as black; at default `*
 ## Loose Threads
 
 - **Bypass is incomplete — real bug, confirmed 2026-07-17.** The bypass jsui → attrui (`@attr bypass`) wiring targets `lens_pix` only; `lens_halation` receives no external bypass wiring, so the bypass Param inside its codebox stays at 0 and halation keeps applying its glow. Since the tilt-shift stage moved to `f_focus` on 2026-09-23, toggling bypass clears lens_pix's effects but leaves halation live. Intended behavior is full-module passthrough in one toggle.
-- **Tilt-shift is slated for removal** once `f_focus` ships (near-mechanical port, not yet built — see `.specify/f_focus/`). When that lands, `tilt`/`tilt_axis`/`tilt_pos`/`slope`/`mode`, the `jit.fx.cf.tiltshift` object, and `lens_tiltcenter.js` all come out of this module entirely — this doc's Parameters/Signal Chain/Algorithm sections above will need trimming at that point, not just a note.
 - **`definition.py`'s halation representation is a verbatim splice** (`raw_halation.json`, with `raw_boxes`/`raw_lines`/`raw_parameters` extracted from the working live patcher and ID-remapped to an `obj-raw-N` namespace), not a declarative schema description — `build_patcher.py` just preserves it unmodified on regeneration. The tilt-shift splice this note originally described was removed with the f_focus move. See `ideas/build_patcher_schema_gaps.md` for the full background.
 - Anamorphic (static + field-driven directional squeeze) was considered for v2 and deliberately moved out to its own future module — see `ideas/f_anamorph_unnamed.md`. Not in scope for `f_lens`.
 - `panel_toggle` (front="lens"/back="field") is real, generated infrastructure now (`build_patcher.py`'s `panel_toggle` schema key) — not hand-built JSON anymore, though it started that way in v1.
 
 ## References
 
-Filmic lens effects are modeled from first principles rather than a specific source: radial distortion (barrel/pincushion), wavelength-dependent aberration, transmission falloff, and ghost imaging (4-tap reflective cascade) are each standard optics concepts composed here originally. Halation's `pix_target` compositing and the tilt-shift's delegation to `jit.fx.cf.tiltshift` (a recorded schema gap, `ideas/build_patcher_schema_gaps.md`) are this module's own architecture.
+Filmic lens effects are modeled from first principles rather than a specific source: radial distortion (barrel/pincushion), wavelength-dependent aberration, transmission falloff, and ghost imaging (4-tap reflective cascade) are each standard optics concepts composed here originally. Halation's `pix_target` compositing is this module's own architecture.
 
-Known bug, documented in Notes: bypass gates `lens_pix` only -- halation stays live regardless. Tilt-shift is slated for extraction to `f_focus` once that module ships (`ideas/f_lens_tiltshift_split.md`).
+Known bug, documented in Notes: bypass gates `lens_pix` only -- halation stays live regardless. Tilt-shift was extracted toward `f_focus` on 2026-09-23 (`ideas/f_lens_tiltshift_split.md`).
 
 See `docs/f-reference/f_lens.md` (this file) for the full algorithm and signal chain.
 
 ## Source File
 
-`package/patchers/f_lens.maxpat` — built from `src/f_lens/definition.py` (+ `raw_tiltshift.json`, `raw_halation.json`, `codebox_lens.gen`, `codebox_halation.gen`) via `build/build_patcher.py`.
+`package/patchers/f_lens.maxpat` — built from `src/f_lens/definition.py` (+ `raw_halation.json`, `codebox_lens.gen`, `codebox_halation.gen`) via `build/build_patcher.py`.

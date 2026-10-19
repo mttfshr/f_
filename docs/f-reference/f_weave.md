@@ -38,6 +38,8 @@ weave_pix out0 → out0 (texture out)
 | `angle` | 0–1 | 0.0 | Global line orientation (mapped to 0–π) |
 | `weight` | 0–0.5 | 0.1 | Line thickness — across-line mark extent |
 | `marklen` | 0–0.5 | 0.3 | Mark length along line direction |
+| `softness` | 0–2 | 0.0 | Edge softness — expands the feather zone beyond the mark edge (0 = the original hard smoothstep). |
+| `shape` | 0–1 | 0.0 | Mark profile — 0 = flat-top rectangle, 1 = raised cosine (calligraphic). |
 | `regularity` | 0–1 | 0.5 | 1=lines in phase (grid-like), 0=fully varied per-line offset |
 | `phase` | -1–1 | 0.0 | Animation phase — scrolls marks along line direction |
 | `field_amount` | 0–2 | 1.0 | Vecfield (in1) orientation-contribution depth. 1.0 reproduces the original (pre-2026-10-13) implicit depth exactly. |

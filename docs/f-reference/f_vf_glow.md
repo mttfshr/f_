@@ -36,7 +36,7 @@ When in1 is unconnected, vs_inState delivers vs_black; raw field value near (0,0
 |---|---|---|---|
 | `radius` | 0–0.2 | 0.01 | UV step size per accumulation step. Controls spatial extent of glow. |
 | `falloff` | 0–0.05 | 0.002 | Exponential decay coefficient per step. Higher = tighter glow. |
-| `gain` | 0–2 | 0.8 | Glow intensity — scales the glow layer's contribution into the driven (fully-composited) state. Renamed from `strength` 2026-07-12 (gain/mix rollout). |
+| `gain` | 0–1.5 | 0.8 | Glow intensity — scales the glow layer's contribution into the driven (fully-composited) state. Renamed from `strength` 2026-07-12 (gain/mix rollout). |
 | `mix` | 0–100% | 0% | Continuous crossfade toward the driven state (`mix_pct` internally), off by default. |
 | `color_mix` | 0–1 | 0.0 | 0 = full-color glow; 1 = luma-only (neutral/white) glow. |
 | `direction` | 0–2 | 0 | 0 = bidirectional, 1 = forward only (trail), 2 = backward only (lead). |

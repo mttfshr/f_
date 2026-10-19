@@ -42,6 +42,7 @@ Traces to GPU Gems Ch. 20 ("Texture Bombing") throughout — see References.
 | `phase` | float | -1–1 | Scroll marks along field direction (connect LFO for motion) |
 | `size_mod` | float | -1–1 | Mod tex → size modulation depth (bipolar) |
 | `stretch_mod` | float | -1–1 | Mod tex → stretch modulation depth (bipolar) |
+| `color_mode` | float | 0–1 | Blend between the shape tex's own color (0) and the color driving texture sampled at each seed's position (1) |
 | `bypass` | toggle | — | Fully transparent output (not opaque black — see Key Findings) |
 
 ## Inlets

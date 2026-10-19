@@ -35,7 +35,7 @@ vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradien
 | `gain` | -10–10 | 4.0 | Scales gradient magnitude into f_vecfield range. Negative inverts field direction. Renamed from `strength`. |
 | `scale` | -0.05–0.05 | 0.004 | Central difference neighbor distance (normalized UV). Low = fine structure; High = coarse/smooth. ~2px at 480p. Negative inverts gradient axis. |
 | `rotate` | -180–180 | 0.0 | Rotates the field vector in degrees, applied after gradient computation. |
-| `thresh` | 0–1 | 0.0 | Suppresses the field (outputs neutral 0.5) below this center-pixel luma threshold. |
+| `thresh` | −2–2 | 0.0 | Suppresses the field (outputs neutral 0.5) below this center-pixel luma threshold. Luma is 0–1, so values below 0 never suppress and values above 1 suppress everywhere. |
 | `bypass` | 0/1 | 0 | Outputs neutral field (all 0.5) |
 
 **Prefix:** `fieldmap` — **Object name:** `fieldmap_pix`

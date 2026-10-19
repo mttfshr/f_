@@ -15,9 +15,9 @@ Takes a flat texture and wraps it onto a sphere. The sphere can be rotated in th
 | Param | Range | Default | Description |
 |-------|-------|---------|-------------|
 | `lon` | 0–1 | 0.5 | Globe rotation around vertical axis. Full sweep = one revolution. Primary LFO target. |
-| `lat` | 0–1 | 0.5 | Pole tilt — tilts the north pole toward/away from viewer. 0.5 = equatorial view. |
+| `lat` | −1–1 | 0.5 | Pole tilt — tilts the north pole toward/away from viewer. 0.5 = equatorial view. |
 | `spin` | 0–1 | 0.0 | Roll around the viewing axis. Independent of lon/lat. |
-| `proj` | −2–2 | 0.5 | Projection blend: 0 = orthographic, 1 = stereographic. Values outside 0–1 produce extended distortions. |
+| `proj` | −2–2 | 0.0 | Projection blend: 0 = orthographic, 1 = stereographic. Values outside 0–1 produce extended distortions. |
 | `circ` | circle/full | circle | Output shape: circle applies a circular mask at the unit disk boundary; full passes the complete projected rectangle including back-hemisphere corners. |
 | `bypass` | 0/1 | 0 | Passes raw unwarped texture through. Distinct from circ=full: bypass removes the projection entirely. |
 

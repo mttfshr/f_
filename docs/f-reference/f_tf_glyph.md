@@ -72,6 +72,8 @@ diagnoses on sight, but never wire it. Nothing mechanically sniffs the input.
 | `softness` | 0-1 | 0.1 | Edge falloff, independent of thickness (f_weave convention). |
 | `gate` | 0-1 | 0.05 | Draw threshold on the delivered trace. |
 | `max_aspect` | 1-32 | 8 | Clamp so near-degenerate λ2 can't draw infinitely thin spikes. |
+| `width` | 64-8192 | 640 | Render width in pixels. Set it to the real frame width: it sets the clamped-tap texel step. (Live `jit.gl.pix` cannot read its own size, so this is exposed for now.) |
+| `height` | 64-8192 | 480 | Render height in pixels. Set it to the real frame height. |
 | `bypass` | 0/1 | 0 | **Passthrough of the source texture** at the current pixel — not a neutral frame (glyph = passthrough per the family contract). |
 
 **Every default above is provisional**, pending the live judgment tier
