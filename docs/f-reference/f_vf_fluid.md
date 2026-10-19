@@ -24,7 +24,7 @@ inlet 0 (force vecfield / control) → routepass
   texture → vs_inState
     vs_inState out0 (force texture or vs_black) → adv in1, enc in1
     vs_inState out1 (0/1)                       → prepend param src_vecfield → adv, enc
-  unmatched → route force dt viscosity project drag gain taps → dials → prepend param <name> → stage(s)
+  unmatched → route force dt viscosity project drag gain drift taps → dials → prepend param <name> → stage(s)
 
 r draw → adv in0            (advances the solver exactly once per frame)
 r draw → enc in0            (gives enc the render-context size, never 1×1)

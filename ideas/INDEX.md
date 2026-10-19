@@ -1,6 +1,6 @@
 # Ideas Index
 
-_Created: 2026-09-17; last brought current 2026-10-18 (75 notes plus one parked
+_Created: 2026-09-17; last brought current 2026-10-18 (77 notes plus one parked
 script)._ A refresher map of `ideas/` so you don't have
 to reread everything to remember where a thread stands. Grouped by theme, not
 date. Each entry: one-line gist + status. When a file's own status line is
@@ -91,6 +91,17 @@ substantially move a file in `ideas/`, update its entry here too.
 - **[f_tf_research.md](f_tf_research.md)** ⚪ — Stable evidence for the tensor family: the
   tensor-native test, prior art, the jit.fx platform audit, kuwahara, and GPU/decode facts
   from the builds.
+- **[shared_tensor_vecfield_operators.md](shared_tensor_vecfield_operators.md)** 🔵 —
+  Analysis (2026-10-18), no decision: can one module take a tensor or a vecfield? Yes for
+  operators that are arithmetic about a neutral (smooth, mix; the only per-kind difference
+  is the neutral value and the unconnected-input guard), no for sharpen and other type
+  algebra; geometric warps share the Jacobian but not the transformation law. Packed
+  tensor (outlet 1) is not linear, so it is never a candidate. Weighs four ways to pick
+  the kind (menu, two inlets, wire tag, shared source with two builds). Matt's answers
+  (kind set once; a leaning, not a ranking, toward general tools) leave one module with a
+  `kind` menu vs shared source undecided: it turns on how many modules would share, and
+  prefix, label and dot questions are open. Vecfield twins tabled, a vecfield
+  arrow view wanted. Nothing built or run.
 - **[f_vf_seeds.md](f_vf_seeds.md)** 🟢 — Built. Discrete-item generator: marks at
   hash-stable seed points, oriented by an incoming vecfield (wind-barb/ink
   look). Reference implementation for the discrete-item family's inlet
@@ -484,6 +495,16 @@ there, then the chapter-specific files for depth.
   same open "UI density / control surface design" question this file is
   blocked on — see `.specify/plan.md`. Next step: reviewing Max4Live devices
   for prior art before picking a direction.
+
+- **[xray_package_candidates.md](xray_package_candidates.md)** 🔵 — **PARKED 2026-10-18** (Matt
+  found `water` underwhelming earlier). Analysis (2026-10-18), no decision: which objects in the installed XRAY package (v1.0.2, 27 pieces, all CPU
+  `jit.matrix`) bear on current `f_` work. Worth a scratch probe: `3dbuffer` + `timecube`
+  (per-pixel time offset, for `f_loop_to_cycle` / `f_texture_sampler`), `water` (animated
+  height field for the `f_lumia` chain, wave look for `f_cymascope`), `cumsum` + `colormap`
+  (ingredients for the missing LUT consumer). Plausible, needs a probe: `distance`,
+  `kmeans`, `svd`, the contour family, and four objects with no helpfile. The rest is
+  plumbing or duplicates core objects. Lean: scratch and precompute only, no dependency
+  for shipped modules (Matt to decide). Nothing run in Max.
 
 ## Standalone research
 

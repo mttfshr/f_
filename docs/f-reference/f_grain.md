@@ -51,7 +51,7 @@ Parameters routed via `route bypass density gain persistence fade size size_var 
 
 Film-grain synthesis via hash-noise sampling is an original construction; no external source was consulted. The dual-mode convention (source mode: generator; processor mode: grain over an input texture, auto-detected via `vs_inState`) established here is the pattern `f_stipple` follows.
 
-This module predates `build_patcher.py` (patcher added 2026-05-23, build system 2026-05-30): `src/f_grain/definition.py` is a record of the real `.maxpat`, not a generator for it -- never regenerate `f_grain` via `build_patcher.py`.
+This module predates `build_patcher.py` (patcher added 2026-05-23, build system 2026-05-30). Taken off the never-regenerate list 2026-10-09 (T003): `src/f_grain/definition.py` is the generator again and reproduces the shipped patch byte for byte.
 
 See `docs/f-reference/f_grain.md` (this file) for the full parameter reference.
 

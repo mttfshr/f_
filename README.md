@@ -185,7 +185,7 @@ Planning and reference material. Kept public as a reference and conversation sta
 
 ### `skills/`
 
-[Claude](https://claude.ai) skills used to collaborate with Claude on this codebase. Eight of them, covering Max/Vsynth/audio-DSP domain knowledge:
+[Claude](https://claude.ai) skills used to collaborate with Claude on this codebase. Ten of them, covering Max/Vsynth/audio-DSP domain knowledge:
 
 - `vsynth-bpatcher` — conventions for bpatcher structure.
 - `jit-gen-codebox` — GenExpr/`jit.gl.pix` gotchas.

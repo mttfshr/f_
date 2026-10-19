@@ -1,7 +1,7 @@
 # f_caustic — Future Directions
 
 _Built and working. Last updated: 2026-06-09._
-_As-built reference: `docs/f_caustic.md` (to be written)._
+_As-built reference: `docs/f-reference/f_caustic.md`._
 
 ## Possible extensions
 

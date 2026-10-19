@@ -70,7 +70,7 @@ changed here.
 |---|---|---|
 | `mode` | menu: along / across, along | follow the edge (reference projected onto the edge line), or its normal (onto the gradient axis) |
 | `angle` | −180–180°, 0 | reference direction φ; where the fade-to-zero lands |
-| `gain` | 0–10, 1 | output amplitude |
+| `gain` | −4–4, 1 | signed output amplitude; negative reverses the flow (changed 2026-10-17) |
 | `gate` | 0–1, 1 | 0 = ignore coherence; 1 = multiply magnitude by coherence (A) |
 | `width`, `height` | 64–8192, 640 / 480, numbox | frame size in pixels. `dim` reads 1 inside live `jit.gl.pix` (see tensormap spec), so they are Params |
 | `bypass` | param bypass (`bypass_gate`) | neutral vecfield |
@@ -116,7 +116,7 @@ changed here.
 
 ## Out of scope
 
-- Per-pixel reference direction (a second inlet, e.g. bias toward a swirl field): v2.
+- Per-pixel reference direction (a second inlet, e.g. bias toward a swirl field): built 2026-10-17 (see tasks Phase 5).
 - `normalize` / full-magnitude mode with a seam.
 - Trace gating (B channel): add only if the live test wants it.
 - Outlet 0 (raw tensor) input.

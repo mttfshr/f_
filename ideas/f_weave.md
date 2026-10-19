@@ -1,7 +1,6 @@
 # f_weave
 
-**Status:** Idea
-**Lifecycle stage:** ideas/ — concept capture, not yet specced
+**Status:** Built — see `src/f_weave/` and `docs/f-reference/f_weave.md`; orientation A/B resolved 2026-10-13 (ship both, `field_amount`/`fix_blend` dials). Body below is a dated design capture.
 
 ---
 

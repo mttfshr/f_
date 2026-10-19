@@ -1,7 +1,7 @@
 # Spec addendum: f_caustic "sheets" mode (GPU forward scatter)
 
 _Created: 2026-10-06. Rewritten 2026-10-07 as an addendum to `f_caustic` (it began as a separate-module draft)._
-_Status: Decisions resolved 2026-10-07; ready for Phase 1 (technical plan, tasks, build). Nothing here is built. The behavior below was measured in the 2026-10-06 and
+_Status: Decisions resolved 2026-10-07. BUILT and shipped 2026-10-07; superseded 2026-10-10, when soft mode was removed and sheets became the only path (see tasks.md's 2026-10-10 entry). The behavior below was measured in the 2026-10-06 and
 2026-10-07 spikes (`tests/records/spike_scatter.py` stages `s0`-`s11`, `tests/bench/spike_scatter*.maxpat`,
 `spike_scatter.jxs`, `scratch/scatter_spike_*`) and recorded in `ideas/optics_map.md` ("Findings: scatter
 feasibility spike", "Findings: scatter density, cost and detail"). The seven items that were marked [DECIDE] were resolved on 2026-10-07 (Matt: "go with your recommendations"); see Decisions at the end._
@@ -116,7 +116,7 @@ Existing parameters keep their names, ranges and defaults. Added parameters are 
 | `detail` **new** | sheets | 1-5, the ladder above. **Decided:** default 5 (Matt's look); an M1 user steps down the ladder |
 | `bypass` | both | unchanged: passthrough on every outlet |
 
-Not built (v1): `edge: wrap` (untested), per-channel dispersion, an analytic glass.
+Not built (v1): per-channel dispersion, an analytic glass. (`edge: wrap` was built 2026-10-17 as a full Off / Wrap / Mirror / Clamp menu.)
 
 ## Inlets / Outlets
 

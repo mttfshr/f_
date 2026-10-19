@@ -1,7 +1,7 @@
 # f_a_decorrelate — Patch Reference (As-Built DSP)
 
 _Last updated: 2026-10-12_
-_Status: Phase 4 DSP built (`f_a_decorrelate_v1.maxpat` + `f_a_decorrelate_inner.maxpat`, `~/Vsynth/patterns/`); bpatcher packaging not done — first `f_a_` processor awaits the `build_patcher.py` audio archetype_
+_Status: Built and shipped to `package/patchers/` 2026-10-12 (hand-built `f_a_decorrelate.maxpat` + `f_a_decorrelate_inner.maxpat`); registration done. First `f_a_` processor still awaits the `build_patcher.py` audio archetype_
 
 ## Role
 
