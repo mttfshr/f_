@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-18 (night): omp fan-out work wrapped (param-audit-1 applied and re-checked); skill updated; docs only
+
+- **param-audit-1 closed.** 54 apply-ready fixes were applied (`26e5cd8`), the 22 table differences were reconciled with `definition.py` (`827e199`: f_stereo `proj` default 0.0 and range -1..1, f_vf_fieldmap `thresh` range -2..2, f_lens tilt-shift rows removed), and the 16 needs-decision items were re-checked against current code (`29369af`): 15 fixed in `docs/f-reference/`, `f_lens-4` already covered. `f_vf_fieldmap` T024 ticked. `tests/check.sh quick` passed.
+- **Wording to know about:** `f_vf_streak` and `f_vf_glow` docs now say an unconnected field gives the source back (the accumulation samples the source pixel), not "no glow" / black; the composite only differs once `mix_pct` > 0 (both default 0).
+- **Open, Matt's call: `f_weave` archetype** (`processor` in `definition.py`, behaves like a generator). Decision 23:17: **leave as is for now**; the doc keeps flagging it.
+- **Still open from the omp work:** tabled staleness-3 "C" items; a coverage-inventory ("extract") template for the `omp-fanout` skill. The skill itself (outside this repo, `f_omp_runs/skill-draft/omp-fanout/`) now has the short-exact-span fix rule, diagram lines as claims, and the empty-unit rule; the folder needs re-uploading to take effect.
+- **Still not part of any commit:** `package/examples/f_demo_sampleplatter.maxpat`, `scratch/tensor-scratch.maxpat` (if still present).
+
 ## 2026-10-18 (evening): XRAY package assessed against `f_` work; one new idea note; docs only, nothing run
 
 - **`ideas/xray_package_candidates.md` (new, indexed; INDEX now 77).** Answers "which XRAY objects should we explore?" from the installed package's helpfiles, launcher and (for four objects with no helpfile) binary strings; upstream source and Max were not touched. Tier A: `3dbuffer` + `timecube` (per-pixel time offset: `f_loop_to_cycle`, `f_texture_sampler`), `water` (height-field source for `f_lumia` / `f_caustic`, wave look for `f_cymascope`), `cumsum` + `colormap` (LUT ingredients; the dependent-read consumer still does not exist). Tier B needs a probe; tier C has no fit (`mean` duplicates what `f_util_profile` does with `jit.dimop`).
