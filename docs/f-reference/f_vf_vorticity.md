@@ -56,8 +56,9 @@ Single `jit.gl.pix` codebox — no multi-stage split needed. This was the
 real open question carried from planning (curl needs 4 field samples;
 the vorticity gradient needs curl evaluated at 4 neighbors, each of which
 needs its own 4 field samples — ~20+ inline texture samples per pixel,
-no loops, no dynamic branching). Confirmed compiling clean in scratch
-testing with no console errors and no capture-ceiling failure, unlike
+no loops, no dynamic branching). Compiled clean in early scratch
+testing with no console errors and no capture-ceiling failure (see the
+status caveat at the top — not a statement of current behavior), unlike
 `f_vf_seeds`/`f_masonry`'s loop-driven searches at similar total sample
 counts — this computation's fixed, linear (non-looping) shape appears to
 be the reason it didn't hit the same wall.
@@ -76,8 +77,8 @@ main body                     — curl_at at center + 4 neighbors →
 ```
 
 Finite-difference offsets use `dim`-derived texel size (`1.0/dim.x`,
-`1.0/dim.y`), same idiom as `f_vf_sobel`'s and `f_caustic`'s divergence
-calc — no new offset convention introduced.
+`1.0/dim.y`), same idiom as `f_vf_sobel`'s gradient
+sampling — no new offset convention introduced.
 
 **Zero-force on unconnected/uniform input, with no explicit suppression
 code.** Unlike `f_vf_glow` (which needs an explicit raw-value threshold

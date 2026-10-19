@@ -126,7 +126,7 @@ axis-symmetric must not copy it blindly.
   menu; cross/tick would be closed-form distance swaps kept as scratch-only
   experiments (plan ADR-8). No debug-tint modes (spec OQ2 gate also open).
 - **Marks confined to their cells:** every drawn pixel lies within
-  `glyph_scale·cellsize/2` (+ the softness falloff) of its own cell center.
+  `glyph_scale·cellsize/2` plus the stroke half-width and softness falloff, both proportional to that radius, of its own cell center.
 
 ## Typical use
 

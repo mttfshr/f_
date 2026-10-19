@@ -125,7 +125,7 @@
 Run via `.specify/maintenance/SKILL.md`; full findings in
 `.specify/maintenance/status.json`. Folder moved back from `stable/`.
 
-- [ ] T024 **Convention: `thresh` range in the doc doesn't match what's
+- [x] T024 (resolved 2026-10-18: the range is −2..2 as shipped; the doc now says so and notes that luma is 0–1, so values below 0 never suppress and above 1 suppress everywhere) **Convention: `thresh` range in the doc doesn't match what's
   shipped.** `docs/f-reference/f_vf_fieldmap.md`'s param table says
   `thresh` is `0–1`; `definition.py`/the shipped codebox actually has
   `min: -2.0, max: 2.0`. The wider range has real, undocumented behavior

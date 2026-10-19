@@ -23,7 +23,7 @@ vfstreak_pix (@type char) out0 → composite (driven state = source + streak*gai
 vfstreak_pix (@type char) out1 → streak layer (isolated)
 ```
 
-When in1 is unconnected, vs_inState delivers vs_black; `src_vecfield` system param suppresses field vectors — step positions collapse to current UV, output passes through source on out0 and black on out1.
+When in1 is unconnected, vs_inState delivers vs_black; `src_vecfield` system param suppresses field vectors — step positions collapse to current UV, the isolated outlet (out1) shows the source, and the composite (out0) adds source×`gain` scaled by `mix_pct` (default 0, so out0 equals the source).
 
 ---
 

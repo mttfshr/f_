@@ -47,9 +47,9 @@ vfprism_pix (@type char) out1 → prism layer (isolated)
 
 ## Notes
 
-- **`.specify/f_vf_prism/spec.md` is a byte-for-byte duplicate of `f_vf_chroma`'s spec.md** — same title ("f_vf_chroma — spec"), same body text, describing chroma's simpler `spread`/`strength` mechanic rather than prism's actual `reach`/`threshold`/`feather` design. This looks like a copy-paste artifact from when the module was forked. **This doc is derived from the shipped `definition.py` instead** — treat `spec.md` in this module's `.specify/` folder as misfiled/stale, not authoritative, until it's rewritten.
-- `codebox_v15.gen` is the version currently wired into `definition.py` — like `f_vf_chroma`'s `codebox_v10.gen`, this module went through many iterations (`codebox_v1.gen` through `codebox_v15.gen` all exist in `.specify/f_vf_prism/`); only v15 is live.
-- Not in `README.md`'s patch table — added as a finding of this documentation pass, not yet cross-checked into README.
+- An earlier version of this note claimed `.specify/f_vf_prism/spec.md` was a stale copy of `f_vf_chroma`'s spec.md; **corrected 2026-10-12**: the spec was rewritten 2026-07-11 against the production module (its own correction note documents the fork cleanup), and it now describes the shipped `reach`/`threshold`/`feather` design.
+- **`codebox_v17.gen` is the version currently wired into `definition.py`** — this module went through many iterations (`codebox_v1.gen` through `codebox_v17.gen` all exist in `src/f_vf_prism/`); only v17 is live, adding the out3 gate-weighted vecfield outlet (ADR1) and the `strength` → `gain` rename on top of the v15 baseline.
+- Listed in `README.md`'s patch table.
 - See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract.
 
 ## Source File

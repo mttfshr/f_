@@ -44,4 +44,4 @@ See `docs/f-reference/f_hue_processor.md` (this file) for the full parameter ref
 
 ## Source File
 
-`patchers/f_hue_processor.maxpat`
+`package/patchers/f_hue_processor.maxpat`

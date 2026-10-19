@@ -151,7 +151,7 @@ same caveat as tensormap).
 | Tensor unconnected | `vs_black` (all zeros) decodes to Jxy·s = −1 → trace 0, λ1 = 1/s *phantom energy*, λ2 negative (non-SPD). **The SPD guard fires** (this is an energy-gated consumer: a trace gate alone would mistake the phantom for structure) and the pixel takes the isotropic fallback: a plain `length`-radius isotropic blur of the source. No crash, no invented direction. |
 | Source unconnected | Black output, no crash. |
 | Packed outlet 1 fed by mistake | Neutral (0.5, 0.5, 0, 0) decodes to a weak isotropic tensor (near-no-op); a strong packed feed reads as a plausible but wrong kernel field — visibly wrong, self-diagnosing; documented, not sniffed. |
-| Bypass | Exact passthrough of inlet 1 (this module has no encoding of its own to neutralize). Rgb **and alpha** pass through — the bypass mix carries an alpha arm; on an unconnected tint inlet the outlet alpha follows the neutral's (0.5). |
+| Bypass | Exact passthrough of inlet 1 (this module has no encoding of its own to neutralize). Rgb **and alpha** pass through — the bypass mix carries an alpha arm; an unconnected source inlet reads black, so the bypassed output is black. |
 
 The all-zeros phantom and the SPD-as-primary-defense distinction are the
 joint glyph/aniso_blur finding of 2026-10-17; see `f_tensor_type.md`

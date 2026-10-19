@@ -69,7 +69,7 @@ float32 and are never exposed as outlets.
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `release` | 0–1 | 0.5 (provisional) | Feedback coefficient. 0 = passthrough (neutral, no residue from frame 1). Higher = longer memory: 0.3 light, 0.5 default, 0.9 heavy inertia. Ride it from 0 (reactive) to 0.9+ (frozen-ish). |
-| `bypass` | 0/1 | 0 | **Exact passthrough of the inlet tensor** — feedback ignored, NOT a freeze of the last smoothed frame. On an unconnected inlet the field decays naturally to the zero-tensor neutral instead of holding stale data. |
+| `bypass` | 0/1 | 0 | **Exact passthrough of the inlet tensor** — feedback ignored, NOT a freeze of the last smoothed frame. On an unconnected inlet the field decays naturally toward all-zeros (vs_black), not toward the (0, 0.5, 0, 1) neutral, and settles there instead of holding stale data. |
 
 **Prefix:** `smooth` - **Object name:** `smooth_pix` (state) / render - **Type:** `@type float32`
 

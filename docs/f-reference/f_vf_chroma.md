@@ -7,7 +7,7 @@
 
 ## What it does
 
-Vecfield-driven chromatic aberration. At each pixel, samples the vecfield for a direction vector and offsets the R and B channel samples in opposite directions along it (G stays at the unshifted UV) — color fringing that follows field geometry rather than a fixed radial center: vortex fields produce spiral fringing, gradient fields produce directional fringing, convergent fields produce radial fringing.
+Vecfield-driven rainbow streak. At each pixel, marches step-by-step along the vecfield's direction vector, and at each step samples the source luma as a gate and accumulates a synthesized rainbow color — a hue-swept streak laid down along field geometry rather than a fixed radial center: vortex fields produce spiral streaks, gradient fields produce directional streaks, convergent fields produce radial streaks.
 
 The expressive, field-steered cousin of f_lens's `aberration` (which is physically grounded — always centrifugal, scaled by distance from a fixed center). f_vf_chroma's separation axis and direction vary per-pixel with whatever field is patched in.
 

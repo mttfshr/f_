@@ -26,7 +26,7 @@ vfglow_pix (@type char) out0 → composite (source + glow * strength)
 vfglow_pix (@type char) out1 → glow layer (isolated)
 ```
 
-When in1 is unconnected, vs_inState delivers vs_black; raw field value near (0,0) is detected pre-remap and field is suppressed — no glow is produced. When in2 is unconnected, vs_black (0.0) adds nothing to the base radius — clean default.
+When in1 is unconnected, vs_inState delivers vs_black; raw field value near (0,0) is detected pre-remap and the displacement is zeroed, so every accumulation step samples the source pixel itself: with the default `mix_pct` 0 the output equals the source, and with `mix_pct` > 0 it gains a source-brightness boost (`gain` × source) rather than a glow. When in2 is unconnected, vs_black (0.0) adds nothing to the base radius — clean default.
 
 ---
 
@@ -97,7 +97,7 @@ The visual result depends entirely on the field source:
 This is intentional — f_vf_glow is a field-aligned blur, not a conventional bloom. The field drives the blur direction. For radially-outward bloom, use f_vf_vortex with `curl=0, converge` negative — see Signal chain recipes below.
 
 ### vs_black suppression
-Raw field texture value is tested before remapping. Values near (0,0) in texture space (vs_black) suppress the field, producing no glow displacement. This correctly handles the unconnected-inlet case. A zero-vector region in a real field is encoded as (0.5, 0.5), which passes through normally and produces zero displacement after remapping — no glow spread, which is also correct.
+Raw field texture value is tested before remapping. Values near (0,0) in texture space (vs_black) zero the displacement, so each accumulation step samples the source pixel itself (no spatial glow spread; see above). This correctly handles the unconnected-inlet case. A zero-vector region in a real field is encoded as (0.5, 0.5), which passes through normally and produces zero displacement after remapping — no glow spread, which is also correct.
 
 ### Radius and banding
 At high `radius` values, step spacing increases and banding can appear on sources with sharp tonal transitions. The 48-step count and jitter handle most cases; if banding persists, lower `radius` or lower `falloff` to distribute weight across more steps.

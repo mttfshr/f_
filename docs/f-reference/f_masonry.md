@@ -62,7 +62,7 @@ Coordinate frame rotates by `angle` into `along`/`across` axes (with `aspect` co
 
 ## Loose Threads
 
-- **`quantize` removal from the live `.maxpat` — completed 2026-09-23 (E001p).** `quantize` was removed from the codebox algorithm entirely in the 2026-07-05 ADR 7 candidate-search redesign (`src/f_masonry/definition.py`'s own header comment: "quantize removed"; no `Param quantize` declared). But the live `.maxpat`'s `quantize` `live.dial`, its `route` entry, and its `prepend quantize`/message wiring are all still present and unremoved — since `f_masonry` is on the never-regenerate-via-`build_patcher.py` list, nobody's gone back to strip the dead UI after the codebox stopped using it. The dial still moves and still sends a message, it just lands on nothing. Not urgent, but a real dangling control — worth removing from the `.maxpat` by hand next time this module is opened for other reasons.
+- **`quantize` removal from the live `.maxpat` — completed 2026-09-23 (E001p).** `quantize` was removed from the codebox algorithm in the 2026-07-05 ADR 7 candidate-search redesign. The dead `live.dial`, its `route` entry, the `prepend quantize` wiring and the parameter entries were removed by hand on 2026-09-23 and the controls panel reflowed. Nothing outstanding.
 - Known bug (per HANDOFF): square-output artifact at non-square render resolutions — untouched.
 - Target-list partitioning for the three modulation inlets is a working hypothesis (structural params → slot space, appearance params → brick/pixel space), not finalized — see `.specify/f_masonry/spec.md`'s Open Questions.
 - Angle compensation for slot-mod sampling when `angle≠0` is deferred (sample coordinate doesn't currently correct for rotation).
