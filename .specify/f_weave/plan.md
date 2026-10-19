@@ -20,11 +20,11 @@ before any patcher structure is built.
 ## Technical Context
 
 **Environment:** Max 9, Vsynth package, jit.gl.pix gen subpatcher
-**Build system:** `tools/build_patcher.py` + `.specify/f_weave/definition.py`
+**Build system:** `build/build_patcher.py` + `src/f_weave/definition.py`
 **Primary output:** `@type char` texture
 **Vecfield inlet:** float32 (f_vecfield convention: RG=XY, 0.5=zero)
 **Scratch location:** `~/Vsynth/patterns/`
-**Source of truth:** `patchers/f_weave.maxpat`
+**Source of truth:** `src/f_weave/definition.py` (builds to `package/patchers/f_weave.maxpat`)
 
 **Constitution constraints met:**
 - Codebox-before-patcher: Phase 1 is scratch patch only; no JSON written until codebox confirmed
@@ -214,11 +214,10 @@ Goal: additive vecfield orientation contribution confirmed working.
 
 Goal: confirmed codebox promoted to built patcher.
 
-- [ ] Read `tools/spec.md` for definition.py schema
+- [ ] Read `build/spec.md` for definition.py schema
 - [ ] Write `.specify/f_weave/definition.py` with confirmed codebox + full
       param contract
-- [ ] Run `tools/py.sh tools/build_patcher.py .specify/f_weave/definition.py
-      patchers/f_weave.maxpat`
+- [ ] Run `build/py.sh build/build_patcher.py src/f_weave/definition.py`
 - [ ] Validate JSON: `python3 -c "import json; json.load(open('patchers/f_weave.maxpat'))"`
 - [ ] Open in Max; verify all params respond; verify UI layout
 - [ ] Wire beats/period enforcement (beats ≤ period) in patcher

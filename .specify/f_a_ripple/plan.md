@@ -22,7 +22,7 @@ depending on band) run per-sample in the `gen~` codebox.
 per-partial null holds at a 2048-entry table and in-range f0 (96 Hz); it
 visibly fails at a 64-entry smoke-test table, but that failure is
 table-resolution quantization (`peek` floors rather than interpolates — see
-`jit-gen-codebox` skill), not a flaw in the split itself.
+`gen-tilde-codebox` skill), not a flaw in the split itself.
 
 **CPU payoff measured 2026-09-15 (spec.md Primary Risk) — turns out not to
 matter at current scale.** DSP Status CPU% was identical (~33%) with the
@@ -39,7 +39,8 @@ by design, not verified by measurement.** An attempt to verify the
 2048-entry table across the full 50–400 Hz range (not just the 96 Hz
 spot-check) broke down on tooling problems (`scope~` failing to render
 above f0≈200, `peakamp~` units confusion, unrepeatable readings — see
-HANDOFF) without producing a trustworthy result. Rather than keep chasing
+the `skills/gen-tilde-codebox/SKILL.md` metering-objects section) without
+producing a trustworthy result. Rather than keep chasing
 that measurement: given the CPU headroom already confirmed above (fully
 negligible), there's no cost reason not to just fix the root cause
 outright. `f_a_ripple_scratch_t3.maxpat` (the null-test rig) and T5/T6's
@@ -123,8 +124,8 @@ file, Licensing.
   (including a value exceeding `smr_mean`, crossing S(t)'s sign reversal),
   and `smr_cycle` all swept live on T5 with no clicks, dropouts, or
   clipping. Impressions only, not a formal characterization — consistent
-  with the reframe. **`pm_turns` not tested — not actually wired as a
-  live parameter yet.** T6's codebox hardcodes the trial-default PM depth
+  with the reframe. **`pm_turns` not swept in scratch — the production patch (Phase 4) wires
+  it as a real `Param`; only T6's scratch codebox hardcodes it.** T6's codebox hardcodes the trial-default PM depth
   (`halfpi = twopi/4`, i.e. `pm_turns=0.5`) rather than exposing it as a
   `Param`; exposing and sweeping it is a known TODO whenever T6 gets
   built out further, not a blocker for the AM-only path.
@@ -148,7 +149,8 @@ file, Licensing.
 
   **Not yet done**: production UI polish (live.dial grid matching `f_`
   visual conventions instead of plain flonums — see
-  `ideas/f_a_build_process.md`), placement in `package/patchers/`,
-  Phase 5 (docs/helpfile). The DSP itself is the hard part and it's done;
-  packaging is comparatively mechanical.
+  `ideas/f_a_build_process.md`), Phase 5 (docs/helpfile). Placement in
+  `package/patchers/` happened later (HANDOFF 2026-10-12: the v1 patch is
+  already shipped); UI polish and docs remain. The DSP itself is the hard
+  part and it's done; packaging is comparatively mechanical.
 - **Phase 5 — docs and helpfile.** Not started.

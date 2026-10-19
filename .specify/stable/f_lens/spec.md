@@ -1,7 +1,7 @@
 # Spec: f_lens
 
 _Last updated: 2026-07-15 (anamorphic removed from v2 scope, moved to new module)_
-_Status: Draft — v1 (aberration/distortion/transmission/tilt) built and working; v2 expansion (ghost, halation) specced below, not yet built_
+_Status: v1 + v2 (aberration, distortion, transmission, ghost images, halation, spatial modulation) shipped; tilt-shift removed 2026-09-23 toward f_focus_
 
 ---
 
@@ -22,7 +22,7 @@ This removes `anamorphic`/`anamorphic_axis`/`anamorphic_field_amt` and the assoc
 
 ### Session 2026-07-15 — v2 scope: ghost, halation, anamorphic; tilt-shift extraction
 
-- Q: Where does tilt-shift go now that it's an unrelated mechanism sharing a file (see `ideas/f_lens_tiltshift_split.md`)? → A: Extracted to a new module, `f_focus`. `f_lens` loses `tilt`/`tilt_axis`/`tilt_pos`/`mode`/`slope` and the `jit.fx.cf.tiltshift` object entirely. `f_focus` Phase 1 is a near-mechanical port of the existing tilt-shift ADR-1/ADR-2 content from this file. `f_focus` Phase 2 (content-driven focus-map gather-blur, GPU Gems Ch. 28 recipe) is tracked separately in `.specify/f_focus/` and is not blocking Phase 1.
+- Q: Where does tilt-shift go now that it's an unrelated mechanism sharing a file (see `ideas/f_lens_tiltshift_split.md`)? → A: Extracted to a new module, `f_focus`. `f_lens` loses `tilt`/`tilt_axis`/`tilt_pos`/`mode`/`slope` and the `jit.fx.cf.tiltshift` object entirely. `f_focus` Phase 1 is a near-mechanical port of the existing tilt-shift ADR-1/ADR-2 content from this file. `f_focus` Phase 2 (content-driven focus-map gather-blur, GPU Gems Ch. 28 recipe) is tracked separately in `.specify/paused/f_focus/` and is not blocking Phase 1.
 - Q: Are ghost images (inter-reflection) still out of scope, per the original spec's "Out of Scope" section? → A: No longer — promoted into v2 scope. Ghosts share the existing radial `cx`/`cy`/`dist` vector machinery already in `lens_pix` (aberration/distortion both key off the same center-outward vector), so they extend the existing codebox rather than requiring a new stage.
 - Q: Is halation still out of scope? → A: No longer — promoted into v2 scope, but as **a mode within `f_lens`**, not a separate module (Matt's explicit call, 2026-07-15) — decided even though halation's mechanism (luma-gated isotropic blur/accumulation, closer to `f_vf_glow`'s idiom than to the radial UV-displacement machinery) doesn't share math with the rest of the codebox. Architecturally this most likely means a second `pix_chain` stage or a multi-pix bpatcher (like `f_vf_advect`), not a single codebox — real open question, see Open Questions below.
 - Q: Is anamorphic distortion still deferred? → A: No longer — promoted into v2 scope, and expanded beyond the original "directional stretch" framing. Two variants: **static anamorphic** (fixed axis + squeeze ratio, small addition to existing distortion math, no new inlet) and **field-driven anamorphic** (squeeze direction driven per-pixel by a new vecfield inlet — genuinely new capability, not just a mode). Both are in scope for v2; field-driven is the one requiring new inlet plumbing.
@@ -205,7 +205,7 @@ Tilt-shift is not in the codebox — handled entirely by `jit.fx.cf.tiltshift` d
 Supersedes the "Out of Scope" section below, which is kept for history.
 Tilt-shift (`tilt`/`tilt_axis`/`tilt_pos`/`mode`/`slope`, and the
 `jit.fx.cf.tiltshift` object) is removed from `f_lens` as part of this
-pass — see `.specify/f_focus/spec.md` for its new home.
+pass — see `.specify/paused/f_focus/spec.md` for its new home.
 
 ### Ghost images (inter-reflection) — SHIPPED 2026-07-15, verified in Max
 
@@ -285,7 +285,7 @@ the static axis rather than overriding it (Phase 0 T001 decision).~~
 
 ## Open Questions
 
-- **Distortion and aberration interaction:** The codebox sketch applies distortion first, then aberration on the distorted UVs. Alternative is to apply them independently to the original UV. Visual results differ — to be decided during codebox development.
+- **Distortion and aberration interaction:** The codebox sketch applies distortion first, then aberration on the distorted UVs. Alternative is to apply them independently to the original UV. Visual results differ — RESOLVED: sequential ordering was built (see Codebox Structure).
 - **Panel layout:** Eight dials — single row vs two rows. To be determined in build phase.
 - **Prefix:** `lens` → `lens_pix`. Confirm no collision with Vsynth objects.
 

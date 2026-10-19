@@ -57,15 +57,15 @@ plus the source tap).
   spec.md             done
   plan.md             this file
   tasks.md            next to this file
-  codebox_glyph.gen   Phase 2 (single codebox; name under the module-prefix convention)
-  definition.py       Phase 4
+  codebox_glyph.gen   Phase 1 (single codebox; name under the module-prefix convention)
+  definition.py       Phase 3
 
 tests/
   test_tf_glyph.py    tier 1 NumPy mirror: decode + aspect/axis + gate + draw       (Phase 0)
-  bench_tf_glyph.py   tier 2, real codebox on the GPU                               (Phase 2)
+  bench_tf_glyph.py   tier 2, real codebox on the GPU                               (Phase 1)
 
 ~/Vsynth/patterns/ (not in repo)
-  tf_glyph_scratch.maxpat   tier 3 judgment — variants, tint, debug modes          (Phase 3)
+  tf_glyph_scratch.maxpat   tier 3 judgment — variants, tint, debug modes          (Phase 2)
 
 docs/f-reference/
   f_tf_glyph.md       as-built reference                                            (Phase 5)

@@ -1,14 +1,14 @@
 # f_stipple — Bpatcher Spec
 
-_Last updated: 2026-07-05_
+_Last updated: 2026-10-12_
 _Status: Working_
 
 ## Concept
 
-A 2D hash field rendered as stipple — no mark geometry, no course structure, pure field operation. Dual-mode: **source mode** (inlet 0 unconnected) generates a standalone luminance stipple texture from parameters alone; **processor mode** (texture present on inlet 0) uses the incoming texture to modulate the hash field, in one of two sub-modes selected via `src_mode`:
+A 2D hash field rendered as stipple — no mark geometry, no course structure, pure field operation. Dual-mode: **source mode** (inlet 0 unconnected) generates a standalone luminance stipple texture from parameters alone; **processor mode** (texture present on inlet 0) uses the incoming texture to modulate the hash field, with dither threshold modulation and displacement both always computed:
 
 - **Dither/density:** incoming luma modulates local threshold — bright regions get dense stipple, dark regions get sparse (halftone/mezzotint character). Output inherits input color when `colorize=1`.
-- **Displacement:** incoming luma warps the hash-field coordinates spatially — stipple bends around bright/dark regions, amount set by `threshold`.
+- **Displacement:** incoming luma displaces the sampling coordinates of the displaced-source output — the resampled input bends around bright/dark regions, amount set by `threshold`.
 
 Mode is auto-detected via `vs_inState` (Vsynth convention: connection-event timing, not alpha/luma) and drives the internal `src_mode` param — not user-facing.
 
@@ -76,4 +76,4 @@ See `docs/f-reference/f_stipple.md` (this file) for the full dual-mode algorithm
 
 ## Source File
 
-`patchers/f_stipple.maxpat`
+`package/patchers/f_stipple.maxpat`

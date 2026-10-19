@@ -7,7 +7,7 @@
 **2026-07-12: Phases 1-4 confirmed shipped in production** (two-pix
 feedback loop, `separate` Ride/Hold/Snap stage) — the module has been
 hand-maintained directly in `package/patchers/f_vf_advect.maxpat` since
-(this module is on the "never regenerate via build_patcher.py" list).
+(this module came off the "never regenerate via build_patcher.py" list on 2026-10-05, when its definition.py was confirmed to reproduce the shipped patch).
 This session's work: ADR 7 (mix_amt split into gain + mix, dry/wet
 rollout), ADR 8 (mode → live.menu), and Phase 5 (3rd outlet, gradient of
 accumulated flow) — see plan.md for full detail.

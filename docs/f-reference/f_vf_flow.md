@@ -48,7 +48,7 @@ vfflow_pix (@type float32) out0 → out0 (f_vecfield)
 [optional scalar texture] → f_vf_flow → f_weave (vecfield inlet)
 ```
 
-`f_weave`'s codebox decodes an incoming vecfield's raw (undecoded, 0–1) X/Y samples directly as an orientation perturbation added to its own `cos(angle*π)`/`sin(angle*π)` basis — see `docs/f-reference/f_weave.md`.
+`f_weave` centers the incoming vecfield's X/Y samples (sample minus 0.5) and uses them as an orientation contribution blended against its own `cos(angle*π)`/`sin(angle*π)` basis via two mechanisms crossfaded by `fix_blend` — see `docs/f-reference/f_weave.md`.
 
 ## Notes
 

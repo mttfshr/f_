@@ -49,7 +49,7 @@ New findings only:
 
 - [ ] MAINT1 **Convention, high-priority — bypass doc contradicts shipped
   behavior.** `docs/f-reference/f_masonry.md`'s param table says bypass
-  "Outputs transparent black (mix to (0,0,0,0))". That was true before
+  "Outputs transparent black (mix to `(0,0,0,0)`)". That was true before
   commit `75dc017` (2026-10-06): bypass now drives a codebox
   `bypass_gate` Param and *both* outlets mix to `sample(in1, norm)` (the
   source), per plan.md's passthrough rule. The doc describes a behavior
@@ -58,8 +58,7 @@ New findings only:
   which may now also be wrong depending on what it's describing).
 - [ ] MAINT2 **Perf — no cost measurement, and never assessed for the
   bypass-cost question.** `f_masonry` is one of the 11 `bypass_mode:
-  "param"` modules, same as the six heavy ones named in HANDOFF's "Open:
-  GPU cost" note, but it wasn't one of the six actually discussed there —
+  "param"` modules, same as the heavy ones named in .specify/plan.md's "Open: GPU cost" note, but it wasn't one of the ones actually discussed there —
   looks like an oversight rather than a deliberate exclusion. No
   dedicated cost measurement exists either. Worth both: a baseline number
   and folding into that same open GPU-cost question.
@@ -198,7 +197,7 @@ matching `definition.py` exactly.
 ### E001 — Verify / promote
 
 - [ ] E001j Full regression pass against updated spec.md acceptance criteria
-- [ ] E001k Update `docs/f-reference/f_masonry.md` if it exists, or note the
+- [ ] E001k Update `docs/f-reference/f_masonry.md` (exists; still documents superseded bypass/drift behavior), or note the
       behavior change wherever f_masonry is documented
 - [ ] E001l Separately, flag/investigate: the `drift` live.dial in the
       current production patcher reads up to 4.00 in Max, but spec/codebox

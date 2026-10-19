@@ -1,7 +1,7 @@
 # f_lens — Future Directions
 
 _Built and working. Last updated: 2026-06-09._
-_As-built reference: `docs/f_lens.md` (to be written)._
+_As-built reference: `docs/f-reference/f_lens.md`._
 
 ## Open questions from original ideation
 

@@ -21,16 +21,16 @@ convention after the build — see the build-path note below.)
 
 ## build/build_patcher.py
 
-No change needed. `"signal_type": "tensor in"` works today: the color is keyed
-on the first word (`SIGNAL_TYPE_COLORS.get(signal_type.split()[0], ...)`), so
-`tensor in` picks up the amber tensor color tensormap T030 added. Confirmed by
-reading `build/build_patcher.py:209-214`; nothing to register.
+No change needed. The shipped definitions use `"signal_type": "T_ in"`: the color
+is keyed on the first word (`SIGNAL_TYPE_COLORS.get(signal_type.split()[0], ...)`),
+and `T_` is the amber tensor-family color in build_patcher.py's SIGNAL_TYPE_COLORS
+(the family-wide `T_` convention); nothing to register.
 
 ## Module menu registration (src/f_modules/menu.py → build/generate_menu.py)
 
 **PENDING — not performed** (shared file, parent-owned). Per tensormap T033
-precedent: add `f_tf_glyph` to `src/f_modules/menu.py` (category: Utilities is
-where tensormap landed; `vecfield False`, not in the nabla groups), then run
+precedent: add `f_tf_glyph` to `src/f_modules/menu.py` (category: `T_ Tensor`,
+where tensormap landed; it is not a nabla/vecfield item), then run
 `python3 build/generate_menu.py`.
 
 ## README.md / docs/f-reference/module-inventory.md / HANDOFF.md
@@ -82,8 +82,8 @@ the same command with the new path; the definition reads its codebox via
 
 ## Built artifact
 
-- definition.py: `.specify/f_tf_glyph/definition.py`
-- codebox: `.specify/f_tf_glyph/codebox_glyph.gen` (84 statements — far under
+- definition.py: `src/f_tf_glyph/definition.py`
+- codebox: `src/f_tf_glyph/codebox_glyph.gen` (84 statements — far under
   the ~450/250 ceilings)
 - built patcher: `package/patchers/f_tf_glyph.maxpat` (JSON-valid)
 - Param wiring verified in the built JSON: 6 dials/numbox → `prepend param` →

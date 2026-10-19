@@ -85,7 +85,7 @@
 
 **Purpose**: Generate `f_stipple.maxpat` via Python build script using confirmed codebox as source of truth.
 
-- [x] T023 Write `build_f_stipple.py` — superseded by general `tools/build_patcher.py`
+- [x] T023 Write `build_f_stipple.py` — superseded by general `build/build_patcher.py`
 - [x] T024 Add `jit.gl.pix vsynth @name stipple_pix` with gen subpatcher and confirmed codebox
 - [x] T025 Add `vs_inState` wiring for dual-mode archetype
 - [x] T026 Add `route freq angle anisotropy threshold softness zoom along_phase across_phase colorize proc_mode` to build script
@@ -153,7 +153,7 @@ items (T034–T038 integration/frame-rate checks — T038 is the never-run
 cost check — and T039–T042 docs/commit), which themselves put it below
 stable/'s nothing-outstanding bar._
 
-- [ ] T043: Refresh docs/f-reference/f_stipple.md against the shipped
+- [x] T043: Refresh docs/f-reference/f_stipple.md against the shipped
   definition.py: param defaults mismatch (doc says coarseness 1.0 /
   freq 5.0; shipped code says 20.0 / 2.0 — anyone dialing "back to
   spec" gets different grain), the doc describes a proc_mode

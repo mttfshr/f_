@@ -6,7 +6,7 @@ _Last updated: 2026-06-17_
 
 Visualizes Chladni plate physics — modal superposition of Bessel functions on a circular plate — as a real-time GPU shader. Operates as an **audio-to-vecfield transducer**: a single resonant mode is selected by a MIDI pitch input and scaled by an amplitude input, producing a living nodal pattern that responds to sound without graphing it. The module is a sculptural object shaped by audio, not a visualizer.
 
-**Two outlets:**
+**Three outlets:**
 - Out 1: luma texture — nodal line pattern (bright lines at modal zeros)
 - Out 2: float32 f_vecfield — gradient of modal field, pointing toward nodal lines; suitable for f_caustic, f_vf_warp, f_vf_streak, f_vf_glow downstream
 

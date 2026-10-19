@@ -81,7 +81,7 @@ f_chladni out3 (magnitude) → f_weave scalar inlet      — matches f_vf_potent
                                                           vecfield-in/scalar-out precedent
 ```
 
-## Companion Patches (Not Yet Built)
+## Companion Patches (audio built but unverified; EEG not yet built)
 
 Interface is `note` + `amp` only (much simpler than the superseded 8-band
 filterbank contract). Design deferred until wanted:
@@ -91,7 +91,7 @@ filterbank contract). Design deferred until wanted:
 
 ## Loose Threads
 
-- Companion patches (audio, EEG) not built — interface is stable and ready for them whenever wanted
+- EEG companion patch not built — interface is stable and ready for it whenever wanted; audio companion exists but is unverified (T140)
 - Preferred MIDI playing range not empirically pinned down beyond "1–2 octaves is the expected expressive range"
 
 ## Superseded

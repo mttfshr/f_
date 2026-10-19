@@ -13,7 +13,7 @@ A temporal fluid advection processor for Vsynth. Each frame, samples the source 
 
 **Temporal processor — has memory.** Unlike f_vf_streak and f_vf_warp (stateless single-pass), f_vf_advect accumulates state across frames. Its visual character depends on history, not just the current input frame. This makes it expressive as a slow accumulator and fundamentally different in character from single-pass displacement.
 
-**Architecture: two chained jit.gl.pix inside one bpatcher** (Pattern 1 from temporal synthesis discovery). `pass_pix` is an identity pix that holds the previous frame's advected output as a stable texture reference; `advect_pix` reads both the current source and the previous frame, computes the new advected state, and outputs it. The GL pipeline's one-frame latency makes the loop stable.
+**Architecture: two chained jit.gl.pix inside one bpatcher** (Pattern 1 from temporal synthesis discovery). `pass_pix` holds the previous frame's output as a stable texture reference (originally an identity pix since a separate Ride/Hold/Snap `separate` stage was added to it); `advect_pix` reads both the current source and the previous frame, computes the new advected state, and outputs it. The GL pipeline's one-frame latency makes the loop stable.
 
 ---
 
@@ -70,11 +70,14 @@ out = mix(out, sample(source, uv), bypass)
 | `dt` | live.dial | 0.0–0.05 | 0.01 | Advection step — how far content moves per frame. Small values give fluid feel; larger values give streak/displacement character. |
 | `decay` | live.dial | 0.8–1.5 | 0.97 | Frame retention. Values >1.0 amplify rather than decay — excitable fluid territory. |
 | `injection` | live.dial | 0.0–0.2 | 0.02 | Source bleed-in per frame. Fluid zone is 0.01–0.05; higher values give displacement character. |
-| `mix` | live.dial | 0.0–1.5 | 1.0 | Wet/dry, extendable above 1.0 for amplified output. |
+| `gain` | live.dial | 0.0–4.0 | 1.0 | Scales the accumulated result before blending; pushes into overdrive. |
+| `mix` | live.numbox | 0–100% | 100 | Wet/dry crossfade between the source and the driven result (internal codebox Param is `mix_pct`). |
+| `separate` | live.dial | -2.0–2.0 | 0.0 | Chroma separate intensity on the pass stage (Ride/Hold/Snap). |
+| `mode` | live.menu | Ride/Hold/Snap | 0 | Separate mode. |
 | `bypass` | bypass_toggle.js | 0/1 | 0 | Passes source texture unmodified; feedback loop stays warm. |
 
 **Prefix:** `vfadvect`
-**Object name:** `vfadvect_pix` (advect_pix), `vfadvect_pass` (pass_pix)
+**Object name:** `#0_advect_pix` (advect_pix), `#0_advect_pass` (pass_pix)
 **Output type:** `@type char`
 
 Hidden system params (not in UI, route, or parameters block):
@@ -164,7 +167,7 @@ bypass_toggle.js → attrui bypass → advect_pix in0
 
 1. **`@adapt 1` on both pix:** Almost certainly required (confirmed from vs_frame_delay pattern). Verify in scratch — failure mode is black output at mismatched resolutions. Treat as a scratch-phase confirmation, not a design question.
 
-2. **dt upper bound:** `0.1` is provisional. Revisit after scratch testing; changing the dial range is a trivial update.
+2. **dt upper bound:** shipped at `0.05` with a tiered UI range; was provisional at `0.1` before scratch testing.
 
 ---
 

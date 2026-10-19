@@ -60,8 +60,8 @@ piece* within an otherwise-confirmed module, not the whole chapter.
 
 Standalone, single-pass, additive force term — no Poisson solve required:
 compute vorticity (curl of velocity via finite differences — same
-central-difference pattern already used in `f_caustic`'s divergence
-calc), build a normalized gradient-of-vorticity-magnitude vector, add a
+central-difference pattern used in `f_vf_fieldmap`'s gradient calc;
+`f_caustic`'s divergence calc was removed with its soft mode 2026-10-10), build a normalized gradient-of-vorticity-magnitude vector, add a
 small corrective force perpendicular to it. Restores fine-scale swirling
 motion that numerical dissipation washes out on a coarse grid.
 
@@ -121,7 +121,7 @@ architecture question from planning resolved in the simpler direction.
 **`confinement` is a prominent turbulence-amount dial, per Matt's call**
 — not a subtle correction. Its effective range varies substantially by
 source (same category of finding as `f_vf_seeds`' `field_gain`), exposed
-via `range_tiers` (0.1/1.0/10.0) rather than one fixed number.
+via `range_tiers` (tiers revised 2026-10-13 to two: fine 0–0.1 and coarse 0–1) rather than one fixed number.
 
 **The real finding, beyond what this file anticipated:** the technique's
 visible effect requires a consumer with *temporal feedback* to compound

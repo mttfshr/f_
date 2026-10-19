@@ -7,6 +7,7 @@
 **Type contracts (read these when composability is the question):**
 - [`f_vecfield_type.md`](f_vecfield_type.md) — the shared vector-field texture format (float32, RG=XY, 0.5=zero). Most "can module A feed module B" questions reduce to "does A produce a coherent f_vecfield and does B consume one," not just "are both texture in/out."
 - [`discrete_item_conventions.md`](discrete_item_conventions.md) — shared param vocabulary (`density`, `phase`, `size`+`stretch`, `softness`, `shape`) across the grid/mark-placement modules (f_grain, f_masonry, f_weave, f_vf_seeds), including where the same name means different things per module.
+- [`f_tensor_type.md`](f_tensor_type.md) — the shared tensor-field texture format (two float32 outlets: raw Jxx/Jxy/Jyy and the packed cos2θ/sin2θ/trace/coherence form) for the f_tf_ family.
 
 **Reading the I/O column:** `tex` = plain texture, `vecfield` = f_vecfield (float32 RG, coherent field — see contract doc), `scalar` = single-channel grayscale signal. `→` separates input(s) from output(s). **temporal** = has frame-to-frame memory (ping-pong feedback), so behavior depends on accumulated history, not just the current frame's inputs.
 
@@ -67,7 +68,7 @@ Take a source texture plus an f_vecfield and produce a visual result shaped by t
 | Module | I/O | What it does |
 |---|---|---|
 | `f_vf_warp` | tex + vecfield → tex | Directly displaces UV by the field vector, scaled by `strength`. The simplest field-driven distortion — single-sample, no accumulation |
-| `f_caustic` | tex + vecfield → composite + isolated layer | Backward streamline accumulation along the field; brightness builds up in *convergence* zones (negative divergence). This is the module for a lens/fresnel-style focusing effect — bright bands form where the field converges, exactly the optical-caustic behavior a fresnel lens produces |
+| `f_caustic` | tex + vecfield → composite + isolated layer | Forward scatter-sheet accumulation along the field (a lattice of field-displaced points deposits additive splats into a float32 capture); brightness builds up in *convergence* zones (negative divergence). This is the module for a lens/fresnel-style focusing effect — bright bands form where the field converges, exactly the optical-caustic behavior a fresnel lens produces |
 | `f_vf_streak` | tex + vecfield (optional) → composite + isolated layer | Accumulates samples along the streamline into a directional smear/streak, with chromatic offset option |
 | `f_vf_glow` | tex + vecfield → composite + isolated layer | 48-step bidirectional accumulation along the field → anisotropic glow/bloom that follows field geometry (not radially symmetric like a normal bloom) |
 | `f_vf_chroma` | tex + vecfield → composite + isolated layer | Field-steered chromatic aberration — R/B channels offset in opposite directions along the *local* field vector (vs. `f_lens`'s aberration, which is always centrifugal from a fixed center) |

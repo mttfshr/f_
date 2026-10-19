@@ -23,7 +23,7 @@ _Created: 2026-10-16_
 - [x] T012 `definition.py` (processor, bypass_mode param, 6 controls + bypass, menu for mode).
 - [x] T013 Build, register in `menu.py`, README row (≤110 chars), regenerate menu/launcher.
 - [x] T014 BYPASS_EXPECT entry (const 0.5,0.5,0.5,1); contract tests; bench_modules clean.
-- [ ] T015 Matt: load in Max (T036 equivalent), panel width fits the controls.
+- [x] T015 (covered by T026, passed by Matt 2026-10-17).
 
 ## Phase 4: docs
 - [x] T016 `docs/f-reference/f_tf_axisflow.md`; helpfile + module-preflight.

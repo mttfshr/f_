@@ -26,9 +26,9 @@ _Last updated: 2026-06-17_
 
 ## Phase 1: Definition Rewrite
 
-- [ ] T107 Rewrite `.specify/f_chladni/definition.py`:
+- [ ] T107 Rewrite `src/f_chladni/definition.py`:
   - Params: `note` (float, 0–127), `amp` (float, 0–1), `dishradius`, `reflectamt`, `linesharpness`, `view_mode`, `ph0`, optional `spread`, `bypass`
-  - Two outlets: `{"comment": "luma"}`, `{"comment": "vecfield", "signal_type": "float32"}`
+  - Three outlets: `{"comment": "luma"}`, `{"comment": "vecfield", "signal_type": "float32"}`, `{"comment": "magnitude"}`
   - `pix_type: "float32"` (required for vecfield outlet)
 - [ ] T108 Write codebox implementing chosen mode selection behavior from scratch patch
 - [ ] T109 Add vecfield gradient computation: evaluate `total` at `norm + epsilon` offsets; central difference → gx, gy; encode as f_vecfield (RG, 0.5=zero)
@@ -40,8 +40,8 @@ _Last updated: 2026-06-17_
 
 ## Phase 2: Build + Verify
 
-- [ ] T111 Run `tools/py.sh tools/build_patcher.py .specify/f_chladni/definition.py`
-- [ ] T112 Open `patchers/f_chladni.maxpat` in Max; verify loads without errors
+- [ ] T111 Run `build/py.sh build/build_patcher.py src/f_chladni/definition.py`
+- [ ] T112 Open `package/patchers/f_chladni.maxpat` in Max; verify loads without errors
 - [ ] T113 Test `note` param: sweep 0–127; confirm pattern reorganizes across modes
 - [ ] T114 Test `amp` param: sweep 0–1; confirm output scales correctly
 - [ ] T115 Test `ph0`: confirm global phase shift visible across all modes
@@ -57,7 +57,7 @@ _Last updated: 2026-06-17_
 - [ ] T118 Route f_chladni out2 → f_caustic; confirm caustic accumulation at nodal lines
 - [ ] T119 Route f_chladni out2 → f_vf_warp with source texture; confirm warp toward nodal lines
 - [ ] T120 Route f_chladni out2 → f_vf_glow; confirm glow organized along nodal geometry
-- [ ] T121 Document signal chain recipes in `docs/f_chladni.md`
+- [ ] T121 Document signal chain recipes in `docs/f-reference/f_chladni.md`
 
 **Checkpoint**: Vecfield outlet verified with at least two consumers. Recipes documented.
 
@@ -84,7 +84,7 @@ and confirmed in Max.
 - [ ] T123 Create `patchers/f_chladni_audio.maxpat`: sigmund~ or pitch follower → `note`; peakamp~ → slide~ → `amp`; master gain; outlet contract `note <int>` / `amp <float>`
 - [ ] T124 Test audio companion with mic: note input tracks pitch; amp responds to dynamics; figure animates sculpturally
 - [ ] T125 Design EEG→note mapping: decide between weighted centroid and highest-amplitude band; document reasoning
-- [ ] T126 Create `patchers/f_chladni_eeg.maxpat`: Muse OSC → note + amp; line smoothing ~150ms; outlet contract matches audio companion
+- [ ] T126 Create `package/patchers/f_chladni_eeg.maxpat`: Muse OSC → note + amp; line smoothing ~150ms; outlet contract matches audio companion
 - [ ] T127 Test EEG companion with Muse: smooth animation; no 10Hz stepping visible
 
 **Checkpoint**: Both companion patches working. Outlet contracts consistent.
@@ -93,7 +93,7 @@ and confirmed in Max.
 
 ## Phase 5: Docs + Registration
 
-- [ ] T128 Update `docs/f_chladni.md`: new architecture, params, signal chain, outlet contract, recipes
+- [ ] T128 Update `docs/f-reference/f_chladni.md`: new architecture, params, signal chain, outlet contract, recipes
 - [ ] T129 Verify f_modules registration is correct (signal_type may have changed)
 - [ ] T130 Update README.md description if needed
 - [ ] T131 Commit all changes in logical units

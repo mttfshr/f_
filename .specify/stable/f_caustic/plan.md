@@ -1,7 +1,7 @@
 # Implementation Plan: f_caustic
 
 **Date**: 2026-07-11
-**Spec**: `.specify/f_caustic/spec.md`
+**Spec**: `.specify/stable/f_caustic/spec.md`
 
 ---
 
@@ -109,7 +109,7 @@ the param that's supposed to carry it.
 ### Phase 1: Rebuild + regression check (bug fix verification)
 
 **Work:**
-- Run `tools/build_patcher.py` against the corrected `definition.py`
+- Run `build/build_patcher.py` against the corrected `definition.py`
   (now pointing at `codebox_v2.gen`)
 - JSON-validate the rebuilt `f_caustic.maxpat`
 - Load in Max, connect a source texture and `f_vf_vortex` to the

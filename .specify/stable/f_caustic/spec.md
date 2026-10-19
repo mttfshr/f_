@@ -1,7 +1,7 @@
 # Spec: f_caustic
 
 _Created: 2026-06-07_
-_Status: Draft_
+_Status: Superseded. The soft backward-gather mode described here was removed 2026-10-10; f_caustic is now a single GPU forward-scatter path — see .specify/f_caustic_scatter/ and docs/f-reference/f_caustic.md._
 
 ---
 
@@ -86,8 +86,8 @@ radial caustic.
 | `bypass` | jsui (bypass_toggle.js) | 0/1 | 0 | Bypass — out1 passes source unmodified, out2 is black. |
 
 **Prefix:** `caustic`
-**Object name:** `caustic_pix`
-**Type:** `@type float32` (overrides the processor-convention default of `char` — accumulation benefits from float32 headroom, decided in scratch validation; confirmed against `definition.py`'s `pix_type` field 2026-07-11)
+**Object name:** `#0_caustic_sheets`
+**Type:** `@type float32` (overrides the processor-convention default of `char` — accumulation benefits from float32 headroom, decided in scratch validation; confirmed against `definition.py`'s `pix_attrs` (`@type float32`))
 
 ---
 

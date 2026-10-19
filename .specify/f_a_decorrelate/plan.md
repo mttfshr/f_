@@ -16,8 +16,9 @@ shapes, not assume "no audio inlet" as an `f_a_` invariant.
 `Mₙ(t)` — the same modulation matrix `f_a_ripple` computes per-harmonic — is
 instead computed per-FFT-bin and applied as either a bin gain multiplier (AM)
 or a bin phase rotation (PM). `Fₙ` becomes bin log-frequency relative to the
-band's geometric center, matching `f_a_ripple`'s ADR-3 correction (mean-
-centered over the modulated *bins in this case*, not the nominal band center).
+band's geometric center, matching the mean-centering documented in
+`ideas/f_a_spectral_ripple.md` (MATLAB discrepancy 4; applied over the
+modulated *bins in this case*, not the nominal band center).
 
 ### ADR-3 — `f_a_ripple` is a hard dependency, not a parallel effort
 Despite being separate projects/specs, `f_a_decorrelate`'s scratch tests (T7,

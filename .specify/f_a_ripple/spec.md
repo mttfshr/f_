@@ -125,7 +125,8 @@ Maps to T1–T6 in `ideas/f_a_spectral_ripple.md`.
       numeric peak/SNR readout (deferred — visual read judged sufficient for
       now). **Root cause identified: table-resolution quantization**, not a
       logic bug — `peek` floors/truncates rather than interpolating (per
-      HANDOFF's confirmed `Data`/`poke`/`peek` semantics), so a 64-entry
+      `skills/gen-tilde-codebox/SKILL.md`, confirmed `Data`/`poke`/`peek`
+      semantics), so a 64-entry
       table at f0=96 Hz (~459 samples/cycle) forces each table index to
       stand in for ~7 consecutive samples, producing a deterministic,
       phase-locked stepping error. This reframes ADR-2's open question: not
@@ -224,4 +225,5 @@ indefinitely for free — a 2048-entry table costs ~410,000 loop iterations on
 render (2048 × 200 harmonics) versus 64's ~12,800, all still one-shot/gated,
 but worth keeping in mind if `band` or harmonic count grows. Whether
 production needs a table this large, `peek` interpolation instead, or some
-combination, is an open decision — see plan.md ADR-2.
+combination was decided: plan.md ADR-2 adopted `peek` interpolation
+(implemented 2026-09-16), with a re-verification listen still owed.

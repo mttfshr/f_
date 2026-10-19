@@ -387,7 +387,7 @@ Load `f_lens.maxpat` in Vsynth context. Test signal chains:
 
 ### Phase 6: Documentation
 
-- `docs/f_lens.md` — as-built reference (params, signal chain, inlet descriptions, known behaviors)
+- `docs/f-reference/f_lens.md` — as-built reference (params, signal chain, inlet descriptions, known behaviors)
 - Update `README.md` — add f_lens to patches table as ✅ Working
 - Update build queue
 - HANDOFF as usual

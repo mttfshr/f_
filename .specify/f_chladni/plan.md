@@ -14,7 +14,7 @@ Reframe f_chladni from an 8-mode manual amplitude generator to a single-resonanc
 ## Technical Context
 
 **Platform**: Max 9 + Vsynth
-**Build**: `tools/build_patcher.py` from `definition.py`
+**Build**: `build/build_patcher.py` from `definition.py`
 **Artifacts**: definition.py (rebuilt); f_chladni.maxpat (rebuilt); companion patches (hand-built in Max)
 **Testing**: Visual verification in Max; vecfield outlet verified via f_caustic routing
 
@@ -120,7 +120,7 @@ Rewrite `.specify/f_chladni/definition.py` with:
 - Codebox implementing chosen mode selection behavior + vecfield gradient + `out3 = clamp(abs(total) * gain, 0.0, 1.0)`
 
 ### Phase 2: Build + Verify
-- Run `tools/build_patcher.py`
+- Run `build/build_patcher.py`
 - Verify in Max: note input selects mode, amp scales output, ph0 shifts pattern, view_mode blends, gain scales out3 without affecting out1/out2
 - Run `tests/run.sh tests/contracts/test_module_contracts.py` (replaced `audit_interface.py`); resolve any issues
 
@@ -136,7 +136,7 @@ Rewrite `.specify/f_chladni/definition.py` with:
 - Design EEG note mapping (weighted centroid vs. highest-amplitude band — decide empirically)
 
 ### Phase 5: Docs + Registration
-- Update `docs/f_chladni.md`
+- Update `docs/f-reference/f_chladni.md`
 - Register in f_modules, f_addmod.js if signal_type changes
 - Update README if needed
 - Update HANDOFF.md

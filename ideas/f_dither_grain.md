@@ -13,7 +13,7 @@ to hue selection rather than luminance-to-black/white.
 Core mechanism, generalized from ordered dithering:
 - `t` = a scalar in `[0,1]` at each cell, representing position between
   hue A and hue B (or, extended, position along a sequence of N hues)
-- `d` = a per-cell dither threshold (see "Regularity" below)
+- `d` = a per-cell dither threshold (see the `jitter` regularity-dial row in the parameter table below)
 - output = `hue_A` if `t < d`, else `hue_B`
 
 For N > 2 hues: treat hues as an ordered sequence, `t ∈ [0, N-1]`,
@@ -176,4 +176,4 @@ running.
 
 ## Status
 
-Idea only. Not specced, not scratch-tested, not scheduled.
+Superseded 2026-07-21: folded into `f_vf_seeds` as Evolution 3 (color-driving texture, shipped). A draft spec exists at `.specify/f_dither_grain/spec.md` (kept as history only); never scratch-tested on its own, not scheduled.

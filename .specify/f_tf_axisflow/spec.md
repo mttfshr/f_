@@ -1,7 +1,7 @@
 # Spec: f_tf_axisflow
 
 _Created: 2026-10-16_
-_Status: Draft_
+_Status: Built 2026-10-16; signed gain and the reference inlet added 2026-10-17._
 _Design history: `design.md` (same directory). Where they differ, this spec wins._
 _Hub: `ideas/f_tensorfield.md` (consumer audit, exclusion list)._
 

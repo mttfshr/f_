@@ -1,7 +1,7 @@
 # f_tf_glyph
 
 **Type:** Processor (f_tensor consumer — the family's first tensor renderer)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending. Tier-1 mirror green (14/14, 2026-10-17); bench file written but not run; defaults provisional (tasks TG020); variant menu / debug tints unresolved for v2 (gates open).
+**Status:** Draft — tier-3 live judgment pending (helpfile judgment gate included). Tier-1 mirror green (14/14, 2026-10-17); tier-2 bench green 6/6 (2026-10-17); defaults provisional (tasks TG020); variant menu / debug tints unresolved for v2 (gates open).
 
 ---
 
@@ -139,11 +139,10 @@ view of the consumer's own output.
 ## Cost
 
 Expected trivially cheap: one tensor tap + one source tap + closed-form math,
-~84 codebox statements (the capture ceiling is ~450). Per-pass cost to be
-recorded by `tests/modules/tf_glyph/bench_tf_glyph.py` at 1080p/4K when the bench runs; the
-cost gate is resolved provisionally against the tensormap floor
-(~0.9 ms per pass at 1080p, R_MAX 16) — gate PROVISIONAL-OPEN, resolving
-experiment = the bench `test_cost_1080p_and_4k`.
+~84 codebox statements (the capture ceiling is ~450). Per-pass cost measured by `tests/modules/tf_glyph/bench_tf_glyph.py` (2026-10-17):
+~2.39 ms per pass at 1080p and ~6.96 ms at 4K, both upper bounds (bench frame floor,
+not GPU-bound; the tensormap T016 convention) — the default-resolution question
+stays open for tier-3 live judgment.
 
 ## Notes
 

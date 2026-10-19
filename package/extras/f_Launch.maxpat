@@ -960,7 +960,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unfinished. Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented",
+									"text": "Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2973,7 +2973,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Vorticity-confinement (\"curl amp\") processor. Do not treat as working",
+									"text": "Vorticity-confinement (\"curl amp\") processor. Do not treat as working",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3462,7 +3462,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction",
+									"text": "Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3600,7 +3600,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool)",
+									"text": "Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3669,7 +3669,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots)",
+									"text": "Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3738,7 +3738,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed",
+									"text": "Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3807,7 +3807,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames",
+									"text": "One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -4723,7 +4723,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unfinished. De-correlating modulation as a processor (audio in → out, pfft~); DSP done, packaging pending",
+									"text": "⚠ De-correlating modulation processor (audio in → out, pfft~); shipped and documented 2026-10-12",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

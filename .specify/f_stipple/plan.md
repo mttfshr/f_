@@ -201,6 +201,6 @@ Write `build_f_stipple.py`. Generate `f_stipple.maxpat`. Update freq range and s
 **Exit criteria:** Block 3 verification passes.
 
 ### Phase 4: Integration + docs
-Test in Vsynth signal chains (source mode, processor/density, processor/displacement). Write `docs/f_stipple.md`. Update `README.md` and build queue. Archive `.specify/f_stipple/` or leave for reference.
+Test in Vsynth signal chains (source mode, processor/density, processor/displacement). Write `docs/f-reference/f_stipple.md`. Update `README.md` and build queue. Archive `.specify/f_stipple/` or leave for reference.
 
 **Exit criteria:** Block 4 verification passes. README updated. `ideas/f_stipple.md` marked done.

@@ -78,7 +78,7 @@ Original plan (surface_amt darkening + field_amt distortion) was replaced with:
 
 ## Phase 6: Documentation
 
-- [ ] T043 Write docs/f_lens.md — as-built reference
+- [ ] T043 Write docs/f-reference/f_lens.md — as-built reference
 - [ ] T044 Update README.md: f_lens → ✅ Working
 - [ ] T045 Update HANDOFF.md with session summary
 
@@ -93,7 +93,7 @@ Original plan (surface_amt darkening + field_amt distortion) was replaced with:
 **Build order**: Sequential. Complete each phase before the next.
 **Scope**: v2 additions only (ghost images, halation, static +
 field-driven anamorphic). Does NOT include tilt-shift removal — that's
-gated on `f_focus` shipping first (see `.specify/f_focus/tasks.md` T029)
+gated on `f_focus` shipping first (see `.specify/paused/f_focus/tasks.md` T029)
 and isn't itself blocking v2 codebox work, since the new effects don't
 touch the tilt-shift object.
 **Commits**: After each phase checkpoint.
@@ -144,7 +144,7 @@ Matt, in conversation, per standing "discuss architecture before writing
 code" preference — before any task past this phase is started.
 
 - [x] T001 **Vecfield inlet: driving vs. modulating?** RESOLVED 2026-07-15: bias/blend, via new `anamorphic_field_amt` dial (0-1, default 0.0). See spec.md Clarifications.
-- [x] T002 **Vecfield inlet labeling convention.** RESOLVED 2026-07-15 — this convention was already documented (established 2026-07-12) in `vsynth-bpatcher/SKILL.md`'s "Vecfield labeling for non-f_vf_-prefixed modules" section, just not re-found before this task was written. Header `signal_type` = `"vecfield in"` (this is an inlet only, no outlet). `f_modules` menu nabla: add `"lens"` to `tools/append_nabla_menu.py`'s `VECFIELD_MODULES` set — already present there (added early, based on the old incorrect "field inlet" assumption; will become accurate once this inlet ships). No skill update needed.
+- [x] T002 **Vecfield inlet labeling convention.** RESOLVED 2026-07-15 — this convention was already documented (established 2026-07-12) in `vsynth-bpatcher/SKILL.md`'s "Vecfield labeling for non-f_vf_-prefixed modules" section, just not re-found before this task was written. Header `signal_type` = `"vecfield in"` (this is an inlet only, no outlet). `f_modules` menu nabla: the `f_modules` menu kinds for `"lens"` in `src/f_modules/menu.py`'s `CATEGORIES` table (added early, based on the old incorrect "field inlet" assumption; will become accurate once this inlet ships). No skill update needed.
 - [x] T003 **Halation architecture.** RESOLVED 2026-07-15: second `jit.gl.pix` stage in series downstream of `lens_pix`, the same shape `jit.fx.cf.tiltshift` already occupies in this exact bpatcher — not a nested internal multi-pix bpatcher. No dedicated architecture scratch test needed: multi-object-in-series-within-one-bpatcher is already proven precedent (`f_lens`'s own tiltshift chain, `f_vf_advect`/`f_vf_seeds`), not a genuine unknown the way v1's three-inlet question was. The halation GLSL math (luma-gate → blur-accumulate → composite) still gets normal scratch verification as part of Phase 2's codebox-before-patcher work (T015–T017) — that's standard practice for any new codebox, not a special Phase 0 concern.
 - [x] T004 **Ghost tap count vs. performance.** RESOLVED 2026-07-15: proceed on assumption, no dedicated Phase 0 profiling gate — matches the library's actual track record (no frame-rate hit yet across any multi-tap/multi-pass module shipped so far). Default `ghost_count` range **1–4, default 3**, per spec.md's original suggestion. Normal frame-rate verification happens in Phase 1's existing T014, same as every other module's build — not a special pre-check.
 - [x] T005 **Panel layout at v2 scale.** RESOLVED 2026-07-15: all v2 params go on the front panel alongside the existing 8 — no third panel, no reorganized front/back split. Explicitly provisional (Matt's call) — a broader UI density refactor across all module layouts is in progress separately and will supersede whatever gets built here, so this isn't worth getting precious about now. Back panel's existing 4 `*_mod` dials stay as-is, untouched by this decision.
@@ -258,7 +258,7 @@ history:
 - [x] T039 Update `.maxhelp` file per `f-helpfile` skill conventions to cover the new effects. DONE — file already existed but predated tilt-shift being wired at all; External Control Messages block and References block both rewritten for full v2 param set, rect/linecount math recomputed to fit the fixed-height panel.
 - [x] T040 Update `HANDOFF.md` — session summary. DONE.
 
-**Bonus fix (Matt's catch, not originally in this task list):** `f_modules.maxpat`'s "Lens ∇" nabla — leftover from the same stale "field inlet" assumption fixed in T038 — removed from both the live menu and `tools/append_nabla_menu.py`'s `VECFIELD_MODULES` set (so it won't silently re-add itself on a future menu regeneration).
+**Bonus fix (Matt's catch, not originally in this task list):** `f_modules.maxpat`'s "Lens ∇" nabla — leftover from the same stale "field inlet" assumption fixed in T038 — removed from both the live menu and `src/f_modules/menu.py`'s vecfield kinds (so it won't silently re-add itself on a future menu regeneration).
 
 **Checkpoint: ✅ REACHED 2026-07-16. `f_lens` v2 is fully complete — built, verified, and documented.**
 

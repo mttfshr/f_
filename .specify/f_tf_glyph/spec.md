@@ -32,7 +32,7 @@ eigenvalue is load-bearing, not decoration. This is the purest full-tensor consu
 in the catalog.
 
 **Processor archetype, `driving_inlet`** (single driving texture; same call as
-`f_vf_tensormap`'s spec), with the raw tensor as the primary input and the source
+`f_tf_tensormap`'s spec), with the raw tensor as the primary input and the source
 texture as a second input for tint/mask only. Not a generator; no self-generating
 mode. Doubles as the debug tap for the whole family: chain A sidecars it off
 tensormap (`f_tf_build_brief.md` §5), and every later renderer (sharpen, aniso_blur,
@@ -50,14 +50,14 @@ rather than re-derive it.
 
 **One glyph per cell, coherent per glyph, not per pixel.** Each pixel looks up its
 grid cell's center by a bounded neighbor search (the `f_vf_seeds` precedent,
-`ideas/f_vf_seeds.md` §"Architecture": 3×3 neighborhood search gives the nearest
-seed/cell; `ideas/f_vf_seeds.md` Q4) and reads the tensor *at the cell center*
+`ideas/f_vf_seeds.md` Q4: 3×3 neighborhood search gives the nearest
+seed/cell) and reads the tensor *at the cell center*
 (`ideas/f_vf_seeds.md`: sample the field at the seed position — stable, identity —
 not at the current pixel; per-pixel orientation shears the mark). Result: each glyph
 has one orientation, one aspect, one gate decision. **No loops anywhere in the glyph
-draw itself** — the per-cell math is closed-form; the only iteration is the bounded
-3×3 cell lookup, and even that reduces to arithmetic for a jitter-free grid (see
-plan ADR-4).
+draw itself** — the per-cell math is closed-form; plan ADR-4 dropped the seeds-style
+3×3 neighbor search entirely, leaving a floor-divide lattice lookup with no search
+and no loop at all.
 
 ---
 
@@ -185,8 +185,8 @@ first task of Phase 0 in tasks.md.
 - **Known-angle ramp:** a linear ramp at known angle phi yields glyphs whose major
   axis is at phi + pi/2 (along the edge), matching NumPy `arctan2` to ~1e-6 rad.
 - **Aspect correctness:** a synthetic field with eigenvalue ratio 4 gives measured
-  ellipse aspect 4 (within tolerance) at `max_aspect` ≥ 4; a ratio above `max_aspect`
-  clamps.
+  ellipse aspect 2 (sqrt ratio per plan ADR-5, TG007; not 4) at `max_aspect` ≥ 4; a
+  ratio above `max_aspect` clamps.
 - **Line-field invariance:** rotating the input tensor by pi leaves the rendered
   field identical (every glyph is unoriented).
 - **Isotropic cells:** a cell with λ1 ≈ λ2 draws aspect-1 (circle) or nothing, never

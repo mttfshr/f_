@@ -39,7 +39,7 @@ tests/
   scatter_mirror.py        # promoted ref_scatter, box_down, upscale, tone                  — T005
   test_scatter_mirror.py   # tier 1                                                        — T006
   bench_caustic_sheets.py  # tier 2                                                        — T016 onward
-  bench_caustic_sheets_cost.py   # interleaved cost (not a gate)                           — T021
+  # no bench_caustic_sheets_cost.py: T021's cost check lives in bench_caustic_sheets.py      — T021
   bench_caustic_codebox.py # tier 2, codebox bench: the sheets composite and select codeboxes   — T013, T023
   bench/caustic_sheets_standalone.maxpat   # generated standalone wrapper                  — T015
   bench/probe_*.maxpat     # throwaway feasibility probes                                  — T007, T008
@@ -235,7 +235,7 @@ package/help/f_caustic.maxhelp                                                  
 - [x] T039 (done 2026-10-07: edited in place; the diff is 15 lines; follows the library's vecfield-consumer pattern, a hint comment and no wired field source; `docs/f-reference/f_caustic.md` gained the `## References` section the skill requires; **not yet opened in Max**: check the layout there) [P] Regenerate `package/help/f_caustic.maxhelp` through `build/generate_helpfiles.py` and the helpfile queue.
 - [x] T040 Apply the constitution amendment (spec, Decisions item 7) to `.specify/constitution.md` through the
   amend-constitution workflow.
-- [x] T041 (done: the README row, which also regenerated `package/extras/f_Launch.maxpat` (the row feeds the launcher; 110-char limit), and two findings added to `skills/jit-gen-codebox/SKILL.md`; **Matt must re-upload that skill and run `./skills/check.sh stamp`**) Update `README.md` (the `f_caustic` row), `HANDOFF.md` and `.specify/plan.md` item 15; add any new
+- [x] T041 (done: the README row, which also regenerated `package/extras/f_Launch.maxpat` (the row feeds the launcher; 110-char limit), and two findings added to `skills/jit-gen-codebox/SKILL.md`; **Matt must re-upload that skill and run `./skills/check.sh stamp`**) Update `README.md` (the `f_caustic` row), `HANDOFF.md` and the `f_caustic` sheets entry in `.specify/plan.md`'s Work queue; add any new
   fact to `skills/jit-gen-codebox/SKILL.md` only if one was found, then `./skills/check.sh` (Matt re-uploads, then
   `stamp`).
 - [x] T042 (DONE 2026-10-07: offline 237/237; drift unchanged; the release zip ships `code/f_caustic_sheets.jxs`; `tests/bench.sh --changed` ends with every bench file green on record, `bench_caustic_sheets` 18/18. Note: T020's 16.8 M-point reference jobs stalled Max on 2 of 3 full runs before the lattice was freed after each reference; since then it passes, but it is the suite's most resource-fragile test) Final `./tests/run.sh`, `build/py.sh build/drift.py`, `build/release.sh --working-tree` dry run; commit.
