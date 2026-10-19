@@ -26,9 +26,9 @@ Active work: M002 — three-space modulation inlets (slot, brick, pixel).
   weave-scratch.maxpat     — scratch patch (reuse for masonry iteration)
 
 /Users/matt/Github/f_/
-  patchers/
+  package/patchers/
     f_masonry.maxpat       — production output (version controlled)
-  docs/
+  docs/f-reference/
     f_masonry.md           — as-built reference (R003)
   .specify/f_masonry/
     spec.md
@@ -74,7 +74,7 @@ New findings only:
 
 ### R001b-fix — pix/autopattr varname cleanup (cosmetic)
 
-- [ ] R001b-fix In patcher JSON: update `weave_pix` → `masonry_pix` and
+- [x] R001b-fix In patcher JSON: update `weave_pix` → `masonry_pix` and
   `weave_autopattr` → `masonry_autopattr` throughout (pix object text,
   varname, autopattr varname, bypass jsui param_connect)
 

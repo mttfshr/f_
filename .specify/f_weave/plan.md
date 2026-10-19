@@ -1,5 +1,7 @@
 # Implementation Plan: f_weave
 
+> **Dated banner, 2026-10-18:** the body below is the original design record; where it differs, `docs/f-reference/f_weave.md` and `src/f_weave/definition.py` win. The shipped contract adds a scalar-potential inlet (`src_potential`), `softness`, `shape`, and the `field_amount`/`fix_blend` orientation dials (resolved 2026-10-13); the Phase 2 atan2-decode sketch no longer describes the module.
+
 **Date:** 2026-06-24
 **Spec:** `.specify/f_weave/spec.md`
 

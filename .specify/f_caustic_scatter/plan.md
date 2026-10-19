@@ -1,5 +1,7 @@
 # Implementation Plan: f_caustic sheets mode
 
+> **Dated banner, 2026-10-18:** the body below is the original two-mode design (a "soft" backward-gather path, a `detail` quality ladder, mode/detail menus, probe patchers later deleted per T011). Soft mode was removed 2026-10-10 and sheets is now the only path; current behavior is in `docs/f-reference/f_caustic.md`. Read layout blocks, parameter rows and bench numbers below as the original plan. The 2026-10-10 entry in `tasks.md` records the change.
+
 _Created: 2026-10-07_
 _Spec: `.specify/f_caustic_scatter/spec.md` (what and why, the measured numbers, the seven resolved decisions;
 this file is HOW only)_

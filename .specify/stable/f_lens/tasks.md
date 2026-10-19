@@ -1,7 +1,7 @@
 # Tasks: f_lens
 
-**Spec**: .specify/f_lens/spec.md
-**Plan**: .specify/f_lens/plan.md
+**Spec**: .specify/stable/f_lens/spec.md
+**Plan**: .specify/stable/f_lens/plan.md
 **Build order**: Sequential by phase. Complete each phase checkpoint before proceeding.
 
 ---
@@ -15,7 +15,7 @@ Final architecture diverged from original spec during Phase 3/4:
 - **8 front dials**: aberration, distortion, transmission, tilt, tilt_axis, tilt_pos, slope, mode
 - **4 back dials** (field panel): aberration_mod, distortion_mod, transmission_mod, surface_mod
 - **lens/field toggle** button scripts visibility via lens_toggle.js → thispatcher script sendbox
-- **lens_toggle.js** added to code/
+- **lens_toggle.js** added to package/javascript/
 
 ---
 
@@ -88,8 +88,8 @@ Original plan (surface_amt darkening + field_amt distortion) was replaced with:
 
 # Tasks: f_lens v2 (ghost, halation, anamorphic)
 
-**Spec**: `.specify/f_lens/spec.md` (v2 Scope section)
-**Plan**: `.specify/f_lens/plan.md` (ADR-6)
+**Spec**: `.specify/stable/f_lens/spec.md` (v2 Scope section)
+**Plan**: `.specify/stable/f_lens/plan.md` (ADR-6)
 **Build order**: Sequential. Complete each phase before the next.
 **Scope**: v2 additions only (ghost images, halation, static +
 field-driven anamorphic). Does NOT include tilt-shift removal — that's
@@ -126,9 +126,7 @@ patchers/
   tasks.md                        — this file (v1 history + v2 section)
 
 docs/f-reference/
-  f_lens.md                       — as-built reference, still not written even for v1 (Phase 6 of the
-                                     v1 task history above is still open) — first version of this file
-                                     will need to cover both v1 and v2 state, see T037 below
+  f_lens.md                       — DONE 2026-07-16 (T037): as-built reference covering both v1 and v2
 
 ~/Vsynth/patterns/
   lens_v2_scratch.maxpat          — scratch patch for ghost/halation/anamorphic verification (Phase 1–3, not committed)

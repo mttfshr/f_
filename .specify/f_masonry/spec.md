@@ -23,7 +23,7 @@ The masonry metaphor is precise: courses are horizontal rows of brick, bond cont
 - `softness` blends brick edges from hard to soft
 - `phase` scrolls bricks along courses; wiring a vs_lfo produces continuous animation
 - `speed_var` causes adjacent courses to drift at different rates; at 0 all courses move together
-- `bypass` outputs black
+- `bypass` passes the source texture through on both outlets (2026-10-05 passthrough rule, superseding the original output-black behavior)
 - No parameter change causes a hash redraw (stable texture identity across sweeps)
 
 ---

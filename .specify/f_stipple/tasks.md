@@ -1,5 +1,7 @@
 # Tasks: f_stipple
 
+> **Dated banner, 2026-10-18:** the body below is the pre-rewrite design record. The shipped module differs: the `proc_mode` param was removed (displacement is always available on out3), `freq` defaults to 2.0 and a `coarseness` param (20.0) was added, and files live in `src/f_stipple/`, `package/patchers/` and `docs/f-reference/`. Current contract: `docs/f-reference/f_stipple.md` and `src/f_stipple/definition.py`.
+
 **Spec**: `.specify/f_stipple/spec.md`
 **Plan**: `.specify/f_stipple/plan.md`
 **Build order**: Sequential. Complete each phase before next. Codebox must be confirmed working before build script.

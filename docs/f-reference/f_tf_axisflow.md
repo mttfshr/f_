@@ -1,7 +1,7 @@
 # f_tf_axisflow
 
 **Type:** Processor (f_vecfield producer, tensor input)
-**Status:** Built 2026-10-16; mirror and bench tests green, live-checked with `f_vf_advect`. Helpfile pending.
+**Status:** Built 2026-10-16; mirror and bench tests green, live-checked with `f_vf_advect`. Helpfile written 2026-10-18.
 **2026-10-17:** `gain` made signed and an optional per-pixel reference-vecfield inlet added (mirror 24/24; bench 9/9 on the GPU 2026-10-17; checked live by Matt 2026-10-17 (inlet position, `f_vf_vortex` as the reference into `f_vf_fluid`, `angle` and negative-gain sweep)).
 
 ---

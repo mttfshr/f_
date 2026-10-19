@@ -2,7 +2,7 @@
 
 _Date: 2026-05-27_
 _Updated: 2026-07-15 — v2 scope (see ADR-6)_
-_Spec: .specify/f_lens/spec.md_
+_Spec: .specify/stable/f_lens/spec.md_
 
 ---
 
@@ -27,7 +27,7 @@ a coherent v2 direction.
 - Anamorphic promoted from "deferred" to in-scope, split into static
   (no new inlet) and field-driven (new vecfield inlet, in4) variants.
 
-Full detail in `.specify/f_lens/spec.md` v2 Scope section and Session
+Full detail in `.specify/stable/f_lens/spec.md` v2 Scope section and Session
 2026-07-15 Clarifications.
 
 **Consequences:** This is a substantially larger build than v1 — three
@@ -68,7 +68,7 @@ together — one future module should own the whole anamorphic concept
 rather than splitting it across two files.
 
 **Consequences:** `f_lens` v2 scope is now ghost images + halation only.
-`.specify/f_lens/tasks.md` Phase 3 (Anamorphic) struck through/removed,
+`.specify/stable/f_lens/tasks.md` Phase 3 (Anamorphic) struck through/removed,
 task numbers T023–T030 retired. `spec.md`'s Anamorphic subsection and
 related Clarifications/Open-Questions entries marked struck-through for
 history, not deleted. The `anamorphic_field_amt` bias/blend decision and
@@ -116,7 +116,7 @@ The critical early question — whether jit.gl.pix supports three texture inlets
 **Shader:** `jit.gl.pix vsynth @name lens_pix` with gen codebox  
 **Inlets:** in1 (image), in2 (surface texture), in3 (field texture) — three texture inlets, needs Phase 0 verification  
 **Build:** Python script generating `.maxpat` JSON (same pattern as f_grain, f_stereo)  
-**JS:** `bypass_toggle.js` already exists in `code/` — no new JS needed  
+**JS:** `bypass_toggle.js` already exists in `package/javascript/` — no new JS needed  
 **Output:** `patchers/f_lens.maxpat`
 
 **Constraints from constitution:**

@@ -29,6 +29,7 @@ pass_pix out0 → advect_pix in2                                [previous frame,
 advect_pix out0 → pass_pix in0                                [feedback]
 advect_pix out0 → out0 (composite)
 advect_pix out1 → out1 (advected, pre-mix)
+advect_pix out2 → out2 (vecfield gradient of the accumulated flow)
 ```
 
 `src_vecfield` suppresses the displacement artifact that `vs_black`'s all-zero fallback would otherwise introduce (a zero-texture sample remaps to `(-1,-1)`, a nonzero displacement toward the corner, not a neutral one) — same pattern as f_vf_warp/f_vf_streak's `src_vecfield`/`src_vecfield` suppression params.

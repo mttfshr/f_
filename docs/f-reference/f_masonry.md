@@ -32,7 +32,7 @@ A parametric masonry texture generator — courses (horizontal bands), bond (bri
 | `course_seed` | float | 0.0–999.0 | 0.0 | Course hash seed — changes color/speed/skip pattern |
 | `brick_seed` | float | 0.0–999.0 | 0.0 | Brick hash seed — changes presence/drift pattern |
 | `src_mode` | internal | 0/1 | — | Driven by `vs_inState`; not user-facing |
-| `bypass` | bypass | 0/1 | 0 | Outputs transparent black (mix to `(0,0,0,0)`) |
+| `bypass` | bypass | 0/1 | 0 | Passthrough — both outlets mix to the source texture from in1 (drives `bypass_gate`) |
 
 Three modulation inlets (A/B/C, texture in) drive per-param `_mod_amt_` deltas on many of the above params (offset, drift, speed_var, regularity, phase, skip, mortar, softness, width, roundness, course_color, brick_color) — these modulation-amount params are codebox-internal, set via the mod-inlet system rather than the named `route`, and are not independently addressable messages. See `codebox` in `.specify/f_masonry/definition.py` for the full `_eff` accumulation per param.
 
@@ -62,7 +62,7 @@ Coordinate frame rotates by `angle` into `along`/`across` axes (with `aspect` co
 
 ## Loose Threads
 
-- **Dead `quantize` control in the live `.maxpat` — confirmed 2026-07-19.** `quantize` was removed from the codebox algorithm entirely in the 2026-07-05 ADR 7 candidate-search redesign (`src/f_masonry/definition.py`'s own header comment: "quantize removed"; no `Param quantize` declared). But the live `.maxpat`'s `quantize` `live.dial`, its `route` entry, and its `prepend quantize`/message wiring are all still present and unremoved — since `f_masonry` is on the never-regenerate-via-`build_patcher.py` list, nobody's gone back to strip the dead UI after the codebox stopped using it. The dial still moves and still sends a message, it just lands on nothing. Not urgent, but a real dangling control — worth removing from the `.maxpat` by hand next time this module is opened for other reasons.
+- **`quantize` removal from the live `.maxpat` — completed 2026-09-23 (E001p).** `quantize` was removed from the codebox algorithm entirely in the 2026-07-05 ADR 7 candidate-search redesign (`src/f_masonry/definition.py`'s own header comment: "quantize removed"; no `Param quantize` declared). But the live `.maxpat`'s `quantize` `live.dial`, its `route` entry, and its `prepend quantize`/message wiring are all still present and unremoved — since `f_masonry` is on the never-regenerate-via-`build_patcher.py` list, nobody's gone back to strip the dead UI after the codebox stopped using it. The dial still moves and still sends a message, it just lands on nothing. Not urgent, but a real dangling control — worth removing from the `.maxpat` by hand next time this module is opened for other reasons.
 - Known bug (per HANDOFF): square-output artifact at non-square render resolutions — untouched.
 - Target-list partitioning for the three modulation inlets is a working hypothesis (structural params → slot space, appearance params → brick/pixel space), not finalized — see `.specify/f_masonry/spec.md`'s Open Questions.
 - Angle compensation for slot-mod sampling when `angle≠0` is deferred (sample coordinate doesn't currently correct for rotation).
@@ -77,4 +77,4 @@ See `docs/f-reference/f_masonry.md` (this file) for the full ADR-7 algorithm and
 
 ## Source File
 
-`patchers/f_masonry.maxpat`
+`package/patchers/f_masonry.maxpat`

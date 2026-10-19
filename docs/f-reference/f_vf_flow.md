@@ -53,9 +53,8 @@ vfflow_pix (@type float32) out0 → out0 (f_vecfield)
 ## Notes
 
 - No `.specify/f_vf_flow/spec.md` exists — this doc is derived from `definition.py`'s header comment and param list plus `codebox_flow.gen`.
-- Not in `README.md`'s patch table — added as a finding of this documentation pass, not yet cross-checked into README.
 - See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract — note `f_vf_flow` is one of the few f_vecfield producers with a `"dual"` archetype (source when unconnected, processor-like when a texture is patched in), same category as `f_stipple`.
 
 ## Source File
 
-`patchers/f_vf_flow.maxpat`
+`package/patchers/f_vf_flow.maxpat`

@@ -1,5 +1,7 @@
 # Implementation Plan: f_vf_advect
 
+> **Dated banner, 2026-10-18:** this is a build-era record. Per-module build scripts such as `build_caustic.py` named below were absorbed into `build/build_patcher.py` (keys documented in `build/spec.md`), so do not follow the build instructions here literally.
+
 **Date:** 2026-06-09
 **Spec:** `.specify/f_vf_advect/spec.md`
 

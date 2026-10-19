@@ -19,7 +19,7 @@ Please note that this repository is intended for development and experimentation
 
 ## Patches
 
-Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category. The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it takes or produces a vecfield, a T_ means the same for a tensor), plus Audio for the `gen~` modules; a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`. The `f_tf_` modules work with `f_tensor` textures produced by `f_tf_tensormap` (`docs/f-reference/f_tensor_type.md`).
+Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category. The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it takes or produces a vecfield, a T_ means the same for a tensor), plus Audio for the audio modules (`gen~`, `pfft~`, and the `f_chladni` companion); a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`. The `f_tf_` modules work with `f_tensor` textures produced by `f_tf_tensormap` (`docs/f-reference/f_tensor_type.md`).
 
 This table is also the source for the package's launcher patcher (`package/extras/f_Launch.maxpat`, opened by the Package Manager's Launch button and the Extras menu), which lists every module on one tab per group below.
 
@@ -141,7 +141,7 @@ This repo has six parts. The map first, details below.
 
 ### `package/`
 
-The installable Max package, and the only folder Max needs (see Installation above). It holds `patchers/`, `help/`, `examples/`, `extras/`, `javascript/`, `package-info.json` and `readme.md`.
+The installable Max package, and the only folder Max needs (see Installation above). It holds `patchers/`, `help/`, `examples/`, `extras/`, `javascript/`, `code/`, `package-info.json`, `readme.md` and `license.md`.
 
 ### `build/`
 
@@ -195,6 +195,8 @@ Planning and reference material. Kept public as a reference and conversation sta
 - `maxpat-json-authoring` — hand-authoring `.maxpat` JSON without a live Max.
 - `f-helpfile` — helpfile format.
 - `max-patch-notation` — a notation system for describing patches in chat.
+- `bench-test-authoring` — conventions for writing tier-2 bench test files.
+- `module-preflight` — the checklist before calling a module done or moving it to `stable/`.
 
 The dividing line: domain knowledge lives here, generic workflow/process scaffolding does not. This directory is the single source of truth — other checkouts symlink here rather than keeping copies, after two of them silently diverged in both directions. Uploaded copies can't be symlinked, so `skills/MANIFEST.md` records the last-uploaded state and `skills/check.sh` reports drift (`check.sh stamp` after re-uploading). Copy these into your own Claude setup (e.g. `claude-scaffold`-style skills directory) if you want a similar collaboration workflow — you'll want to adjust the hardcoded paths in `vsynth-bpatcher/SKILL.md` to match your own repo location.
 

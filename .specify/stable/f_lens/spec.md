@@ -1,5 +1,7 @@
 # Spec: f_lens
 
+> **Dated banner, 2026-10-18:** the tilt-shift material below (the `tilt`, `tilt_axis`, `tilt_pos`, `mode` and `slope` params, `jit.fx.cf.tiltshift`, and the v2 Scope preface) describes the design before 2026-09-23, when tilt-shift was removed toward `f_focus`. The final effect set is in `plan.md` ADR-7: chromatic aberration, barrel/pincushion distortion, transmission vignette, ghost images, halation and spatial modulation.
+
 _Last updated: 2026-07-15 (anamorphic removed from v2 scope, moved to new module)_
 _Status: v1 + v2 (aberration, distortion, transmission, ghost images, halation, spatial modulation) shipped; tilt-shift removed 2026-09-23 toward f_focus_
 
@@ -229,7 +231,7 @@ point-mirrored through the optical axis).
 ### Halation (mode within f_lens) — SHIPPED 2026-07-15, verified in Max
 
 Second `jit.gl.pix` stage in series (`obj-raw-17`, manually-declared
-`raw_boxes` object — see `.specify/f_lens/tasks.md` Phase 2 architecture
+`raw_boxes` object — see `ideas/build_patcher_schema_gaps.md`'s Resolution section
 note for why this used `raw_boxes`/`pix_target` rather than `pix_chain`)
 downstream of `lens_pix`, upstream of `jit.fx.cf.tiltshift`: chain order
 is `lens_pix → halation → tiltshift → outlet`, chosen because halation
@@ -289,7 +291,7 @@ the static axis rather than overriding it (Phase 0 T001 decision).~~
 - **Panel layout:** Eight dials — single row vs two rows. To be determined in build phase.
 - **Prefix:** `lens` → `lens_pix`. Confirm no collision with Vsynth objects.
 
-### v2 open questions — all resolved 2026-07-15 (Phase 0, `.specify/f_lens/tasks.md` T001–T005)
+### v2 open questions — all resolved 2026-07-15 (Phase 0, `.specify/stable/f_lens/tasks.md` T001–T005)
 
 - **Vecfield inlet: driving vs. modulating?** MOOT — anamorphic (both
   variants) removed from `f_lens` v2 scope entirely 2026-07-15, moved to

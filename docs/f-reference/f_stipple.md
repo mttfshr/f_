@@ -70,7 +70,7 @@ Displaced-source output (out2) resamples the input at UV coordinates rotated bac
 
 Hash-field stippling is an original construction: two orthogonal hash fields (a sin-based directional hash and an arithmetic isotropic hash) blended by `anisotropy`. No external source was consulted. The dual-mode auto-detection (source vs processor via `vs_inState`) follows the `f_grain` convention.
 
-The hash constants (large prime multipliers, `coarseness` scaling) were tuned during development; the displacement mode's `input_luma * threshold` warp is this module's own. The removed `proc_mode` header toggle (displacement is always available on out3 since the 2026-10-05 rewrite) is documented in the Notes above.
+The hash constants (large prime multipliers, `coarseness` scaling) were tuned during development; the displacement mode's `input_luma * threshold` warp is this module's own. The removed `proc_mode` header toggle (displacement is always available on out3 since the 2026-10-05 rewrite) is documented in the Loose Threads above.
 
 See `docs/f-reference/f_stipple.md` (this file) for the full dual-mode algorithm and the source/processor auto-detection.
 

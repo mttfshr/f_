@@ -1,5 +1,7 @@
 # Spec addendum: f_caustic "sheets" mode (GPU forward scatter)
 
+> **Dated banner, 2026-10-18:** the body below is the original two-mode design (a "soft" backward-gather path, a `detail` quality ladder, mode/detail menus, probe patchers later deleted per T011). Soft mode was removed 2026-10-10 and sheets is now the only path; current behavior is in `docs/f-reference/f_caustic.md`. Read layout blocks, parameter rows and bench numbers below as the original plan. The 2026-10-10 entry in `tasks.md` records the change.
+
 _Created: 2026-10-06. Rewritten 2026-10-07 as an addendum to `f_caustic` (it began as a separate-module draft)._
 _Status: Decisions resolved 2026-10-07. BUILT and shipped 2026-10-07; superseded 2026-10-10, when soft mode was removed and sheets became the only path (see tasks.md's 2026-10-10 entry). The behavior below was measured in the 2026-10-06 and
 2026-10-07 spikes (`tests/records/spike_scatter.py` stages `s0`-`s11`, `tests/bench/spike_scatter*.maxpat`,
