@@ -13,7 +13,7 @@ Hue-selective processing. Isolates a flat-topped hue band — centered on `hue_c
 |------|------|-------|---------|-------------|
 | `hue_center` | float | 0–360 | 120.0 | Hue band center, in degrees |
 | `hue_lower` | float | 0–180 | 36.0 | Flat-top extent below center, in degrees |
-| `hue_upper` | float | 0–180 | 36.0 | Flat-top extent above center, in degrees |
+| `hue_upper` | float | 0–180 | 156.0 | Flat-top extent above center, in degrees |
 | `edge_falloff` | float | 0–90 | 10.0 | Smoothstep falloff width at each boundary, in degrees — 0=hard edge |
 | `sat_amt` | float | -1–1 | 0.0 | -1=full desaturate, 0=unchanged, 1=full boost, within the band |
 | `lum_shift` | float | -1–1 | 0.0 | Additive luminance shift within the band |

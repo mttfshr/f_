@@ -68,7 +68,7 @@ for i in 0..15 (16 evenly-spaced unit directions):
 //   where turb_amt = clamp((Σw_i / |cancel_vec| - 1) * 0.2, 0, 1)
 
 field = clamp(fx * gain * 0.5 + 0.5, 0, 1), clamp(fy * gain * 0.5 + 0.5, 0, 1)
-out1 = mix(vec(field, 0.5, 1.0), sample(source, uv), bypass)
+out1 = mix(vec(field, 0.5, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass)
 ```
 
 Luma weighting is Rec. 601 (`0.299R + 0.587G + 0.114B`).
@@ -78,6 +78,6 @@ Luma weighting is Rec. 601 (`0.299R + 0.587G + 0.114B`).
 ## Notes
 
 - A previously-planned `f_vf_dilate` module (sobel + dilate propagation) is not needed for this use case — deprioritized per spec.md, though it remains specced as potentially useful for spreading other vecfields (vortex, fieldmap) rather than texture-driven repulsion specifically. Confirmed still unbuilt (`patchers/` has no `f_vf_dilate.maxpat`; `.specify/f_vf_dilate/` has spec/tasks only, no definition.py).
-- Bypass here passes the *source texture* through, not a neutral vecfield (all-0.5) — differs from most other f_vf_ generators' bypass convention (e.g. f_vf_vortex, f_vf_vortex_multi output neutral field on bypass). Worth confirming this divergence is intentional before assuming parity across the vecfield family.
+- Bypass passes a neutral vecfield (all-0.5), the same as the other f_vf_ generators (e.g. f_vf_vortex, f_vf_vortex_multi). This follows the codebox, which is authoritative (decided 2026-10-20): an earlier version of this note and of the algorithm block said the source texture passes through, which the codebox does not do.
 - Per spec.md, remaining open items before full sign-off: general audit pass and final build verification in Max (both unchecked in the spec's acceptance list as of last update).
 - See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract.
