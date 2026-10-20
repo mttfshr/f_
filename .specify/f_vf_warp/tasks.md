@@ -208,6 +208,7 @@ confirmed and the reference doc already documents it accurately, unlike
   saved dial bindings still say `strength`, so open them once and re-save; a live
   `bench_modules` run for warp (no bench was run); the helpfile's References text
   still mentions a bypass bug that was fixed 2026-09-23.
+  **Decided 2026-10-19 (Matt): the warp panel is fine for now** (Mix numbox position, label overhang and the crowded title bar stay as built; the "look in Max" item is closed). Still owed: the two demo re-saves, a live `bench_modules` warp entry, the stale References text.
 
 ---
 

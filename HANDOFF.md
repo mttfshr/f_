@@ -1,5 +1,12 @@
 # HANDOFF
 
+## 2026-10-19 (22:00): decisions recorded; docs only, nothing run
+
+- **Correction:** the "late" entry below says the warp split and streak mirror are NOT committed; they are, as `fc05ecd`. Still uncommitted and not from that work: `.specify/plan.md`, `README.md`, `docs/f-reference/f_vf_seeds.md`, `package/extras/f_Launch.maxpat`, `src/f_vf_seeds/definition.py`, plus this entry and the two tasks files below.
+- **Decided (Matt):** (1) `f_vf_streak` `falloff` near 2.0: leave as is, no cap, no guard (T056 in `.specify/f_vf_streak/tasks.md`). (2) Processors with no dry/wet control do NOT get `mix_pct`; `f_chladni` stays without one. (3) The `f_vf_warp` panel is fine for now (`.specify/f_vf_warp/tasks.md` T052).
+- **`plan.md`:** the Maintenance audit line no longer lists the tier-1 question as open (decided 2026-10-19, constitution "Verification Tiers") and carries decisions (1) and (2).
+- **Still owed (Matt):** open `f_demo_warp.maxpat` and `f_demo_sampleplatter.maxpat` once and re-save (embedded warp bindings still say `strength`); a live `bench_modules` warp entry; the warp helpfile References text still mentions a bypass bug fixed 2026-09-23.
+
 ## 2026-10-19 (late): f_vf_streak tier-1 mirror built; f_vf_warp `strength` split into `gain` + `mix_pct`; NOT committed
 
 - **Streak mirror (T056, ticked):** `tests/modules/vf_streak/{vf_streak_mirror,test_vf_streak}.py`, 8/8 (`tests/run.sh tests/modules/vf_streak/test_vf_streak.py`, run once). Closed forms: weight sum `8 - 4 * falloff`, zero / unconnected field returns the source, composite, uniform field on a ramp, whole-texel march by index arithmetic, bypass; three mutations caught. No bench yet; non-uniform fields and edges untested.
