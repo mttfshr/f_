@@ -21,9 +21,9 @@ Ground truth is independent of the mirror:
   - fract wrapping: fract is periodic with period 1, so two pixels 1/scale apart in norm
     sample the same uv.
 
-Not covered (found in review 2026-10-19): rotation at angles other than 0, 0.25 and 1 turn (the
-cosine terms are 0 or 1 there, so a bug in them survives), and a non-default centre outside the
-guard check (with the centre at 0.5, adding or subtracting it wraps to the same uv).
+Generic parameters (rotation, zoom, off-default centre and invert together) are checked by
+test_generic_parameters_closed_form; the special-angle checks alone left those bugs undetected (review
+2026-10-19).
 
 Tolerances: closed-form checks run at 1e-5 or tighter except the inversion check (1e-4):
 the checked uvs there reach magnitude 64-78, whose float32 reciprocal rounding of about
@@ -204,6 +204,26 @@ def _err_periodicity(bug=None):
     return float(d[good].max()) if good.any() else 0.0
 
 
+def _err_generic(bug=None):
+    """Rotation, zoom, centre and invert all at generic values (no special angle, off-default centre), blending
+    the two paths: uv = fract(c + (1 - k) * z * s * e^{2 pi i r} + k / z-bar-form) in complex float64, with the
+    doc's 1e-4 floor on |z|^2 in the reciprocal. Closed form from complex multiplication and reciprocation.
+    Pixels within 0.1 of the centre are excluded: their uv magnitude is large and float32 rounding would
+    swamp the tolerance."""
+    n = 64
+    src = ramp_tex(n)
+    cx, cy, rot, zoom, k = 0.43, 0.57, 0.13, 0.62, 0.3
+    zx, zy = _z64(n, cx, cy)
+    z = zx + 1j * zy
+    s = 10.0 ** ((zoom - 0.5) * 5.0)
+    rotated = z * s * np.exp(2j * np.pi * rot)
+    recip = np.conj(z) / np.maximum(np.abs(z) ** 2, 1e-4)
+    w = rotated * (1.0 - k) + recip * k
+    uvx, uvy = np.mod(w.real + cx, 1.0), np.mod(w.imag + cy, 1.0)
+    out = mobius(src, cx=cx, cy=cy, rotate=rot, zoom=zoom, invert=k, bug=bug)
+    return _uv_sample_err(out, uvx, uvy, _interior(uvx, uvy, n) & (np.abs(z) > 0.1))
+
+
 # --- individual tests -------------------------------------------------------------------
 
 def test_neutral_setting_is_identity():
@@ -253,12 +273,20 @@ def test_fract_wrap_is_periodic():
     check("period-0.1 periodicity of the zoom warp", _err_periodicity(), 2e-5)
 
 
+def test_generic_parameters_closed_form():
+    """The special-angle checks above cannot see bugs in terms that vanish or equal 1 at 0, a quarter and a full
+    turn, or in the centre offset at the default 0.5 (adding or subtracting it wraps to the same uv). This one runs
+    every dial at a generic value against the complex closed form."""
+    check("generic rotate/zoom/centre/invert vs complex closed form, unwrapped pixels", _err_generic(), 1e-4)
+
+
 # --- mutations --------------------------------------------------------------------------
 
 BUGS = ["swap_rot_terms", "sign_flip_inv_y", "linear_zoom", "no_guard", "wrap_shift"]
 TOLS = {"identity": (1e-5, _err_identity), "rotation": (1e-5, _err_rotation),
         "zoom": (1e-5, _err_zoom), "invert": (1e-4, _err_invert),
-        "guard": (1e-5, _err_guard), "period": (2e-5, _err_periodicity)}
+        "guard": (1e-5, _err_guard), "period": (2e-5, _err_periodicity),
+        "generic": (1e-4, _err_generic)}
 
 
 def test_mutations_are_caught():

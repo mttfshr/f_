@@ -20,8 +20,8 @@ in one sentence each. What the doc and the identities force:
     (uniform field).
   - Modulation: the four global textures decode via (sample - 0.5) * 2.0 * amt
     and offset all three sites simultaneously; a neutral (0.5) texture
-    therefore does nothing whatever the depth, and an unconnected one
-    (vs_black, all zeros) decodes to -1.
+    therefore does nothing whatever the depth, and a texture of
+    0.0 (what an unconnected inlet reads) decodes to -1.
   - Superposition: the decoded three-site field equals the sum of the decoded
     single-site fields, wherever the encode does not clamp.
   - Co-located equal sites triple the magnitude (until the encode clamps).
@@ -61,7 +61,7 @@ def neutral_tex(n=SMALL):
 
 
 def black_tex(n=SMALL):
-    return g.texture(n, n)     # vs_black: all zeros, decodes to -1
+    return g.texture(n, n)     # all zeros (an unconnected inlet's colour), decodes to -1
 
 
 def ramp_tex(axis, a, b, n=SMALL):
@@ -206,33 +206,20 @@ def test_neutral_mod_textures_do_nothing_at_full_depth():
     check("all-0.5 mod textures equal no mod at full depth", worst, 1e-7)
 
 
-def _vs_black_peak_err(bug=None):
-    """Largest decoded pull of a conv-only site along the horizontal row
-    through it: conv > 0 is a sink, so the pull points toward the site centre
-    and |pull| peaks at the texel on each side of it. vs_black over the cx mod
-    inlet decodes to -1 (the vecfield contract's decode), so the centre sits at
-    SITE - amt and the peak is the texel just right of that."""
+def _zero_texel_shift_err(bug=None):
+    """A mod texel of 0.0 (the colour an unconnected inlet reads) decodes to (0 - 0.5) * 2 * amt = -amt, so every
+    site moves by -amt. With amt = 0.25 at n = 64 that is exactly 16 texels: the shifted field equals the
+    unshifted one moved 16 texels the other way, texel for texel."""
     n = N
-    conv, fo, amt = 0.8, 2.0, 0.3
-    out = only_site2(n=n, cx_amt=amt, in2=black_tex(n), s2_cx=SITE, s2_cy=SITE,
-                     s2_conv=conv, falloff=fo, bug=bug)
-    fx, fy = dec(out)
-    row = C
-    u, _, _, _ = g.grid(n, n)
-    peak = float(u[row][int(np.argmax(np.abs(fx[row])))])
-    return abs(peak - (SITE - amt))
+    a = gen(n=n, cx_amt=0.25, in2=black_tex(n), bug=bug)
+    b = gen(n=n, bug=bug)
+    return max(float(np.abs(a[:, :-16, ch] - b[:, 16:, ch]).max()) for ch in (0, 1))
 
 
-def test_vs_black_pulls_all_sites_by_minus_amt():
-    # conv-only site: at r = 0 the decode is exactly zero, so the pull peaks on
-    # the ring around the centre, not at the centre itself; measure instead the
-    # field at a fixed offset: it must equal the un-shifted field at that
-    # offset in magnitude, with the site moved by -amt -- done via the peak of
-    # |pull| on the horizontal axis, which sits one texel to each side of the
-    # centre; the check below uses the coarse peak position and 1 texel of slack.
-    e = _vs_black_peak_err()
-    note("pull-peak texel after the -amt cx shift (expect x = 0.2109375, one texel right of the shifted centre)", e)
-    check("vs_black over cx moves the site by -amt", e, 1.5 / N)
+def test_zero_mod_texel_shifts_all_sites_by_minus_amt():
+    """Doc: the modulation inlets decode '(sample.x - 0.5) * 2.0 * amt' and offset all three sites together, so a
+    texture of 0.0 shifts every site by exactly -amt (here 16 texels). Exact, not a peak-position estimate."""
+    check("0.0 mod texture over cx at depth 0.25 moves every site by -16 texels", _zero_texel_shift_err(), 1e-6)
 
 
 # --- superposition -----------------------------------------------------------------------
@@ -298,20 +285,10 @@ def test_encode_clamps_both_sides():
     check("encode never above 1", max(float(out[..., :2].max()) - 1.0, 0.0), 0.0)
     sat = float(np.mean(np.isclose(out[..., 0], 0.0) | np.isclose(out[..., 0], 1.0)))
     note("fraction of R texels saturated in the overlapped strong-site case", sat)
-    check("encode actually clamps to the rails somewhere", float(sat > 0.05), 1.0)
+    check("encode clamps to the rails over at least 5% of R texels", max(0.05 - sat, 0.0), 0.0)
 
 
 # --- mutations ----------------------------------------------------------------------------
-
-def _shift_err(bug=None):
-    """The 16-texel uniform cx_mod shift, recomputed for the mutation harness."""
-    n = N
-    m = neutral_tex(n)
-    m[...] = np.array([0.75, 0.5, 0.5, 1.0], F32)
-    a = gen(n=n, cx_amt=0.5, in2=m, bug=bug)
-    b = gen(n=n, bug=bug)
-    return max(float(np.abs(a[:, 16:, ch] - b[:, :-16, ch]).max()) for ch in (0, 1))
-
 
 def _shift_err(bug=None):
     """The 16-texel uniform cx_mod shift, recomputed for the mutation harness."""
@@ -327,13 +304,13 @@ def test_mutations_are_caught():
     bad = {"radial_source": _err("radial_source"),
            "no_falloff": _axis_err("no_falloff"),
            "swap_rg": _axis_err("swap_rg"),
-           "mod_unscaled": max(_shift_err("mod_unscaled"), _vs_black_peak_err("mod_unscaled"))}
+           "mod_unscaled": max(_shift_err("mod_unscaled"), _zero_texel_shift_err("mod_unscaled"))}
     for k, val in bad.items():
         note(f"mutation '{k}' worst error", val)
         if not val > 1e-3:
             raise AssertionError(f"mutation not detected: {k} (error {val:.3e})")
-    assert max(_shift_err(), 0.0) <= 1e-6 and _vs_black_peak_err() <= 1.5 / N and _coLoc_err() <= 2e-5, \
-        f"the real mirror must pass the same checks: {_shift_err()}, {_vs_black_peak_err()}, {_coLoc_err()}"
+    assert max(_shift_err(), 0.0) <= 1e-6 and _zero_texel_shift_err() <= 1e-6 and _coLoc_err() <= 2e-5, \
+        f"the real mirror must pass the same checks: {_shift_err()}, {_zero_texel_shift_err()}, {_coLoc_err()}"
     print("    ok   flipped radial sign, dropped falloff, swapped R/G and unscaled mod are each caught")
 
 

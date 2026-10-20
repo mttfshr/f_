@@ -276,9 +276,10 @@ def _time_shift_err(bug=None):
 
 
 def test_time_shift_moves_the_radial_channel():
-    """doc: time_s is "Animation driver — scalar signal, use LFO data outlet", added by the codebox
-    to the radial coordinate s before the shear. With twist=0, the output at time_s += 0.5 must
-    differ (shift by half a tile in v) and the output at time_s += 1.0 must be the original."""
+    """The doc calls time_s only the "Animation driver"; that it is added to the radial coordinate s before the
+    shear is read from the codebox, not from the doc. So only invariants are checked: with twist=0, time_s += 0.5
+    must visibly shift the image (half a tile in v), and time_s += 1.0 must reproduce the original (fract absorbs
+    the integer shift)."""
     src = rand_tex(42)
     half_err = _time_shift_err()
     if not half_err > 0.5:

@@ -265,10 +265,11 @@ def test_mutations_are_caught():
     comp_out, _ = glow_stage(src, vec_tex(0.0, 0.0), gain=1.5, mix_pct=100.0)
     s = src[..., :3].astype(np.float64)
     real.append(float(np.abs(comp_out[..., :3] - np.clip(s * 2.5, 0, 1).astype(F32)).max()))
-    _, oh = glow_stage(src, vec_tex(0.0, 0.0), color_mix=0.5)
-    _, o0 = glow_stage(src, vec_tex(0.0, 0.0), color_mix=0.0)
+    # color_mix 1 at a zero field: the glow layer is the source's luma on every channel. Expected from the standard
+    # Rec. 709 luma weights (the doc says "luma-only" without listing them), never from another mirror output.
     _, o1 = glow_stage(src, vec_tex(0.0, 0.0), color_mix=1.0)
-    real.append(float(np.abs(oh[..., :3] - (o0[..., :3].astype(np.float64) + o1[..., :3]) / 2.0).max()))
+    luma64 = (s[..., 0] * 0.2126 + s[..., 1] * 0.7152 + s[..., 2] * 0.0722)[..., None]
+    real.append(float(np.abs(o1[..., :3].astype(np.float64) - luma64).max()))
     assert max(real) < 1e-3, f"the real mirror must pass the same checks: {max(real):.3e}"
 
     bad = {}
