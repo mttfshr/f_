@@ -82,7 +82,7 @@
                     "f_grain[1]::softness": [ 0.0 ],
                     "f_grain[1]::sv_seed": [ 0.0 ],
                     "f_vf_warp::bypass": [ 0 ],
-                    "f_vf_warp::strength": [ 0.46062992125984437 ],
+                    "f_vf_warp::gain": [ 0.46062992125984437 ],
                     "vs_filter_temp::temp_freq": [ 0.8582677165354333 ],
                     "f_lens[1]::aberration": [ -0.5984251968503929 ],
                     "f_lens[1]::aberration_mod": [ 0.0 ],

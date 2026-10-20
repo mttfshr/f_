@@ -93,17 +93,18 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 1,
+					"numoutlets": 2,
 					"outlettype": [
+						"",
 						""
 					],
 					"patching_rect": [
 						56.5,
 						204.0,
-						91.0,
+						151.0,
 						22.0
 					],
-					"text": "route strength"
+					"text": "route gain mix_pct"
 				}
 			},
 			{
@@ -172,7 +173,7 @@
 							},
 							{
 								"box": {
-									"code": "Param strength(0.0);\nParam src_vecfield(0.0);\nParam bypass_gate(0.0);\n\nuv = norm;\n\n// Sample field channels inline \u2014 never store vec and access component\nfield_x = sample(in2, uv).x;\nfield_y = sample(in2, uv).y;\n\n// Remap [0,1] \u2192 [-1,1], scale by strength\noffset_x = (field_x - 0.5) * 2.0 * strength;\noffset_y = (field_y - 0.5) * 2.0 * strength;\n\n// Suppress offset when vecfield inlet is unconnected (vs_black \u2192 field=0 \u2192 offset=-strength without this)\noffset_x = mix(0.0, offset_x, step(0.5, src_vecfield));\noffset_y = mix(0.0, offset_y, step(0.5, src_vecfield));\n\n// Displace UV and clamp to edge\nwarped_x = clamp(uv.x + offset_x, 0.0, 1.0);\nwarped_y = clamp(uv.y + offset_y, 0.0, 1.0);\nwarped_uv = vec(warped_x, warped_y);\n\n// Output \u2014 sample inline, no stored vec component access\nwarped_sample = sample(in1, warped_uv);\nout1 = mix(warped_sample, sample(in1, uv), bypass_gate);\nout2 = mix(warped_sample, sample(in1, uv), bypass_gate);\n",
+									"code": "Param gain(0.0);\nParam mix_pct(100.0);\nParam src_vecfield(0.0);\nParam bypass_gate(0.0);\n\nuv = norm;\n\n// Sample field channels inline \u2014 never store vec and access component\nfield_x = sample(in2, uv).x;\nfield_y = sample(in2, uv).y;\n\n// Remap [0,1] \u2192 [-1,1], scale by gain\noffset_x = (field_x - 0.5) * 2.0 * gain;\noffset_y = (field_y - 0.5) * 2.0 * gain;\n\n// Suppress offset when vecfield inlet is unconnected (vs_black \u2192 field=0 \u2192 offset=-gain without this)\noffset_x = mix(0.0, offset_x, step(0.5, src_vecfield));\noffset_y = mix(0.0, offset_y, step(0.5, src_vecfield));\n\n// Displace UV and clamp to edge\nwarped_x = clamp(uv.x + offset_x, 0.0, 1.0);\nwarped_y = clamp(uv.y + offset_y, 0.0, 1.0);\nwarped_uv = vec(warped_x, warped_y);\n\n// Output \u2014 sample inline, no stored vec component access\nwarped_sample = sample(in1, warped_uv);\nsrc_sample = sample(in1, uv);\n\n// gain/mix convention (T052): the warped sample is the complete composited state, mix_pct a\n// plain crossfade toward it (source at 0, fully warped at 100). out2 is the warped layer\n// itself, unmixed. Bypass (bypass_mode \"param\"): passthrough on every outlet.\ncomposite = mix(src_sample, warped_sample, mix_pct / 100.0);\nout1 = mix(composite, src_sample, bypass_gate);\nout2 = mix(warped_sample, src_sample, bypass_gate);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -646,14 +647,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Warp depth \u2014 0=none, 1=\u00b11 UV offset",
+					"hint": "Warp depth \u2014 0=none, 1=\u00b11 UV offset. Renamed from strength 2026-10-19 (T052) to match the library-wide gain/mix naming convention.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "vfwarp_pix::strength",
+					"param_connect": "vfwarp_pix::gain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						46.5,
@@ -678,11 +679,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "strength",
+							"parameter_longname": "gain",
 							"parameter_mmax": 1.5,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "strength",
+							"parameter_shortname": "gain",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -691,7 +692,7 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "strength",
+					"varname": "gain",
 					"appearance": 1
 				}
 			},
@@ -699,7 +700,7 @@
 				"box": {
 					"id": "obj-21",
 					"maxclass": "attrui",
-					"attr": "strength",
+					"attr": "gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -735,14 +736,105 @@
 						50.0,
 						18.0
 					],
-					"text": "Strength",
+					"text": "Gain",
 					"textjustification": 1,
-					"varname": "lbl_strength"
+					"varname": "lbl_gain"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-23",
+					"maxclass": "live.numbox",
+					"fontname": "Ableton Sans Light",
+					"hint": "Dry/wet crossfade on the composite outlet, source to fully warped. New 2026-10-19 (T052); default 100 keeps the module's prior behavior unchanged. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator.",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "vfwarp_pix::mix_pct",
+					"parameter_enable": 1,
+					"patching_rect": [
+						110.0,
+						250.0,
+						44.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						41.0,
+						38.0,
+						34.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_initial": [
+								100.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "mix_pct",
+							"parameter_mmax": 100.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "mix_pct",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"varname": "mix_pct"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-24",
+					"maxclass": "attrui",
+					"attr": "mix_pct",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						98.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-25",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						107.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Mix",
+					"textjustification": 1,
+					"varname": "lbl_mix_pct"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-26",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -770,7 +862,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-24",
+					"id": "obj-27",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -899,11 +991,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-23",
+						"obj-26",
 						0
 					],
 					"destination": [
-						"obj-24",
+						"obj-27",
 						0
 					]
 				}
@@ -911,7 +1003,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-24",
+						"obj-27",
 						0
 					],
 					"destination": [
@@ -1015,12 +1107,53 @@
 						0
 					]
 				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						1
+					],
+					"destination": [
+						"obj-23",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
 			}
 		],
 		"parameters": {
 			"obj-20": [
-				"strength",
-				"strength",
+				"gain",
+				"gain",
+				0
+			],
+			"obj-23": [
+				"mix_pct",
+				"mix_pct",
 				0
 			],
 			"parameterbanks": {

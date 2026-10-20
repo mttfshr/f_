@@ -3,9 +3,12 @@
 # (jsui -> `prepend param bypass_gate` -> pix, driving the codebox Param below) instead of the
 # native jsui -> attrui @attr bypass.  Native jit.gl.pix bypass skips the shader and passes
 # secondary outlets through vertically flipped, so out2 could never respect bypass that way.
-# plan.md still lists the module as never-regenerate until Matt takes it off; nothing needs
-# regenerating, because the patcher already equals what this builds.
-# strength default 0.1, vecfield label/comment styling: in the definition and `overrides`.
+# Taken off the never-regenerate list 2026-10-19; nothing needs regenerating, because the
+# patcher already equals what this builds.
+# 2026-10-19 (T052): `strength` split into `gain` (warp depth, default 0.0 as before) and `mix_pct`
+# (dry/wet on the composite outlet, default 100 = prior behavior), as f_grain's T003.  The older
+# comment here claimed a saved default of 0.1; the shipped patcher, this definition and the codebox
+# all had 0.0.  Vecfield label/comment styling: in the definition and `overrides`.
 patcher = {
     "name":               "f_vf_warp",
 
@@ -51,14 +54,19 @@ patcher = {
     ],
 
     "params": [
-        {"name": "strength", "type": "float", "min": 0.0, "max": 1.5,
-         "default": 0.0, "label": "Strength", "hint": "Warp depth — 0=none, 1=±1 UV offset"},
+        {"name": "gain", "type": "float", "min": 0.0, "max": 1.5,
+         "default": 0.0, "label": "Gain",
+         "hint": "Warp depth — 0=none, 1=±1 UV offset. Renamed from strength 2026-10-19 (T052) to match the library-wide gain/mix naming convention."},
+        {"name": "mix_pct", "type": "float", "min": 0.0, "max": 100.0, "default": 100.0,
+         "label": "Mix", "widget": "numbox",
+         "hint": "Dry/wet crossfade on the composite outlet, source to fully warped. New 2026-10-19 (T052); default 100 keeps the module's prior behavior unchanged. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator."},
         {"name": "src_vecfield", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 
     "codebox": """\
-Param strength(0.0);
+Param gain(0.0);
+Param mix_pct(100.0);
 Param src_vecfield(0.0);
 Param bypass_gate(0.0);
 
@@ -68,11 +76,11 @@ uv = norm;
 field_x = sample(in2, uv).x;
 field_y = sample(in2, uv).y;
 
-// Remap [0,1] → [-1,1], scale by strength
-offset_x = (field_x - 0.5) * 2.0 * strength;
-offset_y = (field_y - 0.5) * 2.0 * strength;
+// Remap [0,1] → [-1,1], scale by gain
+offset_x = (field_x - 0.5) * 2.0 * gain;
+offset_y = (field_y - 0.5) * 2.0 * gain;
 
-// Suppress offset when vecfield inlet is unconnected (vs_black → field=0 → offset=-strength without this)
+// Suppress offset when vecfield inlet is unconnected (vs_black → field=0 → offset=-gain without this)
 offset_x = mix(0.0, offset_x, step(0.5, src_vecfield));
 offset_y = mix(0.0, offset_y, step(0.5, src_vecfield));
 
@@ -83,13 +91,19 @@ warped_uv = vec(warped_x, warped_y);
 
 // Output — sample inline, no stored vec component access
 warped_sample = sample(in1, warped_uv);
-out1 = mix(warped_sample, sample(in1, uv), bypass_gate);
-out2 = mix(warped_sample, sample(in1, uv), bypass_gate);
+src_sample = sample(in1, uv);
+
+// gain/mix convention (T052): the warped sample is the complete composited state, mix_pct a
+// plain crossfade toward it (source at 0, fully warped at 100). out2 is the warped layer
+// itself, unmixed. Bypass (bypass_mode "param"): passthrough on every outlet.
+composite = mix(src_sample, warped_sample, mix_pct / 100.0);
+out1 = mix(composite, src_sample, bypass_gate);
+out2 = mix(warped_sample, src_sample, bypass_gate);
 """,
 }
 
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
-    "strength.ctl": {"appearance": 1, "presentation_rect": [4.0, 38.0, 25.0, 23.0]},
+    "gain.ctl": {"appearance": 1, "presentation_rect": [4.0, 38.0, 25.0, 23.0]},
 }
 # END overrides

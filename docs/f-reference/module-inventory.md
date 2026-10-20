@@ -67,7 +67,7 @@ Take a source texture plus an f_vecfield and produce a visual result shaped by t
 
 | Module | I/O | What it does |
 |---|---|---|
-| `f_vf_warp` | tex + vecfield → tex | Directly displaces UV by the field vector, scaled by `strength`. The simplest field-driven distortion — single-sample, no accumulation |
+| `f_vf_warp` | tex + vecfield → tex | Directly displaces UV by the field vector, scaled by `gain` (`mix_pct` crossfades the composite outlet). The simplest field-driven distortion — single-sample, no accumulation |
 | `f_caustic` | tex + vecfield → composite + isolated layer | Forward scatter-sheet accumulation along the field (a lattice of field-displaced points deposits additive splats into a float32 capture); brightness builds up in *convergence* zones (negative divergence). This is the module for a lens/fresnel-style focusing effect — bright bands form where the field converges, exactly the optical-caustic behavior a fresnel lens produces |
 | `f_vf_streak` | tex + vecfield (optional) → composite + isolated layer | Accumulates samples along the streamline into a directional smear/streak, with chromatic offset option |
 | `f_vf_glow` | tex + vecfield → composite + isolated layer | 48-step bidirectional accumulation along the field → anisotropic glow/bloom that follows field geometry (not radially symmetric like a normal bloom) |

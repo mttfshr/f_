@@ -100,8 +100,8 @@
                         270.0,
                         122.0
                     ],
-                    "text": "External Control Messages\n\nstrength [0.0 \u2013 1.5]\nbypass [0 / 1]",
-                    "linecount": 4,
+                    "text": "External Control Messages\n\ngain [0.0 \u2013 1.5]\nmix_pct [0 \u2013 100]\nbypass [0 / 1]",
+                    "linecount": 5,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
@@ -300,8 +300,8 @@
         ],
         "parameters": {
             "d-4::obj-20": [
-                "strength",
-                "strength",
+                "gain",
+                "gain",
                 0
             ],
             "inherited_shortname": 1

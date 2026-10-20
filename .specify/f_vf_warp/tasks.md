@@ -183,13 +183,31 @@ confirmed and the reference doc already documents it accurately, unlike
   **Decided 2026-10-19 (Matt): tier 1 skipped.** Linear remap, clamp and one
   sample; a mirror would restate the codebox. Recorded here (the task
   record), not in `plan.md`.
-- [ ] T052 **Convention decision gate: does `strength` need the gain/mix
+- [x] T052 **Convention decision gate: does `strength` need the gain/mix
   split?** Same open question filed for `f_grain`'s `amount`
   (`.specify/f_grain/tasks.md` T003) — `strength` here is a single
   0-1.5 param doing the same blend-weight-ish job the six rolled-out
   modules split into `gain`+`mix`. Now two modules outside that rollout
   with the same shape of question; worth deciding once, generally,
   rather than module by module.
+  **Decided 2026-10-19 (Matt): the split applies; built the same day**, as
+  `f_grain`'s T003. `strength` is now `gain` (0-1.5, default 0.0, unchanged) and
+  `mix_pct` (0-100, default 100 = the previous behavior) is new: out0 is
+  `mix(source, warped, mix_pct / 100)`, out1 is the warped layer unmixed, both
+  mix to the source under bypass. The older "saved default 0.1" comment in
+  `definition.py` was wrong (patcher, definition and codebox all had 0.0) and is
+  corrected. Done: `src/f_vf_warp/definition.py`, patcher rebuilt (`build/drift.py
+  -v f_vf_warp` ok; `lens_toggle.js` restored; panel size unchanged at 78 x 90),
+  `docs/f-reference/f_vf_warp.md`, `module-inventory.md`, the helpfile's External
+  Control text and parameter binding, and the demo preset key
+  `f_vf_warp::gain` in `package/examples/f_demo_warp.json`;
+  `tests/run.sh -q tests/contracts/test_module_contracts.py` 9/9. **Not done
+  (owed):** Matt's look in Max (the new Mix numbox sits at x 41-75, its label box
+  overhangs the 78 px frame by about 1.5 px; the title bar is still crowded);
+  `f_demo_warp.maxpat` and `f_demo_sampleplatter.maxpat` embed warp instances whose
+  saved dial bindings still say `strength`, so open them once and re-save; a live
+  `bench_modules` run for warp (no bench was run); the helpfile's References text
+  still mentions a bypass bug that was fixed 2026-09-23.
 
 ---
 

@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-19 (late): f_vf_streak tier-1 mirror built; f_vf_warp `strength` split into `gain` + `mix_pct`; NOT committed
+
+- **Streak mirror (T056, ticked):** `tests/modules/vf_streak/{vf_streak_mirror,test_vf_streak}.py`, 8/8 (`tests/run.sh tests/modules/vf_streak/test_vf_streak.py`, run once). Closed forms: weight sum `8 - 4 * falloff`, zero / unconnected field returns the source, composite, uniform field on a ramp, whole-texel march by index arithmetic, bypass; three mutations caught. No bench yet; non-uniform fields and edges untested.
+- **Finding, open (Matt's call): `f_vf_streak` `falloff` near 2.0 is unstable.** The weights sum to `8 - 4 * falloff`, zero at 2.0, inside the dial's 0-2.5 range, and the shader divides by it (the mirror gets rounding noise amplified to a clamped, wrong layer; a GPU may give NaN). The doc says normalization "still holds" above 1. Options in T056: cap the dial below 2.0 or guard the divide. Not changed.
+- **Warp split (T052, ticked):** `strength` -> `gain` (0-1.5, default 0.0), new `mix_pct` (default 100, so behavior is unchanged); out0 = `mix(source, warped, mix_pct / 100)`, out1 = warped layer unmixed. Patcher rebuilt from `definition.py` (`drift.py -v f_vf_warp` ok, `lens_toggle.js` restored, panel still 78 x 90); reference doc, inventory row, helpfile text and binding, and the demo preset key `f_vf_warp::gain` updated. `tests/run.sh -q tests/contracts/test_module_contracts.py` 9/9. The "saved default 0.1" comment in the definition was wrong (all three places had 0.0).
+- **Owed (Matt):** a look in Max at the warp panel (Mix numbox at x 41-75, crowded title bar); open `f_demo_warp.maxpat` and `f_demo_sampleplatter.maxpat` once and re-save (embedded warp dial bindings still say `strength`); a warp entry in a live `bench_modules` run (nothing was benched); helpfile References still mentions a bypass bug fixed 2026-09-23.
+- **Uncommitted:** `.specify/f_vf_streak/tasks.md`, `.specify/f_vf_warp/tasks.md`, `src/f_vf_warp/definition.py`, `package/patchers/f_vf_warp.maxpat`, `package/help/f_vf_warp.maxhelp`, `package/examples/f_demo_warp.json`, `docs/f-reference/f_vf_warp.md`, `docs/f-reference/module-inventory.md`, `tests/modules/vf_streak/`, `HANDOFF.md`; plus the earlier files that are not from this work (`.specify/plan.md`, `README.md`, `f_vf_seeds` doc and definition, `f_Launch.maxpat`).
+
 ## 2026-10-19 (night): tier-1 rule for pre-convention modules decided; f_vf_advect mirror built; one commit
 
 - **Source:** omp run `gate-prep-1` (`f_omp_runs/gate-prep-1/`, REPORT.md and two memos): 33 modules x tier-1 and blend records, 66 records verified, 7 of 7 tier-1 controls hit. Three non-control tier-1 records spot-checked by hand (`f_vf_glow`, `f_sirds`, `f_vf_potential`): correct.
