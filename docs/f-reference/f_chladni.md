@@ -93,6 +93,8 @@ filterbank contract). Design deferred until wanted:
 
 - EEG companion patch not built — interface is stable and ready for it whenever wanted; audio companion exists but is unverified (T140)
 - Preferred MIDI playing range not empirically pinned down beyond "1–2 octaves is the expected expressive range"
+- **Known limitation, top of the note range (mode 0):** `note = 127` maps to `z_pos = z7` only up to float rounding. In float32 it comes out as 11.086401, just above `z7` = 11.0864, so mode 0's top window (`step(zp, z7)`) drops out and the pattern vanishes. Avoid notes within about 0.01 of 127 in mode 0 until a clamp is added. The codebox is authoritative; this was confirmed numerically by the tier-1 test (2026-10-20).
+- **`view_mode = 1` only changes mode 1's own total:** the helper functions used for mode 0 and for the vecfield (`out2`) recompute circular coordinates from the pixel position, so the unwrapped strip view reaches only mode 1's inline total. Mode 0 and `out2` stay circular whatever `view_mode` is. (The Parameters table above describes `view_mode` as switching the view; read it with this caveat.)
 
 ## Superseded
 

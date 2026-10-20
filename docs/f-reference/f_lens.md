@@ -23,7 +23,7 @@ Internally two objects in series: `lens_pix` (aberration/distortion/transmission
 | `transmission_mod` | float | 0.0–1.0 | 0.0 | — | Transmission modulation depth (inlet 3 texture) |
 | `surface_mod` | float | 0.0–5.0 | 0.0 | — | Surface emboss displacement depth (inlet 4 gradient texture) |
 | `ghost` | float | -1.0–1.0 | 0.0 | — | Inter-reflection ghost intensity, additive, color-coupled to aberration. Negative subtracts (dark ghosts). |
-| `ghost_count` | float (numbox) | 1–4 | 3 | — | Number of ghost taps, `floor()`'d in codebox |
+| `ghost_count` | float (numbox) | 1–4 | 3 | — | Number of ghost taps, rounded to the nearest integer in the codebox (`floor(ghost_count + 0.5)`) |
 | `ghost_spacing` | float | -1.0–1.0 | 0.3 | ±1/±5 | Offset scale between ghost taps. Negative mirrors ghosts inward through center. |
 | `halation` | float | 0.0–1.0 | 0.0 | — | Halation glow intensity, additive, warm-tinted, luma-gated |
 | `halation_threshold` | float | 0.0–1.0 | 0.7 | — | Luma gate point; regions above this bloom |
@@ -75,7 +75,7 @@ effect_out = mix(effect_out * warm_shift * vignette, effect_out, 1 - transmissio
 // ghost: 1-4 offset taps along the same post-distortion warp vector,
 // each independently sampling R/G/B at its own aberration-scaled offset
 // (color-coupled to `ab` — real lens ghosts show more fringing than the
-// primary image), attenuated per tap (0.6^(n-1) falloff), added on top
+// primary image), attenuated per tap (weights 1, 0.6, 0.36, 0.22), added on top
 // with alpha explicitly zeroed to avoid drifting the composite past 1.0
 effect_out += ghost_composite * ghost
 
