@@ -135,7 +135,7 @@ src/f_vf_seeds/codebox_seeds_render.gen     -- Stage 2/3 template
 src/f_vf_seeds/codebox_seeds_composite.gen  -- Stage 4
 ```
 
-The shipped patcher is on the never-regenerate list. To check that the definition still describes it:
+The shipped patcher reproduces from its definition (it came off the never-regenerate list 2026-10-19). To check that it still does:
 `build/py.sh build/drift.py -v f_vf_seeds` (must say ok; `tests/build/test_build_seeds_keys.py` also asserts it).
 
 ## Key Findings

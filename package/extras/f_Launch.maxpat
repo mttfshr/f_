@@ -3462,7 +3462,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction",
+									"text": "⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3600,7 +3600,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool)",
+									"text": "⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3669,7 +3669,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots)",
+									"text": "⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots)",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3738,7 +3738,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed",
+									"text": "⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3807,7 +3807,7 @@
 										150.0,
 										20.0
 									],
-									"text": "One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames",
+									"text": "⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

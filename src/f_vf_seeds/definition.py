@@ -9,7 +9,7 @@ and loud, tests/build/test_build_seeds_keys.py): pix_chain `gen_code`, per-param
 `pix_attr` and `range_menu_outlet`, native `bypass_target`, `outlet_source`, and `fanout` /
 `state_nodes` on mod_inlets; earlier ones: `pix_target` lists, `inlet_fanout`, `legacy`.
 This file also feeds the docs/helpfile/param-extraction tooling (build/extract_params.py) and the
-bench's archetype lookup.  The shipped patcher is on the never-regenerate list: this definition exists
+bench's archetype lookup.  The shipped patcher came off the never-regenerate list 2026-10-19: this definition exists
 so drift can be checked (`build/py.sh build/drift.py -v f_vf_seeds`) and the module is recorded.
 
 Placement and orientation engine for discrete marks. Stable seed points distributed across the frame,

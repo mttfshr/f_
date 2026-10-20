@@ -93,12 +93,12 @@ This table is also the source for the package's launcher patcher (`package/extra
 
 | Patch | Description |
 |---|---|
-| `f_tf_aniso_blur` | Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
+| `f_tf_aniso_blur` | ⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
 | `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
-| `f_tf_glyph` | Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
-| `f_tf_hatch` | Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
-| `f_tf_sharpen` | Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed |
-| `f_tf_smooth` | One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames |
+| `f_tf_glyph` | ⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
+| `f_tf_hatch` | ⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
+| `f_tf_sharpen` | ⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed |
+| `f_tf_smooth` | ⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames |
 | `f_tf_tensormap` | Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1) |
 
 ### Utilities
