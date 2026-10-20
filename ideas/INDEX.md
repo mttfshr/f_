@@ -1,6 +1,6 @@
 # Ideas Index
 
-_Created: 2026-09-17; last brought current 2026-10-18 (77 notes plus one parked
+_Created: 2026-09-17; last brought current 2026-10-20 (78 notes plus one parked
 script)._ A refresher map of `ideas/` so you don't have
 to reread everything to remember where a thread stands. Grouped by theme, not
 date. Each entry: one-line gist + status. When a file's own status line is
@@ -155,6 +155,10 @@ substantially move a file in `ideas/`, update its entry here too.
 
 ## Conformal / non-Euclidean geometry
 
+- **[vecfield_aware_uv_warps.md](vecfield_aware_uv_warps.md)** ⚪ — Carry a piped-through vecfield correctly through
+  `f_mobius` (complex division; conformal) and `f_droste` (2x2 Jacobian solve; never conformal) instead of resampling
+  it unmodified. Both characterized, spec drafted (`.specify/f_mobius_vecfield/spec.md`); parked 2026-10-20, gated on a
+  concrete use case.
 - **[circular_screen.md](circular_screen.md)** 🔵 — Framing doc: the circular
   projection screen as a formal constraint, not just a display target. Three
   directions: stereographic (`f_stereo`, built), spherical harmonics

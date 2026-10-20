@@ -43,3 +43,5 @@ _Last updated: 2026-05-26_
   rather than moving the folder: one investigation task doesn't by
   itself drop the module below stable/'s bar — if it turns into real
   work, move it off stable/ then (.specify/maintenance/SKILL.md).
+
+- [x] T021 **Tier-1 NumPy mirror (omp run mirror-build-1, landed 2026-10-19).** `tests/modules/mobius/{mobius_mirror,test_mobius}.py`, 10/10 offline. Checks: identity at neutral, the doc's zoom law 10^((zoom - 0.5) * 5), rotation and 1/z in complex float64, period under fract(), and a generic-parameter check (angle, zoom, centre and invert together; added 2026-10-20 after review found only special angles and the default centre were tested). See `HANDOFF.md` 2026-10-19.

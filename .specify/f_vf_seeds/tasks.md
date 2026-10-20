@@ -539,3 +539,5 @@ otherwise surface) — one real, previously-unflagged gap found:
   new finding, just never promoted to an actual bench entry. Worth a
   `bench_modules.py`/cost-script addition so these stop being anecdotal
   claims from one manual test session.
+
+- [x] T049 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/vf_seeds/{vf_seeds_mirror,test_vf_seeds}.py`, 11/11 offline. Stage 1c (merge: a plain sort of four candidates by LOWER priority) and Stage 4 (composite: the textbook over operator, bypass) only. The search and render stages are not mirrored. The merge tie convention (`step` >=) is pinned by a codebox-dependent test. See `HANDOFF.md` 2026-10-20.

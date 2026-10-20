@@ -296,3 +296,5 @@ without degrading already-confident regions. → Proceed to Phase 6.
   is stale; and definition.py's hand-computed obj-ids (stage_c="obj-53",
   bypass_pre_id=obj-48, fan-out obj-39/27/30) are a standing
   maintenance hazard to remember in any future edit.
+
+- [x] T040 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/vf_optical_flow/{vf_optical_flow_mirror,test_vf_optical_flow}.py`, 12/12 offline. Stage C only (Cramer's rule 2x2 solve, mask, doubled-angle axis): np.linalg.solve, recovery of a known translation, np.linalg.eigh. Stages A, B, D and E are not mirrored. Doc and codebox comment corrected 2026-10-20 (codebox authoritative, Matt): out1 y/z stores the DOMINANT direction's doubled-angle pair; the ambiguous axis's pair is its negation. See `HANDOFF.md` 2026-10-20.

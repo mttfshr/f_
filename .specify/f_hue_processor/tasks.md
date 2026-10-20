@@ -28,3 +28,5 @@ exists; ids start at T001._
   driven via the jsui pair. Also resolves the stale HANDOFF citation in
   Loose Threads once T001 lands. Cross-ref: .specify/helpfiles/tasks.md
   T004/T019 still open for this module's helpfile.
+
+- [x] T003 **Tier-1 NumPy mirror (omp run mirror-build-2, landed 2026-10-20).** `tests/modules/hue_processor/{hue_processor_mirror,test_hue_processor}.py`, 14/14 offline. Checks: Python colorsys as the reference, the band sides from the doc (hue_lower below the centre, hue_upper above), the edge smoothstep. Doc corrected to follow the codebox (Matt, 2026-10-20): the default hue_upper is 156.0, not 36.0. See `HANDOFF.md` 2026-10-20.

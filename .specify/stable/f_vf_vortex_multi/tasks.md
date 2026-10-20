@@ -128,3 +128,5 @@ f_/
 - Scratch patch (Phase 1) is the most important phase — do not skip or abbreviate
 - Position inlet wiring (Phase 3) may be done via direct JSON edit or in Max — JSON edit preferred for precision
 - If build_patcher.py doesn't support three extra inlets natively, add them via Python JSON edit post-build (same pattern as f_caustic build)
+
+- [x] T032 **Tier-1 NumPy mirror (omp run mirror-build-1, landed 2026-10-19).** `tests/modules/vf_vortex_multi/{vf_vortex_multi_mirror,test_vf_vortex_multi}.py`, 12/12 offline. Checks: axis closed forms, superposition against single sites, a co-located triple, translation, an exact 16-texel shift from a zero modulation texel, clamps. Two checks run at tolerances 1e-3 or looser, explained in their docstrings. See `HANDOFF.md` 2026-10-19.

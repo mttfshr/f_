@@ -267,3 +267,5 @@ reads `sample(in4, uv).w`.
 - [ ] T041 Tier-1 mirror of the weight maths (direction 0 unchanged; low coherence pulls modes 1/2 to the bidirectional floor) and a bench parity check.
 - [ ] T042 Live check: `f_tf_tensormap` outlet 1 -> glow anisotropy inlet at `direction` 1 and 2; unconnected = unchanged from today.
 - [ ] T043 Docs: `docs/f-reference/f_vf_glow.md` (new inlet), helpfile, README note. Deferred (do not build): a performer-facing gain dial (waits for `mod_depth_ui_density.md`).
+
+- [x] T044 **Tier-1 NumPy mirror (omp run mirror-build-1, landed 2026-10-19).** `tests/modules/vf_glow/{vf_glow_mirror,test_vf_glow}.py`, 10/10 offline. Checks: a zero field returns the source, ramp readbacks, the closed-form composite and Rec. 709 luma (color_mix 1), bypass on both outlets. See `HANDOFF.md` 2026-10-19.

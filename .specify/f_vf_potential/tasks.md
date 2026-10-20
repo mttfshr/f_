@@ -19,3 +19,5 @@ Ids start at T001._
   produces identical output. The table's current "assumed excluded"
   framing is wrong; it belongs on the affected list. (Code read
   settles the open question; only the doc row needs updating.)
+
+- [x] T003 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/vf_potential/{vf_potential_mirror,test_vf_potential}.py`, 16/16 offline. Checks: the geometric series and fixed point for a uniform field, zero-field decay, bypass, clamp, advection, the strength/tint feedback closed form, and the direction of `decay` from the doc's own words (added 2026-10-20 after the planted-doc control for this module was missed by the author and the verifier). See `HANDOFF.md` 2026-10-20.

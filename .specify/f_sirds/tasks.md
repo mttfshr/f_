@@ -41,3 +41,5 @@ are per directory: `f_sirds/T001`.
   doc's own "Run:" instruction (`python3 .specify/f_sirds/build_sirds.py`)
   would fail outright. Likely predates the `src/` vs `.specify/` layout
   split; fix the paths.
+
+- [x] **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/sirds/{sirds_mirror,test_sirds}.py`, 10/10 offline. Checks: a per-stage scalar float64 walk over stored stage textures, the stage-0 tile by index arithmetic, the flat tiled pattern at zero or unconnected depth, bypass, strip 0 never displaced. The mirror does not wrap shift_x (review removed an unfaithful mod). Tier-2 (probe P2, run 2026-10-20): on the codebox bench `sample()` WRAPS for uv below 0 and above 1, which contradicts SKILL.md's clamp default (a 2026-06-21 scratch patch). Unresolved which governs the shipped module (the bench wraps code in its own genjit); the mirror clamps. See `HANDOFF.md` 2026-10-20.

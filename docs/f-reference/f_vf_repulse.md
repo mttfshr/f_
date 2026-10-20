@@ -57,8 +57,9 @@ Branching is a per-pixel `if/else` on `floor(mode)` — only the active mode's m
 ## Algorithm
 
 ```
+z = norm * (1 - 2*reach) + reach     // remap into [reach, 1-reach] so ring samples never go out of bounds
 for i in 0..15 (16 evenly-spaced unit directions):
-    luma_i = rec601_luma(sample(source, uv + dir_i * reach))
+    luma_i = rec601_luma(sample(source, z + dir_i * reach))
     w_i    = max(luma_i - threshold, 0.0)
 
 // mode 0 (Cancel): fx,fy = Σ(-dir_i * w_i)

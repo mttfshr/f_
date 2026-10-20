@@ -305,3 +305,5 @@ v1 + v2 scope (aberration, distortion, transmission, ghost images,
 halation, spatial modulation) is shipped, drift-clean, and documented.
 Tilt-shift has moved on to `f_focus` (paused). No open architecture
 questions remain for `f_lens` itself. Module is stable.
+
+- [x] T047 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/lens/{lens_mirror,test_lens}.py`, 22/22 offline. Checks: identity at neutral, ramp readback of distortion, aberration, vignette and ghost geometry, the ghost weights 1, 0.6, 0.36, 0.22, a closed form for halation on a uniform texture. Codebox-only constants are labeled (halation radii, 0.7071, surface eps). Doc corrected to follow the codebox (Matt, 2026-10-20): ghost_count rounds (floor(ghost_count + 0.5)) and the weights; the definition hint was updated and the patcher regenerated. See `HANDOFF.md` 2026-10-20.

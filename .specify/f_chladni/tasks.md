@@ -137,3 +137,5 @@ and confirmed in Max.
   README row but no reference doc. Also close out the stale T122
   (sigmund~→note mapping documentation) and mark T123 done (the patch
   exists in package/patchers/).
+
+- [x] T142 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/chladni/{chladni_mirror,test_chladni}.py`, 19/19 offline. Checks: the doc's per-mode formula in float64, rotation symmetry, linear amp and gain, the unit gradient vector, bypass states. Found 2026-10-20 in the float32 NumPy mirror: z_pos came out just past z7 at note 127 and blanked mode 0. Probe P3 (run 2026-10-20) showed the GPU was NOT blank (the old unclamped codebox peaked at out3 0.576), so this was a mirror artifact; the codebox now clamps z_pos with min(., z7) as harmless hardening (mirror and test follow, patcher regenerated), and on the GPU mode 0 equals the pure mode-7 pattern at note 127 (6e-8). Documented caveat: view_mode = 1 only changes mode 1's own total. See `HANDOFF.md` 2026-10-20.

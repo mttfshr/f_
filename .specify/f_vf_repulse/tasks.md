@@ -39,3 +39,5 @@ gaining real tasks. Full findings in `.specify/maintenance/status.json`.
   simple. Lower priority than `f_sirds`'s finding, but still an unmeasured
   cost on a module that's one of the more sample-heavy single-pass
   generators in the library.
+
+- [x] **Tier-1 NumPy mirror (omp run mirror-build-2, landed 2026-10-20).** `tests/modules/vf_repulse/{vf_repulse_mirror,test_vf_repulse}.py`, 22/22 offline. Checks: ring geometry and the four modes in float64, the reach remap, bypass mixing to a neutral vecfield. Doc corrected to follow the codebox (Matt, 2026-10-20): it said the source texture passes through on bypass (algorithm block and Notes), and the algorithm block now includes the norm remap into [reach, 1-reach]. See `HANDOFF.md` 2026-10-20.

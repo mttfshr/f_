@@ -15,6 +15,7 @@ Ids start at T001._
   unmeasured and untested on GPU; a NumPy mirror can verify the
   2·n_mirrors-gon output and convergence at n_mirrors=18 (closed-form
   fold math, directly mirrorable) — fold into this task or T002.
-- [ ] T002: Tier-1 NumPy mirror test for the fold (see T001): verify
+- [x] T002: Tier-1 NumPy mirror test for the fold (see T001): verify
   output polygon vertex count and convergence behavior against the
   codebox math.
+  **Done: tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/ngon/{ngon_mirror,test_ngon}.py`, 10/10 offline. Checks: reflection isometry (radius preserved), the folded angle against the closed form (phi mod 2*theta), the full-turn identity, output range. The neutral setting is not a passthrough (the fold symmetrizes the frame). Grounded in `ideas/f_ngon.md` (the module has no reference doc). See `HANDOFF.md` 2026-10-20.

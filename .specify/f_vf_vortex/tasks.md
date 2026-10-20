@@ -131,3 +131,5 @@ one actionable item (.specify/maintenance/SKILL.md's stable/ bar)._
   test (verify convergence/curl/position params against the codebox at
   a few param points). Generators are otherwise covered only by the
   live contract suite.
+
+- [x] T038 **Tier-1 NumPy mirror (omp run mirror-build-1, landed 2026-10-19).** `tests/modules/vf_vortex/{vf_vortex_mirror,test_vf_vortex}.py`, 16/16 offline. Checks: the doc's topology table, the doc's falloff law exp(-r * falloff) (a planted Gaussian in a snapshot copy was caught as a codebox-versus-doc disagreement), encoding, fixed point, modulation, bypass. The whole-frame and defaults checks re-derive the codebox (labeled). See `HANDOFF.md` 2026-10-19.

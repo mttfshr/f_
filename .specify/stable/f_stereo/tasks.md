@@ -59,3 +59,5 @@ _Last updated: 2026-05-26_
   ortho↔stereo). ideas/f_tensorfield.md:320 flags this as never run.
   Filed in place per the stable/ rule above (single investigation
   task; move the folder if it grows).
+
+- [x] T025 **Tier-1 NumPy mirror (omp run mirror-build-2, landed 2026-10-20).** `tests/modules/stereo/{stereo_mirror,test_stereo}.py`, 14/14 offline. Checks: projection closed forms (Tissot), the asin domain exits, bypass. Tier-2 (probe P1, run 2026-10-20, `tests/records/bench_mirror_findings_probes.py`): on an odd texture the exact-centre texel is finite on the GPU, RGBA (0.985, 0.985, 0, 1), where the mirror gives (0.5, 0.985, 0, 1): not black, but an edge-column value (consistent with a NaN uv sampling an edge texel; atan2(0,0) itself was not probed). The mirror folds atan2(0,0) to 0, so it disagrees at that one texel (odd sizes only). Away from it the worst GPU-vs-mirror difference is 0.0151. See `HANDOFF.md` 2026-10-20.
