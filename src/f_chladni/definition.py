@@ -105,8 +105,8 @@ Param bypass_gate(0.0);
 z0 = 2.4048; z1 = 3.8317; z2 = 5.1356; z3 = 6.3802;
 z4 = 7.5883; z5 = 8.7715; z6 = 9.9361; z7 = 11.0864;
 
-// --- Map note 0-127 to Bessel zero span (clamped to z7: float32 rounding at note 127
-// would otherwise put z_pos just past z7, outside every mode-A window) ---
+// --- Map note 0-127 to Bessel zero span (clamped to z7 as hardening, so rounding at
+// note 127 can never push z_pos past the last Bessel zero) ---
 z_pos = min(z0 + (note / 127.0) * (z7 - z0), z7);
 
 // --- Coordinate system (circular / strip blend) ---

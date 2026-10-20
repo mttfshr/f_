@@ -3,7 +3,7 @@
 // Receives 0 (front panel) or 1 (back panel).
 // Scripts presentation visibility via thispatcher script sendbox.
 
-var FRONT_OBJS = ["aberration", "lbl_aberration", "distortion", "lbl_distortion", "transmission", "lbl_transmission", "tilt", "lbl_tilt", "tilt_axis", "lbl_tilt_axis", "tilt_pos", "lbl_tilt_pos", "slope", "lbl_slope", "mode", "lbl_mode", "ghost", "lbl_ghost", "ghost_count", "lbl_ghost_count", "ghost_spacing", "lbl_ghost_spacing", "halation", "lbl_halation", "halation_threshold", "lbl_halation_threshold"];
+var FRONT_OBJS = ["aberration", "lbl_aberration", "distortion", "lbl_distortion", "transmission", "lbl_transmission", "ghost", "lbl_ghost", "ghost_count", "lbl_ghost_count", "ghost_spacing", "lbl_ghost_spacing", "halation", "lbl_halation", "halation_threshold", "lbl_halation_threshold"];
 
 var BACK_OBJS = ["aberration_mod", "lbl_aberration_mod", "distortion_mod", "lbl_distortion_mod", "transmission_mod", "lbl_transmission_mod", "surface_mod", "lbl_surface_mod"];
 

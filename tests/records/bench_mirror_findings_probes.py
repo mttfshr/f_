@@ -14,6 +14,10 @@ and in HANDOFF. Kept as a record of bench-verified facts, not as a regression ga
                      blank mode 0 on the GPU, or only in float32 NumPy?
   P4 luma gray       a gray texel (r = g = b) gives hue 1/3 in the mirror (green, not
                      colorsys' hue 0). Does the GPU agree, and what does it render?
+  P5 atan2(0, 0)     what does the GPU return for atan2(0, 0) (and for a zero y with a tiny x)?
+                     (P1 showed the stereo pole texel is finite but not the mirror's value.)
+  P6 exact seam      sample() at exactly u = 1.0 and u = 0.0, as a literal and as a runtime
+                     value: edge texel (clamp) or the 50/50 seam blend (wrap)? (Follow-up to P2.)
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh tests/records/bench_mirror_findings_probes.py
@@ -161,6 +165,54 @@ def test_p4_luma_gray_texel_hue():
     e_green = float(np.abs(np.array(px[:3]) - np.array([0.24, 0.6, 0.24])).max())
     e_red = float(np.abs(np.array(px[:3]) - np.array([0.6, 0.24, 0.24])).max())
     note("verdict", "GREEN (hue 1/3, as the mirror)" if e_green < 1e-3 else "RED (hue 0, colorsys)" if e_red < 1e-3 else "OTHER (read the numbers)")
+
+
+# ------------------------------------------------------------------ P5: atan2(0, 0)
+
+def test_p5_atan2_zero_zero():
+    """An odd texture puts a texel at norm = 0.5 exactly, so dx = dy = 0 there at run time (not folded at
+    compile time). The angle is encoded as a / (2 pi) + 0.5; report the decoded value at the centre texel
+    and at its horizontal neighbours (dy = 0, dx = -/+ 1/66, where atan2 is 0 or pi)."""
+    n = 33
+    code = ("dx = norm.x - 0.5;\n"
+            "dy = norm.y - 0.5;\n"
+            "a = atan2(dy, dx);\n"
+            "out1 = vec(a * 0.15915494 + 0.5, 0.0, 0.0, 1.0);\n")
+    out, r = bc.run_pass(code, [np.zeros((n, n, 4), F32)])
+    check("status ok", _status(r), 0)
+    c = n // 2
+    two_pi = 2.0 * np.pi
+    for label, (y, x) in (("centre (dx = 0, dy = 0)", (c, c)), ("left neighbour (dx < 0, dy = 0)", (c, c - 1)),
+                          ("right neighbour (dx > 0, dy = 0)", (c, c + 1))):
+        v = float(out[y, x, 0])
+        note(f"{label}: raw encoded value", v)
+        if np.isfinite(v):
+            note(f"{label}: decoded angle (radians)", (v - 0.5) * two_pi)
+        else:
+            note(f"{label}: NON-FINITE (NaN or Inf)", True)
+
+
+# ------------------------------------------------------------------ P6: sample() exactly at the seam
+
+def test_p6_sample_at_exact_seam():
+    """x-ramp, 64 wide. u = 1.0 exactly: clamp gives the last texel centre (1 - 0.5/W = 0.9922), wrap gives
+    the blend of the last and first texels (0.5). u = 0.0 exactly: clamp gives 0.5/W = 0.0078, wrap 0.5.
+    Run with a literal (the SKILL warns about stored variables) and with a run-time value."""
+    h, w = 8, 64
+    src = _ramp(h, w)
+    cases = {
+        "u = 1.0 literal": "out1 = sample(in1, vec(1.0, norm.y, 0));\n",
+        "u = 0.0 literal": "out1 = sample(in1, vec(0.0, norm.y, 0));\n",
+        "u = 1.0 run-time (norm.x * 0 + 1)": "out1 = sample(in1, vec(norm.x * 0.0 + 1.0, norm.y, 0));\n",
+        "u = 0.0 run-time (norm.x * 0)": "out1 = sample(in1, vec(norm.x * 0.0, norm.y, 0));\n",
+    }
+    for label, code in cases.items():
+        out, r = bc.run_pass(code, [src])
+        check(f"status ok ({label})", _status(r), 0)
+        v = float(out[0, w // 2, 0])
+        edge = 1.0 - 0.5 / w if "1.0" in label else 0.5 / w
+        kind = "CLAMP (edge texel)" if abs(v - edge) < 1e-3 else "WRAP (seam blend)" if abs(v - 0.5) < 1e-3 else "OTHER (read the value)"
+        note(f"{label}: value {v:.5f}; clamp would be {edge:.5f}, wrap 0.50000", kind)
 
 
 if __name__ == "__main__":
