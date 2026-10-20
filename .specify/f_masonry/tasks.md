@@ -62,11 +62,15 @@ New findings only:
   looks like an oversight rather than a deliberate exclusion. No
   dedicated cost measurement exists either. Worth both: a baseline number
   and folding into that same open GPU-cost question.
-- [ ] MAINT3 **Bench decision gate — tier 1 never decided.** Predates
+- [x] MAINT3 **Bench decision gate — tier 1 never decided.** Predates
   Verification Tiers (2026-09-22); no Phase 0 record either way. Unlike
   `f_vf_advect`, there's no obvious closed-form check (it's a visual/
   judgment case, closer to `f_grain`) — likely a legitimate tier-1 skip,
   but record that decision rather than leaving it implicit.
+  **Decided 2026-10-19 (Matt): tier 1 skipped.** Visual/judgment pattern
+  generator with no closed-form check; the contract bench covers wiring and
+  bypass, tier 3 judges the look. (Constitution rule for pre-convention
+  modules, "Verification Tiers".)
 
 ---
 

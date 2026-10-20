@@ -174,12 +174,15 @@ everything else audited so far — bypass fix (T048-T050 above) is
 confirmed and the reference doc already documents it accurately, unlike
 `f_masonry`/`f_vf_advect`'s stale docs. Two small items:
 
-- [ ] T051 **Bench: record the tier-1 skip decision explicitly.** No
+- [x] T051 **Bench: record the tier-1 skip decision explicitly.** No
   NumPy mirror exists, but the codebox is linear remap + clamp + single
   sample — about as textbook-trivial as a codebox gets, and the
   constitution explicitly permits skipping tiers 1-2 for trivial cases
   "but say so." Nobody has said so in writing; add the one-line decision
   to `plan.md` rather than leaving it implicit.
+  **Decided 2026-10-19 (Matt): tier 1 skipped.** Linear remap, clamp and one
+  sample; a mirror would restate the codebox. Recorded here (the task
+  record), not in `plan.md`.
 - [ ] T052 **Convention decision gate: does `strength` need the gain/mix
   split?** Same open question filed for `f_grain`'s `amount`
   (`.specify/f_grain/tasks.md` T003) — `strength` here is a single

@@ -13,3 +13,5 @@ Ids start at T001._
   bypass mixes to the neutral vecfield (correct per family convention)
   — it just has never been asserted anywhere. First live run
   validates.
+
+- [x] T002 (decided 2026-10-19, Matt): tier 1 skipped. Angle-to-unit-vector trig, a few lines, no iteration. (Constitution rule for pre-convention modules, "Verification Tiers".)

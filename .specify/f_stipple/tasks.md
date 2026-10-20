@@ -162,3 +162,5 @@ stable/'s nothing-outstanding bar._
   dither/displacement toggle that was removed (out3 displacement is
   always-on per the definition header comment), and it predates both
   the 2026-10-05 definition rewrite and the 2026-10-06 bypass rollout.
+
+- [x] **TIER1 — tier-1 decision. DONE 2026-10-19 (Matt): tier 1 skipped.** Sin-hash plus smoothstep: a NumPy mirror would restate the same code, and only bypass identity and range/symmetry invariants exist to check. (Constitution rule for pre-convention modules, "Verification Tiers".)

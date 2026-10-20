@@ -109,3 +109,5 @@ IDs are per directory: `f_grain/T001`.
   elements -- same panel/dial/label tweaks as any other override capture,
   nothing codebox-side) so a rebuild reproduces it; `drift.py -v f_grain`
   back to reproducing exactly. T003 fully closed.
+
+- [x] **T004 — tier-1 decision. DONE 2026-10-19 (Matt): tier 1 skipped.** Stochastic hash with no independent ground truth; the contract bench and the T001 cost spike cover what numbers can check, tier 3 judges the look. (Constitution rule for pre-convention modules, "Verification Tiers".)

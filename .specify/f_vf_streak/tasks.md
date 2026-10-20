@@ -236,3 +236,5 @@ docs/
   both modules renamed to gain 2026-07-17). The presets silently
   no-op on the shipped modules. Check all example json/maxpat files
   for the same class.
+
+- [ ] T056 **Tier-1 NumPy mirror (decided 2026-10-19, Matt: mirror by choice).** Fixed 8-step unrolled stateless march; the checks are invariants (zero field returns the source, weights normalize, bypass identity), so the constitution rule would allow a skip, but the mirror is cheap and Matt wants it. Build `tests/modules/vf_streak/` per the `f_vf_advect` mirror pattern.

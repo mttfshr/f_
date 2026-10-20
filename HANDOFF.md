@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-19 (night): tier-1 rule for pre-convention modules decided; f_vf_advect mirror built; one commit
+
+- **Source:** omp run `gate-prep-1` (`f_omp_runs/gate-prep-1/`, REPORT.md and two memos): 33 modules x tier-1 and blend records, 66 records verified, 7 of 7 tier-1 controls hit. Three non-control tier-1 records spot-checked by hand (`f_vf_glow`, `f_sirds`, `f_vf_potential`): correct.
+- **Decided (Matt):** tier 1 is required for a pre-convention module when a closed-form check exists and the mirror costs at most moderate; otherwise a skip is recorded with its reason. Written into `.specify/constitution.md` ("Verification Tiers"). Skips recorded: `f_masonry` (MAINT3 ticked), `f_vf_warp` (T051 ticked), `f_vf_split` (T001 ticked), `f_grain` (T004), `f_stipple`, `f_tone_curve` (T002), `f_vf_flow` (T002), `f_texrouter` (new `.specify/f_texrouter/tasks.md`). `f_vf_streak` T056: mirror by choice, not built yet. The other add_mirror candidates in the report are queued by value, not scheduled.
+- **Built:** `tests/modules/vf_advect/{vf_advect_mirror,test_vf_advect}.py`, 10/10 (`tests/run.sh tests/modules/vf_advect/test_vf_advect.py`, run once); `f_vf_advect` T147 ticked. Advect stage only, pass stage modeled as identity. **Not run:** the full offline suite, any bench. **Open from it:** a tier-2 bench for advect, and whether alpha really settles at `injection / (1 - decay)` (about 0.667 at the defaults) on the GPU.
+- **Still open from the run (Matt's call):** `f_vf_warp` T052 (gain/mix split; the `f_grain` precedent transfers); whether processors with no dry/wet control at all (`f_droste`, `f_mobius`, `f_ngon`, the color processors, `f_lens`) should get `mix_pct`; `f_chladni` has `gain` and `amp` but no `mix_pct`, although plan.md lists it in the six-module rollout.
+- **Not part of this commit:** the uncommitted `.specify/plan.md`, `README.md`, `docs/f-reference/f_vf_seeds.md`, `package/extras/f_Launch.maxpat`, `src/f_vf_seeds/definition.py` and `src/f_vf_warp/definition.py` edits from before this session.
+
 ## 2026-10-18 (night): omp fan-out work wrapped (param-audit-1 applied and re-checked); skill updated; docs only
 
 - **param-audit-1 closed.** 54 apply-ready fixes were applied (`26e5cd8`), the 22 table differences were reconciled with `definition.py` (`827e199`: f_stereo `proj` default 0.0 and range -1..1, f_vf_fieldmap `thresh` range -2..2, f_lens tilt-shift rows removed), and the 16 needs-decision items were re-checked against current code (`29369af`): 15 fixed in `docs/f-reference/`, `f_lens-4` already covered. `f_vf_fieldmap` T024 ticked. `tests/check.sh quick` passed.

@@ -115,6 +115,15 @@ aesthetic changes and UI work — but say so.
 **Which tiers apply is a decision gate** — the first task of Phase 0 in a
 module's `tasks.md`, recorded with a reason for any tier skipped.
 
+**Modules that predate this convention (decided 2026-10-19).** Tier 1 is
+required when the codebox has a closed-form check or invariant a NumPy
+mirror can test against and the mirror costs no more than moderate effort.
+Otherwise the module records a tier-1 skip, with its reason, in its
+`tasks.md`; triviality, judgment-only output, and "a mirror would only
+restate the codebox" are valid reasons. Mirrors for existing modules are
+queued by value, not required before other work. A module may be mirrored
+by choice when the mirror is cheap (`f_vf_streak` was, 2026-10-19).
+
 **Debugging:** when the question is "math or plumbing?", bench the codebox
 in isolation before touching the patch.
 

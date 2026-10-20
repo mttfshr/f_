@@ -5,7 +5,8 @@ folder (graduated straight to docs/). One triviality-skip note closes
 the bench axis per the constitution's "skip, but say so" rule; one
 one-line doc fix. Ids start at T001._
 
-- [ ] T001: Record the written triviality-skip decision for tier-1/tier-2
+- [x] T001 (decided 2026-10-19, Matt: tiers 1-2 skipped as trivial; the stale
+  doc line was already fixed): Record the written triviality-skip decision for tier-1/tier-2
   coverage (the codebox is two samples + two mixes — the cheapest
   non-identity shader in the library; BYPASS_EXPECT {2: IN1} is the only
   check it needs), and fix the one stale line in

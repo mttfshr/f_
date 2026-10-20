@@ -15,3 +15,5 @@ real". Ids start at T001._
   specs (Matt: "wants this pursued for real") is the actionable
   follow-up; this task is the doc-pointer fix, the LUT work stays
   tracked in the ideas file until picked up.
+
+- [x] T002 (decided 2026-10-19, Matt): tier 1 skipped. A few dozen lines of smoothstep band-weighted lift; only identity at neutral and uniform-lift symmetry exist to check. (Constitution rule for pre-convention modules, "Verification Tiers".)

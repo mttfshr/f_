@@ -48,12 +48,23 @@ findings (perf/bench/convention) recorded in `.specify/maintenance/status.json`.
   multi-stage modules keep running") so this isn't an open bug the way the
   six heavy Param-bypass modules are — but there's still no recorded
   frame-cost number for the two-pix chain at HD/4K. Add one.
-- [ ] T147 **Bench decision gate — does tier 1 apply here?** Module
+- [x] T147 **Bench decision gate — does tier 1 apply here?** Module
   predates Verification Tiers (adopted 2026-09-22); no Phase 0 decision was
   ever recorded for it. Unlike `f_grain`, the math has a clean closed-form
   check already written down in the reference doc (equilibrium amplitude
   ≈ `injection / (1 - decay)`), so a NumPy mirror looks cheap and
   worthwhile here — decide whether to add one or record why not.
+  **Decided 2026-10-19 (Matt): tier 1 applies; mirror built the same day.**
+  `tests/modules/vf_advect/{vf_advect_mirror,test_vf_advect}.py`, 10/10 offline
+  (`tests/run.sh tests/modules/vf_advect/test_vf_advect.py`). Checks: equilibrium
+  `s * injection / (1 - decay)` per channel (clamped), pure decay as a power, the
+  gain / mix fixed point, backward displacement of a ramp, whole-pixel shifts by
+  index arithmetic, unconnected vecfield = zero flow, bypass outlets and loop,
+  excitable saturation, outlet 3 on luma ramps; three mutations caught. Scope: the
+  advect stage only, the pass stage (`separate` / `mode`) modeled as identity and
+  unmirrored. Not yet done: a tier-2 bench (GPU run vs this mirror), and checking
+  on the GPU whether alpha really settles at `injection / (1 - decay)` (about 0.667
+  at the defaults) rather than 1, which is what the codebox's vec4 arithmetic does.
 
 ## Expected Artifacts
 
