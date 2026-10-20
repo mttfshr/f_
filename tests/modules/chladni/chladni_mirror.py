@@ -15,8 +15,10 @@ Faithfulness notes (all read off the shipped codebox):
   - Mode A blends adjacent Bessel-zero windows linearly; the seven step windows
     overlap at an exact Bessel zero, so a z_pos exactly equal to a zero is
     double-counted (both neighbouring windows select the same term).
-  - note=127 maps z_pos past z7 in float32 (rounding), where no step window
-    contains it, so mode 0's total vanishes identically there.
+  - note=127 maps z_pos to exactly z7: the codebox clamps with min(., z7). Until
+    2026-10-20 float32 rounding put z_pos just past z7 (11.086401), outside every
+    step window, and mode 0's total vanished identically at note 127 (in this float32
+    NumPy mirror; the old codebox was not blank on the GPU, probe P3, so the clamp is hardening).
   - out2 is a central difference (eps=0.004 in uv) of the unscaled modal total,
     unit-normalized and encoded 0.5 +- 0.5; the gradient floor is 1e-4.
   - out3 = clamp(abs(total)*gain, 0, 1); out1 = 1 - clamp(sqrt(abs(total))*
@@ -134,7 +136,7 @@ def chladni(h=64, w=64, note=60.0, amp=1.0, dishradius=1.0, reflectamt=0.0,
     if bug == "note_span_128":
         z_pos = (Z0 + (F32(note) / F32(128.0)) * (Z7 - Z0)).astype(F32)
     else:
-        z_pos = (Z0 + (F32(note) / F32(127.0)) * (Z7 - Z0)).astype(F32)
+        z_pos = np.minimum(Z0 + (F32(note) / F32(127.0)) * (Z7 - Z0), Z7).astype(F32)
 
     r_circ = (np.sqrt(dx * dx + dy * dy) * F32(2.0) * F32(dishradius)).astype(F32)
     th_circ = np.arctan2(dy, dx).astype(F32)

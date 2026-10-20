@@ -1987,7 +1987,7 @@
 					"id": "obj-44",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Number of ghost taps (1-4), floor()'d in codebox",
+					"hint": "Number of ghost taps (1-4), rounded to the nearest integer in codebox",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [

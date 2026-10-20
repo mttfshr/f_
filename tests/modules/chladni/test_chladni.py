@@ -67,12 +67,19 @@ def test_bypass_states_are_exact():
     check("bypass: out1/out3 exactly black, out2 exactly (0.5,0.5,0,1)", worst, 0.0)
 
 
-def test_mode0_note_127_gives_zero_total():
-    """In float32 note=127 maps z_pos past z7 (rounding), so no step window of
-    mode A contains it and the total vanishes identically; out3 is then exactly 0."""
-    o1, o2, o3 = chladni(N, N, note=127.0, mode=0.0)
-    assert np.isfinite(o3).all()
-    check("note 127, mode 0: out3 exactly 0 (empty window)", float(np.abs(o3[..., :3]).max()), 0.0)
+def test_mode0_note_127_lands_on_the_top_zero():
+    """Doc: the note maps linearly across the Bessel zero span, so note 127 lands on z7 and mode 0 must
+    show the pure mode-7 pattern there. (Until 2026-10-20 float32 rounding put z_pos just past z7, which
+    emptied every mode-A window and blanked mode 0 at note 127 in this NumPy mirror; the GPU was not blank, probe P3, so the codebox clamp is hardening.)
+    Independent reference: mode 1 with the smallest spread weights only the nearest zero (mode 7's
+    Gaussian weight is 1, mode 6's underflows to 0), so it IS the pure mode-7 pattern; mode 0 must equal
+    it, and must not be blank."""
+    a1, a2, a3 = chladni(N, N, note=127.0, mode=0.0)
+    b1, b2, b3 = chladni(N, N, note=127.0, mode=1.0, spread=0.1)
+    err = max(_finite_err(a3, b3.astype(np.float64)), _finite_err(a2, b2.astype(np.float64)))
+    check("note 127: mode 0 equals the pure mode-7 pattern (mode 1, narrowest spread)", err, 2e-5)
+    check("note 127, mode 0 is not blank (out3 reaches at least 0.05)",
+          max(0.0, 0.05 - float(a3[..., :3].max())), 0.0)
 
 
 def test_out3_saturates_at_the_plate_pole():

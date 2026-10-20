@@ -37,9 +37,10 @@ det_safe = max(det, 0.0001);
 // constrained, larger-eigenvalue, "across the edge") direction theta.
 // The ambiguous axis (smaller eigenvalue, "along the edge" -- what
 // Stage E actually needs to propagate along) is perpendicular, i.e.
-// theta+halfpi -- but a 90-degree rotation is a 180-degree rotation in
-// this doubled-angle space, so it's the SAME (cos2t,sin2t) pair; Stage
-// E adds the perpendicular offset itself when reconstructing a
+// theta+halfpi. A 90-degree rotation is a 180-degree rotation in this
+// doubled-angle space, which NEGATES the pair: the ambiguous axis's pair is
+// -(cos2t,sin2t), and what is stored below is the DOMINANT direction's pair.
+// Stage E adds the perpendicular offset itself when reconstructing a
 // direction vector, no extra math needed here. Stored as double-angle
 // rather than a plain angle specifically to avoid a wraparound
 // discontinuity: an axis (undirected line, not a vector) repeats every

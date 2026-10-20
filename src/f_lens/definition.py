@@ -129,7 +129,7 @@ patcher = {
         {"name": "transmission_mod","type": "float", "min": 0.0, "max": 1.0,  "default": 0.0, "label": "Trans Mod",  "hint": "Transmission modulation depth (inlet 4 texture)"},
         {"name": "surface_mod",     "type": "float", "min": 0.0, "max": 5.0,  "default": 0.0, "label": "Surf Mod",   "hint": "Surface emboss displacement depth (inlet 5 gradient texture)"},
         {"name": "ghost",           "type": "float", "min": -1.0, "max": 1.0, "default": 0.0, "label": "Ghost",      "hint": "Inter-reflection ghost intensity -- additive, color-coupled to aberration. Negative subtracts (dark ghosts)."},
-        {"name": "ghost_count",     "type": "float", "min": 1.0, "max": 4.0,  "default": 3.0, "label": "Ghost Ct",   "hint": "Number of ghost taps (1-4), floor()'d in codebox", "widget": "numbox"},
+        {"name": "ghost_count",     "type": "float", "min": 1.0, "max": 4.0,  "default": 3.0, "label": "Ghost Ct",   "hint": "Number of ghost taps (1-4), rounded to the nearest integer in codebox", "widget": "numbox"},
         {"name": "ghost_spacing",   "type": "float", "min": -1.0, "max": 1.0, "default": 0.3, "label": "Ghost Sp",   "hint": "Offset scale between ghost taps. Negative mirrors ghosts inward through center.",
          "range_tiers": [(-1.0, 1.0), (-5.0, 5.0)]},
         {"name": "halation",           "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Halation",  "hint": "Halation glow intensity -- additive, warm-tinted, luma-gated. 0 = no glow.",
