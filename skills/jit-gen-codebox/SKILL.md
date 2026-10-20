@@ -149,6 +149,7 @@ diffing GPU output must wrap-compare at that line.
 
 ### Sampling
 `sample(inN, coord)` — bilinear sample inN at normalized coord vec2; **default boundmode is CLAMP** (empirically verified 2026-06-21 with literal OOB coordinate — sampling at u=1.3 produces solid stripe of u=1.0 edge color)
+**Update (2026-10-20):** probes P2 and P6 and a scratch patch (`scratch/boundmode_probe.maxpat`, pix-to-pix path) show a bare `sample()` WRAPS the coordinate modulo 1 (1.3 reads 0.3, -0.2 reads 0.8, exactly 1.0 or 0.0 reads the first texel, no seam blend) with edge-clamped taps, when its input is another pix's output texture, which is how modules chain. The CLAMP observation above was probably made with a matrix-fed texture (untested). In chains, treat out-of-range reads as wrapping, and clamp or `fract()` explicitly.
 `nearest(inN, coord)` — nearest-neighbor sample
 
 **`uv.x` / `uv.y` silent failure in ring offset code (empirically verified 2026-06-21):**
@@ -951,6 +952,7 @@ Probes: `tests/modules/tf_glyph/bench_tf_glyph.py`, `tests/modules/tf_aniso_blur
 `.specify/f_tf_glyph/plan.md` ADR-2 amendment and `docs/f-reference/f_tensor_type.md` rules 5–6.
 
 - **RUNTIME `atan2(0, 0)` returns NaN on this GPU (compile-time literals fold to 0).**
+  *Counter-observation 2026-10-20 (probe P5, codebox bench):* with zeros made by arithmetic on `norm` (dx = dy = +0 at an odd texture's centre) `atan2` read +pi, finite (also pi for dx < 0, dy = 0, and 0 for dx > 0). So NaN is not universal: it was seen for zeros sampled from a texture. GLSL leaves `atan2(0, 0)` undefined; treat it as undefined, never as a specific value.
   `theta = 0.5 * atan2(0.0, 0.0)` in a probe read 0/1 exactly (constant-folded, host-side);
   the same expression on runtime-zero values sampled from a texture read NaN — and a
   constant-isotropic tensor region (Jxx = Jyy, Jxy = 0: any flat, edge-free stretch of

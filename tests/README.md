@@ -57,7 +57,8 @@ Measured examples, from the bench runs recorded in `HANDOFF.md`:
   GPU snaps and the mirror clips (about 1e-3 in `f_caustic` with edge mode off).
 
 **Where the GPU disagrees with the textbook (found on the bench, so now rules).** Runtime
-`atan2(0, 0)` is NaN, though constants fold to 0; `sample()` falls back to nearest when its
+`atan2(0, 0)` can be NaN (zeros sampled from a texture; but zeros made by arithmetic on `norm` gave +pi on the bench,
+probe P5, 2026-10-20: treat it as undefined), though constants fold to 0; `sample()` falls back to nearest when its
 coordinate is data-dependent and jumps; `phi` is a predefined constant and assigning it fails the
 whole compile. These could not have been found by the mirror alone. They are the reason the bench
 exists.
@@ -73,6 +74,15 @@ exists.
 - The bench runs shaders in isolation at test resolutions, so it cannot see compile limits at
   Vsynth scale, fps under a real chain, GPU driver differences or `@adapt`/`@dim` behavior. The
   bench also keeps Params between jobs, so every test pins the Params it depends on.
+- **Out-of-range `sample()`: settled for pix-to-pix chains (2026-10-20).** In a `jit.gl.pix` fed by another pix's output
+  texture (how Vsynth modules chain, and how the bench feeds its probes, through an identity pix), a bare `sample()` WRAPS
+  the coordinate modulo 1 and then interpolates with edge-clamped taps: uv = 1.3 reads 0.3, uv = -0.2 reads 0.8, and
+  exactly u = 1.0 or u = 0.0 reads the first texel with no seam blend (probes P2 and P6, and the scratch patch's pix-to-pix
+  path, `scratch/boundmode_probe.maxpat`). `skills/jit-gen-codebox/SKILL.md` line 151 says CLAMP (a 2026-06-21 test, probably
+  with a matrix-fed texture; the scratch patch's matrix-fed path did not populate, so that is untested). `gpu_sim.sample`
+  still clamps by default, and its `wrap=True` wraps the taps as well (periodic bilinear), which is neither. Until
+  `gpu_sim` models this: a module that reads outside [0, 1] should clamp or `fract()` explicitly in its codebox, and a
+  mirror of one that does not must model the wrap itself.
 - It does not replace tier 3. A module can match its mirror to 1e-6 and still look wrong.
 
 For how these map to the repo's verification tiers (math, execution, judgment), see the root

@@ -42,7 +42,7 @@ Ground truth is independent of the mirror:
     1e-3 difference step gives ~5e-4 jitter per Jacobian entry.
 
 Scope and limits: NumPy-side only. GPU-specific behaviour (the atan2 +pi convention at the
-branch cut, runtime atan2(0,0) = NaN, 8-bit bilinear weights, char output) is tier-2 bench
+branch cut, runtime atan2(0,0) undefined (+pi in probe P5), 8-bit bilinear weights, char output) is tier-2 bench
 territory and deliberately not checked here. The proj=-2 dial extreme can push rz outside
 asin's domain (see test_proj_minus2_leaves_asin_domain).
 
