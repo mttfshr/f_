@@ -37,7 +37,7 @@ FILES = {"seed": "codebox_seed.gen", "pass": "codebox_pass.gen", "fx": "codebox_
 BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang inlet
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
 PINNED = {"seed": {"salt": 0.0}, "pass": {"reseed": 0.0, "amp": 1.0}, "spec": {"dt": 0.05, "L": L},
-          "nl": {"dt": 0.05, "L": L}, "enc": {"bypass_gate": 0.0}}
+          "nl": {"dt": 0.05, "L": L}, "enc": {"bypass_gate": 0.0, "sharp": 0.0}}
 
 
 def code(stage):
@@ -245,6 +245,14 @@ def test_enc_matches_mirror():
     got = gpu("enc", [BANG, st], dim=(N, N))
     want = km.encode(st)
     check("enc 256x256 (1:1): max err vs the mirror's encode", mx(got, want), 1e-6)
+    for sh in (0.5, 1.0):
+        gs = gpu("enc", [BANG, st], dim=(N, N), sharp=sh)
+        check(f"enc sharp={sh:g}: max err vs the mirror's encode", mx(gs, km.encode(st, sharp=sh)), 2e-6)
+    s1 = gpu("enc", [BANG, st], dim=(N, N), sharp=1.0)[..., 0]
+    soft = got[..., 0]
+    check("enc sharp=1: pushes values away from the middle (mean |v-0.5| grows)",
+          float(np.abs(s1 - 0.5).mean() <= np.abs(soft - 0.5).mean()), 0.0)
+    check("enc sharp=1: the field stays inside [0, 1]", float(s1.min() < 0 or s1.max() > 1), 0.0)
     for (h, w) in ((90, 120), (60, 100), (300, 400)):
         out = gpu("enc", [BANG, st], dim=(w, h))
         lum = np.clip(0.5 + 0.25 * up_periodic(st[..., 0], h, w), 0.0, 1.0)

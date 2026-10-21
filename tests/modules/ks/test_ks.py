@@ -531,5 +531,23 @@ def _dc_err(bug=None):
     return max(e, nonfinite_count(uh[..., 0]))
 
 
+def test_sharp_is_identity_at_zero_monotone_and_bounded():
+    """The enc stage's `sharp` blend: 0 is exactly the soft map, every setting stays in [0, 1] and keeps
+    the ordering of the field, and 1 pushes values toward the ends."""
+    u = np.linspace(-12.0, 12.0, 2001, dtype=F32)
+    t = np.zeros((1, u.size, 4), F32)
+    t[0, :, 0] = u
+    soft = encode(t)[0, :, 0]
+    check("sharp=0 is exactly the soft map", float(np.abs(encode(t, sharp=0.0)[0, :, 0] - soft).max()), 0.0)
+    for sh in (0.25, 0.5, 1.0):
+        v = encode(t, sharp=sh)[0, :, 0]
+        check(f"sharp={sh:g}: inside [0, 1]", float(v.min() < 0 or v.max() > 1), 0.0)
+        check(f"sharp={sh:g}: never reverses the ordering", float(np.diff(v).min() < -1e-7), 0.0)
+    v1 = encode(t, sharp=1.0)[0, :, 0]
+    check("sharp=1: u = 0 stays mid-grey", abs(float(v1[1000]) - 0.5), 1e-6)
+    check("sharp=1: |u| = 1 is already near the ends (the soft map is at 0.25 / 0.75)",
+          float(not (v1[1000 + 83] > 0.9 and v1[1000 - 83] < 0.1)), 0.0)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

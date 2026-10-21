@@ -77,18 +77,20 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 2,
+					"numoutlets": 4,
 					"outlettype": [
+						"",
+						"",
 						"",
 						""
 					],
 					"patching_rect": [
 						56.5,
 						204.0,
-						151.0,
+						295.0,
 						22.0
 					],
-					"text": "route rate reset"
+					"text": "route rate scale sharp reset"
 				}
 			},
 			{
@@ -1254,7 +1256,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_ks stage 7: upsample the 256x256 state to the render size, map it to a\n// bounded grayscale, and apply the bypass gate. Runs at RENDER resolution.\n// Mirror: tests/modules/ks/ks_mirror.encode() (the mapping); the upsample is a periodic bilinear.\n//\n// Inputs: in1 = `r draw` bang (not referenced here; it triggers every frame and gives this pix\n// the render-context size), in2 = the state (R = u, 256x256, from the nl stage).\n//   - the state is read with a manual periodic 4-tap (exact at any output size, including smaller\n//     than 256 where hardware sample() would snap): consumers get a smooth field (FR-011)\n//   - mapping: v = clamp(0.5 + 0.25 * u, 0, 1), replicated to R,G,B, A = 1. This is the PLACEHOLDER\n//     hard clamp; the final mapping is a tier-3 decision (FR-008, T005)\n//   - non-finite u maps to 0.5 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the solver\n//     keeps running upstream. The Param is never named `bypass` (native pix attribute).\nParam bypass_gate(0);\n\nN = 256;\nfx = norm.x * N - 0.5;\nfy = norm.y * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx), mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nlum = clamp(0.5 + 0.25 * au, 0, 1);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
+									"code": "// codebox_enc.gen -- f_ks stage 7: upsample the 256x256 state to the render size, map it to a\n// bounded grayscale, and apply the bypass gate. Runs at RENDER resolution.\n// Mirror: tests/modules/ks/ks_mirror.encode() (the mapping); the upsample is a periodic bilinear.\n//\n// Inputs: in1 = `r draw` bang (not referenced here; it triggers every frame and gives this pix\n// the render-context size), in2 = the state (R = u, 256x256, from the nl stage).\n//   - the state is read with a manual periodic 4-tap (exact at any output size, including smaller\n//     than 256 where hardware sample() would snap): consumers get a smooth field (FR-011)\n//   - mapping: v = clamp(0.5 + 0.25 * u, 0, 1), replicated to R,G,B, A = 1. This is the PLACEHOLDER\n//     hard clamp; the final mapping is a tier-3 decision (FR-008, T005)\n//   - sharp (0..1) blends that soft map toward a crisp one: smoothstep(0.46, 0.54, soft), a narrow\n//     S-curve at u = 0 that turns the field into hard-edged cells and ridges. sharp = 0 is exactly\n//     the soft map above (so the verified behavior is the default)\n//   - non-finite u maps to 0.5 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the solver\n//     keeps running upstream. The Param is never named `bypass` (native pix attribute).\nParam bypass_gate(0);\nParam sharp(0);\n\nN = 256;\nfx = norm.x * N - 0.5;\nfy = norm.y * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx), mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp(0.5 + 0.25 * au, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1334,7 +1336,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_ks_enc @adapt 1 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_ks_enc @adapt 0 @type float32",
 					"varname": "#0_ks_enc"
 				}
 			},
@@ -1777,6 +1779,233 @@
 			{
 				"box": {
 					"id": "obj-23",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Grain: bigger = finer, more cells across the frame; smaller = bold, coarse cells. The pattern re-forms when it moves",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_ks_spec::scale",
+					"parameter_enable": 1,
+					"patching_rect": [
+						118.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						41.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								50.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "scale",
+							"parameter_mmax": 100.0,
+							"parameter_mmin": 25.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "scale",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "scale"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-24",
+					"maxclass": "attrui",
+					"attr": "L",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						98.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-701",
+					"maxclass": "attrui",
+					"attr": "L",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						98.0,
+						344.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-25",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						107.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Scale",
+					"textjustification": 1,
+					"varname": "lbl_scale"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-26",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells and ridges",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_ks_enc::sharp",
+					"parameter_enable": 1,
+					"patching_rect": [
+						190.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						78.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "sharp",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "sharp",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "sharp"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-27",
+					"maxclass": "attrui",
+					"attr": "sharp",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						170.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-28",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						179.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						66.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Sharp",
+					"textjustification": 1,
+					"varname": "lbl_sharp"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-29",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1804,7 +2033,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-24",
+					"id": "obj-30",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1818,6 +2047,24 @@
 						22.0
 					],
 					"text": "prepend param bypass_gate"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-15",
+					"maxclass": "newobj",
+					"patching_rect": [
+						330.0,
+						942.0,
+						40.0,
+						22.0
+					],
+					"text": "r dim",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
 				}
 			},
 			{
@@ -1837,7 +2084,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						62.0,
+						118.0,
 						46.0,
 						28.0,
 						28.0
@@ -1862,7 +2109,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						51.0,
+						107.0,
 						24.0,
 						50.0,
 						18.0
@@ -2183,11 +2430,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-23",
+						"obj-29",
 						0
 					],
 					"destination": [
-						"obj-24",
+						"obj-30",
 						0
 					]
 				}
@@ -2195,7 +2442,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-24",
+						"obj-30",
 						0
 					],
 					"destination": [
@@ -2423,6 +2670,78 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-4",
+						1
+					],
+					"destination": [
+						"obj-23",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						2
+					],
+					"destination": [
+						"obj-26",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						0
+					],
+					"destination": [
+						"obj-27",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-27",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-20",
 						0
 					],
@@ -2447,8 +2766,44 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-701",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-701",
+						0
+					],
+					"destination": [
+						"obj-58",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-15",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-4",
-						1
+						3
 					],
 					"destination": [
 						"obj-raw-3",
@@ -2653,6 +3008,16 @@
 			"obj-20": [
 				"rate",
 				"rate",
+				0
+			],
+			"obj-23": [
+				"scale",
+				"scale",
+				0
+			],
+			"obj-26": [
+				"sharp",
+				"sharp",
 				0
 			],
 			"parameterbanks": {

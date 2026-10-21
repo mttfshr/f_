@@ -193,13 +193,20 @@ def nonlinear_step(u_lin, dt, dx, bug=None):
     return store_float32(out)
 
 
-def encode(u, bug=None):
+def sharpen(soft, sharp):
+    """The enc stage's crisp blend: mix(soft, smoothstep(0.46, 0.54, soft), sharp), float32."""
+    s = np.clip((soft - F32(0.46)) / F32(0.08), 0.0, 1.0).astype(F32)
+    crisp = s * s * (F32(3.0) - F32(2.0) * s)
+    return (soft * (F32(1.0) - F32(sharp)) + crisp * F32(sharp)).astype(F32)
+
+
+def encode(u, bug=None, sharp=0.0):
     """Stage 7 (display outlet). Bounded placeholder encode, chosen here because the
     final mapping is a Phase 2 tier-3 decision (FR-008): a hard clamp of the
     half-range map R = clamp(0.5 + 0.25*u, 0, 1), replicated to G and B, A = 1. The
     solver state itself never goes through this clamp."""
     e = texture(*u.shape[:2])
-    e[..., 0] = np.clip(F32(0.5) + F32(0.25) * u[..., 0], 0.0, 1.0)
+    e[..., 0] = sharpen(np.clip(F32(0.5) + F32(0.25) * u[..., 0], 0.0, 1.0).astype(F32), sharp)
     e[..., 1] = e[..., 0]
     e[..., 2] = e[..., 0]
     e[..., 3] = F32(1.0)

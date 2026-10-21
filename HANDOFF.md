@@ -1183,3 +1183,8 @@ Both still pure ideation — no code, no tests, nothing built or decided.
 - Deviations from the plan: hash-noise `seed` stage instead of jit.noise; `pass` takes the draw bang as inlet 1 (feedback in2, noise in3; bench_ks updated, 8/8 incl. new seed statistics); no patcher-side min() expr.
 - Checks: drift 0, offline contracts 9/9 (f_ks L/amp in KNOWN_ISSUES), live module contracts green, bench_ks_module 2/2.
 - Open for Matt (tier 3): after reset the field is flat ~1 s then grows (seed energy in the damped band) and the luma map saturates (std 0.435 at frame 600). Also T010 naming, T006 real-patch cost, menu/README/helpfile (T040).
+
+## 2026-10-21 - f_ks: scale, sharp, render-size output
+- New dials: `scale` (= domain size L on spec+nl, 25-100, default 50; bigger = finer grain) and `sharp` (enc: mix of the soft map and smoothstep(0.46, 0.54), 0 = unchanged). `tests/records/spike_ks_ceiling_vs_L.py`: dt 0.0625 survives every L from 25 to 150 (0.075 only up to 100; L = 12.5 is too small to sustain a pattern), so the dial stops at 100. Mirror test + GPU-vs-mirror for sharp (bench_ks 8/8, test_ks 18/18).
+- Render size: enc is now `@adapt 0` with `[r dim]` -> enc inlet 0 (the vs_mixer_3 convention). Before, @adapt 1 followed the input texture. NOT verified live against a real vs_render resize (the bench has no vs_render): Matt to check in Vsynth, incl. a module added after the render window already exists.
+- `L` is no longer a KNOWN_ISSUE (driven by scale); only `amp` remains.

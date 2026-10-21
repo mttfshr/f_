@@ -18,7 +18,11 @@ The `r draw` bang goes to seed, pass and enc (draw_triggers); the feedback and t
 inlets, so the loop advances exactly once per rendered frame.
 
 Controls: `rate` is the time step per frame, its range ends at the measured stability ceiling (0.0625 at
-N = 256; 0.075 diverged), so no setting can blow the solver up.  `reset` (a button, a `reset` message or a
+N = 256; 0.075 diverged), so no setting can blow the solver up.  `scale` is the domain size L (bigger =
+finer grain); 0.0625 held at every L from 25 to 150, and 0.075 held up to L = 100, so the dial stops at
+100 (tests/records/spike_ks_ceiling_vs_L.py; L = 12.5 is too small to sustain a pattern).  `sharp` blends
+the output map from soft to hard-edged (enc stage).  The output size follows the render size (`r dim`
+into enc, @adapt 0: the vs_mixer_3 convention).  `reset` (a button, a `reset` message or a
 message on the control inlet) reseeds the field from fresh noise; it also fires once on load.
 Bypass follows f_chladni: black, alpha 1, and the solver keeps running underneath.
 
@@ -45,6 +49,12 @@ patcher = {
         {"name": "rate", "type": "float", "min": 0.0, "max": 0.0625, "default": 0.05,
          "label": "Rate", "pix_attr": "dt", "pix_target": ["spec", "nl"],
          "hint": "Time step per frame: how fast the pattern evolves. The top of the range is the stability limit"},
+        {"name": "scale", "type": "float", "min": 25.0, "max": 100.0, "default": 50.0,
+         "label": "Scale", "pix_attr": "L", "pix_target": ["spec", "nl"],
+         "hint": "Grain: bigger = finer, more cells across the frame; smaller = bold, coarse cells. The pattern re-forms when it moves"},
+        {"name": "sharp", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0,
+         "label": "Sharp", "pix_target": "enc",
+         "hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells and ridges"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -79,7 +89,7 @@ patcher = {
         {"id": "nl",   "name": "#0_ks_nl",   "gen": "codebox_nl.gen",    "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "enc",  "name": "#0_ks_enc",  "gen": "codebox_enc.gen",   "n_inlets": 2, "n_outlets": 1,
-         "pix_attrs": "@adapt 1 @type float32", "primary": True},
+         "pix_attrs": "@adapt 0 @type float32", "primary": True},
     ],
     "pix_wires": [
         ["hold", 0, "pass", 1],     # previous state (cold)
@@ -128,11 +138,13 @@ def _line(src, so, dst, di):
 
 
 patcher["raw_boxes"] = [
+    # render size: the vs_mixer_3 convention (@adapt 0, `r dim` -> the pix); the message is "dim W H"
+    _obj(15, "r dim", 0, 1, [330.0, 320.0, 40.0, 22.0]),
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[62.0, 46.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[118.0, 46.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the field from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[51.0, 24.0, 50.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[107.0, 24.0, 50.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 52.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
@@ -148,7 +160,8 @@ patcher["raw_boxes"] = [
     _msg(14, "param reseed 0", [260.0, 510.0, 85.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line("obj-4", 1, 3, 0),         # route: `reset` -> trigger   (route outlet 1; outlet 0 is rate)
+    _line(15, 0, "obj-5", 0),        # r dim -> enc: the output follows the render size
+    _line("obj-4", 3, 3, 0),         # route: `reset` -> trigger   (route outlet 3: rate, scale, sharp, reset)
     _line(1, 0, 3, 0),               # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
     _line(3, 2, 6, 0), _line(6, 0, 11, 1),    # trigger right -> 0 -> [i] right inlet

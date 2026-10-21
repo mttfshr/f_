@@ -8,10 +8,14 @@
 //     than 256 where hardware sample() would snap): consumers get a smooth field (FR-011)
 //   - mapping: v = clamp(0.5 + 0.25 * u, 0, 1), replicated to R,G,B, A = 1. This is the PLACEHOLDER
 //     hard clamp; the final mapping is a tier-3 decision (FR-008, T005)
+//   - sharp (0..1) blends that soft map toward a crisp one: smoothstep(0.46, 0.54, soft), a narrow
+//     S-curve at u = 0 that turns the field into hard-edged cells and ridges. sharp = 0 is exactly
+//     the soft map above (so the verified behavior is the default)
 //   - non-finite u maps to 0.5 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)
 //   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the solver
 //     keeps running upstream. The Param is never named `bypass` (native pix attribute).
 Param bypass_gate(0);
+Param sharp(0);
 
 N = 256;
 fx = norm.x * N - 0.5;
@@ -31,7 +35,9 @@ p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
 au = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx), mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);
 
 au = switch(abs(au) < 1e30, au, 0);
-lum = clamp(0.5 + 0.25 * au, 0, 1);
+soft = clamp(0.5 + 0.25 * au, 0, 1);
+crisp = smoothstep(0.46, 0.54, soft);
+lum = mix(soft, crisp, sharp);
 lum = lum * (1 - bypass_gate);
 
 out1 = vec(lum, lum, lum, 1);

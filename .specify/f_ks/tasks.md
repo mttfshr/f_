@@ -48,3 +48,5 @@ Created 2026-10-20 from the spec's "Open Experiments". Each task says whether th
 ## Record
 
 - 2026-10-20: tasks file created; omp run `ks-lbm-1` prepared (wave 1: mirrors; wave 2: measurements). The run tooling is `f_omp_runs/ks-lbm-1/`.
+
+- [x] T022 (2026-10-21, Matt's request) `scale` dial (L 25-100) and `sharp` dial (enc crisp blend); dt-ceiling-vs-L spike; output follows render size via `r dim` + @adapt 0 (needs a live check in Vsynth).
