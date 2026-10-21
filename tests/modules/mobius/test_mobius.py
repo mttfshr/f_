@@ -282,7 +282,10 @@ def test_generic_parameters_closed_form():
 
 # --- mutations --------------------------------------------------------------------------
 
-BUGS = ["swap_rot_terms", "sign_flip_inv_y", "linear_zoom", "no_guard", "wrap_shift"]
+# "wrap_shift" (fract before the centre is added back) is NOT required here any more: on the GPU sample() wraps its
+# coordinate on both axes (probes P2, P6, P7, 2026-10-20), so adding the centre after the fract reads the same texel;
+# it is an equivalent mutant there and was only a bug under clamp semantics. The mirror keeps the branch.
+BUGS = ["swap_rot_terms", "sign_flip_inv_y", "linear_zoom", "no_guard"]
 TOLS = {"identity": (1e-5, _err_identity), "rotation": (1e-5, _err_rotation),
         "zoom": (1e-5, _err_zoom), "invert": (1e-4, _err_invert),
         "guard": (1e-5, _err_guard), "period": (2e-5, _err_periodicity),

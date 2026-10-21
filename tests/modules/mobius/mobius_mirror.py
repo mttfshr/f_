@@ -13,7 +13,8 @@ zoom (0.5 = identity, logarithmic), invert (blend from rotate+zoom toward 1/z), 
   "sign_flip_inv_y" -- the imaginary part of 1/z with the wrong sign (zy instead of -zy)
   "linear_zoom"     -- the logarithmic dial misread as a linear one
   "no_guard"        -- the singularity floor max(mag_sq, 0.0001) dropped
-  "wrap_shift"      -- the fract wrap applied before the centre is added back
+  "wrap_shift"      -- the fract wrap applied before the centre is added back (an EQUIVALENT mutant on the GPU,
+                       where sample() wraps; not exercised by the tests since 2026-10-20)
 """
 import numpy as np
 

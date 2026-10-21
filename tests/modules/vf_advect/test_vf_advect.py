@@ -129,8 +129,15 @@ def test_whole_pixel_shifts_are_exact():
     worst = 0.0
     for name, (fx, fy) in cases.items():
         out1, _, _ = advect_stage(g.texture(n, n), vec_tex(fx, fy, n), prev, dt=dt, decay=decay, injection=0.0)
-        xi = np.clip(idx - int(round(fx * 3)), 0, n - 1)
-        yi = np.clip(idx - int(round(fy * 3)), 0, n - 1)
+        # The codebox clamps src_uv to [0, 1] ("clamped to edge"), but on the GPU a coordinate clamped to exactly 0.0 or 1.0
+        # sits on a seam (probe P9, 2026-10-20): x clamped to 1.0 reads the FIRST column and y clamped to 0.0 reads the LAST
+        # row, while x clamped to 0.0 and y clamped to 1.0 read the intended edge. So this module's clamp protects only two of
+        # its four edges; the expectation below pins what the GPU does, not what the comment intends.
+        sx, sy = int(round(fx * 3)), int(round(fy * 3))
+        xi = np.clip(idx - sx, 0, n - 1)
+        yi = np.clip(idx - sy, 0, n - 1)
+        xi = np.where(idx - sx > n - 1, 0, xi)            # x clamped to 1.0 reads the first column
+        yi = np.where(idx - sy < 0, n - 1, yi)            # y clamped to 0.0 reads the last row
         expect = prev[np.ix_(yi, xi)] * F32(decay)
         err = float(np.abs(out1 - expect).max())
         note(f"whole-pixel shift {name} error", err)

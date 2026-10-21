@@ -20,6 +20,9 @@ and in HANDOFF. Kept as a record of bench-verified facts, not as a regression ga
                      value: edge texel (clamp) or the 50/50 seam blend (wrap)? (Follow-up to P2.)
   P7 vertical        P2 and P6 on the Y axis: uv.y below 0, above 1, and exactly 1.0 / 0.0. (gpu_sim keeps y
                      clamping until this is measured; stereo's pole texel hints that y may clamp.)
+  P9 explicit clamp  a codebox that clamps its coordinate to [0, 1] BEFORE sample(): do the clamped rows and columns
+                     (exactly 0.0 and 1.0) read the edge texel the clamp intends, or the seam rule of P6/P7
+                     (x: first texel for both; y: last row for both)? Decides whether clamp() protects an edge.
   P8 stereo pole     the real f_stereo codebox with its last line replaced by out1 = vec(ux, uy, rx, ry):
                      the exact values at the odd-size centre texel (1 ulp below 1.0 reads the last column,
                      exactly 1.0 the first).
@@ -257,6 +260,32 @@ def test_p8_stereo_pole_intermediates():
     for label, (y, x) in (("centre", (c, c)), ("left neighbour", (c, c - 1)), ("right neighbour", (c, c + 1))):
         ux, uy, rx, ry = (float(v) for v in out[y, x])
         note(f"{label}: ux = {ux!r}, uy = {uy!r}, rx = {rx!r}, ry = {ry!r}", "ux < 1.0" if ux < 1.0 else "ux == 1.0 (reads the FIRST column, per P6)" if ux == 1.0 else "ux > 1.0")
+
+
+# ------------------------------------------------------------------ P9: an explicit clamp before sample()
+
+def test_p9_explicit_clamp_then_sample():
+    """P6 and P7 found that a coordinate of exactly 0.0 or 1.0 reads the first texel on x, but the LAST row on y.
+    So does clamp(coord, 0, 1) protect the edge? Here the clamped columns (norm.x - 0.25 < 0 -> exactly 0.0, and
+    norm.x + 0.25 > 1 -> exactly 1.0) and rows are read back. The edge a clamp INTENDS: u = 0 -> first column
+    (R = 0.5 / W), u = 1 -> last column (1 - 0.5 / W); v = 0 -> first row (G = 0.5 / H), v = 1 -> last row."""
+    w, h = 64, 64
+    x_src, y_src = _ramp(8, w), _ramp(h, 8)
+    cases = [
+        ("x clamped to 0.0", "out1 = sample(in1, vec(clamp(norm.x - 0.25, 0.0, 1.0), norm.y, 0));\n", x_src, 0, 0, 0.5 / w, "R"),
+        ("x clamped to 1.0", "out1 = sample(in1, vec(clamp(norm.x + 0.25, 0.0, 1.0), norm.y, 0));\n", x_src, 0, w - 1, 1.0 - 0.5 / w, "R"),
+        ("y clamped to 0.0", "out1 = sample(in1, vec(norm.x, clamp(norm.y - 0.25, 0.0, 1.0), 0));\n", y_src, 0, 0, 0.5 / h, "G"),
+        ("y clamped to 1.0", "out1 = sample(in1, vec(norm.x, clamp(norm.y + 0.25, 0.0, 1.0), 0));\n", y_src, h - 1, 0, 1.0 - 0.5 / h, "G"),
+    ]
+    for label, code, src, row, col, intended, chan in cases:
+        out, r = bc.run_pass(code, [src])
+        check(f"status ok ({label})", _status(r), 0)
+        v = float(out[row, col, 0 if chan == "R" else 1])
+        first, last = (0.5 / w, 1.0 - 0.5 / w) if chan == "R" else (0.5 / h, 1.0 - 0.5 / h)
+        kind = ("the intended edge (clamp works)" if abs(v - intended) < 1e-3
+                else "the OPPOSITE edge (the seam rule beats the clamp)" if abs(v - (last if intended == first else first)) < 1e-3
+                else "OTHER")
+        note(f"{label}: {chan} = {v:.5f}; the clamp intends {intended:.5f}", kind)
 
 
 if __name__ == "__main__":

@@ -49,18 +49,32 @@ def test_sample_default_wraps_x_and_clamps_taps_as_measured_on_the_gpu():
     check("in-range u is untouched (0.5)", abs(got(0.5) - 0.5), 1e-6)
 
 
-def test_sample_y_clamps_by_default_until_probe_p7_and_oob_overrides():
-    """Vertical out-of-range behaviour is NOT measured yet (probe P7), so y keeps clamping by default; the oob
-    argument sets either axis: a string for both, or an (x, y) pair."""
+def test_sample_y_wraps_with_a_flipped_seam_as_measured_by_probe_p7():
+    """Measured 2026-10-20 (probe P7 on a 64-row y-ramp, G = y): v = -0.2 reads 0.79999, v = 1.3 reads 0.29999, and
+    exactly v = 1.0 and exactly v = 0.0 BOTH read the last row (0.99219): 1 - fract(1 - v), the mirror image of x,
+    where the exact seams read the first texel. The expected values are the measured GPU numbers."""
+    h = 64
+    t = _x_ramp(8, h)
+    got = lambda v: float(sample(t, F32(0.5), F32(v))[..., 1])
+    check("v = -0.2 reads 0.8", abs(got(-0.2) - 0.8), 2e-4)
+    check("v = 1.3 reads 0.3", abs(got(1.3) - 0.3), 2e-4)
+    check("v = exactly 1.0 reads the last row", abs(got(1.0) - (1.0 - 0.5 / h)), 1e-6)
+    check("v = exactly 0.0 reads the LAST row too", abs(got(0.0) - (1.0 - 0.5 / h)), 1e-6)
+    check("in-range v is untouched (0.5)", abs(got(0.5) - 0.5), 1e-6)
+
+
+def test_sample_oob_overrides_and_wrap_true_is_a_different_thing():
+    """oob sets either axis (a string for both, or an (x, y) pair); wrap=True is the manual periodic form (a codebox
+    that fract()s its own coordinate) and ignores oob."""
     t = _x_ramp(8, 8)
-    top = float(sample(t, F32(0.5), F32(1.0))[..., 1])
-    check("default: v = 1.0 clamps to the last row (G = 15/16)", abs(top - 15.0 / 16.0), 1e-6)
-    wrapped = float(sample(t, F32(0.5), F32(1.0), oob=("clamp", "wrap_coord"))[..., 1])
-    check("oob y wrap_coord: v = 1.0 reads the first row (G = 1/16)", abs(wrapped - 1.0 / 16.0), 1e-6)
-    clamped = float(sample(t, F32(1.3), F32(0.5), oob="clamp")[..., 0])
-    check("oob clamp: u = 1.3 reads the last column (R = 15/16)", abs(clamped - 15.0 / 16.0), 1e-6)
+    clamp_y = float(sample(t, F32(0.5), F32(-0.2), oob="clamp")[..., 1])
+    check("oob clamp: v = -0.2 reads the first row (G = 1/16)", abs(clamp_y - 1.0 / 16.0), 1e-6)
+    wrap_y = float(sample(t, F32(0.5), F32(1.0), oob=("clamp", "wrap_coord"))[..., 1])
+    check("oob y wrap_coord (unflipped): v = 1.0 reads the first row (G = 1/16)", abs(wrap_y - 1.0 / 16.0), 1e-6)
+    clamped_x = float(sample(t, F32(1.3), F32(0.5), oob="clamp")[..., 0])
+    check("oob clamp: u = 1.3 reads the last column (R = 15/16)", abs(clamped_x - 15.0 / 16.0), 1e-6)
     manual = float(sample(t, F32(1.3), F32(0.5), wrap=True)[..., 0])
-    check("wrap=True is the manual periodic form and ignores oob (u = 1.3 reads 0.3 by periodic taps)", abs(manual - 0.3), 0.07)
+    check("wrap=True is the manual periodic form and ignores oob (u = 1.3 reads about 0.3)", abs(manual - 0.3), 0.07)
 
 
 if __name__ == "__main__":
