@@ -8,6 +8,13 @@
 - **Open decisions for Matt:** whether any clamp artifact is visible enough to fix; the stale `src/f_lens/definition.py` and Stage C comment items were already fixed and regenerated; `package/javascript/lens_toggle.js` was regenerated and kept.
 - **Housekeeping notes:** device tools were renamed twice during the session (`mcp__remote-devices__` and `mcp__claude-device__lcl-`); long commands over about 60 s time out on the device, so use `tests/bg.sh start offline` and `tests/bg.sh status`. A stray older stash exists (`stash@{0}`, not from today).
 
+## 2026-10-20 (21:30): ks-lbm-1 landed; decisions postulated; wave 2 `ks-lbm-2` built, NOT started
+
+- **Landed (109590f):** `tests/modules/ks/` (16 tests) and `tests/modules/vf_lbm/` (15 tests), both green. Wave-1 control score 1/2: the planted LBM roll-direction sentence was missed (my facts pre-empted it), so re-read FR-004 and the Clarifications against the experiment when the LBM codebox is written. The planted KS drift test was dropped (real spec says downward).
+- **Postulated decisions (c21327a), at Matt's instruction, revisit at tier 3:** y periodic; pre-collision = frame-start state before the outflow copy; Zou/He forces the whole inflow column; KS dial 0..1, dt0 = 0.1, uniform [-1, 1] seeding, no Nyquist special case. Details in `.specify/f_vf_lbm/tasks.md` T004 and `.specify/f_ks/tasks.md` T003.
+- **Open findings:** float32 vs float64 LBM diverge by 0.02 in 30 frames at omega 1.99; slow mass drift with bounce-back plus Zou/He; KS dt ceiling depends on DX (N = 32, L = 50 blows up within 300 frames; a stub run showed dt 0.5 fails within 30 frames); one KS mutant survivor (Add to Sub in the np.fft fast path) unreviewed.
+- **Wave 2:** `f_omp_runs/ks-lbm-2/` (outside the repo): four measurement units (`ks-limits`, `lbm-omega`, `lbm-shedding`, `lbm-edges`) driven by a new `sweep.py` (the checker runs every cell and recomputes every quoted number). Dry-run tested on a stub. Paste line for omp: `Read /Users/matt/Github/f_omp_runs/ks-lbm-2/RUN.md and follow it exactly.` Its README lists known limits.
+
 ## 2026-10-20 (20:55): omp run `ks-lbm-1` prepared for f_ks and f_vf_lbm (offline Phase 0); NOT started, NOT committed
 
 - **What exists:** `f_omp_runs/ks-lbm-1/` (outside the repo): wave 1 ready (`RUN.md`, two units: stage-decomposed float32 NumPy mirrors with tests, one for each module; budgets 45 and 60 min). Paste line for omp: `Read /Users/matt/Github/f_omp_runs/ks-lbm-1/RUN.md and follow it exactly.` Derived from `mirror-build-4` (the edits are in `_derive_from_mirror_build_4.py`, each asserted); a dry run of `init` in a temp copy passed. Planted controls are in `overlay/` (copies of the two specs; key only in the chat reply).
