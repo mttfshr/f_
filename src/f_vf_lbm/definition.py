@@ -24,7 +24,10 @@ numerics stage (collide, stream, mac, enc, mrg) is benchable. `hold` is the only
 identity. The first outlet of `hold` is the hot cord into collide; Max fires outlets right to left, so mrg's
 flag and the second plane are in place before the first plane triggers collide.
 
-The `r draw` bang goes to hold and enc (draw_triggers). The feedback enters hold on cold inlets, so the loop
+The `r draw` bang goes to enc directly and to hold through a frame gate (raw boxes at the end of this file): a
+counter passes every Nth bang, N from the Speed menu, so a skipped frame leaves the whole solver loop idle and
+enc re-renders the held state. Speed 1/N therefore slows the flow to 1/N (hold is obj-50, the Speed menu obj-29).
+The bang to hold The feedback enters hold on cold inlets, so the loop
 advances exactly once per rendered frame (the f_vf_fluid / f_ks pattern). The mask is the module's one texture
 inlet; unconnected reads as no obstacle. The solver size is a literal in each codebox (W = 192, H = 108).
 
@@ -61,6 +64,12 @@ patcher = {
          "label": "Gain",
          "hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)"},
 
+        # Speed: run the solver on every Nth rendered frame (the frame gate below). No pix attribute: the
+        # menu's outlet feeds the counter's modulus (pix_wire False, tapped like f_caustic's Edge menu).
+        {"name": "speed", "type": "menu", "options": ["Full", "1/2", "1/3", "1/4"], "default": 0,
+         "label": "Speed", "pix_wire": False,
+         "hint": "How fast the flow evolves: the solver advances on every frame (Full), every 2nd, 3rd or 4th. Slower = the same wake in slow motion. The output holds its last state in between"},
+
         # Bypass drives the codebox Param `bypass_gate` on the encode stage, never the native @bypass: the
         # solver keeps running and the outlet passes a neutral (zero-velocity) field.
         {"name": "bypass", "type": "bypass"},
@@ -72,7 +81,7 @@ patcher = {
     # The mask inlet reaches the mrg stage only (its second inlet).
     "inlet_comment": "obstacle mask (white = obstacle)",
     "inlet_fanout": {"texture": [["mrg", 1]], "state": []},
-    "draw_triggers": ["hold", "enc"],
+    "draw_triggers": ["enc"],            # hold gets its bang through the frame gate (raw boxes below)
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
 
     "pix_chain": [
@@ -100,3 +109,40 @@ patcher = {
         ["mac", 0, "enc", 1],       # velocity -> encode (cold)
     ],
 }
+
+
+# ---- frame gate (raw boxes) -----------------------------------------------------------------------------
+#   [r draw] -> [i] -> [+ 1] -> [% N] -> [i] right inlet        a counter that wraps at N
+#   [i] -> [sel 0] -> bang -> hold (obj-50, inlet 0)            fires on count 0: every Nth frame
+#   Speed menu (obj-29, outlet 0: index 0..3) -> [+ 1] -> [% N] right inlet
+# N = 1 passes every frame (the default); the counter is never reset, so a change of N takes effect within N frames.
+def _box(i, cls, rect, **kw):
+    b = {"id": f"obj-raw-{i}", "maxclass": cls, "patching_rect": rect}
+    b.update(kw)
+    return {"box": b}
+
+
+def _obj(i, text, nin, nout, rect, otypes=None):
+    return _box(i, "newobj", rect, text=text, numinlets=nin, numoutlets=nout,
+                outlettype=otypes or [""] * nout)
+
+
+def _line(src, so, dst, di):
+    ref = lambda o: o if isinstance(o, str) else f"obj-raw-{o}"      # int = a raw box, str = a full id
+    return {"patchline": {"source": [ref(src), so], "destination": [ref(dst), di]}}
+
+
+patcher["raw_boxes"] = [
+    _obj(1, "r draw", 0, 1, [330.0, 320.0, 50.0, 22.0]),
+    _obj(2, "i", 2, 1, [330.0, 350.0, 30.0, 22.0], ["int"]),
+    _obj(3, "+ 1", 2, 1, [380.0, 380.0, 30.0, 22.0], ["int"]),
+    _obj(4, "% 1", 2, 1, [380.0, 410.0, 30.0, 22.0], ["int"]),
+    _obj(5, "sel 0", 2, 2, [330.0, 380.0, 40.0, 22.0], ["bang", ""]),
+    _obj(6, "+ 1", 2, 1, [430.0, 380.0, 30.0, 22.0], ["int"]),
+]
+patcher["raw_lines"] = [
+    _line(1, 0, 2, 0),                  # draw -> counter
+    _line(2, 0, 3, 0), _line(3, 0, 4, 0), _line(4, 0, 2, 1),        # count + 1, wrapped at N, stored
+    _line(2, 0, 5, 0), _line(5, 0, "obj-50", 0),                    # count 0 -> bang -> hold
+    _line("obj-29", 0, 6, 0), _line(6, 0, 4, 1),                    # Speed index + 1 -> N
+]

@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 4,
 					"outlettype": [
+						"",
 						"",
 						"",
 						""
@@ -86,10 +87,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						223.0,
+						295.0,
 						22.0
 					],
-					"text": "route omega inflow gain"
+					"text": "route omega inflow gain speed"
 				}
 			},
 			{
@@ -1957,6 +1958,85 @@
 			{
 				"box": {
 					"id": "obj-29",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "How fast the flow evolves: the solver advances on every frame (Full), every 2nd, 3rd or 4th. Slower = the same wake in slow motion. The output holds its last state in between",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_lbm_enc::speed",
+					"parameter_enable": 1,
+					"patching_rect": [
+						246.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						111.0,
+						52.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Full",
+								"1/2",
+								"1/3",
+								"1/4"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "speed",
+							"parameter_mmax": 3.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "speed",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "speed"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-31",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						251.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						103.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Speed",
+					"textjustification": 1,
+					"varname": "lbl_speed"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-32",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1984,7 +2064,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-30",
+					"id": "obj-33",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1998,6 +2078,115 @@
 						22.0
 					],
 					"text": "prepend param bypass_gate"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-1",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						792.0,
+						50.0,
+						22.0
+					],
+					"text": "r draw",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-2",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						822.0,
+						30.0,
+						22.0
+					],
+					"text": "i",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-3",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						852.0,
+						30.0,
+						22.0
+					],
+					"text": "+ 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-4",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						882.0,
+						30.0,
+						22.0
+					],
+					"text": "% 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-5",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						852.0,
+						40.0,
+						22.0
+					],
+					"text": "sel 0",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-6",
+					"maxclass": "newobj",
+					"patching_rect": [
+						130.0,
+						852.0,
+						30.0,
+						22.0
+					],
+					"text": "+ 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
 				}
 			}
 		],
@@ -2045,18 +2234,6 @@
 						0
 					],
 					"destination": [
-						"obj-50",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-20a",
-						0
-					],
-					"destination": [
 						"obj-5",
 						0
 					]
@@ -2089,11 +2266,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-29",
+						"obj-32",
 						0
 					],
 					"destination": [
-						"obj-30",
+						"obj-33",
 						0
 					]
 				}
@@ -2101,7 +2278,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-30",
+						"obj-33",
 						0
 					],
 					"destination": [
@@ -2445,6 +2622,114 @@
 						0
 					]
 				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						3
+					],
+					"destination": [
+						"obj-29",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-1",
+						0
+					],
+					"destination": [
+						"obj-raw-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-2",
+						0
+					],
+					"destination": [
+						"obj-raw-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-3",
+						0
+					],
+					"destination": [
+						"obj-raw-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-4",
+						0
+					],
+					"destination": [
+						"obj-raw-2",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-2",
+						0
+					],
+					"destination": [
+						"obj-raw-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-5",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-raw-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-6",
+						0
+					],
+					"destination": [
+						"obj-raw-4",
+						1
+					]
+				}
 			}
 		],
 		"parameters": {
@@ -2461,6 +2746,11 @@
 			"obj-26": [
 				"gain",
 				"gain",
+				0
+			],
+			"obj-29": [
+				"speed",
+				"speed",
 				0
 			],
 			"parameterbanks": {
