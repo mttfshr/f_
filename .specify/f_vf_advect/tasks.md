@@ -49,6 +49,7 @@ findings (perf/bench/convention) recorded in `.specify/maintenance/status.json`.
   six heavy Param-bypass modules are — but there's still no recorded
   frame-cost number for the two-pix chain at HD/4K. Add one.
 - [x] T147 **Bench decision gate — does tier 1 apply here?** Module
+  **Update 2026-10-20:** the shader reads unguarded and the GPU wraps out-of-range reads (probes P2, P6, P7), and probe P9 showed its explicit clamp (`src_uv = clamp(uv - f*dt, 0, 1)`, commented "clamped to edge") protects only two of four edges: clamped to x = 1.0 reads the FIRST column, clamped to y = 0.0 reads the LAST row. The whole-pixel-shift test pins that GPU behaviour at the edges (full frame, 10/10); the module itself still has the artifact (a flow toward +y shows the bottom row's content in the top rows, a flow toward -x the left column's in the right columns).
   predates Verification Tiers (adopted 2026-09-22); no Phase 0 decision was
   ever recorded for it. Unlike `f_grain`, the math has a clean closed-form
   check already written down in the reference doc (equilibrium amplitude

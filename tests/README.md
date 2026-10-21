@@ -79,8 +79,11 @@ exists.
   the coordinate modulo 1 and then interpolates with edge-clamped taps: uv = 1.3 reads 0.3, uv = -0.2 reads 0.8, and
   exactly u = 1.0 or u = 0.0 reads the first texel with no seam blend (probes P2 and P6, and the scratch patch's pix-to-pix
   path, `scratch/boundmode_probe.maxpat`). `skills/jit-gen-codebox/SKILL.md` line 151 says CLAMP (a 2026-06-21 test, probably
-  with a matrix-fed texture; the scratch patch's matrix-fed path did not populate, so that is untested). `gpu_sim.sample` now models the x axis as measured (`OOB_DEFAULT`; `oob=` overrides per call); y still
-  clamps until probe P7, and `wrap=True` is the different, manual periodic form (a codebox that `fract()`s its own
+  with a matrix-fed texture; the scratch patch's matrix-fed path did not populate, so that is untested). `gpu_sim.sample` now models the x axis as measured (`OOB_DEFAULT`; `oob=` overrides per call); y wraps
+  with the seam flipped (probe P7: -0.2 reads 0.8, 1.3 reads 0.3, exactly 0.0 and exactly 1.0 both read the LAST row).
+  An explicit clamp protects only TWO of the four edges (probe P9): a coordinate clamped to exactly x = 1.0 reads the FIRST
+  column and one clamped to y = 0.0 reads the LAST row, while x = 0.0 and y = 1.0 read the edge the clamp intends. `gpu_sim`
+  reproduces this on its own, because np.clip to exactly 0.0 or 1.0 hits the same seam rules. `wrap=True` is the different, manual periodic form (a codebox that `fract()`s its own
   coordinate). A module should still clamp or `fract()` explicitly where it can; `tests/records/sweep_unguarded_samples.py`
   lists the shipped codeboxes that read out of range without a guard (a heuristic, 2026-10-20).
 - It does not replace tier 3. A module can match its mirror to 1e-6 and still look wrong.
