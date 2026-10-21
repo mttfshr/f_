@@ -23,8 +23,10 @@ connected = step(0.5, src_vecfield);
 fx = fx * connected;
 fy = fy * connected;
 
-// Backward-displaced UV, clamped to edge
-src_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));
+// Backward-displaced UV, clamped to edge. Bounds are 0.001 / 0.999, NOT 0 / 1: on the GPU a
+// coordinate of exactly x = 1.0 or y = 0.0 sits on the wrap seam and reads the OPPOSITE edge
+// (probe P9, 2026-10-20), and here the wrong edge would be re-injected every frame of the loop.
+src_uv = vec(clamp(uv.x - fx * dt, 0.001, 0.999), clamp(uv.y - fy * dt, 0.001, 0.999));
 
 // Advect previous frame, add source injection
 advected = sample(in3, src_uv) * decay;

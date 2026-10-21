@@ -10,11 +10,12 @@ pass stage itself has no mirror (it is marked CANDIDATE / UNVERIFIED in its sour
 Inputs, as in the gen: in1 = source texture, in2 = vecfield texture (R,G encode (v - 0.5) * 2), in3 = previous
 frame. Sampling is gpu_sim's bilinear, texel-centre, clamp-to-edge `sample`. NOTE: on the GPU the bench wraps
 out-of-range reads (docs: "bench GPU wraps out-of-range reads, codeboxes clamp in-shader"); the advect UV is
-clamped in the shader, but the gradient taps (outlet 3) are not, so edge rows of outlet 3 are a tier-2 question,
+clamped in the shader to 0.001 / 0.999 (texel-safe; exact 0 / 1 reads the opposite edge on the GPU, probe P9), but the gradient taps (outlet 3) are not, so edge rows of outlet 3 are a tier-2 question,
 not a tier-1 one.
 
 `bug` values are the mutations the tests must catch: "sign_flip" (forward instead of backward displacement),
-"no_suppress" (ignore src_vecfield), "no_clamp" (no clamp on the accumulated result).
+"no_suppress" (ignore src_vecfield), "no_clamp" (no clamp on the accumulated result),
+"exact_clamp" (clamp the advect UV to exact 0 / 1, the codebox before 2026-10-20: reads the opposite edge on the GPU).
 """
 import numpy as np
 
@@ -52,8 +53,10 @@ def advect_stage(src, vec, prev, dt=0.01, decay=0.97, injection=0.02, gain=1.0, 
     fy = fy * connected
 
     sgn = F32(-1) if bug == "sign_flip" else F32(1)
-    su = np.clip(u - sgn * fx * dt, F32(0), F32(1)).astype(F32)
-    sv = np.clip(v - sgn * fy * dt, F32(0), F32(1)).astype(F32)
+    # texel-safe bounds, as in the codebox (exact 0 / 1 reads the opposite edge on the GPU, probe P9)
+    lo, hi = (F32(0), F32(1)) if bug == "exact_clamp" else (F32(0.001), F32(0.999))
+    su = np.clip(u - sgn * fx * dt, lo, hi).astype(F32)
+    sv = np.clip(v - sgn * fy * dt, lo, hi).astype(F32)
 
     advected = g.sample(prev, su, sv) * decay
     result = advected + s_here * injection

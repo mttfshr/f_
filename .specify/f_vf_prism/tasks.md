@@ -25,3 +25,5 @@ task tracking lived in plan.md phases. Ids start at T001._
   samples are confirmed negligible at practical resolution regardless
   of bypass state; no shader-side guard is warranted. The bench header
   staleness note above is unrelated and still open.
+
+- **2026-10-20, clamp edge fix:** v17's three `displaced_r/g/b` helpers clamped the displaced coordinate to exact [0, 1], so on the GPU (probe P9: x = 1.0 reads the first column, y = 0.0 the last row) gate taps near the right and low-y edges read the opposite edge's luma. Bounds are now 0.001 / 0.999 (six lines plus a comment). Patcher regenerated, one-line diff, `drift.py -v f_vf_prism` ok. No tier-1 mirror exists. Tier 3 pending (Matt): a bright left or top edge should no longer produce prism fringes along the right or bottom edge.

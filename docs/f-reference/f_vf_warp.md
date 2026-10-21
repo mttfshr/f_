@@ -48,13 +48,13 @@ field_y = sample(vecfield, uv).y
 offset_x = (field_x - 0.5) * 2.0 * gain       // [-gain, +gain]
 offset_y = (field_y - 0.5) * 2.0 * gain
 
-warped_uv = clamp(uv + offset, 0.0, 1.0)
+warped_uv = clamp(uv + offset, 0.001, 0.999)
 warped = sample(source, warped_uv)
 composite = mix(sample(source, uv), warped, mix_pct / 100.0)   // out0
 // out1 = warped; both outlets mix to the source under bypass
 ```
 
-Edge behavior: pixels displaced outside [0,1] UV clamp to edge — boundary pixels stretch/smear. No wrap or mirror.
+Edge behavior: pixels displaced outside [0,1] UV clamp to edge — boundary pixels stretch/smear. No wrap or mirror. The clamp bounds are 0.001 / 0.999, not 0 / 1 (2026-10-20): on the GPU a coordinate of exactly x = 1.0 or y = 0.0 sits on the wrap seam and reads the opposite edge (probe P9), so a clamp to exact 0 / 1 smeared the far side of the frame in from the right and low-y edges.
 
 ---
 

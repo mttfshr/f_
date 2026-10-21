@@ -7,24 +7,28 @@
 // in3 = reach mod
 // in4 = spread mod
 
+// NOTE (2026-10-20): the three helpers clamp the displaced coordinate to 0.001 / 0.999, NOT
+// 0 / 1. On the GPU a coordinate of exactly x = 1.0 or y = 0.0 sits on the wrap seam and reads
+// the OPPOSITE edge (probe P9), so an exact clamp pulled far-edge content into the gate taps.
+
 // helper: displaced R channel
 displaced_r(tux, tuy, fx, fy, cx, sx, reach) {
-    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0., 1.);
-    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0., 1.);
+    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0.001, 0.999);
+    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0.001, 0.999);
     return sample(in1, vec(dux, duy)).x;
 }
 
 // helper: displaced G channel
 displaced_g(tux, tuy, fx, fy, cx, sx, reach) {
-    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0., 1.);
-    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0., 1.);
+    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0.001, 0.999);
+    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0.001, 0.999);
     return sample(in1, vec(dux, duy)).y;
 }
 
 // helper: displaced B channel
 displaced_b(tux, tuy, fx, fy, cx, sx, reach) {
-    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0., 1.);
-    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0., 1.);
+    dux = clamp(tux - (fx*cx - fy*sx)*reach, 0.001, 0.999);
+    duy = clamp(tuy - (fx*sx + fy*cx)*reach, 0.001, 0.999);
     return sample(in1, vec(dux, duy)).z;
 }
 

@@ -15,7 +15,8 @@ The ground truth is independent of the mirror: closed forms derived on paper, no
   - Bypass passes the source on out1 and out2 and the vecfield (or neutral 0.5) on out3, and the loop then
     carries the source.
   - Outlet 3 on a luma ramp: gx = slope * 2 * 0.004 * 4, with the sign of the +x / +y taps pinned.
-  - Mutations the tests must catch: forward displacement, ignoring src_vecfield, dropping the clamp.
+  - Mutations the tests must catch: forward displacement, ignoring src_vecfield, dropping the clamp, and clamping the
+    advect UV to exact 0 / 1 instead of the texel-safe 0.001 / 0.999.
 
 Scope and limits: advect stage only; the loop's pass stage is modeled as the identity (separate = 0). Edge rows
 of outlet 3 are not tested (the bench GPU wraps out-of-range taps; clamp-to-edge here). Alpha follows the same
@@ -120,7 +121,7 @@ def test_backward_displacement_of_a_ramp():
     check("ramp lookup at uv - f*dt (inside the frame)", _translation_err(), 1e-6)
 
 
-def test_whole_pixel_shifts_are_exact():
+def _whole_pixel_err(bug=None):
     n, decay = MID, 0.97
     prev = rand_tex(11)
     idx = np.arange(n)
@@ -128,21 +129,23 @@ def test_whole_pixel_shifts_are_exact():
     cases = {"+x": (1.0, 0.0), "+y": (0.0, 1.0), "diag": (1.0, -1.0)}
     worst = 0.0
     for name, (fx, fy) in cases.items():
-        out1, _, _ = advect_stage(g.texture(n, n), vec_tex(fx, fy, n), prev, dt=dt, decay=decay, injection=0.0)
-        # The codebox clamps src_uv to [0, 1] ("clamped to edge"), but on the GPU a coordinate clamped to exactly 0.0 or 1.0
-        # sits on a seam (probe P9, 2026-10-20): x clamped to 1.0 reads the FIRST column and y clamped to 0.0 reads the LAST
-        # row, while x clamped to 0.0 and y clamped to 1.0 read the intended edge. So this module's clamp protects only two of
-        # its four edges; the expectation below pins what the GPU does, not what the comment intends.
+        out1, _, _ = advect_stage(g.texture(n, n), vec_tex(fx, fy, n), prev, dt=dt, decay=decay, injection=0.0, bug=bug)
+        # The codebox clamps src_uv to [0.001, 0.999] (texel-safe, 2026-10-20), so a read that leaves the frame lands in
+        # its OWN edge texel on all four edges. (With exact 0 / 1 bounds the GPU read the opposite edge for x = 1.0 and
+        # y = 0.0, probe P9; that is the "exact_clamp" mutation.)
         sx, sy = int(round(fx * 3)), int(round(fy * 3))
         xi = np.clip(idx - sx, 0, n - 1)
         yi = np.clip(idx - sy, 0, n - 1)
-        xi = np.where(idx - sx > n - 1, 0, xi)            # x clamped to 1.0 reads the first column
-        yi = np.where(idx - sy < 0, n - 1, yi)            # y clamped to 0.0 reads the last row
         expect = prev[np.ix_(yi, xi)] * F32(decay)
         err = float(np.abs(out1 - expect).max())
-        note(f"whole-pixel shift {name} error", err)
+        if bug is None:
+            note(f"whole-pixel shift {name} error", err)
         worst = max(worst, err)
-    check("shift by 3 texels vs index arithmetic", worst, 1e-6)
+    return worst
+
+
+def test_whole_pixel_shifts_are_exact():
+    check("shift by 3 texels vs index arithmetic (all four edges clamp to their own edge)", _whole_pixel_err(), 1e-6)
 
 
 # --- unconnected vecfield, bypass, range --------------------------------------------
@@ -232,16 +235,17 @@ def test_gradient_outlet_on_ramps():
 # --- mutations ------------------------------------------------------------------------
 
 def test_mutations_are_caught():
-    real = [_translation_err(), _unconnected_err(), max(_clamp_excess(), 0.0)]
+    real = [_translation_err(), _unconnected_err(), max(_clamp_excess(), 0.0), _whole_pixel_err()]
     bad = {"sign_flip": _translation_err("sign_flip"),
            "no_suppress": _unconnected_err("no_suppress"),
-           "no_clamp": _clamp_excess("no_clamp")}
+           "no_clamp": _clamp_excess("no_clamp"),
+           "exact_clamp": _whole_pixel_err("exact_clamp")}
     for k, v in bad.items():
         note(f"mutation '{k}' worst error", v)
         if not v > 1e-3:
             raise AssertionError(f"mutation not detected: {k} (error {v:.3e})")
     assert max(real) < 1e-5, f"the real mirror must pass the same checks: {real}"
-    print("    ok   forward displacement, ignored src_vecfield and a dropped clamp are each caught")
+    print("    ok   forward displacement, ignored src_vecfield, a dropped clamp and exact 0 / 1 clamp bounds are each caught")
 
 
 if __name__ == "__main__":

@@ -84,9 +84,11 @@ offset_y = (field_y - 0.5) * 2.0 * gain;
 offset_x = mix(0.0, offset_x, step(0.5, src_vecfield));
 offset_y = mix(0.0, offset_y, step(0.5, src_vecfield));
 
-// Displace UV and clamp to edge
-warped_x = clamp(uv.x + offset_x, 0.0, 1.0);
-warped_y = clamp(uv.y + offset_y, 0.0, 1.0);
+// Displace UV and clamp to edge. Bounds are 0.001 / 0.999, NOT 0 / 1: on the GPU a coordinate
+// of exactly 1.0 (x) or 0.0 (y) sits on the wrap seam and reads the OPPOSITE edge (probe P9,
+// 2026-10-20). A bound strictly inside the edge texel keeps the read on the intended edge.
+warped_x = clamp(uv.x + offset_x, 0.001, 0.999);
+warped_y = clamp(uv.y + offset_y, 0.001, 0.999);
 warped_uv = vec(warped_x, warped_y);
 
 // Output — sample inline, no stored vec component access
