@@ -27,7 +27,7 @@ Created 2026-10-20 from the spec's "Open Experiments". Each task says whether th
   - The inflow dial gets a direction check when the codebox lands (not covered by the mirror).
 - [ ] T005 Safe `omega` ceiling for the channel-BC case (open experiment 3), measured on the mirror with mass conservation and a long soak (10,000+ frames) with an obstacle. *omp wave 2 (unit `lbm-omega`), needs a sweep tool built after wave 1.*
 - [ ] T006 Shedding quality at performable resolutions and warm-up lengths (open experiment 4): a sweep over resolution, omega, inflow and obstacle shape, measuring wake curl and a probe signal, with image strips. The honest answer may be that nothing sheds well at performable settings; that outcome returns to Matt (spec success criterion 7). *omp wave 2 (unit `lbm-shedding`).*
-- [ ] T007 Obstacle edge cases: full-coverage obstacle stays bounded; a mid-run mask change gives no NaN at the transition; the mask resampling filter (nearest, bilinear, box) (open experiment 5). *omp wave 2 (unit `lbm-edges`).*
+- [~] T007 Obstacle edge cases: full-coverage obstacle stays bounded; a mid-run mask change gives no NaN at the transition; the mask resampling filter (nearest, bilinear, box) (open experiment 5). *omp wave 2 (unit `lbm-edges`).* Result from the failed run `ks-lbm-2` (2026-10-20; 12 cells, all 32 quoted numbers recomputed from the table, 5 of 5 resamples repeat; prose NOT reviewed by a verifier, and mirror-only): all three full-coverage masks stay finite over 2000 frames with encoded values inside [0, 1]; a covered outflow column is the worst (mass ratio 0.528, spurious jet max |u| 0.436 against inflow 0.04), a covered inflow column bleeds mass (ratio 0.963); mid-run mask swaps create no non-finite value and a mass jump under 5e-10 of the total; the wake never settles under 1e-4 within 500 frames at omega 1.8, U0 0.04 (it keeps shedding, du about 0.08); nearest, bilinear and box filters thresholded at 0.5 give the identical obstacle (area +0.39 percent over the ideal disc) and bit-identical runs at a 3.4:1 texture ratio; the mirror treats any fractional mask value as a full obstacle, so soft weighting is unsupported. Not swept: other texture ratios, off-centre discs, settle time at calmer parameters.
 - [ ] T008 Solver codeboxes on the GPU against the mirror, frame-exact over 100+ frames (`run_temporal`). *Phase 1, Max bench; codeboxes written by hand against the mirror's stages.*
 
 ### Decision gates (Matt)
@@ -36,6 +36,9 @@ Created 2026-10-20 from the spec's "Open Experiments". Each task says whether th
 - [ ] T011 Bypass behavior for a module whose only texture inlet is the obstacle mask (open experiment 6).
 - [ ] T012 Whether to build at all, if T006 finds no performable settings where the wake reads as shedding.
 - [ ] T013 `omega` or viscosity as the user-facing control, and the inflow range (tier 3, Phase 2).
+- [ ] T014 Covered outflow (or inflow) edge column: let a performer paint over it, or shield/re-derive the edge columns in the module (T007 result: a covered outflow column drains mass and drives a jet ten times the inflow).
+- [ ] T015 Mid-run mask change acceptance: track 'no NaN and bounded mass' rather than 'field settles under 1e-4' (the wake keeps shedding at omega 1.8).
+- [ ] T016 Soft obstacle weight: if wanted, mask values must mean a bounce probability in the mirror and then the codebox; today any fractional value is a full obstacle.
 
 ---
 

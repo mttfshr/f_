@@ -8,6 +8,12 @@
 - **Open decisions for Matt:** whether any clamp artifact is visible enough to fix; the stale `src/f_lens/definition.py` and Stage C comment items were already fixed and regenerated; `package/javascript/lens_toggle.js` was regenerated and kept.
 - **Housekeeping notes:** device tools were renamed twice during the session (`mcp__remote-devices__` and `mcp__claude-device__lcl-`); long commands over about 60 s time out on the device, so use `tests/bg.sh start offline` and `tests/bg.sh status`. A stray older stash exists (`stash@{0}`, not from today).
 
+## 2026-10-20 (23:30): ks-lbm-2 FAILED; retried as ks-lbm-3 (rescoped by measured cost), NOT started
+
+- **Why ks-lbm-2 failed (my planning):** sized by task count with no measured cost (my per-frame guesses were 3 to 5 times low); validation was one blocking, unresumable call (shedding needed 6.6 core-hours, 16 of 88 cells timed out); a worker edited its script while the checker ran (so the 5 of 5 "nondeterministic" cells were a changed script, not a flaky mirror); four workers at once; workers re-ran lead setup. Only `lbm-edges` validated; its result is recorded in `.specify/f_vf_lbm/tasks.md` T007 with new gates T014 to T016. The `ks-limits` and `lbm-shedding` numbers are NOT trustworthy (reports did not match their tables); ignore them.
+- **Measured costs (Matt's Mac, one process):** KS N=64/128/256 = 1.8/6.5/25.6 ms/frame; LBM 150x30/300x50/600x100 = 5.6/17/64 ms/frame.
+- **ks-lbm-3** (`f_omp_runs/ks-lbm-3/`, README has the cause-to-change table): compute budgets (cell-seconds) gated by `try` and `lint`; `validate <unit> --bg` is detached and resumable; the checker runs a frozen copy of the script; two workers at a time; `SETUP_DONE` and a "setup is done" line in each brief. Units: `ks-limits`, `lbm-omega`, `lbm-shedding`. Paste line for omp: `Read /Users/matt/Github/f_omp_runs/ks-lbm-3/RUN.md and follow it exactly.`
+
 ## 2026-10-20 (21:30): ks-lbm-1 landed; decisions postulated; wave 2 `ks-lbm-2` built, NOT started
 
 - **Landed (109590f):** `tests/modules/ks/` (16 tests) and `tests/modules/vf_lbm/` (15 tests), both green. Wave-1 control score 1/2: the planted LBM roll-direction sentence was missed (my facts pre-empted it), so re-read FR-004 and the Clarifications against the experiment when the LBM codebox is written. The planted KS drift test was dropped (real spec says downward).
