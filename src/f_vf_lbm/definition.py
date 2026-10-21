@@ -61,8 +61,8 @@ patcher = {
          "label": "Omega", "pix_target": "collide",
          "hint": "BGK relaxation rate: low = thick and smooth, high = thin and turbulent. The top of the range is the stability limit"},
         {"name": "inflow", "type": "float", "min": 0.0, "max": 0.1, "default": 0.08,
-         "label": "Wind", "pix_target": "collide",
-         "hint": "Inflow speed in lattice units: the wake needs about 0.08 and a few thousand frames to start shedding"},
+         "label": "Wind", "pix_wire": False,      # no attrui: the dial feeds the slew ramp below, which drives collide's Param
+         "hint": "Inflow speed in lattice units, eased over about 2.5 s so changes do not jolt the inflow edge. Shedding is clean from about 0.06 up and needs a few thousand frames to start. Wind 0 stops the inflow but not the flow already moving (lower Omega to calm it)"},
         {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 3.0,
          "label": "Gain",
          "hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)"},
@@ -128,6 +128,9 @@ patcher = {
 #   [+ 1] -> [prepend param phase] -> enc                       phase = 1..N
 #   [i] -> [sel 0] -> [t b b]   right: mprev (copies the current velocity BEFORE the step), left: hold (steps)
 #   Speed menu (obj-29, outlet 0: index 0..3) -> [+ 1] -> [% N] right inlet, and -> [prepend param nsteps] -> enc
+# WIND SLEW: the Wind dial (obj-23, outlet 0) -> [pack f 2500] -> [line 0.08 16] -> [prepend param inflow] -> collide
+# (obj-52). A step in Wind used to reach the forced inflow column at once and make it jitter (mirror: left-edge
+# roughness 4 to 6 times the steady level while Wind moved); the ramp eases it over 2.5 s.
 # N = 1 steps every frame (the default, phase = nsteps = 1: the blend weight is 1, no smoothing). The counter is
 # never reset, so a change of N takes effect within N frames.
 def _box(i, cls, rect, **kw):
@@ -157,6 +160,9 @@ patcher["raw_boxes"] = [
     _obj(8, "+ 1", 2, 1, [500.0, 380.0, 30.0, 22.0], ["int"]),
     _obj(9, "prepend param phase", 1, 1, [430.0, 440.0, 130.0, 22.0]),
     _obj(10, "prepend param nsteps", 1, 1, [500.0, 410.0, 140.0, 22.0]),
+    _obj(11, "pack f 2500", 2, 1, [660.0, 290.0, 80.0, 22.0]),
+    _obj(12, "line 0.08 16", 3, 1, [660.0, 320.0, 90.0, 22.0]),
+    _obj(13, "prepend param inflow", 1, 1, [660.0, 350.0, 130.0, 22.0]),
 ]
 patcher["raw_lines"] = [
     _line(1, 0, 2, 0),
@@ -169,4 +175,5 @@ patcher["raw_lines"] = [
     _line(7, 0, "obj-50", 0),           # step trigger left -> hold: the solver steps
     _line("obj-29", 0, 8, 0), _line(8, 0, 5, 1),                    # Speed index + 1 -> N
     _line(8, 0, 10, 0), _line(10, 0, "obj-5", 0),                   # N -> enc
+    _line("obj-23", 0, 11, 0), _line(11, 0, 12, 0), _line(12, 0, 13, 0), _line(13, 0, "obj-52", 0),   # Wind slew -> collide
 ]

@@ -23,7 +23,8 @@ def report(tag):
     r, ux, uy = macro(unpack(pl))
     sp = np.hypot(ux, uy)
     rough = np.abs(ux[2:] - 2 * ux[1:-1] + ux[:-2]).__add__(np.abs(uy[2:] - 2 * uy[1:-1] + uy[:-2]))   # (H-2, W)
-    bands = {"left  0-3": slice(0, 4), "interior": slice(8, W - 8), "right W-4..": slice(W - 4, W)}
+    bands = {"left  0-2 (hidden)": slice(0, 3), "left  3-6 (shown)": slice(3, 7), "interior": slice(8, W - 8),
+             "right W-7..W-4 (shown)": slice(W - 7, W - 3), "right W-3.. (hidden)": slice(W - 3, W)}
     print(f"[{tag}] omega {omega}", flush=True)
     for name, sl in bands.items():
         m = ~mask[:, sl]

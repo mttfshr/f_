@@ -1394,7 +1394,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_vf_lbm: upsample the 192x108 velocity to the render size, apply gain, clamp, encode as an\n// f_vecfield (RG = XY, 0.5 = zero, B = 0.5, A = 1) and apply the bypass gate. Runs at RENDER resolution.\n// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.encode() (at the solver size this is exactly that function).\n//\n// Inlets: first = `r draw` bang (unused; it triggers every frame and gives this pix the render-context size),\n// second = the macro texture (R = ux, G = uy) from the mac stage, third = the previous step's macro texture\n// from the mprev stage.\n//   - SPEED BLEND: the velocity shown is mix(previous, current, phase / nsteps). The frame gate sends phase = 1..N\n//     (the frame within the current solver step) and nsteps = N, so at Speed 1/N the output moves smoothly\n//     between solver steps (about N frames behind). Defaults phase 1, nsteps 1: the current velocity only.\n//   - FR-008: R = clamp(0.5 + gain * ux, 0, 1), G likewise with uy. The velocity is in lattice units\n//     (inflow up to 0.1), so the default gain of 3 puts the free stream near 0.74 and keeps the faster flow\n//     around the obstacle inside the range (gain 1 would sit within 0.05 of the centre).\n//   - the upsample is a manual 4-tap bilinear on texel-centre nearest() taps: y periodic (the solver's y is\n//     periodic), x clamped to the end columns (the channel is not periodic in x)\n//   - a non-finite sample encodes as zero velocity (abs(x) < 1e30 guard), so no NaN or Inf reaches the outlet\n//   - bypass_gate = 1 outputs an exactly neutral field (zero velocity). The solver keeps running upstream.\n//     The Param is never named `bypass` (native pix attribute).\nvxm(u, v, w) {\n  return mix(nearest(in3, vec(u, v)).x, nearest(in2, vec(u, v)).x, w);\n}\nvym(u, v, w) {\n  return mix(nearest(in3, vec(u, v)).y, nearest(in2, vec(u, v)).y, w);\n}\n\nParam gain(3);\nParam bypass_gate(0);\nParam phase(1);\nParam nsteps(1);\n\nW = 192;\nH = 108;\nbw = clamp(phase / max(nsteps, 1), 0, 1);\nfx = norm.x * W - 0.5;\nfy = norm.y * H - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = (min(max(x0, 0), W - 1) + 0.5) / W;\nxb = (min(max(x0 + 1, 0), W - 1) + 0.5) / W;\nya = (wrap(y0, 0, H) + 0.5) / H;\nyb = (wrap(y0 + 1, 0, H) + 0.5) / H;\nau = mix(mix(vxm(xa, ya, bw), vxm(xb, ya, bw), tx), mix(vxm(xa, yb, bw), vxm(xb, yb, bw), tx), ty);\nav = mix(mix(vym(xa, ya, bw), vym(xb, ya, bw), tx), mix(vym(xa, yb, bw), vym(xb, yb, bw), tx), ty);\nau = switch(abs(au) < 1e30, au, 0);\nav = switch(abs(av) < 1e30, av, 0);\n\nr = clamp(0.5 + gain * au, 0, 1);\ng = clamp(0.5 + gain * av, 0, 1);\nout1 = vec(mix(r, 0.5, bypass_gate), mix(g, 0.5, bypass_gate), 0.5, 1);\n",
+									"code": "// codebox_enc.gen -- f_vf_lbm: upsample the 192x108 velocity to the render size, apply gain, clamp, encode as an\n// f_vecfield (RG = XY, 0.5 = zero, B = 0.5, A = 1) and apply the bypass gate. Runs at RENDER resolution.\n// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.encode() (at the solver size this is exactly that function).\n//\n// Inlets: first = `r draw` bang (unused; it triggers every frame and gives this pix the render-context size),\n// second = the macro texture (R = ux, G = uy) from the mac stage, third = the previous step's macro texture\n// from the mprev stage.\n//   - SPEED BLEND: the velocity shown is mix(previous, current, phase / nsteps). The frame gate sends phase = 1..N\n//     (the frame within the current solver step) and nsteps = N, so at Speed 1/N the output moves smoothly\n//     between solver steps (about N frames behind). Defaults phase 1, nsteps 1: the current velocity only.\n//   - FR-008: R = clamp(0.5 + gain * ux, 0, 1), G likewise with uy. The velocity is in lattice units\n//     (inflow up to 0.1), so the default gain of 3 puts the free stream near 0.74 and keeps the faster flow\n//     around the obstacle inside the range (gain 1 would sit within 0.05 of the centre).\n//   - the upsample is a manual 4-tap bilinear on texel-centre nearest() taps: y periodic (the solver's y is\n//     periodic), x clamped to columns 3 .. W-4 (the channel is not periodic in x). EDGE FEATHER: the outer three\n//     columns on each side are boundary-condition cells (the forced inflow, the zero-gradient outflow), not\n//     physical flow; they jitter when Wind changes and at low viscosity, so their values never reach the outlet:\n//     they show the nearest inner column instead (added 2026-10-21 after Matt saw edge jitter)\n//   - a non-finite sample encodes as zero velocity (abs(x) < 1e30 guard), so no NaN or Inf reaches the outlet\n//   - bypass_gate = 1 outputs an exactly neutral field (zero velocity). The solver keeps running upstream.\n//     The Param is never named `bypass` (native pix attribute).\nvxm(u, v, w) {\n  return mix(nearest(in3, vec(u, v)).x, nearest(in2, vec(u, v)).x, w);\n}\nvym(u, v, w) {\n  return mix(nearest(in3, vec(u, v)).y, nearest(in2, vec(u, v)).y, w);\n}\n\nParam gain(3);\nParam bypass_gate(0);\nParam phase(1);\nParam nsteps(1);\n\nW = 192;\nH = 108;\nbw = clamp(phase / max(nsteps, 1), 0, 1);\nfx = norm.x * W - 0.5;\nfy = norm.y * H - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = (min(max(x0, 3), W - 4) + 0.5) / W;\nxb = (min(max(x0 + 1, 3), W - 4) + 0.5) / W;\nya = (wrap(y0, 0, H) + 0.5) / H;\nyb = (wrap(y0 + 1, 0, H) + 0.5) / H;\nau = mix(mix(vxm(xa, ya, bw), vxm(xb, ya, bw), tx), mix(vxm(xa, yb, bw), vxm(xb, yb, bw), tx), ty);\nav = mix(mix(vym(xa, ya, bw), vym(xb, ya, bw), tx), mix(vym(xa, yb, bw), vym(xb, yb, bw), tx), ty);\nau = switch(abs(au) < 1e30, au, 0);\nav = switch(abs(av) < 1e30, av, 0);\n\nr = clamp(0.5 + gain * au, 0, 1);\ng = clamp(0.5 + gain * av, 0, 1);\nout1 = vec(mix(r, 0.5, bypass_gate), mix(g, 0.5, bypass_gate), 0.5, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1919,14 +1919,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Inflow speed in lattice units: the wake needs about 0.08 and a few thousand frames to start shedding",
+					"hint": "Inflow speed in lattice units, eased over about 2.5 s so changes do not jolt the inflow edge. Shedding is clean from about 0.06 up and needs a few thousand frames to start. Wind 0 stops the inflow but not the flow already moving (lower Omega to calm it)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_lbm_collide::inflow",
+					"param_connect": "#0_lbm_enc::inflow",
 					"parameter_enable": 1,
 					"patching_rect": [
 						118.5,
@@ -1965,25 +1965,6 @@
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
 					"varname": "inflow"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-24",
-					"maxclass": "attrui",
-					"attr": "inflow",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						98.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
 				}
 			},
 			{
@@ -2423,6 +2404,60 @@
 						""
 					]
 				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-11",
+					"maxclass": "newobj",
+					"patching_rect": [
+						360.0,
+						842.0,
+						80.0,
+						22.0
+					],
+					"text": "pack f 2500",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-12",
+					"maxclass": "newobj",
+					"patching_rect": [
+						360.0,
+						872.0,
+						90.0,
+						22.0
+					],
+					"text": "line 0.08 16",
+					"numinlets": 3,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-13",
+					"maxclass": "newobj",
+					"patching_rect": [
+						360.0,
+						902.0,
+						130.0,
+						22.0
+					],
+					"text": "prepend param inflow",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
 			}
 		],
 		"lines": [
@@ -2813,30 +2848,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-23",
-						0
-					],
-					"destination": [
-						"obj-24",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-24",
-						0
-					],
-					"destination": [
-						"obj-52",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-4",
 						2
 					],
@@ -3070,6 +3081,54 @@
 					],
 					"destination": [
 						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-raw-11",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-11",
+						0
+					],
+					"destination": [
+						"obj-raw-12",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-12",
+						0
+					],
+					"destination": [
+						"obj-raw-13",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-13",
+						0
+					],
+					"destination": [
+						"obj-52",
 						0
 					]
 				}

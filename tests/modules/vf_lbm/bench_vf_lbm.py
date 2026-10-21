@@ -43,6 +43,7 @@ TOL_STAGE = 3e-6        # one frame, one stage vs the mirror (measured 2026-10-2
 def tol_enc(gain):      # the encode error scales with gain (measured 1.8e-6 at gain 1, 5.4e-6 at 3, 1.8e-5 at 10)
     return max(1e-5, 3e-6 * gain)
 TOL_EXACT = 0.0         # pure gathers and copies
+FEATHER = 3             # the encode stage never shows the outer 3 columns on each side: it copies the inner neighbour
 
 
 def code(stage):
@@ -353,7 +354,7 @@ def up_bilinear(a, h, w):
     y0 = np.floor(fy).astype(int)
     tx = (fx - x0)[None, :]
     ty = (fy - y0)[:, None]
-    xa, xb = np.clip(x0, 0, W - 1), np.clip(x0 + 1, 0, W - 1)
+    xa, xb = np.clip(x0, FEATHER, W - 1 - FEATHER), np.clip(x0 + 1, FEATHER, W - 1 - FEATHER)
     ya, yb = y0 % H, (y0 + 1) % H
     top = a[ya][:, xa] * (1 - tx) + a[ya][:, xb] * tx
     bot = a[yb][:, xa] * (1 - tx) + a[yb][:, xb] * tx
@@ -367,16 +368,27 @@ def macro_tex(pl):
     return t, ux, uy
 
 
+def feathered(enc):
+    """The mirror's encode with the outer FEATHER columns on each side replaced by the nearest inner column."""
+    out = enc.copy()
+    out[:, :FEATHER] = enc[:, FEATHER:FEATHER + 1]
+    out[:, W - FEATHER:] = enc[:, W - 1 - FEATHER:W - FEATHER]
+    return out
+
+
 def test_enc_at_solver_size_matches_mirror():
     pl = valid_planes(11)
     tex, ux, uy = macro_tex(pl)
     got = gpu("enc", [BANG, tex], dim=(W, H))
-    want = lm.encode(pl, 3.0)
-    check("enc at 192x108 vs the mirror's encode, max over RGBA", mx(got, want), tol_enc(3.0))
+    want = feathered(lm.encode(pl, 3.0))
+    check("enc at 192x108 vs the mirror's encode with the edge feather, max over RGBA", mx(got, want), tol_enc(3.0))
     for gain in (0.0, 1.0, 10.0):
         g = gpu("enc", [BANG, tex], dim=(W, H), gain=gain)
-        w = lm.encode(pl, gain)
-        check(f"enc gain {gain:g} vs the mirror", mx(g, w), tol_enc(gain))
+        w = feathered(lm.encode(pl, gain))
+        check(f"enc gain {gain:g} vs the mirror (feathered)", mx(g, w), tol_enc(gain))
+    check("edge feather: columns 0..2 and W-3..W-1 equal their inner neighbour (exact)",
+          max(mx(got[:, :FEATHER], np.repeat(got[:, FEATHER:FEATHER + 1], FEATHER, axis=1)),
+              mx(got[:, W - FEATHER:], np.repeat(got[:, W - 1 - FEATHER:W - FEATHER], FEATHER, axis=1))), 0.0)
     check("enc gain 0: exactly neutral", mx(gpu("enc", [BANG, tex], dim=(W, H), gain=0.0)[..., :3], 0.5), 0.0)
     byp = gpu("enc", [BANG, tex], dim=(W, H), bypass_gate=1.0)
     check("bypass_gate 1: an exactly neutral vecfield (0.5, 0.5, 0.5, 1)",
