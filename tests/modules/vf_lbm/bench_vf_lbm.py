@@ -402,8 +402,9 @@ def test_enc_upsample_at_other_sizes():
     bad[21, 21, 1] = np.inf
     out = gpu("enc", [BANG, bad], dim=(W, H))
     check("enc: non-finite velocity never reaches the outlet", float(np.count_nonzero(~np.isfinite(out))), 0.0)
-    check("enc: ... it encodes as zero velocity there",
-          max(mx(out[20, 20, :2], 0.5), mx(out[21, 21, :2], 0.5)), 0.0)
+    # only the poisoned channel is zeroed (R at 20,20 and G at 21,21); the other channel keeps its real value
+    check("enc: ... the poisoned channel encodes as zero velocity there",
+          max(mx(out[20, 20, 0], 0.5), mx(out[21, 21, 1], 0.5)), 0.0)
 
 
 # ----------------------------------------------------------------- chain
