@@ -79,10 +79,10 @@ exists.
   the coordinate modulo 1 and then interpolates with edge-clamped taps: uv = 1.3 reads 0.3, uv = -0.2 reads 0.8, and
   exactly u = 1.0 or u = 0.0 reads the first texel with no seam blend (probes P2 and P6, and the scratch patch's pix-to-pix
   path, `scratch/boundmode_probe.maxpat`). `skills/jit-gen-codebox/SKILL.md` line 151 says CLAMP (a 2026-06-21 test, probably
-  with a matrix-fed texture; the scratch patch's matrix-fed path did not populate, so that is untested). `gpu_sim.sample`
-  still clamps by default, and its `wrap=True` wraps the taps as well (periodic bilinear), which is neither. Until
-  `gpu_sim` models this: a module that reads outside [0, 1] should clamp or `fract()` explicitly in its codebox, and a
-  mirror of one that does not must model the wrap itself.
+  with a matrix-fed texture; the scratch patch's matrix-fed path did not populate, so that is untested). `gpu_sim.sample` now models the x axis as measured (`OOB_DEFAULT`; `oob=` overrides per call); y still
+  clamps until probe P7, and `wrap=True` is the different, manual periodic form (a codebox that `fract()`s its own
+  coordinate). A module should still clamp or `fract()` explicitly where it can; `tests/records/sweep_unguarded_samples.py`
+  lists the shipped codeboxes that read out of range without a guard (a heuristic, 2026-10-20).
 - It does not replace tier 3. A module can match its mirror to 1e-6 and still look wrong.
 
 For how these map to the repo's verification tiers (math, execution, judgment), see the root
