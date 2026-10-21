@@ -8,6 +8,12 @@
 - **Open decisions for Matt:** whether any clamp artifact is visible enough to fix; the stale `src/f_lens/definition.py` and Stage C comment items were already fixed and regenerated; `package/javascript/lens_toggle.js` was regenerated and kept.
 - **Housekeeping notes:** device tools were renamed twice during the session (`mcp__remote-devices__` and `mcp__claude-device__lcl-`); long commands over about 60 s time out on the device, so use `tests/bg.sh start offline` and `tests/bg.sh status`. A stray older stash exists (`stash@{0}`, not from today).
 
+## 2026-10-20 (20:30): luma and panel fixes CONFIRMED in Max and committed
+
+- **Matt looked in Max (20:24):** the `f_luma_processor`, `f_hue_processor` and `f_tone_curve` panels are right (no longer cover the controls), and luma passes (yellow stays yellow at defaults). Closes the Max looks owed in the two entries below; their "NOT committed" lines are stale.
+- **Commits:** `6e06408` (luma hue tie-break + luma panel), `30f2b04` (hue and tone_curve panels), `b91bf84` (HANDOFF, skills manifest stamp, the two re-saved demo patchers). Working tree was clean afterwards.
+- **Still open:** the deferred clamp candidates (`f_vf_potential`, `f_ngon`, `f_stipple`, `f_tf_aniso_blur`), each needing a visibility judgment; the luma reference doc was not checked for wording about gray or hue ties; omp mirror waves (queue: weave, prism, seeds search and render, optical_flow stages A, B, D, E).
+
 ## 2026-10-20 (20:25): frame panels of `f_luma_processor`, `f_hue_processor`, `f_tone_curve` sent to the background layer; Max look owed; NOT committed
 
 - **Report (Matt, 20:11):** on those three modules the panel covers everything. **Cause found:** each definition overrode the frame panel with `"panel": {"background": None, ...}` (present for 30+ commits, not from today's luma regeneration), so the panel (`obj-9`) was a foreground box; the builder default and the other modules have `background=1` (`build/build_patcher.py` line 219).
