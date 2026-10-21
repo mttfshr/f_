@@ -1919,14 +1919,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Inflow speed in lattice units, eased over about 2.5 s so changes do not jolt the inflow edge. Shedding is clean from about 0.06 up and needs a few thousand frames to start. Wind 0 stops the inflow but not the flow already moving (lower Omega to calm it)",
+					"hint": "Inflow speed in lattice units. Shedding is clean from about 0.06 up and needs a few thousand frames to start. Wind 0 stops the inflow but not the flow already moving (lower Omega to calm it). The top of the range (0.1) with Omega near 1.98 pushes local speeds past Mach 0.3",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_lbm_enc::inflow",
+					"param_connect": "#0_lbm_collide::inflow",
 					"parameter_enable": 1,
 					"patching_rect": [
 						118.5,
@@ -1965,6 +1965,25 @@
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
 					"varname": "inflow"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-24",
+					"maxclass": "attrui",
+					"attr": "inflow",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						98.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
 				}
 			},
 			{
@@ -2404,60 +2423,6 @@
 						""
 					]
 				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-11",
-					"maxclass": "newobj",
-					"patching_rect": [
-						360.0,
-						842.0,
-						80.0,
-						22.0
-					],
-					"text": "pack f 2500",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-12",
-					"maxclass": "newobj",
-					"patching_rect": [
-						360.0,
-						872.0,
-						90.0,
-						22.0
-					],
-					"text": "line 0.08 16",
-					"numinlets": 3,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-13",
-					"maxclass": "newobj",
-					"patching_rect": [
-						360.0,
-						902.0,
-						130.0,
-						22.0
-					],
-					"text": "prepend param inflow",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
 			}
 		],
 		"lines": [
@@ -2848,6 +2813,30 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-4",
 						2
 					],
@@ -3081,54 +3070,6 @@
 					],
 					"destination": [
 						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-23",
-						0
-					],
-					"destination": [
-						"obj-raw-11",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-11",
-						0
-					],
-					"destination": [
-						"obj-raw-12",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-12",
-						0
-					],
-					"destination": [
-						"obj-raw-13",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-13",
-						0
-					],
-					"destination": [
-						"obj-52",
 						0
 					]
 				}
