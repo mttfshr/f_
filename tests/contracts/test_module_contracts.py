@@ -50,6 +50,12 @@ KNOWN_ISSUES = {
         "declared but unused; this stage stays live under bypass by design "
         "(plan.md, 'Bypassed multi-stage modules keep running')",
 }
+_KS_NOTE = ("documented in src/f_ks/codebox_*.gen headers: {} is a fixed solver constant that stays a Param "
+            "only so the bench can vary it (tests/modules/ks/bench_ks.py); it is not a performable "
+            "control (spec FR-001: L = 50, FR-003: seed amplitude 1)")
+for _d in ("#0_ks_spec.L", "#0_ks_nl.L"):
+    KNOWN_ISSUES[("f_ks", "undriven", _d)] = _KS_NOTE.format("L")
+KNOWN_ISSUES[("f_ks", "undriven", "#0_ks_pass.amp")] = _KS_NOTE.format("amp")
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE
 

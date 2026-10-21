@@ -1177,3 +1177,9 @@ Both still pure ideation — no code, no tests, nothing built or decided.
 - **Files:** `src/f_ks/` (codebox_pass/spec/nl/enc, four generated DFT codeboxes, `gen_dft.py` reusing f_vf_fluid's template with identical code lines), `tests/modules/ks/bench_ks.py` (registered in `tests/lib/benchdeps.py`), mirror tidied (`dt0` 0.05, `ceiling` 0.0625, dead `fwd_sign` branch removed, new nl containment `U_CAP` 100 + test; 17/17).
 - **Bench (Max 9.2.0, `--slow`, 9/9):** see tasks.md T007/T020 for the figures. Chain GPU-vs-mirror 4.6e-7 at 30 frames, 2.3e-6 at 100.
 - **Next:** `src/f_ks/definition.py` (generator archetype, multi-stage `pix_chain`, raw_boxes for `jit.noise` + the dt expr + load/reset reseed) built by `build/build_patcher.py`, then the module contract bench, then tier-3 (output mapping, `rate` feel). Controls to settle with Matt before building: `rate` dial and a reset bang (proposed); nothing else.
+
+## 2026-10-21 - f_ks patcher built (T021, T013)
+- `package/patchers/f_ks.maxpat` from `src/f_ks/definition.py` (source archetype, 10 pix stages, f_vf_fluid ADR-1 pattern with a hold stage and cold feedback). Controls: `rate` dial (= dt, 0-0.0625), `reset` button + `reset` message (also on load), bypass (black, A=1, solver keeps running).
+- Deviations from the plan: hash-noise `seed` stage instead of jit.noise; `pass` takes the draw bang as inlet 1 (feedback in2, noise in3; bench_ks updated, 8/8 incl. new seed statistics); no patcher-side min() expr.
+- Checks: drift 0, offline contracts 9/9 (f_ks L/amp in KNOWN_ISSUES), live module contracts green, bench_ks_module 2/2.
+- Open for Matt (tier 3): after reset the field is flat ~1 s then grows (seed energy in the damped band) and the luma map saturates (std 0.435 at frame 600). Also T010 naming, T006 real-patch cost, menu/README/helpfile (T040).

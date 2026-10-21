@@ -1,0 +1,23 @@
+// codebox_seed.gen -- f_ks stage 0a: the reseed noise, a deterministic hash per texel. 256x256 float32.
+// Checked statistically (bench_ks.test_seed_noise_statistics); a seed only needs to be broadband and never constant.
+//
+// Inputs: the first inlet is the `r draw` bang (unused; it only triggers the render every frame).
+// Output: R = white noise in [0, 1). The pass stage reads it only on the frame reseed is 1.
+// `salt` changes the pattern: the patcher counts up on every reset, so each reset is a new random start.
+//   - no sin(): a Hoskins-style arithmetic hash (fract and multiply-add only), whose precision does not
+//     depend on the GPU's sin() range reduction
+//   - scalars only: components are never read from a stored vec
+//   - never name a variable e or phi (predefined constants)
+Param salt(0);
+
+px = floor(norm.x * 256) + salt * 61;
+py = floor(norm.y * 256) + salt * 17;
+ha = fract(px * 0.1031);
+hb = fract(py * 0.1031);
+hc = ha;
+hd = ha * (hb + 33.33) + hb * (hc + 33.33) + hc * (ha + 33.33);
+ha = ha + hd;
+hb = hb + hd;
+hc = hc + hd;
+hn = fract((ha + hb) * hc);
+out1 = vec(hn, 0, 0, 1);
