@@ -72,7 +72,7 @@ patcher["overrides"] = {
     "edge_falloff.label": {"fontsize": 9.0, "presentation_rect": [2.5, 59.375, 35.0, 17.0], "textjustification": None},
     "highlights.ctl": {"activedialcolor": None, "presentation_rect": [116.0000034570694, 73.33333551883698, 27.0, 43.0]},
     "midtones.ctl": {"activedialcolor": None, "presentation_rect": [79.00000235438347, 73.33333551883698, 27.0, 43.0]},
-    "panel": {"background": None, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
+    "panel": {"background": 1, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
     "shadows.ctl": {"activedialcolor": None, "presentation_rect": [42.66666793823242, 73.33333551883698, 27.0, 43.0]},
     "title": {"presentation_rect": [10.5, 2.6666667461395264, 102.5, 21.0]},
 }

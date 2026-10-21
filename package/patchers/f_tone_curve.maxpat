@@ -243,6 +243,7 @@
 					"id": "obj-9",
 					"maxclass": "panel",
 					"angle": 270.0,
+					"background": 1,
 					"bgcolor": [
 						0.058823529411764705,
 						0.058823529411764705,
