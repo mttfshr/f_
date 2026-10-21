@@ -8,6 +8,12 @@
 - **Open decisions for Matt:** whether any clamp artifact is visible enough to fix; the stale `src/f_lens/definition.py` and Stage C comment items were already fixed and regenerated; `package/javascript/lens_toggle.js` was regenerated and kept.
 - **Housekeeping notes:** device tools were renamed twice during the session (`mcp__remote-devices__` and `mcp__claude-device__lcl-`); long commands over about 60 s time out on the device, so use `tests/bg.sh start offline` and `tests/bg.sh status`. A stray older stash exists (`stash@{0}`, not from today).
 
+## 2026-10-21 (08:50): ks-lbm-3 results recorded; Matt's decisions; follow-up run ks-lbm-4 built, NOT started
+
+- **ks-lbm-3 ran well.** `lbm-omega`: omega 1.99 survives, 2.00 fails abruptly on every setting; mass drift bounded (T005 done). `lbm-shedding` (verifier: partly): shedding at omega 1.967 to 1.985, U0 0.08, 5000 to 7000 frames; the "nothing at U0 <= 0.04" claim is unsupported (those cells ran only 2001 frames). `ks-limits` was marked incomplete (my lint cost estimate was 5x too high); my own recomputation from its frozen table gives a dt ceiling of about 0.05 to 0.0625 at L = 50. Details in the two `tasks.md` files (T004 to T006).
+- **Matt's decisions (yes to all, 2026-10-21):** build despite the long shedding warm-up (T012); target regime omega 1.97 to 1.98, U0 near 0.08 (T013, partly); KS dt0 changed from 0.1 to 0.05; run both follow-ups.
+- **ks-lbm-4** (`f_omp_runs/ks-lbm-4/`, README explains): `ks-limits-2` (5 seeds, finer ladder, 10000-frame check) and `lbm-shedding-2` (U0 0.04 to 0.07 long, the spike's regime for 10000 frames, readable images). Paste line: `Read /Users/matt/Github/f_omp_runs/ks-lbm-4/RUN.md and follow it exactly.` Tooling fixes from the worker feedback are folded in; ks-lbm-3's lint gate was loosened to 3x.
+
 ## 2026-10-20 (23:30): ks-lbm-2 FAILED; retried as ks-lbm-3 (rescoped by measured cost), NOT started
 
 - **Why ks-lbm-2 failed (my planning):** sized by task count with no measured cost (my per-frame guesses were 3 to 5 times low); validation was one blocking, unresumable call (shedding needed 6.6 core-hours, 16 of 88 cells timed out); a worker edited its script while the checker ran (so the 5 of 5 "nondeterministic" cells were a changed script, not a flaky mirror); four workers at once; workers re-ran lead setup. Only `lbm-edges` validated; its result is recorded in `.specify/f_vf_lbm/tasks.md` T007 with new gates T014 to T016. The `ks-limits` and `lbm-shedding` numbers are NOT trustworthy (reports did not match their tables); ignore them.
