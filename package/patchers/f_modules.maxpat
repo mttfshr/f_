@@ -233,15 +233,14 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Chladni \u2207",
-                                "Kuramoto-Sivashinsky"
+                                "Chladni \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 0,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -272,15 +271,14 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "chladni",
-                                "ks"
+                                "chladni"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 0,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -383,14 +381,15 @@
                                 "Stipple",
                                 "Grain",
                                 "Weave \u2207",
-                                "Seeds \u2207"
+                                "Seeds \u2207",
+                                "Kuramoto-Sivashinsky"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_1_disp",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 5,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -425,14 +424,15 @@
                                 "stipple",
                                 "grain",
                                 "weave",
-                                "vf_seeds"
+                                "vf_seeds",
+                                "ks"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_1_file",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 5,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

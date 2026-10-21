@@ -28,13 +28,13 @@ This table is also the source for the package's launcher patcher (`package/extra
 | Patch | Description |
 |---|---|
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes); audio companion patch included |
-| `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
 
 ### Discrete
 
 | Patch | Description |
 |---|---|
 | `f_grain` | Stochastic grain field with per-grain displacement and luma gating |
+| `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
 | `f_stipple` | 2D hash field stipple texture |
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |

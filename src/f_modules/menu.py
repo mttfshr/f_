@@ -42,7 +42,6 @@ VT = ("vec", "tensor")
 CATEGORIES = [
     ("Scope", [
         ("Chladni", "chladni", V),
-        ("Kuramoto-Sivashinsky", "ks", N),
     ]),
     ("Discrete", [
         ("Masonry", "masonry", N),
@@ -50,6 +49,7 @@ CATEGORIES = [
         ("Grain", "grain", N),
         ("Weave", "weave", V),
         ("Seeds", "vf_seeds", V),
+        ("Kuramoto-Sivashinsky", "ks", N),
     ]),
     ("Spatial", [
         ("Mobius", "mobius", N),
