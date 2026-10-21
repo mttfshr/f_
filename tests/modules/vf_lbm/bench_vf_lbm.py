@@ -35,10 +35,10 @@ from harness import check, note, run, slow
 SRC = _paths.REPO / "src" / "f_vf_lbm"
 W, H = 192, 108
 FILES = {"mrg": "codebox_mrg.gen", "collide": "codebox_collide.gen", "stream": "codebox_stream.gen",
-         "mac": "codebox_mac.gen", "enc": "codebox_enc.gen"}
+         "mac": "codebox_mac.gen", "enc": "codebox_enc.gen", "mprev": "codebox_mprev.gen"}
 BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang inlet
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
-PINNED = {"collide": {"omega": 1.97, "inflow": 0.08}, "enc": {"gain": 3.0, "bypass_gate": 0.0}}
+PINNED = {"collide": {"omega": 1.97, "inflow": 0.08}, "enc": {"gain": 3.0, "bypass_gate": 0.0, "phase": 1.0, "nsteps": 1.0}}
 TOL_STAGE = 3e-6        # one frame, one stage vs the mirror (measured 2026-10-21: worst 3.3e-7, so ~10x headroom)
 def tol_enc(gain):      # the encode error scales with gain (measured 1.8e-6 at gain 1, 5.4e-6 at 3, 1.8e-5 at 10)
     return max(1e-5, 3e-6 * gain)
@@ -126,6 +126,7 @@ def test_every_stage_compiles_and_runs():
         "stream": lambda: gpu("stream", [pl[0], pl[1], pl[2]]),
         "mac": lambda: gpu("mac", [pl[0], pl[1], pl[2]]),
         "enc": lambda: gpu("enc", [BANG, macro_tex], dim=(160, 90)),
+        "mprev": lambda: gpu("mprev", [BANG, macro_tex], dim=(W, H)),
     }
     for name, fn in runs.items():
         out = fn()
@@ -405,6 +406,30 @@ def test_enc_upsample_at_other_sizes():
     # only the poisoned channel is zeroed (R at 20,20 and G at 21,21); the other channel keeps its real value
     check("enc: ... the poisoned channel encodes as zero velocity there",
           max(mx(out[20, 20, 0], 0.5), mx(out[21, 21, 1], 0.5)), 0.0)
+
+
+def test_mprev_is_an_identity_copy():
+    pl = valid_planes(13)
+    tex, ux, uy = macro_tex(pl)
+    check("mprev copies the macro texture exactly", mx(gpu("mprev", [BANG, tex], dim=(W, H)), tex), TOL_EXACT)
+
+
+def test_enc_speed_blend():
+    """The Speed blend: the velocity shown is mix(previous, current, phase / nsteps). Previous is the third inlet."""
+    cur, ux_c, uy_c = macro_tex(valid_planes(14))
+    prev, ux_p, uy_p = macro_tex(valid_planes(15))
+    for (ph, ns) in ((1, 1), (1, 2), (2, 2), (1, 4), (3, 4), (4, 4)):
+        w = ph / ns
+        out = gpu("enc", [BANG, cur, prev], dim=(W, H), phase=float(ph), nsteps=float(ns))
+        ux = ux_p.astype(np.float64) + (ux_c.astype(np.float64) - ux_p) * w
+        uy = uy_p.astype(np.float64) + (uy_c.astype(np.float64) - uy_p) * w
+        want_r = np.clip(0.5 + 3.0 * ux, 0, 1)
+        want_g = np.clip(0.5 + 3.0 * uy, 0, 1)
+        check(f"enc blend phase {ph} of {ns} (weight {w:.2f}): R", mx(out[..., 0], want_r), tol_enc(3.0))
+        check(f"enc blend phase {ph} of {ns}: G", mx(out[..., 1], want_g), tol_enc(3.0))
+    full = gpu("enc", [BANG, cur, prev], dim=(W, H), phase=4.0, nsteps=4.0)
+    check("phase = nsteps shows the current velocity exactly (no smoothing lag at the end of a step)",
+          mx(full[..., 0], np.clip(0.5 + 3.0 * ux_c.astype(np.float64), 0, 1)), tol_enc(3.0))
 
 
 # ----------------------------------------------------------------- chain

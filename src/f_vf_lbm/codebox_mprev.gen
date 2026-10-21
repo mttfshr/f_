@@ -1,0 +1,5 @@
+// codebox_mprev.gen -- f_vf_lbm: the previous solver velocity, for the Speed blend. 192x108 float32.
+// An identity copy of the mac texture, triggered by the frame gate just BEFORE the solver steps (a trigger
+// fans out right to left), so it holds the velocity from the previous step while mac renders the new one.
+// Inlets: first = the gated bang (hot, unused in the code), second = the mac texture (cold).
+out1 = nearest(in2, norm);

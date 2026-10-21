@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						702.0,
+						752.0,
 						30.0,
 						30.0
 					]
@@ -1164,7 +1164,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-5",
+					"id": "obj-55",
 					"maxclass": "newobj",
 					"numinlets": 2,
 					"numoutlets": 2,
@@ -1227,7 +1227,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_vf_lbm: upsample the 192x108 velocity to the render size, apply gain, clamp, encode as an\n// f_vecfield (RG = XY, 0.5 = zero, B = 0.5, A = 1) and apply the bypass gate. Runs at RENDER resolution.\n// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.encode() (at the solver size this is exactly that function).\n//\n// Inlets: first = `r draw` bang (unused; it triggers every frame and gives this pix the render-context size),\n// second = the macro texture (R = ux, G = uy) from the mac stage.\n//   - FR-008: R = clamp(0.5 + gain * ux, 0, 1), G likewise with uy. The velocity is in lattice units\n//     (inflow up to 0.1), so the default gain of 3 puts the free stream near 0.74 and keeps the faster flow\n//     around the obstacle inside the range (gain 1 would sit within 0.05 of the centre).\n//   - the upsample is a manual 4-tap bilinear on texel-centre nearest() taps: y periodic (the solver's y is\n//     periodic), x clamped to the end columns (the channel is not periodic in x)\n//   - a non-finite sample encodes as zero velocity (abs(x) < 1e30 guard), so no NaN or Inf reaches the outlet\n//   - bypass_gate = 1 outputs an exactly neutral field (zero velocity). The solver keeps running upstream.\n//     The Param is never named `bypass` (native pix attribute).\nParam gain(3);\nParam bypass_gate(0);\n\nW = 192;\nH = 108;\nfx = norm.x * W - 0.5;\nfy = norm.y * H - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = min(max(x0, 0), W - 1);\nxb = min(max(x0 + 1, 0), W - 1);\nya = wrap(y0, 0, H);\nyb = wrap(y0 + 1, 0, H);\np00 = vec((xa + 0.5) / W, (ya + 0.5) / H);\np10 = vec((xb + 0.5) / W, (ya + 0.5) / H);\np01 = vec((xa + 0.5) / W, (yb + 0.5) / H);\np11 = vec((xb + 0.5) / W, (yb + 0.5) / H);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx), mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\nav = mix(mix(nearest(in2, p00).y, nearest(in2, p10).y, tx), mix(nearest(in2, p01).y, nearest(in2, p11).y, tx), ty);\nau = switch(abs(au) < 1e30, au, 0);\nav = switch(abs(av) < 1e30, av, 0);\n\nr = clamp(0.5 + gain * au, 0, 1);\ng = clamp(0.5 + gain * av, 0, 1);\nout1 = vec(mix(r, 0.5, bypass_gate), mix(g, 0.5, bypass_gate), 0.5, 1);\n",
+									"code": "// codebox_mprev.gen -- f_vf_lbm: the previous solver velocity, for the Speed blend. 192x108 float32.\n// An identity copy of the mac texture, triggered by the frame gate just BEFORE the solver steps (a trigger\n// fans out right to left), so it holds the velocity from the previous step while mac renders the new one.\n// Inlets: first = the gated bang (hot, unused in the code), second = the mac texture (cold).\nout1 = nearest(in2, norm);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1304,6 +1304,185 @@
 					"patching_rect": [
 						30.0,
 						630.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_lbm_mprev @adapt 0 @dim 192 108 @type float32",
+					"varname": "#0_lbm_mprev"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-5",
+					"maxclass": "newobj",
+					"numinlets": 3,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"code": "// codebox_enc.gen -- f_vf_lbm: upsample the 192x108 velocity to the render size, apply gain, clamp, encode as an\n// f_vecfield (RG = XY, 0.5 = zero, B = 0.5, A = 1) and apply the bypass gate. Runs at RENDER resolution.\n// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.encode() (at the solver size this is exactly that function).\n//\n// Inlets: first = `r draw` bang (unused; it triggers every frame and gives this pix the render-context size),\n// second = the macro texture (R = ux, G = uy) from the mac stage, third = the previous step's macro texture\n// from the mprev stage.\n//   - SPEED BLEND: the velocity shown is mix(previous, current, phase / nsteps). The frame gate sends phase = 1..N\n//     (the frame within the current solver step) and nsteps = N, so at Speed 1/N the output moves smoothly\n//     between solver steps (about N frames behind). Defaults phase 1, nsteps 1: the current velocity only.\n//   - FR-008: R = clamp(0.5 + gain * ux, 0, 1), G likewise with uy. The velocity is in lattice units\n//     (inflow up to 0.1), so the default gain of 3 puts the free stream near 0.74 and keeps the faster flow\n//     around the obstacle inside the range (gain 1 would sit within 0.05 of the centre).\n//   - the upsample is a manual 4-tap bilinear on texel-centre nearest() taps: y periodic (the solver's y is\n//     periodic), x clamped to the end columns (the channel is not periodic in x)\n//   - a non-finite sample encodes as zero velocity (abs(x) < 1e30 guard), so no NaN or Inf reaches the outlet\n//   - bypass_gate = 1 outputs an exactly neutral field (zero velocity). The solver keeps running upstream.\n//     The Param is never named `bypass` (native pix attribute).\nvxm(u, v, w) {\n  return mix(nearest(in3, vec(u, v)).x, nearest(in2, vec(u, v)).x, w);\n}\nvym(u, v, w) {\n  return mix(nearest(in3, vec(u, v)).y, nearest(in2, vec(u, v)).y, w);\n}\n\nParam gain(3);\nParam bypass_gate(0);\nParam phase(1);\nParam nsteps(1);\n\nW = 192;\nH = 108;\nbw = clamp(phase / max(nsteps, 1), 0, 1);\nfx = norm.x * W - 0.5;\nfy = norm.y * H - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = (min(max(x0, 0), W - 1) + 0.5) / W;\nxb = (min(max(x0 + 1, 0), W - 1) + 0.5) / W;\nya = (wrap(y0, 0, H) + 0.5) / H;\nyb = (wrap(y0 + 1, 0, H) + 0.5) / H;\nau = mix(mix(vxm(xa, ya, bw), vxm(xb, ya, bw), tx), mix(vxm(xa, yb, bw), vxm(xb, yb, bw), tx), ty);\nav = mix(mix(vym(xa, ya, bw), vym(xb, ya, bw), tx), mix(vym(xa, yb, bw), vym(xb, yb, bw), tx), ty);\nau = switch(abs(au) < 1e30, au, 0);\nav = switch(abs(av) < 1e30, av, 0);\n\nr = clamp(0.5 + gain * au, 0, 1);\ng = clamp(0.5 + gain * av, 0, 1);\nout1 = vec(mix(r, 0.5, bypass_gate), mix(g, 0.5, bypass_gate), 0.5, 1);\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 3,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						680.0,
 						200.0,
 						22.0
 					],
@@ -1623,24 +1802,6 @@
 						22.0
 					],
 					"text": "vs_inState"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-20a",
-					"maxclass": "newobj",
-					"numinlets": 0,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						130.0,
-						120.0,
-						50.0,
-						22.0
-					],
-					"text": "r draw"
 				}
 			},
 			{
@@ -2086,7 +2247,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						792.0,
+						842.0,
 						50.0,
 						22.0
 					],
@@ -2104,7 +2265,26 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						822.0,
+						872.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-3",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						902.0,
 						30.0,
 						22.0
 					],
@@ -2118,11 +2298,11 @@
 			},
 			{
 				"box": {
-					"id": "obj-raw-3",
+					"id": "obj-raw-4",
 					"maxclass": "newobj",
 					"patching_rect": [
-						80.0,
-						852.0,
+						130.0,
+						932.0,
 						30.0,
 						22.0
 					],
@@ -2136,11 +2316,11 @@
 			},
 			{
 				"box": {
-					"id": "obj-raw-4",
+					"id": "obj-raw-5",
 					"maxclass": "newobj",
 					"patching_rect": [
-						80.0,
-						882.0,
+						130.0,
+						962.0,
 						30.0,
 						22.0
 					],
@@ -2154,11 +2334,11 @@
 			},
 			{
 				"box": {
-					"id": "obj-raw-5",
+					"id": "obj-raw-6",
 					"maxclass": "newobj",
 					"patching_rect": [
-						30.0,
-						852.0,
+						80.0,
+						932.0,
 						40.0,
 						22.0
 					],
@@ -2173,11 +2353,30 @@
 			},
 			{
 				"box": {
-					"id": "obj-raw-6",
+					"id": "obj-raw-7",
 					"maxclass": "newobj",
 					"patching_rect": [
-						130.0,
-						852.0,
+						80.0,
+						962.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-8",
+					"maxclass": "newobj",
+					"patching_rect": [
+						200.0,
+						932.0,
 						30.0,
 						22.0
 					],
@@ -2186,6 +2385,42 @@
 					"numoutlets": 1,
 					"outlettype": [
 						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-9",
+					"maxclass": "newobj",
+					"patching_rect": [
+						130.0,
+						992.0,
+						130.0,
+						22.0
+					],
+					"text": "prepend param phase",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-10",
+					"maxclass": "newobj",
+					"patching_rect": [
+						200.0,
+						962.0,
+						140.0,
+						22.0
+					],
+					"text": "prepend param nsteps",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
 					]
 				}
 			}
@@ -2224,18 +2459,6 @@
 					"destination": [
 						"obj-51",
 						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-20a",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
 					]
 				}
 			},
@@ -2458,6 +2681,30 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-54",
+						0
+					],
+					"destination": [
+						"obj-55",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-55",
+						0
+					],
+					"destination": [
+						"obj-5",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-11",
 						0
 					],
@@ -2651,7 +2898,7 @@
 				"patchline": {
 					"source": [
 						"obj-raw-2",
-						0
+						1
 					],
 					"destination": [
 						"obj-raw-3",
@@ -2662,23 +2909,47 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-3",
-						0
-					],
-					"destination": [
-						"obj-raw-4",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-4",
-						0
-					],
-					"destination": [
 						"obj-raw-2",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-3",
+						0
+					],
+					"destination": [
+						"obj-raw-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-4",
+						0
+					],
+					"destination": [
+						"obj-raw-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-5",
+						0
+					],
+					"destination": [
+						"obj-raw-3",
 						1
 					]
 				}
@@ -2686,11 +2957,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-2",
+						"obj-raw-4",
 						0
 					],
 					"destination": [
-						"obj-raw-5",
+						"obj-raw-9",
 						0
 					]
 				}
@@ -2698,7 +2969,55 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-5",
+						"obj-raw-9",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-3",
+						0
+					],
+					"destination": [
+						"obj-raw-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-6",
+						0
+					],
+					"destination": [
+						"obj-raw-7",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-7",
+						1
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-7",
 						0
 					],
 					"destination": [
@@ -2714,7 +3033,7 @@
 						0
 					],
 					"destination": [
-						"obj-raw-6",
+						"obj-raw-8",
 						0
 					]
 				}
@@ -2722,12 +3041,36 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-6",
+						"obj-raw-8",
 						0
 					],
 					"destination": [
-						"obj-raw-4",
+						"obj-raw-5",
 						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-8",
+						0
+					],
+					"destination": [
+						"obj-raw-10",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-10",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
 					]
 				}
 			}

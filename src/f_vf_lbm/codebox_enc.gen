@@ -3,7 +3,11 @@
 // Mirror: tests/modules/vf_lbm/vf_lbm_mirror.encode() (at the solver size this is exactly that function).
 //
 // Inlets: first = `r draw` bang (unused; it triggers every frame and gives this pix the render-context size),
-// second = the macro texture (R = ux, G = uy) from the mac stage.
+// second = the macro texture (R = ux, G = uy) from the mac stage, third = the previous step's macro texture
+// from the mprev stage.
+//   - SPEED BLEND: the velocity shown is mix(previous, current, phase / nsteps). The frame gate sends phase = 1..N
+//     (the frame within the current solver step) and nsteps = N, so at Speed 1/N the output moves smoothly
+//     between solver steps (about N frames behind). Defaults phase 1, nsteps 1: the current velocity only.
 //   - FR-008: R = clamp(0.5 + gain * ux, 0, 1), G likewise with uy. The velocity is in lattice units
 //     (inflow up to 0.1), so the default gain of 3 puts the free stream near 0.74 and keeps the faster flow
 //     around the obstacle inside the range (gain 1 would sit within 0.05 of the centre).
@@ -12,27 +16,33 @@
 //   - a non-finite sample encodes as zero velocity (abs(x) < 1e30 guard), so no NaN or Inf reaches the outlet
 //   - bypass_gate = 1 outputs an exactly neutral field (zero velocity). The solver keeps running upstream.
 //     The Param is never named `bypass` (native pix attribute).
+vxm(u, v, w) {
+  return mix(nearest(in3, vec(u, v)).x, nearest(in2, vec(u, v)).x, w);
+}
+vym(u, v, w) {
+  return mix(nearest(in3, vec(u, v)).y, nearest(in2, vec(u, v)).y, w);
+}
+
 Param gain(3);
 Param bypass_gate(0);
+Param phase(1);
+Param nsteps(1);
 
 W = 192;
 H = 108;
+bw = clamp(phase / max(nsteps, 1), 0, 1);
 fx = norm.x * W - 0.5;
 fy = norm.y * H - 0.5;
 x0 = floor(fx);
 y0 = floor(fy);
 tx = fx - x0;
 ty = fy - y0;
-xa = min(max(x0, 0), W - 1);
-xb = min(max(x0 + 1, 0), W - 1);
-ya = wrap(y0, 0, H);
-yb = wrap(y0 + 1, 0, H);
-p00 = vec((xa + 0.5) / W, (ya + 0.5) / H);
-p10 = vec((xb + 0.5) / W, (ya + 0.5) / H);
-p01 = vec((xa + 0.5) / W, (yb + 0.5) / H);
-p11 = vec((xb + 0.5) / W, (yb + 0.5) / H);
-au = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx), mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);
-av = mix(mix(nearest(in2, p00).y, nearest(in2, p10).y, tx), mix(nearest(in2, p01).y, nearest(in2, p11).y, tx), ty);
+xa = (min(max(x0, 0), W - 1) + 0.5) / W;
+xb = (min(max(x0 + 1, 0), W - 1) + 0.5) / W;
+ya = (wrap(y0, 0, H) + 0.5) / H;
+yb = (wrap(y0 + 1, 0, H) + 0.5) / H;
+au = mix(mix(vxm(xa, ya, bw), vxm(xb, ya, bw), tx), mix(vxm(xa, yb, bw), vxm(xb, yb, bw), tx), ty);
+av = mix(mix(vym(xa, ya, bw), vym(xb, ya, bw), tx), mix(vym(xa, yb, bw), vym(xb, yb, bw), tx), ty);
 au = switch(abs(au) < 1e30, au, 0);
 av = switch(abs(av) < 1e30, av, 0);
 
