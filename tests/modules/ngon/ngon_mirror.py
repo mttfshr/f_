@@ -6,8 +6,8 @@ float32, in the codebox's own order of operations.
 The codebox folds each pixel's `snorm` coordinate (norm mapped to [-1, 1]) by up to 32
 alternating reflections across two mirror lines at angle 0 and theta = pi/n_mirrors
 (branchless `step`/`mix` per iteration), after rotating by -rotation and scaling by
-1/scale. It then samples in1 at uv = z * 0.5 + 0.5 (clamped to [0, 1], bilinear,
-clamp-to-edge) and blends against an unwarped read of in1 by `bypass`.
+1/scale. It then samples in1 at uv = z * 0.5 + 0.5 (clamped to [0.001, 0.999] texel-centre bounds,
+bilinear, clamp-to-edge) and blends against an unwarped read of in1 by `bypass`.
 
 The fold loop's branch choice is step(zy, 0.0) => reflect across the x-axis when
 zy <= 0, and step(crossTheta, 0.0) => reflect across the theta-line when
@@ -16,6 +16,9 @@ Ties (a pixel exactly on a mirror line) sit on a comparison edge and are avoided
 the tests, per the brief.
 
 `bug` values are the mutations the tests must catch:
+  "exact_clamp" -- the pre-2026-10-20 clamp to exactly [0, 1]: a read at exactly x = 1.0
+    lands on the seam and returns the FIRST column on the GPU (y = 0.0 the last row),
+    so a fold past the right edge showed the wrong edge (caught by its own test only),
   "rot_sign"   -- rotate by +rotation instead of -rotation (sign flip in the trig),
   "no_scale"   -- forget to divide by scale (missing normalization),
   "theta_2pi"  -- wrong constant: theta = 2*pi/n_mirrors instead of pi/n_mirrors,
@@ -94,8 +97,9 @@ def ngon(src, n_mirrors=6.0, rotation=0.0, scale=1.0, bypass=0.0, bug=None):
     else:
         uv_x = (zx * F32(0.5) + F32(0.5)).astype(F32)
         uv_y = (zy * F32(0.5) + F32(0.5)).astype(F32)
-    uv_x = np.clip(uv_x, F32(0.0), F32(1.0)).astype(F32)
-    uv_y = np.clip(uv_y, F32(0.0), F32(1.0)).astype(F32)
+    lo, hi = (F32(0.0), F32(1.0)) if bug == "exact_clamp" else (F32(0.001), F32(0.999))
+    uv_x = np.clip(uv_x, lo, hi).astype(F32)
+    uv_y = np.clip(uv_y, lo, hi).astype(F32)
 
     effect_out = g.sample(src, uv_x, uv_y)
     base = g.sample(src, nx, ny)

@@ -36,8 +36,8 @@ for (i = 0; i < 32; i += 1) {
               mix(mix(zy, newzy1, test1), newzy0, test0);
 }
 
-uv_x = clamp(zx*0.5+0.5, 0.0, 1.0);
-uv_y = clamp(zy*0.5+0.5, 0.0, 1.0);
+uv_x = clamp(zx*0.5+0.5, 0.001, 0.999);
+uv_y = clamp(zy*0.5+0.5, 0.001, 0.999);
 
 effect_out = sample(in1, vec(uv_x, uv_y));
 out1 = mix(effect_out, sample(in1, norm), bypass);

@@ -20,7 +20,7 @@ fy = fy * connected;
 field_mag = sqrt(fx * fx + fy * fy);
 
 // Backward-advect previous frame along field
-src_uv = vec(clamp(uv.x - fx * dt, 0.0, 1.0), clamp(uv.y - fy * dt, 0.0, 1.0));
+src_uv = vec(clamp(uv.x - fx * dt, 0.001, 0.999), clamp(uv.y - fy * dt, 0.001, 0.999));
 prev = sample(in4, src_uv).x;
 
 // Accumulate: advected prev + field contribution, decayed

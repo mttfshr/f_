@@ -80,7 +80,7 @@ disp_uv = vec(along_disp / max(zoom, 0.001), across_disp / max(zoom, 0.001));
 // Reconstruct screen UV from rotated displaced coords
 disp_x = disp_uv.x * cx - disp_uv.y * sx;
 disp_y = disp_uv.x * sx + disp_uv.y * cx;
-disp_screen = vec(clamp(disp_x, 0.0, 1.0), clamp(disp_y, 0.0, 1.0));
+disp_screen = vec(clamp(disp_x, 0.001, 0.999), clamp(disp_y, 0.001, 0.999));
 displaced_out = sample(in1, disp_screen);
 
 // Bypass

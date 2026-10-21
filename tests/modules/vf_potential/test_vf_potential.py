@@ -334,5 +334,37 @@ def test_mutations_are_caught():
     print("    ok   sign slip, missing decay, swapped channels and reversed advection are each caught")
 
 
+def test_flow_entering_at_an_edge_reads_that_edge_not_the_opposite_one():
+    """Backward advection reads uv - f * dt. With dt 0.05 and a unit flow the strip within 0.05 of
+    the edge the flow enters from reads past the frame, and the clamp must give that edge's value:
+    a clamp to exactly 1.0 (x) reads the FIRST column and to exactly 0.0 (y) the LAST row on the
+    GPU (probes P6 / P7, 2026-10-20). prev is 0.2 everywhere except the opposite edge (0.9), so
+    the closed form for the strip is 0.2 * decay + |f| * dt = 0.246. The exact-clamp mutation
+    must miss by more than 0.5."""
+    dt, decay = 0.05, 0.98
+    want = 0.2 * decay + 1.0 * dt
+    white = const_tex((1.0, 1.0, 1.0, 1.0))
+
+    def run_case(bug):
+        prev_x = const_tex((0.2, 0.2, 0.2, 1.0))
+        prev_x[:, 0, 0] = 0.9                      # first column: the wrong edge for fx = -1
+        out_x = potential_stage(vec_tex(-1.0, 0.0), white, prev_x, dt=dt, decay=decay,
+                                src_vecfield=1.0, bug=bug)
+        prev_y = const_tex((0.2, 0.2, 0.2, 1.0))
+        prev_y[N - 1, :, 0] = 0.9                  # last row: the wrong edge for fy = +1
+        out_y = potential_stage(vec_tex(0.0, 1.0), white, prev_y, dt=dt, decay=decay,
+                                src_vecfield=1.0, bug=bug)
+        ex = float(np.abs(out_x[:, N - 2:, 0].astype(np.float64) - want).max())
+        ey = float(np.abs(out_y[:2, :, 0].astype(np.float64) - want).max())
+        return ex, ey
+
+    ex, ey = run_case(None)
+    check("fx = -1: the right strip reads the right edge", ex, 2e-5)
+    check("fy = +1: the top strip reads the top edge", ey, 2e-5)
+    bx, by = run_case("exact_clamp")
+    assert max(bx, by) > 0.5, f"exact-clamp mutation survived: {bx:.3e}, {by:.3e}"
+    note("exact-clamp mutation error", max(bx, by))
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

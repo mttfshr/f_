@@ -267,5 +267,35 @@ def test_mutations_are_caught():
     print("    ok   sign flip, missing scale, wrong theta constant, step swap and uv sign each caught")
 
 
+def test_fold_beyond_the_right_edge_reads_the_right_edge():
+    """The fold keeps the radius, so at scale 1 the frame corners fold to zx * 0.5 + 0.5 > 1
+    (past the right edge). The clamp must then read the RIGHT edge: the ramp read-back returns
+    the read coordinate, so the last texel gives (N - 0.5) / N. A clamp to exactly 1.0 reads the
+    FIRST texel instead (0.5 / N) on the GPU (probe P6, 2026-10-20). Expected pixels come from
+    the float64 closed form (start point, folded angle, radius); the exact-clamp mutation must
+    miss by more than 0.5."""
+    n_m, rotation, scale = 6.0, 0.0, 1.0
+    src = ramp_tex()
+    sx, sy = _start(N, rotation, scale)
+    theta = math.pi / n_m
+    sin_phi, cos_phi = _sin64(sx, sy)
+    safe = (np.abs(sin_phi) > 5e-3) & \
+           (np.abs(sin_phi * math.cos(theta) - cos_phi * math.sin(theta)) > 5e-3)
+    phi_f = _folded_angle64(np.arctan2(sy, sx), theta)
+    zx_f = np.hypot(sx, sy) * np.cos(phi_f)
+    beyond = safe & (zx_f * 0.5 + 0.5 > 1.02)
+    assert beyond.sum() > 10, f"too few pixels fold past the right edge: {int(beyond.sum())}"
+    last = (N - 0.5) / N
+
+    def err(bug):
+        out = ngon(src, n_mirrors=n_m, rotation=rotation, scale=scale, bug=bug)
+        return float(np.abs(out[..., 0].astype(np.float64)[beyond] - last).max())
+
+    check("fold past the right edge reads the last column", err(None), 2e-3)
+    e_bad = err("exact_clamp")
+    assert e_bad > 0.5, f"exact-clamp mutation survived: {e_bad:.3e}"
+    note("exact-clamp mutation error", e_bad)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

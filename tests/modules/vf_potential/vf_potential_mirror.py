@@ -11,7 +11,7 @@ Codebox (verbatim order):
   fx = (sample(in2, uv).x - 0.5) * 2.0;  fy = (sample(in2, uv).y - 0.5) * 2.0
   connected = step(0.5, src_vecfield);   fx *= connected; fy *= connected
   field_mag = sqrt(fx*fx + fy*fy)
-  src_uv = vec(clamp(uv.x - fx*dt, 0, 1), clamp(uv.y - fy*dt, 0, 1))
+  src_uv = vec(clamp(uv.x - fx*dt, 0.001, 0.999), clamp(uv.y - fy*dt, 0.001, 0.999))
   prev = sample(in4, src_uv).x            (bilinear, clamp-to-edge)
   potential = clamp(prev * decay + field_mag * dt, 0, 1)
   potential_scaled = potential * strength
@@ -23,7 +23,9 @@ Codebox (verbatim order):
   "plus_dt"     (accumulate prev*decay - field_mag*dt, a sign slip on the field term),
   "no_decay"    (prev added undecayed: prev + field_mag*dt),
   "swap_rg"     (decode the field from .y/.x instead of .x/.y),
-  "advect_forward" (sample at uv + f*dt instead of uv - f*dt).
+  "advect_forward" (sample at uv + f*dt instead of uv - f*dt),
+  "exact_clamp" (the pre-2026-10-20 clamp of src_uv to exactly [0, 1]: a read at x = 1.0 returns
+                 the FIRST column on the GPU and y = 0.0 the LAST row).
 """
 import numpy as np
 
@@ -54,6 +56,8 @@ def potential_stage(vf, color, prev, dt=0.01, decay=0.98, strength=1.0,
         sx, sy = (u + fx * F32(dt)).astype(F32), (v + fy * F32(dt)).astype(F32)
     else:
         sx, sy = (u - fx * F32(dt)).astype(F32), (v - fy * F32(dt)).astype(F32)
+    lo, hi = (F32(0.0), F32(1.0)) if bug == "exact_clamp" else (F32(0.001), F32(0.999))
+    sx, sy = np.clip(sx, lo, hi).astype(F32), np.clip(sy, lo, hi).astype(F32)
     pv = g.sample(prev, sx, sy)[..., 0]
     if bug == "no_decay":
         p = pv + field_mag * F32(dt)
