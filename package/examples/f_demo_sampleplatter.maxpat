@@ -1994,6 +1994,7 @@
             "obj-17::obj-26": [ "softness[2]", "softness", 0 ],
             "obj-17::obj-29": [ "color_shift[1]", "expo", 0 ],
             "obj-17::obj-310": [ "range_gain", "range_gain", 0 ],
+            "obj-17::obj-32": [ "edge", "edge", 0 ],
             "obj-17::obj-320": [ "range_scale", "range_scale", 0 ],
             "obj-18::obj-20": [ "r_lift", "r_lift", 0 ],
             "obj-18::obj-23": [ "r_gamma", "r_gamma", 0 ],
@@ -2113,6 +2114,7 @@
             "obj-2::obj-5": [ "live.text[9]", "live.text", 0 ],
             "obj-2::obj-6": [ "live.text[8]", "live.text", 0 ],
             "obj-30::obj-20": [ "strength[3]", "strength", 0 ],
+            "obj-30::obj-23": [ "mix_pct[2]", "mix_pct", 0 ],
             "obj-31::obj-20": [ "strength[2]", "strength", 0 ],
             "obj-31::obj-23": [ "length", "mix_pct", 0 ],
             "obj-31::obj-26": [ "falloff[2]", "falloff", 0 ],
@@ -3011,6 +3013,14 @@
                     "parameter_longname": "strength[3]",
                     "parameter_modmode": 3,
                     "parameter_shortname": "strength",
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-30::obj-23": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "mix_pct[2]",
+                    "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
