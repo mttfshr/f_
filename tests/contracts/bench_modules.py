@@ -88,6 +88,7 @@ BYPASS_EXPECT = {
     "f_masonry": {2: IN1},                              # out2 is the brick mask
     "f_stipple": {1: IN1, 2: IN1, 3: IN1},              # dual: the source when connected, black when not
     "f_grain": {1: IN1, 2: IN1, 3: IN1},                # dual: the source when connected, black when not
+    "f_vf_lbm": {1: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6)},   # producer: bypass_gate = neutral vecfield (the solver keeps running)
     "f_ks": {1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0)},  # generator: bypass_gate = black, A=1 (the solver keeps running)
     "f_chladni": {                                      # generator, no texture input: neutral values
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # luma: black

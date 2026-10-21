@@ -13,7 +13,7 @@
 			100.0,
 			100.0,
 			960.0,
-			390.0
+			418.0
 		],
 		"gridsize": [
 			15.0,
@@ -50,7 +50,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -206,7 +206,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -790,7 +790,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1318,7 +1318,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1567,7 +1567,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2002,7 +2002,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2251,7 +2251,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2766,53 +2766,34 @@
 							{
 								"box": {
 									"id": "obj-23",
-									"maxclass": "textbutton",
+									"maxclass": "comment",
 									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
+									"numoutlets": 0,
 									"patching_rect": [
 										20.0,
 										440.0,
 										150.0,
-										22.0
+										20.0
 									],
-									"text": "f_vf_optical_flow",
+									"text": "f_vf_lbm",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										208.0,
 										210.0,
-										22.0
+										210.0,
+										20.0
 									]
 								}
 							},
 							{
 								"box": {
 									"id": "obj-24",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										468.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_vf_optical_flow.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-25",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2822,19 +2803,25 @@
 										150.0,
 										20.0
 									],
-									"text": "Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets",
+									"text": "⚠ Unverified. Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										210.0,
 										720.0,
 										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
 									]
 								}
 							},
 							{
 								"box": {
-									"id": "obj-26",
+									"id": "obj-25",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -2851,7 +2838,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_repulse",
+									"text": "f_vf_optical_flow",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2863,7 +2850,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-27",
+									"id": "obj-26",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -2876,12 +2863,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_repulse.maxhelp"
+									"text": "loadunique f_vf_optical_flow.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-28",
+									"id": "obj-27",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2891,7 +2878,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes",
+									"text": "Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2903,7 +2890,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-29",
+									"id": "obj-28",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -2920,7 +2907,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_streak",
+									"text": "f_vf_repulse",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2932,7 +2919,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-30",
+									"id": "obj-29",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -2945,12 +2932,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_streak.maxhelp"
+									"text": "loadunique f_vf_repulse.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-31",
+									"id": "obj-30",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2960,7 +2947,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Directional blur via f_vecfield -- accumulates along streamlines; composite / isolated streak outlets",
+									"text": "Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2972,7 +2959,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-32",
+									"id": "obj-31",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -2989,7 +2976,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_vorticity",
+									"text": "f_vf_streak",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -3001,7 +2988,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-33",
+									"id": "obj-32",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -3014,12 +3001,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_vorticity.maxhelp"
+									"text": "loadunique f_vf_streak.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-34",
+									"id": "obj-33",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -3029,7 +3016,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Vorticity-confinement (\"curl amp\") processor. Do not treat as working",
+									"text": "Directional blur via f_vecfield -- accumulates along streamlines; composite / isolated streak outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3041,7 +3028,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-35",
+									"id": "obj-34",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -3058,7 +3045,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_warp",
+									"text": "f_vf_vorticity",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -3070,7 +3057,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-36",
+									"id": "obj-35",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -3083,12 +3070,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_warp.maxhelp"
+									"text": "loadunique f_vf_vorticity.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-37",
+									"id": "obj-36",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -3098,11 +3085,80 @@
 										150.0,
 										20.0
 									],
-									"text": "UV warp via f_vecfield -- displaces source texture along field streamlines",
+									"text": "Vorticity-confinement (\"curl amp\") processor. Do not treat as working",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										322.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-37",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										740.0,
+										150.0,
+										22.0
+									],
+									"text": "f_vf_warp",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										348.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-38",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										768.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_vf_warp.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-39",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										740.0,
+										150.0,
+										20.0
+									],
+									"text": "UV warp via f_vecfield -- displaces source texture along field streamlines",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										350.0,
 										720.0,
 										20.0
 									]
@@ -3281,23 +3337,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-23",
+										"obj-25",
 										0
 									],
 									"destination": [
-										"obj-24",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-24",
-										0
-									],
-									"destination": [
-										"obj-1",
+										"obj-26",
 										0
 									]
 								}
@@ -3309,7 +3353,7 @@
 										0
 									],
 									"destination": [
-										"obj-27",
+										"obj-1",
 										0
 									]
 								}
@@ -3317,11 +3361,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-27",
+										"obj-28",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-29",
 										0
 									]
 								}
@@ -3333,7 +3377,7 @@
 										0
 									],
 									"destination": [
-										"obj-30",
+										"obj-1",
 										0
 									]
 								}
@@ -3341,11 +3385,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-30",
+										"obj-31",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-32",
 										0
 									]
 								}
@@ -3357,7 +3401,7 @@
 										0
 									],
 									"destination": [
-										"obj-33",
+										"obj-1",
 										0
 									]
 								}
@@ -3365,11 +3409,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-33",
+										"obj-34",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-35",
 										0
 									]
 								}
@@ -3381,7 +3425,7 @@
 										0
 									],
 									"destination": [
-										"obj-36",
+										"obj-1",
 										0
 									]
 								}
@@ -3389,7 +3433,19 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-36",
+										"obj-37",
+										0
+									],
+									"destination": [
+										"obj-38",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-38",
 										0
 									],
 									"destination": [
@@ -3430,7 +3486,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4144,7 +4200,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4654,7 +4710,7 @@
 							0.0,
 							26.0,
 							960.0,
-							364.0
+							392.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [

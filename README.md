@@ -84,6 +84,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_vf_flow` | Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet |
 | `f_vf_fluid` | Incompressible-flow solver -- force vecfield in, evolving velocity field out; feed it to advect / warp / glow |
 | `f_vf_glow` | Field-aligned directional blur via f_vecfield -- accumulates along streamlines; composite / glow-layer outlets |
+| `f_vf_lbm` | ⚠ Unverified. Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out |
 | `f_vf_optical_flow` | Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets |
 | `f_vf_repulse` | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes |
 | `f_vf_streak` | Directional blur via f_vecfield -- accumulates along streamlines; composite / isolated streak outlets |

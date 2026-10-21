@@ -62,6 +62,8 @@ DATA = {
     "bench_fluid_probes": _MACHINERY + _FLUID_CODEBOXES,
     "bench_ks": _MACHINERY + ["src/f_ks/codebox_*.gen"],
     "bench_ks_module": _MODULE_BENCH + ["package/patchers/f_ks.maxpat", "src/f_ks/codebox_*.gen"],
+    "bench_vf_lbm": _MACHINERY + ["src/f_vf_lbm/codebox_*.gen"],
+    "bench_vf_lbm_module": _MODULE_BENCH + ["package/patchers/f_vf_lbm.maxpat", "src/f_vf_lbm/codebox_*.gen"],
     "bench_mirror_findings_probes": _MACHINERY + ["src/f_stereo/codebox_v1.gen", "src/f_luma_processor/codebox_luma_processor.gen", "src/f_chladni/definition.py"],
     "bench_modules": _MODULE_BENCH,            # plus one patcher per module, see PER_MODULE
     "bench_fluid_module": _MODULE_BENCH + ["package/patchers/f_vf_fluid.maxpat"] + _FLUID_CODEBOXES,

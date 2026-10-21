@@ -1,0 +1,145 @@
+// codebox_collide.gen -- f_vf_lbm stage 1: the fused local pass. 192x108 float32, three output planes.
+// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.fuse_local() (same order, same formulas).
+//
+// Inlets (outer order): the three state planes from the hold stage, the third carrying the obstacle flag from the
+// mrg stage in G. The first is hot (hold's first outlet triggers this render), so no draw bang is needed here and
+// the stage stays at three inlets, which the codebox bench can drive.
+// State packing (FR-001): plane 1 = populations 0..3 in RGBA, plane 2 = populations 4..7, plane 3 = population 8
+// in R. D2Q9 order: 0 rest; 1 (1,0); 2 (0,1); 3 (-1,0); 4 (0,-1); 5 (1,1); 6 (-1,1); 7 (-1,-1); 8 (1,-1).
+// The write order below is the experiment's: pre-collision copy, outflow copy, macro, inflow, equilibrium,
+// right-population overwrite, BGK collision, bounce-back.
+//   - SEED / SELF-HEAL: a texel whose held populations are not all finite, whose density is outside (0.2, 5) or
+//     whose rest population is not above 0.05 (a fresh module, a rebuilt GL context, a poisoned or blown-up
+//     texel) restarts at equilibrium with rho = 1, u = inflow, plus a tiny sideways ripple
+//     (0.02 * inflow * sin(0.3 x)) that lets the wake break symmetry sooner. The rest-population test also
+//     rejects an empty inlet, which reads (0, 0, 0, 1). Selection uses switch(), never mix(): mix(NaN, x, 1) is
+//     still NaN.
+//   - PRE-COLLISION (FR-003): the bounce-back reads the texel's populations as held at the start of the frame,
+//     before the outflow copy and before collision (the experiment's f_prev).
+//   - OUTFLOW (last column): the three leftward populations copy from the column to the left (zero gradient).
+//   - INFLOW (first column): ux = inflow and uy = 0 on the interior rows FIRST, then the Zou/He density
+//     rho = (rest + 2 * leftward) / (1 - ux); the rightward populations take the equilibrium (FR-005).
+//     y is periodic (decided 2026-10-21), so the top and bottom rows are ordinary rows.
+//   - the obstacle flag comes from the mrg stage (the first and last columns are never flagged)
+//   - omega is clamped to [0.5, 1.98] and inflow to [0, 0.1]: the measured stability ceiling (FR-007)
+//   - components are read inline on nearest(), never from a stored vec
+fe(wt, lx, ly, r0, vx, vy) {
+  eu = lx * vx + ly * vy;
+  return wt * r0 * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * (vx * vx + vy * vy));
+}
+fin(x) {
+  return switch(abs(x) < 1e30, 1, 0);
+}
+
+Param omega(1.97);
+Param inflow(0.08);
+
+W = 192;
+H = 108;
+px = floor(norm.x * W);
+py = floor(norm.y * H);
+cv = (py + 0.5) / H;
+pc = vec((px + 0.5) / W, cv);
+pm = vec((px - 0.5) / W, cv);
+
+om = min(max(omega, 0.5), 1.98);
+u0 = min(max(inflow, 0), 0.1);
+is_in = switch(px < 0.5, 1, 0);
+is_out = switch(px > W - 1.5, 1, 0);
+is_row = switch(py > 0.5, 1, 0) * switch(py < H - 1.5, 1, 0);
+
+// the held state
+b0 = nearest(in1, pc).x;
+b1 = nearest(in1, pc).y;
+b2 = nearest(in1, pc).z;
+b3 = nearest(in1, pc).w;
+b4 = nearest(in2, pc).x;
+b5 = nearest(in2, pc).y;
+b6 = nearest(in2, pc).z;
+b7 = nearest(in2, pc).w;
+b8 = nearest(in3, pc).x;
+allfin = fin(b0) * fin(b1) * fin(b2) * fin(b3) * fin(b4) * fin(b5) * fin(b6) * fin(b7) * fin(b8);
+rb = b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8;
+valid = allfin * switch(rb > 0.2, 1, 0) * switch(rb < 5, 1, 0) * switch(b0 > 0.05, 1, 0);
+use_seed = switch(valid >= 0.5, 0, 1);
+
+// the pre-collision populations, seeded where the state is invalid
+ripple = 0.02 * u0 * sin(0.3 * px);
+a0 = switch(use_seed >= 0.5, fe(0.444444444444, 0, 0, 1, u0, ripple), b0);
+a1 = switch(use_seed >= 0.5, fe(0.111111111111, 1, 0, 1, u0, ripple), b1);
+a2 = switch(use_seed >= 0.5, fe(0.111111111111, 0, 1, 1, u0, ripple), b2);
+a3 = switch(use_seed >= 0.5, fe(0.111111111111, 0 - 1, 0, 1, u0, ripple), b3);
+a4 = switch(use_seed >= 0.5, fe(0.111111111111, 0, 0 - 1, 1, u0, ripple), b4);
+a5 = switch(use_seed >= 0.5, fe(0.0277777777778, 1, 1, 1, u0, ripple), b5);
+a6 = switch(use_seed >= 0.5, fe(0.0277777777778, 0 - 1, 1, 1, u0, ripple), b6);
+a7 = switch(use_seed >= 0.5, fe(0.0277777777778, 0 - 1, 0 - 1, 1, u0, ripple), b7);
+a8 = switch(use_seed >= 0.5, fe(0.0277777777778, 1, 0 - 1, 1, u0, ripple), b8);
+
+// outflow: the leftward populations of the last column copy from the column to its left
+cp = is_out * (1 - use_seed);
+f0 = a0;
+f1 = a1;
+f2 = a2;
+f3 = switch(cp >= 0.5, nearest(in1, pm).w, a3);
+f4 = a4;
+f5 = a5;
+f6 = switch(cp >= 0.5, nearest(in2, pm).z, a6);
+f7 = switch(cp >= 0.5, nearest(in2, pm).w, a7);
+f8 = a8;
+
+// macro quantities
+rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
+ux = (f1 - f3 + f5 - f6 - f7 + f8) / rho;
+uy = (f2 - f4 + f5 + f6 - f7 - f8) / rho;
+
+// inflow: prescribe the velocity on the interior rows, then the Zou/He density
+set_u = is_in * is_row;
+ux2 = switch(set_u >= 0.5, u0, ux);
+uy2 = switch(set_u >= 0.5, 0, uy);
+rho_in = (f0 + f2 + f4 + 2 * (f3 + f6 + f7)) / (1 - ux2);
+rho2 = switch(is_in >= 0.5, rho_in, rho);
+
+// equilibrium
+q0 = fe(0.444444444444, 0, 0, rho2, ux2, uy2);
+q1 = fe(0.111111111111, 1, 0, rho2, ux2, uy2);
+q2 = fe(0.111111111111, 0, 1, rho2, ux2, uy2);
+q3 = fe(0.111111111111, 0 - 1, 0, rho2, ux2, uy2);
+q4 = fe(0.111111111111, 0, 0 - 1, rho2, ux2, uy2);
+q5 = fe(0.0277777777778, 1, 1, rho2, ux2, uy2);
+q6 = fe(0.0277777777778, 0 - 1, 1, rho2, ux2, uy2);
+q7 = fe(0.0277777777778, 0 - 1, 0 - 1, rho2, ux2, uy2);
+q8 = fe(0.0277777777778, 1, 0 - 1, rho2, ux2, uy2);
+
+// inflow column: the rightward populations take the equilibrium
+g1 = switch(is_in >= 0.5, q1, f1);
+g5 = switch(is_in >= 0.5, q5, f5);
+g8 = switch(is_in >= 0.5, q8, f8);
+
+// BGK collision
+c0 = f0 + om * (q0 - f0);
+c1 = g1 + om * (q1 - g1);
+c2 = f2 + om * (q2 - f2);
+c3 = f3 + om * (q3 - f3);
+c4 = f4 + om * (q4 - f4);
+c5 = g5 + om * (q5 - g5);
+c6 = f6 + om * (q6 - f6);
+c7 = f7 + om * (q7 - f7);
+c8 = g8 + om * (q8 - g8);
+
+// the obstacle flag from the mrg stage
+m = switch(nearest(in3, pc).y >= 0.5, 1, 0);
+
+// bounce-back: inside the obstacle every population becomes the pre-collision opposite one
+n0 = switch(m >= 0.5, a0, c0);
+n1 = switch(m >= 0.5, a3, c1);
+n2 = switch(m >= 0.5, a4, c2);
+n3 = switch(m >= 0.5, a1, c3);
+n4 = switch(m >= 0.5, a2, c4);
+n5 = switch(m >= 0.5, a7, c5);
+n6 = switch(m >= 0.5, a8, c6);
+n7 = switch(m >= 0.5, a5, c7);
+n8 = switch(m >= 0.5, a6, c8);
+
+out1 = vec(n0, n1, n2, n3);
+out2 = vec(n4, n5, n6, n7);
+out3 = vec(n8, 0, 0, 0);

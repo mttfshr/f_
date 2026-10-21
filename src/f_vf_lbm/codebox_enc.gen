@@ -1,0 +1,41 @@
+// codebox_enc.gen -- f_vf_lbm: upsample the 192x108 velocity to the render size, apply gain, clamp, encode as an
+// f_vecfield (RG = XY, 0.5 = zero, B = 0.5, A = 1) and apply the bypass gate. Runs at RENDER resolution.
+// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.encode() (at the solver size this is exactly that function).
+//
+// Inlets: first = `r draw` bang (unused; it triggers every frame and gives this pix the render-context size),
+// second = the macro texture (R = ux, G = uy) from the mac stage.
+//   - FR-008: R = clamp(0.5 + gain * ux, 0, 1), G likewise with uy. The velocity is in lattice units
+//     (inflow up to 0.1), so the default gain of 3 puts the free stream near 0.74 and keeps the faster flow
+//     around the obstacle inside the range (gain 1 would sit within 0.05 of the centre).
+//   - the upsample is a manual 4-tap bilinear on texel-centre nearest() taps: y periodic (the solver's y is
+//     periodic), x clamped to the end columns (the channel is not periodic in x)
+//   - a non-finite sample encodes as zero velocity (abs(x) < 1e30 guard), so no NaN or Inf reaches the outlet
+//   - bypass_gate = 1 outputs an exactly neutral field (zero velocity). The solver keeps running upstream.
+//     The Param is never named `bypass` (native pix attribute).
+Param gain(3);
+Param bypass_gate(0);
+
+W = 192;
+H = 108;
+fx = norm.x * W - 0.5;
+fy = norm.y * H - 0.5;
+x0 = floor(fx);
+y0 = floor(fy);
+tx = fx - x0;
+ty = fy - y0;
+xa = min(max(x0, 0), W - 1);
+xb = min(max(x0 + 1, 0), W - 1);
+ya = wrap(y0, 0, H);
+yb = wrap(y0 + 1, 0, H);
+p00 = vec((xa + 0.5) / W, (ya + 0.5) / H);
+p10 = vec((xb + 0.5) / W, (ya + 0.5) / H);
+p01 = vec((xa + 0.5) / W, (yb + 0.5) / H);
+p11 = vec((xb + 0.5) / W, (yb + 0.5) / H);
+au = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx), mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);
+av = mix(mix(nearest(in2, p00).y, nearest(in2, p10).y, tx), mix(nearest(in2, p01).y, nearest(in2, p11).y, tx), ty);
+au = switch(abs(au) < 1e30, au, 0);
+av = switch(abs(av) < 1e30, av, 0);
+
+r = clamp(0.5 + gain * au, 0, 1);
+g = clamp(0.5 + gain * av, 0, 1);
+out1 = vec(mix(r, 0.5, bypass_gate), mix(g, 0.5, bypass_gate), 0.5, 1);
