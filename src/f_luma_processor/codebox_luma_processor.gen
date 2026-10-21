@@ -22,7 +22,7 @@ hr = (g - b) / max(delta, 0.00001);
 hg = 2.0 + (b - r) / max(delta, 0.00001);
 hb = 4.0 + (r - g) / max(delta, 0.00001);
 hue = step(cmax, r + 0.00001) * hr
-    + step(cmax, g + 0.00001) * hg
+    + (1.0 - step(cmax, r + 0.00001)) * step(cmax, g + 0.00001) * hg
     + (1.0 - step(cmax, r + 0.00001)) * (1.0 - step(cmax, g + 0.00001)) * hb;
 hue = (hue / 6.0 + 1.0) - floor(hue / 6.0 + 1.0);
 

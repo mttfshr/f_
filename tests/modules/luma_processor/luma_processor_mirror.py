@@ -10,6 +10,9 @@ HSV -> RGB -> bypass mix. The single texture read goes through gpu_sim.sample.
   "no_clamp"    -- sat_out / val_out lose their clamp to [0, 1]
   "mask_off"    -- the mask multiplies the shifts with lm/mh swapped (band inverted),
                    so the mask opens outside [low_mid, mid_high] instead of inside
+  "additive_tie" -- the pre-2026-10-20 hue expression, where the green term is not exclusive of
+                   the red term, so a red = green tie for the maximum (gray, yellow) adds both
+                   and lands at hue 1/3 (green)
 """
 import numpy as np
 
@@ -51,7 +54,10 @@ def luma_processor(src, low_mid=0.33, mid_high=0.66, edge_falloff=0.1, sat_amt=0
     hb = F32(4.0) + (r - gg) / dmax
     sr = _step(cmax, r + F32(0.00001))
     sg = _step(cmax, gg + F32(0.00001))
-    hue = sr * hr + sg * hg + (F32(1) - sr) * (F32(1) - sg) * hb
+    if bug == "additive_tie":
+        hue = sr * hr + sg * hg + (F32(1) - sr) * (F32(1) - sg) * hb   # the pre-2026-10-20 codebox
+    else:
+        hue = sr * hr + (F32(1) - sr) * sg * hg + (F32(1) - sr) * (F32(1) - sg) * hb
     hue = ((hue / F32(6.0) + F32(1.0)) - np.floor(hue / F32(6.0) + F32(1.0))).astype(F32)
 
     sat = (s1 * delta / np.maximum(cmax, F32(0.00001))).astype(F32)

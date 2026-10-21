@@ -66,7 +66,7 @@ patcher["overrides"] = {
     "hue_shift.ctl": {"activedialcolor": None, "needlemode": 2, "presentation_rect": [116.33333680033684, 70.00000208616257, 27.0, 43.0]},
     "lum_shift.ctl": {"activedialcolor": None, "presentation_rect": [80.66666907072067, 70.00000208616257, 27.0, 43.0]},
     "lum_shift.label": {"fontsize": 9.0, "presentation_rect": [82.33333578705788, 56.666668355464935, 27.0, 17.0], "textjustification": None},
-    "panel": {"background": None, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
+    "panel": {"background": 1, "bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0]},
     "sat_amt.ctl": {"activedialcolor": None, "presentation_rect": [43.00000128149986, 69.66666874289513, 27.0, 43.0]},
     "sat_amt.label": {"fontsize": 9.0, "presentation_rect": [44.66666799783707, 56.666668355464935, 27.0, 17.0], "textjustification": None},
     "title": {"fontsize": None, "numinlets": 0, "presentation_rect": [10.5, 1.0000000298023224, 107.8, 21.0], "suppressinlet": 1},

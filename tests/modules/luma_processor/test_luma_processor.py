@@ -35,8 +35,8 @@ from luma_processor_mirror import F32, luma_processor  # noqa: E402
 N = 24
 LM, MH, EF = 0.2, 0.8, 0.05          # generic band: every color's luma sits strictly inside
 
-# 12 unique saturated colors, no two equal channels (the codebox's hue branch
-# needs a unique maximum channel), lumas all inside (lm + ef, mh - ef), S and V
+# 12 unique saturated colors, no two equal channels (kept unique on purpose: ties for the
+# maximum channel have their own tests below), lumas all inside (lm + ef, mh - ef), S and V
 # mostly low enough that the up-shifts do not clamp; colors 6 and 10 clamp S under
 # sat_amt 0.3 and color 6 clamps V under lum_shift 0.25, and their literals are clamped.
 COLORS = [
@@ -229,19 +229,50 @@ def test_luma_shift_clamps():
     check("lum_shift -1 clamps V = 0.75 to black", max(e_dn, 0.0), 2e-5)
 
 
-def test_gray_texel_hue_pinned_codebox_quirk():
-    """Pinned codebox behaviour, not a doc statement: a gray texel has r = g = b, so both the
-    r-branch and g-branch hue terms fire and the hue lands at 1/3 (green), where
-    colorsys.rgb_to_hsv puts gray at hue 0. With sat_amt 0.6 on gray 0.6 the output is therefore
-    the colorsys literal hsv_to_rgb(1/3, 0.6, 0.6) = (0.24, 0.6, 0.24) and not
-    hsv_to_rgb(0, 0.6, 0.6) = (0.6, 0.24, 0.24). Pinned 2026-10-20 as the codebox's current
-    behaviour (review pending): it is only visible if saturation is applied to exact grays. If
-    the codebox changes, update this literal deliberately."""
+def test_gray_texel_hue_matches_colorsys():
+    """A gray texel has r = g = b. colorsys.rgb_to_hsv puts it at hue 0, so with sat_amt 0.6 on
+    gray 0.6 the output is the colorsys literal hsv_to_rgb(0, 0.6, 0.6) = (0.6, 0.24, 0.24).
+    Until 2026-10-20 the codebox added its red and green hue terms on a tie, landed at hue 1/3
+    and gave (0.24, 0.6, 0.24); the green term is now exclusive of the red one."""
     t = g.texture(N, N)
     t[:, :, :3] = 0.6
     out = luma_processor(t, LM, MH, EF, sat_amt=0.6)
-    e = float(np.abs(out[0, :, :3].astype(np.float64) - np.array([0.24, 0.6, 0.24])).max())
-    check("gray 0.6 with sat_amt 0.6 vs colorsys literal (h=1/3, s=0.6, v=0.6)", e, 2e-5)
+    e = float(np.abs(out[0, :, :3].astype(np.float64) - np.array([0.6, 0.24, 0.24])).max())
+    check("gray 0.6 with sat_amt 0.6 vs colorsys literal (h=0, s=0.6, v=0.6)", e, 2e-5)
+
+
+# red = green > blue (the yellow family): both hue terms used to fire and added to hue 1/3.
+TIE_COLORS = [(1.0, 1.0, 0.0), (0.5, 0.5, 0.0), (1.0, 1.0, 0.5), (0.75, 0.75, 0.25)]
+
+
+def _tie_err(bug=None):
+    """Worst error over the red = green tie checks: yellow-family identity at the neutral
+    defaults, and the colorsys literal for (0.75, 0.75, 0.25) hue-shifted 47 degrees."""
+    worst = 0.0
+    for c in TIE_COLORS:
+        t = g.texture(N, N)
+        t[:, :, 0], t[:, :, 1], t[:, :, 2] = c
+        out = luma_processor(t, LM, MH, EF, bug=bug)
+        worst = max(worst, float(np.abs(out[0, :, :3].astype(np.float64) - np.array(c)).max()))
+    t = g.texture(N, N)
+    t[:, :, 0], t[:, :, 1], t[:, :, 2] = 0.75, 0.75, 0.25   # luma 0.69, inside the band
+    out = luma_processor(t, LM, MH, EF, hue_shift=47.0, bug=bug)
+    lit = np.array([0.3583333, 0.75, 0.25])                 # colorsys hsv_to_rgb(1/6 + 47/360, 2/3, 0.75)
+    worst = max(worst, float(np.abs(out[0, :, :3].astype(np.float64) - lit).max()))
+    gr = g.texture(N, N)
+    gr[:, :, :3] = 0.6
+    out = luma_processor(gr, LM, MH, EF, sat_amt=0.6, bug=bug)
+    worst = max(worst, float(np.abs(out[0, :, :3].astype(np.float64) - np.array([0.6, 0.24, 0.24])).max()))
+    return worst
+
+
+def test_red_green_tie_keeps_its_hue():
+    """With no operation applied (sat_amt = lum_shift = hue_shift = 0) the RGB -> HSV -> RGB
+    round trip must return the source, including colors where red and green tie for the
+    maximum (yellow, dark yellow, pale yellow). The old additive hue turned every one of them
+    green. A hue shift of 47 degrees on (0.75, 0.75, 0.25) must match the colorsys literal."""
+    e = _tie_err()
+    check("red = green tie colors: identity at defaults, colorsys literal under hue_shift", e, 2e-5)
 
 
 # --- the mask --------------------------------------------------------------------------------
@@ -322,7 +353,7 @@ def test_alpha_passes_through():
 # --- mutations --------------------------------------------------------------------------------
 
 TOL = {"bypass": 1e-6, "hue47": 2e-5, "hue200": 2e-5, "sat03": 2e-5, "satneg": 2e-5,
-       "lum06": 2e-5, "lumneg": 2e-5, "generic": 2e-5}
+       "lum06": 2e-5, "lumneg": 2e-5, "generic": 2e-5, "tie": 2e-5}
 EXP = {"hue47": (EXP_HUE47, {"hue_shift": 47.0}), "hue200": (EXP_HUE200, {"hue_shift": 200.0}),
        "sat03": (EXP_SAT03, {"sat_amt": 0.3}), "satneg": (EXP_SATNEG2, {"sat_amt": -0.2}),
        "lum06": (EXP_LUM06, {"lum_shift": 0.25}), "lumneg": (EXP_LUMNEG04, {"lum_shift": -0.35}),
@@ -347,12 +378,14 @@ def test_mutations_are_caught():
         exp, params = EXP[k]
         real[k] = _unique_row_err(exp, **params)
     real["bypass"] = _errs()
+    real["tie"] = _tie_err()
     for k, e in real.items():
         assert e <= TOL.get(k, 1e-6), f"real mirror exceeds tolerance on {k}: {e:.3e}"
     note("real mirror worst error over the shared checks", max(real.values()))
-    for bug in ("swap_rg", "no_clamp", "mask_off"):
+    for bug in ("swap_rg", "no_clamp", "mask_off", "additive_tie"):
         be = {}
         be["bypass"] = _errs(bug=bug)
+        be["tie"] = _tie_err(bug=bug)
         for k in EXP:
             exp, params = EXP[k]
             be[k] = _unique_row_err(exp, bug=bug, **params)
