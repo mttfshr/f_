@@ -172,8 +172,13 @@ def test_pass_reseed_and_hold():
     check("reseed 1 over a NaN/Inf feedback: clean noise, no poison survives",
           mx(again[..., 0], seed[..., 0]), 2e-7)
     cleaned = gpu("pass", [BANG, poisoned, noise_tex], dim=(N, N), reseed=0.0)
-    check("reseed 0 over NaN/Inf feedback: non-finite texels become 0, the rest holds",
+    check("reseed 0 over NaN/Inf feedback: no non-finite texel survives",
           float(np.count_nonzero(~np.isfinite(cleaned))), 0.0)
+    check("... the poisoned texels are healed from the noise (seeded, not left at 0)",
+          mx(cleaned[[10, 11], [10, 11], 0], seed[[10, 11], [10, 11], 0]), 2e-7)
+    lost = gpu("pass", [BANG, np.zeros((N, N, 4), np.float32), noise_tex], dim=(N, N), reseed=0.0)
+    check("SELF-HEAL: a lost (all-zero) state with reseed 0 comes back as the full seed",
+          mx(lost[..., 0], seed[..., 0]), 2e-7)
     check("... and the other texels are untouched",
           mx(np.delete(cleaned[..., 0].ravel(), [10 * N + 10, 11 * N + 11]),
              np.delete(poisoned[..., 0].ravel(), [10 * N + 10, 11 * N + 11])), 0.0)

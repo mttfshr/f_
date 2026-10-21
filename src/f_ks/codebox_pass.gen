@@ -7,6 +7,11 @@
 // the seed stage).
 // reseed = 1 replaces the state with (2*noise - 1) * amp: uniform in [-amp, amp], never zero (u = 0 is a
 // fixed point, FR-003). reseed fires on load and on the reset trigger (FR-007).
+//   - SELF-HEAL: a texel of the feedback that is exactly 0 is reseeded from the noise too. A live KS
+//     field never holds an exact 0 (float32 values), so this fires only when the state was lost: a
+//     fresh module, a GL context rebuilt by a window mode change (floating <-> fullscreen), or a
+//     non-finite texel the nl stage zapped to 0. u = 0 everywhere is a fixed point, so without this a
+//     lost state stays flat grey forever
 //   - selection uses switch(), not mix(): mix(NaN, x, 1) is still NaN, so a poisoned feedback
 //     texel could survive a reseed through mix
 //   - the feedback is NaN/Inf-guarded: abs(x) < 1e30 (NaN == NaN is TRUE on this GPU)
@@ -16,4 +21,5 @@ Param amp(1);
 fb = nearest(in2, norm).x;
 fb = switch(abs(fb) < 1e30, fb, 0);
 nz = (nearest(in3, norm).x * 2 - 1) * amp;
-out1 = vec(switch(reseed >= 0.5, nz, fb), 0, 0, 1);
+kept = switch(fb == 0, nz, fb);
+out1 = vec(switch(reseed >= 0.5, nz, kept), 0, 0, 1);
