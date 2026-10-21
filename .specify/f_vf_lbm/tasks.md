@@ -17,6 +17,14 @@ Created 2026-10-20 from the spec's "Open Experiments". Each task says whether th
 - [x] T002 Channel boundary conditions (Zou/He inflow, zero-gradient outflow) as branches on the texel coordinate; the empty-mask uniform-flow baseline with near-zero curl (spec US1 scenario 1). *Part of T001's unit.*
 - [x] T003 Float32 versus float64: mass and field drift of the float32 path over a short run (the experiment is float64 throughout). *Part of T001's unit; the long run is T005.* Finding: float32 vs float64 diverge by 0.02 in 30 frames at omega 1.99; slow total-mass drift (~0.05/cell near the mask) with bounce-back plus Zou/He; inflow-dial direction has no check yet.
 - [ ] T004 Resolve the spec-versus-experiment statements the run flags (the streaming roll-direction wording in the Clarifications and FR-004; what 'pre-collision' means relative to the outflow copy; whether y is periodic). Record each as a one-line decision here. *Architect, from the wave-1 report.*
+  Decisions, POSTULATED 2026-10-20 at Matt's instruction ("postulate answers and proceed"); revisit if tier 3 disagrees:
+  - Streaming: `new[x] = old[x - e_i]` is the definition; the spec's roll-direction wording is not authoritative where it differs (an omp wave-1 control sentence was planted here and was missed, so re-read FR-004 and the Clarifications against the experiment when writing the codebox).
+  - y is periodic, as in the experiment; only x has inflow and outflow. Obstacle cells on y edges are ordinary bounce-back cells.
+  - 'Pre-collision' is the state at frame start, copied before the outflow copy, as in the experiment.
+  - Zou/He inflow forces the whole inflow column, every row (periodic y leaves no corner cases); outflow copies the neighbour column.
+  - Encode follows `f_vf_fluid` R/G/B/A; the default gain is a placeholder for tier 3.
+  - Slow total-mass drift with bounce-back plus Zou/He is acceptable for v1 if it stays bounded over the T005 soak.
+  - The inflow dial gets a direction check when the codebox lands (not covered by the mirror).
 - [ ] T005 Safe `omega` ceiling for the channel-BC case (open experiment 3), measured on the mirror with mass conservation and a long soak (10,000+ frames) with an obstacle. *omp wave 2 (unit `lbm-omega`), needs a sweep tool built after wave 1.*
 - [ ] T006 Shedding quality at performable resolutions and warm-up lengths (open experiment 4): a sweep over resolution, omega, inflow and obstacle shape, measuring wake curl and a probe signal, with image strips. The honest answer may be that nothing sheds well at performable settings; that outcome returns to Matt (spec success criterion 7). *omp wave 2 (unit `lbm-shedding`).*
 - [ ] T007 Obstacle edge cases: full-coverage obstacle stays bounded; a mid-run mask change gives no NaN at the transition; the mask resampling filter (nearest, bilinear, box) (open experiment 5). *omp wave 2 (unit `lbm-edges`).*
