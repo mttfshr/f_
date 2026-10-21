@@ -15,7 +15,7 @@ for U = 1.3, -0.2 and exactly 1.0. Every probe is read back through a jit.matrix
 and the six message boxes show `cell 32 0 val A R G B` (R is the second number).
 
 What drives it: jit.world's second outlet sends a draw bang every frame (the bench wires it the same way); here it is
-connected to the ramp pix, the ramp matrix and all six probe pixes, and a counter shows the frames arriving.
+connected to the ramp pix, the ramp matrix, the path-A texture (the bench bangs its jit.gl.texture the same way) and all six probe pixes, and a counter shows the frames arriving.
 
 Boxes are deep copies of real ones (the shipped f_stereo pix box and its inline gen patcher, the bench's
 jit.world / jit.matrix / jit.gl.texture), so their structure is the proven one. Run:
@@ -124,7 +124,7 @@ ramp = pix("bm_ramp", "out1 = vec(norm.x, norm.y, 0.0, 1.0);\n", 30, 120)
 ramp_mat = add(named(MAT, "jit.matrix bm_ramp_a 4 float32 64 1 @adapt 1"), 30, 160, 260)
 tex_a = add(named(TEX, f"jit.gl.texture {CTX} @name bm_tex_a @type float32"), 30, 200, 300)
 connect(ramp, 0, ramp_mat, 0)
-draw_targets += [ramp, ramp_mat]
+draw_targets += [ramp, ramp_mat, tex_a]     # the bench also bangs the jit.gl.texture each frame (t b b -> tex1)
 connect(ramp_mat, 0, tex_a, 0)
 
 trig = simple("newobj", "metro 250 @active 1", 700, 120, 140, nin=2, nout=1, outtype=["bang"])

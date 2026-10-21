@@ -18,6 +18,11 @@ and in HANDOFF. Kept as a record of bench-verified facts, not as a regression ga
                      (P1 showed the stereo pole texel is finite but not the mirror's value.)
   P6 exact seam      sample() at exactly u = 1.0 and u = 0.0, as a literal and as a runtime
                      value: edge texel (clamp) or the 50/50 seam blend (wrap)? (Follow-up to P2.)
+  P7 vertical        P2 and P6 on the Y axis: uv.y below 0, above 1, and exactly 1.0 / 0.0. (gpu_sim keeps y
+                     clamping until this is measured; stereo's pole texel hints that y may clamp.)
+  P8 stereo pole     the real f_stereo codebox with its last line replaced by out1 = vec(ux, uy, rx, ry):
+                     the exact values at the odd-size centre texel (1 ulp below 1.0 reads the last column,
+                     exactly 1.0 the first).
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh tests/records/bench_mirror_findings_probes.py
@@ -213,6 +218,45 @@ def test_p6_sample_at_exact_seam():
         edge = 1.0 - 0.5 / w if "1.0" in label else 0.5 / w
         kind = "CLAMP (edge texel)" if abs(v - edge) < 1e-3 else "WRAP (seam blend)" if abs(v - 0.5) < 1e-3 else "OTHER (read the value)"
         note(f"{label}: value {v:.5f}; clamp would be {edge:.5f}, wrap 0.50000", kind)
+
+
+# ------------------------------------------------------------------ P7: vertical out of range
+
+def test_p7_vertical_out_of_range():
+    """y-ramp, 64 rows: G = y at texel centres. v = -0.2 / 1.3 / exactly 1.0 / exactly 0.0, as literals.
+    Clamp: v < 0 or 0.0 -> first row (0.5 / H); v > 1 or 1.0 -> last row (1 - 0.5 / H). Wrap of the coordinate
+    (taps clamped): -0.2 -> 0.8, 1.3 -> 0.3, exactly 1.0 -> first row. A seam blend would read 0.5."""
+    h, w = 64, 8
+    src = _ramp(h, w)
+    first, last = 0.5 / h, 1.0 - 0.5 / h
+    cases = [("v = -0.2", "-0.2", first, 0.8), ("v = 1.3", "1.3", last, 0.3),
+             ("v = exactly 1.0", "1.0", last, first), ("v = exactly 0.0", "0.0", first, first)]
+    for label, v, clamp_v, wrap_v in cases:
+        out, r = bc.run_pass(f"out1 = sample(in1, vec(norm.x, {v}, 0));\n", [src])
+        check(f"status ok ({label})", _status(r), 0)
+        g = float(out[h // 2, w // 2, 1])
+        kind = ("CLAMP" if abs(g - clamp_v) < 1e-3 else "WRAP" if abs(g - wrap_v) < 1e-3
+                else "SEAM BLEND (0.5)" if abs(g - 0.5) < 1e-3 else "OTHER")
+        note(f"{label}: G {g:.5f}; clamp {clamp_v:.5f}, wrap {wrap_v:.5f}", kind)
+
+
+# ------------------------------------------------------------------ P8: stereo pole intermediates
+
+def test_p8_stereo_pole_intermediates():
+    """The shipped stereo codebox up to its sample() line, then out1 = vec(ux, uy, rx, ry), on an odd texture at
+    default dials: at the centre texel rx = ry = 0, rz = 1, so ux = atan2(0, 0) / 2pi + 0.5 and uy = asin(1) / pi + 0.5.
+    Report the exact float32 values at the centre and its horizontal neighbours."""
+    code = _read("src/f_stereo/codebox_v1.gen")
+    cut = "effect_out = sample(in1, vec(ux, uy, 0));"
+    assert cut in code, "stereo codebox no longer has the sample line this probe replaces"
+    probe = code[:code.index(cut)] + "out1 = vec(ux, uy, rx, ry);\n"
+    n = 33
+    out, r = bc.run_pass(probe, [np.zeros((n, n, 4), F32)])
+    check("status ok", _status(r), 0)
+    c = n // 2
+    for label, (y, x) in (("centre", (c, c)), ("left neighbour", (c, c - 1)), ("right neighbour", (c, c + 1))):
+        ux, uy, rx, ry = (float(v) for v in out[y, x])
+        note(f"{label}: ux = {ux!r}, uy = {uy!r}, rx = {rx!r}, ry = {ry!r}", "ux < 1.0" if ux < 1.0 else "ux == 1.0 (reads the FIRST column, per P6)" if ux == 1.0 else "ux > 1.0")
 
 
 if __name__ == "__main__":

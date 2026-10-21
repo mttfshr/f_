@@ -259,6 +259,18 @@ def test_scalar_recursion_noisy_depth():
     check("whole chain vs scalar recursion, coloured depth, codebox luma", e2, 2e-4)
 
 
+def test_negative_shift_reads_wrap_like_the_gpu():
+    """On the GPU a bare sample() wraps its coordinate modulo 1 (probes P2 and P6 and the pix-to-pix scratch patch,
+    2026-10-20: 1.3 reads 0.3, -0.2 reads 0.8, exactly 1.0 reads the first texel; edge-clamped taps). With a white
+    depth map and depth_factor -0.3 the shift is negative at the first texels of strip 1, so those reads must come
+    from the right-hand side of the previous stage; a clamp would read the left edge. The scalar reference wraps
+    with mod(., 1) as the GPU does. (Until 2026-10-20 the mirror clamped here and no test noticed.)"""
+    white = np.ones((H, W, 4), np.float32)
+    e = _err_scalar(white, -0.3)
+    note("white depth, depth_factor -0.3: worst error vs the wrapping walk", e)
+    check("negative shifts in strip 1 read wrapped coordinates (chain vs wrapping walk)", e, 2e-4)
+
+
 def test_depth_factor_sign_flips_displacement():
     """math: the shift is depth_val * depth_factor * strip_width, so +df and -df displace
     to positions symmetric about x - strip_width inside the strip; their tile contents

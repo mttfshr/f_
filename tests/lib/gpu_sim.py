@@ -18,6 +18,14 @@ it is norm * (dim - 1), e.g. 0.492, 1.477, ... at dim 64. grid() returns
 true integer indices (i = floor(norm * dim)), which is what a codebox must
 compute explicitly when it needs one. jitter_cell() reproduces `cell`.
 
+Out-of-range sample() (measured 2026-10-20: probes P2 and P6 and the pix-to-pix scratch patch
+scratch/boundmode_probe.maxpat; HANDOFF 2026-10-20): when the input is another pix's output texture (how
+modules chain, and how the bench feeds its probes), a bare sample() WRAPS its x coordinate modulo 1 and then
+interpolates with edge-clamped taps: 1.3 reads 0.3, -0.2 reads 0.8, exactly 1.0 or 0.0 reads the first texel,
+no seam blend. Vertical (y) behaviour is NOT measured yet (probe P7), so y keeps clamping by default.
+OOB_DEFAULT = (x, y) sets it; sample(..., oob=) overrides per call; wrap=True is a different, manual thing
+(periodic taps, a codebox that fract()s its own coordinate). nearest() is unchanged (clamp, not probed).
+
 What this can't tell you: compile limits (loop unrolling, instruction counts),
 fps, GPU trig precision, @adapt/@dim behavior. Those stay Max questions.
 """
@@ -63,6 +71,23 @@ def _index(i, n, wrap):
     return np.mod(i, n) if wrap else np.clip(i, 0, n - 1)
 
 
+OOB_DEFAULT = ("wrap_coord", "clamp")      # (x, y): measured for x only; see the module docstring
+
+
+def _oob_pair(oob):
+    if oob is None:
+        return OOB_DEFAULT
+    if isinstance(oob, str):
+        return (oob, oob)
+    return tuple(oob)
+
+
+def _wrap_coord(a):
+    """Coordinate modulo 1 in float32 (1.0 -> 0.0, -0.2 -> 0.8)."""
+    a = np.asarray(a, F32)
+    return (a - np.floor(a)).astype(F32)
+
+
 def nearest(tex, u, v, wrap=False):
     """GenExpr nearest(inN, vec(u, v)). u, v scalar or broadcastable arrays.
     Default clamp; wrap=True models manual fract() wrapping of the coord."""
@@ -75,10 +100,18 @@ def nearest(tex, u, v, wrap=False):
     return tex[iy, ix]
 
 
-def sample(tex, u, v, wrap=False):
+def sample(tex, u, v, wrap=False, oob=None):
     """GenExpr sample(inN, vec(u, v)): bilinear, texel-center convention.
-    Default clamp-to-edge; wrap=True models manual fract() wrapping."""
+    Out of range: oob (default OOB_DEFAULT, a string or an (x, y) pair of "wrap_coord" / "clamp") -- wrap_coord
+    wraps the coordinate modulo 1 first, taps always clamp. wrap=True instead models manual fract() wrapping
+    (periodic taps) and ignores oob."""
     h, w = tex.shape[:2]
+    if not wrap:
+        ox, oy = _oob_pair(oob)
+        if ox == "wrap_coord":
+            u = _wrap_coord(u)
+        if oy == "wrap_coord":
+            v = _wrap_coord(v)
     x = np.asarray(u, F32) * F32(w) - F32(0.5)
     y = np.asarray(v, F32) * F32(h) - F32(0.5)
     x0 = np.floor(x)

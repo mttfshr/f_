@@ -150,7 +150,7 @@ def _texel_err(bug=None):
     for c, shift in enumerate((+2, 0, -2)):       # R samples +cs, G the centre, B -cs along +field x
         acc = np.zeros((N, N))
         for n in range(8):
-            xi = np.clip(idx - n + shift, 0, N - 1)
+            xi = np.mod(idx - n + shift, N)      # the shader does not clamp its march: the GPU wraps x (2026-10-20 probes)
             acc += wn[n] * src[:, xi, c].astype(np.float64)
         expect[..., c] = acc / wn.sum()
     return float(np.abs(out2[..., :3] - np.clip(expect, 0, 1).astype(F32)).max())

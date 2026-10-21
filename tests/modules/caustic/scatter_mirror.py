@@ -46,7 +46,7 @@ def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0,
     fy multiplies the field's Y (the shader's baked flip is -1 under both flips)."""
     t = (np.arange(n, dtype=np.float64) / (n - 1)).astype(F32)
     U, V = np.meshgrid(t, t)
-    f = (g.sample(flip(field, up_flip), U, V)[..., :2] - F32(0.5)) * F32(2.0)
+    f = (g.sample(flip(field, up_flip), U, V, oob="clamp")[..., :2] - F32(0.5)) * F32(2.0)   # a vertex-side texture fetch (U, V include 1.0), not GenExpr sample(): clamp
     X = U + F32(d) * f[..., 0]
     Y = V + F32(d) * f[..., 1] * F32(fy)
     X, Y = edge_remap(X, edge, r), edge_remap(Y, edge, r)       # edge mode (2026-10-17); 0 = unchanged
@@ -57,7 +57,7 @@ def ref_scatter(src, field, d, n, w, up_flip=False, out_flip=False, r=R, fy=1.0,
     x0, y0 = np.floor(fx), np.floor(fyy)
     tx, ty = fx - x0, fyy - y0
     x0, y0 = x0.astype(np.int64), y0.astype(np.int64)
-    val = g.sample(flip(src, up_flip), U, V) * F32(w)
+    val = g.sample(flip(src, up_flip), U, V, oob="clamp") * F32(w)   # same: a texture fetch on a grid that includes u = v = 1.0
     img = np.zeros((r, r, 4))
     for ox, oy, wt in ((0, 0, (1 - tx) * (1 - ty)), (1, 0, tx * (1 - ty)),
                        (0, 1, (1 - tx) * ty), (1, 1, tx * ty)):

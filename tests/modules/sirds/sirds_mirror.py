@@ -9,9 +9,11 @@ in2 nowhere; each depth stage reads the previous stage's output at in1 (the
 chain wiring) and the depth texture at in2. Sampling is gpu_sim's bilinear
 texel-centre clamp-to-edge `sample`; strip boundaries never pass through a
 texel centre when the texture width is a multiple of 13, so the `step` gates
-never tie. The shift coordinate goes to the sample unwrapped, as in the codebox: negative
-shift_x reads (strip 1 at negative depth_factor) clamp to the left edge. (An earlier draft
-wrapped it with mod(., 1); the review found that was not in the codebox.)
+never tie. The shift coordinate is wrapped with mod(., 1) before the sample: the codebox has no
+mod, but a GPU sample() wraps its coordinate modulo 1 (probes P2 and P6 and the pix-to-pix
+scratch patch, 2026-10-20), so negative shift_x reads (strip 1 at negative depth_factor) come from
+the right-hand side. (The author wrote this; a review removed it as 'not in the codebox' and
+was wrong; test_negative_shift_reads_wrap_like_the_gpu now needs it.)
 
 `bug` values are the mutations the tests must catch:
   - "no_shift": every depth stage passes the previous stage through (the
@@ -68,7 +70,7 @@ def stage_n(chain, depth, stage_index, depth_factor=0.0, bypass=0.0, bug=None):
     if bug == "no_shift":
         computed = g.sample(chain, nx, ny)
     else:
-        computed = g.sample(chain, shift_x.astype(F32), ny)
+        computed = g.sample(chain, np.mod(shift_x, F32(1.0)).astype(F32), ny)
     passthrough = g.sample(chain, nx, ny)
 
     gate = (F32(1.0) - in_strip) if bug == "gate_out" else in_strip

@@ -3,10 +3,10 @@ vf_streak_mirror.py -- NumPy mirror of the f_vf_streak shader: src/f_vf_streak/c
 codebox's own order of operations (the 8 unrolled marching steps, the left-to-right weighted sums).
 
 Inputs, as in the gen: in1 = source texture, in2 = vecfield texture (R,G encode (v - 0.5) * 2). Sampling is
-gpu_sim's bilinear, texel-centre, clamp-to-edge `sample`. The march positions are not clamped in the shader, so
-out-of-frame behavior is the texture's own addressing; on the GPU the bench wraps out-of-range reads (docs:
-"bench GPU wraps out-of-range reads"), so tests compare only pixels whose whole march stays inside the frame, or
-cases where clamp and index arithmetic agree.
+gpu_sim's bilinear, texel-centre `sample` with its measured out-of-range behaviour (x: the coordinate wraps modulo 1,
+taps clamp; y clamps until probe P7). The march positions are not clamped in the shader, so out-of-frame reads are the
+texture's own addressing: on the GPU they WRAP in x (probes P2 and P6 and the pix-to-pix scratch patch, 2026-10-20),
+and so does this mirror now. The test whose reference is index arithmetic wraps its indices with mod.
 
 `bug` values are the mutations the tests must catch: "forward" (march along +field instead of -field),
 "no_normalize" (divide the weighted sum by 8 instead of by the weight sum), "swap_rb" (the chromatic offset

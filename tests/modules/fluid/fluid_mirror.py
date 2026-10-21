@@ -116,7 +116,7 @@ def project_vec(ur, ui, vr, vi, kxo, kyo):
 
 def interp(tex, u, v):
     """Bilinear sample, periodic (the flow domain is a torus)."""
-    return sample(tex, u, v, wrap=PERIODIC)
+    return sample(tex, u, v, wrap=PERIODIC, oob="clamp")   # PERIODIC False is the clamp mutant: it must clamp, whatever gpu_sim's default is
 
 
 def energy(state):
