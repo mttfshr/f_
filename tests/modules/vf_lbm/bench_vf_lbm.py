@@ -39,7 +39,9 @@ FILES = {"mrg": "codebox_mrg.gen", "collide": "codebox_collide.gen", "stream": "
 BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang inlet
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
 PINNED = {"collide": {"omega": 1.97, "inflow": 0.08}, "enc": {"gain": 3.0, "bypass_gate": 0.0}}
-TOL_STAGE = 1e-5        # one frame, one stage vs the mirror (guess: float32 op order differs between GPU and NumPy)
+TOL_STAGE = 3e-6        # one frame, one stage vs the mirror (measured 2026-10-21: worst 3.3e-7, so ~10x headroom)
+def tol_enc(gain):      # the encode error scales with gain (measured 1.8e-6 at gain 1, 5.4e-6 at 3, 1.8e-5 at 10)
+    return max(1e-5, 3e-6 * gain)
 TOL_EXACT = 0.0         # pure gathers and copies
 
 
@@ -369,11 +371,11 @@ def test_enc_at_solver_size_matches_mirror():
     tex, ux, uy = macro_tex(pl)
     got = gpu("enc", [BANG, tex], dim=(W, H))
     want = lm.encode(pl, 3.0)
-    check("enc at 192x108 vs the mirror's encode, max over RGBA", mx(got, want), TOL_STAGE)
+    check("enc at 192x108 vs the mirror's encode, max over RGBA", mx(got, want), tol_enc(3.0))
     for gain in (0.0, 1.0, 10.0):
         g = gpu("enc", [BANG, tex], dim=(W, H), gain=gain)
         w = lm.encode(pl, gain)
-        check(f"enc gain {gain:g} vs the mirror", mx(g, w), TOL_STAGE)
+        check(f"enc gain {gain:g} vs the mirror", mx(g, w), tol_enc(gain))
     check("enc gain 0: exactly neutral", mx(gpu("enc", [BANG, tex], dim=(W, H), gain=0.0)[..., :3], 0.5), 0.0)
     byp = gpu("enc", [BANG, tex], dim=(W, H), bypass_gate=1.0)
     check("bypass_gate 1: an exactly neutral vecfield (0.5, 0.5, 0.5, 1)",
@@ -388,8 +390,8 @@ def test_enc_upsample_at_other_sizes():
         out = gpu("enc", [BANG, tex], dim=(w, h))
         r = np.clip(0.5 + 3.0 * up_bilinear(ux.astype(np.float64), h, w), 0.0, 1.0)
         g = np.clip(0.5 + 3.0 * up_bilinear(uy.astype(np.float64), h, w), 0.0, 1.0)
-        check(f"enc {w}x{h}: R vs y-periodic, x-clamped bilinear", mx(out[..., 0], r), 2e-6)
-        check(f"enc {w}x{h}: G vs the same", mx(out[..., 1], g), 2e-6)
+        check(f"enc {w}x{h}: R vs y-periodic, x-clamped bilinear", mx(out[..., 0], r), tol_enc(3.0))
+        check(f"enc {w}x{h}: G vs the same", mx(out[..., 1], g), tol_enc(3.0))
     wide = np.zeros((H, W, 4), F32)
     wide[..., 0] = 40.0
     wide[..., 3] = 1.0
@@ -442,7 +444,7 @@ def test_chain_30_frames_matches_mirror():
     for f, e in errs.items():
         note(f"omega 1.97, frame {f}: max |GPU - mirror|", e)
     # tolerance is a guess (float32 op order, amplified by the flow): replace with ~10x the first measurement
-    check("30 frames at omega 1.97: max |GPU - mirror|", errs[30], 1e-4)
+    check("30 frames at omega 1.97: max |GPU - mirror|", errs[30], 4e-5)   # measured 4.3e-6 (2026-10-21)
     moved = planes_err(m, seeded_planes(0.08))
     note("how far the state moved from the seed in 30 frames (so the test is not vacuous)", moved)
     check("the state moved (max change from the seed above 0.01)", float(moved < 0.01), 0.0)
