@@ -28,6 +28,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | Patch | Description |
 |---|---|
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes); audio companion patch included |
+| `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
 
 ### Discrete
 

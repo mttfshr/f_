@@ -42,6 +42,7 @@ VT = ("vec", "tensor")
 CATEGORIES = [
     ("Scope", [
         ("Chladni", "chladni", V),
+        ("Kuramoto-Sivashinsky", "ks", N),
     ]),
     ("Discrete", [
         ("Masonry", "masonry", N),

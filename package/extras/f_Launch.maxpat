@@ -147,6 +147,62 @@
 										20.0
 									]
 								}
+							},
+							{
+								"box": {
+									"id": "obj-5",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										20.0,
+										80.0,
+										150.0,
+										20.0
+									],
+									"text": "f_ks",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										42.0,
+										210.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-6",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										80.0,
+										150.0,
+										20.0
+									],
+									"text": "Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										42.0,
+										720.0,
+										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									]
+								}
 							}
 						],
 						"lines": [

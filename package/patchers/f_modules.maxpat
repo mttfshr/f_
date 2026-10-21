@@ -233,14 +233,15 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Chladni \u2207"
+                                "Chladni \u2207",
+                                "Kuramoto-Sivashinsky"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 0,
+                            "parameter_mmax": 1,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -271,14 +272,15 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "chladni"
+                                "chladni",
+                                "ks"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 0,
+                            "parameter_mmax": 1,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
