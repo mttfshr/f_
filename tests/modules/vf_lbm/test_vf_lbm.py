@@ -315,7 +315,9 @@ def test_inflow_sets_rightward_equilibrium():
     g0 = unpack([p.copy() for p in planes])
     pure = g0[0][:, 0] + g0[2][:, 0] + g0[4][:, 0]
     left = g0[3][:, 0] + g0[6][:, 0] + g0[7][:, 0]
-    rho_z = ((pure + F32(2.0) * left) / (F32(1.0) - ux[:, 0])).astype(F32)[:, None]
+    ux_in = ux[:, 0].copy()
+    ux_in[1:-1] = F32(U0)                    # prescribed first, THEN the density (the experiment's order)
+    rho_z = ((pure + F32(2.0) * left) / (F32(1.0) - ux_in)).astype(F32)[:, None]
     feq_in = equilibrium(rho_z, np.full((NY, 1), U0, F32), np.zeros((NY, 1), F32))
     worst = 0.0
     interior = np.ones(NY, bool); interior[0] = interior[-1] = False   # the Dirichlet rows only
@@ -563,9 +565,30 @@ def test_mutations_are_caught():
             worst = max(worst, float(np.abs(unpack(planes)[i] - F32(fexp64[i])).max()))
         return worst
 
-    real = [mass_err(), bounce_err(), permute_err(), mark_err(), encode_err(), eq_err()]
-    bad = {k: [mass_err(k), bounce_err(k), permute_err(k), mark_err(k), encode_err(k), eq_err(k)] for k in
-           ["wrong_weight", "bounce_post", "prev_after_bc", "stream_sign", "swap_rg"]}
+    def inflow_err(bug=None):
+        """Zou/He density must use the PRESCRIBED inflow velocity: on a random
+        non-equilibrium state the inflow column's rightward populations equal
+        the U0 equilibrium at (pure + 2 left) / (1 - U0) on the interior rows."""
+        rng = np.random.default_rng(8)
+        f = [(0.05 + rng.random((NY, NX))).astype(F32) for _ in range(9)]
+        rho, ux, uy = macro(f)
+        f = [fi / rho for fi in f]
+        planes = pack(f)
+        mask = np.zeros((NY, NX), bool)
+        out = unpack(fuse_local(planes, mask, 0.0, U0, bug=bug))
+        g0 = unpack([p.copy() for p in planes])
+        pure = g0[0][:, 0].astype(np.float64) + g0[2][:, 0] + g0[4][:, 0]
+        left = g0[3][:, 0].astype(np.float64) + g0[6][:, 0] + g0[7][:, 0]
+        rho_z = ((pure + 2.0 * left) / (1.0 - U0))[1:-1]
+        worst = 0.0
+        for i in RIGHT:
+            feq = W9[i] * rho_z * (1 + 3 * E[i, 0] * U0 + 4.5 * (E[i, 0] * U0) ** 2 - 1.5 * U0 ** 2)
+            worst = max(worst, float(np.abs(out[i][1:-1, 0].astype(np.float64) - feq).max()))
+        return worst
+
+    real = [mass_err(), bounce_err(), permute_err(), mark_err(), encode_err(), eq_err(), inflow_err()]
+    bad = {k: [mass_err(k), bounce_err(k), permute_err(k), mark_err(k), encode_err(k), eq_err(k), inflow_err(k)] for k in
+           ["wrong_weight", "bounce_post", "prev_after_bc", "stream_sign", "swap_rg", "rho_pre_dirichlet"]}
     for k, v in bad.items():
         m = max(v)
         note(f"mutation '{k}' best check error", m)

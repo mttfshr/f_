@@ -124,9 +124,14 @@ def fuse_local(planes, mask, omega, U0, bug=None):
     col = 0
     pure = f[PURE[0]][:, col] + f[PURE[1]][:, col] + f[PURE[2]][:, col]
     left = f[LEFT[0]][:, col] + f[LEFT[1]][:, col] + f[LEFT[2]][:, col]
-    rho[:, col] = (pure + F32(2.0) * left) / (F32(1.0) - ux[:, col])
-    ux[1:-1, col] = F32(U0)
-    uy[1:-1, col] = F32(0.0)
+    if bug == "rho_pre_dirichlet":            # density from the MEASURED ux (the 2026-10-21 mirror slip)
+        rho[:, col] = (pure + F32(2.0) * left) / (F32(1.0) - ux[:, col])
+        ux[1:-1, col] = F32(U0)
+        uy[1:-1, col] = F32(0.0)
+    else:                                     # the experiment's order: prescribe u first, then Zou/He rho
+        ux[1:-1, col] = F32(U0)
+        uy[1:-1, col] = F32(0.0)
+        rho[:, col] = (pure + F32(2.0) * left) / (F32(1.0) - ux[:, col])
     feq = equilibrium(rho, ux, uy, bug=bug)
     for i in RIGHT:
         f[i][:, col] = feq[i][:, col]
@@ -135,7 +140,7 @@ def fuse_local(planes, mask, omega, U0, bug=None):
         f[i] = (f[i] + omega_f * (feq[i] - f[i])).astype(F32)
     f_post = f
     if bug == "bounce_post":                  # the spike's trap #2
-        f_prev = f_post
+        f_prev = [fi.copy() for fi in f_post]   # a snapshot, not an alias of the list the loop rewrites
     for i in range(9):                        # bounce-back in the mask (local swap)
         f[i] = np.where(mask, f_prev[OPP[i]], f[i]).astype(F32)
     return pack(f)

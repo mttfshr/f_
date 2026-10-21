@@ -34,8 +34,10 @@ Flagging rather than deciding, same as `f_tf_tensormap` in
 - **Two correctness traps, both silent (no error, just wrong output) —
   MUST be explicit regression tests, not just "written carefully":**
   1. **Streaming direction.** The gather must read from *upstream*:
-     `new[x] = old[x - e_i]`, i.e. roll the state texture by **+e_i** in
-     the sampling offset. Rolling by `-e_i` inverts the flow direction —
+     `new[x] = old[x - e_i]`, i.e. the array is rolled by **+e_i**,
+     which means the shader's SAMPLE COORDINATE is displaced by **−e_i**
+     texels (`sample(tex, x − e_i)`; the mirror's `stream` does exactly
+     this). Reading at `x + e_i` instead inverts the flow direction —
      invisible under uniform flow, only exposed once an obstacle is
      present.
   2. **Bounce-back must read pre-collision values.** Obstacle bounce-back
@@ -221,14 +223,18 @@ masks.
   values (`f_prev[OPP[i]]`), never the just-collided result. MUST have a
   dedicated regression test (this is the spike's trap #2).
 - **FR-004**: Streaming MUST be a separate gather codebox; each of the 9
-  directions MUST sample upstream (`new[x] = old[x - e_i]`, i.e. offset
-  by `+e_i`). MUST have a dedicated regression test for stream-direction
+  directions MUST sample upstream (`new[x] = old[x - e_i]`, i.e. the
+  sample coordinate is displaced by `-e_i` texels; the array roll is
+  `+e_i`). MUST have a dedicated regression test for stream-direction
   sign (the spike's trap #1).
 - **FR-005**: The domain boundary MUST implement open channel
   inflow/outflow (Zou/He-style velocity inflow at one edge, zero-gradient
   copy outflow at the opposite edge) — **NOT** periodic wrap. Edge
   handling MUST be expressed as texel-coordinate branching inside the
-  relevant codebox(es), not CPU-style indexed writes.
+  relevant codebox(es), not CPU-style indexed writes. The y edges are
+  **periodic** (decided 2026-10-21; the mirror and the reference
+  experiment both wrap y). The inflow prescribes `ux = U0` on the
+  interior rows FIRST and only then computes the Zou/He density from it.
 - **FR-006**: The obstacle MUST be specified via a mask texture inlet
   (mod-texture-inlet idiom), not a hardcoded shape.
 - **FR-007**: The BGK relaxation rate (`omega`, or a user-facing
@@ -236,10 +242,15 @@ masks.
   the empirically safe range for the channel-BC case (measurement is a
   Phase 0 task; the periodic+obstacle ceiling was `omega ≲ 1.8` and is
   the floor of what to expect, not necessarily the channel case's own
-  ceiling).
+  ceiling). Mirror measurement (2026-10-21, 300×50, circle r=6, U0 0.08,
+  2500 frames): 1.975 and 1.98 hold, 1.99 goes NaN by frame ~900;
+  clamp near 1.97 until the bench says otherwise.
 - **FR-008**: The outlet MUST be an `f_vecfield`-conformant encoding of
   the macro velocity (RG = XY, 0.5 = zero), gain-scaled and clamped, with
-  no NaN/Inf ever reaching it (mirrors `f_vf_fluid` FR-010).
+  no NaN/Inf ever reaching it (mirrors `f_vf_fluid` FR-010). The
+  mirror's `np.clip` passes NaN through, so this guarantee needs an
+  explicit guard in the encode codebox and its own test; it is not
+  modeled yet (found 2026-10-21).
 - **FR-009**: With a valid equilibrium initial state (uniform `rho = 1`,
   `u = inflow`) and no obstacle, the outlet MUST show near-zero curl
   everywhere (the "clean channel flow" baseline US1's first scenario

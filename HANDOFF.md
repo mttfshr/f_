@@ -1160,3 +1160,9 @@ Both still pure ideation — no code, no tests, nothing built or decided.
   carried forward in case Matt wants it done.
 - Everything else from before that (the `jit-gen-codebox` skill re-upload, soft-mode `scale`>1.0 —
   moot now that soft mode is gone) is presumably still wherever it was, not touched this session.
+
+## 2026-10-21 (midday): mirror/spec read, f_vf_lbm inflow-order fix (not yet committed)
+- **Mirror bug fixed:** `vf_lbm_mirror.fuse_local` computed the Zou/He inflow density from the MEASURED ux, then forced ux to U0. The reference (`tests/records/spike_lbm_d2q9_architecture.py` lines 122-125) prescribes ux first, then computes rho with it. Tests hid it (the uniform start makes both orders equal; `test_inflow_sets_rightward_equilibrium` encoded the same slip). Now: mirror + test fixed, new `inflow_err` check and mutation `rho_pre_dirichlet` (caught at 0.04). `bounce_post` mutant no longer aliases its list. 15/15 green.
+- **Ceiling recheck (300x50, circle r=6, U0 0.08, 2500 frames, both orders):** 1.975 and 1.98 ok, 1.99 NaN by frame ~900-950. The fix did not move the ceiling; wave-2's "survives 1.99" was a different geometry/U0, so FR-007's clamp should sit at about 1.97 until the bench says otherwise.
+- **Spec wording to fix (not yet edited):** FR-004 and Clarifications say "offset by +e_i" for the sampling offset; the sample coordinate is x - e_i (the array roll is +e_i). Also: FR-005 is silent on y (mirror: periodic); FR-008's no-NaN guarantee is not modeled (np.clip passes NaN); Open Experiments 3 and 4 are partly answered by wave 2.
+- Scripts: `f_omp_runs/recheck_inflow_fix.py`, `recheck_inflow_fix2.py` (+ .out).
