@@ -1,0 +1,29 @@
+// codebox_spec.gen -- f_ks stage 3: the spectral step. Multiplies every bin of u-hat by
+// exp((K2 - K2^2) * dt) with K = 2*pi*m/L, and zeroes the k = 0 bin. 256x256 float32.
+// Mirror: tests/modules/ks/ks_mirror.spec_stage().
+//
+// Input in1 = spectral texture (R,G = Re,Im of u-hat). Output R,G = Re,Im; B,A = 0.
+//   - dt is the EFFECTIVE per-frame dt, already clamped in the patcher (FR-006); the same value
+//     goes to the nl stage. L is the domain size (DX = L / N).
+//   - the k = 0 (DC) bin is zeroed every frame and is not a toggle (FR-005): without it the mean
+//     drifts downward (spec Clarifications)
+//   - signed bin index from floor(norm * N), not `cell`; the upper half maps to index - N, so the
+//     Nyquist bin is -N/2 (the rate K2 - K2^2 is even in the index, so the sign is immaterial)
+//   - unary minus before a parenthesis mis-parses in GenExpr; none is used here
+Param dt(0.05);
+Param L(50);
+
+N = 256;
+bx = floor(norm.x * N);
+by = floor(norm.y * N);
+mx = switch(bx < N * 0.5, bx, bx - N);
+my = switch(by < N * 0.5, by, by - N);
+kx = twopi / L * mx;
+ky = twopi / L * my;
+k2 = kx * kx + ky * ky;
+gr = k2 * (1 - k2);
+g = exp(gr * dt);
+dc = (1 - step(0.5, bx)) * (1 - step(0.5, by));
+g = g * (1 - dc);
+
+out1 = vec(nearest(in1, norm).x * g, nearest(in1, norm).y * g, 0, 0);

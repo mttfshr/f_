@@ -404,6 +404,31 @@ def test_generic_point_two_frames_match_reference():
 
 # ------------------------------------------------------------------ mutations
 
+def test_nl_containment_keeps_the_feedback_finite_and_bounded():
+    """FR-008, the codebox_nl.gen backstop: whatever the linear step hands over (NaN,
+    Inf, huge, ordinary), the new state is finite and within +-100; ordinary values pass
+    through the clamp untouched (the clamp is inactive in normal running)."""
+    u = np.zeros((N, N, 4), F32)
+    u[..., 3] = F32(1.0)
+    u[0, 0, 0] = np.nan
+    u[0, 1, 0] = np.inf
+    u[0, 2, 0] = -np.inf
+    u[5, 5, 0] = F32(1e31)
+    u[7, 7, 0] = F32(500.0)
+    u[9, 9, 0] = F32(-500.0)
+    with np.errstate(all="ignore"):
+        out = nonlinear_step(u, 0.05, dx=L / N)
+    x = out[..., 0]
+    check("every texel finite", float(np.count_nonzero(~np.isfinite(x))), 0.0)
+    check("every texel within +-100", float(np.max(np.abs(x)) - 100.0 > 0), 0.0)
+    ordinary = rand_state(3)
+    ordinary_out = nonlinear_step(ordinary, 0.05, dx=L / N)
+    ux = (np.roll(ordinary[..., 0], -1, 1) - np.roll(ordinary[..., 0], 1, 1)) * (0.5 * N / L)
+    uy = (np.roll(ordinary[..., 0], -1, 0) - np.roll(ordinary[..., 0], 1, 0)) * (0.5 * N / L)
+    want = ordinary[..., 0] - 0.05 * 0.5 * (ux * ux + uy * uy)
+    check("ordinary values untouched by the clamp", float(np.max(np.abs(ordinary_out[..., 0] - want))), 1e-4)
+
+
 def test_mutations_are_caught():
     """Every injected bug must fail at least one check by a clear margin (> 1e-3);
     the real mirror must pass the same checks (< 1e-4). The `bug` values: a flipped

@@ -37,11 +37,14 @@ from dft_mirror import fft2_passes, ifft2_passes
 from gpu_sim import F32, TWOPI, grid, nearest, sample, store_float32, texture
 
 
+U_CAP = F32(100.0)             # state containment bound in the nl stage (codebox_nl.gen); far above the measured |u|
+
+
 @dataclass(frozen=True)
 class Params:
     rate: float = 0.5           # dial 0..1: scales the effective per-frame dt (FR-006)
-    dt0: float = 0.1            # per-frame dt at rate = 1 (the notebook's value)
-    ceiling: float = 0.25       # stability ceiling: passed in, never a fixed fact (FR-006)
+    dt0: float = 0.05           # per-frame dt at rate = 1 (Matt, 2026-10-21; the notebook's 0.1 is above the measured ceiling)
+    ceiling: float = 0.0625     # backstop: largest dt that survived at N = 128 and 256, L = 50 (ks-lbm-3); passed in, never a fixed fact (FR-006)
     L: float = 50.0             # domain size; DX = L / N
     amp: float = 1.0            # seed noise amplitude (FR-003)
     zero_mean: bool = True      # the k = 0 fix (FR-005); mandatory, exposed for tests only
@@ -117,8 +120,6 @@ def fwd_dft(state, fast=False, bug=None):
     to R,G."""
     tex = texture(*state.shape[:2])
     tex[..., 0] = state[..., 0]
-    if bug == "fwd_sign":
-        return _fft2(tex, fast)
     return _fft2(tex, fast)
 
 
@@ -184,6 +185,11 @@ def nonlinear_step(u_lin, dt, dx, bug=None):
         out[..., 0] = u_lin[..., 0] + F32(dt) * F32(0.5) * q
     if bug == "grad_half":
         out[..., 0] = u_lin[..., 0] - F32(dt) * q
+    # containment (FR-008; codebox_nl.gen): zap non-finite / |x| >= 1e30 to 0, then clamp to +-U_CAP.
+    # Inactive in normal running (|u| is 15 to 20 at the dt ceiling); a backstop for the feedback loop.
+    x = out[..., 0]
+    x = np.where(np.abs(x) < F32(1e30), x, F32(0.0))
+    out[..., 0] = np.clip(x, -U_CAP, U_CAP).astype(F32)
     return store_float32(out)
 
 

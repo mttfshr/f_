@@ -1,0 +1,37 @@
+// codebox_enc.gen -- f_ks stage 7: upsample the 256x256 state to the render size, map it to a
+// bounded grayscale, and apply the bypass gate. Runs at RENDER resolution.
+// Mirror: tests/modules/ks/ks_mirror.encode() (the mapping); the upsample is a periodic bilinear.
+//
+// Inputs: in1 = `r draw` bang (not referenced here; it triggers every frame and gives this pix
+// the render-context size), in2 = the state (R = u, 256x256, from the nl stage).
+//   - the state is read with a manual periodic 4-tap (exact at any output size, including smaller
+//     than 256 where hardware sample() would snap): consumers get a smooth field (FR-011)
+//   - mapping: v = clamp(0.5 + 0.25 * u, 0, 1), replicated to R,G,B, A = 1. This is the PLACEHOLDER
+//     hard clamp; the final mapping is a tier-3 decision (FR-008, T005)
+//   - non-finite u maps to 0.5 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)
+//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the solver
+//     keeps running upstream. The Param is never named `bypass` (native pix attribute).
+Param bypass_gate(0);
+
+N = 256;
+fx = norm.x * N - 0.5;
+fy = norm.y * N - 0.5;
+x0 = floor(fx);
+y0 = floor(fy);
+tx = fx - x0;
+ty = fy - y0;
+xa = wrap(x0, 0, N);
+xb = wrap(x0 + 1, 0, N);
+ya = wrap(y0, 0, N);
+yb = wrap(y0 + 1, 0, N);
+p00 = vec((xa + 0.5) / N, (ya + 0.5) / N);
+p10 = vec((xb + 0.5) / N, (ya + 0.5) / N);
+p01 = vec((xa + 0.5) / N, (yb + 0.5) / N);
+p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
+au = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx), mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);
+
+au = switch(abs(au) < 1e30, au, 0);
+lum = clamp(0.5 + 0.25 * au, 0, 1);
+lum = lum * (1 - bypass_gate);
+
+out1 = vec(lum, lum, lum, 1);

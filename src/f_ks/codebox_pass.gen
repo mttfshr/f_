@@ -1,0 +1,16 @@
+// codebox_pass.gen -- f_ks stage 0: holds last frame's state u, or reseeds it. 256x256 float32.
+// Mirror: tests/modules/ks/ks_mirror.seed_state() (seeding); identity otherwise.
+//
+// Inputs: in1 = feedback state (R = u, from the nl stage), in2 = noise texture (R in [0,1], 256x256,
+// from jit.noise). reseed = 1 replaces the state with (2*noise - 1) * amp: uniform in [-amp, amp],
+// never zero (u = 0 is a fixed point, FR-003). reseed fires on load and on the reset trigger (FR-007).
+//   - selection uses switch(), not mix(): mix(NaN, x, 1) is still NaN, so a poisoned feedback
+//     texel could survive a reseed through mix
+//   - the feedback is NaN/Inf-guarded: abs(x) < 1e30 (NaN == NaN is TRUE on this GPU)
+Param reseed(0);
+Param amp(1);
+
+fb = nearest(in1, norm).x;
+fb = switch(abs(fb) < 1e30, fb, 0);
+nz = (nearest(in2, norm).x * 2 - 1) * amp;
+out1 = vec(switch(reseed >= 0.5, nz, fb), 0, 0, 1);
