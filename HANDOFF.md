@@ -8,6 +8,14 @@
 - **Open decisions for Matt:** whether any clamp artifact is visible enough to fix; the stale `src/f_lens/definition.py` and Stage C comment items were already fixed and regenerated; `package/javascript/lens_toggle.js` was regenerated and kept.
 - **Housekeeping notes:** device tools were renamed twice during the session (`mcp__remote-devices__` and `mcp__claude-device__lcl-`); long commands over about 60 s time out on the device, so use `tests/bg.sh start offline` and `tests/bg.sh status`. A stray older stash exists (`stash@{0}`, not from today).
 
+## 2026-10-20 (20:55): omp run `ks-lbm-1` prepared for f_ks and f_vf_lbm (offline Phase 0); NOT started, NOT committed
+
+- **What exists:** `f_omp_runs/ks-lbm-1/` (outside the repo): wave 1 ready (`RUN.md`, two units: stage-decomposed float32 NumPy mirrors with tests, one for each module; budgets 45 and 60 min). Paste line for omp: `Read /Users/matt/Github/f_omp_runs/ks-lbm-1/RUN.md and follow it exactly.` Derived from `mirror-build-4` (the edits are in `_derive_from_mirror_build_4.py`, each asserted); a dry run of `init` in a temp copy passed. Planted controls are in `overlay/` (copies of the two specs; key only in the chat reply).
+- **New in the repo:** `.specify/f_ks/tasks.md` and `.specify/f_vf_lbm/tasks.md` (Phase 0 gates; neither module had one). Decided with Matt: offline only (omp cannot run the bench and writes no GenExpr; codeboxes are written in Phase 1 against the bench); the LBM boundary conditions belong to the one mirror unit.
+- **Wave 2 is not built on purpose** (measurements: dt ceiling, omega ceiling, shedding sweep, edge cases): it needs the wave-1 mirrors and a `sweep` command in check.py, to be built from wave-1 feedback. Plan in the run folder's README.
+- **Both experiments run in float64** (np.fft, np.roll); the GPU is float32. The mirrors must be float32; the briefs say so.
+- **Uncommitted:** `.specify/f_ks/tasks.md`, `.specify/f_vf_lbm/tasks.md`, this file.
+
 ## 2026-10-20 (20:40): tier 3 PASSED for potential, ngon and stipple; START HERE rewritten
 
 - **Matt looked in Max (20:32):** all three pass (stipple out3, ngon corners and small scales, potential inflow edges). That closes tier 3 for every clamp fix; the 20:45 entry's "tier 3 owed" line is stale (and its "Open after this" is the only clamp item left).
