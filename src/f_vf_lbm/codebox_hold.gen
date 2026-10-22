@@ -1,10 +1,8 @@
-// codebox_hold.gen -- f_vf_lbm: the loop break and one-frame delay of the three state planes (the f_vf_fluid /
-// f_ks hold idiom). An identity pass over three planes at the solver size.
+// codebox_hold.gen -- f_vf_lbm: the loop break and one-frame delay of the state atlas (the f_vf_fluid / f_ks
+// hold idiom). An identity pass over the 192x324 state atlas.
 //
-// Inlets (outer order): first = `r draw` bang (hot; unused in the code, it only triggers the render each frame),
-// then the three planes from the stream stage (cold). The planes go on to the collide and mrg stages, which are
-// triggered by this stage's outputs, so the whole loop advances exactly once per rendered frame and the
-// feedback never retriggers itself. Not benched on its own (four inlets, the codebox bench drives three).
+// Inlets (outer order): first = the frame gate's bang (hot; unused in the code, it only triggers the render on every
+// Nth frame), second = the state atlas from the stream stage (cold). The collide stage is triggered by this stage's
+// output, so the whole loop advances once per gated frame and the feedback never retriggers itself. Not benched on
+// its own (an identity); the live module bench covers it.
 out1 = nearest(in2, norm);
-out2 = nearest(in3, norm);
-out3 = nearest(in4, norm);

@@ -1,34 +1,43 @@
-// codebox_stream.gen -- f_vf_lbm stage 2: the streaming gather. 192x108 float32, three planes in, three out.
+// codebox_stream.gen -- f_vf_lbm stage 2: the streaming gather. ONE 192x324 float32 state atlas in and out.
 // Mirror: tests/modules/vf_lbm/vf_lbm_mirror.stream() (new[x] = old[x - e_i], FR-004).
 //
-// Population i of this texel is population i of the texel UPSTREAM, at x - e_i (the spike's trap #1: reading at
+// The atlas stacks the three state planes vertically (see codebox_collide.gen): plane 1 = rows 0..107 (populations
+// 0..3 in RGBA), plane 2 = rows 108..215 (4..7), plane 3 = rows 216..323 (population 8 in R).
+// Population i of a cell is population i of the cell UPSTREAM, at x - e_i (the spike's trap #1: reading at
 // x + e_i would reverse the flow, invisible until an obstacle is present). The reads use explicit periodic
-// texel indices through wrap() and texel-centre nearest() taps, so they are exact and do not depend on how
+// cell indices through wrap() and texel-centre nearest() taps, so they are exact and do not depend on how
 // sample() treats out-of-range coordinates (the periodic seam in x is overwritten by the boundary branches in
-// the collide stage, exactly as the mirror's np.roll-equivalent wrap is).
+// the collide stage, exactly as the mirror's np.roll-equivalent wrap is). Each output texel gathers all nine
+// populations for its cell and writes the four its plane holds.
 //   D2Q9: 0 rest; 1 (1,0); 2 (0,1); 3 (-1,0); 4 (0,-1); 5 (1,1); 6 (-1,1); 7 (-1,-1); 8 (1,-1)
-//   plane 1 = populations 0..3 (RGBA), plane 2 = 4..7, plane 3 = 8 in R
+vv(j, y) {
+  return (j * 108 + y + 0.5) / 324;
+}
+
 W = 192;
 H = 108;
 px = floor(norm.x * W);
-py = floor(norm.y * H);
+yt = floor(norm.y * 324);
+kp = floor(yt / 108);
+py = yt - kp * 108;
 cxc = (px + 0.5) / W;
 cxm = (wrap(px - 1, 0, W) + 0.5) / W;
 cxp = (wrap(px + 1, 0, W) + 0.5) / W;
-cyc = (py + 0.5) / H;
-cym = (wrap(py - 1, 0, H) + 0.5) / H;
-cyp = (wrap(py + 1, 0, H) + 0.5) / H;
+ym = wrap(py - 1, 0, H);
+yp = wrap(py + 1, 0, H);
 
-n0 = nearest(in1, vec(cxc, cyc)).x;
-n1 = nearest(in1, vec(cxm, cyc)).y;
-n2 = nearest(in1, vec(cxc, cym)).z;
-n3 = nearest(in1, vec(cxp, cyc)).w;
-n4 = nearest(in2, vec(cxc, cyp)).x;
-n5 = nearest(in2, vec(cxm, cym)).y;
-n6 = nearest(in2, vec(cxp, cym)).z;
-n7 = nearest(in2, vec(cxp, cyp)).w;
-n8 = nearest(in3, vec(cxm, cyp)).x;
+n0 = nearest(in1, vec(cxc, vv(0, py))).x;
+n1 = nearest(in1, vec(cxm, vv(0, py))).y;
+n2 = nearest(in1, vec(cxc, vv(0, ym))).z;
+n3 = nearest(in1, vec(cxp, vv(0, py))).w;
+n4 = nearest(in1, vec(cxc, vv(1, yp))).x;
+n5 = nearest(in1, vec(cxm, vv(1, ym))).y;
+n6 = nearest(in1, vec(cxp, vv(1, ym))).z;
+n7 = nearest(in1, vec(cxp, vv(1, yp))).w;
+n8 = nearest(in1, vec(cxm, vv(2, yp))).x;
 
-out1 = vec(n0, n1, n2, n3);
-out2 = vec(n4, n5, n6, n7);
-out3 = vec(n8, 0, 0, 0);
+o0 = switch(kp < 0.5, n0, switch(kp < 1.5, n4, n8));
+o1 = switch(kp < 0.5, n1, switch(kp < 1.5, n5, 0));
+o2 = switch(kp < 0.5, n2, switch(kp < 1.5, n6, 0));
+o3 = switch(kp < 0.5, n3, switch(kp < 1.5, n7, 0));
+out1 = vec(o0, o1, o2, o3);

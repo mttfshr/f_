@@ -1,26 +1,36 @@
-// codebox_collide.gen -- f_vf_lbm stage 1: the fused local pass. 192x108 float32, three output planes.
+// codebox_collide.gen -- f_vf_lbm stage 1: the fused local pass. ONE 192x324 float32 texture out (the state atlas).
 // Mirror: tests/modules/vf_lbm/vf_lbm_mirror.fuse_local() (same order, same formulas).
 //
-// Inlets (outer order): the three state planes from the hold stage, the third carrying the obstacle flag from the
-// mrg stage in G. The first is hot (hold's first outlet triggers this render), so no draw bang is needed here and
-// the stage stays at three inlets, which the codebox bench can drive.
-// State packing (FR-001): plane 1 = populations 0..3 in RGBA, plane 2 = populations 4..7, plane 3 = population 8
-// in R. D2Q9 order: 0 rest; 1 (1,0); 2 (0,1); 3 (-1,0); 4 (0,-1); 5 (1,1); 6 (-1,1); 7 (-1,-1); 8 (1,-1).
+// STATE ATLAS (FR-001, revised 2026-10-21): the three RGBA state planes are stacked vertically in one texture,
+// 192 wide x 324 tall: rows 0..107 = plane 1 (populations 0..3 in RGBA), rows 108..215 = plane 2 (populations
+// 4..7), rows 216..323 = plane 3 (population 8 in R, the rest 0). Why one texture: a pix with several outlets
+// feeding one hot and several cold inlets depends on the ORDER its outlets fire, which Max does not document for
+// jit.gl.pix. A planes-in-three-textures chain that fired in the wrong order would step with planes from
+// different frames (a non-conservative scheme: noise in a perfectly uniform channel, found live 2026-10-21).
+// One texture has one hot inlet and nothing to order.
+// Each output texel recomputes the whole collision for its lattice cell (x, y) = (column, row mod 108) and
+// writes the four values its plane holds (3x the arithmetic, which is trivial at this size).
+// D2Q9 order: 0 rest; 1 (1,0); 2 (0,1); 3 (-1,0); 4 (0,-1); 5 (1,1); 6 (-1,1); 7 (-1,-1); 8 (1,-1).
+//
+// Inlets (outer order): first = the state atlas from the hold stage (hot: it triggers this render),
+// second = the obstacle mask at render resolution (cold, from the module inlet).
 // The write order below is the experiment's: pre-collision copy, outflow copy, macro, inflow, equilibrium,
 // right-population overwrite, BGK collision, bounce-back.
-//   - SEED / SELF-HEAL: a texel whose held populations are not all finite, whose density is outside (0.2, 5) or
+//   - SEED / SELF-HEAL: a cell whose held populations are not all finite, whose density is outside (0.2, 5) or
 //     whose rest population is not above 0.05 (a fresh module, a rebuilt GL context, a poisoned or blown-up
 //     texel) restarts at equilibrium with rho = 1, u = inflow, plus a tiny sideways ripple
 //     (0.02 * inflow * sin(0.3 x)) that lets the wake break symmetry sooner. The rest-population test also
 //     rejects an empty inlet, which reads (0, 0, 0, 1). Selection uses switch(), never mix(): mix(NaN, x, 1) is
 //     still NaN.
-//   - PRE-COLLISION (FR-003): the bounce-back reads the texel's populations as held at the start of the frame,
+//   - PRE-COLLISION (FR-003): the bounce-back reads the cell's populations as held at the start of the frame,
 //     before the outflow copy and before collision (the experiment's f_prev).
 //   - OUTFLOW (last column): the three leftward populations copy from the column to the left (zero gradient).
 //   - INFLOW (first column): ux = inflow and uy = 0 on the interior rows FIRST, then the Zou/He density
 //     rho = (rest + 2 * leftward) / (1 - ux); the rightward populations take the equilibrium (FR-005).
 //     y is periodic (decided 2026-10-21), so the top and bottom rows are ordinary rows.
-//   - the obstacle flag comes from the mrg stage (the first and last columns are never flagged)
+//   - MASK: luma (0.299 R + 0.587 G + 0.114 B) averaged over a 4 x 4 grid of nearest taps across the cell's
+//     footprint (exact at 1:1, a box filter when the mask is larger), obstacle where above 0.5. The first and last
+//     columns are never obstacle (T014 default: shield the edge columns). An unconnected mask reads black.
 //   - omega is clamped to [0.5, 1.98] and inflow to [0, 0.1]: the measured stability ceiling (FR-007)
 //   - components are read inline on nearest(), never from a stored vec
 fe(wt, lx, ly, r0, vx, vy) {
@@ -30,6 +40,9 @@ fe(wt, lx, ly, r0, vx, vy) {
 fin(x) {
   return switch(abs(x) < 1e30, 1, 0);
 }
+vv(j, y) {
+  return (j * 108 + y + 0.5) / 324;
+}
 
 Param omega(1.97);
 Param inflow(0.08);
@@ -37,10 +50,16 @@ Param inflow(0.08);
 W = 192;
 H = 108;
 px = floor(norm.x * W);
-py = floor(norm.y * H);
-cv = (py + 0.5) / H;
-pc = vec((px + 0.5) / W, cv);
-pm = vec((px - 0.5) / W, cv);
+yt = floor(norm.y * 324);
+kp = floor(yt / 108);
+py = yt - kp * 108;
+cu = (px + 0.5) / W;
+um = (px - 0.5) / W;
+pc0 = vec(cu, vv(0, py));
+pc1 = vec(cu, vv(1, py));
+pc2 = vec(cu, vv(2, py));
+pm0 = vec(um, vv(0, py));
+pm1 = vec(um, vv(1, py));
 
 om = min(max(omega, 0.5), 1.98);
 u0 = min(max(inflow, 0), 0.1);
@@ -48,16 +67,16 @@ is_in = switch(px < 0.5, 1, 0);
 is_out = switch(px > W - 1.5, 1, 0);
 is_row = switch(py > 0.5, 1, 0) * switch(py < H - 1.5, 1, 0);
 
-// the held state
-b0 = nearest(in1, pc).x;
-b1 = nearest(in1, pc).y;
-b2 = nearest(in1, pc).z;
-b3 = nearest(in1, pc).w;
-b4 = nearest(in2, pc).x;
-b5 = nearest(in2, pc).y;
-b6 = nearest(in2, pc).z;
-b7 = nearest(in2, pc).w;
-b8 = nearest(in3, pc).x;
+// the held state of this cell
+b0 = nearest(in1, pc0).x;
+b1 = nearest(in1, pc0).y;
+b2 = nearest(in1, pc0).z;
+b3 = nearest(in1, pc0).w;
+b4 = nearest(in1, pc1).x;
+b5 = nearest(in1, pc1).y;
+b6 = nearest(in1, pc1).z;
+b7 = nearest(in1, pc1).w;
+b8 = nearest(in1, pc2).x;
 allfin = fin(b0) * fin(b1) * fin(b2) * fin(b3) * fin(b4) * fin(b5) * fin(b6) * fin(b7) * fin(b8);
 rb = b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8;
 valid = allfin * switch(rb > 0.2, 1, 0) * switch(rb < 5, 1, 0) * switch(b0 > 0.05, 1, 0);
@@ -80,11 +99,11 @@ cp = is_out * (1 - use_seed);
 f0 = a0;
 f1 = a1;
 f2 = a2;
-f3 = switch(cp >= 0.5, nearest(in1, pm).w, a3);
+f3 = switch(cp >= 0.5, nearest(in1, pm0).w, a3);
 f4 = a4;
 f5 = a5;
-f6 = switch(cp >= 0.5, nearest(in2, pm).z, a6);
-f7 = switch(cp >= 0.5, nearest(in2, pm).w, a7);
+f6 = switch(cp >= 0.5, nearest(in1, pm1).z, a6);
+f7 = switch(cp >= 0.5, nearest(in1, pm1).w, a7);
 f8 = a8;
 
 // macro quantities
@@ -126,8 +145,17 @@ c6 = f6 + om * (q6 - f6);
 c7 = f7 + om * (q7 - f7);
 c8 = g8 + om * (q8 - g8);
 
-// the obstacle flag from the mrg stage
-m = switch(nearest(in3, pc).y >= 0.5, 1, 0);
+// the obstacle mask, averaged over the cell's footprint; the edge columns are never obstacle
+cv = (py + 0.5) / H;
+msum = 0;
+for (ta = 0; ta < 4; ta += 1) {
+  ox = ((ta + 0.5) / 4 - 0.5) / W;
+  for (tb = 0; tb < 4; tb += 1) {
+    oy = ((tb + 0.5) / 4 - 0.5) / H;
+    msum += nearest(in2, vec(cu + ox, cv + oy)).x * 0.299 + nearest(in2, vec(cu + ox, cv + oy)).y * 0.587 + nearest(in2, vec(cu + ox, cv + oy)).z * 0.114;
+  }
+}
+m = switch(msum / 16 > 0.5, 1, 0) * (1 - is_in) * (1 - is_out);
 
 // bounce-back: inside the obstacle every population becomes the pre-collision opposite one
 n0 = switch(m >= 0.5, a0, c0);
@@ -140,6 +168,9 @@ n6 = switch(m >= 0.5, a8, c6);
 n7 = switch(m >= 0.5, a5, c7);
 n8 = switch(m >= 0.5, a6, c8);
 
-out1 = vec(n0, n1, n2, n3);
-out2 = vec(n4, n5, n6, n7);
-out3 = vec(n8, 0, 0, 0);
+// write the plane this output texel belongs to (0: populations 0..3, 1: populations 4..7, 2: population 8)
+o0 = switch(kp < 0.5, n0, switch(kp < 1.5, n4, n8));
+o1 = switch(kp < 0.5, n1, switch(kp < 1.5, n5, 0));
+o2 = switch(kp < 0.5, n2, switch(kp < 1.5, n6, 0));
+o3 = switch(kp < 0.5, n3, switch(kp < 1.5, n7, 0));
+out1 = vec(o0, o1, o2, o3);

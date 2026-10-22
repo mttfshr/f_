@@ -1,23 +1,30 @@
-// codebox_mac.gen -- f_vf_lbm: macro quantities from the streamed state. 192x108 float32.
+// codebox_mac.gen -- f_vf_lbm: macro quantities from the streamed state atlas. Output 192x108 float32.
 // Mirror: the macro() step of vf_lbm_mirror.encode().
 //
-// R = ux, G = uy (lattice units), B = rho, A = 1. Non-finite values map to 0 (abs(x) < 1e30 guard: NaN == NaN is
-// TRUE on this GPU), and the density is floored at 1e-6 for the divide, so nothing non-finite reaches the encode.
-// Keeping this at the solver size means the render-resolution encode stage reads two values per tap, not nine
-// populations. rho is carried for later derived outputs (FR-008 / spec "Derived outlets"; not used in v1).
+// Input: the 192x324 state atlas (three planes stacked vertically, see codebox_collide.gen); output: one texel per
+// lattice cell. R = ux, G = uy (lattice units), B = rho, A = 1. Non-finite values map to 0 (abs(x) < 1e30 guard:
+// NaN == NaN is TRUE on this GPU), and the density is floored at 1e-6 for the divide, so nothing non-finite
+// reaches the encode. Keeping this at the solver size means the render-resolution encode stage reads two values
+// per tap, not nine populations. rho is carried for later derived outputs (not used in v1).
+vv(j, y) {
+  return (j * 108 + y + 0.5) / 324;
+}
+
 W = 192;
 H = 108;
-cp = vec((floor(norm.x * W) + 0.5) / W, (floor(norm.y * H) + 0.5) / H);
+px = floor(norm.x * W);
+py = floor(norm.y * H);
+cu = (px + 0.5) / W;
 
-f0 = nearest(in1, cp).x;
-f1 = nearest(in1, cp).y;
-f2 = nearest(in1, cp).z;
-f3 = nearest(in1, cp).w;
-f4 = nearest(in2, cp).x;
-f5 = nearest(in2, cp).y;
-f6 = nearest(in2, cp).z;
-f7 = nearest(in2, cp).w;
-f8 = nearest(in3, cp).x;
+f0 = nearest(in1, vec(cu, vv(0, py))).x;
+f1 = nearest(in1, vec(cu, vv(0, py))).y;
+f2 = nearest(in1, vec(cu, vv(0, py))).z;
+f3 = nearest(in1, vec(cu, vv(0, py))).w;
+f4 = nearest(in1, vec(cu, vv(1, py))).x;
+f5 = nearest(in1, vec(cu, vv(1, py))).y;
+f6 = nearest(in1, vec(cu, vv(1, py))).z;
+f7 = nearest(in1, vec(cu, vv(1, py))).w;
+f8 = nearest(in1, vec(cu, vv(2, py))).x;
 
 rho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;
 rs = max(rho, 0.000001);

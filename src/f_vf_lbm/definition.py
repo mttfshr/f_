@@ -6,30 +6,30 @@ f_vf_lbm -- definition.py
 outlet to f_vf_advect / f_vf_warp / f_vf_streak / f_vf_glow like any other vecfield.
 See .specify/f_vf_lbm/{spec,tasks}.md; the verified NumPy mirror is tests/modules/vf_lbm/.
 
-Stage chain, solver stages at a fixed 192x108 (16:9, so a shape keeps its proportions) float32, three planes
-(nine populations packed in RGBA, FR-001):
-    hold -> collide -> stream -> mac -> enc           (stream -> hold feedback, three planes)
-    hold -> mrg -> collide                            (the obstacle flag rides in plane 3, G)
-  hold     the loop break: one-frame delay of the three state planes (identity), triggered by `r draw`
-  mrg      box-averages the render-size mask, writes the obstacle flag next to population 8
+Stage chain. The solver state is ONE 192x324 float32 texture, the three RGBA state planes (nine populations,
+FR-001) stacked vertically ("state atlas"; codebox_collide.gen documents the layout). One texture means every
+solver stage has a single hot inlet and no multi-outlet handoff: a first version with three textures depended on
+the order jit.gl.pix fires its outlets (undocumented) and, live, produced noise in an empty channel.
+    hold -> collide -> stream -> mac -> enc           (stream -> hold feedback)
+    mac -> mprev -> enc                               (the previous velocity, for the Speed blend)
+  hold     the loop break: one-frame delay of the state atlas (identity), triggered by the frame gate
   collide  fused macro + equilibrium + BGK collision + bounce-back (pre-collision values) + Zou/He inflow +
-           zero-gradient outflow, y periodic; seeds a valid equilibrium when the state is empty or non-finite
+           zero-gradient outflow, y periodic; box-averages the render-size mask itself (second inlet); seeds a
+           valid equilibrium when the state is empty or non-finite
   stream   gather: new[x] = old[x - e_i] (explicit periodic indices)
-  mac      ux, uy, rho from the streamed state (solver size)
-  enc      render-size bilinear upsample + gain + clamp + f_vecfield encode + bypass gate
+  mac      ux, uy, rho from the streamed state, one texel per lattice cell (192x108)
+  mprev    one-step delay of the mac texture
+  enc      render-size bilinear upsample + gain + clamp + f_vecfield encode + Speed blend + bypass gate
 
-Why mrg exists: the codebox bench drives three inlets per stage, and collide would otherwise need a draw bang,
-three planes and a mask (five). With the trigger moved to `hold` and the mask folded into plane 3, every
-numerics stage (collide, stream, mac, enc, mrg) is benchable. `hold` is the only four-inlet stage and is an
-identity. The first outlet of `hold` is the hot cord into collide; Max fires outlets right to left, so mrg's
-flag and the second plane are in place before the first plane triggers collide.
+Every numerics stage has at most three inlets, so the codebox bench (which drives three) can test each against
+the mirror. `hold` and `mprev` are identities.
 
 The `r draw` bang goes to enc directly and to hold through a frame gate (raw boxes at the end of this file): a
 counter passes every Nth bang, N from the Speed menu, so a skipped frame leaves the whole solver loop idle and
 enc re-renders. Speed 1/N therefore slows the flow to 1/N. The output is smoothed between solver steps: `mprev`
 keeps the previous step's velocity (copied just before each step), and enc blends mix(previous, current,
 phase / N) with phase = 1..N sent by the gate, so it moves continuously, about N frames behind.
-Object ids the gate wires: hold obj-50, mprev obj-55, enc obj-5, the Speed menu obj-29.
+Object ids the gate wires: hold obj-50, mprev obj-54, enc obj-5, the Speed menu obj-29.
 The bang to hold The feedback enters hold on cold inlets, so the loop
 advances exactly once per rendered frame (the f_vf_fluid / f_ks pattern). The mask is the module's one texture
 inlet; unconnected reads as no obstacle. The solver size is a literal in each codebox (W = 192, H = 108).
@@ -84,22 +84,20 @@ patcher = {
         {"name": "nsteps", "type": "internal"},
     ],
 
-    # The mask inlet reaches the mrg stage only (its second inlet).
+    # The mask inlet reaches the collide stage only (its second inlet).
     "inlet_comment": "obstacle mask (white = obstacle)",
-    "inlet_fanout": {"texture": [["mrg", 1]], "state": []},
+    "inlet_fanout": {"texture": [["collide", 1]], "state": []},
     # no draw_triggers: the frame gate (raw boxes below) takes `r draw` itself and triggers enc after the solver
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
 
     "pix_chain": [
-        {"id": "hold",    "name": "#0_lbm_hold",    "gen": "codebox_hold.gen",    "n_inlets": 4, "n_outlets": 3,
-         "pix_attrs": "@adapt 0 @dim 192 108 @type float32", "primary": False},
-        {"id": "mrg",     "name": "#0_lbm_mrg",     "gen": "codebox_mrg.gen",     "n_inlets": 2, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @dim 192 108 @type float32", "primary": False},
-        {"id": "collide", "name": "#0_lbm_collide", "gen": "codebox_collide.gen", "n_inlets": 3, "n_outlets": 3,
-         "pix_attrs": "@adapt 0 @dim 192 108 @type float32", "primary": False},
-        {"id": "stream",  "name": "#0_lbm_stream",  "gen": "codebox_stream.gen",  "n_inlets": 3, "n_outlets": 3,
-         "pix_attrs": "@adapt 0 @dim 192 108 @type float32", "primary": False},
-        {"id": "mac",     "name": "#0_lbm_mac",     "gen": "codebox_mac.gen",     "n_inlets": 3, "n_outlets": 1,
+        {"id": "hold",    "name": "#0_lbm_hold",    "gen": "codebox_hold.gen",    "n_inlets": 2, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 192 324 @type float32", "primary": False},
+        {"id": "collide", "name": "#0_lbm_collide", "gen": "codebox_collide.gen", "n_inlets": 2, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 192 324 @type float32", "primary": False},
+        {"id": "stream",  "name": "#0_lbm_stream",  "gen": "codebox_stream.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 192 324 @type float32", "primary": False},
+        {"id": "mac",     "name": "#0_lbm_mac",     "gen": "codebox_mac.gen",     "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 192 108 @type float32", "primary": False},
         {"id": "mprev",   "name": "#0_lbm_mprev",   "gen": "codebox_mprev.gen",   "n_inlets": 2, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 192 108 @type float32", "primary": False},
@@ -107,16 +105,13 @@ patcher = {
          "pix_attrs": "@adapt 1 @type float32", "primary": True},
     ],
     "pix_wires": [
-        # hold -> collide: the first plane is the hot cord; the third plane goes through mrg first
-        ["hold", 0, "collide", 0], ["hold", 1, "collide", 1],
-        ["hold", 2, "mrg", 0], ["mrg", 0, "collide", 2],
-        ["collide", 0, "stream", 0], ["collide", 1, "stream", 1], ["collide", 2, "stream", 2],
-        # feedback edge: stream -> hold, cold inlets (the bang is the hot one)
-        ["stream", 0, "hold", 1], ["stream", 1, "hold", 2], ["stream", 2, "hold", 3],
-        ["stream", 0, "mac", 0], ["stream", 1, "mac", 1], ["stream", 2, "mac", 2],
-        ["mac", 0, "enc", 1],       # velocity -> encode (cold)
-        ["mac", 0, "mprev", 1],     # velocity -> its one-step delay (cold)
-        ["mprev", 0, "enc", 2],     # previous velocity -> encode (cold), for the Speed blend
+        ["hold", 0, "collide", 0],        # the state atlas: collide's one hot inlet
+        ["collide", 0, "stream", 0],
+        ["stream", 0, "hold", 1],         # feedback edge: cold inlet (the gate's bang is the hot one)
+        ["stream", 0, "mac", 0],
+        ["mac", 0, "enc", 1],             # velocity -> encode (cold)
+        ["mac", 0, "mprev", 1],           # velocity -> its one-step delay (cold)
+        ["mprev", 0, "enc", 2],           # previous velocity -> encode (cold), for the Speed blend
     ],
 }
 
@@ -167,7 +162,7 @@ patcher["raw_lines"] = [
     _line(3, 0, 4, 0), _line(4, 0, 5, 0), _line(5, 0, 3, 1),        # count + 1, wrapped at N, stored
     _line(4, 0, 9, 0), _line(9, 0, "obj-5", 0),                     # phase -> enc
     _line(3, 0, 6, 0), _line(6, 0, 7, 0),                           # count 0 -> step trigger
-    _line(7, 1, "obj-55", 0),           # step trigger right -> mprev copies the old velocity first
+    _line(7, 1, "obj-54", 0),           # step trigger right -> mprev copies the old velocity first
     _line(7, 0, "obj-50", 0),           # step trigger left -> hold: the solver steps
     _line("obj-29", 0, 8, 0), _line(8, 0, 5, 1),                    # Speed index + 1 -> N
     _line(8, 0, 10, 0), _line(10, 0, "obj-5", 0),                   # N -> enc
