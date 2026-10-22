@@ -8,6 +8,13 @@
 - **Open decisions for Matt:** whether any clamp artifact is visible enough to fix; the stale `src/f_lens/definition.py` and Stage C comment items were already fixed and regenerated; `package/javascript/lens_toggle.js` was regenerated and kept.
 - **Housekeeping notes:** device tools were renamed twice during the session (`mcp__remote-devices__` and `mcp__claude-device__lcl-`); long commands over about 60 s time out on the device, so use `tests/bg.sh start offline` and `tests/bg.sh status`. A stray older stash exists (`stash@{0}`, not from today).
 
+## 2026-10-21 (17:35): f_vf_lbm edge-band flicker FIXED (state atlas); lesson for the library
+
+- **Cause (confirmed):** the first build carried the three state planes as three textures out of three outlets of one jit.gl.pix into one hot and two cold inlets of the next stage. Max does not document the order jit.gl.pix fires its outlets, and no bench exercised it (the chain tests were host-sequenced). Live, the module stepped with planes from different frames: an empty channel was not uniform (edge columns R 0.68, interior G 0.56, flicker 0.026). The mirror and every per-stage bench were fine, which is why only a live measurement (`scratch/lbm_live_edges.py`, the module bench with a black mask 192 wide) showed it.
+- **Fix (committed `40d9bea`):** the state is ONE 192x324 float32 texture (the three planes stacked vertically). `hold` (2 inlets), `collide` (atlas + mask, mask box-average folded in; the `mrg` stage is gone), `stream`, `mac` (192x108 out), `mprev`, `enc`. Bench rewritten: 16/16 green; the live module now matches the mirror (R 0.74, G 0.50, calm edges).
+- **Rule:** never feed several outlets of one jit.gl.pix into one hot plus several cold inlets; stack multi-plane state in one texture. (Also: a green codebox bench does not cover trigger order; a live empty-channel check is the cheap test.)
+- **Still to run (Max):** `bench_vf_lbm_module.py`, the `f_vf_lbm` row of `bench_modules.py`, the slow 100-frame chain (`tests/bench.sh --slow`). Superseded notes below (feather, slew, edge noise) were chasing this bug.
+
 ## 2026-10-21 (17:10): f_vf_lbm in use in Matt's scratch patch; Speed added; edge/noise chase closed
 
 - **State (committed, `af240c2`):** codebox bench 14/14 green (Matt); module bench, slow 100-frame chain and the `bench_modules.py` bypass row NOT run (the codebox bench predates the `phase`/`nsteps` blend, so re-run it once). Matt: "works great in a scratch patch".
