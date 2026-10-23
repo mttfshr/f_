@@ -99,10 +99,10 @@ tests/modules/wc/
 
 - [x] G1 **Form navigation shape — DECIDED 2026-10-23 (Matt, option A).** The noise-driven region map found no separable four-form attractor regions (see T005 record): the pattern is a noise-driven labyrinth/stripe-glass transient. **Ship the labyrinth generator: no four-form selector.** FR-010/US-3/SC-2,3,8 revised in the spec (a `texture` dial = kernel width σ_I steers the grain; Phase-0 stripe/labyrinth landmarks as snaps). US-1/US-3/SC revised; parameter table `form`→`texture`.
 - [ ] G2 **Naming**: `f_wc` is a placeholder (spec header). Alternatives on record: `f_formconstants`. Decide before Phase 3's menu and README entries.
-- [ ] G3 **Drive inlet semantics**: T007's coupling-shape recommendation; confirm or pick another.
+- [x] G3 **Drive inlet semantics — DECIDED 2026-10-23 (Matt, per T007 recommendation).** Drive inlet = raw additive on E only: `drive_gain·(scene − 0.5)` into the E sigmoid input. Weak drive = hallucinate, strong drive = see (one knob, both ends). Unconnected inlet reads mid-0.5 → zero net drive for free (pure US-1 labyrinth, no special-casing). `drive_gain` is a `gain`-role dial in the library convention.
 - [ ] G4 **Output encoding**: T008's comparison; decide in Phase 2 with live context (same as f_ks T012).
 
-**Checkpoint**: mirror + tests green; region map recorded; G1 decided (2026-10-23); T006 stills seen and approved by Matt ("the stills are great", 2026-10-23); T007 done with a concrete G3 recommendation (drive inlet = raw additive on E only, `drive_gain·(scene−0.5)`; weak drive = hallucinate, strong = see; unconnected inlet reads mid-0.5 → zero net drive for free). **Phase 0 Gate to Phase 1 is now only G3 awaiting Matt.** T008 (encoding measurement → G4) slips to Phase 2; G2 (naming) is a Phase 3 blocker.
+**Checkpoint — PHASE 0 CLOSED 2026-10-23 (Matt approved G3, the last Phase-0 gate).** Mirror + tests green; region map recorded; G1 decided; T006 stills approved by Matt ("the stills are great"); T007 done and G3 approved per its recommendation. **Phase 1 (bpatcher build) may start.** T008 (encoding measurement → G4) slips to Phase 2; G2 (naming) is a Phase 3 blocker.
 
 ---
 
