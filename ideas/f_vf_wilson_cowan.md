@@ -1,4 +1,13 @@
-# f_vf_wilson_cowan (idea, not specced)
+# f_vf_wilson_cowan (idea — specced 2026-10-22 as `.specify/f_wc/spec.md`, working name `f_wc`)
+
+_Spec decisions that supersede this file's framing: generator archetype,
+not a vecfield producer (output is a luma visual-field pattern, one outlet);
+spectral diffusion, not a real-space DoG kernel (the perf question below
+dissolves); the inverse retinotopic map is part of the module's render
+stage — without it the output is V1-coordinate rolls/hexagons, not the
+funnel/spiral/lattice/cobweb taxonomy. The WFG-dial question is deferred
+to the Phase 0 spike's parameter region map. Kept here as the origin
+record._
 
 Vecfield producer based on the Wilson-Cowan neural mass model
 (https://en.wikipedia.org/wiki/Wilson%E2%80%93Cowan_model): two coupled

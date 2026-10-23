@@ -81,7 +81,7 @@ substantially move a file in `ideas/`, update its entry here too.
   `f_vf_prism`, `f_vf_potential`, `f_vf_split` (consumers) joined the originals
   (`f_vf_vortex(_multi)`, `f_vf_fieldmap`, `f_caustic`, `f_vf_warp`, `f_vf_streak`).
   The README Patches table is the current module list; `f_vf_chroma` and
-  `f_vf_vorticity` are paused.
+  `f_vf_vorticity` was paused, now shippable (2026-10-21).
 - **[f_tensorfield.md](f_tensorfield.md)** 🟡 — Tensor field family hub (sibling to
   `f_vecfield.md`): status of the seven built `f_tf_` modules, decisions, live open
   questions (Q12-Q17) and the vecfield-consumer audit. The active working doc.
@@ -133,11 +133,12 @@ substantially move a file in `ideas/`, update its entry here too.
   **fork of `f_vf_fluid`**, not a v2: the solver's parameters live in real space
   (`force`, `dt`, `gain`, cheap to vary per pixel) and in the spectral stage
   (structural). Idea only, not specced, not named.
-- **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** ⚪ — Vecfield producer from
-  the Wilson-Cowan neural-mass model (E/I reaction-diffusion) — targets the
-  classic funnel/spiral/lattice/cobweb hallucination-form taxonomy
-  (Ermentrout-Cowan). Needs `jit.gl.node @capture 1` self-recursion, not a
-  stateless pix chain.
+- **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** 🟡 — **Specced 2026-10-22** as
+  `.specify/f_wc/spec.md` (working name `f_wc`): a generator (not a vecfield
+  producer) — spectral-diffusion Wilson-Cowan on the f_ks solver pattern, with
+  the inverse retinotopic map in the render stage so the Ermentrout-Cowan
+  funnel/spiral/lattice/cobweb taxonomy appears in visual-field coordinates.
+  Phase 0 is the NumPy spike (region map decides the form-selector question).
 - **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** 🟢 — **RESOLVED
   2026-10-13: ship both.** `f_weave`'s vecfield-driven orientation used vector-add +
   renormalize (non-proportional response); the true angular blend via `atan2` (GPU
