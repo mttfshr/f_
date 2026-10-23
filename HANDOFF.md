@@ -1,5 +1,29 @@
 # HANDOFF
 
+## 2026-10-23 (late): f_wc Phase 0 CLOSED (G1 + G3 approved); Phase 1 architecture worked out from the f_ks chain — next session builds
+
+**Phase 0 closed (commit `880820c`).** Both remaining gates went to Matt and came back: G1 = labyrinth-generator scope (no four-form selector), G3 = drive-coupling recommendation approved. Still open, later phases: G4 (output encoding, slips to Phase 2 via T008), G2 (naming `f_wc` vs `f_formconstants`, Phase 3 blocker).
+
+**Phase 1 architecture (worked out by reading all of src/f_ks; build against this directly).** Key structural insight: the f_ks DFT codeboxes (`codebox_dft_{fx,fy,iy,ix}.gen`) already process FOUR channels as TWO independent complex fields (R,G = complex 1; B,A = complex 2). So ONE f_ks-shaped DFT chain carries BOTH WC fields at once — pack complex-1 = E (R=E, G=0), complex-2 = I (B=I, A=0). No duplicated DFT chain, no Hermitian split needed. Stage plan, 256² float32:
+
+    hold → pass(3in) → fx → fy → spec → iy → ix → nl(4in) → hold (feedback)
+    noise → pass.in2 (reseed source) ; noise → nl.in3 (per-frame drive)
+    state pass→nl.in2 (raw E,I) ; nl → enc (render-res)
+
+- **hold/pass/enc/iy/ix** adapt f_ks 1:1 (pass reseeds R=E,G=I each from an independent hash channel of `noise`; enc's 4-tap resample becomes the retinotopic map).
+- **spec:** replace the KS rate `exp((k²−k⁴)dt)` with TWO real per-bin gains: `KE=exp(−σ_E²k²/2)` on the E channels (R,G out = in·KE), `KI=exp(−σ_I²k²/2)` on the I channels (B,A). σ in PIXELS (working-set σ_E=σ_I/1.45, texture dial = σ_I). NO DC zeroing (that's KS-specific). Param `texture` → σ_I, plus `rate`→dt is NOT here (dt only in nl).
+- **nl (the heart), 4 inlets:** in1=convolved fields (R=conv(E,KE), B=conv(I,KI)), in2=raw state (R=E,G=I), in3=per-frame noise, in4=drive texture (sampled at solver res). Computes `Ae=F(16.1·cE − 14.5·cI − He + Ne·nx + drive_gain·(drv−0.5))` (+ same for I with Aei/Aii/Hi), relaxes `E += (Ae−E)·(dt/Te)`, Te=4 Ti=12.5. NaN/Inf zap per f_ks. Params dt(rate), Ne, drive_gain.
+- **noise stage:** f_ks seed codebox + a G channel hash; salt increments EVERY frame (not just on reset — per-frame noise is the load-bearing mechanism) via the `r draw` counter in the raw wiring (f_ks resets salt per reset; WC increments per draw).
+- **enc:** the 256² state → render-res retinotopic (log-polar) resample from `wc_retinotopy.py` (u=k_e·log1p(r/r0), v=k_t·θ, periodic taps), display E (placeholder until G4), sharp dial, bypass→black A=1. Map constants (r0, k_e, k_t) provisional per T006.
+- **Drive inlet** = the module's first texture inlet; check `build/spec.md` `driving_inlet` handling; unconnected default must read 0.5 (so drive=0 → free US-1, per G3).
+- **Params:** rate (dt mult→nl), texture (σ_I→spec, working band corner σ_I∈[1.2,1.7]×Ne; default σ_I=1.4), drive_gain (G3: weak=hallucinate, strong=see; Ne fixed at 1.0 in the G3-verified corner, or its own dial — decide at build), sharp (enc), reset, bypass_gate.
+- **T020 (DFT factor):** f_wc reuses `src/f_ks/gen_dft.py` a third time → factor to a shared location (FR-002). The four DFT codeboxes are byte-adapted from the same template; only the packing comment changes.
+- **Verification tier 1:** new mirror `tests/modules/wc/wc_mirror.py` from the SETTLED model (per-frame noise, relaxation form, Gaussian conv) — the existing spikes are records, not the tier-1 mirror. Tier 2 frame-exact feedback bench per f_ks `bench_ks.py`.
+
+**The settled model (verbatim, from T005/T007):** `E += (S(16.1·(K_E⊗E) − 14.5·(K_I⊗I) − 3.1 + Ne·N + dg·(drive−0.5)) − E)·dt/4`; `I += (S(13.7·(K_E⊗E) − 13·(K_I⊗I) − 3.5 + Ne·N) − I)·dt/12.5`; S logistic, K Gaussian (σ_E<σ_I), N fresh Gaussian noise per frame, dt=1 baseline.
+
+---
+
 ## 2026-10-23 (f_wc UN-BLOCKED): the mechanism is noise-sustained patterning — per-frame drive, not nucleation. Module is GO
 
 **START HERE if resuming f_wc.** The "both model classes fail" conclusion earlier today (commits `c31012d`/`4a1f377`) was MY error, reversed the same day. Matt pointed to Michael Rule's working webgpgpu Wilson-Cowan pages. I ran the actual page headless (512², Psychedelic preset, 1600 frames) and read back the cortical texture: **std 95/255, clean labyrinthine stripe structure** — the real Ermentrout-Cowan hallucination texture — and reproduced it in NumPy.
