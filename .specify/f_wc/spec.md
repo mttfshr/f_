@@ -1,7 +1,8 @@
 # Spec: f_wc
 
 _Created: 2026-10-22_
-_Status: Draft — not yet built_
+_Status: Scope settled 2026-10-23 (Phase 0 gates) — labyrinth-generator
+scope; NOT the four-form selector. See "Scope settled" below._
 _Origin: `ideas/f_vf_wilson_cowan.md` (Wilson-Cowan neural mass model,
 Butler et al. 2012 PNAS variant with long-range inhibitory diffusion;
 Ermentrout-Cowan 1979 hallucination-form taxonomy). Spec'd in one pass
@@ -20,7 +21,55 @@ which is also not `f_vf_` despite having a plausible `grad(u)` outlet).
 
 ---
 
-## Concept
+## Scope settled (2026-10-23, gate G1 — Matt chose option A)
+
+Phase 0 ran and **changed the model and the scope**. Record (full detail:
+`.specify/f_wc/tasks.md` T001–T005 + Record):
+
+- **The model that works is a NOISE-SUSTAINED two-field kernel-coupled
+  sigmoid Wilson-Cowan system** — NOT the diffusion-form equations written
+  in "Concept" below, NOT the Pinto-Ermentrout activator-recovery form
+  (spiked, failed), NOT a noiseless Turing system (the original region map's
+  entire regime collapses without continuous drive). The one load-bearing
+  ingredient, isolated by ablation against Michael Rule's working webgpgpu
+  implementation, is **persistent per-frame stochastic drive** (`Ne·noise`
+  injected every frame). Concept equation is superseded by:
+
+  ```
+  E += ( S(Aee.(Ke*E) - Aie.(Ki*I) - He - be.Ve + Ne.noise) - E ).dt/Te
+  I += ( S(Aei.(Ke*E) - Aii.(Ki*I) - Hi - bi.Vi + Ni.noise) - I ).dt/Ti
+  Ve += (E - Ve).dt/ae      Vi += (I - Vi).dt/ai    (adaptation)
+  Ke, Ki Gaussian conv kernels (sigma_E < sigma_I = lateral inhibition);
+  S = logistic sigmoid. Working set (Rule "Psychedelic"): Aee=16.1 Aie=14.5
+  Aei=13.7 Aii=13, He=3.1 Hi=3.5, Te=4 Ti=12.5, dt=1, Ne=0.75, be=bi=0,
+  sigma_E=2px sigma_I=2.9px, N=256.
+  ```
+
+- **The aesthetic deliverable is a noise-driven LIVING LABYRINTH /
+  stripe-glass, not a discrete four-form selector.** The region map with
+  per-frame noise found: a sharp drive threshold at Ne≈0.75; the labyrinth
+  is a long-lived *transient* on a saturation boundary (low drive dies, high
+  drive saturates all-ones); kernel width selects geometry (σ_I=1.5 →
+  coherent broken stripes, σ_I≥2.9 → disordered labyrinth); no clean
+  hexagon/spiral/funnel/cobweb regions exist as separable stable attractors.
+  So **gate G1 (form selector shape) resolves to: NO four-form selector.**
+  The module is an autonomous hallucination-labyrinth generator + drive
+  inlet + a kernel-width texture dial + the retinotopic render. Form
+  "navigation" is the texture dial over a continuum, not a WFG-style
+  category dial. FR-010 and Success Criteria 2/3/8 are revised accordingly;
+  US-3 is revised.
+
+- **What the retinotopic map renders is the labyrinth** (validated
+  model-agnostic; cortex std 0.19 → retinal std 0.21). The classic form
+  constants appear *within* the labyrinth transiently and stochastically —
+  they are the texture's vocabulary, not addressable presets.
+
+The pre-Phase-0 text below is kept except where this section and the revised
+FR-010 / US-3 / Success Criteria override it.
+
+---
+
+## Concept (superseded — see Scope settled)
 
 A 2D Wilson-Cowan neural mass field: two coupled scalar populations,
 excitatory `E(x)` and inhibitory `I(x)`, evolving per
@@ -110,16 +159,13 @@ navigates to a waveform.
   surfaced: `f_formconstants` (Ermentrout-Cowan's own term), something
   in the `f_cymascope`/`f_chladni` phenomenological vein. Flag, same
   as f_ks did.
-- **Form selector: dial vs. continuum.** Whether the four forms occupy
-  clean discrete parameter regions (a 4-position selector with glyph
-  previews, the WFG-dial idea) or a fuzzy continuum (continuous knobs
-  only) is *the* question the Phase 0 spike answers — it cannot be
-  decided from the literature alone because the answer depends on
-  basin widths at the chosen resolution, dt, and fixed-parameter set.
-  Both UI shapes are spec'd below (US-4); the spike's region map
-  picks one. If regions are clean: discrete selector + continuous
-  knobs. If fuzzy: continuous knobs only, with the four forms as
-  presets/snaps if they're stable attractors.
+- **Form selector: dial vs. continuum — RESOLVED 2026-10-23 (gate G1).**
+  Phase 0 answered it: the four forms do NOT occupy clean discrete
+  parameter regions (no separable stable attractors; the pattern is a
+  noise-driven labyrinth/stripe-glass transient). Resolution: **no
+  four-form selector** — a continuous `texture` dial (kernel width σ_I)
+  steers the grain, with the Phase-0 stripe/labyrinth landmarks as snap
+  points. See the Scope settled block.
 - **Drive inlet semantics.** The Butler narrative wants an external
   drive `P(x)` that a connected texture modulates. Exact shape
   (additive drive on E only? on both? luminance-gated?) and its
@@ -147,18 +193,16 @@ navigates to a waveform.
 ### User Story 1 — Autonomous hallucination-form generator (Priority: P1)
 
 A performer drops `f_wc` into a patch with no inlets connected, and it
-produces a continuously evolving geometric pattern — funnel, spiral,
-lattice, or cobweb depending on settings — rendered in visual-field
-coordinates, never settling to a static image and never needing
-external drive.
+produces a continuously evolving hallucination labyrinth — rendered in
+visual-field coordinates — never settling to a static image and never
+needing external drive.
 
-**Why this priority**: the module's whole reason to exist — the
-specific Ermentrout-Cowan form taxonomy, as a live generator.
+**Why this priority**: the module's whole reason to exist — the living
+Ermentrout-Cowan hallucination texture, as a live generator.
 
-**Independent Test**: patch `f_wc` alone into `vs_preview`. With the
-form selector (or parameter region) set to each of the four categories
-in turn, the output is recognizably that category's geometry (tier-3
-judgment: does a spiral read as a spiral), keeps evolving, and never
+**Independent Test**: patch `f_wc` alone into `vs_preview`. Across the
+texture control's range, the output is a living labyrinth/stripe-glass
+(tier-3: visibly organic, not generic noise), keeps evolving, and never
 blows up or freezes.
 
 **Acceptance Scenarios**:
@@ -212,36 +256,33 @@ dominate regardless of input content.
 
 ---
 
-### User Story 3 — Form navigation (Priority: P1)
+### User Story 3 — Texture navigation (Priority: P1) *(revised 2026-10-23, gate G1)*
 
-A performer can reliably reach each of the four form categories
-(funnel, spiral, lattice, cobweb) from the control surface — via a
-discrete selector if the spike shows clean parameter regions, or via
-continuous knobs with documented landmarks if it doesn't — without
-needing to understand the underlying equations.
+A performer can move the labyrinth's character continuously — from
+coherent broken stripes toward disordered labyrinth, and back — with a
+single texture control, without needing to understand the equations.
 
-**Why this priority**: the taxonomy is the promise; a control surface
-that can't navigate it fails the module's point even if the solver is
-perfect.
+**Why this priority**: the module's promise is a performable living
+hallucination texture; a control that can't steer its grain fails the
+point even if the solver is perfect. (Replaces the four-form navigation
+story — Phase 0 found no discrete categories to select.)
 
-**Independent Test**: set each form in turn from the UI, from a cold
-(random) state, and confirm the named geometry appears (tier-3).
+**Independent Test**: sweep the texture control across its range from a
+running state; confirm the grain shifts (finer/coarser, more/less
+ordered) and the pattern stays alive (tier-3).
 
 **Acceptance Scenarios**:
-1. **Given** the spike's region map, **When** the selector/knobs are
-   set to each mapped category, **Then** the corresponding geometry
-   develops from random initial conditions within the spike-measured
-   warm-up time, in at least 4 of 5 independent random seeds per
-   category (some categories may have seed-dependent mode selection —
-   the spike measures this).
-2. **Given** a running pattern in one category, **When** the selection
-   changes to another category, **Then** the pattern reorganizes into
-   the new category without a reset and without diverging.
-3. **Given** the module has been live-patched mid-performance,
-   **When** the selector moves through its full range over a few
-   seconds, **Then** no transient produces NaN/Inf or a hard visual
-   blow-out (rate-of-change limiting on the critical coupling is
-   acceptable if the spike shows it's needed).
+1. **Given** a running pattern, **When** the texture control moves,
+   **Then** the characteristic scale/ordering shifts continuously and
+   the pattern reorganizes without a reset and without diverging.
+2. **Given** the documented stripe-landmark setting, **When** frames
+   run from noise, **Then** the texture reads as coherent broken
+   stripes rather than disordered labyrinth (tier-3), in at least 4 of
+   5 random seeds.
+3. **Given** the module live-patched mid-performance, **When** the
+   control sweeps its full range over a few seconds, **Then** no
+   transient produces NaN/Inf or a hard visual blow-out (the drive term
+   stays within its Phase-0-measured band regardless).
 
 ---
 
@@ -331,12 +372,15 @@ independent instances — the library baseline.
 - **FR-009**: A reset/reseed trigger (message or UI bang) MUST
   re-randomize both fields from fresh noise without reloading the
   module.
-- **FR-010**: A form-navigation control MUST exist whose shape
-  (discrete selector vs. continuous knobs) is decided by the Phase 0
-  region map (see Clarifications). If discrete: the four categories
-  with distinct parameter sets per category. If continuous: the
-  documented landmark parameter sets MUST be reachable as snap points
-  or presets.
+- **FR-010** *(revised 2026-10-23, gate G1 — Matt chose option A)*: A
+  **texture control** MUST set the labyrinth's characteristic scale/grain —
+  the Gaussian kernel width `σ_I` (with `σ_E` slaved at the Psychedelic
+  aspect ratio `σ_I/1.45`), which Phase 0 showed selects the geometry
+  continuously from coherent broken stripes (fine kernel) to disordered
+  labyrinth (coarse kernel). NO discrete four-form selector is shipped:
+  Phase 0 found no separable stable rolls/hexagon/spiral/cobweb attractor
+  regions. Documented landmarks (the Phase-0 stripe/labyrinth points) MUST
+  be reachable as snap points.
 - **FR-011**: All object names MUST be `#0_`-scoped.
 - **FR-012**: Standard bpatcher conventions (`routepass`, `route`,
   `autopattr` with `varname`, bypass toggle, `moduleSize` chain) and
@@ -368,7 +412,7 @@ independent instances — the library baseline.
 
 | Dial | Underlying | Notes |
 |---|---|---|
-| `form` | discrete selector over 4 spike-mapped parameter sets | ONLY if the spike shows clean regions; otherwise replaced by continuous couplings (see Clarifications) |
+| `texture` | Gaussian kernel width `σ_I` (`σ_E` slaved at `σ_I/1.45`) | the geometry dial (FR-010, revised): fine → broken stripes, coarse → disordered labyrinth; NO four-form selector (gate G1, 2026-10-23) |
 | `hallucinate` | excitability aggregate — scales the coupling gains through the pattern-forming threshold | the performative core (US-2): below threshold the drive dominates, above it spontaneous pattern does |
 | `rate` | per-frame dt multiplier | clamped per FR-005 |
 | `scale` | characteristic cortical wavelength (sets `D` ratio / domain size) | pattern grain in the mapped visual field |
@@ -387,15 +431,19 @@ thresholds — all subject to the Phase 0 region map.
 1. **Diffusion is exact:** single-Fourier-mode decay of E and I matches
    the analytic per-bin rates within tolerance (bench; mirrors the
    spike's single-mode check).
-2. **Spontaneous pattern formation:** from random initial conditions
-   with uniform drive, in each mapped form region, the cortical field
-   develops the predicted symmetry-broken structure (rolls/hexagons in
-   cortical coordinates) within the spike-measured warm-up — verified
-   numerically in the spike (structure-factor peak at the predicted
-   wavelength), visually in tier 3 (the mapped form constant).
-3. **The taxonomy renders:** each of the four categories produces its
-   named visual-field geometry through the retinotopic map — funnel,
-   spiral, lattice, cobweb (tier-3 judgment, Matt).
+2. **Spontaneous living labyrinth:** from random initial conditions
+   with uniform drive, **with per-frame stochastic drive in the
+   Phase-0-measured band (Ne ≈ 0.7–0.85)**, the cortical field sustains
+   a high-contrast labyrinth/stripe-glass indefinitely (std ≥ 0.2) —
+   verified numerically in the spike, visually in tier 3. Below the
+   drive threshold the pattern dies; above it saturates — the working
+   band is the deliverable.
+3. **The labyrinth renders retinotopically:** the cortical labyrinth
+   passed through the retinotopic map reads as organic hallucination
+   texture in visual-field coordinates, visibly distinct from the
+   cortical view, with the classic form constants appearing transiently
+   within it (tier-3 judgment, Matt). *(Replaces the four-category
+   taxonomy criterion — no discrete categories exist.)*
 4. **Drive transition works:** output/input correlation is high below
    threshold and low above it (bench-measurable proxy), and the
    transition reads as continuous in tier 3.
@@ -409,10 +457,10 @@ thresholds — all subject to the Phase 0 region map.
    regions are in motion by construction; standing-pattern regions may
    be near-static in cortical coordinates but must not be a degenerate
    fixed point — the spike defines "meaningfully").
-8. **Expressive (tier 3, Matt's judgment):** the four forms are
-   visibly distinct from each other and from every existing `f_`
-   generator; `hallucinate` reads as one legible gesture; the WFG-dial
-   navigation (if shipped) lands on its named form reliably.
+8. **Expressive (tier 3, Matt's judgment):** the living labyrinth is
+   visibly distinct from every existing `f_` generator (f_ks's
+   cells/ridges in particular); `hallucinate` reads as one legible
+   gesture; the texture dial steers the grain legibly over its range.
 
 ---
 

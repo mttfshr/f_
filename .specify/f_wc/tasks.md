@@ -93,12 +93,12 @@ tests/modules/wc/
 
 ### Decision gates (Matt)
 
-- [ ] G1 **Form navigation shape** (spec, Clarifications): from T004's region widths — discrete 4-position selector with glyph previews (clean regions) or continuous knobs with landmark snaps (fuzzy continuum). The spec's FR-010 branches on this.
+- [x] G1 **Form navigation shape — DECIDED 2026-10-23 (Matt, option A).** The noise-driven region map found no separable four-form attractor regions (see T005 record): the pattern is a noise-driven labyrinth/stripe-glass transient. **Ship the labyrinth generator: no four-form selector.** FR-010/US-3/SC-2,3,8 revised in the spec (a `texture` dial = kernel width σ_I steers the grain; Phase-0 stripe/labyrinth landmarks as snaps). US-1/US-3/SC revised; parameter table `form`→`texture`.
 - [ ] G2 **Naming**: `f_wc` is a placeholder (spec header). Alternatives on record: `f_formconstants`. Decide before Phase 3's menu and README entries.
 - [ ] G3 **Drive inlet semantics**: T007's coupling-shape recommendation; confirm or pick another.
 - [ ] G4 **Output encoding**: T008's comparison; decide in Phase 2 with live context (same as f_ks T012).
 
-**Checkpoint**: mirror + tests green; region map recorded; T006 stills seen by Matt; G1–G3 decided. Only then does Phase 1 start.
+**Checkpoint**: mirror + tests green; region map recorded; G1 decided (2026-10-23). Remaining before Phase 1: T006 stills seen by Matt (retinotopic render of real labyrinth, for the tier-3 look — the map mechanism is already validated), T007 (drive coupling shape → G3), T008 (encoding measurement → G4, Phase 2). G2 (naming) is a Phase 3 blocker, not a Phase 1 blocker.
 
 ---
 
