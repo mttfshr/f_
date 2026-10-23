@@ -29,7 +29,8 @@ counter passes every Nth bang, N from the Speed menu, so a skipped frame leaves 
 enc re-renders. Speed 1/N therefore slows the flow to 1/N. The output is smoothed between solver steps: `mprev`
 keeps the previous step's velocity (copied just before each step), and enc blends mix(previous, current,
 phase / N) with phase = 1..N sent by the gate, so it moves continuously, about N frames behind.
-Object ids the gate wires: hold obj-50, mprev obj-54, enc obj-5, the Speed menu obj-29.
+Object ids the gate wires: hold obj-50, mprev obj-54, enc obj-5, the Speed menu obj-32. The Speed menu's id moves when a param is added
+before it (Tilt shifted it from obj-29 to obj-32 on 2026-10-22; the contract test caught the stale wiring: 'unrouted speed').
 The bang to hold The feedback enters hold on cold inlets, so the loop
 advances exactly once per rendered frame (the f_vf_fluid / f_ks pattern). The mask is the module's one texture
 inlet; unconnected reads as no obstacle. The solver size is a literal in each codebox (W = 192, H = 108).
@@ -43,10 +44,10 @@ columns are never obstacle (T014); a mask value counts as obstacle above 0.5 lum
 patcher = {
     "name":               "f_vf_lbm",
     "prefix":             "vflbm",
-    "title":              "LBM",
-    "signal_type":        "mask in, ∇ out",
+    "title":              "Lattice Boltzmann",
+    "signal_type":        "∇ out",
 
-    "presentation_width":  190,
+    "presentation_width":  197,      # five controls (Omega, Wind, Tilt, Gain, Speed); 190 clipped the Speed menu by 3 px
     "presentation_height": 110,
 
     # processor: the obstacle mask arrives on the primary inlet
@@ -63,6 +64,9 @@ patcher = {
         {"name": "inflow", "type": "float", "min": 0.0, "max": 0.1, "default": 0.08,
          "label": "Wind", "pix_target": "collide",
          "hint": "Inflow speed in lattice units. Shedding is clean from about 0.06 up and needs a few thousand frames to start. Wind 0 stops the inflow but not the flow already moving (lower Omega to calm it). The top of the range (0.1) with Omega near 1.98 pushes local speeds past Mach 0.3"},
+        {"name": "tilt", "type": "float", "min": -30.0, "max": 30.0, "default": 0.0,
+         "label": "Tilt", "pix_target": "collide",
+         "hint": "Wind direction in degrees: 0 = straight left to right, positive = the wind blows toward the top. The speed stays Wind (it is split into x and y parts); the flow still enters through the left edge and wraps top to bottom. Large angles are less accurate"},
         {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 3.0,
          "label": "Gain",
          "hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)"},
@@ -122,7 +126,7 @@ patcher = {
 #   counter: [i] -> [+ 1] -> [% N] -> [i] right inlet           wraps at N; [i] = frame within the step, 0..N-1
 #   [+ 1] -> [prepend param phase] -> enc                       phase = 1..N
 #   [i] -> [sel 0] -> [t b b]   right: mprev (copies the current velocity BEFORE the step), left: hold (steps)
-#   Speed menu (obj-29, outlet 0: index 0..3) -> [+ 1] -> [% N] right inlet, and -> [prepend param nsteps] -> enc
+#   Speed menu (obj-32, outlet 0: index 0..3) -> [+ 1] -> [% N] right inlet, and -> [prepend param nsteps] -> enc
 # A Wind slew ([pack f 2500] -> [line] -> collide's inflow Param) was tried 2026-10-21 and REMOVED the same day: the
 # mirror showed left-edge roughness during a Wind sweep even with a slow ramp, and the live noise got worse after it.
 # N = 1 steps every frame (the default, phase = nsteps = 1: the blend weight is 1, no smoothing). The counter is
@@ -164,6 +168,14 @@ patcher["raw_lines"] = [
     _line(3, 0, 6, 0), _line(6, 0, 7, 0),                           # count 0 -> step trigger
     _line(7, 1, "obj-54", 0),           # step trigger right -> mprev copies the old velocity first
     _line(7, 0, "obj-50", 0),           # step trigger left -> hold: the solver steps
-    _line("obj-29", 0, 8, 0), _line(8, 0, 5, 1),                    # Speed index + 1 -> N
+    _line("obj-32", 0, 8, 0), _line(8, 0, 5, 1),                    # Speed index + 1 -> N
     _line(8, 0, 10, 0), _line(10, 0, "obj-5", 0),                   # N -> enc
 ]
+
+# Title widened from the default 92 px: "Lattice Boltzmann" is about 90 px at 12 pt (2026-10-21, estimated, not
+# measured). The type label is right-justified at x 94-164 and its "∇ out" text sits right of x 130.
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "title": {"presentation_rect": [10.5, 0.0, 110.0, 21.0]},
+}
+# END overrides

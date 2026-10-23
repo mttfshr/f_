@@ -20,8 +20,8 @@ CATEGORIES  [(label, [(display, module, kinds), ...]), ...]
     see docs/f-reference/f_tensor_type.md), VT (both: f_tf_axisflow reads a tensor and writes a
     vecfield), or N (neither).  The category labels and their membership must match the README
     Patches table (the same table build/generate_launch.py reads), in the same order.  The module
-    order WITHIN a category is the menu's own (by visual character, newest last; the T_ category
-    runs in pipeline order), not the README's alphabetical order.
+    order WITHIN a category is alphabetical by display name (T_ Fields runs in pipeline order: map, smooth, sharpen);
+    the README table is alphabetical by patch name.  Regrouped 2026-10-22 (.specify/f_modules_menu/).
 
 SIZE_OVERRIDES  {module: ([w, h], reason)}
     f_addmod.js inserts a module as a bpatcher of this size.  The size is the module's presentation
@@ -40,27 +40,22 @@ T = ("tensor",)
 VT = ("vec", "tensor")
 
 CATEGORIES = [
-    ("Scope", [
+    ("Patterns", [
         ("Chladni", "chladni", V),
-    ]),
-    ("Discrete", [
-        ("Masonry", "masonry", N),
-        ("Stipple", "stipple", N),
         ("Grain", "grain", N),
-        ("Weave", "weave", V),
-        ("Seeds", "vf_seeds", V),
         ("Kuramoto-Sivashinsky", "ks", N),
+        ("Masonry", "masonry", N),
+        ("Seeds", "vf_seeds", V),
+        ("Stipple", "stipple", N),
+        ("Weave", "weave", V),
     ]),
-    ("Spatial", [
-        ("Mobius", "mobius", N),
-        ("Stereo", "stereo", N),
-        ("SIRDS", "sirds", N),
+    ("Space & Optics", [
         ("Droste", "droste", N),
-        ("Ngon", "ngon", N),
-    ]),
-    ("Optical", [
         ("Lens", "lens", N),
-        ("Prism", "vf_prism", V),
+        ("Mobius", "mobius", N),
+        ("Ngon", "ngon", N),
+        ("SIRDS", "sirds", N),
+        ("Stereo", "stereo", N),
     ]),
     ("Color / Tone", [
         ("Channel Grader", "channel_grader", N),
@@ -68,39 +63,66 @@ CATEGORIES = [
         ("Luma Processor", "luma_processor", N),
         ("Tone Curve", "tone_curve", N),
     ]),
-    ("\u2207 Generators", [
+    ("\u2207 Fields", [
+        ("Flow", "vf_flow", V),
+        ("Fluid", "vf_fluid", V),
+        ("Lattice Boltzmann", "vf_lbm", V),
+        ("Optical Flow", "vf_optical_flow", V),
+        ("Repulse", "vf_repulse", V),
         ("Vortex", "vf_vortex", V),
         ("Vortex Multi", "vf_vortex_multi", V),
+        ("Vorticity", "vf_vorticity", V),
     ]),
-    ("\u2207 Processors", [
-        ("Caustic", "caustic", V),
-        ("Fieldmap", "vf_fieldmap", V),
-        ("Flow", "vf_flow", V),
-        ("Repulse", "vf_repulse", V),
-        ("Warp", "vf_warp", V),
-        ("Streak", "vf_streak", V),
-        ("Glow", "vf_glow", V),
+    ("\u2207 Effects", [
         ("Advect", "vf_advect", V),
+        ("Caustic", "caustic", V),
         ("Chroma", "vf_chroma", V),
-        ("Optical Flow", "vf_optical_flow", V),
-        ("Fluid", "vf_fluid", V),
+        ("Glow", "vf_glow", V),
+        ("Prism", "vf_prism", V),
+        ("Streak", "vf_streak", V),
+        ("Warp", "vf_warp", V),
     ]),
-    ("T_ Tensor", [
+    ("T_ Fields", [
         ("Tensormap", "tf_tensormap", T),
         ("Smooth", "tf_smooth", T),
         ("Sharpen", "tf_sharpen", T),
+    ]),
+    ("T_ Effects", [
         ("Aniso Blur", "tf_aniso_blur", T),
-        ("Hatch", "tf_hatch", T),
         ("Glyph", "tf_glyph", T),
+        ("Hatch", "tf_hatch", T),
+    ]),
+    ("Adapters", [
         ("Axis Flow", "tf_axisflow", VT),
-    ]),
-    ("Utilities", [
-        ("Tex Router", "texrouter", N),
-        ("Profile", "util_profile", N),
-        ("Split", "vf_split", V),
+        ("Fieldmap", "vf_fieldmap", V),
         ("Potential", "vf_potential", V),
-        ("Matrix 2", "util_matrix_2", N),
+        ("Split", "vf_split", V),
     ]),
+    ("Routing / Mod", [
+        ("Matrix 2", "util_matrix_2", N),
+        ("Profile", "util_profile", N),
+        ("Tex Router", "texrouter", N),
+    ]),
+]
+
+# Recipes: a tenth dropdown that places a row of modules, left to right in signal order (nothing is wired;
+# build/generate_menu.py, addrecipe in package/javascript/f_addmod.js).  (display, [modules]); every module
+# must be one of the menu modules above and a recipe needs at least two.  Most come from the module sets in
+# package/examples/f_demo_*.maxpat (ordered along the signal path from docs/f-reference/module-inventory.md);
+# "Tensor Advect" is not from a demo.  Added 2026-10-22; prune or reorder freely.
+RECIPES = [
+    ("Fieldmap Seeds", ["vf_fieldmap", "vf_seeds"]),                              # f_demo_seeds
+    ("Fieldmap Streak", ["vf_fieldmap", "vf_streak"]),                            # f_demo_streak
+    ("Fluid Caustic", ["ngon", "vf_fieldmap", "vf_fluid", "caustic"]),            # f_demo_caustic2
+    ("Chladni Glow", ["chladni", "vf_fieldmap", "vf_glow"]),                      # f_demo_chladni
+    ("Grain Warp", ["grain", "vf_fieldmap", "vf_warp"]),                          # f_demo_warp
+    ("Masonry Repulse", ["masonry", "vf_repulse", "vf_advect"]),                  # f_demo_repulse
+    ("Motion Prism", ["masonry", "vf_optical_flow", "vf_prism"]),                 # f_demo_prism-masonry
+    ("Ngon Flow", ["ngon", "vf_flow", "vf_advect"]),                              # f_demo_ngon
+    ("Repulse Caustic", ["vf_repulse", "caustic", "lens"]),                       # f_demo_lens
+    ("SIRDS", ["grain", "sirds", "stereo"]),                                      # f_demo_sirds
+    ("Tensor Advect", ["tf_tensormap", "tf_axisflow", "vf_advect"]),              # no demo
+    ("Vorticity Fluid", ["vf_fieldmap", "vf_fluid", "vf_vorticity"]),             # f_demo_vorticity
 ]
 
 SIZE_OVERRIDES = {
@@ -114,5 +136,4 @@ NOT_IN_MENU = {
     "f_a_ripple":      "audio (gen~) module, not a Vsynth bpatcher; unfinished (README marks it)",
     "f_a_decorrelate": "audio (pfft~) module, not a Vsynth bpatcher; DSP built, packaging pending (README marks it)",
     "f_chladni_audio": "audio companion of f_chladni, not a Vsynth bpatcher (README marks it)",
-    "f_vf_vorticity":  "never completed; plan.md: do not register it in the menu until verified",
 }

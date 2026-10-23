@@ -25,7 +25,8 @@
 //   - PRE-COLLISION (FR-003): the bounce-back reads the cell's populations as held at the start of the frame,
 //     before the outflow copy and before collision (the experiment's f_prev).
 //   - OUTFLOW (last column): the three leftward populations copy from the column to the left (zero gradient).
-//   - INFLOW (first column): ux = inflow and uy = 0 on the interior rows FIRST, then the Zou/He density
+//   - INFLOW (first column): ux = inflow * cos(tilt) and uy = inflow * sin(tilt) (tilt in degrees, clamped to
+//     +-30, default 0 = straight wind) on the interior rows FIRST, then the Zou/He density
 //     rho = (rest + 2 * leftward) / (1 - ux); the rightward populations take the equilibrium (FR-005).
 //     y is periodic (decided 2026-10-21), so the top and bottom rows are ordinary rows.
 //   - MASK: luma (0.299 R + 0.587 G + 0.114 B) averaged over a 4 x 4 grid of nearest taps across the cell's
@@ -46,6 +47,7 @@ vv(j, y) {
 
 Param omega(1.97);
 Param inflow(0.08);
+Param tilt(0);
 
 W = 192;
 H = 108;
@@ -63,6 +65,7 @@ pm1 = vec(um, vv(1, py));
 
 om = min(max(omega, 0.5), 1.98);
 u0 = min(max(inflow, 0), 0.1);
+th = min(max(tilt, -30), 30) * 0.0174532925199;
 is_in = switch(px < 0.5, 1, 0);
 is_out = switch(px > W - 1.5, 1, 0);
 is_row = switch(py > 0.5, 1, 0) * switch(py < H - 1.5, 1, 0);
@@ -113,8 +116,8 @@ uy = (f2 - f4 + f5 + f6 - f7 - f8) / rho;
 
 // inflow: prescribe the velocity on the interior rows, then the Zou/He density
 set_u = is_in * is_row;
-ux2 = switch(set_u >= 0.5, u0, ux);
-uy2 = switch(set_u >= 0.5, 0, uy);
+ux2 = switch(set_u >= 0.5, u0 * cos(th), ux);
+uy2 = switch(set_u >= 0.5, u0 * sin(th), uy);
 rho_in = (f0 + f2 + f4 + 2 * (f3 + f6 + f7)) / (1 - ux2);
 rho2 = switch(is_in >= 0.5, rho_in, rho);
 

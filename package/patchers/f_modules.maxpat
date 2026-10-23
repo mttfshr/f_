@@ -49,7 +49,7 @@
                         0.0,
                         0.0,
                         96.0,
-                        380.0
+                        420.0
                     ],
                     "rounded": 6
                 }
@@ -183,7 +183,7 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Scope",
+                    "text": "Patterns",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -233,14 +233,20 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Chladni \u2207"
+                                "Chladni \u2207",
+                                "Grain",
+                                "Kuramoto-Sivashinsky",
+                                "Masonry",
+                                "Seeds \u2207",
+                                "Stipple",
+                                "Weave \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 0,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -271,14 +277,20 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "chladni"
+                                "chladni",
+                                "grain",
+                                "ks",
+                                "masonry",
+                                "vf_seeds",
+                                "stipple",
+                                "weave"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 0,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -327,7 +339,7 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Discrete",
+                    "text": "Space & Optics",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -377,12 +389,12 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Masonry",
-                                "Stipple",
-                                "Grain",
-                                "Weave \u2207",
-                                "Seeds \u2207",
-                                "Kuramoto-Sivashinsky"
+                                "Droste",
+                                "Lens",
+                                "Mobius",
+                                "Ngon",
+                                "SIRDS",
+                                "Stereo"
                             ],
                             "parameter_initial": [
                                 0.0
@@ -420,12 +432,12 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "masonry",
-                                "stipple",
-                                "grain",
-                                "weave",
-                                "vf_seeds",
-                                "ks"
+                                "droste",
+                                "lens",
+                                "mobius",
+                                "ngon",
+                                "sirds",
+                                "stereo"
                             ],
                             "parameter_initial": [
                                 0.0
@@ -481,7 +493,7 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Spatial",
+                    "text": "Color / Tone",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -531,18 +543,17 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Mobius",
-                                "Stereo",
-                                "SIRDS",
-                                "Droste",
-                                "Ngon"
+                                "Channel Grader",
+                                "Hue Processor",
+                                "Luma Processor",
+                                "Tone Curve"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_disp",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -573,18 +584,17 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "mobius",
-                                "stereo",
-                                "sirds",
-                                "droste",
-                                "ngon"
+                                "channel_grader",
+                                "hue_processor",
+                                "luma_processor",
+                                "tone_curve"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_file",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -633,11 +643,11 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Optical",
+                    "text": "\u2207 Fields",
                     "textcolor": [
-                        0.45098039215686275,
-                        0.47058823529411764,
-                        0.5764705882352941,
+                        0.35,
+                        0.75,
+                        0.95,
                         1.0
                     ]
                 }
@@ -683,15 +693,21 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Lens",
-                                "Prism \u2207"
+                                "Flow \u2207",
+                                "Fluid \u2207",
+                                "Lattice Boltzmann \u2207",
+                                "Optical Flow \u2207",
+                                "Repulse \u2207",
+                                "Vortex \u2207",
+                                "Vortex Multi \u2207",
+                                "Vorticity \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_3_disp",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 7,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -722,15 +738,21 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "lens",
-                                "vf_prism"
+                                "vf_flow",
+                                "vf_fluid",
+                                "vf_lbm",
+                                "vf_optical_flow",
+                                "vf_repulse",
+                                "vf_vortex",
+                                "vf_vortex_multi",
+                                "vf_vorticity"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_3_file",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 7,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -779,11 +801,11 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Color / Tone",
+                    "text": "\u2207 Effects",
                     "textcolor": [
-                        0.45098039215686275,
-                        0.47058823529411764,
-                        0.5764705882352941,
+                        0.35,
+                        0.75,
+                        0.95,
                         1.0
                     ]
                 }
@@ -829,17 +851,20 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Channel Grader",
-                                "Hue Processor",
-                                "Luma Processor",
-                                "Tone Curve"
+                                "Advect \u2207",
+                                "Caustic \u2207",
+                                "Chroma \u2207",
+                                "Glow \u2207",
+                                "Prism \u2207",
+                                "Streak \u2207",
+                                "Warp \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_disp",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -870,17 +895,20 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "channel_grader",
-                                "hue_processor",
-                                "luma_processor",
-                                "tone_curve"
+                                "vf_advect",
+                                "caustic",
+                                "vf_chroma",
+                                "vf_glow",
+                                "vf_prism",
+                                "vf_streak",
+                                "vf_warp"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_4_file",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -929,11 +957,11 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "\u2207 Generators",
+                    "text": "T_ Fields",
                     "textcolor": [
-                        0.45098039215686275,
-                        0.47058823529411764,
-                        0.5764705882352941,
+                        0.85,
+                        0.55,
+                        0.2,
                         1.0
                     ]
                 }
@@ -979,15 +1007,16 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Vortex \u2207",
-                                "Vortex Multi \u2207"
+                                "Tensormap T_",
+                                "Smooth T_",
+                                "Sharpen T_"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_disp",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 2,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1018,15 +1047,16 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "vf_vortex",
-                                "vf_vortex_multi"
+                                "tf_tensormap",
+                                "tf_smooth",
+                                "tf_sharpen"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_5_file",
-                            "parameter_mmax": 1,
+                            "parameter_mmax": 2,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1075,11 +1105,11 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "\u2207 Processors",
+                    "text": "T_ Effects",
                     "textcolor": [
-                        0.45098039215686275,
-                        0.47058823529411764,
-                        0.5764705882352941,
+                        0.85,
+                        0.55,
+                        0.2,
                         1.0
                     ]
                 }
@@ -1125,24 +1155,16 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Caustic \u2207",
-                                "Fieldmap \u2207",
-                                "Flow \u2207",
-                                "Repulse \u2207",
-                                "Warp \u2207",
-                                "Streak \u2207",
-                                "Glow \u2207",
-                                "Advect \u2207",
-                                "Chroma \u2207",
-                                "Optical Flow \u2207",
-                                "Fluid \u2207"
+                                "Aniso Blur T_",
+                                "Glyph T_",
+                                "Hatch T_"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_6_disp",
-                            "parameter_mmax": 10,
+                            "parameter_mmax": 2,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1173,24 +1195,16 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "caustic",
-                                "vf_fieldmap",
-                                "vf_flow",
-                                "vf_repulse",
-                                "vf_warp",
-                                "vf_streak",
-                                "vf_glow",
-                                "vf_advect",
-                                "vf_chroma",
-                                "vf_optical_flow",
-                                "vf_fluid"
+                                "tf_aniso_blur",
+                                "tf_glyph",
+                                "tf_hatch"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_6_file",
-                            "parameter_mmax": 10,
+                            "parameter_mmax": 2,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1239,7 +1253,7 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "T_ Tensor",
+                    "text": "Adapters",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -1289,20 +1303,17 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Tensormap T_",
-                                "Smooth T_",
-                                "Sharpen T_",
-                                "Aniso Blur T_",
-                                "Hatch T_",
-                                "Glyph T_",
-                                "Axis Flow \u2207 T_"
+                                "Axis Flow \u2207 T_",
+                                "Fieldmap \u2207",
+                                "Potential \u2207",
+                                "Split \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_disp",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1333,20 +1344,17 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "tf_tensormap",
-                                "tf_smooth",
-                                "tf_sharpen",
-                                "tf_aniso_blur",
-                                "tf_hatch",
-                                "tf_glyph",
-                                "tf_axisflow"
+                                "tf_axisflow",
+                                "vf_fieldmap",
+                                "vf_potential",
+                                "vf_split"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_file",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1395,7 +1403,7 @@
                         89.66666933894157,
                         21.0
                     ],
-                    "text": "Utilities",
+                    "text": "Routing / Mod",
                     "textcolor": [
                         0.45098039215686275,
                         0.47058823529411764,
@@ -1445,18 +1453,16 @@
                         },
                         "valueof": {
                             "parameter_enum": [
-                                "Tex Router",
+                                "Matrix 2",
                                 "Profile",
-                                "Split \u2207",
-                                "Potential \u2207",
-                                "Matrix 2"
+                                "Tex Router"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_8_disp",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 2,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1487,18 +1493,16 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
-                                "texrouter",
+                                "util_matrix_2",
                                 "util_profile",
-                                "vf_split",
-                                "vf_potential",
-                                "util_matrix_2"
+                                "texrouter"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_8_file",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 2,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1523,6 +1527,172 @@
                         22.0
                     ],
                     "text": "prepend addmod"
+                }
+            },
+            {
+                "box": {
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 12.0,
+                    "id": "obj-43",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        3.0,
+                        376.0,
+                        176.0,
+                        21.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        2.0,
+                        376.0,
+                        89.66666933894157,
+                        21.0
+                    ],
+                    "text": "Recipes",
+                    "textcolor": [
+                        0.45098039215686275,
+                        0.47058823529411764,
+                        0.5764705882352941,
+                        1.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "appearance": 1,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 11.0,
+                    "id": "obj-44",
+                    "lcdcolor": [
+                        0.8,
+                        0.8,
+                        0.8,
+                        1.0
+                    ],
+                    "maxclass": "live.menu",
+                    "numinlets": 1,
+                    "numoutlets": 3,
+                    "outlettype": [
+                        "",
+                        "",
+                        "float"
+                    ],
+                    "parameter_enable": 1,
+                    "parameter_mappable": 0,
+                    "patching_rect": [
+                        3.0,
+                        1500.0,
+                        154.0,
+                        17.0
+                    ],
+                    "presentation": 1,
+                    "presentation_rect": [
+                        3.0,
+                        397.0,
+                        89.66666933894157,
+                        17.0
+                    ],
+                    "saved_attribute_attributes": {
+                        "lcdcolor": {
+                            "expression": "themecolor.live_arranger_grid_tiles"
+                        },
+                        "valueof": {
+                            "parameter_enum": [
+                                "Fieldmap Seeds",
+                                "Fieldmap Streak",
+                                "Fluid Caustic",
+                                "Chladni Glow",
+                                "Grain Warp",
+                                "Masonry Repulse",
+                                "Motion Prism",
+                                "Ngon Flow",
+                                "Repulse Caustic",
+                                "SIRDS",
+                                "Tensor Advect",
+                                "Vorticity Fluid"
+                            ],
+                            "parameter_initial": [
+                                0.0
+                            ],
+                            "parameter_invisible": 2,
+                            "parameter_longname": "f_module_9_disp",
+                            "parameter_mmax": 11,
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "live.menu",
+                            "parameter_type": 2
+                        }
+                    },
+                    "varname": "live.menu[18]"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-45",
+                    "maxclass": "live.menu",
+                    "numinlets": 1,
+                    "numoutlets": 3,
+                    "outlettype": [
+                        "",
+                        "",
+                        "float"
+                    ],
+                    "parameter_enable": 1,
+                    "parameter_mappable": 0,
+                    "patching_rect": [
+                        3.0,
+                        2400.0,
+                        154.0,
+                        15.0
+                    ],
+                    "saved_attribute_attributes": {
+                        "valueof": {
+                            "parameter_enum": [
+                                "fieldmap_seeds",
+                                "fieldmap_streak",
+                                "fluid_caustic",
+                                "chladni_glow",
+                                "grain_warp",
+                                "masonry_repulse",
+                                "motion_prism",
+                                "ngon_flow",
+                                "repulse_caustic",
+                                "sirds",
+                                "tensor_advect",
+                                "vorticity_fluid"
+                            ],
+                            "parameter_initial": [
+                                0.0
+                            ],
+                            "parameter_invisible": 2,
+                            "parameter_longname": "f_module_9_file",
+                            "parameter_mmax": 11,
+                            "parameter_modmode": 0,
+                            "parameter_shortname": "live.menu",
+                            "parameter_type": 2
+                        }
+                    },
+                    "varname": "live.menu[19]"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-46",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        3.0,
+                        3400.0,
+                        100.0,
+                        22.0
+                    ],
+                    "text": "prepend addrecipe"
                 }
             }
         ],
@@ -1886,6 +2056,42 @@
                         1
                     ]
                 }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-44",
+                        0
+                    ],
+                    "destination": [
+                        "obj-45",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-45",
+                        1
+                    ],
+                    "destination": [
+                        "obj-46",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-46",
+                        0
+                    ],
+                    "destination": [
+                        "obj-4",
+                        1
+                    ]
+                }
             }
         ],
         "parameters": {
@@ -1976,6 +2182,16 @@
             ],
             "obj-41": [
                 "f_module_8_file",
+                "live.menu",
+                0
+            ],
+            "obj-44": [
+                "f_module_9_disp",
+                "live.menu",
+                0
+            ],
+            "obj-45": [
+                "f_module_9_file",
                 "live.menu",
                 0
             ],

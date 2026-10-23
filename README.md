@@ -19,20 +19,15 @@ Please note that this repository is intended for development and experimentation
 
 ## Patches
 
-Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category. The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it takes or produces a vecfield, a T_ means the same for a tensor), plus Audio for the audio modules (`gen~`, `pfft~`, and the `f_chladni` companion); a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`. The `f_tf_` modules work with `f_tensor` textures produced by `f_tf_tensormap` (`docs/f-reference/f_tensor_type.md`).
+Every patcher in `package/patchers/` is listed here, grouped by category and alphabetical within each category (the menu puts `T_ Fields` in pipeline order instead). The categories are the ones in the `f_modules` menu (a ∇ in a category name means every module in it takes or produces a vecfield, a T_ means the same for a tensor), plus Audio for the audio modules (`gen~`, `pfft~`, and the `f_chladni` companion); a few modules not yet in the menu are filed under the category they belong to. Entries marked ⚠ are built but unfinished, unverified or undocumented: don't rely on them. The `f_vf_` modules work with float32 `f_vecfield` textures, produced by the `f_vf_` generators and consumed by `f_caustic`, `f_vf_warp`, `f_vf_streak` and `f_vf_seeds`. The `f_tf_` modules work with `f_tensor` textures produced by `f_tf_tensormap` (`docs/f-reference/f_tensor_type.md`).
 
 This table is also the source for the package's launcher patcher (`package/extras/f_Launch.maxpat`, opened by the Package Manager's Launch button and the Extras menu), which lists every module on one tab per group below.
 
-### Scope
+### Patterns
 
 | Patch | Description |
 |---|---|
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes); audio companion patch included |
-
-### Discrete
-
-| Patch | Description |
-|---|---|
 | `f_grain` | Stochastic grain field with per-grain displacement and luma gating |
 | `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
@@ -40,22 +35,16 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |
 | `f_weave` | Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets |
 
-### Spatial
+### Space & Optics
 
 | Patch | Description |
 |---|---|
 | `f_droste` | Log-polar spiral transform -- Droste / Escher-style recursive zoom |
+| `f_lens` | Filmic lens -- aberration, distortion, transmission, ghost images, halation, spatial modulation |
 | `f_mobius` | Mobius transformation UV-space processor |
 | `f_ngon` | Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented |
 | `f_sirds` | Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern |
 | `f_stereo` | Stereographic projection display layer |
-
-### Optical
-
-| Patch | Description |
-|---|---|
-| `f_lens` | Filmic lens -- aberration, distortion, transmission, ghost images, halation, spatial modulation |
-| `f_vf_prism` | Vecfield-driven prism separation -- luma-gated RGB displacement along the field; composite / isolated outlets |
 
 ### Color / Tone
 
@@ -66,44 +55,57 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_luma_processor` | Luminance-selective processing |
 | `f_tone_curve` | Tone curve adjustment |
 
-### ∇ Generators
+### ∇ Fields
 
 | Patch | Description |
 |---|---|
+| `f_vf_flow` | Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet |
+| `f_vf_fluid` | Incompressible-flow solver -- force vecfield in, evolving velocity field out; feed it to advect / warp / glow |
+| `f_vf_lbm` | Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out |
+| `f_vf_optical_flow` | Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets |
+| `f_vf_repulse` | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes |
 | `f_vf_vortex` | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
+| `f_vf_vorticity` | Vorticity confinement ("curl amp"): adds back the fine swirl a vecfield's curl implies; shows via f_vf_advect |
 
-### ∇ Processors
+### ∇ Effects
 
 | Patch | Description |
 |---|---|
 | `f_caustic` | Optical caustic -- GPU forward scatter forming folded sheets; composited / isolated outlets |
 | `f_vf_advect` | Temporal fluid advection via f_vecfield -- accumulates flow across frames; decay >1.0 is excitable |
 | `f_vf_chroma` | Vecfield-driven chromatic aberration -- rainbow streak along field direction; composite / isolated outlets |
-| `f_vf_fieldmap` | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |
-| `f_vf_flow` | Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet |
-| `f_vf_fluid` | Incompressible-flow solver -- force vecfield in, evolving velocity field out; feed it to advect / warp / glow |
 | `f_vf_glow` | Field-aligned directional blur via f_vecfield -- accumulates along streamlines; composite / glow-layer outlets |
-| `f_vf_lbm` | ⚠ Unverified. Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out |
-| `f_vf_optical_flow` | Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets |
-| `f_vf_repulse` | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes |
+| `f_vf_prism` | Vecfield-driven prism separation -- luma-gated RGB displacement along the field; composite / isolated outlets |
 | `f_vf_streak` | Directional blur via f_vecfield -- accumulates along streamlines; composite / isolated streak outlets |
-| `f_vf_vorticity` | Vorticity-confinement ("curl amp") processor. Do not treat as working |
 | `f_vf_warp` | UV warp via f_vecfield -- displaces source texture along field streamlines |
 
-### T_ Tensor
+### T_ Fields
 
 | Patch | Description |
 |---|---|
-| `f_tf_aniso_blur` | ⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
-| `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
-| `f_tf_glyph` | ⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
-| `f_tf_hatch` | ⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
 | `f_tf_sharpen` | ⚠ Unverified. Eigengap exaggerator/relaxer: contrast dial on anisotropy; axis untouched, trace fixed |
 | `f_tf_smooth` | ⚠ Unverified. One-pole temporal tensor smoother (inertia) — stabilizes structure-tensor fields across frames |
 | `f_tf_tensormap` | Structure tensor: raw tensor (outlet 0), packed direction/trace/coherence (outlet 1) |
 
-### Utilities
+### T_ Effects
+
+| Patch | Description |
+|---|---|
+| `f_tf_aniso_blur` | ⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
+| `f_tf_glyph` | ⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
+| `f_tf_hatch` | ⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
+
+### Adapters
+
+| Patch | Description |
+|---|---|
+| `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
+| `f_vf_fieldmap` | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |
+| `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet |
+| `f_vf_split` | Splits an f_vecfield's X/Y channels to two separate grayscale outlets, unipolar or bipolar |
+
+### Routing / Mod
 
 | Patch | Description |
 |---|---|
@@ -111,8 +113,6 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_texrouter` | 4x4 texture routing matrix with preset system |
 | `f_util_matrix_2` | Modulation routing matrix (2-source MVP) -- textures in, scalar per-param routing messages out; draft status |
 | `f_util_profile` | CPU-side dual-axis luminance profiler -- outputs row/column profile textures for modulation |
-| `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet |
-| `f_vf_split` | Splits an f_vecfield's X/Y channels to two separate grayscale outlets, unipolar or bipolar |
 
 ### Audio (`gen~`)
 
@@ -120,7 +120,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 |---|---|
 | `f_a_ripple` | ⚠ Unfinished. De-correlating ripple stimulus (Yukhnovich et al. 2025); DSP done, UI and docs pending |
 | `f_a_decorrelate` | ⚠ De-correlating modulation processor (audio in → out, pfft~); shipped and documented 2026-10-12 |
-| `f_chladni_audio` | ⚠ Unverified. Audio-input companion for `f_chladni`: pitch drives `note`, amplitude `amp`. No reference doc |
+| `f_chladni_audio` | ⚠ Unverified. Eight-band audio analyzer sending m0amp-m7amp; `f_chladni` now takes note/amp instead |
 
 ## Notes
 

@@ -100,7 +100,7 @@ def unpack(planes):
             p2[..., 0]]
 
 
-def fuse_local(planes, mask, omega, U0, bug=None):
+def fuse_local(planes, mask, omega, U0, bug=None, tilt=0.0):
     """Stage 1 (FR-002): the fused local pass. Reads the 3 state planes and
     the obstacle mask at the output texel's own coordinate; at the outflow
     edge also the state plane at x - 1 (zero gradient); at the inflow edge
@@ -122,6 +122,7 @@ def fuse_local(planes, mask, omega, U0, bug=None):
     rho, ux, uy = macro(f)
     # inflow at x = 0 (FR-005): Dirichlet ux on the interior rows, Zou/He rho.
     col = 0
+    th = np.deg2rad(min(max(float(tilt), -30.0), 30.0))   # wind direction (degrees, clamped like the codebox)
     pure = f[PURE[0]][:, col] + f[PURE[1]][:, col] + f[PURE[2]][:, col]
     left = f[LEFT[0]][:, col] + f[LEFT[1]][:, col] + f[LEFT[2]][:, col]
     if bug == "rho_pre_dirichlet":            # density from the MEASURED ux (the 2026-10-21 mirror slip)
@@ -129,8 +130,8 @@ def fuse_local(planes, mask, omega, U0, bug=None):
         ux[1:-1, col] = F32(U0)
         uy[1:-1, col] = F32(0.0)
     else:                                     # the experiment's order: prescribe u first, then Zou/He rho
-        ux[1:-1, col] = F32(U0)
-        uy[1:-1, col] = F32(0.0)
+        ux[1:-1, col] = F32(U0 * np.cos(th))
+        uy[1:-1, col] = F32(U0 * np.sin(th))
         rho[:, col] = (pure + F32(2.0) * left) / (F32(1.0) - ux[:, col])
     feq = equilibrium(rho, ux, uy, bug=bug)
     for i in RIGHT:
@@ -181,10 +182,10 @@ def encode(planes, gain, bug=None):
     return g.store_float32(enc)
 
 
-def lbm_step(planes, mask, omega, U0, gain, bug=None):
+def lbm_step(planes, mask, omega, U0, gain, bug=None, tilt=0.0):
     """One full frame (FR-001..FR-005, FR-008): fuse_local -> stream -> encode.
     Returns (new_planes, encoded)."""
-    fused = fuse_local(planes, mask, omega, U0, bug=bug)
+    fused = fuse_local(planes, mask, omega, U0, bug=bug, tilt=tilt)
     streamed = stream(fused, bug=bug)
     return streamed, encode(streamed, gain, bug=bug)
 

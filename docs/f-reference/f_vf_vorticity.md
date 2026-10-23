@@ -1,7 +1,7 @@
 # f_vf_vorticity — Bpatcher Spec
 
 _Last updated: 2026-07-06_
-_Status: UNVERIFIED — do not treat as working. See note below._
+_Status: shippable (Matt, 2026-10-21; judged by use, not re-verified by a bench). The 2026-07-06 note below is history._
 
 **Correction (2026-07-06, end of session):** this file originally stated
 "Status: Working" and described the module's behavior as confirmed. Matt

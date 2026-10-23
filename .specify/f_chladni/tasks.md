@@ -131,11 +131,22 @@ and confirmed in Max.
 - [ ] T140: (f_chladni_audio) Do T124: verify with a mic that note
   tracks pitch and amp responds to dynamics — that single unchecked
   task is the whole content of README's ⚠ "Unverified" on the companion
-  patch.
-- [ ] T141: (f_chladni_audio) Write docs/f-reference/f_chladni_audio.md
-  — it does not exist, and this is the only shipped module with a
-  README row but no reference doc. Also close out the stale T122
-  (sigmund~→note mapping documentation) and mark T123 done (the patch
-  exists in package/patchers/).
+  patch. **2026-10-22: the shipped patch has no `note`/`amp` to verify**
+  (it is the 8-band filterbank, see T141). Until T123 builds the
+  `note`/`amp` patch, the real check is that the shipped one's bands
+  track an instrument (and the Log/Bessel switch, see T141).
+- [x] T141: (f_chladni_audio) Write docs/f-reference/f_chladni_audio.md
+  **Done 2026-10-22.** The doc describes the patch as built. **The
+  original premise was wrong:** the shipped patch is NOT the
+  sigmund~/peakamp~ `note`/`amp` companion. It is the superseded 8-band
+  filterbank (8 band-pass `biquad~` resonators, abs~/slide~ envelope
+  followers, `m0amp`–`m7amp` messages every 20 ms), a contract `f_chladni`
+  no longer implements. So T123 stays OPEN (the `note`/`amp` patch does
+  not exist), and T122 is not closed by this. The README row, the
+  `f_chladni.md` Companion Patches section and `.specify/plan.md` were
+  corrected to match. The doc also records a likely bug read from the
+  wiring (not tested in Max): `[select 0 1]` is fed from the umenu's text
+  outlet, so the Log/Bessel switch probably does nothing and the
+  filters stay on the typed Log set.
 
 - [x] T142 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/chladni/{chladni_mirror,test_chladni}.py`, 19/19 offline. Checks: the doc's per-mode formula in float64, rotation symmetry, linear amp and gain, the unit gradient vector, bypass states. Found 2026-10-20 in the float32 NumPy mirror: z_pos came out just past z7 at note 127 and blanked mode 0. Probe P3 (run 2026-10-20) showed the GPU was NOT blank (the old unclamped codebox peaked at out3 0.576), so this was a mirror artifact; the codebox now clamps z_pos with min(., z7) as harmless hardening (mirror and test follow, patcher regenerated), and on the GPU mode 0 equals the pure mode-7 pattern at note 127 (6e-8). Documented caveat: view_mode = 1 only changes mode 1's own total. See `HANDOFF.md` 2026-10-20.

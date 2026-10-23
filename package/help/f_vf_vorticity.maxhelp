@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Vorticity-confinement processor -- amplifies curl in a vecfield (UNVERIFIED -- do not rely on it)",
+					"text": "Vorticity-confinement processor -- amplifies curl in a vecfield",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
@@ -135,7 +135,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "References\n\nSee docs/f-reference/f_vf_vorticity.md.\nREADME marks this module Unverified -- treat the\nhelpfile demo as exploratory, not a guarantee.",
+					"text": "References\n\nSee docs/f-reference/f_vf_vorticity.md.\nOnly legible through a temporal consumer (f_vf_advect).",
 					"fontsize": 12.0,
 					"linecount": 5
 				}

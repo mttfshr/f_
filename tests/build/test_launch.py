@@ -164,6 +164,7 @@ def _menu_categories():
             v = bx.get("saved_attribute_attributes", {}).get("valueof", {})
             if v.get("parameter_longname", "").endswith("_file"):
                 cats[cur] = ["f_" + x for x in v["parameter_enum"]]
+    cats.pop("Recipes", None)   # the last dropdown places rows of modules; it is not a README group (2026-10-22)
     return cats
 
 

@@ -326,6 +326,60 @@ def test_inflow_sets_rightward_equilibrium():
     check("inflow sets rightward populations to the U0 equilibrium at the Zou/He density", worst, 1e-5)
 
 
+def test_inflow_tilt_sets_direction():
+    """The Tilt dial (2026-10-22): the inflow column prescribes u = U0 * (cos t, sin t), then the Zou/He density
+    with that ux, and the rightward populations take that equilibrium. Pinned independently of fuse_local (same
+    construction as the straight-wind check above), plus: tilt 0 is exactly the old straight wind, and the angle
+    clamps at +-30 degrees (the codebox clamps the same way)."""
+    rng = np.random.default_rng(9)
+    f = [(0.05 + rng.random((NY, NX))).astype(F32) for _ in range(9)]
+    rho, ux, uy = macro(f)
+    f = [fi / rho for fi in f]
+    planes = pack(f)
+    mask = np.zeros((NY, NX), bool)
+    g0 = unpack([p.copy() for p in planes])
+    rho0, ux0, uy0 = macro(g0)
+    pure = g0[0][:, 0] + g0[2][:, 0] + g0[4][:, 0]
+    left = g0[3][:, 0] + g0[6][:, 0] + g0[7][:, 0]
+    interior = np.ones(NY, bool); interior[0] = interior[-1] = False
+    worst = 0.0
+    for tilt in (20.0, -15.0, 30.0):
+        t = np.deg2rad(tilt)
+        out = unpack(fuse_local(planes, mask, 0.0, U0, tilt=tilt))
+        ux_in = ux0[:, 0].copy(); ux_in[1:-1] = F32(U0 * np.cos(t))
+        uy_in = uy0[:, 0].copy(); uy_in[1:-1] = F32(U0 * np.sin(t))
+        rho_z = ((pure + F32(2.0) * left) / (F32(1.0) - ux_in)).astype(F32)[:, None]
+        feq_in = equilibrium(rho_z, ux_in[:, None], uy_in[:, None])
+        for i in RIGHT:
+            worst = max(worst, float(np.abs(out[i][interior, 0] - feq_in[i][interior, 0]).max()))
+    check("tilted inflow sets the rightward populations to the U0 (cos t, sin t) equilibrium (20, -15, 30 deg)", worst, 1e-5)
+    a = fuse_local(planes, mask, 0.3, U0)
+    b = fuse_local(planes, mask, 0.3, U0, tilt=0.0)
+    check("tilt 0 is exactly the straight wind", float(max(np.abs(x - y).max() for x, y in zip(a, b))), 0.0)
+    c = fuse_local(planes, mask, 0.3, U0, tilt=45.0)
+    d = fuse_local(planes, mask, 0.3, U0, tilt=30.0)
+    check("tilt clamps at 30 degrees", float(max(np.abs(x - y).max() for x, y in zip(c, d))), 0.0)
+
+
+def test_tilt_turns_the_flow_near_the_inflow():
+    """Behavior check (2026-10-22): on an empty mask the flow next to the inflow takes the tilted direction, with the
+    sign of the tilt and about U0 * sin(tilt) across-stream; tilt 0 stays straight. Only the first columns are
+    checked: the across-stream part is carried downstream at the flow speed, so it needs thousands of frames to
+    fill a wide channel (scratch/lbm_tilt_probe.py, 192 x 108: the interior settles to the target by frame ~2500)."""
+    for tilt in (20.0, -20.0, 0.0):
+        planes = _uniform()
+        for _ in range(200):
+            planes, _enc = lbm_step(planes, np.zeros((NY, NX), bool), float(OMEGA), U0, gain=1.0, tilt=tilt)
+        rho, ux, uy = macro(unpack(planes))
+        near_uy = float(uy[1:-1, 1:6].mean())
+        near_ux = float(ux[1:-1, 1:6].mean())
+        t = np.deg2rad(tilt)
+        note(f"tilt {tilt:+.0f}: near-inflow (ux, uy); target ({U0 * np.cos(t):.4f}, {U0 * np.sin(t):+.4f})", (round(near_ux, 4), round(near_uy, 4)))
+        assert _nan(planes) == 0, "non-finite with a tilted inflow"
+        check(f"tilt {tilt:+.0f}: across-stream velocity near the inflow is U0 sin(tilt)", abs(near_uy - U0 * np.sin(t)), 0.2 * U0 * abs(np.sin(t)) + 2e-4)
+        check(f"tilt {tilt:+.0f}: stream-wise velocity near the inflow is U0 cos(tilt)", abs(near_ux - U0 * np.cos(t)), 0.03 * U0)
+
+
 def test_uniform_flow_is_a_fixed_point_empty_mask():
     """Independent: an empty mask with a uniform equilibrium at u = U0, rho = 1
     stays uniform over a few frames -- the channel BCs are the identity on the

@@ -78,7 +78,7 @@ def test_the_menu_patcher_is_wired_the_way_f_addmod_expects():
     boxes = {b["box"]["id"]: b["box"] for b in p["boxes"]}
     menu = g.load_menu()
     live = [b for b in boxes.values() if b["maxclass"] == "live.menu"]
-    _eq("two live.menu per category (display and file)", len(live), 2 * len(menu.CATEGORIES))
+    _eq("two live.menu per category plus two for Recipes (display and file)", len(live), 2 * (len(menu.CATEGORIES) + 1))
     for slot, (label, items) in enumerate(menu.CATEGORIES):
         disp = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_disp"][0]
         file = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_file"][0]
@@ -95,6 +95,21 @@ def test_the_menu_patcher_is_wired_the_way_f_addmod_expects():
     prepends = [i for i, b in boxes.items() if b.get("text") == "prepend addmod"]
     _eq("each file menu's second outlet -> prepend addmod -> gate inlet 1",
         all(any(s[0] == i and d == ("obj-4", 1) for s, d in cords) for i in prepends) and len(prepends) == len(menu.CATEGORIES), True)
+    rprepends = [i for i, b in boxes.items() if b.get("text") == "prepend addrecipe"]
+    _eq("the Recipes file menu -> prepend addrecipe -> gate inlet 1 (one only)",
+        len(rprepends) == 1 and any(s[0] == rprepends[0] and d == ("obj-4", 1) for s, d in cords), True)
+    slot = len(menu.CATEGORIES)
+    rdisp = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_disp"][0]
+    rfile = [b for b in live if b["saved_attribute_attributes"]["valueof"]["parameter_longname"] == f"f_module_{slot}_file"][0]
+    _eq("Recipes: the display menu lists the recipe names",
+        rdisp["saved_attribute_attributes"]["valueof"]["parameter_enum"], [d for d, _ in menu.RECIPES])
+    _eq("Recipes: the file menu lists the recipe keys",
+        rfile["saved_attribute_attributes"]["valueof"]["parameter_enum"], [g.recipe_key(d) for d, _ in menu.RECIPES])
+    labels = {b["text"]: b for b in boxes.values() if b["maxclass"] == "comment" and b.get("presentation")}
+    _eq("Recipes is the last label, grey", ("Recipes" in labels, labels["Recipes"]["textcolor"] == g.GREY_TEXT), (True, True))
+    ys = sorted(b["presentation_rect"][1] for k, b in labels.items() if k != "f_")
+    _eq("the last label sits at the slot pitch and the whole menu fits the panel",
+        (ys[-1] == g.MENU_TOP + g.SLOT * (len(ys) - 1), ys[-1] + g.SLOT_CONTENT <= g.PANEL_H), (True, True))
     _eq("every live.menu is a saved parameter", all(i in p["parameters"] for i, b in boxes.items() if b["maxclass"] == "live.menu"), True)
 
 
@@ -113,6 +128,23 @@ def title_labels(module):
                 and re.search("vecfield|tensor|\u2207|T_", str(b.get("text", ""))):
             out.append(b["text"])
     return out
+
+
+def test_category_labels_are_colored_like_the_title_bar_type_marks():
+    """2026-10-22 (Matt): nabla labels cyan, T_ labels amber, the same colors as the title bars."""
+    import build_patcher as bp
+    menu = g.load_menu()
+    p = json.loads(g.OUT_PATCHER.read_text())["patcher"]
+    labels = {b["box"]["text"]: b["box"]["textcolor"] for b in p["boxes"]
+              if b["box"]["maxclass"] == "comment" and b["box"].get("text") in {l for l, _ in menu.CATEGORIES}}
+    _eq("every category has a label in the menu patcher", sorted(labels), sorted(l for l, _ in menu.CATEGORIES))
+    cyan, amber = bp.SIGNAL_TYPE_COLORS["\u2207"], bp.SIGNAL_TYPE_COLORS["T_"]
+    for label, col in labels.items():
+        want = cyan if label.startswith("\u2207") else (amber if label.startswith("T_") else g.GREY_TEXT)
+        _eq(f"{label!r}: label color", [round(x, 3) for x in col], [round(x, 3) for x in want])
+    _eq("the label colors are the title-bar colors, not copies that could drift",
+        [round(x, 3) for x in g.LABEL_CYAN] + [round(x, 3) for x in g.LABEL_AMBER],
+        [round(x, 3) for x in cyan] + [round(x, 3) for x in amber])
 
 
 def test_title_bar_labels_use_marks_for_in_and_out_and_agree_with_the_menu_kinds():
@@ -274,6 +306,9 @@ def test_validate_accepts_the_shipped_data():
 def test_validate_catches_each_kind_of_mistake():
     m = fresh_menu()
     cats = lambda: copy.deepcopy(m.CATEGORIES)
+    # find categories by what they hold, not by position (the menu was regrouped 2026-10-22)
+    ci = lambda c, mod: next(i for i, (_, es) in enumerate(c) if any(e[1] == mod for e in es))
+    other = lambda c, i: next(j for j in range(len(c)) if j != i)
 
     c = cats(); c[0][1].append(("Weave2", "weave", ("vec",)))
     _eq("a module in two categories", "module listed twice: weave" in problem_text(fresh_menu(CATEGORIES=c)), True)
@@ -282,39 +317,40 @@ def test_validate_catches_each_kind_of_mistake():
     t = problem_text(fresh_menu(CATEGORIES=c))
     _eq("a menu entry with no patcher", "no package/patchers/f_ghost.maxpat" in t, True)
 
-    c = cats(); c[1] = (c[1][0], [e for e in c[1][1] if e[1] != "masonry"])
+    c = cats(); i = ci(c, "masonry"); c[i] = (c[i][0], [e for e in c[i][1] if e[1] != "masonry"])
     t = problem_text(fresh_menu(CATEGORIES=c))
     _eq("a shipped patcher left out of the menu and out of NOT_IN_MENU",
         "f_masonry.maxpat is neither in the menu nor in NOT_IN_MENU" in t, True)
 
-    c = cats(); c[1] = ("Discrete things", c[1][1])
+    c = cats(); i = ci(c, "masonry"); c[i] = (c[i][0] + " things", c[i][1])
     _eq("a category the README does not have", "is not a README group" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
     c = cats(); c[0], c[1] = c[1], c[0]
     _eq("categories in a different order from the README", "differs from the README's" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
-    c = cats(); moved = c[1][1].pop(0); c[2][1].append(moved)
+    c = cats(); i = ci(c, "masonry"); j = other(c, i); home, away = c[i][0], c[j][0]
+    c[j][1].append(next(e for e in c[i][1] if e[1] == "masonry")); c[i] = (home, [e for e in c[i][1] if e[1] != "masonry"])
     t = problem_text(fresh_menu(CATEGORIES=c))
     _eq("a module in another category than the README puts it",
-        "f_masonry is in menu category 'Spatial' but in another README group" in t
-        and "f_masonry is in README group 'Discrete' but not in that menu category" in t, True)
+        f"f_masonry is in menu category '{away}' but in another README group" in t
+        and f"f_masonry is in README group '{home}' but not in that menu category" in t, True)
 
-    c = cats(); i = [lab for lab, _ in c].index("\u2207 Generators"); c[i][1][0] = ("Vortex", "vf_vortex", ())
+    c = cats(); i = [lab for lab, _ in c].index("\u2207 Fields"); e0 = c[i][1][0]; c[i][1][0] = (e0[0], e0[1], ())
     _eq("a nabla category with an unflagged module", "not flagged vec" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
-    c = cats(); i = [lab for lab, _ in c].index("T_ Tensor"); c[i][1][0] = ("Tensormap", "tf_tensormap", ())
+    c = cats(); i = [lab for lab, _ in c].index("T_ Fields"); c[i][1][0] = ("Tensormap", "tf_tensormap", ())
     _eq("a T_ category with an unflagged module",
-        "in the tensor category 'T_ Tensor' but not flagged tensor" in problem_text(fresh_menu(CATEGORIES=c)), True)
+        "in the tensor category 'T_ Fields' but not flagged tensor" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
-    c = cats(); i = [lab for lab, _ in c].index("T_ Tensor"); c[i][1][0] = ("Tensormap", "tf_tensormap", ("vec",))
+    c = cats(); i = [lab for lab, _ in c].index("T_ Fields"); c[i][1][0] = ("Tensormap", "tf_tensormap", ("vec",))
     _eq("a vecfield-only module does not satisfy a T_ category",
         "not flagged tensor" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
-    c = cats(); i = [lab for lab, _ in c].index("T_ Tensor")
-    _eq("a module that takes a tensor and makes a vecfield carries both marks and may sit in T_ (f_tf_axisflow)",
+    c = cats(); i = ci(c, "tf_axisflow")
+    _eq("a module that takes a tensor and makes a vecfield carries both marks (f_tf_axisflow, an Adapter)",
         [e[2] for e in c[i][1] if e[1] == "tf_axisflow"], [("vec", "tensor")])
 
-    c = cats(); c[1][1].append(("Stipple", "texrouter", ()))
+    c = cats(); c[ci(c, "stipple")][1].append(("Stipple", "texrouter", ()))   # the same name, twice in the category that shows Stipple
     _eq("two entries shown with the same name", "two entries are shown as 'Stipple'" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
     c = cats(); c[0] = (c[0][0], [])
@@ -322,12 +358,12 @@ def test_validate_catches_each_kind_of_mistake():
 
     old_slot = g.SLOT
     try:
-        g.SLOT = 43.0                      # the pitch before the T_ category: nine categories no longer fit
+        g.SLOT = 46.0                      # ten slots (nine categories and Recipes) no longer fit at this pitch
         t = problem_text(fresh_menu())
     finally:
         g.SLOT = old_slot
     _eq("a menu taller than its panel is refused (the examples embed it at that size)",
-        "the menu panel is 380 px" in t, True)
+        f"the menu panel is {g.PANEL_H} px" in t, True)
 
     skip = dict(m.NOT_IN_MENU); skip["f_vf_vorticity"] = "  "
     _eq("NOT_IN_MENU without a reason", "needs a reason" in problem_text(fresh_menu(NOT_IN_MENU=skip)), True)
@@ -352,8 +388,8 @@ def test_validate_catches_each_kind_of_mistake():
     ov = dict(m.SIZE_OVERRIDES); ov["wave_table"] = ([1, 2], "x")
     _eq("a size override for a module that is not in the menu", "not in the menu" in problem_text(fresh_menu(SIZE_OVERRIDES=ov)), True)
 
-    c = cats(); c[1] = (c[0][0], c[1][1])
-    _eq("two categories with the same label", "duplicate category: 'Scope'" in problem_text(fresh_menu(CATEGORIES=c)), True)
+    c = cats(); first = c[0][0]; c[1] = (first, c[1][1])
+    _eq("two categories with the same label", f"duplicate category: '{first}'" in problem_text(fresh_menu(CATEGORIES=c)), True)
 
     for label, bad, needle in (("a string where the kinds tuple goes", [("L", [("A", "chladni", "yes")])], "a menu entry must be"),
                                ("the old bool vecfield flag", [("L", [("A", "chladni", True)])], "a menu entry must be"),
@@ -405,6 +441,29 @@ def test_check_reports_a_stale_file_and_write_fixes_it():
         _eq("--check fails when the patcher file is missing", g.main(["--check"]), 1)
     finally:
         g.OUT_PATCHER, g.OUT_JS = real
+
+
+def test_recipes_are_checked_and_written_to_the_js():
+    menu = g.load_menu()
+    _eq("recipes exist and every one has at least two menu modules", all(len(m) >= 2 for _, m in menu.RECIPES) and menu.RECIPES != [], True)
+    _eq("recipe keys are unique", len({g.recipe_key(d) for d, _ in menu.RECIPES}), len(menu.RECIPES))
+    js = g.OUT_JS.read_text()
+    for display, mods in menu.RECIPES:
+        row = ", ".join('"' + x + '"' for x in mods)
+        _eq(f"f_addmod.js has recipe {display!r}", f'"{g.recipe_key(display)}": [{row}]' in js, True)
+    _eq("f_addmod.js defines addrecipe", "function addrecipe(key)" in js, True)
+    good = list(menu.RECIPES)
+    for what, bad, needle in (
+            ("a recipe naming a module that is not in the menu", good + [("Bad", ["vf_fieldmap", "nope"])], "'nope', which is not a menu module"),
+            ("a one-module recipe", good + [("Lonely", ["vf_fieldmap"])], "needs at least two"),
+            ("two recipes with the same key", good + [(good[0][0].upper(), good[0][1])], "repeats another recipe")):
+        _eq(what + " is refused", needle in problem_text(fresh_menu(RECIPES=bad)), True)
+    raised = False
+    try:
+        g.new_js(g.OUT_JS.read_text().replace(g.RECIPES_BEGIN, "// gone"), menu)
+    except g.MenuError as e:
+        raised = "markers" in str(e)
+    _eq("a js file without the RECIPES markers is refused", raised, True)
 
 
 def test_the_js_needs_its_markers():

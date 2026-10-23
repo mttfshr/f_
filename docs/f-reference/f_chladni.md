@@ -81,17 +81,18 @@ f_chladni out3 (magnitude) → f_weave scalar inlet      — matches f_vf_potent
                                                           vecfield-in/scalar-out precedent
 ```
 
-## Companion Patches (audio built but unverified; EEG not yet built)
+## Companion Patches (the shipped audio patch does not fit this module; EEG not built)
 
-Interface is `note` + `amp` only (much simpler than the superseded 8-band
-filterbank contract). Design deferred until wanted:
+This module's interface is `note` + `amp` only (much simpler than the superseded 8-band
+filterbank contract). Neither planned companion that speaks it exists:
 
-- `f_chladni_audio.maxpat` — sigmund~/pitch follower → `note`; peakamp~ → `amp`
-- `f_chladni_eeg.maxpat` — dominant band or weighted centroid → `note`; total power → `amp`
+- **Planned, not built:** a `note` / `amp` audio companion (`sigmund~` or a pitch follower → `note`; `peakamp~` → `slide~` → `amp`; master gain; task T123).
+- **Planned, not built:** `f_chladni_eeg.maxpat` — dominant band or weighted centroid → `note`; total power → `amp`.
+- **Shipped, but a different thing:** `package/patchers/f_chladni_audio.maxpat` is the *superseded 8-band filterbank* version. It splits audio into eight resonant bands and sends `m0amp`–`m7amp`, which this module no longer accepts. See `f_chladni_audio.md`.
 
 ## Loose Threads
 
-- EEG companion patch not built — interface is stable and ready for it whenever wanted; audio companion exists but is unverified (T140)
+- EEG companion patch not built — interface is stable and ready for it whenever wanted. The shipped `f_chladni_audio` emits the old `m0amp`–`m7amp` contract, so there is currently no working audio companion for `note` / `amp` (T123 open; T140 unverified)
 - Preferred MIDI playing range not empirically pinned down beyond "1–2 octaves is the expected expressive range"
 - **`view_mode = 1` only changes mode 1's own total:** the helper functions used for mode 0 and for the vecfield (`out2`) recompute circular coordinates from the pixel position, so the unwrapped strip view reaches only mode 1's inline total. Mode 0 and `out2` stay circular whatever `view_mode` is. (The Parameters table above describes `view_mode` as switching the view; read it with this caveat.)
 
@@ -106,7 +107,7 @@ rationale and the superseded-parameter list.
 
 The large-x Bessel-function asymptotic approximation of circular-membrane modal interference is standard physics (Chladni plate modes); no specific source was consulted beyond the classical formulation. The radial standing-wave model with edge reflection (`reflectamt`), the angular harmonic terms `cos(n*theta + ph0)`, and mode B's Gaussian resonance weighting are this module's own construction.
 
-The audio companion patch (`f_chladni_audio`: sigmund~ pitch -> `note`, peakamp~ -> `amp`) is original wiring; its verification task remains open (`.specify/f_chladni/T140`).
+The shipped audio patch (`f_chladni_audio`, an eight-band filterbank sending `m0amp`–`m7amp`) is original wiring and does not speak this module's `note` / `amp` contract; its verification task remains open (`.specify/f_chladni/T140`). The planned `sigmund~` / `peakamp~` companion is not built (T123).
 
 See `docs/f-reference/f_chladni.md` (this file) for the full algorithm, outlet contract, and companion-patch notes.
 

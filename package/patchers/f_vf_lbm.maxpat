@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 4,
+					"numoutlets": 5,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -87,10 +88,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						295.0,
+						367.0,
 						22.0
 					],
-					"text": "route omega inflow gain speed"
+					"text": "route omega inflow tilt gain speed"
 				}
 			},
 			{
@@ -307,7 +308,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_collide.gen -- f_vf_lbm stage 1: the fused local pass. ONE 192x324 float32 texture out (the state atlas).\n// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.fuse_local() (same order, same formulas).\n//\n// STATE ATLAS (FR-001, revised 2026-10-21): the three RGBA state planes are stacked vertically in one texture,\n// 192 wide x 324 tall: rows 0..107 = plane 1 (populations 0..3 in RGBA), rows 108..215 = plane 2 (populations\n// 4..7), rows 216..323 = plane 3 (population 8 in R, the rest 0). Why one texture: a pix with several outlets\n// feeding one hot and several cold inlets depends on the ORDER its outlets fire, which Max does not document for\n// jit.gl.pix. A planes-in-three-textures chain that fired in the wrong order would step with planes from\n// different frames (a non-conservative scheme: noise in a perfectly uniform channel, found live 2026-10-21).\n// One texture has one hot inlet and nothing to order.\n// Each output texel recomputes the whole collision for its lattice cell (x, y) = (column, row mod 108) and\n// writes the four values its plane holds (3x the arithmetic, which is trivial at this size).\n// D2Q9 order: 0 rest; 1 (1,0); 2 (0,1); 3 (-1,0); 4 (0,-1); 5 (1,1); 6 (-1,1); 7 (-1,-1); 8 (1,-1).\n//\n// Inlets (outer order): first = the state atlas from the hold stage (hot: it triggers this render),\n// second = the obstacle mask at render resolution (cold, from the module inlet).\n// The write order below is the experiment's: pre-collision copy, outflow copy, macro, inflow, equilibrium,\n// right-population overwrite, BGK collision, bounce-back.\n//   - SEED / SELF-HEAL: a cell whose held populations are not all finite, whose density is outside (0.2, 5) or\n//     whose rest population is not above 0.05 (a fresh module, a rebuilt GL context, a poisoned or blown-up\n//     texel) restarts at equilibrium with rho = 1, u = inflow, plus a tiny sideways ripple\n//     (0.02 * inflow * sin(0.3 x)) that lets the wake break symmetry sooner. The rest-population test also\n//     rejects an empty inlet, which reads (0, 0, 0, 1). Selection uses switch(), never mix(): mix(NaN, x, 1) is\n//     still NaN.\n//   - PRE-COLLISION (FR-003): the bounce-back reads the cell's populations as held at the start of the frame,\n//     before the outflow copy and before collision (the experiment's f_prev).\n//   - OUTFLOW (last column): the three leftward populations copy from the column to the left (zero gradient).\n//   - INFLOW (first column): ux = inflow and uy = 0 on the interior rows FIRST, then the Zou/He density\n//     rho = (rest + 2 * leftward) / (1 - ux); the rightward populations take the equilibrium (FR-005).\n//     y is periodic (decided 2026-10-21), so the top and bottom rows are ordinary rows.\n//   - MASK: luma (0.299 R + 0.587 G + 0.114 B) averaged over a 4 x 4 grid of nearest taps across the cell's\n//     footprint (exact at 1:1, a box filter when the mask is larger), obstacle where above 0.5. The first and last\n//     columns are never obstacle (T014 default: shield the edge columns). An unconnected mask reads black.\n//   - omega is clamped to [0.5, 1.98] and inflow to [0, 0.1]: the measured stability ceiling (FR-007)\n//   - components are read inline on nearest(), never from a stored vec\nfe(wt, lx, ly, r0, vx, vy) {\n  eu = lx * vx + ly * vy;\n  return wt * r0 * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * (vx * vx + vy * vy));\n}\nfin(x) {\n  return switch(abs(x) < 1e30, 1, 0);\n}\nvv(j, y) {\n  return (j * 108 + y + 0.5) / 324;\n}\n\nParam omega(1.97);\nParam inflow(0.08);\n\nW = 192;\nH = 108;\npx = floor(norm.x * W);\nyt = floor(norm.y * 324);\nkp = floor(yt / 108);\npy = yt - kp * 108;\ncu = (px + 0.5) / W;\num = (px - 0.5) / W;\npc0 = vec(cu, vv(0, py));\npc1 = vec(cu, vv(1, py));\npc2 = vec(cu, vv(2, py));\npm0 = vec(um, vv(0, py));\npm1 = vec(um, vv(1, py));\n\nom = min(max(omega, 0.5), 1.98);\nu0 = min(max(inflow, 0), 0.1);\nis_in = switch(px < 0.5, 1, 0);\nis_out = switch(px > W - 1.5, 1, 0);\nis_row = switch(py > 0.5, 1, 0) * switch(py < H - 1.5, 1, 0);\n\n// the held state of this cell\nb0 = nearest(in1, pc0).x;\nb1 = nearest(in1, pc0).y;\nb2 = nearest(in1, pc0).z;\nb3 = nearest(in1, pc0).w;\nb4 = nearest(in1, pc1).x;\nb5 = nearest(in1, pc1).y;\nb6 = nearest(in1, pc1).z;\nb7 = nearest(in1, pc1).w;\nb8 = nearest(in1, pc2).x;\nallfin = fin(b0) * fin(b1) * fin(b2) * fin(b3) * fin(b4) * fin(b5) * fin(b6) * fin(b7) * fin(b8);\nrb = b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8;\nvalid = allfin * switch(rb > 0.2, 1, 0) * switch(rb < 5, 1, 0) * switch(b0 > 0.05, 1, 0);\nuse_seed = switch(valid >= 0.5, 0, 1);\n\n// the pre-collision populations, seeded where the state is invalid\nripple = 0.02 * u0 * sin(0.3 * px);\na0 = switch(use_seed >= 0.5, fe(0.444444444444, 0, 0, 1, u0, ripple), b0);\na1 = switch(use_seed >= 0.5, fe(0.111111111111, 1, 0, 1, u0, ripple), b1);\na2 = switch(use_seed >= 0.5, fe(0.111111111111, 0, 1, 1, u0, ripple), b2);\na3 = switch(use_seed >= 0.5, fe(0.111111111111, 0 - 1, 0, 1, u0, ripple), b3);\na4 = switch(use_seed >= 0.5, fe(0.111111111111, 0, 0 - 1, 1, u0, ripple), b4);\na5 = switch(use_seed >= 0.5, fe(0.0277777777778, 1, 1, 1, u0, ripple), b5);\na6 = switch(use_seed >= 0.5, fe(0.0277777777778, 0 - 1, 1, 1, u0, ripple), b6);\na7 = switch(use_seed >= 0.5, fe(0.0277777777778, 0 - 1, 0 - 1, 1, u0, ripple), b7);\na8 = switch(use_seed >= 0.5, fe(0.0277777777778, 1, 0 - 1, 1, u0, ripple), b8);\n\n// outflow: the leftward populations of the last column copy from the column to its left\ncp = is_out * (1 - use_seed);\nf0 = a0;\nf1 = a1;\nf2 = a2;\nf3 = switch(cp >= 0.5, nearest(in1, pm0).w, a3);\nf4 = a4;\nf5 = a5;\nf6 = switch(cp >= 0.5, nearest(in1, pm1).z, a6);\nf7 = switch(cp >= 0.5, nearest(in1, pm1).w, a7);\nf8 = a8;\n\n// macro quantities\nrho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;\nux = (f1 - f3 + f5 - f6 - f7 + f8) / rho;\nuy = (f2 - f4 + f5 + f6 - f7 - f8) / rho;\n\n// inflow: prescribe the velocity on the interior rows, then the Zou/He density\nset_u = is_in * is_row;\nux2 = switch(set_u >= 0.5, u0, ux);\nuy2 = switch(set_u >= 0.5, 0, uy);\nrho_in = (f0 + f2 + f4 + 2 * (f3 + f6 + f7)) / (1 - ux2);\nrho2 = switch(is_in >= 0.5, rho_in, rho);\n\n// equilibrium\nq0 = fe(0.444444444444, 0, 0, rho2, ux2, uy2);\nq1 = fe(0.111111111111, 1, 0, rho2, ux2, uy2);\nq2 = fe(0.111111111111, 0, 1, rho2, ux2, uy2);\nq3 = fe(0.111111111111, 0 - 1, 0, rho2, ux2, uy2);\nq4 = fe(0.111111111111, 0, 0 - 1, rho2, ux2, uy2);\nq5 = fe(0.0277777777778, 1, 1, rho2, ux2, uy2);\nq6 = fe(0.0277777777778, 0 - 1, 1, rho2, ux2, uy2);\nq7 = fe(0.0277777777778, 0 - 1, 0 - 1, rho2, ux2, uy2);\nq8 = fe(0.0277777777778, 1, 0 - 1, rho2, ux2, uy2);\n\n// inflow column: the rightward populations take the equilibrium\ng1 = switch(is_in >= 0.5, q1, f1);\ng5 = switch(is_in >= 0.5, q5, f5);\ng8 = switch(is_in >= 0.5, q8, f8);\n\n// BGK collision\nc0 = f0 + om * (q0 - f0);\nc1 = g1 + om * (q1 - g1);\nc2 = f2 + om * (q2 - f2);\nc3 = f3 + om * (q3 - f3);\nc4 = f4 + om * (q4 - f4);\nc5 = g5 + om * (q5 - g5);\nc6 = f6 + om * (q6 - f6);\nc7 = f7 + om * (q7 - f7);\nc8 = g8 + om * (q8 - g8);\n\n// the obstacle mask, averaged over the cell's footprint; the edge columns are never obstacle\ncv = (py + 0.5) / H;\nmsum = 0;\nfor (ta = 0; ta < 4; ta += 1) {\n  ox = ((ta + 0.5) / 4 - 0.5) / W;\n  for (tb = 0; tb < 4; tb += 1) {\n    oy = ((tb + 0.5) / 4 - 0.5) / H;\n    msum += nearest(in2, vec(cu + ox, cv + oy)).x * 0.299 + nearest(in2, vec(cu + ox, cv + oy)).y * 0.587 + nearest(in2, vec(cu + ox, cv + oy)).z * 0.114;\n  }\n}\nm = switch(msum / 16 > 0.5, 1, 0) * (1 - is_in) * (1 - is_out);\n\n// bounce-back: inside the obstacle every population becomes the pre-collision opposite one\nn0 = switch(m >= 0.5, a0, c0);\nn1 = switch(m >= 0.5, a3, c1);\nn2 = switch(m >= 0.5, a4, c2);\nn3 = switch(m >= 0.5, a1, c3);\nn4 = switch(m >= 0.5, a2, c4);\nn5 = switch(m >= 0.5, a7, c5);\nn6 = switch(m >= 0.5, a8, c6);\nn7 = switch(m >= 0.5, a5, c7);\nn8 = switch(m >= 0.5, a6, c8);\n\n// write the plane this output texel belongs to (0: populations 0..3, 1: populations 4..7, 2: population 8)\no0 = switch(kp < 0.5, n0, switch(kp < 1.5, n4, n8));\no1 = switch(kp < 0.5, n1, switch(kp < 1.5, n5, 0));\no2 = switch(kp < 0.5, n2, switch(kp < 1.5, n6, 0));\no3 = switch(kp < 0.5, n3, switch(kp < 1.5, n7, 0));\nout1 = vec(o0, o1, o2, o3);\n",
+									"code": "// codebox_collide.gen -- f_vf_lbm stage 1: the fused local pass. ONE 192x324 float32 texture out (the state atlas).\n// Mirror: tests/modules/vf_lbm/vf_lbm_mirror.fuse_local() (same order, same formulas).\n//\n// STATE ATLAS (FR-001, revised 2026-10-21): the three RGBA state planes are stacked vertically in one texture,\n// 192 wide x 324 tall: rows 0..107 = plane 1 (populations 0..3 in RGBA), rows 108..215 = plane 2 (populations\n// 4..7), rows 216..323 = plane 3 (population 8 in R, the rest 0). Why one texture: a pix with several outlets\n// feeding one hot and several cold inlets depends on the ORDER its outlets fire, which Max does not document for\n// jit.gl.pix. A planes-in-three-textures chain that fired in the wrong order would step with planes from\n// different frames (a non-conservative scheme: noise in a perfectly uniform channel, found live 2026-10-21).\n// One texture has one hot inlet and nothing to order.\n// Each output texel recomputes the whole collision for its lattice cell (x, y) = (column, row mod 108) and\n// writes the four values its plane holds (3x the arithmetic, which is trivial at this size).\n// D2Q9 order: 0 rest; 1 (1,0); 2 (0,1); 3 (-1,0); 4 (0,-1); 5 (1,1); 6 (-1,1); 7 (-1,-1); 8 (1,-1).\n//\n// Inlets (outer order): first = the state atlas from the hold stage (hot: it triggers this render),\n// second = the obstacle mask at render resolution (cold, from the module inlet).\n// The write order below is the experiment's: pre-collision copy, outflow copy, macro, inflow, equilibrium,\n// right-population overwrite, BGK collision, bounce-back.\n//   - SEED / SELF-HEAL: a cell whose held populations are not all finite, whose density is outside (0.2, 5) or\n//     whose rest population is not above 0.05 (a fresh module, a rebuilt GL context, a poisoned or blown-up\n//     texel) restarts at equilibrium with rho = 1, u = inflow, plus a tiny sideways ripple\n//     (0.02 * inflow * sin(0.3 x)) that lets the wake break symmetry sooner. The rest-population test also\n//     rejects an empty inlet, which reads (0, 0, 0, 1). Selection uses switch(), never mix(): mix(NaN, x, 1) is\n//     still NaN.\n//   - PRE-COLLISION (FR-003): the bounce-back reads the cell's populations as held at the start of the frame,\n//     before the outflow copy and before collision (the experiment's f_prev).\n//   - OUTFLOW (last column): the three leftward populations copy from the column to the left (zero gradient).\n//   - INFLOW (first column): ux = inflow * cos(tilt) and uy = inflow * sin(tilt) (tilt in degrees, clamped to\n//     +-30, default 0 = straight wind) on the interior rows FIRST, then the Zou/He density\n//     rho = (rest + 2 * leftward) / (1 - ux); the rightward populations take the equilibrium (FR-005).\n//     y is periodic (decided 2026-10-21), so the top and bottom rows are ordinary rows.\n//   - MASK: luma (0.299 R + 0.587 G + 0.114 B) averaged over a 4 x 4 grid of nearest taps across the cell's\n//     footprint (exact at 1:1, a box filter when the mask is larger), obstacle where above 0.5. The first and last\n//     columns are never obstacle (T014 default: shield the edge columns). An unconnected mask reads black.\n//   - omega is clamped to [0.5, 1.98] and inflow to [0, 0.1]: the measured stability ceiling (FR-007)\n//   - components are read inline on nearest(), never from a stored vec\nfe(wt, lx, ly, r0, vx, vy) {\n  eu = lx * vx + ly * vy;\n  return wt * r0 * (1 + 3 * eu + 4.5 * eu * eu - 1.5 * (vx * vx + vy * vy));\n}\nfin(x) {\n  return switch(abs(x) < 1e30, 1, 0);\n}\nvv(j, y) {\n  return (j * 108 + y + 0.5) / 324;\n}\n\nParam omega(1.97);\nParam inflow(0.08);\nParam tilt(0);\n\nW = 192;\nH = 108;\npx = floor(norm.x * W);\nyt = floor(norm.y * 324);\nkp = floor(yt / 108);\npy = yt - kp * 108;\ncu = (px + 0.5) / W;\num = (px - 0.5) / W;\npc0 = vec(cu, vv(0, py));\npc1 = vec(cu, vv(1, py));\npc2 = vec(cu, vv(2, py));\npm0 = vec(um, vv(0, py));\npm1 = vec(um, vv(1, py));\n\nom = min(max(omega, 0.5), 1.98);\nu0 = min(max(inflow, 0), 0.1);\nth = min(max(tilt, -30), 30) * 0.0174532925199;\nis_in = switch(px < 0.5, 1, 0);\nis_out = switch(px > W - 1.5, 1, 0);\nis_row = switch(py > 0.5, 1, 0) * switch(py < H - 1.5, 1, 0);\n\n// the held state of this cell\nb0 = nearest(in1, pc0).x;\nb1 = nearest(in1, pc0).y;\nb2 = nearest(in1, pc0).z;\nb3 = nearest(in1, pc0).w;\nb4 = nearest(in1, pc1).x;\nb5 = nearest(in1, pc1).y;\nb6 = nearest(in1, pc1).z;\nb7 = nearest(in1, pc1).w;\nb8 = nearest(in1, pc2).x;\nallfin = fin(b0) * fin(b1) * fin(b2) * fin(b3) * fin(b4) * fin(b5) * fin(b6) * fin(b7) * fin(b8);\nrb = b0 + b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8;\nvalid = allfin * switch(rb > 0.2, 1, 0) * switch(rb < 5, 1, 0) * switch(b0 > 0.05, 1, 0);\nuse_seed = switch(valid >= 0.5, 0, 1);\n\n// the pre-collision populations, seeded where the state is invalid\nripple = 0.02 * u0 * sin(0.3 * px);\na0 = switch(use_seed >= 0.5, fe(0.444444444444, 0, 0, 1, u0, ripple), b0);\na1 = switch(use_seed >= 0.5, fe(0.111111111111, 1, 0, 1, u0, ripple), b1);\na2 = switch(use_seed >= 0.5, fe(0.111111111111, 0, 1, 1, u0, ripple), b2);\na3 = switch(use_seed >= 0.5, fe(0.111111111111, 0 - 1, 0, 1, u0, ripple), b3);\na4 = switch(use_seed >= 0.5, fe(0.111111111111, 0, 0 - 1, 1, u0, ripple), b4);\na5 = switch(use_seed >= 0.5, fe(0.0277777777778, 1, 1, 1, u0, ripple), b5);\na6 = switch(use_seed >= 0.5, fe(0.0277777777778, 0 - 1, 1, 1, u0, ripple), b6);\na7 = switch(use_seed >= 0.5, fe(0.0277777777778, 0 - 1, 0 - 1, 1, u0, ripple), b7);\na8 = switch(use_seed >= 0.5, fe(0.0277777777778, 1, 0 - 1, 1, u0, ripple), b8);\n\n// outflow: the leftward populations of the last column copy from the column to its left\ncp = is_out * (1 - use_seed);\nf0 = a0;\nf1 = a1;\nf2 = a2;\nf3 = switch(cp >= 0.5, nearest(in1, pm0).w, a3);\nf4 = a4;\nf5 = a5;\nf6 = switch(cp >= 0.5, nearest(in1, pm1).z, a6);\nf7 = switch(cp >= 0.5, nearest(in1, pm1).w, a7);\nf8 = a8;\n\n// macro quantities\nrho = f0 + f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8;\nux = (f1 - f3 + f5 - f6 - f7 + f8) / rho;\nuy = (f2 - f4 + f5 + f6 - f7 - f8) / rho;\n\n// inflow: prescribe the velocity on the interior rows, then the Zou/He density\nset_u = is_in * is_row;\nux2 = switch(set_u >= 0.5, u0 * cos(th), ux);\nuy2 = switch(set_u >= 0.5, u0 * sin(th), uy);\nrho_in = (f0 + f2 + f4 + 2 * (f3 + f6 + f7)) / (1 - ux2);\nrho2 = switch(is_in >= 0.5, rho_in, rho);\n\n// equilibrium\nq0 = fe(0.444444444444, 0, 0, rho2, ux2, uy2);\nq1 = fe(0.111111111111, 1, 0, rho2, ux2, uy2);\nq2 = fe(0.111111111111, 0, 1, rho2, ux2, uy2);\nq3 = fe(0.111111111111, 0 - 1, 0, rho2, ux2, uy2);\nq4 = fe(0.111111111111, 0, 0 - 1, rho2, ux2, uy2);\nq5 = fe(0.0277777777778, 1, 1, rho2, ux2, uy2);\nq6 = fe(0.0277777777778, 0 - 1, 1, rho2, ux2, uy2);\nq7 = fe(0.0277777777778, 0 - 1, 0 - 1, rho2, ux2, uy2);\nq8 = fe(0.0277777777778, 1, 0 - 1, rho2, ux2, uy2);\n\n// inflow column: the rightward populations take the equilibrium\ng1 = switch(is_in >= 0.5, q1, f1);\ng5 = switch(is_in >= 0.5, q5, f5);\ng8 = switch(is_in >= 0.5, q8, f8);\n\n// BGK collision\nc0 = f0 + om * (q0 - f0);\nc1 = g1 + om * (q1 - g1);\nc2 = f2 + om * (q2 - f2);\nc3 = f3 + om * (q3 - f3);\nc4 = f4 + om * (q4 - f4);\nc5 = g5 + om * (q5 - g5);\nc6 = f6 + om * (q6 - f6);\nc7 = f7 + om * (q7 - f7);\nc8 = g8 + om * (q8 - g8);\n\n// the obstacle mask, averaged over the cell's footprint; the edge columns are never obstacle\ncv = (py + 0.5) / H;\nmsum = 0;\nfor (ta = 0; ta < 4; ta += 1) {\n  ox = ((ta + 0.5) / 4 - 0.5) / W;\n  for (tb = 0; tb < 4; tb += 1) {\n    oy = ((tb + 0.5) / 4 - 0.5) / H;\n    msum += nearest(in2, vec(cu + ox, cv + oy)).x * 0.299 + nearest(in2, vec(cu + ox, cv + oy)).y * 0.587 + nearest(in2, vec(cu + ox, cv + oy)).z * 0.114;\n  }\n}\nm = switch(msum / 16 > 0.5, 1, 0) * (1 - is_in) * (1 - is_out);\n\n// bounce-back: inside the obstacle every population becomes the pre-collision opposite one\nn0 = switch(m >= 0.5, a0, c0);\nn1 = switch(m >= 0.5, a3, c1);\nn2 = switch(m >= 0.5, a4, c2);\nn3 = switch(m >= 0.5, a1, c3);\nn4 = switch(m >= 0.5, a2, c4);\nn5 = switch(m >= 0.5, a7, c5);\nn6 = switch(m >= 0.5, a8, c6);\nn7 = switch(m >= 0.5, a5, c7);\nn8 = switch(m >= 0.5, a6, c8);\n\n// write the plane this output texel belongs to (0: populations 0..3, 1: populations 4..7, 2: population 8)\no0 = switch(kp < 0.5, n0, switch(kp < 1.5, n4, n8));\no1 = switch(kp < 0.5, n1, switch(kp < 1.5, n5, 0));\no2 = switch(kp < 0.5, n2, switch(kp < 1.5, n6, 0));\no3 = switch(kp < 0.5, n3, switch(kp < 1.5, n7, 0));\nout1 = vec(o0, o1, o2, o3);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1004,14 +1005,14 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						190.0,
+						197.0,
 						110.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						190.0,
+						197.0,
 						110.0
 					],
 					"proportion": 0.5
@@ -1035,10 +1036,10 @@
 					"presentation_rect": [
 						10.5,
 						0.0,
-						92.0,
+						110.0,
 						21.0
 					],
-					"text": "LBM"
+					"text": "Lattice Boltzmann"
 				}
 			},
 			{
@@ -1048,9 +1049,9 @@
 					"fontname": "Ableton Sans Light",
 					"fontsize": 11.0,
 					"textcolor": [
-						0.6,
-						0.6,
-						0.6,
+						0.35,
+						0.75,
+						0.95,
 						1.0
 					],
 					"textjustification": 2,
@@ -1064,12 +1065,12 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						94.0,
+						101.0,
 						0.9,
 						70.0,
 						21.0
 					],
-					"text": "mask in, \u2207 out"
+					"text": "\u2207 out"
 				}
 			},
 			{
@@ -1490,14 +1491,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)",
+					"hint": "Wind direction in degrees: 0 = straight left to right, positive = the wind blows toward the top. The speed stays Wind (it is split into x and y parts); the flow still enters through the left edge and wraps top to bottom. Large angles are less accurate",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_lbm_enc::gain",
+					"param_connect": "#0_lbm_collide::tilt",
 					"parameter_enable": 1,
 					"patching_rect": [
 						190.5,
@@ -1518,15 +1519,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								3.0
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "gain",
-							"parameter_mmax": 10.0,
-							"parameter_mmin": 0.0,
+							"parameter_longname": "tilt",
+							"parameter_mmax": 30.0,
+							"parameter_mmin": -30.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "gain",
+							"parameter_shortname": "tilt",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1535,14 +1536,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "gain"
+					"varname": "tilt"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-27",
 					"maxclass": "attrui",
-					"attr": "gain",
+					"attr": "tilt",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1578,6 +1579,110 @@
 						50.0,
 						18.0
 					],
+					"text": "Tilt",
+					"textjustification": 1,
+					"varname": "lbl_tilt"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-29",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Output scale applied to the velocity before encoding (clamped to the vecfield range)",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_lbm_enc::gain",
+					"parameter_enable": 1,
+					"patching_rect": [
+						262.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						115.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								3.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "gain",
+							"parameter_mmax": 10.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "gain",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "gain"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-30",
+					"maxclass": "attrui",
+					"attr": "gain",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						242.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-31",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						251.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						103.5,
+						20.0,
+						50.0,
+						18.0
+					],
 					"text": "Gain",
 					"textjustification": 1,
 					"varname": "lbl_gain"
@@ -1585,7 +1690,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-29",
+					"id": "obj-32",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
 					"hint": "How fast the flow evolves: the solver advances on every frame (Full), every 2nd, 3rd or 4th. Slower = the same wake in slow motion. The output holds its last state in between",
@@ -1599,14 +1704,14 @@
 					"param_connect": "#0_lbm_enc::speed",
 					"parameter_enable": 1,
 					"patching_rect": [
-						246.0,
+						318.0,
 						250.0,
 						60.0,
 						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						111.0,
+						148.0,
 						52.0,
 						45.0,
 						15.0
@@ -1638,21 +1743,21 @@
 			},
 			{
 				"box": {
-					"id": "obj-31",
+					"id": "obj-34",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.5,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						251.0,
+						323.0,
 						180.0,
 						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						140.5,
 						20.0,
 						50.0,
 						18.0
@@ -1664,7 +1769,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-32",
+					"id": "obj-35",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1681,7 +1786,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						168.0,
+						175.0,
 						5.0,
 						18.0,
 						12.0
@@ -1692,7 +1797,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-33",
+					"id": "obj-36",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1956,11 +2061,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-32",
+						"obj-35",
 						0
 					],
 					"destination": [
-						"obj-33",
+						"obj-36",
 						0
 					]
 				}
@@ -1968,7 +2073,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-33",
+						"obj-36",
 						0
 					],
 					"destination": [
@@ -2224,7 +2329,7 @@
 						0
 					],
 					"destination": [
-						"obj-5",
+						"obj-51",
 						0
 					]
 				}
@@ -2237,6 +2342,42 @@
 					],
 					"destination": [
 						"obj-29",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-30",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-30",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						4
+					],
+					"destination": [
+						"obj-32",
 						0
 					]
 				}
@@ -2388,7 +2529,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-29",
+						"obj-32",
 						0
 					],
 					"destination": [
@@ -2446,11 +2587,16 @@
 				0
 			],
 			"obj-26": [
+				"tilt",
+				"tilt",
+				0
+			],
+			"obj-29": [
 				"gain",
 				"gain",
 				0
 			],
-			"obj-29": [
+			"obj-32": [
 				"speed",
 				"speed",
 				0
