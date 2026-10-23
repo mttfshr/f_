@@ -1,6 +1,6 @@
 # Ideas Index
 
-_Created: 2026-09-17; last brought current 2026-10-20 (78 notes plus one parked
+_Created: 2026-09-17; last brought current 2026-10-23 (86 notes plus one parked
 script)._ A refresher map of `ideas/` so you don't have
 to reread everything to remember where a thread stands. Grouped by theme, not
 date. Each entry: one-line gist + status. When a file's own status line is
@@ -560,6 +560,34 @@ there, then the chapter-specific files for depth.
   (substantially filled). Explicitly calls out what's *not* worth pursuing
   (compositing/color/WFG variants — already comprehensive).
 
+## webgpgpu-derived ideas (2026-10-23)
+
+Eight themes mined from michaelerule/webgpgpu by the omp run `webgpgpu-ideas-1`
+(drafts and report in `f_omp_runs/webgpgpu-ideas-1/`), each checked by a verifier
+against the shader files and the f_ inventory, none tried in Max. Working names are
+placeholders.
+
+- **[f_wave_field.md](f_wave_field.md)** ⚪ — Wave and oscillator fields: classical wave
+  equation, texture-driven leapfrog wave, per-pixel resonator (`f_wave`). The solver core
+  `f_cymascope.md` calls for; open question whether to solve it spectrally like `f_ks`.
+- **[f_ca.md](f_ca.md)** ⚪ — Discrete cellular automata generator with a rule menu (Life,
+  Ising, forest fire). No automaton exists in f_ today; needs a per-frame random source.
+- **[f_adapt.md](f_adapt.md)** ⚪ — Temporal adaptation, novelty, change-gating and
+  band-pass for plain textures (`f_tf_smooth` is tensor-only). Check core Vsynth overlap
+  first.
+- **[f_wc_from_webgpgpu.md](f_wc_from_webgpgpu.md)** ⚪ — Four pieces for `f_wc` from
+  Rule's Wilson-Cowan pages: known-answer reference, Gaussian noise drive, habituation
+  dials, retinotopic stage as a shared piece.
+- **[f_quasi.md](f_quasi.md)** ⚪ — Shepard-zoom quasicrystal generator with an exact
+  analytic gradient outlet, plus relief, slope-hue and contour-banding render modes.
+- **[f_gabor.md](f_gabor.md)** ⚪ — Gabor band-pass and phase-invariant quadrature
+  energy, with tile-bank and octave-pyramid display modes.
+- **[f_cmap_feedback.md](f_cmap_feedback.md)** ⚪ — Iterated complex-map feedback pull
+  (square and log maps, out-of-domain checker); new module or `f_droste` feedback mode.
+- **[webgpgpu_small_maybes.md](webgpgpu_small_maybes.md)** ⚪ — Five small items: mean and
+  variance outlet, marching-squares contour glyphs, sigmoid curve for `f_tone_curve`,
+  colormap sampler, scale-selective gradient for `f_vf_fieldmap`.
+
 ## Scratchpad & catch-all
 
 - **[scratchpad.md](scratchpad.md)** 🔵 — Loose threads not yet graduated to
@@ -573,6 +601,12 @@ there, then the chapter-specific files for depth.
 
 ## Notable cross-file relationships worth remembering
 
+- **`f_wave_field.md` / `f_cymascope.md` / `f_adapt.md`** — the wave solver is
+  `f_cymascope`'s core minus the audio front end; `f_adapt`'s temporal band-pass is the
+  forcing signal for the resonator mode. Plain-texture `f_adapt` also sits next to the
+  parked `f_vf_temporal_smooth.md` and `shared_tensor_vecfield_operators.md`.
+- **`f_ca.md` / `f_wc_from_webgpgpu.md`** — both need a persistent per-frame random
+  source (sin-hash seeded per frame, histogram-checked); build one shared helper.
 - **`f_util_mod_texture.md` vs `named_mod_textures.md`** — the newer
   mechanism's T1–T3 passed live (2026-09-17), so it has displaced most of the older,
   shipped-code-backed convention. T4–T6 (and the unexplained "pix hop" failure) are
