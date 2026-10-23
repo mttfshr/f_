@@ -85,7 +85,11 @@ tests/modules/wc/
 
 ### Open Experiment 4 — drive coupling
 
-- [ ] T007 In the mirror, test drive coupling shapes (additive on E only vs. on both; luminance-gated vs. raw); verify Success Criterion 4 (output/input correlation high below threshold, low above) and pick the coupling equation + unconnected default. Offline.
+- [x] T007 DONE 2026-10-23. Coupling shapes tested in the mirror (structured scene: gaussian-blurred noise, 0..1). Findings and the G3 recommendation:
+  - **Additive coupling on E only vs on both: IDENTICAL** (the E and I sigmoid inputs are driven by the same convolved fields; adding to I changes nothing measurable). Ship **E-only** (simpler, cheaper).
+  - **Luminance-gated drive KILLS the pattern** (corr 0.63 but std collapses to ~0.03 at low drive): masking the drive to bright regions starves the noise-sustained mechanism. Ship **raw additive drive**.
+  - **`hallucinate` semantics fixed after three rejected variants.** Scaling all couplings (G) is backwards: it locks the scene's imprint harder as G rises (the sharpened nonlinearity tracks the drive, corr rises 0.5→0.74 for dg=0.75, and the amplitude collapses to zero outside a narrow window). Scaling the noise only (G3 candidate 2) also just locks the scene (corr ~0.7, no transition). **The clean crossover is `drive_gain` (scene strength) itself, at fixed Psychedelic couplings:** with σ_I=1.4, Ne=1.0, std stays high (~0.35) across the whole sweep while corr tracks drive_gain — dg=0.2 → corr 0.17 (HALLUCINATING, spontaneous), dg=0.5 → corr 0.56, dg≥1.0 → corr 0.77–0.84 (SCENE, normal vision). **Success Criterion 4 verified: high amplitude throughout, correlation low below threshold, high above; crossover near drive_gain ≈ 0.3–0.5.**
+  - **Recommended G3:** drive inlet = raw additive on E only, term `drive_gain·(scene − 0.5)` added to the E sigmoid input; `hallucinate` and `drive_gain` are the SAME knob seen from the two ends (the module's gestural core is scene-strength, with weak drive = hallucinate, strong drive = see). Unconnected default: `drive_gain·(0.5 − 0.5) = 0` (a black/unconnected inlet is mid-0.5 → zero net drive → pure US-1 labyrinth). This makes the unconnected default free: **no special-casing, the constant 0.5 neutral point is the neutral.** Maps onto the gain/mix library convention (drive_gain is a `gain`-role dial).
 
 ### Open Experiment 6 — output encoding measurement
 
@@ -98,7 +102,7 @@ tests/modules/wc/
 - [ ] G3 **Drive inlet semantics**: T007's coupling-shape recommendation; confirm or pick another.
 - [ ] G4 **Output encoding**: T008's comparison; decide in Phase 2 with live context (same as f_ks T012).
 
-**Checkpoint**: mirror + tests green; region map recorded; G1 decided (2026-10-23). Remaining before Phase 1: T006 stills seen by Matt (retinotopic render of real labyrinth, for the tier-3 look — the map mechanism is already validated), T007 (drive coupling shape → G3), T008 (encoding measurement → G4, Phase 2). G2 (naming) is a Phase 3 blocker, not a Phase 1 blocker.
+**Checkpoint**: mirror + tests green; region map recorded; G1 decided (2026-10-23); T006 stills seen and approved by Matt ("the stills are great", 2026-10-23); T007 done with a concrete G3 recommendation (drive inlet = raw additive on E only, `drive_gain·(scene−0.5)`; weak drive = hallucinate, strong = see; unconnected inlet reads mid-0.5 → zero net drive for free). **Phase 0 Gate to Phase 1 is now only G3 awaiting Matt.** T008 (encoding measurement → G4) slips to Phase 2; G2 (naming) is a Phase 3 blocker.
 
 ---
 
