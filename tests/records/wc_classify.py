@@ -80,8 +80,13 @@ def classify(u, n_ang=72):
 
     detail = {"std": std, "k_star": int(k_star), "total_pow": total_pow}
 
-    # uniform: essentially no variance
-    if std < 1e-4:
+    # uniform: essentially no variance AND no spectral concentration.
+    # A low-contrast but spatially coherent pattern (near-threshold Turing)
+    # has low std yet a sharp spectral peak -- do NOT call that uniform.
+    # Use the coefficient of variation of the radially-averaged power as the
+    # coherence signal instead of raw std alone.
+    n = u.shape[0]
+    if std < 1e-6:
         return "uniform", int(k_star), detail
 
     # fold powers: 2-fold (rolls) and 6-fold (hexagons)
