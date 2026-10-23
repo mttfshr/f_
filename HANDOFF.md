@@ -1,5 +1,18 @@
 # HANDOFF
 
+## 2026-10-23 (f_wc T005 fork): Pinto-Ermentrout spike is ALSO negative — both WC model classes fail; module's existence is now the open question
+
+**START HERE if resuming f_wc.** Matt ruled on the T005 fork (the 5008d41 commit message): spike the Pinto-Ermentrout activator-recovery form. Done in `tests/records/spike_wc_pinto.py` (commit `c31012d`). **It also fails.** The earlier entries below have the full Phase 0 history; this entry is the current head.
+
+**What the spike found (all reproduced by the file's passing tests):**
+- The u/v Heaviside system `du/dt = −u + ∫w·H(u−θ) − v + P`, `dv/dt = ε(βu−v)`, exponential kernel `w(r)=A·exp(−λr)` (A=2.1, λ=1, lit Ref[7]) is **cleanly bistable in its homogeneous fixed points** (rest `u=P/(1+β) < θ`, active `u=(a+P)/(1+β) > θ`) — confirmed analytically across (β, θ, a). Bistability requirement #1 holds; noise-seeding is futile (matches the E/I finding).
+- **But the SPATIAL medium has no reachable excitable window.** A finite blob/broken-wave seed either collapses to rest or ignites the whole periodic domain (active-fraction → 1, std → 0). NO localized pulse, target wave, or spiral survives at any probed (P, ε, β, a, seed-radius), including the documented slow-recovery spiral regime (ε 0.02–0.06). Lateral inhibition (Mexican-hat difference-of-exponentials) makes it worse (kills nucleation). The scan is encoded as a passing test (`test_T005b_excitable_window_is_empty`) asserting ZERO confined forms across 6 representative cells.
+- **[INFERENCE] root cause:** with the kernel normalized to integral `a`, once a region fires the coupling `a` outweighs the max recovery `β·u_sat = β(a+P)/(1+β) < a` (that inequality is exactly what makes the active homogeneous state exist) — so the homogeneous-bistability condition and the front-stalling condition pull opposite ways in this normalization. The literature's spirals live in a regime this spectral-kernel setup doesn't reach, or the spiral result uses a different connectivity than Ref[7]'s rate-model kernel.
+
+**Net for the module (the Matt decision now owed):** BOTH model classes the Wikipedia WC article points to have failed to produce the target hallucination forms (funnel/spiral/lattice/cobweb) in any regime reachable by these spectral solvers. Options: (a) stop f_wc here (the negative result is clean and recorded — a legitimate Phase-0 gate outcome); (b) a deeper literature dive to find the *exact* working Pinto-Ermentrout parameterization (Laing/Troy spiral papers) before more simulation — the current spike is my reconstruction, not a transcribed known-good system; (c) drop the spatial-solver premise and get the form constants a cheaper way (the T006 retinotopic map is validated and model-agnostic — any cortical pattern source, incl. a non-WC one, would feed it). My lean: (b) only if Matt wants the WC lineage specifically; otherwise (a)/(c). The validated, reusable asset regardless: `tests/records/wc_retinotopy.py` (the log-polar render map). plan.md item 8 updated.
+
+---
+
 ## 2026-10-23 (f_wc Phase 0): spec + tasks written; Phase 0 region map DONE — NEGATIVE result; module's forms unconfirmed
 
 **START HERE if you are resuming f_wc.** `f_wc` is the Wilson-Cowan hallucination-form generator (`ideas/f_vf_wilson_cowan.md`). Spec and tasks written this session: `.specify/f_wc/{spec,tasks}.md`, idea file header marked specced, `ideas/INDEX.md` flipped to 🟡, `.specify/plan.md` item 8 added (old 8 → 9). Working name `f_wc` (flagged, gate G2). Commits: `a19811a` (spec/tasks/solver), `940ca0b` (region map), `2352435` (negative-result record).
