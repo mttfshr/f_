@@ -344,17 +344,21 @@ independent instances — the library baseline.
   internal resolution (256² carried, pending Phase 0 cost check; 128²
   fallback).
 - **FR-002** *(revised 2026-10-23, Phase 0 — the spec's "diffuse each
-  field then couple" form was measured NOT to pattern; record T001)*:
+  field then couple" form was measured NOT to pattern; record T001;
+  ratio un-baked 2026-10-23, gate G6)*:
   The linear part MUST be the kernel convolution only — two real
   per-bin Gaussian gains `exp(-sigma^2 k^2 / 2)`, `sigma_E` on the E
-  channels and `sigma_I` on the I channels, sigma in PIXELS with
-  `sigma_E = sigma_I / 1.45` — reusing the shared separable DFT chain
-  (`src/f_vf_fluid/gen_dft.py` is the shared generator; `src/f_ks` and
-  `src/f_wc` are adapters with code-line assertions; T020). ONE chain
-  carries BOTH fields: the f_vf_fluid two-complex-field packing,
-  `R,G = Re,Im of E-hat; B,A = Re,Im of I-hat`. NO separate decay
-  term and NO DC-bin zeroing (both are KS-specific): the dt-relaxation
-  in FR-003 carries the decay.
+  channels and `sigma_I` on the I channels, sigma in PIXELS — reusing
+  the shared separable DFT chain (`src/f_vf_fluid/gen_dft.py` is the
+  shared generator; `src/f_ks` and `src/f_wc` are adapters with
+  code-line assertions; T020). ONE chain carries BOTH fields: the
+  f_vf_fluid two-complex-field packing, `R,G = Re,Im of E-hat;
+  B,A = Re,Im of I-hat`. NO separate decay term and NO DC-bin zeroing
+  (both are KS-specific): the dt-relaxation in FR-003 carries the
+  decay. `sigma_E = sigma_I / sig_ratio` with `sig_ratio` the `aspect`
+  dial (1.2–2.2, default 1.45 = the Psychedelic 2/2.9 corner; the G6
+  sweep: hexagons ~1.3 at fine grain, hot rolls 1.7–2.0, saturation
+  ≥ ~2.5).
 - **FR-003** *(revised 2026-10-23, Phase 0 — the noise mechanism,
   record T005/T007; gate G3)*: The explicit real-space `nl` stage MUST
   compute, per frame:
@@ -384,6 +388,10 @@ independent instances — the library baseline.
   every depth 0–1.0 (band shifts up and narrows at the low end as depth
   grows), drift-damping at high drive, contrast-boosting at moderate depth —
   record in tasks.md T052. Reset/reseed restarts the adaptation memory at 0.
+  *(amended 2026-10-23, gate G7)*: the `excite` dial (−0.3..0.8, default 0) adds
+  a SHARED positive offset inside both sigmoid inputs — the firing thresholds
+  HE/HI lowered together (the sweep shifted them jointly as one excitability
+  axis: ~0.5 = clean rolls, toward −0.3 = blackout).
 - **FR-004**: State MUST be seeded from random noise on load and on
   reset — never from zero, never from the spatially uniform rest
   state, because uniform rest is a fixed point whose stability is
@@ -417,7 +425,7 @@ independent instances — the library baseline.
 - **FR-010** *(revised 2026-10-23, gate G1 — Matt chose option A; dial token
   renamed at build 2026-10-23)*: A **texture control** MUST set the
   labyrinth's characteristic scale/grain — the Gaussian kernel width `σ_I`
-  (with `σ_E` slaved at the Psychedelic aspect ratio `σ_I/1.45`), which
+  (with `σ_E` slaved at `σ_I/sig_ratio`, the `aspect` dial per FR-002/G6), which
   Phase 0 showed selects the geometry continuously from coherent broken
   stripes (fine kernel) to disordered labyrinth (coarse kernel). NO discrete
   four-form selector is shipped: Phase 0 found no separable stable
@@ -458,7 +466,8 @@ independent instances — the library baseline.
 
 | Dial | Underlying | Notes |
 |---|---|---|
-| `grain` | Gaussian kernel width `σ_I` (`σ_E` slaved at `σ_I/1.45`) | the geometry dial (FR-010, revised): fine → broken stripes, coarse → disordered labyrinth; NO four-form selector (gate G1, 2026-10-23). Token renamed from `texture` at build (jit.gl.pix native @texture collision) |
+| `grain` | Gaussian kernel width `σ_I` (`σ_E` slaved at `σ_I/sig_ratio`) | the geometry dial (FR-010, revised): fine → broken stripes, coarse → disordered labyrinth; NO four-form selector (gate G1, 2026-10-23). Token renamed from `texture` at build (jit.gl.pix native @texture collision) |
+| `aspect` *(G6, 2026-10-23)* | `sig_ratio` — inhibition-to-excitation kernel ratio (`σ_E = σ_I/sig_ratio`) | 1.2–2.2, default 1.45. Character ladder: 1.3 + fine grain = hexagons; 1.7–2.0 = hot rolls/labyrinth; ≥ ~2.5 saturates (night-12 sweep) |
 | `hallucinate` | excitability aggregate — scales the coupling gains through the pattern-forming threshold | the performative core (US-2): below threshold the drive dominates, above it spontaneous pattern does |
 | `rate` | per-frame dt multiplier | clamped per FR-005 |
 | `scale` | characteristic cortical wavelength (sets `D` ratio / domain size) | pattern grain in the mapped visual field |
@@ -466,6 +475,7 @@ independent instances — the library baseline.
 | `habituation` *(G5, 2026-10-23)* | depth of the Ve/Vi subtractive adaptation (time constants baked at 50/100 frames) | 0.0–1.5, default 0 = free run; higher steadies the field mean against long-soak drift, nudges the usable Ne band upward (viable to 1.5 at the baked Ne = 1.0; depth ≥ 2 would need Ne exposed — T052 addendum) |
 | `energy` *(2026-10-23, exposed from the T021/T025 bench-vary constant)* | per-frame noise amplitude `Ne` | 0.0–2.0, default 1.0 = the verified corner. The drive-band axis: below ~0.7 the pattern freezes out, above ~1.2 it shimmers hot (T005/T052 sweeps); compensates deep habituation |
 | `sharp` | output-map edge sharpening | f_ks precedent |
+| `excite` *(G7, 2026-10-23)* | shared offset inside both sigmoid inputs (HE/HI lowered together) | −0.3–0.8, default 0. + = more excitable (clean rolls ~0.5), − = toward blackout (asymmetric viable band, night-12 sweep) |
 | `reset` | reseed button/message | FR-009 |
 
 Internal-only (spike-determined, fixed): the four coupling weights'

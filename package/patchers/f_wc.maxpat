@@ -77,8 +77,10 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 7,
+					"numoutlets": 9,
 					"outlettype": [
+						"",
+						"",
 						"",
 						"",
 						"",
@@ -90,10 +92,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						511.0,
+						655.0,
 						22.0
 					],
-					"text": "route rate grain drive_gain energy habituation sharp reset"
+					"text": "route rate grain aspect drive_gain energy habituation sharp excite reset"
 				}
 			},
 			{
@@ -765,7 +767,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_spec.gen -- f_wc stage 3: the spectral step. TWO real per-bin Gaussian kernel\n// gains, ONE pass for both fields: KE = exp(-sig_e^2 k^2 / 2) multiplies the E pair (R,G),\n// KI = exp(-sig_i^2 k^2 / 2) the I pair (B,A). 256x256 float32.\n// Mirror: tests/modules/wc/wc_mirror.spec_stage().\n//\n// Input in1 = spectral texture (R,G = Re,Im of E-hat; B,A = Re,Im of I-hat).\n//   - sigma is in PIXELS: the domain IS texels, so k = 2*pi*signed_bin/N (L = N; angular\n//     units are load-bearing -- a cycles-unit k2 under-smooths the kernels by (2*pi)^2)\n//   - sig_e = texture / 1.45 (the Psychedelic 2/2.9 aspect ratio, slaved; FR-010)\n//   - NO decay multiplier and NO k = 0 (DC) zeroing -- both are KS-specific; the\n//     dt-relaxation in the nl stage carries the decay (FR-002, settled model)\n//   - there is no dt in this stage at all: dt only relaxes in nl (FR-003)\n//   - signed bin index from floor(norm * N), not `cell` (bench-verified 2026-09-22)\n//   - sig_i IS the user-facing `texture` dial, renamed here to avoid colliding with the\n//     GLSL `texture()` builtin (unverified at codegen time); the definition maps\n//     `texture` -> this Param (T025)\nParam sig_i(1.4);\n\nN = 256;\nbx = floor(norm.x * N);\nby = floor(norm.y * N);\nmx = switch(bx < N * 0.5, bx, bx - N);\nmy = switch(by < N * 0.5, by, by - N);\nkx = twopi / N * mx;\nky = twopi / N * my;\nk2 = kx * kx + ky * ky;\nse = sig_i / 1.45;\nge = exp(0 - 0.5 * se * se * k2);\ngi = exp(0 - 0.5 * sig_i * sig_i * k2);\n\nout1 = vec(nearest(in1, norm).x * ge, nearest(in1, norm).y * ge,\n           nearest(in1, norm).z * gi, nearest(in1, norm).w * gi);\n",
+									"code": "// codebox_spec.gen -- f_wc stage 3: the spectral step. TWO real per-bin Gaussian kernel\n// gains, ONE pass for both fields: KE = exp(-sig_e^2 k^2 / 2) multiplies the E pair (R,G),\n// KI = exp(-sig_i^2 k^2 / 2) the I pair (B,A). 256x256 float32.\n// Mirror: tests/modules/wc/wc_mirror.spec_stage().\n//\n// Input in1 = spectral texture (R,G = Re,Im of E-hat; B,A = Re,Im of I-hat).\n//   - sigma is in PIXELS: the domain IS texels, so k = 2*pi*signed_bin/N (L = N; angular\n//     units are load-bearing -- a cycles-unit k2 under-smooths the kernels by (2*pi)^2)\n//   - sig_e = texture / sig_ratio (G6: the Psychedelic 2/2.9 aspect ratio 1.45 becomes\n//     a dial, `aspect` -> Param sig_ratio; the 1.45 default is bit-neutral)\n//   - NO decay multiplier and NO k = 0 (DC) zeroing -- both are KS-specific; the\n//     dt-relaxation in the nl stage carries the decay (FR-002, settled model)\n//   - there is no dt in this stage at all: dt only relaxes in nl (FR-003)\n//   - signed bin index from floor(norm * N), not `cell` (bench-verified 2026-09-22)\n//   - sig_i IS the user-facing `texture` dial, renamed here to avoid colliding with the\n//     GLSL `texture()` builtin (unverified at codegen time); the definition maps\n//     `texture` -> this Param (T025)\nParam sig_i(1.4);\nParam sig_ratio(1.45);\n\nN = 256;\nbx = floor(norm.x * N);\nby = floor(norm.y * N);\nmx = switch(bx < N * 0.5, bx, bx - N);\nmy = switch(by < N * 0.5, by, by - N);\nkx = twopi / N * mx;\nky = twopi / N * my;\nk2 = kx * kx + ky * ky;\nse = sig_i / sig_ratio;\nge = exp(0 - 0.5 * se * se * k2);\ngi = exp(0 - 0.5 * sig_i * sig_i * k2);\n\nout1 = vec(nearest(in1, norm).x * ge, nearest(in1, norm).y * ge,\n           nearest(in1, norm).z * gi, nearest(in1, norm).w * gi);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1176,7 +1178,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_nl.gen -- f_wc stage 6: the heart (the settled model, tasks.md T005/T007).\n// Exact relaxation toward the logistic sigmoid of the coupled drive, per frame:\n//   E += (F(AEE*cE - AIE*cI - HE + ne*nx + drive_gain*(drv - 0.5)) - E) * dt / TE\n//   I += (F(AEI*cE - AII*cI - HI + ne*nx) - I) * dt / TI\n// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.nonlinear_step().\n//\n// Inputs (4): in1 = the convolved fields (R = KE conv E, B = KI conv I, from the ix stage),\n// in2 = the raw state (R = E, B = I, from the pass stage -- an extra tap off the feedback so\n// the relaxation target and the state are the same frame), in3 = the noise texture\n// (B, A = the two raw uniforms; fresh every frame -- the per-frame drive is the load-bearing\n// mechanism), in4 = the drive inlet (R; through a vs_inState, so UNCONNECTED reads vs_black\n// (0,0,0,1) -- the patcher sets drv_conn = 0 then, and the codebox falls back to the neutral\n// mid-gray 0.5: zero net drive for free, G3).\n//   - drv = the inlet reading when connected, 0.5 when not; the drive term is\n//     drive_gain*(drv - 0.5), E-only (T007: adding to I is identical but unnecessary)\n//   - fresh Gaussian noise into BOTH sigmoid inputs, Box-Muller from the two uniforms,\n//     sqrt(dt)-scaled (so dt stays a pure relaxation step), same nx in E and I (the Rule form)\n//   - constants are baked (settled Psychedelic corner): AEE 16.1, AIE 14.5, AEI 13.7,\n//     AII 13.0, HE 3.1, HI 3.5, TE 4, TI 12.5\n//   - NaN/Inf zap per the f_ks containment precedent (abs(x) < 1e30, NaN == NaN is TRUE);\n//     zapped texels are self-healed from noise by the pass stage\n//   - HABITUATION (G5, tasks.md T052): Ve, Vi ride the spare state channels G, A,\n//     relaxing toward the firing rates (Ve += (E - Ve).dt/50, Vi += (I - Vi).dt/100 --\n//     the Rule Example-11 time constants) and subtracting from the sigmoid inputs at\n//     depth `habit` (0 = the shipped dynamics: G, A then stay exactly 0 through nl and\n//     the pass stage). In the DFT chain they sit in the imaginary parts; the kernel\n//     gains are REAL, so the convolved real parts are unaffected.\n//   - no unary minus before a parenthesis (GenExpr mis-parses it): write `0 - ...`\nParam dt(1);\nParam ne(1);\nParam drive_gain(0);\nParam drv_conn(0);\nParam habit(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).z;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).z;\nve = nearest(in2, norm).y;\nvi = nearest(in2, norm).w;\nna = nearest(in3, norm).z * 0.999 + 0.0001;\nnb = nearest(in3, norm).w * 0.999 + 0.0001;\nnx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);\ndrv = mix(0.5, nearest(in4, norm).x, drv_conn);\n\nae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 - habit * ve + ne * nx + drive_gain * (drv - 0.5), -60, 60)));\nai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 - habit * vi + ne * nx, -60, 60)));\n\nen = ee + (ae - ee) * (dt * 0.25);\ninw = ii + (ai - ii) * (dt * 0.08);\nen = switch(abs(en) < 1e30, en, 0);\ninw = switch(abs(inw) < 1e30, inw, 0);\nven = ve + (en - ve) * (dt * 0.02);\nvin = vi + (inw - vi) * (dt * 0.01);\nven = switch(abs(ven) < 1e30, ven, 0);\nvin = switch(abs(vin) < 1e30, vin, 0);\nveo = switch(habit != 0, ven, 0);\nvio = switch(habit != 0, vin, 0);\n\nout1 = vec(en, veo, inw, vio);\n",
+									"code": "// codebox_nl.gen -- f_wc stage 6: the heart (the settled model, tasks.md T005/T007).\n// Exact relaxation toward the logistic sigmoid of the coupled drive, per frame:\n//   E += (F(AEE*cE - AIE*cI - HE + ne*nx + drive_gain*(drv - 0.5)) - E) * dt / TE\n//   I += (F(AEI*cE - AII*cI - HI + ne*nx) - I) * dt / TI\n// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.nonlinear_step().\n//\n// Inputs (4): in1 = the convolved fields (R = KE conv E, B = KI conv I, from the ix stage),\n// in2 = the raw state (R = E, B = I, from the pass stage -- an extra tap off the feedback so\n// the relaxation target and the state are the same frame), in3 = the noise texture\n// (B, A = the two raw uniforms; fresh every frame -- the per-frame drive is the load-bearing\n// mechanism), in4 = the drive inlet (R; through a vs_inState, so UNCONNECTED reads vs_black\n// (0,0,0,1) -- the patcher sets drv_conn = 0 then, and the codebox falls back to the neutral\n// mid-gray 0.5: zero net drive for free, G3).\n//   - drv = the inlet reading when connected, 0.5 when not; the drive term is\n//     drive_gain*(drv - 0.5), E-only (T007: adding to I is identical but unnecessary)\n//   - fresh Gaussian noise into BOTH sigmoid inputs, Box-Muller from the two uniforms,\n//     sqrt(dt)-scaled (so dt stays a pure relaxation step), same nx in E and I (the Rule form)\n//   - EXCITE (G7, tasks.md night-12 sweep): one shared positive offset inside BOTH\n//     sigmoid inputs lowers the firing thresholds (3.1/3.5 stay as written, so `+ excite`\n//     up = more excitable). The sweep shifted HE/HI together: +0.5 = clean rolls,\n//     below -0.3 approaches blackout; the dial is ranged -0.3..0.8, default 0\n//     (bit-neutral).\n//   - constants are baked (settled Psychedelic corner): AEE 16.1, AIE 14.5, AEI 13.7,\n//     AII 13.0, HE 3.1, HI 3.5, TE 4, TI 12.5\n//   - NaN/Inf zap per the f_ks containment precedent (abs(x) < 1e30, NaN == NaN is TRUE);\n//     zapped texels are self-healed from noise by the pass stage\n//   - HABITUATION (G5, tasks.md T052): Ve, Vi ride the spare state channels G, A,\n//     relaxing toward the firing rates (Ve += (E - Ve).dt/50, Vi += (I - Vi).dt/100 --\n//     the Rule Example-11 time constants) and subtracting from the sigmoid inputs at\n//     depth `habit` (0 = the shipped dynamics: G, A then stay exactly 0 through nl and\n//     the pass stage). In the DFT chain they sit in the imaginary parts; the kernel\n//     gains are REAL, so the convolved real parts are unaffected.\n//   - no unary minus before a parenthesis (GenExpr mis-parses it): write `0 - ...`\nParam dt(1);\nParam ne(1);\nParam drive_gain(0);\nParam drv_conn(0);\nParam habit(0);\nParam excite(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).z;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).z;\nve = nearest(in2, norm).y;\nvi = nearest(in2, norm).w;\nna = nearest(in3, norm).z * 0.999 + 0.0001;\nnb = nearest(in3, norm).w * 0.999 + 0.0001;\nnx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);\ndrv = mix(0.5, nearest(in4, norm).x, drv_conn);\n\nae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 + excite - habit * ve + ne * nx + drive_gain * (drv - 0.5), -60, 60)));\nai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 + excite - habit * vi + ne * nx, -60, 60)));\n\nen = ee + (ae - ee) * (dt * 0.25);\ninw = ii + (ai - ii) * (dt * 0.08);\nen = switch(abs(en) < 1e30, en, 0);\ninw = switch(abs(inw) < 1e30, inw, 0);\nven = ve + (en - ve) * (dt * 0.02);\nvin = vi + (inw - vi) * (dt * 0.01);\nven = switch(abs(ven) < 1e30, ven, 0);\nvin = switch(abs(vin) < 1e30, vin, 0);\nveo = switch(habit != 0, ven, 0);\nvio = switch(habit != 0, vin, 0);\n\nout1 = vec(en, veo, inw, vio);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1446,7 +1448,7 @@
 						""
 					],
 					"patching_rect": [
-						980.0,
+						991.5,
 						100.0,
 						56.0,
 						22.0
@@ -1478,7 +1480,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						760.0,
+						771.5,
 						260.0,
 						247.0,
 						150.0
@@ -1502,7 +1504,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						980.0,
+						991.5,
 						200.0,
 						80.0,
 						21.0
@@ -1533,7 +1535,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1070.0,
+						1081.5,
 						200.0,
 						60.0,
 						21.0
@@ -1565,7 +1567,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						980.0,
+						991.5,
 						232.0,
 						5.0,
 						5.0
@@ -1597,7 +1599,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1000.0,
+						1011.5,
 						232.0,
 						5.0,
 						5.0
@@ -1622,7 +1624,7 @@
 						""
 					],
 					"patching_rect": [
-						760.0,
+						771.5,
 						20.0,
 						60.0,
 						22.0
@@ -1640,7 +1642,7 @@
 						""
 					],
 					"patching_rect": [
-						760.0,
+						771.5,
 						50.0,
 						180.0,
 						22.0
@@ -1661,7 +1663,7 @@
 						""
 					],
 					"patching_rect": [
-						760.0,
+						771.5,
 						110.0,
 						80.0,
 						22.0
@@ -1680,7 +1682,7 @@
 						""
 					],
 					"patching_rect": [
-						760.0,
+						771.5,
 						140.0,
 						60.0,
 						22.0
@@ -1698,7 +1700,7 @@
 						""
 					],
 					"patching_rect": [
-						760.0,
+						771.5,
 						170.0,
 						80.0,
 						22.0
@@ -1716,7 +1718,7 @@
 						""
 					],
 					"patching_rect": [
-						760.0,
+						771.5,
 						200.0,
 						100.0,
 						22.0
@@ -2021,14 +2023,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Scene strength: 0 = pure hallucination; ~1.5 = the drive inlet imprints (normal vision)",
+					"hint": "Inhibition-to-excitation kernel ratio (G6): 1.3 + fine grain = hexagons; 1.45 labyrinth (default); 1.7-2.0 hot rolls; above 2.5 saturates",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_nl::drive_gain",
+					"param_connect": "#0_wc_spec::aspect",
 					"parameter_enable": 1,
 					"patching_rect": [
 						190.5,
@@ -2049,15 +2051,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								1.45
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "drive_gain",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
+							"parameter_longname": "aspect",
+							"parameter_mmax": 2.2,
+							"parameter_mmin": 1.2,
 							"parameter_modmode": 3,
-							"parameter_shortname": "drive_gain",
+							"parameter_shortname": "aspect",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2066,14 +2068,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "drive_gain"
+					"varname": "aspect"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-27",
 					"maxclass": "attrui",
-					"attr": "drive_gain",
+					"attr": "sig_ratio",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2109,9 +2111,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Drive",
+					"text": "Aspect",
 					"textjustification": 1,
-					"varname": "lbl_drive_gain"
+					"varname": "lbl_aspect"
 				}
 			},
 			{
@@ -2125,14 +2127,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Per-frame noise energy (Ne): below ~0.7 the labyrinth freezes out; above ~1.2 it shimmers hot. Compensates deep Habituation",
+					"hint": "Scene strength: 0 = pure hallucination; ~1.5 = the drive inlet imprints (normal vision)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_nl::energy",
+					"param_connect": "#0_wc_nl::drive_gain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						262.5,
@@ -2153,15 +2155,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								1.0
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "energy",
+							"parameter_longname": "drive_gain",
 							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "energy",
+							"parameter_shortname": "drive_gain",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2170,14 +2172,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "energy"
+					"varname": "drive_gain"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-30",
 					"maxclass": "attrui",
-					"attr": "ne",
+					"attr": "drive_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2213,9 +2215,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Energy",
+					"text": "Drive",
 					"textjustification": 1,
-					"varname": "lbl_energy"
+					"varname": "lbl_drive_gain"
 				}
 			},
 			{
@@ -2229,14 +2231,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time",
+					"hint": "Per-frame noise energy (Ne): below ~0.7 the labyrinth freezes out; above ~1.2 it shimmers hot. Compensates deep Habituation",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_nl::habituation",
+					"param_connect": "#0_wc_nl::energy",
 					"parameter_enable": 1,
 					"patching_rect": [
 						334.5,
@@ -2257,15 +2259,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								1.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "habituation",
-							"parameter_mmax": 1.5,
+							"parameter_longname": "energy",
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "habituation",
+							"parameter_shortname": "energy",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2274,14 +2276,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "habituation"
+					"varname": "energy"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-33",
 					"maxclass": "attrui",
-					"attr": "habit",
+					"attr": "ne",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2317,9 +2319,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Habituation",
+					"text": "Energy",
 					"textjustification": 1,
-					"varname": "lbl_habituation"
+					"varname": "lbl_energy"
 				}
 			},
 			{
@@ -2333,14 +2335,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)",
+					"hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_enc::sharp",
+					"param_connect": "#0_wc_nl::habituation",
 					"parameter_enable": 1,
 					"patching_rect": [
 						406.5,
@@ -2361,15 +2363,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.5
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "sharp",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "habituation",
+							"parameter_mmax": 1.5,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "sharp",
+							"parameter_shortname": "habituation",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2378,14 +2380,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "sharp"
+					"varname": "habituation"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-36",
 					"maxclass": "attrui",
-					"attr": "sharp",
+					"attr": "habit",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2421,6 +2423,110 @@
 						50.0,
 						18.0
 					],
+					"text": "Habituation",
+					"textjustification": 1,
+					"varname": "lbl_habituation"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-38",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wc_enc::sharp",
+					"parameter_enable": 1,
+					"patching_rect": [
+						478.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						41.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.5
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "sharp",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "sharp",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "sharp"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-39",
+					"maxclass": "attrui",
+					"attr": "sharp",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						458.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-40",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						467.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						82.0,
+						50.0,
+						18.0
+					],
 					"text": "Sharp",
 					"textjustification": 1,
 					"varname": "lbl_sharp"
@@ -2428,7 +2534,111 @@
 			},
 			{
 				"box": {
-					"id": "obj-38",
+					"id": "obj-41",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Excitability: firing thresholds, E and I together (G7). + = hotter (clean rolls near 0.5); - = toward blackout",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wc_nl::excite",
+					"parameter_enable": 1,
+					"patching_rect": [
+						550.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						78.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "excite",
+							"parameter_mmax": 0.8,
+							"parameter_mmin": -0.3,
+							"parameter_modmode": 3,
+							"parameter_shortname": "excite",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "excite"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-42",
+					"maxclass": "attrui",
+					"attr": "excite",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						530.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-43",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						539.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						66.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Excite",
+					"textjustification": 1,
+					"varname": "lbl_excite"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-44",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2439,7 +2649,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						980.0,
+						991.5,
 						130.0,
 						18.0,
 						12.0
@@ -2456,7 +2666,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-39",
+					"id": "obj-45",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2464,7 +2674,7 @@
 						""
 					],
 					"patching_rect": [
-						980.0,
+						991.5,
 						160.0,
 						131.0,
 						22.0
@@ -2879,11 +3089,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-38",
+						"obj-44",
 						0
 					],
 					"destination": [
-						"obj-39",
+						"obj-45",
 						0
 					]
 				}
@@ -2891,7 +3101,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-39",
+						"obj-45",
 						0
 					],
 					"destination": [
@@ -3207,7 +3417,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-55",
 						0
 					]
 				}
@@ -3315,7 +3525,79 @@
 						0
 					],
 					"destination": [
+						"obj-58",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						6
+					],
+					"destination": [
+						"obj-38",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
+						"obj-39",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-39",
+						0
+					],
+					"destination": [
 						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						7
+					],
+					"destination": [
+						"obj-41",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-41",
+						0
+					],
+					"destination": [
+						"obj-42",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-42",
+						0
+					],
+					"destination": [
+						"obj-58",
 						0
 					]
 				}
@@ -3336,7 +3618,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						6
+						8
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3537,23 +3819,33 @@
 				0
 			],
 			"obj-26": [
-				"drive_gain",
-				"drive_gain",
+				"aspect",
+				"aspect",
 				0
 			],
 			"obj-29": [
-				"energy",
-				"energy",
+				"drive_gain",
+				"drive_gain",
 				0
 			],
 			"obj-32": [
+				"energy",
+				"energy",
+				0
+			],
+			"obj-35": [
 				"habituation",
 				"habituation",
 				0
 			],
-			"obj-35": [
+			"obj-38": [
 				"sharp",
 				"sharp",
+				0
+			],
+			"obj-41": [
+				"excite",
+				"excite",
 				0
 			],
 			"parameterbanks": {

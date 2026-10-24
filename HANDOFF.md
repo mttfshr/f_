@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-23 (night 13): f_wc G6 + G7 SHIPPED — `aspect` and `excite` dials; module now has 8 dials + reset + bypass
+
+- Matt approved both tier-2 dials. **`aspect`** (σ-ratio `sig_ratio`, 1.2–2.2, def 1.45) in the `spec` codebox — hexagons at 1.3 × fine grain, hot rolls 1.7–2.0, saturates ≥ 2.5. **`excite`** (−0.3..+0.8, def 0) in `nl` — a shared `+ excite` offset inside both sigmoid inputs (sign-flip vs the sweep's bias: sweep b = −excite; clean rolls at +0.5, toward blackout below −0.3). Mirror `Params.excite` maps `he/hi = P.he/P.hi − P.excite` for bench parity.
+- Dial row order: rate / grain / aspect / drive / energy on row 1, habituation / sharp / excite on row 2 (panel stays 247×150); the raw `reset` route wire moved outlet 6 → 8. Spec FR-002 (ratio un-baked) + FR-003 (excite amendment) + Parameters updated; reference doc, definition docstring, helpfile (11-line control list, references block shifted) updated.
+- **Offline green:** drift 16/16, contracts 9/9, launch 8/8, menu 17/17, test_wc 10/10. **Owed to Max (one bench session):** live look at aspect/excite/energy/habituation; the G5 habit > 0 chain-vs-mirror leg. Full offline suite not run since rebuild.
+
 ## 2026-10-23 (night 12): f_wc `energy` dial shipped; tier-2 sweep ranked Aspect + Excite (gates G6/G7 staged)
 
 - **`energy` (Ne) exposed**: 0–2, default 1.0, between Drive and Habituation (dial token `energy`, `pix_attr ne`; panel grew to 247×150 with a second dial row; raw reset route wire moved outlet 5 → 6; `ne` removed from the contract known-undriven list). Docs + helpfile updated. Offline green (drift, contracts, launch, menu, test_wc).

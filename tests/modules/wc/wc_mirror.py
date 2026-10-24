@@ -81,6 +81,9 @@ class Params:
                                #   2/2.9; second-tier candidate geometry axis)
     he: float = 3.1            # sigmoid thresholds (second-tier candidate axis;
     hi: float = 3.5            #   the settled corner is HE 3.1, HI 3.5)
+    excite: float = 0.0        # G7 dial: SHARED positive offset inside both sigmoid
+                               #   inputs == thresholds lowered together
+                               #   (effective he - excite, hi - excite)
 
     def with_(self, **kw):
         return replace(self, **kw)
@@ -337,7 +340,7 @@ def wc_frame(state, rng, P, driv=None):
     return nonlinear_step(conv, state, nz, driv, dt, P.ne, P.drive_gain,
                           be=F32(P.be), bi=F32(P.bi),
                           ae=F32(P.ae), ai=F32(P.ai),
-                          he=F32(P.he), hi=F32(P.hi))
+                          he=F32(P.he - P.excite), hi=F32(P.hi - P.excite))
 
 
 def run_temporal(state0, P, frames, seed=1, driv=None):

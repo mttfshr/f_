@@ -341,13 +341,19 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
   shape as the habituation ship. Staged as gates G6/G7 — Matt's call before the next
   dial lands. **Owed to Max:** bench legs for energy/habit sweeps + a habit > 0
   chain-vs-mirror leg (from G5's record). Full offline suite not run since rebuild.
-- [ ] **G6 (Matt):** expose σ-ratio as a dial (proposed `aspect`, 1.2–2.2, default
-  1.45; codebox `spec` gains `Param sig_ratio(1.45)`, `sig_e = sig_i/sig_ratio`;
-  mirror already parametrized). Character: hexagons ~1.3 fine grain, hot labyrinth
-  1.7–2.0, saturating ≥ 2.5.
-- [ ] **G7 (Matt):** expose threshold bias as a dial (proposed `excite`, −0.8..+0.3,
-  default 0; codebox `nl` gains `Param he_bias/hi_bias` or one shared bias added to
-  both; the sweep shifted HE/HI together). Narrow but real: −0.5 = clean rolls.
+- [x] **G6 DONE 2026-10-23 (Matt approved).** `aspect` dial 1.2–2.2, def 1.45
+  (`spec` gains `Param sig_ratio(1.45)`, `sig_e = sig_i/sig_ratio`; bit-neutral at
+  the corner). Shipped order row1: rate / grain / aspect / drive / energy.
+- [x] **G7 DONE 2026-10-23 (Matt approved).** `excite` dial −0.3..+0.8, def 0 —
+  NOTE the sign flip vs the sweep's "bias" (sweep bias b shifted HE/HI together,
+  so excite −0.3..+0.8 ≡ b = −excite): the codebox adds `+ excite` inside BOTH
+  sigmoid args (clean rolls at +0.5). Mirror `Params.excite` maps
+  `he/hi = P.he/P.hi − P.excite` in `wc_frame` for bench parity. The raw `reset`
+  route wire moved outlet 6 → 8 (8 dials). Docs/spec/helpfile updated (helpfile
+  controls comment grew to 11 lines, references block shifted down). Offline
+  green: drift 16/16, contracts 9/9, launch 8/8, menu 17/17, test_wc 10/10.
+  **Owed to Max:** live look for aspect/excite/energy/habit; G5's habit > 0
+  chain-vs-mirror bench leg.
 - 2026-10-23 (night 11): **Deep-fatigue addendum to T052 (Matt asked "can habituation go
   above 1").** Sweep extended to be = bi ∈ {1.0, 1.5, 2.0, 3.0} × Ne ∈ {1.0, 1.5, 2.0}
   (`tests/logs/spike_wc_habituation_deep.log`; spike script now takes grid args).

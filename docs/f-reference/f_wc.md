@@ -63,11 +63,13 @@ into `enc`, `@adapt 0`).
 | Name | Type | Range | Default | Description |
 |---|---|---|---|---|
 | `rate` | float | 0.0–1.0 | 1.0 | Time step per frame (`dt = rate`; 1 = the validated labyrinth tempo). No stability ceiling exists (relaxation toward a bounded sigmoid); the top of the range is aesthetic, not structural |
-| `grain` | float | 1.0–4.0 | 1.4 | The inhibition kernel width in pixels (`σ_I`; the E kernel is slaved at `σ_I/1.45`). **Landmarks: 1.1 broken stripes / 1.4 labyrinth / 1.9 coarse.** Free sweep approved (Matt, 2026-10-23) |
+| `grain` | float | 1.0–4.0 | 1.4 | The inhibition kernel width in pixels (`σ_I`; the E kernel is slaved at `σ_I/sig_ratio`). **Landmarks: 1.1 broken stripes / 1.4 labyrinth / 1.9 coarse.** Free sweep approved (Matt, 2026-10-23) |
+| `aspect` | float | 1.2–2.2 | 1.45 | Inhibition-to-excitation kernel ratio `sig_ratio` (`σ_E = σ_I/sig_ratio`; G6). Character ladder from the night-12 sweep: 1.3 + fine grain = hexagons; 1.45 = the labyrinth corner; 1.7–2.0 = hot rolls; past ~2.5 = saturation |
 | `drive_gain` | float | 0.0–2.0 | 0.0 | Scene strength on the drive inlet. 0 = pure free hallucination; ~1.5 = the scene imprints (normal vision). Below ~0.2 the pattern ignores the scene entirely |
 | `energy` | float | 0.0–2.0 | 1.0 | Per-frame noise amplitude `Ne` — the drive-band axis. Below ~0.7 the labyrinth thins out and freezes; 1.0 is the T005/G3-verified corner; above ~1.2 it shimmers saturated. It also compensates deep habituation: depth ≥ 2 only stays live at higher energy (T052 deep sweep) |
 | `habituation` | float | 0.0–1.5 | 0.0 | Fatigue depth: slow negative feedback on the activity (Ve/Vi relax toward the firing rates over 50/100 frames and subtract from the sigmoid inputs; G5/T052). 0 = free run with exactly the pre-G5 dynamics; higher steadies the field mean against long-soak drift and lifts contrast, at the cost of a narrower low-drive band |
 | `sharp` | float | 0.0–1.0 | 0.5 | Edge sharpness in `enc`: 0 = soft gradients, 1 = hard-edged cells. The 0.5 default keeps the free labyrinth readable as its mean wanders (G4 decision) |
+| `excite` | float | −0.3–0.8 | 0.0 | Excitability: a shared positive offset inside both sigmoid inputs — the firing thresholds HE/HI lowered together (G7). + = hotter (clean rolls near 0.5); − = toward blackout. The viable band is asymmetric — don't range it wider by message |
 | `reset` | button / message | — | — | Reseeds both fields from fresh noise. Fires once on load (after 200 ms). Also accepted as a `reset` message on the control inlet |
 | `bypass` | toggle | 0/1 | 0 | Black, alpha 1, on the outlet. The solver keeps running underneath, so releasing bypass resumes a warm field |
 
@@ -90,9 +92,10 @@ The settled model is the noise-sustained Ermentrout–Cowan / Michael Rule form 
 produces the working "Psychedelic" webgpgpu demo). Each frame, for both fields E and I:
 
 1. **Convolve.** `cE = K_E ⊗ E`, `cI = K_I ⊗ I` with Gaussians in pixel units
-   (`K_hat = exp(-sigma^2 k^2 / 2)` per Fourier bin, sigma_E = sigma_I/1.45). That IS the linear
+   (`K_hat = exp(-sigma^2 k^2 / 2)` per Fourier bin, sigma_E = sigma_I/sig_ratio — the
+   `aspect` dial, 1.45 at the settled corner). That IS the linear
    part; there is no separate decay term and no DC zeroing — the relaxation below carries both.
-2. **Relax.** `E += (S(16.1·cE − 14.5·cI − 3.1 − habit·Ve + Ne·N + drive_gain·(drive − 0.5)) − E)·dt/4`
+2. **Relax.** `E += (S(16.1·cE − 14.5·cI − 3.1 + excite − habit·Ve + Ne·N + drive_gain·(drive − 0.5)) − E)·dt/4`,
    and same for I with 13.7/13.0/3.5 and `dt/12.5`, where `S` is the logistic sigmoid, `N` a
    FRESH Gaussian field every frame (`Box-Muller × sqrt(dt)`, shared by both sigmoid inputs),
    and the drive term is E-only. `Ve, Vi` are the habituation memory (the `habituation` dial):

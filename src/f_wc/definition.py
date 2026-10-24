@@ -31,8 +31,10 @@ cold inlets, so the loop advances exactly once per rendered frame.
 
 Controls: `rate` scales the per-frame dt (1.0 = the validated labyrinth regime; no NaN ceiling
 exists -- relaxation toward a bounded sigmoid -- so the ceiling is aesthetic, T030).  `texture`
-is the grain (sigma_I in pixels, sigma_E slaved at sigma_I/1.45): low = coherent broken
-stripes ("stripe glass"), high = disordered labyrinth (the Phase-0 region map).  `drive_gain`
+is the grain (sigma_I in pixels, sigma_E slaved at sigma_I/sig_ratio): low = coherent broken
+stripes ("stripe glass"), high = disordered labyrinth (the Phase-0 region map).  `aspect`
+(G6) is that sig_ratio: the inhibition-to-excitation kernel ratio — 1.3 + fine grain =
+hexagons, 1.7-2.0 = hot rolls/labyrinth, past ~2.5 it saturates.  `drive_gain`
 is scene strength (a gain-role dial; 0 = free US-1 labyrinth, the unconnected drive inlet is
 neutral mid-gray via the vs_inState flag; FR-006/G3).  `energy` is the per-frame noise
 amplitude Ne (0-2, default 1.0): the drive-band axis — below ~0.7 the labyrinth freezes out,
@@ -40,7 +42,9 @@ above ~1.2 it shimmers hot, and it compensates deep habituation (T052).  `habitu
 (G5/T052) is slow
 subtractive fatigue: the Ve/Vi adaptation memory rides the state texture's spare G/A
 channels, 0 = free run, higher steadies the field mean against long soak drift (and nudges
-the usable drive band upward).  `sharp` blends the output map from soft to hard-edged (enc
+the usable drive band upward).  `excite` (G7) adds a shared positive offset inside both
+sigmoid inputs (the firing thresholds HE/HI lowered together): + = hotter, clean rolls
+near 0.5; - = toward blackout.  `sharp` blends the output map from soft to hard-edged (enc
 stage, the f_ks shape).  The output size follows the render size
 (`r dim` into enc, @adapt 0).  `reset` (a button, a `reset` message or a message on the
 control inlet) reseeds both fields from fresh noise; it also fires once on load.  Bypass
@@ -74,6 +78,9 @@ patcher = {
         {"name": "grain", "type": "float", "min": 1.0, "max": 4.0, "default": 1.4,
          "label": "Texture", "pix_attr": "sig_i", "pix_target": "spec",
          "hint": "Grain: inhibition kernel width in pixels. Landmarks: 1.1 broken stripes, 1.4 labyrinth (default), 1.9 coarse"},
+        {"name": "aspect", "type": "float", "min": 1.2, "max": 2.2, "default": 1.45,
+         "label": "Aspect", "pix_attr": "sig_ratio", "pix_target": "spec",
+         "hint": "Inhibition-to-excitation kernel ratio (G6): 1.3 + fine grain = hexagons; 1.45 labyrinth (default); 1.7-2.0 hot rolls; above 2.5 saturates"},
         {"name": "drive_gain", "type": "float", "min": 0.0, "max": 2.0, "default": 0.0,
          "label": "Drive", "pix_target": "nl",
          "hint": "Scene strength: 0 = pure hallucination; ~1.5 = the drive inlet imprints (normal vision)"},
@@ -86,6 +93,9 @@ patcher = {
         {"name": "sharp", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "Sharp", "pix_target": "enc",
          "hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)"},
+        {"name": "excite", "type": "float", "min": -0.3, "max": 0.8, "default": 0.0,
+         "label": "Excite", "pix_target": "nl",
+         "hint": "Excitability: firing thresholds, E and I together (G7). + = hotter (clean rolls near 0.5); - = toward blackout"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -206,7 +216,7 @@ patcher["raw_boxes"] = [
 ]
 patcher["raw_lines"] = [
     _line(15, 0, "obj-5", 0),        # r dim -> enc: the output follows the render size
-    _line("obj-4", 6, 3, 0),         # route: `reset` -> trigger   (route outlet 6: rate, texture, drive_gain, energy, habituation, sharp, reset)
+    _line("obj-4", 8, 3, 0),         # route: `reset` -> trigger   (route outlet 8: rate, texture, aspect, drive_gain, energy, habituation, sharp, excite, reset)
     _line(1, 0, 3, 0),               # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
     _line(3, 0, 7, 0), _line(7, 0, "obj-52", 0),    # trigger right -> reseed 1 -> pass
