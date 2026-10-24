@@ -106,7 +106,8 @@ tests/modules/wc/
 ### Decision gates (Matt)
 
 - [x] G1 **Form navigation shape — DECIDED 2026-10-23 (Matt, option A).** The noise-driven region map found no separable four-form attractor regions (see T005 record): the pattern is a noise-driven labyrinth/stripe-glass transient. **Ship the labyrinth generator: no four-form selector.** FR-010/US-3/SC-2,3,8 revised in the spec (a `texture` dial = kernel width σ_I steers the grain; Phase-0 stripe/labyrinth landmarks as snaps). US-1/US-3/SC revised; parameter table `form`→`texture`. **Build-time (T025): the dial's route token is `grain`** — `texture` collides with jit.gl.pix's native @texture attribute in the param_connect binding.
-- [ ] G2 **Naming**: `f_wc` is a placeholder (spec header). Alternatives on record: `f_formconstants`. Decide before Phase 3's menu and README entries.
+- [x] G2 **Naming — DECIDED 2026-10-23 (Matt):** the module ships as **`f_wc` /
+  "Wilson-Cowan"** — the working name is final (no `f_formconstants` rename).
 - [x] G3 **Drive inlet semantics — DECIDED 2026-10-23 (Matt, per T007 recommendation).** Drive inlet = raw additive on E only: `drive_gain·(scene − 0.5)` into the E sigmoid input. Weak drive = hallucinate, strong drive = see (one knob, both ends). Unconnected inlet reads mid-0.5 → zero net drive for free (pure US-1 labyrinth, no special-casing). `drive_gain` is a `gain`-role dial in the library convention. **Build-time correction (T025):** an unconnected pix inlet reads BLACK (0,0,0,1), not 0.5 — the neutral is supplied by a vs_inState connection flag → `drv_conn`, and the nl codebox substitutes 0.5 (spec FR-006).
 - [x] G4 **Output encoding — DECIDED 2026-10-23 (Matt, Phase 2).** Plain-E display
   with the `sharp` dial's S-curve blend, SHIPPED DEFAULT sharp = 0.5 (the Phase-2 soak
@@ -229,12 +230,17 @@ tests/modules/wc/
 
 ---
 
-## Phase 3: Docs and registration
+## Phase 3: Docs and registration — DONE 2026-10-23 (gate G2: names stayed `f_wc` / "Wilson-Cowan")
 
-- [ ] T040 Reference doc `docs/f-reference/f_wc.md`.
-- [ ] T041 Helpfile (the `f-helpfile` skill).
-- [ ] T042 `f_modules` menu placement (`src/f_modules/menu.py` + `build/generate_menu.py`; category: Patterns, alongside f_ks) and launcher regeneration if the Patches table changes.
-- [ ] T043 README row, ideas INDEX flip to 🟢, `.specify/plan.md` item 8 resolved, final naming (G2) applied everywhere.
+- [x] T040 Reference doc `docs/f-reference/f_wc.md`.
+- [x] T041 Helpfile `package/help/f_wc.maxhelp` (generator layout per the `f-helpfile` skill:
+  4 externally-addressable dials + reset/bypass, drive-inlet bubble, references match the doc).
+- [x] T042 `f_modules` menu placement: "Wilson-Cowan" in Patterns after Weave (`src/f_modules/menu.py`,
+  removed from NOT_IN_MENU); `build/generate_menu.py` and `build/generate_launch.py` run,
+  `test_generate_menu`/`test_launch` green.
+- [x] T043 README row finalized (no ⚠: "Wilson-Cowan generator: noise-sustained living
+  labyrinth; the drive inlet makes it see"), `ideas/INDEX.md` f_vf_wilson_cowan flipped to 🟢,
+  `.specify/plan.md` item 8 marked BUILT and SHIPPED, naming (G2) applied.
 
 ---
 

@@ -133,12 +133,13 @@ substantially move a file in `ideas/`, update its entry here too.
   **fork of `f_vf_fluid`**, not a v2: the solver's parameters live in real space
   (`force`, `dt`, `gain`, cheap to vary per pixel) and in the spectral stage
   (structural). Idea only, not specced, not named.
-- **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** 🟡 — **Specced 2026-10-22** as
-  `.specify/f_wc/spec.md` (working name `f_wc`): a generator (not a vecfield
-  producer) — spectral-diffusion Wilson-Cowan on the f_ks solver pattern, with
-  the inverse retinotopic map in the render stage so the Ermentrout-Cowan
-  funnel/spiral/lattice/cobweb taxonomy appears in visual-field coordinates.
-  Phase 0 is the NumPy spike (region map decides the form-selector question).
+- **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** 🟢 — **Built 2026-10-23** as `f_wc`
+  (final name, gate G2): a noise-sustained Wilson-Cowan generator (the settled Rule/
+  Ermentout-Cowan model, G1), one shared DFT chain for both fields, the inverse
+  retinotopic map in the render stage, the raw-additive drive inlet making
+  hallucination ↔ imprint a single dial (G3). Reference doc
+  `docs/f-reference/f_wc.md`; the four-form-selector original pitch was pruned by the
+  region-map finding (there are no separable stable forms).
 - **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** 🟢 — **RESOLVED
   2026-10-13: ship both.** `f_weave`'s vecfield-driven orientation used vector-add +
   renormalize (non-proportional response); the true angular blend via `atan2` (GPU

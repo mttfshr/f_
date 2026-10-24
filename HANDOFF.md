@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-23 (night 7): f_wc Phase 3 COMPLETE — module shipped (G2: names stayed `f_wc` / "Wilson-Cowan")
+
+- **G2 decided by Matt:** keep `f_wc` / "Wilson-Cowan" (no rename). T040 doc `docs/f-reference/f_wc.md` (settled model, gates, notes, verification). T041 helpfile `package/help/f_wc.maxhelp` (generator layout, drive bubble, refs in sync). T042 menu: "Wilson-Cowan" in Patterns after Weave (menu + addmod regenerated); T043 README row finalized (no ⚠), `ideas/INDEX.md` 🟢, `.specify/plan.md` item 8 BUILT and SHIPPED.
+- Build tests green (`test_generate_menu`/`test_launch`/contracts/bench_expect); drift 0. Full module contract bench running in background against the final patcher set as the last sanity before calling it shipped.
+- **f_wc is DONE**: all 4 phases closed (spec settled 2026-10-22 → Phase 0 model via Rule reference + G1/G3 → Phase 1 GPU chain mirror-diffed + contract bench → Phase 2 tuning with Matt → Phase 3 docs/registration). Next candidate: per `.specify/plan.md`, **f_quasi Phase 0** or **f_wave_field Phase 0**.
+
 ## 2026-10-23 (night 6): f_wc Phase 2 COMPLETE — Matt settled G4 + all of T030-T033
 
 - **G4 / output map:** plain E + the `sharp` S-curve blend, SHIPPED DEFAULT sharp = 0.5 (soak showed the soft map drifts toward white over 30 s). No special encoding; T008's comparison item is overtaken by the gate decision.

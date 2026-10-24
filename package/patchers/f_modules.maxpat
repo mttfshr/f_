@@ -239,14 +239,15 @@
                                 "Masonry",
                                 "Seeds \u2207",
                                 "Stipple",
-                                "Weave \u2207"
+                                "Weave \u2207",
+                                "Wilson-Cowan"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 7,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -283,14 +284,15 @@
                                 "masonry",
                                 "vf_seeds",
                                 "stipple",
-                                "weave"
+                                "weave",
+                                "wc"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 6,
+                            "parameter_mmax": 7,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
