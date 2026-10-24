@@ -172,6 +172,13 @@ def test_nl_full_update_vs_mirror():
     mn = km.nonlinear_step(bl.astype(np.float32), st, Pn.dt, Pn, noise=nx)
     cd = np.abs(gn - mn).max(axis=(0, 1))
     note("nl channel diffs", " ".join(f"{float(cd[c]):.2e}" for c in range(4)))
+    d0 = np.abs(gn[..., 0] - mn[..., 0])
+    yx = np.unravel_index(int(d0.argmax()), d0.shape)
+    note("nl max-E-diff texel inputs",
+         f"gpu {float(gn[..., 0][yx]):.6f} mirror {float(mn[..., 0][yx]):.6f} | "
+         f"ce {float(conv_tex[..., 0][yx]):.4f} ci {float(conv_tex[..., 1][yx]):.4f} "
+         f"ee {float(st[..., 0][yx]):.4f} ve {float(st[..., 2][yx]):.4f} "
+         f"nx {float(nx[yx]):.4f} na {float(noise_tex[..., 2][yx]):.6f} nb {float(noise_tex[..., 3][yx]):.6f}")
     check("nl: full update vs the mirror (noise, habituation, carry)",
           float(cd.max()), 1e-3)
     # habituation = 0 pins the carry channels at exactly 0 (the G5 rule)
