@@ -1354,7 +1354,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res\n// output pixel's visual-field polar coords (r, theta) to cortical (u, v) =\n// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both\n// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).\n// Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.\n//\n// Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives\n// this pix the render-context size), in2 = the convolved/current state (R = E, from the nl\n// stage).\n//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any\n//     output size, including smaller than 256 where hardware sample() would snap; v wraps at\n//     the theta seam, u at the far log edge\n//   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS\n//   - map constants (T033 settled 2026-10-23; UN-BAKED 2026-10-23 as dials, gate:\n//     Matt reopened T033's no-exposure; defaults retuned 2026-10-24 -- the T033\n//     corner 8/5/0.5 read as far away live): `zoom` -> k_ecc (2..16, def 5; LOWER =\n//     closer), `twist` -> k_ang (int 2..8, def 3 -- MUST stay integer: a non-integer\n//     angular gain seams the visual field at theta = +-pi, T006), `fovea` -> r0\n//     (0.1..5.0, def 1.0). r_max 4 stays baked.\n//   - FOVEAL SOFTENING (2026-10-24, Matt's live report -- the center pixelated):\n//     u = k_ecc.ln(1 + sqrt(r^2 + r_soft^2)/r0) instead of the raw r -- for\n//     r << r_soft the cortical position flattens to a constant, so the log-\n//     singularity vortex becomes a calm disc (radial du/dr no longer compresses\n//     cortical periods past the render Nyquist); r >> r_soft is untouched.\n//     r_soft is a bench-vary Param (the amp/ne precedent), baked at 0.35.\n//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);\n//     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the\n//     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),\n//     and the half-crisp blend keeps the free labyrinth readable long-term\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the\n//     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)\nParam bypass_gate(0);\nParam sharp(0.5);\nParam k_ecc(5);\nParam k_ang(3);\nParam r0(1.0);\nParam r_soft(0.35);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0);\nv = k_ang * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nN = 256;\nfx = cv * N - 0.5;\nfy = cu * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),\n         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp(au, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
+									"code": "// codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res\n// output pixel's visual-field polar coords (r, theta) to cortical (u, v) =\n// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both\n// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).\n// Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.\n//\n// Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives\n// this pix the render-context size), in2 = the convolved/current state (R = E, from the nl\n// stage).\n//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any\n//     output size, including smaller than 256 where hardware sample() would snap; v wraps at\n//     the theta seam, u at the far log edge\n//   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS\n//   - map constants (T033 settled 2026-10-23; UN-BAKED 2026-10-23 as dials, gate:\n//     Matt reopened T033's no-exposure; defaults now the HTML-parity set\n//     2026-10-24 for direct comparison with WC_Example_10_fullscreen.html --\n//     bare complex log: zoom 1 (1..16), twist 1 (int 1..8, no seam at any integer),\n//     fovea 0.003 (0.001..5; emulates log(length) with no r0 offset), r_soft 0.\n//     NOT a settled retune: after the comparison the display corner ships again.\n//     r_max 4 stays baked (theirs is 1.41: narrower field).\n//   - FOVEAL SOFTENING (2026-10-24, Matt's live report -- the center pixelated):\n//     u = k_ecc.ln(1 + sqrt(r^2 + r_soft^2)/r0) instead of the raw r -- for\n//     r << r_soft the cortical position flattens to a constant, so the log-\n//     singularity vortex becomes a calm disc (radial du/dr no longer compresses\n//     cortical periods past the render Nyquist); r >> r_soft is untouched.\n//     r_soft is a bench-vary Param (the amp/ne precedent); set to 0.35 for the\n//     calm disc, 0.0 for the HTML-parity comparison (current default).\n//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);\n//     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the\n//     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),\n//     and the half-crisp blend keeps the free labyrinth readable long-term\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the\n//     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)\nParam bypass_gate(0);\nParam sharp(0.5);\nParam k_ecc(1);\nParam k_ang(1);\nParam r0(0.003);\nParam r_soft(0.0);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0);\nv = k_ang * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nN = 256;\nfx = cv * N - 0.5;\nfy = cu * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),\n         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp(au, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -2650,7 +2650,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Eccentricity gain of the retinotopic map (log-radius zoom). Lower = closer, bigger shapes; 5 = default (T033 corner was 8)",
+					"hint": "Eccentricity gain of the retinotopic map (log-radius zoom). Lower = closer, bigger shapes. 1 = the webgpgpu bare-log corner",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2678,13 +2678,13 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								5.0
+								1.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "zoom",
 							"parameter_mmax": 16.0,
-							"parameter_mmin": 2.0,
+							"parameter_mmin": 1.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "zoom",
 							"parameter_type": 0,
@@ -2773,13 +2773,13 @@
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_initial": [
-								3.0
+								1.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "twist",
 							"parameter_mmax": 8.0,
-							"parameter_mmin": 2.0,
+							"parameter_mmin": 1.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "twist",
 							"parameter_type": 0,
@@ -2845,7 +2845,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Foveal radius of the map: smaller = more center magnification. 1.0 = default (T033 corner 0.5 read as far away)",
+					"hint": "Foveal radius of the map: smaller = more center magnification. 0.003 = the bare-log webgpgpu corner (untreated center vortex)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2873,13 +2873,13 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								1.0
+								0.003
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "fovea",
 							"parameter_mmax": 5.0,
-							"parameter_mmin": 0.1,
+							"parameter_mmin": 0.001,
 							"parameter_modmode": 3,
 							"parameter_shortname": "fovea",
 							"parameter_type": 0,

@@ -12,17 +12,19 @@
 //     the theta seam, u at the far log edge
 //   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS
 //   - map constants (T033 settled 2026-10-23; UN-BAKED 2026-10-23 as dials, gate:
-//     Matt reopened T033's no-exposure; defaults retuned 2026-10-24 -- the T033
-//     corner 8/5/0.5 read as far away live): `zoom` -> k_ecc (2..16, def 5; LOWER =
-//     closer), `twist` -> k_ang (int 2..8, def 3 -- MUST stay integer: a non-integer
-//     angular gain seams the visual field at theta = +-pi, T006), `fovea` -> r0
-//     (0.1..5.0, def 1.0). r_max 4 stays baked.
+//     Matt reopened T033's no-exposure; defaults now the HTML-parity set
+//     2026-10-24 for direct comparison with WC_Example_10_fullscreen.html --
+//     bare complex log: zoom 1 (1..16), twist 1 (int 1..8, no seam at any integer),
+//     fovea 0.003 (0.001..5; emulates log(length) with no r0 offset), r_soft 0.
+//     NOT a settled retune: after the comparison the display corner ships again.
+//     r_max 4 stays baked (theirs is 1.41: narrower field).
 //   - FOVEAL SOFTENING (2026-10-24, Matt's live report -- the center pixelated):
 //     u = k_ecc.ln(1 + sqrt(r^2 + r_soft^2)/r0) instead of the raw r -- for
 //     r << r_soft the cortical position flattens to a constant, so the log-
 //     singularity vortex becomes a calm disc (radial du/dr no longer compresses
 //     cortical periods past the render Nyquist); r >> r_soft is untouched.
-//     r_soft is a bench-vary Param (the amp/ne precedent), baked at 0.35.
+//     r_soft is a bench-vary Param (the amp/ne precedent); set to 0.35 for the
+//     calm disc, 0.0 for the HTML-parity comparison (current default).
 //   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);
 //     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the
 //     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),
@@ -32,10 +34,10 @@
 //     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)
 Param bypass_gate(0);
 Param sharp(0.5);
-Param k_ecc(5);
-Param k_ang(3);
-Param r0(1.0);
-Param r_soft(0.35);
+Param k_ecc(1);
+Param k_ang(1);
+Param r0(0.003);
+Param r_soft(0.0);
 
 px = (norm.x * 2 - 1) * 4;
 py = (norm.y * 2 - 1) * 4;

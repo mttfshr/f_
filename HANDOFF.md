@@ -1,6 +1,12 @@
 # HANDOFF
 
-## 2026-10-24 (morning, later): f_wc center pixelation FIXED — foveal softening in enc (r_soft = 0.35)
+## 2026-10-24 (mid-morning): f_wc HTML-parity map config shipped for AB comparison
+
+- "Theirs looks noticeably better" — map math: WC_Example_10's display pass is the bare complex log (`atan`/`log(length)`: ~1 wrap/rev, ~1 wrap radial) vs our retuned 5/3/1.0 (~2.8 wraps, 3 spokes) → their shapes read ~3x bigger. Shipped parity defaults: **zoom 1, twist 1, fovea 0.003, r_soft 0.0** (ranges widened: zoom 1–16, twist 1–8, fovea 0.001–5). Mirror render reproduces the demo character (`scratch/wc_enc/html_s000_sharp.png`). For the live AB: Energy 0.75 (their Ne) on top.
+- **After AB, Matt decides the ship corner:** parity bare-log / closer 5/3/1.0 / plus r_soft 0.35 for the center disc. r_max (4 vs their 1.41) is still baked — the real field-of-view lever if needed.
+- Prior notes this morning: center softening fix (a232930, r_soft now defaults 0 for the parity pass — flip back if the calm disc wins), closer retune (e6f431f).
+
+## 2026-10-24 (morning, later): f_wc center pixelation FIXED## 2026-10-24 (morning, later): f_wc center pixelation FIXED — foveal softening in enc (r_soft = 0.35)
 
 - Matt's screenshot showed the retinotopic center breaking into an aliased vortex. Cause: the log map's du/dr = k_ecc/(r0+r) diverges at r → 0, compressing cortical periods past render Nyquist — the 4-tap bilinear can't reconstruct them. Fix shipped: `u = k_ecc·ln(1 + sqrt(r² + s²)/r0)` in `codebox_enc.gen` (`r_soft` = 0.35, a bench-vary Param registered known-undriven in the contract test; mirror encode + T051 inverse updated). Center becomes a calm disc for r ≪ s; periphery untouched.
 - **Owed to Max:** reload and eyeball the center at fine grain (1.1–1.4) and deep fovea; if angular speckle remains, next step is 2×2 supersampled enc taps. r_soft is sweepable on the bench (`param r_soft` on `#0_wc_enc`); expose as a dial only if it wants performable depth.

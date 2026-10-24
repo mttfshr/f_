@@ -317,7 +317,19 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
-- 2026-10-24 (morning, later): **FOVEAL SOFTENING shipped for the center pixelation.**
+- 2026-10-24 (mid-morning): **HTML-parity comparison config shipped (Matt's AB
+  request).** "Theirs looks noticeably better" (WC_Example_10_fullscreen.html) —
+  map math says why: their display is the BARE complex log (u = atan/log(length),
+  one wrap per revolution, ~1 wrap radially) vs our closer set's ~2.8 wraps and
+  3 spokes — ~3x bigger shapes. Parity set shipped: zoom 1 (range now 1–16),
+  twist 1 (range now 1–8), fovea 0.003 (range now 0.001–5 — emulates log(length)
+  with no r0 offset), r_soft default 0.0 (bench-vary Param; 0.35 = the calm disc).
+  Mirror render at parity (`scratch/wc_enc/html_s000_sharp.png`) reproduces their
+  big-blob periphery + dense center vortex. For the AB: set Energy 0.75 (their Ne).
+  **DECISION OWED (Matt) after the AB:** ship point is one of {HTML-parity 1/1/0.003
+  bare}, {closer 5/3/1.0}, {either + r_soft 0.35}. r_max (ours 4 baked, theirs 1.41)
+  stays the un-exposed field-of-view lever.
+- 2026-10-24 (morning, later): **FOVEAL SOFTENING- 2026-10-24 (morning, later): **FOVEAL SOFTENING shipped for the center pixelation.**
   Matt's screenshot: the center of the retinotopic render broke into an aliased vortex.
   Cause: du/dr = k_ecc/(r0+r) blows up near r = 0, compressing cortical periods past the
   render Nyquist where the 4-tap bilinear cannot reconstruct them. Fix in
