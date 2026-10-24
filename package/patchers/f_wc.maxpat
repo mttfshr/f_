@@ -77,8 +77,11 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 9,
+					"numoutlets": 12,
 					"outlettype": [
+						"",
+						"",
+						"",
 						"",
 						"",
 						"",
@@ -92,15 +95,15 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						655.0,
+						871.0,
 						22.0
 					],
-					"text": "route rate grain aspect drive_gain energy habituation sharp excite reset"
+					"text": "route rate grain aspect drive_gain energy habituation sharp excite zoom twist fovea reset"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-50",
+					"id": "obj-55",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -186,7 +189,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-56",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -305,7 +308,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-52",
+					"id": "obj-57",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -484,7 +487,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-58",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -603,7 +606,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-59",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -722,7 +725,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-55",
+					"id": "obj-60",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -841,7 +844,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-56",
+					"id": "obj-61",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -960,7 +963,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-57",
+					"id": "obj-62",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -1079,7 +1082,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-58",
+					"id": "obj-63",
 					"maxclass": "newobj",
 					"numinlets": 4,
 					"numoutlets": 2,
@@ -1351,7 +1354,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res\n// output pixel's visual-field polar coords (r, theta) to cortical (u, v) =\n// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both\n// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).\n// Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.\n//\n// Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives\n// this pix the render-context size), in2 = the convolved/current state (R = E, from the nl\n// stage).\n//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any\n//     output size, including smaller than 256 where hardware sample() would snap; v wraps at\n//     the theta seam, u at the far log edge\n//   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS\n//   - map constants SETTLED (T033, 2026-10-23, Matt approved the provisional T006 working\n//     set; no foveal special-casing, no user exposure): r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4\n//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);\n//     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the\n//     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),\n//     and the half-crisp blend keeps the free labyrinth readable long-term\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the\n//     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)\nParam bypass_gate(0);\nParam sharp(0.5);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = 8 * log(1 + r / 0.5);\nv = 5 * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nN = 256;\nfx = cv * N - 0.5;\nfy = cu * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),\n         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp(au, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
+									"code": "// codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res\n// output pixel's visual-field polar coords (r, theta) to cortical (u, v) =\n// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both\n// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).\n// Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.\n//\n// Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives\n// this pix the render-context size), in2 = the convolved/current state (R = E, from the nl\n// stage).\n//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any\n//     output size, including smaller than 256 where hardware sample() would snap; v wraps at\n//     the theta seam, u at the far log edge\n//   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS\n//   - map constants (T033 settled 2026-10-23; UN-BAKED 2026-10-23 as dials, gate:\n//     Matt reopened T033's no-exposure): `zoom` -> k_ecc (2..16, def 8), `twist` ->\n//     k_ang (int 2..8, def 5 -- MUST stay integer: a non-integer angular gain seams\n//     the visual field at theta = +-pi, T006), `fovea` -> r0 (0.1..2.0, def 0.5).\n//     r_max 4 stays baked.\n//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);\n//     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the\n//     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),\n//     and the half-crisp blend keeps the free labyrinth readable long-term\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the\n//     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)\nParam bypass_gate(0);\nParam sharp(0.5);\nParam k_ecc(8);\nParam k_ang(5);\nParam r0(0.5);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = k_ecc * log(1 + r / r0);\nv = k_ang * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nN = 256;\nfx = cv * N - 0.5;\nfy = cu * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),\n         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp(au, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1448,7 +1451,7 @@
 						""
 					],
 					"patching_rect": [
-						991.5,
+						1207.5,
 						100.0,
 						56.0,
 						22.0
@@ -1480,17 +1483,17 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						771.5,
+						987.5,
 						260.0,
 						247.0,
-						150.0
+						212.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						247.0,
-						150.0
+						212.0
 					],
 					"proportion": 0.5
 				}
@@ -1504,7 +1507,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						991.5,
+						1207.5,
 						200.0,
 						80.0,
 						21.0
@@ -1535,7 +1538,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1081.5,
+						1297.5,
 						200.0,
 						60.0,
 						21.0
@@ -1567,7 +1570,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						991.5,
+						1207.5,
 						232.0,
 						5.0,
 						5.0
@@ -1599,7 +1602,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1011.5,
+						1227.5,
 						232.0,
 						5.0,
 						5.0
@@ -1624,7 +1627,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						987.5,
 						20.0,
 						60.0,
 						22.0
@@ -1642,7 +1645,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						987.5,
 						50.0,
 						180.0,
 						22.0
@@ -1663,7 +1666,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						987.5,
 						110.0,
 						80.0,
 						22.0
@@ -1682,7 +1685,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						987.5,
 						140.0,
 						60.0,
 						22.0
@@ -1700,7 +1703,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						987.5,
 						170.0,
 						80.0,
 						22.0
@@ -1718,7 +1721,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						987.5,
 						200.0,
 						100.0,
 						22.0
@@ -2639,6 +2642,305 @@
 			{
 				"box": {
 					"id": "obj-44",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Eccentricity gain of the retinotopic map (log-radius zoom); 8 = the settled T033 corner",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wc_enc::zoom",
+					"parameter_enable": 1,
+					"patching_rect": [
+						622.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						115.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								8.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "zoom",
+							"parameter_mmax": 16.0,
+							"parameter_mmin": 2.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "zoom",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "zoom"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-45",
+					"maxclass": "attrui",
+					"attr": "k_ecc",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						602.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-46",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						611.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						103.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Zoom",
+					"textjustification": 1,
+					"varname": "lbl_zoom"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-47",
+					"maxclass": "live.numbox",
+					"fontname": "Ableton Sans Light",
+					"hint": "Angular gain of the map (spoke fold); integer only -- fractional seams the field at theta = pi",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wc_enc::twist",
+					"parameter_enable": 1,
+					"patching_rect": [
+						686.0,
+						250.0,
+						44.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						152.0,
+						100.0,
+						34.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_initial": [
+								5.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "twist",
+							"parameter_mmax": 8.0,
+							"parameter_mmin": 2.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "twist",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"varname": "twist"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-48",
+					"maxclass": "attrui",
+					"attr": "k_ang",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						674.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-49",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						683.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Twist",
+					"textjustification": 1,
+					"varname": "lbl_twist"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-50",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Foveal radius of the map: smaller = more center magnification; 0.5 = the settled corner",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wc_enc::fovea",
+					"parameter_enable": 1,
+					"patching_rect": [
+						766.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						162.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.5
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "fovea",
+							"parameter_mmax": 2.0,
+							"parameter_mmin": 0.1,
+							"parameter_modmode": 3,
+							"parameter_shortname": "fovea",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "fovea"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-51",
+					"maxclass": "attrui",
+					"attr": "r0",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						746.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-52",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						755.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						-7.5,
+						144.0,
+						50.0,
+						18.0
+					],
+					"text": "Fovea",
+					"textjustification": 1,
+					"varname": "lbl_fovea"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-53",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2649,7 +2951,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						991.5,
+						1207.5,
 						130.0,
 						18.0,
 						12.0
@@ -2666,7 +2968,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-45",
+					"id": "obj-54",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2674,7 +2976,7 @@
 						""
 					],
 					"patching_rect": [
-						991.5,
+						1207.5,
 						160.0,
 						131.0,
 						22.0
@@ -2997,7 +3299,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-56",
 						0
 					]
 				}
@@ -3009,7 +3311,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-57",
 						0
 					]
 				}
@@ -3057,7 +3359,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
 						3
 					]
 				}
@@ -3081,7 +3383,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
 						0
 					]
 				}
@@ -3089,11 +3391,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-44",
+						"obj-53",
 						0
 					],
 					"destination": [
-						"obj-45",
+						"obj-54",
 						0
 					]
 				}
@@ -3101,7 +3403,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-45",
+						"obj-54",
 						0
 					],
 					"destination": [
@@ -3113,72 +3415,12 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-50",
+						"obj-55",
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-57",
 						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
-						0
-					],
-					"destination": [
-						"obj-52",
-						2
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-52",
-						0
-					],
-					"destination": [
-						"obj-53",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
-						0
-					],
-					"destination": [
-						"obj-54",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-54",
-						0
-					],
-					"destination": [
-						"obj-55",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-55",
-						0
-					],
-					"destination": [
-						"obj-56",
-						0
 					]
 				}
 			},
@@ -3190,7 +3432,7 @@
 					],
 					"destination": [
 						"obj-57",
-						0
+						2
 					]
 				}
 			},
@@ -3209,11 +3451,71 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-52",
+						"obj-58",
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-59",
+						0
+					],
+					"destination": [
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
+						0
+					],
+					"destination": [
+						"obj-61",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-61",
+						0
+					],
+					"destination": [
+						"obj-62",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-62",
+						0
+					],
+					"destination": [
+						"obj-63",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-57",
+						0
+					],
+					"destination": [
+						"obj-63",
 						1
 					]
 				}
@@ -3221,11 +3523,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-56",
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
 						2
 					]
 				}
@@ -3233,11 +3535,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-58",
+						"obj-63",
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-55",
 						0
 					]
 				}
@@ -3245,7 +3547,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-58",
+						"obj-63",
 						0
 					],
 					"destination": [
@@ -3345,7 +3647,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
 						0
 					]
 				}
@@ -3381,7 +3683,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-60",
 						0
 					]
 				}
@@ -3417,7 +3719,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-60",
 						0
 					]
 				}
@@ -3453,7 +3755,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
 						0
 					]
 				}
@@ -3489,7 +3791,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
 						0
 					]
 				}
@@ -3525,7 +3827,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
 						0
 					]
 				}
@@ -3597,7 +3899,115 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-63",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						8
+					],
+					"destination": [
+						"obj-44",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-44",
+						0
+					],
+					"destination": [
+						"obj-45",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-45",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						9
+					],
+					"destination": [
+						"obj-47",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-47",
+						0
+					],
+					"destination": [
+						"obj-48",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-48",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						10
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-50",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-51",
+						0
+					],
+					"destination": [
+						"obj-5",
 						0
 					]
 				}
@@ -3618,7 +4028,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						8
+						11
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3681,7 +4091,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-57",
 						0
 					]
 				}
@@ -3765,7 +4175,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-56",
 						0
 					]
 				}
@@ -3801,7 +4211,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-57",
 						0
 					]
 				}
@@ -3846,6 +4256,21 @@
 			"obj-41": [
 				"excite",
 				"excite",
+				0
+			],
+			"obj-44": [
+				"zoom",
+				"zoom",
+				0
+			],
+			"obj-47": [
+				"twist",
+				"twist",
+				0
+			],
+			"obj-50": [
+				"fovea",
+				"fovea",
 				0
 			],
 			"parameterbanks": {

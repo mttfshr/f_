@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-23 (night 14): f_wc map dials SHIPPED — zoom / twist / fovea (T033 no-exposure reversed); 11 dials now
+
+- Matt asked for zoom: **`zoom`** (k_ecc 2–16, def 8), **`twist`** (k_ang INT 2–8, def 5 — integer-only; fractional = seam at θ = ±π, T006), **`fovea`** (r0 0.1–2.0, def 0.5), all in `codebox_enc.gen`; `r_max 4` stays baked. Mirror `encode()` gained kwargs. Panel → 247×212 (menu `"wc": [247, 212]`, launcher regenerated).
+- Positional-id trap again: adding the 3 dials shifted the raw pix references seed/pass obj-51/52 → obj-56/57; caught by test_module_contracts (reset/salt undriven), fixed, 9/9 green. This is the third time — worth a named anchor in the raw wiring if a 4th dial row ever appears.
+- **Offline green:** drift 16/16, contracts 9/9, launch 8/8, menu 17/17, test_wc 10/10. **Owed to Max (one bench session):** live look at all six new dials (energy/habit/aspect/excite/zoom-map trio) + the G5 habit > 0 chain-vs-mirror leg. Full offline suite not run since rebuild — `tests/bg.sh start offline` before the next unrelated edit.
+
 ## 2026-10-23 (night 13): f_wc G6 + G7 SHIPPED — `aspect` and `excite` dials; module now has 8 dials + reset + bypass
 
 - Matt approved both tier-2 dials. **`aspect`** (σ-ratio `sig_ratio`, 1.2–2.2, def 1.45) in the `spec` codebox — hexagons at 1.3 × fine grain, hot rolls 1.7–2.0, saturates ≥ 2.5. **`excite`** (−0.3..+0.8, def 0) in `nl` — a shared `+ excite` offset inside both sigmoid inputs (sign-flip vs the sweep's bias: sweep b = −excite; clean rolls at +0.5, toward blackout below −0.3). Mirror `Params.excite` maps `he/hi = P.he/P.hi − P.excite` for bench parity.

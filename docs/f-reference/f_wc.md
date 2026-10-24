@@ -70,6 +70,9 @@ into `enc`, `@adapt 0`).
 | `habituation` | float | 0.0–1.5 | 0.0 | Fatigue depth: slow negative feedback on the activity (Ve/Vi relax toward the firing rates over 50/100 frames and subtract from the sigmoid inputs; G5/T052). 0 = free run with exactly the pre-G5 dynamics; higher steadies the field mean against long-soak drift and lifts contrast, at the cost of a narrower low-drive band |
 | `sharp` | float | 0.0–1.0 | 0.5 | Edge sharpness in `enc`: 0 = soft gradients, 1 = hard-edged cells. The 0.5 default keeps the free labyrinth readable as its mean wanders (G4 decision) |
 | `excite` | float | −0.3–0.8 | 0.0 | Excitability: a shared positive offset inside both sigmoid inputs — the firing thresholds HE/HI lowered together (G7). + = hotter (clean rolls near 0.5); − = toward blackout. The viable band is asymmetric — don't range it wider by message |
+| `zoom` | float | 2.0–16.0 | 8.0 | Eccentricity gain of the retinotopic map (`k_ecc`) — log-radius zoom; 8 = the settled T033 corner |
+| `twist` | int | 2–8 | 5 | Angular gain of the map (`k_ang`) — the spoke fold. **Integer only**: a fractional gain seams the visual field at θ = ±π (T006). 5 = settled corner |
+| `fovea` | float | 0.1–2.0 | 0.5 | Foveal radius of the map (`r0`): smaller = more center magnification; 0.5 = the settled corner |
 | `reset` | button / message | — | — | Reseeds both fields from fresh noise. Fires once on load (after 200 ms). Also accepted as a `reset` message on the control inlet |
 | `bypass` | toggle | 0/1 | 0 | Black, alpha 1, on the outlet. The solver keeps running underneath, so releasing bypass resumes a warm field |
 
@@ -108,7 +111,7 @@ produces the working "Psychedelic" webgpgpu demo). Each frame, for both fields E
 3. **Contain.** A non-finite result becomes 0 in `nl`; any texel that hits exact 0 in both
    fields is reseeded from the noise channels by `pass` next frame.
 4. **Encode.** The display resamples E through an **inverse retinotopic map** (the cortical
-   sheet rendered as a visual field: `(u, v) = (8·log1p(r/0.5), 5·theta)`, periodic in both
+   sheet rendered as a visual field: `(u, v) = (k_ecc·log1p(r/r0), k_ang·theta)` — the zoom/twist/fovea dials, periodic in both
    axes), then shows E directly — `soft = clamp(E, 0, 1)`,
    `crisp = smoothstep(0.46, 0.54, soft)`, `lum = mix(soft, crisp, sharp)`, R = G = B = lum,
    A = 1. Map constants (fovea 0.5, eccentricity gain 8, angular gain 5, radius 4) are settled

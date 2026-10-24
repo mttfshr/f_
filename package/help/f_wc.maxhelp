@@ -98,10 +98,10 @@
                         15.0,
                         150.0,
                         270.0,
-                        143.5
+                        183.0
                     ],
-                    "text": "External Control Messages\n\nrate [0.0 \u2013 1.0]\ngrain [1.0 \u2013 4.0]\naspect [1.2 \u2013 2.2]\ndrive_gain [0.0 \u2013 2.0]\nenergy [0.0 \u2013 2.0]\nhabituation [0.0 \u2013 1.5]\nsharp [0.0 \u2013 1.0]\nexcite [-0.3 \u2013 0.8]\nbypass [0 / 1]",
-                    "linecount": 11,
+                    "text": "External Control Messages\n\nrate [0.0 \u2013 1.0]\ngrain [1.0 \u2013 4.0]\naspect [1.2 \u2013 2.2]\ndrive_gain [0.0 \u2013 2.0]\nenergy [0.0 \u2013 2.0]\nhabituation [0.0 \u2013 1.5]\nsharp [0.0 \u2013 1.0]\nexcite [-0.3 \u2013 0.8]\nzoom [2 \u2013 16]\ntwist [2 \u2013 8, int]\nfovea [0.1 \u2013 2.0]\nbypass [0 / 1]",
+                    "linecount": 14,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
@@ -125,7 +125,7 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         15.0,
-                        296.5,
+                        336.5,
                         270.0,
                         160.0
                     ],
@@ -178,7 +178,7 @@
                         338.0,
                         24.0,
                         247.0,
-                        150.0
+                        212.0
                     ],
                     "viewvisibility": 1,
                     "varname": "f_wc"

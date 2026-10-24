@@ -45,7 +45,11 @@ channels, 0 = free run, higher steadies the field mean against long soak drift (
 the usable drive band upward).  `excite` (G7) adds a shared positive offset inside both
 sigmoid inputs (the firing thresholds HE/HI lowered together): + = hotter, clean rolls
 near 0.5; - = toward blackout.  `sharp` blends the output map from soft to hard-edged (enc
-stage, the f_ks shape).  The output size follows the render size
+stage, the f_ks shape).  `zoom` (k_ecc, eccentricity gain), `twist` (k_ang, angular gain --
+integer only, fractional values seam the map at theta = pi per T006) and `fovea` (r0, center
+magnification) expose the retinotopic map (gate reopened 2026-10-23: T033's no-exposure
+reversed by Matt).
+  The output size follows the render size
 (`r dim` into enc, @adapt 0).  `reset` (a button, a `reset` message or a message on the
 control inlet) reseeds both fields from fresh noise; it also fires once on load.  Bypass
 follows f_chladni: black, alpha 1, and the solver keeps running underneath.
@@ -61,8 +65,8 @@ patcher = {
     "title":              "Wilson-Cowan",
     "signal_type":        "luma out",
 
-    "presentation_width":  247,             # 6 dials on two rows (builder pitch is 5/row) + reset
-    "presentation_height": 150,             # row 2 holds Energy (was 110 at 5 dials)
+    "presentation_width":  247,             # 11 dials on three rows (builder pitch is 5/row) + reset
+    "presentation_height": 212,             # row 3 holds Fovea (was 150 at 6 dials)
 
     "archetype": "source",
     "pix_type":  "float32",
@@ -96,6 +100,15 @@ patcher = {
         {"name": "excite", "type": "float", "min": -0.3, "max": 0.8, "default": 0.0,
          "label": "Excite", "pix_target": "nl",
          "hint": "Excitability: firing thresholds, E and I together (G7). + = hotter (clean rolls near 0.5); - = toward blackout"},
+        {"name": "zoom", "type": "float", "min": 2.0, "max": 16.0, "default": 8.0,
+         "label": "Zoom", "pix_attr": "k_ecc", "pix_target": "enc",
+         "hint": "Eccentricity gain of the retinotopic map (log-radius zoom); 8 = the settled T033 corner"},
+        {"name": "twist", "type": "int", "min": 2, "max": 8, "default": 5,
+         "label": "Twist", "pix_attr": "k_ang", "pix_target": "enc",
+         "hint": "Angular gain of the map (spoke fold); integer only -- fractional seams the field at theta = pi"},
+        {"name": "fovea", "type": "float", "min": 0.1, "max": 2.0, "default": 0.5,
+         "label": "Fovea", "pix_attr": "r0", "pix_target": "enc",
+         "hint": "Foveal radius of the map: smaller = more center magnification; 0.5 = the settled corner"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -172,7 +185,8 @@ for _p in patcher["params"]:
 #                                              mechanism (T005), unlike f_ks's per-reset counter
 #   [i] -> [sel 2] -> `param reseed 0` -> pass
 # reseed stays 1 for three draw bangs (never a timer): if rendering is not running yet the reseed waits,
-# and at least two rendered frames see it.  Object ids: pass obj-52, seed obj-51 (chain order, build/spec.md).
+# and at least two rendered frames see it.  Object ids: pass obj-57, seed obj-56 (chain order, build/spec.md;
+# positional ids -- they shift when a UI box is added; see T030's stale-id trap).
 def _box(i, cls, rect, **kw):
     b = {"id": f"obj-raw-{i}", "maxclass": cls, "patching_rect": rect}
     b.update(kw)
@@ -216,12 +230,12 @@ patcher["raw_boxes"] = [
 ]
 patcher["raw_lines"] = [
     _line(15, 0, "obj-5", 0),        # r dim -> enc: the output follows the render size
-    _line("obj-4", 8, 3, 0),         # route: `reset` -> trigger   (route outlet 8: rate, texture, aspect, drive_gain, energy, habituation, sharp, excite, reset)
+    _line("obj-4", 11, 3, 0),        # route: `reset` -> trigger   (route outlet 11 after the 11 dials)
     _line(1, 0, 3, 0),               # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
-    _line(3, 0, 7, 0), _line(7, 0, "obj-52", 0),    # trigger right -> reseed 1 -> pass
+    _line(3, 0, 7, 0), _line(7, 0, "obj-57", 0),    # trigger right -> reseed 1 -> pass
     _line(3, 1, 6, 0), _line(6, 0, 11, 1),    # trigger left -> 0 -> [i] right inlet (restart count)
     _line(10, 0, 11, 0), _line(11, 0, 12, 0), _line(12, 0, 11, 1),    # draw -> [i] -> +1 -> [i]
-    _line(11, 0, 9, 0), _line(9, 0, "obj-51", 0),   # [i] -> salt -> seed (EVERY DRAW: the mechanism)
-    _line(11, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, "obj-52", 0),   # sel 2 -> reseed 0 -> pass
+    _line(11, 0, 9, 0), _line(9, 0, "obj-56", 0),   # [i] -> salt -> seed (EVERY DRAW: the mechanism)
+    _line(11, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, "obj-57", 0),   # sel 2 -> reseed 0 -> pass
 ]

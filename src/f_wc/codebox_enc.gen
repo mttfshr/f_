@@ -11,8 +11,11 @@
 //     output size, including smaller than 256 where hardware sample() would snap; v wraps at
 //     the theta seam, u at the far log edge
 //   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS
-//   - map constants SETTLED (T033, 2026-10-23, Matt approved the provisional T006 working
-//     set; no foveal special-casing, no user exposure): r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4
+//   - map constants (T033 settled 2026-10-23; UN-BAKED 2026-10-23 as dials, gate:
+//     Matt reopened T033's no-exposure): `zoom` -> k_ecc (2..16, def 8), `twist` ->
+//     k_ang (int 2..8, def 5 -- MUST stay integer: a non-integer angular gain seams
+//     the visual field at theta = +-pi, T006), `fovea` -> r0 (0.1..2.0, def 0.5).
+//     r_max 4 stays baked.
 //   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);
 //     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the
 //     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),
@@ -22,12 +25,15 @@
 //     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)
 Param bypass_gate(0);
 Param sharp(0.5);
+Param k_ecc(8);
+Param k_ang(5);
+Param r0(0.5);
 
 px = (norm.x * 2 - 1) * 4;
 py = (norm.y * 2 - 1) * 4;
 r, theta = cartopol(px, py);
-u = 8 * log(1 + r / 0.5);
-v = 5 * theta;
+u = k_ecc * log(1 + r / r0);
+v = k_ang * theta;
 cu = fract(u / twopi);
 cv = fract(v / twopi);
 

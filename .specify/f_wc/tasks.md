@@ -317,6 +317,17 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
+- 2026-10-23 (night 14): **Map dials shipped (Matt reopened T033's no-exposure).**
+  `zoom` (k_ecc 2–16, def 8), `twist` (k_ang INT 2–8, def 5 — integer-only, fractional
+  = seam at θ = ±π per T006), `fovea` (r0 0.1–2.0, def 0.5) in `codebox_enc.gen`
+  (`r_max 4` stays baked); mirror `encode()` gains k_ecc/k_ang/r0 kwargs. Panel grew a
+  third dial row → 247×212 (menu regenerated: `"wc": [247, 212]`); the raw pix-id
+  references for seed/pass shifted obj-51/52 → obj-56/57 (the positional-id trap,
+  caught by test_module_contracts — 9/9 after fix). Spec FR-007 amended, docs + helpfile
+  updated. Offline green: drift, contracts, launch, menu, test_wc 10/10.
+  **Owed to Max:** one bench session for all six new dials' live look + the habit > 0
+  chain-vs-mirror leg (from G5); full offline suite not run since rebuild.
+- 2026-10-23 (night 13): **G6 + G7 shipped** (aspect / excite; see their Phase-4 record).
 - 2026-10-23 (night 12): **Second performable axis shipped: `energy` (Ne); second-tier
   ranking measured.** `energy` dial 0–2, default 1.0, between Drive and Habituation
   (token `energy`, `pix_attr ne`; panel grew a second dial row → 247×150; the raw
