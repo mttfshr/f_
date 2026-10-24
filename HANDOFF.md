@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-23 (night): f_wc Phase 1 groundwork — T020 DFT factoring + tier-1 mirror done; spec rewritten to the settled model
+
+- **T020 done, decision recorded in tasks.md:** `src/f_vf_fluid/gen_dft.py` IS the shared DFT generator; f_wc got a third adapter `src/f_wc/gen_dft.py` (same shape as f_ks's, code-line assertion, packing comment changed to `R,G = Re,Im of E-hat; B,A = Re,Im of I-hat`). No template move, no copy. Four codeboxes generated; ONE chain carries BOTH fields.
+- **Tier-1 mirror done:** `tests/modules/wc/wc_mirror.py` + `test_wc.py`, from the SETTLED model (per-frame noise in BOTH sigmoid inputs, E-only drive term, Gaussian per-bin gains, relaxation form; the old `spike_wc_solver.py` constants are a superseded record, NOT the mirror's source — don't copy them). 7/7 green, 2.2 s (fast_fft=True on the long runs after a 300 s pass-chain timeout — the pass chain is only tied to np.fft at N=32, the f_ks precedent). Bug found by the tests: the retinotopic encode had cortical u/v swapped (u = ROWS, v = COLUMNS, per `wc_retinotopy.render`) — caught by the radial-constancy test at 0.67 residual.
+- **Spec rewritten to the settled model:** FR-002 (kernel-convolution gains only, one chain, no decay term / no DC zeroing), FR-003 (the exact settled equations with constants), FR-005 (no NaN ceiling exists; rate ceiling is aesthetic → T030), FR-006 (G3 raw additive E-only drive, 0.5-neutral unconnected). Phase-1 layout block and T021/T023/T024/T025 in tasks.md updated to the one-chain architecture; `form` is dead, T025 param list is `texture`/`drive_gain`/`rate`/`sharp`.
+- **Next:** T021 + T022 (GenExpr codeboxes — seed/pass/spec/nl/enc against the mirror's stages), then T023-T025 (Max bench). The module's first texture inlet (drive) needs the `build/spec.md` `driving_inlet` handling checked at definition time (T025).
+- Committed as the T020/mirror checkpoint.
+
 ## 2026-10-23 (evening): `f_quasi` specced; `f_wave_field` next
 
 - `.specify/f_quasi/{spec,tasks}.md` written from `ideas/f_quasi.md` (omp run `webgpgpu-ideas-1`, eight idea files committed `bfd8007`). Settled with Matt: looks (Relief, Slope hue) in a gated Phase 2; cyclic `zoom` dial plus a patcher clock; fixed 5 waves × 7 octaves; outlets texture, gradient vecfield, potential scalar. Phase 0 (NumPy mirror T001-T005, cost bench T006, vecfield-normalisation look T007, gates G1-G3) is not started.

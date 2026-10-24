@@ -343,25 +343,52 @@ independent instances — the library baseline.
   pattern: `hold -> pass -> solver stages -> nl -> hold`), at a fixed
   internal resolution (256² carried, pending Phase 0 cost check; 128²
   fallback).
-- **FR-002**: The linear part (decay + diffusion for both fields) MUST
-  be integrated exactly per Fourier bin — per-bin multiplier
-  `exp((-1 - D k^2) dt / tau)` — reusing the f_ks separable DFT chain
-  (`src/f_ks/gen_dft.py`, itself lifted from `f_vf_fluid`; a third
-  reuse should factor it, decided at build time).
-- **FR-003**: The nonlinear part (sigmoid coupling, refractory terms,
-  drive) MUST be applied explicitly in real space after the spectral
-  step, on both fields (the `nl` stage role in f_ks).
+- **FR-002** *(revised 2026-10-23, Phase 0 — the spec's "diffuse each
+  field then couple" form was measured NOT to pattern; record T001)*:
+  The linear part MUST be the kernel convolution only — two real
+  per-bin Gaussian gains `exp(-sigma^2 k^2 / 2)`, `sigma_E` on the E
+  channels and `sigma_I` on the I channels, sigma in PIXELS with
+  `sigma_E = sigma_I / 1.45` — reusing the shared separable DFT chain
+  (`src/f_vf_fluid/gen_dft.py` is the shared generator; `src/f_ks` and
+  `src/f_wc` are adapters with code-line assertions; T020). ONE chain
+  carries BOTH fields: the f_vf_fluid two-complex-field packing,
+  `R,G = Re,Im of E-hat; B,A = Re,Im of I-hat`. NO separate decay
+  term and NO DC-bin zeroing (both are KS-specific): the dt-relaxation
+  in FR-003 carries the decay.
+- **FR-003** *(revised 2026-10-23, Phase 0 — the noise mechanism,
+  record T005/T007; gate G3)*: The explicit real-space `nl` stage MUST
+  compute, per frame:
+
+      E += (F(AEE*(K_E conv E) - AIE*(K_I conv I) - HE + Ne*N
+              + drive_gain*(drive - 0.5)) - E) * dt / TE
+      I += (F(AEI*(K_E conv E) - AII*(K_I conv I) - HI + Ne*N)
+            - I) * dt / TI
+
+  with `F` the logistic sigmoid, `N` FRESH Gaussian noise EVERY FRAME
+  (sqrt(dt)-scaled, injected into BOTH sigmoid inputs — the load-bearing
+  mechanism; without it the pattern collapses to uniform), the drive
+  term E-only (T007), and the settled Psychedelic constants AEE = 16.1,
+  AIE = 14.5, AEI = 13.7, AII = 13.0, HE = 3.1, HI = 3.5, TE = 4,
+  TI = 12.5, dt = 1 the baseline. NO refractory/recovery variable
+  (the Pinto-Ermentrout activator-recovery fork was spiked and rejected
+  as the wrong model class for sustained forms; see tasks.md T005).
 - **FR-004**: State MUST be seeded from random noise on load and on
   reset — never from zero, never from the spatially uniform rest
   state, because uniform rest is a fixed point whose stability is
   parameter-dependent (see Edge Cases); noise seeding is the
   unconditional correct path.
-- **FR-005**: A `rate` control MUST scale the effective per-frame dt;
-  the module MUST clamp effective dt to the Phase-0-measured stability
-  ceiling regardless of the requested value.
-- **FR-006**: A drive inlet MUST modulate the cortical drive term
-  (shape per Clarifications); unconnected, the drive MUST default to
-  its uniform spontaneous-pattern value.
+- **FR-005** *(revised 2026-10-23, Phase 0)*: A `rate` control MUST
+  scale the effective per-frame dt (`dt = rate * dt0`, dt0 = 1 the
+  baseline). NO stability clamp: Phase 0 measured that NO NaN ceiling
+  exists (relaxation toward a bounded sigmoid); the rate ceiling is
+  pattern-preservation, an aesthetic bound set at tuning (T030).
+- **FR-006** *(revised 2026-10-23, gate G3 — Matt approved the T007
+  recommendation)*: A drive inlet MUST couple raw-additively into the E
+  sigmoid input only, as the term `drive_gain * (scene - 0.5)`; weak
+  drive = hallucinate, strong drive = see (one knob, both ends).
+  Unconnected, the inlet's mid-gray read (0.5) gives zero net drive —
+  the pure US-1 labyrinth for free, NO special-casing — and
+  `drive_gain` is a `gain`-role dial in the library convention.
 - **FR-007**: The render stage MUST apply the inverse retinotopic
   (log-polar → Cartesian) map when sampling the cortical state to the
   visual-field output, with map constants per Clarifications; the map

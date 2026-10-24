@@ -14,20 +14,28 @@ Created 2026-10-22 from the spec's "Open Experiments" and phasing. Each task say
 ```
 src/f_wc/
 ├── definition.py            # module definition (archetype: source, luma out)
-├── gen_dft.py               # reuses f_ks's DFT template (factor to a shared
-│                            #   location at build time — third use, per FR-002)
-├── codebox_seed.gen         # hash noise seeding (E and I)
-├── codebox_pass.gen         # feedback hold / reseed
-├── codebox_dft_{fx,fy,iy,ix}.gen   # generated, shared with f_ks
-├── codebox_spec.gen         # per-bin linear step: exp((-1 - D k^2) dt / tau)
-│                            #   (two instances: E chain, I chain)
-├── codebox_nl.gen           # sigmoid coupling + refractory + drive (both fields)
+├── gen_dft.py               # third adapter on f_vf_fluid's shared DFT
+│                            #   template (T020 decision: code-line-asserted)
+├── codebox_seed.gen         # hash noise seeding (E and I) + per-frame noise
+│                            #   salt increments EVERY draw (the mechanism)
+├── codebox_pass.gen         # feedback hold / reseed (3 inlets: noise source)
+├── codebox_dft_{fx,fy,iy,ix}.gen   # generated; ONE chain, two-complex-field
+│                            #   packing (R,G = E-hat; B,A = I-hat) carries BOTH
+│                            #   fields — the f_vf_fluid packing; no split
+├── codebox_spec.gen         # per-bin kernel gains: exp(-sigma^2 k^2 / 2),
+│                            #   ONE instance (sigma_E on the E pair, sigma_I
+│                            #   on the I pair; NOT the spec's old two-chain
+│                            #   decay+diffusion — Phase-0 record T001)
+├── codebox_nl.gen           # sigmoid coupling + per-frame noise + E-only drive,
+│                            #   dt/TE|TI relaxation (4 inlets; FR-003 settled form)
 ├── codebox_enc.gen          # retinotopic (log-polar → Cartesian) resample,
 │                            #   output map, bypass_gate
 tests/records/
-├── spike_wc_solver.py       # Phase 0 mirror + stability (Open Experiment 1)
-├── spike_wc_regions.py      # Phase 0 parameter region map (Open Experiment 2)
-├── spike_wc_map.py          # Phase 0 retinotopic render (Open Experiment 3)
+├── spike_wc_solver.py       # Phase 0 record (superseded pre-noise form)
+├── spike_wc_regions.py      # Phase 0 record (pre-noise region map)
+├── spike_wc_noise_regions.py # Phase 0 record (settled noise-driven region map)
+├── spike_wc_pinto.py        # Phase 0 record (rejected activator-recovery fork)
+├── wc_retinotopy.py         # Phase 0 retinotopic render (T006, validated)
 tests/modules/wc/
 ├── wc_mirror.py             # tier-1 mirror (graduates from the spike)
 ├── test_wc.py               # tier-1 tests
@@ -108,14 +116,44 @@ tests/modules/wc/
 
 ## Phase 1: Solver stages and bpatcher (after Phase 0 gates)
 
-- [ ] T020 Factor the DFT chain: `src/f_ks/gen_dft.py` is already a two-use template; a third use (f_wc) triggers the shared-location decision (FR-002). Either a shared generator both modules import, or a second copy with the same code-line assertion. Record the choice here.
-- [ ] T021 [P] Codeboxes for the E/I solver stages in `src/f_wc/` (seed, pass, spec ×2 instances, nl with NaN/Inf zap per the f_ks containment precedent), verified on the bench against the mirror stage by stage. Max bench; codeboxes written by hand against T001's stages.
-- [ ] T022 [P] `codebox_enc.gen`: the retinotopic resample (T006's constants and foveal handling), output map (placeholder until G4), `bypass_gate` → black alpha 1 (f_ks precedent), `@adapt 0` render-size sampling. Max bench.
-- [ ] T023 Frame-exact multi-frame feedback run of the full GPU chain against the mirror (`run_temporal`, the f_ks T007 pattern: short-horizon pixel comparison, then statistical comparison — WC traveling-wave regions are chaotic-adjacent, so set horizons from the mirror's divergence rate). Max bench.
-- [ ] T024 GPU cost check in a real Vsynth context: the two-field chain (~2× f_ks's 2.39 ms/frame) plus the render-res enc resample; decide 256² vs. 128² (spec NF-001, Clarifications). Max bench.
-- [ ] T025 `definition.py` (archetype source; params per the spec's table, with `form` per G1), `package/patchers/f_wc.maxpat` built; drift 0; offline contracts green; live module contract bench green (bypass expectation: black A=1).
+- [x] T020 **DONE 2026-10-23.** Factor the DFT chain — decision: **`src/f_vf_fluid/gen_dft.py` IS
+  the shared generator**; f_wc got a third adapter `src/f_wc/gen_dft.py` in the
+  exact shape of `src/f_ks/gen_dft.py`, importing the fluid template and
+  asserting byte-identical code lines (only the header comment changes: module
+  name, stage number, packing note). No third copy, no template move — the
+  single template stays put and all three consumers cannot drift apart
+  (FR-002). f_wc packing: `R,G = Re,Im of E-hat; B,A = Re,Im of I-hat` — the
+  fluid two-complex-field packing, so ONE chain carries BOTH WC fields; no
+  Hermitian split, no duplicated chain. Stage numbers: pass 0, fx 1, fy 2,
+  spec 3, iy 4, ix 5, nl 6, enc 7. Four codeboxes generated.
+- [ ] T021 [P] Codeboxes for the E/I solver stages in `src/f_wc/`, against the tier-1 mirror
+  `tests/modules/wc/wc_mirror.py` (settled model — one function per stage): `codebox_seed.gen`
+  (hash noise: seed channels on reset AND the per-frame salt-incremented noise the mechanism
+  needs), `codebox_pass.gen` (3-inlet hold/reseed), `codebox_spec.gen` (ONE instance, two real
+  per-bin gains — sigma_E on the E pair, sigma_I on the I pair — NOT two chains), `codebox_nl.gen`
+  (4 inlets: convolved fields, raw state, per-frame noise, drive; E-only drive term; NaN/Inf zap
+  per the f_ks containment precedent). Verified on the bench against the mirror stage by stage.
+  Max bench; codeboxes written by hand against the mirror's stages.
+  **Tier-1 done 2026-10-23:** `wc_mirror.py` + `test_wc.py` written from the settled model
+  (spike_wc_noise_regions.py form): pass-chain-vs-np.fft at N=32, single-bin kernel gains,
+  scalar fixed point, the noise-sustainment ablation (collapse without, contrast with), the
+  T007 drive-coupling ordering, boundedness, and the retinotopic radial-constancy property.
+- [ ] T022 [P] `codebox_enc.gen`: the retinotopic resample (T006's constants r0 = 0.5,
+  k_e = 8, k_t = 5, r_max = 4 provisional per T033, periodic 4-tap in (u, v)), display-E
+  placeholder map until G4, `sharp` dial (f_ks crisp-blend shape), `bypass_gate` → black
+  alpha 1 (f_ks precedent), `@adapt 0` render-size sampling. Max bench.
+- [ ] T023 Frame-exact multi-frame feedback run of the full GPU chain against `run_temporal`
+  (the f_ks T007 pattern: short-horizon pixel comparison, then statistical comparison — the
+  state is stochastic PER RUN, so the bench must reproduce the noise stream exactly: seed the
+  mirror's rng from the same salt sequence the codebox's hash chain produces, the dft bench's
+  approach). Max bench.
+- [ ] T024 GPU cost check in a real Vsynth context: ONE DFT chain (the four-channel packing
+  carries both fields — f_ks's ~2.39 ms/frame class, NOT 2×) plus the render-res enc resample
+  and the per-frame noise stage; decide 256² vs. 128² (spec NF-001, Clarifications). Max bench.
+- [ ] T025 `definition.py` (archetype source; params per the spec's table — `texture` per G1,
+  `drive_gain` per G3, `rate`, `sharp`; `form` is DEAD — no selector ships), `package/patchers/f_wc.maxpat` built; drift 0; offline contracts green; live module contract bench green (bypass expectation: black A=1).
 
-**Checkpoint**: the shipped patcher on the bench seeds on load, forms patterns in each G1-selected region, responds to the drive inlet per G3, and holds NF-003 over the bench's long soak.
+**Checkpoint**: the shipped patcher on the bench seeds on load, forms a sustained labyrinth in the G1 band (texture dial sweeps stripe-glass → labyrinth coherently), responds to the drive inlet per G3, and holds NF-003 over the bench's long soak.
 
 ---
 
