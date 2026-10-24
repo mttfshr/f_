@@ -51,8 +51,7 @@ qy = 0.25 / dim.y;
 // --- samples norm.x - qx, norm.y - qy
 px_a = ((norm.x - qx) * 2 - 1) * 4;
 py_a = ((norm.y - qy) * 2 - 1) * 4;
-r_a = sqrt(px_a * px_a + py_a * py_a);
-th_a = atan(py_a, px_a);
+r_a, th_a = cartopol(px_a, py_a);
 cu_a = fract(k_ecc * log(1 + sqrt(r_a * r_a + r_soft * r_soft) / r0) / twopi);
 cv_a = fract(k_ang * th_a / twopi);
 fx_a = cv_a * 256 - 0.5;
@@ -98,8 +97,7 @@ au_a = wya_a * ra_a + wyb_a * rb_a + wyc_a * rc_a + wyd_a * rd_a;
 // --- samples norm.x - qx, norm.y + qy
 px_b = ((norm.x - qx) * 2 - 1) * 4;
 py_b = ((norm.y + qy) * 2 - 1) * 4;
-r_b = sqrt(px_b * px_b + py_b * py_b);
-th_b = atan(py_b, px_b);
+r_b, th_b = cartopol(px_b, py_b);
 cu_b = fract(k_ecc * log(1 + sqrt(r_b * r_b + r_soft * r_soft) / r0) / twopi);
 cv_b = fract(k_ang * th_b / twopi);
 fx_b = cv_b * 256 - 0.5;
@@ -145,8 +143,7 @@ au_b = wya_b * ra_b + wyb_b * rb_b + wyc_b * rc_b + wyd_b * rd_b;
 // --- samples norm.x + qx, norm.y - qy
 px_c = ((norm.x + qx) * 2 - 1) * 4;
 py_c = ((norm.y - qy) * 2 - 1) * 4;
-r_c = sqrt(px_c * px_c + py_c * py_c);
-th_c = atan(py_c, px_c);
+r_c, th_c = cartopol(px_c, py_c);
 cu_c = fract(k_ecc * log(1 + sqrt(r_c * r_c + r_soft * r_soft) / r0) / twopi);
 cv_c = fract(k_ang * th_c / twopi);
 fx_c = cv_c * 256 - 0.5;
@@ -192,8 +189,7 @@ au_c = wya_c * ra_c + wyb_c * rb_c + wyc_c * rc_c + wyd_c * rd_c;
 // --- samples norm.x + qx, norm.y + qy
 px_d = ((norm.x + qx) * 2 - 1) * 4;
 py_d = ((norm.y + qy) * 2 - 1) * 4;
-r_d = sqrt(px_d * px_d + py_d * py_d);
-th_d = atan(py_d, px_d);
+r_d, th_d = cartopol(px_d, py_d);
 cu_d = fract(k_ecc * log(1 + sqrt(r_d * r_d + r_soft * r_soft) / r0) / twopi);
 cv_d = fract(k_ang * th_d / twopi);
 fx_d = cv_d * 256 - 0.5;
