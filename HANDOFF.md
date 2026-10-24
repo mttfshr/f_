@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-24 (noon, session break): enc reverted to proven cubic; session checkpoint
+
+- Matt called a break. Everything committed: enc reverted to the verified CR build (2d9174c), records updated, proof renders in scratch/wc_enc/ now tracked. **Left on the table deliberately:** f_demo_ks/f_demo_wc maxpats are Matt's working patches (untracked, per the long-standing note); SSAA is parked as bench-session work.
+- **When you come back, the bench session owes:** (1) the habit > 0 chain-vs-mirror leg (mirror m_step takes be=bi=habit); (2) live look at the six new dials; (3) SSAA-in-Max (compile + readback, small steps, verify each); (4) the full offline suite (tests/bg.sh start offline) — several rebuilds happened without it; (5) enc-vs-mirror bench now runs the CR sampler — old 4-tap tolerances retired. Cost question if edge blocking still bothers: solver 512², measure before deciding.
+
 ## 2026-10-24 (noon, LATER): enc REVERTED to the proven single-eval Catmull-Rom build
 
 - The SSAA variants never worked live: function form → field rendered 4-fold mirrored; inline ×4 with sqrt+two-arg-atan → still 4-fold; cartopol restored → 2-fold. Cause never isolated; offline cannot compile-check GenExpr, so every iteration burned a Max reload on a guess. REVERTED `codebox_enc.gen` to commit fbee342's verified working cubic (the "this is better" build), header fixed (it still said the un-softened map in one line).
