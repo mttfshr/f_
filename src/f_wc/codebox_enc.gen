@@ -11,8 +11,12 @@
 //   - Catmull-Rom 4x4 taps (2026-10-24): bilinear was C0, so texel-boundary slope kinks
 //     faceted at ~7 screen px per cortical texel. CR is C1. Periodic in both axes.
 //   - 2x2 SSAA (2026-10-24, Matt's second screenshot): at high contrast the contour pins
-//     to cortical texel positions and NO interpolation fixes position quantization;
+//     to cortical texel positions; NO interpolation fixes position quantization --
 //     averaging four quarter-pixel evaluations anti-aliases the contour.
+//     CAUTION (same day): a `mapE(nx, ny)` FUNCTION form of this code boxed black on
+//     load (the one offline-untestable GenExpr variant -- destructuring inside a
+//     function body and global refs in a function are the suspects), so the four
+//     evaluations are INLINED below like everything else in the library.
 //   - map constants (T033 settled 2026-10-23; UN-BAKED 2026-10-23 as dials, gate:
 //     Matt reopened T033's no-exposure; defaults now the HTML-parity set
 //     2026-10-24 for direct comparison with WC_Example_10_fullscreen.html --
@@ -32,55 +36,6 @@
 //   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the
 //     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)
 
-// mapE(nx, ny): one evaluation of the retinotopic map + Catmull-Rom sample of the E
-// field at NORMALIZED output coords. Functions declared before Params (GenExpr rule).
-mapE(nx, ny) {
-	pxx = (nx * 2 - 1) * 4;
-	pyy = (ny * 2 - 1) * 4;
-	r, theta = cartopol(pxx, pyy);
-	cu = fract(k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0) / twopi);
-	cv = fract(k_ang * theta / twopi);
-	fx = cv * 256 - 0.5;
-	fy = cu * 256 - 0.5;
-	x0 = floor(fx);
-	y0 = floor(fy);
-	tx = fx - x0;
-	ty = fy - y0;
-	wxa = tx * (tx * (1 - 0.5 * tx) - 0.5);      // Catmull-Rom x weights (sum to 1)
-	wxb = tx * tx * (1.5 * tx - 2.5) + 1;
-	wxc = tx * (tx * (2.0 - 1.5 * tx) + 0.5);
-	wxd = tx * tx * (0.5 * tx - 0.5);
-	wya = ty * (ty * (1 - 0.5 * ty) - 0.5);      // same weights at ty
-	wyb = ty * ty * (1.5 * ty - 2.5) + 1;
-	wyc = ty * (ty * (2.0 - 1.5 * ty) + 0.5);
-	wyd = ty * ty * (0.5 * ty - 0.5);
-	x0m = wrap(x0 - 1, 0, 256);
-	xa = wrap(x0, 0, 256);
-	xb = wrap(x0 + 1, 0, 256);
-	x1p = wrap(x0 + 2, 0, 256);
-	y0m = wrap(y0 - 1, 0, 256);
-	ya = wrap(y0, 0, 256);
-	yb = wrap(y0 + 1, 0, 256);
-	y1p = wrap(y0 + 2, 0, 256);
-	rowa = wxa * nearest(in2, vec((x0m + 0.5) / 256, (y0m + 0.5) / 256)).x
-	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (y0m + 0.5) / 256)).x
-	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (y0m + 0.5) / 256)).x
-	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (y0m + 0.5) / 256)).x;
-	rowb = wxa * nearest(in2, vec((x0m + 0.5) / 256, (ya + 0.5) / 256)).x
-	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (ya + 0.5) / 256)).x
-	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (ya + 0.5) / 256)).x
-	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (ya + 0.5) / 256)).x;
-	rowc = wxa * nearest(in2, vec((x0m + 0.5) / 256, (yb + 0.5) / 256)).x
-	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (yb + 0.5) / 256)).x
-	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (yb + 0.5) / 256)).x
-	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (yb + 0.5) / 256)).x;
-	rowd = wxa * nearest(in2, vec((x0m + 0.5) / 256, (y1p + 0.5) / 256)).x
-	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (y1p + 0.5) / 256)).x
-	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (y1p + 0.5) / 256)).x
-	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (y1p + 0.5) / 256)).x;
-	return wya * rowa + wyb * rowb + wyc * rowc + wyd * rowd;
-}
-
 Param bypass_gate(0);
 Param sharp(0.5);
 Param contrast(1.0);
@@ -89,10 +44,199 @@ Param k_ang(1);
 Param r0(0.003);
 Param r_soft(0.0);
 
-q = 0.25 / dim;
-au = 0.25 * (mapE(norm.x - q.x, norm.y - q.y) + mapE(norm.x - q.x, norm.y + q.y)
-           + mapE(norm.x + q.x, norm.y - q.y) + mapE(norm.x + q.x, norm.y + q.y));
 
+qx = 0.25 / dim.x;
+qy = 0.25 / dim.y;
+
+// --- samples norm.x - qx, norm.y - qy
+px_a = ((norm.x - qx) * 2 - 1) * 4;
+py_a = ((norm.y - qy) * 2 - 1) * 4;
+r_a = sqrt(px_a * px_a + py_a * py_a);
+th_a = atan(py_a, px_a);
+cu_a = fract(k_ecc * log(1 + sqrt(r_a * r_a + r_soft * r_soft) / r0) / twopi);
+cv_a = fract(k_ang * th_a / twopi);
+fx_a = cv_a * 256 - 0.5;
+fy_a = cu_a * 256 - 0.5;
+x0_a = floor(fx_a);
+y0_a = floor(fy_a);
+tx_a = fx_a - x0_a;
+ty_a = fy_a - y0_a;
+wxa_a = tx_a * (tx_a * (1 - 0.5 * tx_a) - 0.5);
+wxb_a = tx_a * tx_a * (1.5 * tx_a - 2.5) + 1;
+wxc_a = tx_a * (tx_a * (2.0 - 1.5 * tx_a) + 0.5);
+wxd_a = tx_a * tx_a * (0.5 * tx_a - 0.5);
+wya_a = ty_a * (ty_a * (1 - 0.5 * ty_a) - 0.5);
+wyb_a = ty_a * ty_a * (1.5 * ty_a - 2.5) + 1;
+wyc_a = ty_a * (ty_a * (2.0 - 1.5 * ty_a) + 0.5);
+wyd_a = ty_a * ty_a * (0.5 * ty_a - 0.5);
+x0m_a = wrap(x0_a - 1, 0, 256);
+xa_a = wrap(x0_a, 0, 256);
+xb_a = wrap(x0_a + 1, 0, 256);
+x1p_a = wrap(x0_a + 2, 0, 256);
+y0m_a = wrap(y0_a - 1, 0, 256);
+ya_a = wrap(y0_a, 0, 256);
+yb_a = wrap(y0_a + 1, 0, 256);
+y1p_a = wrap(y0_a + 2, 0, 256);
+ra_a = wxa_a * nearest(in2, vec((x0m_a + 0.5) / 256, (y0m_a + 0.5) / 256)).x
+      + wxb_a * nearest(in2, vec((xa_a + 0.5) / 256, (y0m_a + 0.5) / 256)).x
+      + wxc_a * nearest(in2, vec((xb_a + 0.5) / 256, (y0m_a + 0.5) / 256)).x
+      + wxd_a * nearest(in2, vec((x1p_a + 0.5) / 256, (y0m_a + 0.5) / 256)).x;
+rb_a = wxa_a * nearest(in2, vec((x0m_a + 0.5) / 256, (ya_a + 0.5) / 256)).x
+      + wxb_a * nearest(in2, vec((xa_a + 0.5) / 256, (ya_a + 0.5) / 256)).x
+      + wxc_a * nearest(in2, vec((xb_a + 0.5) / 256, (ya_a + 0.5) / 256)).x
+      + wxd_a * nearest(in2, vec((x1p_a + 0.5) / 256, (ya_a + 0.5) / 256)).x;
+rc_a = wxa_a * nearest(in2, vec((x0m_a + 0.5) / 256, (yb_a + 0.5) / 256)).x
+      + wxb_a * nearest(in2, vec((xa_a + 0.5) / 256, (yb_a + 0.5) / 256)).x
+      + wxc_a * nearest(in2, vec((xb_a + 0.5) / 256, (yb_a + 0.5) / 256)).x
+      + wxd_a * nearest(in2, vec((x1p_a + 0.5) / 256, (yb_a + 0.5) / 256)).x;
+rd_a = wxa_a * nearest(in2, vec((x0m_a + 0.5) / 256, (y1p_a + 0.5) / 256)).x
+      + wxb_a * nearest(in2, vec((xa_a + 0.5) / 256, (y1p_a + 0.5) / 256)).x
+      + wxc_a * nearest(in2, vec((xb_a + 0.5) / 256, (y1p_a + 0.5) / 256)).x
+      + wxd_a * nearest(in2, vec((x1p_a + 0.5) / 256, (y1p_a + 0.5) / 256)).x;
+au_a = wya_a * ra_a + wyb_a * rb_a + wyc_a * rc_a + wyd_a * rd_a;
+
+// --- samples norm.x - qx, norm.y + qy
+px_b = ((norm.x - qx) * 2 - 1) * 4;
+py_b = ((norm.y + qy) * 2 - 1) * 4;
+r_b = sqrt(px_b * px_b + py_b * py_b);
+th_b = atan(py_b, px_b);
+cu_b = fract(k_ecc * log(1 + sqrt(r_b * r_b + r_soft * r_soft) / r0) / twopi);
+cv_b = fract(k_ang * th_b / twopi);
+fx_b = cv_b * 256 - 0.5;
+fy_b = cu_b * 256 - 0.5;
+x0_b = floor(fx_b);
+y0_b = floor(fy_b);
+tx_b = fx_b - x0_b;
+ty_b = fy_b - y0_b;
+wxa_b = tx_b * (tx_b * (1 - 0.5 * tx_b) - 0.5);
+wxb_b = tx_b * tx_b * (1.5 * tx_b - 2.5) + 1;
+wxc_b = tx_b * (tx_b * (2.0 - 1.5 * tx_b) + 0.5);
+wxd_b = tx_b * tx_b * (0.5 * tx_b - 0.5);
+wya_b = ty_b * (ty_b * (1 - 0.5 * ty_b) - 0.5);
+wyb_b = ty_b * ty_b * (1.5 * ty_b - 2.5) + 1;
+wyc_b = ty_b * (ty_b * (2.0 - 1.5 * ty_b) + 0.5);
+wyd_b = ty_b * ty_b * (0.5 * ty_b - 0.5);
+x0m_b = wrap(x0_b - 1, 0, 256);
+xa_b = wrap(x0_b, 0, 256);
+xb_b = wrap(x0_b + 1, 0, 256);
+x1p_b = wrap(x0_b + 2, 0, 256);
+y0m_b = wrap(y0_b - 1, 0, 256);
+ya_b = wrap(y0_b, 0, 256);
+yb_b = wrap(y0_b + 1, 0, 256);
+y1p_b = wrap(y0_b + 2, 0, 256);
+ra_b = wxa_b * nearest(in2, vec((x0m_b + 0.5) / 256, (y0m_b + 0.5) / 256)).x
+      + wxb_b * nearest(in2, vec((xa_b + 0.5) / 256, (y0m_b + 0.5) / 256)).x
+      + wxc_b * nearest(in2, vec((xb_b + 0.5) / 256, (y0m_b + 0.5) / 256)).x
+      + wxd_b * nearest(in2, vec((x1p_b + 0.5) / 256, (y0m_b + 0.5) / 256)).x;
+rb_b = wxa_b * nearest(in2, vec((x0m_b + 0.5) / 256, (ya_b + 0.5) / 256)).x
+      + wxb_b * nearest(in2, vec((xa_b + 0.5) / 256, (ya_b + 0.5) / 256)).x
+      + wxc_b * nearest(in2, vec((xb_b + 0.5) / 256, (ya_b + 0.5) / 256)).x
+      + wxd_b * nearest(in2, vec((x1p_b + 0.5) / 256, (ya_b + 0.5) / 256)).x;
+rc_b = wxa_b * nearest(in2, vec((x0m_b + 0.5) / 256, (yb_b + 0.5) / 256)).x
+      + wxb_b * nearest(in2, vec((xa_b + 0.5) / 256, (yb_b + 0.5) / 256)).x
+      + wxc_b * nearest(in2, vec((xb_b + 0.5) / 256, (yb_b + 0.5) / 256)).x
+      + wxd_b * nearest(in2, vec((x1p_b + 0.5) / 256, (yb_b + 0.5) / 256)).x;
+rd_b = wxa_b * nearest(in2, vec((x0m_b + 0.5) / 256, (y1p_b + 0.5) / 256)).x
+      + wxb_b * nearest(in2, vec((xa_b + 0.5) / 256, (y1p_b + 0.5) / 256)).x
+      + wxc_b * nearest(in2, vec((xb_b + 0.5) / 256, (y1p_b + 0.5) / 256)).x
+      + wxd_b * nearest(in2, vec((x1p_b + 0.5) / 256, (y1p_b + 0.5) / 256)).x;
+au_b = wya_b * ra_b + wyb_b * rb_b + wyc_b * rc_b + wyd_b * rd_b;
+
+// --- samples norm.x + qx, norm.y - qy
+px_c = ((norm.x + qx) * 2 - 1) * 4;
+py_c = ((norm.y - qy) * 2 - 1) * 4;
+r_c = sqrt(px_c * px_c + py_c * py_c);
+th_c = atan(py_c, px_c);
+cu_c = fract(k_ecc * log(1 + sqrt(r_c * r_c + r_soft * r_soft) / r0) / twopi);
+cv_c = fract(k_ang * th_c / twopi);
+fx_c = cv_c * 256 - 0.5;
+fy_c = cu_c * 256 - 0.5;
+x0_c = floor(fx_c);
+y0_c = floor(fy_c);
+tx_c = fx_c - x0_c;
+ty_c = fy_c - y0_c;
+wxa_c = tx_c * (tx_c * (1 - 0.5 * tx_c) - 0.5);
+wxb_c = tx_c * tx_c * (1.5 * tx_c - 2.5) + 1;
+wxc_c = tx_c * (tx_c * (2.0 - 1.5 * tx_c) + 0.5);
+wxd_c = tx_c * tx_c * (0.5 * tx_c - 0.5);
+wya_c = ty_c * (ty_c * (1 - 0.5 * ty_c) - 0.5);
+wyb_c = ty_c * ty_c * (1.5 * ty_c - 2.5) + 1;
+wyc_c = ty_c * (ty_c * (2.0 - 1.5 * ty_c) + 0.5);
+wyd_c = ty_c * ty_c * (0.5 * ty_c - 0.5);
+x0m_c = wrap(x0_c - 1, 0, 256);
+xa_c = wrap(x0_c, 0, 256);
+xb_c = wrap(x0_c + 1, 0, 256);
+x1p_c = wrap(x0_c + 2, 0, 256);
+y0m_c = wrap(y0_c - 1, 0, 256);
+ya_c = wrap(y0_c, 0, 256);
+yb_c = wrap(y0_c + 1, 0, 256);
+y1p_c = wrap(y0_c + 2, 0, 256);
+ra_c = wxa_c * nearest(in2, vec((x0m_c + 0.5) / 256, (y0m_c + 0.5) / 256)).x
+      + wxb_c * nearest(in2, vec((xa_c + 0.5) / 256, (y0m_c + 0.5) / 256)).x
+      + wxc_c * nearest(in2, vec((xb_c + 0.5) / 256, (y0m_c + 0.5) / 256)).x
+      + wxd_c * nearest(in2, vec((x1p_c + 0.5) / 256, (y0m_c + 0.5) / 256)).x;
+rb_c = wxa_c * nearest(in2, vec((x0m_c + 0.5) / 256, (ya_c + 0.5) / 256)).x
+      + wxb_c * nearest(in2, vec((xa_c + 0.5) / 256, (ya_c + 0.5) / 256)).x
+      + wxc_c * nearest(in2, vec((xb_c + 0.5) / 256, (ya_c + 0.5) / 256)).x
+      + wxd_c * nearest(in2, vec((x1p_c + 0.5) / 256, (ya_c + 0.5) / 256)).x;
+rc_c = wxa_c * nearest(in2, vec((x0m_c + 0.5) / 256, (yb_c + 0.5) / 256)).x
+      + wxb_c * nearest(in2, vec((xa_c + 0.5) / 256, (yb_c + 0.5) / 256)).x
+      + wxc_c * nearest(in2, vec((xb_c + 0.5) / 256, (yb_c + 0.5) / 256)).x
+      + wxd_c * nearest(in2, vec((x1p_c + 0.5) / 256, (yb_c + 0.5) / 256)).x;
+rd_c = wxa_c * nearest(in2, vec((x0m_c + 0.5) / 256, (y1p_c + 0.5) / 256)).x
+      + wxb_c * nearest(in2, vec((xa_c + 0.5) / 256, (y1p_c + 0.5) / 256)).x
+      + wxc_c * nearest(in2, vec((xb_c + 0.5) / 256, (y1p_c + 0.5) / 256)).x
+      + wxd_c * nearest(in2, vec((x1p_c + 0.5) / 256, (y1p_c + 0.5) / 256)).x;
+au_c = wya_c * ra_c + wyb_c * rb_c + wyc_c * rc_c + wyd_c * rd_c;
+
+// --- samples norm.x + qx, norm.y + qy
+px_d = ((norm.x + qx) * 2 - 1) * 4;
+py_d = ((norm.y + qy) * 2 - 1) * 4;
+r_d = sqrt(px_d * px_d + py_d * py_d);
+th_d = atan(py_d, px_d);
+cu_d = fract(k_ecc * log(1 + sqrt(r_d * r_d + r_soft * r_soft) / r0) / twopi);
+cv_d = fract(k_ang * th_d / twopi);
+fx_d = cv_d * 256 - 0.5;
+fy_d = cu_d * 256 - 0.5;
+x0_d = floor(fx_d);
+y0_d = floor(fy_d);
+tx_d = fx_d - x0_d;
+ty_d = fy_d - y0_d;
+wxa_d = tx_d * (tx_d * (1 - 0.5 * tx_d) - 0.5);
+wxb_d = tx_d * tx_d * (1.5 * tx_d - 2.5) + 1;
+wxc_d = tx_d * (tx_d * (2.0 - 1.5 * tx_d) + 0.5);
+wxd_d = tx_d * tx_d * (0.5 * tx_d - 0.5);
+wya_d = ty_d * (ty_d * (1 - 0.5 * ty_d) - 0.5);
+wyb_d = ty_d * ty_d * (1.5 * ty_d - 2.5) + 1;
+wyc_d = ty_d * (ty_d * (2.0 - 1.5 * ty_d) + 0.5);
+wyd_d = ty_d * ty_d * (0.5 * ty_d - 0.5);
+x0m_d = wrap(x0_d - 1, 0, 256);
+xa_d = wrap(x0_d, 0, 256);
+xb_d = wrap(x0_d + 1, 0, 256);
+x1p_d = wrap(x0_d + 2, 0, 256);
+y0m_d = wrap(y0_d - 1, 0, 256);
+ya_d = wrap(y0_d, 0, 256);
+yb_d = wrap(y0_d + 1, 0, 256);
+y1p_d = wrap(y0_d + 2, 0, 256);
+ra_d = wxa_d * nearest(in2, vec((x0m_d + 0.5) / 256, (y0m_d + 0.5) / 256)).x
+      + wxb_d * nearest(in2, vec((xa_d + 0.5) / 256, (y0m_d + 0.5) / 256)).x
+      + wxc_d * nearest(in2, vec((xb_d + 0.5) / 256, (y0m_d + 0.5) / 256)).x
+      + wxd_d * nearest(in2, vec((x1p_d + 0.5) / 256, (y0m_d + 0.5) / 256)).x;
+rb_d = wxa_d * nearest(in2, vec((x0m_d + 0.5) / 256, (ya_d + 0.5) / 256)).x
+      + wxb_d * nearest(in2, vec((xa_d + 0.5) / 256, (ya_d + 0.5) / 256)).x
+      + wxc_d * nearest(in2, vec((xb_d + 0.5) / 256, (ya_d + 0.5) / 256)).x
+      + wxd_d * nearest(in2, vec((x1p_d + 0.5) / 256, (ya_d + 0.5) / 256)).x;
+rc_d = wxa_d * nearest(in2, vec((x0m_d + 0.5) / 256, (yb_d + 0.5) / 256)).x
+      + wxb_d * nearest(in2, vec((xa_d + 0.5) / 256, (yb_d + 0.5) / 256)).x
+      + wxc_d * nearest(in2, vec((xb_d + 0.5) / 256, (yb_d + 0.5) / 256)).x
+      + wxd_d * nearest(in2, vec((x1p_d + 0.5) / 256, (yb_d + 0.5) / 256)).x;
+rd_d = wxa_d * nearest(in2, vec((x0m_d + 0.5) / 256, (y1p_d + 0.5) / 256)).x
+      + wxb_d * nearest(in2, vec((xa_d + 0.5) / 256, (y1p_d + 0.5) / 256)).x
+      + wxc_d * nearest(in2, vec((xb_d + 0.5) / 256, (y1p_d + 0.5) / 256)).x
+      + wxd_d * nearest(in2, vec((x1p_d + 0.5) / 256, (y1p_d + 0.5) / 256)).x;
+au_d = wya_d * ra_d + wyb_d * rb_d + wyc_d * rc_d + wyd_d * rd_d;
+
+au = 0.25 * (au_a + au_b + au_c + au_d);
 au = switch(abs(au) < 1e30, au, 0);
 soft = clamp((clamp(au, 0, 1) - 0.5) * contrast + 0.5, 0, 1);   // G8a: stretch about mid; contrast = 1 is bit-neutral
 crisp = smoothstep(0.46, 0.54, soft);
