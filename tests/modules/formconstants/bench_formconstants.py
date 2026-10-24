@@ -77,10 +77,14 @@ def tex(rng, h=N, w=N):
 
 
 def boxmuller(na, nb, dt=1.0):
-    """Exactly the nl codebox's per-frame Gaussian from the two uniforms."""
-    na = na.astype(np.float64) * 0.999 + 0.0001
-    nb = nb.astype(np.float64)
-    return (np.sqrt(-2.0 * np.log(na)) * np.cos(2 * np.pi * nb) * np.sqrt(dt)).astype(np.float32)
+    """Exactly the nl codebox's per-frame Gaussian, float32 in the GPU's
+    operation order (a float64 reference drifts ~6e-4/step through the trig,
+    which the 30-frame chain amplifies ~10x through relaxation + habituation)."""
+    f = np.float32
+    a = (na.astype(f) * f(0.999) + f(0.0001)).astype(f)
+    s = np.sqrt(np.float64(-2.0) * np.log(a.astype(np.float64))).astype(f)
+    c = np.cos((f(2 * np.pi) * nb.astype(f)).astype(np.float64)).astype(f)
+    return (s * c * f(np.sqrt(dt))).astype(f)
 
 
 def mirror_frame(state, P, nx):

@@ -232,9 +232,11 @@ def encode(state, out_size, sharp=F32(0.5), contrast=F32(1.0),
     uses hardware LINEAR since state grid == render grid), then f_wc's
     contrast + sharp display map. Returns (H, W, 4) float32 luma, alpha 1."""
     H, W = out_size
+    # gen's `norm` is texel-CENTRED: ((x + 0.5)/W), NOT x/W (the 2026-10-24
+    # enc-bench decorrelation was this half-texel shift on random fields)
     ys, xs = np.mgrid[0:H, 0:W].astype(F32)
-    px = (xs / W * 2 - 1) * R_MAX
-    py = (ys / H * 2 - 1) * R_MAX
+    px = ((xs + 0.5) / W * 2 - 1) * R_MAX
+    py = ((ys + 0.5) / H * 2 - 1) * R_MAX
     r = np.hypot(px, py)
     th = np.arctan2(py, px)
     # u (eccentricity) = ROWS, v (angle) = COLUMNS (the f_wc mirror convention)
