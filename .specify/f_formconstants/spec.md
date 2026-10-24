@@ -1,7 +1,8 @@
 # Spec: f_formconstants
 
 _Created: 2026-10-24_
-_Status: Scope settled 2026-10-24 — see below._
+_Status: **REVISION 2 (2026-10-24 night) — read "Revision 2" first; it
+supersedes the premises listed there.** Scope originally settled 2026-10-24._
 _Origin: `ideas/f_formconstants.md` — spun out of the f_wc pixelation
 discussion (HANDOFF 2026-10-24). Reading the `WC_Example_10_fullscreen.html`
 source showed its fine, silky look is structural (solver grid = display grid,
@@ -11,7 +12,100 @@ shipped and unchanged: same model class, different architecture and regime.
 Name settled: `f_formconstants` (Ermentrout-Cowan's term for the
 hallucination taxonomy; Matt, 2026-10-24 — the f_wc gate-G2 alternate)._
 
-## Scope settled (2026-10-24, Claude + Matt)
+## Revision 2 (2026-10-24 night, Claude + Matt): parity first, then deviate
+
+### Why this revision exists
+
+A re-read of the reference source (`WC_Example_10_fullscreen.html`,
+`lib/gpgpu.js`, `lib/gpugaussian.js`, `lib/gpurand.js`) found that the two
+premises the original spec was built on are wrong. Every later decision
+(adaptive render-res solver, resize reseed, `sw`/`sh` plumbing, σ clamp in
+screen px, switching to the Psychedelic + noise + habituation corner) was
+made on top of them. After those decisions the module was being tuned
+against a target it no longer resembled, and the live build fails (HANDOFF
+2026-10-24 night). Matt concurred with this revision 2026-10-24.
+
+### What the reference actually does (source-traced; each item is the spec)
+
+| # | Fact | Source |
+|---|---|---|
+| S1 | **Solver is a FIXED 1024 × 1024**, not render resolution. `getRasterGL()` sets `canvas.width = canvas.clientWidth` *before* `make_fullscreen()` runs, while the canvas still has its inline `style="width:1024px;height:1024px"`; every `newBasicFramebuffer` inherits `gl.width`/`gl.height`. Fullscreen/resize only change the CSS size: the browser stretches the 1024² canvas to `max(w,h)` square and crops the overflow. | `gpgpu.js getRasterGL`, `newTexture`; html `main()` call order, `make_fullscreen()` |
+| S2 | **8-bit quantization at three points per step**: `floor(255·c + 0.5)/255` on the blur-x output, the blur-y output, and the WC update's E and I (`EncodeFloat`). This is the sustain mechanism (Phase 0 T002 measured it: the quantized port breathes, every float32 variant dies). | `gpugaussian.js GPUGaussianMultiBlur` shader; html `wc` shader |
+| S3 | **Blur**: `GPUGaussianMultiBlur(gl,1,2,1,1)` → σ_R = 1, σ_G = 2, σ_B = σ_A = 1 texel; ONE shared radius `ceil(3·max σ)` = 6 (so the σ = 1 kernel also spans 13 taps); each channel's weights `exp(−0.5·(i/σ)²)` normalized over [−6, 6]; texel-exact taps (`gl_FragCoord` ± i), REPEAT wrap. | `gpugaussian.js createGaussianConvolution`, `GPUGaussianMultiBlur` |
+| S4 | **WC update** (dt 1, Te 10, Ti 20, Aee 10.5, Aie 8.5, Aei 12, Aii 3, He 2, Hi 3.5): `Ve = F(Aee·Uec − Aie·Uic − He + s)`, `Vi = F(Aei·Uec − Aii·Uic − Hi)`, `Ue += (Ve−Ue)·dt/Te`, `Ui += (Vi−Ui)·dt/Ti`; output `(Q(Ue), Q(Ui), |Ue−Ui|·3, 1)` (B stored through an 8-bit target, so clamped to [0,1] and quantized). `s` enters E only. | html `parameters`, `wc` shader |
+| S5 | **Drive `s`**: `s = 0.3·(sign(sin(t·π·6.8/500)) + 1)` → a square wave, 0.6 for the first half-period, 0 for the second, period 500/3.4 ≈ 147.06 frames; `t` = frame count from page load. One WC step per frame. | html `animate()` |
+| S6 | **Seeding**: one-time uniform uint8 random in all four channels (values k/255). **No per-frame noise. No habituation.** | `gpurand.js GPUNoise.randomize`, html `noise.randomize(U)` |
+| S7 | **Map**: z = canvas coordinates mapped to [−1, 1]² of the square canvas; u = (atan2(z.y, z.x), log‖z‖) / 2π; sample the NEW state at u with LINEAR filtering and REPEAT wrap. Bare complex log, conformal: one texture width per revolution. Over most of the visible screen this MAGNIFIES the field (≈1–3× in canvas px, × the CSS stretch ≈1.9 at 1080p), which is where the silky read comes from. The centre minifies and aliases (accepted in the source). | html `retinalmap` shader |
+| S8 | **Display is RGB** `(E, I, 3·|E−I|)` straight from the state, no curve, no threshold. The blue channel lights where E and I disagree and draws the contour web. | html `retinalmap` samples all four channels of `temp` |
+
+The Phase 0 Record's statement "solver textures = canvas client size (up to
+1920² on a 1080p display)" is WRONG per S1 (verification step in T040).
+
+### Superseded by this revision
+
+FR-001 (render-res state), FR-002's σ-in-screen-px band clamp, FR-003's
+Psychedelic + noise + habituation defaults, FR-007's map and sampling,
+NF-002 (float32 end to end), NF-005, the Edge Cases resize item, the
+Parameters table, Success Criterion 3, Out of Scope items 1 and 2 (color, the
+`s` wave), and the "Resolved by design discussion" architecture bullets. They
+stay below as history. Where they conflict with Revision 2, Revision 2 wins.
+
+What still holds: US-2 drive semantics (G3, f_wc), US-5 module conventions,
+FR-004 (seed from noise, never zero), FR-008 (no NaN at the outlet), FR-009
+(reset), FR-011, FR-012, NF-003 (stability soak), NF-004 (tier order).
+
+### Revised architecture (Phase R target: the parity build)
+
+    hold → pass → blur_x → blur_y → wc → hold          (all fixed @dim N N)
+    seed → pass (reseed only)        wc → enc (render res)
+
+- **Solver stages are fixed size**, `@adapt 0 @dim N N @type float32`,
+  N = 1024 (S1). NO `r dim` reaches any solver stage. NO resize reseed. Every
+  codebox that needs the texel grid uses a literal or a Param whose default is
+  N, never the gen `dim` global (jit-gen-codebox rule; the 2026-10-24 debug).
+  A test asserts the codebox Param defaults equal the definition's @dim.
+- **Quantization is in the codeboxes** exactly where S2 puts it. State
+  textures stay float32; the quantize makes the values 8-bit-exact.
+- **pass**: reseed from seed (uint8-like: `floor(h·256)/255` capped at 1, all
+  four channels, S6), otherwise hold. The **"lost" test is the alpha channel**
+  (wc writes A = 1; a fresh or reallocated texture reads A = 0), NOT
+  "E == 0 and I == 0": in the quantized dynamics both can legitimately be
+  exactly 0, and the old self-heal would inject noise into a live field.
+  NaN guard stays.
+- **wc** (the old `nl`): S4 verbatim, with `s` computed in the codebox from a
+  frame-count Param `t` (the existing draw counter): `s = s_depth · (fract(t ·
+  s_rate) < 0.5)`, defaults `s_depth` 0.6, `s_rate` 3.4/500 = 0.0068. (`fract`
+  instead of `sin` keeps it exact at large t; the source's t = 0 value 0.3 is a
+  single frame and is not reproduced.)
+- **enc**: S7 on the module's output size. Square crop on the long axis:
+  `L = max(ow, oh)`, `zx = (norm.x·2−1)·ow/L`, `zy = (norm.y·2−1)·oh/L` (`ow`,
+  `oh` = output size Params fed by the existing `r dim → route → unpack`).
+  Sample the state with the existing manual bilinear + wrap, grid size N
+  (literal/Param). Output `(E, I, B, 1)` sampled (S8), `bypass_gate` → black
+  A = 1. No `r_soft`, no contrast/sharp in Phase R.
+- **Parity build has no performance dials** — only reset and bypass. The
+  drive inlet's plumbing may stay in the patcher, but nothing in the wc
+  equation reads it in Phase R. Every dial comes back in Phase D, one at a
+  time.
+
+The y-axis orientation of jit textures vs. `gl_FragCoord` may mirror the
+picture vertically relative to the HTML. That is not a parity failure; note it
+and move on.
+
+### Phase D (deviations from the source, after parity passes)
+
+Each deviation is its own task, A/B'd against the parity build and the HTML,
+and reversible. Candidates, roughly in value order: output mode (RGB / luma of
+E / luma of the B contour channel); breathe dials (`s_depth`, `s_rate`); a
+quantization-levels dial (255 default; float = off) as a character control;
+conformal zoom (one complex gain, so spiral twist stays conformal) and optional
+centre softening; solver size as a load-time choice (512 / 1024 / 2048 —
+features are texel-scale, so N sets the look scale); `rate`; the drive inlet
+(G3 semantics); coupling dials; and, only if it earns its place in A/B, the
+old Psychedelic + noise + habituation "steady web" as a second mode (reference
+build: commit `63b6129`).
+
+## Scope settled (2026-10-24, Claude + Matt) — history; see Revision 2
 
 - **New sibling module, not a re-architecture of f_wc.** f_wc's 256² FFT
   chain, its tuned labyrinth corner, and its spots corner (aii 3–6) ship

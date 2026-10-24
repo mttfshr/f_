@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-24 (late night): f_formconstants REVISION 2 — parity rebuild; read this first
+
+- The reference page was misread: its solver is a FIXED 1024² (not render-res), it sustains on 8-bit quantization + the `s` square wave, and its bare conformal log map MAGNIFIES the field (ours minified it ~2.5×). Spec now has a "Revision 2" section (source facts S1–S8, superseded list, parity architecture); tasks.md has an agent brief, Phase R (T040–T049, parity build: fixed @dim 1024, no dials, RGB out, quantize at the three source points) and Phase D (T060–T069, one deviation at a time).
+- The night entry below (live "flash then black") is NOT being pursued: T044 removes the `r dim`/sizing layer it most likely lives in. The steady-web build is the reference at `63b6129`.
+- **Next:** T040 (source verification; Matt checks `maincanvas.width` in the browser), then T041–T045 offline. Any agent: read the brief in tasks.md before starting.
+
 ## 2026-10-24 (night, for fresh eyes): f_formconstants LIVE symptom unresolved — read this before touching the module
 
 **Module status:** builds drift-0, offline suite green, codebox stage bench 8/8

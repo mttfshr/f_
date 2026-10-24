@@ -7,6 +7,9 @@ default (and whether an internal excite-LFO is needed) and everything in
 Phase 1 assumes those numbers.
 **Commits**: After each phase checkpoint.
 
+> **REVISION 2 (2026-10-24 night): start at "REVISION 2" below — the agent
+> brief, Phase R (parity build) and Phase D. Phases 0/1 above are history.**
+
 Created 2026-10-24 from the spec after the f_wc pixelation post-mortem (see
 Record). Each task says whether it is offline NumPy (no Max), the Max bench,
 or a human look (tier 3, Matt).
@@ -233,23 +236,181 @@ edit (`tests/bg.sh start offline`).
 
 ---
 
-## Phase 2: Tuning (tier 3, live with Matt)
+## REVISION 2 (2026-10-24 night): parity rebuild — supersedes the open Phase 1/2 work
 
-- [ ] T020 [US1] **Headline AB**: module vs. `WC_Example_10_fullscreen.html`
-  side by side at the same window size, default dials, high and low `sharp`.
-  Matt's call: the fine silky web read, with no texel staircase (Success 1).
-- [ ] T021 [US3] `grain`/`aspect` ranges + landmark snap points live (the
-  T003 table is the offline proposal); confirm the stripes↔labyrinth ordering
-  axis reads at render-res physics. Record the final ranges in the spec table.
-- [ ] T022 [US2] Drive-transition feel live (imprint legibility, release);
-  `rate` range + ceiling (pattern-preservation bound, FR-005).
-- [ ] T023 [US1] Map corner for the fine web (zoom/twist/fovea defaults; the
-  parity set was tuned for the chunky field) + `r_soft` value at the fine
-  scale; live resize check alongside (T013's seam visible/acceptable?).
+The spec's "Revision 2" section explains why: the reference runs a FIXED
+1024² solver with 8-bit quantization, the flicker `s` wave and an RGB
+magnifying conformal map, and the build above was made on the opposite
+premises. The steady-web build stays in git as a reference (commit
+`63b6129`). Old tasks: T013 superseded (no resize handling at all), T017
+moves to T066, T018 superseded by T049, T020 by T048, T021–T023 by Phase D,
+T024 stays (Phase 2 below).
+
+### Agent brief — read before ANY Revision 2 task (Claude, omp, any subagent)
+
+**Goal:** make `f_formconstants` look like `WC_Example_10_fullscreen.html`.
+Phase R reproduces the reference. Phase D changes it on purpose, one thing at
+a time. Nothing else.
+
+1. **The reference is the spec.** In Phase R, port spec items S1–S8 exactly
+   and add nothing: no per-frame noise, no habituation, no `r_soft`, no
+   contrast/sharp, no clamps beyond the NaN guard, no "improvements". If you
+   think the source is wrong, say so in your report; do not fix it.
+2. **Never move the target to make something work.** If the port does not
+   sustain or does not match, the port or the harness is wrong. Do not change
+   constants, add terms or switch regimes. Stop and report the evidence.
+   (This module drifted exactly this way once: T002 found the float32 port
+   dead and replaced the model instead of keeping the quantization.)
+3. **A measurement that contradicts the spec stops the task.** Write the
+   measurement and the conflict into the task's record and hand back for a
+   decision. Do not amend the spec yourself.
+4. **One task at a time, in order.** End each task with the report below and
+   do not start the next one unasked.
+5. **Two strikes.** Two failed fix attempts on the same symptom → stop; list
+   the hypotheses ranked, the evidence for each, and the single measurement
+   that would split them.
+6. **GenExpr is verified only in Max.** An offline agent may write codeboxes
+   but must not call them working; only a Max compile + readback (a bench
+   session with Matt) verifies one. Use only precedented constructs
+   (jit-gen-codebox skill): no functions with destructuring or global refs, no
+   multi-assign, no unary minus before a parenthesis, `nearest()` with
+   normalized coords (never `nearestpix`), never the `dim` global for a texel
+   grid (literal or a Param defaulting to N), never a variable named `e` or
+   `phi`, no Param named `texture` or `bypass`.
+7. **No new architecture** (resize handling, adaptive resolution, new build
+   features) unless a task asks for it.
+8. **CLAUDE.md session rules apply:** no test or bench runs beyond the one
+   named test for the change (`-q`); no polling loops; commit at each task
+   checkpoint, chained to the edit; `.specify/paused/` is out of scope.
+9. **Known traps:** quantize knife edges (GPU vs. NumPy rounding at exactly
+   (k+0.5)/255; T046 states the tolerance; do not chase single-texel flips);
+   positional object ids shift when the dial count changes (T044); the old
+   "E == 0 and I == 0" self-heal is wrong under quantization (use the alpha
+   flag, spec Revision 2 `pass`); `jit.gl.pix` reads an unconnected inlet as
+   black.
+
+**Report format, every task:** Done · Evidence (numbers, file paths) ·
+Deviations from the spec (expected: none) · Open questions · Next.
+
+**Live-debug rule (if the module misbehaves in Max but the bench is green):**
+do not add more bench legs first. In a scratch copy of Matt's patch, put a
+`jit.pwindow` (or `jit.gl.asyncread` → `jit.3m`) on each stage's outlet and
+bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
+
+### Phase R: parity build (BLOCKING for Phase D)
+
+- [ ] T040 **Source verification** (offline + Matt, 5 min). Confirm S1–S8
+  against the source files, citing file + function for each. Matt confirms
+  S1 in the browser console with the page fullscreen:
+  `document.getElementById('maincanvas').width` → expect 1024. Any
+  disagreement → STOP (brief rule 3).
+- [ ] T041 **Parity mirror** `tests/modules/formconstants/fc_parity_mirror.py`
+  (offline). Exact NumPy float32 port of S2–S8: `q(x) = floor(255x + 0.5)/255`;
+  `seed_state(rng)` (k/255 in all four channels); `blur_x`/`blur_y` (S3 kernel
+  table, shared radius 6, quantized output, wrap); `s_of_t(t)` (the Revision 2
+  `fract` form); `wc_step(state, conv, t)` (S4, B = q(clip(3|E−I|, 0, 1)),
+  A = 1); `pass(state, seed, reseed)` (alpha lost flag); `encode(state, ow,
+  oh)` (S7 square crop, bilinear + wrap, RGB out). **Read
+  `tests/records/spike_fc_sustain.py` first:** it already has a quantized
+  port; reuse it where it matches S1–S8 and resolve every difference in
+  favor of the source, listing each in the report.
+- [ ] T042 **Parity tests** `tests/modules/formconstants/test_fc_parity.py`
+  (offline, keep under ~20 s). (a) blur weights equal a direct transcription
+  of `createGaussianConvolution(σ, true, 6)` for σ = 1, 2; (b) `q` is
+  idempotent and applied at exactly the S2 points; (c) `s_of_t` values and
+  period; (d) sustain regression at N = 256: quantized + s stays alive over
+  3000 frames (E std keeps pulsing above a floor taken from the T002 record),
+  and the same run with `q` disabled dies, which documents why S2 is
+  load-bearing; (e) a texel with E = I = 0 and A = 1 is held, not reseeded;
+  (f) `encode` samples the expected texel for a few known (angle, log r)
+  points. If (d) fails, that is a brief-rule-2 stop, not a tuning task.
+- [ ] T043 **Parity codeboxes** (offline write; verified in T046). Rewrite
+  `codebox_seed.gen` (uint8-like hash; salt advances per RESET only, not per
+  draw), `codebox_pass.gen` (alpha lost flag), `codebox_blur_x.gen` /
+  `codebox_blur_y.gen` (S3 exactly: 13 fixed taps, per-channel weights
+  normalized over the shared radius, all four channels, quantized output,
+  grid from Param `n` = 1024), `codebox_nl.gen` (S4 + the `s` form; Params
+  `t`, `s_depth`, `s_rate`; keep the file and stage name `nl` to avoid
+  builder churn), `codebox_enc.gen` (S7/S8; Params `ow`, `oh`, `n`,
+  `bypass_gate`). Term for term against `fc_parity_mirror.py`; each header
+  cites the S items it implements. Nothing from the steady-web build
+  survives unless S1–S8 require it.
+- [ ] T044 **Definition + build** (offline). `definition.py`: params = reset,
+  bypass and the internals (`reseed`, `salt`, `t`, `bypass_gate`, `ow`,
+  `oh`); NO dials; drop the drive mod_inlet for Phase R (T066 restores it).
+  Solver stages `@adapt 0 @dim 1024 1024 @type float32`; enc stays
+  render-size via `r dim`; remove the `r dim` fan-out to solver stages and
+  the `r dim → delay` reseed line; the draw counter now feeds `t` (nl) and
+  no longer feeds `salt` every draw. Recompute every positional object id
+  from the `build/spec.md` formula (the dial count changes). Add a test that
+  each codebox Param `n` default equals the definition's @dim. Build; then
+  drift, `test_module_contracts`, `test_launch`, menu `--check` (named tests,
+  `-q`). Panel size shrinks: regenerate menu sizes and launcher. README row
+  text waits for T048.
+- [ ] T045 **Old tests** (offline). `fc_mirror.py` / `test_formconstants.py`
+  describe the steady-web build and stay as its reference. Any test that
+  reads the shipped codeboxes or definition and now fails is marked xfail
+  with reason "steady-web reference, Revision 2"; nothing is deleted.
+- [ ] T046 **Bench legs vs. the parity mirror** (Max bench, Matt's go).
+  Compile every stage; per-stage legs. Tolerance, stated in advance:
+  quantized outputs pass if max |diff| ≤ 1/255 and ≤ 0.1% of texels differ
+  at all. Chain: texel-exact (same tolerance) for the first 5 frames; after
+  that, rounding flips cascade, so compare statistics over 300 frames (E mean
+  and std within 10%, structure-factor peak λ within 10%, mean-E period
+  matches the `s` period). Do not debug texel divergence after frame 5 unless
+  the statistics disagree.
+- [ ] T047 **Module look bench** (Max bench). Rerun `bench_fc_look.py`
+  adapted to RGB output: expect structured, not uniform (E std > 0.05 through
+  the run, a spectral peak, mean E pulsing at ≈147 frames). If uniform or
+  dead: apply the live-debug rule above before any code change.
+- [ ] T048 **[GP — Matt] Parity look gate.** Module vs. the HTML page side by
+  side, same window size, both freshly started. Pass = "same thing" to Matt's
+  eye (a vertical mirror is fine). No Phase D work until GP passes; a fail
+  goes back to T046/T047 evidence. Then update the README row.
+- [ ] T049 **Cost** (Max bench): ms/frame at N = 1024 and N = 2048, render
+  1080p and 4K; report against f_wc's 2.45 ms. Feeds T064.
+
+**Checkpoint:** Phase R closed when GP passes and T049 has numbers.
+
+### Phase D: deliberate deviations (each: mirror first if dynamics change,
+A/B vs. the parity build AND the HTML, Matt keeps or reverts)
+
+- [ ] T060 **Output mode** menu: RGB (source) / E luma / contour (B) luma /
+  RGB luma. Matt picks the default.
+- [ ] T061 **Breathe** dials: `s_depth` (0–1, default 0.6) and `s_rate`
+  (period in frames, default 147). Note how it compares with an `excite`-style
+  offset on both populations (the f_wc G7 semantics).
+- [ ] T062 **Quantization levels** dial (default 255; off = float). A
+  character control; T042(d) predicts "off" dies, so the range floor is a
+  measured value, not a guess.
+- [ ] T063 **Map**: conformal zoom/rotation/spiral as one complex gain on
+  (θ, log r), optional centre softening, field of view. Integer angular
+  periods only where a seam would otherwise show.
+- [ ] T064 **Solver size** as a load-time choice (512 / 1024 / 2048).
+  Design discussion first (how N reaches both @dim and the codebox `n`
+  Params, and how a change is applied); no code before Matt picks.
+- [ ] T065 **Rate** (dt): measure in the mirror first; with quantization,
+  per-step changes under ~1/255 freeze, so small dt may stall rather than
+  slow.
+- [ ] T066 **Drive inlet** back (G3 semantics, E-only, through the
+  vs_inState / `drv_conn` pattern); mirror leg + the old T017 imprint leg.
+- [ ] T067 **Coupling dials** (e.g. Aie / Aii), only if Matt asks after
+  T060–T063.
+- [ ] T068 **Steady-web mode** (the Psychedelic + noise + habituation build,
+  commit `63b6129`) as a second mode, only if A/B shows a distinct family
+  worth a switch; otherwise drop it and record why.
+- [ ] T069 Defaults and panel layout; rewrite the spec's Parameters table to
+  the shipped dials.
+
+**Checkpoint:** Phase D closed when Matt approves the dial set and defaults.
+
+## Phase 2: Soak (tier 3, live with Matt)
+
+- [~] T020 superseded by T048 · T021–T023 superseded by Phase D.
 - [ ] T024 **[G2 — Matt]** Soak check (f_wc's 30 s wash-drift precedent) at the
-  shipped corner; pick the shipped `sharp`/`contrast` defaults from the soak.
+  shipped corner after Phase D.
 
-**Checkpoint:** Phase 2 closed when Matt approves the default look and ranges.
+**Checkpoint:** Phase 2 closed when Matt approves the soak.
 
 ---
 
@@ -319,3 +480,21 @@ the suite is green. Module is shipped.
   vortex); per-frame `Ne` measured rather than assumed (their page injects
   none — possibly sustained by quantization decorrelation + the slow square
   wave `s`; T002 answers this at float32).
+
+### 2026-10-24 (night): Revision 2 — the reference was misread; parity rebuild
+
+- Fresh read of the html + `gpgpu.js` / `gpugaussian.js` / `gpurand.js`
+  (Claude, after the omp/kimi debug arc stalled): the solver is a FIXED
+  1024² (`getRasterGL` reads `clientWidth` while the canvas still has its
+  inline 1024px style, before `make_fullscreen`), so the record above
+  ("canvas client size, up to 1920²") is wrong. The display MAGNIFIES the
+  field through the bare conformal log; the current enc (zoom 5 / twist 3 /
+  r_max 4 over a render-res state) MINIFIES it about 2.5×, so it could not
+  look silky even with healthy dynamics. The sustain mechanism is the 8-bit
+  quantization + `s` (T002 already showed it); the model swap to
+  Psychedelic + noise + habituation moved the target.
+- Matt concurred: spec Revision 2 (facts S1–S8, superseded list, parity
+  architecture, Phase D list) and tasks Phase R (T040–T049) + Phase D
+  (T060–T069) + an anti-drift agent brief. The live "flash then black"
+  symptom is not pursued further: the sizing layer it most likely lives in
+  is removed by T044. Reference build for the old regime: `63b6129`.
