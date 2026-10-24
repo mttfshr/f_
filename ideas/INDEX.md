@@ -578,8 +578,8 @@ placeholders.
 - **[f_wc_from_webgpgpu.md](f_wc_from_webgpgpu.md)** ⚪ — Four pieces for `f_wc` from
   Rule's Wilson-Cowan pages: known-answer reference, Gaussian noise drive, habituation
   dials, retinotopic stage as a shared piece.
-- **[f_quasi.md](f_quasi.md)** ⚪ — Shepard-zoom quasicrystal generator with an exact
-  analytic gradient outlet, plus relief, slope-hue and contour-banding render modes.
+- **[f_quasi.md](f_quasi.md)** 🟡 — **Specced 2026-10-23** (`.specify/f_quasi/`): Shepard-zoom quasicrystal
+  generator with an analytic gradient outlet; relief, slope-hue and contour-banding looks are a gated Phase 2.
 - **[f_gabor.md](f_gabor.md)** ⚪ — Gabor band-pass and phase-invariant quadrature
   energy, with tile-bank and octave-pyramid display modes.
 - **[f_cmap_feedback.md](f_cmap_feedback.md)** ⚪ — Iterated complex-map feedback pull

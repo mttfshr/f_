@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-23 (evening): `f_quasi` specced; `f_wave_field` next
+
+- `.specify/f_quasi/{spec,tasks}.md` written from `ideas/f_quasi.md` (omp run `webgpgpu-ideas-1`, eight idea files committed `bfd8007`). Settled with Matt: looks (Relief, Slope hue) in a gated Phase 2; cyclic `zoom` dial plus a patcher clock; fixed 5 waves × 7 octaves; outlets texture, gradient vecfield, potential scalar. Phase 0 (NumPy mirror T001-T005, cost bench T006, vecfield-normalisation look T007, gates G1-G3) is not started.
+- Source facts that changed the idea: the zoom wrap is approximate (1e-8 at sigma 0.5, visible at sigma 1, so `envelope` needs a cap), the source gradient lacks the 2πBs factor, the source aspect handling is not isometric.
+- **Next: spec `f_wave_field`.** Matt chose the spectral direction (f_ks / f_wc pattern, exact linear wave step per Fourier bin) to evaluate; Phase 0 measures cost. Read `ideas/f_wave_field.md` and `ideas/f_cymascope.md`; edges are periodic under a plain DFT (reflecting edges would need a cosine transform).
+
+---
+
 ## 2026-10-23 (late): f_wc Phase 0 CLOSED (G1 + G3 approved); Phase 1 architecture worked out from the f_ks chain — next session builds
 
 **Phase 0 closed (commit `880820c`).** Both remaining gates went to Matt and came back: G1 = labyrinth-generator scope (no four-form selector), G3 = drive-coupling recommendation approved. Still open, later phases: G4 (output encoding, slips to Phase 2 via T008), G2 (naming `f_wc` vs `f_formconstants`, Phase 3 blocker).
