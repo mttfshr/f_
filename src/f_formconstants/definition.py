@@ -112,6 +112,11 @@ patcher = {
         {"name": "bypass_gate", "type": "internal"},
         # Driven by the drive vs_inState connection flag (`prepend param drv_conn` -> nl)
         {"name": "drv_conn", "type": "internal"},
+        # Driven by the raw `r dim` unpack (`prepend param sw/sh`) -> seed + enc:
+        # the STATE size, explicit per the jit-gen-codebox rule (`dim` is not an
+        # input texture's size; 2026-10-24 solid-flicker debug)
+        {"name": "sw", "type": "internal"},
+        {"name": "sh", "type": "internal"},
     ],
 
     "inlet_comment": "control",
@@ -156,7 +161,8 @@ patcher = {
 
 # Codebox Params that are not a UI control: which stage holds them (the internal ones are driven by raw
 # boxes through `prepend param <name>`; see the reset logic below and the drive mod_inlet above).
-_STAGES_OF = {"reseed": "pass", "salt": "seed", "drv_conn": "nl"}
+_STAGES_OF = {"reseed": "pass", "salt": "seed", "drv_conn": "nl",
+              "sw": ["seed", "enc"], "sh": ["seed", "enc"]}
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:
         _p["pix_target"] = _STAGES_OF[_p["name"]]
@@ -219,6 +225,13 @@ patcher["raw_boxes"] = [
     _obj(13, "sel 2", 2, 2, [260.0, 480.0, 40.0, 22.0], ["bang", ""]),
     _msg(14, "param reseed 0", [260.0, 510.0, 85.0, 22.0]),
     _obj(9, "prepend param salt", 1, 1, [30.0, 480.0, 110.0, 22.0]),
+    # dim W H -> the state size as Params for the stages whose inlets do not
+    # carry the state texture (seed, enc): jit-gen-codebox rule — `dim` is not
+    # an input texture's size (2026-10-24 solid-flicker debug)
+    _obj(16, "route dim", 1, 2, [380.0, 320.0, 60.0, 22.0], ["", ""]),
+    _obj(17, "unpack", 1, 2, [380.0, 350.0, 50.0, 22.0], ["int", "int"]),
+    _obj(18, "prepend param sw", 1, 1, [330.0, 380.0, 105.0, 22.0]),
+    _obj(19, "prepend param sh", 1, 1, [440.0, 380.0, 105.0, 22.0]),
 ]
 patcher["raw_lines"] = [
     _line(15, 0, "obj-5", 0),        # r dim -> enc: the output follows the render size
@@ -235,6 +248,11 @@ patcher["raw_lines"] = [
     _line(3, 0, 7, 0), _line(7, 0, "obj-60", 0),    # trigger right -> reseed 1 -> pass
     _line(3, 1, 6, 0), _line(6, 0, 11, 1),    # trigger left -> 0 -> [i] right inlet (restart count)
     _line(10, 0, 11, 0), _line(11, 0, 12, 0), _line(12, 0, 11, 1),    # draw -> [i] -> +1 -> [i]
+    _line(15, 0, 16, 0),             # r dim -> route dim
+    _line(16, 0, 17, 0),             # -> unpack W H
+    _line(17, 0, 18, 0), _line(17, 1, 19, 0),   # W -> param sw, H -> param sh
+    _line(18, 0, "obj-59", 0), _line(19, 0, "obj-59", 0),   # -> seed
+    _line(18, 0, "obj-5", 0), _line(19, 0, "obj-5", 0),     # -> enc
     _line(11, 0, 9, 0), _line(9, 0, "obj-59", 0),   # [i] -> salt -> seed (EVERY DRAW: the mechanism)
     _line(11, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, "obj-60", 0),   # sel 2 -> reseed 0 -> pass
 ]

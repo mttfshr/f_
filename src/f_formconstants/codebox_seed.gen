@@ -28,9 +28,11 @@ hashf(x, y) {
 }
 
 Param salt(0);
+Param sw(128);
+Param sh(128);
 
-px = floor(norm.x * dim.x);
-py = floor(norm.y * dim.y);
+px = floor(norm.x * sw);
+py = floor(norm.y * sh);
 
 sa = salt * 61;
 sb = salt * 17;

@@ -49,13 +49,14 @@ BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang
 DRIVE = np.zeros((N, N, 4), np.float32)         # neutral drive (unconnected equivalent)
 DRIVE[..., 3] = 1.0
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
-PINNED = {"seed": {"salt": 0.0}, "pass": {"reseed": 0.0, "amp": 1.0},
+PINNED = {"seed": {"salt": 0.0, "sw": float(N), "sh": float(N)}, "pass": {"reseed": 0.0, "amp": 1.0},
           "blurx": {"grain": 0.0008, "sig_ratio": 1.45},
           "blury": {"grain": 0.0008, "sig_ratio": 1.45},
           "nl": {"dt": 1.0, "ne": 0.75, "drive_gain": 0.0, "drv_conn": 0.0,
                  "habit": 0.9, "excite": 0.0, "aie": 14.5, "aii": 13.0},
           "enc": {"bypass_gate": 0.0, "sharp": 0.5, "contrast": 1.0,
-                  "k_ecc": 5.0, "k_ang": 3.0, "r0": 1.0, "r_soft": 0.35}}
+                  "k_ecc": 5.0, "k_ang": 3.0, "r0": 1.0, "r_soft": 0.35,
+                  "sw": float(N), "sh": float(N)}}
 
 
 def code(stage):
@@ -165,13 +166,35 @@ def test_nl_full_update_vs_mirror():
     conv_tex[..., 1] = bl[1]
     gn = gpu("nl", [conv_tex, st, noise_tex, DRIVE], dim=(N, N))
     mn = km.nonlinear_step(bl.astype(np.float32), st, Pn.dt, Pn, noise=nx)
+    cd = np.abs(gn - mn).max(axis=(0, 1))
+    note("nl channel diffs", " ".join(f"{float(cd[c]):.2e}" for c in range(4)))
     check("nl: full update vs the mirror (noise, habituation, carry)",
-          float(np.abs(gn - mn).max(axis=(0, 1))).max(), 1e-3)
-    note("nl channel diffs", " ".join(f"{float(np.abs(gn - mn).max(axis=(0, 1))[c]):.2e}" for c in range(4)))
+          float(cd.max()), 1e-3)
     # habituation = 0 pins the carry channels at exactly 0 (the G5 rule)
     gn0 = gpu("nl", [gn, gn, noise_tex, DRIVE], dim=(N, N), habit=0.0)
     check("nl: habit=0 pins B/A to exactly 0",
           max(float(np.abs(gn0[..., 2]).max()), float(np.abs(gn0[..., 3]).max())), 0.0)
+
+def test_enc_probe_ramp_coordinates():
+    """Diagnostic: state E = a known ramp, so the rendered value at a pixel
+    reveals WHICH texel the GPU sampled. A correct map yields au == the
+    mirror's E at the same pixel; any systematic disagreement exposes the map
+    error numerically (transpose, offset, scale) instead of via correlation."""
+    st = np.zeros((N, N, 4), dtype=np.float32)
+    ys, xs = np.mgrid[0:N, 0:N].astype(np.float32)
+    st[..., 0] = xs / N        # R = column index / N (x ramp)
+    st[..., 1] = ys / N        # G = row index / N (y ramp, for cross-check)
+    g = gpu("enc", [BANG, st], dim=(N, N), sharp=0.0)
+    men = km.encode(st, (N, N), sharp=F32(0.0), contrast=F32(1.0),
+                    k_ecc=F32(5.0), k_ang=F32(3.0), r0=F32(1.0), r_soft=F32(0.35))
+    spots = [(N // 2, N // 2), (N // 2, N - 8), (N // 4, 3 * N // 4), (16, 16), (96, 32)]
+    for y, x in spots:
+        print(f"    ...  pixel ({y},{x}): gpu {float(g[y, x, 0]):.4f} "
+              f"gpuG {float(g[y, x, 1]):.4f} mirror {float(men[y, x, 0]):.4f}")
+    d = float(np.abs(g[..., 0] - men[..., 0]).max())
+    note("ramp max diff", f"{d:.4f}")
+    check("enc probe: ramp render matches the mirror's sampled columns", d, 0.02)
+
 
 def test_enc_render_and_bypass():
     st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)

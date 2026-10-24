@@ -12,8 +12,13 @@
 //
 // Inputs: in1 = the `r draw` bang (not referenced here), in2 = the state
 // (R = E, from the nl stage).
-//   - the cortical sample: fx = cv*dim.x - 0.5, fy = cu*dim.y - 0.5, floor +
-//     fractions, 4 nearestpix texel-centre reads wrapped per axis, lerp
+//   - the cortical sample: fx = cv*sw - 0.5, fy = cu*sh - 0.5, floor +
+//     fractions, 4 nearest texel-centre reads wrapped per axis, lerp. The
+//     state size comes from the sw/sh PARAMS (raw `r dim` -> route/unpack ->
+//     prepend param), NOT the `dim` global: `dim` is not an input texture's
+//     size (jit-gen-codebox skill: manual taps need the size as a literal or
+//     a Param; the 2026-10-24 solid-flicker debug found enc/seed's in1
+//     bound-texture dims degenerate)
 //   - the cortical axes: u (eccentricity) = ROWS, v (angle) = COLUMNS (the
 //     f_wc mirror convention, retained so the map records/render scripts
 //     compare directly)
@@ -37,6 +42,8 @@ Param k_ecc(5.0);
 Param k_ang(3);
 Param r0(1.0);
 Param r_soft(0.35);
+Param sw(128);
+Param sh(128);
 
 px = (norm.x * 2 - 1) * 4;
 py = (norm.y * 2 - 1) * 4;
@@ -46,20 +53,20 @@ v = k_ang * theta;
 cu = fract(u / twopi);
 cv = fract(v / twopi);
 
-fx = cv * dim.x - 0.5;
-fy = cu * dim.y - 0.5;
+fx = cv * sw - 0.5;
+fy = cu * sh - 0.5;
 x0 = floor(fx);
 y0 = floor(fy);
 tx = fx - x0;
 ty = fy - y0;
-xa0 = x0 - dim.x * floor(x0 / dim.x);
-xb0 = (x0 + 1) - dim.x * floor((x0 + 1) / dim.x);
-ya0 = y0 - dim.y * floor(y0 / dim.y);
-yb0 = (y0 + 1) - dim.y * floor((y0 + 1) / dim.y);
-cxa = (xa0 + 0.5) / dim.x;
-cxb = (xb0 + 0.5) / dim.x;
-cya = (ya0 + 0.5) / dim.y;
-cyb = (yb0 + 0.5) / dim.y;
+xa0 = x0 - sw * floor(x0 / sw);
+xb0 = (x0 + 1) - sw * floor((x0 + 1) / sw);
+ya0 = y0 - sh * floor(y0 / sh);
+yb0 = (y0 + 1) - sh * floor((y0 + 1) / sh);
+cxa = (xa0 + 0.5) / sw;
+cxb = (xb0 + 0.5) / sw;
+cya = (ya0 + 0.5) / sh;
+cyb = (yb0 + 0.5) / sh;
 e00 = nearest(in2, vec(cxa, cya)).x;
 e10 = nearest(in2, vec(cxb, cya)).x;
 e01 = nearest(in2, vec(cxa, cyb)).x;

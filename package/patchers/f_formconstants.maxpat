@@ -235,7 +235,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_seed.gen -- f_formconstants noise stage: hash noise, deterministic\n// per texel per salt. Render-resolution float32 (@adapt 0, `r dim` resize).\n// Mirror: tests/modules/formconstants/fc_mirror.seed_state() (the seed\n// channels); the per-frame field (the Box-Muller happens downstream in the\n// nl stage). Same mechanism as f_wc's codebox_seed.gen, dim-generalized.\n//\n// Inputs: the first inlet is the `r draw` bang (unused; it only triggers the\n// render every frame). Packing: R = seed-E hash, G = seed-I hash (the pass\n// stage reads these ONLY on the frame reseed is 1: uniform [0, 1) per field,\n// independent channels, never zero), B, A = the two raw uniforms the nl stage\n// turns into the per-frame Box-Muller noise (the load-bearing mechanism,\n// tasks.md T002).\n//   - `salt` increments EVERY FRAME (the `r draw` counter in the raw wiring):\n//     the per-frame drive is what sustains the web (T002)\n//   - no sin(): a Hoskins-style arithmetic hash (fract and multiply-add only)\n//   - scalars only: components are never read from a stored vec\n//   - never name a variable e or phi (predefined constants)\n//   - functions are declared before Param declarations (GenExpr rule)\nhashf(x, y) {\n\tha = fract(x * 0.1031);\n\thb = fract(y * 0.1031);\n\thc = ha;\n\thd = ha * (hb + 33.33) + hb * (hc + 33.33) + hc * (ha + 33.33);\n\tha = ha + hd;\n\thb = hb + hd;\n\thc = hc + hd;\n\treturn fract((ha + hb) * hc);\n}\n\nParam salt(0);\n\npx = floor(norm.x * dim.x);\npy = floor(norm.y * dim.y);\n\nsa = salt * 61;\nsb = salt * 17;\nse = hashf(px + sa, py + sb);\nsi = hashf(px + sa + 113.7, py + sb + 57.3);\nna = hashf(px + sa + 271.9, py + sb + 181.3);\nnb = hashf(px + sa + 401.1, py + sb + 333.7);\n\nout1 = vec(se, si, na, nb);\n",
+									"code": "// codebox_seed.gen -- f_formconstants noise stage: hash noise, deterministic\n// per texel per salt. Render-resolution float32 (@adapt 0, `r dim` resize).\n// Mirror: tests/modules/formconstants/fc_mirror.seed_state() (the seed\n// channels); the per-frame field (the Box-Muller happens downstream in the\n// nl stage). Same mechanism as f_wc's codebox_seed.gen, dim-generalized.\n//\n// Inputs: the first inlet is the `r draw` bang (unused; it only triggers the\n// render every frame). Packing: R = seed-E hash, G = seed-I hash (the pass\n// stage reads these ONLY on the frame reseed is 1: uniform [0, 1) per field,\n// independent channels, never zero), B, A = the two raw uniforms the nl stage\n// turns into the per-frame Box-Muller noise (the load-bearing mechanism,\n// tasks.md T002).\n//   - `salt` increments EVERY FRAME (the `r draw` counter in the raw wiring):\n//     the per-frame drive is what sustains the web (T002)\n//   - no sin(): a Hoskins-style arithmetic hash (fract and multiply-add only)\n//   - scalars only: components are never read from a stored vec\n//   - never name a variable e or phi (predefined constants)\n//   - functions are declared before Param declarations (GenExpr rule)\nhashf(x, y) {\n\tha = fract(x * 0.1031);\n\thb = fract(y * 0.1031);\n\thc = ha;\n\thd = ha * (hb + 33.33) + hb * (hc + 33.33) + hc * (ha + 33.33);\n\tha = ha + hd;\n\thb = hb + hd;\n\thc = hc + hd;\n\treturn fract((ha + hb) * hc);\n}\n\nParam salt(0);\nParam sw(128);\nParam sh(128);\n\npx = floor(norm.x * sw);\npy = floor(norm.y * sh);\n\nsa = salt * 61;\nsb = salt * 17;\nse = hashf(px + sa, py + sb);\nsi = hashf(px + sa + 113.7, py + sb + 57.3);\nna = hashf(px + sa + 271.9, py + sb + 181.3);\nnb = hashf(px + sa + 401.1, py + sb + 333.7);\n\nout1 = vec(se, si, na, nb);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -998,7 +998,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_formconstants render stage: the inverse retinotopic\n// resample. Maps each output pixel's visual-field polar coords (r, theta) to\n// cortical (u, v) = (k_ecc*log(1 + sqrt(r^2 + r_soft^2)/r0), k_ang*theta) and\n// samples the E field there, periodic in both cortical axes.\n// Runs at render resolution AND SO DOES THE STATE (FR-001: solver res ==\n// render res; `r dim` resizes every stage) -- no reconstruction filter is\n// needed or wanted: hardware-exact manual bilinear WITH WRAP, mirroring\n// tests/modules/formconstants/fc_mirror.encode() term for term (the f_wc\n// 16-tap Catmull-Rom exists to hide 256^2-quantized contours, the artifact\n// class this module does not have -- tasks.md record 2026-10-24).\n// Mirror: tests/modules/formconstants/fc_mirror.encode().\n//\n// Inputs: in1 = the `r draw` bang (not referenced here), in2 = the state\n// (R = E, from the nl stage).\n//   - the cortical sample: fx = cv*dim.x - 0.5, fy = cu*dim.y - 0.5, floor +\n//     fractions, 4 nearestpix texel-centre reads wrapped per axis, lerp\n//   - the cortical axes: u (eccentricity) = ROWS, v (angle) = COLUMNS (the\n//     f_wc mirror convention, retained so the map records/render scripts\n//     compare directly)\n//   - map constants are dials (defaults from G0's stills: zoom 5, twist 3,\n//     fovea 1.0 -- the CLOSER set, the best read at the fine web scale;\n//     retune Phase 2); r_max 4 stays baked (the f_wc field of view)\n//   - FOVEAL SOFTENING (f_wc 2026-10-24, retained): u flattens for\n//     r << r_soft so the log-singularity vortex becomes a calm disc;\n//     r_soft is a bench-vary Param\n//   - display mapping (f_wc G4): E is already a 0..1 rate; contrast stretch\n//     about mid-gray, then sharp blends toward the crisp S-curve; default\n//     0.5 (f_wc's soak finding)\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE here)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator\n//     convention); the solver keeps running upstream. The Param is never\n//     named `bypass` (native pix attribute, f_wc FR-010's lesson)\nParam bypass_gate(0);\nParam sharp(0.5);\nParam contrast(1.0);\nParam k_ecc(5.0);\nParam k_ang(3);\nParam r0(1.0);\nParam r_soft(0.35);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0);\nv = k_ang * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nfx = cv * dim.x - 0.5;\nfy = cu * dim.y - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa0 = x0 - dim.x * floor(x0 / dim.x);\nxb0 = (x0 + 1) - dim.x * floor((x0 + 1) / dim.x);\nya0 = y0 - dim.y * floor(y0 / dim.y);\nyb0 = (y0 + 1) - dim.y * floor((y0 + 1) / dim.y);\ncxa = (xa0 + 0.5) / dim.x;\ncxb = (xb0 + 0.5) / dim.x;\ncya = (ya0 + 0.5) / dim.y;\ncyb = (yb0 + 0.5) / dim.y;\ne00 = nearest(in2, vec(cxa, cya)).x;\ne10 = nearest(in2, vec(cxb, cya)).x;\ne01 = nearest(in2, vec(cxa, cyb)).x;\ne11 = nearest(in2, vec(cxb, cyb)).x;\nau = (1 - ty) * ((1 - tx) * e00 + tx * e10) + ty * ((1 - tx) * e01 + tx * e11);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp((clamp(au, 0, 1) - 0.5) * contrast + 0.5, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
+									"code": "// codebox_enc.gen -- f_formconstants render stage: the inverse retinotopic\n// resample. Maps each output pixel's visual-field polar coords (r, theta) to\n// cortical (u, v) = (k_ecc*log(1 + sqrt(r^2 + r_soft^2)/r0), k_ang*theta) and\n// samples the E field there, periodic in both cortical axes.\n// Runs at render resolution AND SO DOES THE STATE (FR-001: solver res ==\n// render res; `r dim` resizes every stage) -- no reconstruction filter is\n// needed or wanted: hardware-exact manual bilinear WITH WRAP, mirroring\n// tests/modules/formconstants/fc_mirror.encode() term for term (the f_wc\n// 16-tap Catmull-Rom exists to hide 256^2-quantized contours, the artifact\n// class this module does not have -- tasks.md record 2026-10-24).\n// Mirror: tests/modules/formconstants/fc_mirror.encode().\n//\n// Inputs: in1 = the `r draw` bang (not referenced here), in2 = the state\n// (R = E, from the nl stage).\n//   - the cortical sample: fx = cv*sw - 0.5, fy = cu*sh - 0.5, floor +\n//     fractions, 4 nearest texel-centre reads wrapped per axis, lerp. The\n//     state size comes from the sw/sh PARAMS (raw `r dim` -> route/unpack ->\n//     prepend param), NOT the `dim` global: `dim` is not an input texture's\n//     size (jit-gen-codebox skill: manual taps need the size as a literal or\n//     a Param; the 2026-10-24 solid-flicker debug found enc/seed's in1\n//     bound-texture dims degenerate)\n//   - the cortical axes: u (eccentricity) = ROWS, v (angle) = COLUMNS (the\n//     f_wc mirror convention, retained so the map records/render scripts\n//     compare directly)\n//   - map constants are dials (defaults from G0's stills: zoom 5, twist 3,\n//     fovea 1.0 -- the CLOSER set, the best read at the fine web scale;\n//     retune Phase 2); r_max 4 stays baked (the f_wc field of view)\n//   - FOVEAL SOFTENING (f_wc 2026-10-24, retained): u flattens for\n//     r << r_soft so the log-singularity vortex becomes a calm disc;\n//     r_soft is a bench-vary Param\n//   - display mapping (f_wc G4): E is already a 0..1 rate; contrast stretch\n//     about mid-gray, then sharp blends toward the crisp S-curve; default\n//     0.5 (f_wc's soak finding)\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE here)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator\n//     convention); the solver keeps running upstream. The Param is never\n//     named `bypass` (native pix attribute, f_wc FR-010's lesson)\nParam bypass_gate(0);\nParam sharp(0.5);\nParam contrast(1.0);\nParam k_ecc(5.0);\nParam k_ang(3);\nParam r0(1.0);\nParam r_soft(0.35);\nParam sw(128);\nParam sh(128);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0);\nv = k_ang * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nfx = cv * sw - 0.5;\nfy = cu * sh - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa0 = x0 - sw * floor(x0 / sw);\nxb0 = (x0 + 1) - sw * floor((x0 + 1) / sw);\nya0 = y0 - sh * floor(y0 / sh);\nyb0 = (y0 + 1) - sh * floor((y0 + 1) / sh);\ncxa = (xa0 + 0.5) / sw;\ncxb = (xb0 + 0.5) / sw;\ncya = (ya0 + 0.5) / sh;\ncyb = (yb0 + 0.5) / sh;\ne00 = nearest(in2, vec(cxa, cya)).x;\ne10 = nearest(in2, vec(cxb, cya)).x;\ne01 = nearest(in2, vec(cxa, cyb)).x;\ne11 = nearest(in2, vec(cxb, cyb)).x;\nau = (1 - ty) * ((1 - tx) * e00 + tx * e10) + ty * ((1 - tx) * e01 + tx * e11);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp((clamp(au, 0, 1) - 0.5) * contrast + 0.5, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -3039,6 +3039,80 @@
 						""
 					]
 				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-16",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						792.0,
+						60.0,
+						22.0
+					],
+					"text": "route dim",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-17",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						822.0,
+						50.0,
+						22.0
+					],
+					"text": "unpack",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"int",
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-18",
+					"maxclass": "newobj",
+					"patching_rect": [
+						330.0,
+						852.0,
+						105.0,
+						22.0
+					],
+					"text": "prepend param sw",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-19",
+					"maxclass": "newobj",
+					"patching_rect": [
+						440.0,
+						852.0,
+						105.0,
+						22.0
+					],
+					"text": "prepend param sh",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
 			}
 		],
 		"lines": [
@@ -4071,6 +4145,102 @@
 					"destination": [
 						"obj-raw-11",
 						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-15",
+						0
+					],
+					"destination": [
+						"obj-raw-16",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-16",
+						0
+					],
+					"destination": [
+						"obj-raw-17",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-17",
+						0
+					],
+					"destination": [
+						"obj-raw-18",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-17",
+						1
+					],
+					"destination": [
+						"obj-raw-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-18",
+						0
+					],
+					"destination": [
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-19",
+						0
+					],
+					"destination": [
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-18",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-19",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
 					]
 				}
 			},
