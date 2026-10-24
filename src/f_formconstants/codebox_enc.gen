@@ -60,10 +60,10 @@ cxa = (xa0 + 0.5) / dim.x;
 cxb = (xb0 + 0.5) / dim.x;
 cya = (ya0 + 0.5) / dim.y;
 cyb = (yb0 + 0.5) / dim.y;
-e00 = nearestpix(in2, vec(cxa, cya)).x;
-e10 = nearestpix(in2, vec(cxb, cya)).x;
-e01 = nearestpix(in2, vec(cxa, cyb)).x;
-e11 = nearestpix(in2, vec(cxb, cyb)).x;
+e00 = nearest(in2, vec(cxa, cya)).x;
+e10 = nearest(in2, vec(cxb, cya)).x;
+e01 = nearest(in2, vec(cxa, cyb)).x;
+e11 = nearest(in2, vec(cxb, cyb)).x;
 au = (1 - ty) * ((1 - tx) * e00 + tx * e10) + ty * ((1 - tx) * e01 + tx * e11);
 
 au = switch(abs(au) < 1e30, au, 0);
