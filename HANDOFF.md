@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-24 (evening): f_formconstants BENCH GREEN — stage legs 8/8, chain 7.3e-5, debug arc closed
+
+- Matt's first Max try: solid black → then "flickering solid black/white/gray". Five-bug arc, all resolved with the stage bench as the instrument (systematic-debugging order): (1) `nearestpix` with normalized coords; (2) blur mask floor-vs-ceil(3σ) real kernel bug; (3) **the module flicker root cause**: seed/enc codeboxes used the gen `dim` global for texture size when their in1 is bang-only (gen `dim` is not an input texture's size — the jit-gen-codebox skill documents this rule; fixed with `sw`/`sh` Params fed from `r dim → route dim → unpack`); (4) the enc bench decorrelation was **mirror-side** (fc_mirror.encode used pixel-edge `xs/W` where gen `norm` is texel-centred — fixed, enc now corr 1.0000); (5) the chain divergence was **bench-sim-side** (boxmuller guarded only na; the codebox guards both uniforms). GPU was arithmetically exact in every case — proven via a self-readout leg (gpu nx vs float64-of-its-own-readback: 1e-6).
+- **Bench 8/8 PASS**: blur 1.8e-7 vs exact kernel; nl 1.2e-7 single-step; enc 2.2e-4 corr 1.0; 30-frame chain 7.3e-5. Contract bench PASS (loads, frames, params, no unexpected errors). Drift 0, offline suite green. Commits ...d84 → fa5c56f.
+- **Left in Phase 1**: T017 (drive-imprint leg), T018 (cost measurement at 1080p/4K/320² — the module's whole pitch is per-pixel work, this number gates viability at 4K).
+- **Phase 2 is now unblocked (tier-3, live with Matt):** AB vs the HTML page, GRAIN/ASPECT ranges + landmarks (the T003 map predicts the steady band), rate ceiling, map corner (T004 stills said closer 5/3/1.0), G2 soak.
+- Also outstanding from today: the module hasn't been LOOKED at since the dim fix — Matt to reload and gate the web visually.
+
 ## 2026-10-24 (late afternoon): f_formconstants Phase 0 CLOSED — Example-10 constants measured dead; ships Psychedelic+habituation "steady dark web"
 
 - Phase 0 experiments overturned the spec's constants: **WC_Example_10_fullscreen is Rule's *flicker* preset** (Ne=0 + slow square-wave `s`) — at float32 it dies in every configuration; only a faithful 8-bit-quantized+s port breathes. The float32-native sustaining corner (N=512/1024, 4000–6000-frame soaks): **Psychedelic couplings (16.1/14.5/13.7/13, He 3.1, Hi 3.5, Te 4, Ti 12.5) + Ne 0.75 + habituation** — and habituation is LOAD-BEARING (saturation by ~3k frames without it, matched to f_wc's T052 mechanism). f_wc Psychedelic-at-fine-grain also saturates without habit — the webgpgpu pages are all transient aesthetics.
