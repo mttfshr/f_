@@ -385,15 +385,20 @@ def _tap16(tex, cxu, cyu):
     return sum(wy[j] * rows[j] for j in range(4)).astype(F32)
 
 
-def _mapE(state, nx, ny, k_ecc, k_ang, r0, r_soft):
-    """One map+sample evaluation at NORMALIZED coords (nx, ny) (the codebox's
-    mapE function): visual-field polar coords -> cortical (u, v), Catmull-Rom
-    taps, periodic both axes. record convention (wc_retinotopy.render):
-    u (eccentricity) = cortical ROWS, v (angle) = cortical COLUMNS; the -0.5 is
-    the texel-CENTER alignment the enc codebox uses (fx = cv * N - 0.5: texel i
-    centers at normalized (i + 0.5) / N) -- without it the taps sit half a texel
-    off (bench-measured 2026-10-23: a gradient-proportional error to 3.2e-2)."""
+def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
+           k_ecc=K_ECC, k_ang=K_ANG, r0=R0, r_soft=F32(0.35), contrast=F32(1.0)):
+    """Stage 7 (`enc`, runs at RENDER resolution, @adapt 0): the inverse
+    retinotopic map. Each output pixel's visual-field polar coords (r, theta)
+    map to cortical (u, v) = (K_ECC*log1p(r/R0), K_ANG*theta), and the E field
+    is 4-tap sampled there (periodic both axes). Display mapping PLACEHOLDER
+    until gate G4: E is already a 0..1 rate, soft = clamp(E, 0, 1); `sharp`
+    blends toward the f_ks crisp S-curve. Non-finite E maps to 0 (the codebox
+    zaps it upstream; belt and braces). h/w override the square out_size for
+    rectangular render sizes (the bench)."""
+    h = h or out_size
+    w = w or out_size
     n = state.shape[0]
+    nx, ny, _, _ = grid(h, w)
     px = (nx * F32(2.0) - F32(1.0)) * R_MAX
     py = (ny * F32(2.0) - F32(1.0)) * R_MAX
     r = np.hypot(px, py).astype(F32)
@@ -402,29 +407,12 @@ def _mapE(state, nx, ny, k_ecc, k_ang, r0, r_soft):
     v = (F32(k_ang) * theta).astype(F32)
     cu = np.mod(u / TWOPI, F32(1.0)) * n - F32(0.5)
     cv = np.mod(v / TWOPI, F32(1.0)) * n - F32(0.5)
-    return _tap16(state, cv, cu)
-
-
-def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
-           k_ecc=K_ECC, k_ang=K_ANG, r0=R0, r_soft=F32(0.35), contrast=F32(1.0)):
-    """Stage 7 (`enc`, runs at RENDER resolution, @adapt 0): the inverse
-    retinotopic map (k_ecc/k_ang/r0/r_soft = the zoom/twist/fovea dials + the
-    bench-vary softening), Catmull-Rom taps (2026-10-24), 2x2 SSAA at quarter-
-    pixel offsets (2026-10-24, contour edge aliasing). Display mapping (G4):
-    E is already a 0..1 rate; contrast (G8a) stretches about mid-gray; `sharp`
-    blends toward the f_ks crisp S-curve. Non-finite E maps to 0. h/w override
-    the square out_size for rectangular render sizes (the bench)."""
-    h = h or out_size
-    w = w or out_size
-    n = state.shape[0]
-    nx, ny, _, _ = grid(h, w)
-    e = np.zeros((h, w), dtype=F32)
-    for ox in (-0.25, 0.25):                # 2x2 screen-space SSAA (codebox_enc
-        for oy in (-0.25, 0.25):            # mapE at quarter-pixel offsets, 2026-10-24)
-            nxo = np.clip(nx + F32(ox) / F32(w), F32(0.0), F32(1.0))
-            nyo = np.clip(ny + F32(oy) / F32(h), F32(0.0), F32(1.0))
-            e += _mapE(state, nxo, nyo, k_ecc, k_ang, r0, r_soft)
-    e = (e / F32(4.0)).astype(F32)
+    # record convention (wc_retinotopy.render): u (eccentricity) = cortical
+    # ROWS, v (angle) = cortical COLUMNS; the -0.5 is the texel-CENTER
+    # alignment the enc codebox uses (fx = cv * N - 0.5: texel i centers at
+    # normalized (i + 0.5) / N) -- without it the taps sit half a texel off
+    # (bench-measured 2026-10-23: a gradient-proportional error to 3.2e-2)
+    e = _tap16(state, cv, cu)
     e = np.where(np.isfinite(e), e, F32(0.0))
     soft = np.clip(e, F32(0.0), F32(1.0))
     soft = np.clip((soft - F32(0.5)) * F32(contrast) + F32(0.5), F32(0.0), F32(1.0))  # G8a

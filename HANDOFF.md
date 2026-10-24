@@ -1,6 +1,12 @@
 # HANDOFF
 
-## 2026-10-24 (noon, hotfix b852d9d): SSAA function form boxed BLACK — inlined ×4 instead
+## 2026-10-24 (noon, LATER): enc REVERTED to the proven single-eval Catmull-Rom build
+
+- The SSAA variants never worked live: function form → field rendered 4-fold mirrored; inline ×4 with sqrt+two-arg-atan → still 4-fold; cartopol restored → 2-fold. Cause never isolated; offline cannot compile-check GenExpr, so every iteration burned a Max reload on a guess. REVERTED `codebox_enc.gen` to commit fbee342's verified working cubic (the "this is better" build), header fixed (it still said the un-softened map in one line).
+- **Rule now recorded twice and hard:** GenExpr changes beyond trivial expression edits are bench-session work — compile + readback in Max or don't ship. SSAA is parked as bench work (tasks.md).
+- Reload now renders the working CR output (soft contours, foveal softening available via r_soft on the bench).
+
+## 2026-10-24 (noon, hotfix b852d9d): SSAA function form boxed BLACK## 2026-10-24 (noon, hotfix b852d9d): SSAA function form boxed BLACK — inlined ×4 instead
 
 - The `mapE(nx,ny)` GenExpr function failed on load (module black). The inlined 4-copy version is now shipped (every construct precedented: dim.x/dim.y per f_grain/f_masonry, nearest/wrap/vec per the working cubic build). **Lesson for codeboxes: no multi-assign or function-refactoring in jit.gl.pix codeboxes without a Max session to compile-check — the offline path can't catch it.**
 - Reload check owed to Matt: module should render with 2x2 AA. Patcher rebuilt; drift + contracts + test_wc green.

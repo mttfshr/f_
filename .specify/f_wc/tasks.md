@@ -317,7 +317,15 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
-- 2026-10-24 (noon, later): **SSAA function form reverted to inline ×4 (live failure).**
+- 2026-10-24 (noon, later 2): **enc REVERTED to the proven cubic build (fbee342).**
+  SSAA parked: all three live attempts misrendered (4-fold then 2-fold mirrored field);
+  cause unisolated, and offline cannot compile-check GenExpr — further iterations were
+  burning Matt's reloads on guesses. Correct path: SSAA only in a bench session with
+  compile + readback verification against the mirror (the mirror still 2x2-SSAA's in
+  encode() — the codebox is now single-eval CR again; bench enc leg must expect the
+  codebox, not the mirror, until then: REVERT the mirror's SSAA loop to keep the bench
+  meaningful — done in the same commit).
+- 2026-10-24 (noon, later): **SSAA function form reverted- 2026-10-24 (noon, later): **SSAA function form reverted to inline ×4 (live failure).**
   `mapE(nx, ny)` as a GenExpr function boxed black on load; the shipped form is the same
   math inlined four times (suffixed identifiers), matching how the rest of the library's
   codeboxes are written. Rule recorded: codebox function refactors are Max-compile-only
