@@ -64,7 +64,7 @@ patcher = {
         {"name": "rate", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Rate", "pix_attr": "dt", "pix_target": "nl",
          "hint": "Time step per frame (1 = the validated labyrinth tempo). No stability ceiling; the top is aesthetic"},
-        {"name": "texture", "type": "float", "min": 1.0, "max": 4.0, "default": 1.4,
+        {"name": "grain", "type": "float", "min": 1.0, "max": 4.0, "default": 1.4,
          "label": "Texture", "pix_attr": "sig_i", "pix_target": "spec",
          "hint": "Grain: the inhibition kernel width in pixels. Low = broken stripes, high = disordered labyrinth"},
         {"name": "drive_gain", "type": "float", "min": 0.0, "max": 2.0, "default": 0.0,

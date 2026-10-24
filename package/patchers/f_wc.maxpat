@@ -91,7 +91,7 @@
 						367.0,
 						22.0
 					],
-					"text": "route rate texture drive_gain sharp reset"
+					"text": "route rate grain drive_gain sharp reset"
 				}
 			},
 			{
@@ -1922,7 +1922,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_spec::texture",
+					"param_connect": "#0_wc_spec::grain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						118.5,
@@ -1947,11 +1947,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "texture",
+							"parameter_longname": "grain",
 							"parameter_mmax": 4.0,
 							"parameter_mmin": 1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "texture",
+							"parameter_shortname": "grain",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1960,7 +1960,7 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "texture"
+					"varname": "grain"
 				}
 			},
 			{
@@ -2005,7 +2005,7 @@
 					],
 					"text": "Texture",
 					"textjustification": 1,
-					"varname": "lbl_texture"
+					"varname": "lbl_grain"
 				}
 			},
 			{
@@ -3250,8 +3250,8 @@
 				0
 			],
 			"obj-23": [
-				"texture",
-				"texture",
+				"grain",
+				"grain",
 				0
 			],
 			"obj-26": [

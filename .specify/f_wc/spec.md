@@ -402,15 +402,19 @@ independent instances — the library baseline.
 - **FR-009**: A reset/reseed trigger (message or UI bang) MUST
   re-randomize both fields from fresh noise without reloading the
   module.
-- **FR-010** *(revised 2026-10-23, gate G1 — Matt chose option A)*: A
-  **texture control** MUST set the labyrinth's characteristic scale/grain —
-  the Gaussian kernel width `σ_I` (with `σ_E` slaved at the Psychedelic
-  aspect ratio `σ_I/1.45`), which Phase 0 showed selects the geometry
-  continuously from coherent broken stripes (fine kernel) to disordered
-  labyrinth (coarse kernel). NO discrete four-form selector is shipped:
-  Phase 0 found no separable stable rolls/hexagon/spiral/cobweb attractor
-  regions. Documented landmarks (the Phase-0 stripe/labyrinth points) MUST
-  be reachable as snap points.
+- **FR-010** *(revised 2026-10-23, gate G1 — Matt chose option A; dial token
+  renamed at build 2026-10-23)*: A **texture control** MUST set the
+  labyrinth's characteristic scale/grain — the Gaussian kernel width `σ_I`
+  (with `σ_E` slaved at the Psychedelic aspect ratio `σ_I/1.45`), which
+  Phase 0 showed selects the geometry continuously from coherent broken
+  stripes (fine kernel) to disordered labyrinth (coarse kernel). NO discrete
+  four-form selector is shipped: Phase 0 found no separable stable
+  rolls/hexagon/spiral/cobweb attractor regions. Documented landmarks (the
+  Phase-0 stripe/labyrinth points) MUST be reachable as snap points. The
+  control's route token is **`grain`** (label "Texture"): `texture` is not a
+  valid param token on a pix-targeted param — the builder's
+  `param_connect=<pix>::texture` binds to jit.gl.pix's native @texture
+  attribute and the value snaps back (found on the live contract bench).
 - **FR-011**: All object names MUST be `#0_`-scoped.
 - **FR-012**: Standard bpatcher conventions (`routepass`, `route`,
   `autopattr` with `varname`, bypass toggle, `moduleSize` chain) and
@@ -442,7 +446,7 @@ independent instances — the library baseline.
 
 | Dial | Underlying | Notes |
 |---|---|---|
-| `texture` | Gaussian kernel width `σ_I` (`σ_E` slaved at `σ_I/1.45`) | the geometry dial (FR-010, revised): fine → broken stripes, coarse → disordered labyrinth; NO four-form selector (gate G1, 2026-10-23) |
+| `grain` | Gaussian kernel width `σ_I` (`σ_E` slaved at `σ_I/1.45`) | the geometry dial (FR-010, revised): fine → broken stripes, coarse → disordered labyrinth; NO four-form selector (gate G1, 2026-10-23). Token renamed from `texture` at build (jit.gl.pix native @texture collision) |
 | `hallucinate` | excitability aggregate — scales the coupling gains through the pattern-forming threshold | the performative core (US-2): below threshold the drive dominates, above it spontaneous pattern does |
 | `rate` | per-frame dt multiplier | clamped per FR-005 |
 | `scale` | characteristic cortical wavelength (sets `D` ratio / domain size) | pattern grain in the mapped visual field |

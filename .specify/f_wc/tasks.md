@@ -105,7 +105,7 @@ tests/modules/wc/
 
 ### Decision gates (Matt)
 
-- [x] G1 **Form navigation shape — DECIDED 2026-10-23 (Matt, option A).** The noise-driven region map found no separable four-form attractor regions (see T005 record): the pattern is a noise-driven labyrinth/stripe-glass transient. **Ship the labyrinth generator: no four-form selector.** FR-010/US-3/SC-2,3,8 revised in the spec (a `texture` dial = kernel width σ_I steers the grain; Phase-0 stripe/labyrinth landmarks as snaps). US-1/US-3/SC revised; parameter table `form`→`texture`.
+- [x] G1 **Form navigation shape — DECIDED 2026-10-23 (Matt, option A).** The noise-driven region map found no separable four-form attractor regions (see T005 record): the pattern is a noise-driven labyrinth/stripe-glass transient. **Ship the labyrinth generator: no four-form selector.** FR-010/US-3/SC-2,3,8 revised in the spec (a `texture` dial = kernel width σ_I steers the grain; Phase-0 stripe/labyrinth landmarks as snaps). US-1/US-3/SC revised; parameter table `form`→`texture`. **Build-time (T025): the dial's route token is `grain`** — `texture` collides with jit.gl.pix's native @texture attribute in the param_connect binding.
 - [ ] G2 **Naming**: `f_wc` is a placeholder (spec header). Alternatives on record: `f_formconstants`. Decide before Phase 3's menu and README entries.
 - [x] G3 **Drive inlet semantics — DECIDED 2026-10-23 (Matt, per T007 recommendation).** Drive inlet = raw additive on E only: `drive_gain·(scene − 0.5)` into the E sigmoid input. Weak drive = hallucinate, strong drive = see (one knob, both ends). Unconnected inlet reads mid-0.5 → zero net drive for free (pure US-1 labyrinth, no special-casing). `drive_gain` is a `gain`-role dial in the library convention. **Build-time correction (T025):** an unconnected pix inlet reads BLACK (0,0,0,1), not 0.5 — the neutral is supplied by a vs_inState connection flag → `drv_conn`, and the nl codebox substitutes 0.5 (spec FR-006).
 - [ ] G4 **Output encoding**: T008's comparison; decide in Phase 2 with live context (same as f_ks T012).
@@ -126,60 +126,71 @@ tests/modules/wc/
   fluid two-complex-field packing, so ONE chain carries BOTH WC fields; no
   Hermitian split, no duplicated chain. Stage numbers: pass 0, fx 1, fy 2,
   spec 3, iy 4, ix 5, nl 6, enc 7. Four codeboxes generated.
-- [~] T021 [P] **Codeboxes WRITTEN 2026-10-23; bench leg pending (needs Max).** `src/f_wc/`
+- [x] T021 [P] **DONE 2026-10-23 (bench legs green on Max, 10/10 incl slow).** `src/f_wc/`
   `codebox_seed.gen` (Hoskins hash ×4 channels: R/G = seed-E/I reseed channels, B/A = the
   per-frame Box-Muller uniforms; `salt` increments EVERY DRAW — the load-bearing mechanism,
-  not per-reset like f_ks), `codebox_pass.gen` (3-inlet hold/reseed, per-channel self-heal on
-  BOTH-zero texels, G = A = 0 packing), `codebox_spec.gen` (ONE stage, two real gains; codebox
-  Param named `sig_i` — `texture` collides with the GLSL builtin, unverified; the definition
-  maps the `texture` dial → `sig_i`; NO decay multiplier, NO DC zero), `codebox_nl.gen`
-  (4 inlets, Box-Muller * sqrt(dt) from in3.B/A into BOTH sigmoid inputs, E-only drive term,
-  settled constants baked, NaN/Inf zap). Written against the mirror's stages (7/7 green).
-  Mirror grew `hash_noise_tex` / `seed_from_hash` / `nx_from_hash_tex` — the exact float32
-  port of the codebox hash so T023 can feed the mirror the GPU's own stream.
-  **Owed (Max):** stage-by-stage bench vs the mirror.
-- [~] T022 [P] **WRITTEN 2026-10-23; bench pending (needs Max).** `codebox_enc.gen`: retinotopic
-  resample (cortical u = ROWS / v = COLUMNS per `wc_retinotopy.py` — the mirror test caught the
-  swap), constants r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4 baked (T033 decides exposure),
-  periodic 4-tap in (cv, cu), display-E soft map + `sharp` crisp blend (f_ks shape, default
-  sharp = 0), `bypass_gate` → black A=1, non-finite → 0.
-- [ ] T023 Frame-exact multi-frame feedback run of the full GPU chain against `run_temporal`
-  (the f_ks T007 pattern: short-horizon pixel comparison, then statistical comparison — the
-  state is stochastic PER RUN, so the bench must reproduce the noise stream exactly: seed the
-  mirror's rng from the same salt sequence the codebox's hash chain produces, the dft bench's
-  approach). Max bench.
-- [ ] T024 GPU cost check in a real Vsynth context: ONE DFT chain (the four-channel packing
-  carries both fields — f_ks's ~2.39 ms/frame class, NOT 2×) plus the render-res enc resample
-  and the per-frame noise stage; decide 256² vs. 128² (spec NF-001, Clarifications). Max bench.
+  not per-reset like f_ks), `codebox_pass.gen` (3-inlet hold/reseed, self-heal on BOTH-zero
+  texels, G = A = 0 packing), `codebox_spec.gen` (ONE stage, two real gains; codebox Param
+  named `sig_i` — `texture` collides with the GLSL builtin; the `grain` dial maps to it),
+  `codebox_nl.gen` (4 inlets, Box-Muller * sqrt(dt) from in3.B/A into BOTH sigmoid inputs,
+  E-only drive term, settled constants baked, NaN/Inf zap). Bench: `tests/modules/wc/bench_wc.py`
+  GROUP regression ORDER 56 — seed statistics (independent R/G channels), 4-field DFT chain vs
+  np.fft (1e-5 of peak), pass reseed/hold/self-heal exactness, spec gains vs mirror (1e-4),
+  nl vs mirror (1.2e-7), containment. **Bench catch 1:** the bench wires at most 3 inputs per
+  codebox job (`benchclient.run_pass` truncates `inputs[:3]`), so the nl drive test runs at the
+  black-inlet operating point (drv = 0 with drv_conn = 1); the connected-scene case is covered
+  by the module contract bench. Mirror grew `hash_noise_tex` / `seed_from_hash` /
+  `nx_from_hash_tex` (exact float32 Hash port for the frame-exact chain test).
+- [x] T022 [P] **DONE 2026-10-23 (bench leg green).** `codebox_enc.gen`: retinotopic resample
+  (cortical u = ROWS / v = COLUMNS per `wc_retinotopy.py`), constants r0 = 0.5, k_ecc = 8,
+  k_ang = 5, r_max = 4 baked (T033 decides exposure), periodic 4-tap in (cv, cu), display-E
+  soft map + `sharp` crisp blend (default sharp = 0), `bypass_gate` → black A=1, non-finite →
+  0, rectangular renders verified. **Bench catch 2:** the mirror's 4-tap sat half a texel off
+  the codebox's texel-center convention (`fx = cv*N − 0.5`) — GPU-vs-mirror diffs to 3.2e-2;
+  fixed in `wc_mirror.encode`, 256² now 5.2e-6 (sharp tolerance 1.5e-4 = the smoothstep
+  midpoint slope 18.75 × the soft error).
+- [x] T023 **DONE 2026-10-23.** Frame-exact chain: 30 host-sequenced GPU frames vs the mirror
+  (same reseed via the real pass stage, same per-frame hash noise stream): max |GPU − mirror|
+  = 4.1e-6 at frame 30 (flat over frames 1–30, NOT growing fast). @slow 100 frames: pixel diff
+  5.8e-5, E contrast GPU 0.2258 vs mirror 0.2258, no saturation. The noise stream reproduction
+  works — the hash port diffs stay inside the Box-Muller/transform rounding floor.
+- [x] T024 **DONE 2026-10-23 (live bench measurement, `bench_wc.test_cost_per_stage`).** Stage
+  costs at 256² solver + 1280x720 enc: seed 0.134, pass 0.138, fx 0.545, fy 0.133, spec 0.107,
+  iy 0.263, ix 0.526, nl + enc UPPER-BOUND (not GPU-resolved) — total **2.45 ms/frame** against
+  the 4 ms budget (f_ks's ~2.4 ms class, as the ONE-shared-chain architecture predicted).
+  Decision: **256² solver** (the 128² fallback is unnecessary).
 
 
-- [~] T025 **Offline half DONE 2026-10-23.** `definition.py` built (archetype source, luma out):
-  `package/patchers/f_wc.maxpat` builds, **drift 0** (`f_wc [definition] ok, 1 of 1 reproduce
-  exactly`), offline contracts green, `test_launch` and `test_generate_menu` green.
-  Param set per the settled gates: `rate` (dt → nl; no ceiling), `texture` (σ_I → the spec's
-  `sig_i` param — renamed there, GLSL builtin collision risk), `drive_gain` (→ nl; gain-role),
-  `sharp` (→ enc), `reset`, bypass; internals `reseed`/`salt`/`dr_conn`/`bypass_gate`.
-  Ne is BAKED at 1.0 (no dial — spec param table has none; revisit at T030 if Matt wants the
-  noise amount exposed). The drive inlet is the library's first TEXTURE inlet on a source
-  archetype: `mod_inlets` with `fanout` → nl in4 and the vs_inState flag → `prepend param
-  drv_conn` → nl; the codebox falls back to the neutral mid-0.5 when unconnected (the
-  connection-flag mechanism, NOT the "unconnected reads 0.5" the G3 note assumed — an
-  unconnected pix inlet reads BLACK (0,0,0,1), the dual-archetype vs_black case; spec FR-006
-  corrected). Salt increments EVERY DRAW from the [r draw] frame counter (one counter serves
-  the salt chain and the reseed-drop sel-2). Registered `NOT_IN_MENU` (menu entry is T042,
-  Phase 3); README row added early at ⚠ + launcher regenerated (50 modules, 9 ⚠ — needed for
-  `test_launch`, which requires every shipped patcher in the table). Panel 210×110 provisional
-  (4 dials; T030/capture confirms).
-  **Owed (Max):** the live module contract bench (bypass expectation: black A=1).
+- [x] T025 **DONE 2026-10-23 (offline half + live contract bench, 2/2).** `definition.py` built
+  (archetype source, luma out), drift 0, offline + live contracts green, `test_launch` /
+  `test_generate_menu` green.
+  Param set per the settled gates: `rate` (dt → nl; no ceiling), `grain` (σ_I → spec's `sig_i`,
+  the FR-010 "texture dial" — RENAMED at build: the builder's `param_connect=<pix>::texture`
+  binds to jit.gl.pix's NATIVE @texture attribute, which rejects the numeric value and snaps
+  the control back to min; `texture` is not a valid control-name token on a pix-targeted
+  param), `drive_gain` (→ nl; gain-role), `sharp` (→ enc), `reset`, bypass; internals
+  `reseed`/`salt`/`drv_conn`/`bypass_gate`. Ne BAKED at 1.0 (no dial — not in the spec's
+  param table; revisit at T030 if Matt wants the noise amount exposed). The drive inlet is
+  the library's first TEXTURE inlet on a source archetype (`mod_inlets` `fanout` → nl in4 +
+  vs_inState flag → `prepend param drv_conn` → nl; codebox substitutes neutral 0.5 when
+  unconnected — unconnected reads BLACK, the FR-006/G3 correction). Salt increments EVERY
+  DRAW from the [r draw] frame counter. Registered `NOT_IN_MENU` (menu entry is T042, Phase 3);
+  README row at ⚠ + launcher regenerated (50 modules). Panel 210×110 provisional (T030/capture
+  confirms).
+  **Live contract bench:** param routing readbacks exact (dt / grain→sig_i / drive_gain /
+  sharp), bypass → black A=1, 10 pix objects, no unexpected issues.
 
-**Checkpoint**: the shipped patcher on the bench seeds on load, forms a sustained labyrinth in the G1 band (texture dial sweeps stripe-glass → labyrinth coherently), responds to the drive inlet per G3, and holds NF-003 over the bench's long soak.
+**Checkpoint (2026-10-23, all legs green):** the shipped patcher on the bench seeds on load, reseeds on reset, runs the exact settled chain frame-for-frame (30-frame diff 4.1e-6, 100-frame contrast matches the mirror), sweeps grain at spec'd cost (2.45 ms/frame at 256²), holds the drive neutral unconnected, bypasses to black A=1. Remaining Phase-1 gate: Matt's tier-2 bench sign-off on this run.
 
 ---
 
 ## Phase 2: Tuning (tier 3, Matt)
 
 - [ ] T030 Output mapping choice (G4) and `rate`/`scale` ranges and defaults, judged live.
-- [ ] T031 Form navigation feel: the G1 selector (or landmark snaps) — do the four categories land reliably from a cold state and reorganize cleanly on a switch (spec US-3). If the selector ships: the glyph previews (WFG-style visual aid, from T006's stills).
+- [ ] T031 Form navigation feel: the `grain` dial over the G1 continuum (landmark snap points
+  per FR-010) — does the stripe-glass → labyrinth sweep read legibly live, and do the landmark
+  grains reform reliably from any state? (No four-form selector ships; the glyph previews idea
+  from the old US-3 is dropped with it.)
 - [ ] T032 Drive-transition feel: `hallucinate` + `drive_gain` over real input — is the below/above-threshold transition one legible gesture (spec US-2).
 - [ ] T033 Retinotopic look: map constants, foveal region handling, whether any map parameter becomes user-facing (spec Clarifications).
 

@@ -54,6 +54,11 @@ _KS_NOTE = ("documented in src/f_ks/codebox_pass.gen header: {} is a fixed solve
             "only so the bench can vary it (tests/modules/ks/bench_ks.py); it is not a performable "
             "control (spec FR-001: L = 50, FR-003: seed amplitude 1)")
 KNOWN_ISSUES[("f_ks", "undriven", "#0_ks_pass.amp")] = _KS_NOTE.format("amp")
+_WC_NOTE = ("documented in .specify/f_wc/tasks.md T025/T021: {} is a settled solver constant that stays a "
+            "Param only so the bench can vary it (tests/modules/wc/bench_wc.py); it is not a performable "
+            "control (the model's settled corner: Ne = 1.0, seed amplitude 1.0)")
+for _p, _n in (("amp", "seed amplitude"), ("ne", "per-frame noise amplitude")):
+    KNOWN_ISSUES[("f_wc", "undriven", f"#0_wc_{'pass' if _p == 'amp' else 'nl'}.{_p}")] = _WC_NOTE.format(_n)
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE
 

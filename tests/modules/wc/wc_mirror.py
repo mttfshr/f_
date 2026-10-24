@@ -349,28 +349,31 @@ def encode(state, out_size, sharp=F32(0.0), h=None, w=None):
     is 4-tap sampled there (periodic both axes). Display mapping PLACEHOLDER
     until gate G4: E is already a 0..1 rate, soft = clamp(E, 0, 1); `sharp`
     blends toward the f_ks crisp S-curve. Non-finite E maps to 0 (the codebox
-    zaps it upstream; belt and braces)."""
-    o = out_size
-    h = h or state.shape[0]
-    w = w or state.shape[1]
+    zaps it upstream; belt and braces). h/w override the square out_size for
+    rectangular render sizes (the bench)."""
+    h = h or out_size
+    w = w or out_size
     n = state.shape[0]
-    nx, ny, _, _ = grid(o, o)
+    nx, ny, _, _ = grid(h, w)
     px = (nx * F32(2.0) - F32(1.0)) * R_MAX
     py = (ny * F32(2.0) - F32(1.0)) * R_MAX
     r = np.hypot(px, py).astype(F32)
     theta = np.arctan2(py, px).astype(F32)
     u = (K_ECC * np.log1p(r / R0)).astype(F32)             # log(1 + r / r0)
     v = (K_ANG * theta).astype(F32)
-    cu = np.mod(u / TWOPI, F32(1.0)) * n
-    cv = np.mod(v / TWOPI, F32(1.0)) * n
+    cu = np.mod(u / TWOPI, F32(1.0)) * n - F32(0.5)
+    cv = np.mod(v / TWOPI, F32(1.0)) * n - F32(0.5)
     # record convention (wc_retinotopy.render): u (eccentricity) = cortical
-    # ROWS, v (angle) = cortical COLUMNS
+    # ROWS, v (angle) = cortical COLUMNS; the -0.5 is the texel-CENTER
+    # alignment the enc codebox uses (fx = cv * N - 0.5: texel i centers at
+    # normalized (i + 0.5) / N) -- without it the taps sit half a texel off
+    # (bench-measured 2026-10-23: a gradient-proportional error to 3.2e-2)
     e = _tap4(state, cv, cu)
     e = np.where(np.isfinite(e), e, F32(0.0))
     soft = np.clip(e, F32(0.0), F32(1.0))
     crisp = _smoothstep(F32(0.46), F32(0.54), soft)
     lum = (soft * (F32(1.0) - F32(sharp)) + crisp * F32(sharp)).astype(F32)
-    out = texture(o, o)
+    out = texture(h, w)
     out[..., 0] = out[..., 1] = out[..., 2] = lum
     out[..., 3] = F32(1.0)
     return store_float32(out)
