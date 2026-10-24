@@ -37,7 +37,9 @@ import numpy as np
 from gpu_sim import F32, texture  # noqa: E402
 from harness import check, note, run  # noqa: E402
 from wc_mirror import (AEE, AEI, AIE, AII, F, HE, HI,  # noqa: E402
+                       K_ANG, K_ECC, R0, R_MAX,
                        Params, encode, k2_tex, run_temporal, seed_state,
+                       hash_noise_tex, nx_from_hash_tex,
                        fwd_dft, inv_dft_real, spec_stage, wc_frame)
 
 N = 128          # test domain (np.fft fast path; the pass chain is checked at 32)
@@ -96,6 +98,112 @@ def test_single_bin_kernel_gain():
           float(np.abs(out[0, 0] - uh[0, 0]).max()), 0.0)
     check("empty bins stay 0 (gain applied but harmless)",
           float(np.abs(out[mask]).max()), 0.0)
+
+
+# ---------------------------------------------------------- T050 noise-stream hygiene
+
+def test_noise_hash_uniform_on_grid():
+    """T050(a): the shipped seed hash (Hoskins-style, arithmetic only -- no
+    sin() lattice by construction) is uniform on the real 256x256 grid, in ALL
+    FOUR channels (R, G = reseed; B, A = the Box-Muller uniforms). Chi-square
+    on 16 bins per channel; 4.5 sigma of the expected count is the fence."""
+    nz = hash_noise_tex(256, 256, 7.0)
+    expct = 256 * 256 / 16.0
+    for c in range(4):
+        u = nz[..., c].astype(np.float64).ravel()
+        check(f"hash ch{c}: inside [0, 1)", float(u.min() >= 0 and u.max() < 1.0), 1.0)
+        check(f"hash ch{c}: mean ~ 0.5", abs(float(u.mean()) - 0.5), 0.01)
+        hist, _ = np.histogram(u, bins=16, range=(0.0, 1.0))
+        chi2 = float(((hist - expct) ** 2 / expct).sum())
+        note(f"hash ch{c}: chi2/{16}dof", chi2)
+        check(f"hash ch{c}: histogram flat (chi2 < 60, lenient)", float(max(0.0, chi2 - 60.0)), 0.0)
+        lag1 = abs(corr2d(nz[..., c][:, :-1], nz[..., c][:, 1:]))
+        check(f"hash ch{c}: no horizontal lag-1 correlation", lag1, 0.01)
+
+
+def test_noise_hash_temporally_decorrelated():
+    """T050(b): the salt-incremented per-frame stream decorrelates between
+    consecutive draws (the mechanism needs FRESH noise, not a frozen field) --
+    both for the raw uniforms and the Box-Muller Gaussian the nl stage
+    consumes (which itself is a standard normal at dt = 1)."""
+    n0, n1 = hash_noise_tex(256, 256, 100.0), hash_noise_tex(256, 256, 101.0)
+    for c in range(4):
+        r = abs(corr2d(n0[..., c], n1[..., c]))
+        note(f"ch{c} corr(salt 100, 101)", r)
+        check(f"hash ch{c}: decorrelated frame to frame", r, 0.01)
+    nx = nx_from_hash_tex(n0, 1.0)[..., 0].astype(np.float64)
+    check("box-muller @dt=1: mean ~ 0", abs(float(nx.mean())), 0.01)
+    check("box-muller @dt=1: std ~ 1", abs(float(nx.std()) - 1.0), 0.02)
+    kurt = float(((nx - nx.mean()) ** 4).mean() / nx.std() ** 4)
+    note("box-muller kurtosis (Gaussian = 3)", kurt)
+    check("box-muller kurtosis within 0.3 of Gaussian", abs(kurt - 3.0), 0.3)
+
+
+# ---------------------------------------------------------- T051 retinotopy round trip
+
+def test_encode_round_trip_identity():
+    """T051: map then inverse is the identity up to interpolation error, in
+    the eccentricity band where the render resolution supports it. A smooth
+    periodic-in-(u, v) cortical field goes through encode() at render
+    resolution; sampling the render back at each cortical texel's visual
+    position (forward map: r = R0.expm1(u/K_ECC), theta = v/K_ANG; texel-
+    CENTER convention, the enc sampler's own) recovers the field in
+    r in [0.6, 3.5] (below 0.6 the render's angular sampling starves; above
+    3.5 the map nears the square's edge)."""
+    n, m = 128, 192
+    _, _, cx, cy = grid_cortex(n)
+    two_pi = 2.0 * np.pi
+    u = (cy + 0.5) / n * two_pi                       # cortical u = ROWS
+    v = (cx + 0.5) / n * two_pi                       # cortical v = COLUMNS
+    field = (0.5 + 0.3 * np.cos(u * 2.0) * np.cos(v * 3.0)).astype(F32)
+    st = texture(n, n)
+    st[..., 0] = field
+    img = encode(st, m)[..., 0].astype(np.float64)  # sharp = 0: luma = E
+    # inverse map, wrap-aware: cortical u in [0, 2pi) wraps over the visual
+    # radius about 2.8 times (K_ECC.log1p(R_MAX/R0) = 17.6 rad), so each
+    # texel has representative radii r_k = R0.expm1((u + 2pi.k)/K_ECC); take
+    # the first copy inside the r in [0.6, 3.5] band (below 0.6 the render
+    # starves angularly, above 3.5 the square ends). The field is 2pi-
+    # periodic in u and v, so every copy carries the same value.
+    band = np.zeros((n, n), dtype=bool)
+    r = np.full((n, n), np.nan)
+    for k in range(3):
+        rk = (R0 * np.expm1((u + two_pi * k) / K_ECC)) if k else R0 * np.expm1(u / K_ECC)
+        take = ~band & (rk >= 0.6) & (rk <= 3.5)
+        band |= take
+        r = np.where(take, rk, r)
+    theta = (v / K_ANG) % two_pi
+    fx = (r * np.cos(theta) / (2.0 * R_MAX) + 0.5) * m - 0.5
+    fy = (r * np.sin(theta) / (2.0 * R_MAX) + 0.5) * m - 0.5
+    back = _bilayer(img, fx, fy)
+    err = np.abs(back[band] - field[band].astype(np.float64))
+    note("round-trip mean |err| in band", float(err.mean()))
+    note("round-trip p95 |err| in band", float(np.percentile(err, 95)))
+    note("round-trip band texel fraction", float(band.mean()))
+    check("band covers most of the sheet", 0.85 - float(band.mean()), 0.0)
+    check("round trip: mean |err| < 0.02", float(err.mean()), 0.02)
+    check("round trip: p95 |err| < 0.08", float(np.percentile(err, 95)), 0.08)
+
+
+def grid_cortex(n):
+    """Row/col texel indices as (n, n) arrays: cx = col (cortical v), cy = row
+    (cortical u), matching the mirror's meshgrid 'xy' convention."""
+    idx = np.arange(n, dtype=np.float64)
+    cx, cy = np.meshgrid(idx, idx, indexing="xy")
+    return None, None, cx, cy
+
+
+def _bilayer(img, fx, fy):
+    """CLAMP bilinear of the render at texel-center-fraction coords (the
+    inverse map walks off the square at the corners; the band stays inside)."""
+    m = img.shape[0]
+    x0 = np.clip(np.floor(fx), 0, m - 2)
+    y0 = np.clip(np.floor(fy), 0, m - 2)
+    tx = np.clip(fx - x0, 0.0, 1.0)
+    ty = np.clip(fy - y0, 0.0, 1.0)
+    x0, y0 = x0.astype(int), y0.astype(int)
+    return ((img[y0, x0] * (1 - tx) + img[y0, x0 + 1] * tx) * (1 - ty)
+            + (img[y0 + 1, x0] * (1 - tx) + img[y0 + 1, x0 + 1] * tx) * ty)
 
 
 # ---------------------------------------------------------- the mechanism

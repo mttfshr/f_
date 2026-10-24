@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-23 (night 9): f_wc Phase 4 T050-T052 DONE — only gate G5 (Matt) remains
+
+- **T050/T051 (tier-1 hygiene, in `test_wc.py`, 10/10 green):** the shipped hash noise stream is clean — 4-channel histograms chi2 8-14 on 15 dof, ≤ 6e-3 spatial lag-1 corr, ≤ 2.7e-3 frame-to-frame corr, Box-Muller kurtosis 3.03. Retinotopy map→inverse identity: mean err 6.5e-3 / p95 2.0e-2 in the supported eccentricity band (100% of the sheet covered via u-wrap copies).
+- **T052 (habituation spike, `tests/records/spike_wc_habituation.py`, 21 s):** mirror now carries Ve/Vi in state G/A when depth ≠ 0 (zero depth stays bit-tied to the shipped chain; pass-stage carry-through is priced as the only structural cost if exposed). (be/bi × Ne) sweep at 128²/1200 frames: **adaptation is survivable** — Ne 1.0 stays inside the band at every depth 0-1.0 (the doom case the ideas doc warned about did not show); adaptation DAMPENS the E-mean drift where it exists (Ne 1.2: +0.064 → +0.001) — the mechanistic fix for the soak drift that G4's sharp=0.5 patches — and moderate depth (0.5-1.0) IMPROVES contrast at the shifted band (0.30 vs 0.25). Cost: the low-Ne cells (0.6) die under adaptation. Caveats: one seed/cell, 128², coupled be=bi, ae/ai only 50/100.
+- **G5 staged for Matt in tasks.md:** expose a habituation DEPTH dial (0-1, default 0 = shipped dynamics; rate dials not recommended — ae/ai untested off 50/100) or drop. If go: pass carry-through + reseed init of G/A, nl params be/bi, one bench leg, live look. Next candidate if dropped or done: f_quasi or f_wave_field Phase 0 per `.specify/plan.md`.
+
 ## 2026-10-23 (night 8): f_wc Phase 4 drafted from the webgpgpu ideas doc — T050-T052 + gate G5 queued
 
 - Discussed `ideas/f_wc_from_webgpgpu.md` against the shipped module with Matt. Outcome (committed): Phase 4 in `.specify/f_wc/tasks.md` — T050/T051 offline tier-1 hygiene (noise-stream histogram + temporal decorrelation of the salt-incremented hash; retinotopy map↔inverse round trip), T052 habituation mirror extension + (be/bi × Ne) mini region map at the shipped corner, gate G5 (Matt): expose depth/rate dials or drop. Parked with reasons: the Rule-page stats fixture (mirror already derives from the page-validated model) and a shared `f_rng`/retinotopy module (no second consumer; solver noise must live inside the 256² loop).

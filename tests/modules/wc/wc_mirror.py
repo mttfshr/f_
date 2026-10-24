@@ -72,6 +72,11 @@ class Params:
                                #   kept as an explicit False for tests only
     fast_fft: bool = False     # False = the pass_dft chain (what the GPU will
                                #   do); True = np.fft (long runs only)
+    be: float = 0.0            # T052 habituation: adaptation depth on E
+                               #   (0 = the shipped corner, be = bi = 0)
+    bi: float = 0.0            # adaptation depth on I
+    ae: float = 50.0           # adaptation time constants (Rule Example 11:
+    ai: float = 100.0          #   ae = 50, ai = 100 frames)
 
     def with_(self, **kw):
         return replace(self, **kw)
@@ -268,24 +273,45 @@ def drive_tex(h, w, value=F32(0.5)):
     return store_float32(t)
 
 
-def nonlinear_step(conv, state, noise, driv, dt, ne, drive_gain):
+def nonlinear_step(conv, state, noise, driv, dt, ne, drive_gain,
+                   be=F32(0.0), bi=F32(0.0), ae=F32(50.0), ai=F32(100.0)):
     """Stage 6 (the heart, `nl`, 4 inlets on the bench: in1 = convolved fields
     R = cE, B = cI; in2 = raw state R = E, B = I; in3 = the per-frame noise;
     in4 = the drive). Exact relaxation toward the sigmoid of the coupled
     drive; the drive term is E-only (T007), the noise term goes into BOTH
-    sigmoid inputs (same field, the Rule form)."""
+    sigmoid inputs (same field, the Rule form).
+
+    T052 habituation (be = bi = 0 shipped): when EITHER depth is nonzero, Ve,
+    Vi ride the spare state channels G, A, relaxing toward the firing rates
+    (Ve += (E - Ve).dt/ae) and subtracting from the sigmoid inputs; with be =
+    bi = 0 the channels stay 0 (matching the shipped pass stage, which forces
+    G, A to 0 every frame -- the adaptation-aware pass is the carry-through
+    T052 prices), so the zero-depth mirror stays bit-identical to the
+    shipped chain. The kernel gains are REAL, so even with adaptation on,
+    Re(IFFT(K.frm(E + iVe))) = K conv E up to float rounding: the subtraction
+    is the ONLY way Ve, Vi change the E, I trajectory."""
     ce, ci = conv[..., 0], conv[..., 2]
     e, i_ = state[..., 0], state[..., 2]
+    ve, vi = state[..., 1], state[..., 3]
     nx, drv = noise[..., 0], driv[..., 0]
+    adapt = (be != 0.0) or (bi != 0.0)
     fdt_e = F32(dt) / F32(TE)
     fdt_i = F32(dt) / F32(TI)
-    ae = F(F32(AEE) * ce - F32(AIE) * ci - F32(HE)
-           + F32(ne) * nx + F32(drive_gain) * (drv - F32(0.5)))
-    ai = F(F32(AEI) * ce - F32(AII) * ci - F32(HI) + F32(ne) * nx)
+    ae_f = F(F32(AEE) * ce - F32(AIE) * ci - F32(HE) - F32(be) * ve
+             + F32(ne) * nx + F32(drive_gain) * (drv - F32(0.5)))
+    ai_f = F(F32(AEI) * ce - F32(AII) * ci - F32(HI) - F32(bi) * vi
+             + F32(ne) * nx)
     out = np.zeros_like(state)
-    out[..., 0] = e + (ae - e) * fdt_e
-    out[..., 2] = i_ + (ai - i_) * fdt_i
-    for c in (0, 2):
+    en = e + (ae_f - e) * fdt_e
+    iw = i_ + (ai_f - i_) * fdt_i
+    out[..., 0] = en
+    out[..., 2] = iw
+    chans = (0, 2)
+    if adapt:
+        out[..., 1] = ve + (en - ve) * (F32(dt) / ae)
+        out[..., 3] = vi + (iw - vi) * (F32(dt) / ai)
+        chans = (0, 1, 2, 3)
+    for c in chans:
         x = out[..., c]
         out[..., c] = np.where(np.isfinite(x), x, F32(0.0))
     return store_float32(out)
@@ -303,7 +329,9 @@ def wc_frame(state, rng, P, driv=None):
     nz = noise_tex(h, w, rng, dt)
     conv = inv_dft_real(spec_stage(fwd_dft(state, P.fast_fft),
                                    P.sig_e, P.sig_i), P.fast_fft)
-    return nonlinear_step(conv, state, nz, driv, dt, P.ne, P.drive_gain)
+    return nonlinear_step(conv, state, nz, driv, dt, P.ne, P.drive_gain,
+                          be=F32(P.be), bi=F32(P.bi),
+                          ae=F32(P.ae), ai=F32(P.ai))
 
 
 def run_temporal(state0, P, frames, seed=1, driv=None):

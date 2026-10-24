@@ -267,35 +267,55 @@ stats test only earns its cost if the noise stage or nl is retouched later) and 
 shared `f_rng` / retinotopy module (no second consumer; per-frame solver noise cannot
 come from an upstream module — it must be fresh per 256² solver texel inside the loop).
 
-- [ ] T050 **Tier-1 hygiene: noise-stream tests** in `test_wc.py` against
-  `codebox_seed.gen`'s hash scheme (`wc_mirror` helpers): (a) histogram / uniformity of
-  the salt-incremented uniform stream on the real 256² grid; (b) temporal
-  decorrelation — adjacent-salt per-texel correlation ≈ 0. The Hoskins-style
-  arithmetic hash answers the sin-h lattice worry structurally, but the shipped stream
-  was never histogram- or correlation-checked.
-- [ ] T051 **Tier-1 hygiene: retinotopy round trip** in `test_wc.py`: map then inverse
-  is the identity up to interpolation error inside the eccentricity range (r0 = 0.5,
-  k_ecc = 8, k_ang = 5, r_max = 4). From the ideas doc item 4.
-- [ ] T052 **Habituation mirror extension + mini region map (offline, no Max):**
-  extend `wc_mirror.py` with slow adaptation `Ve += (E−Ve)·dt/ae`, `Ve += (I−Vi)·dt/ai`
-  subtracted from the sigmoid inputs at depth be/bi (Rule Example 11: ae = 50,
-  ai = 100), then a small (be/bi × Ne) grid at the shipped corner. Measure two things
-  against the plain (be = bi = 0) run: (i) usable drive-band width around Ne ≈ 1.0
-  (Ne is BAKED with no dial — if adaptation shifts the band the shipped default dies
-  in place); (ii) E-mean drift over long runs — adaptation is the mechanistic fix for
-  the soak drift that G4's `sharp = 0.5` currently patches in the display. Structural
-  feasibility already verified against the shipped codeboxes: state texture G/A are
-  free (pass forces them 0 today), `nl.in2` taps raw pre-DFT state, so Ve/Vi fit with a
-  pass-stage carry-through (read/write G,A; init on reseed), ~4 ALU ops in nl, no extra
-  texture.
-- [ ] **G5 (Matt, tier 3, after T052):** expose habituation dials (depth + rate) or
-  drop. Exposing = pass carry-through + nl params + dials + region-map confirmation on
-  the bench; dropping = keep the record.
+- [x] T050 **DONE 2026-10-23.** Tier-1 hygiene: noise-stream tests in `test_wc.py`:
+  histogram (4 channels, chi2 8-14 on 15 dof = textbook uniform on the real 256² grid),
+  horizontal lag-1 corr ≤ 6.1e-3, frame-to-frame (salt 100 → 101) corr ≤ 2.7e-3 in all
+  channels, Box-Muller at dt = 1 has mean 0 / std 1.00 / kurtosis 3.03. The salt-
+  incremented Hoskins-style hash stream is clean; the T023-era caution is closed.
+- [x] T051 **DONE 2026-10-23.** Tier-1 hygiene: retinotopy round trip in `test_wc.py`
+  (`test_encode_round_trip_identity`): map → inverse identity on a smooth periodic
+  cortical field holds at mean |err| 6.5e-3 / p95 2.0e-2 inside the eccentricity band
+  r ∈ [0.6, 3.5] (100% of the sheet covered by at least one u-wrap copy; below 0.6 the
+  render starves angularly — that is a map property, not an error source).
+- [x] T052 **DONE 2026-10-23 (mirror sweep `tests/records/spike_wc_habituation.py`,
+  CSV in `tests/logs/spike_wc_habituation_*.log`).** Mirror extended: `Params` gains
+  `be/bi` depth (0 shipped) + `ae/ai` time constants (50/100, Rule Example 11); Ve/Vi
+  ride state G/A ONLY when depth is nonzero (the shipped pass stage forces G,A → 0, so
+  the zero-depth mirror stays bit-tied to the shipped GPU chain — chain-diff benches
+  unaffected). Sweep: be = bi ∈ {0, 0.2, 0.5, 1.0} × Ne ∈ {0.6, 0.8, 1.0, 1.2}, 128²,
+  1200 frames, one seed per cell (transient caveat: indicative, not definitive).
+  **Findings for G5:**
+  1. **The doom case did not show.** The shipped corner Ne = 1.0 stays inside the
+     band at every depth tested (band shifts UP and narrows at the low end as depth
+     grows: be 0 → band ≈ 0.6–1.2; be 0.5 → 0.8–1.2; be 1.0 → ≈1.0–1.2). Exposure as
+     a dial with default 0 is safe for the shipped default.
+  2. **Adaptation dampens the mean drift where drift exists** (Ne 1.2: drift +0.064
+     plain → +0.001 at be 1.0) — exactly the anti-washout feedback the soak's
+     E-mean drift called for — at the cost of killing the low-Ne cells (all adapted
+     cells at Ne 0.6 are dead/faint by frame 1200; they sag below threshold without
+     enough noise to re-light).
+  3. **Moderate depth IMPROVES contrast at the shifted band** (best late std 0.304 at
+     be 0.5 / Ne 0.8 vs 0.248 plain; be 1.0 / Ne 1.0: 0.293) — the fatigue-recovery
+     cycle regenerates structure instead of letting it freeze.
+- [ ] **G5 (Matt, tier 3):** expose a habituation depth dial (suggested: 0–1,
+  default 0 = shipped dynamics; rate dials NOT recommended — ae/ai untested off
+  50/100) or drop. If exposed: pass-stage carry-through of G,A (+reseed init), nl
+  params be/bi (ae/ai can stay baked), one bench leg, region-map confirmation live.
 
 ---
 
 ## Record
 
+- 2026-10-23 (later): **Phase 4 T050–T052 executed; only gate G5 remains.** T050/T051
+  tier-1 hygiene landed in `test_wc.py` (10/10): the shipped hash stream is textbook
+  uniform (chi2 8–14 on 15 dof, ≤ 6e-3 lag-1 spatial corr, ≤ 2.7e-3 frame-to-frame
+  corr, Box-Muller kurtosis 3.03); the retinotopy round trip is identity at mean
+  6.5e-3 / p95 2.0e-2 in the supported eccentricity band. T052: `wc_mirror` carries
+  Ve/Vi in state G/A when depth ≠ 0 (zero depth = bit-tied to the shipped chain);
+  the (be/bi × Ne) sweep found adaptation SURVIVABLE at the shipped corner (Ne 1.0
+  inside the band at all depths 0–1.0), drift-damping at high Ne, contrast-boosting
+  at moderate depth, band-shift-up at the low end. Decision staged for Matt as G5:
+  depth dial 0–1 default 0, or drop. Detail in the T052 record.
 - 2026-10-23: **Phase 4 written** (T050–T052 + gate G5) from `ideas/f_wc_from_webgpgpu.md`
   after the discussion with Matt: habituation (Ve/Vi) is the only promoted candidate —
   structural fit verified against the shipped codeboxes (state G/A free; pass forces them
