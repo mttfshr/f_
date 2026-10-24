@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-24 (late afternoon): f_formconstants Phase 0 CLOSED — Example-10 constants measured dead; ships Psychedelic+habituation "steady dark web"
+
+- Phase 0 experiments overturned the spec's constants: **WC_Example_10_fullscreen is Rule's *flicker* preset** (Ne=0 + slow square-wave `s`) — at float32 it dies in every configuration; only a faithful 8-bit-quantized+s port breathes. The float32-native sustaining corner (N=512/1024, 4000–6000-frame soaks): **Psychedelic couplings (16.1/14.5/13.7/13, He 3.1, Hi 3.5, Te 4, Ti 12.5) + Ne 0.75 + habituation** — and habituation is LOAD-BEARING (saturation by ~3k frames without it, matched to f_wc's T052 mechanism). f_wc Psychedelic-at-fine-grain also saturates without habit — the webgpgpu pages are all transient aesthetics.
+- Regime map (σ_I px × habit): **steady band σ_I 0.75–1.1 px × habit 0.9–1.2**, dark-field silk, λ 16–43 px dynamics-set (not kernel-set); habit 0.2–0.45 pulses rhythmically. Resize finding: frame-fraction λ was the wrong target — features are pixel-scale by design; NF-005 amended to regime-independence via a σ_px band clamp [0.75, 1.4].
+- **Gates answered (Matt):** G0 = steady dark web corner (stills `scratch/fc_enc/steady_s*`, pulsing white family reachable at habit ~0.2); G1 = habituation ships, default 0.9.
+- Tier-1 mirror + tests 10/10 green at the shipped corner (`tests/modules/formconstants/`). Spec amended (FR-002, FR-003, NF-005, params); plan.md item 12 current.
+- **Next: Phase 1 — T011 FIRST** (build-system check: the first adaptive-res feedback pix_chain; f_ks/f_wc solver stages are all fixed 256²), then T012–T014 codeboxes+definition (offline), bench/cost with Matt (T015–T019).
+
 ## 2026-10-24 (afternoon): f_formconstants SPECCED — render-res WC sibling born from the f_wc pixelation post-mortem
 
 - The pixelation discussion traced the whole arc (CR fix → failed SSAA) and then read the ACTUAL `WC_Example_10_fullscreen.html` source + `gpgpu.js`/`gpugaussian.js`: their smoothness is STRUCTURAL (solver grid = display grid, separable-Gaussian blur σ_E1/σ_I2 px, 8-bit quantized state, bare-log map, continuous non-thresholded display). Re-reading failed SSAA commit 0589d14 found it structurally unable to help: quarter-SCREEN-pixel offsets against a ~7-screen-px/texel artifact, averaged pre-threshold. SSAA work item reframed in f_wc tasks remains parked; the fine/silky look needs a different architecture, not enc polish.

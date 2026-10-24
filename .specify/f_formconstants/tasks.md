@@ -122,22 +122,21 @@ vs. the mirror); tier 3 for the headline look AB against the HTML page.
   σ_px band.** The tiny-window degenerate-kernel edge case is covered by the
   same clamp mechanism (its floor is now the STEADY-corner floor ≈ 0.75 px,
   no longer just a tap-degeneration guard).
-- [ ] T006 **[G0 — Matt, STAGED 2026-10-24]** Recommendations from T002–T005:
-  constants = Psychedelic+habituation (Example-10 measured dead at float32);
-  **energy 0.75, habituation 0.9 load-bearing**; no internal s-LFO; grain is a
-  clamped regime selector, default 0.0008 (σ_I ≈ 0.86 px at 1080p, floored to
-  0.75 below ~940 px windows); map corner = the closer set 5/3/1.0, r_soft 0.35.
-  Look choice between the two measured families, stills in `scratch/fc_enc/`:
-  **(a) steady dark web** `steady_s0.9_h0.9.png` / `steady_s1.1_h1.2.png`
-  (flat traces, dark field — closest to the Example-10 character), vs
-  **(b) pulsing white web** `state_s0.7_h0.2_closer_rs035.png` (white field,
-  rhythmic dissolve/re-form). Recommend (a) as the default; (b) is reachable
-  at habit ~0.2 either way.
-- [ ] T007 **[G1 — Matt, measured answer staged]** `habituation` in v1: the
-  measurement says it is not optional (saturation by ~3k frames without it,
-  whatever `energy` is). Confirm the dial ships with default 0.9.
+- [x] T006 **[G0 — Matt, ANSWERED 2026-10-24]: the STEADY DARK WEB corner.**
+  Constants: Psychedelic+habituation (Example-10 measured dead at float32);
+  energy 0.75, habituation 0.9, grain 0.0008 (clamped σ_I 0.75–1.4 px),
+  map closer set 5/3/1.0, r_soft 0.35; no internal s-LFO.
+  Look families measured, stills in `scratch/fc_enc/`:
+  (a) steady dark web `steady_s0.9_h0.9.png` / `steady_s1.1_h1.2.png` ← CHOSEN,
+  (b) pulsing white web `state_s0.7_h0.2_closer_rs035.png` (reachable at
+  habit ~0.2).
+- [x] T007 **[G1 — Matt, ANSWERED 2026-10-24]: habituation SHIPS in v1,
+  default 0.9** (measured load-bearing: saturation by ~3k frames without it).
 
-**Checkpoint:** Phase 0 closed when G0/G1 are answered. Mirror + tests green.
+**Checkpoint: Phase 0 CLOSED 2026-10-24.** Mirror + 10/10 tests green at the
+shipped corner; spec amended (FR-002 σ band clamp, FR-003 Psychedelic
+constants + load-bearing habituation/Ne, NF-005 pixel-scale features, params
+table); regime map, sustain table, resize finding and stills recorded above.
 
 ---
 
