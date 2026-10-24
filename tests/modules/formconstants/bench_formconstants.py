@@ -88,10 +88,8 @@ def mirror_frame(state, P, nx):
     return km.nonlinear_step(conv, state, P.dt, P, noise=nx)
 
 
-def t():
+def test_seed_hash_channels():
     rng = np.random.default_rng(9)
-
-    # ----------------------------------------------------------------- seed
     seed_out = gpu("seed", [BANG], dim=(N, N), salt=0.0)
     check("seed R: hash uniform in [0, 1)",
           max(0.0 - float(seed_out[..., 0].min()), float(seed_out[..., 0].max()) - 1.0), 0.0)
@@ -103,7 +101,9 @@ def t():
     check("seed: four channels are decorrelated",
           abs(float(np.corrcoef(seed_out[..., 0].ravel(), seed_out[..., 1].ravel())[0, 1])), 0.05)
 
-    # ----------------------------------------------------------------- pass
+def test_pass_identity_reseed_heal():
+    rng = np.random.default_rng(9)
+    seed_out = gpu("seed", [BANG], dim=(N, N), salt=0.0)
     fb = tex(rng)
     kept = gpu("pass", [BANG, fb, seed_out], dim=(N, N), reseed=0.0)
     check("pass: reseed=0 keeps the feedback state bit-exact",
@@ -120,7 +120,9 @@ def t():
               float(np.abs(healed[..., 1] - seed_out[..., 1]).max())), 1e-7)
 
     # ------------------------------------------------------------- blur stages
-    st = tex(rng)
+    # ------------------------------------------------------------- blur stages
+def test_blur_kernels_match_mirror():
+    st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)
     P0 = Params()
     si, se = km.sigmas_px(N, N, P0)
     note("blur sigma at dim 128, grain 0.0008", f"si {float(si):.3f} px, se {float(se):.3f} px")
@@ -147,9 +149,10 @@ def t():
     check("blur_x: wraps at the periodic boundary",
           float(np.abs(gix[..., 0] - m_ix).max()), 5e-4)
 
-    # -------------------------------------------------------------------- nl
+def test_nl_full_update_vs_mirror():
+    st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)
     Pn = Params()
-    noise_tex = tex(rng)
+    noise_tex = tex(np.random.default_rng(9))
     nx = boxmuller(noise_tex[..., 2], noise_tex[..., 3], Pn.dt)
     conv_tex = np.stack(km.blur_state(st, N, N, Pn)).transpose(1, 2, 0)
     drive = np.zeros((N, N, 4), np.float32); drive[..., 3] = 1.0
@@ -164,7 +167,8 @@ def t():
     check("nl: habit=0 pins B/A to exactly 0",
           max(float(np.abs(gn0[..., 2]).max()), float(np.abs(gn0[..., 3]).max())), 0.0)
 
-    # ------------------------------------------------------------------ enc
+def test_enc_render_and_bypass():
+    st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)
     enc_out = gpu("enc", [BANG, st], dim=(N, N))
     men = km.encode(st, (N, N), sharp=F32(0.5), contrast=F32(1.0),
                     k_ecc=F32(5.0), k_ang=F32(3.0), r0=F32(1.0), r_soft=F32(0.35))
@@ -174,7 +178,7 @@ def t():
           max(float(np.abs(gpu("enc", [BANG, st], dim=(N, N), bypass_gate=1.0)[..., :3]).max()),
               float(np.abs(gpu("enc", [BANG, st], dim=(N, N), bypass_gate=1.0)[..., 3] - 1).max())), 0.0)
 
-    # ------------------------------------------------- the 30-frame chain (T016)
+def test_30_frame_chain_matches_mirror():
     Pchain = Params()
     gstate = km.seed_state(N, N, 3)
     mstate = gstate.copy()
