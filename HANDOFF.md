@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-24 (session break): housekeeping — scratch/ + archive/ gitignored, plan.md item 8 current
+
+- `/scratch/` and `/archive/` are now gitignored and untracked (files stay on disk; references in records remain valid as on-disk paths). `f_demo_ks`/`f_demo_wc` example maxpats are Matt's untracked work patches, left alone.
+- plan.md item 8 (f_wc) now carries the 2026-10-23/24 expansion summary (Phase 4, G5-G8 dials, display fixes, reverted SSAA, bench debt). (A script bug truncated plan.md mid-edit; restored from git and re-applied — the accidental delete commit e05c1b9 contains no other changes.)
+
 ## 2026-10-24 (noon, session break): enc reverted to proven cubic; session checkpoint
 
 - Matt called a break. Everything committed: enc reverted to the verified CR build (2d9174c), records updated, proof renders in scratch/wc_enc/ now tracked. **Left on the table deliberately:** f_demo_ks/f_demo_wc maxpats are Matt's working patches (untracked, per the long-standing note); SSAA is parked as bench-session work.
