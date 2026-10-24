@@ -1,0 +1,227 @@
+"""fc_parity_mirror.py -- tier-1 NumPy mirror of the f_formconstants PARITY build
+(spec Revision 2, tasks T041).
+
+A term-for-term port of webgpgpu/examples/wilson_cowan_examples/
+WC_Example_10_fullscreen.html and the lib/ functions it calls. Nothing is added:
+no per-frame noise, no habituation, no foveal softening, no contrast/sharp, no
+clamps beyond the NaN guard. Each item below cites the spec's S-table.
+
+    S1  fixed solver size N (the page: 1024; arrays here may be smaller for tests)
+    S2  8-bit quantization q(x) = floor(255 x + 0.5)/255 at: the blur-x output,
+        the blur-y output, and the WC update's E and I
+    S3  blur: sigma = (1, 2, 1, 1) per channel (R, G, B, A), one shared radius
+        ceil(3 * max sigma) = 6, weights exp(-0.5 (i/sigma)^2) normalized over
+        [-6, 6], taps at exact integer offsets, wrap
+    S4  WC update, Example-10 constants; B = |Ue - Ui| * 3 (UNquantized Ue/Ui)
+        stored through an 8-bit target (clamp + round), A = 1
+    S5  drive s (E sigmoid input only): s_depth * (fract(t * s_rate) < 0.5),
+        s_depth 0.6, s_rate 3.4/500 (the source's sign(sin(...)) square wave;
+        see s_source() for the exact form and the one-frame difference at t = 0)
+    S6  seed: uniform uint8 (k/255) in all four channels, once
+    S7  map: z in [-1, 1]^2 of the SQUARE canvas (window crop on the long axis);
+        sample the state at (atan2(zy, zx), ln |z|) / 2 pi, bilinear, wrap
+    S8  display: the sampled state's four channels, E, I, B, with alpha 1
+
+Array layout: state is (H, W, 4) float32, R = E, G = I, B = contour, A = flag.
+Row index = texture t coordinate (GL convention: row 0 is the BOTTOM). A jit
+texture may show the picture vertically mirrored relative to the page; that is
+not a parity failure (spec Revision 2).
+
+The stage functions (blur_pass, wc_step, pass_stage, encode) are the unit the
+codeboxes mirror; step() runs one whole frame in the page's order:
+blur_x -> blur_y -> wc (reads the PRE-blur state for the relaxation target).
+"""
+import numpy as np
+
+F32 = np.float32
+
+# ---------------------------------------------------------------- constants
+LEVELS = 255.0
+N_SOLVER = 1024                     # S1 (tests run smaller; the mirror takes any N)
+SIGMAS = (1.0, 2.0, 1.0, 1.0)       # S3: GPUGaussianMultiBlur(gl, 1, 2, 1, 1)
+RADIUS = 6                          # ceil(3 * max sigma)
+AEE, AIE, AEI, AII = 10.5, 8.5, 12.0, 3.0     # S4 (page `parameters`)
+HE, HI = 2.0, 3.5
+TE, TI = 10.0, 20.0
+DT = 1.0
+S_DEPTH = 0.6                       # S5
+S_RATE = 3.4 / 500.0                # period 1 / S_RATE ~ 147.06 frames
+TWO_PI = F32(2.0 * np.pi)
+
+
+# --------------------------------------------------------------------- S2
+def q(x, levels=LEVELS):
+    """EncodeFloat: floor(255 x + 0.5)/255. levels=None disables it (the
+    test-only float control; the page always quantizes)."""
+    if levels is None:
+        return x
+    lv = F32(levels)
+    return (np.floor(lv * x + F32(0.5)) / lv).astype(F32)
+
+
+def q8_store(x, levels=LEVELS):
+    """A float written to an 8-bit render target: clamp to [0, 1], round."""
+    return q(np.clip(x, F32(0.0), F32(1.0)), levels)
+
+
+# --------------------------------------------------------------------- S3
+def createGaussianConvolution(sigma, radius=RADIUS):
+    """lib/gpugaussian.js createGaussianConvolution(sigma, true, radius):
+    2*radius+1 weights exp(-0.5 ((i - radius)/sigma)^2), normalized."""
+    i = np.arange(0, 2 * radius + 1, dtype=np.float64)
+    w = np.exp(-0.5 * ((i - radius) / sigma) ** 2)
+    return (w / w.sum()).astype(F32)
+
+
+def half_kernel():
+    """(RADIUS+1, 4): weights[i, c] = kernel_c[i + radius] -- the packing the
+    page passes as the shader's `weights[K+1]` vec4 array."""
+    k = np.zeros((RADIUS + 1, 4), dtype=F32)
+    for c, s in enumerate(SIGMAS):
+        full = createGaussianConvolution(s)
+        k[:, c] = full[RADIUS:]
+    return k
+
+
+def blur_pass(state, axis, levels=LEVELS):
+    """One pass of the page's multi-blur shader along `axis` (0 = rows = y,
+    1 = columns = x), all four channels, wrap, quantized output.
+    c = tex(0) w[0] + sum_i (tex(+i) + tex(-i)) w[i];  c /= w[0] + 2 sum w[i]."""
+    w = half_kernel()
+    acc = state * w[0]
+    ssum = w[0].copy()
+    for i in range(1, RADIUS + 1):
+        acc = acc + (np.roll(state, i, axis=axis) + np.roll(state, -i, axis=axis)) * w[i]
+        ssum = ssum + F32(2.0) * w[i]
+    return q(acc / ssum, levels)
+
+
+def blur(state, levels=LEVELS):
+    """blur_x then blur_y (`blur(U, temp, UC)`)."""
+    return blur_pass(blur_pass(state, 1, levels), 0, levels)
+
+
+# --------------------------------------------------------------------- S5
+def s_of_t(t):
+    """The module's drive: s_depth * (fract(t * s_rate) < 0.5)."""
+    return F32(S_DEPTH) if (float(t) * S_RATE) % 1.0 < 0.5 else F32(0.0)
+
+
+def s_source(t):
+    """The page's exact expression: .3 * (sign(sin(t pi 6.8 / 500)) + 1).
+    Equals s_of_t at every integer t except two kinds of single frame: t = 0
+    (the page gives 0.3, sign 0; the module 0.6) and t = 1250 k, which land
+    exactly on a half-period (1250 * 3.4/500 = 8.5), where the sign is decided
+    by the page's truncated 3.1415926 for pi (a ~1e-6 sine either way) and the
+    fract form can pick the other side. Documented, not chased."""
+    return F32(0.3 * (np.sign(np.sin(t * 3.1415926 * 6.8 / 500.0)) + 1.0))
+
+
+# --------------------------------------------------------------------- S6
+def seed_state(n, rng):
+    """Uniform uint8 random in all four channels (k/255). n x n, or (h, w)."""
+    h, w = (n, n) if np.isscalar(n) else n
+    return (rng.integers(0, 256, size=(h, w, 4)).astype(F32) / F32(255.0))
+
+
+# --------------------------------------------------------------------- S4
+def F(x):
+    return (F32(1.0) / (F32(1.0) + np.exp(-x))).astype(F32)
+
+
+def wc_step(state, conv, t, levels=LEVELS):
+    """The `wc` shader. state = Uin (pre-blur), conv = Uconv (blur output).
+    E and I are written through EncodeFloat; B = |Ue - Ui| * 3 from the
+    UNquantized updated values, stored as 8-bit; A = 1."""
+    e, i = state[..., 0], state[..., 1]
+    ce, ci = conv[..., 0], conv[..., 1]
+    s = s_of_t(t)
+    ve = F(F32(AEE) * ce - F32(AIE) * ci - F32(HE) + s)
+    vi = F(F32(AEI) * ce - F32(AII) * ci - F32(HI))
+    en = e + (ve - e) * F32(DT / TE)
+    inn = i + (vi - i) * F32(DT / TI)
+    out = np.empty_like(state)
+    out[..., 0] = q(en, levels)
+    out[..., 1] = q(inn, levels)
+    out[..., 2] = q8_store(np.abs(en - inn) * F32(3.0), levels)
+    out[..., 3] = 1.0
+    return out
+
+
+# ---------------------------------------------------------------- pass stage
+def pass_stage(fb, seed, reseed):
+    """The module's hold/reseed stage. A feedback texel is LOST when its alpha
+    is 0 (wc always writes A = 1; a fresh or reallocated texture reads A = 0) --
+    NOT when E == I == 0, which is a legitimate state under quantization.
+    Non-finite feedback is zeroed first (the NaN guard; it keeps A, so a zapped
+    texel is held at zero, not reseeded)."""
+    fbg = np.where(np.abs(fb) < F32(1e30), fb, F32(0.0))
+    lost = (fbg[..., 3] == 0.0)[..., None]
+    take_seed = bool(reseed) or lost
+    return np.where(take_seed, seed, fbg).astype(F32)
+
+
+# ------------------------------------------------------------------ one frame
+def step(state, t, levels=LEVELS):
+    """One frame in the page's order. `state` is the held state (what the
+    `pass` stage emitted); returns the new state (what feeds back and renders)."""
+    conv = blur(state, levels)
+    return wc_step(state, conv, t, levels)
+
+
+def run(state0, frames, t0=0, levels=LEVELS, trace=False):
+    st = state0
+    tr = {"em": [], "es": [], "ebar": []}
+    for fr in range(frames):
+        st = step(st, t0 + fr, levels)
+        if trace:
+            e = st[..., 0]
+            tr["es"].append(float(e.std()))
+            tr["em"].append(float(e.mean()))
+    return st, tr
+
+
+# ----------------------------------------------------------------------- S7/S8
+def encode(state, ow, oh):
+    """The retinal map on an (oh, ow) output. Square crop on the long axis,
+    exactly the page's CSS stretch: L = max(ow, oh); zx = (2x-1) ow/L, zy =
+    (2y-1) oh/L with texel-centred x, y in [0, 1]. Bilinear + wrap sample of all
+    four channels at (atan2(zy, zx), ln r) / 2 pi. Returns (oh, ow, 4) with
+    alpha forced to 1. r is floored at 1e-6 (ln 0); the page leaves the exact
+    centre undefined."""
+    nh, nw = state.shape[0], state.shape[1]
+    ys, xs = np.mgrid[0:oh, 0:ow]
+    L = float(max(ow, oh))
+    zx = ((xs.astype(np.float64) + 0.5) / ow * 2.0 - 1.0) * (ow / L)
+    zy = ((ys.astype(np.float64) + 0.5) / oh * 2.0 - 1.0) * (oh / L)
+    r = np.maximum(np.hypot(zx, zy), 1e-6)
+    th = np.arctan2(zy, zx)
+    u = (th / (2.0 * np.pi)).astype(F32)          # texture x
+    v = (np.log(r) / (2.0 * np.pi)).astype(F32)   # texture y
+    fx = u * F32(nw) - F32(0.5)
+    fy = v * F32(nh) - F32(0.5)
+    x0f, y0f = np.floor(fx), np.floor(fy)
+    tx = (fx - x0f).astype(F32)[..., None]
+    ty = (fy - y0f).astype(F32)[..., None]
+    x0 = x0f.astype(np.int64) % nw
+    y0 = y0f.astype(np.int64) % nh
+    x1 = (x0 + 1) % nw
+    y1 = (y0 + 1) % nh
+    s = state
+    out = ((1 - ty) * ((1 - tx) * s[y0, x0] + tx * s[y0, x1])
+           + ty * ((1 - tx) * s[y1, x0] + tx * s[y1, x1])).astype(F32)
+    out[..., 3] = 1.0
+    return out
+
+
+# --------------------------------------------------------------------- metrics
+def power_peak_period(x):
+    """Dominant period (in samples) of a 1-D trace, DC removed, via FFT;
+    returns None for a flat trace."""
+    x = np.asarray(x, dtype=np.float64)
+    x = x - x.mean()
+    if np.abs(x).max() < 1e-9:
+        return None
+    sp = np.abs(np.fft.rfft(x * np.hanning(len(x))))
+    k = int(np.argmax(sp[1:]) + 1)
+    return len(x) / k

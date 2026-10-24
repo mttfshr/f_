@@ -259,8 +259,9 @@ a time. Nothing else.
 2. **Never move the target to make something work.** If the port does not
    sustain or does not match, the port or the harness is wrong. Do not change
    constants, add terms or switch regimes. Stop and report the evidence.
-   (This module drifted exactly this way once: T002 found the float32 port
-   dead and replaced the model instead of keeping the quantization.)
+   (This module drifted exactly this way once: T002 tested the wrong kernel
+   widths (σ_I 1 px / σ_E 0.69 instead of the source's 2 / 1), called the
+   float32 port dead, and replaced the model.)
 3. **A measurement that contradicts the spec stops the task.** Write the
    measurement and the conflict into the task's record and hand back for a
    decision. Do not amend the spec yourself.
@@ -304,7 +305,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   S1 in the browser console with the page fullscreen:
   `document.getElementById('maincanvas').width` → expect 1024. Any
   disagreement → STOP (brief rule 3).
-- [ ] T041 **Parity mirror** `tests/modules/formconstants/fc_parity_mirror.py`
+- [x] T041 **DONE 2026-10-24** — `fc_parity_mirror.py` (S2–S8, 225 lines). `spike_fc_sustain.py` has NO quantized port (nor does `fc_mirror.py`); the T002 "quantized port" was never committed, so nothing was reused. **Parity mirror** `tests/modules/formconstants/fc_parity_mirror.py`
   (offline). Exact NumPy float32 port of S2–S8: `q(x) = floor(255x + 0.5)/255`;
   `seed_state(rng)` (k/255 in all four channels); `blur_x`/`blur_y` (S3 kernel
   table, shared radius 6, quantized output, wrap); `s_of_t(t)` (the Revision 2
@@ -314,14 +315,15 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   `tests/records/spike_fc_sustain.py` first:** it already has a quantized
   port; reuse it where it matches S1–S8 and resolve every difference in
   favor of the source, listing each in the report.
-- [ ] T042 **Parity tests** `tests/modules/formconstants/test_fc_parity.py`
+- [x] T042 **DONE 2026-10-24, 8/8 green in 14 s; (d) was rewritten because the measurement contradicted its premise** (below). **Parity tests** `tests/modules/formconstants/test_fc_parity.py`
   (offline, keep under ~20 s). (a) blur weights equal a direct transcription
   of `createGaussianConvolution(σ, true, 6)` for σ = 1, 2; (b) `q` is
   idempotent and applied at exactly the S2 points; (c) `s_of_t` values and
-  period; (d) sustain regression at N = 256: quantized + s stays alive over
-  3000 frames (E std keeps pulsing above a floor taken from the T002 record),
-  and the same run with `q` disabled dies, which documents why S2 is
-  load-bearing; (e) a texel with E = I = 0 and A = 1 is held, not reseeded;
+  period; (d) sustain regression. AS WRITTEN (quantized + s alive, q-off dies) it was
+  falsified: at the source's σ = (1, 2) the float32 + s run sustains as well as
+  the quantized one (E std 0.05–0.22, N 128/256, two seeds, 3000–4000 frames);
+  only removing `s` kills the field. The test asserts what was measured: the `s`
+  wave sustains, no-s dies, quantization is not required; (e) a texel with E = I = 0 and A = 1 is held, not reseeded;
   (f) `encode` samples the expected texel for a few known (angle, log r)
   points. If (d) fails, that is a brief-rule-2 stop, not a tuning task.
 - [ ] T043 **Parity codeboxes** (offline write; verified in T046). Rewrite
@@ -381,8 +383,8 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
   (period in frames, default 147). Note how it compares with an `excite`-style
   offset on both populations (the f_wc G7 semantics).
 - [ ] T062 **Quantization levels** dial (default 255; off = float). A
-  character control; T042(d) predicts "off" dies, so the range floor is a
-  measured value, not a guess.
+  character control. T042(d) found float32 + s sustains, so this is a LOOK
+  control, not a liveness one; A/B the texture difference first.
 - [ ] T063 **Map**: conformal zoom/rotation/spiral as one complex gain on
   (θ, log r), optional centre softening, field of view. Integer angular
   periods only where a seam would otherwise show.
@@ -498,3 +500,11 @@ the suite is green. Module is shipped.
   (T060–T069) + an anti-drift agent brief. The live "flash then black"
   symptom is not pursued further: the sizing layer it most likely lives in
   is removed by T044. Reference build for the old regime: `63b6129`.
+
+### 2026-10-24 (night, T041/T042): the T002 "quantization sustains" claim is falsified
+
+- Parity mirror + 8 tests landed (`tests/modules/formconstants/fc_parity_mirror.py`, `test_fc_parity.py`). Measured with the source's actual kernel (σ_E 1, σ_I 2 px, shared radius 6), Example-10 constants, no noise, no habituation, crossing quantization on/off with `s` on/off: **`s` on = sustained (E std 0.05–0.22 over 3000–4000 frames, quantized or float, two seeds, N 128 and 256); `s` off = dead (std ≤ 0.012), quantized or float.** Record: `tests/records/spike_fc_parity_sustain.py`.
+- Why T002 said otherwise: it used σ_I 1 px / σ_E 0.69 (grain 1/512 on N = 512, ratio 1.45), not the source's (2, 1); and its quantized port was never committed, so the claim could not be re-run. So Psychedelic + noise + habituation was a detour from a wrong measurement; the original Example-10 constants WOULD have sustained at float32 with `s`.
+- Consequences: Phase R is unchanged (the quantize is cheap and kept for parity). S2's gloss in the spec and T062's rationale are corrected; the brief's parenthetical too. `s` is the liveness mechanism, so T061's breathe dials are performance-critical (depth 0 kills the field), not cosmetic.
+- Also found: `s_of_t` and the page's `sign(sin)` differ at t = 0 (0.6 vs 0.3) and at t = 1250 k (exact half-periods; the page's truncated π decides). Single frames; documented in the mirror.
+- Open for T043/T046: whether a fresh `jit.gl.pix` float32 output reads A = 0 (the pass stage's lost flag depends on it); the loadbang reseed covers the first frame either way.
