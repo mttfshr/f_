@@ -2010,7 +2010,7 @@
 						50.0,
 						18.0
 					],
-					"text": "Texture",
+					"text": "Grain",
 					"textjustification": 1,
 					"varname": "lbl_grain"
 				}

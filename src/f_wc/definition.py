@@ -80,7 +80,7 @@ patcher = {
          "label": "Rate", "pix_attr": "dt", "pix_target": "nl",
          "hint": "Time step per frame (1 = the validated labyrinth tempo). No stability ceiling; the top is aesthetic"},
         {"name": "grain", "type": "float", "min": 1.0, "max": 4.0, "default": 1.4,
-         "label": "Texture", "pix_attr": "sig_i", "pix_target": "spec",
+         "label": "Grain", "pix_attr": "sig_i", "pix_target": "spec",
          "hint": "Grain: inhibition kernel width in pixels. Landmarks: 1.1 broken stripes, 1.4 labyrinth (default), 1.9 coarse"},
         {"name": "aspect", "type": "float", "min": 1.2, "max": 2.2, "default": 1.45,
          "label": "Aspect", "pix_attr": "sig_ratio", "pix_target": "spec",
