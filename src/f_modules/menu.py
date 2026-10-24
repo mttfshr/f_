@@ -136,4 +136,5 @@ NOT_IN_MENU = {
     "f_a_ripple":      "audio (gen~) module, not a Vsynth bpatcher; unfinished (README marks it)",
     "f_a_decorrelate": "audio (pfft~) module, not a Vsynth bpatcher; DSP built, packaging pending (README marks it)",
     "f_chladni_audio": "audio companion of f_chladni, not a Vsynth bpatcher (README marks it)",
+    "f_wc":            "Wilson-Cowan generator, Phase 1 build (.specify/f_wc); the menu entry is T042 (Phase 3)",
 }

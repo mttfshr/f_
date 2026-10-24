@@ -107,7 +107,7 @@ tests/modules/wc/
 
 - [x] G1 **Form navigation shape — DECIDED 2026-10-23 (Matt, option A).** The noise-driven region map found no separable four-form attractor regions (see T005 record): the pattern is a noise-driven labyrinth/stripe-glass transient. **Ship the labyrinth generator: no four-form selector.** FR-010/US-3/SC-2,3,8 revised in the spec (a `texture` dial = kernel width σ_I steers the grain; Phase-0 stripe/labyrinth landmarks as snaps). US-1/US-3/SC revised; parameter table `form`→`texture`.
 - [ ] G2 **Naming**: `f_wc` is a placeholder (spec header). Alternatives on record: `f_formconstants`. Decide before Phase 3's menu and README entries.
-- [x] G3 **Drive inlet semantics — DECIDED 2026-10-23 (Matt, per T007 recommendation).** Drive inlet = raw additive on E only: `drive_gain·(scene − 0.5)` into the E sigmoid input. Weak drive = hallucinate, strong drive = see (one knob, both ends). Unconnected inlet reads mid-0.5 → zero net drive for free (pure US-1 labyrinth, no special-casing). `drive_gain` is a `gain`-role dial in the library convention.
+- [x] G3 **Drive inlet semantics — DECIDED 2026-10-23 (Matt, per T007 recommendation).** Drive inlet = raw additive on E only: `drive_gain·(scene − 0.5)` into the E sigmoid input. Weak drive = hallucinate, strong drive = see (one knob, both ends). Unconnected inlet reads mid-0.5 → zero net drive for free (pure US-1 labyrinth, no special-casing). `drive_gain` is a `gain`-role dial in the library convention. **Build-time correction (T025):** an unconnected pix inlet reads BLACK (0,0,0,1), not 0.5 — the neutral is supplied by a vs_inState connection flag → `drv_conn`, and the nl codebox substitutes 0.5 (spec FR-006).
 - [ ] G4 **Output encoding**: T008's comparison; decide in Phase 2 with live context (same as f_ks T012).
 
 **Checkpoint — PHASE 0 CLOSED 2026-10-23 (Matt approved G3, the last Phase-0 gate).** Mirror + tests green; region map recorded; G1 decided; T006 stills approved by Matt ("the stills are great"); T007 done and G3 approved per its recommendation. **Phase 1 (bpatcher build) may start.** T008 (encoding measurement → G4) slips to Phase 2; G2 (naming) is a Phase 3 blocker.
@@ -151,8 +151,26 @@ tests/modules/wc/
 - [ ] T024 GPU cost check in a real Vsynth context: ONE DFT chain (the four-channel packing
   carries both fields — f_ks's ~2.39 ms/frame class, NOT 2×) plus the render-res enc resample
   and the per-frame noise stage; decide 256² vs. 128² (spec NF-001, Clarifications). Max bench.
-- [ ] T025 `definition.py` (archetype source; params per the spec's table — `texture` per G1,
-  `drive_gain` per G3, `rate`, `sharp`; `form` is DEAD — no selector ships), `package/patchers/f_wc.maxpat` built; drift 0; offline contracts green; live module contract bench green (bypass expectation: black A=1).
+
+
+- [~] T025 **Offline half DONE 2026-10-23.** `definition.py` built (archetype source, luma out):
+  `package/patchers/f_wc.maxpat` builds, **drift 0** (`f_wc [definition] ok, 1 of 1 reproduce
+  exactly`), offline contracts green, `test_launch` and `test_generate_menu` green.
+  Param set per the settled gates: `rate` (dt → nl; no ceiling), `texture` (σ_I → the spec's
+  `sig_i` param — renamed there, GLSL builtin collision risk), `drive_gain` (→ nl; gain-role),
+  `sharp` (→ enc), `reset`, bypass; internals `reseed`/`salt`/`dr_conn`/`bypass_gate`.
+  Ne is BAKED at 1.0 (no dial — spec param table has none; revisit at T030 if Matt wants the
+  noise amount exposed). The drive inlet is the library's first TEXTURE inlet on a source
+  archetype: `mod_inlets` with `fanout` → nl in4 and the vs_inState flag → `prepend param
+  drv_conn` → nl; the codebox falls back to the neutral mid-0.5 when unconnected (the
+  connection-flag mechanism, NOT the "unconnected reads 0.5" the G3 note assumed — an
+  unconnected pix inlet reads BLACK (0,0,0,1), the dual-archetype vs_black case; spec FR-006
+  corrected). Salt increments EVERY DRAW from the [r draw] frame counter (one counter serves
+  the salt chain and the reseed-drop sel-2). Registered `NOT_IN_MENU` (menu entry is T042,
+  Phase 3); README row added early at ⚠ + launcher regenerated (50 modules, 9 ⚠ — needed for
+  `test_launch`, which requires every shipped patcher in the table). Panel 210×110 provisional
+  (4 dials; T030/capture confirms).
+  **Owed (Max):** the live module contract bench (bypass expectation: black A=1).
 
 **Checkpoint**: the shipped patcher on the bench seeds on load, forms a sustained labyrinth in the G1 band (texture dial sweeps stripe-glass → labyrinth coherently), responds to the drive inlet per G3, and holds NF-003 over the bench's long soak.
 

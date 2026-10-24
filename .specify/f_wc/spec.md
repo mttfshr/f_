@@ -383,12 +383,15 @@ independent instances — the library baseline.
   exists (relaxation toward a bounded sigmoid); the rate ceiling is
   pattern-preservation, an aesthetic bound set at tuning (T030).
 - **FR-006** *(revised 2026-10-23, gate G3 — Matt approved the T007
-  recommendation)*: A drive inlet MUST couple raw-additively into the E
-  sigmoid input only, as the term `drive_gain * (scene - 0.5)`; weak
-  drive = hallucinate, strong drive = see (one knob, both ends).
-  Unconnected, the inlet's mid-gray read (0.5) gives zero net drive —
-  the pure US-1 labyrinth for free, NO special-casing — and
-  `drive_gain` is a `gain`-role dial in the library convention.
+  recommendation; mechanism corrected at build time)*: A drive inlet MUST
+  couple raw-additively into the E sigmoid input only, as the term
+  `drive_gain * (scene - 0.5)`; weak drive = hallucinate, strong drive =
+  see (one knob, both ends). Unconnected, the drive MUST be neutral:
+  an unconnected pix inlet reads BLACK (0,0,0,1), NOT mid-gray (build-
+  time finding), so the inlet runs through a vs_inState whose connection
+  flag sets `drv_conn`, and the `nl` codebox substitutes the neutral
+  0.5 when unconnected — the pure US-1 labyrinth with no drive-term
+  bias. `drive_gain` is a `gain`-role dial in the library convention.
 - **FR-007**: The render stage MUST apply the inverse retinotopic
   (log-polar → Cartesian) map when sampling the cortical state to the
   visual-field output, with map constants per Clarifications; the map

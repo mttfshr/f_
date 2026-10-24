@@ -276,53 +276,34 @@
 							{
 								"box": {
 									"id": "obj-10",
-									"maxclass": "textbutton",
+									"maxclass": "comment",
 									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
+									"numoutlets": 0,
 									"patching_rect": [
 										20.0,
 										200.0,
 										150.0,
-										22.0
+										20.0
 									],
-									"text": "f_masonry",
+									"text": "f_wc",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										96.0,
+										98.0,
 										210.0,
-										22.0
+										20.0
 									]
 								}
 							},
 							{
 								"box": {
 									"id": "obj-11",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										228.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_masonry.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-12",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -332,19 +313,25 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
+									"text": "⚠ Unverified. Wilson-Cowan hallucination generator: a noise-sustained living labyrinth; drive inlet in",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										98.0,
 										720.0,
 										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
 									]
 								}
 							},
 							{
 								"box": {
-									"id": "obj-13",
+									"id": "obj-12",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -361,7 +348,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_stipple",
+									"text": "f_masonry",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -373,7 +360,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-14",
+									"id": "obj-13",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -386,12 +373,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_stipple.maxhelp"
+									"text": "loadunique f_masonry.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-15",
+									"id": "obj-14",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -401,7 +388,7 @@
 										150.0,
 										20.0
 									],
-									"text": "2D hash field stipple texture",
+									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -413,7 +400,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-16",
+									"id": "obj-15",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -430,7 +417,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_seeds",
+									"text": "f_stipple",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -442,7 +429,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-17",
+									"id": "obj-16",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -455,12 +442,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_seeds.maxhelp"
+									"text": "loadunique f_stipple.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-18",
+									"id": "obj-17",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -470,7 +457,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
+									"text": "2D hash field stipple texture",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -482,7 +469,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-19",
+									"id": "obj-18",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -499,7 +486,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_weave",
+									"text": "f_vf_seeds",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -511,7 +498,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-20",
+									"id": "obj-19",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -524,12 +511,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_weave.maxhelp"
+									"text": "loadunique f_vf_seeds.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-21",
+									"id": "obj-20",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -539,11 +526,80 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
+									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										182.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-21",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										440.0,
+										150.0,
+										22.0
+									],
+									"text": "f_weave",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										208.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-22",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										468.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_weave.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-23",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										440.0,
+										150.0,
+										20.0
+									],
+									"text": "Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										210.0,
 										720.0,
 										20.0
 									]
@@ -602,23 +658,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-10",
+										"obj-12",
 										0
 									],
 									"destination": [
-										"obj-11",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-11",
-										0
-									],
-									"destination": [
-										"obj-1",
+										"obj-13",
 										0
 									]
 								}
@@ -630,7 +674,7 @@
 										0
 									],
 									"destination": [
-										"obj-14",
+										"obj-1",
 										0
 									]
 								}
@@ -638,11 +682,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-14",
+										"obj-15",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-16",
 										0
 									]
 								}
@@ -654,7 +698,7 @@
 										0
 									],
 									"destination": [
-										"obj-17",
+										"obj-1",
 										0
 									]
 								}
@@ -662,11 +706,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-17",
+										"obj-18",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-19",
 										0
 									]
 								}
@@ -678,7 +722,7 @@
 										0
 									],
 									"destination": [
-										"obj-20",
+										"obj-1",
 										0
 									]
 								}
@@ -686,7 +730,19 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-20",
+										"obj-21",
+										0
+									],
+									"destination": [
+										"obj-22",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-22",
 										0
 									],
 									"destination": [
