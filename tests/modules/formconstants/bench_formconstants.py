@@ -159,6 +159,32 @@ def test_blur_kernels_match_mirror():
     check("blur_x: wraps at the periodic boundary",
           float(np.abs(gix[..., 0] - m_ix).max()), 5e-4)
 
+def test_noise_boxmuller_gpu_order():
+    """The GPU computes its own Box-Muller in a bare leg; compare against the
+    bench's mirror simulation term for term. Isolates the noise stream from
+    the rest of the nl update (the chain divergence is noise-perturbation-
+    amplified, so nx must be right to ~1e-5 before judging the rest)."""
+    rng = np.random.default_rng(7)
+    tex_noise = tex(rng)
+    code_noise = ("Param dt(1);\n"
+                  "na = nearest(in1, norm).z * 0.999 + 0.0001;\n"
+                  "nb = nearest(in1, norm).w * 0.999 + 0.0001;\n"
+                  "nx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);\n"
+                  "out1 = vec(nx, nx, nx, 1);")
+    out, r = bc.run_pass(code_noise, [tex_noise], dim=(N, N), params={"dt": 1.0},
+                         timeout_ms=30000)
+    assert r["status"] == "ok", f"boxmuller leg failed: {r['errors']}"
+    gnx_gpu = out[..., 0]
+    gnx_sim = boxmuller(tex_noise[..., 2], tex_noise[..., 3], 1.0)
+    d = np.abs(gnx_gpu - gnx_sim)
+    yx = np.unravel_index(int(d.argmax()), d.shape)
+    note("boxmuller gpu-vs-sim max diff",
+         f"{float(d.max()):.3e} at {yx}: gpu {float(gnx_gpu[yx]):.6f} sim {float(gnx_sim[yx]):.6f} "
+         f"(na {float(tex_noise[..., 2][yx]):.6f} nb {float(tex_noise[..., 3][yx]):.6f})")
+    note("boxmuller mean abs diff", f"{float(d.mean()):.3e}")
+    check("GPU Box-Muller matches the bench simulation", float(d.max()), 1e-3)
+
+
 def test_nl_full_update_vs_mirror():
     st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)
     Pn = Params()
@@ -172,6 +198,7 @@ def test_nl_full_update_vs_mirror():
     mn = km.nonlinear_step(bl.astype(np.float32), st, Pn.dt, Pn, noise=nx)
     cd = np.abs(gn - mn).max(axis=(0, 1))
     note("nl channel diffs", " ".join(f"{float(cd[c]):.2e}" for c in range(4)))
+    note("nl E diff mean/max", f"{float(np.abs(gn[..., 0] - mn[..., 0]).mean()):.2e} / {float(cd[0]):.2e}")
     d0 = np.abs(gn[..., 0] - mn[..., 0])
     yx = np.unravel_index(int(d0.argmax()), d0.shape)
     note("nl max-E-diff texel inputs",
