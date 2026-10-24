@@ -1,0 +1,57 @@
+// codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res
+// output pixel's visual-field polar coords (r, theta) to cortical (u, v) =
+// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both
+// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).
+// Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.
+//
+// Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives
+// this pix the render-context size), in2 = the convolved/current state (R = E, from the nl
+// stage).
+//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any
+//     output size, including smaller than 256 where hardware sample() would snap; v wraps at
+//     the theta seam, u at the far log edge
+//   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS
+//   - map constants are PROVISIONAL (T006's working set; the foveal/edge handling and any
+//     user exposure is T033): r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4
+//   - display mapping PLACEHOLDER until gate G4: E is already a 0..1 rate, soft = clamp(E);
+//     sharp (0..1) blends toward the f_ks crisp S-curve (verified behavior is the default
+//     sharp = 0)
+//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)
+//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the
+//     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)
+Param bypass_gate(0);
+Param sharp(0);
+
+px = (norm.x * 2 - 1) * 4;
+py = (norm.y * 2 - 1) * 4;
+r, theta = cartopol(px, py);
+u = 8 * log(1 + r / 0.5);
+v = 5 * theta;
+cu = fract(u / twopi);
+cv = fract(v / twopi);
+
+N = 256;
+fx = cv * N - 0.5;
+fy = cu * N - 0.5;
+x0 = floor(fx);
+y0 = floor(fy);
+tx = fx - x0;
+ty = fy - y0;
+xa = wrap(x0, 0, N);
+xb = wrap(x0 + 1, 0, N);
+ya = wrap(y0, 0, N);
+yb = wrap(y0 + 1, 0, N);
+p00 = vec((xa + 0.5) / N, (ya + 0.5) / N);
+p10 = vec((xb + 0.5) / N, (ya + 0.5) / N);
+p01 = vec((xa + 0.5) / N, (yb + 0.5) / N);
+p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
+au = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),
+         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);
+
+au = switch(abs(au) < 1e30, au, 0);
+soft = clamp(au, 0, 1);
+crisp = smoothstep(0.46, 0.54, soft);
+lum = mix(soft, crisp, sharp);
+lum = lum * (1 - bypass_gate);
+
+out1 = vec(lum, lum, lum, 1);

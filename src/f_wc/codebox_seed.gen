@@ -1,0 +1,40 @@
+// codebox_seed.gen -- f_wc noise stage: hash noise, deterministic per texel per salt.
+// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.seed_state() (the seed channels);
+// noise_tex() (the per-frame field -- the Box-Muller happens downstream in the nl stage).
+//
+// Inputs: the first inlet is the `r draw` bang (unused; it only triggers the render every
+// frame). Packing: R = seed-E hash, G = seed-I hash (the pass stage reads these ONLY on the
+// frame reseed is 1: uniform [0, 1) per field, independent channels, never zero), B, A = the
+// two raw uniforms the nl stage turns into the per-frame Box-Muller noise (the load-bearing
+// mechanism, tasks.md T005).
+//   - `salt` increments EVERY FRAME (the `r draw` counter in the raw wiring), NOT just on
+//     reset like f_ks: the per-frame drive is what sustains the labyrinth
+//   - no sin(): a Hoskins-style arithmetic hash (fract and multiply-add only), whose
+//     precision does not depend on the GPU's sin() range reduction
+//   - scalars only: components are never read from a stored vec
+//   - never name a variable e or phi (predefined constants)
+//   - functions are declared before Param declarations (GenExpr rule)
+hashf(x, y) {
+	ha = fract(x * 0.1031);
+	hb = fract(y * 0.1031);
+	hc = ha;
+	hd = ha * (hb + 33.33) + hb * (hc + 33.33) + hc * (ha + 33.33);
+	ha = ha + hd;
+	hb = hb + hd;
+	hc = hc + hd;
+	return fract((ha + hb) * hc);
+}
+
+Param salt(0);
+
+px = floor(norm.x * 256);
+py = floor(norm.y * 256);
+
+sa = salt * 61;
+sb = salt * 17;
+se = hashf(px + sa, py + sb);
+si = hashf(px + sa + 113.7, py + sb + 57.3);
+na = hashf(px + sa + 271.9, py + sb + 181.3);
+nb = hashf(px + sa + 401.1, py + sb + 333.7);
+
+out1 = vec(se, si, na, nb);

@@ -1,0 +1,32 @@
+// codebox_spec.gen -- f_wc stage 3: the spectral step. TWO real per-bin Gaussian kernel
+// gains, ONE pass for both fields: KE = exp(-sig_e^2 k^2 / 2) multiplies the E pair (R,G),
+// KI = exp(-sig_i^2 k^2 / 2) the I pair (B,A). 256x256 float32.
+// Mirror: tests/modules/wc/wc_mirror.spec_stage().
+//
+// Input in1 = spectral texture (R,G = Re,Im of E-hat; B,A = Re,Im of I-hat).
+//   - sigma is in PIXELS: the domain IS texels, so k = 2*pi*signed_bin/N (L = N; angular
+//     units are load-bearing -- a cycles-unit k2 under-smooths the kernels by (2*pi)^2)
+//   - sig_e = texture / 1.45 (the Psychedelic 2/2.9 aspect ratio, slaved; FR-010)
+//   - NO decay multiplier and NO k = 0 (DC) zeroing -- both are KS-specific; the
+//     dt-relaxation in the nl stage carries the decay (FR-002, settled model)
+//   - there is no dt in this stage at all: dt only relaxes in nl (FR-003)
+//   - signed bin index from floor(norm * N), not `cell` (bench-verified 2026-09-22)
+//   - sig_i IS the user-facing `texture` dial, renamed here to avoid colliding with the
+//     GLSL `texture()` builtin (unverified at codegen time); the definition maps
+//     `texture` -> this Param (T025)
+Param sig_i(1.4);
+
+N = 256;
+bx = floor(norm.x * N);
+by = floor(norm.y * N);
+mx = switch(bx < N * 0.5, bx, bx - N);
+my = switch(by < N * 0.5, by, by - N);
+kx = twopi / N * mx;
+ky = twopi / N * my;
+k2 = kx * kx + ky * ky;
+se = sig_i / 1.45;
+ge = exp(0 - 0.5 * se * se * k2);
+gi = exp(0 - 0.5 * sig_i * sig_i * k2);
+
+out1 = vec(nearest(in1, norm).x * ge, nearest(in1, norm).y * ge,
+           nearest(in1, norm).z * gi, nearest(in1, norm).w * gi);

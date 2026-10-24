@@ -1,0 +1,42 @@
+// codebox_nl.gen -- f_wc stage 6: the heart (the settled model, tasks.md T005/T007).
+// Exact relaxation toward the logistic sigmoid of the coupled drive, per frame:
+//   E += (F(AEE*cE - AIE*cI - HE + ne*nx + drive_gain*(drv - 0.5)) - E) * dt / TE
+//   I += (F(AEI*cE - AII*cI - HI + ne*nx) - I) * dt / TI
+// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.nonlinear_step().
+//
+// Inputs (4): in1 = the convolved fields (R = KE conv E, B = KI conv I, from the ix stage),
+// in2 = the raw state (R = E, B = I, from the pass stage -- an extra tap off the feedback so
+// the relaxation target and the state are the same frame), in3 = the noise texture
+// (B, A = the two raw uniforms; fresh every frame -- the per-frame drive is the load-bearing
+// mechanism), in4 = the drive inlet (R; unconnected reads the pix default which the patcher
+// holds at mid-gray 0.5 -- zero net drive for free, G3).
+//   - fresh Gaussian noise into BOTH sigmoid inputs, Box-Muller from the two uniforms,
+//     sqrt(dt)-scaled (so dt stays a pure relaxation step), same nx in E and I (the Rule form)
+//   - the drive term is E-only (T007: adding to I is identical but unnecessary)
+//   - constants are baked (settled Psychedelic corner): AEE 16.1, AIE 14.5, AEI 13.7,
+//     AII 13.0, HE 3.1, HI 3.5, TE 4, TI 12.5
+//   - NaN/Inf zap per the f_ks containment precedent (abs(x) < 1e30, NaN == NaN is TRUE);
+//     zapped texels are self-healed from noise by the pass stage
+//   - no unary minus before a parenthesis (GenExpr mis-parses it): write `0 - ...`
+Param dt(1);
+Param ne(1);
+Param drive_gain(0);
+
+ce = nearest(in1, norm).x;
+ci = nearest(in1, norm).z;
+ee = nearest(in2, norm).x;
+ii = nearest(in2, norm).z;
+na = nearest(in3, norm).z * 0.999 + 0.0001;
+nb = nearest(in3, norm).w * 0.999 + 0.0001;
+nx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);
+drv = nearest(in4, norm).x;
+
+ae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 + ne * nx + drive_gain * (drv - 0.5), -60, 60)));
+ai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 + ne * nx, -60, 60)));
+
+en = ee + (ae - ee) * (dt * 0.25);
+inw = ii + (ai - ii) * (dt * 0.08);
+en = switch(abs(en) < 1e30, en, 0);
+inw = switch(abs(inw) < 1e30, inw, 0);
+
+out1 = vec(en, 0, inw, 0);

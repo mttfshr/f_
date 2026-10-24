@@ -126,22 +126,23 @@ tests/modules/wc/
   fluid two-complex-field packing, so ONE chain carries BOTH WC fields; no
   Hermitian split, no duplicated chain. Stage numbers: pass 0, fx 1, fy 2,
   spec 3, iy 4, ix 5, nl 6, enc 7. Four codeboxes generated.
-- [ ] T021 [P] Codeboxes for the E/I solver stages in `src/f_wc/`, against the tier-1 mirror
-  `tests/modules/wc/wc_mirror.py` (settled model — one function per stage): `codebox_seed.gen`
-  (hash noise: seed channels on reset AND the per-frame salt-incremented noise the mechanism
-  needs), `codebox_pass.gen` (3-inlet hold/reseed), `codebox_spec.gen` (ONE instance, two real
-  per-bin gains — sigma_E on the E pair, sigma_I on the I pair — NOT two chains), `codebox_nl.gen`
-  (4 inlets: convolved fields, raw state, per-frame noise, drive; E-only drive term; NaN/Inf zap
-  per the f_ks containment precedent). Verified on the bench against the mirror stage by stage.
-  Max bench; codeboxes written by hand against the mirror's stages.
-  **Tier-1 done 2026-10-23:** `wc_mirror.py` + `test_wc.py` written from the settled model
-  (spike_wc_noise_regions.py form): pass-chain-vs-np.fft at N=32, single-bin kernel gains,
-  scalar fixed point, the noise-sustainment ablation (collapse without, contrast with), the
-  T007 drive-coupling ordering, boundedness, and the retinotopic radial-constancy property.
-- [ ] T022 [P] `codebox_enc.gen`: the retinotopic resample (T006's constants r0 = 0.5,
-  k_e = 8, k_t = 5, r_max = 4 provisional per T033, periodic 4-tap in (u, v)), display-E
-  placeholder map until G4, `sharp` dial (f_ks crisp-blend shape), `bypass_gate` → black
-  alpha 1 (f_ks precedent), `@adapt 0` render-size sampling. Max bench.
+- [~] T021 [P] **Codeboxes WRITTEN 2026-10-23; bench leg pending (needs Max).** `src/f_wc/`
+  `codebox_seed.gen` (Hoskins hash ×4 channels: R/G = seed-E/I reseed channels, B/A = the
+  per-frame Box-Muller uniforms; `salt` increments EVERY DRAW — the load-bearing mechanism,
+  not per-reset like f_ks), `codebox_pass.gen` (3-inlet hold/reseed, per-channel self-heal on
+  BOTH-zero texels, G = A = 0 packing), `codebox_spec.gen` (ONE stage, two real gains; codebox
+  Param named `sig_i` — `texture` collides with the GLSL builtin, unverified; the definition
+  maps the `texture` dial → `sig_i`; NO decay multiplier, NO DC zero), `codebox_nl.gen`
+  (4 inlets, Box-Muller * sqrt(dt) from in3.B/A into BOTH sigmoid inputs, E-only drive term,
+  settled constants baked, NaN/Inf zap). Written against the mirror's stages (7/7 green).
+  Mirror grew `hash_noise_tex` / `seed_from_hash` / `nx_from_hash_tex` — the exact float32
+  port of the codebox hash so T023 can feed the mirror the GPU's own stream.
+  **Owed (Max):** stage-by-stage bench vs the mirror.
+- [~] T022 [P] **WRITTEN 2026-10-23; bench pending (needs Max).** `codebox_enc.gen`: retinotopic
+  resample (cortical u = ROWS / v = COLUMNS per `wc_retinotopy.py` — the mirror test caught the
+  swap), constants r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4 baked (T033 decides exposure),
+  periodic 4-tap in (cv, cu), display-E soft map + `sharp` crisp blend (f_ks shape, default
+  sharp = 0), `bypass_gate` → black A=1, non-finite → 0.
 - [ ] T023 Frame-exact multi-frame feedback run of the full GPU chain against `run_temporal`
   (the f_ks T007 pattern: short-horizon pixel comparison, then statistical comparison — the
   state is stochastic PER RUN, so the bench must reproduce the noise stream exactly: seed the

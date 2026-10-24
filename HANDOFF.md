@@ -1,5 +1,12 @@
 # HANDOFF
 
+## 2026-10-23 (night 2): f_wc Phase 1 — all six codeboxes written (T021/T022 written, bench leg owed to Max)
+
+- **`src/f_wc/` has the full stage set:** generated `codebox_dft_{fx,fy,iy,ix}.gen` (T020) plus hand-written `codebox_seed.gen`, `codebox_pass.gen`, `codebox_spec.gen`, `codebox_nl.gen`, `codebox_enc.gen`, all written against `tests/modules/wc/wc_mirror.py` (7/7 green) and the jit-gen-codebox skill. Design facts: the noise stage's `salt` increments EVERY DRAW (one counter from `r draw`, both reseed channels and Box-Muller uniforms — the per-frame mechanism; simpler than f_ks's per-reset counter); the spec codebox param is `sig_i` (`texture` would collide with the GLSL builtin — the definition maps dial → param); nl is 4-inlet (convolved, raw state, noise, drive) with Box-Muller×√dt into both sigmoid inputs and the E-only drive term; enc bakes the provisional map constants (T033 decides exposure). Mirror grew `hash_noise_tex`/`seed_from_hash`/`nx_from_hash_tex` (exact float32 Hash port) so T023 can feed the mirror the GPU's own noise stream.
+- **Still owed, all need Max (Matt's bench):** T021/T022 bench legs (stage-by-stage + enc vs mirror), T023 (frame-exact chain run; noise stream → statistical comparison after frame 1, FMA-caveat noted), T024 (cost; ONE chain ≈ f_ks class), T025 (definition.py, build, drift, offline contracts — build/drift halves are offline-doable next session).
+- Not committed: nothing — everything committed as the T021/T022-written checkpoint.
+- **Next session(s):** T025's offline half (definition.py modeled on f_ks, build, drift 0, offline contracts, README/menu left for Phase 3), then hand to Matt for the bench legs (T021/T022/T023/T024 + module contract bench).
+
 ## 2026-10-23 (night): f_wc Phase 1 groundwork — T020 DFT factoring + tier-1 mirror done; spec rewritten to the settled model
 
 - **T020 done, decision recorded in tasks.md:** `src/f_vf_fluid/gen_dft.py` IS the shared DFT generator; f_wc got a third adapter `src/f_wc/gen_dft.py` (same shape as f_ks's, code-line assertion, packing comment changed to `R,G = Re,Im of E-hat; B,A = Re,Im of I-hat`). No template move, no copy. Four codeboxes generated; ONE chain carries BOTH fields.

@@ -207,6 +207,58 @@ def noise_tex(h, w, rng, dt):
     return store_float32(t)
 
 
+def _hashf(x, y):
+    """Exact float32 port of codebox_seed.gen's Hoskins-style hash (for the
+    tier-2 bench: feed the mirror the SAME stream the GPU's hash produces).
+    FMA/precision differences vs. GLSL are expected at the ulp level -- the
+    noise comparison is statistical after the first frame (see T023)."""
+    ha = np.mod(x * F32(0.1031), F32(1.0))
+    hb = np.mod(y * F32(0.1031), F32(1.0))
+    hc = ha
+    hd = ha * (hb + F32(33.33)) + hb * (hc + F32(33.33)) + hc * (ha + F32(33.33))
+    ha = ha + hd
+    hb = hb + hd
+    hc = hc + hd
+    return np.mod((ha + hb) * hc, F32(1.0))
+
+
+def hash_noise_tex(h, w, salt):
+    """codebox_seed.gen exactly, at a given salt: R = seed-E hash, G = seed-I
+    hash (read by the pass stage on reseed), B, A = the raw Box-Muller
+    uniforms (read by the nl stage every frame)."""
+    _, _, cx, cy = grid(h, w)
+    sa = F32(salt) * F32(61.0)
+    sb = F32(salt) * F32(17.0)
+    t = texture(h, w)
+    t[..., 0] = _hashf(cx + sa, cy + sb)
+    t[..., 1] = _hashf(cx + sa + F32(113.7), cy + sb + F32(57.3))
+    t[..., 2] = _hashf(cx + sa + F32(271.9), cy + sb + F32(181.3))
+    t[..., 3] = _hashf(cx + sa + F32(401.1), cy + sb + F32(333.7))
+    return store_float32(t)
+
+
+def seed_from_hash(h, w, salt, amp=F32(1.0)):
+    """seed_state, but from the codebox hash channels (what the pass stage
+    actually writes on a reseed): R = seed-E hash * amp, B = seed-I hash * amp."""
+    nz = hash_noise_tex(h, w, salt)
+    t = texture(h, w)
+    t[..., 0] = nz[..., 0] * amp
+    t[..., 2] = nz[..., 1] * amp
+    return store_float32(t)
+
+
+def nx_from_hash_tex(nz, dt):
+    """The nl stage's Box-Muller transform of the hash tex's B, A uniforms
+    (0.999/0.0001 guard + sqrt(dt) scale), so nonlinear_step() can be fed the
+    exact codebox stream: R = nx."""
+    na = nz[..., 2] * F32(0.999) + F32(0.0001)
+    nb = nz[..., 3] * F32(0.999) + F32(0.0001)
+    t = texture(*nz.shape[:2])
+    t[..., 0] = (np.sqrt(F32(-2.0) * np.log(na)) * np.cos(TWOPI * nb)
+                 * np.sqrt(F32(dt)))
+    return store_float32(t)
+
+
 def drive_tex(h, w, value=F32(0.5)):
     """The drive inlet texture. Unconnected = the library's mid-gray read 0.5,
     which makes drive_gain*(value - 0.5) = 0 for free (G3: no special-casing).
