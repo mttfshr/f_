@@ -1,0 +1,241 @@
+# Tasks: f_formconstants
+
+**Spec**: `.specify/f_formconstants/spec.md`
+**Plan**: none yet (written after Phase 0)
+**Build order**: Sequential. Phase 0 is the gate: T002 decides the `energy`
+default (and whether an internal excite-LFO is needed) and everything in
+Phase 1 assumes those numbers.
+**Commits**: After each phase checkpoint.
+
+Created 2026-10-24 from the spec after the f_wc pixelation post-mortem (see
+Record). Each task says whether it is offline NumPy (no Max), the Max bench,
+or a human look (tier 3, Matt).
+
+---
+
+## Expected Source Layout
+
+```
+src/f_formconstants/
+├── definition.py            # archetype: source; drive inlet (vs_inState,
+│                            #   f_wc G3 pattern); luma outlet
+├── codebox_blur_x.gen       # separable Gaussian X pass, inline exp() weights,
+│                            #   R at σ_E, G at σ_I, wrap sampling, radius ceil(3σ) (FR-002)
+├── codebox_blur_y.gen       # the Y pass (same codebox shape, axis swapped)
+├── codebox_hold.gen         # feedback hold (adaptive-res variant — T011)
+├── codebox_seed.gen         # hash noise seeding (E, I) + per-frame noise stream;
+│                            #   salt increments every draw (f_wc mechanism)
+├── codebox_pass.gen         # reseed/hold + habituation carry if G1 ships (f_wc shape)
+├── codebox_nl.gen           # sigmoid relax + per-frame noise + E-only drive +
+│                            #   excite offset + NaN zap (f_wc shape, Example-10 constants)
+├── codebox_enc.gen          # f_wc's retinotopic map stage, copied (r_soft
+│                            #   foveal softening, contrast, sharp, bypass_gate)
+tests/modules/formconstants/
+├── fc_mirror.py             # tier-1 mirror (spatial-blur form; graduates from the spike)
+├── test_formconstants.py    # tier-1 tests
+├── bench_formconstants.py   # tier-2 stage/chain bench
+tests/records/
+├── spike_fc_sustain.py      # T002: sustain at Example-10 constants, float32, Ne = 0
+├── spike_fc_lambda.py       # T003: λ(σ_frac) structure-factor calibration
+docs/f-reference/
+├── f_formconstants.md       # Phase 3
+package/help/
+├── f_formconstants.maxhelp  # Phase 3
+```
+
+Notes on what this module does NOT have (deliberate): no `gen_dft.py` adapter,
+no `codebox_dft_*`, no `codebox_spec.gen`, no fixed-size solver texture, no
+manual reconstruction taps in enc (FR-007: hardware `sample()` is exact when
+state grid = render grid).
+
+---
+
+## Phase 0: NumPy spike and decision gates (BLOCKING)
+
+**Tier decision (constitution, Verification Tiers):** tier 1 applies (closed
+forms exist: separable-Gaussian sums, single-mode decay with couplings zeroed,
+structure-factor peak vs. σ); tier 2 applies (frame-exact multi-frame feedback
+vs. the mirror); tier 3 for the headline look AB against the HTML page.
+
+- [ ] T001 Write `tests/modules/formconstants/fc_mirror.py` + `test_formconstants.py`
+  — the f_wc wc_mirror.py stage pattern, with the spectral Gaussian replaced by
+  the explicit separable blur (radius ⌈3σ⌉, normalized `exp(−i²/2σ²)` weights,
+  wrap). Closed-form checks: blur of a constant = the constant (machine-exact),
+  blur of a single Fourier mode = mode × analytic Gaussian gain (f_wc T002's
+  single-mode pattern), relaxation fixed points reproduce. Offline.
+- [ ] T002 [US1] **Sustain measurement (the load-bearing experiment)** in
+  `tests/records/spike_fc_sustain.py`: Example-10 constants (10.5/8.5/12/3,
+  He 2, Hi 3.5, Te 10, Ti 20, dt 1) at float32, σ_frac at the Example-10 visual
+  corner (σ_I = 2 px at a 1024 reference), from noise seeding, 4,000+ frames,
+  Ne ∈ {0, 0.05, 0.15, 0.5, 1.0}: does structure persist at Ne = 0 (std and
+  spectral-peak traces; watch for slow crystallization or uniform decay)? Also
+  with the source's slow square-wave bias `s` on HE to check whether it — not
+  noise — is their sustain mechanism. Output: the default `energy` and a
+  yes/no on an internal excite-LFO. Offline.
+- [ ] T003 [US3] **λ(σ) calibration** in `tests/records/spike_fc_lambda.py`:
+  structure-factor peak wavelength vs. σ_frac over the dial range at the
+  shipped constants → the `grain` dial mapping table (FR-002) and the NF-005
+  tolerance band. Include the σ_px floor behavior (Edge Cases) at small sizes.
+  Offline.
+- [ ] T004 [US1] Retinotopic look stills: mirror fields through the shared map
+  (reuse `tests/records/wc_retinotopy.py`) at the fine web scale, parity map
+  corner (zoom 1 / twist 1 / fovea 0.003 / r_soft 0.35) and 2–3 alternates;
+  static judgment offline (the map corner was tuned on f_wc's chunky field).
+  Offline; stills to `scratch/fc_enc/` (scratch is gitignored — reference by path).
+- [ ] T005 [US3] Resize-invariance in the mirror: same σ_frac at 128² and 256²,
+  measure wavelength and regime drift → bounds NF-005 and informs T013's
+  resize-seam decision. Offline.
+- [ ] T006 **[G0 — Matt]** Defaults from T002–T005: `energy` default + LFO
+  yes/no, grain range/landmarks, map corner for v1. Tier-3 look check of the
+  T004 stills comes along for free. Offline presentation, one message.
+- [ ] T007 **[G1 — Matt]** `habituation` dial in v1 (math proven at f_wc G5;
+  B/A channels free) or drop to v2. One-line decision.
+
+**Checkpoint:** Phase 0 closed when G0/G1 are answered. Mirror + tests green.
+
+---
+
+## Phase 1: Build and bench
+
+- [ ] T010 Generate a reference frame dump from the mirror at the shipped
+  corner for bench diffing (the f_ks/f_wc bench-fixture pattern), small N.
+  Offline.
+- [ ] T011 **Build-system feasibility FIRST** (before any codebox): the
+  pix_chain builder's existing feedback modules (`f_ks`, `f_wc`) run solver
+  stages at FIXED size (`@adapt 0`); this module's solver stages are
+  `@adapt 1` (render res — FR-001). Confirm in `build/spec.md` +
+  `build_patcher.py` how stage sizing and the feedback hold are emitted and
+  whether adaptive-res feedback in a pix_chain needs anything new (the raw
+  `vs_feedback`-style texture pair, the f_grain/f_ks hold precedents).
+  If a builder gap exists, extend the builder rather than hand-patching.
+  Offline code reading; writes up the chosen pattern in this file.
+- [ ] T012 [US1] Write the codeboxes: `codebox_blur_x.gen`, `codebox_blur_y.gen`
+  (inline `exp(−i²/2σ²)` weights from the σ Param — NO kernel tables, NO array
+  uniforms; σ_px = σ_frac·min(dim.x, dim.y) with the ≥ 0.75 px floor; wrap
+  neighbor sampling per the f_ks/f_wc texel-center convention), `codebox_nl.gen`
+  (f_wc's verbatim stage shape, Example-10 constants, excite offset, drive
+  term, habituation subtract only if G1 shipped), `codebox_seed.gen`,
+  `codebox_pass.gen`, `codebox_hold.gen` (per T011), `codebox_enc.gen`
+  (copy of f_wc's enc, header rewritten; `r_soft` stays a bench-vary Param).
+  GenExpr discipline per the f_wc SSAA lesson: no functions with destructuring
+  or global refs, inline everything, single-evaluation shapes only.
+- [ ] T013 [US1] Resize handling: per FR-001/Edge Cases, instrument what the
+  adaptive-res feedback chain does on a render-size change (state texture
+  destroyed/resampled?) and wire the deliberate path — size-change detector
+  (`dim` change → reseed) unless the observed behavior is already a clean
+  resample, in which case record that instead. Bench-verified (two renders at
+  two sizes), live-confirmed in Phase 2.
+- [ ] T014 Write `src/f_formconstants/definition.py` (modeled on f_wc's:
+  pix_chain, mod_inlets with the drive vs_inState fanout, `#0_`-scoped names,
+  NOT_IN_MENU until Phase 3) and build `package/patchers/f_formconstants.maxpat`;
+  drift 0; `test_module_contracts` / `test_launch` / `test_generate_menu` green.
+  Offline.
+- [ ] T015 Write `tests/modules/formconstants/bench_formconstants.py` (the
+  bench_wc.py template): stage legs (blur x/y vs. mirror — the FR-002 analytic
+  check on the GPU; nl vs. mirror at the unconnected-inlet point; enc sanity),
+  reseed/hold/self-heal, and the 30-frame chain vs. T010's fixture.
+  Max bench (Matt's session).
+- [ ] T016 [US1] Chain bench: 30-frame frame-exact vs. mirror at fixed render
+  size (standard tolerance; the f_wc 4.1e-6 figure is the class) + @slow
+  100-frame contract (contrast survives on the real chain). Max bench.
+- [ ] T017 [US2] Drive-imprint leg (the f_wc T032/bench_wc_look pattern):
+  input correlation at `drive_gain` = 0 vs. ≥ 1. Max bench.
+- [ ] T018 **Cost (NF-001)**: ms/frame at 1080p, 4K, and 320² on Matt's machine
+  (resolver: σ_px grows with dim → tap count grows — the 4K number is the
+  informative one). Report against f_wc's 2.45 ms. Max bench.
+- [ ] T019 Module contract bench on the shipped patcher (param readbacks,
+  bypass → black A=1, drive `drv_conn` undriven list, 10 pix).
+  Max bench.
+
+**Checkpoint:** Phase 1 closed when the module builds drift-0, benches green,
+and NF-001 has numbers. f_wc's full offline suite runs before any unrelated
+edit (`tests/bg.sh start offline`).
+
+---
+
+## Phase 2: Tuning (tier 3, live with Matt)
+
+- [ ] T020 [US1] **Headline AB**: module vs. `WC_Example_10_fullscreen.html`
+  side by side at the same window size, default dials, high and low `sharp`.
+  Matt's call: the fine silky web read, with no texel staircase (Success 1).
+- [ ] T021 [US3] `grain`/`aspect` ranges + landmark snap points live (the
+  T003 table is the offline proposal); confirm the stripes↔labyrinth ordering
+  axis reads at render-res physics. Record the final ranges in the spec table.
+- [ ] T022 [US2] Drive-transition feel live (imprint legibility, release);
+  `rate` range + ceiling (pattern-preservation bound, FR-005).
+- [ ] T023 [US1] Map corner for the fine web (zoom/twist/fovea defaults; the
+  parity set was tuned for the chunky field) + `r_soft` value at the fine
+  scale; live resize check alongside (T013's seam visible/acceptable?).
+- [ ] T024 **[G2 — Matt]** Soak check (f_wc's 30 s wash-drift precedent) at the
+  shipped corner; pick the shipped `sharp`/`contrast` defaults from the soak.
+
+**Checkpoint:** Phase 2 closed when Matt approves the default look and ranges.
+
+---
+
+## Phase 3: Ship
+
+- [ ] T025 Reference doc `docs/f-reference/f_formconstants.md` (settled model,
+  constants, ranges/landmarks, resize behavior, relationship to f_wc) +
+  `docs/f-reference/module-inventory.md` rows (inlets/outlets/bypass tables).
+- [ ] T026 Helpfile `package/help/f_formconstants.maxhelp` (generator layout,
+  drive bubble per f_wc's).
+- [ ] T027 Menu: `menu.py` Patterns category (after Wilson-Cowan), regenerate
+  menu + launcher; `test_generate_menu` / `test_launch` green.
+- [ ] T028 README row + `ideas/INDEX.md` flip to 🟢 + `.specify/plan.md`
+  item marked BUILT/SHIPPED.
+- [ ] T029 Enc-dedup hygiene decision (Claude): shared enc source factoring
+  across f_wc / f_formconstants vs. documented copy (the `gen_dft.py`
+  precedent if shared). One paragraph in this file either way.
+- [ ] T030 Full offline suite (`tests/bg.sh start offline`) + full module
+  contract bench on the final patcher set; close-out record.
+
+**Checkpoint:** Phase 3 closed when the module is registered everywhere and
+the suite is green. Module is shipped.
+
+---
+
+## Dependencies & Execution Order
+
+- Phase 0 (T001–T007) blocks everything — G0's `energy` default is baked into
+  the codeboxes at T012.
+- T011 blocks T012–T014 (the adaptive-feedback pattern decides the hold/seed
+  shapes).
+- Bench tasks T015–T019 are one Max session, sequenced as listed.
+- Phase 2 is one live tuning session with Matt.
+- T025–T028 parallelizable once Phase 2's defaults are settled.
+
+## Record
+
+### 2026-10-24: module conceived out of the f_wc pixelation post-mortem
+
+- Matt's report chain over the day: 1920×1080 f_wc renders showed ~30 px
+  blocks (C0-bilinear facets → fixed with Catmull-Rom 4×4, commit fbee342);
+  "still blocky around the edges" (contour-position quantization on the 256²
+  grid); 2×2 SSAA attempts failed live three times (function form boxed
+  black; two-arg-atan → 4-fold mirror; cartopol restored → 2-fold) and were
+  reverted to the proven single-eval CR build (2d9174c). Readback of the
+  failed commit 0589d14 found the offsets were quarter-SCREEN-pixels against
+  a ~7-screen-px/texel artifact, and the average was pre-threshold — the
+  attempt was structurally unable to fix the artifact even if codegen had
+  worked.
+- Reading the actual `WC_Example_10_fullscreen.html` source + `gpgpu.js` +
+  `gpugaussian.js` (2026-10-24): the source's smoothness is STRUCTURAL —
+  solver textures = canvas client size (up to 1920² on a 1080p display),
+  UNSIGNED_BYTE with `EncodeFloat` 1/255 quantization on every write,
+  LINEAR/REPEAT filtering, coupling via `GPUGaussianMultiBlur(gl,1,2,1,1)`
+  (two-pass separable Gaussian, radius ⌈3σ⌉), retinal map =
+  15-line bare complex-log shader, display = continuous `vec4(Ue,Ui,|E−I|·3)`
+  with NO threshold. No FFT, no reconstruction filter, no AA — the artifact
+  class f_wc fights does not exist at solver-res = render-res.
+- **Matt's calls (2026-10-24):** their look (fine, silky) is the actual
+  target; color not essential (downstream tooling covers it); NEW SIBLING
+  MODULE rather than re-architecting f_wc; Example-10 coupling constants as
+  defaults; name `f_formconstants`.
+- Deliberate departures from the source, with reasons: float32 state (their
+  8-bit quantization is a liability on a saturation boundary); pattern scale
+  in frame-height units (their resize-couples-physics is a defect for a
+  module); `r_soft` foveal softening retained (their center is an aliased
+  vortex); per-frame `Ne` measured rather than assumed (their page injects
+  none — possibly sustained by quantization decorrelation + the slow square
+  wave `s`; T002 answers this at float32).

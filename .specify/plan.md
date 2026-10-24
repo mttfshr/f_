@@ -61,6 +61,8 @@ This document is orientation, not execution. It names active workstreams, states
 
 11. **`f_wave_field` (spectral wave / resonator field, working name)** — specced 2026-10-23 (`.specify/f_wave_field/spec.md`, `tasks.md`) from `ideas/f_wave_field.md`; the solver core for `ideas/f_cymascope.md`. Spectral on the `f_ks` / `f_wc` DFT chain (exact per-bin step, no stability limit), general dispersion `omega^2 = ring^2 + speed^2 k^(2 dispersion)` (wave, resonator, plate, water-like), periodic edges plus an absorbing-edge dial, optional force inlet plus point exciter plus strike, outlets luma and gradient vecfield. Third user of the DFT chain (factoring is `f_wc` T020). Phase 0 not started: mirror and closed forms T001-T005, T007, cost T006, gates G1-G5.
 
+12. **`f_formconstants` (render-resolution Wilson-Cowan labyrinth, sibling of `f_wc`)** — specced 2026-10-24 (`.specify/f_formconstants/spec.md`, `tasks.md`) from `ideas/f_formconstants.md`, out of the f_wc pixelation post-mortem the same day. The webgpgpu `WC_Example_10_fullscreen.html` pipeline read from source: solver grid = render grid, separable-Gaussian coupling (σ_E 1 px / σ_I 2 px — no FFT), bare-log retinal map, float32 state (their 8-bit quantization rejected), pattern scale in frame-height units (their resize-couples-physics defect fixed). Example-10 coupling constants as defaults (Matt). f_wc stays shipped and unchanged. Phase 0 not started: mirror + sustain-at-zero-noise measurement T001-T005 (the load-bearing experiment: Example 10 injects no per-frame noise), gates G0 (defaults) and G1 (habituation dial). Item 8's queued-ahead order (f_quasi, f_wave_field) is superseded by this module's priority — Matt set this one as the active line.
+
 ---
 
 ## Paused / blocked — do not resume by default

@@ -1,5 +1,12 @@
 # HANDOFF
 
+## 2026-10-24 (afternoon): f_formconstants SPECCED — render-res WC sibling born from the f_wc pixelation post-mortem
+
+- The pixelation discussion traced the whole arc (CR fix → failed SSAA) and then read the ACTUAL `WC_Example_10_fullscreen.html` source + `gpgpu.js`/`gpugaussian.js`: their smoothness is STRUCTURAL (solver grid = display grid, separable-Gaussian blur σ_E1/σ_I2 px, 8-bit quantized state, bare-log map, continuous non-thresholded display). Re-reading failed SSAA commit 0589d14 found it structurally unable to help: quarter-SCREEN-pixel offsets against a ~7-screen-px/texel artifact, averaged pre-threshold. SSAA work item reframed in f_wc tasks remains parked; the fine/silky look needs a different architecture, not enc polish.
+- **Matt's calls:** their look is the target (fine/silky; color not essential); NEW SIBLING (f_wc ships unchanged); Example-10 constants (10.5/8.5/12/3, He 2, Hi 3.5, Te 10, Ti 20) as defaults; name **`f_formconstants`**.
+- Written + committed: `ideas/f_formconstants.md`, `.specify/f_formconstants/{spec,tasks}.md` (30 tasks; Phase 0 offline: mirror + the load-bearing T002 sustain-at-float32-without-noise measurement, λ(σ) calibration, look stills, resize invariance; gates G0 defaults / G1 habituation), plan.md item 12, INDEX entry. Deliberate departures from the source: float32 state, pattern scale in frame-height units (their resize-couples-physics fixed), r_soft retained, `Ne` measured not assumed.
+- **Next:** Phase 0 T001-T005 (offline, good omp fan-out material minus the gates), then Phase 1's T011 build-system check (first adaptive-res feedback pix_chain — f_ks/f_wc stages are all fixed 256²).
+
 ## 2026-10-24 (session break): housekeeping — scratch/ + archive/ gitignored, plan.md item 8 current
 
 - `/scratch/` and `/archive/` are now gitignored and untracked (files stay on disk; references in records remain valid as on-disk paths). `f_demo_ks`/`f_demo_wc` example maxpats are Matt's untracked work patches, left alone.

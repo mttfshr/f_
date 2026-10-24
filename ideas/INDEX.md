@@ -579,6 +579,11 @@ placeholders.
 - **[f_wc_from_webgpgpu.md](f_wc_from_webgpgpu.md)** ⚪ — Four pieces for `f_wc` from
   Rule's Wilson-Cowan pages: known-answer reference, Gaussian noise drive, habituation
   dials, retinotopic stage as a shared piece.
+- **[f_formconstants.md](f_formconstants.md)** 🟡 — **Specced 2026-10-24**
+  (`.specify/f_formconstants/`): render-resolution Wilson-Cowan labyrinth in the
+  WC_Example_10 pipeline shape (separable-Gaussian coupling at display res, no FFT),
+  sibling of `f_wc`; born from the f_wc pixelation post-mortem (their smoothness is
+  structural, not AA).
 - **[f_quasi.md](f_quasi.md)** 🟡 — **Specced 2026-10-23** (`.specify/f_quasi/`): Shepard-zoom quasicrystal
   generator with an analytic gradient outlet; relief, slope-hue and contour-banding looks are a gated Phase 2.
 - **[f_gabor.md](f_gabor.md)** ⚪ — Gabor band-pass and phase-invariant quadrature
