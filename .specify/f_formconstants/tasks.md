@@ -57,31 +57,52 @@ forms exist: separable-Gaussian sums, single-mode decay with couplings zeroed,
 structure-factor peak vs. σ); tier 2 applies (frame-exact multi-frame feedback
 vs. the mirror); tier 3 for the headline look AB against the HTML page.
 
-- [ ] T001 Write `tests/modules/formconstants/fc_mirror.py` + `test_formconstants.py`
+- [x] T001 Write `tests/modules/formconstants/fc_mirror.py` + `test_formconstants.py`
   — the f_wc wc_mirror.py stage pattern, with the spectral Gaussian replaced by
   the explicit separable blur (radius ⌈3σ⌉, normalized `exp(−i²/2σ²)` weights,
   wrap). Closed-form checks: blur of a constant = the constant (machine-exact),
   blur of a single Fourier mode = mode × analytic Gaussian gain (f_wc T002's
   single-mode pattern), relaxation fixed points reproduce. Offline.
-- [ ] T002 [US1] **Sustain measurement (the load-bearing experiment)** in
-  `tests/records/spike_fc_sustain.py`: Example-10 constants (10.5/8.5/12/3,
-  He 2, Hi 3.5, Te 10, Ti 20, dt 1) at float32, σ_frac at the Example-10 visual
-  corner (σ_I = 2 px at a 1024 reference), from noise seeding, 4,000+ frames,
-  Ne ∈ {0, 0.05, 0.15, 0.5, 1.0}: does structure persist at Ne = 0 (std and
-  spectral-peak traces; watch for slow crystallization or uniform decay)? Also
-  with the source's slow square-wave bias `s` on HE to check whether it — not
-  noise — is their sustain mechanism. Output: the default `energy` and a
-  yes/no on an internal excite-LFO. Offline.
-- [ ] T003 [US3] **λ(σ) calibration** in `tests/records/spike_fc_lambda.py`:
-  structure-factor peak wavelength vs. σ_frac over the dial range at the
-  shipped constants → the `grain` dial mapping table (FR-002) and the NF-005
-  tolerance band. Include the σ_px floor behavior (Edge Cases) at small sizes.
-  Offline.
-- [ ] T004 [US1] Retinotopic look stills: mirror fields through the shared map
-  (reuse `tests/records/wc_retinotopy.py`) at the fine web scale, parity map
-  corner (zoom 1 / twist 1 / fovea 0.003 / r_soft 0.35) and 2–3 alternates;
-  static judgment offline (the map corner was tuned on f_wc's chunky field).
-  Offline; stills to `scratch/fc_enc/` (scratch is gitignored — reference by path).
+  **DONE 2026-10-24, 10/10 green.** Mirror carries both the exact discrete
+  kernel (the codebox reference) and an FFT soak path (deliberately not the
+  bench reference). Test found, on the way: the WC homogeneous dynamics is
+  OSCILLATORY at the Example-10 constants (limit cycle E ∈ [0.104, 0.345]) —
+  the f_wc-style rest test became a scalar-cycle tracking test.
+- [x] T002 [US1] **Sustain measurement (the load-bearing experiment)** in
+  `tests/records/spike_fc_sustain.py` — **DONE 2026-10-24, and it INVERTED the
+  plan.** Verdict table (N=512, σ_I=1.0 px, 4000 frames, Example-10
+  constants): Ne=0 dead; Ne 0.05–0.15 dead; **the source's own s square wave:
+  dead**; Ne 0.5–1.0 marginal (std 0.025–0.046, weak). Faithful 8-bit-quantized
+  port (state AND blur floored to 1/255): dead without s; ALIVE with s — std
+  pulses 0.01–0.13, breathing waves. **Example-10's look is a flicker-driven
+  regime sustained by 8-bit quantization decorrelation + the periodic s kick;
+  its constants are not a foundation for an autonomous float32 module.**
+  Counter-sweeps: Psychedelic couplings at fine grain saturate by ~3000 frames
+  without habituation (the known saturation-boundary transient); **the
+  sustaining regime is Psychedelic + habituation**: σ_I 0.75 px + Ne 0.75 +
+  habit 0.3 healthy past 6000 frames (std ~0.34, flat), habit 0.6 sustained
+  lower-contrast (0.21), habit 1.0 mostly collapsed. → defaults flipped to
+  Psychedelic couplings (16.1/14.5/13.7/13, He 3.1, Hi 3.5, Te 4, Ti 12.5),
+  **energy 0.75, habituation 0.3 and habituation is LOAD-BEARING, not optional
+  (G1 answered by measurement: the dial ships in v1, nonzero default).**
+  No internal excite-LFO (the s mechanism belongs to the flicker page's look;
+  measured non-sustaining at float32 alone). The G0 message to Matt carries
+  the (σ × habit) corner map from the grain-ladder/regime probes.
+- [ ] T003 [US3] **λ(σ) calibration** — regime map (σ_px × habit, N=512,
+  Ne 0.75, 4000 frames) running; the fine web measured: σ_I ≤ 0.75 px
+  (floor-bound kernels) sustains at habit 0.2–0.4 with λ ≈ 14.6 px and
+  prominence ~700; σ_I ≥ 0.9 px saturates at habit ≤ 0.3 but σ_I 1.45 +
+  habit 0.6 sustains. The fine regime's λ is set by the nonlinear dynamics,
+  not the floored kernel — NF-005's "λ constant in frame fractions" is FALSE
+  for the floored regime (λ stays ~14.5 PX at N 384/512); needs a spec
+  amendment once the map lands. Fit from the surviving cells only.
+- [x] T004 [US1] Retinotopic look stills — **DONE 2026-10-24.** Sustained fine
+  corner (σ_I 0.7 px floor-bound + habit 0.2/0.4) rendered through the map at
+  parity and closer corners × r_soft {0.35, 0}: `scratch/fc_enc/state_s0.7_h*_
+  {parity,closer}_rs*.png`. **The look is the target: fine, silky spiral /
+  concentric-contour web, zero texel staircase.** No map change needed for v1;
+  the closer corner (5/3/1.0) reads best of the four at this scale — Phase 2
+  tunes.
 - [ ] T005 [US3] Resize-invariance in the mirror: same σ_frac at 128² and 256²,
   measure wavelength and regime drift → bounds NF-005 and informs T013's
   resize-seam decision. Offline.
