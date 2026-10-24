@@ -1,0 +1,71 @@
+// codebox_blur_y.gen -- f_formconstants blur stage (Y pass): the second half
+// of the separable Gaussian coupling (FR-002). Identical math to
+// codebox_blur_x.gen with the taps running along Y; see that file for the
+// kernel contract (exact discrete kernel: radius ceil(3*sigma), normalized
+// exp(-i^2/2 sigma^2) weights, wrap; mirror: fc_mirror.gauss_taps/blur_axis).
+Param grain(0.0008);
+Param sig_ratio(1.45);
+
+si = clamp(grain * min(dim.x, dim.y), 0.75, 1.4);
+se = si / sig_ratio;
+
+qe = 9.0001 * se * se;
+qi = 9.0001 * si * si;
+re = 0 - 0.5 / (se * se);
+ri = 0 - 0.5 / (si * si);
+
+ix = floor(norm.x * dim.x);
+iy = floor(norm.y * dim.y);
+
+xw0 = ix - dim.x * floor(ix / dim.x);
+yw0 = iy - dim.y * floor(iy / dim.y);
+t0 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+wse = 1; wsi = 1;
+ace = t0.x; aci = t0.y;
+
+we1 = switch(1 <= qe, exp(1 * re), 0);
+wi1 = switch(1 <= qi, exp(1 * ri), 0);
+ywp1 = (iy + 1) - dim.y * floor((iy + 1) / dim.y);
+ywn1 = (iy - 1) - dim.y * floor((iy - 1) / dim.y);
+tp1 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywp1 + 0.5) / dim.y));
+tn1 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywn1 + 0.5) / dim.y));
+wse = wse + 2 * we1; wsi = wsi + 2 * wi1;
+ace = ace + we1 * (tp1.x + tn1.x); aci = aci + wi1 * (tp1.y + tn1.y);
+
+we2 = switch(4 <= qe, exp(4 * re), 0);
+wi2 = switch(4 <= qi, exp(4 * ri), 0);
+ywp2 = (iy + 2) - dim.y * floor((iy + 2) / dim.y);
+ywn2 = (iy - 2) - dim.y * floor((iy - 2) / dim.y);
+tp2 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywp2 + 0.5) / dim.y));
+tn2 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywn2 + 0.5) / dim.y));
+wse = wse + 2 * we2; wsi = wsi + 2 * wi2;
+ace = ace + we2 * (tp2.x + tn2.x); aci = aci + wi2 * (tp2.y + tn2.y);
+
+we3 = switch(9 <= qe, exp(9 * re), 0);
+wi3 = switch(9 <= qi, exp(9 * ri), 0);
+ywp3 = (iy + 3) - dim.y * floor((iy + 3) / dim.y);
+ywn3 = (iy - 3) - dim.y * floor((iy - 3) / dim.y);
+tp3 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywp3 + 0.5) / dim.y));
+tn3 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywn3 + 0.5) / dim.y));
+wse = wse + 2 * we3; wsi = wsi + 2 * wi3;
+ace = ace + we3 * (tp3.x + tn3.x); aci = aci + wi3 * (tp3.y + tn3.y);
+
+we4 = switch(16 <= qe, exp(16 * re), 0);
+wi4 = switch(16 <= qi, exp(16 * ri), 0);
+ywp4 = (iy + 4) - dim.y * floor((iy + 4) / dim.y);
+ywn4 = (iy - 4) - dim.y * floor((iy - 4) / dim.y);
+tp4 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywp4 + 0.5) / dim.y));
+tn4 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywn4 + 0.5) / dim.y));
+wse = wse + 2 * we4; wsi = wsi + 2 * wi4;
+ace = ace + we4 * (tp4.x + tn4.x); aci = aci + wi4 * (tp4.y + tn4.y);
+
+we5 = switch(25 <= qe, exp(25 * re), 0);
+wi5 = switch(25 <= qi, exp(25 * ri), 0);
+ywp5 = (iy + 5) - dim.y * floor((iy + 5) / dim.y);
+ywn5 = (iy - 5) - dim.y * floor((iy - 5) / dim.y);
+tp5 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywp5 + 0.5) / dim.y));
+tn5 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (ywn5 + 0.5) / dim.y));
+wse = wse + 2 * we5; wsi = wsi + 2 * wi5;
+ace = ace + we5 * (tp5.x + tn5.x); aci = aci + wi5 * (tp5.y + tn5.y);
+
+out1 = vec(ace / wse, aci / wsi, t0.z, t0.w);

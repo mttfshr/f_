@@ -145,16 +145,29 @@ table); regime map, sustain table, resize finding and stills recorded above.
 - [ ] T010 Generate a reference frame dump from the mirror at the shipped
   corner for bench diffing (the f_ks/f_wc bench-fixture pattern), small N.
   Offline.
-- [ ] T011 **Build-system feasibility FIRST** (before any codebox): the
-  pix_chain builder's existing feedback modules (`f_ks`, `f_wc`) run solver
-  stages at FIXED size (`@adapt 0`); this module's solver stages are
-  `@adapt 1` (render res — FR-001). Confirm in `build/spec.md` +
-  `build_patcher.py` how stage sizing and the feedback hold are emitted and
-  whether adaptive-res feedback in a pix_chain needs anything new (the raw
-  `vs_feedback`-style texture pair, the f_grain/f_ks hold precedents).
-  If a builder gap exists, extend the builder rather than hand-patching.
-  Offline code reading; writes up the chosen pattern in this file.
-- [ ] T012 [US1] Write the codeboxes: `codebox_blur_x.gen`, `codebox_blur_y.gen`
+- [x] T011 **Build-system feasibility — DONE 2026-10-24, no builder gaps.**
+  The pix_chain machinery already supports this module with zero new build
+  features:
+  1. **Stage sizing:** solver stages get `pix_attrs "@adapt 0 @type float32"`
+     (NO @dim) and the module's raw `r dim` receiver fans out `dim W H` to
+     EVERY solver stage plus enc — the same convention f_wc's enc uses
+     (verified in the built `package/patchers/f_wc.maxpat`:
+     `r dim` → `#0_wc_enc` inlet; jit.gl.pix follows).
+  2. **Feedback:** plain patchcord `["nl", 0, "hold", 0]` + `hold` node with
+     `"gen": "pass"` (passthrough, no codebox file) — the f_wc pattern;
+     frame delay is implicit in render order, verified live in f_wc.
+  3. **Cold-stage refresh:** `r draw` → seed/pass inlets and the every-draw
+     `param salt` increment machinery carries over verbatim from f_wc.
+  4. **Resize handling = resize reseed** (T013's deliberate path): add
+     `r dim` → `delay 200` to the raw_lines so a render-size change bangs
+     the existing reseed trigger (the spec's accepted seam — the state
+     texture reallocates garbage for ~200 ms, then reseeds).
+  Decisions: hold = gen "pass" (no file); enc keeps f_wc's map math but the
+  16-tap CR sampler is REPLACED by manual bilinear-with-wrap mirroring
+  fc_mirror.encode exactly (state res == render res makes CR pointless);
+  state layout R=E, G=I, B=Ve, A=Vi (the fc_mirror layout; differs from
+  f_wc's R=E, B=I).
+- [x] T012 [US1] Write the codeboxes:  **DONE 2026-10-24:** all six written (hold = gen "pass", no file). `codebox_blur_x.gen`, `codebox_blur_y.gen`
   (inline `exp(−i²/2σ²)` weights from the σ Param — NO kernel tables, NO array
   uniforms; σ_px = σ_frac·min(dim.x, dim.y) with the ≥ 0.75 px floor; wrap
   neighbor sampling per the f_ks/f_wc texel-center convention), `codebox_nl.gen`
@@ -164,17 +177,21 @@ table); regime map, sustain table, resize finding and stills recorded above.
   (copy of f_wc's enc, header rewritten; `r_soft` stays a bench-vary Param).
   GenExpr discipline per the f_wc SSAA lesson: no functions with destructuring
   or global refs, inline everything, single-evaluation shapes only.
-- [ ] T013 [US1] Resize handling: per FR-001/Edge Cases, instrument what the
-  adaptive-res feedback chain does on a render-size change (state texture
-  destroyed/resampled?) and wire the deliberate path — size-change detector
-  (`dim` change → reseed) unless the observed behavior is already a clean
-  resample, in which case record that instead. Bench-verified (two renders at
-  two sizes), live-confirmed in Phase 2.
-- [ ] T014 Write `src/f_formconstants/definition.py` (modeled on f_wc's:
-  pix_chain, mod_inlets with the drive vs_inState fanout, `#0_`-scoped names,
-  NOT_IN_MENU until Phase 3) and build `package/patchers/f_formconstants.maxpat`;
-  drift 0; `test_module_contracts` / `test_launch` / `test_generate_menu` green.
-  Offline.
+- [~] T013 [US1] Resize handling — **decided and wired 2026-10-24** (with T011):
+  the deliberate path is **resize reseed**: `r dim` fans `dim W H` to EVERY
+  stage (solver res = render res — T011 verified the convention against the
+  built f_wc patcher) and ALSO bangs the `delay 200` → reseed trigger, so a
+  render-size change reallocates textures and the picture re-forms from fresh
+  noise after ~200 ms instead of interpolating a garbage realloc. Remaining:
+  the bench leg (two renders at two sizes) in the T015–T019 Max session, and
+  the live seam judgment in Phase 2.
+- [x] T014 Write `src/f_formconstants/definition.py` and build
+  `package/patchers/f_formconstants.maxpat` — **DONE 2026-10-24, drift 0**
+  (16/16), build conventions/multistage/seeds-keys/overrides/layout tests
+  green, menu + launcher regenerated (module in NOT_IN_MENU with reason until
+  Phase 3; README row added — the suite enforces both). 12 dials (spec table),
+  route outlet 12 = reset; support ids obj-58..obj-63 hardcoded in raw_lines
+  (positional—f_wc T030's stale-id trap applies if the dial count changes).
 - [ ] T015 Write `tests/modules/formconstants/bench_formconstants.py` (the
   bench_wc.py template): stage legs (blur x/y vs. mirror — the FR-002 analytic
   check on the GPU; nl vs. mirror at the unconnected-inlet point; enc sanity),

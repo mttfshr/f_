@@ -1,0 +1,86 @@
+// codebox_blur_x.gen -- f_formconstants blur stage (X pass): the real-space
+// separable Gaussian coupling (FR-002). R (E) blurred at sigma_E, G (I) at
+// sigma_I, in ONE read pass (per-channel weights, shared texels); B/A pass
+// through. Runs at render resolution (@adapt 0, `r dim` resize).
+// Mirror: tests/modules/formconstants/fc_mirror.gauss_taps() / blur_axis() --
+// the EXACT discrete kernel the mirror asserts: radius ceil(3*sigma),
+// normalized exp(-i^2/2 sigma^2) weights, wrap boundary.
+//
+// sigma is derived per frame (T011): si = clamp(grain * min(dim.x, dim.y),
+// 0.75, 1.4) -- the measured sustaining band, T003; se = si / sig_ratio.
+//   - 11 taps cover radius ceil(3*1.4) = 5; taps past ceil(3*sigma) are
+//     masked to 0 (the mirror's truncation, not a full Gaussian)
+//   - texel-centre reads (ix + 0.5)/dim.x with explicit wrap -- np.roll parity
+//   - weights computed inline from the Params (NO kernel tables; jit.gl.pix
+//     Params are scalars, GPUGaussianMultiBlur's vec4-weights trick does not
+//     apply inside a codebox)
+//   - GenExpr discipline (the f_wc 2026-10-24 lesson): no functions with
+//     destructuring or global refs; everything inlined with suffixed names
+Param grain(0.0008);
+Param sig_ratio(1.45);
+
+si = clamp(grain * min(dim.x, dim.y), 0.75, 1.4);
+se = si / sig_ratio;
+
+qe = 9.0001 * se * se;              // mask radius squared (a hair past (3s)^2)
+qi = 9.0001 * si * si;
+re = 0 - 0.5 / (se * se);           // exponent scale, no unary minus
+ri = 0 - 0.5 / (si * si);
+
+ix = floor(norm.x * dim.x);
+iy = floor(norm.y * dim.y);
+
+// center tap
+xw0 = ix - dim.x * floor(ix / dim.x);
+yw0 = iy - dim.y * floor(iy / dim.y);
+t0 = nearestpix(in1, vec((xw0 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+wse = 1; wsi = 1;
+ace = t0.x; aci = t0.y;
+
+// taps 1..5, symmetric pairs (weights written fully inline)
+we1 = switch(1 <= qe, exp(1 * re), 0);
+wi1 = switch(1 <= qi, exp(1 * ri), 0);
+xwp1 = (ix + 1) - dim.x * floor((ix + 1) / dim.x);
+xwn1 = (ix - 1) - dim.x * floor((ix - 1) / dim.x);
+tp1 = nearestpix(in1, vec((xwp1 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+tn1 = nearestpix(in1, vec((xwn1 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+wse = wse + 2 * we1; wsi = wsi + 2 * wi1;
+ace = ace + we1 * (tp1.x + tn1.x); aci = aci + wi1 * (tp1.y + tn1.y);
+
+we2 = switch(4 <= qe, exp(4 * re), 0);
+wi2 = switch(4 <= qi, exp(4 * ri), 0);
+xwp2 = (ix + 2) - dim.x * floor((ix + 2) / dim.x);
+xwn2 = (ix - 2) - dim.x * floor((ix - 2) / dim.x);
+tp2 = nearestpix(in1, vec((xwp2 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+tn2 = nearestpix(in1, vec((xwn2 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+wse = wse + 2 * we2; wsi = wsi + 2 * wi2;
+ace = ace + we2 * (tp2.x + tn2.x); aci = aci + wi2 * (tp2.y + tn2.y);
+
+we3 = switch(9 <= qe, exp(9 * re), 0);
+wi3 = switch(9 <= qi, exp(9 * ri), 0);
+xwp3 = (ix + 3) - dim.x * floor((ix + 3) / dim.x);
+xwn3 = (ix - 3) - dim.x * floor((ix - 3) / dim.x);
+tp3 = nearestpix(in1, vec((xwp3 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+tn3 = nearestpix(in1, vec((xwn3 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+wse = wse + 2 * we3; wsi = wsi + 2 * wi3;
+ace = ace + we3 * (tp3.x + tn3.x); aci = aci + wi3 * (tp3.y + tn3.y);
+
+we4 = switch(16 <= qe, exp(16 * re), 0);
+wi4 = switch(16 <= qi, exp(16 * ri), 0);
+xwp4 = (ix + 4) - dim.x * floor((ix + 4) / dim.x);
+xwn4 = (ix - 4) - dim.x * floor((ix - 4) / dim.x);
+tp4 = nearestpix(in1, vec((xwp4 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+tn4 = nearestpix(in1, vec((xwn4 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+wse = wse + 2 * we4; wsi = wsi + 2 * wi4;
+ace = ace + we4 * (tp4.x + tn4.x); aci = aci + wi4 * (tp4.y + tn4.y);
+
+we5 = switch(25 <= qe, exp(25 * re), 0);
+wi5 = switch(25 <= qi, exp(25 * ri), 0);
+xwp5 = (ix + 5) - dim.x * floor((ix + 5) / dim.x);
+xwn5 = (ix - 5) - dim.x * floor((ix - 5) / dim.x);
+tp5 = nearestpix(in1, vec((xwp5 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+tn5 = nearestpix(in1, vec((xwn5 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
+wse = wse + 2 * we5; wsi = wsi + 2 * wi5;
+ace = ace + we5 * (tp5.x + tn5.x); aci = aci + wi5 * (tp5.y + tn5.y);
+
+out1 = vec(ace / wse, aci / wsi, t0.z, t0.w);

@@ -137,4 +137,5 @@ NOT_IN_MENU = {
     "f_a_ripple":      "audio (gen~) module, not a Vsynth bpatcher; unfinished (README marks it)",
     "f_a_decorrelate": "audio (pfft~) module, not a Vsynth bpatcher; DSP built, packaging pending (README marks it)",
     "f_chladni_audio": "audio companion of f_chladni, not a Vsynth bpatcher (README marks it)",
+    "f_formconstants": "in build: Phase 1 built 2026-10-24, bench + tuning pending; enters the menu at Phase 3",
 }

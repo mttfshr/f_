@@ -1,0 +1,63 @@
+// codebox_nl.gen -- f_formconstants heart (the Phase-0 settled model):
+// exact relaxation toward the logistic sigmoid of the coupled drive, per frame:
+//   E += (F(AEE*cE - AIE*cI - HE + ne*nx + drive_gain*(drv-0.5) + excite - habit*Ve) - E) * dt/TE
+//   I += (F(AEI*cE - AII*cI - HI + ne*nx + excite - habit*Vi) - I) * dt/TI
+//   Ve += (E - Ve)*dt/50   Vi += (I - Vi)*dt/100
+// Render-resolution float32 (@adapt 0, `r dim` resize).
+// Mirror: tests/modules/formconstants/fc_mirror.nonlinear_step().
+//
+// Inputs (4): in1 = the convolved fields (R = blur_E E, G = blur_I I, from
+// blur_y), in2 = the raw state (R = E, G = I, B = Ve, A = Vi, from the pass
+// stage -- the relaxation target and the carry are the same frame), in3 = the
+// noise texture (B, A = the two raw uniforms; fresh every frame), in4 = the
+// drive inlet (R; through a vs_inState, so UNCONNECTED reads vs_black and the
+// patcher sets drv_conn = 0: the codebox falls back to neutral 0.5, G3).
+//   - fresh Gaussian noise into BOTH sigmoid inputs, Box-Muller from the two
+//     uniforms, sqrt(dt)-scaled, same nx in E and I (the Rule form; the
+//     per-frame drive is load-bearing -- T002)
+//   - constants are the measured sustaining corner (T002/G0): AEE 16.1,
+//     AIE 14.5 (dial), AEI 13.7, AII 13.0 (dial), HE 3.1, HI 3.5, TE 4,
+//     TI 12.5; energy default 0.75; HABITUATION default 0.9 and load-bearing
+//     (without it the field saturates by ~3k frames; G1/ships in v1).
+//     The Example-10 constants (10.5/8.5/12/3, He 2) measured DEAD at
+//     float32 -- T002 record.
+//   - EXCITE (f_wc G7): one shared positive offset inside both sigmoid inputs
+//   - NaN/Inf zap per the f_ks containment precedent (abs(x) < 1e30, NaN ==
+//     NaN is TRUE on this GPU); zapped texels are self-healed by the pass stage
+//   - with habit == 0 the B, A outputs are exactly 0 (the bit-preserving rule)
+//   - no unary minus before a parenthesis (GenExpr mis-parses it)
+Param dt(1);
+Param ne(0.75);
+Param drive_gain(0);
+Param drv_conn(0);
+Param habit(0.9);
+Param excite(0);
+Param aie(14.5);
+Param aii(13.0);
+
+ce = nearest(in1, norm).x;
+ci = nearest(in1, norm).y;
+ee = nearest(in2, norm).x;
+ii = nearest(in2, norm).y;
+ve = nearest(in2, norm).z;
+vi = nearest(in2, norm).w;
+na = nearest(in3, norm).z * 0.999 + 0.0001;
+nb = nearest(in3, norm).w * 0.999 + 0.0001;
+nx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);
+drv = mix(0.5, nearest(in4, norm).x, drv_conn);
+
+ae = 1 / (1 + exp(0 - clamp(16.1 * ce - aie * ci - 3.1 + excite - habit * ve + ne * nx + drive_gain * (drv - 0.5), -60, 60)));
+ai = 1 / (1 + exp(0 - clamp(13.7 * ce - aii * ci - 3.5 + excite - habit * vi + ne * nx, -60, 60)));
+
+en = ee + (ae - ee) * (dt * 0.25);
+inw = ii + (ai - ii) * (dt * 0.08);
+en = switch(abs(en) < 1e30, en, 0);
+inw = switch(abs(inw) < 1e30, inw, 0);
+ven = ve + (en - ve) * (dt * 0.02);
+vin = vi + (inw - vi) * (dt * 0.01);
+ven = switch(abs(ven) < 1e30, ven, 0);
+vin = switch(abs(vin) < 1e30, vin, 0);
+veo = switch(habit != 0, ven, 0);
+vio = switch(habit != 0, vin, 0);
+
+out1 = vec(en, inw, veo, vio);
