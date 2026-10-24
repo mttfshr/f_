@@ -1,71 +1,54 @@
-// codebox_blur_y.gen -- f_formconstants blur stage (Y pass): the second half
-// of the separable Gaussian coupling (FR-002). Identical math to
-// codebox_blur_x.gen with the taps running along Y; see that file for the
-// kernel contract (exact discrete kernel: radius ceil(3*sigma), normalized
-// exp(-i^2/2 sigma^2) weights, wrap; mirror: fc_mirror.gauss_taps/blur_axis).
-Param grain(0.0008);
-Param sig_ratio(1.45);
+// codebox_blur_y.gen -- f_formconstants PARITY blur stage, Y pass (spec Revision 2, S2 + S3).
+// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma
+// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1
+// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact
+// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and
+// quantized floor(255 c + 0.5)/255 on all four channels (S2).
+// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()
+// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.
+// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.
+// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are
+// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything
+// inlined with suffixed names.
+Param n(1024);
 
-si = clamp(grain * min(dim.x, dim.y), 0.75, 1.4);
-se = si / sig_ratio;
-
-qe = ceil(3 * se);
-qi = ceil(3 * si);
-re = 0 - 0.5 / (se * se);
-ri = 0 - 0.5 / (si * si);
-
-ix = floor(norm.x * dim.x);
-iy = floor(norm.y * dim.y);
-
-xw0 = ix - dim.x * floor(ix / dim.x);
-yw0 = iy - dim.y * floor(iy / dim.y);
-t0 = nearest(in1, vec((xw0 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
-wse = 1; wsi = 1;
-ace = t0.x; aci = t0.y;
-
-we1 = switch(1 <= qe, exp(1 * re), 0);
-wi1 = switch(1 <= qi, exp(1 * ri), 0);
-ywp1 = (iy + 1) - dim.y * floor((iy + 1) / dim.y);
-ywn1 = (iy - 1) - dim.y * floor((iy - 1) / dim.y);
-tp1 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywp1 + 0.5) / dim.y));
-tn1 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywn1 + 0.5) / dim.y));
-wse = wse + 2 * we1; wsi = wsi + 2 * wi1;
-ace = ace + we1 * (tp1.x + tn1.x); aci = aci + wi1 * (tp1.y + tn1.y);
-
-we2 = switch(2 <= qe, exp(4 * re), 0);
-wi2 = switch(2 <= qi, exp(4 * ri), 0);
-ywp2 = (iy + 2) - dim.y * floor((iy + 2) / dim.y);
-ywn2 = (iy - 2) - dim.y * floor((iy - 2) / dim.y);
-tp2 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywp2 + 0.5) / dim.y));
-tn2 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywn2 + 0.5) / dim.y));
-wse = wse + 2 * we2; wsi = wsi + 2 * wi2;
-ace = ace + we2 * (tp2.x + tn2.x); aci = aci + wi2 * (tp2.y + tn2.y);
-
-we3 = switch(3 <= qe, exp(9 * re), 0);
-wi3 = switch(3 <= qi, exp(9 * ri), 0);
-ywp3 = (iy + 3) - dim.y * floor((iy + 3) / dim.y);
-ywn3 = (iy - 3) - dim.y * floor((iy - 3) / dim.y);
-tp3 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywp3 + 0.5) / dim.y));
-tn3 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywn3 + 0.5) / dim.y));
-wse = wse + 2 * we3; wsi = wsi + 2 * wi3;
-ace = ace + we3 * (tp3.x + tn3.x); aci = aci + wi3 * (tp3.y + tn3.y);
-
-we4 = switch(4 <= qe, exp(16 * re), 0);
-wi4 = switch(4 <= qi, exp(16 * ri), 0);
-ywp4 = (iy + 4) - dim.y * floor((iy + 4) / dim.y);
-ywn4 = (iy - 4) - dim.y * floor((iy - 4) / dim.y);
-tp4 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywp4 + 0.5) / dim.y));
-tn4 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywn4 + 0.5) / dim.y));
-wse = wse + 2 * we4; wsi = wsi + 2 * wi4;
-ace = ace + we4 * (tp4.x + tn4.x); aci = aci + wi4 * (tp4.y + tn4.y);
-
-we5 = switch(5 <= qe, exp(25 * re), 0);
-wi5 = switch(5 <= qi, exp(25 * ri), 0);
-ywp5 = (iy + 5) - dim.y * floor((iy + 5) / dim.y);
-ywn5 = (iy - 5) - dim.y * floor((iy - 5) / dim.y);
-tp5 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywp5 + 0.5) / dim.y));
-tn5 = nearest(in1, vec((xw0 + 0.5) / dim.x, (ywn5 + 0.5) / dim.y));
-wse = wse + 2 * we5; wsi = wsi + 2 * wi5;
-ace = ace + we5 * (tp5.x + tn5.x); aci = aci + wi5 * (tp5.y + tn5.y);
-
-out1 = vec(ace / wse, aci / wsi, t0.z, t0.w);
+ix = floor(norm.x * n);
+iy = floor(norm.y * n);
+xw0 = ix - n * floor(ix / n);
+t0 = nearest(in1, vec((xw0 + 0.5) / n, (iy + 0.5) / n));
+ar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;
+wp1 = (iy + 1) - n * floor((iy + 1) / n);
+wn1 = (iy - 1) - n * floor((iy - 1) / n);
+tp1 = nearest(in1, vec((xw0 + 0.5) / n, (wp1 + 0.5) / n));
+tn1 = nearest(in1, vec((xw0 + 0.5) / n, (wn1 + 0.5) / n));
+ar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;
+wp2 = (iy + 2) - n * floor((iy + 2) / n);
+wn2 = (iy - 2) - n * floor((iy - 2) / n);
+tp2 = nearest(in1, vec((xw0 + 0.5) / n, (wp2 + 0.5) / n));
+tn2 = nearest(in1, vec((xw0 + 0.5) / n, (wn2 + 0.5) / n));
+ar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;
+wp3 = (iy + 3) - n * floor((iy + 3) / n);
+wn3 = (iy - 3) - n * floor((iy - 3) / n);
+tp3 = nearest(in1, vec((xw0 + 0.5) / n, (wp3 + 0.5) / n));
+tn3 = nearest(in1, vec((xw0 + 0.5) / n, (wn3 + 0.5) / n));
+ar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;
+wp4 = (iy + 4) - n * floor((iy + 4) / n);
+wn4 = (iy - 4) - n * floor((iy - 4) / n);
+tp4 = nearest(in1, vec((xw0 + 0.5) / n, (wp4 + 0.5) / n));
+tn4 = nearest(in1, vec((xw0 + 0.5) / n, (wn4 + 0.5) / n));
+ar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;
+wp5 = (iy + 5) - n * floor((iy + 5) / n);
+wn5 = (iy - 5) - n * floor((iy - 5) / n);
+tp5 = nearest(in1, vec((xw0 + 0.5) / n, (wp5 + 0.5) / n));
+tn5 = nearest(in1, vec((xw0 + 0.5) / n, (wn5 + 0.5) / n));
+ar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;
+wp6 = (iy + 6) - n * floor((iy + 6) / n);
+wn6 = (iy - 6) - n * floor((iy - 6) / n);
+tp6 = nearest(in1, vec((xw0 + 0.5) / n, (wp6 + 0.5) / n));
+tn6 = nearest(in1, vec((xw0 + 0.5) / n, (wn6 + 0.5) / n));
+ar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;
+qr = floor(255 * (ar / 1) + 0.5) / 255;
+qg = floor(255 * (ag / 1) + 0.5) / 255;
+qb = floor(255 * (ab / 1) + 0.5) / 255;
+qa = floor(255 * (aa / 1) + 0.5) / 255;
+out1 = vec(qr, qg, qb, qa);

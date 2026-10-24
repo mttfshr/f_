@@ -62,6 +62,17 @@ KNOWN_ISSUES[("f_wc", "undriven", "#0_wc_enc.r_soft")] = (
     "documented in src/f_wc/codebox_enc.gen: r_soft is the baked foveal-softening constant of the retinotopic "
     "enc stage (2026-10-24, Matt's center-pixelation report); it stays a Param only so the bench can sweep it "
     "before any dial decision -- like amp it is not a performable control")
+_FC_NOTE = ("documented in src/f_formconstants/codebox_*.gen headers and spec Revision 2: {} is a settled "
+            "constant of the parity build ({}) that stays a Param only so the bench can vary it "
+            "(tests/modules/formconstants) and Phase D can drive it (T061 s_depth/s_rate, T064 n); "
+            "it is not a performable control yet")
+for _n in ("seed", "blurx", "blury", "enc"):
+    KNOWN_ISSUES[("f_formconstants", "undriven", f"#0_fc_{_n}.n")] = _FC_NOTE.format(
+        "n", "the 1024 solver grid size, S1; default asserted equal to the @dim by test_fc_codebox_static.py")
+KNOWN_ISSUES[("f_formconstants", "undriven", "#0_fc_nl.s_depth")] = _FC_NOTE.format(
+    "s_depth", "the page's drive amplitude 0.6, S5")
+KNOWN_ISSUES[("f_formconstants", "undriven", "#0_fc_nl.s_rate")] = _FC_NOTE.format(
+    "s_rate", "the page's drive rate 3.4/500, S5")
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE
 

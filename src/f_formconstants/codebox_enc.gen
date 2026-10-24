@@ -1,82 +1,55 @@
-// codebox_enc.gen -- f_formconstants render stage: the inverse retinotopic
-// resample. Maps each output pixel's visual-field polar coords (r, theta) to
-// cortical (u, v) = (k_ecc*log(1 + sqrt(r^2 + r_soft^2)/r0), k_ang*theta) and
-// samples the E field there, periodic in both cortical axes.
-// Runs at render resolution AND SO DOES THE STATE (FR-001: solver res ==
-// render res; `r dim` resizes every stage) -- no reconstruction filter is
-// needed or wanted: hardware-exact manual bilinear WITH WRAP, mirroring
-// tests/modules/formconstants/fc_mirror.encode() term for term (the f_wc
-// 16-tap Catmull-Rom exists to hide 256^2-quantized contours, the artifact
-// class this module does not have -- tasks.md record 2026-10-24).
-// Mirror: tests/modules/formconstants/fc_mirror.encode().
-//
-// Inputs: in1 = the `r draw` bang (not referenced here), in2 = the state
-// (R = E, from the nl stage).
-//   - the cortical sample: fx = cv*sw - 0.5, fy = cu*sh - 0.5, floor +
-//     fractions, 4 nearest texel-centre reads wrapped per axis, lerp. The
-//     state size comes from the sw/sh PARAMS (raw `r dim` -> route/unpack ->
-//     prepend param), NOT the `dim` global: `dim` is not an input texture's
-//     size (jit-gen-codebox skill: manual taps need the size as a literal or
-//     a Param; the 2026-10-24 solid-flicker debug found enc/seed's in1
-//     bound-texture dims degenerate)
-//   - the cortical axes: u (eccentricity) = ROWS, v (angle) = COLUMNS (the
-//     f_wc mirror convention, retained so the map records/render scripts
-//     compare directly)
-//   - map constants are dials (defaults from G0's stills: zoom 5, twist 3,
-//     fovea 1.0 -- the CLOSER set, the best read at the fine web scale;
-//     retune Phase 2); r_max 4 stays baked (the f_wc field of view)
-//   - FOVEAL SOFTENING (f_wc 2026-10-24, retained): u flattens for
-//     r << r_soft so the log-singularity vortex becomes a calm disc;
-//     r_soft is a bench-vary Param
-//   - display mapping (f_wc G4): E is already a 0..1 rate; contrast stretch
-//     about mid-gray, then sharp blends toward the crisp S-curve; default
-//     0.5 (f_wc's soak finding)
-//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE here)
-//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator
-//     convention); the solver keeps running upstream. The Param is never
-//     named `bypass` (native pix attribute, f_wc FR-010's lesson)
+// codebox_enc.gen -- f_formconstants PARITY render stage (spec Revision 2, S7 + S8).
+// Port of the page's `retinalmap` shader on the module's output size: z = canvas coordinate in
+// [-1, 1]^2 of the SQUARE canvas (the page's CSS stretch crops the long axis), then the state is
+// sampled at (atan2(z.y, z.x), ln |z|) / 2 pi with LINEAR filtering and REPEAT wrap. The bare
+// complex log: conformal, one texture width per revolution; over most of the screen it MAGNIFIES
+// the 1024^2 field (the silky read). No foveal softening, contrast or sharp in the parity build.
+// Display (S8): the sampled state's E, I and contour channels, alpha 1.
+// Mirror: fc_parity_mirror.encode().
+// Inputs: in1 = the `r draw` bang (unused), in2 = the state (from nl).
+//   - output size: Params ow, oh (raw `r dim` -> route -> unpack -> prepend param); NOT the gen `dim`
+//     global (it is not an input texture's size). State grid size: Param n (default 1024 = @dim)
+//   - L = max(ow, oh); zx = (2x - 1) ow/L, zy = (2y - 1) oh/L with texel-centred norm
+//   - manual bilinear with explicit wrap on the texel index (the verified pattern); cortical axes:
+//     texture x = angle, texture y = log radius (the mirror's convention)
+//   - r floored at 1e-6 (ln 0): the page leaves the exact centre undefined
+//   - bypass_gate = 1 outputs black with alpha 1; the solver keeps running upstream. Never a Param
+//     named `bypass` (native pix attribute)
+//   - the cartopol multi-assign is the construct the verified f_formconstants enc bench (8/8) used
 Param bypass_gate(0);
-Param sharp(0.5);
-Param contrast(1.0);
-Param k_ecc(5.0);
-Param k_ang(3);
-Param r0(1.0);
-Param r_soft(0.35);
-Param sw(128);
-Param sh(128);
+Param ow(1024);
+Param oh(1024);
+Param n(1024);
 
-px = (norm.x * 2 - 1) * 4;
-py = (norm.y * 2 - 1) * 4;
-r, theta = cartopol(px, py);
-u = k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0);
-v = k_ang * theta;
-cu = fract(u / twopi);
-cv = fract(v / twopi);
+lng = max(ow, oh);
+zx = (norm.x * 2 - 1) * ow / lng;
+zy = (norm.y * 2 - 1) * oh / lng;
+r, theta = cartopol(zx, zy);
+rr = max(r, 0.000001);
+u = theta / twopi;
+v = log(rr) / twopi;
 
-fx = cv * sw - 0.5;
-fy = cu * sh - 0.5;
+fx = u * n - 0.5;
+fy = v * n - 0.5;
 x0 = floor(fx);
 y0 = floor(fy);
 tx = fx - x0;
 ty = fy - y0;
-xa0 = x0 - sw * floor(x0 / sw);
-xb0 = (x0 + 1) - sw * floor((x0 + 1) / sw);
-ya0 = y0 - sh * floor(y0 / sh);
-yb0 = (y0 + 1) - sh * floor((y0 + 1) / sh);
-cxa = (xa0 + 0.5) / sw;
-cxb = (xb0 + 0.5) / sw;
-cya = (ya0 + 0.5) / sh;
-cyb = (yb0 + 0.5) / sh;
-e00 = nearest(in2, vec(cxa, cya)).x;
-e10 = nearest(in2, vec(cxb, cya)).x;
-e01 = nearest(in2, vec(cxa, cyb)).x;
-e11 = nearest(in2, vec(cxb, cyb)).x;
-au = (1 - ty) * ((1 - tx) * e00 + tx * e10) + ty * ((1 - tx) * e01 + tx * e11);
+xa0 = x0 - n * floor(x0 / n);
+xb0 = (x0 + 1) - n * floor((x0 + 1) / n);
+ya0 = y0 - n * floor(y0 / n);
+yb0 = (y0 + 1) - n * floor((y0 + 1) / n);
+cxa = (xa0 + 0.5) / n;
+cxb = (xb0 + 0.5) / n;
+cya = (ya0 + 0.5) / n;
+cyb = (yb0 + 0.5) / n;
+t00 = nearest(in2, vec(cxa, cya));
+t10 = nearest(in2, vec(cxb, cya));
+t01 = nearest(in2, vec(cxa, cyb));
+t11 = nearest(in2, vec(cxb, cyb));
+le = (1 - ty) * ((1 - tx) * t00.x + tx * t10.x) + ty * ((1 - tx) * t01.x + tx * t11.x);
+li = (1 - ty) * ((1 - tx) * t00.y + tx * t10.y) + ty * ((1 - tx) * t01.y + tx * t11.y);
+lb = (1 - ty) * ((1 - tx) * t00.z + tx * t10.z) + ty * ((1 - tx) * t01.z + tx * t11.z);
+k = 1 - bypass_gate;
 
-au = switch(abs(au) < 1e30, au, 0);
-soft = clamp((clamp(au, 0, 1) - 0.5) * contrast + 0.5, 0, 1);
-crisp = smoothstep(0.46, 0.54, soft);
-lum = mix(soft, crisp, sharp);
-lum = lum * (1 - bypass_gate);
-
-out1 = vec(lum, lum, lum, 1);
+out1 = vec(le * k, li * k, lb * k, 1);

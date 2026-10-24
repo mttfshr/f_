@@ -31,7 +31,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_grain` | Stochastic grain field with per-grain displacement and luma gating |
 | `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
 | `f_wc` | Wilson-Cowan generator: noise-sustained living labyrinth; the drive inlet makes it see |
-| `f_formconstants` | Wilson-Cowan at window resolution: fine silky contour web; habituation holds it; drive inlet makes it see |
+| `f_formconstants` | ⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; unverified, no dials |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
 | `f_stipple` | 2D hash field stipple texture |
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |

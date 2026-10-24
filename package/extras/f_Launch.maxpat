@@ -382,7 +382,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Wilson-Cowan at window resolution: fine silky contour web; habituation holds it; drive inlet makes it see",
+									"text": "⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; unverified, no dials",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

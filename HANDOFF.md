@@ -1,5 +1,12 @@
 # HANDOFF
 
+## 2026-10-24 (late night, 2): f_formconstants parity build — T040–T045 DONE offline; next is the Max bench (T046)
+
+- **T041/T042:** `fc_parity_mirror.py` + `test_fc_parity.py` (8/8, 14 s). **The T002 claim "quantization sustains; float32 dies" is FALSIFIED:** with the source's real kernel σ (1, 2) the float32 + `s` run sustains exactly like the quantized one; only removing the `s` square wave kills the field (`tests/records/spike_fc_parity_sustain.py`; T002 had used σ_I 1 / σ_E 0.69 and its port was never committed). So `s` is the liveness mechanism; quantization is kept in Phase R for parity only (look control, T062).
+- **T043–T045:** six parity codeboxes (blur literals generated from the mirror), `definition.py` rewritten (fixed `@dim 1024` solver stages, no dials, `r dim` → enc only, frame counter → `t`, salt per reset), patcher rebuilt drift 0, contracts 9/9, launch 8/8, menu 17/17, `test_fc_codebox_static.py` 5/5; the two old Max benches skip. README row corrected (⚠). **Codeboxes are UNVERIFIED until T046 compiles them in Max.**
+- **Next (Max, Matt):** T046 — write `bench_formconstants.py` legs vs the parity mirror (tolerance: ≤ 1/255 and ≤ 0.1% of texels, texel-exact 5 frames, then statistics), confirm a fresh `jit.gl.pix` float32 output reads A = 0 (the pass stage's lost flag), then T047 look bench and T048 side-by-side with the HTML page.
+- Panel is 100×70 (reset + bypass only); T069 sets the final layout.
+
 ## 2026-10-24 (late night): f_formconstants REVISION 2 — parity rebuild; read this first
 
 - The reference page was misread: its solver is a FIXED 1024² (not render-res), it sustains on 8-bit quantization + the `s` square wave, and its bare conformal log map MAGNIFIES the field (ours minified it ~2.5×). Spec now has a "Revision 2" section (source facts S1–S8, superseded list, parity architecture); tasks.md has an agent brief, Phase R (T040–T049, parity build: fixed @dim 1024, no dials, RGB out, quantize at the three source points) and Phase D (T060–T069, one deviation at a time).

@@ -283,5 +283,19 @@ def test_30_frame_chain_matches_mirror():
     check("30-frame chain: GPU vs mirror frame-exact class", d, 1e-2)
 
 
+# ---- Revision 2 (2026-10-24 night): this bench targets the steady-web build (commit 63b6129) -------------
+# The shipped codeboxes are now the parity build (spec Revision 2); the replacement is the parity bench
+# (tasks T046 / T047). Kept for reference; every test skips with the reason below.
+from harness import skip as _skip  # noqa: E402
+
+
+def _superseded(*_a, **_k):
+    _skip("steady-web reference build (git 63b6129); superseded by the parity bench, tasks T046/T047")
+
+
+for _name in [k for k in list(globals()) if k.startswith("test_")]:
+    globals()[_name] = _superseded
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

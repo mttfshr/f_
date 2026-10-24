@@ -1,21 +1,11 @@
-// codebox_seed.gen -- f_formconstants noise stage: hash noise, deterministic
-// per texel per salt. Render-resolution float32 (@adapt 0, `r dim` resize).
-// Mirror: tests/modules/formconstants/fc_mirror.seed_state() (the seed
-// channels); the per-frame field (the Box-Muller happens downstream in the
-// nl stage). Same mechanism as f_wc's codebox_seed.gen, dim-generalized.
-//
-// Inputs: the first inlet is the `r draw` bang (unused; it only triggers the
-// render every frame). Packing: R = seed-E hash, G = seed-I hash (the pass
-// stage reads these ONLY on the frame reseed is 1: uniform [0, 1) per field,
-// independent channels, never zero), B, A = the two raw uniforms the nl stage
-// turns into the per-frame Box-Muller noise (the load-bearing mechanism,
-// tasks.md T002).
-//   - `salt` increments EVERY FRAME (the `r draw` counter in the raw wiring):
-//     the per-frame drive is what sustains the web (T002)
-//   - no sin(): a Hoskins-style arithmetic hash (fract and multiply-add only)
-//   - scalars only: components are never read from a stored vec
-//   - never name a variable e or phi (predefined constants)
-//   - functions are declared before Param declarations (GenExpr rule)
+// codebox_seed.gen -- f_formconstants PARITY seed stage (spec Revision 2, S6).
+// One-time uniform "uint8" random in all four channels, k/255 (the page's GPUNoise.randomize
+// writes uniform bytes into R, G, B, A). Hash noise, deterministic per texel per salt.
+// Mirror: fc_parity_mirror.seed_state() (the distribution; the hash is not bit-matched to numpy's rng).
+//   - salt advances once per RESET (the raw wiring), NOT per frame: the page has no per-frame noise
+//   - grid size: Param n (default 1024 = the definition's @dim) -- never the gen `dim` global
+//   - no sin(): a Hoskins-style arithmetic hash; functions are declared before Params (GenExpr rule)
+//   - uint8-like: min(floor(h * 256), 255) / 255 on every channel
 hashf(x, y) {
 	ha = fract(x * 0.1031);
 	hb = fract(y * 0.1031);
@@ -28,17 +18,17 @@ hashf(x, y) {
 }
 
 Param salt(0);
-Param sw(128);
-Param sh(128);
+Param n(1024);
 
-px = floor(norm.x * sw);
-py = floor(norm.y * sh);
+px = floor(norm.x * n);
+py = floor(norm.y * n);
 
 sa = salt * 61;
 sb = salt * 17;
-se = hashf(px + sa, py + sb);
-si = hashf(px + sa + 113.7, py + sb + 57.3);
-na = hashf(px + sa + 271.9, py + sb + 181.3);
-nb = hashf(px + sa + 401.1, py + sb + 333.7);
+h0 = hashf(px + sa, py + sb);
+h1 = hashf(px + sa + 113.7, py + sb + 57.3);
+h2 = hashf(px + sa + 271.9, py + sb + 181.3);
+h3 = hashf(px + sa + 401.1, py + sb + 333.7);
 
-out1 = vec(se, si, na, nb);
+out1 = vec(min(floor(h0 * 256), 255) / 255, min(floor(h1 * 256), 255) / 255,
+           min(floor(h2 * 256), 255) / 255, min(floor(h3 * 256), 255) / 255);

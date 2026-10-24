@@ -326,7 +326,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   wave sustains, no-s dies, quantization is not required; (e) a texel with E = I = 0 and A = 1 is held, not reseeded;
   (f) `encode` samples the expected texel for a few known (angle, log r)
   points. If (d) fails, that is a brief-rule-2 stop, not a tuning task.
-- [ ] T043 **Parity codeboxes** (offline write; verified in T046). Rewrite
+- [x] T043 **WRITTEN 2026-10-24 (offline; NOT verified — only T046's Max compile + readback does that).** Six codeboxes rewritten from S1–S8; blur weights are literals generated from the mirror's `half_kernel()` and re-checked by `test_fc_codebox_static.py`. **Parity codeboxes** Rewrite
   `codebox_seed.gen` (uint8-like hash; salt advances per RESET only, not per
   draw), `codebox_pass.gen` (alpha lost flag), `codebox_blur_x.gen` /
   `codebox_blur_y.gen` (S3 exactly: 13 fixed taps, per-channel weights
@@ -337,7 +337,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   `bypass_gate`). Term for term against `fc_parity_mirror.py`; each header
   cites the S items it implements. Nothing from the steady-web build
   survives unless S1–S8 require it.
-- [ ] T044 **Definition + build** (offline). `definition.py`: params = reset,
+- [x] T044 **DONE 2026-10-24: built drift 0; contracts 9/9 (six codebox-only Params registered as known issues: n ×4, s_depth, s_rate); launch 8/8; menu 17/17; `test_fc_codebox_static.py` 5/5 (n == @dim, blur literals, forbidden constructs, positional ids obj-50..55 / enc obj-5 / route obj-4, `r dim` reaches enc only). Panel 100×70 is a placeholder (T069).** **Definition + build** (offline). `definition.py`: params = reset,
   bypass and the internals (`reseed`, `salt`, `t`, `bypass_gate`, `ow`,
   `oh`); NO dials; drop the drive mod_inlet for Phase R (T066 restores it).
   Solver stages `@adapt 0 @dim 1024 1024 @type float32`; enc stays
@@ -349,7 +349,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   drift, `test_module_contracts`, `test_launch`, menu `--check` (named tests,
   `-q`). Panel size shrinks: regenerate menu sizes and launcher. README row
   text waits for T048.
-- [ ] T045 **Old tests** (offline). `fc_mirror.py` / `test_formconstants.py`
+- [x] T045 **DONE 2026-10-24: `test_formconstants.py` tests the retained steady-web MIRROR, not the shipped codeboxes, so it still passes 10/10 and needed no change; the two Max benches that read the shipped codeboxes (`bench_formconstants.py`, `bench_fc_look.py`) now skip with the reason, replaced by T046/T047.** **Old tests** (offline). `fc_mirror.py` / `test_formconstants.py`
   describe the steady-web build and stay as its reference. Any test that
   reads the shipped codeboxes or definition and now fails is marked xfail
   with reason "steady-web reference, Revision 2"; nothing is deleted.
