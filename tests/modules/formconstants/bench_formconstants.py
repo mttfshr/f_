@@ -78,12 +78,14 @@ def tex(rng, h=N, w=N):
 
 def boxmuller(na, nb, dt=1.0):
     """Exactly the nl codebox's per-frame Gaussian, float32 in the GPU's
-    operation order (a float64 reference drifts ~6e-4/step through the trig,
-    which the 30-frame chain amplifies ~10x through relaxation + habituation)."""
+    operation order. The codebox guards BOTH uniforms (z*0.999 + 0.0001:
+    log(0) and the u=1 pole); scaling only na shifts cos(2*pi*nb) by ~3e-3
+    of nx -- the 2026-10-24 chain-divergence root cause."""
     f = np.float32
     a = (na.astype(f) * f(0.999) + f(0.0001)).astype(f)
+    b = (nb.astype(f) * f(0.999) + f(0.0001)).astype(f)
     s = np.sqrt(np.float64(-2.0) * np.log(a.astype(np.float64))).astype(f)
-    c = np.cos((f(2 * np.pi) * nb.astype(f)).astype(np.float64)).astype(f)
+    c = np.cos((f(2 * np.pi) * b).astype(np.float64)).astype(f)
     return (s * c * f(np.sqrt(dt))).astype(f)
 
 
