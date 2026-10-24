@@ -34,7 +34,10 @@ exists -- relaxation toward a bounded sigmoid -- so the ceiling is aesthetic, T0
 is the grain (sigma_I in pixels, sigma_E slaved at sigma_I/1.45): low = coherent broken
 stripes ("stripe glass"), high = disordered labyrinth (the Phase-0 region map).  `drive_gain`
 is scene strength (a gain-role dial; 0 = free US-1 labyrinth, the unconnected drive inlet is
-neutral mid-gray via the vs_inState flag; FR-006/G3).  `habituation` (G5/T052) is slow
+neutral mid-gray via the vs_inState flag; FR-006/G3).  `energy` is the per-frame noise
+amplitude Ne (0-2, default 1.0): the drive-band axis — below ~0.7 the labyrinth freezes out,
+above ~1.2 it shimmers hot, and it compensates deep habituation (T052).  `habituation`
+(G5/T052) is slow
 subtractive fatigue: the Ve/Vi adaptation memory rides the state texture's spare G/A
 channels, 0 = free run, higher steadies the field mean against long soak drift (and nudges
 the usable drive band upward).  `sharp` blends the output map from soft to hard-edged (enc
@@ -54,8 +57,8 @@ patcher = {
     "title":              "Wilson-Cowan",
     "signal_type":        "luma out",
 
-    "presentation_width":  247,             # 5 dials + reset (T052/G5 adds Habituation; was 210)
-    "presentation_height": 110,
+    "presentation_width":  247,             # 6 dials on two rows (builder pitch is 5/row) + reset
+    "presentation_height": 150,             # row 2 holds Energy (was 110 at 5 dials)
 
     "archetype": "source",
     "pix_type":  "float32",
@@ -74,6 +77,9 @@ patcher = {
         {"name": "drive_gain", "type": "float", "min": 0.0, "max": 2.0, "default": 0.0,
          "label": "Drive", "pix_target": "nl",
          "hint": "Scene strength: 0 = pure hallucination; ~1.5 = the drive inlet imprints (normal vision)"},
+        {"name": "energy", "type": "float", "min": 0.0, "max": 2.0, "default": 1.0,
+         "label": "Energy", "pix_attr": "ne", "pix_target": "nl",
+         "hint": "Per-frame noise energy (Ne): below ~0.7 the labyrinth freezes out; above ~1.2 it shimmers hot. Compensates deep Habituation"},
         {"name": "habituation", "type": "float", "min": 0.0, "max": 1.5, "default": 0.0,
          "label": "Habituation", "pix_attr": "habit", "pix_target": "nl",
          "hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time"},
@@ -200,7 +206,7 @@ patcher["raw_boxes"] = [
 ]
 patcher["raw_lines"] = [
     _line(15, 0, "obj-5", 0),        # r dim -> enc: the output follows the render size
-    _line("obj-4", 5, 3, 0),         # route: `reset` -> trigger   (route outlet 5: rate, texture, drive_gain, habituation, sharp, reset)
+    _line("obj-4", 6, 3, 0),         # route: `reset` -> trigger   (route outlet 6: rate, texture, drive_gain, energy, habituation, sharp, reset)
     _line(1, 0, 3, 0),               # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
     _line(3, 0, 7, 0), _line(7, 0, "obj-52", 0),    # trigger right -> reseed 1 -> pass

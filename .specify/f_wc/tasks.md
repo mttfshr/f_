@@ -317,6 +317,37 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
+- 2026-10-23 (night 12): **Second performable axis shipped: `energy` (Ne); second-tier
+  ranking measured.** `energy` dial 0–2, default 1.0, between Drive and Habituation
+  (token `energy`, `pix_attr ne`; panel grew a second dial row → 247×150; the raw
+  `reset` route wire moved outlet 5 → 6). `ne` un-registered from the contract
+  known-undriven list (amp stays). Docs updated. Offline green: drift, contracts 9/9,
+  launch 8/8, menu 17/17, test_wc 10/10.
+  **Tier-2 sweep** (`tests/records/spike_wc_character.py`, log in tests/logs): mirror
+  parametrized for `sig_ratio` and `he/hi`. Findings, ranked:
+  1. **σ-ratio (σ_E = σ_I/σ_ratio, baked 1.45) is a strong, safe CHARACTER axis.**
+     Contrast/morphology ladder at grain 1.4/Ne 1.0: 1.1 = washed-out dots (std 0.09);
+     1.3 = HEXAGONS (f6 0.42 at grain 1.1; the form morphology that G1 said wasn't a
+     selector region — it exists as a corner, not a dial axis); 1.45 = labyrinth
+     (shipped); 1.7 = strong chaotic labyrinth (std 0.34); 2.0 = hottest healthy
+     (0.39, fine grain); 2.5 = saturating (24–29% texels at rails). Candidate dial
+     "Aspect", 1.2–2.2, default 1.45 — bit-neutral at the shipped value.
+  2. **Threshold bias (HE/HI shifted together) is a narrow EXCITABILITY axis.** −0.5
+     = strong clean rolls at Ne 0.8 (f2 0.42, std 0.27) and hot contrast at Ne 1.0
+     (0.38); −1.0 = saturated-high uniform; +0.5 = dying; +1.0 = dead. Viable band is
+     asymmetric (~−0.8..+0.1): real character, easy death. Candidate dial "Excite",
+     −0.8..+0.3, default 0.
+  Both are DEFAULT-NEUTRAL codebox additions (sig_ratio(1.45), hbias(0) params), same
+  shape as the habituation ship. Staged as gates G6/G7 — Matt's call before the next
+  dial lands. **Owed to Max:** bench legs for energy/habit sweeps + a habit > 0
+  chain-vs-mirror leg (from G5's record). Full offline suite not run since rebuild.
+- [ ] **G6 (Matt):** expose σ-ratio as a dial (proposed `aspect`, 1.2–2.2, default
+  1.45; codebox `spec` gains `Param sig_ratio(1.45)`, `sig_e = sig_i/sig_ratio`;
+  mirror already parametrized). Character: hexagons ~1.3 fine grain, hot labyrinth
+  1.7–2.0, saturating ≥ 2.5.
+- [ ] **G7 (Matt):** expose threshold bias as a dial (proposed `excite`, −0.8..+0.3,
+  default 0; codebox `nl` gains `Param he_bias/hi_bias` or one shared bias added to
+  both; the sweep shifted HE/HI together). Narrow but real: −0.5 = clean rolls.
 - 2026-10-23 (night 11): **Deep-fatigue addendum to T052 (Matt asked "can habituation go
   above 1").** Sweep extended to be = bi ∈ {1.0, 1.5, 2.0, 3.0} × Ne ∈ {1.0, 1.5, 2.0}
   (`tests/logs/spike_wc_habituation_deep.log`; spike script now takes grid args).

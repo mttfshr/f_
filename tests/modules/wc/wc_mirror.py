@@ -77,6 +77,10 @@ class Params:
     bi: float = 0.0            # adaptation depth on I
     ae: float = 50.0           # adaptation time constants (Rule Example 11:
     ai: float = 100.0          #   ae = 50, ai = 100 frames)
+    sig_ratio: float = 1.45    # sigma_E = sigma_I / sig_ratio (Psychedelic
+                               #   2/2.9; second-tier candidate geometry axis)
+    he: float = 3.1            # sigmoid thresholds (second-tier candidate axis;
+    hi: float = 3.5            #   the settled corner is HE 3.1, HI 3.5)
 
     def with_(self, **kw):
         return replace(self, **kw)
@@ -87,7 +91,7 @@ class Params:
 
     @property
     def sig_e(self):
-        return self.texture / SIG_RATIO
+        return self.texture / self.sig_ratio
 
 
 def _fft2(tex, fast):
@@ -274,7 +278,8 @@ def drive_tex(h, w, value=F32(0.5)):
 
 
 def nonlinear_step(conv, state, noise, driv, dt, ne, drive_gain,
-                   be=F32(0.0), bi=F32(0.0), ae=F32(50.0), ai=F32(100.0)):
+                   be=F32(0.0), bi=F32(0.0), ae=F32(50.0), ai=F32(100.0),
+                   he=F32(HE), hi=F32(HI)):
     """Stage 6 (the heart, `nl`, 4 inlets on the bench: in1 = convolved fields
     R = cE, B = cI; in2 = raw state R = E, B = I; in3 = the per-frame noise;
     in4 = the drive). Exact relaxation toward the sigmoid of the coupled
@@ -297,9 +302,9 @@ def nonlinear_step(conv, state, noise, driv, dt, ne, drive_gain,
     adapt = (be != 0.0) or (bi != 0.0)
     fdt_e = F32(dt) / F32(TE)
     fdt_i = F32(dt) / F32(TI)
-    ae_f = F(F32(AEE) * ce - F32(AIE) * ci - F32(HE) - F32(be) * ve
+    ae_f = F(F32(AEE) * ce - F32(AIE) * ci - F32(he) - F32(be) * ve
              + F32(ne) * nx + F32(drive_gain) * (drv - F32(0.5)))
-    ai_f = F(F32(AEI) * ce - F32(AII) * ci - F32(HI) - F32(bi) * vi
+    ai_f = F(F32(AEI) * ce - F32(AII) * ci - F32(hi) - F32(bi) * vi
              + F32(ne) * nx)
     out = np.zeros_like(state)
     en = e + (ae_f - e) * fdt_e
@@ -331,7 +336,8 @@ def wc_frame(state, rng, P, driv=None):
                                    P.sig_e, P.sig_i), P.fast_fft)
     return nonlinear_step(conv, state, nz, driv, dt, P.ne, P.drive_gain,
                           be=F32(P.be), bi=F32(P.bi),
-                          ae=F32(P.ae), ai=F32(P.ai))
+                          ae=F32(P.ae), ai=F32(P.ai),
+                          he=F32(P.he), hi=F32(P.hi))
 
 
 def run_temporal(state0, P, frames, seed=1, driv=None):

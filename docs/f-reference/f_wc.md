@@ -65,6 +65,7 @@ into `enc`, `@adapt 0`).
 | `rate` | float | 0.0–1.0 | 1.0 | Time step per frame (`dt = rate`; 1 = the validated labyrinth tempo). No stability ceiling exists (relaxation toward a bounded sigmoid); the top of the range is aesthetic, not structural |
 | `grain` | float | 1.0–4.0 | 1.4 | The inhibition kernel width in pixels (`σ_I`; the E kernel is slaved at `σ_I/1.45`). **Landmarks: 1.1 broken stripes / 1.4 labyrinth / 1.9 coarse.** Free sweep approved (Matt, 2026-10-23) |
 | `drive_gain` | float | 0.0–2.0 | 0.0 | Scene strength on the drive inlet. 0 = pure free hallucination; ~1.5 = the scene imprints (normal vision). Below ~0.2 the pattern ignores the scene entirely |
+| `energy` | float | 0.0–2.0 | 1.0 | Per-frame noise amplitude `Ne` — the drive-band axis. Below ~0.7 the labyrinth thins out and freezes; 1.0 is the T005/G3-verified corner; above ~1.2 it shimmers saturated. It also compensates deep habituation: depth ≥ 2 only stays live at higher energy (T052 deep sweep) |
 | `habituation` | float | 0.0–1.5 | 0.0 | Fatigue depth: slow negative feedback on the activity (Ve/Vi relax toward the firing rates over 50/100 frames and subtract from the sigmoid inputs; G5/T052). 0 = free run with exactly the pre-G5 dynamics; higher steadies the field mean against long-soak drift and lifts contrast, at the cost of a narrower low-drive band |
 | `sharp` | float | 0.0–1.0 | 0.5 | Edge sharpness in `enc`: 0 = soft gradients, 1 = hard-edged cells. The 0.5 default keeps the free labyrinth readable as its mean wanders (G4 decision) |
 | `reset` | button / message | — | — | Reseeds both fields from fresh noise. Fires once on load (after 200 ms). Also accepted as a `reset` message on the control inlet |
@@ -76,9 +77,10 @@ labyrinth runs free — no special-casing needed to unplug it. Any texture works
 structured bright regions imprint strongest.
 
 Internal, never set by hand: `reseed`, `salt` (reset/draw logic), `drv_conn` (drive connection
-flag), `bypass_gate` (bypass jsui). `ne` (the per-frame noise amplitude, 1.0) and `amp` (the
-seed amplitude, 1.0) are codebox `Param`s with no controls, kept so the bench can vary them
-(tasks.md T021/T025, registered known-undriven in `test_module_contracts.py`).
+flag), `bypass_gate` (bypass jsui). `amp` (the seed amplitude, 1.0) is a codebox `Param` with
+no control, kept so the bench can vary it (tasks.md T021/T025, registered known-undriven in
+`test_module_contracts.py`); `ne` was that same kind of constant until 2026-10-23, when the
+`energy` dial exposed it.
 
 ---
 

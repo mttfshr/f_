@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 6,
+					"numoutlets": 7,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -89,10 +90,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						439.0,
+						511.0,
 						22.0
 					],
-					"text": "route rate grain drive_gain habituation sharp reset"
+					"text": "route rate grain drive_gain energy habituation sharp reset"
 				}
 			},
 			{
@@ -1480,14 +1481,14 @@
 						760.0,
 						260.0,
 						247.0,
-						110.0
+						150.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						247.0,
-						110.0
+						150.0
 					],
 					"proportion": 0.5
 				}
@@ -2124,14 +2125,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time",
+					"hint": "Per-frame noise energy (Ne): below ~0.7 the labyrinth freezes out; above ~1.2 it shimmers hot. Compensates deep Habituation",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_nl::habituation",
+					"param_connect": "#0_wc_nl::energy",
 					"parameter_enable": 1,
 					"patching_rect": [
 						262.5,
@@ -2152,15 +2153,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								1.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "habituation",
-							"parameter_mmax": 1.5,
+							"parameter_longname": "energy",
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "habituation",
+							"parameter_shortname": "energy",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2169,14 +2170,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "habituation"
+					"varname": "energy"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-30",
 					"maxclass": "attrui",
-					"attr": "habit",
+					"attr": "ne",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2212,9 +2213,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Habituation",
+					"text": "Energy",
 					"textjustification": 1,
-					"varname": "lbl_habituation"
+					"varname": "lbl_energy"
 				}
 			},
 			{
@@ -2228,14 +2229,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)",
+					"hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_enc::sharp",
+					"param_connect": "#0_wc_nl::habituation",
 					"parameter_enable": 1,
 					"patching_rect": [
 						334.5,
@@ -2256,15 +2257,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.5
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "sharp",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "habituation",
+							"parameter_mmax": 1.5,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "sharp",
+							"parameter_shortname": "habituation",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2273,14 +2274,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "sharp"
+					"varname": "habituation"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-33",
 					"maxclass": "attrui",
-					"attr": "sharp",
+					"attr": "habit",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2316,6 +2317,110 @@
 						50.0,
 						18.0
 					],
+					"text": "Habituation",
+					"textjustification": 1,
+					"varname": "lbl_habituation"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-35",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wc_enc::sharp",
+					"parameter_enable": 1,
+					"patching_rect": [
+						406.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.5
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "sharp",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "sharp",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "sharp"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-36",
+					"maxclass": "attrui",
+					"attr": "sharp",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						386.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-37",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						395.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						-7.5,
+						82.0,
+						50.0,
+						18.0
+					],
 					"text": "Sharp",
 					"textjustification": 1,
 					"varname": "lbl_sharp"
@@ -2323,7 +2428,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-35",
+					"id": "obj-38",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2351,7 +2456,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-36",
+					"id": "obj-39",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2774,11 +2879,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-35",
+						"obj-38",
 						0
 					],
 					"destination": [
-						"obj-36",
+						"obj-39",
 						0
 					]
 				}
@@ -2786,7 +2891,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-36",
+						"obj-39",
 						0
 					],
 					"destination": [
@@ -3174,6 +3279,42 @@
 						0
 					],
 					"destination": [
+						"obj-58",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						5
+					],
+					"destination": [
+						"obj-35",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-35",
+						0
+					],
+					"destination": [
+						"obj-36",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-36",
+						0
+					],
+					"destination": [
 						"obj-5",
 						0
 					]
@@ -3195,7 +3336,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						5
+						6
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3401,11 +3542,16 @@
 				0
 			],
 			"obj-29": [
+				"energy",
+				"energy",
+				0
+			],
+			"obj-32": [
 				"habituation",
 				"habituation",
 				0
 			],
-			"obj-32": [
+			"obj-35": [
 				"sharp",
 				"sharp",
 				0

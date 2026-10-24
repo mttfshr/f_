@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-23 (night 12): f_wc `energy` dial shipped; tier-2 sweep ranked Aspect + Excite (gates G6/G7 staged)
+
+- **`energy` (Ne) exposed**: 0–2, default 1.0, between Drive and Habituation (dial token `energy`, `pix_attr ne`; panel grew to 247×150 with a second dial row; raw reset route wire moved outlet 5 → 6; `ne` removed from the contract known-undriven list). Docs + helpfile updated. Offline green (drift, contracts, launch, menu, test_wc).
+- **Tier-2 sweep measured** (`tests/records/spike_wc_character.py`, mirror parametrized for sig_ratio + he/hi): **σ-ratio is a strong safe character axis** (1.3 = hexagons at fine grain — the morphology G1 ruled out as a selector; 1.7–2.0 = hot healthy labyrinth; 2.5 = saturating) → candidate "Aspect" dial 1.2–2.2. **Threshold bias is a narrow excitability axis** (−0.5 = strong clean rolls; ±death outside ~−0.8..+0.1) → candidate "Excite" dial −0.8..+0.3. Both default-neutral to ship. **Staged as gates G6/G7 in tasks.md — Matt's call.**
+- **Owed to Max (one bench session):** live look at the new dials; habit > 0 chain-vs-mirror leg (from G5). Full offline suite not run since rebuild — `tests/bg.sh start offline`.
+
 ## 2026-10-23 (night 10): f_wc G5 SHIPPED — `habituation` depth dial built and registered
 
 - Matt approved G5 (depth dial). Built: `habituation` 0–1, default 0, between Drive and Sharp (dial token `habituation`, `pix_attr habit`; panel 210 → 247, menu/launcher regenerated, `"wc": [247, 110]`). `codebox_nl.gen` carries Ve/Vi in state G/A (relaxes toward the rates at baked 50/100-frame constants, subtracts `-habit*Ve/-habit*Vi`, pins G/A to 0 at habit 0 → pre-G5 dynamics bit-preserved); `codebox_pass.gen` carries G/A with the NaN guard and restarts them at 0 on reseed/self-heal. Spec FR-003 + Parameters, `docs/f-reference/f_wc.md`, and the helpfile (control list + bpatcher embed) updated.
