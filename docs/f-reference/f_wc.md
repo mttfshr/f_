@@ -72,7 +72,7 @@ into `enc`, `@adapt 0`).
 | `excite` | float | −0.3–0.8 | 0.0 | Excitability: a shared positive offset inside both sigmoid inputs — the firing thresholds HE/HI lowered together (G7). + = hotter (clean rolls near 0.5); − = toward blackout. The viable band is asymmetric — don't range it wider by message |
 | `zoom` | float | 2.0–16.0 | 8.0 | Eccentricity gain of the retinotopic map (`k_ecc`) — log-radius zoom; 8 = the settled T033 corner |
 | `twist` | int | 2–8 | 5 | Angular gain of the map (`k_ang`) — the spoke fold. **Integer only**: a fractional gain seams the visual field at θ = ±π (T006). 5 = settled corner |
-| `fovea` | float | 0.1–2.0 | 0.5 | Foveal radius of the map (`r0`): smaller = more center magnification; 0.5 = the settled corner |
+| `fovea` | float | 0.1–5.0 | 0.5 | Foveal radius of the map (`r0`): smaller = more center magnification; 0.5 = the settled corner |
 | `reset` | button / message | — | — | Reseeds both fields from fresh noise. Fires once on load (after 200 ms). Also accepted as a `reset` message on the control inlet |
 | `bypass` | toggle | 0/1 | 0 | Black, alpha 1, on the outlet. The solver keeps running underneath, so releasing bypass resumes a warm field |
 

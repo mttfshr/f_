@@ -106,7 +106,7 @@ patcher = {
         {"name": "twist", "type": "int", "min": 2, "max": 8, "default": 5,
          "label": "Twist", "pix_attr": "k_ang", "pix_target": "enc",
          "hint": "Angular gain of the map (spoke fold); integer only -- fractional seams the field at theta = pi"},
-        {"name": "fovea", "type": "float", "min": 0.1, "max": 2.0, "default": 0.5,
+        {"name": "fovea", "type": "float", "min": 0.1, "max": 5.0, "default": 0.5,
          "label": "Fovea", "pix_attr": "r0", "pix_target": "enc",
          "hint": "Foveal radius of the map: smaller = more center magnification; 0.5 = the settled corner"},
         {"name": "reset", "type": "raw_ui"},

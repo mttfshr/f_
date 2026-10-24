@@ -100,7 +100,7 @@
                         270.0,
                         183.0
                     ],
-                    "text": "External Control Messages\n\nrate [0.0 \u2013 1.0]\ngrain [1.0 \u2013 4.0]\naspect [1.2 \u2013 2.2]\ndrive_gain [0.0 \u2013 2.0]\nenergy [0.0 \u2013 2.0]\nhabituation [0.0 \u2013 1.5]\nsharp [0.0 \u2013 1.0]\nexcite [-0.3 \u2013 0.8]\nzoom [2 \u2013 16]\ntwist [2 \u2013 8, int]\nfovea [0.1 \u2013 2.0]\nbypass [0 / 1]",
+                    "text": "External Control Messages\n\nrate [0.0 \u2013 1.0]\ngrain [1.0 \u2013 4.0]\naspect [1.2 \u2013 2.2]\ndrive_gain [0.0 \u2013 2.0]\nenergy [0.0 \u2013 2.0]\nhabituation [0.0 \u2013 1.5]\nsharp [0.0 \u2013 1.0]\nexcite [-0.3 \u2013 0.8]\nzoom [2 \u2013 16]\ntwist [2 \u2013 8, int]\nfovea [0.1 \u2013 5.0]\nbypass [0 / 1]",
                     "linecount": 14,
                     "saved_attribute_attributes": {
                         "textcolor": {

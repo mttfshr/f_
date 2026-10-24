@@ -2878,7 +2878,7 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "fovea",
-							"parameter_mmax": 2.0,
+							"parameter_mmax": 5.0,
 							"parameter_mmin": 0.1,
 							"parameter_modmode": 3,
 							"parameter_shortname": "fovea",
