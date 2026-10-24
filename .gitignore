@@ -28,3 +28,6 @@ archive/
 
 # scratch workspace (probes, proof renders, one-offs; referenced in records as on-disk paths)
 /scratch/
+
+# old/superseded artifacts kept on disk
+/archive/
