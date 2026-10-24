@@ -1,5 +1,77 @@
 # HANDOFF
 
+## 2026-10-24 (night, for fresh eyes): f_formconstants LIVE symptom unresolved — read this before touching the module
+
+**Module status:** builds drift-0, offline suite green, codebox stage bench 8/8
+PASS (blur 1.8e-7 vs exact kernel, nl 1.2e-7, enc corr 1.0000), 30-frame
+host-sequenced chain frame-exact class 7.3e-5, module contract bench PASS.
+**Everything at the stage and host-sequenced-chain level is verified correct.**
+
+**Remaining symptom (LIVE, Matt's patch, after ALL fixes):** "flashes, brief
+moments of noise, then all black; the rate of flashing seems directly driven
+by Rate." Reloaded after the sw/sh fix (`fa7da52`), still broken. NOT YET
+OBSERVED against the stage bench's evidence.
+
+**Evidence assembled (in order):**
+1. First Max try: solid black. Code audit found `nearestpix(...)` with
+   normalized coords everywhere (gen pixel-vs-normalized trap) → `nearest`.
+2. Then: flickering solid. Bench legs revealed: blur tap mask truncated at
+   floor(3σ) vs the mirror's ceil(3σ) kernel radius (real bug, 8e-4 → 1.8e-7);
+   enc-vs-mirror decorrelation was MIRROR-side (`xs/W` pixel edges vs gen
+   texel-centred `norm` — fc_mirror.encode fixed, enc now corr 1.0000);
+   30-frame chain divergence was BENCH-sim-side (my boxmuller() guarded only
+   `na`; the codebox guards BOTH uniforms z*0.999+0.0001 — ~3e-3 cos shift ×
+   30 relaxation steps; fixed → 7.3e-5). GPU proven arithmetically exact via
+   a self-readout leg.
+3. The solid-flicker root cause candidate shipped in `fa7da52`: seed/enc
+   codeboxes used the gen `dim` global for texture SIZE in stages whose in1
+   is a bang-only inlet (the jit-gen-codebox skill documents: "a codebox
+   cannot read an input texture's size; manual taps need the size as a
+   literal or a Param"). Fixed with `sw`/`sh` Params fed from raw
+   `r dim → route dim → unpack → prepend param sw/sh`. **This did NOT cure the
+   live symptom** (Matt's last report is POST-fix). Either the flicker has a
+   different production cause, or dim still isn't what we think in the stages.
+4. `bench_fc_look.py` (module-lifecycle snapshots at Rate 1 / Rate 0.2 over
+   8s): **the field is spatially UNIFORM at all times in the module bench**
+   (std ≤ 0.04 even immediately after reseed; first snapshot mean 0.937 —
+   a structured hash-seed would read ~0.5±0.29). Oscillation/death timescale
+   tracks Rate (r02 collapses to sat=1.000 all-black at 4s; r10 swings
+   0.94→0.08→0.02→0.07). Uniform + Rate-scaled = scalar dynamics — a
+   degenerate-size state (1×1-ish) in the module bench, where NOTHING emits
+   the Vsynth `dim` broadcast my stages rely on for sizing (f_wc's stages all
+   carry explicit `@dim 256 256`).
+5. **Latest commit `67d9a07` adds explicit `@dim 256 256` to all seven stages**
+   (production still resizes via the `r dim` message; the bench now reflects
+   real sizes). **The look bench has NOT been rerun since this commit** —
+   that's the immediate next action: if the rerun shows structured dynamics,
+   the bench-uniform artifact is explained and attention goes to what's
+   different in Matt's live world (his f_wc fullscreen renders prove `r dim`
+   broadcasts fire there — BUT check whether it fires at LOAD reliably; the
+   T013 line `r dim → delay 200 → reseed` only exists in this module).
+
+**What is NOT yet verified anywhere:** a *structured* state at a real size
+actually DYING over minutes — mirror sustains 6000+ frames at the same corner
+(Ne 0.75, habit 0.9, σ 0.86px @ 1080 class). If a properly-sized module
+(bench with @dim defaults) also dies, the mirror↔production disagreement is
+the physics itself (then compare: salt advance? drive drv_conn? `route dim`
+ordering? rate Param dt reaching nl?).
+
+**Files to read first:** `.specify/f_formconstants/tasks.md` (full debug arc
+recorded in T015, Phase 0 regime map in T003), `src/f_formconstants/`
+(6 codeboxes + definition), `tests/modules/formconstants/bench_fc_look.py`
+(rerun instructions in its docstring), `tests/logs/fc_look/*.ppm` (contact
+sheets from the uniform run).
+
+**Open questions for fresh eyes:**
+1. Was the live symptom the seed-side degenerate noise (should be fixed by
+   sw/sh + @dim defaults — needs a RELOAD in Matt's patch) or a genuine
+   death-after-reseed at production size?
+2. In the module bench, do the stage pix actually render at 256² now
+   (readback @dim or probe state size via sw/sh vs actual)?
+3. If live still dies: does `r dim` broadcast in the wrapper/Vsynth context
+   reach this module's raw receiver during startup ordering (the loadbang →
+   delay → reseed path races the first dim message)?
+
 ## 2026-10-24 (evening): f_formconstants BENCH GREEN — stage legs 8/8, chain 7.3e-5, debug arc closed
 
 - Matt's first Max try: solid black → then "flickering solid black/white/gray". Five-bug arc, all resolved with the stage bench as the instrument (systematic-debugging order): (1) `nearestpix` with normalized coords; (2) blur mask floor-vs-ceil(3σ) real kernel bug; (3) **the module flicker root cause**: seed/enc codeboxes used the gen `dim` global for texture size when their in1 is bang-only (gen `dim` is not an input texture's size — the jit-gen-codebox skill documents this rule; fixed with `sw`/`sh` Params fed from `r dim → route dim → unpack`); (4) the enc bench decorrelation was **mirror-side** (fc_mirror.encode used pixel-edge `xs/W` where gen `norm` is texel-centred — fixed, enc now corr 1.0000); (5) the chain divergence was **bench-sim-side** (boxmuller guarded only na; the codebox guards both uniforms). GPU was arithmetically exact in every case — proven via a self-readout leg (gpu nx vs float64-of-its-own-readback: 1e-6).
