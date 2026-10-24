@@ -108,7 +108,11 @@ tests/modules/wc/
 - [x] G1 **Form navigation shape — DECIDED 2026-10-23 (Matt, option A).** The noise-driven region map found no separable four-form attractor regions (see T005 record): the pattern is a noise-driven labyrinth/stripe-glass transient. **Ship the labyrinth generator: no four-form selector.** FR-010/US-3/SC-2,3,8 revised in the spec (a `texture` dial = kernel width σ_I steers the grain; Phase-0 stripe/labyrinth landmarks as snaps). US-1/US-3/SC revised; parameter table `form`→`texture`. **Build-time (T025): the dial's route token is `grain`** — `texture` collides with jit.gl.pix's native @texture attribute in the param_connect binding.
 - [ ] G2 **Naming**: `f_wc` is a placeholder (spec header). Alternatives on record: `f_formconstants`. Decide before Phase 3's menu and README entries.
 - [x] G3 **Drive inlet semantics — DECIDED 2026-10-23 (Matt, per T007 recommendation).** Drive inlet = raw additive on E only: `drive_gain·(scene − 0.5)` into the E sigmoid input. Weak drive = hallucinate, strong drive = see (one knob, both ends). Unconnected inlet reads mid-0.5 → zero net drive for free (pure US-1 labyrinth, no special-casing). `drive_gain` is a `gain`-role dial in the library convention. **Build-time correction (T025):** an unconnected pix inlet reads BLACK (0,0,0,1), not 0.5 — the neutral is supplied by a vs_inState connection flag → `drv_conn`, and the nl codebox substitutes 0.5 (spec FR-006).
-- [ ] G4 **Output encoding**: T008's comparison; decide in Phase 2 with live context (same as f_ks T012).
+- [x] G4 **Output encoding — DECIDED 2026-10-23 (Matt, Phase 2).** Plain-E display
+  with the `sharp` dial's S-curve blend, SHIPPED DEFAULT sharp = 0.5 (the Phase-2 soak
+  showed the soft map drifts toward white over ~30 s; the half-crisp blend keeps the
+  free labyrinth readable). T008's hard-clamp/soft-compress/auto-range comparison is
+  overtaken: no special encoding ships.
 
 **Checkpoint — PHASE 0 CLOSED 2026-10-23 (Matt approved G3, the last Phase-0 gate).** Mirror + tests green; region map recorded; G1 decided; T006 stills approved by Matt ("the stills are great"); T007 done and G3 approved per its recommendation. **Phase 1 (bpatcher build) may start.** T008 (encoding measurement → G4) slips to Phase 2; G2 (naming) is a Phase 3 blocker.
 
@@ -206,13 +210,20 @@ tests/modules/wc/
     **+0.25 s 0.83**, +1 s 0.64, +4 s 0.71 (sustained), off +1 s 0.01 (released).
     Display std jumps to 0.37 while imprinted (a strong structural imprint in ~15
     frames). T032 mechanics proven; dial range/labels remain (range is 0–2 today).
-- [ ] T030 Output mapping choice (G4) and `rate`/`grain` ranges and defaults, judged live.
-- [ ] T031 Form navigation feel: the `grain` dial over the G1 continuum (landmark snap points
-  per FR-010) — does the stripe-glass → labyrinth sweep read legibly live, and do the landmark
-  grains reform reliably from any state? (No four-form selector ships; the glyph previews idea
-  from the old US-3 is dropped with it.)
-- [ ] T032 Drive-transition feel: `hallucinate` + `drive_gain` over real input — is the below/above-threshold transition one legible gesture (spec US-2).
-- [ ] T033 Retinotopic look: map constants, foveal region handling, whether any map parameter becomes user-facing (spec Clarifications).
+- [x] T030 **DONE 2026-10-23 (Matt).** Ranges approved at the start of the Phase-2 session:
+  `rate` 0–1 (default 1.0), `drive_gain` 0–2 (default 0). At the G4 call: output map = plain
+  E + the `sharp` S-curve blend with DEFAULT 0.5 (codebox literal and definition dial updated;
+  rebuild reproduces exactly, contracts green). Grain dial stays 1.0–4.0 (default 1.4).
+- [x] T031 **DONE 2026-10-23 (Matt).** Landmark snaps at σ_I **1.1 / 1.4 / 1.9** (broken
+  stripes / labyrinth default / coarse), documented in the `grain` dial hint and to be carried
+  into T040's reference doc; the dial stays continuous (no quantization). No four-form
+  selector ships; the glyph previews idea is dropped.
+- [x] T032 **DONE 2026-10-23 (Matt).** Mechanics proven in the session (imprint corr 0.83 at
+  +0.25 s at drive_gain 1.5, sustained 0.64/0.71, released to 0.01 at +1 s after off) and the
+  "see" level ≈ 1.5 is documented in the drive hint; 0–2 range approved.
+- [x] T033 **DONE 2026-10-23 (Matt).** Provisional retinotopy constants ACCEPTED as final
+  (r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4, baked in `codebox_enc.gen`); no foveal
+  special-casing; no map parameter exposed to the user.
 
 **Checkpoint**: Matt confirms the taxonomy reads (Success Criterion 3, 8).
 

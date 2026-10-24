@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-23 (night 6): f_wc Phase 2 COMPLETE — Matt settled G4 + all of T030-T033
+
+- **G4 / output map:** plain E + the `sharp` S-curve blend, SHIPPED DEFAULT sharp = 0.5 (soak showed the soft map drifts toward white over 30 s). No special encoding; T008's comparison item is overtaken by the gate decision.
+- **Ranges (approved):** `rate` 0–1 (def 1.0), `drive_gain` 0–2 (def 0), `grain` 1.0–4.0 (def 1.4) continuous.
+- **T031 landmarks:** σ_I = **1.1 / 1.4 / 1.9** (broken stripes / labyrinth / coarse), in the grain dial hint + T040 documentation. **T033:** provisional retinotopy constants ACCEPTED (r0 .5, k 8/5, r_max 4; no foveal special-casing; no user exposure). **T032:** "see" ≈ 1.5 documented in the drive hint.
+- Codebox `Param sharp(0.5)` + definition updated, hints carry the landmarks; rebuild reproduces exactly, offline contracts green (bf8ebbe + this).
+- **Next: Phase 3 — G2 naming FIRST** (blocks README row text, menu, reference doc, helpfile), then T040 ref doc, T041 helpfile, T042 menu, T043 README/INDEX/plan.md.
+
 ## 2026-10-23 (night 5, Max bench): f_wc Phase 2 measurement session done — T030-T033 decisions staged for Matt
 
 - **New instrument:** `tests/modules/wc/bench_wc_look.py` (parametric `segments` timeline added as a branch in `tests/bench/bench_module.js` — legacy module jobs unchanged) + contact sheets in `tests/logs/wc_look/*.png`. One 55 s job on the shipped module at 512².

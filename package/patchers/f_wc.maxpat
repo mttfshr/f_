@@ -1347,7 +1347,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res\n// output pixel's visual-field polar coords (r, theta) to cortical (u, v) =\n// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both\n// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).\n// Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.\n//\n// Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives\n// this pix the render-context size), in2 = the convolved/current state (R = E, from the nl\n// stage).\n//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any\n//     output size, including smaller than 256 where hardware sample() would snap; v wraps at\n//     the theta seam, u at the far log edge\n//   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS\n//   - map constants are PROVISIONAL (T006's working set; the foveal/edge handling and any\n//     user exposure is T033): r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4\n//   - display mapping PLACEHOLDER until gate G4: E is already a 0..1 rate, soft = clamp(E);\n//     sharp (0..1) blends toward the f_ks crisp S-curve (verified behavior is the default\n//     sharp = 0)\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the\n//     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)\nParam bypass_gate(0);\nParam sharp(0);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = 8 * log(1 + r / 0.5);\nv = 5 * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nN = 256;\nfx = cv * N - 0.5;\nfy = cu * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),\n         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp(au, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
+									"code": "// codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res\n// output pixel's visual-field polar coords (r, theta) to cortical (u, v) =\n// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both\n// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).\n// Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.\n//\n// Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives\n// this pix the render-context size), in2 = the convolved/current state (R = E, from the nl\n// stage).\n//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any\n//     output size, including smaller than 256 where hardware sample() would snap; v wraps at\n//     the theta seam, u at the far log edge\n//   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS\n//   - map constants SETTLED (T033, 2026-10-23, Matt approved the provisional T006 working\n//     set; no foveal special-casing, no user exposure): r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4\n//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);\n//     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the\n//     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),\n//     and the half-crisp blend keeps the free labyrinth readable long-term\n//   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)\n//   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the\n//     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)\nParam bypass_gate(0);\nParam sharp(0.5);\n\npx = (norm.x * 2 - 1) * 4;\npy = (norm.y * 2 - 1) * 4;\nr, theta = cartopol(px, py);\nu = 8 * log(1 + r / 0.5);\nv = 5 * theta;\ncu = fract(u / twopi);\ncv = fract(v / twopi);\n\nN = 256;\nfx = cv * N - 0.5;\nfy = cu * N - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa = wrap(x0, 0, N);\nxb = wrap(x0 + 1, 0, N);\nya = wrap(y0, 0, N);\nyb = wrap(y0 + 1, 0, N);\np00 = vec((xa + 0.5) / N, (ya + 0.5) / N);\np10 = vec((xb + 0.5) / N, (ya + 0.5) / N);\np01 = vec((xa + 0.5) / N, (yb + 0.5) / N);\np11 = vec((xb + 0.5) / N, (yb + 0.5) / N);\nau = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),\n         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);\n\nau = switch(abs(au) < 1e30, au, 0);\nsoft = clamp(au, 0, 1);\ncrisp = smoothstep(0.46, 0.54, soft);\nlum = mix(soft, crisp, sharp);\nlum = lum * (1 - bypass_gate);\n\nout1 = vec(lum, lum, lum, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1915,7 +1915,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Grain: the inhibition kernel width in pixels. Low = broken stripes, high = disordered labyrinth",
+					"hint": "Grain: inhibition kernel width in pixels. Landmarks: 1.1 broken stripes, 1.4 labyrinth (default), 1.9 coarse",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2019,7 +2019,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Scene strength: 0 = pure hallucination; high = the drive inlet imprints (normal vision)",
+					"hint": "Scene strength: 0 = pure hallucination; ~1.5 = the drive inlet imprints (normal vision)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2123,7 +2123,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells and ridges",
+					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2151,7 +2151,7 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								0.5
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,

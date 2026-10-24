@@ -11,16 +11,17 @@
 //     output size, including smaller than 256 where hardware sample() would snap; v wraps at
 //     the theta seam, u at the far log edge
 //   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS
-//   - map constants are PROVISIONAL (T006's working set; the foveal/edge handling and any
-//     user exposure is T033): r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4
-//   - display mapping PLACEHOLDER until gate G4: E is already a 0..1 rate, soft = clamp(E);
-//     sharp (0..1) blends toward the f_ks crisp S-curve (verified behavior is the default
-//     sharp = 0)
+//   - map constants SETTLED (T033, 2026-10-23, Matt approved the provisional T006 working
+//     set; no foveal special-casing, no user exposure): r0 = 0.5, k_ecc = 8, k_ang = 5, r_max = 4
+//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);
+//     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the
+//     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),
+//     and the half-crisp blend keeps the free labyrinth readable long-term
 //   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)
 //   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the
 //     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)
 Param bypass_gate(0);
-Param sharp(0);
+Param sharp(0.5);
 
 px = (norm.x * 2 - 1) * 4;
 py = (norm.y * 2 - 1) * 4;
