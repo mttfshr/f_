@@ -9,26 +9,26 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 870.0, 178.0, 1476.0, 838.0 ],
+        "rect": [ 105.0, 144.0, 1052.0, 838.0 ],
         "boxes": [
             {
                 "box": {
-                    "bgmode": 1,
+                    "bgmode": 0,
                     "border": 0,
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
-                    "id": "obj-9",
+                    "id": "obj-7",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "f_wc.maxpat",
+                    "name": "f_formconstants.maxpat",
                     "numinlets": 2,
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 657.0, 59.0, 252.0, 222.0 ],
-                    "varname": "f_wc",
+                    "patching_rect": [ 610.0, 355.0, 266.0, 212.0 ],
+                    "varname": "f_formconstants",
                     "viewvisibility": 1
                 }
             },
@@ -74,29 +74,6 @@
             },
             {
                 "box": {
-                    "bgmode": 0,
-                    "border": 0,
-                    "clickthrough": 0,
-                    "enablehscroll": 0,
-                    "enablevscroll": 0,
-                    "id": "obj-11",
-                    "lockeddragscroll": 0,
-                    "lockedsize": 0,
-                    "maxclass": "bpatcher",
-                    "name": "f_ks.maxpat",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 223.0, 35.0, 190.0, 110.0 ],
-                    "presentation": 1,
-                    "presentation_rect": [ 185.0, 469.0, 190.0, 110.0 ],
-                    "varname": "f_ks",
-                    "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
                     "bgmode": 1,
                     "border": 1,
                     "clickthrough": 0,
@@ -129,7 +106,9 @@
                     "patching_rect": [ 349.0, 428.0, 138.0, 35.0 ],
                     "priority": {
                         "vs_wfg_polarizer::pm_range": -1,
-                        "vs_wfg_polarizer::lock_freq": -1
+                        "vs_wfg_polarizer::lock_freq": -1,
+                        "vs_wfg_polarizer[1]::pm_range": -1,
+                        "vs_wfg_polarizer[1]::lock_freq": -1
                     },
                     "saved_object_attributes": {
                         "client_rect": [ 854, 172, 1208, 300 ],
@@ -177,7 +156,7 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "offset": [ 0.0, 0.0 ],
-                    "patching_rect": [ 657.0, 320.0, 157.0, 22.0 ],
+                    "patching_rect": [ 424.0, 674.0, 157.0, 22.0 ],
                     "varname": "vs_output[1]",
                     "viewvisibility": 1
                 }
@@ -214,14 +193,11 @@
             {
                 "patchline": {
                     "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-9", 0 ]
+                    "source": [ "obj-7", 0 ]
                 }
             }
         ],
         "parameters": {
-            "obj-11::obj-20": [ "rate", "rate", 0 ],
-            "obj-11::obj-23": [ "scale", "scale", 0 ],
-            "obj-11::obj-26": [ "sharp", "sharp", 0 ],
             "obj-14::obj-10": [ "bias", "Bias", 0 ],
             "obj-14::obj-14": [ "bm", "BM", 0 ],
             "obj-14::obj-17": [ "live.menu[41]", "live.menu", 0 ],
@@ -296,20 +272,18 @@
             "obj-5::obj-52": [ "live.menu[21]", "live.menu", 0 ],
             "obj-5::obj-53": [ "live.menu[22]", "live.menu", 0 ],
             "obj-5::obj-56": [ "live.menu[25]", "live.menu", 0 ],
-            "obj-9::obj-20": [ "rate[1]", "rate", 0 ],
-            "obj-9::obj-23": [ "grain", "grain", 0 ],
-            "obj-9::obj-26": [ "drive_gain", "aspect", 0 ],
-            "obj-9::obj-29": [ "habituation", "drive_gain", 0 ],
-            "obj-9::obj-32": [ "sharp[1]", "energy", 0 ],
-            "obj-9::obj-35": [ "habituation[1]", "habituation", 0 ],
-            "obj-9::obj-38": [ "sharp[2]", "sharp", 0 ],
-            "obj-9::obj-41": [ "excite", "excite", 0 ],
-            "obj-9::obj-44": [ "aie", "aie", 0 ],
-            "obj-9::obj-47": [ "twist", "aii", 0 ],
-            "obj-9::obj-50": [ "zoom", "zoom", 0 ],
-            "obj-9::obj-53": [ "twist[1]", "twist", 0 ],
-            "obj-9::obj-56": [ "fovea", "fovea", 0 ],
-            "obj-9::obj-59": [ "contrast", "contrast", 0 ],
+            "obj-7::obj-20": [ "gain[1]", "rate", 0 ],
+            "obj-7::obj-23": [ "scale[1]", "grain", 0 ],
+            "obj-7::obj-26": [ "rotate", "aspect", 0 ],
+            "obj-7::obj-29": [ "thresh", "drive_gain", 0 ],
+            "obj-7::obj-32": [ "energy", "energy", 0 ],
+            "obj-7::obj-35": [ "habituation[2]", "habituation", 0 ],
+            "obj-7::obj-38": [ "sharp[3]", "sharp", 0 ],
+            "obj-7::obj-41": [ "excite[1]", "excite", 0 ],
+            "obj-7::obj-44": [ "zoom[1]", "zoom", 0 ],
+            "obj-7::obj-47": [ "twist[2]", "twist", 0 ],
+            "obj-7::obj-50": [ "fovea[1]", "fovea", 0 ],
+            "obj-7::obj-53": [ "contrast[1]", "contrast", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
@@ -319,13 +293,6 @@
                 }
             },
             "parameter_overrides": {
-                "obj-11::obj-26": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
                 "obj-14::obj-22": {
                     "parameter_longname": "live.text[6]"
                 },
@@ -423,71 +390,69 @@
                 "obj-5::obj-56": {
                     "parameter_longname": "live.menu[25]"
                 },
-                "obj-9::obj-20": {
-                    "parameter_longname": "rate[1]"
-                },
-                "obj-9::obj-26": {
+                "obj-7::obj-20": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "drive_gain",
+                    "parameter_longname": "gain[1]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-29": {
+                "obj-7::obj-23": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "habituation",
+                    "parameter_longname": "scale[1]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-32": {
+                "obj-7::obj-26": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "sharp[1]",
+                    "parameter_longname": "rotate",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-35": {
-                    "parameter_longname": "habituation[1]"
-                },
-                "obj-9::obj-38": {
+                "obj-7::obj-29": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "sharp[2]",
+                    "parameter_longname": "thresh",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-41": {
+                "obj-7::obj-35": {
+                    "parameter_longname": "habituation[2]"
+                },
+                "obj-7::obj-38": {
                     "parameter_invisible": 0,
+                    "parameter_longname": "sharp[3]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-44": {
+                "obj-7::obj-41": {
                     "parameter_invisible": 0,
+                    "parameter_longname": "excite[1]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-9::obj-47": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "twist",
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
+                "obj-7::obj-44": {
+                    "parameter_longname": "zoom[1]"
                 },
-                "obj-9::obj-53": {
-                    "parameter_longname": "twist[1]"
+                "obj-7::obj-47": {
+                    "parameter_longname": "twist[2]"
                 },
-                "obj-9::obj-59": {
+                "obj-7::obj-50": {
+                    "parameter_longname": "fovea[1]"
+                },
+                "obj-7::obj-53": {
                     "parameter_invisible": 0,
+                    "parameter_longname": "contrast[1]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,

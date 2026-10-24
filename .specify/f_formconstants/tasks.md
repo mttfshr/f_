@@ -299,7 +299,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
 
 ### Phase R: parity build (BLOCKING for Phase D)
 
-- [ ] T040 **Source verification** (offline + Matt, 5 min). Confirm S1–S8
+- [x] T040 **Source verification — DONE 2026-10-24; Matt confirmed S1 in the browser (`maincanvas.width` = 1024).** (offline + Matt, 5 min). Confirm S1–S8
   against the source files, citing file + function for each. Matt confirms
   S1 in the browser console with the page fullscreen:
   `document.getElementById('maincanvas').width` → expect 1024. Any
