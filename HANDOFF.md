@@ -1,6 +1,11 @@
 # HANDOFF
 
-## 2026-10-24 (noon): f_wc enc now 2x2 SSAA over the Catmull-Rom taps
+## 2026-10-24 (noon, hotfix b852d9d): SSAA function form boxed BLACK — inlined ×4 instead
+
+- The `mapE(nx,ny)` GenExpr function failed on load (module black). The inlined 4-copy version is now shipped (every construct precedented: dim.x/dim.y per f_grain/f_masonry, nearest/wrap/vec per the working cubic build). **Lesson for codeboxes: no multi-assign or function-refactoring in jit.gl.pix codeboxes without a Max session to compile-check — the offline path can't catch it.**
+- Reload check owed to Matt: module should render with 2x2 AA. Patcher rebuilt; drift + contracts + test_wc green.
+
+## 2026-10-24 (noon): f_wc enc now 2x2 SSAA## 2026-10-24 (noon): f_wc enc now 2x2 SSAA over the Catmull-Rom taps
 
 - Matt: "better, but still blocky around the edges." Diagnosis: with the values smooth, the remaining stair is CONTOUR-position quantization — near-binary fields on a 256² grid have edges pinned to texels. enc now averages mapE at 4 quarter-pixel offsets per output pixel (SSAA; GenExpr function form, mirror refactored identically — offline green). If still steppy live at high Sharp: the ceiling is the 256² solver itself → 512² is a cost question (2.45 ms @256² measured; unmeasured at 512²) for the bench session.
 - Bench debt: chain-vs-mirror habit leg, live looks, enc leg now diffs cubic+SSAA.

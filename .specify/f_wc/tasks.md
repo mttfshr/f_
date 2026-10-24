@@ -317,7 +317,12 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
-- 2026-10-24 (late morning, cont.): **2x2 SSAA in enc (Matt: still blocky around
+- 2026-10-24 (noon, later): **SSAA function form reverted to inline ×4 (live failure).**
+  `mapE(nx, ny)` as a GenExpr function boxed black on load; the shipped form is the same
+  math inlined four times (suffixed identifiers), matching how the rest of the library's
+  codeboxes are written. Rule recorded: codebox function refactors are Max-compile-only
+  verification — never ship without a live compile check.
+- 2026-10-24 (late morning, cont.): **2x2 SSAA in enc- 2026-10-24 (late morning, cont.): **2x2 SSAA in enc (Matt: still blocky around
   edges at 1920x1080).** CR smoothing fixed value kinks, but at high contrast the
   contour POSITION is quantized to cortical texels — no interpolation fixes that.
   enc now evaluates mapE at 4 quarter-pixel offsets (q = 0.25/dim) and averages
