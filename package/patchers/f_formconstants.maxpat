@@ -184,7 +184,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_fc_hold @adapt 0 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_fc_hold @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_fc_hold"
 				}
 			},
@@ -303,7 +303,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_fc_seed @adapt 0 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_fc_seed @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_fc_seed"
 				}
 			},
@@ -482,7 +482,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_fc_pass @adapt 0 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_fc_pass @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_fc_pass"
 				}
 			},
@@ -601,7 +601,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_fc_blurx @adapt 0 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_fc_blurx @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_fc_blurx"
 				}
 			},
@@ -720,7 +720,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_fc_blury @adapt 0 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_fc_blury @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_fc_blury"
 				}
 			},
@@ -929,7 +929,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_fc_nl @adapt 0 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_fc_nl @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_fc_nl"
 				}
 			},
@@ -1078,7 +1078,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_fc_enc @adapt 0 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_fc_enc @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_fc_enc"
 				}
 			},

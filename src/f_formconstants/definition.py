@@ -134,19 +134,19 @@ patcher = {
 
     "pix_chain": [
         {"id": "hold",  "name": "#0_fc_hold",  "gen": "pass",               "n_inlets": 1, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @type float32", "primary": False},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "seed",  "name": "#0_fc_seed",  "gen": "codebox_seed.gen",   "n_inlets": 1, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @type float32", "primary": False},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "pass",  "name": "#0_fc_pass",  "gen": "codebox_pass.gen",   "n_inlets": 3, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @type float32", "primary": False},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "blurx", "name": "#0_fc_blurx", "gen": "codebox_blur_x.gen", "n_inlets": 1, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @type float32", "primary": False},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "blury", "name": "#0_fc_blury", "gen": "codebox_blur_y.gen", "n_inlets": 1, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @type float32", "primary": False},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "nl",    "name": "#0_fc_nl",    "gen": "codebox_nl.gen",     "n_inlets": 4, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @type float32", "primary": False},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "enc",   "name": "#0_fc_enc",   "gen": "codebox_enc.gen",    "n_inlets": 2, "n_outlets": 1,
-         "pix_attrs": "@adapt 0 @type float32", "primary": True},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": True},
     ],
     "pix_wires": [
         ["hold", 0, "pass", 1],     # previous state (cold)
