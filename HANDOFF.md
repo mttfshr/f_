@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-24 (morning, later): f_wc center pixelation FIXED — foveal softening in enc (r_soft = 0.35)
+
+- Matt's screenshot showed the retinotopic center breaking into an aliased vortex. Cause: the log map's du/dr = k_ecc/(r0+r) diverges at r → 0, compressing cortical periods past render Nyquist — the 4-tap bilinear can't reconstruct them. Fix shipped: `u = k_ecc·ln(1 + sqrt(r² + s²)/r0)` in `codebox_enc.gen` (`r_soft` = 0.35, a bench-vary Param registered known-undriven in the contract test; mirror encode + T051 inverse updated). Center becomes a calm disc for r ≪ s; periphery untouched.
+- **Owed to Max:** reload and eyeball the center at fine grain (1.1–1.4) and deep fovea; if angular speckle remains, next step is 2×2 supersampled enc taps. r_soft is sweepable on the bench (`param r_soft` on `#0_wc_enc`); expose as a dial only if it wants performable depth.
+- NOTE: the shipped module defaults are now zoom 5 / twist 3 / fovea 1.0 but the MIRROR constants (K_ECC 8, K_ANG 5, R0 0.5) still record the T033 corner — the bench enc leg must pass the module values as kwargs (encode() already takes them).
+
 ## 2026-10-24 (morning): f_wc map defaults retuned CLOSER — zoom 5 / twist 3 / fovea 1.0
 
 - Matt's live report: at the T033 corner (8 / 5 / 0.5) the scene reads far away — expected from the map math (~2.8 cortical wraps radially; k_ang 5 ≈ 3.4°/spoke). Shipped the closer default set **zoom 5, twist 3, fovea 1.0** (~1.3 wraps radially, ~1.7x wider spokes); ranges unchanged (zoom 2–16, twist int 2–8, fovea 0.1–5.0). Codebox literals, spec FR-007, reference rows and hints aligned; drift + contracts green.

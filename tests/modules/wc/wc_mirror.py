@@ -380,7 +380,7 @@ def _tap4(tex, cxu, cyu):
 
 
 def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
-           k_ecc=K_ECC, k_ang=K_ANG, r0=R0):
+           k_ecc=K_ECC, k_ang=K_ANG, r0=R0, r_soft=F32(0.35)):
     """Stage 7 (`enc`, runs at RENDER resolution, @adapt 0): the inverse
     retinotopic map. Each output pixel's visual-field polar coords (r, theta)
     map to cortical (u, v) = (K_ECC*log1p(r/R0), K_ANG*theta), and the E field
@@ -397,7 +397,7 @@ def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
     py = (ny * F32(2.0) - F32(1.0)) * R_MAX
     r = np.hypot(px, py).astype(F32)
     theta = np.arctan2(py, px).astype(F32)
-    u = (F32(k_ecc) * np.log1p(r / F32(r0))).astype(F32)  # log(1 + r / r0)
+    u = (F32(k_ecc) * np.log1p(np.sqrt(r * r + F32(r_soft) * F32(r_soft)) / F32(r0))).astype(F32)  # log(1 + sqrt(r^2+s^2)/r0)
     v = (F32(k_ang) * theta).astype(F32)
     cu = np.mod(u / TWOPI, F32(1.0)) * n - F32(0.5)
     cv = np.mod(v / TWOPI, F32(1.0)) * n - F32(0.5)

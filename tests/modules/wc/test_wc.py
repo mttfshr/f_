@@ -168,7 +168,8 @@ def test_encode_round_trip_identity():
     band = np.zeros((n, n), dtype=bool)
     r = np.full((n, n), np.nan)
     for k in range(3):
-        rk = (R0 * np.expm1((u + two_pi * k) / K_ECC)) if k else R0 * np.expm1(u / K_ECC)
+        uk = (R0 * np.expm1((u + two_pi * k) / K_ECC)) if k else R0 * np.expm1(u / K_ECC)
+        rk = np.sqrt(np.clip(uk * uk - 0.35 * 0.35, 0.0, None))   # soften inverse: sqrt((R0.expm1)^2 - s^2)
         take = ~band & (rk >= 0.6) & (rk <= 3.5)
         band |= take
         r = np.where(take, rk, r)

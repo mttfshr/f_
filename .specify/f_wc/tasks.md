@@ -317,6 +317,16 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
+- 2026-10-24 (morning, later): **FOVEAL SOFTENING shipped for the center pixelation.**
+  Matt's screenshot: the center of the retinotopic render broke into an aliased vortex.
+  Cause: du/dr = k_ecc/(r0+r) blows up near r = 0, compressing cortical periods past the
+  render Nyquist where the 4-tap bilinear cannot reconstruct them. Fix in
+  `codebox_enc.gen`: `u = k_ecc·ln(1 + sqrt(r^2 + s^2)/r0)` with `r_soft` baked at
+  0.35 (bench-vary Param, registered known-undriven with amp — sweep it live before any
+  dial decision). Mirror `encode()` gained the `r_soft` kwarg (default 0.35); the T051
+  round-trip inverse now inverts the softened map. Green: drift, contracts, test_wc.
+  If the softened disc still shows angular speckle at fine grains, the next step is
+  supersampled enc taps (2x2 sub-samples instead of one bilinear).
 - 2026-10-24 (morning): **Map defaults RETUNED closer (live tuning with Matt).**
   The T033 corner (zoom 8 / twist 5 / fovea 0.5) read as FAR AWAY live: ~2.8 cortical
   wraps radially, ~3.4°-wide spokes. New shipped defaults: **zoom 5, twist 3, fovea

@@ -58,6 +58,10 @@ _WC_NOTE = ("documented in .specify/f_wc/tasks.md T025/T021: {} is a settled sol
             "Param only so the bench can vary it (tests/modules/wc/bench_wc.py); it is not a performable "
             "control (the model's settled corner: Ne = 1.0, seed amplitude 1.0)")
 KNOWN_ISSUES[("f_wc", "undriven", "#0_wc_pass.amp")] = _WC_NOTE.format("seed amplitude")
+KNOWN_ISSUES[("f_wc", "undriven", "#0_wc_enc.r_soft")] = (
+    "documented in src/f_wc/codebox_enc.gen: r_soft is the baked foveal-softening constant of the retinotopic "
+    "enc stage (2026-10-24, Matt's center-pixelation report); it stays a Param only so the bench can sweep it "
+    "before any dial decision -- like amp it is not a performable control")
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE
 

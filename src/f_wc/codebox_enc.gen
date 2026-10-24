@@ -17,6 +17,12 @@
 //     closer), `twist` -> k_ang (int 2..8, def 3 -- MUST stay integer: a non-integer
 //     angular gain seams the visual field at theta = +-pi, T006), `fovea` -> r0
 //     (0.1..5.0, def 1.0). r_max 4 stays baked.
+//   - FOVEAL SOFTENING (2026-10-24, Matt's live report -- the center pixelated):
+//     u = k_ecc.ln(1 + sqrt(r^2 + r_soft^2)/r0) instead of the raw r -- for
+//     r << r_soft the cortical position flattens to a constant, so the log-
+//     singularity vortex becomes a calm disc (radial du/dr no longer compresses
+//     cortical periods past the render Nyquist); r >> r_soft is untouched.
+//     r_soft is a bench-vary Param (the amp/ne precedent), baked at 0.35.
 //   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);
 //     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the
 //     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),
@@ -29,11 +35,12 @@ Param sharp(0.5);
 Param k_ecc(5);
 Param k_ang(3);
 Param r0(1.0);
+Param r_soft(0.35);
 
 px = (norm.x * 2 - 1) * 4;
 py = (norm.y * 2 - 1) * 4;
 r, theta = cartopol(px, py);
-u = k_ecc * log(1 + r / r0);
+u = k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0);
 v = k_ang * theta;
 cu = fract(u / twopi);
 cv = fract(v / twopi);
