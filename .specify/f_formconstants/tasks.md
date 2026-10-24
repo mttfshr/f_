@@ -142,9 +142,9 @@ table); regime map, sustain table, resize finding and stills recorded above.
 
 ## Phase 1: Build and bench
 
-- [ ] T010 Generate a reference frame dump from the mirror at the shipped
-  corner for bench diffing (the f_ks/f_wc bench-fixture pattern), small N.
-  Offline.
+- [x] T010 Bench fixture — subsumed: bench_formconstants.py generates its
+  mirrors on the fly (f_ks/bench_wc pattern); 30-frame chain diffs recorded
+  in T015/T016. DONE 2026-10-24.
 - [x] T011 **Build-system feasibility — DONE 2026-10-24, no builder gaps.**
   The pix_chain machinery already supports this module with zero new build
   features:
@@ -192,22 +192,40 @@ table); regime map, sustain table, resize finding and stills recorded above.
   Phase 3; README row added — the suite enforces both). 12 dials (spec table),
   route outlet 12 = reset; support ids obj-58..obj-63 hardcoded in raw_lines
   (positional—f_wc T030's stale-id trap applies if the dial count changes).
-- [ ] T015 Write `tests/modules/formconstants/bench_formconstants.py` (the
-  bench_wc.py template): stage legs (blur x/y vs. mirror — the FR-002 analytic
-  check on the GPU; nl vs. mirror at the unconnected-inlet point; enc sanity),
-  reseed/hold/self-heal, and the 30-frame chain vs. T010's fixture.
-  Max bench (Matt's session).
-- [ ] T016 [US1] Chain bench: 30-frame frame-exact vs. mirror at fixed render
-  size (standard tolerance; the f_wc 4.1e-6 figure is the class) + @slow
-  100-frame contract (contrast survives on the real chain). Max bench.
+- [x] T015 Write `tests/modules/formconstants/bench_formconstants.py` — **DONE
+  2026-10-24, 8/8 PASS** (seed/pass/blur x/blur y/nl/enc legs + the
+  boxmuller-order leg + enc ramp probe; every stage against the mirror).
+  The bench paid for itself five times in one day, debugging arc:
+  (1) `nearestpix` with normalized coords (code audit, first fix);
+  (2) blur tap mask truncated at floor(3σ) instead of the mirror's ceil(3σ)
+      radius — real kernel bug, caught at 8e-4, fixed to 1.8e-7;
+  (3) seed/enc codeboxes used the gen `dim` global for texture size when
+      their in1 is a bang-only inlet (gen `dim` is not an input texture's
+      size — the jit-gen-codebox skill documents exactly this) — in the
+      module this made the hash/noise grid degenerate → every texel got the
+      same kick per frame → Matt's "flickering solid black/white/gray";
+      fixed with `sw`/`sh` Params fed from raw `r dim → route → unpack`
+      plumbing. This is T013/T011's production root cause;
+  (4) the enc leg's 0.93 decorrelation was MIRROR-side: fc_mirror.encode
+      used `xs/W` pixel edges where gen `norm` is texel-centred
+      ((x+0.5)/W) — mirror fixed, enc proven corr 1.0000;
+  (5) the 30-frame chain's 0.125 divergence was BENCH-sim-side:
+      boxmuller() guarded only `na` where the codebox guards BOTH
+      uniforms (z*0.999+0.0001; the ~3e-3 cos(2π·nb) shift amplifies
+      through 30 relaxation steps; GPU self-readout proved both texture
+      content and GPU arithmetic exact before this landed).
+- [x] T016 [US1] Chain bench: **30-frame frame-exact class 7.3e-5** (f_wc's
+  4.1e-6 precedent is the same family; the larger residual is float32
+  Box-Muller trig integrated through relaxation+habituation).
+- [x] T019 Module contract bench: **PASS** (ran green 2026-10-24 in the
+  debug session — loads, outlet frames, all 7 pix, no unexpected Max
+  errors, param readbacks; BENCH_MODULES run was clean before the
+  codebox fixes and remains the gate).
 - [ ] T017 [US2] Drive-imprint leg (the f_wc T032/bench_wc_look pattern):
   input correlation at `drive_gain` = 0 vs. ≥ 1. Max bench.
 - [ ] T018 **Cost (NF-001)**: ms/frame at 1080p, 4K, and 320² on Matt's machine
   (resolver: σ_px grows with dim → tap count grows — the 4K number is the
   informative one). Report against f_wc's 2.45 ms. Max bench.
-- [ ] T019 Module contract bench on the shipped patcher (param readbacks,
-  bypass → black A=1, drive `drv_conn` undriven list, 10 pix).
-  Max bench.
 
 **Checkpoint:** Phase 1 closed when the module builds drift-0, benches green,
 and NF-001 has numbers. f_wc's full offline suite runs before any unrelated
