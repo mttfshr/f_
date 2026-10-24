@@ -25,3 +25,6 @@ dist/
 build/helpfile_queue.json
 
 archive/
+
+# scratch workspace (probes, proof renders, one-offs; referenced in records as on-disk paths)
+/scratch/
