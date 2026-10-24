@@ -317,6 +317,13 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
+- 2026-10-24 (morning): **Map defaults RETUNED closer (live tuning with Matt).**
+  The T033 corner (zoom 8 / twist 5 / fovea 0.5) read as FAR AWAY live: ~2.8 cortical
+  wraps radially, ~3.4°-wide spokes. New shipped defaults: **zoom 5, twist 3, fovea
+  1.0** (~1.3 wraps, ~1.7x wider spokes). Ranges unchanged. `r_max 4` remains baked and
+  is the true field-of-view lever if a still-closer look is wanted. fovea max had been
+  stretched to 5.0 earlier the same day (698efe4). Codebox Param defaults, spec FR-007,
+  reference rows, hints all aligned. Drift + contracts green.
 - 2026-10-23 (night 14): **Map dials shipped (Matt reopened T033's no-exposure).**
   `zoom` (k_ecc 2–16, def 8), `twist` (k_ang INT 2–8, def 5 — integer-only, fractional
   = seam at θ = ±π per T006), `fovea` (r0 0.1–2.0, def 0.5) in `codebox_enc.gen`

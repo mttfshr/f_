@@ -416,10 +416,12 @@ independent instances — the library baseline.
   The render stage MUST apply the inverse retinotopic
   (log-polar → Cartesian) map when sampling the cortical state to the
   visual-field output; the map is a resample, not a solver modification.
-  Map constants: `k_ecc` (the `zoom` dial, 2–16, def 8), `k_ang` (the
-  `twist` INT dial, 2–8, def 5 — MUST stay integer or the map seams at
-  θ = ±π, T006), `r0` (the `fovea` dial, 0.1–5.0, def 0.5); `r_max = 4`
-  stays baked.
+  Map constants: `k_ecc` (the `zoom` dial, 2–16), `k_ang` (the
+  `twist` INT dial, 2–8 — MUST stay integer or the map seams at
+  θ = ±π, T006), `r0` (the `fovea` dial, 0.1–5.0); `r_max = 4`
+  stays baked. Defaults retuned 2026-10-24 to the CLOSER set
+  **5 / 3 / 1.0**: the T033 corner (8 / 5 / 0.5) spans ~2.8 cortical
+  wraps radially and ~3.4°-wide spokes and read as far away live.
 - **FR-008**: The output MUST be mapped to a bounded, displayable
   grayscale range with no NaN/Inf ever reaching the outlet; the exact
   mapping is a Phase 2 tier-3 decision.
@@ -480,9 +482,9 @@ independent instances — the library baseline.
 | `energy` *(2026-10-23, exposed from the T021/T025 bench-vary constant)* | per-frame noise amplitude `Ne` | 0.0–2.0, default 1.0 = the verified corner. The drive-band axis: below ~0.7 the pattern freezes out, above ~1.2 it shimmers hot (T005/T052 sweeps); compensates deep habituation |
 | `sharp` | output-map edge sharpening | f_ks precedent |
 | `excite` *(G7, 2026-10-23)* | shared offset inside both sigmoid inputs (HE/HI lowered together) | −0.3–0.8, default 0. + = more excitable (clean rolls ~0.5), − = toward blackout (asymmetric viable band, night-12 sweep) |
-| `zoom` *(2026-10-23)* | `k_ecc`, map eccentricity gain | 2–16, default 8. Log-radius zoom of the retinotopic display |
-| `twist` *(2026-10-23)* | `k_ang`, map angular gain (INT) | 2–8, default 5. Spoke fold; integer-only (fractional seams, T006) |
-| `fovea` *(2026-10-23)* | `r0`, map foveal radius | 0.1–5.0, default 0.5. Smaller = more center magnification |
+| `zoom` *(2026-10-23; default retuned 2026-10-24)* | `k_ecc`, map eccentricity gain | 2–16, default **5** (was 8 — the T033 corner read as far away live). Log-radius zoom of the retinotopic display; lower = closer |
+| `twist` *(2026-10-23; default retuned 2026-10-24)* | `k_ang`, map angular gain (INT) | 2–8, default **3** (was 5). Spoke fold; integer-only (fractional seams, T006) |
+| `fovea` *(2026-10-23; default retuned 2026-10-24)* | `r0`, map foveal radius | 0.1–5.0, default **1.0** (was 0.5). Smaller = more center magnification |
 | `reset` | reseed button/message | FR-009 |
 
 Internal-only (spike-determined, fixed): the four coupling weights'

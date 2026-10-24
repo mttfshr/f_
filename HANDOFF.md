@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-24 (morning): f_wc map defaults retuned CLOSER — zoom 5 / twist 3 / fovea 1.0
+
+- Matt's live report: at the T033 corner (8 / 5 / 0.5) the scene reads far away — expected from the map math (~2.8 cortical wraps radially; k_ang 5 ≈ 3.4°/spoke). Shipped the closer default set **zoom 5, twist 3, fovea 1.0** (~1.3 wraps radially, ~1.7x wider spokes); ranges unchanged (zoom 2–16, twist int 2–8, fovea 0.1–5.0). Codebox literals, spec FR-007, reference rows and hints aligned; drift + contracts green.
+- Try live: twist 2 for ~2.5x-wider spokes than the old corner, zoom toward 3 for still-bigger fields. `r_max 4` is the true field-of-view and stays baked — exposing it is the next lever if this still isn't close enough.
+- Bench session debt unchanged (habit > 0 chain-vs-mirror leg; live look at the new dials). Full offline suite not run since rebuild.
+
 ## 2026-10-23 (night 14): f_wc map dials SHIPPED — zoom / twist / fovea (T033 no-exposure reversed); 11 dials now
 
 - Matt asked for zoom: **`zoom`** (k_ecc 2–16, def 8), **`twist`** (k_ang INT 2–8, def 5 — integer-only; fractional = seam at θ = ±π, T006), **`fovea`** (r0 0.1–2.0, def 0.5), all in `codebox_enc.gen`; `r_max 4` stays baked. Mirror `encode()` gained kwargs. Panel → 247×212 (menu `"wc": [247, 212]`, launcher regenerated).
