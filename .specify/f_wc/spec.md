@@ -463,7 +463,7 @@ independent instances — the library baseline.
 | `rate` | per-frame dt multiplier | clamped per FR-005 |
 | `scale` | characteristic cortical wavelength (sets `D` ratio / domain size) | pattern grain in the mapped visual field |
 | `drive_gain` | gain on the drive inlet's contribution | how strongly the scene pushes the cortex; at 0 the module is US-1 pure |
-| `habituation` *(G5, 2026-10-23)* | depth of the Ve/Vi subtractive adaptation (time constants baked at 50/100 frames) | 0.0–1.0, default 0 = free run; higher steadies the field mean against long-soak drift, nudges the usable Ne band upward |
+| `habituation` *(G5, 2026-10-23)* | depth of the Ve/Vi subtractive adaptation (time constants baked at 50/100 frames) | 0.0–1.5, default 0 = free run; higher steadies the field mean against long-soak drift, nudges the usable Ne band upward (viable to 1.5 at the baked Ne = 1.0; depth ≥ 2 would need Ne exposed — T052 addendum) |
 | `sharp` | output-map edge sharpening | f_ks precedent |
 | `reset` | reseed button/message | FR-009 |
 

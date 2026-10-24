@@ -74,7 +74,7 @@ patcher = {
         {"name": "drive_gain", "type": "float", "min": 0.0, "max": 2.0, "default": 0.0,
          "label": "Drive", "pix_target": "nl",
          "hint": "Scene strength: 0 = pure hallucination; ~1.5 = the drive inlet imprints (normal vision)"},
-        {"name": "habituation", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0,
+        {"name": "habituation", "type": "float", "min": 0.0, "max": 1.5, "default": 0.0,
          "label": "Habituation", "pix_attr": "habit", "pix_target": "nl",
          "hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time"},
         {"name": "sharp", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,

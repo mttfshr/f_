@@ -2157,7 +2157,7 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "habituation",
-							"parameter_mmax": 1.0,
+							"parameter_mmax": 1.5,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "habituation",
