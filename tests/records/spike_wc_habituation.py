@@ -63,10 +63,14 @@ def run_cell(be, bi, ne, seed=11):
 
 
 def main():
+    depths = (0.0, 0.2, 0.5, 1.0) if len(sys.argv) < 2 else tuple(
+        float(x) for x in sys.argv[1].split(","))
+    nes = (0.6, 0.8, 1.0, 1.2) if len(sys.argv) < 3 else tuple(
+        float(x) for x in sys.argv[2].split(","))
     print("# be,bi,ne,mean_early,std_early,mean_late,std_late,drift,sat_late,alive")
     t0 = time.time()
-    for be in (0.0, 0.2, 0.5, 1.0):
-        for ne in (0.6, 0.8, 1.0, 1.2):
+    for be in depths:
+        for ne in nes:
             out = run_cell(F32(be), F32(be), F32(ne))
             print(f"{be},{be},{ne},{out[0]:.4f},{out[1]:.4f},{out[2]:.4f},"
                   f"{out[3]:.4f},{out[2] - out[0]:+.4f},{out[4]:.3f},{int(out[5])}",

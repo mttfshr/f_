@@ -317,6 +317,15 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
+- 2026-10-23 (night 11): **Deep-fatigue addendum to T052 (Matt asked "can habituation go
+  above 1").** Sweep extended to be = bi ∈ {1.0, 1.5, 2.0, 3.0} × Ne ∈ {1.0, 1.5, 2.0}
+  (`tests/logs/spike_wc_habituation_deep.log`; spike script now takes grid args).
+  Answer: **yes up to ~1.5 at the shipped Ne = 1.0** — depth 1.5/Ne 1.0 is strong and
+  still ORGANIZING (late std 0.275, vs depth-1's 0.292); depth 2.0 needs Ne ≥ 1.5 to
+  stay live (std 0.037 at Ne 1.0 — effectively dead at the baked corner); depth 3.0 is
+  faint even at Ne 2.0 (0.10). No saturation anywhere (boundedness holds structurally:
+  Ve/Vi relax toward rates in (0,1), subtraction enters the clamped sigmoid). No dial
+  change made: max 1.0 stands — deeper would need Ne exposed (its own gate-level call).
 - 2026-10-23 (night 10): **G5 approved (Matt) and shipped — `habituation` depth dial.**
   Ve/Vi ride state G/A: nl relaxes (50/100-frame constants, baked) and subtracts at
   depth `habit` (0 = bit-identical pre-G5 dynamics, G/A pinned 0); pass carries them
