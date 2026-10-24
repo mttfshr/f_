@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-23 (night 8): f_wc Phase 4 drafted from the webgpgpu ideas doc — T050-T052 + gate G5 queued
+
+- Discussed `ideas/f_wc_from_webgpgpu.md` against the shipped module with Matt. Outcome (committed): Phase 4 in `.specify/f_wc/tasks.md` — T050/T051 offline tier-1 hygiene (noise-stream histogram + temporal decorrelation of the salt-incremented hash; retinotopy map↔inverse round trip), T052 habituation mirror extension + (be/bi × Ne) mini region map at the shipped corner, gate G5 (Matt): expose depth/rate dials or drop. Parked with reasons: the Rule-page stats fixture (mirror already derives from the page-validated model) and a shared `f_rng`/retinotopy module (no second consumer; solver noise must live inside the 256² loop).
+- **Structural fact verified against the shipped codeboxes:** state texture G/A are free (`codebox_pass` forces them 0 as DFT imaginary parts; `nl.in2` taps raw pre-DFT state), so Ve/Vi adaptation fits with a pass carry-through and ~4 ALU ops in nl — no extra texture. The real risk is behavioral: Ne is baked at 1.0, and subtractive adaptation on the saturation boundary may shift the usable band; T052 measures band width and E-mean drift (adaptation may fix what G4's sharp=0.5 patches).
+- All Phase 4 tasks are offline; no bench session needed until G5 decides. Ideas doc flipped to 🟡 partially promoted.
+
 ## 2026-10-23 (night 7): f_wc Phase 3 COMPLETE — module shipped (G2: names stayed `f_wc` / "Wilson-Cowan")
 
 - **G2 decided by Matt:** keep `f_wc` / "Wilson-Cowan" (no rename). T040 doc `docs/f-reference/f_wc.md` (settled model, gates, notes, verification). T041 helpfile `package/help/f_wc.maxhelp` (generator layout, drive bubble, refs in sync). T042 menu: "Wilson-Cowan" in Patterns after Weave (menu + addmod regenerated); T043 README row finalized (no ⚠), `ideas/INDEX.md` 🟢, `.specify/plan.md` item 8 BUILT and SHIPPED.

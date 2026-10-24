@@ -257,8 +257,51 @@ Phase 0 is the MVP gate: it produces no shippable module but resolves every open
 
 ---
 
+## Phase 4: Habituation spike and tier-1 hygiene (after Phase 3; G5 is Matt)
+
+Promoted 2026-10-23 from `ideas/f_wc_from_webgpgpu.md` (Matt approved the discussion
+proposal). Two hygiene items close open tier-1 cautions; the substantive item is the
+habituation spike. Parked (not tasks): the Rule-page known-answer stats fixture (the
+mirror already derives from the settled model that the page validated; a seed-averaged
+stats test only earns its cost if the noise stage or nl is retouched later) and a
+shared `f_rng` / retinotopy module (no second consumer; per-frame solver noise cannot
+come from an upstream module — it must be fresh per 256² solver texel inside the loop).
+
+- [ ] T050 **Tier-1 hygiene: noise-stream tests** in `test_wc.py` against
+  `codebox_seed.gen`'s hash scheme (`wc_mirror` helpers): (a) histogram / uniformity of
+  the salt-incremented uniform stream on the real 256² grid; (b) temporal
+  decorrelation — adjacent-salt per-texel correlation ≈ 0. The Hoskins-style
+  arithmetic hash answers the sin-h lattice worry structurally, but the shipped stream
+  was never histogram- or correlation-checked.
+- [ ] T051 **Tier-1 hygiene: retinotopy round trip** in `test_wc.py`: map then inverse
+  is the identity up to interpolation error inside the eccentricity range (r0 = 0.5,
+  k_ecc = 8, k_ang = 5, r_max = 4). From the ideas doc item 4.
+- [ ] T052 **Habituation mirror extension + mini region map (offline, no Max):**
+  extend `wc_mirror.py` with slow adaptation `Ve += (E−Ve)·dt/ae`, `Ve += (I−Vi)·dt/ai`
+  subtracted from the sigmoid inputs at depth be/bi (Rule Example 11: ae = 50,
+  ai = 100), then a small (be/bi × Ne) grid at the shipped corner. Measure two things
+  against the plain (be = bi = 0) run: (i) usable drive-band width around Ne ≈ 1.0
+  (Ne is BAKED with no dial — if adaptation shifts the band the shipped default dies
+  in place); (ii) E-mean drift over long runs — adaptation is the mechanistic fix for
+  the soak drift that G4's `sharp = 0.5` currently patches in the display. Structural
+  feasibility already verified against the shipped codeboxes: state texture G/A are
+  free (pass forces them 0 today), `nl.in2` taps raw pre-DFT state, so Ve/Vi fit with a
+  pass-stage carry-through (read/write G,A; init on reseed), ~4 ALU ops in nl, no extra
+  texture.
+- [ ] **G5 (Matt, tier 3, after T052):** expose habituation dials (depth + rate) or
+  drop. Exposing = pass carry-through + nl params + dials + region-map confirmation on
+  the bench; dropping = keep the record.
+
+---
+
 ## Record
 
+- 2026-10-23: **Phase 4 written** (T050–T052 + gate G5) from `ideas/f_wc_from_webgpgpu.md`
+  after the discussion with Matt: habituation (Ve/Vi) is the only promoted candidate —
+  structural fit verified against the shipped codeboxes (state G/A free; pass forces them
+  0 and needs a carry-through; nl.in2 taps raw state). T050/T051 are offline tier-1
+  hygiene. The Rule-page stats fixture and a shared `f_rng`/retinotopy module were
+  parked with reasons in the Phase 4 section.
 - 2026-10-22: spec written (one pass, no prior spike); tasks created from its Open Experiments and phasing. All Phase 0 tasks are offline NumPy except T006's look judgment (Matt, stills).
 - 2026-10-22: **T001–T003 done** (`tests/records/spike_wc_solver.py`, 5 tests green). Findings that change the spec:
   1. **Solver is kernel-coupled, not naive diffusion.** The spec's "diffuse each field, then couple the diffused fields" (FR-002/FR-003) produces long-wavelength mush, not rolls/hexagons. The working form is Ermentrout-Cowan: each coupling term `w * (K ⊗ field)` with `K` a Gaussian (spectrally `exp(-sigma^2 k^2/2)`), inhibition kernels wider than excitation. The linear step reduces to per-field decay `exp(-dt/tau)` (k-independent); ALL spatial structure comes from the coupling kernels. Spec FR-002/FR-003 must be rewritten to this form. This does NOT change the stage architecture (still: exact linear step + explicit nonlinear coupling, both spectral/real-space split) — only what the linear stage and the `nl` stage each compute.

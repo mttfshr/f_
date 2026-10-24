@@ -1,8 +1,12 @@
 # f_wc support items from webgpgpu (noise drive, reference, habituation, retinotopic stage)
 
-_Status: ⚪ concept only. Drafted 2026-10-23 from the webgpgpu mining run
-(`webgpgpu-ideas-1`). Companion to `f_vf_wilson_cowan.md` and `.specify/f_wc/`;
-it changes neither the spec nor the tasks._
+_Status: 🟡 partially promoted. Drafted 2026-10-23 from the webgpgpu mining run
+(`webgpgpu-ideas-1`). Companion to `f_vf_wilson_cowan.md` and `.specify/f_wc/`.
+Discussed with Matt after f_wc shipped (2026-10-23): habituation (item 3) promoted to
+`.specify/f_wc/tasks.md` Phase 4 (T052 + gate G5); the noise-stream and retinotopy
+round-trip checks promoted as tier-1 hygiene (T050/T051). The known-answer fixture
+(item 1) and the shared noise / retinotopy pieces (items 2, 4) are parked, reasons
+recorded in the Phase 4 section._
 
 Michael Rule's Wilson-Cowan pages (`wilson_cowan/wilson_cowan_gpu.html` and
 `examples/wilson_cowan_examples/`) are what unblocked `f_wc` on 2026-10-23. The mining
