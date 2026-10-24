@@ -186,7 +186,27 @@ tests/modules/wc/
 
 ## Phase 2: Tuning (tier 3, Matt)
 
-- [ ] T030 Output mapping choice (G4) and `rate`/`scale` ranges and defaults, judged live.
+- [~] **Phase-2 measurement session DONE on the bench 2026-10-23** (instrument:
+  `tests/modules/wc/bench_wc_look.py` + the `segments` timeline branch added to
+  `tests/bench/bench_module.js`; job `tests/jobs/20261023_203051_0cb119`; contact
+  sheets `tests/logs/wc_look/{soak,grain,drive}_20261023-203239.png`). Measured on the
+  SHIPPED module at the bench's 512² render:
+  - **Soak (rate 1, grain 1.4, drive off):** displayed contrast 0.059 → 0.091 → 0.122
+    over 30 s; saturation 0.000 throughout (NF-003 holds live). BUT the E-mean drifts:
+    4 s = dark field + bright knots, 12 s = cobweb mid-contrast, 30 s = BRIGHT field +
+    dark knots. The plain display of E washes toward one extreme over time → **G4
+    candidate to try live: mean/contrast normalization or a raised default `sharp`.**
+  - **Grain sweep 1.1 / 1.4 / 1.9 / 2.6 / 3.5:** displayed contrast 0.120 / 0.081 /
+    0.053 / 0.038 / 0.030 — fine grains read as fine central speckle (periphery
+    sub-resolved under the provisional retinotopy), coarse grains wash out (no visible
+    labyrinth at 2.6+). Whether that's physics or the display is a G4/T033 call; check
+    the raw cortical E live.
+  - **Drive imprint (scene fed from start, drive_gain 0 → 1.5 → 0):** corr of the
+    display vs the scene warped through the retinotopic map: pre −0.00 (hallucinating),
+    **+0.25 s 0.83**, +1 s 0.64, +4 s 0.71 (sustained), off +1 s 0.01 (released).
+    Display std jumps to 0.37 while imprinted (a strong structural imprint in ~15
+    frames). T032 mechanics proven; dial range/labels remain (range is 0–2 today).
+- [ ] T030 Output mapping choice (G4) and `rate`/`grain` ranges and defaults, judged live.
 - [ ] T031 Form navigation feel: the `grain` dial over the G1 continuum (landmark snap points
   per FR-010) — does the stripe-glass → labyrinth sweep read legibly live, and do the landmark
   grains reform reliably from any state? (No four-form selector ships; the glyph previews idea

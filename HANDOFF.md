@@ -1,5 +1,14 @@
 # HANDOFF
 
+## 2026-10-23 (night 5, Max bench): f_wc Phase 2 measurement session done — T030-T033 decisions staged for Matt
+
+- **New instrument:** `tests/modules/wc/bench_wc_look.py` (parametric `segments` timeline added as a branch in `tests/bench/bench_module.js` — legacy module jobs unchanged) + contact sheets in `tests/logs/wc_look/*.png`. One 55 s job on the shipped module at 512².
+- **Soak:** contrast grows 0.059→0.122 over 30 s, zero saturation (NF-003 holds). KEY FINDING for G4: the E-mean drifts over time — 4 s dark+knots, 30 s bright+dark-knots; plain E display washes toward an extreme. Candidates: mean/contrast-normalized display or higher default `sharp`.
+- **Grain sweep 1.1→3.5:** displayed contrast 0.12→0.03; fine grains = fine central speckle; coarse grains (2.6+) wash out under the provisional retinotopy. Physics-vs-display is a T033 live question.
+- **Drive imprint (drive_gain 0→1.5→0):** corr vs map-warped scene −0.00 → **0.83 in 0.25 s** → 0.64/0.71 sustained → 0.01 at +1 s after off. Imprint legible, release clean.
+- **Decisions for Matt (Phase 2, live):** T030 output map (G4) + rate/grain defaults per the soak finding; T031 landmark snaps (depends on G4); T032 "see"-gain default + range labels; T033 retinotopy constants (periphery currently sub-resolves fine grains). Then G2 naming + Phase 3.
+- Bench status: everything green (offline suite, bench_wc 10/10, contract 2/2, drift 0).
+
 ## 2026-10-23 (night 4, Max bench session): f_wc Phase 1 COMPLETE — all legs green on Max, including the live module contract bench
 
 - **`tests/modules/wc/bench_wc.py` written (the bench_ks template), 10/10 PASS incl slow:** stage compile, seed statistics (R/G reseed channels independent), 4-field DFT chain vs np.fft (1e-5 of peak), pass reseed/hold/self-heal exact, spec gains vs mirror (1e-4), nl vs mirror (1.2e-7) + containment, enc vs mirror (256² 5.2e-6; rectangular renders 1e-4 tol = float32 map-coordinate ulps), 30-frame chain vs mirror **4.1e-6** (flat, no fast divergence), @slow 100-frame contract: contrast 0.226 GPU vs 0.226 mirror (mechanism intact on the real chain), @slow cost: **2.45 ms/frame total** (f_ks class — ONE shared DFT chain carries both fields), → **256² solver, 128² fallback dropped (T024)**.

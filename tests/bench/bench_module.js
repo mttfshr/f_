@@ -118,6 +118,7 @@ function startJob(dir) {
 }
 
 function buildTimeline() {
+    if (job.segments) return buildSegmentsTimeline();
     var W = job.warmup || 10, S = job.settle || 6, f = W;
     timeline = [];
     function at(frame, fn) { timeline.push([frame, fn]); }
@@ -163,6 +164,44 @@ function buildTimeline() {
         if (j) j.message("int", 0);
     });
     at(f + 2, function () { finish(errors.length ? "error" : "ok"); });
+}
+
+function buildSegmentsTimeline() {
+    // Parametric tuning timeline (f_wc Phase 2, tasks.md T030-T032): the job carries
+    // "segments": [{params?, wait, snap?}]; params are control messages sent one per
+    // frame at the segment start, the segment runs `wait` frames, then a snapshot of
+    // every captured outlet is written as <snap>_outK.jxf in the job dir. The job's
+    // "inputs" (texture jxf files) are loaded once and fed every frame as usual, so a
+    // scene on a drive inlet is present the whole run -- switch its EFFECT with the
+    // drive_gain param, not the feed.
+    timeline = [];
+    function at(frame, fn) { timeline.push([frame, fn]); }
+    var pat = this.patcher;
+    at(1, function () { pat.message("script", "sendbox", "bench_mslot", "replace", job.wrapper); });
+    at(2, function () {
+        extra.pix = pixList().map(function (p) { return String(p.getattr("name")); });
+        extra.jsui_found = !!bypassJsui();
+    });
+    var f = Math.max(job.warmup || 10, 4);
+    var segs = job.segments || [];
+    for (var i = 0; i < segs.length; i++) (function (seg) {
+        var ps = seg.params || [];
+        for (var j = 0; j < ps.length; j++) {
+            (function (msg, atframe) { at(atframe, function () { messnamed.apply(null, ["bench_min1"].concat(msg)); }); })(ps[j], f + j);
+        }
+        f += ps.length;
+        f += seg.wait || 60;
+        if (seg.snap) (function (tag, params) {
+            at(f, function () {
+                extra[tag + "_params"] = params || null;
+                extra[tag + "_frame"] = frames;
+                openGates();
+            });
+            at(f + 1, function () { writeCaps(tag); });
+            f += 1;
+        })(seg.snap, ps);
+    })(segs[i]);
+    at(f + (job.settle || 6), function () { finish(errors.length ? "error" : "ok"); });
 }
 
 function onFrame() {
