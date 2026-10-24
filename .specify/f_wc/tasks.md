@@ -317,7 +317,18 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
-- 2026-10-24 (mid-morning, later): **G8 shipped — contrast display dial + coupling
+- 2026-10-24 (morning, cont.): **BICUBIC enc sampling (the 1920x1080 pixelation).**
+  Matt: blocks ~30 screen px at render 1920x1080, sharp 0 — not window upscaling, not the
+  S-curve: bilinear _tap4 is C0, so texel-boundary slope kinks facet the ~7 screen-px/texel
+  regions. `codebox_enc.gen` now samples Catmull-Rom 4x4 (inline weights; a caught-here bug:
+  the mid weight's first form didn't sum to 1 — test_encode_rolls_along_v caught it at
+  0.23 err, fixed formulas verified summing to 1). Mirror `_tap4` replaced by `_tap16`
+  with identical weights; T051 round trip + radial-constancy green at 10/10; visual proof
+  `scratch/wc_enc/cubic_c1.png` (smooth C1 edges). Note for the bench: enc-vs-mirror leg
+  now diffs a CUBIC sampler (the old 4-tap diffs/tolerances are superseded).
+  r_soft remains a bench-vary Param (0.35 = calm disc; currently default 0 for the
+  HTML-parity comparison).
+- 2026-10-24 (mid-morning, later): **G8 shipped- 2026-10-24 (mid-morning, later): **G8 shipped — contrast display dial + coupling
   exposure (both Matt-approved).** G8a: `contrast` (0.5–8.0, def 1.0, bit-neutral) —
   stretch about mid-gray before the `sharp` curve in enc; rescues the faint regimes.
   G8b: `aie`/`aii` couplings exposed from the sweep (tests/logs/spike_wc_couplings.log):

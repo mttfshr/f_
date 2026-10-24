@@ -40,6 +40,11 @@ Param k_ang(1);
 Param r0(0.003);
 Param r_soft(0.0);
 
+//     4-tap bilinear was C0: at ~7 screen px per cortical texel its texel-boundary slope
+//     kinks read as facets (1920x1080 screenshot). Catmull-Rom 4x4 taps are C1 -- same
+//     data, smooth reconstruction. Periodic in both axes.
+//     (weights written inline -- GenExpr wants functions declared before Params)
+
 px = (norm.x * 2 - 1) * 4;
 py = (norm.y * 2 - 1) * 4;
 r, theta = cartopol(px, py);
@@ -55,16 +60,39 @@ x0 = floor(fx);
 y0 = floor(fy);
 tx = fx - x0;
 ty = fy - y0;
+wxa = tx * (tx * (1 - 0.5 * tx) - 0.5);      // Catmull-Rom x weights
+wxb = tx * tx * (1.5 * tx - 2.5) + 1;
+wxc = tx * (tx * (2.0 - 1.5 * tx) + 0.5);
+wxd = tx * tx * (0.5 * tx - 0.5);
+wya = ty * (ty * (1 - 0.5 * ty) - 0.5);      // same weights at ty
+wyb = ty * ty * (1.5 * ty - 2.5) + 1;
+wyc = ty * (ty * (2.0 - 1.5 * ty) + 0.5);
+wyd = ty * ty * (0.5 * ty - 0.5);
+x0m = wrap(x0 - 1, 0, N);
 xa = wrap(x0, 0, N);
 xb = wrap(x0 + 1, 0, N);
+x1p = wrap(x0 + 2, 0, N);
+y0m = wrap(y0 - 1, 0, N);
 ya = wrap(y0, 0, N);
 yb = wrap(y0 + 1, 0, N);
-p00 = vec((xa + 0.5) / N, (ya + 0.5) / N);
-p10 = vec((xb + 0.5) / N, (ya + 0.5) / N);
-p01 = vec((xa + 0.5) / N, (yb + 0.5) / N);
-p11 = vec((xb + 0.5) / N, (yb + 0.5) / N);
-au = mix(mix(nearest(in2, p00).x, nearest(in2, p10).x, tx),
-         mix(nearest(in2, p01).x, nearest(in2, p11).x, tx), ty);
+y1p = wrap(y0 + 2, 0, N);
+rowa = wxa * nearest(in2, vec((x0m + 0.5) / N, (y0m + 0.5) / N)).x
+     + wxb * nearest(in2, vec((xa  + 0.5) / N, (y0m + 0.5) / N)).x
+     + wxc * nearest(in2, vec((xb  + 0.5) / N, (y0m + 0.5) / N)).x
+     + wxd * nearest(in2, vec((x1p + 0.5) / N, (y0m + 0.5) / N)).x;
+rowb = wxa * nearest(in2, vec((x0m + 0.5) / N, (ya + 0.5) / N)).x
+     + wxb * nearest(in2, vec((xa  + 0.5) / N, (ya + 0.5) / N)).x
+     + wxc * nearest(in2, vec((xb  + 0.5) / N, (ya + 0.5) / N)).x
+     + wxd * nearest(in2, vec((x1p + 0.5) / N, (ya + 0.5) / N)).x;
+rowc = wxa * nearest(in2, vec((x0m + 0.5) / N, (yb + 0.5) / N)).x
+     + wxb * nearest(in2, vec((xa  + 0.5) / N, (yb + 0.5) / N)).x
+     + wxc * nearest(in2, vec((xb  + 0.5) / N, (yb + 0.5) / N)).x
+     + wxd * nearest(in2, vec((x1p + 0.5) / N, (yb + 0.5) / N)).x;
+rowd = wxa * nearest(in2, vec((x0m + 0.5) / N, (y1p + 0.5) / N)).x
+     + wxb * nearest(in2, vec((xa  + 0.5) / N, (y1p + 0.5) / N)).x
+     + wxc * nearest(in2, vec((xb  + 0.5) / N, (y1p + 0.5) / N)).x
+     + wxd * nearest(in2, vec((x1p + 0.5) / N, (y1p + 0.5) / N)).x;
+au = wya * rowa + wyb * rowb + wyc * rowc + wyd * rowd;
 
 au = switch(abs(au) < 1e30, au, 0);
 soft = clamp((clamp(au, 0, 1) - 0.5) * contrast + 0.5, 0, 1);   // G8a: stretch about mid; contrast = 1 is bit-neutral

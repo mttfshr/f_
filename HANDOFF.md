@@ -1,6 +1,11 @@
 # HANDOFF
 
-## 2026-10-24 (mid-morning, later): f_wc G8 SHIPPED — `contrast` dial + `aie`/`aii` coupling dials
+## 2026-10-24 (late morning): f_wc enc sampler upgraded — Catmull-Rom 4x4 (pixelation fix)
+
+- Matt's 1920x1080 grab showed ~30px blocks with sharp 0 — the enc bilinear's C0 facets (not upscale, not Sharp). Now: bicubic `codebox_enc.gen` (inline CR weights — caught a weight-bug via test_wc's radial-constancy test mid-ship; weights now verified sum-1), mirror `_tap16` matching, proof render `scratch/wc_enc/cubic_c1.png` smooth. Bench note: enc leg now diffs a CUBIC sampler. r_soft stays bench-vary (message `#0_wc_enc` `param r_soft 0.35` for the calm disc; 0.0 = the parity-vortex look).
+- f_wc now at 15 controls; all named offline checks green.
+
+## 2026-10-24 (mid-morning, later): f_wc G8 SHIPPED## 2026-10-24 (mid-morning, later): f_wc G8 SHIPPED — `contrast` dial + `aie`/`aii` coupling dials
 
 - Both Matt-approved. **contrast** (0.5–8.0, def 1.0, bit-neutral): mid-gray stretch in enc before Sharp — rescues faint regimes (spots, low energy) and counters soak wash. **aie** / **aii** (Inhibit / I-Inhibit): the couplings, exposed after a proper sweep (spike_wc_couplings.log). Verdict: SPOTS = aii 3.0–6.0 at aie 11–14.5 (dark field, robust, both seeds); aie < 8 = whiteout; aii > 9 = labyrinth family. The html Example-10 corner (aii 3 + aie 8.5) does NOT transfer at our stronger Aee — spots here live at aii 3–4 with aie kept high.
 - 14 dials now; positional pix refs shifted obj-56/57 → obj-65/66 (fixed, contracts 9/9). Helpfile list 17 rows, docs updated.

@@ -359,28 +359,30 @@ def run_temporal(state0, P, frames, seed=1, driv=None):
 
 # ------------------------------------------------------------------ encode
 
-def _tap4(tex, cxu, cyu):
-    """Manual periodic 4-tap bilinear of tex[..., 0] at texel-fraction coords
-    (cxu, cyu) (the f_ks enc sampling shape; exact at any output size where
-    hardware sample() would snap, and the periodic wrap IS the cortical sheet
-    in both axes)."""
+def _tap16(tex, cxu, cyu):
+    """Periodic Catmull-Rom 4x4 of tex[..., 0] at texel-fraction coords (cxu, cyu)
+    (2026-10-24: replaced the bilinear _tap4 after the 1920x1080 screenshot showed
+    bilinear's C0 texel-boundary kinks as facets at ~7 screen px per cortical texel;
+    CR is C1. Matches codebox_enc.gen's inline weights.)"""
     n = tex.shape[0]
-    x0 = np.floor(cxu).astype(F32)
-    y0 = np.floor(cyu).astype(F32)
+    x0 = np.floor(cxu)
+    y0 = np.floor(cyu)
     tx = (cxu - x0).astype(F32)
     ty = (cyu - y0).astype(F32)
-    xa = np.mod(x0, n)
-    xb = np.mod(x0 + 1.0, n)
-    ya = np.mod(y0, n)
-    yb = np.mod(y0 + 1.0, n)
-    def at(x, y):
-        return tex[y.astype(int) % n, x.astype(int) % n, 0]
-    p00 = at(xa, ya)
-    p10 = at(xb, ya)
-    p01 = at(xa, yb)
-    p11 = at(xb, yb)
-    return ((p00 * (1.0 - tx) + p10 * tx) * (1.0 - ty)
-            + (p01 * (1.0 - tx) + p11 * tx) * ty).astype(F32)
+    def crw(t):
+        return (t * (t * (1.0 - 0.5 * t) - 0.5),
+                t * t * (1.5 * t - 2.5) + 1.0,
+                t * (t * (2.0 - 1.5 * t) + 0.5),
+                t * t * (0.5 * t - 0.5))
+    wx = [w.astype(F32) for w in crw(tx)]
+    wy = [w.astype(F32) for w in crw(ty)]
+    xs = [np.mod(x0 + k - 1, n).astype(int) for k in range(4)]
+    ys = [np.mod(y0 + k - 1, n).astype(int) for k in range(4)]
+    rows = []
+    for j, yy in enumerate(ys):
+        row = sum(wx[k] * tex[yy, xs[k], 0] for k in range(4))
+        rows.append(row.astype(F32))
+    return sum(wy[j] * rows[j] for j in range(4)).astype(F32)
 
 
 def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
@@ -410,7 +412,7 @@ def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
     # alignment the enc codebox uses (fx = cv * N - 0.5: texel i centers at
     # normalized (i + 0.5) / N) -- without it the taps sit half a texel off
     # (bench-measured 2026-10-23: a gradient-proportional error to 3.2e-2)
-    e = _tap4(state, cv, cu)
+    e = _tap16(state, cv, cu)
     e = np.where(np.isfinite(e), e, F32(0.0))
     soft = np.clip(e, F32(0.0), F32(1.0))
     soft = np.clip((soft - F32(0.5)) * F32(contrast) + F32(0.5), F32(0.0), F32(1.0))  # G8a
