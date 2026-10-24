@@ -100,6 +100,12 @@ patcher = {
         {"name": "excite", "type": "float", "min": -0.3, "max": 0.8, "default": 0.0,
          "label": "Excite", "pix_target": "nl",
          "hint": "Excitability: firing thresholds, E and I together (G7). + = hotter (clean rolls near 0.5); - = toward blackout"},
+        {"name": "aie", "type": "float", "min": 8.0, "max": 16.0, "default": 14.5,
+         "label": "Inhibit", "pix_target": "nl",
+         "hint": "Inhibition of E strength (I->E coupling, G8b). 14.5 = labyrinth corner; sweep: below ~8 whiteout. Spots live at high Inhibit + LOW I-Inhibit"},
+        {"name": "aii", "type": "float", "min": 0.0, "max": 16.0, "default": 13.0,
+         "label": "I-Inhibit", "pix_target": "nl",
+         "hint": "Inhibition self-suppression (I->I coupling, G8b). 13.0 = labyrinth corner; ~3.0 = the Example-10 spot regime"},
         {"name": "zoom", "type": "float", "min": 1.0, "max": 16.0, "default": 1.0,
          "label": "Zoom", "pix_attr": "k_ecc", "pix_target": "enc",
          "hint": "Eccentricity gain of the retinotopic map (log-radius zoom). Lower = closer, bigger shapes. 1 = the webgpgpu bare-log corner"},
@@ -109,6 +115,9 @@ patcher = {
         {"name": "fovea", "type": "float", "min": 0.001, "max": 5.0, "default": 0.003,
          "label": "Fovea", "pix_attr": "r0", "pix_target": "enc",
          "hint": "Foveal radius of the map: smaller = more center magnification. 0.003 = the bare-log webgpgpu corner (untreated center vortex)"},
+        {"name": "contrast", "type": "float", "min": 0.5, "max": 8.0, "default": 1.0,
+         "label": "Contrast", "pix_target": "enc",
+         "hint": "Display stretch about mid-gray, before the Sharp curve (G8a). 1 = neutral; higher rescues faint regimes (dots, low energy) and counters long-soak wash"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -185,7 +194,7 @@ for _p in patcher["params"]:
 #                                              mechanism (T005), unlike f_ks's per-reset counter
 #   [i] -> [sel 2] -> `param reseed 0` -> pass
 # reseed stays 1 for three draw bangs (never a timer): if rendering is not running yet the reseed waits,
-# and at least two rendered frames see it.  Object ids: pass obj-57, seed obj-56 (chain order, build/spec.md;
+# and at least two rendered frames see it.  Object ids: pass obj-66, seed obj-65 (chain order, build/spec.md;
 # positional ids -- they shift when a UI box is added; see T030's stale-id trap).
 def _box(i, cls, rect, **kw):
     b = {"id": f"obj-raw-{i}", "maxclass": cls, "patching_rect": rect}
@@ -230,12 +239,12 @@ patcher["raw_boxes"] = [
 ]
 patcher["raw_lines"] = [
     _line(15, 0, "obj-5", 0),        # r dim -> enc: the output follows the render size
-    _line("obj-4", 11, 3, 0),        # route: `reset` -> trigger   (route outlet 11 after the 11 dials)
+    _line("obj-4", 14, 3, 0),        # route: `reset` -> trigger   (route outlet 14 after the 14 dials)
     _line(1, 0, 3, 0),               # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
-    _line(3, 0, 7, 0), _line(7, 0, "obj-57", 0),    # trigger right -> reseed 1 -> pass
+    _line(3, 0, 7, 0), _line(7, 0, "obj-66", 0),    # trigger right -> reseed 1 -> pass
     _line(3, 1, 6, 0), _line(6, 0, 11, 1),    # trigger left -> 0 -> [i] right inlet (restart count)
     _line(10, 0, 11, 0), _line(11, 0, 12, 0), _line(12, 0, 11, 1),    # draw -> [i] -> +1 -> [i]
-    _line(11, 0, 9, 0), _line(9, 0, "obj-56", 0),   # [i] -> salt -> seed (EVERY DRAW: the mechanism)
-    _line(11, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, "obj-57", 0),   # sel 2 -> reseed 0 -> pass
+    _line(11, 0, 9, 0), _line(9, 0, "obj-65", 0),   # [i] -> salt -> seed (EVERY DRAW: the mechanism)
+    _line(11, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, "obj-66", 0),   # sel 2 -> reseed 0 -> pass
 ]

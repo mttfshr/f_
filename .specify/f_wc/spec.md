@@ -480,6 +480,9 @@ independent instances — the library baseline.
 | `drive_gain` | gain on the drive inlet's contribution | how strongly the scene pushes the cortex; at 0 the module is US-1 pure |
 | `habituation` *(G5, 2026-10-23)* | depth of the Ve/Vi subtractive adaptation (time constants baked at 50/100 frames) | 0.0–1.5, default 0 = free run; higher steadies the field mean against long-soak drift, nudges the usable Ne band upward (viable to 1.5 at the baked Ne = 1.0; depth ≥ 2 would need Ne exposed — T052 addendum) |
 | `energy` *(2026-10-23, exposed from the T021/T025 bench-vary constant)* | per-frame noise amplitude `Ne` | 0.0–2.0, default 1.0 = the verified corner. The drive-band axis: below ~0.7 the pattern freezes out, above ~1.2 it shimmers hot (T005/T052 sweeps); compensates deep habituation |
+| `contrast` *(G8a, 2026-10-24)* | display stretch about mid-gray in `enc`, before the `sharp` curve | 0.5–8.0, default 1.0 (bit-neutral). Rescues faint regimes (dots, low energy, washed mean) — the html demos get their pop from 8-bit quantization + LUT, this is our analog |
+| `aie` *(G8b, 2026-10-24)* | I→E coupling strength | 8.0–16.0, default 14.5. Below ~8: whiteout (sweep) |
+| `aii` *(G8b, 2026-10-24)* | I→I coupling strength (self-suppression) | 0.0–16.0, default 13.0. Low (3–6) = the robust SPOTS corner at any in-range Inhibit (dark-field fine dots, mean 0.02–0.09); 13 = labyrinth |
 | `sharp` | output-map edge sharpening | f_ks precedent |
 | `excite` *(G7, 2026-10-23)* | shared offset inside both sigmoid inputs (HE/HI lowered together) | −0.3–0.8, default 0. + = more excitable (clean rolls ~0.5), − = toward blackout (asymmetric viable band, night-12 sweep) |
 | `zoom` *(2026-10-23; default retuned 2026-10-24)* | `k_ecc`, map eccentricity gain | 2–16, default **5** (was 8 — the T033 corner read as far away live). Log-radius zoom of the retinotopic display; lower = closer |

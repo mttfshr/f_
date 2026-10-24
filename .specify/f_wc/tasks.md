@@ -317,7 +317,19 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
-- 2026-10-24 (mid-morning): **HTML-parity comparison config shipped (Matt's AB
+- 2026-10-24 (mid-morning, later): **G8 shipped — contrast display dial + coupling
+  exposure (both Matt-approved).** G8a: `contrast` (0.5–8.0, def 1.0, bit-neutral) —
+  stretch about mid-gray before the `sharp` curve in enc; rescues the faint regimes.
+  G8b: `aie`/`aii` couplings exposed from the sweep (tests/logs/spike_wc_couplings.log):
+  dials 8–16 def 14.5 and 0–16 def 13.0. **Sweep verdict: spots live at aii 3.0–6.0 with
+  aie 11–14.5 (dark field, mean 0.02–0.09, robust across seeds); aie ≤ 8.5 washes to
+  white; aii ≥ 9 is the labyrinth family.** Example 10's exact corner (Aee 10.5 etc.)
+  is NOT the reachable spot driver at our Aee 16.1 — at our couplings the spots sit at
+  aii 3–4. Mirror got aie/aii/excite fields + wc_frame mapping; contrast kwarg on
+  encode(). Positional pix ids + outlets fixed again (obj-56/57 → obj-65/66, reset
+  outlet 14). docs/spec/helpfile updated (helpfile list now 17 rows, refs shifted).
+  Offline green: drift, contracts, menu, launch, test_wc.
+- 2026-10-24 (mid-morning): **HTML-parity comparison config shipped- 2026-10-24 (mid-morning): **HTML-parity comparison config shipped (Matt's AB
   request).** "Theirs looks noticeably better" (WC_Example_10_fullscreen.html) —
   map math says why: their display is the BARE complex log (u = atan/log(length),
   one wrap per revolution, ~1 wrap radially) vs our closer set's ~2.8 wraps and

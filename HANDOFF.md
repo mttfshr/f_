@@ -1,6 +1,13 @@
 # HANDOFF
 
-## 2026-10-24 (mid-morning): f_wc HTML-parity map config shipped for AB comparison
+## 2026-10-24 (mid-morning, later): f_wc G8 SHIPPED — `contrast` dial + `aie`/`aii` coupling dials
+
+- Both Matt-approved. **contrast** (0.5–8.0, def 1.0, bit-neutral): mid-gray stretch in enc before Sharp — rescues faint regimes (spots, low energy) and counters soak wash. **aie** / **aii** (Inhibit / I-Inhibit): the couplings, exposed after a proper sweep (spike_wc_couplings.log). Verdict: SPOTS = aii 3.0–6.0 at aie 11–14.5 (dark field, robust, both seeds); aie < 8 = whiteout; aii > 9 = labyrinth family. The html Example-10 corner (aii 3 + aie 8.5) does NOT transfer at our stronger Aee — spots here live at aii 3–4 with aie kept high.
+- 14 dials now; positional pix refs shifted obj-56/57 → obj-65/66 (fixed, contracts 9/9). Helpfile list 17 rows, docs updated.
+- **Try:** Inhibit 12–14.5, I-Inhibit 3–4, Grain 1.0–1.2, Contrast 3–6 → the Example-10-style dark dot field. If washed again, push Contrast up rather than Excite (excite moves the physics, contrast only the display).
+- Bench debt unchanged and growing (chain-vs-mirror habit leg; live look at the new dials; full offline suite).
+
+## 2026-10-24 (mid-morning): f_wc HTML-parity map config shipped for AB comparison## 2026-10-24 (mid-morning): f_wc HTML-parity map config shipped for AB comparison
 
 - "Theirs looks noticeably better" — map math: WC_Example_10's display pass is the bare complex log (`atan`/`log(length)`: ~1 wrap/rev, ~1 wrap radial) vs our retuned 5/3/1.0 (~2.8 wraps, 3 spokes) → their shapes read ~3x bigger. Shipped parity defaults: **zoom 1, twist 1, fovea 0.003, r_soft 0.0** (ranges widened: zoom 1–16, twist 1–8, fovea 0.001–5). Mirror render reproduces the demo character (`scratch/wc_enc/html_s000_sharp.png`). For the live AB: Energy 0.75 (their Ne) on top.
 - **After AB, Matt decides the ship corner:** parity bare-log / closer 5/3/1.0 / plus r_soft 0.35 for the center disc. r_max (4 vs their 1.41) is still baked — the real field-of-view lever if needed.

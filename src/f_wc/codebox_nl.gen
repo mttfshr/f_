@@ -37,6 +37,8 @@ Param drive_gain(0);
 Param drv_conn(0);
 Param habit(0);
 Param excite(0);
+Param aie(14.5);
+Param aii(13.0);
 
 ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).z;
@@ -49,8 +51,8 @@ nb = nearest(in3, norm).w * 0.999 + 0.0001;
 nx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);
 drv = mix(0.5, nearest(in4, norm).x, drv_conn);
 
-ae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 + excite - habit * ve + ne * nx + drive_gain * (drv - 0.5), -60, 60)));
-ai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 + excite - habit * vi + ne * nx, -60, 60)));
+ae = 1 / (1 + exp(0 - clamp(16.1 * ce - aie * ci - 3.1 + excite - habit * ve + ne * nx + drive_gain * (drv - 0.5), -60, 60)));
+ai = 1 / (1 + exp(0 - clamp(13.7 * ce - aii * ci - 3.5 + excite - habit * vi + ne * nx, -60, 60)));
 
 en = ee + (ae - ee) * (dt * 0.25);
 inw = ii + (ai - ii) * (dt * 0.08);

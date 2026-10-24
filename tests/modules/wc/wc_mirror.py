@@ -81,6 +81,8 @@ class Params:
                                #   2/2.9; second-tier candidate geometry axis)
     he: float = 3.1            # sigmoid thresholds (second-tier candidate axis;
     hi: float = 3.5            #   the settled corner is HE 3.1, HI 3.5)
+    aie: float = 14.5          # G8b couplings (second-tier followup): strengths of
+    aii: float = 13.0          #   I->E and I->I suppression (baked Psychedelic corner)
     excite: float = 0.0        # G7 dial: SHARED positive offset inside both sigmoid
                                #   inputs == thresholds lowered together
                                #   (effective he - excite, hi - excite)
@@ -282,7 +284,8 @@ def drive_tex(h, w, value=F32(0.5)):
 
 def nonlinear_step(conv, state, noise, driv, dt, ne, drive_gain,
                    be=F32(0.0), bi=F32(0.0), ae=F32(50.0), ai=F32(100.0),
-                   he=F32(HE), hi=F32(HI)):
+                   he=F32(HE), hi=F32(HI),
+                   aie=F32(AIE), aii=F32(AII)):
     """Stage 6 (the heart, `nl`, 4 inlets on the bench: in1 = convolved fields
     R = cE, B = cI; in2 = raw state R = E, B = I; in3 = the per-frame noise;
     in4 = the drive). Exact relaxation toward the sigmoid of the coupled
@@ -305,9 +308,9 @@ def nonlinear_step(conv, state, noise, driv, dt, ne, drive_gain,
     adapt = (be != 0.0) or (bi != 0.0)
     fdt_e = F32(dt) / F32(TE)
     fdt_i = F32(dt) / F32(TI)
-    ae_f = F(F32(AEE) * ce - F32(AIE) * ci - F32(he) - F32(be) * ve
+    ae_f = F(F32(AEE) * ce - F32(aie) * ci - F32(he) - F32(be) * ve
              + F32(ne) * nx + F32(drive_gain) * (drv - F32(0.5)))
-    ai_f = F(F32(AEI) * ce - F32(AII) * ci - F32(hi) - F32(bi) * vi
+    ai_f = F(F32(AEI) * ce - F32(aii) * ci - F32(hi) - F32(bi) * vi
              + F32(ne) * nx)
     out = np.zeros_like(state)
     en = e + (ae_f - e) * fdt_e
@@ -340,7 +343,8 @@ def wc_frame(state, rng, P, driv=None):
     return nonlinear_step(conv, state, nz, driv, dt, P.ne, P.drive_gain,
                           be=F32(P.be), bi=F32(P.bi),
                           ae=F32(P.ae), ai=F32(P.ai),
-                          he=F32(P.he - P.excite), hi=F32(P.hi - P.excite))
+                          he=F32(P.he - P.excite), hi=F32(P.hi - P.excite),
+                          aie=F32(P.aie), aii=F32(P.aii))
 
 
 def run_temporal(state0, P, frames, seed=1, driv=None):
@@ -380,7 +384,7 @@ def _tap4(tex, cxu, cyu):
 
 
 def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
-           k_ecc=K_ECC, k_ang=K_ANG, r0=R0, r_soft=F32(0.35)):
+           k_ecc=K_ECC, k_ang=K_ANG, r0=R0, r_soft=F32(0.35), contrast=F32(1.0)):
     """Stage 7 (`enc`, runs at RENDER resolution, @adapt 0): the inverse
     retinotopic map. Each output pixel's visual-field polar coords (r, theta)
     map to cortical (u, v) = (K_ECC*log1p(r/R0), K_ANG*theta), and the E field
@@ -409,6 +413,7 @@ def encode(state, out_size, sharp=F32(0.0), h=None, w=None,
     e = _tap4(state, cv, cu)
     e = np.where(np.isfinite(e), e, F32(0.0))
     soft = np.clip(e, F32(0.0), F32(1.0))
+    soft = np.clip((soft - F32(0.5)) * F32(contrast) + F32(0.5), F32(0.0), F32(1.0))  # G8a
     crisp = _smoothstep(F32(0.46), F32(0.54), soft)
     lum = (soft * (F32(1.0) - F32(sharp)) + crisp * F32(sharp)).astype(F32)
     out = texture(h, w)
