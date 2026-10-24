@@ -23,11 +23,12 @@
 - **Next:** T021 + T022 (GenExpr codeboxes — seed/pass/spec/nl/enc against the mirror's stages), then T023-T025 (Max bench). The module's first texture inlet (drive) needs the `build/spec.md` `driving_inlet` handling checked at definition time (T025).
 - Committed as the T020/mirror checkpoint.
 
-## 2026-10-23 (evening): `f_quasi` specced; `f_wave_field` next
+## 2026-10-23 (evening): `f_quasi` and `f_wave_field` specced; both at Phase 0, not started
 
 - `.specify/f_quasi/{spec,tasks}.md` written from `ideas/f_quasi.md` (omp run `webgpgpu-ideas-1`, eight idea files committed `bfd8007`). Settled with Matt: looks (Relief, Slope hue) in a gated Phase 2; cyclic `zoom` dial plus a patcher clock; fixed 5 waves × 7 octaves; outlets texture, gradient vecfield, potential scalar. Phase 0 (NumPy mirror T001-T005, cost bench T006, vecfield-normalisation look T007, gates G1-G3) is not started.
 - Source facts that changed the idea: the zoom wrap is approximate (1e-8 at sigma 0.5, visible at sigma 1, so `envelope` needs a cap), the source gradient lacks the 2πBs factor, the source aspect handling is not isometric.
-- **Next: spec `f_wave_field`.** Matt chose the spectral direction (f_ks / f_wc pattern, exact linear wave step per Fourier bin) to evaluate; Phase 0 measures cost. Read `ideas/f_wave_field.md` and `ideas/f_cymascope.md`; edges are periodic under a plain DFT (reflecting edges would need a cosine transform).
+- `f_wave_field` spec and tasks written (`.specify/f_wave_field/`). Settled with Matt: spectral solver on the `f_ks` / `f_wc` DFT chain, general dispersion `omega^2 = ring^2 + speed^2 k^(2 dispersion)` (wave, resonator, plate, water-like; my addition over the omp drafts), periodic edges plus an absorbing-edge dial, optional force inlet plus point exciter plus strike, outlets luma and gradient vecfield. Third user of the DFT chain: factoring is `f_wc` T020 (gate G5 there). `f_cymascope` becomes this module plus an audio front end (T041).
+- **Next:** `f_wc` Phase 1 build is still the HANDOFF entry below; the two new specs are queued behind it. Their Phase 0 offline tasks (`f_quasi` T001-T005, `f_wave_field` T001-T005 and T007) would suit an omp run.
 
 ---
 

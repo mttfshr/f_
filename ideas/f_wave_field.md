@@ -1,7 +1,10 @@
 # f_wave_field — wave and oscillator fields (working name `f_wave`)
 
-_Status: ⚪ concept only. Drafted 2026-10-23 from the webgpgpu mining run
-(`webgpgpu-ideas-1`). Not specced, not tried in Max._
+_Status: 🟡 specced 2026-10-23 as `.specify/f_wave_field/spec.md` (working name `f_wave_field`). Drafted from the
+webgpgpu mining run (`webgpgpu-ideas-1`). Not tried in Max._
+
+**The spec settled the open question below in favour of the spectral solver** (the `f_ks` / `f_wc` chain, exact per-bin step) and generalised
+the three modes into one dispersion relation, `omega^2 = ring^2 + speed^2 k^(2 dispersion)`. The spec is authoritative.
 
 ## Concept
 

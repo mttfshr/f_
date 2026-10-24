@@ -3,6 +3,8 @@
 _Last updated: 2026-06-07_
 _Status: Concept — not yet built_
 
+_2026-10-23 pointer: the wave-solver core of this idea is now specced as `.specify/f_wave_field/` (`ideas/f_wave_field.md`): a spectral solver with a force inlet, a point exciter and a gradient vecfield outlet. This idea becomes that module plus an audio front end (pitch tracker and envelope to `frequency` and `amplitude`), task T041 there. The boundary-condition question below is answered there too: periodic edges plus an absorbing-edge dial; reflecting edges are out of scope for v1._
+
 ## Reframe (2026-06-07)
 
 Originally conceived as a direct visualizer — FDTD wave simulation producing visual output. That framing has been superseded.
