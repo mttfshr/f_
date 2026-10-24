@@ -22,8 +22,8 @@ Param sig_ratio(1.45);
 si = clamp(grain * min(dim.x, dim.y), 0.75, 1.4);
 se = si / sig_ratio;
 
-qe = 9.0001 * se * se;              // mask radius squared (a hair past (3s)^2)
-qi = 9.0001 * si * si;
+qe = ceil(3 * se);                    // tap radius = ceil(3 sigma) -- the mirror's
+qi = ceil(3 * si);                    //   gauss_taps() exactly (a (3s)^2 mask cuts a tap early)
 re = 0 - 0.5 / (se * se);           // exponent scale, no unary minus
 ri = 0 - 0.5 / (si * si);
 
@@ -47,8 +47,8 @@ tn1 = nearest(in1, vec((xwn1 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
 wse = wse + 2 * we1; wsi = wsi + 2 * wi1;
 ace = ace + we1 * (tp1.x + tn1.x); aci = aci + wi1 * (tp1.y + tn1.y);
 
-we2 = switch(4 <= qe, exp(4 * re), 0);
-wi2 = switch(4 <= qi, exp(4 * ri), 0);
+we2 = switch(2 <= qe, exp(4 * re), 0);
+wi2 = switch(2 <= qi, exp(4 * ri), 0);
 xwp2 = (ix + 2) - dim.x * floor((ix + 2) / dim.x);
 xwn2 = (ix - 2) - dim.x * floor((ix - 2) / dim.x);
 tp2 = nearest(in1, vec((xwp2 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
@@ -56,8 +56,8 @@ tn2 = nearest(in1, vec((xwn2 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
 wse = wse + 2 * we2; wsi = wsi + 2 * wi2;
 ace = ace + we2 * (tp2.x + tn2.x); aci = aci + wi2 * (tp2.y + tn2.y);
 
-we3 = switch(9 <= qe, exp(9 * re), 0);
-wi3 = switch(9 <= qi, exp(9 * ri), 0);
+we3 = switch(3 <= qe, exp(9 * re), 0);
+wi3 = switch(3 <= qi, exp(9 * ri), 0);
 xwp3 = (ix + 3) - dim.x * floor((ix + 3) / dim.x);
 xwn3 = (ix - 3) - dim.x * floor((ix - 3) / dim.x);
 tp3 = nearest(in1, vec((xwp3 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
@@ -65,8 +65,8 @@ tn3 = nearest(in1, vec((xwn3 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
 wse = wse + 2 * we3; wsi = wsi + 2 * wi3;
 ace = ace + we3 * (tp3.x + tn3.x); aci = aci + wi3 * (tp3.y + tn3.y);
 
-we4 = switch(16 <= qe, exp(16 * re), 0);
-wi4 = switch(16 <= qi, exp(16 * ri), 0);
+we4 = switch(4 <= qe, exp(16 * re), 0);
+wi4 = switch(4 <= qi, exp(16 * ri), 0);
 xwp4 = (ix + 4) - dim.x * floor((ix + 4) / dim.x);
 xwn4 = (ix - 4) - dim.x * floor((ix - 4) / dim.x);
 tp4 = nearest(in1, vec((xwp4 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
@@ -74,8 +74,8 @@ tn4 = nearest(in1, vec((xwn4 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
 wse = wse + 2 * we4; wsi = wsi + 2 * wi4;
 ace = ace + we4 * (tp4.x + tn4.x); aci = aci + wi4 * (tp4.y + tn4.y);
 
-we5 = switch(25 <= qe, exp(25 * re), 0);
-wi5 = switch(25 <= qi, exp(25 * ri), 0);
+we5 = switch(5 <= qe, exp(25 * re), 0);
+wi5 = switch(5 <= qi, exp(25 * ri), 0);
 xwp5 = (ix + 5) - dim.x * floor((ix + 5) / dim.x);
 xwn5 = (ix - 5) - dim.x * floor((ix - 5) / dim.x);
 tp5 = nearest(in1, vec((xwp5 + 0.5) / dim.x, (yw0 + 0.5) / dim.y));
