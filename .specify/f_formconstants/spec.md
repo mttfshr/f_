@@ -20,17 +20,25 @@ hallucination taxonomy; Matt, 2026-10-24 — the f_wc gate-G2 alternate)._
   Example-10 pipeline — to reach the fine-grained silky regime f_wc's grid
   structurally cannot (σ_I = 2 display px at fullscreen; f_wc's grain floor is
   ~1 cortical texel ≈ 7 screen px at 1080p).
-- **Example-10 coupling constants as defaults** (Matt, 2026-10-24):
-  Aee = 10.5, Aie = 8.5, Aei = 12.0, Aii = 3.0, He = 2.0, Hi = 3.5,
-  Te = 10, Ti = 20, dt = 1. These sit near the spots corner f_wc's sweeps
-  mapped (their Aii 3 = f_wc's aii 3–6 robust dark-field family) but at the
-  fine kernel scale — different content, not a duplicate dial position.
-- **Pattern scale in visual units.** The source ties σ to pixels, so resizing
-  its canvas changes the physics — a defect for a module. Here `grain` sets
-  the characteristic wavelength as a FRACTION OF FRAME HEIGHT; σ_px derives
-  from `min(dim.x, dim.y)` each frame. Same picture at 320² and 1920², just
-  finer detail — and a window resize changes resolution, not pattern class
-  (see Edge Cases for the state-resize behavior this still requires).
+- ~~**Example-10 coupling constants as defaults**~~ → **AMENDED BY MEASUREMENT
+  (Phase 0 T002, 2026-10-24).** The Example-10 fullscreen page is Rule's
+  *flicker* preset (Ne = 0 + a slow square-wave bias): its own constants
+  measure DEAD at float32 in every configuration we tried (no noise, small
+  noise, their own `s` wave) and only survive in a faithful 8-bit-quantized
+  port — its live look breathes on quantization decorrelation plus the s
+  kick. The float32-native sustaining corner is the **Psychedelic coupling
+  set + habituation**: Aee 16.1, Aie 14.5, Aei 13.7, Aii 13.0, He 3.1,
+  Hi 3.5, Te 4, Ti 12.5, Ne = 0.75,
+  `habituation` ≈ 0.9–1.2 and σ_I in the steady band ≈ 0.75–1.1 screen px
+  (measured: flat traces past 4000–6000 frames, dark-field fine webs).
+- **Pattern scale in screen pixels, held in the measured band** *(amended
+  2026-10-24, Phase 0 T003/T005 — the original "fraction of frame height"
+  plan measured DEAD)*. The fine silky regime exists only at σ_I ≈ 0.75–1.1
+  SCREEN px (with habituation 0.9–1.2); λ there is set by the nonlinear
+  dynamics (16–43 px features), not by the kernel, so a frame-fraction σ
+  breaks the regime as windows resize. `grain` maps to σ_frac but is CLAMPED
+  per frame into the sustaining σ_px band — a resize reflows the pattern, it
+  never leaves the regime (see Edge Cases for state-resize behavior).
 - **Luminance display; color out of scope.** The source's
   `vec4(Ue, Ui, |Ue−Ui|·3)` display is a debug view. This module renders E
   through the shared enc map with contrast/sharp, per f_wc's G4; color is a
@@ -209,28 +217,38 @@ names, independent instances.
   frames in a one-frame feedback loop AT RENDER RESOLUTION (`@adapt 1`
   solver stages; the f_wc FR-013 decoupling is deliberately reversed —
   solver res = render res is the point).
-- **FR-002**: The coupling convolution MUST be a real-space separable
-  Gaussian: two stages (`blur_x`, `blur_y`), each applying
-  `exp(−i²/2σ²)` weights over `i ∈ [−⌈3σ⌉, ⌈3σ⌉]`, normalized, with wrap
-  (periodic) sampling, σ_E on the R channel and σ_I on the G channel
-  simultaneously, σ expressed in screen pixels derived per frame as
-  `σ_px = σ_frac · min(dim.x, dim.y)` so the pattern scale is
-  resolution-independent. NO FFT/DFT chain in this module.
+- **FR-002** *(amended 2026-10-24, Phase 0 T003/T005)*: The coupling
+  convolution MUST be a real-space separable Gaussian: two stages
+  (`blur_x`, `blur_y`), each applying `exp(−i²/2σ²)` weights over
+  `i ∈ [−⌈3σ⌉, ⌈3σ⌉]`, normalized, with wrap (periodic) sampling, σ_E on
+  the R channel and σ_I on the G channel simultaneously. σ in SCREEN PIXELS:
+  nominally `σ_frac · min(dim.x, dim.y)` from the `grain` dial, CLAMPED per
+  frame into the measured sustaining band σ_px ∈ [0.75, 1.4] (below = dead
+  kernel taps / above = saturation at the shipped habituation; the band is
+  the T003 map's diagonal corner). NO FFT/DFT chain in this module.
 - **FR-003**: The `nl` stage MUST compute, per frame:
 
       E += (F(AEE·(σ_E blur E) − AIE·(σ_I blur I) − HE + Ne·N
               + drive_gain·(drive − 0.5) − habit·Ve + excite) − E)·dt/TE
       I += (F(AEI·(σ_E blur E) − AII·(σ_I blur I) − HI + Ne·N
               − habit·Vi + excite) − I)·dt/TI
-      Ve += (E − Ve)·dt/50        Vi += (I − Vi)·dt/100     (if G1 ships)
+      Ve += (E − Ve)·dt/50        Vi += (I − Vi)·dt/100
 
-  with F the logistic sigmoid and the Example-10 defaults AEE = 10.5,
-  AIE = 8.5, AEI = 12.0, AII = 3.0, HE = 2.0, HI = 3.5, TE = 10, TI = 20,
-  dt0 = 1. `N` is fresh Gaussian noise per frame (√dt-scaled, both sigmoid
-  inputs); its default amplitude is set by Phase-0 measurement (T002),
-  not assumed — Example 10 injects none. The drive term is E-only with
-  the f_wc G3 semantics (unconnected = 0.5-neutral via `drv_conn`).
-  `excite` carries f_wc G7's shared threshold offset.
+  *(amended 2026-10-24, Phase 0 T002)*: with F the logistic sigmoid and the
+  measured PSYCHEDELIC defaults AEE = 16.1, AIE = 14.5, AEI = 13.7,
+  AII = 13.0, HE = 3.1, HI = 3.5, TE = 4, TI = 12.5, dt0 = 1 — the
+  originally specced Example-10 constant set (10.5/8.5/12/3, He 2.0) measured
+  DEAD at float32 in every configuration (it is the webgpgpu *flicker*
+  preset: 8-bit quantization + an `s` square wave are its sustain
+  mechanisms, and the quantized+s port is the only variant that breathes;
+  recorded in tasks.md T002). `N` is fresh Gaussian noise per frame
+  (√dt-scaled, both sigmoid inputs); **Ne default = 0.75 and `habituation`
+  default ≈ 0.9, both load-bearing at fine grain — without habituation the
+  field saturates by ~3000 frames even at Ne = 0.75.** Ve/Vi ship in v1
+  (G1 measured, not gated). The drive term is E-only with the f_wc G3
+  semantics (unconnected = 0.5-neutral via `drv_conn`). `excite` carries
+  f_wc G7's shared threshold offset; the source's `s` square wave stays
+  parked (performed via `excite`; measured non-sustaining alone at float32).
 - **FR-004**: State MUST seed from random noise on load and on reset —
   never zero, never uniform rest (f_wc FR-004's guard; same model class,
   same fixed-point asymmetry).
@@ -280,23 +298,27 @@ names, independent instances.
   factor), then frame-exact bench vs. mirror (tier 2), then tier-3 look
   gates — headline gate: side-by-side against `WC_Example_10_fullscreen.html`
   itself (Matt).
-- **NF-005**: Resolution independence of the LOOK: pattern wavelength in
-  frame-height units constant across render sizes within Phase-0-measured
-  tolerance (the property the source demo lacks).
+- **NF-005** *(amended 2026-10-24, Phase 0 T005 — the frame-fraction version
+  measured DEAD)*: Resolution independence of the REGIME, not of the
+  wavelength: at every render size the field MUST stay inside the measured
+  sustaining band (σ_px ∈ [0.75, 1.4] via the FR-002 clamp; habituation at
+  its shipped corner), and pattern features are pixel-scale by design
+  (measured λ 16–43 px). Features do NOT grow proportionally with window
+  size — the look is fine silk at every size, and resize only reflows it.
 
 ## Parameters (proposed — final set fixed by Phase 0 / gate G1)
 
 | Dial | Underlying | Notes |
 |---|---|---|
-| `grain` | pattern wavelength as a fraction of frame height → σ_I,px | the geometry dial (FR-010); fine hair-web → coarse mesh; the Phase-0 λ(σ) table fixes the mapping and range so the dial reads in visual units, not texels |
-| `aspect` | `sig_ratio` (σ_E = σ_I / sig_ratio) | f_wc G6 semantics; stripes ↔ ordering; range/landmarks re-measured at render-res physics in Phase 0 |
-| `energy` | per-frame noise amplitude `Ne` | default from T002's sustain measurement (may be 0); the drive-band axis (f_wc T005/T052) |
+| `grain` | σ_frac → σ_I,px, clamped to the sustaining band (FR-002) | regime selector (T003: λ is dynamics-set, not kernel-set, in the fine regime): fine silk → pulsing cells → (clamped) coarse ends; Phase 2 sets semantics + landmarks live |
+| `aspect` | `sig_ratio` (σ_E = σ_I / sig_ratio) | f_wc G6 semantics; stripes ↔ ordering; landmarks re-measured at render-res physics in Phase 2 |
+| `energy` | per-frame noise amplitude `Ne` | **default 0.75 (measured T002 — load-bearing, not optional)**; the drive-band axis (f_wc T005/T052) |
 | `excite` | shared offset in both sigmoid inputs (HE/HI lowered together) | f_wc G7 semantics; covers the source's parked `s` square wave as a performer gesture |
 | `drive_gain` | gain on the drive inlet term | weak = hallucinate, strong = see (G3) |
-| `habituation` *(gate G1)* | Ve/Vi subtractive adaptation depth | f_wc G5 math on the spare B/A channels; Matt's call for v1 |
+| `habituation` | Ve/Vi subtractive adaptation depth | **default ≈ 0.9; load-bearing — without it the field saturates by ~3k frames (T002). Ships in v1 (G1 measured, pending Matt's confirm)**; steady band needs σ_I ≤ 1.1 px at high habit (T003) |
 | `contrast` | display stretch about mid-gray in enc | f_wc G8a; note the source gets its "pop" from 8-bit + no curve — ours comes from this + `sharp` |
 | `sharp` | S-curve blend on the display | f_wc G4 |
-| `zoom` / `twist` / `fovea` | map constants `k_ecc` / `k_ang` (INT) / `r0`; `r_soft` bench-vary | f_wc FR-007 carries verbatim (defaults start at the HTML-parity set 1/1/0.003, r_soft 0.35 — retune at Phase 2 with the fine web's actual look) |
+| `zoom` / `twist` / `fovea` | map constants `k_ecc` / `k_ang` (INT) / `r0`; `r_soft` bench-vary | f_wc FR-007 carries verbatim (defaults from the T004 stills: the closer set 5/3/1.0 read best at the fine scale; r_soft 0.35) |
 | `rate` | dt multiplier | FR-005 |
 | `reset` | reseed | FR-009 |
 

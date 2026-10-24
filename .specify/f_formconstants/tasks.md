@@ -88,14 +88,21 @@ vs. the mirror); tier 3 for the headline look AB against the HTML page.
   No internal excite-LFO (the s mechanism belongs to the flicker page's look;
   measured non-sustaining at float32 alone). The G0 message to Matt carries
   the (σ × habit) corner map from the grain-ladder/regime probes.
-- [ ] T003 [US3] **λ(σ) calibration** — regime map (σ_px × habit, N=512,
-  Ne 0.75, 4000 frames) running; the fine web measured: σ_I ≤ 0.75 px
-  (floor-bound kernels) sustains at habit 0.2–0.4 with λ ≈ 14.6 px and
-  prominence ~700; σ_I ≥ 0.9 px saturates at habit ≤ 0.3 but σ_I 1.45 +
-  habit 0.6 sustains. The fine regime's λ is set by the nonlinear dynamics,
-  not the floored kernel — NF-005's "λ constant in frame fractions" is FALSE
-  for the floored regime (λ stays ~14.5 PX at N 384/512); needs a spec
-  amendment once the map lands. Fit from the surviving cells only.
+- [x] T003 [US3] **λ(σ) calibration + regime map** — **DONE 2026-10-24**
+  (σ_I 0.75–2.0 px × habit 0.2–1.2, N=512, Ne 0.75, 4000 frames). Findings:
+  1. **The steady band is σ_I 0.75–1.1 px × habit 0.9–1.2** — flat std traces
+     (~0.27–0.31), dark-field webs (mean 0.15–0.23), λ 16–43 px. Ship corner
+     family.
+  2. **Habit 0.2–0.45 pulses intermittently** at every σ (std swings
+     0.10↔0.37): rhythmic dissolve/re-form — a transient aesthetic (the T004
+     stills corner), not a steady bed. Endpoint samples of pulsing regimes
+     disagree between probes at the same corner — classify on traces.
+  3. **Usable corner is a diagonal band**: habit ≥ 0.9 needs σ ≤ 1.1;
+     σ 1.45+ at habit 0.9+ dies; σ 2.0 needs habit ≤ 0.3.
+  4. **λ is set by the nonlinear dynamics, not the kernel** — floored kernels
+     and σ 0.9–1.1 alike give λ 16–43 px. `grain` is a regime selector
+     (fine silk ↔ pulsing cells ↔ dead ends), not a wavelength dial;
+     Phase 2 defines its semantics live.
 - [x] T004 [US1] Retinotopic look stills — **DONE 2026-10-24.** Sustained fine
   corner (σ_I 0.7 px floor-bound + habit 0.2/0.4) rendered through the map at
   parity and closer corners × r_soft {0.35, 0}: `scratch/fc_enc/state_s0.7_h*_
@@ -103,14 +110,32 @@ vs. the mirror); tier 3 for the headline look AB against the HTML page.
   concentric-contour web, zero texel staircase.** No map change needed for v1;
   the closer corner (5/3/1.0) reads best of the four at this scale — Phase 2
   tunes.
-- [ ] T005 [US3] Resize-invariance in the mirror: same σ_frac at 128² and 256²,
-  measure wavelength and regime drift → bounds NF-005 and informs T013's
-  resize-seam decision. Offline.
-- [ ] T006 **[G0 — Matt]** Defaults from T002–T005: `energy` default + LFO
-  yes/no, grain range/landmarks, map corner for v1. Tier-3 look check of the
-  T004 stills comes along for free. Offline presentation, one message.
-- [ ] T007 **[G1 — Matt]** `habituation` dial in v1 (math proven at f_wc G5;
-  B/A channels free) or drop to v2. One-line decision.
+- [x] T005 [US3] **Resize invariance — NEGATIVE for frame-fraction λ;
+  NF-005 amended by measurement:** at grain 0.00137 the small sizes floor-bind
+  (N 384/512 both ran the 0.75 px kernel: λ ≈ 14 px in both — λ fixed in
+  PIXELS, 0.037/H vs 0.029/H) and N ≥ 768 left the sustaining band at habit
+  0.3 (saturated). Resolution-independent behavior is achieved by holding
+  σ_px in the measured steady band [≈0.75, ≈1.4], not by scaling σ with the
+  window: **pattern features are pixel-scale by design (fine silk at 16–43 px)
+  and NF-005 now reads "pattern scale constant in screen pixels across render
+  sizes"; the grain dial maps to σ_frac clamped per frame into the sustaining
+  σ_px band.** The tiny-window degenerate-kernel edge case is covered by the
+  same clamp mechanism (its floor is now the STEADY-corner floor ≈ 0.75 px,
+  no longer just a tap-degeneration guard).
+- [ ] T006 **[G0 — Matt, STAGED 2026-10-24]** Recommendations from T002–T005:
+  constants = Psychedelic+habituation (Example-10 measured dead at float32);
+  **energy 0.75, habituation 0.9 load-bearing**; no internal s-LFO; grain is a
+  clamped regime selector, default 0.0008 (σ_I ≈ 0.86 px at 1080p, floored to
+  0.75 below ~940 px windows); map corner = the closer set 5/3/1.0, r_soft 0.35.
+  Look choice between the two measured families, stills in `scratch/fc_enc/`:
+  **(a) steady dark web** `steady_s0.9_h0.9.png` / `steady_s1.1_h1.2.png`
+  (flat traces, dark field — closest to the Example-10 character), vs
+  **(b) pulsing white web** `state_s0.7_h0.2_closer_rs035.png` (white field,
+  rhythmic dissolve/re-form). Recommend (a) as the default; (b) is reachable
+  at habit ~0.2 either way.
+- [ ] T007 **[G1 — Matt, measured answer staged]** `habituation` in v1: the
+  measurement says it is not optional (saturation by ~3k frames without it,
+  whatever `energy` is). Confirm the dial ships with default 0.9.
 
 **Checkpoint:** Phase 0 closed when G0/G1 are answered. Mirror + tests green.
 

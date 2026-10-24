@@ -55,16 +55,17 @@ R_MAX = F32(4.0)               # visual radius at the image corner (baked)
 @dataclass(frozen=True)
 class Params:
     rate: float = 1.0          # dt multiplier (dt = rate * DT0)
-    grain: float = 0.00137     # sigma_I as a fraction of min(h, w)
-                               #   (default: the measured fine-web corner,
-                               #    sigma_I ~ 0.7 px at 512, ~1.5 px at 1080)
+    grain: float = 0.0008      # sigma_I as a fraction of min(h, w), CLAMPED
+                               #   per frame into the sustaining band
+                               #   sigma_px in [0.75, 1.4] (T003/T005)
     aspect: float = SIG_RATIO  # sigma_E = sigma_I / aspect
     energy: float = 0.75       # per-frame noise amplitude Ne (T002: load-bearing)
     drive_gain: float = 0.0
     excite: float = 0.0        # shared offset inside both sigmoid inputs (f_wc G7)
-    habituation: float = 0.3   # Ve/Vi subtractive depth -- LOAD-BEARING at fine
-                               #   grain (without it the field saturates by ~3k
-                               #   frames; G1: dial in v1, nonzero default)
+    habituation: float = 0.9   # Ve/Vi subtractive depth -- LOAD-BEARING at fine
+                               #   grain (T002: saturates by ~3k frames without;
+                               #   T003: steady band sigma_I <= 1.1 px at habit
+                               #   0.9-1.2)
     aie: float = AIE
     aii: float = AII
 
@@ -73,10 +74,14 @@ class Params:
         return F32(self.rate * DT0)
 
 
+SIG_BAND = (F32(0.75), F32(1.4))   # the measured sustaining sigma_I band (px)
+
+
 def sigmas_px(h, w, P):
-    """sigma_I / sigma_E in screen pixels from the frame-fraction grain dial
-    (FR-002), with the degenerate-kernel floor (Edge Cases)."""
-    si = max(F32(P.grain) * F32(min(h, w)), SIG_FLOOR)
+    """sigma_I / sigma_E in screen pixels: nominal grain * min dim, CLAMPED
+    into the measured sustaining band (FR-002; the floor also guards the
+    degenerate-tap edge case at tiny render sizes)."""
+    si = F32(np.clip(F32(P.grain) * F32(min(h, w)), SIG_BAND[0], SIG_BAND[1]))
     return si, si / F32(P.aspect)
 
 

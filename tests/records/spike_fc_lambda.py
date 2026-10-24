@@ -1,16 +1,18 @@
 """spike_fc_lambda.py -- f_formconstants Phase 0, T003 + T005.
 
-T003: lambda(sigma) calibration at the Example-10 constants -- structure-factor
+T003: lambda(sigma) calibration at the shipped constants -- structure-factor
 peak wavelength vs. the grain dial (sigma_I as a fraction of min dim). Fixes
 the grain dial mapping (FR-002) and the landmark ladder.
 
-T005: resize invariance -- the same grain at N = 128 / 256 / 512 (and a
-floor-bound N = 128 fine-grain case), wavelength measured in FRAME-FRACTION
-units; bounds NF-005's claim and shows where the sigma floor (Edge Cases)
-starts changing the physics.
+T005: resize invariance -- the same grain at several N, wavelength measured
+in FRAME-FRACTION units; bounds NF-005's claim and shows the floor.
 
-ENERGY below should track the T002 verdict (update with the measured default
-if it lands nonzero).
+**2026-10-24 VERDICT (recorded in .specify/f_formconstants/tasks.md T003/T005):
+shipped defaults are Psychedelic couplings + Ne = 0.75 + habituation; the fine
+regime lives INSIDE the sigma clamp band [0.75, 1.4] px and its lambda is
+dynamics-set, not kernel-set, so a clean lambda(sigma) table does not exist
+where it matters. The cell() runs below remain the per-corner verification
+tool; ENERGY/HABIT now reflect the shipped corner.**
 
 Run from the repo root: uv run --no-project --with numpy python3 tests/records/spike_fc_lambda.py
 """
@@ -25,13 +27,14 @@ import numpy as np  # noqa: E402
 from fc_mirror import (Params, lambda_px, run, seed_state,  # noqa: E402
                        sigmas_px, structure_factor_metrics)
 
-ENERGY = 0.0        # <-- set from the T002 verdict
+ENERGY = 0.75       # shipped (T002 measured)
+HABIT = 0.9         # shipped (T002/T003 measured: load-bearing)
 N = 512
 FRAMES = 700
 
 
 def cell(n, grain, seed=1, frames=FRAMES):
-    P = Params(grain=grain, energy=ENERGY)
+    P = Params(grain=grain, energy=ENERGY, habituation=HABIT)
     st, _ = run(seed_state(n, n, seed), P, frames,
                 seed=(7 if ENERGY > 0 else None), fast_blur=True)
     e = np.asarray(st[..., 0], dtype=np.float64)

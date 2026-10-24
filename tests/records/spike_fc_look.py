@@ -37,7 +37,7 @@ def write_ppm(path, img):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    P = Params(grain=1.0 / N, energy=ENERGY)
+    P = Params(grain=1.0 / N, energy=0.75, habituation=0.9)
     st, _ = run(seed_state(N, N, 1), P, FRAMES,
                 seed=(7 if ENERGY > 0 else None), fast_blur=True)
     e = st[..., 0]
