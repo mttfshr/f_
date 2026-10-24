@@ -19,27 +19,42 @@
 //     AII 13.0, HE 3.1, HI 3.5, TE 4, TI 12.5
 //   - NaN/Inf zap per the f_ks containment precedent (abs(x) < 1e30, NaN == NaN is TRUE);
 //     zapped texels are self-healed from noise by the pass stage
+//   - HABITUATION (G5, tasks.md T052): Ve, Vi ride the spare state channels G, A,
+//     relaxing toward the firing rates (Ve += (E - Ve).dt/50, Vi += (I - Vi).dt/100 --
+//     the Rule Example-11 time constants) and subtracting from the sigmoid inputs at
+//     depth `habit` (0 = the shipped dynamics: G, A then stay exactly 0 through nl and
+//     the pass stage). In the DFT chain they sit in the imaginary parts; the kernel
+//     gains are REAL, so the convolved real parts are unaffected.
 //   - no unary minus before a parenthesis (GenExpr mis-parses it): write `0 - ...`
 Param dt(1);
 Param ne(1);
 Param drive_gain(0);
 Param drv_conn(0);
+Param habit(0);
 
 ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).z;
 ee = nearest(in2, norm).x;
 ii = nearest(in2, norm).z;
+ve = nearest(in2, norm).y;
+vi = nearest(in2, norm).w;
 na = nearest(in3, norm).z * 0.999 + 0.0001;
 nb = nearest(in3, norm).w * 0.999 + 0.0001;
 nx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);
 drv = mix(0.5, nearest(in4, norm).x, drv_conn);
 
-ae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 + ne * nx + drive_gain * (drv - 0.5), -60, 60)));
-ai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 + ne * nx, -60, 60)));
+ae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 - habit * ve + ne * nx + drive_gain * (drv - 0.5), -60, 60)));
+ai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 - habit * vi + ne * nx, -60, 60)));
 
 en = ee + (ae - ee) * (dt * 0.25);
 inw = ii + (ai - ii) * (dt * 0.08);
 en = switch(abs(en) < 1e30, en, 0);
 inw = switch(abs(inw) < 1e30, inw, 0);
+ven = ve + (en - ve) * (dt * 0.02);
+vin = vi + (inw - vi) * (dt * 0.01);
+ven = switch(abs(ven) < 1e30, ven, 0);
+vin = switch(abs(vin) < 1e30, vin, 0);
+veo = switch(habit != 0, ven, 0);
+vio = switch(habit != 0, vin, 0);
 
-out1 = vec(en, 0, inw, 0);
+out1 = vec(en, veo, inw, vio);

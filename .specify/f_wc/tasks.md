@@ -297,15 +297,32 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
   3. **Moderate depth IMPROVES contrast at the shifted band** (best late std 0.304 at
      be 0.5 / Ne 0.8 vs 0.248 plain; be 1.0 / Ne 1.0: 0.293) — the fatigue-recovery
      cycle regenerates structure instead of letting it freeze.
-- [ ] **G5 (Matt, tier 3):** expose a habituation depth dial (suggested: 0–1,
-  default 0 = shipped dynamics; rate dials NOT recommended — ae/ai untested off
-  50/100) or drop. If exposed: pass-stage carry-through of G,A (+reseed init), nl
-  params be/bi (ae/ai can stay baked), one bench leg, region-map confirmation live.
+- [x] **G5 DONE 2026-10-23 (Matt approved depth dial).** Shipped: `habituation` dial
+  (0.0–1.0, default 0, between Drive and Sharp; token `habituation` with `pix_attr habit`,
+  panel widened 210 → 247, menu/launcher regenerated → `"wc": [247, 110]`).
+  `codebox_nl.gen` reads Ve/Vi from state G/A, relaxes toward the rates at ae = 50,
+  ai = 100 (baked literals), subtracts `-habit*Ve/-habit*Vi` in the sigmoid inputs, and
+  pins G/A to 0 when habit = 0 — the pre-G5 dynamics are bit-preserved. `codebox_pass.gen`
+  carries G/A with the same NaN guard and restarts them at 0 on reseed/self-heal. Spec
+  FR-003 + Parameters amended, `docs/f-reference/f_wc.md` updated (status, table, flow,
+  algorithm), helpfile control list + bpatcher embed updated. Green: drift 16/16,
+  module contracts 9/9 (route outlet fix — the raw `reset` wire moved 4 → 5 when the dial
+  was inserted), launch 8/8, menu 17/17, test_wc 10/10. **Owed to Max:** one bench
+  session leg — live `habit` sweep (expect: steadier mean, tighter contrast; band shifts
+  up at the low end per T052) and a habit > 0 chain-vs-mirror run (`m_step` gains
+  `be=bi=habit`; zero-depth legs untouched). The full offline suite has NOT been run
+  since the rebuild — run `tests/bg.sh start offline` before the next unrelated edit.
 
 ---
 
 ## Record
 
+- 2026-10-23 (night 10): **G5 approved (Matt) and shipped — `habituation` depth dial.**
+  Ve/Vi ride state G/A: nl relaxes (50/100-frame constants, baked) and subtracts at
+  depth `habit` (0 = bit-identical pre-G5 dynamics, G/A pinned 0); pass carries them
+  with self-heal/reseed to 0. Panel 210 → 247; menu/launcher/helpfile/reference/spec
+  updated. Offline suite green for the touched files. Owed to Max: habit sweep look +
+  habit > 0 chain-vs-mirror bench leg.
 - 2026-10-23 (later): **Phase 4 T050–T052 executed; only gate G5 remains.** T050/T051
   tier-1 hygiene landed in `test_wc.py` (10/10): the shipped hash stream is textbook
   uniform (chi2 8–14 on 15 dof, ≤ 6e-3 lag-1 spatial corr, ≤ 2.7e-3 frame-to-frame

@@ -1,7 +1,7 @@
 # f_wc
 
 **Type:** Generator (drive inlet, luma out) — **temporal / has memory**
-**Status:** Built, benched and tuned. Phase 0 (settled model + gates), Phase 1 (GPU chain + mirror diff), Phase 2 (Ranges/G4/landmarks/retinotopy) all closed 2026-10-23. README lists it by name.
+**Status:** Built, benched and tuned. Phase 0 (settled model + gates), Phase 1 (GPU chain + mirror diff), Phase 2 (Ranges/G4/landmarks/retinotopy) all closed 2026-10-23. Phase 4 (2026-10-23, gate G5): the `habituation` dial shipped — slow Ve/Vi fatigue riding the spare state channels. README lists it by name.
 
 _Reference written 2026-10-23 from `src/f_wc/` (definition + codeboxes), `.specify/f_wc/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module._
 
@@ -43,11 +43,11 @@ pass -> fx -> fy -> spec -> iy -> ix -> nl  ;  pass -> nl (in 2)
 |---|---|
 | `hold` | Identity. One-frame delay, the loop break |
 | `seed` | Deterministic arithmetic hash noise (no `sin()`), the frame counter as `salt`; R/G are the reseed channels, B/A feed the per-frame noise (`nl`) |
-| `pass` | Holds last frame's state, or reseeds each field from the R/G channels when `reseed` = 1. Also reseeds any texel that is exactly 0 in BOTH channels (self-heal, see Notes) |
+| `pass` | Holds last frame's state (R = E, B = I, G = Ve, A = Vi — the habituation memory), or reseeds each field from the R/G channels when `reseed` = 1 (adaptation restarts at 0). Also reseeds any texel that is exactly 0 in BOTH E/I channels (self-heal, see Notes) |
 | `fx` `fy` | Forward DFT, separable, one axis per pass — ONE chain carries BOTH fields (R,G = Re,Im of E-hat; B,A = Re,Im of I-hat) |
 | `spec` | Per-bin Gaussian kernel gains `exp(-sigma^2 k^2 / 2)` per field (`sig_i` on the I pair, `sig_i/1.45` on the E pair). No decay term, no DC zeroing |
 | `iy` `ix` | Inverse DFT, separable, real parts kept, residue zapped |
-| `nl` | The heart: relaxation toward the sigmoid of the coupled drive, per-frame Box-Muller noise into both sigmoid inputs, drive term E-only, NaN/Inf zap |
+| `nl` | The heart: relaxation toward the sigmoid of the coupled drive, per-frame Box-Muller noise into both sigmoid inputs, drive term E-only, Ve/Vi habituation subtracting at depth `habit`, NaN/Inf zap |
 | `enc` | Log-polar inverse-retinotopic resample to render size, plain-E display with the `sharp` S-curve blend (default 0.5), bypass gate |
 
 The `r draw` bang goes to `seed`, `pass` and `enc`, and it increments `salt` EVERY frame —
@@ -65,6 +65,7 @@ into `enc`, `@adapt 0`).
 | `rate` | float | 0.0–1.0 | 1.0 | Time step per frame (`dt = rate`; 1 = the validated labyrinth tempo). No stability ceiling exists (relaxation toward a bounded sigmoid); the top of the range is aesthetic, not structural |
 | `grain` | float | 1.0–4.0 | 1.4 | The inhibition kernel width in pixels (`σ_I`; the E kernel is slaved at `σ_I/1.45`). **Landmarks: 1.1 broken stripes / 1.4 labyrinth / 1.9 coarse.** Free sweep approved (Matt, 2026-10-23) |
 | `drive_gain` | float | 0.0–2.0 | 0.0 | Scene strength on the drive inlet. 0 = pure free hallucination; ~1.5 = the scene imprints (normal vision). Below ~0.2 the pattern ignores the scene entirely |
+| `habituation` | float | 0.0–1.0 | 0.0 | Fatigue depth: slow negative feedback on the activity (Ve/Vi relax toward the firing rates over 50/100 frames and subtract from the sigmoid inputs; G5/T052). 0 = free run with exactly the pre-G5 dynamics; higher steadies the field mean against long-soak drift and lifts contrast, at the cost of a narrower low-drive band |
 | `sharp` | float | 0.0–1.0 | 0.5 | Edge sharpness in `enc`: 0 = soft gradients, 1 = hard-edged cells. The 0.5 default keeps the free labyrinth readable as its mean wanders (G4 decision) |
 | `reset` | button / message | — | — | Reseeds both fields from fresh noise. Fires once on load (after 200 ms). Also accepted as a `reset` message on the control inlet |
 | `bypass` | toggle | 0/1 | 0 | Black, alpha 1, on the outlet. The solver keeps running underneath, so releasing bypass resumes a warm field |
@@ -89,11 +90,16 @@ produces the working "Psychedelic" webgpgpu demo). Each frame, for both fields E
 1. **Convolve.** `cE = K_E ⊗ E`, `cI = K_I ⊗ I` with Gaussians in pixel units
    (`K_hat = exp(-sigma^2 k^2 / 2)` per Fourier bin, sigma_E = sigma_I/1.45). That IS the linear
    part; there is no separate decay term and no DC zeroing — the relaxation below carries both.
-2. **Relax.** `E += (S(16.1·cE − 14.5·cI − 3.1 + Ne·N + drive_gain·(drive − 0.5)) − E)·dt/4`
+2. **Relax.** `E += (S(16.1·cE − 14.5·cI − 3.1 − habit·Ve + Ne·N + drive_gain·(drive − 0.5)) − E)·dt/4`
    and same for I with 13.7/13.0/3.5 and `dt/12.5`, where `S` is the logistic sigmoid, `N` a
    FRESH Gaussian field every frame (`Box-Muller × sqrt(dt)`, shared by both sigmoid inputs),
-   and the drive term is E-only. Constants are the settled "Psychedelic" corner and are baked
-   into `codebox_nl.gen`; `dt = rate`.
+   and the drive term is E-only. `Ve, Vi` are the habituation memory (the `habituation` dial):
+   they ride the spare state channels G/A (the DFT chain's imaginary parts; the real kernel
+   gains leave the convolved E, I unaffected), relax `Ve += (E − Ve)·dt/50`,
+   `Vi += (I − Vi)·dt/100`, and subtract at depth `habit`. At `habit` = 0 (default) G/A stay
+   pinned at 0 and the dynamics are exactly the pre-G5 dynamics; reseed restarts them at 0.
+   Constants are the settled "Psychedelic" corner and are baked into `codebox_nl.gen`;
+   `dt = rate`.
 3. **Contain.** A non-finite result becomes 0 in `nl`; any texel that hits exact 0 in both
    fields is reseeded from the noise channels by `pass` next frame.
 4. **Encode.** The display resamples E through an **inverse retinotopic map** (the cortical

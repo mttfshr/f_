@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 5,
+					"numoutlets": 6,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -88,10 +89,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						367.0,
+						439.0,
 						22.0
 					],
-					"text": "route rate grain drive_gain sharp reset"
+					"text": "route rate grain drive_gain habituation sharp reset"
 				}
 			},
 			{
@@ -382,7 +383,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_pass.gen -- f_wc stage 0: holds last frame's state (E, I), or reseeds it.\n// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.seed_state() (seeding); identity otherwise.\n//\n// Inputs: the first inlet is the `r draw` bang (unused; it only triggers the render every\n// frame, and the feedback arrives on a cold inlet so it cannot retrigger the loop), the second\n// is the feedback state (R = E, B = I, from the nl stage through the hold stage), the third is\n// the noise texture (R = seed-E hash, G = seed-I hash, from the noise stage).\n// reseed = 1 replaces the state with uniform noise in [0, amp): E from R, I from G (two\n// independent hash channels), never zero and never uniform rest (it is a fixed point of the\n// whole update, FR-004). reseed fires on load and on the reset trigger (FR-009).\n//   - SELF-HEAL: a feedback texel that is exactly 0 in BOTH channels is reseeded from the\n//     noise too. A live WC field never holds an exact 0 (E, I stay inside (0, 1): relaxation\n//     toward a sigmoid output), so this fires only when the state was lost: a fresh module, a\n//     GL context rebuilt by a window mode change, or a non-finite texel the nl stage zapped\n//   - selection uses switch(), not mix(): mix(NaN, x, 1) is still NaN, so a poisoned feedback\n//     texel could survive a reseed through mix\n//   - the feedback is NaN/Inf-guarded: abs(x) < 1e30 (NaN == NaN is TRUE on this GPU)\n//   - packing: R = E, B = I, G = A = 0 (G, A are the imaginary parts in the DFT chain; they\n//     MUST stay 0 here)\nParam reseed(0);\nParam amp(1);\n\nfbe = nearest(in2, norm).x;\nfbe = switch(abs(fbe) < 1e30, fbe, 0);\nfbi = nearest(in2, norm).z;\nfbi = switch(abs(fbi) < 1e30, fbi, 0);\nze = nearest(in3, norm).x * amp;\nzi = nearest(in3, norm).y * amp;\nlost = (fbe == 0) * (fbi == 0);\nkept_e = switch(lost > 0.5, ze, fbe);\nkept_i = switch(lost > 0.5, zi, fbi);\nout1 = vec(switch(reseed >= 0.5, ze, kept_e), 0, switch(reseed >= 0.5, zi, kept_i), 0);\n",
+									"code": "// codebox_pass.gen -- f_wc stage 0: holds last frame's state (E, I, Ve, Vi), or reseeds it.\n// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.seed_state() (seeding); identity otherwise.\n//\n// Inputs: the first inlet is the `r draw` bang (unused; it only triggers the render every\n// frame, and the feedback arrives on a cold inlet so it cannot retrigger the loop), the second\n// is the feedback state (R = E, B = I, from the nl stage through the hold stage), the third is\n// the noise texture (R = seed-E hash, G = seed-I hash, from the noise stage).\n// reseed = 1 replaces the state with uniform noise in [0, amp): E from R, I from G (two\n// independent hash channels), never zero and never uniform rest (it is a fixed point of the\n// whole update, FR-004). reseed fires on load and on the reset trigger (FR-009).\n//   - SELF-HEAL: a feedback texel that is exactly 0 in BOTH channels is reseeded from the\n//     noise too. A live WC field never holds an exact 0 (E, I stay inside (0, 1): relaxation\n//     toward a sigmoid output), so this fires only when the state was lost: a fresh module, a\n//     GL context rebuilt by a window mode change, or a non-finite texel the nl stage zapped\n//   - selection uses switch(), not mix(): mix(NaN, x, 1) is still NaN, so a poisoned feedback\n//     texel could survive a reseed through mix\n//   - the feedback is NaN/Inf-guarded: abs(x) < 1e30 (NaN == NaN is TRUE on this GPU)\n//   - packing: R = E, B = I, G = Ve, A = Vi (the habituation variables, G5/T052; they\n//     are the imaginary parts in the DFT chain, whose REAL kernel gains keep the\n//     convolved E, I unaffected). Ve/Vi reset to 0 on reseed and on self-heal: the\n//     adaptation memory restarts with the new pattern. With habit = 0 the nl stage\n//     writes 0 in G, A, so G, A stay exactly 0 (the shipped dynamics are untouched).\nParam reseed(0);\nParam amp(1);\n\nfbe = nearest(in2, norm).x;\nfbe = switch(abs(fbe) < 1e30, fbe, 0);\nfbi = nearest(in2, norm).z;\nfbi = switch(abs(fbi) < 1e30, fbi, 0);\nfbv = nearest(in2, norm).y;\nfbv = switch(abs(fbv) < 1e30, fbv, 0);\nfbw = nearest(in2, norm).w;\nfbw = switch(abs(fbw) < 1e30, fbw, 0);\nze = nearest(in3, norm).x * amp;\nzi = nearest(in3, norm).y * amp;\nlost = (fbe == 0) * (fbi == 0);\nkept_e = switch(lost > 0.5, ze, fbe);\nkept_i = switch(lost > 0.5, zi, fbi);\nkept_ve = switch(lost > 0.5, 0, fbv);\nkept_vi = switch(lost > 0.5, 0, fbw);\nout1 = vec(switch(reseed >= 0.5, ze, kept_e), switch(reseed >= 0.5, 0, kept_ve),\n           switch(reseed >= 0.5, zi, kept_i), switch(reseed >= 0.5, 0, kept_vi));\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1174,7 +1175,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_nl.gen -- f_wc stage 6: the heart (the settled model, tasks.md T005/T007).\n// Exact relaxation toward the logistic sigmoid of the coupled drive, per frame:\n//   E += (F(AEE*cE - AIE*cI - HE + ne*nx + drive_gain*(drv - 0.5)) - E) * dt / TE\n//   I += (F(AEI*cE - AII*cI - HI + ne*nx) - I) * dt / TI\n// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.nonlinear_step().\n//\n// Inputs (4): in1 = the convolved fields (R = KE conv E, B = KI conv I, from the ix stage),\n// in2 = the raw state (R = E, B = I, from the pass stage -- an extra tap off the feedback so\n// the relaxation target and the state are the same frame), in3 = the noise texture\n// (B, A = the two raw uniforms; fresh every frame -- the per-frame drive is the load-bearing\n// mechanism), in4 = the drive inlet (R; through a vs_inState, so UNCONNECTED reads vs_black\n// (0,0,0,1) -- the patcher sets drv_conn = 0 then, and the codebox falls back to the neutral\n// mid-gray 0.5: zero net drive for free, G3).\n//   - drv = the inlet reading when connected, 0.5 when not; the drive term is\n//     drive_gain*(drv - 0.5), E-only (T007: adding to I is identical but unnecessary)\n//   - fresh Gaussian noise into BOTH sigmoid inputs, Box-Muller from the two uniforms,\n//     sqrt(dt)-scaled (so dt stays a pure relaxation step), same nx in E and I (the Rule form)\n//   - constants are baked (settled Psychedelic corner): AEE 16.1, AIE 14.5, AEI 13.7,\n//     AII 13.0, HE 3.1, HI 3.5, TE 4, TI 12.5\n//   - NaN/Inf zap per the f_ks containment precedent (abs(x) < 1e30, NaN == NaN is TRUE);\n//     zapped texels are self-healed from noise by the pass stage\n//   - no unary minus before a parenthesis (GenExpr mis-parses it): write `0 - ...`\nParam dt(1);\nParam ne(1);\nParam drive_gain(0);\nParam drv_conn(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).z;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).z;\nna = nearest(in3, norm).z * 0.999 + 0.0001;\nnb = nearest(in3, norm).w * 0.999 + 0.0001;\nnx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);\ndrv = mix(0.5, nearest(in4, norm).x, drv_conn);\n\nae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 + ne * nx + drive_gain * (drv - 0.5), -60, 60)));\nai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 + ne * nx, -60, 60)));\n\nen = ee + (ae - ee) * (dt * 0.25);\ninw = ii + (ai - ii) * (dt * 0.08);\nen = switch(abs(en) < 1e30, en, 0);\ninw = switch(abs(inw) < 1e30, inw, 0);\n\nout1 = vec(en, 0, inw, 0);\n",
+									"code": "// codebox_nl.gen -- f_wc stage 6: the heart (the settled model, tasks.md T005/T007).\n// Exact relaxation toward the logistic sigmoid of the coupled drive, per frame:\n//   E += (F(AEE*cE - AIE*cI - HE + ne*nx + drive_gain*(drv - 0.5)) - E) * dt / TE\n//   I += (F(AEI*cE - AII*cI - HI + ne*nx) - I) * dt / TI\n// 256x256 float32. Mirror: tests/modules/wc/wc_mirror.nonlinear_step().\n//\n// Inputs (4): in1 = the convolved fields (R = KE conv E, B = KI conv I, from the ix stage),\n// in2 = the raw state (R = E, B = I, from the pass stage -- an extra tap off the feedback so\n// the relaxation target and the state are the same frame), in3 = the noise texture\n// (B, A = the two raw uniforms; fresh every frame -- the per-frame drive is the load-bearing\n// mechanism), in4 = the drive inlet (R; through a vs_inState, so UNCONNECTED reads vs_black\n// (0,0,0,1) -- the patcher sets drv_conn = 0 then, and the codebox falls back to the neutral\n// mid-gray 0.5: zero net drive for free, G3).\n//   - drv = the inlet reading when connected, 0.5 when not; the drive term is\n//     drive_gain*(drv - 0.5), E-only (T007: adding to I is identical but unnecessary)\n//   - fresh Gaussian noise into BOTH sigmoid inputs, Box-Muller from the two uniforms,\n//     sqrt(dt)-scaled (so dt stays a pure relaxation step), same nx in E and I (the Rule form)\n//   - constants are baked (settled Psychedelic corner): AEE 16.1, AIE 14.5, AEI 13.7,\n//     AII 13.0, HE 3.1, HI 3.5, TE 4, TI 12.5\n//   - NaN/Inf zap per the f_ks containment precedent (abs(x) < 1e30, NaN == NaN is TRUE);\n//     zapped texels are self-healed from noise by the pass stage\n//   - HABITUATION (G5, tasks.md T052): Ve, Vi ride the spare state channels G, A,\n//     relaxing toward the firing rates (Ve += (E - Ve).dt/50, Vi += (I - Vi).dt/100 --\n//     the Rule Example-11 time constants) and subtracting from the sigmoid inputs at\n//     depth `habit` (0 = the shipped dynamics: G, A then stay exactly 0 through nl and\n//     the pass stage). In the DFT chain they sit in the imaginary parts; the kernel\n//     gains are REAL, so the convolved real parts are unaffected.\n//   - no unary minus before a parenthesis (GenExpr mis-parses it): write `0 - ...`\nParam dt(1);\nParam ne(1);\nParam drive_gain(0);\nParam drv_conn(0);\nParam habit(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).z;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).z;\nve = nearest(in2, norm).y;\nvi = nearest(in2, norm).w;\nna = nearest(in3, norm).z * 0.999 + 0.0001;\nnb = nearest(in3, norm).w * 0.999 + 0.0001;\nnx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);\ndrv = mix(0.5, nearest(in4, norm).x, drv_conn);\n\nae = 1 / (1 + exp(0 - clamp(16.1 * ce - 14.5 * ci - 3.1 - habit * ve + ne * nx + drive_gain * (drv - 0.5), -60, 60)));\nai = 1 / (1 + exp(0 - clamp(13.7 * ce - 13 * ci - 3.5 - habit * vi + ne * nx, -60, 60)));\n\nen = ee + (ae - ee) * (dt * 0.25);\ninw = ii + (ai - ii) * (dt * 0.08);\nen = switch(abs(en) < 1e30, en, 0);\ninw = switch(abs(inw) < 1e30, inw, 0);\nven = ve + (en - ve) * (dt * 0.02);\nvin = vi + (inw - vi) * (dt * 0.01);\nven = switch(abs(ven) < 1e30, ven, 0);\nvin = switch(abs(vin) < 1e30, vin, 0);\nveo = switch(habit != 0, ven, 0);\nvio = switch(habit != 0, vin, 0);\n\nout1 = vec(en, veo, inw, vio);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1478,14 +1479,14 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						210.0,
+						247.0,
 						110.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						210.0,
+						247.0,
 						110.0
 					],
 					"proportion": 0.5
@@ -1538,7 +1539,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						114.0,
+						151.0,
 						0.9,
 						70.0,
 						21.0
@@ -2123,14 +2124,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)",
+					"hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wc_enc::sharp",
+					"param_connect": "#0_wc_nl::habituation",
 					"parameter_enable": 1,
 					"patching_rect": [
 						262.5,
@@ -2151,15 +2152,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.5
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "sharp",
+							"parameter_longname": "habituation",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "sharp",
+							"parameter_shortname": "habituation",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2168,14 +2169,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "sharp"
+					"varname": "habituation"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-30",
 					"maxclass": "attrui",
-					"attr": "sharp",
+					"attr": "habit",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2211,6 +2212,110 @@
 						50.0,
 						18.0
 					],
+					"text": "Habituation",
+					"textjustification": 1,
+					"varname": "lbl_habituation"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-32",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wc_enc::sharp",
+					"parameter_enable": 1,
+					"patching_rect": [
+						334.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						152.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.5
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "sharp",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "sharp",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "sharp"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-33",
+					"maxclass": "attrui",
+					"attr": "sharp",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						314.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-34",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						323.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						20.0,
+						50.0,
+						18.0
+					],
 					"text": "Sharp",
 					"textjustification": 1,
 					"varname": "lbl_sharp"
@@ -2218,7 +2323,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-32",
+					"id": "obj-35",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2235,7 +2340,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						188.0,
+						225.0,
 						5.0,
 						18.0,
 						12.0
@@ -2246,7 +2351,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-33",
+					"id": "obj-36",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2297,7 +2402,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						190.0,
+						227.0,
 						46.0,
 						28.0,
 						28.0
@@ -2322,7 +2427,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						179.0,
+						216.0,
 						24.0,
 						50.0,
 						18.0
@@ -2669,11 +2774,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-32",
+						"obj-35",
 						0
 					],
 					"destination": [
-						"obj-33",
+						"obj-36",
 						0
 					]
 				}
@@ -2681,7 +2786,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-33",
+						"obj-36",
 						0
 					],
 					"destination": [
@@ -3033,6 +3138,42 @@
 						0
 					],
 					"destination": [
+						"obj-58",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						4
+					],
+					"destination": [
+						"obj-32",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-33",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-33",
+						0
+					],
+					"destination": [
 						"obj-5",
 						0
 					]
@@ -3054,7 +3195,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						4
+						5
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3260,6 +3401,11 @@
 				0
 			],
 			"obj-29": [
+				"habituation",
+				"habituation",
+				0
+			],
+			"obj-32": [
 				"sharp",
 				"sharp",
 				0

@@ -1,4 +1,4 @@
-// codebox_pass.gen -- f_wc stage 0: holds last frame's state (E, I), or reseeds it.
+// codebox_pass.gen -- f_wc stage 0: holds last frame's state (E, I, Ve, Vi), or reseeds it.
 // 256x256 float32. Mirror: tests/modules/wc/wc_mirror.seed_state() (seeding); identity otherwise.
 //
 // Inputs: the first inlet is the `r draw` bang (unused; it only triggers the render every
@@ -15,8 +15,11 @@
 //   - selection uses switch(), not mix(): mix(NaN, x, 1) is still NaN, so a poisoned feedback
 //     texel could survive a reseed through mix
 //   - the feedback is NaN/Inf-guarded: abs(x) < 1e30 (NaN == NaN is TRUE on this GPU)
-//   - packing: R = E, B = I, G = A = 0 (G, A are the imaginary parts in the DFT chain; they
-//     MUST stay 0 here)
+//   - packing: R = E, B = I, G = Ve, A = Vi (the habituation variables, G5/T052; they
+//     are the imaginary parts in the DFT chain, whose REAL kernel gains keep the
+//     convolved E, I unaffected). Ve/Vi reset to 0 on reseed and on self-heal: the
+//     adaptation memory restarts with the new pattern. With habit = 0 the nl stage
+//     writes 0 in G, A, so G, A stay exactly 0 (the shipped dynamics are untouched).
 Param reseed(0);
 Param amp(1);
 
@@ -24,9 +27,16 @@ fbe = nearest(in2, norm).x;
 fbe = switch(abs(fbe) < 1e30, fbe, 0);
 fbi = nearest(in2, norm).z;
 fbi = switch(abs(fbi) < 1e30, fbi, 0);
+fbv = nearest(in2, norm).y;
+fbv = switch(abs(fbv) < 1e30, fbv, 0);
+fbw = nearest(in2, norm).w;
+fbw = switch(abs(fbw) < 1e30, fbw, 0);
 ze = nearest(in3, norm).x * amp;
 zi = nearest(in3, norm).y * amp;
 lost = (fbe == 0) * (fbi == 0);
 kept_e = switch(lost > 0.5, ze, fbe);
 kept_i = switch(lost > 0.5, zi, fbi);
-out1 = vec(switch(reseed >= 0.5, ze, kept_e), 0, switch(reseed >= 0.5, zi, kept_i), 0);
+kept_ve = switch(lost > 0.5, 0, fbv);
+kept_vi = switch(lost > 0.5, 0, fbw);
+out1 = vec(switch(reseed >= 0.5, ze, kept_e), switch(reseed >= 0.5, 0, kept_ve),
+           switch(reseed >= 0.5, zi, kept_i), switch(reseed >= 0.5, 0, kept_vi));

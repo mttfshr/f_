@@ -1,5 +1,11 @@
 # HANDOFF
 
+## 2026-10-23 (night 10): f_wc G5 SHIPPED — `habituation` depth dial built and registered
+
+- Matt approved G5 (depth dial). Built: `habituation` 0–1, default 0, between Drive and Sharp (dial token `habituation`, `pix_attr habit`; panel 210 → 247, menu/launcher regenerated, `"wc": [247, 110]`). `codebox_nl.gen` carries Ve/Vi in state G/A (relaxes toward the rates at baked 50/100-frame constants, subtracts `-habit*Ve/-habit*Vi`, pins G/A to 0 at habit 0 → pre-G5 dynamics bit-preserved); `codebox_pass.gen` carries G/A with the NaN guard and restarts them at 0 on reseed/self-heal. Spec FR-003 + Parameters, `docs/f-reference/f_wc.md`, and the helpfile (control list + bpatcher embed) updated.
+- **Offline green:** build/drift 16/16, module contracts 9/9 (one fix: the raw `reset` route wire moved outlet 4 → 5 when the dial was inserted — the f_vf_lbm stale-id trap pattern), launch 8/8, menu 17/17, test_wc 10/10. Full offline suite NOT run since the rebuild — run `tests/bg.sh start offline` before the next unrelated edit.
+- **Owed to Max (one bench session):** live `habit` sweep look (expect steadier mean / tighter contrast per T052; low-drive band narrows) + a habit > 0 chain-vs-mirror leg in `bench_wc.py` (`m_step` takes `be=bi=habit`; zero-depth legs unchanged). Next after that: f_quasi or f_wave_field Phase 0 per `.specify/plan.md`.
+
 ## 2026-10-23 (night 9): f_wc Phase 4 T050-T052 DONE — only gate G5 (Matt) remains
 
 - **T050/T051 (tier-1 hygiene, in `test_wc.py`, 10/10 green):** the shipped hash noise stream is clean — 4-channel histograms chi2 8-14 on 15 dof, ≤ 6e-3 spatial lag-1 corr, ≤ 2.7e-3 frame-to-frame corr, Box-Muller kurtosis 3.03. Retinotopy map→inverse identity: mean err 6.5e-3 / p95 2.0e-2 in the supported eccentricity band (100% of the sheet covered via u-wrap copies).

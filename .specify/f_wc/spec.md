@@ -372,6 +372,18 @@ independent instances — the library baseline.
   TI = 12.5, dt = 1 the baseline. NO refractory/recovery variable
   (the Pinto-Ermentrout activator-recovery fork was spiked and rejected
   as the wrong model class for sustained forms; see tasks.md T005).
+  *(amended 2026-10-23, Phase 4 / gate G5 — Matt approved a habituation
+  depth dial)*: slow adaptation variables `Ve, Vi` ride the state texture's
+  spare G/A channels (the DFT chain's imaginary parts; the kernel gains are
+  real, so the convolved E, I are unaffected), relaxing
+  `Ve += (E - Ve)*dt/50`, `Vi += (I - Vi)*dt/100` (the Rule Example-11 time
+  constants) and subtracting as `- habit*Ve`, `- habit*Vi` in the E and I
+  sigmoid inputs. `habituation` dial 0.0–1.0, default 0: at 0 the G/A
+  channels are pinned to 0 and the dynamics are exactly the pre-G5 shipped
+  dynamics. The T052 mirror sweep measured the shipped corner survivable at
+  every depth 0–1.0 (band shifts up and narrows at the low end as depth
+  grows), drift-damping at high drive, contrast-boosting at moderate depth —
+  record in tasks.md T052. Reset/reseed restarts the adaptation memory at 0.
 - **FR-004**: State MUST be seeded from random noise on load and on
   reset — never from zero, never from the spatially uniform rest
   state, because uniform rest is a fixed point whose stability is
@@ -451,6 +463,7 @@ independent instances — the library baseline.
 | `rate` | per-frame dt multiplier | clamped per FR-005 |
 | `scale` | characteristic cortical wavelength (sets `D` ratio / domain size) | pattern grain in the mapped visual field |
 | `drive_gain` | gain on the drive inlet's contribution | how strongly the scene pushes the cortex; at 0 the module is US-1 pure |
+| `habituation` *(G5, 2026-10-23)* | depth of the Ve/Vi subtractive adaptation (time constants baked at 50/100 frames) | 0.0–1.0, default 0 = free run; higher steadies the field mean against long-soak drift, nudges the usable Ne band upward |
 | `sharp` | output-map edge sharpening | f_ks precedent |
 | `reset` | reseed button/message | FR-009 |
 

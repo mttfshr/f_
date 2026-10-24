@@ -100,8 +100,8 @@
                         270.0,
                         91.5
                     ],
-                    "text": "External Control Messages\n\nrate [0.0 \u2013 1.0]\ngrain [1.0 \u2013 4.0]\ndrive_gain [0.0 \u2013 2.0]\nsharp [0.0 \u2013 1.0]\nbypass [0 / 1]",
-                    "linecount": 7,
+                    "text": "External Control Messages\n\nrate [0.0 \u2013 1.0]\ngrain [1.0 \u2013 4.0]\ndrive_gain [0.0 \u2013 2.0]\nhabituation [0.0 \u2013 1.0]\nsharp [0.0 \u2013 1.0]\nbypass [0 / 1]",
+                    "linecount": 8,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
@@ -177,7 +177,7 @@
                     "patching_rect": [
                         338.0,
                         24.0,
-                        210.0,
+                        247.0,
                         110.0
                     ],
                     "viewvisibility": 1,

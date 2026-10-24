@@ -15,11 +15,12 @@ two-complex-field packing: R,G = Re,Im of E-hat; B,A = Re,Im of I-hat. FR-002):
                                                                     (nl -> hold feedback)
                                                               nl -> enc (render resolution)
   seed  hash noise (Param salt): R/G = reseed-E/I channels, B/A = per-frame Box-Muller uniforms
-  pass  hold last state, or reseed from the noise (Param reseed)
+  pass  hold last state (R = E, B = I; G = Ve, A = Vi habituation memory, reseeds to 0), or reseed the fields from the noise (Param reseed)
   fx/fy/iy/ix  separable DFT (generated: src/f_wc/gen_dft.py, the shared f_vf_fluid template)
   spec  per-bin kernel gains exp(-sigma^2 k^2 / 2), E pair vs I pair (Param sig_i; FR-010)
-  nl    sigmoid coupling + per-frame noise + E-only drive, dt/TE|TI relaxation + containment
-        (Param dt, ne, drive_gain, drv_conn; FR-003)
+  nl    sigmoid coupling + per-frame noise + E-only drive, dt/TE|TI relaxation + containment;
+        Ve/Vi relax toward the rates (50/100 frames, Rule Ex. 11) and subtract at depth habit
+        (0 = shipped dynamics, G/A pinned to 0) (Param dt, ne, drive_gain, drv_conn, habit; FR-003/G5)
   enc   render-res retinotopic resample + display map + bypass gate (Param sharp, bypass_gate)
 
 The `r draw` bang goes to seed, pass and enc (draw_triggers); it ALSO increments the noise
@@ -33,8 +34,11 @@ exists -- relaxation toward a bounded sigmoid -- so the ceiling is aesthetic, T0
 is the grain (sigma_I in pixels, sigma_E slaved at sigma_I/1.45): low = coherent broken
 stripes ("stripe glass"), high = disordered labyrinth (the Phase-0 region map).  `drive_gain`
 is scene strength (a gain-role dial; 0 = free US-1 labyrinth, the unconnected drive inlet is
-neutral mid-gray via the vs_inState flag; FR-006/G3).  `sharp` blends the output map from
-soft to hard-edged (enc stage, the f_ks shape).  The output size follows the render size
+neutral mid-gray via the vs_inState flag; FR-006/G3).  `habituation` (G5/T052) is slow
+subtractive fatigue: the Ve/Vi adaptation memory rides the state texture's spare G/A
+channels, 0 = free run, higher steadies the field mean against long soak drift (and nudges
+the usable drive band upward).  `sharp` blends the output map from soft to hard-edged (enc
+stage, the f_ks shape).  The output size follows the render size
 (`r dim` into enc, @adapt 0).  `reset` (a button, a `reset` message or a message on the
 control inlet) reseeds both fields from fresh noise; it also fires once on load.  Bypass
 follows f_chladni: black, alpha 1, and the solver keeps running underneath.
@@ -50,7 +54,7 @@ patcher = {
     "title":              "Wilson-Cowan",
     "signal_type":        "luma out",
 
-    "presentation_width":  210,             # 4 dials + reset; T030 confirms the look
+    "presentation_width":  247,             # 5 dials + reset (T052/G5 adds Habituation; was 210)
     "presentation_height": 110,
 
     "archetype": "source",
@@ -70,6 +74,9 @@ patcher = {
         {"name": "drive_gain", "type": "float", "min": 0.0, "max": 2.0, "default": 0.0,
          "label": "Drive", "pix_target": "nl",
          "hint": "Scene strength: 0 = pure hallucination; ~1.5 = the drive inlet imprints (normal vision)"},
+        {"name": "habituation", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0,
+         "label": "Habituation", "pix_attr": "habit", "pix_target": "nl",
+         "hint": "Fatigue: slow negative feedback on the activity (T052/G5). 0 = free run; higher steadies the mean over time"},
         {"name": "sharp", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "Sharp", "pix_target": "enc",
          "hint": "Edge sharpness: 0 = soft gradients, 1 = hard-edged cells (0.5 keeps the free labyrinth readable over time)"},
@@ -174,10 +181,10 @@ patcher["raw_boxes"] = [
     # render size: the vs_mixer_3 convention (@adapt 0, `r dim` -> the pix); the message is "dim W H"
     _obj(15, "r dim", 0, 1, [330.0, 320.0, 40.0, 22.0]),
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[190.0, 46.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[227.0, 46.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[179.0, 24.0, 50.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[216.0, 24.0, 50.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b", 1, 2, [90.0, 380.0, 40.0, 22.0], ["bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
@@ -193,7 +200,7 @@ patcher["raw_boxes"] = [
 ]
 patcher["raw_lines"] = [
     _line(15, 0, "obj-5", 0),        # r dim -> enc: the output follows the render size
-    _line("obj-4", 4, 3, 0),         # route: `reset` -> trigger   (route outlet 4: rate, texture, drive_gain, sharp, reset)
+    _line("obj-4", 5, 3, 0),         # route: `reset` -> trigger   (route outlet 5: rate, texture, drive_gain, habituation, sharp, reset)
     _line(1, 0, 3, 0),               # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
     _line(3, 0, 7, 0), _line(7, 0, "obj-52", 0),    # trigger right -> reseed 1 -> pass
