@@ -1,6 +1,11 @@
 # HANDOFF
 
-## 2026-10-24 (late morning): f_wc enc sampler upgraded — Catmull-Rom 4x4 (pixelation fix)
+## 2026-10-24 (noon): f_wc enc now 2x2 SSAA over the Catmull-Rom taps
+
+- Matt: "better, but still blocky around the edges." Diagnosis: with the values smooth, the remaining stair is CONTOUR-position quantization — near-binary fields on a 256² grid have edges pinned to texels. enc now averages mapE at 4 quarter-pixel offsets per output pixel (SSAA; GenExpr function form, mirror refactored identically — offline green). If still steppy live at high Sharp: the ceiling is the 256² solver itself → 512² is a cost question (2.45 ms @256² measured; unmeasured at 512²) for the bench session.
+- Bench debt: chain-vs-mirror habit leg, live looks, enc leg now diffs cubic+SSAA.
+
+## 2026-10-24 (late morning): f_wc enc sampler upgraded## 2026-10-24 (late morning): f_wc enc sampler upgraded — Catmull-Rom 4x4 (pixelation fix)
 
 - Matt's 1920x1080 grab showed ~30px blocks with sharp 0 — the enc bilinear's C0 facets (not upscale, not Sharp). Now: bicubic `codebox_enc.gen` (inline CR weights — caught a weight-bug via test_wc's radial-constancy test mid-ship; weights now verified sum-1), mirror `_tap16` matching, proof render `scratch/wc_enc/cubic_c1.png` smooth. Bench note: enc leg now diffs a CUBIC sampler. r_soft stays bench-vary (message `#0_wc_enc` `param r_soft 0.35` for the calm disc; 0.0 = the parity-vortex look).
 - f_wc now at 15 controls; all named offline checks green.

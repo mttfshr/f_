@@ -1,16 +1,18 @@
 // codebox_enc.gen -- f_wc stage 7: the inverse retinotopic resample. Maps each RENDER-res
 // output pixel's visual-field polar coords (r, theta) to cortical (u, v) =
-// (k_ecc*log(1 + r/r0), k_ang*theta) and samples the E field there, periodic in both
-// cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).
+// (k_ecc*log(1 + sqrt(r^2 + r_soft^2)/r0), k_ang*theta) and samples the E field there,
+// periodic in both cortical axes. Runs at RENDER resolution (@adapt 0; FR-007/FR-013).
 // Mirror: tests/modules/wc/wc_mirror.encode(); record: tests/records/wc_retinotopy.py.
 //
 // Inputs: in1 = the `r draw` bang (not referenced here; it triggers every frame and gives
 // this pix the render-context size), in2 = the convolved/current state (R = E, from the nl
 // stage).
-//   - the cortical sample is a manual periodic 4-tap (the f_ks enc shape): exact at any
-//     output size, including smaller than 256 where hardware sample() would snap; v wraps at
-//     the theta seam, u at the far log edge
 //   - cortical convention (the record): u (eccentricity) = ROWS, v (angle) = COLUMNS
+//   - Catmull-Rom 4x4 taps (2026-10-24): bilinear was C0, so texel-boundary slope kinks
+//     faceted at ~7 screen px per cortical texel. CR is C1. Periodic in both axes.
+//   - 2x2 SSAA (2026-10-24, Matt's second screenshot): at high contrast the contour pins
+//     to cortical texel positions and NO interpolation fixes position quantization;
+//     averaging four quarter-pixel evaluations anti-aliases the contour.
 //   - map constants (T033 settled 2026-10-23; UN-BAKED 2026-10-23 as dials, gate:
 //     Matt reopened T033's no-exposure; defaults now the HTML-parity set
 //     2026-10-24 for direct comparison with WC_Example_10_fullscreen.html --
@@ -19,19 +21,66 @@
 //     NOT a settled retune: after the comparison the display corner ships again.
 //     r_max 4 stays baked (theirs is 1.41: narrower field).
 //   - FOVEAL SOFTENING (2026-10-24, Matt's live report -- the center pixelated):
-//     u = k_ecc.ln(1 + sqrt(r^2 + r_soft^2)/r0) instead of the raw r -- for
-//     r << r_soft the cortical position flattens to a constant, so the log-
-//     singularity vortex becomes a calm disc (radial du/dr no longer compresses
-//     cortical periods past the render Nyquist); r >> r_soft is untouched.
+//     for r << r_soft the cortical position flattens to a constant, so the log-
+//     singularity vortex becomes a calm disc; r >> r_soft is untouched.
 //     r_soft is a bench-vary Param (the amp/ne precedent); set to 0.35 for the
 //     calm disc, 0.0 for the HTML-parity comparison (current default).
-//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate, soft = clamp(E);
-//     sharp (0..1) blends toward the f_ks crisp S-curve; the SHIPPED default is 0.5 -- the
-//     plain soft map drifts toward white as the field mean wanders over ~30 s (Phase-2 soak),
-//     and the half-crisp blend keeps the free labyrinth readable long-term
+//   - display mapping SETTLED (G4, 2026-10-23): E is already a 0..1 rate; contrast
+//     (G8a, bit-neutral at 1) stretches about mid-gray; sharp (0..1) blends toward
+//     the f_ks crisp S-curve; shipped default sharp 0.5 (Phase-2 soak).
 //   - non-finite E maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)
 //   - bypass_gate = 1 outputs black with alpha 1 (the f_chladni generator convention); the
 //     solver keeps running upstream. The Param is never named `bypass` (native pix attribute)
+
+// mapE(nx, ny): one evaluation of the retinotopic map + Catmull-Rom sample of the E
+// field at NORMALIZED output coords. Functions declared before Params (GenExpr rule).
+mapE(nx, ny) {
+	pxx = (nx * 2 - 1) * 4;
+	pyy = (ny * 2 - 1) * 4;
+	r, theta = cartopol(pxx, pyy);
+	cu = fract(k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0) / twopi);
+	cv = fract(k_ang * theta / twopi);
+	fx = cv * 256 - 0.5;
+	fy = cu * 256 - 0.5;
+	x0 = floor(fx);
+	y0 = floor(fy);
+	tx = fx - x0;
+	ty = fy - y0;
+	wxa = tx * (tx * (1 - 0.5 * tx) - 0.5);      // Catmull-Rom x weights (sum to 1)
+	wxb = tx * tx * (1.5 * tx - 2.5) + 1;
+	wxc = tx * (tx * (2.0 - 1.5 * tx) + 0.5);
+	wxd = tx * tx * (0.5 * tx - 0.5);
+	wya = ty * (ty * (1 - 0.5 * ty) - 0.5);      // same weights at ty
+	wyb = ty * ty * (1.5 * ty - 2.5) + 1;
+	wyc = ty * (ty * (2.0 - 1.5 * ty) + 0.5);
+	wyd = ty * ty * (0.5 * ty - 0.5);
+	x0m = wrap(x0 - 1, 0, 256);
+	xa = wrap(x0, 0, 256);
+	xb = wrap(x0 + 1, 0, 256);
+	x1p = wrap(x0 + 2, 0, 256);
+	y0m = wrap(y0 - 1, 0, 256);
+	ya = wrap(y0, 0, 256);
+	yb = wrap(y0 + 1, 0, 256);
+	y1p = wrap(y0 + 2, 0, 256);
+	rowa = wxa * nearest(in2, vec((x0m + 0.5) / 256, (y0m + 0.5) / 256)).x
+	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (y0m + 0.5) / 256)).x
+	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (y0m + 0.5) / 256)).x
+	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (y0m + 0.5) / 256)).x;
+	rowb = wxa * nearest(in2, vec((x0m + 0.5) / 256, (ya + 0.5) / 256)).x
+	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (ya + 0.5) / 256)).x
+	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (ya + 0.5) / 256)).x
+	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (ya + 0.5) / 256)).x;
+	rowc = wxa * nearest(in2, vec((x0m + 0.5) / 256, (yb + 0.5) / 256)).x
+	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (yb + 0.5) / 256)).x
+	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (yb + 0.5) / 256)).x
+	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (yb + 0.5) / 256)).x;
+	rowd = wxa * nearest(in2, vec((x0m + 0.5) / 256, (y1p + 0.5) / 256)).x
+	     + wxb * nearest(in2, vec((xa  + 0.5) / 256, (y1p + 0.5) / 256)).x
+	     + wxc * nearest(in2, vec((xb  + 0.5) / 256, (y1p + 0.5) / 256)).x
+	     + wxd * nearest(in2, vec((x1p + 0.5) / 256, (y1p + 0.5) / 256)).x;
+	return wya * rowa + wyb * rowb + wyc * rowc + wyd * rowd;
+}
+
 Param bypass_gate(0);
 Param sharp(0.5);
 Param contrast(1.0);
@@ -40,59 +89,9 @@ Param k_ang(1);
 Param r0(0.003);
 Param r_soft(0.0);
 
-//     4-tap bilinear was C0: at ~7 screen px per cortical texel its texel-boundary slope
-//     kinks read as facets (1920x1080 screenshot). Catmull-Rom 4x4 taps are C1 -- same
-//     data, smooth reconstruction. Periodic in both axes.
-//     (weights written inline -- GenExpr wants functions declared before Params)
-
-px = (norm.x * 2 - 1) * 4;
-py = (norm.y * 2 - 1) * 4;
-r, theta = cartopol(px, py);
-u = k_ecc * log(1 + sqrt(r * r + r_soft * r_soft) / r0);
-v = k_ang * theta;
-cu = fract(u / twopi);
-cv = fract(v / twopi);
-
-N = 256;
-fx = cv * N - 0.5;
-fy = cu * N - 0.5;
-x0 = floor(fx);
-y0 = floor(fy);
-tx = fx - x0;
-ty = fy - y0;
-wxa = tx * (tx * (1 - 0.5 * tx) - 0.5);      // Catmull-Rom x weights
-wxb = tx * tx * (1.5 * tx - 2.5) + 1;
-wxc = tx * (tx * (2.0 - 1.5 * tx) + 0.5);
-wxd = tx * tx * (0.5 * tx - 0.5);
-wya = ty * (ty * (1 - 0.5 * ty) - 0.5);      // same weights at ty
-wyb = ty * ty * (1.5 * ty - 2.5) + 1;
-wyc = ty * (ty * (2.0 - 1.5 * ty) + 0.5);
-wyd = ty * ty * (0.5 * ty - 0.5);
-x0m = wrap(x0 - 1, 0, N);
-xa = wrap(x0, 0, N);
-xb = wrap(x0 + 1, 0, N);
-x1p = wrap(x0 + 2, 0, N);
-y0m = wrap(y0 - 1, 0, N);
-ya = wrap(y0, 0, N);
-yb = wrap(y0 + 1, 0, N);
-y1p = wrap(y0 + 2, 0, N);
-rowa = wxa * nearest(in2, vec((x0m + 0.5) / N, (y0m + 0.5) / N)).x
-     + wxb * nearest(in2, vec((xa  + 0.5) / N, (y0m + 0.5) / N)).x
-     + wxc * nearest(in2, vec((xb  + 0.5) / N, (y0m + 0.5) / N)).x
-     + wxd * nearest(in2, vec((x1p + 0.5) / N, (y0m + 0.5) / N)).x;
-rowb = wxa * nearest(in2, vec((x0m + 0.5) / N, (ya + 0.5) / N)).x
-     + wxb * nearest(in2, vec((xa  + 0.5) / N, (ya + 0.5) / N)).x
-     + wxc * nearest(in2, vec((xb  + 0.5) / N, (ya + 0.5) / N)).x
-     + wxd * nearest(in2, vec((x1p + 0.5) / N, (ya + 0.5) / N)).x;
-rowc = wxa * nearest(in2, vec((x0m + 0.5) / N, (yb + 0.5) / N)).x
-     + wxb * nearest(in2, vec((xa  + 0.5) / N, (yb + 0.5) / N)).x
-     + wxc * nearest(in2, vec((xb  + 0.5) / N, (yb + 0.5) / N)).x
-     + wxd * nearest(in2, vec((x1p + 0.5) / N, (yb + 0.5) / N)).x;
-rowd = wxa * nearest(in2, vec((x0m + 0.5) / N, (y1p + 0.5) / N)).x
-     + wxb * nearest(in2, vec((xa  + 0.5) / N, (y1p + 0.5) / N)).x
-     + wxc * nearest(in2, vec((xb  + 0.5) / N, (y1p + 0.5) / N)).x
-     + wxd * nearest(in2, vec((x1p + 0.5) / N, (y1p + 0.5) / N)).x;
-au = wya * rowa + wyb * rowb + wyc * rowc + wyd * rowd;
+q = 0.25 / dim;
+au = 0.25 * (mapE(norm.x - q.x, norm.y - q.y) + mapE(norm.x - q.x, norm.y + q.y)
+           + mapE(norm.x + q.x, norm.y - q.y) + mapE(norm.x + q.x, norm.y + q.y));
 
 au = switch(abs(au) < 1e30, au, 0);
 soft = clamp((clamp(au, 0, 1) - 0.5) * contrast + 0.5, 0, 1);   // G8a: stretch about mid; contrast = 1 is bit-neutral

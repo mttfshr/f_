@@ -317,7 +317,19 @@ come from an upstream module — it must be fresh per 256² solver texel inside 
 
 ## Record
 
-- 2026-10-24 (morning, cont.): **BICUBIC enc sampling (the 1920x1080 pixelation).**
+- 2026-10-24 (late morning, cont.): **2x2 SSAA in enc (Matt: still blocky around
+  edges at 1920x1080).** CR smoothing fixed value kinks, but at high contrast the
+  contour POSITION is quantized to cortical texels — no interpolation fixes that.
+  enc now evaluates mapE at 4 quarter-pixel offsets (q = 0.25/dim) and averages
+  (mapE factored as a GenExpr function declared before Params; the seed codebox's
+  rule). Mirror encode() refactored the same way (_mapE helper + the SSAA loop).
+  Offline green (drift, contracts, test_wc 10/10); at bench-relevant state contrast
+  the proof render is unchanged vs CR alone (correct — the AA matters at the Sharp
+  curve's edge frequencies). If edges STILL step at 2x2, the honest ceiling is the
+  256^2 solver grid: solver 512^2 is the remaining move (~4x cost — the T024 cost
+  number was 2.45 ms/frame at 256^2; unmeasured at 512^2) and needs a bench cost
+  measurement first, not a guess.
+- 2026-10-24 (morning, cont.): **BICUBIC enc sampling- 2026-10-24 (morning, cont.): **BICUBIC enc sampling (the 1920x1080 pixelation).**
   Matt: blocks ~30 screen px at render 1920x1080, sharp 0 — not window upscaling, not the
   S-curve: bilinear _tap4 is C0, so texel-boundary slope kinks facet the ~7 screen-px/texel
   regions. `codebox_enc.gen` now samples Catmull-Rom 4x4 (inline weights; a caught-here bug:
