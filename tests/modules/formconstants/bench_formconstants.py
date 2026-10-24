@@ -170,18 +170,29 @@ def test_noise_boxmuller_gpu_order():
                   "na = nearest(in1, norm).z * 0.999 + 0.0001;\n"
                   "nb = nearest(in1, norm).w * 0.999 + 0.0001;\n"
                   "nx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);\n"
-                  "out1 = vec(nx, nx, nx, 1);")
+                  "out1 = vec(na, nb, nx, 1);")
     out, r = bc.run_pass(code_noise, [tex_noise], dim=(N, N), params={"dt": 1.0},
                          timeout_ms=30000)
     assert r["status"] == "ok", f"boxmuller leg failed: {r['errors']}"
-    gnx_gpu = out[..., 0]
+    gna = out[..., 0]
+    gnb = out[..., 1]
+    gnx_gpu = out[..., 2]
     gnx_sim = boxmuller(tex_noise[..., 2], tex_noise[..., 3], 1.0)
     d = np.abs(gnx_gpu - gnx_sim)
     yx = np.unravel_index(int(d.argmax()), d.shape)
+    sna = tex_noise[..., 2][yx] * np.float32(0.999) + np.float32(0.0001)
+    print(f"    ...  gpu-read na {float(gna[yx]):.8f} nb {float(gnb[yx]):.8f} "
+          f"vs array na {float(sna):.8f} nb {float(tex_noise[..., 3][yx]):.8f}")
+    # same-formula value from the GPU's own readback (numpy float64)
+    ref = np.sqrt(-2 * np.log(float(gna[yx]))) * np.cos(2 * np.pi * float(gnb[yx]))
+    print(f"    ...  gpu nx {float(gnx_gpu[yx]):.6f} vs float64-of-gpu-readback {ref:.6f}")
     note("boxmuller gpu-vs-sim max diff",
          f"{float(d.max()):.3e} at {yx}: gpu {float(gnx_gpu[yx]):.6f} sim {float(gnx_sim[yx]):.6f} "
          f"(na {float(tex_noise[..., 2][yx]):.6f} nb {float(tex_noise[..., 3][yx]):.6f})")
     note("boxmuller mean abs diff", f"{float(d.mean()):.3e}")
+    note("readback na/nb max channel drift",
+         f"na {float(np.abs(gna - (tex_noise[..., 2] * np.float32(0.999) + np.float32(0.0001))).max()):.2e} "
+         f"nb {float(np.abs(gnb - tex_noise[..., 3]).max()):.2e}")
     check("GPU Box-Muller matches the bench simulation", float(d.max()), 1e-3)
 
 
