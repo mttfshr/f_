@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						702.0,
+						952.0,
 						30.0,
 						30.0
 					]
@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 11,
+					"numoutlets": 12,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -94,15 +95,15 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						799.0,
+						871.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period sim_rate pulse_mix pulse_gain grain_scale out_mode pulse_space out_view freeze_on reset"
+					"text": "route pulse_depth pulse_period sim_rate pulse_mix pulse_gain grain_scale deflicker_amt out_mode pulse_space out_view freeze_on reset"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-50",
+					"id": "obj-52",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -188,7 +189,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-53",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -307,7 +308,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-52",
+					"id": "obj-54",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -486,7 +487,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-55",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -605,7 +606,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-56",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -724,7 +725,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-55",
+					"id": "obj-57",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -903,7 +904,483 @@
 			},
 			{
 				"box": {
-					"id": "obj-5",
+					"id": "obj-58",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_formconstants -- mean1 (Phase D T075 De-flicker, Matt 2026-10-25). GENERATED literal taps\n// (regenerate if the solver size changes, T064). 1024 x 1024 -> 128 x 128: each output texel is the\n// mean of its 8 x 8 input block. Each tap is a bilinear `sample` exactly on a texel corner (a 2 x 2\n// average, weights 0.25), 4 x 4 taps cover the block. Kept to <= 16 taps per stage: a 256-tap\n// version broke jit.gl.pix's shader translator ('stack overflow (too many captures)', 2026-10-25).\n// Chain: mean1 1024->128, mean2 ->16, mean3 ->2, mean4 ->1. Mirror: fc_parity_mirror.frame_means.\nbx = floor(norm.x * 128) * 8;\nby = floor(norm.y * 128) * 8;\nacc = vec(0, 0, 0, 0);\nacc = acc + sample(in1, vec((bx + 1) / 1024, (by + 1) / 1024));\nacc = acc + sample(in1, vec((bx + 1) / 1024, (by + 3) / 1024));\nacc = acc + sample(in1, vec((bx + 1) / 1024, (by + 5) / 1024));\nacc = acc + sample(in1, vec((bx + 1) / 1024, (by + 7) / 1024));\nacc = acc + sample(in1, vec((bx + 3) / 1024, (by + 1) / 1024));\nacc = acc + sample(in1, vec((bx + 3) / 1024, (by + 3) / 1024));\nacc = acc + sample(in1, vec((bx + 3) / 1024, (by + 5) / 1024));\nacc = acc + sample(in1, vec((bx + 3) / 1024, (by + 7) / 1024));\nacc = acc + sample(in1, vec((bx + 5) / 1024, (by + 1) / 1024));\nacc = acc + sample(in1, vec((bx + 5) / 1024, (by + 3) / 1024));\nacc = acc + sample(in1, vec((bx + 5) / 1024, (by + 5) / 1024));\nacc = acc + sample(in1, vec((bx + 5) / 1024, (by + 7) / 1024));\nacc = acc + sample(in1, vec((bx + 7) / 1024, (by + 1) / 1024));\nacc = acc + sample(in1, vec((bx + 7) / 1024, (by + 3) / 1024));\nacc = acc + sample(in1, vec((bx + 7) / 1024, (by + 5) / 1024));\nacc = acc + sample(in1, vec((bx + 7) / 1024, (by + 7) / 1024));\nout1 = acc / 16;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						630.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_fc_mean1 @adapt 0 @dim 128 128 @type float32",
+					"varname": "#0_fc_mean1"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-59",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_formconstants -- mean2 (Phase D T075 De-flicker, Matt 2026-10-25). GENERATED literal taps\n// (regenerate if the solver size changes, T064). 128 x 128 -> 16 x 16: each output texel is the\n// mean of its 8 x 8 input block. Each tap is a bilinear `sample` exactly on a texel corner (a 2 x 2\n// average, weights 0.25), 4 x 4 taps cover the block. Kept to <= 16 taps per stage: a 256-tap\n// version broke jit.gl.pix's shader translator ('stack overflow (too many captures)', 2026-10-25).\n// Chain: mean1 1024->128, mean2 ->16, mean3 ->2, mean4 ->1. Mirror: fc_parity_mirror.frame_means.\nbx = floor(norm.x * 16) * 8;\nby = floor(norm.y * 16) * 8;\nacc = vec(0, 0, 0, 0);\nacc = acc + sample(in1, vec((bx + 1) / 128, (by + 1) / 128));\nacc = acc + sample(in1, vec((bx + 1) / 128, (by + 3) / 128));\nacc = acc + sample(in1, vec((bx + 1) / 128, (by + 5) / 128));\nacc = acc + sample(in1, vec((bx + 1) / 128, (by + 7) / 128));\nacc = acc + sample(in1, vec((bx + 3) / 128, (by + 1) / 128));\nacc = acc + sample(in1, vec((bx + 3) / 128, (by + 3) / 128));\nacc = acc + sample(in1, vec((bx + 3) / 128, (by + 5) / 128));\nacc = acc + sample(in1, vec((bx + 3) / 128, (by + 7) / 128));\nacc = acc + sample(in1, vec((bx + 5) / 128, (by + 1) / 128));\nacc = acc + sample(in1, vec((bx + 5) / 128, (by + 3) / 128));\nacc = acc + sample(in1, vec((bx + 5) / 128, (by + 5) / 128));\nacc = acc + sample(in1, vec((bx + 5) / 128, (by + 7) / 128));\nacc = acc + sample(in1, vec((bx + 7) / 128, (by + 1) / 128));\nacc = acc + sample(in1, vec((bx + 7) / 128, (by + 3) / 128));\nacc = acc + sample(in1, vec((bx + 7) / 128, (by + 5) / 128));\nacc = acc + sample(in1, vec((bx + 7) / 128, (by + 7) / 128));\nout1 = acc / 16;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						680.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_fc_mean2 @adapt 0 @dim 16 16 @type float32",
+					"varname": "#0_fc_mean2"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-60",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_formconstants -- mean3 (Phase D T075 De-flicker, Matt 2026-10-25). GENERATED literal taps\n// (regenerate if the solver size changes, T064). 16 x 16 -> 2 x 2: each output texel is the\n// mean of its 8 x 8 input block. Each tap is a bilinear `sample` exactly on a texel corner (a 2 x 2\n// average, weights 0.25), 4 x 4 taps cover the block. Kept to <= 16 taps per stage: a 256-tap\n// version broke jit.gl.pix's shader translator ('stack overflow (too many captures)', 2026-10-25).\n// Chain: mean1 1024->128, mean2 ->16, mean3 ->2, mean4 ->1. Mirror: fc_parity_mirror.frame_means.\nbx = floor(norm.x * 2) * 8;\nby = floor(norm.y * 2) * 8;\nacc = vec(0, 0, 0, 0);\nacc = acc + sample(in1, vec((bx + 1) / 16, (by + 1) / 16));\nacc = acc + sample(in1, vec((bx + 1) / 16, (by + 3) / 16));\nacc = acc + sample(in1, vec((bx + 1) / 16, (by + 5) / 16));\nacc = acc + sample(in1, vec((bx + 1) / 16, (by + 7) / 16));\nacc = acc + sample(in1, vec((bx + 3) / 16, (by + 1) / 16));\nacc = acc + sample(in1, vec((bx + 3) / 16, (by + 3) / 16));\nacc = acc + sample(in1, vec((bx + 3) / 16, (by + 5) / 16));\nacc = acc + sample(in1, vec((bx + 3) / 16, (by + 7) / 16));\nacc = acc + sample(in1, vec((bx + 5) / 16, (by + 1) / 16));\nacc = acc + sample(in1, vec((bx + 5) / 16, (by + 3) / 16));\nacc = acc + sample(in1, vec((bx + 5) / 16, (by + 5) / 16));\nacc = acc + sample(in1, vec((bx + 5) / 16, (by + 7) / 16));\nacc = acc + sample(in1, vec((bx + 7) / 16, (by + 1) / 16));\nacc = acc + sample(in1, vec((bx + 7) / 16, (by + 3) / 16));\nacc = acc + sample(in1, vec((bx + 7) / 16, (by + 5) / 16));\nacc = acc + sample(in1, vec((bx + 7) / 16, (by + 7) / 16));\nout1 = acc / 16;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						730.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_fc_mean3 @adapt 0 @dim 2 2 @type float32",
+					"varname": "#0_fc_mean3"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-61",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_formconstants -- mean4 (Phase D T075 De-flicker, Matt 2026-10-25). GENERATED literal taps\n// (regenerate if the solver size changes, T064). 2 x 2 -> 1 x 1: each output texel is the\n// mean of its 2 x 2 input block. Each tap is a bilinear `sample` exactly on a texel corner (a 2 x 2\n// average, weights 0.25), 1 x 1 taps cover the block. Kept to <= 16 taps per stage: a 256-tap\n// version broke jit.gl.pix's shader translator ('stack overflow (too many captures)', 2026-10-25).\n// Chain: mean1 1024->128, mean2 ->16, mean3 ->2, mean4 ->1. Mirror: fc_parity_mirror.frame_means.\nbx = floor(norm.x * 1) * 2;\nby = floor(norm.y * 1) * 2;\nacc = vec(0, 0, 0, 0);\nacc = acc + sample(in1, vec((bx + 1) / 2, (by + 1) / 2));\nout1 = acc / 1;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						780.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_fc_mean4 @adapt 0 @dim 1 1 @type float32",
+					"varname": "#0_fc_mean4"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-62",
 					"maxclass": "newobj",
 					"numinlets": 2,
 					"numoutlets": 2,
@@ -966,7 +1443,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_formconstants PARITY render stage (spec Revision 2, S7 + S8).\n// Port of the page's `retinalmap` shader on the module's output size: z = canvas coordinate in\n// [-1, 1]^2 of the SQUARE canvas (the page's CSS stretch crops the long axis), then the state is\n// sampled at (atan2(z.y, z.x), ln |z|) / 2 pi with LINEAR filtering and REPEAT wrap. The bare\n// complex log: conformal, one texture width per revolution; over most of the screen it MAGNIFIES\n// the 1024^2 field (the silky read). No foveal softening, contrast or sharp in the parity build.\n// Display (S8): the sampled state's E, I and contour channels, alpha 1 -- then the output mode\n// (Phase D T060, Param out_mode from the Output menu): 0 RGB = (E, I, contour) as the page; 1 E,\n// 2 contour, 3 Rec. 709 luma of that RGB, each as a gray (v, v, v, 1). Branch-free selection.\n// Mirror: fc_parity_mirror.encode_mode() (encode() for mode 0).\n// Phase D T074 (Matt, 2026-10-25): Param out_view from the View menu -- 0 Retinal (the map above), 1\n// Unwrapped: the solver grid itself (cortical space) (angle across, log-radius up, one period each; periodic in\n// both axes, so it tiles) -- the input for f_droste or any downstream log-polar wrap.\n// Inputs: in1 = the `r draw` bang (unused), in2 = the state (from nl).\n//   - output size: Params ow, oh (raw `r dim` -> route -> unpack -> prepend param); NOT the gen `dim`\n//     global (it is not an input texture's size). State grid size: Param n (default 1024 = @dim)\n//   - L = max(ow, oh); zx = (2x - 1) ow/L, zy = (2y - 1) oh/L with texel-centred norm\n//   - manual bilinear with explicit wrap on the texel index (the verified pattern); cortical axes:\n//     texture x = angle, texture y = log radius (the mirror's convention)\n//   - r floored at 1e-6 (ln 0): the page leaves the exact centre undefined\n//   - bypass_gate = 1 outputs black with alpha 1; the solver keeps running upstream. Never a Param\n//     named `bypass` (native pix attribute)\n//   - the cartopol multi-assign is the construct the verified f_formconstants enc bench (8/8) used\nParam bypass_gate(0);\nParam ow(1024);\nParam oh(1024);\nParam n(1024);\nParam out_mode(1);\nParam out_view(0);\n\nlng = max(ow, oh);\nzx = (norm.x * 2 - 1) * ow / lng;\nzy = (norm.y * 2 - 1) * oh / lng;\nr, theta = cartopol(zx, zy);\nrr = max(r, 0.000001);\nu = mix(theta / twopi, norm.x, out_view);\nv = mix(log(rr) / twopi, norm.y, out_view);\n\nfx = u * n - 0.5;\nfy = v * n - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa0 = x0 - n * floor(x0 / n);\nxb0 = (x0 + 1) - n * floor((x0 + 1) / n);\nya0 = y0 - n * floor(y0 / n);\nyb0 = (y0 + 1) - n * floor((y0 + 1) / n);\ncxa = (xa0 + 0.5) / n;\ncxb = (xb0 + 0.5) / n;\ncya = (ya0 + 0.5) / n;\ncyb = (yb0 + 0.5) / n;\nt00 = nearest(in2, vec(cxa, cya));\nt10 = nearest(in2, vec(cxb, cya));\nt01 = nearest(in2, vec(cxa, cyb));\nt11 = nearest(in2, vec(cxb, cyb));\nle = (1 - ty) * ((1 - tx) * t00.x + tx * t10.x) + ty * ((1 - tx) * t01.x + tx * t11.x);\nli = (1 - ty) * ((1 - tx) * t00.y + tx * t10.y) + ty * ((1 - tx) * t01.y + tx * t11.y);\nlb = (1 - ty) * ((1 - tx) * t00.z + tx * t10.z) + ty * ((1 - tx) * t01.z + tx * t11.z);\nk = 1 - bypass_gate;\n\nlum = 0.2126 * le + 0.7152 * li + 0.0722 * lb;\nm1 = abs(out_mode - 1) < 0.5;\nm2 = abs(out_mode - 2) < 0.5;\nm3 = out_mode > 2.5;\ngv = m1 * le + m2 * lb + m3 * lum;\ngsel = out_mode > 0.5;\noc0 = mix(le, gv, gsel);\noc1 = mix(li, gv, gsel);\noc2 = mix(lb, gv, gsel);\n\nout1 = vec(oc0 * k, oc1 * k, oc2 * k, 1);\n",
+									"code": "// f_formconstants -- track (Phase D T075 De-flicker, Matt 2026-10-25): the \"usual\" brightness.\n// in1 = the current field means (mean4, 1 x 1), in2 = this stage's previous output (trackhold, cold).\n// A fresh texture reads alpha 0 -> take the current means; otherwise move a fixed fraction of the way toward\n// them each frame (literal 0.005 = fc_parity_mirror.TRACK_ALPHA, ~ 200 frames, a little over one pulse period). Output alpha 1.\n// Mirror: fc_parity_mirror.track_update.\ncur = nearest(in1, vec(0.5, 0.5));\nprv = nearest(in2, vec(0.5, 0.5));\nfresh = prv.w < 0.5;\nupd = prv + (cur - prv) * 0.005;\no = mix(upd, cur, fresh);\nout1 = vec(o.x, o.y, o.z, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1042,7 +1519,302 @@
 					},
 					"patching_rect": [
 						30.0,
-						630.0,
+						830.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_fc_track @adapt 0 @dim 1 1 @type float32",
+					"varname": "#0_fc_track"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-63",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							400.0,
+							300.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-2",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										100.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"source": [
+										"gen-obj-1",
+										0
+									],
+									"destination": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						880.0,
+						200.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_fc_thold @adapt 0 @dim 1 1 @type float32",
+					"varname": "#0_fc_thold"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-5",
+					"maxclass": "newobj",
+					"numinlets": 4,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-12",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										196.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 4"
+								}
+							},
+							{
+								"box": {
+									"code": "// codebox_enc.gen -- f_formconstants PARITY render stage (spec Revision 2, S7 + S8).\n// Port of the page's `retinalmap` shader on the module's output size: z = canvas coordinate in\n// [-1, 1]^2 of the SQUARE canvas (the page's CSS stretch crops the long axis), then the state is\n// sampled at (atan2(z.y, z.x), ln |z|) / 2 pi with LINEAR filtering and REPEAT wrap. The bare\n// complex log: conformal, one texture width per revolution; over most of the screen it MAGNIFIES\n// the 1024^2 field (the silky read). No foveal softening, contrast or sharp in the parity build.\n// Display (S8): the sampled state's E, I and contour channels, alpha 1 -- then the output mode\n// (Phase D T060, Param out_mode from the Output menu): 0 RGB = (E, I, contour) as the page; 1 E,\n// 2 contour, 3 Rec. 709 luma of that RGB, each as a gray (v, v, v, 1). Branch-free selection.\n// Mirror: fc_parity_mirror.encode_mode() (encode() for mode 0).\n// Phase D T074 (Matt, 2026-10-25): Param out_view from the View menu -- 0 Retinal (the map above), 1\n// Unwrapped: the solver grid itself (cortical space) (angle across, log-radius up, one period each; periodic in\n// both axes, so it tiles) -- the input for f_droste or any downstream log-polar wrap.\n// Inputs: in1 = the `r draw` bang (unused), in2 = the state (from nl).\n//   - output size: Params ow, oh (raw `r dim` -> route -> unpack -> prepend param); NOT the gen `dim`\n//     global (it is not an input texture's size). State grid size: Param n (default 1024 = @dim)\n//   - L = max(ow, oh); zx = (2x - 1) ow/L, zy = (2y - 1) oh/L with texel-centred norm\n//   - manual bilinear with explicit wrap on the texel index (the verified pattern); cortical axes:\n//     texture x = angle, texture y = log radius (the mirror's convention)\n//   - r floored at 1e-6 (ln 0): the page leaves the exact centre undefined\n//   - bypass_gate = 1 outputs black with alpha 1; the solver keeps running upstream. Never a Param\n//     named `bypass` (native pix attribute)\n//   - the cartopol multi-assign is the construct the verified f_formconstants enc bench (8/8) used\nParam bypass_gate(0);\nParam ow(1024);\nParam oh(1024);\nParam n(1024);\nParam out_mode(1);\nParam out_view(0);\nParam deflicker_amt(0);\n\nlng = max(ow, oh);\nzx = (norm.x * 2 - 1) * ow / lng;\nzy = (norm.y * 2 - 1) * oh / lng;\nr, theta = cartopol(zx, zy);\nrr = max(r, 0.000001);\nu = mix(theta / twopi, norm.x, out_view);\nv = mix(log(rr) / twopi, norm.y, out_view);\n\nfx = u * n - 0.5;\nfy = v * n - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa0 = x0 - n * floor(x0 / n);\nxb0 = (x0 + 1) - n * floor((x0 + 1) / n);\nya0 = y0 - n * floor(y0 / n);\nyb0 = (y0 + 1) - n * floor((y0 + 1) / n);\ncxa = (xa0 + 0.5) / n;\ncxb = (xb0 + 0.5) / n;\ncya = (ya0 + 0.5) / n;\ncyb = (yb0 + 0.5) / n;\nt00 = nearest(in2, vec(cxa, cya));\nt10 = nearest(in2, vec(cxb, cya));\nt01 = nearest(in2, vec(cxa, cyb));\nt11 = nearest(in2, vec(cxb, cyb));\nle = (1 - ty) * ((1 - tx) * t00.x + tx * t10.x) + ty * ((1 - tx) * t01.x + tx * t11.x);\nli = (1 - ty) * ((1 - tx) * t00.y + tx * t10.y) + ty * ((1 - tx) * t01.y + tx * t11.y);\nlb = (1 - ty) * ((1 - tx) * t00.z + tx * t10.z) + ty * ((1 - tx) * t01.z + tx * t11.z);\nk = 1 - bypass_gate;\n\n// Phase D T075 De-flicker (Matt 2026-10-25): in3 = the current field means (mean4), in4 = the usual\n// means (track). Per channel gain clamp(usual / cur, 0, 4), applied by deflicker_amt (0 = the source).\n// Until the tracker holds a value (alpha 0) the gains are 1. Mirror: deflicker_gains / encode_mode(gains=).\nfcur = nearest(in3, vec(0.5, 0.5));\nfus = nearest(in4, vec(0.5, 0.5));\nfamt = deflicker_amt * (fus.w > 0.5);\nle = le * mix(1, clamp(fus.x / max(fcur.x, 0.0001), 0, 4), famt);\nli = li * mix(1, clamp(fus.y / max(fcur.y, 0.0001), 0, 4), famt);\nlb = lb * mix(1, clamp(fus.z / max(fcur.z, 0.0001), 0, 4), famt);\n\nlum = 0.2126 * le + 0.7152 * li + 0.0722 * lb;\nm1 = abs(out_mode - 1) < 0.5;\nm2 = abs(out_mode - 2) < 0.5;\nm3 = out_mode > 2.5;\ngv = m1 * le + m2 * lb + m3 * lum;\ngsel = out_mode > 0.5;\noc0 = mix(le, gv, gsel);\noc1 = mix(li, gv, gsel);\noc2 = mix(lb, gv, gsel);\n\nout1 = vec(oc0 * k, oc1 * k, oc2 * k, 1);\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 4,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										3
+									],
+									"source": [
+										"gen-obj-12",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						250.0,
+						880.0,
 						200.0,
 						22.0
 					],
@@ -1063,7 +1835,7 @@
 						""
 					],
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						100.0,
 						56.0,
 						22.0
@@ -1095,7 +1867,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						915.5,
+						987.5,
 						260.0,
 						272.0,
 						150.0
@@ -1119,7 +1891,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						200.0,
 						80.0,
 						21.0
@@ -1150,7 +1922,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1225.5,
+						1297.5,
 						200.0,
 						60.0,
 						21.0
@@ -1182,7 +1954,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						232.0,
 						5.0,
 						5.0
@@ -1214,7 +1986,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1155.5,
+						1227.5,
 						232.0,
 						5.0,
 						5.0
@@ -1239,7 +2011,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						20.0,
 						60.0,
 						22.0
@@ -1257,7 +2029,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						50.0,
 						180.0,
 						22.0
@@ -1278,7 +2050,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						110.0,
 						80.0,
 						22.0
@@ -1297,7 +2069,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						140.0,
 						60.0,
 						22.0
@@ -1315,7 +2087,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						170.0,
 						80.0,
 						22.0
@@ -1333,7 +2105,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						200.0,
 						100.0,
 						22.0
@@ -2065,61 +2837,67 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.menu",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
 					"fontname": "Ableton Sans Light",
-					"hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray",
+					"hint": "De-flicker: 0 = the source's whole-field pumping; 1 = each frame held near its usual brightness (pattern unchanged)",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_enc::out_mode",
+					"param_connect": "#0_fc_enc::deflicker_amt",
 					"parameter_enable": 1,
 					"patching_rect": [
-						462.0,
+						478.5,
 						250.0,
-						60.0,
-						15.0
+						27.0,
+						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						37.0,
-						114.0,
-						45.0,
-						15.0
+						41.0,
+						100.0,
+						27.0,
+						43.0
 					],
 					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
 						"valueof": {
-							"parameter_enum": [
-								"RGB",
-								"E",
-								"Contour",
-								"Luma"
-							],
 							"parameter_initial": [
-								1.0
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "out_mode",
-							"parameter_mmax": 3.0,
+							"parameter_longname": "deflicker_amt",
+							"parameter_mmax": 1.0,
 							"parameter_mmin": 0.0,
-							"parameter_modmode": 0,
-							"parameter_shortname": "out_mode",
-							"parameter_type": 2,
-							"parameter_unitstyle": 0
+							"parameter_modmode": 3,
+							"parameter_shortname": "deflicker_amt",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "out_mode"
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "deflicker_amt"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-39",
 					"maxclass": "attrui",
-					"attr": "out_mode",
+					"attr": "deflicker_amt",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2155,9 +2933,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Output",
+					"text": "Deflick",
 					"textjustification": 1,
-					"varname": "lbl_out_mode"
+					"varname": "lbl_deflicker_amt"
 				}
 			},
 			{
@@ -2165,7 +2943,7 @@
 					"id": "obj-41",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
-					"hint": "Pulse texture space: Retinal = the image lands where you see it; Unwrapped = laid on the flat solver grid (WFG bands become rings / spokes)",
+					"hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray",
 					"numinlets": 1,
 					"numoutlets": 3,
 					"outlettype": [
@@ -2173,7 +2951,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::pulse_space",
+					"param_connect": "#0_fc_enc::out_mode",
 					"parameter_enable": 1,
 					"patching_rect": [
 						534.0,
@@ -2191,31 +2969,33 @@
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_enum": [
-								"Retinal",
-								"Unwrapped"
+								"RGB",
+								"E",
+								"Contour",
+								"Luma"
 							],
 							"parameter_initial": [
-								0.0
+								1.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "pulse_space",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "out_mode",
+							"parameter_mmax": 3.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 0,
-							"parameter_shortname": "pulse_space",
+							"parameter_shortname": "out_mode",
 							"parameter_type": 2,
 							"parameter_unitstyle": 0
 						}
 					},
-					"varname": "pulse_space"
+					"varname": "out_mode"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-42",
 					"maxclass": "attrui",
-					"attr": "pulse_space",
+					"attr": "out_mode",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2251,9 +3031,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Input",
+					"text": "Output",
 					"textjustification": 1,
-					"varname": "lbl_pulse_space"
+					"varname": "lbl_out_mode"
 				}
 			},
 			{
@@ -2261,7 +3041,7 @@
 					"id": "obj-44",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
-					"hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste",
+					"hint": "Pulse texture space: Retinal = the image lands where you see it; Unwrapped = laid on the flat solver grid (WFG bands become rings / spokes)",
 					"numinlets": 1,
 					"numoutlets": 3,
 					"outlettype": [
@@ -2269,7 +3049,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_enc::out_view",
+					"param_connect": "#0_fc_nl::pulse_space",
 					"parameter_enable": 1,
 					"patching_rect": [
 						606.0,
@@ -2295,23 +3075,23 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "out_view",
+							"parameter_longname": "pulse_space",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 0,
-							"parameter_shortname": "out_view",
+							"parameter_shortname": "pulse_space",
 							"parameter_type": 2,
 							"parameter_unitstyle": 0
 						}
 					},
-					"varname": "out_view"
+					"varname": "pulse_space"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-45",
 					"maxclass": "attrui",
-					"attr": "out_view",
+					"attr": "pulse_space",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2347,6 +3127,102 @@
 						50.0,
 						18.0
 					],
+					"text": "Input",
+					"textjustification": 1,
+					"varname": "lbl_pulse_space"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-47",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_enc::out_view",
+					"parameter_enable": 1,
+					"patching_rect": [
+						678.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						148.0,
+						114.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Retinal",
+								"Unwrapped"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "out_view",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "out_view",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "out_view"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-48",
+					"maxclass": "attrui",
+					"attr": "out_view",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						674.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-49",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						683.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						82.0,
+						50.0,
+						18.0
+					],
 					"text": "Space",
 					"textjustification": 1,
 					"varname": "lbl_out_view"
@@ -2366,7 +3242,7 @@
 					"param_connect": "#0_fc_nl::freeze_on",
 					"parameter_enable": 1,
 					"patching_rect": [
-						698.0,
+						770.0,
 						250.0,
 						20.0,
 						20.0
@@ -2406,7 +3282,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						686.5,
+						758.5,
 						180.0,
 						43.0,
 						18.0
@@ -2433,7 +3309,7 @@
 						""
 					],
 					"patching_rect": [
-						674.0,
+						746.0,
 						310.0,
 						68.0,
 						22.0
@@ -2443,7 +3319,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-47",
+					"id": "obj-50",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2454,7 +3330,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						130.0,
 						18.0,
 						12.0
@@ -2471,7 +3347,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-48",
+					"id": "obj-51",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2479,7 +3355,7 @@
 						""
 					],
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						160.0,
 						131.0,
 						22.0
@@ -2493,7 +3369,7 @@
 					"maxclass": "button",
 					"patching_rect": [
 						90.0,
-						792.0,
+						1042.0,
 						24.0,
 						24.0
 					],
@@ -2504,8 +3380,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						160.0,
-						106.0,
+						196.0,
+						44.0,
 						28.0,
 						28.0
 					],
@@ -2519,7 +3395,7 @@
 					"maxclass": "comment",
 					"patching_rect": [
 						90.0,
-						818.0,
+						1068.0,
 						50.0,
 						18.0
 					],
@@ -2529,8 +3405,8 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
-						82.0,
+						188.0,
+						20.0,
 						44.0,
 						18.0
 					],
@@ -2545,7 +3421,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						90.0,
-						852.0,
+						1102.0,
 						50.0,
 						22.0
 					],
@@ -2565,7 +3441,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						200.0,
-						802.0,
+						1052.0,
 						60.0,
 						22.0
 					],
@@ -2583,7 +3459,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						200.0,
-						827.0,
+						1077.0,
 						60.0,
 						22.0
 					],
@@ -2601,7 +3477,7 @@
 					"maxclass": "message",
 					"patching_rect": [
 						90.0,
-						892.0,
+						1142.0,
 						80.0,
 						22.0
 					],
@@ -2619,7 +3495,7 @@
 					"maxclass": "message",
 					"patching_rect": [
 						200.0,
-						922.0,
+						1172.0,
 						30.0,
 						22.0
 					],
@@ -2637,7 +3513,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						260.0,
-						892.0,
+						1142.0,
 						50.0,
 						22.0
 					],
@@ -2655,7 +3531,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						260.0,
-						922.0,
+						1172.0,
 						30.0,
 						22.0
 					],
@@ -2673,7 +3549,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						300.0,
-						922.0,
+						1172.0,
 						30.0,
 						22.0
 					],
@@ -2691,7 +3567,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						340.0,
-						922.0,
+						1172.0,
 						50.0,
 						22.0
 					],
@@ -2709,7 +3585,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						260.0,
-						952.0,
+						1202.0,
 						40.0,
 						22.0
 					],
@@ -2728,7 +3604,7 @@
 					"maxclass": "message",
 					"patching_rect": [
 						260.0,
-						982.0,
+						1232.0,
 						85.0,
 						22.0
 					],
@@ -2746,7 +3622,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						350.0,
-						952.0,
+						1202.0,
 						100.0,
 						22.0
 					],
@@ -2764,7 +3640,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						922.0,
+						1172.0,
 						30.0,
 						22.0
 					],
@@ -2782,7 +3658,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						70.0,
-						922.0,
+						1172.0,
 						30.0,
 						22.0
 					],
@@ -2800,7 +3676,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						952.0,
+						1202.0,
 						110.0,
 						22.0
 					],
@@ -2818,7 +3694,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						480.0,
-						792.0,
+						1042.0,
 						40.0,
 						22.0
 					],
@@ -2836,7 +3712,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						530.0,
-						792.0,
+						1042.0,
 						60.0,
 						22.0
 					],
@@ -2855,7 +3731,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						530.0,
-						822.0,
+						1072.0,
 						50.0,
 						22.0
 					],
@@ -2874,7 +3750,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						480.0,
-						852.0,
+						1102.0,
 						105.0,
 						22.0
 					],
@@ -2892,7 +3768,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						590.0,
-						852.0,
+						1102.0,
 						105.0,
 						22.0
 					],
@@ -2949,7 +3825,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2961,7 +3837,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						0
 					]
 				}
@@ -3009,7 +3885,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						2
 					]
 				}
@@ -3033,31 +3909,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-47",
-						0
-					],
-					"destination": [
-						"obj-48",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-48",
-						0
-					],
-					"destination": [
-						"obj-5",
+						"obj-57",
 						0
 					]
 				}
@@ -3069,8 +3921,8 @@
 						0
 					],
 					"destination": [
-						"obj-52",
-						1
+						"obj-51",
+						0
 					]
 				}
 			},
@@ -3081,7 +3933,31 @@
 						0
 					],
 					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-52",
+						0
+					],
+					"destination": [
+						"obj-54",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-53",
+						0
+					],
+					"destination": [
+						"obj-54",
 						2
 					]
 				}
@@ -3089,30 +3965,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-52",
-						0
-					],
-					"destination": [
-						"obj-53",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
-						0
-					],
-					"destination": [
-						"obj-54",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-54",
 						0
 					],
@@ -3125,11 +3977,35 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-52",
+						"obj-55",
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-56",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-56",
+						0
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-54",
+						0
+					],
+					"destination": [
+						"obj-57",
 						1
 					]
 				}
@@ -3137,11 +4013,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-57",
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -3149,12 +4025,120 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-57",
 						0
 					],
 					"destination": [
 						"obj-5",
 						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-57",
+						0
+					],
+					"destination": [
+						"obj-58",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-58",
+						0
+					],
+					"destination": [
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-59",
+						0
+					],
+					"destination": [
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
+						0
+					],
+					"destination": [
+						"obj-61",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-61",
+						0
+					],
+					"destination": [
+						"obj-62",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-62",
+						0
+					],
+					"destination": [
+						"obj-63",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-63",
+						0
+					],
+					"destination": [
+						"obj-62",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-61",
+						0
+					],
+					"destination": [
+						"obj-5",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-62",
+						0
+					],
+					"destination": [
+						"obj-5",
+						3
 					]
 				}
 			},
@@ -3249,7 +4233,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3285,7 +4269,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3321,7 +4305,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3357,7 +4341,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3393,7 +4377,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3429,7 +4413,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-55",
 						0
 					]
 				}
@@ -3501,7 +4485,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-5",
 						0
 					]
 				}
@@ -3537,6 +4521,42 @@
 						0
 					],
 					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						9
+					],
+					"destination": [
+						"obj-47",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-47",
+						0
+					],
+					"destination": [
+						"obj-48",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-48",
+						0
+					],
+					"destination": [
 						"obj-5",
 						0
 					]
@@ -3561,43 +4581,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						9
-					],
-					"destination": [
-						"obj-19a",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-19a",
-						0
-					],
-					"destination": [
-						"obj-19c",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-19c",
-						0
-					],
-					"destination": [
-						"obj-55",
+						"obj-56",
 						0
 					]
 				}
@@ -3607,6 +4591,42 @@
 					"source": [
 						"obj-4",
 						10
+					],
+					"destination": [
+						"obj-19a",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19a",
+						0
+					],
+					"destination": [
+						"obj-19c",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-19c",
+						0
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						11
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3669,7 +4689,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						0
 					]
 				}
@@ -3777,7 +4797,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3813,7 +4833,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						0
 					]
 				}
@@ -3861,7 +4881,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -3957,7 +4977,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3969,7 +4989,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -4007,16 +5027,21 @@
 				0
 			],
 			"obj-38": [
-				"out_mode",
-				"out_mode",
+				"deflicker_amt",
+				"deflicker_amt",
 				0
 			],
 			"obj-41": [
+				"out_mode",
+				"out_mode",
+				0
+			],
+			"obj-44": [
 				"pulse_space",
 				"pulse_space",
 				0
 			],
-			"obj-44": [
+			"obj-47": [
 				"out_view",
 				"out_view",
 				0

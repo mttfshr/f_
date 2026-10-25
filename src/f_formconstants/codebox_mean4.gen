@@ -1,0 +1,11 @@
+// f_formconstants -- mean4 (Phase D T075 De-flicker, Matt 2026-10-25). GENERATED literal taps
+// (regenerate if the solver size changes, T064). 2 x 2 -> 1 x 1: each output texel is the
+// mean of its 2 x 2 input block. Each tap is a bilinear `sample` exactly on a texel corner (a 2 x 2
+// average, weights 0.25), 1 x 1 taps cover the block. Kept to <= 16 taps per stage: a 256-tap
+// version broke jit.gl.pix's shader translator ('stack overflow (too many captures)', 2026-10-25).
+// Chain: mean1 1024->128, mean2 ->16, mean3 ->2, mean4 ->1. Mirror: fc_parity_mirror.frame_means.
+bx = floor(norm.x * 1) * 2;
+by = floor(norm.y * 1) * 2;
+acc = vec(0, 0, 0, 0);
+acc = acc + sample(in1, vec((bx + 1) / 2, (by + 1) / 2));
+out1 = acc / 1;

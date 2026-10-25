@@ -204,10 +204,37 @@ def module_frame(state, frameno, rate=1.0, freeze=False, levels=LEVELS, grain=1.
 OUT_MODES = ("RGB", "E", "Contour", "Luma")     # Phase D T060: the out_mode menu, in order
 
 
-def encode_mode(state, ow, oh, mode, view=0):
+TRACK_ALPHA = 0.005                 # T075 De-flicker: the "usual" brightness tracks over ~200 frames
+GAIN_CAP = 4.0                      # T075: never boost a frame more than 4x (a near-black frame is noise)
+
+
+def frame_means(state):
+    """T075: the field's average of each channel (RGBA) -- what the mean1 / mean2 stages compute exactly
+    (texel-boundary bilinear taps, each averaging 2 x 2, covering every texel)."""
+    return state.reshape(-1, state.shape[-1]).astype(np.float64).mean(axis=0).astype(F32)
+
+
+def track_update(prev, cur, alpha=TRACK_ALPHA):
+    """T075: the slow tracker. A fresh tracker (prev None; on the GPU a texture reading alpha 0) takes the
+    current means; otherwise it moves alpha of the way toward them each frame."""
+    if prev is None:
+        return cur.copy()
+    return (prev + (cur - prev) * F32(alpha)).astype(F32)
+
+
+def deflicker_gains(cur, usual, amount, cap=GAIN_CAP):
+    """T075: per-channel display gains mix(1, clamp(usual / cur, 0, cap), amount) for R, G, B."""
+    g = np.clip(usual[:3] / np.maximum(cur[:3], F32(1e-4)), 0.0, cap).astype(F32)
+    return (F32(1.0) + (g - F32(1.0)) * F32(amount)).astype(F32)
+
+
+def encode_mode(state, ow, oh, mode, view=0, gains=None):
     """T060: encode() then the output mode. 0 RGB = (E, I, contour) as the page (S8); 1 E, 2 contour,
     3 Rec. 709 luma of that RGB -- each a gray (v, v, v, 1)."""
     rgb = encode(state, ow, oh, view)
+    if gains is not None:               # T075 De-flicker: per-channel gains on the sampled E, I, contour
+        rgb = rgb.copy()
+        rgb[..., :3] = rgb[..., :3] * gains
     if mode == 0:
         return rgb
     if mode == 1:

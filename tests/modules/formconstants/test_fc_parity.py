@@ -447,6 +447,34 @@ def test_cortical_view_is_the_solver_grid():
     check("cortical view tiles across x: the wrap step <= 1.5x the largest interior step", seam - 1.5 * step_in, 0.0)
 
 
+# ------------------------------------------------- (p) Phase D T075: De-flicker
+def test_deflicker_flattens_the_bulk_oscillation():
+    """De-flicker 0 changes nothing; at 1 the displayed frame-mean E stays near its usual level while the
+    raw field pumps (run 1500 frames of the source, N 128): the flash (std over time of the displayed mean
+    E) drops well below the raw flash; gains never exceed the cap; a fresh tracker takes the current means."""
+    rng = np.random.default_rng(12)
+    st = rng.random((16, 16, 4)).astype(F32)
+    cur = m.frame_means(st)
+    check("fresh tracker == the current means", float(np.abs(m.track_update(None, cur) - cur).max()), 0.0)
+    g0 = m.deflicker_gains(cur, cur * F32(3.0), 0.0)
+    check("amount 0: gains are exactly 1", float(np.abs(g0 - 1.0).max()), 0.0)
+    gc = m.deflicker_gains(np.array([0.001, 0.5, 0.5, 1], F32), np.array([0.5, 0.5, 0.5, 1], F32), 1.0)
+    check("gain capped at 4x", float(gc[0] - m.GAIN_CAP), 0.0)
+    s = m.seed_state(128, np.random.default_rng(1))
+    usual, raw_mu, shown_mu = None, [], []
+    for fr in range(1500):
+        s = m.step(s, fr)
+        cur = m.frame_means(s)
+        usual = m.track_update(usual, cur)
+        if fr >= 900:
+            g = m.deflicker_gains(cur, usual, 1.0)
+            raw_mu.append(float(cur[0]))
+            shown_mu.append(float(min(cur[0] * g[0], 1.0)))
+    raw_f, shown_f = float(np.std(raw_mu)), float(np.std(shown_mu))
+    note("flash (std of mean E over time): raw / de-flickered", f"{raw_f:.4f} / {shown_f:.4f}")
+    check("de-flicker 1 cuts the flash to under half the raw flash", shown_f - 0.5 * raw_f, 0.0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

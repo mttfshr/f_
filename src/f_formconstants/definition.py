@@ -47,7 +47,7 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  272,             # T069 (Matt 11:04): two rows -- 5 dials; Grain + Output/Input/Space + reset.
+    "presentation_width":  272,             # T069: row 1 = 5 dials + Reset; row 2 = Grain, Deflick + Output/Input/Space.
     "presentation_height": 150,             # Width set by the header: title, type label, Freeze toggle, bypass.
 
     "archetype": "source",
@@ -86,6 +86,11 @@ patcher = {
         {"name": "grain_scale", "type": "float", "min": 0.5, "max": 2.0, "default": 1.0,
          "label": "Grain", "pix_target": ["blurx", "blury"],
          "hint": "Pattern scale: 1 = the source lattice; lower = finer, wormier; higher = bigger spots, moire near 2"},
+        # Phase D T075 (Matt, 2026-10-25): De-flicker -- display-side rescale toward the usual brightness, per
+        # channel (the flash is the E-I bulk oscillation; no dynamics knob removes it: spike_fc_damping.py).
+        {"name": "deflicker_amt", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0,
+         "label": "Deflick", "pix_target": "enc",
+         "hint": "De-flicker: 0 = the source's whole-field pumping; 1 = each frame held near its usual brightness (pattern unchanged)"},
         # Phase D T060 (Matt, 2026-10-24): output mode. Default E (provisional: "probably not RGB";
         # Matt picks after a live A/B). Name `out_mode`, not `output`/`mode` (pix attribute trap, T061).
         {"name": "out_mode", "type": "menu", "options": ["RGB", "E", "Contour", "Luma"], "default": 1,
@@ -152,7 +157,20 @@ patcher = {
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
         {"id": "nl",    "name": "#0_fc_nl",    "gen": "codebox_nl.gen",     "n_inlets": 3, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "enc",   "name": "#0_fc_enc",   "gen": "codebox_enc.gen",    "n_inlets": 2, "n_outlets": 1,
+        # T075 De-flicker: field means (1024 -> 128 -> 16 -> 2 -> 1), the slow tracker and its one-frame hold
+        {"id": "mean1", "name": "#0_fc_mean1", "gen": "codebox_mean1.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 128 128 @type float32", "primary": False},
+        {"id": "mean2", "name": "#0_fc_mean2", "gen": "codebox_mean2.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 16 16 @type float32", "primary": False},
+        {"id": "mean3", "name": "#0_fc_mean3", "gen": "codebox_mean3.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 2 2 @type float32", "primary": False},
+        {"id": "mean4", "name": "#0_fc_mean4", "gen": "codebox_mean4.gen",  "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 1 1 @type float32", "primary": False},
+        {"id": "track", "name": "#0_fc_track", "gen": "codebox_track.gen",  "n_inlets": 2, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 1 1 @type float32", "primary": False},
+        {"id": "thold", "name": "#0_fc_thold", "gen": "pass",               "n_inlets": 1, "n_outlets": 1,
+         "pix_attrs": "@adapt 0 @dim 1 1 @type float32", "primary": False},
+        {"id": "enc",   "name": "#0_fc_enc",   "gen": "codebox_enc.gen",    "n_inlets": 4, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": True},    # follows `r dim`
     ],
     "pix_wires": [
@@ -162,6 +180,11 @@ patcher = {
         ["pass", 0, "nl", 1],       # raw state (cold; same frame as the convolved input)
         ["nl", 0, "hold", 0],       # feedback edge
         ["nl", 0, "enc", 1],        # state -> render (cold)
+        ["nl", 0, "mean1", 0], ["mean1", 0, "mean2", 0],      # T075: field means, 1024 -> 128 -> 16 -> 2 -> 1
+        ["mean2", 0, "mean3", 0], ["mean3", 0, "mean4", 0],   #   (hot chain; <= 16 taps per stage)
+        ["mean4", 0, "track", 0],   # current means -> tracker (hot)
+        ["track", 0, "thold", 0], ["thold", 0, "track", 1],   # tracker feedback (cold)
+        ["mean4", 0, "enc", 2], ["track", 0, "enc", 3],       # current + usual means -> render (cold)
     ],
 }
 
@@ -219,10 +242,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[160.0, 106.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[196.0, 44.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[152.0, 82.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[188.0, 20.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),

@@ -1,0 +1,11 @@
+// f_formconstants -- track (Phase D T075 De-flicker, Matt 2026-10-25): the "usual" brightness.
+// in1 = the current field means (mean4, 1 x 1), in2 = this stage's previous output (trackhold, cold).
+// A fresh texture reads alpha 0 -> take the current means; otherwise move a fixed fraction of the way toward
+// them each frame (literal 0.005 = fc_parity_mirror.TRACK_ALPHA, ~ 200 frames, a little over one pulse period). Output alpha 1.
+// Mirror: fc_parity_mirror.track_update.
+cur = nearest(in1, vec(0.5, 0.5));
+prv = nearest(in2, vec(0.5, 0.5));
+fresh = prv.w < 0.5;
+upd = prv + (cur - prv) * 0.005;
+o = mix(upd, cur, fresh);
+out1 = vec(o.x, o.y, o.z, 1);
