@@ -56,7 +56,8 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "blury": {"n": float(N), "q_levels": 0.0, "grain_scale": 1.0},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
                  "q_levels": 0.0, "freeze_on": 0.0, "sim_rate": 1.0,
-                 "pulse_mix": 1.0, "pulse_gain": 1.0},
+                 "pulse_mix": 1.0, "pulse_gain": 1.0,
+                 "pulse_space": 0.0, "ow": float(N), "oh": float(N)},   # T073: the module default is Screen; legs pin Cortical
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
                   "out_mode": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
@@ -186,6 +187,44 @@ def test_grain_T072():
         check_q(f"blur_x grain {g}", gx, m.blur_pass(st, 1, m.LEVELS, g))
         gy = gpu("blury", [gx], dim=(N, N), grain_scale=g)
         check_q(f"blur_y grain {g} (on the GPU's blur_x)", gy, m.blur_pass(gx, 0, m.LEVELS, g))
+
+
+def test_pulse_screen_T073():
+    """Phase D T073: Pulse Space = Screen -- nl reads a non-square pulse texture through the inverse of
+    the display map (output 160 x 90) vs the mirror's screen_coords + sample_tex."""
+    rng = np.random.default_rng(41)
+    st = qstate(rng)
+    conv = m.blur(st)
+    pulse = rng.random((64, 96, 4)).astype(F32)
+    pulse[..., 3] = 1.0
+    yy, xx = np.mgrid[0:64, 0:96].astype(F32)
+    smooth = np.zeros((64, 96, 4), F32)
+    smooth[..., 0] = smooth[..., 1] = smooth[..., 2] = 0.5 + 0.5 * np.sin(xx / 96 * 2 * np.pi) * np.cos(yy / 64 * np.pi)
+    smooth[..., 3] = 1.0
+    sc = m.screen_coords(N, 160, 90)
+    edge = np.minimum.reduce([sc[..., 0], 1 - sc[..., 0], sc[..., 1], 1 - sc[..., 1]])
+    dbg = {}
+    for label, tex in (("smooth", smooth), ("noise", pulse)):
+        g = gpu("nl", [conv, st, tex], dim=(N, N), frameno=10.0, pulse_conn=1.0, pulse_space=1.0,
+                ow=160.0, oh=90.0)
+        want = m.wc_step(st, conv, 10, s=m.s_pulse(10, pulse=tex, conn=1.0, space=1.0, ow=160, oh=90, n=N))
+        bad = np.abs(g[..., 0].astype(np.float64) - want[..., 0]) > 1e-6
+        for lo, hi in ((0, 0.5 / 96), (0.5 / 96, 2 / 96), (2 / 96, 1.0)):
+            sel = (edge >= lo) & (edge < hi)
+            note(f"{label}: E mismatch rate, edge distance [{lo:.4f}, {hi:.4f})",
+                 f"{bad[sel].mean() if sel.any() else 0:.3%} of {sel.mean():.2%} of texels")
+        dbg[label + "_gpu"], dbg[label + "_want"], dbg[label + "_tex"] = g, want, tex
+        d = np.abs(g.astype(np.float64) - want.astype(np.float64))
+        note(f"{label}: max diff (levels) / values differing", f"{float(d.max()) / Q:.2f} / {float((d > 1e-6).mean()):.4%}")
+    np.savez(_paths.REPO / "tests" / "logs" / "fc_t073_debug.npz", conv=conv, st=st, **dbg)
+    # Tolerance (stated 2026-10-25, T073): the cortical legs' 0.1% budget assumes no trig and no resampling.
+    # Here the screen map (cos/sin/exp/log) and the GPU's bilinear filtering differ from the float64 mirror at
+    # quantization knife edges, concentrated at the frame edge (GPU wrap vs the mirror's clamp: 7% of edge
+    # texels vs 0.19% elsewhere, first run). Smooth input (what a camera gives): <= 1 level, <= 0.5% differing.
+    # Random noise is the worst case for GPU filtering precision: reported above, not asserted.
+    d = np.abs(dbg["smooth_gpu"].astype(np.float64) - dbg["smooth_want"].astype(np.float64))
+    check("Screen pulse, smooth texture: max diff <= 1 level", float(d.max()), Q + 1e-6)
+    check("Screen pulse, smooth texture: values differing <= 0.5%", float((d > 1e-6).mean()), 5e-3)
 
 
 def test_blur_stages_vs_mirror():

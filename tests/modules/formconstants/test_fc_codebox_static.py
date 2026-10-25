@@ -15,6 +15,7 @@ import importlib.util
 import json
 import os
 import re
+from pathlib import Path
 
 import numpy as np
 
@@ -88,6 +89,8 @@ def test_forbidden_constructs_absent():
                          (r"^\s*(e|phi)\s*=", "variable named e/phi"),
                          (r"[=(,]\s*-\s*\(", "unary minus before a parenthesis"),
                          (r"\bsin\s*\(", "sin() in a hash")):
+            if why == "sin() in a hash" and "seed" not in name:
+                continue        # the hash lives in seed only; nl's T073 Screen map uses sin/cos for geometry
             if re.search(pat, code, re.M):
                 bad.append(f"{name}: {why}")
     assert not bad, bad
@@ -98,20 +101,37 @@ def _built():
     return json.load(open(p))["patcher"]
 
 
+def _defn():
+    """The definition module (its derived _SUP / _N_CONTROLS are what the raw wiring uses)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "fc_definition", str(Path(__file__).resolve().parents[3] / "src" / "f_formconstants" / "definition.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _solver_ids():
+    d = _defn()
+    return [f"obj-{d._SUP + k}" for k in range(6)]
+
+
 def test_positional_ids_match_built_patcher():
     boxes = {b["box"]["id"]: b["box"] for b in _built()["boxes"]}
-    want = {"#0_fc_hold": "obj-50", "#0_fc_seed": "obj-51", "#0_fc_pass": "obj-52",
-            "#0_fc_blurx": "obj-53", "#0_fc_blury": "obj-54", "#0_fc_nl": "obj-55",
-            "#0_fc_enc": "obj-5"}
+    d = _defn()
+    names = ["#0_fc_hold", "#0_fc_seed", "#0_fc_pass", "#0_fc_blurx", "#0_fc_blury", "#0_fc_nl"]
+    want = dict(zip(names, _solver_ids()))
+    want["#0_fc_enc"] = "obj-5"
+    note("support-stage base (_SUP) / controls", f"{d._SUP} / {d._N_CONTROLS}")
     for name, oid in want.items():
         box = boxes.get(oid)
         assert box is not None and name in box.get("text", ""), f"{name} is not {oid}: {box and box.get('text')}"
     route = boxes.get("obj-4")
-    # T061/T060: the dials' and the menu's tokens come first, so `reset` is route outlet 9 (definition raw_lines)
-    assert route and route["text"].split() == ["route", "pulse_depth", "pulse_period", "out_mode", "q_levels", "freeze_on", "sim_rate", "pulse_mix", "pulse_gain", "grain_scale", "reset"], route and route.get("text")
+    # T061/T060: the dials' and the menu's tokens come first, so `reset` is the route's last outlet (definition raw_lines)
+    assert route and route["text"].split() == ["route", "pulse_depth", "pulse_period", "out_mode", "q_levels", "freeze_on", "sim_rate", "pulse_mix", "pulse_gain", "grain_scale", "pulse_space", "reset"], route and route.get("text")
     resets = [ln["patchline"] for ln in _built()["lines"]
               if ln["patchline"]["source"][0] == "obj-4" and ln["patchline"]["destination"][0] == "obj-raw-3"]
-    assert [pl["source"][1] for pl in resets] == [9], f"reset must leave route outlet 9: {resets}"
+    assert [pl["source"][1] for pl in resets] == [d._N_CONTROLS], f"reset must leave the route's last outlet: {resets}"
 
 
 def test_pulse_inlet_reaches_nl():
@@ -119,13 +139,15 @@ def test_pulse_inlet_reaches_nl():
     pb = _built()
     boxes = {b["box"]["id"]: b["box"] for b in pb["boxes"]}
     into_nl = {(pl["source"][0], pl["destination"][1]) for pl in (ln["patchline"] for ln in pb["lines"])
-               if pl["destination"][0] == "obj-55"}
+               if pl["destination"][0] == _solver_ids()[5]}
     srcs = {boxes[s].get("text", ""): i for s, i in into_nl}
     assert srcs.get("vs_inState") == 2, f"pulse texture must reach nl inlet 2 (in3): {srcs}"
     assert srcs.get("prepend param pulse_conn") == 0, f"pulse_conn flag must reach nl: {srcs}"
 
 
 def test_r_dim_reaches_enc_only():
+    """S1: no `dim` message reaches a solver stage (its @dim never follows the window). T073: only the
+    output-size PARAMS (prepend param ow / oh) may reach nl, for the Screen pulse."""
     pb = _built()
     boxes = {b["box"]["id"]: b["box"] for b in pb["boxes"]}
     rdim = [i for i, b in boxes.items() if b.get("text") == "r dim"]
@@ -135,9 +157,16 @@ def test_r_dim_reaches_enc_only():
         pl = ln["patchline"]
         if pl["source"][0] == rdim[0]:
             sinks.add(pl["destination"][0])
-    solver = {"obj-50", "obj-51", "obj-52", "obj-53", "obj-54", "obj-55"}
+    solver = set(_solver_ids())
     assert not (sinks & solver), f"r dim reaches solver stages: {sinks & solver}"
     assert "obj-5" in sinks, "r dim must reach enc"
+    into_solver = {(boxes[pl["source"][0]].get("text", ""), pl["destination"][0])
+                   for pl in (ln["patchline"] for ln in pb["lines"])
+                   if pl["destination"][0] in solver and pl["source"][0] in boxes}
+    dimish = {t for t, _ in into_solver if t in ("r dim", "route dim", "unpack")}
+    assert not dimish, f"a dim message reaches a solver stage: {dimish}"
+    for t in ("prepend param ow", "prepend param oh"):
+        assert (t, _solver_ids()[5]) in into_solver, f"T073: {t} must reach nl"
     note("r dim sinks", sorted(sinks))
 
 

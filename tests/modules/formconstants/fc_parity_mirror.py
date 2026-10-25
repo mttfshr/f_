@@ -130,7 +130,45 @@ def luma(tex):
             + F32(0.0722) * tex[..., 2]).astype(F32)
 
 
-def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0, mix=1.0, gain=1.0):
+def screen_coords(n, ow, oh):
+    """Phase D T073, Pulse Space = Screen: for each solver texel, the normalized SCREEN position it is
+    displayed at (the inverse of encode's map). u = (ix + .5)/n -> angle 2 pi u; v = (iy + .5)/n -> the
+    radii exp(2 pi (v - k)), k integer (the map repeats outward). Per direction the outermost copy
+    INSIDE the frame is used: rb = the distance to the frame edge along that angle, k = ceil(v - log(rb) /
+    2 pi), so every texel reads an on-screen point (no black). Returns (h, w, 2) float32 (x, y) in [0, 1]."""
+    lng = float(max(ow, oh))
+    ax, ay = F32(ow / lng), F32(oh / lng)
+    c = (np.arange(n, dtype=F32) + F32(0.5)) / F32(n)
+    u = c[None, :] * np.ones((n, 1), F32)
+    v = c[:, None] * np.ones((1, n), F32)
+    th = TWO_PI * u
+    cs, sn = np.cos(th).astype(F32), np.sin(th).astype(F32)
+    rb = np.minimum(ax / np.maximum(np.abs(cs), F32(1e-6)), ay / np.maximum(np.abs(sn), F32(1e-6)))
+    k = np.ceil(v - np.log(rb) / TWO_PI)
+    r = np.exp(TWO_PI * (v - k)).astype(F32)
+    out = np.empty((n, n, 2), F32)
+    out[..., 0] = (r * cs / ax + F32(1.0)) * F32(0.5)
+    out[..., 1] = (r * sn / ay + F32(1.0)) * F32(0.5)
+    return out
+
+
+def sample_tex(tex, coords):
+    """Bilinear read of a texture at normalized coords (x, y), texel centres at (i + .5) / size, edges
+    clamped -- GL linear filtering as the codebox's `sample` does."""
+    h, w = tex.shape[:2]
+    x = coords[..., 0].astype(np.float64) * w - 0.5
+    y = coords[..., 1].astype(np.float64) * h - 0.5
+    x0, y0 = np.floor(x), np.floor(y)
+    fx, fy = (x - x0)[..., None], (y - y0)[..., None]
+    xi0 = np.clip(x0, 0, w - 1).astype(int); xi1 = np.clip(x0 + 1, 0, w - 1).astype(int)
+    yi0 = np.clip(y0, 0, h - 1).astype(int); yi1 = np.clip(y0 + 1, 0, h - 1).astype(int)
+    top = tex[yi0, xi0] * (1 - fx) + tex[yi0, xi1] * fx
+    bot = tex[yi1, xi0] * (1 - fx) + tex[yi1, xi1] * fx
+    return (top * (1 - fy) + bot * fy).astype(F32)
+
+
+def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0, mix=1.0, gain=1.0,
+            space=0.0, ow=None, oh=None, n=None):
     """T061 `s`: depth * mix(square(t / period), luma(pulse), conn). REPLACE semantics (Matt,
     2026-10-24): a connected pulse texture IS the pulse; unplugged (conn 0) the internal square
     wave runs. The pulse is read in cortical space (on the solver grid, same size as the state
@@ -139,6 +177,8 @@ def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0, mix=1.0, ga
     sq = F32(1.0) if (float(t) / float(period)) % 1.0 < 0.5 else F32(0.0)
     if pulse is None:
         return F32(depth) * sq
+    if space:                           # T073: Screen -- read the texture where each texel is displayed
+        pulse = sample_tex(pulse, screen_coords(n, ow, oh))
     c = F32(conn) * F32(mix)            # T071: Pulse Mix blends the internal wave with the texture
     return (F32(depth) * ((F32(1.0) - c) * sq + c * F32(gain) * luma(pulse))).astype(F32)   # T071: Pulse Gain
 

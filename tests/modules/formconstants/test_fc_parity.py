@@ -414,6 +414,40 @@ def test_grain_tap_spacing():
     check("constant field unchanged at grain 1.37", float(np.abs(m.blur(flat, None, 1.37) - flat).max()), 1e-6)
 
 
+# ------------------------------------------------- (n) Phase D T073: Pulse Space = Screen
+def test_screen_space_inverts_the_display_map():
+    """Every solver texel's screen point lies inside the frame, and encode's forward map sends that
+    screen point back to the same texel (round trip), for a wide and a tall output."""
+    n = 64
+    for ow, oh in ((160, 90), (90, 160)):
+        sc = m.screen_coords(n, ow, oh)
+        inside = float(((sc >= 0) & (sc <= 1)).all())
+        check(f"{ow}x{oh}: every texel's screen point is on-frame", 1.0 - inside, 0.0)
+        lng = max(ow, oh)
+        zx = (sc[..., 0].astype(np.float64) * 2 - 1) * ow / lng
+        zy = (sc[..., 1].astype(np.float64) * 2 - 1) * oh / lng
+        u = (np.arctan2(zy, zx) / (2 * np.pi)) % 1.0
+        v = (np.log(np.maximum(np.hypot(zx, zy), 1e-12)) / (2 * np.pi)) % 1.0
+        c = (np.arange(n) + 0.5) / n
+        du = np.abs(((u - c[None, :]) + 0.5) % 1.0 - 0.5).max()
+        dv = np.abs(((v - c[:, None]) + 0.5) % 1.0 - 0.5).max()
+        check(f"{ow}x{oh}: round trip lands on the same texel (max offset in texels)", max(du, dv) * n, 1e-3)
+
+
+def test_screen_space_pulse_reads_the_image_where_displayed():
+    """A pulse image bright only in the right half of the screen excites (Screen mode) exactly the
+    texels displayed in the right half; Cortical mode ignores the screen geometry."""
+    n, ow, oh = 64, 160, 90
+    img = np.zeros((90, 160, 4), F32)
+    img[:, 80:, :3] = 1.0
+    s = m.s_pulse(0, pulse=img, conn=1.0, space=1.0, ow=ow, oh=oh, n=n)
+    sc = m.screen_coords(n, ow, oh)
+    right = sc[..., 0] > 0.5 + 1.0 / 160
+    left = sc[..., 0] < 0.5 - 1.0 / 160
+    check("Screen: texels displayed on the right get s = depth (min)", 0.6 - float(s[right].min()), 1e-5)
+    check("Screen: texels displayed on the left get s = 0 (max)", float(s[left].max()), 1e-6)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

@@ -47,7 +47,7 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  377,             # nine controls + reset in a tenth slot (T069 sets the final layout)
+    "presentation_width":  414,             # ten controls + reset in an eleventh slot (T069 sets the final layout)
     "presentation_height": 88,
 
     "archetype": "source",
@@ -101,6 +101,11 @@ patcher = {
         {"name": "grain_scale", "type": "float", "min": 0.5, "max": 2.0, "default": 1.0,
          "label": "Grain", "pix_target": ["blurx", "blury"],
          "hint": "Pattern scale: 1 = the source lattice; lower = finer, wormier; higher = bigger spots, moire near 2"},
+        # Phase D T073 (Matt, 2026-10-25): where the pulse texture is read. Screen (default) = through the
+        # inverse of the display map, so an input lands where it is seen; Cortical = on the solver grid (T061).
+        {"name": "pulse_space", "type": "menu", "options": ["Cortical", "Screen"], "default": 1,
+         "label": "Space", "pix_target": "nl",
+         "hint": "Pulse texture space: Screen = the image lands where you see it; Cortical = read on the solver grid (WFG bands become rings / spokes)"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -158,7 +163,7 @@ patcher = {
 
 # Codebox Params that are not a UI control: which stage holds them (driven by raw boxes through
 # `prepend param <name>`; see the reset logic below).
-_STAGES_OF = {"reseed": "pass", "salt": "seed", "frameno": "nl", "ow": "enc", "oh": "enc"}
+_STAGES_OF = {"reseed": "pass", "salt": "seed", "frameno": "nl", "ow": "enc", "oh": "enc"}   # ow/oh also -> nl (raw lines)
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:
         _p["pix_target"] = _STAGES_OF[_p["name"]]
@@ -174,14 +179,19 @@ for _p in patcher["params"]:
 #   [i] -> [prepend param frameno] -> nl               the frame index drives the `s` square wave
 #   [i] -> [sel 2] -> `param reseed 0` -> pass   reseed stays 1 for three draw bangs (never a timer)
 #   salt: [i] -> [+ 1] -> [i] right ; [i] -> [prepend param salt] -> seed   (per reset, NOT per frame)
-#   [r dim] -> enc, and -> [route dim] -> [unpack] -> [prepend param ow / oh] -> enc: the OUTPUT size only.
-#   NOTHING from `r dim` reaches a solver stage (S1) and a resize does not reseed.
-# Object ids (positional -- they shift when a UI box is added, build/spec.md): with no dial widgets the
-# support stages start at obj-50: hold = obj-50, seed = obj-51, pass = obj-52, blurx = obj-53,
-# blury = obj-54, nl = obj-55; enc (primary) = obj-5 (two dials: still under the ten-widget threshold, so
-# the obj-50 base holds); the route is obj-4 with tokens pulse_depth, pulse_period, out_mode, q_levels,
-# freeze_on, sim_rate, pulse_mix, pulse_gain, grain_scale, reset (`reset` = outlet 9). Nine widgets: one more
-# crosses the ten-widget threshold and moves the support-stage ids (build/spec.md). tests/modules/formconstants/test_fc_codebox_static.py guards these.
+#   [r dim] -> enc, and -> [route dim] -> [unpack] -> [prepend param ow / oh] -> enc AND nl (T073: the Screen
+#   pulse needs the output size). Only those two PARAMS reach nl; no `dim` message reaches a solver stage,
+#   so the solver's @dim never follows the window (S1) and a resize does not reseed.
+# Object ids (positional -- they shift when a UI box is added, build/spec.md): below ten widgets the
+# support stages start at obj-50; from ten widgets up (T073 made ten) the base moves to the first id after
+# the bypass pair. _SUP is that base: hold = _SUP, seed = +1, pass = +2, blurx = +3, blury = +4, nl = +5;
+# enc (primary) = obj-5; the route is obj-4 and `reset` is its LAST outlet (= the number of controls).
+# tests/modules/formconstants/test_fc_codebox_static.py guards these against the built patcher.
+_N_CONTROLS = sum(1 for _p in patcher["params"] if _p["type"] in ("float", "int", "menu"))
+_SUP = 50 if _N_CONTROLS < 10 else 20 + 3 * _N_CONTROLS + 2
+_HOLD, _SEED, _PASS, _BLURX, _BLURY, _NL = (f"obj-{_SUP + k}" for k in range(6))
+
+
 def _box(i, cls, rect, **kw):
     b = {"id": f"obj-raw-{i}", "maxclass": cls, "patching_rect": rect}
     b.update(kw)
@@ -204,10 +214,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[341.0, 44.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[378.0, 44.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[333.0, 20.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[370.0, 20.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
@@ -231,19 +241,20 @@ patcher["raw_boxes"] = [
     _obj(22, "prepend param oh", 1, 1, [590.0, 380.0, 105.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line("obj-4", 9, 3, 0),          # route: `reset` -> trigger (route outlet 9, after the nine controls)
+    _line("obj-4", _N_CONTROLS, 3, 0),    # route: `reset` -> trigger (its last outlet, after the controls)
     _line(1, 0, 3, 0),                # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
-    _line(3, 2, 6, 0), _line(6, 0, "obj-52", 0),    # trigger right -> reseed 1 -> pass
+    _line(3, 2, 6, 0), _line(6, 0, _PASS, 0),    # trigger right -> reseed 1 -> pass
     _line(3, 1, 7, 0), _line(7, 0, 9, 1),     # trigger middle -> 0 -> frame counter right inlet
     _line(3, 0, 15, 0),               # trigger left -> salt counter
     _line(8, 0, 9, 0), _line(9, 0, 10, 0), _line(10, 0, 11, 0), _line(11, 0, 9, 1),   # draw -> [i] -> +1 -> %2500 -> [i]
-    _line(9, 0, 14, 0), _line(14, 0, "obj-55", 0),  # frame index -> param frameno -> nl
-    _line(9, 0, 12, 0), _line(12, 0, 13, 0), _line(13, 0, "obj-52", 0),   # sel 2 -> reseed 0 -> pass
+    _line(9, 0, 14, 0), _line(14, 0, _NL, 0),  # frame index -> param frameno -> nl
+    _line(9, 0, 12, 0), _line(12, 0, 13, 0), _line(13, 0, _PASS, 0),   # sel 2 -> reseed 0 -> pass
     _line(15, 0, 16, 0), _line(16, 0, 15, 1),       # salt counter
-    _line(15, 0, 17, 0), _line(17, 0, "obj-51", 0),   # [i] -> param salt -> seed (per reset)
+    _line(15, 0, 17, 0), _line(17, 0, _SEED, 0),   # [i] -> param salt -> seed (per reset)
     _line(18, 0, "obj-5", 0),         # r dim -> enc: the output follows the render size
     _line(18, 0, 19, 0), _line(19, 0, 20, 0),
     _line(20, 0, 21, 0), _line(20, 1, 22, 0),
     _line(21, 0, "obj-5", 0), _line(22, 0, "obj-5", 0),     # -> enc: ow, oh
+    _line(21, 0, _NL, 0), _line(22, 0, _NL, 0),             # -> nl: ow, oh (T073 Screen pulse; params only)
 ]

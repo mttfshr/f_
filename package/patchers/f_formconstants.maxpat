@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 10,
+					"numoutlets": 11,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -93,15 +94,15 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						727.0,
+						799.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period out_mode q_levels freeze_on sim_rate pulse_mix pulse_gain grain_scale reset"
+					"text": "route pulse_depth pulse_period out_mode q_levels freeze_on sim_rate pulse_mix pulse_gain grain_scale pulse_space reset"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-50",
+					"id": "obj-52",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -187,7 +188,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-53",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -306,7 +307,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-52",
+					"id": "obj-54",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -485,7 +486,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-55",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -604,7 +605,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-56",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -723,7 +724,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-55",
+					"id": "obj-57",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -804,7 +805,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n//     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n//     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\n//   - Phase D T070 (Matt, 2026-10-25): Param freeze_on from the Freeze menu -- 1 writes the incoming\n//     state (in2) back unchanged, so the field holds where it is; the display keeps rendering it and\n//     turning Freeze off resumes from that exact state.\n//   - Phase D T065 (Matt, 2026-10-25): Param sim_rate from the Rate dial, by STEP SKIPPING (a smaller\n//     dt would freeze under quantization). simt = floor(frameno * sim_rate) is the solver's clock (the\n//     pulse wave reads it); this frame steps when floor((frameno + 1) * sim_rate) > simt, else the\n//     state holds exactly as under Freeze. Rate 1 = every frame, simt = frameno (parity). Mirror:\n//     fc_parity_mirror.module_frame / rate_clock.\n//   - Phase D T071 (Matt, 2026-10-25): Params pulse_mix (Pulse Mix: 1 = the texture replaces the wave,\n//     0 = ignored, between = blend) and pulse_gain (scales the texture luma only); unplugged, neither\n//     matters. s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix).\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\nParam q_levels(0);\nParam freeze_on(0);\nParam sim_rate(1);\nParam pulse_mix(1);\nParam pulse_gain(1);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\npl = sample(in3, norm);\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsimt = floor(frameno * sim_rate);\nstp = floor((frameno + 1) * sim_rate) > simt;\nsq = fract(simt / s_period) < 0.5;\ns = s_depth * mix(sq, pulse_gain * lum, pulse_conn * pulse_mix);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqe = mix(en, floor(lv * en + 0.5) / lv, qon);\nqi = mix(inw, floor(lv * inw + 0.5) / lv, qon);\nqbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);\n\nbz = nearest(in2, norm).z;\nhold = max(freeze_on, 1 - stp);\nfe = mix(qe, ee, hold);\nfi = mix(qi, ii, hold);\nfb = mix(qbb, bz, hold);\n\nout1 = vec(fe, fi, fb, 1);\n",
+									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n//     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n//     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\n//   - Phase D T070 (Matt, 2026-10-25): Param freeze_on from the Freeze menu -- 1 writes the incoming\n//     state (in2) back unchanged, so the field holds where it is; the display keeps rendering it and\n//     turning Freeze off resumes from that exact state.\n//   - Phase D T065 (Matt, 2026-10-25): Param sim_rate from the Rate dial, by STEP SKIPPING (a smaller\n//     dt would freeze under quantization). simt = floor(frameno * sim_rate) is the solver's clock (the\n//     pulse wave reads it); this frame steps when floor((frameno + 1) * sim_rate) > simt, else the\n//     state holds exactly as under Freeze. Rate 1 = every frame, simt = frameno (parity). Mirror:\n//     fc_parity_mirror.module_frame / rate_clock.\n//   - Phase D T071 (Matt, 2026-10-25): Params pulse_mix (Pulse Mix: 1 = the texture replaces the wave,\n//     0 = ignored, between = blend) and pulse_gain (scales the texture luma only); unplugged, neither\n//     matters. s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix).\n//   - Phase D T073 (Matt, 2026-10-25): Param pulse_space from the Space menu -- 0 Cortical (the pulse read\n//     on the solver grid, as T061), 1 Screen (default): read where this texel is DISPLAYED, the inverse\n//     of enc's map. angle = 2 pi u; per direction the outermost radius copy inside the frame, rb = the\n//     distance to the frame edge, k = ceil(v - log(rb) / 2 pi), r = exp(2 pi (v - k)). Params ow / oh\n//     (from `r dim`, as enc): output-size PARAMS only -- the solver's @dim never follows the window (S1).\n//     Mirror: fc_parity_mirror.screen_coords / sample_tex.\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\nParam q_levels(0);\nParam freeze_on(0);\nParam sim_rate(1);\nParam pulse_mix(1);\nParam pulse_gain(1);\nParam pulse_space(1);\nParam ow(1024);\nParam oh(1024);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\nlngs = max(ow, oh);\naxs = ow / lngs;\nays = oh / lngs;\nths = twopi * norm.x;\ncss = cos(ths);\nsns = sin(ths);\nrbs = min(axs / max(abs(css), 0.000001), ays / max(abs(sns), 0.000001));\nkks = ceil(norm.y - log(rbs) / twopi);\nrrs = exp(twopi * (norm.y - kks));\nscr = vec((rrs * css / axs + 1) * 0.5, (rrs * sns / ays + 1) * 0.5);\npl = sample(in3, mix(norm, scr, pulse_space));\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsimt = floor(frameno * sim_rate);\nstp = floor((frameno + 1) * sim_rate) > simt;\nsq = fract(simt / s_period) < 0.5;\ns = s_depth * mix(sq, pulse_gain * lum, pulse_conn * pulse_mix);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqe = mix(en, floor(lv * en + 0.5) / lv, qon);\nqi = mix(inw, floor(lv * inw + 0.5) / lv, qon);\nqbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);\n\nbz = nearest(in2, norm).z;\nhold = max(freeze_on, 1 - stp);\nfe = mix(qe, ee, hold);\nfi = mix(qi, ii, hold);\nfb = mix(qbb, bz, hold);\n\nout1 = vec(fe, fi, fb, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1062,7 +1063,7 @@
 						""
 					],
 					"patching_rect": [
-						1063.5,
+						1135.5,
 						100.0,
 						56.0,
 						22.0
@@ -1094,16 +1095,16 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						843.5,
+						915.5,
 						260.0,
-						377.0,
+						414.0,
 						88.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						377.0,
+						414.0,
 						88.0
 					],
 					"proportion": 0.5
@@ -1118,7 +1119,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1063.5,
+						1135.5,
 						200.0,
 						80.0,
 						21.0
@@ -1149,14 +1150,14 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1153.5,
+						1225.5,
 						200.0,
 						60.0,
 						21.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						281.0,
+						318.0,
 						0.9,
 						70.0,
 						21.0
@@ -1181,7 +1182,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1063.5,
+						1135.5,
 						232.0,
 						5.0,
 						5.0
@@ -1213,7 +1214,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1083.5,
+						1155.5,
 						232.0,
 						5.0,
 						5.0
@@ -1238,7 +1239,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						915.5,
 						20.0,
 						60.0,
 						22.0
@@ -1256,7 +1257,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						915.5,
 						50.0,
 						180.0,
 						22.0
@@ -1277,7 +1278,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						915.5,
 						110.0,
 						80.0,
 						22.0
@@ -1296,7 +1297,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						915.5,
 						140.0,
 						60.0,
 						22.0
@@ -1314,7 +1315,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						915.5,
 						170.0,
 						80.0,
 						22.0
@@ -1332,7 +1333,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						915.5,
 						200.0,
 						100.0,
 						22.0
@@ -2393,6 +2394,102 @@
 			{
 				"box": {
 					"id": "obj-47",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Pulse texture space: Screen = the image lands where you see it; Cortical = read on the solver grid (WFG bands become rings / spokes)",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_nl::pulse_space",
+					"parameter_enable": 1,
+					"patching_rect": [
+						678.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						148.0,
+						114.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Cortical",
+								"Screen"
+							],
+							"parameter_initial": [
+								1.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "pulse_space",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "pulse_space",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "pulse_space"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-48",
+					"maxclass": "attrui",
+					"attr": "pulse_space",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						674.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-49",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						683.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Space",
+					"textjustification": 1,
+					"varname": "lbl_pulse_space"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-50",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2403,13 +2500,13 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1063.5,
+						1135.5,
 						130.0,
 						18.0,
 						12.0
 					],
 					"presentation_rect": [
-						355.0,
+						392.0,
 						5.0,
 						18.0,
 						12.0
@@ -2420,7 +2517,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-48",
+					"id": "obj-51",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2428,7 +2525,7 @@
 						""
 					],
 					"patching_rect": [
-						1063.5,
+						1135.5,
 						160.0,
 						131.0,
 						22.0
@@ -2453,7 +2550,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						341.0,
+						378.0,
 						44.0,
 						28.0,
 						28.0
@@ -2478,7 +2575,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						333.0,
+						370.0,
 						20.0,
 						44.0,
 						18.0
@@ -2898,7 +2995,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2910,7 +3007,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						0
 					]
 				}
@@ -2958,7 +3055,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						2
 					]
 				}
@@ -2982,7 +3079,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -2990,11 +3087,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-47",
+						"obj-50",
 						0
 					],
 					"destination": [
-						"obj-48",
+						"obj-51",
 						0
 					]
 				}
@@ -3002,7 +3099,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-48",
+						"obj-51",
 						0
 					],
 					"destination": [
@@ -3014,11 +3111,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-50",
+						"obj-52",
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						1
 					]
 				}
@@ -3026,11 +3123,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-53",
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						2
 					]
 				}
@@ -3038,30 +3135,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-52",
-						0
-					],
-					"destination": [
-						"obj-53",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
-						0
-					],
-					"destination": [
-						"obj-54",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-54",
 						0
 					],
@@ -3074,11 +3147,35 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-52",
+						"obj-55",
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-56",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-56",
+						0
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-54",
+						0
+					],
+					"destination": [
+						"obj-57",
 						1
 					]
 				}
@@ -3086,11 +3183,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-57",
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -3098,7 +3195,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-57",
 						0
 					],
 					"destination": [
@@ -3198,7 +3295,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3234,7 +3331,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3306,7 +3403,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3342,7 +3439,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3378,7 +3475,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3414,7 +3511,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3450,7 +3547,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3486,7 +3583,43 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						9
+					],
+					"destination": [
+						"obj-47",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-47",
+						0
+					],
+					"destination": [
+						"obj-48",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-48",
+						0
+					],
+					"destination": [
+						"obj-57",
 						0
 					]
 				}
@@ -3510,7 +3643,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-55",
 						0
 					]
 				}
@@ -3534,7 +3667,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-56",
 						0
 					]
 				}
@@ -3558,7 +3691,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-56",
 						0
 					]
 				}
@@ -3567,7 +3700,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						9
+						10
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3630,7 +3763,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						0
 					]
 				}
@@ -3738,7 +3871,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-57",
 						0
 					]
 				}
@@ -3774,7 +3907,7 @@
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-54",
 						0
 					]
 				}
@@ -3822,7 +3955,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -3907,6 +4040,30 @@
 					],
 					"destination": [
 						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-21",
+						0
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-22",
+						0
+					],
+					"destination": [
+						"obj-57",
 						0
 					]
 				}
@@ -3956,6 +4113,11 @@
 			"obj-44": [
 				"grain_scale",
 				"grain_scale",
+				0
+			],
+			"obj-47": [
+				"pulse_space",
+				"pulse_space",
 				0
 			],
 			"parameterbanks": {
