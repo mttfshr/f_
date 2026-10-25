@@ -448,6 +448,24 @@ def test_screen_space_pulse_reads_the_image_where_displayed():
     check("Screen: texels displayed on the left get s = 0 (max)", float(s[left].max()), 1e-6)
 
 
+# ------------------------------------------------- (o) Phase D T074: View = Cortical (unwrapped)
+def test_cortical_view_is_the_solver_grid():
+    """View Cortical at the solver's own size reproduces the state exactly (texel centres land on texel
+    centres); at another size it is the same periodic grid resampled, so it tiles seamlessly (the left and
+    right columns, and top and bottom rows, are neighbours across the wrap)."""
+    rng = np.random.default_rng(11)
+    st = rng.random((32, 32, 4)).astype(F32)
+    o = m.encode(st, 32, 32, view=1)
+    check("cortical view at N x N == the state (RGB, max |diff|)", float(np.abs(o[..., :3] - st[..., :3]).max()), 1e-6)
+    smooth = np.zeros((32, 32, 4), F32)
+    yy, xx = np.mgrid[0:32, 0:32]
+    smooth[..., 0] = 0.5 + 0.5 * np.cos(2 * np.pi * xx / 32) * np.cos(2 * np.pi * yy / 32)
+    o = m.encode(smooth, 128, 72, view=1)[..., 0].astype(np.float64)
+    step_in = np.abs(np.diff(o, axis=1)).max()
+    seam = np.abs(o[:, 0] - o[:, -1]).max()
+    check("cortical view tiles across x: the wrap step <= 1.5x the largest interior step", seam - 1.5 * step_in, 0.0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

@@ -205,10 +205,10 @@ Q_LEVELS = (255.0, 1023.0, None)  # Phase D T062: the q_levels menu index -> lev
 OUT_MODES = ("RGB", "E", "Contour", "Luma")     # Phase D T060: the out_mode menu, in order
 
 
-def encode_mode(state, ow, oh, mode):
+def encode_mode(state, ow, oh, mode, view=0):
     """T060: encode() then the output mode. 0 RGB = (E, I, contour) as the page (S8); 1 E, 2 contour,
     3 Rec. 709 luma of that RGB -- each a gray (v, v, v, 1)."""
-    rgb = encode(state, ow, oh)
+    rgb = encode(state, ow, oh, view)
     if mode == 0:
         return rgb
     if mode == 1:
@@ -303,7 +303,7 @@ def run(state0, frames, t0=0, levels=LEVELS, trace=False):
 
 
 # ----------------------------------------------------------------------- S7/S8
-def encode(state, ow, oh):
+def encode(state, ow, oh, view=0):
     """The retinal map on an (oh, ow) output. Square crop on the long axis,
     exactly the page's CSS stretch: L = max(ow, oh); zx = (2x-1) ow/L, zy =
     (2y-1) oh/L with texel-centred x, y in [0, 1]. Bilinear + wrap sample of all
@@ -319,6 +319,9 @@ def encode(state, ow, oh):
     th = np.arctan2(zy, zx)
     u = (th / (2.0 * np.pi)).astype(F32)          # texture x
     v = (np.log(r) / (2.0 * np.pi)).astype(F32)   # texture y
+    if view:                            # T074 View = Cortical: the solver grid itself, unwrapped
+        u = ((xs.astype(np.float64) + 0.5) / ow).astype(F32)     # angle across (one turn)
+        v = ((ys.astype(np.float64) + 0.5) / oh).astype(F32)     # log-radius up (one period)
     fx = u * F32(nw) - F32(0.5)
     fy = v * F32(nh) - F32(0.5)
     x0f, y0f = np.floor(fx), np.floor(fy)

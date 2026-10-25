@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 11,
+					"numoutlets": 12,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -94,15 +95,15 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						799.0,
+						871.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period out_mode q_levels freeze_on sim_rate pulse_mix pulse_gain grain_scale pulse_space reset"
+					"text": "route pulse_depth pulse_period out_mode q_levels freeze_on sim_rate pulse_mix pulse_gain grain_scale pulse_space out_view reset"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-52",
+					"id": "obj-55",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -188,7 +189,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-56",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -307,7 +308,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-57",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -486,7 +487,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-55",
+					"id": "obj-58",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -605,7 +606,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-56",
+					"id": "obj-59",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -724,7 +725,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-57",
+					"id": "obj-60",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -966,7 +967,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_enc.gen -- f_formconstants PARITY render stage (spec Revision 2, S7 + S8).\n// Port of the page's `retinalmap` shader on the module's output size: z = canvas coordinate in\n// [-1, 1]^2 of the SQUARE canvas (the page's CSS stretch crops the long axis), then the state is\n// sampled at (atan2(z.y, z.x), ln |z|) / 2 pi with LINEAR filtering and REPEAT wrap. The bare\n// complex log: conformal, one texture width per revolution; over most of the screen it MAGNIFIES\n// the 1024^2 field (the silky read). No foveal softening, contrast or sharp in the parity build.\n// Display (S8): the sampled state's E, I and contour channels, alpha 1 -- then the output mode\n// (Phase D T060, Param out_mode from the Output menu): 0 RGB = (E, I, contour) as the page; 1 E,\n// 2 contour, 3 Rec. 709 luma of that RGB, each as a gray (v, v, v, 1). Branch-free selection.\n// Mirror: fc_parity_mirror.encode_mode() (encode() for mode 0).\n// Inputs: in1 = the `r draw` bang (unused), in2 = the state (from nl).\n//   - output size: Params ow, oh (raw `r dim` -> route -> unpack -> prepend param); NOT the gen `dim`\n//     global (it is not an input texture's size). State grid size: Param n (default 1024 = @dim)\n//   - L = max(ow, oh); zx = (2x - 1) ow/L, zy = (2y - 1) oh/L with texel-centred norm\n//   - manual bilinear with explicit wrap on the texel index (the verified pattern); cortical axes:\n//     texture x = angle, texture y = log radius (the mirror's convention)\n//   - r floored at 1e-6 (ln 0): the page leaves the exact centre undefined\n//   - bypass_gate = 1 outputs black with alpha 1; the solver keeps running upstream. Never a Param\n//     named `bypass` (native pix attribute)\n//   - the cartopol multi-assign is the construct the verified f_formconstants enc bench (8/8) used\nParam bypass_gate(0);\nParam ow(1024);\nParam oh(1024);\nParam n(1024);\nParam out_mode(1);\n\nlng = max(ow, oh);\nzx = (norm.x * 2 - 1) * ow / lng;\nzy = (norm.y * 2 - 1) * oh / lng;\nr, theta = cartopol(zx, zy);\nrr = max(r, 0.000001);\nu = theta / twopi;\nv = log(rr) / twopi;\n\nfx = u * n - 0.5;\nfy = v * n - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa0 = x0 - n * floor(x0 / n);\nxb0 = (x0 + 1) - n * floor((x0 + 1) / n);\nya0 = y0 - n * floor(y0 / n);\nyb0 = (y0 + 1) - n * floor((y0 + 1) / n);\ncxa = (xa0 + 0.5) / n;\ncxb = (xb0 + 0.5) / n;\ncya = (ya0 + 0.5) / n;\ncyb = (yb0 + 0.5) / n;\nt00 = nearest(in2, vec(cxa, cya));\nt10 = nearest(in2, vec(cxb, cya));\nt01 = nearest(in2, vec(cxa, cyb));\nt11 = nearest(in2, vec(cxb, cyb));\nle = (1 - ty) * ((1 - tx) * t00.x + tx * t10.x) + ty * ((1 - tx) * t01.x + tx * t11.x);\nli = (1 - ty) * ((1 - tx) * t00.y + tx * t10.y) + ty * ((1 - tx) * t01.y + tx * t11.y);\nlb = (1 - ty) * ((1 - tx) * t00.z + tx * t10.z) + ty * ((1 - tx) * t01.z + tx * t11.z);\nk = 1 - bypass_gate;\n\nlum = 0.2126 * le + 0.7152 * li + 0.0722 * lb;\nm1 = abs(out_mode - 1) < 0.5;\nm2 = abs(out_mode - 2) < 0.5;\nm3 = out_mode > 2.5;\ngv = m1 * le + m2 * lb + m3 * lum;\ngsel = out_mode > 0.5;\noc0 = mix(le, gv, gsel);\noc1 = mix(li, gv, gsel);\noc2 = mix(lb, gv, gsel);\n\nout1 = vec(oc0 * k, oc1 * k, oc2 * k, 1);\n",
+									"code": "// codebox_enc.gen -- f_formconstants PARITY render stage (spec Revision 2, S7 + S8).\n// Port of the page's `retinalmap` shader on the module's output size: z = canvas coordinate in\n// [-1, 1]^2 of the SQUARE canvas (the page's CSS stretch crops the long axis), then the state is\n// sampled at (atan2(z.y, z.x), ln |z|) / 2 pi with LINEAR filtering and REPEAT wrap. The bare\n// complex log: conformal, one texture width per revolution; over most of the screen it MAGNIFIES\n// the 1024^2 field (the silky read). No foveal softening, contrast or sharp in the parity build.\n// Display (S8): the sampled state's E, I and contour channels, alpha 1 -- then the output mode\n// (Phase D T060, Param out_mode from the Output menu): 0 RGB = (E, I, contour) as the page; 1 E,\n// 2 contour, 3 Rec. 709 luma of that RGB, each as a gray (v, v, v, 1). Branch-free selection.\n// Mirror: fc_parity_mirror.encode_mode() (encode() for mode 0).\n// Phase D T074 (Matt, 2026-10-25): Param out_view from the View menu -- 0 Retinal (the map above), 1\n// Cortical: the solver grid itself, unwrapped (angle across, log-radius up, one period each; periodic in\n// both axes, so it tiles) -- the input for f_droste or any downstream log-polar wrap.\n// Inputs: in1 = the `r draw` bang (unused), in2 = the state (from nl).\n//   - output size: Params ow, oh (raw `r dim` -> route -> unpack -> prepend param); NOT the gen `dim`\n//     global (it is not an input texture's size). State grid size: Param n (default 1024 = @dim)\n//   - L = max(ow, oh); zx = (2x - 1) ow/L, zy = (2y - 1) oh/L with texel-centred norm\n//   - manual bilinear with explicit wrap on the texel index (the verified pattern); cortical axes:\n//     texture x = angle, texture y = log radius (the mirror's convention)\n//   - r floored at 1e-6 (ln 0): the page leaves the exact centre undefined\n//   - bypass_gate = 1 outputs black with alpha 1; the solver keeps running upstream. Never a Param\n//     named `bypass` (native pix attribute)\n//   - the cartopol multi-assign is the construct the verified f_formconstants enc bench (8/8) used\nParam bypass_gate(0);\nParam ow(1024);\nParam oh(1024);\nParam n(1024);\nParam out_mode(1);\nParam out_view(0);\n\nlng = max(ow, oh);\nzx = (norm.x * 2 - 1) * ow / lng;\nzy = (norm.y * 2 - 1) * oh / lng;\nr, theta = cartopol(zx, zy);\nrr = max(r, 0.000001);\nu = mix(theta / twopi, norm.x, out_view);\nv = mix(log(rr) / twopi, norm.y, out_view);\n\nfx = u * n - 0.5;\nfy = v * n - 0.5;\nx0 = floor(fx);\ny0 = floor(fy);\ntx = fx - x0;\nty = fy - y0;\nxa0 = x0 - n * floor(x0 / n);\nxb0 = (x0 + 1) - n * floor((x0 + 1) / n);\nya0 = y0 - n * floor(y0 / n);\nyb0 = (y0 + 1) - n * floor((y0 + 1) / n);\ncxa = (xa0 + 0.5) / n;\ncxb = (xb0 + 0.5) / n;\ncya = (ya0 + 0.5) / n;\ncyb = (yb0 + 0.5) / n;\nt00 = nearest(in2, vec(cxa, cya));\nt10 = nearest(in2, vec(cxb, cya));\nt01 = nearest(in2, vec(cxa, cyb));\nt11 = nearest(in2, vec(cxb, cyb));\nle = (1 - ty) * ((1 - tx) * t00.x + tx * t10.x) + ty * ((1 - tx) * t01.x + tx * t11.x);\nli = (1 - ty) * ((1 - tx) * t00.y + tx * t10.y) + ty * ((1 - tx) * t01.y + tx * t11.y);\nlb = (1 - ty) * ((1 - tx) * t00.z + tx * t10.z) + ty * ((1 - tx) * t01.z + tx * t11.z);\nk = 1 - bypass_gate;\n\nlum = 0.2126 * le + 0.7152 * li + 0.0722 * lb;\nm1 = abs(out_mode - 1) < 0.5;\nm2 = abs(out_mode - 2) < 0.5;\nm3 = out_mode > 2.5;\ngv = m1 * le + m2 * lb + m3 * lum;\ngsel = out_mode > 0.5;\noc0 = mix(le, gv, gsel);\noc1 = mix(li, gv, gsel);\noc2 = mix(lb, gv, gsel);\n\nout1 = vec(oc0 * k, oc1 * k, oc2 * k, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1063,7 +1064,7 @@
 						""
 					],
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						100.0,
 						56.0,
 						22.0
@@ -1095,16 +1096,16 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						915.5,
+						987.5,
 						260.0,
-						414.0,
+						451.0,
 						88.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						414.0,
+						451.0,
 						88.0
 					],
 					"proportion": 0.5
@@ -1119,7 +1120,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						200.0,
 						80.0,
 						21.0
@@ -1150,14 +1151,14 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1225.5,
+						1297.5,
 						200.0,
 						60.0,
 						21.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						318.0,
+						355.0,
 						0.9,
 						70.0,
 						21.0
@@ -1182,7 +1183,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						232.0,
 						5.0,
 						5.0
@@ -1214,7 +1215,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1155.5,
+						1227.5,
 						232.0,
 						5.0,
 						5.0
@@ -1239,7 +1240,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						20.0,
 						60.0,
 						22.0
@@ -1257,7 +1258,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						50.0,
 						180.0,
 						22.0
@@ -1278,7 +1279,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						110.0,
 						80.0,
 						22.0
@@ -1297,7 +1298,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						140.0,
 						60.0,
 						22.0
@@ -1315,7 +1316,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						170.0,
 						80.0,
 						22.0
@@ -1333,7 +1334,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						987.5,
 						200.0,
 						100.0,
 						22.0
@@ -2490,6 +2491,102 @@
 			{
 				"box": {
 					"id": "obj-50",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Retinal = the form-constant view (log-polar map); Cortical = the unwrapped solver grid, to feed f_droste",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_enc::out_view",
+					"parameter_enable": 1,
+					"patching_rect": [
+						750.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						0.0,
+						176.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Retinal",
+								"Cortical"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "out_view",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "out_view",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "out_view"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-51",
+					"maxclass": "attrui",
+					"attr": "out_view",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						746.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-52",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						755.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						-7.5,
+						144.0,
+						50.0,
+						18.0
+					],
+					"text": "View",
+					"textjustification": 1,
+					"varname": "lbl_out_view"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-53",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2500,13 +2597,13 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						130.0,
 						18.0,
 						12.0
 					],
 					"presentation_rect": [
-						392.0,
+						429.0,
 						5.0,
 						18.0,
 						12.0
@@ -2517,7 +2614,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-54",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2525,7 +2622,7 @@
 						""
 					],
 					"patching_rect": [
-						1135.5,
+						1207.5,
 						160.0,
 						131.0,
 						22.0
@@ -2550,7 +2647,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						378.0,
+						415.0,
 						44.0,
 						28.0,
 						28.0
@@ -2575,7 +2672,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						370.0,
+						407.0,
 						20.0,
 						44.0,
 						18.0
@@ -2995,7 +3092,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-56",
 						0
 					]
 				}
@@ -3007,7 +3104,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-57",
 						0
 					]
 				}
@@ -3055,7 +3152,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						2
 					]
 				}
@@ -3079,44 +3176,8 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-51",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-52",
-						0
-					],
-					"destination": [
-						"obj-54",
-						1
 					]
 				}
 			},
@@ -3128,42 +3189,6 @@
 					],
 					"destination": [
 						"obj-54",
-						2
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-54",
-						0
-					],
-					"destination": [
-						"obj-55",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-55",
-						0
-					],
-					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-56",
-						0
-					],
-					"destination": [
-						"obj-57",
 						0
 					]
 				}
@@ -3172,6 +3197,18 @@
 				"patchline": {
 					"source": [
 						"obj-54",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-55",
 						0
 					],
 					"destination": [
@@ -3183,11 +3220,47 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-56",
+						0
+					],
+					"destination": [
+						"obj-57",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-57",
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-58",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-58",
+						0
+					],
+					"destination": [
+						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-59",
+						0
+					],
+					"destination": [
+						"obj-60",
 						0
 					]
 				}
@@ -3196,6 +3269,30 @@
 				"patchline": {
 					"source": [
 						"obj-57",
+						0
+					],
+					"destination": [
+						"obj-60",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-60",
 						0
 					],
 					"destination": [
@@ -3295,7 +3392,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3331,7 +3428,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3403,7 +3500,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3439,7 +3536,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3475,7 +3572,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3511,7 +3608,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3547,7 +3644,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3583,7 +3680,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-58",
 						0
 					]
 				}
@@ -3619,7 +3716,43 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						10
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-50",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-51",
+						0
+					],
+					"destination": [
+						"obj-5",
 						0
 					]
 				}
@@ -3643,7 +3776,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-58",
 						0
 					]
 				}
@@ -3667,7 +3800,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
+						"obj-59",
 						0
 					]
 				}
@@ -3691,7 +3824,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
+						"obj-59",
 						0
 					]
 				}
@@ -3700,7 +3833,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						10
+						11
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3763,7 +3896,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-57",
 						0
 					]
 				}
@@ -3871,7 +4004,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -3907,7 +4040,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-57",
 						0
 					]
 				}
@@ -3955,7 +4088,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-56",
 						0
 					]
 				}
@@ -4051,7 +4184,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -4063,7 +4196,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-60",
 						0
 					]
 				}
@@ -4118,6 +4251,11 @@
 			"obj-47": [
 				"pulse_space",
 				"pulse_space",
+				0
+			],
+			"obj-50": [
+				"out_view",
+				"out_view",
 				0
 			],
 			"parameterbanks": {

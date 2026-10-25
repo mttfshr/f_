@@ -47,7 +47,7 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  414,             # ten controls + reset in an eleventh slot (T069 sets the final layout)
+    "presentation_width":  451,             # eleven controls + reset in a twelfth slot (T069 sets the final layout)
     "presentation_height": 88,
 
     "archetype": "source",
@@ -106,6 +106,11 @@ patcher = {
         {"name": "pulse_space", "type": "menu", "options": ["Cortical", "Screen"], "default": 1,
          "label": "Space", "pix_target": "nl",
          "hint": "Pulse texture space: Screen = the image lands where you see it; Cortical = read on the solver grid (WFG bands become rings / spokes)"},
+        # Phase D T074 (Matt, 2026-10-25): output geometry. Cortical = the solver grid unwrapped (angle across,
+        # log-radius up; tiles in both axes) -- for f_droste or another downstream wrap, instead of a map here.
+        {"name": "out_view", "type": "menu", "options": ["Retinal", "Cortical"], "default": 0,
+         "label": "View", "pix_target": "enc",
+         "hint": "Retinal = the form-constant view (log-polar map); Cortical = the unwrapped solver grid, to feed f_droste"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -214,10 +219,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[378.0, 44.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[415.0, 44.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[370.0, 20.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[407.0, 20.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),

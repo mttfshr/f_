@@ -59,7 +59,7 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
                  "pulse_mix": 1.0, "pulse_gain": 1.0,
                  "pulse_space": 0.0, "ow": float(N), "oh": float(N)},   # T073: the module default is Screen; legs pin Cortical
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
-                  "out_mode": 0.0}}        # T060: the module default is E; the parity legs pin RGB
+                  "out_mode": 0.0, "out_view": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
 
 def code(stage):
@@ -225,6 +225,21 @@ def test_pulse_screen_T073():
     d = np.abs(dbg["smooth_gpu"].astype(np.float64) - dbg["smooth_want"].astype(np.float64))
     check("Screen pulse, smooth texture: max diff <= 1 level", float(d.max()), Q + 1e-6)
     check("Screen pulse, smooth texture: values differing <= 0.5%", float((d > 1e-6).mean()), 5e-3)
+
+
+def test_cortical_view_T074():
+    """Phase D T074: View = Cortical shows the solver grid unwrapped -- at N x N it is the state itself;
+    at 160 x 90 it matches the mirror's resampled grid (RGB and E modes)."""
+    st = qstate(np.random.default_rng(43))
+    g = gpu("enc", [BANG, st], dim=(N, N), ow=float(N), oh=float(N), out_view=1.0)
+    check("enc Cortical at N x N == the state (RGB, max |diff|)",
+          float(np.abs(g[..., :3].astype(np.float64) - st[..., :3]).max()), 2e-3)
+    for mode in (0, 1):
+        g = gpu("enc", [BANG, st], dim=(160, 90), ow=160.0, oh=90.0, out_view=1.0, out_mode=float(mode))
+        mm = m.encode_mode(st, 160, 90, mode, view=1)
+        d = float(np.abs(g[..., :3].astype(np.float64) - mm[..., :3]).max())
+        note(f"enc Cortical 160x90 mode {mode} max diff", f"{d:.2e}")
+        check(f"enc Cortical 160x90 mode {mode} vs the mirror", d, 2e-3)
 
 
 def test_blur_stages_vs_mirror():
