@@ -406,6 +406,18 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
 > input for the MVP is a plain texture (plus the scalar/WFG path and the
 > internal fallback). Vecfield and tensor inputs are post-MVP, considered
 > after the MVP ships.
+>
+> **T061 decisions + pre-measurement (2026-10-24, 18:00):** Matt chose
+> REPLACE (s = depth × input; the internal square wave is the unplugged
+> default) and CORTICAL space (input read on the solver grid). Vsynth WFGs
+> output textures, so the WFG inlet and the texture inlet are one inlet.
+> Mirror measurement `tests/records/spike_fc_pulse_shapes.py` (RESULT in its
+> docstring): `s` behaves as an excitability level with a viable window
+> (DC 0.3 lives; DC 0.6 and square depth 1.5 die; depth 0 fades over
+> ~1000 frames and revives in a few frames); square pulses faster than
+> ~100 frames die (WFGs above ~0.6 Hz at 60 fps); cortical bands give
+> distinct on/off regions; a travelling-sine WFG sustains. Smooth-vs-square
+> is not a design concern (Matt: every WFG can output a square).
 
 ### Phase D: deliberate deviations (each: mirror first if dynamics change,
 A/B vs. the parity build AND the HTML, Matt keeps or reverts)
