@@ -117,7 +117,7 @@ def luma(tex):
             + F32(0.0722) * tex[..., 2]).astype(F32)
 
 
-def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0):
+def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0, mix=1.0, gain=1.0):
     """T061 `s`: depth * mix(square(t / period), luma(pulse), conn). REPLACE semantics (Matt,
     2026-10-24): a connected pulse texture IS the pulse; unplugged (conn 0) the internal square
     wave runs. The pulse is read in cortical space (on the solver grid, same size as the state
@@ -126,8 +126,8 @@ def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0):
     sq = F32(1.0) if (float(t) / float(period)) % 1.0 < 0.5 else F32(0.0)
     if pulse is None:
         return F32(depth) * sq
-    c = F32(conn)
-    return (F32(depth) * ((F32(1.0) - c) * sq + c * luma(pulse))).astype(F32)
+    c = F32(conn) * F32(mix)            # T071: Pulse Mix blends the internal wave with the texture
+    return (F32(depth) * ((F32(1.0) - c) * sq + c * F32(gain) * luma(pulse))).astype(F32)   # T071: Pulse Gain
 
 
 def rate_clock(frameno, rate):

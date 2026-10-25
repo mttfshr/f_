@@ -29,6 +29,9 @@
 //     pulse wave reads it); this frame steps when floor((frameno + 1) * sim_rate) > simt, else the
 //     state holds exactly as under Freeze. Rate 1 = every frame, simt = frameno (parity). Mirror:
 //     fc_parity_mirror.module_frame / rate_clock.
+//   - Phase D T071 (Matt, 2026-10-25): Params pulse_mix (Pulse Mix: 1 = the texture replaces the wave,
+//     0 = ignored, between = blend) and pulse_gain (scales the texture luma only); unplugged, neither
+//     matters. s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix).
 //   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn
 //     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).
 //   - no unary minus before a parenthesis (GenExpr mis-parses it)
@@ -39,6 +42,8 @@ Param pulse_conn(0);
 Param q_levels(0);
 Param freeze_on(0);
 Param sim_rate(1);
+Param pulse_mix(1);
+Param pulse_gain(1);
 
 ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).y;
@@ -49,7 +54,7 @@ lum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;
 simt = floor(frameno * sim_rate);
 stp = floor((frameno + 1) * sim_rate) > simt;
 sq = fract(simt / s_period) < 0.5;
-s = s_depth * mix(sq, lum, pulse_conn);
+s = s_depth * mix(sq, pulse_gain * lum, pulse_conn * pulse_mix);
 
 ve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));
 vi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));

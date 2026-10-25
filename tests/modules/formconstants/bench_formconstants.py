@@ -55,7 +55,8 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "blurx": {"n": float(N), "q_levels": 0.0},             # T062: 0 = 255 levels (the source)
           "blury": {"n": float(N), "q_levels": 0.0},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
-                 "q_levels": 0.0, "freeze_on": 0.0, "sim_rate": 1.0},
+                 "q_levels": 0.0, "freeze_on": 0.0, "sim_rate": 1.0,
+                 "pulse_mix": 1.0, "pulse_gain": 1.0},
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
                   "out_mode": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
@@ -226,6 +227,9 @@ def test_nl_pulse_T061():
     check_q("nl unplugged, period 200, t 90 (high)", g, m.wc_step(st, conv, 90, s=m.s_pulse(90, period=200.0)))
     g = gpu("nl", [conv, st, pulse], dim=(N, N), frameno=0.0, pulse_conn=1.0, s_depth=1.3)
     check_q("nl pulse connected, depth 1.3", g, m.wc_step(st, conv, 0, s=m.s_pulse(0, depth=1.3, pulse=pulse, conn=1.0)))
+    g = gpu("nl", [conv, st, pulse], dim=(N, N), frameno=10.0, pulse_conn=1.0, pulse_mix=0.5, pulse_gain=1.5)
+    check_q("nl pulse mix 0.5, gain 1.5 (T071)", g,
+            m.wc_step(st, conv, 10, s=m.s_pulse(10, pulse=pulse, conn=1.0, mix=0.5, gain=1.5)))
 
 
 def _wc_no_s(st, conv):

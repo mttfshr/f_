@@ -372,6 +372,26 @@ def test_rate_is_slow_motion():
     check("rate 0.25: 100 steps in 400 frames (|count - 100|)", abs(n_steps - 100), 0.0)
 
 
+# ------------------------------------------------- (l) Phase D T071: Pulse Mix / Pulse Gain
+def test_pulse_mix_and_gain():
+    """Mix 1 + gain 1 = the T061 replace; mix 0 ignores a connected texture (internal wave); mix 0.5 is
+    the halfway blend; gain scales the texture's luma only; unplugged (conn 0) neither matters."""
+    rng = np.random.default_rng(9)
+    tex = rng.random((16, 16, 4)).astype(F32)
+    lum = m.luma(tex)
+    t_hi = 10                                            # the internal wave's high half (sq = 1)
+    check("mix 1, gain 1 == T061 replace", float(np.abs(m.s_pulse(t_hi, pulse=tex, conn=1.0)
+                                                         - F32(0.6) * lum).max()), 1e-7)
+    check("mix 0: the internal wave (0.6 everywhere at t 10)",
+          float(np.abs(m.s_pulse(t_hi, pulse=tex, conn=1.0, mix=0.0) - F32(0.6)).max()), 1e-7)
+    check("mix 0.5: halfway blend", float(np.abs(m.s_pulse(t_hi, pulse=tex, conn=1.0, mix=0.5)
+                                                 - F32(0.6) * (F32(0.5) + F32(0.5) * lum)).max()), 1e-6)
+    check("gain 2 doubles the texture term", float(np.abs(m.s_pulse(t_hi, pulse=tex, conn=1.0, gain=2.0)
+                                                          - F32(1.2) * lum).max()), 1e-6)
+    check("unplugged: mix and gain change nothing", float(np.abs(
+        m.s_pulse(t_hi, pulse=tex, conn=0.0, mix=0.3, gain=1.7) - F32(0.6)).max()), 0.0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))
