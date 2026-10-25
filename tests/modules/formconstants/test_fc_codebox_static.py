@@ -84,6 +84,7 @@ def test_forbidden_constructs_absent():
         for pat, why in ((r"\bdim\b", "gen `dim` global"),
                          (r"nearestpix", "nearestpix with normalized coords"),
                          (r"Param\s+(texture|bypass)\s*\(", "Param named texture/bypass"),
+                         (r"Param\s+t\s*\(", "Param named t (never applied by jit.gl.pix; probed 2026-10-24)"),
                          (r"^\s*(e|phi)\s*=", "variable named e/phi"),
                          (r"[=(,]\s*-\s*\(", "unary minus before a parenthesis"),
                          (r"\bsin\s*\(", "sin() in a hash")):

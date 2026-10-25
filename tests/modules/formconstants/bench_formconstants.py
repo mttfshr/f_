@@ -1,31 +1,32 @@
 """
-bench_formconstants.py -- f_formconstants Phase 1 (tasks.md T015, T016): every stage
-codebox under src/f_formconstants/ run on the GPU through the codebox bench and diffed
-against the NumPy mirror in fc_mirror.py, then the whole chain host-sequenced over 30
-frames (the bench drives one codebox per job; the f_vf_fluid ADR-10 method, bench_wc.py
-the template). ALSO the first Max-side GenExpr compile check of the two brand-new
-codeboxes (blur_x/blur_y; the rewritten enc) -- the 2026-10-24 "module outputs black/
-flickering solid" report is resolved or named by these legs (offline checks cannot
-compile GenExpr).
+bench_formconstants.py -- f_formconstants PARITY build, tasks T046: every stage codebox
+under src/f_formconstants/ run on the GPU through the codebox bench and diffed against the
+parity mirror (fc_parity_mirror.py), then the chain host-sequenced for 5 frames (texel-exact
+class) and, @slow, 150 frames (statistics). THIS IS THE FIRST MAX COMPILE of the parity
+codeboxes: a compile error or a readback mismatch here is the finding; do not tune around it
+(tasks.md agent brief, rules 2, 3, 5).
 
-Stage jobs (one pass per job, outputs chained from Python):
-    pass   in1 = bang stand-in, in2 = feedback state (R = E, G = I, B = Ve, A = Vi),
-           in3 = seed texture (R = seedE, G = seedI)
-    seed   in1 = bang stand-in; R/G = reseed hashes, B/A = Box-Muller uniforms (Param salt)
-    blur_x / blur_y   in1 = state; R blurred at sigma_E, G at sigma_I, B/A pass through
-           (Params grain, sig_ratio -- sigma derived from dim per FR-002)
-    nl     in1 = convolved (R = cE, G = cI), in2 = raw state, in3 = noise (B, A uniforms),
-           in4 = drive (Box-Muller inside, E-only drive; Params dt, ne, drive_gain,
-           drv_conn, habit, excite, aie, aii)
-    enc    in1 = bang stand-in, in2 = state; retinotopic bilinear wrap at RENDER res
-           (= state res), Params bypass_gate, sharp, contrast, k_ecc, k_ang, r0, r_soft
+(The steady-web bench this replaces is in git history: commit c367543 and earlier.)
 
-The per-frame noise stream is REPRODUCIBLE: the host feeds nl a noise texture it built
-itself, and the mirror consumes the Box-Muller of the same uniforms, so the chain test
-diffs pixels, not statistics.
+Tolerance, stated in advance (tasks.md T046): quantized outputs pass if max |diff| <= 1/255
+AND at most 0.1% of values differ at all (GPU vs NumPy float32 rounding can flip a value that
+sits within an ulp of a (k + 0.5)/255 boundary; single flips are not chased). Continuous
+outputs (the enc render) pass at 2e-3. The chain legs use the SAME tolerance every frame; if
+they fail, the numbers are reported, not loosened.
+
+Stage jobs (one pass per job; the bench drives one codebox per job, up to 3 inputs):
+    seed   in1 = bang stand-in; out = four uint8-like hash channels (Params salt, n)
+    pass   in1 = bang, in2 = feedback state, in3 = seed; A == 0 or reseed -> seed (Param reseed)
+    blurx / blury   in1 = state; 13-tap per-channel kernel, wrap, quantized (Param n)
+    nl     in1 = convolved, in2 = raw state; Params frameno, s_depth, s_rate
+    enc    in1 = bang, in2 = state; the retinal map at (ow, oh) (Params ow, oh, n, bypass_gate)
+
+The grid size is pinned with Param n = 128 for the stage legs (the codebox default is the real
+1024; test_fc_codebox_static.py asserts it equals the definition's @dim).
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh tests/modules/formconstants/bench_formconstants.py
+      (add --slow for the 150-frame statistics leg)
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
 ORDER = 56.5           # right after bench_wc (56)
@@ -36,27 +37,24 @@ import sys
 import numpy as np
 
 import benchclient as bc
-import fc_mirror as km
-from fc_mirror import F32, Params
+import fc_parity_mirror as m
 from harness import check, note, run, slow
 
 SRC = _paths.REPO / "src" / "f_formconstants"
 N = 128
+Q = 1.0 / 255.0
+F32 = np.float32
 FILES = {"seed": "codebox_seed.gen", "pass": "codebox_pass.gen",
          "blurx": "codebox_blur_x.gen", "blury": "codebox_blur_y.gen",
          "nl": "codebox_nl.gen", "enc": "codebox_enc.gen"}
 BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang inlet
-DRIVE = np.zeros((N, N, 4), np.float32)         # neutral drive (unconnected equivalent)
-DRIVE[..., 3] = 1.0
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
-PINNED = {"seed": {"salt": 0.0, "sw": float(N), "sh": float(N)}, "pass": {"reseed": 0.0, "amp": 1.0},
-          "blurx": {"grain": 0.0008, "sig_ratio": 1.45},
-          "blury": {"grain": 0.0008, "sig_ratio": 1.45},
-          "nl": {"dt": 1.0, "ne": 0.75, "drive_gain": 0.0, "drv_conn": 0.0,
-                 "habit": 0.9, "excite": 0.0, "aie": 14.5, "aii": 13.0},
-          "enc": {"bypass_gate": 0.0, "sharp": 0.5, "contrast": 1.0,
-                  "k_ecc": 5.0, "k_ang": 3.0, "r0": 1.0, "r_soft": 0.35,
-                  "sw": float(N), "sh": float(N)}}
+PINNED = {"seed": {"salt": 0.0, "n": float(N)},
+          "pass": {"reseed": 0.0},
+          "blurx": {"n": float(N)},
+          "blury": {"n": float(N)},
+          "nl": {"frameno": 0.0, "s_depth": 0.6, "s_rate": 0.0068},
+          "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N)}}
 
 
 def code(stage):
@@ -72,229 +70,177 @@ def gpu(stage, inputs, dim=None, **deltas):
     return out
 
 
-def tex(rng, h=N, w=N):
-    return rng.random((h, w, 4), dtype=np.float32)
+def qstate(rng, live=True):
+    """A random uint8-like state (k/255); A = 1 when `live` (what nl would have written)."""
+    s = (rng.integers(0, 256, size=(N, N, 4)).astype(F32) / F32(255.0))
+    if live:
+        s[..., 3] = 1.0
+    return s
 
 
-def boxmuller(na, nb, dt=1.0):
-    """Exactly the nl codebox's per-frame Gaussian, float32 in the GPU's
-    operation order. The codebox guards BOTH uniforms (z*0.999 + 0.0001:
-    log(0) and the u=1 pole); scaling only na shifts cos(2*pi*nb) by ~3e-3
-    of nx -- the 2026-10-24 chain-divergence root cause."""
-    f = np.float32
-    a = (na.astype(f) * f(0.999) + f(0.0001)).astype(f)
-    b = (nb.astype(f) * f(0.999) + f(0.0001)).astype(f)
-    s = np.sqrt(np.float64(-2.0) * np.log(a.astype(np.float64))).astype(f)
-    c = np.cos((f(2 * np.pi) * b).astype(np.float64)).astype(f)
-    return (s * c * f(np.sqrt(dt))).astype(f)
+def check_q(label, g, mm):
+    d = np.abs(g.astype(np.float64) - mm.astype(np.float64))
+    mx, frac = float(d.max()), float((d > 1e-6).mean())
+    note(label + " max diff / values differing", f"{mx:.3e} ({mx / Q:.2f} levels) / {frac:.4%}")
+    note(label + " per-channel max (levels) R G B A",
+         " ".join(f"{float(d[..., c].max()) / Q:.2f}" for c in range(4)))
+    check(label + ": max diff <= 1/255", mx, Q + 1e-6)
+    check(label + ": values differing <= 0.1%", frac, 1e-3)
 
 
-def mirror_frame(state, P, nx):
-    """One host-side frame with the exact discrete blur (the codebox reference
-    path, not the FFT soak path) and the given Gaussian field."""
-    h, w = state.shape[0], state.shape[1]
-    conv = km.blur_state(state, h, w, P)
-    return km.nonlinear_step(conv, state, P.dt, P, noise=nx)
+# ---------------------------------------------------------------------- seed / pass
+
+def test_seed_stage():
+    s0 = gpu("seed", [BANG], dim=(N, N), salt=0.0)
+    on_grid = float(np.abs(s0 * 255.0 - np.round(s0 * 255.0)).max())
+    check("seed: every channel on the 1/255 grid", on_grid, 2e-3)
+    check("seed: values in [0, 1]", max(0.0 - float(s0.min()), float(s0.max()) - 1.0), 0.0)
+    note("seed means (want ~0.5)", " ".join(f"{float(s0[..., c].mean()):.3f}" for c in range(4)))
+    check("seed: mean ~ 0.5 on every channel",
+          max(abs(float(s0[..., c].mean()) - 0.5) for c in range(4)), 0.03)
+    check("seed: std ~ 0.289 on every channel",
+          max(abs(float(s0[..., c].std()) - 0.2887) for c in range(4)), 0.03)
+    check("seed: reproducible per salt",
+          float(np.abs(s0 - gpu("seed", [BANG], dim=(N, N), salt=0.0)).max()), 0.0)
+    s1 = gpu("seed", [BANG], dim=(N, N), salt=1.0)
+    check("seed: salt 1 differs from salt 0", 0.2 - float(np.abs(s0 - s1).mean()), 0.2)
+    corr = max(abs(float(np.corrcoef(s0[..., a].ravel(), s0[..., b].ravel())[0, 1]))
+               for a, b in ((0, 1), (0, 2), (1, 3)))
+    check("seed: channels weakly correlated (cheap hash, f_wc precedent)", corr, 0.30)
 
 
-def test_seed_hash_channels():
+def test_pass_stage_flag_and_reseed():
     rng = np.random.default_rng(9)
-    seed_out = gpu("seed", [BANG], dim=(N, N), salt=0.0)
-    check("seed R: hash uniform in [0, 1)",
-          max(0.0 - float(seed_out[..., 0].min()), float(seed_out[..., 0].max()) - 1.0), 0.0)
-    seed_out1 = gpu("seed", [BANG], dim=(N, N), salt=1.0)
-    check("seed R: reproducible per salt",
-          float(np.abs(seed_out[..., 0] - gpu("seed", [BANG], dim=(N, N), salt=0.0)[..., 0]).max()), 1e-7)
-    check("seed R: salt 1 differs from salt 0 (fresh noise per frame)",
-          0.5 - float(np.abs(seed_out[..., 0] - seed_out1[..., 0]).mean()), 0.5)
-    # the hash is cheap arithmetic (f_wc's, proven in use); pairwise sample
-    # correlation ~0.21 observed at 128^2 -- benign as a noise UNIFORM source;
-    # what matters is uniformity + decorrelation at the used level
-    check("seed: R/G channels weakly correlated (cheap hash, proven precedent)",
-          abs(float(np.corrcoef(seed_out[..., 0].ravel(), seed_out[..., 1].ravel())[0, 1])), 0.30)
+    seed = gpu("seed", [BANG], dim=(N, N), salt=0.0)
+    fb = qstate(rng)
+    kept = gpu("pass", [BANG, fb, seed], dim=(N, N), reseed=0.0)
+    check("pass: reseed=0 keeps a live (A=1) state bit-exact", float(np.abs(kept - fb).max()), 0.0)
+    re = gpu("pass", [BANG, fb, seed], dim=(N, N), reseed=1.0)
+    check("pass: reseed=1 writes the seed into all four channels", float(np.abs(re - seed).max()), 0.0)
+    zero = fb.copy()
+    zero[..., 0] = 0.0
+    zero[..., 1] = 0.0                                   # E = I = 0 with A = 1: a LEGITIMATE state
+    held = gpu("pass", [BANG, zero, seed], dim=(N, N), reseed=0.0)
+    check("pass: E = I = 0 with A = 1 is HELD, not reseeded", float(np.abs(held - zero).max()), 0.0)
+    lost = fb.copy()
+    lost[: N // 2, :, 3] = 0.0                           # the top half is lost (A = 0)
+    got = gpu("pass", [BANG, lost, seed], dim=(N, N), reseed=0.0)
+    check("pass: A = 0 texels take the seed",
+          float(np.abs(got[: N // 2] - seed[: N // 2]).max()), 0.0)
+    check("pass: the live half is held",
+          float(np.abs(got[N // 2:] - lost[N // 2:]).max()), 0.0)
 
-def test_pass_identity_reseed_heal():
-    rng = np.random.default_rng(9)
-    seed_out = gpu("seed", [BANG], dim=(N, N), salt=0.0)
-    fb = tex(rng)
-    kept = gpu("pass", [BANG, fb, seed_out], dim=(N, N), reseed=0.0)
-    check("pass: reseed=0 keeps the feedback state bit-exact",
-          float(np.abs(kept - fb).max()), 0.0)
-    re = gpu("pass", [BANG, fb, seed_out], dim=(N, N), reseed=1.0)
-    check("pass: reseed=1 writes the seed hashes into R (E) and G (I)",
-          max(float(np.abs(re[..., 0] - seed_out[..., 0]).max()),
-              float(np.abs(re[..., 1] - seed_out[..., 1]).max()),
-              float(np.abs(re[..., 2]).max()), float(np.abs(re[..., 3]).max())), 1e-7)
-    dead = fb.copy(); dead[..., 0] = 0.0; dead[..., 1] = 0.0
-    healed = gpu("pass", [BANG, dead, seed_out], dim=(N, N), reseed=0.0)
-    check("pass: self-heal reseeds texels whose E and I channels are both exactly 0",
-          max(float(np.abs(healed[..., 0] - seed_out[..., 0]).max()),
-              float(np.abs(healed[..., 1] - seed_out[..., 1]).max())), 1e-7)
 
-    # ------------------------------------------------------------- blur stages
-    # ------------------------------------------------------------- blur stages
-def test_blur_kernels_match_mirror():
-    st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)
-    P0 = Params()
-    si, se = km.sigmas_px(N, N, P0)
-    note("blur sigma at dim 128, grain 0.0008", f"si {float(si):.3f} px, se {float(se):.3f} px")
-    mx = np.stack([km.blur_axis(st[..., 0], se, 1), km.blur_axis(st[..., 1], si, 1)])
+# ---------------------------------------------------------------------- blur
+
+def test_blur_stages_vs_mirror():
+    st = qstate(np.random.default_rng(9), live=False)
     gx = gpu("blurx", [st], dim=(N, N))
-    check("blur_x: R blurred at sigma_E along X vs the mirror kernel",
-          float(np.abs(gx[..., 0] - mx[0]).max()), 5e-4)
-    check("blur_x: G blurred at sigma_I along X vs the mirror kernel",
-          float(np.abs(gx[..., 1] - mx[1]).max()), 5e-4)
-    check("blur_x: B/A pass through bit-exact",
-          float(np.abs(gx[..., 2:] - st[..., 2:]).max()), 0.0)
-    my = np.stack([km.blur_axis(gx[..., 0], se, 0), km.blur_axis(gx[..., 1], si, 0)])
+    check_q("blur_x", gx, m.blur_pass(st, 1))
     gy = gpu("blury", [gx], dim=(N, N))
-    check("blur_y: R blurred at sigma_E along Y vs the mirror kernel",
-          float(np.abs(gy[..., 0] - my[0]).max()), 5e-4)
-    mc = km.blur_state(st, N, N, P0)
-    check("blur_x + blur_y chained == mirror blur_state",
-          max(float(np.abs(gy[..., 0] - mc[0]).max()),
-              float(np.abs(gy[..., 1] - mc[1]).max())), 5e-4)
-    # the wrap boundary is exercised: feed an impulse, read the wrapped ring
-    imp = np.zeros((N, N, 4), np.float32); imp[0, 0, 0] = 1.0
-    gix = gpu("blurx", [imp], dim=(N, N))
-    m_ix = km.blur_axis(imp[..., 0], se, 1)
-    check("blur_x: wraps at the periodic boundary",
-          float(np.abs(gix[..., 0] - m_ix).max()), 5e-4)
-
-def test_noise_boxmuller_gpu_order():
-    """The GPU computes its own Box-Muller in a bare leg; compare against the
-    bench's mirror simulation term for term. Isolates the noise stream from
-    the rest of the nl update (the chain divergence is noise-perturbation-
-    amplified, so nx must be right to ~1e-5 before judging the rest)."""
-    rng = np.random.default_rng(7)
-    tex_noise = tex(rng)
-    code_noise = ("Param dt(1);\n"
-                  "na = nearest(in1, norm).z * 0.999 + 0.0001;\n"
-                  "nb = nearest(in1, norm).w * 0.999 + 0.0001;\n"
-                  "nx = sqrt(0 - 2 * log(na)) * cos(twopi * nb) * sqrt(dt);\n"
-                  "out1 = vec(na, nb, nx, 1);")
-    out, r = bc.run_pass(code_noise, [tex_noise], dim=(N, N), params={"dt": 1.0},
-                         timeout_ms=30000)
-    assert r["status"] == "ok", f"boxmuller leg failed: {r['errors']}"
-    gna = out[..., 0]
-    gnb = out[..., 1]
-    gnx_gpu = out[..., 2]
-    gnx_sim = boxmuller(tex_noise[..., 2], tex_noise[..., 3], 1.0)
-    d = np.abs(gnx_gpu - gnx_sim)
-    yx = np.unravel_index(int(d.argmax()), d.shape)
-    sna = tex_noise[..., 2][yx] * np.float32(0.999) + np.float32(0.0001)
-    print(f"    ...  gpu-read na {float(gna[yx]):.8f} nb {float(gnb[yx]):.8f} "
-          f"vs array na {float(sna):.8f} nb {float(tex_noise[..., 3][yx]):.8f}")
-    # same-formula value from the GPU's own readback (numpy float64)
-    ref = np.sqrt(-2 * np.log(float(gna[yx]))) * np.cos(2 * np.pi * float(gnb[yx]))
-    print(f"    ...  gpu nx {float(gnx_gpu[yx]):.6f} vs float64-of-gpu-readback {ref:.6f}")
-    note("boxmuller gpu-vs-sim max diff",
-         f"{float(d.max()):.3e} at {yx}: gpu {float(gnx_gpu[yx]):.6f} sim {float(gnx_sim[yx]):.6f} "
-         f"(na {float(tex_noise[..., 2][yx]):.6f} nb {float(tex_noise[..., 3][yx]):.6f})")
-    note("boxmuller mean abs diff", f"{float(d.mean()):.3e}")
-    note("readback na/nb max channel drift",
-         f"na {float(np.abs(gna - (tex_noise[..., 2] * np.float32(0.999) + np.float32(0.0001))).max()):.2e} "
-         f"nb {float(np.abs(gnb - tex_noise[..., 3]).max()):.2e}")
-    check("GPU Box-Muller matches the bench simulation", float(d.max()), 1e-3)
+    check_q("blur_y (on the GPU's own blur_x output)", gy, m.blur_pass(gx, 0))
+    check_q("blur_x + blur_y chained vs the mirror's blur()", gy, m.blur(st))
+    imp = np.zeros((N, N, 4), np.float32)
+    imp[0, 0, :] = 1.0                                   # an impulse in the corner: the wrap ring
+    check_q("blur_x: impulse at (0,0) wraps (periodic)", gpu("blurx", [imp], dim=(N, N)),
+            m.blur_pass(imp, 1))
+    check_q("blur_y: impulse at (0,0) wraps (periodic)", gpu("blury", [imp], dim=(N, N)),
+            m.blur_pass(imp, 0))
 
 
-def test_nl_full_update_vs_mirror():
-    st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)
-    Pn = Params()
-    noise_tex = tex(np.random.default_rng(9))
-    nx = boxmuller(noise_tex[..., 2], noise_tex[..., 3], Pn.dt)
-    bl = km.blur_state(st, N, N, Pn)
-    conv_tex = np.zeros((N, N, 4), dtype=np.float32)
-    conv_tex[..., 0] = bl[0]
-    conv_tex[..., 1] = bl[1]
-    gn = gpu("nl", [conv_tex, st, noise_tex, DRIVE], dim=(N, N))
-    mn = km.nonlinear_step(bl.astype(np.float32), st, Pn.dt, Pn, noise=nx)
-    cd = np.abs(gn - mn).max(axis=(0, 1))
-    note("nl channel diffs", " ".join(f"{float(cd[c]):.2e}" for c in range(4)))
-    note("nl E diff mean/max", f"{float(np.abs(gn[..., 0] - mn[..., 0]).mean()):.2e} / {float(cd[0]):.2e}")
-    d0 = np.abs(gn[..., 0] - mn[..., 0])
-    yx = np.unravel_index(int(d0.argmax()), d0.shape)
-    note("nl max-E-diff texel inputs",
-         f"gpu {float(gn[..., 0][yx]):.6f} mirror {float(mn[..., 0][yx]):.6f} | "
-         f"ce {float(conv_tex[..., 0][yx]):.4f} ci {float(conv_tex[..., 1][yx]):.4f} "
-         f"ee {float(st[..., 0][yx]):.4f} ve {float(st[..., 2][yx]):.4f} "
-         f"nx {float(nx[yx]):.4f} na {float(noise_tex[..., 2][yx]):.6f} nb {float(noise_tex[..., 3][yx]):.6f}")
-    check("nl: full update vs the mirror (noise, habituation, carry)",
-          float(cd.max()), 1e-3)
-    # habituation = 0 pins the carry channels at exactly 0 (the G5 rule)
-    gn0 = gpu("nl", [gn, gn, noise_tex, DRIVE], dim=(N, N), habit=0.0)
-    check("nl: habit=0 pins B/A to exactly 0",
-          max(float(np.abs(gn0[..., 2]).max()), float(np.abs(gn0[..., 3]).max())), 0.0)
+# ---------------------------------------------------------------------- nl
 
-def test_enc_probe_ramp_coordinates():
-    """Diagnostic: state E = a known ramp, so the rendered value at a pixel
-    reveals WHICH texel the GPU sampled. A correct map yields au == the
-    mirror's E at the same pixel; any systematic disagreement exposes the map
-    error numerically (transpose, offset, scale) instead of via correlation."""
-    st = np.zeros((N, N, 4), dtype=np.float32)
-    ys, xs = np.mgrid[0:N, 0:N].astype(np.float32)
-    st[..., 0] = xs / N        # R = column index / N (x ramp)
-    st[..., 1] = ys / N        # G = row index / N (y ramp, for cross-check)
-    g = gpu("enc", [BANG, st], dim=(N, N), sharp=0.0)
-    men = km.encode(st, (N, N), sharp=F32(0.0), contrast=F32(1.0),
-                    k_ecc=F32(5.0), k_ang=F32(3.0), r0=F32(1.0), r_soft=F32(0.35))
-    spots = [(N // 2, N // 2), (N // 2, N - 8), (N // 4, 3 * N // 4), (16, 16), (96, 32)]
-    for y, x in spots:
-        print(f"    ...  pixel ({y},{x}): gpu {float(g[y, x, 0]):.4f} "
-              f"gpuG {float(g[y, x, 1]):.4f} mirror {float(men[y, x, 0]):.4f}")
-    d = float(np.abs(g[..., 0] - men[..., 0]).max())
-    note("ramp max diff", f"{d:.4f}")
-    check("enc probe: ramp render matches the mirror's sampled columns", d, 0.02)
+def test_nl_vs_mirror():
+    st = qstate(np.random.default_rng(11))
+    conv = m.blur(st)
+    for t in (0, 100, 2400):                             # s on, off, on
+        g = gpu("nl", [conv, st], dim=(N, N), frameno=float(t))
+        mm = m.wc_step(st, conv, t)
+        note(f"s at t={t}", f"{float(m.s_of_t(t)):.1f}")
+        check_q(f"nl at t={t}", g, mm)
+        check(f"nl at t={t}: alpha is exactly 1", float(np.abs(g[..., 3] - 1.0).max()), 0.0)
+    g0 = gpu("nl", [conv, st], dim=(N, N), frameno=0.0, s_depth=0.0)
+    check_q("nl with s_depth = 0", g0, _wc_no_s(st, conv))
 
 
-def test_enc_render_and_bypass():
-    st = np.random.default_rng(9).random((N, N, 4), dtype=np.float32)
-    enc_out = gpu("enc", [BANG, st], dim=(N, N))
-    men = km.encode(st, (N, N), sharp=F32(0.5), contrast=F32(1.0),
-                    k_ecc=F32(5.0), k_ang=F32(3.0), r0=F32(1.0), r_soft=F32(0.35))
-    g, m = enc_out[..., 0], men[..., 0]
-    d = np.abs(g - m)
-    ys, xs = np.nonzero(d == d.max())
-    note("enc center pixel gpu/mirror", f"{float(g[N//2, N//2]):.4f} / {float(m[N//2, N//2]):.4f}")
-    note("enc max diff at", f"({ys[0]},{xs[0]}): gpu {float(g[ys[0], xs[0]]):.4f} mirror {float(m[ys[0], xs[0]]):.4f}")
-    note("enc means gpu/mirror", f"{float(g.mean()):.4f} / {float(m.mean()):.4f}")
-    note("enc corr gpu x mirror", f"{float(np.corrcoef(g.ravel(), m.ravel())[0, 1]):.4f}")
-    check("enc: retinotopic bilinear-wrap render vs the mirror", float(d.max()), 2e-3)
+def _wc_no_s(st, conv):
+    old = m.S_DEPTH
+    m.S_DEPTH = 0.0
+    try:
+        return m.wc_step(st, conv, 0)
+    finally:
+        m.S_DEPTH = old
+
+
+# ---------------------------------------------------------------------- enc
+
+def test_enc_render_vs_mirror():
+    st = qstate(np.random.default_rng(13))
+    for ow, oh in ((N, N), (160, 90), (90, 160)):
+        g = gpu("enc", [BANG, st], dim=(ow, oh), ow=float(ow), oh=float(oh))
+        assert g.shape[:2] == (oh, ow), g.shape
+        mm = m.encode(st, ow, oh)
+        d = np.abs(g[..., :3] - mm[..., :3])
+        note(f"enc {ow}x{oh} max / mean diff", f"{float(d.max()):.2e} / {float(d.mean()):.2e}")
+        note(f"enc {ow}x{oh} corr (E)", f"{float(np.corrcoef(g[..., 0].ravel(), mm[..., 0].ravel())[0, 1]):.5f}")
+        check(f"enc {ow}x{oh}: retinal map vs the mirror (E, I, contour)", float(d.max()), 2e-3)
+        check(f"enc {ow}x{oh}: alpha is 1", float(np.abs(g[..., 3] - 1.0).max()), 0.0)
     bn = gpu("enc", [BANG, st], dim=(N, N), bypass_gate=1.0)
     check("enc: bypass_gate = 1 outputs black with alpha 1",
-          max(float(np.abs(bn[..., :3]).max()),
-              float(np.abs(bn[..., 3] - 1).max())), 0.0)
-
-def test_30_frame_chain_matches_mirror():
-    Pchain = Params()
-    gstate = km.seed_state(N, N, 3)
-    mstate = gstate.copy()
-    n_rng = np.random.default_rng(100)
-    for fr in range(30):
-        nz_tex = tex(n_rng)
-        gnx = boxmuller(nz_tex[..., 2], nz_tex[..., 3], Pchain.dt)
-        gbl = gpu("blurx", [gstate], dim=(N, N))
-        gbl = gpu("blury", [gbl], dim=(N, N))
-        gstate = gpu("nl", [gbl, gstate, nz_tex, DRIVE], dim=(N, N))
-        mstate = mirror_frame(mstate, Pchain, gnx)
-    d = float(np.abs(gstate - mstate).max())
-    note("30-frame chain diff (channels)", " ".join(
-        f"{float(np.abs(gstate - mstate).max(axis=(0, 1))[c]):.2e}" for c in range(4)))
-    check("30-frame chain: GPU vs mirror frame-exact class", d, 1e-2)
+          max(float(np.abs(bn[..., :3]).max()), float(np.abs(bn[..., 3] - 1).max())), 0.0)
 
 
-# ---- Revision 2 (2026-10-24 night): this bench targets the steady-web build (commit 63b6129) -------------
-# The shipped codeboxes are now the parity build (spec Revision 2); the replacement is the parity bench
-# (tasks T046 / T047). Kept for reference; every test skips with the reason below.
-from harness import skip as _skip  # noqa: E402
+# ---------------------------------------------------------------------- chain
+
+def _gpu_frame(state, t):
+    conv = gpu("blury", [gpu("blurx", [state], dim=(N, N))], dim=(N, N))
+    return gpu("nl", [conv, state], dim=(N, N), frameno=float(t))
 
 
-def _superseded(*_a, **_k):
-    _skip("steady-web reference build (git 63b6129); superseded by the parity bench, tasks T046/T047")
+def _gpu_seed_state():
+    seed = gpu("seed", [BANG], dim=(N, N), salt=0.0)
+    return gpu("pass", [BANG, np.zeros((N, N, 4), np.float32), seed], dim=(N, N), reseed=1.0)
 
 
-for _name in [k for k in list(globals()) if k.startswith("test_")]:
-    globals()[_name] = _superseded
+def test_chain_5_frames_texel_exact_class():
+    gs = _gpu_seed_state()
+    ms = gs.copy()                                       # the mirror starts from the GPU's own seed
+    for fr in range(5):
+        gs = _gpu_frame(gs, fr)
+        ms = m.step(ms, fr)
+        check_q(f"chain frame {fr + 1}", gs, ms)
+
+
+def test_each_frame_is_stage_exact_given_identical_input():
+    """Attribution leg for test_chain_5_frames: the GPU frame is stepped from the MIRROR's own
+    state every frame, so any difference is the frame's own, not inherited. If the chain leg
+    diverges but this one does not, the divergence is upstream rounding flips cascading through
+    the frame (B = 3|E - I| triples a 1-level flip in E or I), not a stage error."""
+    ms = _gpu_seed_state()
+    for fr in range(5):
+        g = _gpu_frame(ms, fr)
+        ms = m.step(ms, fr)
+        check_q(f"frame {fr + 1} stepped from the mirror's own state", g, ms)
+
+
+@slow
+def test_chain_150_frames_statistics():
+    """After a few frames rounding flips cascade, so only statistics are compared: the mean and
+    std of E over the last half-period (frames 75-149, the s-off stretch), GPU vs mirror, 10%."""
+    gs = _gpu_seed_state()
+    ms = gs.copy()
+    g_std, m_std, g_mean, m_mean = [], [], [], []
+    for fr in range(150):
+        gs = _gpu_frame(gs, fr)
+        ms = m.step(ms, fr)
+        if fr >= 75:
+            g_std.append(float(gs[..., 0].std())); m_std.append(float(ms[..., 0].std()))
+            g_mean.append(float(gs[..., 0].mean())); m_mean.append(float(ms[..., 0].mean()))
+    gsd, msd, gmn, mmn = np.mean(g_std), np.mean(m_std), np.mean(g_mean), np.mean(m_mean)
+    note("E std (GPU / mirror)", f"{gsd:.4f} / {msd:.4f}")
+    note("E mean (GPU / mirror)", f"{gmn:.4f} / {mmn:.4f}")
+    check("E std agrees within 10%", abs(gsd - msd) / max(msd, 1e-9), 0.10)
+    check("E mean agrees within 10%", abs(gmn - mmn) / max(mmn, 1e-9), 0.10)
 
 
 if __name__ == "__main__":

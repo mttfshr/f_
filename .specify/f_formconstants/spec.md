@@ -73,7 +73,7 @@ FR-004 (seed from noise, never zero), FR-008 (no NaN at the outlet), FR-009
   exactly 0, and the old self-heal would inject noise into a live field.
   NaN guard stays.
 - **wc** (the old `nl`): S4 verbatim, with `s` computed in the codebox from a
-  frame-count Param `t` (the existing draw counter): `s = s_depth · (fract(t ·
+  frame-count Param `frameno` (the existing draw counter; NOT named `t`, see tasks T046): `s = s_depth · (fract(frameno ·
   s_rate) < 0.5)`, defaults `s_depth` 0.6, `s_rate` 3.4/500 = 0.0068. (`fract`
   instead of `sin` keeps it exact at large t; the source's t = 0 value 0.3 is a
   single frame and is not reproduced.)

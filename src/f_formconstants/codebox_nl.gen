@@ -7,13 +7,13 @@
 // Mirror: fc_parity_mirror.wc_step().
 // Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state
 // (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).
-//   - s = s_depth * (fract(t * s_rate) < 0.5): the page's square wave (0.6 half-duty, period
-//     500/3.4 ~ 147 frames), E sigmoid input only. t = the frame counter (patcher, wraps at 2500 =
-//     17 exact periods). s is the LIVENESS mechanism (spec Revision 2, T042 d): s_depth 0 kills the field
+//   - s = s_depth * (fract(frameno * s_rate) < 0.5): the page's square wave (0.6 half-duty, period
+//     500/3.4 ~ 147 frames), E sigmoid input only. frameno = the frame counter (patcher, wraps at 2500 =
+//     17 exact periods; NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24). s is the LIVENESS mechanism (spec Revision 2, T042 d): s_depth 0 kills the field
 //   - no noise, no habituation, no drive, no clamps (the page has none); the NaN guard lives in pass
-//   - constants are literals (the page's `parameters`); t / s_depth / s_rate are the only Params
+//   - constants are literals (the page's `parameters`); frameno / s_depth / s_rate are the only Params
 //   - no unary minus before a parenthesis (GenExpr mis-parses it)
-Param t(0);
+Param frameno(0);
 Param s_depth(0.6);
 Param s_rate(0.0068);
 
@@ -21,7 +21,7 @@ ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).y;
 ee = nearest(in2, norm).x;
 ii = nearest(in2, norm).y;
-s = s_depth * (fract(t * s_rate) < 0.5);
+s = s_depth * (fract(frameno * s_rate) < 0.5);
 
 ve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));
 vi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));

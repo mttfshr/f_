@@ -22,7 +22,7 @@ Layout:
     blur_x / blur_y
            GPUGaussianMultiBlur(1, 2, 1, 1): 13 taps, per-channel weights, wrap, quantized (S2, S3)
     nl     the page's `wc` shader: E, I relax toward F(couplings - H [+ s on E]); out = (q(E), q(I),
-           q8(3 |E - I|), 1); s from the frame counter Param t (S2, S4, S5)
+           q8(3 |E - I|), 1); s from the frame counter Param frameno (S2, S4, S5)
     enc    the retinal map on the OUTPUT size (Params ow, oh from `r dim`): square crop on the long
            axis, sample the state at (atan2, ln r)/2 pi, bilinear + wrap, RGB out (S7, S8)
 
@@ -60,7 +60,7 @@ patcher = {
         # Driven by the module's own reset/draw logic (`prepend param ...`), never by the route
         {"name": "reseed", "type": "internal"},
         {"name": "salt", "type": "internal"},
-        {"name": "t", "type": "internal"},
+        {"name": "frameno", "type": "internal"},
         # Driven by the bypass jsui (`prepend param bypass_gate`)
         {"name": "bypass_gate", "type": "internal"},
         # Driven by the raw `r dim` unpack (`prepend param ow/oh`) -> enc only: the OUTPUT size
@@ -100,7 +100,7 @@ patcher = {
 
 # Codebox Params that are not a UI control: which stage holds them (driven by raw boxes through
 # `prepend param <name>`; see the reset logic below).
-_STAGES_OF = {"reseed": "pass", "salt": "seed", "t": "nl", "ow": "enc", "oh": "enc"}
+_STAGES_OF = {"reseed": "pass", "salt": "seed", "frameno": "nl", "ow": "enc", "oh": "enc"}
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:
         _p["pix_target"] = _STAGES_OF[_p["name"]]
@@ -113,7 +113,7 @@ for _p in patcher["params"]:
 #       left   : bang -> salt counter           a new seed per reset
 #   [r draw] -> [i] -> [+ 1] -> [% 2500] -> [i] right   the frame counter t (wraps at 2500 = 17 exact
 #                                                         `s` periods)
-#   [i] -> [prepend param t] -> nl               the frame index drives the `s` square wave
+#   [i] -> [prepend param frameno] -> nl               the frame index drives the `s` square wave
 #   [i] -> [sel 2] -> `param reseed 0` -> pass   reseed stays 1 for three draw bangs (never a timer)
 #   salt: [i] -> [+ 1] -> [i] right ; [i] -> [prepend param salt] -> seed   (per reset, NOT per frame)
 #   [r dim] -> enc, and -> [route dim] -> [unpack] -> [prepend param ow / oh] -> enc: the OUTPUT size only.
@@ -160,7 +160,7 @@ patcher["raw_boxes"] = [
     _obj(11, "% 2500", 2, 1, [340.0, 450.0, 50.0, 22.0], ["int"]),
     _obj(12, "sel 2", 2, 2, [260.0, 480.0, 40.0, 22.0], ["bang", ""]),
     _msg(13, "param reseed 0", [260.0, 510.0, 85.0, 22.0]),
-    _obj(14, "prepend param t", 1, 1, [350.0, 480.0, 100.0, 22.0]),
+    _obj(14, "prepend param frameno", 1, 1, [350.0, 480.0, 100.0, 22.0]),
     _obj(15, "i", 2, 1, [30.0, 450.0, 30.0, 22.0], ["int"]),
     _obj(16, "+ 1", 2, 1, [70.0, 450.0, 30.0, 22.0], ["int"]),
     _obj(17, "prepend param salt", 1, 1, [30.0, 480.0, 110.0, 22.0]),
@@ -178,7 +178,7 @@ patcher["raw_lines"] = [
     _line(3, 1, 7, 0), _line(7, 0, 9, 1),     # trigger middle -> 0 -> frame counter right inlet
     _line(3, 0, 15, 0),               # trigger left -> salt counter
     _line(8, 0, 9, 0), _line(9, 0, 10, 0), _line(10, 0, 11, 0), _line(11, 0, 9, 1),   # draw -> [i] -> +1 -> %2500 -> [i]
-    _line(9, 0, 14, 0), _line(14, 0, "obj-55", 0),  # frame index -> param t -> nl
+    _line(9, 0, 14, 0), _line(14, 0, "obj-55", 0),  # frame index -> param frameno -> nl
     _line(9, 0, 12, 0), _line(12, 0, 13, 0), _line(13, 0, "obj-52", 0),   # sel 2 -> reseed 0 -> pass
     _line(15, 0, 16, 0), _line(16, 0, 15, 1),       # salt counter
     _line(15, 0, 17, 0), _line(17, 0, "obj-51", 0),   # [i] -> param salt -> seed (per reset)

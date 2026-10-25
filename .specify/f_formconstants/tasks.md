@@ -277,7 +277,7 @@ a time. Nothing else.
    multi-assign, no unary minus before a parenthesis, `nearest()` with
    normalized coords (never `nearestpix`), never the `dim` global for a texel
    grid (literal or a Param defaulting to N), never a variable named `e` or
-   `phi`, no Param named `texture` or `bypass`.
+   `phi`, no Param named `texture`, `bypass` or `t` (a Param named `t` is never applied by jit.gl.pix: found at T046).
 7. **No new architecture** (resize handling, adaptive resolution, new build
    features) unless a task asks for it.
 8. **CLAUDE.md session rules apply:** no test or bench runs beyond the one
@@ -332,17 +332,17 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   `codebox_blur_y.gen` (S3 exactly: 13 fixed taps, per-channel weights
   normalized over the shared radius, all four channels, quantized output,
   grid from Param `n` = 1024), `codebox_nl.gen` (S4 + the `s` form; Params
-  `t`, `s_depth`, `s_rate`; keep the file and stage name `nl` to avoid
+  `frameno`, `s_depth`, `s_rate`; keep the file and stage name `nl` to avoid
   builder churn), `codebox_enc.gen` (S7/S8; Params `ow`, `oh`, `n`,
   `bypass_gate`). Term for term against `fc_parity_mirror.py`; each header
   cites the S items it implements. Nothing from the steady-web build
   survives unless S1–S8 require it.
 - [x] T044 **DONE 2026-10-24: built drift 0; contracts 9/9 (six codebox-only Params registered as known issues: n ×4, s_depth, s_rate); launch 8/8; menu 17/17; `test_fc_codebox_static.py` 5/5 (n == @dim, blur literals, forbidden constructs, positional ids obj-50..55 / enc obj-5 / route obj-4, `r dim` reaches enc only). Panel 100×70 is a placeholder (T069).** **Definition + build** (offline). `definition.py`: params = reset,
-  bypass and the internals (`reseed`, `salt`, `t`, `bypass_gate`, `ow`,
+  bypass and the internals (`reseed`, `salt`, `frameno`, `bypass_gate`, `ow`,
   `oh`); NO dials; drop the drive mod_inlet for Phase R (T066 restores it).
   Solver stages `@adapt 0 @dim 1024 1024 @type float32`; enc stays
   render-size via `r dim`; remove the `r dim` fan-out to solver stages and
-  the `r dim → delay` reseed line; the draw counter now feeds `t` (nl) and
+  the `r dim → delay` reseed line; the draw counter now feeds `frameno` (nl) and
   no longer feeds `salt` every draw. Recompute every positional object id
   from the `build/spec.md` formula (the dial count changes). Add a test that
   each codebox Param `n` default equals the definition's @dim. Build; then
@@ -353,7 +353,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   describe the steady-web build and stay as its reference. Any test that
   reads the shipped codeboxes or definition and now fails is marked xfail
   with reason "steady-web reference, Revision 2"; nothing is deleted.
-- [ ] T046 **Bench legs vs. the parity mirror** (Max bench, Matt's go).
+- [~] T046 **RUN 2026-10-24 (Max 9.2.0): all six codeboxes COMPILE; 6/7 legs green; ONE DECISION OWED (below).** **Bench legs vs. the parity mirror** (Max bench, Matt's go).
   Compile every stage; per-stage legs. Tolerance, stated in advance:
   quantized outputs pass if max |diff| ≤ 1/255 and ≤ 0.1% of texels differ
   at all. Chain: texel-exact (same tolerance) for the first 5 frames; after
@@ -508,3 +508,11 @@ the suite is green. Module is shipped.
 - Consequences: Phase R is unchanged (the quantize is cheap and kept for parity). S2's gloss in the spec and T062's rationale are corrected; the brief's parenthetical too. `s` is the liveness mechanism, so T061's breathe dials are performance-critical (depth 0 kills the field), not cosmetic.
 - Also found: `s_of_t` and the page's `sign(sin)` differ at t = 0 (0.6 vs 0.3) and at t = 1250 k (exact half-periods; the page's truncated π decides). Single frames; documented in the mirror.
 - Open for T043/T046: whether a fresh `jit.gl.pix` float32 output reads A = 0 (the pass stage's lost flag depends on it); the loadbang reseed covers the first frame either way.
+
+### 2026-10-24 (night, T046): the parity codeboxes compile and match; one real bug found, one tolerance question
+
+- **First Max compile of the parity codeboxes: all six compile.** seed (uint8 grid, mean 0.50, std 0.289, reproducible per salt), pass (A = 1 held bit-exact, E = I = 0 with A = 1 HELD, A = 0 texels reseed), blur_x/blur_y (13 taps; max 1 level, ≤ 0.0015% of values differ; impulse wrap exact), enc (128², 160×90, 90×160: max 8.3e-5, corr 1.00000; bypass black A = 1), nl at s on (t = 0, 2400) and off (t = 100, 74): max 1 level.
+- **REAL BUG FOUND: a Param named `t` is never applied in a jit.gl.pix codebox** (it reads back 0 even when set to 100; the identical code with the Param named `tt` works). With `t` the `s` wave was stuck at its t = 0 value (always on), which no offline test could see. Renamed `frameno` (codebox, definition, bench, static-test forbidden list, brief rule 6). Same trap family as `texture` / `bypass`. Worth a line in `skills/jit-gen-codebox/SKILL.md` (needs a re-upload + `skills/check.sh stamp`; NOT done here).
+- **Chain, 5 frames, literal tolerance (≤ 1/255 AND ≤ 0.1% of values): frame 1 passes (1 level, 0.0092% of values), frame 2 fails: R, G 1 level, B 3 levels (0.015% of values).** Attribution leg added (`test_each_frame_is_stage_exact_given_identical_input`, the GPU stepped from the MIRROR's own state each frame): all five frames are stage-exact (frames 2–4 bit-identical, frames 1 and 5 ≤ 1 level, ≤ 0.0092%). So the frame-2 miss is upstream rounding flips cascading: B = 3|E − I| triples a 1-level flip of the inherited state. It is not a stage error.
+- **DECISION OWED (Matt): the chain leg's tolerance.** The literal "same tolerance for frames 1–5" cannot hold for the B channel past frame 1 by construction. Recommendation: keep the attribution leg as the stage-exactness proof; make the chain leg check R, G ≤ 1 level per frame and B ≤ 3 levels (values differing ≤ 0.1%), and report both. Until decided the chain leg stays red, as written. The @slow 150-frame statistics leg has NOT been run.
+- Still open for T047/T048: whether a fresh `jit.gl.pix` float32 output reads A = 0 (not testable in the codebox bench; the loadbang reseed covers frame 1), and the module-level look.
