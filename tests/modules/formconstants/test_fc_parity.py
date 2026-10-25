@@ -392,6 +392,28 @@ def test_pulse_mix_and_gain():
         m.s_pulse(t_hi, pulse=tex, conn=0.0, mix=0.3, gain=1.7) - F32(0.6)).max()), 0.0)
 
 
+# ------------------------------------------------- (m) Phase D T072: Grain (tap spacing)
+def test_grain_tap_spacing():
+    """Grain 1 is exactly the parity blur; grain 2 equals integer taps at 2 i (the fraction is 0); a
+    fractional grain blends the two neighbouring texels; the weights still sum to 1 (a constant field
+    blurs to itself at any grain)."""
+    rng = np.random.default_rng(10)
+    st = (rng.integers(0, 256, (32, 32, 4)) / 255.0).astype(F32)
+    check("grain 1 == parity blur (max |diff|)", float(np.abs(m.blur(st, None, 1.0) - m.blur(st, None)).max()), 0.0)
+    w = m.half_kernel()
+    ref = st * w[0]
+    for i in range(1, m.RADIUS + 1):
+        ref = ref + (np.roll(st, 2 * i, axis=1) + np.roll(st, -2 * i, axis=1)) * w[i]
+    ref = ref / (w[0] + F32(2.0) * w[1:].sum(axis=0))
+    check("grain 2 == integer taps at 2i (blur_x, max |diff|)",
+          float(np.abs(m.blur_pass(st, 1, None, 2.0) - ref).max()), 1e-6)
+    t = m._tap(st, 0.25, 1)
+    check("fractional tap blends neighbours (x + 0.25)",
+          float(np.abs(t - (st + (np.roll(st, -1, axis=1) - st) * F32(0.25))).max()), 1e-6)
+    flat = np.full((16, 16, 4), 0.4, F32)
+    check("constant field unchanged at grain 1.37", float(np.abs(m.blur(flat, None, 1.37) - flat).max()), 1e-6)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

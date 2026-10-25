@@ -52,8 +52,8 @@ BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
 PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "pass": {"reseed": 0.0},
-          "blurx": {"n": float(N), "q_levels": 0.0},             # T062: 0 = 255 levels (the source)
-          "blury": {"n": float(N), "q_levels": 0.0},
+          "blurx": {"n": float(N), "q_levels": 0.0, "grain_scale": 1.0},   # T062: 0 = 255 levels; T072 grain 1
+          "blury": {"n": float(N), "q_levels": 0.0, "grain_scale": 1.0},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
                  "q_levels": 0.0, "freeze_on": 0.0, "sim_rate": 1.0,
                  "pulse_mix": 1.0, "pulse_gain": 1.0},
@@ -176,6 +176,16 @@ def test_rate_T065():
         else:
             d = float(np.abs(g.astype(np.float64) - st.astype(np.float64)).max())
             check(f"nl rate 0.5 frame {f} holds its incoming state", d, 1e-6)
+
+
+def test_grain_T072():
+    """Phase D T072: blur_x / blur_y at grain_scale 0.5, 1.37 and 2 vs the mirror's spaced-tap blur."""
+    st = qstate(np.random.default_rng(37))
+    for g in (0.5, 1.37, 2.0):
+        gx = gpu("blurx", [st], dim=(N, N), grain_scale=g)
+        check_q(f"blur_x grain {g}", gx, m.blur_pass(st, 1, m.LEVELS, g))
+        gy = gpu("blury", [gx], dim=(N, N), grain_scale=g)
+        check_q(f"blur_y grain {g} (on the GPU's blur_x)", gy, m.blur_pass(gx, 0, m.LEVELS, g))
 
 
 def test_blur_stages_vs_mirror():

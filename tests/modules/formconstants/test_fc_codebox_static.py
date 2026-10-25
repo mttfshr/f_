@@ -107,11 +107,11 @@ def test_positional_ids_match_built_patcher():
         box = boxes.get(oid)
         assert box is not None and name in box.get("text", ""), f"{name} is not {oid}: {box and box.get('text')}"
     route = boxes.get("obj-4")
-    # T061/T060: the dials' and the menu's tokens come first, so `reset` is route outlet 8 (definition raw_lines)
-    assert route and route["text"].split() == ["route", "pulse_depth", "pulse_period", "out_mode", "q_levels", "freeze_on", "sim_rate", "pulse_mix", "pulse_gain", "reset"], route and route.get("text")
+    # T061/T060: the dials' and the menu's tokens come first, so `reset` is route outlet 9 (definition raw_lines)
+    assert route and route["text"].split() == ["route", "pulse_depth", "pulse_period", "out_mode", "q_levels", "freeze_on", "sim_rate", "pulse_mix", "pulse_gain", "grain_scale", "reset"], route and route.get("text")
     resets = [ln["patchline"] for ln in _built()["lines"]
               if ln["patchline"]["source"][0] == "obj-4" and ln["patchline"]["destination"][0] == "obj-raw-3"]
-    assert [pl["source"][1] for pl in resets] == [8], f"reset must leave route outlet 8: {resets}"
+    assert [pl["source"][1] for pl in resets] == [9], f"reset must leave route outlet 9: {resets}"
 
 
 def test_pulse_inlet_reaches_nl():

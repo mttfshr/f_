@@ -83,7 +83,16 @@ def half_kernel():
     return k
 
 
-def blur_pass(state, axis, levels=LEVELS):
+def _tap(state, d, axis):
+    """state sampled at x + d along axis: two wrapped texels blended by the fraction (T072 Grain)."""
+    f0 = int(np.floor(d))
+    fr = F32(d - f0)
+    a = np.roll(state, -f0, axis=axis)
+    b = np.roll(state, -(f0 + 1), axis=axis)
+    return a + (b - a) * fr
+
+
+def blur_pass(state, axis, levels=LEVELS, grain=1.0):
     """One pass of the page's multi-blur shader along `axis` (0 = rows = y,
     1 = columns = x), all four channels, wrap, quantized output.
     c = tex(0) w[0] + sum_i (tex(+i) + tex(-i)) w[i];  c /= w[0] + 2 sum w[i]."""
@@ -91,14 +100,18 @@ def blur_pass(state, axis, levels=LEVELS):
     acc = state * w[0]
     ssum = w[0].copy()
     for i in range(1, RADIUS + 1):
-        acc = acc + (np.roll(state, i, axis=axis) + np.roll(state, -i, axis=axis)) * w[i]
+        if grain == 1.0:                # parity: integer taps
+            pair = np.roll(state, i, axis=axis) + np.roll(state, -i, axis=axis)
+        else:                           # T072 Grain: tap offsets i * grain, bilinear between texels
+            pair = _tap(state, i * grain, axis) + _tap(state, -i * grain, axis)
+        acc = acc + pair * w[i]
         ssum = ssum + F32(2.0) * w[i]
     return q(acc / ssum, levels)
 
 
-def blur(state, levels=LEVELS):
-    """blur_x then blur_y (`blur(U, temp, UC)`)."""
-    return blur_pass(blur_pass(state, 1, levels), 0, levels)
+def blur(state, levels=LEVELS, grain=1.0):
+    """blur_x then blur_y (`blur(U, temp, UC)`); grain scales the tap spacing (T072)."""
+    return blur_pass(blur_pass(state, 1, levels, grain), 0, levels, grain)
 
 
 # --------------------------------------------------------------------- S5
@@ -140,11 +153,11 @@ def rate_clock(frameno, rate):
     return int(np.floor((float(frameno) + 1.0) * float(rate))) > simt, simt
 
 
-def module_frame(state, frameno, rate=1.0, freeze=False, levels=LEVELS):
+def module_frame(state, frameno, rate=1.0, freeze=False, levels=LEVELS, grain=1.0):
     """One rendered frame of the module with Rate and Freeze: the pulse reads simt; the state holds on
     a non-stepping frame or under Freeze."""
     steps, simt = rate_clock(frameno, rate)
-    return step(state, simt, levels, s=s_pulse(simt), freeze=freeze or not steps)
+    return step(state, simt, levels, s=s_pulse(simt), freeze=freeze or not steps, grain=grain)
 
 
 Q_LEVELS = (255.0, 1023.0, None)  # Phase D T062: the q_levels menu index -> levels (None = float)
@@ -230,10 +243,10 @@ def pass_stage(fb, seed, reseed):
 
 
 # ------------------------------------------------------------------ one frame
-def step(state, t, levels=LEVELS, s=None, freeze=False):
+def step(state, t, levels=LEVELS, s=None, freeze=False, grain=1.0):
     """One frame in the page's order. `state` is the held state (what the
     `pass` stage emitted); returns the new state (what feeds back and renders)."""
-    conv = blur(state, levels)
+    conv = blur(state, levels, grain)
     return wc_step(state, conv, t, levels, s, freeze)
 
 

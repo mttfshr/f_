@@ -10,46 +10,63 @@
 // Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are
 // nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything
 // inlined with suffixed names.
+// Phase D T072 (Matt, 2026-10-25): Param grain_scale from the Grain dial (0.5-2, default 1) -- every
+// tap's offset i becomes i * grain_scale, read as two wrapped texels blended by the fraction (same 13
+// taps and weights; at 1 the fraction is 0, so the parity path is exact). Above ~1.5 the spaced taps
+// alias into a checkerboard moire (tests/records/spike_fc_grain_inhibit.py) -- kept on purpose (Matt).
 // Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,
 // S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes
 // (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.
 Param n(1024);
 Param q_levels(0);
+Param grain_scale(1);
 
 ix = floor(norm.x * n);
 iy = floor(norm.y * n);
 yw0 = iy - n * floor(iy / n);
 t0 = nearest(in1, vec((ix + 0.5) / n, (yw0 + 0.5) / n));
 ar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;
-wp1 = (ix + 1) - n * floor((ix + 1) / n);
-wn1 = (ix - 1) - n * floor((ix - 1) / n);
-tp1 = nearest(in1, vec((wp1 + 0.5) / n, (yw0 + 0.5) / n));
-tn1 = nearest(in1, vec((wn1 + 0.5) / n, (yw0 + 0.5) / n));
+dp1 = ix + 1 * grain_scale; fp1 = floor(dp1); rp1 = dp1 - fp1;
+pa1 = fp1 - n * floor(fp1 / n); pb1 = (fp1 + 1) - n * floor((fp1 + 1) / n);
+tp1 = mix(nearest(in1, vec((pa1 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb1 + 0.5) / n, (yw0 + 0.5) / n)), rp1);
+dn1 = ix - 1 * grain_scale; fn1 = floor(dn1); rn1 = dn1 - fn1;
+na1 = fn1 - n * floor(fn1 / n); nb1 = (fn1 + 1) - n * floor((fn1 + 1) / n);
+tn1 = mix(nearest(in1, vec((na1 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb1 + 0.5) / n, (yw0 + 0.5) / n)), rn1);
 ar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;
-wp2 = (ix + 2) - n * floor((ix + 2) / n);
-wn2 = (ix - 2) - n * floor((ix - 2) / n);
-tp2 = nearest(in1, vec((wp2 + 0.5) / n, (yw0 + 0.5) / n));
-tn2 = nearest(in1, vec((wn2 + 0.5) / n, (yw0 + 0.5) / n));
+dp2 = ix + 2 * grain_scale; fp2 = floor(dp2); rp2 = dp2 - fp2;
+pa2 = fp2 - n * floor(fp2 / n); pb2 = (fp2 + 1) - n * floor((fp2 + 1) / n);
+tp2 = mix(nearest(in1, vec((pa2 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb2 + 0.5) / n, (yw0 + 0.5) / n)), rp2);
+dn2 = ix - 2 * grain_scale; fn2 = floor(dn2); rn2 = dn2 - fn2;
+na2 = fn2 - n * floor(fn2 / n); nb2 = (fn2 + 1) - n * floor((fn2 + 1) / n);
+tn2 = mix(nearest(in1, vec((na2 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb2 + 0.5) / n, (yw0 + 0.5) / n)), rn2);
 ar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;
-wp3 = (ix + 3) - n * floor((ix + 3) / n);
-wn3 = (ix - 3) - n * floor((ix - 3) / n);
-tp3 = nearest(in1, vec((wp3 + 0.5) / n, (yw0 + 0.5) / n));
-tn3 = nearest(in1, vec((wn3 + 0.5) / n, (yw0 + 0.5) / n));
+dp3 = ix + 3 * grain_scale; fp3 = floor(dp3); rp3 = dp3 - fp3;
+pa3 = fp3 - n * floor(fp3 / n); pb3 = (fp3 + 1) - n * floor((fp3 + 1) / n);
+tp3 = mix(nearest(in1, vec((pa3 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb3 + 0.5) / n, (yw0 + 0.5) / n)), rp3);
+dn3 = ix - 3 * grain_scale; fn3 = floor(dn3); rn3 = dn3 - fn3;
+na3 = fn3 - n * floor(fn3 / n); nb3 = (fn3 + 1) - n * floor((fn3 + 1) / n);
+tn3 = mix(nearest(in1, vec((na3 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb3 + 0.5) / n, (yw0 + 0.5) / n)), rn3);
 ar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;
-wp4 = (ix + 4) - n * floor((ix + 4) / n);
-wn4 = (ix - 4) - n * floor((ix - 4) / n);
-tp4 = nearest(in1, vec((wp4 + 0.5) / n, (yw0 + 0.5) / n));
-tn4 = nearest(in1, vec((wn4 + 0.5) / n, (yw0 + 0.5) / n));
+dp4 = ix + 4 * grain_scale; fp4 = floor(dp4); rp4 = dp4 - fp4;
+pa4 = fp4 - n * floor(fp4 / n); pb4 = (fp4 + 1) - n * floor((fp4 + 1) / n);
+tp4 = mix(nearest(in1, vec((pa4 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb4 + 0.5) / n, (yw0 + 0.5) / n)), rp4);
+dn4 = ix - 4 * grain_scale; fn4 = floor(dn4); rn4 = dn4 - fn4;
+na4 = fn4 - n * floor(fn4 / n); nb4 = (fn4 + 1) - n * floor((fn4 + 1) / n);
+tn4 = mix(nearest(in1, vec((na4 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb4 + 0.5) / n, (yw0 + 0.5) / n)), rn4);
 ar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;
-wp5 = (ix + 5) - n * floor((ix + 5) / n);
-wn5 = (ix - 5) - n * floor((ix - 5) / n);
-tp5 = nearest(in1, vec((wp5 + 0.5) / n, (yw0 + 0.5) / n));
-tn5 = nearest(in1, vec((wn5 + 0.5) / n, (yw0 + 0.5) / n));
+dp5 = ix + 5 * grain_scale; fp5 = floor(dp5); rp5 = dp5 - fp5;
+pa5 = fp5 - n * floor(fp5 / n); pb5 = (fp5 + 1) - n * floor((fp5 + 1) / n);
+tp5 = mix(nearest(in1, vec((pa5 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb5 + 0.5) / n, (yw0 + 0.5) / n)), rp5);
+dn5 = ix - 5 * grain_scale; fn5 = floor(dn5); rn5 = dn5 - fn5;
+na5 = fn5 - n * floor(fn5 / n); nb5 = (fn5 + 1) - n * floor((fn5 + 1) / n);
+tn5 = mix(nearest(in1, vec((na5 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb5 + 0.5) / n, (yw0 + 0.5) / n)), rn5);
 ar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;
-wp6 = (ix + 6) - n * floor((ix + 6) / n);
-wn6 = (ix - 6) - n * floor((ix - 6) / n);
-tp6 = nearest(in1, vec((wp6 + 0.5) / n, (yw0 + 0.5) / n));
-tn6 = nearest(in1, vec((wn6 + 0.5) / n, (yw0 + 0.5) / n));
+dp6 = ix + 6 * grain_scale; fp6 = floor(dp6); rp6 = dp6 - fp6;
+pa6 = fp6 - n * floor(fp6 / n); pb6 = (fp6 + 1) - n * floor((fp6 + 1) / n);
+tp6 = mix(nearest(in1, vec((pa6 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb6 + 0.5) / n, (yw0 + 0.5) / n)), rp6);
+dn6 = ix - 6 * grain_scale; fn6 = floor(dn6); rn6 = dn6 - fn6;
+na6 = fn6 - n * floor(fn6 / n); nb6 = (fn6 + 1) - n * floor((fn6 + 1) / n);
+tn6 = mix(nearest(in1, vec((na6 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb6 + 0.5) / n, (yw0 + 0.5) / n)), rn6);
 ar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;
 lv = 255 + 768 * (q_levels > 0.5);
 qon = q_levels < 1.5;
