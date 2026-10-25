@@ -13,6 +13,7 @@
 - **Follow-up (next bench session, not blocking):** `bench_fc_look.py` captured NO outlet output in the module bench although the module renders live → bench-side capture bug. First suspect: float32 output vs the capture matrix; diff against `bench_wc_look.py`'s job one change at a time.
 - **Next:** T049 (cost: ms/frame at N 1024 / 2048, 1080p / 4K vs f_wc 2.45 ms). Then Phase D (T060–T069), one deviation at a time, starting with output mode / breathe dials. README row updated (⚠ stays: no dials, no docs). Commits through `6eac1fb` + this one.
 - Still owed: the `Param t` trap line in `skills/jit-gen-codebox/SKILL.md` (re-upload + `skills/check.sh stamp`).
+- Still owed (2026-10-24, T061): the **dial-name trap** -- a control's `param_connect` names `<pix>::<dial name>`, so a dial named like a jit.gl.pix attribute (`depth` was one: int 0/1) binds to that attribute and takes its type/range. f_formconstants renamed to `pulse_depth`/`pulse_period`. Scan the other definitions; consider a builder guard; add to the maxpat-json-authoring skill.
 
 ## 2026-10-24, 17:05: f_formconstants parity rebuild — Phase R at T047 (superseded by the entry above)
 

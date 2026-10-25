@@ -60,10 +60,13 @@ patcher = {
     "params": [
         # Phase D T061 (Matt, 2026-10-24): the pulse. s = depth * (pulse inlet luma if connected, else the
         # internal square wave of `period` frames). No dead-zone guard: kill and revive is a gesture.
-        {"name": "depth", "type": "float", "min": 0.0, "max": 1.5, "default": 0.6,
+        # Dial names are NOT `depth` / `period`: a control's param_connect names `<pix>::<dial name>`, and
+        # jit.gl.pix has an int 0/1 attribute called `depth` -- a dial named `depth` bound to it and became
+        # Type Int, Range 0 1 in Max (Matt, 2026-10-24). Prefixed names cannot collide with a pix attribute.
+        {"name": "pulse_depth", "type": "float", "min": 0.0, "max": 1.5, "default": 0.6,
          "label": "Depth", "pix_attr": "s_depth", "pix_target": "nl",
          "hint": "Pulse depth (excitability). 0.6 = the source; 0 fades the field out slowly; ~1.5 kills it fast"},
-        {"name": "period", "type": "float", "min": 30.0, "max": 600.0, "default": 147.0588,
+        {"name": "pulse_period", "type": "float", "min": 30.0, "max": 600.0, "default": 147.0588,
          "label": "Period", "pix_attr": "s_period", "pix_target": "nl",
          "hint": "Internal pulse period in frames (used when the pulse inlet is unplugged). 147 = the source; under ~100 the field dies"},
         {"name": "reset", "type": "raw_ui"},
@@ -144,7 +147,7 @@ for _p in patcher["params"]:
 # Object ids (positional -- they shift when a UI box is added, build/spec.md): with no dial widgets the
 # support stages start at obj-50: hold = obj-50, seed = obj-51, pass = obj-52, blurx = obj-53,
 # blury = obj-54, nl = obj-55; enc (primary) = obj-5 (two dials: still under the ten-widget threshold, so
-# the obj-50 base holds); the route is obj-4 with tokens depth, period, reset (`reset` = outlet 2). tests/modules/formconstants/test_fc_codebox_static.py guards these.
+# the obj-50 base holds); the route is obj-4 with tokens pulse_depth, pulse_period, reset (`reset` = outlet 2). tests/modules/formconstants/test_fc_codebox_static.py guards these.
 def _box(i, cls, rect, **kw):
     b = {"id": f"obj-raw-{i}", "maxclass": cls, "patching_rect": rect}
     b.update(kw)

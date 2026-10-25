@@ -108,7 +108,7 @@ def test_positional_ids_match_built_patcher():
         assert box is not None and name in box.get("text", ""), f"{name} is not {oid}: {box and box.get('text')}"
     route = boxes.get("obj-4")
     # T061: the two dials' tokens come first, so `reset` is route outlet 2 (definition raw_lines)
-    assert route and route["text"].split() == ["route", "depth", "period", "reset"], route and route.get("text")
+    assert route and route["text"].split() == ["route", "pulse_depth", "pulse_period", "reset"], route and route.get("text")
     resets = [ln["patchline"] for ln in _built()["lines"]
               if ln["patchline"]["source"][0] == "obj-4" and ln["patchline"]["destination"][0] == "obj-raw-3"]
     assert [pl["source"][1] for pl in resets] == [2], f"reset must leave route outlet 2: {resets}"

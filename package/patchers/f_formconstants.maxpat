@@ -86,10 +86,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						223.0,
+						234.0,
 						22.0
 					],
-					"text": "route depth period reset"
+					"text": "route pulse_depth pulse_period reset"
 				}
 			},
 			{
@@ -1429,7 +1429,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::depth",
+					"param_connect": "#0_fc_nl::pulse_depth",
 					"parameter_enable": 1,
 					"patching_rect": [
 						46.5,
@@ -1454,11 +1454,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "depth",
+							"parameter_longname": "pulse_depth",
 							"parameter_mmax": 1.5,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "depth",
+							"parameter_shortname": "pulse_depth",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1467,7 +1467,7 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "depth"
+					"varname": "pulse_depth"
 				}
 			},
 			{
@@ -1512,7 +1512,7 @@
 					],
 					"text": "Depth",
 					"textjustification": 1,
-					"varname": "lbl_depth"
+					"varname": "lbl_pulse_depth"
 				}
 			},
 			{
@@ -1533,7 +1533,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::period",
+					"param_connect": "#0_fc_nl::pulse_period",
 					"parameter_enable": 1,
 					"patching_rect": [
 						118.5,
@@ -1558,11 +1558,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "period",
+							"parameter_longname": "pulse_period",
 							"parameter_mmax": 600.0,
 							"parameter_mmin": 30.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "period",
+							"parameter_shortname": "pulse_period",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1571,7 +1571,7 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "period"
+					"varname": "pulse_period"
 				}
 			},
 			{
@@ -1616,7 +1616,7 @@
 					],
 					"text": "Period",
 					"textjustification": 1,
-					"varname": "lbl_period"
+					"varname": "lbl_pulse_period"
 				}
 			},
 			{
@@ -2819,13 +2819,13 @@
 		],
 		"parameters": {
 			"obj-20": [
-				"depth",
-				"depth",
+				"pulse_depth",
+				"pulse_depth",
 				0
 			],
 			"obj-23": [
-				"period",
-				"period",
+				"pulse_period",
+				"pulse_period",
 				0
 			],
 			"parameterbanks": {
