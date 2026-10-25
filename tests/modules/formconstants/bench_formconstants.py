@@ -55,7 +55,7 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "blurx": {"n": float(N), "q_levels": 0.0},             # T062: 0 = 255 levels (the source)
           "blury": {"n": float(N), "q_levels": 0.0},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
-                 "q_levels": 0.0, "freeze_on": 0.0},
+                 "q_levels": 0.0, "freeze_on": 0.0, "sim_rate": 1.0},
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
                   "out_mode": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
@@ -160,6 +160,21 @@ def test_freeze_T070():
     d = float(np.abs(g.astype(np.float64) - st.astype(np.float64)).max())
     note("nl frozen: max |out - in|", f"{d:.3e}")
     check("nl frozen == its incoming state", d, 1e-6)
+
+
+def test_rate_T065():
+    """Phase D T065: at sim_rate 0.5 a stepping frame (frameno 1, simt 0) equals the mirror's step with
+    the pulse at simt; a non-stepping frame (frameno 2) holds the incoming state."""
+    st = qstate(np.random.default_rng(31))
+    conv = m.blur(st)
+    for f in (1, 2, 301):
+        steps, simt = m.rate_clock(f, 0.5)
+        g = gpu("nl", [conv, st], dim=(N, N), frameno=float(f), sim_rate=0.5)
+        if steps:
+            check_q(f"nl rate 0.5 frame {f} steps (simt {simt})", g, m.wc_step(st, conv, simt, s=m.s_pulse(simt)))
+        else:
+            d = float(np.abs(g.astype(np.float64) - st.astype(np.float64)).max())
+            check(f"nl rate 0.5 frame {f} holds its incoming state", d, 1e-6)
 
 
 def test_blur_stages_vs_mirror():

@@ -437,7 +437,7 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 - [ ] T064 **Solver size** as a load-time choice (512 / 1024 / 2048).
   Design discussion first (how N reaches both @dim and the codebox `n`
   Params, and how a change is applied); no code before Matt picks.
-- [ ] T065 **Rate** (dt): measure in the mirror first; with quantization,
+- [~] T065 **BUILT + BENCH-VERIFIED 2026-10-25 00:46 (Matt asked to slow the pulse; chose the Rate route over a longer Period).** Dial `sim_rate` (label Rate, 0.05-1, default 1) → nl, by STEP SKIPPING: simt = floor(frameno * rate) is the solver clock (the pulse reads it); a frame steps when floor((frameno+1) * rate) > simt, else the state holds as under Freeze (hold = max(freeze_on, 1 - step)). Mirror `rate_clock` / `module_frame`; test_fc_parity 15/15 (rate 0.5 x 2T frames == rate 1 x T frames exactly); route `reset` → outlet 6; panel 266×88 placeholder; static/contracts/drift/launch/menu green; bench 12/12 (2 slow skipped) incl. `test_rate_T065`. Matt's live look pending (watch for visible stepping at very slow rates; an enc blend could smooth it). **Rate** (dt): measure in the mirror first; with quantization,
   per-step changes under ~1/255 freeze, so small dt may stall rather than
   slow.
 - [ ] T066 **Drive inlet** back (G3 semantics, E-only, through the

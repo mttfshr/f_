@@ -130,6 +130,23 @@ def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0):
     return (F32(depth) * ((F32(1.0) - c) * sq + c * luma(pulse))).astype(F32)
 
 
+def rate_clock(frameno, rate):
+    """Phase D T065: Rate by STEP SKIPPING (not a smaller dt, which freezes under quantization).
+    Returns (steps, simt): whether this frame advances the solver, and the solver's own clock (what the
+    pulse wave reads). simt = floor(frameno * rate); a frame steps when floor((frameno + 1) * rate)
+    > simt. rate 1 = every frame steps and simt == frameno (parity). A non-stepping frame holds the
+    state exactly like Freeze."""
+    simt = int(np.floor(float(frameno) * float(rate)))
+    return int(np.floor((float(frameno) + 1.0) * float(rate))) > simt, simt
+
+
+def module_frame(state, frameno, rate=1.0, freeze=False, levels=LEVELS):
+    """One rendered frame of the module with Rate and Freeze: the pulse reads simt; the state holds on
+    a non-stepping frame or under Freeze."""
+    steps, simt = rate_clock(frameno, rate)
+    return step(state, simt, levels, s=s_pulse(simt), freeze=freeze or not steps)
+
+
 Q_LEVELS = (255.0, 1023.0, None)  # Phase D T062: the q_levels menu index -> levels (None = float)
 
 OUT_MODES = ("RGB", "E", "Contour", "Luma")     # Phase D T060: the out_mode menu, in order

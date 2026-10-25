@@ -24,6 +24,11 @@
 //   - Phase D T070 (Matt, 2026-10-25): Param freeze_on from the Freeze menu -- 1 writes the incoming
 //     state (in2) back unchanged, so the field holds where it is; the display keeps rendering it and
 //     turning Freeze off resumes from that exact state.
+//   - Phase D T065 (Matt, 2026-10-25): Param sim_rate from the Rate dial, by STEP SKIPPING (a smaller
+//     dt would freeze under quantization). simt = floor(frameno * sim_rate) is the solver's clock (the
+//     pulse wave reads it); this frame steps when floor((frameno + 1) * sim_rate) > simt, else the
+//     state holds exactly as under Freeze. Rate 1 = every frame, simt = frameno (parity). Mirror:
+//     fc_parity_mirror.module_frame / rate_clock.
 //   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn
 //     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).
 //   - no unary minus before a parenthesis (GenExpr mis-parses it)
@@ -33,6 +38,7 @@ Param s_period(147.0588);
 Param pulse_conn(0);
 Param q_levels(0);
 Param freeze_on(0);
+Param sim_rate(1);
 
 ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).y;
@@ -40,7 +46,9 @@ ee = nearest(in2, norm).x;
 ii = nearest(in2, norm).y;
 pl = sample(in3, norm);
 lum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;
-sq = fract(frameno / s_period) < 0.5;
+simt = floor(frameno * sim_rate);
+stp = floor((frameno + 1) * sim_rate) > simt;
+sq = fract(simt / s_period) < 0.5;
 s = s_depth * mix(sq, lum, pulse_conn);
 
 ve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));
@@ -56,8 +64,9 @@ qi = mix(inw, floor(lv * inw + 0.5) / lv, qon);
 qbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);
 
 bz = nearest(in2, norm).z;
-fe = mix(qe, ee, freeze_on);
-fi = mix(qi, ii, freeze_on);
-fb = mix(qbb, bz, freeze_on);
+hold = max(freeze_on, 1 - stp);
+fe = mix(qe, ee, hold);
+fi = mix(qi, ii, hold);
+fb = mix(qbb, bz, hold);
 
 out1 = vec(fe, fi, fb, 1);

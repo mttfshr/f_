@@ -350,6 +350,28 @@ def test_freeze_holds_and_resumes():
           float(np.abs(m.step(x, 50) - m.step(st, 50)).max()), 0.0)
 
 
+# ------------------------------------------------- (k) Phase D T065: Rate (step skipping)
+def test_rate_is_slow_motion():
+    """Rate 1 is the parity run; rate 0.5 for 2T frames equals rate 1 for T frames exactly (same look,
+    half speed); rate 0.25 steps on exactly a quarter of the frames."""
+    rng = np.random.default_rng(8)
+    st0 = (rng.integers(0, 256, (24, 24, 4)) / 255.0).astype(F32)
+    st0[..., 3] = 1.0
+    a = st0
+    for f in range(60):
+        a = m.module_frame(a, f, 1.0)
+    b = st0
+    for f in range(60):
+        b = m.step(b, f, s=m.s_pulse(f))
+    check("rate 1 == the parity run (60 frames, max |diff|)", float(np.abs(a - b).max()), 0.0)
+    c = st0
+    for f in range(120):
+        c = m.module_frame(c, f, 0.5)
+    check("rate 0.5 x 120 frames == rate 1 x 60 frames (max |diff|)", float(np.abs(c - a).max()), 0.0)
+    n_steps = sum(m.rate_clock(f, 0.25)[0] for f in range(400))
+    check("rate 0.25: 100 steps in 400 frames (|count - 100|)", abs(n_steps - 100), 0.0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))
