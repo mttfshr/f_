@@ -1,5 +1,22 @@
 # HANDOFF
 
+## START HERE (2026-10-24, 17:05): f_formconstants parity rebuild — Phase R at T047
+
+**Goal:** make `f_formconstants` look like `WC_Example_10_fullscreen.html`. Phase R = faithful port, Phase D = deviations one at a time. **Read first:** `.specify/f_formconstants/tasks.md` from the "REVISION 2" heading (agent brief, Phase R T040–T049, Phase D T060–T069, and the T041/T042/T046 records) and `spec.md` "Revision 2" (source facts S1–S8).
+
+**State (all committed, last `7345ff7`):** T040–T046 DONE. Offline: drift 0, contracts 9/9, launch 8/8, menu 17/17, `test_fc_parity` 8/8, `test_fc_codebox_static` 5/5, `test_formconstants` 10/10 (steady-web mirror, retained as reference). Max (9.2.0): all six parity codeboxes compile; `bench_formconstants` 8/8 incl. `--slow` (stage legs ≤ 1 level vs `fc_parity_mirror`; 150-frame E std/mean GPU = mirror to 4 digits). The module itself (the built patcher, in a live Vsynth patch) has NOT been looked at since the rebuild; the old "flash then black" symptom was module-level.
+
+**Next:** T047 — adapt `tests/modules/formconstants/bench_fc_look.py` (currently skips; it targets the steady-web build) to the parity module: RGB output, no dials, expect structured (E std > 0.05 through the run, mean E pulsing at ≈ 147 frames). If uniform/dead, apply the brief's live-debug rule (probe each stage output in a scratch patch; no new bench legs first). Then T048 (Matt: side-by-side vs the HTML page = the gate), T049 (cost at N 1024/2048, 1080p/4K). No Phase D work before T048 passes.
+
+**Facts learned this session (do not rediscover):**
+- The reference solver is a FIXED 1024² (`getRasterGL` reads `clientWidth` before `make_fullscreen`; Matt confirmed `maincanvas.width` = 1024). The display map MAGNIFIES the field; the old render-res solver minified it.
+- Sustain: with the source's real kernel σ = (1, 2) the **`s` square wave** keeps the field alive in float32 and quantized alike; without `s` both die (`tests/records/spike_fc_parity_sustain.py`). The T002 "quantization sustains" claim was wrong (wrong σ; its port was never committed). Quantization stays for parity; whether it earns a dial is T062.
+- **A Param named `t` is never applied in a jit.gl.pix codebox** (found at T046; the frame counter is `frameno`). Same family as `texture` / `bypass`. NOT yet in `skills/jit-gen-codebox/SKILL.md` (needs a re-upload + `skills/check.sh stamp`).
+- `s` differs from the page's `sign(sin)` only at t = 0 and t = 1250 k (single frames; documented).
+- Chain tolerance (Matt): R, G ≤ 1 level, B ≤ 3 (B = 3|E−I| triples inherited flips), A exact, ≤ 0.1% values differing; `test_each_frame_is_stage_exact_given_identical_input` proves per-frame exactness.
+- Open for T047/T048: whether a fresh float32 `jit.gl.pix` output reads A = 0 (the pass stage's lost flag; loadbang reseed covers frame 1 either way). Panel is a 100×70 placeholder (reset + bypass); T069 sets the layout.
+- Working-style notes: bench runs via `tests/bench.sh -q <file>` (add `--slow` for @slow); offline via `tests/run.sh -q <file>`; python with numpy via `uv run --no-project --with numpy python3`; `write_file` on an existing file needs `mode: "rewrite"`; the steady-web reference build is git `63b6129`. `package/examples/f_demo_wc.maxpat` is Matt's modified working patch: leave it alone.
+
 ## 2026-10-24 (late night, 2): f_formconstants parity build — T040–T045 DONE offline; next is the Max bench (T046)
 
 - **T041/T042:** `fc_parity_mirror.py` + `test_fc_parity.py` (8/8, 14 s). **The T002 claim "quantization sustains; float32 dies" is FALSIFIED:** with the source's real kernel σ (1, 2) the float32 + `s` run sustains exactly like the quantized one; only removing the `s` square wave kills the field (`tests/records/spike_fc_parity_sustain.py`; T002 had used σ_I 1 / σ_E 0.69 and its port was never committed). So `s` is the liveness mechanism; quantization is kept in Phase R for parity only (look control, T062).
