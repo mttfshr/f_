@@ -8,7 +8,8 @@ codeboxes: a compile error or a readback mismatch here is the finding; do not tu
 
 (The steady-web bench this replaces is in git history: commit c367543 and earlier.)
 
-Tolerance, stated in advance (tasks.md T046): quantized outputs pass if max |diff| <= 1/255
+Tolerance, stated in advance (tasks.md T046; the chain leg's per-channel form was set by Matt
+2026-10-24, see check_chain): quantized outputs pass if max |diff| <= 1/255
 AND at most 0.1% of values differ at all (GPU vs NumPy float32 rounding can flip a value that
 sits within an ulp of a (k + 0.5)/255 boundary; single flips are not chased). Continuous
 outputs (the enc render) pass at 2e-3. The chain legs use the SAME tolerance every frame; if
@@ -192,6 +193,22 @@ def test_enc_render_vs_mirror():
 
 # ---------------------------------------------------------------------- chain
 
+def check_chain(label, g, mm):
+    """The chain tolerance (Matt, 2026-10-24, T046): inherited 1-level rounding flips cascade, and
+    B = 3|E - I| triples them, so R, G, A are held to 1 level (A exactly) and B to 3 levels, with at
+    most 0.1% of values differing. Stage-exactness is proven separately by
+    test_each_frame_is_stage_exact_given_identical_input."""
+    d = np.abs(g.astype(np.float64) - mm.astype(np.float64))
+    per = [float(d[..., c].max()) / Q for c in range(4)]
+    frac = float((d > 1e-6).mean())
+    note(label + " per-channel max (levels) R G B A", " ".join(f"{p:.2f}" for p in per))
+    note(label + " values differing", f"{frac:.4%}")
+    check(label + ": R, G within 1 level", max(per[0], per[1]), 1.0 + 1e-3)
+    check(label + ": B within 3 levels", per[2], 3.0 + 1e-3)
+    check(label + ": A exact", per[3], 0.0)
+    check(label + ": values differing <= 0.1%", frac, 1e-3)
+
+
 def _gpu_frame(state, t):
     conv = gpu("blury", [gpu("blurx", [state], dim=(N, N))], dim=(N, N))
     return gpu("nl", [conv, state], dim=(N, N), frameno=float(t))
@@ -208,7 +225,7 @@ def test_chain_5_frames_texel_exact_class():
     for fr in range(5):
         gs = _gpu_frame(gs, fr)
         ms = m.step(ms, fr)
-        check_q(f"chain frame {fr + 1}", gs, ms)
+        check_chain(f"chain frame {fr + 1}", gs, ms)
 
 
 def test_each_frame_is_stage_exact_given_identical_input():
