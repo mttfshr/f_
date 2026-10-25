@@ -27,7 +27,6 @@ Param oh(1024);
 Param n(1024);
 Param out_mode(1);
 Param out_view(0);
-Param deflicker_amt(0);
 
 lng = max(ow, oh);
 zx = (norm.x * 2 - 1) * ow / lng;
@@ -60,15 +59,6 @@ li = (1 - ty) * ((1 - tx) * t00.y + tx * t10.y) + ty * ((1 - tx) * t01.y + tx * 
 lb = (1 - ty) * ((1 - tx) * t00.z + tx * t10.z) + ty * ((1 - tx) * t01.z + tx * t11.z);
 k = 1 - bypass_gate;
 
-// Phase D T075 De-flicker (Matt 2026-10-25): in3 = the current field means (mean4), in4 = the usual
-// means (track). Per channel gain clamp(usual / cur, 0, 4), applied by deflicker_amt (0 = the source).
-// Until the tracker holds a value (alpha 0) the gains are 1. Mirror: deflicker_gains / encode_mode(gains=).
-fcur = nearest(in3, vec(0.5, 0.5));
-fus = nearest(in4, vec(0.5, 0.5));
-famt = deflicker_amt * (fus.w > 0.5);
-le = le * mix(1, clamp(fus.x / max(fcur.x, 0.0001), 0, 4), famt);
-li = li * mix(1, clamp(fus.y / max(fcur.y, 0.0001), 0, 4), famt);
-lb = lb * mix(1, clamp(fus.z / max(fcur.z, 0.0001), 0, 4), famt);
 
 lum = 0.2126 * le + 0.7152 * li + 0.0722 * lb;
 m1 = abs(out_mode - 1) < 0.5;

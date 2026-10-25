@@ -11,7 +11,8 @@
 //     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the
 //     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet
 //     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the
-//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).
+//     internal wave runs), Rec. 709 luma, `sample` with normalized coords (any input size). NOTE (measured 2026-10-25,
+//     T075): on these inputs `sample` returns the nearest texel -- no linear filtering.
 //     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;
 //     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).
 //     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the

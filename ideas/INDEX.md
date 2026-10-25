@@ -1,6 +1,6 @@
 # Ideas Index
 
-_Created: 2026-09-17; last brought current 2026-10-23 (86 notes plus one parked
+_Created: 2026-09-17; last brought current 2026-10-25 (87 notes plus one parked
 script)._ A refresher map of `ideas/` so you don't have
 to reread everything to remember where a thread stands. Grouped by theme, not
 date. Each entry: one-line gist + status. When a file's own status line is
@@ -247,6 +247,10 @@ substantially move a file in `ideas/`, update its entry here too.
 
 ## Optics, lens, color
 
+- **[f_deflicker.md](f_deflicker.md)** ⚪ — Downstream utility that holds an input's overall
+  brightness near its usual level (whole-frame pumping flattens, structure untouched; one De-flicker dial).
+  Born in `f_formconstants` T075 (2026-10-25), moved out as a general tool. Carries the measured GPU
+  findings: `sample()` does not interpolate here, ~256-tap codeboxes break the shader translator.
 - **[f_lens.md](f_lens.md)** 🟢 — Built and working; moved to `.specify/stable/`
   2026-10-13 with v2 (ghost images + halation) closed. Tilt-shift left for `f_focus`
   (paused, never built). The note's future-directions list predates that; anamorphic

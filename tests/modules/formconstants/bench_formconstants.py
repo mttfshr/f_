@@ -47,9 +47,7 @@ Q = 1.0 / 255.0
 F32 = np.float32
 FILES = {"seed": "codebox_seed.gen", "pass": "codebox_pass.gen",
          "blurx": "codebox_blur_x.gen", "blury": "codebox_blur_y.gen",
-         "nl": "codebox_nl.gen", "enc": "codebox_enc.gen",
-         "mean1": "codebox_mean1.gen", "mean2": "codebox_mean2.gen", "mean3": "codebox_mean3.gen",
-         "mean4": "codebox_mean4.gen", "track": "codebox_track.gen"}   # T075
+         "nl": "codebox_nl.gen", "enc": "codebox_enc.gen"}
 BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang inlet
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
 PINNED = {"seed": {"salt": 0.0, "n": float(N)},
@@ -61,7 +59,7 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
                  "pulse_mix": 1.0, "pulse_gain": 1.0,
                  "pulse_space": 1.0, "ow": float(N), "oh": float(N)},   # T073: 0 Retinal (module default), 1 Unwrapped (legs pin it)
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
-                  "out_mode": 0.0, "out_view": 0.0, "deflicker_amt": 0.0}}        # T060: the module default is E; the parity legs pin RGB
+                  "out_mode": 0.0, "out_view": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
 
 def code(stage):
@@ -228,40 +226,6 @@ def test_cortical_view_T074():
         note(f"enc Cortical 160x90 mode {mode} max diff", f"{d:.2e}")
         check(f"enc Cortical 160x90 mode {mode} vs the mirror", d, 2e-3)
 
-
-def test_deflicker_T075():
-    """Phase D T075 De-flicker: the mean chain (1024 -> 128 -> 16 -> 2 -> 1, each an 8 x 8 / 2 x 2 block mean), track
-    (fresh = take the current means; else move 0.005 toward them) and enc's per-channel gains vs the mirror.
-    The averaging stages are hard-wired to a 1024 solver (generated taps), so this leg uses 1024^2."""
-    rng = np.random.default_rng(47)
-    big = (rng.integers(0, 256, size=(1024, 1024, 4)).astype(F32) / F32(255.0))
-    big[..., 3] = 1.0
-    x = big
-    for stage, dst in (("mean1", 128), ("mean2", 16), ("mean3", 2), ("mean4", 1)):
-        src = x.shape[0]
-        b = src // dst
-        g = gpu(stage, [x], dim=(dst, dst))
-        if stage == "mean1":                # debug evidence (2026-10-25: mean1 disagreed by 0.26 once)
-            np.savez(_paths.REPO / "tests" / "logs" / "fc_t075_mean1.npz", x=x, g=g)
-        want = x.reshape(dst, b, dst, b, 4).astype(np.float64).mean(axis=(1, 3))
-        check(f"{stage}: {src} -> {dst} block means (max |diff|)", float(np.abs(g - want).max()), 1e-5)
-        x = g
-    check("mean chain: the field mean (max |diff|)", float(np.abs(x[0, 0] - m.frame_means(big)).max()), 1e-5)
-    cur = np.array([[[0.4, 0.3, 0.2, 1.0]]], F32)
-    prev = np.array([[[0.2, 0.5, 0.1, 1.0]]], F32)
-    gt = gpu("track", [cur, prev], dim=(1, 1))
-    check("track: moves 0.005 toward the current means",
-          float(np.abs(gt[0, 0, :3] - m.track_update(prev[0, 0], cur[0, 0])[:3]).max()), 1e-6)
-    gf = gpu("track", [cur, np.zeros((1, 1, 4), F32)], dim=(1, 1))
-    check("track: a fresh tracker (alpha 0) takes the current means", float(np.abs(gf[0, 0, :3] - cur[0, 0, :3]).max()), 1e-6)
-    st = qstate(rng)
-    usual = np.array([[[0.35, 0.3, 0.25, 1.0]]], F32)
-    fm = m.frame_means(st)
-    g = gpu("enc", [BANG, st, fm[None, None, :], usual], dim=(160, 90), ow=160.0, oh=90.0, deflicker_amt=0.7)
-    mm = m.encode_mode(st, 160, 90, 0, gains=m.deflicker_gains(fm, usual[0, 0], 0.7))
-    d = float(np.abs(g[..., :3].astype(np.float64) - mm[..., :3]).max())
-    note("enc de-flicker 0.7 max diff", f"{d:.2e}")
-    check("enc de-flicker 0.7 (RGB, 160x90) vs the mirror", d, 2e-3)
 
 
 def test_blur_stages_vs_mirror():
