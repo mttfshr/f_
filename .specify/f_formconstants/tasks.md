@@ -435,6 +435,7 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 - [ ] T063 **ON HOLD (Matt, 2026-10-25 09:46): zoom / rotate / arms / spiral / scale "sound just like droste" -- he hesitates to duplicate them here. His idea to weigh: UNWRAP the output (expose the cortical / log-polar state, unmapped) so it can be fed to f_droste instead. Decide before any map work.** **Map**: conformal zoom/rotation/spiral as one complex gain on
   (θ, log r), optional centre softening, field of view. Integer angular
   periods only where a seam would otherwise show.
+- [ ] T072 **Character dials: Grain / Inhibit sweep DONE 2026-10-25** (`tests/records/spike_fc_grain_inhibit.py`, sheets `tests/logs/fc_grain.png` / `fc_inhibit.png`; RESULT in the docstring). Grain (blur tap spacing × g, cheap 13-tap method) lives over 0.5–2 and genuinely changes character (finer/wormier/rolls below 1, bigger softer spots above); at 2 the spaced taps alias into a checkerboard moiré, so the cheap method's usable span is 0.5–1.5. Inhibit (AIE, page 8.5) has one narrow living band ~7.5–10 (washes out below, dims and dies above; 10 = a faint labyrinth). Decision for Matt pending.
 - [ ] T064 **Solver size** as a load-time choice (512 / 1024 / 2048).
   Design discussion first (how N reaches both @dim and the codebox `n`
   Params, and how a change is applied); no code before Matt picks.
