@@ -1,6 +1,32 @@
 # HANDOFF
 
-## START HERE (2026-10-24, 18:00): f_formconstants — PHASE R CLOSED; next is Phase D, starting with the T061 design discussion
+## START HERE (2026-10-25, 11:56): f_formconstants — Phase D mostly done; next: close out the remaining Phase D calls
+
+**Read first:** `.specify/f_formconstants/tasks.md` Phase D (T060–T075, each with its record). All work is committed (last `4b50f8e`); `bench_formconstants.py` 14/14, `test_fc_parity` 19/19, static 7/7, contracts 9/9, drift 16/16, all `tests/build` green. Only uncommitted file: Matt's own `package/examples/f_demo_wc.maxpat` — leave it.
+
+**The module now (all kept by Matt live unless noted):**
+- Row 1: **Depth** (`pulse_depth` 0–1.5, 0.6) · **Period** (`pulse_period` 30–600 f, 147) · **Rate** (`sim_rate` 0.05–1, slow motion by step skipping) · **P.Mix** · **P.Gain** · Reset.
+- Row 2: **Grain** (`grain_scale` 0.5–2, blur tap spacing; moiré near 2 kept on purpose) · **Output** (`out_mode` RGB/E/Contour/Luma, default E) · **Input** (`pulse_space` Retinal/Unwrapped, default Retinal = the input lands where seen) · **Space** (`out_view` Retinal/Unwrapped, default Retinal; Unwrapped = the flat cortical grid, to feed f_droste).
+- Header: **Freeze** (header live.toggle → nl). Pulse texture inlet (luma replaces the internal square wave; WFG-friendly). Panel 272×150, two rows (T069 layout pass 1).
+- Settings groups A–E (Depth/Period/Grain) verified at N 1024 → go in the helpfile (T026), NOT a preset menu.
+
+**Decided against / moved out (do not rebuild):** Quant menu (removed: no visible difference); Inhibit dial (narrow, wash-out kills); Flash "swing" dial and an inhibition-rate damping dial (the flash is the E–I loop's own bulk oscillation, inseparable from the pattern: `spike_fc_flash.py`, `spike_fc_damping.py`); De-flicker → a downstream utility, `ideas/f_deflicker.md`; Strike/impulse and Contrast/Sharp → downstream modules (Matt's call). T063 map (zoom/rotate/arms/spiral) ON HOLD: overlaps f_droste; the Unwrapped view covers the droste route.
+
+**Builder changes this session:** a `header_toggle` may target one `pix_target` stage; the title-bar type label now ends left of a header toggle (both in `build/spec.md`). `f_formconstants/definition.py` DERIVES its support-stage ids (`_SUP`) and reset's route outlet from the control count — the ten-widget id shift no longer breaks its raw wiring.
+
+**Measured GPU facts (do not rediscover):**
+- **Dial-name trap:** `param_connect` names `<pix>::<dial name>`; a dial named like a jit.gl.pix attribute (`depth`) binds to it and becomes Int 0–1. Use prefixed names.
+- **`sample()` does not interpolate here**: a tap on a texel corner returns ONE texel (T075 evidence). Use `nearest` at texel centres for exact maths.
+- **~256-tap codeboxes break jit.gl.pix's shader translator** ("lua: stack overflow (too many captures)"), and a failed compile makes every later leg in that bench run fail.
+- Quantization below 255 levels freezes the field; ≥ 255 all live.
+
+**Next (Matt's calls, in this order):**
+1. Remaining Phase D items: **T064** solver size (load-time 512/1024/2048 — design discussion first), **T066** drive inlet (likely superseded by the Retinal pulse input — decide or drop), **T068** steady-web mode (A/B or drop), **T069** finish (defaults; rewrite spec.md's Parameters table to the shipped controls). Then Matt approves the control set = Phase D closed.
+2. Phase 2 soak (T024), Phase 3 docs: T025 reference doc, T026 helpfile (must include the A–E settings-groups table); README row (⚠ until docs).
+
+**Still owed (not blocking):** skill updates — `Param t` trap, dial-name trap, `sample` = nearest, shader-length limit → `skills/jit-gen-codebox/SKILL.md` / maxpat-json-authoring (re-upload + `skills/check.sh stamp`); scan other modules for the dial-name trap / consider a builder guard; `bench_fc_look.py` module-bench capture bug (no outlet captured though the module renders).
+
+## 2026-10-24, 18:00: f_formconstants — PHASE R CLOSED; next is Phase D, starting with the T061 design discussion (superseded by the entry above)
 
 - **T049 done:** N 1024: 1.07 ms @ 1080p / 1.54 ms @ 4K; N 2048: 2.04 / 2.47 ms (upper bounds; f_wc 2.45 ms). Cost is not a constraint. `bench_formconstants.py` 9/9 incl. --slow.
 - **Phase D direction (Matt, recorded in tasks.md above T060):** "outstanding simulation, not a performable module". Slow reset is a feature (no fix). Breathe wave + pulse are the primary performance surface: subtle dials, an external WFG (Vsynth convention, internal square wave as fallback) and a texture input. Kill-and-revive is a feature (no dead-zone guard). **MVP = regular-texture input only**; vecfield/tensor post-MVP.
