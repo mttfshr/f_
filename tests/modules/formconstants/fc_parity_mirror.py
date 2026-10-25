@@ -130,6 +130,27 @@ def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0):
     return (F32(depth) * ((F32(1.0) - c) * sq + c * luma(pulse))).astype(F32)
 
 
+OUT_MODES = ("RGB", "E", "Contour", "Luma")     # Phase D T060: the out_mode menu, in order
+
+
+def encode_mode(state, ow, oh, mode):
+    """T060: encode() then the output mode. 0 RGB = (E, I, contour) as the page (S8); 1 E, 2 contour,
+    3 Rec. 709 luma of that RGB -- each a gray (v, v, v, 1)."""
+    rgb = encode(state, ow, oh)
+    if mode == 0:
+        return rgb
+    if mode == 1:
+        v = rgb[..., 0]
+    elif mode == 2:
+        v = rgb[..., 2]
+    else:
+        v = luma(rgb)
+    out = np.empty_like(rgb)
+    out[..., 0] = out[..., 1] = out[..., 2] = v
+    out[..., 3] = 1.0
+    return out
+
+
 def s_source(t):
     """The page's exact expression: .3 * (sign(sin(t pi 6.8 / 500)) + 1).
     Equals s_of_t at every integer t except two kinds of single frame: t = 0

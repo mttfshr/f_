@@ -55,7 +55,8 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "blurx": {"n": float(N)},
           "blury": {"n": float(N)},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0},   # T061: s_rate -> s_period
-          "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N)}}
+          "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
+                  "out_mode": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
 
 def code(stage):
@@ -210,6 +211,22 @@ def test_enc_render_vs_mirror():
     bn = gpu("enc", [BANG, st], dim=(N, N), bypass_gate=1.0)
     check("enc: bypass_gate = 1 outputs black with alpha 1",
           max(float(np.abs(bn[..., :3]).max()), float(np.abs(bn[..., 3] - 1).max())), 0.0)
+
+
+def test_enc_out_modes_T060():
+    """Phase D T060: out_mode 1 E / 2 Contour / 3 Luma vs the mirror's encode_mode (a gray of the
+    RGB map), at a non-square output; mode 0 is covered by test_enc_render_vs_mirror."""
+    st = qstate(np.random.default_rng(19))
+    ow, oh = 160, 90
+    for mode in (1, 2, 3):
+        g = gpu("enc", [BANG, st], dim=(ow, oh), ow=float(ow), oh=float(oh), out_mode=float(mode))
+        mm = m.encode_mode(st, ow, oh, mode)
+        d = np.abs(g[..., :3] - mm[..., :3])
+        note(f"enc mode {mode} ({m.OUT_MODES[mode]}) max / mean diff", f"{float(d.max()):.2e} / {float(d.mean()):.2e}")
+        check(f"enc mode {mode} ({m.OUT_MODES[mode]}) vs the mirror", float(d.max()), 2e-3)
+        check(f"enc mode {mode}: gray (max channel spread)",
+              float(max(np.abs(g[..., 1] - g[..., 0]).max(), np.abs(g[..., 2] - g[..., 0]).max())), 1e-6)
+        check(f"enc mode {mode}: alpha is 1", float(np.abs(g[..., 3] - 1.0).max()), 0.0)
 
 
 # ---------------------------------------------------------------------- chain

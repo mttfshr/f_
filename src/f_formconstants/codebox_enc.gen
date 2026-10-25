@@ -4,8 +4,10 @@
 // sampled at (atan2(z.y, z.x), ln |z|) / 2 pi with LINEAR filtering and REPEAT wrap. The bare
 // complex log: conformal, one texture width per revolution; over most of the screen it MAGNIFIES
 // the 1024^2 field (the silky read). No foveal softening, contrast or sharp in the parity build.
-// Display (S8): the sampled state's E, I and contour channels, alpha 1.
-// Mirror: fc_parity_mirror.encode().
+// Display (S8): the sampled state's E, I and contour channels, alpha 1 -- then the output mode
+// (Phase D T060, Param out_mode from the Output menu): 0 RGB = (E, I, contour) as the page; 1 E,
+// 2 contour, 3 Rec. 709 luma of that RGB, each as a gray (v, v, v, 1). Branch-free selection.
+// Mirror: fc_parity_mirror.encode_mode() (encode() for mode 0).
 // Inputs: in1 = the `r draw` bang (unused), in2 = the state (from nl).
 //   - output size: Params ow, oh (raw `r dim` -> route -> unpack -> prepend param); NOT the gen `dim`
 //     global (it is not an input texture's size). State grid size: Param n (default 1024 = @dim)
@@ -20,6 +22,7 @@ Param bypass_gate(0);
 Param ow(1024);
 Param oh(1024);
 Param n(1024);
+Param out_mode(1);
 
 lng = max(ow, oh);
 zx = (norm.x * 2 - 1) * ow / lng;
@@ -52,4 +55,14 @@ li = (1 - ty) * ((1 - tx) * t00.y + tx * t10.y) + ty * ((1 - tx) * t01.y + tx * 
 lb = (1 - ty) * ((1 - tx) * t00.z + tx * t10.z) + ty * ((1 - tx) * t01.z + tx * t11.z);
 k = 1 - bypass_gate;
 
-out1 = vec(le * k, li * k, lb * k, 1);
+lum = 0.2126 * le + 0.7152 * li + 0.0722 * lb;
+m1 = abs(out_mode - 1) < 0.5;
+m2 = abs(out_mode - 2) < 0.5;
+m3 = out_mode > 2.5;
+gv = m1 * le + m2 * lb + m3 * lum;
+gsel = out_mode > 0.5;
+oc0 = mix(le, gv, gsel);
+oc1 = mix(li, gv, gsel);
+oc2 = mix(lb, gv, gsel);
+
+out1 = vec(oc0 * k, oc1 * k, oc2 * k, 1);

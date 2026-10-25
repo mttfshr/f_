@@ -296,6 +296,21 @@ def test_pulse_is_per_texel_and_E_only():
     check("s = 0.6 half equals the scalar-0.6 step (max |diff|)", float(np.abs(a[:, 12:] - b6[:, 12:]).max()), 0.0)
 
 
+# ------------------------------------------------- (h) Phase D T060: output modes (encode_mode)
+def test_out_modes():
+    """RGB is encode() unchanged; E / Contour / Luma are grays of encode()'s R / B / Rec. 709 luma."""
+    rng = np.random.default_rng(5)
+    st = rng.random((32, 32, 4)).astype(F32)
+    rgb = m.encode(st, 40, 24)
+    check("mode 0 (RGB) == encode()", float(np.abs(m.encode_mode(st, 40, 24, 0) - rgb).max()), 0.0)
+    for mode, want in ((1, rgb[..., 0]), (2, rgb[..., 2]), (3, m.luma(rgb))):
+        o = m.encode_mode(st, 40, 24, mode)
+        gray = float(max(np.abs(o[..., 1] - o[..., 0]).max(), np.abs(o[..., 2] - o[..., 0]).max()))
+        check(f"mode {mode} ({m.OUT_MODES[mode]}) value (max |diff|)", float(np.abs(o[..., 0] - want).max()), 1e-7)
+        check(f"mode {mode} is gray (max channel spread)", gray, 0.0)
+        check(f"mode {mode} alpha is 1", float(np.abs(o[..., 3] - 1).max()), 0.0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))
