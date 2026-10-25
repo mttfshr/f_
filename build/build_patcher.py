@@ -1813,12 +1813,16 @@ def build(defn, debug=None, side_files=None):
         if p.get("range_tiers"):
             boxes.extend(range_tier_boxes(n, p))
 
-    # Header toggle boxes (e.g. proc_mode) — rendered in header, wired via route
+    # Header toggle boxes (e.g. proc_mode) — rendered in header, wired via route. Like a dial, a header
+    # toggle may name ONE pix_target stage (2026-10-25, f_formconstants' Freeze drives nl); default: primary.
     if header_toggles:
         p = header_toggles[0]   # currently only one supported
-        boxes.append(header_toggle_box(p, connect_name, pw))
+        if isinstance(p.get("pix_target"), list):
+            raise ValueError(f"header_toggle '{p['name']}': pix_target must be one stage, not a list")
+        ht_name = chain_names.get(p.get("pix_target"), connect_name)     # the pix this toggle drives
+        boxes.append(header_toggle_box(p, ht_name, pw))
         boxes.append(header_toggle_label_box(p, pw))
-        boxes.append(attrui_box(OBJ_HEADER_TOGGLE_PRE, p["name"], 500.0, 230.0))
+        boxes.append(attrui_box(OBJ_HEADER_TOGGLE_PRE, p.get("pix_attr", p["name"]), 500.0, 230.0))
 
     # bypass jsui and prepend LAST — must come after pix in boxes list
     boxes.append(bypass_jsui_box(bp_jsui_id, object_name, pw, legacy.get("bypass_jsui_saved")))
@@ -1987,7 +1991,7 @@ def build(defn, debug=None, side_files=None):
         ht_outlet = len(ui_params) + rb   # header toggles come after ui_params in route
         lines.append(wire(OBJ_ROUTE, ht_outlet, OBJ_HEADER_TOGGLE, 0))
         lines.append(wire(OBJ_HEADER_TOGGLE, 0, OBJ_HEADER_TOGGLE_PRE, 0))
-        lines.append(wire(OBJ_HEADER_TOGGLE_PRE, 0, primary_obj_id, 0))
+        lines.append(wire(OBJ_HEADER_TOGGLE_PRE, 0, pix_targets_of(header_toggles[0])[0], 0))   # primary unless pix_target
 
     # parameters block — grid params + header toggles (not bypass jsui)
     params_block = {}

@@ -128,10 +128,10 @@ def test_positional_ids_match_built_patcher():
         assert box is not None and name in box.get("text", ""), f"{name} is not {oid}: {box and box.get('text')}"
     route = boxes.get("obj-4")
     # T061/T060: the dials' and the menu's tokens come first, so `reset` is the route's last outlet (definition raw_lines)
-    assert route and route["text"].split() == ["route", "pulse_depth", "pulse_period", "out_mode", "freeze_on", "sim_rate", "pulse_mix", "pulse_gain", "grain_scale", "pulse_space", "out_view", "reset"], route and route.get("text")
+    assert route and route["text"].split() == ["route", "pulse_depth", "pulse_period", "out_mode", "sim_rate", "pulse_mix", "pulse_gain", "grain_scale", "pulse_space", "out_view", "freeze_on", "reset"], route and route.get("text")
     resets = [ln["patchline"] for ln in _built()["lines"]
               if ln["patchline"]["source"][0] == "obj-4" and ln["patchline"]["destination"][0] == "obj-raw-3"]
-    assert [pl["source"][1] for pl in resets] == [d._N_CONTROLS], f"reset must leave the route's last outlet: {resets}"
+    assert [pl["source"][1] for pl in resets] == [d._N_CONTROLS + d._N_HEADER], f"reset must leave the route's last outlet: {resets}"
 
 
 def test_pulse_inlet_reaches_nl():
@@ -143,6 +143,19 @@ def test_pulse_inlet_reaches_nl():
     srcs = {boxes[s].get("text", ""): i for s, i in into_nl}
     assert srcs.get("vs_inState") == 2, f"pulse texture must reach nl inlet 2 (in3): {srcs}"
     assert srcs.get("prepend param pulse_conn") == 0, f"pulse_conn flag must reach nl: {srcs}"
+
+
+def test_freeze_header_toggle_reaches_nl():
+    """Freeze is the header live.toggle (Matt 2026-10-25): toggle -> attrui freeze_on -> nl (not enc)."""
+    pb = _built()
+    boxes = {b["box"]["id"]: b["box"] for b in pb["boxes"]}
+    tog = [i for i, b in boxes.items() if b.get("maxclass") == "live.toggle" and b.get("varname") == "freeze_on"]
+    assert len(tog) == 1, tog
+    pre = [pl["destination"][0] for pl in (ln["patchline"] for ln in pb["lines"]) if pl["source"][0] == tog[0]]
+    assert len(pre) == 1 and boxes[pre[0]].get("attr") == "freeze_on", pre
+    dst = [pl["destination"][0] for pl in (ln["patchline"] for ln in pb["lines"]) if pl["source"][0] == pre[0]]
+    assert dst == [_solver_ids()[5]], f"Freeze must reach nl {_solver_ids()[5]}, got {dst}"
+    assert "#0_fc_nl::freeze_on" in boxes[tog[0]].get("param_connect", ""), boxes[tog[0]].get("param_connect")
 
 
 def test_r_dim_reaches_enc_only():

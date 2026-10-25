@@ -97,12 +97,12 @@
 						799.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period out_mode freeze_on sim_rate pulse_mix pulse_gain grain_scale pulse_space out_view reset"
+					"text": "route pulse_depth pulse_period out_mode sim_rate pulse_mix pulse_gain grain_scale pulse_space out_view freeze_on reset"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-52",
+					"id": "obj-50",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -188,7 +188,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-51",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -307,7 +307,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-52",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -486,7 +486,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-55",
+					"id": "obj-53",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -605,7 +605,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-56",
+					"id": "obj-54",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -724,7 +724,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-57",
+					"id": "obj-55",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -1097,14 +1097,14 @@
 					"patching_rect": [
 						915.5,
 						260.0,
-						414.0,
+						377.0,
 						88.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						414.0,
+						377.0,
 						88.0
 					],
 					"proportion": 0.5
@@ -1157,7 +1157,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						318.0,
+						281.0,
 						0.9,
 						70.0,
 						21.0
@@ -1728,59 +1728,67 @@
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.menu",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Freeze: hold the field exactly where it is (the display keeps rendering); Off resumes from that state",
+					"hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::freeze_on",
+					"param_connect": "#0_fc_nl::sim_rate",
 					"parameter_enable": 1,
 					"patching_rect": [
-						246.0,
+						262.5,
 						250.0,
-						60.0,
-						15.0
+						27.0,
+						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						111.0,
-						52.0,
-						45.0,
-						15.0
+						115.0,
+						38.0,
+						27.0,
+						43.0
 					],
 					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
 						"valueof": {
-							"parameter_enum": [
-								"Off",
-								"On"
-							],
 							"parameter_initial": [
-								0.0
+								1.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "freeze_on",
+							"parameter_longname": "sim_rate",
 							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 0,
-							"parameter_shortname": "freeze_on",
-							"parameter_type": 2,
-							"parameter_unitstyle": 0
+							"parameter_mmin": 0.05,
+							"parameter_modmode": 3,
+							"parameter_shortname": "sim_rate",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "freeze_on"
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "sim_rate"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-30",
 					"maxclass": "attrui",
-					"attr": "freeze_on",
+					"attr": "sim_rate",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1816,9 +1824,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Freeze",
+					"text": "Rate",
 					"textjustification": 1,
-					"varname": "lbl_freeze_on"
+					"varname": "lbl_sim_rate"
 				}
 			},
 			{
@@ -1832,14 +1840,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)",
+					"hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::sim_rate",
+					"param_connect": "#0_fc_nl::pulse_mix",
 					"parameter_enable": 1,
 					"patching_rect": [
 						334.5,
@@ -1864,11 +1872,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "sim_rate",
+							"parameter_longname": "pulse_mix",
 							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.05,
+							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "sim_rate",
+							"parameter_shortname": "pulse_mix",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1877,14 +1885,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "sim_rate"
+					"varname": "pulse_mix"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-33",
 					"maxclass": "attrui",
-					"attr": "sim_rate",
+					"attr": "pulse_mix",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1920,9 +1928,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Rate",
+					"text": "P.Mix",
 					"textjustification": 1,
-					"varname": "lbl_sim_rate"
+					"varname": "lbl_pulse_mix"
 				}
 			},
 			{
@@ -1936,14 +1944,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend",
+					"hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::pulse_mix",
+					"param_connect": "#0_fc_nl::pulse_gain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						406.5,
@@ -1968,11 +1976,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "pulse_mix",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "pulse_gain",
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "pulse_mix",
+							"parameter_shortname": "pulse_gain",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1981,14 +1989,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "pulse_mix"
+					"varname": "pulse_gain"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-36",
 					"maxclass": "attrui",
-					"attr": "pulse_mix",
+					"attr": "pulse_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2024,110 +2032,6 @@
 						50.0,
 						18.0
 					],
-					"text": "P.Mix",
-					"textjustification": 1,
-					"varname": "lbl_pulse_mix"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_fc_nl::pulse_gain",
-					"parameter_enable": 1,
-					"patching_rect": [
-						478.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						41.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								1.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "pulse_gain",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "pulse_gain",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "pulse_gain"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-39",
-					"maxclass": "attrui",
-					"attr": "pulse_gain",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						458.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-40",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						467.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						29.5,
-						82.0,
-						50.0,
-						18.0
-					],
 					"text": "P.Gain",
 					"textjustification": 1,
 					"varname": "lbl_pulse_gain"
@@ -2135,7 +2039,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-41",
+					"id": "obj-38",
 					"maxclass": "live.dial",
 					"activedialcolor": [
 						0.8,
@@ -2154,14 +2058,14 @@
 					"param_connect": "#0_fc_blurx::grain_scale",
 					"parameter_enable": 1,
 					"patching_rect": [
-						550.5,
+						478.5,
 						250.0,
 						27.0,
 						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						41.0,
 						100.0,
 						27.0,
 						43.0
@@ -2194,7 +2098,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-42",
+					"id": "obj-39",
 					"maxclass": "attrui",
 					"attr": "grain_scale",
 					"numinlets": 1,
@@ -2203,7 +2107,7 @@
 						""
 					],
 					"patching_rect": [
-						530.0,
+						458.0,
 						310.0,
 						68.0,
 						22.0
@@ -2222,7 +2126,7 @@
 						""
 					],
 					"patching_rect": [
-						530.0,
+						458.0,
 						344.0,
 						68.0,
 						22.0
@@ -2232,21 +2136,21 @@
 			},
 			{
 				"box": {
-					"id": "obj-43",
+					"id": "obj-40",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.5,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						539.0,
+						467.0,
 						180.0,
 						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						29.5,
 						82.0,
 						50.0,
 						18.0
@@ -2258,7 +2162,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-44",
+					"id": "obj-41",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
 					"hint": "Pulse texture space: Retinal = the image lands where you see it; Unwrapped = laid on the flat solver grid (WFG bands become rings / spokes)",
@@ -2272,14 +2176,14 @@
 					"param_connect": "#0_fc_nl::pulse_space",
 					"parameter_enable": 1,
 					"patching_rect": [
-						606.0,
+						534.0,
 						250.0,
 						60.0,
 						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						111.0,
+						74.0,
 						114.0,
 						45.0,
 						15.0
@@ -2309,9 +2213,105 @@
 			},
 			{
 				"box": {
-					"id": "obj-45",
+					"id": "obj-42",
 					"maxclass": "attrui",
 					"attr": "pulse_space",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						530.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-43",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						539.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						66.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Space",
+					"textjustification": 1,
+					"varname": "lbl_pulse_space"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-44",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_enc::out_view",
+					"parameter_enable": 1,
+					"patching_rect": [
+						606.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						111.0,
+						114.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Retinal",
+								"Unwrapped"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "out_view",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "out_view",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "out_view"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-45",
+					"maxclass": "attrui",
+					"attr": "out_view",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2347,67 +2347,86 @@
 						50.0,
 						18.0
 					],
-					"text": "Space",
+					"text": "View",
 					"textjustification": 1,
-					"varname": "lbl_pulse_space"
+					"varname": "lbl_out_view"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-47",
-					"maxclass": "live.menu",
+					"id": "obj-19a",
+					"maxclass": "live.toggle",
 					"fontname": "Ableton Sans Light",
-					"hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste",
+					"hint": "Freeze: hold the field exactly where it is (the display keeps rendering); off resumes from that state",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 1,
 					"outlettype": [
-						"",
-						"",
-						"float"
+						""
 					],
-					"param_connect": "#0_fc_enc::out_view",
+					"param_connect": "#0_fc_nl::freeze_on",
 					"parameter_enable": 1,
 					"patching_rect": [
-						678.0,
+						698.0,
 						250.0,
-						60.0,
-						15.0
+						20.0,
+						20.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						148.0,
-						114.0,
-						45.0,
-						15.0
+						327.0,
+						1.0,
+						20.0,
+						20.0
 					],
 					"saved_attribute_attributes": {
 						"valueof": {
-							"parameter_enum": [
-								"Retinal",
-								"Unwrapped"
-							],
 							"parameter_initial": [
 								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "out_view",
+							"parameter_longname": "freeze_on",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 0,
-							"parameter_shortname": "out_view",
-							"parameter_type": 2,
+							"parameter_shortname": "freeze_on",
+							"parameter_type": 1,
 							"parameter_unitstyle": 0
 						}
 					},
-					"varname": "out_view"
+					"varname": "freeze_on"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-48",
+					"id": "obj-19b",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						686.5,
+						180.0,
+						43.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						284.0,
+						3.0,
+						43.0,
+						18.0
+					],
+					"text": "Freeze On",
+					"textjustification": 2
+				}
+			},
+			{
+				"box": {
+					"id": "obj-19c",
 					"maxclass": "attrui",
-					"attr": "out_view",
+					"attr": "freeze_on",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2424,33 +2443,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-49",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						683.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						140.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "View",
-					"textjustification": 1,
-					"varname": "lbl_out_view"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-50",
+					"id": "obj-47",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2467,7 +2460,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						392.0,
+						355.0,
 						5.0,
 						18.0,
 						12.0
@@ -2478,7 +2471,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-48",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2511,7 +2504,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						378.0,
+						341.0,
 						44.0,
 						28.0,
 						28.0
@@ -2536,7 +2529,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						370.0,
+						333.0,
 						20.0,
 						44.0,
 						18.0
@@ -2956,7 +2949,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-51",
 						0
 					]
 				}
@@ -2968,7 +2961,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-52",
 						0
 					]
 				}
@@ -3016,7 +3009,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						2
 					]
 				}
@@ -3040,7 +3033,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3048,11 +3041,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-50",
+						"obj-47",
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-48",
 						0
 					]
 				}
@@ -3060,7 +3053,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-48",
 						0
 					],
 					"destination": [
@@ -3072,12 +3065,36 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-50",
+						0
+					],
+					"destination": [
+						"obj-52",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-51",
+						0
+					],
+					"destination": [
+						"obj-52",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-52",
 						0
 					],
 					"destination": [
-						"obj-54",
-						1
+						"obj-53",
+						0
 					]
 				}
 			},
@@ -3089,7 +3106,7 @@
 					],
 					"destination": [
 						"obj-54",
-						2
+						0
 					]
 				}
 			},
@@ -3108,35 +3125,11 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-52",
+						0
+					],
+					"destination": [
 						"obj-55",
-						0
-					],
-					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-56",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-54",
-						0
-					],
-					"destination": [
-						"obj-57",
 						1
 					]
 				}
@@ -3144,11 +3137,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
+						"obj-55",
 						0
 					],
 					"destination": [
-						"obj-52",
+						"obj-50",
 						0
 					]
 				}
@@ -3156,7 +3149,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-57",
+						"obj-55",
 						0
 					],
 					"destination": [
@@ -3256,7 +3249,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3292,7 +3285,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3364,7 +3357,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3400,7 +3393,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3436,7 +3429,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3472,7 +3465,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-53",
 						0
 					]
 				}
@@ -3544,7 +3537,31 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-38",
+						0
+					],
+					"destination": [
+						"obj-700",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-700",
+						0
+					],
+					"destination": [
+						"obj-54",
 						0
 					]
 				}
@@ -3556,7 +3573,7 @@
 						9
 					],
 					"destination": [
-						"obj-47",
+						"obj-19a",
 						0
 					]
 				}
@@ -3564,11 +3581,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-47",
+						"obj-19a",
 						0
 					],
 					"destination": [
-						"obj-48",
+						"obj-19c",
 						0
 					]
 				}
@@ -3576,35 +3593,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-48",
+						"obj-19c",
 						0
 					],
 					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-41",
-						0
-					],
-					"destination": [
-						"obj-700",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-700",
-						0
-					],
-					"destination": [
-						"obj-56",
+						"obj-55",
 						0
 					]
 				}
@@ -3676,7 +3669,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-52",
 						0
 					]
 				}
@@ -3784,7 +3777,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3820,7 +3813,7 @@
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-52",
 						0
 					]
 				}
@@ -3868,7 +3861,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-51",
 						0
 					]
 				}
@@ -3964,7 +3957,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3976,7 +3969,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-55",
 						0
 					]
 				}
@@ -3999,38 +3992,38 @@
 				0
 			],
 			"obj-29": [
-				"freeze_on",
-				"freeze_on",
+				"sim_rate",
+				"sim_rate",
 				0
 			],
 			"obj-32": [
-				"sim_rate",
-				"sim_rate",
+				"pulse_mix",
+				"pulse_mix",
 				0
 			],
 			"obj-35": [
-				"pulse_mix",
-				"pulse_mix",
+				"pulse_gain",
+				"pulse_gain",
 				0
 			],
 			"obj-38": [
-				"pulse_gain",
-				"pulse_gain",
+				"grain_scale",
+				"grain_scale",
 				0
 			],
 			"obj-41": [
-				"grain_scale",
-				"grain_scale",
+				"pulse_space",
+				"pulse_space",
 				0
 			],
 			"obj-44": [
-				"pulse_space",
-				"pulse_space",
+				"out_view",
+				"out_view",
 				0
 			],
-			"obj-47": [
-				"out_view",
-				"out_view",
+			"obj-19a": [
+				"freeze_on",
+				"freeze_on",
 				0
 			],
 			"parameterbanks": {

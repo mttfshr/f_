@@ -338,6 +338,11 @@ Extract-and-remap from a working reference file rather than hand-picking
 IDs from scratch. See `ideas/build_patcher_schema_gaps.md` for the full
 background on when this is the right tool vs. `pix_chain`/`pix_target`.
 
+**`"type": "header_toggle"` param and `pix_target`** (2026-10-25) — a header toggle (one per module, a
+live.toggle left of bypass) drives the PRIMARY pix by default; like a dial it may name one `pix_target`
+stage (a string; a list is refused) and a `pix_attr`, and its param_connect then names that stage.
+First user: f_formconstants' Freeze, which must reach the `nl` solver stage, not the primary `enc`.
+
 **`"type": "raw_ui"` param** (added 2026-07-15) — reserves a route
 outlet (dispatched by name, appended to the route arg list after
 `ui_params` + `header_toggles`) but generates **no** dial/label/attrui/

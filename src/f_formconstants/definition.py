@@ -47,7 +47,7 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  414,             # ten controls + reset in an eleventh slot (T069 sets the final layout)
+    "presentation_width":  377,             # nine controls + reset in a tenth slot; Freeze in the header (T069: layout)
     "presentation_height": 88,
 
     "archetype": "source",
@@ -76,10 +76,11 @@ patcher = {
          "hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray"},
         # (T062 Quant removed 2026-10-25: Matt saw no difference live; the source's fixed 255 levels stay.)
         # Phase D T070 (Matt, 2026-10-25): Freeze -- nl writes its incoming state back unchanged, so the
-        # field holds; Off resumes from that state. A menu (the builder has no toggle type).
-        {"name": "freeze_on", "type": "menu", "options": ["Off", "On"], "default": 0,
+        # field holds; off resumes from that state. A header toggle (Matt 2026-10-25; the builder now lets a
+        # header toggle name a pix_target, here nl).
+        {"name": "freeze_on", "type": "header_toggle", "min": 0.0, "max": 1.0, "default": 0.0,
          "label": "Freeze", "pix_target": "nl",
-         "hint": "Freeze: hold the field exactly where it is (the display keeps rendering); Off resumes from that state"},
+         "hint": "Freeze: hold the field exactly where it is (the display keeps rendering); off resumes from that state"},
         # Phase D T065 (Matt, 2026-10-25): Rate = slow motion by step skipping (the solver advances on a
         # fraction of the frames; the pulse clock counts solver steps), so the look is unchanged.
         {"name": "sim_rate", "type": "float", "min": 0.05, "max": 1.0, "default": 1.0,
@@ -187,9 +188,10 @@ for _p in patcher["params"]:
 # Object ids (positional -- they shift when a UI box is added, build/spec.md): below ten widgets the
 # support stages start at obj-50; from ten widgets up (T073 made ten) the base moves to the first id after
 # the bypass pair. _SUP is that base: hold = _SUP, seed = +1, pass = +2, blurx = +3, blury = +4, nl = +5;
-# enc (primary) = obj-5; the route is obj-4 and `reset` is its LAST outlet (= the number of controls).
+# enc (primary) = obj-5; the route is obj-4 and `reset` is its LAST outlet (controls, then the header toggle).
 # tests/modules/formconstants/test_fc_codebox_static.py guards these against the built patcher.
 _N_CONTROLS = sum(1 for _p in patcher["params"] if _p["type"] in ("float", "int", "menu"))
+_N_HEADER = sum(1 for _p in patcher["params"] if _p["type"] == "header_toggle")   # route tokens after the controls
 _SUP = 50 if _N_CONTROLS < 10 else 20 + 3 * _N_CONTROLS + 2
 _HOLD, _SEED, _PASS, _BLURX, _BLURY, _NL = (f"obj-{_SUP + k}" for k in range(6))
 
@@ -216,10 +218,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[378.0, 44.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[341.0, 44.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[370.0, 20.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[333.0, 20.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
@@ -243,7 +245,7 @@ patcher["raw_boxes"] = [
     _obj(22, "prepend param oh", 1, 1, [590.0, 380.0, 105.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line("obj-4", _N_CONTROLS, 3, 0),    # route: `reset` -> trigger (its last outlet, after the controls)
+    _line("obj-4", _N_CONTROLS + _N_HEADER, 3, 0),    # route: `reset` -> trigger (last: after controls + header toggle)
     _line(1, 0, 3, 0),                # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
     _line(3, 2, 6, 0), _line(6, 0, _PASS, 0),    # trigger right -> reseed 1 -> pass
