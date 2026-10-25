@@ -200,7 +200,6 @@ def module_frame(state, frameno, rate=1.0, freeze=False, levels=LEVELS, grain=1.
     return step(state, simt, levels, s=s_pulse(simt), freeze=freeze or not steps, grain=grain)
 
 
-Q_LEVELS = (255.0, 1023.0, None)  # Phase D T062: the q_levels menu index -> levels (None = float)
 
 OUT_MODES = ("RGB", "E", "Contour", "Luma")     # Phase D T060: the out_mode menu, in order
 

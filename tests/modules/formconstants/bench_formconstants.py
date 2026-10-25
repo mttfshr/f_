@@ -52,10 +52,10 @@ BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
 PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "pass": {"reseed": 0.0},
-          "blurx": {"n": float(N), "q_levels": 0.0, "grain_scale": 1.0},   # T062: 0 = 255 levels; T072 grain 1
-          "blury": {"n": float(N), "q_levels": 0.0, "grain_scale": 1.0},
+          "blurx": {"n": float(N), "grain_scale": 1.0},          # T072 grain 1 (T062 Quant removed)
+          "blury": {"n": float(N), "grain_scale": 1.0},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
-                 "q_levels": 0.0, "freeze_on": 0.0, "sim_rate": 1.0,
+                 "freeze_on": 0.0, "sim_rate": 1.0,
                  "pulse_mix": 1.0, "pulse_gain": 1.0,
                  "pulse_space": 1.0, "ow": float(N), "oh": float(N)},   # T073: 0 Retinal (module default), 1 Unwrapped (legs pin it)
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
@@ -137,21 +137,6 @@ def test_pass_stage_flag_and_reseed():
 
 
 # ---------------------------------------------------------------------- blur
-
-def test_q_levels_T062():
-    """Phase D T062: the Quant menu index 1 (1023 levels) and 2 (float) in blur_x, blur_y and nl vs
-    the mirror at the same levels (index 0 = 255 is every other leg)."""
-    st = qstate(np.random.default_rng(23))
-    for idx in (1, 2):
-        lv = m.Q_LEVELS[idx]
-        name = "float" if lv is None else str(int(lv))
-        gx = gpu("blurx", [st], dim=(N, N), q_levels=float(idx))
-        check_q(f"blur_x at {name}", gx, m.blur_pass(st, 1, lv))
-        gy = gpu("blury", [gx], dim=(N, N), q_levels=float(idx))
-        check_q(f"blur_y at {name} (on the GPU's blur_x)", gy, m.blur_pass(gx, 0, lv))
-        conv = m.blur(st, lv)
-        g = gpu("nl", [conv, st], dim=(N, N), frameno=0.0, q_levels=float(idx))
-        check_q(f"nl at {name}", g, m.wc_step(st, conv, 0, lv))
 
 
 def test_freeze_T070():

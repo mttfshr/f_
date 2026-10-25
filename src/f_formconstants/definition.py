@@ -47,7 +47,7 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  451,             # eleven controls + reset in a twelfth slot (T069 sets the final layout)
+    "presentation_width":  414,             # ten controls + reset in an eleventh slot (T069 sets the final layout)
     "presentation_height": 88,
 
     "archetype": "source",
@@ -74,11 +74,7 @@ patcher = {
         {"name": "out_mode", "type": "menu", "options": ["RGB", "E", "Contour", "Luma"], "default": 1,
          "label": "Output", "pix_target": "enc",
          "hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray"},
-        # Phase D T062 (Matt, 2026-10-25): quantization levels at the page's three points (blur_x, blur_y,
-        # nl). Only the living span: every level below 255 freezes the field (spike_fc_quant_levels.py).
-        {"name": "q_levels", "type": "menu", "options": ["255", "1023", "Float"], "default": 0,
-         "label": "Quant", "pix_target": ["nl", "blurx", "blury"],
-         "hint": "Quantization: 255 = the source (crisp spots, lattice); 1023 in between; Float = softer, larger domains, slower to form"},
+        # (T062 Quant removed 2026-10-25: Matt saw no difference live; the source's fixed 255 levels stay.)
         # Phase D T070 (Matt, 2026-10-25): Freeze -- nl writes its incoming state back unchanged, so the
         # field holds; Off resumes from that state. A menu (the builder has no toggle type).
         {"name": "freeze_on", "type": "menu", "options": ["Off", "On"], "default": 0,
@@ -220,10 +216,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[415.0, 44.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[378.0, 44.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[407.0, 20.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[370.0, 20.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),

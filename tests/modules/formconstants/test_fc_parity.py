@@ -311,25 +311,6 @@ def test_out_modes():
         check(f"mode {mode} alpha is 1", float(np.abs(o[..., 3] - 1).max()), 0.0)
 
 
-# ------------------------------------------------- (i) Phase D T062: quantization levels
-def test_q_levels_menu():
-    """Menu index -> levels (255 / 1023 / float); at 1023 every blur and wc output is a multiple of
-    1/1023; at float the stages are unquantized (blur = the unrounded weighted sum)."""
-    check("Q_LEVELS = (255, 1023, float)", float(m.Q_LEVELS != (255.0, 1023.0, None)), 0.0)
-    rng = np.random.default_rng(6)
-    st = (rng.integers(0, 256, (20, 20, 4)) / 255.0).astype(F32)
-    for lv in (1023.0,):
-        conv = m.blur(st, lv)
-        out = m.wc_step(st, conv, 0, lv)
-        for name, a in (("blur", conv), ("wc", out[..., :3])):
-            k = a.astype(np.float64) * lv
-            check(f"levels {int(lv)}: {name} on the 1/{int(lv)} grid (max off-grid)",
-                  float(np.abs(k - np.round(k)).max()), 2e-3)
-    cf = m.blur(st, None)
-    k = cf.astype(np.float64) * 1023.0
-    check("float: blur is NOT on the 1/1023 grid (some off-grid value > 0.01)",
-          float(np.abs(k - np.round(k)).max() < 0.01), 0.0)
-
 
 # ------------------------------------------------- (j) Phase D T070: Freeze
 def test_freeze_holds_and_resumes():

@@ -77,9 +77,8 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 12,
+					"numoutlets": 11,
 					"outlettype": [
-						"",
 						"",
 						"",
 						"",
@@ -95,15 +94,15 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						871.0,
+						799.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period out_mode q_levels freeze_on sim_rate pulse_mix pulse_gain grain_scale pulse_space out_view reset"
+					"text": "route pulse_depth pulse_period out_mode freeze_on sim_rate pulse_mix pulse_gain grain_scale pulse_space out_view reset"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-55",
+					"id": "obj-52",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -189,7 +188,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-56",
+					"id": "obj-53",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -308,7 +307,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-57",
+					"id": "obj-54",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -487,7 +486,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-58",
+					"id": "obj-55",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -532,7 +531,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_blur_x.gen -- f_formconstants PARITY blur stage, X pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\n// Phase D T072 (Matt, 2026-10-25): Param grain_scale from the Grain dial (0.5-2, default 1) -- every\n// tap's offset i becomes i * grain_scale, read as two wrapped texels blended by the fraction (same 13\n// taps and weights; at 1 the fraction is 0, so the parity path is exact). Above ~1.5 the spaced taps\n// alias into a checkerboard moire (tests/records/spike_fc_grain_inhibit.py) -- kept on purpose (Matt).\n// Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n// S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n// (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\nParam n(1024);\nParam q_levels(0);\nParam grain_scale(1);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nyw0 = iy - n * floor(iy / n);\nt0 = nearest(in1, vec((ix + 0.5) / n, (yw0 + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\ndp1 = ix + 1 * grain_scale; fp1 = floor(dp1); rp1 = dp1 - fp1;\npa1 = fp1 - n * floor(fp1 / n); pb1 = (fp1 + 1) - n * floor((fp1 + 1) / n);\ntp1 = mix(nearest(in1, vec((pa1 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb1 + 0.5) / n, (yw0 + 0.5) / n)), rp1);\ndn1 = ix - 1 * grain_scale; fn1 = floor(dn1); rn1 = dn1 - fn1;\nna1 = fn1 - n * floor(fn1 / n); nb1 = (fn1 + 1) - n * floor((fn1 + 1) / n);\ntn1 = mix(nearest(in1, vec((na1 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb1 + 0.5) / n, (yw0 + 0.5) / n)), rn1);\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\ndp2 = ix + 2 * grain_scale; fp2 = floor(dp2); rp2 = dp2 - fp2;\npa2 = fp2 - n * floor(fp2 / n); pb2 = (fp2 + 1) - n * floor((fp2 + 1) / n);\ntp2 = mix(nearest(in1, vec((pa2 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb2 + 0.5) / n, (yw0 + 0.5) / n)), rp2);\ndn2 = ix - 2 * grain_scale; fn2 = floor(dn2); rn2 = dn2 - fn2;\nna2 = fn2 - n * floor(fn2 / n); nb2 = (fn2 + 1) - n * floor((fn2 + 1) / n);\ntn2 = mix(nearest(in1, vec((na2 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb2 + 0.5) / n, (yw0 + 0.5) / n)), rn2);\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\ndp3 = ix + 3 * grain_scale; fp3 = floor(dp3); rp3 = dp3 - fp3;\npa3 = fp3 - n * floor(fp3 / n); pb3 = (fp3 + 1) - n * floor((fp3 + 1) / n);\ntp3 = mix(nearest(in1, vec((pa3 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb3 + 0.5) / n, (yw0 + 0.5) / n)), rp3);\ndn3 = ix - 3 * grain_scale; fn3 = floor(dn3); rn3 = dn3 - fn3;\nna3 = fn3 - n * floor(fn3 / n); nb3 = (fn3 + 1) - n * floor((fn3 + 1) / n);\ntn3 = mix(nearest(in1, vec((na3 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb3 + 0.5) / n, (yw0 + 0.5) / n)), rn3);\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\ndp4 = ix + 4 * grain_scale; fp4 = floor(dp4); rp4 = dp4 - fp4;\npa4 = fp4 - n * floor(fp4 / n); pb4 = (fp4 + 1) - n * floor((fp4 + 1) / n);\ntp4 = mix(nearest(in1, vec((pa4 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb4 + 0.5) / n, (yw0 + 0.5) / n)), rp4);\ndn4 = ix - 4 * grain_scale; fn4 = floor(dn4); rn4 = dn4 - fn4;\nna4 = fn4 - n * floor(fn4 / n); nb4 = (fn4 + 1) - n * floor((fn4 + 1) / n);\ntn4 = mix(nearest(in1, vec((na4 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb4 + 0.5) / n, (yw0 + 0.5) / n)), rn4);\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\ndp5 = ix + 5 * grain_scale; fp5 = floor(dp5); rp5 = dp5 - fp5;\npa5 = fp5 - n * floor(fp5 / n); pb5 = (fp5 + 1) - n * floor((fp5 + 1) / n);\ntp5 = mix(nearest(in1, vec((pa5 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb5 + 0.5) / n, (yw0 + 0.5) / n)), rp5);\ndn5 = ix - 5 * grain_scale; fn5 = floor(dn5); rn5 = dn5 - fn5;\nna5 = fn5 - n * floor(fn5 / n); nb5 = (fn5 + 1) - n * floor((fn5 + 1) / n);\ntn5 = mix(nearest(in1, vec((na5 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb5 + 0.5) / n, (yw0 + 0.5) / n)), rn5);\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\ndp6 = ix + 6 * grain_scale; fp6 = floor(dp6); rp6 = dp6 - fp6;\npa6 = fp6 - n * floor(fp6 / n); pb6 = (fp6 + 1) - n * floor((fp6 + 1) / n);\ntp6 = mix(nearest(in1, vec((pa6 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb6 + 0.5) / n, (yw0 + 0.5) / n)), rp6);\ndn6 = ix - 6 * grain_scale; fn6 = floor(dn6); rn6 = dn6 - fn6;\nna6 = fn6 - n * floor(fn6 / n); nb6 = (fn6 + 1) - n * floor((fn6 + 1) / n);\ntn6 = mix(nearest(in1, vec((na6 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb6 + 0.5) / n, (yw0 + 0.5) / n)), rn6);\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqr = mix(ar, floor(lv * ar + 0.5) / lv, qon);\nqg = mix(ag, floor(lv * ag + 0.5) / lv, qon);\nqb = mix(ab, floor(lv * ab + 0.5) / lv, qon);\nqa = mix(aa, floor(lv * aa + 0.5) / lv, qon);\nout1 = vec(qr, qg, qb, qa);\n",
+									"code": "// codebox_blur_x.gen -- f_formconstants PARITY blur stage, X pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\n// Phase D T072 (Matt, 2026-10-25): Param grain_scale from the Grain dial (0.5-2, default 1) -- every\n// tap's offset i becomes i * grain_scale, read as two wrapped texels blended by the fraction (same 13\n// taps and weights; at 1 the fraction is 0, so the parity path is exact). Above ~1.5 the spaced taps\n// alias into a checkerboard moire (tests/records/spike_fc_grain_inhibit.py) -- kept on purpose (Matt).\nParam n(1024);\nParam grain_scale(1);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nyw0 = iy - n * floor(iy / n);\nt0 = nearest(in1, vec((ix + 0.5) / n, (yw0 + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\ndp1 = ix + 1 * grain_scale; fp1 = floor(dp1); rp1 = dp1 - fp1;\npa1 = fp1 - n * floor(fp1 / n); pb1 = (fp1 + 1) - n * floor((fp1 + 1) / n);\ntp1 = mix(nearest(in1, vec((pa1 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb1 + 0.5) / n, (yw0 + 0.5) / n)), rp1);\ndn1 = ix - 1 * grain_scale; fn1 = floor(dn1); rn1 = dn1 - fn1;\nna1 = fn1 - n * floor(fn1 / n); nb1 = (fn1 + 1) - n * floor((fn1 + 1) / n);\ntn1 = mix(nearest(in1, vec((na1 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb1 + 0.5) / n, (yw0 + 0.5) / n)), rn1);\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\ndp2 = ix + 2 * grain_scale; fp2 = floor(dp2); rp2 = dp2 - fp2;\npa2 = fp2 - n * floor(fp2 / n); pb2 = (fp2 + 1) - n * floor((fp2 + 1) / n);\ntp2 = mix(nearest(in1, vec((pa2 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb2 + 0.5) / n, (yw0 + 0.5) / n)), rp2);\ndn2 = ix - 2 * grain_scale; fn2 = floor(dn2); rn2 = dn2 - fn2;\nna2 = fn2 - n * floor(fn2 / n); nb2 = (fn2 + 1) - n * floor((fn2 + 1) / n);\ntn2 = mix(nearest(in1, vec((na2 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb2 + 0.5) / n, (yw0 + 0.5) / n)), rn2);\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\ndp3 = ix + 3 * grain_scale; fp3 = floor(dp3); rp3 = dp3 - fp3;\npa3 = fp3 - n * floor(fp3 / n); pb3 = (fp3 + 1) - n * floor((fp3 + 1) / n);\ntp3 = mix(nearest(in1, vec((pa3 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb3 + 0.5) / n, (yw0 + 0.5) / n)), rp3);\ndn3 = ix - 3 * grain_scale; fn3 = floor(dn3); rn3 = dn3 - fn3;\nna3 = fn3 - n * floor(fn3 / n); nb3 = (fn3 + 1) - n * floor((fn3 + 1) / n);\ntn3 = mix(nearest(in1, vec((na3 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb3 + 0.5) / n, (yw0 + 0.5) / n)), rn3);\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\ndp4 = ix + 4 * grain_scale; fp4 = floor(dp4); rp4 = dp4 - fp4;\npa4 = fp4 - n * floor(fp4 / n); pb4 = (fp4 + 1) - n * floor((fp4 + 1) / n);\ntp4 = mix(nearest(in1, vec((pa4 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb4 + 0.5) / n, (yw0 + 0.5) / n)), rp4);\ndn4 = ix - 4 * grain_scale; fn4 = floor(dn4); rn4 = dn4 - fn4;\nna4 = fn4 - n * floor(fn4 / n); nb4 = (fn4 + 1) - n * floor((fn4 + 1) / n);\ntn4 = mix(nearest(in1, vec((na4 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb4 + 0.5) / n, (yw0 + 0.5) / n)), rn4);\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\ndp5 = ix + 5 * grain_scale; fp5 = floor(dp5); rp5 = dp5 - fp5;\npa5 = fp5 - n * floor(fp5 / n); pb5 = (fp5 + 1) - n * floor((fp5 + 1) / n);\ntp5 = mix(nearest(in1, vec((pa5 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb5 + 0.5) / n, (yw0 + 0.5) / n)), rp5);\ndn5 = ix - 5 * grain_scale; fn5 = floor(dn5); rn5 = dn5 - fn5;\nna5 = fn5 - n * floor(fn5 / n); nb5 = (fn5 + 1) - n * floor((fn5 + 1) / n);\ntn5 = mix(nearest(in1, vec((na5 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb5 + 0.5) / n, (yw0 + 0.5) / n)), rn5);\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\ndp6 = ix + 6 * grain_scale; fp6 = floor(dp6); rp6 = dp6 - fp6;\npa6 = fp6 - n * floor(fp6 / n); pb6 = (fp6 + 1) - n * floor((fp6 + 1) / n);\ntp6 = mix(nearest(in1, vec((pa6 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((pb6 + 0.5) / n, (yw0 + 0.5) / n)), rp6);\ndn6 = ix - 6 * grain_scale; fn6 = floor(dn6); rn6 = dn6 - fn6;\nna6 = fn6 - n * floor(fn6 / n); nb6 = (fn6 + 1) - n * floor((fn6 + 1) / n);\ntn6 = mix(nearest(in1, vec((na6 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb6 + 0.5) / n, (yw0 + 0.5) / n)), rn6);\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nqr = floor(255 * ar + 0.5) / 255;\nqg = floor(255 * ag + 0.5) / 255;\nqb = floor(255 * ab + 0.5) / 255;\nqa = floor(255 * aa + 0.5) / 255;\nout1 = vec(qr, qg, qb, qa);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -606,7 +605,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-59",
+					"id": "obj-56",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -651,7 +650,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_blur_y.gen -- f_formconstants PARITY blur stage, Y pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\n// Phase D T072 (Matt, 2026-10-25): Param grain_scale from the Grain dial (0.5-2, default 1) -- every\n// tap's offset i becomes i * grain_scale, read as two wrapped texels blended by the fraction (same 13\n// taps and weights; at 1 the fraction is 0, so the parity path is exact). Above ~1.5 the spaced taps\n// alias into a checkerboard moire (tests/records/spike_fc_grain_inhibit.py) -- kept on purpose (Matt).\n// Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n// S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n// (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\nParam n(1024);\nParam q_levels(0);\nParam grain_scale(1);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nxw0 = ix - n * floor(ix / n);\nt0 = nearest(in1, vec((xw0 + 0.5) / n, (iy + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\ndp1 = iy + 1 * grain_scale; fp1 = floor(dp1); rp1 = dp1 - fp1;\npa1 = fp1 - n * floor(fp1 / n); pb1 = (fp1 + 1) - n * floor((fp1 + 1) / n);\ntp1 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa1 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb1 + 0.5) / n)), rp1);\ndn1 = iy - 1 * grain_scale; fn1 = floor(dn1); rn1 = dn1 - fn1;\nna1 = fn1 - n * floor(fn1 / n); nb1 = (fn1 + 1) - n * floor((fn1 + 1) / n);\ntn1 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na1 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb1 + 0.5) / n)), rn1);\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\ndp2 = iy + 2 * grain_scale; fp2 = floor(dp2); rp2 = dp2 - fp2;\npa2 = fp2 - n * floor(fp2 / n); pb2 = (fp2 + 1) - n * floor((fp2 + 1) / n);\ntp2 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa2 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb2 + 0.5) / n)), rp2);\ndn2 = iy - 2 * grain_scale; fn2 = floor(dn2); rn2 = dn2 - fn2;\nna2 = fn2 - n * floor(fn2 / n); nb2 = (fn2 + 1) - n * floor((fn2 + 1) / n);\ntn2 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na2 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb2 + 0.5) / n)), rn2);\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\ndp3 = iy + 3 * grain_scale; fp3 = floor(dp3); rp3 = dp3 - fp3;\npa3 = fp3 - n * floor(fp3 / n); pb3 = (fp3 + 1) - n * floor((fp3 + 1) / n);\ntp3 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa3 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb3 + 0.5) / n)), rp3);\ndn3 = iy - 3 * grain_scale; fn3 = floor(dn3); rn3 = dn3 - fn3;\nna3 = fn3 - n * floor(fn3 / n); nb3 = (fn3 + 1) - n * floor((fn3 + 1) / n);\ntn3 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na3 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb3 + 0.5) / n)), rn3);\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\ndp4 = iy + 4 * grain_scale; fp4 = floor(dp4); rp4 = dp4 - fp4;\npa4 = fp4 - n * floor(fp4 / n); pb4 = (fp4 + 1) - n * floor((fp4 + 1) / n);\ntp4 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa4 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb4 + 0.5) / n)), rp4);\ndn4 = iy - 4 * grain_scale; fn4 = floor(dn4); rn4 = dn4 - fn4;\nna4 = fn4 - n * floor(fn4 / n); nb4 = (fn4 + 1) - n * floor((fn4 + 1) / n);\ntn4 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na4 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb4 + 0.5) / n)), rn4);\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\ndp5 = iy + 5 * grain_scale; fp5 = floor(dp5); rp5 = dp5 - fp5;\npa5 = fp5 - n * floor(fp5 / n); pb5 = (fp5 + 1) - n * floor((fp5 + 1) / n);\ntp5 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa5 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb5 + 0.5) / n)), rp5);\ndn5 = iy - 5 * grain_scale; fn5 = floor(dn5); rn5 = dn5 - fn5;\nna5 = fn5 - n * floor(fn5 / n); nb5 = (fn5 + 1) - n * floor((fn5 + 1) / n);\ntn5 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na5 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb5 + 0.5) / n)), rn5);\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\ndp6 = iy + 6 * grain_scale; fp6 = floor(dp6); rp6 = dp6 - fp6;\npa6 = fp6 - n * floor(fp6 / n); pb6 = (fp6 + 1) - n * floor((fp6 + 1) / n);\ntp6 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa6 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb6 + 0.5) / n)), rp6);\ndn6 = iy - 6 * grain_scale; fn6 = floor(dn6); rn6 = dn6 - fn6;\nna6 = fn6 - n * floor(fn6 / n); nb6 = (fn6 + 1) - n * floor((fn6 + 1) / n);\ntn6 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na6 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb6 + 0.5) / n)), rn6);\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqr = mix(ar, floor(lv * ar + 0.5) / lv, qon);\nqg = mix(ag, floor(lv * ag + 0.5) / lv, qon);\nqb = mix(ab, floor(lv * ab + 0.5) / lv, qon);\nqa = mix(aa, floor(lv * aa + 0.5) / lv, qon);\nout1 = vec(qr, qg, qb, qa);\n",
+									"code": "// codebox_blur_y.gen -- f_formconstants PARITY blur stage, Y pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\n// Phase D T072 (Matt, 2026-10-25): Param grain_scale from the Grain dial (0.5-2, default 1) -- every\n// tap's offset i becomes i * grain_scale, read as two wrapped texels blended by the fraction (same 13\n// taps and weights; at 1 the fraction is 0, so the parity path is exact). Above ~1.5 the spaced taps\n// alias into a checkerboard moire (tests/records/spike_fc_grain_inhibit.py) -- kept on purpose (Matt).\nParam n(1024);\nParam grain_scale(1);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nxw0 = ix - n * floor(ix / n);\nt0 = nearest(in1, vec((xw0 + 0.5) / n, (iy + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\ndp1 = iy + 1 * grain_scale; fp1 = floor(dp1); rp1 = dp1 - fp1;\npa1 = fp1 - n * floor(fp1 / n); pb1 = (fp1 + 1) - n * floor((fp1 + 1) / n);\ntp1 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa1 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb1 + 0.5) / n)), rp1);\ndn1 = iy - 1 * grain_scale; fn1 = floor(dn1); rn1 = dn1 - fn1;\nna1 = fn1 - n * floor(fn1 / n); nb1 = (fn1 + 1) - n * floor((fn1 + 1) / n);\ntn1 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na1 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb1 + 0.5) / n)), rn1);\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\ndp2 = iy + 2 * grain_scale; fp2 = floor(dp2); rp2 = dp2 - fp2;\npa2 = fp2 - n * floor(fp2 / n); pb2 = (fp2 + 1) - n * floor((fp2 + 1) / n);\ntp2 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa2 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb2 + 0.5) / n)), rp2);\ndn2 = iy - 2 * grain_scale; fn2 = floor(dn2); rn2 = dn2 - fn2;\nna2 = fn2 - n * floor(fn2 / n); nb2 = (fn2 + 1) - n * floor((fn2 + 1) / n);\ntn2 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na2 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb2 + 0.5) / n)), rn2);\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\ndp3 = iy + 3 * grain_scale; fp3 = floor(dp3); rp3 = dp3 - fp3;\npa3 = fp3 - n * floor(fp3 / n); pb3 = (fp3 + 1) - n * floor((fp3 + 1) / n);\ntp3 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa3 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb3 + 0.5) / n)), rp3);\ndn3 = iy - 3 * grain_scale; fn3 = floor(dn3); rn3 = dn3 - fn3;\nna3 = fn3 - n * floor(fn3 / n); nb3 = (fn3 + 1) - n * floor((fn3 + 1) / n);\ntn3 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na3 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb3 + 0.5) / n)), rn3);\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\ndp4 = iy + 4 * grain_scale; fp4 = floor(dp4); rp4 = dp4 - fp4;\npa4 = fp4 - n * floor(fp4 / n); pb4 = (fp4 + 1) - n * floor((fp4 + 1) / n);\ntp4 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa4 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb4 + 0.5) / n)), rp4);\ndn4 = iy - 4 * grain_scale; fn4 = floor(dn4); rn4 = dn4 - fn4;\nna4 = fn4 - n * floor(fn4 / n); nb4 = (fn4 + 1) - n * floor((fn4 + 1) / n);\ntn4 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na4 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb4 + 0.5) / n)), rn4);\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\ndp5 = iy + 5 * grain_scale; fp5 = floor(dp5); rp5 = dp5 - fp5;\npa5 = fp5 - n * floor(fp5 / n); pb5 = (fp5 + 1) - n * floor((fp5 + 1) / n);\ntp5 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa5 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb5 + 0.5) / n)), rp5);\ndn5 = iy - 5 * grain_scale; fn5 = floor(dn5); rn5 = dn5 - fn5;\nna5 = fn5 - n * floor(fn5 / n); nb5 = (fn5 + 1) - n * floor((fn5 + 1) / n);\ntn5 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na5 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb5 + 0.5) / n)), rn5);\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\ndp6 = iy + 6 * grain_scale; fp6 = floor(dp6); rp6 = dp6 - fp6;\npa6 = fp6 - n * floor(fp6 / n); pb6 = (fp6 + 1) - n * floor((fp6 + 1) / n);\ntp6 = mix(nearest(in1, vec((xw0 + 0.5) / n, (pa6 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (pb6 + 0.5) / n)), rp6);\ndn6 = iy - 6 * grain_scale; fn6 = floor(dn6); rn6 = dn6 - fn6;\nna6 = fn6 - n * floor(fn6 / n); nb6 = (fn6 + 1) - n * floor((fn6 + 1) / n);\ntn6 = mix(nearest(in1, vec((xw0 + 0.5) / n, (na6 + 0.5) / n)), nearest(in1, vec((xw0 + 0.5) / n, (nb6 + 0.5) / n)), rn6);\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nqr = floor(255 * ar + 0.5) / 255;\nqg = floor(255 * ag + 0.5) / 255;\nqb = floor(255 * ab + 0.5) / 255;\nqa = floor(255 * aa + 0.5) / 255;\nout1 = vec(qr, qg, qb, qa);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -725,7 +724,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-60",
+					"id": "obj-57",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -806,7 +805,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n//     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n//     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\n//   - Phase D T070 (Matt, 2026-10-25): Param freeze_on from the Freeze menu -- 1 writes the incoming\n//     state (in2) back unchanged, so the field holds where it is; the display keeps rendering it and\n//     turning Freeze off resumes from that exact state.\n//   - Phase D T065 (Matt, 2026-10-25): Param sim_rate from the Rate dial, by STEP SKIPPING (a smaller\n//     dt would freeze under quantization). simt = floor(frameno * sim_rate) is the solver's clock (the\n//     pulse wave reads it); this frame steps when floor((frameno + 1) * sim_rate) > simt, else the\n//     state holds exactly as under Freeze. Rate 1 = every frame, simt = frameno (parity). Mirror:\n//     fc_parity_mirror.module_frame / rate_clock.\n//   - Phase D T071 (Matt, 2026-10-25): Params pulse_mix (Pulse Mix: 1 = the texture replaces the wave,\n//     0 = ignored, between = blend) and pulse_gain (scales the texture luma only); unplugged, neither\n//     matters. s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix).\n//   - Phase D T073 (Matt, 2026-10-25): Param pulse_space from the Space menu -- 0 Retinal (default): read\n//     where this texel is DISPLAYED; 1 Unwrapped: read on the solver grid, as T061. Retinal is the inverse\n//     of enc's map. angle = 2 pi u; per direction the outermost radius copy inside the frame, rb = the\n//     distance to the frame edge, k = ceil(v - log(rb) / 2 pi), r = exp(2 pi (v - k)). Params ow / oh\n//     (from `r dim`, as enc): output-size PARAMS only -- the solver's @dim never follows the window (S1).\n//     Mirror: fc_parity_mirror.screen_coords / sample_tex.\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\nParam q_levels(0);\nParam freeze_on(0);\nParam sim_rate(1);\nParam pulse_mix(1);\nParam pulse_gain(1);\nParam pulse_space(0);\nParam ow(1024);\nParam oh(1024);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\nlngs = max(ow, oh);\naxs = ow / lngs;\nays = oh / lngs;\nths = twopi * norm.x;\ncss = cos(ths);\nsns = sin(ths);\nrbs = min(axs / max(abs(css), 0.000001), ays / max(abs(sns), 0.000001));\nkks = ceil(norm.y - log(rbs) / twopi);\nrrs = exp(twopi * (norm.y - kks));\nscr = vec((rrs * css / axs + 1) * 0.5, (rrs * sns / ays + 1) * 0.5);\npl = sample(in3, mix(scr, norm, pulse_space));\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsimt = floor(frameno * sim_rate);\nstp = floor((frameno + 1) * sim_rate) > simt;\nsq = fract(simt / s_period) < 0.5;\ns = s_depth * mix(sq, pulse_gain * lum, pulse_conn * pulse_mix);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqe = mix(en, floor(lv * en + 0.5) / lv, qon);\nqi = mix(inw, floor(lv * inw + 0.5) / lv, qon);\nqbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);\n\nbz = nearest(in2, norm).z;\nhold = max(freeze_on, 1 - stp);\nfe = mix(qe, ee, hold);\nfi = mix(qi, ii, hold);\nfb = mix(qbb, bz, hold);\n\nout1 = vec(fe, fi, fb, 1);\n",
+									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - Phase D T070 (Matt, 2026-10-25): Param freeze_on from the Freeze menu -- 1 writes the incoming\n//     state (in2) back unchanged, so the field holds where it is; the display keeps rendering it and\n//     turning Freeze off resumes from that exact state.\n//   - Phase D T065 (Matt, 2026-10-25): Param sim_rate from the Rate dial, by STEP SKIPPING (a smaller\n//     dt would freeze under quantization). simt = floor(frameno * sim_rate) is the solver's clock (the\n//     pulse wave reads it); this frame steps when floor((frameno + 1) * sim_rate) > simt, else the\n//     state holds exactly as under Freeze. Rate 1 = every frame, simt = frameno (parity). Mirror:\n//     fc_parity_mirror.module_frame / rate_clock.\n//   - Phase D T071 (Matt, 2026-10-25): Params pulse_mix (Pulse Mix: 1 = the texture replaces the wave,\n//     0 = ignored, between = blend) and pulse_gain (scales the texture luma only); unplugged, neither\n//     matters. s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix).\n//   - Phase D T073 (Matt, 2026-10-25): Param pulse_space from the Space menu -- 0 Retinal (default): read\n//     where this texel is DISPLAYED; 1 Unwrapped: read on the solver grid, as T061. Retinal is the inverse\n//     of enc's map. angle = 2 pi u; per direction the outermost radius copy inside the frame, rb = the\n//     distance to the frame edge, k = ceil(v - log(rb) / 2 pi), r = exp(2 pi (v - k)). Params ow / oh\n//     (from `r dim`, as enc): output-size PARAMS only -- the solver's @dim never follows the window (S1).\n//     Mirror: fc_parity_mirror.screen_coords / sample_tex.\n//   - (T062 Quant removed 2026-10-25: Matt saw no difference live; fixed 255 levels, S2)\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\nParam freeze_on(0);\nParam sim_rate(1);\nParam pulse_mix(1);\nParam pulse_gain(1);\nParam pulse_space(0);\nParam ow(1024);\nParam oh(1024);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\nlngs = max(ow, oh);\naxs = ow / lngs;\nays = oh / lngs;\nths = twopi * norm.x;\ncss = cos(ths);\nsns = sin(ths);\nrbs = min(axs / max(abs(css), 0.000001), ays / max(abs(sns), 0.000001));\nkks = ceil(norm.y - log(rbs) / twopi);\nrrs = exp(twopi * (norm.y - kks));\nscr = vec((rrs * css / axs + 1) * 0.5, (rrs * sns / ays + 1) * 0.5);\npl = sample(in3, mix(scr, norm, pulse_space));\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsimt = floor(frameno * sim_rate);\nstp = floor((frameno + 1) * sim_rate) > simt;\nsq = fract(simt / s_period) < 0.5;\ns = s_depth * mix(sq, pulse_gain * lum, pulse_conn * pulse_mix);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nqe = floor(255 * en + 0.5) / 255;\nqi = floor(255 * inw + 0.5) / 255;\nqbb = floor(255 * bb + 0.5) / 255;\n\nbz = nearest(in2, norm).z;\nhold = max(freeze_on, 1 - stp);\nfe = mix(qe, ee, hold);\nfi = mix(qi, ii, hold);\nfb = mix(qbb, bz, hold);\n\nout1 = vec(fe, fi, fb, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1064,7 +1063,7 @@
 						""
 					],
 					"patching_rect": [
-						1207.5,
+						1135.5,
 						100.0,
 						56.0,
 						22.0
@@ -1096,16 +1095,16 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						987.5,
+						915.5,
 						260.0,
-						451.0,
+						414.0,
 						88.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						451.0,
+						414.0,
 						88.0
 					],
 					"proportion": 0.5
@@ -1120,7 +1119,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1207.5,
+						1135.5,
 						200.0,
 						80.0,
 						21.0
@@ -1151,14 +1150,14 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1297.5,
+						1225.5,
 						200.0,
 						60.0,
 						21.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						355.0,
+						318.0,
 						0.9,
 						70.0,
 						21.0
@@ -1183,7 +1182,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1207.5,
+						1135.5,
 						232.0,
 						5.0,
 						5.0
@@ -1215,7 +1214,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1227.5,
+						1155.5,
 						232.0,
 						5.0,
 						5.0
@@ -1240,7 +1239,7 @@
 						""
 					],
 					"patching_rect": [
-						987.5,
+						915.5,
 						20.0,
 						60.0,
 						22.0
@@ -1258,7 +1257,7 @@
 						""
 					],
 					"patching_rect": [
-						987.5,
+						915.5,
 						50.0,
 						180.0,
 						22.0
@@ -1279,7 +1278,7 @@
 						""
 					],
 					"patching_rect": [
-						987.5,
+						915.5,
 						110.0,
 						80.0,
 						22.0
@@ -1298,7 +1297,7 @@
 						""
 					],
 					"patching_rect": [
-						987.5,
+						915.5,
 						140.0,
 						60.0,
 						22.0
@@ -1316,7 +1315,7 @@
 						""
 					],
 					"patching_rect": [
-						987.5,
+						915.5,
 						170.0,
 						80.0,
 						22.0
@@ -1334,7 +1333,7 @@
 						""
 					],
 					"patching_rect": [
-						987.5,
+						915.5,
 						200.0,
 						100.0,
 						22.0
@@ -1731,141 +1730,6 @@
 					"id": "obj-29",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
-					"hint": "Quantization: 255 = the source (crisp spots, lattice); 1023 in between; Float = softer, larger domains, slower to form",
-					"numinlets": 1,
-					"numoutlets": 3,
-					"outlettype": [
-						"",
-						"",
-						"float"
-					],
-					"param_connect": "#0_fc_nl::q_levels",
-					"parameter_enable": 1,
-					"patching_rect": [
-						246.0,
-						250.0,
-						60.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						111.0,
-						52.0,
-						45.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"255",
-								"1023",
-								"Float"
-							],
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "q_levels",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 0,
-							"parameter_shortname": "q_levels",
-							"parameter_type": 2,
-							"parameter_unitstyle": 0
-						}
-					},
-					"varname": "q_levels"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-30",
-					"maxclass": "attrui",
-					"attr": "q_levels",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						242.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-700",
-					"maxclass": "attrui",
-					"attr": "q_levels",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						242.0,
-						344.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-701",
-					"maxclass": "attrui",
-					"attr": "q_levels",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						242.0,
-						368.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-31",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						251.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						103.5,
-						20.0,
-						50.0,
-						18.0
-					],
-					"text": "Quant",
-					"textjustification": 1,
-					"varname": "lbl_q_levels"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-32",
-					"maxclass": "live.menu",
-					"fontname": "Ableton Sans Light",
 					"hint": "Freeze: hold the field exactly where it is (the display keeps rendering); Off resumes from that state",
 					"numinlets": 1,
 					"numoutlets": 3,
@@ -1877,14 +1741,14 @@
 					"param_connect": "#0_fc_nl::freeze_on",
 					"parameter_enable": 1,
 					"patching_rect": [
-						318.0,
+						246.0,
 						250.0,
 						60.0,
 						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						148.0,
+						111.0,
 						52.0,
 						45.0,
 						15.0
@@ -1914,9 +1778,113 @@
 			},
 			{
 				"box": {
-					"id": "obj-33",
+					"id": "obj-30",
 					"maxclass": "attrui",
 					"attr": "freeze_on",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						242.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-31",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						251.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						103.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Freeze",
+					"textjustification": 1,
+					"varname": "lbl_freeze_on"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-32",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_nl::sim_rate",
+					"parameter_enable": 1,
+					"patching_rect": [
+						334.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						152.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								1.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "sim_rate",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.05,
+							"parameter_modmode": 3,
+							"parameter_shortname": "sim_rate",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "sim_rate"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-33",
+					"maxclass": "attrui",
+					"attr": "sim_rate",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1952,9 +1920,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Freeze",
+					"text": "Rate",
 					"textjustification": 1,
-					"varname": "lbl_freeze_on"
+					"varname": "lbl_sim_rate"
 				}
 			},
 			{
@@ -1968,14 +1936,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)",
+					"hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::sim_rate",
+					"param_connect": "#0_fc_nl::pulse_mix",
 					"parameter_enable": 1,
 					"patching_rect": [
 						406.5,
@@ -2000,11 +1968,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "sim_rate",
+							"parameter_longname": "pulse_mix",
 							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.05,
+							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "sim_rate",
+							"parameter_shortname": "pulse_mix",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2013,14 +1981,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "sim_rate"
+					"varname": "pulse_mix"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-36",
 					"maxclass": "attrui",
-					"attr": "sim_rate",
+					"attr": "pulse_mix",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2056,9 +2024,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Rate",
+					"text": "P.Mix",
 					"textjustification": 1,
-					"varname": "lbl_sim_rate"
+					"varname": "lbl_pulse_mix"
 				}
 			},
 			{
@@ -2072,14 +2040,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend",
+					"hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::pulse_mix",
+					"param_connect": "#0_fc_nl::pulse_gain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						478.5,
@@ -2104,11 +2072,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "pulse_mix",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "pulse_gain",
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "pulse_mix",
+							"parameter_shortname": "pulse_gain",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2117,14 +2085,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "pulse_mix"
+					"varname": "pulse_gain"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-39",
 					"maxclass": "attrui",
-					"attr": "pulse_mix",
+					"attr": "pulse_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2160,110 +2128,6 @@
 						50.0,
 						18.0
 					],
-					"text": "P.Mix",
-					"textjustification": 1,
-					"varname": "lbl_pulse_mix"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_fc_nl::pulse_gain",
-					"parameter_enable": 1,
-					"patching_rect": [
-						550.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						78.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								1.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "pulse_gain",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "pulse_gain",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "pulse_gain"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-42",
-					"maxclass": "attrui",
-					"attr": "pulse_gain",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						530.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-43",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						539.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						66.5,
-						82.0,
-						50.0,
-						18.0
-					],
 					"text": "P.Gain",
 					"textjustification": 1,
 					"varname": "lbl_pulse_gain"
@@ -2271,7 +2135,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-44",
+					"id": "obj-41",
 					"maxclass": "live.dial",
 					"activedialcolor": [
 						0.8,
@@ -2290,14 +2154,14 @@
 					"param_connect": "#0_fc_blurx::grain_scale",
 					"parameter_enable": 1,
 					"patching_rect": [
-						622.5,
+						550.5,
 						250.0,
 						27.0,
 						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						78.0,
 						100.0,
 						27.0,
 						43.0
@@ -2330,7 +2194,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-45",
+					"id": "obj-42",
 					"maxclass": "attrui",
 					"attr": "grain_scale",
 					"numinlets": 1,
@@ -2339,7 +2203,7 @@
 						""
 					],
 					"patching_rect": [
-						602.0,
+						530.0,
 						310.0,
 						68.0,
 						22.0
@@ -2349,7 +2213,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-702",
+					"id": "obj-700",
 					"maxclass": "attrui",
 					"attr": "grain_scale",
 					"numinlets": 1,
@@ -2358,7 +2222,7 @@
 						""
 					],
 					"patching_rect": [
-						602.0,
+						530.0,
 						344.0,
 						68.0,
 						22.0
@@ -2368,21 +2232,21 @@
 			},
 			{
 				"box": {
-					"id": "obj-46",
+					"id": "obj-43",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.5,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						611.0,
+						539.0,
 						180.0,
 						50.0,
 						18.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						66.5,
 						82.0,
 						50.0,
 						18.0
@@ -2394,7 +2258,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-47",
+					"id": "obj-44",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
 					"hint": "Pulse texture space: Retinal = the image lands where you see it; Unwrapped = laid on the flat solver grid (WFG bands become rings / spokes)",
@@ -2408,14 +2272,14 @@
 					"param_connect": "#0_fc_nl::pulse_space",
 					"parameter_enable": 1,
 					"patching_rect": [
-						678.0,
+						606.0,
 						250.0,
 						60.0,
 						15.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						148.0,
+						111.0,
 						114.0,
 						45.0,
 						15.0
@@ -2445,9 +2309,105 @@
 			},
 			{
 				"box": {
-					"id": "obj-48",
+					"id": "obj-45",
 					"maxclass": "attrui",
 					"attr": "pulse_space",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						602.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-46",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						611.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						103.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Space",
+					"textjustification": 1,
+					"varname": "lbl_pulse_space"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-47",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_enc::out_view",
+					"parameter_enable": 1,
+					"patching_rect": [
+						678.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						148.0,
+						114.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Retinal",
+								"Unwrapped"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "out_view",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "out_view",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "out_view"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-48",
+					"maxclass": "attrui",
+					"attr": "out_view",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2483,102 +2443,6 @@
 						50.0,
 						18.0
 					],
-					"text": "Space",
-					"textjustification": 1,
-					"varname": "lbl_pulse_space"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-50",
-					"maxclass": "live.menu",
-					"fontname": "Ableton Sans Light",
-					"hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste",
-					"numinlets": 1,
-					"numoutlets": 3,
-					"outlettype": [
-						"",
-						"",
-						"float"
-					],
-					"param_connect": "#0_fc_enc::out_view",
-					"parameter_enable": 1,
-					"patching_rect": [
-						750.0,
-						250.0,
-						60.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						0.0,
-						176.0,
-						45.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"Retinal",
-								"Unwrapped"
-							],
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "out_view",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 0,
-							"parameter_shortname": "out_view",
-							"parameter_type": 2,
-							"parameter_unitstyle": 0
-						}
-					},
-					"varname": "out_view"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-51",
-					"maxclass": "attrui",
-					"attr": "out_view",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						746.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-52",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						755.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						-7.5,
-						144.0,
-						50.0,
-						18.0
-					],
 					"text": "View",
 					"textjustification": 1,
 					"varname": "lbl_out_view"
@@ -2586,7 +2450,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-50",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2597,13 +2461,13 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1207.5,
+						1135.5,
 						130.0,
 						18.0,
 						12.0
 					],
 					"presentation_rect": [
-						429.0,
+						392.0,
 						5.0,
 						18.0,
 						12.0
@@ -2614,7 +2478,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-51",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2622,7 +2486,7 @@
 						""
 					],
 					"patching_rect": [
-						1207.5,
+						1135.5,
 						160.0,
 						131.0,
 						22.0
@@ -2647,7 +2511,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						415.0,
+						378.0,
 						44.0,
 						28.0,
 						28.0
@@ -2672,7 +2536,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						407.0,
+						370.0,
 						20.0,
 						44.0,
 						18.0
@@ -3092,7 +2956,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
+						"obj-53",
 						0
 					]
 				}
@@ -3104,7 +2968,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-54",
 						0
 					]
 				}
@@ -3152,7 +3016,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						2
 					]
 				}
@@ -3176,7 +3040,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -3184,11 +3048,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-53",
+						"obj-50",
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-51",
 						0
 					]
 				}
@@ -3196,7 +3060,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-54",
+						"obj-51",
 						0
 					],
 					"destination": [
@@ -3208,12 +3072,48 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-52",
+						0
+					],
+					"destination": [
+						"obj-54",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-53",
+						0
+					],
+					"destination": [
+						"obj-54",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-54",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-55",
 						0
 					],
 					"destination": [
-						"obj-57",
-						1
+						"obj-56",
+						0
 					]
 				}
 			},
@@ -3225,54 +3125,18 @@
 					],
 					"destination": [
 						"obj-57",
-						2
+						0
 					]
 				}
 			},
 			{
 				"patchline": {
 					"source": [
+						"obj-54",
+						0
+					],
+					"destination": [
 						"obj-57",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-58",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-59",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-57",
-						0
-					],
-					"destination": [
-						"obj-60",
 						1
 					]
 				}
@@ -3280,11 +3144,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-60",
+						"obj-57",
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-52",
 						0
 					]
 				}
@@ -3292,7 +3156,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-60",
+						"obj-57",
 						0
 					],
 					"destination": [
@@ -3392,7 +3256,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -3428,7 +3292,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -3500,7 +3364,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -3536,7 +3400,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -3572,7 +3436,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -3608,7 +3472,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -3644,7 +3508,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-55",
 						0
 					]
 				}
@@ -3680,7 +3544,7 @@
 						0
 					],
 					"destination": [
-						"obj-58",
+						"obj-57",
 						0
 					]
 				}
@@ -3716,7 +3580,31 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-41",
+						0
+					],
+					"destination": [
+						"obj-700",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-700",
+						0
+					],
+					"destination": [
+						"obj-56",
 						0
 					]
 				}
@@ -3726,114 +3614,6 @@
 					"source": [
 						"obj-4",
 						10
-					],
-					"destination": [
-						"obj-50",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-51",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-29",
-						0
-					],
-					"destination": [
-						"obj-700",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-700",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-29",
-						0
-					],
-					"destination": [
-						"obj-701",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-701",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-44",
-						0
-					],
-					"destination": [
-						"obj-702",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-702",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						11
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3896,7 +3676,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-54",
 						0
 					]
 				}
@@ -4004,7 +3784,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -4040,6 +3820,150 @@
 						0
 					],
 					"destination": [
+						"obj-54",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-15",
+						0
+					],
+					"destination": [
+						"obj-raw-16",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-16",
+						0
+					],
+					"destination": [
+						"obj-raw-15",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-15",
+						0
+					],
+					"destination": [
+						"obj-raw-17",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-17",
+						0
+					],
+					"destination": [
+						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-18",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-18",
+						0
+					],
+					"destination": [
+						"obj-raw-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-19",
+						0
+					],
+					"destination": [
+						"obj-raw-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-20",
+						0
+					],
+					"destination": [
+						"obj-raw-21",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-20",
+						1
+					],
+					"destination": [
+						"obj-raw-22",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-21",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-22",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-21",
+						0
+					],
+					"destination": [
 						"obj-57",
 						0
 					]
@@ -4048,155 +3972,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-15",
-						0
-					],
-					"destination": [
-						"obj-raw-16",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-16",
-						0
-					],
-					"destination": [
-						"obj-raw-15",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-15",
-						0
-					],
-					"destination": [
-						"obj-raw-17",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-17",
-						0
-					],
-					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-18",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-18",
-						0
-					],
-					"destination": [
-						"obj-raw-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-19",
-						0
-					],
-					"destination": [
-						"obj-raw-20",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-20",
-						0
-					],
-					"destination": [
-						"obj-raw-21",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-20",
-						1
-					],
-					"destination": [
-						"obj-raw-22",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-21",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-raw-22",
 						0
 					],
 					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-21",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-22",
-						0
-					],
-					"destination": [
-						"obj-60",
+						"obj-57",
 						0
 					]
 				}
@@ -4219,41 +3999,36 @@
 				0
 			],
 			"obj-29": [
-				"q_levels",
-				"q_levels",
+				"freeze_on",
+				"freeze_on",
 				0
 			],
 			"obj-32": [
-				"freeze_on",
-				"freeze_on",
+				"sim_rate",
+				"sim_rate",
 				0
 			],
 			"obj-35": [
-				"sim_rate",
-				"sim_rate",
+				"pulse_mix",
+				"pulse_mix",
 				0
 			],
 			"obj-38": [
-				"pulse_mix",
-				"pulse_mix",
+				"pulse_gain",
+				"pulse_gain",
 				0
 			],
 			"obj-41": [
-				"pulse_gain",
-				"pulse_gain",
+				"grain_scale",
+				"grain_scale",
 				0
 			],
 			"obj-44": [
-				"grain_scale",
-				"grain_scale",
+				"pulse_space",
+				"pulse_space",
 				0
 			],
 			"obj-47": [
-				"pulse_space",
-				"pulse_space",
-				0
-			],
-			"obj-50": [
 				"out_view",
 				"out_view",
 				0

@@ -14,11 +14,7 @@
 // tap's offset i becomes i * grain_scale, read as two wrapped texels blended by the fraction (same 13
 // taps and weights; at 1 the fraction is 0, so the parity path is exact). Above ~1.5 the spaced taps
 // alias into a checkerboard moire (tests/records/spike_fc_grain_inhibit.py) -- kept on purpose (Matt).
-// Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,
-// S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes
-// (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.
 Param n(1024);
-Param q_levels(0);
 Param grain_scale(1);
 
 ix = floor(norm.x * n);
@@ -68,10 +64,8 @@ dn6 = ix - 6 * grain_scale; fn6 = floor(dn6); rn6 = dn6 - fn6;
 na6 = fn6 - n * floor(fn6 / n); nb6 = (fn6 + 1) - n * floor((fn6 + 1) / n);
 tn6 = mix(nearest(in1, vec((na6 + 0.5) / n, (yw0 + 0.5) / n)), nearest(in1, vec((nb6 + 0.5) / n, (yw0 + 0.5) / n)), rn6);
 ar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;
-lv = 255 + 768 * (q_levels > 0.5);
-qon = q_levels < 1.5;
-qr = mix(ar, floor(lv * ar + 0.5) / lv, qon);
-qg = mix(ag, floor(lv * ag + 0.5) / lv, qon);
-qb = mix(ab, floor(lv * ab + 0.5) / lv, qon);
-qa = mix(aa, floor(lv * aa + 0.5) / lv, qon);
+qr = floor(255 * ar + 0.5) / 255;
+qg = floor(255 * ag + 0.5) / 255;
+qb = floor(255 * ab + 0.5) / 255;
+qa = floor(255 * aa + 0.5) / 255;
 out1 = vec(qr, qg, qb, qa);
