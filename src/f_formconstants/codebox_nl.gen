@@ -18,6 +18,9 @@
 //     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --
 //     all reachable on purpose (kill and revive is a performance gesture).
 //   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass
+//   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,
+//     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes
+//     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.
 //   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn
 //     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).
 //   - no unary minus before a parenthesis (GenExpr mis-parses it)
@@ -25,6 +28,7 @@ Param frameno(0);
 Param s_depth(0.6);
 Param s_period(147.0588);
 Param pulse_conn(0);
+Param q_levels(0);
 
 ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).y;
@@ -41,4 +45,10 @@ en = ee + (ve - ee) * 0.1;
 inw = ii + (vi - ii) * 0.05;
 bb = clamp(abs(en - inw) * 3.0, 0, 1);
 
-out1 = vec(floor(255 * en + 0.5) / 255, floor(255 * inw + 0.5) / 255, floor(255 * bb + 0.5) / 255, 1);
+lv = 255 + 768 * (q_levels > 0.5);
+qon = q_levels < 1.5;
+qe = mix(en, floor(lv * en + 0.5) / lv, qon);
+qi = mix(inw, floor(lv * inw + 0.5) / lv, qon);
+qbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);
+
+out1 = vec(qe, qi, qbb, 1);

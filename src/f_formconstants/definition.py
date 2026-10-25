@@ -47,7 +47,7 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  155,             # Depth, Period, Output menu + reset in a fourth slot (T069: final layout)
+    "presentation_width":  192,             # Depth, Period, Output, Quant + reset in a fifth slot (T069: final layout)
     "presentation_height": 88,
 
     "archetype": "source",
@@ -74,6 +74,11 @@ patcher = {
         {"name": "out_mode", "type": "menu", "options": ["RGB", "E", "Contour", "Luma"], "default": 1,
          "label": "Output", "pix_target": "enc",
          "hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray"},
+        # Phase D T062 (Matt, 2026-10-25): quantization levels at the page's three points (blur_x, blur_y,
+        # nl). Only the living span: every level below 255 freezes the field (spike_fc_quant_levels.py).
+        {"name": "q_levels", "type": "menu", "options": ["255", "1023", "Float"], "default": 0,
+         "label": "Quant", "pix_target": ["nl", "blurx", "blury"],
+         "hint": "Quantization: 255 = the source (crisp spots, lattice); 1023 in between; Float = softer, larger domains, slower to form"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -152,8 +157,8 @@ for _p in patcher["params"]:
 # Object ids (positional -- they shift when a UI box is added, build/spec.md): with no dial widgets the
 # support stages start at obj-50: hold = obj-50, seed = obj-51, pass = obj-52, blurx = obj-53,
 # blury = obj-54, nl = obj-55; enc (primary) = obj-5 (two dials: still under the ten-widget threshold, so
-# the obj-50 base holds); the route is obj-4 with tokens pulse_depth, pulse_period, out_mode, reset (`reset` =
-# outlet 3). tests/modules/formconstants/test_fc_codebox_static.py guards these.
+# the obj-50 base holds); the route is obj-4 with tokens pulse_depth, pulse_period, out_mode, q_levels, reset
+# (`reset` = outlet 4). tests/modules/formconstants/test_fc_codebox_static.py guards these.
 def _box(i, cls, rect, **kw):
     b = {"id": f"obj-raw-{i}", "maxclass": cls, "patching_rect": rect}
     b.update(kw)
@@ -176,10 +181,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[119.0, 44.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[156.0, 44.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[111.0, 20.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[148.0, 20.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
@@ -203,7 +208,7 @@ patcher["raw_boxes"] = [
     _obj(22, "prepend param oh", 1, 1, [590.0, 380.0, 105.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line("obj-4", 3, 3, 0),          # route: `reset` -> trigger (route outlet 3, after the dials + Output menu)
+    _line("obj-4", 4, 3, 0),          # route: `reset` -> trigger (route outlet 4, after the dials + two menus)
     _line(1, 0, 3, 0),                # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
     _line(3, 2, 6, 0), _line(6, 0, "obj-52", 0),    # trigger right -> reseed 1 -> pass

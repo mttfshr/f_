@@ -52,9 +52,10 @@ BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
 PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "pass": {"reseed": 0.0},
-          "blurx": {"n": float(N)},
-          "blury": {"n": float(N)},
-          "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0},   # T061: s_rate -> s_period
+          "blurx": {"n": float(N), "q_levels": 0.0},             # T062: 0 = 255 levels (the source)
+          "blury": {"n": float(N), "q_levels": 0.0},
+          "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
+                 "q_levels": 0.0},
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
                   "out_mode": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
@@ -134,6 +135,22 @@ def test_pass_stage_flag_and_reseed():
 
 
 # ---------------------------------------------------------------------- blur
+
+def test_q_levels_T062():
+    """Phase D T062: the Quant menu index 1 (1023 levels) and 2 (float) in blur_x, blur_y and nl vs
+    the mirror at the same levels (index 0 = 255 is every other leg)."""
+    st = qstate(np.random.default_rng(23))
+    for idx in (1, 2):
+        lv = m.Q_LEVELS[idx]
+        name = "float" if lv is None else str(int(lv))
+        gx = gpu("blurx", [st], dim=(N, N), q_levels=float(idx))
+        check_q(f"blur_x at {name}", gx, m.blur_pass(st, 1, lv))
+        gy = gpu("blury", [gx], dim=(N, N), q_levels=float(idx))
+        check_q(f"blur_y at {name} (on the GPU's blur_x)", gy, m.blur_pass(gx, 0, lv))
+        conv = m.blur(st, lv)
+        g = gpu("nl", [conv, st], dim=(N, N), frameno=0.0, q_levels=float(idx))
+        check_q(f"nl at {name}", g, m.wc_step(st, conv, 0, lv))
+
 
 def test_blur_stages_vs_mirror():
     st = qstate(np.random.default_rng(9), live=False)

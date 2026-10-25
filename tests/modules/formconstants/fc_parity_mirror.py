@@ -130,6 +130,8 @@ def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0):
     return (F32(depth) * ((F32(1.0) - c) * sq + c * luma(pulse))).astype(F32)
 
 
+Q_LEVELS = (255.0, 1023.0, None)  # Phase D T062: the q_levels menu index -> levels (None = float)
+
 OUT_MODES = ("RGB", "E", "Contour", "Luma")     # Phase D T060: the out_mode menu, in order
 
 

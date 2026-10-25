@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 4,
+					"numoutlets": 5,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -87,10 +88,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						295.0,
+						367.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period out_mode reset"
+					"text": "route pulse_depth pulse_period out_mode q_levels reset"
 				}
 			},
 			{
@@ -524,7 +525,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_blur_x.gen -- f_formconstants PARITY blur stage, X pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\nParam n(1024);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nyw0 = iy - n * floor(iy / n);\nt0 = nearest(in1, vec((ix + 0.5) / n, (yw0 + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\nwp1 = (ix + 1) - n * floor((ix + 1) / n);\nwn1 = (ix - 1) - n * floor((ix - 1) / n);\ntp1 = nearest(in1, vec((wp1 + 0.5) / n, (yw0 + 0.5) / n));\ntn1 = nearest(in1, vec((wn1 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\nwp2 = (ix + 2) - n * floor((ix + 2) / n);\nwn2 = (ix - 2) - n * floor((ix - 2) / n);\ntp2 = nearest(in1, vec((wp2 + 0.5) / n, (yw0 + 0.5) / n));\ntn2 = nearest(in1, vec((wn2 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\nwp3 = (ix + 3) - n * floor((ix + 3) / n);\nwn3 = (ix - 3) - n * floor((ix - 3) / n);\ntp3 = nearest(in1, vec((wp3 + 0.5) / n, (yw0 + 0.5) / n));\ntn3 = nearest(in1, vec((wn3 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\nwp4 = (ix + 4) - n * floor((ix + 4) / n);\nwn4 = (ix - 4) - n * floor((ix - 4) / n);\ntp4 = nearest(in1, vec((wp4 + 0.5) / n, (yw0 + 0.5) / n));\ntn4 = nearest(in1, vec((wn4 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\nwp5 = (ix + 5) - n * floor((ix + 5) / n);\nwn5 = (ix - 5) - n * floor((ix - 5) / n);\ntp5 = nearest(in1, vec((wp5 + 0.5) / n, (yw0 + 0.5) / n));\ntn5 = nearest(in1, vec((wn5 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\nwp6 = (ix + 6) - n * floor((ix + 6) / n);\nwn6 = (ix - 6) - n * floor((ix - 6) / n);\ntp6 = nearest(in1, vec((wp6 + 0.5) / n, (yw0 + 0.5) / n));\ntn6 = nearest(in1, vec((wn6 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nqr = floor(255 * (ar / 1) + 0.5) / 255;\nqg = floor(255 * (ag / 1) + 0.5) / 255;\nqb = floor(255 * (ab / 1) + 0.5) / 255;\nqa = floor(255 * (aa / 1) + 0.5) / 255;\nout1 = vec(qr, qg, qb, qa);\n",
+									"code": "// codebox_blur_x.gen -- f_formconstants PARITY blur stage, X pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\n// Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n// S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n// (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\nParam n(1024);\nParam q_levels(0);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nyw0 = iy - n * floor(iy / n);\nt0 = nearest(in1, vec((ix + 0.5) / n, (yw0 + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\nwp1 = (ix + 1) - n * floor((ix + 1) / n);\nwn1 = (ix - 1) - n * floor((ix - 1) / n);\ntp1 = nearest(in1, vec((wp1 + 0.5) / n, (yw0 + 0.5) / n));\ntn1 = nearest(in1, vec((wn1 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\nwp2 = (ix + 2) - n * floor((ix + 2) / n);\nwn2 = (ix - 2) - n * floor((ix - 2) / n);\ntp2 = nearest(in1, vec((wp2 + 0.5) / n, (yw0 + 0.5) / n));\ntn2 = nearest(in1, vec((wn2 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\nwp3 = (ix + 3) - n * floor((ix + 3) / n);\nwn3 = (ix - 3) - n * floor((ix - 3) / n);\ntp3 = nearest(in1, vec((wp3 + 0.5) / n, (yw0 + 0.5) / n));\ntn3 = nearest(in1, vec((wn3 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\nwp4 = (ix + 4) - n * floor((ix + 4) / n);\nwn4 = (ix - 4) - n * floor((ix - 4) / n);\ntp4 = nearest(in1, vec((wp4 + 0.5) / n, (yw0 + 0.5) / n));\ntn4 = nearest(in1, vec((wn4 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\nwp5 = (ix + 5) - n * floor((ix + 5) / n);\nwn5 = (ix - 5) - n * floor((ix - 5) / n);\ntp5 = nearest(in1, vec((wp5 + 0.5) / n, (yw0 + 0.5) / n));\ntn5 = nearest(in1, vec((wn5 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\nwp6 = (ix + 6) - n * floor((ix + 6) / n);\nwn6 = (ix - 6) - n * floor((ix - 6) / n);\ntp6 = nearest(in1, vec((wp6 + 0.5) / n, (yw0 + 0.5) / n));\ntn6 = nearest(in1, vec((wn6 + 0.5) / n, (yw0 + 0.5) / n));\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqr = mix(ar, floor(lv * ar + 0.5) / lv, qon);\nqg = mix(ag, floor(lv * ag + 0.5) / lv, qon);\nqb = mix(ab, floor(lv * ab + 0.5) / lv, qon);\nqa = mix(aa, floor(lv * aa + 0.5) / lv, qon);\nout1 = vec(qr, qg, qb, qa);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -643,7 +644,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_blur_y.gen -- f_formconstants PARITY blur stage, Y pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\nParam n(1024);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nxw0 = ix - n * floor(ix / n);\nt0 = nearest(in1, vec((xw0 + 0.5) / n, (iy + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\nwp1 = (iy + 1) - n * floor((iy + 1) / n);\nwn1 = (iy - 1) - n * floor((iy - 1) / n);\ntp1 = nearest(in1, vec((xw0 + 0.5) / n, (wp1 + 0.5) / n));\ntn1 = nearest(in1, vec((xw0 + 0.5) / n, (wn1 + 0.5) / n));\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\nwp2 = (iy + 2) - n * floor((iy + 2) / n);\nwn2 = (iy - 2) - n * floor((iy - 2) / n);\ntp2 = nearest(in1, vec((xw0 + 0.5) / n, (wp2 + 0.5) / n));\ntn2 = nearest(in1, vec((xw0 + 0.5) / n, (wn2 + 0.5) / n));\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\nwp3 = (iy + 3) - n * floor((iy + 3) / n);\nwn3 = (iy - 3) - n * floor((iy - 3) / n);\ntp3 = nearest(in1, vec((xw0 + 0.5) / n, (wp3 + 0.5) / n));\ntn3 = nearest(in1, vec((xw0 + 0.5) / n, (wn3 + 0.5) / n));\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\nwp4 = (iy + 4) - n * floor((iy + 4) / n);\nwn4 = (iy - 4) - n * floor((iy - 4) / n);\ntp4 = nearest(in1, vec((xw0 + 0.5) / n, (wp4 + 0.5) / n));\ntn4 = nearest(in1, vec((xw0 + 0.5) / n, (wn4 + 0.5) / n));\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\nwp5 = (iy + 5) - n * floor((iy + 5) / n);\nwn5 = (iy - 5) - n * floor((iy - 5) / n);\ntp5 = nearest(in1, vec((xw0 + 0.5) / n, (wp5 + 0.5) / n));\ntn5 = nearest(in1, vec((xw0 + 0.5) / n, (wn5 + 0.5) / n));\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\nwp6 = (iy + 6) - n * floor((iy + 6) / n);\nwn6 = (iy - 6) - n * floor((iy - 6) / n);\ntp6 = nearest(in1, vec((xw0 + 0.5) / n, (wp6 + 0.5) / n));\ntn6 = nearest(in1, vec((xw0 + 0.5) / n, (wn6 + 0.5) / n));\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nqr = floor(255 * (ar / 1) + 0.5) / 255;\nqg = floor(255 * (ag / 1) + 0.5) / 255;\nqb = floor(255 * (ab / 1) + 0.5) / 255;\nqa = floor(255 * (aa / 1) + 0.5) / 255;\nout1 = vec(qr, qg, qb, qa);\n",
+									"code": "// codebox_blur_y.gen -- f_formconstants PARITY blur stage, Y pass (spec Revision 2, S2 + S3).\n// Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma\n// R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1\n// kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact\n// integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and\n// quantized floor(255 c + 0.5)/255 on all four channels (S2).\n// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()\n// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.\n// Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.\n// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are\n// nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything\n// inlined with suffixed names.\n// Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n// S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n// (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\nParam n(1024);\nParam q_levels(0);\n\nix = floor(norm.x * n);\niy = floor(norm.y * n);\nxw0 = ix - n * floor(ix / n);\nt0 = nearest(in1, vec((xw0 + 0.5) / n, (iy + 0.5) / n));\nar = t0.x * 0.398942292; ag = t0.y * 0.199675635; ab = t0.z * 0.398942292; aa = t0.w * 0.398942292;\nwp1 = (iy + 1) - n * floor((iy + 1) / n);\nwn1 = (iy - 1) - n * floor((iy - 1) / n);\ntp1 = nearest(in1, vec((xw0 + 0.5) / n, (wp1 + 0.5) / n));\ntn1 = nearest(in1, vec((xw0 + 0.5) / n, (wn1 + 0.5) / n));\nar = ar + (tp1.x + tn1.x) * 0.241970718; ag = ag + (tp1.y + tn1.y) * 0.176213115; ab = ab + (tp1.z + tn1.z) * 0.241970718; aa = aa + (tp1.w + tn1.w) * 0.241970718;\nwp2 = (iy + 2) - n * floor((iy + 2) / n);\nwn2 = (iy - 2) - n * floor((iy - 2) / n);\ntp2 = nearest(in1, vec((xw0 + 0.5) / n, (wp2 + 0.5) / n));\ntn2 = nearest(in1, vec((xw0 + 0.5) / n, (wn2 + 0.5) / n));\nar = ar + (tp2.x + tn2.x) * 0.0539909676; ag = ag + (tp2.y + tn2.y) * 0.121109389; ab = ab + (tp2.z + tn2.z) * 0.0539909676; aa = aa + (tp2.w + tn2.w) * 0.0539909676;\nwp3 = (iy + 3) - n * floor((iy + 3) / n);\nwn3 = (iy - 3) - n * floor((iy - 3) / n);\ntp3 = nearest(in1, vec((xw0 + 0.5) / n, (wp3 + 0.5) / n));\ntn3 = nearest(in1, vec((xw0 + 0.5) / n, (wn3 + 0.5) / n));\nar = ar + (tp3.x + tn3.x) * 0.00443184841; ag = ag + (tp3.y + tn3.y) * 0.0648251846; ab = ab + (tp3.z + tn3.z) * 0.00443184841; aa = aa + (tp3.w + tn3.w) * 0.00443184841;\nwp4 = (iy + 4) - n * floor((iy + 4) / n);\nwn4 = (iy - 4) - n * floor((iy - 4) / n);\ntp4 = nearest(in1, vec((xw0 + 0.5) / n, (wp4 + 0.5) / n));\ntn4 = nearest(in1, vec((xw0 + 0.5) / n, (wn4 + 0.5) / n));\nar = ar + (tp4.x + tn4.x) * 0.000133830225; ag = ag + (tp4.y + tn4.y) * 0.0270231571; ab = ab + (tp4.z + tn4.z) * 0.000133830225; aa = aa + (tp4.w + tn4.w) * 0.000133830225;\nwp5 = (iy + 5) - n * floor((iy + 5) / n);\nwn5 = (iy - 5) - n * floor((iy - 5) / n);\ntp5 = nearest(in1, vec((xw0 + 0.5) / n, (wp5 + 0.5) / n));\ntn5 = nearest(in1, vec((xw0 + 0.5) / n, (wn5 + 0.5) / n));\nar = ar + (tp5.x + tn5.x) * 1.4867195e-06; ag = ag + (tp5.y + tn5.y) * 0.00877313502; ab = ab + (tp5.z + tn5.z) * 1.4867195e-06; aa = aa + (tp5.w + tn5.w) * 1.4867195e-06;\nwp6 = (iy + 6) - n * floor((iy + 6) / n);\nwn6 = (iy - 6) - n * floor((iy - 6) / n);\ntp6 = nearest(in1, vec((xw0 + 0.5) / n, (wp6 + 0.5) / n));\ntn6 = nearest(in1, vec((xw0 + 0.5) / n, (wn6 + 0.5) / n));\nar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqr = mix(ar, floor(lv * ar + 0.5) / lv, qon);\nqg = mix(ag, floor(lv * ag + 0.5) / lv, qon);\nqb = mix(ab, floor(lv * ab + 0.5) / lv, qon);\nqa = mix(aa, floor(lv * aa + 0.5) / lv, qon);\nout1 = vec(qr, qg, qb, qa);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -798,7 +799,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\npl = sample(in3, norm);\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsq = fract(frameno / s_period) < 0.5;\ns = s_depth * mix(sq, lum, pulse_conn);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nout1 = vec(floor(255 * en + 0.5) / 255, floor(255 * inw + 0.5) / 255, floor(255 * bb + 0.5) / 255, 1);\n",
+									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n//     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n//     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\nParam q_levels(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\npl = sample(in3, norm);\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsq = fract(frameno / s_period) < 0.5;\ns = s_depth * mix(sq, lum, pulse_conn);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqe = mix(en, floor(lv * en + 0.5) / lv, qon);\nqi = mix(inw, floor(lv * inw + 0.5) / lv, qon);\nqbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);\n\nout1 = vec(qe, qi, qbb, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1090,14 +1091,14 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						155.0,
+						192.0,
 						88.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						155.0,
+						192.0,
 						88.0
 					],
 					"proportion": 0.5
@@ -1150,7 +1151,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						59.0,
+						96.0,
 						0.9,
 						70.0,
 						21.0
@@ -1721,6 +1722,141 @@
 			{
 				"box": {
 					"id": "obj-29",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Quantization: 255 = the source (crisp spots, lattice); 1023 in between; Float = softer, larger domains, slower to form",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_nl::q_levels",
+					"parameter_enable": 1,
+					"patching_rect": [
+						246.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						111.0,
+						52.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"255",
+								"1023",
+								"Float"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "q_levels",
+							"parameter_mmax": 2.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "q_levels",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "q_levels"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-30",
+					"maxclass": "attrui",
+					"attr": "q_levels",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						242.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-700",
+					"maxclass": "attrui",
+					"attr": "q_levels",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						242.0,
+						344.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-701",
+					"maxclass": "attrui",
+					"attr": "q_levels",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						242.0,
+						368.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-31",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						251.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						103.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Quant",
+					"textjustification": 1,
+					"varname": "lbl_q_levels"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-32",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1737,7 +1873,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						133.0,
+						170.0,
 						5.0,
 						18.0,
 						12.0
@@ -1748,7 +1884,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-30",
+					"id": "obj-33",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1781,7 +1917,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						119.0,
+						156.0,
 						44.0,
 						28.0,
 						28.0
@@ -1806,7 +1942,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						111.0,
+						148.0,
 						20.0,
 						44.0,
 						18.0
@@ -2318,11 +2454,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-29",
+						"obj-32",
 						0
 					],
 					"destination": [
-						"obj-30",
+						"obj-33",
 						0
 					]
 				}
@@ -2330,7 +2466,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-30",
+						"obj-33",
 						0
 					],
 					"destination": [
@@ -2608,6 +2744,90 @@
 					"source": [
 						"obj-4",
 						3
+					],
+					"destination": [
+						"obj-29",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-30",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-30",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-700",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-700",
+						0
+					],
+					"destination": [
+						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-29",
+						0
+					],
+					"destination": [
+						"obj-701",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-701",
+						0
+					],
+					"destination": [
+						"obj-54",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						4
 					],
 					"destination": [
 						"obj-raw-3",
@@ -2966,6 +3186,11 @@
 			"obj-26": [
 				"out_mode",
 				"out_mode",
+				0
+			],
+			"obj-29": [
+				"q_levels",
+				"q_levels",
 				0
 			],
 			"parameterbanks": {

@@ -10,7 +10,11 @@
 // Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are
 // nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything
 // inlined with suffixed names.
+// Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,
+// S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes
+// (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.
 Param n(1024);
+Param q_levels(0);
 
 ix = floor(norm.x * n);
 iy = floor(norm.y * n);
@@ -47,8 +51,10 @@ wn6 = (ix - 6) - n * floor((ix - 6) / n);
 tp6 = nearest(in1, vec((wp6 + 0.5) / n, (yw0 + 0.5) / n));
 tn6 = nearest(in1, vec((wn6 + 0.5) / n, (yw0 + 0.5) / n));
 ar = ar + (tp6.x + tn6.x) * 6.07588291e-09; ag = ag + (tp6.y + tn6.y) * 0.00221819594; ab = ab + (tp6.z + tn6.z) * 6.07588291e-09; aa = aa + (tp6.w + tn6.w) * 6.07588291e-09;
-qr = floor(255 * (ar / 1) + 0.5) / 255;
-qg = floor(255 * (ag / 1) + 0.5) / 255;
-qb = floor(255 * (ab / 1) + 0.5) / 255;
-qa = floor(255 * (aa / 1) + 0.5) / 255;
+lv = 255 + 768 * (q_levels > 0.5);
+qon = q_levels < 1.5;
+qr = mix(ar, floor(lv * ar + 0.5) / lv, qon);
+qg = mix(ag, floor(lv * ag + 0.5) / lv, qon);
+qb = mix(ab, floor(lv * ab + 0.5) / lv, qon);
+qa = mix(aa, floor(lv * aa + 0.5) / lv, qon);
 out1 = vec(qr, qg, qb, qa);
