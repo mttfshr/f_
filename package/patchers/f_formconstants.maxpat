@@ -97,7 +97,7 @@
 						799.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period out_mode sim_rate pulse_mix pulse_gain grain_scale pulse_space out_view freeze_on reset"
+					"text": "route pulse_depth pulse_period sim_rate pulse_mix pulse_gain grain_scale out_mode pulse_space out_view freeze_on reset"
 				}
 			},
 			{
@@ -1097,15 +1097,15 @@
 					"patching_rect": [
 						915.5,
 						260.0,
-						377.0,
-						88.0
+						272.0,
+						150.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						377.0,
-						88.0
+						272.0,
+						150.0
 					],
 					"proportion": 0.5
 				}
@@ -1157,7 +1157,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						281.0,
+						105.0,
 						0.9,
 						70.0,
 						21.0
@@ -1630,61 +1630,67 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.menu",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
 					"fontname": "Ableton Sans Light",
-					"hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray",
+					"hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)",
 					"numinlets": 1,
-					"numoutlets": 3,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_enc::out_mode",
+					"param_connect": "#0_fc_nl::sim_rate",
 					"parameter_enable": 1,
 					"patching_rect": [
-						174.0,
+						190.5,
 						250.0,
-						60.0,
-						15.0
+						27.0,
+						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						74.0,
-						52.0,
-						45.0,
-						15.0
+						78.0,
+						38.0,
+						27.0,
+						43.0
 					],
 					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
 						"valueof": {
-							"parameter_enum": [
-								"RGB",
-								"E",
-								"Contour",
-								"Luma"
-							],
 							"parameter_initial": [
 								1.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "out_mode",
-							"parameter_mmax": 3.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 0,
-							"parameter_shortname": "out_mode",
-							"parameter_type": 2,
-							"parameter_unitstyle": 0
+							"parameter_longname": "sim_rate",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.05,
+							"parameter_modmode": 3,
+							"parameter_shortname": "sim_rate",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
 						}
 					},
-					"varname": "out_mode"
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "sim_rate"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-27",
 					"maxclass": "attrui",
-					"attr": "out_mode",
+					"attr": "sim_rate",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1720,9 +1726,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Output",
+					"text": "Rate",
 					"textjustification": 1,
-					"varname": "lbl_out_mode"
+					"varname": "lbl_sim_rate"
 				}
 			},
 			{
@@ -1736,14 +1742,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Slow motion: 1 = the source speed; 0.5 = half speed, pulse and pattern together (same look)",
+					"hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::sim_rate",
+					"param_connect": "#0_fc_nl::pulse_mix",
 					"parameter_enable": 1,
 					"patching_rect": [
 						262.5,
@@ -1768,11 +1774,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "sim_rate",
+							"parameter_longname": "pulse_mix",
 							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.05,
+							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "sim_rate",
+							"parameter_shortname": "pulse_mix",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1781,14 +1787,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "sim_rate"
+					"varname": "pulse_mix"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-30",
 					"maxclass": "attrui",
-					"attr": "sim_rate",
+					"attr": "pulse_mix",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1824,9 +1830,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Rate",
+					"text": "P.Mix",
 					"textjustification": 1,
-					"varname": "lbl_sim_rate"
+					"varname": "lbl_pulse_mix"
 				}
 			},
 			{
@@ -1840,14 +1846,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Pulse texture vs the internal wave: 1 = the texture is the pulse; 0 = ignored; between = blend",
+					"hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_fc_nl::pulse_mix",
+					"param_connect": "#0_fc_nl::pulse_gain",
 					"parameter_enable": 1,
 					"patching_rect": [
 						334.5,
@@ -1872,11 +1878,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "pulse_mix",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "pulse_gain",
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "pulse_mix",
+							"parameter_shortname": "pulse_gain",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1885,14 +1891,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "pulse_mix"
+					"varname": "pulse_gain"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-33",
 					"maxclass": "attrui",
-					"attr": "pulse_mix",
+					"attr": "pulse_gain",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1928,110 +1934,6 @@
 						50.0,
 						18.0
 					],
-					"text": "P.Mix",
-					"textjustification": 1,
-					"varname": "lbl_pulse_mix"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Pulse texture brightness before it becomes the pulse: raise a dim image, tame a bright one",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_fc_nl::pulse_gain",
-					"parameter_enable": 1,
-					"patching_rect": [
-						406.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						4.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								1.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "pulse_gain",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "pulse_gain",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "pulse_gain"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-36",
-					"maxclass": "attrui",
-					"attr": "pulse_gain",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						386.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-37",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						395.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						-7.5,
-						82.0,
-						50.0,
-						18.0
-					],
 					"text": "P.Gain",
 					"textjustification": 1,
 					"varname": "lbl_pulse_gain"
@@ -2039,7 +1941,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-38",
+					"id": "obj-35",
 					"maxclass": "live.dial",
 					"activedialcolor": [
 						0.8,
@@ -2058,14 +1960,14 @@
 					"param_connect": "#0_fc_blurx::grain_scale",
 					"parameter_enable": 1,
 					"patching_rect": [
-						478.5,
+						406.5,
 						250.0,
 						27.0,
 						43.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						4.0,
 						100.0,
 						27.0,
 						43.0
@@ -2098,7 +2000,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-39",
+					"id": "obj-36",
 					"maxclass": "attrui",
 					"attr": "grain_scale",
 					"numinlets": 1,
@@ -2107,7 +2009,7 @@
 						""
 					],
 					"patching_rect": [
-						458.0,
+						386.0,
 						310.0,
 						68.0,
 						22.0
@@ -2126,8 +2028,106 @@
 						""
 					],
 					"patching_rect": [
-						458.0,
+						386.0,
 						344.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-37",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						395.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						-7.5,
+						82.0,
+						50.0,
+						18.0
+					],
+					"text": "Grain",
+					"textjustification": 1,
+					"varname": "lbl_grain_scale"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-38",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_enc::out_mode",
+					"parameter_enable": 1,
+					"patching_rect": [
+						462.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						37.0,
+						114.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"RGB",
+								"E",
+								"Contour",
+								"Luma"
+							],
+							"parameter_initial": [
+								1.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "out_mode",
+							"parameter_mmax": 3.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "out_mode",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "out_mode"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-39",
+					"maxclass": "attrui",
+					"attr": "out_mode",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						458.0,
+						310.0,
 						68.0,
 						22.0
 					],
@@ -2155,9 +2155,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Grain",
+					"text": "Output",
 					"textjustification": 1,
-					"varname": "lbl_grain_scale"
+					"varname": "lbl_out_mode"
 				}
 			},
 			{
@@ -2251,7 +2251,7 @@
 						50.0,
 						18.0
 					],
-					"text": "Space",
+					"text": "Input",
 					"textjustification": 1,
 					"varname": "lbl_pulse_space"
 				}
@@ -2347,7 +2347,7 @@
 						50.0,
 						18.0
 					],
-					"text": "View",
+					"text": "Space",
 					"textjustification": 1,
 					"varname": "lbl_out_view"
 				}
@@ -2373,7 +2373,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						327.0,
+						222.0,
 						1.0,
 						20.0,
 						20.0
@@ -2413,12 +2413,12 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						284.0,
+						179.0,
 						3.0,
 						43.0,
 						18.0
 					],
-					"text": "Freeze On",
+					"text": "Freeze",
 					"textjustification": 2
 				}
 			},
@@ -2460,7 +2460,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						355.0,
+						250.0,
 						5.0,
 						18.0,
 						12.0
@@ -2504,8 +2504,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						341.0,
-						44.0,
+						160.0,
+						106.0,
 						28.0,
 						28.0
 					],
@@ -2529,8 +2529,8 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						333.0,
-						20.0,
+						152.0,
+						82.0,
 						44.0,
 						18.0
 					],
@@ -3321,7 +3321,7 @@
 						0
 					],
 					"destination": [
-						"obj-5",
+						"obj-55",
 						0
 					]
 				}
@@ -3429,7 +3429,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-53",
 						0
 					]
 				}
@@ -3465,7 +3465,7 @@
 						0
 					],
 					"destination": [
-						"obj-53",
+						"obj-5",
 						0
 					]
 				}
@@ -3545,7 +3545,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-38",
+						"obj-35",
 						0
 					],
 					"destination": [
@@ -3987,28 +3987,28 @@
 				0
 			],
 			"obj-26": [
-				"out_mode",
-				"out_mode",
+				"sim_rate",
+				"sim_rate",
 				0
 			],
 			"obj-29": [
-				"sim_rate",
-				"sim_rate",
+				"pulse_mix",
+				"pulse_mix",
 				0
 			],
 			"obj-32": [
-				"pulse_mix",
-				"pulse_mix",
+				"pulse_gain",
+				"pulse_gain",
 				0
 			],
 			"obj-35": [
-				"pulse_gain",
-				"pulse_gain",
+				"grain_scale",
+				"grain_scale",
 				0
 			],
 			"obj-38": [
-				"grain_scale",
-				"grain_scale",
+				"out_mode",
+				"out_mode",
 				0
 			],
 			"obj-41": [

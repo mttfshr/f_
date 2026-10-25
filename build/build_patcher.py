@@ -1717,6 +1717,8 @@ def build(defn, debug=None, side_files=None):
     signal_type = defn.get("signal_type")
     if signal_type:
         button_x = defn.get("overrides", {}).get("bypass_jsui", {}).get("presentation_rect", [pw - 22.0])[0]
+        if header_toggles:                 # the header toggle + its label sit left of bypass: end the type label
+            button_x = min(button_x, pw - 50.0 - 43.0)   # left of them instead (2026-10-25, first header-toggle user)
         boxes.append(signal_type_box(signal_type, button_x))
     title_y = defn.get("overrides", {}).get("title", {}).get("presentation_rect", [0.0, 0.0])[1]
     in_mark, out_mark = parse_signal_type(signal_type)

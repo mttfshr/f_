@@ -47,8 +47,8 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  377,             # nine controls + reset in a tenth slot; Freeze in the header (T069: layout)
-    "presentation_height": 88,
+    "presentation_width":  272,             # T069 (Matt 11:04): two rows -- 5 dials; Grain + Output/Input/Space + reset.
+    "presentation_height": 150,             # Width set by the header: title, type label, Freeze toggle, bypass.
 
     "archetype": "source",
     "pix_type":  "float32",
@@ -69,18 +69,6 @@ patcher = {
         {"name": "pulse_period", "type": "float", "min": 30.0, "max": 600.0, "default": 147.0588,
          "label": "Period", "pix_attr": "s_period", "pix_target": "nl",
          "hint": "Internal pulse period in frames (used when the pulse inlet is unplugged). 147 = the source; under ~100 the field dies"},
-        # Phase D T060 (Matt, 2026-10-24): output mode. Default E (provisional: "probably not RGB";
-        # Matt picks after a live A/B). Name `out_mode`, not `output`/`mode` (pix attribute trap, T061).
-        {"name": "out_mode", "type": "menu", "options": ["RGB", "E", "Contour", "Luma"], "default": 1,
-         "label": "Output", "pix_target": "enc",
-         "hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray"},
-        # (T062 Quant removed 2026-10-25: Matt saw no difference live; the source's fixed 255 levels stay.)
-        # Phase D T070 (Matt, 2026-10-25): Freeze -- nl writes its incoming state back unchanged, so the
-        # field holds; off resumes from that state. A header toggle (Matt 2026-10-25; the builder now lets a
-        # header toggle name a pix_target, here nl).
-        {"name": "freeze_on", "type": "header_toggle", "min": 0.0, "max": 1.0, "default": 0.0,
-         "label": "Freeze", "pix_target": "nl",
-         "hint": "Freeze: hold the field exactly where it is (the display keeps rendering); off resumes from that state"},
         # Phase D T065 (Matt, 2026-10-25): Rate = slow motion by step skipping (the solver advances on a
         # fraction of the frames; the pulse clock counts solver steps), so the look is unchanged.
         {"name": "sim_rate", "type": "float", "min": 0.05, "max": 1.0, "default": 1.0,
@@ -98,17 +86,30 @@ patcher = {
         {"name": "grain_scale", "type": "float", "min": 0.5, "max": 2.0, "default": 1.0,
          "label": "Grain", "pix_target": ["blurx", "blury"],
          "hint": "Pattern scale: 1 = the source lattice; lower = finer, wormier; higher = bigger spots, moire near 2"},
+        # Phase D T060 (Matt, 2026-10-24): output mode. Default E (provisional: "probably not RGB";
+        # Matt picks after a live A/B). Name `out_mode`, not `output`/`mode` (pix attribute trap, T061).
+        {"name": "out_mode", "type": "menu", "options": ["RGB", "E", "Contour", "Luma"], "default": 1,
+         "label": "Output", "pix_target": "enc",
+         "hint": "RGB = the source look (E, I, contour). E = the activity (spots). Contour = the boundary web. Luma = all three as gray"},
         # Phase D T073 (Matt, 2026-10-25): where the pulse texture is read. Screen (default) = through the
         # inverse of the display map, so an input lands where it is seen; Cortical = on the solver grid (T061).
-        # Labels Retinal / Unwrapped (Matt, 2026-10-25), same words and order as View: 0 Retinal (default), 1 Unwrapped.
+        # Labels Retinal / Unwrapped (Matt, 2026-10-25), same words and order as the Space (out_view) menu;
+        # panel labels (Matt 11:04): this menu = "Input", out_view = "Space". Order: 0 Retinal (default), 1 Unwrapped.
         {"name": "pulse_space", "type": "menu", "options": ["Retinal", "Unwrapped"], "default": 0,
-         "label": "Space", "pix_target": "nl",
+         "label": "Input", "pix_target": "nl",
          "hint": "Pulse texture space: Retinal = the image lands where you see it; Unwrapped = laid on the flat solver grid (WFG bands become rings / spokes)"},
         # Phase D T074 (Matt, 2026-10-25): output geometry. Cortical = the solver grid unwrapped (angle across,
         # log-radius up; tiles in both axes) -- for f_droste or another downstream wrap, instead of a map here.
         {"name": "out_view", "type": "menu", "options": ["Retinal", "Unwrapped"], "default": 0,
-         "label": "View", "pix_target": "enc",
+         "label": "Space", "pix_target": "enc",
          "hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste"},
+        # (T062 Quant removed 2026-10-25: Matt saw no difference live; the source's fixed 255 levels stay.)
+        # Phase D T070 (Matt, 2026-10-25): Freeze -- nl writes its incoming state back unchanged, so the
+        # field holds; off resumes from that state. A header toggle (Matt 2026-10-25; the builder now lets a
+        # header toggle name a pix_target, here nl).
+        {"name": "freeze_on", "type": "header_toggle", "min": 0.0, "max": 1.0, "default": 0.0,
+         "label": "Freeze", "header_label": "Freeze", "pix_target": "nl",
+         "hint": "Freeze: hold the field exactly where it is (the display keeps rendering); off resumes from that state"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -218,10 +219,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[341.0, 44.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[160.0, 106.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[333.0, 20.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[152.0, 82.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),

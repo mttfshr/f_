@@ -451,7 +451,7 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 - [ ] T068 **Steady-web mode** (the Psychedelic + noise + habituation build,
   commit `63b6129`) as a second mode, only if A/B shows a distinct family
   worth a switch; otherwise drop it and record why.
-- [ ] T069 Defaults and panel layout; rewrite the spec's Parameters table to
+- [~] T069 **Layout pass 1 (Matt, 2026-10-25 11:04): labels Space -> "Input" (pulse_space) and View -> "Space" (out_view); the three menus grouped. Panel 272 x 150, two rows: Depth Period Rate P.Mix P.Gain / Grain Output Input Space Reset; Freeze = header toggle (label "Freeze"). Builder: with a header toggle the title-bar type label ends left of the toggle's label (no overlap; spec.md). Build tests 9 files green, static 7/7, contracts 9/9. Matt's live look pending.** Defaults and panel layout; rewrite the spec's Parameters table to
   the shipped dials.
 
 **Checkpoint:** Phase D closed when Matt approves the dial set and defaults.
