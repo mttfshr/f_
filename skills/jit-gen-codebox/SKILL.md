@@ -336,6 +336,24 @@ name against the full operator list (`mix`, `step`, `clamp`,
 the same class of risk as the `active`/`inN` cases, not limited to those
 specific words.
 
+### A `Param` named `t` is never applied — confirmed 2026-10-24 (f_formconstants T046)
+A codebox `Param t(...)` accepts `param t <value>` messages without complaint but **never takes the value**:
+it stays at its default. The symptom was a square-wave drive stuck at one phase (the module's `s` wave never
+alternated) with a clean console. Same silent-failure shape as the operator-named `Param` above, and the
+same family as `texture` and `bypass` (names jit.gl.pix itself owns). **Fix: rename the internal Param** —
+f_formconstants' frame counter is `frameno`. Treat any one-letter or generic Param name (`t`, `n`, `s`) as
+suspect until a bench leg proves the message reaches it (set a non-default value, read the output back).
+
+### A control named like a `jit.gl.pix` attribute binds to the attribute, not your Param — confirmed 2026-10-24
+This is a builder/UI-side trap, not a codebox one, but it shows up as a "codebox Param that does nothing".
+A control's `param_connect` addresses `<pix object>::<dial name>`; if jit.gl.pix has a native attribute of
+that name, the dial binds to the **attribute** and inherits its type and range. f_formconstants' dial named
+`depth` became Type Int, Range 0 1 in Max, because jit.gl.pix has an int 0/1 attribute `depth`; f_wc's dial
+named `texture` snapped back to its minimum, because native `@texture` takes a texture-name list. **Fix:
+give the control a token that cannot be a pix attribute** (a prefix: `pulse_depth`, `grain`, `out_mode`,
+not `depth`, `texture`, `output`, `mode`) and keep the nice name only in the label. Scan a definition's
+control tokens against jit.gl.pix's attributes before the first build.
+
 ### `active` as a variable name — silent collision, confirmed 2026-07-08
 Naming a scalar variable `active` (e.g. a sticky "is this pixel still
 iterating" flag, `active = active * escaped_this_iter`) produced solid
@@ -995,6 +1013,23 @@ Probes: `tests/modules/tf_glyph/bench_tf_glyph.py`, `tests/modules/tf_aniso_blur
 
 ---
 
+### More bench-verified facts (f_formconstants block-mean attempt, 2026-10-25)
+
+- **A `sample()` tap on a texel corner returns ONE texel, not the mean of four.** A reduction chain was built
+  assuming each `sample()` at a block corner bilinearly averages the surrounding texels (16 taps per stage,
+  4 x 4 blocks). The GPU block values had twice the std of the true 8 x 8 block means (0.072 against 0.036)
+  and correlated only 0.5 with them, which is what averaging 16 single texels (not 64) looks like; which
+  texel is returned varies with rounding. Do not rely on `sample()` to interpolate when the tap lands on a
+  texel corner or when the source is read at 1:1 in a pix-to-pix chain. **Fix: use `nearest()` at texel
+  centres** (`(ix + 0.5) / width`) and do the arithmetic yourself; the maths is then exact (a 1024 -> 1 mean
+  is five stages of 4 x 4 blocks, 16 taps each, 1024 -> 256 -> 64 -> 16 -> 4 -> 1). Related to the
+  "nearest-like" facts above; this one bites even with smooth coordinates.
+- **A ~256-tap unrolled codebox fails the parser** with `lua: stack overflow (too many captures)` (the
+  statement budget above, hit by writing 256 tap reads in one shader). A chain of four 16-tap stages
+  compiled fine. The failed compile also left the bench patch failing 7 unrelated legs until the next run,
+  the wedge described above, so after any compile failure re-probe before trusting later results.
+- **Where the evidence lives:** `tests/logs/fc_t075_mean1.npz` and `.specify/f_formconstants/tasks.md` T075.
+
 ## Code Health Checklist
 
 When reviewing any codebox, scan for these in order:
@@ -1010,6 +1045,9 @@ When reviewing any codebox, scan for these in order:
 - [ ] **`nearest()` tap coordinates normalized** — the four-tap idiom's taps take `(ix + 0.5) / width` UVs, NOT raw texel indices; raw indices silently read the frame border after the sampler's clamp (found 2026-10-17 refactoring a codebox)
 - [ ] **`atan2` fed possibly-(0,0) runtime args** — NaN; fix by biasing a denominator argument (+1e-7), not by guarding after (mix propagates NaN; no `isnan()`; `x == x` is TRUE even for NaN so that test is useless) — see the 2026-10-17 bench-facts section
 - [ ] **Statement count** — about 250 per function body or top level, about 450 for the whole program (not bytes, not lines); over that the parser fails with "stack overflow (too many captures)" and wedges the bench; move repeated code into functions (a call is one statement); `require` adds no budget
+- [ ] **`Param` named `t` (or another generic one-letter name)** — never applied, silently; use a descriptive name (`frameno`); prove a message reaches it in a bench leg (2026-10-24)
+- [ ] **Control token equal to a `jit.gl.pix` attribute** (`depth`, `texture`, `output`, `mode`) — the dial binds to the attribute and takes its type/range; prefix the token and keep the plain word in the label (2026-10-24)
+- [ ] **`sample()` used as an exact interpolator at texel corners or 1:1 in a chain** — returns ONE texel; use `nearest()` at texel centres for exact maths (2026-10-25)
 - [ ] **`step()` with two literal arguments** — folds reversed (`step(0.3, 0.5)` = 0); keep one argument a variable or Param
 - [ ] **`snoise()` or `cycle()`** — replace with sin hash or `sin(x * twopi)` respectively
 - [ ] **`cell` used as an integer index** — it is `norm * (dim - 1)` on jit.gl.pix; use `floor(norm.x * dim.x)` for integer indices

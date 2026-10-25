@@ -105,6 +105,39 @@ features are texel-scale, so N sets the look scale); `rate`; the drive inlet
 old Psychedelic + noise + habituation "steady web" as a second mode (reference
 build: commit `63b6129`).
 
+## Shipped controls (Phase D, 2026-10-25) — supersedes the Parameters table below
+
+Matt confirmed the live defaults as good on 2026-10-25 (T069). Panel 272 × 150, two rows. One texture
+inlet (the pulse), one outlet (RGB pattern). Control tokens are prefixed where a bare word collides
+with a `jit.gl.pix` attribute (`depth`, `texture`, `output`, `mode`; tasks T061).
+
+| Row | Label | Token | Type / range | Default | What it does |
+|---|---|---|---|---|---|
+| 1 | Depth | `pulse_depth` | float 0–1.5 | 0.6 | Pulse depth (excitability). 0.6 = the source; 0 fades the field out slowly; ~1.5 kills it fast |
+| 1 | Period | `pulse_period` | float 30–600 frames | 147.0588 | Internal square-wave period, used when the pulse inlet is unplugged; under ~100 the field dies |
+| 1 | Rate | `sim_rate` | float 0.05–1 | 1 | Slow motion by step skipping; the pulse clock counts solver steps, so the look is unchanged |
+| 1 | P.Mix | `pulse_mix` | float 0–1 | 1 | Pulse texture vs the internal wave: 1 = the texture is the pulse, 0 = ignored |
+| 1 | P.Gain | `pulse_gain` | float 0–2 | 1 | Pulse texture brightness before it becomes the pulse |
+| 1 | Reset | (raw button) | bang | — | Reseed the fields from fresh noise (also on load) |
+| 2 | Grain | `grain_scale` | float 0.5–2 | 1 | Blur tap spacing: below 1 finer and wormier, above 1 bigger softer spots, moire near 2 (kept on purpose) |
+| 2 | Output | `out_mode` | menu RGB / E / Contour / Luma | E | RGB = the source look; E = activity (spots); Contour = the boundary web; Luma = all three as gray |
+| 2 | Input | `pulse_space` | menu Retinal / Unwrapped | Retinal | Where the pulse texture is read: Retinal = it lands where it is seen; Unwrapped = on the flat solver grid |
+| 2 | Space | `out_view` | menu Retinal / Unwrapped | Retinal | Retinal = the log-polar form-constant view; Unwrapped = the flat solver grid, to feed `f_droste` |
+| header | Freeze | `freeze_on` | toggle | off | Hold the field exactly where it is; off resumes from that state |
+| header | Bypass | `bypass` | toggle | off | Black output (A = 1) |
+
+**Fixed, not controls:** solver size N = 1024 (S1), 255-level quantization at the source's three points
+(S2), the blur kernels and Example-10 couplings (S3, S4), the retinal map's constants (S7).
+
+**Decided against / moved out in Phase D (do not rebuild):** Quant menu (no visible difference); Inhibit
+dial (one narrow band, washes out or dies outside it); Flash "swing" dial and an inhibition-rate damping
+dial (the flash is the E–I loop's own bulk oscillation); De-flicker (a downstream utility,
+`ideas/f_deflicker.md`); Strike / impulse and Contrast / Sharp (downstream modules); map dials
+(zoom / rotate / arms / spiral, T063, overlap `f_droste`; the Unwrapped Space view covers that route);
+drive inlet (T066, superseded by the pulse inlet with the Retinal Input space); steady-web mode (T068,
+reference build at `63b6129`). T064 (solver size as a load-time choice) is open pending a look
+(`tests/records/spike_fc_solver_size.py`).
+
 ## Scope settled (2026-10-24, Claude + Matt) — history; see Revision 2
 
 - **New sibling module, not a re-architecture of f_wc.** f_wc's 256² FFT

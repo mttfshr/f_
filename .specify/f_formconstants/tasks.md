@@ -445,15 +445,23 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
   slow.
 - [x] T073 **Pulse Space switch: Cortical / Screen** (Matt, 2026-10-25 10:19, after "it still feels like a sim, not a performance or expression tool"). Screen = the pulse texture read through the inverse of the display map, so the input lands where it is seen and the pattern grows out of it. Matt's calls in the same exchange: a Strike / impulse gesture and Contrast / Sharp are DOWNSTREAM effects (other modules), not this module's job. Design discussion before code. **BUILT + BENCH-VERIFIED 2026-10-25 10:30 (default Screen, taken from Matt's note that a camera in Cortical arrives distorted into log-polar).** Menu `pulse_space` (label Space; Cortical / Screen, default 1) → nl: Screen reads the pulse at the screen point each texel is displayed at (angle 2πu; per direction the outermost radius copy inside the frame, k = ceil(v − log(rb)/2π)); Params ow/oh now also reach nl from `r dim` (params only: no dim message reaches a solver stage, S1 holds; static guard rewritten to assert exactly that). TENTH widget: support stages moved obj-50..55 → obj-52..57; definition now DERIVES them (`_N_CONTROLS`, `_SUP`, reset = the route's last outlet) and the static test reads them from the definition. Static `sin()`-hash guard scoped to the seed codebox (nl's sin/cos are geometry). Mirror `screen_coords` / `sample_tex`; test_fc_parity 19/19 (every texel on-frame; round trip lands on the same texel; a right-half image excites exactly the right-half texels). Bench 14/14 incl. `test_pulse_screen_T073`: **TOLERANCE STATED for this leg (flagged to Matt):** smooth texture ≤ 1 level, ≤ 0.5% differing (measured 1.0 level / 0.139%; mismatches concentrated at the frame edge, GPU wrap vs mirror clamp: 7% of edge texels vs 0.19% elsewhere); random-noise texture reported only (4 levels / 2.09%: GPU bilinear-filtering precision, the worst case). **KEPT 2026-10-25 10:35 (Matt): tolerance accepted; "camera input looks as expected now".**
 - [x] T074 **View: Retinal / Cortical (unwrapped output)** (Matt, 2026-10-25 10:35: "I was also expecting an unwrapping option for the cortical space"; the T063-hold idea of feeding f_droste). **BUILT + BENCH-VERIFIED 10:38:** menu `out_view` (label View; Retinal / Cortical, default Retinal) → enc: Cortical samples the solver grid directly (u = norm.x angle across, v = norm.y log-radius up; one period each, periodic in both axes). Eleventh widget: stages now obj-55..60 (derived ids held). Mirror `encode(view=)`; test_fc_parity 20/20 (Cortical at N x N == the state; tiles seamlessly at 128 x 72); static/contracts/drift/launch/menu green; bench 15/15 incl. `test_cortical_view_T074`. **KEPT 2026-10-25 10:40 (Matt): "yes this is what I meant".** Labels (Matt 10:41): **Retinal / Unwrapped in both View and Space**, Retinal first and default in both (Space's Param flipped: 0 Retinal, 1 Unwrapped; codebox + bench pins flipped; bench 15/15).
-- [ ] T066 **Drive inlet** back (G3 semantics, E-only, through the
-  vs_inState / `drv_conn` pattern); mirror leg + the old T017 imprint leg.
+- [x] T066 **DROPPED 2026-10-25 (Matt, "concur").** Superseded by the pulse
+  inlet (T061) with the Retinal Input space (T073): a texture already lands
+  where it is seen. A second E-only drive inlet would duplicate it. The old
+  T017 imprint leg is dropped with it.
+  (Original: **Drive inlet** back, G3 semantics, E-only, through the
+  vs_inState / `drv_conn` pattern; mirror leg + the old T017 imprint leg.)
 - [ ] T067 **Coupling dials** (e.g. Aie / Aii), only if Matt asks after
   T060–T063.
-- [ ] T068 **Steady-web mode** (the Psychedelic + noise + habituation build,
-  commit `63b6129`) as a second mode, only if A/B shows a distinct family
-  worth a switch; otherwise drop it and record why.
+- [x] T068 **DROPPED 2026-10-25 (Matt, "concur").** The steady-web build
+  (Psychedelic couplings + Ne 0.75 + habituation, render-res solver) conflicts
+  with the fixed-1024 parity architecture, and the Phase D direction is the
+  parity look plus performance dials, not a second regime. The build stays in
+  git at `63b6129` as a reference if it is ever wanted back.
+  (Original: **Steady-web mode** as a second mode, only if A/B shows a
+  distinct family worth a switch; otherwise drop it and record why.)
 - [~] T069 **Layout pass 1 (Matt, 2026-10-25 11:04): labels Space -> "Input" (pulse_space) and View -> "Space" (out_view); the three menus grouped. Panel 272 x 150, two rows: Depth Period Rate P.Mix P.Gain / Grain Output Input Space Reset; Freeze = header toggle (label "Freeze"). Builder: with a header toggle the title-bar type label ends left of the toggle's label (no overlap; spec.md). Build tests 9 files green, static 7/7, contracts 9/9. Matt's live look pending.** Defaults and panel layout; rewrite the spec's Parameters table to
-  the shipped dials.
+  the shipped dials. **2026-10-25 16:50: Matt: "the live defaults are good". Spec.md now has a "Shipped controls (Phase D)" section (table of all 12 controls, fixed items, the decided-against list) that supersedes the old Parameters table. Phase D closes when Matt approves the control set and T064 is settled.**
 
 **Checkpoint:** Phase D closed when Matt approves the dial set and defaults.
 
@@ -469,10 +477,10 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 
 ## Phase 3: Ship
 
-- [ ] T025 Reference doc `docs/f-reference/f_formconstants.md` (settled model,
+- [~] T025 **DRAFTED 2026-10-25 (Matt asked for it while T064 runs):** `docs/f-reference/f_formconstants.md` written (what it does, flow, parameters, settings groups A-E, algorithm, notes, verification, references). `module-inventory.md` rows added 2026-10-25 (capability map + I/O table, after `f_ks`). STILL OWED: a re-read against the final defaults once T064 and the soak settle. Reference doc (settled model,
   constants, ranges/landmarks, resize behavior, relationship to f_wc) +
   `docs/f-reference/module-inventory.md` rows (inlets/outlets/bypass tables).
-- [ ] T026 (MUST include the settings-groups table A-E from T072 / `spike_fc_presets.py`, Matt 2026-10-25) Helpfile `package/help/f_formconstants.maxhelp` (generator layout,
+- [~] T026 **DRAFTED 2026-10-25:** `package/help/f_formconstants.maxhelp` written (generator layout, pulse-inlet bubble, A-E settings-groups block; valid JSON, NOT opened in Max, no `parameters` block since the bpatcher's inner ids were not read). STILL OWED: Matt's look in Max, then the `f-helpfile` skill's checklist. (MUST include the settings-groups table A-E from T072 / `spike_fc_presets.py`, Matt 2026-10-25) Helpfile `package/help/f_formconstants.maxhelp` (generator layout,
   drive bubble per f_wc's).
 - [ ] T027 Menu: `menu.py` Patterns category (after Wilson-Cowan), regenerate
   menu + launcher; `test_generate_menu` / `test_launch` green.

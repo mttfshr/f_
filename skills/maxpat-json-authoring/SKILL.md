@@ -135,3 +135,18 @@ prove the result:
 4. Check the diff with `git diff -w --stat`: a surgical edit is a handful of lines, not hundreds.
 5. Anything that references box ids (`parameters` blocks, cords) must still resolve; removing a box means
    removing every cord that touches it, and checking nothing else names it.
+
+---
+
+## A control's `varname` / `param_connect` name can collide with a pix attribute (2026-10-24)
+
+A control wired to a `jit.gl.pix` through `param_connect` is addressed as `<pix object>::<control name>`.
+If the pix has a native attribute with that name, the control binds to the **attribute**, not to the codebox
+`Param`, and takes the attribute's type and range. Seen twice: a dial named `depth` became Type Int, Range
+0 1 (jit.gl.pix has an int 0/1 `depth`), and a dial named `texture` snapped back to its minimum (native
+`@texture` takes a texture-name list). When hand-authoring a `.maxpat` or a definition, give each control a
+token that cannot be a pix attribute (a prefix: `pulse_depth`, `out_mode`, `grain`), and keep the plain word
+in the visible label only. Check the tokens against jit.gl.pix's attribute list before the first open in Max;
+the error is silent on load and only shows as a dial that will not move or has the wrong range.
+Codebox-side companion traps (a `Param t` that is never applied, `sample()` returning one texel at corners)
+are in `jit-gen-codebox/SKILL.md`.
