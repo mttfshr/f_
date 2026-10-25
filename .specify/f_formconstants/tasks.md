@@ -374,6 +374,14 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
 
 **Checkpoint:** Phase R closed when GP passes and T049 has numbers.
 
+> **Phase D's framing (Matt, 2026-10-24, after T048): "an outstanding
+> simulation, but not a performable module."** That is the "almost" in the
+> parity pass. Phase D's job is to make it performable; judge each deviation
+> by that, not only by parity. Known performability facts from Phase R: a
+> reset takes ~600 frames (~10 s) to re-form structure (T047 pre-check);
+> `s` is the liveness mechanism, so `s_depth` 0 kills the field (T042); the
+> pulse period is fixed at ~147 frames (frame-locked, not tempo-locked).
+
 ### Phase D: deliberate deviations (each: mirror first if dynamics change,
 A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 
