@@ -399,6 +399,11 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
 > (3) **No dead-zone guard: being able to kill the field and bring it back is
 > part of performability.** Depth goes to 0; recovery is the slow re-formation,
 > by design.
+>
+> **MVP scope (Matt, 2026-10-24, 17:33): regular textures only.** The pulse
+> input for the MVP is a plain texture (plus the scalar/WFG path and the
+> internal fallback). Vecfield and tensor inputs are post-MVP, considered
+> after the MVP ships.
 
 ### Phase D: deliberate deviations (each: mirror first if dynamics change,
 A/B vs. the parity build AND the HTML, Matt keeps or reverts)
