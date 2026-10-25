@@ -55,7 +55,7 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "blurx": {"n": float(N), "q_levels": 0.0},             # T062: 0 = 255 levels (the source)
           "blury": {"n": float(N), "q_levels": 0.0},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
-                 "q_levels": 0.0},
+                 "q_levels": 0.0, "freeze_on": 0.0},
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
                   "out_mode": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
@@ -150,6 +150,16 @@ def test_q_levels_T062():
         conv = m.blur(st, lv)
         g = gpu("nl", [conv, st], dim=(N, N), frameno=0.0, q_levels=float(idx))
         check_q(f"nl at {name}", g, m.wc_step(st, conv, 0, lv))
+
+
+def test_freeze_T070():
+    """Phase D T070: freeze_on 1 makes nl write its incoming state back unchanged (alpha 1), with s on."""
+    st = qstate(np.random.default_rng(29))
+    conv = m.blur(st)
+    g = gpu("nl", [conv, st], dim=(N, N), frameno=0.0, freeze_on=1.0)
+    d = float(np.abs(g.astype(np.float64) - st.astype(np.float64)).max())
+    note("nl frozen: max |out - in|", f"{d:.3e}")
+    check("nl frozen == its incoming state", d, 1e-6)
 
 
 def test_blur_stages_vs_mirror():

@@ -77,8 +77,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 5,
+					"numoutlets": 6,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -88,10 +89,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						367.0,
+						439.0,
 						22.0
 					],
-					"text": "route pulse_depth pulse_period out_mode q_levels reset"
+					"text": "route pulse_depth pulse_period out_mode q_levels freeze_on reset"
 				}
 			},
 			{
@@ -799,7 +800,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n//     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n//     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\nParam q_levels(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\npl = sample(in3, norm);\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsq = fract(frameno / s_period) < 0.5;\ns = s_depth * mix(sq, lum, pulse_conn);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqe = mix(en, floor(lv * en + 0.5) / lv, qon);\nqi = mix(inw, floor(lv * inw + 0.5) / lv, qon);\nqbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);\n\nout1 = vec(qe, qi, qbb, 1);\n",
+									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,\n//     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes\n//     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.\n//   - Phase D T070 (Matt, 2026-10-25): Param freeze_on from the Freeze menu -- 1 writes the incoming\n//     state (in2) back unchanged, so the field holds where it is; the display keeps rendering it and\n//     turning Freeze off resumes from that exact state.\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\nParam q_levels(0);\nParam freeze_on(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\npl = sample(in3, norm);\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsq = fract(frameno / s_period) < 0.5;\ns = s_depth * mix(sq, lum, pulse_conn);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nlv = 255 + 768 * (q_levels > 0.5);\nqon = q_levels < 1.5;\nqe = mix(en, floor(lv * en + 0.5) / lv, qon);\nqi = mix(inw, floor(lv * inw + 0.5) / lv, qon);\nqbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);\n\nbz = nearest(in2, norm).z;\nfe = mix(qe, ee, freeze_on);\nfi = mix(qi, ii, freeze_on);\nfb = mix(qbb, bz, freeze_on);\n\nout1 = vec(fe, fi, fb, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1091,14 +1092,14 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						192.0,
+						229.0,
 						88.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						192.0,
+						229.0,
 						88.0
 					],
 					"proportion": 0.5
@@ -1151,7 +1152,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						96.0,
+						133.0,
 						0.9,
 						70.0,
 						21.0
@@ -1857,6 +1858,102 @@
 			{
 				"box": {
 					"id": "obj-32",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Freeze: hold the field exactly where it is (the display keeps rendering); Off resumes from that state",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_nl::freeze_on",
+					"parameter_enable": 1,
+					"patching_rect": [
+						318.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						148.0,
+						52.0,
+						45.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Off",
+								"On"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "freeze_on",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "freeze_on",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "freeze_on"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-33",
+					"maxclass": "attrui",
+					"attr": "freeze_on",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						314.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-34",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						323.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Freeze",
+					"textjustification": 1,
+					"varname": "lbl_freeze_on"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-35",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1873,7 +1970,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						170.0,
+						207.0,
 						5.0,
 						18.0,
 						12.0
@@ -1884,7 +1981,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-33",
+					"id": "obj-36",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1917,7 +2014,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						156.0,
+						193.0,
 						44.0,
 						28.0,
 						28.0
@@ -1942,7 +2039,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						148.0,
+						185.0,
 						20.0,
 						44.0,
 						18.0
@@ -2454,11 +2551,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-32",
+						"obj-35",
 						0
 					],
 					"destination": [
-						"obj-33",
+						"obj-36",
 						0
 					]
 				}
@@ -2466,7 +2563,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-33",
+						"obj-36",
 						0
 					],
 					"destination": [
@@ -2778,6 +2875,42 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-4",
+						4
+					],
+					"destination": [
+						"obj-32",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-32",
+						0
+					],
+					"destination": [
+						"obj-33",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-33",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-29",
 						0
 					],
@@ -2827,7 +2960,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						4
+						5
 					],
 					"destination": [
 						"obj-raw-3",
@@ -3191,6 +3324,11 @@
 			"obj-29": [
 				"q_levels",
 				"q_levels",
+				0
+			],
+			"obj-32": [
+				"freeze_on",
+				"freeze_on",
 				0
 			],
 			"parameterbanks": {

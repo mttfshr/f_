@@ -331,6 +331,25 @@ def test_q_levels_menu():
           float(np.abs(k - np.round(k)).max() < 0.01), 0.0)
 
 
+# ------------------------------------------------- (j) Phase D T070: Freeze
+def test_freeze_holds_and_resumes():
+    """Freeze writes the incoming state back unchanged (alpha 1), whatever s or the pulse; frozen for
+    any number of frames the state does not move; unfreezing resumes exactly as an unfrozen step of
+    that held state would."""
+    rng = np.random.default_rng(7)
+    st = (rng.integers(0, 256, (24, 24, 4)) / 255.0).astype(F32)
+    st[..., 3] = 1.0
+    conv = m.blur(st)
+    held = m.wc_step(st, conv, 0, s=F32(0.6), freeze=True)
+    check("frozen step == the incoming state (max |diff|)", float(np.abs(held - st).max()), 0.0)
+    x = st
+    for fr in range(50):
+        x = m.step(x, fr, freeze=True)
+    check("50 frozen frames: state unchanged (max |diff|)", float(np.abs(x - st).max()), 0.0)
+    check("resume == an unfrozen step of the held state (max |diff|)",
+          float(np.abs(m.step(x, 50) - m.step(st, 50)).max()), 0.0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

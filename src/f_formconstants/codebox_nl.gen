@@ -21,6 +21,9 @@
 //   - Phase D T062 (Matt, 2026-10-25): Param q_levels from the Quant menu -- 0 = 255 levels (the source,
 //     S2), 1 = 1023, 2 = float (no quantization). Every level >= 255 lives; below 255 the field freezes
 //     (tests/records/spike_fc_quant_levels.py), so the menu offers only the living span.
+//   - Phase D T070 (Matt, 2026-10-25): Param freeze_on from the Freeze menu -- 1 writes the incoming
+//     state (in2) back unchanged, so the field holds where it is; the display keeps rendering it and
+//     turning Freeze off resumes from that exact state.
 //   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn
 //     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).
 //   - no unary minus before a parenthesis (GenExpr mis-parses it)
@@ -29,6 +32,7 @@ Param s_depth(0.6);
 Param s_period(147.0588);
 Param pulse_conn(0);
 Param q_levels(0);
+Param freeze_on(0);
 
 ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).y;
@@ -51,4 +55,9 @@ qe = mix(en, floor(lv * en + 0.5) / lv, qon);
 qi = mix(inw, floor(lv * inw + 0.5) / lv, qon);
 qbb = mix(bb, floor(lv * bb + 0.5) / lv, qon);
 
-out1 = vec(qe, qi, qbb, 1);
+bz = nearest(in2, norm).z;
+fe = mix(qe, ee, freeze_on);
+fi = mix(qi, ii, freeze_on);
+fb = mix(qbb, bz, freeze_on);
+
+out1 = vec(fe, fi, fb, 1);

@@ -175,7 +175,7 @@ def F(x):
     return (F32(1.0) / (F32(1.0) + np.exp(-x))).astype(F32)
 
 
-def wc_step(state, conv, t, levels=LEVELS, s=None):
+def wc_step(state, conv, t, levels=LEVELS, s=None, freeze=False):
     """The `wc` shader. state = Uin (pre-blur), conv = Uconv (blur output).
     E and I are written through EncodeFloat; B = |Ue - Ui| * 3 from the
     UNquantized updated values, stored as 8-bit; A = 1."""
@@ -192,6 +192,10 @@ def wc_step(state, conv, t, levels=LEVELS, s=None):
     out[..., 1] = q(inn, levels)
     out[..., 2] = q8_store(np.abs(en - inn) * F32(3.0), levels)
     out[..., 3] = 1.0
+    if freeze:                          # Phase D T070: Freeze -- write back the incoming state unchanged
+        out = state.copy()
+        out[..., 3] = 1.0
+
     return out
 
 
@@ -209,11 +213,11 @@ def pass_stage(fb, seed, reseed):
 
 
 # ------------------------------------------------------------------ one frame
-def step(state, t, levels=LEVELS, s=None):
+def step(state, t, levels=LEVELS, s=None, freeze=False):
     """One frame in the page's order. `state` is the held state (what the
     `pass` stage emitted); returns the new state (what feeds back and renders)."""
     conv = blur(state, levels)
-    return wc_step(state, conv, t, levels, s)
+    return wc_step(state, conv, t, levels, s, freeze)
 
 
 def run(state0, frames, t0=0, levels=LEVELS, trace=False):
