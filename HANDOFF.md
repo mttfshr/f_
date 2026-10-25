@@ -5,7 +5,8 @@
 - **T049 done:** N 1024: 1.07 ms @ 1080p / 1.54 ms @ 4K; N 2048: 2.04 / 2.47 ms (upper bounds; f_wc 2.45 ms). Cost is not a constraint. `bench_formconstants.py` 9/9 incl. --slow.
 - **Phase D direction (Matt, recorded in tasks.md above T060):** "outstanding simulation, not a performable module". Slow reset is a feature (no fix). Breathe wave + pulse are the primary performance surface: subtle dials, an external WFG (Vsynth convention, internal square wave as fallback) and a texture input. Kill-and-revive is a feature (no dead-zone guard). **MVP = regular-texture input only**; vecfield/tensor post-MVP.
 - **T061 DONE and KEPT (2026-10-24 23:47):** pulse inlet (luma replaces the internal square wave, cortical space), `pulse_depth` 0-1.5 / `pulse_period` 30-600 dials, counter wrap 1e6; bench 8/8; Matt live: great. (Dial-name trap found on the way, see "Still owed".)
-- **Next:** T060 output mode (RGB / E / contour / RGB luma), then T062-T069.
+- **T060 DONE and KEPT (2026-10-25 00:01):** Output menu `out_mode` (RGB / E / Contour / Luma), default **E** (Matt's pick); enc only; bench 9/9.
+- **Next:** T062 (quantization levels dial: A/B the look first), then T063 map, T064 solver size (design discussion first), T065-T069.
 
 ## 2026-10-24, 17:30: f_formconstants — PARITY LOOK PASSED (T048); Phase R at T049
 
