@@ -381,6 +381,15 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
 > reset takes ~600 frames (~10 s) to re-form structure (T047 pre-check);
 > `s` is the liveness mechanism, so `s_depth` 0 kills the field (T042); the
 > pulse period is fixed at ~147 frames (frame-locked, not tempo-locked).
+>
+> **Matt's calls (2026-10-24, 17:28):** (1) the slow reset is NOT a problem
+> to solve: slow evolution is why one reaches for Wilson-Cowan. No fast-reset
+> or warm-start work. (2) The breathe wave and pulse are the primary
+> performance surface: subtle adjustment, driven by an external WFG, or taken
+> from an input. Open for the T061 design discussion: what "input" means here
+> (a scalar mod inlet replacing the internal square wave; a texture whose luma
+> sets `s` per texel; or both), the WFG signal convention it follows, and
+> how the depth range avoids the dead zone (`s_depth` 0 kills the field).
 
 ### Phase D: deliberate deviations (each: mirror first if dynamics change,
 A/B vs. the parity build AND the HTML, Matt keeps or reverts)
