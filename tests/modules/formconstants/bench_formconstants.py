@@ -57,7 +57,7 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0,   # T061: s_rate -> s_period
                  "q_levels": 0.0, "freeze_on": 0.0, "sim_rate": 1.0,
                  "pulse_mix": 1.0, "pulse_gain": 1.0,
-                 "pulse_space": 0.0, "ow": float(N), "oh": float(N)},   # T073: the module default is Screen; legs pin Cortical
+                 "pulse_space": 1.0, "ow": float(N), "oh": float(N)},   # T073: 0 Retinal (module default), 1 Unwrapped (legs pin it)
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N),
                   "out_mode": 0.0, "out_view": 0.0}}        # T060: the module default is E; the parity legs pin RGB
 
@@ -205,7 +205,7 @@ def test_pulse_screen_T073():
     edge = np.minimum.reduce([sc[..., 0], 1 - sc[..., 0], sc[..., 1], 1 - sc[..., 1]])
     dbg = {}
     for label, tex in (("smooth", smooth), ("noise", pulse)):
-        g = gpu("nl", [conv, st, tex], dim=(N, N), frameno=10.0, pulse_conn=1.0, pulse_space=1.0,
+        g = gpu("nl", [conv, st, tex], dim=(N, N), frameno=10.0, pulse_conn=1.0, pulse_space=0.0,
                 ow=160.0, oh=90.0)
         want = m.wc_step(st, conv, 10, s=m.s_pulse(10, pulse=tex, conn=1.0, space=1.0, ow=160, oh=90, n=N))
         bad = np.abs(g[..., 0].astype(np.float64) - want[..., 0]) > 1e-6

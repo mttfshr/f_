@@ -9,7 +9,7 @@
 // 2 contour, 3 Rec. 709 luma of that RGB, each as a gray (v, v, v, 1). Branch-free selection.
 // Mirror: fc_parity_mirror.encode_mode() (encode() for mode 0).
 // Phase D T074 (Matt, 2026-10-25): Param out_view from the View menu -- 0 Retinal (the map above), 1
-// Cortical: the solver grid itself, unwrapped (angle across, log-radius up, one period each; periodic in
+// Unwrapped: the solver grid itself (cortical space) (angle across, log-radius up, one period each; periodic in
 // both axes, so it tiles) -- the input for f_droste or any downstream log-polar wrap.
 // Inputs: in1 = the `r draw` bang (unused), in2 = the state (from nl).
 //   - output size: Params ow, oh (raw `r dim` -> route -> unpack -> prepend param); NOT the gen `dim`

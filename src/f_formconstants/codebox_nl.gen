@@ -32,8 +32,8 @@
 //   - Phase D T071 (Matt, 2026-10-25): Params pulse_mix (Pulse Mix: 1 = the texture replaces the wave,
 //     0 = ignored, between = blend) and pulse_gain (scales the texture luma only); unplugged, neither
 //     matters. s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix).
-//   - Phase D T073 (Matt, 2026-10-25): Param pulse_space from the Space menu -- 0 Cortical (the pulse read
-//     on the solver grid, as T061), 1 Screen (default): read where this texel is DISPLAYED, the inverse
+//   - Phase D T073 (Matt, 2026-10-25): Param pulse_space from the Space menu -- 0 Retinal (default): read
+//     where this texel is DISPLAYED; 1 Unwrapped: read on the solver grid, as T061. Retinal is the inverse
 //     of enc's map. angle = 2 pi u; per direction the outermost radius copy inside the frame, rb = the
 //     distance to the frame edge, k = ceil(v - log(rb) / 2 pi), r = exp(2 pi (v - k)). Params ow / oh
 //     (from `r dim`, as enc): output-size PARAMS only -- the solver's @dim never follows the window (S1).
@@ -50,7 +50,7 @@ Param freeze_on(0);
 Param sim_rate(1);
 Param pulse_mix(1);
 Param pulse_gain(1);
-Param pulse_space(1);
+Param pulse_space(0);
 Param ow(1024);
 Param oh(1024);
 
@@ -68,7 +68,7 @@ rbs = min(axs / max(abs(css), 0.000001), ays / max(abs(sns), 0.000001));
 kks = ceil(norm.y - log(rbs) / twopi);
 rrs = exp(twopi * (norm.y - kks));
 scr = vec((rrs * css / axs + 1) * 0.5, (rrs * sns / ays + 1) * 0.5);
-pl = sample(in3, mix(norm, scr, pulse_space));
+pl = sample(in3, mix(scr, norm, pulse_space));
 lum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;
 simt = floor(frameno * sim_rate);
 stp = floor((frameno + 1) * sim_rate) > simt;

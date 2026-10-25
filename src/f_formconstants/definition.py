@@ -103,14 +103,15 @@ patcher = {
          "hint": "Pattern scale: 1 = the source lattice; lower = finer, wormier; higher = bigger spots, moire near 2"},
         # Phase D T073 (Matt, 2026-10-25): where the pulse texture is read. Screen (default) = through the
         # inverse of the display map, so an input lands where it is seen; Cortical = on the solver grid (T061).
-        {"name": "pulse_space", "type": "menu", "options": ["Cortical", "Screen"], "default": 1,
+        # Labels Retinal / Unwrapped (Matt, 2026-10-25), same words and order as View: 0 Retinal (default), 1 Unwrapped.
+        {"name": "pulse_space", "type": "menu", "options": ["Retinal", "Unwrapped"], "default": 0,
          "label": "Space", "pix_target": "nl",
-         "hint": "Pulse texture space: Screen = the image lands where you see it; Cortical = read on the solver grid (WFG bands become rings / spokes)"},
+         "hint": "Pulse texture space: Retinal = the image lands where you see it; Unwrapped = laid on the flat solver grid (WFG bands become rings / spokes)"},
         # Phase D T074 (Matt, 2026-10-25): output geometry. Cortical = the solver grid unwrapped (angle across,
         # log-radius up; tiles in both axes) -- for f_droste or another downstream wrap, instead of a map here.
-        {"name": "out_view", "type": "menu", "options": ["Retinal", "Cortical"], "default": 0,
+        {"name": "out_view", "type": "menu", "options": ["Retinal", "Unwrapped"], "default": 0,
          "label": "View", "pix_target": "enc",
-         "hint": "Retinal = the form-constant view (log-polar map); Cortical = the unwrapped solver grid, to feed f_droste"},
+         "hint": "Retinal = the form-constant view (log-polar map); Unwrapped = the flat solver grid, to feed f_droste"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
