@@ -361,11 +361,11 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   and std within 10%, structure-factor peak λ within 10%, mean-E period
   matches the `s` period). Do not debug texel divergence after frame 5 unless
   the statistics disagree.
-- [ ] T047 **Module look bench** (Max bench). Rerun `bench_fc_look.py`
+- [x] T047 **CLOSED 2026-10-24 on Matt's live observation** (structured field, ran 3 minutes, stays alive). The rewritten `bench_fc_look.py` (adopted criteria a–d) captured no outlet output in the module bench although the module renders live → a bench-side capture bug, FOLLOW-UP for the next bench session (first suspect: the float32 output vs the capture matrix; compare against `bench_wc_look.py`'s job one difference at a time). **Module look bench** (Max bench). Rerun `bench_fc_look.py`
   adapted to RGB output: expect structured, not uniform (E std > 0.05 through
   the run, a spectral peak, mean E pulsing at ≈147 frames). If uniform or
   dead: apply the live-debug rule above before any code change.
-- [ ] T048 **[GP — Matt] Parity look gate.** Module vs. the HTML page side by
+- [x] T048 **PASSED 2026-10-24 (Matt): "it looks perfect" / "almost exactly perfect"; looks like the HTML page (yes). No specific difference named. Screenshot in chat: spots and short worms with the blue E/I contour web, finer toward the centre, magnified at the edges (S7/S8). README row updated.** **[GP — Matt] Parity look gate.** Module vs. the HTML page side by
   side, same window size, both freshly started. Pass = "same thing" to Matt's
   eye (a vertical mirror is fine). No Phase D work until GP passes; a fail
   goes back to T046/T047 evidence. Then update the README row.

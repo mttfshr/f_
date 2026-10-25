@@ -382,7 +382,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; unverified, no dials",
+									"text": "⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; no dials yet",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

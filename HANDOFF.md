@@ -1,6 +1,14 @@
 # HANDOFF
 
-## START HERE (2026-10-24, 17:05): f_formconstants parity rebuild — Phase R at T047
+## START HERE (2026-10-24, 17:30): f_formconstants — PARITY LOOK PASSED (T048); Phase R at T049
+
+- **T048 PASSED (Matt):** the module looks "almost exactly perfect", like the HTML page; ran 3 minutes live and stays alive. No specific difference named. **T047 closed on that live observation.**
+- **T047 pre-check finding (keep):** the reference's own dynamics have a ~600-frame near-uniform transient and sub-0.05 E-std dips after emergence; the mean-E pulse is 150 frames. The adopted bench criteria (a–d) are in tasks.md and `bench_fc_look.py`. The mirror at N 256 stands in for N 1024 (mean/std within 0.014).
+- **Follow-up (next bench session, not blocking):** `bench_fc_look.py` captured NO outlet output in the module bench although the module renders live → bench-side capture bug. First suspect: float32 output vs the capture matrix; diff against `bench_wc_look.py`'s job one change at a time.
+- **Next:** T049 (cost: ms/frame at N 1024 / 2048, 1080p / 4K vs f_wc 2.45 ms). Then Phase D (T060–T069), one deviation at a time, starting with output mode / breathe dials. README row updated (⚠ stays: no dials, no docs). Commits through `6eac1fb` + this one.
+- Still owed: the `Param t` trap line in `skills/jit-gen-codebox/SKILL.md` (re-upload + `skills/check.sh stamp`).
+
+## 2026-10-24, 17:05: f_formconstants parity rebuild — Phase R at T047 (superseded by the entry above)
 
 **Goal:** make `f_formconstants` look like `WC_Example_10_fullscreen.html`. Phase R = faithful port, Phase D = deviations one at a time. **Read first:** `.specify/f_formconstants/tasks.md` from the "REVISION 2" heading (agent brief, Phase R T040–T049, Phase D T060–T069, and the T041/T042/T046 records) and `spec.md` "Revision 2" (source facts S1–S8).
 
