@@ -77,17 +77,19 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 1,
+					"numoutlets": 3,
 					"outlettype": [
+						"",
+						"",
 						""
 					],
 					"patching_rect": [
 						56.5,
 						204.0,
-						79.0,
+						223.0,
 						22.0
 					],
-					"text": "route reset"
+					"text": "route depth period reset"
 				}
 			},
 			{
@@ -716,7 +718,7 @@
 				"box": {
 					"id": "obj-55",
 					"maxclass": "newobj",
-					"numinlets": 2,
+					"numinlets": 3,
 					"numoutlets": 2,
 					"outlettype": [
 						"jit_gl_texture",
@@ -777,13 +779,31 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * (fract(frameno * s_rate) < 0.5): the page's square wave (0.6 half-duty, period\n//     500/3.4 ~ 147 frames), E sigmoid input only. frameno = the frame counter (patcher, wraps at 2500 =\n//     17 exact periods; NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24). s is the LIVENESS mechanism (spec Revision 2, T042 d): s_depth 0 kills the field\n//   - no noise, no habituation, no drive, no clamps (the page has none); the NaN guard lives in pass\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_rate are the only Params\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_rate(0.0068);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\ns = s_depth * (fract(frameno * s_rate) < 0.5);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nout1 = vec(floor(255 * en + 0.5) / 255, floor(255 * inw + 0.5) / 255, floor(255 * bb + 0.5) / 255, 1);\n",
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"code": "// codebox_nl.gen -- f_formconstants PARITY wc stage (spec Revision 2, S2 + S4 + S5).\n// Port of the page's `wc` shader, Example-10 constants, dt = 1:\n//   Ve = F(10.5 cE - 8.5 cI - 2.0 + s)      Vi = F(12 cE - 3 cI - 3.5)\n//   E += (Ve - E) * dt/10                    I += (Vi - I) * dt/20\n//   out = (q(E), q(I), q8(3 |E - I|), 1)     q(x) = floor(255 x + 0.5)/255\n// B is built from the UNquantized updated E, I and stored through an 8-bit target (clamp, round).\n// Mirror: fc_parity_mirror.wc_step().\n// Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state\n// (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).\n//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt\n//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the\n//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet\n//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the\n//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).\n//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;\n//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).\n//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the\n//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --\n//     all reachable on purpose (kill and revive is a performance gesture).\n//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass\n//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn\n//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).\n//   - no unary minus before a parenthesis (GenExpr mis-parses it)\nParam frameno(0);\nParam s_depth(0.6);\nParam s_period(147.0588);\nParam pulse_conn(0);\n\nce = nearest(in1, norm).x;\nci = nearest(in1, norm).y;\nee = nearest(in2, norm).x;\nii = nearest(in2, norm).y;\npl = sample(in3, norm);\nlum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;\nsq = fract(frameno / s_period) < 0.5;\ns = s_depth * mix(sq, lum, pulse_conn);\n\nve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));\nvi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));\nen = ee + (ve - ee) * 0.1;\ninw = ii + (vi - ii) * 0.05;\nbb = clamp(abs(en - inw) * 3.0, 0, 1);\n\nout1 = vec(floor(255 * en + 0.5) / 255, floor(255 * inw + 0.5) / 255, floor(255 * bb + 0.5) / 255, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 2,
+									"numinlets": 3,
 									"numoutlets": 1,
 									"outlettype": [
 										""
@@ -833,6 +853,18 @@
 									],
 									"source": [
 										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
 										0
 									]
 								}
@@ -1057,15 +1089,15 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						100.0,
-						70.0
+						118.0,
+						88.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						100.0,
-						70.0
+						118.0,
+						88.0
 					],
 					"proportion": 0.5
 				}
@@ -1117,7 +1149,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						22.0,
 						0.9,
 						70.0,
 						21.0
@@ -1325,7 +1357,271 @@
 			},
 			{
 				"box": {
+					"id": "obj-100",
+					"maxclass": "inlet",
+					"comment": "pulse in (luma = the pulse; unconnected = internal square wave)",
+					"index": 0,
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						20.0,
+						30.0,
+						30.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-101",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						260.0,
+						70.0,
+						80.0,
+						22.0
+					],
+					"text": "vs_inState"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-102",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						120.0,
+						160.0,
+						22.0
+					],
+					"text": "prepend param pulse_conn"
+				}
+			},
+			{
+				"box": {
 					"id": "obj-20",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Pulse depth (excitability). 0.6 = the source; 0 fades the field out slowly; ~1.5 kills it fast",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_nl::depth",
+					"parameter_enable": 1,
+					"patching_rect": [
+						46.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						4.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.6
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "depth",
+							"parameter_mmax": 1.5,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "depth",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "depth"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-21",
+					"maxclass": "attrui",
+					"attr": "s_depth",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						26.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-22",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						35.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						-7.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Depth",
+					"textjustification": 1,
+					"varname": "lbl_depth"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-23",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Internal pulse period in frames (used when the pulse inlet is unplugged). 147 = the source; under ~100 the field dies",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_fc_nl::period",
+					"parameter_enable": 1,
+					"patching_rect": [
+						118.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						41.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								147.0588
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "period",
+							"parameter_mmax": 600.0,
+							"parameter_mmin": 30.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "period",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "period"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-24",
+					"maxclass": "attrui",
+					"attr": "s_period",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						98.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-25",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						107.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Period",
+					"textjustification": 1,
+					"varname": "lbl_period"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-26",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1342,7 +1638,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						78.0,
+						96.0,
 						5.0,
 						18.0,
 						12.0
@@ -1353,7 +1649,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-21",
+					"id": "obj-27",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1386,8 +1682,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						8.0,
-						30.0,
+						82.0,
+						44.0,
 						28.0,
 						28.0
 					],
@@ -1411,8 +1707,8 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						0.0,
-						14.0,
+						74.0,
+						20.0,
 						44.0,
 						18.0
 					],
@@ -1577,7 +1873,7 @@
 						50.0,
 						22.0
 					],
-					"text": "% 2500",
+					"text": "% 1000000",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1875,11 +2171,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-20",
+						"obj-100",
 						0
 					],
 					"destination": [
-						"obj-21",
+						"obj-101",
 						0
 					]
 				}
@@ -1887,7 +2183,55 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-21",
+						"obj-101",
+						0
+					],
+					"destination": [
+						"obj-55",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						1
+					],
+					"destination": [
+						"obj-102",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-102",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						0
+					],
+					"destination": [
+						"obj-27",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-27",
 						0
 					],
 					"destination": [
@@ -2057,6 +2401,78 @@
 					"source": [
 						"obj-4",
 						0
+					],
+					"destination": [
+						"obj-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-20",
+						0
+					],
+					"destination": [
+						"obj-21",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-21",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						1
+					],
+					"destination": [
+						"obj-23",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-55",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						2
 					],
 					"destination": [
 						"obj-raw-3",
@@ -2402,6 +2818,16 @@
 			}
 		],
 		"parameters": {
+			"obj-20": [
+				"depth",
+				"depth",
+				0
+			],
+			"obj-23": [
+				"period",
+				"period",
+				0
+			],
 			"parameterbanks": {
 				"0": {
 					"index": 0,

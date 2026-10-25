@@ -54,7 +54,7 @@ PINNED = {"seed": {"salt": 0.0, "n": float(N)},
           "pass": {"reseed": 0.0},
           "blurx": {"n": float(N)},
           "blury": {"n": float(N)},
-          "nl": {"frameno": 0.0, "s_depth": 0.6, "s_rate": 0.0068},
+          "nl": {"frameno": 0.0, "s_depth": 0.6, "s_period": 500.0 / 3.4, "pulse_conn": 0.0},   # T061: s_rate -> s_period
           "enc": {"bypass_gate": 0.0, "ow": float(N), "oh": float(N), "n": float(N)}}
 
 
@@ -162,6 +162,27 @@ def test_nl_vs_mirror():
         check(f"nl at t={t}: alpha is exactly 1", float(np.abs(g[..., 3] - 1.0).max()), 0.0)
     g0 = gpu("nl", [conv, st], dim=(N, N), frameno=0.0, s_depth=0.0)
     check_q("nl with s_depth = 0", g0, _wc_no_s(st, conv))
+
+
+def test_nl_pulse_T061():
+    """Phase D T061: the pulse inlet (nl in3) and the period Param vs the mirror's s_pulse.
+    The pulse texture is N x N, so the codebox's bilinear `sample` at texel centres reads texels
+    exactly (the mirror has no resampling). Cases: connected (s = depth * luma per texel, any t);
+    a connected texture with pulse_conn 0 (the internal wave, here in its low half: no s);
+    unplugged at period 200 inside the high half; and depth 1.3."""
+    rng = np.random.default_rng(17)
+    st = qstate(rng)
+    conv = m.blur(st)
+    pulse = rng.random((N, N, 4)).astype(F32)
+    pulse[..., 3] = 1.0
+    g = gpu("nl", [conv, st, pulse], dim=(N, N), frameno=100.0, pulse_conn=1.0)
+    check_q("nl pulse connected (s = 0.6 luma)", g, m.wc_step(st, conv, 100, s=m.s_pulse(100, pulse=pulse, conn=1.0)))
+    g = gpu("nl", [conv, st, pulse], dim=(N, N), frameno=100.0, pulse_conn=0.0)
+    check_q("nl pulse texture present, conn 0 (internal wave low)", g, m.wc_step(st, conv, 100, s=m.s_pulse(100)))
+    g = gpu("nl", [conv, st], dim=(N, N), frameno=90.0, s_period=200.0)
+    check_q("nl unplugged, period 200, t 90 (high)", g, m.wc_step(st, conv, 90, s=m.s_pulse(90, period=200.0)))
+    g = gpu("nl", [conv, st, pulse], dim=(N, N), frameno=0.0, pulse_conn=1.0, s_depth=1.3)
+    check_q("nl pulse connected, depth 1.3", g, m.wc_step(st, conv, 0, s=m.s_pulse(0, depth=1.3, pulse=pulse, conn=1.0)))
 
 
 def _wc_no_s(st, conv):

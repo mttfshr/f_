@@ -6,7 +6,9 @@ A faithful port of the webgpgpu page: a FIXED 1024 x 1024 float32 Wilson-Cowan s
 Gaussian coupling sigma (1, 2) with a shared radius 6 (S3), the Example-10 constants
 and the `s` square-wave drive (S4, S5), a one-time uint8 seed (S6), and the bare
 conformal log-polar display map on the output size (S7), RGB out (S8). Nothing else:
-no noise, no habituation, no dials. Phase D adds deviations one at a time.
+no noise, no habituation. Phase D adds deviations one at a time; so far T061 (2026-10-24): the
+`depth` / `period` dials and the pulse inlet (luma replaces the internal square wave, read on the
+solver grid; unconnected = the internal wave through a vs_inState flag, Param pulse_conn).
 
 The steady-web build this replaces (Psychedelic constants + noise + habituation, a
 render-resolution solver, 12 dials) is the reference at git commit 63b6129.
@@ -14,7 +16,8 @@ render-resolution solver, 12 dials) is the reference at git commit 63b6129.
 Layout:
 
     hold -> pass (in 1) ; seed -> pass (in 2)
-    pass -> blur_x -> blur_y -> nl (in 1) ; pass -> nl (in 2) ; nl -> hold (feedback) ; nl -> enc (in 2)
+    pass -> blur_x -> blur_y -> nl (in 1) ; pass -> nl (in 2) ; pulse -> nl (in 3)
+    nl -> hold (feedback) ; nl -> enc (in 2)
 
     pass   hold last state (R = E, G = I, B = contour, A = 1 flag), or reseed it from the seed
            (Param reseed); a texel whose alpha is 0 is lost and reseeds too (S6)
@@ -22,7 +25,8 @@ Layout:
     blur_x / blur_y
            GPUGaussianMultiBlur(1, 2, 1, 1): 13 taps, per-channel weights, wrap, quantized (S2, S3)
     nl     the page's `wc` shader: E, I relax toward F(couplings - H [+ s on E]); out = (q(E), q(I),
-           q8(3 |E - I|), 1); s from the frame counter Param frameno (S2, S4, S5)
+           q8(3 |E - I|), 1); s = s_depth * mix(square(frameno / s_period), luma(pulse), pulse_conn)
+           (S2, S4, S5; T061)
     enc    the retinal map on the OUTPUT size (Params ow, oh from `r dim`): square crop on the long
            axis, sample the state at (atan2, ln r)/2 pi, bilinear + wrap, RGB out (S7, S8)
 
@@ -43,8 +47,8 @@ patcher = {
     "title":              "Form Constants",
     "signal_type":        "rgb out",
 
-    "presentation_width":  100,             # parity build: reset + bypass only (T069 sets the final layout)
-    "presentation_height": 70,
+    "presentation_width":  118,             # T061: Depth, Period + reset in a third slot (T069 sets the final layout)
+    "presentation_height": 88,
 
     "archetype": "source",
     "pix_type":  "float32",
@@ -54,6 +58,14 @@ patcher = {
     ],
 
     "params": [
+        # Phase D T061 (Matt, 2026-10-24): the pulse. s = depth * (pulse inlet luma if connected, else the
+        # internal square wave of `period` frames). No dead-zone guard: kill and revive is a gesture.
+        {"name": "depth", "type": "float", "min": 0.0, "max": 1.5, "default": 0.6,
+         "label": "Depth", "pix_attr": "s_depth", "pix_target": "nl",
+         "hint": "Pulse depth (excitability). 0.6 = the source; 0 fades the field out slowly; ~1.5 kills it fast"},
+        {"name": "period", "type": "float", "min": 30.0, "max": 600.0, "default": 147.0588,
+         "label": "Period", "pix_attr": "s_period", "pix_target": "nl",
+         "hint": "Internal pulse period in frames (used when the pulse inlet is unplugged). 147 = the source; under ~100 the field dies"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -66,9 +78,20 @@ patcher = {
         # Driven by the raw `r dim` unpack (`prepend param ow/oh`) -> enc only: the OUTPUT size
         {"name": "ow", "type": "internal"},
         {"name": "oh", "type": "internal"},
+        # Driven by the pulse vs_inState connection flag (`prepend param pulse_conn` -> nl)
+        {"name": "pulse_conn", "type": "internal"},
     ],
 
     "inlet_comment": "control",
+    "mod_inlets": [
+        {
+            "label":       "pulse in (luma = the pulse; unconnected = internal square wave)",
+            "vs_instate":  True,
+            "state_param": "pulse_conn",
+            "fanout":      [["nl", 2]],        # the pulse texture reads at nl in 3
+            "state_nodes": ["nl"],             # connection flag -> param pulse_conn -> nl
+        },
+    ],
     "draw_triggers": ["seed", "pass", "enc"],
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
 
@@ -83,7 +106,7 @@ patcher = {
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
         {"id": "blury", "name": "#0_fc_blury", "gen": "codebox_blur_y.gen", "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "nl",    "name": "#0_fc_nl",    "gen": "codebox_nl.gen",     "n_inlets": 2, "n_outlets": 1,
+        {"id": "nl",    "name": "#0_fc_nl",    "gen": "codebox_nl.gen",     "n_inlets": 3, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
         {"id": "enc",   "name": "#0_fc_enc",   "gen": "codebox_enc.gen",    "n_inlets": 2, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": True},    # follows `r dim`
@@ -111,8 +134,8 @@ for _p in patcher["params"]:
 #       right  : `param reseed 1` -> pass      reseed the state from the seed
 #       middle : 0 -> frame counter right inlet (the `s` phase and the reseed drop restart at t = 0)
 #       left   : bang -> salt counter           a new seed per reset
-#   [r draw] -> [i] -> [+ 1] -> [% 2500] -> [i] right   the frame counter t (wraps at 2500 = 17 exact
-#                                                         `s` periods)
+#   [r draw] -> [i] -> [+ 1] -> [% 1000000] -> [i] right   the frame counter (T061: the period is a dial,
+#                                                         so no short wrap is seamless; 1e6 frames ~ 4.6 h)
 #   [i] -> [prepend param frameno] -> nl               the frame index drives the `s` square wave
 #   [i] -> [sel 2] -> `param reseed 0` -> pass   reseed stays 1 for three draw bangs (never a timer)
 #   salt: [i] -> [+ 1] -> [i] right ; [i] -> [prepend param salt] -> seed   (per reset, NOT per frame)
@@ -120,8 +143,8 @@ for _p in patcher["params"]:
 #   NOTHING from `r dim` reaches a solver stage (S1) and a resize does not reseed.
 # Object ids (positional -- they shift when a UI box is added, build/spec.md): with no dial widgets the
 # support stages start at obj-50: hold = obj-50, seed = obj-51, pass = obj-52, blurx = obj-53,
-# blury = obj-54, nl = obj-55; enc (primary) = obj-5; the route is obj-4 and its only token is `reset`
-# (outlet 0). tests/modules/formconstants/test_fc_codebox_static.py guards these.
+# blury = obj-54, nl = obj-55; enc (primary) = obj-5 (two dials: still under the ten-widget threshold, so
+# the obj-50 base holds); the route is obj-4 with tokens depth, period, reset (`reset` = outlet 2). tests/modules/formconstants/test_fc_codebox_static.py guards these.
 def _box(i, cls, rect, **kw):
     b = {"id": f"obj-raw-{i}", "maxclass": cls, "patching_rect": rect}
     b.update(kw)
@@ -144,10 +167,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[8.0, 30.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[82.0, 44.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the fields from fresh noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[0.0, 14.0, 44.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[74.0, 20.0, 44.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 50.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
@@ -157,7 +180,7 @@ patcher["raw_boxes"] = [
     _obj(8, "r draw", 0, 1, [260.0, 420.0, 50.0, 22.0]),
     _obj(9, "i", 2, 1, [260.0, 450.0, 30.0, 22.0], ["int"]),
     _obj(10, "+ 1", 2, 1, [300.0, 450.0, 30.0, 22.0], ["int"]),
-    _obj(11, "% 2500", 2, 1, [340.0, 450.0, 50.0, 22.0], ["int"]),
+    _obj(11, "% 1000000", 2, 1, [340.0, 450.0, 50.0, 22.0], ["int"]),
     _obj(12, "sel 2", 2, 2, [260.0, 480.0, 40.0, 22.0], ["bang", ""]),
     _msg(13, "param reseed 0", [260.0, 510.0, 85.0, 22.0]),
     _obj(14, "prepend param frameno", 1, 1, [350.0, 480.0, 100.0, 22.0]),
@@ -171,7 +194,7 @@ patcher["raw_boxes"] = [
     _obj(22, "prepend param oh", 1, 1, [590.0, 380.0, 105.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line("obj-4", 0, 3, 0),          # route: `reset` (the only token) -> trigger
+    _line("obj-4", 2, 3, 0),          # route: `reset` -> trigger (route outlet 2, after the two dials)
     _line(1, 0, 3, 0),                # button -> trigger
     _line(4, 0, 5, 0), _line(5, 0, 3, 0),     # loadbang -> delay -> trigger
     _line(3, 2, 6, 0), _line(6, 0, "obj-52", 0),    # trigger right -> reseed 1 -> pass

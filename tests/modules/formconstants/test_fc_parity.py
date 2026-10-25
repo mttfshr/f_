@@ -249,6 +249,53 @@ def test_encode_crop_is_the_long_axis_square():
     assert m.encode(state, ow, oh).shape == (oh, ow, 4)
 
 
+# ------------------------------------------------- (g) Phase D T061: the pulse (s_pulse)
+def test_pulse_unplugged_is_the_parity_wave():
+    """Unplugged at the defaults, s_pulse(t) (t / period form) equals the parity s_of_t (t * rate
+    form) except on exact half-period frames (t = 1250 k, the documented knife edge); a different
+    period changes only the period."""
+    ts = np.arange(0, 5000)
+    diff = [t for t in ts if m.s_pulse(t) != m.s_of_t(t)]
+    note("frames where s_pulse != s_of_t (t < 5000)", diff)
+    check("mismatches only on exact half periods (t = 1250 k)",
+          float(any(t % 1250 for t in diff)), 0.0)
+    w = np.array([m.s_pulse(t, period=200.0) for t in range(4000)])
+    rises = int(np.sum((w[1:] > 0) & (w[:-1] == 0)))
+    check("period 200: 19 rising edges in 4000 frames (|count - 19|)", abs(rises - 19), 0.0)
+    check("depth scales the wave (max at depth 1.3 = 1.3)",
+          abs(max(m.s_pulse(t, depth=1.3) for t in range(300)) - 1.3), 1e-6)
+
+
+def test_pulse_connected_replaces_the_wave():
+    """Connected (conn 1) the pulse texture's luma times depth IS s at every t (REPLACE, Matt
+    2026-10-24); conn 0 ignores a supplied texture; depth 0 is exactly zero (the fade gesture)."""
+    rng = np.random.default_rng(3)
+    tex = rng.random((16, 16, 4)).astype(F32)
+    want = F32(0.6) * m.luma(tex)
+    worst = max(float(np.abs(m.s_pulse(t, pulse=tex, conn=1.0) - want).max()) for t in (0, 50, 100, 147))
+    check("conn 1: s = depth * luma(pulse) at every t (max |diff|)", worst, 1e-7)
+    off = m.s_pulse(100, pulse=tex, conn=0.0)              # t = 100 is in the wave's low half
+    check("conn 0: the internal wave, texture ignored (max |s|)", float(np.abs(off).max()), 0.0)
+    check("depth 0: s == 0 everywhere", float(np.abs(m.s_pulse(10, depth=0.0, pulse=tex, conn=1.0)).max()), 0.0)
+    check("luma weights sum to 1 (white -> 1)", abs(float(m.luma(np.ones((1, 1, 4), F32))[0, 0]) - 1.0), 1e-6)
+
+
+def test_pulse_is_per_texel_and_E_only():
+    """A per-texel s changes E only where s differs, and never I (s enters the E sigmoid only,
+    S4); wc_step with an array s equals wc_step with that texel's scalar s."""
+    rng = np.random.default_rng(4)
+    st = (rng.integers(0, 256, (24, 24, 4)) / 255.0).astype(F32)
+    conv = m.blur(st)
+    s_arr = np.zeros((24, 24), F32)
+    s_arr[:, 12:] = 0.6
+    a = m.wc_step(st, conv, 0, s=s_arr)
+    b0 = m.wc_step(st, conv, 0, s=F32(0.0))
+    b6 = m.wc_step(st, conv, 0, s=F32(0.6))
+    check("I identical whatever s is (max |dI|)", float(np.abs(a[..., 1] - b0[..., 1]).max()), 0.0)
+    check("s = 0 half equals the scalar-0 step (max |diff|)", float(np.abs(a[:, :12] - b0[:, :12]).max()), 0.0)
+    check("s = 0.6 half equals the scalar-0.6 step (max |diff|)", float(np.abs(a[:, 12:] - b6[:, 12:]).max()), 0.0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

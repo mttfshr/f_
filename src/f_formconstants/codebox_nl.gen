@@ -7,21 +7,33 @@
 // Mirror: fc_parity_mirror.wc_step().
 // Inputs: in1 = the convolved fields (R = blur(E), G = blur(I), from blur_y), in2 = the raw state
 // (R = E, G = I, from pass -- the relaxation target is the same frame as the convolved input).
-//   - s = s_depth * (fract(frameno * s_rate) < 0.5): the page's square wave (0.6 half-duty, period
-//     500/3.4 ~ 147 frames), E sigmoid input only. frameno = the frame counter (patcher, wraps at 2500 =
-//     17 exact periods; NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24). s is the LIVENESS mechanism (spec Revision 2, T042 d): s_depth 0 kills the field
-//   - no noise, no habituation, no drive, no clamps (the page has none); the NaN guard lives in pass
-//   - constants are literals (the page's `parameters`); frameno / s_depth / s_rate are the only Params
+//   - s = s_depth * mix(square, luma(pulse), pulse_conn), E sigmoid input only (Phase D T061, Matt
+//     2026-10-24: REPLACE semantics, CORTICAL space). square = (fract(frameno / s_period) < 0.5): the
+//     page's wave at the defaults (depth 0.6, period 500/3.4 ~ 147 frames). in3 = the pulse inlet
+//     (through a vs_inState: UNCONNECTED reads vs_black and the patcher sets pulse_conn = 0, so the
+//     internal wave runs), Rec. 709 luma, bilinear `sample` with normalized coords (any input size).
+//     frameno = the frame counter (patcher; wraps at 1000000, ~4.6 h at 60 fps -- one phase jump then;
+//     NOT named `t`: a Param called t is never applied by jit.gl.pix, probed 2026-10-24).
+//     s acts as an excitability level (tests/records/spike_fc_pulse_shapes.py): depth 0 fades the
+//     field out over ~1000 frames, depth ~1.5 or a steady 0.6 kills it, periods under ~100 die --
+//     all reachable on purpose (kill and revive is a performance gesture).
+//   - no noise, no habituation, no clamps (the page has none); the NaN guard lives in pass
+//   - constants are literals (the page's `parameters`); frameno / s_depth / s_period / pulse_conn
+//     are the only Params. Mirror: fc_parity_mirror.wc_step(..., s=s_pulse(...)).
 //   - no unary minus before a parenthesis (GenExpr mis-parses it)
 Param frameno(0);
 Param s_depth(0.6);
-Param s_rate(0.0068);
+Param s_period(147.0588);
+Param pulse_conn(0);
 
 ce = nearest(in1, norm).x;
 ci = nearest(in1, norm).y;
 ee = nearest(in2, norm).x;
 ii = nearest(in2, norm).y;
-s = s_depth * (fract(frameno * s_rate) < 0.5);
+pl = sample(in3, norm);
+lum = 0.2126 * pl.x + 0.7152 * pl.y + 0.0722 * pl.z;
+sq = fract(frameno / s_period) < 0.5;
+s = s_depth * mix(sq, lum, pulse_conn);
 
 ve = 1 / (1 + exp(0 - (10.5 * ce - 8.5 * ci - 2.0 + s)));
 vi = 1 / (1 + exp(0 - (12.0 * ce - 3.0 * ci - 3.5)));

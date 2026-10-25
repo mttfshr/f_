@@ -69,10 +69,7 @@ _FC_NOTE = ("documented in src/f_formconstants/codebox_*.gen headers and spec Re
 for _n in ("seed", "blurx", "blury", "enc"):
     KNOWN_ISSUES[("f_formconstants", "undriven", f"#0_fc_{_n}.n")] = _FC_NOTE.format(
         "n", "the 1024 solver grid size, S1; default asserted equal to the @dim by test_fc_codebox_static.py")
-KNOWN_ISSUES[("f_formconstants", "undriven", "#0_fc_nl.s_depth")] = _FC_NOTE.format(
-    "s_depth", "the page's drive amplitude 0.6, S5")
-KNOWN_ISSUES[("f_formconstants", "undriven", "#0_fc_nl.s_rate")] = _FC_NOTE.format(
-    "s_rate", "the page's drive rate 3.4/500, S5")
+# s_depth / s_rate: removed 2026-10-24 (T061) -- the Depth / Period dials drive s_depth / s_period now.
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE
 

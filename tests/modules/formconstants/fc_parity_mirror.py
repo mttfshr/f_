@@ -107,6 +107,29 @@ def s_of_t(t):
     return F32(S_DEPTH) if (float(t) * S_RATE) % 1.0 < 0.5 else F32(0.0)
 
 
+# ------------------------------------------------------- Phase D, T061: the pulse
+S_PERIOD = 500.0 / 3.4              # the internal square wave's period in frames (S5)
+
+
+def luma(tex):
+    """Rec. 709 luma of an RGB(A) texture -- the pulse inlet's reading."""
+    return (F32(0.2126) * tex[..., 0] + F32(0.7152) * tex[..., 1]
+            + F32(0.0722) * tex[..., 2]).astype(F32)
+
+
+def s_pulse(t, depth=S_DEPTH, period=S_PERIOD, pulse=None, conn=0.0):
+    """T061 `s`: depth * mix(square(t / period), luma(pulse), conn). REPLACE semantics (Matt,
+    2026-10-24): a connected pulse texture IS the pulse; unplugged (conn 0) the internal square
+    wave runs. The pulse is read in cortical space (on the solver grid, same size as the state
+    here; the module bilinear-samples a texture of any size). Returns a scalar when unplugged,
+    an (h, w) array when a pulse texture is given."""
+    sq = F32(1.0) if (float(t) / float(period)) % 1.0 < 0.5 else F32(0.0)
+    if pulse is None:
+        return F32(depth) * sq
+    c = F32(conn)
+    return (F32(depth) * ((F32(1.0) - c) * sq + c * luma(pulse))).astype(F32)
+
+
 def s_source(t):
     """The page's exact expression: .3 * (sign(sin(t pi 6.8 / 500)) + 1).
     Equals s_of_t at every integer t except two kinds of single frame: t = 0
@@ -129,13 +152,14 @@ def F(x):
     return (F32(1.0) / (F32(1.0) + np.exp(-x))).astype(F32)
 
 
-def wc_step(state, conv, t, levels=LEVELS):
+def wc_step(state, conv, t, levels=LEVELS, s=None):
     """The `wc` shader. state = Uin (pre-blur), conv = Uconv (blur output).
     E and I are written through EncodeFloat; B = |Ue - Ui| * 3 from the
     UNquantized updated values, stored as 8-bit; A = 1."""
     e, i = state[..., 0], state[..., 1]
     ce, ci = conv[..., 0], conv[..., 1]
-    s = s_of_t(t)
+    if s is None:                       # parity default; T061 passes s_pulse(...) (scalar or per texel)
+        s = s_of_t(t)
     ve = F(F32(AEE) * ce - F32(AIE) * ci - F32(HE) + s)
     vi = F(F32(AEI) * ce - F32(AII) * ci - F32(HI))
     en = e + (ve - e) * F32(DT / TE)
@@ -162,11 +186,11 @@ def pass_stage(fb, seed, reseed):
 
 
 # ------------------------------------------------------------------ one frame
-def step(state, t, levels=LEVELS):
+def step(state, t, levels=LEVELS, s=None):
     """One frame in the page's order. `state` is the held state (what the
     `pass` stage emitted); returns the new state (what feeds back and renders)."""
     conv = blur(state, levels)
-    return wc_step(state, conv, t, levels)
+    return wc_step(state, conv, t, levels, s)
 
 
 def run(state0, frames, t0=0, levels=LEVELS, trace=False):

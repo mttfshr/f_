@@ -107,7 +107,22 @@ def test_positional_ids_match_built_patcher():
         box = boxes.get(oid)
         assert box is not None and name in box.get("text", ""), f"{name} is not {oid}: {box and box.get('text')}"
     route = boxes.get("obj-4")
-    assert route and route["text"].split()[:2] == ["route", "reset"], route and route.get("text")
+    # T061: the two dials' tokens come first, so `reset` is route outlet 2 (definition raw_lines)
+    assert route and route["text"].split() == ["route", "depth", "period", "reset"], route and route.get("text")
+    resets = [ln["patchline"] for ln in _built()["lines"]
+              if ln["patchline"]["source"][0] == "obj-4" and ln["patchline"]["destination"][0] == "obj-raw-3"]
+    assert [pl["source"][1] for pl in resets] == [2], f"reset must leave route outlet 2: {resets}"
+
+
+def test_pulse_inlet_reaches_nl():
+    """T061: the pulse mod inlet -> vs_inState -> nl in 3; the connection flag -> param pulse_conn -> nl."""
+    pb = _built()
+    boxes = {b["box"]["id"]: b["box"] for b in pb["boxes"]}
+    into_nl = {(pl["source"][0], pl["destination"][1]) for pl in (ln["patchline"] for ln in pb["lines"])
+               if pl["destination"][0] == "obj-55"}
+    srcs = {boxes[s].get("text", ""): i for s, i in into_nl}
+    assert srcs.get("vs_inState") == 2, f"pulse texture must reach nl inlet 2 (in3): {srcs}"
+    assert srcs.get("prepend param pulse_conn") == 0, f"pulse_conn flag must reach nl: {srcs}"
 
 
 def test_r_dim_reaches_enc_only():
