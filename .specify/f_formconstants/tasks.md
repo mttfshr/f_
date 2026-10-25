@@ -390,6 +390,15 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
 > (a scalar mod inlet replacing the internal square wave; a texture whose luma
 > sets `s` per texel; or both), the WFG signal convention it follows, and
 > how the depth range avoids the dead zone (`s_depth` 0 kills the field).
+>
+> **Matt's answers (2026-10-24, 17:32), tentative:** (1) input form undecided;
+> likes both the scalar inlet and the per-texel texture, and the library's
+> three texture kinds (texture, vecfield, tensor) widen the options: explore
+> before choosing. (2) Follow the Vsynth WFG convention, and fall back to the
+> internal square wave when nothing is connected ("yes and yes, I think").
+> (3) **No dead-zone guard: being able to kill the field and bring it back is
+> part of performability.** Depth goes to 0; recovery is the slow re-formation,
+> by design.
 
 ### Phase D: deliberate deviations (each: mirror first if dynamics change,
 A/B vs. the parity build AND the HTML, Matt keeps or reverts)
