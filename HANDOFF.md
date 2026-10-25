@@ -1,6 +1,12 @@
 # HANDOFF
 
-## START HERE (2026-10-24, 17:30): f_formconstants — PARITY LOOK PASSED (T048); Phase R at T049
+## START HERE (2026-10-24, 18:00): f_formconstants — PHASE R CLOSED; next is Phase D, starting with the T061 design discussion
+
+- **T049 done:** N 1024: 1.07 ms @ 1080p / 1.54 ms @ 4K; N 2048: 2.04 / 2.47 ms (upper bounds; f_wc 2.45 ms). Cost is not a constraint. `bench_formconstants.py` 9/9 incl. --slow.
+- **Phase D direction (Matt, recorded in tasks.md above T060):** "outstanding simulation, not a performable module". Slow reset is a feature (no fix). Breathe wave + pulse are the primary performance surface: subtle dials, an external WFG (Vsynth convention, internal square wave as fallback) and a texture input. Kill-and-revive is a feature (no dead-zone guard). **MVP = regular-texture input only**; vecfield/tensor post-MVP.
+- **Next:** design discussion for T061 (breathe/pulse: dials, WFG inlet, texture inlet semantics) before any code. T060 (output mode) is small and can go alongside.
+
+## 2026-10-24, 17:30: f_formconstants — PARITY LOOK PASSED (T048); Phase R at T049
 
 - **T048 PASSED (Matt):** the module looks "almost exactly perfect", like the HTML page; ran 3 minutes live and stays alive. No specific difference named. **T047 closed on that live observation.**
 - **T047 pre-check finding (keep):** the reference's own dynamics have a ~600-frame near-uniform transient and sub-0.05 E-std dips after emergence; the mean-E pulse is 150 frames. The adopted bench criteria (a–d) are in tasks.md and `bench_fc_look.py`. The mirror at N 256 stands in for N 1024 (mean/std within 0.014).

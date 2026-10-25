@@ -369,8 +369,10 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   side, same window size, both freshly started. Pass = "same thing" to Matt's
   eye (a vertical mirror is fine). No Phase D work until GP passes; a fail
   goes back to T046/T047 evidence. Then update the README row.
-- [ ] T049 **Cost** (Max bench): ms/frame at N = 1024 and N = 2048, render
+- [x] T049 **DONE 2026-10-24 (Max 9.2.0; `bench_formconstants.py` 9/9 incl. --slow; new leg `test_cost_per_frame_T049`, numbers in `tests/logs/fc_cost_T049.txt`).** Totals (sum of the six per-frame stages): **N 1024: 1.07 ms @ 1080p, 1.54 ms @ 4K; N 2048: 2.04 ms @ 1080p, 2.47 ms @ 4K** (f_wc: 2.45 ms). Most stages did not become GPU-bound even at chain 32, so these are UPPER BOUNDS (real cost is at or below); only pass and nl at N 1024 resolved. Per stage at N 1024: seed 0.08, pass 0.48 (resolved; its N 2048 upper bound 0.32 is lower, so treat it as noise-level), blur_x/blur_y 0.09 each, nl 0.15, enc 0.17 (1080p) / 0.64 (4K); at N 2048 each solver stage ≈ 0.32–0.38. **Conclusion: cost is not a constraint at either N or render size; N 2048 at 4K costs about what f_wc does.** `seed` renders every frame though only reset uses it: a small Phase D saving, not needed. **Cost** (Max bench): ms/frame at N = 1024 and N = 2048, render
   1080p and 4K; report against f_wc's 2.45 ms. Feeds T064.
+
+**Phase R CLOSED 2026-10-24: GP (T048) passed and T049 has numbers.**
 
 **Checkpoint:** Phase R closed when GP passes and T049 has numbers.
 

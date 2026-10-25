@@ -260,5 +260,59 @@ def test_chain_150_frames_statistics():
     check("E mean agrees within 10%", abs(gmn - mmn) / max(mmn, 1e-9), 0.10)
 
 
+# ----------------------------------------------------------------- cost (T049)
+
+def _stage_cost(stage, inputs, dim, params):
+    """bench_wc's method: chain copies until the GPU dominates the frame."""
+    for chain in (8, 16, 32):
+        r = bc.measure(code(stage), inputs, dim=dim, chain=chain, params=params)
+        if r.get("gpu_bound"):
+            return r["ms_per_pass"], chain, True
+    return r.get("ms_per_pass_upper_bound", float("nan")), chain, False
+
+
+@slow       # timing: noisy and long (2048^2 inputs); run when a shader or the bench setup changes
+def test_cost_per_frame_T049():
+    """T049: ms/frame of the per-frame stages (seed, pass, blur_x, blur_y, nl, enc; all six
+    render every frame -- seed is banged by `r draw` too) at solver N 1024 / 2048 and render
+    1080p / 4K. Report only (no budget in tasks.md); compared against f_wc's 2.45 ms (T024,
+    256^2 solver + enc 1280x720). The hold pix (a passthrough) is not timed."""
+    rng = np.random.default_rng(0)
+    totals, stage_lines = {}, []
+    for n in (1024, 2048):
+        st = (rng.integers(0, 256, (n, n, 4)) / 255.0).astype(F32)
+        st[..., 3] = 1.0
+        nn = {"n": float(n)}
+        plan = [("seed", [BANG], (n, n), {"salt": 0.0, **nn}),
+                ("pass", [BANG, st, st], (n, n), {"reseed": 0.0}),
+                ("blurx", [st], None, nn),
+                ("blury", [st], None, nn),
+                ("nl", [st, st], None, PINNED["nl"])]
+        solver = 0.0
+        for stage, inputs, dim, params in plan:
+            ms, chain, bound = _stage_cost(stage, inputs, dim, params)
+            solver += ms
+            note(f"N {n} {stage:5s}", f"{ms:7.3f} ms/pass (chain {chain}, "
+                                       f"{'GPU bound' if bound else 'UPPER BOUND, not resolved'})")
+            stage_lines.append(f"N {n} {stage:5s} {ms:7.3f} ms ({'GPU bound' if bound else 'UPPER BOUND'}, chain {chain})")
+        for w, h, label in ((1920, 1080, "1080p"), (3840, 2160, "4K")):
+            ms, chain, bound = _stage_cost("enc", [BANG, st], (w, h),
+                                           {"bypass_gate": 0.0, "ow": float(w), "oh": float(h), **nn})
+            note(f"N {n} enc {label}", f"{ms:7.3f} ms/pass (chain {chain}, "
+                                      f"{'GPU bound' if bound else 'UPPER BOUND, not resolved'})")
+            stage_lines.append(f"N {n} enc {label} {ms:7.3f} ms ({'GPU bound' if bound else 'UPPER BOUND'}, chain {chain})")
+            totals[(n, label)] = solver + ms
+    lines = []
+    for (n, label), t in totals.items():
+        line = (f"TOTAL N {n} @ {label}: {t:.2f} ms/frame ({t / 2.45:.1f}x f_wc's 2.45 ms; "
+                f"{1000.0 / t:.0f} fps ceiling for this module alone)")
+        note("cost", line)
+        lines.append(line)
+    out = _paths.REPO / "tests" / "logs" / "fc_cost_T049.txt"      # -q hides notes on a pass
+    out.write_text("\n".join(stage_lines + lines) + "\n")
+    print("written:", out.relative_to(_paths.REPO))
+    check("every total is finite", float(not all(np.isfinite(list(totals.values())))), 0.0)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))
