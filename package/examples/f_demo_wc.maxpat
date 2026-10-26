@@ -9,26 +9,26 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 105.0, 144.0, 1052.0, 838.0 ],
+        "rect": [ 1001.0, 136.0, 983.0, 869.0 ],
         "boxes": [
             {
                 "box": {
-                    "bgmode": 0,
+                    "bgmode": 1,
                     "border": 0,
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
-                    "id": "obj-7",
+                    "id": "obj-20",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "f_formconstants.maxpat",
+                    "name": "f_wc.maxpat",
                     "numinlets": 2,
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 610.0, 355.0, 266.0, 212.0 ],
-                    "varname": "f_formconstants",
+                    "patching_rect": [ 547.0, 200.0, 272.0, 150.0 ],
+                    "varname": "f_wc",
                     "viewvisibility": 1
                 }
             },
@@ -39,7 +39,91 @@
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
-                    "id": "obj-14",
+                    "id": "obj-17",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_lfo.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture", "float" ],
+                    "patching_rect": [ 709.0, 420.75, 75.0, 73.5 ],
+                    "varname": "vs_lfo",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 0,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-16",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "f_droste.maxpat",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture" ],
+                    "patching_rect": [ 537.0, 413.0, 150.0, 89.0 ],
+                    "varname": "f_droste",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-9",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_camera_fm.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 2,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
+                    "patching_rect": [ 813.0, 44.0, 129.87, 103.0 ],
+                    "varname": "vs_camera_fm",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 0,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-8",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "f_ks.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture" ],
+                    "patching_rect": [ 222.0, 187.0, 190.0, 110.0 ],
+                    "varname": "f_ks",
+                    "viewvisibility": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-6",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
@@ -48,8 +132,8 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 1207.0, 77.0, 220.0, 132.0 ],
-                    "varname": "vs_wfg_polarizer",
+                    "patching_rect": [ 407.0, 22.0, 220.0, 132.0 ],
+                    "varname": "vs_wfg_polarizer[1]",
                     "viewvisibility": 1
                 }
             },
@@ -107,8 +191,11 @@
                     "priority": {
                         "vs_wfg_polarizer::pm_range": -1,
                         "vs_wfg_polarizer::lock_freq": -1,
+                        "vs_wfg_polarizer[1]::lock_freq": -1,
                         "vs_wfg_polarizer[1]::pm_range": -1,
-                        "vs_wfg_polarizer[1]::lock_freq": -1
+                        "vs_camera_fm::can2_scale_freq_y": -1,
+                        "vs_camera_fm::cam2_scale_freq_x": -1,
+                        "vs_lfo::lfo_freq_range": -1
                     },
                     "saved_object_attributes": {
                         "client_rect": [ 854, 172, 1208, 300 ],
@@ -156,7 +243,7 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "offset": [ 0.0, 0.0 ],
-                    "patching_rect": [ 424.0, 674.0, 157.0, 22.0 ],
+                    "patching_rect": [ 553.0, 582.0, 157.0, 22.0 ],
                     "varname": "vs_output[1]",
                     "viewvisibility": 1
                 }
@@ -193,26 +280,39 @@
             {
                 "patchline": {
                     "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-7", 0 ]
+                    "source": [ "obj-16", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-16", 1 ],
+                    "source": [ "obj-17", 1 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-16", 0 ],
+                    "source": [ "obj-20", 0 ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [ "obj-20", 1 ],
+                    "source": [ "obj-8", 0 ]
                 }
             }
         ],
         "parameters": {
-            "obj-14::obj-10": [ "bias", "Bias", 0 ],
-            "obj-14::obj-14": [ "bm", "BM", 0 ],
-            "obj-14::obj-17": [ "live.menu[41]", "live.menu", 0 ],
-            "obj-14::obj-22": [ "live.text[6]", "live.text", 0 ],
-            "obj-14::obj-29": [ "freq", "Freq", 0 ],
-            "obj-14::obj-30": [ "angle", "Angle", 0 ],
-            "obj-14::obj-42": [ "live.toggle[2]", "live.toggle", 0 ],
-            "obj-14::obj-47": [ "polarizer", "Morph", 0 ],
-            "obj-14::obj-51": [ "live.menu[40]", "live.menu", 0 ],
-            "obj-14::obj-53": [ "speed[2]", "Speed", 0 ],
-            "obj-14::obj-54": [ "morph", "Morph", 0 ],
-            "obj-14::obj-6": [ "pm", "PM", 0 ],
-            "obj-14::obj-65": [ "shape", "Shape", 0 ],
-            "obj-14::obj-71": [ "phase", "Phase", 0 ],
-            "obj-14::obj-72": [ "phase_time_switch", "phase_time_switch", 0 ],
+            "obj-16::obj-20": [ "zoom", "zoom", 0 ],
+            "obj-16::obj-23": [ "n_arms", "n_arms", 0 ],
+            "obj-16::obj-26": [ "twist", "twist", 0 ],
+            "obj-16::obj-29": [ "rotation", "rotation", 0 ],
+            "obj-17::obj-34": [ "live.dial[3]", "Freq", 0 ],
+            "obj-17::obj-35": [ "live.dial[2]", "Freq", 0 ],
+            "obj-17::obj-4": [ "lfo_freq__range", "live.text", 0 ],
+            "obj-17::obj-82": [ "lfo_wave", "lfo_wave", 0 ],
+            "obj-17::obj-9": [ "lfo_freq", "Freq", 0 ],
+            "obj-17::obj-97": [ "lfo_pw", "lfo_pw", 0 ],
             "obj-1::obj-10": [ "vs_preset_name", "vs_preset_name", 0 ],
             "obj-1::obj-11": [ "live.text[5]", "live.text", 0 ],
             "obj-1::obj-15": [ "live.tab", "live.tab", 0 ],
@@ -223,6 +323,16 @@
             "obj-1::obj-45::obj-19": [ "live.numbox[2]", "live.numbox[1]", 0 ],
             "obj-1::obj-45::obj-32": [ "live.numbox", "live.numbox", 0 ],
             "obj-1::obj-45::obj-9": [ "live.numbox[3]", "live.numbox", 0 ],
+            "obj-20::obj-19a": [ "freeze_on", "freeze_on", 0 ],
+            "obj-20::obj-20": [ "pulse_depth", "pulse_depth", 0 ],
+            "obj-20::obj-23": [ "pulse_period", "pulse_period", 0 ],
+            "obj-20::obj-26": [ "sim_rate", "sim_rate", 0 ],
+            "obj-20::obj-29": [ "pulse_mix", "pulse_mix", 0 ],
+            "obj-20::obj-32": [ "pulse_gain", "pulse_gain", 0 ],
+            "obj-20::obj-35": [ "grain_scale", "grain_scale", 0 ],
+            "obj-20::obj-38": [ "out_mode", "out_mode", 0 ],
+            "obj-20::obj-41": [ "pulse_space", "pulse_space", 0 ],
+            "obj-20::obj-44": [ "out_view", "out_view", 0 ],
             "obj-2::obj-19": [ "dim_x", "dim_x", 0 ],
             "obj-2::obj-23": [ "dim_y", "dim_y", 0 ],
             "obj-2::obj-36": [ "live.text", "live.text", 0 ],
@@ -272,18 +382,29 @@
             "obj-5::obj-52": [ "live.menu[21]", "live.menu", 0 ],
             "obj-5::obj-53": [ "live.menu[22]", "live.menu", 0 ],
             "obj-5::obj-56": [ "live.menu[25]", "live.menu", 0 ],
-            "obj-7::obj-20": [ "gain[1]", "rate", 0 ],
-            "obj-7::obj-23": [ "scale[1]", "grain", 0 ],
-            "obj-7::obj-26": [ "rotate", "aspect", 0 ],
-            "obj-7::obj-29": [ "thresh", "drive_gain", 0 ],
-            "obj-7::obj-32": [ "energy", "energy", 0 ],
-            "obj-7::obj-35": [ "habituation[2]", "habituation", 0 ],
-            "obj-7::obj-38": [ "sharp[3]", "sharp", 0 ],
-            "obj-7::obj-41": [ "excite[1]", "excite", 0 ],
-            "obj-7::obj-44": [ "zoom[1]", "zoom", 0 ],
-            "obj-7::obj-47": [ "twist[2]", "twist", 0 ],
-            "obj-7::obj-50": [ "fovea[1]", "fovea", 0 ],
-            "obj-7::obj-53": [ "contrast[1]", "contrast", 0 ],
+            "obj-6::obj-10": [ "bias[1]", "Bias", 0 ],
+            "obj-6::obj-14": [ "bm[1]", "BM", 0 ],
+            "obj-6::obj-17": [ "live.menu[42]", "live.menu", 0 ],
+            "obj-6::obj-22": [ "live.text[7]", "live.text", 0 ],
+            "obj-6::obj-29": [ "freq[1]", "Freq", 0 ],
+            "obj-6::obj-30": [ "angle[1]", "Angle", 0 ],
+            "obj-6::obj-42": [ "live.toggle[3]", "live.toggle", 0 ],
+            "obj-6::obj-47": [ "polarizer[1]", "Morph", 0 ],
+            "obj-6::obj-51": [ "live.menu[43]", "live.menu", 0 ],
+            "obj-6::obj-53": [ "speed", "Speed", 0 ],
+            "obj-6::obj-54": [ "morph[1]", "Morph", 0 ],
+            "obj-6::obj-6": [ "pm[1]", "PM", 0 ],
+            "obj-6::obj-65": [ "shape[1]", "Shape", 0 ],
+            "obj-6::obj-71": [ "phase[1]", "Phase", 0 ],
+            "obj-6::obj-72": [ "phase_time_switch[1]", "phase_time_switch", 0 ],
+            "obj-8::obj-20": [ "rate", "rate", 0 ],
+            "obj-8::obj-23": [ "scale", "scale", 0 ],
+            "obj-8::obj-26": [ "sharp", "sharp", 0 ],
+            "obj-9::obj-11": [ "toggle", "scale_freq_x", 0 ],
+            "obj-9::obj-18": [ "can2_scale_freq_y", "scale_freq_y", 0 ],
+            "obj-9::obj-19": [ "cam2_on_off", "live.text", 0 ],
+            "obj-9::obj-20": [ "cam2_fm_x", "XM", 0 ],
+            "obj-9::obj-21": [ "cam2_fm_y", "YM", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
@@ -293,14 +414,33 @@
                 }
             },
             "parameter_overrides": {
-                "obj-14::obj-22": {
-                    "parameter_longname": "live.text[6]"
+                "obj-16::obj-20": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
                 },
-                "obj-14::obj-53": {
-                    "parameter_longname": "speed[2]"
+                "obj-16::obj-23": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
                 },
-                "obj-14::obj-6": {
-                    "parameter_range": [ -1.0, 1.0 ]
+                "obj-16::obj-26": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-16::obj-29": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
                 },
                 "obj-1::obj-11": {
                     "parameter_longname": "live.text[5]"
@@ -310,6 +450,62 @@
                 },
                 "obj-1::obj-32": {
                     "parameter_longname": "live.numbox[4]"
+                },
+                "obj-20::obj-19a": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-20::obj-26": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-20::obj-29": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-20::obj-32": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-20::obj-35": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-20::obj-38": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
+                },
+                "obj-20::obj-41": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
+                },
+                "obj-20::obj-44": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
                 },
                 "obj-2::obj-19": {
                     "parameter_longname": "dim_x"
@@ -390,73 +586,58 @@
                 "obj-5::obj-56": {
                     "parameter_longname": "live.menu[25]"
                 },
-                "obj-7::obj-20": {
+                "obj-6::obj-10": {
+                    "parameter_longname": "bias[1]"
+                },
+                "obj-6::obj-14": {
+                    "parameter_longname": "bm[1]"
+                },
+                "obj-6::obj-17": {
+                    "parameter_longname": "live.menu[42]"
+                },
+                "obj-6::obj-22": {
+                    "parameter_longname": "live.text[7]"
+                },
+                "obj-6::obj-29": {
+                    "parameter_longname": "freq[1]"
+                },
+                "obj-6::obj-30": {
+                    "parameter_longname": "angle[1]"
+                },
+                "obj-6::obj-42": {
+                    "parameter_longname": "live.toggle[3]"
+                },
+                "obj-6::obj-47": {
+                    "parameter_longname": "polarizer[1]"
+                },
+                "obj-6::obj-51": {
+                    "parameter_longname": "live.menu[43]"
+                },
+                "obj-6::obj-54": {
+                    "parameter_longname": "morph[1]"
+                },
+                "obj-6::obj-6": {
+                    "parameter_longname": "pm[1]",
+                    "parameter_range": [ -1.0, 1.0 ]
+                },
+                "obj-6::obj-65": {
+                    "parameter_longname": "shape[1]"
+                },
+                "obj-6::obj-71": {
+                    "parameter_longname": "phase[1]"
+                },
+                "obj-6::obj-72": {
+                    "parameter_longname": "phase_time_switch[1]"
+                },
+                "obj-8::obj-26": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "gain[1]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-7::obj-23": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "scale[1]",
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-7::obj-26": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "rotate",
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-7::obj-29": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "thresh",
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-7::obj-35": {
-                    "parameter_longname": "habituation[2]"
-                },
-                "obj-7::obj-38": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "sharp[3]",
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-7::obj-41": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "excite[1]",
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-7::obj-44": {
-                    "parameter_longname": "zoom[1]"
-                },
-                "obj-7::obj-47": {
-                    "parameter_longname": "twist[2]"
-                },
-                "obj-7::obj-50": {
-                    "parameter_longname": "fovea[1]"
-                },
-                "obj-7::obj-53": {
-                    "parameter_invisible": 0,
-                    "parameter_longname": "contrast[1]",
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
+                "obj-9::obj-20": {
+                    "parameter_range": [ -0.1, 0.1 ]
                 }
             },
             "inherited_shortname": 1
