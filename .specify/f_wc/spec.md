@@ -107,7 +107,7 @@ build: commit `63b6129`).
 
 ## Shipped controls (Phase D, 2026-10-25) — supersedes the Parameters table below
 
-Matt confirmed the live defaults as good on 2026-10-25 (T069). Panel 272 × 150, two rows. One texture
+Matt confirmed the live defaults as good and approved this control set as it stands on 2026-10-25 (T069; Phase D closed 17:41). Panel 272 × 150, two rows. One texture
 inlet (the pulse), one outlet (RGB pattern). Control tokens are prefixed where a bare word collides
 with a `jit.gl.pix` attribute (`depth`, `texture`, `output`, `mode`; tasks T061).
 

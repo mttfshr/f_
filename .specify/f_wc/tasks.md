@@ -465,10 +465,10 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
   git at `63b6129` as a reference if it is ever wanted back.
   (Original: **Steady-web mode** as a second mode, only if A/B shows a
   distinct family worth a switch; otherwise drop it and record why.)
-- [~] T069 **Layout pass 1 (Matt, 2026-10-25 11:04): labels Space -> "Input" (pulse_space) and View -> "Space" (out_view); the three menus grouped. Panel 272 x 150, two rows: Depth Period Rate P.Mix P.Gain / Grain Output Input Space Reset; Freeze = header toggle (label "Freeze"). Builder: with a header toggle the title-bar type label ends left of the toggle's label (no overlap; spec.md). Build tests 9 files green, static 7/7, contracts 9/9. Matt's live look pending.** Defaults and panel layout; rewrite the spec's Parameters table to
-  the shipped dials. **2026-10-25 16:50: Matt: "the live defaults are good". Spec.md now has a "Shipped controls (Phase D)" section (table of all 12 controls, fixed items, the decided-against list) that supersedes the old Parameters table. Phase D closes when Matt approves the control set and T064 is settled.**
+- [x] **DONE 2026-10-25 17:41: Matt approved the control set as it stands; Phase D CLOSED.** T069 **Layout pass 1 (Matt, 2026-10-25 11:04): labels Space -> "Input" (pulse_space) and View -> "Space" (out_view); the three menus grouped. Panel 272 x 150, two rows: Depth Period Rate P.Mix P.Gain / Grain Output Input Space Reset; Freeze = header toggle (label "Freeze"). Builder: with a header toggle the title-bar type label ends left of the toggle's label (no overlap; spec.md). Build tests 9 files green, static 7/7, contracts 9/9. Matt's live look pending.** Defaults and panel layout; rewrite the spec's Parameters table to
+  the shipped dials. **2026-10-25 16:50: Matt: "the live defaults are good". Spec.md now has a "Shipped controls (Phase D)" section (table of all 12 controls, fixed items, the decided-against list) that supersedes the old Parameters table. Matt approved the control set at 17:41 and T064 was dropped, so Phase D is closed.**
 
-**Checkpoint:** Phase D closed when Matt approves the dial set and defaults.
+**Checkpoint: PHASE D CLOSED 2026-10-25 17:41.** Matt approved the dial set and defaults as they stand (12 controls, spec "Shipped controls"). Next: Phase 2 soak (T024), then Phase 3 finish (T025/T026 re-read, T030).
 
 ## Phase 2: Soak (tier 3, live with Matt)
 

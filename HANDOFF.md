@@ -11,7 +11,7 @@
 **Verified after the rename (offline only):** test_launch 8/8, test_generate_menu 17/17, test_module_contracts 9/9, test_drift 16/16 (f_wc reproduces exactly), test_wc_codebox_static 7/7, test_wc_parity 19/19, test_wc_steadyweb 10/10. NOT run: any Max bench, the full offline suite, the module contract bench (T030).
 
 **Still owed:**
-1. Matt approves the control set → Phase D closed. Then Phase 2 soak (T024), then README ⚠ off.
+1. ~~Matt approves the control set~~ **DONE 17:41: Phase D CLOSED.** Next: Phase 2 soak (T024), then README ⚠ off.
 2. Matt's look in Max at `package/help/f_wc.maxhelp` (written as JSON, never opened in Max; it has no `parameters` block), then the `f-helpfile` checklist.
 3. Re-upload `skills/jit-gen-codebox` and `skills/maxpat-json-authoring` (four traps added: `Param t` never applied, dial-name vs pix attribute, `sample()` = one texel at corners, ~256-tap parser limit), then `skills/check.sh stamp`. Those entries still say `f_formconstants` (history).
 4. T030: full offline suite (`tests/bg.sh start offline`) + module contract bench on the final patcher set. `bench_wc_look.py` still has the module-bench capture bug (no outlet captured though the module renders).
