@@ -75,14 +75,13 @@ needs all four channels at once, which the `spec` stage already sees.
 
 ### Open, not yet decided
 
-- **G1 naming.**
+- **G1 naming (decided 2026-10-25).** Module `f_wave_field`, menu name "Wave Field".
 - **G2 output mapping (decided 2026-10-25).** `tanh` compression for luma and for the vecfield, with a `gain` dial in front: `0.5 + 0.5 tanh(gain * scale * x)`. No hard clamp, no auto-range (gain pumps x2.5 and amplifies quiet fields). Default gain and scales are tuned by eye in Phase 2.
-- **G3 time units.** The model step is one frame (frame-rate dependent, like `f_ks`
-  `rate`), or seconds from a measured frame time (`ideas/variable_framerate.md`).
-  `frequency` and `speed` units follow.
-- **G4 dial count.** About 11 dials plus buttons is more than the library's UI density
-  tolerates (`ideas/mod_depth_ui_density.md`); grouping and a possible `medium` preset
-  menu (Membrane, Water, Plate, Resonator) are Phase 2.
+- **G3 time units (decided 2026-10-25).** The model step is one draw, compatible with core Vsynth state modules
+  (`f_ks` `rate`, `f_vf_fluid`). `dt` is the fixed constant 1/60 s per frame; `speed` and `frequency` are in model units
+  at that nominal 60 fps. No measured-frame-time scaling (`ideas/variable_framerate.md`).
+- **G4 dial count (decided 2026-10-25).** Use the proposed set (about 11 dials, see Parameters). Grouping and a possible
+  `medium` preset menu (Membrane, Water, Plate, Resonator) are left to Phase 2 tuning (`ideas/mod_depth_ui_density.md`).
 - **Hidden constants:** `kref`, `nu`, the sponge width and profile (T004).
 - **Shared DFT chain.** The shared generator is `src/f_vf_fluid/gen_dft.py`; each user has a thin adapter
   (`src/f_ks/gen_dft.py`). The third user, the old `f_wc_fft`, was retired 2026-10-25 and its adapter deleted
