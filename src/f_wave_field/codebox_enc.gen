@@ -1,0 +1,61 @@
+// codebox_enc.gen -- f_wave_field stage 7: encode the 256x256 state at the RENDER resolution, two outlets.
+// Mirror: tests/modules/wave_field/wave_field_mirror.encode_luma() / encode_vec() at the solver resolution, then
+// a periodic bilinear upsample (exact at 1:1).
+//
+// Inputs: first = the `r draw` bang (not referenced; it triggers every frame and gives this pix the render
+// size), second = the state (R = u, from the real stage; cold).
+// Outlets: the first is the luma map, the second is the gradient vecfield.
+//   - G2 (Matt, 2026-10-25): tanh compression, no clamp. luma = 0.5 + 0.5 tanh(gain * 0.5 * u) (LUMA_SCALE 0.5);
+//     vecfield R,G = 0.5 + 0.5 tanh(gain * 0.05 * grad u) (GRAD_SCALE 0.05), B = 0.5, A = 1 (f_vecfield_type)
+//   - grad u = central difference over one texel either side with integer wrap, times N / 2 (L = 1 frame
+//     width); the mapped values at the four surrounding solver texels are blended bilinearly (a manual periodic
+//     4-tap on nearest(): hardware sample() would snap when the output is smaller than 256)
+//   - bypass_gate = 1 (module bypass, never the native @bypass): the first outlet is black with alpha 1, the
+//     second is the neutral vecfield 0.5 / 0.5 / 0.5 / 1; the solver keeps running upstream
+//   - non-finite u maps to 0 (abs(x) < 1e30 guard: NaN == NaN is TRUE on this GPU)
+// Functions come before the Params and do not see them: gain is an argument.
+lum_at(xi, yi, g) {
+    uv = nearest(in2, vec((xi + 0.5) / 256, (yi + 0.5) / 256)).x;
+    uv = switch(abs(uv) < 1e30, uv, 0);
+    return 0.5 + 0.5 * tanh(g * 0.5 * uv);
+}
+
+vx_at(xi, yi, g) {
+    xp = (wrap(xi + 1, 0, 256) + 0.5) / 256;
+    xm = (wrap(xi - 1, 0, 256) + 0.5) / 256;
+    yc = (yi + 0.5) / 256;
+    ga = (nearest(in2, vec(xp, yc)).x - nearest(in2, vec(xm, yc)).x) * 128;
+    ga = switch(abs(ga) < 1e30, ga, 0);
+    return 0.5 + 0.5 * tanh(g * 0.05 * ga);
+}
+
+vy_at(xi, yi, g) {
+    yp = (wrap(yi + 1, 0, 256) + 0.5) / 256;
+    ym = (wrap(yi - 1, 0, 256) + 0.5) / 256;
+    xc = (xi + 0.5) / 256;
+    gb = (nearest(in2, vec(xc, yp)).x - nearest(in2, vec(xc, ym)).x) * 128;
+    gb = switch(abs(gb) < 1e30, gb, 0);
+    return 0.5 + 0.5 * tanh(g * 0.05 * gb);
+}
+
+Param gain(1);
+Param bypass_gate(0);
+
+fx = norm.x * 256 - 0.5;
+fy = norm.y * 256 - 0.5;
+x0 = floor(fx);
+y0 = floor(fy);
+tx = fx - x0;
+ty = fy - y0;
+xa = wrap(x0, 0, 256);
+xb = wrap(x0 + 1, 0, 256);
+ya = wrap(y0, 0, 256);
+yb = wrap(y0 + 1, 0, 256);
+
+lum = mix(mix(lum_at(xa, ya, gain), lum_at(xb, ya, gain), tx), mix(lum_at(xa, yb, gain), lum_at(xb, yb, gain), tx), ty);
+vxo = mix(mix(vx_at(xa, ya, gain), vx_at(xb, ya, gain), tx), mix(vx_at(xa, yb, gain), vx_at(xb, yb, gain), tx), ty);
+vyo = mix(mix(vy_at(xa, ya, gain), vy_at(xb, ya, gain), tx), mix(vy_at(xa, yb, gain), vy_at(xb, yb, gain), tx), ty);
+
+keep = 1 - bypass_gate;
+out1 = vec(lum * keep, lum * keep, lum * keep, 1);
+out2 = vec(mix(vxo, 0.5, bypass_gate), mix(vyo, 0.5, bypass_gate), 0.5, 1);

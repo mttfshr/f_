@@ -62,6 +62,8 @@ DATA = {
     "bench_fluid_probes": _MACHINERY + _FLUID_CODEBOXES,
     "bench_ks": _MACHINERY + ["src/f_ks/codebox_*.gen"],
     "bench_ks_module": _MODULE_BENCH + ["package/patchers/f_ks.maxpat", "src/f_ks/codebox_*.gen"],
+    "bench_wave_field": _MACHINERY + ["src/f_wave_field/codebox_*.gen"],
+    "bench_wave_field_module": _MODULE_BENCH + ["package/patchers/f_wave_field.maxpat", "src/f_wave_field/codebox_*.gen"],
     "bench_wc": _MACHINERY + ["src/f_wc/codebox_*.gen"],
     "bench_wc_look": _MODULE_BENCH + ["package/patchers/f_wc.maxpat", "src/f_wc/codebox_*.gen"],
     "bench_vf_lbm": _MACHINERY + ["src/f_vf_lbm/codebox_*.gen"],

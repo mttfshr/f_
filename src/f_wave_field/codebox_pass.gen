@@ -1,0 +1,21 @@
+// codebox_pass.gen -- f_wave_field stage 0: holds last frame's state for the DFT chain, or clears it.
+// 256x256 float32. Mirror: tests/modules/wave_field/wave_field_mirror.wave_frame() (the texture handed to the
+// forward DFT: R = u, B = v, G = A = 0); reset is new_state().
+//
+// Inputs: the first inlet is the `r draw` bang (not referenced; it only triggers the render every frame, and the
+// feedback arrives on a cold inlet so it cannot retrigger the loop), the second is the feedback state from the
+// hold stage (R = u, B = v, G = strike counter, A = 1 + exciter phase; the real stage owns G and A).
+// reset_gate = 1 replaces the field with zeros (FR-009). The reset logic holds it for a few draws, and a cleared
+// field is a fixed point, so being applied on several frames does no harm.
+//   - the output has G = A = 0: the DFT template reads (R,G) and (B,A) as two complex fields, and the strike
+//     counter and phase riding in G and A must not enter it
+//   - the feedback is NaN/Inf-guarded: abs(x) < 1e30 (NaN == NaN is TRUE on this GPU), and selection uses
+//     switch(), not mix(): mix(NaN, x, 1) is still NaN
+Param reset_gate(0);
+
+fbu = nearest(in2, norm).x;
+fbv = nearest(in2, norm).z;
+fbu = switch(abs(fbu) < 1e30, fbu, 0);
+fbv = switch(abs(fbv) < 1e30, fbv, 0);
+keep = switch(reset_gate >= 0.5, 0, 1);
+out1 = vec(fbu * keep, 0, fbv * keep, 0);

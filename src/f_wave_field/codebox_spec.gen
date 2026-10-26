@@ -1,0 +1,65 @@
+// codebox_spec.gen -- f_wave_field stage 3: the exact per-bin step of  u_tt + 2 beta u_t + omega^2 u = 0.
+// 256x256 float32. Mirror: tests/modules/wave_field/wave_field_mirror.step_coeffs() and spec_stage().
+//
+// Input = spectral texture (R,G = Re,Im of u-hat; B,A = Re,Im of v-hat). Output: the same packing.
+//   omega^2 = ring^2 + (speed * kref * (|k| / kref)^dispersion)^2     beta = damping + nu |k|^2
+//   wd^2 = omega^2 - beta^2     x = wd^2 dt^2     E = exp(-beta dt)
+//   u' = Cc u + Cs (v + beta u)       v' = Cc v - Cs (omega^2 u + beta v)
+// Cc and Cs are E cos(a), E sin(a)/wd (x > T, underdamped, a = sqrt(x)); the cosh / sinh forms with E folded
+// into exp(a - beta dt) and exp(-beta dt - a) (x < -T, overdamped: float32 never forms cosh of a large
+// argument); and the Taylor series (|x| <= T, critical: no 0/0). The three are selected by switch() with SAFE
+// arguments in the unused branches (sqrt of 1, never of a negative), so no lane computes NaN.
+//   - constants (mirror names): kref = 2 pi 8, nu = 1e-5 (NU), T = 1e-4 (TAYLOR_X). dt is the per-frame step
+//     (gate G3: one draw = 1/60 model second); L = 1 frame width, k = 2 pi m for the signed bin index m
+//   - signed bin index from floor(norm * N), not `cell`; the upper half maps to index - N
+//   - the k = 0 (DC) bin of both fields is zeroed every frame (FR-005), by a 0/1 mask. The pow() base is
+//     floored at 1e-6 so the DC bin never computes pow(0, y); every other bin has |k| >= 2 pi
+//   - `damping` arrives already at or above its floor (the dial's minimum is the floor, T003: 1e-3)
+//   - unary minus before a parenthesis mis-parses in GenExpr: none is used here ("0 - ..." instead)
+Param speed(0.25);
+Param damping(0.2);
+Param dispersion(1);
+Param ring(0);
+Param dt(0.016666667);
+
+N = 256;
+bx = floor(norm.x * N);
+by = floor(norm.y * N);
+mx = switch(bx < N * 0.5, bx, bx - N);
+my = switch(by < N * 0.5, by, by - N);
+kx = twopi * mx;
+ky = twopi * my;
+kk = sqrt(kx * kx + ky * ky);
+kref = 50.265482;
+cph = speed * kref * pow(max(kk / kref, 0.000001), dispersion);
+om2 = ring * ring + cph * cph;
+beta = damping + 0.00001 * kk * kk;
+wd2 = om2 - beta * beta;
+x = wd2 * dt * dt;
+bdt = beta * dt;
+
+a_u = sqrt(switch(x > 0.0001, x, 1));
+a_o = sqrt(switch(x < -0.0001, 0 - x, 1));
+ee = exp(0 - bdt);
+cc_u = ee * cos(a_u);
+cs_u = ee * dt * sin(a_u) / a_u;
+em = exp(a_o - bdt);
+ep = exp(0 - bdt - a_o);
+cc_o = 0.5 * (em + ep);
+cs_o = dt * 0.5 * (em - ep) / a_o;
+cc_c = ee * (1 - x * 0.5 + x * x * 0.041666667);
+cs_c = ee * dt * (1 - x * 0.16666667 + x * x * 0.0083333333);
+cc = switch(x > 0.0001, cc_u, switch(x < -0.0001, cc_o, cc_c));
+cs = switch(x > 0.0001, cs_u, switch(x < -0.0001, cs_o, cs_c));
+
+dcmask = switch(bx + by < 0.5, 0, 1);
+
+ur = nearest(in1, norm).x;
+ui = nearest(in1, norm).y;
+vr = nearest(in1, norm).z;
+vi = nearest(in1, norm).w;
+
+out1 = vec((cc * ur + cs * (vr + beta * ur)) * dcmask,
+           (cc * ui + cs * (vi + beta * ui)) * dcmask,
+           (cc * vr - cs * (om2 * ur + beta * vr)) * dcmask,
+           (cc * vi - cs * (om2 * ui + beta * vi)) * dcmask);

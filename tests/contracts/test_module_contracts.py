@@ -54,6 +54,11 @@ _KS_NOTE = ("documented in src/f_ks/codebox_pass.gen header: {} is a fixed solve
             "only so the bench can vary it (tests/modules/ks/bench_ks.py); it is not a performable "
             "control (spec FR-001: L = 50, FR-003: seed amplitude 1)")
 KNOWN_ISSUES[("f_ks", "undriven", "#0_ks_pass.amp")] = _KS_NOTE.format("amp")
+_WF_NOTE = ("documented in src/f_wave_field/codebox_spec.gen and codebox_real.gen headers: dt is the per-frame model step "
+            "(gate G3: one draw = 1/60 model second), a fixed constant that stays a Param only so the bench can vary it "
+            "(tests/modules/wave_field/bench_wave_field.py); it is not a performable control")
+for _n in ("spec", "real"):
+    KNOWN_ISSUES[("f_wave_field", "undriven", f"#0_wf_{_n}.dt")] = _WF_NOTE
 _FC_NOTE = ("documented in src/f_wc/codebox_*.gen headers and spec Revision 2: {} is a settled "
             "constant of the parity build ({}) that stays a Param only so the bench can vary it "
             "(tests/modules/wc) and Phase D can drive it (T061 s_depth/s_rate, T064 n); "
