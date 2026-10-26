@@ -2,13 +2,19 @@
 
 ## START HERE (2026-10-25, 17:30): `f_formconstants` is now `f_wc` (Wilson-Cowan); the old FFT-chain `f_wc` is retired
 
+**STATUS AT CLOSE (2026-10-25, 18:35): `f_wc` is DONE. Nothing is owed on it.** Phase D closed, soak passed, README ⚠ off, helpfile checked in Max, skills re-uploaded and stamped, full offline suite 92 s green, Max module contract bench green (`bench_modules.py` 2/2, f_wc covered). The repo is clean at `4b16b5b`.
+
+**Next (Matt's pick; no `f_wc` work is queued):** (a) `f_quasi` or `f_wave_field` Phase 0 (both specced, offline-only tasks, good `omp` fan-out material; `plan.md` items 10 and 11); (b) `ideas/f_deflicker.md`, the downstream de-flicker utility that came out of the T075 finding; (c) fix the `bench_wc_look.py` module-bench capture bug (no outlet captured though the module renders; first suspect float32 output vs the capture matrix; diff against the old `bench_wc_look` job one change at a time).
+
+**Loose threads:** the `f-helpfile` skill checklist was not run line by line on `f_wc.maxhelp` (Matt's look in Max passed); `skills/jit-gen-codebox` and `maxpat-json-authoring` entries still name `f_formconstants` as history; `tests/records/spike_wc_character.py` and `spike_wc_habituation.py` are record-only (they import the deleted old mirror).
+
 **Naming map (old entries below use the old names):** `f_formconstants` → **`f_wc`** (menu "Wilson-Cowan", Patterns, after Weave); the old FFT-chain module `f_wc` → **`f_wc_fft`**, archived and removed. Pix prefix `fc_` → `wc_` (`#0_wc_*`). Files: `src/f_wc/`, `tests/modules/wc/` (`wc_parity_mirror.py`, `wc_steadyweb_mirror.py` (the old steady-web reference mirror, renamed to avoid a clash), `test_wc_parity.py`, `test_wc_codebox_static.py`, `test_wc_steadyweb.py`, `bench_wc.py`, `bench_wc_look.py`), `.specify/f_wc/`, `docs/f-reference/f_wc.md`, `package/help/f_wc.maxhelp`, `ideas/f_wc.md`. **Kept on purpose:** `tests/records/spike_fc_*.py` keep their names (the tasks cite them) with imports updated; `spike_wc_character.py` and `spike_wc_habituation.py` are record-only now (they import the deleted old mirror; restore `tests/modules/wc` from `af74411` to rerun).
 
 **Commits today (all on main):** `af74411` (T066/T068 dropped, spec "Shipped controls" table, reference doc + helpfile + inventory rows drafted, skill traps, solver-size spike), `121e321` (old f_wc docs archived to `.specify/superseded/f_wc_fft/` and `docs/f-reference/superseded/f_wc_fft.md`, banners), `10ffbc3` (old f_wc code/patcher/helpfile/tests removed; T064 dropped), `77d02c1` (the rename), plus the cleanup commit that carries this entry. Matt updated `package/examples/f_demo_wc.maxpat` for the rename and it was committed as a save checkpoint (17:45); `f_demo_wc.json` and `f_demo_ks.maxpat` mentions of the old module were not checked.
 
 **Decisions (Matt, 2026-10-25):** the live defaults are good; T066 (drive inlet) and T068 (steady-web mode) dropped; **T064 dropped, the solver stays FIXED at 1024** (the N 512 / 1024 / 2048 look: `tests/records/spike_fc_solver_size.py`, `tests/logs/fc_solver_size.png`: same dynamics and emergence frames at every N, only the scale changes); f_wc takes the id, the old module "goes away" (archived under `superseded/`).
 
-**Verified after the rename (offline only):** test_launch 8/8, test_generate_menu 17/17, test_module_contracts 9/9, test_drift 16/16 (f_wc reproduces exactly), test_wc_codebox_static 7/7, test_wc_parity 19/19, test_wc_steadyweb 10/10. NOT run: any Max bench, the full offline suite, the module contract bench (T030).
+**Verified right after the rename (offline only; the later full suite and Max contract bench are in the status line above):** test_launch 8/8, test_generate_menu 17/17, test_module_contracts 9/9, test_drift 16/16 (f_wc reproduces exactly), test_wc_codebox_static 7/7, test_wc_parity 19/19, test_wc_steadyweb 10/10. NOT run: any Max bench, the full offline suite, the module contract bench (T030).
 
 **Still owed:**
 1. ~~Matt approves the control set~~ **DONE 17:41: Phase D CLOSED.** Phase 2 soak (T024) done by Matt live, **README ⚠ removed** (2026-10-25 17:45).
