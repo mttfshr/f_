@@ -26,7 +26,7 @@ import time
 from multiprocessing import Pool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
 
@@ -35,7 +35,7 @@ FLASHES = (0.0, 0.25, 0.5, 0.75, 1.0)
 
 
 def go(flash):
-    import fc_parity_mirror as m
+    import wc_parity_mirror as m
     st = m.seed_state(N, np.random.default_rng(1))
     es, means = [], []
     for fr in range(FRAMES):

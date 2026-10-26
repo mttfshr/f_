@@ -54,13 +54,13 @@ _KS_NOTE = ("documented in src/f_ks/codebox_pass.gen header: {} is a fixed solve
             "only so the bench can vary it (tests/modules/ks/bench_ks.py); it is not a performable "
             "control (spec FR-001: L = 50, FR-003: seed amplitude 1)")
 KNOWN_ISSUES[("f_ks", "undriven", "#0_ks_pass.amp")] = _KS_NOTE.format("amp")
-_FC_NOTE = ("documented in src/f_formconstants/codebox_*.gen headers and spec Revision 2: {} is a settled "
+_FC_NOTE = ("documented in src/f_wc/codebox_*.gen headers and spec Revision 2: {} is a settled "
             "constant of the parity build ({}) that stays a Param only so the bench can vary it "
-            "(tests/modules/formconstants) and Phase D can drive it (T061 s_depth/s_rate, T064 n); "
+            "(tests/modules/wc) and Phase D can drive it (T061 s_depth/s_rate, T064 n); "
             "it is not a performable control yet")
 for _n in ("seed", "blurx", "blury", "enc"):
-    KNOWN_ISSUES[("f_formconstants", "undriven", f"#0_fc_{_n}.n")] = _FC_NOTE.format(
-        "n", "the 1024 solver grid size, S1; default asserted equal to the @dim by test_fc_codebox_static.py")
+    KNOWN_ISSUES[("f_wc", "undriven", f"#0_wc_{_n}.n")] = _FC_NOTE.format(
+        "n", "the 1024 solver grid size, S1; default asserted equal to the @dim by test_wc_codebox_static.py")
 # s_depth / s_rate: removed 2026-10-24 (T061) -- the Depth / Period dials drive s_depth / s_period now.
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE

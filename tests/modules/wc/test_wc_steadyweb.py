@@ -1,5 +1,5 @@
-"""test_formconstants.py -- tier-1 NumPy mirror tests for the not-yet-built
-f_formconstants module (render-res Wilson-Cowan; spec .specify/f_formconstants/).
+"""test_wc_steadyweb.py -- tier-1 NumPy mirror tests for the not-yet-built
+f_wc module (render-res Wilson-Cowan; spec .specify/f_wc/).
 
 Ground truth is independent of the mirror:
 
@@ -12,32 +12,32 @@ Ground truth is independent of the mirror:
   - The homogeneous fixed point, solved as a scalar fixed-point problem
     directly (NOT through the chain), vs the chain's uniform rest state.
   - Boundedness: sigmoid relaxation keeps the fields in [0, 1] forever (no
-    NaN ceiling -- structural, the f_wc T003 finding applies to the class).
+    NaN ceiling -- structural, the f_wc_fft T003 finding applies to the class).
   - Habituation bit-preservation: habit = 0 pins the B/A (Ve/Vi) channels at
-    exactly 0 forever, even mid-run (the f_wc G5 rule).
+    exactly 0 forever, even mid-run (the f_wc_fft G5 rule).
   - The enc stage's defining property: a cortical field constant along u
     (rolls along v) renders radially constant spokes (wc_retinotopy.py; the
-    map math is f_wc's FR-007 verbatim).
+    map math is f_wc_fft's FR-007 verbatim).
   - Short regime sanity at the shipped corner (Psychedelic couplings +
     Ne = 0.75 + habituation 0.3, fine grain): structured, non-collapsed,
     non-saturated within 800 frames. (Indefinite sustain measured in the
     T002/T003 spikes, tests/records/spike_fc_sustain.py and the habituation /
-    grain-ladder probes recorded in .specify/f_formconstants/tasks.md -- not
+    grain-ladder probes recorded in .specify/f_wc/tasks.md -- not
     an assertion here.)
 
 Tolerance notes: analytic-blur and decay checks are near-exact (1e-6 and the
 measured truncation band); the fixed-point check 1e-4 (the chain iterates in
 float32); regime sanity is statistical (stochastic by construction).
 
-Run:  tests/run.sh tests/modules/formconstants/test_formconstants.py
+Run:  tests/run.sh tests/modules/wc/test_wc_steadyweb.py
 """
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-from fc_mirror import (AEE, AEI, AIE, AII, F, HE, HI, TE, TI,  # noqa: E402
+from wc_steadyweb_mirror import (AEE, AEI, AIE, AII, F, HE, HI, TE, TI,  # noqa: E402
                        Params, blur_axis, encode, fc_frame, gauss_taps,
                        nonlinear_step, seed_state, sigmas_px)
-from fc_mirror import run as fc_run  # noqa: E402
+from wc_steadyweb_mirror import run as fc_run  # noqa: E402
 
 N = 256
 

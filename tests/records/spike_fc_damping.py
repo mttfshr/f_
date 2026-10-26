@@ -25,7 +25,7 @@ import time
 from multiprocessing import Pool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
 
@@ -34,7 +34,7 @@ RATES = (0.045, 0.05, 0.055, 0.06, 0.065, 0.07)   # pass 2 (pass 1: 0.02 0.035 0
 
 
 def go(rate):
-    import fc_parity_mirror as m
+    import wc_parity_mirror as m
     m.TI = m.DT / rate                      # wc_step uses DT / TI as inhibition's per-frame rate
     st = m.seed_state(N, np.random.default_rng(1))
     es, mu, tiles = [], [], {}

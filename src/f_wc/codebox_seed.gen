@@ -1,7 +1,7 @@
-// codebox_seed.gen -- f_formconstants PARITY seed stage (spec Revision 2, S6).
+// codebox_seed.gen -- f_wc PARITY seed stage (spec Revision 2, S6).
 // One-time uniform "uint8" random in all four channels, k/255 (the page's GPUNoise.randomize
 // writes uniform bytes into R, G, B, A). Hash noise, deterministic per texel per salt.
-// Mirror: fc_parity_mirror.seed_state() (the distribution; the hash is not bit-matched to numpy's rng).
+// Mirror: wc_parity_mirror.seed_state() (the distribution; the hash is not bit-matched to numpy's rng).
 //   - salt advances once per RESET (the raw wiring), NOT per frame: the page has no per-frame noise
 //   - grid size: Param n (default 1024 = the definition's @dim) -- never the gen `dim` global
 //   - no sin(): a Hoskins-style arithmetic hash; functions are declared before Params (GenExpr rule)

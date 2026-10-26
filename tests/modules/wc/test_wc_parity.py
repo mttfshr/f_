@@ -1,4 +1,4 @@
-"""test_fc_parity.py -- tier-1 tests for fc_parity_mirror.py (f_formconstants
+"""test_wc_parity.py -- tier-1 tests for wc_parity_mirror.py (f_wc
 Revision 2, tasks T042): the faithful port of WC_Example_10_fullscreen.html.
 
 Ground truth is the SOURCE, transcribed independently of the mirror where it
@@ -16,14 +16,14 @@ float64 transcription of the map shader.
   e  pass stage: A is the lost flag (E = I = 0 with A = 1 is held), reseed, NaN guard
   f  encode vs the scalar transcription, non-square (crop) and square outputs
 
-Run:  tests/run.sh -q tests/modules/formconstants/test_fc_parity.py
+Run:  tests/run.sh -q tests/modules/wc/test_wc_parity.py
 """
 import math
 
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-import fc_parity_mirror as m  # noqa: E402
+import wc_parity_mirror as m  # noqa: E402
 
 F32 = np.float32
 

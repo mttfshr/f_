@@ -16,7 +16,7 @@ import time
 from multiprocessing import Pool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
 
@@ -28,7 +28,7 @@ JOBS = [(s, n) for s in SETTINGS for n in SIZES]
 
 def go(job):
     (name, depth, period, grain), n = job
-    import fc_parity_mirror as m
+    import wc_parity_mirror as m
     st = m.seed_state(n, np.random.default_rng(1))
     es, tiles = [], {}
     for fr in range(FRAMES):

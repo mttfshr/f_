@@ -1,5 +1,5 @@
-// codebox_pass.gen -- f_formconstants PARITY hold/reseed stage (spec Revision 2, S6).
-// Mirror: fc_parity_mirror.pass_stage().
+// codebox_pass.gen -- f_wc PARITY hold/reseed stage (spec Revision 2, S6).
+// Mirror: wc_parity_mirror.pass_stage().
 // Inputs: in1 = the `r draw` bang (unused; it only triggers the render each frame), in2 = the
 // feedback state (R = E, G = I, B = contour, A = 1 flag, from nl through hold), in3 = the seed
 // stage (all four channels).

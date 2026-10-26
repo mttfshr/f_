@@ -1,4 +1,4 @@
-// codebox_enc.gen -- f_formconstants PARITY render stage (spec Revision 2, S7 + S8).
+// codebox_enc.gen -- f_wc PARITY render stage (spec Revision 2, S7 + S8).
 // Port of the page's `retinalmap` shader on the module's output size: z = canvas coordinate in
 // [-1, 1]^2 of the SQUARE canvas (the page's CSS stretch crops the long axis), then the state is
 // sampled at (atan2(z.y, z.x), ln |z|) / 2 pi with LINEAR filtering and REPEAT wrap. The bare
@@ -7,7 +7,7 @@
 // Display (S8): the sampled state's E, I and contour channels, alpha 1 -- then the output mode
 // (Phase D T060, Param out_mode from the Output menu): 0 RGB = (E, I, contour) as the page; 1 E,
 // 2 contour, 3 Rec. 709 luma of that RGB, each as a gray (v, v, v, 1). Branch-free selection.
-// Mirror: fc_parity_mirror.encode_mode() (encode() for mode 0).
+// Mirror: wc_parity_mirror.encode_mode() (encode() for mode 0).
 // Phase D T074 (Matt, 2026-10-25): Param out_view from the View menu -- 0 Retinal (the map above), 1
 // Unwrapped: the solver grid itself (cortical space) (angle across, log-radius up, one period each; periodic in
 // both axes, so it tiles) -- the input for f_droste or any downstream log-polar wrap.
@@ -20,7 +20,7 @@
 //   - r floored at 1e-6 (ln 0): the page leaves the exact centre undefined
 //   - bypass_gate = 1 outputs black with alpha 1; the solver keeps running upstream. Never a Param
 //     named `bypass` (native pix attribute)
-//   - the cartopol multi-assign is the construct the verified f_formconstants enc bench (8/8) used
+//   - the cartopol multi-assign is the construct the verified f_wc enc bench (8/8) used
 Param bypass_gate(0);
 Param ow(1024);
 Param oh(1024);

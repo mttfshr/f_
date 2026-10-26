@@ -1,4 +1,4 @@
-"""spike_fc_quant_levels.py -- f_formconstants Phase D, T062 pre-look: what does the
+"""spike_fc_quant_levels.py -- f_wc Phase D, T062 pre-look: what does the
 quantization level do to the field? (tasks.md T062: "A/B the texture difference first".)
 
 Parity mirror (source kernel, Example-10 constants, internal square wave), N 256, seed 1,
@@ -29,7 +29,7 @@ import time
 from multiprocessing import Pool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
 
@@ -38,7 +38,7 @@ LEVELS = (None, 255.0, 63.0, 31.0, 15.0, 7.0)
 
 
 def go(levels):
-    import fc_parity_mirror as m
+    import wc_parity_mirror as m
     st = m.seed_state(N, np.random.default_rng(1))
     es, tiles, moved = [], {}, 0.0
     for fr in range(FRAMES):

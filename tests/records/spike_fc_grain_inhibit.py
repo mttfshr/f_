@@ -1,4 +1,4 @@
-"""spike_fc_grain_inhibit.py -- f_formconstants Phase D: candidate CHARACTER dials (Matt,
+"""spike_fc_grain_inhibit.py -- f_wc Phase D: candidate CHARACTER dials (Matt,
 2026-10-25: "formconstants might want an additional dial or two that modifies the character";
 the f_wc comparison put Grain and Inhibit first).
 
@@ -34,7 +34,7 @@ import time
 from multiprocessing import Pool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
 
@@ -64,7 +64,7 @@ def make_blur_pass(m, g):
 
 def go(job):
     kind, val = job
-    import fc_parity_mirror as m
+    import wc_parity_mirror as m
     if kind == "grain":
         m.blur_pass = make_blur_pass(m, val)
     else:

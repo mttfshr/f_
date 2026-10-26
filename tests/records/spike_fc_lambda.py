@@ -1,4 +1,4 @@
-"""spike_fc_lambda.py -- f_formconstants Phase 0, T003 + T005.
+"""spike_fc_lambda.py -- f_wc Phase 0, T003 + T005.
 
 T003: lambda(sigma) calibration at the shipped constants -- structure-factor
 peak wavelength vs. the grain dial (sigma_I as a fraction of min dim). Fixes
@@ -7,7 +7,7 @@ the grain dial mapping (FR-002) and the landmark ladder.
 T005: resize invariance -- the same grain at several N, wavelength measured
 in FRAME-FRACTION units; bounds NF-005's claim and shows the floor.
 
-**2026-10-24 VERDICT (recorded in .specify/f_formconstants/tasks.md T003/T005):
+**2026-10-24 VERDICT (recorded in .specify/f_wc/tasks.md T003/T005):
 shipped defaults are Psychedelic couplings + Ne = 0.75 + habituation; the fine
 regime lives INSIDE the sigma clamp band [0.75, 1.4] px and its lambda is
 dynamics-set, not kernel-set, so a clean lambda(sigma) table does not exist
@@ -21,10 +21,10 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO, "tests", "lib"))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
-from fc_mirror import (Params, lambda_px, run, seed_state,  # noqa: E402
+from wc_steadyweb_mirror import (Params, lambda_px, run, seed_state,  # noqa: E402
                        sigmas_px, structure_factor_metrics)
 
 ENERGY = 0.75       # shipped (T002 measured)

@@ -1,15 +1,15 @@
-"""fc_mirror.py -- tier-1 NumPy mirror of the not-yet-built f_formconstants module.
+"""wc_steadyweb_mirror.py -- tier-1 NumPy mirror of the not-yet-built f_wc module.
 
-The RENDER-RESOLUTION sibling of f_wc (spec: .specify/f_formconstants/spec.md):
+The RENDER-RESOLUTION sibling of f_wc_fft (spec: .specify/f_wc/spec.md):
 same Wilson-Cowan model class, but the coupling convolution is a real-space
 separable Gaussian blur at render resolution (the webgpgpu
-WC_Example_10_fullscreen pipeline) instead of f_wc's 256^2 spectral chain.
+WC_Example_10_fullscreen pipeline) instead of f_wc_fft's 256^2 spectral chain.
 
 State texture (float32 end to end -- the source's 8-bit EncodeFloat quantization
 is deliberately NOT mirrored): R = E, G = I, B = Ve, A = Vi (habituation carry,
-pinned to 0 at habituation = 0, the f_wc G5 bit-preservation rule).
+pinned to 0 at habituation = 0, the f_wc_fft G5 bit-preservation rule).
 
-Settled constants: the Example-10 coupling set (.specify/f_formconstants Record):
+Settled constants: the Example-10 coupling set (.specify/f_wc Record):
   AEE=10.5 AIE=8.5 AEI=12 AII=3, HE=2 HI=3.5, TE=10 TI=20, dt0=1.
   The source's slow square-wave bias s (period ~147 frames, 0.6 half-duty,
   E-input only) is PARKED pending the T002 sustain measurement -- spike_fc_sustain
@@ -44,7 +44,7 @@ DT0 = 1.0
 SIG_RATIO = 1.45               # default aspect: sigma_E = sigma_I / SIG_RATIO
 SIG_FLOOR = F32(0.75)          # px floor so the truncated kernel never degenerates
 
-# Retinotopic map (f_wc FR-007; the HTML-parity corner, r_soft softened)
+# Retinotopic map (f_wc_fft FR-007; the HTML-parity corner, r_soft softened)
 K_ECC = F32(1.0)
 K_ANG = F32(1.0)
 R0 = F32(0.003)
@@ -61,7 +61,7 @@ class Params:
     aspect: float = SIG_RATIO  # sigma_E = sigma_I / aspect
     energy: float = 0.75       # per-frame noise amplitude Ne (T002: load-bearing)
     drive_gain: float = 0.0
-    excite: float = 0.0        # shared offset inside both sigmoid inputs (f_wc G7)
+    excite: float = 0.0        # shared offset inside both sigmoid inputs (f_wc_fft G7)
     habituation: float = 0.9   # Ve/Vi subtractive depth -- LOAD-BEARING at fine
                                #   grain (T002: saturates by ~3k frames without;
                                #   T003: steady band sigma_I <= 1.1 px at habit
@@ -158,7 +158,7 @@ def seed_state(h, w, seed, amp=F32(1.0)):
 def nonlinear_step(conv, state, dt, P, noise=None, driv=F32(0.5), s=F32(0.0)):
     """The nl update (FR-003). conv = blur_state{,_fft} output [conv E, conv I].
     noise: fresh N(0,1) per frame, sqrt(dt)-scaled, amplitude P.energy, added
-    to BOTH sigmoid inputs (f_wc's load-bearing mechanism; T002 decides the
+    to BOTH sigmoid inputs (f_wc_fft's load-bearing mechanism; T002 decides the
     default amplitude -- Example 10 injects none). driv = drive texture value
     (0.5 neutral when unconnected). s = the parked Example-10 square-wave bias
     (E input only) for the T002 comparison runs."""
@@ -229,7 +229,7 @@ def encode(state, out_size, sharp=F32(0.5), contrast=F32(1.0),
            k_ecc=K_ECC, k_ang=K_ANG, r0=R0, r_soft=R_SOFT):
     """The retinotopic render (FR-007): bare complex log with foveal softening,
     bilinear periodic sample of the E channel (exact-enough at 1:1 res; the GPU
-    uses hardware LINEAR since state grid == render grid), then f_wc's
+    uses hardware LINEAR since state grid == render grid), then f_wc_fft's
     contrast + sharp display map. Returns (H, W, 4) float32 luma, alpha 1."""
     H, W = out_size
     # gen's `norm` is texel-CENTRED: ((x + 0.5)/W), NOT x/W (the 2026-10-24
@@ -239,7 +239,7 @@ def encode(state, out_size, sharp=F32(0.5), contrast=F32(1.0),
     py = ((ys + 0.5) / H * 2 - 1) * R_MAX
     r = np.hypot(px, py)
     th = np.arctan2(py, px)
-    # u (eccentricity) = ROWS, v (angle) = COLUMNS (the f_wc mirror convention)
+    # u (eccentricity) = ROWS, v (angle) = COLUMNS (the f_wc_fft mirror convention)
     u = k_ecc * np.log(1.0 + np.sqrt(r * r + r_soft * r_soft) / r0)
     v = k_ang * th
     cu = (u / F32(2 * np.pi)) % 1.0

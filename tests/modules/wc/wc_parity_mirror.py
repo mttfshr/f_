@@ -1,4 +1,4 @@
-"""fc_parity_mirror.py -- tier-1 NumPy mirror of the f_formconstants PARITY build
+"""wc_parity_mirror.py -- tier-1 NumPy mirror of the f_wc PARITY build
 (spec Revision 2, tasks T041).
 
 A term-for-term port of webgpgpu/examples/wilson_cowan_examples/

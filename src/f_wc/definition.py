@@ -1,4 +1,4 @@
-"""definition.py -- f_formconstants: the PARITY build of WC_Example_10_fullscreen.html
+"""definition.py -- f_wc: the PARITY build of WC_Example_10_fullscreen.html
 (spec Revision 2, tasks Phase R).
 
 A faithful port of the webgpgpu page: a FIXED 1024 x 1024 float32 Wilson-Cowan solver
@@ -32,19 +32,19 @@ Layout:
 
 The solver stages are fixed `@dim 1024 1024` and NO `r dim` message reaches them (S1: the page's
 solver never follows the window). Only enc follows the render size. Every codebox takes the grid
-size from a Param n (default 1024), never the gen `dim` global (test_fc_codebox_static.py asserts
+size from a Param n (default 1024), never the gen `dim` global (test_wc_codebox_static.py asserts
 the default equals the @dim below).
 
-Verification: tests/modules/formconstants/fc_parity_mirror.py + test_fc_parity.py (tier 1);
+Verification: tests/modules/wc/wc_parity_mirror.py + test_wc_parity.py (tier 1);
 bench legs against the mirror (T046) and the look gate against the HTML page (T048).
 """
 
 SOLVER_N = 1024
 
 patcher = {
-    "name":               "f_formconstants",
-    "prefix":             "fc",
-    "title":              "Form Constants",
+    "name":               "f_wc",
+    "prefix":             "wc",
+    "title":              "Wilson-Cowan",
     "signal_type":        "rgb out",
 
     "presentation_width":  272,             # T069: row 1 = 5 dials + Reset; row 2 = Grain + Output/Input/Space.
@@ -140,19 +140,19 @@ patcher = {
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
 
     "pix_chain": [
-        {"id": "hold",  "name": "#0_fc_hold",  "gen": "pass",               "n_inlets": 1, "n_outlets": 1,
+        {"id": "hold",  "name": "#0_wc_hold",  "gen": "pass",               "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "seed",  "name": "#0_fc_seed",  "gen": "codebox_seed.gen",   "n_inlets": 1, "n_outlets": 1,
+        {"id": "seed",  "name": "#0_wc_seed",  "gen": "codebox_seed.gen",   "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "pass",  "name": "#0_fc_pass",  "gen": "codebox_pass.gen",   "n_inlets": 3, "n_outlets": 1,
+        {"id": "pass",  "name": "#0_wc_pass",  "gen": "codebox_pass.gen",   "n_inlets": 3, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "blurx", "name": "#0_fc_blurx", "gen": "codebox_blur_x.gen", "n_inlets": 1, "n_outlets": 1,
+        {"id": "blurx", "name": "#0_wc_blurx", "gen": "codebox_blur_x.gen", "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "blury", "name": "#0_fc_blury", "gen": "codebox_blur_y.gen", "n_inlets": 1, "n_outlets": 1,
+        {"id": "blury", "name": "#0_wc_blury", "gen": "codebox_blur_y.gen", "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "nl",    "name": "#0_fc_nl",    "gen": "codebox_nl.gen",     "n_inlets": 3, "n_outlets": 1,
+        {"id": "nl",    "name": "#0_wc_nl",    "gen": "codebox_nl.gen",     "n_inlets": 3, "n_outlets": 1,
          "pix_attrs": f"@adapt 0 @dim {SOLVER_N} {SOLVER_N} @type float32", "primary": False},
-        {"id": "enc",   "name": "#0_fc_enc",   "gen": "codebox_enc.gen",    "n_inlets": 2, "n_outlets": 1,
+        {"id": "enc",   "name": "#0_wc_enc",   "gen": "codebox_enc.gen",    "n_inlets": 2, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": True},    # follows `r dim`
     ],
     "pix_wires": [
@@ -190,7 +190,7 @@ for _p in patcher["params"]:
 # support stages start at obj-50; from ten widgets up (T073 made ten) the base moves to the first id after
 # the bypass pair. _SUP is that base: hold = _SUP, seed = +1, pass = +2, blurx = +3, blury = +4, nl = +5;
 # enc (primary) = obj-5; the route is obj-4 and `reset` is its LAST outlet (controls, then the header toggle).
-# tests/modules/formconstants/test_fc_codebox_static.py guards these against the built patcher.
+# tests/modules/wc/test_wc_codebox_static.py guards these against the built patcher.
 _N_CONTROLS = sum(1 for _p in patcher["params"] if _p["type"] in ("float", "int", "menu"))
 _N_HEADER = sum(1 for _p in patcher["params"] if _p["type"] == "header_toggle")   # route tokens after the controls
 _SUP = 50 if _N_CONTROLS < 10 else 20 + 3 * _N_CONTROLS + 2

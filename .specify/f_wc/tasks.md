@@ -1,6 +1,6 @@
-# Tasks: f_formconstants
+# Tasks: f_wc
 
-**Spec**: `.specify/f_formconstants/spec.md`
+**Spec**: `.specify/f_wc/spec.md`
 **Plan**: none yet (written after Phase 0)
 **Build order**: Sequential. Phase 0 is the gate: T002 decides the `energy`
 default (and whether an internal excite-LFO is needed) and everything in
@@ -10,7 +10,7 @@ Phase 1 assumes those numbers.
 > **REVISION 2 (2026-10-24 night): start at "REVISION 2" below — the agent
 > brief, Phase R (parity build) and Phase D. Phases 0/1 above are history.**
 
-Created 2026-10-24 from the spec after the f_wc pixelation post-mortem (see
+Created 2026-10-24 from the spec after the f_wc_fft pixelation post-mortem (see
 Record). Each task says whether it is offline NumPy (no Max), the Max bench,
 or a human look (tier 3, Matt).
 
@@ -19,31 +19,31 @@ or a human look (tier 3, Matt).
 ## Expected Source Layout
 
 ```
-src/f_formconstants/
+src/f_wc/
 ├── definition.py            # archetype: source; drive inlet (vs_inState,
-│                            #   f_wc G3 pattern); luma outlet
+│                            #   f_wc_fft G3 pattern); luma outlet
 ├── codebox_blur_x.gen       # separable Gaussian X pass, inline exp() weights,
 │                            #   R at σ_E, G at σ_I, wrap sampling, radius ceil(3σ) (FR-002)
 ├── codebox_blur_y.gen       # the Y pass (same codebox shape, axis swapped)
 ├── codebox_hold.gen         # feedback hold (adaptive-res variant — T011)
 ├── codebox_seed.gen         # hash noise seeding (E, I) + per-frame noise stream;
-│                            #   salt increments every draw (f_wc mechanism)
-├── codebox_pass.gen         # reseed/hold + habituation carry if G1 ships (f_wc shape)
+│                            #   salt increments every draw (f_wc_fft mechanism)
+├── codebox_pass.gen         # reseed/hold + habituation carry if G1 ships (f_wc_fft shape)
 ├── codebox_nl.gen           # sigmoid relax + per-frame noise + E-only drive +
-│                            #   excite offset + NaN zap (f_wc shape, Example-10 constants)
-├── codebox_enc.gen          # f_wc's retinotopic map stage, copied (r_soft
+│                            #   excite offset + NaN zap (f_wc_fft shape, Example-10 constants)
+├── codebox_enc.gen          # f_wc_fft's retinotopic map stage, copied (r_soft
 │                            #   foveal softening, contrast, sharp, bypass_gate)
-tests/modules/formconstants/
-├── fc_mirror.py             # tier-1 mirror (spatial-blur form; graduates from the spike)
-├── test_formconstants.py    # tier-1 tests
-├── bench_formconstants.py   # tier-2 stage/chain bench
+tests/modules/wc/
+├── wc_steadyweb_mirror.py             # tier-1 mirror (spatial-blur form; graduates from the spike)
+├── test_wc_steadyweb.py    # tier-1 tests
+├── bench_wc.py   # tier-2 stage/chain bench
 tests/records/
 ├── spike_fc_sustain.py      # T002: sustain at Example-10 constants, float32, Ne = 0
 ├── spike_fc_lambda.py       # T003: λ(σ_frac) structure-factor calibration
 docs/f-reference/
-├── f_formconstants.md       # Phase 3
+├── f_wc.md       # Phase 3
 package/help/
-├── f_formconstants.maxhelp  # Phase 3
+├── f_wc.maxhelp  # Phase 3
 ```
 
 Notes on what this module does NOT have (deliberate): no `gen_dft.py` adapter,
@@ -60,17 +60,17 @@ forms exist: separable-Gaussian sums, single-mode decay with couplings zeroed,
 structure-factor peak vs. σ); tier 2 applies (frame-exact multi-frame feedback
 vs. the mirror); tier 3 for the headline look AB against the HTML page.
 
-- [x] T001 Write `tests/modules/formconstants/fc_mirror.py` + `test_formconstants.py`
-  — the f_wc wc_mirror.py stage pattern, with the spectral Gaussian replaced by
+- [x] T001 Write `tests/modules/wc/wc_steadyweb_mirror.py` + `test_wc_steadyweb.py`
+  — the f_wc_fft wc_mirror.py stage pattern, with the spectral Gaussian replaced by
   the explicit separable blur (radius ⌈3σ⌉, normalized `exp(−i²/2σ²)` weights,
   wrap). Closed-form checks: blur of a constant = the constant (machine-exact),
-  blur of a single Fourier mode = mode × analytic Gaussian gain (f_wc T002's
+  blur of a single Fourier mode = mode × analytic Gaussian gain (f_wc_fft T002's
   single-mode pattern), relaxation fixed points reproduce. Offline.
   **DONE 2026-10-24, 10/10 green.** Mirror carries both the exact discrete
   kernel (the codebox reference) and an FFT soak path (deliberately not the
   bench reference). Test found, on the way: the WC homogeneous dynamics is
   OSCILLATORY at the Example-10 constants (limit cycle E ∈ [0.104, 0.345]) —
-  the f_wc-style rest test became a scalar-cycle tracking test.
+  the f_wc_fft-style rest test became a scalar-cycle tracking test.
 - [x] T002 [US1] **Sustain measurement (the load-bearing experiment)** in
   `tests/records/spike_fc_sustain.py` — **DONE 2026-10-24, and it INVERTED the
   plan.** Verdict table (N=512, σ_I=1.0 px, 4000 frames, Example-10
@@ -145,7 +145,7 @@ table); regime map, sustain table, resize finding and stills recorded above.
 
 ## Phase 1: Build and bench
 
-- [x] T010 Bench fixture — subsumed: bench_formconstants.py generates its
+- [x] T010 Bench fixture — subsumed: bench_wc.py generates its
   mirrors on the fly (f_ks/bench_wc pattern); 30-frame chain diffs recorded
   in T015/T016. DONE 2026-10-24.
 - [x] T011 **Build-system feasibility — DONE 2026-10-24, no builder gaps.**
@@ -153,49 +153,49 @@ table); regime map, sustain table, resize finding and stills recorded above.
   features:
   1. **Stage sizing:** solver stages get `pix_attrs "@adapt 0 @type float32"`
      (NO @dim) and the module's raw `r dim` receiver fans out `dim W H` to
-     EVERY solver stage plus enc — the same convention f_wc's enc uses
-     (verified in the built `package/patchers/f_wc.maxpat`:
+     EVERY solver stage plus enc — the same convention f_wc_fft's enc uses
+     (verified in the built `package/patchers/f_wc_fft.maxpat`:
      `r dim` → `#0_wc_enc` inlet; jit.gl.pix follows).
   2. **Feedback:** plain patchcord `["nl", 0, "hold", 0]` + `hold` node with
-     `"gen": "pass"` (passthrough, no codebox file) — the f_wc pattern;
-     frame delay is implicit in render order, verified live in f_wc.
+     `"gen": "pass"` (passthrough, no codebox file) — the f_wc_fft pattern;
+     frame delay is implicit in render order, verified live in f_wc_fft.
   3. **Cold-stage refresh:** `r draw` → seed/pass inlets and the every-draw
-     `param salt` increment machinery carries over verbatim from f_wc.
+     `param salt` increment machinery carries over verbatim from f_wc_fft.
   4. **Resize handling = resize reseed** (T013's deliberate path): add
      `r dim` → `delay 200` to the raw_lines so a render-size change bangs
      the existing reseed trigger (the spec's accepted seam — the state
      texture reallocates garbage for ~200 ms, then reseeds).
-  Decisions: hold = gen "pass" (no file); enc keeps f_wc's map math but the
+  Decisions: hold = gen "pass" (no file); enc keeps f_wc_fft's map math but the
   16-tap CR sampler is REPLACED by manual bilinear-with-wrap mirroring
-  fc_mirror.encode exactly (state res == render res makes CR pointless);
-  state layout R=E, G=I, B=Ve, A=Vi (the fc_mirror layout; differs from
-  f_wc's R=E, B=I).
+  wc_steadyweb_mirror.encode exactly (state res == render res makes CR pointless);
+  state layout R=E, G=I, B=Ve, A=Vi (the wc_steadyweb_mirror layout; differs from
+  f_wc_fft's R=E, B=I).
 - [x] T012 [US1] Write the codeboxes:  **DONE 2026-10-24:** all six written (hold = gen "pass", no file). `codebox_blur_x.gen`, `codebox_blur_y.gen`
   (inline `exp(−i²/2σ²)` weights from the σ Param — NO kernel tables, NO array
   uniforms; σ_px = σ_frac·min(dim.x, dim.y) with the ≥ 0.75 px floor; wrap
-  neighbor sampling per the f_ks/f_wc texel-center convention), `codebox_nl.gen`
-  (f_wc's verbatim stage shape, Example-10 constants, excite offset, drive
+  neighbor sampling per the f_ks/f_wc_fft texel-center convention), `codebox_nl.gen`
+  (f_wc_fft's verbatim stage shape, Example-10 constants, excite offset, drive
   term, habituation subtract only if G1 shipped), `codebox_seed.gen`,
   `codebox_pass.gen`, `codebox_hold.gen` (per T011), `codebox_enc.gen`
-  (copy of f_wc's enc, header rewritten; `r_soft` stays a bench-vary Param).
-  GenExpr discipline per the f_wc SSAA lesson: no functions with destructuring
+  (copy of f_wc_fft's enc, header rewritten; `r_soft` stays a bench-vary Param).
+  GenExpr discipline per the f_wc_fft SSAA lesson: no functions with destructuring
   or global refs, inline everything, single-evaluation shapes only.
 - [~] T013 [US1] Resize handling — **decided and wired 2026-10-24** (with T011):
   the deliberate path is **resize reseed**: `r dim` fans `dim W H` to EVERY
   stage (solver res = render res — T011 verified the convention against the
-  built f_wc patcher) and ALSO bangs the `delay 200` → reseed trigger, so a
+  built f_wc_fft patcher) and ALSO bangs the `delay 200` → reseed trigger, so a
   render-size change reallocates textures and the picture re-forms from fresh
   noise after ~200 ms instead of interpolating a garbage realloc. Remaining:
   the bench leg (two renders at two sizes) in the T015–T019 Max session, and
   the live seam judgment in Phase 2.
-- [x] T014 Write `src/f_formconstants/definition.py` and build
-  `package/patchers/f_formconstants.maxpat` — **DONE 2026-10-24, drift 0**
+- [x] T014 Write `src/f_wc/definition.py` and build
+  `package/patchers/f_wc.maxpat` — **DONE 2026-10-24, drift 0**
   (16/16), build conventions/multistage/seeds-keys/overrides/layout tests
   green, menu + launcher regenerated (module in NOT_IN_MENU with reason until
   Phase 3; README row added — the suite enforces both). 12 dials (spec table),
   route outlet 12 = reset; support ids obj-58..obj-63 hardcoded in raw_lines
-  (positional—f_wc T030's stale-id trap applies if the dial count changes).
-- [x] T015 Write `tests/modules/formconstants/bench_formconstants.py` — **DONE
+  (positional—f_wc_fft T030's stale-id trap applies if the dial count changes).
+- [x] T015 Write `tests/modules/wc/bench_wc.py` — **DONE
   2026-10-24, 8/8 PASS** (seed/pass/blur x/blur y/nl/enc legs + the
   boxmuller-order leg + enc ramp probe; every stage against the mirror).
   The bench paid for itself five times in one day, debugging arc:
@@ -209,7 +209,7 @@ table); regime map, sustain table, resize finding and stills recorded above.
       same kick per frame → Matt's "flickering solid black/white/gray";
       fixed with `sw`/`sh` Params fed from raw `r dim → route → unpack`
       plumbing. This is T013/T011's production root cause;
-  (4) the enc leg's 0.93 decorrelation was MIRROR-side: fc_mirror.encode
+  (4) the enc leg's 0.93 decorrelation was MIRROR-side: wc_steadyweb_mirror.encode
       used `xs/W` pixel edges where gen `norm` is texel-centred
       ((x+0.5)/W) — mirror fixed, enc proven corr 1.0000;
   (5) the 30-frame chain's 0.125 divergence was BENCH-sim-side:
@@ -217,21 +217,21 @@ table); regime map, sustain table, resize finding and stills recorded above.
       uniforms (z*0.999+0.0001; the ~3e-3 cos(2π·nb) shift amplifies
       through 30 relaxation steps; GPU self-readout proved both texture
       content and GPU arithmetic exact before this landed).
-- [x] T016 [US1] Chain bench: **30-frame frame-exact class 7.3e-5** (f_wc's
+- [x] T016 [US1] Chain bench: **30-frame frame-exact class 7.3e-5** (f_wc_fft's
   4.1e-6 precedent is the same family; the larger residual is float32
   Box-Muller trig integrated through relaxation+habituation).
 - [x] T019 Module contract bench: **PASS** (ran green 2026-10-24 in the
   debug session — loads, outlet frames, all 7 pix, no unexpected Max
   errors, param readbacks; BENCH_MODULES run was clean before the
   codebox fixes and remains the gate).
-- [ ] T017 [US2] Drive-imprint leg (the f_wc T032/bench_wc_look pattern):
+- [ ] T017 [US2] Drive-imprint leg (the f_wc_fft T032/bench_wc_look pattern):
   input correlation at `drive_gain` = 0 vs. ≥ 1. Max bench.
 - [ ] T018 **Cost (NF-001)**: ms/frame at 1080p, 4K, and 320² on Matt's machine
   (resolver: σ_px grows with dim → tap count grows — the 4K number is the
-  informative one). Report against f_wc's 2.45 ms. Max bench.
+  informative one). Report against f_wc_fft's 2.45 ms. Max bench.
 
 **Checkpoint:** Phase 1 closed when the module builds drift-0, benches green,
-and NF-001 has numbers. f_wc's full offline suite runs before any unrelated
+and NF-001 has numbers. f_wc_fft's full offline suite runs before any unrelated
 edit (`tests/bg.sh start offline`).
 
 ---
@@ -248,7 +248,7 @@ T024 stays (Phase 2 below).
 
 ### Agent brief — read before ANY Revision 2 task (Claude, omp, any subagent)
 
-**Goal:** make `f_formconstants` look like `WC_Example_10_fullscreen.html`.
+**Goal:** make `f_wc` look like `WC_Example_10_fullscreen.html`.
 Phase R reproduces the reference. Phase D changes it on purpose, one thing at
 a time. Nothing else.
 
@@ -305,7 +305,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   S1 in the browser console with the page fullscreen:
   `document.getElementById('maincanvas').width` → expect 1024. Any
   disagreement → STOP (brief rule 3).
-- [x] T041 **DONE 2026-10-24** — `fc_parity_mirror.py` (S2–S8, 225 lines). `spike_fc_sustain.py` has NO quantized port (nor does `fc_mirror.py`); the T002 "quantized port" was never committed, so nothing was reused. **Parity mirror** `tests/modules/formconstants/fc_parity_mirror.py`
+- [x] T041 **DONE 2026-10-24** — `wc_parity_mirror.py` (S2–S8, 225 lines). `spike_fc_sustain.py` has NO quantized port (nor does `wc_steadyweb_mirror.py`); the T002 "quantized port" was never committed, so nothing was reused. **Parity mirror** `tests/modules/wc/wc_parity_mirror.py`
   (offline). Exact NumPy float32 port of S2–S8: `q(x) = floor(255x + 0.5)/255`;
   `seed_state(rng)` (k/255 in all four channels); `blur_x`/`blur_y` (S3 kernel
   table, shared radius 6, quantized output, wrap); `s_of_t(t)` (the Revision 2
@@ -315,7 +315,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   `tests/records/spike_fc_sustain.py` first:** it already has a quantized
   port; reuse it where it matches S1–S8 and resolve every difference in
   favor of the source, listing each in the report.
-- [x] T042 **DONE 2026-10-24, 8/8 green in 14 s; (d) was rewritten because the measurement contradicted its premise** (below). **Parity tests** `tests/modules/formconstants/test_fc_parity.py`
+- [x] T042 **DONE 2026-10-24, 8/8 green in 14 s; (d) was rewritten because the measurement contradicted its premise** (below). **Parity tests** `tests/modules/wc/test_wc_parity.py`
   (offline, keep under ~20 s). (a) blur weights equal a direct transcription
   of `createGaussianConvolution(σ, true, 6)` for σ = 1, 2; (b) `q` is
   idempotent and applied at exactly the S2 points; (c) `s_of_t` values and
@@ -326,7 +326,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   wave sustains, no-s dies, quantization is not required; (e) a texel with E = I = 0 and A = 1 is held, not reseeded;
   (f) `encode` samples the expected texel for a few known (angle, log r)
   points. If (d) fails, that is a brief-rule-2 stop, not a tuning task.
-- [x] T043 **WRITTEN 2026-10-24 (offline; NOT verified — only T046's Max compile + readback does that).** Six codeboxes rewritten from S1–S8; blur weights are literals generated from the mirror's `half_kernel()` and re-checked by `test_fc_codebox_static.py`. **Parity codeboxes** Rewrite
+- [x] T043 **WRITTEN 2026-10-24 (offline; NOT verified — only T046's Max compile + readback does that).** Six codeboxes rewritten from S1–S8; blur weights are literals generated from the mirror's `half_kernel()` and re-checked by `test_wc_codebox_static.py`. **Parity codeboxes** Rewrite
   `codebox_seed.gen` (uint8-like hash; salt advances per RESET only, not per
   draw), `codebox_pass.gen` (alpha lost flag), `codebox_blur_x.gen` /
   `codebox_blur_y.gen` (S3 exactly: 13 fixed taps, per-channel weights
@@ -334,10 +334,10 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   grid from Param `n` = 1024), `codebox_nl.gen` (S4 + the `s` form; Params
   `frameno`, `s_depth`, `s_rate`; keep the file and stage name `nl` to avoid
   builder churn), `codebox_enc.gen` (S7/S8; Params `ow`, `oh`, `n`,
-  `bypass_gate`). Term for term against `fc_parity_mirror.py`; each header
+  `bypass_gate`). Term for term against `wc_parity_mirror.py`; each header
   cites the S items it implements. Nothing from the steady-web build
   survives unless S1–S8 require it.
-- [x] T044 **DONE 2026-10-24: built drift 0; contracts 9/9 (six codebox-only Params registered as known issues: n ×4, s_depth, s_rate); launch 8/8; menu 17/17; `test_fc_codebox_static.py` 5/5 (n == @dim, blur literals, forbidden constructs, positional ids obj-50..55 / enc obj-5 / route obj-4, `r dim` reaches enc only). Panel 100×70 is a placeholder (T069).** **Definition + build** (offline). `definition.py`: params = reset,
+- [x] T044 **DONE 2026-10-24: built drift 0; contracts 9/9 (six codebox-only Params registered as known issues: n ×4, s_depth, s_rate); launch 8/8; menu 17/17; `test_wc_codebox_static.py` 5/5 (n == @dim, blur literals, forbidden constructs, positional ids obj-50..55 / enc obj-5 / route obj-4, `r dim` reaches enc only). Panel 100×70 is a placeholder (T069).** **Definition + build** (offline). `definition.py`: params = reset,
   bypass and the internals (`reseed`, `salt`, `frameno`, `bypass_gate`, `ow`,
   `oh`); NO dials; drop the drive mod_inlet for Phase R (T066 restores it).
   Solver stages `@adapt 0 @dim 1024 1024 @type float32`; enc stays
@@ -349,11 +349,11 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   drift, `test_module_contracts`, `test_launch`, menu `--check` (named tests,
   `-q`). Panel size shrinks: regenerate menu sizes and launcher. README row
   text waits for T048.
-- [x] T045 **DONE 2026-10-24: `test_formconstants.py` tests the retained steady-web MIRROR, not the shipped codeboxes, so it still passes 10/10 and needed no change; the two Max benches that read the shipped codeboxes (`bench_formconstants.py`, `bench_fc_look.py`) now skip with the reason, replaced by T046/T047.** **Old tests** (offline). `fc_mirror.py` / `test_formconstants.py`
+- [x] T045 **DONE 2026-10-24: `test_wc_steadyweb.py` tests the retained steady-web MIRROR, not the shipped codeboxes, so it still passes 10/10 and needed no change; the two Max benches that read the shipped codeboxes (`bench_wc.py`, `bench_wc_look.py`) now skip with the reason, replaced by T046/T047.** **Old tests** (offline). `wc_steadyweb_mirror.py` / `test_wc_steadyweb.py`
   describe the steady-web build and stay as its reference. Any test that
   reads the shipped codeboxes or definition and now fails is marked xfail
   with reason "steady-web reference, Revision 2"; nothing is deleted.
-- [x] T046 **DONE 2026-10-24 (Max 9.2.0): all six codeboxes compile; bench_formconstants 8/8 including @slow (150-frame E std 0.0192 GPU / 0.0192 mirror, E mean 0.1583 / 0.1583); one real bug found (Param `t`) and the chain tolerance decided (below).** **Bench legs vs. the parity mirror** (Max bench, Matt's go).
+- [x] T046 **DONE 2026-10-24 (Max 9.2.0): all six codeboxes compile; bench_wc 8/8 including @slow (150-frame E std 0.0192 GPU / 0.0192 mirror, E mean 0.1583 / 0.1583); one real bug found (Param `t`) and the chain tolerance decided (below).** **Bench legs vs. the parity mirror** (Max bench, Matt's go).
   Compile every stage; per-stage legs. Tolerance, stated in advance:
   quantized outputs pass if max |diff| ≤ 1/255 and ≤ 0.1% of texels differ
   at all. Chain: texel-exact (same tolerance) for the first 5 frames; after
@@ -361,7 +361,7 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   and std within 10%, structure-factor peak λ within 10%, mean-E period
   matches the `s` period). Do not debug texel divergence after frame 5 unless
   the statistics disagree.
-- [x] T047 **CLOSED 2026-10-24 on Matt's live observation** (structured field, ran 3 minutes, stays alive). The rewritten `bench_fc_look.py` (adopted criteria a–d) captured no outlet output in the module bench although the module renders live → a bench-side capture bug, FOLLOW-UP for the next bench session (first suspect: the float32 output vs the capture matrix; compare against `bench_wc_look.py`'s job one difference at a time). **Module look bench** (Max bench). Rerun `bench_fc_look.py`
+- [x] T047 **CLOSED 2026-10-24 on Matt's live observation** (structured field, ran 3 minutes, stays alive). The rewritten `bench_wc_look.py` (adopted criteria a–d) captured no outlet output in the module bench although the module renders live → a bench-side capture bug, FOLLOW-UP for the next bench session (first suspect: the float32 output vs the capture matrix; compare against `bench_wc_look.py`'s job one difference at a time). **Module look bench** (Max bench). Rerun `bench_wc_look.py`
   adapted to RGB output: expect structured, not uniform (E std > 0.05 through
   the run, a spectral peak, mean E pulsing at ≈147 frames). If uniform or
   dead: apply the live-debug rule above before any code change.
@@ -369,8 +369,8 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
   side, same window size, both freshly started. Pass = "same thing" to Matt's
   eye (a vertical mirror is fine). No Phase D work until GP passes; a fail
   goes back to T046/T047 evidence. Then update the README row.
-- [x] T049 **DONE 2026-10-24 (Max 9.2.0; `bench_formconstants.py` 9/9 incl. --slow; new leg `test_cost_per_frame_T049`, numbers in `tests/logs/fc_cost_T049.txt`).** Totals (sum of the six per-frame stages): **N 1024: 1.07 ms @ 1080p, 1.54 ms @ 4K; N 2048: 2.04 ms @ 1080p, 2.47 ms @ 4K** (f_wc: 2.45 ms). Most stages did not become GPU-bound even at chain 32, so these are UPPER BOUNDS (real cost is at or below); only pass and nl at N 1024 resolved. Per stage at N 1024: seed 0.08, pass 0.48 (resolved; its N 2048 upper bound 0.32 is lower, so treat it as noise-level), blur_x/blur_y 0.09 each, nl 0.15, enc 0.17 (1080p) / 0.64 (4K); at N 2048 each solver stage ≈ 0.32–0.38. **Conclusion: cost is not a constraint at either N or render size; N 2048 at 4K costs about what f_wc does.** `seed` renders every frame though only reset uses it: a small Phase D saving, not needed. **Cost** (Max bench): ms/frame at N = 1024 and N = 2048, render
-  1080p and 4K; report against f_wc's 2.45 ms. Feeds T064.
+- [x] T049 **DONE 2026-10-24 (Max 9.2.0; `bench_wc.py` 9/9 incl. --slow; new leg `test_cost_per_frame_T049`, numbers in `tests/logs/fc_cost_T049.txt`).** Totals (sum of the six per-frame stages): **N 1024: 1.07 ms @ 1080p, 1.54 ms @ 4K; N 2048: 2.04 ms @ 1080p, 2.47 ms @ 4K** (f_wc_fft: 2.45 ms). Most stages did not become GPU-bound even at chain 32, so these are UPPER BOUNDS (real cost is at or below); only pass and nl at N 1024 resolved. Per stage at N 1024: seed 0.08, pass 0.48 (resolved; its N 2048 upper bound 0.32 is lower, so treat it as noise-level), blur_x/blur_y 0.09 each, nl 0.15, enc 0.17 (1080p) / 0.64 (4K); at N 2048 each solver stage ≈ 0.32–0.38. **Conclusion: cost is not a constraint at either N or render size; N 2048 at 4K costs about what f_wc_fft does.** `seed` renders every frame though only reset uses it: a small Phase D saving, not needed. **Cost** (Max bench): ms/frame at N = 1024 and N = 2048, render
+  1080p and 4K; report against f_wc_fft's 2.45 ms. Feeds T064.
 
 **Phase R CLOSED 2026-10-24: GP (T048) passed and T049 has numbers.**
 
@@ -422,21 +422,21 @@ bisect the chain in one session: seed, pass, blur_x, blur_y, wc, enc.
 ### Phase D: deliberate deviations (each: mirror first if dynamics change,
 A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 
-- [x] T060 **KEPT 2026-10-25 00:01: Matt picked E as the default (the provisional default stands; no rebuild).** BENCH-VERIFIED 2026-10-24 23:58 (bench_formconstants.py 9/9, 2 slow skipped: the E / Contour / Luma modes match the mirror; the parity legs pinned to RGB still pass); Matt's pick of the default pending.** Menu `out_mode` (label Output; RGB / E / Contour / Luma; default 1 = E, Matt's pick) → enc Param `out_mode`, branch-free selection; RGB = the parity output, the others grays (v, v, v, 1) of R / B / Rec. 709 luma. Mirror `encode_mode()`; `test_fc_parity` 12/12; route `reset` → outlet 3; panel 155×88 placeholder (reset in a fourth slot); static/contracts/drift/launch/menu green. Bench: PINNED enc `out_mode 0` for the parity legs + new leg `test_enc_out_modes_T060` (passed). **Output mode** menu: RGB (source) / E luma / contour (B) luma /
+- [x] T060 **KEPT 2026-10-25 00:01: Matt picked E as the default (the provisional default stands; no rebuild).** BENCH-VERIFIED 2026-10-24 23:58 (bench_wc.py 9/9, 2 slow skipped: the E / Contour / Luma modes match the mirror; the parity legs pinned to RGB still pass); Matt's pick of the default pending.** Menu `out_mode` (label Output; RGB / E / Contour / Luma; default 1 = E, Matt's pick) → enc Param `out_mode`, branch-free selection; RGB = the parity output, the others grays (v, v, v, 1) of R / B / Rec. 709 luma. Mirror `encode_mode()`; `test_wc_parity` 12/12; route `reset` → outlet 3; panel 155×88 placeholder (reset in a fourth slot); static/contracts/drift/launch/menu green. Bench: PINNED enc `out_mode 0` for the parity legs + new leg `test_enc_out_modes_T060` (passed). **Output mode** menu: RGB (source) / E luma / contour (B) luma /
   RGB luma. Matt picks the default. Matt (2026-10-24 23:50): "probably not RGB"; default undecided until he sees them.
-- [x] T061 **KEPT 2026-10-24 23:47 (Matt, live, after the dial rename): "yes it's great now".** Pulse inlet confirmed live with a fed texture: "it works great" (23:50). Bench-verified the same day. Built as decided above: dials `depth` (0–1.5, 0.6 → Param `s_depth`) and `period` (30–600 frames, 147.06 → Param `s_period`, replaces `s_rate`); pulse mod inlet → `vs_inState` → nl in3, flag → Param `pulse_conn`; codebox `s = s_depth * mix(fract(frameno / s_period) < 0.5, luma(sample(in3, norm)), pulse_conn)`; frame counter wrap 2500 → 1000000; route `reset` outlet 0 → 2; panel 118×88 placeholder (reset moved to a third slot). Mirror `s_pulse()` + `luma()` + `wc_step(s=...)`; `test_fc_parity` 11/11 (3 new pulse tests); static 6/6 (route + pulse-wiring guards), contracts 9/9 (s_depth/s_rate known issues removed), drift 16/16, launch 8/8, menu current. New bench leg `test_nl_pulse_T061` (connected, conn 0, period 200, depth 1.3 vs mirror) and PINNED `s_rate` → `s_period`/`pulse_conn`: **RUN 2026-10-24 18:24 (Max 9.2.0): `bench_formconstants.py` 8/8 (2 slow skipped) — the new nl codebox compiles and every pulse case matches the mirror within the stage tolerance (≤ 1 level, ≤ 0.1%).** Then Matt's live check (WFG square into the pulse inlet; kill/revive). **Live check, first finding (Matt, 2026-10-24 23:36): the Depth dial loaded as Type Int, Range 0 1** although the built dial is float 0–1.5. Cause: a control's `param_connect` is `<pix>::<dial name>`, and jit.gl.pix has an int 0/1 attribute named `depth`, so the dial bound to it and adopted its type and range (Period had no such collision). Fix: dial names `pulse_depth` / `pulse_period` (labels unchanged); static/contracts/drift/launch/menu green. LIBRARY-WIDE FOLLOW-UP: any dial whose name equals a jit.gl.pix attribute has the same trap (scan the definitions against the pix attribute list; consider a builder guard). **Breathe** dials: `s_depth` (0–1, default 0.6) and `s_rate`
+- [x] T061 **KEPT 2026-10-24 23:47 (Matt, live, after the dial rename): "yes it's great now".** Pulse inlet confirmed live with a fed texture: "it works great" (23:50). Bench-verified the same day. Built as decided above: dials `depth` (0–1.5, 0.6 → Param `s_depth`) and `period` (30–600 frames, 147.06 → Param `s_period`, replaces `s_rate`); pulse mod inlet → `vs_inState` → nl in3, flag → Param `pulse_conn`; codebox `s = s_depth * mix(fract(frameno / s_period) < 0.5, luma(sample(in3, norm)), pulse_conn)`; frame counter wrap 2500 → 1000000; route `reset` outlet 0 → 2; panel 118×88 placeholder (reset moved to a third slot). Mirror `s_pulse()` + `luma()` + `wc_step(s=...)`; `test_wc_parity` 11/11 (3 new pulse tests); static 6/6 (route + pulse-wiring guards), contracts 9/9 (s_depth/s_rate known issues removed), drift 16/16, launch 8/8, menu current. New bench leg `test_nl_pulse_T061` (connected, conn 0, period 200, depth 1.3 vs mirror) and PINNED `s_rate` → `s_period`/`pulse_conn`: **RUN 2026-10-24 18:24 (Max 9.2.0): `bench_wc.py` 8/8 (2 slow skipped) — the new nl codebox compiles and every pulse case matches the mirror within the stage tolerance (≤ 1 level, ≤ 0.1%).** Then Matt's live check (WFG square into the pulse inlet; kill/revive). **Live check, first finding (Matt, 2026-10-24 23:36): the Depth dial loaded as Type Int, Range 0 1** although the built dial is float 0–1.5. Cause: a control's `param_connect` is `<pix>::<dial name>`, and jit.gl.pix has an int 0/1 attribute named `depth`, so the dial bound to it and adopted its type and range (Period had no such collision). Fix: dial names `pulse_depth` / `pulse_period` (labels unchanged); static/contracts/drift/launch/menu green. LIBRARY-WIDE FOLLOW-UP: any dial whose name equals a jit.gl.pix attribute has the same trap (scan the definitions against the pix attribute list; consider a builder guard). **Breathe** dials: `s_depth` (0–1, default 0.6) and `s_rate`
   (period in frames, default 147). Note how it compares with an `excite`-style
-  offset on both populations (the f_wc G7 semantics).
-- [x] T062 **REMOVED 2026-10-25 10:43 (Matt: "I haven't been able to see a difference"): menu, Params, bench leg and mirror menu constant gone; blur_x / blur_y / nl back to the literal 255-level rounding (S2); bench 14/14. The finding stays: below 255 levels the field freezes (spike_fc_quant_levels.py).** Was: KEPT 2026-10-25 00:43 (Matt, live: "great").** **Matt chose option 1 (00:07): a Quant menu 255 / 1023 / Float, default 255. OFFLINE DONE 00:10:** menu `q_levels` → Param `q_levels` in blur_x, blur_y and nl (lv = 255 or 1023, qon = index < 2; branch-free mix of raw and quantized); mirror `Q_LEVELS`; test_fc_parity 13/13; route `reset` → outlet 4; panel 192×88 placeholder; static/contracts/drift/launch/menu green; bench leg `test_q_levels_T062` + PINNED q_levels 0: **PASSED 2026-10-25 00:27** (bench_formconstants.py 11/11, 2 slow skipped; 1023 and float match the mirror in blur_x, blur_y and nl). Matt's live look pending. Look A/B done 2026-10-25 (`tests/records/spike_fc_quant_levels.py`, sheet `tests/logs/fc_quant_ab.png`): every level >= 255 lives (511 / 1023 / 4095 / float); every level tried below 255 (63, 31, 15, 7) FREEZES (0% of texels move). 255 = crisper spots / lattice; float = softer, larger domains, emerges ~300 frames later. A continuous levels dial would be mostly a freeze switch -- design decision for Matt pending.** **Quantization levels** dial (default 255; off = float). A
+  offset on both populations (the f_wc_fft G7 semantics).
+- [x] T062 **REMOVED 2026-10-25 10:43 (Matt: "I haven't been able to see a difference"): menu, Params, bench leg and mirror menu constant gone; blur_x / blur_y / nl back to the literal 255-level rounding (S2); bench 14/14. The finding stays: below 255 levels the field freezes (spike_fc_quant_levels.py).** Was: KEPT 2026-10-25 00:43 (Matt, live: "great").** **Matt chose option 1 (00:07): a Quant menu 255 / 1023 / Float, default 255. OFFLINE DONE 00:10:** menu `q_levels` → Param `q_levels` in blur_x, blur_y and nl (lv = 255 or 1023, qon = index < 2; branch-free mix of raw and quantized); mirror `Q_LEVELS`; test_wc_parity 13/13; route `reset` → outlet 4; panel 192×88 placeholder; static/contracts/drift/launch/menu green; bench leg `test_q_levels_T062` + PINNED q_levels 0: **PASSED 2026-10-25 00:27** (bench_wc.py 11/11, 2 slow skipped; 1023 and float match the mirror in blur_x, blur_y and nl). Matt's live look pending. Look A/B done 2026-10-25 (`tests/records/spike_fc_quant_levels.py`, sheet `tests/logs/fc_quant_ab.png`): every level >= 255 lives (511 / 1023 / 4095 / float); every level tried below 255 (63, 31, 15, 7) FREEZES (0% of texels move). 255 = crisper spots / lattice; float = softer, larger domains, emerges ~300 frames later. A continuous levels dial would be mostly a freeze switch -- design decision for Matt pending.** **Quantization levels** dial (default 255; off = float). A
   character control. T042(d) found float32 + s sustains, so this is a LOOK
   control, not a liveness one; A/B the texture difference first.
-- [x] T070 **KEPT 2026-10-25 00:43 (Matt, live: "great").** **2026-10-25 10:47: now the header live.toggle (Matt asked for a toggle, not a menu).** Builder change: a `header_toggle` may name ONE `pix_target` stage (and `pix_attr`); its param_connect names that stage; default still the primary (build/spec.md; no other module uses header toggles; tests/build all 9 files green, drift 16/16). Definition derives reset's outlet as controls + header toggles (`_N_HEADER`); nine widgets, so the support stages are back at obj-50..55. Static 7/7 (new: toggle → attrui → nl, param_connect #0_fc_nl::freeze_on); bench 14/14. **Freeze** (NEW, Matt 2026-10-25 00:20, arising from the T062 finding that coarse quantization freezes the field). **OFFLINE DONE 00:22:** menu `freeze_on` (label Freeze; Off / On, default Off; the builder has no toggle type) → nl Param `freeze_on`: nl writes its incoming state back unchanged (alpha 1), so the field holds exactly; the display keeps rendering; Off resumes from that state. Built directly (not via quantization, which would posterize). Mirror `wc_step(freeze=)`; test_fc_parity 14/14 (holds 50 frames, resumes exactly); route `reset` → outlet 5; panel 229×88 placeholder; static/contracts/drift/launch/menu green; bench leg `test_freeze_T070`: **PASSED 2026-10-25 00:27** (same run). Matt's live look pending.
-- [x] T071 **KEPT 2026-10-25 09:42 (Matt).** **Pulse Mix + Pulse Gain** (NEW, Matt 2026-10-25 00:47). **BUILT + BENCH-VERIFIED 00:49:** dials `pulse_mix` (P.Mix 0-1, default 1) and `pulse_gain` (P.Gain 0-2, default 1) → nl; s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix): defaults = T061 replace, mix 0 ignores the texture, unplugged neither matters. Mirror `s_pulse(mix=, gain=)`; test_fc_parity 16/16; route `reset` → outlet 8; panel 340×88 placeholder (8 controls; the support-stage ids hold until 10 widgets); static/contracts/drift/launch/menu green; bench 12/12 incl. the mix 0.5 / gain 1.5 case. Matt's live look pending.
+- [x] T070 **KEPT 2026-10-25 00:43 (Matt, live: "great").** **2026-10-25 10:47: now the header live.toggle (Matt asked for a toggle, not a menu).** Builder change: a `header_toggle` may name ONE `pix_target` stage (and `pix_attr`); its param_connect names that stage; default still the primary (build/spec.md; no other module uses header toggles; tests/build all 9 files green, drift 16/16). Definition derives reset's outlet as controls + header toggles (`_N_HEADER`); nine widgets, so the support stages are back at obj-50..55. Static 7/7 (new: toggle → attrui → nl, param_connect #0_wc_nl::freeze_on); bench 14/14. **Freeze** (NEW, Matt 2026-10-25 00:20, arising from the T062 finding that coarse quantization freezes the field). **OFFLINE DONE 00:22:** menu `freeze_on` (label Freeze; Off / On, default Off; the builder has no toggle type) → nl Param `freeze_on`: nl writes its incoming state back unchanged (alpha 1), so the field holds exactly; the display keeps rendering; Off resumes from that state. Built directly (not via quantization, which would posterize). Mirror `wc_step(freeze=)`; test_wc_parity 14/14 (holds 50 frames, resumes exactly); route `reset` → outlet 5; panel 229×88 placeholder; static/contracts/drift/launch/menu green; bench leg `test_freeze_T070`: **PASSED 2026-10-25 00:27** (same run). Matt's live look pending.
+- [x] T071 **KEPT 2026-10-25 09:42 (Matt).** **Pulse Mix + Pulse Gain** (NEW, Matt 2026-10-25 00:47). **BUILT + BENCH-VERIFIED 00:49:** dials `pulse_mix` (P.Mix 0-1, default 1) and `pulse_gain` (P.Gain 0-2, default 1) → nl; s = s_depth * mix(square, pulse_gain * luma, pulse_conn * pulse_mix): defaults = T061 replace, mix 0 ignores the texture, unplugged neither matters. Mirror `s_pulse(mix=, gain=)`; test_wc_parity 16/16; route `reset` → outlet 8; panel 340×88 placeholder (8 controls; the support-stage ids hold until 10 widgets); static/contracts/drift/launch/menu green; bench 12/12 incl. the mix 0.5 / gain 1.5 case. Matt's live look pending.
 - [ ] T063 **ON HOLD (Matt, 2026-10-25 09:46): zoom / rotate / arms / spiral / scale "sound just like droste" -- he hesitates to duplicate them here. His idea to weigh: UNWRAP the output (expose the cortical / log-polar state, unmapped) so it can be fed to f_droste instead. Decide before any map work.** **Map**: conformal zoom/rotation/spiral as one complex gain on
   (θ, log r), optional centre softening, field of view. Integer angular
   periods only where a seam would otherwise show.
-- [x] T072 **KEPT (as part of the settings groups, Matt 10:12).** **Character dials: Grain / Inhibit sweep DONE 2026-10-25** (`tests/records/spike_fc_grain_inhibit.py`, sheets `tests/logs/fc_grain.png` / `fc_inhibit.png`; RESULT in the docstring). Grain (blur tap spacing × g, cheap 13-tap method) lives over 0.5–2 and genuinely changes character (finer/wormier/rolls below 1, bigger softer spots above); at 2 the spaced taps alias into a checkerboard moiré, so the cheap method's usable span is 0.5–1.5. Inhibit (AIE, page 8.5) has one narrow living band ~7.5–10 (washes out below, dims and dies above; 10 = a faint labyrinth). **Matt (09:49): add Grain, range 0.5-2.0 (moire end kept on purpose); Inhibit not added. BUILT + BENCH-VERIFIED 09:53:** dial `grain_scale` (label Grain, 0.5-2, default 1) → blur_x and blur_y Param `grain_scale`: each tap's address lines rewritten (offset i -> i * grain_scale, two wrapped texels blended by the fraction; weight lines byte-identical, the static weight check still passes); grain 1 = parity exact. Mirror `blur_pass(grain=)` / `_tap`; test_fc_parity 17/17; route `reset` → outlet 9; panel 377×88 placeholder (9 widgets -- one more crosses the ten-widget id threshold); static/contracts/drift/launch/menu green; bench 13/13 incl. `test_grain_T072` (0.5 / 1.37 / 2). Matt (09:57): Grain alone "doesn't seem to really be doing much" live (it reshapes a formed field slowly -- reset after changing it; at N 1024 features are 4x smaller than in the N 256 sweep). **Settings groups (`tests/records/spike_fc_presets.py`, N 1024, from reset), Matt live 10:12: A-E distinctive, F dies at once:** A source 0.6 / 147 / 1.0; B fine rolls 0.9 / 147 / 0.6; C big cells 0.6 / 294 / 1.6; D slow breath 0.4 / 450 / 1.0; E moire 0.8 / 147 / 2.0 (Depth / Period / Grain). Grain kept as part of these groups. **Matt (10:16): NO preset menu; the groups go in the helpfile (T026) and the reference doc (T025).**
-- [x] T075 **Flash control? -- CLOSED: no in-module control (dynamics knife-edge; De-flicker moved downstream).** (Matt, 2026-10-25 11:32: control the speed / intensity of the RGB flashing). Measured (`tests/records/spike_fc_flash.py`): the flashing is the E-I loop's intrinsic BULK OSCILLATION (frame-mean E 0.07 <-> 0.6; ~80-frame period free-running, locked to the 150-frame pulse by the square wave). The proposed swing ("Flash") dial does not reduce it -- disproved, not built. Speed today: Period (entrainment) and Rate. Intensity: option 1 (damping via inhibition's rate) measured and REJECTED (`spike_fc_damping.py`: only the page's 0.05 lives; slower = bigger flashes + dead pattern, faster = less flash + dead pattern -- the flash and the pattern share one E-I balance). Remaining: display de-flicker in enc, or downstream smoothing. **Matt chose De-flicker (11:42/11:43, design approved). IN PROGRESS, STOPPED AT TWO STRIKES (2026-10-25 11:52):** dial `deflicker_amt` (Deflick, 0-1, default 0) -> enc gains clamp(usual/cur, 0, 4) per channel; tracker stage `track` (+ 1x1 `thold` passthrough) moving 0.005/frame; mirror `frame_means` / `track_update` / `deflicker_gains` / `encode_mode(gains=)`, test_fc_parity 20/20; track + enc bench legs written. Strike 1: a 256-tap mean shader broke jit.gl.pix's shader translator (lua 'stack overflow (too many captures)'), and the failed compile left the bench patch failing 7 unrelated legs until the next run. Strike 2: a 4-stage chain of 16-tap shaders compiled, but mean1 disagreed with the true block means by up to 0.26: EVIDENCE (`tests/logs/fc_t075_mean1.npz`): the GPU block values have 2x the std of true 8x8 means (0.072 vs 0.036) and correlate 0.5 with them = averaging 16 single texels, not 64 -- `sample()` at a texel corner returns ONE texel (no linear filtering on these inputs), and which one varies with rounding. Design assumed bilinear. SIDE FINDING: the T073 Screen pulse comments say bilinear `sample`; on this evidence it is effectively nearest (Matt saw the camera look right; the mirror models bilinear, which may be part of that leg's noise-case residue). Proposed fix (Matt's call): nearest-only taps at texel centres, 4 x 4 blocks, 16 taps per stage: 1024 -> 256 -> 64 -> 16 -> 4 -> 1 (five stages, exact). Committed as WIP; the dial defaults to 0, so the module output is unchanged. **DROPPED 2026-10-25 11:53 (Matt): De-flicker belongs downstream as a general utility -> `ideas/f_deflicker.md`.** Removed from f_formconstants (dial, mean/track/thold stages, enc gains, mirror/test/bench pieces; nine controls, stages back at obj-50..55); WIP kept in git at 8b33e27. nl's pulse comment corrected (`sample` returns the nearest texel here). test_fc_parity 19/19, static 7/7, contracts 9/9, drift 16/16, bench 14/14.
+- [x] T072 **KEPT (as part of the settings groups, Matt 10:12).** **Character dials: Grain / Inhibit sweep DONE 2026-10-25** (`tests/records/spike_fc_grain_inhibit.py`, sheets `tests/logs/fc_grain.png` / `fc_inhibit.png`; RESULT in the docstring). Grain (blur tap spacing × g, cheap 13-tap method) lives over 0.5–2 and genuinely changes character (finer/wormier/rolls below 1, bigger softer spots above); at 2 the spaced taps alias into a checkerboard moiré, so the cheap method's usable span is 0.5–1.5. Inhibit (AIE, page 8.5) has one narrow living band ~7.5–10 (washes out below, dims and dies above; 10 = a faint labyrinth). **Matt (09:49): add Grain, range 0.5-2.0 (moire end kept on purpose); Inhibit not added. BUILT + BENCH-VERIFIED 09:53:** dial `grain_scale` (label Grain, 0.5-2, default 1) → blur_x and blur_y Param `grain_scale`: each tap's address lines rewritten (offset i -> i * grain_scale, two wrapped texels blended by the fraction; weight lines byte-identical, the static weight check still passes); grain 1 = parity exact. Mirror `blur_pass(grain=)` / `_tap`; test_wc_parity 17/17; route `reset` → outlet 9; panel 377×88 placeholder (9 widgets -- one more crosses the ten-widget id threshold); static/contracts/drift/launch/menu green; bench 13/13 incl. `test_grain_T072` (0.5 / 1.37 / 2). Matt (09:57): Grain alone "doesn't seem to really be doing much" live (it reshapes a formed field slowly -- reset after changing it; at N 1024 features are 4x smaller than in the N 256 sweep). **Settings groups (`tests/records/spike_fc_presets.py`, N 1024, from reset), Matt live 10:12: A-E distinctive, F dies at once:** A source 0.6 / 147 / 1.0; B fine rolls 0.9 / 147 / 0.6; C big cells 0.6 / 294 / 1.6; D slow breath 0.4 / 450 / 1.0; E moire 0.8 / 147 / 2.0 (Depth / Period / Grain). Grain kept as part of these groups. **Matt (10:16): NO preset menu; the groups go in the helpfile (T026) and the reference doc (T025).**
+- [x] T075 **Flash control? -- CLOSED: no in-module control (dynamics knife-edge; De-flicker moved downstream).** (Matt, 2026-10-25 11:32: control the speed / intensity of the RGB flashing). Measured (`tests/records/spike_fc_flash.py`): the flashing is the E-I loop's intrinsic BULK OSCILLATION (frame-mean E 0.07 <-> 0.6; ~80-frame period free-running, locked to the 150-frame pulse by the square wave). The proposed swing ("Flash") dial does not reduce it -- disproved, not built. Speed today: Period (entrainment) and Rate. Intensity: option 1 (damping via inhibition's rate) measured and REJECTED (`spike_fc_damping.py`: only the page's 0.05 lives; slower = bigger flashes + dead pattern, faster = less flash + dead pattern -- the flash and the pattern share one E-I balance). Remaining: display de-flicker in enc, or downstream smoothing. **Matt chose De-flicker (11:42/11:43, design approved). IN PROGRESS, STOPPED AT TWO STRIKES (2026-10-25 11:52):** dial `deflicker_amt` (Deflick, 0-1, default 0) -> enc gains clamp(usual/cur, 0, 4) per channel; tracker stage `track` (+ 1x1 `thold` passthrough) moving 0.005/frame; mirror `frame_means` / `track_update` / `deflicker_gains` / `encode_mode(gains=)`, test_wc_parity 20/20; track + enc bench legs written. Strike 1: a 256-tap mean shader broke jit.gl.pix's shader translator (lua 'stack overflow (too many captures)'), and the failed compile left the bench patch failing 7 unrelated legs until the next run. Strike 2: a 4-stage chain of 16-tap shaders compiled, but mean1 disagreed with the true block means by up to 0.26: EVIDENCE (`tests/logs/fc_t075_mean1.npz`): the GPU block values have 2x the std of true 8x8 means (0.072 vs 0.036) and correlate 0.5 with them = averaging 16 single texels, not 64 -- `sample()` at a texel corner returns ONE texel (no linear filtering on these inputs), and which one varies with rounding. Design assumed bilinear. SIDE FINDING: the T073 Screen pulse comments say bilinear `sample`; on this evidence it is effectively nearest (Matt saw the camera look right; the mirror models bilinear, which may be part of that leg's noise-case residue). Proposed fix (Matt's call): nearest-only taps at texel centres, 4 x 4 blocks, 16 taps per stage: 1024 -> 256 -> 64 -> 16 -> 4 -> 1 (five stages, exact). Committed as WIP; the dial defaults to 0, so the module output is unchanged. **DROPPED 2026-10-25 11:53 (Matt): De-flicker belongs downstream as a general utility -> `ideas/f_deflicker.md`.** Removed from f_wc (dial, mean/track/thold stages, enc gains, mirror/test/bench pieces; nine controls, stages back at obj-50..55); WIP kept in git at 8b33e27. nl's pulse comment corrected (`sample` returns the nearest texel here). test_wc_parity 19/19, static 7/7, contracts 9/9, drift 16/16, bench 14/14.
 - [x] T064 **DROPPED 2026-10-25 (Matt, "concur"): the solver stays FIXED at 1024.** Looked at first
   (`tests/records/spike_fc_solver_size.py`, sheet `tests/logs/fc_solver_size.png`, 845 s, A source and
   B fine rolls at N 512 / 1024 / 2048, 1500 frames, same Depth / Period / Grain): the dynamics do not
@@ -445,11 +445,11 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
   A size menu would be a second scale control beside Grain, and 1024 is the page's size and the parity
   setting. Cost is not a factor (N 2048 ~2.5 ms).
   (Original: **Solver size** as a load-time choice (512 / 1024 / 2048). Design discussion first.)
-- [x] T065 **KEPT 2026-10-25 09:42 (Matt).** **BUILT + BENCH-VERIFIED 2026-10-25 00:46 (Matt asked to slow the pulse; chose the Rate route over a longer Period).** Dial `sim_rate` (label Rate, 0.05-1, default 1) → nl, by STEP SKIPPING: simt = floor(frameno * rate) is the solver clock (the pulse reads it); a frame steps when floor((frameno+1) * rate) > simt, else the state holds as under Freeze (hold = max(freeze_on, 1 - step)). Mirror `rate_clock` / `module_frame`; test_fc_parity 15/15 (rate 0.5 x 2T frames == rate 1 x T frames exactly); route `reset` → outlet 6; panel 266×88 placeholder; static/contracts/drift/launch/menu green; bench 12/12 (2 slow skipped) incl. `test_rate_T065`. Matt's live look pending (watch for visible stepping at very slow rates; an enc blend could smooth it). **Rate** (dt): measure in the mirror first; with quantization,
+- [x] T065 **KEPT 2026-10-25 09:42 (Matt).** **BUILT + BENCH-VERIFIED 2026-10-25 00:46 (Matt asked to slow the pulse; chose the Rate route over a longer Period).** Dial `sim_rate` (label Rate, 0.05-1, default 1) → nl, by STEP SKIPPING: simt = floor(frameno * rate) is the solver clock (the pulse reads it); a frame steps when floor((frameno+1) * rate) > simt, else the state holds as under Freeze (hold = max(freeze_on, 1 - step)). Mirror `rate_clock` / `module_frame`; test_wc_parity 15/15 (rate 0.5 x 2T frames == rate 1 x T frames exactly); route `reset` → outlet 6; panel 266×88 placeholder; static/contracts/drift/launch/menu green; bench 12/12 (2 slow skipped) incl. `test_rate_T065`. Matt's live look pending (watch for visible stepping at very slow rates; an enc blend could smooth it). **Rate** (dt): measure in the mirror first; with quantization,
   per-step changes under ~1/255 freeze, so small dt may stall rather than
   slow.
-- [x] T073 **Pulse Space switch: Cortical / Screen** (Matt, 2026-10-25 10:19, after "it still feels like a sim, not a performance or expression tool"). Screen = the pulse texture read through the inverse of the display map, so the input lands where it is seen and the pattern grows out of it. Matt's calls in the same exchange: a Strike / impulse gesture and Contrast / Sharp are DOWNSTREAM effects (other modules), not this module's job. Design discussion before code. **BUILT + BENCH-VERIFIED 2026-10-25 10:30 (default Screen, taken from Matt's note that a camera in Cortical arrives distorted into log-polar).** Menu `pulse_space` (label Space; Cortical / Screen, default 1) → nl: Screen reads the pulse at the screen point each texel is displayed at (angle 2πu; per direction the outermost radius copy inside the frame, k = ceil(v − log(rb)/2π)); Params ow/oh now also reach nl from `r dim` (params only: no dim message reaches a solver stage, S1 holds; static guard rewritten to assert exactly that). TENTH widget: support stages moved obj-50..55 → obj-52..57; definition now DERIVES them (`_N_CONTROLS`, `_SUP`, reset = the route's last outlet) and the static test reads them from the definition. Static `sin()`-hash guard scoped to the seed codebox (nl's sin/cos are geometry). Mirror `screen_coords` / `sample_tex`; test_fc_parity 19/19 (every texel on-frame; round trip lands on the same texel; a right-half image excites exactly the right-half texels). Bench 14/14 incl. `test_pulse_screen_T073`: **TOLERANCE STATED for this leg (flagged to Matt):** smooth texture ≤ 1 level, ≤ 0.5% differing (measured 1.0 level / 0.139%; mismatches concentrated at the frame edge, GPU wrap vs mirror clamp: 7% of edge texels vs 0.19% elsewhere); random-noise texture reported only (4 levels / 2.09%: GPU bilinear-filtering precision, the worst case). **KEPT 2026-10-25 10:35 (Matt): tolerance accepted; "camera input looks as expected now".**
-- [x] T074 **View: Retinal / Cortical (unwrapped output)** (Matt, 2026-10-25 10:35: "I was also expecting an unwrapping option for the cortical space"; the T063-hold idea of feeding f_droste). **BUILT + BENCH-VERIFIED 10:38:** menu `out_view` (label View; Retinal / Cortical, default Retinal) → enc: Cortical samples the solver grid directly (u = norm.x angle across, v = norm.y log-radius up; one period each, periodic in both axes). Eleventh widget: stages now obj-55..60 (derived ids held). Mirror `encode(view=)`; test_fc_parity 20/20 (Cortical at N x N == the state; tiles seamlessly at 128 x 72); static/contracts/drift/launch/menu green; bench 15/15 incl. `test_cortical_view_T074`. **KEPT 2026-10-25 10:40 (Matt): "yes this is what I meant".** Labels (Matt 10:41): **Retinal / Unwrapped in both View and Space**, Retinal first and default in both (Space's Param flipped: 0 Retinal, 1 Unwrapped; codebox + bench pins flipped; bench 15/15).
+- [x] T073 **Pulse Space switch: Cortical / Screen** (Matt, 2026-10-25 10:19, after "it still feels like a sim, not a performance or expression tool"). Screen = the pulse texture read through the inverse of the display map, so the input lands where it is seen and the pattern grows out of it. Matt's calls in the same exchange: a Strike / impulse gesture and Contrast / Sharp are DOWNSTREAM effects (other modules), not this module's job. Design discussion before code. **BUILT + BENCH-VERIFIED 2026-10-25 10:30 (default Screen, taken from Matt's note that a camera in Cortical arrives distorted into log-polar).** Menu `pulse_space` (label Space; Cortical / Screen, default 1) → nl: Screen reads the pulse at the screen point each texel is displayed at (angle 2πu; per direction the outermost radius copy inside the frame, k = ceil(v − log(rb)/2π)); Params ow/oh now also reach nl from `r dim` (params only: no dim message reaches a solver stage, S1 holds; static guard rewritten to assert exactly that). TENTH widget: support stages moved obj-50..55 → obj-52..57; definition now DERIVES them (`_N_CONTROLS`, `_SUP`, reset = the route's last outlet) and the static test reads them from the definition. Static `sin()`-hash guard scoped to the seed codebox (nl's sin/cos are geometry). Mirror `screen_coords` / `sample_tex`; test_wc_parity 19/19 (every texel on-frame; round trip lands on the same texel; a right-half image excites exactly the right-half texels). Bench 14/14 incl. `test_pulse_screen_T073`: **TOLERANCE STATED for this leg (flagged to Matt):** smooth texture ≤ 1 level, ≤ 0.5% differing (measured 1.0 level / 0.139%; mismatches concentrated at the frame edge, GPU wrap vs mirror clamp: 7% of edge texels vs 0.19% elsewhere); random-noise texture reported only (4 levels / 2.09%: GPU bilinear-filtering precision, the worst case). **KEPT 2026-10-25 10:35 (Matt): tolerance accepted; "camera input looks as expected now".**
+- [x] T074 **View: Retinal / Cortical (unwrapped output)** (Matt, 2026-10-25 10:35: "I was also expecting an unwrapping option for the cortical space"; the T063-hold idea of feeding f_droste). **BUILT + BENCH-VERIFIED 10:38:** menu `out_view` (label View; Retinal / Cortical, default Retinal) → enc: Cortical samples the solver grid directly (u = norm.x angle across, v = norm.y log-radius up; one period each, periodic in both axes). Eleventh widget: stages now obj-55..60 (derived ids held). Mirror `encode(view=)`; test_wc_parity 20/20 (Cortical at N x N == the state; tiles seamlessly at 128 x 72); static/contracts/drift/launch/menu green; bench 15/15 incl. `test_cortical_view_T074`. **KEPT 2026-10-25 10:40 (Matt): "yes this is what I meant".** Labels (Matt 10:41): **Retinal / Unwrapped in both View and Space**, Retinal first and default in both (Space's Param flipped: 0 Retinal, 1 Unwrapped; codebox + bench pins flipped; bench 15/15).
 - [x] T066 **DROPPED 2026-10-25 (Matt, "concur").** Superseded by the pulse
   inlet (T061) with the Retinal Input space (T073): a texture already lands
   where it is seen. A second E-only drive inlet would duplicate it. The old
@@ -473,7 +473,7 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 ## Phase 2: Soak (tier 3, live with Matt)
 
 - [~] T020 superseded by T048 · T021–T023 superseded by Phase D.
-- [ ] T024 **[G2 — Matt]** Soak check (f_wc's 30 s wash-drift precedent) at the
+- [ ] T024 **[G2 — Matt]** Soak check (f_wc_fft's 30 s wash-drift precedent) at the
   shipped corner after Phase D.
 
 **Checkpoint:** Phase 2 closed when Matt approves the soak.
@@ -482,17 +482,17 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 
 ## Phase 3: Ship
 
-- [~] T025 **DRAFTED 2026-10-25 (Matt asked for it while T064 runs):** `docs/f-reference/f_formconstants.md` written (what it does, flow, parameters, settings groups A-E, algorithm, notes, verification, references). `module-inventory.md` rows added 2026-10-25 (capability map + I/O table, after `f_ks`). STILL OWED: a re-read against the final defaults once T064 and the soak settle. Reference doc (settled model,
-  constants, ranges/landmarks, resize behavior, relationship to f_wc) +
+- [~] T025 **DRAFTED 2026-10-25 (Matt asked for it while T064 runs):** `docs/f-reference/f_wc.md` written (what it does, flow, parameters, settings groups A-E, algorithm, notes, verification, references). `module-inventory.md` rows added 2026-10-25 (capability map + I/O table, after `f_ks`). STILL OWED: a re-read against the final defaults once T064 and the soak settle. Reference doc (settled model,
+  constants, ranges/landmarks, resize behavior, relationship to f_wc_fft) +
   `docs/f-reference/module-inventory.md` rows (inlets/outlets/bypass tables).
-- [~] T026 **DRAFTED 2026-10-25:** `package/help/f_formconstants.maxhelp` written (generator layout, pulse-inlet bubble, A-E settings-groups block; valid JSON, NOT opened in Max, no `parameters` block since the bpatcher's inner ids were not read). STILL OWED: Matt's look in Max, then the `f-helpfile` skill's checklist. (MUST include the settings-groups table A-E from T072 / `spike_fc_presets.py`, Matt 2026-10-25) Helpfile `package/help/f_formconstants.maxhelp` (generator layout,
-  drive bubble per f_wc's).
+- [~] T026 **DRAFTED 2026-10-25:** `package/help/f_wc.maxhelp` written (generator layout, pulse-inlet bubble, A-E settings-groups block; valid JSON, NOT opened in Max, no `parameters` block since the bpatcher's inner ids were not read). STILL OWED: Matt's look in Max, then the `f-helpfile` skill's checklist. (MUST include the settings-groups table A-E from T072 / `spike_fc_presets.py`, Matt 2026-10-25) Helpfile `package/help/f_wc.maxhelp` (generator layout,
+  drive bubble per f_wc_fft's).
 - [ ] T027 Menu: `menu.py` Patterns category (after Wilson-Cowan), regenerate
   menu + launcher; `test_generate_menu` / `test_launch` green.
 - [ ] T028 README row + `ideas/INDEX.md` flip to 🟢 + `.specify/plan.md`
   item marked BUILT/SHIPPED.
 - [ ] T029 Enc-dedup hygiene decision (Claude): shared enc source factoring
-  across f_wc / f_formconstants vs. documented copy (the `gen_dft.py`
+  across f_wc_fft / f_wc vs. documented copy (the `gen_dft.py`
   precedent if shared). One paragraph in this file either way.
 - [ ] T030 Full offline suite (`tests/bg.sh start offline`) + full module
   contract bench on the final patcher set; close-out record.
@@ -514,9 +514,9 @@ the suite is green. Module is shipped.
 
 ## Record
 
-### 2026-10-24: module conceived out of the f_wc pixelation post-mortem
+### 2026-10-24: module conceived out of the f_wc_fft pixelation post-mortem
 
-- Matt's report chain over the day: 1920×1080 f_wc renders showed ~30 px
+- Matt's report chain over the day: 1920×1080 f_wc_fft renders showed ~30 px
   blocks (C0-bilinear facets → fixed with Catmull-Rom 4×4, commit fbee342);
   "still blocky around the edges" (contour-position quantization on the 256²
   grid); 2×2 SSAA attempts failed live three times (function form boxed
@@ -534,11 +534,11 @@ the suite is green. Module is shipped.
   (two-pass separable Gaussian, radius ⌈3σ⌉), retinal map =
   15-line bare complex-log shader, display = continuous `vec4(Ue,Ui,|E−I|·3)`
   with NO threshold. No FFT, no reconstruction filter, no AA — the artifact
-  class f_wc fights does not exist at solver-res = render-res.
+  class f_wc_fft fights does not exist at solver-res = render-res.
 - **Matt's calls (2026-10-24):** their look (fine, silky) is the actual
   target; color not essential (downstream tooling covers it); NEW SIBLING
-  MODULE rather than re-architecting f_wc; Example-10 coupling constants as
-  defaults; name `f_formconstants`.
+  MODULE rather than re-architecting f_wc_fft; Example-10 coupling constants as
+  defaults; name `f_wc`.
 - Deliberate departures from the source, with reasons: float32 state (their
   8-bit quantization is a liability on a saturation boundary); pattern scale
   in frame-height units (their resize-couples-physics is a defect for a
@@ -567,7 +567,7 @@ the suite is green. Module is shipped.
 
 ### 2026-10-24 (night, T041/T042): the T002 "quantization sustains" claim is falsified
 
-- Parity mirror + 8 tests landed (`tests/modules/formconstants/fc_parity_mirror.py`, `test_fc_parity.py`). Measured with the source's actual kernel (σ_E 1, σ_I 2 px, shared radius 6), Example-10 constants, no noise, no habituation, crossing quantization on/off with `s` on/off: **`s` on = sustained (E std 0.05–0.22 over 3000–4000 frames, quantized or float, two seeds, N 128 and 256); `s` off = dead (std ≤ 0.012), quantized or float.** Record: `tests/records/spike_fc_parity_sustain.py`.
+- Parity mirror + 8 tests landed (`tests/modules/wc/wc_parity_mirror.py`, `test_wc_parity.py`). Measured with the source's actual kernel (σ_E 1, σ_I 2 px, shared radius 6), Example-10 constants, no noise, no habituation, crossing quantization on/off with `s` on/off: **`s` on = sustained (E std 0.05–0.22 over 3000–4000 frames, quantized or float, two seeds, N 128 and 256); `s` off = dead (std ≤ 0.012), quantized or float.** Record: `tests/records/spike_fc_parity_sustain.py`.
 - Why T002 said otherwise: it used σ_I 1 px / σ_E 0.69 (grain 1/512 on N = 512, ratio 1.45), not the source's (2, 1); and its quantized port was never committed, so the claim could not be re-run. So Psychedelic + noise + habituation was a detour from a wrong measurement; the original Example-10 constants WOULD have sustained at float32 with `s`.
 - Consequences: Phase R is unchanged (the quantize is cheap and kept for parity). S2's gloss in the spec and T062's rationale are corrected; the brief's parenthetical too. `s` is the liveness mechanism, so T061's breathe dials are performance-critical (depth 0 kills the field), not cosmetic.
 - Also found: `s_of_t` and the page's `sign(sin)` differ at t = 0 (0.6 vs 0.3) and at t = 1250 k (exact half-periods; the page's truncated π decides). Single frames; documented in the mirror.
@@ -583,10 +583,10 @@ the suite is green. Module is shipped.
 
 ### 2026-10-24 (evening, T047 pre-check): the mirror contradicts T047's "E std > 0.05 throughout" — STOPPED for a decision (brief rule 3)
 
-- Before adapting `bench_fc_look.py`, the parity mirror was run from a fresh seed (N 256, seeds 1 and 2, quantized + s, 1200 frames; inline script, ~15 s). **The reference's own dynamics do not keep E std above 0.05 throughout.** State E std every 50 frames (seed 1; seed 2 within ~0.003): 0.271 (seed noise) → 0.060 → 0.010 → 0.025 → 0.005 … ≈0.005 until ~frame 600, then the pattern emerges: 0.066 (650), 0.102 (750), 0.125, 0.058, 0.141, 0.103, 0.087, 0.150, 0.026 (1100), 0.065. Minimum after frame 300: 0.002. Encoded output (128², R channel) at frames 100–400: std 0.004–0.011; 800–1000: 0.08–0.14; 1100: 0.018.
+- Before adapting `bench_wc_look.py`, the parity mirror was run from a fresh seed (N 256, seeds 1 and 2, quantized + s, 1200 frames; inline script, ~15 s). **The reference's own dynamics do not keep E std above 0.05 throughout.** State E std every 50 frames (seed 1; seed 2 within ~0.003): 0.271 (seed noise) → 0.060 → 0.010 → 0.025 → 0.005 … ≈0.005 until ~frame 600, then the pattern emerges: 0.066 (650), 0.102 (750), 0.125, 0.058, 0.141, 0.103, 0.087, 0.150, 0.026 (1100), 0.065. Minimum after frame 300: 0.002. Encoded output (128², R channel) at frames 100–400: std 0.004–0.011; 800–1000: 0.08–0.14; 1100: 0.018.
 - So there is a ~600-frame near-uniform transient (blur flattens the uint8 noise, then the `s` forcing grows structure), and after emergence the std still swings well below 0.05 within some `s` periods. This matches T046's 150-frame GPU = mirror E std 0.0192: that was the transient, not a fault.
 - Mean-E pulse: power-spectrum peak period 150 frames (frames 300–1200, both seeds) — the ≈147-frame expectation holds.
 - Both seeds give near-identical std/mean time series, so the series is set by the `s` forcing, not the seed: a GPU-vs-mirror statistics comparison is meaningful without reproducing the module's seed hash.
 - Proposed replacement criteria (NOT adopted; Matt decides): run ≥ 1500 frames from reset, snapshot every ~15 frames; pass = (a) max output R std over frames 700–1500 > 0.05, (b) peak R std over the last 300 frames > 0.05 (not dead late), (c) mean-R pulse period 147 ± 10%, (d) the snapshot std/mean series tracks the mirror's encoded series at the same frames within a stated band. Dead or uniform after frame 900 → live-debug rule.
-- **ADOPTED (Matt, 2026-10-24 17:10: "proceed with your recommendations")**, ±0.03 band on ≥ 90% of snapshots. Before adoption the N 256 mirror was checked against N 1024 (1500 frames, encoded 256² every 15 frames): max |mean diff| 0.014, max |std diff| 0.014, so N 256 is the in-test reference. `bench_fc_look.py` rewritten to these criteria.
+- **ADOPTED (Matt, 2026-10-24 17:10: "proceed with your recommendations")**, ±0.03 band on ≥ 90% of snapshots. Before adoption the N 256 mirror was checked against N 1024 (1500 frames, encoded 256² every 15 frames): max |mean diff| 0.014, max |std diff| 0.014, so N 256 is the in-test reference. `bench_wc_look.py` rewritten to these criteria.
 - **First run (job `20261024_171658_ee746c`, Max 9.2.0): the job rendered 1505 frames at ~58 fps with no unexpected errors, but NO outlet was captured at any of the 93 snapshots** (`outputs` empty; capture matrices stayed 1×1). The harness path is the one `bench_wc_look.py` and the old fc look bench used successfully, so the module's outlet sent nothing during the run. Static read of the built patcher: enc (obj-5) → outlet is wired; enc's inlet 0 receives `r draw` bangs AND the module input texture (inlet → routepass → enc in0); nl → enc in1 is wired. No fix attempted (strike 0). Next: an existing outlet-renders check or the live-debug rule (Matt's call).

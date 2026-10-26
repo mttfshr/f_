@@ -12,7 +12,7 @@ reaction-diffusion and neural-field generators, feedback loops, strobing footage
 
 ## Where it came from
 
-`f_formconstants` flashes: the whole field fires, recovers and fires again. Measured (2026-10-25,
+`f_wc` flashes: the whole field fires, recovers and fires again. Measured (2026-10-25,
 `tests/records/spike_fc_flash.py`, `spike_fc_damping.py`) as the E–I loop's own bulk oscillation
 (frame-mean E swinging ~0.07 ↔ 0.6), entrained by the pulse, and inseparable from the pattern inside the
 dynamics: no knob removes one without killing the other. A display-side de-flicker was designed and
@@ -53,6 +53,6 @@ luma-only switch (luma-only avoids colour shifts on footage).
 
 ## Related
 
-- `f_formconstants` (`.specify/f_formconstants/tasks.md` T075) — the origin and the measurements.
+- `f_wc` (`.specify/f_wc/tasks.md` T075) — the origin and the measurements.
 - Downstream-effect philosophy (Matt, 2026-10-25): Strike / impulse and Contrast / Sharp also belong in
   separate modules, not inside generators.

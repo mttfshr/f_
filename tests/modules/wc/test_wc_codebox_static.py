@@ -1,15 +1,15 @@
-"""test_fc_codebox_static.py -- static guards for the f_formconstants PARITY build
+"""test_wc_codebox_static.py -- static guards for the f_wc PARITY build
 (tasks T043/T044): things an offline run CAN verify about the codeboxes and the
 built patcher, since GenExpr itself only compiles in Max (T046).
 
   1  every codebox's Param `n` default equals the definition's solver @dim (S1) -- the
      texel grid is never the gen `dim` global
-  2  the blur literals in codebox_blur_x/y.gen equal fc_parity_mirror.half_kernel()
+  2  the blur literals in codebox_blur_x/y.gen equal wc_parity_mirror.half_kernel()
   3  forbidden constructs (jit-gen-codebox skill / the Revision 2 agent brief) are absent
   4  the positional object ids the definition's raw wiring hard-codes match the built patcher
   5  no solver stage is wired to `r dim`; enc is
 
-Run:  tests/run.sh -q tests/modules/formconstants/test_fc_codebox_static.py
+Run:  tests/run.sh -q tests/modules/wc/test_wc_codebox_static.py
 """
 import importlib.util
 import json
@@ -20,10 +20,10 @@ from pathlib import Path
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-import fc_parity_mirror as m  # noqa: E402
+import wc_parity_mirror as m  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(REPO, "src", "f_formconstants")
+SRC = os.path.join(REPO, "src", "f_wc")
 GEN = ["codebox_seed.gen", "codebox_pass.gen", "codebox_blur_x.gen", "codebox_blur_y.gen",
        "codebox_nl.gen", "codebox_enc.gen"]
 
@@ -97,7 +97,7 @@ def test_forbidden_constructs_absent():
 
 
 def _built():
-    p = os.path.join(REPO, "package", "patchers", "f_formconstants.maxpat")
+    p = os.path.join(REPO, "package", "patchers", "f_wc.maxpat")
     return json.load(open(p))["patcher"]
 
 
@@ -105,7 +105,7 @@ def _defn():
     """The definition module (its derived _SUP / _N_CONTROLS are what the raw wiring uses)."""
     import importlib.util
     spec = importlib.util.spec_from_file_location(
-        "fc_definition", str(Path(__file__).resolve().parents[3] / "src" / "f_formconstants" / "definition.py"))
+        "fc_definition", str(Path(__file__).resolve().parents[3] / "src" / "f_wc" / "definition.py"))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -119,9 +119,9 @@ def _solver_ids():
 def test_positional_ids_match_built_patcher():
     boxes = {b["box"]["id"]: b["box"] for b in _built()["boxes"]}
     d = _defn()
-    names = ["#0_fc_hold", "#0_fc_seed", "#0_fc_pass", "#0_fc_blurx", "#0_fc_blury", "#0_fc_nl"]
+    names = ["#0_wc_hold", "#0_wc_seed", "#0_wc_pass", "#0_wc_blurx", "#0_wc_blury", "#0_wc_nl"]
     want = dict(zip(names, _solver_ids()))
-    want["#0_fc_enc"] = "obj-5"
+    want["#0_wc_enc"] = "obj-5"
     note("support-stage base (_SUP) / controls", f"{d._SUP} / {d._N_CONTROLS}")
     for name, oid in want.items():
         box = boxes.get(oid)
@@ -155,7 +155,7 @@ def test_freeze_header_toggle_reaches_nl():
     assert len(pre) == 1 and boxes[pre[0]].get("attr") == "freeze_on", pre
     dst = [pl["destination"][0] for pl in (ln["patchline"] for ln in pb["lines"]) if pl["source"][0] == pre[0]]
     assert dst == [_solver_ids()[5]], f"Freeze must reach nl {_solver_ids()[5]}, got {dst}"
-    assert "#0_fc_nl::freeze_on" in boxes[tog[0]].get("param_connect", ""), boxes[tog[0]].get("param_connect")
+    assert "#0_wc_nl::freeze_on" in boxes[tog[0]].get("param_connect", ""), boxes[tog[0]].get("param_connect")
 
 
 def test_r_dim_reaches_enc_only():

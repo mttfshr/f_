@@ -1,4 +1,4 @@
-"""spike_fc_sustain.py -- f_formconstants Phase 0, T002 (the load-bearing
+"""spike_fc_sustain.py -- f_wc Phase 0, T002 (the load-bearing
 experiment): does the Example-10 Wilson-Cowan update SUSTAIN structure at
 float32 without per-frame noise?
 
@@ -34,10 +34,10 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO, "tests", "lib"))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
-from fc_mirror import (F32, Params, ex10_square_wave, lambda_px, run,  # noqa: E402
+from wc_steadyweb_mirror import (F32, Params, ex10_square_wave, lambda_px, run,  # noqa: E402
                        seed_state, structure_factor_metrics)
 
 FRAMES = 4000

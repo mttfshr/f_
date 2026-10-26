@@ -1,9 +1,9 @@
-# f_formconstants
+# f_wc
 
 **Type:** Generator (pulse inlet, RGB out) — **temporal / has memory**
 **Status:** Built, benched and live-checked through Phase D (Matt confirmed the live defaults 2026-10-25). Phase 0 (constants measured), Phase R (the parity rebuild) and Phase D (performance controls) are closed except T064 (solver size, open pending a look). The Phase 2 soak (T024) is still owed, so the README row keeps its ⚠.
 
-_Reference written 2026-10-25 from `src/f_formconstants/` (definition + codeboxes), `.specify/f_formconstants/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module (spec Revision 2 and its "Shipped controls" section are the current spec)._
+_Reference written 2026-10-25 from `src/f_wc/` (definition + codeboxes), `.specify/f_wc/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module (spec Revision 2 and its "Shipped controls" section are the current spec)._
 
 ---
 
@@ -26,8 +26,8 @@ Typical use: patch it alone as a living background; feed a camera or a Vsynth WF
 to make the web follow the image; set Space to Unwrapped and patch the output into `f_droste` (or any
 downstream wrap) for the flat cortical grid.
 
-Sibling of `f_wc` (a 256² FFT-chain solver with a noise-sustained labyrinth and many more dials); this
-module trades f_wc's resolution-independent grid and tuning surface for the page's fine-grained look.
+Sibling of `f_wc_fft` (a 256² FFT-chain solver with a noise-sustained labyrinth and many more dials); this
+module trades f_wc_fft's resolution-independent grid and tuning surface for the page's fine-grained look.
 
 ---
 
@@ -165,7 +165,7 @@ changes texture character, not liveness.
 - **Orientation.** The picture may be mirrored vertically relative to the HTML page; that is not a parity
   failure.
 - **Cost.** About 1.07 ms/frame at 1080p and 1.54 ms at 4K (N 1024); N 2048 measured 2.04 / 2.47 ms (upper
-  bounds). f_wc is 2.45 ms. Cost is not a constraint.
+  bounds). f_wc_fft is 2.45 ms. Cost is not a constraint.
 - **Taken out, do not rebuild:** Quant menu (no visible difference), Inhibit dial (one narrow living band),
   Flash / damping dials (above), De-flicker (downstream), Strike / impulse and Contrast / Sharp (downstream
   modules), map dials (overlap `f_droste`), the drive inlet (superseded by the pulse inlet), and a
@@ -176,18 +176,18 @@ changes texture character, not liveness.
 - **T064 solver size** (512 / 1024 / 2048 as a load-time choice) is open pending a look
   (`tests/records/spike_fc_solver_size.py`). Until decided the solver stays at 1024, the page's size.
 - **Phase 2 soak (T024)** is owed before the README ⚠ comes off.
-- `bench_fc_look.py` captures no outlet output in the module bench although the module renders live (a
+- `bench_wc_look.py` captures no outlet output in the module bench although the module renders live (a
   bench-side capture bug; first suspect the float32 output vs the capture matrix).
 - Very slow Rate settings step visibly (the state holds between solver steps); an enc blend could smooth it.
 
 ## Verification
 
-- `tests/modules/formconstants/test_fc_parity.py` — NumPy mirror (`fc_parity_mirror.py`), 19/19: blur,
+- `tests/modules/wc/test_wc_parity.py` — NumPy mirror (`wc_parity_mirror.py`), 19/19: blur,
   `wc` step, pulse shapes, Rate clock, Screen / Unwrapped coordinates (round trip lands on the same texel),
   Cortical view at N × N equals the state and tiles seamlessly.
-- `test_fc_codebox_static.py` 7/7: codebox Param defaults equal the definition's `@dim`, no `r dim` reaches
+- `test_wc_codebox_static.py` 7/7: codebox Param defaults equal the definition's `@dim`, no `r dim` reaches
   a solver stage, hash and weight guards.
-- `tests/modules/formconstants/bench_formconstants.py` — GPU vs mirror, 14/14 incl. `--slow`: stage legs
+- `tests/modules/wc/bench_wc.py` — GPU vs mirror, 14/14 incl. `--slow`: stage legs
   within 1 level, 150-frame E std / mean on the GPU equal the mirror to four digits, cost legs, plus legs for
   Rate, Grain, Output, the Retinal pulse and the Unwrapped view.
 - Module contract bench, drift (16/16 reproduce exactly), launch and menu tests green.
@@ -202,11 +202,11 @@ changes texture character, not liveness.
 - Michael Rule's webgpgpu `WC_Example_10_fullscreen.html` and `gpgpu.js` / `gpugaussian.js`: the
   pipeline, constants and display map this module ports (algorithm used directly; the float32 state, the
   pulse inlet and the Phase D controls are this repo's additions).
-- Related: `f_wc.md` (same model family, FFT chain, many dials), `f_droste.md` (the downstream wrap for the
+- Related: `f_wc_fft.md` (same model family, FFT chain, many dials), `f_droste.md` (the downstream wrap for the
   Unwrapped view), `ideas/f_deflicker.md`.
 
 ## Source Files
 
-`src/f_formconstants/definition.py`, `src/f_formconstants/codebox_{seed,pass,blur_x,blur_y,nl,enc}.gen`,
-`package/patchers/f_formconstants.maxpat`, `package/help/f_formconstants.maxhelp`,
-`.specify/f_formconstants/{spec,tasks}.md`, `tests/modules/formconstants/`.
+`src/f_wc/definition.py`, `src/f_wc/codebox_{seed,pass,blur_x,blur_y,nl,enc}.gen`,
+`package/patchers/f_wc.maxpat`, `package/help/f_wc.maxhelp`,
+`.specify/f_wc/{spec,tasks}.md`, `tests/modules/wc/`.

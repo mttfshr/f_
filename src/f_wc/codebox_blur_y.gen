@@ -1,13 +1,13 @@
-// codebox_blur_y.gen -- f_formconstants PARITY blur stage, Y pass (spec Revision 2, S2 + S3).
+// codebox_blur_y.gen -- f_wc PARITY blur stage, Y pass (spec Revision 2, S2 + S3).
 // Port of lib/gpugaussian.js GPUGaussianMultiBlur(gl, 1, 2, 1, 1): per-channel sigma
 // R = 1 (E), G = 2 (I), B = 1, A = 1; ONE shared radius ceil(3 * 2) = 6, so the sigma = 1
 // kernel is also 13 taps; weights exp(-0.5 (i/sigma)^2) normalized over [-6, 6]; taps at exact
 // integer texel offsets, wrap (REPEAT); the result divided by w0 + 2*sum(w_i) (the page does) and
 // quantized floor(255 c + 0.5)/255 on all four channels (S2).
-// Weights are LITERALS generated from tests/modules/formconstants/fc_parity_mirror.half_kernel()
-// (test_fc_codebox_static.py re-parses this file and compares them). Mirror: fc_parity_mirror.blur_pass.
+// Weights are LITERALS generated from tests/modules/wc/wc_parity_mirror.half_kernel()
+// (test_wc_codebox_static.py re-parses this file and compares them). Mirror: wc_parity_mirror.blur_pass.
 // Grid size: Param n (default 1024 = the definition's @dim, S1) -- NEVER the gen `dim` global.
-// Wrap is explicit modulo on the texel index (the verified f_wc / f_formconstants pattern); reads are
+// Wrap is explicit modulo on the texel index (the verified f_wc_fft / f_wc pattern); reads are
 // nearest() at texel centres, normalized coordinates. GenExpr discipline: no functions, everything
 // inlined with suffixed names.
 // Phase D T072 (Matt, 2026-10-25): Param grain_scale from the Grain dial (0.5-2, default 1) -- every

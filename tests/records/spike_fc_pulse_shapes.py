@@ -1,11 +1,11 @@
-"""spike_fc_pulse_shapes.py -- f_formconstants Phase D, T061 pre-measurement:
+"""spike_fc_pulse_shapes.py -- f_wc Phase D, T061 pre-measurement:
 what pulse (the `s` drive) keeps the parity field alive, so that "plug a Vsynth WFG in"
 is a sound design?
 
 Decided before this run (Matt, 2026-10-24): the pulse input REPLACES the internal square
 wave (s = depth * input, the internal wave being the unplugged default) and is read in
 CORTICAL space (on the solver grid). This script measures, in the parity mirror
-(fc_parity_mirror.py: source kernel, Example-10 constants, quantized), N 256, seed 1:
+(wc_parity_mirror.py: source kernel, Example-10 constants, quantized), N 256, seed 1:
   A  waveform at depth 0.6, period 147: square (source), sine, triangle, saw, DC 0.3, DC 0.6
   B  square depth sweep 0.2 - 1.5
   C  square period sweep 37 - 588 frames
@@ -38,7 +38,7 @@ import time
 from multiprocessing import Pool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
 
@@ -82,7 +82,7 @@ def s_fn(spec):
 
 def go(args):
     label, spec, frames = args
-    import fc_parity_mirror as m
+    import wc_parity_mirror as m
     m.s_of_t = s_fn(spec)
     st = m.seed_state(N, np.random.default_rng(1))
     es, on_std, off_std = [], [], []

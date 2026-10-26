@@ -30,7 +30,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes); audio companion patch included |
 | `f_grain` | Stochastic grain field with per-grain displacement and luma gating |
 | `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
-| `f_formconstants` | ⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; no dials yet |
+| `f_wc` | ⚠ Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
 | `f_stipple` | 2D hash field stipple texture |
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |

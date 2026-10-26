@@ -1,14 +1,14 @@
-"""spike_fc_parity_sustain.py -- f_formconstants Revision 2, T041/T042 record:
+"""spike_fc_parity_sustain.py -- f_wc Revision 2, T041/T042 record:
 which ingredient of the WC_Example_10 page actually sustains the pattern?
 
-Conditions (the parity mirror, fc_parity_mirror.py: source kernel sigma = (1, 2) px,
+Conditions (the parity mirror, wc_parity_mirror.py: source kernel sigma = (1, 2) px,
 Example-10 constants, no per-frame noise, no habituation), crossed:
     8-bit quantization   on / off  (levels 255 / None)
     drive s square wave  on / off  (depth 0.6 / 0.0, period ~147 frames)
 two seeds, N = 128 and 256, 3000-4000 frames. Tracked: spatial std of E, per
 500-frame window (min-max).
 
-RESULT (2026-10-24; the numbers the test_fc_parity sustain test asserts):
+RESULT (2026-10-24; the numbers the test_wc_parity sustain test asserts):
     quantized + s    sustained   E std 0.05-0.22 through the last window, both seeds
     float32  + s     sustained   E std 0.05-0.22, same band
     quantized, no s  dead        E std 0.002-0.010 after ~1000 frames
@@ -28,14 +28,14 @@ import time
 from multiprocessing import Pool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
 
 
 def go(args):
     label, n, frames, levels, depth, seed = args
-    import fc_parity_mirror as m
+    import wc_parity_mirror as m
     m.S_DEPTH = depth
     st = m.seed_state(n, np.random.default_rng(seed))
     es = []

@@ -1,5 +1,5 @@
 """
-bench_fc_look.py -- f_formconstants T047: the SHIPPED parity patcher's look over time.
+bench_wc_look.py -- f_wc T047: the SHIPPED parity patcher's look over time.
 
 Rewritten 2026-10-24 for the Revision 2 parity build (fixed 1024^2 solver, RGB out, no
 dials; the steady-web version is in git 63b6129). The module is loaded in the module bench,
@@ -15,12 +15,12 @@ dynamics have a ~600-frame near-uniform transient and sub-0.05 std dips after em
       >= 90% of snapshots at frames >= 300, after the best lag in [LAG_MIN, LAG_MAX]
       (the module's reset goes through a 200 ms [delay], so its frame 0 is a wall-clock
       offset after the bench's reset message; the lag is reported).
-Reference curve: fc_parity_mirror at N = 256 (local dynamics; the mean-R curve at N 256
+Reference curve: wc_parity_mirror at N = 256 (local dynamics; the mean-R curve at N 256
 was checked against N 1024 offline before adoption -- see tasks.md T047 record).
 Uniform or dead after frame 900 -> the brief's live-debug rule, not more bench legs.
 
 Run (Max open, tests/bench/bench_module.maxpat loaded):
-    tests/bench.sh -q tests/modules/formconstants/bench_fc_look.py
+    tests/bench.sh -q tests/modules/wc/bench_wc_look.py
 Not in the regression group (long run).
 """
 import json
@@ -37,7 +37,7 @@ import modulebench as mb
 from harness import check, note, run
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import fc_parity_mirror as fm  # noqa: E402
+import wc_parity_mirror as fm  # noqa: E402
 
 N_IN = 64                    # module bench input texture size (the module ignores its input)
 RUN = 1500                   # frames after reset
@@ -93,7 +93,7 @@ def ppm(path, arr3):
 
 def test_parity_module_look_over_time():
     segs, offs = schedule()
-    print(f"bench_fc_look: {len(segs)} snapshots every {SPACING + 1} frames over {offs[-1]} frames")
+    print(f"bench_wc_look: {len(segs)} snapshots every {SPACING + 1} frames over {offs[-1]} frames")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     t0 = time.time()
@@ -102,10 +102,10 @@ def test_parity_module_look_over_time():
 
     job, job_dir = bc.new_job("module", warmup=10, settle=6, timeout_ms=600000)
     job["wrapper"] = f"mjob_{job['id']}.maxpat"
-    mod = mb.Module(_paths.REPO / "package" / "patchers" / "f_formconstants.maxpat")
+    mod = mb.Module(_paths.REPO / "package" / "patchers" / "f_wc.maxpat")
     n_in, n_out = mb.module_io(mod)
     with open(bc.BENCH_DIR / job["wrapper"], "w") as fh:
-        json.dump(mb.make_wrapper("f_formconstants.maxpat", n_in, n_out), fh, indent=2)
+        json.dump(mb.make_wrapper("f_wc.maxpat", n_in, n_out), fh, indent=2)
     jxf.write_rgba(job_dir / "in1.jxf", mb.neutral(N_IN))
     job["inputs"] = ["in1.jxf"]
     job["segments"] = segs

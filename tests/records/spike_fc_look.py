@@ -1,4 +1,4 @@
-"""spike_fc_look.py -- f_formconstants Phase 0, T004: retinotopic look stills
+"""spike_fc_look.py -- f_wc Phase 0, T004: retinotopic look stills
 from the mirror at the fine web scale, judged offline BEFORE any Max session.
 
 Renders the sustained Example-10 field through the shared enc map at several
@@ -16,10 +16,10 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO, "tests", "lib"))
-sys.path.insert(0, os.path.join(REPO, "tests", "modules", "formconstants"))
+sys.path.insert(0, os.path.join(REPO, "tests", "modules", "wc"))
 
 import numpy as np  # noqa: E402
-from fc_mirror import F32, Params, encode, run, seed_state  # noqa: E402
+from wc_steadyweb_mirror import F32, Params, encode, run, seed_state  # noqa: E402
 
 ENERGY = 0.0        # <-- set from the T002 verdict
 N = 512

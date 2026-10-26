@@ -341,7 +341,7 @@ background on when this is the right tool vs. `pix_chain`/`pix_target`.
 **`"type": "header_toggle"` param and `pix_target`** (2026-10-25) — a header toggle (one per module, a
 live.toggle left of bypass) drives the PRIMARY pix by default; like a dial it may name one `pix_target`
 stage (a string; a list is refused) and a `pix_attr`, and its param_connect then names that stage.
-First user: f_formconstants' Freeze, which must reach the `nl` solver stage, not the primary `enc`.
+First user: f_wc' Freeze, which must reach the `nl` solver stage, not the primary `enc`.
 With a header toggle the title-bar signal-type label ends left of the toggle's label (pw - 93) instead of
 left of bypass, so the two no longer overlap; `header_label` sets the toggle's label text.
 

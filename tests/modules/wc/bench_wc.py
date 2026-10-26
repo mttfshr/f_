@@ -1,7 +1,7 @@
 """
-bench_formconstants.py -- f_formconstants PARITY build, tasks T046: every stage codebox
-under src/f_formconstants/ run on the GPU through the codebox bench and diffed against the
-parity mirror (fc_parity_mirror.py), then the chain host-sequenced for 5 frames (texel-exact
+bench_wc.py -- f_wc PARITY build, tasks T046: every stage codebox
+under src/f_wc/ run on the GPU through the codebox bench and diffed against the
+parity mirror (wc_parity_mirror.py), then the chain host-sequenced for 5 frames (texel-exact
 class) and, @slow, 150 frames (statistics). THIS IS THE FIRST MAX COMPILE of the parity
 codeboxes: a compile error or a readback mismatch here is the finding; do not tune around it
 (tasks.md agent brief, rules 2, 3, 5).
@@ -23,10 +23,10 @@ Stage jobs (one pass per job; the bench drives one codebox per job, up to 3 inpu
     enc    in1 = bang, in2 = state; the retinal map at (ow, oh) (Params ow, oh, n, bypass_gate)
 
 The grid size is pinned with Param n = 128 for the stage legs (the codebox default is the real
-1024; test_fc_codebox_static.py asserts it equals the definition's @dim).
+1024; test_wc_codebox_static.py asserts it equals the definition's @dim).
 
 Needs Max with tests/bench/bench.maxpat open.
-Run:  tests/bench.sh tests/modules/formconstants/bench_formconstants.py
+Run:  tests/bench.sh tests/modules/wc/bench_wc.py
       (add --slow for the 150-frame statistics leg)
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
@@ -38,10 +38,10 @@ import sys
 import numpy as np
 
 import benchclient as bc
-import fc_parity_mirror as m
+import wc_parity_mirror as m
 from harness import check, note, run, slow
 
-SRC = _paths.REPO / "src" / "f_formconstants"
+SRC = _paths.REPO / "src" / "f_wc"
 N = 128
 Q = 1.0 / 255.0
 F32 = np.float32
@@ -111,7 +111,7 @@ def test_seed_stage():
     check("seed: salt 1 differs from salt 0", 0.2 - float(np.abs(s0 - s1).mean()), 0.2)
     corr = max(abs(float(np.corrcoef(s0[..., a].ravel(), s0[..., b].ravel())[0, 1]))
                for a, b in ((0, 1), (0, 2), (1, 3)))
-    check("seed: channels weakly correlated (cheap hash, f_wc precedent)", corr, 0.30)
+    check("seed: channels weakly correlated (cheap hash, f_wc_fft precedent)", corr, 0.30)
 
 
 def test_pass_stage_flag_and_reseed():
@@ -409,7 +409,7 @@ def _stage_cost(stage, inputs, dim, params):
 def test_cost_per_frame_T049():
     """T049: ms/frame of the per-frame stages (seed, pass, blur_x, blur_y, nl, enc; all six
     render every frame -- seed is banged by `r draw` too) at solver N 1024 / 2048 and render
-    1080p / 4K. Report only (no budget in tasks.md); compared against f_wc's 2.45 ms (T024,
+    1080p / 4K. Report only (no budget in tasks.md); compared against f_wc_fft's 2.45 ms (T024,
     256^2 solver + enc 1280x720). The hold pix (a passthrough) is not timed."""
     rng = np.random.default_rng(0)
     totals, stage_lines = {}, []
@@ -438,7 +438,7 @@ def test_cost_per_frame_T049():
             totals[(n, label)] = solver + ms
     lines = []
     for (n, label), t in totals.items():
-        line = (f"TOTAL N {n} @ {label}: {t:.2f} ms/frame ({t / 2.45:.1f}x f_wc's 2.45 ms; "
+        line = (f"TOTAL N {n} @ {label}: {t:.2f} ms/frame ({t / 2.45:.1f}x f_wc_fft's 2.45 ms; "
                 f"{1000.0 / t:.0f} fps ceiling for this module alone)")
         note("cost", line)
         lines.append(line)

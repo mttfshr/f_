@@ -1,16 +1,16 @@
-# Spec: f_formconstants
+# Spec: f_wc
 
 _Created: 2026-10-24_
 _Status: **REVISION 2 (2026-10-24 night) — read "Revision 2" first; it
 supersedes the premises listed there.** Scope originally settled 2026-10-24._
-_Origin: `ideas/f_formconstants.md` — spun out of the f_wc pixelation
+_Origin: `ideas/f_wc.md` — spun out of the f_wc_fft pixelation
 discussion (HANDOFF 2026-10-24). Reading the `WC_Example_10_fullscreen.html`
 source showed its fine, silky look is structural (solver grid = display grid,
 separable-Gaussian coupling, continuous display), and Matt confirmed that look
-is the actual target. Sibling of `f_wc` (`.specify/f_wc/spec.md`), which stays
+is the actual target. Sibling of `f_wc_fft` (`.specify/f_wc_fft/spec.md`), which stays
 shipped and unchanged: same model class, different architecture and regime.
-Name settled: `f_formconstants` (Ermentrout-Cowan's term for the
-hallucination taxonomy; Matt, 2026-10-24 — the f_wc gate-G2 alternate)._
+Name settled: `f_wc` (Ermentrout-Cowan's term for the
+hallucination taxonomy; Matt, 2026-10-24 — the f_wc_fft gate-G2 alternate)._
 
 ## Revision 2 (2026-10-24 night, Claude + Matt): parity first, then deviate
 
@@ -50,7 +50,7 @@ Parameters table, Success Criterion 3, Out of Scope items 1 and 2 (color, the
 `s` wave), and the "Resolved by design discussion" architecture bullets. They
 stay below as history. Where they conflict with Revision 2, Revision 2 wins.
 
-What still holds: US-2 drive semantics (G3, f_wc), US-5 module conventions,
+What still holds: US-2 drive semantics (G3, f_wc_fft), US-5 module conventions,
 FR-004 (seed from noise, never zero), FR-008 (no NaN at the outlet), FR-009
 (reset), FR-011, FR-012, NF-003 (stability soak), NF-004 (tier order).
 
@@ -140,12 +140,12 @@ reference build at `63b6129`). T064 (solver size as a load-time choice) is open 
 
 ## Scope settled (2026-10-24, Claude + Matt) — history; see Revision 2
 
-- **New sibling module, not a re-architecture of f_wc.** f_wc's 256² FFT
+- **New sibling module, not a re-architecture of f_wc_fft.** f_wc_fft's 256² FFT
   chain, its tuned labyrinth corner, and its spots corner (aii 3–6) ship
-  unchanged. This module trades f_wc's resolution-independent 256² grid for a
+  unchanged. This module trades f_wc_fft's resolution-independent 256² grid for a
   render-resolution solver with spatial blur coupling — the webgpgpu
-  Example-10 pipeline — to reach the fine-grained silky regime f_wc's grid
-  structurally cannot (σ_I = 2 display px at fullscreen; f_wc's grain floor is
+  Example-10 pipeline — to reach the fine-grained silky regime f_wc_fft's grid
+  structurally cannot (σ_I = 2 display px at fullscreen; f_wc_fft's grain floor is
   ~1 cortical texel ≈ 7 screen px at 1080p).
 - ~~**Example-10 coupling constants as defaults**~~ → **AMENDED BY MEASUREMENT
   (Phase 0 T002, 2026-10-24).** The Example-10 fullscreen page is Rule's
@@ -168,11 +168,11 @@ reference build at `63b6129`). T064 (solver size as a load-time choice) is open 
   never leaves the regime (see Edge Cases for state-resize behavior).
 - **Luminance display; color out of scope.** The source's
   `vec4(Ue, Ui, |Ue−Ui|·3)` display is a debug view. This module renders E
-  through the shared enc map with contrast/sharp, per f_wc's G4; color is a
+  through the shared enc map with contrast/sharp, per f_wc_fft's G4; color is a
   downstream module's job.
 - **float32 end to end.** The source quantizes state to 1/255 every write
   (`EncodeFloat`) and quantizes the blur output too; this model lives on a
-  saturation boundary, so we keep f_wc's precision. (Their quantization also
+  saturation boundary, so we keep f_wc_fft's precision. (Their quantization also
   acts as stochastic decorrelation — Phase 0 measures whether Example-10's
   noiseless update sustains structure at float32 or needs a small per-frame
   `Ne` default.)
@@ -180,14 +180,14 @@ reference build at `63b6129`). T064 (solver size as a load-time choice) is open 
 ## Why this module, in this library
 
 - The fine/silky web look is confirmed target content (Matt, 2026-10-24) and
-  is unreachable from f_wc's grid — this is the cheapest faithful route, and
+  is unreachable from f_wc_fft's grid — this is the cheapest faithful route, and
   it is also likely CHEAPER per frame than the DFT chain it replaces (two
   ~15-tap separable blur passes vs. eight generated stage codeboxes at these
   σ; cost to be measured, NF-001).
 - Everything load-bearing is already proven in-repo: the nl equations and
-  noise/habituation/drive mechanics (f_wc Phase 0–4), the enc retinotopic
-  map stage with foveal softening (f_wc FR-007), the blur-as-convolution
-  correctness (f_wc's spec stage is the same Gaussian, evaluated spectrally —
+  noise/habituation/drive mechanics (f_wc_fft Phase 0–4), the enc retinotopic
+  map stage with foveal softening (f_wc_fft FR-007), the blur-as-convolution
+  correctness (f_wc_fft's spec stage is the same Gaussian, evaluated spectrally —
   the mirror cross-checks the spatial form against np.fft trivially).
 
 ## Clarifications
@@ -206,7 +206,7 @@ reference build at `63b6129`). T064 (solver size as a load-time choice) is open 
   `ceil(3σ)`, weights `exp(−i²/2σ²)` evaluated in GenExpr from the σ Params
   (no kernel tables, no array uniforms — jit.gl.pix Params are scalars).
   The source's `GPUGaussianMultiBlur(gl,1,2,1,1)` is exactly this shape.
-- **enc stage reuses f_wc's map math** — the bare-log retinotopic resample,
+- **enc stage reuses f_wc_fft's map math** — the bare-log retinotopic resample,
   `r_soft` foveal softening, contrast + sharp output map, `bypass_gate`.
   Copied with header changes; whether a shared enc source gets factored
   (the `gen_dft.py` shared-generator precedent) is a Phase 3 hygiene
@@ -217,7 +217,7 @@ reference build at `63b6129`). T064 (solver size as a load-time choice) is open 
   Phase 0 (T002) measures whether a default per-frame `Ne` covers the rest.
 - **Noise at float32: measured, not assumed.** Example 10 injects no
   per-frame noise (its 8-bit quantization decorrelates deterministically);
-  f_wc's Psychedelic corner needs noise as the load-bearing mechanism.
+  f_wc_fft's Psychedelic corner needs noise as the load-bearing mechanism.
   Phase 0 T002 determines the default `energy` for the Example-10
   constants at float32; the dial exists either way.
 
@@ -229,7 +229,7 @@ reference build at `63b6129`). T064 (solver size as a load-time choice) is open 
 - **`energy` default** — T002's measurement (0.0 if the deterministic
   update sustains indefinitely at float32; the measured sustain floor
   otherwise).
-- **`habituation` dial in v1** — the math is proven (f_wc G5) and the B/A
+- **`habituation` dial in v1** — the math is proven (f_wc_fft G5) and the B/A
   channels are free; staged as gate G1 (Matt) to keep the v1 dial surface
   curated.
 
@@ -237,15 +237,15 @@ reference build at `63b6129`). T064 (solver size as a load-time choice) is open 
 
 ### User Story 1 — Fine-grained living hallucination web (Priority: P1)
 
-A performer drops `f_formconstants` into a patch with no inlets connected and
+A performer drops `f_wc` into a patch with no inlets connected and
 gets a continuously evolving, fine-grained, silky cortical labyrinth rendered
 in visual-field coordinates — the WC_Example_10 look — never settling, never
 blocky, at any render resolution.
 
-**Why this priority**: the module's entire reason to exist; the look f_wc
+**Why this priority**: the module's entire reason to exist; the look f_wc_fft
 structurally cannot reach.
 
-**Independent Test**: patch `f_formconstants` alone into `vs_preview` at
+**Independent Test**: patch `f_wc` alone into `vs_preview` at
 default dials. At 1920×1080 the pattern reads as the Example-10 fine web
 (tier-3, Matt, side-by-side with the HTML page); at 320×180 it reads as the
 same picture at lower detail; no texel-scale staircase on contours at any
@@ -266,11 +266,11 @@ same picture at lower detail; no texel-scale staircase on contours at any
 
 ### User Story 2 — Driven mode: scene vs. spontaneous web (Priority: P1)
 
-Same contract as f_wc US-2: a texture on the drive inlet modulates the E
+Same contract as f_wc_fft US-2: a texture on the drive inlet modulates the E
 sigmoid input; weak drive = hallucinate, strong drive = see; unconnected =
 neutral (the pure US-1 web).
 
-**Why this priority**: the performative core, shared with f_wc (gate G3's
+**Why this priority**: the performative core, shared with f_wc_fft (gate G3's
 semantics carry verbatim).
 
 **Independent Test**: high-contrast moving texture on the drive inlet; sweep
@@ -280,7 +280,7 @@ disconnect mid-run without a NaN or pop.
 **Acceptance Scenarios**:
 1. **Given** a structured texture on the drive inlet at `drive_gain` ≥ 1,
    **When** frames run, **Then** the web's structure follows the input
-   (bench-measurable imprint correlation, f_wc T032-pattern).
+   (bench-measurable imprint correlation, f_wc_fft T032-pattern).
 2. **Given** the drive inlet disconnected, **When** frames run, **Then** the
    behavior is exactly US-1 (0.5-neutral substitution via `drv_conn`).
 
@@ -288,7 +288,7 @@ disconnect mid-run without a NaN or pop.
 
 A continuous `grain` dial moves the web from hair-fine to coarse-mesh,
 resolution-independently; `aspect` (σ_E/σ_I ratio) steers ordering
-(stripes ↔ labyrinth), carrying f_wc's G6 semantics.
+(stripes ↔ labyrinth), carrying f_wc_fft's G6 semantics.
 
 **Why this priority**: the navigation promise; without a steerable grain the
 module is one fixed demo preset.
@@ -302,14 +302,14 @@ the mesh size and ordering shift continuously; no reset, no divergence.
    units (mirror-measured structure-factor peak) at every render size.
 2. **Given** the documented spots landmark, **When** frames run from noise,
    **Then** the texture reads as the Example-10 web (tier-3) in at least 4
-   of 5 seeds (the seed-variance bound the f_wc sweeps used).
+   of 5 seeds (the seed-variance bound the f_wc_fft sweeps used).
 
 ### User Story 4 — Rate, energy, and reset (Priority: P2)
 
 `rate` scales per-frame dt; `energy` (Ne) sets the per-frame noise floor
 (default per T002's measurement); reset reseeds from fresh noise.
 
-**Why this priority**: feel controls, f_ks/f_wc precedent.
+**Why this priority**: feel controls, f_ks/f_wc_fft precedent.
 
 **Independent Test**: sweep `rate` across its range; hammer reset; no NaN,
 no freeze, no cross-instance state.
@@ -317,7 +317,7 @@ no freeze, no cross-instance state.
 **Acceptance Scenarios**:
 1. **Given** `rate` at maximum, **When** 10,000 frames run, **Then** the
    output stays finite and bounded (relaxation toward a bounded sigmoid: no
-   NaN ceiling exists, f_wc T003 — the ceiling is pattern-preservation,
+   NaN ceiling exists, f_wc_fft T003 — the ceiling is pattern-preservation,
    set at Phase 2 tuning).
 2. **Given** a reset mid-run, **When** frames continue, **Then** both fields
    reseed from fresh noise and resume with no seam after the settle time.
@@ -342,7 +342,7 @@ names, independent instances.
 - **FR-001**: The module MUST hold persistent two-field state `(E, I)` in
   one texture (R = E, G = I; B/A reserved for habituation per G1) across
   frames in a one-frame feedback loop AT RENDER RESOLUTION (`@adapt 1`
-  solver stages; the f_wc FR-013 decoupling is deliberately reversed —
+  solver stages; the f_wc_fft FR-013 decoupling is deliberately reversed —
   solver res = render res is the point).
 - **FR-002** *(amended 2026-10-24, Phase 0 T003/T005)*: The coupling
   convolution MUST be a real-space separable Gaussian: two stages
@@ -372,47 +372,47 @@ names, independent instances.
   (√dt-scaled, both sigmoid inputs); **Ne default = 0.75 and `habituation`
   default ≈ 0.9, both load-bearing at fine grain — without habituation the
   field saturates by ~3000 frames even at Ne = 0.75.** Ve/Vi ship in v1
-  (G1 measured, not gated). The drive term is E-only with the f_wc G3
+  (G1 measured, not gated). The drive term is E-only with the f_wc_fft G3
   semantics (unconnected = 0.5-neutral via `drv_conn`). `excite` carries
-  f_wc G7's shared threshold offset; the source's `s` square wave stays
+  f_wc_fft G7's shared threshold offset; the source's `s` square wave stays
   parked (performed via `excite`; measured non-sustaining alone at float32).
 - **FR-004**: State MUST seed from random noise on load and on reset —
-  never zero, never uniform rest (f_wc FR-004's guard; same model class,
+  never zero, never uniform rest (f_wc_fft FR-004's guard; same model class,
   same fixed-point asymmetry).
 - **FR-005**: `rate` MUST scale per-frame dt. No NaN clamp (bounded
   sigmoid); the ceiling is pattern-preservation, set at Phase 2.
 - **FR-006**: The drive inlet MUST couple raw-additively into the E sigmoid
   input as `drive_gain·(scene − 0.5)`; an unconnected inlet reads BLACK in
-  a pix chain (f_wc build-time finding), so the inlet runs through a
+  a pix chain (f_wc_fft build-time finding), so the inlet runs through a
   vs_inState whose connection flag sets `drv_conn`, and nl substitutes
   0.5 when unconnected. `drive_gain` is a `gain`-role dial.
-- **FR-007**: The render stage MUST apply f_wc's inverse retinotopic
+- **FR-007**: The render stage MUST apply f_wc_fft's inverse retinotopic
   (log-polar → Cartesian) resample to the state at render resolution,
   including the `r_soft` foveal softening (the log-map singularity
   otherwise aliases the center into a vortex — the source demo has this
-  defect; we do not) and the contrast + sharp display mapping (f_wc G4/G8a).
+  defect; we do not) and the contrast + sharp display mapping (f_wc_fft G4/G8a).
   Sampling here is ordinary `sample()` — state and render grids coincide,
   so hardware LINEAR is exact and NO manual reconstruction (taps, weights,
   wrap arithmetic) carries over.
 - **FR-008**: The output MUST be bounded grayscale with no NaN/Inf at the
-  outlet; non-finite state zaps per the f_ks/f_wc containment precedent.
+  outlet; non-finite state zaps per the f_ks/f_wc_fft containment precedent.
 - **FR-009**: A reset trigger MUST re-randomize both fields from fresh
   noise without reloading the module.
 - **FR-010**: `grain` MUST set the pattern scale continuously via σ_frac
   (FR-002), with `σ_E = σ_I / sig_ratio` slaved to the `aspect` dial
-  (f_wc G6 semantics and landmarks carry, re-measured for FR-002's form
+  (f_wc_fft G6 semantics and landmarks carry, re-measured for FR-002's form
   in Phase 0). Documented landmarks MUST be reachable; there is no
-  discrete form selector (f_wc gate G1's finding applies to the model
+  discrete form selector (f_wc_fft gate G1's finding applies to the model
   class).
 - **FR-011**: All object names MUST be `#0_`-scoped.
 - **FR-012**: Standard bpatcher conventions and canonical parameter naming.
   The σ Params MUST NOT be named `texture` (jit.gl.pix native-attribute
-  collision, f_wc FR-010's live-bench finding) — the dial token is `grain`.
+  collision, f_wc_fft FR-010's live-bench finding) — the dial token is `grain`.
 
 ### Non-Functional Requirements
 
 - **NF-001** *(target, pending measurement)*: per-frame cost at 1920×1080
-  measured on Matt's machine and reported against f_wc's 2.45 ms (256²) as
+  measured on Matt's machine and reported against f_wc_fft's 2.45 ms (256²) as
   the reference point. Hypothesis (not a finding): two ~15-tap separable
   passes + nl + enc is sub-ms to few-ms class; 4K and tiny windows measured
   too, since σ_px and the tap count scale with resolution.
@@ -438,14 +438,14 @@ names, independent instances.
 | Dial | Underlying | Notes |
 |---|---|---|
 | `grain` | σ_frac → σ_I,px, clamped to the sustaining band (FR-002) | regime selector (T003: λ is dynamics-set, not kernel-set, in the fine regime): fine silk → pulsing cells → (clamped) coarse ends; Phase 2 sets semantics + landmarks live |
-| `aspect` | `sig_ratio` (σ_E = σ_I / sig_ratio) | f_wc G6 semantics; stripes ↔ ordering; landmarks re-measured at render-res physics in Phase 2 |
-| `energy` | per-frame noise amplitude `Ne` | **default 0.75 (measured T002 — load-bearing, not optional)**; the drive-band axis (f_wc T005/T052) |
-| `excite` | shared offset in both sigmoid inputs (HE/HI lowered together) | f_wc G7 semantics; covers the source's parked `s` square wave as a performer gesture |
+| `aspect` | `sig_ratio` (σ_E = σ_I / sig_ratio) | f_wc_fft G6 semantics; stripes ↔ ordering; landmarks re-measured at render-res physics in Phase 2 |
+| `energy` | per-frame noise amplitude `Ne` | **default 0.75 (measured T002 — load-bearing, not optional)**; the drive-band axis (f_wc_fft T005/T052) |
+| `excite` | shared offset in both sigmoid inputs (HE/HI lowered together) | f_wc_fft G7 semantics; covers the source's parked `s` square wave as a performer gesture |
 | `drive_gain` | gain on the drive inlet term | weak = hallucinate, strong = see (G3) |
 | `habituation` | Ve/Vi subtractive adaptation depth | **default ≈ 0.9; load-bearing — without it the field saturates by ~3k frames (T002). Ships in v1 (G1 measured, pending Matt's confirm)**; steady band needs σ_I ≤ 1.1 px at high habit (T003) |
-| `contrast` | display stretch about mid-gray in enc | f_wc G8a; note the source gets its "pop" from 8-bit + no curve — ours comes from this + `sharp` |
-| `sharp` | S-curve blend on the display | f_wc G4 |
-| `zoom` / `twist` / `fovea` | map constants `k_ecc` / `k_ang` (INT) / `r0`; `r_soft` bench-vary | f_wc FR-007 carries verbatim (defaults from the T004 stills: the closer set 5/3/1.0 read best at the fine scale; r_soft 0.35) |
+| `contrast` | display stretch about mid-gray in enc | f_wc_fft G8a; note the source gets its "pop" from 8-bit + no curve — ours comes from this + `sharp` |
+| `sharp` | S-curve blend on the display | f_wc_fft G4 |
+| `zoom` / `twist` / `fovea` | map constants `k_ecc` / `k_ang` (INT) / `r0`; `r_soft` bench-vary | f_wc_fft FR-007 carries verbatim (defaults from the T004 stills: the closer set 5/3/1.0 read best at the fine scale; r_soft 0.35) |
 | `rate` | dt multiplier | FR-005 |
 | `reset` | reseed | FR-009 |
 
@@ -454,7 +454,7 @@ names, independent instances.
 1. **The look (tier 3, headline)**: side-by-side against
    `WC_Example_10_fullscreen.html` at the same window size, the module
    reproduces the fine-grained silky web to Matt's judgment — INCLUDING at
-   high `sharp`, with no texel-scale staircase (the f_wc failure mode).
+   high `sharp`, with no texel-scale staircase (the f_wc_fft failure mode).
 2. **Sustained structure**: from noise seeding at the default constants the
    web persists indefinitely in the mirror (std and spectral peak stable
    over 10,000-frame soak; T002 fixes whether that needs `Ne` > 0).
@@ -463,14 +463,14 @@ names, independent instances.
    (NF-005), mirror-verified and live-eyeballed.
 4. **Frame-exact bench**: multi-frame runs of the real codeboxes match the
    NumPy mirror within the standard tolerance at fixed render size (blur
-   exactness carries the f_wc spec-stage tolerance class).
+   exactness carries the f_wc_fft spec-stage tolerance class).
 5. **Drive transition**: input/output imprint correlation high at strong
-   drive, ~0 at zero drive (f_wc T032-pattern leg).
+   drive, ~0 at zero drive (f_wc_fft T032-pattern leg).
 6. **Stable**: NF-003's 10,000-frame statement, plus resize mid-run
    produces the specified reseed/resample seam and nothing else.
 7. **Cost measured and within budget** at 1080p on Matt's machine (NF-001);
    4K and 320² reported with it.
-8. **Distinct from f_wc (tier 3)**: the two modules' default outputs are
+8. **Distinct from f_wc_fft (tier 3)**: the two modules' default outputs are
    visibly different content families (fine web vs. chunky labyrinth), so
    the sibling relationship is justified in the menu/README.
 
@@ -489,25 +489,25 @@ names, independent instances.
   floor (≥ ~0.75) so the blur never degenerates to identity, accepting that
   pattern scale then exceeds the dial's nominal value.
 - **Uniform rest / below-threshold quiet**: same fixed-point asymmetry as
-  f_wc — a too-clean state in a below-threshold regime decays quiet; FR-004
+  f_wc_fft — a too-clean state in a below-threshold regime decays quiet; FR-004
   noise seeding is the guard, and quiet-under-threshold is correct dynamics
   (US-2's below-threshold behavior is "shows the drive").
 - **Drive inlet hot-plug**: connecting/disconnecting mid-run must not NaN
-  (`drv_conn` guard, f_wc precedent).
+  (`drv_conn` guard, f_wc_fft precedent).
 - **Habituation state on reset**: if G1 ships, Ve/Vi restart at 0 on
-  reseed (f_wc G5's rule).
+  reseed (f_wc_fft G5's rule).
 - **`twist` integer-only**: fractional wrap gains seam the map at θ = ±π
-  (f_wc T006); the dial stays INT.
+  (f_wc_fft T006); the dial stays INT.
 
 ## Open Experiments (Phase 0 — none yet run)
 
-1. **Mirror + blur exactness** (`tests/records/spike_fc_mirror.py` graduating
-   to `tests/modules/formconstants/fc_mirror.py`): separable Gaussian vs.
+1. **Mirror + blur exactness** (`tests/records/spike_wc_steadyweb_mirror.py` graduating
+   to `tests/modules/wc/wc_steadyweb_mirror.py`): separable Gaussian vs.
    analytic Gaussian convolution; single-mode decay rates with couplings
-   zeroed (f_wc T002's pattern); boundedness.
+   zeroed (f_wc_fft T002's pattern); boundedness.
 2. **Sustain at the Example-10 constants, float32, NO explicit noise** —
    the load-bearing experiment. Example 10's page injects no per-frame
-   noise and leans on 8-bit quantization + the `s` square wave; f_wc's
+   noise and leans on 8-bit quantization + the `s` square wave; f_wc_fft's
    Psychedelic corner collapses without noise. Measure at the Example-10
    constants: does the structure persist indefinitely at float32 from
    noise seeding? Output: the `energy` default and whether an internal
@@ -518,7 +518,7 @@ names, independent instances.
 4. **Retinotopic look stills**: the mirror's field at the Example-10 fine
    scale through the shared map (reuse `tests/records/wc_retinotopy.py`);
    judge the look offline before any Max session (the parity defaults
-   shipped for f_wc were tuned on the chunky field; the fine web may want
+   shipped for f_wc_fft were tuned on the chunky field; the fine web may want
    a different corner).
 5. **Resize-invariance check**: mirror run at (say) 128² and 256² with
    σ_frac held constant; measure wavelength drift and regime drift —
@@ -530,13 +530,13 @@ names, independent instances.
   parity-map corner) + G1 (habituation in v1: Matt).
 - **Phase 1** — codeboxes (blur pair, nl, hold/seed, enc copy), definition,
   build (FIRST: confirm the build system's adaptive-res feedback pattern —
-  f_ks/f_wc run fixed-res stages; adaptive feedback is Vsynth-standard but
+  f_ks/f_wc_fft run fixed-res stages; adaptive feedback is Vsynth-standard but
   new to the pix_chain builder: T011), bench vs. mirror, module contract
   bench, cost (NF-001 at 1080p/4K/320²), resize handling (T013).
 - **Phase 2** — live tuning (tier 3): AB vs. the HTML page, grain/aspect
   ranges + landmarks, drive feel, map corner for the fine web, `rate`
   ceiling.
-- **Phase 3** — reference doc, helpfile, menu (Patterns, after f_wc),
+- **Phase 3** — reference doc, helpfile, menu (Patterns, after f_wc_fft),
   README row, INDEX flip.
 
 ## Out of Scope (This Version)
@@ -547,7 +547,7 @@ names, independent instances.
   measured for necessity at T002, performed via `excite` regardless).
 - Vecfield / gradient outlets.
 - Runtime-selectable solver resolution (solver res IS render res).
-- Migrating f_wc onto this architecture (f_wc ships unchanged; if this
+- Migrating f_wc_fft onto this architecture (f_wc_fft ships unchanged; if this
   module lands, that question can be revisited on its own merits).
 - Shared-source factoring of the enc stage across the two modules (Phase 3
   hygiene question).

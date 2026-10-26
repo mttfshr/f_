@@ -292,7 +292,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_formconstants",
+									"text": "f_wc",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -317,7 +317,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_formconstants.maxhelp"
+									"text": "loadunique f_wc.maxhelp"
 								}
 							},
 							{
@@ -332,7 +332,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; no dials yet",
+									"text": "⚠ Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

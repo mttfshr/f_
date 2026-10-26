@@ -1816,7 +1816,7 @@ def build(defn, debug=None, side_files=None):
             boxes.extend(range_tier_boxes(n, p))
 
     # Header toggle boxes (e.g. proc_mode) — rendered in header, wired via route. Like a dial, a header
-    # toggle may name ONE pix_target stage (2026-10-25, f_formconstants' Freeze drives nl); default: primary.
+    # toggle may name ONE pix_target stage (2026-10-25, f_wc' Freeze drives nl); default: primary.
     if header_toggles:
         p = header_toggles[0]   # currently only one supported
         if isinstance(p.get("pix_target"), list):
