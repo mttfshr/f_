@@ -322,6 +322,54 @@ def map_vec(ux, uy, kind, s=0.01):
     return 0.5 + 0.5 * ux / m, 0.5 + 0.5 * uy / m
 
 
+ROW_NOTES = {
+    "driven": "exciter running at amplitude 1, 2 Hz, steady state (the busy case)",
+    "ring": "one strike, mid-flight: a clean expanding ring (the sparse case)",
+    "plate": "dispersion 2 (plate), mid-flight: ripples spread by wavelength (the quiet, fine-grained case)",
+}
+COL_NOTES = {
+    "luma hard": "LUMA, hard clamp: 0.5 + scale*u, cut at 0 and 1",
+    "luma tanh": "LUMA, tanh compression: same slope near mid-grey, soft ends",
+    "luma auto": "LUMA, auto-range: rescaled each frame so the biggest |u| fills the range (brightness pumps)",
+    "vec hard": "VECFIELD, hard clamp: R,G = 0.5 + 0.005*gradient (u slope in x,y; scale 0.01 means +-1 at gradient 100), B = 0.5",
+    "vec tanh": "VECFIELD, tanh compression of the same gradient",
+    "vec auto": "VECFIELD, auto-range: gradient normalised to its per-frame maximum",
+}
+
+
+def write_labeled_html(path, rows, cols, tiles):
+    import base64
+    import tempfile
+
+    def b64(img):
+        fd, tmp = tempfile.mkstemp(suffix=".png")
+        os.close(fd)
+        png(tmp, np.kron(img * 255, np.ones((3, 3, 1))))
+        with open(tmp, "rb") as f:
+            d = base64.b64encode(f.read()).decode()
+        os.remove(tmp)
+        return "data:image/png;base64," + d
+
+    h = ["<!doctype html><meta charset=utf-8><title>f_wave_field T005 output mappings</title>",
+         "<style>body{font:14px system-ui;margin:20px;background:#111;color:#ddd}td{padding:4px;vertical-align:top;max-width:390px}"
+         "th{font-weight:600;text-align:left;color:#fff}.n{font-size:12px;color:#999;font-weight:400}</style>",
+         "<h2>f_wave_field: how the field is turned into an image</h2>",
+         "<p>Each row is a different wave state; each column is a different way of mapping it to 0..1. Luma = the height u as grey. "
+         "Vecfield = the slope of u as red/green (mid-grey-ish = flat). Look for: detail kept without blown-out whites/blacks, "
+         "and no flicker from brightness pumping (auto-range).</p><table><tr><td></td>"]
+    for c in cols:
+        h.append(f"<th>{c}<div class=n>{COL_NOTES[c]}</div></th>")
+    h.append("</tr>")
+    for r in rows:
+        h.append(f"<tr><th>{r}<div class=n>{ROW_NOTES[r]}</div></th>")
+        for c in cols:
+            h.append(f"<td><img src='{b64(tiles[(r, c)])}' width=384></td>")
+        h.append("</tr>")
+    h.append("</table>")
+    with open(path, "w") as f:
+        f.write("\n".join(h))
+
+
 def t005():
     print("== T005: output mappings on warmed-up states (hard clamp / tanh / auto-range)")
     os.makedirs(OUT, exist_ok=True)
@@ -358,6 +406,7 @@ def t005():
     sheet = np.kron(sheet, np.ones((2, 2, 1)))
     path = os.path.join(OUT, "T005_mappings.png")
     png(path, sheet)
+    write_labeled_html(os.path.join(OUT, "T005_mappings.html"), rows, cols, tiles)
     print(f"\ncontact sheet: {path}")
     print("   rows: " + ", ".join(rows) + ";  columns: " + ", ".join(cols))
 
