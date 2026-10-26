@@ -16,7 +16,7 @@ src/f_wave_field/
 ├── definition.py               # archetype: source (optional force inlet), outlets luma + vecfield
 ├── gen_dft.py                  # the shared DFT template (see G5); not copied
 ├── codebox_pass.gen            # feedback hold / reset
-├── codebox_dft_{fx,fy,iy,ix}.gen   # generated, shared with f_ks and f_wc_fft
+├── codebox_dft_{fx,fy,iy,ix}.gen   # generated, shared with f_ks (via the shared generator)
 ├── codebox_spec.gen            # exact per-bin 2x2 step, three damping regimes, DC zeroed
 ├── codebox_nl.gen              # forcing, exciter phase, strike, sponge, gradient, containment
 ├── codebox_enc.gen             # bilinear to render size, luma and vecfield outlets, bypass_gate
@@ -31,8 +31,8 @@ tests/modules/wave_field/
 
 **Tier decision (constitution, Verification Tiers):** tier 1 applies (closed forms exist: the damped-oscillator solution per mode in all three regimes, energy conservation, dispersion, superposition, wrap and sponge); tier 2 applies (frame-exact multi-frame feedback against the mirror, like `f_ks`'s `bench_ks.py`, plus cost); tier 3 for the look.
 
-- [ ] T001 Float32 stage-decomposed NumPy mirror of the one-frame update (forward DFT, spectral step with DC zeroed, inverse DFT, forcing, exciter, strike, sponge, gradient, containment, bounded encode), with tests grounded in the spec and independent references (single-mode closed form in the underdamped, critical and overdamped regimes). *Offline.*
-- [ ] T002 Closed-form checks as tests: energy conservation at zero damping, dispersion (`dispersion` 1 ring radius grows at the phase velocity; 2 gives frequency ∝ k²), superposition, periodic wrap of a pulse at `edge` 0, sponge removes energy and never adds. *Offline.*
+- [x] T001 (2026-10-25, `tests/modules/wave_field/wave_field_mirror.py`) Float32 stage-decomposed NumPy mirror of the one-frame update (forward DFT, spectral step with DC zeroed, inverse DFT, forcing, exciter, strike, sponge, gradient, containment, bounded encode), with tests grounded in the spec and independent references (single-mode closed form in the underdamped, critical and overdamped regimes). *Offline.*
+- [x] T002 (2026-10-25, `tests/modules/wave_field/test_wave_field.py`, 26/26) Closed-form checks as tests: energy conservation at zero damping, dispersion (`dispersion` 1 ring radius grows at the phase velocity; 2 gives frequency ∝ k²), superposition, periodic wrap of a pulse at `edge` 0, sponge removes energy and never adds. *Offline.*
 - [ ] T003 Float32 versus float64: energy drift over 1,000 and 10,000 frames at zero damping; set the `damping` floor (FR-006) and the tolerance for SC-002. *Offline.*
 - [ ] T004 Normalisation constants: `kref` (so `speed` is the mid-scale phase velocity regardless of `dispersion`), the viscosity `nu`, the sponge width and profile (smooth enough not to reflect). *Offline.*
 - [ ] T005 Output mapping comparison on the same warmed-up states: hard clamp, `tanh`-style compression, auto-range for luma, and the vecfield normalisation, as numbers (fraction clipped, range per frame) plus image strips for Matt's tier-3 look. *Offline; the choice is Matt's (G2).*
@@ -70,3 +70,4 @@ tests/modules/wave_field/
 ## Record
 
 - 2026-10-23: spec and tasks created from `ideas/f_wave_field.md`; spectral direction and four design questions settled with Matt (general dispersion family, periodic edges plus an absorbing-edge dial, force inlet plus point exciter plus strike, luma plus gradient vecfield). The general-dispersion idea (`omega^2 = ring^2 + speed^2 k^(2 dispersion)`) is Claude's addition to the omp drafts.
+- 2026-10-25: T001 + T002 done. Mirror `tests/modules/wave_field/wave_field_mirror.py` (branch-free spectral step: underdamped cos/sin, overdamped exp-folded cosh/sinh so float32 never forms cosh of a large argument, Taylor series below |wd^2 dt^2| = 1e-4) and `test_wave_field.py` 26/26 in 3.3 s, checked against an independent float64 matrix exponential (all three regimes, continuity through the series switch, beta dt = 1000 finite), np.fft (pass chain tied at N = 32), energy conservation over 1,000 frames, dispersion and the kref calibration, superposition, DC zeroing, periodic wrap, sponge, resonator, strike/reset, outlets, containment. Provisional constants (KREF, NU, EX_*, SPONGE_*, U_CAP, GRAD_SCALE, LUMA_SCALE, dt = 1/60) are module-level names for T003/T004/T005/G3 to set. Findings for later tasks: (1) the resonator (`speed` 0) is per-pixel independent EXCEPT the DC bin, which zeroing removes at mean/N^2 per frame (T004 / G4 note); (2) the edge sponge scales u and v by a pointwise g <= 1, so the L2 norms never grow, but the spectral energy weights |grad u|^2 and is not guaranteed monotone (the worst frame-to-frame rise is printed by `test_sponge_removes_energy_after_the_pulse_crosses_the_border`; T004 sets the profile); (3) a uniform force leaves mean(u) = 0 and v bounded at F dt (FR-005 holds). Not run: GPU benches (Phase 1).
