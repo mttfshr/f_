@@ -48,7 +48,6 @@ CATEGORIES = [
         ("Seeds", "vf_seeds", V),
         ("Stipple", "stipple", N),
         ("Weave", "weave", V),
-        ("Wilson-Cowan", "wc", N),
     ]),
     ("Space & Optics", [
         ("Droste", "droste", N),

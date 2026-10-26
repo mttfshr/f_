@@ -13,7 +13,7 @@
 			100.0,
 			100.0,
 			960.0,
-			306.0
+			278.0
 		],
 		"gridsize": [
 			15.0,
@@ -50,7 +50,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -292,7 +292,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_wc",
+									"text": "f_formconstants",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -317,7 +317,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_wc.maxhelp"
+									"text": "loadunique f_formconstants.maxhelp"
 								}
 							},
 							{
@@ -332,7 +332,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Wilson-Cowan generator: noise-sustained living labyrinth; the drive inlet makes it see",
+									"text": "⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; no dials yet",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -345,34 +345,53 @@
 							{
 								"box": {
 									"id": "obj-13",
-									"maxclass": "comment",
+									"maxclass": "textbutton",
 									"numinlets": 1,
-									"numoutlets": 0,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
 									"patching_rect": [
 										20.0,
 										260.0,
 										150.0,
-										20.0
+										22.0
 									],
-									"text": "f_formconstants",
-									"textcolor": [
-										0.55,
-										0.55,
-										0.55,
-										1.0
-									],
+									"text": "f_masonry",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										126.0,
+										124.0,
 										210.0,
-										20.0
+										22.0
 									]
 								}
 							},
 							{
 								"box": {
 									"id": "obj-14",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										288.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_masonry.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-15",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -382,25 +401,19 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Parity port of the webgpgpu Example-10 page: fixed 1024² Wilson-Cowan + retinal map; no dials yet",
+									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										126.0,
 										720.0,
 										20.0
-									],
-									"textcolor": [
-										0.55,
-										0.55,
-										0.55,
-										1.0
 									]
 								}
 							},
 							{
 								"box": {
-									"id": "obj-15",
+									"id": "obj-16",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -417,7 +430,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_masonry",
+									"text": "f_stipple",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -429,7 +442,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-16",
+									"id": "obj-17",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -442,12 +455,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_masonry.maxhelp"
+									"text": "loadunique f_stipple.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-17",
+									"id": "obj-18",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -457,7 +470,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
+									"text": "2D hash field stipple texture",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -469,7 +482,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-18",
+									"id": "obj-19",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -486,7 +499,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_stipple",
+									"text": "f_vf_seeds",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -498,7 +511,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-19",
+									"id": "obj-20",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -511,12 +524,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_stipple.maxhelp"
+									"text": "loadunique f_vf_seeds.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-20",
+									"id": "obj-21",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -526,7 +539,7 @@
 										150.0,
 										20.0
 									],
-									"text": "2D hash field stipple texture",
+									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -538,7 +551,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-21",
+									"id": "obj-22",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -555,7 +568,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_seeds",
+									"text": "f_weave",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -567,7 +580,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-22",
+									"id": "obj-23",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -580,12 +593,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_seeds.maxhelp"
+									"text": "loadunique f_weave.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-23",
+									"id": "obj-24",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -595,80 +608,11 @@
 										150.0,
 										20.0
 									],
-									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										210.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-24",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										500.0,
-										150.0,
-										22.0
-									],
-									"text": "f_weave",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										236.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-25",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										528.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_weave.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-26",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										500.0,
-										150.0,
-										20.0
-									],
 									"text": "Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
-										238.0,
+										210.0,
 										720.0,
 										20.0
 									]
@@ -751,35 +695,47 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-15",
+										"obj-13",
 										0
 									],
 									"destination": [
+										"obj-14",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-14",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
 										"obj-16",
 										0
+									],
+									"destination": [
+										"obj-17",
+										0
 									]
 								}
 							},
 							{
 								"patchline": {
 									"source": [
-										"obj-16",
+										"obj-17",
 										0
 									],
 									"destination": [
 										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-18",
-										0
-									],
-									"destination": [
-										"obj-19",
 										0
 									]
 								}
@@ -791,7 +747,7 @@
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-20",
 										0
 									]
 								}
@@ -799,19 +755,7 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-21",
-										0
-									],
-									"destination": [
-										"obj-22",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-22",
+										"obj-20",
 										0
 									],
 									"destination": [
@@ -823,11 +767,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-24",
+										"obj-22",
 										0
 									],
 									"destination": [
-										"obj-25",
+										"obj-23",
 										0
 									]
 								}
@@ -835,7 +779,7 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-25",
+										"obj-23",
 										0
 									],
 									"destination": [
@@ -876,7 +820,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1497,7 +1441,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1932,7 +1876,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2702,7 +2646,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -3416,7 +3360,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -3758,7 +3702,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4100,7 +4044,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4535,7 +4479,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4859,7 +4803,7 @@
 							0.0,
 							26.0,
 							960.0,
-							280.0
+							252.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [

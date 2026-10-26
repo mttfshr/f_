@@ -1,3 +1,5 @@
+# RECORD ONLY (2026-10-25): imports tests/modules/wc/wc_mirror.py, removed with the old FFT-chain f_wc
+# (superseded by Wilson-Cowan). To rerun, restore tests/modules/wc from git commit af74411.
 """
 spike_wc_habituation.py -- f_wc Phase 4, task T052 (2026-10-23).
 

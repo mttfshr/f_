@@ -54,14 +54,6 @@ _KS_NOTE = ("documented in src/f_ks/codebox_pass.gen header: {} is a fixed solve
             "only so the bench can vary it (tests/modules/ks/bench_ks.py); it is not a performable "
             "control (spec FR-001: L = 50, FR-003: seed amplitude 1)")
 KNOWN_ISSUES[("f_ks", "undriven", "#0_ks_pass.amp")] = _KS_NOTE.format("amp")
-_WC_NOTE = ("documented in .specify/f_wc/tasks.md T025/T021: {} is a settled solver constant that stays a "
-            "Param only so the bench can vary it (tests/modules/wc/bench_wc.py); it is not a performable "
-            "control (the model's settled corner: Ne = 1.0, seed amplitude 1.0)")
-KNOWN_ISSUES[("f_wc", "undriven", "#0_wc_pass.amp")] = _WC_NOTE.format("seed amplitude")
-KNOWN_ISSUES[("f_wc", "undriven", "#0_wc_enc.r_soft")] = (
-    "documented in src/f_wc/codebox_enc.gen: r_soft is the baked foveal-softening constant of the retinotopic "
-    "enc stage (2026-10-24, Matt's center-pixelation report); it stays a Param only so the bench can sweep it "
-    "before any dial decision -- like amp it is not a performable control")
 _FC_NOTE = ("documented in src/f_formconstants/codebox_*.gen headers and spec Revision 2: {} is a settled "
             "constant of the parity build ({}) that stays a Param only so the bench can vary it "
             "(tests/modules/formconstants) and Phase D can drive it (T061 s_depth/s_rate, T064 n); "
