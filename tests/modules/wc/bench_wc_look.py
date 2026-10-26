@@ -36,6 +36,8 @@ import jxf
 import modulebench as mb
 from harness import check, note, run
 
+GROUP = "record"   # long run, not in the regression set; see tests/lib/benchdeps.py list --group
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import wc_parity_mirror as fm  # noqa: E402
 

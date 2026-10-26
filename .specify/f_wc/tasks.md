@@ -494,7 +494,7 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 - [x] **MOOT 2026-10-25: the old FFT-chain f_wc (the other enc user) was retired, so there is nothing to share with.** T029 Enc-dedup hygiene decision (Claude): shared enc source factoring
   across f_wc_fft / f_wc vs. documented copy (the `gen_dft.py`
   precedent if shared). One paragraph in this file either way.
-- [ ] T030 Full offline suite (`tests/bg.sh start offline`) + full module
+- [~] **OFFLINE HALF DONE 2026-10-25 17:48: the full offline suite passes (bg run, 92 s). It first failed on three older gaps, fixed: no `bench_wc` / `bench_wc_look` DATA entries in `tests/lib/benchdeps.py`, `bench_wc_look.py` declared no GROUP (now `record`), `bench_wc.py` ORDER 59 (ORDER must be an integer), and no `f_wc` bypass entry in `tests/contracts/bench_modules.py`. STILL OWED: the Max module contract bench on the final patcher set (needs Max open).** T030 Full offline suite (`tests/bg.sh start offline`) + full module
   contract bench on the final patcher set; close-out record.
 
 **Checkpoint:** Phase 3 closed when the module is registered everywhere and

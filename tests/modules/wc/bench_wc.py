@@ -30,7 +30,7 @@ Run:  tests/bench.sh tests/modules/wc/bench_wc.py
       (add --slow for the 150-frame statistics leg)
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
-ORDER = 56.5           # right after bench_wc (56)
+ORDER = 59             # integers only; after bench_vf_lbm_module (58)
 
 import paths as _paths
 import sys
