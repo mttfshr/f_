@@ -17,7 +17,7 @@ settled with Matt the same day._
 
 ### Resolved by design discussion (2026-10-23, Claude + Matt)
 
-- **Solver: spectral, the `f_ks` / `f_wc` chain.** The wave equation is linear, so
+- **Solver: spectral, the `f_ks` / `f_wc_fft` chain.** The wave equation is linear, so
   each Fourier bin takes an exact step: no stability limit, no real-space
   Laplacian, no CFL worry (the omp run's main risk). The real-space leapfrog from
   webgpgpu stays as the fallback only if Phase 0 shows the spectral cost is
@@ -68,7 +68,7 @@ inverse DFT → real-space stage: add forcing to `v` (`v += F dt`), apply the ed
 to `u` and `v`, compute the central-difference gradient of `u` (periodic), containment
 (NaN/Inf zap, bounded clamp).
 
-State packing follows `f_wc` (HANDOFF 2026-10-23): the four channels of the `f_ks` DFT
+State packing follows `f_wc_fft` (HANDOFF 2026-10-23): the four channels of the `f_ks` DFT
 chain are two independent complex fields; put `u` in the first (R = u, G = 0) and `v` in
 the second (B = v, A = 0). The spectral stage mixes `u` and `v` at the same bin, so it
 needs all four channels at once, which the `spec` stage already sees.
@@ -87,9 +87,9 @@ needs all four channels at once, which the `spec` stage already sees.
   tolerates (`ideas/mod_depth_ui_density.md`); grouping and a possible `medium` preset
   menu (Membrane, Water, Plate, Resonator) are Phase 2.
 - **Hidden constants:** `kref`, `nu`, the sponge width and profile (T004).
-- **Shared DFT chain.** This is the third user of `f_ks`'s DFT codeboxes (after `f_wc`);
-  factoring to a shared location is `f_wc` T020. Whichever builds first does it; this
-  module consumes it.
+- **Shared DFT chain.** The shared generator is `src/f_vf_fluid/gen_dft.py`; each user has a thin adapter
+  (`src/f_ks/gen_dft.py`). The third user, the old `f_wc_fft`, was retired 2026-10-25 and its adapter deleted
+  (its T020 decision is in `.specify/superseded/f_wc_fft/tasks.md`). This module adds its own adapter.
 
 ---
 

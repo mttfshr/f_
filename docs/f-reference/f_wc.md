@@ -3,7 +3,7 @@
 **Type:** Generator (pulse inlet, RGB out) — **temporal / has memory**
 **Status:** Built, benched and live-checked through Phase D (Matt confirmed the live defaults 2026-10-25). Phase 0 (constants measured), Phase R (the parity rebuild) and Phase D (performance controls) are closed except T064 (solver size, open pending a look). The Phase 2 soak (T024) is still owed, so the README row keeps its ⚠.
 
-_Reference written 2026-10-25 from `src/f_wc/` (definition + codeboxes), `.specify/f_wc/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module (spec Revision 2 and its "Shipped controls" section are the current spec)._
+_Renamed from `f_formconstants` on 2026-10-25. Reference written 2026-10-25 from `src/f_wc/` (definition + codeboxes), `.specify/f_wc/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module (spec Revision 2 and its "Shipped controls" section are the current spec)._
 
 ---
 
@@ -26,8 +26,9 @@ Typical use: patch it alone as a living background; feed a camera or a Vsynth WF
 to make the web follow the image; set Space to Unwrapped and patch the output into `f_droste` (or any
 downstream wrap) for the flat cortical grid.
 
-Sibling of `f_wc_fft` (a 256² FFT-chain solver with a noise-sustained labyrinth and many more dials); this
-module trades f_wc_fft's resolution-independent grid and tuning surface for the page's fine-grained look.
+Replaces the old FFT-chain `f_wc_fft` (a 256² solver with a noise-sustained labyrinth and many more dials;
+archived in `docs/f-reference/superseded/f_wc_fft.md`): this module trades that one's resolution-independent grid and
+tuning surface for the page's fine-grained look.
 
 ---
 
@@ -202,7 +203,7 @@ changes texture character, not liveness.
 - Michael Rule's webgpgpu `WC_Example_10_fullscreen.html` and `gpgpu.js` / `gpugaussian.js`: the
   pipeline, constants and display map this module ports (algorithm used directly; the float32 state, the
   pulse inlet and the Phase D controls are this repo's additions).
-- Related: `f_wc_fft.md` (same model family, FFT chain, many dials), `f_droste.md` (the downstream wrap for the
+- Related: `superseded/f_wc_fft.md` (same model family, FFT chain, many dials), `f_droste.md` (the downstream wrap for the
   Unwrapped view), `ideas/f_deflicker.md`.
 
 ## Source Files

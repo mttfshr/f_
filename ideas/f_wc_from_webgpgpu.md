@@ -1,14 +1,14 @@
-# f_wc support items from webgpgpu (noise drive, reference, habituation, retinotopic stage)
+# f_wc_fft support items from webgpgpu (noise drive, reference, habituation, retinotopic stage)
 
 _Status: 🟢 shipped 2026-10-23. Drafted 2026-10-23 from the webgpgpu mining run
-(`webgpgpu-ideas-1`). Companion to `f_vf_wilson_cowan.md` and `.specify/f_wc/`.
+(`webgpgpu-ideas-1`). Companion to `f_vf_wilson_cowan.md` and `.specify/superseded/f_wc_fft/`.
 Habituation (item 3) shipped as the `habituation` dial (gate G5, tasks.md Phase 4); the
 noise-stream and retinotopy round-trip checks landed as tier-1 tests (T050/T051). The
 known-answer fixture (item 1) and the shared noise / retinotopy pieces (items 2, 4)
 remain parked, reasons in the Phase 4 section._
 
 Michael Rule's Wilson-Cowan pages (`wilson_cowan/wilson_cowan_gpu.html` and
-`examples/wilson_cowan_examples/`) are what unblocked `f_wc` on 2026-10-23. The mining
+`examples/wilson_cowan_examples/`) are what unblocked `f_wc_fft` on 2026-10-23. The mining
 run read them as ordinary examples, and four reusable pieces came out.
 
 ## 1. Known-answer reference
@@ -52,7 +52,7 @@ mirror is bit-identical to the unadapted run.
 
 ## 4. Retinotopic stage as a shared piece
 
-`f_wc` does the inverse log-polar map inside its own render stage. `WC_Example_5`
+`f_wc_fft` does the inverse log-polar map inside its own render stage. `WC_Example_5`
 shows the same map as a display pass: angle `atan(z.y, z.x)` and `log(length(z))` as
 sample coordinates, scaled by 1/2 pi with wrap, plus a drift as a plain offset in angle
 and log radius. The same resample would show any texture or generator in visual-field
@@ -60,7 +60,7 @@ coordinates with logarithmic centre magnification. `f_droste` is a spiral-zoom d
 transform, not an honest cortex-to-retina map with a foveal policy, so there is a real
 distinction, but the overlap and the foveal singularity (the seam family in
 `droste_singularity.md`) make the standalone value uncertain. Design question: factor
-the stage out as a shared module now, or keep it inside `f_wc` until a second consumer
+the stage out as a shared module now, or keep it inside `f_wc_fft` until a second consumer
 exists. Tier-1: map then inverse is the identity up to interpolation error inside the
 eccentricity range.
 
@@ -72,7 +72,7 @@ eccentricity range.
 
 ## Related
 
-`f_vf_wilson_cowan.md`, `.specify/f_wc/`, `f_ca.md`, `f_adapt.md`,
+`f_vf_wilson_cowan.md`, `.specify/superseded/f_wc_fft/`, `f_ca.md`, `f_adapt.md`,
 `droste_singularity.md`, `f_droste`.
 
 ## Provenance
@@ -80,6 +80,6 @@ eccentricity range.
 webgpgpu at 5997061, omp run `webgpgpu-ideas-1`, 2026-10-23. Source drafts in
 `f_omp_runs/webgpgpu-ideas-1/ideas_draft/`: 32, 33, 34, 35, plus the known-answer
 reference and noise utilities in `SUGGESTIONS.md`. Verified by subagents against the
-page sources and the f_wc spec. The omp run did not flag the noise drive as the
+page sources and the f_wc_fft spec. The omp run did not flag the noise drive as the
 load-bearing ingredient (it filed it as a generic utility); that framing is from
 `HANDOFF.md`.

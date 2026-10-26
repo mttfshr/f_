@@ -487,11 +487,11 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
   `docs/f-reference/module-inventory.md` rows (inlets/outlets/bypass tables).
 - [~] T026 **DRAFTED 2026-10-25:** `package/help/f_wc.maxhelp` written (generator layout, pulse-inlet bubble, A-E settings-groups block; valid JSON, NOT opened in Max, no `parameters` block since the bpatcher's inner ids were not read). STILL OWED: Matt's look in Max, then the `f-helpfile` skill's checklist. (MUST include the settings-groups table A-E from T072 / `spike_fc_presets.py`, Matt 2026-10-25) Helpfile `package/help/f_wc.maxhelp` (generator layout,
   drive bubble per f_wc_fft's).
-- [ ] T027 Menu: `menu.py` Patterns category (after Wilson-Cowan), regenerate
+- [x] **DONE 2026-10-25 (in the rename commit): the Wilson-Cowan entry is back in Patterns after Weave; menu + launcher regenerated, test_generate_menu 17/17 and test_launch 8/8 green.** T027 Menu: `menu.py` Patterns category (after Wilson-Cowan), regenerate
   menu + launcher; `test_generate_menu` / `test_launch` green.
-- [ ] T028 README row + `ideas/INDEX.md` flip to 🟢 + `.specify/plan.md`
+- [~] **PARTLY DONE 2026-10-25: README row (⚠ stays until the soak), ideas/INDEX.md and plan.md items updated in the rename/cleanup commits; plan item stays 'closing' until T024 and Matt's final approval.** T028 README row + `ideas/INDEX.md` flip to 🟢 + `.specify/plan.md`
   item marked BUILT/SHIPPED.
-- [ ] T029 Enc-dedup hygiene decision (Claude): shared enc source factoring
+- [x] **MOOT 2026-10-25: the old FFT-chain f_wc (the other enc user) was retired, so there is nothing to share with.** T029 Enc-dedup hygiene decision (Claude): shared enc source factoring
   across f_wc_fft / f_wc vs. documented copy (the `gen_dft.py`
   precedent if shared). One paragraph in this file either way.
 - [ ] T030 Full offline suite (`tests/bg.sh start offline`) + full module

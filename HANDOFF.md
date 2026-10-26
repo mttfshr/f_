@@ -1,6 +1,25 @@
 # HANDOFF
 
-## START HERE (2026-10-25, 11:56): f_formconstants — Phase D mostly done; next: close out the remaining Phase D calls
+## START HERE (2026-10-25, 17:30): `f_formconstants` is now `f_wc` (Wilson-Cowan); the old FFT-chain `f_wc` is retired
+
+**Naming map (old entries below use the old names):** `f_formconstants` → **`f_wc`** (menu "Wilson-Cowan", Patterns, after Weave); the old FFT-chain module `f_wc` → **`f_wc_fft`**, archived and removed. Pix prefix `fc_` → `wc_` (`#0_wc_*`). Files: `src/f_wc/`, `tests/modules/wc/` (`wc_parity_mirror.py`, `wc_steadyweb_mirror.py` (the old steady-web reference mirror, renamed to avoid a clash), `test_wc_parity.py`, `test_wc_codebox_static.py`, `test_wc_steadyweb.py`, `bench_wc.py`, `bench_wc_look.py`), `.specify/f_wc/`, `docs/f-reference/f_wc.md`, `package/help/f_wc.maxhelp`, `ideas/f_wc.md`. **Kept on purpose:** `tests/records/spike_fc_*.py` keep their names (the tasks cite them) with imports updated; `spike_wc_character.py` and `spike_wc_habituation.py` are record-only now (they import the deleted old mirror; restore `tests/modules/wc` from `af74411` to rerun).
+
+**Commits today (all on main):** `af74411` (T066/T068 dropped, spec "Shipped controls" table, reference doc + helpfile + inventory rows drafted, skill traps, solver-size spike), `121e321` (old f_wc docs archived to `.specify/superseded/f_wc_fft/` and `docs/f-reference/superseded/f_wc_fft.md`, banners), `10ffbc3` (old f_wc code/patcher/helpfile/tests removed; T064 dropped), `77d02c1` (the rename), plus the cleanup commit that carries this entry. Only uncommitted file: Matt's `package/examples/f_demo_wc.maxpat` (leave it; he handles `f_demo_wc.maxpat`, `f_demo_wc.json`, and `f_demo_ks.maxpat` mentions of the old module).
+
+**Decisions (Matt, 2026-10-25):** the live defaults are good; T066 (drive inlet) and T068 (steady-web mode) dropped; **T064 dropped, the solver stays FIXED at 1024** (the N 512 / 1024 / 2048 look: `tests/records/spike_fc_solver_size.py`, `tests/logs/fc_solver_size.png`: same dynamics and emergence frames at every N, only the scale changes); f_wc takes the id, the old module "goes away" (archived under `superseded/`).
+
+**Verified after the rename (offline only):** test_launch 8/8, test_generate_menu 17/17, test_module_contracts 9/9, test_drift 16/16 (f_wc reproduces exactly), test_wc_codebox_static 7/7, test_wc_parity 19/19, test_wc_steadyweb 10/10. NOT run: any Max bench, the full offline suite, the module contract bench (T030).
+
+**Still owed:**
+1. Matt approves the control set → Phase D closed. Then Phase 2 soak (T024), then README ⚠ off.
+2. Matt's look in Max at `package/help/f_wc.maxhelp` (written as JSON, never opened in Max; it has no `parameters` block), then the `f-helpfile` checklist.
+3. Re-upload `skills/jit-gen-codebox` and `skills/maxpat-json-authoring` (four traps added: `Param t` never applied, dial-name vs pix attribute, `sample()` = one texel at corners, ~256-tap parser limit), then `skills/check.sh stamp`. Those entries still say `f_formconstants` (history).
+4. T030: full offline suite (`tests/bg.sh start offline`) + module contract bench on the final patcher set. `bench_wc_look.py` still has the module-bench capture bug (no outlet captured though the module renders).
+5. Nothing yet adds a bypass entry for `f_wc` in `tests/contracts/bench_modules.py` (the old f_wc had one; the new module passed without).
+
+**Gotcha learned:** `git mv dir existing-empty-dir` nests instead of renaming (stale `__pycache__` stubs left an empty `tests/modules/wc/` and `src/f_wc/`). Delete the stubs first.
+
+## 2026-10-25, 11:56: f_formconstants — Phase D mostly done (superseded by the entry above; the module is now `f_wc`)
 
 **Read first:** `.specify/f_formconstants/tasks.md` Phase D (T060–T075, each with its record). All work is committed (last `4b50f8e`); `bench_formconstants.py` 14/14, `test_fc_parity` 19/19, static 7/7, contracts 9/9, drift 16/16, all `tests/build` green. Only uncommitted file: Matt's own `package/examples/f_demo_wc.maxpat` — leave it.
 

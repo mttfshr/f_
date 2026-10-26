@@ -78,7 +78,7 @@ motion blur (`perceptron_v2`); that overlaps `glow_profile_and_afterimage.md`.
 ## Related
 
 `f_tf_smooth`, `f_vf_temporal_smooth.md`, `f_vf_advect`, `glow_profile_and_afterimage.md`,
-`f_wave_field.md`, `f_wc_from_webgpgpu.md` (habituation channels inside `f_wc`).
+`f_wave_field.md`, `f_wc_from_webgpgpu.md` (habituation channels inside `f_wc_fft`).
 
 ## Provenance
 

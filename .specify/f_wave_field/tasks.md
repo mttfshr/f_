@@ -16,7 +16,7 @@ src/f_wave_field/
 ├── definition.py               # archetype: source (optional force inlet), outlets luma + vecfield
 ├── gen_dft.py                  # the shared DFT template (see G5); not copied
 ├── codebox_pass.gen            # feedback hold / reset
-├── codebox_dft_{fx,fy,iy,ix}.gen   # generated, shared with f_ks and f_wc
+├── codebox_dft_{fx,fy,iy,ix}.gen   # generated, shared with f_ks and f_wc_fft
 ├── codebox_spec.gen            # exact per-bin 2x2 step, three damping regimes, DC zeroed
 ├── codebox_nl.gen              # forcing, exciter phase, strike, sponge, gradient, containment
 ├── codebox_enc.gen             # bilinear to render size, luma and vecfield outlets, bypass_gate
@@ -45,7 +45,7 @@ tests/modules/wave_field/
 - [ ] G2 Output mapping and vecfield normalisation (T005): tier 3, Phase 2.
 - [ ] G3 Time units: per-frame model step or seconds from a measured frame time; `speed` and `frequency` units follow (`ideas/variable_framerate.md`).
 - [ ] G4 Dial count and grouping: the proposed set is about 11 dials; trim or group in Phase 2; decide whether a `medium` preset menu (Membrane, Water, Plate, Resonator) replaces some dials.
-- [ ] G5 DFT chain factoring: `f_wc` T020 factors `f_ks`'s `gen_dft.py` to a shared location; this module consumes it. Coordinate: whichever builds first does the factoring.
+- [x] G5 DFT chain factoring: settled by `f_wc_fft` T020 (now archived): `src/f_vf_fluid/gen_dft.py` is the shared generator and each module keeps a thin adapter, as `f_ks` does. This module adds `src/f_wave_field/gen_dft.py`; the old `f_wc_fft` adapter is gone with that module.
 
 ---
 

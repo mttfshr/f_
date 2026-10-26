@@ -3,7 +3,7 @@
 _Status: 🟡 specced 2026-10-23 as `.specify/f_wave_field/spec.md` (working name `f_wave_field`). Drafted from the
 webgpgpu mining run (`webgpgpu-ideas-1`). Not tried in Max._
 
-**The spec settled the open question below in favour of the spectral solver** (the `f_ks` / `f_wc` chain, exact per-bin step) and generalised
+**The spec settled the open question below in favour of the spectral solver** (the `f_ks` / `f_wc_fft` chain, exact per-bin step) and generalised
 the three modes into one dispersion relation, `omega^2 = ring^2 + speed^2 k^(2 dispersion)`. The spec is authoritative.
 
 ## Concept
@@ -67,7 +67,7 @@ each pixel rings up when its input keeps hitting the ring frequency.
   and the real-space multi-pass Laplacian per frame; the index already records
   that Jacobi-style iterations were judged impractical once. Possible answer
   (my addition, not from the run): the linear wave equation is exactly solvable
-  per Fourier mode, so the `f_ks` / `f_wc` pattern (exact linear stage, spectral)
+  per Fourier mode, so the `f_ks` / `f_wc_fft` pattern (exact linear stage, spectral)
   would remove the CFL limit. Cost is the `f_ks` DFT cost, and edges become
   periodic instead of reflecting. Decide before speccing.
 - Resonator mode is frame-rate dependent (ring frequency in radians per frame).

@@ -7,10 +7,10 @@ _Origin: `ideas/f_wc.md` — spun out of the f_wc_fft pixelation
 discussion (HANDOFF 2026-10-24). Reading the `WC_Example_10_fullscreen.html`
 source showed its fine, silky look is structural (solver grid = display grid,
 separable-Gaussian coupling, continuous display), and Matt confirmed that look
-is the actual target. Sibling of `f_wc_fft` (`.specify/f_wc_fft/spec.md`), which stays
-shipped and unchanged: same model class, different architecture and regime.
-Name settled: `f_wc` (Ermentrout-Cowan's term for the
-hallucination taxonomy; Matt, 2026-10-24 — the f_wc_fft gate-G2 alternate)._
+is the actual target. Written as a sibling of the FFT-chain `f_wc_fft`; on 2026-10-25 it REPLACED that
+module (archive: `.specify/superseded/f_wc_fft/`): same model class, different architecture and regime.
+Working name was `f_formconstants` (Ermentrout-Cowan's term for the hallucination taxonomy; Matt,
+2026-10-24), renamed `f_wc` (Wilson-Cowan) on 2026-10-25. Task and section ids are unchanged._
 
 ## Revision 2 (2026-10-24 night, Claude + Matt): parity first, then deviate
 

@@ -133,12 +133,12 @@ substantially move a file in `ideas/`, update its entry here too.
   **fork of `f_vf_fluid`**, not a v2: the solver's parameters live in real space
   (`force`, `dt`, `gain`, cheap to vary per pixel) and in the spectral stage
   (structural). Idea only, not specced, not named.
-- **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** 🟢 — **Built 2026-10-23** as `f_wc`
-  (final name, gate G2): a noise-sustained Wilson-Cowan generator (the settled Rule/
+- **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** ⚫ — **Superseded 2026-10-25** by `f_wc` ([f_wc.md](f_wc.md)).
+  Was **built 2026-10-23** as the FFT-chain `f_wc_fft`: a noise-sustained Wilson-Cowan generator (the settled Rule/
   Ermentout-Cowan model, G1), one shared DFT chain for both fields, the inverse
   retinotopic map in the render stage, the raw-additive drive inlet making
   hallucination ↔ imprint a single dial (G3). Reference doc
-  `docs/f-reference/f_wc.md`; the four-form-selector original pitch was pruned by the
+  `docs/f-reference/superseded/f_wc_fft.md` (archive); the four-form-selector original pitch was pruned by the
   region-map finding (there are no separable stable forms).
 - **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** 🟢 — **RESOLVED
   2026-10-13: ship both.** `f_weave`'s vecfield-driven orientation used vector-add +
@@ -249,7 +249,7 @@ substantially move a file in `ideas/`, update its entry here too.
 
 - **[f_deflicker.md](f_deflicker.md)** ⚪ — Downstream utility that holds an input's overall
   brightness near its usual level (whole-frame pumping flattens, structure untouched; one De-flicker dial).
-  Born in `f_formconstants` T075 (2026-10-25), moved out as a general tool. Carries the measured GPU
+  Born in `f_wc` (then `f_formconstants`) T075 (2026-10-25), moved out as a general tool. Carries the measured GPU
   findings: `sample()` does not interpolate here, ~256-tap codeboxes break the shader translator.
 - **[f_lens.md](f_lens.md)** 🟢 — Built and working; moved to `.specify/stable/`
   2026-10-13 with v2 (ghost images + halation) closed. Tilt-shift left for `f_focus`
@@ -580,14 +580,14 @@ placeholders.
 - **[f_adapt.md](f_adapt.md)** ⚪ — Temporal adaptation, novelty, change-gating and
   band-pass for plain textures (`f_tf_smooth` is tensor-only). Check core Vsynth overlap
   first.
-- **[f_wc_from_webgpgpu.md](f_wc_from_webgpgpu.md)** ⚪ — Four pieces for `f_wc` from
+- **[f_wc_from_webgpgpu.md](f_wc_from_webgpgpu.md)** ⚪ — Four pieces for the (now archived) `f_wc_fft` from
   Rule's Wilson-Cowan pages: known-answer reference, Gaussian noise drive, habituation
   dials, retinotopic stage as a shared piece.
-- **[f_formconstants.md](f_formconstants.md)** 🟡 — **Specced 2026-10-24**
-  (`.specify/f_formconstants/`): render-resolution Wilson-Cowan labyrinth in the
-  WC_Example_10 pipeline shape (separable-Gaussian coupling at display res, no FFT),
-  sibling of `f_wc`; born from the f_wc pixelation post-mortem (their smoothness is
-  structural, not AA).
+- **[f_wc.md](f_wc.md)** 🟢 — **Built 2026-10-24/25** (formerly `f_formconstants`; renamed 2026-10-25;
+  `.specify/f_wc/`): render-resolution Wilson-Cowan labyrinth, a faithful port of the WC_Example_10 pipeline
+  (fixed 1024² solver, separable-Gaussian coupling, bare log-polar map). **Replaces** the FFT-chain `f_wc_fft`;
+  born from that module's pixelation post-mortem (their smoothness is structural, not AA). Soak and final
+  control-set approval pending.
 - **[f_quasi.md](f_quasi.md)** 🟡 — **Specced 2026-10-23** (`.specify/f_quasi/`): Shepard-zoom quasicrystal
   generator with an analytic gradient outlet; relief, slope-hue and contour-banding looks are a gated Phase 2.
 - **[f_gabor.md](f_gabor.md)** ⚪ — Gabor band-pass and phase-invariant quadrature

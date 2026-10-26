@@ -1,6 +1,6 @@
-# f_wc — render-resolution Wilson-Cowan labyrinth (sibling of f_wc_fft)
+# f_wc — render-resolution Wilson-Cowan labyrinth (formerly f_formconstants; replaces f_wc_fft)
 
-_Specced 2026-10-24 (`.specify/f_wc/`). Origin: the f_wc_fft pixelation
+_Built 2026-10-24/25 (`.specify/f_wc/`). On 2026-10-25 it was renamed from `f_formconstants` to `f_wc` and REPLACED the FFT-chain `f_wc_fft` (archived at `.specify/superseded/f_wc_fft/`); the history below describes it as a sibling and is kept as written. Specced 2026-10-24. Origin: the f_wc_fft pixelation
 discussion the same day — reading the actual `WC_Example_10_fullscreen.html`
 source (michaelerule/webgpgpu) showed its fine, silky look is STRUCTURAL, not an
 AA technique: solver grid = display grid, separable-Gaussian-blur coupling

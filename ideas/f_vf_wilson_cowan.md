@@ -1,4 +1,4 @@
-# f_vf_wilson_cowan (idea — specced 2026-10-22 as `.specify/f_wc/spec.md`, working name `f_wc`)
+# f_vf_wilson_cowan (idea — built 2026-10-23 as the FFT-chain `f_wc_fft`, SUPERSEDED 2026-10-25 by `f_wc`, see `ideas/f_wc.md`; archived spec `.specify/superseded/f_wc_fft/spec.md`)
 
 _Spec decisions that supersede this file's framing: generator archetype,
 not a vecfield producer (output is a luma visual-field pattern, one outlet);
