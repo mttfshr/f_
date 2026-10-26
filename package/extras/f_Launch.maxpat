@@ -332,7 +332,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it",
+									"text": "Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

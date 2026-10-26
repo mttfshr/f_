@@ -473,7 +473,7 @@ A/B vs. the parity build AND the HTML, Matt keeps or reverts)
 ## Phase 2: Soak (tier 3, live with Matt)
 
 - [~] T020 superseded by T048 · T021–T023 superseded by Phase D.
-- [ ] T024 **[G2 — Matt]** Soak check (f_wc_fft's 30 s wash-drift precedent) at the
+- [x] **DONE 2026-10-25 (Matt, live; reported 17:42): the soak passed; README ⚠ removed.** T024 **[G2 — Matt]** Soak check (f_wc_fft's 30 s wash-drift precedent) at the
   shipped corner after Phase D.
 
 **Checkpoint:** Phase 2 closed when Matt approves the soak.
