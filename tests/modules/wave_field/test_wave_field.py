@@ -29,12 +29,19 @@ import sys
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-from wave_field_mirror import (F32, TWOPI, Params, encode_luma, encode_vec, energy,  # noqa: E402
+from wave_field_mirror import (F32, TWOPI, encode_luma, encode_vec, energy,  # noqa: E402
                                gradient, new_state, real_stage, sponge_rate, spec_stage,
                                step_coeffs, struck_state, wave_frame, _fft2, _gauss, signed_k)
 import wave_field_mirror as wfm  # noqa: E402
 
 N = 32
+
+
+def Params(**kw):
+    """Pure-physics tests run with viscosity off (nu = 0) so the closed forms hold exactly; the
+    shipped NU has its own tests below. Everything else is the mirror's Params."""
+    kw.setdefault("nu", 0.0)
+    return wfm.Params(**kw)
 
 
 # ------------------------------------------------------------------ references
@@ -502,6 +509,103 @@ def test_luma_is_bounded_and_opaque():
     check("luma inside [0, 1]", float(e[..., :3].min() < 0 or e[..., :3].max() > 1), 0.0)
     check("luma A = 1", float(np.abs(e[..., 3] - 1.0).max()), 0.0)
     check("u = 0 maps to mid-grey", abs(float(encode_luma(new_state(N, N))[0, 0, 0]) - 0.5), 0.0)
+
+
+# ------------------------------------------------------------------ Phase 0 constants (T003, T004, T007)
+
+def test_damping_floor_means_no_energy_growth_over_10000_frames():
+    """T003: at the dial's lowest damping the energy only falls, and falls at exp(-2 floor t)."""
+    rng = np.random.default_rng(31)
+    st = new_state(N, N)
+    for ch in (0, 2):
+        a = rng.uniform(-1, 1, (N, N))
+        st[..., ch] = (a - a.mean()).astype(F32)
+    p = Params(speed=0.25, damping=wfm.DAMPING_FLOOR, fast_fft=True)
+    e0 = energy(st, p)
+    es = [e0]
+    for i in range(1, 10001):
+        st, _, _, _ = wave_frame(st, p)
+        if i % 100 == 0:
+            es.append(energy(st, p))
+    worst_rise = max(max(b / a - 1.0 for a, b in zip(es[:-1], es[1:])), 0.0)
+    check("largest 100-frame energy rise at the damping floor", worst_rise, 1e-6)
+    want = np.exp(-2.0 * wfm.DAMPING_FLOOR * 10000 * p.dt)
+    check("energy after 10,000 frames vs exp(-2 floor t) (relative)", abs(es[-1] / e0 / want - 1.0), 2e-3)
+
+
+def test_viscosity_tames_the_top_bins_and_leaves_mid_scale_alone():
+    """T004: nu damps the N = 256 Nyquist bin within ~0.2 s and leaves mode 8 alone for ~40 s."""
+    p = wfm.Params(speed=0.25, damping=0.0)
+    mags = np.array([[TWOPI * 8, TWOPI * 128]], F32)
+    _, _, _, beta = step_coeffs(mags, p)
+    tau8, tau128 = 1.0 / float(beta[0, 0]), 1.0 / float(beta[0, 1])
+    note("damping time at mode 8 / the N = 256 Nyquist bin", f"{tau8:.1f} s / {tau128:.3f} s")
+    check("mode 8 damping time is at least 30 s", float(tau8 < 30.0), 0.0)
+    check("Nyquist bin damping time is at most 0.2 s", float(tau128 > 0.2), 0.0)
+
+
+def test_default_sponge_absorbs_the_pulse_without_reflecting_it():
+    """T004: struck pulse, default constants, edge 0.5 (the dial default). `reflect` is the inner-disc
+    energy that comes back in the window where a reflection would arrive; `left` what survives 4 s."""
+    n = 64
+    p = Params(speed=0.25, damping=0.001, nu=float(wfm.NU), edge=0.5, fast_fft=True)
+    nx = (np.arange(n) + 0.5) / n
+    xx, yy = np.meshgrid(nx, nx)
+    inner = (xx - 0.5) ** 2 + (yy - 0.5) ** 2 < 0.2 ** 2
+
+    def edens(s):
+        u, v = s[..., 0].astype(np.float64), s[..., 2].astype(np.float64)
+        ux = (np.roll(u, -1, 1) - np.roll(u, 1, 1)) * (n / 2)
+        uy = (np.roll(u, -1, 0) - np.roll(u, 1, 0)) * (n / 2)
+        return 0.5 * v * v + 0.5 * p.speed ** 2 * (ux * ux + uy * uy)
+    st = struck_state(n, n, p)
+    e0 = float(edens(st).sum())
+    refl = 0.0
+    for i in range(1, 241):
+        st, _, _, _ = wave_frame(st, p)
+        if 114 <= i <= 186:
+            refl = max(refl, float(edens(st)[inner].sum()) / e0)
+    left = float(edens(st).sum()) / e0
+    note("reflect / left", f"{refl:.4f} / {left:.4f}")
+    check("reflected energy back in the inner disc (T004 measured 0.001 at N = 96)", refl, 1e-2)
+    check("energy left at 4 s (T004 measured 0.005 at N = 96)", left, 2e-2)
+
+
+def test_exciter_gain_gives_unit_amplitude_at_the_default_settings():
+    n = 64
+    p = Params(speed=0.25, damping=0.3, nu=float(wfm.NU), edge=0.5, amplitude=1.0, frequency=2.0, fast_fft=True)
+    st, phase, peak = new_state(n, n), 0.0, 0.0
+    for i in range(1, 361):
+        st, _, _, phase = wave_frame(st, p, phase=phase)
+        if i >= 240:
+            peak = max(peak, float(np.abs(st[..., 0]).max()))
+    note("max |u| over t in [4, 6] s at amplitude 1", f"{peak:.3f}")
+    check("max |u| is within 30% of 1", abs(peak - 1.0), 0.3)
+
+
+def test_force_kick_amplitude_error_follows_the_discrete_model():
+    """T007: a static force cos(2 pi m x) is delivered as a kick per frame. The mirror's steady state
+    must equal the exact fixed point of the discrete map (linear algebra, independent), and that
+    fixed point differs from the continuous F/omega^2 by about -(omega dt)^2 / 12, whatever beta is."""
+    m_idx, dt = 4, 1.0 / 60.0
+    p = Params(speed=0.25, damping=5.0, dt=dt, force=1.0, fast_fft=True)
+    om = float(wfm.omega_of(2 * np.pi * m_idx, p)) if hasattr(wfm, "omega_of") else p.speed * 2 * np.pi * m_idx
+    x = (np.arange(N, dtype=np.float64) + 0.5) / N
+    tex = new_state(N, N)
+    tex[..., 0] = (0.5 + 0.5 * np.cos(2 * np.pi * m_idx * x))[None, :] * np.ones((N, 1))
+    st = new_state(N, N)
+    for _ in range(300):                                     # beta = 5: transients gone to 1e-11
+        st, _, _, _ = wave_frame(st, p, force_tex=tex)
+    a, b, c, d = expm2(np.float64(om ** 2), np.float64(5.0), dt)
+    P = np.array([[a, b], [c, d]])
+    X = np.linalg.solve(np.eye(2) - P, np.array([0.0, dt]))
+    prof = np.cos(2 * np.pi * m_idx * x)[None, :] * np.ones((N, 1))
+    check("mirror steady state vs the discrete fixed point (relative)",
+          float(np.abs(st[..., 0] - X[0] * prof).max()) / abs(X[0]), 1e-4)
+    err = X[0] * om ** 2 - 1.0
+    pred = -(om * dt) ** 2 / 12.0
+    note("static amplitude error vs -(omega dt)^2/12", f"{100 * err:.3f}% vs {100 * pred:.3f}%")
+    check("error is -(omega dt)^2/12 within 20%", abs(err - pred) / abs(pred), 0.2)
 
 
 if __name__ == "__main__":

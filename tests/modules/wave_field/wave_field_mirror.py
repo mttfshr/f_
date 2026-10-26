@@ -44,12 +44,13 @@ from gpu_sim import F32, TWOPI, grid, sample, store_float32, texture
 
 # ---- provisional constants (T003/T004/T005 set these) ----
 KREF = F32(TWOPI * 8.0)        # reference wavenumber: mode 8 across the frame (T004)
-NU = F32(0.0)                  # fixed viscosity on |k|^2; 0 until T004 chooses it
+NU = F32(1e-5)                 # fixed viscosity on |k|^2 (T004: damping time 0.15 s at the N = 256 Nyquist bin, 40 s at mode 8)
+DAMPING_FLOOR = 1e-3           # lowest `damping` the dial reaches, per time unit (T003: worst float32 coefficient gain 3.3e-7/frame needs 1e-5; x100 margin)
 EX_SIGMA = F32(0.02)           # exciter / strike Gaussian sigma, in frame widths (T004)
-EX_GAIN = F32(50.0)            # exciter force per unit `amplitude` (T004)
-STRIKE_AMP = F32(1.0)          # strike impulse height in u per unit amplitude (T004)
-SPONGE_WIDTH = F32(0.12)       # sponge band width, in frame widths (T004)
-SPONGE_RATE = F32(30.0)        # peak sponge damping rate at edge = 1, per time unit (T004)
+EX_GAIN = F32(165.0)           # exciter force per unit `amplitude` (T004: max|u| ~ 1 at amplitude 1, 2 Hz, speed 0.25, damping 0.3, edge 0.5)
+STRIKE_AMP = F32(4.0)          # strike impulse height in u (T004: the ring is ~0.4 after 1 s; independent of `amplitude`, so amplitude 0 can still strike)
+SPONGE_WIDTH = F32(0.12)       # sponge band width, in frame widths (T004: 0.12 reflects ~0.1% and absorbs ~99.5% at rate 10)
+SPONGE_RATE = F32(20.0)        # peak sponge damping rate at edge = 1, per time unit (T004: edge 0.5 lands on the rate-10 optimum; stronger reflects more)
 U_CAP = F32(100.0)             # containment bound on u and v (T003)
 GRAD_SCALE = F32(0.05)         # vecfield encode scale (placeholder; G2 / T005)
 LUMA_SCALE = F32(0.25)         # luma encode scale (placeholder; G2 / T005)
