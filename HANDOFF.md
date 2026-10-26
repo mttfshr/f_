@@ -14,7 +14,7 @@
 1. ~~Matt approves the control set~~ **DONE 17:41: Phase D CLOSED.** Phase 2 soak (T024) done by Matt live, **README ⚠ removed** (2026-10-25 17:45).
 2. ~~Matt's look in Max at `package/help/f_wc.maxhelp`~~ **DONE 17:43 ("looks great").** It has no `parameters` block; the `f-helpfile` skill checklist was not run line by line.
 3. ~~Re-upload the two skills~~ **DONE: Matt uploaded `jit-gen-codebox` and `maxpat-json-authoring` and `skills/check.sh stamp` was run (17:45).** (Four traps added: `Param t` never applied, dial-name vs pix attribute, `sample()` = one texel at corners, ~256-tap parser limit; the entries still say `f_formconstants` as history.)
-4. T030: ~~full offline suite~~ **PASSED 17:48 (92 s)** after registering `bench_wc` / `bench_wc_look` in `tests/lib/benchdeps.py` (look = GROUP record; `bench_wc.py` ORDER 59), and re-adding the `f_wc` bypass entry in `tests/contracts/bench_modules.py`. STILL OWED: the Max module contract bench (`tests/bench.sh`, needs Max open). `bench_wc_look.py` still has the module-bench capture bug (no outlet captured though the module renders).
+4. T030: ~~full offline suite~~ **PASSED 17:48 (92 s)** after registering `bench_wc` / `bench_wc_look` in `tests/lib/benchdeps.py` (look = GROUP record; `bench_wc.py` ORDER 59), and re-adding the `f_wc` bypass entry in `tests/contracts/bench_modules.py`. **The Max module contract bench PASSED too (18:30, `bench_modules.py` 2/2, f_wc covered): T030 CLOSED.** `bench_wc_look.py` still has the module-bench capture bug (no outlet captured though the module renders).
 
 **Gotcha learned:** `git mv dir existing-empty-dir` nests instead of renaming (stale `__pycache__` stubs left an empty `tests/modules/wc/` and `src/f_wc/`). Delete the stubs first.
 
