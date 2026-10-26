@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-10-25.** This FFT-chain module is replaced by **Wilson-Cowan** (`f_wc`, formerly `f_formconstants`: a fixed 1024² render-map solver, see `docs/f-reference/f_wc.md`). Its source, patcher, helpfile and tests are removed from the library; the last commit that still holds them is `af74411`. Kept here as archival decision history. Paths below describe the old module and are no longer valid.
+
 # f_wc
 
 **Type:** Generator (drive inlet, luma out) — **temporal / has memory**
