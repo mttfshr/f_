@@ -76,10 +76,7 @@ needs all four channels at once, which the `spec` stage already sees.
 ### Open, not yet decided
 
 - **G1 naming.**
-- **G2 output mapping.** Luma from `u` and the vecfield from `grad u` have unbounded
-  linear range. Hard clamp, `tanh`-style compression or auto-range, and the vecfield
-  normalisation, are open (tier 3, same shape as `f_ks`'s T005). A `gain` dial is
-  expected.
+- **G2 output mapping (decided 2026-10-25).** `tanh` compression for luma and for the vecfield, with a `gain` dial in front: `0.5 + 0.5 tanh(gain * scale * x)`. No hard clamp, no auto-range (gain pumps x2.5 and amplifies quiet fields). Default gain and scales are tuned by eye in Phase 2.
 - **G3 time units.** The model step is one frame (frame-rate dependent, like `f_ks`
   `rate`), or seconds from a measured frame time (`ideas/variable_framerate.md`).
   `frequency` and `speed` units follow.

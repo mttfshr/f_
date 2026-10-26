@@ -52,8 +52,8 @@ STRIKE_AMP = F32(4.0)          # strike impulse height in u (T004: the ring is ~
 SPONGE_WIDTH = F32(0.12)       # sponge band width, in frame widths (T004: 0.12 reflects ~0.1% and absorbs ~99.5% at rate 10)
 SPONGE_RATE = F32(20.0)        # peak sponge damping rate at edge = 1, per time unit (T004: edge 0.5 lands on the rate-10 optimum; stronger reflects more)
 U_CAP = F32(100.0)             # containment bound on u and v (T003)
-GRAD_SCALE = F32(0.05)         # vecfield encode scale (placeholder; G2 / T005)
-LUMA_SCALE = F32(0.25)         # luma encode scale (placeholder; G2 / T005)
+GRAD_SCALE = F32(0.05)         # vecfield tanh argument scale (G2: tanh; default gain tuned in Phase 2)
+LUMA_SCALE = F32(0.5)          # luma tanh argument scale (G2: tanh; default gain tuned in Phase 2)
 TAYLOR_X = F32(1e-4)           # |wd^2 dt^2| below this uses the series (critical regime)
 
 
@@ -70,6 +70,7 @@ class Params:
     y: float = 0.5
     frequency: float = 2.0      # exciter frequency (cycles per time unit)
     amplitude: float = 0.0      # exciter strength; 0 = free ringing
+    gain: float = 1.0           # output mapping strength (G2: tanh), before the tanh
     fast_fft: bool = False      # False = the pass_dft chain; True = np.fft (long runs only)
     nu: float = float(NU)
     kref: float = float(KREF)
@@ -217,22 +218,23 @@ def gradient(u_tex, L=1.0):
     return ux.astype(F32), uy.astype(F32)
 
 
-def encode_luma(u_tex):
-    """Placeholder bounded map (hard clamp); the real mapping is G2."""
+def encode_luma(u_tex, gain=1.0):
+    """G2 (Matt, 2026-10-25): tanh compression, 0.5 + 0.5 tanh(gain LUMA_SCALE u). Never clips; near
+    mid-grey the slope is 0.5 gain LUMA_SCALE (the old hard clamp's 0.25 at the default)."""
     e = texture(*u_tex.shape[:2])
-    e[..., 0] = np.clip(F32(0.5) + LUMA_SCALE * u_tex[..., 0], 0.0, 1.0)
+    e[..., 0] = F32(0.5) + F32(0.5) * np.tanh(F32(gain) * LUMA_SCALE * u_tex[..., 0])
     e[..., 1] = e[..., 0]
     e[..., 2] = e[..., 0]
     e[..., 3] = F32(1.0)
     return store_float32(e)
 
 
-def encode_vec(u_tex):
-    """Gradient vecfield: R,G = clamp(grad u * GRAD_SCALE * 0.5 + 0.5), B = 0.5, A = 1."""
+def encode_vec(u_tex, gain=1.0):
+    """Gradient vecfield (G2: tanh): R,G = 0.5 + 0.5 tanh(gain GRAD_SCALE grad u), B = 0.5, A = 1."""
     ux, uy = gradient(u_tex)
     e = texture(*u_tex.shape[:2])
-    e[..., 0] = np.clip(ux * GRAD_SCALE * F32(0.5) + F32(0.5), 0.0, 1.0)
-    e[..., 1] = np.clip(uy * GRAD_SCALE * F32(0.5) + F32(0.5), 0.0, 1.0)
+    e[..., 0] = F32(0.5) + F32(0.5) * np.tanh(F32(gain) * GRAD_SCALE * ux)
+    e[..., 1] = F32(0.5) + F32(0.5) * np.tanh(F32(gain) * GRAD_SCALE * uy)
     e[..., 2] = F32(0.5)
     e[..., 3] = F32(1.0)
     return store_float32(e)
@@ -268,7 +270,7 @@ def wave_frame(state, p, force_tex=None, phase=0.0, strike=False):
     st[..., 3] = F32(1.0)
     new = real_stage(st, p, force_tex, phase, strike)
     new_phase = (phase + float(TWOPI) * p.frequency * p.dt) % float(TWOPI)
-    return new, encode_luma(new), encode_vec(new), new_phase
+    return new, encode_luma(new, p.gain), encode_vec(new, p.gain), new_phase
 
 
 def energy(state, p):

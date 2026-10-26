@@ -511,6 +511,30 @@ def test_luma_is_bounded_and_opaque():
     check("u = 0 maps to mid-grey", abs(float(encode_luma(new_state(N, N))[0, 0, 0]) - 0.5), 0.0)
 
 
+def test_output_mapping_is_tanh_and_gain_scales_the_argument():
+    """G2 (Matt, 2026-10-25): luma = 0.5 + 0.5 tanh(gain LUMA_SCALE u), vec likewise on grad u. Never clips."""
+    t = new_state(N, N)
+    t[..., 0] = np.linspace(-6, 6, N * N).reshape(N, N)
+    u = t[..., 0].astype(np.float64)
+    for g in (0.5, 1.0, 4.0):
+        want = 0.5 + 0.5 * np.tanh(g * float(wfm.LUMA_SCALE) * u)
+        check(f"luma matches the tanh formula at gain {g}", float(np.abs(encode_luma(t, g)[..., 0] - want).max()), 1e-6)
+    small = new_state(N, N)
+    small[..., 0] = np.linspace(-1, 1, N * N).reshape(N, N)
+    y = encode_luma(small)[..., 0]
+    check("luma is strictly inside (0, 1) for |u| <= 1", float(y.min() <= 0 or y.max() >= 1), 0.0)
+    check("luma is monotone in u", float(np.diff(y.reshape(-1)).min() < 0), 0.0)
+    ramp = new_state(N, N)
+    ramp[..., 0] = np.sin(2 * np.pi * (np.arange(N) + 0.5) / N)[None, :] * 3.0
+    ux, _ = gradient(ramp)
+    want = 0.5 + 0.5 * np.tanh(2.0 * float(wfm.GRAD_SCALE) * ux.astype(np.float64))
+    check("vecfield R matches the tanh formula at gain 2", float(np.abs(encode_vec(ramp, 2.0)[..., 0] - want).max()), 1e-6)
+    p = Params(speed=0.25, amplitude=1.0, gain=4.0)
+    _, luma, vec, _ = wave_frame(new_state(32, 32), p)
+    check("wave_frame passes gain to both outputs (luma/vec unchanged is gain 1)",
+          float(np.abs(luma - encode_luma(wave_frame(new_state(32, 32), p)[0], 4.0)).max()), 0.0)
+
+
 # ------------------------------------------------------------------ Phase 0 constants (T003, T004, T007)
 
 def test_damping_floor_means_no_energy_growth_over_10000_frames():
