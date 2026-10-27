@@ -95,6 +95,11 @@ BYPASS_EXPECT = {
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # luma: black, A = 1
         2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
     },
+    "f_quasi": {                                        # dual generator: bypass_gate = neutral values on every outlet
+        1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # look: black, A = 1
+        2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
+        3: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # potential: black, A = 1
+    },
     "f_chladni": {                                      # generator, no texture input: neutral values
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # luma: black
         2: ("const", (0.5, 0.5, 0.0, 1.0), 0.0),        # vecfield: zero vector

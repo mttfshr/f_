@@ -32,7 +32,8 @@ CODE = (_paths.REPO / "src" / "f_quasi" / "codebox_quasi.gen").read_text()
 H, W = 144, 256
 BLANK = np.zeros((H, W, 4), np.float32)        # first input as large as the render: `dim` is the render's
 STAND_IN = np.zeros((4, 4, 4), np.float32)     # the bench's usual bang stand-in (4x4)
-PINNED = dict(zoom=0.0, drift=0.0, density=4.0, envelope=0.5, bands=5.0, angle=0.0, gain=1.0, bypass_gate=0.0)
+PINNED = dict(zoom=0.0, drift=0.0, density=4.0, envelope=0.5, bands=5.0, angle=0.0, gain=1.0,
+              zoom_clk=0.0, drift_clk=0.0, src_mode=0.0, bypass_gate=0.0)
 CASES = {
     "defaults": {},
     "dense, zoomed, capped envelope": dict(zoom=0.5, density=12.0, envelope=0.7),
@@ -111,6 +112,19 @@ def test_zoom_and_drift_wrap_on_the_gpu():
                         ("zoom 0.25 vs -0.75", dict(zoom=0.25), dict(zoom=-0.75)),
                         ("drift 0.5 vs 1.5", dict(drift=0.5), dict(drift=1.5)),
                         ("drift 0.5 vs -0.5", dict(drift=0.5), dict(drift=-0.5))):
+        oa, ob = gpu(a), gpu(b)
+        check(f"{label}: all three outlets identical", max(worst(oa[i], ob[i]) for i in range(3)), 1e-6)
+
+
+def test_clock_phases_add_to_zoom_and_drift():
+    """zoom_clk and drift_clk are the patcher clock's wrapped phases (T021); they ADD to the dials and the sum wraps.
+    Binary fractions, so the sums are exact in float32 and the frames must agree to rounding. src_mode (the dual
+    archetype's vs_inState flag) is not read, so it must change nothing."""
+    for label, a, b in (("zoom 0.25 + zoom_clk 0.5 vs zoom 0.75", dict(zoom=0.25, zoom_clk=0.5), dict(zoom=0.75)),
+                        ("zoom 0.75 + zoom_clk 0.5 vs zoom 0.25 (the sum wraps)", dict(zoom=0.75, zoom_clk=0.5), dict(zoom=0.25)),
+                        ("drift 0.25 + drift_clk 0.5 vs drift 0.75", dict(drift=0.25, drift_clk=0.5), dict(drift=0.75)),
+                        ("drift 0.75 + drift_clk 0.5 vs drift 0.25 (the sum wraps)", dict(drift=0.75, drift_clk=0.5), dict(drift=0.25)),
+                        ("src_mode 1 vs src_mode 0", dict(src_mode=1.0), dict())):
         oa, ob = gpu(a), gpu(b)
         check(f"{label}: all three outlets identical", max(worst(oa[i], ob[i]) for i in range(3)), 1e-6)
 

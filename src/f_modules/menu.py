@@ -138,4 +138,5 @@ NOT_IN_MENU = {
     "f_a_decorrelate": "audio (pfft~) module, not a Vsynth bpatcher; DSP built, packaging pending (README marks it)",
     "f_chladni_audio": "audio companion of f_chladni, not a Vsynth bpatcher (README marks it)",
     "f_wave_field":    "Phase 1 built (codeboxes + patcher, 2026-10-25); menu placement, helpfile and README row are Phase 3 (T040)",
+    "f_quasi":        "Phase 1 built (patcher from its definition, 2026-10-26); menu placement, helpfile and reference doc are Phase 3 (T040)",
 }

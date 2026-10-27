@@ -70,6 +70,11 @@ for _n in ("seed", "blurx", "blury", "enc"):
 for _p in ("drift", "phase", "regularity", "skip", "speed_var"):
     KNOWN_ISSUES[("f_masonry", "unused", f"masonry_pix.{_p}_mod_amt_a")] = _MASONRY_NOTE
 
+KNOWN_ISSUES[("f_quasi", "unused", "#0_quasi_pix.src_mode")] = (
+    "documented in src/f_quasi/codebox_quasi.gen header: src_mode is the dual archetype's vs_inState flag, driven by "
+    "the builder; this generator has no processor mode, so the codebox declares it and never reads it "
+    "(declared so the prepend param does not raise an invalid message)")
+
 # default_mismatch: f_masonry (mortar/width) and f_hue_processor (hue_upper) were initially
 # flagged here pending Matt's call on which side -- dial or codebox literal -- was stale.
 # Resolved 2026-10-15: masonry's shipped dial (0.5/0.5) confirmed as an intentional hand
