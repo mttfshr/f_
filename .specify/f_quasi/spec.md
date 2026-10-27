@@ -113,7 +113,7 @@ pattern scales endlessly without changing character, wrapping at one octave with
 visible seam.
 
 **Independent Test**: sweep `zoom` from 0 to 1 and back at the default envelope; the
-frame at 0.999 and at 0.000 differ by less than the Phase 0 tolerance (T004).
+frame at 0.999 and at 0.000 differ by less than 1.5e-4 in P (the T004 tolerance).
 
 **Acceptance Scenarios**:
 1. **Given** the default envelope, **When** `zoom` wraps from 1 to 0, **Then** no
@@ -138,7 +138,7 @@ potential; tier 2 diffs the GPU outlet against the mirror.
 
 ### User Story 4 — Density, envelope, bands, rotation (Priority: P2)
 
-A performer shapes the texture: `density` (bands per frame width), `envelope` (how
+A performer shapes the texture: `density` (cycles per frame height), `envelope` (how
 many octaves are visible), `bands` (contour count in the banded look), `angle` (global
 rotation), `drift` (phase drift).
 
@@ -169,10 +169,13 @@ Requirements).
 - **FR-008**: The texture outlet MUST render the banded look from `P`: triangle fold of
   `frac((P*0.5+1) * bands)`, raised to 1.1 (source value; Phase 2 may expose the
   exponent). `bands` defaults to 5.
-- **FR-009**: Octaves near the Nyquist limit MUST fade smoothly rather than alias
-  (cutoff set in Phase 0).
+- **FR-009**: Octaves near the Nyquist limit MUST NOT alias visibly. T005 (2026-10-26):
+  at 1080p inside the parameter ranges no octave carrying weight exceeds 0.50 cycles per
+  pixel, so no fade is needed there; whether to ship a per-octave smooth fade without
+  renormalisation (start 0.25, end 0.5) as insurance for small render sizes is decided
+  at the T030 look, with the T006 cost.
 - **FR-010**: `envelope` MUST be capped so the zoom-wrap residual stays under the
-  Phase 0 tolerance (the cap is a measured number, not a guess).
+  Phase 0 tolerance (the cap is a measured number, not a guess): set by T004 at 0.7, tolerance 1.5e-4 in P.
 - **FR-011**: Coordinates MUST be isotropic (aspect applied to `x` only).
 - **FR-012**: Standard f_ behaviour: bypass via a codebox `bypass_gate` Param (never
   the native `@bypass`): texture outlet emits black with A = 1 (as `f_chladni` and
@@ -197,9 +200,9 @@ Requirements).
 |---|---|---|---|
 | `zoom` | 0–1 (cyclic) | 0 | base scale = 2^zoom, one octave per cycle |
 | `zoom_rate` | signed, octaves/s (unit settled in T021) | small non-zero | patcher clock |
-| `drift` | signed rate | small | advances the phase offset `p` |
-| `density` | about 1–12 | 4 | bands per frame width at scale 1 (`B`) |
-| `envelope` | 0.25–cap | 0.5 | `sigma`; cap set by T004 |
+| `drift` | signed rate | small | advances the phase offset; a base-octave phase in turns, offset `2 pi phi 2^i`, wrapped at 1 (T002: an unbounded `p` loses precision) |
+| `density` | about 1–12 | 4 | cycles per frame HEIGHT at scale 1 (`B`; height, not width, because only `x` is scaled by aspect: T001) |
+| `envelope` | 0.25–0.7 | 0.5 | `sigma`; cap 0.7 set by T004 (wrap residual under half an output level at bands 12) |
 | `bands` | about 1–12 | 5 | contour count in the banded look |
 | `angle` | 0–180 deg | 0 | global rotation of the five orientations |
 | `gain` | 0–unbounded | 1 | vecfield strength (library naming) |

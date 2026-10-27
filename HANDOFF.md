@@ -1,6 +1,14 @@
 # HANDOFF
 
-## START HERE (2026-10-25, 17:30): `f_formconstants` is now `f_wc` (Wilson-Cowan); the old FFT-chain `f_wc` is retired
+## START HERE (2026-10-26): `f_quasi` Phase 0 offline half DONE (T001-T005); remaining T006 (Max bench) and T007 (Matt)
+
+- **What exists:** `tests/modules/quasi/quasi_mirror.py` + `test_quasi.py` (11/11, 0.5 s; independent scalar float64 reference, finite difference, rotation covariance, four mutations caught) and four records, `tests/records/spike_quasi_{float32,gradient,wrap,nyquist}.py` (run with `uv run --no-project --with numpy python3`). Full findings in `.specify/f_quasi/tasks.md` Record (2026-10-26); spec table amended (density is per frame HEIGHT, `envelope` max 0.7, drift a wrapped phase).
+- **Decisions made (revisit freely):** no argument reduction (float32 error 2.6e-5 in P); `envelope` cap 0.7 (wrap residual under half an output level at bands 12, tolerance 1.5e-4 in P); **drift must be a wrapped phase** (unbounded p reaches half a level at p = 1e4); beta_k are float64 literals; renormalised Nyquist fades and a global fade rejected, a per-octave no-renorm smooth fade (0.25 to 0.5) is the candidate but irrelevant at 1080p inside the ranges, so the decision waits for the T030 small-render look and the T006 cost.
+- **Not run:** nothing on the GPU (no Max bench), and the full offline suite (only `test_quasi.py`). GPU `cos` accuracy at large arguments is untested.
+- **Next (Matt's pick):** T006 (cost at 1080p, all 7 octaves vs skipping; needs a scratch codebox on the bench), T007 (look: bounded vecfield into `f_caustic` / `f_vf_warp`, and whether the default `gain` should exceed 1, since the bounded field only fills 0.19-0.80 of the encoded range at gain 1), gates G1 (name) and G2.
+- **Stale-doc warning:** this file's entries below say `f_wave_field` Phase 0 is not started and `plan.md` item 11 agrees, but git history shows `f_wave_field` Phase 0 complete (T006 cost on the bench) and Phase 1 built (`a68c9db`, T020-T022). Not updated here: not my work this session. The working tree also holds uncommitted moves of `f_dither_grain` (to `paused/`), `f_vf_lbm` and `f_wc` (to `stable/`) that this session did not make.
+
+## 2026-10-25, 17:30: `f_formconstants` is now `f_wc` (Wilson-Cowan); the old FFT-chain `f_wc` is retired
 
 **STATUS AT CLOSE (2026-10-25, 18:35): `f_wc` is DONE. Nothing is owed on it.** Phase D closed, soak passed, README ⚠ off, helpfile checked in Max, skills re-uploaded and stamped, full offline suite 92 s green, Max module contract bench green (`bench_modules.py` 2/2, f_wc covered). The repo is clean at `4b16b5b`.
 
