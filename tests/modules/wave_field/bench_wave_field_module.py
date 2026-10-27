@@ -12,7 +12,7 @@ Needs Max with tests/bench/bench_module.maxpat open (Vsynth performance patches 
 Run:  tests/bench.sh tests/modules/wave_field/bench_wave_field_module.py
 """
 GROUP = "regression"
-ORDER = 58
+ORDER = 63             # integers only; 58 was shared with bench_vf_lbm_module, renumbered 2026-10-26
 
 import paths as _paths
 import sys

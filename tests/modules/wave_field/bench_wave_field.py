@@ -14,7 +14,7 @@ Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh tests/modules/wave_field/bench_wave_field.py
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
-ORDER = 57
+ORDER = 62             # integers only; 57 was shared with bench_vf_lbm, renumbered 2026-10-26 (61 is bench_quasi)
 
 import paths as _paths
 import sys
