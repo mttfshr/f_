@@ -12,7 +12,9 @@ Model (N = 5 orientations, M = 7 octaves, q = frame-height units, centred):
     w_i    = exp(-0.5 * ((e_i - 3) / envelope)^2)
     phi_k  = k * pi / N + angle
     beta_k = frac(exp(pi * k))                   LITERALS in the codebox (see below)
-    psi_ik = (beta_k + drift) * s_i + (cos phi_k * x + sin phi_k * y) * 2 pi B s_i
+    psi_ik = beta_k * s_i + 2 pi dw 2^i + (cos phi_k * x + sin phi_k * y) * 2 pi B s_i
+                                                 dw = frac(drift): a base-octave phase in TURNS (T002), so the
+                                                 offset is exactly periodic in drift (2^i is an integer)
     P      = sum_i w_i sum_k cos(psi_ik) / (N * sum_i w_i)               in [-1, 1]
     grad P = -2 pi B sum_i w_i s_i sum_k sin(psi_ik) dir_k / (N * sum_i w_i)
     v      = -sum_i w_i s_i sum_k sin(psi_ik) dir_k / (N * sum_i w_i s_i)  |v| <= 1 (gate G2)
@@ -77,7 +79,7 @@ def fade_factors(s, density, fade, dtype=np.float64):
 
 
 def field(x, y, *, zoom=0.0, drift=0.0, density=4.0, envelope=0.5, angle=0.0,
-          dtype=np.float32, fade=None, wrap_zoom=True, bug=None):
+          dtype=np.float32, fade=None, wrap_zoom=True, bug=None, legacy_drift=None):
     """Potential P, exact gradient (gx, gy) and bounded vecfield numerators (vx, vy) at the
     coordinates x, y (frame-height units). Returns a dict of arrays shaped like x."""
     x = np.asarray(x, dtype)
@@ -89,7 +91,8 @@ def field(x, y, *, zoom=0.0, drift=0.0, density=4.0, envelope=0.5, angle=0.0,
     wnorm = wf.sum() if (not fade or fade.get("renorm", True)) else w.sum()
     wsnorm = (wf * s).sum() if (not fade or fade.get("renorm", True)) else (w * s).sum()
     b = betas(dtype)
-    p = dtype(drift)
+    dw = dtype(drift) - np.floor(dtype(drift))           # wrapped phase in turns
+    pw = dtype(2) ** np.arange(N_OCT, dtype=dtype)       # 2^i, exact in float32
     twopib = dtype(TWOPI) * dtype(density)
     k = np.arange(N_WAVES, dtype=dtype)
     phi = k * dtype(np.pi / N_WAVES) + dtype(angle)
@@ -106,7 +109,10 @@ def field(x, y, *, zoom=0.0, drift=0.0, density=4.0, envelope=0.5, angle=0.0,
         sy = np.zeros_like(x)
         for kk in range(N_WAVES):
             d = ck[kk] * x + sk[kk] * y
-            psi = (b[kk] + p) * si + d * (twopib * si)
+            if legacy_drift is None:
+                psi = b[kk] * si + dtype(TWOPI) * dw * pw[i] + d * (twopib * si)
+            else:    # the pre-T002 form (unbounded phase scaled by s_i), kept for spike_quasi_float32's drift table
+                psi = (b[kk] + dtype(legacy_drift)) * si + d * (twopib * si)
             sn = np.sin(psi)
             sum_cos += np.cos(psi)
             sx += sn * ck[kk]

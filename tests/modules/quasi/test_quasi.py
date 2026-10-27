@@ -46,7 +46,8 @@ def ref_point(x, y, zoom=0.3, drift=0.0, density=4.0, envelope=0.5, angle=0.0,
         wssum += w * s
         for k in range(5):
             phi = k * math.pi / 5 + angle
-            psi = (betas[k] + drift) * s + (math.cos(phi) * x + math.sin(phi) * y) * tpb * s
+            psi = (betas[k] * s + 2.0 * math.pi * (drift - math.floor(drift)) * 2.0 ** i
+                   + (math.cos(phi) * x + math.sin(phi) * y) * tpb * s)
             c, sn = math.cos(psi), math.sin(psi)
             P += w * c
             gx -= w * sn * math.cos(phi) * tpb * s
@@ -144,6 +145,23 @@ def test_wrap_residual_matches_spec_weights():
     a = q.field(XS, YS, dtype=np.float64, zoom=1.0, **{k: v for k, v in DEF.items() if k != "zoom"})["P"]
     b = q.field(XS, YS, dtype=np.float64, zoom=0.0, **{k: v for k, v in DEF.items() if k != "zoom"})["P"]
     check("zoom 1 wraps to zoom 0 exactly", np.abs(a - b).max(), 0.0)
+
+
+def test_drift_is_a_wrapped_phase_in_turns():
+    """T002: the offset is 2 pi frac(drift) 2^i, so one whole turn of drift is the identical frame (exactly,
+    because 2^i is an integer) and an unbounded accumulator costs nothing."""
+    base = {k: v for k, v in DEF.items() if k != "drift"}
+    a = q.field(XS, YS, dtype=np.float64, drift=0.37, **base)["P"]
+    b = q.field(XS, YS, dtype=np.float64, drift=1.37, **base)["P"]
+    c = q.field(XS, YS, dtype=np.float64, drift=-0.63, **base)["P"]
+    check("drift 0.37 == 1.37 (one turn)", np.abs(a - b).max(), 1e-9)
+    check("drift 0.37 == -0.63", np.abs(a - c).max(), 1e-9)
+    zero = q.field(XS, YS, dtype=np.float64, drift=0.0, **base)["P"]
+    assert np.abs(a - zero).max() > 0.05, "a 0.37-turn drift must change the pattern"
+    # float32: a drift of 10001.37 turns wraps to the same phase as 0.37 up to the float32 rounding of the input
+    big = q.field(XS, YS, dtype=np.float32, drift=1.5 + 4096.0, **base)["P"]
+    small = q.field(XS, YS, dtype=np.float32, drift=1.5, **base)["P"]
+    check("float32 drift 4097.5 == 1.5 (exact wrap)", np.abs(big - small).max(), 1e-6)
 
 
 def test_rotation_covariance():

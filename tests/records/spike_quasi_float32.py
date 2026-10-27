@@ -90,13 +90,18 @@ def drift_table():
     The same offset written as a base-octave phase phi in turns, offset_i = 2 pi phi 2^i, is
     exactly periodic in phi (2^i is an integer), so phi can wrap at 1."""
     print()
-    print("drift p (accumulator)   float32 max|dP| vs float64   (density 4, zoom 0.5, env 0.5)")
+    print("drift p (accumulator)   float32 max|dP| vs float64: legacy (unbounded p * s_i)   wrapped turns (shipped form)")
+    print("                        (density 4, zoom 0.5, env 0.5; the mirror's `drift` is the turns form since 2026-10-26)")
     for p in (0.0, 1.0, 10.0, 100.0, 1000.0, 10000.0):
-        a = q.field(X, Y, zoom=0.5, drift=p, density=4, envelope=0.5, dtype=F32)["P"].astype(F64)
-        r = q.field(X, Y, zoom=0.5, drift=p, density=4, envelope=0.5, dtype=F64)["P"]
-        print(f"  p = {p:9.1f}          {float(np.abs(a - r).max()):.2e}")
+        a = q.field(X, Y, zoom=0.5, legacy_drift=p, density=4, envelope=0.5, dtype=F32)["P"].astype(F64)
+        r = q.field(X, Y, zoom=0.5, legacy_drift=p, density=4, envelope=0.5, dtype=F64)["P"]
+        # the turns form, with the phase accumulator held in float32 and wrapped (what the patcher clock will do)
+        wrapped = float(F32(p) - np.floor(F32(p)))
+        a2 = q.field(X, Y, zoom=0.5, drift=wrapped, density=4, envelope=0.5, dtype=F32)["P"].astype(F64)
+        r2 = q.field(X, Y, zoom=0.5, drift=wrapped, density=4, envelope=0.5, dtype=F64)["P"]
+        print(f"  p = {p:9.1f}          {float(np.abs(a - r).max()):.2e}                          {float(np.abs(a2 - r2).max()):.2e}")
     print("A phase accumulator that wraps (turns, wrap at 1, integer octave multiples) keeps the"
-          " first row's error for ever; an unbounded p does not.")
+          " first row's error for ever; an unbounded p (the legacy column) does not.")
 
 
 if __name__ == "__main__":
