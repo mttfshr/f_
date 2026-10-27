@@ -237,6 +237,7 @@
                                 "Grain",
                                 "Kuramoto-Sivashinsky",
                                 "Masonry",
+                                "Quasi \u2207",
                                 "Seeds \u2207",
                                 "Stipple",
                                 "Weave \u2207",
@@ -247,7 +248,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 7,
+                            "parameter_mmax": 8,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -282,6 +283,7 @@
                                 "grain",
                                 "ks",
                                 "masonry",
+                                "quasi",
                                 "vf_seeds",
                                 "stipple",
                                 "weave",
@@ -292,7 +294,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 7,
+                            "parameter_mmax": 8,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

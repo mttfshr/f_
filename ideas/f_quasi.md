@@ -1,7 +1,7 @@
 # f_quasi — Shepard-zoom quasicrystal generator with gradient outlet (working name)
 
-_Status: 🟡 specced 2026-10-23 as `.specify/f_quasi/spec.md` (working name `f_quasi`). Drafted from the
-webgpgpu mining run (`webgpgpu-ideas-1`). Not tried in Max._
+_Status: 🟢 SHIPPED 2026-10-26 as `f_quasi` (reference: `docs/f-reference/f_quasi.md`; specced 2026-10-23 as `.specify/f_quasi/spec.md`). Drafted from the
+webgpgpu mining run (`webgpgpu-ideas-1`). The Relief and Slope-hue looks (modes 1 and 2 below) were NOT built: Phase 2 of its tasks._
 
 **Corrections found when the spec read the source shaders (the spec is authoritative):** the zoom wrap is
 approximate (weight about 1e-8 at `sigma` 0.5, a visible pop by `sigma` 1), so `envelope` needs a cap; the source

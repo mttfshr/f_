@@ -33,7 +33,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_wave_field` | ⚠ Unfinished. Spectral wave field: tunable dispersion, point exciter, strike; luma and gradient vecfield out |
 | `f_wc` | Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
-| `f_quasi` | ⚠ Unfinished. Quasicrystal generator with an endless zoom; banded luma, gradient vecfield and potential out |
+| `f_quasi` | Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets |
 | `f_stipple` | 2D hash field stipple texture |
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |
 | `f_weave` | Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets |

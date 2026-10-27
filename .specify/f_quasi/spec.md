@@ -1,7 +1,7 @@
 # Spec: f_quasi
 
 _Created: 2026-10-23_
-_Status: Draft — not yet built_
+_Status: Built and shipped 2026-10-26 (reference doc: `docs/f-reference/f_quasi.md`; where this spec and the module differ, the doc follows the module)_
 _Origin: `ideas/f_quasi.md` (mined from michaelerule/webgpgpu `Example_27`,
 `Example_28`, `Example_31`, `Example_33` by the omp run `webgpgpu-ideas-1`,
 2026-10-23). Matt chose this as the first of the eight themes to spec, and

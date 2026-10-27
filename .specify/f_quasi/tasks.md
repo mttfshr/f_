@@ -54,12 +54,12 @@ The patcher also holds a small clock (zoom and drift accumulators); see T021.
 
 ## Phase 2: Tuning and looks (tier 3, Matt)
 
-- [ ] T030 Parameter ranges and defaults, `envelope` cap, whether the five-fold structure reads as distinct from `f_chladni` and `f_ks`, whether the zoom reads as endless.
-- [ ] T031 Relief and Slope-hue looks (`ideas/f_quasi.md` modes 1 and 2): specular term masked to ridges as in the source, `atan2` of the gradient with the +1e-7 bias idiom; Phase 2 only if T030 passes. Decide whether the contour-banding helper is shared with `f_vf_potential` and `f_chladni`.
+- [~] T030 NOT DONE as a pass (Matt shipped the first-look defaults 2026-10-26; revisit when wanted): Parameter ranges and defaults, `envelope` cap, whether the five-fold structure reads as distinct from `f_chladni` and `f_ks`, whether the zoom reads as endless.
+- [~] T031 NOT BUILT (the gate, T030, was not run): Relief and Slope-hue looks (`ideas/f_quasi.md` modes 1 and 2): specular term masked to ridges as in the source, `atan2` of the gradient with the +1e-7 bias idiom; Phase 2 only if T030 passes. Decide whether the contour-banding helper is shared with `f_vf_potential` and `f_chladni`.
 
 ## Phase 3: Docs and registration
 
-- [ ] T040 Reference doc, helpfile, `f_modules` menu placement (Patterns), README row (110 characters), final name.
+- [x] T040 (2026-10-26) Reference doc `docs/f-reference/f_quasi.md`, helpfile `package/help/f_quasi.maxhelp` (cloned from `f_wc`'s layout; lists the nine real route tokens, not `bypass`), `f_modules` menu placement (Patterns, between Masonry and Seeds, marked ∇), README row without the unfinished mark (106 characters), `NOT_IN_MENU` entry removed, inventory rows added (producers table and I/O table), launcher regenerated (43 clickable). Name kept: `f_quasi` (G1). Matt, 2026-10-26: "the built module -- ship it". Module-preflight Part 1 (mechanical) green: drift 1 of 1, launch 8/8, menu 17/17, contracts 9/9, bypass convention, doc exists, helpfile box at least the 227 x 164 footprint; Part 2 (open the module and helpfile in Max, judge the digest line) is Matt's.
 
 ---
 

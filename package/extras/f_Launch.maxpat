@@ -470,34 +470,53 @@
 							{
 								"box": {
 									"id": "obj-18",
-									"maxclass": "comment",
+									"maxclass": "textbutton",
 									"numinlets": 1,
-									"numoutlets": 0,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
 									"patching_rect": [
 										20.0,
 										380.0,
 										150.0,
-										20.0
+										22.0
 									],
 									"text": "f_quasi",
-									"textcolor": [
-										0.55,
-										0.55,
-										0.55,
-										1.0
-									],
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										182.0,
+										180.0,
 										210.0,
-										20.0
+										22.0
 									]
 								}
 							},
 							{
 								"box": {
 									"id": "obj-19",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										408.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_quasi.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-20",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -507,25 +526,19 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unfinished. Quasicrystal generator with an endless zoom; banded luma, gradient vecfield and potential out",
+									"text": "Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										182.0,
 										720.0,
 										20.0
-									],
-									"textcolor": [
-										0.55,
-										0.55,
-										0.55,
-										1.0
 									]
 								}
 							},
 							{
 								"box": {
-									"id": "obj-20",
+									"id": "obj-21",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -554,7 +567,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-21",
+									"id": "obj-22",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -572,7 +585,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-22",
+									"id": "obj-23",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -594,7 +607,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-23",
+									"id": "obj-24",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -623,7 +636,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-24",
+									"id": "obj-25",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -641,7 +654,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-25",
+									"id": "obj-26",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -663,7 +676,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-26",
+									"id": "obj-27",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -692,7 +705,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-27",
+									"id": "obj-28",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -710,7 +723,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-28",
+									"id": "obj-29",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -831,11 +844,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-20",
+										"obj-18",
 										0
 									],
 									"destination": [
-										"obj-21",
+										"obj-19",
 										0
 									]
 								}
@@ -843,31 +856,7 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-21",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-23",
-										0
-									],
-									"destination": [
-										"obj-24",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-24",
+										"obj-19",
 										0
 									],
 									"destination": [
@@ -879,11 +868,47 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-26",
+										"obj-21",
 										0
 									],
 									"destination": [
-										"obj-27",
+										"obj-22",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-22",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-24",
+										0
+									],
+									"destination": [
+										"obj-25",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-25",
+										0
+									],
+									"destination": [
+										"obj-1",
 										0
 									]
 								}
@@ -892,6 +917,18 @@
 								"patchline": {
 									"source": [
 										"obj-27",
+										0
+									],
+									"destination": [
+										"obj-28",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-28",
 										0
 									],
 									"destination": [
