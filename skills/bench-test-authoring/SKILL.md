@@ -72,6 +72,25 @@ conventions below are load-bearing — hold to them.
    hash proves the math exact at 3.5e-6 — pair the look-dependent row with an
    exact-geometry row).
 
+8. **A codebox that reads `dim` sees the FIRST INPUT's size, not the job's `dim=`** (probe, 2026-10-26,
+   `tests/modules/quasi/bench_quasi.py::test_dim_probe`: with `dim=(256, 144)`, a 256x144 first input read 16:9 and
+   the 4x4 stand-in read square, output 256x144 both times). The usual bench stand-in for a generator's bang inlet is
+   4x4, so an aspect, a pixels-per-unit conversion or a cutoff on `dim.y` silently uses the wrong size. Give input 1 the
+   render's size (`np.zeros((h, w, 4), np.float32)`) in every job of such a codebox, or pass aspect and height as
+   Params. Symptom if you do not: GPU matches the mirror only at aspect 1 (errors of order 1, identical for every
+   variant), or a size-dependent fade flattens the whole frame. Keep the probe as a `note`, not a gate.
+
+9. **The bench has 8 chain slots** (`N_SLOTS = 8` in `tests/bench/bench.js`, which clamps `job.chain` and reports
+   the chain it ran as `result["chain"]`), but `benchclient.measure()` divides by the chain you REQUESTED
+   (`ms_per_pass = frame_ms / chain`, `ms_per_pass_upper_bound = frame_ms_k0 / chain`). Requesting 16 / 32 / 64
+   measures the same 8 passes and mislabels the number by chain/8: a ladder that escalates past 8 when the pass is not
+   GPU bound reports bounds that are too small, and a fixed `chain=32` that IS GPU bound reports a cost 4x too low.
+   Request `chain=8` and divide by `result["chain"]`. Resolved readings (GPU bound at 8) are unaffected. A cheap pass is
+   hidden by the bench's own per-frame work (K = 0 baseline about 5 ms at 1080p and 20 ms at 4K): the best statement
+   then is an upper bound, roughly `0.33 * frame_k0 / 8` per pass, and a resolved number needs the per-pass work
+   amplified (a Param-bounded repeat loop whose coordinates shift per repeat so it cannot be hoisted, then the slope
+   between two repeat counts). Costs recorded before 2026-10-26 from the 16 / 32 / 64 rungs are suspect.
+
 ## Layout and ownership (multi-agent builds)
 
 - **`src/<module>/` is the shipped layout** — definition.py and codeboxes live there,

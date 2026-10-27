@@ -145,7 +145,7 @@ diffing GPU output must wrap-compare at that line.
 `norm` — normalized UV [0,1] as vec2, current pixel position
 `snorm` — signed normalized UV [-1,1] as vec2
 `cell` — **NOT an integer index on jit.gl.pix: `cell = norm * (dim - 1)`** (bench-verified 2026-09-22; see Bench-Verified Facts). Integer index: `floor(norm * dim)`
-`dim` — pixel dimensions of render context as vec2 (e.g. vec(640, 480) — NOT normalized)
+`dim` — pixel dimensions as vec2 (e.g. vec(640, 480) — NOT normalized). **In the test bench it is the FIRST INPUT's size, not the job's output size** (bench-verified 2026-10-26, "f_quasi codebox bench" below): a 4x4 stand-in first input reads as square.
 
 ### Sampling
 `sample(inN, coord)` — bilinear sample inN at normalized coord vec2; **default boundmode is CLAMP** (empirically verified 2026-06-21 with literal OOB coordinate — sampling at u=1.3 produces solid stripe of u=1.0 edge color)
@@ -753,11 +753,18 @@ the same size (real bug). This is a cheap, fast, and often decisive test
 to run early, not late.
 
 ### `dim` for aspect ratio
-`dim` returns pixel dimensions of the render context (e.g. 640×480), not normalized values:
+`dim` returns pixel dimensions (e.g. 640×480), not normalized values:
 ```
 aspect = dim.x / dim.y;   // e.g. 1.333 for 640×480
 ```
 Do not use `dim` to get normalized output size — use `norm` for that.
+
+**Whose size is it?** In a Vsynth chain modules use `dim.x / dim.y` for the aspect and it works, because the first
+inlet carries a render-sized texture (upstream, or `vs_black`). In the test bench `dim` is the **first input's**
+size (2026-10-26: a 256x144 first input read 16:9; the 4x4 stand-in read square; the output was 256x144 both
+times). So a bench of a codebox that uses `dim` must give the first input the render's size, or take the aspect
+from a Param. A pattern that matches its mirror only at aspect 1, or a cutoff on `dim.y` that flattens everything,
+is this.
 
 ---
 
@@ -836,7 +843,8 @@ the trig function even runs.
   `0 - (v * k2 + drag) * dt` is correct. Write `0 - ...` in front of any
   parenthesis or product (a bare `-1` literal is fine).
 - **A codebox cannot read an input texture's size**: `texdim()` is not defined,
-  `in1.dim` returns 0, and `dim` is the render context's. Manual bilinear taps
+  `in1.dim` returns 0, and `dim` is the first input's size in the bench (the render's in a chain,
+  where the first inlet is render-sized; corrected 2026-10-26). Manual bilinear taps
   therefore need the size as a literal or a Param.
 - **Hardware `sample()` on this GPU**: exact bilinear at 1:1 and when
   magnifying, but with 8-bit interpolation weights (~1e-3 for general
@@ -1029,6 +1037,26 @@ Probes: `tests/modules/tf_glyph/bench_tf_glyph.py`, `tests/modules/tf_aniso_blur
   compiled fine. The failed compile also left the bench patch failing 7 unrelated legs until the next run,
   the wedge described above, so after any compile failure re-probe before trusting later results.
 - **Where the evidence lives:** `tests/logs/fc_t075_mean1.npz` and `.specify/f_formconstants/tasks.md` T075.
+
+### More bench-verified facts (f_quasi codebox bench, 2026-10-26)
+
+- **`dim` is the first input's size in the bench** (see "`dim` for aspect ratio"). Probe: the same codebox with a
+  256x144 first input and with the 4x4 stand-in, `dim=(256, 144)` on both jobs; the scalar outlet matched the 16:9
+  mirror to 5e-6 in the first case and the square mirror to 5e-6 in the second, 0.73 off the other way each time.
+- **GPU `cos`/`sin` at large arguments are fine for a sum of cosines.** A 7-octave x 5-wave plane-wave sum (phase up
+  to ~1.6e3 rad at density 4, up to ~1e4 at density 12 on a negligible-weight octave) matched a float64 evaluation to
+  3.7e-5 in the normalised sum over 12 parameter sets, with the plain phase `beta s + d 2 pi B s` and with an
+  argument-reduced `2 pi fract(cycles)` alike (worst 3.7e-5 and 3.2e-5). The 12x gain from reducing the argument in
+  the DFT ("Reduce trig arguments", above) is an accumulation effect over 256 taps, not a property of one `cos`.
+  A drift phase that multiplies a growing octave scale is a different matter: an unbounded accumulator lost a level
+  of precision by 1e4, so wrap it (a phase in turns times the integer 2^i is exactly periodic).
+- **Cost of that shader:** 35 `cos` + 35 `sin` + 14 `exp` per pixel, three outlets, costs under 0.21 ms per pass at
+  1920x1080 on the M3 Max (an upper bound: below what the bench resolves; M1 not measured).
+- **A uniform per-octave branch** (`if (weight > 0.001)` on a Param-only value) and a per-octave `smoothstep` fade both
+  compile and run; neither moved the cost at this size.
+- **A Param-bounded multi-outlet codebox with ~48 lines of unrolled waves compiles first time** when it follows the
+  hazards above: negative literals written `(0 - c)`, no variables named `e`/`phi`/`pi`, accumulators declared before
+  the loop, no outlet names in comments.
 
 ## Code Health Checklist
 
