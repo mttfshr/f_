@@ -184,24 +184,25 @@ def test_gpu_cos_accuracy_by_form():
     check("GPU potential error, better of the two forms (NF-002 tolerance)", min(worst.values()), 1e-3)
 
 
-def cost(code, params, dim=(1920, 1080), chains=(8, 16, 32, 64, 128)):
-    """(ms per pass, chain, resolved). When no chain length is GPU bound the pass is below what the bench can see:
-    the bound returned is the largest added time consistent with 'fps >= 0.75 of the K=0 baseline', per pass, which
-    is tighter than the bench's own upper bound (frame time at K=0 over the chain)."""
-    r = {}
-    p = {**params, **size_params(*dim)}
-    for chain in chains:
-        r = bc.measure(code, [BANG], dim=dim, chain=chain, params=p)
-        if r.get("gpu_bound"):
-            return r["ms_per_pass"], chain, True
+def cost(code, params, dim=(1920, 1080)):
+    """(ms per pass, chain actually run, resolved). The bench has N_SLOTS = 8 slots (tests/bench/bench.js clamps the
+    requested chain to 8) and reports the chain it ran; benchclient.measure divides by the REQUESTED chain, so a ladder
+    of 16 / 32 / 64 / 128 (this script's first two runs) measured the same K = 8 each time and mislabelled the bound.
+    So: request 8 and use the reported chain. When not GPU bound the pass is below what the bench resolves; the bound
+    returned is the largest added time consistent with 'fps >= 0.75 of the K=0 baseline', per pass."""
+    r = bc.measure(code, [BANG], dim=dim, chain=8, params={**params, **size_params(*dim)})
+    k = int(r.get("chain") or 8)
+    if r.get("gpu_bound"):
+        return r["frame_ms"] / k, k, True
     if r.get("frame_ms_k0"):
-        return r["frame_ms_k0"] * (1 / 0.75 - 1) / chain, chain, False
-    return float("nan"), chain, False
+        return r["frame_ms_k0"] * (1 / 0.75 - 1) / k, k, False
+    return float("nan"), k, False
 
 
 def test_cost_at_1080p():
-    """1920x1080 (chain up to 128), then 3840x2160 (4x the pixels, so a pass 4x as large to resolve); the 4K figure
-    divided by 4 is the 1080p-equivalent. A line marked '<' is an upper bound: not GPU bound at the largest chain."""
+    """1920x1080, then 3840x2160 (4x the pixels, so a pass 4x as large to resolve; the 4K figure divided by 4 is the
+    1080p-equivalent). A line marked '<' is an upper bound: not GPU bound at the bench's 8 slots. The K = 0 baseline is
+    about 5 ms at 1080p and 20 ms at 4K (the bench's own per-frame work), which is what hides a cheap pass."""
     for dim in ((1920, 1080), (3840, 2160)):
         rows = []
         for label, kw, params in VARIANTS:
