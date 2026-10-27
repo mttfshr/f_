@@ -1,6 +1,6 @@
 # f_ — Project Constitution
 
-_Last updated: 2026-06-09_
+_Last updated: 2026-10-26 (Verification Tiers: tier 3 amended)_
 
 ## Identity
 
@@ -88,7 +88,7 @@ A bpatcher moves from `ideas/` to `docs/` when it is built and confirmed working
 ### Verification Tiers
 
 *Adopted 2026-09-22, after the Max test bench (`.specify/test_bench/`)
-proved out on the FFT work.* A scratch patch tests two things at once — is
+proved out on the FFT work.* Judging a patch by eye tests two things at once — is
 the math right, and does Max/the GPU run it — so failures can't be
 attributed. Verification is split into tiers, cheapest and most attributable
 first:
@@ -103,14 +103,27 @@ first:
    bypass, round trips, symmetries, ranges). Also catches compile errors, and
    measures cost when cost is a question. Template:
    `tests/templates/bench_module_template.py`.
-3. **Judgment — scratch patch** (`~/Vsynth/patterns/`). Expressive tuning,
-   parameter ranges, visual character, Vsynth integration, UI — what numbers
-   can't judge.
+3. **Judgment — the real module.** Expressive tuning, parameter ranges,
+   visual character, Vsynth integration, UI — what numbers can't judge. Once
+   tiers 1–2 pass, the module is built directly from its `definition.py`
+   (`build/build_patcher.py`) and judged live on the shipped bpatcher; what
+   tuning changes goes back into the codebox file and `definition.py`, and
+   tiers 1–2 are re-run. A scratch patch (`~/Vsynth/patterns/`) is the
+   exception, for investigating something that is not a module yet (an
+   unfamiliar Max object, a Vsynth integration question, a comparison of
+   existing modules), not a stage every module passes through.
 
 **Rule of thumb:** if "correct" can be stated as numbers or invariants,
-verify it in tiers 1–2 before any scratch patch; if success is "it looks
+verify it in tiers 1–2 before the module is built or judged live; if success is "it looks
 right", tier 3 is the test. Skip tiers 1–2 for trivial codeboxes, purely
 aesthetic changes and UI work — but say so.
+
+**Amended 2026-10-26 (Matt).** Tier 3 used to be a scratch patch built before the
+module. In practice (`f_wave_field`, `f_wc`) the flow was NumPy mirror, bench of
+the real codebox, module built from `definition.py`, then tuning live on the
+module, and a scratch-patch stage added only a detour (`f_quasi` T007). Trigger:
+implementation discovery; no ADR. Impact: wording only; older `tasks.md` files
+describe their own history and are left as written.
 
 **Which tiers apply is a decision gate** — the first task of Phase 0 in a
 module's `tasks.md`, recorded with a reason for any tier skipped.
@@ -128,7 +141,7 @@ by choice when the mirror is cheap (`f_vf_streak` was, 2026-10-19).
 in isolation before touching the patch.
 
 **Evidence standard:** a claim that something is "confirmed" or "verified"
-says how — bench (numeric), scratch patch (visual), or docs (unverified).
+says how — bench (numeric), live look at the module (visual), or docs (unverified).
 Prefer bench evidence for claims about GenExpr/jit.gl.pix behavior.
 
 **What the bench covers** (since E1–E4, 2026-09-22): up to 3 inputs and all
@@ -237,4 +250,4 @@ f_/
 3. **One bpatcher, one concern** — resist adding unrelated functionality to an existing bpatcher
 4. **Specs before building** — for any new bpatcher, write the spec (concept + params + signal chain) before opening Max
 5. **Tasks.md is the session anchor** — always update `.specify/f_name/tasks.md` at session end; also update README.md (project state) and HANDOFF.md (session notes)
-6. **Numbers before eyes** — if correctness can be stated as numbers or invariants, it is verified numerically (tiers 1–2) before a scratch patch judges it (tier 3)
+6. **Numbers before eyes** — if correctness can be stated as numbers or invariants, it is verified numerically (tiers 1–2) before the module is looked at live (tier 3)

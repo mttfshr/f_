@@ -42,6 +42,12 @@ Consult these before designing a new f_ patch: capability map (what Vsynth alrea
 
 ### Scratch patch GL context requirement
 
+**Scratch patches are now the exception (amended 2026-10-26, Matt).** A module is built
+directly from its definition once tiers 1–2 pass and is judged on the shipped bpatcher.
+Use a scratch patch only to investigate something that is not a module yet (an unfamiliar
+Max object, a Vsynth integration question, a comparison of existing modules). The rest of
+this section and the next two apply when you do.
+
 Scratch patches that use any `vsynth`-context GL object (`jit.gl.pix`, `jit.gl.asyncread`, `jit.gl.texture`, `jit.gl.slab`, etc.) require the **`vs_render` bpatcher** to be present and running — not the bare `vs_render` object. The bpatcher initializes the full Vsynth GL context including `jit.gl.render`, context naming, and qmetro. Without it, GL objects silently fail or output black.
 
 Always include in scratch patches:
@@ -58,7 +64,10 @@ hand-building a gen-subpatcher-with-codebox from inference, and getting that
 JSON subtly wrong (inlet/outlet ordering, numinlets mismatches) costs more
 debugging time than it saves. Matt builds/clones scratch shells in Max
 directly; Claude provides codebox text to paste in (see "Codebox Writing
-Workflow" above).
+Workflow" above). When Matt asks, Claude may instead write the codebox straight into a
+cloned template's embedded gen patcher, copying the schema from a shipped module with the
+same outlet count (`f_chladni` for three) and verifying the structure offline (done for
+`f_quasi` 2026-10-26); that is Matt's call, not the default.
 
 Contents of the template:
 - `vs_modules` (module menu, for spawning test/source bpatchers) and
@@ -184,11 +193,12 @@ Tiers (adopted 2026-09-22).** In short: numbers before eyes.
    mirror, holds invariants (e.g. `bypass=1` is exact identity), and cost at
    target resolutions if cost matters. Claude runs it via Desktop Commander;
    Matt only needs Max with `tests/bench/bench.maxpat` open.
-4. **Tier 3:** scratch patch for expressive tuning, param ranges, visual
-   character, integration. For this tier the old flow still applies — Claude
-   writes the code as a fenced text block and Matt pastes it into Max.
-5. Only write the full `definition.py` and run `build_patcher.py` once the
-   codebox has passed the tiers that apply.
+4. Once the codebox has passed tiers 1–2, write the full `definition.py` and run
+   `build_patcher.py`: the module is built DIRECTLY, with no scratch-patch stage
+   (Matt, 2026-10-26; constitution Verification Tiers).
+5. **Tier 3:** judge the built module live: expressive tuning, param ranges,
+   visual character, integration. Tuning edits go back into the codebox file and
+   `definition.py`, then tiers 1–2 are re-run.
 
 **Bench coverage:** ≤3 inputs, all 4 outputs (`all_outputs=True`), float32
 or char (`pix_type=`), multi-frame feedback runs (`run_temporal`), cost
@@ -209,7 +219,8 @@ and `tests/bench.sh tests/contracts/bench_modules.py` (live contracts in `vs_ren
 - [ ] T004 (Tier 2) tests/bench_f_name.py from the template: compiles clean,
       GPU vs mirror, invariants. Record measured errors here.
 - [ ] T005 (Tier 2, if cost matters) bench cost at target resolutions.
-- [ ] T006 (Tier 3) scratch patch: expressive tuning, ranges, integration.
+- [ ] T006 (Tier 3) is not a Phase 0 task: Phase 1 builds the module from definition.py,
+      Phase 2 tunes ranges, defaults and integration live on it.
 ```
 
 **Debugging an existing module:** if the question is "math or plumbing?",

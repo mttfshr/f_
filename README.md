@@ -169,7 +169,7 @@ Build inputs, per module:
 
 ### `tests/`
 
-Verification that doesn't need a scratch patch, in two layers:
+Verification that doesn't need a hand-built patch, in two layers:
 
 - **Math** — NumPy mirrors of codebox algorithms, checked against independent references (`test_*.py`, `tests/run.sh`, no Max needed). The same offline layer statically checks every shipped patcher's wiring: every control reaches the Param it claims to, and every Param is driven and read.
 - **Execution** — a Max test bench. One generated patch stays open in Max and is driven from Python over OSC, so a module's real `src/` codebox runs on the GPU and its output is diffed numerically, with compile errors caught and cost measured (`bench_*.py`, `tests/bench.sh`). A second bench loads *shipped* bpatchers inside Vsynth's own render context to check their contracts: every parameter reaches the attribute it claims to, bypass passes through, and every outlet renders.
@@ -211,9 +211,9 @@ Verification happens in three tiers, cheapest and most attributable first — th
 
 1. **Math** — a NumPy mirror of the codebox, checked against independent ground truth. No Max.
 2. **Execution** — the real codebox file run on the GPU through the test bench and diffed numerically; shipped bpatchers additionally contract-tested for parameter wiring and bypass.
-3. **Judgment** — a scratch patch for what numbers can't judge: expressive tuning, parameter ranges, visual character, Vsynth integration.
+3. **Judgment** — a live look at the built module for what numbers can't judge: expressive tuning, parameter ranges, visual character, Vsynth integration. The module is built straight from its definition once tiers 1 and 2 pass; there is no separate scratch-patch stage.
 
-The reason for the split: a scratch patch tests two things at once — whether the math is right and whether Max and the GPU run it — so a failure can't be attributed to either. Separating them turned "this doesn't look right" into specific answers, and the contract tests found real bugs in shipped modules that no amount of looking would have surfaced.
+The reason for the split: judging a patch by eye tests two things at once — whether the math is right and whether Max and the GPU run it — so a failure can't be attributed to either. Separating them turned "this doesn't look right" into specific answers, and the contract tests found real bugs in shipped modules that no amount of looking would have surfaced.
 
 ## License
 

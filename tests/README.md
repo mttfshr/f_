@@ -1,9 +1,9 @@
 # tests/
 
 Math-first tests for codebox algorithms, run in NumPy before anything is
-patched in Max. Motivation: a scratch patch tests two things at once (is the
+patched in Max. Motivation: judging a patch by eye tests two things at once (is the
 math right? does Max/GPU run it?) and failures can't be attributed. Settle the
-math here; the scratch patch then answers only "does known-correct code compile
+math here; the bench and the built module then answer only "does known-correct code compile
 and run fast enough."
 
 ## The idea, and what it does and doesn't prove
@@ -21,7 +21,7 @@ by a different tool, so a failure points at one cause:
 2. **Does the real codebox do what the mirror does?** Answered by the bench. The shipped `.gen`
    file runs on the actual GPU inside a live Max, the frame is read back, and it is diffed against
    the mirror, pixel by pixel, with the measured error printed.
-3. **Does it look and feel right?** Not measurable here. That is a scratch patch and your eyes
+3. **Does it look and feel right?** Not measurable here. That is the built module and your eyes
    (expressive tuning, ranges, Vsynth integration).
 
 **What "emulating with NumPy" means.** `tests/lib/gpu_sim.py` models the parts of the execution

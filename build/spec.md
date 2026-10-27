@@ -13,7 +13,7 @@ This is a personal scaffolding tool. It generates the initial patcher correctly 
 ## Workflow Position
 
 ```
-scratch patch (iterate codebox)
+codebox file + NumPy mirror + bench (tiers 1-2, src/f_<name>/codebox_*.gen)
     ↓
 src/f_<name>/definition.py         ← patcher definition: codebox + params + archetype
     ↓
@@ -55,7 +55,7 @@ patcher = {
     # Params list — ordered; determines UI layout left-to-right
     "params":             list,  # see Param schema below
 
-    # Confirmed codebox content — verbatim from scratch patch
+    # Confirmed codebox content — verbatim from the benched codebox file
     "codebox":            str,
 }
 ```
