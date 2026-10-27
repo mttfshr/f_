@@ -43,7 +43,16 @@ import quasi_mirror as q
 
 F32, F64 = np.float32, np.float64
 BANG = np.zeros((4, 4, 4), np.float32)          # stand-in for the `r draw` bang inlet (first inlet drives the size)
-DEFAULTS = dict(zoom=0.3, drift=0.0, density=4.0, envelope=0.5, bands=5.0, angle=0.0, gain=1.0)
+# asp and hpx (aspect, output height in pixels) are Params here, not the `dim` global: the first run (2026-10-26)
+# read `dim.x / dim.y` as 1 in the bench (GPU = mirror to 1.9e-5 only at aspect 1), most likely because the bench's
+# first input is a 4x4 stand-in. The module takes them from `dim` in production like f_chladni and f_masonry; what
+# `dim` follows in the bench is a separate question (probe it before the T020 bench relies on it).
+DEFAULTS = dict(zoom=0.3, drift=0.0, density=4.0, envelope=0.5, bands=5.0, angle=0.0, gain=1.0,
+                asp=1920 / 1080, hpx=1080.0)
+
+
+def size_params(w, h):
+    return dict(asp=w / h, hpx=float(h))
 
 
 def lit(v):
@@ -57,7 +66,6 @@ def make_code(outputs="all", form="spec", skip=False, fade=False):
     for name, d in DEFAULTS.items():
         L.append(f"Param {name}({d});")
     L += [
-        "asp = dim.x / dim.y;",
         "px = (norm.x - 0.5) * asp;",
         "py = norm.y - 0.5;",
         "zw = zoom - floor(zoom);",
@@ -79,7 +87,7 @@ def make_code(outputs="all", form="spec", skip=False, fade=False):
           "    wsum += wgt;",
           "    wssum += wgt * sc;"]
     if fade:
-        L += ["    cpp = density * sc / dim.y;",
+        L += ["    cpp = density * sc / hpx;",
               "    wf = wgt * (1 - smoothstep(0.25, 0.5, cpp));"]
     else:
         L += ["    wf = wgt;"]
@@ -144,7 +152,8 @@ def go(code, dim, params=None, all_outputs=False):
 def test_variants_compile_and_run():
     for label, kw, params in VARIANTS + [("raw P, spec form", dict(outputs="rawP"), {}),
                                          ("raw P, cycles form", dict(outputs="rawP", form="cycles"), {})]:
-        outs = go(make_code(**kw), (64, 36), params, all_outputs=True)
+        # hpx 1080 on a 64x36 job: a real 36-pixel height would fade every weighted octave to a flat field
+        outs = go(make_code(**kw), (64, 36), {**params, "asp": 64 / 36, "hpx": 1080.0}, all_outputs=True)
         first = outs[0]
         assert np.isfinite(first).all(), f"{label}: non-finite output"
         assert float(first[..., :3].std()) > 1e-3, f"{label}: flat output (std {float(first[..., :3].std()):.2e}); check the codebox"
@@ -164,7 +173,7 @@ def test_gpu_cos_accuracy_by_form():
                 row = {}
                 for form in ("spec", "cycles"):
                     out = go(make_code(outputs="rawP", form=form), (w, h),
-                             dict(zoom=zoom, density=dens, envelope=env))
+                             dict(zoom=zoom, density=dens, envelope=env, **size_params(w, h)))
                     row[form] = float(np.abs(out[..., 0].astype(F64) - ref).max())
                     worst[form] = max(worst[form], row[form])
                 print(f"    {zoom:5.3f} {dens:5.1f} {env:4.1f} |                      {row['spec']:.2e}      {row['cycles']:.2e}")
@@ -175,28 +184,39 @@ def test_gpu_cos_accuracy_by_form():
     check("GPU potential error, better of the two forms (NF-002 tolerance)", min(worst.values()), 1e-3)
 
 
-def cost(code, params, dim=(1920, 1080)):
+def cost(code, params, dim=(1920, 1080), chains=(8, 16, 32, 64, 128)):
+    """(ms per pass, chain, resolved). When no chain length is GPU bound the pass is below what the bench can see:
+    the bound returned is the largest added time consistent with 'fps >= 0.75 of the K=0 baseline', per pass, which
+    is tighter than the bench's own upper bound (frame time at K=0 over the chain)."""
     r = {}
-    for chain in (4, 8, 16, 32):
-        r = bc.measure(code, [BANG], dim=dim, chain=chain, params=params)
+    p = {**params, **size_params(*dim)}
+    for chain in chains:
+        r = bc.measure(code, [BANG], dim=dim, chain=chain, params=p)
         if r.get("gpu_bound"):
             return r["ms_per_pass"], chain, True
-    return r.get("ms_per_pass_upper_bound", float("nan")), chain, False
+    if r.get("frame_ms_k0"):
+        return r["frame_ms_k0"] * (1 / 0.75 - 1) / chain, chain, False
+    return float("nan"), chain, False
 
 
 def test_cost_at_1080p():
-    rows = []
-    for label, kw, params in VARIANTS:
-        ms, chain, bound = cost(make_code(**kw), params)
-        rows.append((label, ms, bound))
-        print(f"    ...  {ms:7.3f} ms/pass  {label}  (chain {chain}, {'GPU bound' if bound else 'UPPER BOUND, not resolved'})")
-    base = rows[1][1]
-    for label, ms, bound in rows:
-        if not bound:
-            note(f"{label}", "upper bound only: raise the chain or the size before comparing")
-    note("module as specced, ms per frame at 1920x1080", f"{base:.3f}")
-    note("skipping vs full (envelope 0.5)", f"{rows[3][1] / base:.2f}x of full")
-    note("fade vs full", f"{rows[5][1] / base:.2f}x of full")
+    """1920x1080 (chain up to 128), then 3840x2160 (4x the pixels, so a pass 4x as large to resolve); the 4K figure
+    divided by 4 is the 1080p-equivalent. A line marked '<' is an upper bound: not GPU bound at the largest chain."""
+    for dim in ((1920, 1080), (3840, 2160)):
+        rows = []
+        for label, kw, params in VARIANTS:
+            ms, chain, bound = cost(make_code(**kw), params, dim=dim)
+            rows.append((label, ms, bound))
+            tag = f"{ms:7.3f}" if bound else f"< {ms:5.3f}"
+            print(f"    ...  {dim[0]}x{dim[1]}  {tag} ms/pass  {label}  (chain {chain}{'' if bound else ', NOT resolved'})")
+        resolved = [r for r in rows if r[2]]
+        if len(resolved) == len(rows):
+            base = rows[1][1]
+            note(f"{dim[0]}x{dim[1]}: module as specced, ms per frame", f"{base:.3f}")
+            note(f"{dim[0]}x{dim[1]}: skipping (envelope 0.5) vs full", f"{rows[3][1] / base:.2f}x")
+            note(f"{dim[0]}x{dim[1]}: fade vs full", f"{rows[5][1] / base:.2f}x")
+        else:
+            note(f"{dim[0]}x{dim[1]}", f"{len(rows) - len(resolved)} of {len(rows)} variants below the bench's resolution (bounds above)")
 
 
 if __name__ == "__main__":
