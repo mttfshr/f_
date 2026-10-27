@@ -10,11 +10,11 @@
 
 CODEBOX = """\
 // --- Helper: Mode A total at arbitrary UV ---
-modal_A(ux, uy, zp, radius, reflect, phase) {
+modal_A(ux, uy, zp, radius, reflect, phase, vw) {
     ddx = ux - 0.5;
     ddy = uy - 0.5;
-    rs  = max(sqrt(ddx*ddx + ddy*ddy) * 2.0 * radius, 0.001);
-    th  = atan2(ddy, ddx);
+    rs  = max(mix(sqrt(ddx*ddx + ddy*ddy) * 2.0 * radius, uy * radius, vw), 0.001);
+    th  = mix(atan2(ddy, ddx), ux * twopi - pi, vw);
     ev  = sqrt(2.0 / (pi * rs));
     msk = 1.0 - smoothstep(0.8, 1.0, rs / max(radius, 0.001));
 
@@ -54,11 +54,11 @@ modal_A(ux, uy, zp, radius, reflect, phase) {
 }
 
 // --- Helper: Mode B total at arbitrary UV ---
-modal_B(ux, uy, zp, radius, reflect, phase, sprd) {
+modal_B(ux, uy, zp, radius, reflect, phase, sprd, vw) {
     ddx = ux - 0.5;
     ddy = uy - 0.5;
-    rs  = max(sqrt(ddx*ddx + ddy*ddy) * 2.0 * radius, 0.001);
-    th  = atan2(ddy, ddx);
+    rs  = max(mix(sqrt(ddx*ddx + ddy*ddy) * 2.0 * radius, uy * radius, vw), 0.001);
+    th  = mix(atan2(ddy, ddx), ux * twopi - pi, vw);
     ev  = sqrt(2.0 / (pi * rs));
     msk = 1.0 - smoothstep(0.8, 1.0, rs / max(radius, 0.001));
 
@@ -124,7 +124,7 @@ env  = sqrt(2.0 / (pi * r_s));
 mask = 1.0 - smoothstep(0.8, 1.0, r / max(dishradius, 0.001));
 
 // --- Mode A: linear blend (via function at center UV) ---
-total_A = modal_A(norm.x, norm.y, z_pos, dishradius, reflectamt, ph0);
+total_A = modal_A(norm.x, norm.y, z_pos, dishradius, reflectamt, ph0, view_mode);
 
 // --- Mode B: Gaussian resonance snap ---
 // expressive spread range: 0.1-0.5 (below 0.1 produces white artifacts between modes)
@@ -159,14 +159,14 @@ luma_out = vec(line, line, line, 1.0);
 // --- Vecfield: central difference gradient, mode-aware ---
 eps  = 0.004;
 md   = step(0.5, mode);
-t_xp = mix(modal_A(norm.x+eps, norm.y,     z_pos, dishradius, reflectamt, ph0),
-           modal_B(norm.x+eps, norm.y,     z_pos, dishradius, reflectamt, ph0, spread), md);
-t_xn = mix(modal_A(norm.x-eps, norm.y,     z_pos, dishradius, reflectamt, ph0),
-           modal_B(norm.x-eps, norm.y,     z_pos, dishradius, reflectamt, ph0, spread), md);
-t_yp = mix(modal_A(norm.x,     norm.y+eps, z_pos, dishradius, reflectamt, ph0),
-           modal_B(norm.x,     norm.y+eps, z_pos, dishradius, reflectamt, ph0, spread), md);
-t_yn = mix(modal_A(norm.x,     norm.y-eps, z_pos, dishradius, reflectamt, ph0),
-           modal_B(norm.x,     norm.y-eps, z_pos, dishradius, reflectamt, ph0, spread), md);
+t_xp = mix(modal_A(norm.x+eps, norm.y,     z_pos, dishradius, reflectamt, ph0, view_mode),
+           modal_B(norm.x+eps, norm.y,     z_pos, dishradius, reflectamt, ph0, spread, view_mode), md);
+t_xn = mix(modal_A(norm.x-eps, norm.y,     z_pos, dishradius, reflectamt, ph0, view_mode),
+           modal_B(norm.x-eps, norm.y,     z_pos, dishradius, reflectamt, ph0, spread, view_mode), md);
+t_yp = mix(modal_A(norm.x,     norm.y+eps, z_pos, dishradius, reflectamt, ph0, view_mode),
+           modal_B(norm.x,     norm.y+eps, z_pos, dishradius, reflectamt, ph0, spread, view_mode), md);
+t_yn = mix(modal_A(norm.x,     norm.y-eps, z_pos, dishradius, reflectamt, ph0, view_mode),
+           modal_B(norm.x,     norm.y-eps, z_pos, dishradius, reflectamt, ph0, spread, view_mode), md);
 
 gx = (t_xp - t_xn) / (2.0 * eps);
 gy = (t_yp - t_yn) / (2.0 * eps);
@@ -210,7 +210,7 @@ patcher = {
         {"name": "reflectamt",    "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "reflect", "hint": "Boundary reflection amount — adds reflected wave"},
         {"name": "linesharpness", "type": "float", "min": 0.1,     "max": 100.0,  "default": 10.0,  "label": "sharp",   "hint": "Nodal line sharpness — higher = thinner lines"},
         {"name": "ph0",           "type": "float", "min": -6.2832, "max": 6.2832, "default": 0.0,   "label": "phase",   "hint": "Global phase offset — rotates nodal pattern"},
-        {"name": "spread",        "type": "float", "min": 0.1,     "max": 1.0,    "default": 0.3,   "label": "spread",  "hint": "Mode B falloff width — 0.1=snap 0.5=broad (Mode B only)"},
+        {"name": "spread",        "type": "float", "min": 0.1,     "max": 1.0,    "default": 0.3,   "label": "spread",  "hint": "Mode B falloff width — 0.1=snap 0.5=broad. Only acts when mode = 1 (Mode A has no spread)"},
         {"name": "mode",          "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "mode",    "hint": "0=linear interp between modes  1=Gaussian resonance snap"},
         {"name": "view_mode",     "type": "float", "min": 0.0,     "max": 1.0,    "default": 0.0,   "label": "view",    "hint": "0=circular plate  1=unwrapped strip"},
         {"name": "gain",          "type": "float", "min": 0.0,     "max": 20.0,   "default": 1.0,   "label": "gain",    "hint": "Scales out3 (raw modal magnitude) — no hard ceiling on effective range"},
