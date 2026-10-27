@@ -184,5 +184,39 @@ def test_the_param_default_checks_catch_broken_implementations():
     check("mutants the checks let through", len(missed), 0)
 
 
+def _fake_measure(requested, reported, fps, fps_k0):
+    """benchclient.measure() with the bench replaced by a canned result (no Max): `reported` is the chain the bench
+    says it ran (None = the field is absent), fps and fps_k0 the two readings."""
+    real = (benchclient._prepare, benchclient.run_job, benchclient._cleanup_genjits)
+    res = {"fps": fps, "fps_baseline_k0": fps_k0}
+    if reported is not None:
+        res["chain"] = reported
+    try:
+        benchclient._prepare = lambda *a, **k: ({}, Path("/nonexistent/job"), None)
+        benchclient.run_job = lambda job, job_dir: dict(res)
+        benchclient._cleanup_genjits = lambda keep: None
+        return benchclient.measure("out1 = in1;", [None], chain=requested)
+    finally:
+        benchclient._prepare, benchclient.run_job, benchclient._cleanup_genjits = real
+
+
+def test_measure_divides_by_the_chain_the_bench_ran_not_the_one_requested():
+    """2026-10-26: the bench has 8 slots and clamps a longer chain to 8, so per-pass numbers must use result['chain']."""
+    # GPU bound: 100 fps against a 400 fps baseline; frame 10 ms over 8 passes = 1.25 ms (NOT 10/32)
+    r = _fake_measure(32, 8, 100.0, 400.0)
+    check("gpu bound: ms per pass = frame / 8", abs(r["ms_per_pass"] - 10.0 / 8), 1e-9)
+    check("gpu bound: the requested chain is kept", r["chain_requested"] - 32, 0)
+    # not GPU bound: 190 fps against 200 fps; the bound is the K = 0 frame (5 ms) over 8 passes
+    r = _fake_measure(128, 8, 190.0, 200.0)
+    check("not gpu bound: upper bound = frame_k0 / 8", abs(r["ms_per_pass_upper_bound"] - 5.0 / 8), 1e-9)
+    check("not gpu bound: no resolved ms_per_pass", 0 if "ms_per_pass" not in r else 1, 0)
+    # a request inside the slots is unchanged by the fix
+    r = _fake_measure(4, 4, 100.0, 400.0)
+    check("chain 4 run as 4: ms per pass = frame / 4", abs(r["ms_per_pass"] - 10.0 / 4), 1e-9)
+    # a result with no `chain` field falls back to the requested chain
+    r = _fake_measure(8, None, 100.0, 400.0)
+    check("no chain field: falls back to the requested chain", abs(r["ms_per_pass"] - 10.0 / 8), 1e-9)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

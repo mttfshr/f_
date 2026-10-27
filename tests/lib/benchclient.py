@@ -401,12 +401,20 @@ def measure(code, inputs, dim=None, chain=1, params=None, warmup=30,
     cost) -- verified 2026-09-22 (heavy codebox: K=1 8.8 ms, K=2 17.3 ms;
     N=512 DFT K=1/2/4/8 fits 1/max(overhead, K*2.9 ms)). Hence:
       gpu_bound    fps < 0.75 * baseline: GPU work dominates the frame
-      ms_per_pass  frame_ms / chain, only when gpu_bound (slight
+      ms_per_pass  frame_ms / K, only when gpu_bound (slight
                    overestimate: includes the bench's own tiny GPU work)
-      ms_per_pass_upper_bound  frame_ms_k0 / chain when NOT gpu_bound: the
+      ms_per_pass_upper_bound  frame_ms_k0 / K when NOT gpu_bound: the
                    pass fits inside the CPU overhead and can't be resolved
-                   -- raise chain or resolution to measure it
+                   -- raise the resolution (or the work per pass) to measure it
     Subtracting the baseline (the original plan) is wrong under overlap.
+
+    K is the chain the BENCH ran (result["chain"]), not the one requested: the
+    bench has N_SLOTS = 8 slots (tests/bench/bench.js) and clamps a longer
+    request to 8, so requesting 16 / 32 / 64 measures the same 8 passes. Until
+    2026-10-26 this divided by the requested chain, which mislabelled every
+    number by requested/8 (a GPU-bound chain=32 read 4x too low; the unresolved
+    upper bounds read too small). The requested value is kept as
+    result["chain_requested"]; a result without "chain" falls back to it.
     """
     if timeout_ms is None:
         timeout_ms = 2 * measure_ms + 15000
@@ -417,14 +425,16 @@ def measure(code, inputs, dim=None, chain=1, params=None, warmup=30,
     result = run_job(job, job_dir)
     _cleanup_genjits(genjit_path)
     fk, f0 = result.get("fps"), result.get("fps_baseline_k0")
-    if fk and f0 and chain:
+    result["chain_requested"] = int(chain)
+    k = int(result.get("chain") or chain)           # the chain the bench actually ran (clamped to its slots)
+    if fk and f0 and k:
         result["frame_ms"] = 1000.0 / fk
         result["frame_ms_k0"] = 1000.0 / f0
         result["gpu_bound"] = fk < 0.75 * f0
         if result["gpu_bound"]:
-            result["ms_per_pass"] = result["frame_ms"] / chain
+            result["ms_per_pass"] = result["frame_ms"] / k
         else:
-            result["ms_per_pass_upper_bound"] = result["frame_ms_k0"] / chain
+            result["ms_per_pass_upper_bound"] = result["frame_ms_k0"] / k
     result["job_dir"] = str(job_dir)
     return result
 

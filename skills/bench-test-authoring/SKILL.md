@@ -81,11 +81,12 @@ conventions below are load-bearing — hold to them.
    variant), or a size-dependent fade flattens the whole frame. Keep the probe as a `note`, not a gate.
 
 9. **The bench has 8 chain slots** (`N_SLOTS = 8` in `tests/bench/bench.js`, which clamps `job.chain` and reports
-   the chain it ran as `result["chain"]`), but `benchclient.measure()` divides by the chain you REQUESTED
-   (`ms_per_pass = frame_ms / chain`, `ms_per_pass_upper_bound = frame_ms_k0 / chain`). Requesting 16 / 32 / 64
-   measures the same 8 passes and mislabels the number by chain/8: a ladder that escalates past 8 when the pass is not
-   GPU bound reports bounds that are too small, and a fixed `chain=32` that IS GPU bound reports a cost 4x too low.
-   Request `chain=8` and divide by `result["chain"]`. Resolved readings (GPU bound at 8) are unaffected. A cheap pass is
+   the chain it ran as `result["chain"]`). Requesting 16 / 32 / 64 measures the same 8 passes, so a ladder that
+   escalates past 8 only repeats one measurement: request `chain=8`. `benchclient.measure()` now divides by
+   `result["chain"]` and keeps the requested value as `result["chain_requested"]` (fixed 2026-10-26, unit-tested in
+   `tests/toolchain/test_benchclient.py`); before that it divided by the REQUESTED chain and mislabelled every number
+   by requested/8 (a fixed `chain=32` that IS GPU bound read 4x too low, unresolved bounds too small). Resolved
+   readings (GPU bound at 8) were never affected. A cheap pass is
    hidden by the bench's own per-frame work (K = 0 baseline about 5 ms at 1080p and 20 ms at 4K): the best statement
    then is an upper bound, roughly `0.33 * frame_k0 / 8` per pass, and a resolved number needs the per-pass work
    amplified (a Param-bounded repeat loop whose coordinates shift per repeat so it cannot be hoisted, then the slope
