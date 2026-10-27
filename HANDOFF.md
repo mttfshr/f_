@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-26, 22:45: `f_cmap` SPECCED (Phase 0 not started); `f_quasi` entry below is still the START HERE for everything else
+
+- **What exists:** `.specify/f_cmap/{spec,tasks}.md`, `ideas/f_cmap_feedback.md` revised (🟡), `plan.md` item 13. No code, no tests run.
+- **Decisions (Matt, 2026-10-26):** for performing with live input; rectangular `z^n + w` pull only (Log dropped; a separate log-space transformer if log space keeps recurring); NO checker. Drop-in replacements: per-frame source `inject` plus a `bounds` menu (Source / Black / Wrap). Tensor field is not the core; an optional vecfield offset inlet is Phase 2.
+- **Facts read from the webgpgpu source (`/Users/matt/Github/webgpgpu/examples/Example_9*.html`):** the examples never inject an image (the `seed` program is never called), so the checker was their only information source; Log's angular term jumps by an integer (3), so REPEAT wrap hides the atan seam; `|w|` sweeps -1.35..1.65 at 0.01 rad per frame (frame-rate coupled). Architecture follows `f_vf_advect` (Pattern 1: `pass` pix plus primary pix, float32, `adapt`).
+- **Next:** Phase 0 T001-T003 (mirror, identity / isometry / composition tests), T004 (smear measurement, decides the sampler gate G4), T005 look stills. Gates for Matt: G1 naming, G2 bounds rectangle vs disk (proposed rectangle), G3 `power` range, G4 sampler, G5 no `mix_pct`, G6 control trim. T001-T005 are offline and good `omp` fan-out material; T006 cost needs Max.
+- **Unverified:** Log mode matching `f_droste` with other constants (droste codebox not read; moot now that Log is dropped).
+
 ## START HERE (2026-10-26): `f_quasi` SHIPPED (Phase 1 built, benched, live contracts green; reference doc, helpfile, menu entry, README row done)
 
 - **What exists:** `tests/modules/quasi/quasi_mirror.py` + `test_quasi.py` (12/12, 0.7 s; independent scalar float64 reference, finite difference, rotation covariance, four mutations caught) and four records, `tests/records/spike_quasi_{float32,gradient,wrap,nyquist}.py` (run with `uv run --no-project --with numpy python3`). Full findings in `.specify/stable/f_quasi/tasks.md` Record (2026-10-26); spec table amended (density is per frame HEIGHT, `envelope` max 0.7, drift a wrapped phase).
