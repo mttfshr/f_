@@ -1,7 +1,7 @@
 """
 test_quasi.py -- tier-1 independent checks for the f_quasi mirror (T001).
 
-Ground truth is the spec's settled model (.specify/f_quasi/spec.md) evaluated by a plain
+Ground truth is the spec's settled model (.specify/stable/f_quasi/spec.md) evaluated by a plain
 scalar float64 loop written here with `math` (no NumPy, no shared code with the mirror), plus
 closed forms:
   - the potential is a normalised sum of cosines, so |P| <= 1;

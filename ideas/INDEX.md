@@ -588,7 +588,7 @@ placeholders.
   (fixed 1024² solver, separable-Gaussian coupling, bare log-polar map). **Replaces** the FFT-chain `f_wc_fft`;
   born from that module's pixelation post-mortem (their smoothness is structural, not AA). Soak and final
   control-set approval pending.
-- **[f_quasi.md](f_quasi.md)** 🟢 — **Shipped 2026-10-26** (`docs/f-reference/f_quasi.md`; specced 2026-10-23 in `.specify/f_quasi/`): Shepard-zoom quasicrystal
+- **[f_quasi.md](f_quasi.md)** 🟢 — **Shipped 2026-10-26** (`docs/f-reference/f_quasi.md`; specced 2026-10-23 in `.specify/stable/f_quasi/`): Shepard-zoom quasicrystal
   generator with an analytic gradient outlet and a patcher clock. The relief, slope-hue and contour-banding looks were not built.
 - **[f_gabor.md](f_gabor.md)** ⚪ — Gabor band-pass and phase-invariant quadrature
   energy, with tile-bank and octave-pyramid display modes.

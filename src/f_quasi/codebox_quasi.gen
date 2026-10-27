@@ -8,7 +8,7 @@
 //   second outlet: the exact analytic gradient divided by the weighted total frequency, so |v| <= 1 (gate G2 proposal),
 //                  encoded v * gain * 0.5 + 0.5 with B = 0.5, A = 1 (the f_vecfield contract)
 //   third outlet:  the potential P mapped to 0..1 (P / 2 + 0.5)
-// Settled by Phase 0 (.specify/f_quasi/tasks.md): units are frame HEIGHT (x is scaled by the aspect only); the five
+// Settled by Phase 0 (.specify/stable/f_quasi/tasks.md): units are frame HEIGHT (x is scaled by the aspect only); the five
 // beta_k = frac(exp(pi k)) are float64 literals; no argument reduction (GPU error 3.7e-5 in P); drift is a phase in turns,
 // wrapped here and applied as 2 pi drift 2^i so it is exactly periodic; zoom wraps here; the envelope cap (0.7) is the
 // dial range, not enforced in this file; no octave skipping and no Nyquist fade (T005, T006).

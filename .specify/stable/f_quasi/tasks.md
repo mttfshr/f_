@@ -1,6 +1,6 @@
 # Tasks: f_quasi
 
-**Spec**: `.specify/f_quasi/spec.md`
+**Spec**: `.specify/stable/f_quasi/spec.md`
 **Plan**: none yet (written after Phase 0)
 **Build order**: Sequential. Phase 0 is the gate; nothing in Phase 1 starts until its decision gates are closed.
 **Commits**: After each phase checkpoint.
@@ -59,7 +59,7 @@ The patcher also holds a small clock (zoom and drift accumulators); see T021.
 
 ## Phase 3: Docs and registration
 
-- [x] T040 (2026-10-26) Reference doc `docs/f-reference/f_quasi.md`, helpfile `package/help/f_quasi.maxhelp` (cloned from `f_wc`'s layout; lists the nine real route tokens, not `bypass`), `f_modules` menu placement (Patterns, between Masonry and Seeds, marked ∇), README row without the unfinished mark (106 characters), `NOT_IN_MENU` entry removed, inventory rows added (producers table and I/O table), launcher regenerated (43 clickable). Name kept: `f_quasi` (G1). Matt, 2026-10-26: "the built module -- ship it". Module-preflight Part 1 (mechanical) green: drift 1 of 1, launch 8/8, menu 17/17, contracts 9/9, bypass convention, doc exists, helpfile box at least the 227 x 164 footprint; Part 2 (open the module and helpfile in Max, judge the digest line) is Matt's.
+- [x] T040 (2026-10-26) Reference doc `docs/f-reference/f_quasi.md`, helpfile `package/help/f_quasi.maxhelp` (cloned from `f_wc`'s layout; lists the nine real route tokens, not `bypass`), `f_modules` menu placement (Patterns, between Masonry and Seeds, marked ∇), README row without the unfinished mark (106 characters), `NOT_IN_MENU` entry removed, inventory rows added (producers table and I/O table), launcher regenerated (43 clickable). Name kept: `f_quasi` (G1). Matt, 2026-10-26: "the built module -- ship it". Module-preflight Part 1 (mechanical) green: drift 1 of 1, launch 8/8, menu 17/17, contracts 9/9, bypass convention, doc exists, helpfile box at least the 227 x 164 footprint; Part 2 done by Matt 2026-10-26 (the helpfile looks fine); `.specify/f_quasi` moved to `.specify/stable/f_quasi` the same day.
 
 ---
 

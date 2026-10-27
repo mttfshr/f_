@@ -3,7 +3,7 @@ f_quasi -- definition.py   (working name `f_quasi`; gate G1 settled 2026-10-26: 
 
 Shepard-zoom quasicrystal generator: five cosine plane waves over seven octaves, the octave weights a Gaussian in
 log2 scale, so advancing `zoom` one octave never changes the pattern's character (an endless zoom). A stateless
-generator: one pix, three outlets, no feedback.  See .specify/f_quasi/{spec,tasks}.md.
+generator: one pix, three outlets, no feedback.  See .specify/stable/f_quasi/{spec,tasks}.md.
 
   outlet 1  banded look of the potential (triangle-folded contours, `bands` of them)
   outlet 2  the exact analytic gradient as an f_vecfield, divided by the weighted total frequency so |v| <= 1

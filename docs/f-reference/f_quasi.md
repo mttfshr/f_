@@ -3,7 +3,7 @@
 **Type:** Generator (dual-mode: optional texture inlet, three outlets) — stateless; the clock lives in the patcher
 **Status:** Built, benched and live-checked (Matt, 2026-10-26: the built module, "ship it"). The defaults are first-look values, not a tuned set; the open items are under Known issues.
 
-_Working name kept (gate G1, 2026-10-26). Reference written 2026-10-26 from `src/f_quasi/` (definition + codebox), `.specify/f_quasi/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc follows the module._
+_Working name kept (gate G1, 2026-10-26). Reference written 2026-10-26 from `src/f_quasi/` (definition + codebox), `.specify/stable/f_quasi/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc follows the module._
 
 ---
 
@@ -136,4 +136,4 @@ Exact and bounded: `v` is the gradient divided by `2 pi B` times the weighted me
 
 ## Source Files
 
-`src/f_quasi/definition.py`, `src/f_quasi/codebox_quasi.gen`, `package/patchers/f_quasi.maxpat`, `package/help/f_quasi.maxhelp`, `.specify/f_quasi/{spec,tasks}.md`, `tests/modules/quasi/`.
+`src/f_quasi/definition.py`, `src/f_quasi/codebox_quasi.gen`, `package/patchers/f_quasi.maxpat`, `package/help/f_quasi.maxhelp`, `.specify/stable/f_quasi/{spec,tasks}.md`, `tests/modules/quasi/`.

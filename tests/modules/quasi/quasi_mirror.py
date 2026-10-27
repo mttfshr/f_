@@ -1,5 +1,5 @@
 """
-quasi_mirror.py -- NumPy mirror of the settled f_quasi model (.specify/f_quasi/spec.md,
+quasi_mirror.py -- NumPy mirror of the settled f_quasi model (.specify/stable/f_quasi/spec.md,
 "Settled model"), written BEFORE the codebox exists. The mirror is the spec in executable
 form; T020 writes the codebox against it and the bench diffs the GPU against it.
 
