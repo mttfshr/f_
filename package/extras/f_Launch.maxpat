@@ -13,7 +13,7 @@
 			100.0,
 			100.0,
 			960.0,
-			278.0
+			306.0
 		],
 		"gridsize": [
 			15.0,
@@ -50,7 +50,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -276,53 +276,34 @@
 							{
 								"box": {
 									"id": "obj-10",
-									"maxclass": "textbutton",
+									"maxclass": "comment",
 									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
+									"numoutlets": 0,
 									"patching_rect": [
 										20.0,
 										200.0,
 										150.0,
-										22.0
+										20.0
 									],
-									"text": "f_wc",
+									"text": "f_wave_field",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										96.0,
+										98.0,
 										210.0,
-										22.0
+										20.0
 									]
 								}
 							},
 							{
 								"box": {
 									"id": "obj-11",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										228.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_wc.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-12",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -332,19 +313,25 @@
 										150.0,
 										20.0
 									],
-									"text": "Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it",
+									"text": "⚠ Unfinished. Spectral wave field: tunable dispersion, point exciter, strike; luma and gradient vecfield out",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										98.0,
 										720.0,
 										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
 									]
 								}
 							},
 							{
 								"box": {
-									"id": "obj-13",
+									"id": "obj-12",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -361,7 +348,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_masonry",
+									"text": "f_wc",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -373,7 +360,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-14",
+									"id": "obj-13",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -386,12 +373,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_masonry.maxhelp"
+									"text": "loadunique f_wc.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-15",
+									"id": "obj-14",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -401,7 +388,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
+									"text": "Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -413,7 +400,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-16",
+									"id": "obj-15",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -430,7 +417,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_stipple",
+									"text": "f_masonry",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -442,7 +429,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-17",
+									"id": "obj-16",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -455,12 +442,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_stipple.maxhelp"
+									"text": "loadunique f_masonry.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-18",
+									"id": "obj-17",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -470,7 +457,7 @@
 										150.0,
 										20.0
 									],
-									"text": "2D hash field stipple texture",
+									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -482,7 +469,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-19",
+									"id": "obj-18",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -499,7 +486,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_seeds",
+									"text": "f_stipple",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -511,7 +498,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-20",
+									"id": "obj-19",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -524,12 +511,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_seeds.maxhelp"
+									"text": "loadunique f_stipple.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-21",
+									"id": "obj-20",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -539,7 +526,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
+									"text": "2D hash field stipple texture",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -551,7 +538,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-22",
+									"id": "obj-21",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -568,7 +555,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_weave",
+									"text": "f_vf_seeds",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -580,7 +567,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-23",
+									"id": "obj-22",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -593,12 +580,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_weave.maxhelp"
+									"text": "loadunique f_vf_seeds.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-24",
+									"id": "obj-23",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -608,11 +595,80 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
+									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										210.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-24",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										500.0,
+										150.0,
+										22.0
+									],
+									"text": "f_weave",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										236.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-25",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										528.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_weave.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-26",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										500.0,
+										150.0,
+										20.0
+									],
+									"text": "Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										238.0,
 										720.0,
 										20.0
 									]
@@ -671,23 +727,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-10",
+										"obj-12",
 										0
 									],
 									"destination": [
-										"obj-11",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-11",
-										0
-									],
-									"destination": [
-										"obj-1",
+										"obj-13",
 										0
 									]
 								}
@@ -699,7 +743,7 @@
 										0
 									],
 									"destination": [
-										"obj-14",
+										"obj-1",
 										0
 									]
 								}
@@ -707,11 +751,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-14",
+										"obj-15",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-16",
 										0
 									]
 								}
@@ -723,7 +767,7 @@
 										0
 									],
 									"destination": [
-										"obj-17",
+										"obj-1",
 										0
 									]
 								}
@@ -731,11 +775,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-17",
+										"obj-18",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-19",
 										0
 									]
 								}
@@ -747,7 +791,7 @@
 										0
 									],
 									"destination": [
-										"obj-20",
+										"obj-1",
 										0
 									]
 								}
@@ -755,11 +799,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-20",
+										"obj-21",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-22",
 										0
 									]
 								}
@@ -771,7 +815,7 @@
 										0
 									],
 									"destination": [
-										"obj-23",
+										"obj-1",
 										0
 									]
 								}
@@ -779,7 +823,19 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-23",
+										"obj-24",
+										0
+									],
+									"destination": [
+										"obj-25",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-25",
 										0
 									],
 									"destination": [
@@ -820,7 +876,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1441,7 +1497,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1876,7 +1932,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2646,7 +2702,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -3360,7 +3416,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -3702,7 +3758,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4044,7 +4100,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4479,7 +4535,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4803,7 +4859,7 @@
 							0.0,
 							26.0,
 							960.0,
-							252.0
+							280.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
