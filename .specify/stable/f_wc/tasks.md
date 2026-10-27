@@ -1,6 +1,6 @@
 # Tasks: f_wc
 
-**Spec**: `.specify/f_wc/spec.md`
+**Spec**: `.specify/stable/f_wc/spec.md`
 **Plan**: none yet (written after Phase 0)
 **Build order**: Sequential. Phase 0 is the gate: T002 decides the `energy`
 default (and whether an internal excite-LFO is needed) and everything in

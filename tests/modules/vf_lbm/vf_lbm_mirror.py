@@ -1,6 +1,6 @@
 """
 vf_lbm_mirror.py -- tier-1 NumPy mirror of the future f_vf_lbm solver (no codebox
-exists yet; .specify/f_vf_lbm/spec.md FR-001..FR-005 + FR-008 fix the design).
+exists yet; .specify/stable/f_vf_lbm/spec.md FR-001..FR-005 + FR-008 fix the design).
 
 Conventions (stated here because the spec is silent on both):
   - Textures are (row = y, column = x) RGBA float32 arrays, row 0 at the

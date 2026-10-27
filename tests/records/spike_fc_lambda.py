@@ -7,7 +7,7 @@ the grain dial mapping (FR-002) and the landmark ladder.
 T005: resize invariance -- the same grain at several N, wavelength measured
 in FRAME-FRACTION units; bounds NF-005's claim and shows the floor.
 
-**2026-10-24 VERDICT (recorded in .specify/f_wc/tasks.md T003/T005):
+**2026-10-24 VERDICT (recorded in .specify/stable/f_wc/tasks.md T003/T005):
 shipped defaults are Psychedelic couplings + Ne = 0.75 + habituation; the fine
 regime lives INSIDE the sigma clamp band [0.75, 1.4] px and its lambda is
 dynamics-set, not kernel-set, so a clean lambda(sigma) table does not exist

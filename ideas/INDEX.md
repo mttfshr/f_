@@ -222,7 +222,7 @@ substantially move a file in `ideas/`, update its entry here too.
 - **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** — see
   Vector field family above (cross-listed; resolved 2026-10-13).
 - **[f_dither_grain.md](f_dither_grain.md)** ⏸ SUPERSEDED 2026-07-21 — folded into
-  `f_vf_seeds` as Evolution 3 (shipped); `.specify/f_dither_grain/` is history only.
+  `f_vf_seeds` as Evolution 3 (shipped); `.specify/paused/f_dither_grain/` is history only.
   (The 10-11 gates digest still listed its T001/T002 as blocking; its tasks file says
   superseded.) Ordered dithering reframed
   as an `f_grain`-family processor: per-cell hue selection via a `t` vs.
@@ -386,7 +386,7 @@ there, then the chapter-specific files for depth.
   frame), but the spectral `f_vf_fluid`-shape is stable one-step-per-frame
   (dt ~ 0.076) with a mandatory k=0 mean-zeroing — cleared to spec whenever
   wanted.** **Both then fully specced 2026-10-13** (`.specify/f_ks/spec.md`,
-  `.specify/f_vf_lbm/spec.md`); Phase 0 GPU bench not started for either.
+  `.specify/stable/f_vf_lbm/spec.md`); Phase 0 GPU bench not started for either.
 - **[slab_chain_architecture.md](slab_chain_architecture.md)** 🧰 —
   **RETIRED 2026-10-12.** Was the stub for a second architectural track
   (true multi-pass GLSL slab chains). FFT fluids shipped without it
@@ -584,7 +584,7 @@ placeholders.
   Rule's Wilson-Cowan pages: known-answer reference, Gaussian noise drive, habituation
   dials, retinotopic stage as a shared piece.
 - **[f_wc.md](f_wc.md)** 🟢 — **Built 2026-10-24/25** (formerly `f_formconstants`; renamed 2026-10-25;
-  `.specify/f_wc/`): render-resolution Wilson-Cowan labyrinth, a faithful port of the WC_Example_10 pipeline
+  `.specify/stable/f_wc/`): render-resolution Wilson-Cowan labyrinth, a faithful port of the WC_Example_10 pipeline
   (fixed 1024² solver, separable-Gaussian coupling, bare log-polar map). **Replaces** the FFT-chain `f_wc_fft`;
   born from that module's pixelation post-mortem (their smoothness is structural, not AA). Soak and final
   control-set approval pending.

@@ -1,6 +1,6 @@
 """wc_steadyweb_mirror.py -- tier-1 NumPy mirror of the not-yet-built f_wc module.
 
-The RENDER-RESOLUTION sibling of f_wc_fft (spec: .specify/f_wc/spec.md):
+The RENDER-RESOLUTION sibling of f_wc_fft (spec: .specify/stable/f_wc/spec.md):
 same Wilson-Cowan model class, but the coupling convolution is a real-space
 separable Gaussian blur at render resolution (the webgpgpu
 WC_Example_10_fullscreen pipeline) instead of f_wc_fft's 256^2 spectral chain.
@@ -9,7 +9,7 @@ State texture (float32 end to end -- the source's 8-bit EncodeFloat quantization
 is deliberately NOT mirrored): R = E, G = I, B = Ve, A = Vi (habituation carry,
 pinned to 0 at habituation = 0, the f_wc_fft G5 bit-preservation rule).
 
-Settled constants: the Example-10 coupling set (.specify/f_wc Record):
+Settled constants: the Example-10 coupling set (.specify/stable/f_wc Record):
   AEE=10.5 AIE=8.5 AEI=12 AII=3, HE=2 HI=3.5, TE=10 TI=20, dt0=1.
   The source's slow square-wave bias s (period ~147 frames, 0.6 half-duty,
   E-input only) is PARKED pending the T002 sustain measurement -- spike_fc_sustain

@@ -427,7 +427,7 @@ Stage 4 — Composite (vfseeds_composite_pix)
 ## Evolution 3 — Color-Driving Texture (Seed-Sampled Color Blend)
 
 **Status:** Shipped 2026-07-22. Originates from a separate conversational
-thread (`ideas/f_dither_grain.md`, `.specify/f_dither_grain/`) that set out
+thread (`ideas/f_dither_grain.md`, `.specify/paused/f_dither_grain/`) that set out
 to build parametric dithering as its own standalone module, hit the
 identical structural problem this module's own Evolution 2 already solved
 (see below), and was folded in here — but the mechanism that actually

@@ -53,6 +53,6 @@ luma-only switch (luma-only avoids colour shifts on footage).
 
 ## Related
 
-- `f_wc` (`.specify/f_wc/tasks.md` T075) — the origin and the measurements.
+- `f_wc` (`.specify/stable/f_wc/tasks.md` T075) — the origin and the measurements.
 - Downstream-effect philosophy (Matt, 2026-10-25): Strike / impulse and Contrast / Sharp also belong in
   separate modules, not inside generators.

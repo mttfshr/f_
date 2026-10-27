@@ -5,7 +5,7 @@ Diagnostic and tier-1 foundation, not yet a regression gate: this file both
 *measures* (dt ceilings, single-mode decay rates) and *verifies* the spectral
 solver shape the f_wc codeboxes will implement.
 
-The system (spec: .specify/f_wc/spec.md; Butler et al. 2012 PNAS variant --
+The system (spec: .specify/superseded/f_wc_fft/spec.md; Butler et al. 2012 PNAS variant --
 diffusive long-range inhibition):
 
     tau_E dE/dt = -E + (1 - rE E) S(wEE E - wEI I + P + ext_E)

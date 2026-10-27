@@ -1,6 +1,6 @@
 # Tasks: f_vf_lbm
 
-**Spec**: `.specify/f_vf_lbm/spec.md`
+**Spec**: `.specify/stable/f_vf_lbm/spec.md`
 **Plan**: none yet (written after Phase 0)
 **Build order**: Sequential. Phase 0 is the gate; nothing in Phase 1 starts until its decision gates are closed.
 **Commits**: After each phase checkpoint.

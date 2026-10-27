@@ -176,4 +176,4 @@ running.
 
 ## Status
 
-Superseded 2026-07-21: folded into `f_vf_seeds` as Evolution 3 (color-driving texture, shipped). A draft spec exists at `.specify/f_dither_grain/spec.md` (kept as history only); never scratch-tested on its own, not scheduled.
+Superseded 2026-07-21: folded into `f_vf_seeds` as Evolution 3 (color-driving texture, shipped). A draft spec exists at `.specify/paused/f_dither_grain/spec.md` (kept as history only); never scratch-tested on its own, not scheduled.

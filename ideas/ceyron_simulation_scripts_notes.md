@@ -264,7 +264,7 @@ Three real threads opened, one answered:
    slab track** (see finding #2 above; two correctness traps and two
    real constraints recorded there). Value question answered 2026-10-13
    (Matt: "spec it") — **specced as `f_vf_lbm`** (working name,
-   `.specify/f_vf_lbm/spec.md`). Phase 0 (both solver codeboxes on the
+   `.specify/stable/f_vf_lbm/spec.md`). Phase 0 (both solver codeboxes on the
    bench, channel-BC codebox, safe-omega measurement) not started.
 3. Kuramoto-Sivashinsky as a new self-sustaining chaotic generator
    module — **stability scratch test run 2026-10-12: spectral

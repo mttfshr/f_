@@ -5,7 +5,7 @@
 **Type:** Generator (drive inlet, luma out) — **temporal / has memory**
 **Status:** Built, benched and tuned. Phase 0 (settled model + gates), Phase 1 (GPU chain + mirror diff), Phase 2 (Ranges/G4/landmarks/retinotopy) all closed 2026-10-23. Phase 4 (2026-10-23, gate G5): the `habituation` dial shipped — slow Ve/Vi fatigue riding the spare state channels. README lists it by name.
 
-_Reference written 2026-10-23 from `src/f_wc/` (definition + codeboxes), `.specify/f_wc/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module._
+_Reference written 2026-10-23 from `src/f_wc/` (definition + codeboxes), `.specify/superseded/f_wc_fft/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module._
 
 ---
 
@@ -201,4 +201,4 @@ forever.
 ## Source Files
 
 `src/f_wc/definition.py`, `src/f_wc/codebox_{seed,pass,dft_fx,dft_fy,dft_iy,dft_ix,spec,nl,enc}.gen`,
-`src/f_wc/gen_dft.py`, `package/patchers/f_wc.maxpat`, `.specify/f_wc/{spec,tasks}.md`.
+`src/f_wc/gen_dft.py`, `package/patchers/f_wc.maxpat`, `.specify/superseded/f_wc_fft/{spec,tasks}.md`.

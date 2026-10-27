@@ -4,7 +4,7 @@ f_vf_lbm -- definition.py
 2D Lattice Boltzmann (D2Q9, BGK) channel flow around an obstacle, a vecfield producer: a mask texture goes in
 (white = obstacle), a steady wind blows left to right, and the velocity vecfield of the wake comes out. Feed the
 outlet to f_vf_advect / f_vf_warp / f_vf_streak / f_vf_glow like any other vecfield.
-See .specify/f_vf_lbm/{spec,tasks}.md; the verified NumPy mirror is tests/modules/vf_lbm/.
+See .specify/stable/f_vf_lbm/{spec,tasks}.md; the verified NumPy mirror is tests/modules/vf_lbm/.
 
 Stage chain. The solver state is ONE 192x324 float32 texture, the three RGBA state planes (nine populations,
 FR-001) stacked vertically ("state atlas"; codebox_collide.gen documents the layout). One texture means every

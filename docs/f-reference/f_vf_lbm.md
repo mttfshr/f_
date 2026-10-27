@@ -3,7 +3,7 @@
 **Type:** Processor (obstacle mask in → f_vecfield out) — **temporal / has memory**
 **Status:** Verified by use (Matt, 2026-10-21; README ⚠ removed). Three Max benches are still unrun and the `tilt` dial has not been run in Max (see Known issues). Menu entry: `Lattice Boltzmann`, in ∇ Fields (the menu was regrouped 2026-10-22).
 
-_Reference written 2026-10-22 from `src/f_vf_lbm/` (definition + codeboxes), `.specify/f_vf_lbm/{spec,tasks}.md`, `HANDOFF.md` and the module's tests. Where the spec and the shipped module differ, this doc follows the shipped module._
+_Reference written 2026-10-22 from `src/f_vf_lbm/` (definition + codeboxes), `.specify/stable/f_vf_lbm/{spec,tasks}.md`, `HANDOFF.md` and the module's tests. Where the spec and the shipped module differ, this doc follows the shipped module._
 
 ---
 
@@ -93,7 +93,7 @@ The `Wind` label is the user-facing name of the `inflow` param; the routed messa
 - **Not run in Max: `tilt`.** Built in the mirror, codebox, definition and menu size on 2026-10-22 (mirror tests green). It has not been opened in Max and the change is uncommitted. `bench_vf_lbm_module.py` has no Tilt case.
 - **Three benches unrun:** `bench_vf_lbm_module.py`, the `f_vf_lbm` row of `bench_modules.py`, and the slow 100-frame chain (`tests/bench.sh --slow`).
 - **Reset control** (restart from rest) does not exist. Capping Wind/Omega at the top corner is open.
-- **Spec drift.** `.specify/f_vf_lbm/spec.md` says "Draft — not yet built" and describes three state textures, a separate `mrg` stage and two solver codeboxes; the shipped chain is the atlas above. T004's wording that Zou/He forces the whole inflow column differs from the mirror and codebox (interior rows only, FR-005).
+- **Spec drift.** `.specify/stable/f_vf_lbm/spec.md` says "Draft — not yet built" and describes three state textures, a separate `mrg` stage and two solver codeboxes; the shipped chain is the atlas above. T004's wording that Zou/He forces the whole inflow column differs from the mirror and codebox (interior rows only, FR-005).
 - **Name** (`f_vf_lbm` versus `f_vf_karman` / `f_vf_obstacle`) was kept by default (T010); decide at Phase 3.
 - **Cost not recorded.** NF-001 has no measurement in `tasks.md`.
 - **Float32 vs float64:** the two paths diverge by 0.02 in 30 frames at omega 1.99; slow mass drift with bounce-back plus Zou/He.
@@ -113,4 +113,4 @@ The `Wind` label is the user-facing name of the `inflow` param; the routed messa
 
 ## Source Files
 
-`src/f_vf_lbm/definition.py`, `src/f_vf_lbm/codebox_{hold,collide,stream,mac,mprev,enc}.gen`, `package/patchers/f_vf_lbm.maxpat`, `.specify/f_vf_lbm/{spec,tasks}.md`.
+`src/f_vf_lbm/definition.py`, `src/f_vf_lbm/codebox_{hold,collide,stream,mac,mprev,enc}.gen`, `package/patchers/f_vf_lbm.maxpat`, `.specify/stable/f_vf_lbm/{spec,tasks}.md`.

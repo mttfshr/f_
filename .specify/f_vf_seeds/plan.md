@@ -646,7 +646,7 @@ problem and was folded in rather than duplicated.
 ### ADR 9 — Fold into `f_vf_seeds` as Evolution 3, not a new module
 
 **Context:** `f_dither_grain` (separate conversational thread, see
-`.specify/f_dither_grain/spec.md`'s Architecture Pivot section) built its
+`.specify/paused/f_dither_grain/spec.md`'s Architecture Pivot section) built its
 own nearest/second-nearest search, jitter, and vecfield-driven size/shape
 mechanism from scratch, attempting to make grain size legible in a
 full-color composite. Every attempt hit the same wall: revealing a

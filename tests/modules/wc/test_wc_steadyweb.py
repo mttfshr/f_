@@ -1,5 +1,5 @@
 """test_wc_steadyweb.py -- tier-1 NumPy mirror tests for the not-yet-built
-f_wc module (render-res Wilson-Cowan; spec .specify/f_wc/).
+f_wc module (render-res Wilson-Cowan; spec .specify/stable/f_wc/).
 
 Ground truth is independent of the mirror:
 
@@ -22,7 +22,7 @@ Ground truth is independent of the mirror:
     Ne = 0.75 + habituation 0.3, fine grain): structured, non-collapsed,
     non-saturated within 800 frames. (Indefinite sustain measured in the
     T002/T003 spikes, tests/records/spike_fc_sustain.py and the habituation /
-    grain-ladder probes recorded in .specify/f_wc/tasks.md -- not
+    grain-ladder probes recorded in .specify/stable/f_wc/tasks.md -- not
     an assertion here.)
 
 Tolerance notes: analytic-blur and decay checks are near-exact (1e-6 and the

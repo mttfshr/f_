@@ -26,7 +26,7 @@ which is also not `f_vf_` despite having a plausible `grad(u)` outlet).
 ## Scope settled (2026-10-23, gate G1 — Matt chose option A)
 
 Phase 0 ran and **changed the model and the scope**. Record (full detail:
-`.specify/f_wc/tasks.md` T001–T005 + Record):
+`.specify/superseded/f_wc_fft/tasks.md` T001–T005 + Record):
 
 - **The model that works is a NOISE-SUSTAINED two-field kernel-coupled
   sigmoid Wilson-Cowan system** — NOT the diffusion-form equations written

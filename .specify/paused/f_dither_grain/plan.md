@@ -10,7 +10,7 @@
 ---
 
 _Date: 2026-07-21_
-_Spec: .specify/f_dither_grain/spec.md_
+_Spec: .specify/paused/f_dither_grain/spec.md_
 
 ---
 

@@ -8,7 +8,7 @@
 
 ---
 
-**Spec**: `.specify/f_dither_grain/spec.md`
+**Spec**: `.specify/paused/f_dither_grain/spec.md`
 **Build order**: Sequential. Complete each phase before the next.
 **Commits**: After each phase checkpoint.
 
@@ -20,7 +20,7 @@
 ~/Vsynth/patterns/
   dither_grain_scratch.maxpat     — scratch patch for Phases 0-3 (not committed)
 
-.specify/f_dither_grain/
+.specify/paused/f_dither_grain/
   spec.md                         — done
   plan.md                         — done
   tasks.md                        — this file

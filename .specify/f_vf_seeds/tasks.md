@@ -271,7 +271,7 @@ end of Phase 3 (is the cost acceptable at all, before bombing adds more).
 the next.
 **Scratch location**: `~/Vsynth/patterns/`
 **Origin note**: This work originated as a separate module attempt
-(`.specify/f_dither_grain/`) that was folded in here 2026-07-21 once it
+(`.specify/paused/f_dither_grain/`) that was folded in here 2026-07-21 once it
 became clear the overlap-legibility problem it kept hitting was already
 solved by this module's own Evolution 2. See that directory's spec.md
 "Architecture Pivot" section for the full history if useful context.
@@ -406,7 +406,7 @@ into the shared skill reference. → Phase 3.
 - [ ] T047 Update `docs/f-reference/f_vf_seeds.md` — new inlet, new
       param, attribution to the originating `f_dither_grain` thread —
       **still pending**
-- [ ] T048 Retire `.specify/f_dither_grain/` — mark its spec/plan/tasks
+- [ ] T048 Retire `.specify/paused/f_dither_grain/` — mark its spec/plan/tasks
       as superseded-and-folded-in (already done for spec.md as of the
       pivot; plan.md/tasks.md there should get the same treatment),
       not deleted — real history worth keeping — **still pending**

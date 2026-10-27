@@ -3,7 +3,7 @@
 **Type:** Generator (pulse inlet, RGB out) — **temporal / has memory**
 **Status:** Built, benched and live-checked through Phase D (Matt confirmed the live defaults 2026-10-25). Phase 0 (constants measured), Phase R (the parity rebuild) and Phase D (performance controls) are closed (control set approved 2026-10-25; T064 dropped, solver fixed at 1024). The Phase 2 soak (T024) was done by Matt live on 2026-10-25, so the README row carries no ⚠.
 
-_Renamed from `f_formconstants` on 2026-10-25. Reference written 2026-10-25 from `src/f_wc/` (definition + codeboxes), `.specify/f_wc/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module (spec Revision 2 and its "Shipped controls" section are the current spec)._
+_Renamed from `f_formconstants` on 2026-10-25. Reference written 2026-10-25 from `src/f_wc/` (definition + codeboxes), `.specify/stable/f_wc/{spec,tasks}.md` and the module's tests. Where the spec and the shipped module differ, this doc and `tasks.md` follow the shipped module (spec Revision 2 and its "Shipped controls" section are the current spec)._
 
 ---
 
@@ -209,4 +209,4 @@ changes texture character, not liveness.
 
 `src/f_wc/definition.py`, `src/f_wc/codebox_{seed,pass,blur_x,blur_y,nl,enc}.gen`,
 `package/patchers/f_wc.maxpat`, `package/help/f_wc.maxhelp`,
-`.specify/f_wc/{spec,tasks}.md`, `tests/modules/wc/`.
+`.specify/stable/f_wc/{spec,tasks}.md`, `tests/modules/wc/`.
