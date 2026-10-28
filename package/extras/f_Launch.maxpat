@@ -2260,7 +2260,7 @@
 										150.0,
 										20.0
 									],
-									"text": "f_vf_lbm",
+									"text": "f_vf_immiscible",
 									"textcolor": [
 										0.55,
 										0.55,
@@ -2288,7 +2288,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out",
+									"text": "⚠ Unfinished. Blends two velocity vecfields via a Cahn-Hilliard phase field; blended vecfield and phase out",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2307,53 +2307,34 @@
 							{
 								"box": {
 									"id": "obj-10",
-									"maxclass": "textbutton",
+									"maxclass": "comment",
 									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
+									"numoutlets": 0,
 									"patching_rect": [
 										20.0,
 										200.0,
 										150.0,
-										22.0
+										20.0
 									],
-									"text": "f_vf_optical_flow",
+									"text": "f_vf_lbm",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
-										96.0,
+										98.0,
 										210.0,
-										22.0
+										20.0
 									]
 								}
 							},
 							{
 								"box": {
 									"id": "obj-11",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										228.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_vf_optical_flow.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-12",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2363,19 +2344,25 @@
 										150.0,
 										20.0
 									],
-									"text": "Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets",
+									"text": "Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										98.0,
 										720.0,
 										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
 									]
 								}
 							},
 							{
 								"box": {
-									"id": "obj-13",
+									"id": "obj-12",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -2392,7 +2379,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_repulse",
+									"text": "f_vf_optical_flow",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2404,7 +2391,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-14",
+									"id": "obj-13",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -2417,12 +2404,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_repulse.maxhelp"
+									"text": "loadunique f_vf_optical_flow.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-15",
+									"id": "obj-14",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2432,7 +2419,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes",
+									"text": "Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2444,7 +2431,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-16",
+									"id": "obj-15",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -2461,7 +2448,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_vortex",
+									"text": "f_vf_repulse",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2473,7 +2460,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-17",
+									"id": "obj-16",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -2486,12 +2473,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_vortex.maxhelp"
+									"text": "loadunique f_vf_repulse.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-18",
+									"id": "obj-17",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2501,7 +2488,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets",
+									"text": "Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2513,7 +2500,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-19",
+									"id": "obj-18",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -2530,7 +2517,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_vortex_multi",
+									"text": "f_vf_vortex",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2542,7 +2529,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-20",
+									"id": "obj-19",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -2555,12 +2542,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_vortex_multi.maxhelp"
+									"text": "loadunique f_vf_vortex.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-21",
+									"id": "obj-20",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2570,7 +2557,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets",
+									"text": "Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2582,7 +2569,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-22",
+									"id": "obj-21",
 									"maxclass": "textbutton",
 									"numinlets": 1,
 									"numoutlets": 3,
@@ -2599,7 +2586,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_vorticity",
+									"text": "f_vf_vortex_multi",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -2611,7 +2598,7 @@
 							},
 							{
 								"box": {
-									"id": "obj-23",
+									"id": "obj-22",
 									"maxclass": "message",
 									"numinlets": 2,
 									"numoutlets": 1,
@@ -2624,12 +2611,12 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_vorticity.maxhelp"
+									"text": "loadunique f_vf_vortex_multi.maxhelp"
 								}
 							},
 							{
 								"box": {
-									"id": "obj-24",
+									"id": "obj-23",
 									"maxclass": "comment",
 									"numinlets": 1,
 									"numoutlets": 0,
@@ -2639,11 +2626,80 @@
 										150.0,
 										20.0
 									],
-									"text": "Vorticity confinement (\"curl amp\"): adds back the fine swirl a vecfield's curl implies; shows via f_vf_advect",
+									"text": "Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										210.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-24",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										500.0,
+										150.0,
+										22.0
+									],
+									"text": "f_vf_vorticity",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										236.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-25",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										528.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_vf_vorticity.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-26",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										500.0,
+										150.0,
+										20.0
+									],
+									"text": "Vorticity confinement (\"curl amp\"): adds back the fine swirl a vecfield's curl implies; shows via f_vf_advect",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										238.0,
 										720.0,
 										20.0
 									]
@@ -2702,23 +2758,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-10",
+										"obj-12",
 										0
 									],
 									"destination": [
-										"obj-11",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-11",
-										0
-									],
-									"destination": [
-										"obj-1",
+										"obj-13",
 										0
 									]
 								}
@@ -2730,7 +2774,7 @@
 										0
 									],
 									"destination": [
-										"obj-14",
+										"obj-1",
 										0
 									]
 								}
@@ -2738,11 +2782,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-14",
+										"obj-15",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-16",
 										0
 									]
 								}
@@ -2754,7 +2798,7 @@
 										0
 									],
 									"destination": [
-										"obj-17",
+										"obj-1",
 										0
 									]
 								}
@@ -2762,11 +2806,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-17",
+										"obj-18",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-19",
 										0
 									]
 								}
@@ -2778,7 +2822,7 @@
 										0
 									],
 									"destination": [
-										"obj-20",
+										"obj-1",
 										0
 									]
 								}
@@ -2786,11 +2830,11 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-20",
+										"obj-21",
 										0
 									],
 									"destination": [
-										"obj-1",
+										"obj-22",
 										0
 									]
 								}
@@ -2802,7 +2846,7 @@
 										0
 									],
 									"destination": [
-										"obj-23",
+										"obj-1",
 										0
 									]
 								}
@@ -2810,7 +2854,19 @@
 							{
 								"patchline": {
 									"source": [
-										"obj-23",
+										"obj-24",
+										0
+									],
+									"destination": [
+										"obj-25",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-25",
 										0
 									],
 									"destination": [
