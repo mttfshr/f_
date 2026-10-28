@@ -54,6 +54,8 @@ MDT_EXP = 3              # cubic dial law, as f_vf_fluid's viscosity
 PHI_CLAMP = 1.25         # safety bound in adv before packing (observed max |phi| 1.03)
 RESEED_AMP = 0.05        # reset noise amplitude (onset 16-29 frames for 0.005-0.3: not critical)
 IFACE_MIN = 1.5          # smallest dial value: the stripe profile matches tanh to 1.5e-3 at iface 1, 5e-5 from 1.5
+THRESH_W = 0.15         # width of the injection smoothstep above `thresh` (baked in adv)
+PULL_MAX = 0.05          # per-frame rate of the mean pull at pull = 1 (rate = PULL_MAX * pull^3, baked in spec)
 # PROVISIONAL until T007 (blend rule, G2):
 S_LO, S_HI = 0.05, 0.35  # interface-aware rule: smoothstep band on |grad phi| * eps
 
@@ -63,8 +65,10 @@ class Params:
     dt: float = 0.01            # advection step, same meaning as f_vf_fluid / f_vf_advect
     iface: float = 4.0          # interface width, solver texels: eps = iface / N, kappa = eps^2
     coarsen: float = 0.3        # dial -> per-frame mobility*dt via coarsen_to_mdt()
-    inject: float = 0.2         # in0 deposit rate
-    fill: float = 0.0           # mean phi at reseed
+    inject: float = 0.3         # in0 deposit dial (rate = inject^3)
+    thresh: float = 0.5         # source luma where deposit starts (smoothstep over THRESH_W)
+    pull: float = 0.3           # mean-of-phi relaxation toward fill (rate = PULL_MAX * pull^3 per frame)
+    fill: float = 0.0           # mean phi at reseed, and what `pull` relaxes the mean toward
     blend: float = 0.0          # 0 = plain, 1 = interface-aware (G2)
     taps: float = 2.0           # inab minification: taps x taps hardware taps per solver texel
     freeze: float = 0.0         # 1 = phi held (no advect, no inject, spec factor 1)
@@ -220,7 +224,8 @@ def inab(A, B, taps, src_a=1.0, src_b=1.0, n=N_SOLVER):
 
 def adv(state, uab, src, p):
     """Stage 3. Blend velocities by phi, backward-advect phi by it, inject from the
-    source luma (phi += inject * luma * (1 - phi): bounded, phase B only), clamp, pack.
+    source luma (phi += inject^3 * ramp(luma) * (1 - phi): bounded, phase B only; ramp is a
+    smoothstep from thresh to thresh + THRESH_W), clamp, pack.
     freeze: phi passes unchanged (no advect, no inject), still packed for the DFT."""
     h, w = state.shape[:2]
     phi = state[..., 0]
@@ -233,7 +238,9 @@ def adv(state, uab, src, p):
     if src is not None and p.src_phi >= 0.5 and p.inject != 0:
         s = tap_avg(src, p.taps, h, w)
         luma = F32(0.2126) * s[..., 0] + F32(0.7152) * s[..., 1] + F32(0.0722) * s[..., 2]
-        newphi = newphi + F32(p.inject) * luma * (F32(1.0) - newphi)
+        tt = np.clip((luma - F32(p.thresh)) / F32(THRESH_W), F32(0.0), F32(1.0)).astype(F32)
+        ramp = tt * tt * (F32(3.0) - F32(2.0) * tt)
+        newphi = newphi + F32(p.inject) ** 3 * ramp * (F32(1.0) - newphi)
     newphi = np.clip(newphi, -F32(PHI_CLAMP), F32(PHI_CLAMP)).astype(F32)
     return store_float32(pack_phi(newphi))
 
@@ -260,6 +267,9 @@ def spec(tex, p):
     out = np.zeros_like(tex)
     out[..., 0] = fa * tex[..., 0] + fn * tex[..., 2]
     out[..., 1] = fa * tex[..., 1] + fn * tex[..., 3]
+    if p.freeze < 0.5:                       # pull: relax ONLY the k = 0 bin (phi-hat(0) = h*w*mean) toward fill
+        pe = F32(PULL_MAX) * F32(p.pull) ** 3
+        out[0, 0, 0] += pe * (F32(p.fill) * F32(h * w) - tex[0, 0, 0])
     return store_float32(out)
 
 

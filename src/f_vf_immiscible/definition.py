@@ -12,9 +12,9 @@ Stage chain (plan ADR-1, amended 2026-10-27), solver stages at a fixed 256x256 f
     adv -> fx -> fy -> spec -> iy -> ix        (ix -> hold feedback ; ix -> enc in2)
   inab  A and B vecfields -> one packed 256x256 velocity texture (content gate, taps x taps average)
   hold  last state    pass  hold it, or reseed from the hash (Params reseed, salt, fill)
-  adv   blend + advect phi + inject (Params dt, inject, taps, freeze, src_phi)
+  adv   blend + advect phi + inject (Params dt, inject, thresh, taps, freeze, src_phi)
   fx/fy/iy/ix  separable DFT (phi and phi^3 as two complex fields)
-  spec  stabilised Cahn-Hilliard step per bin (Params iface, coarsen, freeze)
+  spec  stabilised Cahn-Hilliard step per bin (Params iface, coarsen, freeze, pull, fill)
   enc   render-size outlets: out0 phi grey, out1 blended velocity; bypass gate (Param bypass_gate)
 
 `r draw` goes to inab, pass and enc.  inab and pass are both chain heads on the same bang: the cold inab
@@ -52,12 +52,18 @@ patcher = {
         {"name": "coarsen", "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,
          "label": "Coarsen",
          "hint": "How fast the two phases pull together into bigger blobs; 0 = the pattern is only carried, never re-forms"},
-        {"name": "inject", "type": "float", "min": 0.0, "max": 1.0, "default": 0.2,
+        {"name": "inject", "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,
          "label": "Inject",
-         "hint": "How strongly the brightness of the texture on input 0 deposits phase B (velocity B)"},
+         "hint": "How strongly the bright parts of the texture on input 0 deposit phase B (velocity B). The dial is cubic: gentle at the bottom, full strength at 1"},
+        {"name": "thresh", "type": "float", "min": 0.0, "max": 0.9, "default": 0.5,
+         "label": "Thresh",
+         "hint": "Brightness the input-0 texture needs before it deposits anything: dim and mid-grey parts add nothing, only brighter parts do"},
+        {"name": "pull", "type": "float", "min": 0.0, "max": 1.0, "default": 0.3,
+         "label": "Pull",
+         "hint": "Slowly pulls the overall mix back toward Fill, so a held source settles into a balance instead of flooding the screen with B. 0 = off"},
         {"name": "fill", "type": "float", "min": -0.6, "max": 0.6, "default": 0.0,
          "label": "Fill",
-         "hint": "Mean mix at reset: negative = mostly A, positive = mostly B"},
+         "hint": "Mean mix at reset, and the balance point Pull relaxes toward: negative = mostly A, positive = mostly B"},
         {"name": "freeze", "type": "menu", "options": ["Off", "Freeze"], "default": 0,
          "label": "Freeze",
          "hint": "Hold the pattern still while the blend keeps running on it"},
@@ -125,8 +131,8 @@ patcher = {
 
 # UI parameter / internal flag -> the stage(s) whose codebox Param it sets (the first is the control's
 # param_connect target).
-_STAGES_OF = {"dt": "adv", "iface": "spec", "coarsen": "spec", "inject": "adv",
-              "fill": "pass", "freeze": ["adv", "spec"], "taps": ["inab", "adv"],
+_STAGES_OF = {"dt": "adv", "iface": "spec", "coarsen": "spec", "inject": "adv", "thresh": "adv", "pull": "spec",
+              "fill": ["pass", "spec"], "freeze": ["adv", "spec"], "taps": ["inab", "adv"],
               "reseed": "pass", "salt": "pass"}
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:
@@ -171,10 +177,10 @@ def _line(src, so, dst, di):
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[118.0, 46.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[151.0, 104.0, 28.0, 28.0], varname="reset_button",
          hint="Reseed the pattern: mean mix = Fill, plus a little noise"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[107.0, 24.0, 50.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[140.0, 82.0, 50.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _obj(3, "t b b b", 1, 3, [90.0, 380.0, 52.0, 22.0], ["bang", "bang", "bang"]),
     _obj(4, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),

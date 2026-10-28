@@ -66,11 +66,11 @@ def g_pass(hold, reseed, salt=0.0, fill=0.0):
 
 def g_adv(state, uab, src, p):
     return gpu("adv", [state, uab, NOSRC if src is None else src], dim=(N, N),
-               params={"dt": p.dt, "inject": p.inject, "taps": p.taps, "freeze": p.freeze, "src_phi": p.src_phi})
+               params={"dt": p.dt, "inject": p.inject, "thresh": p.thresh, "taps": p.taps, "freeze": p.freeze, "src_phi": p.src_phi})
 
 
 def g_spec(tex, p):
-    return gpu("spec", [tex], params={"iface": p.iface, "coarsen": p.coarsen, "freeze": p.freeze})
+    return gpu("spec", [tex], params={"iface": p.iface, "coarsen": p.coarsen, "freeze": p.freeze, "pull": p.pull, "fill": p.fill})
 
 
 def g_enc(state, uab, p, size):
@@ -215,7 +215,7 @@ def test_pass_hold_reseed_and_self_heal():
 
 def test_adv_matches_mirror():
     st, uab = smooth_phi(3), smooth_uab()
-    p = Params(dt=0.05, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
     err = np.max(np.abs(g_adv(st, uab, None, p) - im.adv(st, uab, None, p)))
     check("adv blend + advect, no source: max err vs mirror", err, 1e-4)
     for label, size, tol in (("source 256 (1:1)", 256, 1e-4), ("source 128 (magnified 2x)", 128, 1e-3)):
@@ -233,10 +233,10 @@ def test_adv_matches_mirror():
     # clamp: phi = 3 everywhere comes out at the 1.25 bound (and freeze leaves it alone)
     big = im.phi_state(np.full((N, N), 3.0, F32))
     z = np.zeros((N, N, 4), F32)
-    got = g_adv(big, z, None, Params(dt=0.05, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0))
+    got = g_adv(big, z, None, Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0))
     check("adv clamp: phi = 3 -> 1.25", np.max(np.abs(got[..., 0] - 1.25)), 1e-6)
     check("adv clamp: B carries 1.25^3", np.max(np.abs(got[..., 2] - 1.25 ** 3)), 1e-5)
-    got = g_adv(big, z, None, Params(dt=0.05, inject=0.0, taps=2.0, freeze=1.0, src_phi=0.0))
+    got = g_adv(big, z, None, Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=1.0, src_phi=0.0))
     check("adv freeze=1: phi = 3 is not clamped", np.max(np.abs(got[..., 0] - 3.0)), 1e-6)
     # seam: whole-texel x shifts are an exact wrapped gather (any edge clamping shows at once)
     col = np.random.default_rng(9).uniform(-1, 1, N).astype(F32)
@@ -244,7 +244,7 @@ def test_adv_matches_mirror():
     for u, dt in ((0.25, 0.25), (0.5, 0.25), (0.75, 0.25)):
         uu = np.zeros((N, N, 4), F32)
         uu[..., 0] = uu[..., 2] = u
-        got = g_adv(s2, uu, None, Params(dt=dt, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0))
+        got = g_adv(s2, uu, None, Params(dt=dt, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0))
         shift = int(round(u * dt * N))
         want = col[(np.arange(N) - shift) % N]
         check(f"adv periodic seam, shift {shift} texels: exact wrapped gather", np.max(np.abs(got[..., 0] - want[None, :])), 1e-6)
@@ -320,7 +320,7 @@ def test_multiframe_matches_mirror():
     """100 frames of the real stage chain (Python passes each stage's GPU output to the next) vs the
     mirror, from the GPU's own reseeded noise state, with two different smooth flows blended by phi."""
     A, B = smooth_vecfield(21), smooth_vecfield(22)
-    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0, src_a=1.0, src_b=1.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, src_a=1.0, src_b=1.0)
     uab_g = g_inab(A, B, p)
     check("multiframe: inab vs mirror", np.max(np.abs(uab_g - im.inab(A, B, p.taps, 1.0, 1.0, N))), 1e-4)
     st0 = g_pass(np.zeros((N, N, 4), F32), 1.0, 3.0, 0.0)
@@ -359,7 +359,7 @@ def test_multiframe_with_injection_matches_mirror():
 
 def test_nan_in_the_state_heals_and_stays_finite():
     A, B = smooth_vecfield(26), smooth_vecfield(27)
-    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0, src_a=1.0, src_b=1.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, src_a=1.0, src_b=1.0)
     uab = g_inab(A, B, p)
     st = g_pass(np.zeros((N, N, 4), F32), 1.0, 3.0, 0.0)
     st[40, 40, 0], st[41, 41, 0] = np.nan, np.inf                # a poisoned feedback state
@@ -375,7 +375,7 @@ def test_nan_in_the_state_heals_and_stays_finite():
 
 def test_SC1_SC2_mean_conserved_and_energy_falls_on_the_gpu():
     z = np.zeros((N, N, 4), F32)                                # no flow, no injection
-    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
     g = g_pass(np.zeros((N, N, 4), F32), 1.0, 3.0, 0.2)
     mean0, e_prev, worst_drift, worst_rise = float(g[..., 0].mean()), im.free_energy(g[..., 0], p.iface), 0.0, -1e9
     for f in range(60):
@@ -394,7 +394,7 @@ def test_SC3_mode_growth_rate_on_the_gpu():
     amp0 = 1e-3
     phi = np.tile((amp0 * np.cos(2 * np.pi * 3 * x)).astype(F32), (N, 1))
     z = np.zeros((N, N, 4), F32)
-    p = Params(dt=0.02, iface=4.0, coarsen=0.3, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=0.3, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
     g = im.phi_state(phi)
     for f in range(6):
         g = g_step(g, z, None, p)
@@ -410,7 +410,7 @@ def test_SC3_mode_growth_rate_on_the_gpu():
 def test_SC4_interface_profile_on_the_gpu():
     x = np.arange(N) + 0.5
     z = np.zeros((N, N, 4), F32)
-    p = Params(dt=0.02, iface=4.0, coarsen=2.0, inject=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=2.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
     g = im.phi_state(np.tile(0.98 * np.sign(np.sin(2 * np.pi * 2 * x / N)), (N, 1)).astype(F32))
     for f in range(40):
         g = g_step(g, z, None, p)
@@ -441,8 +441,8 @@ def test_T017_cost_per_stage_and_total():
     st, uab = smooth_phi(), smooth_uab()
     spectral = fm.fft2_np(im.pack_phi(st[..., 0]))
     P_INAB = lambda taps: {"taps": taps, "src_a": 1.0, "src_b": 1.0}
-    P_ADV = lambda taps, srcphi: {"dt": 0.02, "inject": 0.2, "taps": taps, "freeze": 0.0, "src_phi": srcphi}
-    P_SPEC = {"iface": 4.0, "coarsen": 0.3, "freeze": 0.0}
+    P_ADV = lambda taps, srcphi: {"dt": 0.02, "inject": 0.2, "thresh": 0.5, "taps": taps, "freeze": 0.0, "src_phi": srcphi}
+    P_SPEC = {"iface": 4.0, "coarsen": 0.3, "freeze": 0.0, "pull": 0.3, "fill": 0.0}
     rows = {}
 
     def row(name, stage, inputs, dim, params):

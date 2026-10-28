@@ -127,6 +127,10 @@ def test_constants_match_the_mirror():
         bad.append("A_STAB (a and a + 1)")
     if not (im.PHI_CLAMP == 1.25 and "clamp(newp, -1.25, 1.25)" in adv):
         bad.append("PHI_CLAMP")
+    if not (im.THRESH_W == 0.15 and "(luma - thresh) / 0.15" in adv):
+        bad.append("THRESH_W")
+    if not (im.PULL_MAX == 0.05 and "pulle = 0.05 * pull * pull * pull" in spec):
+        bad.append("PULL_MAX")
     if not (im.RESEED_AMP == 0.05 and "amp = 0.05;" in pas):
         bad.append("RESEED_AMP")
     if not (im.N_SOLVER == 256):
@@ -138,7 +142,8 @@ def test_constants_match_the_mirror():
 
 def test_stage_params_are_the_planned_ones():
     want = {"inab": {"taps", "src_a", "src_b"}, "pass": {"reseed", "salt", "fill"},
-            "adv": {"dt", "inject", "taps", "freeze", "src_phi"}, "spec": {"iface", "coarsen", "freeze"},
+            "adv": {"dt", "inject", "thresh", "taps", "freeze", "src_phi"},
+            "spec": {"iface", "coarsen", "freeze", "pull", "fill"},
             "enc": {"bypass_gate"}}
     bad = 0
     for n, w in want.items():

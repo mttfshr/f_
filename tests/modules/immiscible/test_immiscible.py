@@ -89,7 +89,7 @@ def test_mean_conserved_no_flow():
     rng = np.random.default_rng(3)
     phi0 = np.clip(0.1 + 0.15 * rng.standard_normal((n, n)), -0.9, 0.9)
     m0 = float(np.mean(phi0.astype(F32).astype(np.float64)))
-    p = Params(coarsen=1.0, inject=0.0)
+    p = Params(coarsen=1.0, inject=0.0, pull=0.0)
     s = im.phi_state(phi0)
     for _ in range(40):
         s = im.spectral_step(s, p)
@@ -106,7 +106,7 @@ def test_single_mode_rate():
     within 2% (small step, so the scheme's O(x^2) error is far below the tolerance)."""
     n, steps, delta = 64, 200, 1e-2
     mdt = 1e-6
-    p = Params(coarsen=im.mdt_to_coarsen(mdt), inject=0.0)
+    p = Params(coarsen=im.mdt_to_coarsen(mdt), inject=0.0, pull=0.0)
     nx, _ = coords64(n)
     for phi0, m in ((0.0, 2), (0.3, 1), (0.0, 6)):
         s = im.phi_state(phi0 + delta * np.cos(TWOPI * m * nx))
@@ -124,7 +124,7 @@ def test_flat_interface_relaxes_to_tanh():
     """SC4: a periodic top-hat relaxes to the tanh profile whose width iface predicts,
     phi = tanh((x - x0) / (sqrt(2) eps)), within 10% (profile and peak gradient)."""
     n = 128
-    p = Params(coarsen=im.mdt_to_coarsen(5e-4), iface=4.0, inject=0.0)
+    p = Params(coarsen=im.mdt_to_coarsen(5e-4), iface=4.0, inject=0.0, pull=0.0)
     nx, _ = coords64(n)
     row = np.where((nx[0] > 0.25) & (nx[0] < 0.75), 1.0, -1.0)
     s = im.phi_state(np.tile(row, (n, 1)))
@@ -154,7 +154,7 @@ def test_free_energy_nonincreasing_without_flow():
     rng = np.random.default_rng(5)
     phi0 = 0.1 * rng.uniform(-1, 1, (n, n)) + 0.05
     for mdt in (2e-4, 2e-3):
-        p = Params(coarsen=im.mdt_to_coarsen(mdt), inject=0.0)
+        p = Params(coarsen=im.mdt_to_coarsen(mdt), inject=0.0, pull=0.0)
         s = im.phi_state(phi0)
         e = [im.free_energy(s[..., 0], p.iface)]
         for _ in range(150):
@@ -248,7 +248,7 @@ def test_advection_is_periodic():
     rng = np.random.default_rng(11)
     phi0 = rng.uniform(-0.9, 0.9, (n, n))
     A = uniform_vecfield(n, n, 0.5, 0.0)
-    p = Params(dt=0.5, coarsen=0.0, inject=0.0, taps=1.0)
+    p = Params(dt=0.5, coarsen=0.0, inject=0.0, pull=0.0, taps=1.0)
     s = im.step(im.phi_state(phi0), A, A, None, p)
     expected = np.roll(phi0.astype(F32), 8, axis=1)
     check("periodic shift error", np.max(np.abs(s[..., 0] - expected)), 1e-6)
@@ -266,7 +266,7 @@ def test_injection_only_where_bright():
     uab = np.zeros((n, n, 4), F32)
     p = Params(inject=0.2, taps=2.0)
     out = im.adv(im.phi_state(np.zeros((n, n))), uab, src, p)[..., 0]
-    check("centre deposit minus inject*luma", abs(float(out[n // 2, n // 2]) - 0.2), 1e-6)
+    check("centre deposit minus inject^3 (bright disc, luma 1 above thresh + width)", abs(float(out[n // 2, n // 2]) - 0.2 ** 3), 1e-6)
     check("corner deposit", abs(float(out[0, 0])), 0.0)
     black = np.zeros((r, r, 4), F32)
     black[..., 3] = 1.0
@@ -305,7 +305,7 @@ def test_reseed_hold_and_uniform_states():
     for v in (1.0, -1.0):
         u = im.phi_state(np.full((n, n), v))
         assert np.array_equal(im.pass_stage(u, 0.0, 3, 0.0), u), f"uniform {v} was reseeded"
-        out = im.step(u, None, None, None, Params(coarsen=1.0, inject=0.0))
+        out = im.step(u, None, None, None, Params(coarsen=1.0, inject=0.0, pull=0.0))
         check(f"uniform {v} stays", float(np.max(np.abs(out[..., 0] - v))), 1e-6)
     bad = s.copy()
     bad[5, 5, 0] = np.nan
@@ -349,7 +349,7 @@ def test_no_nan_at_extremes():
     src[..., 3] = 1.0
     cfgs = (Params(coarsen=1.0, iface=2.0, dt=0.05, inject=1.0, blend=1.0, fill=0.6),
             Params(coarsen=1.0, iface=12.0, dt=0.05, inject=1.0, blend=0.0, fill=-0.6),
-            Params(coarsen=0.0, iface=4.0, dt=0.05, inject=0.0, blend=1.0))
+            Params(coarsen=0.0, iface=4.0, dt=0.05, inject=0.0, pull=0.0, blend=1.0))
     for i, p in enumerate(cfgs):
         s = im.seed(n, p, salt=i)
         s[..., 0] = np.sign(rng.standard_normal((n, n))).astype(F32)
@@ -357,6 +357,73 @@ def test_no_nan_at_extremes():
             s = im.step(s, A, B, src, p)
             assert np.all(np.isfinite(s)), f"non-finite phi in config {i}"
         check(f"phi beyond clamp, config {i}", float(max(np.max(np.abs(s[..., 0])) - im.PHI_CLAMP, 0.0)), 1e-6)
+
+
+def test_injection_threshold_ramp():
+    """Only the bright part of the source deposits: below `thresh` nothing, at thresh + THRESH_W the full
+    inject^3, between them the smoothstep. A uniform mid-grey source below thresh never floods phi."""
+    n, r = 32, 64
+    uab = np.zeros((n, n, 4), F32)
+    p = Params(inject=0.5, thresh=0.5, taps=1.0, pull=0.0)
+    def dep(luma):
+        src = np.full((r, r, 4), luma, F32)
+        src[..., 3] = 1.0
+        return float(im.adv(im.phi_state(np.zeros((n, n))), uab, src, p)[n // 2, n // 2, 0])
+    full = 0.5 ** 3
+    check("luma 0.40 (below thresh) deposits nothing", dep(0.40), 0.0)
+    check("luma 0.50 (at thresh) deposits nothing", dep(0.50), 1e-9)
+    check("luma 0.575 (half ramp: smoothstep 0.5)", abs(dep(0.575) - 0.5 * full), 1e-6)
+    check("luma 0.65 (thresh + width) deposits inject^3", abs(dep(0.65) - full), 1e-6)
+    check("luma 1.0 deposits inject^3, not more", abs(dep(1.0) - full), 1e-6)
+    s = im.phi_state(np.full((n, n), -1.0))
+    src = np.full((r, r, 4), 0.45, F32)
+    src[..., 3] = 1.0
+    for _ in range(300):
+        s = im.step(s, None, None, src, Params(inject=1.0, thresh=0.5, pull=0.0, coarsen=0.0))
+    check("300 frames of inject 1 under a below-threshold source: phi still -1", abs(float(s[..., 0].mean()) + 1.0), 1e-6)
+
+
+def test_pull_relaxes_only_the_mean_toward_fill():
+    """spec's pull: phi-hat(0) relaxes toward fill*N^2 at rate PULL_MAX*pull^3 per frame; every other bin is
+    untouched; pull 0 and freeze both leave the mean exactly alone."""
+    n = 32
+    rng = np.random.default_rng(3)
+    phi0 = (0.4 + 0.3 * rng.standard_normal((n, n))).astype(F32)
+    st = im.phi_state(phi0)
+    for pull in (0.0, 0.5, 1.0):
+        p = Params(coarsen=0.0, pull=pull, fill=-0.2)
+        s = st
+        frames = 20
+        for _ in range(frames):
+            s = im.spectral_step(s, p)
+        rate = im.PULL_MAX * pull ** 3
+        want = -0.2 + (float(phi0.mean()) + 0.2) * (1 - rate) ** frames
+        check(f"pull {pull}: mean after {frames} frames vs closed form", abs(float(s[..., 0].mean()) - want), 2e-6)
+        dev0 = phi0 - phi0.mean()
+        dev1 = s[..., 0] - s[..., 0].mean()
+        check(f"pull {pull}: deviation from the mean unchanged (coarsen 0)", float(np.max(np.abs(dev1 - dev0))), 2e-6)
+    s = im.spectral_step(st, Params(coarsen=0.0, pull=1.0, fill=-0.2, freeze=1.0))
+    check("freeze: mean untouched even with pull 1", abs(float(s[..., 0].mean()) - float(phi0.mean())), 2e-6)
+
+
+def test_held_source_settles_with_pull():
+    """The reason for pull: a held bright source with pull off drives the mean to +1; with pull on the mean
+    stops short and the field stays two-phase."""
+    n = 32
+    r = 64
+    src = np.zeros((r, r, 4), F32)
+    src[24:40, 24:40, :3] = 1.0
+    src[..., 3] = 1.0
+    out = {}
+    for pull in (0.0, 1.0):
+        p = Params(inject=0.6, thresh=0.5, pull=pull, fill=0.0, coarsen=0.5, dt=0.0)
+        s = im.seed(n, p, salt=1)
+        for _ in range(1500):
+            s = im.step(s, None, None, src, p)
+        out[pull] = float(s[..., 0].mean())
+    note("mean phi after 1500 frames of a held source, pull 0 / pull 1", f"{out[0.0]:.3f} / {out[1.0]:.3f}")
+    check("pull 0: the held source floods phi to +1 (mean >= 0.95)", max(0.95 - out[0.0], 0.0), 0.0)
+    check("pull 1: the mean settles below 0.5 (measured 0.064)", max(out[1.0] - 0.5, 0.0), 0.0)
 
 
 # ------------------------------------------------------------- mutations
