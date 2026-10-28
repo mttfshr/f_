@@ -146,9 +146,9 @@ the two vecfield inlets must be gated individually.
 ```
 r draw → inab (in0 bang, in1 vecfield A, in2 vecfield B)           256²
 inab ─────────────────────────────────────────────┐ (cold, for enc)
-inab → adv  (in0 packed velocities, in1 φ source via vs_inState, in2 state)   256²
+pass → adv (in0 state, hot), inab → adv (in1 packed velocities, cold), φ source via vs_inState → adv (in2)   256²
 hold → pass (in0 r draw bang, in1 hold)                            256²
-pass → adv (in2)
+(amended 2026-10-27, T008: state rides the hot inlet so a draw reaching inab before pass cannot interleave even and odd frames)
 adv → fx → fy → spec → iy → ix → hold                              256²  (feedback)
 ix → enc (in2);  inab → enc (in1);  r draw → enc (in0)             render size
 enc out0 → outlet 0 (φ);  enc out1 → outlet 1 (blended velocity)
@@ -159,7 +159,7 @@ enc out0 → outlet 0 (φ);  enc out1 → outlet 1 (blended velocity)
 | 0 | `inab` | decode and content-gate both vecfields, `taps × taps` box minify, pack | bang, A, B |
 | 1 | `hold` | identity; one-frame delay, the loop break | ix |
 | 2 | `pass` | holds φ, or re-seeds `fill` + hash noise on `reseed`; zaps non-finite | bang, hold |
-| 3 | `adv` | blend by φ (rule per `blend`), backward-advect φ by it, inject, clamp, pack φ and φ³; honours `freeze` | packed u, φ source, state |
+| 3 | `adv` | blend by φ (rule per `blend`), backward-advect φ by it, inject, clamp, pack φ and φ³; honours `freeze` | state (hot), packed u, φ source |
 | 4–5 | `fx`, `fy` | forward DFT | prev |
 | 6 | `spec` | phase-separation step per bin; honours `freeze` | prev |
 | 7–8 | `iy`, `ix` | inverse DFT; `ix` keeps the real part and clears non-finite | prev |
