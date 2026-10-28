@@ -1,7 +1,7 @@
 # Spec: f_cmap
 
 _Created: 2026-10-26_
-_Status: Specced; Phase 0 offline part (T001-T005) done 2026-10-27, T006 cost and gates G1-G7 open_
+_Status: Specced; Phase 0 (T001-T006) done 2026-10-27, gates G1-G7 open_
 _Origin: `ideas/f_cmap_feedback.md` (mined from michaelerule/webgpgpu `Example_9`,
 omp run `webgpgpu-ideas-1`, 2026-10-23; source re-read and the design settled with Matt
 2026-10-26)._
@@ -64,8 +64,11 @@ sweep 1.5, angle step 0.01 and phase step 0.01 sqrt(2) per frame, so `|w|` sweep
   16:9 live video a frame-rectangle test (pulled point outside the texture) is the natural
   criterion; the disk leaves corners that never update. Proposed: the rectangle.
 - **G3 `n` range.** Integer 2-4, default 2; or fixed at 2 for v1.
-- **G4 sampler.** Bilinear plus injection, or Catmull-Rom taps (as `f_wc`'s enc); decided
-  by the T004 smear measurement and the cost.
+- **G4 sampler.** The previous frame is read with taps built by hand from `nearest()`,
+  never a bare `sample()` (T006: the hardware `sample()` is exactly nearest in the minifying
+  part of this pull). Choose a 4-tap bilinear (cost under the bench floor) or a 16-tap
+  Catmull-Rom (about 0.66 ms at 1080p, 2.4 ms at 4K, derived); recommend the 4-tap for v1
+  (tasks.md Record, 2026-10-27).
 - **G5 dry/wet.** `inject` is already the source blend, so propose no `gain` / `mix_pct` in
   v1 (cf. the 2026-10-19 decision for processors with no dry/wet control); confirm.
 - **G6 control trim.** The `angle` / `rate` / `radius` / `sweep` quartet and the `decay` /
@@ -135,6 +138,12 @@ input at that pixel), Black, or Wrap (the previous frame wrapped with explicit c
   (the dial-name and `texture` / `t` traps: `f_wc` HANDOFF); T020 checks every name.
 - **FR-010**: Identity-map invariance: with `n = 1`, `w = 0`, `decay = 1`, `inject = 0`, the
   image MUST be unchanged frame to frame (texel-centre sampling exact; no drift).
+- **FR-011**: The history read MUST be made from manual `nearest()` taps at texel-centre
+  coordinates (with `dim` as the size, so the first inlet must be render-sized), not from a
+  bare `sample()`: the coordinate of this pull jumps by more than a texel between
+  neighbouring pixels wherever |f'| > 1, where the hardware filter falls back to nearest
+  (jit-gen-codebox skill, 2026-10-06; confirmed here by T006 Part 1). Taps use a clamp of
+  0.0005 / 0.9995 on the sample position (the wrap-seam rule, probe P9).
 
 ### Non-Functional Requirements
 

@@ -1,10 +1,12 @@
 # HANDOFF
 
-## 2026-10-27: `f_cmap` Phase 0 offline part DONE (T001-T005); T006 cost and gates G1-G7 owed. The `f_quasi` entry below is still the START HERE for everything else
+## 2026-10-27: `f_cmap` Phase 0 DONE (T001-T006); gates G1-G7 owed. The `f_quasi` entry below is still the START HERE for everything else
+
+- **T006 (Max bench, `tests/records/spike_cmap_cost.py`):** a bare `sample()` is exactly nearest wherever the pull minifies (|q| > 0.2; 0.0000 error vs the mirror's nearest) and bilinear only near the centre, so the codebox must read the history from hand-built `nearest()` taps (new spec FR-011; the 4-bilinear-fetch bicubic trick is unusable too). 4-tap bilinear matches the mirror to 0.0002 and costs under the bench floor (<0.76 ms at 1080p); 16-tap Catmull-Rom is about 0.66 ms at 1080p, 2.4 ms at 4K (derived from a x4 amplified run; M1 unmeasured). The T004 "bilinear" numbers describe the 4-tap read, not `sample()`.
 
 - **Built (committed):** `tests/modules/cmap/{cmap_mirror,test_cmap}.py` (9/9, 0.4 s, five mutations caught), `tests/records/spike_cmap_smear.py`, `tests/records/spike_cmap_look.py` (sheets to `tests/logs/cmap_look/`, gitignored). Full numbers in `.specify/f_cmap/tasks.md` Record (2026-10-27).
 - **Findings that matter:** (1) the default look is a Julia window: the basin interior goes flat and the live image shows outside it; `inject` ~0.3 is what makes the live image wind through the interior. (2) Bilinear loses ~9% of an 8 px wave per frame, Catmull-Rom ~1%; outside |q| > 0.2 everything aliases after ~3 frames (bilinear mush, Catmull-Rom keeps contrast). Not visibly different on the smooth synthetic source. (3) float32 identity drift 2e-2 at 3000 frames on noise: `freeze` must hold `prev` without resampling. (4) `bounds` Black leaves 82% of the frame black (candidate cut); Wrap is dim but processes the whole frame. (5) The source's disk bounds would cover 44% of a 16:9 frame: use the rectangle.
-- **Next:** gates for Matt (G1 name, G2 rectangle, G3 power, G4 sampler (recommend bilinear v1), G5, G6 cut Black?, new G7: expose the `L` scale in v1?), then T006 cost bench in Max, then Phase 1 (T020-T023). The sheets are a synthetic source, not a camera: the real look is T030.
+- **Next:** gates for Matt (G1 name, G2 rectangle, G3 power, G4 sampler (recommend the hand 4-tap bilinear for v1; 16-tap Catmull-Rom is the affordable alternative), G5, G6 cut Black?, new G7: expose the `L` scale in v1?), then Phase 1 (T020-T023). The sheets are a synthetic source, not a camera: the real look is T030.
 - **Earlier the same entry (2026-10-26, speccing):**
 
 - **What exists:** `.specify/f_cmap/{spec,tasks}.md`, `ideas/f_cmap_feedback.md` revised (🟡), `plan.md` item 13. No code, no tests run.

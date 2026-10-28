@@ -23,7 +23,7 @@ Verification follows the three tiers (`.specify/constitution.md`): mirror first,
 - [x] **T005** Look stills from the mirror on synthetic input (noise, gradient, a moving
   edge; never the checker as a module feature): usable `decay` / `inject` / `radius` /
   `sweep` region, whether `sweep` is needed, trim for G6.
-- [ ] **T006** Cost bench (Max, with Matt): single pass plus `pass` copy at 1080p and 4K;
+- [x] **T006** Cost bench (Max, with Matt): single pass plus `pass` copy at 1080p and 4K;
   report a bound if under the bench's resolution floor. NF-001; M1 unmeasured.
 
 ### Gates (Matt)
@@ -31,7 +31,7 @@ Verification follows the three tiers (`.specify/constitution.md`): mirror first,
 - [ ] **G1** Naming (`f_cmap` or a name a performer reads).
 - [ ] **G2** Bounds region: frame rectangle (proposed) or the source's disk.
 - [ ] **G3** `power`: integer 2-4 or fixed at 2.
-- [ ] **G4** Sampler: bilinear plus injection, or Catmull-Rom (after T004).
+- [ ] **G4** Sampler: hand 4-tap bilinear (recommended) or 16-tap Catmull-Rom; hardware `sample()` is out (T004, T006).
 - [ ] **G5** No `gain` / `mix_pct` in v1 (inject is the source blend): confirm.
 - [ ] **G6** Control trim (T005 done: candidate cut is the `black` bounds rule).
 - [ ] **G7** (new 2026-10-27) Promote the `L` scale dial (T032) into v1.
@@ -139,3 +139,45 @@ this is a first read, the real look is T030.
 - **G6**: candidate cut: the `black` bounds rule (82% black). `angle` stays if `freeze` needs a manual pose.
 - **New G7**: promote the `L` scale (T032) into v1? The frame framing decides how much is Julia
   interior versus escaping exterior, which is most of the look.
+
+### 2026-10-27 (later): T006, cost and GPU sampler (`tests/records/spike_cmap_cost.py`, Max 9.2.0, M3 Max)
+
+Scratch shaders (no `src/f_cmap` codebox yet): the z^2 + w pull with bounds = Source, in1 = source, in2 =
+previous frame, both render-sized so `dim` is the render's; variants differ only in how the previous
+frame is read. Run with `tests/bench.sh tests/records/spike_cmap_cost.py`. Not run through the regression
+set (a record, not a test).
+
+**Part 1, GPU against the float32 mirror at 256 x 144 (mean |err| per annulus of |q|: 0-0.08 / 0.08-0.20 /
+0.20-0.35 / 0.35-0.50 / 0.50-0.95; smooth two-component source and previous frame):**
+- hardware `sample()` vs the mirror's NEAREST: 0.046 / 0.018 / **0.0000 / 0.0000 / 0.0000**; vs the mirror's
+  BILINEAR: 0.0002 / 0.026 / 0.045 / 0.028 / 0.0004, with 31% of pixels off by more than 0.01. So the hardware
+  filter is bilinear only near the centre and exactly nearest wherever the pull minifies (|q| > 0.2). The
+  mirror's "bilinear" is not what a bare `sample()` does here (this is the jit-gen-codebox skill's 2026-10-06
+  fact, confirmed on this pull; no skill edit needed).
+- 4-tap hand bilinear vs the mirror's bilinear: 0.0000 / 0.0000 / 0.0000 / 0.0002 / 0.0000, 0.1% of pixels
+  above 0.01 (max 0.073: isolated pixels, probably inside/outside decisions flipping at float32 on the frame
+  edge; not investigated).
+- 16-tap hand Catmull-Rom vs the mirror's Catmull-Rom: the same (max 0.064, 0.1% above 0.01).
+
+**Part 2, cost, ms per pass, chain 8, median of 3 (an upper bound, shown with `<`, means the pass fits under
+the bench's per-frame floor):** copy / hw / 4-tap / 16-tap at 1080p: <0.80 / <0.81 / <0.76 / <0.77; at 4K:
+<3.06 / <3.06 / <3.10 / <3.07. The floor (the empty `out = in1` pass) is about 0.8 ms per slot at 1080p and
+3.0 ms at 4K with two float32 inputs, so nothing resolves.
+
+**Part 3, each read repeated x4 per pass with offset taps (to push past the floor):** at 1080p copy <0.79,
+hw x4 <0.78, 4-tap x4 <0.75, **16-tap x4 2.64 ms** (GPU bound); at 4K copy <3.00, hw x4 <2.99, 4-tap x4 <4.24
+(still unresolved), **16-tap x4 9.46 ms**. Dividing by the four reads: a 16-tap Catmull-Rom costs about
+0.66 ms at 1080p and 2.4 ms at 4K per pass (derived, and nearby offset taps are cache friendly, so likely a
+slight underestimate). The hardware read and the 4-tap bilinear are cheaper than anything the bench resolves
+here (4-tap under about 0.75 ms at 1080p). M1 not measured (NF-001).
+
+**Consequences:**
+- The codebox MUST read the history by hand from `nearest()` (new FR-011); the standard "four bilinear fetches
+  make a bicubic" trick is unusable for the same reason (it relies on the hardware bilinear).
+- G4: the 4-tap bilinear is the recommended v1 (matches the mirror to 0.0002 and costs under the floor); the
+  16-tap Catmull-Rom is a real but affordable option (about 0.66 ms at 1080p) if the live look wants the
+  contrast T004 measured. Using bare `sample()` is out unless the nearest-in-the-minifying-zone crunch is
+  wanted as a look (it keeps amplitude 1.0, T004).
+- The T004 numbers for "bilinear" therefore describe the 4-tap read, not `sample()`.
+- A feedback module is this pass plus one `pass` copy (the `copy` row): at 1080p expect the whole module
+  under about 1.6 ms with the 4-tap read (a bound), about 1.4 ms more with Catmull-Rom.
