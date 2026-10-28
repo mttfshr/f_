@@ -25,8 +25,8 @@ Texture packing (float32 RGBA, solver 256 x 256 by default):
 Domain: periodic unit square; wavevector k = 2*pi*signed_index; x runs along
 axis 1 (columns), y along axis 0 (rows), as in fluid_mirror.
 
-PROVISIONAL constants (A_STAB, MDT_MAX, MDT_EXP, PHI_CLAMP, RESEED_AMP, S_LO, S_HI)
-are placeholders until T004 fixes them from the stability sweep. They are looked
+Module constants (A_STAB, MDT_MAX, MDT_EXP, PHI_CLAMP, RESEED_AMP, IFACE_MIN) were fixed
+by the T004 stability sweep; S_LO, S_HI stay provisional until T007. They are looked
 up at call time. Mutation hooks (tests patch these to prove the tests bite):
 spec_factor(), blend_weight(), and fluid_mirror.PERIODIC.
 
@@ -44,12 +44,17 @@ from gpu_sim import F32, grid, sample, store_float32
 
 N_SOLVER = 256           # fixed solver grid; iface is in texels of THIS grid (NF-005)
 
-# ------------------------------------------------ provisional constants (T004)
-A_STAB = 1.5             # stabiliser a; theory wants a >= max|f''|/2, = 1 for |phi| <= 1
-MDT_MAX = 2e-4           # per-frame mobility*dt at coarsen = 1
+# ------------------------------------------------ constants fixed by T004 (2026-10-27)
+# spike_immiscible_constants.py; numbers in .specify/f_vf_immiscible/tasks.md Record.
+A_STAB = 1.5             # stabiliser a. a = 0.5 diverges at mdt >= 1e-2; a >= 1 never rose in energy up to
+                         # mdt 51; 1.5 keeps the overshoot to 1.03 (a = 1: 1.09)
+MDT_MAX = 0.1            # per-frame mobility*dt at coarsen = 1 (separation in ~60 frames; larger
+                         # values stop helping: the stabiliser saturates the domain-scale rate)
 MDT_EXP = 3              # cubic dial law, as f_vf_fluid's viscosity
-PHI_CLAMP = 2.0          # bound applied in adv before packing
-RESEED_AMP = 0.05        # reset noise amplitude
+PHI_CLAMP = 1.25         # safety bound in adv before packing (observed max |phi| 1.03)
+RESEED_AMP = 0.05        # reset noise amplitude (onset 16-29 frames for 0.005-0.3: not critical)
+IFACE_MIN = 1.5          # smallest dial value: the stripe profile matches tanh to 1.5e-3 at iface 1, 5e-5 from 1.5
+# PROVISIONAL until T007 (blend rule, G2):
 S_LO, S_HI = 0.05, 0.35  # interface-aware rule: smoothstep band on |grad phi| * eps
 
 
