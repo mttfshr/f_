@@ -167,8 +167,10 @@ enc out0 → outlet 0 (φ);  enc out1 → outlet 1 (blended velocity)
 
 **Rationale**: it is `f_vf_fluid`'s chain (`pass → adv → fx → fy → spec → iy → ix →
 enc`) with an input stage added in front and the DFT carrying φ and φ³ instead of
-velocity. Keeping `inab` as a chain head lets `adv` be triggered by its output,
-so `adv` is not a head and needs no bang inlet.
+velocity. `adv` is triggered by `pass` (state on the hot inlet, amended 2026-10-27),
+so `adv` is not a head and needs no bang inlet. `inab` and `pass` are both
+chain heads on `r draw`; the cold `inab` output must have landed before `pass`
+fires `adv`, which T011 must verify on the bench (draw-order test).
 
 **Alternatives**: one stage reading A, B, φ and the source (rejected: four or five
 inputs, beyond the bench); two input stages (rejected: the packed pair fits one
