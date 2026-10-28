@@ -1,7 +1,7 @@
 # Spec: f_cmap
 
 _Created: 2026-10-26_
-_Status: Specced; Phase 0 (T001-T006) done 2026-10-27, gates G1-G7 decided 2026-10-27_
+_Status: PAUSED 2026-10-27 (Matt). Phases 0-1 built, gates G1-G7 decided; the look was not confirmed live (see tasks.md Record)._
 _Origin: `ideas/f_cmap_feedback.md` (mined from michaelerule/webgpgpu `Example_9`,
 omp run `webgpgpu-ideas-1`, 2026-10-23; source re-read and the design settled with Matt
 2026-10-26)._

@@ -188,7 +188,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Complex-map feedback pull (z^n + w) for live input: the image winds into Julia-like filaments",
+									"text": "⚠ Paused. Complex-map feedback pull (z^n + w) for live input; built and benched, look not confirmed",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

@@ -236,3 +236,7 @@ here (4-tap under about 0.75 ms at 1080p). M1 not measured (NF-001).
   and the disc into curved filaments and arcs, with the live image kept by Inject. The earlier "no filaments" verdict (sheet H) came from a STATIC window
   (Sweep 0): the winding needs |w| to sweep through a wide range slowly. Matt's first live look used Sweep 0 (defaults), then Sweep 0.81 at Rate 0.01
   (six times the source's rate, which smears). Defaults to change after Matt's look: Sweep 0 -> 1.5, Inject 0.05 -> 0.1, Decay 0.97 -> 1.0.
+
+### 2026-10-27: PAUSED by Matt
+
+After his looks in Max (defaults, then Decay 1.0 / Inject 0.16 / Radius 0.47 / Sweep 0.81 / Rate 0.01 / Power 4) and the offline studies above, Matt said he did not get it and paused the module. Nothing is deleted: code, patcher, tests and studies stay in place (README row marked paused). To resume: change the defaults per the correction above, look live, then Phase 3.
