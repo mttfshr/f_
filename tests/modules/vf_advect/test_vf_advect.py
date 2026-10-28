@@ -15,8 +15,10 @@ The ground truth is independent of the mirror: closed forms derived on paper, no
   - Bypass passes the source on out1 and out2 and the vecfield (or neutral 0.5) on out3, and the loop then
     carries the source.
   - Outlet 3 on a luma ramp: gx = slope * 2 * 0.004 * 4, with the sign of the +x / +y taps pinned.
-  - Mutations the tests must catch: forward displacement, ignoring src_vecfield, dropping the clamp, and clamping the
-    advect UV to exact 0 / 1 instead of the texel-safe 0.001 / 0.999.
+  - Trail (2026-10-28): a half-life in frames; exact half after `trail` frames of pure decay; the settled level of a
+    static source is s * injection / 0.03 whatever the trail length; trail below 1 is the classic loop bit for bit.
+  - Mutations the tests must catch: forward displacement, ignoring src_vecfield, dropping the clamp, clamping the
+    advect UV to exact 0 / 1 instead of the texel-safe 0.001 / 0.999, and a trail without the injection rescale.
 
 Scope and limits: advect stage only; the loop's pass stage is modeled as the identity (separate = 0). Edge rows
 of outlet 3 are not tested (the bench GPU wraps out-of-range taps; clamp-to-edge here). Alpha follows the same
@@ -234,17 +236,59 @@ def test_gradient_outlet_on_ramps():
 
 # --- mutations ------------------------------------------------------------------------
 
+# --- trail (2026-10-28): persistence as a half-life, density independent of it ----------------------------
+
+def test_trail_half_life_is_exact():
+    a = np.array([0.9, 0.6, 0.3, 1.0], F32)
+    worst = 0.0
+    for t in (20, 69, 200):
+        out = run_frames(const_tex((0, 0, 0, 0)), vec_tex(0.0, 0.0), t, init=const_tex(a), trail=float(t), injection=0.0)[-1]
+        worst = max(worst, float(np.abs(out[0, 0] - a * F32(0.5)).max()))
+    check("after `trail` frames of pure decay the field is exactly half (trails 20, 69, 200)", worst, 5e-5)
+
+
+def test_trail_settled_level_does_not_depend_on_trail_length():
+    src = np.array([0.8, 0.5, 0.2, 1.0], np.float64)
+    want = src * 0.02 / 0.03
+    worst = 0.0
+    for t in (5, 23, 69, 200, 600):
+        out = run_frames(const_tex(tuple(src)), vec_tex(0.0, 0.0), int(10 * t), trail=float(t))[-1]
+        err = float(np.abs(out[0, 0] - want.astype(F32)).max())
+        note(f"trail {t}: settled level worst error vs injection/0.03", err)
+        worst = max(worst, err)
+    check("settled level = source * injection / 0.03 whatever the trail (5..600 frames)", worst, 2e-3)
+
+
+def test_trail_below_one_is_the_classic_loop():
+    src, vec = rand_tex(3), vec_tex(0.2, -0.1, MID)
+    classic = run_frames(src, vec, 30, decay=0.95, injection=0.04)[-1]
+    for t in (0.0, 0.5, 0.999):
+        got = run_frames(src, vec, 30, decay=0.95, injection=0.04, trail=t)[-1]
+        check(f"trail {t:g}: identical to the classic loop", float(np.abs(got - classic).max()), 0.0)
+    ignored = run_frames(src, vec, 30, decay=0.5, injection=0.04, trail=69.0)[-1]
+    same = run_frames(src, vec, 30, decay=0.99, injection=0.04, trail=69.0)[-1]
+    check("with trail on, the Decay dial is ignored", float(np.abs(ignored - same).max()), 0.0)
+
+
 def test_mutations_are_caught():
-    real = [_translation_err(), _unconnected_err(), max(_clamp_excess(), 0.0), _whole_pixel_err()]
+    def _trail_level_spread(bug=None):
+        lv = []
+        for t in (5, 69, 200):
+            out = run_frames(const_tex((0.8, 0.5, 0.2, 1.0)), vec_tex(0.0, 0.0), 10 * t, trail=float(t), bug=bug)[-1]
+            lv.append(float(out[0, 0, 0]))
+        return max(lv) - min(lv)
+
+    real = [_translation_err(), _unconnected_err(), max(_clamp_excess(), 0.0), _whole_pixel_err(), _trail_level_spread()]
     bad = {"sign_flip": _translation_err("sign_flip"),
            "no_suppress": _unconnected_err("no_suppress"),
            "no_clamp": _clamp_excess("no_clamp"),
-           "exact_clamp": _whole_pixel_err("exact_clamp")}
+           "exact_clamp": _whole_pixel_err("exact_clamp"),
+           "no_normalize": _trail_level_spread("no_normalize")}
     for k, v in bad.items():
         note(f"mutation '{k}' worst error", v)
         if not v > 1e-3:
             raise AssertionError(f"mutation not detected: {k} (error {v:.3e})")
-    assert max(real) < 1e-5, f"the real mirror must pass the same checks: {real}"
+    assert max(real[:4]) < 1e-5 and real[4] < 2e-3, f"the real mirror must pass the same checks: {real}"
     print("    ok   forward displacement, ignored src_vecfield, a dropped clamp and exact 0 / 1 clamp bounds are each caught")
 
 

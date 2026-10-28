@@ -61,6 +61,7 @@ DATA = {
     "bench_fluid": _MACHINERY + _FLUID_CODEBOXES,
     "bench_fluid_probes": _MACHINERY + _FLUID_CODEBOXES,
     "bench_ks": _MACHINERY + ["src/f_ks/codebox_*.gen"],
+    "bench_vf_advect": _MACHINERY + ["src/f_vf_advect/codebox_advect.gen"],
     "bench_immiscible": _MACHINERY + ["src/f_vf_immiscible/codebox_*.gen"],
     "bench_immiscible_module": _MODULE_BENCH + ["package/patchers/f_vf_immiscible.maxpat", "src/f_vf_immiscible/codebox_*.gen"],
     "bench_ks_module": _MODULE_BENCH + ["package/patchers/f_ks.maxpat", "src/f_ks/codebox_*.gen"],

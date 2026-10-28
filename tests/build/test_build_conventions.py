@@ -447,7 +447,7 @@ def test_param_connect_names_the_pix_a_control_drives():
         (pc["separate"], pc["mode"]), ("#0_advect_pass::separate", "#0_advect_pass::mode"))
     _eq("the rest name the primary pix",
         {k: v for k, v in pc.items() if k not in ("separate", "mode")},
-        {k: f"#0_advect_pix::{k}" for k in ("dt", "decay", "injection", "gain", "mix_pct")})
+        {k: f"#0_advect_pix::{k}" for k in ("dt", "decay", "injection", "gain", "mix_pct", "trail")})
     d = _defn()
     d["params"][0]["pix_target"] = "obj-raw-9"       # a raw object id: its @name is unknown here
     pcs = {b["varname"]: b["param_connect"] for b in _boxes_of(d) if b.get("param_connect") and b.get("varname")}
@@ -478,7 +478,7 @@ def test_f_vf_advect_builds_from_its_definition_as_it_ships():
     top = {b["box"]["id"]: b["box"] for b in p["boxes"]}
     tokens = top[bp.OBJ_ROUTE]["text"].split()[1:]
     _eq("route tokens, `mix` for the mix_pct numbox",
-        tokens, ["dt", "decay", "injection", "gain", "mix", "separate", "mode"])
+        tokens, ["dt", "decay", "injection", "gain", "mix", "separate", "mode", "trail"])
     outs = sorted((b["comment"] for b in top.values() if b["maxclass"] == "outlet"))
     _eq("three outlets", outs, ["advected", "composite", "vecfield"])
     pix = [b for b in top.values() if str(b.get("text", "")).startswith("jit.gl.pix")]

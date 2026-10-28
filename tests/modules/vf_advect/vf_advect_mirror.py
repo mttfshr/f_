@@ -33,13 +33,21 @@ def _mix(a, b, t):
 
 
 def advect_stage(src, vec, prev, dt=0.01, decay=0.97, injection=0.02, gain=1.0, mix_pct=100.0,
-                 bypass_gate=0.0, src_vecfield=1.0, bug=None):
+                 bypass_gate=0.0, src_vecfield=1.0, trail=0.0, bug=None):
     """One frame of the advect gen. src, vec, prev: (H, W, 4) float32. Returns (out1, out2, out3).
 
     out1 composite (gain, wet/dry, bypass) -- the loop state; out2 the advected result before the mix;
     out3 the vecfield gradient of the accumulated flow (or the passed-through vecfield when bypassed).
     """
     dt, decay, injection, gain = F32(dt), F32(decay), F32(injection), F32(gain)
+    # Trail: a half-life in frames (>= 1); below 1 the classic Decay / Inject loop, unchanged.
+    # decay_eff = 0.5^(1/trail); injection is rescaled by (1 - decay_eff) / 0.03 so the settled level
+    # (injection / 0.03) does not depend on the trail length.
+    if F32(trail) >= F32(1.0):
+        decay_eff = F32(np.exp(F32(0.0) - F32(0.6931472) / max(F32(trail), F32(1.0))))
+        inj_eff = injection if bug == "no_normalize" else F32(injection * (F32(1.0) - decay_eff) / F32(0.03))
+    else:
+        decay_eff, inj_eff = decay, injection
     h, w = src.shape[:2]
     u, v, _, _ = g.grid(h, w)
 
@@ -58,8 +66,8 @@ def advect_stage(src, vec, prev, dt=0.01, decay=0.97, injection=0.02, gain=1.0, 
     su = np.clip(u - sgn * fx * dt, lo, hi).astype(F32)
     sv = np.clip(v - sgn * fy * dt, lo, hi).astype(F32)
 
-    advected = g.sample(prev, su, sv) * decay
-    result = advected + s_here * injection
+    advected = g.sample(prev, su, sv) * decay_eff
+    result = advected + s_here * inj_eff
     if bug != "no_clamp":
         result = np.clip(result, F32(0), F32(1))
     result = result.astype(F32)

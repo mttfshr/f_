@@ -7,6 +7,7 @@
 Param dt(0.01);
 Param decay(0.97);
 Param injection(0.02);
+Param trail(0.0);
 Param gain(1.0);
 Param mix_pct(100.0);
 Param bypass_gate(0.0);
@@ -28,9 +29,18 @@ fy = fy * connected;
 // (probe P9, 2026-10-20), and here the wrong edge would be re-injected every frame of the loop.
 src_uv = vec(clamp(uv.x - fx * dt, 0.001, 0.999), clamp(uv.y - fy * dt, 0.001, 0.999));
 
+// Trail (2026-10-28, ink-in-milk control): trail = 0 (or below 1) is the classic loop, byte for byte.
+// trail >= 1 is the persistence as a HALF-LIFE in frames: decay_eff = 0.5^(1/trail) (the Decay dial is
+// then ignored), and injection is rescaled by (1 - decay_eff) / 0.03 so the level a static source settles
+// at is injection / 0.03 (0.667 at the default 0.02) whatever the trail length -- longer trails no longer
+// wash to white. 0.03 = 1 - 0.97, the default decay, so at trail ~ 22.8 it equals the classic default.
+tr_on = step(1.0, trail);
+decay_eff = mix(decay, exp(0.0 - 0.6931472 / max(trail, 1.0)), tr_on);
+inj_eff = mix(injection, injection * (1.0 - decay_eff) / 0.03, tr_on);
+
 // Advect previous frame, add source injection
-advected = sample(in3, src_uv) * decay;
-result = clamp(advected + sample(in1, uv) * injection, 0.0, 1.0);
+advected = sample(in3, src_uv) * decay_eff;
+result = clamp(advected + sample(in1, uv) * inj_eff, 0.0, 1.0);
 
 // Wet/dry, then bypass (bypass_mode "param"): passthrough on every outlet (Matt, 2026-10-05).
 // out1 feeds the pass stage, so the feedback loop carries the source while bypassed.

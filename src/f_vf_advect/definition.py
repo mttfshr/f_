@@ -96,8 +96,12 @@ patcher = {
     # Params.  `"hint": None` = the shipped control has no hint key at all (build/spec.md).
     "params": [
         {"name": "dt",        "type": "float", "min": 0.0, "max": 0.05, "default": 0.01, "label": "dt", "hint": None},
-        {"name": "decay",     "type": "float", "min": 0.8, "max": 1.5,  "default": 0.97, "label": "Decay", "hint": None},
-        {"name": "injection", "type": "float", "min": 0.0, "max": 0.2,  "default": 0.02, "label": "Inject", "hint": None},
+        {"name": "decay",     "type": "float", "min": 0.8, "max": 1.5,  "default": 0.97, "label": "Decay", "hint": "How much of the last frame survives each frame (classic). Ignored while Trail is on"},
+        # Inject: the exponent only changes the dial's feel (more travel for the small values that matter);
+        # values, range and behavior are unchanged.  With Trail on it is the settled ink level: Inject / 0.03.
+        {"name": "injection", "type": "float", "min": 0.0, "max": 0.2,  "default": 0.02, "label": "Inject",
+         "exponent": 3.0,
+         "hint": "How much of the source is added each frame. With Trail on, the level a still source settles at is Inject / 0.03 (0.02 = two thirds), whatever the trail length"},
         {"name": "gain",      "type": "float", "min": 0.0, "max": 4.0,  "default": 1.0,  "label": "Gain", "hint": None},
         {
             "name": "mix_pct", "type": "float", "min": 0.0, "max": 100.0, "default": 100.0,
@@ -109,6 +113,10 @@ patcher = {
          "hint": None, "pix_target": "pass"},
         {"name": "mode",      "type": "menu", "options": ["Ride", "Hold", "Snap"], "default": 0,
          "label": "Mode", "hint": None, "pix_target": "pass"},
+        # Trail goes last of the controls so every existing dial keeps its slot on the panel
+        {"name": "trail",     "type": "float", "min": 0.0, "max": 1000.0, "default": 0.0, "label": "Trail",
+         "exponent": 3.0,
+         "hint": "How long trails last, as a half-life in frames (60 = about a second). 0 = off: the Decay dial rules, exactly as before. Above 1 it replaces Decay and keeps the ink density steady as trails get longer"},
         {"name": "src_vecfield", "type": "internal"},
         {"name": "bypass",       "type": "bypass"},
     ],
