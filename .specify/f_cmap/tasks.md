@@ -208,3 +208,20 @@ here (4-tap under about 0.75 ms at 1080p). M1 not measured (NF-001).
   modules: 0 unexpected issues), offline suite green (59 files).
 - **Not done / owed:** cost of the module as built (the T006 numbers were for scratch shaders; the bench `measure` of the real codebox is a
   one-liner for a later look), the Matt look in Max (T030), the helpfile and reference doc (Phase 3).
+
+### 2026-10-27 (night): Matt's first look in Max, and two offline look studies
+
+- **Live look (Matt, camera in a dim room):** defaults and then Decay 1.0 / Inject 0.16 / Radius 0.47 / Sweep 0.81 / Rate 0.01 /
+  Power 4 / Scale 1.86 both gave "just a scalloped gray shape": a flat dim interior with a faint ghost of the live image and a thin
+  scalloped border; outside the window the live image. Not a bug (the bench matches the mirror), a property of the map: the basin
+  contracts, so the interior collapses toward the fixed point and only the border carries detail.
+- **`tests/records/spike_cmap_inverse.py` (sheets E, F):** the INVERSE map (the pixel reads prev(+/- sqrt(z - w)); principal, per-frame
+  alternating, checker and per-pixel-hash branches). Result: not better. Principal is nearly the source with faint wisps (std 0.019),
+  alt_frame / checker / hash are noisy salt-and-pepper streaks on top of the source; none fills the frame with structure. Dropped.
+- **`tests/records/spike_cmap_room.py` (sheet G):** the shipped forward map on a low-saturation room-like synthetic (lamps, curtain stripes,
+  a swaying dark head). It reproduces Matt's look: a dark / gray flat interior (the head's color smeared) inside a scalloped border. More
+  structure with a larger Radius (0.8) and a smaller Scale (1.2: the frame zooms into the border, where the detail is); a faster Rate and
+  Sweep only smear it flatter (Matt's Rate 0.01 turns the offset 3.6 degrees a frame). The T005 sheets looked rich because their source was
+  saturated and high-contrast: the module gives back the contrast and color the source already has.
+- **Status:** the look is a gate for the module (T030): a try at Scale about 1.0-1.2, Radius about 0.8, Power 2, Rate about 0.002, Sweep 0 on
+  the live camera decides whether CMAP is worth keeping.
