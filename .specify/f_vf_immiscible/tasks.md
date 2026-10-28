@@ -54,7 +54,7 @@ tests/records/
 - [ ] G4 φ outlet encoding: `w = (φ + 1)/2` grey, neutral mid grey (proposal). Confirm at T023.
 - [x] G5 Bypass: neutral outlets (the plan). Decided by Matt 2026-10-27 (took the recommendation); no fourth pix input on `enc`.
 - [ ] G6 Solver size: 256² or 128². After T017.
-- [ ] G7 Phase model: Cahn–Hilliard or the fallback. After T006. If the fallback wins, revise the plan (ADR-2) and T010–T017 before continuing.
+- [x] G7 Phase model: Cahn–Hilliard. Decided by Matt 2026-10-27 on T006/T006b (option 1: close now, accept the 0.0264 stripes drift against the 0.02 pre-registered limit, check long-run drift in T017's offline run). The fallback is dead (T006). If the fallback wins, revise the plan (ADR-2) and T010–T017 before continuing.
 - [ ] G8 Stage 2 delivery: existing force inlet plus `f_vf_mix`, or a native inlet on `f_vf_fluid`. Phase 4.
 
 **Checkpoint**: tier-1 tests green and mutation-checked; G7 and G2 decided on numbers and stills; coarsening time recorded; builder check recorded.
@@ -70,7 +70,7 @@ tests/records/
 - [ ] T014 [P] `tests/modules/immiscible/test_immiscible_static.py`: every stage at most three inputs; no forbidden Param names (FR-012: `texture`, `t`, `depth`, `mix`, `bypass`, `dim`); the two blend copies identical; `N = 256` literal in the right places; no `sin(`, no `noise()`; the non-finite guard form. *Offline.*
 - [ ] T015 `src/f_vf_immiscible/codebox_spec.gen`: the Cahn–Hilliard step with the T004 constants in one place, mirrored in `immiscible_mirror.py` (they change together); `freeze` gives factor 1.
 - [ ] T016 `tests/modules/immiscible/bench_immiscible.py`: each real codebox on the GPU against the mirror (`inab` including the gates, `pass` reseed, hold and self-heal with a uniform ±1 left alone, `adv` including the periodic seam, injection and freeze, the four DFTs, `spec`, `enc` including the bypass gate), then a host-sequenced 100-frame run and the NaN guard. Give the first input the render size (HANDOFF 2026-10-26). Set tolerances from the first measured run, record them, then tighten. *Max bench; ask Matt to run it.*
-- [ ] T017 Cost (experiment 4): per stage and total at 256², and input minification at `taps` 1, 2 and 8; record the module-alone number (NF-001) as a bound where under the bench floor. Decide G6. *Max bench.*
+- [ ] T017 Cost (experiment 4) AND long-run mean drift (G7 condition, 2026-10-27): offline mirror run of 3000+ frames under the T005 stirring recipe, mean phi against frame count for stripes, drops and noise; if it keeps climbing, add the k = 0 pull toward `fill` in `spec` and re-test. per stage and total at 256², and input minification at `taps` 1, 2 and 8; record the module-alone number (NF-001) as a bound where under the bench floor. Decide G6. *Max bench.*
 
 **Checkpoint**: spec success criteria 1–5 pass on the GPU path; cost recorded.
 
@@ -189,3 +189,5 @@ Only after Phase 2 is judged worth extending.
   - Drift diagnosis (mean phi every 100 frames, stripes CH): +0.013, +0.018, +0.026, +0.023, +0.018, +0.026: fluctuating, not clearly monotonic over 600 frames; noise@0.3: -0.0005 ... +0.0218, still creeping at the end. Cause: the semi-Lagrangian advection of phi is not conservative (the CH step conserves the mean exactly, so all the drift enters in `adv`); the plain arm shows the same effect twice as large. A 0.03 shift in the mean changes the phase-B area by about 1.5%, but over minutes it could accumulate and one phase would eat the other.
   - Candidate mitigation if it matters (not built): pull the k = 0 bin in `spec` toward `fill` at a slow rate (a "mean restore" dial or fixed constant); costs nothing in the chain. Alternative: accept as a known property. A long-run check (3000+ frames, drift against frame count) belongs in the T017 offline run either way.
   - **G7 is Matt's call:** Cahn–Hilliard holds the interface under stirring far better than any alternative tried (the fallback is dead), but its pre-registered mean-drift criterion failed by 0.006.
+
+- 2026-10-27: Phase 0 closed. Gates decided: G2 plain blend, G5 neutral outlets, G7 Cahn–Hilliard (with the drift check moved to T017). Still open: G1 (T033), G3 (T024), G4 (T023), G6 (after T017), G8 (Phase 4). `blend` dial and the interface-aware branch are out of the module; the mirror keeps them for the record. Next: Phase 1, T010 first.

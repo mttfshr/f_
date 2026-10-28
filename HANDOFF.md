@@ -495,3 +495,5 @@ The u/v Heaviside activator-recovery spike (`tests/records/spike_wc_pinto.py`, c
 
 ## f_vf_immiscible (2026-10-27)
 Phase 0 started: T001, T002, T003, T008 done (tier-1 mirror and 14 tests green, builder dry build OK). Next: T004 constants sweep, T005 thresholds, then T006/T007. Open: G5 bypass (Matt), adv input-order amendment (see tasks.md Record).
+
+f_vf_immiscible (2026-10-27, later): Phase 0 complete (T001–T008, T006b). G2 plain, G5 neutral, G7 Cahn–Hilliard decided. Constants fixed in the mirror. Next: Phase 1, T010 (codebox stages on the bench); T017 carries the 3000-frame drift check. Plan ADR-1 `adv` input order amended (state hot).
