@@ -32,9 +32,9 @@ Verification follows the three tiers (`.specify/constitution.md`): mirror first,
 - [x] **G2** Bounds region: frame rectangle (Matt, 2026-10-27).
 - [x] **G3** `power`: integer 2-4, default 2 (Matt, 2026-10-27).
 - [x] **G4** Sampler: hand 4-tap bilinear (Matt, 2026-10-27); Catmull-Rom stays a T030 option.
-- [ ] **G5** No `gain` / `mix_pct` in v1 (inject is the source blend): confirm.
-- [ ] **G6** Control trim (T005 done: candidate cut is the `black` bounds rule).
-- [ ] **G7** (new 2026-10-27) Promote the `L` scale dial (T032) into v1.
+- [x] **G5** No `gain` / `mix_pct` in v1 (Matt concurs, 2026-10-27).
+- [x] **G6** Control trim: cut the `black` bounds rule; menu is Source / Wrap (Matt, 2026-10-27).
+- [x] **G7** Promote the `L` scale dial into v1: yes (Matt, 2026-10-27); T032 moves to Phase 1 as a `scale` Param.
 
 ## Phase 1 - build (T020-T023)
 
@@ -57,7 +57,7 @@ Verification follows the three tiers (`.specify/constitution.md`): mirror first,
 - [ ] **T030** Tuning with live camera (Matt): defaults, ranges, `inject` / `decay` feel.
 - [ ] **T031** Optional vecfield offset inlet for structure-aligned pull (tensormap ->
   axisflow). First check whether `f_vf_warp` through `vs_feedback` already gives it.
-- [ ] **T032** Optional `scale` dial (the `L` constant, currently baked at 1.75).
+- [ ] **T032** `scale` dial (the `L` constant, default 1.75): promoted into v1 by G7, built with the Phase 1 codebox (T020). Needs a mirror check that L is a Param, not a constant (extend `pull_point`).
 
 ## Phase 3 - docs and menu
 

@@ -1,7 +1,7 @@
 # Spec: f_cmap
 
 _Created: 2026-10-26_
-_Status: Specced; Phase 0 (T001-T006) done 2026-10-27, gates G1-G7 open_
+_Status: Specced; Phase 0 (T001-T006) done 2026-10-27, gates G1-G7 decided 2026-10-27_
 _Origin: `ideas/f_cmap_feedback.md` (mined from michaelerule/webgpgpu `Example_9`,
 omp run `webgpgpu-ideas-1`, 2026-10-23; source re-read and the design settled with Matt
 2026-10-26)._
@@ -123,8 +123,8 @@ input at that pixel), Black, or Wrap (the previous frame wrapped with explicit c
 - **FR-003**: History MUST be float32 and live in the `pass` stage; `out = mix(decay * hist,
   src, inject)`. `decay` is capped at 1.0 (bounded: no excitable regime in v1).
 - **FR-004**: `inject` MUST be able to reach 0 (pure map evolution) and 1 (pure source).
-- **FR-005**: `bounds` MUST offer Source, Black and Wrap. Source returns the source at the
-  current pixel; Black returns 0 (A = 1); Wrap samples the previous frame at `fract(p')`
+- **FR-005**: `bounds` MUST offer Source and Wrap (Black cut by G6, 2026-10-27). Source returns the source at the
+  current pixel; Wrap samples the previous frame at `fract(p')`
   with explicit texel-centre coordinates (no reliance on bare `sample()` wrapping: the
   2026-10-20 sampling findings, `skills/jit-gen-codebox/SKILL.md`).
 - **FR-006**: A patcher clock MUST advance `theta` at `rate` (signed); `rate` 0 MUST freeze
@@ -164,7 +164,8 @@ input at that pixel), Black, or Wrap (the previous frame wrapped with explicit c
 | `rate` | signed turns/s (unit in T021) | small | patcher clock, 0 freezes |
 | `angle` | 0-1 (cyclic) | 0 | manual `theta` offset |
 | `power` | int 2-4 | 2 | exponent `n` (G3; name checked against FR-009) |
-| `bounds` | Source / Black / Wrap | Source | menu |
+| `bounds` | Source / Wrap | Source | menu (Black cut, G6) |
+| `scale` | about 0.5-3 (range fixed in T020) | 1.75 | the `L` constant (G7, promoted into v1) |
 | `freeze`, `reset`, `bypass_gate` | toggles | 0 | |
 
 ## Success Criteria
@@ -207,7 +208,7 @@ input at that pixel), Black, or Wrap (the previous frame wrapped with explicit c
 - **Phase 0**: NumPy mirror and its checks (T001-T004), look stills (T005), cost (T006),
   gates.
 - **Phase 1**: codeboxes, definition, clock, patcher, bench, contracts (T020-T023).
-- **Phase 2**: tuning, optional vecfield offset inlet (tensor-field route), `scale` dial.
+- **Phase 2**: tuning, optional vecfield offset inlet (tensor-field route). (`scale` dial moved into v1 by G7.)
 - **Phase 3**: reference doc, helpfile, menu placement, README row.
 
 ## Out of Scope (This Version)
