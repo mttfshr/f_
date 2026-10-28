@@ -28,6 +28,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | Patch | Description |
 |---|---|
 | `f_chladni` | Chladni plate modal synthesis visualizer (Bessel modes); audio companion patch included |
+| `f_cmap` | ⚠ Unverified. Complex-map feedback pull (z^n + w) for live input: the image winds into Julia-like filaments |
 | `f_grain` | Stochastic grain field with per-grain displacement and luma gating |
 | `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
 | `f_wave_field` | ⚠ Unfinished. Spectral wave field: tunable dispersion, point exciter, strike; luma and gradient vecfield out |

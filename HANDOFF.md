@@ -1,6 +1,8 @@
 # HANDOFF
 
-## 2026-10-27: `f_cmap` Phase 0 DONE (T001-T006); gates G1-G7 owed. The `f_quasi` entry below is still the START HERE for everything else
+## 2026-10-27: `f_cmap` (label CMAP) Phase 1 BUILT (T020-T023, T032), Phase 0 done, all gates decided. NEXT: Matt's look in Max (T030). The `f_quasi` entry below is still the START HERE for everything else
+
+- **Phase 1 (evening):** `src/f_cmap/` (two codeboxes + `definition.py`), `package/patchers/f_cmap.maxpat`, `tests/modules/cmap/{test_cmap_static,bench_cmap}.py`. Bench 9/9 against the mirror (mean error 2e-8 to 1e-7; freeze, reseed, bypass and inject 1 exact; NaN guarded), contract bench and offline suite green. Gates decided by Matt: G1 label CMAP (module stays `f_cmap`), G2 rectangle, G3 power 2-4, G4 4-tap bilinear, G5 no mix, G6 Black bounds cut, G7 Scale dial in v1 (token `lscale`: `scale` is an Ob3D attribute). Record in `.specify/f_cmap/tasks.md`. Owed: the look in Max (open the patcher with a camera; `inject` ~0.3 winds the live image; Rate, Radius, Sweep, Power, Scale), real cost of the built module (T006 measured scratch shaders), helpfile / reference doc / menu placement (Phase 3), presentation layout check (Reset sits bottom left).
 
 - **T006 (Max bench, `tests/records/spike_cmap_cost.py`):** a bare `sample()` is exactly nearest wherever the pull minifies (|q| > 0.2; 0.0000 error vs the mirror's nearest) and bilinear only near the centre, so the codebox must read the history from hand-built `nearest()` taps (new spec FR-011; the 4-bilinear-fetch bicubic trick is unusable too). 4-tap bilinear matches the mirror to 0.0002 and costs under the bench floor (<0.76 ms at 1080p); 16-tap Catmull-Rom is about 0.66 ms at 1080p, 2.4 ms at 4K (derived from a x4 amplified run; M1 unmeasured). The T004 "bilinear" numbers describe the 4-tap read, not `sample()`.
 

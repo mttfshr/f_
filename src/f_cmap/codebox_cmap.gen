@@ -1,0 +1,101 @@
+// codebox_cmap.gen -- f_cmap primary stage: the iterated complex-map pull (spec FR-001..FR-011).
+// Mirror: tests/modules/cmap/cmap_mirror.py (frame(), pull_point(), offset()).
+// Inputs: in1 = the live source, in2 = the previous frame (the pass stage's guarded copy of out1).
+//
+// Per pixel (isometric, centred, frame-height units):
+//   q  = ((x - 0.5) * aspect, y - 0.5)          z = 2 L q          L = lscale (default 1.75)
+//   z' = z^pwr + w                              by repeated complex multiplication, pwr = 2..4
+//   p' = (z'.x / (2 L) / aspect + 0.5, z'.y / (2 L) + 0.5)
+//   hist = prev(p') when p' lies in the closed frame, else (edge) Source: the source here / Wrap: prev(fract(p'))
+//   out  = hist * decay * (1 - inject) + src * inject          alpha 1
+// w = radius + sweep cos(2 pi phase_clk), turned by 2 pi (angle + theta_clk): the two clocks are patcher
+// accumulators in turns (theta_clk at `rate`, phase_clk at sqrt(2) `rate`), so rate 0 freezes w exactly.
+//
+// FR-011: the history is read from hand-built nearest() taps at texel-centre coordinates (4-tap bilinear, gate G4):
+// a bare sample() is exactly nearest wherever the pull minifies (T006). The tap INDEX is clamped (Source) or wrapped
+// (Wrap) before the coordinate is formed, so no tap sits on a wrap seam. `dim` is the first inlet's size, so the
+// source must be render-sized (the bench gives it that size too).
+//
+// freeze_on holds the previous frame EXACTLY (it reads texel centres, never resamples); reseed >= 0.5 replaces the
+// history with the source (reset); bypass_gate = 1 passes the source (and the loop carries it).
+// The source is NaN/Inf-guarded here and the history in the pass stage, so everything out1 holds is finite (NF-003).
+Param decay(0.97);
+Param inject(0.05);
+Param radius(0.15);
+Param sweep(0.0);
+Param angle(0.0);
+Param pwr(2);
+Param edge(0);
+Param lscale(1.75);
+Param freeze_on(0);
+Param reseed(0);
+Param bypass_gate(0);
+Param theta_clk(0.0);
+Param phase_clk(0.0);
+
+// the source, finite, alpha 1
+sx = sample(in1, norm).x;
+sx = switch(abs(sx) < 1e30, sx, 0.0);
+sy = sample(in1, norm).y;
+sy = switch(abs(sy) < 1e30, sy, 0.0);
+sz = sample(in1, norm).z;
+sz = switch(abs(sz) < 1e30, sz, 0.0);
+sv = vec(sx, sy, sz, 1.0);
+
+// the offset w
+th = twopi * (angle + theta_clk);
+mag = radius + sweep * cos(twopi * phase_clk);
+wx = mag * cos(th);
+wy = mag * sin(th);
+
+// the pull
+aspect = dim.x / dim.y;
+two_l = 2.0 * lscale;
+zx = (norm.x - 0.5) * aspect * two_l;
+zy = (norm.y - 0.5) * two_l;
+r2x = zx * zx - zy * zy;
+r2y = zx * zy + zy * zx;
+r3x = r2x * zx - r2y * zy;
+r3y = r2x * zy + r2y * zx;
+r4x = r3x * zx - r3y * zy;
+r4y = r3x * zy + r3y * zx;
+m3 = step(2.5, pwr);
+m4 = step(3.5, pwr);
+rx = mix(mix(r2x, r3x, m3), r4x, m4);
+ry = mix(mix(r2y, r3y, m3), r4y, m4);
+ppx = (rx + wx) / two_l / aspect + 0.5;
+ppy = (ry + wy) / two_l + 0.5;
+ins = step(0.0, ppx) * step(ppx, 1.0) * step(0.0, ppy) * step(ppy, 1.0);
+ins = max(ins, edge);
+
+// the 4-tap bilinear read of the previous frame
+ux = mix(clamp(ppx, 0.0, 1.0), fract(ppx), edge);
+uy = mix(clamp(ppy, 0.0, 1.0), fract(ppy), edge);
+tx = ux * dim.x - 0.5;
+ty = uy * dim.y - 0.5;
+ix = floor(tx);
+iy = floor(ty);
+ax = tx - ix;
+ay = ty - iy;
+jx0 = ix;
+jx1 = ix + 1.0;
+jy0 = iy;
+jy1 = iy + 1.0;
+kx0 = mix(clamp(jx0, 0.0, dim.x - 1.0), jx0 - floor(jx0 / dim.x) * dim.x, edge);
+kx1 = mix(clamp(jx1, 0.0, dim.x - 1.0), jx1 - floor(jx1 / dim.x) * dim.x, edge);
+ky0 = mix(clamp(jy0, 0.0, dim.y - 1.0), jy0 - floor(jy0 / dim.y) * dim.y, edge);
+ky1 = mix(clamp(jy1, 0.0, dim.y - 1.0), jy1 - floor(jy1 / dim.y) * dim.y, edge);
+cx0 = (kx0 + 0.5) / dim.x;
+cx1 = (kx1 + 0.5) / dim.x;
+cy0 = (ky0 + 0.5) / dim.y;
+cy1 = (ky1 + 0.5) / dim.y;
+hv = (nearest(in2, vec(cx0, cy0)) * (1.0 - ax) + nearest(in2, vec(cx1, cy0)) * ax) * (1.0 - ay) + (nearest(in2, vec(cx0, cy1)) * (1.0 - ax) + nearest(in2, vec(cx1, cy1)) * ax) * ay;
+
+// the step: outside the frame the bounds rule supplies the history
+k1 = decay * (1.0 - inject);
+res = mix(sv, hv, ins) * k1 + sv * inject;
+res = res * vec(1.0, 1.0, 1.0, 0.0) + vec(0.0, 0.0, 0.0, 1.0);
+
+// freeze holds the previous frame exactly; reset / bypass take the source
+held = mix(res, nearest(in2, norm), step(0.5, freeze_on));
+out1 = mix(held, sv, max(step(0.5, reseed), step(0.5, bypass_gate)));

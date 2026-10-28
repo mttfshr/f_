@@ -38,17 +38,17 @@ Verification follows the three tiers (`.specify/constitution.md`): mirror first,
 
 ## Phase 1 - build (T020-T023)
 
-- [ ] **T020** Codeboxes `src/f_cmap/codebox_cmap_pass.gen` and `codebox_cmap.gen`, and
+- [x] **T020** Codeboxes `src/f_cmap/codebox_cmap_pass.gen` and `codebox_cmap.gen`, and
   `definition.py` modelled on `src/f_vf_advect/definition.py` (Pattern 1: pass and primary
   pix, float32, `adapt`, `pix_wires` state -> pass -> state in2). Check every control
   name against `jit.gl.pix` attributes and GLSL builtins (FR-009; the `depth`, `texture`
   and `t` traps), frame-size-change behaviour, NaN guard (NF-003).
-- [ ] **T021** Patcher clock for `theta` / the sqrt(2) phase on `rate` (`f_quasi` clock
+- [x] **T021** Patcher clock for `theta` / the sqrt(2) phase on `rate` (`f_quasi` clock
   precedent), exact freeze at rate 0; freeze and reset wiring (`f_wc` header toggle).
-- [ ] **T022** `tests/modules/cmap/bench_cmap.py` (register in `tests/lib/benchdeps.py`,
+- [x] **T022** `tests/modules/cmap/bench_cmap.py` (register in `tests/lib/benchdeps.py`,
   pick an unused ORDER): codebox versus mirror frame by frame, bypass, bounds modes. Give
   the first input the render's size (the `dim` finding).
-- [ ] **T023** Registration: README row (Patterns, with a unverified marker until Phase 3),
+- [x] **T023** Registration: README row (Patterns, with a unverified marker until Phase 3),
   `build/py.sh build/generate_launch.py`, `NOT_IN_MENU` entry until Phase 3, drift,
   module contract bench. Offline suite once at the end.
 
@@ -57,7 +57,7 @@ Verification follows the three tiers (`.specify/constitution.md`): mirror first,
 - [ ] **T030** Tuning with live camera (Matt): defaults, ranges, `inject` / `decay` feel.
 - [ ] **T031** Optional vecfield offset inlet for structure-aligned pull (tensormap ->
   axisflow). First check whether `f_vf_warp` through `vs_feedback` already gives it.
-- [ ] **T032** `scale` dial (the `L` constant, default 1.75): promoted into v1 by G7, built with the Phase 1 codebox (T020). Needs a mirror check that L is a Param, not a constant (extend `pull_point`).
+- [x] **T032** `scale` dial (the `L` constant, default 1.75): promoted into v1 by G7, built with the Phase 1 codebox (T020). Needs a mirror check that L is a Param, not a constant (extend `pull_point`).
 
 ## Phase 3 - docs and menu
 
@@ -181,3 +181,30 @@ here (4-tap under about 0.75 ms at 1080p). M1 not measured (NF-001).
 - The T004 numbers for "bilinear" therefore describe the 4-tap read, not `sample()`.
 - A feedback module is this pass plus one `pass` copy (the `copy` row): at 1080p expect the whole module
   under about 1.6 ms with the 4-tap read (a bound), about 1.4 ms more with Catmull-Rom.
+
+### 2026-10-27 (evening): Phase 1 built (T020-T023, T032)
+
+- **Files:** `src/f_cmap/{definition.py, codebox_cmap.gen, codebox_cmap_pass.gen}`, `package/patchers/f_cmap.maxpat` (built with
+  `build/py.sh build/build_patcher.py src/f_cmap/definition.py`), `tests/modules/cmap/{test_cmap_static.py, bench_cmap.py}`.
+  Two `jit.gl.pix` (pass: guarded copy of the primary's out1; state: in1 source, in2 previous frame), float32, `adapt`.
+- **Controls (token -> label):** `decay` Decay, `inject` Inject, `radius` Radius, `sweep` Sweep, `rate` Rate (clock only, no pix cord),
+  `angle` Angle, `lscale` Scale (G7; `scale` is an Ob3D attribute, FR-009), `pwr` Power (int 2-4), `edge` Bounds (Source / Wrap; Black cut by G6),
+  header toggle `freeze_on`, `reset` button, bypass. `bypass_gate` / `reseed` / `theta_clk` / `phase_clk` are internal.
+- **Clock (T021):** `rate` is turns per frame; two raw accumulators wrapped into [0, 1) (theta at `rate`, phase at `rate` x sqrt 2),
+  `rate` 0 freezes w exactly. Reset: button / route `reset` / loadbang -> `param reseed 1`, a draw-bang counter drops it after four bangs.
+- **Behaviours:** reseed (= reset) and bypass output the source; freeze outputs the previous frame (reseed beats freeze). The source is
+  NaN/Inf-guarded in the primary and the history in the pass stage (NF-003). The history read is the 4-tap bilinear from `nearest()` taps
+  with the tap INDEX clamped (Source) or wrapped (Wrap), so no tap sits on a seam (FR-011).
+- **Tier 1 static (5/5):** Param defaults equal the definition's, every internal param is declared, tokens avoid Ob3D attributes and
+  operators, forbidden constructs absent (including a bare `sample(in2`), positional ids match the built patcher.
+- **Tier 2 bench (`bench_cmap.py`, 9/9, Max 9.2.0):** the codeboxes against the float32 mirror over ten parameter cases (defaults, power
+  3 and 4, wrap, scale 1.2 and 2.6, a clocked offset, heavy decay / inject, a large offset): mean error 2e-8 to 1e-7 in nine, 2.6e-5 in
+  scale 1.2 (one pixel in ten thousand flips its inside / outside decision, max 0.62 there). Each parameter has an effect and matches its own
+  mirror. Alpha is exactly 1 (source alpha 0.25, history alpha 0). `inject` 1 is the source exactly. Freeze is bit-exact on noise (also with
+  cubed / wrap / offset). Reseed and bypass are the source, and reseed beats freeze. NaN / Inf source: output finite, frozen frame still exact.
+  Pass stage: finite values copied exactly, non-finite channels read 0. Five ping-pong frames with a moving w: mean error 5e-8.
+- **Registration (T023):** README row (Patterns, marked unverified), `NOT_IN_MENU` entry (Phase 3 places it), launcher regenerated (53 modules),
+  drift ok, `bench_cmap` registered in `tests/lib/benchdeps.py` (ORDER 64), module contract bench (BENCH_MODULES=f_cmap run covered all 48
+  modules: 0 unexpected issues), offline suite green (59 files).
+- **Not done / owed:** cost of the module as built (the T006 numbers were for scratch shaders; the bench `measure` of the real codebox is a
+  one-liner for a later look), the Matt look in Max (T030), the helpfile and reference doc (Phase 3).
