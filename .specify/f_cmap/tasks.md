@@ -28,10 +28,10 @@ Verification follows the three tiers (`.specify/constitution.md`): mirror first,
 
 ### Gates (Matt)
 
-- [ ] **G1** Naming (`f_cmap` or a name a performer reads).
-- [ ] **G2** Bounds region: frame rectangle (proposed) or the source's disk.
-- [ ] **G3** `power`: integer 2-4 or fixed at 2.
-- [ ] **G4** Sampler: hand 4-tap bilinear (recommended) or 16-tap Catmull-Rom; hardware `sample()` is out (T004, T006).
+- [x] **G1** Naming: `CMAP` (Matt, 2026-10-27; module stays `f_cmap`, label CMAP).
+- [x] **G2** Bounds region: frame rectangle (Matt, 2026-10-27).
+- [x] **G3** `power`: integer 2-4, default 2 (Matt, 2026-10-27).
+- [x] **G4** Sampler: hand 4-tap bilinear (Matt, 2026-10-27); Catmull-Rom stays a T030 option.
 - [ ] **G5** No `gain` / `mix_pct` in v1 (inject is the source blend): confirm.
 - [ ] **G6** Control trim (T005 done: candidate cut is the `black` bounds rule).
 - [ ] **G7** (new 2026-10-27) Promote the `L` scale dial (T032) into v1.
