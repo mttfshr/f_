@@ -93,9 +93,8 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 10,
+					"numoutlets": 9,
 					"outlettype": [
-						"",
 						"",
 						"",
 						"",
@@ -109,10 +108,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						727.0,
+						655.0,
 						22.0
 					],
-					"text": "route dt iface coarsen inject thresh pull fill freeze taps reset"
+					"text": "route dt iface coarsen inject thresh pull fill taps reset"
 				}
 			},
 			{
@@ -1524,7 +1523,7 @@
 						""
 					],
 					"patching_rect": [
-						1063.5,
+						991.5,
 						100.0,
 						56.0,
 						22.0
@@ -1556,7 +1555,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						843.5,
+						771.5,
 						260.0,
 						190.0,
 						150.0
@@ -1580,7 +1579,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1063.5,
+						991.5,
 						200.0,
 						80.0,
 						21.0
@@ -1611,7 +1610,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1153.5,
+						1081.5,
 						200.0,
 						60.0,
 						21.0
@@ -1643,7 +1642,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1063.5,
+						991.5,
 						232.0,
 						5.0,
 						5.0
@@ -1675,7 +1674,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1083.5,
+						1011.5,
 						232.0,
 						5.0,
 						5.0
@@ -1700,7 +1699,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						771.5,
 						20.0,
 						60.0,
 						22.0
@@ -1718,7 +1717,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						771.5,
 						50.0,
 						180.0,
 						22.0
@@ -1739,7 +1738,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						771.5,
 						110.0,
 						80.0,
 						22.0
@@ -1758,7 +1757,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						771.5,
 						140.0,
 						60.0,
 						22.0
@@ -1776,7 +1775,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						771.5,
 						170.0,
 						80.0,
 						22.0
@@ -1794,7 +1793,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						771.5,
 						200.0,
 						100.0,
 						22.0
@@ -2722,122 +2721,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-41",
-					"maxclass": "live.menu",
-					"fontname": "Ableton Sans Light",
-					"hint": "Hold the pattern still while the blend keeps running on it",
-					"numinlets": 1,
-					"numoutlets": 3,
-					"outlettype": [
-						"",
-						"",
-						"float"
-					],
-					"param_connect": "#0_imm_adv::freeze",
-					"parameter_enable": 1,
-					"patching_rect": [
-						534.0,
-						250.0,
-						60.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						74.0,
-						114.0,
-						45.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"Off",
-								"Freeze"
-							],
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "freeze",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 0,
-							"parameter_shortname": "freeze",
-							"parameter_type": 2,
-							"parameter_unitstyle": 0
-						}
-					},
-					"varname": "freeze"
-				}
-			},
-			{
-				"box": {
 					"id": "obj-42",
-					"maxclass": "attrui",
-					"attr": "freeze",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						530.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-701",
-					"maxclass": "attrui",
-					"attr": "freeze",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						530.0,
-						344.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-43",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						539.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						66.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Freeze",
-					"textjustification": 1,
-					"varname": "lbl_freeze"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-45",
 					"maxclass": "attrui",
 					"attr": "taps",
 					"numinlets": 1,
@@ -2846,7 +2730,7 @@
 						""
 					],
 					"patching_rect": [
-						602.0,
+						530.0,
 						310.0,
 						68.0,
 						22.0
@@ -2857,7 +2741,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-702",
+					"id": "obj-701",
 					"maxclass": "attrui",
 					"attr": "taps",
 					"numinlets": 1,
@@ -2866,7 +2750,7 @@
 						""
 					],
 					"patching_rect": [
-						602.0,
+						530.0,
 						344.0,
 						68.0,
 						22.0
@@ -2876,7 +2760,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-47",
+					"id": "obj-44",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2887,7 +2771,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1063.5,
+						991.5,
 						130.0,
 						18.0,
 						12.0
@@ -2904,7 +2788,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-48",
+					"id": "obj-45",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2912,7 +2796,7 @@
 						""
 					],
 					"patching_rect": [
-						1063.5,
+						991.5,
 						160.0,
 						131.0,
 						22.0
@@ -3427,11 +3311,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-47",
+						"obj-44",
 						0
 					],
 					"destination": [
-						"obj-48",
+						"obj-45",
 						0
 					]
 				}
@@ -3439,7 +3323,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-48",
+						"obj-45",
 						0
 					],
 					"destination": [
@@ -3899,18 +3783,6 @@
 						7
 					],
 					"destination": [
-						"obj-41",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-41",
-						0
-					],
-					"destination": [
 						"obj-42",
 						0
 					]
@@ -3920,30 +3792,6 @@
 				"patchline": {
 					"source": [
 						"obj-42",
-						0
-					],
-					"destination": [
-						"obj-53",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						8
-					],
-					"destination": [
-						"obj-45",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-45",
 						0
 					],
 					"destination": [
@@ -3979,35 +3827,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
-						0
-					],
-					"destination": [
-						"obj-701",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-701",
-						0
-					],
-					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-4",
-						8
+						7
 					],
 					"destination": [
-						"obj-702",
+						"obj-701",
 						0
 					]
 				}
@@ -4015,7 +3839,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-702",
+						"obj-701",
 						0
 					],
 					"destination": [
@@ -4028,7 +3852,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						9
+						8
 					],
 					"destination": [
 						"obj-raw-3",
@@ -4263,11 +4087,6 @@
 			"obj-38": [
 				"fill",
 				"fill",
-				0
-			],
-			"obj-41": [
-				"freeze",
-				"freeze",
 				0
 			],
 			"parameterbanks": {

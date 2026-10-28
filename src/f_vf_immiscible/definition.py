@@ -12,9 +12,9 @@ Stage chain (plan ADR-1, amended 2026-10-27), solver stages at a fixed 256x256 f
     adv -> fx -> fy -> spec -> iy -> ix        (ix -> hold feedback ; ix -> enc in2)
   inab  A and B vecfields -> one packed 256x256 velocity texture (content gate, taps x taps average)
   hold  last state    pass  hold it, or reseed from the hash (Params reseed, salt, fill)
-  adv   blend + advect phi + inject (Params dt, inject, thresh, taps, freeze, src_phi)
+  adv   blend + advect phi + inject (Params dt, inject, thresh, taps, src_phi; freeze stays 0, no dial)
   fx/fy/iy/ix  separable DFT (phi and phi^3 as two complex fields)
-  spec  stabilised Cahn-Hilliard step per bin (Params iface, coarsen, freeze, pull, fill)
+  spec  stabilised Cahn-Hilliard step per bin (Params iface, coarsen, pull, fill; freeze stays 0, no dial)
   enc   render-size outlets: out0 phi grey, out1 blended velocity; bypass gate (Param bypass_gate)
 
 `r draw` goes to inab, pass and enc.  inab and pass are both chain heads on the same bang: the cold inab
@@ -64,9 +64,6 @@ patcher = {
         {"name": "fill", "type": "float", "min": -0.6, "max": 0.6, "default": 0.0,
          "label": "Fill",
          "hint": "Mean mix at reset, and the balance point Pull relaxes toward: negative = mostly A, positive = mostly B"},
-        {"name": "freeze", "type": "menu", "options": ["Off", "Freeze"], "default": 0,
-         "label": "Freeze",
-         "hint": "Hold the pattern still while the blend keeps running on it"},
         {"name": "taps", "type": "int", "min": 1, "max": 16, "default": 2,
          "label": "Taps", "ui": False,
          "hint": "Input filter: taps x taps samples per solver texel for the velocity and source inputs"},
@@ -132,7 +129,7 @@ patcher = {
 # UI parameter / internal flag -> the stage(s) whose codebox Param it sets (the first is the control's
 # param_connect target).
 _STAGES_OF = {"dt": "adv", "iface": "spec", "coarsen": "spec", "inject": "adv", "thresh": "adv", "pull": "spec",
-              "fill": ["pass", "spec"], "freeze": ["adv", "spec"], "taps": ["inab", "adv"],
+              "fill": ["pass", "spec"], "taps": ["inab", "adv"],
               "reseed": "pass", "salt": "pass"}
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:
