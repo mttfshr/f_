@@ -66,11 +66,11 @@ def g_pass(hold, reseed, salt=0.0, fill=0.0):
 
 def g_adv(state, uab, src, p):
     return gpu("adv", [state, uab, NOSRC if src is None else src], dim=(N, N),
-               params={"dt": p.dt, "inject": p.inject, "thresh": p.thresh, "mix_pct": p.mix_pct, "taps": p.taps, "freeze": p.freeze, "src_phi": p.src_phi})
+               params={"dt": p.dt, "inject": p.inject, "thresh": p.thresh, "mix_pct": p.mix_pct, "taps": p.taps, "src_phi": p.src_phi})
 
 
 def g_spec(tex, p):
-    return gpu("spec", [tex], params={"iface": p.iface, "coarsen": p.coarsen, "freeze": p.freeze, "pull": p.pull, "fill": p.fill})
+    return gpu("spec", [tex], params={"iface": p.iface, "coarsen": p.coarsen, "pull": p.pull, "fill": p.fill})
 
 
 def g_enc(state, uab, p, size):
@@ -215,36 +215,30 @@ def test_pass_hold_reseed_and_self_heal():
 
 def test_adv_matches_mirror():
     st, uab = smooth_phi(3), smooth_uab()
-    p = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0)
     err = np.max(np.abs(g_adv(st, uab, None, p) - im.adv(st, uab, None, p)))
     check("adv blend + advect, no source: max err vs mirror", err, 1e-4)
     for label, size, tol in (("source 256 (1:1)", 256, 1e-4), ("source 128 (magnified 2x)", 128, 1e-3)):
         src = smooth_source(7, size)
-        p = Params(dt=0.05, inject=0.5, taps=2.0, freeze=0.0, src_phi=1.0)
+        p = Params(dt=0.05, inject=0.5, taps=2.0, src_phi=1.0)
         err = np.max(np.abs(g_adv(st, uab, src, p) - im.adv(st, uab, src, p)))
         check(f"adv inject {label}: max err vs mirror", err, tol)
-    p0 = Params(dt=0.05, inject=0.5, taps=2.0, freeze=0.0, src_phi=0.0)
+    p0 = Params(dt=0.05, inject=0.5, taps=2.0, src_phi=0.0)
     check("adv src_phi=0 with a source present: equals the source-free mirror",
           np.max(np.abs(g_adv(st, uab, smooth_source(7), p0) - im.adv(st, uab, None, p0))), 1e-5)
-    pf = Params(dt=0.05, inject=0.5, taps=2.0, freeze=1.0, src_phi=1.0)
-    got = g_adv(st, uab, smooth_source(7), pf)
-    check("adv freeze=1: phi passes through unchanged", np.max(np.abs(got[..., 0] - st[..., 0])), 1e-6)
-    check("adv freeze=1: packed as (phi, 0, phi^3, 0) vs mirror", np.max(np.abs(got - im.adv(st, uab, None, pf))), 1e-5)
-    # clamp: phi = 3 everywhere comes out at the 1.25 bound (and freeze leaves it alone)
+    # clamp: phi = 3 everywhere comes out at the 1.25 bound
     big = im.phi_state(np.full((N, N), 3.0, F32))
     z = np.zeros((N, N, 4), F32)
-    got = g_adv(big, z, None, Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0))
+    got = g_adv(big, z, None, Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0))
     check("adv clamp: phi = 3 -> 1.25", np.max(np.abs(got[..., 0] - 1.25)), 1e-6)
     check("adv clamp: B carries 1.25^3", np.max(np.abs(got[..., 2] - 1.25 ** 3)), 1e-5)
-    got = g_adv(big, z, None, Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=1.0, src_phi=0.0))
-    check("adv freeze=1: phi = 3 is not clamped", np.max(np.abs(got[..., 0] - 3.0)), 1e-6)
     # seam: whole-texel x shifts are an exact wrapped gather (any edge clamping shows at once)
     col = np.random.default_rng(9).uniform(-1, 1, N).astype(F32)
     s2 = im.phi_state(np.tile(col, (N, 1)))
     for u, dt in ((0.25, 0.25), (0.5, 0.25), (0.75, 0.25)):
         uu = np.zeros((N, N, 4), F32)
         uu[..., 0] = uu[..., 2] = u
-        got = g_adv(s2, uu, None, Params(dt=dt, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0))
+        got = g_adv(s2, uu, None, Params(dt=dt, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0))
         shift = int(round(u * dt * N))
         want = col[(np.arange(N) - shift) % N]
         check(f"adv periodic seam, shift {shift} texels: exact wrapped gather", np.max(np.abs(got[..., 0] - want[None, :])), 1e-6)
@@ -256,27 +250,24 @@ def test_spec_matches_mirror():
     rng = np.random.default_rng(6)
     phi = rng.uniform(-1, 1, (N, N)).astype(F32)               # white noise: Nyquist bins included
     tex = fm.fft2_np(im.pack_phi(phi))
-    cases = [(4.0, 0.3, 0.0), (1.5, 1.0, 0.0), (8.0, 0.1, 0.0), (2.0, 0.6, 0.0), (4.0, 2.0, 0.0), (4.0, 0.3, 1.0),
-             (4.0, 0.0, 0.0)]
-    for iface, c, fr in cases:
-        p = Params(iface=iface, coarsen=c, freeze=fr)
+    cases = [(4.0, 0.3), (1.5, 1.0), (8.0, 0.1), (2.0, 0.6), (4.0, 2.0), (4.0, 0.0)]
+    for iface, c in cases:
+        p = Params(iface=iface, coarsen=c)
         err = rel(g_spec(tex, p), im.spec(tex, p))
-        check(f"spec iface={iface:g} coarsen={c:g} freeze={fr:g}: rel err vs mirror", err, 1e-4)
+        check(f"spec iface={iface:g} coarsen={c:g}: rel err vs mirror", err, 1e-4)
     g_spec(tex, Params())                                       # back to the defaults
-    p = Params(iface=4.0, coarsen=1.0, freeze=0.0, pull=0.0)
+    p = Params(iface=4.0, coarsen=1.0, pull=0.0)
     out = g_spec(tex, p)
     check("spec pull 0: the k = 0 bin is exactly its input (factor 1, fn 0)", float(np.max(np.abs(out[0, 0, 0:2] - tex[0, 0, 0:2]))), 1e-4)
     check("spec: B and A are zero on output", float(np.max(np.abs(out[..., 2:]))), 0)
     # pull: only the k = 0 bin moves, toward fill * N^2 at PULL_MAX * pull^3
-    pp = Params(iface=4.0, coarsen=1.0, freeze=0.0, pull=1.0, fill=0.2)
+    pp = Params(iface=4.0, coarsen=1.0, pull=1.0, fill=0.2)
     outp = g_spec(tex, pp)
     want = float(tex[0, 0, 0]) + im.PULL_MAX * (0.2 * N * N - float(tex[0, 0, 0]))
     check("spec pull 1 fill 0.2: k = 0 bin vs closed form (rel)", abs(float(outp[0, 0, 0]) - want) / abs(want), 1e-4)
     rest = np.ones((N, N), bool)
     rest[0, 0] = False
     check("spec pull 1: every other bin equals the pull-0 output", float(np.max(np.abs(outp[..., 0:2][rest] - out[..., 0:2][rest]))), 1e-4)
-    pf = Params(iface=4.0, coarsen=1.0, freeze=1.0, pull=1.0, fill=0.2)
-    check("spec freeze 1: pull is off, k = 0 bin is its input", float(np.max(np.abs(g_spec(tex, pf)[0, 0, 0:2] - tex[0, 0, 0:2]))), 1e-4)
     g_spec(tex, Params(pull=0.0))                               # pin pull back
 
 
@@ -330,10 +321,10 @@ def test_mix_matches_mirror_in_adv_and_enc():
     the phi-grey outlet must not move with it."""
     st, uab = smooth_phi(3), smooth_uab()
     for m in (0.0, 20.0, 80.0, 100.0):
-        p = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, mix_pct=m)
+        p = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0, mix_pct=m)
         err = np.max(np.abs(g_adv(st, uab, None, p) - im.adv(st, uab, None, p)))
         check(f"adv mix_pct={m:g}: max err vs mirror", err, 1e-4)
-    p50 = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, mix_pct=50.0)
+    p50 = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0, mix_pct=50.0)
     p0 = p50.with_(mix_pct=0.0)
     d = np.max(np.abs(g_adv(st, uab, None, p0) - g_adv(st, uab, None, p50)))
     check("adv: mix 0 differs from mix 50 (the control does something)", max(1e-3 - d, 0.0), 0.0)
@@ -354,7 +345,7 @@ def test_multiframe_matches_mirror():
     """100 frames of the real stage chain (Python passes each stage's GPU output to the next) vs the
     mirror, from the GPU's own reseeded noise state, with two different smooth flows blended by phi."""
     A, B = smooth_vecfield(21), smooth_vecfield(22)
-    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, src_a=1.0, src_b=1.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0, src_a=1.0, src_b=1.0)
     uab_g = g_inab(A, B, p)
     check("multiframe: inab vs mirror", np.max(np.abs(uab_g - im.inab(A, B, p.taps, 1.0, 1.0, N))), 1e-4)
     st0 = g_pass(np.zeros((N, N, 4), F32), 1.0, 3.0, 0.0)
@@ -378,7 +369,7 @@ def test_multiframe_matches_mirror():
 
 def test_multiframe_with_injection_matches_mirror():
     A, B = smooth_vecfield(23), smooth_vecfield(24)
-    p = Params(dt=0.02, iface=4.0, coarsen=0.5, inject=0.3, taps=2.0, freeze=0.0, src_phi=1.0, src_a=1.0, src_b=1.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=0.5, inject=0.3, taps=2.0, src_phi=1.0, src_a=1.0, src_b=1.0)
     src = smooth_source(25, 128)
     uab_g = g_inab(A, B, p)
     g = m = g_pass(np.zeros((N, N, 4), F32), 1.0, 5.0, -0.3)
@@ -393,7 +384,7 @@ def test_multiframe_with_injection_matches_mirror():
 
 def test_nan_in_the_state_heals_and_stays_finite():
     A, B = smooth_vecfield(26), smooth_vecfield(27)
-    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, src_a=1.0, src_b=1.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0, src_a=1.0, src_b=1.0)
     uab = g_inab(A, B, p)
     st = g_pass(np.zeros((N, N, 4), F32), 1.0, 3.0, 0.0)
     st[40, 40, 0], st[41, 41, 0] = np.nan, np.inf                # a poisoned feedback state
@@ -409,7 +400,7 @@ def test_nan_in_the_state_heals_and_stays_finite():
 
 def test_SC1_SC2_mean_conserved_and_energy_falls_on_the_gpu():
     z = np.zeros((N, N, 4), F32)                                # no flow, no injection
-    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=1.0, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0)
     g = g_pass(np.zeros((N, N, 4), F32), 1.0, 3.0, 0.2)
     mean0, e_prev, worst_drift, worst_rise = float(g[..., 0].mean()), im.free_energy(g[..., 0], p.iface), 0.0, -1e9
     for f in range(60):
@@ -428,7 +419,7 @@ def test_SC3_mode_growth_rate_on_the_gpu():
     amp0 = 1e-3
     phi = np.tile((amp0 * np.cos(2 * np.pi * 3 * x)).astype(F32), (N, 1))
     z = np.zeros((N, N, 4), F32)
-    p = Params(dt=0.02, iface=4.0, coarsen=0.3, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=0.3, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0)
     g = im.phi_state(phi)
     for f in range(6):
         g = g_step(g, z, None, p)
@@ -444,7 +435,7 @@ def test_SC3_mode_growth_rate_on_the_gpu():
 def test_SC4_interface_profile_on_the_gpu():
     x = np.arange(N) + 0.5
     z = np.zeros((N, N, 4), F32)
-    p = Params(dt=0.02, iface=4.0, coarsen=2.0, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0)
+    p = Params(dt=0.02, iface=4.0, coarsen=2.0, inject=0.0, pull=0.0, taps=2.0, src_phi=0.0)
     g = im.phi_state(np.tile(0.98 * np.sign(np.sin(2 * np.pi * 2 * x / N)), (N, 1)).astype(F32))
     for f in range(40):
         g = g_step(g, z, None, p)
@@ -475,8 +466,8 @@ def test_T017_cost_per_stage_and_total():
     st, uab = smooth_phi(), smooth_uab()
     spectral = fm.fft2_np(im.pack_phi(st[..., 0]))
     P_INAB = lambda taps: {"taps": taps, "src_a": 1.0, "src_b": 1.0}
-    P_ADV = lambda taps, srcphi: {"dt": 0.02, "inject": 0.2, "thresh": 0.5, "mix_pct": 50.0, "taps": taps, "freeze": 0.0, "src_phi": srcphi}
-    P_SPEC = {"iface": 4.0, "coarsen": 0.3, "freeze": 0.0, "pull": 0.3, "fill": 0.0}
+    P_ADV = lambda taps, srcphi: {"dt": 0.02, "inject": 0.2, "thresh": 0.5, "mix_pct": 50.0, "taps": taps, "src_phi": srcphi}
+    P_SPEC = {"iface": 4.0, "coarsen": 0.3, "pull": 0.3, "fill": 0.0}
     rows = {}
 
     def row(name, stage, inputs, dim, params):

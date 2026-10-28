@@ -315,19 +315,12 @@ def test_reseed_hold_and_uniform_states():
     check("untouched texels preserved", float(np.max(np.abs(np.delete(healed.ravel(), [5 * n + 5, 6 * n + 6]) - np.delete(phi.ravel(), [5 * n + 5, 6 * n + 6])))), 1e-7)
 
 
-def test_freeze_drift_and_determinism():
-    """FR-009 freeze: phi held through 100 frames drifts only by DFT round-trip rounding
-    (measured here); FR-014: identical inputs, parameters and seed give identical frames."""
+def test_determinism():
+    """FR-014: identical inputs, parameters and seed give identical frames."""
     n = 32
-    p = Params(freeze=1.0, inject=0.5)
+    p = Params(inject=0.5)
     s0 = im.seed(n, Params(fill=0.0), salt=3)
     A, B = rand_vecfield(48, 48, 1), rand_vecfield(48, 48, 2)
-    s = s0
-    for _ in range(100):
-        s = im.step(s, A, B, None, p)
-    drift = float(np.max(np.abs(s[..., 0] - s0[..., 0])))
-    note("freeze drift, 100 frames", f"{drift:.2e}")
-    check("freeze drift", drift, 1e-5)
 
     def run_n():
         t = im.seed(n, Params(), salt=7)
@@ -385,7 +378,7 @@ def test_injection_threshold_ramp():
 
 def test_pull_relaxes_only_the_mean_toward_fill():
     """spec's pull: phi-hat(0) relaxes toward fill*N^2 at rate PULL_MAX*pull^3 per frame; every other bin is
-    untouched; pull 0 and freeze both leave the mean exactly alone."""
+    untouched; pull 0 leaves the mean exactly alone."""
     n = 32
     rng = np.random.default_rng(3)
     phi0 = (0.4 + 0.3 * rng.standard_normal((n, n))).astype(F32)
@@ -402,8 +395,6 @@ def test_pull_relaxes_only_the_mean_toward_fill():
         dev0 = phi0 - phi0.mean()
         dev1 = s[..., 0] - s[..., 0].mean()
         check(f"pull {pull}: deviation from the mean unchanged (coarsen 0)", float(np.max(np.abs(dev1 - dev0))), 2e-6)
-    s = im.spectral_step(st, Params(coarsen=0.0, pull=1.0, fill=-0.2, freeze=1.0))
-    check("freeze: mean untouched even with pull 1", abs(float(s[..., 0].mean()) - float(phi0.mean())), 2e-6)
 
 
 def test_held_source_settles_with_pull():

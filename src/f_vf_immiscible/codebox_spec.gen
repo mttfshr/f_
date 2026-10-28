@@ -9,19 +9,17 @@
 //   - the k = 0 bin has x = 0: fa = 1, fn = 0, so the CH step conserves the mean of phi exactly
 //   - `pull` then relaxes ONLY that bin toward fill: phi-hat(0)' = phi-hat(0) + pulle (fill N^2 - phi-hat(0)),
 //     pulle = 0.05 * pull^3 (PULL_MAX of the mirror); the forward DFT is unnormalised, so phi-hat(0) = N^2 mean.
-//     This is what lets a held source settle instead of flooding. freeze = 1 switches it off.
+//     This is what lets a held source settle instead of flooding.
 //   - the fixed point is the exact Cahn-Hilliard steady state; a >= 1 never raised the energy
 //     (T004: a = 0.5 diverges at mdt >= 1e-2)
 //   - CONSTANTS FIXED BY T004 (2026-10-27), mirrored in immiscible_mirror.py -- change both together:
 //       a = 1.5 (A_STAB), mdt = 0.1 * coarsen^3 (MDT_MAX, MDT_EXP)
 //   - `coarsen` and `iface` are not clamped here; the patcher's dial ranges do that (the mirror
 //     does not clamp either). `iface` is in texels of THIS 256 grid
-//   - freeze = 1 gives mdt = 0, i.e. factor exactly 1 (phi untouched)
 //   - integer bin index is floor(norm * N), not `cell`; components are read inline on nearest()
 //   - unary minus before a parenthesis mis-parses in GenExpr; `0 - x` is used
 Param iface(4);
 Param coarsen(0.3);
-Param freeze(0);
 Param pull(0.3);
 Param fill(0);
 
@@ -35,13 +33,13 @@ ky = twopi * my;
 k2 = kx * kx + ky * ky;
 
 kappa = (iface / N) * (iface / N);
-mdt = 0.1 * coarsen * coarsen * coarsen * (1 - step(0.5, freeze));
+mdt = 0.1 * coarsen * coarsen * coarsen;
 x = mdt * k2;
 den = 1 + x * (1.5 + kappa * k2);
 fa = (1 + x * 2.5) / den;
 fn = (0 - x) / den;
 isdc = switch(k2 < 0.5, 1, 0);
-pulle = 0.05 * pull * pull * pull * (1 - step(0.5, freeze)) * isdc;
+pulle = 0.05 * pull * pull * pull * isdc;
 pushv = pulle * (fill * N * N - nearest(in1, norm).x);
 
 out1 = vec(fa * nearest(in1, norm).x + fn * nearest(in1, norm).z + pushv, fa * nearest(in1, norm).y + fn * nearest(in1, norm).w, 0, 0);

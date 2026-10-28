@@ -91,6 +91,10 @@ BYPASS_EXPECT = {
     "f_vf_lbm": {1: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6)},   # producer: bypass_gate = neutral vecfield (the solver keeps running)
     "f_ks": {1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0)},  # generator: bypass_gate = black, A=1 (the solver keeps running)
     "f_wc": {1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0)},  # generator: bypass_gate = black, A=1 (the solver keeps running)
+    "f_vf_immiscible": {                                # producer: bypass_gate on enc, both outlets neutral (G5); the solver keeps running
+        1: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # phi grey: mid grey
+        2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # blended velocity: neutral vecfield
+    },
     "f_wave_field": {                                   # generator with an optional force inlet: neutral values
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # luma: black, A = 1
         2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
@@ -171,6 +175,7 @@ PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
                             "f_tf_hatch",       # bypass_gate on stage e3 only; E1/E2 keep decoding (spec: Parameters)
                             "f_tf_aniso_blur",  # single codebox; bypass_gate inside the pass (spec: bypass = passthrough of inlet 1)
                             "f_vf_fluid",     # fluid: Param gate on enc, not native @bypass (plan ADR-8)
+                            "f_vf_immiscible",  # same: Param gate on enc, the solver keeps running (spec FR-011)
                             "f_wave_field"}   # bypass_gate on enc only; the solver keeps running underneath (spec FR-013)
 
 # Processors whose bypass is DOCUMENTED to output a neutral field, not to pass the input through,
@@ -179,7 +184,7 @@ PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
 # codebox_stage_e.gen header). The check only started to run for it when its definition moved
 # into src/ (build_cleanup T007), because modulebench.archetype() reads the definition there;
 # before that its archetype was unknown and it was silently skipped.
-NEUTRAL_BYPASS_BY_DESIGN = {"f_vf_optical_flow", "f_tf_tensormap", "f_tf_axisflow",
+NEUTRAL_BYPASS_BY_DESIGN = {"f_vf_optical_flow", "f_tf_tensormap", "f_tf_axisflow", "f_vf_immiscible",
                             "f_wave_field"}   # a generator: the force inlet is optional, bypass = black / neutral vecfield
 
 # Modules whose output follows the render CONTEXT size (512x512 in the module bench), not the

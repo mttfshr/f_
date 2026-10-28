@@ -72,7 +72,6 @@ class Params:
     fill: float = 0.0           # mean phi at reseed, and what `pull` relaxes the mean toward
     blend: float = 0.0          # 0 = plain, 1 = interface-aware (G2)
     taps: float = 2.0           # inab minification: taps x taps hardware taps per solver texel
-    freeze: float = 0.0         # 1 = phi held (no advect, no inject, spec factor 1)
     bypass_gate: float = 0.0    # 1 = neutral outlets (G5 as planned)
     src_a: float = 1.0          # vs_inState flags: input connected
     src_b: float = 1.0
@@ -235,11 +234,9 @@ def adv(state, uab, src, p):
     """Stage 3. Blend velocities by phi, backward-advect phi by it, inject from the
     source luma (phi += inject^3 * ramp(luma) * (1 - phi): bounded, phase B only; ramp is a
     smoothstep from thresh to thresh + THRESH_W), clamp, pack.
-    freeze: phi passes unchanged (no advect, no inject), still packed for the DFT."""
+    """
     h, w = state.shape[:2]
     phi = state[..., 0]
-    if p.freeze >= 0.5:
-        return store_float32(pack_phi(phi))
     nx, ny, _, _ = grid(h, w)
     u = blend_vel(uab[..., 0:2], uab[..., 2:4], phi, p.iface, p.blend, mix_pct=p.mix_pct)
     a = fm.interp(state, nx - u[..., 0] * F32(p.dt), ny - u[..., 1] * F32(p.dt))
@@ -268,17 +265,17 @@ def spec_factor(k2, mdt, kappa, a):
 
 def spec(tex, p):
     """Stage 4. R,G = phi-hat, B,A = (phi^3)^ in; R,G = phi-hat' out, B,A zero.
-    freeze gives mdt = 0, i.e. factor exactly 1."""
+    """
     h, w = tex.shape[:2]
     _, _, k2, _, _ = fm.wavenumbers(h, w)
-    mdt = 0.0 if p.freeze >= 0.5 else coarsen_to_mdt(p.coarsen)
+    mdt = coarsen_to_mdt(p.coarsen)
     fa, fn = spec_factor(k2, mdt, kappa_of(p.iface, h), A_STAB)
     out = np.zeros_like(tex)
     out[..., 0] = fa * tex[..., 0] + fn * tex[..., 2]
     out[..., 1] = fa * tex[..., 1] + fn * tex[..., 3]
-    if p.freeze < 0.5:                       # pull: relax ONLY the k = 0 bin (phi-hat(0) = h*w*mean) toward fill
-        pe = F32(PULL_MAX) * F32(p.pull) ** 3
-        out[0, 0, 0] += pe * (F32(p.fill) * F32(h * w) - tex[0, 0, 0])
+    # pull: relax ONLY the k = 0 bin (phi-hat(0) = h*w*mean) toward fill
+    pe = F32(PULL_MAX) * F32(p.pull) ** 3
+    out[0, 0, 0] += pe * (F32(p.fill) * F32(h * w) - tex[0, 0, 0])
     return store_float32(out)
 
 

@@ -44,14 +44,12 @@ ADV = """\
 //   - mix_pct (0-100, 50 = neutral) biases the VELOCITY weight toward A (below 50) or B (above 50): bm moves
 //     bw toward 0 or 1 by |mix_pct - 50| / 50, so 0 = pure A motion, 100 = pure B motion; phi itself and
 //     the phi-grey outlet are NOT shifted, only which flow advects it and what the velocity outlet carries
-//   - freeze = 1 passes phi through unchanged (no advection, no injection, no clamp), still packed
 //   - components are accessed inline on nearest()/sample(), never on a stored vec
 Param dt(0.01);
 Param inject(0.3);
 Param thresh(0.5);
 Param mix_pct(50);
 Param taps(2);
-Param freeze(0);
 Param src_phi(0);
 
 N = 256;
@@ -98,7 +96,6 @@ tt = clamp((luma - thresh) / 0.15, 0, 1);
 rmp = tt * tt * (3 - 2 * tt);
 newp = ap + inject * inject * inject * rmp * (1 - ap) * gate;
 newp = clamp(newp, -1.25, 1.25);
-newp = switch(freeze >= 0.5, ph, newp);
 out1 = vec(newp, 0, newp * newp * newp, 0);
 """
 

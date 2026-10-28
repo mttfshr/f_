@@ -12,9 +12,9 @@ Stage chain (plan ADR-1, amended 2026-10-27), solver stages at a fixed 256x256 f
     adv -> fx -> fy -> spec -> iy -> ix        (ix -> hold feedback ; ix -> enc in2)
   inab  A and B vecfields -> one packed 256x256 velocity texture (content gate, taps x taps average)
   hold  last state    pass  hold it, or reseed from the hash (Params reseed, salt, fill)
-  adv   blend + advect phi + inject (Params dt, inject, thresh, taps, src_phi; freeze stays 0, no dial)
+  adv   blend + advect phi + inject (Params dt, inject, thresh, taps, src_phi)
   fx/fy/iy/ix  separable DFT (phi and phi^3 as two complex fields)
-  spec  stabilised Cahn-Hilliard step per bin (Params iface, coarsen, pull, fill; freeze stays 0, no dial)
+  spec  stabilised Cahn-Hilliard step per bin (Params iface, coarsen, pull, fill)
   enc   render-size outlets: out0 phi grey, out1 blended velocity; bypass gate (Param bypass_gate)
 
 `r draw` goes to inab, pass and enc.  inab and pass are both chain heads on the same bang: the cold inab
