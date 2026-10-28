@@ -225,3 +225,8 @@ here (4-tap under about 0.75 ms at 1080p). M1 not measured (NF-001).
   saturated and high-contrast: the module gives back the contrast and color the source already has.
 - **Status:** the look is a gate for the module (T030): a try at Scale about 1.0-1.2, Radius about 0.8, Power 2, Rate about 0.002, Sweep 0 on
   the live camera decides whether CMAP is worth keeping.
+- **`tests/records/spike_cmap_motion.py` (sheet H, 2026-10-27):** the spec's goal tested directly: a bright disc crossing the Julia window
+  (forward map, room source, n 2, radius 0.6, inject 0.3, decay 1, scale 1.75 and 3.0, 72 frames, bilinear). Result: there IS interaction,
+  inside the window the disc is duplicated into several soft ghost copies (the map is two-to-one) that fade over some frames, with
+  small bright specks along the border. There are NO filaments or spirals: the interior contracts, so wound detail is smoothed away,
+  and a bilinear read loses fine detail each frame. The spec's "motion winds up into filaments and spirals" is not met on this source.
