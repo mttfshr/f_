@@ -14,10 +14,12 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 BLEND = """\
-// ---- blend begin (plain convex, G2; identical in codebox_adv.gen and codebox_enc.gen) ----
+// ---- blend begin (plain convex, G2, then the Mix bias on the VELOCITY weight only; identical in codebox_adv.gen and codebox_enc.gen) ----
 bw = clamp((ph + 1) * 0.5, 0, 1);
-ux = mix(uax, ubx, bw);
-uy = mix(uay, uby, bw);
+mv = (mix_pct - 50) * 0.02;
+bm = bw + (1 - bw) * max(mv, 0) - bw * max(0 - mv, 0);
+ux = mix(uax, ubx, bm);
+uy = mix(uay, uby, bm);
 // ---- blend end ----
 """
 
@@ -39,11 +41,15 @@ ADV = """\
 //     The source is averaged over a taps x taps grid of hardware taps in normalized offsets, like inab.
 //     src_phi = 0 (inlet unconnected) disables it
 //   - the clamp bound 1.25 is PHI_CLAMP of the mirror (T004: observed |phi| <= 1.03); a safety net only
+//   - mix_pct (0-100, 50 = neutral) biases the VELOCITY weight toward A (below 50) or B (above 50): bm moves
+//     bw toward 0 or 1 by |mix_pct - 50| / 50, so 0 = pure A motion, 100 = pure B motion; phi itself and
+//     out1 (phi grey) are NOT shifted, only which flow advects it and what out2 carries
 //   - freeze = 1 passes phi through unchanged (no advection, no injection, no clamp), still packed
 //   - components are accessed inline on nearest()/sample(), never on a stored vec
 Param dt(0.01);
 Param inject(0.3);
 Param thresh(0.5);
+Param mix_pct(50);
 Param taps(2);
 Param freeze(0);
 Param src_phi(0);
@@ -111,7 +117,9 @@ ENC = """\
 //   - bypass_gate = 1 mixes BOTH outlets to their own-kind neutral (0.5, 0.5, 0.5, 1): out1 mid grey,
 //     out2 the neutral vecfield (G5, decided 2026-10-27; the solver keeps running)
 //   - Param is bypass_gate, never `bypass` (native pix attribute)
+//   - mix_pct: the same Mix bias as adv (see its header); out1 (phi grey) uses the unshifted bw
 Param bypass_gate(0);
+Param mix_pct(50);
 
 N = 256;
 fx = norm.x * N - 0.5;

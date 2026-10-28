@@ -64,6 +64,9 @@ patcher = {
         {"name": "fill", "type": "float", "min": -0.6, "max": 0.6, "default": 0.0,
          "label": "Fill",
          "hint": "Mean mix at reset, and the balance point Pull relaxes toward: negative = mostly A, positive = mostly B"},
+        {"name": "mix_pct", "type": "float", "min": 0.0, "max": 100.0, "default": 50.0,
+         "label": "Mix", "widget": "numbox",
+         "hint": "Which flow moves the mix: 0 = everything moves like input A, 50 = the pattern decides, 100 = everything moves like input B. Slides between the two kinds of motion without changing the pattern"},
         {"name": "taps", "type": "int", "min": 1, "max": 16, "default": 2,
          "label": "Taps", "ui": False,
          "hint": "Input filter: taps x taps samples per solver texel for the velocity and source inputs"},
@@ -129,7 +132,7 @@ patcher = {
 # UI parameter / internal flag -> the stage(s) whose codebox Param it sets (the first is the control's
 # param_connect target).
 _STAGES_OF = {"dt": "adv", "iface": "spec", "coarsen": "spec", "inject": "adv", "thresh": "adv", "pull": "spec",
-              "fill": ["pass", "spec"], "taps": ["inab", "adv"],
+              "fill": ["pass", "spec"], "mix_pct": ["adv", "enc"], "taps": ["inab", "adv"],
               "reseed": "pass", "salt": "pass"}
 for _p in patcher["params"]:
     if _p["name"] in _STAGES_OF:

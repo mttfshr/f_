@@ -66,7 +66,7 @@ def g_pass(hold, reseed, salt=0.0, fill=0.0):
 
 def g_adv(state, uab, src, p):
     return gpu("adv", [state, uab, NOSRC if src is None else src], dim=(N, N),
-               params={"dt": p.dt, "inject": p.inject, "thresh": p.thresh, "taps": p.taps, "freeze": p.freeze, "src_phi": p.src_phi})
+               params={"dt": p.dt, "inject": p.inject, "thresh": p.thresh, "mix_pct": p.mix_pct, "taps": p.taps, "freeze": p.freeze, "src_phi": p.src_phi})
 
 
 def g_spec(tex, p):
@@ -75,7 +75,7 @@ def g_spec(tex, p):
 
 def g_enc(state, uab, p, size):
     h, w = size
-    o = gpu("enc", [BANG, uab, state], dim=(w, h), params={"bypass_gate": p.bypass_gate}, all_outputs=True)
+    o = gpu("enc", [BANG, uab, state], dim=(w, h), params={"bypass_gate": p.bypass_gate, "mix_pct": p.mix_pct}, all_outputs=True)
     return o[0], o[1]
 
 
@@ -441,7 +441,7 @@ def test_T017_cost_per_stage_and_total():
     st, uab = smooth_phi(), smooth_uab()
     spectral = fm.fft2_np(im.pack_phi(st[..., 0]))
     P_INAB = lambda taps: {"taps": taps, "src_a": 1.0, "src_b": 1.0}
-    P_ADV = lambda taps, srcphi: {"dt": 0.02, "inject": 0.2, "thresh": 0.5, "taps": taps, "freeze": 0.0, "src_phi": srcphi}
+    P_ADV = lambda taps, srcphi: {"dt": 0.02, "inject": 0.2, "thresh": 0.5, "mix_pct": 50.0, "taps": taps, "freeze": 0.0, "src_phi": srcphi}
     P_SPEC = {"iface": 4.0, "coarsen": 0.3, "freeze": 0.0, "pull": 0.3, "fill": 0.0}
     rows = {}
 
@@ -462,7 +462,7 @@ def test_T017_cost_per_stage_and_total():
     for stage, inp in t.items():
         row(stage, stage, [inp], None, None)
     row("spec", "spec", [spectral], None, P_SPEC)
-    row("enc 1080p", "enc", [BANG, uab, st], (1920, 1080), {"bypass_gate": 0.0})
+    row("enc 1080p", "enc", [BANG, uab, st], (1920, 1080), {"bypass_gate": 0.0, "mix_pct": 50.0})
     total_hd = (rows["inab 1080p x2 taps 2"] + rows["adv + 1080p source taps 2"] + rows["fx"] + rows["fy"]
                 + rows["spec"] + rows["iy"] + rows["ix"] + rows["enc 1080p"])
     print(f"    ...  TOTAL at 1920x1080, taps 2 (inab + adv-with-source + 4 DFT + spec + enc): {total_hd:.3f} ms/frame")
@@ -470,7 +470,7 @@ def test_T017_cost_per_stage_and_total():
     A_4k, B_4k, src_4k = rand_force(2160, 3840, 5), rand_force(2160, 3840, 6), rand_force(2160, 3840, 7)
     row("inab 4K x2 taps 2", "inab", [BANG, A_4k, B_4k], (N, N), P_INAB(2))
     row("adv + 4K source taps 2", "adv", [st, uab, src_4k], (N, N), P_ADV(2, 1.0))
-    row("enc 4K", "enc", [BANG, uab, st], (3840, 2160), {"bypass_gate": 0.0})
+    row("enc 4K", "enc", [BANG, uab, st], (3840, 2160), {"bypass_gate": 0.0, "mix_pct": 50.0})
     total_4k = (rows["inab 4K x2 taps 2"] + rows["adv + 4K source taps 2"] + rows["fx"] + rows["fy"]
                 + rows["spec"] + rows["iy"] + rows["ix"] + rows["enc 4K"])
     print(f"    ...  TOTAL at 3840x2160, taps 2: {total_4k:.3f} ms/frame")

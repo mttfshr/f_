@@ -426,6 +426,39 @@ def test_held_source_settles_with_pull():
     check("pull 1: the mean settles below 0.5 (measured 0.064)", max(out[1.0] - 0.5, 0.0), 0.0)
 
 
+def test_mix_biases_velocity_weight_only():
+    """Mix (mix_pct, 50 neutral): 0 = pure A motion, 100 = pure B motion, monotone and convex in between;
+    50 changes nothing; swapping A and B with phi -> -phi and mix -> 100 - mix gives the same velocity.
+    The phi grey outlet does not move with it."""
+    rng = np.random.default_rng(11)
+    uA = rng.uniform(-0.5, 0.5, (16, 16, 2)).astype(F32)
+    uB = rng.uniform(-0.5, 0.5, (16, 16, 2)).astype(F32)
+    phi = rng.uniform(-1, 1, (16, 16)).astype(F32)
+    base = im.blend_vel(uA, uB, phi, 4.0, 0.0)
+    check("mix 50 is the identity", float(np.max(np.abs(im.blend_vel(uA, uB, phi, 4.0, 0.0, mix_pct=50.0) - base))), 0.0)
+    check("mix 0 gives pure A", float(np.max(np.abs(im.blend_vel(uA, uB, phi, 4.0, 0.0, mix_pct=0.0) - uA))), 1e-7)
+    check("mix 100 gives pure B", float(np.max(np.abs(im.blend_vel(uA, uB, phi, 4.0, 0.0, mix_pct=100.0) - uB))), 1e-7)
+    w = im.blend_weight(phi)
+    prev = None
+    worst = 0.0
+    for m in (0, 10, 25, 40, 50, 60, 75, 90, 100):
+        wm = im.mix_bias(w, m)
+        worst = max(worst, float(np.max(np.maximum(-wm, wm - 1))))
+        if prev is not None:
+            worst = max(worst, float(np.max(prev - wm)))
+        prev = wm
+    check("weight stays in [0, 1] and never falls as mix rises", worst, 1e-7)
+    for m in (0.0, 20.0, 70.0, 100.0):
+        a = im.blend_vel(uA, uB, phi, 4.0, 0.0, mix_pct=m)
+        b = im.blend_vel(uB, uA, -phi, 4.0, 0.0, mix_pct=100.0 - m)
+        check(f"swap A/B, phi -> -phi, mix {m:g} -> {100 - m:g}", float(np.max(np.abs(a - b))), 1e-6)
+    st = im.phi_state(phi)
+    A = np.zeros((16, 16, 4), F32)
+    o0a, _ = im.outputs(st, A, A, Params(mix_pct=0.0), (16, 16))
+    o0b, _ = im.outputs(st, A, A, Params(mix_pct=100.0), (16, 16))
+    check("phi grey outlet is the same at mix 0 and mix 100", float(np.max(np.abs(o0a - o0b))), 0.0)
+
+
 # ------------------------------------------------------------- mutations
 
 @contextlib.contextmanager

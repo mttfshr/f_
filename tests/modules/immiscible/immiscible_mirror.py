@@ -67,6 +67,7 @@ class Params:
     coarsen: float = 0.3        # dial -> per-frame mobility*dt via coarsen_to_mdt()
     inject: float = 0.3         # in0 deposit dial (rate = inject^3)
     thresh: float = 0.5         # source luma where deposit starts (smoothstep over THRESH_W)
+    mix_pct: float = 50.0       # Mix: 0 = pure A motion, 50 = neutral, 100 = pure B motion (velocity weight only)
     pull: float = 0.3           # mean-of-phi relaxation toward fill (rate = PULL_MAX * pull^3 per frame)
     fill: float = 0.0           # mean phi at reseed, and what `pull` relaxes the mean toward
     blend: float = 0.0          # 0 = plain, 1 = interface-aware (G2)
@@ -142,14 +143,22 @@ def tap_avg(tex, taps, h, w):
     return out
 
 
-def blend_vel(uA, uB, phi, iface, mode, n_solver=N_SOLVER):
+def mix_bias(w, mix_pct):
+    """The Mix bias on the velocity weight: moves w toward 1 (mix_pct > 50) or 0 (< 50) by |mix_pct - 50| / 50.
+    50 is exactly the identity; 0 gives w = 0 (pure A), 100 gives w = 1 (pure B)."""
+    mv = (F32(mix_pct) - F32(50.0)) * F32(0.02)
+    return (w + (F32(1.0) - w) * max(mv, F32(0.0)) - w * max(F32(0.0) - mv, F32(0.0))).astype(F32)
+
+
+def blend_vel(uA, uB, phi, iface, mode, n_solver=N_SOLVER, mix_pct=50.0):
     """Blended velocity, h x w x 2 (float32). mode < 0.5: plain convex blend.
     mode >= 0.5: interface-aware (plan ADR-3): the normal component is moved toward
     the band-weighted average of the two normals, which SPREADS the normal jump over
     the band (it does not remove it: spec, Settled model).
     The weight uses blend_weight(phi); the gradient is taken on whatever grid phi is on."""
     w = blend_weight(phi)[..., None]
-    up = ((F32(1.0) - w) * uA + w * uB).astype(F32)
+    wm = mix_bias(w, mix_pct)
+    up = ((F32(1.0) - wm) * uA + wm * uB).astype(F32)
     if mode < 0.5:
         return up
     gx, gy = grad_phi(phi)
@@ -232,7 +241,7 @@ def adv(state, uab, src, p):
     if p.freeze >= 0.5:
         return store_float32(pack_phi(phi))
     nx, ny, _, _ = grid(h, w)
-    u = blend_vel(uab[..., 0:2], uab[..., 2:4], phi, p.iface, p.blend)
+    u = blend_vel(uab[..., 0:2], uab[..., 2:4], phi, p.iface, p.blend, mix_pct=p.mix_pct)
     a = fm.interp(state, nx - u[..., 0] * F32(p.dt), ny - u[..., 1] * F32(p.dt))
     newphi = a[..., 0]
     if src is not None and p.src_phi >= 0.5 and p.inject != 0:
@@ -290,7 +299,7 @@ def enc(state, uab, p, size):
     nx, ny, _, _ = grid(h, w)
     phi = fm.interp(state, nx, ny)[..., 0]
     u4 = fm.interp(uab, nx, ny)
-    u = blend_vel(u4[..., 0:2], u4[..., 2:4], phi, p.iface, p.blend)
+    u = blend_vel(u4[..., 0:2], u4[..., 2:4], phi, p.iface, p.blend, mix_pct=p.mix_pct)
     half = F32(0.5)
     wv = blend_weight(phi)
     o0 = np.zeros((h, w, 4), F32)

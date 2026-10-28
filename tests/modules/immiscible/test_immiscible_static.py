@@ -142,9 +142,9 @@ def test_constants_match_the_mirror():
 
 def test_stage_params_are_the_planned_ones():
     want = {"inab": {"taps", "src_a", "src_b"}, "pass": {"reseed", "salt", "fill"},
-            "adv": {"dt", "inject", "thresh", "taps", "freeze", "src_phi"},
+            "adv": {"dt", "inject", "thresh", "mix_pct", "taps", "freeze", "src_phi"},
             "spec": {"iface", "coarsen", "freeze", "pull", "fill"},
-            "enc": {"bypass_gate"}}
+            "enc": {"bypass_gate", "mix_pct"}}
     bad = 0
     for n, w in want.items():
         got = set(re.findall(r"^Param\s+(\w+)\s*\(", text(n), re.M))
