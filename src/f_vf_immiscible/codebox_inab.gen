@@ -1,0 +1,40 @@
+// codebox_inab.gen -- f_vf_immiscible stage 0: decode, content-gate and minify BOTH upstream velocity
+// vecfields onto the 256x256 solver grid, packed into one texture. Mirror: immiscible_mirror.inab().
+//
+// Inputs (jit.gl.pix inlets): in1 = `r draw` bang (unused; it only triggers the render every frame),
+// in2 = velocity vecfield A at render resolution (via vs_inState), in3 = velocity vecfield B (same).
+// Output: R,G = uA.x,uA.y   B,A = uB.x,uB.y   in decoded f_vecfield units (p - 0.5) * 2.
+// An unconnected or invalid input reads as ZERO velocity.
+//   - gate per input = (src flag >= 0.5) * (|B - 0.5| < 0.25 at the single centre tap). A real
+//     f_vecfield has B = 0.5 (contract); vs_black is all zeros, which would decode as -1. vs_inState's
+//     connected flag lags at load/disconnect, so the content check is needed as well (f_vf_fluid, 2026-09-23)
+//   - TAP GRID: each input is averaged over a taps x taps grid of hardware sample() taps spread across the
+//     solver texel's footprint, offsets in NORMALIZED coordinates (a codebox cannot read a texture's size).
+//     Same scheme and findings as f_vf_fluid's force taps (T038a). Cost ~ 4 taps^2 fetches per texel
+//   - components are accessed inline on sample(), never on a stored vec
+//   - never name a Param `bypass`; src_a / src_b are the vs_inState flags
+Param taps(2);
+Param src_a(0);
+Param src_b(0);
+
+N = 256;
+gate_a = switch(src_a >= 0.5, 1, 0) * switch(abs(sample(in2, norm).z - 0.5) < 0.25, 1, 0);
+gate_b = switch(src_b >= 0.5, 1, 0) * switch(abs(sample(in3, norm).z - 0.5) < 0.25, 1, 0);
+
+tn = max(1, floor(taps));
+sax = 0;
+say = 0;
+sbx = 0;
+sby = 0;
+for (a = 0; a < tn; a += 1) {
+  ox = ((a + 0.5) / tn - 0.5) / N;
+  for (b = 0; b < tn; b += 1) {
+    oy = ((b + 0.5) / tn - 0.5) / N;
+    sax += sample(in2, vec(norm.x + ox, norm.y + oy)).x;
+    say += sample(in2, vec(norm.x + ox, norm.y + oy)).y;
+    sbx += sample(in3, vec(norm.x + ox, norm.y + oy)).x;
+    sby += sample(in3, vec(norm.x + ox, norm.y + oy)).y;
+  }
+}
+nt = tn * tn;
+out1 = vec((sax / nt - 0.5) * 2 * gate_a, (say / nt - 0.5) * 2 * gate_a, (sbx / nt - 0.5) * 2 * gate_b, (sby / nt - 0.5) * 2 * gate_b);
