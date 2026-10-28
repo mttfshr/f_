@@ -615,6 +615,39 @@ def numbox_box(n, p, object_name):
         },
         varname=p["name"])
 
+def slider_box(n, p, object_name):
+    """Opt-in `"widget": "slider"` on a float param: a horizontal live.slider that shows its own name and
+    value (so no label box: set `"label": None`).  `"rect": [x, y, w, h]` is its presentation rect; the
+    default is a full-width strip under the dial grid.  First used by f_vf_immiscible's crossfade."""
+    x, y, w, h = p.get("rect", [4.0, 150.0, 182.0, 17.0])
+    return box(param_obj_id(n),
+        maxclass="live.slider",
+        fontname=FONT,
+        **_hint_kw(p),
+        numinlets=1, numoutlets=2, outlettype=["", "float"],
+        orientation=0,
+        param_connect=f"{object_name}::{p['name']}",
+        parameter_enable=1,
+        patching_rect=[50.0 + n * 50.0, 80.0, w, h],
+        presentation=1,
+        presentation_rect=[float(x), float(y), float(w), float(h)],
+        saved_attribute_attributes={
+            "valueof": {
+                "parameter_initial": [float(p["default"])],
+                "parameter_initial_enable": 1,
+                "parameter_linknames": 1,
+                "parameter_longname": p["name"],
+                "parameter_mmax": float(p["max"]),
+                "parameter_mmin": float(p["min"]),
+                "parameter_modmode": _modmode(p),
+                "parameter_shortname": p["name"],
+                "parameter_type": 0,
+                "parameter_unitstyle": 1
+            }
+        },
+        showname=1, shownumber=1,
+        varname=p["name"])
+
 def text_button_box(n, p, object_name):
     col = n % 5
     row = n // 5
@@ -1782,6 +1815,8 @@ def build(defn, debug=None, side_files=None):
             # convention (vsynth-bpatcher/SKILL.md) -- live.numbox instead
             # of the float-param default live.dial
             boxes.append(numbox_box(n, p, pname))
+        elif p["type"] == "float" and p.get("widget") == "slider":
+            boxes.append(slider_box(n, p, pname))
         elif p["type"] == "float":
             boxes.append(dial_box(n, p, pname))
         elif p["type"] == "int":
