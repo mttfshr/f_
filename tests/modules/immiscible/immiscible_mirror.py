@@ -99,7 +99,7 @@ def fract(x):
 
 def hash01(cx, cy, salt):
     """Arithmetic hash in [0, 1) of texel index and salt (no sin()); Hoskins hash12 shape.
-    PROVISIONAL: T012 bit-matches the codebox hash to this."""
+    The GPU codebox (codebox_pass.gen) computes the same arithmetic but is NOT bit-identical: fract at magnitude ~2e3 amplifies float32 rounding (T016: median err 1e-9, 7.5% of texels off by ~1e-4, 0.05% wrap-flipped by 2*amp). Statistically equal; change both together."""
     s = F32(salt)
     px = fract((cx + s * F32(37.0)) * F32(0.1031))
     py = fract((cy + s * F32(17.0)) * F32(0.1030))
