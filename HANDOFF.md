@@ -1,6 +1,11 @@
 # HANDOFF
 
-## 2026-10-26, 22:45: `f_cmap` SPECCED (Phase 0 not started); `f_quasi` entry below is still the START HERE for everything else
+## 2026-10-27: `f_cmap` Phase 0 offline part DONE (T001-T005); T006 cost and gates G1-G7 owed. The `f_quasi` entry below is still the START HERE for everything else
+
+- **Built (committed):** `tests/modules/cmap/{cmap_mirror,test_cmap}.py` (9/9, 0.4 s, five mutations caught), `tests/records/spike_cmap_smear.py`, `tests/records/spike_cmap_look.py` (sheets to `tests/logs/cmap_look/`, gitignored). Full numbers in `.specify/f_cmap/tasks.md` Record (2026-10-27).
+- **Findings that matter:** (1) the default look is a Julia window: the basin interior goes flat and the live image shows outside it; `inject` ~0.3 is what makes the live image wind through the interior. (2) Bilinear loses ~9% of an 8 px wave per frame, Catmull-Rom ~1%; outside |q| > 0.2 everything aliases after ~3 frames (bilinear mush, Catmull-Rom keeps contrast). Not visibly different on the smooth synthetic source. (3) float32 identity drift 2e-2 at 3000 frames on noise: `freeze` must hold `prev` without resampling. (4) `bounds` Black leaves 82% of the frame black (candidate cut); Wrap is dim but processes the whole frame. (5) The source's disk bounds would cover 44% of a 16:9 frame: use the rectangle.
+- **Next:** gates for Matt (G1 name, G2 rectangle, G3 power, G4 sampler (recommend bilinear v1), G5, G6 cut Black?, new G7: expose the `L` scale in v1?), then T006 cost bench in Max, then Phase 1 (T020-T023). The sheets are a synthetic source, not a camera: the real look is T030.
+- **Earlier the same entry (2026-10-26, speccing):**
 
 - **What exists:** `.specify/f_cmap/{spec,tasks}.md`, `ideas/f_cmap_feedback.md` revised (🟡), `plan.md` item 13. No code, no tests run.
 - **Decisions (Matt, 2026-10-26):** for performing with live input; rectangular `z^n + w` pull only (Log dropped; a separate log-space transformer if log space keeps recurring); NO checker. Drop-in replacements: per-frame source `inject` plus a `bounds` menu (Source / Black / Wrap). Tensor field is not the core; an optional vecfield offset inlet is Phase 2.

@@ -1,7 +1,7 @@
 # Spec: f_cmap
 
 _Created: 2026-10-26_
-_Status: Specced, Phase 0 not started_
+_Status: Specced; Phase 0 offline part (T001-T005) done 2026-10-27, T006 cost and gates G1-G7 open_
 _Origin: `ideas/f_cmap_feedback.md` (mined from michaelerule/webgpgpu `Example_9`,
 omp run `webgpgpu-ideas-1`, 2026-10-23; source re-read and the design settled with Matt
 2026-10-26)._

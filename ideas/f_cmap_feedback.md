@@ -1,6 +1,6 @@
 # f_cmap — iterated complex-map feedback pull (working name)
 
-_Status: 🟡 specced 2026-10-26 (`.specify/f_cmap/{spec,tasks}.md`), Phase 0 not started.
+_Status: 🟡 specced 2026-10-26 (`.specify/f_cmap/{spec,tasks}.md`); Phase 0 offline part done 2026-10-27.
 Revised 2026-10-26 after discussion with Matt (performing with live input; no checker;
 rectangular map only). Drafted 2026-10-23 from the webgpgpu mining run
 (`webgpgpu-ideas-1`). Not tried in Max._
