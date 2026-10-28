@@ -53,7 +53,7 @@ tests/records/
 - [ ] G3 Initial state: `fill` default (proposal 0) and the reset noise. Judged live at T024.
 - [ ] G4 φ outlet encoding: `w = (φ + 1)/2` grey, neutral mid grey (proposal). Confirm at T023.
 - [x] G5 Bypass: neutral outlets (the plan). Decided by Matt 2026-10-27 (took the recommendation); no fourth pix input on `enc`.
-- [ ] G6 Solver size: 256² or 128². After T017.
+- [ ] G6 Solver size: 256² or 128². Numbers in the T017 Record. Matt 2026-10-27: keep 256² for now, decide after the live look (T023).
 - [x] G7 Phase model: Cahn–Hilliard. Decided by Matt 2026-10-27 on T006/T006b (option 1: close now, accept the 0.0264 stripes drift against the 0.02 pre-registered limit, check long-run drift in T017's offline run). The fallback is dead (T006). If the fallback wins, revise the plan (ADR-2) and T010–T017 before continuing.
 - [ ] G8 Stage 2 delivery: existing force inlet plus `f_vf_mix`, or a native inlet on `f_vf_fluid`. Phase 4.
 
