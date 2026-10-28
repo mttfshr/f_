@@ -31,7 +31,7 @@ import fluid_mirror as fm
 import immiscible_mirror as im
 from immiscible_mirror import Params
 from gpu_sim import F32
-from harness import check, note, run
+from harness import check, note, run, slow
 from dft_mirror import make_image, pack, rel_err
 from test_fluid_mirror import rand_force, smooth_state
 
@@ -422,6 +422,67 @@ def test_SC4_interface_profile_on_the_gpu():
     check("SC4 (GPU, 40 frames): stripe interface vs tanh(x / (sqrt2 iface)), max err (spec: within 10%)", err, 0.05)
 
 
+# ----------------------------------------------------------------- cost (T017, NF-001)
+
+def stage_cost(stage, inputs, dim, params=None):
+    for chain in (8, 16, 32):
+        r = bc.measure(code(stage), inputs, dim=dim, chain=chain, params=params or {})
+        if r.get("gpu_bound"):
+            return r["ms_per_pass"], chain, True
+    return r.get("ms_per_pass_upper_bound", float("nan")), chain, False
+
+
+@slow       # a timing measurement against the NF-001 budget, so also the noisiest test here; the 4K rows
+            # transfer three 133 MB textures per job. Run it when a shader or the bench setup changes.
+def test_T017_cost_per_stage_and_total():
+    """NF-001: this module's own cost. Solver stages at 256^2; inab / adv-source / enc at 1920x1080 and
+    3840x2160. Every job pins ALL its Params (the bench keeps them between jobs). The bench has a
+    resolution floor (about 0.2 ms): a row marked UPPER BOUND is not resolved."""
+    st, uab = smooth_phi(), smooth_uab()
+    spectral = fm.fft2_np(im.pack_phi(st[..., 0]))
+    P_INAB = lambda taps: {"taps": taps, "src_a": 1.0, "src_b": 1.0}
+    P_ADV = lambda taps, srcphi: {"dt": 0.02, "inject": 0.2, "taps": taps, "freeze": 0.0, "src_phi": srcphi}
+    P_SPEC = {"iface": 4.0, "coarsen": 0.3, "freeze": 0.0}
+    rows = {}
+
+    def row(name, stage, inputs, dim, params):
+        ms, chain, bound = stage_cost(stage, inputs, dim, params)
+        rows[name] = ms
+        print(f"    ...  {name:34s} {ms:7.3f} ms/pass  (chain {chain}, {'GPU bound' if bound else 'UPPER BOUND, not resolved'})")
+        return ms
+
+    A_hd, B_hd = rand_force(1080, 1920, 2), rand_force(1080, 1920, 3)
+    for taps in (1, 2, 8):
+        row(f"inab 1080p x2 taps {taps}", "inab", [BANG, A_hd, B_hd], (N, N), P_INAB(taps))
+    row("adv, no source (src_phi 0)", "adv", [st, uab, NOSRC], (N, N), P_ADV(2, 0.0))
+    src_hd = rand_force(1080, 1920, 4)
+    for taps in (1, 2, 8):
+        row(f"adv + 1080p source taps {taps}", "adv", [st, uab, src_hd], (N, N), P_ADV(taps, 1.0))
+    t = {"fx": st, "fy": st, "iy": spectral, "ix": spectral}
+    for stage, inp in t.items():
+        row(stage, stage, [inp], None, None)
+    row("spec", "spec", [spectral], None, P_SPEC)
+    row("enc 1080p", "enc", [BANG, uab, st], (1920, 1080), {"bypass_gate": 0.0})
+    total_hd = (rows["inab 1080p x2 taps 2"] + rows["adv + 1080p source taps 2"] + rows["fx"] + rows["fy"]
+                + rows["spec"] + rows["iy"] + rows["ix"] + rows["enc 1080p"])
+    print(f"    ...  TOTAL at 1920x1080, taps 2 (inab + adv-with-source + 4 DFT + spec + enc): {total_hd:.3f} ms/frame")
+    note("total at 1080p (ms/frame) vs the rough 3 ms budget in NF-001: recorded, Matt judges (G6); rows marked UPPER BOUND sit at the bench floor", total_hd)
+    A_4k, B_4k, src_4k = rand_force(2160, 3840, 5), rand_force(2160, 3840, 6), rand_force(2160, 3840, 7)
+    row("inab 4K x2 taps 2", "inab", [BANG, A_4k, B_4k], (N, N), P_INAB(2))
+    row("adv + 4K source taps 2", "adv", [st, uab, src_4k], (N, N), P_ADV(2, 1.0))
+    row("enc 4K", "enc", [BANG, uab, st], (3840, 2160), {"bypass_gate": 0.0})
+    total_4k = (rows["inab 4K x2 taps 2"] + rows["adv + 4K source taps 2"] + rows["fx"] + rows["fy"]
+                + rows["spec"] + rows["iy"] + rows["ix"] + rows["enc 4K"])
+    print(f"    ...  TOTAL at 3840x2160, taps 2: {total_4k:.3f} ms/frame")
+    note("total at 4K (ms/frame, informational)", total_4k)
+
+
 if __name__ == "__main__":
+    import os
     import sys
-    sys.exit(run(globals()))
+    only = os.environ.get("IMM_ONLY")          # e.g. IMM_ONLY=test_T017_cost_per_stage_and_total: run just those tests
+    g = globals()
+    if only:
+        keep = set(only.split(","))
+        g = {k: v for k, v in g.items() if not k.startswith("test_") or k in keep}
+    sys.exit(run(g))
