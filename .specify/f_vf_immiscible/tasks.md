@@ -49,7 +49,7 @@ tests/records/
 ### Decision gates (Matt)
 
 - [ ] G1 Name: `f_vf_immiscible` chosen 2026-10-27; confirm at T033.
-- [ ] G2 Blend rule: plain, interface-aware, or viscosity-weighted. After T007.
+- [x] G2 Blend rule: plain. Decided by Matt 2026-10-27 on T007's numbers (interface-aware raised the peak divergence in every band tried; viscosity-weighted untested). T013 carries the plain blend only; `blend` dial and the interface-aware branch are dropped from the module.
 - [ ] G3 Initial state: `fill` default (proposal 0) and the reset noise. Judged live at T024.
 - [ ] G4 φ outlet encoding: `w = (φ + 1)/2` grey, neutral mid grey (proposal). Confirm at T023.
 - [x] G5 Bypass: neutral outlets (the plan). Decided by Matt 2026-10-27 (took the recommendation); no fourth pix input on `enc`.
@@ -176,3 +176,9 @@ Only after Phase 2 is judged worth extending.
     - The 0.7 contrast gives the same ordering (plain max 13.5 vs aware 16.7–24.4).
   - Normal jump |(uB − uA)·n| at interface texels over rms|u|: median ~1.0, p90 2.9–3.1, p99 4.1–4.6 (stirred); the interface covers 16–23% of the area.
   - **Reading for G2:** the interface-aware rule does NOT lower the peak divergence; it raises it in every band tried (wider bands are less bad but still above plain), as the early datum suggested. The plain blend's divergence is large in absolute terms (its rms exceeds the sources' own velocity-gradient scale), so a downstream consumer sees real compression at the interface, and stage 2 (nudging the Fluids) is what could address it. Recommendation: **plain blend** for G2 (simplest shader, lowest divergence). Not tested: the viscosity-weighted option. Matt's gate.
+
+- 2026-10-27 (T006b pre-registration, Matt approved the follow-up and accepted G2 = plain). Written BEFORE `spike_immiscible_stirring_b.py` exists or runs. Same velocity recipe as T005 (force amp 0.6, viscosity 0.3, 200 warm-up, 600 frames, A = B = u), iface 4, coarsen 0.3 unless stated. Arms: ch and plain (the sharpening arms already failed in T006 and are dropped).
+  - Starts: **stripes** (phase B for |x − 128| < 64, mean 0, two straight interfaces); **drops** (four droplets of radius 0.14 at (64,64), (192,64), (64,192), (192,192), phase-B area about 25%, mean about −0.5); **noise** (fill 0, amp 0.05, CH only, coarsen 0.3 and 1.0).
+  - Measures every 25 frames: G = p99 |grad phi| / its frame-0 value (stripes, drops); S = p99 |grad phi| / 0.1768 (the flat-interface slope 1/(√2·iface) per texel) for the noise start; component count (drops, area >= 16 texels); mean drift; max |phi|; finite.
+  - **Pass for Cahn–Hilliard (closes G7 as Cahn–Hilliard):** stripes and drops: min G over frames 300–600 >= 0.5; mean drift <= 0.02; always finite; max |phi| <= 1.25; drops: component count at 600 between 1 and 6; CH's min G over 300–600 beats plain's on both starts. Noise: S >= 0.5 at every measured frame from 300 to 600, for both coarsen values; max |phi| <= 1.25; finite.
+  - If any of these fails: do not rescue by changing thresholds; report to Matt. No fallback is viable (sharpening failed in T006).
