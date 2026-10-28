@@ -17,7 +17,7 @@
 //   - the clamp bound 1.25 is PHI_CLAMP of the mirror (T004: observed |phi| <= 1.03); a safety net only
 //   - mix_pct (0-100, 50 = neutral) biases the VELOCITY weight toward A (below 50) or B (above 50): bm moves
 //     bw toward 0 or 1 by |mix_pct - 50| / 50, so 0 = pure A motion, 100 = pure B motion; phi itself and
-//     out1 (phi grey) are NOT shifted, only which flow advects it and what out2 carries
+//     the phi-grey outlet are NOT shifted, only which flow advects it and what the velocity outlet carries
 //   - freeze = 1 passes phi through unchanged (no advection, no injection, no clamp), still packed
 //   - components are accessed inline on nearest()/sample(), never on a stored vec
 Param dt(0.01);

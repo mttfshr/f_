@@ -263,10 +263,21 @@ def test_spec_matches_mirror():
         err = rel(g_spec(tex, p), im.spec(tex, p))
         check(f"spec iface={iface:g} coarsen={c:g} freeze={fr:g}: rel err vs mirror", err, 1e-4)
     g_spec(tex, Params())                                       # back to the defaults
-    p = Params(iface=4.0, coarsen=1.0, freeze=0.0)
+    p = Params(iface=4.0, coarsen=1.0, freeze=0.0, pull=0.0)
     out = g_spec(tex, p)
-    check("spec: the k = 0 bin is exactly its input (factor 1, fn 0)", float(np.max(np.abs(out[0, 0, 0:2] - tex[0, 0, 0:2]))), 1e-4)
+    check("spec pull 0: the k = 0 bin is exactly its input (factor 1, fn 0)", float(np.max(np.abs(out[0, 0, 0:2] - tex[0, 0, 0:2]))), 1e-4)
     check("spec: B and A are zero on output", float(np.max(np.abs(out[..., 2:]))), 0)
+    # pull: only the k = 0 bin moves, toward fill * N^2 at PULL_MAX * pull^3
+    pp = Params(iface=4.0, coarsen=1.0, freeze=0.0, pull=1.0, fill=0.2)
+    outp = g_spec(tex, pp)
+    want = float(tex[0, 0, 0]) + im.PULL_MAX * (0.2 * N * N - float(tex[0, 0, 0]))
+    check("spec pull 1 fill 0.2: k = 0 bin vs closed form (rel)", abs(float(outp[0, 0, 0]) - want) / abs(want), 1e-4)
+    rest = np.ones((N, N), bool)
+    rest[0, 0] = False
+    check("spec pull 1: every other bin equals the pull-0 output", float(np.max(np.abs(outp[..., 0:2][rest] - out[..., 0:2][rest]))), 1e-4)
+    pf = Params(iface=4.0, coarsen=1.0, freeze=1.0, pull=1.0, fill=0.2)
+    check("spec freeze 1: pull is off, k = 0 bin is its input", float(np.max(np.abs(g_spec(tex, pf)[0, 0, 0:2] - tex[0, 0, 0:2]))), 1e-4)
+    g_spec(tex, Params(pull=0.0))                               # pin pull back
 
 
 # ----------------------------------------------------------------- DFT
@@ -312,6 +323,29 @@ def test_enc_matches_mirror_on_both_outlets():
     check("out1 alpha is 1 and R = G = B", float(np.max(np.abs(o0[..., 3] - 1)) + np.max(np.abs(o0[..., 0] - o0[..., 1]))
                                                  + np.max(np.abs(o0[..., 1] - o0[..., 2]))), 1e-6)
     check("out2 B = 0.5 and A = 1 (f_vecfield contract)", float(np.max(np.abs(o1[..., 2] - 0.5)) + np.max(np.abs(o1[..., 3] - 1))), 1e-6)
+
+
+def test_mix_matches_mirror_in_adv_and_enc():
+    """Mix (mix_pct) biases the velocity weight in BOTH adv (what advects phi) and enc (what out2 carries);
+    the phi-grey outlet must not move with it."""
+    st, uab = smooth_phi(3), smooth_uab()
+    for m in (0.0, 20.0, 80.0, 100.0):
+        p = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, mix_pct=m)
+        err = np.max(np.abs(g_adv(st, uab, None, p) - im.adv(st, uab, None, p)))
+        check(f"adv mix_pct={m:g}: max err vs mirror", err, 1e-4)
+    p50 = Params(dt=0.05, inject=0.0, pull=0.0, taps=2.0, freeze=0.0, src_phi=0.0, mix_pct=50.0)
+    p0 = p50.with_(mix_pct=0.0)
+    d = np.max(np.abs(g_adv(st, uab, None, p0) - g_adv(st, uab, None, p50)))
+    check("adv: mix 0 differs from mix 50 (the control does something)", max(1e-3 - d, 0.0), 0.0)
+    st5, uab5 = smooth_phi(5), smooth_uab(13)
+    o0_ref, _ = g_enc(st5, uab5, Params(bypass_gate=0.0, mix_pct=50.0), (90, 120))
+    for m in (0.0, 25.0, 75.0, 100.0):
+        p = Params(bypass_gate=0.0, mix_pct=m)
+        o0, o1 = g_enc(st5, uab5, p, (90, 120))
+        w0, w1 = im.enc(st5, uab5, p, (90, 120))
+        check(f"enc mix_pct={m:g} out2 (velocity): max err vs mirror", np.max(np.abs(o1 - w1)), 1e-5)
+        check(f"enc mix_pct={m:g} out1 (phi grey) equals the mix-50 grey", np.max(np.abs(o0 - o0_ref)), 1e-6)
+    g_enc(st5, uab5, Params(bypass_gate=0.0, mix_pct=50.0), (90, 120))    # pin mix back
 
 
 # ----------------------------------------------------------------- the chain over many frames
