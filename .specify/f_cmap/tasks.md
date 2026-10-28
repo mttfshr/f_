@@ -230,3 +230,9 @@ here (4-tap under about 0.75 ms at 1080p). M1 not measured (NF-001).
   inside the window the disc is duplicated into several soft ghost copies (the map is two-to-one) that fade over some frames, with
   small bright specks along the border. There are NO filaments or spirals: the interior contracts, so wound detail is smoothed away,
   and a bilinear read loses fine detail each frame. The spec's "motion winds up into filaments and spirals" is not met on this source.
+- **CORRECTION (2026-10-27, later): the doc's own animation DOES wind motion into filaments.** `spike_cmap_motion.py long` (sheets I): forward map,
+  room source plus an orbiting disc and a sweeping bar, Radius 0.15, SWEEP 1.5, the source rate (0.0016 turns/frame), Decay 1.0, Inject 0.1 or 0.3,
+  450 frames (one sweep cycle), frames every 50. The window changes shape the whole time (four-pointed star, blob, lobed rosette) and drags the bar
+  and the disc into curved filaments and arcs, with the live image kept by Inject. The earlier "no filaments" verdict (sheet H) came from a STATIC window
+  (Sweep 0): the winding needs |w| to sweep through a wide range slowly. Matt's first live look used Sweep 0 (defaults), then Sweep 0.81 at Rate 0.01
+  (six times the source's rate, which smears). Defaults to change after Matt's look: Sweep 0 -> 1.5, Inject 0.05 -> 0.1, Decay 0.97 -> 1.0.
