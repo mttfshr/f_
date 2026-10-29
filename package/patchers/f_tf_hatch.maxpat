@@ -249,7 +249,7 @@
 				"box": {
 					"id": "obj-50",
 					"maxclass": "newobj",
-					"numinlets": 1,
+					"numinlets": 2,
 					"numoutlets": 2,
 					"outlettype": [
 						"jit_gl_texture",
@@ -292,13 +292,31 @@
 							},
 							{
 								"box": {
-									"code": "// Stage E2 (f_tf_hatch v2): the streamline march. in1 = E1's aux (ca, sa, coh,\n// pres), render-sized (Width / Height Params = its size). Mirrors\n// tests/modules/tf_hatch/tf_hatch_mirror.py stage_e2 (sparse mode).\n//\n// Per pixel: march N = 16 steps each way along the local axis, accumulating\n// sparse impulse noise. All geometry is in PIXEL units (steps are uniform in\n// pixels, so a non-square frame still gets round streaks).\n//   - sign continuity: the axis has no sign; each step flips it to agree with\n//     the previous direction (dot product), so there is no branch cut.\n//   - coherence enters ONLY as persistence (spec OQ1): d = normalize(w*a +\n//     (1-w)*r), w = coh^0.5, r = a per-pixel/per-step hashed unit vector.\n//     Coherent regions march ballistically (streaks), incoherent ones random-\n//     walk (grain). Never shape, never brightness.\n//   - noise lives in WORLD coordinates: round BLOB impulses from rotated value\n//     noise (blob_noise below; lattice scale from `grain`), thresholded so their\n//     coverage equals the lit probability set by `density`.\n//   - brightness = blob coverage crossed (acc * step / cell_px), so one\n//     impulse's stroke has brightness ~1 whatever reach and grain are (a low-\n//     density blob peaks below 1: same expected coverage, dimmer peak).\n//   - a path that leaves the frame stops contributing (`alive` latch).\n//   - the step must not exceed the cell size (step <= cell_px) or cells can be\n//     skipped; at N = 16 this bounds reach against grain.\n//\n// Coordinates: `norm` = (i + 0.5)/size (texel centres; tests/lib/gpu_sim.py,\n// jxf.py), so the pixel's own texel centre is norm*size = i + 0.5. (`cell`\n// would be norm*(size-1): not used.) Reads: `nearest` at (pos/size). size = the\n// Width / Height Params (never `dim`: see below).\n//\n// Params (names avoid GenExpr operators: `length` is one, hence `reach`):\n//   reach    0..1  half-length of the march = reach * 0.25 * frame height\n//   grain    0..1  noise cell size, log: cells per frame height =\n//                  2^((1-grain)*6+3)\n//   density  0..1  impulse coverage = 0.0025 * 2^(5*density), via the\n//                  closed-form blob threshold\n// out1 = (raw blob-coverage-crossed, pres, 0, 1)\n\n// Hashes WITHOUT sin (Hoskins' \"hash without sine\"): sin(ix*127.1+iy*311.7)*43758\n// loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p\n// lattices), which can make the lit-cell pattern clump and flip with tiny\n// `grain` changes. Every intermediate here stays below ~1e3.\nhash12(ha, hb) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = hx;\n    hd = hx * (hy + 33.33) + hy * (hz + 33.33) + hz * (hx + 33.33);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\nhash13(ha, hb, hc) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = fract(hc * 0.1031);\n    hd = hx * (hz + 31.32) + hy * (hy + 31.32) + hz * (hx + 31.32);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\n// Band-limited blob impulse (2026-10-29; mirror: blob_noise / value_noise). Quintic value\n// noise on a lattice ROTATED 22.5 deg (cos 0.9238795, sin 0.3826834: the pixel's axis and\n// diagonal directions see the same noise), thresholded with a soft ramp. Replaces the lit\n// lattice cells, whose squares painted axis-aligned rectangles. bext = (W + H)/cell keeps\n// the lattice index positive after the rotation. Four hash12 taps per sample.\nblob_noise(cx, cy, cell_sz, bthr, bwid, bext) {\n    bu = (0.9238795 * cx - 0.3826834 * cy) / cell_sz + bext;\n    bv = (0.3826834 * cx + 0.9238795 * cy) / cell_sz + bext;\n    bi = floor(bu);\n    bj = floor(bv);\n    bfu = bu - bi;\n    bfv = bv - bj;\n    bfu = bfu * bfu * bfu * (bfu * (bfu * 6.0 - 15.0) + 10.0);\n    bfv = bfv * bfv * bfv * (bfv * (bfv * 6.0 - 15.0) + 10.0);\n    bh00 = hash12(bi, bj);\n    bh10 = hash12(bi + 1.0, bj);\n    bh01 = hash12(bi, bj + 1.0);\n    bh11 = hash12(bi + 1.0, bj + 1.0);\n    bn = (bh00 * (1.0 - bfu) + bh10 * bfu) * (1.0 - bfv) + (bh01 * (1.0 - bfu) + bh11 * bfu) * bfv;\n    return smoothstep(bthr - bwid, bthr + bwid, bn);\n}\n\nParam reach(0.5);\nParam grain(0.5);\nParam density(0.7);\n// Render size. NOT `dim`: live jit.gl.pix cannot read its own size (`dim` reads ~1 x 1 in a\n// Vsynth chain, found 2026-10-29: with dim ~ 1 the position clamp [0.5, dim - 0.5] pins every\n// march step to the frame centre, so nothing follows the tensor). Vsynth drives these two Params\n// (definition `render_dim`: `r dim` -> `prepend param width/height`); nobody sets them by hand.\nParam width(1920.0);\nParam height(1080.0);\n\nwpx = width;\nhpx = height;\nx0 = norm.x * wpx;\ny0 = norm.y * hpx;\n\nhalf_len = reach * 0.25 * hpx;\nh_step = half_len / 16.0;\ncell_px = hpx / pow(2.0, (1.0 - grain) * 6.0 + 3.0);\n// blob threshold: a closed-form cubic in density, fit so the soft-ramped coverage equals the\n// lit probability 0.0025 * 2^(5 density) (mirror BLOB_THR; blob_fit.py; worst error 3.2%)\nblob_thr = 0.999341 + density * (-0.092880 + density * (0.011592 + density * -0.084665));\nblob_wid = 0.079065;                  // 0.35 * 0.2259 (BLOB_SOFT * BLOB_STD)\nblob_ext = (wpx + hpx) / cell_px;\npersist_pow = 0.5;\n\nca0 = nearest(in1, norm).x;\nsa0 = nearest(in1, norm).y;\npres0 = nearest(in1, norm).w;\n// unset axis (0, 0) -> a fixed fallback axis (E3 multiplies by presence 0 there)\nm0 = sqrt(ca0 * ca0 + sa0 * sa0);\nok0 = step(0.000001, m0);\nca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);\nsa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);\n\nacc = blob_noise(x0, y0, cell_px, blob_thr, blob_wid, blob_ext);\npx = x0;\npy = y0;\ndx = 0.0;\ndy = 0.0;\nalive = 1.0;\nsgn = 1.0;\nfor (side = 0; side < 2; side += 1) {\n    px = x0;\n    py = y0;\n    alive = 1.0;\n    sgn = 1.0 - 2.0 * side;\n    dx = sgn * ca0;\n    dy = sgn * sa0;\n    for (k = 1; k <= 16; k += 1) {\n        ux = px / wpx;      // px is clamped to [0.5, W-0.5]: strictly inside (0, 1)\n        uy = py / hpx;\n        ax = nearest(in1, vec(ux, uy)).x;\n        ay = nearest(in1, vec(ux, uy)).y;\n        coh = nearest(in1, vec(ux, uy)).z;\n        am = sqrt(ax * ax + ay * ay);\n        oka = step(0.000001, am);\n        ax = mix(1.0, ax / max(am, 0.000001), oka);\n        ay = mix(0.0, ay / max(am, 0.000001), oka);\n        dp = ax * dx + ay * dy;\n        flipv = 2.0 * step(0.0, dp) - 1.0;\n        ax = ax * flipv;\n        ay = ay * flipv;\n        wgt = pow(clamp(coh, 0.0, 1.0), persist_pow);\n        ang = twopi * hash13(floor(x0), floor(y0), k + 32.0 * side);\n        mx = wgt * ax + (1.0 - wgt) * cos(ang);\n        my = wgt * ay + (1.0 - wgt) * sin(ang);\n        mm = sqrt(mx * mx + my * my);\n        okm = step(0.000001, mm);\n        ax = mix(ax, mx / max(mm, 0.000001), okm);\n        ay = mix(ay, my / max(mm, 0.000001), okm);\n        nx = px + h_step * ax;\n        ny = py + h_step * ay;\n        alive = alive * step(0.0, nx) * step(nx, wpx) * step(0.0, ny) * step(ny, hpx);\n        px = clamp(nx, 0.5, wpx - 0.5);\n        py = clamp(ny, 0.5, hpx - 0.5);\n        dx = ax;\n        dy = ay;\n        acc = acc + alive * blob_noise(px, py, cell_px, blob_thr, blob_wid, blob_ext);\n    }\n}\nraw = acc * h_step / cell_px;\nout1 = vec(raw, pres0, 0.0, 1.0);\n",
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"code": "// Stage E2 (f_tf_hatch v2): the streamline march. in1 = E1's aux (ca, sa, coh,\n// pres), render-sized (Width / Height Params = its size). Mirrors\n// tests/modules/tf_hatch/tf_hatch_mirror.py stage_e2 (sparse mode).\n//\n// Per pixel: march N = 16 steps each way along the local axis, accumulating\n// sparse impulse noise. All geometry is in PIXEL units (steps are uniform in\n// pixels, so a non-square frame still gets round streaks).\n//   - sign continuity: the axis has no sign; each step flips it to agree with\n//     the previous direction (dot product), so there is no branch cut.\n//   - coherence enters ONLY as persistence (spec OQ1): d = normalize(w*a +\n//     (1-w)*r), w = coh^0.5, r = a per-pixel/per-step hashed unit vector.\n//     Coherent regions march ballistically (streaks), incoherent ones random-\n//     walk (grain). Never shape, never brightness.\n//   - noise lives in WORLD coordinates: round BLOB impulses from rotated value\n//     noise (blob_noise below; lattice scale from `grain`), thresholded so their\n//     coverage equals the lit probability set by `density`.\n//   - brightness = blob coverage crossed (acc * step / cell_px), so one\n//     impulse's stroke has brightness ~1 whatever reach and grain are (a low-\n//     density blob peaks below 1: same expected coverage, dimmer peak).\n//   - a path that leaves the frame stops contributing (`alive` latch).\n//   - the step must not exceed the cell size (step <= cell_px) or cells can be\n//     skipped; at N = 16 this bounds reach against grain.\n//\n// Coordinates: `norm` = (i + 0.5)/size (texel centres; tests/lib/gpu_sim.py,\n// jxf.py), so the pixel's own texel centre is norm*size = i + 0.5. (`cell`\n// would be norm*(size-1): not used.) Reads: `nearest` at (pos/size). size = the\n// Width / Height Params (never `dim`: see below).\n//\n// Params (names avoid GenExpr operators: `length` is one, hence `reach`):\n//   reach    0..1  half-length of the march = reach * 0.25 * frame height\n//   grain    0..1  noise cell size, log: cells per frame height =\n//                  2^((1-grain)*6+3)\n//   density  0..1  impulse coverage = 0.0025 * 2^(5*density), via the\n//                  closed-form blob threshold\n//   src_stroke  internal: 1 when the optional stroke-texture inlet (in2) is connected\n// out1 = (raw blob-coverage-crossed, pres, 0, 1)   (texture connected: raw = the mean impulse along the path)\n//\n// STROKE TEXTURE (2026-10-29; mirror: texture_coord / texture_impulse): with in2 connected the impulse is\n// the texture's Rec.709 luma, soft-thresholded, instead of a blob; the marks are then the texture streaked\n// along the contours. Grain = ZOOM: the texture is tiled 2^((1-grain)*6) times across the frame (grain 1 =\n// once, 64 tiles at grain 0; same six octaves as the blob cell). Density = the soft threshold on the luma:\n// smoothstep(thr - 0.1, thr + 0.1, luma), thr = 1.1 - 1.2 * density. Sampled by `nearest` at the\n// frame-normalized march position. Brightness = acc / wsum, the plain LIC mean (not blob coverage crossed).\n\n// Hashes WITHOUT sin (Hoskins' \"hash without sine\"): sin(ix*127.1+iy*311.7)*43758\n// loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p\n// lattices), which can make the lit-cell pattern clump and flip with tiny\n// `grain` changes. Every intermediate here stays below ~1e3.\nhash12(ha, hb) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = hx;\n    hd = hx * (hy + 33.33) + hy * (hz + 33.33) + hz * (hx + 33.33);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\nhash13(ha, hb, hc) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = fract(hc * 0.1031);\n    hd = hx * (hz + 31.32) + hy * (hy + 31.32) + hz * (hx + 31.32);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\n// Band-limited blob impulse (2026-10-29; mirror: blob_noise / value_noise). Quintic value\n// noise on a lattice ROTATED 22.5 deg (cos 0.9238795, sin 0.3826834: the pixel's axis and\n// diagonal directions see the same noise), thresholded with a soft ramp. Replaces the lit\n// lattice cells, whose squares painted axis-aligned rectangles. bext = (W + H)/cell keeps\n// the lattice index positive after the rotation. Four hash12 taps per sample.\nblob_noise(cx, cy, cell_sz, bthr, bwid, bext) {\n    bu = (0.9238795 * cx - 0.3826834 * cy) / cell_sz + bext;\n    bv = (0.3826834 * cx + 0.9238795 * cy) / cell_sz + bext;\n    bi = floor(bu);\n    bj = floor(bv);\n    bfu = bu - bi;\n    bfv = bv - bj;\n    bfu = bfu * bfu * bfu * (bfu * (bfu * 6.0 - 15.0) + 10.0);\n    bfv = bfv * bfv * bfv * (bfv * (bfv * 6.0 - 15.0) + 10.0);\n    bh00 = hash12(bi, bj);\n    bh10 = hash12(bi + 1.0, bj);\n    bh01 = hash12(bi, bj + 1.0);\n    bh11 = hash12(bi + 1.0, bj + 1.0);\n    bn = (bh00 * (1.0 - bfu) + bh10 * bfu) * (1.0 - bfv) + (bh01 * (1.0 - bfu) + bh11 * bfu) * bfv;\n    return smoothstep(bthr - bwid, bthr + bwid, bn);\n}\n\nParam reach(0.5);\nParam grain(0.5);\nParam density(0.7);\nParam src_stroke(0.0);    // 1 when the stroke-texture inlet is connected (vs_inState)\n// Render size. NOT `dim`: live jit.gl.pix cannot read its own size (`dim` reads ~1 x 1 in a\n// Vsynth chain, found 2026-10-29: with dim ~ 1 the position clamp [0.5, dim - 0.5] pins every\n// march step to the frame centre, so nothing follows the tensor). Vsynth drives these two Params\n// (definition `render_dim`: `r dim` -> `prepend param width/height`); nobody sets them by hand.\nParam width(1920.0);\nParam height(1080.0);\n\nwpx = width;\nhpx = height;\nx0 = norm.x * wpx;\ny0 = norm.y * hpx;\n\nhalf_len = reach * 0.25 * hpx;\nh_step = half_len / 16.0;\ncell_px = hpx / pow(2.0, (1.0 - grain) * 6.0 + 3.0);\n// blob threshold: a closed-form cubic in density, fit so the soft-ramped coverage equals the\n// lit probability 0.0025 * 2^(5 density) (mirror BLOB_THR; blob_fit.py; worst error 3.2%)\nblob_thr = 0.999341 + density * (-0.092880 + density * (0.011592 + density * -0.084665));\nblob_wid = 0.079065;                  // 0.35 * 0.2259 (BLOB_SOFT * BLOB_STD)\nblob_ext = (wpx + hpx) / cell_px;\npersist_pow = 0.5;\ntex_on = step(0.5, src_stroke);\ntiles = pow(2.0, (1.0 - grain) * 6.0);\ntex_thr = 1.1 - 1.2 * density;\n\nca0 = nearest(in1, norm).x;\nsa0 = nearest(in1, norm).y;\npres0 = nearest(in1, norm).w;\n// unset axis (0, 0) -> a fixed fallback axis (E3 multiplies by presence 0 there)\nm0 = sqrt(ca0 * ca0 + sa0 * sa0);\nok0 = step(0.000001, m0);\nca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);\nsa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);\n\nimp = 0.0;\nif (tex_on > 0.5) {\n    tu = fract(tiles * x0 / wpx);\n    tv = fract(tiles * y0 / hpx);\n    tl = 0.2126 * nearest(in2, vec(tu, tv)).x + 0.7152 * nearest(in2, vec(tu, tv)).y + 0.0722 * nearest(in2, vec(tu, tv)).z;\n    imp = smoothstep(tex_thr - 0.1, tex_thr + 0.1, tl);\n} else {\n    imp = blob_noise(x0, y0, cell_px, blob_thr, blob_wid, blob_ext);\n}\nacc = imp;\nwsum = 1.0;\npx = x0;\npy = y0;\ndx = 0.0;\ndy = 0.0;\nalive = 1.0;\nsgn = 1.0;\nfor (side = 0; side < 2; side += 1) {\n    px = x0;\n    py = y0;\n    alive = 1.0;\n    sgn = 1.0 - 2.0 * side;\n    dx = sgn * ca0;\n    dy = sgn * sa0;\n    for (k = 1; k <= 16; k += 1) {\n        ux = px / wpx;      // px is clamped to [0.5, W-0.5]: strictly inside (0, 1)\n        uy = py / hpx;\n        ax = nearest(in1, vec(ux, uy)).x;\n        ay = nearest(in1, vec(ux, uy)).y;\n        coh = nearest(in1, vec(ux, uy)).z;\n        am = sqrt(ax * ax + ay * ay);\n        oka = step(0.000001, am);\n        ax = mix(1.0, ax / max(am, 0.000001), oka);\n        ay = mix(0.0, ay / max(am, 0.000001), oka);\n        dp = ax * dx + ay * dy;\n        flipv = 2.0 * step(0.0, dp) - 1.0;\n        ax = ax * flipv;\n        ay = ay * flipv;\n        wgt = pow(clamp(coh, 0.0, 1.0), persist_pow);\n        ang = twopi * hash13(floor(x0), floor(y0), k + 32.0 * side);\n        mx = wgt * ax + (1.0 - wgt) * cos(ang);\n        my = wgt * ay + (1.0 - wgt) * sin(ang);\n        mm = sqrt(mx * mx + my * my);\n        okm = step(0.000001, mm);\n        ax = mix(ax, mx / max(mm, 0.000001), okm);\n        ay = mix(ay, my / max(mm, 0.000001), okm);\n        nx = px + h_step * ax;\n        ny = py + h_step * ay;\n        alive = alive * step(0.0, nx) * step(nx, wpx) * step(0.0, ny) * step(ny, hpx);\n        px = clamp(nx, 0.5, wpx - 0.5);\n        py = clamp(ny, 0.5, hpx - 0.5);\n        dx = ax;\n        dy = ay;\n        if (tex_on > 0.5) {\n            tu = fract(tiles * px / wpx);\n            tv = fract(tiles * py / hpx);\n            tl = 0.2126 * nearest(in2, vec(tu, tv)).x + 0.7152 * nearest(in2, vec(tu, tv)).y + 0.0722 * nearest(in2, vec(tu, tv)).z;\n            imp = smoothstep(tex_thr - 0.1, tex_thr + 0.1, tl);\n        } else {\n            imp = blob_noise(px, py, cell_px, blob_thr, blob_wid, blob_ext);\n        }\n        acc = acc + alive * imp;\n        wsum = wsum + alive;\n    }\n}\nraw = mix(acc * h_step / cell_px, acc / wsum, tex_on);\nout1 = vec(raw, pres0, 0.0, 1.0);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 1,
+									"numinlets": 2,
 									"numoutlets": 1,
 									"outlettype": [
 										""
@@ -336,6 +354,18 @@
 									],
 									"source": [
 										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
 										0
 									]
 								}
@@ -805,6 +835,62 @@
 						"parameter_enable": 0
 					},
 					"text": "js moduleSize.js"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-100",
+					"maxclass": "inlet",
+					"comment": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs",
+					"index": 0,
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						20.0,
+						30.0,
+						30.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-101",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						260.0,
+						70.0,
+						80.0,
+						22.0
+					],
+					"text": "vs_inState"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-102",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						120.0,
+						160.0,
+						22.0
+					],
+					"text": "prepend param src_stroke"
 				}
 			},
 			{
@@ -1765,6 +1851,54 @@
 					],
 					"destination": [
 						"obj-201",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-100",
+						0
+					],
+					"destination": [
+						"obj-101",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						0
+					],
+					"destination": [
+						"obj-50",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						1
+					],
+					"destination": [
+						"obj-102",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-102",
+						0
+					],
+					"destination": [
+						"obj-50",
 						0
 					]
 				}

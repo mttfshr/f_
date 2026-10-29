@@ -32,7 +32,15 @@
 //                  2^((1-grain)*6+3)
 //   density  0..1  impulse coverage = 0.0025 * 2^(5*density), via the
 //                  closed-form blob threshold
-// out1 = (raw blob-coverage-crossed, pres, 0, 1)
+//   src_stroke  internal: 1 when the optional stroke-texture inlet (in2) is connected
+// out1 = (raw blob-coverage-crossed, pres, 0, 1)   (texture connected: raw = the mean impulse along the path)
+//
+// STROKE TEXTURE (2026-10-29; mirror: texture_coord / texture_impulse): with in2 connected the impulse is
+// the texture's Rec.709 luma, soft-thresholded, instead of a blob; the marks are then the texture streaked
+// along the contours. Grain = ZOOM: the texture is tiled 2^((1-grain)*6) times across the frame (grain 1 =
+// once, 64 tiles at grain 0; same six octaves as the blob cell). Density = the soft threshold on the luma:
+// smoothstep(thr - 0.1, thr + 0.1, luma), thr = 1.1 - 1.2 * density. Sampled by `nearest` at the
+// frame-normalized march position. Brightness = acc / wsum, the plain LIC mean (not blob coverage crossed).
 
 // Hashes WITHOUT sin (Hoskins' "hash without sine"): sin(ix*127.1+iy*311.7)*43758
 // loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p
@@ -85,6 +93,7 @@ blob_noise(cx, cy, cell_sz, bthr, bwid, bext) {
 Param reach(0.5);
 Param grain(0.5);
 Param density(0.7);
+Param src_stroke(0.0);    // 1 when the stroke-texture inlet is connected (vs_inState)
 // Render size. NOT `dim`: live jit.gl.pix cannot read its own size (`dim` reads ~1 x 1 in a
 // Vsynth chain, found 2026-10-29: with dim ~ 1 the position clamp [0.5, dim - 0.5] pins every
 // march step to the frame centre, so nothing follows the tensor). Vsynth drives these two Params
@@ -106,6 +115,9 @@ blob_thr = 0.999341 + density * (-0.092880 + density * (0.011592 + density * -0.
 blob_wid = 0.079065;                  // 0.35 * 0.2259 (BLOB_SOFT * BLOB_STD)
 blob_ext = (wpx + hpx) / cell_px;
 persist_pow = 0.5;
+tex_on = step(0.5, src_stroke);
+tiles = pow(2.0, (1.0 - grain) * 6.0);
+tex_thr = 1.1 - 1.2 * density;
 
 ca0 = nearest(in1, norm).x;
 sa0 = nearest(in1, norm).y;
@@ -116,7 +128,17 @@ ok0 = step(0.000001, m0);
 ca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);
 sa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);
 
-acc = blob_noise(x0, y0, cell_px, blob_thr, blob_wid, blob_ext);
+imp = 0.0;
+if (tex_on > 0.5) {
+    tu = fract(tiles * x0 / wpx);
+    tv = fract(tiles * y0 / hpx);
+    tl = 0.2126 * nearest(in2, vec(tu, tv)).x + 0.7152 * nearest(in2, vec(tu, tv)).y + 0.0722 * nearest(in2, vec(tu, tv)).z;
+    imp = smoothstep(tex_thr - 0.1, tex_thr + 0.1, tl);
+} else {
+    imp = blob_noise(x0, y0, cell_px, blob_thr, blob_wid, blob_ext);
+}
+acc = imp;
+wsum = 1.0;
 px = x0;
 py = y0;
 dx = 0.0;
@@ -159,8 +181,17 @@ for (side = 0; side < 2; side += 1) {
         py = clamp(ny, 0.5, hpx - 0.5);
         dx = ax;
         dy = ay;
-        acc = acc + alive * blob_noise(px, py, cell_px, blob_thr, blob_wid, blob_ext);
+        if (tex_on > 0.5) {
+            tu = fract(tiles * px / wpx);
+            tv = fract(tiles * py / hpx);
+            tl = 0.2126 * nearest(in2, vec(tu, tv)).x + 0.7152 * nearest(in2, vec(tu, tv)).y + 0.0722 * nearest(in2, vec(tu, tv)).z;
+            imp = smoothstep(tex_thr - 0.1, tex_thr + 0.1, tl);
+        } else {
+            imp = blob_noise(px, py, cell_px, blob_thr, blob_wid, blob_ext);
+        }
+        acc = acc + alive * imp;
+        wsum = wsum + alive;
     }
 }
-raw = acc * h_step / cell_px;
+raw = mix(acc * h_step / cell_px, acc / wsum, tex_on);
 out1 = vec(raw, pres0, 0.0, 1.0);

@@ -64,7 +64,7 @@ patcher = {
             "id":        "e2",
             "name":      "#0_hatch_stage_e2",
             "gen":       "codebox_stage_e2.gen",
-            "n_inlets":  1,
+            "n_inlets":  2,
             "n_outlets": 1,
             "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   False,
@@ -84,6 +84,15 @@ patcher = {
     "pix_wires": [
         ["e1", 0, "e2", 0],   # (ca, sa, coh, pres) -> streamline march
         ["e2", 0, "e3", 0],   # (raw, pres, 0, 1)   -> style + encode
+    ],
+
+    # The optional stroke texture: the marks Hatch streaks along the contours. Unconnected -> the built-in
+    # blobs (src_stroke 0), the output is unchanged. Inside E2 it is in2 (build/spec.md mod_inlets).
+    "mod_inlets": [
+        {"label": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs",
+         "state_param": "src_stroke",
+         "fanout": [["e2", 1]],
+         "state_nodes": ["e2"]},
     ],
 
     "outlets": [
@@ -150,6 +159,8 @@ patcher = {
         },
         # Render size, driven by Vsynth through render_dim (never set by hand): `dim` reads 1 in a live
         # jit.gl.pix, so E2 takes its frame size from these two Params.
+        # 1 when the stroke-texture inlet is connected (vs_inState -> prepend param src_stroke -> E2)
+        {"name": "src_stroke", "type": "internal"},
         {"name": "width", "type": "internal"},
         {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
