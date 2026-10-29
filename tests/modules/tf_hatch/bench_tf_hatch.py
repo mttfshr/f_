@@ -116,18 +116,33 @@ def test_stage_e1_floor_and_offset():
 
 # ------------------------------------------------------------- stage E2
 
-HASH_PROBE = """ix = nearest(in1, norm).x;
+HASH12_SRC = """hash12(ha, hb) {
+    hx = fract(ha * 0.1031);
+    hy = fract(hb * 0.1031);
+    hz = hx;
+    hd = hx * (hy + 33.33) + hy * (hz + 33.33) + hz * (hx + 33.33);
+    hx = hx + hd;
+    hy = hy + hd;
+    hz = hz + hd;
+    return fract((hx + hy) * hz);
+}
+"""
+# The probe evaluates the SAME hash12 text as the shipped E2 codebox (test_hash_is_the_shipped_one asserts it).
+HASH_PROBE = HASH12_SRC + """
+ix = nearest(in1, norm).x;
 iy = nearest(in1, norm).y;
-out1 = vec(fract(sin(ix * 127.1 + iy * 311.7) * 43758.5453), 0.0, 0.0, 1.0);
+out1 = vec(hash12(ix, iy), 0.0, 0.0, 1.0);
 """
 
 
-def gpu_hash_table(n=64):
-    """The E2 lattice hash evaluated BY THE GPU for cell indices 0..n-1 (table[iy, ix]). The hash
-    sin(ix*127.1 + iy*311.7)*43758 is not reproducible across implementations (float32 arguments of
-    ~1e4, trig precision), so E2's reference uses the GPU's own hash values and the parity test is
-    about everything EXCEPT the hash: coordinates, march, sign continuity, edges, brightness. How far
-    the NumPy hash agrees with the GPU's is reported separately (a look-level fact, not a defect)."""
+def gpu_hash_table(n=192):
+    """The E2 lattice hash evaluated BY THE GPU for cell indices 0..n-1 (table[iy, ix]); 192 covers the
+    lattice of a 1080p frame at the finest useful grain. (The first E2 hash, sin(ix*127.1 + iy*311.7)*
+    43758, was not reproducible across implementations and, at 1080p lattice indices, lost its
+    precision on the GPU: the lit-cell pattern clumped and flipped with 0.01 changes of `grain`,
+    2026-10-29 live look. The hash is now sin-free and the tests below hold it to NumPy.)
+    The E2 reference below still uses the GPU's own table, so the parity test stays about everything
+    EXCEPT the hash: coordinates, march, sign continuity, edges, brightness."""
     tex = np.zeros((n, n, 4), F32)
     tex[..., 0] = np.arange(n, dtype=F32)[None, :]
     tex[..., 1] = np.arange(n, dtype=F32)[:, None]
@@ -155,14 +170,32 @@ def e2_ref(aux, params, h, table):
         m.noise_at = saved
 
 
+def test_hash_is_the_shipped_one():
+    check("bench probe uses the shipped hash12 text", 0.0 if HASH12_SRC in code("e2") else 1.0, 0.0)
+
+
+def test_hash_gpu_matches_numpy_and_is_uniform():
+    """The lattice hash at 1080p-sized cell indices (0..191): the GPU agrees with NumPy, and the lit-cell
+    pattern is uniform, not clumped (the 2026-10-29 failure was the previous sin-based hash)."""
+    table = gpu_hash_table()
+    ix, iy = np.meshgrid(np.arange(192, dtype=F32), np.arange(192, dtype=F32))
+    np_h = m.hash12(ix, iy)
+    bad = float((np.abs(np_h - table) > 0.01).mean())
+    note("NumPy vs GPU hash: fraction of cells with |dh| > 0.01", bad)
+    check("GPU hash matches NumPy (<= 1% of cells differ)", 0.0 if bad <= 0.01 else bad, 0.0)
+    lit = (table < 0.04)
+    note("lit fraction at fill 0.04", float(lit.mean()))
+    check("lit fraction within 25% of fill", abs(float(lit.mean()) / 0.04 - 1.0), 0.25)
+    blocks = lit.reshape(6, 32, 6, 32).mean(axis=(1, 3))
+    note("lit fraction per 32x32 block: min / max", (float(blocks.min()), float(blocks.max())))
+    check("no clumping: every block within 3x of fill", 0.0 if blocks.max() <= 0.12 else float(blocks.max()), 0.0)
+    check("hash value range", 0.0 if (table.min() >= 0.0 and table.max() < 1.0) else 1.0, 0.0)
+
+
 def test_stage_e2_matches_on_coherent_fields():
     """GPU march vs the mirror on constant-axis, coherence-1 fields (three axes, one of them
     across the horizontal branch cut). Fraction of pixels differing by > 0.05, plus the mean."""
     table = gpu_hash_table()
-    ix, iy = np.meshgrid(np.arange(64), np.arange(64))
-    np_h = m._fract(np.sin(ix.astype(F32) * F32(m.HASH_A) + iy.astype(F32) * F32(m.HASH_B)) * F32(m.HASH_C))
-    note("NumPy vs GPU lattice hash: fraction of cells with |dh| > 0.01 (not asserted)",
-         float((np.abs(np_h - table) > 0.01).mean()))
     for along in (20.0, 100.0, 170.0):
         h = w = 64
         aux = m.stage_e1(field_tex(h, w, along, 1.0), 100.0, aux_mode="unsigned_nearest")

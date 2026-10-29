@@ -30,10 +30,36 @@
 //   density  0..1  lit-cell probability fill = 0.0025 * 2^(5*density)
 // out1 = (raw lit-cells-crossed, pres, 0, 1)
 
+// Hashes WITHOUT sin (Hoskins' "hash without sine"): sin(ix*127.1+iy*311.7)*43758
+// loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p
+// lattices), which can make the lit-cell pattern clump and flip with tiny
+// `grain` changes. Every intermediate here stays below ~1e3.
+hash12(ha, hb) {
+    hx = fract(ha * 0.1031);
+    hy = fract(hb * 0.1031);
+    hz = hx;
+    hd = hx * (hy + 33.33) + hy * (hz + 33.33) + hz * (hx + 33.33);
+    hx = hx + hd;
+    hy = hy + hd;
+    hz = hz + hd;
+    return fract((hx + hy) * hz);
+}
+
+hash13(ha, hb, hc) {
+    hx = fract(ha * 0.1031);
+    hy = fract(hb * 0.1031);
+    hz = fract(hc * 0.1031);
+    hd = hx * (hz + 31.32) + hy * (hy + 31.32) + hz * (hx + 31.32);
+    hx = hx + hd;
+    hy = hy + hd;
+    hz = hz + hd;
+    return fract((hx + hy) * hz);
+}
+
 lit_noise(cx, cy, cell_sz, fl) {
     ix = floor(cx / cell_sz);
     iy = floor(cy / cell_sz);
-    hv = fract(sin(ix * 127.1 + iy * 311.7) * 43758.5453);
+    hv = hash12(ix, iy);
     return 1.0 - step(fl, hv);
 }
 
@@ -62,7 +88,6 @@ ca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);
 sa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);
 
 acc = lit_noise(x0, y0, cell_px, fill_frac);
-idxp = floor(y0) * wpx + floor(x0);
 px = x0;
 py = y0;
 dx = 0.0;
@@ -91,7 +116,7 @@ for (side = 0; side < 2; side += 1) {
         ax = ax * flipv;
         ay = ay * flipv;
         wgt = pow(clamp(coh, 0.0, 1.0), persist_pow);
-        ang = twopi * fract(sin(idxp * 12.9898 + k * 78.233 + sgn * 37.719) * 43758.5453);
+        ang = twopi * hash13(floor(x0), floor(y0), k + 32.0 * side);
         mx = wgt * ax + (1.0 - wgt) * cos(ang);
         my = wgt * ay + (1.0 - wgt) * sin(ang);
         mm = sqrt(mx * mx + my * my);

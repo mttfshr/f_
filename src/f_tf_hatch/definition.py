@@ -100,7 +100,7 @@ patcher = {
         {
             "name": "grain", "type": "float",
             "min": 0.0, "max": 1.0, "default": 0.5,
-            "hint": "Feature scale of the noise the strokes are drawn from, log-mapped: low = coarse, thick strokes; high = fine, thin strokes. PROVISIONAL.",
+            "hint": "Feature scale of the noise the strokes are drawn from, log-mapped: low = fine, thin strokes; high = coarse, thick strokes (and fewer of them). PROVISIONAL.",
             "label": "Grain",
             "pix_target": "e2",
         },

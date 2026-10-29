@@ -56,6 +56,27 @@ def _fract(x):
     return (x - np.floor(x)).astype(F32)
 
 
+def hash12(a, b):
+    """Hoskins' hash-without-sine, 2 in -> 1 out (the codebox's hash12, same op order). The old
+    sin(ix*127.1 + iy*311.7)*43758 form loses its precision on the GPU at 1080p lattice indices."""
+    x = _fract(np.asarray(a, F32) * F32(0.1031))
+    y = _fract(np.asarray(b, F32) * F32(0.1031))
+    z = x
+    d = x * (y + F32(33.33)) + y * (z + F32(33.33)) + z * (x + F32(33.33))
+    x, y, z = x + d, y + d, z + d
+    return _fract((x + y) * z)
+
+
+def hash13(a, b, c):
+    """3 in -> 1 out (the codebox's hash13): the per-pixel, per-step random direction."""
+    x = _fract(np.asarray(a, F32) * F32(0.1031))
+    y = _fract(np.asarray(b, F32) * F32(0.1031))
+    z = _fract(np.asarray(c, F32) * F32(0.1031))
+    d = x * (z + F32(31.32)) + y * (y + F32(31.32)) + z * (x + F32(31.32))
+    x, y, z = x + d, y + d, z + d
+    return _fract((x + y) * z)
+
+
 def fill_from_density(density):
     """`density` dial (0..1) -> probability a noise cell is lit (0.0025 .. 0.08)."""
     return F32(FILL_BASE * 2.0 ** (FILL_SPAN * float(density)))
@@ -157,7 +178,7 @@ def noise_at(px, py, cell_px, seed=0, fill=None):
     noise realisations; the codebox has no seed."""
     ix = np.floor(px / F32(cell_px)) + F32(101 * seed)
     iy = np.floor(py / F32(cell_px)) + F32(57 * seed)
-    h = _fract(np.sin(ix * F32(HASH_A) + iy * F32(HASH_B)) * F32(HASH_C))
+    h = hash12(ix, iy)
     if fill is None:
         return h                                  # dense: uniform white noise per cell
     return (h < F32(fill)).astype(F32)           # sparse: a lit cell (1) with probability `fill`
@@ -197,8 +218,7 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
             ax, ay = ax * flip, ay * flip
             if persist == "mix":
                 w = np.clip(samp[..., 2], 0, 1) ** F32(persist_pow)
-                ang = F32(2 * np.pi) * _fract(np.sin(idx * F32(RND_A) + F32(k) * F32(RND_B)
-                                                     + F32(sgn) * F32(RND_C)) * F32(HASH_C))
+                ang = F32(2 * np.pi) * hash13(cx, cy, F32(k + (32 if sgn < 0 else 0)))
                 rx, ry = np.cos(ang), np.sin(ang)
                 mx, my = w * ax + (F32(1) - w) * rx, w * ay + (F32(1) - w) * ry
                 mm = np.sqrt(mx * mx + my * my)
