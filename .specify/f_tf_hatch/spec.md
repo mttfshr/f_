@@ -255,8 +255,11 @@ Any of them may return in a later version once the streamline field is trusted.
   1.38 in all three: the unsigned pair's sign flip only affects a ~1 px band, a single march
   step). So the choice is cost and visual quality: **leaning `unsigned_nearest`** (one tap per
   step, no sqrt); confirm on the GPU cost spike and in stills (the axis read is texel-quantized).
-- **OQ3 — Kernel and N:** box vs cosine falloff; `N` = 8 / 16 / 32. Decided by cost
-  spike and look.
+  **Decided 2026-10-28 (GPU spike): `unsigned_nearest`.** Bilinear costs the same (1.84 vs
+  1.73 ms at N=16, 1080p) and buys nothing measurable.
+- **OQ3 — Kernel and N:** box vs cosine falloff; `N` = 8 / 16 / 32. **N decided 2026-10-28:
+  N = 16, one pass** (E2 1.7 ms at 1080p; N=32 is 3.1 ms; N=8 is at the bench floor but halves
+  the streak resolution). Kernel shape (box vs cosine) still open, a look question for Block 3.
 - **OQ4 — Outlet 1:** the unstyled streak field is plausible, but is it used? Cheap to
   keep; confirm at the helpfile.
 - **OQ6 — Dense LIC as a mode?** The smooth texture look (`fill` off) is a one-line variant

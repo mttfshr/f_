@@ -88,6 +88,28 @@ A throwaway march codebox on the bench at N = 8 / 16 / 32, nearest vs bilinear a
 ms/pass at 1080p and compares to the ≤ 5 ms module budget. Decides OQ2, OQ3 and whether
 E2 stays one pass. Needs Matt's go-ahead to run (bench rule).
 
+**RESULT (2026-10-28, `tests/records/spike_tf_hatch_lic_cost.py`, 1080p, chain 8, median of 3,
+random tensor, grain 0.5; empty-pass bench floor 0.84 ms):**
+
+| aux read | N | half-len 135 px | half-len 40 px |
+|---|---|---|---|
+| nearest | 8 | 0.80 (≈ floor) | 0.73 (≈ floor) |
+| nearest | 16 | 1.73 | 1.67 |
+| nearest | 32 | 3.09 | 3.20 |
+| bilinear | 16 | 1.84 | 1.65 |
+
+Decisions: E2 stays ONE pass at **N = 16**, **`unsigned_nearest`** (bilinear buys nothing
+measurable); N = 32 (~3.1 ms) would leave under 2 ms for E1+E3, so it is not worth it.
+Kernel length does not change cost (far taps are not slower). Whole module estimate:
+E2 1.7 + E1 + E3 (simple passes, ~0.8 each) ≈ 3.3 ms, inside the ≤ 5 ms budget. Kernel shape
+(box vs cosine) is a look question, left for Block 3.
+Parity sanity (64², coherent field): 8.7% of pixels differ by > 0.05 and GPU mean raw is 9%
+higher than the mirror's (0.241 vs 0.221), so the codebox is NOT yet mirror-exact. Probable
+cause (untested): the spike used `x0 = norm.x * dim.x`, but `norm` on jit.gl.pix is
+`i/(dim-1)`-style, not texel-centre, so the noise lattice is shifted by up to ~1 px. Block 2
+must use texel-centre coordinates (`(floor(norm*dim)+0.5)`) and the tier-2 bench must hit
+the mirror tightly; the cost numbers do not depend on this.
+
 ### Block 2: Production codeboxes + bench
 E1/E2/E3 as in Files; tier-2 diff against the mirror.
 
