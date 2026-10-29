@@ -699,6 +699,7 @@
                             "parameter_enum": [
                                 "Flow \u2207",
                                 "Fluid \u2207",
+                                "Immiscible \u2207",
                                 "Lattice Boltzmann \u2207",
                                 "Optical Flow \u2207",
                                 "Repulse \u2207",
@@ -711,7 +712,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_3_disp",
-                            "parameter_mmax": 7,
+                            "parameter_mmax": 8,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -744,6 +745,7 @@
                             "parameter_enum": [
                                 "vf_flow",
                                 "vf_fluid",
+                                "vf_immiscible",
                                 "vf_lbm",
                                 "vf_optical_flow",
                                 "vf_repulse",
@@ -756,7 +758,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_3_file",
-                            "parameter_mmax": 7,
+                            "parameter_mmax": 8,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

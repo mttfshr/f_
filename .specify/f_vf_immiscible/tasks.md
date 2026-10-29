@@ -48,7 +48,7 @@ tests/records/
 
 ### Decision gates (Matt)
 
-- [ ] G1 Name: `f_vf_immiscible` chosen 2026-10-27; confirm at T033.
+- [x] G1 Name: `f_vf_immiscible` chosen 2026-10-27; confirmed by Matt 2026-10-28.
 - [x] G2 Blend rule: plain. Decided by Matt 2026-10-27 on T007's numbers (interface-aware raised the peak divergence in every band tried; viscosity-weighted untested). T013 carries the plain blend only; `blend` dial and the interface-aware branch are dropped from the module.
 - [x] G3 Initial state: `fill` default 0 kept (Matt 2026-10-28: "the defaults are good"); reset noise as built.
 - [ ] G4 φ outlet encoding: `w = (φ + 1)/2` grey, neutral mid grey (proposal). Confirm at T023.
@@ -93,10 +93,10 @@ tests/records/
 
 ## Phase 3: Docs and registration
 
-- [ ] T030 `docs/f-reference/f_vf_immiscible.md`: as-built reference (settled model, gates and their outcomes, the divergence finding, the one-frame latency, the 256² detail limit).
-- [ ] T031 `package/help/f_vf_immiscible.maxhelp`: written in a Claude session from the `build/generate_helpfiles.py` prompt, never by an API call from a script; must show the two-Fluid setup.
-- [ ] T032 Menu entry in `src/f_modules/menu.py` (∇ marked; Processors, near `f_vf_fluid`), then `build/py.sh build/generate_menu.py`; remove `NOT_IN_MENU`; README row finalised (⚠ off if live-checked) and `generate_launch.py`; `docs/f-reference/module-inventory.md` row.
-- [ ] T033 Confirm the name (G1); update `ideas/f_vf_immiscible.md`, `ideas/INDEX.md` (🟢) and `.specify/plan.md` item 14.
+- [x] T030 (2026-10-28) `docs/f-reference/f_vf_immiscible.md`: as-built reference (settled model, gates and their outcomes, the divergence finding, the one-frame latency, the 256² detail limit).
+- [x] T031 (2026-10-28; layout not yet seen in Max) `package/help/f_vf_immiscible.maxhelp`: written in a Claude session from the `build/generate_helpfiles.py` prompt, never by an API call from a script; must show the two-Fluid setup.
+- [x] T032 (2026-10-28) Menu entry in `src/f_modules/menu.py` (∇ marked; Processors, near `f_vf_fluid`), then `build/py.sh build/generate_menu.py`; remove `NOT_IN_MENU`; README row finalised (⚠ off if live-checked) and `generate_launch.py`; `docs/f-reference/module-inventory.md` row.
+- [x] T033 (2026-10-28, name confirmed by Matt) Confirm the name (G1); update `ideas/f_vf_immiscible.md`, `ideas/INDEX.md` (🟢) and `.specify/plan.md` item 14.
 - [ ] T034 `module-preflight` checklist; when it passes, Matt moves `.specify/f_vf_immiscible` to `.specify/stable/`.
 
 ---

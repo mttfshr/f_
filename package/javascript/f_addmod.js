@@ -27,6 +27,7 @@ var SIZES = {
     "tone_curve":     [150, 120],
     "vf_flow":        [150,  80],
     "vf_fluid":       [190, 150],
+    "vf_immiscible":  [190, 150],
     "vf_lbm":         [197, 110],
     "vf_optical_flow":[190, 130],
     "vf_repulse":     [165,  80],

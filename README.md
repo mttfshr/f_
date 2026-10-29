@@ -65,7 +65,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 |---|---|
 | `f_vf_flow` | Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet |
 | `f_vf_fluid` | Incompressible-flow solver -- force vecfield in, evolving velocity field out; feed it to advect / warp / glow |
-| `f_vf_immiscible` | ⚠ Unfinished. Blends two velocity vecfields via a Cahn-Hilliard phase field; blended vecfield and phase out |
+| `f_vf_immiscible` | Blends two velocity vecfields (two Fluids) via a Cahn-Hilliard phase field; blended vecfield and phase out |
 | `f_vf_lbm` | Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out |
 | `f_vf_optical_flow` | Lucas-Kanade optical flow from source motion -- confidence-gated, with aperture-problem fill; two outlets |
 | `f_vf_repulse` | Texture-driven repulsion vecfield -- 16-sample ring accumulation, luma threshold, four accumulation modes |

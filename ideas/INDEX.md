@@ -132,7 +132,22 @@ substantially move a file in `ideas/`, update its entry here too.
   begin to mix" as a vecfield problem rather than image compositing. Would be a
   **fork of `f_vf_fluid`**, not a v2: the solver's parameters live in real space
   (`force`, `dt`, `gain`, cheap to vary per pixel) and in the spectral stage
-  (structural). Idea only, not specced, not named.
+  (structural). Idea only, not specced, not named. **Direction changed
+  2026-10-27: now a separate module, see `f_vf_immiscible.md`; this file is the
+  analysis record.**
+- **[f_vf_immiscible.md](f_vf_immiscible.md)** 🟢 — **Built 2026-10-28, live-checked, name confirmed.** Immiscible
+  two-fluid phase field (Cahn–Hilliard) that **requires two upstream velocity
+  vecfields**, one per phase, each from its own `f_vf_fluid` with its own
+  viscosity, and blends them by φ; stage 2 adds nudge and force outlets.
+  Separate module, not a fork. Spec and record in
+  `.specify/f_vf_immiscible/`, reference `docs/f-reference/f_vf_immiscible.md`. Cost about
+  3.7 ms at 1080p for this module alone (two Fluids not measured). Two-way coupling
+  (stage 2) is not built and needs an untested cross-module feedback cycle.
+- **[f_splat.md](f_splat.md)** ⚪ — **2026-10-27, working name.** A triggered drop:
+  an ink blot texture plus a matching impulse vecfield, as a stateless pulse
+  whose persistence is left to `f_vf_advect` and `f_vf_fluid`. The impulse needs
+  curl (swirl or dipole), or `project = 1` removes it. Idea only; stateless
+  versus held slots is open.
 - **[f_vf_wilson_cowan.md](f_vf_wilson_cowan.md)** ⚫ — **Superseded 2026-10-25** by `f_wc` ([f_wc.md](f_wc.md)).
   Was **built 2026-10-23** as the FFT-chain `f_wc_fft`: a noise-sustained Wilson-Cowan generator (the settled Rule/
   Ermentout-Cowan model, G1), one shared DFT chain for both fields, the inverse
@@ -576,7 +591,8 @@ placeholders.
   resonator and plate field with general dispersion, force inlet, point exciter and gradient vecfield. The
   solver core `f_cymascope.md` calls for.
 - **[f_ca.md](f_ca.md)** ⚪ — Discrete cellular automata generator with a rule menu (Life,
-  Ising, forest fire). No automaton exists in f_ today; needs a per-frame random source.
+  Ising, forest fire, river growth network). No automaton exists in f_ today; needs a
+  per-frame random source (the river rule does not).
 - **[f_adapt.md](f_adapt.md)** ⚪ — Temporal adaptation, novelty, change-gating and
   band-pass for plain textures (`f_tf_smooth` is tensor-only). Check core Vsynth overlap
   first.

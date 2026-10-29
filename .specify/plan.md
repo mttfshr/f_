@@ -1,6 +1,6 @@
 # f_ — Project Plan
 
-_Last updated: 2026-10-25_
+_Last updated: 2026-10-27_
 
 This document is orientation, not execution. It names active workstreams, states current thinking on sequencing and priority, and surfaces open questions that need a decision before work can proceed. Per-module task detail lives in `.specify/f_name/tasks.md`. Session-specific state and full narrative history live in `HANDOFF.md` and git log — resolved items below are kept to one line with a pointer, not the full story. Claude-directed session rules live in `CLAUDE.md` at the repo root (moved out of the README 2026-10-18); Claude Code loads it automatically, chat sessions do not, so it has to be read explicitly there.
 
@@ -63,6 +63,9 @@ This document is orientation, not execution. It names active workstreams, states
 12. **`f_wc` (Wilson-Cowan; formerly `f_formconstants`; replaces the FFT-chain `f_wc_fft`, item 8)** — **Phases 0, R and D CLOSED (Matt approved the control set 2026-10-25 17:41)** (`.specify/stable/f_wc/{spec,tasks}.md`; renamed and the old `f_wc` retired 2026-10-25, commits `121e321`, `10ffbc3`, `77d02c1`). A faithful port of `WC_Example_10_fullscreen.html`: a fixed 1024² float32 solver, 255-level quantization, separable multi-sigma Gaussian blur, a square-wave pulse `s` on E (no noise, no habituation), the bare log-polar map. The look gate (T048) passed ('almost exactly perfect'); 1.07 ms/frame at 1080p, 1.54 ms at 4K. Shipped controls (spec 'Shipped controls'): Depth, Period, Rate (slow motion by step skipping), P.Mix, P.Gain, Grain, menus Output / Input / Space, Freeze, Reset, Bypass; a pulse texture inlet (Retinal Input space by default, so a camera lands where it is seen); Space = Unwrapped gives the flat cortical grid for `f_droste`. Decided against: Quant, Inhibit, Flash / damping dials, De-flicker (now `ideas/f_deflicker.md`), map dials (overlap `f_droste`), the drive inlet (T066), the steady-web mode (T068, git `63b6129`), a solver-size menu (T064: the dynamics do not change with N, only the scale; fixed at 1024). Reference doc and helpfile drafted 2026-10-25. Phase 2 soak done by Matt live 2026-10-25 (README ⚠ off). Helpfile checked in Max by Matt 2026-10-25. Full offline suite passed 2026-10-25. Max module contract bench passed 2026-10-25 (T030 closed); nothing owed on `f_wc` except the housekeeping in HANDOFF.
 
 13. **`f_cmap`** — PAUSED 2026-10-27 (see Paused / blocked below).
+
+14. **`f_vf_immiscible`** (immiscible two-phase blend of two velocity vecfields) — **built and live-checked 2026-10-28** (`.specify/f_vf_immiscible/{spec,plan,tasks}.md`, `docs/f-reference/f_vf_immiscible.md`, `package/help/f_vf_immiscible.maxhelp`; menu entry in ∇ Fields). A Cahn–Hilliard phase field φ on an `f_ks`-style DFT chain (fixed 256²) blends two upstream `f_vf_fluid` outputs, one per phase; ten `jit.gl.pix` stages, three inlets, two outlets (φ grey, blended vecfield); dials dt, iface, coarsen, inject, thresh, pull, fill, Mix. Gates decided: G2 plain blend, G3 fill 0, G5 neutral bypass, G7 Cahn–Hilliard; name confirmed by Matt (G1). Still open: T024/T025 live looks not separately reported, G4 and G6 (256² kept) not formally closed, the `--slow` cost test not re-run since `pull`/`thresh`/`mix_pct`, Phase 4 (stage 2, G8) unscheduled. Defaults kept as shipped; the found-working set is a recorded recipe only (tasks.md Record).
+
 ---
 
 ## Paused / blocked — do not resume by default
