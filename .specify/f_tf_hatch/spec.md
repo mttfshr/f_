@@ -42,6 +42,18 @@ accumulating a procedural noise value at each step. Result:
 Hatching is the *style* of the output: a contrast/threshold stage turns the smooth LIC
 into engraved-looking lines. The topology comes from the field, not from mark design.
 
+**The input noise is sparse (decided in Phase 0, 2026-10-28, after looking).** With dense
+white noise the render was contour-streaked texture: correct, but no individual strokes
+(Matt: "contour-streaked noise"). With *sparse impulses* (a small fraction of noise cells
+lit, the rest black) each lit cell is smeared into one stroke along its streamline, so the
+output is separate strokes with gaps. That also restores v1's original intent by the right
+mechanism: where coherence is high an impulse smears into a line along the structure, where
+it is low the same impulse random-walks and stays a dot, and where it is in between the
+stroke fans out (the paths' spread grows with distance from the impulse). Stroke width is
+`grain` (the cell size), stroke length is `length` (capped at twice the half-length), the
+number of strokes is `density`. Dense LIC is no longer the design (see OQ6).
+Evidence: `spike/lic_stills_sparse_2026-10-28.png`, tier-1 test 9.
+
 **Coherence is visible, not a dial.** There is no coherence-to-shape mapping (v1's
 `commit`/aspect is gone: equating coherence with stroke length was a mistake, because
 length encodes extent not confidence, and coherence saturates near 1 on any clean edge).
@@ -108,9 +120,18 @@ out = acc / wsum
   step (dot product against the previous direction, flip if negative) is the standard LIC
   answer and is what makes the march seam-free where the axis crosses the decode's wrap
   (along-axis angle 0/180°, i.e. horizontal; the decode returns angles in (0, 180]).
-- **Noise** is procedural and stateless: a hash of the position at a `grain` scale
-  (value noise, no extra inlet). It lives in *world* coordinates, never in the pixel's
-  rotated frame, so it cannot produce origin-anchored rings.
+- **Noise** is procedural and stateless: a hash of the lattice cell the position falls
+  in, at the `grain` scale (no extra inlet). Sparse: a cell is lit (1) when its hash is
+  below `fill`, else 0. It lives in *world* coordinates, never in the pixel's rotated
+  frame, so it cannot produce origin-anchored rings.
+- **Brightness is in lit cells crossed:** E2 accumulates `Σ noise · step/cell_px`, so one
+  impulse's stroke has brightness ~1 whatever `length` and `grain` are (otherwise longer
+  strokes come out dim and dashed: the first sparse render did).
+- **A path that leaves the frame stops contributing** (weight 0 from the exit step on; the
+  axis reads stay clamped in-bounds). Clamping the position and re-counting the edge cell
+  was the first draft.
+- The march's step must not exceed the cell size (`step <= cell_px`), or a cell can be
+  skipped and strokes get gaps. At the build-time N = 16 this bounds `length`/`grain`.
 - **Kernel** `w(k)`: box to start; a smooth falloff (e.g. cosine) is a later refinement.
 - **Persistence (OQ1).** With an exactly isotropic tensor, `atan2(0,0)=0` hands the march
   a fixed (*vertical*) axis, so the incoherent region would render as clean vertical streaks,
@@ -154,7 +175,8 @@ All provisional until tier 3. Count target: ≤ 8.
 |------|------|-------|---------|
 | `length` | float | 0–1 | Total integration length (step size; `N` is fixed in the build). Longer = longer streaks |
 | `grain` | float | 0–1 | Noise feature scale, log-mapped. Smaller = finer grain, thinner streaks |
-| `contrast` | float | 0–1 | Normalization gain on the raw LIC |
+| `density` | float | 0–1 | Fraction of noise cells lit (stroke count). Provisional map `fill = 0.0025 · 2^(5·density)` → 0.0025…0.08; the 3% used in the stills is density ≈ 0.7 |
+| `contrast` | float | 0–1 | Stroke brightness gain (sparse: lit cells crossed × gain, 0.6 at 0 → 2.0 at 1, provisional) |
 | `line` | float | 0–1 | 0 = smooth LIC, 1 = hard engraved lines (threshold with a soft edge) |
 | `structure_floor` | float | 0–1 | Presence floor, carried from v1 (default 0.1 provisional) |
 | `strength` | float | 0–1 | Tensor decode calibration, carried from v1 (match tensormap's) |
@@ -201,6 +223,11 @@ Tier 1 (NumPy mirror), each on a synthetic encoded-tensor field:
 7. **Presence**: `structure_floor` blanks the weak-trace region without changing the
    streak geometry elsewhere.
 8. Neutral (zero) tensor → black. Bypass → black, A=1.
+9. **Sparse impulses keep the response** (fill 3%, length 0.25, mean of six seeds):
+   coherent → strokes 9.5 px long vs 1.3 across; isotropic → dots (ratio 1.00); the coherence
+   ramp's stroke length rises 2.8 → 4.6 → 6.8 → 7.8 → 8.8 px, then plateaus (it SATURATES at
+   the kernel cap, twice the half-length: test the rise and the plateau, not rank correlation);
+   strokes follow the rings (ridge error median 4.1°).
 
 Tier 2: bench diff of E1/E2/E3 against the mirror (`bench_tf_hatch.py`, rewritten).
 Tier 3 (Matt, live): looks like streamlines, coherence readable on the camera and on wfg
@@ -232,5 +259,10 @@ Any of them may return in a later version once the streamline field is trusted.
   spike and look.
 - **OQ4 — Outlet 1:** the unstyled streak field is plausible, but is it used? Cheap to
   keep; confirm at the helpfile.
+- **OQ6 — Dense LIC as a mode?** The smooth texture look (`fill` off) is a one-line variant
+  of the same march. Keep it as a hidden or second mode, or drop it? Decided at tier 3.
+- **OQ7 — Fanning strokes:** at mid coherence the stroke widens into a cone as the paths
+  diverge. It reads as "direction uncertain here", but is it wanted, or does it want a
+  taper or a hard cutoff? Tier 3. (`line = 1` hardens the edge but keeps the cone.)
 - **OQ5 — Fallback if the whole approach fails the look:** seeds with a per-seed tensor
   read (`f_vf_seeds` `axis_mode`), see `plan.md` § Out of this plan.

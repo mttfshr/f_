@@ -294,5 +294,51 @@ def test_line_style_is_hard_and_smooth_is_not():
     check("line=0 is graded", 0.0 if mid_s > 0.4 else 1.0, 0.0)
 
 
+def test_9_sparse_impulses_keep_the_coherence_response():
+    """The shipping input noise is SPARSE (a few lit cells smeared into strokes), not dense
+    white noise (Phase 0 stills, 2026-10-28: dense reads as contour-streaked noise, sparse
+    reads as hatching). Re-check the headline behaviours in sparse mode, fill 3%, length 0.25:
+    coherent -> long strokes; isotropic -> isolated dots (short, isotropic); coherence ramp
+    -> stroke length rises; strokes follow the field on rings."""
+    kw = dict(fill=0.03, length=0.25)
+    # (a) coherent straight: long along the axis
+    lx, ly = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 1.0), seed=s, **kw))) for s in SEEDS], 0)
+    note(f"sparse coherent: L_along={lx:.1f}px L_across={ly:.1f}px")
+    check("sparse: coherent along >= 4x across", 0.0 if lx >= 4.0 * ly else 1.0, 0.0)
+    # (b) isotropic: dots
+    lxi, lyi = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 0.0), seed=s, **kw))) for s in SEEDS], 0)
+    note(f"sparse isotropic: L_x={lxi:.1f}px L_y={lyi:.1f}px ratio {lxi / max(lyi, 1e-9):.2f}")
+    check("sparse isotropic: |L_x/L_y - 1| <= 0.5", abs(lxi / max(lyi, 1e-9) - 1.0), 0.5)
+    check("sparse isotropic: shorter than half the coherent stroke", 0.0 if lxi < 0.5 * lx else 1.0, 0.0)
+    # (c) ramp
+    coh = np.broadcast_to(np.linspace(0.0, 1.0, H)[:, None], (H, W))
+    tex = field(0.0, coh)
+    strips = [(4 + 20 * i, 4 + 20 * (i + 1)) for i in range(6)]
+    ls = np.mean([[integral_length(raw_field(chain(tex, seed=s, **kw)), slice(y0, y1), slice(16, W - 16))[0]
+                   for (y0, y1) in strips] for s in SEEDS], 0)
+    cs = [float(np.linspace(0, 1, H)[(y0 + y1) // 2]) for (y0, y1) in strips]
+    note("sparse coherence ramp, stroke length (px): " + "  ".join(f"c={c:.2f}:{v:.1f}" for c, v in zip(cs, ls)))
+    # the response SATURATES at the kernel's cap (a full stroke is 2 x half-length; ~9.5 px
+    # at length 0.25), so test the rise over the first half and that the top stays on the plateau
+    rises = all(ls[i + 1] >= 1.25 * ls[i] for i in range(2)) and all(ls[i + 1] >= ls[i] for i in range(2, 4))
+    check("sparse ramp: rises >= 25% per strip below coherence 0.45, then still non-decreasing", 0.0 if rises else 1.0, 0.0)
+    check("sparse ramp: top stays on the plateau (>= 75% of the max)", 0.0 if ls[-1] >= 0.75 * ls.max() else 1.0, 0.0)
+    check("sparse ramp: top at least 2.5x the bottom", 0.0 if ls[-1] >= 2.5 * ls[0] else 1.0, 0.0)
+    # (d) strokes follow the rings
+    x, y = _xy()
+    cx0, cy0 = W / 2 + 0.5, H / 2 + 0.5
+    along = np.rad2deg(np.arctan2(y - cy0, x - cx0)) + 90.0
+    r = np.hypot(x - cx0, y - cy0)
+    img = raw_field(chain(field(along, 1.0), fill=0.03, length=0.25))
+    gy0, gx0 = np.roll(img, -1, 0) - np.roll(img, 1, 0), np.roll(img, -1, 1) - np.roll(img, 1, 1)
+    jxx, jxy, jyy = _box(gx0 * gx0, 6), _box(gx0 * gy0, 6), _box(gy0 * gy0, 6)
+    ridge = np.rad2deg(0.5 * np.arctan2(2 * jxy, jxx - jyy)) + 90.0
+    lit = _box(img, 6) > 0.05                      # where there is any stroke to measure
+    mask = (r > 25) & (r < 50) & lit
+    err = np.abs((ridge - along + 90.0) % 180.0 - 90.0)[mask]
+    note(f"sparse rings: ridge-vs-axis error median {np.median(err):.1f} deg ({mask.sum()} px measured)")
+    check("sparse rings: median ridge error <= 20 deg", 0.0 if np.median(err) <= 20.0 else 1.0, 0.0)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

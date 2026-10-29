@@ -109,7 +109,7 @@ def _read(aux, px, py, aux_mode):
 
 # ------------------------------------------------------------------ E2 ---
 
-def noise_at(px, py, cell_px, seed=0):
+def noise_at(px, py, cell_px, seed=0, fill=None):
     """Procedural noise, WORLD coordinates (never the pixel's rotated frame --
     the cause of v1's origin-anchored rings): a hash of the lattice cell the
     position falls in (weave's published hash form). `seed` shifts the lattice
@@ -117,11 +117,14 @@ def noise_at(px, py, cell_px, seed=0):
     noise realisations; the codebox has no seed."""
     ix = np.floor(px / F32(cell_px)) + F32(101 * seed)
     iy = np.floor(py / F32(cell_px)) + F32(57 * seed)
-    return _fract(np.sin(ix * F32(HASH_A) + iy * F32(HASH_B)) * F32(HASH_C))
+    h = _fract(np.sin(ix * F32(HASH_A) + iy * F32(HASH_B)) * F32(HASH_C))
+    if fill is None:
+        return h                                  # dense: uniform white noise per cell
+    return (h < F32(fill)).astype(F32)           # sparse: a lit cell (1) with probability `fill`
 
 
 def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
-             persist_pow=PERSIST_POW, aux_mode="doubled", n_dirs=(1, -1), seed=0):
+             persist_pow=PERSIST_POW, aux_mode="doubled", n_dirs=(1, -1), seed=0, fill=None):
     """Streamline march. For each pixel, walk n_steps each way along the local
     axis (sign-aligned against the previous step), accumulate noise_at() at
     every position, box kernel. Coherence enters ONLY through `persist`.
@@ -138,12 +141,14 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
     cells_per_h = 2.0 ** ((1.0 - grain) * GRAIN_SPAN + GRAIN_BASE)
     cell_px = H / cells_per_h
 
-    acc = noise_at(x0, y0, cell_px, seed).astype(F32)
+    acc = noise_at(x0, y0, cell_px, seed, fill).astype(F32)
     wsum = F32(1.0)
     s0 = _read(aux, x0, y0, aux_mode)
     ca0, sa0 = _axis_from_aux(s0, aux_mode)
     for sgn in n_dirs:
         px, py = x0.copy(), y0.copy()
+        alive = np.ones_like(x0)      # a path that leaves the frame STOPS contributing (it used to
+                                      # clamp to the edge and re-count one cell: wedge artifacts)
         dx, dy = F32(sgn) * ca0, F32(sgn) * sa0          # start direction
         for k in range(1, n_steps + 1):
             samp = _read(aux, px, py, aux_mode)
@@ -162,19 +167,31 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
                 ay = np.where(okm, my / np.maximum(mm, F32(1e-6)), ay)
             elif persist != "off":
                 raise ValueError(persist)
-            px = np.clip(px + step * ax, F32(0.5), F32(W) - F32(0.5)).astype(F32)
-            py = np.clip(py + step * ay, F32(0.5), F32(H) - F32(0.5)).astype(F32)
+            nx_, ny_ = px + step * ax, py + step * ay
+            alive = alive * ((nx_ >= 0) & (nx_ <= W) & (ny_ >= 0) & (ny_ <= H)).astype(F32)
+            px = np.clip(nx_, F32(0.5), F32(W) - F32(0.5)).astype(F32)   # reads stay in-bounds
+            py = np.clip(ny_, F32(0.5), F32(H) - F32(0.5)).astype(F32)
             dx, dy = ax, ay
-            acc = acc + noise_at(px, py, cell_px, seed)
-            wsum += F32(1.0)
-    raw = (acc / wsum).astype(F32)
+            acc = acc + alive * noise_at(px, py, cell_px, seed, fill)
+            wsum = wsum + alive
+    if fill is None:
+        raw = (acc / wsum).astype(F32)                  # dense: the mean along the (in-frame) path
+    else:
+        # sparse: lit CELLS crossed, so one impulse's stroke has brightness ~1 whatever
+        # `length` and `grain` are (each sample spans step/cell_px of a cell)
+        raw = (acc * F32(step / cell_px)).astype(F32)
     pres = s0[..., 3]
     return g.store_float32(np.stack([raw, pres, np.zeros_like(raw), np.ones_like(raw)], -1))
 
 
 # ------------------------------------------------------------------ E3 ---
 
-def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0):
+SPARSE_GAIN_LO = 0.6  # sparse input: raw is in lit-cells-crossed (one impulse ~ 1), so the gain is
+SPARSE_GAIN_HI = 2.0  # O(1): contrast 0 -> 0.6 (dim strokes), contrast 1 -> 2.0 (saturated).
+                      # PROVISIONAL exploration values.
+
+
+def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0, fill=None):
     """Normalize + style + presence + encode (the only clamp). The mean of
     n_eff independent uniform samples has std SIGMA_UNIT/sqrt(n_eff), so raw LIC
     is gray; `contrast` interpolates the gain from 1 to the stretch that puts
@@ -187,8 +204,11 @@ def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0):
     raw, pres = aux2[..., 0], aux2[..., 1]
     n_eff = 2 * n_steps + 1
     sigma = SIGMA_UNIT / np.sqrt(n_eff)
-    gain = F32(1.0 + contrast * (0.25 / sigma - 1.0))
-    v = np.clip(F32(0.5) + (raw - F32(0.5)) * gain, 0, 1).astype(F32)
+    if fill is None:
+        gain = F32(1.0 + contrast * (0.25 / sigma - 1.0))
+        v = np.clip(F32(0.5) + (raw - F32(0.5)) * gain, 0, 1).astype(F32)
+    else:
+        v = np.clip(raw * F32(SPARSE_GAIN_LO + contrast * (SPARSE_GAIN_HI - SPARSE_GAIN_LO)), 0, 1).astype(F32)
     w = F32(0.5 + (0.03 - 0.5) * line)
     hard = _smoothstep(F32(0.5) - w, F32(0.5) + w, v)
     styled = (v + (hard - v) * F32(line)).astype(F32)
@@ -202,7 +222,7 @@ def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0):
 
 def chain(tex, strength=100.0, angle_offset=0.0, floor=0.0, aux_mode="doubled",
           n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix", persist_pow=PERSIST_POW,
-          contrast=0.5, line=0.0, bypass=0.0, seed=0):
+          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None):
     aux = stage_e1(tex, strength, angle_offset, floor, aux_mode)
-    aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed)
-    return stage_e3(aux2, n_steps, contrast, line, bypass)
+    aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed, fill=fill)
+    return stage_e3(aux2, n_steps, contrast, line, bypass, fill=fill)

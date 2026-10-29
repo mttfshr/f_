@@ -71,8 +71,17 @@ OQ1 is provisionally decided (mix, coherence^0.5) and OQ2 leans `unsigned_neares
 Stills: `spike/lic_stills_2026-10-28.png` (clean and heavily noisy sources). They show streaks
 following the rings and stripes, grain where the tensor is noisy, and the "coherence ignored"
 column drawing false worm-like curls in the noise that the real version renders as grain.
-**Honest read:** it looks like contour-streaked noise, and `line = 1` reads as engraving, not
-as hatching marks. The look is promising; tier 3 decides whether it is the look Matt wants.
+**Honest read:** with DENSE noise it looks like contour-streaked noise (Matt agreed), and
+`line = 1` reads as engraving, not as hatching marks.
+
+**Phase 0 addendum: sparse input noise (same day).** Matt agreed to try impulses instead of
+dense noise. Result (`spike/lic_stills_sparse_2026-10-28.png`): separate strokes with gaps that
+read as hatching; rings come out as arc strokes, diagonal stripes as diagonal strokes, the
+noisy region as dots, and a synthetic coherence ramp shows dot → stroke on its own. Two real
+bugs found and fixed in the mirror on the way (brightness depended on `length`; paths that left
+the frame re-counted the edge cell). The cone-shaped fans at mid coherence are real behaviour,
+not an artifact (OQ7). Tier 1 is 11/11 with sparse-mode test 9. D6: **the shipping noise is
+sparse impulses**; dense LIC is OQ6.
 
 ### Block 1: GPU cost spike (BLOCKING after Block 0)
 A throwaway march codebox on the bench at N = 8 / 16 / 32, nearest vs bilinear aux. Reports
