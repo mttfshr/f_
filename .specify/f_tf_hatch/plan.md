@@ -141,6 +141,15 @@ Locks defaults (provisional until now). Confirms or kills OQ4.
 
 ### Block 4: definition.py, build, drift and contract tests
 
+**DONE early (2026-10-29), instead of a scratch patch** (Matt's standing rule: tier 3 is judged
+live on the built module): `definition.py` rewritten for v2 (8 dials: Length=`reach`,
+Grain, Density, Contrast, Line=`line_hard`, Strength, Floor, Offset, plus bypass; pix_targets
+e1/e2/e3), `codebox_stage_e2_T.gen` removed, `package/patchers/f_tf_hatch.maxpat` rebuilt. Drift
+reads ok; contract tests 9/9. Not run: the module contract bench (`tests/contracts/bench_modules.py`)
+and the menu/launch regeneration (the module was already registered). Close and reopen the patcher
+in Max to see it. Block 3 (Matt's live judgment) is next and is the only thing that can lock the
+provisional defaults.
+
 ### Block 5: Docs and handoff
 `docs/f-reference/f_tf_hatch.md`, helpfile (f-helpfile skill, written in a Claude session),
 `f_tensor_type.md` family row, README status.
