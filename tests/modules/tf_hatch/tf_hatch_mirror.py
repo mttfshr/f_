@@ -13,6 +13,9 @@ F32 = np.float32
 EPS_TRACE = 1e-6      # tensormap ADR-6/T019 value, cited (re-validated in T007)
 C_LO = 0.25           # PROVISIONAL knee (OQ3): = coherence_gate default
 C_HI = 1.0            # PROVISIONAL knee (OQ3)
+PRES_EPS = 1e-6       # presence knee width at floor 0 (a hair above the iso guard)
+PRES_LO = 0.5         # presence ramp: lo = PRES_LO * thr  (thr = floor^2)
+PRES_HI = 1.5         # presence ramp: hi = PRES_HI * thr + PRES_EPS
 DENSITY_SPAN = 5.0    # family log map span (weave's published value)
 HASH_A = 127.1        # weave's published line-hash constants
 HASH_C = 43758.5453
@@ -41,6 +44,25 @@ def commit_curve(coh, c_lo=C_LO, c_hi=C_HI, gate=None, form="smoothstep"):
     raise ValueError(form)
 
 
+def presence(enc_trace, floor=0.0):
+    """Presence: is there structure here AT ALL, independent of its direction.
+    Decoupled from commit (shape) on 2026-10-28 after the first live look:
+    when one variable carried both, the line->dot rounding faded to black and
+    the coherence gate only dimmed the field.
+
+    enc_trace = R + B of the tensormap outlet-0 texel, i.e. trace * the
+    tensormap's `strength` (its calibrated scale: ~1 on strong structure).
+    thr = floor^2 (finer control at the low end); smooth ramp from 0.5*thr to
+    1.5*thr (+ a hair). floor 0 -> a step at the iso guard: presence 1
+    wherever any structure exists. NOT strength-invariant for floor > 0
+    (spec: the optional absolute trace floor is the one strength-scaled
+    quantity)."""
+    thr = F32(floor) * F32(floor)
+    lo = F32(PRES_LO) * thr
+    hi = F32(PRES_HI) * thr + F32(PRES_EPS)
+    return _smoothstep(lo, hi, np.asarray(enc_trace, F32))
+
+
 def decode(t, strength=100.0):
     """E1 mirror: the canonical decode idiom, copied VERBATIM from
     .specify/f_tf_glyph/plan.md ADR-2 (f_tensor_type.md outlet 0 encoding).
@@ -64,29 +86,32 @@ def decode(t, strength=100.0):
             coherence.astype(F32))
 
 
-def stage_e1(tex, strength=100.0, gate=None, angle_offset=0.0):
-    """E1 mirror: decode + commit + guard, written as the codebox pass runs.
+def stage_e1(tex, strength=100.0, gate=None, angle_offset=0.0, floor=0.0):
+    """E1 mirror: decode + commit + presence + guard, written as the codebox
+    pass runs.
 
     tex: (H, W, 4) outlet-0-format tensor texture, sampled at norm (texel
     centred, so the sample coordinate is trivially in-bounds -- the in-shader
     clamp is a no-op for a norm read; kept in the codebox for the rule).
-    Below eps_trace: commit 0 and axis unset-marker (ca=sa=0), never a
-    decoded-angle artifact (plan ADR-5).
+    Below eps_trace: commit 0, presence 0 and axis unset-marker (ca=sa=0),
+    never a decoded-angle artifact (plan ADR-5).
 
-    aux (intermediate, NEVER an outlet): (ca, sa, commit, iso) where
+    aux (intermediate, NEVER an outlet): (ca, sa, commit, pres) where
     (ca, sa) = cos/sin of the COMMIT-FRAME axis
-    (axis + angle_offset*pi/2), iso = 1 below eps_trace (the unset marker).
+    (axis + angle_offset*pi/2); commit = SHAPE only (0 dot -> 1 stroke);
+    pres = PRESENCE only (0 = draw nothing, 1 = draw), 0 below eps_trace
+    (the old `iso` channel, now continuous: the structure-floor ramp).
     """
     ca, sa = np.zeros(tex.shape[:2], F32), np.zeros(tex.shape[:2], F32)
     commit = np.zeros(tex.shape[:2], F32)
-    iso = np.ones(tex.shape[:2], F32)
+    pres = np.zeros(tex.shape[:2], F32)
     for i in range(tex.shape[0]):
         for j in range(tex.shape[1]):
             (_Jxx, _Jxy, _Jyy, trace, _d, _r, _l1, _l2, _th, axis, coh) = \
                 decode(tex[i, j], strength)
             if trace <= F32(EPS_TRACE):
-                continue          # iso stays 1, axis unset (0,0), commit 0
-            iso[i, j] = F32(0.0)
+                continue          # pres stays 0, axis unset (0,0), commit 0
+            pres[i, j] = presence(F32(tex[i, j, 0]) + F32(tex[i, j, 2]), floor)
             eff = axis + F32(angle_offset * np.pi / 2.0)
             ca[i, j] = np.cos(eff).astype(F32)
             sa[i, j] = np.sin(eff).astype(F32)
@@ -95,7 +120,7 @@ def stage_e1(tex, strength=100.0, gate=None, angle_offset=0.0):
             # floor stays continuous (the no-seam guarantee).
             commit[i, j] = commit_curve(np.array([coh], F32),
                                         gate=F32(0.0) if gate is None else F32(gate))[0]
-    return g.store_float32(np.stack([ca, sa, commit, iso], -1))
+    return g.store_float32(np.stack([ca, sa, commit, pres], -1))
 
 
 # ------------------------------------------------------------------ E2 ---
@@ -104,19 +129,19 @@ def stage_e2(aux):
     """E2 mirror (branch T): the tileable distance-field layout in the
     per-pixel local frame.
 
-    aux: E1's intermediate (ca, sa, commit, iso). All frame coordinates are
+    aux: E1's intermediate (ca, sa, commit, pres). All frame coordinates are
     `norm` reads (sampling at the pixel itself -- no taps, the axis texture
     carries the per-pixel frame).
 
-    aux2 (intermediate): (u, v, commit, iso) where (u, v) = the pixel
+    aux2 (intermediate): (u, v, commit, pres) where (u, v) = the pixel
     rotated into its local (across, along) frame (already angle_offset-
     applied in E1: the frame is the committed axis).
     """
-    ca, sa, commit, iso = aux[..., 0], aux[..., 1], aux[..., 2], aux[..., 3]
+    ca, sa, commit, pres = aux[..., 0], aux[..., 1], aux[..., 2], aux[..., 3]
     nx, ny, _, _ = g.grid(aux.shape[0], aux.shape[1])
     u = (-sa * nx + ca * ny).astype(F32)       # across (normal) coordinate
     v = (ca * nx + sa * ny).astype(F32)        # along-stroke coordinate
-    return g.store_float32(np.stack([u, v, commit, iso], -1))
+    return g.store_float32(np.stack([u, v, commit, pres], -1))
 
 
 # ------------------------------------------------------------------ E3 ---
@@ -140,16 +165,18 @@ def stage_e3(aux2, density=0.5, weight=0.1, softness=0.05, elongation=3.0,
     0.25/(weight*density_scale)^2; at the provisional defaults it binds at
     elongation ~2.1).
 
-    Mark INTENSITY is weighted by commit: commit 0 = nothing (not a full-
-    brightness dot) -- the no-seam-at-the-gate requirement (spike finding;
-    dots still form above the gate with aspect -> 1: the spec's line->dot
-    rounding, via the aspect squeeze).
+    Mark INTENSITY is weighted by PRESENCE only (aux2's 4th channel, the
+    structure floor), NEVER by commit. commit drives shape alone: commit 0 =
+    a full-brightness dot (aspect 1), commit 1 = a stroke. (Changed
+    2026-10-28 after the first live look: weighting intensity by commit as
+    well made the dot state invisible -- the coherence gate only dimmed the
+    field. Presence 0 = nothing: no structure at all / below the floor.)
 
     out0 = hatch output (luma marks on black, A=1); out1 = mark mask
     (the same luma, encode-mixed only -- the discrete-family convention).
     Bypass = black on both (plan ADR-5).
     """
-    u, v, commit, iso = aux2[..., 0], aux2[..., 1], aux2[..., 2], aux2[..., 3]
+    u, v, commit, pres = aux2[..., 0], aux2[..., 1], aux2[..., 2], aux2[..., 3]
     aspect = (F32(1.0) + F32(elongation) * commit).astype(F32)
     soft = F32(min(softness, 0.49))
     density_scale = F32(2.0 ** (density * DENSITY_SPAN - 1.0))
@@ -178,7 +205,7 @@ def stage_e3(aux2, density=0.5, weight=0.1, softness=0.05, elongation=3.0,
     outer_along = (al * (F32(1.0) + soft)).astype(F32)
     m_line = _smoothstep(outer_across, F32(0.0), dist_to_line)
     m_mark = _smoothstep(outer_along, F32(0.0), dist_to_mark)
-    marks = (m_line * m_mark * (F32(1.0) - iso) * commit).astype(F32)
+    marks = (m_line * m_mark * pres).astype(F32)
     out0 = np.zeros(aux2.shape[:2] + (4,), F32)
     out0[..., 0] = marks
     out0[..., 3] = F32(1.0)

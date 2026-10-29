@@ -231,6 +231,21 @@ hatch look on real chains.
       sidecar tap off the same tensor for structure comparison (glyph's own suggestion,
       expressive_consumers glyph entry) and simple remap taps on both hatch outlets.
       **PENDING MATT (Phase 2/4 out of this build's scope).**
+- **T019 FIRST LIVE LOOK (Matt, 2026-10-28, Max, tensormap → hatch with a glyph tap):**
+  strokes lie along the glyph ellipses; bypass and unconnected inlet are neutral.
+  **FINDING: sweeping `coherence_gate` only dimmed the field and did not change stroke
+  shape.** Cause (read from E1/E3): `commit` scaled both the mark aspect and its
+  brightness, so the line→dot rounding faded to black and the dot state was invisible.
+  The tier-1 tests passed because they checked the formula, not the look.
+  **FIX, decided by Matt the same session (shape and presence decoupled; one new dial):**
+  `commit` now drives shape only; a new presence signal (E1's 4th channel, was `iso`)
+  gates brightness, from the tensormap-encoded trace against the new `structure_floor`
+  dial (default 0.1, provisional). Done: spec, mirror, codeboxes E1/E2/E3, bench file,
+  definition, patcher rebuilt. Tier-1 26/26 (6 new, two of them mutation checks),
+  offline contracts 9/9. NOT yet done: tier-2 bench run of the changed E1/E3 (the new
+  `test_stage_e1_structure_floor` leg is written, never run), drift test, helpfile
+  control list, and a second live look. The hairpin question (step 4 of the session) was
+  not judged: the check was explained and Matt could not tell either way.
 - [ ] T019 Judge the commit character on real content (bfg Perlin / Voronoi / fbm, a
       camera test if available): structure→strokes along the axis; isotropic/noisy
       regions→dots or blank per `coherence_gate`; the rounding continuous, not a

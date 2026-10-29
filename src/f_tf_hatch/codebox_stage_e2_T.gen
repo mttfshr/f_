@@ -4,11 +4,12 @@
 // Mirrors tests/test_tf_hatch.py stage_e2. Intermediate texture, NEVER an
 // outlet; unbounded float32 (plan ADR-4).
 //
-// out1 = (u, v, commit, iso):
+// out1 = (u, v, commit, pres):
 //   (u, v)   the pixel rotated into its local (across, along) frame --
 //            across = -sa*norm.x + ca*norm.y, along = ca*norm.x + sa*norm.y
 //            (the frame is E1's commit-frame axis, angle_offset applied)
-//   commit, iso   passthrough (E3 renders the profile against them)
+//   commit   SHAPE passthrough;  pres   PRESENCE passthrough
+//            (E3 renders the profile against them; E1 documents the split)
 //
 // All coordinates are norm reads (sample at the pixel itself: no taps; the
 // per-pixel frame lives in the aux texture). Closed form, no loop. The
@@ -28,7 +29,7 @@
 ca2 = nearest(in1, norm).x;
 sa2 = nearest(in1, norm).y;
 commit = nearest(in1, norm).z;
-iso = nearest(in1, norm).w;
+pres = nearest(in1, norm).w;
 
 // texel-center clamp rule (tensormap T012): the coordinate is exactly norm,
 // which is always in-bounds on the render grid -- the clamp is a no-op kept
@@ -36,4 +37,4 @@ iso = nearest(in1, norm).w;
 u = (-sa2 * norm.x + ca2 * norm.y);
 v = ( ca2 * norm.x + sa2 * norm.y);
 
-out1 = vec(u, v, commit, iso);
+out1 = vec(u, v, commit, pres);

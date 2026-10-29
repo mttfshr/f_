@@ -23,10 +23,12 @@
 //                                              the 0.5 cap = dashes merge;
 //                                              aspect_max = (0.5/(w*ds))^2]
 //
-// Commit-weighted intensity: commit 0 -> NO marks (not full-brightness
-// dots) -- the no-seam-at-the-gate requirement (spike finding; the dot
-// character lives above the gate via the aspect squeeze, OQ3's
-// 'dots persist vs blank' resolved as fade-in, tier-3 confirms).
+// Intensity is PRESENCE only (E1's 4th channel, the structure floor) and is
+// NEVER weighted by commit: commit 0 is a full-brightness DOT (aspect 1),
+// commit 1 a stroke; presence 0 draws nothing. (Changed 2026-10-28 after the
+// first live look: weighting intensity by commit as well faded the dots to
+// black, so the coherence gate only dimmed the field. This resolves OQ3's
+// 'dots persist vs blank': dots persist; the structure floor makes blank.)
 //
 // out1 = module OUTLET 0: hatch output (luma marks on black, A=1); color is
 // downstream's job (weave convention). out2 = module OUTLET 1: mark mask
@@ -50,7 +52,7 @@ soft = min(softness, 0.49);
 u = nearest(in1, norm).x;
 v = nearest(in1, norm).y;
 commit = nearest(in1, norm).z;
-iso = nearest(in1, norm).w;
+pres = nearest(in1, norm).w;
 
 density_scale = pow(2.0, density * 5.0 - 1.0);
 
@@ -62,7 +64,7 @@ al = min(weight * density_scale * sqrt_aspect, 0.5);
 // across-line distance field (in the local frame)
 dist_to_line = abs(fract(u * density_scale) - 0.5);
 
-// per-line phase offset (weave's hash, cited; iso pixels never render)
+// per-line phase offset (weave's hash, cited; presence-0 pixels never render)
 line_idx = floor(u * density_scale);
 line_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));
 pos = v * density_scale + phase + line_hash;
@@ -74,8 +76,8 @@ outer_along  = al * (1.0 + soft);
 edge_across = smoothstep(outer_across, 0.0, dist_to_line);
 edge_along  = smoothstep(outer_along,  0.0, dist_to_mark);
 
-// the mark: weave's product, commit-weighted intensity, iso-gated
-mark = edge_across * edge_along * (1.0 - iso) * commit;
+// the mark: weave's product, gated by presence (NOT commit -- see header)
+mark = edge_across * edge_along * pres;
 
 // compose + encode: luma marks on black (color downstream's job), the only
 // clamp in the module; bypass -> black on both outlets

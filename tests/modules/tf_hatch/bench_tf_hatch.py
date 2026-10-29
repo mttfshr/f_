@@ -74,23 +74,44 @@ def ok(r):
 
 def test_stage_e1_compiles_and_matches():
     tex = rand_tensor_tex(64, 64, seed=1)
-    params = {"strength": 100.0, "angle_offset": 0.0, "coherence_gate": 0.25}
+    # structure_floor 0 here: the mirror default, presence = 1 wherever any
+    # structure exists (the floor ramp itself has its own leg below)
+    params = {"strength": 100.0, "angle_offset": 0.0, "coherence_gate": 0.25,
+              "structure_floor": 0.0}
     out, r = bc.run_pass(code("e1"), [tex], params=params)
     ok(r)
     ref = m.stage_e1(tex, 100.0, 0.25, 0.0)
     check("E1 ca", float(np.abs(out[..., 0] - ref[..., 0]).max()), 1e-4)
     check("E1 sa", float(np.abs(out[..., 1] - ref[..., 1]).max()), 1e-4)
     check("E1 commit", float(np.abs(out[..., 2] - ref[..., 2]).max()), 1e-4)
-    check("E1 iso", float(np.abs(out[..., 3] - ref[..., 3]).max()), 1e-6)
+    check("E1 pres", float(np.abs(out[..., 3] - ref[..., 3]).max()), 1e-5)
     # borders: the read is at norm (in-bounds on both GPU and sim), so the
     # border rows must match the interior-quality tolerance
     check("E1 borders", border_err(out, ref), 1e-4)
-    # eps-guard boundary: an exactly-zero tensor stays iso (no atan2 artifact)
+    # eps-guard boundary: an exactly-zero tensor draws nothing (pres = 0) and
+    # leaves the axis unset (no atan2 artifact)
     zero = np.zeros((8, 8, 4), F32)
     outz, r = bc.run_pass(code("e1"), [zero], params=params)
     ok(r)
-    check("E1 zero tensor iso=1", float(np.abs(outz[..., 3] - 1).max()), 1e-6)
+    check("E1 zero tensor pres=0", float(np.abs(outz[..., 3]).max()), 1e-6)
     check("E1 zero tensor axis unset", float(np.abs(outz[..., :2]).max()), 1e-6)
+
+
+def test_stage_e1_structure_floor():
+    """The presence ramp on the GPU vs the mirror: the new dial, 2026-10-28.
+    Floors 0.1 (the shipped default), 0.5 and 0.9 on a random tensor field
+    whose encoded traces span the ramps; commit/axis must be unaffected."""
+    tex = rand_tensor_tex(64, 64, seed=7)
+    for fl in (0.1, 0.5, 0.9):
+        params = {"strength": 100.0, "angle_offset": 0.0,
+                  "coherence_gate": 0.25, "structure_floor": fl}
+        out, r = bc.run_pass(code("e1"), [tex], params=params)
+        ok(r)
+        ref = m.stage_e1(tex, 100.0, 0.25, 0.0, fl)
+        note(f"floor {fl}: mean presence (GPU)", float(out[..., 3].mean()))
+        check(f"E1 floor {fl} pres", float(np.abs(out[..., 3] - ref[..., 3]).max()), 1e-4)
+        check(f"E1 floor {fl} commit unaffected",
+              float(np.abs(out[..., 2] - ref[..., 2]).max()), 1e-4)
 
 
 def test_stage_e1_offset_and_gate():

@@ -56,7 +56,7 @@
 						0.55,
 						1.0
 					],
-					"hint": "Hatch marks, luma on black (color is downstream's job, the f_weave convention). Commit-weighted: coherently-line-structured regions render strokes, near-gate regions fade toward nothing; aspect rounds to dots as coherence falls (plan ADR-9). @type float32."
+					"hint": "Hatch marks, luma on black (color is downstream's job, the f_weave convention). Strokes where structure is directional, full-brightness dots where it is not (shape follows coherence), nothing below the structure floor (presence follows trace). @type float32."
 				}
 			},
 			{
@@ -107,8 +107,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 9,
+					"numoutlets": 10,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -122,10 +123,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						655.0,
+						727.0,
 						22.0
 					],
-					"text": "route density weight softness elongation strength coherence_gate angle_offset phase regularity"
+					"text": "route density weight softness elongation strength coherence_gate structure_floor angle_offset phase regularity"
 				}
 			},
 			{
@@ -175,7 +176,7 @@
 							},
 							{
 								"box": {
-									"code": "// Stage E1 (f_tf_hatch): eigen decode + commit + guard. in1 = the TENSOR\n// (f_tf_tensormap outlet 0, raw float32; f_tensor_type.md encoding).\n// Mirrors tests/test_tf_hatch.py stage_e1. Intermediate texture, NEVER an\n// outlet; unbounded float32 (plan ADR-4 -- no clamp, no 0.5-offset here).\n//\n// out1 = (ca, sa, commit, iso):\n//   (ca, sa)     cos/sin of the commit-frame axis:\n//                axis = theta + pi/2 + angle_offset*pi/2\n//   commit       the commit curve (smoothstep in the normalized eigengap;\n//                PROVISIONAL knees C_LO/C_HI -- OQ3 open, tier-3 confirms)\n//   iso          1 = direction-undefined/zero tensor (eps_trace guard,\n//                tensormap ADR-6/T019 value cited): axis UNSET (ca=sa=0),\n//                commit 0 -- never an atan2 artifact (plan ADR-5)\n//\n// DECODE IDIOM: copied VERBATIM from .specify/f_tf_glyph/plan.md ADR-2\n// (the canonical block; do not re-derive):\n//   in: t = sample(tensor_tex, clamp(cell_uv_to_texel))  // tensormap ADR-5 clamp\n//   encoding: f_tensor_type.md outlet 0 - R>=0 G:0.5=zero B>=0 A=1 (all x strength)\n//   Jxx = t.r / strength; Jxy = (t.g - 0.5)*2.0/strength; Jyy = t.b/strength;\n//   trace = Jxx + Jyy; diff = Jxx - Jyy; root = sqrt(diff*diff + 4.0*Jxy*Jxy);\n//   lambda1 = 0.5*(trace + root); lambda2 = 0.5*(trace - root);\n//   theta = 0.5*atan2(2.0*Jxy, diff);      // GRADIENT axis; along = theta + pi/2\n//   ... 0.5*atan2 confines theta to (-pi/2, pi/2]; safe ONLY for consumers\n//   symmetric to theta+180 deg (hatch IS: an unoriented line pattern).\n// Coherence normalization is TENSormap's (its plan ADR-2, not glyph's):\n//   coherence = (lambda1-lambda2)/(lambda1+lambda2) -- gain-free.\n// Sample coordinate: the read is AT norm (texel centered, always in-bounds);\n// the clamp is kept for the in-shader rule (tensormap T012 finding).\n//\n// NOTE: this stage reads strength and angle_offset; commit knees C_LO/C_HI\n// are constants here (OQ3 provisional) -- coherence_gate rides C_LO.\n\nParam strength(100.0);\nParam angle_offset(0.0);\nParam coherence_gate(0.25);\n\neps_trace = 0.000001;\nC_HI = 1.0;    // commit saturates at coherence 1 (C_LO is coherence_gate, a live Param above)\n\nuv = vec(clamp(norm.x, 0.0, 1.0), clamp(norm.y, 0.0, 1.0));\nt = sample(in1, uv);\n\n// --- decode (glyph ADR-2 verbatim) ---\njxx = t.r / strength;\njxy = (t.g - 0.5) * 2.0 / strength;\njyy = t.b / strength;\ntrace = jxx + jyy;\ndiff = jxx - jyy;\nroot = sqrt(diff*diff + 4.0*jxy*jxy);\ntheta = 0.5 * atan2(2.0*jxy, diff);   // gradient axis (across the edge)\n\niso = 1.0 - step(eps_trace, trace);   // 1 = zero/undefined tensor\n// the -1-Jxy artifact of an all-zeros read (f_tensor_type.md rule 5) also\n// has trace 0: the SAME guard catches it (root 2/strength, phantom axis --\n// never written: ca/sa stay (0, 0) below).\n\n// coherence, gain-free (tensormap plan ADR-2):\ncoh = clamp(root / max(trace, eps_trace), 0.0, 1.0);\n\n// commit curve (PROVISIONAL smoothstep in the normalized eigengap, OQ3):\n// coherence_gate is the performer's commit floor: coherence at/below it\n// renders nothing (spec: the gate rides the knee, not a separate AND-mask,\n// so crossing the floor is continuous -- the no-seam guarantee).\nx = (coh - max(coherence_gate, 0.0)) / max(C_HI - max(coherence_gate, 0.0), 0.000001);\nx = clamp(x, 0.0, 1.0);\ncommit = x*x*(3.0 - 2.0*x) * (1.0 - iso);\n\n// commit-frame axis: along-structure + the performer rotation. The axis is\n// an UNORIENTED line (theta+180 is the same line): the offset wraps cleanly\n// (mod pi), the acceptance criterion's no-seam property.\neff = theta + halfpi + angle_offset * halfpi * 2.0 * 0.5;  // = +offset*pi/2\nca = cos(eff) * (1.0 - iso);\nsa = sin(eff) * (1.0 - iso);\n\nout1 = vec(ca, sa, commit, iso);",
+									"code": "// Stage E1 (f_tf_hatch): eigen decode + commit + guard. in1 = the TENSOR\n// (f_tf_tensormap outlet 0, raw float32; f_tensor_type.md encoding).\n// Mirrors tests/test_tf_hatch.py stage_e1. Intermediate texture, NEVER an\n// outlet; unbounded float32 (plan ADR-4 -- no clamp, no 0.5-offset here).\n//\n// out1 = (ca, sa, commit, pres):\n//   (ca, sa)     cos/sin of the commit-frame axis:\n//                axis = theta + pi/2 + angle_offset*pi/2\n//   commit       SHAPE only: the commit curve (smoothstep in the normalized\n//                eigengap; 0 = dot, 1 = stroke; PROVISIONAL knees C_LO/C_HI --\n//                OQ3 open, tier-3 confirms). Never multiplies brightness.\n//   pres         PRESENCE only: 0 = draw nothing, 1 = draw. A smooth ramp on\n//                the tensormap-encoded trace (R + B = trace * the tensormap's\n//                strength) against structure_floor^2; 0 where the eps_trace\n//                guard fires (direction-undefined/zero tensor, tensormap\n//                ADR-6/T019 value cited): axis UNSET (ca=sa=0), commit 0 --\n//                never an atan2 artifact (plan ADR-5). (This channel was\n//                `iso`, a 0/1 guard flag; made continuous 2026-10-28.)\n//\n// SHAPE vs PRESENCE (2026-10-28, first live look): commit used to scale both\n// the mark aspect AND its brightness, so the line->dot rounding faded to\n// black and the coherence gate only dimmed the field. Now commit sets shape\n// alone and pres sets whether a mark is drawn at all.\n//\n// DECODE IDIOM: copied VERBATIM from .specify/f_tf_glyph/plan.md ADR-2\n// (the canonical block; do not re-derive):\n//   in: t = sample(tensor_tex, clamp(cell_uv_to_texel))  // tensormap ADR-5 clamp\n//   encoding: f_tensor_type.md outlet 0 - R>=0 G:0.5=zero B>=0 A=1 (all x strength)\n//   Jxx = t.r / strength; Jxy = (t.g - 0.5)*2.0/strength; Jyy = t.b/strength;\n//   trace = Jxx + Jyy; diff = Jxx - Jyy; root = sqrt(diff*diff + 4.0*Jxy*Jxy);\n//   lambda1 = 0.5*(trace + root); lambda2 = 0.5*(trace - root);\n//   theta = 0.5*atan2(2.0*Jxy, diff);      // GRADIENT axis; along = theta + pi/2\n//   ... 0.5*atan2 confines theta to (-pi/2, pi/2]; safe ONLY for consumers\n//   symmetric to theta+180 deg (hatch IS: an unoriented line pattern).\n// Coherence normalization is TENSormap's (its plan ADR-2, not glyph's):\n//   coherence = (lambda1-lambda2)/(lambda1+lambda2) -- gain-free.\n// Sample coordinate: the read is AT norm (texel centered, always in-bounds);\n// the clamp is kept for the in-shader rule (tensormap T012 finding).\n//\n// NOTE: this stage reads strength and angle_offset; commit knees C_LO/C_HI\n// are constants here (OQ3 provisional) -- coherence_gate rides C_LO.\n\nParam strength(100.0);\nParam angle_offset(0.0);\nParam coherence_gate(0.25);\nParam structure_floor(0.1);\n\neps_trace = 0.000001;\nC_HI = 1.0;    // commit saturates at coherence 1 (C_LO is coherence_gate, a live Param above)\n\nuv = vec(clamp(norm.x, 0.0, 1.0), clamp(norm.y, 0.0, 1.0));\nt = sample(in1, uv);\n\n// --- decode (glyph ADR-2 verbatim) ---\njxx = t.r / strength;\njxy = (t.g - 0.5) * 2.0 / strength;\njyy = t.b / strength;\ntrace = jxx + jyy;\ndiff = jxx - jyy;\nroot = sqrt(diff*diff + 4.0*jxy*jxy);\ntheta = 0.5 * atan2(2.0*jxy, diff);   // gradient axis (across the edge)\n\niso = 1.0 - step(eps_trace, trace);   // 1 = zero/undefined tensor\n// the -1-Jxy artifact of an all-zeros read (f_tensor_type.md rule 5) also\n// has trace 0: the SAME guard catches it (root 2/strength, phantom axis --\n// never written: ca/sa stay (0, 0) below).\n\n// coherence, gain-free (tensormap plan ADR-2):\ncoh = clamp(root / max(trace, eps_trace), 0.0, 1.0);\n\n// commit curve (PROVISIONAL smoothstep in the normalized eigengap, OQ3):\n// coherence_gate is the performer's commit floor: coherence at/below it\n// renders nothing (spec: the gate rides the knee, not a separate AND-mask,\n// so crossing the floor is continuous -- the no-seam guarantee).\nx = (coh - max(coherence_gate, 0.0)) / max(C_HI - max(coherence_gate, 0.0), 0.000001);\nx = clamp(x, 0.0, 1.0);\ncommit = x*x*(3.0 - 2.0*x) * (1.0 - iso);\n\n// commit-frame axis: along-structure + the performer rotation. The axis is\n// an UNORIENTED line (theta+180 is the same line): the offset wraps cleanly\n// (mod pi), the acceptance criterion's no-seam property.\neff = theta + halfpi + angle_offset * halfpi * 2.0 * 0.5;  // = +offset*pi/2\nca = cos(eff) * (1.0 - iso);\nsa = sin(eff) * (1.0 - iso);\n\n// presence (2026-10-28): is there structure here AT ALL, regardless of its\n// direction. enc_trace = R + B = trace * the producing tensormap's strength\n// (its calibrated scale, ~1 on strong structure), so structure_floor reads\n// on the same scale as tensormap's trace output. thr = floor^2 (finer at the\n// low end); ramp 0.5*thr -> 1.5*thr (+ a hair, so floor 0 is a step at the\n// iso guard: presence 1 wherever any structure exists). Not strength-\n// invariant for floor > 0 -- the one absolute quantity in the module.\nenc_trace = t.r + t.b;\nthr = structure_floor * structure_floor;\npres = smoothstep(0.5 * thr, 1.5 * thr + 0.000001, enc_trace) * (1.0 - iso);\n\nout1 = vec(ca, sa, commit, pres);",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -249,7 +250,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-50",
+					"id": "obj-52",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -294,7 +295,7 @@
 							},
 							{
 								"box": {
-									"code": "// Stage E2 (f_tf_hatch): mark layout -- branch T (tileable distance-field\n// pattern, f_weave mechanics in the per-pixel local frame; chosen at the\n// T001 cost-shape gate, plan ADR-1 amendment). in1 = stage E1's aux.\n// Mirrors tests/test_tf_hatch.py stage_e2. Intermediate texture, NEVER an\n// outlet; unbounded float32 (plan ADR-4).\n//\n// out1 = (u, v, commit, iso):\n//   (u, v)   the pixel rotated into its local (across, along) frame --\n//            across = -sa*norm.x + ca*norm.y, along = ca*norm.x + sa*norm.y\n//            (the frame is E1's commit-frame axis, angle_offset applied)\n//   commit, iso   passthrough (E3 renders the profile against them)\n//\n// All coordinates are norm reads (sample at the pixel itself: no taps; the\n// per-pixel frame lives in the aux texture). Closed form, no loop. The\n// GATE PROVISIONAL-OPEN points recorded here:\n//   - dash PHASE continuity under hairpin curvature: the dist_to_mark field\n//     is built per-pixel from (u, v) straight-ray coordinates, so dash phase\n//     resets where the axis turns fast relative to the along-frame. The\n//     spike MEASURED this (ridge-err trend 24.9 -> 64.0 deg over ring\n//     spacing 8 -> 64); tier-3 judges the look; mitigations (elongation/\n//     weight tuning now; a phase-scan pass later) are recorded in ADR-1.\n//   - regularity's hash is computed IN E3 (per-line, weave's published\n//     form) -- E2 carries no hash state.\n\n// (no params on this stage: density/weight/softness/elongation/phase/\n// regularity are E3's; commit/gate/offset/strength are E1's)\n\nca2 = nearest(in1, norm).x;\nsa2 = nearest(in1, norm).y;\ncommit = nearest(in1, norm).z;\niso = nearest(in1, norm).w;\n\n// texel-center clamp rule (tensormap T012): the coordinate is exactly norm,\n// which is always in-bounds on the render grid -- the clamp is a no-op kept\n// for the rule.\nu = (-sa2 * norm.x + ca2 * norm.y);\nv = ( ca2 * norm.x + sa2 * norm.y);\n\nout1 = vec(u, v, commit, iso);",
+									"code": "// Stage E2 (f_tf_hatch): mark layout -- branch T (tileable distance-field\n// pattern, f_weave mechanics in the per-pixel local frame; chosen at the\n// T001 cost-shape gate, plan ADR-1 amendment). in1 = stage E1's aux.\n// Mirrors tests/test_tf_hatch.py stage_e2. Intermediate texture, NEVER an\n// outlet; unbounded float32 (plan ADR-4).\n//\n// out1 = (u, v, commit, pres):\n//   (u, v)   the pixel rotated into its local (across, along) frame --\n//            across = -sa*norm.x + ca*norm.y, along = ca*norm.x + sa*norm.y\n//            (the frame is E1's commit-frame axis, angle_offset applied)\n//   commit   SHAPE passthrough;  pres   PRESENCE passthrough\n//            (E3 renders the profile against them; E1 documents the split)\n//\n// All coordinates are norm reads (sample at the pixel itself: no taps; the\n// per-pixel frame lives in the aux texture). Closed form, no loop. The\n// GATE PROVISIONAL-OPEN points recorded here:\n//   - dash PHASE continuity under hairpin curvature: the dist_to_mark field\n//     is built per-pixel from (u, v) straight-ray coordinates, so dash phase\n//     resets where the axis turns fast relative to the along-frame. The\n//     spike MEASURED this (ridge-err trend 24.9 -> 64.0 deg over ring\n//     spacing 8 -> 64); tier-3 judges the look; mitigations (elongation/\n//     weight tuning now; a phase-scan pass later) are recorded in ADR-1.\n//   - regularity's hash is computed IN E3 (per-line, weave's published\n//     form) -- E2 carries no hash state.\n\n// (no params on this stage: density/weight/softness/elongation/phase/\n// regularity are E3's; commit/gate/offset/strength are E1's)\n\nca2 = nearest(in1, norm).x;\nsa2 = nearest(in1, norm).y;\ncommit = nearest(in1, norm).z;\npres = nearest(in1, norm).w;\n\n// texel-center clamp rule (tensormap T012): the coordinate is exactly norm,\n// which is always in-bounds on the render grid -- the clamp is a no-op kept\n// for the rule.\nu = (-sa2 * norm.x + ca2 * norm.y);\nv = ( ca2 * norm.x + sa2 * norm.y);\n\nout1 = vec(u, v, commit, pres);",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -368,7 +369,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-53",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 3,
@@ -414,7 +415,7 @@
 							},
 							{
 								"box": {
-									"code": "// Stage E3 (f_tf_hatch): mark render + compose + encode (the ONLY stage\n// that clamps/encodes -- hard rule, plan ADR-4). in1 = stage E2's aux2.\n// Mirrors tests/test_tf_hatch.py stage_e3.\n//\n// The f_weave algorithm (docs/f-reference/f_weave.md; its definition.py is\n// the shipped form) adapted to the per-pixel axis and the commit-driven\n// aspect. Cited verbatim where reused:\n//   density log map    density_scale = pow(2, density*5 - 1)\n//   line hash          line_hash = fract(sin(line_idx*127.1)*43758.5453)\n//                                  * (1 - regularity)\n//   edge form          outer = weight*(1 + softness); edge =\n//                      smoothstep(outer, 0.0, dist)   [softness EXPANDS the\n//                      outer edge multiplicatively; inner edge at 0; no\n//                      zero-denominator case at softness 0]\n//   softness clamp     softness <= 0.49 (weave's ceiling)\n//\n// Aspect -- plan ADR-9 (pitch units, capped at dash saturation):\n//   aspect  = 1 + elongation*commit           [commit 0 -> dot, commit 1 ->\n//                                              elongation+1 until saturation]\n//   aw      = weight / sqrt(aspect)           [across half-width, u units]\n//   al      = min(weight*density_scale*sqrt(aspect), 0.5)\n//                                             [along half-length, pos units;\n//                                              the 0.5 cap = dashes merge;\n//                                              aspect_max = (0.5/(w*ds))^2]\n//\n// Commit-weighted intensity: commit 0 -> NO marks (not full-brightness\n// dots) -- the no-seam-at-the-gate requirement (spike finding; the dot\n// character lives above the gate via the aspect squeeze, OQ3's\n// 'dots persist vs blank' resolved as fade-in, tier-3 confirms).\n//\n// out1 = module OUTLET 0: hatch output (luma marks on black, A=1); color is\n// downstream's job (weave convention). out2 = module OUTLET 1: mark mask\n// (same luma, no encode mix -- the discrete-family convention).\n// Bypass (bypass_mode \"param\"): black on both outlets (plan ADR-5; bypass\n// lives here, the last stage, like tensormap's).\n//\n// Tone (OQ2): OUT of v1 -- no tone inlet, no density-band layering (plan\n// ADR-6's T002 record); the v2 pointer is inlet-1-luma.\n\nParam density(0.5);\nParam weight(0.1);\nParam softness(0.05);\nParam elongation(3.0);\nParam phase(0.0);\nParam regularity(0.5);\nParam bypass_gate(0.0);\n\nsoft = min(softness, 0.49);\n\nu = nearest(in1, norm).x;\nv = nearest(in1, norm).y;\ncommit = nearest(in1, norm).z;\niso = nearest(in1, norm).w;\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\naspect = 1.0 + elongation * commit;\nsqrt_aspect = sqrt(max(aspect, 1.0));\naw = weight / sqrt_aspect;\nal = min(weight * density_scale * sqrt_aspect, 0.5);\n\n// across-line distance field (in the local frame)\ndist_to_line = abs(fract(u * density_scale) - 0.5);\n\n// per-line phase offset (weave's hash, cited; iso pixels never render)\nline_idx = floor(u * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = v * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// edge falloff (cited: outer expands, inner at 0)\nouter_across = aw * (1.0 + soft);\nouter_along  = al * (1.0 + soft);\nedge_across = smoothstep(outer_across, 0.0, dist_to_line);\nedge_along  = smoothstep(outer_along,  0.0, dist_to_mark);\n\n// the mark: weave's product, commit-weighted intensity, iso-gated\nmark = edge_across * edge_along * (1.0 - iso) * commit;\n\n// compose + encode: luma marks on black (color downstream's job), the only\n// clamp in the module; bypass -> black on both outlets\n// out1 = module OUTLET 0: hatch output (luma marks on black, A=1); color is\n// the tint; the bypass = the module neutral (black) with the outlet contract's\n// alpha 1 preserved (2026-10-17: the first draft multiplied the whole vec by\n// (1-bypass), dropping alpha to 0 under bypass \u2014 against f_tensor_type.md's\n// outlets-are-A=1 rule and the BYPASS_EXPECT row).\nout1 = vec(mix(mark, 0.0, bypass_gate), mix(mark, 0.0, bypass_gate),\n           mix(mark, 0.0, bypass_gate), 1.0);\nout2 = out1;",
+									"code": "// Stage E3 (f_tf_hatch): mark render + compose + encode (the ONLY stage\n// that clamps/encodes -- hard rule, plan ADR-4). in1 = stage E2's aux2.\n// Mirrors tests/test_tf_hatch.py stage_e3.\n//\n// The f_weave algorithm (docs/f-reference/f_weave.md; its definition.py is\n// the shipped form) adapted to the per-pixel axis and the commit-driven\n// aspect. Cited verbatim where reused:\n//   density log map    density_scale = pow(2, density*5 - 1)\n//   line hash          line_hash = fract(sin(line_idx*127.1)*43758.5453)\n//                                  * (1 - regularity)\n//   edge form          outer = weight*(1 + softness); edge =\n//                      smoothstep(outer, 0.0, dist)   [softness EXPANDS the\n//                      outer edge multiplicatively; inner edge at 0; no\n//                      zero-denominator case at softness 0]\n//   softness clamp     softness <= 0.49 (weave's ceiling)\n//\n// Aspect -- plan ADR-9 (pitch units, capped at dash saturation):\n//   aspect  = 1 + elongation*commit           [commit 0 -> dot, commit 1 ->\n//                                              elongation+1 until saturation]\n//   aw      = weight / sqrt(aspect)           [across half-width, u units]\n//   al      = min(weight*density_scale*sqrt(aspect), 0.5)\n//                                             [along half-length, pos units;\n//                                              the 0.5 cap = dashes merge;\n//                                              aspect_max = (0.5/(w*ds))^2]\n//\n// Intensity is PRESENCE only (E1's 4th channel, the structure floor) and is\n// NEVER weighted by commit: commit 0 is a full-brightness DOT (aspect 1),\n// commit 1 a stroke; presence 0 draws nothing. (Changed 2026-10-28 after the\n// first live look: weighting intensity by commit as well faded the dots to\n// black, so the coherence gate only dimmed the field. This resolves OQ3's\n// 'dots persist vs blank': dots persist; the structure floor makes blank.)\n//\n// out1 = module OUTLET 0: hatch output (luma marks on black, A=1); color is\n// downstream's job (weave convention). out2 = module OUTLET 1: mark mask\n// (same luma, no encode mix -- the discrete-family convention).\n// Bypass (bypass_mode \"param\"): black on both outlets (plan ADR-5; bypass\n// lives here, the last stage, like tensormap's).\n//\n// Tone (OQ2): OUT of v1 -- no tone inlet, no density-band layering (plan\n// ADR-6's T002 record); the v2 pointer is inlet-1-luma.\n\nParam density(0.5);\nParam weight(0.1);\nParam softness(0.05);\nParam elongation(3.0);\nParam phase(0.0);\nParam regularity(0.5);\nParam bypass_gate(0.0);\n\nsoft = min(softness, 0.49);\n\nu = nearest(in1, norm).x;\nv = nearest(in1, norm).y;\ncommit = nearest(in1, norm).z;\npres = nearest(in1, norm).w;\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\naspect = 1.0 + elongation * commit;\nsqrt_aspect = sqrt(max(aspect, 1.0));\naw = weight / sqrt_aspect;\nal = min(weight * density_scale * sqrt_aspect, 0.5);\n\n// across-line distance field (in the local frame)\ndist_to_line = abs(fract(u * density_scale) - 0.5);\n\n// per-line phase offset (weave's hash, cited; presence-0 pixels never render)\nline_idx = floor(u * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = v * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// edge falloff (cited: outer expands, inner at 0)\nouter_across = aw * (1.0 + soft);\nouter_along  = al * (1.0 + soft);\nedge_across = smoothstep(outer_across, 0.0, dist_to_line);\nedge_along  = smoothstep(outer_along,  0.0, dist_to_mark);\n\n// the mark: weave's product, gated by presence (NOT commit -- see header)\nmark = edge_across * edge_along * pres;\n\n// compose + encode: luma marks on black (color downstream's job), the only\n// clamp in the module; bypass -> black on both outlets\n// out1 = module OUTLET 0: hatch output (luma marks on black, A=1); color is\n// the tint; the bypass = the module neutral (black) with the outlet contract's\n// alpha 1 preserved (2026-10-17: the first draft multiplied the whole vec by\n// (1-bypass), dropping alpha to 0 under bypass \u2014 against f_tensor_type.md's\n// outlets-are-A=1 rule and the BYPASS_EXPECT row).\nout1 = vec(mix(mark, 0.0, bypass_gate), mix(mark, 0.0, bypass_gate),\n           mix(mark, 0.0, bypass_gate), 1.0);\nout2 = out1;",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -527,7 +528,7 @@
 						""
 					],
 					"patching_rect": [
-						991.5,
+						1063.5,
 						100.0,
 						56.0,
 						22.0
@@ -559,7 +560,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						771.5,
+						843.5,
 						260.0,
 						190.0,
 						150.0
@@ -583,7 +584,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						991.5,
+						1063.5,
 						200.0,
 						80.0,
 						21.0
@@ -614,7 +615,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1081.5,
+						1153.5,
 						200.0,
 						60.0,
 						21.0
@@ -646,7 +647,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						991.5,
+						1063.5,
 						232.0,
 						5.0,
 						5.0
@@ -678,7 +679,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1011.5,
+						1083.5,
 						232.0,
 						5.0,
 						5.0
@@ -703,7 +704,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						843.5,
 						20.0,
 						60.0,
 						22.0
@@ -721,7 +722,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						843.5,
 						50.0,
 						180.0,
 						22.0
@@ -742,7 +743,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						843.5,
 						110.0,
 						80.0,
 						22.0
@@ -761,7 +762,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						843.5,
 						140.0,
 						60.0,
 						22.0
@@ -779,7 +780,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						843.5,
 						170.0,
 						80.0,
 						22.0
@@ -797,7 +798,7 @@
 						""
 					],
 					"patching_rect": [
-						771.5,
+						843.5,
 						200.0,
 						100.0,
 						22.0
@@ -1340,7 +1341,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Commit floor: coherence at/below this renders nothing (the eps_trace guard is separate, below it). PROVISIONAL -- OQ3's gate-floor fallback (dots persist vs fade-in) is shipped as fade-in, tier-3 confirms.",
+					"hint": "Where strokes begin: coherence at/below this gives dots (mark shape rounds off), above it marks lengthen toward strokes. Changes SHAPE only, never brightness (2026-10-28; see Floor for blank). PROVISIONAL, tier-3 confirms.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1444,14 +1445,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Rotates the pattern relative to the decoded axis: +-1 = +-90 deg (the axis is an unoriented line, so +-90 spans the distinct layouts). Zero keeps strokes along structure.",
+					"hint": "Structure floor: where there is too little structure to mark, draw nothing. Reads the tensormap's trace scale (trace x its Strength; strong structure is ~1), squared for finer control at the low end. 0 = dots wherever any structure exists. Not strength-invariant: calibrate with the tensormap's Strength. PROVISIONAL default (spec OQ6).",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_hatch_stage_e1::angle_offset",
+					"param_connect": "#0_hatch_stage_e1::structure_floor",
 					"parameter_enable": 1,
 					"patching_rect": [
 						478.5,
@@ -1472,15 +1473,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.0
+								0.1
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "angle_offset",
+							"parameter_longname": "structure_floor",
 							"parameter_mmax": 1.0,
-							"parameter_mmin": -1.0,
+							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "angle_offset",
+							"parameter_shortname": "structure_floor",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1489,14 +1490,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "angle_offset"
+					"varname": "structure_floor"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-39",
 					"maxclass": "attrui",
-					"attr": "angle_offset",
+					"attr": "structure_floor",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1532,9 +1533,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Offset",
+					"text": "Floor",
 					"textjustification": 1,
-					"varname": "lbl_angle_offset"
+					"varname": "lbl_structure_floor"
 				}
 			},
 			{
@@ -1548,14 +1549,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Scrolls marks along the stroke axis (phase 1.0 = one full dash pitch; connect an LFO for motion). Family-standard animation entry.",
+					"hint": "Rotates the pattern relative to the decoded axis: +-1 = +-90 deg (the axis is an unoriented line, so +-90 spans the distinct layouts). Zero keeps strokes along structure.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_hatch_stage_e3::phase",
+					"param_connect": "#0_hatch_stage_e1::angle_offset",
 					"parameter_enable": 1,
 					"patching_rect": [
 						550.5,
@@ -1580,11 +1581,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "phase",
+							"parameter_longname": "angle_offset",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "phase",
+							"parameter_shortname": "angle_offset",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1593,14 +1594,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "phase"
+					"varname": "angle_offset"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-42",
 					"maxclass": "attrui",
-					"attr": "phase",
+					"attr": "angle_offset",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1636,9 +1637,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Phase",
+					"text": "Offset",
 					"textjustification": 1,
-					"varname": "lbl_phase"
+					"varname": "lbl_angle_offset"
 				}
 			},
 			{
@@ -1652,14 +1653,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Per-line dash stagger (weave's hash form): 1 = all lines in phase (grid-like), 0 = fully staggered, hash-stable across frames. PROVISIONAL.",
+					"hint": "Scrolls marks along the stroke axis (phase 1.0 = one full dash pitch; connect an LFO for motion). Family-standard animation entry.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_hatch_stage_e3::regularity",
+					"param_connect": "#0_hatch_stage_e3::phase",
 					"parameter_enable": 1,
 					"patching_rect": [
 						622.5,
@@ -1680,15 +1681,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.5
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "regularity",
+							"parameter_longname": "phase",
 							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
+							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "regularity",
+							"parameter_shortname": "phase",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1697,14 +1698,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "regularity"
+					"varname": "phase"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-45",
 					"maxclass": "attrui",
-					"attr": "regularity",
+					"attr": "phase",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1740,6 +1741,110 @@
 						50.0,
 						18.0
 					],
+					"text": "Phase",
+					"textjustification": 1,
+					"varname": "lbl_phase"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-47",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Per-line dash stagger (weave's hash form): 1 = all lines in phase (grid-like), 0 = fully staggered, hash-stable across frames. PROVISIONAL.",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_hatch_stage_e3::regularity",
+					"parameter_enable": 1,
+					"patching_rect": [
+						694.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						152.0,
+						100.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								0.5
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "regularity",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "regularity",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "regularity"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-48",
+					"maxclass": "attrui",
+					"attr": "regularity",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						674.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-49",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						683.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						140.5,
+						82.0,
+						50.0,
+						18.0
+					],
 					"text": "Regularity",
 					"textjustification": 1,
 					"varname": "lbl_regularity"
@@ -1747,7 +1852,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-47",
+					"id": "obj-50",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1758,7 +1863,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						991.5,
+						1063.5,
 						130.0,
 						18.0,
 						12.0
@@ -1775,7 +1880,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-48",
+					"id": "obj-51",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1783,7 +1888,7 @@
 						""
 					],
 					"patching_rect": [
-						991.5,
+						1063.5,
 						160.0,
 						131.0,
 						22.0
@@ -1832,7 +1937,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-53",
 						0
 					],
 					"destination": [
@@ -1844,7 +1949,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-53",
 						1
 					],
 					"destination": [
@@ -1856,11 +1961,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-47",
+						"obj-50",
 						0
 					],
 					"destination": [
-						"obj-48",
+						"obj-51",
 						0
 					]
 				}
@@ -1868,11 +1973,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-48",
+						"obj-51",
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -1884,7 +1989,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -1892,11 +1997,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-50",
+						"obj-52",
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -1992,7 +2097,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2028,7 +2133,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2064,7 +2169,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2100,7 +2205,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2244,7 +2349,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-5",
 						0
 					]
 				}
@@ -2280,7 +2385,43 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						9
+					],
+					"destination": [
+						"obj-47",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-47",
+						0
+					],
+					"destination": [
+						"obj-48",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-48",
+						0
+					],
+					"destination": [
+						"obj-53",
 						0
 					]
 				}
@@ -2318,16 +2459,21 @@
 				0
 			],
 			"obj-38": [
-				"angle_offset",
-				"angle_offset",
+				"structure_floor",
+				"structure_floor",
 				0
 			],
 			"obj-41": [
+				"angle_offset",
+				"angle_offset",
+				0
+			],
+			"obj-44": [
 				"phase",
 				"phase",
 				0
 			],
-			"obj-44": [
+			"obj-47": [
 				"regularity",
 				"regularity",
 				0

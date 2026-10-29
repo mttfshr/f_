@@ -87,7 +87,8 @@ replacements recorded in the spec's Open Questions.
 | `weight` | 0–0.5 | 0.1 | Mark thickness (across-axis half-extent). Squeeze-not-independent (the family's size+stretch finding): aspect is one dial |
 | `softness` | 0–0.49 | 0.05 | Edge feather, both axes; expands the multiplicative outer edge (weave's cited form). Clamped 0.49 |
 | `elongation` | 0–8 | 3 | Response-magnitude dial: max mark aspect at commit 1. Commit 0 ⇒ aspect 1 (dot) regardless. Caps where dashes merge: aspect_max = (0.5/(weight·density_scale))² — at the defaults that is ~elongation 2.1 (plan ADR-9); lighter `weight` uncaps |
-| `coherence_gate` | 0–1 | 0.25 | Commit floor: coherence at/below this renders nothing. The "dots persist vs blank" fallback is shipped as commit-weighted fade-in (no seam at the gate); OQ3's live confirmation pending |
+| `coherence_gate` | 0–1 | 0.25 | Where strokes begin: coherence at/below this gives dots, above it marks lengthen toward strokes. Changes mark shape only, never brightness. Curve form (OQ3) still pending live confirmation |
+| `structure_floor` | 0–1 | 0.1 | Draw nothing where there is too little structure. Threshold on the tensormap's trace scale (trace × its `strength`), squared for finer low-end control; 0 = dots wherever any structure exists. Not strength-invariant: calibrate with the tensormap's `strength`. Provisional default |
 | `angle_offset` | −1–1 | 0 | Rotates the pattern relative to the decoded axis; ±1 ⇒ ±90° (spans the distinct layouts of an unoriented axis field) |
 | `phase` | −1–1 | 0 | Scrolls marks along the stroke axis (phase 1.0 = one full dash pitch); the family-standard animation entry |
 | `regularity` | 0–1 | 0.5 | Per-line dash stagger (weave's hash form): 1 = lines in phase (grid-like), 0 = fully staggered, hash-stable across frames |

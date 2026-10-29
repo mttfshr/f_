@@ -30,7 +30,12 @@ an incoming tensor — and, critically, each mark's *shape is committed per-pixe
 eigenvalues*: where the eigengap is wide (a direction genuinely exists) the mark commits
 to a line-like stroke along that direction; where the gap closes the same mark rounds off
 toward a dot. One mechanism, continuous across the field: lines where structure is
-line-like, dots where it is not, nothing where the gate says there is no structure at all.
+line-like, dots where it is not, nothing where there is no structure at all. **Shape and
+presence are separate signals** (decided 2026-10-28, after the first live look): `commit`
+(from coherence) sets only the mark shape, dot to stroke, and never its brightness;
+*presence* (from the trace, set by the `structure_floor` dial) decides whether a mark is
+drawn at all. Before that change one variable did both, so the dots faded to black and the
+coherence gate only dimmed the field.
 
 **Discrete-item family member** — the fifth, after `f_grain`, `f_masonry`, `f_weave`,
 `f_vf_seeds`. Mark geometry follows the family's conventions
@@ -145,6 +150,25 @@ coherence, tensormap plan ADR-2), equal to 0 at/below `coherence_gate`, and → 
 (elongation response `elongation`), circular dot at commit 0. The exact curve shape —
 direct normalized gap vs. an eigenvalue-ratio form, exponent, knee placement — is Open
 Question 3, settled by the Phase-0 mirror (tier 1), not guessed here.
+
+### E1 — presence (added 2026-10-28)
+
+`commit` above drives shape only. A second E1 output, `pres`, drives whether a mark is
+drawn. It uses the tensormap-encoded trace (`R + B` of the outlet-0 texel, which is trace ×
+the tensormap's own `strength`, the scale its calibration table is written in):
+
+```
+enc_trace = t.r + t.b
+thr  = structure_floor^2                       // finer control at the low end
+pres = smoothstep(0.5*thr, 1.5*thr + 1e-6, enc_trace) * (1 - iso)
+```
+
+- `pres` is continuous, monotone in trace, in [0, 1], and 0 wherever the eps_t guard fires.
+- `structure_floor` = 0 makes the ramp a step at the guard: presence 1 wherever any
+  structure exists (dots across the whole frame on a textured source).
+- This is the one quantity in the module that is not strength-invariant. Calibrate it with
+  the tensormap's `strength`, the same way its trace outlet is calibrated.
+- E3 gates brightness on `pres` alone. `commit` never multiplies intensity.
 
 ### E2 — mark layout: THE COST-SHAPE GATE SUBJECT
 
@@ -261,7 +285,8 @@ provisional until T023-T027 locked them live).
 | `weight` | live.dial | 0-0.5 | 0.1 (provisional, weave default) | Mark thickness (across-axis extent). |
 | `softness` | live.dial | 0-0.49 | 0.05 (provisional) | Edge feather, both axes, per the family formula (`discrete_item_conventions.md` `softness` section, weave's clamp to 0.49). |
 | `elongation` | live.dial | 0-8 | 3 (provisional) | Response-magnitude dial: max along/across aspect of a mark at commit 1. NOT the shape data — shape data is per-pixel commit (glint lesson, above). commit 0 ⇒ aspect 1 (dot) regardless of this dial. Uses the family's squeeze-not-independent finding (`discrete_item_conventions.md` `size`+`stretch` section) rather than a `marklen` dial. |
-| `coherence_gate` | live.dial | 0-1 | 0.25 (provisional) | Commit floor: coherence at/below this ⇒ commit 0. How far below 0 the module then falls back (dots persist vs. blank between gate and zero) is part of OQ3's curve decision. |
+| `coherence_gate` | live.dial | 0-1 | 0.25 (provisional) | Where strokes begin: coherence at/below this ⇒ commit 0 ⇒ a dot; above it marks lengthen toward strokes. Changes shape only, never brightness (2026-10-28). |
+| `structure_floor` | live.dial | 0-1 | 0.1 (provisional) | Where there is too little structure to mark, draw nothing. Threshold on the tensormap-encoded trace (trace × its `strength`), squared for finer low-end control. 0 ⇒ dots wherever any structure exists. Not strength-invariant: calibrate with the tensormap's `strength`. Added 2026-10-28; the default awaits tier 3. |
 | `angle_offset` | live.dial | -1-1 | 0 | Rotates the pattern relative to the decoded axis: ±1 ⇒ ±90° (axis is unoriented, so ±90° spans all distinct layouts; the ±1 endpoints reach the across-structure orientation). Zero keeps strokes along structure. |
 | `phase` | live.dial | -1-1 | 0 | Family-standard animation entry point: scrolls marks along the stroke axis (`discrete_item_conventions.md` `phase` section). |
 | `regularity` | live.dial | 0-1 | 0.5 (provisional) | Per-cell/per-line hash stagger (`f_weave` mechanism: stable per-cell hash scaled by 1-regularity). |
@@ -342,7 +367,14 @@ Numbers first. Tiers 1-2 verify these before any scratch patch
   monotone non-decreasing; the field crosses the gate boundary with a continuous
   (no-seam) mark transition — checked numerically in tier 1 on an authored isotropic→
   anisotropic gradient field.
-- **Contrast independence:** the same edge structure at gradient contrast 0.1 and 1.0
+- **Shape and presence are decoupled (2026-10-28):** raising `coherence_gate` changes mark
+  shape (dot ⇄ stroke) at unchanged peak brightness; near-isotropic structure above the
+  floor renders full-brightness dots; `structure_floor` blanks weak structure and leaves
+  strong structure untouched. Mirror-verified (`test_gate_changes_shape_not_brightness`,
+  `test_dots_persist_at_low_coherence`, `test_structure_floor_blanks_weak_structure`, plus
+  two mutation checks).
+- **Contrast independence** (holds at `structure_floor` 0; a nonzero floor is an absolute
+  trace threshold by design): the same edge structure at gradient contrast 0.1 and 1.0
   yields identical commit and axis maps (coherence property; tier-1 invariant).
 - **Rotation equivariance:** rotating the input's structure by 90° rotates the rendered
   stroke field by 90°; mirror-verified.
@@ -409,6 +441,10 @@ Numbers first. Tiers 1-2 verify these before any scratch patch
    collapse into one or two exposed dials; what the gate-floor fallback is (dots
    persist vs blank). Settled by the tier-1 mirror (the curve is cheap to sweep there),
    confirmed in tier 3.
+   **Gate-floor fallback DECIDED (first live look, 2026-10-28): dots persist.** The
+   original "fade-in" fallback made the dot state invisible and the gate only dimmed the
+   field; shape and presence are now separate (see E1 — presence). The curve form
+   itself (knees, one dial or two) is still open for tier 3.
 4. **`angle_offset` endpoints and range.** Provisional ±1 → ±90°. Confirm the wrap and
    that ±90° is the useful limit for an unoriented axis field (a 180° offset is
    pattern-identical).

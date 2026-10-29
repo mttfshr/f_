@@ -16,11 +16,11 @@
 #
 # Hardcoded object ids below are derived by hand from build_patcher.py's id
 # formulas, NOT kept in sync automatically. Chain order [e1(primary), e2, e3]:
-#   9 UI params (density, weight, softness, elongation, coherence_gate,
-#   angle_offset, phase, regularity, width, height = 10) -> chain_id_base 50
-#   support nodes: e2 = obj-50, e3 = obj-51
-#   outlet ids: outlet 0 = obj-2, outlet 1 = obj-201
-# If the param count or chain order changes, recompute these.
+#   (original 9-dial layout: 10 UI params incl. width/height -> chain_id_base 50;
+#   support nodes e2 = obj-50, e3 = obj-51; outlet 0 = obj-2, outlet 1 = obj-201.
+#   structure_floor was added 2026-10-28 -> 10 dials; nothing in this file
+#   hard-codes those ids (outlet_source is name-based), but any raw wiring
+#   added later must recompute them.)
 #
 # Params reach non-primary stages via `pix_target` (the tensormap precedent:
 # radius fans to two stages there; here density/weight/softness/elongation/
@@ -84,14 +84,14 @@ patcher = {
 
     # [src_id, src_outlet, dst_id, dst_inlet]
     "pix_wires": [
-        ["e1", 0, "e2", 0],   # (ca, sa, commit, iso) -> local-frame pass
-        ["e2", 0, "e3", 0],   # (u, v, commit, iso)   -> profile + encode
+        ["e1", 0, "e2", 0],   # (ca, sa, commit, pres) -> local-frame pass
+        ["e2", 0, "e3", 0],   # (u, v, commit, pres)   -> profile + encode
     ],
 
     "outlets": [
         {"comment": "hatch output",
          "color": [0.55, 0.55, 0.55, 1.0],
-         "hint": "Hatch marks, luma on black (color is downstream's job, the f_weave convention). Commit-weighted: coherently-line-structured regions render strokes, near-gate regions fade toward nothing; aspect rounds to dots as coherence falls (plan ADR-9). @type float32."},
+         "hint": "Hatch marks, luma on black (color is downstream's job, the f_weave convention). Strokes where structure is directional, full-brightness dots where it is not (shape follows coherence), nothing below the structure floor (presence follows trace). @type float32."},
         {"comment": "mark mask",
          "color": [0.55, 0.55, 0.55, 1.0],
          "hint": "Mark mask without the encode mix (same luma, the discrete-family convention, f_vf_seeds out1): for downstream compositing/gating. NOT a tensor and not a vecfield."},
@@ -141,8 +141,15 @@ patcher = {
         {
             "name": "coherence_gate", "type": "float",
             "min": 0.0, "max": 1.0, "default": 0.25,
-            "hint": "Commit floor: coherence at/below this renders nothing (the eps_trace guard is separate, below it). PROVISIONAL -- OQ3's gate-floor fallback (dots persist vs fade-in) is shipped as fade-in, tier-3 confirms.",
+            "hint": "Where strokes begin: coherence at/below this gives dots (mark shape rounds off), above it marks lengthen toward strokes. Changes SHAPE only, never brightness (2026-10-28; see Floor for blank). PROVISIONAL, tier-3 confirms.",
             "label": "Gate",
+            "pix_target": "e1",
+        },
+        {
+            "name": "structure_floor", "type": "float",
+            "min": 0.0, "max": 1.0, "default": 0.1,
+            "hint": "Structure floor: where there is too little structure to mark, draw nothing. Reads the tensormap's trace scale (trace x its Strength; strong structure is ~1), squared for finer control at the low end. 0 = dots wherever any structure exists. Not strength-invariant: calibrate with the tensormap's Strength. PROVISIONAL default (spec OQ6).",
+            "label": "Floor",
             "pix_target": "e1",
         },
         {

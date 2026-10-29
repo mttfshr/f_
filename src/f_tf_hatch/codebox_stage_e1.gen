@@ -3,14 +3,24 @@
 // Mirrors tests/test_tf_hatch.py stage_e1. Intermediate texture, NEVER an
 // outlet; unbounded float32 (plan ADR-4 -- no clamp, no 0.5-offset here).
 //
-// out1 = (ca, sa, commit, iso):
+// out1 = (ca, sa, commit, pres):
 //   (ca, sa)     cos/sin of the commit-frame axis:
 //                axis = theta + pi/2 + angle_offset*pi/2
-//   commit       the commit curve (smoothstep in the normalized eigengap;
-//                PROVISIONAL knees C_LO/C_HI -- OQ3 open, tier-3 confirms)
-//   iso          1 = direction-undefined/zero tensor (eps_trace guard,
-//                tensormap ADR-6/T019 value cited): axis UNSET (ca=sa=0),
-//                commit 0 -- never an atan2 artifact (plan ADR-5)
+//   commit       SHAPE only: the commit curve (smoothstep in the normalized
+//                eigengap; 0 = dot, 1 = stroke; PROVISIONAL knees C_LO/C_HI --
+//                OQ3 open, tier-3 confirms). Never multiplies brightness.
+//   pres         PRESENCE only: 0 = draw nothing, 1 = draw. A smooth ramp on
+//                the tensormap-encoded trace (R + B = trace * the tensormap's
+//                strength) against structure_floor^2; 0 where the eps_trace
+//                guard fires (direction-undefined/zero tensor, tensormap
+//                ADR-6/T019 value cited): axis UNSET (ca=sa=0), commit 0 --
+//                never an atan2 artifact (plan ADR-5). (This channel was
+//                `iso`, a 0/1 guard flag; made continuous 2026-10-28.)
+//
+// SHAPE vs PRESENCE (2026-10-28, first live look): commit used to scale both
+// the mark aspect AND its brightness, so the line->dot rounding faded to
+// black and the coherence gate only dimmed the field. Now commit sets shape
+// alone and pres sets whether a mark is drawn at all.
 //
 // DECODE IDIOM: copied VERBATIM from .specify/f_tf_glyph/plan.md ADR-2
 // (the canonical block; do not re-derive):
@@ -33,6 +43,7 @@
 Param strength(100.0);
 Param angle_offset(0.0);
 Param coherence_gate(0.25);
+Param structure_floor(0.1);
 
 eps_trace = 0.000001;
 C_HI = 1.0;    // commit saturates at coherence 1 (C_LO is coherence_gate, a live Param above)
@@ -72,4 +83,15 @@ eff = theta + halfpi + angle_offset * halfpi * 2.0 * 0.5;  // = +offset*pi/2
 ca = cos(eff) * (1.0 - iso);
 sa = sin(eff) * (1.0 - iso);
 
-out1 = vec(ca, sa, commit, iso);
+// presence (2026-10-28): is there structure here AT ALL, regardless of its
+// direction. enc_trace = R + B = trace * the producing tensormap's strength
+// (its calibrated scale, ~1 on strong structure), so structure_floor reads
+// on the same scale as tensormap's trace output. thr = floor^2 (finer at the
+// low end); ramp 0.5*thr -> 1.5*thr (+ a hair, so floor 0 is a step at the
+// iso guard: presence 1 wherever any structure exists). Not strength-
+// invariant for floor > 0 -- the one absolute quantity in the module.
+enc_trace = t.r + t.b;
+thr = structure_floor * structure_floor;
+pres = smoothstep(0.5 * thr, 1.5 * thr + 0.000001, enc_trace) * (1.0 - iso);
+
+out1 = vec(ca, sa, commit, pres);

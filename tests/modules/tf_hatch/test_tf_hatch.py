@@ -38,6 +38,7 @@ from tf_hatch_mirror import (
     F32,
     commit_curve,
     decode,
+    presence,
     stage_e1,
     stage_e2,
     stage_e3,
@@ -49,8 +50,8 @@ INTERIOR = (slice(8, -8), slice(8, -8))
 
 def chain(tex, density=0.5, weight=0.1, softness=0.05, elongation=3.0,
           phase=0.0, regularity=0.5, strength=100.0, gate=None,
-          angle_offset=0.0, bypass=0.0):
-    aux = stage_e1(tex, strength, gate, angle_offset)
+          angle_offset=0.0, bypass=0.0, floor=0.0):
+    aux = stage_e1(tex, strength, gate, angle_offset, floor)
     aux2 = stage_e2(aux)
     return stage_e3(aux2, density, weight, softness, elongation, phase,
                     regularity, bypass)
@@ -399,13 +400,20 @@ def test_commit_endpoints():
     aw = 0.1 / 1.0
     al = 0.1 * ds * 1.0
     check("commit 0 aspect = 1 (dot)", abs(al / (aw * ds) - aspect0), 1e-5)
-    # commit 0 renders nothing (the fade-in endpoint, the mirror's truth)
+    # commit 0 is a DOT, not nothing (2026-10-28 decoupling): with presence 1
+    # it renders at full brightness; only presence 0 renders nothing.
     aux0 = np.zeros((64, 64, 4), F32)
-    aux0[..., 1] = F32(1.0)
-    aux0[..., 3] = F32(0.0)
+    aux0[..., 1] = F32(1.0)            # axis (0, 1); commit 0
+    aux0[..., 3] = F32(1.0)            # presence 1
     o0a, _ = stage_e3(stage_e2(aux0), density=0.5, weight=0.1, softness=0.0,
                       elongation=3.0)
-    check("commit 0 renders nothing", float(np.abs(o0a[..., 0]).max()), 1e-7)
+    peak = float(o0a[..., 0].max())
+    note("commit 0, presence 1: peak mark", peak)
+    check("commit 0 renders dots at full brightness", 0.0 if peak > 0.8 else 1.0, 0.0)
+    aux0[..., 3] = F32(0.0)            # presence 0
+    o0b, _ = stage_e3(stage_e2(aux0), density=0.5, weight=0.1, softness=0.0,
+                      elongation=3.0)
+    check("presence 0 renders nothing", float(np.abs(o0b[..., 0]).max()), 1e-7)
 
 
 def _runs(idxs):
@@ -539,19 +547,19 @@ def _stage_e1_mutated(tex, use_gradient_axis=False, drop_guard=False):
     """The E1 mirror with an injected bug (the T008 mutation vehicle)."""
     ca, sa = np.zeros(tex.shape[:2], F32), np.zeros(tex.shape[:2], F32)
     commit = np.zeros(tex.shape[:2], F32)
-    iso = np.ones(tex.shape[:2], F32)
+    pres = np.zeros(tex.shape[:2], F32)
     for i in range(tex.shape[0]):
         for j in range(tex.shape[1]):
             out = decode(tex[i, j])
             trace = out[3]
             if not drop_guard and trace <= F32(EPS_TRACE):
                 continue
-            iso[i, j] = F32(0.0)
+            pres[i, j] = F32(1.0)
             eff = out[8] if use_gradient_axis else out[9]     # the bug
             ca[i, j] = np.cos(eff).astype(F32)
             sa[i, j] = np.sin(eff).astype(F32)
             commit[i, j] = commit_curve(np.array([out[10]], F32))[0]
-    return g.store_float32(np.stack([ca, sa, commit, iso], -1))
+    return g.store_float32(np.stack([ca, sa, commit, pres], -1))
 
 
 def test_mutation_eps_guard_dropped():
@@ -582,25 +590,162 @@ def test_mutation_eps_guard_dropped():
 def test_mutation_elongation_without_commit_mult():
     """Inject: tie mark aspect to `elongation` directly, without the commit
     multiplier -- the glint lesson's view-in-disguise bug. A near-iso
-    field must render elongated marks under the bug, dots under the truth
-    (commit-weighted fade-in)."""
-    # near-iso but traceable: Jxx=Jyy=0.5, Jxy=0.01 -> root 0.02, coh 0.02
-    tex = _tex_from_tensor(np.full((H, W), F32(0.5)),
-                           np.full((H, W), F32(0.01)),
-                           np.full((H, W), F32(0.5)))
+    field must render DOTS under the truth (commit ~ 0, aspect 1) and
+    elongated marks under the bug -- a different mark shape, so the two
+    renders differ pixelwise. (Reworked 2026-10-28: the truth is no longer
+    'nothing' -- dots now render at full brightness, presence decoupled.)"""
+    tex = _near_iso_tex()
     coh = float(decode(tex[32, 40])[10])
     commit_truth = float(commit_curve(np.array([coh], F32))[0])
     note("coh and commit", commit_truth)
-    # truth: commit->0 fades marks out entirely
+    check("truth: near-iso commit ~ 0", commit_truth, 0.01)
     o_truth = stage_e3(stage_e2(stage_e1(tex)), elongation=8.0)[0]
-    check("truth: near-iso renders ~nothing", float(np.abs(o_truth[..., 0]).max()), 0.05)
-    # the BUG would render full dots at every pixel (aspect tied to dial):
-    # measure the bug's rendered coverage analytically: commit replaced by 1
+    # the BUG: aspect tied to the dial without the commit multiplier
     aux_bug = stage_e1(tex)
     aux_bug[..., 2] = F32(1.0)                       # the bug: full commit
     o_bug = stage_e3(stage_e2(aux_bug), elongation=8.0)[0]
-    check("mutation: commit removed is detected",
-          0 if float(np.abs(o_bug[..., 0]).max()) - float(np.abs(o_truth[..., 0]).max()) > 0.1 else 1, 0.0)
+    diff = float(np.abs(o_bug[..., 0] - o_truth[..., 0]).max())
+    note("mutation: max |bug - truth| render diff", diff)
+    check("mutation: commit removed is detected", 0 if diff > 0.1 else 1, 0.0)
+
+
+# --- 2026-10-28: shape and presence decoupled (first live look) -----------
+
+def _near_iso_tex():
+    """near-iso but traceable: Jxx=Jyy=0.5, Jxy=0.01 -> root 0.02, coh 0.02."""
+    return _tex_from_tensor(np.full((H, W), F32(0.5)),
+                            np.full((H, W), F32(0.01)),
+                            np.full((H, W), F32(0.5)))
+
+
+def _mid_coherence_tex():
+    """Jxx=0.7, Jyy=0.3, Jxy=0 -> coherence 0.4 everywhere, gradient along x
+    (strokes vertical), trace 1.0 (encoded 100 at strength 100)."""
+    return _tex_from_tensor(np.full((H, W), F32(0.7)),
+                            np.full((H, W), F32(0.0)),
+                            np.full((H, W), F32(0.3)))
+
+
+def _longest_run(profile):
+    best = run = 0
+    for b in profile:
+        run = run + 1 if b else 0
+        best = max(best, run)
+    return best
+
+
+def test_dots_persist_at_low_coherence():
+    """The first live look's bug: the line->dot rounding faded to black, so
+    the dot state was invisible. Near-iso structure (commit ~ 0, trace well
+    above the floor) must render FULL-BRIGHTNESS dots."""
+    tex = _near_iso_tex()
+    aux = stage_e1(tex)
+    check("near-iso commit ~ 0", float(aux[..., 2].max()), 0.01)
+    check("near-iso presence 1", float(1.0 - aux[..., 3].min()), 1e-6)
+    o0, _ = stage_e3(stage_e2(aux), softness=0.0)
+    peak = float(o0[..., 0].max())
+    note("near-iso peak mark (dots)", peak)
+    check("near-iso renders full-brightness dots", 0.0 if peak > 0.8 else 1.0, 0.0)
+
+
+def test_gate_changes_shape_not_brightness():
+    """coherence_gate must move the mark SHAPE (dot <-> stroke), not dim the
+    field -- the exact complaint from the first live look. Same field, gate
+    0.9 (coherence 0.4 below it -> commit 0 -> dots) vs gate 0.0 (commit
+    > 0 -> longer strokes): peak brightness equal, vertical dash extent
+    clearly different."""
+    tex = _mid_coherence_tex()
+    kw = dict(elongation=8.0, softness=0.0, regularity=1.0)
+    o_dot, _ = chain(tex, gate=0.9, **kw)
+    o_str, _ = chain(tex, gate=0.0, **kw)
+    p_dot, p_str = float(o_dot[..., 0].max()), float(o_str[..., 0].max())
+    note("peak brightness at gate 0.9 (dots)", p_dot)
+    note("peak brightness at gate 0.0 (strokes)", p_str)
+    check("gate does not dim: peaks within 0.05", abs(p_dot - p_str), 0.05)
+    # strokes run along y here (gradient along x): measure vertical runs
+    def along(o):
+        m = o[INTERIOR][..., 0] > 0.4
+        return max(_longest_run(m[:, j]) for j in range(m.shape[1]))
+    r_dot, r_str = along(o_dot), along(o_str)
+    note("longest vertical run, dots", float(r_dot))
+    note("longest vertical run, strokes", float(r_str))
+    # Expected from the formula: dot half-length al = w*ds = 0.283 pitch,
+    # stroke al = min(w*ds*sqrt(1 + 8*0.352), 0.5) = 0.5 (the dash cap, ADR-9)
+    # -> ratio 1.77. Measured 8 -> 12 px on the 64 px frame (pitch ~22 px,
+    # >0.4 threshold): >= 1.3x leaves room for pixel rounding without
+    # passing a no-change bug (which gives exactly 1.0x).
+    check("gate changes shape: strokes longer than dots (>= 1.3x)",
+          0.0 if r_str >= 1.3 * r_dot else 1.0, 0.0)
+
+
+def test_structure_floor_blanks_weak_structure():
+    """The new dial: below the floor nothing renders, above it marks render,
+    at floor 0 both render (presence only tracks 'any structure at all')."""
+    weak = _tex_from_tensor(np.full((H, W), F32(0.0005)),
+                            np.full((H, W), F32(0.0)),
+                            np.full((H, W), F32(0.0005)))     # enc trace 0.1
+    strong = _tex_from_tensor(np.full((H, W), F32(0.005)),
+                              np.full((H, W), F32(0.0)),
+                              np.full((H, W), F32(0.005)))    # enc trace 1.0
+    kw = dict(softness=0.0)
+    w0, _ = chain(weak, floor=0.0, **kw)
+    s0, _ = chain(strong, floor=0.0, **kw)
+    w5, _ = chain(weak, floor=0.5, **kw)      # thr 0.25: weak (0.1) < lo 0.125
+    s5, _ = chain(strong, floor=0.5, **kw)    # strong (1.0) > hi 0.375
+    note("weak @ floor 0 peak", float(w0[..., 0].max()))
+    note("weak @ floor 0.5 peak", float(w5[..., 0].max()))
+    check("floor 0: weak structure still renders", 0.0 if w0[..., 0].max() > 0.8 else 1.0, 0.0)
+    check("floor 0.5: weak structure blanked", float(np.abs(w5[..., 0]).max()), 1e-7)
+    check("floor 0.5: strong structure unaffected",
+          float(np.abs(s5[..., 0] - s0[..., 0]).max()), 1e-6)
+
+
+def test_presence_ramp_monotone_and_bounded():
+    """presence(enc_trace, floor): continuous, monotone non-decreasing in
+    trace, in [0, 1], 0 below 0.5*thr, 1 above 1.5*thr."""
+    tr = np.linspace(0.0, 1.0, 2001).astype(F32)
+    for floor in (0.0, 0.1, 0.5, 0.9):
+        p = presence(tr, floor)
+        thr = floor * floor
+        check(f"floor {floor}: bounded", 0.0 if p.min() >= 0 and p.max() <= 1 else 1.0, 0.0)
+        check(f"floor {floor}: monotone", float(np.maximum(0, -np.diff(p)).max()), 1e-6)
+        if floor > 0:
+            check(f"floor {floor}: zero below 0.5*thr",
+                  float(np.abs(p[tr < 0.5 * thr - 1e-4]).max(initial=0.0)), 1e-7)
+            check(f"floor {floor}: one above 1.5*thr",
+                  float(np.abs(1.0 - p[tr > 1.5 * thr + 1e-4]).max(initial=0.0)), 1e-6)
+        # the step is smooth: max slope bounded by the analytic smoothstep slope
+        slope = float(np.abs(np.diff(p)).max() / (tr[1] - tr[0]))
+        bound = 1.5 / (thr + 1e-6) * 1.05
+        check(f"floor {floor}: continuous (slope <= analytic)", 0.0 if slope <= bound else 1.0, 0.0)
+
+
+def test_mutation_presence_weighted_by_commit():
+    """Inject the ORIGINAL bug: intensity multiplied by commit as well as
+    presence. On near-iso structure (commit ~ 0) the bug renders ~nothing
+    where the truth renders dots -- the first live look's symptom."""
+    tex = _near_iso_tex()
+    aux = stage_e1(tex)
+    o_truth = stage_e3(stage_e2(aux), softness=0.0)[0]
+    o_bug = o_truth[..., 0] * aux[..., 2]            # the old commit-weighting
+    check("truth renders dots", 0.0 if o_truth[..., 0].max() > 0.8 else 1.0, 0.0)
+    check("mutation: old commit-weighting kills dots (caught)",
+          0.0 if float(o_bug.max()) < 0.05 else 1.0, 0.0)
+
+
+def test_mutation_floor_ignored():
+    """Inject: presence ignores the floor (always 1 where trace > eps). The
+    weak-structure blanking test must fail."""
+    weak = _tex_from_tensor(np.full((H, W), F32(0.0005)),
+                            np.full((H, W), F32(0.0)),
+                            np.full((H, W), F32(0.0005)))
+    aux_bug = stage_e1(weak, floor=0.5)
+    aux_bug[..., 3] = F32(1.0)                       # the bug
+    o_bug = stage_e3(stage_e2(aux_bug), softness=0.0)[0]
+    o_truth = chain(weak, floor=0.5, softness=0.0)[0]
+    check("truth: floor blanks weak structure", float(np.abs(o_truth[..., 0]).max()), 1e-7)
+    check("mutation: floor ignored renders marks (caught)",
+          0.0 if o_bug[..., 0].max() > 0.8 else 1.0, 0.0)
 
 
 if __name__ == "__main__":
