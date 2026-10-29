@@ -19,9 +19,9 @@
 //   - the step must not exceed the cell size (step <= cell_px) or cells can be
 //     skipped; at N = 16 this bounds reach against grain.
 //
-// Coordinates (spike 2026-10-28): the pixel's own texel centre is
-// norm*(dim-1)+0.5 -- jit.gl.pix `norm` runs 0..1 over texel CENTRES (cell =
-// norm*(dim-1)), not over texel edges. Reads: `nearest` at (pos/dim).
+// Coordinates: `norm` = (i + 0.5)/dim (texel centres; tests/lib/gpu_sim.py,
+// jxf.py), so the pixel's own texel centre is norm*dim = i + 0.5. (`cell`
+// would be norm*(dim-1): not used.) Reads: `nearest` at (pos/dim).
 //
 // Params (names avoid GenExpr operators: `length` is one, hence `reach`):
 //   reach    0..1  half-length of the march = reach * 0.25 * frame height
@@ -43,8 +43,8 @@ Param density(0.7);
 
 wpx = dim.x;
 hpx = dim.y;
-x0 = norm.x * (wpx - 1.0) + 0.5;
-y0 = norm.y * (hpx - 1.0) + 0.5;
+x0 = norm.x * wpx;
+y0 = norm.y * hpx;
 
 half_len = reach * 0.25 * hpx;
 h_step = half_len / 16.0;

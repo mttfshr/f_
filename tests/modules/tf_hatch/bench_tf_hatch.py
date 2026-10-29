@@ -116,25 +116,63 @@ def test_stage_e1_floor_and_offset():
 
 # ------------------------------------------------------------- stage E2
 
-def e2_ref(aux, params, h):
-    return m.stage_e2(aux, n_steps=16, length=params["reach"], grain=params["grain"], persist="mix",
-                      persist_pow=0.5, aux_mode="unsigned_nearest",
-                      fill=float(m.fill_from_density(params["density"])))
+HASH_PROBE = """ix = nearest(in1, norm).x;
+iy = nearest(in1, norm).y;
+out1 = vec(fract(sin(ix * 127.1 + iy * 311.7) * 43758.5453), 0.0, 0.0, 1.0);
+"""
+
+
+def gpu_hash_table(n=64):
+    """The E2 lattice hash evaluated BY THE GPU for cell indices 0..n-1 (table[iy, ix]). The hash
+    sin(ix*127.1 + iy*311.7)*43758 is not reproducible across implementations (float32 arguments of
+    ~1e4, trig precision), so E2's reference uses the GPU's own hash values and the parity test is
+    about everything EXCEPT the hash: coordinates, march, sign continuity, edges, brightness. How far
+    the NumPy hash agrees with the GPU's is reported separately (a look-level fact, not a defect)."""
+    tex = np.zeros((n, n, 4), F32)
+    tex[..., 0] = np.arange(n, dtype=F32)[None, :]
+    tex[..., 1] = np.arange(n, dtype=F32)[:, None]
+    tex[..., 3] = 1.0
+    out, r = bc.run_pass(HASH_PROBE, [tex])
+    ok(r)
+    return out[..., 0].copy()
+
+
+def e2_ref(aux, params, h, table):
+    """Mirror E2 with the noise lookup swapped for the GPU's own hash table (restored after)."""
+    fill = float(m.fill_from_density(params["density"]))
+
+    def gpu_noise(px, py, cell_px, seed=0, fill=None):
+        ix = np.floor(px / F32(cell_px)).astype(int)
+        iy = np.floor(py / F32(cell_px)).astype(int)
+        return (table[iy, ix] < F32(fill)).astype(F32)
+
+    saved = m.noise_at
+    m.noise_at = gpu_noise
+    try:
+        return m.stage_e2(aux, n_steps=16, length=params["reach"], grain=params["grain"], persist="mix",
+                          persist_pow=0.5, aux_mode="unsigned_nearest", fill=fill)
+    finally:
+        m.noise_at = saved
 
 
 def test_stage_e2_matches_on_coherent_fields():
     """GPU march vs the mirror on constant-axis, coherence-1 fields (three axes, one of them
     across the horizontal branch cut). Fraction of pixels differing by > 0.05, plus the mean."""
+    table = gpu_hash_table()
+    ix, iy = np.meshgrid(np.arange(64), np.arange(64))
+    np_h = m._fract(np.sin(ix.astype(F32) * F32(m.HASH_A) + iy.astype(F32) * F32(m.HASH_B)) * F32(m.HASH_C))
+    note("NumPy vs GPU lattice hash: fraction of cells with |dh| > 0.01 (not asserted)",
+         float((np.abs(np_h - table) > 0.01).mean()))
     for along in (20.0, 100.0, 170.0):
         h = w = 64
         aux = m.stage_e1(field_tex(h, w, along, 1.0), 100.0, aux_mode="unsigned_nearest")
         out, r = bc.run_pass(code("e2"), [aux], params=dict(E2_BASE))
         ok(r)
-        ref = e2_ref(aux, E2_BASE, h)
+        ref = e2_ref(aux, E2_BASE, h, table)
         frac = float((np.abs(out[..., 0] - ref[..., 0]) > 0.05).mean())
         mean_ratio = float(out[..., 0].mean()) / max(float(ref[..., 0].mean()), 1e-9)
         note(f"along {along}: fraction differing > 0.05 / mean GPU/mirror", (frac, mean_ratio))
-        # 3%: a few lattice cells sit on the hash threshold (sin of ~1e4 * 43758 in float32).
+        # 3%: cells whose position sits within float32 rounding of a lattice boundary.
         check(f"E2 along {along}: <= 3% of pixels differ", 0.0 if frac <= 0.03 else frac, 0.0)
         check(f"E2 along {along}: mean raw within 5%", abs(mean_ratio - 1.0), 0.05)
         check(f"E2 along {along}: presence channel", float(np.abs(out[..., 1] - ref[..., 1]).max()), 1e-4)
@@ -148,7 +186,7 @@ def test_stage_e2_edges_and_unset():
     aux = m.stage_e1(field_tex(h, w, 45.0, 1.0), 100.0, aux_mode="unsigned_nearest")
     out, r = bc.run_pass(code("e2"), [aux], params=dict(E2_BASE))
     ok(r)
-    ref = e2_ref(aux, E2_BASE, h)
+    ref = e2_ref(aux, E2_BASE, h, gpu_hash_table())
     d = np.abs(out[..., 0] - ref[..., 0]) > 0.05
     band = np.zeros_like(d)
     band[:3] = band[-3:] = True

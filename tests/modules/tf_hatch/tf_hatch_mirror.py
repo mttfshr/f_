@@ -117,6 +117,7 @@ def stage_e1(tex, strength=100.0, angle_offset=0.0, floor=0.0, aux_mode="doubled
     else:
         c, s = np.cos(a), np.sin(a)
     pres = presence(F32(1) * tex[..., 0] + tex[..., 2], floor)
+    coh = np.clip(coh, 0, 1)   # the codebox clamps (a non-PSD fixture can give root > trace)
     aux = np.stack([np.where(live, c, 0), np.where(live, s, 0),
                     np.where(live, coh, 0), np.where(live, pres, 0)], -1)
     return g.store_float32(aux)

@@ -105,17 +105,28 @@ E2 1.7 + E1 + E3 (simple passes, ~0.8 each) ≈ 3.3 ms, inside the ≤ 5 ms budg
 (box vs cosine) is a look question, left for Block 3.
 Parity sanity (64², coherent field): 8.7% of pixels differ by > 0.05 and GPU mean raw is 9%
 higher than the mirror's (0.241 vs 0.221), so the codebox is NOT yet mirror-exact. Probable
-cause (untested): the spike used `x0 = norm.x * dim.x`, but `norm` on jit.gl.pix is
-`i/(dim-1)`-style, not texel-centre, so the noise lattice is shifted by up to ~1 px. Block 2
-must use texel-centre coordinates (`(floor(norm*dim)+0.5)`) and the tier-2 bench must hit
-the mirror tightly; the cost numbers do not depend on this.
+cause, as found in Block 2: the sin lattice hash is not reproducible between GPU and NumPy
+(10% of cells differ by > 0.01). `norm` IS texel-centre (`(i+0.5)/dim`, gpu_sim.py), so
+`x0 = norm.x * dim.x` was right; the first Block 2 attempt "fixed" it to `norm*(dim-1)+0.5`
+and got worse (20% mismatch) before this was understood. The cost numbers never depended on it.
 
 ### Block 2: Production codeboxes + bench
 E1/E2/E3 as in Files; tier-2 diff against the mirror.
 
-**STATUS (2026-10-28): written, bench NOT yet run.** `codebox_stage_e1/e2/e3.gen` are the v2
-production passes (E2: N = 16 literal loop, `unsigned_nearest`, texel-centre start
-`norm*(dim-1)+0.5`, no `ux` clamp so 1080p edge texels read correctly). The tier-1 mirror
+**RESULT (2026-10-29): tier 2 PASSES, 6/6** (`tests/modules/tf_hatch/bench_tf_hatch.py`).
+E1 matches the mirror to 7e-7 (axis), presence floor sweep exact. E2 matches the mirror with
+0.0% of pixels differing (three axes incl. across the horizontal cut; border band 0.0%) once
+the reference uses the GPU's own hash values (the bench evaluates the lattice hash on the GPU
+and hands it to the mirror; NumPy's sin hash disagrees on ~10% of cells, a note, not a defect).
+E3 matches on both outlets (contrast/line sweep), presence 0 renders black, bypass black A=1.
+**Cost at 1080p, per stage: E1 0.73 (bench floor), E2 1.78, E3 0.73, sum 3.24 ms**, inside
+the 5 ms gate and matching the spike's E2 1.7. Not yet tested on the GPU: the persistence
+mix on incoherent fields (random directions hash differently per implementation), judged
+live in Block 3.
+
+**Written as:** `codebox_stage_e1/e2/e3.gen` are the v2
+production passes (E2: N = 16 literal loop, `unsigned_nearest`, start `norm*dim`, no `ux`
+clamp so 1080p edge texels read correctly). The tier-1 mirror
 and tests were folded into `tf_hatch_mirror.py` / `test_tf_hatch.py` (v1's mirror, tests and
 bench deleted; recoverable at `a24b8cd`); tier 1 is still 11/11. `bench_tf_hatch.py` is rewritten
 (E1 exact, E2 statistical on coherent fields, E3 exact, per-stage 1080p cost vs the 5 ms gate).
