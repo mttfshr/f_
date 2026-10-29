@@ -16,7 +16,8 @@ import numpy as np
 
 from harness import check, run  # noqa: E402
 from harness import note as _note  # noqa: E402
-from tf_hatch_mirror import F32, blob_noise, chain, fill_from_density, noise_at  # noqa: E402
+from tf_hatch_mirror import (F32, blob_noise, chain, fill_from_density, noise_at,  # noqa: E402
+                             texture_coord, texture_impulse)
 
 
 def note(msg):
@@ -378,6 +379,95 @@ def test_11_blobs_have_no_axis_bias():
     note(f"1/e correlation length (px): blobs x {lxb:.2f} diag {ldb:.2f} (ratio {ldb / lxb:.3f}); "
          f"cells x {lxc:.2f} diag {ldc:.2f} (ratio {ldc / lxc:.3f})")
     check("blobs: |L_diag / L_x - 1| <= 0.08", abs(ldb / lxb - 1.0), 0.08)
+
+
+# ---- the optional stroke-texture inlet (2026-10-29): the marks are the texture, streaked along the axis
+
+def _noise_tex(seed, n=H, smooth=0.0):
+    """RGBA texture, R=G=B=luma: uniform white noise, optionally Gaussian-smoothed (sigma px) and
+    re-stretched to 0..1 so its features have a size."""
+    a = np.random.default_rng(100 + seed).random((n, n))
+    if smooth > 0.0:
+        k = np.fft.fftfreq(n)
+        a = np.fft.ifft2(np.fft.fft2(a) * np.exp(-2 * (np.pi * smooth) ** 2 * (k[:, None] ** 2 + k[None, :] ** 2))).real
+        a = (a - a.min()) / (a.max() - a.min())
+    t = np.zeros((n, n, 4), F32)
+    t[..., 0] = t[..., 1] = t[..., 2] = a.astype(F32)
+    t[..., 3] = F32(1.0)
+    return t
+
+
+def test_12_texture_strokes_follow_the_axis_and_coherence_still_matters():
+    """With a stroke texture, the marks are the texture streaked along the contours: the same headline
+    behaviours as the blobs. White-noise texture, density 0.3 (soft threshold at luma ~0.74), grain 1
+    (the identity map), length 0.25: coherent -> long strokes along the axis; isotropic -> short,
+    isotropic dots; strokes follow the rings."""
+    fill = float(fill_from_density(0.3))
+    kw = dict(fill=fill, length=0.25, grain=1.0)
+    lx, ly = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 1.0), texture=_noise_tex(s), **kw))) for s in range(4)], 0)
+    note(f"texture coherent: L_along={lx:.1f}px L_across={ly:.1f}px")
+    check("texture: coherent along >= 4x across", 0.0 if lx >= 4.0 * ly else 1.0, 0.0)
+    lxi, lyi = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 0.0), texture=_noise_tex(s), **kw))) for s in range(4)], 0)
+    note(f"texture isotropic: L_x={lxi:.1f}px L_y={lyi:.1f}px ratio {lxi / max(lyi, 1e-9):.2f}")
+    check("texture isotropic: |L_x/L_y - 1| <= 0.5", abs(lxi / max(lyi, 1e-9) - 1.0), 0.5)
+    check("texture isotropic: shorter than half the coherent stroke", 0.0 if lxi < 0.5 * lx else 1.0, 0.0)
+    x, y = _xy()
+    cx0, cy0 = W / 2 + 0.5, H / 2 + 0.5
+    along = np.rad2deg(np.arctan2(y - cy0, x - cx0)) + 90.0
+    r = np.hypot(x - cx0, y - cy0)
+    img = raw_field(chain(field(along, 1.0), texture=_noise_tex(0), **kw))
+    gy0, gx0 = np.roll(img, -1, 0) - np.roll(img, 1, 0), np.roll(img, -1, 1) - np.roll(img, 1, 1)
+    jxx, jxy, jyy = _box(gx0 * gx0, 6), _box(gx0 * gy0, 6), _box(gy0 * gy0, 6)
+    ridge = np.rad2deg(0.5 * np.arctan2(2 * jxy, jxx - jyy)) + 90.0
+    mask = (r > 25) & (r < 50) & (_box(img, 6) > 0.02)
+    err = np.abs((ridge - along + 90.0) % 180.0 - 90.0)[mask]
+    note(f"texture rings: ridge-vs-axis error median {np.median(err):.1f} deg ({mask.sum()} px measured)")
+    check("texture rings: median ridge error <= 20 deg", 0.0 if np.median(err) <= 20.0 else 1.0, 0.0)
+
+
+def test_13_texture_grain_is_zoom():
+    """Grain tiles the texture T = 2^((1-grain)*6) times across the frame: grain 1 is the identity map
+    (one copy), grain 0.5 is 8 tiles, grain 0 is 64; a lower grain makes smaller marks. The map is
+    checked exactly, then the direction on a smooth texture (an isotropic field, so only the
+    texture sets the mark size)."""
+    px = np.array([10.5, 40.5, 100.5], F32)
+    for grain, t in ((1.0, 1), (0.5, 8), (0.0, 64)):
+        u, v = texture_coord(px, px, W, H, grain)
+        want = (t * px / W) % 1.0
+        check(f"texture_coord grain {grain}: u = fract({t} x/W)", float(np.abs(u - want).max()), 1e-5)
+        check(f"texture_coord grain {grain}: v = fract({t} y/H)", float(np.abs(v - want).max()), 1e-5)
+    tex = _noise_tex(0, smooth=6.0)
+    kw = dict(fill=float(fill_from_density(0.4)), length=0.25)
+    big = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 0.0), texture=_noise_tex(s, smooth=6.0), grain=1.0, **kw)))[0] for s in range(3)])
+    small = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 0.0), texture=_noise_tex(s, smooth=6.0), grain=0.6, **kw)))[0] for s in range(3)])
+    note(f"texture mark size (1/e length, px): grain 1.0 -> {big:.1f}, grain 0.6 -> {small:.1f}")
+    check("texture: grain 0.6 marks are <= 70% of grain 1.0 marks", 0.0 if small <= 0.7 * big else 1.0, 0.0)
+
+
+def test_14_texture_density_is_a_soft_threshold():
+    """Density is smoothstep(thr - w, thr + w, luma), thr = (1 + w) - density (1 + 2w), w = 0.1.
+    On a constant luma-0.5 texture: density 0 lights nothing, 0.5 sits exactly mid-ramp, 1 lights
+    everything; monotone in between. A stroke texture needs `fill`."""
+    tex = np.full((16, 16, 4), 0.5, F32)
+    p = np.array([8.0], F32)
+    vals = [float(texture_impulse(tex, p, p, W, H, 1.0, d)[0]) for d in (0.0, 0.25, 0.5, 0.75, 1.0)]
+    note("constant luma 0.5, impulse at density 0 .25 .5 .75 1: " + " ".join(f"{v:.3f}" for v in vals))
+    check("density 0 lights nothing", vals[0], 1e-6)
+    check("density 0.5 is mid-ramp (0.5)", abs(vals[2] - 0.5), 1e-5)
+    check("density 1 lights everything", abs(vals[4] - 1.0), 1e-6)
+    check("monotone in density", 0.0 if all(a <= b for a, b in zip(vals, vals[1:])) else 1.0, 0.0)
+    # luma, not red: a pure-green texel is lit as 0.7152, a pure-blue one as 0.0722
+    g_tex, b_tex = np.zeros((4, 4, 4), F32), np.zeros((4, 4, 4), F32)
+    g_tex[..., 1], b_tex[..., 2] = 1.0, 1.0
+    lg = float(texture_impulse(g_tex, p, p, W, H, 1.0, 0.2858)[0])    # thr = 1.1 - 0.2858*1.2 = 0.7570: luma 0.7152 -> below
+    lb = float(texture_impulse(b_tex, p, p, W, H, 1.0, 0.2858)[0])
+    check("a green texel (luma 0.715) is lit more than a blue one (0.072)", 0.0 if lg > lb else 1.0, 0.0)
+    try:
+        chain(field(0.0, 1.0), texture=tex)
+        raised = False
+    except ValueError:
+        raised = True
+    check("a stroke texture without `fill` is loud", 0.0 if raised else 1.0, 0.0)
 
 
 if __name__ == "__main__":

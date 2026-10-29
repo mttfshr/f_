@@ -238,10 +238,42 @@ def blob_noise(px, py, cell_px, seed=0, fill=None, extent=0.0):
     return _smoothstep(thr - w, thr + w, value_noise(px, py, cell_px, seed, extent))
 
 
+# --- stroke texture (2026-10-29): an optional texture inlet replaces the blob impulses ---------
+# The marks are then whatever the texture is, streaked along the contours (LIC with an input
+# texture). Sampled by NEAREST (exact against the GPU) at the frame-normalized march position:
+#   Grain   = ZOOM. The texture is tiled T = 2^((1-grain)*GRAIN_SPAN) times across the frame in
+#             each axis (grain 1: once, the identity; grain 0: 64 tiles, features 64x smaller;
+#             the same six octaves as the blob cell size, and a bigger Grain = bigger marks).
+#   Density = a SOFT THRESHOLD on the texture's Rec.709 luma: impulse = smoothstep(thr - w,
+#             thr + w, luma), thr = (1 + w) - density * (1 + 2w), w = TEX_SOFT. density 0 lights
+#             nothing (luma <= 1), density 1 lights every texel (luma >= 0).
+#   Brightness = the mean impulse along the in-frame path (classic LIC), not blob coverage crossed.
+TEX_SOFT = 0.1
+LUMA = (0.2126, 0.7152, 0.0722)
+
+
+def texture_coord(px, py, W, H, grain):
+    """Grain-zoomed, wrapped (fract) texture coordinate of the frame position (px, py)."""
+    t = F32(2.0 ** ((1.0 - grain) * GRAIN_SPAN))
+    u, v = t * np.asarray(px, F32) / F32(W), t * np.asarray(py, F32) / F32(H)
+    return (u - np.floor(u)).astype(F32), (v - np.floor(v)).astype(F32)
+
+
+def texture_impulse(tex, px, py, W, H, grain, density):
+    """Soft-thresholded luma of the stroke texture at the frame position (px, py), 0..1."""
+    u, v = texture_coord(px, py, W, H, grain)
+    rgb = g.nearest(tex, u, v)
+    luma = (F32(LUMA[0]) * rgb[..., 0] + F32(LUMA[1]) * rgb[..., 1] + F32(LUMA[2]) * rgb[..., 2]).astype(F32)
+    w = F32(TEX_SOFT)
+    thr = F32(1.0 + TEX_SOFT) - F32(density) * F32(1.0 + 2.0 * TEX_SOFT)
+    return _smoothstep(thr - w, thr + w, luma)
+
+
 def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
              persist_pow=PERSIST_POW, aux_mode="doubled", n_dirs=(1, -1), seed=0, fill=None,
-             noise="blobs"):
-    """Streamline march. `noise` picks the sparse impulse source ("blobs": band-limited value
+             noise="blobs", texture=None):
+    """Streamline march. `texture` (an RGBA array, the optional stroke-texture inlet) replaces the
+    impulse source (see above; it needs `fill`, from which Density is taken). `noise` picks the sparse impulse source ("blobs": band-limited value
     noise, the 2026-10-29 default; "cells": the original lit lattice cells, kept as the A/B
     reference); it only applies when `fill` is set (sparse). For each pixel, walk n_steps each way along the local
     axis (sign-aligned against the previous step), accumulate noise_at() at
@@ -259,7 +291,14 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
     cells_per_h = 2.0 ** ((1.0 - grain) * GRAIN_SPAN + GRAIN_BASE)
     cell_px = H / cells_per_h
 
-    if fill is not None and noise == "blobs":
+    if texture is not None:
+        if fill is None:
+            raise ValueError("a stroke texture needs `fill` (Density is its soft threshold)")
+        dens = float(np.log2(float(fill) / FILL_BASE) / FILL_SPAN)
+
+        def nf(px_, py_, cp, sd, fl):
+            return texture_impulse(texture, px_, py_, W, H, grain, dens)
+    elif fill is not None and noise == "blobs":
         extent = F32(W + H)
 
         def nf(px_, py_, cp, sd, fl):
@@ -301,8 +340,8 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
             dx, dy = ax, ay
             acc = acc + alive * nf(px, py, cell_px, seed, fill)
             wsum = wsum + alive
-    if fill is None:
-        raw = (acc / wsum).astype(F32)                  # dense: the mean along the (in-frame) path
+    if fill is None or texture is not None:
+        raw = (acc / wsum).astype(F32)                  # dense / texture: the mean along the (in-frame) path
     else:
         # sparse: lit CELLS crossed, so one impulse's stroke has brightness ~1 whatever
         # `length` and `grain` are (each sample spans step/cell_px of a cell)
@@ -349,7 +388,8 @@ def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0, fill=Non
 
 def chain(tex, angle_offset=0.0, floor=0.0, aux_mode="doubled",
           n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix", persist_pow=PERSIST_POW,
-          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None, noise="blobs"):
+          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None, noise="blobs", texture=None):
     aux = stage_e1(tex, angle_offset, floor, aux_mode)
-    aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed, fill=fill, noise=noise)
+    aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed, fill=fill, noise=noise,
+                    texture=texture)
     return stage_e3(aux2, n_steps, contrast, line, bypass, fill=fill)
