@@ -15,6 +15,7 @@ Neither of us can see token usage, so the session is paced by things we can both
 - **State lives in the repo, not the chat:** `.specify/<module>/tasks.md` (the record), `HANDOFF.md` (a short scratch note), and a commit at every checkpoint. A fresh session starts by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
 - **Modules in `.specify/paused/` are excluded from analysis and planning.** They're paused for a reason; don't treat them as blockers, candidates, or examples when scoping a spike or feature elsewhere in the library. If a paused module's own resumption is genuinely in scope, that's a separate, explicit decision — not something to fold into unrelated planning (2026-10-11).
 - **Commits:** a plain message is fine for files Claude did not work on (a save checkpoint). Chain a commit to the edit that precedes it, so a failed edit cannot be committed.
+- **Asks are clearly delineated.** When a reply mixes assessment with requests for Matt's input (something to do, decide, or test), put the asks in their own labeled section, one per item, separate from the assessment. Mixed replies make it impossible for him to keep track of what he is supposed to be doing (2026-10-29).
 
 ## Editing the README Patches table
 

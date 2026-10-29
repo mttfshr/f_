@@ -38,6 +38,15 @@ patcher = {
     "bypass_mode": "param",
     "bypass_target": "e3",
 
+    # The render size from Vsynth (build/spec.md "render_dim"): `r dim` -> E2's width/height Params, and
+    # `r dim` -> every stage (@adapt 0), so the whole chain renders at the render size, not the tensor's.
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["e2"],
+        "size_stages":  ["e1", "e2", "e3"],
+    },
+
     "presentation_width":  190,
     "presentation_height": 150,
 
@@ -48,7 +57,7 @@ patcher = {
             "gen":       "codebox_stage_e1.gen",
             "n_inlets":  1,
             "n_outlets": 1,
-            "pix_type":  "float32",
+            "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   True,
         },
         {
@@ -57,7 +66,7 @@ patcher = {
             "gen":       "codebox_stage_e2.gen",
             "n_inlets":  1,
             "n_outlets": 1,
-            "pix_type":  "float32",
+            "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   False,
         },
         {
@@ -66,7 +75,7 @@ patcher = {
             "gen":       "codebox_stage_e3.gen",
             "n_inlets":  1,
             "n_outlets": 2,
-            "pix_type":  "float32",
+            "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   False,
         },
     ],
@@ -139,6 +148,10 @@ patcher = {
             "label": "Offset",
             "pix_target": "e1",
         },
+        # Render size, driven by Vsynth through render_dim (never set by hand): `dim` reads 1 in a live
+        # jit.gl.pix, so E2 takes its frame size from these two Params.
+        {"name": "width", "type": "internal"},
+        {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 }

@@ -1,5 +1,5 @@
 // Stage E2 (f_tf_hatch v2): the streamline march. in1 = E1's aux (ca, sa, coh,
-// pres), render-sized (so `dim` is the render's). Mirrors
+// pres), render-sized (Width / Height Params = its size). Mirrors
 // tests/modules/tf_hatch/tf_hatch_mirror.py stage_e2 (sparse mode).
 //
 // Per pixel: march N = 16 steps each way along the local axis, accumulating
@@ -21,9 +21,10 @@
 //   - the step must not exceed the cell size (step <= cell_px) or cells can be
 //     skipped; at N = 16 this bounds reach against grain.
 //
-// Coordinates: `norm` = (i + 0.5)/dim (texel centres; tests/lib/gpu_sim.py,
-// jxf.py), so the pixel's own texel centre is norm*dim = i + 0.5. (`cell`
-// would be norm*(dim-1): not used.) Reads: `nearest` at (pos/dim).
+// Coordinates: `norm` = (i + 0.5)/size (texel centres; tests/lib/gpu_sim.py,
+// jxf.py), so the pixel's own texel centre is norm*size = i + 0.5. (`cell`
+// would be norm*(size-1): not used.) Reads: `nearest` at (pos/size). size = the
+// Width / Height Params (never `dim`: see below).
 //
 // Params (names avoid GenExpr operators: `length` is one, hence `reach`):
 //   reach    0..1  half-length of the march = reach * 0.25 * frame height
@@ -84,9 +85,15 @@ blob_noise(cx, cy, cell_sz, bthr, bwid, bext) {
 Param reach(0.5);
 Param grain(0.5);
 Param density(0.7);
+// Render size. NOT `dim`: live jit.gl.pix cannot read its own size (`dim` reads ~1 x 1 in a
+// Vsynth chain, found 2026-10-29: with dim ~ 1 the position clamp [0.5, dim - 0.5] pins every
+// march step to the frame centre, so nothing follows the tensor). Vsynth drives these two Params
+// (definition `render_dim`: `r dim` -> `prepend param width/height`); nobody sets them by hand.
+Param width(1920.0);
+Param height(1080.0);
 
-wpx = dim.x;
-hpx = dim.y;
+wpx = width;
+hpx = height;
 x0 = norm.x * wpx;
 y0 = norm.y * hpx;
 
