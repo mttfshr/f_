@@ -1,5 +1,11 @@
 # f_tf_hatch
 
+> **2026-10-28: v1 below is being replaced.** The live look showed the lattice-of-marks
+> design draws origin-anchored concentric rings in every source. v2 is a per-pixel
+> streamline (LIC) renderer built to make tensor coherence and topology visible. See
+> `.specify/f_tf_hatch/spec.md` and `plan.md`. This page still documents the v1 code that
+> is in the repo until the v2 build lands.
+
 **Type:** Processor (f_tensor consumer, renderer)
 **Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending
 (built 2026-10-17 as the fifth module of the tensor-family build order:
