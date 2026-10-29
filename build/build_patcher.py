@@ -1354,6 +1354,97 @@ def check_port_order(boxes):
                              f"order (Max orders ports by x): {ports}")
 
 
+def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
+    """The render-size plumbing (definition key `render_dim`, added 2026-10-29).
+
+    WHY: `dim` reads 1 inside a live Vsynth jit.gl.pix, regardless of @adapt/@type (tensormap T012,
+    probe 2026-10-16), so a codebox cannot read the render size.  Vsynth broadcasts `dim W H`
+    (vs_render: `pak dim i i` -> `s dim`) and answers `r trig_res` by re-sending it; every module that
+    needs the size takes it from there (f_wc: `r dim` -> `route dim` -> `unpack` -> `prepend param`).
+    This generates that chain so a definition declares it instead of hand-wiring raw_boxes:
+
+        "render_dim": {
+            "width_param":  "width",    # codebox Param set from W   (declared in params, type "internal")
+            "height_param": "height",   # codebox Param set from H   (likewise)
+            "param_stages": ["e2"],     # pix nodes that get both Params   ("primary" = the primary pix)
+            "size_stages":  ["e1", "e2", "e3"],   # pix nodes whose OUTPUT follows the render size:
+        }                               # `r dim` goes into them; they must be `@adapt 0` (pix_attrs)
+
+    Any of the two groups may be omitted, not both.  `loadbang -> s trig_res` asks Vsynth for the current
+    size at load (without it a module added after the render started never receives a value).
+    Returns (boxes, lines) in the raw_boxes/raw_lines shape; ids are `obj-rd-N`."""
+    if not isinstance(rd, dict):
+        raise ValueError(f"render_dim must be a dict, not {rd!r}")
+    unknown = sorted(set(rd) - {"width_param", "height_param", "param_stages", "size_stages"})
+    if unknown:
+        raise ValueError(f"render_dim: unknown key(s) {unknown} (allowed: width_param, height_param, "
+                         f"param_stages, size_stages)")
+    wp, hp = rd.get("width_param"), rd.get("height_param")
+    param_stages, size_stages = rd.get("param_stages", []), rd.get("size_stages", [])
+    if not (wp or hp or param_stages or size_stages):
+        raise ValueError("render_dim: declare param_stages (with width_param and height_param) and/or size_stages")
+    if bool(wp) != bool(hp):
+        raise ValueError("render_dim: width_param and height_param go together (one `unpack` feeds both)")
+    if bool(wp) != bool(param_stages):
+        raise ValueError("render_dim: width_param/height_param need param_stages (the pix nodes that receive them), and "
+                         "param_stages needs the two param names")
+    declared = {p["name"]: p for p in params}
+    for nm in (wp, hp):
+        if nm and (nm not in declared or declared[nm].get("type") != "internal"):
+            raise ValueError(f"render_dim: {nm!r} must be declared in params with type 'internal' "
+                             f"(Vsynth drives it; it is not a control)")
+    if wp and wp == hp:
+        raise ValueError("render_dim: width_param and height_param must differ")
+    chain_nodes = {n["id"]: n for n in pix_chain}
+
+    def nodes(spec, what):
+        items = [spec] if isinstance(spec, str) else list(spec)
+        if not items or len(set(items)) != len(items) or not all(isinstance(i, str) and i for i in items):
+            raise ValueError(f"render_dim {what}: a non-empty list of distinct node ids, not {spec!r}")
+        out = []
+        for ref in items:
+            if ref == "primary":
+                out.append(primary_obj_id)
+            elif ref in chain_id_to_obj:
+                out.append(chain_id_to_obj[ref])
+            else:
+                raise ValueError(f"render_dim {what}: unknown node {ref!r} (pix_chain ids: "
+                                 f"{sorted(chain_id_to_obj)}, or 'primary')")
+        return out
+
+    p_objs = nodes(param_stages, "param_stages") if param_stages else []
+    s_objs = nodes(size_stages, "size_stages") if size_stages else []
+    for ref in ([size_stages] if isinstance(size_stages, str) else size_stages):
+        node = chain_nodes.get(ref)
+        if node is not None and "@adapt 0" not in node.get("pix_attrs", ""):
+            raise ValueError(f"render_dim size_stages: node {ref!r} must set pix_attrs with '@adapt 0' (with adapt on "
+                             f"the output follows the INPUT and the `dim` message is ignored; see jit.gl.pix @adapt)")
+
+    def box(i, text, nin, nout, rect, otypes=None):
+        return {"box": {"id": f"obj-rd-{i}", "maxclass": "newobj", "patching_rect": rect, "text": text,
+                        "numinlets": nin, "numoutlets": nout, "outlettype": otypes or [""] * nout}}
+
+    def line(src, so, dst, di):
+        ref = lambda o: o if isinstance(o, str) else f"obj-rd-{o}"
+        return {"patchline": {"source": [ref(src), so], "destination": [ref(dst), di]}}
+
+    boxes = [box(0, "r dim", 0, 1, [480.0, 320.0, 40.0, 22.0]),
+             box(5, "loadbang", 1, 1, [620.0, 320.0, 60.0, 22.0], ["bang"]),
+             box(6, "s trig_res", 1, 0, [620.0, 350.0, 70.0, 22.0], [])]
+    lines = [line(5, 0, 6, 0)]
+    for o in s_objs:
+        lines.append(line(0, 0, o, 0))                       # r dim -> the pix: its output follows the render size
+    if wp:
+        boxes += [box(1, "route dim", 1, 2, [530.0, 320.0, 60.0, 22.0]),
+                  box(2, "unpack i i", 1, 2, [530.0, 350.0, 60.0, 22.0], ["int", "int"]),
+                  box(3, f"prepend param {wp}", 1, 1, [480.0, 380.0, 120.0, 22.0]),
+                  box(4, f"prepend param {hp}", 1, 1, [610.0, 380.0, 120.0, 22.0])]
+        lines += [line(0, 0, 1, 0), line(1, 0, 2, 0), line(2, 0, 3, 0), line(2, 1, 4, 0)]
+        for o in p_objs:
+            lines += [line(3, 0, o, 0), line(4, 0, o, 0)]
+    return boxes, lines
+
+
 def build(defn, debug=None, side_files=None):
     """Build a patcher dict from a definition. Pure: nothing is written to disk.
 
@@ -2019,6 +2110,11 @@ def build(defn, debug=None, side_files=None):
     # collide with any schema-generated ID (UI_PARAM_BASE-derived, fixed
     # constants, range-tier obj-300+ range, etc.) — extract-and-remap from
     # a working reference file rather than hand-picking IDs from scratch.
+    if "render_dim" in defn:
+        _rd_boxes, _rd_lines = build_render_dim(defn["render_dim"], chain_id_to_obj, primary_obj_id,
+                                                defn.get("params", []), defn.get("pix_chain", []))
+        boxes.extend(_rd_boxes)
+        lines.extend(_rd_lines)
     boxes.extend(defn.get("raw_boxes", []))
     lines.extend(defn.get("raw_lines", []))
     # raw_parameters: {obj_id: [longname, shortname, 0]} for raw_boxes objects

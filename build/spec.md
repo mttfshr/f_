@@ -195,6 +195,18 @@ patcher = {
 #   stage, so it advances once per frame; shared with the source archetype's own render trigger (a cord
 #   the archetype already makes is not doubled).
 #
+#   Top-level "render_dim": {"width_param", "height_param", "param_stages", "size_stages"} -- the render
+#   size from Vsynth (2026-10-29).  `dim` READS 1 INSIDE A LIVE Vsynth jit.gl.pix (tensormap T012), so a
+#   codebox cannot read the frame size; Vsynth broadcasts `dim W H` instead.  Generates (ids obj-rd-N):
+#   `r dim` -> `route dim` -> `unpack i i` -> `prepend param <width_param>` / `<height_param>` -> inlet 0 of
+#   each "param_stages" node ("primary" = the primary pix), and `r dim` -> inlet 0 of each "size_stages" node
+#   (its OUTPUT follows the render size; it must set pix_attrs with `@adapt 0`, as with adapt on the dim
+#   message is ignored), and `loadbang` -> `s trig_res` (Vsynth re-sends the size on it; without it a module
+#   added after the render started gets no value).  The two params must be declared in "params" with
+#   type "internal" (Vsynth drives them; they are not controls) and exist as `Param`s in the codebox.  Either
+#   group may be omitted, not both.  tests/build/test_render_dim.py also fails any module whose codebox
+#   reads `dim` without this key (explicit exemption list for the known latent cases).
+#
 #   Top-level "bypass_mode": "native" (default) | "param".  "param": the bypass jsui -> `prepend param
 #   <bypass_param>` -> the stage(s) in "bypass_target" (default the primary; a node or a list), instead of
 #   jsui -> attrui @attr bypass.  Native jit.gl.pix bypass skips the shader and flips secondary outlets
