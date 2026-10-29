@@ -174,6 +174,49 @@ def test_hash_is_the_shipped_one():
     check("bench probe uses the shipped hash12 text", 0.0 if HASH12_SRC in code("e2") else 1.0, 0.0)
 
 
+HASH13_SRC = """hash13(ha, hb, hc) {
+    hx = fract(ha * 0.1031);
+    hy = fract(hb * 0.1031);
+    hz = fract(hc * 0.1031);
+    hd = hx * (hz + 31.32) + hy * (hy + 31.32) + hz * (hx + 31.32);
+    hx = hx + hd;
+    hy = hy + hd;
+    hz = hz + hd;
+    return fract((hx + hy) * hz);
+}
+"""
+HASH13_PROBE = HASH13_SRC + """
+Param cval(1.0);
+ix = nearest(in1, norm).x;
+iy = nearest(in1, norm).y;
+out1 = vec(hash13(ix, iy, cval), 0.0, 0.0, 1.0);
+"""
+
+
+def test_hash13_gpu_matches_numpy_and_is_isotropic():
+    """The per-step random direction: the GPU's hash13 against NumPy at 1080p-sized pixel coordinates
+    (the E2 march uses angle = 2 pi * hash13(floor x, floor y, k + 32 side)); the direction it makes
+    must not be biased (a degenerate hash would drag low-coherence paths one way)."""
+    check("hash13 probe is the shipped text", 0.0 if HASH13_SRC in code("e2") else 1.0, 0.0)
+    n = 256
+    tex = np.zeros((n, n, 4), F32)
+    tex[..., 0] = (np.arange(n, dtype=F32)[None, :] * 7.0)   # x = 0..1785
+    tex[..., 1] = (np.arange(n, dtype=F32)[:, None] * 4.0)   # y = 0..1020
+    tex[..., 3] = 1.0
+    ix, iy = tex[..., 0], tex[..., 1]
+    for cval in (1.0, 9.0, 33.0, 48.0):
+        out, r = bc.run_pass(HASH13_PROBE, [tex], params={"cval": cval})
+        ok(r)
+        ref = m.hash13(ix, iy, F32(cval))
+        bad = float((np.abs(out[..., 0] - ref) > 0.01).mean())
+        ang = 2 * np.pi * out[..., 0]
+        mc, ms = float(np.cos(ang).mean()), float(np.sin(ang).mean())
+        note(f"hash13 c={cval}: fraction differing from NumPy / mean cos, sin", (bad, mc, ms))
+        check(f"hash13 c={cval}: matches NumPy (<= 1% differ)", 0.0 if bad <= 0.01 else bad, 0.0)
+        check(f"hash13 c={cval}: mean cos(angle) ~ 0", abs(mc), 0.05)
+        check(f"hash13 c={cval}: mean sin(angle) ~ 0", abs(ms), 0.05)
+
+
 def test_hash_gpu_matches_numpy_and_is_uniform():
     """The lattice hash at 1080p-sized cell indices (0..191): the GPU agrees with NumPy, and the lit-cell
     pattern is uniform, not clumped (the 2026-10-29 failure was the previous sin-based hash)."""
@@ -210,6 +253,22 @@ def test_stage_e2_matches_on_coherent_fields():
         check(f"E2 along {along}: mean raw within 5%", abs(mean_ratio - 1.0), 0.05)
         check(f"E2 along {along}: presence channel", float(np.abs(out[..., 1] - ref[..., 1]).max()), 1e-4)
         check(f"E2 along {along}: alpha 1", float(np.abs(out[..., 3] - 1.0).max()), 1e-6)
+
+
+def test_stage_e2_matches_on_incoherent_fields():
+    """Same, at partial coherence: the persistence mix and the per-step random direction are on the
+    GPU path now (a coherence-1 field never uses them)."""
+    table = gpu_hash_table()
+    for along, coh in ((30.0, 0.5), (110.0, 0.2)):
+        h = w = 64
+        aux = m.stage_e1(field_tex(h, w, along, coh), 100.0, aux_mode="unsigned_nearest")
+        out, r = bc.run_pass(code("e2"), [aux], params=dict(E2_BASE))
+        ok(r)
+        ref = e2_ref(aux, E2_BASE, h, table)
+        frac = float((np.abs(out[..., 0] - ref[..., 0]) > 0.05).mean())
+        note(f"along {along} coherence {coh}: fraction differing > 0.05 / mean GPU, mirror",
+             (frac, float(out[..., 0].mean()), float(ref[..., 0].mean())))
+        check(f"E2 coherence {coh}: <= 3% of pixels differ", 0.0 if frac <= 0.03 else frac, 0.0)
 
 
 def test_stage_e2_edges_and_unset():
