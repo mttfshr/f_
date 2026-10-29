@@ -78,8 +78,25 @@ E2_BASE = {"reach": 0.5, "grain": 0.75, "density": 0.717}
 
 
 def e2p(aux, **kw):
-    """E2 params for this aux: Width / Height must equal the render size (live `dim` is unusable)."""
-    return dict(E2_BASE, width=float(aux.shape[1]), height=float(aux.shape[0]), **kw)
+    """E2 params for this aux: Width / Height must equal the render size (live `dim` is unusable).
+    `src_stroke` (the stroke-texture inlet's connected flag) is PINNED to 0 in every job, as the bench
+    keeps a Param's last value; a texture test overrides it."""
+    p = dict(E2_BASE, width=float(aux.shape[1]), height=float(aux.shape[0]), src_stroke=0.0)
+    p.update(kw)
+    return p
+
+
+# E2 has a second inlet (the stroke texture). Unconnected, the live module sees a black texture and
+# src_stroke 0; the bench passes a small black one.
+NOTEX = np.zeros((4, 4, 4), F32)
+
+
+def noise_tex(h, w, seed):
+    """RGBA stroke texture, R=G=B=luma, uniform white noise."""
+    t = np.zeros((h, w, 4), F32)
+    t[..., 0] = t[..., 1] = t[..., 2] = np.random.default_rng(seed).random((h, w)).astype(F32)
+    t[..., 3] = 1.0
+    return t
 E3_BASE = {"contrast": 0.5, "line_hard": 0.0, "bypass_gate": 0.0}
 E1_BASE = {"angle_offset": 0.0, "structure_floor": 0.0}
 
@@ -239,7 +256,7 @@ def test_stage_e2_matches_on_coherent_fields():
     for along in (20.0, 100.0, 170.0):
         h = w = 64
         aux = m.stage_e1(field_tex(h, w, along, 1.0), aux_mode="unsigned_nearest")
-        out, r = bc.run_pass(code("e2"), [aux], params=e2p(aux))
+        out, r = bc.run_pass(code("e2"), [aux, NOTEX], params=e2p(aux))
         ok(r)
         ref = e2_ref(aux, E2_BASE, h, table)
         frac = float((np.abs(out[..., 0] - ref[..., 0]) > 0.05).mean())
@@ -259,7 +276,7 @@ def test_stage_e2_matches_on_incoherent_fields():
     for along, coh in ((30.0, 0.5), (110.0, 0.2)):
         h = w = 64
         aux = m.stage_e1(field_tex(h, w, along, coh), aux_mode="unsigned_nearest")
-        out, r = bc.run_pass(code("e2"), [aux], params=e2p(aux))
+        out, r = bc.run_pass(code("e2"), [aux, NOTEX], params=e2p(aux))
         ok(r)
         ref = e2_ref(aux, E2_BASE, h, table)
         frac = float((np.abs(out[..., 0] - ref[..., 0]) > 0.05).mean())
@@ -273,7 +290,7 @@ def test_stage_e2_edges_and_unset():
     tensor) must not produce NaN (the march falls back to a fixed axis; E3 multiplies by presence 0)."""
     h = w = 64
     aux = m.stage_e1(field_tex(h, w, 45.0, 1.0), aux_mode="unsigned_nearest")
-    out, r = bc.run_pass(code("e2"), [aux], params=e2p(aux))
+    out, r = bc.run_pass(code("e2"), [aux, NOTEX], params=e2p(aux))
     ok(r)
     ref = e2_ref(aux, E2_BASE, h, gpu_hash_table())
     d = np.abs(out[..., 0] - ref[..., 0]) > 0.05
@@ -283,10 +300,33 @@ def test_stage_e2_edges_and_unset():
     note("E2 border band: fraction differing", float(d[band].mean()))
     check("E2 border band <= 8%", 0.0 if float(d[band].mean()) <= 0.08 else float(d[band].mean()), 0.0)
     zero_aux = np.zeros((16, 16, 4), F32)
-    outz, r = bc.run_pass(code("e2"), [zero_aux], params=e2p(zero_aux))
+    outz, r = bc.run_pass(code("e2"), [zero_aux, NOTEX], params=e2p(zero_aux))
     ok(r)
     check("E2 unset axis: finite", 0.0 if bool(np.isfinite(outz).all()) else 1.0, 0.0)
     check("E2 unset axis: presence 0", float(np.abs(outz[..., 1]).max()), 1e-6)
+
+
+def test_stage_e2_stroke_texture_matches():
+    """The optional stroke-texture inlet (in2, src_stroke = 1) vs the mirror: a coherent and a partial-
+    coherence field, a NON-square texture (the normalized mapping), Grain zoom (2.8 tiles at 0.75) and a
+    Density-0.3 soft threshold. The same pixel-fraction criterion as the blob march."""
+    for along, coh in ((20.0, 1.0), (110.0, 0.5)):
+        h = w = 64
+        aux = m.stage_e1(field_tex(h, w, along, coh), aux_mode="unsigned_nearest")
+        tex = noise_tex(40, 48, 3)
+        params = e2p(aux, src_stroke=1.0, density=0.3)
+        out, r = bc.run_pass(code("e2"), [aux, tex], params=params)
+        ok(r)
+        ref = m.stage_e2(aux, n_steps=16, length=params["reach"], grain=params["grain"], persist="mix",
+                         persist_pow=0.5, aux_mode="unsigned_nearest",
+                         fill=float(m.fill_from_density(0.3)), texture=tex)
+        frac = float((np.abs(out[..., 0] - ref[..., 0]) > 0.05).mean())
+        mean_ratio = float(out[..., 0].mean()) / max(float(ref[..., 0].mean()), 1e-9)
+        note(f"stroke texture, along {along} coherence {coh}: fraction differing > 0.05 / mean GPU/mirror",
+             (frac, mean_ratio))
+        check(f"E2 stroke texture {along}/{coh}: <= 3% of pixels differ", 0.0 if frac <= 0.03 else frac, 0.0)
+        check(f"E2 stroke texture {along}/{coh}: mean raw within 5%", abs(mean_ratio - 1.0), 0.05)
+        check(f"E2 stroke texture {along}/{coh}: presence channel", float(np.abs(out[..., 1] - ref[..., 1]).max()), 1e-4)
 
 
 # ------------------------------------------------------------- stage E3
@@ -331,13 +371,16 @@ def test_cost_per_stage_1080p():
     aux2[..., 3] = 1.0
     total = 0.0
     for label, c, args, params in (("E1", code("e1"), [tex], dict(E1_BASE, structure_floor=0.1)),
-                                   ("E2", code("e2"), [aux], e2p(aux, reach=0.5, grain=0.5)),
+                                   ("E2", code("e2"), [aux, NOTEX], e2p(aux, reach=0.5, grain=0.5)),
                                    ("E3", code("e3"), [aux2], dict(E3_BASE))):
         r = bc.measure(c, args, chain=CHAIN, params=params)
         ms = r.get("ms_per_pass", r.get("ms_per_pass_upper_bound"))
         kind = "gpu_bound" if "ms_per_pass" in r else "upper bound"
         note(f"{label} 1080p ms/pass ({kind})", ms)
         total += ms
+    r = bc.measure(code("e2"), [aux, noise_tex(1080, 1920, 9)], chain=CHAIN,
+                   params=e2p(aux, reach=0.5, grain=0.5, src_stroke=1.0))
+    note("E2 stroke-texture mode 1080p ms/pass (not in the gate)", r.get("ms_per_pass", r.get("ms_per_pass_upper_bound")))
     note("sum of the three stages, ms (module gate <= 5)", total)
     check("module cost <= 5 ms at 1080p", 0.0 if total <= 5.0 else total, 0.0)
 
