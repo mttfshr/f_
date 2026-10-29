@@ -106,13 +106,14 @@ out = acc / wsum
 
 - **Sign continuity** is the architectural problem the v1 plan flagged. The `sign_align`
   step (dot product against the previous direction, flip if negative) is the standard LIC
-  answer and is what makes the march seam-free where the axis crosses vertical.
+  answer and is what makes the march seam-free where the axis crosses the decode's wrap
+  (along-axis angle 0/180°, i.e. horizontal; the decode returns angles in (0, 180]).
 - **Noise** is procedural and stateless: a hash of the position at a `grain` scale
   (value noise, no extra inlet). It lives in *world* coordinates, never in the pixel's
   rotated frame, so it cannot produce origin-anchored rings.
 - **Kernel** `w(k)`: box to start; a smooth falloff (e.g. cosine) is a later refinement.
 - **Persistence (OQ1).** With an exactly isotropic tensor, `atan2(0,0)=0` hands the march
-  a *horizontal* axis, so the incoherent region would render as clean horizontal streaks,
+  a fixed (*vertical*) axis, so the incoherent region would render as clean vertical streaks,
   the opposite of what we want. So coherence must participate. Candidate: mix the axis
   with a hashed random unit vector per step, `d = normalize(coh·a + (1−coh)·r_k)`, so
   coherent regions march ballistically (long streaks) and incoherent ones random-walk
@@ -186,11 +187,15 @@ Tier 1 (NumPy mirror), each on a synthetic encoded-tensor field:
 3. **Coherence ramp** (axes fixed, coherence 0 → 1 across the frame): streak
    (autocorrelation) length along the axis rises **monotonically** with coherence. The
    direct "coherence is readable" test.
-4. **Concentric rings** (curved field): streaks follow the curvature; no origin-anchored
-   rings appear in the *noise* (render the same field offset from the origin: the output
-   is a translation of the original). This is the v1 regression test.
-5. **Branch cut**: a field whose axis angle sweeps through vertical shows no seam;
-   streak continuity across the cut.
+4. **Streaks follow the field** (the v1 regression): the local streak direction matches
+   the field's axis on concentric rings, on a sweep that is not rings, and on a
+   low-frequency random angle field. (The first draft of this test measured large-scale
+   modulation about the origin; that proved to be a bad statistic, since correct streaks
+   on a ring field ARE rings and constant fields have the same slow power. Ridge-vs-axis
+   error is the direct measure of what v1 got wrong.)
+5. **Branch cut**: a field whose axis sweeps through the decode's wrap (along-axis angle
+   0/180°, where the unsigned pair flips sign; horizontal, not vertical) shows no seam;
+   streak length straddling the cut stays within 80% of away from it.
 6. **Degenerate point** (a wedge or center singularity): grain at the point, streaks
    around it.
 7. **Presence**: `structure_floor` blanks the weak-trace region without changing the
@@ -209,13 +214,20 @@ Any of them may return in a later version once the streamline field is trusted.
 
 ## Open Questions
 
-- **OQ1 — How does coherence enter the march?** Direction mixing with a per-step hash
-  (`coh·a + (1−coh)·r`) is the candidate; alternatives are shortening the step weight, or
-  cutting the kernel. Decided by acceptance tests 2 and 3 in the mirror. Does it need its
-  own `persist` dial? Default: no, until tier 3 says so.
-- **OQ2 — Aux layout:** unsigned `(cos a, sin a)` with `nearest` reads, or doubled-angle
-  with bilinear and a closed-form half angle? Decided in the spike (bench cost and
-  the quality at the branch cut).
+- **OQ1 — How does coherence enter the march?** **PROVISIONALLY DECIDED (Phase 0,
+  2026-10-28):** direction mixing, `d = normalize(w·a + (1−w)·r_k)` with `w = coherence^0.5`
+  and `r_k` a per-pixel/per-step hashed unit vector. Tests 2 and 3 pass in the mirror
+  (isotropic field: L_x/L_y = 1.04; coherence ramp: streak length 2.6 → 4.6 → 7.3 → 11.1 →
+  16.0 → 14.3 px over six strips, mean of six noise seeds, rank correlation 0.94). The
+  exponent matters: 1.0 stays flat until coherence ~0.5 (2.3 / 2.8 / 2.9 / 6.3 / 11.4 /
+  13.3 px); 0.5 grades across the whole range. No `persist` dial until tier 3 says so.
+  Still open for tier 3: whether real tensormap coherence (mostly 0.1–0.7 on natural
+  content) reads well at 0.5.
+- **OQ2 — Aux layout:** doubled-angle with bilinear, unsigned with bilinear, and unsigned
+  with `nearest` are statistically identical on the branch-cut test (streak length near/away
+  1.38 in all three: the unsigned pair's sign flip only affects a ~1 px band, a single march
+  step). So the choice is cost and visual quality: **leaning `unsigned_nearest`** (one tap per
+  step, no sqrt); confirm on the GPU cost spike and in stills (the axis read is texel-quantized).
 - **OQ3 — Kernel and N:** box vs cosine falloff; `N` = 8 / 16 / 32. Decided by cost
   spike and look.
 - **OQ4 — Outlet 1:** the unstyled streak field is plausible, but is it used? Cheap to

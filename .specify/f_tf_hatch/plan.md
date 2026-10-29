@@ -60,6 +60,20 @@ criteria. Rendered stills for Matt to look at. Decides OQ1 and informs OQ2/OQ3.
 **Gate: tests 2 and 3 pass.** If the isotropic field renders streaks, or streak length
 does not rise monotonically with coherence, the design stops here.
 
+**RESULT (2026-10-28): GATE PASSED, tier 1 10/10** (`tests/modules/tf_hatch/test_tf_hatch_lic.py`,
+mirror `tf_hatch_lic_mirror.py`, beside the v1 files until Phase 2). Measured: coherent
+straight field L_along/L_across = 12.2; isotropic field ratio 1.04 (grain); coherence ramp
+streak length 2.6 → 14.3 px, rank correlation 0.94; ridge-vs-axis error median 4.6° (rings) /
+6.7° (sweep) / 3.1° (random field), against v1's recorded 25–64°; branch cut no seam in any
+aux layout; degenerate point grain at the centre (1.08) and streaks around it (3.04).
+The mutation (coherence ignored) is caught: anisotropy 13.6 on the isotropic field.
+OQ1 is provisionally decided (mix, coherence^0.5) and OQ2 leans `unsigned_nearest`; see spec.
+Stills: `spike/lic_stills_2026-10-28.png` (clean and heavily noisy sources). They show streaks
+following the rings and stripes, grain where the tensor is noisy, and the "coherence ignored"
+column drawing false worm-like curls in the noise that the real version renders as grain.
+**Honest read:** it looks like contour-streaked noise, and `line = 1` reads as engraving, not
+as hatching marks. The look is promising; tier 3 decides whether it is the look Matt wants.
+
 ### Block 1: GPU cost spike (BLOCKING after Block 0)
 A throwaway march codebox on the bench at N = 8 / 16 / 32, nearest vs bilinear aux. Reports
 ms/pass at 1080p and compares to the ≤ 5 ms module budget. Decides OQ2, OQ3 and whether
