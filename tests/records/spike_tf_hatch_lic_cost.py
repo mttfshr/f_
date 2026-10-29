@@ -6,7 +6,7 @@ shader built here (nothing is written to src/); the production codeboxes come in
 Decides spec OQ2 (aux read: nearest vs bilinear), OQ3 (N = 8 / 16 / 32) and whether E2 stays one pass,
 against the provisional budget "whole module <= 5 ms at 1080p, M3 Max" (spec, cost gate).
 
-The scratch codebox is the sparse-impulse march of tests/modules/tf_hatch/tf_hatch_lic_mirror.py stage_e2:
+The scratch codebox is the sparse-impulse march of tests/modules/tf_hatch/tf_hatch_mirror.py stage_e2:
   in1 = the aux texture (cos a, sin a, coherence, presence), UNSIGNED layout, render-sized (so `dim` is the
         render's: in the bench `dim` is the FIRST input's size)
   out = (raw lit-cells-crossed, presence, 0, 1)
@@ -32,7 +32,7 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run
-import tf_hatch_lic_mirror as lm
+import tf_hatch_mirror as lm
 
 F32 = np.float32
 REPEATS = 3

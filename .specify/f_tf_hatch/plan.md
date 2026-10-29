@@ -113,6 +113,17 @@ the mirror tightly; the cost numbers do not depend on this.
 ### Block 2: Production codeboxes + bench
 E1/E2/E3 as in Files; tier-2 diff against the mirror.
 
+**STATUS (2026-10-28): written, bench NOT yet run.** `codebox_stage_e1/e2/e3.gen` are the v2
+production passes (E2: N = 16 literal loop, `unsigned_nearest`, texel-centre start
+`norm*(dim-1)+0.5`, no `ux` clamp so 1080p edge texels read correctly). The tier-1 mirror
+and tests were folded into `tf_hatch_mirror.py` / `test_tf_hatch.py` (v1's mirror, tests and
+bench deleted; recoverable at `a24b8cd`); tier 1 is still 11/11. `bench_tf_hatch.py` is rewritten
+(E1 exact, E2 statistical on coherent fields, E3 exact, per-stage 1080p cost vs the 5 ms gate).
+Param names that differ from the spec's table because GenExpr reserves them: `reach` (spec
+`length`), `line_hard` (spec `line`); `definition.py` must use these. Left for Phase 4:
+`definition.py` (still the v1 dials and `codebox_stage_e2_T.gen`, which stays until then so the
+v1 definition keeps resolving).
+
 ### Block 3: Judgment on real content
 Matt, live: camera, wfg stripes, a degenerate-rich scene; with and without `f_tf_smooth`.
 Locks defaults (provisional until now). Confirms or kills OQ4.

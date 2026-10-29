@@ -1,0 +1,112 @@
+// Stage E2 (f_tf_hatch v2): the streamline march. in1 = E1's aux (ca, sa, coh,
+// pres), render-sized (so `dim` is the render's). Mirrors
+// tests/modules/tf_hatch/tf_hatch_mirror.py stage_e2 (sparse mode).
+//
+// Per pixel: march N = 16 steps each way along the local axis, accumulating
+// sparse impulse noise. All geometry is in PIXEL units (steps are uniform in
+// pixels, so a non-square frame still gets round streaks).
+//   - sign continuity: the axis has no sign; each step flips it to agree with
+//     the previous direction (dot product), so there is no branch cut.
+//   - coherence enters ONLY as persistence (spec OQ1): d = normalize(w*a +
+//     (1-w)*r), w = coh^0.5, r = a per-pixel/per-step hashed unit vector.
+//     Coherent regions march ballistically (streaks), incoherent ones random-
+//     walk (grain). Never shape, never brightness.
+//   - noise lives in WORLD coordinates (hash of the lattice cell the position
+//     falls in, cell size from `grain`); a cell is lit when its hash < fill.
+//   - brightness = lit CELLS crossed (acc * step / cell_px), so one impulse's
+//     stroke has brightness ~1 whatever reach and grain are.
+//   - a path that leaves the frame stops contributing (`alive` latch).
+//   - the step must not exceed the cell size (step <= cell_px) or cells can be
+//     skipped; at N = 16 this bounds reach against grain.
+//
+// Coordinates (spike 2026-10-28): the pixel's own texel centre is
+// norm*(dim-1)+0.5 -- jit.gl.pix `norm` runs 0..1 over texel CENTRES (cell =
+// norm*(dim-1)), not over texel edges. Reads: `nearest` at (pos/dim).
+//
+// Params (names avoid GenExpr operators: `length` is one, hence `reach`):
+//   reach    0..1  half-length of the march = reach * 0.25 * frame height
+//   grain    0..1  noise cell size, log: cells per frame height =
+//                  2^((1-grain)*6+3)
+//   density  0..1  lit-cell probability fill = 0.0025 * 2^(5*density)
+// out1 = (raw lit-cells-crossed, pres, 0, 1)
+
+lit_noise(cx, cy, cell_sz, fl) {
+    ix = floor(cx / cell_sz);
+    iy = floor(cy / cell_sz);
+    hv = fract(sin(ix * 127.1 + iy * 311.7) * 43758.5453);
+    return 1.0 - step(fl, hv);
+}
+
+Param reach(0.5);
+Param grain(0.5);
+Param density(0.7);
+
+wpx = dim.x;
+hpx = dim.y;
+x0 = norm.x * (wpx - 1.0) + 0.5;
+y0 = norm.y * (hpx - 1.0) + 0.5;
+
+half_len = reach * 0.25 * hpx;
+h_step = half_len / 16.0;
+cell_px = hpx / pow(2.0, (1.0 - grain) * 6.0 + 3.0);
+fill_frac = 0.0025 * pow(2.0, 5.0 * density);
+persist_pow = 0.5;
+
+ca0 = nearest(in1, norm).x;
+sa0 = nearest(in1, norm).y;
+pres0 = nearest(in1, norm).w;
+// unset axis (0, 0) -> a fixed fallback axis (E3 multiplies by presence 0 there)
+m0 = sqrt(ca0 * ca0 + sa0 * sa0);
+ok0 = step(0.000001, m0);
+ca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);
+sa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);
+
+acc = lit_noise(x0, y0, cell_px, fill_frac);
+idxp = floor(y0) * wpx + floor(x0);
+px = x0;
+py = y0;
+dx = 0.0;
+dy = 0.0;
+alive = 1.0;
+sgn = 1.0;
+for (side = 0; side < 2; side += 1) {
+    px = x0;
+    py = y0;
+    alive = 1.0;
+    sgn = 1.0 - 2.0 * side;
+    dx = sgn * ca0;
+    dy = sgn * sa0;
+    for (k = 1; k <= 16; k += 1) {
+        ux = px / wpx;      // px is clamped to [0.5, W-0.5]: strictly inside (0, 1)
+        uy = py / hpx;
+        ax = nearest(in1, vec(ux, uy)).x;
+        ay = nearest(in1, vec(ux, uy)).y;
+        coh = nearest(in1, vec(ux, uy)).z;
+        am = sqrt(ax * ax + ay * ay);
+        oka = step(0.000001, am);
+        ax = mix(1.0, ax / max(am, 0.000001), oka);
+        ay = mix(0.0, ay / max(am, 0.000001), oka);
+        dp = ax * dx + ay * dy;
+        flipv = 2.0 * step(0.0, dp) - 1.0;
+        ax = ax * flipv;
+        ay = ay * flipv;
+        wgt = pow(clamp(coh, 0.0, 1.0), persist_pow);
+        ang = twopi * fract(sin(idxp * 12.9898 + k * 78.233 + sgn * 37.719) * 43758.5453);
+        mx = wgt * ax + (1.0 - wgt) * cos(ang);
+        my = wgt * ay + (1.0 - wgt) * sin(ang);
+        mm = sqrt(mx * mx + my * my);
+        okm = step(0.000001, mm);
+        ax = mix(ax, mx / max(mm, 0.000001), okm);
+        ay = mix(ay, my / max(mm, 0.000001), okm);
+        nx = px + h_step * ax;
+        ny = py + h_step * ay;
+        alive = alive * step(0.0, nx) * step(nx, wpx) * step(0.0, ny) * step(ny, hpx);
+        px = clamp(nx, 0.5, wpx - 0.5);
+        py = clamp(ny, 0.5, hpx - 0.5);
+        dx = ax;
+        dy = ay;
+        acc = acc + alive * lit_noise(px, py, cell_px, fill_frac);
+    }
+}
+raw = acc * h_step / cell_px;
+out1 = vec(raw, pres0, 0.0, 1.0);

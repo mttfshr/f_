@@ -11,7 +11,7 @@ sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch")]
 
 import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
-from tf_hatch_lic_mirror import F32, chain, stage_e1  # noqa: E402
+from tf_hatch_mirror import F32, chain, stage_e1  # noqa: E402
 
 H, W = 180, 320
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("/Users/matt/Desktop/hatch_lic_stills.png")

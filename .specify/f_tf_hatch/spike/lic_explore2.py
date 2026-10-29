@@ -10,7 +10,7 @@ sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch")]
 import numpy as np  # noqa: E402
 import test_tf_hatch_lic as T  # noqa: E402
 import test_tf_hatch as V1  # noqa: E402
-from tf_hatch_lic_mirror import chain  # noqa: E402
+from tf_hatch_mirror import chain  # noqa: E402
 
 H = W = T.H
 

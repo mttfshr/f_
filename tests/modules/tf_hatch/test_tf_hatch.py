@@ -1,66 +1,39 @@
 """
-test_tf_hatch.py -- Tier-1 NumPy mirror for f_tf_hatch (Phase 0, tasks T003-T009).
+test_tf_hatch.py -- Tier-1 for f_tf_hatch v2 (streamline renderer), Phase 0.
+Spec .specify/f_tf_hatch/spec.md, acceptance criteria 1-8.
 
-One function per planned codebox stage (tests/README convention), plus the
-commit curve and the family pattern math. Ground truth: np.linalg.eigh for the
-decode (the tensormap mirror's T006 method, reused), analytic ramps for the
-axis, the spec's acceptance invariants for the commit curve, and
-`docs/f-reference/f_weave.md`'s published algorithm, cited where reused
-verbatim (branch T mechanics, density log map, regularity hash, softness
-feather).
-
-The canonical GenExpr decode idiom lives in `.specify/f_tf_glyph/plan.md`
-ADR-2; this mirror copies it verbatim (the strength-canceling gain-free
-form, see the invariants below).
-
-Aspect convention (measured in PITCH units, the invariant the spec states):
-  mark extent across (in across-pitches) / along (in along-pitches)
-    = aspect = 1 + elongation * commit
-  achieved with aw = weight / sqrt(aspect) (u units) and
-  al = weight * density_scale * sqrt(aspect) (pos units, pos = v*density_scale)
+Synthetic encoded-tensor fields with KNOWN coherence and axis; the module is only
+worth building if these pass in the mirror. Metrics are autocorrelation lengths of
+the rendered field: a streak is long along its axis and short across it, grain is
+short both ways. Where a strip holds only a few independent streaks the metric is
+averaged over several noise realisations (the mirror's `seed` test hook).
 
 Run:  tests/run.sh tests/modules/tf_hatch/test_tf_hatch.py -q
 """
 import sys
-from pathlib import Path
 
 import numpy as np
 
-HERE = Path(__file__).resolve().parent
-
-from harness import check, note, run  # noqa: E402
-import gpu_sim as g  # noqa: E402
-from tf_hatch_mirror import (
-    C_HI,
-    C_LO,
-    DENSITY_SPAN,
-    EPS_TRACE,
-    F32,
-    commit_curve,
-    decode,
-    presence,
-    stage_e1,
-    stage_e2,
-    stage_e3,
-)
-
-H = W = 64
-INTERIOR = (slice(8, -8), slice(8, -8))
+from harness import check, run  # noqa: E402
+from harness import note as _note  # noqa: E402
+from tf_hatch_mirror import F32, chain  # noqa: E402
 
 
-def chain(tex, density=0.5, weight=0.1, softness=0.05, elongation=3.0,
-          phase=0.0, regularity=0.5, strength=100.0, gate=None,
-          angle_offset=0.0, bypass=0.0, floor=0.0):
-    aux = stage_e1(tex, strength, gate, angle_offset, floor)
-    aux2 = stage_e2(aux)
-    return stage_e3(aux2, density, weight, softness, elongation, phase,
-                    regularity, bypass)
+def note(msg):
+    """One-string note: the harness's note() takes (label, value)."""
+    _note("measured", msg)
+
+
+H = W = 128
+STRENGTH = 100.0
+TR = 0.01                       # tensor trace in J units -> encoded trace = 1.0 at strength 100
+THRESH = float(np.exp(-1.0))    # autocorrelation 1/e
+SEEDS = range(6)
 
 
 # ------------------------------------------------------------- fixtures ---
 
-def _tex_from_tensor(Jxx, Jxy, Jyy, strength=100.0):
-    """(H, W) scalar fields -> the outlet-0 RGBA encoding (f_tensor_type.md)."""
+def _tex_from_J(Jxx, Jxy, Jyy, strength=STRENGTH):
     tex = np.zeros(Jxx.shape + (4,), F32)
     tex[..., 0] = (Jxx * strength).astype(F32)
     tex[..., 1] = (Jxy * strength * F32(0.5) + F32(0.5)).astype(F32)
@@ -69,683 +42,302 @@ def _tex_from_tensor(Jxx, Jxy, Jyy, strength=100.0):
     return tex
 
 
-def _ramp_texture(phi_deg, contrast=1.0, strength=100.0):
-    """A clean-edge tensor field whose gradient direction is phi: J is
-    constant, so theta/axis/coherence are known exactly everywhere."""
-    phi = np.deg2rad(phi_deg)
-    gx = np.full((H, W), F32(np.cos(phi) * contrast))
-    gy = np.full((H, W), F32(np.sin(phi) * contrast))
-    return _tex_from_tensor(gx * gx, gx * gy, gy * gy, strength)
+def field(along_deg, coh, tr=TR):
+    """Tensor texture whose ALONG axis is `along_deg` (degrees, scalar or (H, W))
+    and whose coherence is `coh` (scalar or (H, W)): J = tr [ (1-c)/2 I + c g g^T ],
+    g = the gradient direction = along + 90 deg."""
+    a = np.deg2rad(np.broadcast_to(np.asarray(along_deg, np.float64), (H, W)))
+    c = np.broadcast_to(np.asarray(coh, np.float64), (H, W))
+    t = np.broadcast_to(np.asarray(tr, np.float64), (H, W))
+    gx, gy = np.cos(a + np.pi / 2), np.sin(a + np.pi / 2)
+    Jxx = t * ((1 - c) / 2 + c * gx * gx)
+    Jxy = t * (c * gx * gy)
+    Jyy = t * ((1 - c) / 2 + c * gy * gy)
+    return _tex_from_J(Jxx.astype(F32), Jxy.astype(F32), Jyy.astype(F32))
 
 
-def _render_axis(out):
-    """Single dominant ridge angle (deg, mod 180) of the rendered mark field,
-    by the structure tensor of the interior mark mask (the same form the
-    spike's metric uses, global sums)."""
-    m = out[INTERIOR][..., 0]
-    gy0 = np.roll(m, -1, 0) - np.roll(m, 1, 0)
-    gx0 = np.roll(m, -1, 1) - np.roll(m, 1, 1)
-    jxx = float((gx0 * gx0).sum())
-    jxy = float((gx0 * gy0).sum())
-    jyy = float((gy0 * gy0).sum())
-    theta = 0.5 * np.arctan2(2 * jxy, jxx - jyy)
-    return float(np.rad2deg(theta + np.pi / 2) % 180.0)
+def _xy():
+    cy, cx = np.meshgrid(np.arange(H, dtype=np.float64), np.arange(W, dtype=np.float64), indexing="ij")
+    return cx + 0.5, cy + 0.5
 
 
-def _mark_aspect(out, thresh=0.4):
-    """PITCH-normalized aspect of the rendered marks: max horizontal run of
-    marked pixels inside one dash band vs its vertical thickness, for an
-    axis=90 ('vertical strokes') field where dashes run along y... general:
-    runs are measured along the mark's OWN axis via the ridge angle."""
-    ang = np.deg2rad(_render_axis(out))
-    # project the mask profile onto the across direction: mark width there
-    m = out[INTERIOR][..., 0]
-    across = (-np.sin(ang) * 0 + 1) * 0          # placeholder replaced below
-    # measure extents: number of marked rows in a dash column (along) and
-    # number of marked columns in a dash row (across), at the mark center.
-    ys, xs = np.where(m > thresh)
-    if len(ys) == 0:
-        return float("nan")
-    # the widest dash: pick a marked pixel, measure run extents both ways
-    i0, j0 = ys[len(ys) // 2], xs[len(ys) // 2]
-    row = m[i0] > thresh
-    col = m[:, j0] > thresh
-    return float(_run_len(row, j0) + _run_len(col, i0)) / 2.0 * float("nan")
+# -------------------------------------------------------------- metrics ---
+
+def _autocorr(img, rows, cols):
+    a = np.asarray(img, np.float64)[rows, cols]
+    a = a - a.mean()
+    h, w = a.shape
+    F = np.fft.rfft2(a, s=(2 * h, 2 * w))
+    ac = np.fft.irfft2(F * np.conj(F), s=(2 * h, 2 * w))
+    return ac / ac[0, 0], h, w
 
 
-def _run_len(profile, idx):
-    a = 0
-    j = idx
-    while j - 1 >= 0 and profile[j - 1]:
-        a += 1
-        j -= 1
-    j = idx
-    b = 0
-    while j + 1 < len(profile) and profile[j + 1]:
-        b += 1
-        j += 1
-    return a + b + 1
+def _cross(profile, thresh=THRESH):
+    """Lag at which a decaying profile (profile[0] = 1) first drops below thresh,
+    linearly interpolated; the profile length if it never does."""
+    below = np.where(profile < thresh)[0]
+    if len(below) == 0:
+        return float(len(profile))
+    i = below[0]
+    if i == 0:
+        return 0.0
+    y0, y1 = profile[i - 1], profile[i]
+    return float(i - 1 + (y0 - thresh) / max(y0 - y1, 1e-12))
 
 
-# --- T003 E1 decode -------------------------------------------------------
-
-def test_decode_matches_eigh():
-    rng = np.random.default_rng(0)
-    worst_l, worst_a = 0.0, 0.0
-    for _ in range(300):
-        Jxy = rng.uniform(-1, 1)
-        base = rng.uniform(0.1, 2.0)          # SPD constructor
-        Jxx = base * rng.uniform(0.4, 1.6)
-        Jyy = base * rng.uniform(0.4, 1.6)
-        if base < 1.2 and rng.uniform() < 0.15:   # some diagonal-only cases
-            Jxy = 0.0
-        T = np.array([[Jxx, Jxy], [Jxy, Jyy]], F32)
-        s = float(rng.uniform(1, 200))
-        tex = _tex_from_tensor(np.array([[Jxx]]), np.array([[Jxy]]),
-                               np.array([[Jyy]]), strength=s)
-        out = decode(tex[0, 0], strength=s)
-        l1, l2, axis = out[6], out[7], out[9]
-        w_ref, vecs = np.linalg.eigh(T)
-        e_l = max(abs(l1 - w_ref[1]), abs(l2 - w_ref[0]))
-        v = vecs[:, -1]                        # the larger eigenvalue's eigenvector
-        # eigh's vector angle IS the decode's gradient angle; the along axis
-        # sits +pi/2 from it (EXACTLY, as lines): err = |mod(axis - eig, pi) - pi/2|
-        e_a = abs(np.mod(axis - np.arctan2(v[1], v[0]), np.pi) - np.pi / 2)
-        worst_l = max(worst_l, e_l)
-        worst_a = max(worst_a, e_a)
-    note("eigh lambda err", worst_l)
-    note("eigh axis err (rad)", worst_a)
-    check("decode lam1/lam2 vs eigh", worst_l, 1e-4)
-    check("decode axis vs eigh (mod pi)", worst_a, 1e-5)
+def autocorr_lengths(img, rows=slice(24, H - 24), cols=slice(24, W - 24)):
+    """(L_x, L_y): 1/e autocorrelation lengths along x and y (pixels)."""
+    ac, h, w = _autocorr(img, rows, cols)
+    return _cross(ac[0, :w]), _cross(ac[:h, 0])
 
 
-def test_decode_zero_tensor_guard():
-    for label, t in (("vs_black", np.zeros(4, F32)),
-                     ("tensormap neutral", np.array([0, 0.5, 0, 1], F32))):
-        out = decode(t)
-        check(f"zero tensor {label} trace", float(out[3]), 1e-7)
-        check(f"zero tensor {label} coherence", float(out[10]), 1e-6)
-    # re-validate eps_trace for THIS decode path: smallest real signal vs the
-    # guard (the T007 note: a 1-LSB step edge peaks at trace ~2.9e-5-2.5e-4
-    # on the tensormap path; the guard must sit well below real signals)
-    one_lsb = np.array([0.0039, 0.5, 0.0, 1.0], F32)   # Jxx = 3.9e-5 pre-eps
-    out = decode(one_lsb, strength=1.0)
-    note("1-LSB trace", float(out[3]))
-    check("1-LSB edge survives eps_trace", 0 if float(out[3]) > EPS_TRACE * 10 else 1, 0)
-
-
-def test_decode_axis_on_ramps():
-    worst = 0.0
-    for phi_deg in (0, 17, 45, 90, 133):
-        tex = _ramp_texture(phi_deg)
-        phi = np.deg2rad(phi_deg)
-        expect_grad = phi if phi <= np.pi / 2 else phi - np.pi
-        expect_axis = np.mod(expect_grad + np.pi / 2, np.pi)
-        err = 0.0
-        out = decode(tex[32, 40])
-        err = max(err, float(np.abs(np.mod(out[9] - expect_axis + np.pi / 2,
-                                           np.pi) - np.pi / 2)))
-        worst = max(worst, err)
-    note("ramp axis worst err (rad)", worst)
-    check("ramp axis vs analytic (mod pi)", worst, 1e-3)
-
-
-# --- T004/T005 commit curve ------------------------------------------------
-
-def test_commit_curve_invariants():
-    sweep = np.linspace(0, 1, 4096).astype(F32)
-    for form in ("smoothstep", "linear"):
-        c = commit_curve(sweep, 0.25, 1.0, gate=0.25, form=form)
-        check(f"commit {form} at gate", float(np.abs(c[sweep <= 0.25]).max()), 1e-7)
-        check(f"commit {form} at coherence 1", float(abs(c[-1] - 1)), 1e-6)
-        check(f"commit {form} monotone", 0 if np.all(np.diff(c) >= -1e-7) else 1, 0)
-        check(f"commit {form} in [0,1]", 0 if (c >= 0).all() and (c <= 1).all() else 1, 0)
-
-
-def test_commit_curve_seam_continuity():
-    """No-seam across the gate boundary: the per-pixel commit step on a
-    coherence ramp must not exceed the analytic smoothstep slope (no snap).
-    The mark intensity itself is commit-weighted (v marks, commit->0), so
-    the RENDERED field crosses the gate without a seam."""
-    coh = np.linspace(0.0, 1.0, W, dtype=F32)[None, :].repeat(H, 0)
-    c = commit_curve(coh, 0.25, 1.0, gate=0.25)
-    steps = np.abs(np.diff(c[0]))
-    dcoh = float(np.diff(np.linspace(0, 1, W, dtype=F32))[0])
-    analytic_max = 1.5 / (C_HI - C_LO) * dcoh   # smoothstep's max slope
-    slope = float(steps.max())
-    note("max commit step/pixel", slope)
-    note("analytic max slope", analytic_max)
-    check("commit continuous at gate", slope, analytic_max * 1.01)
-
-
-def test_commit_curve_sweep_separates_structure():
-    """T005: which form separates structure from noise best at fixed gate,
-    on synthetic eigengap distributions (uniform, bimodal, noise-tailed)?
-    Measured in NumPy (uniform/bimodal/noisetail coverage + mean commit);
-    the decision is held for the tier-3 judgment (OQ3 not closed here)."""
-    rng = np.random.default_rng(3)
-    uniform = rng.uniform(0, 1, 4096).astype(F32)
-    bimodal = np.concatenate([np.full(2048, F32(0.02)),
-                              np.full(2048, F32(0.98))]).astype(F32)
-    noisetail = np.clip(rng.uniform(0, 1, 4096).astype(F32)
-                        + np.abs(rng.normal(0, 0.08, 4096)), 0, 1).astype(F32)
-    for name, dist in (("uniform", uniform), ("bimodal", bimodal),
-                       ("noise-tailed", noisetail)):
-        cs = commit_curve(dist, 0.25, 1.0, gate=0.25)
-        on = float(cs.mean())
-        frac_activated = float((cs > 0.5).mean())
-        note(f"{name}: frac>0.5 (activation coverage)", frac_activated)
-        note(f"{name}: mean commit", on)
-    # both forms run; the record is the printed numbers + OQ3 stays open.
-
-
-# --- T006 family mechanics --------------------------------------------------
-
-def test_density_log_map_matches_weave():
-    """The family formula: density_scale = pow(2, density*5 - 1) -- weave's
-    published map, cited verbatim (docs/f-reference/f_weave.md)."""
-    for d in (0.0, 0.25, 0.5, 1.0):
-        expect = 2.0 ** (d * 5.0 - 1.0)
-        got = F32(2.0 ** (d * DENSITY_SPAN - 1.0))
-        check(f"density log map at {d}", float(abs(got - expect)), 1e-6)
-
-
-def test_phase_scrolls_marks():
-    """phase scrolls marks along the stroke axis at fixed pattern. Measured
-    with cross-correlation of the dash profile at elongation 1 (dashes, not
-    saturated lines) and phase shifts large enough to clear integer-px
-    quantization: pitch_px = H/density_scale ~ 22.6 at defaults, so phase
-    0.2 shifts 4.5 px, 0.5 shifts 11.3 px (phase 1.0 = one full pitch)."""
-    tex = _ramp_texture(0.0)     # gradient x -> strokes vertical (along y)
-    base = chain(tex, elongation=1.0)[0][..., 0]
-    prof0 = (base > 0.3).mean(1)             # per-row profile (dash along y)
-    px_per_phase = H / (2.0 ** (0.5 * DENSITY_SPAN - 1.0))
-    for ph in (0.2, 0.5):
-        m = chain(tex, elongation=1.0, phase=ph)[0][..., 0]
-        prof = (m > 0.3).mean(1)
-        best, best_val = 0, -1.0
-        for sh in range(-H // 2, H // 2):
-            v = float(np.mean(np.roll(prof, sh) * prof0))
-            if v > best_val:
-                best_val, best = v, sh
-        note(f"phase {ph} shift (px, stroke axis)", abs(best))
-        # integer-px-quantized cross-correlation: within 2 px of analytic
-        check(f"phase {ph} scroll", abs(abs(best) - ph * px_per_phase), 2.0)
-
-
-def test_regularity_endpoints():
-    """regularity = 1 is grid-phase-locked (all lines in phase), regularity
-    = 0 fully staggers (per-line hash), and the hash is stable across
-    frames/calls (weave's line_hash form, cited). Measured at elongation 1
-    (dashes visible; saturated lines would hide the stagger)."""
-    tex = _ramp_texture(0.0)
-
-    def dash_centres(reg):
-        o, _ = chain(tex, regularity=reg, elongation=1.0)
-        m = o[..., 0]
-        ds = 2.0 ** (0.5 * DENSITY_SPAN - 1.0)
-        out = []
-        for k in (-2, -1):                       # two distinct line indices
-            nx = -(k + 0.5) / ds
-            col = int(np.floor(nx * W))          # u = -nx (axis y strokes)
-            out.append(tuple(_dash_centres(m[:, col])))
-        return out
-
-    c1 = dash_centres(1.0)
-    c0 = dash_centres(0.0)
-    # reg 1: dash centers coincide across lines (phase-locked; +-0.5 px --
-    # the 1-px across-line width quantization of the mark profile)
-    lock_diff = max(abs(a - b) for a, b in zip(c1[0], c1[1]))
-    note("reg 1 center offset", lock_diff)
-    check("reg 1 phase-locked across lines", lock_diff, 0.9)
-    # reg 0: the two lines' dash phases differ (the hash stagger shows)
-    stag = max(abs(a - b) for a, b in zip(c0[0], c0[1]))
-    note("reg 0 center offset", stag)
-    check("reg 0 staggers", 0.0 if min(len(x) for x in c0) == len(c0[0]) == len(c0[1]) and stag > 1.0 else (0.0 if stag > 1.0 else 1.0), 0.0)
-    # hash stability: same render twice (stateless, hash-driven)
-    o0, _ = chain(tex, regularity=0.0, elongation=1.0)
-    check("pattern stable call-to-call",
-          float(np.abs(chain(tex, regularity=0.0, elongation=1.0)[0][..., 0]
-                       - o0[..., 0]).max()), 0.0)
-
-
-def _dash_centres(prof):
-    """Centers of the marked dashes in a 1-D mark profile."""
-    import itertools
-    centers = []
-    on = prof > 0.05
-    for k, g in itertools.groupby(enumerate(on), key=lambda kv: kv[1]):
-        g = list(g)
-        if k:
-            idxs = [i for i, _ in g]
-            centers.append(sum(idxs) / len(idxs))
-    return centers
-
-
-def test_softness_feathers_both_axes():
-    """softness feathers the across-line edge and the along-mark end
-    simultaneously (discrete_item_conventions softness section, weave's
-    smoothstep form cited)."""
-    tex = _ramp_texture(0.0)
-    hard = chain(tex, softness=0.0, elongation=3.0)[0][..., 0]
-    soft = chain(tex, softness=0.3, elongation=3.0)[0][..., 0]
-    w_soft = float((soft > 0.1).sum())
-    w_hard = float((hard > 0.1).sum())
-    note("soft coverage", w_soft)
-    note("hard coverage", w_hard)
-    check("softness widens marks", 0 if w_soft > w_hard * 1.3 else 1, 0)
-
-
-# --- T007 invariants ---------------------------------------------------------
-
-def test_zero_tensor_renders_black():
-    tex = g.texture(H, W)         # all zeros: vs_black on inlet 0
-    o0, o1 = chain(tex, density=0.7, weight=0.4, softness=0.1, elongation=8.0)
-    check("zero tensor outlet0 black", float(np.abs(o0[..., :3]).max()), 1e-7)
-    check("zero tensor outlet1 black", float(np.abs(o1[..., :3]).max()), 1e-7)
-    # also the tensormap NEUTRAL (0, 0.5, 0, 1) -- a real unconnected producer
-    neutral = np.zeros((1, 1, 4), F32)
-    neutral[0, 0] = F32([0, 0.5, 0, 1.0])
-    tex2 = np.repeat(np.repeat(neutral, H, 0), W, 1)
-    o0, _ = chain(tex2, density=0.7, weight=0.4, softness=0.1, elongation=8.0)
-    check("neutral tensor black", float(np.abs(o0[..., :3]).max()), 1e-7)
-
-
-def test_axis_correctness_known_angles():
-    """A clean-edge field whose gradient axis is at phi renders strokes at
-    phi + 90 deg (mod pi); the rendered ridge orientation matches."""
-    for phi_deg in (0, 30, 90, 133):
-        tex = _ramp_texture(phi_deg, contrast=0.7)
-        o0, o1 = chain(tex, regularity=1.0)
-        grad = np.deg2rad(phi_deg if phi_deg <= 90 else phi_deg - 180)
-        want = np.mod(grad + np.pi / 2, np.pi)
-        got = _render_axis(o0)
-        got_rad = np.deg2rad(got) % np.pi
-        err = float(np.abs(np.mod(got_rad - want + np.pi / 2, np.pi) - np.pi / 2))
-        note(f"phi {phi_deg}: ridge {got:.1f} deg, want {np.rad2deg(want):.1f}", err)
-        # 64px frame: dash-row quantization biases the ridge read ~1.4 deg/px
-        # (measured: 8.8 err at phi 30, 8.3 at phi 133 -- the dash grid's
-        # 3-px-wide lines at pitch 22.6 snap rows); tol 10 deg is that
-        # quantization floor. Sub-degree angle verification lives in the
-        # axis-MAP tests (decode axis vs eigh <=3.6e-7, ramps <=1.5e-7).
-        check(f"phi {phi_deg} stroke axis", err, 0.18)
-
-
-def test_commit_endpoints():
-    """coherence 1 -> pitch-normalized mark aspect = elongation + 1 (capped
-    per plan ADR-9); commit 0 -> nothing renders (commit-weighted fade-in).
-
-    The aspect invariant is tested at the FORMULA level (the mirror's own
-    al/aw relationship): al = min(w*ds*sqrt(aspect), 0.5), aw = w/sqrt(aspect)
-    -> al/(aw*ds) = aspect, capped to (0.5/(w*ds))*sqrt(aspect) at the
-    saturation cap (ADR-9: aspect_max binds at defaults). Extent-ratio
-    rendering checks live in the spike (pitch-quantized at 64px; a pitch-
-    exact read needs larger frames -- noted for tier-2's bigger fixtures)."""
-    ds = 2.0 ** (0.5 * DENSITY_SPAN - 1.0)
-    for el, w, commit in ((3.0, 0.1, 1.0), (1.0, 0.05, 1.0), (0.5, 0.1, 0.8)):
-        aspect = 1.0 + el * commit
-        aw = w / np.sqrt(aspect)
-        al = min(w * ds * np.sqrt(aspect), 0.5)
-        if al < 0.5:                       # uncapped: aspect exact
-            check(f"aspect {aspect:.2f} (w {w}, el {el}) uncapped",
-                  abs(al / (aw * ds) - aspect), 1e-5)
-        else:                              # capped: realized aspect formula
-            realized = al / (aw * ds)
-            want_realized = 0.5 / (w * ds) * np.sqrt(aspect)
-            note(f"capped aspect (w {w}, el {el})", realized)
-            check(f"capped aspect (w {w}, el {el}) formula",
-                  abs(realized - want_realized), 0.01)
-    # a dot at commit -> 0: aspect -> 1 exactly (uncapped regime)
-    aspect0 = 1.0 + 3.0 * 0.0
-    aw = 0.1 / 1.0
-    al = 0.1 * ds * 1.0
-    check("commit 0 aspect = 1 (dot)", abs(al / (aw * ds) - aspect0), 1e-5)
-    # commit 0 is a DOT, not nothing (2026-10-28 decoupling): with presence 1
-    # it renders at full brightness; only presence 0 renders nothing.
-    aux0 = np.zeros((64, 64, 4), F32)
-    aux0[..., 1] = F32(1.0)            # axis (0, 1); commit 0
-    aux0[..., 3] = F32(1.0)            # presence 1
-    o0a, _ = stage_e3(stage_e2(aux0), density=0.5, weight=0.1, softness=0.0,
-                      elongation=3.0)
-    peak = float(o0a[..., 0].max())
-    note("commit 0, presence 1: peak mark", peak)
-    check("commit 0 renders dots at full brightness", 0.0 if peak > 0.8 else 1.0, 0.0)
-    aux0[..., 3] = F32(0.0)            # presence 0
-    o0b, _ = stage_e3(stage_e2(aux0), density=0.5, weight=0.1, softness=0.0,
-                      elongation=3.0)
-    check("presence 0 renders nothing", float(np.abs(o0b[..., 0]).max()), 1e-7)
-
-
-def _runs(idxs):
-    """[(length, center)] of consecutive integer runs in a sorted index list."""
-    if len(idxs) == 0:
-        return []
+def integral_length(img, rows, cols):
+    """(Lx, Ly): integral of the autocorrelation up to its first zero crossing,
+    along x and y. Steadier than the 1/e crossing on small strips."""
+    ac, h, w = _autocorr(img, rows, cols)
     out = []
-    j0 = idxs[0]
-    prev = idxs[0]
-    for i in idxs[1:]:
-        if i != prev + 1:
-            out.append((prev - j0 + 1, (j0 + prev) // 2))
-            j0 = i
-        prev = i
-    out.append((prev - j0 + 1, (j0 + prev) // 2))
-    return out
+    for prof in (ac[0, :w], ac[:h, 0]):
+        neg = np.where(prof < 0)[0]
+        out.append(float(prof[: neg[0] if len(neg) else len(prof)].sum()))
+    return out[0], out[1]
 
 
-def _argmax_run(profile):
-    """Center index of the longest True run in a boolean profile."""
-    runs = []
-    j = 0
-    while j < len(profile):
-        if profile[j]:
-            k = j
-            while k + 1 < len(profile) and profile[k + 1]:
-                k += 1
-            runs.append((k - j + 1, (j + k) // 2, j, k))
-            j = k + 1
-        else:
-            j += 1
-    runs.sort(reverse=True)
-    return runs[0][1]
+def lum(out):
+    return np.asarray(out[0][..., 0], np.float64)
 
 
-# (the old _mark_aspect is retired: pitch-normalized extents above are exact)
+def raw_field(out):
+    """Normalized unstyled field (outlet 1)."""
+    return np.asarray(out[1][..., 0], np.float64)
 
 
-def test_contrast_independence():
-    """Same edge at gradient contrast 0.1 and 1.0: identical commit and axis
-    (the coherence property), hence identical marks."""
-    tex_lo = _ramp_texture(30.0, contrast=0.1)
-    tex_hi = _ramp_texture(30.0, contrast=1.0)
-    o0b, _ = chain(tex_lo)
-    o0h, _ = chain(tex_hi)
-    check("contrast-independence of commit+axis", float(np.abs(o0b - o0h).max()), 1e-5)
+def _box(a, r):
+    k = np.ones(2 * r + 1) / (2 * r + 1)
+    a = np.apply_along_axis(lambda v: np.convolve(v, k, "same"), 0, a)
+    return np.apply_along_axis(lambda v: np.convolve(v, k, "same"), 1, a)
 
 
-def test_strength_invariance():
-    """Positive scaling of the tensor leaves the output unchanged (the
-    gain-free identity, glyph ADR-2)."""
-    outs = []
-    for s in (30.0, 100.0, 500.0):
-        t = _ramp_texture(50.0, strength=s)
-        o, _ = chain(t)
-        outs.append(o)
-    check("strength invariance 100 vs 30",
-          float(np.abs(outs[0] - outs[1]).max()), 1e-4)
-    check("strength invariance 100 vs 500",
-          float(np.abs(outs[1] - outs[2]).max()), 1e-4)
+def ridge_angle(out):
+    """Local streak direction (deg, mod 180) of an image: structure tensor of the
+    output, window 9, rotated 90 deg (the gradient is across the streak)."""
+    gy0 = np.roll(out, -1, 0) - np.roll(out, 1, 0)
+    gx0 = np.roll(out, -1, 1) - np.roll(out, 1, 1)
+    jxx, jxy, jyy = _box(gx0 * gx0, 4), _box(gx0 * gy0, 4), _box(gy0 * gy0, 4)
+    return np.rad2deg(0.5 * np.arctan2(2 * jxy, jxx - jyy)) + 90.0
 
 
-def test_rotation_equivariance_90():
-    """Rotating the input's structure by 90 deg rotates the stroke field by
-    90 deg: the rendered ridge angle moves by exactly 90 (mod 180) -- the
-    E1 axis map moves by exactly pi/2 (mod pi) on the analytic ramp, and
-    the E3 render (fixed params) inherits it."""
-    for phi_deg in (0, 70):
-        t0 = _ramp_texture(phi_deg)
-        t90 = _ramp_texture(phi_deg + 90)
-        a0 = _tex_axis_map(t0)[32, 40]
-        a90 = _tex_axis_map(t90)[32, 40]
-        diff = float(np.abs(np.mod((a90 - a0) - np.pi / 2 + np.pi / 2, np.pi) - np.pi / 2))
-        check(f"rot equivariance axis map phi {phi_deg}", diff, 1e-4)
-        r0 = np.deg2rad(_render_axis(chain(t0, regularity=1.0)[0]) % 180.0)
-        r90 = np.deg2rad(_render_axis(chain(t90, regularity=1.0)[0]) % 180.0)
-        dr = float(np.abs(np.mod((r90 - r0) - np.pi / 2 + np.pi / 2, np.pi) - np.pi / 2))
-        check(f"rot equivariance render phi {phi_deg}", dr, 0.2)
+def ridge_error(out, along_deg, mask):
+    """Absolute angle error (deg, 0..90) between the render's ridge direction and
+    the field's along-axis, over `mask`."""
+    return np.abs((ridge_angle(out) - along_deg + 90.0) % 180.0 - 90.0)[mask]
 
 
-def _tex_axis_map(tex):
-    axis = np.zeros(tex.shape[:2], F32)
-    for i in range(tex.shape[0]):
-        for j in range(tex.shape[1]):
-            axis[i, j] = decode(tex[i, j])[9]
-    return axis
+# ------------------------------------------------------------ the tests ---
+
+def test_1_coherent_straight_is_streaks():
+    """Coherence 1, axis horizontal: long along x, short along y."""
+    out = chain(field(0.0, 1.0))
+    lx, ly = autocorr_lengths(raw_field(out))
+    note(f"coherent straight: L_along={lx:.1f}px  L_across={ly:.1f}px  ratio={lx / max(ly, 1e-9):.1f}")
+    check("streaks: along >= 4x across", 0.0 if lx >= 4.0 * ly else 1.0, 0.0)
 
 
-def test_angle_offset_endpoint():
-    """angle_offset = +-1 produces the exactly-rotated +-90 deg layout with
-    no discontinuity from the doubled-angle decode (the axis field is
-    unoriented, so +-90 spans the distinct layouts and the offset wraps
-    cleanly)."""
-    for phis, offset in ((0.0, -1.0), (0.0, 1.0), (45.0, -1.0), (80.0, 1.0)):
-        tex = _ramp_texture(phis)
-        aux = stage_e1(tex, angle_offset=offset)
-        # the offset axis renders marks whose ridge = phi + 90 + offset*90
-        want = np.mod(phis + offset * 90.0 + 90.0, 180.0)   # deg
-        o0, _ = stage_e3(stage_e2(aux), regularity=1.0)
-        got = _render_axis(o0)
-        err_d = abs(np.mod(got - want + 90.0, 180.0) - 90.0)
-        note(f"phi {phis} offset {offset}: ridge {got:.1f} want {want:.1f}", err_d)
-        check(f"angle_offset {offset} at phi {phis}", err_d, 8.0)
+def test_2_isotropic_is_grain():
+    """Equal eigenvalues, coherence 0, trace above the floor. The atan2(0,0) trap:
+    the decode hands back a FIXED axis here (theta = 0, so along = vertical), and a
+    march that trusted it would render clean vertical streaks. Output must be grain:
+    isotropic and short."""
+    out = chain(field(0.0, 0.0))
+    lx, ly = autocorr_lengths(raw_field(out))
+    lx_c, _ = autocorr_lengths(raw_field(chain(field(0.0, 1.0))))
+    ratio = lx / max(ly, 1e-9)
+    note(f"isotropic: L_x={lx:.1f}  L_y={ly:.1f}  ratio={ratio:.2f}  (coherent L_along={lx_c:.1f})")
+    check("isotropic: |L_x/L_y - 1| <= 0.35", abs(ratio - 1.0), 0.35)
+    check("isotropic: correlation length < half the coherent streak", 0.0 if lx < 0.5 * lx_c else 1.0, 0.0)
 
 
-# --- T008 mutation checks -----------------------------------------------------
-
-def test_mutation_gradient_axis_used_for_strokes():
-    """Inject: use the GRADIENT angle theta instead of the along axis
-    (theta + pi/2) for the pattern frame. A 45-degree-rotated field must
-    render strokes 90 deg off -- detected by the angle invariant."""
-    tex = _ramp_texture(45.0)
-    aux_bad = _stage_e1_mutated(tex, use_gradient_axis=True)
-    aux = stage_e1(tex)
-    want = np.mod(np.deg2rad(45.0) + np.pi / 2, np.pi)
-
-    def _axis_of(a):
-        return float(np.arctan2(a[..., 1], a[..., 0])[32, 40])
-
-    got_bad = _axis_of(aux_bad)
-    got_good = _axis_of(aux)
-    err_bad = float(np.abs(np.mod(got_bad - want + np.pi / 2, np.pi) - np.pi / 2))
-    err_good = float(np.abs(np.mod(got_good - want + np.pi / 2, np.pi) - np.pi / 2))
-    note("mutation bug axis err", err_bad)
-    note("truth axis err", err_good)
-    check("mutation: bug err exceeds clean err (caught)",
-          0.0 if err_bad > 0.5 and err_good < 1e-3 else 1.0, 0.0)
+def test_3_coherence_ramp_is_monotone():
+    """Axis fixed horizontal, coherence 0 -> 1 down the frame. Streak length along
+    the axis must rise monotonically with coherence (6 horizontal strips, mean of
+    6 noise realisations)."""
+    coh = np.broadcast_to(np.linspace(0.0, 1.0, H)[:, None], (H, W))
+    tex = field(0.0, coh)
+    strips = [(4 + 20 * i, 4 + 20 * (i + 1)) for i in range(6)]
+    per = np.array([[integral_length(raw_field(chain(tex, seed=sd)), slice(y0, y1), slice(16, W - 16))[0]
+                     for (y0, y1) in strips] for sd in SEEDS])
+    ls = per.mean(0)
+    cs = [float(np.linspace(0, 1, H)[(y0 + y1) // 2]) for (y0, y1) in strips]
+    note("coherence ramp, streak length (px): " + "  ".join(f"c={c:.2f}:{v:.1f}" for c, v in zip(cs, ls)))
+    span = ls.max() - ls.min()
+    worst_drop = max(max(ls[i] - ls[i + 1] for i in range(len(ls) - 1)), 0.0)
+    rho = float(np.corrcoef(np.argsort(np.argsort(cs)), np.argsort(np.argsort(ls)))[0, 1])
+    note(f"  rank correlation {rho:.3f}; worst drop {worst_drop:.2f} of span {span:.2f}")
+    check("ramp: length rises with coherence (rank corr >= 0.85)", 0.0 if rho >= 0.85 else 1.0, 0.0)
+    check("ramp: no big reversals (worst drop <= 25% of span)", 0.0 if worst_drop <= 0.25 * span else 1.0, 0.0)
+    check("ramp: top at least 4x the bottom", 0.0 if ls[-1] >= 4.0 * ls[0] else 1.0, 0.0)
 
 
-def _stage_e1_mutated(tex, use_gradient_axis=False, drop_guard=False):
-    """The E1 mirror with an injected bug (the T008 mutation vehicle)."""
-    ca, sa = np.zeros(tex.shape[:2], F32), np.zeros(tex.shape[:2], F32)
-    commit = np.zeros(tex.shape[:2], F32)
-    pres = np.zeros(tex.shape[:2], F32)
-    for i in range(tex.shape[0]):
-        for j in range(tex.shape[1]):
-            out = decode(tex[i, j])
-            trace = out[3]
-            if not drop_guard and trace <= F32(EPS_TRACE):
-                continue
-            pres[i, j] = F32(1.0)
-            eff = out[8] if use_gradient_axis else out[9]     # the bug
-            ca[i, j] = np.cos(eff).astype(F32)
-            sa[i, j] = np.sin(eff).astype(F32)
-            commit[i, j] = commit_curve(np.array([out[10]], F32))[0]
-    return g.store_float32(np.stack([ca, sa, commit, pres], -1))
+def test_4_streaks_follow_the_field():
+    """The v1 regression. v1's lattice was anchored at the frame origin, so smooth or
+    noisy axis fields drew rings that did not follow the field at all. Here the local
+    streak direction must match the field's axis on (a) concentric rings, (b) a sweep
+    that is NOT rings, (c) a low-frequency random angle field."""
+    x, y = _xy()
+    # (a) rings, axis tangent, annulus away from the centre
+    cx0, cy0 = W / 2 + 0.5, H / 2 + 0.5
+    along = np.rad2deg(np.arctan2(y - cy0, x - cx0)) + 90.0
+    r = np.hypot(x - cx0, y - cy0)
+    err = ridge_error(raw_field(chain(field(along, 1.0))), along, (r > 25) & (r < 50))
+    note(f"(a) rings: ridge-vs-axis error median {np.median(err):.1f} deg, 90th pct {np.percentile(err, 90):.1f}")
+    check("rings: median ridge error <= 15 deg", 0.0 if np.median(err) <= 15.0 else 1.0, 0.0)
+    # (b) a sweep 0 -> 40 deg across x (no circle anywhere)
+    sweep = np.broadcast_to(np.linspace(0.0, 40.0, W)[None, :], (H, W))
+    inner = np.zeros((H, W), bool)
+    inner[24:-24, 24:-24] = True
+    err = ridge_error(raw_field(chain(field(sweep, 1.0))), sweep, inner)
+    note(f"(b) sweep: ridge-vs-axis error median {np.median(err):.1f} deg, 90th pct {np.percentile(err, 90):.1f}")
+    check("sweep: median ridge error <= 15 deg", 0.0 if np.median(err) <= 15.0 else 1.0, 0.0)
+    # (c) low-frequency random angle field, +-35 deg around 90
+    rng = np.random.default_rng(3)
+    lf = _box(_box(rng.standard_normal((H, W)), 14), 14)
+    lf = 90.0 + 35.0 * lf / np.abs(lf).max()
+    err = ridge_error(raw_field(chain(field(lf, 1.0))), lf, inner)
+    note(f"(c) random field: ridge-vs-axis error median {np.median(err):.1f} deg, 90th pct {np.percentile(err, 90):.1f}")
+    check("random field: median ridge error <= 20 deg", 0.0 if np.median(err) <= 20.0 else 1.0, 0.0)
 
 
-def test_mutation_eps_guard_dropped():
-    """Inject: compute coherence as root/trace WITHOUT the eps guard (the
-    raw form, trace = 0 on a zero tensor) -- the artifact path drives
-    commit to inf/clamped values and marks appear where nothing should.
-    The zero-tensor test must fail. (Also asserted: the guard's axis-unset
-    marker -- with the guard, (ca, sa) stay exactly (0, 0) on a zero
-    tensor; without, the -1/s-Jxy artifact axis leaks.)"""
-    tex = np.zeros((H, W, 4), F32)
-    aux = stage_e1(tex)
-    check("truth: guard keeps (ca, sa) unset on zero tensor",
-          float(np.abs(aux[..., :2]).max()), 1e-7)
-    # the mutation: coherence = root / trace, unguarded (trace = 0 -> inf)
-    rng = np.random.default_rng(0)
-    trace = np.zeros((8, 8), F32)          # exactly the zero tensor
-    root = np.full((8, 8), F32(0.02))      # the Jxy -1/s artifact root
-    with np.errstate(divide="ignore", invalid="ignore"):
-        coh_bad = (root / trace)
-    coh_bad = np.where(np.isfinite(coh_bad), coh_bad, F32(5.0))  # GPU: inf/nan -> big
-    c_bad = commit_curve(coh_bad)
-    c_truth = commit_curve(np.zeros((8, 8), F32))
-    note("mutation: mean commit unguarded", float(c_bad.mean()))
-    check("mutation: dropped guard renders (caught)",
-          0 if float(c_bad.mean()) > 0.1 and float(c_truth.mean()) < 1e-6 else 1, 0.0)
+def test_5_branch_cut_has_no_seam():
+    """Axis sweeping 170 -> 190 deg across x, crossing the decode's wrap (along-axis
+    angles live in (0, 180], so the unsigned pair flips sign there). Streak length in
+    a strip straddling the cut must stay within 80% of a strip away from it, for the
+    doubled-angle and the unsigned aux layouts alike (OQ2 evidence)."""
+    sweep = np.broadcast_to(np.linspace(170.0, 190.0, W)[None, :], (H, W))
+    for mode in ("doubled", "unsigned_bilinear", "unsigned_nearest"):
+        near, away = [], []
+        for sd in SEEDS:
+            out = raw_field(chain(field(sweep, 1.0), aux_mode=mode, seed=sd))
+            near.append(integral_length(out, slice(24, H - 24), slice(W // 2 - 14, W // 2 + 14))[0])
+            away.append(integral_length(out, slice(24, H - 24), slice(20, 48))[0])
+        n, a = float(np.mean(near)), float(np.mean(away))
+        note(f"branch cut [{mode}]: streak length near the cut {n:.1f}px, away {a:.1f}px, ratio {n / a:.2f}")
+        check(f"branch cut ({mode}): near >= 0.8 * away", 0.0 if n >= 0.8 * a else 1.0, 0.0)
 
 
-def test_mutation_elongation_without_commit_mult():
-    """Inject: tie mark aspect to `elongation` directly, without the commit
-    multiplier -- the glint lesson's view-in-disguise bug. A near-iso
-    field must render DOTS under the truth (commit ~ 0, aspect 1) and
-    elongated marks under the bug -- a different mark shape, so the two
-    renders differ pixelwise. (Reworked 2026-10-28: the truth is no longer
-    'nothing' -- dots now render at full brightness, presence decoupled.)"""
-    tex = _near_iso_tex()
-    coh = float(decode(tex[32, 40])[10])
-    commit_truth = float(commit_curve(np.array([coh], F32))[0])
-    note("coh and commit", commit_truth)
-    check("truth: near-iso commit ~ 0", commit_truth, 0.01)
-    o_truth = stage_e3(stage_e2(stage_e1(tex)), elongation=8.0)[0]
-    # the BUG: aspect tied to the dial without the commit multiplier
-    aux_bug = stage_e1(tex)
-    aux_bug[..., 2] = F32(1.0)                       # the bug: full commit
-    o_bug = stage_e3(stage_e2(aux_bug), elongation=8.0)[0]
-    diff = float(np.abs(o_bug[..., 0] - o_truth[..., 0]).max())
-    note("mutation: max |bug - truth| render diff", diff)
-    check("mutation: commit removed is detected", 0 if diff > 0.1 else 1, 0.0)
+def test_6_degenerate_point_is_grain_around_streaks():
+    """A radial field whose coherence goes to 0 at the centre (a degenerate point):
+    grain AT the point, streaks around it. Measured as tangential/radial gradient
+    energy (radial streaks have gradient across them, i.e. tangential)."""
+    cx0, cy0 = W / 2 + 0.5, H / 2 + 0.5
+    x, y = _xy()
+    r = np.hypot(x - cx0, y - cy0)
+    along = np.rad2deg(np.arctan2(y - cy0, x - cx0))
+    coh = np.clip(r / 30.0, 0.0, 1.0)
+    out = raw_field(chain(field(along, coh)))
+    gy0 = np.roll(out, -1, 0) - np.roll(out, 1, 0)
+    gx0 = np.roll(out, -1, 1) - np.roll(out, 1, 1)
+    gr = (gx0 * (x - cx0) + gy0 * (y - cy0)) / np.maximum(r, 1e-6)
+    gt = (-gx0 * (y - cy0) + gy0 * (x - cx0)) / np.maximum(r, 1e-6)
+
+    def tan_over_rad(mask):
+        return float(np.sqrt((gt[mask] ** 2).sum() / max((gr[mask] ** 2).sum(), 1e-12)))
+    ti, to = tan_over_rad(r < 8), tan_over_rad((r > 40) & (r < 56))
+    note(f"degenerate point: tangential/radial gradient energy  centre {ti:.2f}   annulus {to:.2f}")
+    check("degenerate point: grain at centre (ratio ~1)", abs(ti - 1.0), 0.4)
+    check("degenerate point: annulus clearly streaky (tangential >= 2x radial)", 0.0 if to >= 2.0 * ti else 1.0, 0.0)
 
 
-# --- 2026-10-28: shape and presence decoupled (first live look) -----------
-
-def _near_iso_tex():
-    """near-iso but traceable: Jxx=Jyy=0.5, Jxy=0.01 -> root 0.02, coh 0.02."""
-    return _tex_from_tensor(np.full((H, W), F32(0.5)),
-                            np.full((H, W), F32(0.01)),
-                            np.full((H, W), F32(0.5)))
-
-
-def _mid_coherence_tex():
-    """Jxx=0.7, Jyy=0.3, Jxy=0 -> coherence 0.4 everywhere, gradient along x
-    (strokes vertical), trace 1.0 (encoded 100 at strength 100)."""
-    return _tex_from_tensor(np.full((H, W), F32(0.7)),
-                            np.full((H, W), F32(0.0)),
-                            np.full((H, W), F32(0.3)))
+def test_7_presence_blanks_weak_trace_only():
+    """Left half weak trace, right half strong, floor 0.5: the weak half is black,
+    the strong half is identical to the floor-0 render (geometry unchanged)."""
+    tr = np.where(np.arange(W)[None, :] < W // 2, 0.0004, TR) * np.ones((H, 1))
+    tex = field(20.0, 0.9, tr=tr)
+    o_floor = lum(chain(tex, floor=0.5))
+    o_free = lum(chain(tex, floor=0.0))
+    left = o_floor[:, : W // 2 - 2]
+    right_diff = np.abs(o_floor[:, W // 2 + 2:] - o_free[:, W // 2 + 2:]).max()
+    check("floor: weak half black", float(np.abs(left).max()), 1e-7)
+    check("floor: strong half unchanged by the floor", float(right_diff), 1e-6)
+    check("floor 0: weak half is drawn", 0.0 if np.abs(o_free[:, : W // 2 - 2]).max() > 0.2 else 1.0, 0.0)
 
 
-def _longest_run(profile):
-    best = run = 0
-    for b in profile:
-        run = run + 1 if b else 0
-        best = max(best, run)
-    return best
+def test_8_neutral_and_bypass():
+    neutral = np.zeros((H, W, 4), F32)
+    neutral[..., 1] = 0.5
+    neutral[..., 3] = 1.0
+    o = chain(neutral)
+    check("neutral tensor -> black", float(np.abs(o[0][..., :3]).max()), 1e-7)
+    check("outlet alpha is 1", float(np.abs(o[0][..., 3] - 1.0).max()), 0.0)
+    ob = chain(field(0.0, 1.0), bypass=1.0)
+    check("bypass -> black (outlet 0)", float(np.abs(ob[0][..., :3]).max()), 1e-7)
+    check("bypass -> black (outlet 1)", float(np.abs(ob[1][..., :3]).max()), 1e-7)
+    check("bypass keeps A=1", float(np.abs(ob[0][..., 3] - 1.0).max()), 0.0)
 
 
-def test_dots_persist_at_low_coherence():
-    """The first live look's bug: the line->dot rounding faded to black, so
-    the dot state was invisible. Near-iso structure (commit ~ 0, trace well
-    above the floor) must render FULL-BRIGHTNESS dots."""
-    tex = _near_iso_tex()
-    aux = stage_e1(tex)
-    check("near-iso commit ~ 0", float(aux[..., 2].max()), 0.01)
-    check("near-iso presence 1", float(1.0 - aux[..., 3].min()), 1e-6)
-    o0, _ = stage_e3(stage_e2(aux), softness=0.0)
-    peak = float(o0[..., 0].max())
-    note("near-iso peak mark (dots)", peak)
-    check("near-iso renders full-brightness dots", 0.0 if peak > 0.8 else 1.0, 0.0)
+def test_mutation_coherence_ignored_gives_false_streaks():
+    """Inject the atan2(0,0) trap: persistence off (coherence ignored). The isotropic
+    field must then render streaks along the decode's fixed (vertical) axis -- test 2
+    would fail."""
+    out = raw_field(chain(field(0.0, 0.0), persist="off"))
+    lx, ly = autocorr_lengths(out)
+    aniso = max(lx / max(ly, 1e-9), ly / max(lx, 1e-9))
+    note(f"mutation (persist off), isotropic field: L_x={lx:.1f} L_y={ly:.1f}, anisotropy {aniso:.1f}")
+    check("mutation: false streaks appear (caught by test 2)", 0.0 if aniso > 2.0 else 1.0, 0.0)
 
 
-def test_gate_changes_shape_not_brightness():
-    """coherence_gate must move the mark SHAPE (dot <-> stroke), not dim the
-    field -- the exact complaint from the first live look. Same field, gate
-    0.9 (coherence 0.4 below it -> commit 0 -> dots) vs gate 0.0 (commit
-    > 0 -> longer strokes): peak brightness equal, vertical dash extent
-    clearly different."""
-    tex = _mid_coherence_tex()
-    kw = dict(elongation=8.0, softness=0.0, regularity=1.0)
-    o_dot, _ = chain(tex, gate=0.9, **kw)
-    o_str, _ = chain(tex, gate=0.0, **kw)
-    p_dot, p_str = float(o_dot[..., 0].max()), float(o_str[..., 0].max())
-    note("peak brightness at gate 0.9 (dots)", p_dot)
-    note("peak brightness at gate 0.0 (strokes)", p_str)
-    check("gate does not dim: peaks within 0.05", abs(p_dot - p_str), 0.05)
-    # strokes run along y here (gradient along x): measure vertical runs
-    def along(o):
-        m = o[INTERIOR][..., 0] > 0.4
-        return max(_longest_run(m[:, j]) for j in range(m.shape[1]))
-    r_dot, r_str = along(o_dot), along(o_str)
-    note("longest vertical run, dots", float(r_dot))
-    note("longest vertical run, strokes", float(r_str))
-    # Expected from the formula: dot half-length al = w*ds = 0.283 pitch,
-    # stroke al = min(w*ds*sqrt(1 + 8*0.352), 0.5) = 0.5 (the dash cap, ADR-9)
-    # -> ratio 1.77. Measured 8 -> 12 px on the 64 px frame (pitch ~22 px,
-    # >0.4 threshold): >= 1.3x leaves room for pixel rounding without
-    # passing a no-change bug (which gives exactly 1.0x).
-    check("gate changes shape: strokes longer than dots (>= 1.3x)",
-          0.0 if r_str >= 1.3 * r_dot else 1.0, 0.0)
+def test_line_style_is_hard_and_smooth_is_not():
+    smooth = lum(chain(field(0.0, 1.0), line=0.0))
+    hard = lum(chain(field(0.0, 1.0), line=1.0))
+    mid_s = float(((smooth > 0.15) & (smooth < 0.85)).mean())
+    mid_h = float(((hard > 0.15) & (hard < 0.85)).mean())
+    note(f"mid-tone fraction: smooth {mid_s:.2f}, line=1 {mid_h:.2f}")
+    check("line=1 is mostly binary", 0.0 if mid_h < 0.25 else 1.0, 0.0)
+    check("line=0 is graded", 0.0 if mid_s > 0.4 else 1.0, 0.0)
 
 
-def test_structure_floor_blanks_weak_structure():
-    """The new dial: below the floor nothing renders, above it marks render,
-    at floor 0 both render (presence only tracks 'any structure at all')."""
-    weak = _tex_from_tensor(np.full((H, W), F32(0.0005)),
-                            np.full((H, W), F32(0.0)),
-                            np.full((H, W), F32(0.0005)))     # enc trace 0.1
-    strong = _tex_from_tensor(np.full((H, W), F32(0.005)),
-                              np.full((H, W), F32(0.0)),
-                              np.full((H, W), F32(0.005)))    # enc trace 1.0
-    kw = dict(softness=0.0)
-    w0, _ = chain(weak, floor=0.0, **kw)
-    s0, _ = chain(strong, floor=0.0, **kw)
-    w5, _ = chain(weak, floor=0.5, **kw)      # thr 0.25: weak (0.1) < lo 0.125
-    s5, _ = chain(strong, floor=0.5, **kw)    # strong (1.0) > hi 0.375
-    note("weak @ floor 0 peak", float(w0[..., 0].max()))
-    note("weak @ floor 0.5 peak", float(w5[..., 0].max()))
-    check("floor 0: weak structure still renders", 0.0 if w0[..., 0].max() > 0.8 else 1.0, 0.0)
-    check("floor 0.5: weak structure blanked", float(np.abs(w5[..., 0]).max()), 1e-7)
-    check("floor 0.5: strong structure unaffected",
-          float(np.abs(s5[..., 0] - s0[..., 0]).max()), 1e-6)
-
-
-def test_presence_ramp_monotone_and_bounded():
-    """presence(enc_trace, floor): continuous, monotone non-decreasing in
-    trace, in [0, 1], 0 below 0.5*thr, 1 above 1.5*thr."""
-    tr = np.linspace(0.0, 1.0, 2001).astype(F32)
-    for floor in (0.0, 0.1, 0.5, 0.9):
-        p = presence(tr, floor)
-        thr = floor * floor
-        check(f"floor {floor}: bounded", 0.0 if p.min() >= 0 and p.max() <= 1 else 1.0, 0.0)
-        check(f"floor {floor}: monotone", float(np.maximum(0, -np.diff(p)).max()), 1e-6)
-        if floor > 0:
-            check(f"floor {floor}: zero below 0.5*thr",
-                  float(np.abs(p[tr < 0.5 * thr - 1e-4]).max(initial=0.0)), 1e-7)
-            check(f"floor {floor}: one above 1.5*thr",
-                  float(np.abs(1.0 - p[tr > 1.5 * thr + 1e-4]).max(initial=0.0)), 1e-6)
-        # the step is smooth: max slope bounded by the analytic smoothstep slope
-        slope = float(np.abs(np.diff(p)).max() / (tr[1] - tr[0]))
-        bound = 1.5 / (thr + 1e-6) * 1.05
-        check(f"floor {floor}: continuous (slope <= analytic)", 0.0 if slope <= bound else 1.0, 0.0)
-
-
-def test_mutation_presence_weighted_by_commit():
-    """Inject the ORIGINAL bug: intensity multiplied by commit as well as
-    presence. On near-iso structure (commit ~ 0) the bug renders ~nothing
-    where the truth renders dots -- the first live look's symptom."""
-    tex = _near_iso_tex()
-    aux = stage_e1(tex)
-    o_truth = stage_e3(stage_e2(aux), softness=0.0)[0]
-    o_bug = o_truth[..., 0] * aux[..., 2]            # the old commit-weighting
-    check("truth renders dots", 0.0 if o_truth[..., 0].max() > 0.8 else 1.0, 0.0)
-    check("mutation: old commit-weighting kills dots (caught)",
-          0.0 if float(o_bug.max()) < 0.05 else 1.0, 0.0)
-
-
-def test_mutation_floor_ignored():
-    """Inject: presence ignores the floor (always 1 where trace > eps). The
-    weak-structure blanking test must fail."""
-    weak = _tex_from_tensor(np.full((H, W), F32(0.0005)),
-                            np.full((H, W), F32(0.0)),
-                            np.full((H, W), F32(0.0005)))
-    aux_bug = stage_e1(weak, floor=0.5)
-    aux_bug[..., 3] = F32(1.0)                       # the bug
-    o_bug = stage_e3(stage_e2(aux_bug), softness=0.0)[0]
-    o_truth = chain(weak, floor=0.5, softness=0.0)[0]
-    check("truth: floor blanks weak structure", float(np.abs(o_truth[..., 0]).max()), 1e-7)
-    check("mutation: floor ignored renders marks (caught)",
-          0.0 if o_bug[..., 0].max() > 0.8 else 1.0, 0.0)
+def test_9_sparse_impulses_keep_the_coherence_response():
+    """The shipping input noise is SPARSE (a few lit cells smeared into strokes), not dense
+    white noise (Phase 0 stills, 2026-10-28: dense reads as contour-streaked noise, sparse
+    reads as hatching). Re-check the headline behaviours in sparse mode, fill 3%, length 0.25:
+    coherent -> long strokes; isotropic -> isolated dots (short, isotropic); coherence ramp
+    -> stroke length rises; strokes follow the field on rings."""
+    kw = dict(fill=0.03, length=0.25)
+    # (a) coherent straight: long along the axis
+    lx, ly = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 1.0), seed=s, **kw))) for s in SEEDS], 0)
+    note(f"sparse coherent: L_along={lx:.1f}px L_across={ly:.1f}px")
+    check("sparse: coherent along >= 4x across", 0.0 if lx >= 4.0 * ly else 1.0, 0.0)
+    # (b) isotropic: dots
+    lxi, lyi = np.mean([autocorr_lengths(raw_field(chain(field(0.0, 0.0), seed=s, **kw))) for s in SEEDS], 0)
+    note(f"sparse isotropic: L_x={lxi:.1f}px L_y={lyi:.1f}px ratio {lxi / max(lyi, 1e-9):.2f}")
+    check("sparse isotropic: |L_x/L_y - 1| <= 0.5", abs(lxi / max(lyi, 1e-9) - 1.0), 0.5)
+    check("sparse isotropic: shorter than half the coherent stroke", 0.0 if lxi < 0.5 * lx else 1.0, 0.0)
+    # (c) ramp
+    coh = np.broadcast_to(np.linspace(0.0, 1.0, H)[:, None], (H, W))
+    tex = field(0.0, coh)
+    strips = [(4 + 20 * i, 4 + 20 * (i + 1)) for i in range(6)]
+    ls = np.mean([[integral_length(raw_field(chain(tex, seed=s, **kw)), slice(y0, y1), slice(16, W - 16))[0]
+                   for (y0, y1) in strips] for s in SEEDS], 0)
+    cs = [float(np.linspace(0, 1, H)[(y0 + y1) // 2]) for (y0, y1) in strips]
+    note("sparse coherence ramp, stroke length (px): " + "  ".join(f"c={c:.2f}:{v:.1f}" for c, v in zip(cs, ls)))
+    # the response SATURATES at the kernel's cap (a full stroke is 2 x half-length; ~9.5 px
+    # at length 0.25), so test the rise over the first half and that the top stays on the plateau
+    rises = all(ls[i + 1] >= 1.25 * ls[i] for i in range(2)) and all(ls[i + 1] >= ls[i] for i in range(2, 4))
+    check("sparse ramp: rises >= 25% per strip below coherence 0.45, then still non-decreasing", 0.0 if rises else 1.0, 0.0)
+    check("sparse ramp: top stays on the plateau (>= 75% of the max)", 0.0 if ls[-1] >= 0.75 * ls.max() else 1.0, 0.0)
+    check("sparse ramp: top at least 2.5x the bottom", 0.0 if ls[-1] >= 2.5 * ls[0] else 1.0, 0.0)
+    # (d) strokes follow the rings
+    x, y = _xy()
+    cx0, cy0 = W / 2 + 0.5, H / 2 + 0.5
+    along = np.rad2deg(np.arctan2(y - cy0, x - cx0)) + 90.0
+    r = np.hypot(x - cx0, y - cy0)
+    img = raw_field(chain(field(along, 1.0), fill=0.03, length=0.25))
+    gy0, gx0 = np.roll(img, -1, 0) - np.roll(img, 1, 0), np.roll(img, -1, 1) - np.roll(img, 1, 1)
+    jxx, jxy, jyy = _box(gx0 * gx0, 6), _box(gx0 * gy0, 6), _box(gy0 * gy0, 6)
+    ridge = np.rad2deg(0.5 * np.arctan2(2 * jxy, jxx - jyy)) + 90.0
+    lit = _box(img, 6) > 0.05                      # where there is any stroke to measure
+    mask = (r > 25) & (r < 50) & lit
+    err = np.abs((ridge - along + 90.0) % 180.0 - 90.0)[mask]
+    note(f"sparse rings: ridge-vs-axis error median {np.median(err):.1f} deg ({mask.sum()} px measured)")
+    check("sparse rings: median ridge error <= 20 deg", 0.0 if np.median(err) <= 20.0 else 1.0, 0.0)
 
 
 if __name__ == "__main__":
