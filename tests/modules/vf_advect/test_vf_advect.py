@@ -242,9 +242,30 @@ def test_trail_half_life_is_exact():
     a = np.array([0.9, 0.6, 0.3, 1.0], F32)
     worst = 0.0
     for t in (20, 69, 200):
-        out = run_frames(const_tex((0, 0, 0, 0)), vec_tex(0.0, 0.0), t, init=const_tex(a), trail=float(t), injection=0.0)[-1]
+        out = run_frames(const_tex((0, 0, 0, 0)), vec_tex(0.0, 0.0), t, init=const_tex(a), trail=float(t),
+                         decay=1.0, injection=0.0)[-1]
         worst = max(worst, float(np.abs(out[0, 0] - a * F32(0.5)).max()))
-    check("after `trail` frames of pure decay the field is exactly half (trails 20, 69, 200)", worst, 5e-5)
+    check("at Decay 1.0, after `trail` frames of pure decay the field is exactly half (trails 20, 69, 200)", worst, 5e-5)
+
+
+def test_decay_scales_the_trail_half_life_on_a_log_curve():
+    a = np.array([0.9, 0.6, 0.3, 1.0], F32)
+    worst = 0.0
+    # (decay, trail) -> expected half-life trail * exp((decay - 1) * 20), clamped to [1, 1000]
+    for decay, trail in [(0.97, 100.0), (1.03, 100.0), (0.9, 300.0), (1.5, 300.0), (0.8, 50.0)]:
+        hl = min(max(trail * np.exp((decay - 1.0) * 20.0), 1.0), 1000.0)
+        frames = int(round(hl))
+        out = run_frames(const_tex((0, 0, 0, 0)), vec_tex(0.0, 0.0), frames, init=const_tex(a), trail=trail,
+                         decay=decay, injection=0.0)[-1]
+        want = a.astype(np.float64) * 0.5 ** (frames / hl)
+        err = float(np.abs(out[0, 0] - want.astype(F32)).max())
+        note(f"decay {decay} trail {trail:g}: half-life {hl:.1f} frames, worst error", err)
+        worst = max(worst, err)
+    check("Decay scales the half-life as trail*exp((decay-1)*20), clamped to [1, 1000]", worst, 5e-5)
+    ratio = (0.5 ** (1 / 56.0))  # neutral check: Decay 1.0 leaves trail untouched
+    same = run_frames(const_tex((0, 0, 0, 0)), vec_tex(0.0, 0.0), 10, init=const_tex(a), trail=56.0, decay=1.0,
+                      injection=0.0)[-1][0, 0, 0]
+    check("Decay 1.0 is neutral: per-frame factor 0.5^(1/trail)", abs(float(same) / 0.9 - ratio ** 10), 5e-6)
 
 
 def test_trail_settled_level_does_not_depend_on_trail_length():
@@ -265,9 +286,10 @@ def test_trail_below_one_is_the_classic_loop():
     for t in (0.0, 0.5, 0.999):
         got = run_frames(src, vec, 30, decay=0.95, injection=0.04, trail=t)[-1]
         check(f"trail {t:g}: identical to the classic loop", float(np.abs(got - classic).max()), 0.0)
-    ignored = run_frames(src, vec, 30, decay=0.5, injection=0.04, trail=69.0)[-1]
-    same = run_frames(src, vec, 30, decay=0.99, injection=0.04, trail=69.0)[-1]
-    check("with trail on, the Decay dial is ignored", float(np.abs(ignored - same).max()), 0.0)
+    low = run_frames(src, vec, 30, decay=0.9, injection=0.04, trail=69.0)[-1]
+    high = run_frames(src, vec, 30, decay=1.0, injection=0.04, trail=69.0)[-1]
+    assert float(np.abs(low - high).max()) > 1e-3, "Decay must act on the trail half-life"
+    print("    ok   with trail on, Decay scales the half-life (no longer ignored)")
 
 
 def test_mutations_are_caught():

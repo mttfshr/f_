@@ -43,7 +43,7 @@ advect_pix out2 → out2 (vecfield gradient of the accumulated flow)
 | `dt` | 0–0.05 | 0.01 | Displacement step size per frame — larger = faster flow. |
 | `decay` | 0.8–1.5 | 0.97 | Frame retention. <1.0 fades, >1.0 amplifies (excitable regime). |
 | `injection` | 0–0.2 | 0.02 | Source bleed-in amount per frame. |
-| `trail` | 0–1000 | 0 | Persistence as a half-life in frames (added 2026-10-28). 0 (or below 1) = off: `decay` and `injection` act exactly as before. Above 1 it replaces `decay` (`decay_eff = 0.5^(1/trail)`) and rescales `injection` by `(1 - decay_eff) / 0.03`, so the level a still source settles at is `injection / 0.03` (0.667 at the default 0.02) whatever the trail length: longer trails no longer wash to white. The dial has a cubic taper (like `injection`, which got the same taper: values and range unchanged). |
+| `trail` | 0–1000 | 0 | Persistence as a half-life in frames (added 2026-10-28). 0 (or below 1) = off: `decay` and `injection` act exactly as before. Above 1 it sets the half-life and `decay` becomes a log-scale multiplier on it (`hl = trail · exp((decay − 1) · 20)`, clamped to 1–1000 frames; `decay` 1.0 is neutral, each 0.01 ≈ ±20%, so the default 0.97 gives ×0.55), then `decay_eff = 0.5^(1/hl)`, and rescales `injection` by `(1 - decay_eff) / 0.03`, so the level a still source settles at is `injection / 0.03` (0.667 at the default 0.02) whatever the trail length: longer trails no longer wash to white. The dial has a cubic taper (like `injection`, which got the same taper: values and range unchanged). |
 | `gain` | 0–4.0 | 1.0 | Scales the accumulated flow before the wet/dry blend. |
 | `mix` | 0–100% | 100 | Wet/dry crossfade — 0 = source only, 100 = fully advected. |
 | `separate` | −2.0–2.0 | 0.0 | Pass-stage chroma separation amount; 0 is exact identity in every mode. |
@@ -67,7 +67,7 @@ composite = mix(source, driven, mix_pct / 100.0)                          // wet
 composite = mix(composite, source, bypass_gate)
 ```
 
-Backward displacement (pulling from source rather than pushing to destination) avoids holes and is the standard fluid-sim/video-warp convention. Steady-state amplitude at equilibrium is approximately `injection / (1 - decay)`. With `trail` on, `decay` is derived from the half-life and `injection` is rescaled, so the equilibrium is `injection / 0.03` and independent of the trail (tests/modules/vf_advect/test_vf_advect.py, bench_vf_advect.py).
+Backward displacement (pulling from source rather than pushing to destination) avoids holes and is the standard fluid-sim/video-warp convention. Steady-state amplitude at equilibrium is approximately `injection / (1 - decay)`. With `trail` on, `decay` is derived from the (Decay-scaled) half-life and `injection` is rescaled, so the equilibrium is `injection / 0.03` and independent of the trail (tests/modules/vf_advect/test_vf_advect.py, bench_vf_advect.py).
 
 ---
 

@@ -30,12 +30,17 @@ fy = fy * connected;
 src_uv = vec(clamp(uv.x - fx * dt, 0.001, 0.999), clamp(uv.y - fy * dt, 0.001, 0.999));
 
 // Trail (2026-10-28, ink-in-milk control): trail = 0 (or below 1) is the classic loop, byte for byte.
-// trail >= 1 is the persistence as a HALF-LIFE in frames: decay_eff = 0.5^(1/trail) (the Decay dial is
-// then ignored), and injection is rescaled by (1 - decay_eff) / 0.03 so the level a static source settles
+// trail >= 1 is the persistence as a HALF-LIFE in frames: decay_eff = 0.5^(1/hl) (hl = trail, scaled by Decay
+// below), and injection is rescaled by (1 - decay_eff) / 0.03 so the level a static source settles
 // at is injection / 0.03 (0.667 at the default 0.02) whatever the trail length -- longer trails no longer
 // wash to white. 0.03 = 1 - 0.97, the default decay, so at trail ~ 22.8 it equals the classic default.
+// Decay x Trail (2026-10-28, Matt: option 1 / scale B): with trail on, Decay no longer switches off, it SCALES the
+// half-life on a log curve: hl = trail * exp((decay - 1) * 20), clamped to [1, 1000] frames. decay = 1.0 is neutral
+// (hl = trail), each 0.01 of Decay is about +-20% of the half-life (0.97 ~ x0.55, 1.03 ~ x1.8), and the 1000-frame
+// cap keeps Decay > 1 from running away (the inj_eff rescale would otherwise starve the ink as decay_eff -> 1).
 tr_on = step(1.0, trail);
-decay_eff = mix(decay, exp(0.0 - 0.6931472 / max(trail, 1.0)), tr_on);
+hl = clamp(trail * exp((decay - 1.0) * 20.0), 1.0, 1000.0);
+decay_eff = mix(decay, exp(0.0 - 0.6931472 / hl), tr_on);
 inj_eff = mix(injection, injection * (1.0 - decay_eff) / 0.03, tr_on);
 
 // Advect previous frame, add source injection

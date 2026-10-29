@@ -41,10 +41,12 @@ def advect_stage(src, vec, prev, dt=0.01, decay=0.97, injection=0.02, gain=1.0, 
     """
     dt, decay, injection, gain = F32(dt), F32(decay), F32(injection), F32(gain)
     # Trail: a half-life in frames (>= 1); below 1 the classic Decay / Inject loop, unchanged.
-    # decay_eff = 0.5^(1/trail); injection is rescaled by (1 - decay_eff) / 0.03 so the settled level
+    # decay_eff = 0.5^(1/hl), hl = trail scaled by Decay; injection is rescaled by (1 - decay_eff) / 0.03 so the settled level
     # (injection / 0.03) does not depend on the trail length.
     if F32(trail) >= F32(1.0):
-        decay_eff = F32(np.exp(F32(0.0) - F32(0.6931472) / max(F32(trail), F32(1.0))))
+        # Decay scales the half-life on a log curve (neutral at 1.0), capped to [1, 1000] frames.
+        hl = np.clip(F32(trail) * F32(np.exp((decay - F32(1.0)) * F32(20.0))), F32(1.0), F32(1000.0))
+        decay_eff = F32(np.exp(F32(0.0) - F32(0.6931472) / F32(hl)))
         inj_eff = injection if bug == "no_normalize" else F32(injection * (F32(1.0) - decay_eff) / F32(0.03))
     else:
         decay_eff, inj_eff = decay, injection
