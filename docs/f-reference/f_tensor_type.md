@@ -81,5 +81,6 @@ Storing (cos θ, sin θ) of an unoriented axis forces an arbitrary sign, and the
 |---|---|---|
 | `f_tf_tensormap` | Producer | Image/scalar texture -> raw tensor + packed |
 | `f_tf_axisflow` | Bridge | Packed tensor -> vecfield (projection of a reference angle onto the edge line) |
+| `f_tf_hatch` | Consumer (renderer) | Raw tensor (outlet 0) -> marks. Decodes in-pixel; commits mark shape from coherence. Outputs marks only, never a tensor or vecfield |
 
 Planned consumers (hub: `ideas/f_tensorfield.md`): `f_vf_glow` anisotropy inlet, anisotropic blur, confidence-scaled marks in `f_vf_seeds`, a glyph-field renderer.

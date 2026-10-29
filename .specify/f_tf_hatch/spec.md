@@ -1,8 +1,12 @@
 # Spec: f_tf_hatch
 
 _Created: 2026-10-17_
-_Status: Draft — Phase 0 not started. The module's FIRST Phase-0 gate is the cost-shape
-decision (Open Question 1, below); neither render branch is picked anywhere in this spec._
+_Status (updated 2026-10-28): BUILT, UNVERIFIED. Phases 0-1 and the build are done
+(2026-10-17): branch T chosen at the cost-shape gate (provisional, see OQ1), tier-1 mirror
+20/20, tier-2 bench green, patcher builds drift-clean and is registered. Tier-3 live
+judgment (commit curve OQ3, defaults OQ6, hairpin behavior) has NOT happened; every
+default below is still provisional. The text below was written before the gates ran;
+where a gate has since been decided, a **DECIDED** note follows the question._
 
 _Promoted from `ideas/f_tf_triage.md` (review outcome 2026-10-17, Matt: "build as proposed,
 but its Phase 0 gate is the cost-shape question, not the shipped-look question"). Full
@@ -208,8 +212,10 @@ the bench GPU wraps out-of-range reads (found 2026-10-16, tensormap T012).
 hatch entry, "tone-gated by a brightness/tone-curve input"), but whether that arrives
 as an optional inlet 1 (source/texture sampled for luma), or is deferred to a
 density-layer scheme (cross-hatch layers per tone band), is a gate-adjacent decision
-recorded in Phase 0, before E3 is designed. The tables below list inlet 1 as
-**provisional pending OQ2**.
+recorded in Phase 0, before E3 is designed. **DECIDED (T002, 2026-10-17): tone is OUT of
+v1.** The tone inlet was declined (plan ADR-6 record): inlets stay single; tone gating
+is deferred with the cross-hatch layer to a v2 (the v2 pointer is inlet-1-luma, not
+density layering).
 
 ---
 
@@ -218,7 +224,6 @@ recorded in Phase 0, before E3 is designed. The tables below list inlet 1 as
 | Inlet | Type | Label | Description |
 |---|---|---|---|
 | 0 | tensor texture (required) + control | — | `f_tf_tensormap` outlet 0 (raw tensor, `@type float32`, `f_tensor_type.md`). Per-pixel eigen decode (E1). Control messages route to params per `driving_inlet` convention. |
-| 1 | texture (optional) | tone (PROVISIONAL — OQ2) | Engraving tone gate: luma of the sampled texture gates mark intensity. Not committed; if OQ2 rejects the inlet, hatch is not tone-gated in v1 and inlets stay single. |
 
 vs_black fallback on inlet 0: the raw-tensor zeros decode to a true **zero tensor**
 (unlike the packed outlet's unconnected case — the −1-axis hazard is outlet-1 only,
@@ -387,12 +392,18 @@ Numbers first. Tiers 1-2 verify these before any scratch patch
 1. **Cost shape: stroke-marching (S) vs tileable distance-field (T) — Phase-0 FIRST
    gate, T001.** Both branches described above with the recorded observations; decided
    by a NumPy spike + cost estimate (branch implementations at small scale, per-pixel
-   cost vs known bench per-pass bounds), recorded as an ADR with reasons. **Neither
-   branch is picked anywhere in these docs.**
+   cost vs known bench per-pass bounds), recorded as an ADR with reasons.
+   **PROVISIONALLY DECIDED (T001, 2026-10-17): branch T.** Evidence and cost model are
+   in plan ADR-1's amendment. The tier-2 bench was the declared resolver; it ran green,
+   but its cost bounds were measured at a fixed `chain=32` and are suspect after the
+   2026-10-26 bench-client fix (they may be up to 4x low), so cost is being re-measured
+   (2026-10-28). The hairpin question (stroke breakup under fast axis curvature,
+   25-64 deg ridge error in the NumPy spike) can only be closed by a live look.
 2. **Tone gating mechanism.** Optional inlet 1 (source luma sampled for mark gating) vs
    density-driven engraving layers (tone → which density band draws) vs none in v1.
-   Decided in Phase 0 before E3 design; the inlet table and E3 hold the provisional
-   shape until then.
+   Decided in Phase 0 before E3 design. **DECIDED (T002, 2026-10-17): OUT of v1.**
+   Recorded in plan ADR-6; the inlet table now lists inlet 0 only. Cross-hatch layers
+   and an inlet-1-luma tone gate are the v2 candidates.
 3. **Commit curve form.** Direct coherence smoothstep (C_LO/C_HI knees) vs an
    eigenvalue-ratio response with an exponent; whether `coherence_gate` and the knees
    collapse into one or two exposed dials; what the gate-floor fallback is (dots

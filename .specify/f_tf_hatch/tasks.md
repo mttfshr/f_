@@ -190,7 +190,13 @@ benched stage by stage (tests/README); one pass per job.
   (hash zeroed) proving exact at 3.5e-6.]* Bench E3 against the mirror on BOTH outlets
   (`all_outputs=True` — the sweep covers density/phase/regularity/softness knobs; the
   reg-1.0 row pins the exact geometry) — done, evidence above.
-- [x] T016 *[BENCHED 2026-10-17: E1 0.204 / E2 0.202 / E3 0.202 ms/pass upper bounds at
+- [x] T016 *[RE-MEASURED 2026-10-28 (M3 Max, Max 9.2.0, after the 2026-10-26 benchclient
+  chain-divisor fix): E1 0.796 / E2 0.789 / E3 0.784 ms/pass upper bounds at 1080p, about
+  2.37 ms summed. The 2026-10-17 figures below were exactly 4x low (fixed chain=32 divided
+  by the requested chain instead of the 8 slots). 2.37 ms is under the T001 model's 2.7 ms
+  ceiling, so the branch-T gate is NOT reopened. All three readings sit at the bench floor
+  (upper bounds, not GPU bound): real cost is lower. M1 unmeasured.]*
+  *[BENCHED 2026-10-17, SUPERSEDED by the re-measure above: E1 0.204 / E2 0.202 / E3 0.202 ms/pass upper bounds at
   1080p (chain far under the family's single-pass floor; the T001
   PROVISIONAL-CLOSED gate's resolving numbers are in. M1 unmeasured per convention).]*
   **Cost record:** per-stage and chain cost at 1080p and 4K (`bc.measure`,

@@ -4,8 +4,8 @@
 **Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending
 (built 2026-10-17 as the fifth module of the tensor-family build order:
 smooth → glyph → sharpen → aniso_blur → **hatch**; the mirror and cost
-spike are green, and the tier-2 bench ran green (2026-10-17; each stage
-~0.2 ms/pass at 1080p); the module's provisional defaults remain
+spike are green, and the tier-2 bench ran green (re-run 2026-10-28; each
+stage under ~0.8 ms/pass at 1080p, upper bounds); the module's provisional defaults remain
 provisional — the tensormap cycle applies, with the tier-3 live
 judgment pending).
 
