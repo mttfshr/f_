@@ -1,7 +1,7 @@
 # Implementation Plan: f_vf_immiscible
 
 _Created: 2026-10-27_
-_Spec: `.specify/f_vf_immiscible/spec.md` (user stories, FRs, gates and success
+_Spec: `.specify/stable/f_vf_immiscible/spec.md` (user stories, FRs, gates and success
 criteria live there; this file is HOW only)_
 _Idea record: `ideas/f_vf_immiscible.md`; analysis background: `ideas/f_vf_emulsion.md`_
 

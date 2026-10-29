@@ -1,6 +1,6 @@
 """spike_immiscible_stirring.py -- T006 / experiment 1 (decides G7) and experiment 3 (coarsening
 under stirring) for f_vf_immiscible. Thresholds were pre-registered in
-.specify/f_vf_immiscible/tasks.md Record (T005) before this file existed.
+.specify/stable/f_vf_immiscible/tasks.md Record (T005) before this file existed.
 
 One stirred fluid_mirror Fluid (N 256, seed-free: deterministic drifting-cell force) advects phi in
 every arm; A = B = u so the blend is neutral. Arms: ch (Cahn-Hilliard, the module's step), plain

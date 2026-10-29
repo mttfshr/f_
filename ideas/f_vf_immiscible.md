@@ -4,7 +4,7 @@
 different viscosity "in good shape", defaults kept). Name confirmed by Matt (it began as
 `f_vf_phase`; `f_vf_emulsion` was the other candidate). Module: `src/f_vf_immiscible/`,
 reference `docs/f-reference/f_vf_immiscible.md`, helpfile `package/help/f_vf_immiscible.maxhelp`,
-design record `.specify/f_vf_immiscible/{spec,plan,tasks}.md`. **A separate module** (not the fork of
+design record `.specify/stable/f_vf_immiscible/{spec,plan,tasks}.md`. **A separate module** (not the fork of
 `f_vf_fluid` that `f_vf_emulsion.md` first proposed), and it **requires two upstream velocity
 vecfields**, one per phase. Below: the original idea record; the sections after "The phenomena" are
 history and some figures (cost, "unverified" notes) were superseded by the build. Stage 2

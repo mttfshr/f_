@@ -10,7 +10,7 @@ Sections (run one at a time; each prints a table):
   s4  reset noise: frames until separation (std(phi) > 0.5) per amplitude and fill
 
 Run: tests/py.sh tests/records/spike_immiscible_constants.py s1     (then s2 s3 s4)
-RESULT: recorded in .specify/f_vf_immiscible/tasks.md Record (T004).
+RESULT: recorded in .specify/stable/f_vf_immiscible/tasks.md Record (T004).
 """
 import sys
 import time

@@ -1,6 +1,6 @@
 """
 immiscible_mirror.py -- NumPy mirror of every f_vf_immiscible stage, pass for pass,
-in float32 (plan ADR-1..5, .specify/f_vf_immiscible/).
+in float32 (plan ADR-1..5, .specify/stable/f_vf_immiscible/).
 
 Chain:   inab -> adv -> fx -> fy -> spec -> iy -> ix -> (hold -> pass -> adv)   enc
   pass  hold phi, or re-seed fill + amp*(2h-1) on reseed; zap non-finite only
@@ -45,7 +45,7 @@ from gpu_sim import F32, grid, sample, store_float32
 N_SOLVER = 256           # fixed solver grid; iface is in texels of THIS grid (NF-005)
 
 # ------------------------------------------------ constants fixed by T004 (2026-10-27)
-# spike_immiscible_constants.py; numbers in .specify/f_vf_immiscible/tasks.md Record.
+# spike_immiscible_constants.py; numbers in .specify/stable/f_vf_immiscible/tasks.md Record.
 A_STAB = 1.5             # stabiliser a. a = 0.5 diverges at mdt >= 1e-2; a >= 1 never rose in energy up to
                          # mdt 51; 1.5 keeps the overshoot to 1.03 (a = 1: 1.09)
 MDT_MAX = 0.1            # per-frame mobility*dt at coarsen = 1 (separation in ~60 frames; larger

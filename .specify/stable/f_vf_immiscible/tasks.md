@@ -1,7 +1,7 @@
 # Tasks: f_vf_immiscible
 
-**Spec**: `.specify/f_vf_immiscible/spec.md`
-**Plan**: `.specify/f_vf_immiscible/plan.md`
+**Spec**: `.specify/stable/f_vf_immiscible/spec.md`
+**Plan**: `.specify/stable/f_vf_immiscible/plan.md`
 **Build order**: Sequential. Phase 0 is the gate: its two experiments decide G7 (does Cahn–Hilliard hold the interface) and G2 (the blend rule). If G7 says it does not, stop and re-plan around the fallback before any codebox is written.
 **Commits**: After each phase checkpoint. Session rules in `CLAUDE.md` apply: one phase or coherent group per turn, no test or bench runs without asking, always `-q`.
 
@@ -51,9 +51,9 @@ tests/records/
 - [x] G1 Name: `f_vf_immiscible` chosen 2026-10-27; confirmed by Matt 2026-10-28.
 - [x] G2 Blend rule: plain. Decided by Matt 2026-10-27 on T007's numbers (interface-aware raised the peak divergence in every band tried; viscosity-weighted untested). T013 carries the plain blend only; `blend` dial and the interface-aware branch are dropped from the module.
 - [x] G3 Initial state: `fill` default 0 kept (Matt 2026-10-28: "the defaults are good"); reset noise as built.
-- [ ] G4 φ outlet encoding: `w = (φ + 1)/2` grey, neutral mid grey (proposal). Confirm at T023.
+- [x] G4 (closed by Matt 2026-10-28) φ outlet encoding: `w = (φ + 1)/2` grey, neutral mid grey (proposal). Confirm at T023.
 - [x] G5 Bypass: neutral outlets (the plan). Decided by Matt 2026-10-27 (took the recommendation); no fourth pix input on `enc`.
-- [ ] G6 Solver size: 256² or 128². Numbers in the T017 Record. Matt 2026-10-27: keep 256² for now, decide after the live look (T023).
+- [x] G6 (closed by Matt 2026-10-28: 256² stays) Solver size: 256² or 128². Numbers in the T017 Record. Matt 2026-10-27: keep 256² for now, decide after the live look (T023).
 - [x] G7 Phase model: Cahn–Hilliard. Decided by Matt 2026-10-27 on T006/T006b (option 1: close now, accept the 0.0264 stripes drift against the 0.02 pre-registered limit, check long-run drift in T017's offline run). The fallback is dead (T006). If the fallback wins, revise the plan (ADR-2) and T010–T017 before continuing.
 - [ ] G8 Stage 2 delivery: existing force inlet plus `f_vf_mix`, or a native inlet on `f_vf_fluid`. Phase 4.
 
@@ -82,9 +82,9 @@ tests/records/
 - [x] T021 [US3] Reset and load behaviour in the patcher: `reset` once on load after 200 ms, `reseed` held three draw bangs, `salt` counter per reset, `freeze`.
 - [x] T022 [US6] `tests/modules/immiscible/bench_immiscible_module.py` and the live module contract bench (`tests/contracts/bench_modules.py`): params arrive, every outlet renders, bypass outlets neutral per G5, "advances exactly once per frame", two instances independent (FR-013). *Max bench; ask Matt.*
 - [x] T023 [US1] (2026-10-28, Matt live: passes, see Record) First live look (tier 3, Matt): two real `f_vf_fluid` modules at clearly different `viscosity` (for example 0.05 and 0.6), the same stirring force into both, blended out1 into `f_vf_advect`. Record what is seen against SC8; confirm G4. A recipe for the patch goes in the Record.
-- [ ] T024 [US2] Interface look: `iface` and `coarsen` ranges and defaults, whether droplets bead and coalesce, `fill` default (G3), how fast it resolves.
-- [ ] T025 [US3] Injection look: `inject` range with a bright disc and with `f_grain` upstream; `f_splat` if it exists by then.
-- [ ] T026 [US4] Blend rule look: A/B the rules left by G2 on the live pair.
+- [x] T024 (2026-10-28, closed by Matt) [US2] Interface look: `iface` and `coarsen` ranges and defaults, whether droplets bead and coalesce, `fill` default (G3), how fast it resolves.
+- [x] T025 (2026-10-28, closed by Matt) [US3] Injection look: `inject` range with a bright disc and with `f_grain` upstream; `f_splat` if it exists by then.
+- [x] T026 (2026-10-28, moot: G2 chose the plain blend) [US4] Blend rule look: A/B the rules left by G2 on the live pair.
 - [x] T027 (2026-10-28, Matt: defaults kept, nothing changes for now; slow cost test not re-run) Write every tuning change back into the codebox files and `definition.py` and re-run tiers 1–2 (constitution). Decide `taps` default.
 
 **Checkpoint**: spec success criteria 7–9 judged; stage 1 closed.
@@ -97,7 +97,7 @@ tests/records/
 - [x] T031 (2026-10-28; layout not yet seen in Max) `package/help/f_vf_immiscible.maxhelp`: written in a Claude session from the `build/generate_helpfiles.py` prompt, never by an API call from a script; must show the two-Fluid setup.
 - [x] T032 (2026-10-28) Menu entry in `src/f_modules/menu.py` (∇ marked; Processors, near `f_vf_fluid`), then `build/py.sh build/generate_menu.py`; remove `NOT_IN_MENU`; README row finalised (⚠ off if live-checked) and `generate_launch.py`; `docs/f-reference/module-inventory.md` row.
 - [x] T033 (2026-10-28, name confirmed by Matt) Confirm the name (G1); update `ideas/f_vf_immiscible.md`, `ideas/INDEX.md` (🟢) and `.specify/plan.md` item 14.
-- [ ] T034 `module-preflight` checklist; when it passes, Matt moves `.specify/f_vf_immiscible` to `.specify/stable/`.
+- [x] T034 (2026-10-28, Matt moved it to stable/) `module-preflight` checklist; when it passes, Matt moves `.specify/stable/f_vf_immiscible` to `.specify/stable/`.
 
 ---
 
@@ -221,3 +221,4 @@ Only after Phase 2 is judged worth extending.
 - 2026-10-28 (stage bench re-run, Max open): 13/13 correctness tests pass against the mirror after the thresh / pull / fill / mix changes (adv with thresh and mix_pct, spec with pull and fill: k=0 bin vs closed form 5.6e-8 rel, every other bin identical to pull 0, freeze turns pull off; enc mix 0/25/75/100 velocity vs mirror 5e-7 to 7e-7, phi grey identical to mix 50). First run failed only `adv`: a comment in it said "out2", and the bench wrapper counts `outN` tokens in comments as outlets ("patchcord outlet out of range"); comment reworded (lesson: no `outN` text in codebox comments of single-output stages). One stale test (k=0 bin "exactly its input") now pins pull 0 and gains pull checks. New bench test: mix in adv and enc. The slow cost test (T017) was not re-run (spec gained a few ops; cost not expected to move; re-run before T027).
 - 2026-10-28 (T021, T022, Max benches): `freeze` removed everywhere (codeboxes, mirror, tests, bench): the offline module contract flagged the inert Param as undriven, and Matt had dropped the dial. Stage bench 14/14 after that. NEW `tests/modules/immiscible/bench_immiscible_module.py` (ORDER 81, registered in benchdeps), 4/4 on the shipped patcher: (a) fresh load with nothing connected: velocity outlet exactly neutral, phi seeded (std 0.78, fully separated by frame 40), render size, alpha 1, R=G=B: the reset-once-on-load behaviour works; (b) advances once per frame: white source, mean phi 0.416 at frame 28 and 0.706 at 56, 0.965 updates per frame against the deposit+pull model (limit 0.1); (c) vecfield inlets through inab and the blend: out2 stays between A=0.6 and B=0.2 (min 0.200, mean 0.396, max 0.600), Mix 0 = exactly A and Mix 100 = exactly B (2e-8 and 5e-8), mix_pct read back on adv and enc, phi grey never uniform at either end; (d) two instances independent (instance 2 unconnected exactly neutral). `tests/contracts/bench_modules.py`: BYPASS_EXPECT const neutral on both outlets, PARTIAL_BYPASS_BY_DESIGN, NEUTRAL_BYPASS_BY_DESIGN; full live contract run (49 modules): 0 unexpected issues, f_vf_immiscible outs 1,2, 10 pix, bypass gate on enc by design. NOT covered by any bench: the one-frame lag of the cold velocity input (inab vs pass draw order) cannot show on static inputs; it rests on adv in0 being the only hot inlet and on the live look. The slow cost test was not re-run.
 - 2026-10-28 (T023, Matt live, in Max): the first live look with two real `f_vf_fluid` modules at different viscosity passes. Matt: "immiscible is in good shape, the two fluids at different viscosities pass, the defaults are good", and then "nothing changes for now" on baking the found-working values. So the shipped defaults stay (dt 0.01, iface 4, coarsen 0.3, inject 0.3, thresh 0.5, pull 0.3, fill 0, mix_pct 50, taps 2) and the found-working set (thresh 0.85, pull 0.64, fill 0.22, inject 0.5, coarsen 0.02, iface 1.5) is NOT baked; it stays a recorded recipe. G3 closed on that basis. NOT reported separately and still open: T024 (interface look beyond the above), T025 (injection with a bright disc / `f_grain`), T026 (moot: G2 chose the plain blend), G4 (phi grey encoding), G6 (256² vs 128²), G1 (T033), G8. The slow cost test (T017) has not been re-run since the spec gained the pull/mix ops. Also 2026-10-28: `f_vf_advect` Trail work checked on the GPU (see HANDOFF).
+- 2026-10-28 (close-out, Matt): "close t024 and t025 and the two gates, move this to stable and call it done." T024, T025, G4 (phi grey encoding as built) and G6 (256² stays) closed; T026 ticked as moot (G2 plain). T034 done: `.specify/stable/f_vf_immiscible` moved to `.specify/stable/f_vf_immiscible`. Not done and not scheduled: G8 and Phase 4 (momentum across the interface); the `--slow` cost test was not re-run after pull/thresh/mix_pct.

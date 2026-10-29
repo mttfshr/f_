@@ -1,5 +1,5 @@
 """spike_immiscible_stirring_b.py -- T006b: the supercritical stirring test that closes G7.
-Thresholds pre-registered in .specify/f_vf_immiscible/tasks.md Record (T006b) before this file existed.
+Thresholds pre-registered in .specify/stable/f_vf_immiscible/tasks.md Record (T006b) before this file existed.
 Same stirred velocity as spike_immiscible_stirring.py (imported). Starts: stripes, drops, noise.
 
 Run: . tests/_log.sh >/dev/null; export PYTHONPATH
