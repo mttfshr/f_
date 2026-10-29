@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-29 (00:25): `f_tf_hatch` v2 (LIC renderer) BUILT, tiers 1-2 green, but LIVE OUTPUT IS WRONG (axis-aligned rectangles, not strokes along contours). START HERE for hatch; full write-up in `.specify/f_tf_hatch/findings_2026-10-29.md`
+
+- **State:** codeboxes E1/E2/E3, `definition.py`, patcher rebuilt (commit `c141cbb`); tier 1 11/11; tier 2 exact vs the mirror on coherence-1 fields; cost 3.24 ms at 1080p (a later run read 5.21 under live GPU load, inconclusive). The mirror at Matt's exact settings draws oriented strokes, so the live defect is GPU / pipeline / real-tensor, not the design.
+- **Next (one bench run, Max/Vsynth live session CLOSED):** `tests/bench.sh -q tests/modules/tf_hatch/bench_tf_hatch.py`: runs two new never-run tests (GPU `hash13` vs NumPy + directional bias; E2 vs mirror at coherence 0.5/0.2) and re-measures cost. Then a 1080p geometry test; capture a real camera tensor. Strength dial is dead in v2 (remove?). Open design question A/B/C/D (persistence curve / Persist dial / strict LIC + coherence-as-length) is in the findings doc.
+
 ## 2026-10-27 (evening): `f_vf_immiscible` SPECCED (spec, plan, tasks written; nothing built, nothing run). START HERE for the fluid thread; the `f_cmap` entry below is still current for that module (paused)
 
 - **What exists (all docs, none committed by Claude):** `.specify/f_vf_immiscible/{spec,plan,tasks}.md` (34 tasks, Phase 0 first); `ideas/f_vf_immiscible.md` (the idea record; began as `f_vf_phase`), `ideas/f_splat.md` (new idea), `ideas/f_ca.md` (River rule from omp draft 50 folded in, plus a parked fluid-coupling section), `ideas/f_vf_emulsion.md` (banner: now the analysis record), `ideas/f_vf_mix.md` (note: first concrete consumer), `ideas/INDEX.md`, `.specify/plan.md` item 14.
