@@ -89,7 +89,7 @@ patcher = {
     # The optional stroke texture: the marks Hatch streaks along the contours. Unconnected -> the built-in
     # blobs (src_stroke 0), the output is unchanged. Inside E2 it is in2 (build/spec.md mod_inlets).
     "mod_inlets": [
-        {"label": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs",
+        {"label": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs. HEAVY at 1080p: a full-size float32 texture at a low Grain makes E2 take 12-13 ms (blobs 3); a texture of 1024x1024 or less, or Grain near 1, keeps it at 5-7 ms",
          "state_param": "src_stroke",
          "fanout": [["e2", 1]],
          "state_nodes": ["e2"]},

@@ -362,7 +362,10 @@ def test_stage_e3_matches_both_outlets():
 
 def test_cost_per_stage_1080p():
     """Per-stage ms/pass at 1080p (M3 Max); the module gate is the SUM <= 5 ms. The spike predicted
-    E2 ~1.7 ms (N = 16, nearest); bench floor ~0.8 ms/pass, so E1 and E3 read as upper bounds."""
+    E2 ~1.7 ms (N = 16, nearest); bench floor ~0.8 ms/pass, so E1 and E3 read as upper bounds.
+    The gate is the BLOB path. The stroke-texture mode is reported, not gated: 11-13 ms for E2 with a full-size
+    float32 texture at a low Grain (memory-bound; .specify/f_tf_hatch/spike/bench_cost_probe*.py), accepted as a
+    heavy optional mode (Matt, 2026-10-29)."""
     tex = rand_tensor_tex(1080, 1920, seed=6)
     aux = m.stage_e1(tex, 0.0, 0.1, "unsigned_nearest")
     aux2 = np.zeros_like(aux)
