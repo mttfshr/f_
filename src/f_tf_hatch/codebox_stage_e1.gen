@@ -16,21 +16,24 @@
 //   Where trace <= eps_trace (zero / direction-undefined tensor): axis UNSET
 //   (0, 0), coh 0, pres 0 -- never an atan2(0,0) artifact.
 //
-// DECODE IDIOM: verbatim from .specify/f_tf_glyph/plan.md ADR-2:
-//   Jxx = R/strength; Jxy = (G-0.5)*2/strength; Jyy = B/strength
+// DECODE IDIOM: .specify/f_tf_glyph/plan.md ADR-2 WITHOUT the gain divide (the Strength
+// dial was removed 2026-10-29: axis and coherence are ratios and presence reads the
+// encoded trace, so dividing the tensormap's gain back out changed nothing but the
+// zero guard). Everything below is in ENCODED units (J * the tensormap's strength):
+//   Jxx = R; Jxy = (G-0.5)*2; Jyy = B
 //   theta = 0.5*atan2(2*Jxy, Jxx-Jyy)  (GRADIENT axis; along = theta + pi/2)
 // The read is AT norm (texel centred, always in-bounds).
 
-Param strength(100.0);
 Param angle_offset(0.0);
 Param structure_floor(0.1);
 
-eps_trace = 0.000001;
+// zero-tensor guard on the ENCODED trace (was 1e-6 in J units = 1e-4 at strength 100)
+eps_trace = 0.0001;
 
 // (component access INLINE on sample(): on a stored variable it silently fails)
-jxx = sample(in1, norm).r / strength;
-jxy = (sample(in1, norm).g - 0.5) * 2.0 / strength;
-jyy = sample(in1, norm).b / strength;
+jxx = sample(in1, norm).r;
+jxy = (sample(in1, norm).g - 0.5) * 2.0;
+jyy = sample(in1, norm).b;
 trace = jxx + jyy;
 diff = jxx - jyy;
 root = sqrt(diff*diff + 4.0*jxy*jxy);

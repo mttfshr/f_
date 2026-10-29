@@ -107,7 +107,7 @@ patcher = {
         {
             "name": "density", "type": "float",
             "min": 0.0, "max": 1.0, "default": 0.7,
-            "hint": "How many strokes: the fraction of noise cells that are lit (0.25% at 0 to 8% at 1). PROVISIONAL.",
+            "hint": "How many strokes: how much of the frame the noise blobs the strokes are drawn from cover (0.25% at 0 to 8% at 1). PROVISIONAL.",
             "label": "Density",
             "pix_target": "e2",
         },
@@ -124,15 +124,6 @@ patcher = {
             "hint": "Stroke style: 0 = soft, 1 = hard engraved lines (thresholded with a soft edge). Outlet 1 stays soft.",
             "label": "Line",
             "pix_target": "e3",
-        },
-        {
-            "name": "strength", "type": "float",
-            "min": 1.0, "max": 1000.0, "default": 100.0,
-            "hint": "Gain the producing tensormap applied to trace and the raw tensor "
-                    "(f_tensor_type.md decode). Match it to the tensormap feeding this "
-                    "module: the decode divides it back out. Log dial like tensormap's.",
-            "label": "Strength",
-            "pix_target": "e1",
         },
         {
             "name": "structure_floor", "type": "float",

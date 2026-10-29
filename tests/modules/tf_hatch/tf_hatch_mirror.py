@@ -31,7 +31,8 @@ import gpu_sim as g  # noqa: E402
 F32 = np.float32
 
 # --- named constants (the codebox carries the same names) ---
-EPS_TRACE = 1e-6        # tensormap ADR-6/T019 value, cited
+EPS_TRACE = 1e-4        # zero-tensor guard on the ENCODED trace (R + B). Was 1e-6 in J units
+                        # (tensormap ADR-6/T019) = 1e-4 encoded at the default strength 100.
 PRES_EPS = 1e-6         # presence knee width at floor 0 (a hair above the iso guard)
 PRES_LO = 0.5           # presence ramp: lo = PRES_LO * thr  (thr = floor^2)
 PRES_HI = 1.5           # presence ramp: hi = PRES_HI * thr + PRES_EPS
@@ -92,13 +93,16 @@ def presence(enc_trace, floor=0.0):
     return _smoothstep(F32(PRES_LO) * thr, F32(PRES_HI) * thr + F32(PRES_EPS), np.asarray(enc_trace, F32))
 
 
-def decode(t, strength=100.0):
+def decode(t):
     """Canonical decode idiom (.specify/f_tf_glyph/plan.md ADR-2; f_tensor_type.md
-    outlet 0). t = RGBA planes (4, ...). Returns (Jxx, Jxy, Jyy, trace, diff, root,
-    lambda1, lambda2, theta_grad, axis_along, coherence)."""
-    Jxx = t[0] / strength
-    Jxy = (t[1] - 0.5) * 2.0 / strength
-    Jyy = t[2] / strength
+    outlet 0), WITHOUT the tensormap's gain divided back out (2026-10-29, the Strength dial
+    was removed: axis and coherence are ratios, presence reads the encoded trace, so the
+    divide changed nothing but the zero guard). t = RGBA planes (4, ...). Returns
+    (Jxx, Jxy, Jyy, trace, diff, root, lambda1, lambda2, theta_grad, axis_along, coherence),
+    all in ENCODED units (J * the producing tensormap's strength)."""
+    Jxx = t[0]
+    Jxy = (t[1] - 0.5) * 2.0
+    Jyy = t[2]
     trace = Jxx + Jyy
     diff = Jxx - Jyy
     root = np.sqrt(diff * diff + F32(4.0) * Jxy * Jxy)
@@ -118,7 +122,7 @@ def _smoothstep(lo, hi, x):
 
 # ------------------------------------------------------------------ E1 ---
 
-def stage_e1(tex, strength=100.0, angle_offset=0.0, floor=0.0, aux_mode="doubled"):
+def stage_e1(tex, angle_offset=0.0, floor=0.0, aux_mode="doubled"):
     """Decode + presence. tex: (H, W, 4) outlet-0-format tensor texture.
 
     aux (intermediate, NEVER an outlet), float32:
@@ -130,7 +134,7 @@ def stage_e1(tex, strength=100.0, angle_offset=0.0, floor=0.0, aux_mode="doubled
     decoded-angle artifact (v1 ADR-5, carried over).
     """
     t = np.moveaxis(np.asarray(tex, F32), -1, 0)
-    (_jxx, _jxy, _jyy, trace, _d, _r, _l1, _l2, _th, axis, coh) = decode(t, strength)
+    (_jxx, _jxy, _jyy, trace, _d, _r, _l1, _l2, _th, axis, coh) = decode(t)
     a = (axis + F32(angle_offset * np.pi / 2.0)).astype(F32)
     live = trace > F32(EPS_TRACE)
     if aux_mode == "doubled":
@@ -184,9 +188,62 @@ def noise_at(px, py, cell_px, seed=0, fill=None):
     return (h < F32(fill)).astype(F32)           # sparse: a lit cell (1) with probability `fill`
 
 
+# --- band-limited ("blob") impulses (2026-10-29) ---------------------------------------
+# The lit-lattice-cell noise above paints cell-shaped patches (axis-aligned rectangles
+# wherever a path stays inside one cell). The blob noise replaces it: quintic value
+# noise on a ROTATED lattice (no pixel-axis bias), thresholded with a soft ramp so the
+# impulses are round blobs about a `grain` cell wide. The threshold is a CLOSED-FORM
+# cubic in `density` (fit by .specify/f_tf_hatch/spike/blob_fit.py), so the GPU needs no
+# quantile lookup. Same hash12 as above, four taps per sample.
+BLOB_ROT = float(np.pi / 8)   # lattice rotation: 22.5 deg puts the pixel's 0 and 45 deg directions
+                              # mirror-symmetric about the noise lattice, so axis and diagonal
+                              # strokes see the same noise (0.3927 rad; cos 0.9238795, sin 0.3826834)
+BLOB_SOFT = 0.35         # ramp half-width, in std of the value noise
+BLOB_STD = 0.2259        # std of the value noise (fit, blob_fit.py 2026-10-29)
+# threshold(density) = c0 + c1 d + c2 d^2 + c3 d^3, so the soft-ramped coverage equals `fill`
+# (worst relative error 3.2% on an independent patch, 0.1-1% over most of the range). The
+# ramp never reaches 1 at low density (the noise peaks at 1): a low-density stroke is dimmer
+# at its peak but has the same expected coverage as a lit cell.
+BLOB_THR = (0.999341, -0.092880, 0.011592, -0.084665)
+
+
+def _fade5(t):
+    return t * t * t * (t * (t * F32(6) - F32(15)) + F32(10))
+
+
+def value_noise(px, py, cell_px, seed=0, extent=0.0):
+    """Quintic value noise on a rotated lattice, world coordinates. `extent` (= W + H, pixels)
+    offsets the lattice index so it stays positive after the rotation (the codebox does the same)."""
+    c, s = F32(np.cos(BLOB_ROT)), F32(np.sin(BLOB_ROT))
+    off = F32(extent / cell_px)
+    px, py = np.asarray(px, F32), np.asarray(py, F32)
+    u = (c * px - s * py) / F32(cell_px) + off + F32(17.3 * seed)
+    v = (s * px + c * py) / F32(cell_px) + off + F32(9.1 * seed)
+    iu, iv = np.floor(u), np.floor(v)
+    fu, fv = _fade5(u - iu), _fade5(v - iv)
+    return ((hash12(iu, iv) * (1 - fu) + hash12(iu + 1, iv) * fu) * (1 - fv)
+            + (hash12(iu, iv + 1) * (1 - fu) + hash12(iu + 1, iv + 1) * fu) * fv).astype(F32)
+
+
+def blob_threshold(density):
+    d = F32(density)
+    return F32(BLOB_THR[0] + d * (BLOB_THR[1] + d * (BLOB_THR[2] + d * BLOB_THR[3])))
+
+
+def blob_noise(px, py, cell_px, seed=0, fill=None, extent=0.0):
+    """Sparse blob impulses, 0..1 (a soft threshold of the value noise). `fill` is the same
+    lit probability the cells use; the closed form takes it as density = log2(fill/FILL_BASE)/FILL_SPAN."""
+    d = np.log2(float(fill) / FILL_BASE) / FILL_SPAN
+    thr, w = blob_threshold(d), F32(BLOB_SOFT * BLOB_STD)
+    return _smoothstep(thr - w, thr + w, value_noise(px, py, cell_px, seed, extent))
+
+
 def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
-             persist_pow=PERSIST_POW, aux_mode="doubled", n_dirs=(1, -1), seed=0, fill=None):
-    """Streamline march. For each pixel, walk n_steps each way along the local
+             persist_pow=PERSIST_POW, aux_mode="doubled", n_dirs=(1, -1), seed=0, fill=None,
+             noise="blobs"):
+    """Streamline march. `noise` picks the sparse impulse source ("blobs": band-limited value
+    noise, the 2026-10-29 default; "cells": the original lit lattice cells, kept as the A/B
+    reference); it only applies when `fill` is set (sparse). For each pixel, walk n_steps each way along the local
     axis (sign-aligned against the previous step), accumulate noise_at() at
     every position, box kernel. Coherence enters ONLY through `persist`.
 
@@ -202,7 +259,17 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
     cells_per_h = 2.0 ** ((1.0 - grain) * GRAIN_SPAN + GRAIN_BASE)
     cell_px = H / cells_per_h
 
-    acc = noise_at(x0, y0, cell_px, seed, fill).astype(F32)
+    if fill is not None and noise == "blobs":
+        extent = F32(W + H)
+
+        def nf(px_, py_, cp, sd, fl):
+            return blob_noise(px_, py_, cp, sd, fl, extent)
+    elif noise in ("blobs", "cells"):
+        nf = noise_at                  # dense (fill None) or the cell reference
+    else:
+        raise ValueError(noise)
+
+    acc = nf(x0, y0, cell_px, seed, fill).astype(F32)
     wsum = F32(1.0)
     s0 = _read(aux, x0, y0, aux_mode)
     ca0, sa0 = _axis_from_aux(s0, aux_mode)
@@ -232,7 +299,7 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
             px = np.clip(nx_, F32(0.5), F32(W) - F32(0.5)).astype(F32)   # reads stay in-bounds
             py = np.clip(ny_, F32(0.5), F32(H) - F32(0.5)).astype(F32)
             dx, dy = ax, ay
-            acc = acc + alive * noise_at(px, py, cell_px, seed, fill)
+            acc = acc + alive * nf(px, py, cell_px, seed, fill)
             wsum = wsum + alive
     if fill is None:
         raw = (acc / wsum).astype(F32)                  # dense: the mean along the (in-frame) path
@@ -280,9 +347,9 @@ def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0, fill=Non
             np.stack([o1, o1, o1, one], -1).astype(F32))
 
 
-def chain(tex, strength=100.0, angle_offset=0.0, floor=0.0, aux_mode="doubled",
+def chain(tex, angle_offset=0.0, floor=0.0, aux_mode="doubled",
           n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix", persist_pow=PERSIST_POW,
-          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None):
-    aux = stage_e1(tex, strength, angle_offset, floor, aux_mode)
-    aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed, fill=fill)
+          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None, noise="blobs"):
+    aux = stage_e1(tex, angle_offset, floor, aux_mode)
+    aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed, fill=fill, noise=noise)
     return stage_e3(aux2, n_steps, contrast, line, bypass, fill=fill)

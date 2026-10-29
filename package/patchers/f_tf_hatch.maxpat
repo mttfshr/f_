@@ -107,9 +107,8 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 8,
+					"numoutlets": 7,
 					"outlettype": [
-						"",
 						"",
 						"",
 						"",
@@ -121,10 +120,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						583.0,
+						511.0,
 						22.0
 					],
-					"text": "route reach grain density contrast line_hard strength structure_floor angle_offset"
+					"text": "route reach grain density contrast line_hard structure_floor angle_offset"
 				}
 			},
 			{
@@ -174,7 +173,7 @@
 							},
 							{
 								"box": {
-									"code": "// Stage E1 (f_tf_hatch v2): tensor decode + presence. in1 = the TENSOR\n// (f_tf_tensormap outlet 0, raw float32; f_tensor_type.md encoding).\n// Mirrors tests/modules/tf_hatch/tf_hatch_mirror.py stage_e1 (aux_mode\n// \"unsigned_nearest\", spec OQ2 decided 2026-10-28). Intermediate texture,\n// NEVER an outlet; unbounded float32 (no clamp, no 0.5 offset).\n//\n// out1 = (ca, sa, coh, pres):\n//   (ca, sa)  cos/sin of the ALONG-structure axis + angle_offset*pi/2. The\n//             axis is an unoriented line; E2 recovers sign continuity itself\n//             (dot-product alignment), so this pair is read with `nearest`\n//             only (interpolating it would flip sign at the horizontal cut).\n//   coh       coherence (lambda1-lambda2)/(lambda1+lambda2), gain-free\n//             (tensormap plan ADR-2). Enters E2 ONLY as direction persistence.\n//   pres      PRESENCE: smooth ramp on the tensormap-encoded trace (R + B)\n//             against structure_floor^2. Brightness gate only (E3 applies it).\n//   Where trace <= eps_trace (zero / direction-undefined tensor): axis UNSET\n//   (0, 0), coh 0, pres 0 -- never an atan2(0,0) artifact.\n//\n// DECODE IDIOM: verbatim from .specify/f_tf_glyph/plan.md ADR-2:\n//   Jxx = R/strength; Jxy = (G-0.5)*2/strength; Jyy = B/strength\n//   theta = 0.5*atan2(2*Jxy, Jxx-Jyy)  (GRADIENT axis; along = theta + pi/2)\n// The read is AT norm (texel centred, always in-bounds).\n\nParam strength(100.0);\nParam angle_offset(0.0);\nParam structure_floor(0.1);\n\neps_trace = 0.000001;\n\n// (component access INLINE on sample(): on a stored variable it silently fails)\njxx = sample(in1, norm).r / strength;\njxy = (sample(in1, norm).g - 0.5) * 2.0 / strength;\njyy = sample(in1, norm).b / strength;\ntrace = jxx + jyy;\ndiff = jxx - jyy;\nroot = sqrt(diff*diff + 4.0*jxy*jxy);\ntheta = 0.5 * atan2(2.0*jxy, diff);\n\niso = 1.0 - step(eps_trace, trace);   // 1 = zero/undefined tensor\ncoh = clamp(root / max(trace, eps_trace), 0.0, 1.0);\n\neff = theta + halfpi + angle_offset * halfpi;\nca = cos(eff) * (1.0 - iso);\nsa = sin(eff) * (1.0 - iso);\n\n// presence: enc_trace = R + B = trace * the producing tensormap's strength.\n// thr = floor^2 (finer at the low end); ramp 0.5*thr -> 1.5*thr (+ a hair, so\n// floor 0 is a step at the iso guard).\nenc_trace = sample(in1, norm).r + sample(in1, norm).b;\nthr = structure_floor * structure_floor;\npres = smoothstep(0.5 * thr, 1.5 * thr + 0.000001, enc_trace) * (1.0 - iso);\n\nout1 = vec(ca, sa, coh * (1.0 - iso), pres);\n",
+									"code": "// Stage E1 (f_tf_hatch v2): tensor decode + presence. in1 = the TENSOR\n// (f_tf_tensormap outlet 0, raw float32; f_tensor_type.md encoding).\n// Mirrors tests/modules/tf_hatch/tf_hatch_mirror.py stage_e1 (aux_mode\n// \"unsigned_nearest\", spec OQ2 decided 2026-10-28). Intermediate texture,\n// NEVER an outlet; unbounded float32 (no clamp, no 0.5 offset).\n//\n// out1 = (ca, sa, coh, pres):\n//   (ca, sa)  cos/sin of the ALONG-structure axis + angle_offset*pi/2. The\n//             axis is an unoriented line; E2 recovers sign continuity itself\n//             (dot-product alignment), so this pair is read with `nearest`\n//             only (interpolating it would flip sign at the horizontal cut).\n//   coh       coherence (lambda1-lambda2)/(lambda1+lambda2), gain-free\n//             (tensormap plan ADR-2). Enters E2 ONLY as direction persistence.\n//   pres      PRESENCE: smooth ramp on the tensormap-encoded trace (R + B)\n//             against structure_floor^2. Brightness gate only (E3 applies it).\n//   Where trace <= eps_trace (zero / direction-undefined tensor): axis UNSET\n//   (0, 0), coh 0, pres 0 -- never an atan2(0,0) artifact.\n//\n// DECODE IDIOM: .specify/f_tf_glyph/plan.md ADR-2 WITHOUT the gain divide (the Strength\n// dial was removed 2026-10-29: axis and coherence are ratios and presence reads the\n// encoded trace, so dividing the tensormap's gain back out changed nothing but the\n// zero guard). Everything below is in ENCODED units (J * the tensormap's strength):\n//   Jxx = R; Jxy = (G-0.5)*2; Jyy = B\n//   theta = 0.5*atan2(2*Jxy, Jxx-Jyy)  (GRADIENT axis; along = theta + pi/2)\n// The read is AT norm (texel centred, always in-bounds).\n\nParam angle_offset(0.0);\nParam structure_floor(0.1);\n\n// zero-tensor guard on the ENCODED trace (was 1e-6 in J units = 1e-4 at strength 100)\neps_trace = 0.0001;\n\n// (component access INLINE on sample(): on a stored variable it silently fails)\njxx = sample(in1, norm).r;\njxy = (sample(in1, norm).g - 0.5) * 2.0;\njyy = sample(in1, norm).b;\ntrace = jxx + jyy;\ndiff = jxx - jyy;\nroot = sqrt(diff*diff + 4.0*jxy*jxy);\ntheta = 0.5 * atan2(2.0*jxy, diff);\n\niso = 1.0 - step(eps_trace, trace);   // 1 = zero/undefined tensor\ncoh = clamp(root / max(trace, eps_trace), 0.0, 1.0);\n\neff = theta + halfpi + angle_offset * halfpi;\nca = cos(eff) * (1.0 - iso);\nsa = sin(eff) * (1.0 - iso);\n\n// presence: enc_trace = R + B = trace * the producing tensormap's strength.\n// thr = floor^2 (finer at the low end); ramp 0.5*thr -> 1.5*thr (+ a hair, so\n// floor 0 is a step at the iso guard).\nenc_trace = sample(in1, norm).r + sample(in1, norm).b;\nthr = structure_floor * structure_floor;\npres = smoothstep(0.5 * thr, 1.5 * thr + 0.000001, enc_trace) * (1.0 - iso);\n\nout1 = vec(ca, sa, coh * (1.0 - iso), pres);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -293,7 +292,7 @@
 							},
 							{
 								"box": {
-									"code": "// Stage E2 (f_tf_hatch v2): the streamline march. in1 = E1's aux (ca, sa, coh,\n// pres), render-sized (so `dim` is the render's). Mirrors\n// tests/modules/tf_hatch/tf_hatch_mirror.py stage_e2 (sparse mode).\n//\n// Per pixel: march N = 16 steps each way along the local axis, accumulating\n// sparse impulse noise. All geometry is in PIXEL units (steps are uniform in\n// pixels, so a non-square frame still gets round streaks).\n//   - sign continuity: the axis has no sign; each step flips it to agree with\n//     the previous direction (dot product), so there is no branch cut.\n//   - coherence enters ONLY as persistence (spec OQ1): d = normalize(w*a +\n//     (1-w)*r), w = coh^0.5, r = a per-pixel/per-step hashed unit vector.\n//     Coherent regions march ballistically (streaks), incoherent ones random-\n//     walk (grain). Never shape, never brightness.\n//   - noise lives in WORLD coordinates (hash of the lattice cell the position\n//     falls in, cell size from `grain`); a cell is lit when its hash < fill.\n//   - brightness = lit CELLS crossed (acc * step / cell_px), so one impulse's\n//     stroke has brightness ~1 whatever reach and grain are.\n//   - a path that leaves the frame stops contributing (`alive` latch).\n//   - the step must not exceed the cell size (step <= cell_px) or cells can be\n//     skipped; at N = 16 this bounds reach against grain.\n//\n// Coordinates: `norm` = (i + 0.5)/dim (texel centres; tests/lib/gpu_sim.py,\n// jxf.py), so the pixel's own texel centre is norm*dim = i + 0.5. (`cell`\n// would be norm*(dim-1): not used.) Reads: `nearest` at (pos/dim).\n//\n// Params (names avoid GenExpr operators: `length` is one, hence `reach`):\n//   reach    0..1  half-length of the march = reach * 0.25 * frame height\n//   grain    0..1  noise cell size, log: cells per frame height =\n//                  2^((1-grain)*6+3)\n//   density  0..1  lit-cell probability fill = 0.0025 * 2^(5*density)\n// out1 = (raw lit-cells-crossed, pres, 0, 1)\n\n// Hashes WITHOUT sin (Hoskins' \"hash without sine\"): sin(ix*127.1+iy*311.7)*43758\n// loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p\n// lattices), which can make the lit-cell pattern clump and flip with tiny\n// `grain` changes. Every intermediate here stays below ~1e3.\nhash12(ha, hb) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = hx;\n    hd = hx * (hy + 33.33) + hy * (hz + 33.33) + hz * (hx + 33.33);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\nhash13(ha, hb, hc) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = fract(hc * 0.1031);\n    hd = hx * (hz + 31.32) + hy * (hy + 31.32) + hz * (hx + 31.32);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\nlit_noise(cx, cy, cell_sz, fl) {\n    ix = floor(cx / cell_sz);\n    iy = floor(cy / cell_sz);\n    hv = hash12(ix, iy);\n    return 1.0 - step(fl, hv);\n}\n\nParam reach(0.5);\nParam grain(0.5);\nParam density(0.7);\n\nwpx = dim.x;\nhpx = dim.y;\nx0 = norm.x * wpx;\ny0 = norm.y * hpx;\n\nhalf_len = reach * 0.25 * hpx;\nh_step = half_len / 16.0;\ncell_px = hpx / pow(2.0, (1.0 - grain) * 6.0 + 3.0);\nfill_frac = 0.0025 * pow(2.0, 5.0 * density);\npersist_pow = 0.5;\n\nca0 = nearest(in1, norm).x;\nsa0 = nearest(in1, norm).y;\npres0 = nearest(in1, norm).w;\n// unset axis (0, 0) -> a fixed fallback axis (E3 multiplies by presence 0 there)\nm0 = sqrt(ca0 * ca0 + sa0 * sa0);\nok0 = step(0.000001, m0);\nca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);\nsa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);\n\nacc = lit_noise(x0, y0, cell_px, fill_frac);\npx = x0;\npy = y0;\ndx = 0.0;\ndy = 0.0;\nalive = 1.0;\nsgn = 1.0;\nfor (side = 0; side < 2; side += 1) {\n    px = x0;\n    py = y0;\n    alive = 1.0;\n    sgn = 1.0 - 2.0 * side;\n    dx = sgn * ca0;\n    dy = sgn * sa0;\n    for (k = 1; k <= 16; k += 1) {\n        ux = px / wpx;      // px is clamped to [0.5, W-0.5]: strictly inside (0, 1)\n        uy = py / hpx;\n        ax = nearest(in1, vec(ux, uy)).x;\n        ay = nearest(in1, vec(ux, uy)).y;\n        coh = nearest(in1, vec(ux, uy)).z;\n        am = sqrt(ax * ax + ay * ay);\n        oka = step(0.000001, am);\n        ax = mix(1.0, ax / max(am, 0.000001), oka);\n        ay = mix(0.0, ay / max(am, 0.000001), oka);\n        dp = ax * dx + ay * dy;\n        flipv = 2.0 * step(0.0, dp) - 1.0;\n        ax = ax * flipv;\n        ay = ay * flipv;\n        wgt = pow(clamp(coh, 0.0, 1.0), persist_pow);\n        ang = twopi * hash13(floor(x0), floor(y0), k + 32.0 * side);\n        mx = wgt * ax + (1.0 - wgt) * cos(ang);\n        my = wgt * ay + (1.0 - wgt) * sin(ang);\n        mm = sqrt(mx * mx + my * my);\n        okm = step(0.000001, mm);\n        ax = mix(ax, mx / max(mm, 0.000001), okm);\n        ay = mix(ay, my / max(mm, 0.000001), okm);\n        nx = px + h_step * ax;\n        ny = py + h_step * ay;\n        alive = alive * step(0.0, nx) * step(nx, wpx) * step(0.0, ny) * step(ny, hpx);\n        px = clamp(nx, 0.5, wpx - 0.5);\n        py = clamp(ny, 0.5, hpx - 0.5);\n        dx = ax;\n        dy = ay;\n        acc = acc + alive * lit_noise(px, py, cell_px, fill_frac);\n    }\n}\nraw = acc * h_step / cell_px;\nout1 = vec(raw, pres0, 0.0, 1.0);\n",
+									"code": "// Stage E2 (f_tf_hatch v2): the streamline march. in1 = E1's aux (ca, sa, coh,\n// pres), render-sized (so `dim` is the render's). Mirrors\n// tests/modules/tf_hatch/tf_hatch_mirror.py stage_e2 (sparse mode).\n//\n// Per pixel: march N = 16 steps each way along the local axis, accumulating\n// sparse impulse noise. All geometry is in PIXEL units (steps are uniform in\n// pixels, so a non-square frame still gets round streaks).\n//   - sign continuity: the axis has no sign; each step flips it to agree with\n//     the previous direction (dot product), so there is no branch cut.\n//   - coherence enters ONLY as persistence (spec OQ1): d = normalize(w*a +\n//     (1-w)*r), w = coh^0.5, r = a per-pixel/per-step hashed unit vector.\n//     Coherent regions march ballistically (streaks), incoherent ones random-\n//     walk (grain). Never shape, never brightness.\n//   - noise lives in WORLD coordinates: round BLOB impulses from rotated value\n//     noise (blob_noise below; lattice scale from `grain`), thresholded so their\n//     coverage equals the lit probability set by `density`.\n//   - brightness = blob coverage crossed (acc * step / cell_px), so one\n//     impulse's stroke has brightness ~1 whatever reach and grain are (a low-\n//     density blob peaks below 1: same expected coverage, dimmer peak).\n//   - a path that leaves the frame stops contributing (`alive` latch).\n//   - the step must not exceed the cell size (step <= cell_px) or cells can be\n//     skipped; at N = 16 this bounds reach against grain.\n//\n// Coordinates: `norm` = (i + 0.5)/dim (texel centres; tests/lib/gpu_sim.py,\n// jxf.py), so the pixel's own texel centre is norm*dim = i + 0.5. (`cell`\n// would be norm*(dim-1): not used.) Reads: `nearest` at (pos/dim).\n//\n// Params (names avoid GenExpr operators: `length` is one, hence `reach`):\n//   reach    0..1  half-length of the march = reach * 0.25 * frame height\n//   grain    0..1  noise cell size, log: cells per frame height =\n//                  2^((1-grain)*6+3)\n//   density  0..1  impulse coverage = 0.0025 * 2^(5*density), via the\n//                  closed-form blob threshold\n// out1 = (raw blob-coverage-crossed, pres, 0, 1)\n\n// Hashes WITHOUT sin (Hoskins' \"hash without sine\"): sin(ix*127.1+iy*311.7)*43758\n// loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p\n// lattices), which can make the lit-cell pattern clump and flip with tiny\n// `grain` changes. Every intermediate here stays below ~1e3.\nhash12(ha, hb) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = hx;\n    hd = hx * (hy + 33.33) + hy * (hz + 33.33) + hz * (hx + 33.33);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\nhash13(ha, hb, hc) {\n    hx = fract(ha * 0.1031);\n    hy = fract(hb * 0.1031);\n    hz = fract(hc * 0.1031);\n    hd = hx * (hz + 31.32) + hy * (hy + 31.32) + hz * (hx + 31.32);\n    hx = hx + hd;\n    hy = hy + hd;\n    hz = hz + hd;\n    return fract((hx + hy) * hz);\n}\n\n// Band-limited blob impulse (2026-10-29; mirror: blob_noise / value_noise). Quintic value\n// noise on a lattice ROTATED 22.5 deg (cos 0.9238795, sin 0.3826834: the pixel's axis and\n// diagonal directions see the same noise), thresholded with a soft ramp. Replaces the lit\n// lattice cells, whose squares painted axis-aligned rectangles. bext = (W + H)/cell keeps\n// the lattice index positive after the rotation. Four hash12 taps per sample.\nblob_noise(cx, cy, cell_sz, bthr, bwid, bext) {\n    bu = (0.9238795 * cx - 0.3826834 * cy) / cell_sz + bext;\n    bv = (0.3826834 * cx + 0.9238795 * cy) / cell_sz + bext;\n    bi = floor(bu);\n    bj = floor(bv);\n    bfu = bu - bi;\n    bfv = bv - bj;\n    bfu = bfu * bfu * bfu * (bfu * (bfu * 6.0 - 15.0) + 10.0);\n    bfv = bfv * bfv * bfv * (bfv * (bfv * 6.0 - 15.0) + 10.0);\n    bh00 = hash12(bi, bj);\n    bh10 = hash12(bi + 1.0, bj);\n    bh01 = hash12(bi, bj + 1.0);\n    bh11 = hash12(bi + 1.0, bj + 1.0);\n    bn = (bh00 * (1.0 - bfu) + bh10 * bfu) * (1.0 - bfv) + (bh01 * (1.0 - bfu) + bh11 * bfu) * bfv;\n    return smoothstep(bthr - bwid, bthr + bwid, bn);\n}\n\nParam reach(0.5);\nParam grain(0.5);\nParam density(0.7);\n\nwpx = dim.x;\nhpx = dim.y;\nx0 = norm.x * wpx;\ny0 = norm.y * hpx;\n\nhalf_len = reach * 0.25 * hpx;\nh_step = half_len / 16.0;\ncell_px = hpx / pow(2.0, (1.0 - grain) * 6.0 + 3.0);\n// blob threshold: a closed-form cubic in density, fit so the soft-ramped coverage equals the\n// lit probability 0.0025 * 2^(5 density) (mirror BLOB_THR; blob_fit.py; worst error 3.2%)\nblob_thr = 0.999341 + density * (-0.092880 + density * (0.011592 + density * -0.084665));\nblob_wid = 0.079065;                  // 0.35 * 0.2259 (BLOB_SOFT * BLOB_STD)\nblob_ext = (wpx + hpx) / cell_px;\npersist_pow = 0.5;\n\nca0 = nearest(in1, norm).x;\nsa0 = nearest(in1, norm).y;\npres0 = nearest(in1, norm).w;\n// unset axis (0, 0) -> a fixed fallback axis (E3 multiplies by presence 0 there)\nm0 = sqrt(ca0 * ca0 + sa0 * sa0);\nok0 = step(0.000001, m0);\nca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);\nsa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);\n\nacc = blob_noise(x0, y0, cell_px, blob_thr, blob_wid, blob_ext);\npx = x0;\npy = y0;\ndx = 0.0;\ndy = 0.0;\nalive = 1.0;\nsgn = 1.0;\nfor (side = 0; side < 2; side += 1) {\n    px = x0;\n    py = y0;\n    alive = 1.0;\n    sgn = 1.0 - 2.0 * side;\n    dx = sgn * ca0;\n    dy = sgn * sa0;\n    for (k = 1; k <= 16; k += 1) {\n        ux = px / wpx;      // px is clamped to [0.5, W-0.5]: strictly inside (0, 1)\n        uy = py / hpx;\n        ax = nearest(in1, vec(ux, uy)).x;\n        ay = nearest(in1, vec(ux, uy)).y;\n        coh = nearest(in1, vec(ux, uy)).z;\n        am = sqrt(ax * ax + ay * ay);\n        oka = step(0.000001, am);\n        ax = mix(1.0, ax / max(am, 0.000001), oka);\n        ay = mix(0.0, ay / max(am, 0.000001), oka);\n        dp = ax * dx + ay * dy;\n        flipv = 2.0 * step(0.0, dp) - 1.0;\n        ax = ax * flipv;\n        ay = ay * flipv;\n        wgt = pow(clamp(coh, 0.0, 1.0), persist_pow);\n        ang = twopi * hash13(floor(x0), floor(y0), k + 32.0 * side);\n        mx = wgt * ax + (1.0 - wgt) * cos(ang);\n        my = wgt * ay + (1.0 - wgt) * sin(ang);\n        mm = sqrt(mx * mx + my * my);\n        okm = step(0.000001, mm);\n        ax = mix(ax, mx / max(mm, 0.000001), okm);\n        ay = mix(ay, my / max(mm, 0.000001), okm);\n        nx = px + h_step * ax;\n        ny = py + h_step * ay;\n        alive = alive * step(0.0, nx) * step(nx, wpx) * step(0.0, ny) * step(ny, hpx);\n        px = clamp(nx, 0.5, wpx - 0.5);\n        py = clamp(ny, 0.5, hpx - 0.5);\n        dx = ax;\n        dy = ay;\n        acc = acc + alive * blob_noise(px, py, cell_px, blob_thr, blob_wid, blob_ext);\n    }\n}\nraw = acc * h_step / cell_px;\nout1 = vec(raw, pres0, 0.0, 1.0);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1027,7 +1026,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "How many strokes: the fraction of noise cells that are lit (0.25% at 0 to 8% at 1). PROVISIONAL.",
+					"hint": "How many strokes: how much of the frame the noise blobs the strokes are drawn from cover (0.25% at 0 to 8% at 1). PROVISIONAL.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1339,14 +1338,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Gain the producing tensormap applied to trace and the raw tensor (f_tensor_type.md decode). Match it to the tensormap feeding this module: the decode divides it back out. Log dial like tensormap's.",
+					"hint": "Structure floor: where there is too little structure to mark, draw nothing. Reads the tensormap's trace scale (trace x its Strength; strong structure is ~1), squared for finer control at the low end. 0 = marks wherever any structure exists. Not strength-invariant: calibrate with the tensormap's Strength. PROVISIONAL default.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_hatch_stage_e1::strength",
+					"param_connect": "#0_hatch_stage_e1::structure_floor",
 					"parameter_enable": 1,
 					"patching_rect": [
 						406.5,
@@ -1367,15 +1366,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								100.0
+								0.1
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "strength",
-							"parameter_mmax": 1000.0,
-							"parameter_mmin": 1.0,
+							"parameter_longname": "structure_floor",
+							"parameter_mmax": 1.0,
+							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "strength",
+							"parameter_shortname": "structure_floor",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1384,14 +1383,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "strength"
+					"varname": "structure_floor"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-36",
 					"maxclass": "attrui",
-					"attr": "strength",
+					"attr": "structure_floor",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1427,9 +1426,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Strength",
+					"text": "Floor",
 					"textjustification": 1,
-					"varname": "lbl_strength"
+					"varname": "lbl_structure_floor"
 				}
 			},
 			{
@@ -1443,14 +1442,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Structure floor: where there is too little structure to mark, draw nothing. Reads the tensormap's trace scale (trace x its Strength; strong structure is ~1), squared for finer control at the low end. 0 = marks wherever any structure exists. Not strength-invariant: calibrate with the tensormap's Strength. PROVISIONAL default.",
+					"hint": "Rotates the streaks relative to the structure axis: +-1 = +-90 deg (the axis is an unoriented line, so +-90 spans the distinct layouts). Zero keeps strokes along structure.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_hatch_stage_e1::structure_floor",
+					"param_connect": "#0_hatch_stage_e1::angle_offset",
 					"parameter_enable": 1,
 					"patching_rect": [
 						478.5,
@@ -1471,15 +1470,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.1
+								0.0
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "structure_floor",
+							"parameter_longname": "angle_offset",
 							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
+							"parameter_mmin": -1.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "structure_floor",
+							"parameter_shortname": "angle_offset",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1488,14 +1487,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "structure_floor"
+					"varname": "angle_offset"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-39",
 					"maxclass": "attrui",
-					"attr": "structure_floor",
+					"attr": "angle_offset",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1531,110 +1530,6 @@
 						50.0,
 						18.0
 					],
-					"text": "Floor",
-					"textjustification": 1,
-					"varname": "lbl_structure_floor"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Rotates the streaks relative to the structure axis: +-1 = +-90 deg (the axis is an unoriented line, so +-90 spans the distinct layouts). Zero keeps strokes along structure.",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_hatch_stage_e1::angle_offset",
-					"parameter_enable": 1,
-					"patching_rect": [
-						550.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						78.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "angle_offset",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": -1.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "angle_offset",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "angle_offset"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-42",
-					"maxclass": "attrui",
-					"attr": "angle_offset",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						530.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-43",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						539.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						66.5,
-						82.0,
-						50.0,
-						18.0
-					],
 					"text": "Offset",
 					"textjustification": 1,
 					"varname": "lbl_angle_offset"
@@ -1642,7 +1537,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-44",
+					"id": "obj-41",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1670,7 +1565,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-45",
+					"id": "obj-42",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1751,11 +1646,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-44",
+						"obj-41",
 						0
 					],
 					"destination": [
-						"obj-45",
+						"obj-42",
 						0
 					]
 				}
@@ -1763,7 +1658,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-45",
+						"obj-42",
 						0
 					],
 					"destination": [
@@ -2107,42 +2002,6 @@
 						0
 					]
 				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						7
-					],
-					"destination": [
-						"obj-41",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-41",
-						0
-					],
-					"destination": [
-						"obj-42",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-42",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
 			}
 		],
 		"parameters": {
@@ -2172,16 +2031,11 @@
 				0
 			],
 			"obj-35": [
-				"strength",
-				"strength",
+				"structure_floor",
+				"structure_floor",
 				0
 			],
 			"obj-38": [
-				"structure_floor",
-				"structure_floor",
-				0
-			],
-			"obj-41": [
 				"angle_offset",
 				"angle_offset",
 				0

@@ -76,7 +76,7 @@ def ok(r):
 # frame height), grain -> cell size. PINNED in every job (the bench keeps a Param's last value).
 E2_BASE = {"reach": 0.5, "grain": 0.75, "density": 0.717}
 E3_BASE = {"contrast": 0.5, "line_hard": 0.0, "bypass_gate": 0.0}
-E1_BASE = {"strength": 100.0, "angle_offset": 0.0, "structure_floor": 0.0}
+E1_BASE = {"angle_offset": 0.0, "structure_floor": 0.0}
 
 
 # ------------------------------------------------------------- stage E1
@@ -85,7 +85,7 @@ def test_stage_e1_matches():
     tex = rand_tensor_tex(64, 64, seed=1)
     out, r = bc.run_pass(code("e1"), [tex], params=dict(E1_BASE))
     ok(r)
-    ref = m.stage_e1(tex, 100.0, 0.0, 0.0, "unsigned_nearest")
+    ref = m.stage_e1(tex, 0.0, 0.0, "unsigned_nearest")
     check("E1 axis pair", float(np.abs(out[..., :2] - ref[..., :2]).max()), 1e-4)
     check("E1 coherence", float(np.abs(out[..., 2] - ref[..., 2]).max()), 1e-4)
     check("E1 presence", float(np.abs(out[..., 3] - ref[..., 3]).max()), 1e-5)
@@ -102,7 +102,7 @@ def test_stage_e1_floor_and_offset():
         params = dict(E1_BASE, structure_floor=fl)
         out, r = bc.run_pass(code("e1"), [tex], params=params)
         ok(r)
-        ref = m.stage_e1(tex, 100.0, 0.0, fl, "unsigned_nearest")
+        ref = m.stage_e1(tex, 0.0, fl, "unsigned_nearest")
         note(f"floor {fl}: mean presence (GPU)", float(out[..., 3].mean()))
         check(f"E1 floor {fl} presence", float(np.abs(out[..., 3] - ref[..., 3]).max()), 1e-4)
         check(f"E1 floor {fl} axis unaffected", float(np.abs(out[..., :2] - ref[..., :2]).max()), 1e-4)
@@ -110,7 +110,7 @@ def test_stage_e1_floor_and_offset():
         params = dict(E1_BASE, angle_offset=off)
         out, r = bc.run_pass(code("e1"), [tex], params=params)
         ok(r)
-        ref = m.stage_e1(tex, 100.0, off, 0.0, "unsigned_nearest")
+        ref = m.stage_e1(tex, off, 0.0, "unsigned_nearest")
         check(f"E1 offset {off} axis pair", float(np.abs(out[..., :2] - ref[..., :2]).max()), 1e-4)
 
 
@@ -152,22 +152,14 @@ def gpu_hash_table(n=192):
     return out[..., 0].copy()
 
 
-def e2_ref(aux, params, h, table):
-    """Mirror E2 with the noise lookup swapped for the GPU's own hash table (restored after)."""
+def e2_ref(aux, params, h, table=None):
+    """Mirror E2 (blob noise). The reference uses the mirror's NumPy hash12: the blob lattice is rotated
+    and its indices reach ~3000 at the finest grain, beyond the GPU-hash table (the table is still
+    built for the hash tests; `table` is accepted and unused). The GPU hash matches NumPy to ~0.05% of
+    cells (test_hash_gpu_matches_numpy_and_is_uniform), and the quintic blend smooths what differs."""
     fill = float(m.fill_from_density(params["density"]))
-
-    def gpu_noise(px, py, cell_px, seed=0, fill=None):
-        ix = np.floor(px / F32(cell_px)).astype(int)
-        iy = np.floor(py / F32(cell_px)).astype(int)
-        return (table[iy, ix] < F32(fill)).astype(F32)
-
-    saved = m.noise_at
-    m.noise_at = gpu_noise
-    try:
-        return m.stage_e2(aux, n_steps=16, length=params["reach"], grain=params["grain"], persist="mix",
-                          persist_pow=0.5, aux_mode="unsigned_nearest", fill=fill)
-    finally:
-        m.noise_at = saved
+    return m.stage_e2(aux, n_steps=16, length=params["reach"], grain=params["grain"], persist="mix",
+                      persist_pow=0.5, aux_mode="unsigned_nearest", fill=fill, noise="blobs")
 
 
 def test_hash_is_the_shipped_one():
@@ -241,7 +233,7 @@ def test_stage_e2_matches_on_coherent_fields():
     table = gpu_hash_table()
     for along in (20.0, 100.0, 170.0):
         h = w = 64
-        aux = m.stage_e1(field_tex(h, w, along, 1.0), 100.0, aux_mode="unsigned_nearest")
+        aux = m.stage_e1(field_tex(h, w, along, 1.0), aux_mode="unsigned_nearest")
         out, r = bc.run_pass(code("e2"), [aux], params=dict(E2_BASE))
         ok(r)
         ref = e2_ref(aux, E2_BASE, h, table)
@@ -261,7 +253,7 @@ def test_stage_e2_matches_on_incoherent_fields():
     table = gpu_hash_table()
     for along, coh in ((30.0, 0.5), (110.0, 0.2)):
         h = w = 64
-        aux = m.stage_e1(field_tex(h, w, along, coh), 100.0, aux_mode="unsigned_nearest")
+        aux = m.stage_e1(field_tex(h, w, along, coh), aux_mode="unsigned_nearest")
         out, r = bc.run_pass(code("e2"), [aux], params=dict(E2_BASE))
         ok(r)
         ref = e2_ref(aux, E2_BASE, h, table)
@@ -275,7 +267,7 @@ def test_stage_e2_edges_and_unset():
     """Texel-centre convention: borders match as well as the interior. And an unset axis (zero
     tensor) must not produce NaN (the march falls back to a fixed axis; E3 multiplies by presence 0)."""
     h = w = 64
-    aux = m.stage_e1(field_tex(h, w, 45.0, 1.0), 100.0, aux_mode="unsigned_nearest")
+    aux = m.stage_e1(field_tex(h, w, 45.0, 1.0), aux_mode="unsigned_nearest")
     out, r = bc.run_pass(code("e2"), [aux], params=dict(E2_BASE))
     ok(r)
     ref = e2_ref(aux, E2_BASE, h, gpu_hash_table())
@@ -296,7 +288,7 @@ def test_stage_e2_edges_and_unset():
 
 def test_stage_e3_matches_both_outlets():
     tex = rand_tensor_tex(64, 64, seed=4)
-    aux = m.stage_e1(tex, 100.0, 0.0, 0.1, "unsigned_nearest")
+    aux = m.stage_e1(tex, 0.0, 0.1, "unsigned_nearest")
     aux2 = m.stage_e2(aux, n_steps=16, length=0.5, grain=0.75, aux_mode="unsigned_nearest",
                       fill=float(m.fill_from_density(0.717)))
     for contrast, line in ((0.5, 0.0), (1.0, 1.0), (0.2, 0.5)):
@@ -327,7 +319,7 @@ def test_cost_per_stage_1080p():
     """Per-stage ms/pass at 1080p (M3 Max); the module gate is the SUM <= 5 ms. The spike predicted
     E2 ~1.7 ms (N = 16, nearest); bench floor ~0.8 ms/pass, so E1 and E3 read as upper bounds."""
     tex = rand_tensor_tex(1080, 1920, seed=6)
-    aux = m.stage_e1(tex, 100.0, 0.0, 0.1, "unsigned_nearest")
+    aux = m.stage_e1(tex, 0.0, 0.1, "unsigned_nearest")
     aux2 = np.zeros_like(aux)
     aux2[..., 0] = np.random.default_rng(1).random(aux.shape[:2]).astype(F32)
     aux2[..., 1] = 1.0

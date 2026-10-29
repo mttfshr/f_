@@ -16,7 +16,7 @@ import numpy as np
 
 from harness import check, run  # noqa: E402
 from harness import note as _note  # noqa: E402
-from tf_hatch_mirror import F32, chain  # noqa: E402
+from tf_hatch_mirror import F32, blob_noise, chain, fill_from_density, noise_at  # noqa: E402
 
 
 def note(msg):
@@ -338,6 +338,46 @@ def test_9_sparse_impulses_keep_the_coherence_response():
     err = np.abs((ridge - along + 90.0) % 180.0 - 90.0)[mask]
     note(f"sparse rings: ridge-vs-axis error median {np.median(err):.1f} deg ({mask.sum()} px measured)")
     check("sparse rings: median ridge error <= 20 deg", 0.0 if np.median(err) <= 20.0 else 1.0, 0.0)
+
+
+def _noise_patch(n, cell, fill, seed, kind):
+    """The sparse impulse source on an n x n pixel patch (kind 'blobs' or 'cells')."""
+    yy, xx = np.mgrid[0:n, 0:n].astype(F32)
+    xx, yy = xx + F32(0.5), yy + F32(0.5)
+    if kind == "blobs":
+        return np.asarray(blob_noise(xx, yy, cell, seed, fill, 2.0 * n), np.float64)
+    return np.asarray(noise_at(xx, yy, cell, seed, fill), np.float64)
+
+
+def test_10_blob_coverage_matches_fill():
+    """The closed-form threshold (a cubic in density) must make the soft-ramped blob coverage
+    equal the lit probability `fill`, so Density means the same thing as with lit cells."""
+    worst = 0.0
+    for d in (0.25, 0.5, 0.75, 1.0):
+        fill = float(fill_from_density(d))
+        cov = float(np.mean([_noise_patch(1024, 6.0, fill, s, "blobs").mean() for s in (0, 3)]))
+        rel = abs(cov - fill) / fill
+        worst = max(worst, rel)
+        note(f"blob coverage at density {d:.2f}: {cov:.4f} vs fill {fill:.4f} ({100 * (cov - fill) / fill:+.1f}%)")
+    check("blob coverage within 10% of fill (density 0.25..1)", worst, 0.10)
+
+
+def test_11_blobs_have_no_axis_bias():
+    """Why the blobs exist: lit cells are squares, so their autocorrelation is longer along the
+    pixel diagonals than the axes and strokes crossing them paint rectangles. The blob lattice is
+    rotated 22.5 deg: the 1/e correlation length along x and along the 45 deg diagonal must match."""
+    def lengths(kind):
+        lx, ld = [], []
+        for s in (0, 3, 5):
+            ac, h, w = _autocorr(_noise_patch(1024, 8.0, 0.08, s, kind), slice(0, 1024), slice(0, 1024))
+            lx.append(_cross(ac[0, :w]))
+            ld.append(_cross(np.array([ac[i, i] for i in range(min(h, w))])) * np.sqrt(2.0))
+        return float(np.mean(lx)), float(np.mean(ld))
+    lxb, ldb = lengths("blobs")
+    lxc, ldc = lengths("cells")
+    note(f"1/e correlation length (px): blobs x {lxb:.2f} diag {ldb:.2f} (ratio {ldb / lxb:.3f}); "
+         f"cells x {lxc:.2f} diag {ldc:.2f} (ratio {ldc / lxc:.3f})")
+    check("blobs: |L_diag / L_x - 1| <= 0.08", abs(ldb / lxb - 1.0), 0.08)
 
 
 if __name__ == "__main__":

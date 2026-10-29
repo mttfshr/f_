@@ -11,10 +11,12 @@
 //     (1-w)*r), w = coh^0.5, r = a per-pixel/per-step hashed unit vector.
 //     Coherent regions march ballistically (streaks), incoherent ones random-
 //     walk (grain). Never shape, never brightness.
-//   - noise lives in WORLD coordinates (hash of the lattice cell the position
-//     falls in, cell size from `grain`); a cell is lit when its hash < fill.
-//   - brightness = lit CELLS crossed (acc * step / cell_px), so one impulse's
-//     stroke has brightness ~1 whatever reach and grain are.
+//   - noise lives in WORLD coordinates: round BLOB impulses from rotated value
+//     noise (blob_noise below; lattice scale from `grain`), thresholded so their
+//     coverage equals the lit probability set by `density`.
+//   - brightness = blob coverage crossed (acc * step / cell_px), so one
+//     impulse's stroke has brightness ~1 whatever reach and grain are (a low-
+//     density blob peaks below 1: same expected coverage, dimmer peak).
 //   - a path that leaves the frame stops contributing (`alive` latch).
 //   - the step must not exceed the cell size (step <= cell_px) or cells can be
 //     skipped; at N = 16 this bounds reach against grain.
@@ -27,8 +29,9 @@
 //   reach    0..1  half-length of the march = reach * 0.25 * frame height
 //   grain    0..1  noise cell size, log: cells per frame height =
 //                  2^((1-grain)*6+3)
-//   density  0..1  lit-cell probability fill = 0.0025 * 2^(5*density)
-// out1 = (raw lit-cells-crossed, pres, 0, 1)
+//   density  0..1  impulse coverage = 0.0025 * 2^(5*density), via the
+//                  closed-form blob threshold
+// out1 = (raw blob-coverage-crossed, pres, 0, 1)
 
 // Hashes WITHOUT sin (Hoskins' "hash without sine"): sin(ix*127.1+iy*311.7)*43758
 // loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p
@@ -56,11 +59,26 @@ hash13(ha, hb, hc) {
     return fract((hx + hy) * hz);
 }
 
-lit_noise(cx, cy, cell_sz, fl) {
-    ix = floor(cx / cell_sz);
-    iy = floor(cy / cell_sz);
-    hv = hash12(ix, iy);
-    return 1.0 - step(fl, hv);
+// Band-limited blob impulse (2026-10-29; mirror: blob_noise / value_noise). Quintic value
+// noise on a lattice ROTATED 22.5 deg (cos 0.9238795, sin 0.3826834: the pixel's axis and
+// diagonal directions see the same noise), thresholded with a soft ramp. Replaces the lit
+// lattice cells, whose squares painted axis-aligned rectangles. bext = (W + H)/cell keeps
+// the lattice index positive after the rotation. Four hash12 taps per sample.
+blob_noise(cx, cy, cell_sz, bthr, bwid, bext) {
+    bu = (0.9238795 * cx - 0.3826834 * cy) / cell_sz + bext;
+    bv = (0.3826834 * cx + 0.9238795 * cy) / cell_sz + bext;
+    bi = floor(bu);
+    bj = floor(bv);
+    bfu = bu - bi;
+    bfv = bv - bj;
+    bfu = bfu * bfu * bfu * (bfu * (bfu * 6.0 - 15.0) + 10.0);
+    bfv = bfv * bfv * bfv * (bfv * (bfv * 6.0 - 15.0) + 10.0);
+    bh00 = hash12(bi, bj);
+    bh10 = hash12(bi + 1.0, bj);
+    bh01 = hash12(bi, bj + 1.0);
+    bh11 = hash12(bi + 1.0, bj + 1.0);
+    bn = (bh00 * (1.0 - bfu) + bh10 * bfu) * (1.0 - bfv) + (bh01 * (1.0 - bfu) + bh11 * bfu) * bfv;
+    return smoothstep(bthr - bwid, bthr + bwid, bn);
 }
 
 Param reach(0.5);
@@ -75,7 +93,11 @@ y0 = norm.y * hpx;
 half_len = reach * 0.25 * hpx;
 h_step = half_len / 16.0;
 cell_px = hpx / pow(2.0, (1.0 - grain) * 6.0 + 3.0);
-fill_frac = 0.0025 * pow(2.0, 5.0 * density);
+// blob threshold: a closed-form cubic in density, fit so the soft-ramped coverage equals the
+// lit probability 0.0025 * 2^(5 density) (mirror BLOB_THR; blob_fit.py; worst error 3.2%)
+blob_thr = 0.999341 + density * (-0.092880 + density * (0.011592 + density * -0.084665));
+blob_wid = 0.079065;                  // 0.35 * 0.2259 (BLOB_SOFT * BLOB_STD)
+blob_ext = (wpx + hpx) / cell_px;
 persist_pow = 0.5;
 
 ca0 = nearest(in1, norm).x;
@@ -87,7 +109,7 @@ ok0 = step(0.000001, m0);
 ca0 = mix(1.0, ca0 / max(m0, 0.000001), ok0);
 sa0 = mix(0.0, sa0 / max(m0, 0.000001), ok0);
 
-acc = lit_noise(x0, y0, cell_px, fill_frac);
+acc = blob_noise(x0, y0, cell_px, blob_thr, blob_wid, blob_ext);
 px = x0;
 py = y0;
 dx = 0.0;
@@ -130,7 +152,7 @@ for (side = 0; side < 2; side += 1) {
         py = clamp(ny, 0.5, hpx - 0.5);
         dx = ax;
         dy = ay;
-        acc = acc + alive * lit_noise(px, py, cell_px, fill_frac);
+        acc = acc + alive * blob_noise(px, py, cell_px, blob_thr, blob_wid, blob_ext);
     }
 }
 raw = acc * h_step / cell_px;
