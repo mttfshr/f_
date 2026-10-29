@@ -1,5 +1,16 @@
 # f_vf_emulsion (working name) — two materials in one flow
 
+> **Direction changed 2026-10-27.** The build direction is now a **separate
+> module**, not the fork described below: see `f_vf_immiscible.md` (a Cahn–Hilliard
+> phase field that takes two upstream velocity vecfields, one per phase, each
+> from its own `f_vf_fluid`, and blends them by φ) and `f_splat.md` (the drop of
+> ink or oil). This
+> file stays as the analysis record: the cost tiers, the "why one fluid is
+> structural" finding, the φ-source argument and the timescale discussion all
+> still hold. Where it says "fork" or proposes an anti-diffusion term for
+> immiscible behaviour, read `f_vf_immiscible.md` instead. The "Why a separate
+> module, not `f_vf_fluid` v2" section below is superseded.
+
 **Status:** idea only, not specced, not scheduled. Surfaced 2026-09-29 in
 conversation, immediately after `f_vf_fluid` reached its Phase 4 checkpoint.
 Not naming-locked. Would be a **fork of `f_vf_fluid`**, not a v2 of it — see

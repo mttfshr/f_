@@ -40,6 +40,11 @@ Whether `mix` should be a scalar param, a texture inlet, or both. Texture-driven
 
 ## Notes
 
+- **A concrete consumer exists (2026-10-27):** `f_vf_immiscible.md` returns a force
+  vecfield (buoyancy and surface tension) that must be added to the performer's
+  own stirring force before `f_vf_fluid`'s single force inlet, and a splat
+  impulse (`f_splat.md`) would be added the same way. Additive is the mode
+  that matters there.
 - Output must remain float32 RG to stay in the f_vecfield contract
 - Additive combination may need normalization or clamping to keep output in [0,1] range — need to decide whether to normalize or clip
 - This is infrastructure, not a visual generator — build when a specific signal chain need is felt in performance rather than speculatively
