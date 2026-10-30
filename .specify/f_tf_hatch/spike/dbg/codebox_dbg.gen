@@ -1,0 +1,44 @@
+// SCRATCH (not shipped): shows what Hatch's E1 actually receives and decodes from the live
+// tensor (Map -> Smooth). Same decode as src/f_tf_hatch/codebox_stage_e1.gen, no E2/E3.
+//
+//   view 0.00-0.25  RAW:       (R, G, B) of the tensor * gain mult. Neutral G = 0.5.
+//   view 0.25-0.50  COHERENCE: gray. High (bright) where the structure has a direction.
+//   view 0.50-0.75  AXIS:      R = 0.5 + 0.5 cos(along), G = 0.5 + 0.5 sin(along). Smooth
+//                              colour regions that follow contours = a good axis.
+//   view 0.75-1.00  PRESENCE:  gray (the floor gate).
+//   gain 0..1       multiplier for RAW view: 10^((gain - 0.5) * 4), 0.5 = x1 (0.01 .. 100).
+
+Param view(0.0);
+Param gain(0.5);
+Param structure_floor(0.1);
+Param bypass_gate(0.0);
+
+eps_trace = 0.0001;
+mult = pow(10.0, (gain - 0.5) * 4.0);
+
+rr = sample(in1, norm).r;
+gg = sample(in1, norm).g;
+bb = sample(in1, norm).b;
+jxx = rr;
+jxy = (gg - 0.5) * 2.0;
+jyy = bb;
+trace = jxx + jyy;
+diff = jxx - jyy;
+root = sqrt(diff*diff + 4.0*jxy*jxy);
+theta = 0.5 * atan2(2.0*jxy, diff);
+iso = 1.0 - step(eps_trace, trace);
+coh = clamp(root / max(trace, eps_trace), 0.0, 1.0) * (1.0 - iso);
+ca = cos(theta + halfpi) * (1.0 - iso);
+sa = sin(theta + halfpi) * (1.0 - iso);
+thr = structure_floor * structure_floor;
+pres = smoothstep(0.5 * thr, 1.5 * thr + 0.000001, rr + bb) * (1.0 - iso);
+
+v0 = 1.0 - step(0.25, view);
+v1 = step(0.25, view) * (1.0 - step(0.5, view));
+v2 = step(0.5, view) * (1.0 - step(0.75, view));
+v3 = step(0.75, view);
+outr = v0 * rr * mult + v1 * coh + v2 * (0.5 + 0.5 * ca) + v3 * pres;
+outg = v0 * gg * mult + v1 * coh + v2 * (0.5 + 0.5 * sa) + v3 * pres;
+outb = v0 * bb * mult + v1 * coh + v3 * pres;
+keep = 1.0 - bypass_gate;
+out1 = vec(outr * keep, outg * keep, outb * keep, 1.0);

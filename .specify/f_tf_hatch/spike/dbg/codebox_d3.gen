@@ -1,0 +1,42 @@
+// SCRATCH (not shipped): display stage after the REAL E1 and E2 codeboxes. in1 = E2's output
+// (raw, pres, 0, 1); in2 = E1's aux (ca, sa, coh, pres), the SAME texture E2 reads.
+//
+//   view 0.0-0.2  E2 RAW:     the march result before E3 styling, gray = raw * gain mult
+//   view 0.2-0.4  AXIS:       R = 0.5 + 0.5 ca, G = 0.5 + 0.5 sa (E1 aux as the next stage sees it).
+//                             Negative components should reach below 0.5; if R and G never go
+//                             darker than half-bright, the texture hand-off is clamping signs.
+//   view 0.4-0.6  COHERENCE:  gray (E1 aux z)
+//   view 0.6-0.8  PRESENCE:   gray (E1 aux w)
+//   view 0.8-1.0  DIM BARS:   top bar = dim.x/2048 of the width, middle = dim.y/2048, bottom = fixed
+//                             reference 640/2048. Shows what `dim` is in this stage.
+//   gain 0..1     multiplier for the E2 RAW view: 10^((gain - 0.5) * 4), 0.5 = x1.
+
+Param view(0.0);
+Param gain(0.5);
+Param bypass_gate(0.0);
+
+mult = pow(10.0, (gain - 0.5) * 4.0);
+rawv = nearest(in1, norm).x;
+cax = nearest(in2, norm).x;
+cay = nearest(in2, norm).y;
+ccz = nearest(in2, norm).z;
+cpw = nearest(in2, norm).w;
+
+// three horizontal bands: top = dim.x/2048 of the width, middle = dim.y/2048, bottom = a fixed
+// reference of 640/2048 (31%). dim 1x1 shows no bar in the top two; 640x480 shows 31% and 23%.
+bandy = floor(norm.y * 3.0);
+bb0 = 1.0 - step(1.0, bandy);
+bb1 = step(1.0, bandy) * (1.0 - step(2.0, bandy));
+bb2 = step(2.0, bandy);
+chk = bb0 * step(norm.x, dim.x / 2048.0) + bb1 * step(norm.x, dim.y / 2048.0) + bb2 * step(norm.x, 0.3125);
+
+v0 = 1.0 - step(0.2, view);
+v1 = step(0.2, view) * (1.0 - step(0.4, view));
+v2 = step(0.4, view) * (1.0 - step(0.6, view));
+v3 = step(0.6, view) * (1.0 - step(0.8, view));
+v4 = step(0.8, view);
+outr = v0 * rawv * mult + v1 * (0.5 + 0.5 * cax) + v2 * ccz + v3 * cpw + v4 * chk;
+outg = v0 * rawv * mult + v1 * (0.5 + 0.5 * cay) + v2 * ccz + v3 * cpw + v4 * chk;
+outb = v0 * rawv * mult + v2 * ccz + v3 * cpw + v4 * chk;
+keep = 1.0 - bypass_gate;
+out1 = vec(outr * keep, outg * keep, outb * keep, 1.0);
