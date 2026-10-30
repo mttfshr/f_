@@ -275,8 +275,8 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
              noise="blobs", texture=None, coh_floor=0.0):
     """Streamline march. `coh_floor` (0..1, default 0 = off) ends a stroke where the coherence along its path drops:
     each step's contribution is scaled by smoothstep(coh_floor - 0.2, coh_floor, coherence at the step's start),
-    which is exactly 1 at coh_floor = 0 (2026-10-29, the "Terminate" look: an undirected pixel keeps only its OWN
-    impulse: a blob dot, or the stroke texture unstreaked). `texture` (an RGBA array, the optional stroke-texture inlet) replaces the
+    which is exactly 1 at coh_floor = 0 (2026-10-29, "Terminate"), and the pixel's own presence is scaled by the same
+    ramp on its OWN coherence, so an undirected region goes BLACK (Matt chose black over the pixel's own dot). `texture` (an RGBA array, the optional stroke-texture inlet) replaces the
     impulse source (see above; it needs `fill`, from which Density is taken). `noise` picks the sparse impulse source ("blobs": band-limited value
     noise, the 2026-10-29 default; "cells": the original lit lattice cells, kept as the A/B
     reference); it only applies when `fill` is set (sparse). For each pixel, walk n_steps each way along the local
@@ -351,7 +351,9 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
         # sparse: lit CELLS crossed, so one impulse's stroke has brightness ~1 whatever
         # `length` and `grain` are (each sample spans step/cell_px of a cell)
         raw = (acc * F32(step / cell_px)).astype(F32)
-    pres = s0[..., 3]
+    # Coh Floor also fades the pixel itself to black, by the same ramp on its OWN coherence (Matt, 2026-10-29:
+    # the own-mark dots of an undirected pixel read as bright dots, not as black). Exactly 1 at coh_floor 0.
+    pres = (s0[..., 3] * _smoothstep(F32(coh_floor) - F32(COH_RAMP), F32(coh_floor), s0[..., 2])).astype(F32)
     return g.store_float32(np.stack([raw, pres, np.zeros_like(raw), np.ones_like(raw)], -1))
 
 

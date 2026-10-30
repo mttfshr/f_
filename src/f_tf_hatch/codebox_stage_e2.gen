@@ -39,8 +39,9 @@
 // COHERENCE FLOOR (2026-10-29; mirror: coh_floor; Matt's choice, "Terminate", from the Clouds / Dark / Terminate
 // sheet; this supersedes spec OQ1's "coherence only as persistence" for coh_floor > 0). Each step's contribution is
 // scaled by smoothstep(coh_floor - 0.2, coh_floor, coherence at the step's start): strokes end where direction is
-// lost. An undirected pixel keeps only its OWN impulse: a blob dot, or the stroke texture unstreaked. At 0 the factor
-// is exactly 1, so the default is today's look bit for bit. Costs one smoothstep and one multiply per step.
+// lost, and the pixel's own presence (what E3 multiplies by) is scaled by the same ramp on its OWN coherence, so an
+// undirected region goes BLACK (Matt, 2026-10-29: keeping the pixel's own mark read as bright dots, not black). At 0
+// both factors are exactly 1, so the default is today's look bit for bit. One smoothstep and one multiply per step.
 //
 // STROKE TEXTURE (2026-10-29; mirror: texture_coord / texture_impulse): with in2 connected the impulse is
 // the texture's Rec.709 luma, soft-thresholded, instead of a blob; the marks are then the texture streaked
@@ -135,6 +136,7 @@ tex_thr = 1.1 - 1.2 * density;
 ca0 = nearest(in1, norm).x;
 sa0 = nearest(in1, norm).y;
 pres0 = nearest(in1, norm).w;
+coh0 = nearest(in1, norm).z;     // this pixel's own coherence (the Coh Floor black-out)
 // unset axis (0, 0) -> a fixed fallback axis (E3 multiplies by presence 0 there)
 m0 = sqrt(ca0 * ca0 + sa0 * sa0);
 ok0 = step(0.000001, m0);
@@ -208,4 +210,4 @@ for (side = 0; side < 2; side += 1) {
     }
 }
 raw = mix(acc * h_step / cell_px, acc / wsum, tex_on);
-out1 = vec(raw, pres0, 0.0, 1.0);
+out1 = vec(raw, pres0 * smoothstep(coh_floor - 0.2, coh_floor, coh0), 0.0, 1.0);   // 1 exactly at coh_floor 0

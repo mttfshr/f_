@@ -19,6 +19,7 @@ from harness import note as _note  # noqa: E402
 from tf_hatch_mirror import (COH_RAMP, F32, blob_noise, chain, fill_from_density, noise_at,  # noqa: E402
                              texture_coord, texture_impulse)
 from tf_hatch_mirror import _smoothstep  # noqa: E402
+from tf_hatch_mirror import stage_e1, stage_e2  # noqa: E402
 
 
 def note(msg):
@@ -491,37 +492,45 @@ def test_15_coherence_floor_zero_is_exactly_off():
     check("coh_floor 0.5: 0 below 0.3, 1 above 0.5", float(max(f5[c <= 0.3].max(), (1.0 - f5[c >= 0.5]).max())), 1e-6)
 
 
-def test_16_coherence_floor_ends_strokes_where_direction_is_lost():
+def test_16_coherence_floor_blacks_out_undirected_regions_and_keeps_the_coherent_ones():
     """Blobs. Left half coherent, right half isotropic. With coh_floor 0.5 the coherent half keeps its
-    strokes (>= 90% of its output; the band by the seam is excluded) and the undirected half keeps only
-    each pixel's own blob dot (<= 50% of its output; in fact about one step in 33)."""
+    strokes (>= 90% of its output; the band by the seam is excluded) and the undirected half is BLACK
+    (its presence is scaled by smoothstep(0.3, 0.5, 0) = 0, so exactly 0)."""
     tex = _split_field()
     kw = dict(fill=float(fill_from_density(0.4)), length=0.25, grain=0.62)
     off = raw_field(chain(tex, coh_floor=0.0, **kw))
     on = raw_field(chain(tex, coh_floor=0.5, **kw))
     left, right = (slice(None), slice(8, W // 2 - 12)), (slice(None), slice(W // 2 + 12, W - 8))
     m_left = float(on[left].mean() / max(off[left].mean(), 1e-9))
-    m_right = float(on[right].mean() / max(off[right].mean(), 1e-9))
-    note(f"output kept with coh_floor 0.5: coherent half {100 * m_left:.0f}%, undirected half {100 * m_right:.0f}%")
+    note(f"output kept with coh_floor 0.5: coherent half {100 * m_left:.0f}%, undirected half max {float(on[right].max()):.2e}")
     check("the coherent half keeps >= 90% of its output", 0.0 if m_left >= 0.9 else 1.0, 0.0)
-    check("the undirected half falls to <= 50% of its output", 0.0 if m_right <= 0.5 else 1.0, 0.0)
+    check("the undirected half is black (max output <= 1e-6)", float(on[right].max()), 1e-6)
 
 
-def test_17_texture_shows_through_unstreaked_where_there_is_no_direction():
-    """Stroke texture. In the undirected half the march ends at once, so what remains is the thresholded
-    texture itself, an independent value per pixel (1/e length <= 1.5 px) -- where with the floor off the
-    random walk averages 33 samples of it (measured about half the contrast: 0.22 against 0.43, after E3's clamp)."""
+def test_17_texture_mode_blacks_out_undirected_regions_too():
+    """Stroke texture, the same split field: the coherent half keeps its streaked texture (>= 90%) and the
+    undirected half is black, not the texture showing through."""
     tex = _split_field()
     kw = dict(fill=float(fill_from_density(0.3)), length=0.25, grain=1.0, texture=_noise_tex(0))
     off = raw_field(chain(tex, coh_floor=0.0, **kw))
     on = raw_field(chain(tex, coh_floor=0.5, **kw))
-    region = (slice(None), slice(W // 2 + 12, W - 8))
-    l_on = autocorr_lengths(on[region])[0]
-    sd_off, sd_on = float(off[region].std()), float(on[region].std())
-    note(f"undirected half: 1/e length floor 0.5 {l_on:.2f} px; contrast (std) floor off {sd_off:.3f}, floor 0.5 {sd_on:.3f}")
-    check("floor 0.5: the texture shows through unstreaked (1/e length <= 1.5 px)", 0.0 if l_on <= 1.5 else 1.0, 0.0)
-    check("floor 0.5: the single texture sample has >= 1.5x the contrast of the 33-sample random-walk mean",
-          0.0 if sd_on >= 1.5 * sd_off else 1.0, 0.0)
+    left, right = (slice(None), slice(8, W // 2 - 12)), (slice(None), slice(W // 2 + 12, W - 8))
+    m_left = float(on[left].mean() / max(off[left].mean(), 1e-9))
+    note(f"texture, coh_floor 0.5: coherent half keeps {100 * m_left:.0f}%, undirected half max {float(on[right].max()):.2e}")
+    check("texture: the coherent half keeps >= 90% of its output", 0.0 if m_left >= 0.9 else 1.0, 0.0)
+    check("texture: the undirected half is black (max output <= 1e-6)", float(on[right].max()), 1e-6)
+
+
+def test_18_coherence_floor_scales_presence_by_the_pixels_own_coherence():
+    """E2's presence channel (what E3 multiplies by) = presence x smoothstep(floor - 0.2, floor, the pixel's own
+    coherence): checked in the ramp (coherence 0.4, floor 0.5 -> 0.5) and exactly untouched at floor 0."""
+    aux = stage_e1(field(0.0, 0.4), 0.0, 0.0, "unsigned_nearest")
+    kw = dict(length=0.25, grain=0.62, aux_mode="unsigned_nearest", fill=float(fill_from_density(0.4)))
+    off, on = stage_e2(aux, coh_floor=0.0, **kw), stage_e2(aux, coh_floor=0.5, **kw)
+    want = (aux[..., 3] * _smoothstep(F32(0.3), F32(0.5), aux[..., 2])).astype(F32)
+    note(f"in the ramp: own coherence {float(aux[..., 2].mean()):.2f}, presence factor {float((on[..., 1] / np.maximum(aux[..., 3], 1e-9)).mean()):.2f}")
+    check("floor 0.5: presence = presence x smoothstep(0.3, 0.5, own coherence)", float(np.abs(on[..., 1] - want).max()), 1e-6)
+    check("floor 0: the presence channel is untouched", float(np.abs(off[..., 1] - aux[..., 3]).max()), 0.0)
 
 
 if __name__ == "__main__":
