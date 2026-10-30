@@ -72,8 +72,6 @@ diagnoses on sight, but never wire it. Nothing mechanically sniffs the input.
 | `softness` | 0-1 | 0.1 | Edge falloff, independent of thickness (f_weave convention). |
 | `gate` | 0-1 | 0.05 | Draw threshold on the delivered trace. |
 | `max_aspect` | 1-32 | 8 | Clamp so near-degenerate λ2 can't draw infinitely thin spikes. |
-| `width` | 64-8192 | 640 | Render width in pixels. Set it to the real frame width: it sets the clamped-tap texel step. (Live `jit.gl.pix` cannot read its own size, so this is exposed for now.) |
-| `height` | 64-8192 | 480 | Render height in pixels. Set it to the real frame height. |
 | `bypass` | 0/1 | 0 | **Passthrough of the source texture** at the current pixel — not a neutral frame (glyph = passthrough per the family contract). |
 
 **Every default above is provisional**, pending the live judgment tier
@@ -165,7 +163,12 @@ stays open for tier-3 live judgment.
 - Bench GPU wraps out-of-range texture reads; cell-tap coordinates are clamped
   in-shader to texel centers (tensormap ADR-5).
 - `dim` reads 1 inside live jit.gl.pix, so `width`/`height` are Params (the
-  tensormap precedent); they enter only through the texel-center clamp.
+  tensormap precedent); they enter only through the texel-center clamp. Since
+  2026-10-30 they are INTERNAL (the Width / Height dials are removed): Vsynth's
+  render size drives them through the builder's `render_dim`, and the pix is
+  `@adapt 0`, so the glyph composite is rendered at the render size, with nothing
+  to set. The tensor and source inputs are assumed render-sized (as the clamp
+  already did).
 - The decode idiom's custodian is this module's plan ADR-2; guard its text.
 - Unconnected `jit.gl.pix` inlets read (0,0,0,1) (bench-verified 2026-10-07);
   for inlet 1 that lands on luma 0 → neutral white ink, as intended.

@@ -78,10 +78,8 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 8,
+					"numoutlets": 6,
 					"outlettype": [
-						"",
-						"",
 						"",
 						"",
 						"",
@@ -92,10 +90,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						583.0,
+						439.0,
 						22.0
 					],
-					"text": "route grid glyph_scale thickness softness gate max_aspect width height"
+					"text": "route grid glyph_scale thickness softness gate max_aspect"
 				}
 			},
 			{
@@ -243,7 +241,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_glyph_pix",
+					"text": "jit.gl.pix vsynth @name #0_glyph_pix @adapt 0 @dim 256 256",
 					"varname": "#0_glyph_pix"
 				}
 			},
@@ -1213,188 +1211,6 @@
 			{
 				"box": {
 					"id": "obj-38",
-					"maxclass": "live.numbox",
-					"fontname": "Ableton Sans Light",
-					"hint": "Render width in pixels. Set to the real frame width: it sets the clamped-tap texel step. (Live jit.gl.pix cannot read its own size, so this is exposed for now.)",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_glyph_pix::width",
-					"parameter_enable": 1,
-					"patching_rect": [
-						470.0,
-						250.0,
-						44.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						41.0,
-						100.0,
-						34.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_initial": [
-								640.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "width",
-							"parameter_mmax": 8192.0,
-							"parameter_mmin": 64.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "width",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"varname": "width"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-39",
-					"maxclass": "attrui",
-					"attr": "width",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						458.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-40",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						467.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						29.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Width",
-					"textjustification": 1,
-					"varname": "lbl_width"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-41",
-					"maxclass": "live.numbox",
-					"fontname": "Ableton Sans Light",
-					"hint": "Render height in pixels. Set to the real frame height.",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_glyph_pix::height",
-					"parameter_enable": 1,
-					"patching_rect": [
-						542.0,
-						250.0,
-						44.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						78.0,
-						100.0,
-						34.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_initial": [
-								480.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "height",
-							"parameter_mmax": 8192.0,
-							"parameter_mmin": 64.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "height",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"varname": "height"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-42",
-					"maxclass": "attrui",
-					"attr": "height",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						530.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-43",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						539.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						66.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Height",
-					"textjustification": 1,
-					"varname": "lbl_height"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-44",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1422,7 +1238,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-45",
+					"id": "obj-39",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1436,6 +1252,132 @@
 						22.0
 					],
 					"text": "prepend param bypass_gate"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-0",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						542.0,
+						40.0,
+						22.0
+					],
+					"text": "r dim",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-5",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						542.0,
+						60.0,
+						22.0
+					],
+					"text": "loadbang",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-6",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						572.0,
+						70.0,
+						22.0
+					],
+					"text": "s trig_res",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": []
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-1",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						542.0,
+						60.0,
+						22.0
+					],
+					"text": "route dim",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-2",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						572.0,
+						60.0,
+						22.0
+					],
+					"text": "unpack i i",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"int",
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-3",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						602.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param width",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-4",
+					"maxclass": "newobj",
+					"patching_rect": [
+						160.0,
+						602.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param height",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
 				}
 			}
 		],
@@ -1539,11 +1481,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-44",
+						"obj-38",
 						0
 					],
 					"destination": [
-						"obj-45",
+						"obj-39",
 						0
 					]
 				}
@@ -1551,7 +1493,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-45",
+						"obj-39",
 						0
 					],
 					"destination": [
@@ -1839,11 +1781,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-4",
-						6
+						"obj-rd-5",
+						0
 					],
 					"destination": [
-						"obj-38",
+						"obj-rd-6",
 						0
 					]
 				}
@@ -1851,19 +1793,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-38",
-						0
-					],
-					"destination": [
-						"obj-39",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-39",
+						"obj-rd-0",
 						0
 					],
 					"destination": [
@@ -1875,11 +1805,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-4",
-						7
+						"obj-rd-0",
+						0
 					],
 					"destination": [
-						"obj-41",
+						"obj-rd-1",
 						0
 					]
 				}
@@ -1887,11 +1817,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-41",
+						"obj-rd-1",
 						0
 					],
 					"destination": [
-						"obj-42",
+						"obj-rd-2",
 						0
 					]
 				}
@@ -1899,7 +1829,43 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-42",
+						"obj-rd-2",
+						0
+					],
+					"destination": [
+						"obj-rd-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						1
+					],
+					"destination": [
+						"obj-rd-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-3",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-4",
 						0
 					],
 					"destination": [
@@ -1938,16 +1904,6 @@
 			"obj-35": [
 				"max_aspect",
 				"max_aspect",
-				0
-			],
-			"obj-38": [
-				"width",
-				"width",
-				0
-			],
-			"obj-41": [
-				"height",
-				"height",
 				0
 			],
 			"parameterbanks": {

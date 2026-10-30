@@ -40,6 +40,17 @@ patcher = {
 
     "codebox": (_HERE / "codebox_glyph.gen").open(newline="").read(),
 
+    # Render size (2026-10-30, Matt: Width / Height dials removed, output follows the render size): the pix is
+    # `@adapt 0`, sized by Vsynth's render size through render_dim, which also drives the internal width / height
+    # Params (the clamped-tap texel step; `dim` reads 1 in a live jit.gl.pix). No @type: the glyph keeps its output type.
+    "pix_attrs": "@adapt 0 @dim 256 256",
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["primary"],
+        "size_stages":  ["primary"],
+    },
+
     "outlets": [
         {"comment": "glyph composite",
          "hint": "One closed-form ellipse glyph per grid cell over the raw tensor: "
@@ -104,26 +115,13 @@ patcher = {
             "hint": "Clamp on the ellipse aspect so near-degenerate tensors do not "
                     "draw infinitely thin spikes. PROVISIONAL (TG020).",
         },
-        {
-            "name": "width", "type": "float",
-            "min": 64.0, "max": 8192.0, "default": 640.0,
-            "widget": "numbox",
-            "hint": "Render width in pixels. Set to the real frame width: it sets the "
-                    "clamped-tap texel step. (Live jit.gl.pix cannot read its own size, "
-                    "so this is exposed for now.)",
-            "label": "Width",
-        },
-        {
-            "name": "height", "type": "float",
-            "min": 64.0, "max": 8192.0, "default": 480.0,
-            "widget": "numbox",
-            "hint": "Render height in pixels. Set to the real frame height.",
-            "label": "Height",
-        },
+        {"name": "width",  "type": "internal"},   # render size, driven by Vsynth (render_dim)
+        {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 }
 
 # Layout: six controls in two rows under the title, on the library's 5-column,
 # 190 px grid (the frame was 154 x 84 and cropped the right dials and the second row).
+# (2026-10-30: the Width / Height numboxes are gone; the builder lays out the six that remain.)
 patcher["overrides"] = {}
