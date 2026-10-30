@@ -10,6 +10,7 @@ F32 = np.float32
 H = W = 64
 
 TAPS_STATIONS = 8            # per side; total taps = 1 + 2*8*3 = 49 = TAPS_MAX
+SPACING_DIV = F32(8.0)       # station spacing = max(1, L / 8) px (2026-10-30): the reach grows with the same 49 taps
 EPS_TRACE = F32(1e-6)
 EPS_SPD = F32(1e-4)
 EPS_ROOT = F32(1e-6)
@@ -128,6 +129,10 @@ def aniso_pass(tensor, source, *, s_scale=S_SCALE, length=LENGTH, w_gate=W_GATE,
     inv_ll2 = F32(2.0) / np.maximum(l_f * l_f, F32(1e-12))   # 2/L^2
     sig_d = np.maximum(F32(0.5) * d_f, F32(1e-6)).astype(F32)  # D/2 px
     step_mass = F32(1.0 / density)                # quadrature per-step mass
+    # Station spacing (2026-10-30), from the pixel's own semi-length: 1 px up to L = 8 (the kernel as shipped before),
+    # then L/8 px so the 49 taps keep a constant quarter-sigma step and the reach grows with Length (up to 48).
+    spacing = (np.ones_like(l_f) if mutation == "no_spacing"
+               else np.maximum(F32(1.0), l_f / SPACING_DIV)).astype(F32)
 
     acc = np.zeros((Hh, Ww, 4), F32)
     wsum = np.zeros((Hh, Ww), F32)
@@ -139,7 +144,7 @@ def aniso_pass(tensor, source, *, s_scale=S_SCALE, length=LENGTH, w_gate=W_GATE,
 
     n_station = int(round(TAPS_STATIONS * density))
     for k in range(1, n_station + 1):
-        umag = F32(k - 0.5) / F32(density)
+        umag = (F32(k - 0.5) / F32(density) * spacing).astype(F32)
         for sgn in (F32(1.0), F32(-1.0)):
             u = sgn * umag
             g_u = (np.exp(-(u * u) * inv_ll2) * step_mass).astype(F32)

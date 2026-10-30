@@ -105,7 +105,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nstrength_scale [0 \u2013 2]\nlength [0 \u2013 8]\nwidth_gate [0 \u2013 1]\nfloor_pct [0 \u2013 1]\nstrength [1 \u2013 1000]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nstrength_scale [0 \u2013 2]\nlength [0 \u2013 48]\nwidth_gate [0 \u2013 1]\nfloor_pct [0 \u2013 1]\nstrength [1 \u2013 1000]\nbypass [0 / 1]",
      "fontsize": 12.0,
      "linecount": 8
     }

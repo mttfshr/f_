@@ -106,14 +106,17 @@ patcher = {
         },
         {
             "name": "length", "type": "float",
-            "min": 0.0, "max": 8.0, "default": 4.0,
+            "min": 0.0, "max": 48.0, "default": 4.0,
+            "exponent": 2.0,
             "label": "Length",
             "hint": "Kernel semi-length in pixels along the structure axis. "
-                    "0 = no blur at all (identity). Range top 8 = "
-                    "TAPS_MAX 49 (1 + 2*8 stations * 3 transverse taps); "
-                    "PROVISIONAL -- tier-3 pending. COST SCALES WITH "
-                    "TAPS_MAX (the compile-time loop), NOT this dial: "
-                    "turning it down saves no frame time.",
+                    "0 = no blur at all (identity). Up to 8 px the 49 taps sit "
+                    "1 px apart; above 8 the tap spacing grows (= Length/8 px) "
+                    "so the same 49 taps reach further, up to 48 px (the Gaussian "
+                    "sigma is half the length). Curved dial: fine control at the "
+                    "low end. PROVISIONAL -- tier-3 pending. COST SCALES WITH "
+                    "TAPS_MAX (the compile-time loop), NOT this dial: turning it "
+                    "down saves no frame time.",
         },
         {
             "name": "width_gate", "type": "float",

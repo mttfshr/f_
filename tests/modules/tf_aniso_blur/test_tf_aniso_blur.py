@@ -666,5 +666,58 @@ def test_adr2_family_b_ellipse_grid_reference():
     print("    ok   ADR-2 family (a)/(b) artifact comparison recorded as data")
 
 
+# ------------------------------------------------------------------ Length 0-48: station spacing (2026-10-30)
+
+def _edge_profile(length, mutation=None):
+    """The centre row of a vertical step edge blurred isotropically (the vs_black tensor takes the guard path:
+    L = length, circular kernel, axis = x)."""
+    src = np.zeros((H, W, 4), F32)
+    src[:, W // 2:, :3] = 1.0
+    src[..., 3] = 1.0
+    return aniso_pass(VS_BLACK, src, length=F32(length), mutation=mutation)[H // 2, :, 0]
+
+
+def _width_10_90(p):
+    p = np.maximum.accumulate(p.astype(np.float64))
+    xs = np.arange(len(p)) + 0.5
+    return float(np.interp(0.9, p, xs) - np.interp(0.1, p, xs))
+
+
+def test_spacing_is_identity_up_to_length_8():
+    src = noise_tex(7)
+    for tens, nm in ((VS_BLACK, "vs_black"), (NEUTRAL, "neutral")):
+        for L in (0.5, 3.0, 8.0):
+            a = aniso_pass(tens, src, length=F32(L))
+            b = aniso_pass(tens, src, length=F32(L), mutation="no_spacing")
+            check(f"{nm}, length {L}: spacing 1 (bit-identical to the pre-2026-10-30 kernel)", float(np.abs(a - b).max()), 0.0)
+
+
+def test_long_length_reaches_further():
+    w8, w24 = _width_10_90(_edge_profile(8.0)), _width_10_90(_edge_profile(24.0))
+    w24_mut = _width_10_90(_edge_profile(24.0, "no_spacing"))
+    note("10-90% width of a blurred step (px): L=8, L=24, L=24 with the spacing disabled", (round(w8, 2), round(w24, 2), round(w24_mut, 2)))
+    check("L=24 reaches ~3x further than L=8 (expect ratio 2.4+)", 0.0 if w24 >= 2.4 * w8 else w24 / w8, 0.0)
+    check("the no-spacing mutation does not (the test discriminates)", 0.0 if w24_mut < 1.8 * w8 else w24_mut / w8, 0.0)
+
+
+def test_long_length_matches_an_independent_1d_model():
+    """The spaced kernel written standalone in 1-D (a step source is constant in y, so the transverse taps drop
+    out: their mass is 0.25 + 0.5 + 0.25 = 1): centre weight 1, stations u = +-(k-0.5)*max(1, L/8),
+    weights exp(-2u^2/L^2), bilinear reads between texel centres, edge-clamped."""
+    for L in (12.0, 24.0, 48.0):
+        s = max(1.0, L / 8.0)
+        row = np.where(np.arange(W) >= W // 2, 1.0, 0.0)
+        xs = np.arange(W) + 0.5
+        f = lambda p: np.interp(p - 0.5, np.arange(W), row)
+        num, den = f(xs), 1.0
+        for k in range(1, 9):
+            for sg in (1.0, -1.0):
+                u = sg * (k - 0.5) * s
+                gu = np.exp(-2.0 * u * u / (L * L))
+                num = num + gu * f(xs + u)
+                den += gu
+        check(f"L={L:g}: matches the independent 1-D model", float(np.abs(_edge_profile(L) - num / den).max()), 1e-5)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

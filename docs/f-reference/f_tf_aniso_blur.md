@@ -91,7 +91,7 @@ gain channel, or ratio gating) reopen — do not "fix" it silently.
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `strength_scale` | 0–2 | 0.5 | Energy→length gate gain: W = min(1, λ1·this). Calibrate together with tensormap's `strength`. |
-| `length` | 0–8 | 4 | Kernel semi-length in pixels along the structure axis. 0 = no blur at all (identity). |
+| `length` | 0–48 (curved dial) | 4 | Kernel semi-length in pixels along the structure axis. 0 = no blur at all (identity). Up to 8 px the taps sit 1 px apart; above 8 the tap spacing grows (= length/8 px), so the same 49 taps reach further (the Gaussian σ is half the length). |
 | `width_gate` | 0–1 | 0.5 | Coherence gate: 0 = always circular, 1 = full coherence response. |
 | `floor_pct` | 0–1 | 0.25 | Width floor (labeled "Floor"): minimum isotropic fraction everywhere. 0 = no smoothing where there is no structure; 1 = fully isotropic. |
 | `strength` | 1–1000 (log) | 100 | **The value tensormap's `strength` dial is set to** (the G-decode pairing above). Not an effect control. |
@@ -100,8 +100,15 @@ gain channel, or ratio gating) reopen — do not "fix" it silently.
 **Render size (2026-10-30).** The module renders at Vsynth's render size: the pix is `@adapt 0`, and the internal `width` / `height` Params (the one-pixel tap step; `dim` reads 1 inside a live `jit.gl.pix`) are driven by it through the builder's `render_dim`, so `length` is in render pixels at any frame size and there is nothing to set. They were `Width` / `Height` dials until then. The tensor and source inputs are assumed render-sized.
 
 All four effect-knob defaults are **provisional** (tier-3 judgment pending);
-`length`'s range top is set by the kernel's compile-time tap budget:
-TAPS_MAX = 49 = 1 + 2·8 stations × 3 transverse taps.
+The tap budget is fixed: TAPS_MAX = 49 = 1 + 2·8 stations × 3 transverse taps.
+**Length above 8 px (2026-10-30)** grows the station *spacing*, not the tap count:
+`spacing = max(1, L/8)` px, taken from each pixel's own L (so the energy gate
+cannot undersample a shortened kernel). Up to 8 px the kernel is exactly the
+original (bit-identical); beyond it the steps stay a constant quarter-sigma, so the
+reach grows to 48 px at the same cost, but the absolute tap spacing grows with it
+(6 px at length 48) and may show as tap banding on smooth content — the family-(a)
+kernel's known trait, tier-3 judgment. (At an HD frame the old ceiling of 8 px — a
+Gaussian σ of 4 px — was subtle; this was found live 2026-10-30.)
 
 **`length` cost does not scale with the dial.** The loop runs to the fixed
 TAPS_MAX and weights unused taps to zero — same fact as tensormap's

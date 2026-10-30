@@ -99,6 +99,10 @@ def test_matches_mirror_at_knobs():
         ({"width_gate": 0.0}, "width_gate 0 exact-iso"),
         ({"floor_pct": 1.0}, "floor 1 exact-iso"),
         ({"strength_scale": 2.0, "length": 8.0}, "long kernel"),
+        # 2026-10-30: Length up to 48, station spacing max(1, L/8) px from the pixel's own L
+        ({"strength_scale": 2.0, "length": 24.0}, "Length 24 (spacing 3 px)"),
+        ({"strength_scale": 2.0, "length": 48.0}, "Length 48 (spacing 6 px)"),
+        ({"length": 24.0, "width_gate": 0.0}, "Length 24 exact-iso"),
     ]
     tens = _tensor_tex(64, 64, 3.0, 0.4, 45.0)
     for params, label in cases:

@@ -49,8 +49,9 @@
 // unclamped between stages of the math; only the guard (a route, not a
 // range clamp) and the sample-coordinate clamp exist.
 Param strength_scale(0.5);   // energy -> length gate gain (0-2) PROVISIONAL
-Param length(4.0);           // kernel semi-length in px (0-8: TAPS_MAX=49
-                             //   = 1 + 2*8 stations * 3 transverse taps)
+Param length(4.0);           // kernel semi-length in px (0-48; TAPS_MAX=49
+                             //   = 1 + 2*8 stations * 3 transverse taps; the
+                             //   station spacing grows above 8 px, below)
                              //   PROVISIONAL
 Param width_gate(0.5);       // coherence-response gate (0-1) PROVISIONAL
 Param floor_pct(0.25);       // width floor fraction (0-1) PROVISIONAL
@@ -133,6 +134,12 @@ sig_d = max(0.5*d_f, 1e-6);                 // transverse sigma = D/2 px
 ux_lo = 0.5/width; ux_hi = 1.0 - 0.5/width;
 uy_lo = 0.5/height; uy_hi = 1.0 - 0.5/height;
 
+// 2026-10-30 (Matt: too subtle at HD, the 8 px reach was a hard ceiling): the station spacing grows with the
+// PIXEL'S OWN semi-length above 8 px, so the same 49 taps reach further (Length up to 48). spc = max(1, L/8) px:
+// exactly 1 px (the kernel as shipped, bit-identical) for L <= 8, and a constant quarter-sigma step beyond it.
+// From l_f, not the dial: the energy gate W shortens l_f, and a shortened kernel must not be undersampled.
+spc = max(1.0, l_f * 0.125);
+
 // --- kernel: bounded loop, compile-time taps, weight-gated (cost scales
 //     with TAPS_MAX, not the dial -- say so in the docs) ------------------
 acc_r = 0.0; acc_g = 0.0; acc_b = 0.0; acc_a = 0.0; wsum = 0.0;
@@ -171,12 +178,12 @@ c_a = c00.a * (1.0 - c_ax) * (1.0 - c_ay) + c10.a * c_ax * (1.0 - c_ay)
 acc_r = c_r; acc_g = c_g; acc_b = c_b; acc_a = c_a;
 wsum = 1.0;
 
-// stations k = 1..8 per side at u = +-(k-0.5) px; three transverse taps
+// stations k = 1..8 per side at u = +-(k-0.5)*spc px; three transverse taps
 for (kk = 0; kk < 2.0 * taps; kk += 1.0) {
     // k = 1..taps; su = +1 then -1
     k = floor(kk * 0.5) + 1.0;
     su = 1.0 - 2.0 * mod(kk, 2.0);
-    umag = k - 0.5;
+    umag = (k - 0.5) * spc;                      // px; spacing 1 up to L = 8
     g_u = exp(-(umag*umag) * inv_ll2) / 1.0;   // 1 px station mass
     for (ts = 0; ts < 3.0; ts += 1.0) {
         // t = 0, +sig_d, -sig_d; weights 0.5 / 0.25 / 0.25
