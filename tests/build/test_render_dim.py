@@ -232,6 +232,47 @@ def test_param_stages_dict_is_loud():
         _eq(f"param_stages {bad}", raises(lambda: bp.build(d), needle), True)
 
 
+# ---- a SINGLE-pix module (definition `codebox`, no pix_chain): `pix_attrs` and render_dim on 'primary' (f_tf_glyph)
+
+def single_defn(**extra):
+    d = {"name": "f_t1", "prefix": "t1", "object_name": "#0_t1_pix", "title": "Test1", "signal_type": "texture",
+         "archetype": "processor", "presentation_width": 160, "presentation_height": 90,
+         "_def_path": str(TMP / "definition.py"),
+         "outlets": [{"comment": "out"}],
+         "codebox": "Param width(640.0);\nParam height(480.0);\nParam bypass_gate(0.0);\nout1 = in1;\n",
+         "params": [{"name": "width", "type": "internal"}, {"name": "height", "type": "internal"},
+                    {"name": "bypass", "type": "bypass"}]}
+    d.update(extra)
+    return d
+
+
+SRD = {"width_param": "width", "height_param": "height", "param_stages": ["primary"], "size_stages": ["primary"]}
+SATTRS = "@adapt 0 @dim 256 256 @type float32"
+
+
+def test_single_pix_pix_attrs_and_render_dim_on_primary():
+    top, cords = top_and_cords(single_defn(pix_attrs=SATTRS, render_dim=SRD))
+    pix = [i for i, b in top.items() if str(b.get("text", "")).startswith("jit.gl.pix")]
+    _eq("one pix", len(pix), 1)
+    txt = top[pix[0]]["text"]
+    _eq("the pix text carries pix_attrs verbatim and no generated @adapt 1", SATTRS in txt and "@adapt 1" not in txt, True)
+    c = lambda a, ao, b, bi: ((a, ao), (b, bi)) in cords
+    _eq("width, height and the `dim` message all reach the primary pix",
+        [c("obj-rd-3", 0, pix[0], 0), c("obj-rd-4", 0, pix[0], 0), c("obj-rd-0", 0, pix[0], 0)], [True] * 3)
+
+
+def test_single_pix_pix_attrs_is_loud():
+    for label, kw, needle in (("with pix_type", dict(pix_attrs=SATTRS, pix_type="float32"), "give one or the other"),
+                              ("with pix_adapt", dict(pix_attrs=SATTRS, pix_adapt=True), "give one or the other"),
+                              ("setting @name", dict(pix_attrs="@name x @adapt 0"), "must not set @name"),
+                              ("empty", dict(pix_attrs="  "), "non-empty string"),
+                              ("render_dim on primary without @adapt 0", dict(render_dim=SRD), "'primary' must set pix_attrs"),
+                              ("render_dim on primary with @adapt 1", dict(pix_attrs="@adapt 1 @type float32", render_dim=SRD),
+                               "'primary' must set pix_attrs")):
+        d = single_defn(**kw)
+        _eq(f"single pix {label}", raises(lambda: bp.build(d), needle), True)
+
+
 # ---- STATIC: a codebox that reads `dim` must be given the render size another way
 
 # Modules whose code reads `dim` today and declare nothing: the latent bug (`dim` reads 1 live), found

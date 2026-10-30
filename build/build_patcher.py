@@ -1061,11 +1061,21 @@ def pix_text(name, type_attr, adapt_attr, pix_context="arg"):
 
 
 def pix_box(p, object_name, codebox, archetype, mod_inlets=None, pix_type=None, outlets=None, adapt=False, driving_inlet=False,
-            render_trigger="rdraw", pix_context="arg", varname=None):
+            render_trigger="rdraw", pix_context="arg", varname=None, pix_attrs=None):
     mod_inlets = mod_inlets or []
     outlets    = outlets or [{"comment": "texture out"}]
     type_attr  = f" @type {pix_type}" if pix_type else ""
     adapt_attr = " @adapt 1" if adapt else ""
+    # pix_attrs (2026-10-30): the pix's attributes as one verbatim string, in place of the generated `@type` /
+    # `@adapt`, as a pix_chain node's `pix_attrs` (f_tf_glyph: "@adapt 0 @dim 256 256 @type float32", sized by render_dim).
+    if pix_attrs is not None:
+        if not isinstance(pix_attrs, str) or not pix_attrs.strip():
+            raise ValueError(f"pix_attrs must be a non-empty string, not {pix_attrs!r}")
+        if pix_type or adapt:
+            raise ValueError("pix_attrs replaces pix_type/pix_adapt; give one or the other")
+        if "@name" in pix_attrs:
+            raise ValueError("pix_attrs must not set @name (object_name does)")
+        type_attr, adapt_attr = " " + pix_attrs.strip(), ""
     n_outer_inlets = len(mod_inlets) if driving_inlet else 1 + len(mod_inlets)
     n_outlets      = len(outlets)
     outlettype     = ["jit_gl_texture"] * n_outlets + [""]
@@ -1354,7 +1364,7 @@ def check_port_order(boxes):
                              f"order (Max orders ports by x): {ports}")
 
 
-def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
+def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain, primary_pix_attrs=""):
     """The render-size plumbing (definition key `render_dim`, added 2026-10-29).
 
     WHY: `dim` reads 1 inside a live Vsynth jit.gl.pix, regardless of @adapt/@type (tensormap T012,
@@ -1460,6 +1470,9 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
     s_objs = nodes(size_stages, "size_stages") if size_stages else []
     for ref in ([size_stages] if isinstance(size_stages, str) else size_stages):
         node = chain_nodes.get(ref)
+        if ref == "primary" and "@adapt 0" not in (primary_pix_attrs or ""):
+            raise ValueError("render_dim size_stages: 'primary' must set pix_attrs with '@adapt 0' (definition key "
+                             "`pix_attrs` for a single-pix module, the primary node's `pix_attrs` in a pix_chain)")
         if node is not None and "@adapt 0" not in node.get("pix_attrs", ""):
             raise ValueError(f"render_dim size_stages: node {ref!r} must set pix_attrs with '@adapt 0' (with adapt on "
                              f"the output follows the INPUT and the `dim` message is ignored; see jit.gl.pix @adapt)")
@@ -1693,7 +1706,8 @@ def build(defn, debug=None, side_files=None):
                                     driving_inlet=driving_inlet,
                                     render_trigger=render_trigger,
                                     pix_context=pix_context,
-                                    varname=legacy.get("pix_varname"))]
+                                    varname=legacy.get("pix_varname"),
+                                    pix_attrs=defn.get("pix_attrs"))]
         extra_pix_lines  = []
         chain_id_to_obj  = {}
 
@@ -2175,8 +2189,12 @@ def build(defn, debug=None, side_files=None):
     # constants, range-tier obj-300+ range, etc.) — extract-and-remap from
     # a working reference file rather than hand-picking IDs from scratch.
     if "render_dim" in defn:
+        # the primary pix's attrs: the definition's `pix_attrs` (single-pix module) or the primary chain node's
+        _prim_attrs = (next((n.get("pix_attrs", "") for n in defn["pix_chain"] if n.get("primary")), "")
+                       if defn.get("pix_chain") else defn.get("pix_attrs", ""))
         _rd_boxes, _rd_lines = build_render_dim(defn["render_dim"], chain_id_to_obj, primary_obj_id,
-                                                defn.get("params", []), defn.get("pix_chain", []))
+                                                defn.get("params", []), defn.get("pix_chain", []),
+                                                primary_pix_attrs=_prim_attrs)
         boxes.extend(_rd_boxes)
         lines.extend(_rd_lines)
     boxes.extend(defn.get("raw_boxes", []))
