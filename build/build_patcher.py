@@ -1373,6 +1373,10 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
     Any of the two groups may be omitted, not both.  `loadbang -> s trig_res` asks Vsynth for the current
     size at load (without it a module added after the render started never receives a value).
 
+    `param_stages` is a list of node ids that each get BOTH params, or (2026-10-30) a dict
+    `{"width": [ids], "height": [ids]}` giving each Param only the stages that declare it (a stage that does not
+    declare a Param should not be sent it: f_tf_tensormap's two blur passes read one axis each).
+
     OPTIONAL `"downsample"` (2026-10-30, f_tf_hatch's texture pre-stage): a SEPARABLE downsample by an integer
     factor F, as two pix stages (H pass: width -> ow, height kept; V pass: height -> oh):
 
@@ -1444,7 +1448,15 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
                                  f"{sorted(chain_id_to_obj)}, or 'primary')")
         return out
 
-    p_objs = nodes(param_stages, "param_stages") if param_stages else []
+    if isinstance(param_stages, dict):
+        # per-Param targets (2026-10-30): width goes only to the stages that declare Param width, height likewise
+        if set(param_stages) != {"width", "height"}:
+            raise ValueError("render_dim param_stages as a dict needs exactly the keys 'width' and 'height' "
+                             f"(the stages that get each Param), not {sorted(param_stages)}")
+        pw_objs = nodes(param_stages["width"], "param_stages['width']")
+        ph_objs = nodes(param_stages["height"], "param_stages['height']")
+    else:
+        pw_objs = ph_objs = nodes(param_stages, "param_stages") if param_stages else []
     s_objs = nodes(size_stages, "size_stages") if size_stages else []
     for ref in ([size_stages] if isinstance(size_stages, str) else size_stages):
         node = chain_nodes.get(ref)
@@ -1474,8 +1486,8 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
         boxes += [box(3, f"prepend param {wp}", 1, 1, [480.0, 380.0, 120.0, 22.0]),
                   box(4, f"prepend param {hp}", 1, 1, [610.0, 380.0, 120.0, 22.0])]
         lines += [line(2, 0, 3, 0), line(2, 1, 4, 0)]
-        for o in p_objs:
-            lines += [line(3, 0, o, 0), line(4, 0, o, 0)]
+        lines += [line(3, 0, o, 0) for o in pw_objs]
+        lines += [line(4, 0, o, 0) for o in ph_objs]
     if ds:
         F, hs, vs = ds["factor"], chain_id_to_obj[ds["h_stage"]], chain_id_to_obj[ds["v_stage"]]
         # unpack fires its RIGHT outlet (H) first, then the left (W): H reaches every cold right inlet before W

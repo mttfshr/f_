@@ -212,6 +212,26 @@ def test_downsample_is_loud():
                                             mutate=lambda d: d["pix_chain"][-1].update(pix_attrs="@adapt 1 @type float32")), True)
 
 
+# ---- param_stages as a dict: each Param only to the stages that declare it (f_tf_tensormap's blur passes read one axis)
+
+def test_param_stages_dict_targets_each_param_separately():
+    d = chain_defn(render_dim=dict(RD, param_stages={"width": ["e1"], "height": ["e3"]}))
+    top, cords = top_and_cords(d)
+    prim, e3 = pix_id(top, "#0_t_e1"), pix_id(top, "#0_t_e3")
+    c = lambda a, ao, b, bi: ((a, ao), (b, bi)) in cords
+    _eq("prepend param width reaches only the width stage; height only the height stage",
+        [c("obj-rd-3", 0, prim, 0), c("obj-rd-3", 0, e3, 0), c("obj-rd-4", 0, e3, 0), c("obj-rd-4", 0, prim, 0)],
+        [True, False, True, False])
+
+
+def test_param_stages_dict_is_loud():
+    for bad, needle in (({"width": ["primary"]}, "exactly the keys"),
+                        ({"width": ["primary"], "height": ["nope"]}, "unknown node"),
+                        ({"width": [], "height": ["primary"]}, "non-empty list")):
+        d = chain_defn(render_dim=dict(RD, param_stages=bad))
+        _eq(f"param_stages {bad}", raises(lambda: bp.build(d), needle), True)
+
+
 # ---- STATIC: a codebox that reads `dim` must be given the render size another way
 
 # Modules whose code reads `dim` today and declare nothing: the latent bug (`dim` reads 1 live), found
