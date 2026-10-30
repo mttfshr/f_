@@ -17,14 +17,18 @@
 #
 # Hardcoded object ids below are derived by hand from build_patcher.py's id
 # formulas, NOT kept in sync automatically. Chain order [a(primary), bh, bv, c]:
-#   4 UI params (strength, radius, width, height) -> chain_id_base = 50
+#   2 UI params (strength, radius; width / height are internal since 2026-10-30) -> chain_id_base = 50
 #   support nodes: bh = obj-50, bv = obj-51, c = obj-52
 #   outlet ids: outlet 0 = obj-2, outlet 1 = obj-201
 # If the param count or chain order changes, recompute these.
 #
 # `dim` reads 1 inside live Vsynth jit.gl.pix objects (tf_probe.maxpat,
-# 2026-10-16), so tap spacing comes from the width/height Params instead
-# (exposed for now, per Matt). Stages clamp coordinates in-shader because the
+# 2026-10-16), so tap spacing comes from the width/height Params instead.
+# Until 2026-10-30 they were exposed as Width / Height dials ("set to your real
+# frame size"); now they are INTERNAL, driven by Vsynth's render size through the
+# builder's `render_dim` (see f_tf_hatch), and every stage is `@adapt 0` so the
+# tensor renders at the render size (Matt, 2026-10-30: dials removed, outputs
+# follow the render size). Stages clamp coordinates in-shader because the
 # bench GPU wraps out-of-range reads.
 
 CODEBOX_DIR = ""  # gen paths below are relative to this definition.py's own directory
@@ -49,7 +53,7 @@ patcher = {
             "gen":       "codebox_stage_a.gen",
             "n_inlets":  1,
             "n_outlets": 1,
-            "pix_type":  "float32",
+            "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   True,
         },
         {
@@ -58,7 +62,7 @@ patcher = {
             "gen":       "codebox_stage_b_h.gen",
             "n_inlets":  1,
             "n_outlets": 1,
-            "pix_type":  "float32",
+            "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   False,
         },
         {
@@ -67,7 +71,7 @@ patcher = {
             "gen":       "codebox_stage_b_v.gen",
             "n_inlets":  1,
             "n_outlets": 1,
-            "pix_type":  "float32",
+            "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   False,
         },
         {
@@ -76,7 +80,7 @@ patcher = {
             "gen":       "codebox_stage_c.gen",
             "n_inlets":  1,
             "n_outlets": 2,
-            "pix_type":  "float32",
+            "pix_attrs": "@adapt 0 @dim 256 256 @type float32",   # output follows the render size (render_dim)
             "primary":   False,
         },
     ],
@@ -118,31 +122,28 @@ patcher = {
         {
             "name": "radius", "type": "float",
             "min": 0.0, "max": 16.0, "default": 3.0,
-            "hint": "Smoothing radius in pixels (box, 0-16). 0 = no smoothing. Cost depends on the fixed maximum (16), not this value. Pixels only if width/height match the render size.",
+            "hint": "Smoothing radius in render pixels (box, 0-16). 0 = no smoothing. Cost depends on the fixed maximum (16), not this value.",
             "label": "Radius",
             "pix_target": ["bh", "bv"],
         },
-        {
-            "name": "width", "type": "float",
-            "min": 64.0, "max": 8192.0, "default": 640.0,
-            "widget": "numbox",
-            "hint": "Render width in pixels. Set to the real frame width: it sets the one-pixel tap step. (Live jit.gl.pix cannot read its own size, so this is exposed for now.)",
-            "label": "Width",
-            "pix_target": ["a", "bh"],
-        },
-        {
-            "name": "height", "type": "float",
-            "min": 64.0, "max": 8192.0, "default": 480.0,
-            "widget": "numbox",
-            "hint": "Render height in pixels. Set to the real frame height: it sets the vertical tap step.",
-            "label": "Height",
-            "pix_target": ["a", "bv"],
-        },
+        {"name": "width",  "type": "internal"},   # render size, driven by Vsynth (render_dim)
+        {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 }
 
+# The render size reaches the stages through render_dim (builder key): Params width / height only where a stage
+# declares them (A reads both, the horizontal blur only width, the vertical blur only height), and every stage's
+# output size is the render size.
+patcher["render_dim"] = {
+    "width_param":  "width",
+    "height_param": "height",
+    "param_stages": {"width": ["a", "bh"], "height": ["a", "bv"]},
+    "size_stages":  ["a", "bh", "bv", "c"],
+}
+
 # Layout (2026-10-16, Matt: panel too narrow, width/height cropped): the four controls run to x ~ 150.
+# (2026-10-30: width/height dials removed; the panel keeps the f_tf_smooth / f_tf_sharpen size.)
 patcher["overrides"] = {
     "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
 }

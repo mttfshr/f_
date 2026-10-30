@@ -107,20 +107,18 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 4,
+					"numoutlets": 2,
 					"outlettype": [
-						"",
-						"",
 						"",
 						""
 					],
 					"patching_rect": [
 						56.5,
 						204.0,
-						295.0,
+						151.0,
 						22.0
 					],
-					"text": "route strength radius width height"
+					"text": "route strength radius"
 				}
 			},
 			{
@@ -238,7 +236,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_tm_stage_a @type float32",
+					"text": "jit.gl.pix vsynth @name #0_tm_stage_a @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_tm_stage_a"
 				}
 			},
@@ -357,7 +355,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_tm_stage_b_h @type float32",
+					"text": "jit.gl.pix vsynth @name #0_tm_stage_b_h @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_tm_stage_b_h"
 				}
 			},
@@ -476,7 +474,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_tm_stage_b_v @type float32",
+					"text": "jit.gl.pix vsynth @name #0_tm_stage_b_v @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_tm_stage_b_v"
 				}
 			},
@@ -624,7 +622,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_tm_stage_c @type float32",
+					"text": "jit.gl.pix vsynth @name #0_tm_stage_c @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_tm_stage_c"
 				}
 			},
@@ -1039,7 +1037,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Smoothing radius in pixels (box, 0-16). 0 = no smoothing. Cost depends on the fixed maximum (16), not this value. Pixels only if width/height match the render size.",
+					"hint": "Smoothing radius in render pixels (box, 0-16). 0 = no smoothing. Cost depends on the fixed maximum (16), not this value.",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1154,226 +1152,6 @@
 			{
 				"box": {
 					"id": "obj-26",
-					"maxclass": "live.numbox",
-					"fontname": "Ableton Sans Light",
-					"hint": "Render width in pixels. Set to the real frame width: it sets the one-pixel tap step. (Live jit.gl.pix cannot read its own size, so this is exposed for now.)",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_tm_stage_a::width",
-					"parameter_enable": 1,
-					"patching_rect": [
-						182.0,
-						250.0,
-						44.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						78.0,
-						38.0,
-						34.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_initial": [
-								640.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "width",
-							"parameter_mmax": 8192.0,
-							"parameter_mmin": 64.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "width",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"varname": "width"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-27",
-					"maxclass": "attrui",
-					"attr": "width",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						170.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-701",
-					"maxclass": "attrui",
-					"attr": "width",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						170.0,
-						344.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-28",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						179.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						66.5,
-						20.0,
-						50.0,
-						18.0
-					],
-					"text": "Width",
-					"textjustification": 1,
-					"varname": "lbl_width"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-29",
-					"maxclass": "live.numbox",
-					"fontname": "Ableton Sans Light",
-					"hint": "Render height in pixels. Set to the real frame height: it sets the vertical tap step.",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_tm_stage_a::height",
-					"parameter_enable": 1,
-					"patching_rect": [
-						254.0,
-						250.0,
-						44.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						115.0,
-						38.0,
-						34.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_initial": [
-								480.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "height",
-							"parameter_mmax": 8192.0,
-							"parameter_mmin": 64.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "height",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"varname": "height"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-30",
-					"maxclass": "attrui",
-					"attr": "height",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						242.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-702",
-					"maxclass": "attrui",
-					"attr": "height",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						242.0,
-						344.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-31",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						251.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						103.5,
-						20.0,
-						50.0,
-						18.0
-					],
-					"text": "Height",
-					"textjustification": 1,
-					"varname": "lbl_height"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-32",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1401,7 +1179,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-33",
+					"id": "obj-27",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -1415,6 +1193,132 @@
 						22.0
 					],
 					"text": "prepend param bypass_gate"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-0",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						692.0,
+						40.0,
+						22.0
+					],
+					"text": "r dim",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-5",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						692.0,
+						60.0,
+						22.0
+					],
+					"text": "loadbang",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-6",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						722.0,
+						70.0,
+						22.0
+					],
+					"text": "s trig_res",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": []
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-1",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						692.0,
+						60.0,
+						22.0
+					],
+					"text": "route dim",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-2",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						722.0,
+						60.0,
+						22.0
+					],
+					"text": "unpack i i",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"int",
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-3",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						752.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param width",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-4",
+					"maxclass": "newobj",
+					"patching_rect": [
+						160.0,
+						752.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param height",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
 				}
 			}
 		],
@@ -1458,11 +1362,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-32",
+						"obj-26",
 						0
 					],
 					"destination": [
-						"obj-33",
+						"obj-27",
 						0
 					]
 				}
@@ -1470,7 +1374,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-33",
+						"obj-27",
 						0
 					],
 					"destination": [
@@ -1650,78 +1554,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-4",
-						2
-					],
-					"destination": [
-						"obj-26",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-26",
-						0
-					],
-					"destination": [
-						"obj-27",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-27",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						3
-					],
-					"destination": [
-						"obj-29",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-29",
-						0
-					],
-					"destination": [
-						"obj-30",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-30",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-23",
 						0
 					],
@@ -1746,11 +1578,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-26",
+						"obj-rd-5",
 						0
 					],
 					"destination": [
-						"obj-701",
+						"obj-rd-6",
 						0
 					]
 				}
@@ -1758,7 +1590,19 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-701",
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
 						0
 					],
 					"destination": [
@@ -1770,11 +1614,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-29",
+						"obj-rd-0",
 						0
 					],
 					"destination": [
-						"obj-702",
+						"obj-51",
 						0
 					]
 				}
@@ -1782,7 +1626,103 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-702",
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-rd-1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-1",
+						0
+					],
+					"destination": [
+						"obj-rd-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						0
+					],
+					"destination": [
+						"obj-rd-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						1
+					],
+					"destination": [
+						"obj-rd-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-3",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-3",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-4",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-4",
 						0
 					],
 					"destination": [
@@ -1825,16 +1765,6 @@
 			"obj-23": [
 				"radius",
 				"radius",
-				0
-			],
-			"obj-26": [
-				"width",
-				"width",
-				0
-			],
-			"obj-29": [
-				"height",
-				"height",
 				0
 			],
 			"parameterbanks": {

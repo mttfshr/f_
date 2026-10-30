@@ -38,14 +38,12 @@ Stateless (no previous-frame pass). Internal textures are unbounded float32; onl
 | Param | Range | Default | Description |
 |---|---|---|---|
 | `strength` | 1-1000 (log) | 100 | Gain on trace and the raw tensor terms before clamping. Not applied to coherence. See calibration. |
-| `radius` | 0-16 | 3 | Smoothing radius in pixels (box). 0 = no smoothing. |
-| `width` | 64-8192 | 640 | Render width in pixels. **Set to your real frame width.** |
-| `height` | 64-8192 | 480 | Render height in pixels. **Set to your real frame height.** |
+| `radius` | 0-16 | 3 | Smoothing radius in render pixels (box). 0 = no smoothing. |
 | `bypass` | 0/1 | 0 | Zero-tensor neutral on both outlets. |
 
 **Prefix:** `tensormap` - **Object name:** `tensormap_pix` - **Type:** `@type float32`
 
-`width`/`height` exist because `dim` reads 1 inside a live `jit.gl.pix`, so the module cannot read its own render size. They set the one-pixel tap step; left at the defaults on a different frame size, `radius` stops meaning pixels and the smoothing is anisotropic by the aspect ratio. They are exposed for now.
+**Render size (2026-10-30).** The module renders at Vsynth's render size: every stage's output is that size, and the internal `width` / `height` Params (the one-pixel tap step) are driven by it through the builder's `render_dim`, so `radius` is in render pixels at any frame size and there is nothing to set. (They were `Width` / `Height` dials until then, because `dim` reads 1 inside a live `jit.gl.pix`; the dials are removed.) The tensor output is therefore render-sized even if the input texture is not.
 
 **`radius` cost does not scale with the dial.** The loop runs to a fixed maximum of 16 taps and weights unused taps to zero, so turning `radius` down does not buy back frame time.
 
