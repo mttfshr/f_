@@ -408,7 +408,7 @@ def test_stage_prefilter_matches_the_mirror():
         both = m.stage_prefilter(src, ow, oh)
         check(f"{w}x{h}: the mirror's two passes compose to stage_prefilter", float(np.abs(ref - both).max()), 0.0)
         err_h, err_v = float(np.abs(out_h - ref_h).max()), float(np.abs(out_v - ref).max())
-        note(f"prefilter {w}x{h} -> {ow}x{oh}: H pass max err {err_h:.2e}, chain max err {err_v:.2e}")
+        note(f"prefilter {w}x{h} -> {ow}x{oh}: max err (H pass, H then V)", (err_h, err_v))
         if exact:
             check(f"{w}x{h}: H pass matches the mirror", err_h, 1e-5)
             check(f"{w}x{h}: H then V matches the mirror", err_v, 1e-5)
@@ -421,9 +421,9 @@ def test_stage_prefilter_matches_the_mirror():
 def test_cost_per_stage_1080p():
     """Per-stage ms/pass at 1080p (M3 Max); the module gate is the SUM <= 5 ms. The spike predicted
     E2 ~1.7 ms (N = 16, nearest); bench floor ~0.8 ms/pass, so E1 and E3 read as upper bounds.
-    The gate is the BLOB path. The stroke-texture mode is reported, not gated: 11-13 ms for E2 with a full-size
-    float32 texture at a low Grain (memory-bound; .specify/f_tf_hatch/spike/bench_cost_probe*.py), accepted as a
-    heavy optional mode (Matt, 2026-10-29)."""
+    The gate is the BLOB path (<= 5 ms). TEXTURE MODE (2026-10-30) has its own gate, <= 8 ms: E2 reads the pre-staged
+    texture (render / 4: pre_h and pre_v, below the bench floor) and costs ~5 ms; E2 with a FULL-SIZE float32 texture,
+    11-13 ms at a low Grain (memory-bound; .specify/f_tf_hatch/spike/bench_cost_probe*.py), is reported for comparison."""
     tex = rand_tensor_tex(1080, 1920, seed=6)
     aux = m.stage_e1(tex, 0.0, 0.1, "unsigned_nearest")
     aux2 = np.zeros_like(aux)

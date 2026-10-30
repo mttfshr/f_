@@ -52,8 +52,9 @@
 // COST (bench, 1080p, E2 alone; the module adds ~1.5 ms for E1 + E3): blobs 3.0 ms. Texture mode is memory-bound, not
 // arithmetic-bound (a 4x4 texture costs 2.7): the texture's size times the tiling stride. A float32 1080p texture
 // costs 13 ms at Grain 0.5 and 12.5 at Grain 0 but 5.0 at Grain 1 (read once, sequential); 256x256 4.8, 512x512 5.1,
-// 1024x1024 6.9 at Grain 0.5. Fetch count and the if/else cost nothing (probes 1 and 2). Accepted 2026-10-29 as a
-// heavy OPTIONAL mode: feed it a small texture, or keep Grain near 1.
+// 1024x1024 6.9 at Grain 0.5. Fetch count and the if/else cost nothing (probes 1 and 2). Since 2026-10-30 in2 is
+// NOT the raw inlet texture: the pre-stage (codebox_stage_pre_h / _pre_v) box-filters it to render size / 4 on each
+// axis first, so E2 reads a 480x270 texture at 1080p: 5.0 ms (bench), module about 7.4 ms in texture mode.
 
 // Hashes WITHOUT sin (Hoskins' "hash without sine"): sin(ix*127.1+iy*311.7)*43758
 // loses all precision on the GPU once the argument reaches ~1e4-1e5 (1080p

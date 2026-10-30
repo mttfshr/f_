@@ -93,8 +93,12 @@ sampled by `nearest` at the frame-normalized march position:
   Contrast needs retuning when you switch modes.
 - An animated texture animates the strokes. Any Vsynth noise or pattern source works.
 
-**The stroke texture is a heavy optional mode** (accepted 2026-10-29): it is memory-bound, not
-arithmetic-bound. See Cost.
+**The stroke texture is pre-filtered** (2026-10-30): before E2 it is box-filtered down to 1/4 of the
+render size on each axis (two stages, `pre_h` and `pre_v`; 480x270 at 1080p, 270x270 at 1:1, so the
+aspect follows the render). The streaking averages fine detail away anyway, and E2's cost with a
+texture is its memory footprint times the tiling stride, so this cuts E2 from about 12 ms to 5. Smooth
+textures look the same (luma contrast x0.87-0.98); per-pixel noise loses contrast (x0.25), so
+Density's useful range is narrower for it. See Cost.
 
 ---
 
@@ -114,8 +118,9 @@ All defaults are **provisional**.
 | `coh_floor` | Coh Floor | 0-1 | 0 | Where the tensor loses its **direction** (low coherence) the output goes black and strokes end, instead of smearing into clouds: below this coherence a path stops contributing, and the pixel fades to black by its own coherence (both ramped over the 0.2 below the dial). 0 = off, exactly: the plain look, bit for bit |
 | `bypass` | (toggle) | 0/1 | 0 | Black on both outlets |
 
-Internal (no control): `src_stroke` (1 when the stroke-texture inlet is connected) and `width` /
-`height` (the render size, below).
+Internal (no control): `src_stroke` (1 when the stroke-texture inlet is connected), `width` /
+`height` (the render size, below) and `ow` / `oh` (the stroke-texture pre-stage's output size,
+floor(render / 4), at least 1; the same render-size plumbing sizes the two pre-stages).
 
 **Floor vs Coh Floor.** Floor asks "is there enough structure here?" (trace); Coh Floor asks "does
 the structure have a direction?" (coherence). Measured on a synthetic noisy scene, the trace gate
@@ -161,13 +166,17 @@ Bench numbers, 1080p, per pass (2026-10-30, clean machine): **E1 0.80 + E2 3.00 
 4.62 ms** (E1 and E3 are upper bounds at the bench floor); the module gate is 5 ms. Coh Floor is
 free (E2 with it at 0.5 reads 2.96 ms).
 
-The **stroke texture is heavy**: E2 takes **12-13 ms** with a full-size float32 texture at a low
-Grain, so the module is about 14 ms. Probes (`.specify/f_tf_hatch/spike/bench_cost_probe*.py`)
-show it is the texture's memory footprint times the tiling stride, not the fetch count or the
-branch: a 4x4 texture costs 2.7 ms (cheaper than blobs), 256x256 4.8, 512x512 5.1, 1024x1024 6.9,
-1920x1080 13.2; at 1080p, Grain 1 (read once, sequential) costs 5.0 against 13.2 at Grain 0.5.
-**Advice: feed a small texture (1024x1024 or less) or keep Grain near 1: 5-7 ms.** Vsynth's own
-textures may be 8-bit (a quarter of the memory); that is not testable on the bench.
+**Stroke-texture mode** (bench 2026-10-30, 1080p, float32): E2 with the pre-staged 480x270 texture
+**5.0 ms** (12.2 with a full-size float32 texture, which is what the module did before the
+pre-stage; blobs 3.0), `pre_h` 0.37 and `pre_v` 0.25 (both upper bounds at the bench floor), so the
+module in texture mode is about **7.4 ms** (conservative: E1 and E3 are floors too); its gate is
+8 ms, the blob gate stays 5. The pre-stage's GPU passes match the mirror exactly (0.0 error, 16:9,
+1:1 and a size 4 does not divide). Why a pre-stage: probes
+(`.specify/f_tf_hatch/spike/bench_cost_probe*.py`, `bench_downsample_probe.py`) showed the cost is
+the texture's memory footprint times the tiling stride, not the fetch count or the branch: a 4x4
+texture 2.7 ms, 256x256 4.8, 512x512 5.1, 1024x1024 6.9, 1920x1080 13.2; a box downsample is
+accurate to 1e-7 against NumPy. Vsynth's own textures may be 8-bit; that is not testable on the
+bench.
 
 ---
 
