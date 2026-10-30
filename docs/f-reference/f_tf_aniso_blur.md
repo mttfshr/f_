@@ -166,6 +166,32 @@ consumer rule 5.
 
 ---
 
+## What to expect
+
+**Anisotropic blur is most characteristic in the presence of noise** (Matt, 2026-10-30,
+after comparing it against a plain blur on a noisy test image). A plain blur has to choose
+between keeping fine structure and removing noise; this module averages only *along* the
+local structure direction, so lines, edges and grain survive while direction-less speckle
+averages out. On a noisy source (a camera in low light or with gain up, grain, any
+stochastic texture) compare it with the plain-blur reference at the same Length (`floor` 1,
+or `width_gate` 0): the plain blur washes a fine pattern to grey, this one keeps the
+pattern and removes the speckle.
+
+On a **clean source** (a daylight camera, clean generator output such as a `wfg`) there is
+little noise to remove, so the effect is subtle: a light streaking of fine texture along
+edges, and the painterly look only at a long Length with `floor` 0. To see the module
+working, feed it noise: a noisy camera, or add grain ahead of it.
+
+**Length.** Start at **8-12** on camera content. The kernel is a straight line (v1), so at a
+long Length it leaves curved edges and small shapes and leaves soft halos and lost
+contrast around them (a test image at Length 24: a disc of radius 28 px was haloed, its
+border only slightly steeper than under a plain blur). Long values (24-48) suit long
+straight structure — grain, hair, fabric, stripes — and the painterly look. (An earlier
+suggestion here of 24-32 as a starting point was too high for camera content; the demo
+preset uses 28 deliberately, to make the effect visible on a noisy source.)
+
+---
+
 ## Typical use
 
 ```
