@@ -19,6 +19,7 @@ from harness import note as _note  # noqa: E402
 from tf_hatch_mirror import (COH_RAMP, F32, blob_noise, chain, fill_from_density, noise_at,  # noqa: E402
                              texture_coord, texture_impulse)
 from tf_hatch_mirror import _smoothstep  # noqa: E402
+from tf_hatch_mirror import PRE_F, prefilter_size, stage_prefilter  # noqa: E402
 from tf_hatch_mirror import stage_e1, stage_e2  # noqa: E402
 
 
@@ -531,6 +532,68 @@ def test_18_coherence_floor_scales_presence_by_the_pixels_own_coherence():
     note(f"in the ramp: own coherence {float(aux[..., 2].mean()):.2f}, presence factor {float((on[..., 1] / np.maximum(aux[..., 3], 1e-9)).mean()):.2f}")
     check("floor 0.5: presence = presence x smoothstep(0.3, 0.5, own coherence)", float(np.abs(on[..., 1] - want).max()), 1e-6)
     check("floor 0: the presence channel is untouched", float(np.abs(off[..., 1] - aux[..., 3]).max()), 0.0)
+
+
+# ------------------------------------------------------------------ the texture pre-stage (2026-10-30)
+
+def _rand_rgba(h, w, seed):
+    t = np.random.default_rng(seed).random((h, w, 4)).astype(F32)
+    t[..., 3] = 1.0
+    return t
+
+
+def _block_mean(img, f):
+    h, w = img.shape[:2]
+    return img.astype(np.float64).reshape(h // f, f, w // f, f, 4).mean(axis=(1, 3))
+
+
+def test_19_prefilter_is_the_block_mean_for_16_9_and_1_1():
+    for h, w in ((144, 256), (128, 128), (36, 64)):
+        src = _rand_rgba(h, w, 1)
+        ow, oh = prefilter_size(w, h)
+        out = stage_prefilter(src, ow, oh)
+        check(f"{w}x{h}: output is {w // PRE_F}x{h // PRE_F} (the aspect follows the render)",
+              abs(out.shape[1] - w // PRE_F) + abs(out.shape[0] - h // PRE_F), 0)
+        check(f"{w}x{h}: max error vs the NumPy block mean", float(np.abs(out - _block_mean(src, PRE_F)).max()), 1e-6)
+    # discriminating: one point sample per output texel (a plain downscale) is nowhere near the block mean
+    src = _rand_rgba(144, 256, 2)
+    err = float(np.abs(src[1::PRE_F, 1::PRE_F] - _block_mean(src, PRE_F)).max())
+    note(f"a single point sample per texel is {err:.2f} from the block mean on white noise")
+    check("the 1e-6 tolerance would catch a point sample", 0.0 if err > 0.1 else 1.0, 0.0)
+
+
+def test_20_prefilter_handles_sizes_the_factor_does_not_divide():
+    for h, w in ((150, 250), (768, 1366)):
+        ow, oh = prefilter_size(w, h)
+        out = stage_prefilter(np.full((h, w, 4), 0.37, F32), ow, oh)
+        check(f"{w}x{h} -> {ow}x{oh}: a constant stays constant", float(np.abs(out - 0.37).max()), 1e-6)
+        src = _rand_rgba(h, w, 3)
+        out = stage_prefilter(src, ow, oh)
+        check(f"{w}x{h}: the mean is preserved", abs(float(out.mean()) - float(src.mean())), 5e-3)
+    check("1366x768 -> 341x192", abs(prefilter_size(1366, 768)[0] - 341) + abs(prefilter_size(1366, 768)[1] - 192), 0)
+    check("a render smaller than the factor still gets a 1x1 pre-stage", abs(prefilter_size(3, 2)[0] - 1) + abs(prefilter_size(3, 2)[1] - 1), 0)
+
+
+def test_21_prefilter_with_factor_1_is_the_identity():
+    src = _rand_rgba(36, 64, 4)
+    out = stage_prefilter(src, 64, 36, f=1)
+    check("factor 1: output equals the input exactly", float(np.abs(out - src).max()), 0.0)
+
+
+def test_22_chain_applies_the_prefilter_and_it_narrows_fine_noise():
+    kw = dict(fill=float(fill_from_density(0.5)), length=0.25, grain=1.0)
+    tex, T = field(0.0, 1.0), _noise_tex(0)
+    ow, oh = prefilter_size(W, H)
+    default = chain(tex, texture=T, **kw)
+    explicit = chain(tex, texture=stage_prefilter(T, ow, oh), prefilter=1, **kw)
+    off = chain(tex, texture=T, prefilter=1, **kw)
+    check("chain's default = an explicit pre-stage then E2", float(np.abs(default[1] - explicit[1]).max()), 0.0)
+    check("the pre-stage changes the result for fine noise (it is not a no-op)",
+          0.0 if float(np.abs(default[1] - off[1]).max()) > 1e-3 else 1.0, 0.0)
+    small = stage_prefilter(T, ow, oh)
+    ratio = float(small[..., 0].std() / T[..., 0].std())
+    note(f"white-noise std after the pre-stage = {ratio:.3f} x before (1/{PRE_F} expected): Density's useful range narrows for fine noise")
+    check("white noise std shrinks by ~1/PRE_F", abs(ratio - 1.0 / PRE_F), 0.03)
 
 
 if __name__ == "__main__":

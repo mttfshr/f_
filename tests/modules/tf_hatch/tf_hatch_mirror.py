@@ -270,6 +270,46 @@ def texture_impulse(tex, px, py, W, H, grain, density):
     return _smoothstep(thr - w, thr + w, luma)
 
 
+# --- stroke-texture PRE-STAGE (2026-10-30): a separable box downsample ahead of E2 ----------------
+# Why: E2's texture cost is the texture's footprint x the tiling stride (spike/bench_cost_probe*.py: a 1080p
+# float32 texture reads 13 ms, a 256^2 one 5 ms), and the streaking averages the texture's fine detail away
+# anyway. Two stages (H then V), each averaging PRE_F taps, render the texture at 1/PRE_F of the render size
+# on EACH axis, so the aspect follows the render (16:9, 1:1 ...). Spike result: matches a NumPy block mean to
+# 1e-7, cost under the bench floor. Taps are positions inside the output texel in NORMALIZED coordinates,
+#   u = norm.x + ((a + 0.5) / F - 0.5) / ow,
+# so the stage never needs the source texture's size (a codebox cannot read it, and live `dim` reads 1) and a
+# render size that PRE_F does not divide still works (an even spread of point taps instead of an exact box).
+# `ow` / `oh` (the output size) are Params fed from the render size: floor(render / PRE_F), at least 1.
+PRE_F = 4
+
+
+def prefilter_size(W, H, f=PRE_F):
+    """Output size (ow, oh) of the pre-stage for a render of W x H."""
+    return max(1, int(W) // int(f)), max(1, int(H) // int(f))
+
+
+def stage_prefilter(tex, ow, oh, f=PRE_F):
+    """H pass (width -> ow, height kept), then V pass (height -> oh). tex (sh, sw, 4) -> (oh, ow, 4)."""
+    tex = np.asarray(tex, F32)
+    sh = tex.shape[0]
+    f = int(f)
+    inv = F32(1.0 / f)
+    nx = (np.arange(ow, dtype=F32)[None, :] + F32(0.5)) / F32(ow)
+    ny = (np.arange(sh, dtype=F32)[:, None] + F32(0.5)) / F32(sh)
+    acc = None
+    for a in range(f):
+        t = g.nearest(tex, nx + F32(((a + 0.5) / f - 0.5) / ow), ny)
+        acc = t if acc is None else (acc + t).astype(F32)
+    mid = (acc * inv).astype(F32)                                   # (sh, ow, 4)
+    nx = (np.arange(ow, dtype=F32)[None, :] + F32(0.5)) / F32(ow)
+    ny = (np.arange(oh, dtype=F32)[:, None] + F32(0.5)) / F32(oh)
+    acc = None
+    for b in range(f):
+        t = g.nearest(mid, nx, ny + F32(((b + 0.5) / f - 0.5) / oh))
+        acc = t if acc is None else (acc + t).astype(F32)
+    return (acc * inv).astype(F32)
+
+
 def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
              persist_pow=PERSIST_POW, aux_mode="doubled", n_dirs=(1, -1), seed=0, fill=None,
              noise="blobs", texture=None, coh_floor=0.0):
@@ -395,7 +435,12 @@ def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0, fill=Non
 
 def chain(tex, angle_offset=0.0, floor=0.0, aux_mode="doubled",
           n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix", persist_pow=PERSIST_POW,
-          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None, noise="blobs", texture=None, coh_floor=0.0):
+          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None, noise="blobs", texture=None, coh_floor=0.0,
+          prefilter=PRE_F):
+    """`prefilter` = the texture pre-stage's reduction factor (the module's is PRE_F; 1 = off, the pre-2026-10-30 chain)."""
+    if texture is not None and prefilter != 1:
+        ow, oh = prefilter_size(tex.shape[1], tex.shape[0], prefilter)
+        texture = stage_prefilter(texture, ow, oh, prefilter)
     aux = stage_e1(tex, angle_offset, floor, aux_mode)
     aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed, fill=fill, noise=noise,
                     texture=texture, coh_floor=coh_floor)
