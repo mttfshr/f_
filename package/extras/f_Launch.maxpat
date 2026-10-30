@@ -4226,7 +4226,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots)",
+									"text": "⚠ Unverified. Streamline (LIC) renderer: strokes follow the tensor axis; optional texture inlet for the marks",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

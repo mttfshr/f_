@@ -99,7 +99,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 |---|---|
 | `f_tf_aniso_blur` | ⚠ Unverified. Structure-aligned smoother: blurs along the tensor axis, isotropic fallback where no direction |
 | `f_tf_glyph` | ⚠ Unverified. Tensor glyph view: one oriented ellipse per cell from the raw tensor (also the debug tool) |
-| `f_tf_hatch` | ⚠ Unverified. Orientation-committed hatching: marks laid out and committed from the tensor (strokes → dots) |
+| `f_tf_hatch` | ⚠ Unverified. Streamline (LIC) renderer: strokes follow the tensor axis; optional texture inlet for the marks |
 
 ### Adapters
 
