@@ -1,109 +1,145 @@
 # f_tf_hatch
 
-> **2026-10-28: v1 below is being replaced.** The live look showed the lattice-of-marks
-> design draws origin-anchored concentric rings in every source. v2 is a per-pixel
-> streamline (LIC) renderer built to make tensor coherence and topology visible. See
-> `.specify/f_tf_hatch/spec.md` and `plan.md`. This page still documents the v1 code that
-> is in the repo until the v2 build lands.
-
 **Type:** Processor (f_tensor consumer, renderer)
-**Status:** Draft — codebox tier-2 bench and tier-3 live judgment pending
-(built 2026-10-17 as the fifth module of the tensor-family build order:
-smooth → glyph → sharpen → aniso_blur → **hatch**; the mirror and cost
-spike are green, and the tier-2 bench ran green (re-run 2026-10-28; each
-stage under ~0.8 ms/pass at 1080p, upper bounds); the module's provisional defaults remain
-provisional — the tensormap cycle applies, with the tier-3 live
-judgment pending).
+**Status:** v2 built 2026-10-29; tier 1 (NumPy mirror, 20/20) and tier 2 (GPU bench vs the
+mirror, 12/12, 2026-10-30) green; tier 3 live looks passed (the blob strokes, the stroke-texture
+inlet, Coh Floor). The dial defaults are still provisional.
+(v1, a lattice of oriented marks, was replaced on 2026-10-28: it drew origin-anchored concentric
+rings in every source. v1 is archived as `.specify/f_tf_hatch/spec_v1.md`, `plan_v1.md`,
+`tasks_v1.md`, and in git at `a24b8cd`.)
 
 ---
 
 ## What it does
 
-An orientation-committed hatching / engraving renderer. Discrete marks (short
-dashes) are laid out across the frame, each oriented along the local structure
-axis decoded from an incoming structure tensor — and, critically, each mark's
-*shape is committed per-pixel from the eigenvalues*: where the eigengap is wide
-(a direction genuinely exists) the mark commits to a line-like stroke along
-that direction; where the gap closes the same mark rounds off toward a dot; at
-or below the coherence gate there is nothing. One mechanism, continuous across
-the field: lines where structure is line-like, dots where it is not, nothing
-where the gate says there is no structure at all.
+A per-pixel **streamline renderer** (line integral convolution) built to make a tensor field's
+**coherence and topology visible**. For every pixel it walks a bounded number of steps in both
+directions along the local structure axis decoded from an incoming structure tensor, adding up a
+sparse noise value at each step. The result:
 
-The per-pixel decode is per-consumer (no `f_tf_decode` module exists; hatch
-copies the canonical decode idiom from `.specify/f_tf_glyph/plan.md` ADR-2
-verbatim). Hatching is the *tensor-native* consumer of the family: direction
-alone would be a view (a vecfield carries neither λ2 nor confidence); the
-per-pixel commit IS the point. Performer dials set response magnitude and
-thresholds only (`elongation`, `coherence_gate`) — never the shape data (the
-glint lesson, applied deliberately).
+- **Coherent, smooth structure -> strokes.** Neighboring pixels on one streamline share most of
+  their samples, so each impulse is smeared into a stroke along the contour.
+- **Incoherent structure -> grain.** The march random-walks, neighbors share nothing, and an
+  impulse stays a small smudge.
+- **Degenerate points** (where the direction vanishes inside a coherent region) -> knots, wedges
+  and swirls where the strokes converge. That is the topology, and it comes from the field, not
+  from mark design.
 
-Discrete-item family member (the fifth, after `f_grain`, `f_masonry`,
-`f_weave`, `f_vf_seeds`): hash-grid-cell marks with the family's `density` /
-`weight` / `softness` / `phase` / `regularity` vocabulary; but hatching's mark
-character is INTERNAL (smoothstep profile, as in `f_weave`), not the
-shape-tex-inlet architecture — the mark footprint cannot live upstream without
-un-doing the tensor-native part.
+The noise is **sparse**: only a small fraction of the frame is lit, so the output is separate
+strokes with gaps, not a contour-streaked texture. The impulses are round blobs by default, or the
+marks can come from a texture (see Inlets): then the module streaks that texture along the
+contours.
 
-Requires a tensor input (processor archetype, `driving_inlet`); no
-self-generating mode.
+Coherence enters in exactly two places. It sets **how faithfully each step follows the axis**
+(persistence: a step goes along the axis weighted by `coherence^0.5` and in a random direction
+otherwise), and, only when **Coh Floor** is raised, it ends strokes and blacks out regions where
+direction is lost. There is no coherence-to-stroke-shape mapping (v1's `commit`/aspect is gone).
+
+The decode is per-consumer (no `f_tf_decode` module): the canonical idiom from
+`.specify/f_tf_glyph/plan.md` ADR-2, without dividing the tensormap's gain back out (axis and
+coherence are ratios; see Notes). Stateless: no feedback pass. Flicker mitigation lives upstream
+(see Upstream contract). Output is luma on black; color is downstream's job.
+
+Requires a tensor input (processor archetype, `driving_inlet`); no self-generating mode.
 
 ---
 
 ## Signal Chain
 
 ```
-in0 (tensor + control) -> stage E1  eigen decode + commit (closed-form)
-                       -> stage E2  mark layout (the branch-T frame pass)
-                       -> stage E3  mark render + compose + encode (the only
-                                    stage that clamps/encodes)
+in0 (tensor)  -> stage E1  decode + presence            -> aux (ca, sa, coherence, presence)
+in1 (texture, optional) ---------+
+                                 v
+                 stage E2  streamline march (16 steps per direction, one pass) -> (raw, presence)
+                 stage E3  style + encode (the only stage that clamps)          -> outlets 0 and 1
 E1/E2 intermediates stay unbounded float32 and are never outlets.
 ```
 
-- **Stage E1** samples tensormap **outlet 0** (raw tensor, lossless; the
-  packed outlet 1 is angle-doubled and clamped — the wrong feed for a
-  geometry-laying-out consumer). Decodes λ1/λ2 closed-form (the glyph ADR-2
-  idiom), normalizes coherence = (λ1−λ2)/(λ1+λ2) (tensormap's form), computes
-  the commit curve (below), and applies `angle_offset` (±1 ⇒ ±90°, wrapping
-  cleanly because the decoded axis is an unoriented line). Below `eps_trace`
-  (1e-6, tensormap ADR-6/T019) the axis is unset and commit 0 — no marks,
-  never an arbitrary angle.
-- **Stage E2** rotates each pixel into its local (across, along) frame from
-  E1's axis (branch T: the tileable distance-field pattern; chosen over
-  stroke-marching by the T001 cost-shape gate — 3 passes / ~6 taps / no loops
-  vs ≥5 passes / 75-90 taps / loop-carried march state — plan ADR-1).
-- **Stage E3** renders the mark (the f_weave smoothstep profile and edge
-  form, cited), squeezes aspect by commit, multiplies mark intensity BY
-  commit (no seam at the gate), and encodes both outlets. Bypass lives here
-  (bypass_mode "param", both outlets black).
+- **Stage E1** samples tensormap **outlet 0** (the raw tensor, lossless; the packed outlet 1 is
+  angle-doubled and clamped, the wrong feed for a geometry consumer). It decodes the axis and
+  coherence = (l1-l2)/(l1+l2) in closed form, applies `angle_offset`, and computes presence
+  (below). Below the zero-tensor guard (`eps_trace`, 1e-4 on the encoded trace) the axis is unset
+  and presence is 0: no strokes, never an arbitrary angle. The aux stores the axis as unsigned
+  `(cos, sin)` and is read with `nearest` only.
+- **Stage E2** is the march. Per pixel and per direction: up to 16 steps of length
+  `half-length / 16`; the direction at each step is `normalize(w*axis + (1-w)*random)` with
+  `w = coherence^0.5` read at the current position, the axis sign-flipped to stay continuous with
+  the previous step; a path that leaves the frame stops contributing. The impulse is added at the
+  pixel itself and at every step. Blob impulses are described under Density and Grain below;
+  with a texture connected they are the texture's luma (Inlets).
+- **Stage E3** scales by Contrast, applies the Line style, multiplies by presence, and encodes
+  both outlets. Bypass lives here (`bypass_mode "param"`: black on both outlets; E1/E2 keep
+  running).
 
-Stateless (no feedback pass); flicker mitigation lives upstream — see
-Upstream contract.
+---
+
+## Inlets
+
+| Inlet | Content | Notes |
+|---|---|---|
+| 0 | Tensor (`f_tf_tensormap` outlet 0 encoding, `f_tensor_type.md`) | Required. Packed (outlet 1) feeds are a wiring error: strokes at a doubled angle |
+| 1 | **Stroke texture** (optional) | The marks Hatch streaks along the contours. Unconnected (`vs_inState`) = the built-in blobs; the output is exactly the plain look |
+
+**With a stroke texture** the impulse at each step is the texture's Rec.709 luma, soft-thresholded,
+sampled by `nearest` at the frame-normalized march position:
+
+- **Grain = zoom.** The texture is tiled `2^((1-Grain)*6)` times across the frame in each axis:
+  Grain 1 shows it once (the identity map), Grain 0 tiles it 64 times (features 64x smaller). As
+  with the blobs, a bigger Grain makes bigger marks.
+- **Density = a soft threshold on the luma:** `smoothstep(thr-0.1, thr+0.1, luma)` with
+  `thr = 1.1 - 1.2*Density`. Density 0 lights nothing, Density 1 lights every texel, 0.5 sits
+  mid-ramp.
+- **Brightness** is the mean impulse along the path (classic LIC), not blob coverage crossed, so
+  Contrast needs retuning when you switch modes.
+- An animated texture animates the strokes. Any Vsynth noise or pattern source works.
+
+**The stroke texture is a heavy optional mode** (accepted 2026-10-29): it is memory-bound, not
+arithmetic-bound. See Cost.
 
 ---
 
 ## Parameters
 
-All defaults below are **provisional** — the tensormap precedent applies:
-they lock at the tier-3 judgment (tasks T020, pending) with live
-replacements recorded in the spec's Open Questions.
+All defaults are **provisional**.
 
-| Param | Range | Default | Description |
-|---|---|---|---|
-| `density` | 0–1 | 0.5 | Line/dash spacing, log-mapped: `pow(2, density*5 − 1)` (the family formula, weave's published span) |
-| `weight` | 0–0.5 | 0.1 | Mark thickness (across-axis half-extent). Squeeze-not-independent (the family's size+stretch finding): aspect is one dial |
-| `softness` | 0–0.49 | 0.05 | Edge feather, both axes; expands the multiplicative outer edge (weave's cited form). Clamped 0.49 |
-| `elongation` | 0–8 | 3 | Response-magnitude dial: max mark aspect at commit 1. Commit 0 ⇒ aspect 1 (dot) regardless. Caps where dashes merge: aspect_max = (0.5/(weight·density_scale))² — at the defaults that is ~elongation 2.1 (plan ADR-9); lighter `weight` uncaps |
-| `coherence_gate` | 0–1 | 0.25 | Where strokes begin: coherence at/below this gives dots, above it marks lengthen toward strokes. Changes mark shape only, never brightness. Curve form (OQ3) still pending live confirmation |
-| `structure_floor` | 0–1 | 0.1 | Draw nothing where there is too little structure. Threshold on the tensormap's trace scale (trace × its `strength`), squared for finer low-end control; 0 = dots wherever any structure exists. Not strength-invariant: calibrate with the tensormap's `strength`. Provisional default |
-| `angle_offset` | −1–1 | 0 | Rotates the pattern relative to the decoded axis; ±1 ⇒ ±90° (spans the distinct layouts of an unoriented axis field) |
-| `phase` | −1–1 | 0 | Scrolls marks along the stroke axis (phase 1.0 = one full dash pitch); the family-standard animation entry |
-| `regularity` | 0–1 | 0.5 | Per-line dash stagger (weave's hash form): 1 = lines in phase (grid-like), 0 = fully staggered, hash-stable across frames |
-| `strength` | 1-1000 | 100 | Gain the producing tensormap applied to the tensor; the decode divides it back out - match it to the feeding tensormap (log dial, like tensormap's) |
-| `bypass` | 0/1 | 0 | Black on both outlets (bypass_mode "param", like the tensormap's) |
+| Param | Label | Range | Default | Description |
+|---|---|---|---|---|
+| `reach` | Length | 0-1 | 0.5 | Stroke length: the march's half-length, 0 to a quarter of the frame height on each side. Strokes reach it only where coherence is high; 0 draws nothing. With very fine Grain at full Length the march can skip noise cells and strokes get gaps |
+| `grain` | Grain | 0-1 | 0.5 | Feature scale of the noise the strokes are drawn from, log-mapped: low = fine, thin strokes; high = coarse, thick strokes, fewer of them. Blobs: the noise lattice has `2^((1-Grain)*6+3)` cells (8 to 512) per frame height. Texture: the zoom above |
+| `density` | Density | 0-1 | 0.7 | How many strokes. Blobs: how much of the frame the blobs cover, `0.25% * 2^(5*Density)` (0.25% at 0 to 8% at 1). Texture: the soft threshold above |
+| `contrast` | Contrast | 0-1 | 0.5 | Stroke brightness gain, 0.6x at 0 to 2x at 1 |
+| `line_hard` | Line | 0-1 | 0 | Stroke style: 0 = soft, 1 = hard engraved lines (thresholded with a soft edge). Outlet 1 stays soft |
+| `structure_floor` | Floor | 0-1 | 0.1 | Draw nothing where there is too little structure **strength**. Reads the tensormap's trace scale (trace x its Strength; strong structure is ~1), squared for finer control at the low end; 0 = strokes wherever any structure exists. Not Strength-invariant: calibrate with the feeding tensormap's Strength. Gates brightness only, never the geometry |
+| `angle_offset` | Offset | -1 to 1 | 0 | Rotates the strokes relative to the structure axis: +-1 = +-90 degrees (the axis is an unoriented line, so +-90 spans the distinct layouts). 0 keeps strokes along structure |
+| `coh_floor` | Coh Floor | 0-1 | 0 | Where the tensor loses its **direction** (low coherence) the output goes black and strokes end, instead of smearing into clouds: below this coherence a path stops contributing, and the pixel fades to black by its own coherence (both ramped over the 0.2 below the dial). 0 = off, exactly: the plain look, bit for bit |
+| `bypass` | (toggle) | 0/1 | 0 | Black on both outlets |
 
-**Prefix:** `hatch` — **Object name:** `hatch_pix` — **Type:** `@type float32`
-throughout. No width/height params: every texture read is at `norm` (no
-measured tap step needed — the aspect `dim`-reads-1 caveat does not apply).
+Internal (no control): `src_stroke` (1 when the stroke-texture inlet is connected) and `width` /
+`height` (the render size, below).
+
+**Floor vs Coh Floor.** Floor asks "is there enough structure here?" (trace); Coh Floor asks "does
+the structure have a direction?" (coherence). Measured on a synthetic noisy scene, the trace gate
+separates flat sensor noise from real structure better than the coherence gate (keeping 5% of a
+noisy wall kept 82% of the structure with Floor, 56% with Coh Floor), so use Floor for plain noise
+on flat areas. Coh Floor is for strong but directionless energy: foliage, corners, crossing edges.
+
+**Prefix:** `hatch` - **Object name:** `hatch_pix` - **Type:** `@type float32` throughout.
+
+---
+
+## Render size
+
+Hatch renders at **Vsynth's render resolution**, whatever size the tensor is. It takes the size
+from Vsynth the way Vsynth's own modules do (`r dim` receives `dim W H` from `vs_render`;
+`loadbang -> s trig_res` asks for it at load). All three stages run `@adapt 0` and follow the
+size, and E2's `width` / `height` params are driven the same way (the build key `render_dim`,
+documented in `build/spec.md`). Nobody sets them by hand.
+
+Why: `dim` reads 1 inside a live Vsynth `jit.gl.pix`, regardless of `@adapt` and `@type` (found
+2026-10-16 in the tensormap work, re-found 2026-10-29), so a codebox cannot read the frame size.
+E2 used to, and every march step was pinned to the frame center: the output was the same noise
+for any input. Hatch needs a running Vsynth render for its size; the tensor can be any
+resolution (it is read at `norm`).
 
 ---
 
@@ -111,78 +147,80 @@ measured tap step needed — the aspect `dim`-reads-1 caveat does not apply).
 
 | Outlet | Content | Notes |
 |---|---|---|
-| 0 | Hatch output | Luma marks on black, `@type float32`; color is downstream's job (`f_channel_grader`/colorize, the weave convention) |
-| 1 | Mark mask | The same luma without the encode mix (the discrete-family convention, `f_vf_seeds` out1): for downstream compositing/gating |
+| 0 | Streaks | Hatch strokes, luma on black, `@type float32`: strokes follow the structure axis and lengthen where coherence is high, grain where it is low, nothing below the structure floor. Color is downstream's job |
+| 1 | Streak field | The same field without the Line style (soft strokes), for downstream styling or gating |
 
-Neither outlet is a tensor or a vecfield — they are rendered marks, not field
-data (don't feed them to tensor consumers). The header `signal_type` label
-reads "T_ in" (the tensor-family color) as the tensormap precedent's header
-tag; the outlets themselves are plain luma textures.
+Neither outlet is a tensor or a vecfield (do not feed them to tensor consumers). The header
+`signal_type` reads "T_ in" (the tensor family's color) as the inlet tag only.
 
-**Commit semantics (the one design constant):** mark intensity is multiplied
-by per-pixel `commit`, so coherence at/below the gate renders nothing and the
-line→dot rounding is continuous — this is the tensor-native core; pushing
-`elongation` down does NOT create dots at low coherence (aspect does not take
-shape instructions from a dial, plan ADR-3).
+---
+
+## Cost
+
+Bench numbers, 1080p, per pass (2026-10-30, clean machine): **E1 0.80 + E2 3.00 + E3 0.82 =
+4.62 ms** (E1 and E3 are upper bounds at the bench floor); the module gate is 5 ms. Coh Floor is
+free (E2 with it at 0.5 reads 2.96 ms).
+
+The **stroke texture is heavy**: E2 takes **12-13 ms** with a full-size float32 texture at a low
+Grain, so the module is about 14 ms. Probes (`.specify/f_tf_hatch/spike/bench_cost_probe*.py`)
+show it is the texture's memory footprint times the tiling stride, not the fetch count or the
+branch: a 4x4 texture costs 2.7 ms (cheaper than blobs), 256x256 4.8, 512x512 5.1, 1024x1024 6.9,
+1920x1080 13.2; at 1080p, Grain 1 (read once, sequential) costs 5.0 against 13.2 at Grain 0.5.
+**Advice: feed a small texture (1024x1024 or less) or keep Grain near 1: 5-7 ms.** Vsynth's own
+textures may be 8-bit (a quarter of the memory); that is not testable on the bench.
 
 ---
 
 ## Typical use
 
 ```
-jit.gl.bfg -> f_tf_tensormap -> f_tf_hatch (outlet 0 / 1)
+camera -> f_tf_tensormap -> f_tf_smooth -> f_tf_hatch (outlet 0 / 1)
+                                              ^ in1: a Vsynth noise or pattern module (optional)
 ```
-Chain-terminal renderer. The full chains (B: `tensormap ↔ f_tf_authored →
-f_tf_mix → f_tf_smooth → hatch`; D: `f_vf_optical_flow → f_tf_motion →
-f_tf_smooth → hatch`) assemble as those triads land.
+Chain-terminal renderer. Start with Density around 0.5-0.7 and Line 0-0.5, raise Floor until flat
+walls go black, raise Coh Floor only if directionless clutter remains. The full chains (B:
+`tensormap <-> f_tf_authored -> f_tf_mix -> f_tf_smooth -> hatch`; D: `f_vf_optical_flow ->
+f_tf_motion -> f_tf_smooth -> hatch`) assemble as those modules land.
 
 ---
 
 ## Upstream contract
 
-`f_tf_smooth` upstream is the practical requirement: hatching is the family's
-most flicker-sensitive consumer (a line present one frame and gone the next
-reads as noise). Hatch itself is stateless and holds no smoother — the
-mitigation lives upstream by design. Its inlet expects EXACTLY tensormap
-outlet 0's encoding (`f_tensor_type.md`): the packing is a wiring error,
-self-diagnosing (marks everywhere at a doubled angle), never blessed.
+`f_tf_smooth` upstream is the practical requirement: a stroke present one frame and gone the next
+reads as noise, and Hatch is stateless and holds no smoother. Its inlet expects EXACTLY tensormap
+outlet 0's encoding (`f_tensor_type.md`). Floor reads the encoded trace, so it depends on the
+tensormap's Strength (the Strength dial that used to live on Hatch is gone: it only fed the
+zero-tensor guard, since axis and coherence are ratios).
 
 ---
 
 ## Notes
 
-- Built by the parallel T001 build (2026-10-17): NumPy mirror
-  `tests/modules/tf_hatch/test_tf_hatch.py` (20/20 pass — eigh cross-check ≤4.8e-7 on λ,
-  ≤3.6e-7 rad on axis; commit invariants; family mechanics; three mutation
-  checks), cost spike `tests/records/spike_tf_hatch_costshape.py` (branch T chosen;
-  model ≤2.7 ms/1080p vs the ~0.9 ms/pass bench floor), codeboxes
-  `src/f_tf_hatch/codebox_stage_e{1,2_T,3}.gen`, definition.py
-  (`src/f_tf_hatch/definition.py`) → `package/patchers/f_tf_hatch.maxpat`
-  (JSON-valid).
-- **Tier-2 bench (`tests/modules/tf_hatch/bench_tf_hatch.py`) and tier-3 scratch patch are
-  pending** — the bench file is written and registered (in benchdeps.DATA via
-  `.specify/f_tf_hatch/REGISTRATION_NOTES.md`) but not yet run; the cost
-  model's PROVISIONAL-CLOSED gate and the provisional defaults resolve
-  there.
-- Bench GPU wraps out-of-range reads; hatch samples only at `norm` (always
-  in-bounds), and E1 keeps the explicit clamp for the rule.
-- GenExpr `0.5*atan2` confines the gradient angle to (−π/2, π/2]: hatch is
-  safe under that (an unoriented line pattern is symmetric to θ+180°); the
-  decode caveat is recorded in the codebox (glyph ADR-2 verbatim).
-- Spec, plan, tasks: `.specify/f_tf_hatch/`; triage/build-order context in
-  `ideas/f_tf_backlog.md`, `ideas/f_tensorfield.md`.
+- **Tests.** NumPy mirror `tests/modules/tf_hatch/tf_hatch_mirror.py` and tier 1
+  `test_tf_hatch.py` (20 tests: decode vs `eigh`, headline behaviors on coherent / isotropic /
+  ring fields, blob coverage and axis bias, the texture mode, Coh Floor); tier 2 GPU bench
+  `bench_tf_hatch.py` (12 tests: parity vs the mirror including the texture mode and Coh Floor,
+  edge cases, cost). The build key and its static guard: `tests/build/test_render_dim.py`.
+- **The blobs.** Quintic value noise on a lattice rotated 22.5 degrees (so strokes along the axes
+  and the diagonals see the same noise), thresholded with a soft ramp; the threshold is a
+  closed-form cubic in Density (`BLOB_THR`, fit by `.specify/f_tf_hatch/spike/blob_fit.py`). They
+  replaced the first lit-lattice-cell noise, whose squares painted cell-shaped patches.
+- **Spec OQ1 ("coherence only as persistence") is superseded** for `coh_floor > 0` (2026-10-29,
+  Matt): the first form kept each undirected pixel's own mark, which read as bright dots; the
+  chosen form fades them to black.
+- **Latent `dim` readers.** Six modules still read `dim` in code (`f_cmap`, `f_grain`,
+  `f_masonry`, `f_quasi`, `f_vf_seeds`, `f_vf_vorticity`); `tests/build/test_render_dim.py` keeps
+  them on an explicit exemption list until each gets `render_dim`.
+- Spec, plan, tasks, findings, spikes: `.specify/f_tf_hatch/`; session record in `HANDOFF.md`.
 
 ---
 
 ## References
 
-- `docs/f-reference/f_weave.md` — the distance-field line/mark algorithm
-  branch T adapts (cited, never re-derived).
-- `docs/f-reference/discrete_item_conventions.md` — the family's param
-  vocabulary (density/phase/regularity/softness, size+stretch squeeze).
-- `.specify/f_tf_glyph/plan.md` ADR-2 — the canonical decode idiom (copied
-  verbatim into stage E1).
-- `docs/f-reference/f_tensor_type.md` — the tensor encoding contract.
-- Gouraud/Haeberli-style line-hatching lineage: Praun et al. 2001
-  ("Real-time hatching") for the tone-layer mechanism hatch's v2 pointer
-  (inlet-1-luma) generalizes; nothing was taken from implementations.
+- `docs/f-reference/f_tensor_type.md` - the tensor encoding contract.
+- `.specify/f_tf_glyph/plan.md` ADR-2 - the canonical decode idiom (the basis of stage E1).
+- `.specify/f_tf_hatch/spec.md`, `plan.md` - the v2 design (line integral convolution of sparse
+  impulses along the axis field; coherence as persistence).
+- `build/spec.md` ("render_dim") and `docs/f-reference/f_wc.md` - the Vsynth `r dim` pattern.
+- `docs/f-reference/f_tf_tensormap.md`, `f_tf_smooth.md` - the upstream modules.
+- Cabral and Leedom 1993, "Imaging vector fields using line integral convolution" - the technique.
