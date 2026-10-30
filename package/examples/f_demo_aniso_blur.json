@@ -1,0 +1,57 @@
+{
+ "pattrstorage": {
+  "name": "Vsynth",
+  "slots": {
+   "1": {
+    "id": 1,
+    "data": {
+     "f_tf_tensormap::strength": [
+      100.0
+     ],
+     "f_tf_tensormap::radius": [
+      6.0
+     ],
+     "f_tf_tensormap::bypass": [
+      0
+     ],
+     "f_tf_aniso_blur::strength_scale": [
+      2.0
+     ],
+     "f_tf_aniso_blur::length": [
+      28.0
+     ],
+     "f_tf_aniso_blur::width_gate": [
+      1.0
+     ],
+     "f_tf_aniso_blur::floor_pct": [
+      0.0
+     ],
+     "f_tf_aniso_blur::strength": [
+      100.0
+     ],
+     "f_tf_aniso_blur::bypass": [
+      0
+     ],
+     "f_tf_aniso_blur[1]::strength_scale": [
+      2.0
+     ],
+     "f_tf_aniso_blur[1]::length": [
+      28.0
+     ],
+     "f_tf_aniso_blur[1]::width_gate": [
+      0.0
+     ],
+     "f_tf_aniso_blur[1]::floor_pct": [
+      1.0
+     ],
+     "f_tf_aniso_blur[1]::strength": [
+      100.0
+     ],
+     "f_tf_aniso_blur[1]::bypass": [
+      0
+     ]
+    }
+   }
+  }
+ }
+}

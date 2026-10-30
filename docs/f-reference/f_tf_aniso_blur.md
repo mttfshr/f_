@@ -180,6 +180,11 @@ jit.gl.bfg    (structure source) -> f_tf_tensormap outlet 0 -> aniso_blur in0
 A/B against plain isotropic blur: raise `floor` to 1 (or `width_gate` to 0)
 for the exact circular reference at the same length budget.
 
+**Demo:** `package/examples/f_demo_aniso_blur.maxpat` (camera -> tensormap -> two aniso_blur
+instances on the same inputs: A structure-aligned, B the plain-blur reference, side by side;
+preset slot 1 in `f_demo_aniso_blur.json`: tensormap Radius 6, Strength 100; aniso Length 28,
+Strength 2, T-Map Strength 100, A Floor 0 / Width Gate 1, B Floor 1 / Width Gate 0).
+
 ---
 
 ## Notes
