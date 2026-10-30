@@ -32,8 +32,15 @@
 //                  2^((1-grain)*6+3)
 //   density  0..1  impulse coverage = 0.0025 * 2^(5*density), via the
 //                  closed-form blob threshold
+//   coh_floor   0..1  stroke termination (below): 0 = off
 //   src_stroke  internal: 1 when the optional stroke-texture inlet (in2) is connected
 // out1 = (raw blob-coverage-crossed, pres, 0, 1)   (texture connected: raw = the mean impulse along the path)
+//
+// COHERENCE FLOOR (2026-10-29; mirror: coh_floor; Matt's choice, "Terminate", from the Clouds / Dark / Terminate
+// sheet; this supersedes spec OQ1's "coherence only as persistence" for coh_floor > 0). Each step's contribution is
+// scaled by smoothstep(coh_floor - 0.2, coh_floor, coherence at the step's start): strokes end where direction is
+// lost. An undirected pixel keeps only its OWN impulse: a blob dot, or the stroke texture unstreaked. At 0 the factor
+// is exactly 1, so the default is today's look bit for bit. Costs one smoothstep and one multiply per step.
 //
 // STROKE TEXTURE (2026-10-29; mirror: texture_coord / texture_impulse): with in2 connected the impulse is
 // the texture's Rec.709 luma, soft-thresholded, instead of a blob; the marks are then the texture streaked
@@ -99,6 +106,7 @@ Param reach(0.5);
 Param grain(0.5);
 Param density(0.7);
 Param src_stroke(0.0);    // 1 when the stroke-texture inlet is connected (vs_inState)
+Param coh_floor(0.0);     // 0..1: a stroke ends where the coherence along its path drops (0 = off)
 // Render size. NOT `dim`: live jit.gl.pix cannot read its own size (`dim` reads ~1 x 1 in a
 // Vsynth chain, found 2026-10-29: with dim ~ 1 the position clamp [0.5, dim - 0.5] pins every
 // march step to the frame centre, so nothing follows the tensor). Vsynth drives these two Params
@@ -182,6 +190,7 @@ for (side = 0; side < 2; side += 1) {
         nx = px + h_step * ax;
         ny = py + h_step * ay;
         alive = alive * step(0.0, nx) * step(nx, wpx) * step(0.0, ny) * step(ny, hpx);
+        alive = alive * smoothstep(coh_floor - 0.2, coh_floor, coh);   // 1 exactly at coh_floor 0
         px = clamp(nx, 0.5, wpx - 0.5);
         py = clamp(ny, 0.5, hpx - 0.5);
         dx = ax;

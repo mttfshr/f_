@@ -159,6 +159,15 @@ patcher = {
         },
         # Render size, driven by Vsynth through render_dim (never set by hand): `dim` reads 1 in a live
         # jit.gl.pix, so E2 takes its frame size from these two Params.
+        {
+            "name": "coh_floor", "type": "float",
+            "min": 0.0, "max": 1.0, "default": 0.0,
+            "hint": "Where the tensor loses its direction (low coherence), strokes end instead of smearing into clouds: "
+                    "a path stops contributing below this coherence (ramped over the 0.2 below it). An undirected pixel keeps only its "
+                    "own mark: a blob dot, or the stroke texture unstreaked. 0 = off (the plain look).",
+            "label": "Coh Floor",
+            "pix_target": "e2",
+        },
         # 1 when the stroke-texture inlet is connected (vs_inState -> prepend param src_stroke -> E2)
         {"name": "src_stroke", "type": "internal"},
         {"name": "width", "type": "internal"},
