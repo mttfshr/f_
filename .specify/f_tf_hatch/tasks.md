@@ -54,7 +54,7 @@ entries and the git log, so the commit hashes below are the record).
 
 ## Open
 
-- [ ] T060 **Matt's live look at the pre-stage**: connect a texture to a fresh Hatch instance. Does it arrive and render each frame (the two-stage path is unverified live; at most a frame of latency)? Does Density behave? Per-pixel noise loses contrast (luma std x0.25), smooth textures do not (x0.87-0.98), so Density may need a nudge for noise.
+- [x] T060 **Matt's live look at the pre-stage PASSED 2026-10-30 (09:40)**: a texture connected to a fresh Hatch instance works through the two-stage path. (Not reported either way: Density with per-pixel-noise textures, which lose contrast x0.25 in the reduction; smooth textures do not, x0.87-0.98.)
 - [ ] T061 Confirm or change the 8 ms texture-mode cost gate (bench floor and 8-bit Vsynth textures are not modelled: untestable on the bench).
 - [ ] T062 **Migrate `f_tf_tensormap`, `f_tf_glyph`, `f_tf_aniso_blur` to `render_dim`** (their Width / Height dials become `render_dim`; the tensor then renders at the render size, so cost and what Radius means change: bench each). Needed because Hatch now follows the render size while the tensor modules do not.
 - [ ] T063 The six exempt modules read `dim` (latent live bug; list in `tests/build/test_render_dim.py`): `f_cmap` (paused), `f_grain`, `f_masonry`, `f_quasi`, `f_vf_seeds`, `f_vf_vorticity`. Not Hatch's work; tracked here because Hatch found it.
