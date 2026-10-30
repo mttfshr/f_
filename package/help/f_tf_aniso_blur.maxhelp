@@ -105,9 +105,9 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nstrength_scale [0 \u2013 2]\nlength [0 \u2013 8]\nwidth_gate [0 \u2013 1]\nfloor_pct [0 \u2013 1]\nstrength [1 \u2013 1000]\nwidth [64 \u2013 8192]\nheight [64 \u2013 8192]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nstrength_scale [0 \u2013 2]\nlength [0 \u2013 8]\nwidth_gate [0 \u2013 1]\nfloor_pct [0 \u2013 1]\nstrength [1 \u2013 1000]\nbypass [0 / 1]",
      "fontsize": 12.0,
-     "linecount": 10
+     "linecount": 8
     }
    },
    {
@@ -168,7 +168,7 @@
       338.0,
       24.0,
       190.0,
-      204.0
+      172.0
      ],
      "bgmode": 1,
      "border": 1,

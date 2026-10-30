@@ -26,6 +26,10 @@
 #
 # width/height Params exist because `dim` reads 1 inside live Vsynth
 # jit.gl.pix (tensormap T012 finding): they set the one-pixel tap step.
+# Until 2026-10-30 they were Width / Height dials ("set to the real frame size");
+# now they are INTERNAL, driven by Vsynth's render size through `render_dim`, and
+# the pix is `@adapt 0` so the output follows the render size (Matt, 2026-10-30:
+# dials removed, outputs follow the render size).
 #
 # All kernel/gate defaults are PROVISIONAL (spec Parameters table; tier-2
 # bench + tier-3 live judgment pending Matt): strength_scale 0.5,
@@ -49,9 +53,19 @@ patcher = {
     "bypass_mode": "param",
 
     "presentation_width":  190,
-    "presentation_height": 122,
+    "presentation_height": 90,    # was 122 with the Width / Height numbox row (removed 2026-10-30)
 
     "codebox": (_HERE / "codebox_aniso.gen").open(newline="").read(),
+
+    # Render size (2026-10-30): `@adapt 0`, sized by render_dim, which also drives the internal width / height Params
+    # (the one-pixel tap step). No @type: the module keeps its output type.
+    "pix_attrs": "@adapt 0 @dim 256 256",
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["primary"],
+        "size_stages":  ["primary"],
+    },
 
     "outlets": [
         {"comment": "smoothed source",
@@ -134,27 +148,12 @@ patcher = {
                     "thus the kernel length (measured in tasks.md T010). "
                     "PROVISIONAL: OQ3 option (a), documented pairing.",
         },
-        {
-            "name": "width", "type": "float",
-            "min": 64.0, "max": 8192.0, "default": 640.0,
-            "widget": "numbox",
-            "label": "Width",
-            "hint": "Render width in pixels. Set to the real frame width: "
-                    "it sets the one-pixel tap step. (Live jit.gl.pix "
-                    "cannot read its own size; tensormap T012.)",
-        },
-        {
-            "name": "height", "type": "float",
-            "min": 64.0, "max": 8192.0, "default": 480.0,
-            "widget": "numbox",
-            "label": "Height",
-            "hint": "Render height in pixels. Set to the real frame height: "
-                    "it sets the vertical tap step.",
-        },
+        {"name": "width",  "type": "internal"},   # render size, driven by Vsynth (render_dim)
+        {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 }
 
-# Layout: the library's 5-column, 190 px grid (five dials, then a numbox row); the frame was
-# 154 x 84 and cropped the right dials and the numbox row.
+# Layout: the library's 5-column, 190 px grid (one row of five dials; the numbox row went with the Width / Height
+# dials on 2026-10-30, so the frame is 190 x 90, was 122).
 patcher["overrides"] = {}

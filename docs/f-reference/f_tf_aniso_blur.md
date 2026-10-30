@@ -95,9 +95,9 @@ gain channel, or ratio gating) reopen — do not "fix" it silently.
 | `width_gate` | 0–1 | 0.5 | Coherence gate: 0 = always circular, 1 = full coherence response. |
 | `floor_pct` | 0–1 | 0.25 | Width floor (labeled "Floor"): minimum isotropic fraction everywhere. 0 = no smoothing where there is no structure; 1 = fully isotropic. |
 | `strength` | 1–1000 (log) | 100 | **The value tensormap's `strength` dial is set to** (the G-decode pairing above). Not an effect control. |
-| `width` | 64–8192 | 640 | Render width in pixels — sets the one-pixel tap step. **Set to your real frame width** (`dim` reads 1 inside a live `jit.gl.pix`). |
-| `height` | 64–8192 | 480 | Render height in pixels — same. |
 | `bypass` | 0/1 | 0 | Exact passthrough of inlet 1. |
+
+**Render size (2026-10-30).** The module renders at Vsynth's render size: the pix is `@adapt 0`, and the internal `width` / `height` Params (the one-pixel tap step; `dim` reads 1 inside a live `jit.gl.pix`) are driven by it through the builder's `render_dim`, so `length` is in render pixels at any frame size and there is nothing to set. They were `Width` / `Height` dials until then. The tensor and source inputs are assumed render-sized.
 
 All four effect-knob defaults are **provisional** (tier-3 judgment pending);
 `length`'s range top is set by the kernel's compile-time tap budget:
