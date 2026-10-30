@@ -79,9 +79,9 @@ E2_BASE = {"reach": 0.5, "grain": 0.75, "density": 0.717}
 
 def e2p(aux, **kw):
     """E2 params for this aux: Width / Height must equal the render size (live `dim` is unusable).
-    `src_stroke` (the stroke-texture inlet's connected flag) is PINNED to 0 in every job, as the bench
-    keeps a Param's last value; a texture test overrides it."""
-    p = dict(E2_BASE, width=float(aux.shape[1]), height=float(aux.shape[0]), src_stroke=0.0)
+    `src_stroke` (the stroke-texture inlet's connected flag) and `coh_floor` are PINNED to 0 in every job, as
+    the bench keeps a Param's last value; a texture / coherence-floor test overrides them."""
+    p = dict(E2_BASE, width=float(aux.shape[1]), height=float(aux.shape[0]), src_stroke=0.0, coh_floor=0.0)
     p.update(kw)
     return p
 
@@ -329,6 +329,32 @@ def test_stage_e2_stroke_texture_matches():
         check(f"E2 stroke texture {along}/{coh}: presence channel", float(np.abs(out[..., 1] - ref[..., 1]).max()), 1e-4)
 
 
+def test_stage_e2_coherence_floor_matches():
+    """Coh Floor (Terminate + black-out) vs the mirror, floor 0.5: a split field (left coherent, right isotropic:
+    the right half goes black), a uniform field INSIDE the ramp (coherence 0.4 -> presence x 0.5) and the stroke-
+    texture mode on that ramp field. Channel 0 by the pixel-fraction criterion, the presence channel tightly."""
+    h = w = 64
+    split = np.where((np.arange(w)[None, :, None] < w // 2), field_tex(h, w, 0.0, 1.0), field_tex(h, w, 0.0, 0.0)).astype(F32)
+    cases = [("split", split, {}, None), ("ramp", field_tex(h, w, 20.0, 0.4), {}, None),
+             ("ramp+texture", field_tex(h, w, 20.0, 0.4), dict(src_stroke=1.0, density=0.3), noise_tex(40, 48, 3))]
+    for label, tex_in, extra, stroke in cases:
+        aux = m.stage_e1(tex_in, aux_mode="unsigned_nearest")
+        params = e2p(aux, coh_floor=0.5, **extra)
+        out, r = bc.run_pass(code("e2"), [aux, stroke if stroke is not None else NOTEX], params=params)
+        ok(r)
+        dens = extra.get("density", None)
+        ref = m.stage_e2(aux, n_steps=16, length=params["reach"], grain=params["grain"], persist="mix",
+                         persist_pow=0.5, aux_mode="unsigned_nearest",
+                         fill=float(m.fill_from_density(dens if dens is not None else params["density"])),
+                         coh_floor=0.5, texture=stroke)
+        frac = float((np.abs(out[..., 0] - ref[..., 0]) > 0.05).mean())
+        pres_err = float(np.abs(out[..., 1] - ref[..., 1]).max())
+        note(f"coh_floor 0.5, {label}: fraction differing > 0.05 / presence max abs err / mean pres GPU, mirror",
+             (frac, pres_err, float(out[..., 1].mean()), float(ref[..., 1].mean())))
+        check(f"E2 coh_floor {label}: <= 3% of pixels differ", 0.0 if frac <= 0.03 else frac, 0.0)
+        check(f"E2 coh_floor {label}: presence channel", pres_err, 1e-4)
+
+
 # ------------------------------------------------------------- stage E3
 
 def test_stage_e3_matches_both_outlets():
@@ -384,6 +410,8 @@ def test_cost_per_stage_1080p():
     r = bc.measure(code("e2"), [aux, noise_tex(1080, 1920, 9)], chain=CHAIN,
                    params=e2p(aux, reach=0.5, grain=0.5, src_stroke=1.0))
     note("E2 stroke-texture mode 1080p ms/pass (not in the gate)", r.get("ms_per_pass", r.get("ms_per_pass_upper_bound")))
+    r = bc.measure(code("e2"), [aux, NOTEX], chain=CHAIN, params=e2p(aux, reach=0.5, grain=0.5, coh_floor=0.5))
+    note("E2 coh_floor 0.5 blob mode 1080p ms/pass (not in the gate)", r.get("ms_per_pass", r.get("ms_per_pass_upper_bound")))
     note("sum of the three stages, ms (module gate <= 5)", total)
     check("module cost <= 5 ms at 1080p", 0.0 if total <= 5.0 else total, 0.0)
 
