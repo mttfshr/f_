@@ -1,0 +1,24 @@
+// f_tf_hatch -- stroke-texture PRE-STAGE, H pass (2026-10-30).
+// Spec: tests/modules/tf_hatch/tf_hatch_mirror.py `stage_prefilter` (this is its first loop).
+//
+// The stroke texture is box-filtered down by 4 on each axis ahead of E2: E2's cost with a texture is the
+// texture's footprint x the tiling stride (1080p float32: 13 ms; 1/4 size: 5 ms) and the streaking averages the
+// fine detail away anyway. This pass renders ow x (render height): each output texel is the mean of four
+// nearest taps spread evenly across it. The taps are offsets from `norm` in units of the OUTPUT texel (1/ow),
+// so no source size is needed (a codebox cannot read an input's size, and live `dim` reads 1).
+// `ow` = max(1, render width // 4), driven by Vsynth through render_dim `downsample`; the stage's own size
+// (ow x H) is set by the same plumbing.
+// Rule: one tap per statement (a long single sum trips the jit.gl.pix translator; the spike probe hung on it).
+//
+// in1: the stroke texture (any size).   out1: the horizontally reduced texture.
+
+Param ow(64);
+
+iw = 1.0 / max(ow, 1.0);
+
+acc = nearest(in1, vec(norm.x - 0.375 * iw, norm.y));
+acc = acc + nearest(in1, vec(norm.x - 0.125 * iw, norm.y));
+acc = acc + nearest(in1, vec(norm.x + 0.125 * iw, norm.y));
+acc = acc + nearest(in1, vec(norm.x + 0.375 * iw, norm.y));
+
+out1 = acc * 0.25;

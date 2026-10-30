@@ -45,12 +45,33 @@ patcher = {
         "height_param": "height",
         "param_stages": ["e2"],
         "size_stages":  ["e1", "e2", "e3"],
+        # The stroke-texture pre-stage (2026-10-30): a separable box downsample by 4 on each axis, so E2 reads a
+        # texture of render size / 4 (13 ms -> 5 ms at 1080p). ow / oh and the two stages' sizes follow the render.
+        "downsample": {"factor": 4, "width_param": "ow", "height_param": "oh", "h_stage": "pre_h", "v_stage": "pre_v"},
     },
 
     "presentation_width":  190,
     "presentation_height": 150,
 
     "pix_chain": [
+        {
+            "id":        "pre_h",
+            "name":      "#0_hatch_stage_pre_h",
+            "gen":       "codebox_stage_pre_h.gen",
+            "n_inlets":  1,
+            "n_outlets": 1,
+            "pix_attrs": "@adapt 0 @dim 64 64 @type float32",   # output ow x H, set by render_dim downsample
+            "primary":   False,
+        },
+        {
+            "id":        "pre_v",
+            "name":      "#0_hatch_stage_pre_v",
+            "gen":       "codebox_stage_pre_v.gen",
+            "n_inlets":  1,
+            "n_outlets": 1,
+            "pix_attrs": "@adapt 0 @dim 64 64 @type float32",   # output ow x oh, set by render_dim downsample
+            "primary":   False,
+        },
         {
             "id":        "e1",
             "name":      "#0_hatch_stage_e1",
@@ -84,14 +105,16 @@ patcher = {
     "pix_wires": [
         ["e1", 0, "e2", 0],   # (ca, sa, coh, pres) -> streamline march
         ["e2", 0, "e3", 0],   # (raw, pres, 0, 1)   -> style + encode
+        ["pre_h", 0, "pre_v", 0],   # the stroke texture: H pass (width / 4) ...
+        ["pre_v", 0, "e2", 1],      # ... V pass (height / 4) -> E2's stroke texture (in2)
     ],
 
     # The optional stroke texture: the marks Hatch streaks along the contours. Unconnected -> the built-in
     # blobs (src_stroke 0), the output is unchanged. Inside E2 it is in2 (build/spec.md mod_inlets).
     "mod_inlets": [
-        {"label": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs. HEAVY at 1080p: a full-size float32 texture at a low Grain makes E2 take 12-13 ms (blobs 3); a texture of 1024x1024 or less, or Grain near 1, keeps it at 5-7 ms",
+        {"label": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs. It is first box-filtered down to 1/4 of the render size on each axis (a pre-stage, nearly free), so the cost is ~5 ms for E2 at 1080p instead of 12-13; fine per-pixel noise loses contrast in that reduction, smooth textures do not",
          "state_param": "src_stroke",
-         "fanout": [["e2", 1]],
+         "fanout": [["pre_h", 0]],
          "state_nodes": ["e2"]},
     ],
 
@@ -172,6 +195,9 @@ patcher = {
         {"name": "src_stroke", "type": "internal"},
         {"name": "width", "type": "internal"},
         {"name": "height", "type": "internal"},
+        # The pre-stage's output size, floor(render / 4): driven by render_dim `downsample` (Param ow in the H pass, oh in the V pass).
+        {"name": "ow", "type": "internal"},
+        {"name": "oh", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 }

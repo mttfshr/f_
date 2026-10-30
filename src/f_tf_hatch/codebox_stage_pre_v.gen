@@ -1,0 +1,20 @@
+// f_tf_hatch -- stroke-texture PRE-STAGE, V pass (2026-10-30).
+// Spec: tests/modules/tf_hatch/tf_hatch_mirror.py `stage_prefilter` (this is its second loop).
+//
+// Takes the H pass's output (ow x render height) down to ow x oh: each output texel is the mean of four nearest
+// taps spread evenly across it vertically, as offsets from `norm` in units of the OUTPUT texel (1/oh), so no
+// source size is needed. `oh` = max(1, render height // 4), driven by Vsynth through render_dim `downsample`.
+// The result is what E2 reads as its stroke texture (Grain tiles it, Density thresholds its luma).
+//
+// in1: the H pass's output.   out1: the reduced stroke texture.
+
+Param oh(64);
+
+ih = 1.0 / max(oh, 1.0);
+
+acc = nearest(in1, vec(norm.x, norm.y - 0.375 * ih));
+acc = acc + nearest(in1, vec(norm.x, norm.y - 0.125 * ih));
+acc = acc + nearest(in1, vec(norm.x, norm.y + 0.125 * ih));
+acc = acc + nearest(in1, vec(norm.x, norm.y + 0.375 * ih));
+
+out1 = acc * 0.25;

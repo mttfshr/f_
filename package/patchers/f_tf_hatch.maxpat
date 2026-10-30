@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						552.0,
+						602.0,
 						30.0,
 						30.0
 					],
@@ -69,7 +69,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						100.0,
-						552.0,
+						602.0,
 						30.0,
 						30.0
 					],
@@ -125,6 +125,244 @@
 						22.0
 					],
 					"text": "route reach grain density contrast line_hard structure_floor angle_offset coh_floor"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-50",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_tf_hatch -- stroke-texture PRE-STAGE, H pass (2026-10-30).\n// Spec: tests/modules/tf_hatch/tf_hatch_mirror.py `stage_prefilter` (this is its first loop).\n//\n// The stroke texture is box-filtered down by 4 on each axis ahead of E2: E2's cost with a texture is the\n// texture's footprint x the tiling stride (1080p float32: 13 ms; 1/4 size: 5 ms) and the streaking averages the\n// fine detail away anyway. This pass renders ow x (render height): each output texel is the mean of four\n// nearest taps spread evenly across it. The taps are offsets from `norm` in units of the OUTPUT texel (1/ow),\n// so no source size is needed (a codebox cannot read an input's size, and live `dim` reads 1).\n// `ow` = max(1, render width // 4), driven by Vsynth through render_dim `downsample`; the stage's own size\n// (ow x H) is set by the same plumbing.\n// Rule: one tap per statement (a long single sum trips the jit.gl.pix translator; the spike probe hung on it).\n//\n// in1: the stroke texture (any size).   out1: the horizontally reduced texture.\n\nParam ow(64);\n\niw = 1.0 / max(ow, 1.0);\n\nacc = nearest(in1, vec(norm.x - 0.375 * iw, norm.y));\nacc = acc + nearest(in1, vec(norm.x - 0.125 * iw, norm.y));\nacc = acc + nearest(in1, vec(norm.x + 0.125 * iw, norm.y));\nacc = acc + nearest(in1, vec(norm.x + 0.375 * iw, norm.y));\n\nout1 = acc * 0.25;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						380.0,
+						240.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_hatch_stage_pre_h @adapt 0 @dim 64 64 @type float32",
+					"varname": "#0_hatch_stage_pre_h"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-51",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_tf_hatch -- stroke-texture PRE-STAGE, V pass (2026-10-30).\n// Spec: tests/modules/tf_hatch/tf_hatch_mirror.py `stage_prefilter` (this is its second loop).\n//\n// Takes the H pass's output (ow x render height) down to ow x oh: each output texel is the mean of four nearest\n// taps spread evenly across it vertically, as offsets from `norm` in units of the OUTPUT texel (1/oh), so no\n// source size is needed. `oh` = max(1, render height // 4), driven by Vsynth through render_dim `downsample`.\n// The result is what E2 reads as its stroke texture (Grain tiles it, Density thresholds its luma).\n//\n// in1: the H pass's output.   out1: the reduced stroke texture.\n\nParam oh(64);\n\nih = 1.0 / max(oh, 1.0);\n\nacc = nearest(in1, vec(norm.x, norm.y - 0.375 * ih));\nacc = acc + nearest(in1, vec(norm.x, norm.y - 0.125 * ih));\nacc = acc + nearest(in1, vec(norm.x, norm.y + 0.125 * ih));\nacc = acc + nearest(in1, vec(norm.x, norm.y + 0.375 * ih));\n\nout1 = acc * 0.25;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						430.0,
+						240.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_hatch_stage_pre_v @adapt 0 @dim 64 64 @type float32",
+					"varname": "#0_hatch_stage_pre_v"
 				}
 			},
 			{
@@ -237,7 +475,7 @@
 						]
 					},
 					"patching_rect": [
-						30.0,
+						290.0,
 						380.0,
 						216.0,
 						22.0
@@ -248,7 +486,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-50",
+					"id": "obj-52",
 					"maxclass": "newobj",
 					"numinlets": 2,
 					"numoutlets": 2,
@@ -387,7 +625,7 @@
 					},
 					"patching_rect": [
 						30.0,
-						430.0,
+						480.0,
 						216.0,
 						22.0
 					],
@@ -397,7 +635,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-53",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 3,
@@ -535,7 +773,7 @@
 					},
 					"patching_rect": [
 						30.0,
-						480.0,
+						530.0,
 						216.0,
 						22.0
 					],
@@ -842,7 +1080,7 @@
 				"box": {
 					"id": "obj-100",
 					"maxclass": "inlet",
-					"comment": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs. HEAVY at 1080p: a full-size float32 texture at a low Grain makes E2 take 12-13 ms (blobs 3); a texture of 1024x1024 or less, or Grain near 1, keeps it at 5-7 ms",
+					"comment": "stroke texture (optional): the marks streaked along the contours; unconnected = the built-in blobs. It is first box-filtered down to 1/4 of the render size on each axis (a pre-stage, nearly free), so the cost is ~5 ms for E2 at 1080p instead of 12-13; fine per-pixel noise loses contrast in that reduction, smooth textures do not",
 					"index": 0,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -1778,7 +2016,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						642.0,
+						692.0,
 						40.0,
 						22.0
 					],
@@ -1796,7 +2034,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						170.0,
-						642.0,
+						692.0,
 						60.0,
 						22.0
 					],
@@ -1814,7 +2052,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						170.0,
-						672.0,
+						722.0,
 						70.0,
 						22.0
 					],
@@ -1830,7 +2068,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						80.0,
-						642.0,
+						692.0,
 						60.0,
 						22.0
 					],
@@ -1849,7 +2087,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						80.0,
-						672.0,
+						722.0,
 						60.0,
 						22.0
 					],
@@ -1868,7 +2106,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						702.0,
+						752.0,
 						120.0,
 						22.0
 					],
@@ -1886,11 +2124,155 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						160.0,
-						702.0,
+						752.0,
 						120.0,
 						22.0
 					],
 					"text": "prepend param height",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-10",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						752.0,
+						120.0,
+						22.0
+					],
+					"text": "expr max(1\\, $i1/4)",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-11",
+					"maxclass": "newobj",
+					"patching_rect": [
+						510.0,
+						752.0,
+						120.0,
+						22.0
+					],
+					"text": "expr max(1\\, $i1/4)",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-12",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						782.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param ow",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-13",
+					"maxclass": "newobj",
+					"patching_rect": [
+						510.0,
+						782.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param oh",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-14",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						812.0,
+						60.0,
+						22.0
+					],
+					"text": "pack 0 0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-15",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						842.0,
+						80.0,
+						22.0
+					],
+					"text": "prepend dim",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-16",
+					"maxclass": "newobj",
+					"patching_rect": [
+						510.0,
+						812.0,
+						60.0,
+						22.0
+					],
+					"text": "pack 0 0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-17",
+					"maxclass": "newobj",
+					"patching_rect": [
+						510.0,
+						842.0,
+						80.0,
+						22.0
+					],
+					"text": "prepend dim",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1939,7 +2321,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-53",
 						0
 					],
 					"destination": [
@@ -1951,7 +2333,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-51",
+						"obj-53",
 						1
 					],
 					"destination": [
@@ -1980,7 +2362,7 @@
 					],
 					"destination": [
 						"obj-50",
-						1
+						0
 					]
 				}
 			},
@@ -2003,7 +2385,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -2027,7 +2409,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2039,7 +2421,19 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-52",
+						0
+					],
+					"destination": [
+						"obj-53",
 						0
 					]
 				}
@@ -2053,6 +2447,18 @@
 					"destination": [
 						"obj-51",
 						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-51",
+						0
+					],
+					"destination": [
+						"obj-52",
+						1
 					]
 				}
 			},
@@ -2147,7 +2553,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -2183,7 +2589,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -2219,7 +2625,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -2255,7 +2661,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2291,7 +2697,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2399,7 +2805,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -2435,7 +2841,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -2447,7 +2853,7 @@
 						0
 					],
 					"destination": [
-						"obj-51",
+						"obj-53",
 						0
 					]
 				}
@@ -2507,7 +2913,7 @@
 						0
 					],
 					"destination": [
-						"obj-50",
+						"obj-52",
 						0
 					]
 				}
@@ -2519,7 +2925,175 @@
 						0
 					],
 					"destination": [
+						"obj-52",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						0
+					],
+					"destination": [
+						"obj-rd-10",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						1
+					],
+					"destination": [
+						"obj-rd-11",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						1
+					],
+					"destination": [
+						"obj-rd-14",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-10",
+						0
+					],
+					"destination": [
+						"obj-rd-12",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-10",
+						0
+					],
+					"destination": [
+						"obj-rd-14",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-10",
+						0
+					],
+					"destination": [
+						"obj-rd-16",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-11",
+						0
+					],
+					"destination": [
+						"obj-rd-13",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-11",
+						0
+					],
+					"destination": [
+						"obj-rd-16",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-12",
+						0
+					],
+					"destination": [
 						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-13",
+						0
+					],
+					"destination": [
+						"obj-51",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-14",
+						0
+					],
+					"destination": [
+						"obj-rd-15",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-15",
+						0
+					],
+					"destination": [
+						"obj-50",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-16",
+						0
+					],
+					"destination": [
+						"obj-rd-17",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-17",
+						0
+					],
+					"destination": [
+						"obj-51",
 						0
 					]
 				}

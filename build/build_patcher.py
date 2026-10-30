@@ -1372,17 +1372,29 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
 
     Any of the two groups may be omitted, not both.  `loadbang -> s trig_res` asks Vsynth for the current
     size at load (without it a module added after the render started never receives a value).
+
+    OPTIONAL `"downsample"` (2026-10-30, f_tf_hatch's texture pre-stage): a SEPARABLE downsample by an integer
+    factor F, as two pix stages (H pass: width -> ow, height kept; V pass: height -> oh):
+
+        "downsample": {"factor": 4,
+                       "width_param": "ow",  "h_stage": "pre_h",   # ow = max(1, W // F): Param + the H stage's width
+                       "height_param": "oh", "v_stage": "pre_v"}   # oh = max(1, H // F): Param + the V stage's height
+
+    Generates `expr max(1\\, $i1/F)` for each axis, `prepend param ow|oh` into h_stage|v_stage, and
+    `pack` -> `prepend dim` so h_stage's output is ow x H and v_stage's is ow x oh (both `@adapt 0`, in pix_attrs).
+    The two params are declared in "params" with type "internal", like width_param/height_param.
     Returns (boxes, lines) in the raw_boxes/raw_lines shape; ids are `obj-rd-N`."""
     if not isinstance(rd, dict):
         raise ValueError(f"render_dim must be a dict, not {rd!r}")
-    unknown = sorted(set(rd) - {"width_param", "height_param", "param_stages", "size_stages"})
+    unknown = sorted(set(rd) - {"width_param", "height_param", "param_stages", "size_stages", "downsample"})
     if unknown:
         raise ValueError(f"render_dim: unknown key(s) {unknown} (allowed: width_param, height_param, "
-                         f"param_stages, size_stages)")
+                         f"param_stages, size_stages, downsample)")
+    ds = rd.get("downsample")
     wp, hp = rd.get("width_param"), rd.get("height_param")
     param_stages, size_stages = rd.get("param_stages", []), rd.get("size_stages", [])
-    if not (wp or hp or param_stages or size_stages):
-        raise ValueError("render_dim: declare param_stages (with width_param and height_param) and/or size_stages")
+    if not (wp or hp or param_stages or size_stages or ds):
+        raise ValueError("render_dim: declare param_stages (with width_param and height_param), size_stages and/or downsample")
     if bool(wp) != bool(hp):
         raise ValueError("render_dim: width_param and height_param go together (one `unpack` feeds both)")
     if bool(wp) != bool(param_stages):
@@ -1396,6 +1408,26 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
     if wp and wp == hp:
         raise ValueError("render_dim: width_param and height_param must differ")
     chain_nodes = {n["id"]: n for n in pix_chain}
+    if ds is not None:
+        need = {"factor", "width_param", "height_param", "h_stage", "v_stage"}
+        if not isinstance(ds, dict) or set(ds) != need:
+            raise ValueError(f"render_dim downsample: a dict with exactly the keys {sorted(need)}, not {ds!r}")
+        if not isinstance(ds["factor"], int) or isinstance(ds["factor"], bool) or ds["factor"] < 2:
+            raise ValueError(f"render_dim downsample: factor must be an integer >= 2, not {ds['factor']!r}")
+        if ds["width_param"] == ds["height_param"]:
+            raise ValueError("render_dim downsample: width_param and height_param must differ")
+        for nm in (ds["width_param"], ds["height_param"]):
+            if nm not in declared or declared[nm].get("type") != "internal":
+                raise ValueError(f"render_dim downsample: {nm!r} must be declared in params with type 'internal'")
+        for key in ("h_stage", "v_stage"):
+            ref = ds[key]
+            if ref not in chain_id_to_obj:
+                raise ValueError(f"render_dim downsample {key}: unknown node {ref!r} (pix_chain ids: {sorted(chain_id_to_obj)})")
+            if "@adapt 0" not in chain_nodes[ref].get("pix_attrs", ""):
+                raise ValueError(f"render_dim downsample {key}: node {ref!r} must set pix_attrs with '@adapt 0' "
+                                 f"(its output size is set by a `dim` message)")
+        if ds["h_stage"] == ds["v_stage"]:
+            raise ValueError("render_dim downsample: h_stage and v_stage must be different nodes")
 
     def nodes(spec, what):
         items = [spec] if isinstance(spec, str) else list(spec)
@@ -1434,14 +1466,34 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain):
     lines = [line(5, 0, 6, 0)]
     for o in s_objs:
         lines.append(line(0, 0, o, 0))                       # r dim -> the pix: its output follows the render size
-    if wp:
+    if wp or ds:
         boxes += [box(1, "route dim", 1, 2, [530.0, 320.0, 60.0, 22.0]),
-                  box(2, "unpack i i", 1, 2, [530.0, 350.0, 60.0, 22.0], ["int", "int"]),
-                  box(3, f"prepend param {wp}", 1, 1, [480.0, 380.0, 120.0, 22.0]),
+                  box(2, "unpack i i", 1, 2, [530.0, 350.0, 60.0, 22.0], ["int", "int"])]
+        lines += [line(0, 0, 1, 0), line(1, 0, 2, 0)]
+    if wp:
+        boxes += [box(3, f"prepend param {wp}", 1, 1, [480.0, 380.0, 120.0, 22.0]),
                   box(4, f"prepend param {hp}", 1, 1, [610.0, 380.0, 120.0, 22.0])]
-        lines += [line(0, 0, 1, 0), line(1, 0, 2, 0), line(2, 0, 3, 0), line(2, 1, 4, 0)]
+        lines += [line(2, 0, 3, 0), line(2, 1, 4, 0)]
         for o in p_objs:
             lines += [line(3, 0, o, 0), line(4, 0, o, 0)]
+    if ds:
+        F, hs, vs = ds["factor"], chain_id_to_obj[ds["h_stage"]], chain_id_to_obj[ds["v_stage"]]
+        # unpack fires its RIGHT outlet (H) first, then the left (W): H reaches every cold right inlet before W
+        # reaches a hot left inlet, so each `pack` emits once with both values current.
+        boxes += [box(10, f"expr max(1\\, $i1/{F})", 1, 1, [830.0, 380.0, 120.0, 22.0]),     # ow
+                  box(11, f"expr max(1\\, $i1/{F})", 1, 1, [960.0, 380.0, 120.0, 22.0]),     # oh
+                  box(12, f"prepend param {ds['width_param']}", 1, 1, [830.0, 410.0, 120.0, 22.0]),
+                  box(13, f"prepend param {ds['height_param']}", 1, 1, [960.0, 410.0, 120.0, 22.0]),
+                  box(14, "pack 0 0", 2, 1, [830.0, 440.0, 60.0, 22.0]),                        # ow, H   -> h_stage dim
+                  box(15, "prepend dim", 1, 1, [830.0, 470.0, 80.0, 22.0]),
+                  box(16, "pack 0 0", 2, 1, [960.0, 440.0, 60.0, 22.0]),                        # ow, oh  -> v_stage dim
+                  box(17, "prepend dim", 1, 1, [960.0, 470.0, 80.0, 22.0])]
+        lines += [line(2, 0, 10, 0), line(2, 1, 11, 0), line(2, 1, 14, 1),
+                  line(10, 0, 12, 0), line(10, 0, 14, 0), line(10, 0, 16, 0),
+                  line(11, 0, 13, 0), line(11, 0, 16, 1),
+                  line(12, 0, hs, 0), line(13, 0, vs, 0),
+                  line(14, 0, 15, 0), line(15, 0, hs, 0),
+                  line(16, 0, 17, 0), line(17, 0, vs, 0)]
     return boxes, lines
 
 

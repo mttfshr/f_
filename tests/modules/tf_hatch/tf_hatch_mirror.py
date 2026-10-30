@@ -288,26 +288,37 @@ def prefilter_size(W, H, f=PRE_F):
     return max(1, int(W) // int(f)), max(1, int(H) // int(f))
 
 
-def stage_prefilter(tex, ow, oh, f=PRE_F):
-    """H pass (width -> ow, height kept), then V pass (height -> oh). tex (sh, sw, 4) -> (oh, ow, 4)."""
+def prefilter_h(tex, ow, f=PRE_F):
+    """The H pass (codebox_stage_pre_h): width -> ow, height kept. tex (sh, sw, 4) -> (sh, ow, 4)."""
     tex = np.asarray(tex, F32)
     sh = tex.shape[0]
     f = int(f)
-    inv = F32(1.0 / f)
     nx = (np.arange(ow, dtype=F32)[None, :] + F32(0.5)) / F32(ow)
     ny = (np.arange(sh, dtype=F32)[:, None] + F32(0.5)) / F32(sh)
     acc = None
     for a in range(f):
         t = g.nearest(tex, nx + F32(((a + 0.5) / f - 0.5) / ow), ny)
         acc = t if acc is None else (acc + t).astype(F32)
-    mid = (acc * inv).astype(F32)                                   # (sh, ow, 4)
+    return (acc * F32(1.0 / f)).astype(F32)
+
+
+def prefilter_v(mid, oh, f=PRE_F):
+    """The V pass (codebox_stage_pre_v): height -> oh, width kept. mid (sh, ow, 4) -> (oh, ow, 4)."""
+    mid = np.asarray(mid, F32)
+    ow = mid.shape[1]
+    f = int(f)
     nx = (np.arange(ow, dtype=F32)[None, :] + F32(0.5)) / F32(ow)
     ny = (np.arange(oh, dtype=F32)[:, None] + F32(0.5)) / F32(oh)
     acc = None
     for b in range(f):
         t = g.nearest(mid, nx, ny + F32(((b + 0.5) / f - 0.5) / oh))
         acc = t if acc is None else (acc + t).astype(F32)
-    return (acc * inv).astype(F32)
+    return (acc * F32(1.0 / f)).astype(F32)
+
+
+def stage_prefilter(tex, ow, oh, f=PRE_F):
+    """H pass then V pass: tex (sh, sw, 4) -> (oh, ow, 4)."""
+    return prefilter_v(prefilter_h(tex, ow, f), oh, f)
 
 
 def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",

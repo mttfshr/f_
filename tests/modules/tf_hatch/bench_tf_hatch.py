@@ -386,6 +386,38 @@ def test_stage_e3_matches_both_outlets():
 
 # ------------------------------------------------------------- cost
 
+def _rgba_noise(h, w, seed):
+    t = np.random.default_rng(seed).random((h, w, 4)).astype(F32)
+    t[..., 3] = 1.0
+    return t
+
+
+def test_stage_prefilter_matches_the_mirror():
+    """The texture pre-stage (codebox_stage_pre_h / _pre_v) vs the mirror's prefilter_h / prefilter_v, each pass on its
+    own and the pair: 16:9 and 1:1 sizes the factor divides (taps sit at texel centres: exact), and a size it does not
+    divide (taps land anywhere in a texel: a rare nearest() tie may flip, so a pixel-fraction criterion)."""
+    for h, w, exact in ((144, 256, True), (128, 128, True), (150, 250, False)):
+        src = _rgba_noise(h, w, 5)
+        ow, oh = m.prefilter_size(w, h)
+        out_h, r = bc.run_pass(code("pre_h"), [src], dim=(ow, h), params={"ow": float(ow)})
+        ok(r)
+        ref_h = m.prefilter_h(src, ow)
+        out_v, r = bc.run_pass(code("pre_v"), [out_h], dim=(ow, oh), params={"oh": float(oh)})
+        ok(r)
+        ref = m.prefilter_v(ref_h, oh)
+        both = m.stage_prefilter(src, ow, oh)
+        check(f"{w}x{h}: the mirror's two passes compose to stage_prefilter", float(np.abs(ref - both).max()), 0.0)
+        err_h, err_v = float(np.abs(out_h - ref_h).max()), float(np.abs(out_v - ref).max())
+        note(f"prefilter {w}x{h} -> {ow}x{oh}: H pass max err {err_h:.2e}, chain max err {err_v:.2e}")
+        if exact:
+            check(f"{w}x{h}: H pass matches the mirror", err_h, 1e-5)
+            check(f"{w}x{h}: H then V matches the mirror", err_v, 1e-5)
+        else:
+            frac = float((np.abs(out_v - ref) > 0.02).mean())
+            check(f"{w}x{h} (not divisible): <= 1% of pixels differ", 0.0 if frac <= 0.01 else frac, 0.0)
+            check(f"{w}x{h} (not divisible): mean within 1e-3", abs(float(out_v.mean()) - float(ref.mean())), 1e-3)
+
+
 def test_cost_per_stage_1080p():
     """Per-stage ms/pass at 1080p (M3 Max); the module gate is the SUM <= 5 ms. The spike predicted
     E2 ~1.7 ms (N = 16, nearest); bench floor ~0.8 ms/pass, so E1 and E3 read as upper bounds.
@@ -399,6 +431,7 @@ def test_cost_per_stage_1080p():
     aux2[..., 1] = 1.0
     aux2[..., 3] = 1.0
     total = 0.0
+    got = {}
     for label, c, args, params in (("E1", code("e1"), [tex], dict(E1_BASE, structure_floor=0.1)),
                                    ("E2", code("e2"), [aux, NOTEX], e2p(aux, reach=0.5, grain=0.5)),
                                    ("E3", code("e3"), [aux2], dict(E3_BASE))):
@@ -407,13 +440,30 @@ def test_cost_per_stage_1080p():
         kind = "gpu_bound" if "ms_per_pass" in r else "upper bound"
         note(f"{label} 1080p ms/pass ({kind})", ms)
         total += ms
+        got[label] = ms
+    _ms = lambda r: r.get("ms_per_pass", r.get("ms_per_pass_upper_bound"))
     r = bc.measure(code("e2"), [aux, noise_tex(1080, 1920, 9)], chain=CHAIN,
                    params=e2p(aux, reach=0.5, grain=0.5, src_stroke=1.0))
-    note("E2 stroke-texture mode 1080p ms/pass (not in the gate)", r.get("ms_per_pass", r.get("ms_per_pass_upper_bound")))
+    note("E2 with a FULL-SIZE stroke texture (no pre-stage), 1080p ms/pass (not in the gate)", _ms(r))
+    # Texture mode as shipped: the pre-stage (render / 4) feeds E2 a 480 x 270 texture.
+    r = bc.measure(code("e2"), [aux, noise_tex(270, 480, 9)], chain=CHAIN,
+                   params=e2p(aux, reach=0.5, grain=0.5, src_stroke=1.0))
+    e2_tex = _ms(r)
+    note("E2 with the pre-staged 480x270 stroke texture, ms/pass", e2_tex)
+    pre = 0.0
+    for nm, args, dim, prm in (("pre_h", [noise_tex(1080, 1920, 9)], (480, 1080), {"ow": 480.0}),
+                               ("pre_v", [noise_tex(1080, 480, 9)], (480, 270), {"oh": 270.0})):
+        rp = bc.measure(code(nm), args, dim=dim, chain=CHAIN, params=prm)
+        note(f"{nm} ms/pass ({'gpu_bound' if 'ms_per_pass' in rp else 'upper bound: below the bench floor'})", _ms(rp))
+        pre += _ms(rp)
+    tex_total = total - got["E2"] + e2_tex + pre
+    note("TEXTURE-MODE module total (E1 + E2 with the pre-staged texture + pre_h + pre_v + E3), ms; gate <= 8", tex_total)
     r = bc.measure(code("e2"), [aux, NOTEX], chain=CHAIN, params=e2p(aux, reach=0.5, grain=0.5, coh_floor=0.5))
     note("E2 coh_floor 0.5 blob mode 1080p ms/pass (not in the gate)", r.get("ms_per_pass", r.get("ms_per_pass_upper_bound")))
     note("sum of the three stages, ms (module gate <= 5)", total)
     check("module cost <= 5 ms at 1080p", 0.0 if total <= 5.0 else total, 0.0)
+    check("texture-mode module cost <= 8 ms at 1080p (the pre-stage's gate; the blob gate stays 5)",
+          0.0 if tex_total <= 8.0 else tex_total, 0.0)
 
 
 if __name__ == "__main__":

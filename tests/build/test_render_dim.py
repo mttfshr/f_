@@ -31,7 +31,7 @@ import build_patcher as bp          # noqa: E402
 from harness import check, run      # noqa: E402
 
 TMP = Path(tempfile.mkdtemp(prefix="f_render_dim_"))
-(TMP / "g.gen").write_text("Param width(640.0);\nParam height(480.0);\nParam bypass_gate(0.0);\nout1 = in1;\n")
+(TMP / "g.gen").write_text("Param width(640.0);\nParam height(480.0);\nParam ow(64.0);\nParam oh(64.0);\nParam bypass_gate(0.0);\nout1 = in1;\n")
 
 
 def _eq(label, got, want):
@@ -148,6 +148,68 @@ def test_the_key_changes_nothing_when_absent():
     _eq("building twice without the key gives the same patcher", bp.build(chain_defn()), bp.build(chain_defn()))
     top, _ = top_and_cords(chain_defn())
     _eq("no obj-rd boxes without the key", [i for i in top if str(i).startswith("obj-rd-")], [])
+
+
+# ---- `downsample` (2026-10-30): f_tf_hatch's texture pre-stage, a separable box downsample by an integer factor
+
+DS = {"factor": 4, "width_param": "ow", "height_param": "oh", "h_stage": "ph", "v_stage": "pv"}
+
+
+def ds_defn(ds=DS, rd=None):
+    d = chain_defn(render_dim=dict(RD if rd is None else rd, downsample=ds) if ds is not None else RD)
+    d["pix_chain"] += [{"id": i, "name": f"#0_t_{i}", "gen": "g.gen", "n_inlets": 1, "n_outlets": 1,
+                        "pix_attrs": "@adapt 0 @dim 64 64 @type float32", "primary": False} for i in ("ph", "pv")]
+    d["pix_wires"] = d["pix_wires"] + [["ph", 0, "pv", 0]]
+    d["params"] = d["params"] + [{"name": "ow", "type": "internal"}, {"name": "oh", "type": "internal"}]
+    return d
+
+
+def test_downsample_generates_the_divide_and_the_two_stage_messages():
+    top, cords = top_and_cords(ds_defn())
+    ph, pv = pix_id(top, "#0_t_ph"), pix_id(top, "#0_t_pv")
+    txt = lambda i: top[f"obj-rd-{i}"].get("text")
+    _eq("the eight downsample boxes", [txt(i) for i in range(10, 18)],
+        ["expr max(1\\, $i1/4)", "expr max(1\\, $i1/4)", "prepend param ow", "prepend param oh",
+         "pack 0 0", "prepend dim", "pack 0 0", "prepend dim"])
+    c = lambda a, ao, b, bi: ((a if a.startswith("obj-") else f"obj-rd-{a}", ao), (b if b.startswith("obj-") else f"obj-rd-{b}", bi)) in cords
+    _eq("unpack: width (left) -> the ow expr, height (right) -> the oh expr and the H stage's pack (cold inlet)",
+        [c("2", 0, "10", 0), c("2", 1, "11", 0), c("2", 1, "14", 1)], [True] * 3)
+    _eq("ow feeds its Param and BOTH packs' hot left inlets; oh feeds its Param and the V stage's pack (cold inlet)",
+        [c("10", 0, "12", 0), c("10", 0, "14", 0), c("10", 0, "16", 0), c("11", 0, "13", 0), c("11", 0, "16", 1)], [True] * 5)
+    _eq("params: ow reaches the H stage only, oh the V stage only",
+        [c("12", 0, ph, 0), c("13", 0, pv, 0), c("12", 0, pv, 0), c("13", 0, ph, 0)], [True, True, False, False])
+    _eq("dim messages: H stage gets (ow, H), V stage gets (ow, oh)",
+        [c("14", 0, "15", 0), c("15", 0, ph, 0), c("16", 0, "17", 0), c("17", 0, pv, 0), c("15", 0, pv, 0), c("17", 0, ph, 0)],
+        [True, True, True, True, False, False])
+    _eq("the downsample stages are not in size_stages: `r dim` does not size them to the full render",
+        [c("0", 0, ph, 0), c("0", 0, pv, 0)], [False, False])
+
+
+def test_downsample_works_alone_and_the_factor_is_in_the_expr():
+    d = ds_defn()
+    d["render_dim"] = {"downsample": dict(DS, factor=8)}
+    top, _ = top_and_cords(d)
+    _eq("downsample alone builds; its factor is the expr's divisor", top["obj-rd-10"].get("text"), "expr max(1\\, $i1/8)")
+    _eq("without width_param there is no `prepend param width` / `height`",
+        [b.get("text") for b in top.values() if str(b.get("text", "")) in ("prepend param width", "prepend param height")], [])
+
+
+def test_downsample_is_loud():
+    def bad(needle, ds=None, mutate=None):
+        d = ds_defn(DS if ds is None else ds)
+        if mutate:
+            mutate(d)
+        return raises(lambda: bp.build(d), needle)
+    _eq("a missing key", bad("exactly the keys", ds={k: v for k, v in DS.items() if k != "v_stage"}), True)
+    _eq("an extra key", bad("exactly the keys", ds=dict(DS, extra=1)), True)
+    _eq("factor 1", bad("integer >= 2", ds=dict(DS, factor=1)), True)
+    _eq("factor not an int", bad("integer >= 2", ds=dict(DS, factor=4.0)), True)
+    _eq("the same param twice", bad("must differ", ds=dict(DS, height_param="ow")), True)
+    _eq("a param that is not declared internal", bad("type 'internal'", mutate=lambda d: d["params"].pop(-1)), True)
+    _eq("an unknown stage", bad("unknown node", ds=dict(DS, v_stage="nope")), True)
+    _eq("both passes on one node", bad("different nodes", ds=dict(DS, v_stage="ph")), True)
+    _eq("a stage that is not @adapt 0", bad("must set pix_attrs with '@adapt 0'",
+                                            mutate=lambda d: d["pix_chain"][-1].update(pix_attrs="@adapt 1 @type float32")), True)
 
 
 # ---- STATIC: a codebox that reads `dim` must be given the render size another way
