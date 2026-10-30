@@ -248,6 +248,7 @@ def blob_noise(px, py, cell_px, seed=0, fill=None, extent=0.0):
 #             thr + w, luma), thr = (1 + w) - density * (1 + 2w), w = TEX_SOFT. density 0 lights
 #             nothing (luma <= 1), density 1 lights every texel (luma >= 0).
 #   Brightness = the mean impulse along the in-frame path (classic LIC), not blob coverage crossed.
+COH_RAMP = 0.2          # width of the coherence-termination ramp below coh_floor
 TEX_SOFT = 0.1
 LUMA = (0.2126, 0.7152, 0.0722)
 
@@ -271,8 +272,11 @@ def texture_impulse(tex, px, py, W, H, grain, density):
 
 def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
              persist_pow=PERSIST_POW, aux_mode="doubled", n_dirs=(1, -1), seed=0, fill=None,
-             noise="blobs", texture=None):
-    """Streamline march. `texture` (an RGBA array, the optional stroke-texture inlet) replaces the
+             noise="blobs", texture=None, coh_floor=0.0):
+    """Streamline march. `coh_floor` (0..1, default 0 = off) ends a stroke where the coherence along its path drops:
+    each step's contribution is scaled by smoothstep(coh_floor - 0.2, coh_floor, coherence at the step's start),
+    which is exactly 1 at coh_floor = 0 (2026-10-29, the "Terminate" look: an undirected pixel keeps only its OWN
+    impulse: a blob dot, or the stroke texture unstreaked). `texture` (an RGBA array, the optional stroke-texture inlet) replaces the
     impulse source (see above; it needs `fill`, from which Density is taken). `noise` picks the sparse impulse source ("blobs": band-limited value
     noise, the 2026-10-29 default; "cells": the original lit lattice cells, kept as the A/B
     reference); it only applies when `fill` is set (sparse). For each pixel, walk n_steps each way along the local
@@ -335,6 +339,7 @@ def stage_e2(aux, n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix",
                 raise ValueError(persist)
             nx_, ny_ = px + step * ax, py + step * ay
             alive = alive * ((nx_ >= 0) & (nx_ <= W) & (ny_ >= 0) & (ny_ <= H)).astype(F32)
+            alive = alive * _smoothstep(F32(coh_floor) - F32(COH_RAMP), F32(coh_floor), samp[..., 2]).astype(F32)
             px = np.clip(nx_, F32(0.5), F32(W) - F32(0.5)).astype(F32)   # reads stay in-bounds
             py = np.clip(ny_, F32(0.5), F32(H) - F32(0.5)).astype(F32)
             dx, dy = ax, ay
@@ -388,8 +393,8 @@ def stage_e3(aux2, n_steps=N_STEPS, contrast=0.5, line=0.0, bypass=0.0, fill=Non
 
 def chain(tex, angle_offset=0.0, floor=0.0, aux_mode="doubled",
           n_steps=N_STEPS, length=0.5, grain=0.5, persist="mix", persist_pow=PERSIST_POW,
-          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None, noise="blobs", texture=None):
+          contrast=0.5, line=0.0, bypass=0.0, seed=0, fill=None, noise="blobs", texture=None, coh_floor=0.0):
     aux = stage_e1(tex, angle_offset, floor, aux_mode)
     aux2 = stage_e2(aux, n_steps, length, grain, persist, persist_pow, aux_mode, seed=seed, fill=fill, noise=noise,
-                    texture=texture)
+                    texture=texture, coh_floor=coh_floor)
     return stage_e3(aux2, n_steps, contrast, line, bypass, fill=fill)
