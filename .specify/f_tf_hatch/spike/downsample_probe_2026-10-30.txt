@@ -1,0 +1,40 @@
+accuracy 16:9 f=4: out size 480x270: 
+accuracy 1:1 f=4: out size 270x270: 
+accuracy 16:9 f=8: out size 240x135: 
+cost 16:9 f=4 H pass x1 repeats (upper bound), ms/pass: 0.449 [ok, fps 282.15353938185444, k0 278.3300198807157, UPPER BOUND]  per repeat 0.449
+cost 16:9 f=4 V pass x1 repeats (gpu-bound), ms/pass: 0.406 [ok, fps 307.6923076923077, k0 485, gpu-bound]  per repeat 0.406
+cost 16:9 f=4 single f x f pass x1 repeats (upper bound), ms/pass: 0.262 [ok, fps 434.2629482071713, k0 476.5234765234765, UPPER BOUND]  per repeat 0.262
+cost 16:9 f=4 H pass x8 repeats (upper bound), ms/pass: 0.342 [ok, fps 318.3632734530938, k0 365, UPPER BOUND]  per repeat 0.043
+cost 16:9 f=4 V pass x8 repeats (upper bound), ms/pass: 0.348 [ok, fps 355.2894211576846, k0 359, UPPER BOUND]  per repeat 0.044
+cost 16:9 f=4 single f x f pass x8 repeats (upper bound), ms/pass: 0.349 [ok, fps 276, k0 358.28343313373256, UPPER BOUND]  per repeat 0.044
+cost 1:1 f=4 H pass x1 repeats (upper bound), ms/pass: 0.284 [ok, fps 375, k0 440.55944055944053, UPPER BOUND]  per repeat 0.284
+cost 1:1 f=4 V pass x1 repeats (upper bound), ms/pass: 0.459 [ok, fps 339, k0 272.45508982035926, UPPER BOUND]  per repeat 0.459
+cost 1:1 f=4 single f x f pass x1 repeats (upper bound), ms/pass: 0.418 [ok, fps 360.55776892430276, k0 299.4011976047904, UPPER BOUND]  per repeat 0.418
+cost 1:1 f=4 H pass x8 repeats (upper bound), ms/pass: 0.467 [ok, fps 222.5548902195609, k0 267.4650698602794, UPPER BOUND]  per repeat 0.058
+cost 1:1 f=4 V pass x8 repeats (gpu-bound), ms/pass: 0.576 [ok, fps 217, k0 333, gpu-bound]  per repeat 0.072
+cost 1:1 f=4 single f x f pass x8 repeats (upper bound), ms/pass: 0.344 [ok, fps 361, k0 363.27345309381235, UPPER BOUND]  per repeat 0.043
+cost 16:9 f=8 H pass x1 repeats (gpu-bound), ms/pass: 0.428 [ok, fps 292, k0 444, gpu-bound]  per repeat 0.428
+cost 16:9 f=8 V pass x1 repeats (upper bound), ms/pass: 0.353 [ok, fps 402, k0 354, UPPER BOUND]  per repeat 0.353
+cost 16:9 f=8 single f x f pass x1 repeats (upper bound), ms/pass: 0.314 [ok, fps 447, k0 398.20359281437123, UPPER BOUND]  per repeat 0.314
+cost 16:9 f=8 H pass x8 repeats (upper bound), ms/pass: 0.357 [ok, fps 357.64235764235764, k0 349.950149551346, UPPER BOUND]  per repeat 0.045
+cost 16:9 f=8 V pass x8 repeats (upper bound), ms/pass: 0.304 [ok, fps 435, k0 411, UPPER BOUND]  per repeat 0.038
+cost 16:9 f=8 single f x f pass x8 repeats (upper bound), ms/pass: 0.343 [error, fps 386, k0 363.90827517447656, UPPER BOUND]  per repeat 0.043
+E2 16:9 f=4 grain 0.5: full texture 1920x1080 ms/pass: 1.065 [ok, fps 107.67696909272183, k0 117.35700197238658, UPPER BOUND]
+E2 16:9 f=4 grain 0.5: small texture 480x270 ms/pass: 1.009 [ok, fps 121.7564870259481, k0 123.87612387612387, UPPER BOUND]
+E2 16:9 f=4 grain 0.0: full texture 1920x1080 ms/pass: 0.845 [ok, fps 129.4820717131474, k0 147.85214785214785, UPPER BOUND]
+E2 16:9 f=4 grain 0.0: small texture 480x270 ms/pass: 0.998 [ok, fps 124.5019920318725, k0 125.24850894632206, UPPER BOUND]
+E2 16:9 f=4: blobs (no texture) ms/pass: 0.869 [ok, fps 144.85514485514486, k0 143.85614385614386, UPPER BOUND]
+E2 1:1 f=4 grain 0.5: full texture 1080x1080 ms/pass: 0.970 [ok, fps 142.14711729622266, k0 128.87112887112886, UPPER BOUND]
+E2 1:1 f=4 grain 0.5: small texture 270x270 ms/pass: 0.680 [ok, fps 164.84607745779545, k0 183.8161838161838, UPPER BOUND]
+E2 1:1 f=4 grain 0.0: full texture 1080x1080 ms/pass: 0.639 [ok, fps 181, k0 195.60878243512974, UPPER BOUND]
+E2 1:1 f=4 grain 0.0: small texture 270x270 ms/pass: 1.039 [ok, fps 152.54237288135593, k0 120.27833001988071, UPPER BOUND]
+E2 1:1 f=4: blobs (no texture) ms/pass: 0.875 [ok, fps 196.8031968031968, k0 142.85714285714286, UPPER BOUND]
+
+# NOTE (Claude, 2026-10-30): the E2 lines ABOVE are INVALID. They are from the third run, after the harness reopened the bench:
+# every E2 reads ~1 ms with fps close to the K=0 baseline ("UPPER BOUND"), even the full 1080p texture (13 ms before), so that
+# run was not GPU bound. The VALID E2 numbers are from the first run (GPU bound, in line with probes 1-2), E2 ms/pass:
+#   16:9 1920x1080: grain 0.5 full texture 13.03, small 480x270 5.33; grain 0.0 full 12.97, small 5.42; blobs (no texture) 3.20
+#   1:1 1080x1080:  grain 0.5 full texture 4.24,  small 270x270 3.00; grain 0.0 full 4.65,  small 2.92; blobs 1.76
+# Box-pass accuracy (all runs identical): separable and single-pass match the NumPy block mean to 1e-7 (16:9 f=4, 1:1 f=4, 16:9 f=8).
+# Box-pass cost: every pass is below the bench's resolution (UPPER BOUND, floor ~0.3-0.45 ms/pass); at 8x taps still <= 0.35 ms,
+# so a 1x pass is <= ~0.05 ms if cost scales with taps. The one [error] line (16:9 f=8 single pass x8) is 512 taps, over the ~256-tap limit.
