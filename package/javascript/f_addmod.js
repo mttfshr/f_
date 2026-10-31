@@ -33,7 +33,7 @@ var SIZES = {
     "vf_repulse":     [165,  80],
     "vf_vortex":      [196, 160],
     "vf_vortex_multi":[191, 284],
-    "vf_vorticity":   [100,  80],
+    "vf_vorticity":   [133,  80],
     "vf_advect":      [190, 150],
     "caustic":        [227, 122],
     "vf_chroma":      [190, 180],

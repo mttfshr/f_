@@ -77,17 +77,19 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 1,
+					"numoutlets": 3,
 					"outlettype": [
+						"",
+						"",
 						""
 					],
 					"patching_rect": [
 						56.5,
 						204.0,
-						110.5,
+						223.0,
 						22.0
 					],
-					"text": "route confinement"
+					"text": "route confinement step_mode step_n"
 				}
 			},
 			{
@@ -137,7 +139,7 @@
 							},
 							{
 								"box": {
-									"code": "field_x(u, v) {\n    return (sample(in1, vec(u, v)).x - 0.5) * 2.0;\n}\n\nfield_y(u, v) {\n    return (sample(in1, vec(u, v)).y - 0.5) * 2.0;\n}\n\ncurl_at(u, v, sx, sy) {\n    fy_r = field_y(u + sx, v);\n    fy_l = field_y(u - sx, v);\n    fx_t = field_x(u, v + sy);\n    fx_b = field_x(u, v - sy);\n    return (fy_r - fy_l) / (2.0 * sx) - (fx_t - fx_b) / (2.0 * sy);\n}\n\nParam confinement(0.1);\nParam width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)\nParam height(480.0);\nParam bypass(0.0);\n\nsx = 1.0 / width;\nsy = 1.0 / height;\n\nu = norm.x;\nv = norm.y;\n\nw_c = curl_at(u, v, sx, sy);\nw_r = curl_at(u + sx, v, sx, sy);\nw_l = curl_at(u - sx, v, sx, sy);\nw_t = curl_at(u, v + sy, sx, sy);\nw_b = curl_at(u, v - sy, sx, sy);\n\ndwdx = (w_r - w_l) / (2.0 * sx);\ndwdy = (w_t - w_b) / (2.0 * sy);\n\ngrad_mag = max(sqrt(dwdx * dwdx + dwdy * dwdy), 0.00001);\nnx = dwdx / grad_mag;\nny = dwdy / grad_mag;\n\nforce_x = confinement * ny * w_c;\nforce_y = confinement * (-nx) * w_c;\n\nout_x = field_x(u, v) + force_x;\nout_y = field_y(u, v) + force_y;\n\nresult = vec(out_x * 0.5 + 0.5, out_y * 0.5 + 0.5, 0.5, 1.0);\n\nout1 = mix(result, sample(in1, norm), bypass);\n",
+									"code": "field_x(u, v) {\n    return (sample(in1, vec(u, v)).x - 0.5) * 2.0;\n}\n\nfield_y(u, v) {\n    return (sample(in1, vec(u, v)).y - 0.5) * 2.0;\n}\n\ncurl_at(u, v, sx, sy) {\n    fy_r = field_y(u + sx, v);\n    fy_l = field_y(u - sx, v);\n    fx_t = field_x(u, v + sy);\n    fx_b = field_x(u, v - sy);\n    return (fy_r - fy_l) / (2.0 * sx) - (fx_t - fx_b) / (2.0 * sy);\n}\n\nParam confinement(0.1);\nParam width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)\nParam height(480.0);\nParam step_mode(0.0);  // finite-difference step source: 0 Render, 1 dim, 2 256, 3 Manual\nParam step_n(1024.0);\nParam bypass(0.0);\n\nis0 = step_mode < 0.5;\nis1 = (step_mode > 0.5) * (step_mode < 1.5);\nis2 = (step_mode > 1.5) * (step_mode < 2.5);\nis3 = step_mode > 2.5;\nnx = is0 * width  + is1 * dim.x + is2 * 256.0 + is3 * step_n;\nny = is0 * height + is1 * dim.y + is2 * 256.0 + is3 * step_n;\nsx = 1.0 / nx;\nsy = 1.0 / ny;\n\nu = norm.x;\nv = norm.y;\n\nw_c = curl_at(u, v, sx, sy);\nw_r = curl_at(u + sx, v, sx, sy);\nw_l = curl_at(u - sx, v, sx, sy);\nw_t = curl_at(u, v + sy, sx, sy);\nw_b = curl_at(u, v - sy, sx, sy);\n\ndwdx = (w_r - w_l) / (2.0 * sx);\ndwdy = (w_t - w_b) / (2.0 * sy);\n\ngrad_mag = max(sqrt(dwdx * dwdx + dwdy * dwdy), 0.00001);\nnx = dwdx / grad_mag;\nny = dwdy / grad_mag;\n\nforce_x = confinement * ny * w_c;\nforce_y = confinement * (-nx) * w_c;\n\nout_x = field_x(u, v) + force_x;\nout_y = field_y(u, v) + force_y;\n\nresult = vec(out_x * 0.5 + 0.5, out_y * 0.5 + 0.5, 0.5, 1.0);\n\nout1 = mix(result, sample(in1, norm), bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -256,14 +258,14 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						100.0,
+						133.0,
 						80.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						100.0,
+						133.0,
 						80.0
 					],
 					"proportion": 0.5
@@ -316,7 +318,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						35.0,
 						0.9,
 						70.0,
 						21.0
@@ -706,6 +708,209 @@
 			{
 				"box": {
 					"id": "obj-23",
+					"maxclass": "live.menu",
+					"fontname": "Ableton Sans Light",
+					"hint": "Where the finite-difference step (the scale the curl is measured at) comes from. Render: one render pixel. dim: 1/dim.x, 1/dim.y as the module used to (whatever dim reads in this pix; unreliable live). 256: the step of a 256 pixel field (f_vf_fluid's solver size). Manual: 1/Step N.",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"float"
+					],
+					"param_connect": "vfvorticity_pix::step_mode",
+					"parameter_enable": 1,
+					"patching_rect": [
+						102.0,
+						250.0,
+						60.0,
+						15.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						37.0,
+						38.0,
+						52.0,
+						15.0
+					],
+					"saved_attribute_attributes": {
+						"valueof": {
+							"parameter_enum": [
+								"Render",
+								"dim",
+								"256",
+								"Manual"
+							],
+							"parameter_initial": [
+								0.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "step_mode",
+							"parameter_mmax": 3.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 0,
+							"parameter_shortname": "step_mode",
+							"parameter_type": 2,
+							"parameter_unitstyle": 0
+						}
+					},
+					"varname": "step_mode"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-24",
+					"maxclass": "attrui",
+					"attr": "step_mode",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						98.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-25",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						107.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						38.0,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Step",
+					"textjustification": 1,
+					"varname": "lbl_step_mode"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-26",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "With Step = Manual, the finite-difference step is 1/N on both axes: smaller N = a wider step = broader swirls and a smoother force; larger N = finer detail.",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "vfvorticity_pix::step_n",
+					"parameter_enable": 1,
+					"patching_rect": [
+						190.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						94.0,
+						38.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								1024.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "step_n",
+							"parameter_mmax": 4096.0,
+							"parameter_mmin": 16.0,
+							"parameter_modmode": 3,
+							"parameter_exponent": 2.0,
+							"parameter_shortname": "step_n",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "step_n"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-27",
+					"maxclass": "attrui",
+					"attr": "step_n",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						170.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-28",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						179.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						82.5,
+						20.0,
+						50.0,
+						18.0
+					],
+					"text": "Step N",
+					"textjustification": 1,
+					"varname": "lbl_step_n"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-29",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -722,7 +927,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						78.0,
+						109.0,
 						5.0,
 						18.0,
 						12.0
@@ -733,7 +938,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-24",
+					"id": "obj-30",
 					"maxclass": "attrui",
 					"attr": "bypass",
 					"numinlets": 1,
@@ -929,11 +1134,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-23",
+						"obj-29",
 						0
 					],
 					"destination": [
-						"obj-24",
+						"obj-30",
 						0
 					]
 				}
@@ -941,7 +1146,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-24",
+						"obj-30",
 						0
 					],
 					"destination": [
@@ -1109,6 +1314,78 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-4",
+						1
+					],
+					"destination": [
+						"obj-23",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-23",
+						0
+					],
+					"destination": [
+						"obj-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-24",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						2
+					],
+					"destination": [
+						"obj-26",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-26",
+						0
+					],
+					"destination": [
+						"obj-27",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-27",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-rd-5",
 						0
 					],
@@ -1207,6 +1484,16 @@
 			"obj-20": [
 				"confinement",
 				"confinement",
+				0
+			],
+			"obj-23": [
+				"step_mode",
+				"step_mode",
+				0
+			],
+			"obj-26": [
+				"step_n",
+				"step_n",
 				0
 			],
 			"parameterbanks": {

@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\nconfinement [0 \u2013 1]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\nconfinement [0 \u2013 1]\nstep_mode [Render/dim/256/Manual]\nstep_n [16 \u2013 4096]\nbypass [0 / 1]",
 					"fontsize": 12.0,
-					"linecount": 4
+					"linecount": 6
 				}
 			},
 			{

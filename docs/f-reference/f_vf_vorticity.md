@@ -36,7 +36,24 @@ practice.
 | Name | Type | Range | Description |
 |------|------|-------|--------------|
 | `confinement` | float | 0–1 (range_tiers 0.1/1.0/10.0) | Turbulence amount. 0 = pass-through field. Effective strength depends heavily on the source field's baseline curl — see Key Findings. |
+| `step_mode` | menu | Render / dim / 256 / Manual | Where the finite-difference step comes from (see **Step** below). Default Render. |
+| `step_n` | float | 16–4096 (curved) | With `step_mode` = Manual, the step is `1/N` on both axes. Default 1024. |
 | `bypass` | toggle | — | Output = unmodified input field |
+
+**Step (2026-10-30).** The curl and its gradient are finite differences, so the
+step they are measured over sets the *scale* of the effect: a wider step (smaller
+N) sees broader swirls and gives a broader, smoother confinement force, a narrower
+one (larger N) responds to finer detail. Render (default) uses one render pixel
+(`1/width`, `1/height`). `dim` is what the module did before `render_dim`
+(`1/dim.x`, `1/dim.y`, whatever `dim` reads inside the pix, which is unreliable
+live). `256` is the step of a 256-pixel field, such as `f_vf_fluid`'s solver
+output. Manual is `1/Step N`. Before 2026-10-30 the step could not be chosen: it
+was always `1/dim`, which depends on how the pix is sized in the chain, so the
+same module could measure at different scales in different patches (when the
+`render_dim` change made the module look different in a live demo, this was the
+suspected cause; the A/B is what Step is for). Confinement strength changes with
+the step (the force goes as the gradient of the curl), so re-tune `confinement`
+after changing it.
 
 ## Inlets
 

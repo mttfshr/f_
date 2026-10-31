@@ -23,7 +23,7 @@ patcher = {
         "size_stages":  ["primary"],
     },
 
-    "presentation_width":  100,
+    "presentation_width":  133,   # was 100: room for the Step menu and Step N dial
     "presentation_height": 80,
 
     "outlets": [
@@ -59,6 +59,17 @@ patcher = {
             "label": "Confinement",
             "range_tiers": [0.1, 1.0],
         },
+        # Step (2026-10-30, kept by Matt): the size of the finite-difference step the curl and its gradient
+        # are measured over.  A wider step (smaller N) measures curl over broader swirls and gives a broader,
+        # smoother confinement force; a narrower one responds to finer detail.  Render (1 / render size) is the
+        # default and what the module did through render_dim; dim reproduces the pre-render_dim code (whatever
+        # `dim` reads inside this pix); 256 is the step of a 256-pixel field (e.g. f_vf_fluid's solver).
+        {"name": "step_mode", "type": "menu", "options": ["Render", "dim", "256", "Manual"], "default": 0,
+         "label": "Step",
+         "hint": "Where the finite-difference step (the scale the curl is measured at) comes from. Render: one render pixel. dim: 1/dim.x, 1/dim.y as the module used to (whatever dim reads in this pix; unreliable live). 256: the step of a 256 pixel field (f_vf_fluid's solver size). Manual: 1/Step N."},
+        {"name": "step_n", "type": "float", "min": 16.0, "max": 4096.0, "default": 1024.0,
+         "label": "Step N", "exponent": 2.0,
+         "hint": "With Step = Manual, the finite-difference step is 1/N on both axes: smaller N = a wider step = broader swirls and a smoother force; larger N = finer detail."},
         {"name": "width",  "type": "internal"},
         {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
@@ -84,10 +95,18 @@ curl_at(u, v, sx, sy) {
 Param confinement(0.1);
 Param width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)
 Param height(480.0);
+Param step_mode(0.0);  // finite-difference step source: 0 Render, 1 dim, 2 256, 3 Manual
+Param step_n(1024.0);
 Param bypass(0.0);
 
-sx = 1.0 / width;
-sy = 1.0 / height;
+is0 = step_mode < 0.5;
+is1 = (step_mode > 0.5) * (step_mode < 1.5);
+is2 = (step_mode > 1.5) * (step_mode < 2.5);
+is3 = step_mode > 2.5;
+nx = is0 * width  + is1 * dim.x + is2 * 256.0 + is3 * step_n;
+ny = is0 * height + is1 * dim.y + is2 * 256.0 + is3 * step_n;
+sx = 1.0 / nx;
+sy = 1.0 / ny;
 
 u = norm.x;
 v = norm.y;
@@ -115,4 +134,13 @@ result = vec(out_x * 0.5 + 0.5, out_y * 0.5 + 0.5, 0.5, 1.0);
 
 out1 = mix(result, sample(in1, norm), bypass);
 """,
+}
+
+# Layout for the Step controls (2026-10-30, with step_mode / step_n above).
+patcher["overrides"] = {
+    "bypass_jsui":     {"presentation_rect": [109.0, 5.0, 18.0, 12.0]},
+    "step_mode.ctl":   {"presentation_rect": [37.0, 38.0, 52.0, 15.0]},
+    "step_mode.label": {"presentation_rect": [38.0, 20.0, 50.0, 18.0]},
+    "step_n.ctl":      {"presentation_rect": [94.0, 38.0, 27.0, 43.0]},
+    "step_n.label":    {"presentation_rect": [82.5, 20.0, 50.0, 18.0]},
 }
