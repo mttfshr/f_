@@ -1,0 +1,78 @@
+{
+ "pattrstorage": {
+  "name": "Vsynth",
+  "slots": {
+   "1": {
+    "id": 1,
+    "data": {
+     "f_quasi::zoom": [
+      0.0
+     ],
+     "f_quasi::zoom_rate": [
+      0.002
+     ],
+     "f_quasi::drift": [
+      0.0
+     ],
+     "f_quasi::drift_rate": [
+      0.001
+     ],
+     "f_quasi::density": [
+      4.0
+     ],
+     "f_quasi::envelope": [
+      0.5
+     ],
+     "f_quasi::bands": [
+      5.0
+     ],
+     "f_quasi::angle": [
+      0.0
+     ],
+     "f_quasi::gain": [
+      2.0
+     ],
+     "f_quasi::bypass": [
+      0
+     ],
+     "f_vf_warp::gain": [
+      0.12
+     ],
+     "f_vf_warp::mix_pct": [
+      100.0
+     ],
+     "f_vf_warp::bypass": [
+      0
+     ],
+     "f_vf_advect::dt": [
+      0.003
+     ],
+     "f_vf_advect::decay": [
+      0.97
+     ],
+     "f_vf_advect::injection": [
+      0.1
+     ],
+     "f_vf_advect::gain": [
+      1.0
+     ],
+     "f_vf_advect::mix_pct": [
+      100.0
+     ],
+     "f_vf_advect::separate": [
+      0.0
+     ],
+     "f_vf_advect::mode": [
+      0
+     ],
+     "f_vf_advect::trail": [
+      0.0
+     ],
+     "f_vf_advect::bypass": [
+      0
+     ]
+    }
+   }
+  }
+ }
+}

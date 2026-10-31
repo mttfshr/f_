@@ -120,6 +120,7 @@ Exact and bounded: `v` is the gradient divided by `2 pi B` times the weighted me
 
 ## Verification
 
+- Demo patch: `package/examples/f_demo_quasi.maxpat` (+ `.json`, preset slot 1): one `f_quasi` feeding `f_vf_warp` and `f_vf_advect` with its vecfield (camera as the texture), plus previews of the banded look and the potential. Written 2026-10-30; starting values, not tuned; never opened in Max when written.
 - `tests/modules/quasi/test_quasi.py` — NumPy mirror (`quasi_mirror.py`), 12/12, against an independent scalar float64 reference: potential bounded, octave shift, wrap weights, drift period, rotation covariance, analytic gradient against a finite difference (1.8e-6), vecfield bound, banded look closed form, four mutations caught.
 - `tests/modules/quasi/bench_quasi.py` — the real codebox on the GPU, 7/7: all three outlets against the mirror (look within 2.2e-4, vecfield within 2.5e-5, scalar within 2.0e-5), exact bypass neutrals, gain 0, zoom and drift wraps, clock phases add, `src_mode` inert, and the aspect following `width` / `height` (rewritten 2026-10-30 from the `dim` probe; not re-run since).
 - Records: `tests/records/spike_quasi_{float32,gradient,wrap,nyquist,cost}.py`.
