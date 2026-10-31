@@ -1,5 +1,10 @@
 # HANDOFF
 
+## 2026-10-30 (17:25): `f_tf_aniso_blur` Length 0-48 bench RUN: 6/6 (GPU parity at Length 24 / 48 / exact-iso within 3e-5 of the mirror, bypass exact, cost 0.37 ms/pass at 256^2 and 1.30 ms/pass at 640^2). `f_demo_aniso_blur` is good as is (Matt, 17:15). Next: the six `dim`-exempt modules (T063), to be discussed first
+
+- **Bench (`tests/bench.sh -q tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py`, Max 9.2.0, log `tests/logs/20261030-171511-bench.log`):** `test_matches_mirror_at_knobs` Length 24 (spacing 3 px) 1.21e-5, Length 48 (spacing 6 px) 2.78e-5, Length 24 exact-iso 2.4e-7 (tolerance 2e-4); Length 0 identity exact; bypass exact; no Max errors. Cost is measured at 256^2 and 640^2 only (the bench leg does not run 1080p): a straight pixel-count scaling gives roughly 6-7 ms at 1080p, an extrapolation, not a measurement. Whether the wider spacing costs more per pixel than the old 1 px spacing was not compared in this run.
+- **Still open for aniso_blur:** nothing blocking. The tier-3 look at Length 24-48 on camera input and the tap banding caveat is Matt's (the demo patch he calls good as is).
+
 ## 2026-10-30 (17:30): `f_demo_axisflow` demo patcher written (A/B/C: Along vs Across vs Along steered by a vortex); LIVE CHECK PASSED (Matt, 17:13: loads, preset recalls, frame rate and layout fine, 'it's great'; preset values left as is). Everything else as the 17:20 entry below
 
 - **What:** `package/examples/f_demo_axisflow.maxpat` + `.json` (preset slot 1), generated from Matt's saved `f_demo_aniso_blur.maxpat` (Vsynth infrastructure, camera and tensormap kept verbatim; generator in `scratch/gen_axisflow_demo.py`, gitignored). Flow: camera -> tensormap -> OUTLET 1 (packed) -> three `f_tf_axisflow` -> three `f_vf_advect` (vecfield in1; camera also to advect's texture in0). A (varname `f_tf_axisflow` / `f_vf_advect`) Mode Along, feeds `vs_output` and the top preview; B (`[1]`) Mode Across, middle preview; C (`[2]`) Along with `f_vf_vortex` into Axis Flow's reference inlet (in1), bottom preview. Matt chose A/B, camera only, and the vortex reference; C is the vortex row, delete it if it clutters.
