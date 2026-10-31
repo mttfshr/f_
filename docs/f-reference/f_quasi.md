@@ -35,7 +35,7 @@ Bypass (`bypass_gate`, never the native `@bypass`): outlets 1 and 3 black with A
 
 ## Signal Flow
 
-One inlet (control messages and an optional texture), one `jit.gl.pix`, three outlets. The inlet follows the library's dual-mode generator pattern: `vs_inState` feeds the pix a texture, or `vs_black` when nothing is connected, so the module draws on its own. The codebox does not read that texture; the **aspect comes from the render size** (internal `width` / `height` Params, see "Render size" below), and the patcher's own `src_mode` flag (`vs_inState`'s connected / not connected) is declared and unused.
+One inlet (control messages and an optional texture), one `jit.gl.pix`, three outlets. The inlet follows the library's dual-mode generator pattern: `vs_inState` feeds the pix a texture, or `vs_black` when nothing is connected. `vs_black` alone does not make the pix draw, so a raw `r draw` cord goes straight to the pix (as in `f_grain`) and the module renders every frame with nothing on the inlet (fixed 2026-10-30 after it drew nothing unconnected; a connected texture also triggers the pix, so there are two cheap passes per frame). The codebox does not read that texture; the **aspect comes from the render size** (internal `width` / `height` Params, see "Render size" below), and the patcher's own `src_mode` flag (`vs_inState`'s connected / not connected) is declared and unused.
 
 The clock, in raw boxes, one per dial:
 

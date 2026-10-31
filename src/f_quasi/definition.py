@@ -10,7 +10,8 @@ generator: one pix, three outlets, no feedback.  See .specify/stable/f_quasi/{sp
             (gate G2: the bounded form ships, with `gain`; a fixed scale is judged in Phase 2)
   outlet 3  the potential P mapped to 0..1
 
-Archetype `dual` (vs_inState on the first inlet, vs_black when nothing is connected, so the module draws on its own);
+Archetype `dual` (vs_inState on the first inlet, vs_black when nothing is connected; vs_black alone does not trigger the
+pix, so a raw `r draw` -> pix cord renders the module every frame with nothing connected, as f_grain does);
 the codebox reads the aspect from the internal `width` / `height` Params (render_dim; `dim` reads 1 live).  `src_mode` (vs_inState's flag) is declared and
 not read.  Bypass is `bypass_gate` (never the native @bypass): look and scalar black with alpha 1, vecfield neutral.
 
@@ -142,3 +143,8 @@ for _k, (_rate, _param, _b) in enumerate(_CLOCKS):
         _line(_b + 3, 0, _PIX, 0),            # prepend param <clk> -> the pix
         _line(_dial(_rate), 0, _b + 1, 1),    # the rate dial -> [+ rate] right inlet
     ]
+
+# Render trigger (2026-10-30).  vs_inState's vs_black fallback does NOT make the pix draw by itself: unconnected, the
+# module drew nothing (Matt, live).  `r draw` goes straight to the pix, as f_grain / f_masonry do, so the generator
+# renders every frame with nothing on the inlet.  Connected, a texture also triggers the pix: two cheap passes.
+patcher["raw_lines"].append(_line(1, 0, _PIX, 0))     # r draw -> the pix

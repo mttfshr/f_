@@ -2604,6 +2604,18 @@
 						1
 					]
 				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-1",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
 			}
 		],
 		"parameters": {
