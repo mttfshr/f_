@@ -1,5 +1,19 @@
 # HANDOFF
 
+## 2026-10-30 (23:45): END OF SESSION. NEXT SESSION (Matt): ASSESS THE HIGHEST-VALUE WORK. START HERE
+
+**Repo state:** clean at `21a4788` (Matt committed the three re-saved demos). T063 (`render_dim` for the `dim`-reading modules) is CLOSED: `f_vf_vorticity` (Step menu stays, default Render), `f_quasi`, `f_grain`, `f_vf_seeds` done and passing live; `f_masonry` (its refactor) and `f_cmap` (paused) stay on `EXEMPT`.
+
+**Done this session, newest first:** vorticity Step result (dim reproduces the old look; nothing changed); `f_vf_seeds` migrated; `f_grain` migrated (an Aspect menu was tried and removed: live all three modes looked alike); `f_quasi` migrated, plus three fixes found live (rendered nothing unconnected: `r draw` -> pix; a phase jump at every zoom wrap with drift running: one shared drift phase; both with tests) and `f_demo_quasi` written; bench 8/8.
+
+**Candidate work to weigh (nothing is scheduled; Matt decides which is highest value):**
+- Render-trigger check: `f_stipple`, `f_weave`, `f_vf_flow` have a `vs_inState` and no `r draw` to the pix, so they may draw nothing unconnected (the `f_quasi` bug); check live, fix by an `r draw` -> pix cord.
+- Correct the `vs_black` claim in `skills/vsynth-bpatcher/SKILL.md` (Dual-Mode Generator, ~line 354-357) and `docs/vsynth-reference/patterns.md` (~15-28); the skill needs Matt's re-upload and `skills/check.sh stamp`.
+- `f_vf_seeds` cost at 1080p (every stage now follows the render size; not measured) and the live module contract bench (Max) has not been run since the migrations.
+- Older open items in `.specify/plan.md` "Still open" (audio integration decision, packaging readiness, tier-3 gates for the tensor consumers, the v1 Hatch helpfile T052 / README marker T051 / 8 ms texture gate T061, the f_modules menu redesign (Matt's), `f_wave_field` Phase 0, the gates digest `claude/gates-digest.md` for what is blocked on what).
+
+**Process reminders:** read README.md, HANDOFF.md, CLAUDE.md and `.specify/plan.md` first; discuss design before writing code; one phase per turn; ask before any bench run; Desktop Commander for files (`mcp__remote-devices__Desktop_Commander__*`; load schemas with ToolSearch; `edit_block` for targeted edits, and never rewrite a file in text mode that carries CRLF lines, as `f_grain`'s codebox does); commit per module with a HANDOFF entry.
+
 ## 2026-10-30 (23:59): `f_vf_vorticity` Step A/B RESULT (Matt, live): Step = `dim` reproduces the old look. `f_vf_seeds` passes live; `f_grain` passes live. Default NOT changed yet (awaiting Matt)
 
 - **Finding:** in `f_demo_vorticity`, Step = `dim` (the pre-migration code, step = 1/dim.x, 1/dim.y read inside the pix) matches the look from before the `render_dim` migration; the default `Render` (one render pixel) does not. So the old step really was whatever `dim` reads in that pix live, and that is NOT the render size. What `dim` reads there is still unknown (the 2026-10-16 tensormap probe says 1 in a live jit.gl.pix, which would make the old step a whole-frame step, i.e. very broad swirls; `256` was not reported as matching). Not probed.
