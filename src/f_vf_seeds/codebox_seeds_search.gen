@@ -42,10 +42,12 @@ Param field_priority(0.0);
 Param field_gain(0.0);
 Param active_blend(1.0);
 Param sentinel(5.0);
+Param width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)
+Param height(480.0);
 
 density_scale = pow(2.0, density * 9.0 - 1.0);
 density_scale_eff = density_scale;
-aspect = dim.x / dim.y;
+aspect = width / height;
 
 px = norm.x * density_scale_eff * aspect;
 py = norm.y * density_scale_eff;

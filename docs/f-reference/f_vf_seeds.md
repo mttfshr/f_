@@ -138,6 +138,8 @@ src/f_vf_seeds/codebox_seeds_composite.gen  -- Stage 4
 The shipped patcher reproduces from its definition (it came off the never-regenerate list 2026-10-19). To check that it still does:
 `build/py.sh build/drift.py -v f_vf_seeds` (must say ok; `tests/build/test_build_seeds_keys.py` also asserts it).
 
+**Render size (2026-10-30, T063).** Every stage renders at Vsynth's render size: all six pix objects are `@adapt 0` and the builder's `render_dim` sends them `dim W H` from `r dim`, so there is nothing to set. The two search halves and the two render stages read the aspect for the seed grid and the mark geometry; `dim` reads 1 inside a live `jit.gl.pix`, so they now take internal `width` / `height` Params (`aspect = width / height`) driven by the same message. The merge and the composite read neither. Before, each stage adapted to its first inlet (the vecfield for the search halves, so a small vecfield made a small search); now the whole chain costs the render size whatever the inputs are, which is more at 1080p than a 256-pixel vecfield used to be (not measured). The inputs are assumed render-sized. `codebox_seeds.gen` and the two `codebox_seeds_scratch*.gen` files are not in the build (the pre-Evolution-2 single-codebox versions) and still read `dim`.
+
 ## Key Findings
 
 **Selection alone never produces overlap — this took real testing to

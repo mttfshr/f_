@@ -24,8 +24,10 @@ Param src_mod(0.0);
 // ── Evolution 3: seed-sampled color, blended in via color_mode ──────────────
 Param color_mode(0.0);
 Param src_color_drive(0.0);
+Param width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)
+Param height(480.0);
 
-aspect = dim.x / dim.y;
+aspect = width / height;
 
 // ── Consume Stage 1c's coord (pixel-for-pixel passthrough, same context) ────
 

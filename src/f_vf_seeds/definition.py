@@ -74,6 +74,11 @@ def _search(salts):
     return text.format(salt1=salts[0], salt2=salts[1], salt3=salts[2], salt4=salts[3])
 
 
+# 2026-10-30 (T063): every stage renders at the render size (`@adapt 0`, sized by render_dim below).  The search
+# halves and the merge are float32; the render stages and the composite keep the default type, as shipped.
+F32 = "@adapt 0 @dim 256 256 @type float32"
+DEF = "@adapt 0 @dim 256 256"
+
 _AB = ["1a", "1b"]                           # the two search halves
 _RENDER = ["render_1", "render_2"]           # the two render ranks
 
@@ -144,6 +149,8 @@ patcher = {
         {"name": "src_vecfield", "type": "internal"},
         {"name": "src_mod", "type": "internal"},
         {"name": "src_color_drive", "type": "internal"},
+        {"name": "width", "type": "internal"},       # render size, driven by render_dim
+        {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 
@@ -165,19 +172,29 @@ patcher = {
     # stages keep running (ADR 8: bypass gated at the composite stage).
     "bypass_target": ["1c", "4"],
 
+    # The render size from Vsynth (build/spec.md "render_dim"): `dim` reads 1 inside a live jit.gl.pix, so the
+    # search halves and the render stages (which read `dim.x / dim.y` for the aspect) take width / height Params
+    # from `r dim`, and every stage's output follows the render size (the inputs are assumed render-sized).
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["1a", "1b", "render_1", "render_2"],
+        "size_stages":  ["1a", "1b", "1c", "render_1", "render_2", "4"],
+    },
+
     "pix_chain": [
         {"id": "1a", "name": "vfseeds_search_a", "gen_code": _search(_SALTS_A), "n_inlets": 1, "n_outlets": 3,
-         "pix_type": "float32", "primary": False},
+         "pix_attrs": F32, "primary": False},
         {"id": "1b", "name": "vfseeds_search_b", "gen_code": _search(_SALTS_B), "n_inlets": 1, "n_outlets": 3,
-         "pix_type": "float32", "primary": False},
+         "pix_attrs": F32, "primary": False},
         {"id": "1c", "name": "vfseeds_merge", "gen": "codebox_seeds_merge.gen", "n_inlets": 6, "n_outlets": 3,
-         "pix_type": "float32", "primary": False},
+         "pix_attrs": F32, "primary": False},
         {"id": "render_1", "name": "vfseeds_render_1", "gen": "codebox_seeds_render.gen", "n_inlets": 5,
-         "n_outlets": 1, "primary": False},
+         "n_outlets": 1, "pix_attrs": DEF, "primary": False},
         {"id": "render_2", "name": "vfseeds_render_2", "gen": "codebox_seeds_render.gen", "n_inlets": 5,
-         "n_outlets": 1, "primary": False},
+         "n_outlets": 1, "pix_attrs": DEF, "primary": False},
         {"id": "4", "name": "vfseeds_composite", "gen": "codebox_seeds_composite.gen", "n_inlets": 2,
-         "n_outlets": 2, "primary": True},
+         "n_outlets": 2, "pix_attrs": DEF, "primary": True},
     ],
     "pix_wires": [
         ["1a", 0, "1c", 0], ["1a", 1, "1c", 1], ["1a", 2, "1c", 2],      # search half A -> merge
