@@ -200,7 +200,7 @@ Requirements).
 |---|---|---|---|
 | `zoom` | 0–1 (cyclic) | 0 | base scale = 2^zoom, one octave per cycle |
 | `zoom_rate` | signed, octaves/s (unit settled in T021) | small non-zero | patcher clock |
-| `drift` | signed rate | small | advances the phase offset; a base-octave phase in turns, offset `2 pi phi 2^i`, wrapped at 1 (T002: an unbounded `p` loses precision) |
+| `drift` | signed rate | small | advances the phase offset; a base-octave phase in turns, offset `2 pi phi` shared by every octave (2026-10-30; it was `2 pi phi 2^i`, which jumped the pattern at every zoom wrap), wrapped at 1 (T002: an unbounded `p` loses precision) |
 | `density` | about 1–12 | 4 | cycles per frame HEIGHT at scale 1 (`B`; height, not width, because only `x` is scaled by aspect: T001) |
 | `envelope` | 0.25–0.7 | 0.5 | `sigma`; cap 0.7 set by T004 (wrap residual under half an output level at bands 12) |
 | `bands` | about 1–12 | 5 | contour count in the banded look |

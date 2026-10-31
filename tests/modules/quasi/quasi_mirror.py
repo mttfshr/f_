@@ -12,9 +12,12 @@ Model (N = 5 orientations, M = 7 octaves, q = frame-height units, centred):
     w_i    = exp(-0.5 * ((e_i - 3) / envelope)^2)
     phi_k  = k * pi / N + angle
     beta_k = frac(exp(pi * k))                   LITERALS in the codebox (see below)
-    psi_ik = beta_k * s_i + 2 pi dw 2^i + (cos phi_k * x + sin phi_k * y) * 2 pi B s_i
-                                                 dw = frac(drift): a base-octave phase in TURNS (T002), so the
-                                                 offset is exactly periodic in drift (2^i is an integer)
+    psi_ik = beta_k * s_i + 2 pi dw + (cos phi_k * x + sin phi_k * y) * 2 pi B s_i
+                                                 dw = frac(drift): ONE phase in TURNS shared by every octave
+                                                 (T002), so the offset is exactly periodic in drift. It used to be
+                                                 scaled by 2^i (the octave's slot in the loop); the zoom wrap
+                                                 re-indexes the octaves, so that jumped the pattern at every wrap
+                                                 while drift was non-zero (fixed 2026-10-30)
     P      = sum_i w_i sum_k cos(psi_ik) / (N * sum_i w_i)               in [-1, 1]
     grad P = -2 pi B sum_i w_i s_i sum_k sin(psi_ik) dir_k / (N * sum_i w_i)
     v      = -sum_i w_i s_i sum_k sin(psi_ik) dir_k / (N * sum_i w_i s_i)  |v| <= 1 (gate G2)
@@ -36,7 +39,8 @@ the unfaded weights (amplitude falls with the fade).
   "grad_no_freq_factor"  the gradient omits 2 pi B s (the webgpgpu Example_31 shape),
   "source_aspect"        render scales x by aspect and divides y by aspect (not isometric),
   "vec_norm_by_w"        the vecfield divides by sum w instead of sum w s (unbounded),
-  "mu_off"               the envelope centre is 2 instead of 3.
+  "mu_off"               the envelope centre is 2 instead of 3,
+  "drift_scaled"         the drift phase is scaled by 2^i again (the pre-2026-10-30 form: it jumps at the zoom wrap).
 """
 import numpy as np
 
@@ -47,7 +51,7 @@ N_OCT = 7
 MU = 3.0
 LN2 = 0.6931471805599453
 TWOPI = 2.0 * np.pi
-BUGS = ("grad_no_freq_factor", "source_aspect", "vec_norm_by_w", "mu_off")
+BUGS = ("grad_no_freq_factor", "source_aspect", "vec_norm_by_w", "mu_off", "drift_scaled")
 
 
 def betas(dtype=np.float64):
@@ -92,7 +96,8 @@ def field(x, y, *, zoom=0.0, drift=0.0, density=4.0, envelope=0.5, angle=0.0,
     wsnorm = (wf * s).sum() if (not fade or fade.get("renorm", True)) else (w * s).sum()
     b = betas(dtype)
     dw = dtype(drift) - np.floor(dtype(drift))           # wrapped phase in turns
-    pw = dtype(2) ** np.arange(N_OCT, dtype=dtype)       # 2^i, exact in float32
+    # one drift phase for every octave; the "drift_scaled" mutation restores the old 2^i scaling (exact in float32)
+    pw = dtype(2) ** np.arange(N_OCT, dtype=dtype) if bug == "drift_scaled" else np.ones(N_OCT, dtype)
     twopib = dtype(TWOPI) * dtype(density)
     k = np.arange(N_WAVES, dtype=dtype)
     phi = k * dtype(np.pi / N_WAVES) + dtype(angle)

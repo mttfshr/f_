@@ -21,10 +21,11 @@ and feed two accumulators carried in raw boxes:
     [r draw] -> [f] -> [+ rate] -> [expr $f1 - floor($f1)] -> [f] right inlet (store)
                                                            -> [prepend param zoom_clk] -> pix
 The wrap is exact for a value already in [0, 1), so rate 0 freezes the phase exactly; the codebox ADDS the phase to the
-dial and wraps the sum.  Drift is a phase in turns (the codebox applies it as 2 pi drift 2^i, exactly periodic).
+dial and wraps the sum.  Drift is a phase in turns shared by every octave (the codebox applies 2 pi drift, exactly periodic; scaled by 2^i it
+jumped the pattern at every zoom wrap, fixed 2026-10-30).
 There is no control-rate [wrap] object in Max, hence the expr.
 
-Verification: tests/modules/quasi (mirror, 12 tests), tests/modules/quasi/bench_quasi.py (the codebox on the GPU).
+Verification: tests/modules/quasi (mirror, 13 tests), tests/modules/quasi/bench_quasi.py (the codebox on the GPU).
 """
 from pathlib import Path
 

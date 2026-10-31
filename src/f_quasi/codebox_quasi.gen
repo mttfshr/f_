@@ -10,7 +10,9 @@
 //   third outlet:  the potential P mapped to 0..1 (P / 2 + 0.5)
 // Settled by Phase 0 (.specify/stable/f_quasi/tasks.md): units are frame HEIGHT (x is scaled by the aspect only); the five
 // beta_k = frac(exp(pi k)) are float64 literals; no argument reduction (GPU error 3.7e-5 in P); drift is a phase in turns,
-// wrapped here and applied as 2 pi drift 2^i so it is exactly periodic; zoom wraps here; the envelope cap (0.7) is the
+// wrapped here and applied as ONE phase 2 pi drift shared by every octave (exactly periodic; 2026-10-30: it was scaled
+// by 2^i, the octave's slot in the loop, which jumped the whole pattern at every zoom wrap because the wrap re-indexes
+// the octaves); zoom wraps here; the envelope cap (0.7) is the
 // dial range, not enforced in this file; no octave skipping and no Nyquist fade (T005, T006).
 // zoom_clk and drift_clk are the patcher clock's wrapped phases (per-frame accumulators, rate 0 freezes them exactly); they
 // add to the zoom and drift dials, so a mod source can still drive the dials. src_mode is the dual-archetype flag from
@@ -41,6 +43,7 @@ ztot = zoom + zoom_clk;
 zw = ztot - floor(ztot);
 dtot = drift + drift_clk;
 dw = dtot - floor(dtot);
+dph = twopi * dw;
 ang = angle * 0.017453292519943295;
 ca = cos(ang);
 sa = sin(ang);
@@ -60,7 +63,6 @@ gxa = 0;
 gya = 0;
 wsum = 0;
 wssum = 0;
-pw2 = 1;
 for (i = 0; i < 7; i += 1) {
     ex = zw + i;
     tz = (ex - 3) / envelope;
@@ -68,15 +70,14 @@ for (i = 0; i < 7; i += 1) {
     sc = exp(ex * 0.6931471805599453);
     wsum += wgt;
     wssum += wgt * sc;
-    ps0 = 0.000000000000 * sc + twopi * dw * pw2 + (dx0 * px + dy0 * py) * (twopib * sc);
-    ps1 = 0.140692632779 * sc + twopi * dw * pw2 + (dx1 * px + dy1 * py) * (twopib * sc);
-    ps2 = 0.491655524765 * sc + twopi * dw * pw2 + (dx2 * px + dy2 * py) * (twopib * sc);
-    ps3 = 0.647807916694 * sc + twopi * dw * pw2 + (dx3 * px + dy3 * py) * (twopib * sc);
-    ps4 = 0.313136653160 * sc + twopi * dw * pw2 + (dx4 * px + dy4 * py) * (twopib * sc);
+    ps0 = 0.000000000000 * sc + dph + (dx0 * px + dy0 * py) * (twopib * sc);
+    ps1 = 0.140692632779 * sc + dph + (dx1 * px + dy1 * py) * (twopib * sc);
+    ps2 = 0.491655524765 * sc + dph + (dx2 * px + dy2 * py) * (twopib * sc);
+    ps3 = 0.647807916694 * sc + dph + (dx3 * px + dy3 * py) * (twopib * sc);
+    ps4 = 0.313136653160 * sc + dph + (dx4 * px + dy4 * py) * (twopib * sc);
     pacc += wgt * (cos(ps0) + cos(ps1) + cos(ps2) + cos(ps3) + cos(ps4));
     gxa += wgt * sc * (sin(ps0) * dx0 + sin(ps1) * dx1 + sin(ps2) * dx2 + sin(ps3) * dx3 + sin(ps4) * dx4);
     gya += wgt * sc * (sin(ps0) * dy0 + sin(ps1) * dy1 + sin(ps2) * dy2 + sin(ps3) * dy3 + sin(ps4) * dy4);
-    pw2 = pw2 * 2;
 }
 pf = pacc / (5 * wsum);
 sb = (pf * 0.5 + 1) * bands;

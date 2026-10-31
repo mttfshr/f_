@@ -118,6 +118,17 @@ def test_zoom_and_drift_wrap_on_the_gpu():
         check(f"{label}: all three outlets identical", max(worst(oa[i], ob[i]) for i in range(3)), 1e-6)
 
 
+def test_zoom_wrap_is_seamless_with_drift_running():
+    """2026-10-30: the drift phase used to be scaled by 2^i (the octave's slot in the loop), which jumped the pattern at
+    every zoom wrap while drift was non-zero (the mirror: |dP| up to 1.5). Now one phase is shared by every octave.
+    zoom = 1 - 2^-20 (exact in float32) against zoom = 0 at a non-zero drift: only the one-step zoom slope remains."""
+    near = 1.0 - 2.0 ** -20
+    for drift in (0.05, 0.37, 0.8):
+        a, b = gpu(dict(zoom=near, drift=drift)), gpu(dict(zoom=0.0, drift=drift))
+        check(f"drift {drift}: scalar outlet across the zoom wrap", worst(a[2], b[2]), 1e-3)
+        check(f"drift {drift}: vecfield R, G across the zoom wrap", worst(a[1][..., :2], b[1][..., :2]), 2e-3)
+
+
 def test_clock_phases_add_to_zoom_and_drift():
     """zoom_clk and drift_clk are the patcher clock's wrapped phases (T021); they ADD to the dials and the sum wraps.
     Binary fractions, so the sums are exact in float32 and the frames must agree to rounding. src_mode (the dual

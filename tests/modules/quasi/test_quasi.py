@@ -46,7 +46,7 @@ def ref_point(x, y, zoom=0.3, drift=0.0, density=4.0, envelope=0.5, angle=0.0,
         wssum += w * s
         for k in range(5):
             phi = k * math.pi / 5 + angle
-            psi = (betas[k] * s + 2.0 * math.pi * (drift - math.floor(drift)) * 2.0 ** i
+            psi = (betas[k] * s + 2.0 * math.pi * (drift - math.floor(drift))
                    + (math.cos(phi) * x + math.sin(phi) * y) * tpb * s)
             c, sn = math.cos(psi), math.sin(psi)
             P += w * c
@@ -148,8 +148,8 @@ def test_wrap_residual_matches_spec_weights():
 
 
 def test_drift_is_a_wrapped_phase_in_turns():
-    """T002: the offset is 2 pi frac(drift) 2^i, so one whole turn of drift is the identical frame (exactly,
-    because 2^i is an integer) and an unbounded accumulator costs nothing."""
+    """T002: the offset is one phase 2 pi frac(drift) shared by every octave (2026-10-30; was scaled by 2^i), so one
+    whole turn of drift is the identical frame (exactly) and an unbounded accumulator costs nothing."""
     base = {k: v for k, v in DEF.items() if k != "drift"}
     a = q.field(XS, YS, dtype=np.float64, drift=0.37, **base)["P"]
     b = q.field(XS, YS, dtype=np.float64, drift=1.37, **base)["P"]
@@ -162,6 +162,28 @@ def test_drift_is_a_wrapped_phase_in_turns():
     big = q.field(XS, YS, dtype=np.float32, drift=1.5 + 4096.0, **base)["P"]
     small = q.field(XS, YS, dtype=np.float32, drift=1.5, **base)["P"]
     check("float32 drift 4097.5 == 1.5 (exact wrap)", np.abs(big - small).max(), 1e-6)
+
+
+def test_zoom_wrap_is_seamless_with_drift_running():
+    """2026-10-30 regression: the drift phase was scaled by 2^i (the octave's slot in the loop), and the zoom wrap
+    re-indexes the octaves, so with a non-zero drift the whole pattern jumped (|dP| up to 1.5) at every zoom wrap.
+    The earlier wrap checks ran at drift 0 (or at one fixed zoom), so none could see it. The unwrapped zoom = 1 frame
+    must equal the zoom = 0 frame at any drift, in the potential and the vecfield numerators."""
+    base = {k: v for k, v in DEF.items() if k not in ("zoom", "drift")}
+    for env in (0.5, 0.7):
+        for drift in (0.05, 0.37, 0.8):
+            a = q.field(XS, YS, dtype=np.float64, zoom=1.0, drift=drift, wrap_zoom=False, **{**base, "envelope": env})
+            b = q.field(XS, YS, dtype=np.float64, zoom=0.0, drift=drift, **{**base, "envelope": env})
+            tol = 1e-6 if env == 0.5 else 2e-3     # the leaving / entering octave weights (spec: ~1e-8 at 0.5, 7.6e-5 at 0.7)
+            check(f"envelope {env}, drift {drift}: P(zoom 1) == P(zoom 0)", np.abs(a["P"] - b["P"]).max(), tol)
+            check(f"envelope {env}, drift {drift}: vx, vy (zoom 1) == (zoom 0)",
+                  max(np.abs(a["vx"] - b["vx"]).max(), np.abs(a["vy"] - b["vy"]).max()), tol)
+    # the mutation (the old 2^i scaling) must jump here, so this test can tell the two apart
+    a = q.field(XS, YS, dtype=np.float64, zoom=1.0, drift=0.37, wrap_zoom=False, bug="drift_scaled", **base)["P"]
+    b = q.field(XS, YS, dtype=np.float64, zoom=0.0, drift=0.37, bug="drift_scaled", **base)["P"]
+    jump = float(np.abs(a - b).max())
+    note("old 2^i scaling: jump of P at the zoom wrap (drift 0.37)", f"{jump:.3f}")
+    assert jump > 0.5, f"the drift_scaled mutation should jump at the zoom wrap, got {jump:.3e}"
 
 
 def test_rotation_covariance():
@@ -238,8 +260,8 @@ def test_mutations_are_caught():
         note(f"mutation '{bug}' worst error", f"{worst:.3e}")
         if not worst > 1e-2:
             raise AssertionError(f"mutation not detected: {bug} ({e})")
-    print("    ok   a gradient without 2 pi B s, the source aspect, a vecfield normalised by sum w "
-          "and a shifted envelope centre are each caught")
+    print("    ok   a gradient without 2 pi B s, the source aspect, a vecfield normalised by sum w, "
+          "a shifted envelope centre and a 2^i-scaled drift phase are each caught")
 
 
 if __name__ == "__main__":
