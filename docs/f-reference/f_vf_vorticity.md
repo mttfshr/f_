@@ -76,9 +76,14 @@ main body                     — curl_at at center + 4 neighbors →
                                 as f_vecfield (0.5 = zero vector)
 ```
 
-Finite-difference offsets use `dim`-derived texel size (`1.0/dim.x`,
-`1.0/dim.y`), same idiom as `f_vf_sobel`'s gradient
-sampling — no new offset convention introduced.
+Finite-difference offsets use the render-size texel (`1.0/width`,
+`1.0/height`), the same idiom as `f_vf_sobel`'s gradient sampling.
+
+**Render size (2026-10-30).** The module renders at Vsynth's render size: the
+pix is `@adapt 0`, and the internal `width` / `height` Params (the texel step;
+`dim` reads 1 inside a live `jit.gl.pix`, so the codebox used to read `dim.x` /
+`dim.y`) are driven by it through the builder's `render_dim`, so there is
+nothing to set. The input vecfield is assumed render-sized.
 
 **Zero-force on unconnected/uniform input, with no explicit suppression
 code.** Unlike `f_vf_glow` (which needs an explicit raw-value threshold

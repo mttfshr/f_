@@ -137,7 +137,7 @@
 							},
 							{
 								"box": {
-									"code": "field_x(u, v) {\n    return (sample(in1, vec(u, v)).x - 0.5) * 2.0;\n}\n\nfield_y(u, v) {\n    return (sample(in1, vec(u, v)).y - 0.5) * 2.0;\n}\n\ncurl_at(u, v, sx, sy) {\n    fy_r = field_y(u + sx, v);\n    fy_l = field_y(u - sx, v);\n    fx_t = field_x(u, v + sy);\n    fx_b = field_x(u, v - sy);\n    return (fy_r - fy_l) / (2.0 * sx) - (fx_t - fx_b) / (2.0 * sy);\n}\n\nParam confinement(0.1);\nParam bypass(0.0);\n\nsx = 1.0 / dim.x;\nsy = 1.0 / dim.y;\n\nu = norm.x;\nv = norm.y;\n\nw_c = curl_at(u, v, sx, sy);\nw_r = curl_at(u + sx, v, sx, sy);\nw_l = curl_at(u - sx, v, sx, sy);\nw_t = curl_at(u, v + sy, sx, sy);\nw_b = curl_at(u, v - sy, sx, sy);\n\ndwdx = (w_r - w_l) / (2.0 * sx);\ndwdy = (w_t - w_b) / (2.0 * sy);\n\ngrad_mag = max(sqrt(dwdx * dwdx + dwdy * dwdy), 0.00001);\nnx = dwdx / grad_mag;\nny = dwdy / grad_mag;\n\nforce_x = confinement * ny * w_c;\nforce_y = confinement * (-nx) * w_c;\n\nout_x = field_x(u, v) + force_x;\nout_y = field_y(u, v) + force_y;\n\nresult = vec(out_x * 0.5 + 0.5, out_y * 0.5 + 0.5, 0.5, 1.0);\n\nout1 = mix(result, sample(in1, norm), bypass);\n",
+									"code": "field_x(u, v) {\n    return (sample(in1, vec(u, v)).x - 0.5) * 2.0;\n}\n\nfield_y(u, v) {\n    return (sample(in1, vec(u, v)).y - 0.5) * 2.0;\n}\n\ncurl_at(u, v, sx, sy) {\n    fy_r = field_y(u + sx, v);\n    fy_l = field_y(u - sx, v);\n    fx_t = field_x(u, v + sy);\n    fx_b = field_x(u, v - sy);\n    return (fy_r - fy_l) / (2.0 * sx) - (fx_t - fx_b) / (2.0 * sy);\n}\n\nParam confinement(0.1);\nParam width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)\nParam height(480.0);\nParam bypass(0.0);\n\nsx = 1.0 / width;\nsy = 1.0 / height;\n\nu = norm.x;\nv = norm.y;\n\nw_c = curl_at(u, v, sx, sy);\nw_r = curl_at(u + sx, v, sx, sy);\nw_l = curl_at(u - sx, v, sx, sy);\nw_t = curl_at(u, v + sy, sx, sy);\nw_b = curl_at(u, v - sy, sx, sy);\n\ndwdx = (w_r - w_l) / (2.0 * sx);\ndwdy = (w_t - w_b) / (2.0 * sy);\n\ngrad_mag = max(sqrt(dwdx * dwdx + dwdy * dwdy), 0.00001);\nnx = dwdx / grad_mag;\nny = dwdy / grad_mag;\n\nforce_x = confinement * ny * w_c;\nforce_y = confinement * (-nx) * w_c;\n\nout_x = field_x(u, v) + force_x;\nout_y = field_y(u, v) + force_y;\n\nresult = vec(out_x * 0.5 + 0.5, out_y * 0.5 + 0.5, 0.5, 1.0);\n\nout1 = mix(result, sample(in1, norm), bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -205,7 +205,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name vfvorticity_pix @type float32",
+					"text": "jit.gl.pix vsynth @name vfvorticity_pix @adapt 0 @dim 256 256 @type float32",
 					"varname": "vfvorticity_pix"
 				}
 			},
@@ -749,6 +749,132 @@
 					],
 					"style": ""
 				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-0",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						714.0,
+						40.0,
+						22.0
+					],
+					"text": "r dim",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-5",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						714.0,
+						60.0,
+						22.0
+					],
+					"text": "loadbang",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-6",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						744.0,
+						70.0,
+						22.0
+					],
+					"text": "s trig_res",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": []
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-1",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						714.0,
+						60.0,
+						22.0
+					],
+					"text": "route dim",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-2",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						744.0,
+						60.0,
+						22.0
+					],
+					"text": "unpack i i",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"int",
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-3",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						774.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param width",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-4",
+					"maxclass": "newobj",
+					"patching_rect": [
+						160.0,
+						774.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param height",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
 			}
 		],
 		"lines": [
@@ -976,6 +1102,102 @@
 					],
 					"destination": [
 						"obj-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-5",
+						0
+					],
+					"destination": [
+						"obj-rd-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-rd-1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-1",
+						0
+					],
+					"destination": [
+						"obj-rd-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						0
+					],
+					"destination": [
+						"obj-rd-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						1
+					],
+					"destination": [
+						"obj-rd-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-3",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-4",
+						0
+					],
+					"destination": [
+						"obj-5",
 						0
 					]
 				}

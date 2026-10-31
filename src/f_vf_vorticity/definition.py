@@ -11,7 +11,17 @@ patcher = {
     "title":              "Vorticity",
     "signal_type":        "∇ in/out",
     "archetype":          "processor",
-    "pix_type":           "float32",
+    # 2026-10-30: `dim` reads 1 inside a live jit.gl.pix, so the texel step came from `dim.x/dim.y`
+    # unreliably.  width / height are internal Params driven from the render size by the builder's
+    # `render_dim` key, and the output follows the render size (`@adapt 0`; the input is assumed
+    # render-sized).  pix_attrs replaces pix_type (the builder rejects both); the output stays float32.
+    "pix_attrs":          "@adapt 0 @dim 256 256 @type float32",
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["primary"],
+        "size_stages":  ["primary"],
+    },
 
     "presentation_width":  100,
     "presentation_height": 80,
@@ -49,6 +59,8 @@ patcher = {
             "label": "Confinement",
             "range_tiers": [0.1, 1.0],
         },
+        {"name": "width",  "type": "internal"},
+        {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 
@@ -70,10 +82,12 @@ curl_at(u, v, sx, sy) {
 }
 
 Param confinement(0.1);
+Param width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)
+Param height(480.0);
 Param bypass(0.0);
 
-sx = 1.0 / dim.x;
-sy = 1.0 / dim.y;
+sx = 1.0 / width;
+sy = 1.0 / height;
 
 u = norm.x;
 v = norm.y;

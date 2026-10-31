@@ -276,15 +276,16 @@ def test_single_pix_pix_attrs_is_loud():
 # ---- STATIC: a codebox that reads `dim` must be given the render size another way
 
 # Modules whose code reads `dim` today and declare nothing: the latent bug (`dim` reads 1 live), found
-# 2026-10-29.  Each needs a live look and then a fix; remove the line when it is fixed.  f_masonry, f_grain
-# and f_vf_seeds are on the never-regenerate list (hand edit only); the others build from a definition.
+# 2026-10-29.  Each needs a live look and then a fix; remove the line when it is fixed.  Only f_masonry is
+# still on the never-regenerate list (hand edit only; Matt, 2026-10-30: leave it for its refactor, and
+# f_cmap stays paused); the others build from a definition and take `render_dim` (f_vf_vorticity done
+# 2026-10-30; f_quasi, f_grain, f_vf_seeds next).
 EXEMPT = {
-    "f_cmap": "20 reads, pixel maths (tx = ux * dim.x - 0.5): the likeliest to be visibly wrong",
-    "f_grain": "aspect from dim; predates the build system, never regenerate",
-    "f_masonry": "aspect from dim in every phase; never regenerate",
-    "f_quasi": "aspect from dim",
-    "f_vf_seeds": "aspect from dim; never regenerate",
-    "f_vf_vorticity": "dim in the inline codebox",
+    "f_cmap": "20 reads, pixel maths (tx = ux * dim.x - 0.5): paused, left alone (Matt, 2026-10-30)",
+    "f_grain": "aspect from dim; builds from its definition since 2026-10-19: next",
+    "f_masonry": "aspect from dim in every phase; never regenerate; left for its refactor (Matt, 2026-10-30)",
+    "f_quasi": "aspect from dim: next",
+    "f_vf_seeds": "aspect from dim; builds from its definition since 2026-10-19: next",
 }
 
 
