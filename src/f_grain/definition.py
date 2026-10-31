@@ -93,7 +93,7 @@ patcher = {
         {"name": "mix_pct",     "type": "float", "min": 0.0,  "max": 100.0, "default": 100.0, "label": "Mix", "widget": "numbox",
          "hint": "Dry/wet crossfade toward the fully-composited (displaced-source + grain) state. New 2026-10-09 (T003); default 100 keeps the module's prior look unchanged. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator."},
         {"name": "aspect_mode", "type": "menu", "options": ["Render", "dim", "Square"], "default": 0, "label": "Aspect",
-         "hint": "Where the grain grid's aspect comes from. Render: the render size's width / height (the migrated behaviour: square grain cells at any frame shape). dim: dim.x / dim.y as the module used to (whatever dim reads in this pix: unreliable live). Square: aspect 1, cells stretched with the frame."},
+         "hint": "Where the grain grid's aspect comes from. Render: the render size's width / height (the migrated behaviour: square grain cells at any frame shape). dim: dim.x / dim.y as the module used to (whatever dim reads in this pix: unreliable live). Square: aspect 1, cells stretched with the frame. Only visible once Size makes the cells several pixels across (Size above about 0.3): at Size 0 the cells are sub-pixel and every mode is just noise."},
         {"name": "era_clock",   "type": "internal"},  # driven by the persistence chain
         {"name": "src_mode",    "type": "internal"},  # driven by vs_inState
         {"name": "width",       "type": "internal"},  # render size, driven by render_dim

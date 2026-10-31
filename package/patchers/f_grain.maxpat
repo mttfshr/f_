@@ -1952,7 +1952,7 @@
 					"id": "obj-59",
 					"maxclass": "live.menu",
 					"fontname": "Ableton Sans Light",
-					"hint": "Where the grain grid's aspect comes from. Render: the render size's width / height (the migrated behaviour: square grain cells at any frame shape). dim: dim.x / dim.y as the module used to (whatever dim reads in this pix: unreliable live). Square: aspect 1, cells stretched with the frame.",
+					"hint": "Where the grain grid's aspect comes from. Render: the render size's width / height (the migrated behaviour: square grain cells at any frame shape). dim: dim.x / dim.y as the module used to (whatever dim reads in this pix: unreliable live). Square: aspect 1, cells stretched with the frame. Only visible once Size makes the cells several pixels across (Size above about 0.3): at Size 0 the cells are sub-pixel and every mode is just noise.",
 					"numinlets": 1,
 					"numoutlets": 3,
 					"outlettype": [

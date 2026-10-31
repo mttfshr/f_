@@ -1,5 +1,13 @@
 # HANDOFF
 
+## 2026-10-30 (23:40): `f_grain` Aspect probe RUN: 4/4. The menu WORKS on the GPU; "identical in all cases" is explained by Size (the default Size 0 has sub-pixel cells). Hint and doc updated. Everything else as the entries below (T063 3 of 4; NEXT: `f_vf_seeds`)
+
+- **Probe result (`tests/logs/20261030-232344-bench.log`, 256 x 144, jitter 0, shape 0):** `dim` == `Render` exactly at every Size (0 / 0.5 / 0.65 / 0.75). Anisotropy (mean |dx| / mean |dy| of the grain mask): `Render` 1.00 / 1.01 / 1.00 / 1.03, `Square` 0.48 (Size 0.5, cells 2 px) / 0.56 / 0.56 (the frame aspect 1/1.78, as predicted). Square vs Render mean |diff| 0.15-0.18 at Size >= 0.5. So the menu is wired and the codebox obeys it; the three modes differ visibly only when cells are several pixels (Size above about 0.3).
+- **Oddity, bench-only as far as known (my reading, not verified):** at Size 0 the `Square` mask on the 256-wide bench frame is EMPTY (dx = dy = 0, mean 0) while `Render` is noise with mean 0.10. 4096 / 256 = 16 is an integer, so with aspect 1 every pixel centre lands on the same sub-cell position of a cell and the hash happens to be dark there; at 1920 wide (4096 / 1920 = 2.13) this lattice resonance should not occur. Not investigated further; it only matters at Size ~0 in Square mode.
+- **What the bench cannot say:** what `dim` reads in a LIVE chain (in the bench it follows the render-sized first input, so dim == Render there by construction). Which mode reproduces Matt's old look is still a live question at Size >= 0.5.
+- **Changed:** the Aspect hint (definition; patcher rebuilt) and `docs/f-reference/f_grain.md` now say Aspect only shows at Size above about 0.3, with the table of cell sizes and the measured numbers.
+- **Next:** Matt's live A/B at Size 0.5-0.75, then `f_vf_seeds` (the last of the four).
+
 ## 2026-10-30 (23:30): `f_grain` Aspect looked IDENTICAL in all three modes (Matt, live, at an unreported Size); a bench PROBE is written, NOT RUN. Everything else as the 23:15 entry below
 
 - **Analysis (offline, not verified live):** the menu is wired like Size / Jitter (menu -> attrui -> pix; the contract test agrees). `aspect` enters the codebox in ONE place, the horizontal cell count (`px = uv.x * 4096 * aspect / size_scale`; `aspect_sq` is computed and unused, as before). On-screen cell height is `frame height * 2^(12 Size) / 4096` (1080 high: 0.26 px at Size 0, 2 px at 0.25, 17 px at 0.5, 135 px at 0.75), so at the default Size 0 the cells are sub-pixel in every mode and the mask is just noise on a slightly different lattice: visually identical. Render and dim should match anyway if `dim` reads the true aspect; Square should differ once cells are several pixels.
