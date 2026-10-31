@@ -6,9 +6,10 @@ that shares the code's conventions could not catch.
 The codebox is a stateless generator, one pass, three outlets: banded look, bounded gradient vecfield, potential.
 Every job pins every Param (the bench keeps a Param's last value between jobs: bench-test-authoring #2).
 
-The first input is a render-sized blank, so that the `dim` global is the render's: the T006 scratch shader read `dim`
-as square with a 4x4 stand-in first input (tasks.md T006), so test_dim_probe records what `dim` follows both ways
-(informational, no pass/fail) and every other test uses the render-sized input.
+The aspect comes from the `width` / `height` Params (2026-10-30: `dim` reads 1 in a live jit.gl.pix, so the module
+takes the render size through the builder's render_dim; the first input's texture is never read). Every job pins them
+to the bench render (256 x 144); test_aspect_follows_width_height checks the aspect follows the Params and not the
+first input's size (a render-sized blank and the bench's 4x4 stand-in must give the same frame).
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh tests/modules/quasi/bench_quasi.py
@@ -30,10 +31,11 @@ import quasi_mirror as q
 
 CODE = (_paths.REPO / "src" / "f_quasi" / "codebox_quasi.gen").read_text()
 H, W = 144, 256
-BLANK = np.zeros((H, W, 4), np.float32)        # first input as large as the render: `dim` is the render's
+BLANK = np.zeros((H, W, 4), np.float32)        # a first input as large as the render (never read)
 STAND_IN = np.zeros((4, 4, 4), np.float32)     # the bench's usual bang stand-in (4x4)
 PINNED = dict(zoom=0.0, drift=0.0, density=4.0, envelope=0.5, bands=5.0, angle=0.0, gain=1.0,
-              zoom_clk=0.0, drift_clk=0.0, src_mode=0.0, bypass_gate=0.0)
+              zoom_clk=0.0, drift_clk=0.0, src_mode=0.0, bypass_gate=0.0,
+              width=float(W), height=float(H))     # the render size, as render_dim drives them in the module
 CASES = {
     "defaults": {},
     "dense, zoomed, capped envelope": dict(zoom=0.5, density=12.0, envelope=0.7),
@@ -129,18 +131,20 @@ def test_clock_phases_add_to_zoom_and_drift():
         check(f"{label}: all three outlets identical", max(worst(oa[i], ob[i]) for i in range(3)), 1e-6)
 
 
-def test_dim_probe():
-    """Informational. What does the `dim` global follow in the bench: the render size (256x144) or the first input's
-    size? Compares the scalar outlet with the mirror at the 16:9 aspect and at aspect 1. Closes the T006 open question."""
+def test_aspect_follows_width_height():
+    """The aspect is width / height (render_dim, 2026-10-30), not the first input's size. The scalar outlet is compared
+    with the mirror at the 16:9 aspect (width 256, height 144, the pinned default) and at aspect 1 (width = height =
+    144); the first input is a render-sized blank or the 4x4 stand-in, which must change nothing."""
     nx, ny, _, _ = g.grid(H, W)
     sq = q.field(nx - np.float32(0.5), ny - np.float32(0.5), dtype=np.float32, zoom=0.0, drift=0.0, density=4.0,
                  envelope=0.5)["P"] * np.float32(0.5) + np.float32(0.5)
     wide = mirror({})[2][..., 0]
-    for label, inp in (("render-sized first input (256x144)", BLANK), ("4x4 stand-in first input", STAND_IN)):
-        out = gpu({}, inputs=[inp])[2][..., 0]
-        e_wide, e_sq = worst(out, wide), worst(out, sq)
-        verdict = "16:9, the render's" if e_wide < e_sq else "square, the input's (or a default)"
-        note(f"dim with {label}", f"aspect read as {verdict} (error vs 16:9 {e_wide:.2e}, vs square {e_sq:.2e})")
+    check("the two aspects differ (the test can tell them apart)", 0 if worst(wide, sq) > 1e-2 else 1, 0)
+    for label, inp in (("render-sized first input", BLANK), ("4x4 stand-in first input", STAND_IN)):
+        out_w = gpu({}, inputs=[inp])[2][..., 0]
+        check(f"width 256 / height 144, {label}: matches the 16:9 mirror", worst(out_w, wide), TOL_SCALAR)
+        out_s = gpu(dict(width=144.0, height=144.0), inputs=[inp])[2][..., 0]
+        check(f"width = height = 144, {label}: matches the aspect-1 mirror", worst(out_s, sq), TOL_SCALAR)
 
 
 if __name__ == "__main__":

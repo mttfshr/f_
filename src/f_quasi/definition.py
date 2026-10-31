@@ -11,7 +11,7 @@ generator: one pix, three outlets, no feedback.  See .specify/stable/f_quasi/{sp
   outlet 3  the potential P mapped to 0..1
 
 Archetype `dual` (vs_inState on the first inlet, vs_black when nothing is connected, so the module draws on its own);
-the codebox reads the aspect from `dim`, as f_grain and f_masonry do.  `src_mode` (vs_inState's flag) is declared and
+the codebox reads the aspect from the internal `width` / `height` Params (render_dim; `dim` reads 1 live).  `src_mode` (vs_inState's flag) is declared and
 not read.  Bypass is `bypass_gate` (never the native @bypass): look and scalar black with alpha 1, vecfield neutral.
 
 The clock (T021, G3: frame-based like the other `rate` dials).  `zoom` and `drift` are plain dials (so a mod source or
@@ -37,7 +37,17 @@ patcher = {
     "archetype":   "dual",
     "signal_type": "∇ out",
 
-    "pix_type":    "float32",
+    # 2026-10-30: `dim` reads 1 inside a live jit.gl.pix, so the aspect cannot come from it.  width / height are
+    # internal Params driven from the render size by the builder's `render_dim` key, and the output follows the
+    # render size (`@adapt 0`; the first inlet's texture is never read).  pix_attrs replaces pix_type (the builder
+    # rejects both); the outlets stay float32.
+    "pix_attrs":   "@adapt 0 @dim 256 256 @type float32",
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["primary"],
+        "size_stages":  ["primary"],
+    },
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> pix (every outlet its neutral)
 
     "presentation_width":  227,
@@ -69,6 +79,8 @@ patcher = {
         {"name": "drift_clk",   "type": "internal"},
         {"name": "src_mode",    "type": "internal"},
         {"name": "bypass_gate", "type": "internal"},
+        {"name": "width",       "type": "internal"},     # render size, driven by render_dim
+        {"name": "height",      "type": "internal"},
     ],
 
     "outlets": [

@@ -35,7 +35,7 @@ Bypass (`bypass_gate`, never the native `@bypass`): outlets 1 and 3 black with A
 
 ## Signal Flow
 
-One inlet (control messages and an optional texture), one `jit.gl.pix`, three outlets. The inlet follows the library's dual-mode generator pattern: `vs_inState` feeds the pix a texture, or `vs_black` when nothing is connected, so the module draws on its own. The codebox does not read that texture; its **size sets the aspect** (`dim.x / dim.y`, as `f_grain` and `f_masonry` do), and the patcher's own `src_mode` flag (`vs_inState`'s connected / not connected) is declared and unused.
+One inlet (control messages and an optional texture), one `jit.gl.pix`, three outlets. The inlet follows the library's dual-mode generator pattern: `vs_inState` feeds the pix a texture, or `vs_black` when nothing is connected, so the module draws on its own. The codebox does not read that texture; the **aspect comes from the render size** (internal `width` / `height` Params, see "Render size" below), and the patcher's own `src_mode` flag (`vs_inState`'s connected / not connected) is declared and unused.
 
 The clock, in raw boxes, one per dial:
 
@@ -101,7 +101,9 @@ Exact and bounded: `v` is the gradient divided by `2 pi B` times the weighted me
 - **The vecfield is bounded but loose.** Over a parameter sweep the largest `|v|` was 0.62 (median 0.22 and 99th percentile 0.47 at the defaults), so at `Gain` 1 the encoded R and G occupy about 0.19–0.80 of their range. `Gain` above 1 uses more. A fixed scale would not serve every setting: the true gradient's peak spans 24 to 337 across the sweep. A fixed-scale alternative was not shipped.
 - **No Nyquist fade.** At 1080p, inside the ranges, the highest octave that carries weight (at least 1e-3 of the peak) reaches only 0.50 cycles per pixel (density 12, `Env` 0.7), so nothing aliases. Aliasing appears at small render sizes (a 270-pixel-tall frame at high density). The tested candidate is a per-octave smooth fade on cycles per pixel, not renormalised (a renormalised or global fade performed worse); it is not shipped.
 - **Cost.** One pass at 1920×1080 is under 0.21 ms (under 0.82 ms at 3840×2160) on the M3 Max, an upper bound set by the bench's resolution; the M1 is unmeasured. Skipping low-weight octaves was not worth a branch.
-- **Aspect comes from the texture on the first inlet** (`dim`), which in a chain is render-sized. In the codebox bench `dim` follows the first input's size, not the render's, so the bench gives it a render-sized input.
+- **Aspect comes from the render size** (internal `width` / `height` Params), not from the first inlet's texture. The bench pins them to its render (256 x 144) and checks the aspect follows them.
+
+**Render size (2026-10-30).** The module renders at Vsynth's render size: the pix is `@adapt 0`, and the internal `width` / `height` Params (the aspect; `dim` reads 1 inside a live `jit.gl.pix`, so the codebox used to read `dim.x / dim.y`) are driven by it through the builder's `render_dim`, so there is nothing to set. The first inlet's texture is never read, so it no longer sets the size either.
 
 ---
 
@@ -119,7 +121,7 @@ Exact and bounded: `v` is the gradient divided by `2 pi B` times the weighted me
 ## Verification
 
 - `tests/modules/quasi/test_quasi.py` — NumPy mirror (`quasi_mirror.py`), 12/12, against an independent scalar float64 reference: potential bounded, octave shift, wrap weights, drift period, rotation covariance, analytic gradient against a finite difference (1.8e-6), vecfield bound, banded look closed form, four mutations caught.
-- `tests/modules/quasi/bench_quasi.py` — the real codebox on the GPU, 7/7: all three outlets against the mirror (look within 2.2e-4, vecfield within 2.5e-5, scalar within 2.0e-5), exact bypass neutrals, gain 0, zoom and drift wraps, clock phases add, `src_mode` inert, and the `dim` probe.
+- `tests/modules/quasi/bench_quasi.py` — the real codebox on the GPU, 7/7: all three outlets against the mirror (look within 2.2e-4, vecfield within 2.5e-5, scalar within 2.0e-5), exact bypass neutrals, gain 0, zoom and drift wraps, clock phases add, `src_mode` inert, and the aspect following `width` / `height` (rewritten 2026-10-30 from the `dim` probe; not re-run since).
 - Records: `tests/records/spike_quasi_{float32,gradient,wrap,nyquist,cost}.py`.
 - Module contract bench (`tests/contracts/bench_modules.py`), 2/2 over all 47 modules with no unexpected issue; offline contracts 9/9 (`src_mode` is a documented unread Param); drift 0 (reproduces exactly from the definition).
 

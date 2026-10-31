@@ -3,7 +3,7 @@
 //
 // A stateless generator: five cosine plane waves (orientations k pi / 5 plus the angle) over seven octaves, the octave
 // weights a Gaussian in log2 scale centred on 3 (envelope = sigma). The first inlet only drives the render and is never
-// read; the aspect comes from the render context's dim (bench probe pending: see tasks.md T006a).
+// read; the aspect comes from the width / height Params (the render size, driven by the builder's render_dim: `dim` reads 1 in a live jit.gl.pix).
 //   first outlet:  banded look of P: triangle fold of frac((P / 2 + 1) * bands), raised to 1.1
 //   second outlet: the exact analytic gradient divided by the weighted total frequency, so |v| <= 1 (gate G2 proposal),
 //                  encoded v * gain * 0.5 + 0.5 with B = 0.5, A = 1 (the f_vecfield contract)
@@ -31,8 +31,10 @@ Param zoom_clk(0);
 Param drift_clk(0);
 Param src_mode(0);
 Param bypass_gate(0);
+Param width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)
+Param height(480.0);
 
-asp = dim.x / dim.y;
+asp = width / height;
 px = (norm.x - 0.5) * asp;
 py = norm.y - 0.5;
 ztot = zoom + zoom_clk;

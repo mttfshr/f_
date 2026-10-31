@@ -179,7 +179,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_quasi.gen -- f_quasi: Shepard-zoom quasicrystal generator (working name, gate G1).\n// Mirror: tests/modules/quasi/quasi_mirror.py (field, banded, encode_vec, render). Bench: tests/modules/quasi/bench_quasi.py.\n//\n// A stateless generator: five cosine plane waves (orientations k pi / 5 plus the angle) over seven octaves, the octave\n// weights a Gaussian in log2 scale centred on 3 (envelope = sigma). The first inlet only drives the render and is never\n// read; the aspect comes from the render context's dim (bench probe pending: see tasks.md T006a).\n//   first outlet:  banded look of P: triangle fold of frac((P / 2 + 1) * bands), raised to 1.1\n//   second outlet: the exact analytic gradient divided by the weighted total frequency, so |v| <= 1 (gate G2 proposal),\n//                  encoded v * gain * 0.5 + 0.5 with B = 0.5, A = 1 (the f_vecfield contract)\n//   third outlet:  the potential P mapped to 0..1 (P / 2 + 0.5)\n// Settled by Phase 0 (.specify/stable/f_quasi/tasks.md): units are frame HEIGHT (x is scaled by the aspect only); the five\n// beta_k = frac(exp(pi k)) are float64 literals; no argument reduction (GPU error 3.7e-5 in P); drift is a phase in turns,\n// wrapped here and applied as 2 pi drift 2^i so it is exactly periodic; zoom wraps here; the envelope cap (0.7) is the\n// dial range, not enforced in this file; no octave skipping and no Nyquist fade (T005, T006).\n// zoom_clk and drift_clk are the patcher clock's wrapped phases (per-frame accumulators, rate 0 freezes them exactly); they\n// add to the zoom and drift dials, so a mod source can still drive the dials. src_mode is the dual-archetype flag from\n// vs_inState (generator or processor); this module does not read it.\n// bypass_gate = 1 (module bypass, never the native @bypass): first and third outlets black with alpha 1, second the\n// neutral vecfield 0.5 / 0.5 / 0.5 / 1.\n// Compile hazards avoided (skills/jit-gen-codebox): no unary minus before a product or parenthesis, no variables named\n// e, phi, pi or cell, accumulators declared before the loop, no outlet names in comments.\n\nParam zoom(0);\nParam drift(0);\nParam density(4);\nParam envelope(0.5);\nParam bands(5);\nParam angle(0);\nParam gain(1);\nParam zoom_clk(0);\nParam drift_clk(0);\nParam src_mode(0);\nParam bypass_gate(0);\n\nasp = dim.x / dim.y;\npx = (norm.x - 0.5) * asp;\npy = norm.y - 0.5;\nztot = zoom + zoom_clk;\nzw = ztot - floor(ztot);\ndtot = drift + drift_clk;\ndw = dtot - floor(dtot);\nang = angle * 0.017453292519943295;\nca = cos(ang);\nsa = sin(ang);\ntwopib = twopi * density;\ndx0 = 1.000000000000 * ca - 0.000000000000 * sa;\ndy0 = 0.000000000000 * ca + 1.000000000000 * sa;\ndx1 = 0.809016994375 * ca - 0.587785252292 * sa;\ndy1 = 0.587785252292 * ca + 0.809016994375 * sa;\ndx2 = 0.309016994375 * ca - 0.951056516295 * sa;\ndy2 = 0.951056516295 * ca + 0.309016994375 * sa;\ndx3 = (0 - 0.309016994375) * ca - 0.951056516295 * sa;\ndy3 = 0.951056516295 * ca + (0 - 0.309016994375) * sa;\ndx4 = (0 - 0.809016994375) * ca - 0.587785252292 * sa;\ndy4 = 0.587785252292 * ca + (0 - 0.809016994375) * sa;\npacc = 0;\ngxa = 0;\ngya = 0;\nwsum = 0;\nwssum = 0;\npw2 = 1;\nfor (i = 0; i < 7; i += 1) {\n    ex = zw + i;\n    tz = (ex - 3) / envelope;\n    wgt = exp(0 - 0.5 * tz * tz);\n    sc = exp(ex * 0.6931471805599453);\n    wsum += wgt;\n    wssum += wgt * sc;\n    ps0 = 0.000000000000 * sc + twopi * dw * pw2 + (dx0 * px + dy0 * py) * (twopib * sc);\n    ps1 = 0.140692632779 * sc + twopi * dw * pw2 + (dx1 * px + dy1 * py) * (twopib * sc);\n    ps2 = 0.491655524765 * sc + twopi * dw * pw2 + (dx2 * px + dy2 * py) * (twopib * sc);\n    ps3 = 0.647807916694 * sc + twopi * dw * pw2 + (dx3 * px + dy3 * py) * (twopib * sc);\n    ps4 = 0.313136653160 * sc + twopi * dw * pw2 + (dx4 * px + dy4 * py) * (twopib * sc);\n    pacc += wgt * (cos(ps0) + cos(ps1) + cos(ps2) + cos(ps3) + cos(ps4));\n    gxa += wgt * sc * (sin(ps0) * dx0 + sin(ps1) * dx1 + sin(ps2) * dx2 + sin(ps3) * dx3 + sin(ps4) * dx4);\n    gya += wgt * sc * (sin(ps0) * dy0 + sin(ps1) * dy1 + sin(ps2) * dy2 + sin(ps3) * dy3 + sin(ps4) * dy4);\n    pw2 = pw2 * 2;\n}\npf = pacc / (5 * wsum);\nsb = (pf * 0.5 + 1) * bands;\nfr = fract(sb);\ntri = abs(fr * 2 - 1);\nlk = pow(tri, 1.1);\nvxn = (0 - gxa) / (5 * wssum);\nvyn = (0 - gya) / (5 * wssum);\nvr = clamp(0.5 + 0.5 * gain * vxn, 0, 1);\nvg = clamp(0.5 + 0.5 * gain * vyn, 0, 1);\nsp = pf * 0.5 + 0.5;\nkeep = 1 - bypass_gate;\nout1 = vec(lk * keep, lk * keep, lk * keep, 1);\nout2 = vec(0.5 + (vr - 0.5) * keep, 0.5 + (vg - 0.5) * keep, 0.5, 1);\nout3 = vec(sp * keep, sp * keep, sp * keep, 1);\n",
+									"code": "// codebox_quasi.gen -- f_quasi: Shepard-zoom quasicrystal generator (working name, gate G1).\n// Mirror: tests/modules/quasi/quasi_mirror.py (field, banded, encode_vec, render). Bench: tests/modules/quasi/bench_quasi.py.\n//\n// A stateless generator: five cosine plane waves (orientations k pi / 5 plus the angle) over seven octaves, the octave\n// weights a Gaussian in log2 scale centred on 3 (envelope = sigma). The first inlet only drives the render and is never\n// read; the aspect comes from the width / height Params (the render size, driven by the builder's render_dim: `dim` reads 1 in a live jit.gl.pix).\n//   first outlet:  banded look of P: triangle fold of frac((P / 2 + 1) * bands), raised to 1.1\n//   second outlet: the exact analytic gradient divided by the weighted total frequency, so |v| <= 1 (gate G2 proposal),\n//                  encoded v * gain * 0.5 + 0.5 with B = 0.5, A = 1 (the f_vecfield contract)\n//   third outlet:  the potential P mapped to 0..1 (P / 2 + 0.5)\n// Settled by Phase 0 (.specify/stable/f_quasi/tasks.md): units are frame HEIGHT (x is scaled by the aspect only); the five\n// beta_k = frac(exp(pi k)) are float64 literals; no argument reduction (GPU error 3.7e-5 in P); drift is a phase in turns,\n// wrapped here and applied as 2 pi drift 2^i so it is exactly periodic; zoom wraps here; the envelope cap (0.7) is the\n// dial range, not enforced in this file; no octave skipping and no Nyquist fade (T005, T006).\n// zoom_clk and drift_clk are the patcher clock's wrapped phases (per-frame accumulators, rate 0 freezes them exactly); they\n// add to the zoom and drift dials, so a mod source can still drive the dials. src_mode is the dual-archetype flag from\n// vs_inState (generator or processor); this module does not read it.\n// bypass_gate = 1 (module bypass, never the native @bypass): first and third outlets black with alpha 1, second the\n// neutral vecfield 0.5 / 0.5 / 0.5 / 1.\n// Compile hazards avoided (skills/jit-gen-codebox): no unary minus before a product or parenthesis, no variables named\n// e, phi, pi or cell, accumulators declared before the loop, no outlet names in comments.\n\nParam zoom(0);\nParam drift(0);\nParam density(4);\nParam envelope(0.5);\nParam bands(5);\nParam angle(0);\nParam gain(1);\nParam zoom_clk(0);\nParam drift_clk(0);\nParam src_mode(0);\nParam bypass_gate(0);\nParam width(640.0);    // render size; `dim` reads 1 live, so Params (render_dim drives them)\nParam height(480.0);\n\nasp = width / height;\npx = (norm.x - 0.5) * asp;\npy = norm.y - 0.5;\nztot = zoom + zoom_clk;\nzw = ztot - floor(ztot);\ndtot = drift + drift_clk;\ndw = dtot - floor(dtot);\nang = angle * 0.017453292519943295;\nca = cos(ang);\nsa = sin(ang);\ntwopib = twopi * density;\ndx0 = 1.000000000000 * ca - 0.000000000000 * sa;\ndy0 = 0.000000000000 * ca + 1.000000000000 * sa;\ndx1 = 0.809016994375 * ca - 0.587785252292 * sa;\ndy1 = 0.587785252292 * ca + 0.809016994375 * sa;\ndx2 = 0.309016994375 * ca - 0.951056516295 * sa;\ndy2 = 0.951056516295 * ca + 0.309016994375 * sa;\ndx3 = (0 - 0.309016994375) * ca - 0.951056516295 * sa;\ndy3 = 0.951056516295 * ca + (0 - 0.309016994375) * sa;\ndx4 = (0 - 0.809016994375) * ca - 0.587785252292 * sa;\ndy4 = 0.587785252292 * ca + (0 - 0.809016994375) * sa;\npacc = 0;\ngxa = 0;\ngya = 0;\nwsum = 0;\nwssum = 0;\npw2 = 1;\nfor (i = 0; i < 7; i += 1) {\n    ex = zw + i;\n    tz = (ex - 3) / envelope;\n    wgt = exp(0 - 0.5 * tz * tz);\n    sc = exp(ex * 0.6931471805599453);\n    wsum += wgt;\n    wssum += wgt * sc;\n    ps0 = 0.000000000000 * sc + twopi * dw * pw2 + (dx0 * px + dy0 * py) * (twopib * sc);\n    ps1 = 0.140692632779 * sc + twopi * dw * pw2 + (dx1 * px + dy1 * py) * (twopib * sc);\n    ps2 = 0.491655524765 * sc + twopi * dw * pw2 + (dx2 * px + dy2 * py) * (twopib * sc);\n    ps3 = 0.647807916694 * sc + twopi * dw * pw2 + (dx3 * px + dy3 * py) * (twopib * sc);\n    ps4 = 0.313136653160 * sc + twopi * dw * pw2 + (dx4 * px + dy4 * py) * (twopib * sc);\n    pacc += wgt * (cos(ps0) + cos(ps1) + cos(ps2) + cos(ps3) + cos(ps4));\n    gxa += wgt * sc * (sin(ps0) * dx0 + sin(ps1) * dx1 + sin(ps2) * dx2 + sin(ps3) * dx3 + sin(ps4) * dx4);\n    gya += wgt * sc * (sin(ps0) * dy0 + sin(ps1) * dy1 + sin(ps2) * dy2 + sin(ps3) * dy3 + sin(ps4) * dy4);\n    pw2 = pw2 * 2;\n}\npf = pacc / (5 * wsum);\nsb = (pf * 0.5 + 1) * bands;\nfr = fract(sb);\ntri = abs(fr * 2 - 1);\nlk = pow(tri, 1.1);\nvxn = (0 - gxa) / (5 * wssum);\nvyn = (0 - gya) / (5 * wssum);\nvr = clamp(0.5 + 0.5 * gain * vxn, 0, 1);\nvg = clamp(0.5 + 0.5 * gain * vyn, 0, 1);\nsp = pf * 0.5 + 0.5;\nkeep = 1 - bypass_gate;\nout1 = vec(lk * keep, lk * keep, lk * keep, 1);\nout2 = vec(0.5 + (vr - 0.5) * keep, 0.5 + (vg - 0.5) * keep, 0.5, 1);\nout3 = vec(sp * keep, sp * keep, sp * keep, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -303,7 +303,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_quasi_pix @type float32",
+					"text": "jit.gl.pix vsynth @name #0_quasi_pix @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_quasi_pix"
 				}
 			},
@@ -1585,10 +1585,136 @@
 			},
 			{
 				"box": {
-					"id": "obj-raw-1",
+					"id": "obj-rd-0",
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
+						542.0,
+						40.0,
+						22.0
+					],
+					"text": "r dim",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-5",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						542.0,
+						60.0,
+						22.0
+					],
+					"text": "loadbang",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-6",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						572.0,
+						70.0,
+						22.0
+					],
+					"text": "s trig_res",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": []
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-1",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						542.0,
+						60.0,
+						22.0
+					],
+					"text": "route dim",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-2",
+					"maxclass": "newobj",
+					"patching_rect": [
+						80.0,
+						572.0,
+						60.0,
+						22.0
+					],
+					"text": "unpack i i",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"int",
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-3",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						602.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param width",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-4",
+					"maxclass": "newobj",
+					"patching_rect": [
+						160.0,
+						602.0,
+						120.0,
+						22.0
+					],
+					"text": "prepend param height",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-1",
+					"maxclass": "newobj",
+					"patching_rect": [
+						50.0,
 						542.0,
 						50.0,
 						22.0
@@ -1606,7 +1732,7 @@
 					"id": "obj-raw-2",
 					"maxclass": "newobj",
 					"patching_rect": [
-						30.0,
+						50.0,
 						582.0,
 						30.0,
 						22.0
@@ -1624,7 +1750,7 @@
 					"id": "obj-raw-3",
 					"maxclass": "newobj",
 					"patching_rect": [
-						30.0,
+						50.0,
 						622.0,
 						40.0,
 						22.0
@@ -1642,7 +1768,7 @@
 					"id": "obj-raw-4",
 					"maxclass": "newobj",
 					"patching_rect": [
-						30.0,
+						50.0,
 						662.0,
 						120.0,
 						22.0
@@ -1660,7 +1786,7 @@
 					"id": "obj-raw-5",
 					"maxclass": "newobj",
 					"patching_rect": [
-						30.0,
+						50.0,
 						702.0,
 						120.0,
 						22.0
@@ -1678,7 +1804,7 @@
 					"id": "obj-raw-6",
 					"maxclass": "newobj",
 					"patching_rect": [
-						160.0,
+						180.0,
 						582.0,
 						30.0,
 						22.0
@@ -1696,7 +1822,7 @@
 					"id": "obj-raw-7",
 					"maxclass": "newobj",
 					"patching_rect": [
-						160.0,
+						180.0,
 						622.0,
 						40.0,
 						22.0
@@ -1714,7 +1840,7 @@
 					"id": "obj-raw-8",
 					"maxclass": "newobj",
 					"patching_rect": [
-						160.0,
+						180.0,
 						662.0,
 						120.0,
 						22.0
@@ -1732,7 +1858,7 @@
 					"id": "obj-raw-9",
 					"maxclass": "newobj",
 					"patching_rect": [
-						160.0,
+						180.0,
 						702.0,
 						120.0,
 						22.0
@@ -2207,6 +2333,102 @@
 				"patchline": {
 					"source": [
 						"obj-45",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-5",
+						0
+					],
+					"destination": [
+						"obj-rd-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-rd-1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-1",
+						0
+					],
+					"destination": [
+						"obj-rd-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						0
+					],
+					"destination": [
+						"obj-rd-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-2",
+						1
+					],
+					"destination": [
+						"obj-rd-4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-3",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-4",
 						0
 					],
 					"destination": [
