@@ -37,7 +37,19 @@ patcher = {
 
     # Archetype: vs_inState gates src_mode
     "archetype":           "dual",
-    "pix_type":            "char",
+
+    # 2026-10-30 (T063): `dim` reads 1 inside a live jit.gl.pix, so the codebox's aspect cannot come from it alone.
+    # width / height are internal Params driven from the render size by the builder's `render_dim` key, and the
+    # output follows the render size (`@adapt 0`; the input is assumed render-sized).  pix_attrs replaces pix_type
+    # (the builder rejects both); the output stays char.  The `aspect_mode` menu picks where the aspect comes from
+    # (Render / dim / Square) so the pre-migration look can be reproduced and compared.
+    "pix_attrs":           "@adapt 0 @dim 256 256 @type char",
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["primary"],
+        "size_stages":  ["primary"],
+    },
 
     # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
     # not the native @bypass, which skips the shader and flips secondary outlets.  Every outlet
@@ -49,7 +61,7 @@ patcher = {
 
     # Presentation panel size (from the panel's presentation_rect)
     "presentation_width":  227,
-    "presentation_height": 164,
+    "presentation_height": 188,   # was 164: a bottom row for the Aspect menu (2026-10-30)
 
     # Params, in the shipped route order (the order of the route tokens is the param order).
     "params": [
@@ -71,15 +83,21 @@ patcher = {
         {"name": "edge_mode",   "type": "raw_ui", "route_name": "edge_mode_menu"},
         {"name": "field",       "type": "raw_ui"},
         {"name": "sv_seed",     "type": "raw_ui"},
-        # mix_pct MUST be last among routed params (after every raw_ui one too): both
+        # (2026-10-30: `aspect_mode` was added after mix_pct, so the raw_ui outlets moved up by one: raw_ui.json's
+        # route indices for edge_mode / field / sv_seed are 15 / 16 / 17.  Any further ui param added anywhere in this
+        # list needs the same re-index.)  mix_pct MUST be last among routed params (after every raw_ui one too): both
         # `persistence`'s era-clock chain AND `field`/`sv_seed`'s second route are raw, hand-
         # captured wiring hardcoded to a fixed outlet-index on the shared `route` object --
         # inserting mix_pct anywhere before them shifts that index and silently detaches them
         # (build/drift.py + tests/contracts/test_module_contracts.py caught both, 2026-10-09 T003).
         {"name": "mix_pct",     "type": "float", "min": 0.0,  "max": 100.0, "default": 100.0, "label": "Mix", "widget": "numbox",
          "hint": "Dry/wet crossfade toward the fully-composited (displaced-source + grain) state. New 2026-10-09 (T003); default 100 keeps the module's prior look unchanged. Internal Param named mix_pct to avoid colliding with the codebox's mix() operator."},
+        {"name": "aspect_mode", "type": "menu", "options": ["Render", "dim", "Square"], "default": 0, "label": "Aspect",
+         "hint": "Where the grain grid's aspect comes from. Render: the render size's width / height (the migrated behaviour: square grain cells at any frame shape). dim: dim.x / dim.y as the module used to (whatever dim reads in this pix: unreliable live). Square: aspect 1, cells stretched with the frame."},
         {"name": "era_clock",   "type": "internal"},  # driven by the persistence chain
         {"name": "src_mode",    "type": "internal"},  # driven by vs_inState
+        {"name": "width",       "type": "internal"},  # render size, driven by render_dim
+        {"name": "height",      "type": "internal"},
         {"name": "bypass",      "type": "bypass"},
     ],
 
@@ -100,6 +118,8 @@ patcher = {
 
 # BEGIN overrides (build/capture.py rewrites only this block)
 patcher["overrides"] = {
+    "aspect_mode.ctl": {"presentation_rect": [52.0, 163.0, 90.0, 15.0]},
+    "aspect_mode.label": {"presentation_rect": [8.0, 161.0, 42.0, 18.0]},
     "bypass_jsui": {"presentation_rect": [208.00000309944153, 5.600000083446503, 18.0, 12.0], "valuepopuplabel": None},
     "ch_diverge.ctl": {"presentation_rect": [86.0, 107.0, 27.0, 43.0]},
     "ch_diverge.label": {"presentation_rect": [79.00000235438347, 99.00000295042992, 34.0, 18.0], "textjustification": None},
@@ -120,7 +140,7 @@ patcher["overrides"] = {
     "outlet.0": {"tricolor": [0.9529411764705882, 0.6901960784313725, 0.6196078431372549, 1.0]},
     "outlet.1": {"tricolor": [0.6196078431372549, 0.9529411764705882, 0.6588235294117647, 1.0]},
     "outlet.2": {"tricolor": [0.9490196078431372, 0.6196078431372549, 0.9529411764705882, 1.0]},
-    "panel": {"bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0], "bordercolor": [0.0, 0.03529411764705882, 0.22745098039215686, 1.0], "presentation_rect": [2.0, 2.0, 231.5, 176.0]},
+    "panel": {"bgcolor": [0.058823529411764705, 0.058823529411764705, 0.058823529411764705, 1.0], "bordercolor": [0.0, 0.03529411764705882, 0.22745098039215686, 1.0], "presentation_rect": [2.0, 2.0, 231.5, 200.0]},
     "persistence.ctl": {"presentation_rect": [188.0, 38.0, 27.0, 43.0]},
     "persistence.label": {"linecount": 2, "presentation_rect": [184.0, 22.0, 37.5, 18.0], "textjustification": None},
     "shape.ctl": {"presentation_rect": [115.0, 38.0, 27.0, 43.0]},

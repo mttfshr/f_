@@ -163,10 +163,25 @@ def test_raw_ids_must_not_collide_with_generated_ids():
             capture_raw.RAW_ID_BASE = old
 
 
+def _arrangement_only(text):
+    """raw_ui.json with each raw box's patching_rect moved so the block's top-left is the origin.  Since f_grain took
+    `render_dim` (2026-10-30) the layout pass moves the render-size boxes and the raw boxes as ONE overflow block
+    below everything else, so the raw boxes' absolute edit-view position is not a fixed point of capture + rebuild
+    (every re-capture would push them further down).  The content (boxes, cords, parameters) and the arrangement
+    of the raw boxes relative to each other are still compared exactly."""
+    r = json.loads(text)
+    rects = [b["box"]["patching_rect"] for b in r["raw_boxes"]]
+    x0, y0 = min(q[0] for q in rects), min(q[1] for q in rects)
+    for q in rects:
+        q[0], q[1] = round(q[0] - x0, 3), round(q[1] - y0, 3)
+    return r
+
+
 def test_f_grain_raw_ui_json_is_what_the_tool_derives_from_the_shipped_patcher():
     c = capture_raw.plan(ROOT / "src" / "f_grain" / "definition.py")
-    _eq("the committed raw_ui.json is in sync with the shipped patch",
-        capture_raw.render(c), (ROOT / "src" / "f_grain" / "raw_ui.json").read_text())
+    _eq("the committed raw_ui.json is in sync with the shipped patch (content and relative arrangement)",
+        _arrangement_only(capture_raw.render(c)),
+        _arrangement_only((ROOT / "src" / "f_grain" / "raw_ui.json").read_text()))
 
 
 # ---- the builder keys that came with it

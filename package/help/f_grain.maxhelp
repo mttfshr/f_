@@ -98,10 +98,10 @@
       15.0,
       150.0,
       270.0,
-      274.5
+      289.75
      ],
-     "text": "External Control Messages\n\ndensity [0.0 \u2013 1.0]\ngain [0.0 \u2013 2.0]\nmix [0.0 \u2013 100.0]\npersistence [0.0 \u2013 1.0]\nfade [0.0 \u2013 4.0]\nsize [0.0 \u2013 1.0]\nsize_var [0.0 \u2013 1.0]\nshape [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]\njitter [0.0 \u2013 2.0]\nch_diverge [0.0 \u2013 1.0]\nluma_gate [-1.0 \u2013 1.0]\ndisplace [0.0 \u2013 0.5]\nedge_mode [Clear/Clamp/Wrap/Mirror]\nfield [0.0 \u2013 5.0]\nsv_seed [0.0 \u2013 5.0]\nbypass [0 / 1]",
-     "linecount": 18,
+     "text": "External Control Messages\n\ndensity [0.0 \u2013 1.0]\ngain [0.0 \u2013 2.0]\nmix [0.0 \u2013 100.0]\npersistence [0.0 \u2013 1.0]\nfade [0.0 \u2013 4.0]\nsize [0.0 \u2013 1.0]\nsize_var [0.0 \u2013 1.0]\nshape [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]\njitter [0.0 \u2013 2.0]\nch_diverge [0.0 \u2013 1.0]\nluma_gate [-1.0 \u2013 1.0]\ndisplace [0.0 \u2013 0.5]\naspect_mode [Render/dim/Square]\nedge_mode [Clear/Clamp/Wrap/Mirror]\nfield [0.0 \u2013 5.0]\nsv_seed [0.0 \u2013 5.0]\nbypass [0 / 1]",
+     "linecount": 19,
      "saved_attribute_attributes": {
       "textcolor": {
        "expression": "themecolor.live_control_fg"
@@ -209,7 +209,7 @@
       338.0,
       190.0,
       241.5,
-      187.5
+      213.0
      ],
      "viewvisibility": 1,
      "varname": "f_grain"

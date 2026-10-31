@@ -278,11 +278,10 @@ def test_single_pix_pix_attrs_is_loud():
 # Modules whose code reads `dim` today and declare nothing: the latent bug (`dim` reads 1 live), found
 # 2026-10-29.  Each needs a live look and then a fix; remove the line when it is fixed.  Only f_masonry is
 # still on the never-regenerate list (hand edit only; Matt, 2026-10-30: leave it for its refactor, and
-# f_cmap stays paused); the others build from a definition and take `render_dim` (f_vf_vorticity and
-# f_quasi done 2026-10-30; f_grain, f_vf_seeds next).
+# f_cmap stays paused); the others build from a definition and take `render_dim` (f_vf_vorticity,
+# f_quasi and f_grain done 2026-10-30; f_vf_seeds next).
 EXEMPT = {
     "f_cmap": "20 reads, pixel maths (tx = ux * dim.x - 0.5): paused, left alone (Matt, 2026-10-30)",
-    "f_grain": "aspect from dim; builds from its definition since 2026-10-19: next",
     "f_masonry": "aspect from dim in every phase; never regenerate; left for its refactor (Matt, 2026-10-30)",
     "f_vf_seeds": "aspect from dim; builds from its definition since 2026-10-19: next",
 }

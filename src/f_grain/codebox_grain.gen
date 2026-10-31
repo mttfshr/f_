@@ -16,6 +16,9 @@ Param displace(0.0);
 Param edge_mode(2.0);
 Param field(0.0);
 Param sv_seed(0.0);
+Param aspect_mode(0.0);  // grid aspect source: 0 Render, 1 dim, 2 Square
+Param width(640.0);      // render size; `dim` reads 1 live, so Params (render_dim drives them)
+Param height(480.0);
 
 uv = norm;
 src = mix(vec(0.5, 0.5, 0.5, 1.0), sample(in1, uv), src_mode);
@@ -24,7 +27,10 @@ src = mix(vec(0.5, 0.5, 0.5, 1.0), sample(in1, uv), src_mode);
 fixed_res = 4096.0;
 // size controls viewport zoom into the fixed grid
 size_scale = pow(2.0, mix(0.0, 12.0, size));
-aspect = dim.x / dim.y;
+am0 = aspect_mode < 0.5;
+am1 = (aspect_mode > 0.5) * (aspect_mode < 1.5);
+am2 = aspect_mode > 1.5;
+aspect = am0 * (width / height) + am1 * (dim.x / dim.y) + am2 * 1.0;
 aspect_sq = aspect * aspect;
 
 // pixel position in grid space
