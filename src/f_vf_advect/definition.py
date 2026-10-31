@@ -96,12 +96,12 @@ patcher = {
     # Params.  `"hint": None` = the shipped control has no hint key at all (build/spec.md).
     "params": [
         {"name": "dt",        "type": "float", "min": 0.0, "max": 0.05, "default": 0.01, "label": "dt", "hint": None},
-        {"name": "decay",     "type": "float", "min": 0.8, "max": 1.5,  "default": 0.97, "label": "Decay", "hint": "How much of the last frame survives each frame (classic). With Trail on it scales the trail length instead: 1.0 = no change, each 0.01 is about 20% longer or shorter"},
+        {"name": "decay",     "type": "float", "min": 0.8, "max": 1.5,  "default": 0.97, "label": "Decay", "hint": "How much of the last frame survives each frame. Above 1.0 it amplifies (excitable). Trail stretches how long this takes"},
         # Inject: the exponent only changes the dial's feel (more travel for the small values that matter);
         # values, range and behavior are unchanged.  With Trail on it is the settled ink level: Inject / 0.03.
         {"name": "injection", "type": "float", "min": 0.0, "max": 0.2,  "default": 0.02, "label": "Inject",
          "exponent": 3.0,
-         "hint": "How much of the source is added each frame. With Trail on, the level a still source settles at is Inject / 0.03 (0.02 = two thirds), whatever the trail length"},
+         "hint": "How much of the source is added each frame. A still source settles at Inject / (1 - Decay), whatever Trail is set to"},
         {"name": "gain",      "type": "float", "min": 0.0, "max": 4.0,  "default": 1.0,  "label": "Gain", "hint": None},
         {
             "name": "mix_pct", "type": "float", "min": 0.0, "max": 100.0, "default": 100.0,
@@ -116,7 +116,7 @@ patcher = {
         # Trail goes last of the controls so every existing dial keeps its slot on the panel
         {"name": "trail",     "type": "float", "min": 0.0, "max": 1000.0, "default": 0.0, "label": "Trail",
          "exponent": 3.0,
-         "hint": "How long trails last, as a half-life in frames (60 = about a second). 0 = off: the Decay dial rules, exactly as before. Above 1 it sets the trail length (Decay then scales it) and keeps the ink density steady as trails get longer"},
+         "hint": "How many times longer trails last than Decay alone makes them: 0 = off (exactly the classic loop), 1 = twice as long, 3 = four times, 9 = ten times. The settled brightness stays the same, so longer trails do not wash out. Has no effect at Decay 1.0 (nothing fades there)"},
         {"name": "src_vecfield", "type": "internal"},
         {"name": "bypass",       "type": "bypass"},
     ],

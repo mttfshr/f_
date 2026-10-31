@@ -16,6 +16,7 @@ not a tier-1 one.
 `bug` values are the mutations the tests must catch: "sign_flip" (forward instead of backward displacement),
 "no_suppress" (ignore src_vecfield), "no_clamp" (no clamp on the accumulated result),
 "exact_clamp" (clamp the advect UV to exact 0 / 1, the codebox before 2026-10-20: reads the opposite edge on the GPU).
+"legacy_trail" (the 2026-10-28 half-life trail, which jumps at trail = 1).
 """
 import numpy as np
 
@@ -40,14 +41,26 @@ def advect_stage(src, vec, prev, dt=0.01, decay=0.97, injection=0.02, gain=1.0, 
     out3 the vecfield gradient of the accumulated flow (or the passed-through vecfield when bypassed).
     """
     dt, decay, injection, gain = F32(dt), F32(decay), F32(injection), F32(gain)
-    # Trail: a half-life in frames (>= 1); below 1 the classic Decay / Inject loop, unchanged.
-    # decay_eff = 0.5^(1/hl), hl = trail scaled by Decay; injection is rescaled by (1 - decay_eff) / 0.03 so the settled level
-    # (injection / 0.03) does not depend on the trail length.
-    if F32(trail) >= F32(1.0):
-        # Decay scales the half-life on a log curve (neutral at 1.0), capped to [1, 1000] frames.
-        hl = np.clip(F32(trail) * F32(np.exp((decay - F32(1.0)) * F32(20.0))), F32(1.0), F32(1000.0))
-        decay_eff = F32(np.exp(F32(0.0) - F32(0.6931472) / F32(hl)))
-        inj_eff = injection if bug == "no_normalize" else F32(injection * (F32(1.0) - decay_eff) / F32(0.03))
+    # Trail (2026-10-31): a persistence MULTIPLIER on the classic loop. m = 1 + trail, decay_eff = decay^(1/m): the
+    # half-life is the classic one times m, trail 0 is the classic loop bit for bit, continuous in trail everywhere.
+    # Injection is rescaled by (1 - decay_eff) / (1 - decay) so the settled level stays the classic injection / (1 - decay)
+    # (the limit 1 / m within 0.001 of decay = 1, as in the codebox).
+    t = F32(trail)
+    if bug == "legacy_trail":
+        # the 2026-10-28 form: a half-life in frames from trail >= 1, Decay scaling it on a log curve (jumps at trail = 1)
+        if t >= F32(1.0):
+            hl = np.clip(t * F32(np.exp((decay - F32(1.0)) * F32(20.0))), F32(1.0), F32(1000.0))
+            decay_eff = F32(np.exp(F32(0.0) - F32(0.6931472) / F32(hl)))
+            inj_eff = F32(injection * (F32(1.0) - decay_eff) / F32(0.03))
+        else:
+            decay_eff, inj_eff = decay, injection
+    elif t >= F32(0.000001):
+        m = F32(1.0) + t
+        decay_pow = F32(np.power(decay, F32(1.0) / m))
+        dd = F32(1.0) - decay
+        ratio = F32((F32(1.0) - decay_pow) / dd) if abs(dd) >= F32(0.001) else F32(F32(1.0) / m)
+        decay_eff = decay_pow
+        inj_eff = injection if bug == "no_normalize" else F32(injection * ratio)
     else:
         decay_eff, inj_eff = decay, injection
     h, w = src.shape[:2]

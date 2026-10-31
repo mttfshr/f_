@@ -29,19 +29,24 @@ fy = fy * connected;
 // (probe P9, 2026-10-20), and here the wrong edge would be re-injected every frame of the loop.
 src_uv = vec(clamp(uv.x - fx * dt, 0.001, 0.999), clamp(uv.y - fy * dt, 0.001, 0.999));
 
-// Trail (2026-10-28, ink-in-milk control): trail = 0 (or below 1) is the classic loop, byte for byte.
-// trail >= 1 is the persistence as a HALF-LIFE in frames: decay_eff = 0.5^(1/hl) (hl = trail, scaled by Decay
-// below), and injection is rescaled by (1 - decay_eff) / 0.03 so the level a static source settles
-// at is injection / 0.03 (0.667 at the default 0.02) whatever the trail length -- longer trails no longer
-// wash to white. 0.03 = 1 - 0.97, the default decay, so at trail ~ 22.8 it equals the classic default.
-// Decay x Trail (2026-10-28, Matt: option 1 / scale B): with trail on, Decay no longer switches off, it SCALES the
-// half-life on a log curve: hl = trail * exp((decay - 1) * 20), clamped to [1, 1000] frames. decay = 1.0 is neutral
-// (hl = trail), each 0.01 of Decay is about +-20% of the half-life (0.97 ~ x0.55, 1.03 ~ x1.8), and the 1000-frame
-// cap keeps Decay > 1 from running away (the inj_eff rescale would otherwise starve the ink as decay_eff -> 1).
-tr_on = step(1.0, trail);
-hl = clamp(trail * exp((decay - 1.0) * 20.0), 1.0, 1000.0);
-decay_eff = mix(decay, exp(0.0 - 0.6931472 / hl), tr_on);
-inj_eff = mix(injection, injection * (1.0 - decay_eff) / 0.03, tr_on);
+// Trail (2026-10-31, replaces the 2026-10-28 half-life form): a PERSISTENCE MULTIPLIER on the classic loop.
+// tr_m = 1 + trail and decay_eff = decay^(1/tr_m), so the half-life is the classic one (ln 0.5 / ln decay) times
+// tr_m: trail = 0 is the classic loop bit for bit, trail = 1 doubles how long trails last, 3 quadruples it, and the
+// result is continuous in trail everywhere (the half-life form jumped at trail = 1: from the classic ~23 frames to a
+// 1-frame half-life). It works for decay > 1 too: the growth rate is divided by tr_m.
+// Injection is rescaled by (1 - decay_eff) / (1 - decay), so the level a still source settles at is the classic
+// injection / (1 - decay) whatever the trail: longer trails do not wash to white. Within 0.001 of decay = 1 the
+// ratio is replaced by its limit 1 / tr_m (and the divisor is kept off zero, so the unused branch cannot make a NaN).
+// Decay = 1.0 exactly means "never fades" in the classic loop, so Trail has nothing to lengthen there.
+tr_on = step(0.000001, trail);
+tr_m = 1.0 + trail;
+tr_pow = pow(decay, 1.0 / tr_m);
+tr_dd = 1.0 - decay;
+tr_far = step(0.001, abs(tr_dd));
+tr_dd_safe = mix(1.0, tr_dd, tr_far);
+tr_ratio = mix(1.0 / tr_m, (1.0 - tr_pow) / tr_dd_safe, tr_far);
+decay_eff = mix(decay, tr_pow, tr_on);
+inj_eff = mix(injection, injection * tr_ratio, tr_on);
 
 // Advect previous frame, add source injection
 advected = sample(in3, src_uv) * decay_eff;
