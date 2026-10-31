@@ -71,9 +71,9 @@ One pass, no loops, no state.
 | `angle` | -180-180 deg | 0 | Reference direction. Where the fade-to-zero lands. With a reference vecfield connected it rotates that field instead. |
 | `gain` | -4-4 | 1 | Signed output amplitude: negative reverses the flow. Units are the short side of the frame, so consumers usually want small values. |
 | `gate` | 0-1 | 1 | 0 = ignore coherence; 1 = scale flow by the tensormap's coherence, so only confident structure moves. |
-| `width` | 64-8192 | 640 | Render width in pixels. Set to the real frame width. |
-| `height` | 64-8192 | 480 | Render height in pixels. Set to the real frame height. |
 | `bypass` | 0/1 | 0 | Neutral vecfield. |
+
+**Render size (2026-10-30).** The module renders at Vsynth's render size: the pix is `@adapt 0`, and the internal `width` / `height` Params (used for the aspect conversion; `dim` reads 1 inside a live `jit.gl.pix`) are driven by it through the builder's `render_dim`, so the flow direction is true at any frame size and there is nothing to set. They were `Width` / `Height` numboxes until then. The tensor input is assumed render-sized.
 
 **Prefix:** `axisflow` - **Object name:** `axisflow_pix` - **Type:** `@type float32`
 
@@ -84,7 +84,7 @@ One pass, no loops, no state.
 A standard f_vecfield (`docs/f-reference/f_vecfield_type.md`): R,G = v * 0.5 + 0.5, B = 0.5, A = 1. Neutral = (0.5, 0.5, 0.5, 1).
 
 - **Isotropic pixels** (tensormap R = G = 0.5) and an **unconnected inlet** (`vs_black`, which decodes to a vector of length sqrt 2) both give the neutral vecfield. Valid tensormap output always has |(c2, s2)| <= 1, so anything above 1.05 is treated as invalid.
-- **Aspect:** the tensor lives in pixel space, vecfield vectors in normalized screen coordinates. The module converts so the vector keeps its *pixel* direction (units: the short side). Without this a 45-degree edge on 16:9 would drift at about 29 degrees. On a square frame the conversion is the identity. This needs `width`/`height` set correctly.
+- **Aspect:** the tensor lives in pixel space, vecfield vectors in normalized screen coordinates. The module converts so the vector keeps its *pixel* direction (units: the short side). Without this a 45-degree edge on 16:9 would drift at about 29 degrees. On a square frame the conversion is the identity. `width`/`height` come from the render size (see Render size under Parameters), so there is nothing to set.
 
 ---
 

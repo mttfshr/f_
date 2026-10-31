@@ -7,7 +7,9 @@
 # choice. BYPASS: bypass_mode "param" -> `Param bypass_gate` (neutral vecfield), not native @bypass.
 #
 # `dim` reads 1 inside live jit.gl.pix (see f_tf_tensormap), so width/height are Params, used
-# for the aspect conversion that keeps the vector's pixel-space direction.
+# for the aspect conversion that keeps the vector's pixel-space direction. They are internal and
+# driven from the render size by the builder's `render_dim` key (2026-10-30; no dials), and the
+# output follows the render size too (`@adapt 0`).
 #
 # Second (optional) inlet = per-pixel reference direction: a vecfield replaces the `angle` dial's
 # constant r, `angle` then rotating it; unconnected, the module is exactly as before. Gain is signed.
@@ -22,11 +24,20 @@ patcher = {
     "title":       "Axis Flow",
     "signal_type": "T_ in ∇ out",
     "archetype":   "processor",
-    "pix_type":    "float32",
+    # Output is a vecfield and must stay float32. pix_attrs replaces pix_type (the builder rejects both).
+    "pix_attrs":   "@adapt 0 @dim 256 256 @type float32",
     "bypass_mode": "param",
 
+    # width / height are driven from the render size (render_dim), not dials.
+    "render_dim": {
+        "width_param":  "width",
+        "height_param": "height",
+        "param_stages": ["primary"],
+        "size_stages":  ["primary"],
+    },
+
     "presentation_width":  154,
-    "presentation_height": 124,
+    "presentation_height": 90,
 
     "codebox": (_HERE / "codebox_axisflow.gen").open(newline="").read(),
 
@@ -54,17 +65,13 @@ patcher = {
         {"name": "gate", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Gate",
          "hint": "0 = ignore coherence; 1 = scale flow by coherence so it follows only confident structure."},
-        {"name": "width", "type": "float", "min": 64.0, "max": 8192.0, "default": 640.0,
-         "widget": "numbox", "label": "Width",
-         "hint": "Render width in pixels. Set to the real frame width: it keeps the flow direction true on non-square frames. (Live jit.gl.pix cannot read its own size, so this is exposed for now.)"},
-        {"name": "height", "type": "float", "min": 64.0, "max": 8192.0, "default": 480.0,
-         "widget": "numbox", "label": "Height",
-         "hint": "Render height in pixels. Set to the real frame height."},
+        {"name": "width",  "type": "internal"},
+        {"name": "height", "type": "internal"},
         {"name": "bypass", "type": "bypass"},
     ],
 }
 
-# Layout: row 1 = angle, gain, gate dials + mode menu; row 2 = width, height numboxes.
+# Layout: one row = angle, gain, gate dials + mode menu (width / height are internal, render_dim).
 patcher["overrides"] = {
     "bypass_jsui": {"presentation_rect": [129.0, 5.0, 18.0, 12.0]},
     "angle.ctl":      {"presentation_rect": [4.0, 38.0, 27.0, 43.0]},
@@ -75,8 +82,4 @@ patcher["overrides"] = {
     "gate.label":   {"presentation_rect": [66.0, 20.0, 50.0, 18.0]},
     "mode.ctl":       {"presentation_rect": [108.0, 38.0, 44.0, 15.0]},
     "mode.label":   {"presentation_rect": [96.0, 20.0, 50.0, 18.0]},
-    "width.ctl":      {"presentation_rect": [4.0, 104.0, 34.0, 15.0]},
-    "width.label":  {"presentation_rect": [-8.0, 86.0, 50.0, 18.0]},
-    "height.ctl":     {"presentation_rect": [50.0, 104.0, 34.0, 15.0]},
-    "height.label": {"presentation_rect": [38.0, 86.0, 50.0, 18.0]},
 }

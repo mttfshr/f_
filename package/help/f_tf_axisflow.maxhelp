@@ -105,9 +105,9 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nmode [Along/Across]\nangle [-180 \u2013 180]\ngain [-4 \u2013 4]\ngate [0 \u2013 1]\nwidth [64 \u2013 8192]\nheight [64 \u2013 8192]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nmode [Along/Across]\nangle [-180 \u2013 180]\ngain [-4 \u2013 4]\ngate [0 \u2013 1]\nbypass [0 / 1]",
      "fontsize": 12.0,
-     "linecount": 9
+     "linecount": 7
     }
    },
    {
@@ -168,7 +168,7 @@
       338.0,
       24.0,
       154.0,
-      124.0
+      90.0
      ],
      "bgmode": 1,
      "border": 1,
