@@ -215,10 +215,11 @@ Strength 2, T-Map Strength 100, A Floor 0 / Width Gate 1, B Floor 1 / Width Gate
 
 ## Notes
 
-- Tier-1 mirror: `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py` (19/19; independent ground
+- Tier-1 mirror: `tests/modules/tf_aniso_blur/test_tf_aniso_blur.py` (22/22; independent ground
   truths: `np.linalg.eigvalsh`, a densified brute quadrature, a dense area
   Gaussian, an independent isotropic reference). Tier-2:
-  `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py` (written; **not yet run** — bench-gated).
+  `tests/modules/tf_aniso_blur/bench_tf_aniso_blur.py` (6/6, 2026-10-30: GPU matches the mirror
+  within 3e-5 at Length 24 and 48, bypass exact; cost 0.37 ms/pass at 256², 1.30 ms at 640²).
   Spec/plan/tasks: `.specify/f_tf_aniso_blur/`.
 - Kernel-family decision (fixed-tap line integration vs ellipse grid) is
   plan ADR-2, RESOLVED PROVISIONAL-OPEN: family (a) ships; the exact bench
