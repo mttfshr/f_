@@ -69,6 +69,7 @@ DATA = {
     "bench_wave_field_module": _MODULE_BENCH + ["package/patchers/f_wave_field.maxpat", "src/f_wave_field/codebox_*.gen"],
     "bench_quasi": _MACHINERY + ["src/f_quasi/codebox_*.gen"],
     "bench_cmap": _MACHINERY + ["src/f_cmap/codebox_*.gen"],
+    "bench_grain_aspect": _MACHINERY + ["src/f_grain/codebox_*.gen"],
     "bench_wc": _MACHINERY + ["src/f_wc/codebox_*.gen"],
     "bench_wc_look": _MODULE_BENCH + ["package/patchers/f_wc.maxpat", "src/f_wc/codebox_*.gen"],
     "bench_vf_lbm": _MACHINERY + ["src/f_vf_lbm/codebox_*.gen"],
