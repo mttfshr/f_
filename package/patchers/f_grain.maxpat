@@ -128,9 +128,8 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 19,
+					"numoutlets": 18,
 					"outlettype": [
-						"",
 						"",
 						"",
 						"",
@@ -153,10 +152,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						1303.0,
+						1231.0,
 						22.0
 					],
-					"text": "route bypass density gain persistence fade size size_var shape softness jitter ch_diverge luma_gate displace mix_pct aspect_mode edge_mode_menu field sv_seed"
+					"text": "route bypass density gain persistence fade size size_var shape softness jitter ch_diverge luma_gate displace mix_pct edge_mode_menu field sv_seed"
 				}
 			},
 			{
@@ -208,7 +207,7 @@
 							},
 							{
 								"box": {
-									"code": "Param src_mode(0.0);\nParam density(0.5);\nParam gain(1.0);\nParam mix_pct(100.0);\nParam era_clock(0.0);\r\nParam bypass_gate(0.0);\nParam size(0.0);\nParam size_var(0.0);\nParam shape(0.5);\nParam softness(0.0);\nParam jitter(0.0);\r\nParam fade(0.0);\nParam ch_diverge(0.0);\r\nParam luma_gate(0.0);\nParam displace(0.0);\nParam edge_mode(2.0);\nParam field(0.0);\nParam sv_seed(0.0);\nParam aspect_mode(0.0);  // grid aspect source: 0 Render, 1 dim, 2 Square\nParam width(640.0);      // render size; `dim` reads 1 live, so Params (render_dim drives them)\nParam height(480.0);\n\nuv = norm;\nsrc = mix(vec(0.5, 0.5, 0.5, 1.0), sample(in1, uv), src_mode);\n\n// cell identities pinned to fixed_res \u2014 never change regardless of size\nfixed_res = 4096.0;\n// size controls viewport zoom into the fixed grid\nsize_scale = pow(2.0, mix(0.0, 12.0, size));\nam0 = aspect_mode < 0.5;\nam1 = (aspect_mode > 0.5) * (aspect_mode < 1.5);\nam2 = aspect_mode > 1.5;\naspect = am0 * (width / height) + am1 * (dim.x / dim.y) + am2 * 1.0;\naspect_sq = aspect * aspect;\n\n// pixel position in grid space\npx = uv.x * fixed_res * aspect / size_scale;\npy = uv.y * fixed_res / size_scale;\nicx = floor(px);\nicy = floor(py);\n\n// VORONOI JITTER: single field param navigates topology space smoothly via 1D interpolation\nf0 = floor(field); f1 = f0 + 1.0; bf = fract(field);\n\nncx = icx-1.0; ncy = icy-1.0;\njxA = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyA = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxA = px-(ncx+0.5+jxA*jitter); dyA = py-(ncy+0.5+jyA*jitter);\ndA = dxA*dxA+dyA*dyA; gxA = (ncx+0.5)/fixed_res; gyA = (ncy+0.5)/fixed_res;\n\nncx = icx; ncy = icy-1.0;\njxB = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyB = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxB = px-(ncx+0.5+jxB*jitter); dyB = py-(ncy+0.5+jyB*jitter);\ndB = dxB*dxB+dyB*dyB; gxB = (ncx+0.5)/fixed_res; gyB = (ncy+0.5)/fixed_res;\n\nncx = icx+1.0; ncy = icy-1.0;\njxC = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyC = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxC = px-(ncx+0.5+jxC*jitter); dyC = py-(ncy+0.5+jyC*jitter);\ndC = dxC*dxC+dyC*dyC; gxC = (ncx+0.5)/fixed_res; gyC = (ncy+0.5)/fixed_res;\n\nncx = icx-1.0; ncy = icy;\njxD = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyD = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxD = px-(ncx+0.5+jxD*jitter); dyD = py-(ncy+0.5+jyD*jitter);\ndD = dxD*dxD+dyD*dyD; gxD = (ncx+0.5)/fixed_res; gyD = (ncy+0.5)/fixed_res;\n\nncx = icx; ncy = icy;\njxE = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyE = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxE = px-(ncx+0.5+jxE*jitter); dyE = py-(ncy+0.5+jyE*jitter);\ndE = dxE*dxE+dyE*dyE; gxE = (ncx+0.5)/fixed_res; gyE = (ncy+0.5)/fixed_res;\n\nncx = icx+1.0; ncy = icy;\njxF = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyF = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxF = px-(ncx+0.5+jxF*jitter); dyF = py-(ncy+0.5+jyF*jitter);\ndF = dxF*dxF+dyF*dyF; gxF = (ncx+0.5)/fixed_res; gyF = (ncy+0.5)/fixed_res;\n\nncx = icx-1.0; ncy = icy+1.0;\njxG = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyG = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxG = px-(ncx+0.5+jxG*jitter); dyG = py-(ncy+0.5+jyG*jitter);\ndG = dxG*dxG+dyG*dyG; gxG = (ncx+0.5)/fixed_res; gyG = (ncy+0.5)/fixed_res;\n\nncx = icx; ncy = icy+1.0;\njxH = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyH = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxH = px-(ncx+0.5+jxH*jitter); dyH = py-(ncy+0.5+jyH*jitter);\ndH = dxH*dxH+dyH*dyH; gxH = (ncx+0.5)/fixed_res; gyH = (ncy+0.5)/fixed_res;\n\nncx = icx+1.0; ncy = icy+1.0;\njxI = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyI = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxI = px-(ncx+0.5+jxI*jitter); dyI = py-(ncy+0.5+jyI*jitter);\ndI = dxI*dxI+dyI*dyI; gxI = (ncx+0.5)/fixed_res; gyI = (ncy+0.5)/fixed_res;\n\n// find nearest and second-nearest center\nbest_d = dA; second_best_d = 9999.0; best_gx = gxA; best_gy = gyA;\nt = step(dB,best_d); second_best_d=mix(min(second_best_d,dB),best_d,t); best_d=mix(best_d,dB,t); best_gx=mix(best_gx,gxB,t); best_gy=mix(best_gy,gyB,t);\nt = step(dC,best_d); second_best_d=mix(min(second_best_d,dC),best_d,t); best_d=mix(best_d,dC,t); best_gx=mix(best_gx,gxC,t); best_gy=mix(best_gy,gyC,t);\nt = step(dD,best_d); second_best_d=mix(min(second_best_d,dD),best_d,t); best_d=mix(best_d,dD,t); best_gx=mix(best_gx,gxD,t); best_gy=mix(best_gy,gyD,t);\nt = step(dE,best_d); second_best_d=mix(min(second_best_d,dE),best_d,t); best_d=mix(best_d,dE,t); best_gx=mix(best_gx,gxE,t); best_gy=mix(best_gy,gyE,t);\nt = step(dF,best_d); second_best_d=mix(min(second_best_d,dF),best_d,t); best_d=mix(best_d,dF,t); best_gx=mix(best_gx,gxF,t); best_gy=mix(best_gy,gyF,t);\nt = step(dG,best_d); second_best_d=mix(min(second_best_d,dG),best_d,t); best_d=mix(best_d,dG,t); best_gx=mix(best_gx,gxG,t); best_gy=mix(best_gy,gyG,t);\nt = step(dH,best_d); second_best_d=mix(min(second_best_d,dH),best_d,t); best_d=mix(best_d,dH,t); best_gx=mix(best_gx,gxH,t); best_gy=mix(best_gy,gyH,t);\nt = step(dI,best_d); second_best_d=mix(min(second_best_d,dI),best_d,t); best_d=mix(best_d,dI,t); best_gx=mix(best_gx,gxI,t); best_gy=mix(best_gy,gyI,t);\n\n// distances to nearest and second-nearest centers\nnearest_dist = sqrt(best_d);\nsecond_nearest_dist = sqrt(second_best_d);\n\n// per-grain displacement: each cell gets a unique random XY offset\ndisp_x = (fract(sin(best_gx * 127.1 + best_gy * 311.7) * 43758.5453) - 0.5) * displace;\ndisp_y = (fract(sin(best_gx * 269.5 + best_gy * 183.3) * 43758.5453) - 0.5) * displace;\nuv_d_raw_x = uv.x + disp_x;\nuv_d_raw_y = uv.y + disp_y;\nin_bounds = step(0.0, uv_d_raw_x) * step(uv_d_raw_x, 1.0) * step(0.0, uv_d_raw_y) * step(uv_d_raw_y, 1.0);\nuv_d = uv;\ndisp_mask = 1.0;\nif (edge_mode < 0.5) {\n    uv_d = vec(clamp(uv_d_raw_x, 0.0, 1.0), clamp(uv_d_raw_y, 0.0, 1.0));\n    disp_mask = in_bounds;\n} else if (edge_mode < 1.5) {\n    uv_d = vec(clamp(uv_d_raw_x, 0.0, 1.0), clamp(uv_d_raw_y, 0.0, 1.0));\n} else if (edge_mode < 2.5) {\n    uv_d = vec(fract(uv_d_raw_x), fract(uv_d_raw_y));\n} else {\n    uv_d = vec(1.0 - abs(fract(uv_d_raw_x * 0.5) * 2.0 - 1.0), 1.0 - abs(fract(uv_d_raw_y * 0.5) * 2.0 - 1.0));\n}\n\n// grain identity from winning Voronoi center\np1 = fract(sin(best_gx * 127.1 + best_gy * 311.7) * 43758.5453);\np2 = fract(sin(p1 * 263.77) * 43758.5453);\nera_raw = era_clock + p2;\nera = floor(era_raw);\nera_phase = fract(era_raw);\n\n// grain value \u2014 stable per era, intensity envelope handles temporal evolution\ngrain_a = fract(sin(era * 127.1 + p1 * 311.7) * 43758.5453);\ngrain_mono = grain_a;\n\n// per-channel color offset \u2014 stable per cell, not per era\ncol_g = fract(sin(best_gx * 91.3 + best_gy * 57.2) * 43758.5453) - 0.5;\ncol_b = fract(sin(best_gx * 43.1 + best_gy * 123.7) * 43758.5453) - 0.5;\n\n// blend monochrome grain toward chromatically diverged grain\ngrain_r = grain_mono;\ngrain_g = grain_mono + col_g * ch_diverge;\ngrain_b = grain_mono + col_b * ch_diverge;\n\n// polarity: era-based, stable per era\nsign_a = fract(sin(era * 263.7 + p1 * 419.2) * 43758.5453) * 2.0 - 1.0;\ngrain_sign = sign_a;\n\n// fade envelope: intensity ramps in at era start, holds, ramps out at era end\nramp = min(fade * 0.125, 0.5);\nsafe_ramp = max(ramp, 0.001);\nfade_in = smoothstep(0.0, safe_ramp, era_phase);\nfade_out = 1.0 - smoothstep(1.0 - safe_ramp, 1.0, era_phase);\ngrain_intensity = min(fade_in, fade_out);\n\n// shape: blend between circular (shape=1) and Voronoi-conforming (shape=0)\nvoronoi_boundary_dist = (nearest_dist + second_nearest_dist) * 0.5;\nt_circ = nearest_dist / 0.5;\nt_voro = nearest_dist / max(voronoi_boundary_dist, 0.001);\nshape_t = mix(t_voro, t_circ, shape);\n\n// per-cell size variation with smooth seed interpolation\nsv0 = floor(sv_seed); sv1 = sv0 + 1.0; svf = fract(sv_seed);\ncell_size_a = fract(sin((best_gx + sv0) * 213.7 + (best_gy + sv0) * 157.3) * 43758.5453);\ncell_size_b = fract(sin((best_gx + sv1) * 213.7 + (best_gy + sv1) * 157.3) * 43758.5453);\ncell_size = mix(1.0, mix(cell_size_a, cell_size_b, svf), size_var);\nshape_t = shape_t / max(cell_size, 0.001);\n\n// softness: feathered falloff in shape-blended coordinate\nfeather = mix(0.02, 0.5, softness);\nsoft_falloff = 1.0 - smoothstep(1.0 - feather, 1.0, shape_t);\n\n// density gate\nvisible = step(1.0 - density, grain_r);\n\n// displacement gated to grain shape only\nsrc_displaced = mix(src, sample(in1, uv_d), visible * soft_falloff * grain_intensity * disp_mask);\n\n// apply grain_sign (stable polarity per cell) scaled by ch_diverge for color, and gain\n// (unbounded intensity -- renamed from amount 2026-10-09, T003, gain/mix convention)\ngr = grain_sign * visible * soft_falloff * grain_intensity * gain;\ngg = (grain_sign + col_g * ch_diverge) * visible * soft_falloff * grain_intensity * gain;\ngb = (grain_sign + col_b * ch_diverge) * visible * soft_falloff * grain_intensity * gain;\n\n// luma gate: bipolar (-1=shadows +1=highlights 0=uniform)\nluma = 0.299*src.r + 0.587*src.g + 0.114*src.b;\nluma_weight = mix(1.0 - luma, luma, luma_gate * 0.5 + 0.5);\nluma_weight = pow(luma_weight, mix(1.0, 3.0, abs(luma_gate)));\nluma_mod = mix(1.0, luma_weight, clamp(abs(luma_gate) * 2.0, 0.0, 1.0));\ngr *= luma_mod;\ngg *= luma_mod;\ngb *= luma_mod;\n\n// gain/mix convention (T003): driven = the complete composited state (source included),\n// mix_pct a plain crossfade toward it -- NOT a bare effect layer (vsynth-bpatcher skill,\n// \"Canonical naming: gain vs mix\" -- a sparse layer double-images under a uniform crossfade).\ndriven_r = clamp(src_displaced.r + gr, 0.0, 1.0);\ndriven_g = clamp(src_displaced.g + gg, 0.0, 1.0);\ndriven_b = clamp(src_displaced.b + gb, 0.0, 1.0);\ncomposited = vec(mix(src_displaced.r, driven_r, mix_pct / 100.0),\n                  mix(src_displaced.g, driven_g, mix_pct / 100.0),\n                  mix(src_displaced.b, driven_b, mix_pct / 100.0),\n                  src_displaced.a);\nraw = vec(grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, 1.0);\n\n// bypass (bypass_mode \"param\"): passthrough on every outlet (Matt, 2026-10-05).\n// The source when it is connected, black when it is not (src_mode): the dual-module convention.\nbypass_px = mix(vec(0.0, 0.0, 0.0, 1.0), sample(in1, uv), src_mode);\nout1 = mix(composited, bypass_px, bypass_gate);\nout2 = mix(raw, bypass_px, bypass_gate);\nout3 = mix(src_displaced, bypass_px, bypass_gate);",
+									"code": "Param src_mode(0.0);\nParam density(0.5);\nParam gain(1.0);\nParam mix_pct(100.0);\nParam era_clock(0.0);\r\nParam bypass_gate(0.0);\nParam size(0.0);\nParam size_var(0.0);\nParam shape(0.5);\nParam softness(0.0);\nParam jitter(0.0);\r\nParam fade(0.0);\nParam ch_diverge(0.0);\r\nParam luma_gate(0.0);\nParam displace(0.0);\nParam edge_mode(2.0);\nParam field(0.0);\nParam sv_seed(0.0);\nParam width(640.0);      // render size; `dim` reads 1 live, so Params (render_dim drives them)\nParam height(480.0);\n\nuv = norm;\nsrc = mix(vec(0.5, 0.5, 0.5, 1.0), sample(in1, uv), src_mode);\n\n// cell identities pinned to fixed_res \u2014 never change regardless of size\nfixed_res = 4096.0;\n// size controls viewport zoom into the fixed grid\nsize_scale = pow(2.0, mix(0.0, 12.0, size));\naspect = width / height;   // the render size (render_dim drives width / height; `dim` reads 1 live)\naspect_sq = aspect * aspect;\n\n// pixel position in grid space\npx = uv.x * fixed_res * aspect / size_scale;\npy = uv.y * fixed_res / size_scale;\nicx = floor(px);\nicy = floor(py);\n\n// VORONOI JITTER: single field param navigates topology space smoothly via 1D interpolation\nf0 = floor(field); f1 = f0 + 1.0; bf = fract(field);\n\nncx = icx-1.0; ncy = icy-1.0;\njxA = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyA = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxA = px-(ncx+0.5+jxA*jitter); dyA = py-(ncy+0.5+jyA*jitter);\ndA = dxA*dxA+dyA*dyA; gxA = (ncx+0.5)/fixed_res; gyA = (ncy+0.5)/fixed_res;\n\nncx = icx; ncy = icy-1.0;\njxB = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyB = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxB = px-(ncx+0.5+jxB*jitter); dyB = py-(ncy+0.5+jyB*jitter);\ndB = dxB*dxB+dyB*dyB; gxB = (ncx+0.5)/fixed_res; gyB = (ncy+0.5)/fixed_res;\n\nncx = icx+1.0; ncy = icy-1.0;\njxC = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyC = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxC = px-(ncx+0.5+jxC*jitter); dyC = py-(ncy+0.5+jyC*jitter);\ndC = dxC*dxC+dyC*dyC; gxC = (ncx+0.5)/fixed_res; gyC = (ncy+0.5)/fixed_res;\n\nncx = icx-1.0; ncy = icy;\njxD = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyD = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxD = px-(ncx+0.5+jxD*jitter); dyD = py-(ncy+0.5+jyD*jitter);\ndD = dxD*dxD+dyD*dyD; gxD = (ncx+0.5)/fixed_res; gyD = (ncy+0.5)/fixed_res;\n\nncx = icx; ncy = icy;\njxE = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyE = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxE = px-(ncx+0.5+jxE*jitter); dyE = py-(ncy+0.5+jyE*jitter);\ndE = dxE*dxE+dyE*dyE; gxE = (ncx+0.5)/fixed_res; gyE = (ncy+0.5)/fixed_res;\n\nncx = icx+1.0; ncy = icy;\njxF = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyF = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxF = px-(ncx+0.5+jxF*jitter); dyF = py-(ncy+0.5+jyF*jitter);\ndF = dxF*dxF+dyF*dyF; gxF = (ncx+0.5)/fixed_res; gyF = (ncy+0.5)/fixed_res;\n\nncx = icx-1.0; ncy = icy+1.0;\njxG = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyG = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxG = px-(ncx+0.5+jxG*jitter); dyG = py-(ncy+0.5+jyG*jitter);\ndG = dxG*dxG+dyG*dyG; gxG = (ncx+0.5)/fixed_res; gyG = (ncy+0.5)/fixed_res;\n\nncx = icx; ncy = icy+1.0;\njxH = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyH = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxH = px-(ncx+0.5+jxH*jitter); dyH = py-(ncy+0.5+jyH*jitter);\ndH = dxH*dxH+dyH*dyH; gxH = (ncx+0.5)/fixed_res; gyH = (ncy+0.5)/fixed_res;\n\nncx = icx+1.0; ncy = icy+1.0;\njxI = mix(fract(sin((ncx+f0)*17543.2+(ncy+f0)*8976.5)*43758.5453)-0.5, fract(sin((ncx+f1)*17543.2+(ncy+f1)*8976.5)*43758.5453)-0.5, bf);\njyI = mix(fract(sin((ncx+f0)*5432.1+(ncy+f0)*13579.8)*43758.5453)-0.5, fract(sin((ncx+f1)*5432.1+(ncy+f1)*13579.8)*43758.5453)-0.5, bf);\ndxI = px-(ncx+0.5+jxI*jitter); dyI = py-(ncy+0.5+jyI*jitter);\ndI = dxI*dxI+dyI*dyI; gxI = (ncx+0.5)/fixed_res; gyI = (ncy+0.5)/fixed_res;\n\n// find nearest and second-nearest center\nbest_d = dA; second_best_d = 9999.0; best_gx = gxA; best_gy = gyA;\nt = step(dB,best_d); second_best_d=mix(min(second_best_d,dB),best_d,t); best_d=mix(best_d,dB,t); best_gx=mix(best_gx,gxB,t); best_gy=mix(best_gy,gyB,t);\nt = step(dC,best_d); second_best_d=mix(min(second_best_d,dC),best_d,t); best_d=mix(best_d,dC,t); best_gx=mix(best_gx,gxC,t); best_gy=mix(best_gy,gyC,t);\nt = step(dD,best_d); second_best_d=mix(min(second_best_d,dD),best_d,t); best_d=mix(best_d,dD,t); best_gx=mix(best_gx,gxD,t); best_gy=mix(best_gy,gyD,t);\nt = step(dE,best_d); second_best_d=mix(min(second_best_d,dE),best_d,t); best_d=mix(best_d,dE,t); best_gx=mix(best_gx,gxE,t); best_gy=mix(best_gy,gyE,t);\nt = step(dF,best_d); second_best_d=mix(min(second_best_d,dF),best_d,t); best_d=mix(best_d,dF,t); best_gx=mix(best_gx,gxF,t); best_gy=mix(best_gy,gyF,t);\nt = step(dG,best_d); second_best_d=mix(min(second_best_d,dG),best_d,t); best_d=mix(best_d,dG,t); best_gx=mix(best_gx,gxG,t); best_gy=mix(best_gy,gyG,t);\nt = step(dH,best_d); second_best_d=mix(min(second_best_d,dH),best_d,t); best_d=mix(best_d,dH,t); best_gx=mix(best_gx,gxH,t); best_gy=mix(best_gy,gyH,t);\nt = step(dI,best_d); second_best_d=mix(min(second_best_d,dI),best_d,t); best_d=mix(best_d,dI,t); best_gx=mix(best_gx,gxI,t); best_gy=mix(best_gy,gyI,t);\n\n// distances to nearest and second-nearest centers\nnearest_dist = sqrt(best_d);\nsecond_nearest_dist = sqrt(second_best_d);\n\n// per-grain displacement: each cell gets a unique random XY offset\ndisp_x = (fract(sin(best_gx * 127.1 + best_gy * 311.7) * 43758.5453) - 0.5) * displace;\ndisp_y = (fract(sin(best_gx * 269.5 + best_gy * 183.3) * 43758.5453) - 0.5) * displace;\nuv_d_raw_x = uv.x + disp_x;\nuv_d_raw_y = uv.y + disp_y;\nin_bounds = step(0.0, uv_d_raw_x) * step(uv_d_raw_x, 1.0) * step(0.0, uv_d_raw_y) * step(uv_d_raw_y, 1.0);\nuv_d = uv;\ndisp_mask = 1.0;\nif (edge_mode < 0.5) {\n    uv_d = vec(clamp(uv_d_raw_x, 0.0, 1.0), clamp(uv_d_raw_y, 0.0, 1.0));\n    disp_mask = in_bounds;\n} else if (edge_mode < 1.5) {\n    uv_d = vec(clamp(uv_d_raw_x, 0.0, 1.0), clamp(uv_d_raw_y, 0.0, 1.0));\n} else if (edge_mode < 2.5) {\n    uv_d = vec(fract(uv_d_raw_x), fract(uv_d_raw_y));\n} else {\n    uv_d = vec(1.0 - abs(fract(uv_d_raw_x * 0.5) * 2.0 - 1.0), 1.0 - abs(fract(uv_d_raw_y * 0.5) * 2.0 - 1.0));\n}\n\n// grain identity from winning Voronoi center\np1 = fract(sin(best_gx * 127.1 + best_gy * 311.7) * 43758.5453);\np2 = fract(sin(p1 * 263.77) * 43758.5453);\nera_raw = era_clock + p2;\nera = floor(era_raw);\nera_phase = fract(era_raw);\n\n// grain value \u2014 stable per era, intensity envelope handles temporal evolution\ngrain_a = fract(sin(era * 127.1 + p1 * 311.7) * 43758.5453);\ngrain_mono = grain_a;\n\n// per-channel color offset \u2014 stable per cell, not per era\ncol_g = fract(sin(best_gx * 91.3 + best_gy * 57.2) * 43758.5453) - 0.5;\ncol_b = fract(sin(best_gx * 43.1 + best_gy * 123.7) * 43758.5453) - 0.5;\n\n// blend monochrome grain toward chromatically diverged grain\ngrain_r = grain_mono;\ngrain_g = grain_mono + col_g * ch_diverge;\ngrain_b = grain_mono + col_b * ch_diverge;\n\n// polarity: era-based, stable per era\nsign_a = fract(sin(era * 263.7 + p1 * 419.2) * 43758.5453) * 2.0 - 1.0;\ngrain_sign = sign_a;\n\n// fade envelope: intensity ramps in at era start, holds, ramps out at era end\nramp = min(fade * 0.125, 0.5);\nsafe_ramp = max(ramp, 0.001);\nfade_in = smoothstep(0.0, safe_ramp, era_phase);\nfade_out = 1.0 - smoothstep(1.0 - safe_ramp, 1.0, era_phase);\ngrain_intensity = min(fade_in, fade_out);\n\n// shape: blend between circular (shape=1) and Voronoi-conforming (shape=0)\nvoronoi_boundary_dist = (nearest_dist + second_nearest_dist) * 0.5;\nt_circ = nearest_dist / 0.5;\nt_voro = nearest_dist / max(voronoi_boundary_dist, 0.001);\nshape_t = mix(t_voro, t_circ, shape);\n\n// per-cell size variation with smooth seed interpolation\nsv0 = floor(sv_seed); sv1 = sv0 + 1.0; svf = fract(sv_seed);\ncell_size_a = fract(sin((best_gx + sv0) * 213.7 + (best_gy + sv0) * 157.3) * 43758.5453);\ncell_size_b = fract(sin((best_gx + sv1) * 213.7 + (best_gy + sv1) * 157.3) * 43758.5453);\ncell_size = mix(1.0, mix(cell_size_a, cell_size_b, svf), size_var);\nshape_t = shape_t / max(cell_size, 0.001);\n\n// softness: feathered falloff in shape-blended coordinate\nfeather = mix(0.02, 0.5, softness);\nsoft_falloff = 1.0 - smoothstep(1.0 - feather, 1.0, shape_t);\n\n// density gate\nvisible = step(1.0 - density, grain_r);\n\n// displacement gated to grain shape only\nsrc_displaced = mix(src, sample(in1, uv_d), visible * soft_falloff * grain_intensity * disp_mask);\n\n// apply grain_sign (stable polarity per cell) scaled by ch_diverge for color, and gain\n// (unbounded intensity -- renamed from amount 2026-10-09, T003, gain/mix convention)\ngr = grain_sign * visible * soft_falloff * grain_intensity * gain;\ngg = (grain_sign + col_g * ch_diverge) * visible * soft_falloff * grain_intensity * gain;\ngb = (grain_sign + col_b * ch_diverge) * visible * soft_falloff * grain_intensity * gain;\n\n// luma gate: bipolar (-1=shadows +1=highlights 0=uniform)\nluma = 0.299*src.r + 0.587*src.g + 0.114*src.b;\nluma_weight = mix(1.0 - luma, luma, luma_gate * 0.5 + 0.5);\nluma_weight = pow(luma_weight, mix(1.0, 3.0, abs(luma_gate)));\nluma_mod = mix(1.0, luma_weight, clamp(abs(luma_gate) * 2.0, 0.0, 1.0));\ngr *= luma_mod;\ngg *= luma_mod;\ngb *= luma_mod;\n\n// gain/mix convention (T003): driven = the complete composited state (source included),\n// mix_pct a plain crossfade toward it -- NOT a bare effect layer (vsynth-bpatcher skill,\n// \"Canonical naming: gain vs mix\" -- a sparse layer double-images under a uniform crossfade).\ndriven_r = clamp(src_displaced.r + gr, 0.0, 1.0);\ndriven_g = clamp(src_displaced.g + gg, 0.0, 1.0);\ndriven_b = clamp(src_displaced.b + gb, 0.0, 1.0);\ncomposited = vec(mix(src_displaced.r, driven_r, mix_pct / 100.0),\n                  mix(src_displaced.g, driven_g, mix_pct / 100.0),\n                  mix(src_displaced.b, driven_b, mix_pct / 100.0),\n                  src_displaced.a);\nraw = vec(grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, grain_sign * visible * soft_falloff * grain_intensity, 1.0);\n\n// bypass (bypass_mode \"param\"): passthrough on every outlet (Matt, 2026-10-05).\n// The source when it is connected, black when it is not (src_mode): the dual-module convention.\nbypass_px = mix(vec(0.0, 0.0, 0.0, 1.0), sample(in1, uv), src_mode);\nout1 = mix(composited, bypass_px, bypass_gate);\nout2 = mix(raw, bypass_px, bypass_gate);\nout3 = mix(src_displaced, bypass_px, bypass_gate);",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -349,7 +348,7 @@
 						""
 					],
 					"patching_rect": [
-						1639.5,
+						1567.5,
 						100.0,
 						56.0,
 						22.0
@@ -381,17 +380,17 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1419.5,
+						1347.5,
 						260.0,
 						227.0,
-						188.0
+						164.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						2.0,
 						2.0,
 						231.5,
-						200.0
+						176.0
 					],
 					"proportion": 0.5
 				}
@@ -404,7 +403,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1639.5,
+						1567.5,
 						200.0,
 						80.0,
 						21.0
@@ -436,7 +435,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1639.5,
+						1567.5,
 						232.0,
 						5.0,
 						5.0
@@ -468,7 +467,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1659.5,
+						1587.5,
 						232.0,
 						5.0,
 						5.0
@@ -493,7 +492,7 @@
 						""
 					],
 					"patching_rect": [
-						1419.5,
+						1347.5,
 						20.0,
 						60.0,
 						22.0
@@ -511,7 +510,7 @@
 						""
 					],
 					"patching_rect": [
-						1419.5,
+						1347.5,
 						50.0,
 						180.0,
 						22.0
@@ -532,7 +531,7 @@
 						""
 					],
 					"patching_rect": [
-						1419.5,
+						1347.5,
 						110.0,
 						80.0,
 						22.0
@@ -551,7 +550,7 @@
 						""
 					],
 					"patching_rect": [
-						1419.5,
+						1347.5,
 						140.0,
 						60.0,
 						22.0
@@ -569,7 +568,7 @@
 						""
 					],
 					"patching_rect": [
-						1419.5,
+						1347.5,
 						170.0,
 						80.0,
 						22.0
@@ -587,7 +586,7 @@
 						""
 					],
 					"patching_rect": [
-						1419.5,
+						1347.5,
 						200.0,
 						100.0,
 						22.0
@@ -1950,103 +1949,6 @@
 			{
 				"box": {
 					"id": "obj-59",
-					"maxclass": "live.menu",
-					"fontname": "Ableton Sans Light",
-					"hint": "Where the grain grid's aspect comes from. Render: the render size's width / height (the migrated behaviour: square grain cells at any frame shape). dim: dim.x / dim.y as the module used to (whatever dim reads in this pix: unreliable live). Square: aspect 1, cells stretched with the frame. Only visible once Size makes the cells several pixels across (Size above about 0.3): at Size 0 the cells are sub-pixel and every mode is just noise.",
-					"numinlets": 1,
-					"numoutlets": 3,
-					"outlettype": [
-						"",
-						"",
-						"float"
-					],
-					"param_connect": "grain_pix::aspect_mode",
-					"parameter_enable": 1,
-					"patching_rect": [
-						1038.0,
-						250.0,
-						60.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						52.0,
-						163.0,
-						90.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_enum": [
-								"Render",
-								"dim",
-								"Square"
-							],
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "aspect_mode",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 0,
-							"parameter_shortname": "aspect_mode",
-							"parameter_type": 2,
-							"parameter_unitstyle": 0
-						}
-					},
-					"varname": "aspect_mode"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-60",
-					"maxclass": "attrui",
-					"attr": "aspect_mode",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						1034.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-61",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						1043.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						8.0,
-						161.0,
-						42.0,
-						18.0
-					],
-					"text": "Aspect",
-					"textjustification": 1,
-					"varname": "lbl_aspect_mode"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-62",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2073,7 +1975,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-63",
+					"id": "obj-60",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2649,7 +2551,7 @@
 				"patchline": {
 					"source": [
 						"obj-4",
-						18
+						17
 					],
 					"destination": [
 						"obj-3",
@@ -2696,11 +2598,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
+						"obj-59",
 						0
 					],
 					"destination": [
-						"obj-63",
+						"obj-60",
 						0
 					]
 				}
@@ -2708,7 +2610,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-63",
+						"obj-60",
 						0
 					],
 					"destination": [
@@ -2724,7 +2626,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-59",
 						0
 					]
 				}
@@ -3236,42 +3138,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-4",
-						14
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-59",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-60",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-rd-5",
 						0
 					],
@@ -3397,7 +3263,7 @@
 					],
 					"source": [
 						"obj-4",
-						16
+						15
 					]
 				}
 			},
@@ -3409,7 +3275,7 @@
 					],
 					"source": [
 						"obj-4",
-						15
+						14
 					]
 				}
 			},
@@ -3421,7 +3287,7 @@
 					],
 					"source": [
 						"obj-4",
-						17
+						16
 					]
 				}
 			},
@@ -3682,11 +3548,6 @@
 			"obj-56": [
 				"mix_pct",
 				"mix_pct",
-				0
-			],
-			"obj-59": [
-				"aspect_mode",
-				"aspect_mode",
 				0
 			],
 			"parameterbanks": {
