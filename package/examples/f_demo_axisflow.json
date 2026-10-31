@@ -1,0 +1,177 @@
+{
+ "pattrstorage": {
+  "name": "Vsynth",
+  "slots": {
+   "1": {
+    "id": 1,
+    "data": {
+     "f_tf_tensormap::strength": [
+      100.0
+     ],
+     "f_tf_tensormap::radius": [
+      6.0
+     ],
+     "f_tf_tensormap::bypass": [
+      0
+     ],
+     "f_tf_axisflow::mode": [
+      0
+     ],
+     "f_tf_axisflow::angle": [
+      45.0
+     ],
+     "f_tf_axisflow::gain": [
+      1.0
+     ],
+     "f_tf_axisflow::gate": [
+      1.0
+     ],
+     "f_tf_axisflow::bypass": [
+      0
+     ],
+     "f_tf_axisflow[1]::mode": [
+      1
+     ],
+     "f_tf_axisflow[1]::angle": [
+      45.0
+     ],
+     "f_tf_axisflow[1]::gain": [
+      1.0
+     ],
+     "f_tf_axisflow[1]::gate": [
+      1.0
+     ],
+     "f_tf_axisflow[1]::bypass": [
+      0
+     ],
+     "f_tf_axisflow[2]::mode": [
+      0
+     ],
+     "f_tf_axisflow[2]::angle": [
+      45.0
+     ],
+     "f_tf_axisflow[2]::gain": [
+      1.0
+     ],
+     "f_tf_axisflow[2]::gate": [
+      1.0
+     ],
+     "f_tf_axisflow[2]::bypass": [
+      0
+     ],
+     "f_vf_advect::dt": [
+      0.003
+     ],
+     "f_vf_advect::decay": [
+      0.97
+     ],
+     "f_vf_advect::injection": [
+      0.1
+     ],
+     "f_vf_advect::gain": [
+      1.0
+     ],
+     "f_vf_advect::mix_pct": [
+      100.0
+     ],
+     "f_vf_advect::separate": [
+      0.0
+     ],
+     "f_vf_advect::mode": [
+      0
+     ],
+     "f_vf_advect::trail": [
+      0.0
+     ],
+     "f_vf_advect::bypass": [
+      0
+     ],
+     "f_vf_advect[1]::dt": [
+      0.003
+     ],
+     "f_vf_advect[1]::decay": [
+      0.97
+     ],
+     "f_vf_advect[1]::injection": [
+      0.1
+     ],
+     "f_vf_advect[1]::gain": [
+      1.0
+     ],
+     "f_vf_advect[1]::mix_pct": [
+      100.0
+     ],
+     "f_vf_advect[1]::separate": [
+      0.0
+     ],
+     "f_vf_advect[1]::mode": [
+      0
+     ],
+     "f_vf_advect[1]::trail": [
+      0.0
+     ],
+     "f_vf_advect[1]::bypass": [
+      0
+     ],
+     "f_vf_advect[2]::dt": [
+      0.003
+     ],
+     "f_vf_advect[2]::decay": [
+      0.97
+     ],
+     "f_vf_advect[2]::injection": [
+      0.1
+     ],
+     "f_vf_advect[2]::gain": [
+      1.0
+     ],
+     "f_vf_advect[2]::mix_pct": [
+      100.0
+     ],
+     "f_vf_advect[2]::separate": [
+      0.0
+     ],
+     "f_vf_advect[2]::mode": [
+      0
+     ],
+     "f_vf_advect[2]::trail": [
+      0.0
+     ],
+     "f_vf_advect[2]::bypass": [
+      0
+     ],
+     "f_vf_vortex::cx": [
+      0.5
+     ],
+     "f_vf_vortex::cy": [
+      0.5
+     ],
+     "f_vf_vortex::convergence": [
+      0.0
+     ],
+     "f_vf_vortex::curl": [
+      0.8
+     ],
+     "f_vf_vortex::falloff": [
+      0.6
+     ],
+     "f_vf_vortex::cx_amt": [
+      0.0
+     ],
+     "f_vf_vortex::cy_amt": [
+      0.0
+     ],
+     "f_vf_vortex::convergence_amt": [
+      0.0
+     ],
+     "f_vf_vortex::curl_amt": [
+      0.0
+     ],
+     "f_vf_vortex::bypass": [
+      0
+     ]
+    }
+   }
+  }
+ }
+}
