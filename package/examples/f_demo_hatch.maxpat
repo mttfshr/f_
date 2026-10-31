@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 98.0, 254.0, 1000.0, 780.0 ],
+        "rect": [ 98.0, 237.0, 1000.0, 780.0 ],
         "boxes": [
             {
                 "box": {
@@ -193,7 +193,7 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 289.5, 32.0, 220.0, 132.0 ],
+                    "patching_rect": [ 289.5, 37.0, 220.0, 132.0 ],
                     "varname": "vs_wfg_polarizer",
                     "viewvisibility": 1
                 }
@@ -214,7 +214,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 324.0, 183.0, 140.0, 48.0 ],
+                    "patching_rect": [ 221.0, 181.0, 140.0, 48.0 ],
                     "varname": "vs_camera_s",
                     "viewvisibility": 1
                 }
@@ -235,7 +235,7 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 283.0, 258.0, 154.0, 84.0 ],
+                    "patching_rect": [ 283.0, 253.0, 154.0, 84.0 ],
                     "varname": "f_tf_tensormap",
                     "viewvisibility": 1
                 }
@@ -409,14 +409,14 @@
             {
                 "patchline": {
                     "destination": [ "obj-16", 0 ],
-                    "order": 0,
+                    "order": 1,
                     "source": [ "obj-20", 0 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-18", 0 ],
-                    "order": 1,
+                    "order": 0,
                     "source": [ "obj-20", 0 ]
                 }
             },
@@ -429,14 +429,14 @@
             {
                 "patchline": {
                     "destination": [ "obj-17", 0 ],
-                    "order": 0,
+                    "order": 1,
                     "source": [ "obj-8", 0 ]
                 }
             },
             {
                 "patchline": {
                     "destination": [ "obj-7", 0 ],
-                    "order": 1,
+                    "order": 0,
                     "source": [ "obj-8", 0 ]
                 }
             },
@@ -548,8 +548,6 @@
             "obj-5::obj-56": [ "live.menu[25]", "live.menu", 0 ],
             "obj-7::obj-20": [ "strength[1]", "strength", 0 ],
             "obj-7::obj-23": [ "radius", "radius", 0 ],
-            "obj-7::obj-26": [ "width", "width", 0 ],
-            "obj-7::obj-29": [ "height", "height", 0 ],
             "obj-8::obj-20": [ "cam_invx", "flip_x", 0 ],
             "obj-8::obj-3": [ "what", "live.text", 0 ],
             "obj-9::obj-20": [ "release", "release", 0 ],
@@ -836,20 +834,6 @@
                     "parameter_unitstyle": 1
                 },
                 "obj-7::obj-23": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-7::obj-26": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-7::obj-29": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,

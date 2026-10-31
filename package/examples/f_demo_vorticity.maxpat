@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 263.0, 118.0, 1407.0, 826.0 ],
+        "rect": [ 453.0, 95.0, 1201.0, 793.0 ],
         "boxes": [
             {
                 "box": {
@@ -27,7 +27,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 678.0, 247.0, 104.0, 82.0 ],
+                    "patching_rect": [ 678.0, 247.0, 139.0, 88.0 ],
                     "varname": "f_vf_vorticity[4]",
                     "viewvisibility": 1
                 }
@@ -48,7 +48,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 557.0, 388.0, 104.0, 82.0 ],
+                    "patching_rect": [ 507.0, 379.0, 141.0, 80.0 ],
                     "varname": "f_vf_vorticity[3]",
                     "viewvisibility": 1
                 }
@@ -69,7 +69,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 531.0, 267.0, 104.0, 82.0 ],
+                    "patching_rect": [ 531.0, 267.0, 139.0, 98.0 ],
                     "varname": "f_vf_vorticity[2]",
                     "viewvisibility": 1
                 }
@@ -191,7 +191,7 @@
                     "numoutlets": 1,
                     "outlettype": [ "" ],
                     "patching_rect": [ 1021.0, 749.0, 123.0, 22.0 ],
-                    "text": "0.5633"
+                    "text": "0.220355"
                 }
             },
             {
@@ -687,8 +687,8 @@
         "parameters": {
             "obj-11::obj-20": [ "gain[1]", "gain", 0 ],
             "obj-11::obj-23": [ "scale[2]", "scale", 0 ],
-            "obj-11::obj-28": [ "rotate", "rotate", 0 ],
-            "obj-11::obj-31": [ "thresh", "thresh", 0 ],
+            "obj-11::obj-26": [ "rotate", "rotate", 0 ],
+            "obj-11::obj-29": [ "thresh", "thresh", 0 ],
             "obj-12::obj-2": [ "vs_phase_ctrl", "vs_phase_ctrl", 0 ],
             "obj-13::obj-11": [ "cycles", "Cycles", 0 ],
             "obj-13::obj-15": [ "inv", "Inv", 0 ],
@@ -708,10 +708,16 @@
             "obj-1::obj-45::obj-32": [ "live.numbox", "live.numbox", 0 ],
             "obj-1::obj-45::obj-9": [ "live.numbox[3]", "live.numbox", 0 ],
             "obj-20::obj-20": [ "confinement", "confinement", 0 ],
+            "obj-20::obj-23": [ "step_mode[2]", "step_mode", 0 ],
+            "obj-20::obj-26": [ "step_n[2]", "step_n", 0 ],
             "obj-20::obj-300": [ "range_confinement", "range_confinement", 0 ],
             "obj-21::obj-20": [ "confinement[2]", "confinement", 0 ],
+            "obj-21::obj-23": [ "step_mode[1]", "step_mode", 0 ],
+            "obj-21::obj-26": [ "step_n[1]", "step_n", 0 ],
             "obj-21::obj-300": [ "range_confinement[2]", "range_confinement", 0 ],
             "obj-25::obj-20": [ "confinement[3]", "confinement", 0 ],
+            "obj-25::obj-23": [ "step_mode", "step_mode", 0 ],
+            "obj-25::obj-26": [ "step_n", "step_n", 0 ],
             "obj-25::obj-300": [ "range_confinement[3]", "range_confinement", 0 ],
             "obj-2::obj-19": [ "dim_x", "dim_x", 0 ],
             "obj-2::obj-23": [ "dim_y", "dim_y", 0 ],
@@ -748,6 +754,10 @@
             "obj-4::obj-33": [ "f_module_6_file", "live.menu", 0 ],
             "obj-4::obj-36": [ "f_module_7_disp", "live.menu", 0 ],
             "obj-4::obj-37": [ "f_module_7_file", "live.menu", 0 ],
+            "obj-4::obj-40": [ "f_module_8_disp", "live.menu", 0 ],
+            "obj-4::obj-41": [ "f_module_8_file", "live.menu", 0 ],
+            "obj-4::obj-44": [ "f_module_9_disp", "live.menu", 0 ],
+            "obj-4::obj-45": [ "f_module_9_file", "live.menu", 0 ],
             "obj-4::obj-8": [ "f_module_0_disp", "live.menu", 0 ],
             "obj-4::obj-9": [ "f_module_0_file", "live.menu", 0 ],
             "obj-5::obj-14": [ "live.menu[18]", "live.menu", 0 ],
@@ -789,6 +799,7 @@
             "obj-8::obj-26": [ "scale[1]", "scale", 0 ],
             "obj-8::obj-29": [ "softness", "expo", 0 ],
             "obj-8::obj-310": [ "range_gain", "range_gain", 0 ],
+            "obj-8::obj-32": [ "edge", "edge", 0 ],
             "obj-8::obj-320": [ "range_scale", "range_scale", 0 ],
             "obj-9::obj-20": [ "force", "force", 0 ],
             "obj-9::obj-23": [ "dt", "dt", 0 ],
@@ -796,6 +807,7 @@
             "obj-9::obj-29": [ "project", "project", 0 ],
             "obj-9::obj-32": [ "drag", "drag", 0 ],
             "obj-9::obj-35": [ "gain[2]", "gain", 0 ],
+            "obj-9::obj-38": [ "drift", "drift", 0 ],
             "parameterbanks": {
                 "0": {
                     "index": 0,
@@ -821,14 +833,14 @@
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-11::obj-28": {
+                "obj-11::obj-26": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
-                "obj-11::obj-31": {
+                "obj-11::obj-29": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
@@ -853,6 +865,23 @@
                 "obj-20::obj-20": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
+                    "parameter_range": [ 0.0, 0.1 ],
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-20::obj-23": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "step_mode[2]",
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
+                },
+                "obj-20::obj-26": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "step_n[2]",
+                    "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
@@ -860,6 +889,23 @@
                 "obj-21::obj-20": {
                     "parameter_invisible": 0,
                     "parameter_longname": "confinement[2]",
+                    "parameter_modmode": 3,
+                    "parameter_range": [ 0.0, 0.1 ],
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-21::obj-23": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "step_mode[1]",
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
+                },
+                "obj-21::obj-26": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "step_n[1]",
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
@@ -871,6 +917,21 @@
                 "obj-25::obj-20": {
                     "parameter_invisible": 0,
                     "parameter_longname": "confinement[3]",
+                    "parameter_modmode": 3,
+                    "parameter_range": [ 0.0, 0.1 ],
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-25::obj-23": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
+                },
+                "obj-25::obj-26": {
+                    "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
@@ -1106,6 +1167,13 @@
                 "obj-9::obj-35": {
                     "parameter_invisible": 0,
                     "parameter_longname": "gain[2]",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-9::obj-38": {
+                    "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
