@@ -7,7 +7,7 @@ _Rewritten 2026-10-31, updated 2026-11-01._ Orientation only: what is Active, wh
 1. **Record-keeping.** HANDOFF trimmed (older entries in `HANDOFF_ARCHIVE.md`), this focus doc and `gates.md` written 2026-10-31. Next: use it for a few sessions and measure the startup read; add per-workstream blocks and a generated survey only if the gates file isn't enough.
 2. **`f_modules` menu redesign** (Matt's, in progress). See `G-menu`.
 
-Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), the `f_vf_advect` Trail rework, and `f_tf_hatch` (v2 built, benched, helpfile checked; only the spike-script tidy remains, Next 2).
+Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), the `f_vf_advect` Trail rework, and `f_tf_hatch` (v2 built, benched, helpfile checked; only the spike-script tidy remains, Next 2; hub Q17, NaN masking in its E1 stage, is still open under `G-tensor-t3`).
 
 ## Next (Claude's lean; Matt decides)
 

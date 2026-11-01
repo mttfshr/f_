@@ -19,7 +19,7 @@
 
 ## 2026-10-31 (23:58): Hatch closed out; `f_ks` tier-3 tuning done with no code change
 
-- **Hatch:** README marker dropped (launcher regenerated, `test_launch` 8/8); 8 ms gate kept; v2 helpfile written and Matt checked it in Max; OQ1/3/4/6/7 decided as leaned (spec "Tier-3 decisions"); the reference doc's References gained the coherence-persistence line.
+- **Hatch:** README marker dropped (launcher regenerated, `test_launch` 8/8); 8 ms gate kept; v2 helpfile written and Matt checked it in Max; OQ1/3/4/6/7 decided as leaned (spec "Tier-3 decisions"); the reference doc's References gained the coherence-persistence line. Hub Q17 (NaN masking in Hatch E1: no `+1e-7` atan2 bias) is still open under `G-tensor-t3`.
 - **T064 correction:** the demo's `strength[1]` bindings belong to its `f_tf_tensormap` (obj-7), not Hatch; the Hatch bpatcher there has exactly the eight v2 bindings. Nothing removed. Not tested: that the demo loads in Max.
 - **`f_ks`:** Matt's live look: `rate`, `scale`, `sharp` all smooth and expressive; the pattern reads about 3 s after reset at the default rate (about 2 s at the top). Clamp map, defaults and ranges stay (T005 closed unrun, T012 decided, T030 `[x]`). Matt passed on the "organic and distinct" verdict (T030 now `[x]`) and on naming it; T010 name and T040 docs stay open.
 - **Commits:** b977cbf, 3deb87d, 9648d97, 6969d59, 65f58de. Tree clean after the HANDOFF commit.

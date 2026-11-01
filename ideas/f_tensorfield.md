@@ -37,7 +37,7 @@ judgment in a scratch patch. All seven are registered (menu, README, launcher, i
 | `f_tf_glyph` | Consumer: glyph field, family debug tap, **canonical decode idiom** | 14/14 | 6/6 | Variant menu and debug tints (look); defaults provisional |
 | `f_tf_sharpen` | Operator: eigengap exaggerate / relax, trace fixed | 15/15 | 6/6 | Dial mapping (0-4 one-sided vs bipolar vs log) and possible rename (T016/T017) |
 | `f_tf_aniso_blur` | Consumer: structure-aligned smoother, straight-axis v1 | 19/19 | 6/6 | Kernel family (b) only if the cost experiment says (a) is not enough; defaults; curved-corner artifact look; strength pairing (Q16) |
-| `f_tf_hatch` | Consumer: orientation-committed hatching, branch T | 20/20 | 6/6 | Commit-curve shape; hairpin hazard probe (needs bench); defaults; NaN masking question (Q17) |
+| `f_tf_hatch` | v1 row, superseded by v2 (`.specify/f_tf_hatch/spec.md`): orientation-committed hatching, branch T | 20/20 | 6/6 | v1 items dropped in v2: commit curve, hairpin hazard. Still open: NaN masking (Q17) |
 
 Cross-cutting open items: the helpfile judgment gate for the five new helpfiles (yours), and
 whether the five benches join `bench.sh DEFAULT`. Cost: hatch measures about 0.2 ms/pass per
@@ -201,6 +201,7 @@ row passed (`iso=1`, axis unset, exact), but tensormap's own `mix(NaN, 0.5, iso)
 for unresolved compiler-fold reasons, so a pass does not prove safety. Sharpen and aniso_blur are
 `atan2`-free and unaffected; glyph carries the bias. Cheapest resolution: adopt the bias idiom in
 hatch, or run one constant-isotropic-tensor probe. Not changed in this docs pass.
+**Status 2026-11-01: still open in Hatch v2.** `codebox_stage_e1.gen` line 40 is still `atan2(2.0*jxy, diff)` with no bias (glyph has `+ 1e-7`); the `ca`/`sa` masking is unchanged. Hatch v2 passed its bench and live looks, which per the paragraph above does not prove safety.
 
 ---
 
