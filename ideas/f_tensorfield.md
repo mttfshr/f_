@@ -37,7 +37,7 @@ judgment in a scratch patch. All seven are registered (menu, README, launcher, i
 | `f_tf_glyph` | Consumer: glyph field, family debug tap, **canonical decode idiom** | 14/14 | 6/6 | Variant menu and debug tints (look); defaults provisional |
 | `f_tf_sharpen` | Operator: eigengap exaggerate / relax, trace fixed | 15/15 | 6/6 | Dial mapping (0-4 one-sided vs bipolar vs log) and possible rename (T016/T017) |
 | `f_tf_aniso_blur` | Consumer: structure-aligned smoother, straight-axis v1 | 19/19 | 6/6 | Kernel family (b) only if the cost experiment says (a) is not enough; defaults; curved-corner artifact look; strength pairing (Q16) |
-| `f_tf_hatch` | v1 row, superseded by v2 (`.specify/f_tf_hatch/spec.md`): orientation-committed hatching, branch T | 20/20 | 6/6 | v1 items dropped in v2: commit curve, hairpin hazard. Still open: NaN masking (Q17) |
+| `f_tf_hatch` | v1 row, superseded by v2 (`.specify/f_tf_hatch/spec.md`): orientation-committed hatching, branch T | 20/20 | 6/6 | v1 items dropped in v2: commit curve, hairpin hazard. NaN masking (Q17): probed clean 2026-11-01 |
 
 Cross-cutting open items: the helpfile judgment gate for the five new helpfiles (yours), and
 whether the five benches join `bench.sh DEFAULT`. Cost: hatch measures about 0.2 ms/pass per
@@ -201,7 +201,7 @@ row passed (`iso=1`, axis unset, exact), but tensormap's own `mix(NaN, 0.5, iso)
 for unresolved compiler-fold reasons, so a pass does not prove safety. Sharpen and aniso_blur are
 `atan2`-free and unaffected; glyph carries the bias. Cheapest resolution: adopt the bias idiom in
 hatch, or run one constant-isotropic-tensor probe. Not changed in this docs pass.
-**Status 2026-11-01: still open in Hatch v2.** `codebox_stage_e1.gen` line 40 is still `atan2(2.0*jxy, diff)` with no bias (glyph has `+ 1e-7`); the `ca`/`sa` masking is unchanged. Hatch v2 passed its bench and live looks, which per the paragraph above does not prove safety.
+**Status 2026-11-01: probed, no NaN.** `.specify/f_tf_hatch/spike/bench_e1_nan_probe.py` ran the shipped E1 codebox on the bench (Max 9.2.0; log `tests/logs/20261101-082451-bench.log`): an exactly-zero tensor, a constant isotropic nonzero tensor (two magnitudes, 16, 64 and 256 square), a mixed texture (random field, zero stripe, isotropic region) and one float32 ulp either side of isotropic: zero NaN and zero inf in every channel, 4096/4096 finite pixels at 64x64. Not explained: why glyph's runtime `atan2(0,0)` NaN does not reproduce in E1. At isotropic pixels the GPU axis differs from the mirror's by 1.0 (finite, coherence 0; E2 reads direction only through coherence, which is inferred from the code, not tested). Verified on the bench GPU only, not in a live Vsynth render, and the bias idiom was not adopted.
 
 ---
 
