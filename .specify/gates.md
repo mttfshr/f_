@@ -41,4 +41,4 @@ Live looks, bench runs and other owed actions are in `.specify/plan.md` "Owed to
 | P-bypass-guard | Shader-side bypass guard for heavy modules: no measurable effect so far | 2026-10-13 | a general reason or a real GPU-cost problem appears |
 | P-light-theme | Light Max themes (library is dark-only) | 2026-10-17 | Matt switches Max to a light theme and looks at a few modules |
 | P-entrainment | `f_ganzflicker`, `f_dreamachine`, perception research | | design research only; Matt wants a build |
-| P-taxonomy | Module taxonomy (processor vs self-sufficient generator); `f_weave` left as is | 2026-10-18 | a concrete case needs a fix |
+| P-taxonomy | Module taxonomy (processor vs self-sufficient generator); `f_weave` is being made a `dual` through its definition (Matt, 2026-11-01; HANDOFF has the plan), the rest left as is | 2026-10-18 | a concrete case needs a fix |

@@ -2,6 +2,14 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-01 (08:30): Claims rule and gates check added; Hatch Q17 probed clean
+
+- **Claims rule (CLAUDE.md "Claims"):** status claims cite their source; reconcile `gates.md`, `plan.md` and the module's `tasks.md` before saying closed; inferred is not verified; records say who observed what. `tests/build/test_gates.py` (5/5) flags a Waiting gate whose cited tasks are all ticked or that cites a missing task or path; it cannot see rows that cite no task ids. `finishing-a-session` skill step 6 added (claude-scaffold `2623572`; Matt re-uploaded it).
+- **Hatch Q17:** `.specify/f_tf_hatch/spike/bench_e1_nan_probe.py` 5/5, zero NaN/inf in E1 on zero, isotropic and mixed tensors (log `tests/logs/20261101-082451-bench.log`, Max 9.2.0; T066). Matt decided no permanent bench rows and no live check. Not explained: why glyph's `atan2(0,0)` NaN does not reproduce in E1. The `G-hatch` row is removed and Hatch is out of `G-tensor-t3` (four README warnings left).
+- **Evening of 2026-10-31 (archive entry 23:58):** Hatch closed out (T051, T052, T061, T065; only the spike-script tail of T064 remains); `f_ks` tier-3 done with no code change (T005, T012, T030 closed; T010 name and T040 docs open); contract bench green after a harness input-size fix.
+- **Commits (f_):** b977cbf, 3deb87d, 9648d97, 6969d59, 65f58de, 7fd9b59, 3ce861b, ad7408f, 6cd4d56.
+- **Next:** `f_wave_field` T030 tuning (dials plus the `medium` presets), then its one full bench re-run (only `bench.maxpat` open); then the render-trigger check.
+
 ## 2026-10-31 (23:58): Hatch closed out; `f_ks` tier-3 tuning done with no code change
 
 - **Hatch:** README marker dropped (launcher regenerated, `test_launch` 8/8); 8 ms gate kept; v2 helpfile written and Matt checked it in Max; OQ1/3/4/6/7 decided as leaned (spec "Tier-3 decisions"); the reference doc's References gained the coherence-persistence line. Hub Q17 (NaN masking in Hatch E1: no `+1e-7` atan2 bias) probed clean 2026-11-01 on the bench (`.specify/f_tf_hatch/spike/bench_e1_nan_probe.py`, T066).
