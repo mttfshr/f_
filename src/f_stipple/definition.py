@@ -104,6 +104,14 @@ patcher = {
     # Archetype: "source", "processor", or "dual"
     "archetype":           "dual",
 
+    # Output follows the render size (2026-11-01, Matt: render_dim, size_stages only). Live (Matt, 2026-11-01),
+    # unconnected source mode was a solid frame flipping white/black around threshold 0.2; INFERRED cause: the pix
+    # adapted to vs_black, a 1x1 texture, so it drew one constant pixel (not probed). `@adapt 0` plus `r dim` -> the
+    # pix sets the size in both modes; the codebox uses `norm`, not `dim`, so no width/height Params are needed.
+    # A connected texture is assumed render-sized (the 2026-10-30 convention).
+    "pix_attrs":           "@adapt 0 @dim 256 256",
+    "render_dim":          {"size_stages": ["primary"]},
+
     # Bypass drives the codebox Param `bypass_gate` (jsui -> `prepend param bypass_gate` -> pix),
     # not the native @bypass, which skips the shader and flips secondary outlets.  Every outlet
     # mixes to its passthrough, so a bypassed module is a passthrough (Matt, 2026-10-05; plan.md item 10).
@@ -139,3 +147,36 @@ patcher = {
 
     "codebox": CODEBOX,
 }
+
+# Render trigger for source mode (2026-11-01, Matt: gated; per-module raw_lines).
+# Unconnected, vs_inState emits nothing the pix would draw from (f_quasi's bug: it rendered nothing with no input),
+# so source mode needs its own per-frame trigger. `r draw` -> [gate 1 1] -> pix inlet 0. The gate STARTS OPEN
+# (vs_inState's connected flag is a [change], whose first 0 is suppressed, so nothing may arrive at load) and the
+# flag closes it while a texture is patched in: [== 0] turns connected 1 into closed 0. The texture itself then
+# triggers the pix, so a connected stipple renders once per frame, not twice.
+# vs_inState is obj-17 and the pix obj-5 in a built dual module (tests/modules/stipple/test_stipple_static.py checks).
+_PIX = "obj-5"
+_INSTATE = "obj-17"
+
+
+def _obj(i, text, nin, nout, rect):
+    return {"box": {"id": f"obj-raw-{i}", "maxclass": "newobj", "patching_rect": rect, "text": text,
+                    "numinlets": nin, "numoutlets": nout, "outlettype": [""] * nout}}
+
+
+def _line(src, so, dst, di):
+    ref = lambda o: o if isinstance(o, str) else f"obj-raw-{o}"      # int = a raw box, str = a full id
+    return {"patchline": {"source": [ref(src), so], "destination": [ref(dst), di]}}
+
+
+patcher["raw_boxes"] = [
+    _obj(1, "r draw",    0, 1, [1220.0, 120.0, 50.0, 22.0]),
+    _obj(2, "gate 1 1",  2, 1, [1220.0, 220.0, 55.0, 22.0]),    # open at load; control inlet 0, data inlet 1
+    _obj(3, "== 0",      2, 1, [1290.0, 170.0, 40.0, 22.0]),    # connected flag -> 1 when NOTHING is connected
+]
+patcher["raw_lines"] = [
+    _line(_INSTATE, 1, 3, 0),     # vs_inState connected flag -> [== 0]
+    _line(3, 0, 2, 0),            # unconnected (1) opens, connected (0) closes the gate
+    _line(1, 0, 2, 1),            # r draw -> the gate's data inlet
+    _line(2, 0, _PIX, 0),         # gate -> the pix (a bang renders it, as f_quasi's `r draw` does)
+]

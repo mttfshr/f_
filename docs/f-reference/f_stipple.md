@@ -36,7 +36,8 @@ Two orthogonal hash fields — a sin-based directional hash and an arithmetic is
 ```
 in0 (texture + ctrl) → routepass jit_gl_texture jit_matrix
 
-routepass out0 (texture or vs_black) → stipple_pix in0   [render trigger]
+routepass out0 → vs_inState → stipple_pix in0   [texture or vs_black; the render trigger when connected]
+r draw → gate 1 1 → stipple_pix in0   [the render trigger when NOTHING is connected; see below]
 vs_inState outlet 1 (0/1 state) → prepend param src_mode → stipple_pix in0
 
 routepass unmatched → route <params> → live.dials → prepend param <name> → stipple_pix in0
@@ -47,6 +48,10 @@ stipple_pix out2 (displaced source) → out2
 ```
 
 Three outlets: composite (color-graded stipple), stipple mask (raw scalar), and displaced source (input resampled at the displacement-warped UV — always computed regardless of mode).
+
+**Source mode: render trigger and size** (2026-11-01). With nothing on inlet 0, `vs_inState` gives the pix nothing to draw from, so source mode has its own trigger: `r draw` → `gate 1 1` → `stipple_pix` inlet 0. The gate starts open and `vs_inState`'s connected flag closes it through `== 0`, so a connected stipple is driven by its texture alone (one render per frame). The pix is `@adapt 0 @dim 256 256` and takes the render size from Vsynth's `dim` broadcast (`render_dim`, size stage only; the codebox reads `norm`, not `dim`, so there are no width/height Params). Before this, the pix adapted to `vs_black`, a 1x1 texture (inferred, not probed), and unconnected source mode was one constant pixel: a solid frame flipping white/black around `threshold` 0.2. A connected texture is assumed render-sized and is not resampled. Checked offline by Claude (`tests/modules/stipple/test_stipple_static.py` 4/4, drift ok) and live by Matt on 2026-11-01 ("works as expected").
+
+With nothing connected (read from the codebox, not separately observed): `threshold` sets coverage (the hash is 0-1, so values above about 1 are all black), `colorize` has no effect, and the displaced outlet is black.
 
 ## Algorithm
 
