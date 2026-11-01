@@ -105,6 +105,35 @@ def test_density_curve_and_mark_ranges():
     check("built patcher carries the new curve", 0 if "4.0 * max(density - 0.5, 0.0)" in text else 1, 0)
 
 
+def test_softness_zero_is_crisp_one_is_the_old_softness_one():
+    """2026-11-01: feather = [w*max(1-s,0), w*(1+s)], min band aa. Mirrors the codebox lines (smoothstep reversed edges)."""
+    import re
+    src = open(os.path.join(REPO, "src", "f_weave", "definition.py")).read()
+    for line in ("aa = 0.01;", "inner_across = min(weight * max(1.0 - softness, 0.0), outer_across - aa);",
+                 "inner_along  = min(marklen * max(1.0 - softness, 0.0), outer_along - aa);",
+                 "edge_across = smoothstep(outer_across, inner_across, dist_to_line);",
+                 "edge_along  = smoothstep(outer_along,  inner_along,  dist_to_mark);"):
+        check("codebox has: " + line[:40], 0 if line in src else 1, 0)
+
+    def sm(e0, e1, x):
+        t = min(max((x - e0) / (e1 - e0), 0.0), 1.0)
+        return t * t * (3 - 2 * t)
+
+    def edge(w, s, d, aa=0.01):
+        outer = w + s * w
+        inner = min(w * max(1.0 - s, 0.0), outer - aa)
+        return sm(outer, inner, d)
+
+    w = 0.2
+    check("s=0: full inside the edge (d=0.15)", edge(w, 0.0, 0.15), 1.0)
+    check("s=0: zero outside the edge (d=0.21)", edge(w, 0.0, 0.21), 0.0)
+    for d in (0.0, 0.05, 0.15, 0.3, 0.39):
+        old = sm(w * 2.0, 0.0, d)          # the pre-change formula at softness 1: smoothstep(w + 1*w, 0, d)
+        check(f"s=1 equals the old softness-1 falloff at d={d}", edge(w, 1.0, d), old)
+    for d in (0.0, 0.1, 0.3):
+        check(f"s=2 equals the old softness-2 falloff at d={d}", edge(w, 2.0, d), sm(w * 3.0, 0.0, d))
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

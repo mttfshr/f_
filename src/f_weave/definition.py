@@ -36,7 +36,7 @@ patcher = {
         {"name": "marklen",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.3,  "hint": "Mark length along line direction (1.0 = fills the cell, edges at half level)."},
         {"name": "regularity", "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5,  "hint": "1=lines in phase (grid-like), 0=fully varied per-line offset."},
         {"name": "phase",      "type": "float", "min": -1.0, "max": 1.0, "default": 0.0,  "hint": "Animation phase — scrolls marks along line direction."},
-        {"name": "softness",   "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0,  "hint": "Edge softness — expands feather zone beyond mark edge (0=original hard smoothstep)."},
+        {"name": "softness",   "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0,  "hint": "Edge softness — 0=crisp edge at weight/marklen, 1=feather from the line centre out to 2x weight/marklen, >1 feathers further out."},
         {"name": "shape",      "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "Mark profile — 0=flat-top rectangle, 1=raised cosine (calligraphic)."},
         {"name": "field_amount", "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0, "hint": "Vecfield (in1) contribution depth. 1.0 = original implicit depth."},
         {"name": "fix_blend",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "hint": "Orientation mechanism: 0=vector-add+renormalize, 1=true angular blend (atan2-based). Performable — not a fixed choice."},
@@ -131,12 +131,19 @@ line_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity,
 pos = along * density_scale + phase + line_hash;
 dist_to_mark = abs(fract(pos) - 0.5);
 
-// ─── Edge falloff (softness expands outer edge, inner stays at 0) ─────────────
+// ─── Edge falloff ─────────────────────────────────────────────────────────────
+// 2026-11-01 (Matt): softness 0 = crisp, 1 = soft. The feather runs from inner = w*max(1-softness,0) to
+// outer = w*(1+softness): softness >= 1 is the old behaviour exactly (inner 0, outer w*(1+softness)); softness -> 0
+// closes the band onto the hard edge at w. `aa` keeps a minimum band (cell units) so the crisp edge stays
+// anti-aliased and smoothstep never sees equal edges. Applied to both axes (weight across, marklen along).
 
+aa = 0.01;
 outer_across = weight + softness * weight;
+inner_across = min(weight * max(1.0 - softness, 0.0), outer_across - aa);
 outer_along  = marklen + softness * marklen;
-edge_across = smoothstep(outer_across, 0.0, dist_to_line);
-edge_along  = smoothstep(outer_along,  0.0, dist_to_mark);
+inner_along  = min(marklen * max(1.0 - softness, 0.0), outer_along - aa);
+edge_across = smoothstep(outer_across, inner_across, dist_to_line);
+edge_along  = smoothstep(outer_along,  inner_along,  dist_to_mark);
 
 // ─── Shape profile (flat-top → raised cosine) ─────────────────────────────────
 

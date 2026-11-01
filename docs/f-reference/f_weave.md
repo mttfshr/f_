@@ -38,7 +38,7 @@ weave_pix out0 → out0 (texture out)
 | `angle` | 0–1 | 0.0 | Global line orientation (mapped to 0–π) |
 | `weight` | 0–1 | 0.1 | Line thickness — across-line mark extent |
 | `marklen` | 0–1 | 0.3 | Mark length along line direction |
-| `softness` | 0–2 | 0.0 | Edge softness — expands the feather zone beyond the mark edge (0 = the original hard smoothstep). |
+| `softness` | 0–2 | 0.0 | Edge softness — 0 = crisp edge at `weight`/`marklen`, 1 = feather from the line centre out to 2x, >1 feathers further out (2026-11-01; before that 0 was a ramp from the centre to the edge). |
 | `shape` | 0–1 | 0.0 | Mark profile — 0 = flat-top rectangle, 1 = raised cosine (calligraphic). |
 | `regularity` | 0–1 | 0.5 | 1=lines in phase (grid-like), 0=fully varied per-line offset |
 | `phase` | -1–1 | 0.0 | Animation phase — scrolls marks along line direction |
@@ -85,9 +85,11 @@ line_hash = fract(sin(line_idx*127.1)*43758.5453) * (1 - regularity)
 pos = along * density_scale + phase + line_hash
 dist_to_mark = |fract(pos) - 0.5|
 
-// softness expands the feather zone beyond the mark edge; the inner edge stays at weight
+// 2026-11-01: feather band = [w*max(1-softness,0), w*(1+softness)], min band aa = 0.01 (cell units)
 outer_across = weight + softness*weight
+inner_across = min(weight*max(1-softness,0), outer_across - aa)
 outer_along  = marklen + softness*marklen
+inner_along  = min(marklen*max(1-softness,0), outer_along - aa)
 edge = smoothstep(outer_across, 0, dist_to_line) * smoothstep(outer_along, 0, dist_to_mark)
 
 // shape: 0=flat-top rectangle (smoothstep result), 1=raised cosine across the line
