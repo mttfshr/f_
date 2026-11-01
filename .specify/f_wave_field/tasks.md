@@ -57,7 +57,7 @@ tests/modules/wave_field/
 
 ## Phase 2: Tuning (tier 3, Matt)
 
-- [ ] T030 Ranges and defaults for `speed`, `damping`, `dispersion`, `ring`, `edge`, the exciter; output mapping (G2); whether the rings feel right and read as distinct from `f_chladni`, `f_ks`, `f_vf_fluid`; whether the vecfield drives `f_caustic` well.
+- [x] T030 (Matt, 2026-11-01 11:05: "passes with existing defaults"; no change made. His words only: which of the sub-checks below he looked at, e.g. distinctness from `f_chladni`/`f_ks`/`f_vf_fluid` or driving `f_caustic`, is not recorded. The full bench re-run owed after tuning: see plan.md.) Ranges and defaults for `speed`, `damping`, `dispersion`, `ring`, `edge`, the exciter; output mapping (G2); whether the rings feel right and read as distinct from `f_chladni`, `f_ks`, `f_vf_fluid`; whether the vecfield drives `f_caustic` well.
 - [ ] T031 Dial grouping and possible `medium` presets (G4).
 
 ## Phase 3: Docs and registration

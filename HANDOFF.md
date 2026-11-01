@@ -9,7 +9,7 @@
 **Candidates (Matt decides):**
 - `f_weave` identity and character (open, for Matt's thinking time; gate `G-weave-scope`, `ideas/f_weave_scope_questions.md`, 16 questions): what it is for, whether it should actually weave, texture-modulated weight, keep the vecfield inlet or use `f_vf_warp`.
 - Hatch tail (T064): the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail.
-- Tier-3 tuning owed: `f_wave_field` T030 (its full bench re-run is owed once after tuning, with only `bench.maxpat` open). `f_ks` still needs its name (T010) and docs (T040).
+- `f_wave_field` T030 closed 2026-11-01 (Matt: passes with the existing defaults, no change). Open: whether its full bench re-run (owed after tuning, only `bench.maxpat` open) is still wanted when nothing changed. `f_ks` still needs its name (T010) and docs (T040).
 - `vs_black` wording in `skills/vsynth-bpatcher/SKILL.md` and `docs/vsynth-reference/patterns.md` (the skill needs Matt's re-upload and `skills/check.sh stamp`). New fact for that wording: `vs_black` is a 1x1 texture (`vs_render.maxpat`).
 - `f_vf_seeds` cost at 1080p is unmeasured; optional cap on the `f_vf_advect` Trail dial.
 
@@ -26,5 +26,6 @@
 - **Live contract bench:** 09:53 FAIL 1/2 (weave's bypass frame 640x640 against the 64x64 input, the same harness gap as stipple); `f_weave` added to `INPUT_SIZE` in `tests/contracts/bench_modules.py`; rerun GREEN 2/2 (log `tests/logs/20261101-095527-bench.log`, Max 9.2.0).
 - **Correction:** an earlier entry said `f_quasi` has two `vs_inState`; it has one (parsed). Removed from the archived text.
 - **`f_vf_flow` resolved, no change (Matt, 11:03):** flow needs a texture; unconnected rendering is not wanted (the codebox would give a uniform field at `angle`, which is only a second angle dial on weave; the unconnected render was never run live). The render-trigger check is closed. Its README/Launch/help/digest descriptions now read "Texture-driven direction field -- brightness sets the flow angle; ..."; the doc keeps its dual-mode type line and the codebox its header (untouched).
-- **Next:** `f_wave_field` T030 tuning.
+- **`f_wave_field` T030 (Matt, 11:05):** passes with the existing defaults; recorded in its tasks, no code change.
+- **Next:** nothing scheduled; Matt picks from the candidates.
 
