@@ -19,6 +19,7 @@ Live looks, bench runs and other owed actions are in `.specify/plan.md` "Owed to
 | G-edge-wrap | Out-of-range `sample()` wraps in pix-to-pix chains; an explicit clamp protects only two of four edges. Triage `f_vf_advect` (confirmed) and seven more codeboxes, then fix where visible. Old ref: "GPU model findings" | Matt | 2026-10-20 | triage run |
 | G-helpfiles | Content audit found 13 non-clean helpfiles (worst `f_sirds`, `f_vf_vorticity`, `f_vf_glow`); rewrites deliberately not started. `ideas/f_helpfile_content_audit_2026-10-13.md` | Matt | 2026-10-13 | Matt says go |
 | G-drift | Drift ratchet: patchers that still don't reproduce from `definition.py` (`f_masonry`, `f_texrouter`, the hand-built audio patchers, `f_modules`, `f_util_matrix_2`, `f_util_profile`). Also Matt's look at the 10 layout-pass modules. Old ref: Still open 3, 6 | Matt | 2026-09-24 | list shrinks; `tests/build/drift_baseline.json` |
+| G-weave-scope | Does `f_weave` offer enough beyond "straight marks + warp"? Chiefly: keep or retire the vecfield inlet (and `field_amount`, `fix_blend`) in favor of `f_vf_warp`; plus sharpness, scalar precision at density 64. Holds nothing; the module works as built. `ideas/f_weave_scope_questions.md` | Matt | 2026-11-01 | Matt decides whether the vecfield inlet stays |
 
 ## Parked (a tripwire reopens it)
 

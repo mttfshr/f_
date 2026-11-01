@@ -8,6 +8,7 @@
 
 **Candidates (Matt decides):**
 - Render-trigger check, remaining: `f_vf_flow` (same `dual` wiring and the same unconnected-use doc claim; apply the `f_stipple` pattern, design check first; notes in the latest entry).
+- `f_weave` scope questions (open, for Matt's thinking time; gate `G-weave-scope`, `ideas/f_weave_scope_questions.md`): keep the vecfield inlet or use `f_vf_warp`.
 - Hatch tail (T064): the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail.
 - Tier-3 tuning owed: `f_wave_field` T030 (its full bench re-run is owed once after tuning, with only `bench.maxpat` open). `f_ks` still needs its name (T010) and docs (T040).
 - `vs_black` wording in `skills/vsynth-bpatcher/SKILL.md` and `docs/vsynth-reference/patterns.md` (the skill needs Matt's re-upload and `skills/check.sh stamp`). New fact for that wording: `vs_black` is a 1x1 texture (`vs_render.maxpat`).
