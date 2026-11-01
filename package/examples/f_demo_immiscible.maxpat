@@ -9,7 +9,7 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 905.0, 95.0, 1286.0, 859.0 ],
+        "rect": [ 408.0, 95.0, 1286.0, 859.0 ],
         "boxes": [
             {
                 "box": {
@@ -414,8 +414,6 @@
                     "outlettype": [ "" ],
                     "patching_rect": [ 26.0, 552.0, 138.0, 35.0 ],
                     "priority": {
-                        "vs_wfg_polarizer[1]::pm_range": -1,
-                        "vs_wfg_polarizer[1]::lock_freq": -1,
                         "vs_lfo::lfo_freq_range": -1,
                         "vs_wfg_polarizer::pm_range": -1,
                         "vs_wfg_polarizer::lock_freq": -1
