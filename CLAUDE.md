@@ -13,10 +13,19 @@ Neither of us can see token usage, so the session is paced by things we can both
 - **No test or bench runs without asking.** The exception is one named test for the thing just changed. Always `-q`: `tests/run.sh -q`, `tests/bench.sh --changed -q`. No re-runs after doc-only edits.
 - **No polling loops.** Start a long run and ask Matt to say when it is done.
 - **State lives in the repo, not the chat:** `.specify/<module>/tasks.md` (the record), `HANDOFF.md` (START HERE block plus the latest entry only; older entries are in `HANDOFF_ARCHIVE.md`), and a commit at every checkpoint. A fresh session reads `CLAUDE.md`, `HANDOFF.md`, `.specify/plan.md` (one-page focus) and `.specify/gates.md`. `README.md` is not required: read its Patches table only when a task needs a module's status.
-- **Record-keeping:** `plan.md` is orientation only (Active, Next, Owed to Matt): no history and no per-module detail, which belong in tasks.md, `gates.md` and git. `gates.md` holds every blocked or parked thing with who decides and a tripwire; when an idea, result or decision lands, scan the tripwires and say which gate it touches. At session end: update the START HERE block and the gates rows touched, keep the new HANDOFF entry under about 15 lines, put narrative in the commit message, and move older entries to the archive.
+- **Record-keeping:** `plan.md` is orientation only (Active, Next, Owed to Matt): no history and no per-module detail, which belong in tasks.md, `gates.md` and git. `gates.md` holds every blocked or parked thing with who decides and a tripwire; when an idea, result or decision lands, scan the tripwires and say which gate it touches. At session end: update the START HERE block and the gates rows touched, keep the new HANDOFF entry under about 15 lines, put narrative in the commit message, and move older entries to the archive. Before the last commit, reconcile claims per the Claims section, and with Matt's go run `tests/run.sh -q tests/build/test_gates.py`.
 - **Modules in `.specify/paused/` are excluded from analysis and planning.** They're paused for a reason; don't treat them as blockers, candidates, or examples when scoping a spike or feature elsewhere in the library. If a paused module's own resumption is genuinely in scope, that's a separate, explicit decision — not something to fold into unrelated planning (2026-10-11).
 - **Commits:** a plain message is fine for files Claude did not work on (a save checkpoint). Chain a commit to the edit that precedes it, so a failed edit cannot be committed.
 - **Asks are clearly delineated.** When a reply mixes assessment with requests for Matt's input (something to do, decide, or test), put the asks in their own labeled section, one per item, separate from the assessment. Mixed replies make it impossible for him to keep track of what he is supposed to be doing (2026-10-29).
+
+## Claims
+
+Added 2026-11-01, after a workstream was reported closed while its gate row was still listed, and a "dead binding" was repeated from a task note without opening the file.
+
+- **Cite the source.** A status claim (closed, done, passing, built, benched, unblocked, decided) names its source in the same message: a ticked task ID, a log path, a commit hash, or a gates row. If the source was not opened this session, say "per the docs" or "not verified".
+- **Reconcile before closing.** Before saying a workstream is closed, or ending a session, grep `.specify/gates.md`, `.specify/plan.md` and the module's `tasks.md` for it and reconcile all three. `tests/build/test_gates.py` flags a Waiting gate whose cited tasks are all ticked, or that cites a task or path that does not exist; it cannot see rows that cite no task ids, so the grep is still required.
+- **Inferred is not verified.** Anything worked out instead of observed (a size from a failing shape, a cause from reading code) is labelled as inferred until a run or a live look confirms it.
+- **Records say who observed what:** offline by Claude, or live by Matt, with the date.
 
 ## Repo map
 
