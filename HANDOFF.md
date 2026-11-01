@@ -19,7 +19,7 @@
 
 ## 2026-11-01 (09:55): `f_weave` rebuilt: unconnected lines, three inlets, packing, crisp softness
 
-- **Commits (f_):** a5c9022 (dual: straight lines at `angle` unconnected, render size), 6106fb7 (`density` to 64 cells above 0.5, `weight`/`marklen` 0-1), 4451e2f (`softness` 0 crisp, 1 = old softness 1), then the inlet commit. Matt live: density/weight/marklen "much better"; all three inlets work. Softness crisp look not explicitly confirmed.
+- **Commits (f_):** a5c9022 (dual: straight lines at `angle` unconnected, render size), 6106fb7 (`density` to 64 cells above 0.5, `weight`/`marklen` 0-1), 4451e2f (`softness` 0 crisp, 1 = old softness 1), then the inlet commit. Matt live: density/weight/marklen "much better"; all three inlets work. Softness crisp look confirmed live (Matt, 09:58).
 - **Final shape:** `processor` + `driving_inlet`, `mod_inlets` across (inlet 0, `in1`, flag `src_potential`, also tints), along (inlet 1, `in2`, `src_along`, new), vecfield (inlet 2, `in3`, `src_field`). The `dual` pieces (`obj-17`, `obj-18`, `src_mode`) are gone; the gated `r draw` is keyed on inlet 0's `vs_inState` (`obj-101`). Nothing connected: straight lines at `angle`. The vecfield steers only axes a scalar has not replaced (with 0 and 1 both connected it does nothing: by design, Matt saw it).
 - **Wiring changed:** patches that fed weave a vecfield on inlet 0 and a scalar on inlet 1 need rewiring. Docs/help/README updated (`f_vf_flow`, `f_vf_potential` help point at the new inlets).
 - **Checks:** `tests/modules/weave/test_weave_static.py` 7/7 (trigger, flags, codebox reads, density curve, softness), full offline suite green 66 files, `drift -v f_weave` ok (Claude, offline).
