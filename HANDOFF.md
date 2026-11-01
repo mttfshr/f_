@@ -1,6 +1,6 @@
 # HANDOFF
 
-## START HERE (2026-10-31)
+## START HERE (2026-11-01)
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 

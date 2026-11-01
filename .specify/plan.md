@@ -1,6 +1,6 @@
 # f_ — Focus
 
-_Rewritten 2026-10-31._ Orientation only: what is Active, what is Next, what is owed to Matt. Blocked and parked things are in `.specify/gates.md`. Per-module detail is in `.specify/<module>/tasks.md` and `docs/f-reference/`. Session state is in `HANDOFF.md` (START HERE block). The previous full plan (resolved history, "Still open" 1-14, workstream prose) is in git: `git show 76c2ab8:.specify/plan.md`.
+_Rewritten 2026-10-31, updated 2026-11-01._ Orientation only: what is Active, what is Next, what is owed to Matt. Blocked and parked things are in `.specify/gates.md`. Per-module detail is in `.specify/<module>/tasks.md` and `docs/f-reference/`. Session state is in `HANDOFF.md` (START HERE block). The previous full plan (resolved history, "Still open" 1-14, workstream prose) is in git: `git show 76c2ab8:.specify/plan.md`.
 
 ## Active
 
@@ -13,7 +13,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 ## Next (Claude's lean; Matt decides)
 
 1. Check `f_stipple`, `f_weave`, `f_vf_flow` for the `f_quasi` "draws nothing unconnected" bug.
-2. Close Hatch.
+2. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
 3. Tier-3 tuning of `f_wave_field` (built; its full bench re-run is owed once, after tuning). `f_ks` tuning is done 2026-10-31 (map, defaults and ranges unchanged); its name (T010) and docs (T040) remain.
 4. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 
