@@ -233,3 +233,4 @@ zero-tensor guard, since axis and coherence are ratios).
 - `build/spec.md` ("render_dim") and `docs/f-reference/f_wc.md` - the Vsynth `r dim` pattern.
 - `docs/f-reference/f_tf_tensormap.md`, `f_tf_smooth.md` - the upstream modules.
 - Cabral and Leedom 1993, "Imaging vector fields using line integral convolution" - the technique.
+- Coherence as direction persistence (the scattered step that turns lost direction into grain) is an original derivation (spec OQ1), not from an outside source.

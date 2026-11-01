@@ -269,3 +269,12 @@ Any of them may return in a later version once the streamline field is trusted.
   taper or a hard cutoff? Tier 3. (`line = 1` hardens the edge but keeps the cone.)
 - **OQ5 — Fallback if the whole approach fails the look:** seeds with a per-seed tensor
   read (`f_vf_seeds` `axis_mode`), see `plan.md` § Out of this plan.
+
+### Tier-3 decisions (2026-10-31, Matt)
+
+- **OQ1:** decided. Keep exponent 0.5; no `persist` dial; Coh Floor is the user-facing lever.
+- **OQ3:** kernel decided: box. Cosine falloff deferred until a look asks for it.
+- **OQ4:** decided. Keep outlet 1 (the field without the Line style); documented in the helpfile.
+- **OQ6:** dropped as a separate mode: the stroke-texture inlet at Density 1 gives the dense look.
+- **OQ7:** deferred. The cone at mid coherence reads as "direction uncertain here"; revisit if a look wants a taper.
+- **OQ5:** moot (the approach passed its looks).

@@ -44,7 +44,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "Tensor Hatch",
+     "text": "Hatch",
      "fontsize": 36.0,
      "varname": "autohelp_top_digest[4]"
     }
@@ -74,7 +74,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "Orientation-committed hatching: dashes follow the Tensor Map's edges and commit on coherence \u2014 strokes to dots where the direction is unsure",
+     "text": "Streamline renderer: strokes follow the tensor axis, lengthen where coherence is high, grain where it is low",
      "fontsize": 14.0,
      "linecount": 2,
      "varname": "autohelp_top_digest[3]"
@@ -90,7 +90,7 @@
       15.0,
       150.0,
       270.0,
-      204.0
+      187.0
      ],
      "fontface": 0,
      "fontname": "Ableton Sans Light",
@@ -105,9 +105,9 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\ndensity [0 \u2013 1]\nweight [0 \u2013 0.5]\nsoftness [0 \u2013 0.49]\nelongation [0 \u2013 8]\nstrength [1 \u2013 1000]\ncoherence_gate [0 \u2013 1]\nangle_offset [-1 \u2013 1]\nphase [-1 \u2013 1]\nregularity [0 \u2013 1]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nreach [0 \u2013 1]\ngrain [0 \u2013 1]\ndensity [0 \u2013 1]\ncontrast [0 \u2013 1]\nline_hard [0 \u2013 1]\nstructure_floor [0 \u2013 1]\nangle_offset [-1 \u2013 1]\ncoh_floor [0 \u2013 1]\nbypass [0 / 1]",
      "fontsize": 12.0,
-     "linecount": 12
+     "linecount": 11
     }
    },
    {
@@ -118,9 +118,9 @@
      "numoutlets": 0,
      "patching_rect": [
       15.0,
-      374.0,
+      357.0,
       270.0,
-      120.0
+      200.0
      ],
      "fontface": 0,
      "fontname": "Ableton Sans Light",
@@ -135,9 +135,9 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "References\n\nDigital engraving: Ostromoukhov (1999); the\nper-pixel COMMIT (round to dots at low\ncoherence) is our tensor-native addition.\nMark mechanics inherit f_weave's distance-\nfield idiom.\n\nSee docs/f-reference/f_tf_hatch.md.",
+     "text": "References\n\nLine integral convolution: Cabral &\nLeedom (1993), \"Imaging vector fields\nusing line integral convolution\".\n\nAxis and coherence decode: the f_tf_glyph\nidiom (in-repo, ADR-2).\n\nCoherence as direction persistence (the\nscatter that turns lost direction into\ngrain): derived in development, not from\nan outside source.\n\nSee docs/f-reference/f_tf_hatch.md.",
      "fontsize": 12.0,
-     "linecount": 9
+     "linecount": 15
     }
    },
    {
@@ -159,7 +159,7 @@
      "id": "d-4",
      "maxclass": "bpatcher",
      "name": "f_tf_hatch.maxpat",
-     "numinlets": 1,
+     "numinlets": 2,
      "numoutlets": 2,
      "outlettype": [
       "jit_gl_texture",
@@ -168,8 +168,8 @@
      "patching_rect": [
       338.0,
       24.0,
-      190.0,
-      244.0
+      191.0,
+      152.0
      ],
      "bgmode": 1,
      "border": 1,
@@ -198,7 +198,7 @@
      ],
      "patching_rect": [
       338.0,
-      288.0,
+      196.0,
       236.0,
       249.0
      ],
@@ -223,10 +223,10 @@
      "numinlets": 1,
      "numoutlets": 0,
      "patching_rect": [
-      500.0,
-      288.0,
-      210.0,
-      51.0
+      545.0,
+      24.0,
+      215.0,
+      66.0
      ],
      "fontface": 0,
      "fontname": "Ableton Sans Light",
@@ -237,9 +237,35 @@
       0.0
      ],
      "bubble": 1,
-     "text": "Input: Tensor Map outlet 0. commit rides\nthe knee; density is the pitch dial.",
+     "text": "In 0: tensor (f_tf_tensormap outlet 0,\nsmoothed upstream by f_tf_smooth).\nIn 1 (optional): stroke texture; left\nunconnected = the built-in blobs.",
      "fontsize": 12.0,
-     "linecount": 2
+     "linecount": 4
+    }
+   },
+   {
+    "box": {
+     "id": "d-10",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      590.0,
+      196.0,
+      175.0,
+      66.0
+     ],
+     "fontface": 0,
+     "fontname": "Ableton Sans Light",
+     "bgcolor": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "bubble": 1,
+     "text": "Needs a running Vsynth render: the\noutput follows its size.\nOut 0: streaks. Out 1: the same\nfield without the Line style.",
+     "fontsize": 12.0,
+     "linecount": 4
     }
    }
   ],
