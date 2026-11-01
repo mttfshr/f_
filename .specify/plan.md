@@ -14,12 +14,12 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 1. Check `f_stipple`, `f_weave`, `f_vf_flow` for the `f_quasi` "draws nothing unconnected" bug.
 2. Close Hatch.
-3. Tier-3 tuning of `f_ks` and `f_wave_field`: both are built and benched; tuning and docs/registration remain.
+3. Tier-3 tuning of `f_wave_field` (built; its full bench re-run is owed once, after tuning). `f_ks` tuning is done 2026-10-31 (map, defaults and ranges unchanged); its name (T010) and docs (T040) remain.
 4. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 
 ## Owed to Matt
 
-- **Runs and looks:** live check of the three render-trigger suspects; `f_ks` T030 and `f_wave_field` T030 tuning looks (`.specify/f_ks/tasks.md`, `.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Runs and looks:** live check of the three render-trigger suspects; `f_wave_field` T030 tuning look (`.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).
 
