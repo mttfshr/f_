@@ -30,10 +30,10 @@ patcher = {
     ],
 
     "params": [
-        {"name": "density",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5,  "hint": "Line spacing and mark frequency (log-mapped)."},
+        {"name": "density",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5,  "hint": "Line spacing and mark frequency (log-mapped; up to 64 cells across, 2026-11-01)."},
         {"name": "angle",      "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "Global line orientation (0-1 maps to 0-π)."},
-        {"name": "weight",     "type": "float", "min": 0.0,  "max": 0.5, "default": 0.1,  "hint": "Line thickness — across-line mark extent."},
-        {"name": "marklen",    "type": "float", "min": 0.0,  "max": 0.5, "default": 0.3,  "hint": "Mark length along line direction."},
+        {"name": "weight",     "type": "float", "min": 0.0,  "max": 1.0, "default": 0.1,  "hint": "Line thickness — across-line mark extent (1.0 = fills the cell, edges at half level)."},
+        {"name": "marklen",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.3,  "hint": "Mark length along line direction (1.0 = fills the cell, edges at half level)."},
         {"name": "regularity", "type": "float", "min": 0.0,  "max": 1.0, "default": 0.5,  "hint": "1=lines in phase (grid-like), 0=fully varied per-line offset."},
         {"name": "phase",      "type": "float", "min": -1.0, "max": 1.0, "default": 0.0,  "hint": "Animation phase — scrolls marks along line direction."},
         {"name": "softness",   "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0,  "hint": "Edge softness — expands feather zone beyond mark edge (0=original hard smoothstep)."},
@@ -115,7 +115,10 @@ across = mix(across_rot, across_pot, src_potential);
 
 // ─── Density scale (log-mapped) ───────────────────────────────────────────────
 
-density_scale = pow(2.0, density * 5.0 - 1.0);
+// 2026-11-01 (Matt): top end extended from 16 to 64 cells across so the frame can be packed. Below density 0.5 the
+// curve is unchanged (exponent 5d-1, 0.5..2.8 cells; default 0.5 untouched); above 0.5 it steepens (9 per unit) to
+// reach exponent 6 (64) at density 1.0. Saved density values above 0.5 now read denser than before.
+density_scale = pow(2.0, density * 5.0 - 1.0 + 4.0 * max(density - 0.5, 0.0));
 
 // ─── Distance to nearest line ─────────────────────────────────────────────────
 

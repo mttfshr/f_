@@ -105,7 +105,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 0.5]\nmarklen [0 \u2013 0.5]\nregularity [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nshape [0 \u2013 1]\nfield_amount [0 \u2013 2]\nfix_blend [0 \u2013 1]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 1]\nmarklen [0 \u2013 1]\nregularity [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nshape [0 \u2013 1]\nfield_amount [0 \u2013 2]\nfix_blend [0 \u2013 1]\nbypass [0 / 1]",
 					"fontsize": 12.0,
 					"linecount": 13
 				}

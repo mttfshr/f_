@@ -34,10 +34,10 @@ weave_pix out0 → out0 (texture out)
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `density` | 0–1 | 0.5 | Line spacing and mark frequency (log-mapped: `pow(2, density*5-1)`) |
+| `density` | 0–1 | 0.5 | Line spacing and mark frequency (log-mapped: `pow(2, density*5 - 1 + 4*max(density-0.5, 0))`; unchanged up to 0.5, 64 cells across at 1.0) |
 | `angle` | 0–1 | 0.0 | Global line orientation (mapped to 0–π) |
-| `weight` | 0–0.5 | 0.1 | Line thickness — across-line mark extent |
-| `marklen` | 0–0.5 | 0.3 | Mark length along line direction |
+| `weight` | 0–1 | 0.1 | Line thickness — across-line mark extent |
+| `marklen` | 0–1 | 0.3 | Mark length along line direction |
 | `softness` | 0–2 | 0.0 | Edge softness — expands the feather zone beyond the mark edge (0 = the original hard smoothstep). |
 | `shape` | 0–1 | 0.0 | Mark profile — 0 = flat-top rectangle, 1 = raised cosine (calligraphic). |
 | `regularity` | 0–1 | 0.5 | 1=lines in phase (grid-like), 0=fully varied per-line offset |
@@ -77,7 +77,7 @@ along      = uv.x*(-sn) + uv.y*cs
 across_pot = sample(potential, uv).x
 across = mix(across_rot, across_pot, src_potential)
 
-density_scale = pow(2, density*5 - 1)
+density_scale = pow(2, density*5 - 1 + 4*max(density-0.5, 0))   // 2026-11-01: top end 16 -> 64 cells
 dist_to_line = |fract(across * density_scale) - 0.5|
 
 line_idx  = floor(across * density_scale)          // hash seed only, NOT grid identity

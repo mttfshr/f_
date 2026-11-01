@@ -90,6 +90,21 @@ def test_output_follows_the_render_size():
     check("loadbang -> s trig_res (Vsynth re-sends the size)", 0 if trig and any(d[0] == trig[0] for _, d in lines) else 1, 0)
 
 
+def test_density_curve_and_mark_ranges():
+    """2026-11-01: density tops out at 64 cells across (was 16) with the low end untouched; weight / marklen reach 1.0."""
+    import re
+    src = open(os.path.join(REPO, "src", "f_weave", "definition.py")).read()
+    m = re.search(r"density_scale = pow\(2\.0, (.*)\);", src)
+    assert m, "density_scale line not found"
+    curve = lambda density: 2.0 ** eval(m.group(1).replace("max(", "max(").replace("density", repr(density)))
+    check("density 0.0 unchanged (0.5 cells)", curve(0.0), 0.5)
+    check("density 0.5 unchanged (default, 2^1.5 cells)", curve(0.5), 2.0 ** 1.5)
+    check("density 1.0 -> 64 cells", curve(1.0), 64.0)
+    d = json.load(open(os.path.join(REPO, "package", "patchers", "f_weave.maxpat")))["patcher"]
+    text = json.dumps(d)
+    check("built patcher carries the new curve", 0 if "4.0 * max(density - 0.5, 0.0)" in text else 1, 0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))
