@@ -6,7 +6,7 @@ _Rewritten 2026-10-31._ Orientation only: what is Active, what is Next, what is 
 
 1. **Record-keeping.** HANDOFF trimmed (older entries in `HANDOFF_ARCHIVE.md`), this focus doc and `gates.md` written 2026-10-31. Next: use it for a few sessions and measure the startup read; add per-workstream blocks and a generated survey only if the gates file isn't enough.
 2. **`f_modules` menu redesign** (Matt's, in progress). See `G-menu`.
-3. **`f_tf_hatch` close-out.** v2 is built and benched; open: README ⚠, v1 helpfile, 8 ms gate. See `G-hatch`.
+3. **`f_tf_hatch` close-out.** v2 is built and benched; open: v1 helpfile, demo-patch check, tier-3 questions to record. See `G-hatch`.
 
 Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), and the `f_vf_advect` Trail rework.
 
@@ -19,8 +19,8 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
-- **Runs and looks:**  live check of the three render-trigger suspects; `f_ks` T030 and `f_wave_field` T030 tuning looks (`.specify/f_ks/tasks.md`, `.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
-- **Decisions:** Hatch T051 and T061; cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
+- **Runs and looks:** live check of the three render-trigger suspects; `f_ks` T030 and `f_wave_field` T030 tuning looks (`.specify/f_ks/tasks.md`, `.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).
 
 ## Conventions in force
