@@ -12,10 +12,15 @@ Neither of us can see token usage, so the session is paced by things we can both
 - **Count tool calls.** Suggest a new session after each commit checkpoint, or around 25-30 tool calls, whichever comes first.
 - **No test or bench runs without asking.** The exception is one named test for the thing just changed. Always `-q`: `tests/run.sh -q`, `tests/bench.sh --changed -q`. No re-runs after doc-only edits.
 - **No polling loops.** Start a long run and ask Matt to say when it is done.
-- **State lives in the repo, not the chat:** `.specify/<module>/tasks.md` (the record), `HANDOFF.md` (a short scratch note), and a commit at every checkpoint. A fresh session starts by reading `README.md`, `HANDOFF.md` and `.specify/plan.md`.
+- **State lives in the repo, not the chat:** `.specify/<module>/tasks.md` (the record), `HANDOFF.md` (START HERE block plus the latest entry only; older entries are in `HANDOFF_ARCHIVE.md`), and a commit at every checkpoint. A fresh session reads `CLAUDE.md`, `HANDOFF.md`, `.specify/plan.md` (one-page focus) and `.specify/gates.md`. `README.md` is not required: read its Patches table only when a task needs a module's status.
+- **Record-keeping:** `plan.md` is orientation only (Active, Next, Owed to Matt): no history and no per-module detail, which belong in tasks.md, `gates.md` and git. `gates.md` holds every blocked or parked thing with who decides and a tripwire; when an idea, result or decision lands, scan the tripwires and say which gate it touches. At session end: update the START HERE block and the gates rows touched, keep the new HANDOFF entry under about 15 lines, put narrative in the commit message, and move older entries to the archive.
 - **Modules in `.specify/paused/` are excluded from analysis and planning.** They're paused for a reason; don't treat them as blockers, candidates, or examples when scoping a spike or feature elsewhere in the library. If a paused module's own resumption is genuinely in scope, that's a separate, explicit decision — not something to fold into unrelated planning (2026-10-11).
 - **Commits:** a plain message is fine for files Claude did not work on (a save checkpoint). Chain a commit to the edit that precedes it, so a failed edit cannot be committed.
 - **Asks are clearly delineated.** When a reply mixes assessment with requests for Matt's input (something to do, decide, or test), put the asks in their own labeled section, one per item, separate from the assessment. Mixed replies make it impossible for him to keep track of what he is supposed to be doing (2026-10-29).
+
+## Repo map
+
+`src/<module>/` (`definition.py` + `codebox_*.gen`) → `build/build_patcher.py` → `package/patchers/` (the installable Max package). Tests are in `tests/` (math mirrors in `tests/modules/<m>/`, the Max bench via `tests/bench.sh`, contracts in `tests/contracts/`). Planning is in `.specify/` (specs and tasks per module, `stable/` and `paused/`) and `ideas/` (`INDEX.md`). Reference docs are in `docs/f-reference/` (`module-inventory.md` is the one-line-per-module map). Skills are in `skills/`.
 
 ## Editing the README Patches table
 

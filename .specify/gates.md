@@ -1,0 +1,45 @@
+# Gates
+
+_Created 2026-10-31 from the 2026-10-11 gates digest, `.specify/plan.md` (as of commit 76c2ab8) and a check of each item against the repo._
+
+One row per thing that is blocked, waiting on a decision, or parked on purpose. **Waiting needs a decider; Parked needs a tripwire** (an observable fact that would clear or reopen it). When an idea, result or decision lands, scan the Clears-when column and say which row it touches. "Old ref" points into the pre-2026-10-31 plan: `git show 76c2ab8:.specify/plan.md`.
+
+Live looks, bench runs and other owed actions are in `.specify/plan.md` "Owed to Matt", not here. This file is for open questions.
+
+## Waiting (a decision is needed)
+
+| ID | Question, and what it holds | Decider | Since | Clears when |
+|---|---|---|---|---|
+| G-audio | Are `f_a_*` modules part of the library: sibling family, an audio archetype in the builder, or control-rate bridges only? Also: perform inside Vsynth or standalone, stay in this repo, appear in the menu? Holds `f_a_purr` (T026, T028), `f_a_ripple`, `f_a_decorrelate` (its build script lives outside the repo), `f_chladni_audio` (T123). Old ref: Still open 1 | Matt | 2026-10-18 | Matt answers the three questions, or a third hand-built audio module shows repeated cost (then reconsider the archetype) |
+| G-packaging | Release readiness: Kevin's answers (does paid work count, his Max/Vsynth versions), `icon.png`, install test of a release zip, `max_version_min`, license wording review (T012), first tag. Holds any release. Old ref: Still open 4; `.specify/packaging/tasks.md` | Matt, Kevin (external) | 2026-10-01 | Kevin replies, or Matt wants a first release |
+| G-tensor-t3 | Tier-3 gates for the tensor consumers: smooth `release` default, glyph variant menu, sharpen dial mapping and name, aniso_blur kernel family, hatch commit curve (hub Q16/Q17). Holds the README ⚠ on five `f_tf_*` rows. Old ref: Still open 9; `ideas/f_tensorfield.md` | Matt | 2026-10-17 | Matt's live looks |
+| G-hatch | Close Hatch: README ⚠ (T051), v1 helpfile (T052), 8 ms texture-mode gate (T061), open tier-3 questions (T065). `.specify/f_tf_hatch/tasks.md` | Matt | 2026-10-30 | Matt decides T051/T061; the helpfile is written |
+| G-ui-density | Direction for UI density / control-surface design (Matt was reviewing Max4Live prior art). Decide together with the tensor family's Phase 2 "performative control surfaces". Holds `f_util_compound_dial`, `mod_depth_ui_density`, `f_util_matrix` refinement | Matt | 2026-09-20 | Matt picks a direction |
+| G-menu | `f_modules` menu redesign (Matt's, in progress). Holds `menu.py` changes, recipe entries for tensor chains. `.specify/f_modules_menu/` | Matt | 2026-10-22 | the redesign lands |
+| G-masonry | `f_masonry` refactor (hand-built UI, still drifts, exempt from `render_dim`, square-output bug at non-square render). It is the only module on the never-regenerate list | Matt | 2026-10-19 | Matt schedules the refactor |
+| G-edge-wrap | Out-of-range `sample()` wraps in pix-to-pix chains; an explicit clamp protects only two of four edges. Triage `f_vf_advect` (confirmed) and seven more codeboxes, then fix where visible. Old ref: "GPU model findings" | Matt | 2026-10-20 | triage run |
+| G-helpfiles | Content audit found 13 non-clean helpfiles (worst `f_sirds`, `f_vf_vorticity`, `f_vf_glow`); rewrites deliberately not started. `ideas/f_helpfile_content_audit_2026-10-13.md` | Matt | 2026-10-13 | Matt says go |
+| G-drift | Drift ratchet: patchers that still don't reproduce from `definition.py` (`f_masonry`, `f_texrouter`, the hand-built audio patchers, `f_modules`, `f_util_matrix_2`, `f_util_profile`). Also Matt's look at the 10 layout-pass modules. Old ref: Still open 3, 6 | Matt | 2026-09-24 | list shrinks; `tests/build/drift_baseline.json` |
+
+## Parked (a tripwire reopens it)
+
+| ID | What is parked, and why | Since | Reopens when |
+|---|---|---|---|
+| P-uv-vecfield | Vecfield-aware `f_mobius` / `f_droste` (carry a piped-through vecfield correctly). Specced; open question: new module vs mode or second outlet. Old ref: Still open 5 | 2026-10-20 | a concrete use case appears |
+| P-cmap | `f_cmap` paused after Matt's first looks. If resumed: Sweep 1.5, Inject 0.1, Decay 1.0, look live first, then helpfile and menu | 2026-10-27 | Matt wants to retry it |
+| P-vf-chroma | `f_vf_chroma` paused mid-retool (shipped v10 misses its goal); direction in `continuity.md` | 2026-10-12 | Matt resumes; the painter-model direction is tried |
+| P-moebius-tiling | `f_poincare`, `f_apollonian`: Möbius composition parity-tracking bug (ADR-8) | 2026-07 | the bug is traced; verified Poincaré arithmetic applied back first |
+| P-focus | `f_focus` shelved: a UI wrapper around one native object | 2026-07-17 | content-driven focus-map blur is wanted, or a concrete gap in the native object appears |
+| P-stereogram | `f_stereogram`: Vsynth render-to-texture limit | | Vsynth removes the limit |
+| P-confinement | Vorticity-confinement fold-in to `f_vf_advect` (reverted; `f_vf_vorticity` itself shipped) | | someone tries a dedicated multi-stage `pix_chain` splitting curl from force |
+| P-pm | `f_a_spectral_ripple` T7b (PM in `pfft~`): un-scoped for v1 (ADR-4) | 2026-10-12 | Matt wants PM / a v2 |
+| P-optflow | `f_vf_optical_flow` rough edges (T024c edge framing, T025 fast motion, T026 confidence outlet) | 2026-07-18 | a real scene needs them |
+| P-tensor-vecfield-ops | One module for tensor or vecfield (`kind` menu vs shared source); `f_vf_temporal_smooth`, `f_vf_mix` tabled | 2026-10-18 | a chain needs a vecfield smooth or mix, or the candidate count justifies sharing |
+| P-mod-textures | Mod-texture assignment convention. `named_mod_textures` T1-T3 passed 2026-09-17; T4-T6 and an unexplained "pix hop" failure remain. Holds `f_util_matrix` | 2026-09-17 | before any `build_patcher.py` change for mod textures |
+| P-mirrors | Tier-1 mirror queue by value: weave, prism, seeds search/render, optical_flow A, B, D, E | 2026-10-20 | a module in the queue is touched |
+| P-web-shim | `exportcode webgl` / `isf` trial ran 2026-10-12 on `f_vf_split` (`scratch/experiments/web_shim_trial/REPORT.md`, uncommitted); no go/no-go | 2026-10-12 | Matt wants a web demo |
+| P-feasibility | `f_loop_to_cycle`, `f_texture_sampler`, `variable_framerate`: GPU-resident frames vs CPU seek. `f_texture_sampler` option A is the feasibility test | | Matt wants any of them |
+| P-bypass-guard | Shader-side bypass guard for heavy modules: no measurable effect so far | 2026-10-13 | a general reason or a real GPU-cost problem appears |
+| P-light-theme | Light Max themes (library is dark-only) | 2026-10-17 | Matt switches Max to a light theme and looks at a few modules |
+| P-entrainment | `f_ganzflicker`, `f_dreamachine`, perception research | | design research only; Matt wants a build |
+| P-taxonomy | Module taxonomy (processor vs self-sufficient generator); `f_weave` left as is | 2026-10-18 | a concrete case needs a fix |
