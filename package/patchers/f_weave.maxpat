@@ -164,7 +164,7 @@
 							},
 							{
 								"box": {
-									"code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam softness(0.0);\nParam shape(0.0);\nParam field_amount(1.0);\nParam fix_blend(0.0);\nParam src_potential(0.0);\nParam bypass(0.0);\n\n// \u2500\u2500\u2500 Orientation (two mechanisms, performable crossfade) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// Resolved 2026-10-13 (Matt), via scratch/experiments/f_weave_orientation_ab/\n// and ideas/f_weave_orientation_blend.md: not a one-time pick between Fix A\n// and Fix B -- both ship as live dials. field_amount=1.0, fix_blend=0.0\n// reproduces this block's original (pre-2026-10-13) behavior exactly.\n\nvx = sample(in1, norm).x - 0.5;\nvy = sample(in1, norm).y - 0.5;\n\nbase_angle = angle * pi;\nbase_cs = cos(base_angle);\nbase_sn = sin(base_angle);\n\n// Mechanism A: vector-add + renormalize, field term scaled by field_amount.\ncsA = base_cs + field_amount * (-vy);\nsnA = base_sn + field_amount * vx;\nmagA = sqrt(csA * csA + snA * snA);\ncsA = csA / max(magA, 0.0001);\nsnA = snA / max(magA, 0.0001);\n\n// Mechanism B: true angular blend. Field angle via atan2 (verified GPU-safe\n// on decoded sampled-texture input, tests/spike_atan2_safety.py), same\n// (cs,sn)-space sign convention as mechanism A's addition direction.\n// Weighted by field_amount (depth) and field magnitude (confidence) so\n// near-zero field falls back to the base angle cleanly.\nfield_mag = sqrt(vx * vx + vy * vy);\nfield_angle = atan2(vx, -vy);\nd_ang = field_angle - base_angle;\nd_ang = d_ang - 2.0 * pi * floor((d_ang + pi) / (2.0 * pi));\nweight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0);\nblend_angle = base_angle + d_ang * weight_b;\ncsB = cos(blend_angle);\nsnB = sin(blend_angle);\n\n// Crossfade A -> B.\ncs = mix(csA, csB, fix_blend);\nsn = mix(snA, snB, fix_blend);\nmag = sqrt(cs * cs + sn * sn);\ncs = cs / max(mag, 0.0001);\nsn = sn / max(mag, 0.0001);\n\nacross_rot = norm.x * cs + norm.y * sn;\nalong      = norm.x * (-sn) + norm.y * cs;\n\n// \u2500\u2500\u2500 Scalar potential override \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nacross_pot = sample(in2, norm).x;\nacross = mix(across_rot, across_pot, src_potential);\n\n// \u2500\u2500\u2500 Density scale (log-mapped) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\n// \u2500\u2500\u2500 Distance to nearest line \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// \u2500\u2500\u2500 Per-line phase offset \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// \u2500\u2500\u2500 Edge falloff (softness expands outer edge, inner stays at 0) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nouter_across = weight + softness * weight;\nouter_along  = marklen + softness * marklen;\nedge_across = smoothstep(outer_across, 0.0, dist_to_line);\nedge_along  = smoothstep(outer_along,  0.0, dist_to_mark);\n\n// \u2500\u2500\u2500 Shape profile (flat-top \u2192 raised cosine) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nprofile = mix(1.0, cos(clamp(dist_to_line / max(weight, 0.0001), 0.0, 1.0) * pi * 0.5), shape);\n\n// \u2500\u2500\u2500 Mark \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nmark = edge_across * edge_along * profile;\n\n// \u2500\u2500\u2500 Output \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ncr = mix(1.0, sample(in2, norm).x, src_potential);\ncg = mix(1.0, sample(in2, norm).y, src_potential);\ncb = mix(1.0, sample(in2, norm).z, src_potential);\n\nout1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
+									"code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam softness(0.0);\nParam shape(0.0);\nParam field_amount(1.0);\nParam fix_blend(0.0);\nParam src_potential(0.0);\nParam src_mode(0.0);\nParam bypass(0.0);\n\n// \u2500\u2500\u2500 Orientation (two mechanisms, performable crossfade) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// Resolved 2026-10-13 (Matt), via scratch/experiments/f_weave_orientation_ab/\n// and ideas/f_weave_orientation_blend.md: not a one-time pick between Fix A\n// and Fix B -- both ship as live dials. field_amount=1.0, fix_blend=0.0\n// reproduces this block's original (pre-2026-10-13) behavior exactly.\n\nvx = sample(in1, norm).x - 0.5;\nvy = sample(in1, norm).y - 0.5;\n\nbase_angle = angle * pi;\nbase_cs = cos(base_angle);\nbase_sn = sin(base_angle);\n\n// src_mode = vs_inState's connected flag for inlet 0 (2026-11-01): 0 = nothing patched in, so no field and the lines\n// stay straight at `angle`. The gate is applied AFTER the sample and only on csA / snA / weight_b: an unconnected\n// inlet reads (0,0,0,1), i.e. (vx, vy) = (-0.5, -0.5), and atan2 below keeps seeing that finite input (atan2(0,0)\n// is the GPU NaN case, so vx / vy are never zeroed themselves). Connected, src_mode = 1 multiplies by exactly 1.\n// Mechanism A: vector-add + renormalize, field term scaled by field_amount.\ncsA = base_cs + field_amount * (-vy) * src_mode;\nsnA = base_sn + field_amount * vx * src_mode;\nmagA = sqrt(csA * csA + snA * snA);\ncsA = csA / max(magA, 0.0001);\nsnA = snA / max(magA, 0.0001);\n\n// Mechanism B: true angular blend. Field angle via atan2 (verified GPU-safe\n// on decoded sampled-texture input, tests/spike_atan2_safety.py), same\n// (cs,sn)-space sign convention as mechanism A's addition direction.\n// Weighted by field_amount (depth) and field magnitude (confidence) so\n// near-zero field falls back to the base angle cleanly.\nfield_mag = sqrt(vx * vx + vy * vy);\nfield_angle = atan2(vx, -vy);\nd_ang = field_angle - base_angle;\nd_ang = d_ang - 2.0 * pi * floor((d_ang + pi) / (2.0 * pi));\nweight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0) * src_mode;\nblend_angle = base_angle + d_ang * weight_b;\ncsB = cos(blend_angle);\nsnB = sin(blend_angle);\n\n// Crossfade A -> B.\ncs = mix(csA, csB, fix_blend);\nsn = mix(snA, snB, fix_blend);\nmag = sqrt(cs * cs + sn * sn);\ncs = cs / max(mag, 0.0001);\nsn = sn / max(mag, 0.0001);\n\nacross_rot = norm.x * cs + norm.y * sn;\nalong      = norm.x * (-sn) + norm.y * cs;\n\n// \u2500\u2500\u2500 Scalar potential override \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nacross_pot = sample(in2, norm).x;\nacross = mix(across_rot, across_pot, src_potential);\n\n// \u2500\u2500\u2500 Density scale (log-mapped) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndensity_scale = pow(2.0, density * 5.0 - 1.0);\n\n// \u2500\u2500\u2500 Distance to nearest line \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// \u2500\u2500\u2500 Per-line phase offset \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// \u2500\u2500\u2500 Edge falloff (softness expands outer edge, inner stays at 0) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nouter_across = weight + softness * weight;\nouter_along  = marklen + softness * marklen;\nedge_across = smoothstep(outer_across, 0.0, dist_to_line);\nedge_along  = smoothstep(outer_along,  0.0, dist_to_mark);\n\n// \u2500\u2500\u2500 Shape profile (flat-top \u2192 raised cosine) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nprofile = mix(1.0, cos(clamp(dist_to_line / max(weight, 0.0001), 0.0, 1.0) * pi * 0.5), shape);\n\n// \u2500\u2500\u2500 Mark \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nmark = edge_across * edge_along * profile;\n\n// \u2500\u2500\u2500 Output \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ncr = mix(1.0, sample(in2, norm).x, src_potential);\ncg = mix(1.0, sample(in2, norm).y, src_potential);\ncb = mix(1.0, sample(in2, norm).z, src_potential);\n\nout1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -244,7 +244,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name weave_pix @type char",
+					"text": "jit.gl.pix vsynth @name weave_pix @adapt 0 @dim 256 256 @type char",
 					"varname": "weave_pix"
 				}
 			},
@@ -541,6 +541,43 @@
 						"parameter_enable": 0
 					},
 					"text": "js moduleSize.js"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-17",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						30.0,
+						120.0,
+						80.0,
+						22.0
+					],
+					"text": "vs_inState"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-18",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						30.0,
+						150.0,
+						145.0,
+						22.0
+					],
+					"text": "prepend param src_mode"
 				}
 			},
 			{
@@ -1685,6 +1722,112 @@
 					],
 					"style": ""
 				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-0",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						742.0,
+						40.0,
+						22.0
+					],
+					"text": "r dim",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-5",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						742.0,
+						60.0,
+						22.0
+					],
+					"text": "loadbang",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-6",
+					"maxclass": "newobj",
+					"patching_rect": [
+						170.0,
+						772.0,
+						70.0,
+						22.0
+					],
+					"text": "s trig_res",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": []
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-1",
+					"maxclass": "newobj",
+					"patching_rect": [
+						770.0,
+						542.0,
+						50.0,
+						22.0
+					],
+					"text": "r draw",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-2",
+					"maxclass": "newobj",
+					"patching_rect": [
+						770.0,
+						642.0,
+						55.0,
+						22.0
+					],
+					"text": "gate 1 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-3",
+					"maxclass": "newobj",
+					"patching_rect": [
+						840.0,
+						592.0,
+						40.0,
+						22.0
+					],
+					"text": "== 0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
 			}
 		],
 		"lines": [
@@ -1704,6 +1847,42 @@
 				"patchline": {
 					"source": [
 						"obj-3",
+						0
+					],
+					"destination": [
+						"obj-17",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						1
+					],
+					"destination": [
+						"obj-18",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-18",
 						0
 					],
 					"destination": [
@@ -2220,6 +2399,78 @@
 				"patchline": {
 					"source": [
 						"obj-48",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-5",
+						0
+					],
+					"destination": [
+						"obj-rd-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						1
+					],
+					"destination": [
+						"obj-raw-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-3",
+						0
+					],
+					"destination": [
+						"obj-raw-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-1",
+						0
+					],
+					"destination": [
+						"obj-raw-2",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-2",
 						0
 					],
 					"destination": [

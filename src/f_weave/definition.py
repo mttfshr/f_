@@ -4,8 +4,15 @@ patcher = {
     "object_name":        "weave_pix",
     "title":              "Weave",
     "signal_type":        "\u2207 in",
-    "archetype":          "processor",
-    "pix_type":           "char",
+    # "dual" (Matt, 2026-11-01): inlet 0 is an OPTIONAL vecfield. Unconnected, weave draws straight lines at `angle`
+    # (src_mode = 0 zeroes the field term in the codebox); connected, the field turns them as before.
+    "archetype":          "dual",
+
+    # Output follows the render size (render_dim, size_stages only; the codebox reads `norm`, not `dim`). Without
+    # `@adapt 0` an unconnected pix adapts to vs_black, a 1x1 texture (inferred; seen on f_stipple). pix_attrs replaces
+    # pix_type, so the old `@type char` is written out here.
+    "pix_attrs":          "@adapt 0 @dim 256 256 @type char",
+    "render_dim":         {"size_stages": ["primary"]},
 
     "presentation_width":  220,
     "presentation_height": 219,
@@ -34,6 +41,7 @@ patcher = {
         {"name": "field_amount", "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0, "hint": "Vecfield (in1) contribution depth. 1.0 = original implicit depth."},
         {"name": "fix_blend",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "hint": "Orientation mechanism: 0=vector-add+renormalize, 1=true angular blend (atan2-based). Performable — not a fixed choice."},
         {"name": "src_potential", "type": "internal"},
+        {"name": "src_mode",      "type": "internal"},   # the dual's connected flag for inlet 0 (vs_inState)
         {"name": "bypass",        "type": "bypass"},
     ],
 
@@ -49,6 +57,7 @@ Param shape(0.0);
 Param field_amount(1.0);
 Param fix_blend(0.0);
 Param src_potential(0.0);
+Param src_mode(0.0);
 Param bypass(0.0);
 
 // ─── Orientation (two mechanisms, performable crossfade) ─────────────────────
@@ -64,9 +73,13 @@ base_angle = angle * pi;
 base_cs = cos(base_angle);
 base_sn = sin(base_angle);
 
+// src_mode = vs_inState's connected flag for inlet 0 (2026-11-01): 0 = nothing patched in, so no field and the lines
+// stay straight at `angle`. The gate is applied AFTER the sample and only on csA / snA / weight_b: an unconnected
+// inlet reads (0,0,0,1), i.e. (vx, vy) = (-0.5, -0.5), and atan2 below keeps seeing that finite input (atan2(0,0)
+// is the GPU NaN case, so vx / vy are never zeroed themselves). Connected, src_mode = 1 multiplies by exactly 1.
 // Mechanism A: vector-add + renormalize, field term scaled by field_amount.
-csA = base_cs + field_amount * (-vy);
-snA = base_sn + field_amount * vx;
+csA = base_cs + field_amount * (-vy) * src_mode;
+snA = base_sn + field_amount * vx * src_mode;
 magA = sqrt(csA * csA + snA * snA);
 csA = csA / max(magA, 0.0001);
 snA = snA / max(magA, 0.0001);
@@ -80,7 +93,7 @@ field_mag = sqrt(vx * vx + vy * vy);
 field_angle = atan2(vx, -vy);
 d_ang = field_angle - base_angle;
 d_ang = d_ang - 2.0 * pi * floor((d_ang + pi) / (2.0 * pi));
-weight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0);
+weight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0) * src_mode;
 blend_angle = base_angle + d_ang * weight_b;
 csB = cos(blend_angle);
 snB = sin(blend_angle);
@@ -139,3 +152,32 @@ cb = mix(1.0, sample(in2, norm).z, src_potential);
 out1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
 """,
 }
+
+
+# Gated source-mode trigger (same pattern as f_stipple, 2026-11-01): with nothing on inlet 0, vs_inState does not make
+# the pix render, so a gated `r draw` does. Connected, the gate is closed and the module renders once per frame as before.
+_PIX = "obj-5"
+_INSTATE = "obj-17"
+
+
+def _obj(i, text, nin, nout, rect):
+    return {"box": {"id": f"obj-raw-{i}", "maxclass": "newobj", "patching_rect": rect, "text": text,
+                    "numinlets": nin, "numoutlets": nout, "outlettype": [""] * nout}}
+
+
+def _line(src, so, dst, di):
+    ref = lambda o: o if isinstance(o, str) else f"obj-raw-{o}"      # int = a raw box, str = a full id
+    return {"patchline": {"source": [ref(src), so], "destination": [ref(dst), di]}}
+
+
+patcher["raw_boxes"] = [
+    _obj(1, "r draw",    0, 1, [1220.0, 120.0, 50.0, 22.0]),
+    _obj(2, "gate 1 1",  2, 1, [1220.0, 220.0, 55.0, 22.0]),    # open at load; control inlet 0, data inlet 1
+    _obj(3, "== 0",      2, 1, [1290.0, 170.0, 40.0, 22.0]),    # connected flag -> 1 when NOTHING is connected
+]
+patcher["raw_lines"] = [
+    _line(_INSTATE, 1, 3, 0),
+    _line(3, 0, 2, 0),
+    _line(1, 0, 2, 1),
+    _line(2, 0, _PIX, 0),
+]
