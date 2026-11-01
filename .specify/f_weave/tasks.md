@@ -196,3 +196,14 @@ out1 = mix(vec(mark, mark, mark, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
   A vs B — atan2 blocker closed 2026-10-12) was resolved 2026-10-13 by
   shipping both dials (`field_amount`/`fix_blend`), leaving no open item; keep it tracked in
   the ideas file until you want it on this queue.
+
+---
+
+## 2026-11-01 (Matt, live)
+
+- [x] T057: Unconnected `f_weave` draws straight lines at `angle` (gated `r draw` trigger, `src_field` gates the field term, `@adapt 0 @dim 256 256` plus `render_dim` size stage). `tests/modules/weave/test_weave_static.py`. Commit a5c9022.
+- [x] T058: Pack more marks: `density` exponent `5d-1+4*max(d-0.5,0)` (64 cells at 1.0, unchanged up to 0.5); `weight` and `marklen` range 0-1. Commit 6106fb7.
+- [x] T059: `softness` 0 = crisp, 1 = old softness 1 (feather `[w*max(1-s,0), w*(1+s)]`, min band 0.01), both axes. Commit 4451e2f.
+- [x] T060: Inlets reordered scalars first and an along inlet added: 0 across (`in1`), 1 along (`in2`), 2 vecfield (`in3`); `processor` + `driving_inlet`. Flags `src_potential`/`src_along`/`src_field`.
+- [ ] T061: Run the live contract bench for weave (ask Matt first); bypass under `driving_inlet` may need `INPUT_SIZE`/`BYPASS_EXPECT` in `tests/contracts/bench_modules.py`.
+- [ ] T062: Matt to confirm the crisp `softness` look live.

@@ -37,7 +37,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_quasi` | Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets |
 | `f_stipple` | 2D hash field stipple texture |
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |
-| `f_weave` | Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets |
+| `f_weave` | Parametric distance-field line texture with per-line phase variation; optional across, along, vecfield inlets |
 
 ### Space & Optics
 
@@ -107,7 +107,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 |---|---|
 | `f_tf_axisflow` | Tensor map axis to a seam-free vecfield: flow along or across image edges |
 | `f_vf_fieldmap` | Scalar texture to vecfield via central difference gradient -- primary source: jit.gl.bfg |
-| `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet |
+| `f_vf_potential` | Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlets |
 | `f_vf_split` | Splits an f_vecfield's X/Y channels to two separate grayscale outlets, unipolar or bipolar |
 
 ### Routing / Mod

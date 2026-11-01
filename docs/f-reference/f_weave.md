@@ -1,6 +1,6 @@
 # f_weave
 
-**Type:** Generator (with optional vecfield + scalar-potential inlets)
+**Type:** Generator (three optional inlets: across scalar, along scalar, vecfield — reordered 2026-11-01)
 **Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. Orientation-blend A/B resolved 2026-10-13 (Matt): not a one-time pick, both mechanisms ship as live `field_amount`/`fix_blend` dials (`ideas/f_weave_orientation_blend.md`). Matt's recorded quality concern is still open (see Notes).
 
 ---
@@ -9,7 +9,7 @@
 
 Parametric line-mark texture generator. Structure is a family of parallel lines running in a direction set by `angle`, with soft marks placed at continuous intervals along each line. Lines are defined as continuous distance fields (`fract`-based), never grid-quantized — this is the key architectural distinction from `f_masonry`: `f_masonry` uses `band_idx`/`slot` as real grid identity (courses and bond), while in `f_weave` the analogous `floor()` term is used *only* as a hash seed for per-line phase variation, never as slot structure. This gives clean UV-transform compatibility (confirmed droste-safe — marks compress toward a Droste singularity without the aliasing `f_masonry`'s grid approach would produce).
 
-Output is luminance (white marks) unless the scalar-potential inlet (in2) is engaged, in which case marks are tinted by that texture's RGB — otherwise color is downstream's job (`f_channel_grader`, colorize elsewhere, etc).
+Output is luminance (white marks) unless the across inlet (inlet 0, `in1`) is engaged, in which case marks are tinted by that texture's RGB — otherwise color is downstream's job (`f_channel_grader`, colorize elsewhere, etc).
 
 **Taxonomy note (carried from HANDOFF):** despite being labeled `archetype: "processor"` in `definition.py`, f_weave is self-sufficient like f_masonry — no real content dependency on a texture inlet, generator behavior. Flagged alongside f_masonry for correction whenever `build_modules.py`'s CATEGORIES get refined.
 
@@ -18,12 +18,16 @@ Output is luminance (white marks) unless the scalar-potential inlet (in2) is eng
 ## Signal Flow
 
 ```
-in0 (texture + ctrl) → routepass jit_gl_texture jit_matrix
-routepass out0 (texture or vs_black) → weave_pix in0   [render trigger]
+inlet 0 (across scalar + control) → routepass jit_gl_texture jit_matrix
+routepass out0 → vs_inState → weave_pix in0 (codebox in1)   [src_potential flag — replaces the across coordinate AND tints color]
 routepass unmatched → route <params> → live.dials → prepend param <name> → weave_pix in0
 
-in1 (vecfield, optional)         → weave_pix in1   [orientation perturbation]
-in2 (scalar potential, optional) → vs_inState → weave_pix in2   [src_potential gate — overrides across-coordinate AND tints color]
+inlet 1 (along scalar, optional) → vs_inState → weave_pix in1 (codebox in2)   [src_along flag — replaces the along coordinate; phase / regularity still apply on top]
+inlet 2 (vecfield, optional)     → vs_inState → weave_pix in2 (codebox in3)   [src_field flag — steers the line orientation; only acts on an axis a scalar has not replaced]
+
+r draw → gate 1 1 → weave_pix in0   [render trigger when inlet 0 is empty; the gate is closed by inlet 0's connected flag]
+weave_pix out0 → out0 (texture out)
+Archetype: processor with driving_inlet (mod_inlets across / along / vecfield). Render size follows the render (render_dim, size_stages only; @adapt 0).
 
 weave_pix out0 → out0 (texture out)
 ```
@@ -102,6 +106,13 @@ out1 = mix(vec(cr*mark, cg*mark, cb*mark, 1), vec(0,0,0,1), bypass)
 ```
 
 ---
+
+## Changes 2026-11-01 (Matt)
+
+- Nothing connected now draws straight lines at `angle` (before, an empty inlet 0 drew nothing: vs_inState does not make an unconnected pix render, the f_quasi bug).
+- Inlets reordered scalars first: 0 across, 1 along (new), 2 vecfield. Saved patches that fed a vecfield to inlet 0 and a scalar to inlet 1 need rewiring.
+- `density` reaches 64 cells across (was 16; unchanged below 0.5). `weight` / `marklen` range 0-1 (1.0 fills the cell, edges at half level).
+- `softness` 0 = crisp edge, 1 = the old softness-1 feather (the old softness 0, a ramp from the line centre, no longer exists; about 0.5 is nearest).
 
 ## Notes — real discrepancy between spec.md and definition.py
 

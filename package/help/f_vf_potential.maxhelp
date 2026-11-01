@@ -236,7 +236,7 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Feed into f_weave's scalar inlet for\ncurved, field-informed isolines.",
+					"text": "Feed into f_weave's across or along inlet for\ncurved, field-informed isolines.",
 					"fontsize": 12.0,
 					"linecount": 2
 				}

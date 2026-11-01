@@ -11,14 +11,14 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-1. Render-trigger check: `f_stipple` done 2026-11-01 (gated `r draw` plus `render_dim` size; Matt live; T044/T045). Left: `f_vf_flow` (same `dual` wiring), then `f_weave` (doc says generator, archetype says processor; decide first).
+1. Render-trigger check: `f_stipple` done 2026-11-01 (gated `r draw` plus `render_dim` size; Matt live; T044/T045). `f_weave` done 2026-11-01 (three optional inlets, unconnected lines; Matt live; its live contract bench not run). Left: `f_vf_flow` (same `dual` wiring).
 2. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
 3. Tier-3 tuning of `f_wave_field` (built; its full bench re-run is owed once, after tuning). `f_ks` tuning is done 2026-10-31 (map, defaults and ranges unchanged); its name (T010) and docs (T040) remain.
 4. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 
 ## Owed to Matt
 
-- **Runs and looks:** live check of the remaining render-trigger suspects (`f_vf_flow`, `f_weave`); `f_wave_field` T030 tuning look (`.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Runs and looks:** live check of the remaining render-trigger suspect (`f_vf_flow`); the `f_weave` live contract bench (ask first); `f_wave_field` T030 tuning look (`.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).
 

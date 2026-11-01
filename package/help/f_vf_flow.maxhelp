@@ -236,7 +236,7 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Designed to feed f_weave in2 or any\nvecfield consumer.",
+					"text": "Designed to feed f_weave in3 or any\nvecfield consumer.",
 					"fontsize": 12.0,
 					"linecount": 2
 				}

@@ -231,7 +231,7 @@ MODULES = {
         n_in=2),
     "f_weave": dict(
         title="Weave",
-        digest="Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
+        digest="Parametric distance-field line texture with per-line phase variation; optional across, along, vecfield inlets",
         recipe="Feed f_vf_flow into in2 and\nf_vf_potential into in3 for field-curved lines.",
         references="References\n\nSee docs/f-reference/f_weave.md and\ndocs/f-reference/discrete_item_conventions.md.",
         n_in=4),

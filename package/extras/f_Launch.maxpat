@@ -789,7 +789,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
+									"text": "Parametric distance-field line texture with per-line phase variation; optional across, along, vecfield inlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -4568,7 +4568,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlet",
+									"text": "Scalar potential-field integrator -- accumulates vecfield magnitude over time; feeds f_weave's scalar inlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

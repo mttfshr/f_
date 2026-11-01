@@ -9,7 +9,7 @@
 
 Scalar potential-field integrator. Takes a vecfield and accumulates its magnitude over time via ping-pong feedback (same two-`jit.gl.pix`-in-one-bpatcher pattern as `f_vf_advect`: an identity `pass` stage holds the previous frame, a `state` stage accumulates). Output is a scalar (grayscale; the internal 0–1 potential times strength, so it can exceed 1) whose level sets (isolines) trace integrated flow — designed to feed directly into `f_weave`'s scalar inlet to produce curved, field-informed isoline texture in place of `f_weave`'s straight-line default.
 
-Typical chain: `f_vf_repulse → f_vf_potential → f_weave` (scalar inlet).
+Typical chain: `f_vf_repulse → f_vf_potential → f_weave` (across or along inlet).
 
 ---
 

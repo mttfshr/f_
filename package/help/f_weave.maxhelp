@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Parametric distance-field line texture with per-line phase variation; optional vecfield + scalar inlets",
+					"text": "Parametric distance-field line texture with per-line phase variation; optional across, along, vecfield inlets",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
@@ -236,7 +236,7 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Feed f_vf_flow into in2 and\nf_vf_potential into in3 for field-curved lines.",
+					"text": "Feed f_vf_potential into in1 (across) and\nf_vf_flow into in3 (vecfield) for field-curved lines.",
 					"fontsize": 12.0,
 					"linecount": 2
 				}

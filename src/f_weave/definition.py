@@ -4,9 +4,11 @@ patcher = {
     "object_name":        "weave_pix",
     "title":              "Weave",
     "signal_type":        "\u2207 in",
-    # "dual" (Matt, 2026-11-01): inlet 0 is an OPTIONAL vecfield. Unconnected, weave draws straight lines at `angle`
-    # (src_mode = 0 zeroes the field term in the codebox); connected, the field turns them as before.
-    "archetype":          "dual",
+    # Three optional inlets, scalars first (Matt, 2026-11-01): 0 = across scalar, 1 = along scalar, 2 = vecfield. All
+    # optional: with nothing connected weave draws straight lines at `angle`. driving_inlet makes mod_inlets[0] share
+    # outer inlet 0 (texture + control); each inlet has its own vs_inState and connected flag (state_param).
+    "archetype":          "processor",
+    "driving_inlet":      True,
 
     # Output follows the render size (render_dim, size_stages only; the codebox reads `norm`, not `dim`). Without
     # `@adapt 0` an unconnected pix adapts to vs_black, a 1x1 texture (inferred; seen on f_stipple). pix_attrs replaces
@@ -22,11 +24,9 @@ patcher = {
     ],
 
     "mod_inlets": [
-        {
-            "label":       "scalar in",
-            "vs_instate":  True,
-            "state_param": "src_potential",
-        },
+        {"label": "across in",   "vs_instate": True, "state_param": "src_potential"},   # in1: replaces across; tints
+        {"label": "along in",    "vs_instate": True, "state_param": "src_along"},       # in2: replaces along
+        {"label": "vecfield in", "vs_instate": True, "state_param": "src_field"},       # in3: steers orientation
     ],
 
     "params": [
@@ -38,10 +38,11 @@ patcher = {
         {"name": "phase",      "type": "float", "min": -1.0, "max": 1.0, "default": 0.0,  "hint": "Animation phase — scrolls marks along line direction."},
         {"name": "softness",   "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0,  "hint": "Edge softness — 0=crisp edge at weight/marklen, 1=feather from the line centre out to 2x weight/marklen, >1 feathers further out."},
         {"name": "shape",      "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "Mark profile — 0=flat-top rectangle, 1=raised cosine (calligraphic)."},
-        {"name": "field_amount", "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0, "hint": "Vecfield (in1) contribution depth. 1.0 = original implicit depth."},
+        {"name": "field_amount", "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0, "hint": "Vecfield (in3) contribution depth. 1.0 = original implicit depth."},
         {"name": "fix_blend",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "hint": "Orientation mechanism: 0=vector-add+renormalize, 1=true angular blend (atan2-based). Performable — not a fixed choice."},
         {"name": "src_potential", "type": "internal"},
-        {"name": "src_mode",      "type": "internal"},   # the dual's connected flag for inlet 0 (vs_inState)
+        {"name": "src_along",     "type": "internal"},
+        {"name": "src_field",     "type": "internal"},
         {"name": "bypass",        "type": "bypass"},
     ],
 
@@ -57,7 +58,8 @@ Param shape(0.0);
 Param field_amount(1.0);
 Param fix_blend(0.0);
 Param src_potential(0.0);
-Param src_mode(0.0);
+Param src_along(0.0);
+Param src_field(0.0);
 Param bypass(0.0);
 
 // ─── Orientation (two mechanisms, performable crossfade) ─────────────────────
@@ -66,20 +68,20 @@ Param bypass(0.0);
 // and Fix B -- both ship as live dials. field_amount=1.0, fix_blend=0.0
 // reproduces this block's original (pre-2026-10-13) behavior exactly.
 
-vx = sample(in1, norm).x - 0.5;
-vy = sample(in1, norm).y - 0.5;
+vx = sample(in3, norm).x - 0.5;
+vy = sample(in3, norm).y - 0.5;
 
 base_angle = angle * pi;
 base_cs = cos(base_angle);
 base_sn = sin(base_angle);
 
-// src_mode = vs_inState's connected flag for inlet 0 (2026-11-01): 0 = nothing patched in, so no field and the lines
+// src_field = vs_inState's connected flag for the vecfield inlet, in3 (2026-11-01): 0 = nothing patched in, so no field and the lines
 // stay straight at `angle`. The gate is applied AFTER the sample and only on csA / snA / weight_b: an unconnected
 // inlet reads (0,0,0,1), i.e. (vx, vy) = (-0.5, -0.5), and atan2 below keeps seeing that finite input (atan2(0,0)
-// is the GPU NaN case, so vx / vy are never zeroed themselves). Connected, src_mode = 1 multiplies by exactly 1.
+// is the GPU NaN case, so vx / vy are never zeroed themselves). Connected, src_field = 1 multiplies by exactly 1.
 // Mechanism A: vector-add + renormalize, field term scaled by field_amount.
-csA = base_cs + field_amount * (-vy) * src_mode;
-snA = base_sn + field_amount * vx * src_mode;
+csA = base_cs + field_amount * (-vy) * src_field;
+snA = base_sn + field_amount * vx * src_field;
 magA = sqrt(csA * csA + snA * snA);
 csA = csA / max(magA, 0.0001);
 snA = snA / max(magA, 0.0001);
@@ -93,7 +95,7 @@ field_mag = sqrt(vx * vx + vy * vy);
 field_angle = atan2(vx, -vy);
 d_ang = field_angle - base_angle;
 d_ang = d_ang - 2.0 * pi * floor((d_ang + pi) / (2.0 * pi));
-weight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0) * src_mode;
+weight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0) * src_field;
 blend_angle = base_angle + d_ang * weight_b;
 csB = cos(blend_angle);
 snB = sin(blend_angle);
@@ -106,12 +108,15 @@ cs = cs / max(mag, 0.0001);
 sn = sn / max(mag, 0.0001);
 
 across_rot = norm.x * cs + norm.y * sn;
-along      = norm.x * (-sn) + norm.y * cs;
+along_rot  = norm.x * (-sn) + norm.y * cs;
 
 // ─── Scalar potential override ────────────────────────────────────────────────
 
-across_pot = sample(in2, norm).x;
+across_pot = sample(in1, norm).x;
 across = mix(across_rot, across_pot, src_potential);
+
+// Along scalar (in2) replaces the along coordinate when connected; phase and regularity still apply on top.
+along = mix(along_rot, sample(in2, norm).x, src_along);
 
 // ─── Density scale (log-mapped) ───────────────────────────────────────────────
 
@@ -155,9 +160,9 @@ mark = edge_across * edge_along * profile;
 
 // ─── Output ───────────────────────────────────────────────────────────────────
 
-cr = mix(1.0, sample(in2, norm).x, src_potential);
-cg = mix(1.0, sample(in2, norm).y, src_potential);
-cb = mix(1.0, sample(in2, norm).z, src_potential);
+cr = mix(1.0, sample(in1, norm).x, src_potential);
+cg = mix(1.0, sample(in1, norm).y, src_potential);
+cb = mix(1.0, sample(in1, norm).z, src_potential);
 
 out1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
 """,
@@ -167,7 +172,7 @@ out1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), b
 # Gated source-mode trigger (same pattern as f_stipple, 2026-11-01): with nothing on inlet 0, vs_inState does not make
 # the pix render, so a gated `r draw` does. Connected, the gate is closed and the module renders once per frame as before.
 _PIX = "obj-5"
-_INSTATE = "obj-17"
+_INSTATE = "obj-101"
 
 
 def _obj(i, text, nin, nout, rect):

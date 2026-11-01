@@ -2,6 +2,18 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-01 (09:05): `f_stipple` unconnected rendering fixed (trigger + size); contract bench green
+
+- **Trigger (T044):** unconnected `f_stipple` drew nothing (Matt, live; the `f_quasi` bug). `src/f_stipple/definition.py` `raw_boxes`/`raw_lines`: `r draw` -> `gate 1 1` -> pix inlet 0, the gate closed by `vs_inState`'s connected flag through `== 0`, so a connected stipple renders once per frame. Matt chose gated and per-module raw_lines. The gate starts open because that flag is a `change`, which probably swallows a first 0 (inferred from reading `vs_inState.maxpat`, not probed).
+- **Size (T045):** with the trigger in, unconnected source mode was a solid frame flipping white/black near `threshold` 0.2 (Matt, live). Inferred, not probed: the pix adapted to `vs_black`, a 1x1 texture. Fix: `pix_attrs "@adapt 0 @dim 256 256"` plus `render_dim {"size_stages": ["primary"]}` (no width/height Params; the codebox reads `norm`). Matt live: works as expected.
+- **Checks:** `tests/modules/stipple/test_stipple_static.py` 4/4, `test_render_dim` 12/12, `test_bench_expect` 10/10, `drift -v f_stipple` ok (Claude, offline). Live contract bench: 08:48 FAIL 1/2 (stipple's bypass frames 640x640 against the 64x64 input, a harness gap), `f_stipple` added to `INPUT_SIZE` in `tests/contracts/bench_modules.py`, 08:52 GREEN 2/2 (log `tests/logs/20261101-085202-bench.log`, Max 9.2.0).
+- **For `f_vf_flow`:** same `dual` wiring, no `r draw`, default `@adapt`; its codebox has no `dim.` reads and it is not named in `bench_modules.py` (its bypass expectation there is not checked). Copy the bottom of `src/f_stipple/definition.py` (raw boxes/lines; `obj-17` is `vs_inState`, `obj-5` the pix, check both in the built patcher) and the `pix_attrs`/`render_dim` keys, and adapt `tests/modules/stipple/test_stipple_static.py`.
+- **`f_weave`:** decided here, built in the 2026-11-01 (09:55) entry (the plan text that stood here, including a wrong claim that `f_quasi` has two `vs_inState`, is removed: `f_quasi` has one).
+- **Gates:** the `P-taxonomy` row is updated: `f_weave` is being made a `dual`.
+- **Docs and record:** `docs/f-reference/f_stipple.md` (signal chain, source-mode note), `.specify/f_stipple/tasks.md` T044/T045, `.specify/plan.md` Next 1.
+- **Commits (f_):** d1144ac, 131a1c9, then this handoff commit.
+- **Next:** `f_vf_flow` with the stipple pattern; then `f_weave` per the decisions above; then `f_wave_field` T030 tuning.
+
 ## 2026-11-01 (08:30): Claims rule and gates check added; Hatch Q17 probed clean
 
 - **Claims rule (CLAUDE.md "Claims"):** status claims cite their source; reconcile `gates.md`, `plan.md` and the module's `tasks.md` before saying closed; inferred is not verified; records say who observed what. `tests/build/test_gates.py` (5/5) flags a Waiting gate whose cited tasks are all ticked or that cites a missing task or path; it cannot see rows that cite no task ids. `finishing-a-session` skill step 6 added (claude-scaffold `2623572`; Matt re-uploaded it).
