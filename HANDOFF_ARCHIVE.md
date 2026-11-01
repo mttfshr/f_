@@ -2,6 +2,15 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-10-31 (22:15): live contract bench after the `render_dim` migrations: first run FAIL 1/2 (6 bypass-shape issues in four modules), harness fixed, re-run GREEN 2/2. CLOSED
+
+- **Run:** `tests/bench.sh -q tests/contracts/bench_modules.py`, 109 s, log `tests/logs/20261031-215154-bench.log`. `test_live_module_contracts` fails, the other test passes. 49 modules checked; the `f_a_decorrelate` XFAILs are the known audio case.
+- **Failures:** `f_grain` out1-3, `f_tf_aniso_blur` out1, `f_tf_glyph` out1, `f_vf_vorticity` out1: "bypassed frame is (640, 640, 4), expected (64, 64, 4)". Nothing else is unexpected.
+- **Cause (read-only, not confirmed live):** these four have passthrough bypass expectations (`("in", k)` / `in_a1` in `BYPASS_EXPECT`) and their output now follows the render size (`@adapt 0`, size from Vsynth's `dim W H` broadcast; "the input is assumed render-sized"). The bench feeds a 64x64 input and sends no `dim`, so they render at the 640 default and `bypass_issues` trips on the shape check. `const` expectations (axisflow, tensormap, quasi) skip that check, so they pass. Reads as a harness expectation gap, not a module bug.
+- **Fix (Matt chose the INPUT_SIZE route over sending `dim`):** the bench's real `vs_render` already broadcasts `dim` (640 x 640), so `bench_modules.py` `INPUT_SIZE` now feeds `f_grain`, `f_tf_aniso_blur`, `f_tf_glyph`, `f_vf_vorticity` a 640 input (`RENDER_DIM_SIZE`); inlets 2+ follow. Test-harness change only; no module touched.
+- **Re-run 22:12:** `tests/bench.sh -q tests/contracts/bench_modules.py` 2/2, all selected files passed (log `tests/logs/latest-bench`). The `f_a_decorrelate` XFAILs are the known audio case.
+- **Note:** the 640 is inferred from the failing shape, not read from `vs_render`; the old "512" comment for `f_vf_fluid` is now worded as fluid-specific.
+
 ## 2026-10-31 (11:35): `f_vf_advect` Trail REWORKED to a persistence multiplier (Matt: option A); the jump at trail = 1.0 is gone. Offline green, GPU bench 2/2 (2026-10-31 17:05), live look PASSED (Matt, 17:04: the Trail sweep is smooth; the immiscible demo presets were updated by Matt and are fine). CLOSED
 
 - **The bug:** trail >= 1 switched to an absolute half-life (`hl = trail * exp((decay - 1) * 20)`, clamped to >= 1 frame), but trail 0 was the classic loop, which at Decay 0.97 is a 22.8-frame half-life. So sweeping Trail through 1.0 dropped persistence from 22.8 frames to 1 (decay_eff 0.97 -> 0.5, injection x16.7), held flat to ~1.82, then climbed back (the classic look sat at trail ~41). The settled level was already continuous; persistence was not.

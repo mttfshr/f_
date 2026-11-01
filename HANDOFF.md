@@ -4,12 +4,12 @@
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
-**State:** closed: T062/T063 (`render_dim` migration; `f_masonry` and `f_cmap` stay exempt) and the `f_vf_advect` Trail rework (live look passed). Live contract bench: first run 21:52 failed (harness bypass-shape gap for four `render_dim` modules), fixed in `tests/contracts/bench_modules.py`, re-run 22:12 GREEN (2/2). Nothing is scheduled; Matt picks the next item.
+**State:** closed: T062/T063 (`render_dim` migration; `f_masonry` and `f_cmap` stay exempt) and the `f_vf_advect` Trail rework (live look passed). Live contract bench: first run 21:52 failed (harness bypass-shape gap for four `render_dim` modules), fixed in `tests/contracts/bench_modules.py`, re-run 22:12 GREEN (2/2). Also closed that evening: Hatch (T051 README marker dropped, T061 8 ms gate kept, T052 helpfile written and checked, T065 tier-3 questions decided; only the spike-script tail of T064 remains) and `f_ks` tier-3 tuning (map, defaults, ranges unchanged). Nothing is scheduled; Matt picks the next item.
 
 **Candidates (Matt decides):**
 - Render-trigger check: `f_stipple`, `f_weave`, `f_vf_flow` may draw nothing unconnected (the `f_quasi` bug).
-- Close Hatch: v1 helpfile T052, README marker T051, 8 ms gate T061 (`.specify/f_tf_hatch/tasks.md`).
-- Tier-3 tuning owed: `f_ks` T030 and `f_wave_field` T030 (both built; docs and registration pending).
+- Hatch tail (T064): the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail.
+- Tier-3 tuning owed: `f_wave_field` T030 (its full bench re-run is owed once after tuning, with only `bench.maxpat` open). `f_ks` still needs its name (T010) and docs (T040).
 - `vs_black` wording in `skills/vsynth-bpatcher/SKILL.md` and `docs/vsynth-reference/patterns.md` (the skill needs Matt's re-upload and `skills/check.sh stamp`).
 - `f_vf_seeds` cost at 1080p is unmeasured; optional cap on the `f_vf_advect` Trail dial.
 
@@ -17,11 +17,10 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-10-31 (22:15): live contract bench after the `render_dim` migrations: first run FAIL 1/2 (6 bypass-shape issues in four modules), harness fixed, re-run GREEN 2/2. CLOSED
+## 2026-10-31 (23:58): Hatch closed out; `f_ks` tier-3 tuning done with no code change
 
-- **Run:** `tests/bench.sh -q tests/contracts/bench_modules.py`, 109 s, log `tests/logs/20261031-215154-bench.log`. `test_live_module_contracts` fails, the other test passes. 49 modules checked; the `f_a_decorrelate` XFAILs are the known audio case.
-- **Failures:** `f_grain` out1-3, `f_tf_aniso_blur` out1, `f_tf_glyph` out1, `f_vf_vorticity` out1: "bypassed frame is (640, 640, 4), expected (64, 64, 4)". Nothing else is unexpected.
-- **Cause (read-only, not confirmed live):** these four have passthrough bypass expectations (`("in", k)` / `in_a1` in `BYPASS_EXPECT`) and their output now follows the render size (`@adapt 0`, size from Vsynth's `dim W H` broadcast; "the input is assumed render-sized"). The bench feeds a 64x64 input and sends no `dim`, so they render at the 640 default and `bypass_issues` trips on the shape check. `const` expectations (axisflow, tensormap, quasi) skip that check, so they pass. Reads as a harness expectation gap, not a module bug.
-- **Fix (Matt chose the INPUT_SIZE route over sending `dim`):** the bench's real `vs_render` already broadcasts `dim` (640 x 640), so `bench_modules.py` `INPUT_SIZE` now feeds `f_grain`, `f_tf_aniso_blur`, `f_tf_glyph`, `f_vf_vorticity` a 640 input (`RENDER_DIM_SIZE`); inlets 2+ follow. Test-harness change only; no module touched.
-- **Re-run 22:12:** `tests/bench.sh -q tests/contracts/bench_modules.py` 2/2, all selected files passed (log `tests/logs/latest-bench`). The `f_a_decorrelate` XFAILs are the known audio case.
-- **Note:** the 640 is inferred from the failing shape, not read from `vs_render`; the old "512" comment for `f_vf_fluid` is now worded as fluid-specific.
+- **Hatch:** README marker dropped (launcher regenerated, `test_launch` 8/8); 8 ms gate kept; v2 helpfile written and Matt checked it in Max; OQ1/3/4/6/7 decided as leaned (spec "Tier-3 decisions"); the reference doc's References gained the coherence-persistence line.
+- **T064 correction:** the demo's `strength[1]` bindings belong to its `f_tf_tensormap` (obj-7), not Hatch; the Hatch bpatcher there has exactly the eight v2 bindings. Nothing removed. Not tested: that the demo loads in Max.
+- **`f_ks`:** Matt's live look: `rate`, `scale`, `sharp` all smooth and expressive; the pattern reads about 3 s after reset at the default rate (about 2 s at the top). Clamp map, defaults and ranges stay (T005 closed unrun, T012 decided, T030 `[~]`). Open: his verdict on "organic and distinct" was cut off; name T010 and docs T040.
+- **Commits:** b977cbf, 3deb87d, 9648d97, 6969d59, 65f58de. Tree clean after the HANDOFF commit.
+- **Next:** `f_wave_field` T030 tuning (one module, dials plus the `medium` presets), then its bench re-run once; then the render-trigger check.
