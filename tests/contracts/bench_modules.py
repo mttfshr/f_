@@ -199,7 +199,10 @@ INPUT_SIZE = {"f_vf_fluid": 512,
               "f_tf_glyph": RENDER_DIM_SIZE, "f_vf_vorticity": RENDER_DIM_SIZE,
               # 2026-11-01: f_stipple took render_dim (T045); live run 08:48 failed its three passthrough outlets
               # with (640, 640, 4) against the 64 x 64 input, the same shape as the four above.
-              "f_stipple": RENDER_DIM_SIZE}
+              "f_stipple": RENDER_DIM_SIZE,
+              # 2026-11-01: f_weave took render_dim (T057); live run 09:53 failed its bypass frame, (640, 640, 4)
+              # against the 64 x 64 input, the same shape as f_stipple.
+              "f_weave": RENDER_DIM_SIZE}
 
 # Modules whose primary inlet takes a VECFIELD (B = 0.5, A = 1): a random-RGBA input is not one,
 # and f_vf_fluid (correctly) refuses a texture whose B is not ~0.5 as a force. Char-representable

@@ -205,5 +205,5 @@ out1 = mix(vec(mark, mark, mark, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
 - [x] T058: Pack more marks: `density` exponent `5d-1+4*max(d-0.5,0)` (64 cells at 1.0, unchanged up to 0.5); `weight` and `marklen` range 0-1. Commit 6106fb7.
 - [x] T059: `softness` 0 = crisp, 1 = old softness 1 (feather `[w*max(1-s,0), w*(1+s)]`, min band 0.01), both axes. Commit 4451e2f.
 - [x] T060: Inlets reordered scalars first and an along inlet added: 0 across (`in1`), 1 along (`in2`), 2 vecfield (`in3`); `processor` + `driving_inlet`. Flags `src_potential`/`src_along`/`src_field`.
-- [ ] T061: Run the live contract bench for weave (ask Matt first); bypass under `driving_inlet` may need `INPUT_SIZE`/`BYPASS_EXPECT` in `tests/contracts/bench_modules.py`.
+- [x] T061: Live contract bench for weave: 09:53 failed on the bypass frame size (640x640 vs 64x64); `f_weave` added to `INPUT_SIZE`; rerun green 2/2 (`tests/logs/20261101-095527-bench.log`).
 - [ ] T062: Matt to confirm the crisp `softness` look live.
