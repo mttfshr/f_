@@ -6,7 +6,7 @@ _Rewritten 2026-10-31._ Orientation only: what is Active, what is Next, what is 
 
 1. **Record-keeping.** HANDOFF trimmed (older entries in `HANDOFF_ARCHIVE.md`), this focus doc and `gates.md` written 2026-10-31. Next: use it for a few sessions and measure the startup read; add per-workstream blocks and a generated survey only if the gates file isn't enough.
 2. **`f_modules` menu redesign** (Matt's, in progress). See `G-menu`.
-3. **`f_tf_hatch` close-out.** v2 is built and benched; open: Matt's check of the new v2 helpfile in Max, and the demo-patch check (T064). See `G-hatch`.
+3. **`f_tf_hatch` close-out.** v2 is built and benched; open: only the spike scripts that still pass `strength=` (T064 tail). See `G-hatch`.
 
 Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), and the `f_vf_advect` Trail rework.
 

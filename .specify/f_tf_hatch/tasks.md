@@ -48,7 +48,7 @@ entries and the git log, so the commit hashes below are the record).
 
 - [x] T050 Reference doc rewritten for v2 (`0a9daa7`); README row describes v2, launcher regenerated, `test_launch` 8/8 (`b4ce9b1`); pre-stage cost and design in the doc (`742e9db`).
 - [x] T051 README ⚠ Unverified marker DROPPED (Matt, 2026-10-31, after the passed pre-stage live look); launcher regenerated.
-- [~] T052 v2 helpfile `package/help/f_tf_hatch.maxhelp` WRITTEN 2026-10-31 (title Hatch, nine controls, comment-only wiring like v1, new References; `docs/f-reference/f_tf_hatch.md` References line added). Awaiting Matt's check in Max (layout, wrap, bpatcher size).
+- [x] T052 v2 helpfile `package/help/f_tf_hatch.maxhelp` WRITTEN 2026-10-31 (title Hatch, nine controls, comment-only wiring like v1, new References; `docs/f-reference/f_tf_hatch.md` References line added). Matt checked it in Max 2026-10-31: looks good.
 
 ---
 
@@ -58,7 +58,7 @@ entries and the git log, so the commit hashes below are the record).
 - [x] T061 8 ms texture-mode cost gate KEPT as is (Matt, 2026-10-31; bench floor and 8-bit Vsynth textures are not modelled: untestable on the bench).
 - [x] T062 (DONE offline 2026-10-30, 4 of 4: `f_tf_tensormap` and `f_tf_glyph` (live looks passed), `f_tf_aniso_blur`, and `f_tf_axisflow`, which Matt added; live look at aniso_blur and axisflow still owed) **Migrate `f_tf_tensormap`, `f_tf_glyph`, `f_tf_aniso_blur` to `render_dim`** (their Width / Height dials become `render_dim`; the tensor then renders at the render size, so cost and what Radius means change: bench each). Needed because Hatch now follows the render size while the tensor modules do not. **Decided (Matt, 2026-10-30): the Width and Height dials are REMOVED** (they become internal params driven by `render_dim`); the affected files are listed in the HANDOFF entry of 2026-10-30 09:45. **Also decided: each module's output follows the render size** (`render_dim` `size_stages`, every stage `@adapt 0`, as Hatch's does).
 - [x] T063 (closed 2026-10-30/31: grain, quasi, seeds, vorticity migrated; `f_masonry` and `f_cmap` stay exempt) The six exempt modules read `dim` (latent live bug; list in `tests/build/test_render_dim.py`): `f_cmap` (paused), `f_grain`, `f_masonry`, `f_quasi`, `f_vf_seeds`, `f_vf_vorticity`. Not Hatch's work; tracked here because Hatch found it.
-- [ ] T064 Housekeeping: the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail (Strength was removed in T031); `package/examples/f_demo_hatch.maxpat` is untracked and has `strength[1]` bindings: check it loads.
+- [~] T064 Housekeeping. DONE 2026-10-31: `package/examples/f_demo_hatch.maxpat` is tracked and consistent: its Hatch bpatcher has exactly the eight v2 bindings (reach to coh_floor); the `strength[1]` bindings belong to its `f_tf_tensormap` (obj-7), whose Strength dial is valid, so nothing was removed (the earlier note was a false alarm). Not tested: that it loads cleanly in Max. OPEN: the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail (Strength was removed in T031).
 - [x] T065 Tier-3 questions DECIDED 2026-10-31 (Matt, as leaned): OQ1 keep exponent 0.5, no `persist` dial, Coh Floor is the lever; OQ3 box kernel, cosine deferred until a look asks; OQ4 keep outlet 1, documented in the helpfile; OQ6 dense LIC dropped as a mode (the stroke-texture inlet at Density 1 covers it); OQ7 fanning cone deferred (reads as direction uncertain). OQ5 moot.
 
 ## Decisions (Matt unless noted)
