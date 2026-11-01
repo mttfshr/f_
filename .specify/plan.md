@@ -8,20 +8,19 @@ _Rewritten 2026-10-31._ Orientation only: what is Active, what is Next, what is 
 2. **`f_modules` menu redesign** (Matt's, in progress). See `G-menu`.
 3. **`f_tf_hatch` close-out.** v2 is built and benched; open: README ⚠, v1 helpfile, 8 ms gate. See `G-hatch`.
 
-Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt) and the `f_vf_advect` Trail rework.
+Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), and the `f_vf_advect` Trail rework.
 
 ## Next (Claude's lean; Matt decides)
 
-1. Fix the contract-bench harness for `render_dim` modules, then re-run it. First run (2026-10-31) failed only on bypass frame shape for `f_grain`, `f_tf_aniso_blur`, `f_tf_glyph`, `f_vf_vorticity`; options A/B/C in HANDOFF.
-2. Check `f_stipple`, `f_weave`, `f_vf_flow` for the `f_quasi` "draws nothing unconnected" bug.
-3. Close Hatch.
-4. Tier-3 tuning of `f_ks` and `f_wave_field`: both are built and benched; tuning and docs/registration remain.
-5. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
+1. Check `f_stipple`, `f_weave`, `f_vf_flow` for the `f_quasi` "draws nothing unconnected" bug.
+2. Close Hatch.
+3. Tier-3 tuning of `f_ks` and `f_wave_field`: both are built and benched; tuning and docs/registration remain.
+4. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 
 ## Owed to Matt
 
-- **Runs and looks:** the contract bench re-run after the harness fix (Max, Vsynth paused); live check of the three render-trigger suspects; `f_ks` T030 and `f_wave_field` T030 tuning looks (`.specify/f_ks/tasks.md`, `.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
-- **Decisions:** contract-harness fix for bypass shape under `render_dim` (HANDOFF options A/B/C); Hatch T051 and T061; cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
+- **Runs and looks:**  live check of the three render-trigger suspects; `f_ks` T030 and `f_wave_field` T030 tuning looks (`.specify/f_ks/tasks.md`, `.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Decisions:** Hatch T051 and T061; cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).
 
 ## Conventions in force

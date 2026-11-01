@@ -187,9 +187,16 @@ PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
 NEUTRAL_BYPASS_BY_DESIGN = {"f_vf_optical_flow", "f_tf_tensormap", "f_tf_axisflow", "f_vf_immiscible",
                             "f_wave_field"}   # a generator: the force inlet is optional, bypass = black / neutral vecfield
 
-# Modules whose output follows the render CONTEXT size (512x512 in the module bench), not the
-# input texture's: feed them an input of that size so the passthrough check is like for like.
-INPUT_SIZE = {"f_vf_fluid": 512}
+# Modules whose output follows the render CONTEXT size, not the input texture's: feed them an input of
+# that size so the passthrough check is like for like.  f_vf_fluid follows the context (512).  The
+# render_dim modules follow the `dim W H` that the bench's real vs_render broadcasts, 640 x 640 as seen
+# 2026-10-31 (their bypass frame was (640, 640, 4) against the 64 x 64 input); inlets 2+ use the same n.
+# Only the modules with a passthrough bypass expectation need it: the const-expectation ones skip the
+# shape check.
+RENDER_DIM_SIZE = 640
+INPUT_SIZE = {"f_vf_fluid": 512,
+              "f_grain": RENDER_DIM_SIZE, "f_tf_aniso_blur": RENDER_DIM_SIZE,
+              "f_tf_glyph": RENDER_DIM_SIZE, "f_vf_vorticity": RENDER_DIM_SIZE}
 
 # Modules whose primary inlet takes a VECFIELD (B = 0.5, A = 1): a random-RGBA input is not one,
 # and f_vf_fluid (correctly) refuses a texture whose B is not ~0.5 as a force. Char-representable
