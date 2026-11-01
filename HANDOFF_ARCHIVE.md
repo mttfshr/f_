@@ -2,6 +2,14 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-10-31 (23:58): Hatch closed out; `f_ks` tier-3 tuning done with no code change
+
+- **Hatch:** README marker dropped (launcher regenerated, `test_launch` 8/8); 8 ms gate kept; v2 helpfile written and Matt checked it in Max; OQ1/3/4/6/7 decided as leaned (spec "Tier-3 decisions"); the reference doc's References gained the coherence-persistence line. Hub Q17 (NaN masking in Hatch E1: no `+1e-7` atan2 bias) probed clean 2026-11-01 on the bench (`.specify/f_tf_hatch/spike/bench_e1_nan_probe.py`, T066).
+- **T064 correction:** the demo's `strength[1]` bindings belong to its `f_tf_tensormap` (obj-7), not Hatch; the Hatch bpatcher there has exactly the eight v2 bindings. Nothing removed. Not tested: that the demo loads in Max.
+- **`f_ks`:** Matt's live look: `rate`, `scale`, `sharp` all smooth and expressive; the pattern reads about 3 s after reset at the default rate (about 2 s at the top). Clamp map, defaults and ranges stay (T005 closed unrun, T012 decided, T030 `[x]`). Matt passed on the "organic and distinct" verdict (T030 now `[x]`) and on naming it; T010 name and T040 docs stay open.
+- **Commits:** b977cbf, 3deb87d, 9648d97, 6969d59, 65f58de. Tree clean after the HANDOFF commit.
+- **Next:** `f_wave_field` T030 tuning (one module, dials plus the `medium` presets), then its bench re-run once; then the render-trigger check.
+
 ## 2026-10-31 (22:15): live contract bench after the `render_dim` migrations: first run FAIL 1/2 (6 bypass-shape issues in four modules), harness fixed, re-run GREEN 2/2. CLOSED
 
 - **Run:** `tests/bench.sh -q tests/contracts/bench_modules.py`, 109 s, log `tests/logs/20261031-215154-bench.log`. `test_live_module_contracts` fails, the other test passes. 49 modules checked; the `f_a_decorrelate` XFAILs are the known audio case.
