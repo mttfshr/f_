@@ -7,7 +7,6 @@
 **State:** closed 2026-11-01: `f_weave` (unconnected lines, across/along/vecfield inlets, density/weight/marklen/softness; Matt live; live contract bench green 2/2), `f_stipple` unconnected rendering (T044 gated `r draw` trigger, T045 render-size output; Matt live "works as expected"; live contract bench green 2/2 at 08:52 after adding it to `INPUT_SIZE`). Closed earlier: T062/T063 (`render_dim` migration; `f_masonry` and `f_cmap` stay exempt), the `f_vf_advect` Trail rework, Hatch (only the spike-script tail of T064 remains), `f_ks` tier-3 tuning (map, defaults, ranges unchanged), the Claims rule in CLAUDE.md with `tests/build/test_gates.py`. Nothing is scheduled; Matt picks the next item.
 
 **Candidates (Matt decides):**
-- Render-trigger check, remaining: `f_vf_flow` (same `dual` wiring and the same unconnected-use doc claim; apply the `f_stipple` pattern, design check first; notes in the latest entry).
 - `f_weave` identity and character (open, for Matt's thinking time; gate `G-weave-scope`, `ideas/f_weave_scope_questions.md`, 16 questions): what it is for, whether it should actually weave, texture-modulated weight, keep the vecfield inlet or use `f_vf_warp`.
 - Hatch tail (T064): the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail.
 - Tier-3 tuning owed: `f_wave_field` T030 (its full bench re-run is owed once after tuning, with only `bench.maxpat` open). `f_ks` still needs its name (T010) and docs (T040).
@@ -26,6 +25,6 @@
 - **Checks:** `tests/modules/weave/test_weave_static.py` 7/7 (trigger, flags, codebox reads, density curve, softness), full offline suite green 66 files, `drift -v f_weave` ok (Claude, offline).
 - **Live contract bench:** 09:53 FAIL 1/2 (weave's bypass frame 640x640 against the 64x64 input, the same harness gap as stipple); `f_weave` added to `INPUT_SIZE` in `tests/contracts/bench_modules.py`; rerun GREEN 2/2 (log `tests/logs/20261101-095527-bench.log`, Max 9.2.0).
 - **Correction:** an earlier entry said `f_quasi` has two `vs_inState`; it has one (parsed). Removed from the archived text.
-- **For `f_vf_flow` (next):** copy the bottom of `src/f_stipple/definition.py` (gated `r draw`; `obj-17` `vs_inState`, `obj-5` pix, check both in the built patcher) plus `pix_attrs`/`render_dim`; adapt `tests/modules/stipple/test_stipple_static.py`. Its codebox has no `dim.` reads; it is not in `bench_modules.py`. Design check first.
-- **Next:** `f_vf_flow`; then `f_wave_field` T030 tuning.
+- **`f_vf_flow` resolved, no change (Matt, 11:03):** flow needs a texture; unconnected rendering is not wanted (the codebox would give a uniform field at `angle`, which is only a second angle dial on weave; the unconnected render was never run live). The render-trigger check is closed. Left as mismatches, untouched: its README/Launch/help description ("Dual-mode uniform / texture-perturbed") and the doc's unconnected-mode claim.
+- **Next:** `f_wave_field` T030 tuning.
 

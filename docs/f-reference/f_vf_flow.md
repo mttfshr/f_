@@ -7,7 +7,7 @@
 
 ## What it does
 
-Dual-mode vecfield generator, designed as an input for `f_weave`'s vecfield inlet. Takes an optional scalar texture on inlet 0:
+Dual-mode vecfield generator, designed as an input for `f_weave`'s vecfield inlet. **Decision 2026-11-01 (Matt): flow needs a texture; unconnected rendering is not supported or wanted** (no render trigger was added; the unconnected render was never checked live, and a uniform field is only a second angle dial on weave). The unconnected codebox path below is what the code computes, not a supported mode. Takes a scalar texture on inlet 0:
 
 - **Unconnected:** uniform direction field — every pixel outputs the same vector, oriented by `angle`.
 - **Connected:** direction varies spatially, perturbed by the input texture's luminance scaled by `spread` — a spatially-varying flow direction rather than a single global angle.
