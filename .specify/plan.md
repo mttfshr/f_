@@ -7,14 +7,15 @@ _Rewritten 2026-10-31, updated 2026-11-01._ Orientation only: what is Active, wh
 1. **Record-keeping.** HANDOFF trimmed (older entries in `HANDOFF_ARCHIVE.md`), this focus doc and `gates.md` written 2026-10-31. Next: use it for a few sessions and measure the startup read; add per-workstream blocks and a generated survey only if the gates file isn't enough.
 2. **`f_modules` menu redesign** (Matt's, in progress). See `G-menu`.
 
-Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), the `f_vf_advect` Trail rework, and `f_tf_hatch` (v2 built, benched, helpfile checked; only the spike-script tidy remains, Next 2; hub Q17, NaN masking in its E1 stage, probed clean 2026-11-01).
+Closed 2026-11-01: the render-trigger check (`f_stipple` gated `r draw` plus `render_dim` size, T044/T045; `f_weave` three optional inlets and unconnected lines, live contract bench green 2/2; `f_vf_flow` needs a texture, re-typed processor), and `f_wave_field` T030 (Matt: passes with the existing defaults, no change; no bench re-run needed).
+
+Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), the `f_vf_advect` Trail rework, and `f_tf_hatch` (v2 built, benched, helpfile checked; only the spike-script tidy remains, Next 1; hub Q17, NaN masking in its E1 stage, probed clean 2026-11-01).
 
 ## Next (Claude's lean; Matt decides)
 
-1. Render-trigger check: `f_stipple` done 2026-11-01 (gated `r draw` plus `render_dim` size; Matt live; T044/T045). `f_weave` done 2026-11-01 (three optional inlets, unconnected lines; Matt live; live contract bench green 2/2). `f_vf_flow` resolved 2026-11-01 (Matt: it needs a texture; re-typed processor, was dual). The check is closed.
-2. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
-3. Tier-3 tuning of `f_wave_field` is closed 2026-11-01 (Matt: passes with the existing defaults, no change). The full bench re-run once owed after tuning is not needed (Matt, 2026-11-01: nothing changed). `f_ks` tuning is done 2026-10-31 (map, defaults and ranges unchanged); its name (T010) and docs (T040) remain.
-4. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
+1. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
+2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
+3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 
 ## Owed to Matt
 
