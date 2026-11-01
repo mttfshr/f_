@@ -12,7 +12,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-1. Run the live module contract bench. It hasn't run since the `render_dim` migrations touched about nine modules.
+1. Fix the contract-bench harness for `render_dim` modules, then re-run it. First run (2026-10-31) failed only on bypass frame shape for `f_grain`, `f_tf_aniso_blur`, `f_tf_glyph`, `f_vf_vorticity`; options A/B/C in HANDOFF.
 2. Check `f_stipple`, `f_weave`, `f_vf_flow` for the `f_quasi` "draws nothing unconnected" bug.
 3. Close Hatch.
 4. Tier-3 tuning of `f_ks` and `f_wave_field`: both are built and benched; tuning and docs/registration remain.
@@ -20,8 +20,8 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
-- **Runs and looks:** the contract bench (Max, Vsynth paused); live check of the three render-trigger suspects; `f_ks` T030 and `f_wave_field` T030 tuning looks (`.specify/f_ks/tasks.md`, `.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
-- **Decisions:** Hatch T051 and T061; cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
+- **Runs and looks:** the contract bench re-run after the harness fix (Max, Vsynth paused); live check of the three render-trigger suspects; `f_ks` T030 and `f_wave_field` T030 tuning looks (`.specify/f_ks/tasks.md`, `.specify/f_wave_field/tasks.md`); the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Decisions:** contract-harness fix for bypass shape under `render_dim` (HANDOFF options A/B/C); Hatch T051 and T061; cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).
 
 ## Conventions in force
