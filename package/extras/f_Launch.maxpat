@@ -2169,7 +2169,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Dual-mode uniform/texture-perturbed direction field -- designed to feed f_weave's vecfield inlet",
+									"text": "Texture-driven direction field -- brightness sets the flow angle; designed to feed f_weave's vecfield inlet",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

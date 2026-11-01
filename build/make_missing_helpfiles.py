@@ -183,7 +183,7 @@ MODULES = {
         references="References\n\nSee docs/f-reference/f_vf_chroma.md. Note: mid-retool --\nthe shipped v10 washes the rainbow out at high\ndispersion (accumulation averages hues); the\nclosest-emitter redesign is specced in\n.specify/paused/f_vf_chroma/. direction=Bi is\nunreachable from the UI (build bug)."),
     "f_vf_flow": dict(
         title="Flow",
-        digest="Dual-mode uniform / texture-perturbed direction field -- feeds f_weave's vecfield inlet",
+        digest="Texture-driven direction field -- brightness sets the flow angle; feeds f_weave's vecfield inlet",
         recipe="Designed to feed f_weave in2 or any\nvecfield consumer.",
         references="References\n\nSee docs/f-reference/f_vf_flow.md and\ndocs/f-reference/f_vecfield_type.md."),
     "f_vf_glow": dict(

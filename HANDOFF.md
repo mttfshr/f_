@@ -25,6 +25,6 @@
 - **Checks:** `tests/modules/weave/test_weave_static.py` 7/7 (trigger, flags, codebox reads, density curve, softness), full offline suite green 66 files, `drift -v f_weave` ok (Claude, offline).
 - **Live contract bench:** 09:53 FAIL 1/2 (weave's bypass frame 640x640 against the 64x64 input, the same harness gap as stipple); `f_weave` added to `INPUT_SIZE` in `tests/contracts/bench_modules.py`; rerun GREEN 2/2 (log `tests/logs/20261101-095527-bench.log`, Max 9.2.0).
 - **Correction:** an earlier entry said `f_quasi` has two `vs_inState`; it has one (parsed). Removed from the archived text.
-- **`f_vf_flow` resolved, no change (Matt, 11:03):** flow needs a texture; unconnected rendering is not wanted (the codebox would give a uniform field at `angle`, which is only a second angle dial on weave; the unconnected render was never run live). The render-trigger check is closed. Left as mismatches, untouched: its README/Launch/help description ("Dual-mode uniform / texture-perturbed") and the doc's unconnected-mode claim.
+- **`f_vf_flow` resolved, no change (Matt, 11:03):** flow needs a texture; unconnected rendering is not wanted (the codebox would give a uniform field at `angle`, which is only a second angle dial on weave; the unconnected render was never run live). The render-trigger check is closed. Its README/Launch/help/digest descriptions now read "Texture-driven direction field -- brightness sets the flow angle; ..."; the doc keeps its dual-mode type line and the codebox its header (untouched).
 - **Next:** `f_wave_field` T030 tuning.
 

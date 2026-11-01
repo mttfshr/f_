@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Dual-mode uniform / texture-perturbed direction field -- feeds f_weave's vecfield inlet",
+					"text": "Texture-driven direction field -- brightness sets the flow angle; feeds f_weave's vecfield inlet",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
