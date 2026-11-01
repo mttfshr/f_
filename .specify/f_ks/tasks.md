@@ -23,7 +23,7 @@ Created 2026-10-20 from the spec's "Open Experiments". Each task says whether th
 
 ### Decision gates (Matt)
 
-- [ ] T010 Naming: `f_ks` is a placeholder (see the spec header). Decide before the Phase 3 menu and README entry.
+- [ ] T010 Naming: `f_ks` is a placeholder (see the spec header). Decide before the Phase 3 menu and README entry. Matt passed on naming it 2026-10-31; still open.
 - [x] T011 Bypass behavior for a pure generator with no pass-through input (open experiment 5): decide in Phase 1, not inherited from `f_vf_fluid`. Decided 2026-10-21 (Matt: "do what other modules do"): follow `f_chladni`, the existing generator with no texture input, whose bypass outputs black with alpha 1. Implemented as a `bypass_gate` Param on `enc` only (the f_vf_fluid ADR-8 mechanism), so the solver keeps running and the state stays warm.
 - [x] T012 Output mapping and `rate` default DECIDED 2026-10-31 (Matt, live look): keep the clamp map and the shipped defaults; no seed shaping or warm-up work. Live measure: the pattern reads as a pattern about 3 s after reset at the default `rate`, about 2 s at the top of the range; nothing is too slow. (The 2026-10-21 frame statistics predicted a longer warm-up; the live feel is what counts.)
 - [x] T013 Reset trigger: both (decided 2026-10-21): a button on the panel and a `reset` message on the control inlet; also fires once on load. Holds `reseed` for three draw bangs (never a timer), and bumps the seed `salt` so every reset is a new pattern.
@@ -37,7 +37,7 @@ Created 2026-10-20 from the spec's "Open Experiments". Each task says whether th
 
 ## Phase 2: Tuning (tier 3, Matt)
 
-- [~] T030 Tier-3 look DONE 2026-10-31 (Matt): `rate`, `scale` and `sharp` all sweep smoothly and are expressive controls (no good or bad settings); the existing defaults and ranges stay (rate 0.05 of 0.0625, scale 50 of 25-100, sharp 0). No code change. NOT RECORDED: the verdict on organic and distinct from other generators (Matt's reply was cut off).
+- [x] T030 Tier-3 look DONE 2026-10-31 (Matt): `rate`, `scale` and `sharp` all sweep smoothly and are expressive controls (no good or bad settings); the existing defaults and ranges stay (rate 0.05 of 0.0625, scale 50 of 25-100, sharp 0). No code change. Matt passed on the organic-and-distinct verdict (2026-10-31): not asked again.
 
 ## Phase 3: Docs and registration
 
