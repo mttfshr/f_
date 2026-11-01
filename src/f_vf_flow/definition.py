@@ -1,9 +1,9 @@
 """
 f_vf_flow — definition.py
 
-Dual-mode vecfield generator. Takes an optional scalar texture on inlet 0.
-Unconnected: uniform direction field — all vectors point same way (angle param).
-Connected: direction varies spatially following texture luminance * spread.
+Vecfield processor (Matt, 2026-11-01: flow needs a texture; it is not a dual). Takes a scalar texture on inlet 0 and
+turns its luminance into a flow direction: angle * 2pi + (luminance - 0.5) * spread * 2pi. With nothing connected it
+renders nothing (no uniform-field mode, no render trigger).
 
 Output: float32 RG vecfield (0.5 = zero vector).
 Bypass: neutral vecfield (0.5, 0.5) — not passthrough.
@@ -16,7 +16,7 @@ patcher = {
     "prefix":             "vfflow",
     "object_name":        "vfflow_pix",
     "title":              "Flow",
-    "archetype":          "dual",
+    "archetype":          "processor",
     "pix_type":           "float32",
     "signal_type":        "∇ out",
 
@@ -39,9 +39,6 @@ patcher = {
             "min": 0.0, "max": 1.0, "default": 0.5,
             "hint": "How much the texture perturbs direction (0=uniform, 1=full rotation)",
             "label": "Spread",
-        },
-        {
-            "name": "src_mode", "type": "internal",
         },
         {
             "name": "bypass", "type": "bypass",

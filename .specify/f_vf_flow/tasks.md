@@ -16,4 +16,4 @@ Ids start at T001._
 
 - [x] T002 (decided 2026-10-19, Matt): tier 1 skipped. Angle-to-unit-vector trig, a few lines, no iteration. (Constitution rule for pre-convention modules, "Verification Tiers".)
 
-- [x] T003 (decided 2026-11-01, Matt): f_vf_flow needs a texture; no unconnected rendering (no gated `r draw`, no size handling). Render-trigger check closed for this module. Doc and descriptions updated (README, Launch, help, make_missing_helpfiles.py digest; 2026-11-01).
+- [x] T003 (decided 2026-11-01, Matt): f_vf_flow needs a texture; no unconnected rendering (no gated `r draw`, no size handling). Re-typed `processor` (was `dual`): `vs_inState`, `src_mode` and the unconnected codebox path removed. Render-trigger check closed for this module. Doc and descriptions updated (README, Launch, help, make_missing_helpfiles.py digest; 2026-11-01).

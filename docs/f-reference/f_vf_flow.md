@@ -1,18 +1,15 @@
 # f_vf_flow
 
-**Type:** Generator (f_vecfield producer), dual-mode
-**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated); maintenance-audited 2026-10-12
+**Type:** Processor (f_vecfield producer): a scalar texture in, a vecfield out
+**Status:** Working — listed in README.md's patch table; maintenance-audited 2026-10-12. Re-typed 2026-11-01 (Matt): it is a processor, not a dual (see below).
 
 ---
 
 ## What it does
 
-Dual-mode vecfield generator, designed as an input for `f_weave`'s vecfield inlet. **Decision 2026-11-01 (Matt): flow needs a texture; unconnected rendering is not supported or wanted** (no render trigger was added; the unconnected render was never checked live, and a uniform field is only a second angle dial on weave). The unconnected codebox path below is what the code computes, not a supported mode. Takes a scalar texture on inlet 0:
+Vecfield generator, designed as an input for `f_weave`'s vecfield inlet. It needs a scalar texture on inlet 0: the texture's luminance sets the flow direction at each pixel, `angle * 2pi + (luminance - 0.5) * spread * 2pi`, output as a unit vector. `spread` 0 gives the uniform field at `angle`.
 
-- **Unconnected:** uniform direction field — every pixel outputs the same vector, oriented by `angle`.
-- **Connected:** direction varies spatially, perturbed by the input texture's luminance scaled by `spread` — a spatially-varying flow direction rather than a single global angle.
-
-Mode is auto-detected via `vs_inState`, driving the internal `src_mode` param (not user-facing), the same convention used by f_stipple/f_masonry.
+**Decision 2026-11-01 (Matt): flow needs a texture; there is no unconnected mode** (no uniform-field mode, no render trigger). With nothing connected it renders nothing. Before this date the module was a `dual` with a `src_mode` flag; that, its `vs_inState` and the unconnected path were removed. A uniform field would only be a second angle dial on weave.
 
 Bypass outputs a neutral vecfield (0.5, 0.5) — not a passthrough of the input scalar texture.
 
@@ -21,7 +18,7 @@ Bypass outputs a neutral vecfield (0.5, 0.5) — not a passthrough of the input 
 ## Signal Flow
 
 ```
-in0 (optional scalar texture + control) → vs_inState → vfflow_pix in0   [render trigger + src_mode]
+in0 (scalar texture + control) → routepass jit_gl_texture jit_matrix → vfflow_pix in0
 routepass unmatched → route angle spread → live.dials → prepend param <name> → vfflow_pix in0
 
 vfflow_pix (@type float32) out0 → out0 (f_vecfield)
@@ -35,7 +32,6 @@ vfflow_pix (@type float32) out0 → out0 (f_vecfield)
 |---|---|---|---|
 | `angle` | 0–1 | 0.0 | Base flow direction (0–1 = full circle) |
 | `spread` | 0–1 | 0.5 | How much the input texture perturbs direction — 0=uniform, 1=full rotation |
-| `src_mode` | internal | — | Driven by `vs_inState`; not user-facing |
 | `bypass` | 0/1 | 0 | Outputs neutral vecfield (0.5, 0.5) |
 
 **Prefix:** `vfflow` — **Object name:** `vfflow_pix`
@@ -45,7 +41,7 @@ vfflow_pix (@type float32) out0 → out0 (f_vecfield)
 ## Typical Use
 
 ```
-[optional scalar texture] → f_vf_flow → f_weave (vecfield inlet)
+[scalar texture] → f_vf_flow → f_weave (vecfield inlet)
 ```
 
 `f_weave` centers the incoming vecfield's X/Y samples (sample minus 0.5) and uses them as an orientation contribution blended against its own `cos(angle*π)`/`sin(angle*π)` basis via two mechanisms crossfaded by `fix_blend` — see `docs/f-reference/f_weave.md`.
@@ -53,7 +49,7 @@ vfflow_pix (@type float32) out0 → out0 (f_vecfield)
 ## Notes
 
 - No `.specify/f_vf_flow/spec.md` exists — this doc is derived from `definition.py`'s header comment and param list plus `codebox_flow.gen`.
-- See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract — note `f_vf_flow` is one of the few f_vecfield producers with a `"dual"` archetype (source when unconnected, processor-like when a texture is patched in), same category as `f_stipple`.
+- See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract. Until 2026-11-01 `f_vf_flow` was one of the few f_vecfield producers with a `"dual"` archetype; it is now a plain processor.
 
 ## Source File
 

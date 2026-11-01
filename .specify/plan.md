@@ -11,9 +11,9 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-1. Render-trigger check: `f_stipple` done 2026-11-01 (gated `r draw` plus `render_dim` size; Matt live; T044/T045). `f_weave` done 2026-11-01 (three optional inlets, unconnected lines; Matt live; live contract bench green 2/2). `f_vf_flow` resolved 2026-11-01 with no change (Matt: it needs a texture). The check is closed.
+1. Render-trigger check: `f_stipple` done 2026-11-01 (gated `r draw` plus `render_dim` size; Matt live; T044/T045). `f_weave` done 2026-11-01 (three optional inlets, unconnected lines; Matt live; live contract bench green 2/2). `f_vf_flow` resolved 2026-11-01 (Matt: it needs a texture; re-typed processor, was dual). The check is closed.
 2. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
-3. Tier-3 tuning of `f_wave_field` is closed 2026-11-01 (Matt: passes with the existing defaults, no change). Its full bench re-run was owed once after tuning; whether it is still wanted with nothing changed is Matt's call. `f_ks` tuning is done 2026-10-31 (map, defaults and ranges unchanged); its name (T010) and docs (T040) remain.
+3. Tier-3 tuning of `f_wave_field` is closed 2026-11-01 (Matt: passes with the existing defaults, no change). The full bench re-run once owed after tuning is not needed (Matt, 2026-11-01: nothing changed). `f_ks` tuning is done 2026-10-31 (map, defaults and ranges unchanged); its name (T010) and docs (T040) remain.
 4. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 
 ## Owed to Matt
