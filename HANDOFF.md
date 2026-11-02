@@ -25,7 +25,8 @@
 - **Commits:** e99bdab (src, patcher rebuilt, help, demo `f_demo_ch`, menu, `f_addmod.js`, `f_modules`, `f_Launch`, README row), 93fbf1c (`tests/modules/vf_ch/`, bench tables, spike imports), then the docs/records commit (reference doc, `.specify/stable/f_vf_ch/`, `ideas/f_vf_ch.md`, inventory, ideas links, this entry).
 - **Checked (offline, Claude):** `drift -v f_vf_ch` ok; `generate_menu --check` current; `test_vf_ch_static.py` 9/9 (log `tests/logs/20261101-214225-offline.log`). Not run: the full offline suite, `test_gates.py`, either live bench.
 - **Left on purpose:** internal `prefix` `vfimm`; spike script filenames and `tests/logs/immiscible*` (history); the dated G1 naming lines in the `.specify` records; `tests/.state/bench_green.json` (its immiscible entries are stale until the renamed benches run live). Saved patches using the old name break.
-- **Owed to Matt:** run `tests/bench.sh tests/modules/vf_ch/bench_vf_ch.py` and `bench_vf_ch_module.py`; open `f_vf_ch` to check "Cahn-Hilliard" fits the title bar, and open the help and `f_demo_ch`.
+- **Checked live (Matt, 21:48):** the title bar, helpfile and `f_demo_ch` look passes. `tests/build/test_gates.py` 5/5 (Matt ran it; log `tests/logs/20261101-214502-offline.log`).
+- **Owed to Matt:** the two benches (`tests/bench.sh tests/modules/vf_ch/bench_vf_ch.py`, then `bench_vf_ch_module.py`): started 21:48, result not yet reported.
 
 ## 2026-11-01 (late evening): `f_weave` promoted: variants, tagged textures, offset, compact panel
 
