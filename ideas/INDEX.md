@@ -519,6 +519,12 @@ there, then the chapter-specific files for depth.
   same open "UI density / control surface design" question this file is
   blocked on — see `.specify/plan.md`. Next step: reviewing Max4Live devices
   for prior art before picking a direction.
+- **[ui_design_concepts.md](ui_design_concepts.md)** 🧰 — 2026-11-01, open for discussion: the
+  same UI-density thread from the other end. Started from the `f_weave` panel rework (a 6 x 2 grid, numbox depth
+  under each dial, tinted depth boxes) and a designer-style critique of it; lists 15 design concepts to talk
+  through (grouping, colour meaning, hierarchy in the dark, labels, hit targets, mod-depth pattern, mode
+  controls, header, panel size, where explanation lives) and a suggested path to a skill. Aim: arrive at a
+  skill that describes our best design concepts. Touches `G-ui-density`. Nothing decided.
 
 - **[xray_package_candidates.md](xray_package_candidates.md)** 🔵 — **PARKED 2026-10-18** (Matt
   found `water` underwhelming earlier). Analysis (2026-10-18), no decision: which objects in the installed XRAY package (v1.0.2, 27 pieces, all CPU
