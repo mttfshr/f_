@@ -1,5 +1,5 @@
-// codebox_pass.gen -- f_vf_immiscible stage 2: holds last frame's phi, or reseeds it. 256x256 float32.
-// Mirror: immiscible_mirror.pass_stage() and hash01().
+// codebox_pass.gen -- f_vf_ch stage 2: holds last frame's phi, or reseeds it. 256x256 float32.
+// Mirror: vf_ch_mirror.pass_stage() and hash01().
 //
 // Inputs: in1 = `r draw` bang (unused; it only triggers the render every frame and rides the HOT inlet,
 // the feedback arrives on a cold inlet so it cannot retrigger the loop), in2 = the held state from the

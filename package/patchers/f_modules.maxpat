@@ -697,9 +697,9 @@
                         },
                         "valueof": {
                             "parameter_enum": [
+                                "Cahn-Hilliard \u2207",
                                 "Flow \u2207",
                                 "Fluid \u2207",
-                                "Immiscible \u2207",
                                 "Lattice Boltzmann \u2207",
                                 "Optical Flow \u2207",
                                 "Repulse \u2207",
@@ -743,9 +743,9 @@
                     "saved_attribute_attributes": {
                         "valueof": {
                             "parameter_enum": [
+                                "vf_ch",
                                 "vf_flow",
                                 "vf_fluid",
-                                "vf_immiscible",
                                 "vf_lbm",
                                 "vf_optical_flow",
                                 "vf_repulse",

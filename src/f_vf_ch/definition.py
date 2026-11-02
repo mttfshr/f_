@@ -1,10 +1,10 @@
 """
-f_vf_immiscible -- definition.py
+f_vf_ch -- definition.py
 
 Immiscible two-phase blend of two upstream velocity vecfields.  A Cahn-Hilliard phase field phi (a fixed
 256x256 float32 periodic state, advected by the blended velocity and phase-separated every frame) decides
 where velocity A (phi = -1) and velocity B (phi = +1) show: out0 = phi as grey, out1 = the blended velocity
-as an f_vecfield.  See .specify/stable/f_vf_immiscible/{spec,plan,tasks}.md.
+as an f_vecfield.  See .specify/stable/f_vf_ch/{spec,plan,tasks}.md.
 
 Stage chain (plan ADR-1, amended 2026-10-27), solver stages at a fixed 256x256 float32:
     inab -> adv (in1, cold) ; inab -> enc (in1)
@@ -27,9 +27,9 @@ input reads as zero velocity.  Bypass is a Param gate on enc (never native @bypa
 SOLVER = "@adapt 0 @dim 256 256 @type float32"
 
 patcher = {
-    "name":               "f_vf_immiscible",
+    "name":               "f_vf_ch",
     "prefix":             "vfimm",
-    "title":              "Immiscible",
+    "title":              "Cahn-Hilliard",
     "signal_type":        "∇ in/out",
 
     "presentation_width":  190,

@@ -332,13 +332,13 @@
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
-                    "name": "f_vf_immiscible.maxpat",
+                    "name": "f_vf_ch.maxpat",
                     "numinlets": 3,
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture" ],
                     "patching_rect": [ 723.0, 366.0, 191.0, 157.0 ],
-                    "varname": "f_vf_immiscible",
+                    "varname": "f_vf_ch",
                     "viewvisibility": 1
                 }
             },
@@ -404,7 +404,7 @@
             },
             {
                 "box": {
-                    "autorestore": "f_demo_immiscible.json",
+                    "autorestore": "f_demo_ch.json",
                     "hidden": 1,
                     "id": "obj-10",
                     "linecount": 2,

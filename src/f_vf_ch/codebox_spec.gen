@@ -1,5 +1,5 @@
-// codebox_spec.gen -- f_vf_immiscible stage 6: the stabilised semi-implicit Cahn-Hilliard step,
-// per Fourier bin. 256x256 float32. Mirror: tests/modules/immiscible/immiscible_mirror.spec().
+// codebox_spec.gen -- f_vf_ch stage 6: the stabilised semi-implicit Cahn-Hilliard step,
+// per Fourier bin. 256x256 float32. Mirror: tests/modules/vf_ch/vf_ch_mirror.spec().
 //
 // Input in1 = spectral texture (R,G = Re,Im of phi-hat; B,A = Re,Im of (phi^3)^).
 // Output R,G = Re,Im of phi-hat'; B,A = 0.
@@ -12,7 +12,7 @@
 //     This is what lets a held source settle instead of flooding.
 //   - the fixed point is the exact Cahn-Hilliard steady state; a >= 1 never raised the energy
 //     (T004: a = 0.5 diverges at mdt >= 1e-2)
-//   - CONSTANTS FIXED BY T004 (2026-10-27), mirrored in immiscible_mirror.py -- change both together:
+//   - CONSTANTS FIXED BY T004 (2026-10-27), mirrored in vf_ch_mirror.py -- change both together:
 //       a = 1.5 (A_STAB), mdt = 0.1 * coarsen^3 (MDT_MAX, MDT_EXP)
 //   - `coarsen` and `iface` are not clamped here; the patcher's dial ranges do that (the mirror
 //     does not clamp either). `iface` is in texels of THIS 256 grid

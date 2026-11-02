@@ -66,9 +66,9 @@ CATEGORIES = [
         ("Tone Curve", "tone_curve", N),
     ]),
     ("\u2207 Fields", [
+        ("Cahn-Hilliard", "vf_ch", V),
         ("Flow", "vf_flow", V),
         ("Fluid", "vf_fluid", V),
-        ("Immiscible", "vf_immiscible", V),
         ("Lattice Boltzmann", "vf_lbm", V),
         ("Optical Flow", "vf_optical_flow", V),
         ("Repulse", "vf_repulse", V),

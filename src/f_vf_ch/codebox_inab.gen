@@ -1,5 +1,5 @@
-// codebox_inab.gen -- f_vf_immiscible stage 0: decode, content-gate and minify BOTH upstream velocity
-// vecfields onto the 256x256 solver grid, packed into one texture. Mirror: immiscible_mirror.inab().
+// codebox_inab.gen -- f_vf_ch stage 0: decode, content-gate and minify BOTH upstream velocity
+// vecfields onto the 256x256 solver grid, packed into one texture. Mirror: vf_ch_mirror.inab().
 //
 // Inputs (jit.gl.pix inlets): in1 = `r draw` bang (unused; it only triggers the render every frame),
 // in2 = velocity vecfield A at render resolution (via vs_inState), in3 = velocity vecfield B (same).

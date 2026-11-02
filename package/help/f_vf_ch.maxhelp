@@ -41,7 +41,7 @@
 						270.0,
 						50.0
 					],
-					"text": "Immiscible",
+					"text": "Cahn-Hilliard",
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"
@@ -132,7 +132,7 @@
 						270.0,
 						380.0
 					],
-					"text": "References\n\nPhase model: the Cahn-Hilliard\nequation, stepped in Fourier space\nwith a stabilised semi-implicit\nsplit.\nCahn & Hilliard (1958)\n\"Free Energy of a Nonuniform System. I.\"\nJ. Chem. Phys. 28, 258\nEyre (1998) MRS Symp. Proc. 529\n\nBlend, Mix bias, pull and injection\nramp: derived in development --\nnot from any external source.\nConstants are tuned from this\nmodule's own experiments.\n\nNeeds two f_vecfield inputs (in 1\nand in 2); a texture on in 0 is\noptional. Full notes:\ndocs/f-reference/f_vf_immiscible.md",
+					"text": "References\n\nPhase model: the Cahn-Hilliard\nequation, stepped in Fourier space\nwith a stabilised semi-implicit\nsplit.\nCahn & Hilliard (1958)\n\"Free Energy of a Nonuniform System. I.\"\nJ. Chem. Phys. 28, 258\nEyre (1998) MRS Symp. Proc. 529\n\nBlend, Mix bias, pull and injection\nramp: derived in development --\nnot from any external source.\nConstants are tuned from this\nmodule's own experiments.\n\nNeeds two f_vecfield inputs (in 1\nand in 2); a texture on in 0 is\noptional. Full notes:\ndocs/f-reference/f_vf_ch.md",
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"
@@ -370,7 +370,7 @@
 					"lockeddragscroll": 0,
 					"lockedsize": 0,
 					"maxclass": "bpatcher",
-					"name": "f_vf_immiscible.maxpat",
+					"name": "f_vf_ch.maxpat",
 					"numinlets": 3,
 					"numoutlets": 2,
 					"offset": [
@@ -388,7 +388,7 @@
 						150.0
 					],
 					"viewvisibility": 1,
-					"varname": "f_vf_immiscible"
+					"varname": "f_vf_ch"
 				}
 			},
 			{
