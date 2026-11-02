@@ -167,7 +167,7 @@ def test_title_bar_labels_say_the_right_direction_for_the_tensor_family():
     want = {"tf_tensormap": "T_ out", "tf_smooth": "T_ in/out", "tf_sharpen": "T_ in/out",
             "tf_aniso_blur": "T_ in", "tf_hatch": "T_ in", "tf_glyph": "T_ in",
             "tf_axisflow": "T_ in \u2207 out", "vf_fluid": "\u2207 in/out", "vf_warp": "\u2207 in",
-            "vf_vortex": "\u2207 out", "weave": "\u2207 in",
+            "vf_vortex": "\u2207 out",           # weave left this table 2026-11-01: no vecfield input, no label
             "vf_advect": "\u2207 in/out", "vf_prism": "\u2207 in/out"}   # their 3rd outlets carry a vecfield (code audit 2026-10-17)
     for m, text in want.items():
         _eq(f"{m}: title-bar label", title_labels(m), [text])

@@ -48,7 +48,7 @@ CATEGORIES = [
         ("Quasi", "quasi", V),
         ("Seeds", "vf_seeds", V),
         ("Stipple", "stipple", N),
-        ("Weave", "weave", V),
+        ("Weave", "weave", N),          # no vecfield input since 2026-11-01 (inlet retired, signal_type removed)
         ("Wilson-Cowan", "wc", N),
     ]),
     ("Space & Optics", [

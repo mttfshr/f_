@@ -240,7 +240,7 @@
                                 "Quasi \u2207",
                                 "Seeds \u2207",
                                 "Stipple",
-                                "Weave \u2207",
+                                "Weave",
                                 "Wilson-Cowan"
                             ],
                             "parameter_initial": [

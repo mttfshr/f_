@@ -90,7 +90,7 @@
 						15.0,
 						150.0,
 						270.0,
-						221.0
+						289.0
 					],
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 1]\nmarklen [0 \u2013 1]\nregularity [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nshape [0 \u2013 1]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 1]\nmarklen [0 \u2013 1]\noffset [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nvariant [0 \u2013 4]\nirreg [0 \u2013 1]\nnscale [0 \u2013 1]\nweight_m [0 \u2013 1]\nirreg_m [0 \u2013 1]\nmarklen_m [0 \u2013 1]\nmmode [0 / 1]\nbypass [0 / 1]",
 					"fontsize": 12.0,
-					"linecount": 13
+					"linecount": 17
 				}
 			},
 			{
@@ -118,7 +118,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						15.0,
-						391.0,
+						459.0,
 						270.0,
 						120.0
 					],
@@ -167,8 +167,8 @@
 					"patching_rect": [
 						338.0,
 						24.0,
-						237.5,
-						169.0
+						247.5,
+						190.0
 					],
 					"bgmode": 1,
 					"border": 1,
@@ -197,7 +197,7 @@
 					],
 					"patching_rect": [
 						338.0,
-						213.0,
+						234.0,
 						236.0,
 						249.0
 					],
@@ -223,9 +223,9 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						500.0,
-						478.0,
+						499.0,
 						210.0,
-						51.0
+						99.0
 					],
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
@@ -236,9 +236,9 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Feed f_vf_potential into in1 (across) for\nfield-curved isolines.",
+					"text": "Feed f_vf_potential into in1 (across) for\nfield-curved isolines. To modulate weight,\nirreg or marklen with a texture, tag it\n(prepend weight_tex / irreg_tex / marklen_tex)\ninto inlet 0 and raise its box.",
 					"fontsize": 12.0,
-					"linecount": 2
+					"linecount": 5
 				}
 			}
 		],
