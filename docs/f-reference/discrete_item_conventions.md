@@ -7,6 +7,8 @@ See `ideas/discrete_item_family.md` for the full architectural framework.
 
 ## OPEN: this doc's f_weave description is stale relative to the shipped module (found 2026-07-05)
 
+_Update 2026-11-01: f_weave has had `softness` since its 2026-11-01 rework and no longer has `shape` (removed 2026-11-01); `regularity` became `offset`, inverted (see the `regularity` section). The rest of this note is the 2026-07-05 finding and is otherwise unchecked._
+
 **This doc's `softness` and `shape` sections both describe f_weave params that
 do not exist in `.specify/f_weave/definition.py`'s shipped param list**
 (`density`, `angle`, `weight`, `marklen`, `regularity`, `phase`,
@@ -47,17 +49,17 @@ get lost.
 
 ## `regularity` — shared name, distinct semantics
 
-Both f_weave and f_masonry have a `regularity` param. The name is intentionally
+f_masonry has a `regularity` param, and f_weave had one until 2026-11-01 (now `offset`, inverted). The name was intentionally
 shared (both modules concern themselves with ordered vs. disordered arrangements),
 but the semantics differ:
 
-**f_weave `regularity` (0–1):**
+**f_weave `offset` (0–1; this was `regularity`, inverted, 2026-11-01):**
 Controls per-line phase randomness along the mark axis.
-- `regularity = 1.0` — all lines in phase: marks align across lines, grid-like.
-- `regularity = 0.0` — each line's marks are independently offset by a random hash,
+- `offset = 0.0` — all lines in phase: marks align across lines, grid-like.
+- `offset = 1.0` — each line's marks are independently offset by a random hash,
   fully staggered. Painterly, woven texture.
 
-Implementation: `line_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - regularity)`
+Implementation: `line_hash = fract(sin(line_idx * 127.1) * 43758.5453) * offset`
 The hash is stable per line index, so the stagger pattern is consistent across frames.
 
 **f_masonry `regularity` (0–1):**
