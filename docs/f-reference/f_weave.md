@@ -1,7 +1,7 @@
 # f_weave
 
-**Type:** Generator (three optional inlets: across scalar, along scalar, vecfield — reordered 2026-11-01)
-**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. Orientation-blend A/B resolved 2026-10-13 (Matt): not a one-time pick, both mechanisms ship as live `field_amount`/`fix_blend` dials (`ideas/f_weave_orientation_blend.md`). Matt's recorded quality concern is still open (see Notes).
+**Type:** Generator (two optional inlets: across scalar, along scalar; the vecfield inlet was retired 2026-11-01)
+**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. The vecfield inlet and its `field_amount`/`fix_blend` dials (orientation-blend A/B, 2026-10-13, `ideas/f_weave_orientation_blend.md`) were retired 2026-11-01 (Matt, `G-weave-scope` Q1): a field warp is `f_vf_warp` downstream. Matt's recorded quality concern is still open (see Notes).
 
 ---
 
@@ -23,11 +23,11 @@ routepass out0 → vs_inState → weave_pix in0 (codebox in1)   [src_potential f
 routepass unmatched → route <params> → live.dials → prepend param <name> → weave_pix in0
 
 inlet 1 (along scalar, optional) → vs_inState → weave_pix in1 (codebox in2)   [src_along flag — replaces the along coordinate; phase / regularity still apply on top]
-inlet 2 (vecfield, optional)     → vs_inState → weave_pix in2 (codebox in3)   [src_field flag — steers the line orientation; only acts on an axis a scalar has not replaced]
+(no third inlet: the vecfield inlet was retired 2026-11-01)
 
 r draw → gate 1 1 → weave_pix in0   [render trigger when inlet 0 is empty; the gate is closed by inlet 0's connected flag]
 weave_pix out0 → out0 (texture out)
-Archetype: processor with driving_inlet (mod_inlets across / along / vecfield). Render size follows the render (render_dim, size_stages only; @adapt 0).
+Archetype: processor with driving_inlet (mod_inlets across / along). Render size follows the render (render_dim, size_stages only; @adapt 0).
 
 weave_pix out0 → out0 (texture out)
 ```
@@ -46,8 +46,6 @@ weave_pix out0 → out0 (texture out)
 | `shape` | 0–1 | 0.0 | Mark profile — 0 = flat-top rectangle, 1 = raised cosine (calligraphic). |
 | `regularity` | 0–1 | 0.5 | 1=lines in phase (grid-like), 0=fully varied per-line offset |
 | `phase` | -1–1 | 0.0 | Animation phase — scrolls marks along line direction |
-| `field_amount` | 0–2 | 1.0 | Vecfield (in1) orientation-contribution depth. 1.0 reproduces the original (pre-2026-10-13) implicit depth exactly. |
-| `fix_blend` | 0–1 | 0.0 | Orientation mechanism crossfade: 0 = vector-add + renormalize, 1 = true angular blend (`atan2`-based). Live performance control, not a fixed choice — see `ideas/f_weave_orientation_blend.md`. |
 | `src_potential` | internal | — | Driven by vs_inState on the scalar-potential inlet; not user-facing |
 | `bypass` | 0/1 | 0 | Outputs black |
 
@@ -58,22 +56,9 @@ weave_pix out0 → out0 (texture out)
 ## Algorithm
 
 ```
-// orientation: two mechanisms, crossfaded by fix_blend (resolved 2026-10-13)
-vx, vy = sample(vecfield, uv) - 0.5
+// orientation: the global `angle` only (the vecfield terms were removed 2026-11-01)
 base_angle = angle*π
-
-// Mechanism A (fix_blend=0): vector-add + renormalize, field_amount-scaled
-csA = cos(base_angle) + field_amount*(-vy); snA = sin(base_angle) + field_amount*vx
-normalize (csA, snA)
-
-// Mechanism B (fix_blend=1): true angular blend via atan2, weighted by
-// field_amount (depth) and field magnitude (confidence)
-field_angle = atan2(vx, -vy)
-blend_angle = base_angle + wrap(field_angle - base_angle) * clamp(field_amount * |field| * 2, 0, 1)
-csB = cos(blend_angle); snB = sin(blend_angle)
-
-cs = mix(csA, csB, fix_blend); sn = mix(snA, snB, fix_blend)
-normalize (cs, sn)
+cs = cos(base_angle); sn = sin(base_angle)
 across_rot = uv.x*cs + uv.y*sn
 along      = uv.x*(-sn) + uv.y*cs
 
@@ -110,13 +95,26 @@ out1 = mix(vec(cr*mark, cg*mark, cb*mark, 1), vec(0,0,0,1), bypass)
 ## Changes 2026-11-01 (Matt)
 
 - Nothing connected now draws straight lines at `angle` (before, an empty inlet 0 drew nothing: vs_inState does not make an unconnected pix render, the f_quasi bug).
-- Inlets reordered scalars first: 0 across, 1 along (new), 2 vecfield. Saved patches that fed a vecfield to inlet 0 and a scalar to inlet 1 need rewiring.
+- Inlets reordered scalars first: 0 across, 1 along (new). A vecfield inlet (2) was added in this reorder and retired later the same day (next section). Saved patches that fed a vecfield to inlet 0 and a scalar to inlet 1 need rewiring.
 - `density` reaches 64 cells across (was 16; unchanged below 0.5). `weight` / `marklen` range 0-1 (1.0 fills the cell, edges at half level).
 - `softness` 0 = crisp edge, 1 = the old softness-1 feather (the old softness 0, a ramp from the line centre, no longer exists; about 0.5 is nearest).
 
+## Vecfield inlet retired 2026-11-01 (Matt, `G-weave-scope` Q1, option C)
+
+- Removed: the vecfield inlet (inlet 2, codebox `in3`), `field_amount`, `fix_blend` and the `src_field` flag. Orientation is `angle` only. Commit `508ffc7`; static test and drift ok.
+- Why: the vecfield only rotated `across_rot` / `along_rot`, which a connected scalar replaces. With inlets 0, 1 and 2 all connected the field had no effect, and disconnecting inlet 0 brought it back (Matt, in Max, same day). By the codebox, with only inlet 0 connected the field would only shift mark positions along each line, and used alone it fans lines from the origin instead of bending them along the field (read from the code, not tested). A real field warp is `f_vf_warp` downstream; `ideas/f_weave_scope_questions.md` Q2 (whether `f_vf_warp` is a drop-in) was not checked.
+- Consequence: a patch with anything on weave's old inlet 2 loses that connection. `angle` is also inert once both scalar inlets are connected, because both coordinates are then replaced; that tension is scope question 5.
+- History of the removed mechanisms: `ideas/f_weave_orientation_blend.md` (A/B, 2026-10-13), kept as a record.
+
+## Character work, scratch (2026-11-01)
+
+Not in the shipped module. A scratch copy, `f_weave_char` (`scratch/experiments/f_weave_character/`, gitignored, local only), tried irregularity variants and named-texture modulation:
+- `variant` 0 off, 1 line wobble, 2 smooth along-line modulation of `weight`/`marklen`, 3 hashed per-mark jitter, 4 wobble + smooth modulation, with `irreg` (depth) and `nscale` (noise frequency). Matt (2026-11-01): all variants look good and he wants all of them; bringing them into the shipped `f_weave` is not done and not yet scheduled.
+- Named-texture modulation of `weight` / `irreg` / `marklen` on inlet 0 (tagged textures, depth dials `*_m`, `mmode`): works live; see `ideas/named_mod_textures.md`. No `build_patcher.py` change yet (`P-mod-textures`).
+
 ## Notes — real discrepancy between spec.md and definition.py
 
-- **`spec.md`'s "Phase 2 — Vecfield inlet" section describes an `atan2`-based scale-factor design** (`vf_angle = atan2(vy-0.5, vx-0.5)`, added to `angle*π` via an undetermined `SCALE` constant) that was still marked open/undecided (`[ ] Scale factor chosen and documented` unchecked in Phase 2's acceptance criteria). **The shipped `definition.py` codebox instead adds `vx`/`vy` directly into the `cos`/`sin` basis** (`cs = cos(angle*π) + (-vy)`, then renormalized) — a different, simpler mechanism than the spec's sketch, with no `atan2` or scale constant anywhere. Whether this represents Phase 2's actual resolution (undocumented) or a further, unspecced iteration isn't clear from the available files.
+- (Moot since 2026-11-01: the vecfield inlet no longer exists.) **`spec.md`'s "Phase 2 — Vecfield inlet" section describes an `atan2`-based scale-factor design** (`vf_angle = atan2(vy-0.5, vx-0.5)`, added to `angle*π` via an undetermined `SCALE` constant) that was still marked open/undecided (`[ ] Scale factor chosen and documented` unchecked in Phase 2's acceptance criteria). **The shipped `definition.py` codebox instead adds `vx`/`vy` directly into the `cos`/`sin` basis** (`cs = cos(angle*π) + (-vy)`, then renormalized) — a different, simpler mechanism than the spec's sketch, with no `atan2` or scale constant anywhere. Whether this represents Phase 2's actual resolution (undocumented) or a further, unspecced iteration isn't clear from the available files.
 - **A second inlet (`scalar potential`, `src_potential`) exists in the shipped module with no corresponding entry anywhere in `spec.md`.** This inlet can fully override the `across` coordinate (rather than perturb it) and also tints output color from white to the potential texture's RGB — a capability not mentioned in the spec at all. This is very likely intended to pair with the also-undocumented `f_vf_potential` module (see `docs/f-reference/f_vf_potential.md`), whose own header comment states exactly this pairing (`f_vf_repulse → f_vf_potential → f_weave (scalar in)`). Treat `spec.md`'s Phase 2/3/4 checklists as stale relative to what's actually built.
 - Per HANDOFF.md: Matt flagged f_weave with a vague, unresolved quality concern ("can't put my finger on it yet") — logged as a separate open thread from the `f_grain`/`f_vf_seeds` grid-rigidity discussion, explicitly not assumed related until checked.
 - `swing`, `continuity`, and `beats`/`period` (Euclidean rhythm) were all deliberately dropped in Phase 1 — each pulls toward grid/slot structure, which conflicts with the continuous-distance-field architecture that makes this module Droste-safe. See `spec.md`'s "What Was Dropped and Why" for the reasoning if revisiting any of them.

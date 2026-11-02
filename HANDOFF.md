@@ -7,7 +7,8 @@
 **State:** closed 2026-11-01: `f_wave_field` T030 (Matt: passes with the existing defaults, no change; its full bench re-run is not needed), `f_vf_flow` (needs a texture; re-typed processor, was dual; render-trigger check closed), `f_weave` (unconnected lines, across/along/vecfield inlets, density/weight/marklen/softness; Matt live; live contract bench green 2/2), `f_stipple` unconnected rendering (T044 gated `r draw` trigger, T045 render-size output; Matt live "works as expected"; live contract bench green 2/2 at 08:52 after adding it to `INPUT_SIZE`). Closed earlier: T062/T063 (`render_dim` migration; `f_masonry` and `f_cmap` stay exempt), the `f_vf_advect` Trail rework, Hatch (only the spike-script tail of T064 remains), `f_ks` tier-3 tuning (map, defaults, ranges unchanged), the Claims rule in CLAUDE.md with `tests/build/test_gates.py`. Nothing is scheduled; Matt picks the next item.
 
 **Candidates (Matt decides):**
-- `f_weave` identity and character (open, for Matt's thinking time; gate `G-weave-scope`, `ideas/f_weave_scope_questions.md`, 16 questions): what it is for, whether it should actually weave, texture-modulated weight, keep the vecfield inlet or use `f_vf_warp`.
+- `f_weave` identity and character (open, for Matt's thinking time; gate `G-weave-scope`, `ideas/f_weave_scope_questions.md`, 16 questions): what it is for (Q6, Q9) and whether it should actually weave (Q7). The vecfield inlet is decided (retired, T063), see the 2026-11-01 evening entry.
+- `f_weave` T064 (bring the five irregularity variants into the shipped module; Matt wants all of them) and T065 (named-texture modulation, waits on `P-mod-textures`).
 - Hatch tail (T064): the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail.
 - `f_ks` still needs its name (T010) and docs (T040) (its tuning is done).
 - `vs_black` wording in `skills/vsynth-bpatcher/SKILL.md` and `docs/vsynth-reference/patterns.md` (the skill needs Matt's re-upload and `skills/check.sh stamp`). New fact for that wording: `vs_black` is a 1x1 texture (`vs_render.maxpat`).
@@ -17,7 +18,17 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
+## 2026-11-01 (evening): `f_weave` vecfield inlet retired; irreg variants and named-texture modulation prototyped (scratch)
+
+- **Decided (Matt):** `G-weave-scope` Q1 option C: retire the vecfield inlet. Commit 508ffc7 (inlet 2, `field_amount`, `fix_blend`, `src_field`; orientation is `angle` only; test 7/7, `drift -v f_weave` ok). Found live: with all three inlets connected the field did nothing; disconnecting inlet 0 brought it back. `angle` is likewise inert once both scalar inlets are connected (Q5). Docs, help, README, `f_Launch`, ideas, gates and tasks (T063-T065) updated in the commit after.
+- **Scratch only (local, `/scratch/` is gitignored):** `scratch/experiments/f_weave_character/` holds `f_weave_char` (variants 0-4 via `variant`, `irreg`, `nscale`; Matt: all look good, wants all) and the named-texture prototype (tagged `weight_tex`/`irreg_tex`/`marklen_tex` on inlet 0, depth dials `*_m`, `mmode`, flag-gated). `_build.py` post-processes the real builder's output; `build_patcher.py` is untouched. Test patches `scratch_weave_character.maxpat` and `scratch_weave_named_tex.maxpat` (same folder, so names resolve).
+- **Live results (Matt):** two tagged streams share inlet 0; a pulled cord returns the target to its dial; `mmode` reads as described; T6 coexistence (untagged + tagged on inlet 0) passes; the pix hop did not reproduce. Recorded in `ideas/named_mod_textures.md`.
+- **Not done:** Q13's head-to-head (variant 2 vs 3), the `f_droste` and long-mark seam checks; Q2 (`f_vf_warp` as a drop-in); T5 (inlet ceiling) and the `build_patcher.py` `tag` design; the stored GenExpr notes list `f_weave` as never-regenerate, but it reproduces from `definition.py` (drift ok) and was regenerated.
+- **Next:** nothing scheduled; Matt picks (candidates above).
+
 ## 2026-11-01 (09:55): `f_weave` rebuilt: unconnected lines, three inlets, packing, crisp softness
+
+- **Superseded in part:** the vecfield inlet described below was retired the same evening (see the entry above).
 
 - **Commits (f_):** a5c9022 (dual: straight lines at `angle` unconnected, render size), 6106fb7 (`density` to 64 cells above 0.5, `weight`/`marklen` 0-1), 4451e2f (`softness` 0 crisp, 1 = old softness 1), then the inlet commit. Matt live: density/weight/marklen "much better"; all three inlets work. Softness crisp look confirmed live (Matt, 09:58).
 - **Final shape:** `processor` + `driving_inlet`, `mod_inlets` across (inlet 0, `in1`, flag `src_potential`, also tints), along (inlet 1, `in2`, `src_along`, new), vecfield (inlet 2, `in3`, `src_field`). The `dual` pieces (`obj-17`, `obj-18`, `src_mode`) are gone; the gated `r draw` is keyed on inlet 0's `vs_inState` (`obj-101`). Nothing connected: straight lines at `angle`. The vecfield steers only axes a scalar has not replaced (with 0 and 1 both connected it does nothing: by design, Matt saw it).

@@ -37,7 +37,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_quasi` | Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets |
 | `f_stipple` | 2D hash field stipple texture |
 | `f_vf_seeds` | Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap |
-| `f_weave` | Parametric distance-field line texture with per-line phase variation; optional across, along, vecfield inlets |
+| `f_weave` | Parametric distance-field line texture with per-line phase variation; optional across and along inlets |
 
 ### Space & Optics
 
@@ -63,7 +63,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 
 | Patch | Description |
 |---|---|
-| `f_vf_flow` | Texture-driven direction field -- brightness sets the flow angle; designed to feed f_weave's vecfield inlet |
+| `f_vf_flow` | Texture-driven direction field -- brightness sets the flow angle; feeds any vecfield consumer |
 | `f_vf_fluid` | Incompressible-flow solver -- force vecfield in, evolving velocity field out; feed it to advect / warp / glow |
 | `f_vf_immiscible` | Blends two velocity vecfields (two Fluids) via a Cahn-Hilliard phase field; blended vecfield and phase out |
 | `f_vf_lbm` | Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out |

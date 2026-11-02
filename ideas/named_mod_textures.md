@@ -11,7 +11,7 @@ are closed — they bear on how the demux interacts with `vs_inState`/
 
 **Update 2026-11-01:** first run on a real module, a scratch variant of `f_weave`
 (`scratch/experiments/f_weave_character/`) — see "Live result on f_weave_char" below.
-T4's live half and T6 are partly answered; T5 is still open.
+T4's live half and T6 are answered on that scratch module; T5 and the build change are still open.
 
 If it holds it likely supersedes large parts of
 `ideas/f_util_mod_texture.md` — see "Relationship to the assignment
@@ -284,9 +284,13 @@ tagged target leaves the dial alone regardless of the fallback texture (gray or 
 - `mmode` 0 vs 1 reads as described (unipolar can only push up; bipolar both ways).
 - **Pix hop: not reproduced.** Tag demux → `vs_inState` → pix inlet rendered without trouble on a real module. Not root-caused; consistent with the T1 note's guess that a bare pix inlet needs the `vs_inState` framing.
 
-**Not tested:** an untagged driving texture and tagged textures arriving on inlet 0 together (the demo had only tagged
-streams on it), so **T6's coexistence half is still open**. T5 (inlet ceiling) untested — three targets only.
-`vs_inState`'s load-time behaviour for a target that never receives anything was not checked beyond the visible result.
+**T6 coexistence: passes (Matt, live, later the same session).** An untagged texture on inlet 0 together with the
+tagged ones, in `scratch_weave_named_tex.maxpat`. (The first demo had only tagged streams on inlet 0; this was the
+follow-up check.) Matt reported "passes"; no further detail was recorded.
+
+**Still not tested:** T5 (inlet ceiling) — three targets only. `vs_inState`'s load-time behaviour for a target that
+never receives anything was not checked beyond the visible result. The `build_patcher.py` change itself (a `tag` key
+on `mod_inlets` entries, replacing the post-processing in the scratch `_build.py`) is not designed.
 
 ---
 

@@ -789,7 +789,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric distance-field line texture with per-line phase variation; optional across, along, vecfield inlets",
+									"text": "Parametric distance-field line texture with per-line phase variation; optional across and along inlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2169,7 +2169,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Texture-driven direction field -- brightness sets the flow angle; designed to feed f_weave's vecfield inlet",
+									"text": "Texture-driven direction field -- brightness sets the flow angle; feeds any vecfield consumer",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

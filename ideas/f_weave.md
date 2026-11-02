@@ -2,7 +2,7 @@
 
 > **Dated banner, 2026-10-18:** the body below is the original design capture. Its `euclidean_hit`/`band_idx` architecture was replaced in the build by a continuous fract-based mark distance field (see `.specify/f_weave/tasks.md`).
 
-**Status:** Built — see `src/f_weave/` and `docs/f-reference/f_weave.md`; orientation A/B resolved 2026-10-13 (ship both, `field_amount`/`fix_blend` dials). Body below is a dated design capture.
+**Status:** Built — see `src/f_weave/` and `docs/f-reference/f_weave.md`; the orientation A/B (2026-10-13, `field_amount`/`fix_blend`) and the vecfield inlet were removed 2026-11-01. Body below is a dated design capture.
 
 ---
 

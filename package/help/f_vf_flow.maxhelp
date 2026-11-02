@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Texture-driven direction field -- brightness sets the flow angle; feeds f_weave's vecfield inlet",
+					"text": "Texture-driven direction field -- brightness sets the flow angle; feeds any vecfield consumer",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
@@ -236,7 +236,7 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Designed to feed f_weave in3 or any\nvecfield consumer.",
+					"text": "Feed into any vecfield consumer,\nfor example f_vf_warp.",
 					"fontsize": 12.0,
 					"linecount": 2
 				}

@@ -7,7 +7,7 @@
 
 ## What it does
 
-Vecfield generator, designed as an input for `f_weave`'s vecfield inlet. It needs a scalar texture on inlet 0: the texture's luminance sets the flow direction at each pixel, `angle * 2pi + (luminance - 0.5) * spread * 2pi`, output as a unit vector. `spread` 0 gives the uniform field at `angle`.
+Vecfield generator (it was designed to feed `f_weave`'s vecfield inlet, which was retired 2026-11-01; it feeds any vecfield consumer, for example `f_vf_warp`). It needs a scalar texture on inlet 0: the texture's luminance sets the flow direction at each pixel, `angle * 2pi + (luminance - 0.5) * spread * 2pi`, output as a unit vector. `spread` 0 gives the uniform field at `angle`.
 
 **Decision 2026-11-01 (Matt): flow needs a texture; there is no unconnected mode** (no uniform-field mode, no render trigger). With nothing connected it renders nothing. Before this date the module was a `dual` with a `src_mode` flag; that, its `vs_inState` and the unconnected path were removed. A uniform field would only be a second angle dial on weave.
 
@@ -41,10 +41,10 @@ vfflow_pix (@type float32) out0 → out0 (f_vecfield)
 ## Typical Use
 
 ```
-[scalar texture] → f_vf_flow → f_weave (vecfield inlet)
+[scalar texture] → f_vf_flow → f_vf_warp (or another vecfield consumer)
 ```
 
-`f_weave` centers the incoming vecfield's X/Y samples (sample minus 0.5) and uses them as an orientation contribution blended against its own `cos(angle*π)`/`sin(angle*π)` basis via two mechanisms crossfaded by `fix_blend` — see `docs/f-reference/f_weave.md`.
+`f_weave` no longer takes a vecfield (retired 2026-11-01, see `docs/f-reference/f_weave.md`); whether `f_vf_warp` after weave is a drop-in for the old behaviour was not checked (`ideas/f_weave_scope_questions.md` Q2).
 
 ## Notes
 

@@ -155,11 +155,10 @@ substantially move a file in `ideas/`, update its entry here too.
   hallucination ↔ imprint a single dial (G3). Reference doc
   `docs/f-reference/superseded/f_wc_fft.md` (archive); the four-form-selector original pitch was pruned by the
   region-map finding (there are no separable stable forms).
-- **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** 🟢 — **RESOLVED
-  2026-10-13: ship both.** `f_weave`'s vecfield-driven orientation used vector-add +
-  renormalize (non-proportional response); the true angular blend via `atan2` (GPU
-  safety verified 2026-10-12) is now one end of a performable `fix_blend` crossfade,
-  with `field_amount` setting depth. Both dials are live in `src/f_weave/definition.py`.
+- **[f_weave_orientation_blend.md](f_weave_orientation_blend.md)** ⚫ — **RESOLVED
+  2026-10-13 (ship both), then SUPERSEDED 2026-11-01: the vecfield inlet, `field_amount`
+  and `fix_blend` were removed from `f_weave`** (`G-weave-scope` Q1). Kept as the record
+  of the A/B (vector-add + renormalize against a true `atan2` angular blend).
 - **[dry_wet_gain_and_novel_field_outlet.md](dry_wet_gain_and_novel_field_outlet.md)**
   🧰 — Design discussion (no module chosen yet): reframe additive-layer
   modules (`f_vf_glow/chroma/prism/streak`, `f_caustic`) with separate `gain`

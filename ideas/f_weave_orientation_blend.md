@@ -1,6 +1,10 @@
 # f_weave — orientation response to vecfield input
 
-## Status: RESOLVED 2026-10-13 (Matt)
+## SUPERSEDED 2026-11-01 (Matt): the vecfield inlet, `field_amount` and `fix_blend` were removed
+
+Commit `508ffc7` (`G-weave-scope` Q1, `ideas/f_weave_scope_questions.md`). The vecfield only rotated coordinates a connected scalar replaces, so it did nothing when the scalar inlets were in use; a field warp is `f_vf_warp` downstream. This file is kept as the record of the A/B and its result; nothing below describes the current module.
+
+## Status: RESOLVED 2026-10-13 (Matt), since superseded (above)
 
 Decision, after the live scratch-patch A/B (`scratch/experiments/f_weave_orientation_ab/`):
 **not a one-time pick between Fix A and Fix B — ship both, as live dials.**

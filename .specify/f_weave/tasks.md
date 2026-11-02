@@ -207,3 +207,9 @@ out1 = mix(vec(mark, mark, mark, 1.0), vec(0.5, 0.5, 0.5, 1.0), bypass);
 - [x] T060: Inlets reordered scalars first and an along inlet added: 0 across (`in1`), 1 along (`in2`), 2 vecfield (`in3`); `processor` + `driving_inlet`. Flags `src_potential`/`src_along`/`src_field`.
 - [x] T061: Live contract bench for weave: 09:53 failed on the bypass frame size (640x640 vs 64x64); `f_weave` added to `INPUT_SIZE`; rerun green 2/2 (`tests/logs/20261101-095527-bench.log`).
 - [x] T062: Crisp `softness` look confirmed live (Matt, 2026-11-01 09:58).
+
+## 2026-11-01 (Matt, evening)
+
+- [x] T063: Vecfield inlet retired (`G-weave-scope` Q1, option C): inlet 2, `field_amount`, `fix_blend`, `src_field` and both orientation mechanisms removed; orientation is `angle` only. `definition.py`, `test_weave_static.py` (7/7), patcher rebuilt, `drift -v f_weave` ok. Commit 508ffc7. Docs, help, README, `f_Launch` and ideas updated after.
+- [ ] T064: Bring the five irregularity variants (`variant` 0-4, `irreg`, `nscale`; tried on the scratch copy `scratch/experiments/f_weave_character/`, Matt wants all of them) into the shipped `f_weave`. Not scheduled; open: a head-to-head of variant 2 vs 3, the `f_droste` check, the long-mark seam check, and dial layout (15 dials fit three rows in the scratch copy).
+- [ ] T065: Named-texture modulation of `weight` / `irreg` / `marklen` on inlet 0 in the shipped module. Waits on `P-mod-textures` (`build_patcher.py` design, T5). Prototype passes live on the scratch copy.

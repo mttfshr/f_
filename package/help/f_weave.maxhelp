@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Parametric distance-field line texture with per-line phase variation; optional across, along, vecfield inlets",
+					"text": "Parametric distance-field line texture with per-line phase variation; optional across and along inlets",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
@@ -105,7 +105,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 1]\nmarklen [0 \u2013 1]\nregularity [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nshape [0 \u2013 1]\nfield_amount [0 \u2013 2]\nfix_blend [0 \u2013 1]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 1]\nmarklen [0 \u2013 1]\nregularity [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nshape [0 \u2013 1]\nbypass [0 / 1]",
 					"fontsize": 12.0,
 					"linecount": 13
 				}
@@ -236,7 +236,7 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Feed f_vf_potential into in1 (across) and\nf_vf_flow into in3 (vecfield) for field-curved lines.",
+					"text": "Feed f_vf_potential into in1 (across) for\nfield-curved isolines.",
 					"fontsize": 12.0,
 					"linecount": 2
 				}
