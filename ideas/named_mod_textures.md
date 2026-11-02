@@ -9,6 +9,10 @@ T1–T3's result, but don't commit `build_patcher.py` changes until T4/T5/T6
 are closed — they bear on how the demux interacts with `vs_inState`/
 `routepass` and how far it scales, which a real module will need.
 
+**Update 2026-11-01:** first run on a real module, a scratch variant of `f_weave`
+(`scratch/experiments/f_weave_character/`) — see "Live result on f_weave_char" below.
+T4's live half and T6 are partly answered; T5 is still open.
+
 If it holds it likely supersedes large parts of
 `ideas/f_util_mod_texture.md` — see "Relationship to the assignment
 convention" below.
@@ -250,6 +254,39 @@ belongs relative to the existing one, and whether tagged and untagged
 textures can coexist on the same inlet.
 Result: _untested_ — note this one is a design question as much as a
 test, and T6 failing would not kill the idea, only reshape the plumbing.
+
+---
+
+## Live result on f_weave_char (2026-11-01)
+
+First real-module prototype, on a scratch copy of `f_weave` (`f_weave_char`), not on `build_patcher.py` — the
+tripwire in `P-mod-textures` still holds. Matt's design for it (2026-11-01): **no separate named inlet**. All
+modulation textures arrive on inlet 0, each tagged; at most one texture is untagged and is the driving texture
+(in weave, the across scalar; the along scalar keeps its own inlet 1). A texture-modulatable param with no tagged
+texture behaves as its dial, the way `vs_displacement` x/xm, y/ym do.
+
+**Wiring built** (all in `_build.py`, post-processing the real builder's output): inlet 0 → `routepass jit_gl_texture
+jit_matrix` → scalar `route`; a tagged message (`weight_tex jit_gl_texture <name>`) matches none of the scalar
+names and falls out of that `route`'s reject outlet (the builder declares none; one was added) → `route weight_tex
+irreg_tex marklen_tex` strips the tag → that target's own `vs_inState` → its pix inlet (in3..in5). The `vs_inState`
+sits downstream of the demux, as the static review above said it must. The three physical inlets the builder makes
+for `mod_inlets` entries were removed.
+
+**Formula:** effective = dial + connected_flag × depth × tex, depth dials `weight_m`, `irreg_m`, `marklen_m` (0..1,
+default 0), and `mmode` (0 = raw 0..1, 1 = rescaled to -1..1, mid-gray = no change). Modelled on `vs_displacement`'s
+combine (read from its gen graph, not run); the polarity of its own `mode` was not verified, so `mmode` is defined
+here explicitly. **Deviation:** the term is also multiplied by the target's `vs_inState` connected flag, so a never-
+tagged target leaves the dial alone regardless of the fallback texture (gray or black) `vs_inState` substitutes.
+
+**Results (Matt, live in Max, 2026-11-01), test patch `scratch_weave_named_tex.maxpat`:**
+- Two tagged `vs_wfg_3` streams cabled into the same inlet 0 both modulate their own target (weight, irreg). T2 repeats on a real module.
+- Pulling a tag's cord returns that target to its dial; the other target is unaffected. **T4 (b), the untagged-target half, holds** — through the flag gating above, not through the fallback texture.
+- `mmode` 0 vs 1 reads as described (unipolar can only push up; bipolar both ways).
+- **Pix hop: not reproduced.** Tag demux → `vs_inState` → pix inlet rendered without trouble on a real module. Not root-caused; consistent with the T1 note's guess that a bare pix inlet needs the `vs_inState` framing.
+
+**Not tested:** an untagged driving texture and tagged textures arriving on inlet 0 together (the demo had only tagged
+streams on it), so **T6's coexistence half is still open**. T5 (inlet ceiling) untested — three targets only.
+`vs_inState`'s load-time behaviour for a target that never receives anything was not checked beyond the visible result.
 
 ---
 
