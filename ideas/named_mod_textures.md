@@ -289,8 +289,7 @@ tagged ones, in `scratch_weave_named_tex.maxpat`. (The first demo had only tagge
 follow-up check.) Matt reported "passes"; no further detail was recorded.
 
 **Still not tested:** T5 (inlet ceiling) — three targets only. `vs_inState`'s load-time behaviour for a target that
-never receives anything was not checked beyond the visible result. The `build_patcher.py` change itself (a `tag` key
-on `mod_inlets` entries, replacing the post-processing in the scratch `_build.py`) is not designed.
+never receives anything was not checked beyond the visible result. The `build_patcher.py` change was built the same evening: a `tag` key on `mod_inlets` entries (`build/spec.md`, `tests/build/test_build_tag_key.py`), replacing the post-processing in the scratch `_build.py`; `f_weave` is the first consumer (shipped, offline-checked only).
 
 ---
 

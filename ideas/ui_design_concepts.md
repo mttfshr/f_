@@ -45,6 +45,8 @@ passes. Along the way, from Matt's screenshots and our own misses:
 - The depth numboxes (tinted blue) and the toggle that governs them (grey) look unrelated; the stale blue `∇ in`
   header glyph is the loudest colour on the panel.
 
+**Result:** the compact panel (two dial rows, depth numbox under each modulated dial, Variant menu and Tex uni/bi toggle in the title bar, label hidden, gray type dots) was promoted to the shipped `f_weave` on 2026-11-01; its layout is `patcher["overrides"]` in `src/f_weave/definition.py`. It is the first real test case for whatever skill comes out of this file.
+
 ## Design assessment of the 2026-11-01 panel (Claude, from a screenshot; Matt: apply none yet)
 
 Offered as candidate principles to argue with, not findings:

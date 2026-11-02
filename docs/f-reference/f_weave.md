@@ -1,7 +1,7 @@
 # f_weave
 
-**Type:** Generator (two optional inlets: across scalar, along scalar; the vecfield inlet was retired 2026-11-01)
-**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. The vecfield inlet and its `field_amount`/`fix_blend` dials (orientation-blend A/B, 2026-10-13, `ideas/f_weave_orientation_blend.md`) were retired 2026-11-01 (Matt, `G-weave-scope` Q1): a field warp is `f_vf_warp` downstream. Matt's recorded quality concern is still open (see Notes).
+**Type:** Generator (two optional inlets: across scalar, along scalar; plus three tagged modulation textures that arrive on inlet 0; the vecfield inlet was retired 2026-11-01)
+**Status:** Working — listed in README.md's patch table (the 2026-07-05 audit note "not yet listed" is outdated). Maintenance-audited 2026-10-12. The vecfield inlet and its `field_amount`/`fix_blend` dials (orientation-blend A/B, 2026-10-13, `ideas/f_weave_orientation_blend.md`) were retired 2026-11-01 (Matt, `G-weave-scope` Q1): a field warp is `f_vf_warp` downstream. Promoted 2026-11-01 from a scratch copy: irregularity variants, texture-modulated weight / irreg / marklen (tagged textures on inlet 0), a compact panel (see "Promoted 2026-11-01"). Matt's recorded quality concern is still open (see Notes).
 
 ---
 
@@ -18,19 +18,22 @@ Output is luminance (white marks) unless the across inlet (inlet 0, `in1`) is en
 ## Signal Flow
 
 ```
-inlet 0 (across scalar + control) → routepass jit_gl_texture jit_matrix
+inlet 0 (across scalar + control + tagged textures) → routepass jit_gl_texture jit_matrix
 routepass out0 → vs_inState → weave_pix in0 (codebox in1)   [src_potential flag — replaces the across coordinate AND tints color]
 routepass unmatched → route <params> → live.dials → prepend param <name> → weave_pix in0
+  scalar route's reject outlet → route weight_tex irreg_tex marklen_tex   (the tag demux, mod_inlets "tag")
+    weight_tex  → vs_inState → weave_pix in2 (codebox in3)   [src_weight flag]
+    irreg_tex   → vs_inState → weave_pix in3 (codebox in4)   [src_irreg flag]
+    marklen_tex → vs_inState → weave_pix in4 (codebox in5)   [src_marklen flag]
 
-inlet 1 (along scalar, optional) → vs_inState → weave_pix in1 (codebox in2)   [src_along flag — replaces the along coordinate; phase / regularity still apply on top]
-(no third inlet: the vecfield inlet was retired 2026-11-01)
+inlet 1 (along scalar, optional) → vs_inState → weave_pix in1 (codebox in2)   [src_along flag — replaces the along coordinate; phase / offset still apply on top]
 
 r draw → gate 1 1 → weave_pix in0   [render trigger when inlet 0 is empty; the gate is closed by inlet 0's connected flag]
 weave_pix out0 → out0 (texture out)
-Archetype: processor with driving_inlet (mod_inlets across / along). Render size follows the render (render_dim, size_stages only; @adapt 0).
-
-weave_pix out0 → out0 (texture out)
+Archetype: processor with driving_inlet (mod_inlets across / along, plus three TAGGED entries with no outer inlet of their own). Render size follows the render (render_dim, size_stages only; @adapt 0).
 ```
+
+A texture is tagged upstream with `prepend weight_tex` (or `irreg_tex`, `marklen_tex`) and cabled into inlet 0 next to the untagged scalar; an untagged texture on inlet 0 is still the across scalar. A target nothing is tagged for leaves its dial alone.
 
 ---
 
@@ -42,11 +45,15 @@ weave_pix out0 → out0 (texture out)
 | `angle` | 0–1 | 0.0 | Global line orientation (mapped to 0–π) |
 | `weight` | 0–1 | 0.1 | Line thickness — across-line mark extent |
 | `marklen` | 0–1 | 0.3 | Mark length along line direction |
-| `softness` | 0–2 | 0.0 | Edge softness — 0 = crisp edge at `weight`/`marklen`, 1 = feather from the line centre out to 2x, >1 feathers further out (2026-11-01; before that 0 was a ramp from the centre to the edge). |
-| `shape` | 0–1 | 0.0 | Mark profile — 0 = flat-top rectangle, 1 = raised cosine (calligraphic). |
-| `regularity` | 0–1 | 0.5 | 1=lines in phase (grid-like), 0=fully varied per-line offset |
+| `offset` | 0–1 | 0.5 | Per-line offset along the line: 0 = marks line up across lines (grid-like), 1 = each line fully offset. The old `regularity`, inverted (`offset = 1 - regularity`; the default looks the same). |
 | `phase` | -1–1 | 0.0 | Animation phase — scrolls marks along line direction |
-| `src_potential` | internal | — | Driven by vs_inState on the scalar-potential inlet; not user-facing |
+| `softness` (label Soft) | 0–2 | 0.0 | Edge softness — 0 = crisp edge at `weight`/`marklen`, 1 = feather from the line centre out to 2x, >1 feathers further out. |
+| `variant` | menu 0–4 | Off | Irregularity: Off, Wobble (smooth noise nudges the line position), Smooth (continuous noise along each line modulates weight and marklen), Hashed (one random value per mark; grid-leaning), Both (wobble + smooth). |
+| `irreg` | 0–1 | 0.5 | Irregularity depth for the chosen variant (the irreg_tex texture adds to it). |
+| `nscale` (label Noise) | 0–1 | 0.5 | Noise frequency, log-mapped from one change per 8 cells (0) to 4 per cell (1); about 0.6 is one change per mark. |
+| `weight_m`, `marklen_m`, `irreg_m` | 0–1 | 0.0 | Depth of the texture tagged `weight_tex` / `marklen_tex` / `irreg_tex` on inlet 0. A numbox under the dial it modulates. 0 = ignored. |
+| `mmode` (Tex uni / Tex bi) | 0/1 | 0 | How a tagged texture is read: uni = raw 0..1 (can only add), bi = rescaled to -1..1 (mid-gray = no change, dark subtracts). Modelled on `vs_displacement`'s mode switch (its polarity naming was not verified). |
+| `src_potential`, `src_along`, `src_weight`, `src_irreg`, `src_marklen` | internal | — | Connected flags from the `vs_inState` of each inlet / tagged texture; not user-facing |
 | `bypass` | 0/1 | 0 | Outputs black |
 
 **Prefix:** `weave` — **Object name:** `weave_pix`
@@ -62,30 +69,37 @@ cs = cos(base_angle); sn = sin(base_angle)
 across_rot = uv.x*cs + uv.y*sn
 along      = uv.x*(-sn) + uv.y*cs
 
-// scalar potential (in2) can fully override the across coordinate
+// scalar potential (in1) can fully override the across coordinate; the along scalar (in2) the along one
 across_pot = sample(potential, uv).x
 across = mix(across_rot, across_pot, src_potential)
 
 density_scale = pow(2, density*5 - 1 + 4*max(density-0.5, 0))   // 2026-11-01: top end 16 -> 64 cells
-dist_to_line = |fract(across * density_scale) - 0.5|
 
-line_idx  = floor(across * density_scale)          // hash seed only, NOT grid identity
-line_hash = fract(sin(line_idx*127.1)*43758.5453) * (1 - regularity)
-pos = along * density_scale + phase + line_hash
+// tagged modulation textures (in3..in5): effective = dial + connected_flag * depth * texture
+tw = mix(t3, t3*2 - 1, mmode)        // mmode 0 raw 0..1, 1 rescaled to -1..1; same for ti (in4), tl (in5)
+weight_g = clamp(weight + src_weight*weight_m*tw, 0, 1)
+irreg_g = clamp(irreg + src_irreg*irreg_m*ti, 0, 1)
+marklen_g = clamp(marklen + src_marklen*marklen_m*tl, 0, 1)
+
+// variant weights: Off 0/0/0, Wobble 1/0/0, Smooth 0/1/0, Hashed 0/0/1, Both 1/1/0  (wobble / smooth / hashed)
+// wobble: smooth 2D noise of the cell coordinates nudges the line position across by up to 0.4 cell
+u = u0 + wob*irreg_g*0.4*w_wob          // the line index and distance below use the DISPLACED u
+dist_to_line = |fract(u) - 0.5|
+line_idx  = floor(u)                    // hash seed only, NOT grid identity
+line_hash = fract(sin(line_idx*127.1)*43758.5453) * offset
+pos = along*density_scale + phase + line_hash
 dist_to_mark = |fract(pos) - 0.5|
 
-// 2026-11-01: feather band = [w*max(1-softness,0), w*(1+softness)], min band aa = 0.01 (cell units)
-outer_across = weight + softness*weight
-inner_across = min(weight*max(1-softness,0), outer_across - aa)
-outer_along  = marklen + softness*marklen
-inner_along  = min(marklen*max(1-softness,0), outer_along - aa)
-edge = smoothstep(outer_across, 0, dist_to_line) * smoothstep(outer_along, 0, dist_to_mark)
+// mark irregularity: smooth (continuous 1D noise along the line, its own stream per line, no slot index)
+// or hashed (one value per mark from floor(pos): a seam appears once a mark is longer than half a cell)
+weight_e  = clamp(weight_g  * (1 + irreg_g*mod_w), 0, 1)
+marklen_e = clamp(marklen_g * (1 + irreg_g*mod_l), 0, 1)
 
-// shape: 0=flat-top rectangle (smoothstep result), 1=raised cosine across the line
-profile = mix(1, cos(clamp(dist_to_line / max(weight, 0.0001), 0, 1) * pi * 0.5), shape)
-mark = edge * profile
+// 2026-11-01: feather band = [w*max(1-softness,0), w*(1+softness)], min band aa = 0.01 (cell units), on weight_e / marklen_e
+edge = smoothstep(outer_across, inner_across, dist_to_line) * smoothstep(outer_along, inner_along, dist_to_mark)
+mark = edge                              // flat-top: the raised-cosine `shape` option was removed 2026-11-01
 
-// color: white unless potential inlet connected, in which case tinted by its RGB
+// color: white unless the across inlet is connected, in which case tinted by its RGB
 cr,cg,cb = mix(1, sample(potential, uv).rgb, src_potential)
 out1 = mix(vec(cr*mark, cg*mark, cb*mark, 1), vec(0,0,0,1), bypass)
 ```
@@ -106,11 +120,14 @@ out1 = mix(vec(cr*mark, cg*mark, cb*mark, 1), vec(0,0,0,1), bypass)
 - Consequence: a patch with anything on weave's old inlet 2 loses that connection. `angle` is also inert once both scalar inlets are connected, because both coordinates are then replaced; that tension is scope question 5.
 - History of the removed mechanisms: `ideas/f_weave_orientation_blend.md` (A/B, 2026-10-13), kept as a record.
 
-## Character work, scratch (2026-11-01)
+## Promoted 2026-11-01 (Matt): irregularity, tagged modulation textures, compact panel
 
-Not in the shipped module. A scratch copy, `f_weave_char` (`scratch/experiments/f_weave_character/`, gitignored, local only), tried irregularity variants and named-texture modulation:
-- `variant` 0 off, 1 line wobble, 2 smooth along-line modulation of `weight`/`marklen`, 3 hashed per-mark jitter, 4 wobble + smooth modulation, with `irreg` (depth) and `nscale` (noise frequency). Matt (2026-11-01): all variants look good and he wants all of them; bringing them into the shipped `f_weave` is not done and not yet scheduled. The scratch copy also renamed `regularity` to `offset` (inverted), made `variant` a menu and the modulation mode a Unipolar/Bipolar toggle, and removed `shape` (Matt, 2026-11-01); the shipped module still has `regularity` and `shape`.
-- Named-texture modulation of `weight` / `irreg` / `marklen` on inlet 0 (tagged textures, depth dials `*_m`, `mmode`): works live; see `ideas/named_mod_textures.md`. No `build_patcher.py` change yet (`P-mod-textures`).
+Everything tried on a scratch copy (`f_weave_char`, `scratch/experiments/f_weave_character/`, local only) is now in the shipped module.
+- **Params:** `regularity` became `offset` (inverted), `shape` was removed (only its raised-cosine option is lost; the default was flat-top), and `variant` (menu), `irreg`, `nscale`, `weight_m` / `marklen_m` / `irreg_m` and the `mmode` toggle were added. Saved patches that use `regularity` or `shape`, and presets of them, break; the new params start at their defaults.
+- **Tagged textures:** built by the new `mod_inlets` `tag` key in `build/build_patcher.py` (`build/spec.md`, `tests/build/test_build_tag_key.py`), which replaces the scratch copy's post-processing. First consumer. Prototype results (live, Matt): two tagged streams share inlet 0, a pulled cord returns the target to its dial, `mmode` reads as described, an untagged texture alongside tagged ones works, the pix hop did not reproduce (`ideas/named_mod_textures.md`).
+- **Panel (232 x 180):** two rows of dials (density, angle, offset, phase, soft / marklen, weight, irreg, noise), a depth numbox under each of weight, marklen and irreg (as in `f_grain`; tinted blue, no label of their own: the hint names the tag), the Variant menu and the Tex uni/bi toggle in the title bar (the menu has no label), the title just "Weave". Hand layout is `patcher["overrides"]` in `definition.py`.
+- **Header:** `signal_type` removed (it said `∇ in`); both type dots are the "neither" gray. The panel border stays the standard dark blue.
+- **Checked offline:** `tests/modules/weave/test_weave_static.py` (11 checks), the full offline suite, `drift -v f_weave`. **Not checked:** how it looks and behaves in Max with the shipped patch; the live contract bench (`f_weave` is in `INPUT_SIZE`; it has five pix inlets now); a head-to-head of Smooth against Hashed, the `f_droste` check and the long-mark seam check on the variants; T5 (inlet ceiling, three tagged targets only).
 
 ## Notes — real discrepancy between spec.md and definition.py
 
