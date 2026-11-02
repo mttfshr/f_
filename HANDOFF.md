@@ -26,7 +26,8 @@
 - **Checked (offline, Claude):** `drift -v f_vf_ch` ok; `generate_menu --check` current; `test_vf_ch_static.py` 9/9 (log `tests/logs/20261101-214225-offline.log`). Not run: the full offline suite, `test_gates.py`, either live bench.
 - **Left on purpose:** internal `prefix` `vfimm`; spike script filenames and `tests/logs/immiscible*` (history); the dated G1 naming lines in the `.specify` records; `tests/.state/bench_green.json` (its immiscible entries are stale until the renamed benches run live). Saved patches using the old name break.
 - **Checked live (Matt, 21:48):** the title bar, helpfile and `f_demo_ch` look passes. `tests/build/test_gates.py` 5/5 (Matt ran it; log `tests/logs/20261101-214502-offline.log`).
-- **Owed to Matt:** the two benches (`tests/bench.sh tests/modules/vf_ch/bench_vf_ch.py`, then `bench_vf_ch_module.py`): started 21:48, result not yet reported.
+- **Benches (Matt, live, Max 9.2.0, 2026-11-01):** `bench_vf_ch.py` first run 13/14 (log `tests/logs/20261101-214525-bench.log`): `test_SC4` failed at job launch with Max name collisions on `grain_pix` and `fieldmap_pix` (other modules' names; inferred from the log to be other patches loaded in that Max session, not `f_vf_ch`); rerun of SC4 alone passed, stripe vs tanh 1.426e-06 (`20261101-214920-bench.log`). `bench_vf_ch_module.py` 4/4 (`20261101-214955-bench.log`). The slow cost test (T017) was skipped, not run.
+- **Owed to Matt:** nothing for the rename.
 
 ## 2026-11-01 (late evening): `f_weave` promoted: variants, tagged textures, offset, compact panel
 
