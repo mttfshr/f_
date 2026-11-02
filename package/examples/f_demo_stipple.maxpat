@@ -3,13 +3,13 @@
         "fileversion": 1,
         "appversion": {
             "major": 9,
-            "minor": 1,
-            "revision": 4,
+            "minor": 2,
+            "revision": 0,
             "architecture": "x64",
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 694.0, 129.0, 1000.0, 780.0 ],
+        "rect": [ 70.0, 95.0, 1000.0, 780.0 ],
         "boxes": [
             {
                 "box": {
@@ -43,7 +43,6 @@
                     "numoutlets": 1,
                     "outlettype": [ "" ],
                     "patching_rect": [ 678.03125, 356.015625, 138.0, 35.0 ],
-                    "presentation_linecount": 2,
                     "priority": {
                         "vs_wfg_polarizer::pm_range": -1,
                         "vs_wfg_polarizer::lock_freq": -1
@@ -114,7 +113,7 @@
                     "numoutlets": 3,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 412.0, 328.0, 196.0, 160.0 ],
+                    "patching_rect": [ 422.5, 309.0, 196.0, 160.0 ],
                     "varname": "f_stipple",
                     "viewvisibility": 1
                 }
@@ -209,12 +208,6 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-1", 0 ],
-                    "source": [ "obj-18", 0 ]
-                }
-            },
-            {
-                "patchline": {
                     "destination": [ "obj-5", 0 ],
                     "source": [ "obj-8", 0 ]
                 }
@@ -294,6 +287,10 @@
             "obj-4::obj-33": [ "f_module_6_file", "live.menu", 0 ],
             "obj-4::obj-36": [ "f_module_7_disp", "live.menu", 0 ],
             "obj-4::obj-37": [ "f_module_7_file", "live.menu", 0 ],
+            "obj-4::obj-40": [ "f_module_8_disp", "live.menu", 0 ],
+            "obj-4::obj-41": [ "f_module_8_file", "live.menu", 0 ],
+            "obj-4::obj-44": [ "f_module_9_disp", "live.menu", 0 ],
+            "obj-4::obj-45": [ "f_module_9_file", "live.menu", 0 ],
             "obj-4::obj-8": [ "f_module_0_disp", "live.menu", 0 ],
             "obj-4::obj-9": [ "f_module_0_file", "live.menu", 0 ],
             "obj-5::obj-1": [ "toggle[1]", "toggle[1]", 0 ],
