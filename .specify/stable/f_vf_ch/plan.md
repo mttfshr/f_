@@ -1,9 +1,11 @@
-# Implementation Plan: f_vf_immiscible
+# Implementation Plan: f_vf_ch
+
+> **Renamed 2026-11-01 (Matt): `f_vf_immiscible` -> `f_vf_ch`**, for Cahn and Hilliard, whose equation the module solves. Paths and module references below use the new name; the dated G1 naming decision keeps the old one.
 
 _Created: 2026-10-27_
-_Spec: `.specify/stable/f_vf_immiscible/spec.md` (user stories, FRs, gates and success
+_Spec: `.specify/stable/f_vf_ch/spec.md` (user stories, FRs, gates and success
 criteria live there; this file is HOW only)_
-_Idea record: `ideas/f_vf_immiscible.md`; analysis background: `ideas/f_vf_emulsion.md`_
+_Idea record: `ideas/f_vf_ch.md`; analysis background: `ideas/f_vf_emulsion.md`_
 
 Everything marked [inference] is general knowledge of the method or my own
 derivation, not checked against the repo or tried.
@@ -30,7 +32,7 @@ of one DFT chain. Everything numeric is checked in a NumPy mirror (which reuses
 
 **Stack**: Max 9, Vsynth, `jit.gl.pix` + GenExpr codeboxes (`float32`); Python 3
 (NumPy) for the mirror; the Max test bench (`tests/bench*`) for GPU verification.
-Built from `src/f_vf_immiscible/definition.py` with raw wiring, as `f_ks` and `f_wc`
+Built from `src/f_vf_ch/definition.py` with raw wiring, as `f_ks` and `f_wc`
 are (not a dedicated build script as `f_vf_fluid` was).
 
 **Reused, already verified** (cite, do not rewrite):
@@ -66,7 +68,7 @@ lever is 128² (spec G6).
 
 ## Constitution Check
 
-✅ **Codebox before patcher**: every stage is a `src/f_vf_immiscible/codebox_*.gen`
+✅ **Codebox before patcher**: every stage is a `src/f_vf_ch/codebox_*.gen`
 verified (tiers 1–2) before any JSON is built.
 ✅ **Numbers before eyes**: the mirror and bench precede the live look; tier 3 is
 for ranges, character and cost in a real patch.
@@ -85,7 +87,7 @@ for ranges, character and cost in a real patch.
 ## Project Structure
 
 ```
-src/f_vf_immiscible/
+src/f_vf_ch/
   definition.py            # params, three inlets, raw wiring (as f_ks / f_wc)
   gen_dft.py               # adapter: four DFT codeboxes (packing comment: R,G = φ̂, B,A = (φ³)^)
   gen_blend.py             # writes ONE blend block into codebox_adv.gen and codebox_enc.gen
@@ -95,17 +97,17 @@ src/f_vf_immiscible/
   codebox_dft_fx.gen  codebox_dft_fy.gen  codebox_dft_iy.gen  codebox_dft_ix.gen
   codebox_spec.gen         # per-bin phase-separation step
   codebox_enc.gen          # render-size encode: out0 φ, out1 blended velocity, bypass gate
-tests/modules/immiscible/
-  immiscible_mirror.py     # NumPy mirror of every stage and the full step
-  test_immiscible.py       # tier 1
-  bench_immiscible.py      # tier 2, stage by stage and host-sequenced
-  bench_immiscible_module.py   # the built patcher
+tests/modules/vf_ch/
+  vf_ch_mirror.py     # NumPy mirror of every stage and the full step
+  test_vf_ch.py       # tier 1
+  bench_vf_ch.py      # tier 2, stage by stage and host-sequenced
+  bench_vf_ch_module.py   # the built patcher
 tests/records/
   spike_immiscible_stirring.py   # Phase 0 experiment 1 (stills to tests/logs/, gitignored)
   spike_immiscible_blend.py      # Phase 0 experiment 2
-docs/f-reference/f_vf_immiscible.md     # Phase 3
-package/patchers/f_vf_immiscible.maxpat # built from definition.py
-package/help/f_vf_immiscible.maxhelp    # Phase 3
+docs/f-reference/f_vf_ch.md     # Phase 3
+package/patchers/f_vf_ch.maxpat # built from definition.py
+package/help/f_vf_ch.maxhelp    # Phase 3
 ```
 
 **Structure decision**: stage-per-file codeboxes (each verified independently);
@@ -303,7 +305,7 @@ idea-only), or a new native inlet on `f_vf_fluid`.
 
 ### ADR-9: Verification strategy
 
-1. **Tier 1 (no Max):** `immiscible_mirror.py` mirrors each stage and a `step()`.
+1. **Tier 1 (no Max):** `vf_ch_mirror.py` mirrors each stage and a `step()`.
    Checks against independent truth: mean conservation (exact); single-mode
    growth and decay rate; flat-interface `tanh` profile; free-energy
    non-increase with no flow; blend identities (φ = ±1, swap symmetry);
@@ -327,7 +329,7 @@ idea-only), or a new native inlet on `f_vf_fluid`.
 ## Dependency Blocks
 
 ### Block A: Math (tier 1) and the two gating experiments
-**Dependencies**: none. **Builds**: `immiscible_mirror.py`, `test_immiscible.py`,
+**Dependencies**: none. **Builds**: `vf_ch_mirror.py`, `test_vf_ch.py`,
 `spike_immiscible_stirring.py`, `spike_immiscible_blend.py`. **Why**: the idea
 stands or falls on experiment 1 (does Cahn–Hilliard hold the interface under
 stirring, G7) and on experiment 2 (how large the blend's divergence really is, G2).
@@ -336,7 +338,7 @@ numbers and stills; coarsening speed (experiment 3) recorded.
 
 ### Block B: Stage codeboxes on the bench (tier 2)
 **Dependencies**: A. **Builds**: the nine codebox files, `gen_dft.py`,
-`gen_blend.py`, `bench_immiscible.py`. **Checkpoint**: every stage matches the
+`gen_blend.py`, `bench_vf_ch.py`. **Checkpoint**: every stage matches the
 mirror; host-sequenced run within tolerance; cost per stage recorded.
 
 ### Block C: Builder and pix limits (parallel with A)
@@ -347,12 +349,12 @@ definition changes shape; better known before Block D.
 
 ### Block D: The bpatcher
 **Dependencies**: B, C. **Builds**: `definition.py`, `package/patchers/
-f_vf_immiscible.maxpat`, contract-bench pass. **Checkpoint**: drift 0, contracts
+f_vf_ch.maxpat`, contract-bench pass. **Checkpoint**: drift 0, contracts
 green with no new XFAIL, two instances coexist, "once per frame" check, bypass.
 
 ### Block E: Live look, tuning and docs (tier 3)
 **Dependencies**: D. **Builds**: ranges and defaults, `docs/f-reference/
-f_vf_immiscible.md`, helpfile, menu entry (∇ marked, Processors), README row,
+f_vf_ch.md`, helpfile, menu entry (∇ marked, Processors), README row,
 inventory rows. **Checkpoint**: spec success criteria 7–8 judged by Matt; name
 confirmed (G1).
 
@@ -377,7 +379,7 @@ needed, nudge and force outlets, buoyancy and tension. Not scheduled.
 - **Checkpoint**: spec success criteria 1–5 pass on the GPU path.
 
 ### Phase 2: Build the module [D]; stories 1–4, 6
-- `definition.py`, patcher, contracts, `bench_immiscible_module.py`.
+- `definition.py`, patcher, contracts, `bench_vf_ch_module.py`.
 - **Checkpoint**: contracts green; the live look with two Fluids is the first
   tier-3 session.
 
@@ -400,7 +402,7 @@ needed, nudge and force outlets, buoyancy and tension. Not scheduled.
   stage 2, a cross-module cycle never tried. Phase 0 is built to answer the first
   two before any codebox exists.
 - **Cost.** About 8 ms with two Fluids is large for a live patch; 128² (G6) and the
-  one-map-inlet fallback in `ideas/f_vf_immiscible.md` are the levers.
+  one-map-inlet fallback in `ideas/f_vf_ch.md` are the levers.
 - **Known limits carried from the spec:** periodic domain; output detail 256²;
   stage 1 gives a picture of two flows, not momentum exchange.
 

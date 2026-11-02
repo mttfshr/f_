@@ -2,7 +2,7 @@
 
 **Status:** ⚪ idea only, not specced, not scheduled. Raised 2026-10-27 with Matt
 as the missing "drop of ink" piece for the ink-in-water look and for dropping
-oil into `f_vf_immiscible.md`. Name is a placeholder.
+oil into `f_vf_ch.md`. Name is a placeholder.
 
 ## The gap
 
@@ -75,7 +75,7 @@ be projected away and the splat would stir nothing. Hence impulse modes:
 - Draw with periodic wrap in the distance calculation, because `f_vf_fluid`'s
   domain is a torus; a splat near an edge should not seam against it.
 - A second use: the same blot, taken as a φ injection, is a drop of oil for
-  `f_vf_immiscible.md`.
+  `f_vf_ch.md`.
 
 ## Tier-1 checks (candidates)
 
@@ -104,7 +104,7 @@ be projected away and the splat would stir nothing. Hence impulse modes:
 
 ## Related
 
-`f_vf_immiscible.md`, `f_vf_emulsion.md`, `f_vf_fluid`, `f_vf_advect`,
+`f_vf_ch.md`, `f_vf_emulsion.md`, `f_vf_fluid`, `f_vf_advect`,
 `f_vf_vortex`, `f_vf_vortex_multi`, `f_grain`, `f_vf_seeds`, `f_vf_mix.md`
 (to add a splat to a performer's stirring force).
 

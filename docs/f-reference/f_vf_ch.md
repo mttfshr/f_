@@ -1,4 +1,6 @@
-# f_vf_immiscible
+# f_vf_ch
+
+_Named for Cahn and Hilliard (renamed from `f_vf_immiscible` on 2026-11-01); the menu label is "Cahn-Hilliard"._
 
 **Type:** Processor (texture + two f_vecfield in → phase texture + f_vecfield out) — **temporal / has memory**
 **Status:** Complete (live-checked by Matt 2026-10-28; defaults kept)
@@ -11,7 +13,7 @@ An oil-and-water light show for velocity fields. Two upstream velocity vecfields
 
 It does **not** move any image and it does **not** run a fluid. The two upstream Fluids do the physics; this module only decides where each shows and keeps the boundary between them crisp. Nothing is fed back into the two Fluids (v1 is one-way).
 
-Typical use: a force producer → two `f_vf_fluid` (say `viscosity` 0.05 and 0.6, same force) → `f_vf_immiscible` in1 and in2 → out1 → `f_vf_advect`. A camera or `f_grain` on in0 drops phase B in where it is bright.
+Typical use: a force producer → two `f_vf_fluid` (say `viscosity` 0.05 and 0.6, same force) → `f_vf_ch` in1 and in2 → out1 → `f_vf_advect`. A camera or `f_grain` on in0 drops phase B in where it is bright.
 
 There is **no single-fluid mode**: both vecfield inlets are required. An unconnected inlet, or a texture that is not a vecfield (B ≠ 0.5, such as `vs_black`), reads as zero velocity, not as `vs_black`'s decoded −1.
 
@@ -123,9 +125,9 @@ Periodic unit square, `k = 2π · signed_index`. The Cahn–Hilliard step conser
 - **Unconnected inputs.** In1 or in2 unconnected (or not a vecfield) reads as zero velocity, gated both by the `vs_inState` flag and by content (`|B − 0.5| < 0.25`), because the connected flag lags about 180 ms at load and disconnect. In0 unconnected means nothing is deposited.
 - **Two instances** in one patch are independent (module bench).
 - **Containment.** The state is clamped to ±1.25 (observed |φ| ≤ 1.03; a safety net), and `pass` reseeds NaN/Inf texels, so a bad value cannot persist in the loop.
-- **Cost** (M3 Max, `bench_immiscible.py` slow test, `taps 2`): about 3.7 ms/frame at 1080p and 5.9 ms at 4K for this module alone (seven of eleven rows are bench-floor upper bounds, so the real figure is somewhat lower). The four-stage DFT chain is 2.06 ms, 56% of the total; `enc` dominates at 4K (2.76 ms). `taps 8` makes `inab` about three times dearer than 1–2. The slow cost test was not re-run after `pull`, `thresh` and `mix_pct` were added to the spec stage; the added operations are few. Two Fluids plus this module together were not measured.
+- **Cost** (M3 Max, `bench_vf_ch.py` slow test, `taps 2`): about 3.7 ms/frame at 1080p and 5.9 ms at 4K for this module alone (seven of eleven rows are bench-floor upper bounds, so the real figure is somewhat lower). The four-stage DFT chain is 2.06 ms, 56% of the total; `enc` dominates at 4K (2.76 ms). `taps 8` makes `inab` about three times dearer than 1–2. The slow cost test was not re-run after `pull`, `thresh` and `mix_pct` were added to the spec stage; the added operations are few. Two Fluids plus this module together were not measured.
 - **Verification.** Tier 1 (NumPy mirror, 18 tests): mean conservation, linear-mode growth, `tanh` profile, free-energy descent, blend identities, threshold ramp, `pull` closed form, held-source settling, `Mix` identities; mutation-checked. Tier 2 on the GPU: stage bench 14/14 against the mirror (errors 1e-7 to 1e-6; the 100-frame chain drifts to 1.3e-3 pointwise by rounding, free energy agrees to 5.6e-6; growth rate 0.29814 vs analytic 0.29815), module bench 4/4 on the shipped patcher (fresh load seeded and neutral, once-per-frame update, vecfield blend and `Mix` exact, two instances independent), and the live contract run over 49 modules with 0 unexpected issues. Tier 3 (live look) by Matt 2026-10-28.
-- See `docs/f-reference/f_vf_fluid.md` (the Fluids this pairs with, and the DFT chain this reuses), `docs/f-reference/f_vf_advect.md` (the consumer), `docs/f-reference/f_vecfield_type.md` for the vecfield contract, and `.specify/stable/f_vf_immiscible/{spec,plan,tasks}.md` for the design record, the experiments and their pre-registered thresholds.
+- See `docs/f-reference/f_vf_fluid.md` (the Fluids this pairs with, and the DFT chain this reuses), `docs/f-reference/f_vf_advect.md` (the consumer), `docs/f-reference/f_vecfield_type.md` for the vecfield contract, and `.specify/stable/f_vf_ch/{spec,plan,tasks}.md` for the design record, the experiments and their pre-registered thresholds.
 
 ---
 

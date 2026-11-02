@@ -133,14 +133,14 @@ substantially move a file in `ideas/`, update its entry here too.
   **fork of `f_vf_fluid`**, not a v2: the solver's parameters live in real space
   (`force`, `dt`, `gain`, cheap to vary per pixel) and in the spectral stage
   (structural). Idea only, not specced, not named. **Direction changed
-  2026-10-27: now a separate module, see `f_vf_immiscible.md`; this file is the
+  2026-10-27: now a separate module, see `f_vf_ch.md`; this file is the
   analysis record.**
-- **[f_vf_immiscible.md](f_vf_immiscible.md)** 🟢 — **Built 2026-10-28, live-checked, name confirmed.** Immiscible
+- **[f_vf_ch.md](f_vf_ch.md)** 🟢 — **Built 2026-10-28, live-checked, name confirmed.** Immiscible
   two-fluid phase field (Cahn–Hilliard) that **requires two upstream velocity
   vecfields**, one per phase, each from its own `f_vf_fluid` with its own
   viscosity, and blends them by φ; stage 2 adds nudge and force outlets.
   Separate module, not a fork. Spec and record in
-  `.specify/stable/f_vf_immiscible/`, reference `docs/f-reference/f_vf_immiscible.md`. Cost about
+  `.specify/stable/f_vf_ch/`, reference `docs/f-reference/f_vf_ch.md`. Cost about
   3.7 ms at 1080p for this module alone (two Fluids not measured). Two-way coupling
   (stage 2) is not built and needs an untested cross-module feedback cycle.
 - **[f_splat.md](f_splat.md)** ⚪ — **2026-10-27, working name.** A triggered drop:

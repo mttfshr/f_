@@ -1,8 +1,10 @@
-# Spec: f_vf_immiscible
+# Spec: f_vf_ch
+
+> **Renamed 2026-11-01 (Matt): `f_vf_immiscible` -> `f_vf_ch`**, for Cahn and Hilliard, whose equation the module solves. Paths and module references below use the new name; the dated G1 naming decision keeps the old one.
 
 _Created: 2026-10-27_
 _Status: Draft — not yet built_
-_Origin: `ideas/f_vf_immiscible.md`, which grew out of `ideas/f_vf_emulsion.md`
+_Origin: `ideas/f_vf_ch.md`, which grew out of `ideas/f_vf_emulsion.md`
 (2026-09-29). Direction, name and the required second vecfield settled with Matt
 2026-10-27. Companion idea: `ideas/f_splat.md` (the drop of ink or oil)._
 
