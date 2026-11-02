@@ -5,8 +5,8 @@ open and vs_inState's connected flag closes it through [== 0], so a connected we
 
   1  `r draw` reaches the pix only through the gate (data inlet 1 -> outlet 0 -> pix inlet 0), never directly
   2  the gate starts open ("gate 1 1") and its control inlet 0 is fed by [== 0], fed by vs_inState outlet 1
-  3  three inlets (across / along / vecfield -> pix inlets 0 / 1 / 2), each vs_inState with its own connected flag
-  3b the codebox reads in1 / in2 / in3 accordingly
+  3  two inlets (across / along -> pix inlets 0 / 1), each vs_inState with its own connected flag; no vecfield inlet
+  3b the codebox reads in1 / in2 accordingly and carries no vecfield orientation code (retired 2026-11-01)
   4  the output follows the render size (render_dim, size_stages only): pix `@adapt 0 @dim ...`, `r dim` -> pix,
      loadbang -> `s trig_res`. Unconnected, the pix otherwise adapts to vs_black (1x1; inferred) and draws one pixel.
 
@@ -35,7 +35,7 @@ def _ids(boxes, text):
 
 
 def _instate_for(boxes, lines, flag):
-    """The vs_inState whose outlet 1 feeds `prepend param <flag>` (weave has three: across / along / vecfield)."""
+    """The vs_inState whose outlet 1 feeds `prepend param <flag>` (weave has two: across / along)."""
     pre = _ids(boxes, "prepend param " + flag)
     assert len(pre) == 1, (flag, pre)
     inst = [s[0] for s, d in lines if d[0] == pre[0] and s[1] == 1 and boxes[s[0]].get("text") == "vs_inState"]
@@ -67,28 +67,29 @@ def test_gate_starts_open_and_is_closed_by_the_connected_flag():
     check("[== 0] -> gate control inlet 0", 0 if ((eq[0], 0), (gate[0], 0)) in lines else 1, 0)
 
 
-def test_three_inlets_each_with_its_own_flag():
-    """2026-11-01: inlet 0 = across scalar, 1 = along scalar, 2 = vecfield (pix inlets 0 / 1 / 2 = codebox in1 / in2 / in3);
-    each has its own vs_inState and a connected flag (src_potential / src_along / src_field) back to the pix."""
+def test_two_inlets_each_with_its_own_flag():
+    """2026-11-01: inlet 0 = across scalar, 1 = along scalar (pix inlets 0 / 1 = codebox in1 / in2); each has its own
+    vs_inState and a connected flag (src_potential / src_along) back to the pix. The vecfield inlet (2) is retired."""
     boxes, lines = _patcher()
     pix = _pix(boxes)
-    for k, flag in enumerate(("src_potential", "src_along", "src_field")):
+    for k, flag in enumerate(("src_potential", "src_along")):
         inst = _instate_for(boxes, lines, flag)
         pre = _ids(boxes, "prepend param " + flag)[0]
         check(f"vs_inState outlet 0 ({flag}) -> pix inlet {k}", 0 if ((inst, 0), (pix, k)) in lines else 1, 0)
         check(f"prepend param {flag} -> pix inlet 0", 0 if ((pre, 0), (pix, 0)) in lines else 1, 0)
     check("the old dual flag is gone (no prepend param src_mode)", len(_ids(boxes, "prepend param src_mode")), 0)
     inlets = [b.get("comment") for b in boxes.values() if b.get("maxclass") == "inlet"]
-    check("three outer inlets", len(inlets), 3)
+    check("two outer inlets", len(inlets), 2)
+    check("no src_field flag box (vecfield retired)", len(_ids(boxes, "prepend param src_field")), 0)
 
 
 def test_codebox_reads_the_matching_inlets():
     src = open(os.path.join(REPO, "src", "f_weave", "definition.py")).read()
-    for line in ("vx = sample(in3, norm).x - 0.5;", "vy = sample(in3, norm).y - 0.5;",
-                 "across_pot = sample(in1, norm).x;", "along = mix(along_rot, sample(in2, norm).x, src_along);",
-                 "csA = base_cs + field_amount * (-vy) * src_field;", "snA = base_sn + field_amount * vx * src_field;",
-                 "* src_field;"):
+    for line in ("across_pot = sample(in1, norm).x;", "along = mix(along_rot, sample(in2, norm).x, src_along);",
+                 "cs = cos(base_angle);", "sn = sin(base_angle);"):
         check("codebox has: " + line[:44], 0 if line in src else 1, 0)
+    for gone in ("in3", "field_amount", "fix_blend", "src_field"):
+        check(f"no {gone} left in the definition", 0 if gone not in src.replace("(in3, field_amount, fix_blend, src_field)", "").replace("inlet 2 was retired", "") else 1, 0)
     check("no src_mode left in the definition", src.count("src_mode"), 0)
 
 

@@ -77,10 +77,8 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 10,
+					"numoutlets": 8,
 					"outlettype": [
-						"",
-						"",
 						"",
 						"",
 						"",
@@ -93,17 +91,17 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						727.0,
+						583.0,
 						22.0
 					],
-					"text": "route density angle weight marklen regularity phase softness shape field_amount fix_blend"
+					"text": "route density angle weight marklen regularity phase softness shape"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-5",
 					"maxclass": "newobj",
-					"numinlets": 3,
+					"numinlets": 2,
 					"numoutlets": 2,
 					"outlettype": [
 						"jit_gl_texture",
@@ -164,31 +162,13 @@
 							},
 							{
 								"box": {
-									"id": "gen-obj-12",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										196.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 3"
-								}
-							},
-							{
-								"box": {
-									"code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam softness(0.0);\nParam shape(0.0);\nParam field_amount(1.0);\nParam fix_blend(0.0);\nParam src_potential(0.0);\nParam src_along(0.0);\nParam src_field(0.0);\nParam bypass(0.0);\n\n// \u2500\u2500\u2500 Orientation (two mechanisms, performable crossfade) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// Resolved 2026-10-13 (Matt), via scratch/experiments/f_weave_orientation_ab/\n// and ideas/f_weave_orientation_blend.md: not a one-time pick between Fix A\n// and Fix B -- both ship as live dials. field_amount=1.0, fix_blend=0.0\n// reproduces this block's original (pre-2026-10-13) behavior exactly.\n\nvx = sample(in3, norm).x - 0.5;\nvy = sample(in3, norm).y - 0.5;\n\nbase_angle = angle * pi;\nbase_cs = cos(base_angle);\nbase_sn = sin(base_angle);\n\n// src_field = vs_inState's connected flag for the vecfield inlet, in3 (2026-11-01): 0 = nothing patched in, so no field and the lines\n// stay straight at `angle`. The gate is applied AFTER the sample and only on csA / snA / weight_b: an unconnected\n// inlet reads (0,0,0,1), i.e. (vx, vy) = (-0.5, -0.5), and atan2 below keeps seeing that finite input (atan2(0,0)\n// is the GPU NaN case, so vx / vy are never zeroed themselves). Connected, src_field = 1 multiplies by exactly 1.\n// Mechanism A: vector-add + renormalize, field term scaled by field_amount.\ncsA = base_cs + field_amount * (-vy) * src_field;\nsnA = base_sn + field_amount * vx * src_field;\nmagA = sqrt(csA * csA + snA * snA);\ncsA = csA / max(magA, 0.0001);\nsnA = snA / max(magA, 0.0001);\n\n// Mechanism B: true angular blend. Field angle via atan2 (verified GPU-safe\n// on decoded sampled-texture input, tests/spike_atan2_safety.py), same\n// (cs,sn)-space sign convention as mechanism A's addition direction.\n// Weighted by field_amount (depth) and field magnitude (confidence) so\n// near-zero field falls back to the base angle cleanly.\nfield_mag = sqrt(vx * vx + vy * vy);\nfield_angle = atan2(vx, -vy);\nd_ang = field_angle - base_angle;\nd_ang = d_ang - 2.0 * pi * floor((d_ang + pi) / (2.0 * pi));\nweight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0) * src_field;\nblend_angle = base_angle + d_ang * weight_b;\ncsB = cos(blend_angle);\nsnB = sin(blend_angle);\n\n// Crossfade A -> B.\ncs = mix(csA, csB, fix_blend);\nsn = mix(snA, snB, fix_blend);\nmag = sqrt(cs * cs + sn * sn);\ncs = cs / max(mag, 0.0001);\nsn = sn / max(mag, 0.0001);\n\nacross_rot = norm.x * cs + norm.y * sn;\nalong_rot  = norm.x * (-sn) + norm.y * cs;\n\n// \u2500\u2500\u2500 Scalar potential override \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nacross_pot = sample(in1, norm).x;\nacross = mix(across_rot, across_pot, src_potential);\n\n// Along scalar (in2) replaces the along coordinate when connected; phase and regularity still apply on top.\nalong = mix(along_rot, sample(in2, norm).x, src_along);\n\n// \u2500\u2500\u2500 Density scale (log-mapped) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n// 2026-11-01 (Matt): top end extended from 16 to 64 cells across so the frame can be packed. Below density 0.5 the\n// curve is unchanged (exponent 5d-1, 0.5..2.8 cells; default 0.5 untouched); above 0.5 it steepens (9 per unit) to\n// reach exponent 6 (64) at density 1.0. Saved density values above 0.5 now read denser than before.\ndensity_scale = pow(2.0, density * 5.0 - 1.0 + 4.0 * max(density - 0.5, 0.0));\n\n// \u2500\u2500\u2500 Distance to nearest line \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// \u2500\u2500\u2500 Per-line phase offset \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// \u2500\u2500\u2500 Edge falloff \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// 2026-11-01 (Matt): softness 0 = crisp, 1 = soft. The feather runs from inner = w*max(1-softness,0) to\n// outer = w*(1+softness): softness >= 1 is the old behaviour exactly (inner 0, outer w*(1+softness)); softness -> 0\n// closes the band onto the hard edge at w. `aa` keeps a minimum band (cell units) so the crisp edge stays\n// anti-aliased and smoothstep never sees equal edges. Applied to both axes (weight across, marklen along).\n\naa = 0.01;\nouter_across = weight + softness * weight;\ninner_across = min(weight * max(1.0 - softness, 0.0), outer_across - aa);\nouter_along  = marklen + softness * marklen;\ninner_along  = min(marklen * max(1.0 - softness, 0.0), outer_along - aa);\nedge_across = smoothstep(outer_across, inner_across, dist_to_line);\nedge_along  = smoothstep(outer_along,  inner_along,  dist_to_mark);\n\n// \u2500\u2500\u2500 Shape profile (flat-top \u2192 raised cosine) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nprofile = mix(1.0, cos(clamp(dist_to_line / max(weight, 0.0001), 0.0, 1.0) * pi * 0.5), shape);\n\n// \u2500\u2500\u2500 Mark \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nmark = edge_across * edge_along * profile;\n\n// \u2500\u2500\u2500 Output \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ncr = mix(1.0, sample(in1, norm).x, src_potential);\ncg = mix(1.0, sample(in1, norm).y, src_potential);\ncb = mix(1.0, sample(in1, norm).z, src_potential);\n\nout1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
+									"code": "Param density(0.5);\nParam angle(0.0);\nParam weight(0.1);\nParam marklen(0.3);\nParam regularity(0.5);\nParam phase(0.0);\nParam softness(0.0);\nParam shape(0.0);\nParam src_potential(0.0);\nParam src_along(0.0);\nParam bypass(0.0);\n\n// \u2500\u2500\u2500 Orientation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// 2026-11-01 (Matt): the vecfield inlet (in3, field_amount, fix_blend, src_field) is retired; a field warp is f_vf_warp\n// downstream. Orientation is the global `angle` only. History: ideas/f_weave_orientation_blend.md.\n\nbase_angle = angle * pi;\ncs = cos(base_angle);\nsn = sin(base_angle);\n\nacross_rot = norm.x * cs + norm.y * sn;\nalong_rot  = norm.x * (-sn) + norm.y * cs;\n\n// \u2500\u2500\u2500 Scalar potential override \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nacross_pot = sample(in1, norm).x;\nacross = mix(across_rot, across_pot, src_potential);\n\n// Along scalar (in2) replaces the along coordinate when connected; phase and regularity still apply on top.\nalong = mix(along_rot, sample(in2, norm).x, src_along);\n\n// \u2500\u2500\u2500 Density scale (log-mapped) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n// 2026-11-01 (Matt): top end extended from 16 to 64 cells across so the frame can be packed. Below density 0.5 the\n// curve is unchanged (exponent 5d-1, 0.5..2.8 cells; default 0.5 untouched); above 0.5 it steepens (9 per unit) to\n// reach exponent 6 (64) at density 1.0. Saved density values above 0.5 now read denser than before.\ndensity_scale = pow(2.0, density * 5.0 - 1.0 + 4.0 * max(density - 0.5, 0.0));\n\n// \u2500\u2500\u2500 Distance to nearest line \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ndist_to_line = abs(fract(across * density_scale) - 0.5);\n\n// \u2500\u2500\u2500 Per-line phase offset \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nline_idx = floor(across * density_scale);\nline_hash = fract(sin(line_idx * 127.1) * 43758.5453) * (1.0 - clamp(regularity, 0.0, 1.0));\npos = along * density_scale + phase + line_hash;\ndist_to_mark = abs(fract(pos) - 0.5);\n\n// \u2500\u2500\u2500 Edge falloff \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// 2026-11-01 (Matt): softness 0 = crisp, 1 = soft. The feather runs from inner = w*max(1-softness,0) to\n// outer = w*(1+softness): softness >= 1 is the old behaviour exactly (inner 0, outer w*(1+softness)); softness -> 0\n// closes the band onto the hard edge at w. `aa` keeps a minimum band (cell units) so the crisp edge stays\n// anti-aliased and smoothstep never sees equal edges. Applied to both axes (weight across, marklen along).\n\naa = 0.01;\nouter_across = weight + softness * weight;\ninner_across = min(weight * max(1.0 - softness, 0.0), outer_across - aa);\nouter_along  = marklen + softness * marklen;\ninner_along  = min(marklen * max(1.0 - softness, 0.0), outer_along - aa);\nedge_across = smoothstep(outer_across, inner_across, dist_to_line);\nedge_along  = smoothstep(outer_along,  inner_along,  dist_to_mark);\n\n// \u2500\u2500\u2500 Shape profile (flat-top \u2192 raised cosine) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nprofile = mix(1.0, cos(clamp(dist_to_line / max(weight, 0.0001), 0.0, 1.0) * pi * 0.5), shape);\n\n// \u2500\u2500\u2500 Mark \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nmark = edge_across * edge_along * profile;\n\n// \u2500\u2500\u2500 Output \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\ncr = mix(1.0, sample(in1, norm).x, src_potential);\ncg = mix(1.0, sample(in1, norm).y, src_potential);\ncb = mix(1.0, sample(in1, norm).z, src_potential);\n\nout1 = mix(vec(cr * mark, cg * mark, cb * mark, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 3,
+									"numinlets": 2,
 									"numoutlets": 1,
 									"outlettype": [
 										""
@@ -245,18 +225,6 @@
 							{
 								"patchline": {
 									"destination": [
-										"gen-obj-2",
-										2
-									],
-									"source": [
-										"gen-obj-12",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
 										"gen-obj-3",
 										0
 									],
@@ -291,7 +259,7 @@
 						""
 					],
 					"patching_rect": [
-						1063.5,
+						980.0,
 						100.0,
 						56.0,
 						22.0
@@ -323,7 +291,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						843.5,
+						760.0,
 						260.0,
 						220.0,
 						219.0
@@ -347,7 +315,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1063.5,
+						980.0,
 						200.0,
 						80.0,
 						21.0
@@ -378,7 +346,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1153.5,
+						1070.0,
 						200.0,
 						60.0,
 						21.0
@@ -410,7 +378,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1063.5,
+						980.0,
 						232.0,
 						5.0,
 						5.0
@@ -442,7 +410,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1083.5,
+						1000.0,
 						232.0,
 						5.0,
 						5.0
@@ -467,7 +435,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						760.0,
 						20.0,
 						60.0,
 						22.0
@@ -485,7 +453,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						760.0,
 						50.0,
 						180.0,
 						22.0
@@ -506,7 +474,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						760.0,
 						110.0,
 						80.0,
 						22.0
@@ -525,7 +493,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						760.0,
 						140.0,
 						60.0,
 						22.0
@@ -543,7 +511,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						760.0,
 						170.0,
 						80.0,
 						22.0
@@ -561,7 +529,7 @@
 						""
 					],
 					"patching_rect": [
-						843.5,
+						760.0,
 						200.0,
 						100.0,
 						22.0
@@ -632,44 +600,6 @@
 			},
 			{
 				"box": {
-					"id": "obj-106",
-					"maxclass": "inlet",
-					"comment": "vecfield in",
-					"index": 0,
-					"numinlets": 0,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						600.0,
-						20.0,
-						30.0,
-						30.0
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-107",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						600.0,
-						70.0,
-						80.0,
-						22.0
-					],
-					"text": "vs_inState"
-				}
-			},
-			{
-				"box": {
 					"id": "obj-102",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -702,24 +632,6 @@
 						22.0
 					],
 					"text": "prepend param src_along"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-108",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						600.0,
-						120.0,
-						160.0,
-						22.0
-					],
-					"text": "prepend param src_field"
 				}
 			},
 			{
@@ -1557,214 +1469,6 @@
 			{
 				"box": {
 					"id": "obj-44",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Vecfield (in3) contribution depth. 1.0 = original implicit depth.",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "weave_pix::field_amount",
-					"parameter_enable": 1,
-					"patching_rect": [
-						622.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						115.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								1.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "field_amount",
-							"parameter_mmax": 2.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "field_amount",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "field_amount"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-45",
-					"maxclass": "attrui",
-					"attr": "field_amount",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						602.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-46",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						611.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						103.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Field Amount",
-					"textjustification": 1,
-					"varname": "lbl_field_amount"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-47",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Orientation mechanism: 0=vector-add+renormalize, 1=true angular blend (atan2-based). Performable \u2014 not a fixed choice.",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "weave_pix::fix_blend",
-					"parameter_enable": 1,
-					"patching_rect": [
-						694.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						152.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "fix_blend",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "fix_blend",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "fix_blend"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-48",
-					"maxclass": "attrui",
-					"attr": "fix_blend",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						674.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-49",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						683.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						140.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Fix Blend",
-					"textjustification": 1,
-					"varname": "lbl_fix_blend"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-50",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -1775,7 +1479,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1063.5,
+						980.0,
 						130.0,
 						18.0,
 						12.0
@@ -1792,7 +1496,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-51",
+					"id": "obj-45",
 					"maxclass": "attrui",
 					"attr": "bypass",
 					"numinlets": 1,
@@ -1801,7 +1505,7 @@
 						""
 					],
 					"patching_rect": [
-						1063.5,
+						980.0,
 						160.0,
 						131.0,
 						22.0
@@ -2064,11 +1768,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-106",
+						"obj-44",
 						0
 					],
 					"destination": [
-						"obj-107",
+						"obj-45",
 						0
 					]
 				}
@@ -2076,55 +1780,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-107",
-						0
-					],
-					"destination": [
-						"obj-5",
-						2
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-107",
-						1
-					],
-					"destination": [
-						"obj-108",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-108",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-51",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
+						"obj-45",
 						0
 					],
 					"destination": [
@@ -2484,78 +2140,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-4",
-						8
-					],
-					"destination": [
-						"obj-44",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-44",
-						0
-					],
-					"destination": [
-						"obj-45",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-45",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						9
-					],
-					"destination": [
-						"obj-47",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-47",
-						0
-					],
-					"destination": [
-						"obj-48",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-48",
-						0
-					],
-					"destination": [
-						"obj-5",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-rd-5",
 						0
 					],
@@ -2665,16 +2249,6 @@
 			"obj-41": [
 				"shape",
 				"shape",
-				0
-			],
-			"obj-44": [
-				"field_amount",
-				"field_amount",
-				0
-			],
-			"obj-47": [
-				"fix_blend",
-				"fix_blend",
 				0
 			],
 			"parameterbanks": {

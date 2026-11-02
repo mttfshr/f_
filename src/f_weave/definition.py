@@ -4,9 +4,9 @@ patcher = {
     "object_name":        "weave_pix",
     "title":              "Weave",
     "signal_type":        "\u2207 in",
-    # Three optional inlets, scalars first (Matt, 2026-11-01): 0 = across scalar, 1 = along scalar, 2 = vecfield. All
-    # optional: with nothing connected weave draws straight lines at `angle`. driving_inlet makes mod_inlets[0] share
-    # outer inlet 0 (texture + control); each inlet has its own vs_inState and connected flag (state_param).
+    # Two optional inlets (Matt, 2026-11-01; the vecfield inlet 2 was retired the same day): 0 = across scalar, 1 = along
+    # scalar. Both optional: with nothing connected weave draws straight lines at `angle`. driving_inlet makes
+    # mod_inlets[0] share outer inlet 0 (texture + control); each inlet has its own vs_inState and connected flag.
     "archetype":          "processor",
     "driving_inlet":      True,
 
@@ -26,7 +26,6 @@ patcher = {
     "mod_inlets": [
         {"label": "across in",   "vs_instate": True, "state_param": "src_potential"},   # in1: replaces across; tints
         {"label": "along in",    "vs_instate": True, "state_param": "src_along"},       # in2: replaces along
-        {"label": "vecfield in", "vs_instate": True, "state_param": "src_field"},       # in3: steers orientation
     ],
 
     "params": [
@@ -38,11 +37,8 @@ patcher = {
         {"name": "phase",      "type": "float", "min": -1.0, "max": 1.0, "default": 0.0,  "hint": "Animation phase — scrolls marks along line direction."},
         {"name": "softness",   "type": "float", "min": 0.0,  "max": 2.0, "default": 0.0,  "hint": "Edge softness — 0=crisp edge at weight/marklen, 1=feather from the line centre out to 2x weight/marklen, >1 feathers further out."},
         {"name": "shape",      "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0,  "hint": "Mark profile — 0=flat-top rectangle, 1=raised cosine (calligraphic)."},
-        {"name": "field_amount", "type": "float", "min": 0.0,  "max": 2.0, "default": 1.0, "hint": "Vecfield (in3) contribution depth. 1.0 = original implicit depth."},
-        {"name": "fix_blend",    "type": "float", "min": 0.0,  "max": 1.0, "default": 0.0, "hint": "Orientation mechanism: 0=vector-add+renormalize, 1=true angular blend (atan2-based). Performable — not a fixed choice."},
         {"name": "src_potential", "type": "internal"},
         {"name": "src_along",     "type": "internal"},
-        {"name": "src_field",     "type": "internal"},
         {"name": "bypass",        "type": "bypass"},
     ],
 
@@ -55,57 +51,17 @@ Param regularity(0.5);
 Param phase(0.0);
 Param softness(0.0);
 Param shape(0.0);
-Param field_amount(1.0);
-Param fix_blend(0.0);
 Param src_potential(0.0);
 Param src_along(0.0);
-Param src_field(0.0);
 Param bypass(0.0);
 
-// ─── Orientation (two mechanisms, performable crossfade) ─────────────────────
-// Resolved 2026-10-13 (Matt), via scratch/experiments/f_weave_orientation_ab/
-// and ideas/f_weave_orientation_blend.md: not a one-time pick between Fix A
-// and Fix B -- both ship as live dials. field_amount=1.0, fix_blend=0.0
-// reproduces this block's original (pre-2026-10-13) behavior exactly.
-
-vx = sample(in3, norm).x - 0.5;
-vy = sample(in3, norm).y - 0.5;
+// ─── Orientation ──────────────────────────────────────────────────────────────
+// 2026-11-01 (Matt): the vecfield inlet (in3, field_amount, fix_blend, src_field) is retired; a field warp is f_vf_warp
+// downstream. Orientation is the global `angle` only. History: ideas/f_weave_orientation_blend.md.
 
 base_angle = angle * pi;
-base_cs = cos(base_angle);
-base_sn = sin(base_angle);
-
-// src_field = vs_inState's connected flag for the vecfield inlet, in3 (2026-11-01): 0 = nothing patched in, so no field and the lines
-// stay straight at `angle`. The gate is applied AFTER the sample and only on csA / snA / weight_b: an unconnected
-// inlet reads (0,0,0,1), i.e. (vx, vy) = (-0.5, -0.5), and atan2 below keeps seeing that finite input (atan2(0,0)
-// is the GPU NaN case, so vx / vy are never zeroed themselves). Connected, src_field = 1 multiplies by exactly 1.
-// Mechanism A: vector-add + renormalize, field term scaled by field_amount.
-csA = base_cs + field_amount * (-vy) * src_field;
-snA = base_sn + field_amount * vx * src_field;
-magA = sqrt(csA * csA + snA * snA);
-csA = csA / max(magA, 0.0001);
-snA = snA / max(magA, 0.0001);
-
-// Mechanism B: true angular blend. Field angle via atan2 (verified GPU-safe
-// on decoded sampled-texture input, tests/spike_atan2_safety.py), same
-// (cs,sn)-space sign convention as mechanism A's addition direction.
-// Weighted by field_amount (depth) and field magnitude (confidence) so
-// near-zero field falls back to the base angle cleanly.
-field_mag = sqrt(vx * vx + vy * vy);
-field_angle = atan2(vx, -vy);
-d_ang = field_angle - base_angle;
-d_ang = d_ang - 2.0 * pi * floor((d_ang + pi) / (2.0 * pi));
-weight_b = clamp(field_amount * field_mag * 2.0, 0.0, 1.0) * src_field;
-blend_angle = base_angle + d_ang * weight_b;
-csB = cos(blend_angle);
-snB = sin(blend_angle);
-
-// Crossfade A -> B.
-cs = mix(csA, csB, fix_blend);
-sn = mix(snA, snB, fix_blend);
-mag = sqrt(cs * cs + sn * sn);
-cs = cs / max(mag, 0.0001);
-sn = sn / max(mag, 0.0001);
+cs = cos(base_angle);
+sn = sin(base_angle);
 
 across_rot = norm.x * cs + norm.y * sn;
 along_rot  = norm.x * (-sn) + norm.y * cs;
