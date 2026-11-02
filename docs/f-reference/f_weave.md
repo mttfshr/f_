@@ -109,7 +109,7 @@ out1 = mix(vec(cr*mark, cg*mark, cb*mark, 1), vec(0,0,0,1), bypass)
 ## Character work, scratch (2026-11-01)
 
 Not in the shipped module. A scratch copy, `f_weave_char` (`scratch/experiments/f_weave_character/`, gitignored, local only), tried irregularity variants and named-texture modulation:
-- `variant` 0 off, 1 line wobble, 2 smooth along-line modulation of `weight`/`marklen`, 3 hashed per-mark jitter, 4 wobble + smooth modulation, with `irreg` (depth) and `nscale` (noise frequency). Matt (2026-11-01): all variants look good and he wants all of them; bringing them into the shipped `f_weave` is not done and not yet scheduled.
+- `variant` 0 off, 1 line wobble, 2 smooth along-line modulation of `weight`/`marklen`, 3 hashed per-mark jitter, 4 wobble + smooth modulation, with `irreg` (depth) and `nscale` (noise frequency). Matt (2026-11-01): all variants look good and he wants all of them; bringing them into the shipped `f_weave` is not done and not yet scheduled. The scratch copy also renamed `regularity` to `offset` (inverted), made `variant` a menu and the modulation mode a Unipolar/Bipolar toggle, and removed `shape` (Matt, 2026-11-01); the shipped module still has `regularity` and `shape`.
 - Named-texture modulation of `weight` / `irreg` / `marklen` on inlet 0 (tagged textures, depth dials `*_m`, `mmode`): works live; see `ideas/named_mod_textures.md`. No `build_patcher.py` change yet (`P-mod-textures`).
 
 ## Notes — real discrepancy between spec.md and definition.py
