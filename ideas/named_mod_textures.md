@@ -288,7 +288,7 @@ tagged target leaves the dial alone regardless of the fallback texture (gray or 
 tagged ones, in `scratch_weave_named_tex.maxpat`. (The first demo had only tagged streams on inlet 0; this was the
 follow-up check.) Matt reported "passes"; no further detail was recorded.
 
-**Still not tested:** T5 (inlet ceiling) — three targets only. `vs_inState`'s load-time behaviour for a target that
+**T5 decided as a rule (Matt, 2026-11-01 21:17):** a module takes as many tagged textures as it has named `<param>_tex` params; there is no designed cap. `marklen_tex` was confirmed live on the shipped `f_weave`. The first large count is `f_masonry` (about 13 modulatable params), taken up next. **Still not tested:** `vs_inState`'s load-time behaviour for a target that
 never receives anything was not checked beyond the visible result. The `build_patcher.py` change was built the same evening: a `tag` key on `mod_inlets` entries (`build/spec.md`, `tests/build/test_build_tag_key.py`), replacing the post-processing in the scratch `_build.py`; `f_weave` is the first consumer (shipped, offline-checked only).
 
 ---
