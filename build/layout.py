@@ -56,6 +56,7 @@ SERV_GAP   = 60.0
 SERV_COL_B = 220.0
 SERV_STEP  = 30.0
 OVERFLOW_GAP = 60.0
+TAG_GAP    = 40.0    # mod_inlets "tag": gap between the route's right edge and the tag strip
 
 
 def _snap(v):
@@ -184,6 +185,19 @@ def layout_edit_view(boxes, lines, roles):
         w = max(w, len(bx.get("text", "")) * 6.5)     # never clip below the text
         _put(bx, x=cx(0) - 3.5, y=Y_ROUTE, w=w)
         route_right = cx(0) - 3.5 + w
+    # mod_inlets "tag" (build_patcher): the demux is fed by the route's reject outlet, so it sits under the route
+    # row, to the right of the lane; each tagged entry's vs_inState and state prepend hang below it.  Every cord
+    # from the reject outlet to the pix then runs downward.  Nothing here moves for a module without tags.
+    tag_x0, tag_right = route_right + TAG_GAP, 0.0
+    for bx in one("tag_demux"):
+        _put(bx, tag_x0, Y_ROUTE + 40.0)
+        tag_right = max(tag_right, tag_x0 + _rect(bx)[2])
+    tag_rank = {i: k for k, (i, _) in enumerate(grp.get("tag_instate", []))}
+    for role, y in (("tag_instate", Y_ROUTE + 90.0), ("tag_statepre", Y_ROUTE + 135.0)):
+        for i, bid in grp.get(role, []):
+            x = tag_x0 + tag_rank.get(i, 0) * MOD_PITCH
+            _put(by_id[bid], x, y)
+            tag_right = max(tag_right, x + _rect(by_id[bid])[2])
     for k, bid in grp.get("label", []):
         _put_centered(by_id[bid], cx(k + off), Y_HEADER, COL_W)
     for k, bid in grp.get("ctl", []):
@@ -234,6 +248,7 @@ def layout_edit_view(boxes, lines, roles):
     x_a = max(cx(n_cols - 1) + PITCH,
               (MOD_X0 + n_mod * MOD_PITCH) if n_mod else 0.0,
               route_right,
+              tag_right,
               700.0) + SERV_GAP
     x_b = x_a + SERV_COL_B
     for role, x, y in (("loadbang", x_a, 20.0), ("getattr", x_a, 50.0),

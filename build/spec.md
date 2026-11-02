@@ -250,6 +250,19 @@ patcher = {
 #   leaves it unconnected: f_vf_seeds' vestigial src_vecfield).  state_nodes needs a state_param.  Loud on an
 #   empty or malformed fanout, an unknown node, a repeat, or an unknown key in the entry.
 #
+#   Per mod_inlets entry "tag": "<word>" (2026-11-01, f_weave; ideas/named_mod_textures.md) -- a modulation texture
+#   that arrives on the module's MAIN inlet, tagged with that name upstream (`prepend <word>`, so the message is
+#   `<word> jit_gl_texture <name>`).  The entry gets no outer inlet; it still gets its pix inlet, vs_inState and
+#   connected-flag prepend.  One `route <tags>` (TAG_DEMUX, obj-4a), fed by the scalar route's reject outlet (the
+#   route box gains one), strips each tag and feeds that entry's vs_inState; demux outlet k = the k-th tagged entry.
+#   An untagged texture still reaches the pix by routepass as ever; an entry nothing is tagged for sees no frames, so
+#   its connected flag stays 0 (the codebox gates its term on that flag).  Edit view: layout.py puts the demux under
+#   the route row, right of the lane, with the tagged vs_inState / prepend boxes below it, so every cord runs downward
+#   (roles tag_demux / tag_instate / tag_statepre; override keys `tag_demux`, `tag_instate.<i>`, `tag_statepre.<i>`).
+#   Loud on a tag that is not one word, a duplicate tag, a tag that is also a route token or `bypass`, a tag on the
+#   driving texture (mod_inlets[0] under driving_inlet), or a tag together with route_first / route_reject_to_pix (all
+#   three use the route's reject outlet).  Default-off.  `tests/build/test_build_tag_key.py`.
+#
 #   build() itself: a support pix node's id is obj-50+ unless the per-param objects (dial, attrui, label per
 #   widget, then the bypass pair) reach it -- from ten widgets up they do, and a support pix with a dial's id
 #   silently garbled every cord naming it.  The base then moves to the first id after the bypass pair

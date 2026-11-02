@@ -84,6 +84,11 @@ OBJ_PANEL_TOGGLE_JS = "obj-19e"
 # Type dots (2026-10-17) — fixed IDs
 OBJ_DOT_IN  = "obj-19f"
 OBJ_DOT_OUT = "obj-19g"
+
+# mod_inlets "tag" (2026-11-01): the `route <tags>` that strips the tag off a named modulation texture
+# arriving on the main inlet (ideas/named_mod_textures.md).  One per module, fed by the scalar route's
+# reject outlet.  Id is fixed so tests and overrides can name it.
+TAG_DEMUX   = "obj-4a"
 # bypass IDs are dynamic — computed from n_ui_params in build()
 UI_PARAM_BASE   = 20
 
@@ -792,7 +797,8 @@ def mod_inlet_boxes(mod_inlets, driving_inlet=False):
         instate_id  = mod_instate_obj_id(i)
         label       = mi.get("label", f"mod {i+1}")
         use_instate = mi.get("vs_instate", True)
-        skip_inlet  = driving_inlet and i == 0
+        # a tagged entry gets no outer inlet of its own: its texture arrives on the main inlet, tagged
+        skip_inlet  = (driving_inlet and i == 0) or bool(mi.get("tag"))
         if not skip_inlet:
             inlet_id = mod_inlet_obj_id(i)
             index    = i if driving_inlet else i + 1
@@ -834,6 +840,8 @@ def mod_inlet_lines(mod_inlets, driving_inlet=False, fan=None):
     """
     lines = []
     offset = 0 if driving_inlet else 1
+    # a tagged entry is fed by the tag demux (TAG_DEMUX), one demux outlet per tag in declaration order
+    tag_k = {i_: k_ for k_, i_ in enumerate(i2 for i2, m2 in enumerate(mod_inlets) if m2.get("tag"))}
     for i, mi in enumerate(mod_inlets):
         instate_id  = mod_instate_obj_id(i)
         use_instate = mi.get("vs_instate", True)
@@ -844,11 +852,14 @@ def mod_inlet_lines(mod_inlets, driving_inlet=False, fan=None):
         # inlet-0 wire in this case (would double-feed pix inlet 0).
         is_driving_primary = driving_inlet and i == 0
         source_id = OBJ_ROUTEPASS if is_driving_primary else mod_inlet_obj_id(i)
+        src_out = 0
+        if i in tag_k:
+            source_id, src_out = TAG_DEMUX, tag_k[i]
         f_ = (fan or {}).get(i, {})
         tex_targets = f_.get("texture") or [(OBJ_PIX, i + offset)]
         if use_instate:
             # source → vs_inState → pix inlet i+offset (or the "fanout" stages)
-            lines.append(wire(source_id, 0, instate_id, 0))
+            lines.append(wire(source_id, src_out, instate_id, 0))
             for node_, inlet_ in tex_targets:
                 lines.append(wire(instate_id, 0, node_, inlet_))
             # optional state_param feedback
@@ -860,7 +871,7 @@ def mod_inlet_lines(mod_inlets, driving_inlet=False, fan=None):
         else:
             # source → pix inlet i+offset directly (no vs_inState)
             for node_, inlet_ in tex_targets:
-                lines.append(wire(source_id, 0, node_, inlet_))
+                lines.append(wire(source_id, src_out, node_, inlet_))
     return lines
 
 def mod_state_pre_boxes(mod_inlets):
@@ -1288,9 +1299,12 @@ def assign_roles(ui_params, header_toggles, mod_inlets, outlets, pix_ids,
         r[aid] = ("pre_extra", (n, seen.setdefault(n, 0)))
         seen[n] += 1
     for i in range(len(mod_inlets)):
+        tagged = bool(mod_inlets[i].get("tag"))      # a tagged entry has no outer inlet box: its role is harmless
         r[mod_inlet_obj_id(i)] = ("mod_inlet", i)
-        r[mod_instate_obj_id(i)] = ("mod_instate", i)
-        r[mod_state_pre_id(i)] = ("mod_statepre", i)
+        r[mod_instate_obj_id(i)] = ("tag_instate" if tagged else "mod_instate", i)
+        r[mod_state_pre_id(i)] = ("tag_statepre" if tagged else "mod_statepre", i)
+    if any(mi.get("tag") for mi in mod_inlets):
+        r[TAG_DEMUX] = ("tag_demux", None)
     return r
 
 
@@ -1310,7 +1324,7 @@ def element_keys(roles, ui_params, header_toggles):
             key = f"{names[idx[0]]}.range_msg.{idx[1]}"
         elif role == "pre_extra":
             key = f"{names[idx[0]]}.pre_extra.{idx[1]}"
-        elif role in ("outlet", "mod_inlet", "mod_instate", "mod_statepre"):
+        elif role in ("outlet", "mod_inlet", "mod_instate", "mod_statepre", "tag_instate", "tag_statepre"):
             key = f"{role}.{idx}"
         elif role == "pix":
             key, pix_n = f"pix.{pix_n}", pix_n + 1
@@ -1651,6 +1665,33 @@ def build(defn, debug=None, side_files=None):
         raise ValueError(f"route tokens must be unique, but {dup} appear more than once "
                          f"(a param's name, or its route_name)")
 
+    # mod_inlets "tag" (2026-11-01, f_weave; ideas/named_mod_textures.md): a modulation texture that arrives
+    # on the module's MAIN inlet, tagged with a name (`<tag> jit_gl_texture <name>`, made upstream with
+    # `prepend <tag>`).  A tagged entry gets no outer inlet; a `route <tags>` fed by the scalar route's reject
+    # outlet strips the tag and hands each texture to its own vs_inState -> pix inlet.  Default-off and loud.
+    tags = []                                                  # [(mod_inlets index, tag)]
+    for i_, mi_ in enumerate(mod_inlets or []):
+        if "tag" not in mi_:
+            continue
+        t_ = mi_["tag"]
+        if not isinstance(t_, str) or not t_ or t_ != t_.strip() or len(t_.split()) != 1:
+            raise ValueError(f"mod_inlets[{i_}].tag must be a single word, not {t_!r}")
+        tags.append((i_, t_))
+    if tags:
+        if route_first or route_reject_to_pix:
+            raise ValueError("mod_inlets tag uses the route's reject outlet, so it cannot be combined with "
+                             "route_first or route_reject_to_pix")
+        if defn.get("driving_inlet", False) and tags[0][0] == 0:
+            raise ValueError("mod_inlets[0] is the driving texture under driving_inlet; it cannot carry a tag")
+        tag_names = [t_ for _, t_ in tags]
+        dup_tags = sorted({t_ for t_ in tag_names if tag_names.count(t_) > 1})
+        if dup_tags:
+            raise ValueError(f"mod_inlets tags must be unique, but {dup_tags} appear more than once")
+        clash = sorted(set(tag_names) & (set(tokens) | {"bypass"}))
+        if clash:
+            raise ValueError(f"mod_inlets tag {clash} is also a route token (a param name, route_name or `bypass`): "
+                             f"a tagged texture would be claimed by the scalar route first")
+
     # Validate: vs_instate:False and state_param are mutually exclusive
     for mi in mod_inlets:
         if not mi.get("vs_instate", True) and mi.get("state_param"):
@@ -1795,7 +1836,7 @@ def build(defn, debug=None, side_files=None):
     mod_fan = {}
     for i_, mi_ in enumerate(mod_inlets or []):
         what = f"mod_inlets[{i_}]"
-        unknown = set(mi_) - {"label", "vs_instate", "state_param", "fanout", "state_nodes"}
+        unknown = set(mi_) - {"label", "vs_instate", "state_param", "fanout", "state_nodes", "tag"}
         if unknown:
             raise ValueError(f"{what}: unknown key(s) {sorted(unknown)}")
         if "fanout" in mi_:
@@ -1878,7 +1919,7 @@ def build(defn, debug=None, side_files=None):
     boxes.append(inlet_box(inlet_comment))
     boxes.extend(outlet_boxes(outlets))
     boxes.append(routepass_box())
-    boxes.append(route_box(route_params, route_bypass, route_first or route_reject_to_pix))
+    boxes.append(route_box(route_params, route_bypass, route_first or route_reject_to_pix or bool(tags)))
     boxes.extend(pix_boxes_to_add)
     boxes.append(autopattr_box(prefix, legacy.get("autopattr_varname")))
     boxes.append(panel_box(pw, ph, border_color_for(defn.get("signal_type"))))
@@ -1924,6 +1965,10 @@ def build(defn, debug=None, side_files=None):
     if mod_inlets:
         boxes.extend(mod_inlet_boxes(mod_inlets, driving_inlet=defn.get("driving_inlet", False)))
         boxes.extend(mod_state_pre_boxes(mod_inlets))
+    if tags:                                   # the tag demux: `<tag> jit_gl_texture <name>` -> `jit_gl_texture <name>`
+        boxes.append(box(TAG_DEMUX,
+            maxclass="newobj", numinlets=1, numoutlets=len(tags) + 1, outlettype=[""] * (len(tags) + 1),
+            patching_rect=[400.0, 120.0, 200.0, 22.0], text="route " + " ".join(t_ for _, t_ in tags)))
 
     # Per-param boxes (grid — float and int only).  A control's param_connect names the pix it
     # drives: the @name of its `pix_target` node when that is a pix_chain node (f_vf_advect's
@@ -2050,6 +2095,10 @@ def build(defn, debug=None, side_files=None):
     # route_reject_to_pix: the route's reject outlet → the primary pix
     if route_reject_to_pix:
         lines.append(wire(OBJ_ROUTE, len(route_params) + rb, primary_obj_id, 0))
+
+    # mod_inlets tag: the route's reject outlet → the tag demux
+    if tags:
+        lines.append(wire(OBJ_ROUTE, len(route_params) + rb, TAG_DEMUX, 0))
 
     # routepass out2 (unmatched) → route (route_first: route's reject outlet → routepass)
     if route_first:
