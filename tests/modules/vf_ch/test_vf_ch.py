@@ -1,6 +1,6 @@
 """
-test_immiscible.py -- tier 1 for f_vf_immiscible: the NumPy mirror in
-immiscible_mirror.py checked against INDEPENDENT ground truth (exact mean
+test_vf_ch.py -- tier 1 for f_vf_ch: the NumPy mirror in
+vf_ch_mirror.py checked against INDEPENDENT ground truth (exact mean
 conservation, analytic single-mode rates, the tanh interface profile, free-energy
 decay, blend identities, the divergence of a blend), plus mutation checks proving
 the tests bite (tasks.md T003; spec success criteria 1-5, FR-004, FR-010, FR-014).
@@ -8,7 +8,7 @@ the tests bite (tasks.md T003; spec success criteria 1-5, FR-004, FR-010, FR-014
 Constants in the mirror are PROVISIONAL until T004; these tests pin behaviour that
 must hold for any constants, with the tolerances stated in each check.
 
-Run:  tests/run.sh -q tests/modules/immiscible/test_immiscible.py
+Run:  tests/run.sh -q tests/modules/vf_ch/test_vf_ch.py
 """
 import contextlib
 import io
@@ -17,10 +17,10 @@ import sys
 import numpy as np
 
 import fluid_mirror as fm
-import immiscible_mirror as im
+import vf_ch_mirror as im
 from gpu_sim import F32, grid
 from harness import check, note, run
-from immiscible_mirror import Params
+from vf_ch_mirror import Params
 
 TWOPI = 2.0 * np.pi
 

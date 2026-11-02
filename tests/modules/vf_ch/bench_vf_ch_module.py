@@ -1,5 +1,5 @@
 """
-bench_immiscible_module.py -- f_vf_immiscible module-level checks inside Vsynth's real render
+bench_vf_ch_module.py -- f_vf_ch module-level checks inside Vsynth's real render
 context (tasks.md T021, T022), through the module bench: the SHIPPED patcher, not the bare stages.
 
   T022a  reset fires once on load: a fresh module with nothing connected has a seeded (not
@@ -19,10 +19,10 @@ context (tasks.md T021, T022), through the module bench: the SHIPPED patcher, no
          unconnected one stays EXACTLY neutral on out2 (FR-013).
 
 Bypass neutral outlets, parameter arrival and outlet frames for every module are checked by
-tests/contracts/bench_modules.py (BYPASS_EXPECT carries f_vf_immiscible).
+tests/contracts/bench_modules.py (BYPASS_EXPECT carries f_vf_ch).
 
 Needs Max with tests/bench/bench_module.maxpat open (other patches closed).
-Run:  tests/bench.sh tests/modules/immiscible/bench_immiscible_module.py
+Run:  tests/bench.sh tests/modules/vf_ch/bench_vf_ch_module.py
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
 ORDER = 81
@@ -38,7 +38,7 @@ import modulebench as mb
 from bench_modules import ENV_NOISE
 from harness import check, note, run
 
-MODULE = "f_vf_immiscible.maxpat"
+MODULE = "f_vf_ch.maxpat"
 SIZE = 512                                       # the module bench's render-context size
 INJECT, THRESH, PULL = 0.3, 0.5, 0.3             # dial defaults (definition.py)
 E = INJECT ** 3                                  # per-frame deposit rate at luma 1

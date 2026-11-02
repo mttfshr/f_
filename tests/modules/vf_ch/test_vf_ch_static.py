@@ -1,10 +1,10 @@
 """
-test_immiscible_static.py -- static guards for the f_vf_immiscible codeboxes (tasks T014): what an offline
-run CAN verify about src/f_vf_immiscible/*.gen without Max. The GPU agreement with the mirror is
-bench_immiscible.py (T016); this file stops the cheap, silent mistakes (bench-verified GenExpr traps, a
+test_vf_ch_static.py -- static guards for the f_vf_ch codeboxes (tasks T014): what an offline
+run CAN verify about src/f_vf_ch/*.gen without Max. The GPU agreement with the mirror is
+bench_vf_ch.py (T016); this file stops the cheap, silent mistakes (bench-verified GenExpr traps, a
 forbidden Param name, the two blend copies drifting, constants changed in one place only).
 
-Run:  tests/run.sh -q tests/modules/immiscible/test_immiscible_static.py
+Run:  tests/run.sh -q tests/modules/vf_ch/test_vf_ch_static.py
 """
 import importlib.util
 import re
@@ -12,9 +12,9 @@ import sys
 from pathlib import Path
 
 from harness import check, run
-import immiscible_mirror as im
+import vf_ch_mirror as im
 
-SRC = Path(__file__).resolve().parents[3] / "src" / "f_vf_immiscible"
+SRC = Path(__file__).resolve().parents[3] / "src" / "f_vf_ch"
 STAGES = ["inab", "pass", "adv", "spec", "enc"]
 DFT = ["dft_fx", "dft_fy", "dft_iy", "dft_ix"]
 def say(msg):

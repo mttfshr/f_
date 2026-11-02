@@ -1,5 +1,5 @@
 """spike_immiscible_stirring_b.py -- T006b: the supercritical stirring test that closes G7.
-Thresholds pre-registered in .specify/stable/f_vf_immiscible/tasks.md Record (T006b) before this file existed.
+Thresholds pre-registered in .specify/stable/f_vf_ch/tasks.md Record (T006b) before this file existed.
 Same stirred velocity as spike_immiscible_stirring.py (imported). Starts: stripes, drops, noise.
 
 Run: . tests/_log.sh >/dev/null; export PYTHONPATH
@@ -11,8 +11,8 @@ import os
 import numpy as np
 
 import fluid_mirror as fm
-import immiscible_mirror as im
-from immiscible_mirror import Params
+import vf_ch_mirror as im
+from vf_ch_mirror import Params
 from spike_immiscible_stirring import (EVERY, FRAMES, N, OUT, SNAPS, WARM, advance, components,
                                        fluid_warm, force_tex, gradp99, packed, tanh_phi)
 

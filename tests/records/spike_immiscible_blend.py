@@ -17,9 +17,9 @@ Run (needs the test import path):  . tests/_log.sh >/dev/null; export PYTHONPATH
 import numpy as np
 
 import fluid_mirror as fm
-import immiscible_mirror as im
+import vf_ch_mirror as im
 from gpu_sim import F32
-from immiscible_mirror import Params
+from vf_ch_mirror import Params
 from spike_immiscible_stirring import force_tex, packed, tanh_phi
 
 N = 256

@@ -1,6 +1,6 @@
 """spike_immiscible_stirring.py -- T006 / experiment 1 (decides G7) and experiment 3 (coarsening
-under stirring) for f_vf_immiscible. Thresholds were pre-registered in
-.specify/stable/f_vf_immiscible/tasks.md Record (T005) before this file existed.
+under stirring) for f_vf_ch. Thresholds were pre-registered in
+.specify/stable/f_vf_ch/tasks.md Record (T005) before this file existed.
 
 One stirred fluid_mirror Fluid (N 256, seed-free: deterministic drifting-cell force) advects phi in
 every arm; A = B = u so the blend is neutral. Arms: ch (Cahn-Hilliard, the module's step), plain
@@ -20,9 +20,9 @@ import time
 import numpy as np
 
 import fluid_mirror as fm
-import immiscible_mirror as im
+import vf_ch_mirror as im
 from gpu_sim import F32
-from immiscible_mirror import Params
+from vf_ch_mirror import Params
 
 N = 256
 AMP = float(os.environ.get("STIR_AMP", "0.6"))

@@ -12,8 +12,8 @@ add the k = 0 pull toward `fill` in the spec stage (a slow mean-restore) and re-
 import numpy as np
 
 import fluid_mirror as fm
-import immiscible_mirror as im
-from immiscible_mirror import Params
+import vf_ch_mirror as im
+from vf_ch_mirror import Params
 from spike_immiscible_stirring import WARM, advance, fluid_warm, force_tex, packed
 from spike_immiscible_stirring_b import starts
 

@@ -1,5 +1,5 @@
 """spike_immiscible_constants.py -- T004: stability sweep that fixes the provisional constants of
-immiscible_mirror.py (A_STAB, MDT_MAX, MDT_EXP, PHI_CLAMP, RESEED_AMP, smallest iface).
+vf_ch_mirror.py (A_STAB, MDT_MAX, MDT_EXP, PHI_CLAMP, RESEED_AMP, smallest iface).
 
 Offline NumPy only, spectral stage (no flow), 256 x 256 float32, periodic.
 
@@ -10,7 +10,7 @@ Sections (run one at a time; each prints a table):
   s4  reset noise: frames until separation (std(phi) > 0.5) per amplitude and fill
 
 Run: tests/py.sh tests/records/spike_immiscible_constants.py s1     (then s2 s3 s4)
-RESULT: recorded in .specify/stable/f_vf_immiscible/tasks.md Record (T004).
+RESULT: recorded in .specify/stable/f_vf_ch/tasks.md Record (T004).
 """
 import sys
 import time
@@ -18,9 +18,9 @@ from multiprocessing import Pool
 
 import numpy as np
 
-import immiscible_mirror as im
+import vf_ch_mirror as im
 from gpu_sim import F32
-from immiscible_mirror import Params
+from vf_ch_mirror import Params
 
 N = 256
 

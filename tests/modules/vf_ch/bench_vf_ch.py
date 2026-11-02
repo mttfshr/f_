@@ -1,7 +1,7 @@
 """
-bench_immiscible.py -- f_vf_immiscible Phase 1 (tasks.md T016): every stage codebox under
-src/f_vf_immiscible/ run on the GPU through the codebox bench and diffed against the NumPy mirror in
-immiscible_mirror.py, then the whole chain host-sequenced over many frames (the bench drives one codebox
+bench_vf_ch.py -- f_vf_ch Phase 1 (tasks.md T016): every stage codebox under
+src/f_vf_ch/ run on the GPU through the codebox bench and diffed against the NumPy mirror in
+vf_ch_mirror.py, then the whole chain host-sequenced over many frames (the bench drives one codebox
 per job; plan ADR-10), then spec success criteria 1-4 on the GPU path.
 
 Stage jobs (one pass per job, outputs chained from Python):
@@ -16,7 +16,7 @@ TOLERANCES are first-run provisional (modelled on bench_fluid) until measured; e
 measured number. The bench keeps Params between jobs, so every job pins ALL the stage's Params.
 
 Needs Max with tests/bench/bench.maxpat open.
-Run:  tests/bench.sh tests/modules/immiscible/bench_immiscible.py
+Run:  tests/bench.sh tests/modules/vf_ch/bench_vf_ch.py
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
 ORDER = 65
@@ -28,14 +28,14 @@ import numpy as np
 
 import benchclient as bc
 import fluid_mirror as fm
-import immiscible_mirror as im
-from immiscible_mirror import Params
+import vf_ch_mirror as im
+from vf_ch_mirror import Params
 from gpu_sim import F32
 from harness import check, note, run, slow
 from dft_mirror import make_image, pack, rel_err
 from test_fluid_mirror import rand_force, smooth_state
 
-SRC = _paths.REPO / "src" / "f_vf_immiscible"
+SRC = _paths.REPO / "src" / "f_vf_ch"
 N = 256
 FILES = {"inab": "codebox_inab.gen", "pass": "codebox_pass.gen", "adv": "codebox_adv.gen",
          "fx": "codebox_dft_fx.gen", "fy": "codebox_dft_fy.gen", "spec": "codebox_spec.gen",
