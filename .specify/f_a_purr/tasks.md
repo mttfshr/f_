@@ -202,6 +202,20 @@ _Session anchor. Updated 2026-07-27._
       exactly antipodal the blend direction flips (a step of size mix); at
       `breath_src` 0 or 1 it has no effect. Operators used are only ones already
       verified in this codebox (comparisons, ternary, arithmetic, `exp`).
+      **Applied 2026-11-03 (Matt: go; fade time exposed as a param):** the
+      sketch is in `src/f_a_purr/codebox.gen` (114 lines) with a new
+      `breath_src_ms` param (clamped 1-2000, default 50, one-pole time
+      constant). A copy of the scratch patch with the same codebox, a
+      `breath_src` and `breath_src_ms` control and a `phasor~ 0.3` test source
+      is at `/Users/matt/Vsynth/patterns/f_a_purr_scratch_t025.maxpat`; the
+      original scratch patch is untouched. Control positions are guesses
+      (below the breath_noise column, y about 390), not looked at. **Not
+      compiled or heard in Max.** Owed (Matt, live): (1) `breath_src` 0 sounds
+      the same as before; (2) src 1 with the `phasor~` follows it, scope on
+      `out2`; (3) toggling mid-play, listen for a click; (4) feed 2.0, -1 and a
+      NaN-making value at src 1 and check it falls back to internal with no
+      lasting silence; (5) src 1 with nothing connected sits at gain
+      `1 - breath_depth` (expected). Then T025 can be ticked.
 
 ## Phase 4 — production build (not started)
 

@@ -75,10 +75,14 @@ onset detection on the click train is strictly worse than ground truth.
 | `breath_depth` | 0–1 | 0.3 | 2 |
 | `breath_rate_mod` | -0.5–0.5 | 0.2 | 2 |
 | `breath_noise` | 0–1 | 0 | 4 |
+| `breath_src` | 0–1 | 0 | 2 |
+| `breath_src_ms` | 1–2000 | 50 | 2 |
 
 The breath rows were built 2026-07-27 (tasks.md T012, T016). `breath_skew` and
 the breath phase were verified by ear and at the 0.5 crossover (T013, T014);
-`breath_noise` has not been heard in Max.
+`breath_noise` has not been heard in Max. `breath_src` and `breath_src_ms` (the
+crossfade time constant, Matt chose to expose it 2026-11-03) were written
+2026-11-03 (tasks.md T025) and have not been run in Max.
 
 **Ranges are provisional.** The table gives the original dial ranges. Jitter was
 first set to 0–0.2, **not** 0–1: jitter multiplies bipolar `noise()`, so values

@@ -11,6 +11,8 @@ Param breath_skew(0.3);
 Param breath_depth(0.3);
 Param breath_rate_mod(0.2);
 Param breath_noise(0);
+Param breath_src(0);
+Param breath_src_ms(50);
 
 History ph_prev(0);
 History rate_h(25);
@@ -21,6 +23,7 @@ History y1(0);
 History y2(0);
 History bph_prev(0);
 History bn_prev(0);
+History bsrc_prev(0);
 
 // ---- clamp all params: message path is unprotected by dial ranges ----
 c_rate = min(200, max(1, rate_hz));
@@ -36,6 +39,8 @@ c_bskew = min(1, max(0, breath_skew));
 c_bdepth = min(1, max(0, breath_depth));
 c_brmod = min(0.5, max(-0.5, breath_rate_mod));
 c_bnoise = min(1, max(0, breath_noise));
+c_bsrc = min(1, max(0, breath_src));
+c_bsms = min(2000, max(1, breath_src_ms));
 
 // ---- read held values before writing ----
 r_held = rate_h;
@@ -47,7 +52,19 @@ bwrap = bph_acc >= 1;
 bph_prev = bph_acc - bwrap;
 
 fi = 0.5 - 0.4 * c_bskew;
-b_phase = bph_prev < fi ? 0.5 * bph_prev / fi : 0.5 + 0.5 * (bph_prev - fi) / (1 - fi);
+b_int = bph_prev < fi ? 0.5 * bph_prev / fi : 0.5 + 0.5 * (bph_prev - fi) / (1 - fi);
+// ---- breath source: internal oscillator <-> external phase on in1, crossfaded on the phase ----
+// fade runs along the shortest circular arc so b_curve, the rate fold and out2 stay consistent;
+// external value used only if 0 <= in1 <= 1 (NaN fails both tests -> falls back to internal)
+bsrc_p = bsrc_prev;
+bsrc_s = bsrc_p + (1 - exp(-1 / (c_bsms * 0.001 * samplerate))) * (c_bsrc - bsrc_p);
+bsrc_prev = bsrc_s;
+ext_ok = (in1 >= 0) * (in1 <= 1);
+b_ext = ext_ok ? in1 : b_int;
+b_d = b_ext - b_int;
+b_dw = b_d - (b_d >= 0.5) + (b_d < -0.5);
+b_mix = b_int + bsrc_s * b_dw;
+b_phase = b_mix - (b_mix >= 1) + (b_mix < 0);
 b_curve = 0.5 - 0.5 * cos(twopi * b_phase);
 
 // ---- accumulator ----
