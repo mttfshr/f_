@@ -192,7 +192,8 @@ _Session anchor. Updated 2026-07-27._
       (`d = ext - b_int`, wrapped to [-0.5, 0.5) with comparisons only), not on
       derived values, so `b_curve`, the rate fold, the noise gate and `out2`
       all stay consistent. `breath_src` is clamped 0-1 (ADR-6) and smoothed by
-      a fixed one-pole (about 50 ms time constant, tune by ear, not exposed).
+      a one-pole (about 50 ms time constant; first sketched as fixed, then
+      exposed as `breath_src_ms` at Matt's request, see Applied below).
       The external value is used only if `0 <= in1 <= 1` (a NaN fails both
       comparisons and falls back to internal), so a bad sensor value cannot
       reach the latched-rate feedback. The internal breath oscillator keeps
