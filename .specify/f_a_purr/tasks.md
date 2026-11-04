@@ -179,6 +179,27 @@ preset message boxes: `scratch/experiments/f_a_purr_realism/f_a_purr_scratch_rea
       `breath_shape` 0 -> 1 with `breath_depth` raised (try 0.6) and judge T015; (5) turn
       `jit_tau` up with the existing jitter dials and say whether it reads as less machine.
 
+## Inhale/exhale timbre contrast (direction chosen 2026-11-04; design proposed, not built)
+
+- [ ] T039 Matt, 2026-11-04: "I think we want an inhale vs exhale timbre difference."
+      Evidence: Schötz & Eklund say the two phases are distinguishable by sound and waveform;
+      Remmers & Gautier put the vocal tract on opposite sides of the larynx in the two
+      phases; the direction of the level and F0 differences is individual (research note
+      findings 1 and 4), so no fixed "dull inhale" is justified and the controls must be
+      bipolar; Purrli plays a different recording per phase (research note, Purrli section).
+      **Proposed design (awaiting Matt's go):** keep one click generator and offset its
+      parameters by phase. Weight `s = sin(2 pi b_phase)`: +1 mid-inhale, -1 mid-exhale,
+      0 at both flow reversals. It is smooth, and the timbre passes through neutral exactly
+      where the two-hump gain (T035) dips, so any change is masked. Bipolar params, all
+      default 0 so nothing changes until used: `ph_gain` (inhale/exhale level balance),
+      `ph_tilt` (click spectral tilt, duller or brighter on inhale), `ph_res` (resonator
+      frequency offset in semitones, the tract-position difference), `ph_rate` (F0 offset
+      between phases; antisymmetric, unlike `breath_rate_mod`, which is the same in both
+      phases). Works with the internal and the external phase.
+      **Open:** (1) which of the four to include; (2) sine weighting or a flatter shape
+      (a power of `s`); (3) range of `ph_res`; (4) whether to add the A/B message boxes to
+      the realism test patch. Not written; no codebox change.
+
 ## Documentation debt — do before this scrolls out of memory
 
 - [x] T018 Add a gen~ / audio-domain section to

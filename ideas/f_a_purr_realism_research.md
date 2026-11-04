@@ -1,8 +1,9 @@
 # f_a_purr — realism research
 
 _2026-11-03. Web research on techniques for making the synth sound more like a
-cat. Acoustics and voice-science sources only; purr generators on the web were
-not consulted (see `ideas/f_a_purr.md` Notes). Written from search results and
+cat. Findings 1-5 come from acoustics and voice-science sources only. A later section
+studies the architecture of one public generator, after Matt relaxed the rule on
+2026-11-04 (see `ideas/f_a_purr.md` Notes). Written from search results and
 one fetched primary paper; confidence is marked per item. Nothing here is
 verified against the codebox by ear._
 
@@ -106,6 +107,49 @@ scratch test patch: the T011 preset against an evidence-based set (`breath_hz`
 0.8, `breath_skew` -0.1, `breath_shape` 1, `breath_jit` 0.15, `jit_tau` 0.5).
 These were chosen from the numbers above, not tuned by ear.
 
+## Architecture of one public generator: Purrli (studied 2026-11-04)
+
+Source: Matt pasted the page's JavaScript into chat. It is not stored in this repo, and
+by the relaxed rule nothing below records its code, constants or sample files. Part of
+the script is hex-obfuscated; decoded, the hidden strings were only standard Web Audio
+API names and slider labels, so the structure below is readable.
+
+- **Sample-based, not synthesized.** Two looping recorded sources (one inhale, one
+  exhale) plus a sheet of meow clips, through a master gain, a low shelf and a broad
+  high-frequency cut. Every pulse heard is a real cat's. The UI tempo is labelled
+  "purrs per minute", i.e. a breath-cycle rate.
+- **Breath scheduler.** It alternates inhale and exhale phases. Each phase has its own
+  piecewise-linear gain envelope (ramp up, plateau, ramp down) that overlaps the phase
+  edges, not a smooth sine hump. The end of a silent audio buffer is used as the timer
+  that triggers the next phase.
+- **Per-breath randomness.** The breath period, each phase's pitch (playback rate), the
+  level at each envelope breakpoint, the envelope's time scale and the short pauses
+  between phases are all randomized a little on every breath. The inhale share of the
+  cycle is held near half with small random variation, which agrees with the measured
+  51-54% in finding 1.
+- **"Variability" control.** At breath boundaries, with a probability set by the slider,
+  it starts a run of a few breaths at a different tempo (drawn from a wide range around
+  the base tempo), then returns. So tempo excursions come in clusters, not independently
+  per breath.
+- **"Symmetry" control.** It attenuates one phase relative to the other: a user-set
+  inhale/exhale loudness balance. Other controls: tone (playback-rate scale), a
+  low-shelf/high-cut filter, and meow rate (the exhale is strongly attenuated during a
+  meow).
+- **The two phases are different recordings**, consistent with Schötz & Eklund noting
+  that the phases are distinguishable by sound and waveform.
+
+Inference (not measured): its realism likely comes mostly from the recorded click
+texture; the engine adds breath structure and randomness. We have the structure and
+randomness; the click texture is the gap. Levers it suggests for us, none built:
+inhale/exhale timbre contrast (tasks.md T039), clustered tempo excursions (runs of a few
+breaths, different from our independent per-breath `breath_jit`), and a user-set
+inhale/exhale loudness balance (part of T039). Our own numbers (`breath_jit` 0.15 and so
+on) come from the papers in findings 1-4, not from this generator.
+
+Other generators found (not studied; links only): myNoise "Furry Friend" (the earlier
+generation, a frequency-shaped noise generator) and the PurrCell instruments in Avid
+Pro Tools Sonic Drops (resynthesized recordings, plus one FM-synthesized instrument).
+
 ## Sources
 - Schötz & Eklund 2011, "A comparative acoustic analysis of purring in four cats": https://lup.lub.lu.se/search/files/3610898/2292764.pdf
 - Herbst et al. 2023, "Domestic cat larynges can produce purring frequencies without neural input", Current Biology 33(21): https://phaidra.vetmeduni.ac.at/api/object/o:3419/download (press: https://sciencedaily.com/releases/2023/10/231004105157.htm)
@@ -115,4 +159,5 @@ These were chosen from the numbers above, not tuned by ear.
 - Aoki 2000 thesis, Hokkaido University: https://eprints.lib.hokudai.ac.jp/repo/huscap/all/28112/thesis2000.pdf
 - Mattioli et al., "Perturbation Measurements on the Degree of Naturalness of Synthesized Vowels", J Voice 2015: https://observatorio.fm.usp.br/entities/publication/41448492-a962-4b0b-bc71-245c3d3173dd
 - Devaraj et al. 2021, amplitude-modulated vocal fry glottal area waveforms: https://mdpi.com/2076-3417/11/5/1990
+- Purrli (listened to and, from pasted source, architecture studied): https://purrli.com
 - Reed College student site on purring mechanics (low reliability): https://reed.edu/biology/courses/BIO342/2011_syllabus/2011_websites/Purring%20CH&JP/mechanism.html

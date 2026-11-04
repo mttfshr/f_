@@ -317,8 +317,11 @@ mechanism to one target.
 
 ## Notes
 
-- Existing purr generators on the web are reference-by-ear only. Build from
-  acoustics; do not reverse-engineer or use third-party generator output.
+- Existing purr generators on the web: relaxed by Matt, 2026-11-04 (the earlier rule was
+  reference-by-ear only). They may be listened to and their architecture studied. Do not
+  copy their code, samples or constants, and do not store their code or audio in this
+  repo. The engine is still built from acoustics and measured data. First use of the
+  relaxed rule: `ideas/f_a_purr_realism_research.md`, Purrli section.
 - Realism research (2026-11-03): `ideas/f_a_purr_realism_research.md`. Note it corrects the
   "exhale longer than inhale" principle above: the measured asymmetry is small and its
   direction disagrees between sources.
