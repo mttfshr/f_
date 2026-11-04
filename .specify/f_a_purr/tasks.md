@@ -208,7 +208,7 @@ _Session anchor. Updated 2026-07-27._
       `breath_src_ms` param (clamped 1-2000, default 50, one-pole time
       constant). A copy of the scratch patch with the same codebox, a
       `breath_src` and `breath_src_ms` control and a `phasor~ 0.3` test source
-      is at `/Users/matt/Vsynth/patterns/f_a_purr_scratch_t025.maxpat`; the
+      is at `scratch/experiments/f_a_purr_breath_src/f_a_purr_scratch_t025.maxpat`; the
       original scratch patch is untouched. Control positions are guesses
       (below the breath_noise column, y about 390), not looked at. **Not
       compiled or heard in Max.** Owed (Matt, live): (1) `breath_src` 0 sounds
