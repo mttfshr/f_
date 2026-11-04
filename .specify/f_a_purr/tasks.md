@@ -94,6 +94,13 @@ _Session anchor. Updated 2026-07-27._
       was a major contributor to "motorcycle," not just the missing
       jitter.
 
+      **2026-11-03 note (read from the scratch patch's codebox):** the
+      preset's `decay_jit` 0.6 and `res_hz` 215.5 sit outside the ranges in
+      spec.md (0–0.2, 20–200) but inside the codebox clamps (`decay_jit` and
+      `amp_jit` 0.9, `rate_jit` 0.5, `res_hz` up to `samplerate * 0.25`).
+      spec.md's table is marked provisional; per-parameter ranges are
+      decided when this task is finished.
+
 ## Build — layers 2 and 4
 
 - [x] T012 Re-add layer 2 (breath) to codebox; restore the four breath param
@@ -167,11 +174,19 @@ _Session anchor. Updated 2026-07-27._
 - [x] T023 Q3 — parametric click vs. wavetable bank. **Resolved (partial)
       2026-07-27** — parametric built and confirmed audible/non-repeating;
       wavetable alternative not pursued. See `ideas/f_a_purr.md` Q3.
-- [ ] T024 Q6 — performance instrument vs. fixed piece. Propagates into
-      whether the parameter layer must be playable.
+- [x] T024 Q6 — performance instrument vs. fixed piece. **Decided (Matt,
+      2026-11-03): "playable by construction" for v1.** No macro, mapping or
+      scheduler layer; presets as saved messages (T011 preset first). Owed:
+      a live-safety check (fast param moves, no clicks or blowups) on the next
+      listening pass. My reading of the codebox says rate/decay are latched per
+      cycle and the resonator is clamped stable; that is inferred, not heard.
 - [ ] T025 Q7 — inlet accepting an external 0–1 breath phase, overriding the
-      internal oscillator. Cheap; enables a real breath sensor driving the
-      purr. Undecided whether it belongs in v1.
+      internal oscillator. **Decided (Matt, 2026-11-03): in v1, with an
+      explicit `breath_src` switch** (0 internal, 1 external) plus the signal
+      inlet; no sentinel value, because an unconnected gen~ inlet reads 0, a
+      valid phase. External phase replaces `b_phase` directly (skips the
+      `breath_skew` warp; `breath_hz` and `breath_skew` inert in that mode).
+      **Not yet built or tested.** Test input: a `phasor~`.
 
 ## Phase 4 — production build (not started)
 

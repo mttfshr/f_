@@ -102,12 +102,22 @@ template. Cost several exchanges of misdirected debugging.
 ## Phases
 
 - **Phase 1 — concept and interface.** Complete. `ideas/f_a_purr.md`.
-- **Phase 2 — scratch verification.** Partial. Layers 0/1 + resonator
-  confirmed audible. Layers 2 and 4 not yet built. Jitter bands unresolved.
-- **Phase 3 — parameter characterization.** Not started. Blocked on resolving
-  the primary risk in spec.md.
+- **Phase 2 — scratch verification.** Mostly done (refreshed 2026-11-03 per
+  tasks.md). Layers 0/1, resonator and layer 2 (breath) confirmed (T005–T014).
+  Layer 4 (breath noise, T016) built, not yet heard in Max. Still open: T015
+  (`bcurve` shape), T017 (per-breath detune).
+- **Phase 3 — parameter characterization.** Not started. No longer blocked: the
+  primary risk resolved 2026-07-27 (T010). T011 holds a whole-preset
+  starting point; per-parameter bands are still owed. Ranges in spec.md are
+  provisional (the codebox clamps are wider than the documented dial ranges).
+- **Interface decisions (open, before Phase 4).** T025 (external breath-phase
+  input) and T024 (performance instrument vs fixed piece) change the module's
+  inputs and which params must be playable, so they come before T026.
 - **Phase 4 — production build.** Not started. No `definition.py` equivalent
   exists for `f_a_` modules; build path must be decided. Scoped (not solved)
   2026-09-16 in `ideas/f_a_build_process.md` — a follow-up project, not
   something to resolve while finishing this module's earlier phases.
+  Held by gate `G-audio` in `.specify/gates.md` (T026, T028). The codebox
+  currently exists only inside the hand-built scratch patch, outside this repo
+  (`ideas/f_a_purr.md` "Source File: Not yet created").
 - **Phase 5 — docs and helpfile.** Not started.
