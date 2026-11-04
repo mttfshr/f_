@@ -187,6 +187,21 @@ _Session anchor. Updated 2026-07-27._
       valid phase. External phase replaces `b_phase` directly (skips the
       `breath_skew` warp; `breath_hz` and `breath_skew` inert in that mode).
       **Not yet built or tested.** Test input: a `phasor~`.
+      **Design sketched 2026-11-03 (Matt: crossfade between sources):**
+      the fade is done on the *phase*, along the shortest circular arc
+      (`d = ext - b_int`, wrapped to [-0.5, 0.5) with comparisons only), not on
+      derived values, so `b_curve`, the rate fold, the noise gate and `out2`
+      all stay consistent. `breath_src` is clamped 0-1 (ADR-6) and smoothed by
+      a fixed one-pole (about 50 ms time constant, tune by ear, not exposed).
+      The external value is used only if `0 <= in1 <= 1` (a NaN fails both
+      comparisons and falls back to internal), so a bad sensor value cannot
+      reach the latched-rate feedback. The internal breath oscillator keeps
+      running so switching back never jumps. `in1` already reaches the codebox
+      (it has one inlet, fed by `in 1`), so no rewiring; the patch only needs
+      a `breath_src` control. Known edge: mid-fade, if the two phases are
+      exactly antipodal the blend direction flips (a step of size mix); at
+      `breath_src` 0 or 1 it has no effect. Operators used are only ones already
+      verified in this codebox (comparisons, ternary, arithmetic, `exp`).
 
 ## Phase 4 — production build (not started)
 
