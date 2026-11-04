@@ -179,7 +179,7 @@ preset message boxes: `scratch/experiments/f_a_purr_realism/f_a_purr_scratch_rea
       `breath_shape` 0 -> 1 with `breath_depth` raised (try 0.6) and judge T015; (5) turn
       `jit_tau` up with the existing jitter dials and say whether it reads as less machine.
 
-## Inhale/exhale timbre contrast (direction chosen 2026-11-04; design proposed, not built)
+## Inhale/exhale timbre contrast and tempo runs (written 2026-11-04, not compiled or heard)
 
 - [ ] T039 Matt, 2026-11-04: "I think we want an inhale vs exhale timbre difference."
       Evidence: Schötz & Eklund say the two phases are distinguishable by sound and waveform;
@@ -187,7 +187,7 @@ preset message boxes: `scratch/experiments/f_a_purr_realism/f_a_purr_scratch_rea
       phases; the direction of the level and F0 differences is individual (research note
       findings 1 and 4), so no fixed "dull inhale" is justified and the controls must be
       bipolar; Purrli plays a different recording per phase (research note, Purrli section).
-      **Proposed design (awaiting Matt's go):** keep one click generator and offset its
+      **Design (Matt, 2026-11-04: "go", all four):** keep one click generator and offset its
       parameters by phase. Weight `s = sin(2 pi b_phase)`: +1 mid-inhale, -1 mid-exhale,
       0 at both flow reversals. It is smooth, and the timbre passes through neutral exactly
       where the two-hump gain (T035) dips, so any change is masked. Bipolar params, all
@@ -196,10 +196,32 @@ preset message boxes: `scratch/experiments/f_a_purr_realism/f_a_purr_scratch_rea
       frequency offset in semitones, the tract-position difference), `ph_rate` (F0 offset
       between phases; antisymmetric, unlike `breath_rate_mod`, which is the same in both
       phases). Works with the internal and the external phase.
-      **Open:** (1) which of the four to include; (2) sine weighting or a flatter shape
-      (a power of `s`); (3) range of `ph_res`; (4) whether to add the A/B message boxes to
-      the realism test patch. Not written; no codebox change.
+      **Written 2026-11-04, not compiled or heard.** Full-scale effects: `ph_gain` +-6 dB
+      (positive = inhale louder); `ph_tilt` multiplies the tilt coefficient by e^(+-1)
+      (positive = inhale brighter, clamped to the existing 0.02-1); `ph_res` +-6 semitones
+      (positive = inhale higher); `ph_rate` +-15% click rate (positive = inhale faster).
+      The 6 dB / 6 semitone / e / 15% full-scale sizes are my choices, not from data (the
+      F0 data spread about +-10% between phases, research note finding 4). The weight is
+      written `cos(twopi * (phase - 0.25))` because `cos` is the operator already verified
+      in this codebox; a flatter shape is still an open option. At 0 each term multiplies
+      by exactly 1.
 
+- [ ] T040 Clustered tempo excursions (`run_prob` 0-1 default 0, `run_oct` 0-1.5 default
+      0.6). Idea from the architecture study of a public generator (research note, Purrli
+      section); Matt, 2026-11-04: "add it now". At each breath wrap with no run active,
+      probability `run_prob` starts a run of 2-4 breaths at a different breath tempo,
+      drawn log-uniform within +-`run_oct` octaves (default 0.6 = 0.66x to 1.5x), then back
+      to normal. Acts on the internal breath oscillator only (not an external phase) and
+      does not change the click rate. Complements `breath_jit`, which varies each breath
+      independently. The "runs on" message in the test patch uses `run_prob` 0.15, an
+      arbitrary starting value.
+
+      **Owed (Matt, live), T039 and T040:** (1) the codebox compiles in the t039 test copy;
+      (2) with all six new params at 0 it sounds like the realism patch did; (3) with
+      `breath_shape` 1 and `breath_depth` raised so the phases are audible, try each `ph_`
+      param at +1 and -1 and say which direction sounds more like a real cat (the
+      purring.org clips are the reference); (4) `run_prob` 0.15: does the clustering read
+      as natural or as glitchy?
 ## Documentation debt — do before this scrolls out of memory
 
 - [x] T018 Add a gen~ / audio-domain section to

@@ -14,6 +14,11 @@ heard in Max and promoted.
 `scratch/experiments/f_a_purr_realism/f_a_purr_scratch_realism.maxpat` (supersedes the
 `..._breath_src/` copy). Not compiled or heard in Max.
 
+2026-11-04: T039 (`ph_gain`, `ph_tilt`, `ph_res`, `ph_rate`) and T040 (`run_prob`, `run_oct`)
+were added here too (177 lines). Newest test copy:
+`scratch/experiments/f_a_purr_realism/f_a_purr_scratch_realism_t039.maxpat`, built from the
+realism patch as it was on disk, so any layout changes are kept. Not compiled or heard.
+
 Status: a source of record, not yet a build input. There is no `definition.py`, and
 `build/build_patcher.py` cannot generate `f_a_` modules (`G-audio`, tasks.md T026).
 The scratch patch is still hand-built. Until a build path exists, the scratch patch is

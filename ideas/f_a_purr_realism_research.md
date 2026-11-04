@@ -107,6 +107,11 @@ scratch test patch: the T011 preset against an evidence-based set (`breath_hz`
 0.8, `breath_skew` -0.1, `breath_shape` 1, `breath_jit` 0.15, `jit_tau` 0.5).
 These were chosen from the numbers above, not tuned by ear.
 
+2026-11-04: added inhale/exhale contrast (`ph_gain`, `ph_tilt`, `ph_res`, `ph_rate`;
+T039, from findings 1 and 4 and the Purrli section) and clustered tempo runs (`run_prob`,
+`run_oct`; T040, from the Purrli section). The full-scale sizes of the `ph_` offsets are
+my choices, not measurements.
+
 ## Architecture of one public generator: Purrli (studied 2026-11-04)
 
 Source: Matt pasted the page's JavaScript into chat. It is not stored in this repo, and

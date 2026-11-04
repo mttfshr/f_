@@ -80,6 +80,12 @@ onset detection on the click train is strictly worse than ground truth.
 | `breath_shape` | 0–1 | 0 | 2 |
 | `breath_jit` | 0–0.3 | 0 | 2 |
 | `jit_tau` | 0–10 s | 0 | 1 |
+| `ph_gain` | -1–1 | 0 | 2 |
+| `ph_tilt` | -1–1 | 0 | 2 |
+| `ph_res` | -1–1 | 0 | 2 |
+| `ph_rate` | -1–1 | 0 | 2 |
+| `run_prob` | 0–1 | 0 | 2 |
+| `run_oct` | 0–1.5 | 0.6 | 2 |
 
 The breath rows were built 2026-07-27 (tasks.md T012, T016). `breath_skew` and
 the breath phase were verified by ear and at the 0.5 crossover (T013, T014);
@@ -96,6 +102,14 @@ deviation, as a fraction, of a per-breath rate multiplier latched at each breath
 `rate_jit`/`amp_jit`/`decay_jit` noise across click cycles (0 = independent each cycle, the old
 behaviour). `breath_skew` now accepts negative values: inhale share is `0.5 - 0.4 * skew`, so
 skew -1 gives 90% inhale and +1 gives 10%.
+
+**Phase contrast and tempo runs, written 2026-11-04, not compiled or heard (tasks.md T039,
+T040).** The four `ph_` params offset the click level, tilt, resonator frequency and
+rate by breath phase, weighted +1 mid-inhale, -1 mid-exhale, 0 at both flow reversals;
+all 0 = off, positive = the inhale gets more. Full scale is +-6 dB, e^(+-1) on the tilt
+coefficient, +-6 semitones and +-15% rate. `run_prob` is the per-breath chance of
+starting a run of 2-4 breaths at a different breath tempo, within +-`run_oct` octaves;
+0 = off.
 
 **Ranges are provisional.** The table gives the original dial ranges. Jitter was
 first set to 0–0.2, **not** 0–1: jitter multiplies bipolar `noise()`, so values

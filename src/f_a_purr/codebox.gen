@@ -16,6 +16,12 @@ Param breath_src_ms(50);
 Param breath_shape(0);
 Param breath_jit(0);
 Param jit_tau(0);
+Param ph_gain(0);
+Param ph_tilt(0);
+Param ph_res(0);
+Param ph_rate(0);
+Param run_prob(0);
+Param run_oct(0.6);
 
 History ph_prev(0);
 History rate_h(25);
@@ -31,6 +37,8 @@ History bjm_h(1);
 History jr_h(0);
 History ja_h(0);
 History jd_h(0);
+History rl_h(0);
+History rm_h(1);
 
 // ---- clamp all params: message path is unprotected by dial ranges ----
 c_rate = min(200, max(1, rate_hz));
@@ -51,6 +59,12 @@ c_bsms = min(2000, max(1, breath_src_ms));
 c_bshape = min(1, max(0, breath_shape));
 c_bjit = min(0.3, max(0, breath_jit));
 c_jtau = min(10, max(0, jit_tau));
+c_phgain = min(1, max(-1, ph_gain));
+c_phtilt = min(1, max(-1, ph_tilt));
+c_phres = min(1, max(-1, ph_res));
+c_phrate = min(1, max(-1, ph_rate));
+c_runp = min(1, max(0, run_prob));
+c_runoct = min(1.5, max(0, run_oct));
 
 // ---- read held values before writing ----
 r_held = rate_h;
@@ -59,13 +73,25 @@ bjm_held = bjm_h;
 jr_held = jr_h;
 ja_held = ja_h;
 jd_held = jd_h;
+rl_held = rl_h;
+rm_held = rm_h;
 
 // ---- layer 2: breath oscillator, free-running, independent of click cycle ----
-bph_acc = bph_prev + c_bhz * bjm_held / samplerate;
+bph_acc = bph_prev + c_bhz * bjm_held * rm_held / samplerate;
 bwrap = bph_acc >= 1;
 bph_prev = bph_acc - bwrap;
 // per-breath period jitter: SD of the rate multiplier = c_bjit (noise() is uniform, SD 1/sqrt(3), hence 1.732)
 bjm_h = bwrap ? max(0.3, 1 + c_bjit * 1.732 * noise()) : bjm_held;
+// ---- clustered tempo excursions: with probability run_prob per breath, a run of 2-4 breaths at a different
+// breath tempo (log-uniform within +-run_oct octaves), then back to normal; run_prob 0 = off ----
+ru1 = 0.5 + 0.5 * noise();
+ru2 = 0.5 + 0.5 * noise();
+ru3 = 0.5 + 0.5 * noise();
+r_len = 2 + (ru2 > 0.3333) + (ru2 > 0.6667);
+r_cont = rl_held > 1;
+r_start = (rl_held <= 1) * (ru1 < c_runp);
+rl_h = bwrap ? (r_cont ? rl_held - 1 : (r_start ? r_len : 0)) : rl_held;
+rm_h = bwrap ? (r_cont ? rm_held : (r_start ? exp(0.6931472 * c_runoct * (2 * ru3 - 1)) : 1)) : rm_held;
 
 fi = 0.5 - 0.4 * c_bskew;
 b_int = bph_prev < fi ? 0.5 * bph_prev / fi : 0.5 + 0.5 * (bph_prev - fi) / (1 - fi);
@@ -87,6 +113,13 @@ b_c1 = 0.5 - 0.5 * cos(twopi * b_phase);
 b_c2 = 0.5 - 0.5 * cos(2 * twopi * b_phase);
 b_curve = b_c1 + c_bshape * (b_c2 - b_c1);
 
+// ---- inhale/exhale contrast: s_ph = +1 mid-inhale, -1 mid-exhale, 0 at both flow reversals (smooth) ----
+// all four ph_ params are bipolar, default 0 = no contrast; positive = the inhale gets more of it
+s_ph = cos(twopi * (b_phase - 0.25));
+gph = exp(0.6931472 * c_phgain * s_ph);                                              // level: +-6 dB at full scale
+c_tilt_e = min(1, max(0.02, c_tilt * exp(c_phtilt * s_ph)));                         // tilt: positive = inhale brighter
+c_res_e = min(samplerate * 0.25, max(20, c_res * exp(0.3465736 * c_phres * s_ph)));  // resonator: +-6 semitones at full scale
+
 // ---- accumulator ----
 ph_acc = ph_prev + r_held / samplerate;
 trig = ph_acc >= 1;
@@ -100,7 +133,7 @@ ja_new = min(3, max(-3, rho * ja_held + s_rho * noise()));
 jd_new = min(3, max(-3, rho * jd_held + s_rho * noise()));
 
 // ---- per-cycle latch (breath rate offset folded in per ADR-3 / idea-file Q5) ----
-rate_target = max(1, c_rate * (1 + c_brmod * b_curve) * (1 + c_rjit * jr_new));
+rate_target = max(1, c_rate * (1 + c_brmod * b_curve) * (1 + c_rjit * jr_new) * (1 + 0.15 * c_phrate * s_ph));
 amp_target = max(0.05, 1 + c_ajit * ja_new);
 dec_target = max(0.2, c_dec * (1 + c_djit * jd_new));
 
@@ -116,7 +149,7 @@ env = trig ? amp_target : env_prev * coeff;
 env_prev = env;
 
 // ---- noise + tilt ----
-lp = lp_prev + c_tilt * (noise() - lp_prev);
+lp = lp_prev + c_tilt_e * (noise() - lp_prev);
 lp_prev = lp;
 
 click = lp * env;
@@ -124,7 +157,7 @@ click = lp * env;
 // ---- resonator: two-pole, hand-rolled, clamped stable ----
 p1 = y1;
 p2 = y2;
-w = twopi * c_res / samplerate;
+w = twopi * c_res_e / samplerate;
 a = 2 * q * cos(w);
 b = q * q;
 y = click * (1 - q) + a * p1 - b * p2;
@@ -140,5 +173,5 @@ bn_lp = bn_prev + 0.05 * (bn_raw - bn_prev);
 bn_prev = bn_lp;
 breath_noise_out = bn_lp * c_bnoise * b_curve;
 
-out1 = y * b_gain + breath_noise_out;
+out1 = (y * b_gain + breath_noise_out) * gph;
 out2 = b_phase;
