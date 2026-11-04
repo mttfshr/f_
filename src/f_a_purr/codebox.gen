@@ -13,6 +13,9 @@ Param breath_rate_mod(0.2);
 Param breath_noise(0);
 Param breath_src(0);
 Param breath_src_ms(50);
+Param breath_shape(0);
+Param breath_jit(0);
+Param jit_tau(0);
 
 History ph_prev(0);
 History rate_h(25);
@@ -24,6 +27,10 @@ History y2(0);
 History bph_prev(0);
 History bn_prev(0);
 History bsrc_prev(0);
+History bjm_h(1);
+History jr_h(0);
+History ja_h(0);
+History jd_h(0);
 
 // ---- clamp all params: message path is unprotected by dial ranges ----
 c_rate = min(200, max(1, rate_hz));
@@ -35,21 +42,30 @@ c_tilt = min(1, max(0.02, tilt));
 c_res = min(samplerate * 0.25, max(20, res_hz));
 q = min(0.999, max(0.5, res_q));
 c_bhz = min(2, max(0.05, breath_hz));
-c_bskew = min(1, max(0, breath_skew));
+c_bskew = min(1, max(-1, breath_skew));   // -1..1: negative = inhale longer than exhale
 c_bdepth = min(1, max(0, breath_depth));
 c_brmod = min(0.5, max(-0.5, breath_rate_mod));
 c_bnoise = min(1, max(0, breath_noise));
 c_bsrc = min(1, max(0, breath_src));
 c_bsms = min(2000, max(1, breath_src_ms));
+c_bshape = min(1, max(0, breath_shape));
+c_bjit = min(0.3, max(0, breath_jit));
+c_jtau = min(10, max(0, jit_tau));
 
 // ---- read held values before writing ----
 r_held = rate_h;
 d_held = dec_h;
+bjm_held = bjm_h;
+jr_held = jr_h;
+ja_held = ja_h;
+jd_held = jd_h;
 
 // ---- layer 2: breath oscillator, free-running, independent of click cycle ----
-bph_acc = bph_prev + c_bhz / samplerate;
+bph_acc = bph_prev + c_bhz * bjm_held / samplerate;
 bwrap = bph_acc >= 1;
 bph_prev = bph_acc - bwrap;
+// per-breath period jitter: SD of the rate multiplier = c_bjit (noise() is uniform, SD 1/sqrt(3), hence 1.732)
+bjm_h = bwrap ? max(0.3, 1 + c_bjit * 1.732 * noise()) : bjm_held;
 
 fi = 0.5 - 0.4 * c_bskew;
 b_int = bph_prev < fi ? 0.5 * bph_prev / fi : 0.5 + 0.5 * (bph_prev - fi) / (1 - fi);
@@ -65,20 +81,34 @@ b_d = b_ext - b_int;
 b_dw = b_d - (b_d >= 0.5) + (b_d < -0.5);
 b_mix = b_int + bsrc_s * b_dw;
 b_phase = b_mix - (b_mix >= 1) + (b_mix < 0);
-b_curve = 0.5 - 0.5 * cos(twopi * b_phase);
+// shape 0 = one hump per breath (peak at the 0.5 crossover); shape 1 = two humps (mid-inhale, mid-exhale,
+// dips at both flow reversals); breath_depth sets how deep the dips go
+b_c1 = 0.5 - 0.5 * cos(twopi * b_phase);
+b_c2 = 0.5 - 0.5 * cos(2 * twopi * b_phase);
+b_curve = b_c1 + c_bshape * (b_c2 - b_c1);
 
 // ---- accumulator ----
 ph_acc = ph_prev + r_held / samplerate;
 trig = ph_acc >= 1;
 ph_prev = ph_acc - trig;
 
+// ---- correlated per-cycle jitter: AR(1) across click cycles; jit_tau = correlation time in seconds, 0 = white (old behaviour) ----
+rho = c_jtau > 0 ? exp(-1 / max(0.001, c_jtau * r_held)) : 0;
+s_rho = sqrt(1 - rho * rho);
+jr_new = min(3, max(-3, rho * jr_held + s_rho * noise()));
+ja_new = min(3, max(-3, rho * ja_held + s_rho * noise()));
+jd_new = min(3, max(-3, rho * jd_held + s_rho * noise()));
+
 // ---- per-cycle latch (breath rate offset folded in per ADR-3 / idea-file Q5) ----
-rate_target = max(1, c_rate * (1 + c_brmod * b_curve) * (1 + c_rjit * noise()));
-amp_target = max(0.05, 1 + c_ajit * noise());
-dec_target = max(0.2, c_dec * (1 + c_djit * noise()));
+rate_target = max(1, c_rate * (1 + c_brmod * b_curve) * (1 + c_rjit * jr_new));
+amp_target = max(0.05, 1 + c_ajit * ja_new);
+dec_target = max(0.2, c_dec * (1 + c_djit * jd_new));
 
 rate_h = trig ? rate_target : r_held;
 dec_h = trig ? dec_target : d_held;
+jr_h = trig ? jr_new : jr_held;
+ja_h = trig ? ja_new : ja_held;
+jd_h = trig ? jd_new : jd_held;
 
 // ---- click envelope ----
 coeff = exp(-1 / (d_held * 0.001 * samplerate));

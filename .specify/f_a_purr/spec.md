@@ -71,18 +71,31 @@ onset detection on the click train is strictly worse than ground truth.
 | `res_hz` | 20–200 | 90 | 3 |
 | `res_q` | 0.5–0.999 | 0.98 | 3 |
 | `breath_hz` | 0.05–2 | 0.4 | 2 |
-| `breath_skew` | 0–1 | 0.3 | 2 |
+| `breath_skew` | -1–1 | 0.3 | 2 |
 | `breath_depth` | 0–1 | 0.3 | 2 |
 | `breath_rate_mod` | -0.5–0.5 | 0.2 | 2 |
 | `breath_noise` | 0–1 | 0 | 4 |
 | `breath_src` | 0–1 | 0 | 2 |
 | `breath_src_ms` | 1–2000 | 50 | 2 |
+| `breath_shape` | 0–1 | 0 | 2 |
+| `breath_jit` | 0–0.3 | 0 | 2 |
+| `jit_tau` | 0–10 s | 0 | 1 |
 
 The breath rows were built 2026-07-27 (tasks.md T012, T016). `breath_skew` and
 the breath phase were verified by ear and at the 0.5 crossover (T013, T014);
 `breath_noise` has not been heard in Max. `breath_src` and `breath_src_ms` (the
 crossfade time constant, Matt chose to expose it 2026-11-03) were written
 2026-11-03 (tasks.md T025) and have not been run in Max.
+
+**Realism pass, written 2026-11-03, not compiled or heard (tasks.md T035-T038, evidence in
+`ideas/f_a_purr_realism_research.md`).** All default to the old behaviour. `breath_shape` 0-1
+morphs the breath gain curve from one hump per breath (0, old) to two humps with dips at both
+flow reversals (1); `breath_depth` sets how deep the dips go. `breath_jit` is the standard
+deviation, as a fraction, of a per-breath rate multiplier latched at each breath wrap
+(measured phase-duration SD was 0.09-0.21). `jit_tau` is the correlation time in seconds of the
+`rate_jit`/`amp_jit`/`decay_jit` noise across click cycles (0 = independent each cycle, the old
+behaviour). `breath_skew` now accepts negative values: inhale share is `0.5 - 0.4 * skew`, so
+skew -1 gives 90% inhale and +1 gives 10%.
 
 **Ranges are provisional.** The table gives the original dial ranges. Jitter was
 first set to 0–0.2, **not** 0–1: jitter multiplies bipolar `noise()`, so values

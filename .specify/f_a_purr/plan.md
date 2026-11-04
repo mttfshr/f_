@@ -110,6 +110,9 @@ template. Cost several exchanges of misdirected debugging.
   primary risk resolved 2026-07-27 (T010). T011 holds a whole-preset
   starting point; per-parameter bands are still owed. Ranges in spec.md are
   provisional (the codebox clamps are wider than the documented dial ranges).
+- **Realism pass (written 2026-11-03, not heard).** `breath_shape`, `breath_jit`, `jit_tau`,
+  bipolar `breath_skew` (tasks.md T035-T038), from `ideas/f_a_purr_realism_research.md`.
+  Part of Phase 3; may change the parameter ranges T011 is still owed.
 - **Interface decisions (decided 2026-11-03, before Phase 4).** T025: external
   breath-phase inlet with an explicit `breath_src` switch, in v1, not yet
   built. T024: playable by construction, no macro or scheduler layer. Both

@@ -124,6 +124,9 @@ _Session anchor. Updated 2026-07-27._
       **Passed 2026-07-27** — no discontinuity/click at the crossover.
 - [ ] T015 Decide whether `bcurve` peaking at the inhale/exhale crossover is
       the right amplitude shape, or whether energy should peak mid-exhale
+      (2026-11-03: research says amplitude dips at both flow reversals, i.e. two
+      humps; implemented as an option, `breath_shape`, in T035. The decision itself
+      needs your ears; leave this open until you've compared the shapes.)
 - [x] T016 Add layer 4 (breath noise), gated by breath envelope. **Done
       2026-07-27.** New param `breath_noise` (0-1, default 0). Broadband
       noise through a fixed-coefficient one-pole lowpass (0.05, hardcoded —
@@ -136,6 +139,45 @@ _Session anchor. Updated 2026-07-27._
       **Not yet verified in Max** — JSON-validated only.
 - [ ] T017 Test per-breath resonator detune (idea file Q4) — audible or
       wasted complexity?
+
+## Realism pass — from `ideas/f_a_purr_realism_research.md` (2026-11-03)
+
+Written together at Matt's request ("do all 2-5"). Every one defaults to the old
+behaviour, so with the new params at 0 (and `breath_skew` unchanged) the sound should be
+statistically the same as before; the random draws come from slightly different `noise()`
+call sites, so it will not be bit-identical (it never was run to run). **None compiled or
+heard in Max.** Code is in `src/f_a_purr/codebox.gen`; test copy with controls and two
+preset message boxes: `scratch/experiments/f_a_purr_realism/f_a_purr_scratch_realism.maxpat`.
+
+- [ ] T035 `breath_shape` (0-1, default 0): morphs `b_curve` from one hump per breath
+      (`0.5 - 0.5 cos(2 pi p)`) to two (`0.5 - 0.5 cos(4 pi p)`, zero at p = 0, 0.5, 1,
+      peaks mid-inhale and mid-exhale). Same mean level (both average 0.5). `b_curve` also
+      drives the rate fold and the breath-noise gate, so both follow the shape. The floor
+      at the dips is `1 - breath_depth`, no separate floor param. Evidence: research note
+      finding 2 (medium confidence, one source seen secondhand).
+- [ ] T036 `breath_jit` (0-0.3, default 0): per-breath rate multiplier latched at each
+      breath wrap, `1 + breath_jit * 1.732 * noise()` (so `breath_jit` is its standard
+      deviation), floored at 0.3. Applies to the internal oscillator only. Measured SD of
+      phase durations was 0.09-0.21. A held multiplier, not a re-latched rate, so
+      `breath_hz` still changes take effect immediately.
+- [ ] T037 `jit_tau` (0-10 s, default 0): the three click jitters (`rate_jit`, `amp_jit`,
+      `decay_jit`) become AR(1) noise across click cycles with correlation time `jit_tau`
+      seconds (`rho = exp(-1 / (jit_tau * rate))`, innovation scaled by `sqrt(1 - rho^2)` so
+      the stationary spread stays the same and the existing jitter dials keep their
+      meaning; clamped to +-3). 0 = independent each cycle (old behaviour). A one-pole
+      approximation of the 1/f-like variation found in natural voices, not a true 1/f source.
+- [ ] T038 `breath_skew` widened to -1..1: inhale share is `0.5 - 0.4 * skew`, so negative
+      values make inhale the longer phase (the four-cat measurement had inhale 51-54%).
+      Values in 0..1 are unchanged.
+
+      **Owed (Matt, live):** (1) the codebox compiles in the test copy (console message if
+      not); (2) with the new params at 0, it sounds like before; (3) the two message boxes
+      are an A/B: A = the T011 breath settings, B = evidence-based (`breath_hz` 0.8,
+      `breath_skew` -0.1, `breath_shape` 1, `breath_jit` 0.15, `jit_tau` 0.5). Those B values
+      come from the research numbers, not from listening. The message boxes do not update the
+      number boxes, so the number boxes show stale values after clicking one; (4) move
+      `breath_shape` 0 -> 1 with `breath_depth` raised (try 0.6) and judge T015; (5) turn
+      `jit_tau` up with the existing jitter dials and say whether it reads as less machine.
 
 ## Documentation debt — do before this scrolls out of memory
 

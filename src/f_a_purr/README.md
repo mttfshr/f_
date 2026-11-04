@@ -9,6 +9,11 @@ applied here and to a copy of the patch, `scratch/experiments/f_a_purr_breath_sr
 so this file is currently AHEAD of the master scratch patch until that copy is
 heard in Max and promoted.
 
+2026-11-03, later still: the realism pass (`breath_shape`, `breath_jit`, `jit_tau`, bipolar
+`breath_skew`; tasks.md T035-T038) was added here too (144 lines). Test copy:
+`scratch/experiments/f_a_purr_realism/f_a_purr_scratch_realism.maxpat` (supersedes the
+`..._breath_src/` copy). Not compiled or heard in Max.
+
 Status: a source of record, not yet a build input. There is no `definition.py`, and
 `build/build_patcher.py` cannot generate `f_a_` modules (`G-audio`, tasks.md T026).
 The scratch patch is still hand-built. Until a build path exists, the scratch patch is

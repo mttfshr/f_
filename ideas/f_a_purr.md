@@ -319,6 +319,9 @@ mechanism to one target.
 
 - Existing purr generators on the web are reference-by-ear only. Build from
   acoustics; do not reverse-engineer or use third-party generator output.
+- Realism research (2026-11-03): `ideas/f_a_purr_realism_research.md`. Note it corrects the
+  "exhale longer than inhale" principle above: the measured asymmetry is small and its
+  direction disagrees between sources.
 - Related: `ideas/f_breath_phase.md` — shares the tier-2 phase convention.
   See Outlets section above.
 
