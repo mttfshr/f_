@@ -324,4 +324,7 @@ mechanism to one target.
 
 ## Source File
 
-Not yet created.
+The codebox is in the repo as `src/f_a_purr/codebox.gen` (extracted verbatim
+2026-11-03; see `src/f_a_purr/README.md`). The hand-built patch is still
+`/Users/matt/Vsynth/patterns/f_a_purr_scratch.maxpat`, outside the repo. There is
+no `definition.py` and no build path yet (`G-audio`, tasks.md T026).

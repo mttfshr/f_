@@ -110,14 +110,16 @@ template. Cost several exchanges of misdirected debugging.
   primary risk resolved 2026-07-27 (T010). T011 holds a whole-preset
   starting point; per-parameter bands are still owed. Ranges in spec.md are
   provisional (the codebox clamps are wider than the documented dial ranges).
-- **Interface decisions (open, before Phase 4).** T025 (external breath-phase
-  input) and T024 (performance instrument vs fixed piece) change the module's
-  inputs and which params must be playable, so they come before T026.
+- **Interface decisions (decided 2026-11-03, before Phase 4).** T025: external
+  breath-phase inlet with an explicit `breath_src` switch, in v1, not yet
+  built. T024: playable by construction, no macro or scheduler layer. Both
+  change the inputs and params the production module needs, so they precede T026.
 - **Phase 4 — production build.** Not started. No `definition.py` equivalent
   exists for `f_a_` modules; build path must be decided. Scoped (not solved)
   2026-09-16 in `ideas/f_a_build_process.md` — a follow-up project, not
   something to resolve while finishing this module's earlier phases.
-  Held by gate `G-audio` in `.specify/gates.md` (T026, T028). The codebox
-  currently exists only inside the hand-built scratch patch, outside this repo
-  (`ideas/f_a_purr.md` "Source File: Not yet created").
+  Held by gate `G-audio` in `.specify/gates.md` (T026, T028). The codebox was
+  copied into the repo as `src/f_a_purr/codebox.gen` on 2026-11-03 (verbatim,
+  Matt's go); the patch itself is still the hand-built scratch patch, outside
+  this repo, and nothing checks that the two agree.
 - **Phase 5 — docs and helpfile.** Not started.
