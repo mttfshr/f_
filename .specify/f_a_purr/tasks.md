@@ -217,6 +217,10 @@ _Session anchor. Updated 2026-07-27._
       NaN-making value at src 1 and check it falls back to internal with no
       lasting silence; (5) src 1 with nothing connected sits at gain
       `1 - breath_depth` (expected). Then T025 can be ticked.
+      **Live report (Matt, 2026-11-03 21:01):** the test copy runs ("working
+      fine"), "sounds approximately like a purr, but could be more realistic".
+      The codebox compiled. The five checks were NOT reported individually, so
+      T025 stays unticked; a toggle was added to the test patch for check 3.
 
 ## Phase 4 — production build (not started)
 
