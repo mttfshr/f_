@@ -17,7 +17,7 @@
 //   "performance"  K chained slots, fps vs a K=0 baseline       (Phase 4)
 //
 // Correctness frame sequence (frames counted from job start):
-//   (inputs 1..3 reach the pix by physical cords when their matrices are
+//   (inputs 1..4 reach the pix by physical cords when their matrices are
 //    banged at job start; the pix re-renders every frame on its own)
 //   frame W+1       open bench_gate (before this frame's texture arrives)
 //   frame W+2       close gate, write out.jxf, finish
@@ -29,7 +29,7 @@ inlets = 3;
 outlets = 1;
 
 var N_SLOTS = 8;
-var MAX_INPUTS = 3;
+var MAX_INPUTS = 4;
 
 var job = null;        // parsed job.json of the active job, or null
 var jobDir = null;     // its directory (string, as received)

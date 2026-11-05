@@ -10,16 +10,16 @@ Layout of the signal path:
     [error 1] -> js inlet 1
     [jit.world bench_ctx] draw bang -> [t b b]: right -> js inlet 2 (frame
         counted FIRST), left -> bang [jit.gl.texture bench_tex1]
-    [jit.matrix bench_inK] -> [jit.gl.texture bench_texK]   (K = 1..3)
+    [jit.matrix bench_inK] -> [jit.gl.texture bench_texK]   (K = 1..4)
     bench_tex1 -> bench_src -> bench_p1 -> ... -> bench_p8   (inlet 0 chain)
     bench_p1 -> [gate] (right inlet) -> [jit.matrix bench_out]
 
-Constant 3 inlets per slot: jit.gl.pix's `inputs` is read-only and follows
+Constant 4 inlets per slot: jit.gl.pix's `inputs` is read-only and follows
 the gen patcher's `in` objects. So the slots start from bench_default.genjit
-(written here: in 1..3, out1 = in1) and every job's .genjit also carries
-in 1..3 (genjit.make_genjit(min_inputs=3)). Inlet counts never change, so
-bench_tex2 / bench_tex3 are plain physical cords into inlets 1 / 2 of every
-slot. (2026-09-22: delivering them by message from bench.js failed --
+(written here: in 1..4, out1 = in1) and every job's .genjit also carries
+in 1..4 (genjit.make_genjit(min_inputs=4)). Inlet counts never change, so
+bench_tex2 / bench_tex3 / bench_tex4 are plain physical cords into inlets 1 / 2 / 3
+of every slot (the fourth input was added 2026-11-04 for f_wave_field's real stage, which has four). (2026-09-22: delivering them by message from bench.js failed --
 `activeinput` + jit_gl_texture landed on input 0; `sendinput N
 jit_gl_texture` did not set the input.)
 
@@ -33,7 +33,7 @@ from patchbuild import Patch, patcher_dict
 
 OUT = Path(__file__).resolve().parent / "bench.maxpat"
 N_SLOTS = 8
-N_INPUTS = 3
+N_INPUTS = 4
 
 _p = Patch()                       # obj / comment / wire live in patchbuild.py (shared with make_module_bench.py)
 boxes, lines = _p.boxes, _p.lines
@@ -82,7 +82,7 @@ wire("tbb", 0, "tex1", 0)
 # place (heavy codebox: K=1 8.8 ms/frame, K=2 17.3 ms). NOT established
 # whether it would without bench_src -- an earlier "cached re-emit" reading
 # of the perf numbers turned out to be CPU/GPU overlap (plan ADR-9 rev. 2).
-obj("src", "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32", 3, 2,
+obj("src", "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32", 4, 2,
     [20, 295, 400, 22], ["jit_gl_texture", ""], varname="bench_src")
 wire("tex1", 0, "src", 0)
 prev = "src"
@@ -90,11 +90,12 @@ for k in range(1, N_SLOTS + 1):
     bypass = "" if k == 1 else " @bypass 1"
     obj(f"p{k}", f"jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 "
         f"@type float32{bypass}",
-        3, 5, [20, 330 + (k - 1) * 35, 400, 22], ["jit_gl_texture"] * 4 + [""],
+        4, 5, [20, 330 + (k - 1) * 35, 400, 22], ["jit_gl_texture"] * 4 + [""],
         varname=f"bench_p{k}")
     wire(prev, 0, f"p{k}", 0)
     wire("tex2", 0, f"p{k}", 1)
     wire("tex3", 0, f"p{k}", 2)
+    wire("tex4", 0, f"p{k}", 3)
     prev = f"p{k}"
 
 # capture taps on all 4 outlets of slot 1 (E1). Out 1 keeps the original
@@ -115,7 +116,7 @@ for k in range(1, 5):
 obj("fbsel", "switch 4 0", 5, 1, [450, 420, 90, 22], varname="bench_fbsel")
 for k in range(4):
     wire("p1", k, "fbsel", k + 1)
-obj("fb", "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32", 3, 5,
+obj("fb", "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32", 4, 5,
     [450, 455, 330, 22], ["jit_gl_texture"] * 4 + [""], varname="bench_fb")
 wire("fbsel", 0, "fb", 0)
 obj("fbgate", "gate 2 0", 2, 2, [450, 490, 60, 22], varname="bench_fbgate")
@@ -132,12 +133,12 @@ comment("c-world", "jit.world bench_ctx: the GL context every texture and pix ob
 comment("c-tbb", "t b b: right = frame count in js (first), left = bang bench_tex1", [300, 87, 230, 28])
 comment("c-js", "js bench.js: all the logic. Parses a job from OSC, writes its .genjit, sets params, counts "
         "frames, captures the result, replies through udpsend (7472).", [190, 172, 420, 40])
-comment("c-inputs", "bench_inK matrix -> bench_texK texture: the test inputs (K = 1..3). tex1 goes through bench_src "
-        "into slot 1; tex2 / tex3 are corded into inlets 1 / 2 of every slot (delivery by message failed, 2026-09-22).",
+comment("c-inputs", "bench_inK matrix -> bench_texK texture: the test inputs (K = 1..4). tex1 goes through bench_src "
+        "into slot 1; tex2 / tex3 / tex4 are corded into inlets 1 / 2 / 3 of every slot (delivery by message failed, 2026-09-22).",
         [20, 203, 740, 26])
 comment("c-src", "bench_src: identity pass upstream of slot 1", [430, 297, 330, 20])
 comment("c-slots", "bench_p1..p8: the slots. Each job's .genjit loads into them; slots 2..8 start bypassed and are "
-        "enabled for chained measurements. Every slot has 3 inlets and 4 outlets (counts never change).",
+        "enabled for chained measurements. Every slot has 4 inlets and 4 outlets (counts never change).",
         [20, 610, 400, 45])
 comment("c-gates", "bench_gateK -> bench_outK: capture taps on slot 1's 4 outlets (out 1 = bench_gate / bench_out). "
         "js opens a gate on the chosen frame so the matrix holds that frame; it is then written to the job directory.",
@@ -153,7 +154,7 @@ if __name__ == "__main__":
     import sys
     sys.path.insert(0, str(OUT.parent.parent / "lib"))  # tests/lib
     from genjit import write_genjit
-    write_genjit(OUT.parent / "bench_default.genjit", "out1 = in1;", min_inputs=3, min_outputs=4)
+    write_genjit(OUT.parent / "bench_default.genjit", "out1 = in1;", min_inputs=4, min_outputs=4)
     with open(OUT, "w") as f:
         json.dump(patcher, f, indent=2)
     print(f"wrote {OUT} ({len(boxes)} boxes, {len(lines)} lines)")

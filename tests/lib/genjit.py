@@ -30,7 +30,7 @@ def make_genjit(code, n_inputs=None, n_outputs=None, min_inputs=1, min_outputs=1
     """min_inputs: create at least this many `in` objects even if the code
     doesn't reference them (unused ones are left unwired). jit.gl.pix's inlet
     count follows the gen patcher's `in` objects, so the bench uses
-    min_inputs=3 to keep a constant 3 inlets across jobs (plan ADR-6 rev.)."""
+    min_inputs=4 (3 until 2026-11-04) to keep a constant 4 inlets across jobs (plan ADR-6 rev.)."""
     auto_in, auto_out = count_ports(code)
     n_used = n_inputs or auto_in
     n_in = max(n_used, min_inputs)

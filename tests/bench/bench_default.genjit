@@ -72,6 +72,24 @@
       },
       {
         "box": {
+          "id": "in-4",
+          "maxclass": "newobj",
+          "text": "in 4",
+          "numinlets": 0,
+          "numoutlets": 1,
+          "outlettype": [
+            ""
+          ],
+          "patching_rect": [
+            202.0,
+            20.0,
+            34.0,
+            22.0
+          ]
+        }
+      },
+      {
+        "box": {
           "id": "codebox",
           "maxclass": "codebox",
           "code": "out1 = in1;",

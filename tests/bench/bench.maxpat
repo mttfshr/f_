@@ -299,10 +299,50 @@
       },
       {
         "box": {
+          "id": "mat4",
+          "maxclass": "newobj",
+          "text": "jit.matrix bench_in4 4 float32 64 64",
+          "numinlets": 1,
+          "numoutlets": 2,
+          "patching_rect": [
+            770.0,
+            230.0,
+            230.0,
+            22.0
+          ],
+          "outlettype": [
+            "jit_matrix",
+            ""
+          ],
+          "varname": "bench_in4"
+        }
+      },
+      {
+        "box": {
+          "id": "tex4",
+          "maxclass": "newobj",
+          "text": "jit.gl.texture bench_ctx @name bench_tex4 @type float32",
+          "numinlets": 1,
+          "numoutlets": 2,
+          "patching_rect": [
+            770.0,
+            265.0,
+            230.0,
+            22.0
+          ],
+          "outlettype": [
+            "jit_gl_texture",
+            ""
+          ],
+          "varname": "bench_tex4"
+        }
+      },
+      {
+        "box": {
           "id": "src",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 2,
           "patching_rect": [
             20.0,
@@ -322,7 +362,7 @@
           "id": "p1",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -345,7 +385,7 @@
           "id": "p2",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -368,7 +408,7 @@
           "id": "p3",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -391,7 +431,7 @@
           "id": "p4",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -414,7 +454,7 @@
           "id": "p5",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -437,7 +477,7 @@
           "id": "p6",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -460,7 +500,7 @@
           "id": "p7",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -483,7 +523,7 @@
           "id": "p8",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 0 @dim 256 256 @type float32 @bypass 1",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             20.0,
@@ -681,7 +721,7 @@
           "id": "fb",
           "maxclass": "newobj",
           "text": "jit.gl.pix bench_ctx @gen bench_default @adapt 1 @type float32",
-          "numinlets": 3,
+          "numinlets": 4,
           "numoutlets": 5,
           "patching_rect": [
             450.0,
@@ -798,7 +838,7 @@
         "box": {
           "id": "c-inputs",
           "maxclass": "comment",
-          "text": "bench_inK matrix -> bench_texK texture: the test inputs (K = 1..3). tex1 goes through bench_src into slot 1; tex2 / tex3 are corded into inlets 1 / 2 of every slot (delivery by message failed, 2026-09-22).",
+          "text": "bench_inK matrix -> bench_texK texture: the test inputs (K = 1..4). tex1 goes through bench_src into slot 1; tex2 / tex3 / tex4 are corded into inlets 1 / 2 / 3 of every slot (delivery by message failed, 2026-09-22).",
           "numinlets": 1,
           "numoutlets": 0,
           "patching_rect": [
@@ -828,7 +868,7 @@
         "box": {
           "id": "c-slots",
           "maxclass": "comment",
-          "text": "bench_p1..p8: the slots. Each job's .genjit loads into them; slots 2..8 start bypassed and are enabled for chained measurements. Every slot has 3 inlets and 4 outlets (counts never change).",
+          "text": "bench_p1..p8: the slots. Each job's .genjit loads into them; slots 2..8 start bypassed and are enabled for chained measurements. Every slot has 4 inlets and 4 outlets (counts never change).",
           "numinlets": 1,
           "numoutlets": 0,
           "patching_rect": [
@@ -1024,6 +1064,18 @@
       {
         "patchline": {
           "source": [
+            "mat4",
+            0
+          ],
+          "destination": [
+            "tex4",
+            0
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "tbb",
             0
           ],
@@ -1084,6 +1136,18 @@
       {
         "patchline": {
           "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p1",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "p1",
             0
           ],
@@ -1120,6 +1184,18 @@
       {
         "patchline": {
           "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p2",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "p2",
             0
           ],
@@ -1156,6 +1232,18 @@
       {
         "patchline": {
           "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p3",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "p3",
             0
           ],
@@ -1192,6 +1280,18 @@
       {
         "patchline": {
           "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p4",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "p4",
             0
           ],
@@ -1228,6 +1328,18 @@
       {
         "patchline": {
           "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p5",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "p5",
             0
           ],
@@ -1264,6 +1376,18 @@
       {
         "patchline": {
           "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p6",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "p6",
             0
           ],
@@ -1300,6 +1424,18 @@
       {
         "patchline": {
           "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p7",
+            3
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
             "p7",
             0
           ],
@@ -1330,6 +1466,18 @@
           "destination": [
             "p8",
             2
+          ]
+        }
+      },
+      {
+        "patchline": {
+          "source": [
+            "tex4",
+            0
+          ],
+          "destination": [
+            "p8",
+            3
           ]
         }
       },

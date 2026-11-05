@@ -304,13 +304,13 @@ def _prepare(code, inputs, dim, mode, **fields):
     job, job_dir = new_job(mode, dim=[int(dim[0]), int(dim[1])], type="float32", **fields)
     job["gen"] = "job_" + job["id"]
     job["inputs"] = []
-    for i, arr in enumerate(inputs[:3]):
+    for i, arr in enumerate(inputs[:4]):
         name = f"in{i + 1}.jxf"
         jxf.write_rgba(job_dir / name, arr)
         job["inputs"].append(name)
     (job_dir / "code.gen").write_text(code)
     genjit_path = BENCH_DIR / (job["gen"] + ".genjit")
-    write_genjit(genjit_path, code, min_inputs=3, min_outputs=4)   # constant inlets/outlets
+    write_genjit(genjit_path, code, min_inputs=4, min_outputs=4)   # constant inlets/outlets
     return job, job_dir, genjit_path
 
 
@@ -330,7 +330,7 @@ def run_pass(code, inputs, dim=None, params=None, warmup=5, timeout_ms=10000,
     """Run one codebox pass on the bench (spec Story 2; plan ADR-3/ADR-4).
 
     code    -- codebox text (GenExpr)
-    inputs  -- list of up to 3 RGBA float32 arrays (H, W, 4)
+    inputs  -- list of up to 4 RGBA float32 arrays (H, W, 4)
     dim     -- (w, h) output size; defaults to the first input's size
     raw     -- return the output as the raw Jitter matrix (planes as stored)
                instead of converting through jxf's RGBA conventions
