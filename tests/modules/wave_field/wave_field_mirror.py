@@ -27,13 +27,18 @@ Texture packing (float32 RGBA), the f_ks chain's two complex fields:
     vec out   R,G = grad u * scale * 0.5 + 0.5, B = 0.5, A = 1   (f_vecfield_type)
 
 Per frame (spec): fwd DFT -> spectral step (DC bin of u and v zeroed, FR-005) -> inverse DFT
-(real part kept) -> real-space stage: forcing into v (v += F dt), exciter, strike, edge sponge
+(real part kept) -> real-space stage: forcing into v (v += F dt), strike, edge sponge
 on u and v, containment -> encode (gradient of u for the vecfield).
 
 PROVISIONAL CONSTANTS (to be set by T003 / T004 / T005; each is a module-level name so the
-later tasks change one line): KREF, NU, EX_SIGMA, EX_GAIN, STRIKE_AMP, SPONGE_WIDTH,
+later tasks change one line): KREF, NU, EX_SIGMA, STRIKE_AMP, OUTLINE_AMP, SPONGE_WIDTH,
 SPONGE_RATE, U_CAP, GRAD_SCALE, LUMA_SCALE. The time unit is seconds with dt = 1/60 per frame
 by default; whether that is the shipped unit is gate G3.
+
+T035 (Matt, 2026-11-04): the point sine exciter is REMOVED (no frequency / amplitude, no phase accumulator, no
+EX_GAIN). The force inlet (inlet 0) says where, the optional LFO inlet (`lfo_tex`, inlet 1) says when: T is the LFO's
+R channel per pixel, raw 0..1 (`lmode` 0, uni) or 2 x - 1 (`lmode` 1, bi). T scales the texture push and the strike;
+with nothing on the force inlet the LFO pushes nothing. Strike = strength * (point Gaussian | outline mask) * T.
 """
 from dataclasses import dataclass, replace
 
@@ -46,9 +51,8 @@ from gpu_sim import F32, TWOPI, grid, sample, store_float32, texture
 KREF = F32(TWOPI * 8.0)        # reference wavenumber: mode 8 across the frame (T004)
 NU = F32(1e-5)                 # fixed viscosity on |k|^2 (T004: damping time 0.15 s at the N = 256 Nyquist bin, 40 s at mode 8)
 DAMPING_FLOOR = 1e-3           # lowest `damping` the dial reaches, per time unit (T003: worst float32 coefficient gain 3.3e-7/frame needs 1e-5; x100 margin)
-EX_SIGMA = F32(0.02)           # exciter / strike Gaussian sigma, in frame widths (T004)
-EX_GAIN = F32(165.0)           # exciter force per unit `amplitude` (T004: max|u| ~ 1 at amplitude 1, 2 Hz, speed 0.25, damping 0.3, edge 0.5)
-STRIKE_AMP = F32(4.0)          # strike impulse height in u (T004: the ring is ~0.4 after 1 s; independent of `amplitude`, so amplitude 0 can still strike)
+EX_SIGMA = F32(0.02)           # strike Gaussian sigma, in frame widths (T004; the exciter that shared it was removed, D7)
+STRIKE_AMP = F32(4.0)          # strike impulse height in u (T004: the ring is ~0.4 after 1 s; scaled by `strength` since T035)
 OUTLINE_AMP = F32(1.0)         # outline strike height in u at mask = 1 and strength = 1 (T032, PROVISIONAL: tuned by eye in T034)
 SPONGE_WIDTH = F32(0.12)       # sponge band width, in frame widths (T004: 0.12 reflects ~0.1% and absorbs ~99.5% at rate 10)
 SPONGE_RATE = F32(20.0)        # peak sponge damping rate at edge = 1, per time unit (T004: edge 0.5 lands on the rate-10 optimum; stronger reflects more)
@@ -68,10 +72,9 @@ class Params:
     dt: float = 1.0 / 60.0      # model step per frame (time unit seconds; gate G3)
     force: float = 1.0          # gain on the force inlet (dial 0..1.5, T032)
     strength: float = 1.0       # outline strike strength, 0..1 (T032); only used while the force inlet is connected
-    x: float = 0.5              # exciter position
+    x: float = 0.5              # point strike position (nothing connected on the force inlet)
     y: float = 0.5
-    frequency: float = 2.0      # exciter frequency (cycles per time unit)
-    amplitude: float = 0.0      # exciter strength; 0 = free ringing
+    lmode: int = 0              # LFO read: 0 uni (raw 0..1), 1 bi (2 x - 1)  (T035)
     gain: float = 1.0           # output mapping strength (G2: tanh), before the tanh
     fast_fft: bool = False      # False = the pass_dft chain; True = np.fft (long runs only)
     nu: float = float(NU)
@@ -192,32 +195,38 @@ def outline_mask(tex):
     return np.clip(np.sqrt(gx * gx + gy * gy), F32(0.0), F32(1.0)).astype(F32)
 
 
-def real_stage(state, p, force_tex=None, phase=0.0, strike=False):
-    """Stage 6. state R = u, B = v from the inverse DFT. Adds forcing to v (v += F dt):
-    the force inlet F = force * 2 (tex - 0.5) (FR-007, neutral at 0.5) plus the point exciter
-    amplitude * EX_GAIN * sin(phase) * gaussian (FR-008); adds the strike impulse to u
-    (FR-009); applies the edge sponge to u and v (FR-010); contains (zap non-finite, clamp).
+def lfo_time(lfo_tex, lmode):
+    """The LFO's time function T per pixel (T035, Matt 2026-11-04): the R channel of the LFO inlet, read raw
+    0..1 (lmode 0, uni: can only add) or rescaled to -1..1 (lmode 1, bi: mid-grey neutral). mix(raw, 2 raw - 1,
+    lmode) = raw + lmode (raw - 1), the form f_weave's mmode uses."""
+    raw = lfo_tex[..., 0].astype(F32)
+    return (raw + F32(lmode) * (raw - F32(1.0))).astype(F32)
 
-    T032 (Matt, 2026-11-04): `force_tex is not None` means the force inlet is connected (src_force = 1).
-    Connected: the point exciter is OFF (force and exciter are mutually exclusive) and the strike drops the
-    impulse on the inlet's outlines, strength * OUTLINE_AMP * outline_mask. Unconnected: the point exciter
-    and the point strike at (x, y), unchanged; `strength` does nothing."""
+
+def real_stage(state, p, force_tex=None, strike=False, lfo_tex=None):
+    """Stage 6. state R = u, B = v from the inverse DFT.
+
+    force_tex is not None means the force inlet is connected (src_force = 1): it pushes v by
+    force * 2 (tex - 0.5) * T * dt (FR-007, neutral at 0.5). lfo_tex is not None means the LFO inlet is connected
+    (src_lfo = 1): T = lfo_time(...), else T = 1. With nothing on the force inlet there is no push, LFO or not.
+    The strike (FR-009) adds strength * impulse * T to u, where the impulse is STRIKE_AMP * the point Gaussian at
+    (x, y) with nothing connected, or OUTLINE_AMP * outline_mask(force_tex) when connected. Then the edge sponge on
+    u and v (FR-010) and containment (zap non-finite, clamp). T032/T035 (Matt, 2026-11-04): the point exciter
+    that used to sit here was removed (D7)."""
     h, w = state.shape[:2]
     dt = F32(p.dt)
     u, v = state[..., 0].copy(), state[..., 2].copy()
-    prof = _gauss(h, w, p.x, p.y, EX_SIGMA)
-    f = np.zeros((h, w), F32)
     connected = force_tex is not None
+    tt = lfo_time(lfo_tex, p.lmode) if lfo_tex is not None else F32(1.0)
     if connected:
-        f = f + F32(p.force) * F32(2.0) * (force_tex[..., 0] - F32(0.5))
-    else:
-        f = f + F32(p.amplitude) * EX_GAIN * F32(np.sin(phase)) * prof
-    v = v + f * dt
+        f = F32(p.force) * F32(2.0) * (force_tex[..., 0] - F32(0.5)) * tt
+        v = v + f * dt
     if strike:
         if connected:
-            u = u + F32(p.strength) * OUTLINE_AMP * outline_mask(force_tex)
+            imp = F32(p.strength) * OUTLINE_AMP * outline_mask(force_tex)
         else:
-            u = u + STRIKE_AMP * prof
+            imp = F32(p.strength) * STRIKE_AMP * _gauss(h, w, p.x, p.y, EX_SIGMA)
+        u = u + imp * tt
     g = np.exp(-sponge_rate(h, w, p.edge) * dt).astype(F32)
     u, v = u * g, v * g
     out = texture(h, w)
@@ -275,15 +284,14 @@ def new_state(h, w):
 
 
 def struck_state(h, w, p, amp=1.0):
-    """reset then strike on the same frame: the impulse at the exciter position, in u."""
+    """reset then strike on the same frame: the point impulse at (x, y), in u."""
     t = new_state(h, w)
-    t[..., 0] = F32(amp) * STRIKE_AMP * _gauss(h, w, p.x, p.y, EX_SIGMA)
+    t[..., 0] = F32(amp) * F32(p.strength) * STRIKE_AMP * _gauss(h, w, p.x, p.y, EX_SIGMA)
     return store_float32(t)
 
 
-def wave_frame(state, p, force_tex=None, phase=0.0, strike=False):
-    """One full frame. Returns (new_state, luma, vec, new_phase). The exciter phase
-    accumulates 2 pi frequency dt per frame in the real-space stage (FR-008)."""
+def wave_frame(state, p, force_tex=None, strike=False, lfo_tex=None):
+    """One full frame. Returns (new_state, luma, vec). T035: no exciter phase any more."""
     tex = texture(*state.shape[:2])
     tex[..., 0] = state[..., 0]
     tex[..., 2] = state[..., 2]
@@ -293,12 +301,8 @@ def wave_frame(state, p, force_tex=None, phase=0.0, strike=False):
     st[..., 0] = lin[..., 0]
     st[..., 2] = lin[..., 2]
     st[..., 3] = F32(1.0)
-    new = real_stage(st, p, force_tex, phase, strike)
-    if force_tex is not None:                           # T032: the exciter is off while connected, its phase freezes
-        new_phase = phase
-    else:
-        new_phase = (phase + float(TWOPI) * p.frequency * p.dt) % float(TWOPI)
-    return new, encode_luma(new, p.gain), encode_vec(new, p.gain), new_phase
+    new = real_stage(st, p, force_tex, strike, lfo_tex)
+    return new, encode_luma(new, p.gain), encode_vec(new, p.gain)
 
 
 def energy(state, p):

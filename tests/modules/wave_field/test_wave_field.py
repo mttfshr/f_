@@ -93,7 +93,7 @@ def single_mode_error(p, m_idx=4, a=1.0, b=0.3, frames=1):
     st, prof = mode_state(N, m_idx, a, b)
     ua, va = a, b
     for _ in range(frames):
-        st, _, _, _ = wave_frame(st, p.with_(fast_fft=True))
+        st, _, _ = wave_frame(st, p.with_(fast_fft=True))
         ua, va = aa * ua + bb * va, cc * ua + dd * va
     err = max(float(np.abs(st[..., 0] - ua * prof).max()), float(np.abs(st[..., 2] - va * prof).max()))
     return err, om, beta
@@ -109,8 +109,8 @@ def test_pass_chain_matches_npfft_for_one_frame():
     st[..., 0] = rng.uniform(-1, 1, (N, N))
     st[..., 2] = rng.uniform(-1, 1, (N, N))
     p = Params(speed=0.25, damping=0.4, dt=0.02)
-    a, _, _, _ = wave_frame(st, p.with_(fast_fft=False))
-    b, _, _, _ = wave_frame(st, p.with_(fast_fft=True))
+    a, _, _ = wave_frame(st, p.with_(fast_fft=False))
+    b, _, _ = wave_frame(st, p.with_(fast_fft=True))
     err = max(float(np.abs(a[..., 0] - b[..., 0]).max()), float(np.abs(a[..., 2] - b[..., 2]).max()))
     check("one frame: pass chain vs np.fft", err, 1e-5)
 
@@ -192,7 +192,7 @@ def test_energy_is_conserved_at_zero_damping_over_1000_frames():
     e0 = energy(st, p)
     emax = e0
     for _ in range(1000):
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
         emax = max(emax, energy(st, p))
     e1 = energy(st, p)
     check("relative energy drift after 1,000 frames (SC-002 target 1e-4)", abs(e1 - e0) / e0, 1e-4)
@@ -209,7 +209,7 @@ def test_damping_removes_energy_and_never_adds_it():
     p = Params(speed=0.25, damping=0.8, fast_fft=True)
     e = [energy(st, p)]
     for _ in range(60):
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
         e.append(energy(st, p))
     worst_rise = max(b / a - 1.0 for a, b in zip(e[:-1], e[1:]))
     check("largest frame-to-frame energy rise with damping", max(worst_rise, 0.0), 1e-6)
@@ -222,7 +222,7 @@ def _omega_from_motion(p, m_idx, frames):
     """Measure omega from a free-ringing single mode started at rest: u(t) = A cos(omega t)."""
     st, prof = mode_state(N, m_idx, 1.0, 0.0)
     for _ in range(frames):
-        st, _, _, _ = wave_frame(st, p.with_(fast_fft=True))
+        st, _, _ = wave_frame(st, p.with_(fast_fft=True))
     ratio = float(st[N // 2, 0, 0] / prof[N // 2, 0])
     return np.arccos(np.clip(ratio, -1, 1)) / (frames * p.dt)
 
@@ -254,7 +254,7 @@ def test_struck_pulse_ring_grows_at_the_phase_velocity():
     st = struck_state(n, n, p)
     frames = 60                                         # 1 time unit: radius should be about 0.25
     for _ in range(frames):
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
     nx = (np.arange(n) + 0.5) / n
     xx, yy = np.meshgrid(nx, nx)
     r = np.sqrt((xx - 0.5) ** 2 + (yy - 0.5) ** 2)
@@ -274,7 +274,7 @@ def test_forced_response_is_linear():
     def run_with(tex, k=1.0, n=30):
         st = new_state(N, N)
         for _ in range(n):
-            st, _, _, _ = wave_frame(st, p.with_(force=k), force_tex=tex)
+            st, _, _ = wave_frame(st, p.with_(force=k), force_tex=tex)
         return st
     f1 = new_state(N, N); f1[..., 0] = 0.5 + 0.2 * rng.uniform(-1, 1, (N, N))
     f2 = new_state(N, N); f2[..., 0] = 0.5 + 0.2 * rng.uniform(-1, 1, (N, N))
@@ -292,7 +292,7 @@ def test_unconnected_force_is_neutral():
     """User Story 3 AS1: a 0.5 texture (the unconnected inlet) applies no force."""
     p = Params(speed=0.25, force=1.0, fast_fft=True)
     flat = new_state(N, N); flat[..., 0] = 0.5
-    st, _, _, _ = wave_frame(new_state(N, N), p, force_tex=flat)
+    st, _, _ = wave_frame(new_state(N, N), p, force_tex=flat)
     check("0.5 force texture leaves a zero field zero", float(np.abs(st[..., :3]).max()), 0.0)
 
 
@@ -305,7 +305,7 @@ def test_mean_force_does_not_accelerate_a_mean_offset():
     tex = new_state(N, N); tex[..., 0] = 0.7
     st = new_state(N, N)
     for _ in range(300):
-        st, _, _, _ = wave_frame(st, p, force_tex=tex)
+        st, _, _ = wave_frame(st, p, force_tex=tex)
     check("mean(u) after 300 frames of uniform force", abs(float(st[..., 0].mean())), 1e-6)
     check("max |v| stays at one force step (F dt)", float(np.abs(st[..., 2]).max()) - 0.4 * p.dt, 1e-6)
 
@@ -318,8 +318,8 @@ def test_periodic_wrap_is_translation_invariant_across_the_seam():
     a = struck_state(n, n, p.with_(x=0.875))
     b = struck_state(n, n, p.with_(x=0.625))
     for _ in range(30):                                 # the front reaches x > 1 and wraps to the left
-        a, _, _, _ = wave_frame(a, p.with_(x=0.875))
-        b, _, _, _ = wave_frame(b, p.with_(x=0.625))
+        a, _, _ = wave_frame(a, p.with_(x=0.875))
+        b, _, _ = wave_frame(b, p.with_(x=0.625))
     shifted = np.roll(b[..., 0], 16, axis=1)            # 16 texels = 0.25 of the frame
     check("pulse across the seam = rolled copy (relative)",
           float(np.abs(a[..., 0] - shifted).max()) / float(np.abs(a[..., 0]).max()), 1e-5)
@@ -332,7 +332,7 @@ def test_pulse_leaving_one_border_reappears_at_the_opposite_one():
     lo, hi = int(0.12 * n), int(0.20 * n)               # a strip beyond the pulse's own tail across the seam
     left_before = float(np.abs(st[:, lo:hi, 0]).max())
     for _ in range(48):                                 # radius 0.2: the front reaches x = 1.15 -> 0.15
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
     left_after = float(np.abs(st[:, lo:hi, 0]).max())
     note("strip x in [0.12, 0.20): |u| before / after", f"{left_before:.2e} / {left_after:.2e}")
     check("strip is empty before the pulse crosses", left_before, 1e-6)
@@ -366,7 +366,7 @@ def test_sponge_removes_energy_after_the_pulse_crosses_the_border():
         e_prev = energy(st, p)
         worst[edge] = 0.0
         for _ in range(60):
-            st, _, _, _ = wave_frame(st, p)
+            st, _, _ = wave_frame(st, p)
             e = energy(st, p)
             worst[edge] = max(worst[edge], e / e_prev - 1.0)
             e_prev = e
@@ -388,7 +388,7 @@ def test_resonator_rings_per_pixel_without_spreading():
     st[8, 8, 0] = 1.0
     frames = 40
     for _ in range(frames):
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
     want = np.cos(ring * frames * p.dt)
     got = float(st[8, 8, 0])
     note("peak pixel vs cos(ring t)", f"{got:.4f} vs {want:.4f}")
@@ -406,45 +406,33 @@ def test_zero_speed_zero_ring_is_stable_and_static():
     p = Params(speed=0.0, ring=0.0, damping=0.0, fast_fft=True)
     out = st
     for _ in range(100):
-        out, _, _, _ = wave_frame(out, p)
+        out, _, _ = wave_frame(out, p)
     check("speed 0, ring 0, v = 0: the field does not move", float(np.abs(out[..., 0] - st[..., 0]).max()), 1e-5)
 
 
-# ------------------------------------------------------------------ strike, reset, exciter
+# ------------------------------------------------------------------ strike, reset
 
 def test_strike_and_reset():
     p = Params(speed=0.25, x=0.3, y=0.6)
     s = struck_state(64, 64, p)
     iy, ix = np.unravel_index(np.argmax(s[..., 0]), s[..., 0].shape)
-    check("strike peaks at the exciter position (x)", abs((ix + 0.5) / 64 - 0.3), 1 / 64)
-    check("strike peaks at the exciter position (y)", abs((iy + 0.5) / 64 - 0.6), 1 / 64)
+    check("strike peaks at the strike position (x)", abs((ix + 0.5) / 64 - 0.3), 1 / 64)
+    check("strike peaks at the strike position (y)", abs((iy + 0.5) / 64 - 0.6), 1 / 64)
     check("strike puts nothing in v", float(np.abs(s[..., 2]).max()), 0.0)
     z = new_state(64, 64)
     check("reset zeroes u and v", float(np.abs(z[..., [0, 1, 2]]).max()), 0.0)
-    out, _, _, _ = wave_frame(z, p.with_(fast_fft=True), strike=True)
+    out, _, _ = wave_frame(z, p.with_(fast_fft=True), strike=True)
     check("a strike frame on a reset field puts a positive peak in u",
           float(out[..., 0].max() <= 0), 0.0)
 
 
-def test_exciter_with_nothing_connected_makes_rings():
-    """User Story 1: with amplitude > 0 and no inlet the field becomes non-trivial and stays bounded."""
-    p = Params(speed=0.25, damping=0.2, amplitude=1.0, frequency=3.0, edge=0.5, fast_fft=True)
-    st = new_state(64, 64)
-    phase = 0.0
-    for _ in range(120):
-        st, luma, vec, phase = wave_frame(st, p, phase=phase)
-    check("field has left zero", float(np.abs(st[..., 0]).max() < 1e-3), 0.0)
-    check("field stays bounded", float(np.abs(st[..., 0]).max() > float(wfm.U_CAP)), 0.0)
-    check("luma stays in [0, 1]", float(luma[..., 0].min() < 0 or luma[..., 0].max() > 1), 0.0)
-
-
-def test_amplitude_zero_means_free_ringing_and_decay():
-    """User Story 1 AS2: amplitude 0 plus a strike rings freely at the damping rate and never grows."""
-    p = Params(speed=0.25, damping=0.8, amplitude=0.0, fast_fft=True)
+def test_free_ringing_after_a_strike_decays_at_the_damping_rate():
+    """A strike rings freely at the damping rate and never grows (was User Story 1 AS2, with amplitude 0)."""
+    p = Params(speed=0.25, damping=0.8, fast_fft=True)
     st = struck_state(64, 64, p)
     e = [energy(st, p)]
     for _ in range(90):
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
         e.append(energy(st, p))
     check("never grows", max(max(b / a - 1.0 for a, b in zip(e[:-1], e[1:])), 0.0), 1e-6)
     decay = e[-1] / e[0]
@@ -492,13 +480,13 @@ def test_containment_never_lets_nan_or_inf_through():
     st = new_state(N, N)
     st[3, 4, 0] = np.nan
     st[5, 6, 2] = np.inf
-    out, luma, vec, _ = wave_frame(st, p)
+    out, luma, vec = wave_frame(st, p)
     check("state finite after a NaN / Inf input", float((~np.isfinite(out)).sum()), 0.0)
     check("luma finite", float((~np.isfinite(luma)).sum()), 0.0)
     check("vecfield finite", float((~np.isfinite(vec)).sum()), 0.0)
     big = new_state(N, N)
     big[..., 0] = 1.0e6
-    out, _, _, _ = wave_frame(big, p)
+    out, _, _ = wave_frame(big, p)
     check("huge input clamped to U_CAP", float(np.abs(out[..., [0, 2]]).max() > float(wfm.U_CAP)), 0.0)
 
 
@@ -529,10 +517,10 @@ def test_output_mapping_is_tanh_and_gain_scales_the_argument():
     ux, _ = gradient(ramp)
     want = 0.5 + 0.5 * np.tanh(2.0 * float(wfm.GRAD_SCALE) * ux.astype(np.float64))
     check("vecfield R matches the tanh formula at gain 2", float(np.abs(encode_vec(ramp, 2.0)[..., 0] - want).max()), 1e-6)
-    p = Params(speed=0.25, amplitude=1.0, gain=4.0)
-    _, luma, vec, _ = wave_frame(new_state(32, 32), p)
+    p = Params(speed=0.25, gain=4.0)
+    _, luma, vec = wave_frame(struck_state(32, 32, p), p)
     check("wave_frame passes gain to both outputs (luma/vec unchanged is gain 1)",
-          float(np.abs(luma - encode_luma(wave_frame(new_state(32, 32), p)[0], 4.0)).max()), 0.0)
+          float(np.abs(luma - encode_luma(wave_frame(struck_state(32, 32, p), p)[0], 4.0)).max()), 0.0)
 
 
 # ------------------------------------------------------------------ Phase 0 constants (T003, T004, T007)
@@ -548,7 +536,7 @@ def test_damping_floor_means_no_energy_growth_over_10000_frames():
     e0 = energy(st, p)
     es = [e0]
     for i in range(1, 10001):
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
         if i % 100 == 0:
             es.append(energy(st, p))
     worst_rise = max(max(b / a - 1.0 for a, b in zip(es[:-1], es[1:])), 0.0)
@@ -586,25 +574,13 @@ def test_default_sponge_absorbs_the_pulse_without_reflecting_it():
     e0 = float(edens(st).sum())
     refl = 0.0
     for i in range(1, 241):
-        st, _, _, _ = wave_frame(st, p)
+        st, _, _ = wave_frame(st, p)
         if 114 <= i <= 186:
             refl = max(refl, float(edens(st)[inner].sum()) / e0)
     left = float(edens(st).sum()) / e0
     note("reflect / left", f"{refl:.4f} / {left:.4f}")
     check("reflected energy back in the inner disc (T004 measured 0.001 at N = 96)", refl, 1e-2)
     check("energy left at 4 s (T004 measured 0.005 at N = 96)", left, 2e-2)
-
-
-def test_exciter_gain_gives_unit_amplitude_at_the_default_settings():
-    n = 64
-    p = Params(speed=0.25, damping=0.3, nu=float(wfm.NU), edge=0.5, amplitude=1.0, frequency=2.0, fast_fft=True)
-    st, phase, peak = new_state(n, n), 0.0, 0.0
-    for i in range(1, 361):
-        st, _, _, phase = wave_frame(st, p, phase=phase)
-        if i >= 240:
-            peak = max(peak, float(np.abs(st[..., 0]).max()))
-    note("max |u| over t in [4, 6] s at amplitude 1", f"{peak:.3f}")
-    check("max |u| is within 30% of 1", abs(peak - 1.0), 0.3)
 
 
 def test_force_kick_amplitude_error_follows_the_discrete_model():
@@ -619,7 +595,7 @@ def test_force_kick_amplitude_error_follows_the_discrete_model():
     tex[..., 0] = (0.5 + 0.5 * np.cos(2 * np.pi * m_idx * x))[None, :] * np.ones((N, 1))
     st = new_state(N, N)
     for _ in range(300):                                     # beta = 5: transients gone to 1e-11
-        st, _, _, _ = wave_frame(st, p, force_tex=tex)
+        st, _, _ = wave_frame(st, p, force_tex=tex)
     a, b, c, d = expm2(np.float64(om ** 2), np.float64(5.0), dt)
     P = np.array([[a, b], [c, d]])
     X = np.linalg.solve(np.eye(2) - P, np.array([0.0, dt]))
@@ -633,38 +609,14 @@ def test_force_kick_amplitude_error_follows_the_discrete_model():
 
 
 # ------------------------------------------------------------------ T032: connected inlet (Matt, 2026-11-04)
-# Connected force inlet: the point exciter is off and its phase freezes; the strike lands on the inlet's
-# outlines (strength * OUTLINE_AMP * outline_mask). Unconnected: the point exciter and point strike, unchanged.
+# Connected force inlet: the strike lands on the inlet's outlines (strength * OUTLINE_AMP * outline_mask).
+# Unconnected: the point strike, scaled by strength (T035). The point exciter was removed (D7).
 
 def _square_tex(n=64, lo=16, hi=48, level=1.0, base=0.0):
     t = new_state(n, n)
     t[..., 0] = base
     t[lo:hi, lo:hi, 0] = level
     return t
-
-
-def test_exciter_is_silent_while_the_force_inlet_is_connected():
-    """T032: with amplitude 1 and a neutral (0.5) texture connected, nothing is pushed; unconnected it is."""
-    p = Params(speed=0.25, damping=0.2, amplitude=1.0, frequency=3.0, force=1.0, fast_fft=True)
-    flat = new_state(N, N); flat[..., 0] = 0.5
-    st, phase = new_state(N, N), 1.0                    # phase 1.0: sin(phase) is far from 0
-    for _ in range(20):
-        st, _, _, phase = wave_frame(st, p, force_tex=flat, phase=phase)
-    check("connected + neutral texture + amplitude 1: the field stays zero", float(np.abs(st[..., :3]).max()), 0.0)
-    free, ph = new_state(N, N), 1.0
-    for _ in range(20):
-        free, _, _, ph = wave_frame(free, p, phase=ph)
-    check("unconnected, same settings: the exciter drives the field", float(np.abs(free[..., 0]).max() < 1e-3), 0.0)
-
-
-def test_exciter_phase_freezes_while_connected():
-    p = Params(frequency=3.0, amplitude=1.0, fast_fft=True)
-    flat = new_state(N, N); flat[..., 0] = 0.5
-    _, _, _, ph_conn = wave_frame(new_state(N, N), p, force_tex=flat, phase=1.25)
-    check("connected: phase unchanged", abs(ph_conn - 1.25), 0.0)
-    _, _, _, ph_free = wave_frame(new_state(N, N), p, phase=1.25)
-    want = 1.25 + 2 * np.pi * 3.0 * p.dt
-    check("unconnected: phase advances by 2 pi f dt (float32 TWOPI)", abs(ph_free - want), 1e-6)
 
 
 def test_outline_mask_marks_the_outlines_of_a_known_image():
@@ -701,12 +653,13 @@ def test_connected_strike_lands_on_the_outlines_and_scales_with_strength():
     note("v with Force 1 on a black/white inlet (the texture is also the force field)", f"{float(pushed[..., 2].min()):.4f} .. {float(pushed[..., 2].max()):.4f}")
 
 
-def test_unconnected_strike_is_unchanged_and_ignores_strength():
+def test_unconnected_strike_is_the_point_gaussian_scaled_by_strength():
     n = 64
-    p = Params(edge=0.0, x=0.3, y=0.6, strength=0.0)
-    out = real_stage(new_state(n, n), p, strike=True)
-    want = wfm.STRIKE_AMP * _gauss(n, n, 0.3, 0.6, wfm.EX_SIGMA)
-    check("unconnected strike is the point Gaussian even at strength 0", float(np.abs(out[..., 0] - want).max()), 1e-6)
+    for st_ in (1.0, 0.5, 0.0):
+        p = Params(edge=0.0, x=0.3, y=0.6, strength=st_)
+        out = real_stage(new_state(n, n), p, strike=True)
+        want = st_ * wfm.STRIKE_AMP * _gauss(n, n, 0.3, 0.6, wfm.EX_SIGMA)
+        check(f"unconnected strike = strength {st_:g} x the point Gaussian", float(np.abs(out[..., 0] - want).max()), 1e-6)
 
 
 def test_outline_strike_radiates_into_the_stones_and_stays_bounded():
@@ -719,7 +672,7 @@ def test_outline_strike_radiates_into_the_stones_and_stays_bounded():
     centre0 = abs(float(st[32, 32, 0]))
     peak = 0.0
     for _ in range(75):                                 # 1.25 time units: the front crosses the 0.25 half-width
-        st, _, _, _ = wave_frame(st, p.with_(strength=1.0))
+        st, _, _ = wave_frame(st, p.with_(strength=1.0))
         peak = max(peak, float(np.abs(st[28:36, 28:36, 0]).max()))
     note("|u| at the stone centre before / peak after 75 frames", f"{centre0:.3e} / {peak:.3e}")
     check("nothing at the centre at the strike", centre0, 0.0)
@@ -736,11 +689,95 @@ def test_force_range_to_1p5_scales_linearly():
     def run_with(k):
         st = new_state(N, N)
         for _ in range(30):
-            st, _, _, _ = wave_frame(st, p.with_(force=k), force_tex=tex)
+            st, _, _ = wave_frame(st, p.with_(force=k), force_tex=tex)
         return st
     a, b = run_with(1.0), run_with(1.5)
     scale = float(np.abs(b[..., 0]).max())
     check("force 1.5 = 1.5 x force 1 (relative)", float(np.abs(b[..., 0] - 1.5 * a[..., 0]).max()) / scale, 1e-5)
+
+
+# ------------------------------------------------------------------ T035: LFO inlet, no exciter (Matt, 2026-11-04)
+# lfo_tex is the texture on the second inlet; T is its R channel per pixel, raw 0..1 (lmode 0, uni) or 2 x - 1
+# (lmode 1, bi). It is a pure time modulator: it scales the texture push and the strike, and pushes nothing alone.
+
+def _flat(level, n=64):
+    t = new_state(n, n)
+    t[..., 0] = level
+    return t
+
+
+def test_nothing_connected_and_no_strike_stays_silent():
+    """D7: with the exciter removed an untouched field stays exactly zero (it only rings after a strike)."""
+    p = Params(speed=0.25, damping=0.2, edge=0.5, fast_fft=True)
+    st = new_state(32, 32)
+    for _ in range(30):
+        st, _, _ = wave_frame(st, p)
+    check("no exciter: an untouched field stays exactly zero", float(np.abs(st[..., :3]).max()), 0.0)
+
+
+def test_lfo_time_function_is_uni_or_bi():
+    t = new_state(8, 8)
+    t[..., 0] = np.linspace(0, 1, 64, dtype=np.float32).reshape(8, 8)
+    check("uni reads the LFO raw", float(np.abs(wfm.lfo_time(t, 0) - t[..., 0]).max()), 0.0)
+    check("bi reads 2 x - 1", float(np.abs(wfm.lfo_time(t, 1) - (2 * t[..., 0] - 1)).max()), 1e-6)
+    check("bi: mid-grey is neutral", abs(float(wfm.lfo_time(_flat(0.5, 8), 1)[0, 0])), 0.0)
+
+
+def test_uniform_lfo_scales_the_point_strike():
+    n = 64
+    base = real_stage(new_state(n, n), Params(edge=0.0, x=0.3, y=0.6), strike=True)[..., 0]
+    for lm, level, factor in ((0, 0.5, 0.5), (0, 0.0, 0.0), (0, 1.0, 1.0), (1, 0.5, 0.0), (1, 1.0, 1.0), (1, 0.0, -1.0)):
+        out = real_stage(new_state(n, n), Params(edge=0.0, x=0.3, y=0.6, lmode=lm), strike=True,
+                         lfo_tex=_flat(level, n))[..., 0]
+        check(f"point strike x LFO {level:g} ({'bi' if lm else 'uni'}) = {factor:g} x the plain strike",
+              float(np.abs(out - factor * base).max()), 1e-6)
+
+
+def test_spatial_lfo_prints_its_pattern_on_the_outline_strike():
+    n = 64
+    tex = _square_tex(n)
+    mask = wfm.outline_mask(tex)
+    lfo = new_state(n, n)
+    lfo[..., 0] = (np.arange(n, dtype=np.float32) / (n - 1))[None, :] * np.ones((n, 1), np.float32)   # ramp 0..1 left to right
+    out = real_stage(new_state(n, n), Params(edge=0.0, force=0.0), force_tex=tex, strike=True, lfo_tex=lfo)[..., 0]
+    check("outline strike x spatial LFO = OUTLINE_AMP * mask * ramp",
+          float(np.abs(out - wfm.OUTLINE_AMP * mask * lfo[..., 0]).max()), 1e-6)
+    check("the left edge of the stone (low ramp) strikes weaker than the right edge", float(out[32, 16] >= out[32, 47]), 0.0)
+
+
+def test_lfo_pulses_the_texture_push():
+    n = 64
+    tex = _square_tex(n)                                # black outside (pushes down), white inside (pushes up)
+    base = real_stage(new_state(n, n), Params(edge=0.0, force=1.0), force_tex=tex)[..., 2]
+    check("no LFO: v = force * 2 (tex - 0.5) * dt",
+          float(np.abs(base - 2 * (tex[..., 0] - 0.5) * (1 / 60)).max()), 1e-7)
+    for lm, level, factor in ((0, 0.25, 0.25), (1, 0.75, 0.5), (1, 0.5, 0.0), (1, 0.0, -1.0)):
+        out = real_stage(new_state(n, n), Params(edge=0.0, force=1.0, lmode=lm), force_tex=tex,
+                         lfo_tex=_flat(level, n))[..., 2]
+        check(f"push x LFO {level:g} ({'bi' if lm else 'uni'}) = {factor:g} x the plain push",
+              float(np.abs(out - factor * base).max()), 1e-7)
+
+
+def test_lfo_alone_pushes_nothing():
+    """D9: the LFO is a time modulator, not a force field: with nothing on the force inlet it does not push."""
+    out = real_stage(new_state(64, 64), Params(edge=0.0, force=1.5, lmode=1), lfo_tex=_flat(1.0))
+    check("LFO with nothing on inlet 0 pushes nothing", float(np.abs(out[..., :3]).max()), 0.0)
+
+
+def test_wave_frame_passes_the_lfo_through_and_the_response_is_linear_in_it():
+    n = 64
+    tex = _square_tex(n)
+    p = Params(speed=0.25, damping=0.1, edge=0.0, force=0.0, fast_fft=True)
+
+    def run_with(level):
+        st, _, _ = wave_frame(new_state(n, n), p, force_tex=tex, strike=True, lfo_tex=_flat(level, n))
+        for _ in range(10):
+            st, _, _ = wave_frame(st, p, force_tex=tex, lfo_tex=_flat(level, n))
+        return st
+    a, b = run_with(1.0), run_with(0.5)
+    scale = float(np.abs(a[..., 0]).max())
+    check("LFO 0.5 gives half the field of LFO 1 after 10 frames (relative)",
+          float(np.abs(b[..., 0] - 0.5 * a[..., 0]).max()) / scale, 1e-5)
 
 
 if __name__ == "__main__":
