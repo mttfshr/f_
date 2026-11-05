@@ -93,8 +93,9 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 13,
+					"numoutlets": 14,
 					"outlettype": [
+						"",
 						"",
 						"",
 						"",
@@ -112,15 +113,15 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						943.0,
+						1015.0,
 						22.0
 					],
-					"text": "route speed damping dispersion ring edge exc_x exc_y frequency amplitude force gain strike reset"
+					"text": "route speed damping dispersion ring edge exc_x exc_y frequency amplitude force strength gain strike reset"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-55",
+					"id": "obj-58",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -206,7 +207,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-56",
+					"id": "obj-59",
 					"maxclass": "newobj",
 					"numinlets": 2,
 					"numoutlets": 2,
@@ -355,7 +356,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-57",
+					"id": "obj-60",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -474,7 +475,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-58",
+					"id": "obj-61",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -593,7 +594,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-59",
+					"id": "obj-62",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -712,7 +713,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-60",
+					"id": "obj-63",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -831,7 +832,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-61",
+					"id": "obj-64",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 2,
@@ -950,7 +951,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-62",
+					"id": "obj-65",
 					"maxclass": "newobj",
 					"numinlets": 3,
 					"numoutlets": 2,
@@ -1031,7 +1032,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_real.gen -- f_wave_field stage 6: the real-space stage on the inverse-DFT result.\n// 256x256 float32. Mirror: tests/modules/wave_field/wave_field_mirror.real_stage().\n//\n// Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module inlet through\n// vs_inState), third = last frame's state from the hold stage (cold). Output = the new solver state and the\n// feedback edge:  R = u, B = v, G = strike counter, A = 1 + exciter phase.\n//   - force (FR-007): v += force * 2 (tex - 0.5) * dt, times src_force, the connected flag from vs_inState (an\n//     unconnected inlet is vs_black = 0, which would decode to a full -1 force). The flag lags ~180 ms at load;\n//     a uniform force only feeds the DC bin, which the spec stage removes\n//   - exciter (FR-008): v += amplitude * 165 (EX_GAIN) * sin(exphase) * gaussian(exc_x, exc_y, sigma 0.02) * dt on\n//     the wrapped distance. The phase accumulator lives in A of the state: A = 1 + phase, so a fresh hold\n//     texture (A = 1) starts at phase 0; each frame adds 2 pi frequency dt, modulo 2 pi\n//   - strike (FR-009): u += 4 (STRIKE_AMP) * gaussian, exactly once per change of the counter strike_id. G of\n//     the hold texture remembers the last counter value seen, so the pulse cannot repeat or be dropped\n//     whatever the draw order. While reset_gate is on the strike waits (reset, then strike on the same frame\n//     is the spec's struck_state) and G keeps its old value\n//   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the\n//     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap\n//   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)\n//   - Param names: `exc_x`, `exc_y` (never a one-letter name, `t` was silently never applied) and `edge_amt` (`edge` is\n//     a Gen operator name; the dial and the message keep the plain word `edge`)\nParam dt(0.016666667);\nParam force(1);\nParam src_force(0);\nParam exc_x(0.5);\nParam exc_y(0.5);\nParam frequency(2);\nParam amplitude(0.5);\nParam edge_amt(0);\nParam strike_id(0);\nParam reset_gate(0);\n\ndx = norm.x - exc_x;\ndy = norm.y - exc_y;\ndx = dx - floor(dx + 0.5);\ndy = dy - floor(dy + 0.5);\nprof = exp(0 - (dx * dx + dy * dy) / 0.0008);\n\nlastid = nearest(in3, norm).y;\nlastid = switch(abs(lastid) < 1e30, lastid, 0);\nexphase = nearest(in3, norm).w - 1;\nexphase = switch(abs(exphase) < 1e30, exphase, 0);\n\nuu = nearest(in1, norm).x;\nvv = nearest(in1, norm).z;\n\nff = force * 2 * (nearest(in2, norm).x - 0.5) * src_force + amplitude * 165 * sin(exphase) * prof;\nvv = vv + ff * dt;\n\nfire = switch(strike_id != lastid, 1, 0) * switch(reset_gate < 0.5, 1, 0);\nuu = uu + fire * 4 * prof;\n\nedist = min(min(norm.x, 1 - norm.x), min(norm.y, 1 - norm.y));\nsp = clamp(1 - edist / 0.12, 0, 1);\nsprate = edge_amt * 20 * sp * sp * (3 - 2 * sp);\ngs = exp(0 - sprate * dt);\nuu = uu * gs;\nvv = vv * gs;\n\nuu = switch(abs(uu) < 1e30, uu, 0);\nvv = switch(abs(vv) < 1e30, vv, 0);\nuu = clamp(uu, -100, 100);\nvv = clamp(vv, -100, 100);\n\nnewid = switch(reset_gate >= 0.5, lastid, strike_id);\nnewphase = mod(exphase + twopi * frequency * dt, twopi);\n\nout1 = vec(uu, newid, vv, 1 + newphase);\n",
+									"code": "// codebox_real.gen -- f_wave_field stage 6: the real-space stage on the inverse-DFT result.\n// 256x256 float32. Mirror: tests/modules/wave_field/wave_field_mirror.real_stage().\n//\n// Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module inlet through\n// vs_inState), third = last frame's state from the hold stage (cold). Output = the new solver state and the\n// feedback edge:  R = u, B = v, G = strike counter, A = 1 + exciter phase.\n//   - force (FR-007): v += force * 2 (tex - 0.5) * dt, times src_force, the connected flag from vs_inState (an\n//     unconnected inlet is vs_black = 0, which would decode to a full -1 force). The flag lags ~180 ms at load;\n//     a uniform force only feeds the DC bin, which the spec stage removes\n//   - exciter (FR-008): v += amplitude * 165 (EX_GAIN) * sin(exphase) * gaussian(exc_x, exc_y, sigma 0.02) * dt on\n//     the wrapped distance. The phase accumulator lives in A of the state: A = 1 + phase, so a fresh hold\n//     texture (A = 1) starts at phase 0; each frame adds 2 pi frequency dt, modulo 2 pi\n//   - strike (FR-009): u += 4 (STRIKE_AMP) * gaussian, exactly once per change of the counter strike_id. G of\n//     the hold texture remembers the last counter value seen, so the pulse cannot repeat or be dropped\n//     whatever the draw order. While reset_gate is on the strike waits (reset, then strike on the same frame\n//     is the spec's struck_state) and G keeps its old value\n//   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the\n//     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap\n//   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)\n//   - Param names: `exc_x`, `exc_y` (never a one-letter name, `t` was silently never applied) and `edge_amt` (`edge` is\n//     a Gen operator name; the dial and the message keep the plain word `edge`)\n// T033 (Matt, 2026-11-04; mirror: wave_field_mirror.real_stage / outline_mask, T032). `conn` = src_force > 0.5 is\n// the connected flag (the same flag that gates the force texture):\n//   - connected: the point exciter is OFF (force and exciter are mutually exclusive) and its phase holds (A is\n//     carried over unchanged, so reconnecting never jumps); the strike drops strength * OUTLINE_AMP (1) * the\n//     outline mask of the force texture on u instead of the point Gaussian\n//   - unconnected: the point exciter and the point strike at exc_x / exc_y, exactly as before; strength does nothing\n//   - outline mask = |I(x+1) - I(x-1), I(y+1) - I(y-1)| of the inlet's R channel, one solver texel (1/256) either\n//     side, coordinates clamped to 0..1 (the mirror pads with the edge texel), result clamped to 0..1. It is read\n//     with nearest() at the inlet's own resolution, so an inlet smaller than 256 gives a band about two solver\n//     texels wide at each of ITS texel boundaries (checked live in T034, not in the mirror)\n//   - the branches use switch(), not multiplication by conn, so a NaN in the unused branch cannot leak (0 * NaN)\nParam dt(0.016666667);\nParam force(1);\nParam strength(1);\nParam src_force(0);\nParam exc_x(0.5);\nParam exc_y(0.5);\nParam frequency(2);\nParam amplitude(0.5);\nParam edge_amt(0);\nParam strike_id(0);\nParam reset_gate(0);\n\ndx = norm.x - exc_x;\ndy = norm.y - exc_y;\ndx = dx - floor(dx + 0.5);\ndy = dy - floor(dy + 0.5);\nprof = exp(0 - (dx * dx + dy * dy) / 0.0008);\n\nlastid = nearest(in3, norm).y;\nlastid = switch(abs(lastid) < 1e30, lastid, 0);\nexphase = nearest(in3, norm).w - 1;\nexphase = switch(abs(exphase) < 1e30, exphase, 0);\n\nuu = nearest(in1, norm).x;\nvv = nearest(in1, norm).z;\n\nconn = switch(src_force > 0.5, 1, 0);\n\nff = switch(conn > 0.5, force * 2 * (nearest(in2, norm).x - 0.5), amplitude * 165 * sin(exphase) * prof);\nvv = vv + ff * dt;\n\nsx = 1 / 256;\nxr = clamp(norm.x + sx, 0, 1);\nxl = clamp(norm.x - sx, 0, 1);\nyu = clamp(norm.y + sx, 0, 1);\nyd = clamp(norm.y - sx, 0, 1);\ngx = nearest(in2, vec(xr, norm.y)).x - nearest(in2, vec(xl, norm.y)).x;\ngy = nearest(in2, vec(norm.x, yu)).x - nearest(in2, vec(norm.x, yd)).x;\nomask = clamp(sqrt(gx * gx + gy * gy), 0, 1);\n\nfire = switch(strike_id != lastid, 1, 0) * switch(reset_gate < 0.5, 1, 0);\nuu = uu + fire * switch(conn > 0.5, strength * omask, 4 * prof);\n\nedist = min(min(norm.x, 1 - norm.x), min(norm.y, 1 - norm.y));\nsp = clamp(1 - edist / 0.12, 0, 1);\nsprate = edge_amt * 20 * sp * sp * (3 - 2 * sp);\ngs = exp(0 - sprate * dt);\nuu = uu * gs;\nvv = vv * gs;\n\nuu = switch(abs(uu) < 1e30, uu, 0);\nvv = switch(abs(vv) < 1e30, vv, 0);\nuu = clamp(uu, -100, 100);\nvv = clamp(vv, -100, 100);\n\nnewid = switch(reset_gate >= 0.5, lastid, strike_id);\nnewphase = switch(conn > 0.5, exphase, mod(exphase + twopi * frequency * dt, twopi));\n\nout1 = vec(uu, newid, vv, 1 + newphase);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1318,7 +1319,7 @@
 						""
 					],
 					"patching_rect": [
-						1279.5,
+						1351.5,
 						100.0,
 						56.0,
 						22.0
@@ -1350,7 +1351,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1059.5,
+						1131.5,
 						260.0,
 						190.0,
 						232.0
@@ -1374,7 +1375,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1279.5,
+						1351.5,
 						200.0,
 						80.0,
 						21.0
@@ -1405,7 +1406,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1369.5,
+						1441.5,
 						200.0,
 						60.0,
 						21.0
@@ -1437,7 +1438,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1279.5,
+						1351.5,
 						232.0,
 						5.0,
 						5.0
@@ -1469,7 +1470,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1299.5,
+						1371.5,
 						232.0,
 						5.0,
 						5.0
@@ -1494,7 +1495,7 @@
 						""
 					],
 					"patching_rect": [
-						1059.5,
+						1131.5,
 						20.0,
 						60.0,
 						22.0
@@ -1512,7 +1513,7 @@
 						""
 					],
 					"patching_rect": [
-						1059.5,
+						1131.5,
 						50.0,
 						180.0,
 						22.0
@@ -1533,7 +1534,7 @@
 						""
 					],
 					"patching_rect": [
-						1059.5,
+						1131.5,
 						110.0,
 						80.0,
 						22.0
@@ -1552,7 +1553,7 @@
 						""
 					],
 					"patching_rect": [
-						1059.5,
+						1131.5,
 						140.0,
 						60.0,
 						22.0
@@ -1570,7 +1571,7 @@
 						""
 					],
 					"patching_rect": [
-						1059.5,
+						1131.5,
 						170.0,
 						80.0,
 						22.0
@@ -1588,7 +1589,7 @@
 						""
 					],
 					"patching_rect": [
-						1059.5,
+						1131.5,
 						200.0,
 						100.0,
 						22.0
@@ -2186,7 +2187,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Where the point exciter and the strike sit, left to right",
+					"hint": "Where the point exciter and the strike sit, left to right. Used only with nothing connected to the inlet",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2290,7 +2291,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Where the point exciter and the strike sit, bottom to top",
+					"hint": "Where the point exciter and the strike sit, bottom to top. Used only with nothing connected to the inlet",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2394,7 +2395,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Exciter rate in cycles per second (it stays faithful up to about 4 Hz at 60 frames per second)",
+					"hint": "Exciter rate in cycles per second (it stays faithful up to about 4 Hz at 60 frames per second). Used only with nothing connected to the inlet",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2498,7 +2499,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Exciter strength: 0 = silent (free ringing after a strike), 1 = a field about one unit high",
+					"hint": "Exciter strength: 0 = silent (free ringing after a strike), 1 = a field about one unit high. Used only with nothing connected to the inlet",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2602,7 +2603,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "How hard the texture on the inlet pushes the field: mid-grey does nothing, brighter pushes up, darker pushes down",
+					"hint": "How hard the texture on the inlet pushes the field: mid-grey does nothing, brighter pushes up, darker pushes down. Past 1 it boosts a dim texture",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2635,7 +2636,7 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "force",
-							"parameter_mmax": 1.0,
+							"parameter_mmax": 1.5,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "force",
@@ -2706,14 +2707,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Output strength before the soft tanh limiter: raise it to see quiet waves, lower it for big ones",
+					"hint": "How hard Strike hits the outlines of the texture on the inlet. 0 = no strike. Only with a texture connected; with nothing connected Strike is a point at X, Y",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_wf_enc::gain",
+					"param_connect": "#0_wf_real::strength",
 					"parameter_enable": 1,
 					"patching_rect": [
 						766.5,
@@ -2738,11 +2739,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "gain",
-							"parameter_mmax": 10.0,
+							"parameter_longname": "strength",
+							"parameter_mmax": 1.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "gain",
+							"parameter_shortname": "strength",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2751,14 +2752,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "gain"
+					"varname": "strength"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-51",
 					"maxclass": "attrui",
-					"attr": "gain",
+					"attr": "strength",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2794,6 +2795,110 @@
 						50.0,
 						18.0
 					],
+					"text": "Strength",
+					"textjustification": 1,
+					"varname": "lbl_strength"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-53",
+					"maxclass": "live.dial",
+					"activedialcolor": [
+						0.8,
+						0.8,
+						0.8,
+						1.0
+					],
+					"fontname": "Ableton Sans Light",
+					"hint": "Output strength before the soft tanh limiter: raise it to see quiet waves, lower it for big ones",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						"float"
+					],
+					"param_connect": "#0_wf_enc::gain",
+					"parameter_enable": 1,
+					"patching_rect": [
+						838.5,
+						250.0,
+						27.0,
+						43.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						41.0,
+						162.0,
+						27.0,
+						43.0
+					],
+					"saved_attribute_attributes": {
+						"activedialcolor": {
+							"expression": ""
+						},
+						"valueof": {
+							"parameter_initial": [
+								1.0
+							],
+							"parameter_initial_enable": 1,
+							"parameter_linknames": 1,
+							"parameter_longname": "gain",
+							"parameter_mmax": 10.0,
+							"parameter_mmin": 0.0,
+							"parameter_modmode": 3,
+							"parameter_shortname": "gain",
+							"parameter_type": 0,
+							"parameter_unitstyle": 1
+						}
+					},
+					"showname": 0,
+					"triangle": 1,
+					"valuepopup": 1,
+					"valuepopuplabel": 1,
+					"varname": "gain"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-54",
+					"maxclass": "attrui",
+					"attr": "gain",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						818.0,
+						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-55",
+					"maxclass": "comment",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						827.0,
+						180.0,
+						50.0,
+						18.0
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						29.5,
+						144.0,
+						50.0,
+						18.0
+					],
 					"text": "Gain",
 					"textjustification": 1,
 					"varname": "lbl_gain"
@@ -2801,7 +2906,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-53",
+					"id": "obj-56",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -2812,7 +2917,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1279.5,
+						1351.5,
 						130.0,
 						18.0,
 						12.0
@@ -2829,7 +2934,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-57",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -2837,7 +2942,7 @@
 						""
 					],
 					"patching_rect": [
-						1279.5,
+						1351.5,
 						160.0,
 						131.0,
 						22.0
@@ -2862,7 +2967,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						85.0,
+						115.0,
 						186.0,
 						28.0,
 						28.0
@@ -2887,7 +2992,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						74.0,
+						104.0,
 						164.0,
 						50.0,
 						18.0
@@ -2914,13 +3019,13 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						48.0,
+						78.0,
 						186.0,
 						28.0,
 						28.0
 					],
 					"varname": "strike_button",
-					"hint": "Drop an impulse at X, Y"
+					"hint": "Drop an impulse: at X, Y with nothing connected, or on the outlines of the inlet texture (set by Strength)"
 				}
 			},
 			{
@@ -2939,7 +3044,7 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						37.0,
+						67.0,
 						164.0,
 						50.0,
 						18.0
@@ -3218,7 +3323,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						1
 					]
 				}
@@ -3242,7 +3347,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -3254,7 +3359,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
+						"obj-59",
 						0
 					]
 				}
@@ -3310,11 +3415,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-53",
+						"obj-56",
 						0
 					],
 					"destination": [
-						"obj-54",
+						"obj-57",
 						0
 					]
 				}
@@ -3322,7 +3427,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-54",
+						"obj-57",
 						0
 					],
 					"destination": [
@@ -3334,11 +3439,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-58",
 						0
 					],
 					"destination": [
-						"obj-56",
+						"obj-59",
 						1
 					]
 				}
@@ -3346,11 +3451,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-58",
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						2
 					]
 				}
@@ -3358,42 +3463,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-56",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-57",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-58",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-59",
 						0
 					],
@@ -3434,7 +3503,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-63",
 						0
 					]
 				}
@@ -3442,7 +3511,43 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-62",
+						"obj-63",
+						0
+					],
+					"destination": [
+						"obj-64",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-64",
+						0
+					],
+					"destination": [
+						"obj-65",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-65",
+						0
+					],
+					"destination": [
+						"obj-58",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-65",
 						0
 					],
 					"destination": [
@@ -3542,7 +3647,7 @@
 						0
 					],
 					"destination": [
-						"obj-59",
+						"obj-62",
 						0
 					]
 				}
@@ -3578,7 +3683,7 @@
 						0
 					],
 					"destination": [
-						"obj-59",
+						"obj-62",
 						0
 					]
 				}
@@ -3614,7 +3719,7 @@
 						0
 					],
 					"destination": [
-						"obj-59",
+						"obj-62",
 						0
 					]
 				}
@@ -3650,7 +3755,7 @@
 						0
 					],
 					"destination": [
-						"obj-59",
+						"obj-62",
 						0
 					]
 				}
@@ -3686,7 +3791,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -3722,7 +3827,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -3758,7 +3863,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -3794,7 +3899,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -3830,7 +3935,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -3866,7 +3971,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -3902,7 +4007,7 @@
 						0
 					],
 					"destination": [
-						"obj-5",
+						"obj-65",
 						0
 					]
 				}
@@ -3914,7 +4019,31 @@
 						11
 					],
 					"destination": [
-						"obj-raw-10",
+						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-53",
+						0
+					],
+					"destination": [
+						"obj-54",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-54",
+						0
+					],
+					"destination": [
+						"obj-5",
 						0
 					]
 				}
@@ -3924,6 +4053,18 @@
 					"source": [
 						"obj-4",
 						12
+					],
+					"destination": [
+						"obj-raw-10",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-4",
+						13
 					],
 					"destination": [
 						"obj-raw-5",
@@ -4034,7 +4175,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
+						"obj-59",
 						0
 					]
 				}
@@ -4046,7 +4187,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -4094,7 +4235,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -4166,7 +4307,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
+						"obj-59",
 						0
 					]
 				}
@@ -4178,7 +4319,7 @@
 						0
 					],
 					"destination": [
-						"obj-62",
+						"obj-65",
 						0
 					]
 				}
@@ -4236,6 +4377,11 @@
 				0
 			],
 			"obj-50": [
+				"strength",
+				"strength",
+				0
+			],
+			"obj-53": [
 				"gain",
 				"gain",
 				0

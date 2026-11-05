@@ -19,8 +19,20 @@
 //   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)
 //   - Param names: `exc_x`, `exc_y` (never a one-letter name, `t` was silently never applied) and `edge_amt` (`edge` is
 //     a Gen operator name; the dial and the message keep the plain word `edge`)
+// T033 (Matt, 2026-11-04; mirror: wave_field_mirror.real_stage / outline_mask, T032). `conn` = src_force > 0.5 is
+// the connected flag (the same flag that gates the force texture):
+//   - connected: the point exciter is OFF (force and exciter are mutually exclusive) and its phase holds (A is
+//     carried over unchanged, so reconnecting never jumps); the strike drops strength * OUTLINE_AMP (1) * the
+//     outline mask of the force texture on u instead of the point Gaussian
+//   - unconnected: the point exciter and the point strike at exc_x / exc_y, exactly as before; strength does nothing
+//   - outline mask = |I(x+1) - I(x-1), I(y+1) - I(y-1)| of the inlet's R channel, one solver texel (1/256) either
+//     side, coordinates clamped to 0..1 (the mirror pads with the edge texel), result clamped to 0..1. It is read
+//     with nearest() at the inlet's own resolution, so an inlet smaller than 256 gives a band about two solver
+//     texels wide at each of ITS texel boundaries (checked live in T034, not in the mirror)
+//   - the branches use switch(), not multiplication by conn, so a NaN in the unused branch cannot leak (0 * NaN)
 Param dt(0.016666667);
 Param force(1);
+Param strength(1);
 Param src_force(0);
 Param exc_x(0.5);
 Param exc_y(0.5);
@@ -44,11 +56,22 @@ exphase = switch(abs(exphase) < 1e30, exphase, 0);
 uu = nearest(in1, norm).x;
 vv = nearest(in1, norm).z;
 
-ff = force * 2 * (nearest(in2, norm).x - 0.5) * src_force + amplitude * 165 * sin(exphase) * prof;
+conn = switch(src_force > 0.5, 1, 0);
+
+ff = switch(conn > 0.5, force * 2 * (nearest(in2, norm).x - 0.5), amplitude * 165 * sin(exphase) * prof);
 vv = vv + ff * dt;
 
+sx = 1 / 256;
+xr = clamp(norm.x + sx, 0, 1);
+xl = clamp(norm.x - sx, 0, 1);
+yu = clamp(norm.y + sx, 0, 1);
+yd = clamp(norm.y - sx, 0, 1);
+gx = nearest(in2, vec(xr, norm.y)).x - nearest(in2, vec(xl, norm.y)).x;
+gy = nearest(in2, vec(norm.x, yu)).x - nearest(in2, vec(norm.x, yd)).x;
+omask = clamp(sqrt(gx * gx + gy * gy), 0, 1);
+
 fire = switch(strike_id != lastid, 1, 0) * switch(reset_gate < 0.5, 1, 0);
-uu = uu + fire * 4 * prof;
+uu = uu + fire * switch(conn > 0.5, strength * omask, 4 * prof);
 
 edist = min(min(norm.x, 1 - norm.x), min(norm.y, 1 - norm.y));
 sp = clamp(1 - edist / 0.12, 0, 1);
@@ -63,6 +86,6 @@ uu = clamp(uu, -100, 100);
 vv = clamp(vv, -100, 100);
 
 newid = switch(reset_gate >= 0.5, lastid, strike_id);
-newphase = mod(exphase + twopi * frequency * dt, twopi);
+newphase = switch(conn > 0.5, exphase, mod(exphase + twopi * frequency * dt, twopi));
 
 out1 = vec(uu, newid, vv, 1 + newphase);

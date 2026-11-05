@@ -20,6 +20,10 @@ The `r draw` bang goes to pass and enc (draw_triggers); the feedback arrives on 
 advances exactly once per rendered frame. The force texture reaches `real` through vs_inState; the connected
 flag `src_force` gates it (an unconnected inlet is vs_black = 0, which would decode to a full -1 force).
 
+Connected inlet (T033, Matt 2026-11-04): with a texture on the inlet (`src_force` = 1) the point exciter is off and
+its phase holds, Force pushes with the texture (0 to 1.5), and Strike drops `strength` on the OUTLINES of the
+texture instead of a point at X, Y. With nothing connected: the point exciter and the point strike, as before.
+
 Time unit (gate G3, Matt 2026-10-25): one draw = 1/60 model second (Param dt, a codebox constant, not a dial).
 Output mapping (gate G2): tanh with the `gain` dial in front. Dial set (gate G4): the proposed set.
 `damping` starts at its floor (0.001, T003) so float32 round-off cannot grow energy.
@@ -66,19 +70,22 @@ patcher = {
          "hint": "Absorbing borders: 0 = waves wrap around to the opposite side, higher = they die at the edge without reflecting"},
         {"name": "exc_x", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "X", "pix_target": "real",
-         "hint": "Where the point exciter and the strike sit, left to right"},
+         "hint": "Where the point exciter and the strike sit, left to right. Used only with nothing connected to the inlet"},
         {"name": "exc_y", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "Y", "pix_target": "real",
-         "hint": "Where the point exciter and the strike sit, bottom to top"},
+         "hint": "Where the point exciter and the strike sit, bottom to top. Used only with nothing connected to the inlet"},
         {"name": "frequency", "type": "float", "min": 0.1, "max": 12.0, "default": 2.0,
          "label": "Freq", "pix_target": "real",
-         "hint": "Exciter rate in cycles per second (it stays faithful up to about 4 Hz at 60 frames per second)"},
+         "hint": "Exciter rate in cycles per second (it stays faithful up to about 4 Hz at 60 frames per second). Used only with nothing connected to the inlet"},
         {"name": "amplitude", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "Amp", "pix_target": "real",
-         "hint": "Exciter strength: 0 = silent (free ringing after a strike), 1 = a field about one unit high"},
-        {"name": "force", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
+         "hint": "Exciter strength: 0 = silent (free ringing after a strike), 1 = a field about one unit high. Used only with nothing connected to the inlet"},
+        {"name": "force", "type": "float", "min": 0.0, "max": 1.5, "default": 1.0,
          "label": "Force", "pix_target": "real",
-         "hint": "How hard the texture on the inlet pushes the field: mid-grey does nothing, brighter pushes up, darker pushes down"},
+         "hint": "How hard the texture on the inlet pushes the field: mid-grey does nothing, brighter pushes up, darker pushes down. Past 1 it boosts a dim texture"},
+        {"name": "strength", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
+         "label": "Strength", "pix_target": "real",
+         "hint": "How hard Strike hits the outlines of the texture on the inlet. 0 = no strike. Only with a texture connected; with nothing connected Strike is a point at X, Y"},
         {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 1.0,
          "label": "Gain", "pix_target": "enc",
          "hint": "Output strength before the soft tanh limiter: raise it to see quiet waves, lower it for big ones"},
@@ -169,20 +176,20 @@ def _line(src, so, dst, di):
 
 
 # Filled in from the built patcher (build order of pix_chain: hold, pass, fx, fy, spec, iy, ix, real, enc).
-_IDS = {"route": "obj-4", "pass": "obj-56", "real": "obj-62"}
+_IDS = {"route": "obj-4", "pass": "obj-59", "real": "obj-65"}
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[85.0, 186.0, 28.0, 28.0], varname="reset_button",
+         presentation=1, presentation_rect=[115.0, 186.0, 28.0, 28.0], varname="reset_button",
          hint="Clear the field"),
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[74.0, 164.0, 50.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[104.0, 164.0, 50.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
     _box(3, "button", [30.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
-         presentation=1, presentation_rect=[48.0, 186.0, 28.0, 28.0], varname="strike_button",
-         hint="Drop an impulse at X, Y"),
+         presentation=1, presentation_rect=[78.0, 186.0, 28.0, 28.0], varname="strike_button",
+         hint="Drop an impulse: at X, Y with nothing connected, or on the outlines of the inlet texture (set by Strength)"),
     _box(4, "comment", [30.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[37.0, 164.0, 50.0, 18.0],
+         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[67.0, 164.0, 50.0, 18.0],
          text="Strike", textjustification=1, varname="lbl_strike"),
     _obj(5, "t b b", 1, 2, [90.0, 380.0, 40.0, 22.0], ["bang", "bang"]),
     _obj(6, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
@@ -199,8 +206,8 @@ patcher["raw_boxes"] = [
     _msg(16, "param reset_gate 0", [260.0, 510.0, 100.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line(_IDS["route"], 11, 10, 0),   # route: `strike` -> counter [i] / [+ 1] (first bang gives 1)   (route outlet 11: speed ... gain = 0..10, strike, reset)
-    _line(_IDS["route"], 12, 5, 0),    # route: `reset` -> trigger
+    _line(_IDS["route"], 12, 10, 0),   # route: `strike` -> counter [i] / [+ 1] (first bang gives 1)   (route outlet 12: speed ... gain = 0..11, strike, reset)
+    _line(_IDS["route"], 13, 5, 0),    # route: `reset` -> trigger
     _line(3, 0, 10, 0),                # strike button -> counter
     _line(1, 0, 5, 0),                 # reset button -> trigger
     _line(6, 0, 7, 0), _line(7, 0, 5, 0), _line(7, 0, 10, 0),      # loadbang -> delay -> reset trigger and strike
