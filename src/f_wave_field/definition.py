@@ -23,7 +23,7 @@ through their own vs_inState; the connected flags `src_force` and `src_lfo` gate
 vs_black = 0, which would decode to a full -1 force).
 
 Inlets (T033 / T036, Matt 2026-11-04): inlet 0 says WHERE, inlet 1 says WHEN. With a texture on inlet 0 Force pushes
-with it (0 to 1.5) and Strike drops `strength` on its OUTLINES; with nothing there Strike is a point at X, Y. An LFO
+with it (0 to 1.5) and Strike drops `strength` on its OUTLINES; with nothing there Strike is a point at the frame centre. An LFO
 texture on inlet 1 gives the time function T per pixel (`lmode`: uni raw 0..1, bi 2 x - 1): it scales the texture push
 and the strike, and does nothing alone (no push without inlet 0). The point sine exciter (Freq, Amp) was removed.
 
@@ -71,18 +71,12 @@ patcher = {
         {"name": "edge", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "Edge", "pix_attr": "edge_amt", "pix_target": "real",
          "hint": "Absorbing borders: 0 = waves wrap around to the opposite side, higher = they die at the edge without reflecting"},
-        {"name": "exc_x", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
-         "label": "X", "pix_target": "real",
-         "hint": "Where the point strike lands, left to right. Used only with nothing connected to inlet 0 (a connected texture is struck on its outlines)"},
-        {"name": "exc_y", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
-         "label": "Y", "pix_target": "real",
-         "hint": "Where the point strike lands, bottom to top. Used only with nothing connected to inlet 0 (a connected texture is struck on its outlines)"},
         {"name": "force", "type": "float", "min": 0.0, "max": 1.5, "default": 1.0,
          "label": "Force", "pix_target": "real",
          "hint": "How hard the texture on inlet 0 pushes the field: mid-grey does nothing, brighter pushes up, darker pushes down. Past 1 it boosts a dim texture. An LFO on inlet 1 makes the push pulse"},
         {"name": "strength", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Strength", "pix_target": "real",
-         "hint": "How hard Strike hits: on the outlines of the texture on inlet 0, or at the point X, Y with nothing connected. 0 = no strike. An LFO on inlet 1 shapes the pulse"},
+         "hint": "How hard Strike hits: on the outlines of the texture on inlet 0, or at the frame centre with nothing connected. 0 = no strike. An LFO on inlet 1 shapes the pulse"},
         {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 1.0,
          "label": "Gain", "pix_target": "enc",
          "hint": "Output strength before the soft tanh limiter: raise it to see quiet waves, lower it for big ones"},
@@ -183,7 +177,7 @@ def _line(src, so, dst, di):
 
 
 # Filled in from the built patcher (build order of pix_chain: hold, pass, fx, fy, spec, iy, ix, real, enc).
-_IDS = {"route": "obj-4", "pass": "obj-56", "real": "obj-62"}
+_IDS = {"route": "obj-4", "pass": "obj-51", "real": "obj-57"}
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
@@ -194,7 +188,7 @@ patcher["raw_boxes"] = [
          text="Reset", textjustification=1, varname="lbl_reset"),
     _box(3, "button", [30.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
          presentation=1, presentation_rect=[78.0, 186.0, 28.0, 28.0], varname="strike_button",
-         hint="Drop an impulse: at X, Y with nothing connected, or on the outlines of the inlet texture (set by Strength)"),
+         hint="Drop an impulse: at the frame centre with nothing connected, or on the outlines of the inlet texture (set by Strength)"),
     _box(4, "comment", [30.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
          numinlets=1, numoutlets=0, presentation=1, presentation_rect=[67.0, 164.0, 50.0, 18.0],
          text="Strike", textjustification=1, varname="lbl_strike"),
@@ -213,8 +207,8 @@ patcher["raw_boxes"] = [
     _msg(16, "param reset_gate 0", [260.0, 510.0, 100.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line(_IDS["route"], 11, 10, 0),   # route: `strike` -> counter [i] / [+ 1] (first bang gives 1)   (route outlet 11: speed ... gain, lmode = 0..10, strike, reset)
-    _line(_IDS["route"], 12, 5, 0),    # route: `reset` -> trigger
+    _line(_IDS["route"], 9, 10, 0),    # route: `strike` -> counter [i] / [+ 1] (first bang gives 1)   (route outlet 9: speed ... gain, lmode = 0..8, strike, reset)
+    _line(_IDS["route"], 10, 5, 0),   # route: `reset` -> trigger
     _line(3, 0, 10, 0),                # strike button -> counter
     _line(1, 0, 5, 0),                 # reset button -> trigger
     _line(6, 0, 7, 0), _line(7, 0, 5, 0), _line(7, 0, 10, 0),      # loadbang -> delay -> reset trigger and strike

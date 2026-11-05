@@ -39,7 +39,7 @@ PINNED = {
     "pass": {"reset_gate": 0.0},
     "spec": {"speed": 0.25, "damping": 0.001, "dispersion": 1.0, "ring": 0.0, "dt": DT},
     "real": {"dt": DT, "force": 1.0, "strength": 1.0, "lmode": 0.0, "src_force": 0.0, "src_lfo": 0.0,
-             "exc_x": 0.5, "exc_y": 0.5, "edge_amt": 0.0, "strike_id": 0.0, "reset_gate": 0.0},
+             "edge_amt": 0.0, "strike_id": 0.0, "reset_gate": 0.0},
     "enc": {"gain": 1.0, "bypass_gate": 0.0},
 }
 
@@ -280,9 +280,9 @@ def test_real_stage_matches_mirror():
         ("force x spatial LFO, bi", dict(force=1.0, src_force=1.0, src_lfo=1.0, lmode=1.0), sq, sp, False, h0),
         ("LFO alone pushes nothing", dict(force=1.0, src_lfo=1.0, lmode=1.0), None, lf, False, h0),
         ("LFO ignored when src_lfo 0", dict(force=0.7, src_force=1.0, src_lfo=0.0), ft, lf, False, h0),
-        ("point strike (counter 1 vs hold 0)", dict(strike_id=1.0, exc_x=0.4, exc_y=0.7), None, None, True, h0),
-        ("point strike x strength 0.5", dict(strike_id=1.0, strength=0.5, exc_x=0.4, exc_y=0.7), None, None, True, h0),
-        ("point strike x uniform LFO, bi", dict(strike_id=1.0, src_lfo=1.0, lmode=1.0, exc_x=0.4, exc_y=0.7),
+        ("point strike (counter 1 vs hold 0)", dict(strike_id=1.0), None, None, True, h0),
+        ("point strike x strength 0.5", dict(strike_id=1.0, strength=0.5), None, None, True, h0),
+        ("point strike x uniform LFO, bi", dict(strike_id=1.0, src_lfo=1.0, lmode=1.0),
          None, lf, True, h0),
         ("outline strike (square, force 0)", dict(strike_id=1.0, src_force=1.0, force=0.0), sq, None, True, h0),
         ("outline strike x spatial LFO", dict(strike_id=1.0, src_force=1.0, force=0.0, src_lfo=1.0), sq, sp, True, h0),
@@ -295,7 +295,7 @@ def test_real_stage_matches_mirror():
         connected, lconn = kw.get("src_force", 0.0) >= 0.5, kw.get("src_lfo", 0.0) >= 0.5
         got = gpu("real", [lin, ftex if ftex is not None else force_tex_of(8), hold,
                            ltex if ltex is not None else LFO_OFF], **kw)
-        p = mp(x=kw.get("exc_x", 0.5), y=kw.get("exc_y", 0.5), edge=kw.get("edge_amt", 0.0), force=kw.get("force", 1.0),
+        p = mp(edge=kw.get("edge_amt", 0.0), force=kw.get("force", 1.0),
                strength=kw.get("strength", 1.0), lmode=int(kw.get("lmode", 0.0)))
         # the mirror applies the force inlet / LFO only when given: src_force 0 / src_lfo 0 mean not connected
         want = wfm.real_stage(base, p, ftex if connected else None, strike, ltex if lconn else None)
@@ -442,8 +442,8 @@ def chain_vs_mirror(frames, marks, mkw, gkw, strike_frame=1, use_force=True, lfo
 def test_chain_30_frames_matches_mirror():
     """30 host-sequenced GPU frames with a white square on the force inlet, a uniform LFO (uni) on the LFO inlet, the
     outline strike on frame 1 and the sponge on."""
-    mkw = dict(speed=0.25, damping=0.05, edge=0.5, force=0.5, strength=0.8, x=0.4, y=0.6)
-    gkw = dict(speed=0.25, damping=0.05, edge_amt=0.5, force=0.5, strength=0.8, exc_x=0.4, exc_y=0.6,
+    mkw = dict(speed=0.25, damping=0.05, edge=0.5, force=0.5, strength=0.8)
+    gkw = dict(speed=0.25, damping=0.05, edge_amt=0.5, force=0.5, strength=0.8,
                src_force=1.0, src_lfo=1.0, strike_id=1.0)
     errs, m, g = chain_vs_mirror(30, (1, 5, 10, 30), mkw, gkw, lfo=lfo_flat(0.6))
     for f, e in errs.items():
@@ -471,8 +471,8 @@ def test_chain_10_frames_in_each_damping_regime():
 
 @slow       # ~2 minutes: 100 frames x 7 bench jobs, bound by render frames per job
 def test_chain_100_frames_matches_mirror():
-    mkw = dict(speed=0.25, damping=0.05, edge=0.5, force=0.5, x=0.4, y=0.6)
-    gkw = dict(speed=0.25, damping=0.05, edge_amt=0.5, force=0.5, exc_x=0.4, exc_y=0.6, src_force=1.0, strike_id=1.0)
+    mkw = dict(speed=0.25, damping=0.05, edge=0.5, force=0.5)
+    gkw = dict(speed=0.25, damping=0.05, edge_amt=0.5, force=0.5, src_force=1.0, strike_id=1.0)
     errs, m, g = chain_vs_mirror(100, (10, 30, 60, 100), mkw, gkw)
     for f, e in errs.items():
         note(f"frame {f}: max |GPU - mirror|", e)

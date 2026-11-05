@@ -315,11 +315,11 @@ def test_mean_force_does_not_accelerate_a_mean_offset():
 def test_periodic_wrap_is_translation_invariant_across_the_seam():
     n = 64
     p = Params(speed=0.25, damping=0.0, fast_fft=True)
-    a = struck_state(n, n, p.with_(x=0.875))
-    b = struck_state(n, n, p.with_(x=0.625))
+    a = struck_state(n, n, p, at=(0.875, 0.5))
+    b = struck_state(n, n, p, at=(0.625, 0.5))
     for _ in range(30):                                 # the front reaches x > 1 and wraps to the left
-        a, _, _ = wave_frame(a, p.with_(x=0.875))
-        b, _, _ = wave_frame(b, p.with_(x=0.625))
+        a, _, _ = wave_frame(a, p)
+        b, _, _ = wave_frame(b, p)
     shifted = np.roll(b[..., 0], 16, axis=1)            # 16 texels = 0.25 of the frame
     check("pulse across the seam = rolled copy (relative)",
           float(np.abs(a[..., 0] - shifted).max()) / float(np.abs(a[..., 0]).max()), 1e-5)
@@ -327,8 +327,8 @@ def test_periodic_wrap_is_translation_invariant_across_the_seam():
 
 def test_pulse_leaving_one_border_reappears_at_the_opposite_one():
     n = 64
-    p = Params(speed=0.25, damping=0.0, fast_fft=True, x=0.95)
-    st = struck_state(n, n, p)
+    p = Params(speed=0.25, damping=0.0, fast_fft=True)
+    st = struck_state(n, n, p, at=(0.95, 0.5))
     lo, hi = int(0.12 * n), int(0.20 * n)               # a strip beyond the pulse's own tail across the seam
     left_before = float(np.abs(st[:, lo:hi, 0]).max())
     for _ in range(48):                                 # radius 0.2: the front reaches x = 1.15 -> 0.15
@@ -357,12 +357,12 @@ def test_sponge_never_adds_to_u_or_v_norms_and_is_zero_inside():
 
 def test_sponge_removes_energy_after_the_pulse_crosses_the_border():
     n = 64
-    base = Params(speed=0.25, damping=0.0, fast_fft=True, x=0.9)
+    base = Params(speed=0.25, damping=0.0, fast_fft=True)
     es = {}
     worst = {}
     for edge in (0.0, 1.0):
         p = base.with_(edge=edge)
-        st = struck_state(n, n, p)
+        st = struck_state(n, n, p, at=(0.9, 0.5))
         e_prev = energy(st, p)
         worst[edge] = 0.0
         for _ in range(60):
@@ -372,7 +372,7 @@ def test_sponge_removes_energy_after_the_pulse_crosses_the_border():
             e_prev = e
         es[edge] = e_prev
     note("worst frame-to-frame energy rise, edge 1", f"{worst[1.0]:.2e} (spectral energy weights |grad u|^2: not guaranteed monotone; T004)")
-    check("edge 0: energy conserved by the wrap", abs(es[0.0] / energy(struck_state(n, n, base), base) - 1.0), 1e-3)
+    check("edge 0: energy conserved by the wrap", abs(es[0.0] / energy(struck_state(n, n, base, at=(0.9, 0.5)), base) - 1.0), 1e-3)
     check("edge 1: energy after crossing is below the wrapping run's", float(es[1.0] > 0.7 * es[0.0]), 0.0)
 
 
@@ -413,11 +413,15 @@ def test_zero_speed_zero_ring_is_stable_and_static():
 # ------------------------------------------------------------------ strike, reset
 
 def test_strike_and_reset():
-    p = Params(speed=0.25, x=0.3, y=0.6)
-    s = struck_state(64, 64, p)
+    p = Params(speed=0.25)
+    s = real_stage(new_state(64, 64), p, strike=True)     # nothing connected: the point strike sits at the frame centre (D10)
     iy, ix = np.unravel_index(np.argmax(s[..., 0]), s[..., 0].shape)
-    check("strike peaks at the strike position (x)", abs((ix + 0.5) / 64 - 0.3), 1 / 64)
-    check("strike peaks at the strike position (y)", abs((iy + 0.5) / 64 - 0.6), 1 / 64)
+    check("the point strike peaks at the frame centre (x)", abs((ix + 0.5) / 64 - 0.5), 1 / 64)
+    check("the point strike peaks at the frame centre (y)", abs((iy + 0.5) / 64 - 0.5), 1 / 64)
+    check("struck_state is the same impulse", float(np.abs(struck_state(64, 64, p)[..., 0] - s[..., 0]).max()), 1e-6)
+    off = struck_state(64, 64, p, at=(0.3, 0.6))
+    iy, ix = np.unravel_index(np.argmax(off[..., 0]), off[..., 0].shape)
+    check("struck_state(at=...) puts the pulse off centre (test helper)", abs((ix + 0.5) / 64 - 0.3) + abs((iy + 0.5) / 64 - 0.6), 2 / 64)
     check("strike puts nothing in v", float(np.abs(s[..., 2]).max()), 0.0)
     z = new_state(64, 64)
     check("reset zeroes u and v", float(np.abs(z[..., [0, 1, 2]]).max()), 0.0)
@@ -450,7 +454,7 @@ def test_vecfield_is_neutral_on_a_flat_field_and_follows_the_gradient():
     check("flat field: vecfield G = 0.5", float(np.abs(vec[..., 1] - 0.5).max()), 0.0)
     check("vecfield B = 0.5, A = 1", float(max(np.abs(vec[..., 2] - 0.5).max(), np.abs(vec[..., 3] - 1.0).max())), 0.0)
     n = 64
-    p = Params(x=0.5, y=0.5)
+    p = Params()
     bump = new_state(n, n)
     bump[..., 0] = _gauss(n, n, 0.5, 0.5, 0.1)
     ux, uy = gradient(bump)
@@ -656,9 +660,9 @@ def test_connected_strike_lands_on_the_outlines_and_scales_with_strength():
 def test_unconnected_strike_is_the_point_gaussian_scaled_by_strength():
     n = 64
     for st_ in (1.0, 0.5, 0.0):
-        p = Params(edge=0.0, x=0.3, y=0.6, strength=st_)
+        p = Params(edge=0.0, strength=st_)
         out = real_stage(new_state(n, n), p, strike=True)
-        want = st_ * wfm.STRIKE_AMP * _gauss(n, n, 0.3, 0.6, wfm.EX_SIGMA)
+        want = st_ * wfm.STRIKE_AMP * _gauss(n, n, wfm.STRIKE_X, wfm.STRIKE_Y, wfm.EX_SIGMA)
         check(f"unconnected strike = strength {st_:g} x the point Gaussian", float(np.abs(out[..., 0] - want).max()), 1e-6)
 
 
@@ -725,9 +729,9 @@ def test_lfo_time_function_is_uni_or_bi():
 
 def test_uniform_lfo_scales_the_point_strike():
     n = 64
-    base = real_stage(new_state(n, n), Params(edge=0.0, x=0.3, y=0.6), strike=True)[..., 0]
+    base = real_stage(new_state(n, n), Params(edge=0.0), strike=True)[..., 0]
     for lm, level, factor in ((0, 0.5, 0.5), (0, 0.0, 0.0), (0, 1.0, 1.0), (1, 0.5, 0.0), (1, 1.0, 1.0), (1, 0.0, -1.0)):
-        out = real_stage(new_state(n, n), Params(edge=0.0, x=0.3, y=0.6, lmode=lm), strike=True,
+        out = real_stage(new_state(n, n), Params(edge=0.0, lmode=lm), strike=True,
                          lfo_tex=_flat(level, n))[..., 0]
         check(f"point strike x LFO {level:g} ({'bi' if lm else 'uni'}) = {factor:g} x the plain strike",
               float(np.abs(out - factor * base).max()), 1e-6)

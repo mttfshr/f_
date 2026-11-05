@@ -51,6 +51,8 @@ from gpu_sim import F32, TWOPI, grid, sample, store_float32, texture
 KREF = F32(TWOPI * 8.0)        # reference wavenumber: mode 8 across the frame (T004)
 NU = F32(1e-5)                 # fixed viscosity on |k|^2 (T004: damping time 0.15 s at the N = 256 Nyquist bin, 40 s at mode 8)
 DAMPING_FLOOR = 1e-3           # lowest `damping` the dial reaches, per time unit (T003: worst float32 coefficient gain 3.3e-7/frame needs 1e-5; x100 margin)
+STRIKE_X = F32(0.5)            # the point strike sits at the frame centre: the X and Y dials were removed (D10)
+STRIKE_Y = F32(0.5)
 EX_SIGMA = F32(0.02)           # strike Gaussian sigma, in frame widths (T004; the exciter that shared it was removed, D7)
 STRIKE_AMP = F32(4.0)          # strike impulse height in u (T004: the ring is ~0.4 after 1 s; scaled by `strength` since T035)
 OUTLINE_AMP = F32(1.0)         # outline strike height in u at mask = 1 and strength = 1 (T032, PROVISIONAL: tuned by eye in T034)
@@ -72,8 +74,6 @@ class Params:
     dt: float = 1.0 / 60.0      # model step per frame (time unit seconds; gate G3)
     force: float = 1.0          # gain on the force inlet (dial 0..1.5, T032)
     strength: float = 1.0       # outline strike strength, 0..1 (T032); only used while the force inlet is connected
-    x: float = 0.5              # point strike position (nothing connected on the force inlet)
-    y: float = 0.5
     lmode: int = 0              # LFO read: 0 uni (raw 0..1), 1 bi (2 x - 1)  (T035)
     gain: float = 1.0           # output mapping strength (G2: tanh), before the tanh
     fast_fft: bool = False      # False = the pass_dft chain; True = np.fft (long runs only)
@@ -209,8 +209,7 @@ def real_stage(state, p, force_tex=None, strike=False, lfo_tex=None):
     force_tex is not None means the force inlet is connected (src_force = 1): it pushes v by
     force * 2 (tex - 0.5) * T * dt (FR-007, neutral at 0.5). lfo_tex is not None means the LFO inlet is connected
     (src_lfo = 1): T = lfo_time(...), else T = 1. With nothing on the force inlet there is no push, LFO or not.
-    The strike (FR-009) adds strength * impulse * T to u, where the impulse is STRIKE_AMP * the point Gaussian at
-    (x, y) with nothing connected, or OUTLINE_AMP * outline_mask(force_tex) when connected. Then the edge sponge on
+    The strike (FR-009) adds strength * impulse * T to u, where the impulse is STRIKE_AMP * the point Gaussian at the frame centre with nothing connected, or OUTLINE_AMP * outline_mask(force_tex) when connected. Then the edge sponge on
     u and v (FR-010) and containment (zap non-finite, clamp). T032/T035 (Matt, 2026-11-04): the point exciter
     that used to sit here was removed (D7)."""
     h, w = state.shape[:2]
@@ -225,7 +224,7 @@ def real_stage(state, p, force_tex=None, strike=False, lfo_tex=None):
         if connected:
             imp = F32(p.strength) * OUTLINE_AMP * outline_mask(force_tex)
         else:
-            imp = F32(p.strength) * STRIKE_AMP * _gauss(h, w, p.x, p.y, EX_SIGMA)
+            imp = F32(p.strength) * STRIKE_AMP * _gauss(h, w, STRIKE_X, STRIKE_Y, EX_SIGMA)
         u = u + imp * tt
     g = np.exp(-sponge_rate(h, w, p.edge) * dt).astype(F32)
     u, v = u * g, v * g
@@ -283,10 +282,10 @@ def new_state(h, w):
     return t
 
 
-def struck_state(h, w, p, amp=1.0):
-    """reset then strike on the same frame: the point impulse at (x, y), in u."""
+def struck_state(h, w, p, amp=1.0, at=(STRIKE_X, STRIKE_Y)):
+    """reset then strike on the same frame: the point impulse at `at` (default the frame centre, as real_stage strikes), in u."""
     t = new_state(h, w)
-    t[..., 0] = F32(amp) * F32(p.strength) * STRIKE_AMP * _gauss(h, w, p.x, p.y, EX_SIGMA)
+    t[..., 0] = F32(amp) * F32(p.strength) * STRIKE_AMP * _gauss(h, w, at[0], at[1], EX_SIGMA)
     return store_float32(t)
 
 

@@ -14,7 +14,7 @@
 //     nothing on inlet 0 there is no push, whatever the LFO does. A uniform force only feeds the DC bin, which the spec
 //     stage removes
 //   - strike (FR-009): u += T * strength * impulse, exactly once per change of the counter strike_id. impulse = 4
-//     (STRIKE_AMP) * a gaussian at exc_x / exc_y (sigma 0.02, wrapped distance) with nothing on inlet 0, or the OUTLINE
+//     (STRIKE_AMP) * a gaussian at the frame centre (0.5, 0.5; sigma 0.02, wrapped distance; the X and Y dials were removed, D10) with nothing on inlet 0, or the OUTLINE
 //     mask of inlet 0 (OUTLINE_AMP 1) when it is connected: |I(x+1) - I(x-1), I(y+1) - I(y-1)| of its R channel, one
 //     solver texel either side, the neighbour's texel index clamped to 0..255 and read at its texel centre (never at a
 //     coordinate on or past the seam: out-of-range reads wrap, and nearest() there is unmeasured, tests/lib/gpu_sim.py;
@@ -26,7 +26,7 @@
 //   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the
 //     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap
 //   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)
-//   - Param names: `exc_x`, `exc_y` (never a one-letter name, `t` was silently never applied) and `edge_amt` (`edge` is
+//   - Param names: never a one-letter name (`t` was silently never applied); `edge_amt` (`edge` is
 //     a Gen operator name; the dial and the message keep the plain word `edge`)
 Param dt(0.016666667);
 Param force(1);
@@ -34,14 +34,12 @@ Param strength(1);
 Param lmode(0);
 Param src_force(0);
 Param src_lfo(0);
-Param exc_x(0.5);
-Param exc_y(0.5);
 Param edge_amt(0);
 Param strike_id(0);
 Param reset_gate(0);
 
-dx = norm.x - exc_x;
-dy = norm.y - exc_y;
+dx = norm.x - 0.5;
+dy = norm.y - 0.5;
 dx = dx - floor(dx + 0.5);
 dy = dy - floor(dy + 0.5);
 prof = exp(0 - (dx * dx + dy * dy) / 0.0008);
