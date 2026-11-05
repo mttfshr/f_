@@ -14,7 +14,7 @@ Stage chain (the f_ks / f_vf_fluid pattern), solver stages at a fixed 256x256 fl
   pass  hold last state, or clear (Param reset_gate); strips G and A so the DFT sees only u and v
   fx/fy/iy/ix  separable DFT, two complex fields per pass (u in R,G; v in B,A)
   spec  exact per-bin step of u_tt + 2 beta u_t + omega^2 u = 0 (Params speed, damping, dispersion, ring)
-  real  force inlet, LFO inlet, strike, edge sponge, containment; owns G (pin flag); A stays 1
+  real  force inlet, LFO inlet, strike, edge sponge, containment; carries G through unused; A stays 1
   enc   render-res periodic upsample, tanh luma map (outlet 1), tanh gradient vecfield (outlet 2), bypass gate
 
 The `r draw` bang goes to pass and enc (draw_triggers); the feedback arrives on cold inlets, so the loop
@@ -133,7 +133,7 @@ patcher = {
     ],
     "pix_wires": [
         ["hold", 0, "pass", 1],     # previous state (cold)
-        ["hold", 0, "real", 2],     # previous state (cold; real reads it only to keep inlet 3)
+        ["hold", 0, "real", 2],     # previous state (cold; real reads and re-writes its G only so that in3 is a real inlet)
         ["pass", 0, "fx", 0], ["fx", 0, "fy", 0], ["fy", 0, "spec", 0],
         ["spec", 0, "iy", 0], ["iy", 0, "ix", 0], ["ix", 0, "real", 0],
         ["real", 0, "hold", 0],     # feedback edge

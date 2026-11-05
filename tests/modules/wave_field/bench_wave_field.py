@@ -302,7 +302,7 @@ def test_real_stage_matches_mirror():
         check(f"real {label}: u vs mirror", mx(got[..., 0], want[..., 0]), 2e-6)
         check(f"real {label}: v vs mirror", mx(got[..., 2], want[..., 2]), 2e-6)
         check(f"real {label}: A = 1 (the exciter phase is gone)", mx(got[..., 3], 1.0), 0.0)
-        check(f"real {label}: G = the pin flag", mx(got[..., 1], float(kw.get("strike_gate", 0.0) >= 0.5 and kw.get("reset_gate", 0.0) < 0.5)), 0.0)
+        check(f"real {label}: G = the hold texture's G, carried through", mx(got[..., 1], float(hold[..., 1].max())), 0.0)
     neutral = gpu("real", [lin, force_tex_of(8), hold_tex(u, v, 0, 0.0), LFO_OFF])
     check("real neutral: u and v pass through exactly", max(mx(neutral[..., 0], u), mx(neutral[..., 2], v)), 0.0)
 
@@ -317,7 +317,7 @@ def test_strike_gate_pins_replaces_and_waits_for_reset():
     peak = float(a[..., 0].max())
     want_peak = 4.0 * float(np.exp(-(2 * (0.5 / N) ** 2) / 0.0008))      # the four texels around (0.5, 0.5) sit half a texel off
     check("one gated frame on a field at rest: the old impulse, 4 (STRIKE_AMP) times the Gaussian at the nearest texel", abs(peak - want_peak), 1e-4)
-    check("... G is the pin flag, 1", mx(a[..., 1], 1.0), 0.0)
+    check("... G carries the hold texture's G (0), so in3 stays a live inlet", mx(a[..., 1], 0.0), 0.0)
     m1 = wfm.real_stage(base, p, None, True)
     m2 = wfm.real_stage(m1, p, None, True)
     b = gpu("real", [a, force_tex_of(8), a, LFO_OFF], strike_gate=1.0)
@@ -325,9 +325,9 @@ def test_strike_gate_pins_replaces_and_waits_for_reset():
     check("... v is killed where pinned (v vs mirror)", mx(b[..., 2], m2[..., 2]), 2e-6)
     check("... and never exceeds the target 4 (STRIKE_AMP)", float(b[..., 0].max() > 4.0), 0.0)
     c = gpu("real", [a, force_tex_of(8), a, LFO_OFF], strike_gate=0.0)
-    check("gate 0: the field passes through untouched, G = 0", max(mx(c[..., 0], a[..., 0]), mx(c[..., 1], 0.0)), 0.0)
+    check("gate 0: the field passes through untouched", mx(c[..., 0], a[..., 0]), 0.0)
     d = gpu("real", [lin, force_tex_of(8), hold_tex(z, z, 1, 0.0), LFO_OFF], strike_gate=1.0, reset_gate=1.0)
-    check("while reset_gate is on the pin waits (u stays 0, G = 0)", max(float(np.abs(d[..., 0]).max()), mx(d[..., 1], 0.0)), 0.0)
+    check("while reset_gate is on the pin waits (u stays 0; G carries the hold G, 1)", max(float(np.abs(d[..., 0]).max()), mx(d[..., 1], 1.0)), 0.0)
     e = gpu("real", [lin, force_tex_of(8), d, LFO_OFF], strike_gate=1.0, reset_gate=0.0)
     check("reset ends with the gate still held: the pin fires", abs(float(e[..., 0].max()) - want_peak), 1e-4)
 
@@ -457,7 +457,7 @@ def test_chain_30_frames_matches_mirror():
     check("30 frames: max |GPU - mirror| relative to peak", errs[30], 1e-4)
     note("field size after 30 frames (so the test is not vacuous): max |u|", float(np.abs(m[..., 0]).max()))
     check("the field is not vacuous (max |u| above 0.05)", float(np.abs(m[..., 0]).max() < 0.05), 0.0)
-    check("G = 0 after the gate was released on frame 2", mx(g[..., 1], 0.0), 0.0)
+    check("G stays 0 (carried through; nothing writes it)", mx(g[..., 1], 0.0), 0.0)
     check("A stays 1", mx(g[..., 3], 1.0), 0.0)
     luma, vec = gpu("enc", [BANG, g], dim=(N, N), all_outputs=True)[:2]
     check("enc of the GPU state vs the mirror's encode of the mirror state (luma)", mx(luma, wfm.encode_luma(m)), 1e-4)

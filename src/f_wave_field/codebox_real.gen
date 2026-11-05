@@ -4,7 +4,7 @@
 // Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module's inlet 0 through
 // vs_inState: WHERE), third = last frame's state from the hold stage (cold), fourth = the LFO texture (cold; the
 // module's inlet 1 through its own vs_inState: WHEN). Output = the new solver state and the feedback edge:
-//   R = u, G = pin flag (1 on a frame the pin applied), B = v, A = 1 (A held the exciter phase until the exciter was
+//   R = u, G = the hold texture's G carried through unchanged (unused), B = v, A = 1 (A held the exciter phase until the exciter was
 //   removed, 2026-11-04, D7)
 //   - connected flags (from vs_inState, via `prepend param`): src_force (inlet 0) and src_lfo (inlet 1). An unconnected
 //     inlet is vs_black = 0, which would decode to a full -1 force, so every read is gated on its flag. The gates use
@@ -27,7 +27,8 @@
 //     inlet's own resolution, so an inlet smaller than 256 gives a band about two solver texels wide at each of ITS
 //     texel boundaries (checked live in T034, not in the mirror). While reset_gate is on the pin waits. Param named
 //     strike_gate, not gate: `gate` is a Gen operator name (the same clash as `edge`). The hold texture is still read
-//     (in3) so the inlet count and wiring stay put; its G is no longer used
+//     (in3) and its G written back, so the inlet count and wiring stay put; nothing uses that G. in3 is now dead weight:
+//     it is the reason this stage has FOUR inputs, which the codebox bench (three inputs at most) cannot drive
 //   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the
 //     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap
 //   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)
@@ -90,4 +91,4 @@ vv = switch(abs(vv) < 1e30, vv, 0);
 uu = clamp(uu, -100, 100);
 vv = clamp(vv, -100, 100);
 
-out1 = vec(uu, pinon + 0 * holdg, vv, 1);
+out1 = vec(uu, holdg, vv, 1);

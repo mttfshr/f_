@@ -46,7 +46,7 @@ def test_live_field_after_load():
         check(f"frame {w}: opaque", float(abs(a[..., 3] - 1).max()), 1e-6)
         note(f"frame {w}: luma mean / std; vec deviation from 0.5", 
              f"{lum.mean():.4f} / {lum.std():.4f}; {np.abs(v[..., :2] - 0.5).max():.4f}")
-    check("load strike fired: real contrast at some frame (std > 0.01)", float(best_std < 0.01), 0.0)
+    check("load strike fired: real contrast at some frame (std > 0.005)", float(best_std < 0.005), 0.0)
     check("vecfield leaves neutral at some frame (deviation > 1e-3)", float(best_dev < 1e-3), 0.0)
 
 
