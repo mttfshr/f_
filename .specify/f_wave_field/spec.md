@@ -1,7 +1,7 @@
 # Spec: f_wave_field
 
 _Created: 2026-10-23_
-_Status: Draft — not yet built_
+_Status: Built (Phases 0-2); redesigned 2026-11-04, see "Revision 2026-11-04" below. Sections after it keep the 2026-10-23 wording and say where they are SUPERSEDED. Reference: `docs/f-reference/f_wave_field.md`._
 _Origin: `ideas/f_wave_field.md` (mined from michaelerule/webgpgpu
 `Example_24`, `Vision_006`, `Vision_010`, `Vision_014` by the omp run
 `webgpgpu-ideas-1`, 2026-10-23), the solver core that `ideas/f_cymascope.md`
@@ -10,6 +10,17 @@ settled with Matt the same day._
 
 **Working name — not settled.** `f_wave_field` is a placeholder (gate G1 in
 `tasks.md`). Avoid `ripple`: `f_a_ripple` already exists (audio).
+
+---
+
+## Revision 2026-11-04 (Matt, in chat; decisions D1-D14 in `tasks.md` Phase 2b / 2c)
+
+What the shipped module does now, where it differs from the 2026-10-23 text below:
+
+- **Two inlets.** Inlet 0 says WHERE: a force texture (`Force` 0-1.5) and the shape Strike hits (its OUTLINES; a point at the frame centre with nothing connected). Inlet 1 says WHEN: an LFO texture, a time function `T` per pixel (`lmode` uni / bi), scaling the push and the strike.
+- **The point sine exciter is removed** (D7): no `Freq`, `Amp`, `frequency`, `amplitude`, no phase accumulator; `X` and `Y` are removed too (D10). With nothing connected the module rings once from the load strike and decays.
+- **Strike is a held press** (D11 / D12): while the gate is held, `u` is pinned toward `strength * amp * T` along the outlines (replace, not add: D13) and `v` is killed there; the release is the solver ringing out. The Strike control is a `ubutton` (press / release); the `strike` message is a tap (D14).
+- New dial `Strength` (0-1); `Force` widened to 0-1.5.
 
 ---
 
@@ -33,7 +44,7 @@ settled with Matt the same day._
 - **Edges: periodic, plus an absorbing-edge dial.** Native to the spectral solver;
   `edge` > 0 applies a real-space sponge near the borders. Reflecting edges (a mirrored
   grid, about 4 times the transform cost) are out of scope for v1.
-- **Drive: optional force inlet, a point exciter and a strike.** A texture inlet adds
+- **Drive: optional force inlet, a point exciter and a strike.** (SUPERSEDED 2026-11-04: see the revision above.) A texture inlet adds
   forcing (unconnected: none, free ringing); a built-in point source (x, y, frequency,
   amplitude) gives cymascope-style driving; `strike` drops an impulse at the exciter.
 - **Outlets: field luma and a gradient vecfield** (the `f_cymascope` use: a vecfield
@@ -91,7 +102,7 @@ needs all four channels at once, which the `spec` stage already sees.
 
 ## User Stories
 
-### User Story 1 — Visible rings with nothing connected (Priority: P1)
+### User Story 1 — Visible rings with nothing connected (Priority: P1) — SUPERSEDED 2026-11-04: with nothing connected the module rings once from the load strike and decays; the default exciter was removed (D7), so "keeps going" no longer holds
 
 A performer drops `f_wave_field` in alone and sees waves: a default exciter drives
 concentric rings that expand, wrap or are soaked up at the edges, and interfere.
@@ -173,12 +184,12 @@ an impulse at the exciter position. `reset` clears the field.
 - **FR-006**: A small `damping` floor MUST keep float32 round-off from growing energy
   over long runs; its value is set in Phase 0 (T003).
 - **FR-007**: The force inlet MUST add `F = force * 2 * (tex - 0.5)` to `v` each frame,
-  neutral at 0.5 when unconnected.
+  neutral at 0.5 when unconnected. **Revised 2026-11-04:** the push is `force * 2 * (tex - 0.5) * T * dt` (T = the LFO per pixel, 1 with no LFO), only with inlet 0 connected; `force` reaches 1.5.
 - **FR-008**: The point exciter MUST add a Gaussian-profile force at (`x`, `y`) with a
   sinusoidal time dependence at `frequency` and strength `amplitude`; a phase accumulator
-  runs in the real-space stage.
+  runs in the real-space stage. **REMOVED 2026-11-04 (D7, Matt):** no point exciter.
 - **FR-009**: `strike` MUST add a single impulse at the exciter position (to `u`);
-  `reset` MUST zero `u` and `v`. Both fire once on load (reset, then strike).
+  `reset` MUST zero `u` and `v`. Both fire once on load (reset, then strike). **Revised 2026-11-04:** Strike is a held press that pins `u` toward `strength * amp * T` on the outlines of inlet 0 (the frame-centre Gaussian with nothing connected), `v` killed where pinned (D11-D13); the load press is released after the reset has finished.
 - **FR-010**: `edge` MUST apply a smooth absorbing sponge to `u` and `v` near the borders
   (0 = pure periodic wrap), by an exponential damping profile so it cannot add energy.
 - **FR-011**: The luma outlet MUST be a bounded mapping of `u`; the vecfield outlet MUST be
@@ -209,10 +220,10 @@ an impulse at the exciter position. `reset` clears the field.
 | `dispersion` | 0.5–2 | 1 | 1 = ordinary wave, 2 = plate |
 | `ring` | 0–max | 0 | `omega` at k = 0; with `speed` 0 gives the resonator |
 | `edge` | 0–1 | 0.5 | absorbing-border strength; 0 wraps |
-| `x`, `y` | 0–1 | 0.5, 0.5 | exciter position |
-| `frequency` | range | mid | exciter frequency |
-| `amplitude` | 0–1 | non-zero | exciter strength; 0 = free ringing |
-| `force` | 0–1 | 1 | gain on the force inlet |
+| `x`, `y`, `frequency`, `amplitude` | | | REMOVED 2026-11-04 (D7, D10) |
+| `strength` | 0–1 | 1 | how hard Strike presses (the pin target); added 2026-11-04 |
+| `lmode` | uni / bi | uni | how the LFO on inlet 1 is read; added 2026-11-04 |
+| `force` | 0–1.5 | 1 | gain on the force inlet (widened 2026-11-04) |
 | `gain` | unbounded | 1 | output mapping strength (G2) |
 | `strike`, `reset` | buttons | | also messages; fire on load |
 | `bypass` | toggle | 0 | |

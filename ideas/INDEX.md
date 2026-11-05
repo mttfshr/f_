@@ -592,7 +592,7 @@ Eight themes mined from michaelerule/webgpgpu by the omp run `webgpgpu-ideas-1`
 against the shader files and the f_ inventory, none tried in Max. Working names are
 placeholders.
 
-- **[f_wave_field.md](f_wave_field.md)** 🟡 — **Specced 2026-10-23** (`.specify/f_wave_field/`): spectral wave,
+- **[f_wave_field.md](f_wave_field.md)** 🟡 — **Built 2026-10-25, redesigned 2026-11-04 (specced 2026-10-23)** (`.specify/f_wave_field/`): spectral wave,
   resonator and plate field with general dispersion, force inlet, point exciter and gradient vecfield. The
   solver core `f_cymascope.md` calls for.
 - **[f_ca.md](f_ca.md)** ⚪ — Discrete cellular automata generator with a rule menu (Life,

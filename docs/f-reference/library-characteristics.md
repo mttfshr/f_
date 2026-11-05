@@ -174,8 +174,8 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 1. Self-referential aberration: `f_quasi` out2 (exact bounded gradient) → `f_vf_chroma` with out1 (banded luma) as the source — the quasicrystal's own gradient steers its RGB separation.
 2. Woven quasicrystal: `f_quasi` out3 (potential scalar) → `f_weave` across inlet → `f_mobius` — Shepard-zoom isolines woven into lines, then Möbius-folded.
 
-**f_wave_field** ⚠ unfinished
-1. Strike → rings → glow: exciter strike on `f_wave_field` → out1 luma → `f_vf_glow` (source + its dispersion field) — dispersion rings bloom outward along the gradient.
+**f_wave_field** ⚠ unverified
+1. Strike → rings → glow: a held Strike on `f_wave_field` (the outlines of a texture on inlet 0, or the frame centre) → out1 luma → `f_vf_glow` (source + its dispersion field) — dispersion rings bloom outward along the gradient.
 2. Field-driven trails: `f_wave_field` out2 gradient vecfield → `f_vf_advect` with camera source — footage smears along the wavefront gradient, decay shaping the trail length.
 
 **f_cmap** ⚠ paused (built and benched, look not confirmed)
