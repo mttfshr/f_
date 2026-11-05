@@ -4,8 +4,8 @@ the real chain, the real reset logic and the real load-time reset + strike, with
 
 Asserted:
   - after load both outlets are finite, luma is inside [0, 1] (tanh encode) and opaque
-  - the load strike fired and the field runs (the default exciter also keeps ringing): luma shows real
-    contrast and the vecfield outlet leaves its neutral 0.5 grey
+  - the load strike fired and the field rings (the point exciter was removed, D7: nothing else drives it): luma
+    shows real contrast at some frame and the vecfield outlet leaves its neutral 0.5 grey at some frame
   - the pattern evolves: the same module read at two different times differs
 
 Needs Max with tests/bench/bench_module.maxpat open (Vsynth performance patches closed).
@@ -34,25 +34,27 @@ def frames(warmup):
 
 
 def test_live_field_after_load():
+    best_std, best_dev = 0.0, 0.0
     for w in (30, 120, 300):
         a, v = frames(w)
         lum = a[..., 0]
+        best_std = max(best_std, float(lum.std()))
+        best_dev = max(best_dev, float(np.abs(v[..., :2] - 0.5).max()))
         check(f"frame {w}: luma finite", float(not np.isfinite(a).all()), 0.0)
         check(f"frame {w}: vecfield finite", float(not np.isfinite(v).all()), 0.0)
         check(f"frame {w}: luma inside [0, 1]", float(lum.min() < -1e-6 or lum.max() > 1 + 1e-6), 0.0)
         check(f"frame {w}: opaque", float(abs(a[..., 3] - 1).max()), 1e-6)
         note(f"frame {w}: luma mean / std; vec deviation from 0.5", 
              f"{lum.mean():.4f} / {lum.std():.4f}; {np.abs(v[..., :2] - 0.5).max():.4f}")
-    check("load strike / exciter fired: real contrast (std > 0.01)", float(lum.std() < 0.01), 0.0)
-    check("vecfield leaves neutral (deviation > 1e-3)", float(np.abs(v[..., :2] - 0.5).max() < 1e-3), 0.0)
+    check("load strike fired: real contrast at some frame (std > 0.01)", float(best_std < 0.01), 0.0)
+    check("vecfield leaves neutral at some frame (deviation > 1e-3)", float(best_dev < 1e-3), 0.0)
 
 
 def test_pattern_evolves():
-    a = frames(30)[0][..., 0]
-    b = frames(120)[0][..., 0]
-    d = float(np.abs(a - b).mean())
-    note("mean |difference| between frame 30 and frame 120", d)
-    check("the field evolves (mean difference > 0.005)", float(d < 0.005), 0.0)
+    f = [frames(w)[0][..., 0] for w in (30, 120, 300)]
+    d = max(float(np.abs(f[i] - f[j]).mean()) for i, j in ((0, 1), (1, 2), (0, 2)))
+    note("largest mean |difference| between frames 30, 120 and 300", d)
+    check("the field evolves between some pair of frames (mean difference > 0.005)", float(d < 0.005), 0.0)
 
 
 if __name__ == "__main__":

@@ -1,43 +1,41 @@
 // codebox_real.gen -- f_wave_field stage 6: the real-space stage on the inverse-DFT result.
 // 256x256 float32. Mirror: tests/modules/wave_field/wave_field_mirror.real_stage().
 //
-// Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module inlet through
-// vs_inState), third = last frame's state from the hold stage (cold). Output = the new solver state and the
-// feedback edge:  R = u, B = v, G = strike counter, A = 1 + exciter phase.
-//   - force (FR-007): v += force * 2 (tex - 0.5) * dt, times src_force, the connected flag from vs_inState (an
-//     unconnected inlet is vs_black = 0, which would decode to a full -1 force). The flag lags ~180 ms at load;
-//     a uniform force only feeds the DC bin, which the spec stage removes
-//   - exciter (FR-008): v += amplitude * 165 (EX_GAIN) * sin(exphase) * gaussian(exc_x, exc_y, sigma 0.02) * dt on
-//     the wrapped distance. The phase accumulator lives in A of the state: A = 1 + phase, so a fresh hold
-//     texture (A = 1) starts at phase 0; each frame adds 2 pi frequency dt, modulo 2 pi
-//   - strike (FR-009): u += 4 (STRIKE_AMP) * gaussian, exactly once per change of the counter strike_id. G of
-//     the hold texture remembers the last counter value seen, so the pulse cannot repeat or be dropped
-//     whatever the draw order. While reset_gate is on the strike waits (reset, then strike on the same frame
-//     is the spec's struck_state) and G keeps its old value
+// Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module's inlet 0 through
+// vs_inState: WHERE), third = last frame's state from the hold stage (cold), fourth = the LFO texture (cold; the
+// module's inlet 1 through its own vs_inState: WHEN). Output = the new solver state and the feedback edge:
+//   R = u, G = strike counter, B = v, A = 1 (A held the exciter phase until the exciter was removed, 2026-11-04, D7)
+//   - connected flags (from vs_inState, via `prepend param`): src_force (inlet 0) and src_lfo (inlet 1). An unconnected
+//     inlet is vs_black = 0, which would decode to a full -1 force, so every read is gated on its flag. The gates use
+//     switch(), not multiplication, so a NaN in the unused branch cannot leak (0 * NaN). The flags lag ~180 ms at load
+//   - T (the LFO time function, T035) = the LFO's R channel per pixel, raw 0..1 (lmode 0, uni) or 2 x - 1 (lmode 1, bi,
+//     mid-grey neutral), and 1 when no LFO is connected. A uniform and a spatial LFO both work
+//   - force (FR-007): v += force * 2 (tex - 0.5) * T * dt, only with inlet 0 connected (mid-grey does nothing). With
+//     nothing on inlet 0 there is no push, whatever the LFO does. A uniform force only feeds the DC bin, which the spec
+//     stage removes
+//   - strike (FR-009): u += T * strength * impulse, exactly once per change of the counter strike_id. impulse = 4
+//     (STRIKE_AMP) * a gaussian at exc_x / exc_y (sigma 0.02, wrapped distance) with nothing on inlet 0, or the OUTLINE
+//     mask of inlet 0 (OUTLINE_AMP 1) when it is connected: |I(x+1) - I(x-1), I(y+1) - I(y-1)| of its R channel, one
+//     solver texel either side, the neighbour's texel index clamped to 0..255 and read at its texel centre (never at a
+//     coordinate on or past the seam: out-of-range reads wrap, and nearest() there is unmeasured, tests/lib/gpu_sim.py;
+//     this equals the mirror's edge padding), result clamped to 0..1. Read with nearest() at the inlet's own resolution, so an inlet smaller than 256 gives a band
+//     about two solver texels wide at each of ITS texel boundaries (checked live in T034, not in the mirror).
+//     G of the hold texture remembers the last counter value seen, so the pulse cannot repeat or be dropped whatever
+//     the draw order. While reset_gate is on the strike waits (reset, then strike on the same frame is the spec's
+//     struck_state) and G keeps its old value
 //   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the
 //     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap
 //   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)
 //   - Param names: `exc_x`, `exc_y` (never a one-letter name, `t` was silently never applied) and `edge_amt` (`edge` is
 //     a Gen operator name; the dial and the message keep the plain word `edge`)
-// T033 (Matt, 2026-11-04; mirror: wave_field_mirror.real_stage / outline_mask, T032). `conn` = src_force > 0.5 is
-// the connected flag (the same flag that gates the force texture):
-//   - connected: the point exciter is OFF (force and exciter are mutually exclusive) and its phase holds (A is
-//     carried over unchanged, so reconnecting never jumps); the strike drops strength * OUTLINE_AMP (1) * the
-//     outline mask of the force texture on u instead of the point Gaussian
-//   - unconnected: the point exciter and the point strike at exc_x / exc_y, exactly as before; strength does nothing
-//   - outline mask = |I(x+1) - I(x-1), I(y+1) - I(y-1)| of the inlet's R channel, one solver texel (1/256) either
-//     side, coordinates clamped to 0..1 (the mirror pads with the edge texel), result clamped to 0..1. It is read
-//     with nearest() at the inlet's own resolution, so an inlet smaller than 256 gives a band about two solver
-//     texels wide at each of ITS texel boundaries (checked live in T034, not in the mirror)
-//   - the branches use switch(), not multiplication by conn, so a NaN in the unused branch cannot leak (0 * NaN)
 Param dt(0.016666667);
 Param force(1);
 Param strength(1);
+Param lmode(0);
 Param src_force(0);
+Param src_lfo(0);
 Param exc_x(0.5);
 Param exc_y(0.5);
-Param frequency(2);
-Param amplitude(0.5);
 Param edge_amt(0);
 Param strike_id(0);
 Param reset_gate(0);
@@ -50,28 +48,29 @@ prof = exp(0 - (dx * dx + dy * dy) / 0.0008);
 
 lastid = nearest(in3, norm).y;
 lastid = switch(abs(lastid) < 1e30, lastid, 0);
-exphase = nearest(in3, norm).w - 1;
-exphase = switch(abs(exphase) < 1e30, exphase, 0);
 
 uu = nearest(in1, norm).x;
 vv = nearest(in1, norm).z;
 
 conn = switch(src_force > 0.5, 1, 0);
+lraw = nearest(in4, norm).x;
+tt = switch(src_lfo > 0.5, mix(lraw, lraw * 2 - 1, lmode), 1);
 
-ff = switch(conn > 0.5, force * 2 * (nearest(in2, norm).x - 0.5), amplitude * 165 * sin(exphase) * prof);
+ff = switch(conn > 0.5, force * 2 * (nearest(in2, norm).x - 0.5) * tt, 0);
 vv = vv + ff * dt;
 
-sx = 1 / 256;
-xr = clamp(norm.x + sx, 0, 1);
-xl = clamp(norm.x - sx, 0, 1);
-yu = clamp(norm.y + sx, 0, 1);
-yd = clamp(norm.y - sx, 0, 1);
+cxi = floor(norm.x * 256);
+cyi = floor(norm.y * 256);
+xr = (min(cxi + 1, 255) + 0.5) / 256;
+xl = (max(cxi - 1, 0) + 0.5) / 256;
+yu = (min(cyi + 1, 255) + 0.5) / 256;
+yd = (max(cyi - 1, 0) + 0.5) / 256;
 gx = nearest(in2, vec(xr, norm.y)).x - nearest(in2, vec(xl, norm.y)).x;
 gy = nearest(in2, vec(norm.x, yu)).x - nearest(in2, vec(norm.x, yd)).x;
 omask = clamp(sqrt(gx * gx + gy * gy), 0, 1);
 
 fire = switch(strike_id != lastid, 1, 0) * switch(reset_gate < 0.5, 1, 0);
-uu = uu + fire * switch(conn > 0.5, strength * omask, 4 * prof);
+uu = uu + fire * tt * switch(conn > 0.5, strength * omask, strength * 4 * prof);
 
 edist = min(min(norm.x, 1 - norm.x), min(norm.y, 1 - norm.y));
 sp = clamp(1 - edist / 0.12, 0, 1);
@@ -86,6 +85,5 @@ uu = clamp(uu, -100, 100);
 vv = clamp(vv, -100, 100);
 
 newid = switch(reset_gate >= 0.5, lastid, strike_id);
-newphase = switch(conn > 0.5, exphase, mod(exphase + twopi * frequency * dt, twopi));
 
-out1 = vec(uu, newid, vv, 1 + newphase);
+out1 = vec(uu, newid, vv, 1);

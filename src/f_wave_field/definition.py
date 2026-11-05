@@ -2,9 +2,10 @@
 f_wave_field -- definition.py
 
 Spectral wave / resonator field ("Wave Field", gate G1): ripples, rings and plate waves on a 256x256 periodic
-sheet that decay, reflect off nothing (an edge sponge) or wrap around, driven by an optional texture, a point
-exciter and a strike. Outlets: luma (the height u) and a gradient vecfield. A generator that works with nothing
-connected (User Story 1). See .specify/f_wave_field/{spec,tasks}.md.
+sheet that decay, reflect off nothing (an edge sponge) or wrap around, driven by an optional force texture (inlet
+0, where), an optional LFO texture (inlet 1, when) and a strike. Outlets: luma (the height u) and a gradient
+vecfield. With nothing connected it rings once from the load strike and decays: the point sine exciter was removed
+2026-11-04 (D7), so spec User Story 1 ("keeps going") no longer holds. See .specify/f_wave_field/{spec,tasks}.md.
 
 Stage chain (the f_ks / f_vf_fluid pattern), solver stages at a fixed 256x256 float32:
     hold -> pass (in 1)                          hold -> real (in 3)
@@ -13,16 +14,18 @@ Stage chain (the f_ks / f_vf_fluid pattern), solver stages at a fixed 256x256 fl
   pass  hold last state, or clear (Param reset_gate); strips G and A so the DFT sees only u and v
   fx/fy/iy/ix  separable DFT, two complex fields per pass (u in R,G; v in B,A)
   spec  exact per-bin step of u_tt + 2 beta u_t + omega^2 u = 0 (Params speed, damping, dispersion, ring)
-  real  force inlet, point exciter, strike, edge sponge, containment; owns G (strike counter) and A (1 + phase)
+  real  force inlet, LFO inlet, strike, edge sponge, containment; owns G (strike counter); A stays 1
   enc   render-res periodic upsample, tanh luma map (outlet 1), tanh gradient vecfield (outlet 2), bypass gate
 
 The `r draw` bang goes to pass and enc (draw_triggers); the feedback arrives on cold inlets, so the loop
-advances exactly once per rendered frame. The force texture reaches `real` through vs_inState; the connected
-flag `src_force` gates it (an unconnected inlet is vs_black = 0, which would decode to a full -1 force).
+advances exactly once per rendered frame. The force texture (inlet 0) and the LFO texture (inlet 1) reach `real`
+through their own vs_inState; the connected flags `src_force` and `src_lfo` gate them (an unconnected inlet is
+vs_black = 0, which would decode to a full -1 force).
 
-Connected inlet (T033, Matt 2026-11-04): with a texture on the inlet (`src_force` = 1) the point exciter is off and
-its phase holds, Force pushes with the texture (0 to 1.5), and Strike drops `strength` on the OUTLINES of the
-texture instead of a point at X, Y. With nothing connected: the point exciter and the point strike, as before.
+Inlets (T033 / T036, Matt 2026-11-04): inlet 0 says WHERE, inlet 1 says WHEN. With a texture on inlet 0 Force pushes
+with it (0 to 1.5) and Strike drops `strength` on its OUTLINES; with nothing there Strike is a point at X, Y. An LFO
+texture on inlet 1 gives the time function T per pixel (`lmode`: uni raw 0..1, bi 2 x - 1): it scales the texture push
+and the strike, and does nothing alone (no push without inlet 0). The point sine exciter (Freq, Amp) was removed.
 
 Time unit (gate G3, Matt 2026-10-25): one draw = 1/60 model second (Param dt, a codebox constant, not a dial).
 Output mapping (gate G2): tanh with the `gain` dial in front. Dial set (gate G4): the proposed set.
@@ -70,25 +73,22 @@ patcher = {
          "hint": "Absorbing borders: 0 = waves wrap around to the opposite side, higher = they die at the edge without reflecting"},
         {"name": "exc_x", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "X", "pix_target": "real",
-         "hint": "Where the point exciter and the strike sit, left to right. Used only with nothing connected to the inlet"},
+         "hint": "Where the point strike lands, left to right. Used only with nothing connected to inlet 0 (a connected texture is struck on its outlines)"},
         {"name": "exc_y", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "label": "Y", "pix_target": "real",
-         "hint": "Where the point exciter and the strike sit, bottom to top. Used only with nothing connected to the inlet"},
-        {"name": "frequency", "type": "float", "min": 0.1, "max": 12.0, "default": 2.0,
-         "label": "Freq", "pix_target": "real",
-         "hint": "Exciter rate in cycles per second (it stays faithful up to about 4 Hz at 60 frames per second). Used only with nothing connected to the inlet"},
-        {"name": "amplitude", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
-         "label": "Amp", "pix_target": "real",
-         "hint": "Exciter strength: 0 = silent (free ringing after a strike), 1 = a field about one unit high. Used only with nothing connected to the inlet"},
+         "hint": "Where the point strike lands, bottom to top. Used only with nothing connected to inlet 0 (a connected texture is struck on its outlines)"},
         {"name": "force", "type": "float", "min": 0.0, "max": 1.5, "default": 1.0,
          "label": "Force", "pix_target": "real",
-         "hint": "How hard the texture on the inlet pushes the field: mid-grey does nothing, brighter pushes up, darker pushes down. Past 1 it boosts a dim texture"},
+         "hint": "How hard the texture on inlet 0 pushes the field: mid-grey does nothing, brighter pushes up, darker pushes down. Past 1 it boosts a dim texture. An LFO on inlet 1 makes the push pulse"},
         {"name": "strength", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0,
          "label": "Strength", "pix_target": "real",
-         "hint": "How hard Strike hits the outlines of the texture on the inlet. 0 = no strike. Only with a texture connected; with nothing connected Strike is a point at X, Y"},
+         "hint": "How hard Strike hits: on the outlines of the texture on inlet 0, or at the point X, Y with nothing connected. 0 = no strike. An LFO on inlet 1 shapes the pulse"},
         {"name": "gain", "type": "float", "min": 0.0, "max": 10.0, "default": 1.0,
          "label": "Gain", "pix_target": "enc",
          "hint": "Output strength before the soft tanh limiter: raise it to see quiet waves, lower it for big ones"},
+        {"name": "lmode", "type": "text_button", "options": ["LFO uni", "LFO bi"], "default": 0, "label": "LFO mode",
+         "pix_target": "real",
+         "hint": "How the LFO on inlet 1 is read. LFO uni = raw 0..1 (can only add). LFO bi = rescaled to -1..1 (mid-grey = nothing, dark pulls the other way). Modelled on f_weave's Mod mode"},
         {"name": "strike", "type": "raw_ui"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
@@ -98,12 +98,19 @@ patcher = {
         {"name": "strike_id", "type": "internal"},
         # Set by vs_inState via `prepend param src_force` (1 = force inlet connected)
         {"name": "src_force", "type": "internal"},
+        # Set by the LFO inlet's vs_inState via `prepend param src_lfo` (1 = LFO inlet connected)
+        {"name": "src_lfo", "type": "internal"},
         # Driven by the bypass jsui (`prepend param bypass_gate`), never by the route
         {"name": "bypass_gate", "type": "internal"},
     ],
 
-    "inlet_comment": "force texture / control",
+    "inlet_comment": "force texture (where) / control",
     "inlet_fanout": {"texture": [["real", 1]], "state": ["real"], "state_param": "src_force"},
+    # inlet 1: the LFO texture (the time function T), its own vs_inState and connected flag, into `real` inlet 3 (in4)
+    "mod_inlets": [
+        {"label": "LFO texture (when)", "vs_instate": True, "state_param": "src_lfo",
+         "fanout": [["real", 3]], "state_nodes": ["real"]},
+    ],
     "draw_triggers": ["pass", "enc"],
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
 
@@ -122,7 +129,7 @@ patcher = {
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "ix",   "name": "#0_wf_ix",   "gen": "codebox_dft_ix.gen", "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
-        {"id": "real", "name": "#0_wf_real", "gen": "codebox_real.gen",   "n_inlets": 3, "n_outlets": 1,
+        {"id": "real", "name": "#0_wf_real", "gen": "codebox_real.gen",   "n_inlets": 4, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "enc",  "name": "#0_wf_enc",  "gen": "codebox_enc.gen",    "n_inlets": 2, "n_outlets": 2,
          "pix_attrs": "@adapt 1 @type float32", "primary": True},
@@ -176,7 +183,7 @@ def _line(src, so, dst, di):
 
 
 # Filled in from the built patcher (build order of pix_chain: hold, pass, fx, fy, spec, iy, ix, real, enc).
-_IDS = {"route": "obj-4", "pass": "obj-59", "real": "obj-65"}
+_IDS = {"route": "obj-4", "pass": "obj-56", "real": "obj-62"}
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
@@ -206,8 +213,8 @@ patcher["raw_boxes"] = [
     _msg(16, "param reset_gate 0", [260.0, 510.0, 100.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line(_IDS["route"], 12, 10, 0),   # route: `strike` -> counter [i] / [+ 1] (first bang gives 1)   (route outlet 12: speed ... gain = 0..11, strike, reset)
-    _line(_IDS["route"], 13, 5, 0),    # route: `reset` -> trigger
+    _line(_IDS["route"], 11, 10, 0),   # route: `strike` -> counter [i] / [+ 1] (first bang gives 1)   (route outlet 11: speed ... gain, lmode = 0..10, strike, reset)
+    _line(_IDS["route"], 12, 5, 0),    # route: `reset` -> trigger
     _line(3, 0, 10, 0),                # strike button -> counter
     _line(1, 0, 5, 0),                 # reset button -> trigger
     _line(6, 0, 7, 0), _line(7, 0, 5, 0), _line(7, 0, 10, 0),      # loadbang -> delay -> reset trigger and strike
