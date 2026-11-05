@@ -48,6 +48,7 @@ CATEGORIES = [
         ("Quasi", "quasi", V),
         ("Seeds", "vf_seeds", V),
         ("Stipple", "stipple", N),
+        ("Wave Field", "wave_field", V),   # luma + gradient vecfield outlets; menu placement 2026-11-04 (Matt)
         ("Weave", "weave", N),          # no vecfield input since 2026-11-01 (inlet retired, signal_type removed)
         ("Wilson-Cowan", "wc", N),
     ]),
@@ -140,5 +141,4 @@ NOT_IN_MENU = {
     "f_a_decorrelate": "audio (pfft~) module, not a Vsynth bpatcher; DSP built, packaging pending (README marks it)",
     "f_chladni_audio": "audio companion of f_chladni, not a Vsynth bpatcher (README marks it)",
     "f_cmap":          "Phase 1 built (codeboxes + patcher, 2026-10-27); menu placement, helpfile and reference doc are Phase 3",
-    "f_wave_field":    "Phase 1 built (codeboxes + patcher, 2026-10-25); menu placement, helpfile and README row are Phase 3 (T040)",
 }

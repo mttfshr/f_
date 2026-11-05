@@ -240,6 +240,7 @@
                                 "Quasi \u2207",
                                 "Seeds \u2207",
                                 "Stipple",
+                                "Wave Field \u2207",
                                 "Weave",
                                 "Wilson-Cowan"
                             ],
@@ -248,7 +249,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -286,6 +287,7 @@
                                 "quasi",
                                 "vf_seeds",
                                 "stipple",
+                                "wave_field",
                                 "weave",
                                 "wc"
                             ],
@@ -294,7 +296,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

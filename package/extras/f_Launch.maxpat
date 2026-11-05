@@ -369,7 +369,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unfinished. Spectral wave field: tunable dispersion, point exciter, strike; luma and gradient vecfield out",
+									"text": "⚠ Unverified. Spectral wave field: held outline strike, LFO inlet, tunable dispersion; luma and gradient out",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

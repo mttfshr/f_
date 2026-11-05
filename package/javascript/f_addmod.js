@@ -13,6 +13,7 @@ var SIZES = {
     "quasi":          [227, 164],
     "vf_seeds":       [190, 205],
     "stipple":        [191, 157],
+    "wave_field":     [190, 232],
     "weave":          [232, 180],
     "wc":             [272, 150],
     "droste":         [150,  89],
