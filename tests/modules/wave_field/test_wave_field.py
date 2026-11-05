@@ -784,5 +784,76 @@ def test_wave_frame_passes_the_lfo_through_and_the_response_is_linear_in_it():
           float(np.abs(b[..., 0] - 0.5 * a[..., 0]).max()) / scale, 1e-5)
 
 
+# ------------------------------------------------------------------ T039: the held press (D11, Matt 2026-11-04)
+# `strike` is a gate. While it is held u is pinned toward strength * amp * T by the outline / point weight and v is
+# killed there: attack and decay are the luma of T over the held frames, sustain is the press length, release is the
+# solver ringing out. One held frame on a field at rest is the old impulse (the strike tests above).
+
+def test_held_press_pins_the_outline_to_the_enveloped_level_and_does_not_pile_up():
+    n = 64
+    tex = _square_tex(n)
+    full = wfm.outline_mask(tex) == 1.0
+    p = Params(speed=0.25, damping=0.2, edge=0.0, force=0.0, fast_fft=True)
+    st = new_state(n, n)
+    for f, level in enumerate((0.2, 0.9, 0.5, 0.5, 0.5, 0.8, 0.3, 0.3)):
+        st, _, _ = wave_frame(st, p, force_tex=tex, strike=True, lfo_tex=_flat(level, n))
+        want = wfm.OUTLINE_AMP * level
+        check(f"held frame {f}: u on the outline = strength * amp * T ({want:.2f}), not a pile-up",
+              float(np.abs(st[..., 0][full] - want).max()), 1e-5)
+        check(f"held frame {f}: v is killed on the pinned texels", float(np.abs(st[..., 2][full]).max()), 0.0)
+    check("the pinned texels exist (the test is not vacuous)", float(full.sum() < 50), 0.0)
+
+
+def test_press_scales_with_strength_and_bi_makes_it_negative():
+    n = 64
+    tex = _square_tex(n)
+    full = wfm.outline_mask(tex) == 1.0
+    z = new_state(n, n)
+    half = real_stage(z, Params(edge=0.0, force=0.0, strength=0.5), force_tex=tex, strike=True)[..., 0][full]
+    check("strength 0.5 pins the outline at half the height", float(np.abs(half - 0.5 * wfm.OUTLINE_AMP).max()), 1e-6)
+    neg = real_stage(z, Params(edge=0.0, force=0.0, lmode=1), force_tex=tex, strike=True, lfo_tex=_flat(0.0, n))[..., 0][full]
+    check("bi with the LFO at 0 pins the outline at -OUTLINE_AMP (the other way)", float(np.abs(neg + wfm.OUTLINE_AMP).max()), 1e-6)
+
+
+def test_release_lets_go_and_the_field_rings_out_without_gaining_energy():
+    n = 64
+    tex = _square_tex(n)
+    full = wfm.outline_mask(tex) == 1.0
+    p = Params(speed=0.25, damping=0.5, edge=0.0, force=0.0, fast_fft=True)
+    st = new_state(n, n)
+    for _ in range(10):
+        st, _, _ = wave_frame(st, p, force_tex=tex, strike=True)
+    e = [energy(st, p)]
+    free = []
+    for _ in range(30):
+        st, _, _ = wave_frame(st, p, force_tex=tex)               # gate released
+        e.append(energy(st, p))
+        free.append(float(np.abs(st[..., 0][full] - wfm.OUTLINE_AMP).max()))
+    check("after release the outline is no longer pinned (it moves off the held level)", float(max(free) < 0.01), 0.0)
+    check("after release the energy never rises (damped, no edge)", max(max(b / a - 1.0 for a, b in zip(e[:-1], e[1:])), 0.0), 1e-6)
+    check("the field stays finite and inside U_CAP", float((~np.isfinite(st)).any() or np.abs(st[..., [0, 2]]).max() > float(wfm.U_CAP)), 0.0)
+
+
+def test_a_press_replaces_rather_than_adds_on_a_ringing_field():
+    """The documented consequence of a pin: at a fully weighted texel u becomes the target, not u + target."""
+    n = 64
+    tex = _square_tex(n)
+    full = wfm.outline_mask(tex) == 1.0
+    ring = new_state(n, n)
+    ring[..., 0] = 0.5
+    out = real_stage(ring, Params(edge=0.0, force=0.0), force_tex=tex, strike=True)[..., 0]
+    check("pinned texels become the target (1.0), not 0.5 + 1.0", float(np.abs(out[full] - wfm.OUTLINE_AMP).max()), 1e-6)
+    check("unweighted texels keep the ring (0.5)", float(np.abs(out[~(wfm.outline_mask(tex) > 0)] - 0.5).max()), 1e-6)
+
+
+def test_one_held_frame_on_a_field_at_rest_is_the_old_impulse():
+    n = 64
+    tex = _square_tex(n)
+    out = real_stage(new_state(n, n), Params(edge=0.0, force=0.0), force_tex=tex, strike=True)
+    check("one held frame at rest = strength * OUTLINE_AMP * mask", float(np.abs(out[..., 0] - wfm.OUTLINE_AMP * wfm.outline_mask(tex)).max()), 1e-6)
+    pt = real_stage(new_state(n, n), Params(edge=0.0), strike=True)[..., 0]
+    check("... and the point press = STRIKE_AMP * the Gaussian", float(np.abs(pt - wfm.STRIKE_AMP * _gauss(n, n, wfm.STRIKE_X, wfm.STRIKE_Y, wfm.EX_SIGMA)).max()), 1e-6)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

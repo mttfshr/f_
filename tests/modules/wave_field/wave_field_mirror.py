@@ -209,9 +209,16 @@ def real_stage(state, p, force_tex=None, strike=False, lfo_tex=None):
     force_tex is not None means the force inlet is connected (src_force = 1): it pushes v by
     force * 2 (tex - 0.5) * T * dt (FR-007, neutral at 0.5). lfo_tex is not None means the LFO inlet is connected
     (src_lfo = 1): T = lfo_time(...), else T = 1. With nothing on the force inlet there is no push, LFO or not.
-    The strike (FR-009) adds strength * impulse * T to u, where the impulse is STRIKE_AMP * the point Gaussian at the frame centre with nothing connected, or OUTLINE_AMP * outline_mask(force_tex) when connected. Then the edge sponge on
-    u and v (FR-010) and containment (zap non-finite, clamp). T032/T035 (Matt, 2026-11-04): the point exciter
-    that used to sit here was removed (D7)."""
+
+    `strike` is the GATE: True on every frame the press is held (D11, Matt 2026-11-04; the argument keeps its old
+    name). While held, u is PINNED toward target = strength * amp * T with weight wgt, u += wgt (target - u), and v
+    is killed where pinned, v *= 1 - wgt. wgt, amp are the outline mask and OUTLINE_AMP when the force inlet is
+    connected, else the point Gaussian at the frame centre and STRIKE_AMP. So the envelope's attack and decay are
+    the luma of T over the held frames, sustain is the press length, and release is the solver ringing out (Speed,
+    Damp); no gain constant, the amplitude is in field units. A press of one frame on a field at rest is the old
+    one-frame impulse. The pin REPLACES u at the pinned texels: a press on a ringing field does not add to the
+    ring there. Then the edge sponge on u and v (FR-010) and containment (zap non-finite, clamp). The point
+    exciter that used to sit here was removed (D7)."""
     h, w = state.shape[:2]
     dt = F32(p.dt)
     u, v = state[..., 0].copy(), state[..., 2].copy()
@@ -220,12 +227,14 @@ def real_stage(state, p, force_tex=None, strike=False, lfo_tex=None):
     if connected:
         f = F32(p.force) * F32(2.0) * (force_tex[..., 0] - F32(0.5)) * tt
         v = v + f * dt
-    if strike:
+    if strike:                                          # the gate is held this frame (D11)
         if connected:
-            imp = F32(p.strength) * OUTLINE_AMP * outline_mask(force_tex)
+            wgt, amp = outline_mask(force_tex), OUTLINE_AMP
         else:
-            imp = F32(p.strength) * STRIKE_AMP * _gauss(h, w, STRIKE_X, STRIKE_Y, EX_SIGMA)
-        u = u + imp * tt
+            wgt, amp = _gauss(h, w, STRIKE_X, STRIKE_Y, EX_SIGMA), STRIKE_AMP
+        target = F32(p.strength) * amp * tt
+        u = u + wgt * (target - u)
+        v = v * (F32(1.0) - wgt)
     g = np.exp(-sponge_rate(h, w, p.edge) * dt).astype(F32)
     u, v = u * g, v * g
     out = texture(h, w)
