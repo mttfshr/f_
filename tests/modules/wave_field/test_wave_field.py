@@ -632,5 +632,116 @@ def test_force_kick_amplitude_error_follows_the_discrete_model():
     check("error is -(omega dt)^2/12 within 20%", abs(err - pred) / abs(pred), 0.2)
 
 
+# ------------------------------------------------------------------ T032: connected inlet (Matt, 2026-11-04)
+# Connected force inlet: the point exciter is off and its phase freezes; the strike lands on the inlet's
+# outlines (strength * OUTLINE_AMP * outline_mask). Unconnected: the point exciter and point strike, unchanged.
+
+def _square_tex(n=64, lo=16, hi=48, level=1.0, base=0.0):
+    t = new_state(n, n)
+    t[..., 0] = base
+    t[lo:hi, lo:hi, 0] = level
+    return t
+
+
+def test_exciter_is_silent_while_the_force_inlet_is_connected():
+    """T032: with amplitude 1 and a neutral (0.5) texture connected, nothing is pushed; unconnected it is."""
+    p = Params(speed=0.25, damping=0.2, amplitude=1.0, frequency=3.0, force=1.0, fast_fft=True)
+    flat = new_state(N, N); flat[..., 0] = 0.5
+    st, phase = new_state(N, N), 1.0                    # phase 1.0: sin(phase) is far from 0
+    for _ in range(20):
+        st, _, _, phase = wave_frame(st, p, force_tex=flat, phase=phase)
+    check("connected + neutral texture + amplitude 1: the field stays zero", float(np.abs(st[..., :3]).max()), 0.0)
+    free, ph = new_state(N, N), 1.0
+    for _ in range(20):
+        free, _, _, ph = wave_frame(free, p, phase=ph)
+    check("unconnected, same settings: the exciter drives the field", float(np.abs(free[..., 0]).max() < 1e-3), 0.0)
+
+
+def test_exciter_phase_freezes_while_connected():
+    p = Params(frequency=3.0, amplitude=1.0, fast_fft=True)
+    flat = new_state(N, N); flat[..., 0] = 0.5
+    _, _, _, ph_conn = wave_frame(new_state(N, N), p, force_tex=flat, phase=1.25)
+    check("connected: phase unchanged", abs(ph_conn - 1.25), 0.0)
+    _, _, _, ph_free = wave_frame(new_state(N, N), p, phase=1.25)
+    want = 1.25 + 2 * np.pi * 3.0 * p.dt
+    check("unconnected: phase advances by 2 pi f dt (float32 TWOPI)", abs(ph_free - want), 1e-6)
+
+
+def test_outline_mask_marks_the_outlines_of_a_known_image():
+    m = wfm.outline_mask(_square_tex())
+    check("flat interior has no outline", float(np.abs(m[20:44, 20:44]).max()), 0.0)
+    check("flat exterior has no outline", float(np.abs(m[:12]).max()), 0.0)
+    check("outline is 1 on both texels straddling the top edge", float(abs(m[15, 32] - 1.0) + abs(m[16, 32] - 1.0)), 0.0)
+    check("outline is 1 on both texels straddling the bottom edge", float(abs(m[47, 32] - 1.0) + abs(m[48, 32] - 1.0)), 0.0)
+    check("outline is 1 on both texels straddling the left edge", float(abs(m[32, 15] - 1.0) + abs(m[32, 16] - 1.0)), 0.0)
+    check("mask stays inside [0, 1] (corners clamp)", float(m.min() < 0 or m.max() > 1), 0.0)
+    flat = new_state(64, 64); flat[..., 0] = 0.9
+    check("a uniformly bright inlet has no outlines", float(np.abs(wfm.outline_mask(flat)).max()), 0.0)
+    half = wfm.outline_mask(_square_tex(level=0.5))
+    check("an outline of contrast 0.5 reads 0.5", abs(float(half[15, 32]) - 0.5), 1e-6)
+
+
+def test_connected_strike_lands_on_the_outlines_and_scales_with_strength():
+    n = 64
+    tex = _square_tex(n)
+    mask = wfm.outline_mask(tex)
+    z = new_state(n, n)
+    # force = 0 isolates the strike: the same texture is also the force field (black pushes down, white up)
+    out = real_stage(z, Params(edge=0.0, strength=1.0, force=0.0), force_tex=tex, strike=True)
+    check("u = OUTLINE_AMP * mask at strength 1", float(np.abs(out[..., 0] - wfm.OUTLINE_AMP * mask).max()), 1e-6)
+    check("the default point position (0.5, 0.5) gets no point strike while connected", abs(float(out[32, 32, 0])), 0.0)
+    check("a strike puts nothing in v", float(np.abs(out[..., 2]).max()), 0.0)
+    half = real_stage(z, Params(edge=0.0, strength=0.5, force=0.0), force_tex=tex, strike=True)
+    check("strength 0.5 halves the strike", float(np.abs(half[..., 0] - 0.5 * out[..., 0]).max()), 1e-6)
+    none = real_stage(z, Params(edge=0.0, strength=0.0, force=0.0), force_tex=tex, strike=True)
+    check("strength 0 strikes nothing", float(np.abs(none[..., 0]).max()), 0.0)
+    nostrike = real_stage(z, Params(edge=0.0, force=0.0), force_tex=tex, strike=False)
+    check("no strike, no outline impulse", float(np.abs(nostrike[..., 0]).max()), 0.0)
+    pushed = real_stage(z, Params(edge=0.0, force=1.0), force_tex=tex, strike=False)
+    note("v with Force 1 on a black/white inlet (the texture is also the force field)", f"{float(pushed[..., 2].min()):.4f} .. {float(pushed[..., 2].max()):.4f}")
+
+
+def test_unconnected_strike_is_unchanged_and_ignores_strength():
+    n = 64
+    p = Params(edge=0.0, x=0.3, y=0.6, strength=0.0)
+    out = real_stage(new_state(n, n), p, strike=True)
+    want = wfm.STRIKE_AMP * _gauss(n, n, 0.3, 0.6, wfm.EX_SIGMA)
+    check("unconnected strike is the point Gaussian even at strength 0", float(np.abs(out[..., 0] - want).max()), 1e-6)
+
+
+def test_outline_strike_radiates_into_the_stones_and_stays_bounded():
+    """User picture: strike the pan, the outlines of the stones ripple outward. After the strike the
+    field leaves the outlines (waves reach the stone's centre) and stays finite and inside the cap."""
+    n = 64
+    tex = _square_tex(n)
+    p = Params(speed=0.25, damping=0.1, edge=0.0, force=0.0, fast_fft=True)
+    st = real_stage(new_state(n, n), p, force_tex=tex, strike=True)
+    centre0 = abs(float(st[32, 32, 0]))
+    peak = 0.0
+    for _ in range(75):                                 # 1.25 time units: the front crosses the 0.25 half-width
+        st, _, _, _ = wave_frame(st, p.with_(strength=1.0))
+        peak = max(peak, float(np.abs(st[28:36, 28:36, 0]).max()))
+    note("|u| at the stone centre before / peak after 75 frames", f"{centre0:.3e} / {peak:.3e}")
+    check("nothing at the centre at the strike", centre0, 0.0)
+    check("waves reach the centre of the stone", float(peak < 1e-3), 0.0)
+    check("field stays finite and inside U_CAP", float((~np.isfinite(st)).any() or np.abs(st[..., [0, 2]]).max() > float(wfm.U_CAP)), 0.0)
+
+
+def test_force_range_to_1p5_scales_linearly():
+    """T032: the Force dial now reaches 1.5; the response is linear in it."""
+    rng = np.random.default_rng(21)
+    tex = new_state(N, N); tex[..., 0] = 0.5 + 0.2 * rng.uniform(-1, 1, (N, N))
+    p = Params(speed=0.25, damping=0.3, fast_fft=True)
+
+    def run_with(k):
+        st = new_state(N, N)
+        for _ in range(30):
+            st, _, _, _ = wave_frame(st, p.with_(force=k), force_tex=tex)
+        return st
+    a, b = run_with(1.0), run_with(1.5)
+    scale = float(np.abs(b[..., 0]).max())
+    check("force 1.5 = 1.5 x force 1 (relative)", float(np.abs(b[..., 0] - 1.5 * a[..., 0]).max()) / scale, 1e-5)
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

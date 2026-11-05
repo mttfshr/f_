@@ -49,6 +49,7 @@ DAMPING_FLOOR = 1e-3           # lowest `damping` the dial reaches, per time uni
 EX_SIGMA = F32(0.02)           # exciter / strike Gaussian sigma, in frame widths (T004)
 EX_GAIN = F32(165.0)           # exciter force per unit `amplitude` (T004: max|u| ~ 1 at amplitude 1, 2 Hz, speed 0.25, damping 0.3, edge 0.5)
 STRIKE_AMP = F32(4.0)          # strike impulse height in u (T004: the ring is ~0.4 after 1 s; independent of `amplitude`, so amplitude 0 can still strike)
+OUTLINE_AMP = F32(1.0)         # outline strike height in u at mask = 1 and strength = 1 (T032, PROVISIONAL: tuned by eye in T034)
 SPONGE_WIDTH = F32(0.12)       # sponge band width, in frame widths (T004: 0.12 reflects ~0.1% and absorbs ~99.5% at rate 10)
 SPONGE_RATE = F32(20.0)        # peak sponge damping rate at edge = 1, per time unit (T004: edge 0.5 lands on the rate-10 optimum; stronger reflects more)
 U_CAP = F32(100.0)             # containment bound on u and v (T003)
@@ -65,7 +66,8 @@ class Params:
     ring: float = 0.0           # omega at k = 0 (resonator)
     edge: float = 0.0           # sponge strength 0..1; 0 = pure periodic wrap
     dt: float = 1.0 / 60.0      # model step per frame (time unit seconds; gate G3)
-    force: float = 1.0          # gain on the force inlet
+    force: float = 1.0          # gain on the force inlet (dial 0..1.5, T032)
+    strength: float = 1.0       # outline strike strength, 0..1 (T032); only used while the force inlet is connected
     x: float = 0.5              # exciter position
     y: float = 0.5
     frequency: float = 2.0      # exciter frequency (cycles per time unit)
@@ -177,22 +179,45 @@ def sponge_rate(h, w, edge):
     return (F32(edge) * SPONGE_RATE * s * s * (F32(3.0) - F32(2.0) * s)).astype(F32)
 
 
+def outline_mask(tex):
+    """Outlines of the force inlet (T032, Matt 2026-11-04): |I(x+1) - I(x-1), I(y+1) - I(y-1)| of the
+    inlet's R channel, one solver texel either side, clamped to 0..1. A step of contrast 1 gives mask = 1
+    on the two texels that straddle it; flat regions give 0, whatever their brightness. Reads outside the
+    frame clamp (the codebox uses nearest(), which clamps, not wraps). Assumes the inlet at the solver's
+    resolution: how a differently sized inlet resamples is a bench question (T033/T034), not mirrored here."""
+    i = tex[..., 0].astype(F32)
+    pad = np.pad(i, 1, mode="edge")
+    gx = pad[1:-1, 2:] - pad[1:-1, :-2]
+    gy = pad[2:, 1:-1] - pad[:-2, 1:-1]
+    return np.clip(np.sqrt(gx * gx + gy * gy), F32(0.0), F32(1.0)).astype(F32)
+
+
 def real_stage(state, p, force_tex=None, phase=0.0, strike=False):
     """Stage 6. state R = u, B = v from the inverse DFT. Adds forcing to v (v += F dt):
     the force inlet F = force * 2 (tex - 0.5) (FR-007, neutral at 0.5) plus the point exciter
     amplitude * EX_GAIN * sin(phase) * gaussian (FR-008); adds the strike impulse to u
-    (FR-009); applies the edge sponge to u and v (FR-010); contains (zap non-finite, clamp)."""
+    (FR-009); applies the edge sponge to u and v (FR-010); contains (zap non-finite, clamp).
+
+    T032 (Matt, 2026-11-04): `force_tex is not None` means the force inlet is connected (src_force = 1).
+    Connected: the point exciter is OFF (force and exciter are mutually exclusive) and the strike drops the
+    impulse on the inlet's outlines, strength * OUTLINE_AMP * outline_mask. Unconnected: the point exciter
+    and the point strike at (x, y), unchanged; `strength` does nothing."""
     h, w = state.shape[:2]
     dt = F32(p.dt)
     u, v = state[..., 0].copy(), state[..., 2].copy()
     prof = _gauss(h, w, p.x, p.y, EX_SIGMA)
     f = np.zeros((h, w), F32)
-    if force_tex is not None:
+    connected = force_tex is not None
+    if connected:
         f = f + F32(p.force) * F32(2.0) * (force_tex[..., 0] - F32(0.5))
-    f = f + F32(p.amplitude) * EX_GAIN * F32(np.sin(phase)) * prof
+    else:
+        f = f + F32(p.amplitude) * EX_GAIN * F32(np.sin(phase)) * prof
     v = v + f * dt
     if strike:
-        u = u + STRIKE_AMP * prof
+        if connected:
+            u = u + F32(p.strength) * OUTLINE_AMP * outline_mask(force_tex)
+        else:
+            u = u + STRIKE_AMP * prof
     g = np.exp(-sponge_rate(h, w, p.edge) * dt).astype(F32)
     u, v = u * g, v * g
     out = texture(h, w)
@@ -269,7 +294,10 @@ def wave_frame(state, p, force_tex=None, phase=0.0, strike=False):
     st[..., 2] = lin[..., 2]
     st[..., 3] = F32(1.0)
     new = real_stage(st, p, force_tex, phase, strike)
-    new_phase = (phase + float(TWOPI) * p.frequency * p.dt) % float(TWOPI)
+    if force_tex is not None:                           # T032: the exciter is off while connected, its phase freezes
+        new_phase = phase
+    else:
+        new_phase = (phase + float(TWOPI) * p.frequency * p.dt) % float(TWOPI)
     return new, encode_luma(new, p.gain), encode_vec(new, p.gain), new_phase
 
 
