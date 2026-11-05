@@ -1047,7 +1047,7 @@
 							},
 							{
 								"box": {
-									"code": "// codebox_real.gen -- f_wave_field stage 6: the real-space stage on the inverse-DFT result.\n// 256x256 float32. Mirror: tests/modules/wave_field/wave_field_mirror.real_stage().\n//\n// Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module's inlet 0 through\n// vs_inState: WHERE), third = last frame's state from the hold stage (cold), fourth = the LFO texture (cold; the\n// module's inlet 1 through its own vs_inState: WHEN). Output = the new solver state and the feedback edge:\n//   R = u, G = strike counter, B = v, A = 1 (A held the exciter phase until the exciter was removed, 2026-11-04, D7)\n//   - connected flags (from vs_inState, via `prepend param`): src_force (inlet 0) and src_lfo (inlet 1). An unconnected\n//     inlet is vs_black = 0, which would decode to a full -1 force, so every read is gated on its flag. The gates use\n//     switch(), not multiplication, so a NaN in the unused branch cannot leak (0 * NaN). The flags lag ~180 ms at load\n//   - T (the LFO time function, T035) = the LFO's R channel per pixel, raw 0..1 (lmode 0, uni) or 2 x - 1 (lmode 1, bi,\n//     mid-grey neutral), and 1 when no LFO is connected. A uniform and a spatial LFO both work\n//   - force (FR-007): v += force * 2 (tex - 0.5) * T * dt, only with inlet 0 connected (mid-grey does nothing). With\n//     nothing on inlet 0 there is no push, whatever the LFO does. A uniform force only feeds the DC bin, which the spec\n//     stage removes\n//   - strike (FR-009): u += T * strength * impulse, exactly once per change of the counter strike_id. impulse = 4\n//     (STRIKE_AMP) * a gaussian at the frame centre (0.5, 0.5; sigma 0.02, wrapped distance; the X and Y dials were removed, D10) with nothing on inlet 0, or the OUTLINE\n//     mask of inlet 0 (OUTLINE_AMP 1) when it is connected: |I(x+1) - I(x-1), I(y+1) - I(y-1)| of its R channel, one\n//     solver texel either side, the neighbour's texel index clamped to 0..255 and read at its texel centre (never at a\n//     coordinate on or past the seam: out-of-range reads wrap, and nearest() there is unmeasured, tests/lib/gpu_sim.py;\n//     this equals the mirror's edge padding), result clamped to 0..1. Read with nearest() at the inlet's own resolution, so an inlet smaller than 256 gives a band\n//     about two solver texels wide at each of ITS texel boundaries (checked live in T034, not in the mirror).\n//     G of the hold texture remembers the last counter value seen, so the pulse cannot repeat or be dropped whatever\n//     the draw order. While reset_gate is on the strike waits (reset, then strike on the same frame is the spec's\n//     struck_state) and G keeps its old value\n//   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the\n//     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap\n//   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)\n//   - Param names: never a one-letter name (`t` was silently never applied); `edge_amt` (`edge` is\n//     a Gen operator name; the dial and the message keep the plain word `edge`)\nParam dt(0.016666667);\nParam force(1);\nParam strength(1);\nParam lmode(0);\nParam src_force(0);\nParam src_lfo(0);\nParam edge_amt(0);\nParam strike_id(0);\nParam reset_gate(0);\n\ndx = norm.x - 0.5;\ndy = norm.y - 0.5;\ndx = dx - floor(dx + 0.5);\ndy = dy - floor(dy + 0.5);\nprof = exp(0 - (dx * dx + dy * dy) / 0.0008);\n\nlastid = nearest(in3, norm).y;\nlastid = switch(abs(lastid) < 1e30, lastid, 0);\n\nuu = nearest(in1, norm).x;\nvv = nearest(in1, norm).z;\n\nconn = switch(src_force > 0.5, 1, 0);\nlraw = nearest(in4, norm).x;\ntt = switch(src_lfo > 0.5, mix(lraw, lraw * 2 - 1, lmode), 1);\n\nff = switch(conn > 0.5, force * 2 * (nearest(in2, norm).x - 0.5) * tt, 0);\nvv = vv + ff * dt;\n\ncxi = floor(norm.x * 256);\ncyi = floor(norm.y * 256);\nxr = (min(cxi + 1, 255) + 0.5) / 256;\nxl = (max(cxi - 1, 0) + 0.5) / 256;\nyu = (min(cyi + 1, 255) + 0.5) / 256;\nyd = (max(cyi - 1, 0) + 0.5) / 256;\ngx = nearest(in2, vec(xr, norm.y)).x - nearest(in2, vec(xl, norm.y)).x;\ngy = nearest(in2, vec(norm.x, yu)).x - nearest(in2, vec(norm.x, yd)).x;\nomask = clamp(sqrt(gx * gx + gy * gy), 0, 1);\n\nfire = switch(strike_id != lastid, 1, 0) * switch(reset_gate < 0.5, 1, 0);\nuu = uu + fire * tt * switch(conn > 0.5, strength * omask, strength * 4 * prof);\n\nedist = min(min(norm.x, 1 - norm.x), min(norm.y, 1 - norm.y));\nsp = clamp(1 - edist / 0.12, 0, 1);\nsprate = edge_amt * 20 * sp * sp * (3 - 2 * sp);\ngs = exp(0 - sprate * dt);\nuu = uu * gs;\nvv = vv * gs;\n\nuu = switch(abs(uu) < 1e30, uu, 0);\nvv = switch(abs(vv) < 1e30, vv, 0);\nuu = clamp(uu, -100, 100);\nvv = clamp(vv, -100, 100);\n\nnewid = switch(reset_gate >= 0.5, lastid, strike_id);\n\nout1 = vec(uu, newid, vv, 1);\n",
+									"code": "// codebox_real.gen -- f_wave_field stage 6: the real-space stage on the inverse-DFT result.\n// 256x256 float32. Mirror: tests/modules/wave_field/wave_field_mirror.real_stage().\n//\n// Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module's inlet 0 through\n// vs_inState: WHERE), third = last frame's state from the hold stage (cold), fourth = the LFO texture (cold; the\n// module's inlet 1 through its own vs_inState: WHEN). Output = the new solver state and the feedback edge:\n//   R = u, G = pin flag (1 on a frame the pin applied), B = v, A = 1 (A held the exciter phase until the exciter was\n//   removed, 2026-11-04, D7)\n//   - connected flags (from vs_inState, via `prepend param`): src_force (inlet 0) and src_lfo (inlet 1). An unconnected\n//     inlet is vs_black = 0, which would decode to a full -1 force, so every read is gated on its flag. The gates use\n//     switch(), not multiplication, so a NaN in the unused branch cannot leak (0 * NaN). The flags lag ~180 ms at load\n//   - T (the LFO time function, T035) = the LFO's R channel per pixel, raw 0..1 (lmode 0, uni) or 2 x - 1 (lmode 1, bi,\n//     mid-grey neutral), and 1 when no LFO is connected. A uniform and a spatial LFO both work\n//   - force (FR-007): v += force * 2 (tex - 0.5) * T * dt, only with inlet 0 connected (mid-grey does nothing). With\n//     nothing on inlet 0 there is no push, whatever the LFO does. A uniform force only feeds the DC bin, which the spec\n//     stage removes\n//   - strike (FR-009; D11 / D12, T042): a held PRESS, not an impulse. While strike_gate is 1 (and reset_gate is 0) u is\n//     PINNED toward target = strength * amp * T with weight pw: u += pw (target - u), and v is killed where pinned,\n//     v *= 1 - pw. pw and amp are the OUTLINE mask of inlet 0 and 1 (OUTLINE_AMP) when it is connected, else the\n//     gaussian at the frame centre (0.5, 0.5; sigma 0.02, wrapped distance) and 4 (STRIKE_AMP). The pin REPLACES u at\n//     the pinned texels (a press on a ringing field does not add there; Matt, 2026-11-04) and is idempotent, so the old\n//     counter and the G memory are gone: a tap is a gate the patcher holds for a few draws. No gain constant: the\n//     amplitude is in field units. The outline mask is |I(x+1) - I(x-1), I(y+1) - I(y-1)| of the R channel of inlet 0,\n//     one solver texel either side, the neighbour's texel index clamped to 0..255 and read at its texel centre (never\n//     at a coordinate on or past the seam: out-of-range reads wrap, and nearest() there is unmeasured,\n//     tests/lib/gpu_sim.py; this equals the mirror's edge padding), result clamped to 0..1. Read with nearest() at the\n//     inlet's own resolution, so an inlet smaller than 256 gives a band about two solver texels wide at each of ITS\n//     texel boundaries (checked live in T034, not in the mirror). While reset_gate is on the pin waits. Param named\n//     strike_gate, not gate: `gate` is a Gen operator name (the same clash as `edge`). The hold texture is still read\n//     (in3) so the inlet count and wiring stay put; its G is no longer used\n//   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the\n//     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap\n//   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)\n//   - Param names: never a one-letter name (`t` was silently never applied); `edge_amt` (`edge` is\n//     a Gen operator name; the dial and the message keep the plain word `edge`)\nParam dt(0.016666667);\nParam force(1);\nParam strength(1);\nParam lmode(0);\nParam src_force(0);\nParam src_lfo(0);\nParam edge_amt(0);\nParam strike_gate(0);\nParam reset_gate(0);\n\ndx = norm.x - 0.5;\ndy = norm.y - 0.5;\ndx = dx - floor(dx + 0.5);\ndy = dy - floor(dy + 0.5);\nprof = exp(0 - (dx * dx + dy * dy) / 0.0008);\n\nholdg = nearest(in3, norm).y;\nholdg = switch(abs(holdg) < 1e30, holdg, 0);\n\nuu = nearest(in1, norm).x;\nvv = nearest(in1, norm).z;\n\nconn = switch(src_force > 0.5, 1, 0);\nlraw = nearest(in4, norm).x;\ntt = switch(src_lfo > 0.5, mix(lraw, lraw * 2 - 1, lmode), 1);\n\nff = switch(conn > 0.5, force * 2 * (nearest(in2, norm).x - 0.5) * tt, 0);\nvv = vv + ff * dt;\n\ncxi = floor(norm.x * 256);\ncyi = floor(norm.y * 256);\nxr = (min(cxi + 1, 255) + 0.5) / 256;\nxl = (max(cxi - 1, 0) + 0.5) / 256;\nyu = (min(cyi + 1, 255) + 0.5) / 256;\nyd = (max(cyi - 1, 0) + 0.5) / 256;\ngx = nearest(in2, vec(xr, norm.y)).x - nearest(in2, vec(xl, norm.y)).x;\ngy = nearest(in2, vec(norm.x, yu)).x - nearest(in2, vec(norm.x, yd)).x;\nomask = clamp(sqrt(gx * gx + gy * gy), 0, 1);\n\npinon = switch(strike_gate > 0.5, 1, 0) * switch(reset_gate < 0.5, 1, 0);\npw = pinon * switch(conn > 0.5, omask, prof);\nptarget = strength * switch(conn > 0.5, 1, 4) * tt;\nuu = uu + pw * (ptarget - uu);\nvv = vv * (1 - pw);\n\nedist = min(min(norm.x, 1 - norm.x), min(norm.y, 1 - norm.y));\nsp = clamp(1 - edist / 0.12, 0, 1);\nsprate = edge_amt * 20 * sp * sp * (3 - 2 * sp);\ngs = exp(0 - sprate * dt);\nuu = uu * gs;\nvv = vv * gs;\n\nuu = switch(abs(uu) < 1e30, uu, 0);\nvv = switch(abs(vv) < 1e30, vv, 0);\nuu = clamp(uu, -100, 100);\nvv = clamp(vv, -100, 100);\n\nout1 = vec(uu, pinon + 0 * holdg, vv, 1);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -2758,8 +2758,8 @@
 			},
 			{
 				"box": {
-					"id": "obj-raw-3",
-					"maxclass": "button",
+					"id": "obj-raw-18",
+					"maxclass": "panel",
 					"patching_rect": [
 						30.0,
 						942.0,
@@ -2767,9 +2767,56 @@
 						24.0
 					],
 					"numinlets": 1,
-					"numoutlets": 1,
+					"numoutlets": 0,
+					"background": 1,
+					"ignoreclick": 1,
+					"border": 2,
+					"bordercolor": [
+						0.55,
+						0.55,
+						0.55,
+						1.0
+					],
+					"bgcolor": [
+						0.2,
+						0.2,
+						0.2,
+						1.0
+					],
+					"rounded": 14,
+					"presentation": 1,
+					"presentation_rect": [
+						78.0,
+						186.0,
+						28.0,
+						28.0
+					],
+					"varname": "strike_face"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-3",
+					"maxclass": "ubutton",
+					"patching_rect": [
+						30.0,
+						942.0,
+						24.0,
+						24.0
+					],
+					"numinlets": 1,
+					"numoutlets": 4,
 					"outlettype": [
-						"bang"
+						"bang",
+						"bang",
+						"",
+						"int"
+					],
+					"hltcolor": [
+						1.0,
+						1.0,
+						1.0,
+						0.45
 					],
 					"presentation": 1,
 					"presentation_rect": [
@@ -2779,7 +2826,7 @@
 						28.0
 					],
 					"varname": "strike_button",
-					"hint": "Drop an impulse: at the frame centre with nothing connected, or on the outlines of the inlet texture (set by Strength)"
+					"hint": "Hold to strike: pins the outlines of the inlet texture (or the frame centre with nothing connected) while held; release lets the waves ring out"
 				}
 			},
 			{
@@ -2901,60 +2948,6 @@
 			},
 			{
 				"box": {
-					"id": "obj-raw-10",
-					"maxclass": "newobj",
-					"patching_rect": [
-						30.0,
-						1042.0,
-						30.0,
-						22.0
-					],
-					"text": "i",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						"int"
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-17",
-					"maxclass": "newobj",
-					"patching_rect": [
-						30.0,
-						1072.0,
-						30.0,
-						22.0
-					],
-					"text": "+ 1",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						"int"
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-11",
-					"maxclass": "newobj",
-					"patching_rect": [
-						30.0,
-						1102.0,
-						140.0,
-						22.0
-					],
-					"text": "prepend param strike_id",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
-			},
-			{
-				"box": {
 					"id": "obj-raw-12",
 					"maxclass": "newobj",
 					"patching_rect": [
@@ -3037,6 +3030,265 @@
 						22.0
 					],
 					"text": "param reset_gate 0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-10",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						1172.0,
+						90.0,
+						22.0
+					],
+					"text": "sel bang 1 0",
+					"numinlets": 1,
+					"numoutlets": 4,
+					"outlettype": [
+						"bang",
+						"bang",
+						"bang",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-24",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						1207.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-19",
+					"maxclass": "newobj",
+					"patching_rect": [
+						90.0,
+						1242.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-22",
+					"maxclass": "message",
+					"patching_rect": [
+						30.0,
+						1277.0,
+						30.0,
+						22.0
+					],
+					"text": "0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-21",
+					"maxclass": "message",
+					"patching_rect": [
+						90.0,
+						1277.0,
+						120.0,
+						22.0
+					],
+					"text": "param strike_gate 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-20",
+					"maxclass": "message",
+					"patching_rect": [
+						230.0,
+						1277.0,
+						36.0,
+						22.0
+					],
+					"text": "100",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-25",
+					"maxclass": "newobj",
+					"patching_rect": [
+						300.0,
+						1172.0,
+						30.0,
+						22.0
+					],
+					"text": "i",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-26",
+					"maxclass": "newobj",
+					"patching_rect": [
+						340.0,
+						1202.0,
+						30.0,
+						22.0
+					],
+					"text": "+ 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-27",
+					"maxclass": "newobj",
+					"patching_rect": [
+						300.0,
+						1232.0,
+						40.0,
+						22.0
+					],
+					"text": "sel 2",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-23",
+					"maxclass": "message",
+					"patching_rect": [
+						300.0,
+						1262.0,
+						120.0,
+						22.0
+					],
+					"text": "param strike_gate 0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-31",
+					"maxclass": "message",
+					"patching_rect": [
+						380.0,
+						1002.0,
+						30.0,
+						22.0
+					],
+					"text": "1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-28",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						1042.0,
+						50.0,
+						22.0
+					],
+					"text": "spigot",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-29",
+					"maxclass": "newobj",
+					"patching_rect": [
+						380.0,
+						1072.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-raw-30",
+					"maxclass": "message",
+					"patching_rect": [
+						420.0,
+						1102.0,
+						30.0,
+						22.0
+					],
+					"text": "0",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -3769,11 +4021,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-3",
+						"obj-raw-1",
 						0
 					],
 					"destination": [
-						"obj-raw-10",
+						"obj-raw-5",
 						0
 					]
 				}
@@ -3781,11 +4033,227 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-1",
+						"obj-raw-3",
+						1
+					],
+					"destination": [
+						"obj-raw-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-3",
 						0
 					],
 					"destination": [
-						"obj-raw-5",
+						"obj-raw-22",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-10",
+						0
+					],
+					"destination": [
+						"obj-raw-24",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-10",
+						1
+					],
+					"destination": [
+						"obj-raw-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-10",
+						2
+					],
+					"destination": [
+						"obj-raw-22",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-24",
+						1
+					],
+					"destination": [
+						"obj-raw-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-24",
+						0
+					],
+					"destination": [
+						"obj-raw-22",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-19",
+						1
+					],
+					"destination": [
+						"obj-raw-20",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-20",
+						0
+					],
+					"destination": [
+						"obj-raw-25",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-19",
+						0
+					],
+					"destination": [
+						"obj-raw-21",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-21",
+						0
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-22",
+						0
+					],
+					"destination": [
+						"obj-raw-25",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-12",
+						0
+					],
+					"destination": [
+						"obj-raw-25",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-25",
+						0
+					],
+					"destination": [
+						"obj-raw-26",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-26",
+						0
+					],
+					"destination": [
+						"obj-raw-25",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-25",
+						0
+					],
+					"destination": [
+						"obj-raw-27",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-27",
+						0
+					],
+					"destination": [
+						"obj-raw-23",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-23",
+						0
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-6",
+						0
+					],
+					"destination": [
+						"obj-raw-20",
 						0
 					]
 				}
@@ -3821,7 +4289,91 @@
 						0
 					],
 					"destination": [
-						"obj-raw-10",
+						"obj-raw-19",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-7",
+						0
+					],
+					"destination": [
+						"obj-raw-31",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-31",
+						0
+					],
+					"destination": [
+						"obj-raw-28",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-15",
+						0
+					],
+					"destination": [
+						"obj-raw-28",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-28",
+						0
+					],
+					"destination": [
+						"obj-raw-29",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-29",
+						1
+					],
+					"destination": [
+						"obj-raw-30",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-30",
+						0
+					],
+					"destination": [
+						"obj-raw-28",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-29",
+						0
+					],
+					"destination": [
+						"obj-raw-22",
 						0
 					]
 				}
@@ -3878,54 +4430,6 @@
 				"patchline": {
 					"source": [
 						"obj-raw-9",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-10",
-						0
-					],
-					"destination": [
-						"obj-raw-17",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-17",
-						0
-					],
-					"destination": [
-						"obj-raw-10",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-17",
-						0
-					],
-					"destination": [
-						"obj-raw-11",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-11",
 						0
 					],
 					"destination": [

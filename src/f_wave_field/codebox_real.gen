@@ -4,7 +4,8 @@
 // Inputs: first = the inverse DFT (R = u, B = v), second = the force texture (cold; the module's inlet 0 through
 // vs_inState: WHERE), third = last frame's state from the hold stage (cold), fourth = the LFO texture (cold; the
 // module's inlet 1 through its own vs_inState: WHEN). Output = the new solver state and the feedback edge:
-//   R = u, G = strike counter, B = v, A = 1 (A held the exciter phase until the exciter was removed, 2026-11-04, D7)
+//   R = u, G = pin flag (1 on a frame the pin applied), B = v, A = 1 (A held the exciter phase until the exciter was
+//   removed, 2026-11-04, D7)
 //   - connected flags (from vs_inState, via `prepend param`): src_force (inlet 0) and src_lfo (inlet 1). An unconnected
 //     inlet is vs_black = 0, which would decode to a full -1 force, so every read is gated on its flag. The gates use
 //     switch(), not multiplication, so a NaN in the unused branch cannot leak (0 * NaN). The flags lag ~180 ms at load
@@ -13,16 +14,20 @@
 //   - force (FR-007): v += force * 2 (tex - 0.5) * T * dt, only with inlet 0 connected (mid-grey does nothing). With
 //     nothing on inlet 0 there is no push, whatever the LFO does. A uniform force only feeds the DC bin, which the spec
 //     stage removes
-//   - strike (FR-009): u += T * strength * impulse, exactly once per change of the counter strike_id. impulse = 4
-//     (STRIKE_AMP) * a gaussian at the frame centre (0.5, 0.5; sigma 0.02, wrapped distance; the X and Y dials were removed, D10) with nothing on inlet 0, or the OUTLINE
-//     mask of inlet 0 (OUTLINE_AMP 1) when it is connected: |I(x+1) - I(x-1), I(y+1) - I(y-1)| of its R channel, one
-//     solver texel either side, the neighbour's texel index clamped to 0..255 and read at its texel centre (never at a
-//     coordinate on or past the seam: out-of-range reads wrap, and nearest() there is unmeasured, tests/lib/gpu_sim.py;
-//     this equals the mirror's edge padding), result clamped to 0..1. Read with nearest() at the inlet's own resolution, so an inlet smaller than 256 gives a band
-//     about two solver texels wide at each of ITS texel boundaries (checked live in T034, not in the mirror).
-//     G of the hold texture remembers the last counter value seen, so the pulse cannot repeat or be dropped whatever
-//     the draw order. While reset_gate is on the strike waits (reset, then strike on the same frame is the spec's
-//     struck_state) and G keeps its old value
+//   - strike (FR-009; D11 / D12, T042): a held PRESS, not an impulse. While strike_gate is 1 (and reset_gate is 0) u is
+//     PINNED toward target = strength * amp * T with weight pw: u += pw (target - u), and v is killed where pinned,
+//     v *= 1 - pw. pw and amp are the OUTLINE mask of inlet 0 and 1 (OUTLINE_AMP) when it is connected, else the
+//     gaussian at the frame centre (0.5, 0.5; sigma 0.02, wrapped distance) and 4 (STRIKE_AMP). The pin REPLACES u at
+//     the pinned texels (a press on a ringing field does not add there; Matt, 2026-11-04) and is idempotent, so the old
+//     counter and the G memory are gone: a tap is a gate the patcher holds for a few draws. No gain constant: the
+//     amplitude is in field units. The outline mask is |I(x+1) - I(x-1), I(y+1) - I(y-1)| of the R channel of inlet 0,
+//     one solver texel either side, the neighbour's texel index clamped to 0..255 and read at its texel centre (never
+//     at a coordinate on or past the seam: out-of-range reads wrap, and nearest() there is unmeasured,
+//     tests/lib/gpu_sim.py; this equals the mirror's edge padding), result clamped to 0..1. Read with nearest() at the
+//     inlet's own resolution, so an inlet smaller than 256 gives a band about two solver texels wide at each of ITS
+//     texel boundaries (checked live in T034, not in the mirror). While reset_gate is on the pin waits. Param named
+//     strike_gate, not gate: `gate` is a Gen operator name (the same clash as `edge`). The hold texture is still read
+//     (in3) so the inlet count and wiring stay put; its G is no longer used
 //   - sponge (FR-010): exp(-rate dt) on u and v, rate = edge_amt * 20 (SPONGE_RATE) * smoothstep profile over the
 //     border band of width 0.12 (SPONGE_WIDTH). edge 0 leaves the periodic wrap
 //   - containment: non-finite / huge values zapped to 0 (abs(x) < 1e30), then clamped to +-100 (U_CAP)
@@ -35,7 +40,7 @@ Param lmode(0);
 Param src_force(0);
 Param src_lfo(0);
 Param edge_amt(0);
-Param strike_id(0);
+Param strike_gate(0);
 Param reset_gate(0);
 
 dx = norm.x - 0.5;
@@ -44,8 +49,8 @@ dx = dx - floor(dx + 0.5);
 dy = dy - floor(dy + 0.5);
 prof = exp(0 - (dx * dx + dy * dy) / 0.0008);
 
-lastid = nearest(in3, norm).y;
-lastid = switch(abs(lastid) < 1e30, lastid, 0);
+holdg = nearest(in3, norm).y;
+holdg = switch(abs(holdg) < 1e30, holdg, 0);
 
 uu = nearest(in1, norm).x;
 vv = nearest(in1, norm).z;
@@ -67,8 +72,11 @@ gx = nearest(in2, vec(xr, norm.y)).x - nearest(in2, vec(xl, norm.y)).x;
 gy = nearest(in2, vec(norm.x, yu)).x - nearest(in2, vec(norm.x, yd)).x;
 omask = clamp(sqrt(gx * gx + gy * gy), 0, 1);
 
-fire = switch(strike_id != lastid, 1, 0) * switch(reset_gate < 0.5, 1, 0);
-uu = uu + fire * tt * switch(conn > 0.5, strength * omask, strength * 4 * prof);
+pinon = switch(strike_gate > 0.5, 1, 0) * switch(reset_gate < 0.5, 1, 0);
+pw = pinon * switch(conn > 0.5, omask, prof);
+ptarget = strength * switch(conn > 0.5, 1, 4) * tt;
+uu = uu + pw * (ptarget - uu);
+vv = vv * (1 - pw);
 
 edist = min(min(norm.x, 1 - norm.x), min(norm.y, 1 - norm.y));
 sp = clamp(1 - edist / 0.12, 0, 1);
@@ -82,6 +90,4 @@ vv = switch(abs(vv) < 1e30, vv, 0);
 uu = clamp(uu, -100, 100);
 vv = clamp(vv, -100, 100);
 
-newid = switch(reset_gate >= 0.5, lastid, strike_id);
-
-out1 = vec(uu, newid, vv, 1);
+out1 = vec(uu, pinon + 0 * holdg, vv, 1);
