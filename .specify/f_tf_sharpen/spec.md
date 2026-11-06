@@ -182,4 +182,4 @@ applies (decode/re-encode round-trip on GPU); tier 3 applies (dial feel, floor b
   open ground.
 - `ideas/f_tf_expressive_consumers.md` §2.5 — concept origin, floor rationale (Frangi
   stability logic).
-- `.specify/f_tf_tensormap/spec.md` — eps_trace convention, encode/decode contract.
+- `.specify/stable/f_tf_tensormap/spec.md` — eps_trace convention, encode/decode contract.

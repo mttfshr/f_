@@ -79,7 +79,7 @@ Resolved; each is recorded where it is implemented. Change one only by an explic
   bugs (`f_apollonian`/`f_poincare`, ADR-8), a Vsynth render-to-texture limit (`f_stereogram`), a
   loop architecture question (`f_vf_chroma` draft), a codebox-split question (`f_vf_vorticity`),
   or not blocked at all (`f_focus`). None is a representation problem.
-- **Producer design history lives in the tensormap spec** (`.specify/f_tf_tensormap/spec.md`) and
+- **Producer design history lives in the tensormap spec** (`.specify/stable/f_tf_tensormap/spec.md`) and
   reference (`docs/f-reference/f_tf_tensormap.md`, including "Calibration by input type").
   The 2026-10-10 spike (`tests/records/spike_structure_tensor_range.py`) fixed the `strength` regime;
   the shipped default is 100. Gradient operator: Sobel (the verified `f_vf_sobel` kernel);

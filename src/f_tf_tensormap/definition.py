@@ -1,6 +1,6 @@
 # f_tf_tensormap patcher definition
 # Input to build/build_patcher.py
-# Spec: .specify/f_tf_tensormap/{spec,plan,tasks}.md   Created: 2026-10-16
+# Spec: .specify/stable/f_tf_tensormap/{spec,plan,tasks}.md   Created: 2026-10-16
 #
 # ARCHITECTURE NOTE -- primary node vs. real output node
 #

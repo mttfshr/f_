@@ -4,7 +4,7 @@
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
-**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. Stable push in progress: batch 3, `f_tf_tensormap` preflighted and fixed, bench 8/8, waiting on Matt's helpfile look before the move (latest entry below).
+**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. Stable push in progress: batch 3 continues at `f_tf_hatch` (latest entries below).
 
 **Candidates (Matt decides):**
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
@@ -20,12 +20,11 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-06: batch 3 started, `f_tf_tensormap` preflight
+## 2026-11-06: batch 3, `f_tf_tensormap` moved to `.specify/stable/`
 
-- **Done (Claude, offline):** Part 1 green; stale docs, spec and the source-less helpfile fixed. Record: `.specify/f_tf_tensormap/tasks.md`, "Stable preflight".
-- **Verified:** `bench_tf_tensormap.py` 8/8 (log `tests/logs/20261106-082418-bench.log`).
-- **Waiting (Matt):** helpfile look in Max. Then move it and go on to `f_tf_hatch`.
-- **Watch for:** `f_tf_axisflow` and `f_tf_smooth` helpfiles also have no source wired (seen 2026-11-06).
+- **Done:** preflight, stale docs and spec fixed, helpfile given a source (Claude, offline); moved after Matt's helpfile look passed. Record: `.specify/stable/f_tf_tensormap/tasks.md`, "Moved to stable/".
+- **Verified:** `bench_tf_tensormap.py` 8/8 (log `tests/logs/20261106-082418-bench.log`); bypass live by Matt.
+- **Next:** `f_tf_hatch`. Its helpfile, and those of `f_tf_axisflow`, `f_vf_potential`, `f_vf_flow`, have no upstream module wired: fix each as it comes up (Claude's stated plan; Matt raised no objection, not an explicit yes).
 
 ## 2026-11-06: `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/`
 

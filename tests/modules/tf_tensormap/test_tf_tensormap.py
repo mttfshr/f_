@@ -1,6 +1,6 @@
 """
 test_tf_tensormap.py -- tier-1 NumPy mirror of the planned f_tf_tensormap
-producer (.specify/f_tf_tensormap/{spec,plan,tasks}.md, Phase 0 T003-T010).
+producer (.specify/stable/f_tf_tensormap/{spec,plan,tasks}.md, Phase 0 T003-T010).
 
 Mirrors the 3-stage-plus-split pass chain as GenExpr shaders, sampling through
 gpu_sim.nearest (clamp-to-edge) exactly as the codeboxes will:

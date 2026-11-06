@@ -1,7 +1,7 @@
 # Tasks: f_tf_tensormap
 
-**Spec**: `.specify/f_tf_tensormap/spec.md`
-**Plan**: `.specify/f_tf_tensormap/plan.md`
+**Spec**: `.specify/stable/f_tf_tensormap/spec.md`
+**Plan**: `.specify/stable/f_tf_tensormap/plan.md`
 **Hub**: `ideas/f_tensorfield.md`
 **Build order**: Sequential by phase. Phases 0 and 1 are BLOCKING.
 **Commits**: After each phase checkpoint.
@@ -12,7 +12,7 @@
 ## Expected Output Layout
 
 ```
-.specify/f_tf_tensormap/
+.specify/stable/f_tf_tensormap/
   spec.md  plan.md  tasks.md      — done
   codebox_stage_a.gen             — Phase 1
   codebox_stage_b_h.gen           — Phase 1
@@ -136,15 +136,15 @@ docs/f-reference/f_tf_tensormap.md, f_tensor_type.md   — Phase 5
 
 ---
 
-## Stable preflight (2026-11-06, not yet moved)
+## Moved to stable/ (2026-11-06)
 
 Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--check` up to date; README row 110 chars or under; bypass is `bypass_gate` on stage C; helpfile box 154x84 equals the panel footprint. Contract bench clean in `tests/logs/20261106-081412-bench.log`; offline suite `tests/logs/20261106-081756-offline.log`.
 
-Fixed: the reference doc and `f_tensor_type.md` said nothing consumes outlet 0 and listed `f_weave` as a vecfield consumer (inlet retired 2026-11-01); `f_tensor_type.md` listed built modules as planned; spec still showed `width` / `height` as dials. The helpfile had no source, so its demo showed only the neutral output: `vs_sources_main` added, the comment moved off the preview, digest and comment now name outlet 0's consumers. Not yet opened in Max.
+Fixed: the reference doc and `f_tensor_type.md` said nothing consumes outlet 0 and listed `f_weave` as a vecfield consumer (inlet retired 2026-11-01); `f_tensor_type.md` listed built modules as planned; spec still showed `width` / `height` as dials. The helpfile had no source, so its demo showed only the neutral output: `vs_sources_main` added, the comment moved off the preview, digest and comment now name outlet 0's consumers.
 
 `bench_tf_tensormap.py` 8/8 on the live bench, first run on record since the 2026-10-30 `render_dim` change (log `tests/logs/20261106-082418-bench.log`).
 
-Open: Matt's helpfile look. The helpfile lists a `bypass` message that does not work here (same bench log), as accepted for Fluid and Split.
+Live by Matt, 2026-11-06: helpfile look passes; bypass works and shows a mustard yellow, which matches the packed neutral (0.5, 0.5, 0) on the preview (the match is inferred). The bench reports the `bypass` control message as not working here (`tests/logs/20261106-081412-bench.log`), as accepted for Fluid and Split.
 
 ---
 

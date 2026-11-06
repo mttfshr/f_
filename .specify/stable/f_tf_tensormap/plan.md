@@ -1,7 +1,7 @@
 # Implementation Plan: f_tf_tensormap
 
 _Date: 2026-10-16_
-_Spec: .specify/f_tf_tensormap/spec.md_
+_Spec: .specify/stable/f_tf_tensormap/spec.md_
 _Hub: ideas/f_tensorfield.md (design history, consumer audit)_
 
 ---
@@ -37,7 +37,7 @@ Most of the risk is not the math (a NumPy spike exists and `atan2` is bench-veri
 ## Files
 
 ```
-.specify/f_tf_tensormap/
+.specify/stable/f_tf_tensormap/
   spec.md             done
   plan.md             this file
   tasks.md            next to this file
@@ -60,7 +60,7 @@ docs/f-reference/
   f_tensor_type.md         the encoding contract, sibling of f_vecfield_type.md (Phase 5)
 ```
 
-Where the codeboxes live (`src/<name>/` vs `.specify/f_tf_tensormap/`) follows whatever `f_vf_optical_flow` actually does; Task T028 reads it rather than assuming. Paths above assume `src/<name>/` per the current convention, with `<name>` = `f_tf_tensormap` (ADR-7).
+Where the codeboxes live (`src/<name>/` vs `.specify/stable/f_tf_tensormap/`) follows whatever `f_vf_optical_flow` actually does; Task T028 reads it rather than assuming. Paths above assume `src/<name>/` per the current convention, with `<name>` = `f_tf_tensormap` (ADR-7).
 
 ---
 

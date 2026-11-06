@@ -32,7 +32,7 @@ tests/
 docs/f-reference/f_tf_glyph.md   — Phase 5
 ```
 
-Family context: tensormap is built and shipped (`.specify/f_tf_tensormap/`, docs at
+Family context: tensormap is built and shipped (`.specify/stable/f_tf_tensormap/`, docs at
 `docs/f-reference/f_tf_tensormap.md` + `f_tensor_type.md`); smooth's triad is authored
 in parallel — the consumer plans (sharpen, aniso_blur, hatch) copy this file's decode idiom (plan ADR-2), so
 ADR-2's text must be final by the end of Phase 0 (TG003).
