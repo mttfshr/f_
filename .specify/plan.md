@@ -27,7 +27,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 ## Owed to Matt
 
 - **Runs and looks:** the `f_vf_flow` and `f_tone_curve` helpfiles (stable push); the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
-- **Decisions:** `f_tone_curve` bypass, native or `bypass_gate` (`G-bypass-native`); cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
+- **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).

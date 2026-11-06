@@ -33,7 +33,7 @@ Parameters routed via `route bypass shadows midtones highlights edge_falloff low
 
 ## Loose Threads
 
-- Bypass is still native (`G-bypass-native`). For a texture processor the visible result is the same source passthrough.
+- Bypass stays native (Matt, 2026-11-06; `G-bypass-native`). For a texture processor the visible result is the same source passthrough.
 - Uses the same low_mid / mid_high / edge_falloff parameters as f_luma_processor, but with different defaults (this module's edge_falloff default is 0.0, while luma_processor's is 0.1); consider whether these should always match when used in sequence.
 
 ## References

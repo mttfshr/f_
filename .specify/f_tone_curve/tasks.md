@@ -20,11 +20,11 @@ real". Ids start at T001._
 
 - [x] T003 Stable preflight (2026-11-06, offline by Claude), record below.
 - [ ] T004 Matt's helpfile look: the digest, the note, and Falloff 0 against a raised Falloff. Do not move to `.specify/stable/` until it passes.
-- [ ] T005 Matt's call: keep native bypass or migrate to `bypass_gate` (`G-bypass-native`).
+- [x] T005 Matt's call, 2026-11-06: keep native bypass ("Keep native"), no migration to `bypass_gate`, so no bench run (`G-bypass-native`).
 
 ## Stable preflight (2026-11-06)
 
-Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--check` up to date; README row 100 chars, no ⚠; menu entry under Color / Tone, no recipe; helpfile box 160x130 against a footprint of 150x120. Bypass FAILS the preflight rule as written: jsui -> `attrui bypass`, native, and the module is listed in `G-bypass-native`. For a texture processor the result is source passthrough either way (contract bench's implicit out1 = in1 check; no `BYPASS_EXPECT` entry), so the doc says native and the decision is T005. The route has a `bypass` selector, so `bypass [0 / 1]` stays in the helpfile. Tests: no mirror (T002, skip decided by Matt) and no `bench_*` file of its own, only the contract bench, plus the route string in `tests/build/test_build_conventions.py`. No `spec.md` or `plan.md`; `definition.py` has no `Spec:` line.
+Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--check` up to date; README row 100 chars, no ⚠; menu entry under Color / Tone, no recipe; helpfile box 160x130 against a footprint of 150x120. Bypass FAILS the preflight rule as written: jsui -> `attrui bypass`, native, and the module is listed in `G-bypass-native`. For a texture processor the result is source passthrough either way (contract bench's implicit out1 = in1 check; no `BYPASS_EXPECT` entry), so the doc says native. Matt decided to keep it (T005). The route has a `bypass` selector, so `bypass [0 / 1]` stays in the helpfile. Tests: no mirror (T002, skip decided by Matt) and no `bench_*` file of its own, only the contract bench, plus the route string in `tests/build/test_build_conventions.py`. No `spec.md` or `plan.md`; `definition.py` has no `Spec:` line.
 
 Patcher against docs: one inlet, one outlet. No `vs_inState`, no `vs_black`, no `r draw`, so only the incoming texture triggers the pix, and nothing connected means no output (wiring read; behavior inferred, not run). `@type char`, so float input is quantized here. The inventory's Required is right.
 
