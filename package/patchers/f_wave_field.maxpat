@@ -2706,6 +2706,291 @@
 			},
 			{
 				"box": {
+					"id": "obj-gate-strike-face",
+					"maxclass": "panel",
+					"patching_rect": [
+						30.0,
+						942.0,
+						24.0,
+						24.0
+					],
+					"numinlets": 1,
+					"numoutlets": 0,
+					"background": 1,
+					"ignoreclick": 1,
+					"border": 2,
+					"bordercolor": [
+						0.55,
+						0.55,
+						0.55,
+						1.0
+					],
+					"bgcolor": [
+						0.2,
+						0.2,
+						0.2,
+						1.0
+					],
+					"rounded": 14,
+					"presentation": 1,
+					"presentation_rect": [
+						78.0,
+						186.0,
+						28.0,
+						28.0
+					],
+					"varname": "strike_face"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-button",
+					"maxclass": "ubutton",
+					"patching_rect": [
+						30.0,
+						942.0,
+						24.0,
+						24.0
+					],
+					"numinlets": 1,
+					"numoutlets": 4,
+					"outlettype": [
+						"bang",
+						"bang",
+						"",
+						"int"
+					],
+					"hltcolor": [
+						1.0,
+						1.0,
+						1.0,
+						0.45
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						78.0,
+						186.0,
+						28.0,
+						28.0
+					],
+					"varname": "strike_button",
+					"hint": "Hold to strike: pins the outlines of the inlet texture (or the frame centre with nothing connected) while held; release lets the waves ring out"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-label",
+					"maxclass": "comment",
+					"patching_rect": [
+						30.0,
+						968.0,
+						50.0,
+						18.0
+					],
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.5,
+					"numinlets": 1,
+					"numoutlets": 0,
+					"presentation": 1,
+					"presentation_rect": [
+						67.0,
+						164.0,
+						50.0,
+						18.0
+					],
+					"text": "Strike",
+					"textjustification": 1,
+					"varname": "lbl_strike"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-sel",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						1172.0,
+						90.0,
+						22.0
+					],
+					"text": "sel bang 1 0",
+					"numinlets": 1,
+					"numoutlets": 4,
+					"outlettype": [
+						"bang",
+						"bang",
+						"bang",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-tap",
+					"maxclass": "newobj",
+					"patching_rect": [
+						30.0,
+						1207.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-press",
+					"maxclass": "newobj",
+					"patching_rect": [
+						90.0,
+						1242.0,
+						40.0,
+						22.0
+					],
+					"text": "t b b",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-release",
+					"maxclass": "message",
+					"patching_rect": [
+						30.0,
+						1277.0,
+						30.0,
+						22.0
+					],
+					"text": "0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-on",
+					"maxclass": "message",
+					"patching_rect": [
+						90.0,
+						1277.0,
+						120.0,
+						22.0
+					],
+					"text": "param strike_gate 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-arm",
+					"maxclass": "message",
+					"patching_rect": [
+						230.0,
+						1277.0,
+						36.0,
+						22.0
+					],
+					"text": "100",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-count",
+					"maxclass": "newobj",
+					"patching_rect": [
+						300.0,
+						1172.0,
+						30.0,
+						22.0
+					],
+					"text": "i",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-add",
+					"maxclass": "newobj",
+					"patching_rect": [
+						340.0,
+						1202.0,
+						30.0,
+						22.0
+					],
+					"text": "+ 1",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						"int"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-match",
+					"maxclass": "newobj",
+					"patching_rect": [
+						300.0,
+						1232.0,
+						40.0,
+						22.0
+					],
+					"text": "sel 2",
+					"numinlets": 2,
+					"numoutlets": 2,
+					"outlettype": [
+						"bang",
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-gate-strike-off",
+					"maxclass": "message",
+					"patching_rect": [
+						300.0,
+						1262.0,
+						120.0,
+						22.0
+					],
+					"text": "param strike_gate 0",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
 					"id": "obj-raw-1",
 					"maxclass": "button",
 					"patching_rect": [
@@ -2754,105 +3039,6 @@
 					"text": "Reset",
 					"textjustification": 1,
 					"varname": "lbl_reset"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-18",
-					"maxclass": "panel",
-					"patching_rect": [
-						30.0,
-						942.0,
-						24.0,
-						24.0
-					],
-					"numinlets": 1,
-					"numoutlets": 0,
-					"background": 1,
-					"ignoreclick": 1,
-					"border": 2,
-					"bordercolor": [
-						0.55,
-						0.55,
-						0.55,
-						1.0
-					],
-					"bgcolor": [
-						0.2,
-						0.2,
-						0.2,
-						1.0
-					],
-					"rounded": 14,
-					"presentation": 1,
-					"presentation_rect": [
-						78.0,
-						186.0,
-						28.0,
-						28.0
-					],
-					"varname": "strike_face"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-3",
-					"maxclass": "ubutton",
-					"patching_rect": [
-						30.0,
-						942.0,
-						24.0,
-						24.0
-					],
-					"numinlets": 1,
-					"numoutlets": 4,
-					"outlettype": [
-						"bang",
-						"bang",
-						"",
-						"int"
-					],
-					"hltcolor": [
-						1.0,
-						1.0,
-						1.0,
-						0.45
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						78.0,
-						186.0,
-						28.0,
-						28.0
-					],
-					"varname": "strike_button",
-					"hint": "Hold to strike: pins the outlines of the inlet texture (or the frame centre with nothing connected) while held; release lets the waves ring out"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-4",
-					"maxclass": "comment",
-					"patching_rect": [
-						30.0,
-						968.0,
-						50.0,
-						18.0
-					],
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"presentation": 1,
-					"presentation_rect": [
-						67.0,
-						164.0,
-						50.0,
-						18.0
-					],
-					"text": "Strike",
-					"textjustification": 1,
-					"varname": "lbl_strike"
 				}
 			},
 			{
@@ -3030,192 +3216,6 @@
 						22.0
 					],
 					"text": "param reset_gate 0",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-10",
-					"maxclass": "newobj",
-					"patching_rect": [
-						30.0,
-						1172.0,
-						90.0,
-						22.0
-					],
-					"text": "sel bang 1 0",
-					"numinlets": 1,
-					"numoutlets": 4,
-					"outlettype": [
-						"bang",
-						"bang",
-						"bang",
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-24",
-					"maxclass": "newobj",
-					"patching_rect": [
-						30.0,
-						1207.0,
-						40.0,
-						22.0
-					],
-					"text": "t b b",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"bang",
-						"bang"
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-19",
-					"maxclass": "newobj",
-					"patching_rect": [
-						90.0,
-						1242.0,
-						40.0,
-						22.0
-					],
-					"text": "t b b",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"bang",
-						"bang"
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-22",
-					"maxclass": "message",
-					"patching_rect": [
-						30.0,
-						1277.0,
-						30.0,
-						22.0
-					],
-					"text": "0",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-21",
-					"maxclass": "message",
-					"patching_rect": [
-						90.0,
-						1277.0,
-						120.0,
-						22.0
-					],
-					"text": "param strike_gate 1",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-20",
-					"maxclass": "message",
-					"patching_rect": [
-						230.0,
-						1277.0,
-						36.0,
-						22.0
-					],
-					"text": "100",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-25",
-					"maxclass": "newobj",
-					"patching_rect": [
-						300.0,
-						1172.0,
-						30.0,
-						22.0
-					],
-					"text": "i",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						"int"
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-26",
-					"maxclass": "newobj",
-					"patching_rect": [
-						340.0,
-						1202.0,
-						30.0,
-						22.0
-					],
-					"text": "+ 1",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						"int"
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-27",
-					"maxclass": "newobj",
-					"patching_rect": [
-						300.0,
-						1232.0,
-						40.0,
-						22.0
-					],
-					"text": "sel 2",
-					"numinlets": 2,
-					"numoutlets": 2,
-					"outlettype": [
-						"bang",
-						""
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-raw-23",
-					"maxclass": "message",
-					"patching_rect": [
-						300.0,
-						1262.0,
-						120.0,
-						22.0
-					],
-					"text": "param strike_gate 0",
 					"numinlets": 2,
 					"numoutlets": 1,
 					"outlettype": [
@@ -4001,7 +4001,235 @@
 						9
 					],
 					"destination": [
-						"obj-raw-10",
+						"obj-gate-strike-sel",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-button",
+						1
+					],
+					"destination": [
+						"obj-gate-strike-press",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-button",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-release",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-sel",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-tap",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-sel",
+						1
+					],
+					"destination": [
+						"obj-gate-strike-press",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-sel",
+						2
+					],
+					"destination": [
+						"obj-gate-strike-release",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-tap",
+						1
+					],
+					"destination": [
+						"obj-gate-strike-press",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-tap",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-release",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-press",
+						1
+					],
+					"destination": [
+						"obj-gate-strike-arm",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-arm",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-count",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-press",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-on",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-release",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-count",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-12",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-count",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-count",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-add",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-add",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-count",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-count",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-match",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-match",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-off",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-raw-6",
+						0
+					],
+					"destination": [
+						"obj-gate-strike-arm",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-on",
+						0
+					],
+					"destination": [
+						"obj-57",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-gate-strike-off",
+						0
+					],
+					"destination": [
+						"obj-57",
 						0
 					]
 				}
@@ -4033,234 +4261,6 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-raw-3",
-						1
-					],
-					"destination": [
-						"obj-raw-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-3",
-						0
-					],
-					"destination": [
-						"obj-raw-22",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-10",
-						0
-					],
-					"destination": [
-						"obj-raw-24",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-10",
-						1
-					],
-					"destination": [
-						"obj-raw-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-10",
-						2
-					],
-					"destination": [
-						"obj-raw-22",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-24",
-						1
-					],
-					"destination": [
-						"obj-raw-19",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-24",
-						0
-					],
-					"destination": [
-						"obj-raw-22",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-19",
-						1
-					],
-					"destination": [
-						"obj-raw-20",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-20",
-						0
-					],
-					"destination": [
-						"obj-raw-25",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-19",
-						0
-					],
-					"destination": [
-						"obj-raw-21",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-21",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-22",
-						0
-					],
-					"destination": [
-						"obj-raw-25",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-12",
-						0
-					],
-					"destination": [
-						"obj-raw-25",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-25",
-						0
-					],
-					"destination": [
-						"obj-raw-26",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-26",
-						0
-					],
-					"destination": [
-						"obj-raw-25",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-25",
-						0
-					],
-					"destination": [
-						"obj-raw-27",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-27",
-						0
-					],
-					"destination": [
-						"obj-raw-23",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-23",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-raw-6",
-						0
-					],
-					"destination": [
-						"obj-raw-20",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"obj-raw-6",
 						0
 					],
@@ -4289,7 +4289,7 @@
 						0
 					],
 					"destination": [
-						"obj-raw-19",
+						"obj-gate-strike-press",
 						0
 					]
 				}
@@ -4373,7 +4373,7 @@
 						0
 					],
 					"destination": [
-						"obj-raw-22",
+						"obj-gate-strike-release",
 						0
 					]
 				}

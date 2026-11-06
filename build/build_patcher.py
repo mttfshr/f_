@@ -1251,6 +1251,87 @@ def wire(src_id, src_outlet, dst_id, dst_inlet):
         "destination": [dst_id, dst_inlet]
     }}
 
+
+# ---------------------------------------------------------------------------
+# gate_button: a held press (build/spec.md, "gate_button"; f_wave_field T042, f_vf_stamp ADR-2)
+# ---------------------------------------------------------------------------
+
+def gate_id(name, role):
+    """Object id of one box of a gate_button.  Fixed, so raw_lines can reach `press` and `release`."""
+    return f"obj-gate-{name}-{role}"
+
+
+def gate_button_parts(p, targets, route_outlet, draw_from=None, load_from=None):
+    """The boxes and cords of a held press, as (boxes, lines).
+
+    A panel face behind a transparent `ubutton` (a plain button reports no release):
+        mouse-down -> PRESS, mouse-up -> RELEASE; the message: bare = tap, 1 = PRESS, 0 = RELEASE
+        PRESS   = [t b b]: right `100` -> [i] right inlet (cancels a pending release), left `param <gate> 1`
+        RELEASE = `0` -> [i] right inlet; draw -> [i] -> [+ 1] -> [i]; [i] -> [sel N] -> `param <gate> 0`
+    so a release lands on draw bang N + 1 after it: counters, never timers.  `100` also fires on load: [i] starts
+    at 0, so the counter would otherwise reach [sel N] once with nothing pending.
+
+    The rects are offsets from `origin` and are part of the behaviour: where a cord fans out, Max fires by
+    destination position, and drift ignores patching_rect, so moving them is not a cosmetic change.
+    """
+    name, gate, n = p["name"], p["gate_param"], p.get("release_draws", 2)
+    ox, oy = p.get("origin", [30.0, 320.0])
+    g = lambda role: gate_id(name, role)
+    rect = lambda x, y, w, h: [ox + x, oy + y, w, h]
+
+    def obj(role, text, nin, nout, r, otypes=None):
+        return box(g(role), maxclass="newobj", patching_rect=r, text=text, numinlets=nin, numoutlets=nout,
+                   outlettype=otypes or [""] * nout)
+
+    def msg(role, text, r):
+        return box(g(role), maxclass="message", patching_rect=r, text=text, numinlets=2, numoutlets=1,
+                   outlettype=[""])
+
+    boxes = [
+        box(g("face"), maxclass="panel", patching_rect=rect(0.0, 0.0, 24.0, 24.0), numinlets=1, numoutlets=0,
+            background=1, ignoreclick=1, border=2, bordercolor=[0.55, 0.55, 0.55, 1.0],
+            bgcolor=[0.2, 0.2, 0.2, 1.0], rounded=14, presentation=1, presentation_rect=list(p["rect"]),
+            varname=f"{name}_face"),
+        box(g("button"), maxclass="ubutton", patching_rect=rect(0.0, 0.0, 24.0, 24.0), numinlets=1, numoutlets=4,
+            outlettype=["bang", "bang", "", "int"], hltcolor=[1.0, 1.0, 1.0, 0.45], presentation=1,
+            presentation_rect=list(p["rect"]), varname=f"{name}_button", hint=p["hint"]),
+        box(g("label"), maxclass="comment", patching_rect=rect(0.0, 26.0, 50.0, 18.0), fontname="Ableton Sans Light",
+            fontsize=9.5, numinlets=1, numoutlets=0, presentation=1, presentation_rect=list(p["label_rect"]),
+            text=p["label"], textjustification=1, varname=f"lbl_{name}"),
+        obj("sel", "sel bang 1 0", 1, 4, rect(0.0, 230.0, 90.0, 22.0), ["bang", "bang", "bang", ""]),
+        obj("tap", "t b b", 1, 2, rect(0.0, 265.0, 40.0, 22.0), ["bang", "bang"]),
+        obj("press", "t b b", 1, 2, rect(60.0, 300.0, 40.0, 22.0), ["bang", "bang"]),
+        msg("release", "0", rect(0.0, 335.0, 30.0, 22.0)),
+        msg("on", f"param {gate} 1", rect(60.0, 335.0, 120.0, 22.0)),
+        msg("arm", "100", rect(200.0, 335.0, 36.0, 22.0)),
+        obj("count", "i", 2, 1, rect(270.0, 230.0, 30.0, 22.0), ["int"]),
+        obj("add", "+ 1", 2, 1, rect(310.0, 260.0, 30.0, 22.0), ["int"]),
+        obj("match", f"sel {n}", 2, 2, rect(270.0, 290.0, 40.0, 22.0), ["bang", ""]),
+        msg("off", f"param {gate} 0", rect(270.0, 320.0, 120.0, 22.0)),
+    ]
+    if draw_from is None:
+        boxes.append(obj("draw", "r draw", 0, 1, rect(270.0, 200.0, 50.0, 22.0)))
+        draw_from = g("draw")
+    if load_from is None:
+        boxes.append(obj("load", "loadbang", 1, 1, rect(200.0, 305.0, 60.0, 22.0), ["bang"]))
+        load_from = g("load")
+
+    lines = [
+        wire(OBJ_ROUTE, route_outlet, g("sel"), 0),
+        wire(g("button"), 1, g("press"), 0), wire(g("button"), 0, g("release"), 0),
+        wire(g("sel"), 0, g("tap"), 0), wire(g("sel"), 1, g("press"), 0), wire(g("sel"), 2, g("release"), 0),
+        wire(g("tap"), 1, g("press"), 0), wire(g("tap"), 0, g("release"), 0),
+        wire(g("press"), 1, g("arm"), 0), wire(g("arm"), 0, g("count"), 1),
+        wire(g("press"), 0, g("on"), 0),
+        wire(g("release"), 0, g("count"), 1),
+        wire(draw_from, 0, g("count"), 0), wire(g("count"), 0, g("add"), 0), wire(g("add"), 0, g("count"), 1),
+        wire(g("count"), 0, g("match"), 0), wire(g("match"), 0, g("off"), 0),
+        wire(load_from, 0, g("arm"), 0),
+    ]
+    for t in targets:
+        lines += [wire(g("on"), 0, t, 0), wire(g("off"), 0, t, 0)]
+    return boxes, lines
+
 # ---------------------------------------------------------------------------
 # Main builder
 # ---------------------------------------------------------------------------
@@ -1652,7 +1733,7 @@ def build(defn, debug=None, side_files=None):
     # route_name (per param): the message the control answers to, when it is not the param's name.
     # It is a route token, so it must be one word, unique, and not `bypass` (reserved).
     tokens = [route_token(p) for p in all_params if p["type"] in ("float", "int", "menu", "text_button",
-                                                                   "header_toggle", "raw_ui")]
+                                                                   "header_toggle", "raw_ui", "gate_button")]
     for p in all_params:
         if "route_name" in p:
             t = p["route_name"]
@@ -1709,7 +1790,9 @@ def build(defn, debug=None, side_files=None):
     # (jit.fx.cf.tiltshift) via bespoke per-param transform logic (e.g.
     # lens_tiltcenter.js combining tilt_axis+tilt_pos) that doesn't fit a
     # generic "downstream target" schema. See ideas/build_patcher_schema_gaps.md.
-    raw_ui_params   = [p for p in all_params if p["type"] == "raw_ui"]
+    # A gate_button shares their slot, in definition order, so a raw_ui after it keeps its route outlet.
+    raw_ui_params   = [p for p in all_params if p["type"] in ("raw_ui", "gate_button")]
+    gate_buttons    = [p for p in all_params if p["type"] == "gate_button"]
     # bypass is handled separately
 
     # Route param names = ui params + header toggles + raw_ui params (in that
@@ -2246,6 +2329,24 @@ def build(defn, debug=None, side_files=None):
                                                 primary_pix_attrs=_prim_attrs)
         boxes.extend(_rd_boxes)
         lines.extend(_rd_lines)
+    # gate_button: the held press (build/spec.md).  gate_param names a declared internal param, whose pix_target
+    # is where the `param <gate> 0/1` messages go.  draw_from / load_from share a module's own `r draw` / `loadbang`.
+    declared_params = {p["name"]: p for p in all_params}
+    for p in gate_buttons:
+        what = f"gate_button '{p['name']}'"
+        for key in ("gate_param", "label", "hint", "rect", "label_rect"):
+            if key not in p:
+                raise ValueError(f"{what}: {key} is required")
+        gp = declared_params.get(p["gate_param"])
+        if gp is None or gp["type"] != "internal":
+            raise ValueError(f"{what}: gate_param {p['gate_param']!r} must be a declared internal param")
+        n_ = p.get("release_draws", 2)
+        if not isinstance(n_, int) or isinstance(n_, bool) or n_ < 1:
+            raise ValueError(f"{what}: release_draws must be a whole number of at least 1, not {n_!r}")
+        _shared = {k: node_ref(p[k], f"{what}: {k}") if k in p else None for k in ("draw_from", "load_from")}
+        _g_boxes, _g_lines = gate_button_parts(p, pix_targets_of(gp), route_params.index(p) + rb, **_shared)
+        boxes.extend(_g_boxes)
+        lines.extend(_g_lines)
     boxes.extend(defn.get("raw_boxes", []))
     lines.extend(defn.get("raw_lines", []))
     # raw_parameters: {obj_id: [longname, shortname, 0]} for raw_boxes objects

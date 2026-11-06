@@ -86,7 +86,10 @@ patcher = {
         {"name": "lmode", "type": "text_button", "options": ["LFO uni", "LFO bi"], "default": 0, "label": "LFO mode",
          "pix_target": "real",
          "hint": "How the LFO on inlet 1 is read. LFO uni = raw 0..1 (can only add). LFO bi = rescaled to -1..1 (mid-grey = nothing, dark pulls the other way). Modelled on f_weave's Mod mode"},
-        {"name": "strike", "type": "raw_ui"},
+        {"name": "strike", "type": "gate_button", "label": "Strike", "gate_param": "strike_gate",
+         "rect": [78.0, 186.0, 28.0, 28.0], "label_rect": [67.0, 164.0, 50.0, 18.0],
+         "draw_from": "obj-raw-12", "load_from": "obj-raw-6",      # shared with the reset logic below
+         "hint": "Hold to strike: pins the outlines of the inlet texture (or the frame centre with nothing connected) while held; release lets the waves ring out"},
         {"name": "reset", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
 
@@ -149,15 +152,11 @@ for _p in patcher["params"]:
 
 
 # ---- reset and strike logic (raw boxes) --------------------------------------------------------------------
-#   loadbang -> delay 200 -> [t b b] reset trigger, and -> a PRESS (load strike); `1` opens a [spigot] so the
+#   loadbang -> delay 200 -> [t b b] reset trigger, and -> the gate's PRESS (load strike); `1` opens a [spigot] so the
 #     reset's [sel 2] (reset_gate back to 0) releases that press once: [spigot] -> [t b b] (right: `0` closes it; left: RELEASE)
 #   reset button / `reset` message -> [t b b]:  right: 0 -> [i] right inlet (restart the draw count)
 #                                              left : `param reset_gate 1` -> pass and real
-#   strike ubutton: outlet 1 (mouse-down) -> PRESS, outlet 0 (mouse-up) -> RELEASE (a plain button has no release)
-#   `strike` message -> [sel bang 1 0]: bare `strike` = tap (PRESS then RELEASE), `strike 1` = PRESS, `strike 0` = RELEASE
-#   PRESS   = [t b b]: right `100` -> [i] right inlet (cancels a pending release), left `param strike_gate 1` -> real
-#   RELEASE = `0` -> [i] right inlet; [r draw] -> [i] -> [+ 1] -> [i] ; [i] -> [sel 2] -> `param strike_gate 0` -> real
-#     (the third draw bang after the release, so the gate is seen by at least two frames, never a timer)
+#   strike: the `gate_button` param above generates the press (build/spec.md); `press` and `release` below are its boxes
 #   [r draw] -> [i] -> [+ 1] -> [i] ; [i] -> [sel 2] -> `param reset_gate 0` -> pass and real   (reset_gate stays 1
 #     for two draw bangs: if rendering is not running yet it waits)
 # strike_gate is idempotent in the codebox (a pin), so there is no counter and no state memory. Object ids of the
@@ -184,7 +183,8 @@ def _line(src, so, dst, di):
 
 
 # Filled in from the built patcher (build order of pix_chain: hold, pass, fx, fy, spec, iy, ix, real, enc).
-_IDS = {"route": "obj-4", "pass": "obj-51", "real": "obj-57"}
+_IDS = {"route": "obj-4", "pass": "obj-51", "real": "obj-57",
+        "press": "obj-gate-strike-press", "release": "obj-gate-strike-release"}
 
 patcher["raw_boxes"] = [
     _box(1, "button", [90.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=1, outlettype=["bang"],
@@ -193,17 +193,6 @@ patcher["raw_boxes"] = [
     _box(2, "comment", [90.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
          numinlets=1, numoutlets=0, presentation=1, presentation_rect=[104.0, 164.0, 50.0, 18.0],
          text="Reset", textjustification=1, varname="lbl_reset"),
-    # the Strike face: a panel behind a transparent ubutton (a plain button reports no release)
-    _box(18, "panel", [30.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=0, background=1, ignoreclick=1,
-         border=2, bordercolor=[0.55, 0.55, 0.55, 1.0], bgcolor=[0.2, 0.2, 0.2, 1.0], rounded=14,
-         presentation=1, presentation_rect=[78.0, 186.0, 28.0, 28.0], varname="strike_face"),
-    _box(3, "ubutton", [30.0, 320.0, 24.0, 24.0], numinlets=1, numoutlets=4,
-         outlettype=["bang", "bang", "", "int"], hltcolor=[1.0, 1.0, 1.0, 0.45],
-         presentation=1, presentation_rect=[78.0, 186.0, 28.0, 28.0], varname="strike_button",
-         hint="Hold to strike: pins the outlines of the inlet texture (or the frame centre with nothing connected) while held; release lets the waves ring out"),
-    _box(4, "comment", [30.0, 346.0, 50.0, 18.0], fontname="Ableton Sans Light", fontsize=9.5,
-         numinlets=1, numoutlets=0, presentation=1, presentation_rect=[67.0, 164.0, 50.0, 18.0],
-         text="Strike", textjustification=1, varname="lbl_strike"),
     _obj(5, "t b b", 1, 2, [90.0, 380.0, 40.0, 22.0], ["bang", "bang"]),
     _obj(6, "loadbang", 1, 1, [200.0, 330.0, 60.0, 22.0], ["bang"]),
     _obj(7, "delay 200", 2, 1, [200.0, 355.0, 60.0, 22.0], ["bang"]),
@@ -214,17 +203,6 @@ patcher["raw_boxes"] = [
     _obj(14, "+ 1", 2, 1, [300.0, 480.0, 30.0, 22.0], ["int"]),
     _obj(15, "sel 2", 2, 2, [260.0, 480.0, 40.0, 22.0], ["bang", ""]),
     _msg(16, "param reset_gate 0", [260.0, 510.0, 100.0, 22.0]),
-    # the strike gate
-    _obj(10, "sel bang 1 0", 1, 4, [30.0, 550.0, 90.0, 22.0], ["bang", "bang", "bang", ""]),
-    _obj(24, "t b b", 1, 2, [30.0, 585.0, 40.0, 22.0], ["bang", "bang"]),
-    _obj(19, "t b b", 1, 2, [90.0, 620.0, 40.0, 22.0], ["bang", "bang"]),
-    _msg(22, "0", [30.0, 655.0, 30.0, 22.0]),
-    _msg(21, "param strike_gate 1", [90.0, 655.0, 120.0, 22.0]),
-    _msg(20, "100", [230.0, 655.0, 36.0, 22.0]),
-    _obj(25, "i", 2, 1, [300.0, 550.0, 30.0, 22.0], ["int"]),
-    _obj(26, "+ 1", 2, 1, [340.0, 580.0, 30.0, 22.0], ["int"]),
-    _obj(27, "sel 2", 2, 2, [300.0, 610.0, 40.0, 22.0], ["bang", ""]),
-    _msg(23, "param strike_gate 0", [300.0, 640.0, 120.0, 22.0]),
     # the load press: held until the reset has finished (then released through the draw counter)
     _msg(31, "1", [380.0, 380.0, 30.0, 22.0]),
     _obj(28, "spigot", 2, 1, [380.0, 420.0, 50.0, 22.0], [""]),
@@ -232,22 +210,12 @@ patcher["raw_boxes"] = [
     _msg(30, "0", [420.0, 480.0, 30.0, 22.0]),
 ]
 patcher["raw_lines"] = [
-    _line(_IDS["route"], 9, 10, 0),    # route: `strike` / `strike 1` / `strike 0` -> [sel bang 1 0]   (route outlet 9: speed ... gain, lmode = 0..8, strike, reset)
-    _line(_IDS["route"], 10, 5, 0),   # route: `reset` -> trigger
+    _line(_IDS["route"], 10, 5, 0),   # route: `reset` -> trigger   (route outlets: speed ... gain, lmode = 0..8, strike 9, reset 10)
     _line(1, 0, 5, 0),                 # reset button -> trigger
-    _line(3, 1, 19, 0), _line(3, 0, 22, 0),                        # ubutton: mouse-down -> PRESS, mouse-up -> RELEASE
-    _line(10, 0, 24, 0), _line(10, 1, 19, 0), _line(10, 2, 22, 0),    # bare `strike` -> tap, `strike 1` -> PRESS, `strike 0` -> RELEASE
-    _line(24, 1, 19, 0), _line(24, 0, 22, 0),                      # tap: PRESS (right, first), then RELEASE
-    _line(19, 1, 20, 0), _line(20, 0, 25, 1),                      # PRESS: `100` -> [i] right inlet (cancel a pending release)
-    _line(19, 0, 21, 0), _line(21, 0, _IDS["real"], 0),            # PRESS: `param strike_gate 1` -> real
-    _line(22, 0, 25, 1),                                           # RELEASE: `0` -> [i] right inlet (start the draw count)
-    _line(12, 0, 25, 0), _line(25, 0, 26, 0), _line(26, 0, 25, 1), # draw -> [i] -> +1 -> [i]
-    _line(25, 0, 27, 0), _line(27, 0, 23, 0), _line(23, 0, _IDS["real"], 0),    # sel 2 -> `param strike_gate 0` -> real
-    _line(6, 0, 20, 0),                                            # loadbang: no pending release at start
     _line(6, 0, 7, 0), _line(7, 0, 5, 0),                          # loadbang -> delay -> reset trigger
-    _line(7, 0, 19, 0), _line(7, 0, 31, 0), _line(31, 0, 28, 1),   # delay -> load PRESS, and open the spigot
+    _line(7, 0, _IDS["press"], 0), _line(7, 0, 31, 0), _line(31, 0, 28, 1),   # delay -> load PRESS, and open the spigot
     _line(15, 0, 28, 0), _line(28, 0, 29, 0),                      # reset done ([sel 2]) -> spigot -> [t b b]
-    _line(29, 1, 30, 0), _line(30, 0, 28, 1), _line(29, 0, 22, 0), # right: close the spigot; left: RELEASE (the load press)
+    _line(29, 1, 30, 0), _line(30, 0, 28, 1), _line(29, 0, _IDS["release"], 0), # right: close the spigot; left: RELEASE (the load press)
     _line(5, 1, 8, 0), _line(8, 0, 13, 1),                         # trigger right -> 0 -> [i] right inlet
     _line(5, 0, 9, 0), _line(9, 0, _IDS["pass"], 0), _line(9, 0, _IDS["real"], 0),   # trigger left -> reset 1 -> pass, real
     _line(12, 0, 13, 0), _line(13, 0, 14, 0), _line(14, 0, 13, 1),    # draw -> [i] -> +1 -> [i]

@@ -380,6 +380,30 @@ feed a custom `lens_tiltcenter.js` transform before reaching
 one object" shape. The param's actual UI/wiring is then supplied via
 `raw_boxes`/`raw_lines`.
 
+**`"type": "gate_button"` param** (added 2026-11-05, f_vf_stamp T020; first users `f_wave_field` Strike, `f_vf_stamp` Stamp) —
+a held press: mouse-down opens a gate Param, mouse-up closes it on a later draw bang, so any press is seen by rendered
+frames. A plain `button` reports no release, hence a panel face behind a transparent `ubutton`. Takes a route outlet in
+definition order among the `raw_ui` params.
+
+```python
+{"name": "strike", "type": "gate_button", "label": "Strike", "hint": str,
+ "gate_param": "strike_gate",              # a declared `internal` param; its pix_target is where the messages go
+ "rect": [x, y, w, h], "label_rect": [x, y, w, h],     # presentation rects of the button and its label
+ "release_draws": 2,                       # optional: the release lands on draw bang N + 1 after mouse-up
+ "origin": [30.0, 320.0],                  # optional: edit-view position of the block
+ "draw_from": "obj-raw-12", "load_from": "obj-raw-6"}  # optional: share a module's `r draw` / `loadbang`
+```
+
+The message is a tap when bare, `<name> 1` presses, `<name> 0` releases; a new press cancels a pending release. Without
+`draw_from` / `load_from` the type makes its own `r draw` / `loadbang`. Its boxes have fixed ids `obj-gate-<name>-<role>`,
+so `raw_lines` can reach `press` and `release` (`f_wave_field`'s load strike does); `bp.gate_id` builds them. The other
+roles are `face`, `button`, `label`, `sel`, `tap`, `on`, `arm`, `count`, `add`, `match`, `off`, `draw`, `load`.
+
+The offsets inside the block are behaviour, not layout: a fan-out fires by destination position. Drift cannot guard this
+type: it ignores `patching_rect`, and most of these boxes are not unique, so their cords are not compared.
+`tests/build/test_build_gate_button.py` runs the logic over the built cords instead. Like `raw_boxes`, the button has no
+`overrides` key: its position is `rect`.
+
 **`render_trigger`** (added 2026-10-05; `"rdraw"` default, or `"inlet"`; `source` archetype only) —
 a source module normally gets an `r draw` box wired to the pix as a per-frame render trigger (and a
 free-standing `r draw` inside the gen patcher). `"inlet"` omits both, so the module renders only when
