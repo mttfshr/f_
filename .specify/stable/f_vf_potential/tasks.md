@@ -39,4 +39,4 @@ Left alone: `definition.py`'s docstring calls the previous frame `in3` (it is `i
 
 ## Moved to stable/ (2026-11-06)
 
-Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing. Drift still ok. `tests/build/test_gates.py` not run: it needs Matt's go. Decision, Matt 2026-11-06: "vecfields don't go in on 0, they go in on 1", so the inlets stay as they are.
+Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing. Drift still ok. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-093844-offline.log`). Decision, Matt 2026-11-06: "vecfields don't go in on 0, they go in on 1", so the inlets stay as they are.

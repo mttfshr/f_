@@ -25,7 +25,7 @@
 - **Found:** three inlets, not two: 0 texture trigger (never read), 1 vecfield, 2 color; the docs and chains implied the field goes to inlet 0 (read from the patcher; not run). Helpfile still said axis-blind. `strength` and the red tint are inside the feedback loop. No menu recipe for the chain `library-characteristics.md` called pre-wired.
 - **Tests:** mirror in `tests/modules/vf_potential/` (not run); contract bench only. No `spec.md` or `plan.md` exists.
 - **Verified:** drift ok, menu and launcher `--check`; `test_generate_menu.py` 17/17 (log `tests/logs/20261106-093622-offline.log`). `bench_modules.py` 2/2 predates these edits, which touch no module code.
-- **Gates:** no row touched. `tests/build/test_gates.py` not run after the move (needs Matt's go).
+- **Gates:** no row touched. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-093844-offline.log`).
 - **Pattern:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. Check patcher inlets against the docs, and chains by meaning, not only type.
 - **Decided (Matt):** vecfields go in on inlet 1, not 0; Potential's inlets stay as they are.
 - **Next:** `f_vf_flow` (helpfile has no upstream wired), then `f_tone_curve`.
