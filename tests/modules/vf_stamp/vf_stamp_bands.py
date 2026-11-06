@@ -29,8 +29,8 @@ def kept(vx, vy):
     return float((px ** 2 + py ** 2).sum() / max((vx ** 2 + vy ** 2).sum(), 1e-20))
 
 
-def row(t, softness, field, reach, edge):
-    kw = dict(softness=softness, field=field, reach=reach, edge_amt=edge, seed=3)
+def row(t, softness, field, reach):
+    kw = dict(threshold=0.5, softness=softness, field=field, reach=reach)
     rx, ry = decode(stamp_stage(t, **kw)[1])
     sx, sy = decode(stamp_stage(t, impulse=1, **kw)[1])
     mag = np.hypot(rx, ry)
@@ -44,15 +44,14 @@ def row(t, softness, field, reach, edge):
 
 def main():
     print(f"N = {N}, disc radius {R}, threshold 0.5")
-    print(f"{'stamp':22}{'edge':>5}{'soft':>6}  {'field':8}{'band':>7}{'peak':>7}{'rim':>7}{'div':>8}{'kept_r':>8}{'kept_s':>8}")
+    print(f"{'stamp':22}{'soft':>6}  {'field':8}{'band':>7}{'peak':>7}{'rim':>7}{'div':>8}{'kept_r':>8}{'kept_s':>8}")
     for name, ramp in STAMPS:
         t = disc(N, r=R, ramp=ramp)
-        for edge in (0.0, 0.3):
-            for softness in (0.02, 0.1, 0.3):
-                for field, reach in FIELDS:
-                    b, p, r, d, kr, ks = row(t, softness, field, reach, edge)
-                    label = f"{field} s={reach}"
-                    print(f"{name:22}{edge:5.1f}{softness:6.2f}  {label:8}{b:7.2f}{p:7.2f}{r:7.2f}{d:8.4f}{kr:8.3f}{ks:8.3f}")
+        for softness in (0.02, 0.1, 0.3):
+            for field, reach in FIELDS:
+                b, p, r, d, kr, ks = row(t, softness, field, reach)
+                label = f"{field} s={reach}"
+                print(f"{name:22}{softness:6.2f}  {label:8}{b:7.2f}{p:7.2f}{r:7.2f}{d:8.4f}{kr:8.3f}{ks:8.3f}")
 
 
 if __name__ == "__main__":

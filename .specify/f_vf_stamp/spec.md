@@ -28,7 +28,7 @@ _Origin: `ideas/f_vf_stamp.md` (was `f_splat`, raised 2026-10-27 as the missing 
 - **G3 Radial and swirl field definition.** DECIDED 2026-11-05 (Matt, on the T010 numbers; live look still owed at T030): the plain wide central difference, `v = -(cov(x+s) - cov(x-s), cov(y+s) - cov(y-s))`, no divide, swirl = `(-v.y, v.x)`. `s = max(1, round(rim * width))` texels on both axes, from a new `rim` dial in frame widths. Rim strength is about `2 * rim` in frame units whatever `softness` and render size.
 - **G4 Gate button as a shared building block.** Extract the `ubutton`, `[sel bang 1 0]` and draw-counter boxes from `f_wave_field`'s `definition.py` into a schema UI type, or copy the raw boxes. DECIDED 2026-11-05 (Matt): extract.
 - **G5 Bypass.** DECIDED 2026-11-05 (Matt: "pass the input through"; reading confirmed by Matt the same day): out0 passes in0, out1 passes in1 when connected (else neutral 0.5 / 0.5); the gate and envelope are ignored, so a bypassed stamp hands the whole texture downstream as ink. FR-011's non-finite zap stays active in bypass (Claude's proposal; Matt did not object).
-- **G6 Dial set and ranges** (below), subject to `G-ui-density`.
+- **G6 Dial set and ranges.** DECIDED 2026-11-05 (Matt): the table below. `edge` and `seed` are cut (no effect on hard-edged stamps; an irregular edge comes from upstream), `threshold` defaults to 0.05, `amount` is 0-4, `rim` is added. Live tuning at T032 can still move ranges and defaults.
 - **G7 Luma weights.** DECIDED 2026-11-05 (Matt): Rec.709 (0.2126, 0.7152, 0.0722). The library is split (`f_luma_processor` 601, `f_vf_glow` 709; list in `tasks.md`); 709 is what `f_vf_advect`'s ink pass stage uses.
 - **G8 Menu category** (held by `G-menu`).
 
@@ -73,7 +73,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 
 ### User Story 5 — Shape the mask (Priority: P2)
 
-`threshold`, `softness`, `invert`, and an irregular edge (`edge` amount with `seed`): a noise-offset threshold that works for any stamp shape.
+`threshold`, `softness` and `invert`. An irregular edge is not this module's job: it comes from the stamp texture upstream.
 
 ### User Story 6 — Standard f_ module behaviour (Priority: P3)
 
@@ -87,7 +87,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 
 - **FR-001**: The module MUST be usable with nothing on in1. With nothing on in0 it stamps nothing (out0 black A = 1, out1 neutral): in0 gives the shape, so it is a processor, not a generator.
 - **FR-002**: The module MUST be stateless: output is a pure function of in0, in1, the params, the envelope value and the render size. No feedback texture.
-- **FR-003**: Coverage MUST be `cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * noise)`, flipped by `invert`, with Rec.709 luma (G7) and a deterministic arithmetic hash noise centred on 0 (plan ADR-5) (no `sin()`, as `f_ks`'s seed) seeded by `seed`.
+- **FR-003**: Coverage MUST be `cov = smoothstep(threshold - softness/2, threshold + softness/2, luma)`, flipped by `invert`, with Rec.709 luma (G7).
 - **FR-004**: out0 MUST be `vec(in0.rgb * cov * amount * env, 1.0)` (G2); RGB exactly zero and A = 1 when `cov * env` = 0.
 - **FR-005**: With in1 connected, out1 MUST be `encode((in1.rg - 0.5) * 2 * cov * env * force)` per `f_vecfield_type.md` (`v * 0.5 + 0.5`, B = 0.5, A = 1), bounded, and exactly (0.5, 0.5) when `cov * env` = 0. An unconnected in1 MUST be recognised from the connected flag (via `vs_inState`), not from the value: `vs_black` would decode as a full -1 vector (the `f_vf_glow` ADR-2 lesson, `vs_black` suppression before the remap).
 - **FR-006**: With in1 unconnected, out1 MUST be the radial impulse (`impulse` Radial) or the swirl (`impulse` Swirl) derived from `cov` by the wide central difference of G3 (reach set by `rim`), scaled by `force` and the envelope. With in1 connected the switch MUST have no effect.
@@ -105,16 +105,14 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 - **NF-002**: Float32 end to end, both outlets (one `jit.gl.pix` stage).
 - **NF-003**: Verification follows the constitution's tiers (below).
 
-## Parameters (proposed; final set fixed by G6, trimmed by `G-ui-density`)
+## Parameters (fixed by G6, 2026-11-05; T032 tunes them live)
 
 | Param | Range | Default | Notes |
 |---|---|---|---|
-| `threshold` | 0–1 | 0.5 | luma above which the stamp covers |
+| `threshold` | 0–1 | 0.05 | luma above which the stamp covers; low so saturated red and blue stamp |
 | `softness` | 0–1 | 0.1 | width of the smoothstep band; 0 = hard edge |
 | `invert` | toggle | 0 | stamp where luma is below |
-| `edge` | 0–1 | 0 | irregular edge: noise offset on the threshold (internal Param `edge_amt`) |
-| `seed` | int | 0 | noise seed |
-| `amount` | 0–1 | 1 | ink strength |
+| `amount` | 0–4 | 1 | ink strength; above 1 lifts a tap, `f_vf_advect` clamps after adding |
 | `force` | 0–2 | 1 | impulse strength (the field is in vecfield units) |
 | `impulse` | Radial / Swirl | Radial | the in1-empty fallback; inert when in1 is connected |
 | `rim` | 0.005–0.05 | 0.015 | width of the radial / swirl band, in frame widths (Matt, 2026-11-05: a dial, not a constant); inert when in1 is connected |
@@ -134,7 +132,8 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 
 ## Edge Cases
 
-- `softness` 0 or a hard-edged stamp: `softness` and `edge` act in luma, so neither changes a 0-to-1 step; the band comes from `rim` alone (T010).
+- `softness` 0 or a hard-edged stamp: `softness` acts in luma, so it does not change a 0-to-1 step; the band comes from `rim` alone (T010).
+- `softness` above `2 * threshold`: the band's lower edge goes below 0, so black is partly covered (at the default `threshold`, any `softness` above 0.1).
 - A stamp smaller than a few texels; `threshold` at 0 or 1; `invert` on a full-white texture.
 - in1 non-neutral outside the mask (masked off); in1 with non-finite texels.
 - Render size changes at runtime; non-square render targets (the gradient steps are per-texel in each axis).

@@ -53,9 +53,11 @@ A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage wit
 
 **Known leak (mirror, inferred for the live module)**: the spectral projection and this stencil disagree at high k, so about 10% of radial energy survives `project` at wider reach. Viscosity and `taps` are not modelled; T030 decides whether it shows.
 
-### ADR-5: Coverage and irregular edge
+### ADR-5: Coverage
 
-`cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * (noise - 0.5))`, `invert` as `1 - cov`. The noise is a value noise on a hash that uses no `sin()`, seeded by `seed`, defined in texel space so the edge shape is stable. It works on any stamp with a soft luma ramp, unlike angular harmonics on a radius; on a hard-edged stamp it does nothing, because the noise cannot move a 0-to-1 step (T010). Whether `edge` and `seed` stay is part of T006.
+`cov = smoothstep(threshold - softness/2, threshold + softness/2, luma)`, `invert` as `1 - cov`.
+
+**Cut (Matt, 2026-11-05, T006)**: the irregular edge (`edge`, `seed`, a noise offset on the threshold). On a hard-edged stamp it does nothing, because the noise cannot move a 0-to-1 step (T010); an irregular edge comes from upstream.
 
 ### ADR-6: Connected flags, not values
 
@@ -94,7 +96,7 @@ stamp -> out0 (ink), out1 (impulse)       r dim -> stamp (render size)
 - **Radial at `project` 1 stirs nothing in `f_vf_fluid`** (by the curl constraint): by design, with the swirl switch as the answer; the look test confirms or corrects this.
 - **Rim width at high render sizes**: `s` grows with the render (about 29 texels at 1920), which costs nothing in taps but has not been looked at live.
 - **Ink channel mismatch with `f_vf_advect`'s injection** (G2): read the consumer before fixing the encoding.
-- **Dial count** against `G-ui-density` (about ten controls).
+- **Dial count** against `G-ui-density`: ten controls plus the Stamp press (G6).
 - **Schema extraction (ADR-2)** touches `f_wave_field`'s definition; `drift` is the guard.
 
 ## Phasing (details in tasks.md)

@@ -17,8 +17,7 @@ import numpy as np
 
 from harness import check, note, run  # noqa: E402
 import gpu_sim as g  # noqa: E402
-from vf_stamp_mirror import (F32, decode, disc, hash2, project, rim_texels,  # noqa: E402
-                             stamp_stage, value_noise)
+from vf_stamp_mirror import F32, decode, disc, project, rim_texels, stamp_stage  # noqa: E402
 
 N = 64
 FIELDS = (("diff", 1), ("diff", 4), ("unit", 1))
@@ -28,15 +27,6 @@ BUGS = ("inward", "clamp_edge", "value_flag", "ink_no_env", "swap_luma")
 def flat(level, n=N):
     t = g.texture(n, n)
     t[..., 0:3] = level
-    t[..., 3] = 1
-    return t
-
-
-def ramp_tex(n=N):
-    """Luma ramp along x, 0 at the left to 1 at the right."""
-    nx = g.grid(n, n)[0]
-    t = g.texture(n, n)
-    t[..., 0:3] = nx[..., None]
     t[..., 3] = 1
     return t
 
@@ -148,19 +138,18 @@ def test_radial_outward_and_swirl_rotated():
 
 
 def test_diff_identities():
-    """The diff field: exactly curl-free radial, exactly divergence-free swirl, irregular edge too."""
-    for edge in (0.0, 0.3):
-        t = disc(N, r=0.25, ramp=0.1)
-        for reach in (1, 4):
-            _, r = stamp_stage(t, field="diff", reach=reach, edge_amt=edge, seed=3)
-            _, s = stamp_stage(t, field="diff", reach=reach, edge_amt=edge, seed=3, impulse=1)
-            # the identities hold for a stencil of the same reach; encode rounds, hence the tolerance
-            rx, ry = decode(r)
-            sx, sy = decode(s)
-            sd = (np.roll(sx, -reach, 1) - np.roll(sx, reach, 1)) + (np.roll(sy, -reach, 0) - np.roll(sy, reach, 0))
-            rc = (np.roll(ry, -reach, 1) - np.roll(ry, reach, 1)) - (np.roll(rx, -reach, 0) - np.roll(rx, reach, 0))
-            check(f"swirl divergence, s={reach} edge={edge}", float(np.abs(sd).max()), 1e-5)
-            check(f"radial curl, s={reach} edge={edge}", float(np.abs(rc).max()), 1e-5)
+    """The diff field: exactly curl-free radial, exactly divergence-free swirl."""
+    t = disc(N, r=0.25, ramp=0.1)
+    for reach in (1, 4):
+        _, r = stamp_stage(t, field="diff", reach=reach)
+        _, s = stamp_stage(t, field="diff", reach=reach, impulse=1)
+        # the identities hold for a stencil of the same reach; encode rounds, hence the tolerance
+        rx, ry = decode(r)
+        sx, sy = decode(s)
+        sd = (np.roll(sx, -reach, 1) - np.roll(sx, reach, 1)) + (np.roll(sy, -reach, 0) - np.roll(sy, reach, 0))
+        rc = (np.roll(ry, -reach, 1) - np.roll(ry, reach, 1)) - (np.roll(rx, -reach, 0) - np.roll(rx, reach, 0))
+        check(f"swirl divergence, s={reach}", float(np.abs(sd).max()), 1e-5)
+        check(f"radial curl, s={reach}", float(np.abs(rc).max()), 1e-5)
 
 
 def test_diff_rim_integral():
@@ -171,7 +160,9 @@ def test_diff_rim_integral():
     t[..., 3] = 1
     for softness in (0.02, 0.3):
         for reach in (1, 4):
-            _, r = stamp_stage(t, softness=softness, reach=reach)
+            # threshold 0.5 keeps the band inside 0-1; at the default 0.05, softness 0.3 covers black
+            # at 0.26 and the edge runs 0.26 to 1, not 0 to 1 (spec Edge Cases)
+            _, r = stamp_stage(t, threshold=0.5, softness=softness, reach=reach)
             rx = decode(r)[0][5]
             check(f"rim integral s={reach} softness={softness}", abs(float(rx[N // 2:].sum()) - 2 * reach), 1e-4)
 
@@ -211,23 +202,20 @@ def test_non_square():
     check("right rim points right", float(rx[24, 48:].max() > 0.01) - 1, 0)
 
 
-def test_noise():
-    """Range, determinism, seed sensitivity, and edge = 0 exactly removing it."""
-    _, _, ix, iy = g.grid(128, 128)
-    a = value_noise(ix, iy, 128, 128, 1)
-    check("noise in range", float(np.abs(a).max() > 0.5), 0)
-    check("noise deterministic", float(np.abs(a - value_noise(ix, iy, 128, 128, 1)).max()), 0)
-    check("seed changes it", float(np.abs(a - value_noise(ix, iy, 128, 128, 2)).max() < 0.05), 0)
-    check("noise is not constant", float(a.std() < 0.02), 0)
-    note("noise mean", float(a.mean()))
-    note("noise std", float(a.std()))
-    h = hash2(np.arange(256, dtype=F32)[:, None], np.arange(256, dtype=F32)[None, :])
-    check("hash in [0, 1)", float((h < 0).any() or (h >= 1).any()), 0)
-    note("hash mean", float(h.mean()))
-    t = ramp_tex()
-    o0, _ = stamp_stage(t, edge_amt=0.0, seed=1)
-    o1, _ = stamp_stage(t, edge_amt=0.0, seed=2)
-    check("edge 0 ignores the seed", float(np.abs(o0 - o1).max()), 0)
+def test_default_threshold_keeps_saturated_colours():
+    """T006: at the default threshold pure red, green and blue all stamp; black does not. Blue's luma
+    0.0722 sits inside the 0-0.1 band: t = 0.722, smoothstep 0.8111, so it stamps at 81%."""
+    for name, rgb, want in (("red", (1, 0, 0), 1.0), ("green", (0, 1, 0), 1.0), ("blue", (0, 0, 1), 0.8111)):
+        o, _ = stamp_stage(disc(N, rgb=rgb))
+        check(f"{name} strength", abs(float(o[32, 32, 0:3].max()) - want), 1e-3)
+    o, _ = stamp_stage(disc(N))
+    check("black does not stamp", float(np.abs(o[1, 1, 0:3]).max()), 0)
+
+
+def test_amount_above_one():
+    """T006: amount is 0-4, so the ink is not clamped here; f_vf_advect clamps after adding."""
+    o, _ = stamp_stage(disc(N), amount=4.0, env=0.5)
+    check("amount 4 at env 0.5 gives 2", abs(float(o[32, 32, 0]) - 2), 1e-6)
 
 
 def test_non_finite():

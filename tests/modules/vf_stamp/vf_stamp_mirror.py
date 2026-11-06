@@ -22,10 +22,7 @@ The field (`field` argument) is what T003 has to choose, so both candidates are 
 Swirl is the radial field rotated by (x, y) -> (-y, x) in either case.
 
 Neighbours use explicit integer texel indices with a modulo wrap (FR-010): the codebox reads them
-at texel centres. Noise (ADR-5) is value noise over the f_ks hash, centred on 0 so edge = 0 is
-exact and a non-zero edge does not bias the threshold.
-
-PROVISIONAL CONSTANT: NOISE_CELL (texels per noise cell), not a spec value yet.
+at texel centres.
 
 `bug` values are mutations the tests must catch: "inward" (radial sign flipped), "clamp_edge"
 (neighbours clamped, not wrapped), "value_flag" (in1 used regardless of src_vec), "ink_no_env"
@@ -39,8 +36,7 @@ F32 = np.float32
 LUMA = (F32(0.2126), F32(0.7152), F32(0.0722))
 LUMA_601 = (F32(0.299), F32(0.587), F32(0.114))
 SOFT_EPS = F32(1e-5)     # smoothstep width floor: softness 0 must not divide by zero
-UNIT_EPS = F32(1e-6)     # ADR-4's eps
-NOISE_CELL = 8
+UNIT_EPS = F32(1e-6)     # the rejected "unit" field's eps
 
 
 def rim_texels(rim, w):
@@ -57,55 +53,15 @@ def _mix(a, b, t):
     return (a * (F32(1) - F32(t)) + b * F32(t)).astype(F32)
 
 
-def _mixa(a, b, t):
-    return (a * (F32(1) - t) + b * t).astype(F32)
-
-
-def hash2(px, py):
-    """src/f_ks/codebox_seed.gen's arithmetic hash (no sin()): in [0, 1)."""
-    px = np.asarray(px, F32)
-    py = np.asarray(py, F32)
-    ha = (px * F32(0.1031)) % F32(1)
-    hb = (py * F32(0.1031)) % F32(1)
-    hc = ha
-    hd = ha * (hb + F32(33.33)) + hb * (hc + F32(33.33)) + hc * (ha + F32(33.33))
-    ha = ha + hd
-    hb = hb + hd
-    hc = hc + hd
-    return (((ha + hb) * hc) % F32(1)).astype(F32)
-
-
-def value_noise(ix, iy, w, h, seed, cell=NOISE_CELL):
-    """Value noise in texel space, in [-0.5, 0.5), periodic on the render size."""
-    ncx = max(1, int(np.ceil(w / cell)))
-    ncy = max(1, int(np.ceil(h / cell)))
-    fx = np.asarray(ix, F32) / F32(cell)
-    fy = np.asarray(iy, F32) / F32(cell)
-    cx = np.floor(fx)
-    cy = np.floor(fy)
-    tx = fx - cx
-    ty = fy - cy
-    tx = tx * tx * (F32(3) - F32(2) * tx)
-    ty = ty * ty * (F32(3) - F32(2) * ty)
-
-    def lat(a, b):
-        return hash2((a % ncx) + F32(seed * 61), (b % ncy) + F32(seed * 17))
-
-    top = _mixa(lat(cx, cy), lat(cx + 1, cy), tx)
-    bot = _mixa(lat(cx, cy + 1), lat(cx + 1, cy + 1), tx)
-    return (_mixa(top, bot, ty) - F32(0.5)).astype(F32)
-
-
 def smoothstep(e0, e1, x):
     t = np.clip((x - F32(e0)) / max(F32(e1) - F32(e0), SOFT_EPS), 0, 1).astype(F32)
     return (t * t * (F32(3) - F32(2) * t)).astype(F32)
 
 
-def coverage(in0, ix, iy, w, h, threshold, softness, invert, edge_amt, seed, weights=LUMA):
+def coverage(in0, ix, iy, w, h, threshold, softness, invert, weights=LUMA):
     """cov at integer texel indices of a w x h render target (FR-003)."""
     rgb = zap(g.sample(in0, (ix + F32(0.5)) / F32(w), (iy + F32(0.5)) / F32(h)), 0)
     lum = rgb[..., 0] * weights[0] + rgb[..., 1] * weights[1] + rgb[..., 2] * weights[2]
-    lum = lum + F32(edge_amt) * value_noise(ix, iy, w, h, seed)
     c = smoothstep(F32(threshold) - F32(softness) / 2, F32(threshold) + F32(softness) / 2, lum)
     return _mix(c, F32(1) - c, invert)
 
@@ -144,8 +100,7 @@ def impulse_field(cov_at, c0, ix, iy, w, h, field, reach, impulse, bug=None):
     return rx.astype(F32), ry.astype(F32)
 
 
-def stamp_stage(in0, in1=None, threshold=0.5, softness=0.1, invert=0.0, edge_amt=0.0, seed=0,
-                amount=1.0, force=1.0, impulse=0.0, env=1.0, src_vec=0.0, bypass_gate=0.0,
+def stamp_stage(in0, in1=None, threshold=0.05, softness=0.1, invert=0.0, amount=1.0, force=1.0, impulse=0.0, env=1.0, src_vec=0.0, bypass_gate=0.0,
                 field="diff", reach=1, rim=None, size=None, bug=None):
     """One frame of the stage. Returns (out0, out1), each float32 (H, W, 4)."""
     h, w = size if size else in0.shape[:2]
@@ -155,7 +110,7 @@ def stamp_stage(in0, in1=None, threshold=0.5, softness=0.1, invert=0.0, edge_amt
     weights = LUMA_601 if bug == "swap_luma" else LUMA
 
     def cov_at(a, b):
-        return coverage(in0, a, b, w, h, threshold, softness, invert, edge_amt, seed, weights)
+        return coverage(in0, a, b, w, h, threshold, softness, invert, weights)
 
     c0 = cov_at(ix, iy)
     src = g.sample(in0, nx, ny)
