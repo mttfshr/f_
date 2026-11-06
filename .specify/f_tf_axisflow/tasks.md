@@ -44,7 +44,7 @@ rotates it, unconnected = old behavior; title-bar label left as `T_ in ∇ out`.
 - [x] T023 (bench 9/9, 2026-10-17; the sample() tolerance worry did not materialise) Bench: cases written (negative gain, reference inlet, black ref == dial, 16:9 reference); `run_case` now feeds
   in2. NOT RUN: ask Matt (bench.maxpat open). One open point: in2 uses `sample()` (bilinear, so a lower-res fluid
   output reads smoothly); same-size bench inputs should be exact, but if TOL 2e-5 fails check 8-bit sample weights first.
-- [ ] T024 Full offline suite once (`tests/run.sh -q`): the rebuild touched only f_tf_axisflow, but the contract /
+- [x] T024 (2026-11-06, Claude: 69 files passed, log `tests/logs/20261106-081756-offline.log`) Full offline suite once (`tests/run.sh -q`): the rebuild touched only f_tf_axisflow, but the contract /
   drift / conventions tests have not been re-run since.
 - [x] T025 Helpfile (2026-10-18): `gain` range corrected, a note on the optional second inlet and negative gain added,
   bpatcher numinlets 2. Text only; Matt's look in Max (the judgment gate) is still to do.

@@ -5,7 +5,7 @@ graduated to docs/, but the audit found two gaps — an unasserted bypass
 behavior and a tensor-consumer fact that closes a filed open question.
 Ids start at T001._
 
-- [x] T001 (2026-11-06: the module was on native `@bypass`, so the neutral below never ran; moved to `bypass_gate`, entry added, live bench 2/2, log `tests/logs/20261106-081412-bench.log`): Add a BYPASS_EXPECT entry (or NEUTRAL_BYPASS_BY_DESIGN
+- [x] T001 (2026-11-06: the module was on native `@bypass`, so the neutral below never ran; moved to `bypass_gate`, entry added, live bench 2/2, log `tests/logs/20261106-081412-bench.log`; live by Matt 2026-11-06: black when bypassed): Add a BYPASS_EXPECT entry (or NEUTRAL_BYPASS_BY_DESIGN
   listing) for f_vf_potential in tests/contracts/bench_modules.py. The module
   declares archetype "processor" but its bypass outputs the neutral
   (0,0,0,1), not input passthrough — the implicit out1==in1 check
