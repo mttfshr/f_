@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Scalar potential-field integrator -- accumulates vecfield magnitude over time into isolines",
+					"text": "Turns a vecfield into a slowly fading scalar map of its strength, for contour lines and depth",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
@@ -120,7 +120,7 @@
 						15.0,
 						272.0,
 						270.0,
-						120.0
+						150.0
 					],
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
@@ -135,9 +135,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "References\n\nSee docs/f-reference/f_vf_potential.md.\nIntegrates field magnitude only -- axis-blind\n(a 180-degree flipped field looks identical).",
+					"text": "References\n\nSee docs/f-reference/f_vf_potential.md.\nIntegrates field magnitude, but the history\nis advected along the field, so direction\nmatters: feed a signed vecfield, not\nTensor Map outlet 1.",
 					"fontsize": 12.0,
-					"linecount": 5
+					"linecount": 7
 				}
 			},
 			{
@@ -156,17 +156,78 @@
 			},
 			{
 				"box": {
+					"bgmode": 1,
+					"border": 1,
+					"clickthrough": 0,
+					"enablehscroll": 0,
+					"enablevscroll": 0,
+					"id": "d-3",
+					"lockeddragscroll": 0,
+					"lockedsize": 0,
+					"maxclass": "bpatcher",
+					"name": "vs_sources_main.maxpat",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"offset": [
+						0.0,
+						0.0
+					],
+					"outlettype": [
+						"jit_gl_texture"
+					],
+					"patching_rect": [
+						338.0,
+						23.75,
+						296.4,
+						125.5
+					],
+					"viewvisibility": 1
+				}
+			},
+			{
+				"box": {
+					"bgmode": 1,
+					"border": 1,
+					"clickthrough": 0,
+					"enablehscroll": 0,
+					"enablevscroll": 0,
+					"id": "d-11",
+					"lockeddragscroll": 0,
+					"lockedsize": 0,
+					"maxclass": "bpatcher",
+					"name": "f_vf_repulse.maxpat",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"offset": [
+						0.0,
+						0.0
+					],
+					"outlettype": [
+						"jit_gl_texture"
+					],
+					"patching_rect": [
+						338.0,
+						170.0,
+						182.5,
+						91.0
+					],
+					"varname": "f_vf_repulse",
+					"viewvisibility": 1
+				}
+			},
+			{
+				"box": {
 					"id": "d-4",
 					"maxclass": "bpatcher",
 					"name": "f_vf_potential.maxpat",
-					"numinlets": 2,
+					"numinlets": 3,
 					"numoutlets": 1,
 					"outlettype": [
 						"jit_gl_texture"
 					],
 					"patching_rect": [
 						338.0,
-						24.0,
+						281.0,
 						207.5,
 						110.0
 					],
@@ -197,7 +258,7 @@
 					],
 					"patching_rect": [
 						338.0,
-						154.0,
+						411.0,
 						236.0,
 						249.0
 					],
@@ -222,10 +283,10 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						500.0,
-						419.0,
-						210.0,
-						51.0
+						560.0,
+						281.0,
+						220.0,
+						72.0
 					],
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
@@ -236,13 +297,75 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Feed into f_weave's across or along inlet for\ncurved, field-informed isolines.",
+					"text": "Needs a vecfield on inlet 1 and any\ntexture on inlet 0, which only triggers\nit. Here one field feeds both. Inlet 2\n(optional) tints the output.",
 					"fontsize": 12.0,
-					"linecount": 2
+					"linecount": 4
+				}
+			},
+			{
+				"box": {
+					"id": "d-10",
+					"maxclass": "comment",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						590.0,
+						411.0,
+						190.0,
+						98.0
+					],
+					"fontface": 0,
+					"fontname": "Ableton Sans Light",
+					"bgcolor": [
+						0.0,
+						0.0,
+						0.0,
+						0.0
+					],
+					"bubble": 1,
+					"text": "Bright = the field has been strong.\nA uniform field gives flat gray.\nFeed f_weave's across or along\ninlet for curved, field-informed\nlines. Strength above 1 runs the\ntrail up to white.",
+					"fontsize": 12.0,
+					"linecount": 6
 				}
 			}
 		],
 		"lines": [
+			{
+				"patchline": {
+					"destination": [
+						"d-11",
+						0
+					],
+					"source": [
+						"d-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"destination": [
+						"d-4",
+						0
+					],
+					"source": [
+						"d-11",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"destination": [
+						"d-4",
+						1
+					],
+					"source": [
+						"d-11",
+						0
+					]
+				}
+			},
 			{
 				"patchline": {
 					"destination": [

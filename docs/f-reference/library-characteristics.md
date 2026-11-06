@@ -72,7 +72,7 @@ Characteristic: generators that build **arrangements** (grids of bricks, weaves,
 
 Data flow (potential → isolines → weave):
 
-- `f_vf_vortex` (or `f_vf_fluid`) vecfield out → `f_vf_potential` (temporal integration of field magnitude into a 0–1 scalar whose isolines trace the flow).
+- `f_vf_vortex` (or `f_vf_fluid`) vecfield out → `f_vf_potential` inlets 0 and 1 (temporal integration of field magnitude into a 0–1 scalar whose isolines trace the flow; the field is read from inlet 1, and inlet 0 only triggers the frame).
 - `f_vf_potential` scalar out → `f_weave`'s across inlet: weave lines become curved isolines of the flow, not straight grids.
 - `f_weave` tex out → `f_masonry`-style geometry: for a different feel, `f_masonry`'s output is the module that stays clean under geometric warps like `f_droste` because it's distance-field based, whereas `f_masonry` is grid-quantized.
 
@@ -320,7 +320,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 1. Lens-stacked caustics: `f_caustic` composite → `f_lens` (halation, transmission mod = `f_vf_potential`) — the caustic sheet gets a filmic lens pass on top.
 2. Bricks under water: `f_masonry` → `f_caustic` (field = `f_vf_fluid` stirred by noise) → `f_droste` — masonry refracted through turbulent caustics, then spiraled.
 
-**f_vf_potential**
+**f_vf_potential** (in every chain here, the vecfield goes to inlet 1 and inlet 0 needs a texture; one vecfield into both works)
 1. Depth for stereogram: `f_vf_potential` scalar → `f_sirds` depth — flow topology as stereogram relief.
 2. Isoline stipple: `f_vf_potential` scalar → `f_stipple` processor mode — stipple density tracks the potential isolines rather than the source image.
 
@@ -377,7 +377,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 2. Cross-routed warps: `f_vf_fluid` output as source A, `f_tf_axisflow` output as source B → matrix → `mix_pct` of `f_vf_warp` and `f_vf_chroma`, swapped preset-to-preset.
 
 **f_modules**
-1. Live chain building: `f_modules` adds modules in the order: `f_vf_fluid` → `f_vf_advect` → `f_vf_potential` → `f_weave`, all pre-wired by the menu — the chain in the temporal field characteristic section assembled from the menu alone.
+1. Live chain building: `f_modules` adds modules in the order: `f_vf_fluid` → `f_vf_advect` → `f_vf_potential` → `f_weave` — the chain in the temporal field characteristic section. `menu.py` has no recipe for it, so wire `f_vf_potential`'s inlets by hand.
 2. Category-typed wiring: the ∇ and T_ category markers in the menu are the type system check: `f_tf_tensormap` is added under T_ Fields, and the next picker (`f_tf_axisflow`) lands straight under it — category order = pipeline order.
 
 ## Audio

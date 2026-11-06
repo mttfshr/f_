@@ -2,6 +2,16 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 3, `f_vf_fieldmap` moved to `.specify/stable/`
+
+- **Done (offline, Claude):** preflight, docs, spec and helpfile fixed. Moved after Matt's helpfile look passed (T027), with the Caustic, Warp and Streak references removed at his request. Record: `.specify/stable/f_vf_fieldmap/tasks.md`, "Stable preflight" and "Moved to stable/".
+- **Found:** no `vs_inState` in the patcher, so unconnected = no output, not a neutral field (wiring read; behavior inferred, not run). Helpfile `thresh` range was wrong. `f_vf_fieldmap` at rotate 0 into `f_vf_fluid` is type-correct but mostly projected away (NumPy estimate plus Fluid's own record; not run in Max); chain now says `rotate` near 90.
+- **Tests:** no `tests/modules` folder or bench file; `bench_modules.py` bypass entry and a partial mirror in `tests/math/test_conservative_field.py`. The analytic mirror (T025) is still open, not blocking.
+- **Verified:** drift ok, menu and launcher `--check`, `test_generate_menu.py` 17/17 (log `tests/logs/20261106-092751-offline.log`). `bench_modules.py` 2/2 predates these edits, which touch no module code.
+- **Gates:** no row touched. Matt 2026-11-06: no output when unconnected is fine; recipes Fluid Caustic and Vorticity Fluid look right live, no `menu.py` change. `G-edge-wrap`: negative `scale` samples out of range. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-093231-offline.log`).
+- **Pattern:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. On a move, check `parents[N]` and `../` paths and the `Spec:` path; Fieldmap has neither scripts nor a `Spec:` line. Also check chains by meaning, not only type.
+- **Next:** `f_vf_potential`. Its helpfile has no upstream module wired (not opened), and `f_vf_flow`'s has none either.
+
 ## 2026-11-06: batch 3, `f_tf_axisflow` moved to `.specify/stable/`
 
 - **Done (offline, Claude):** preflight, helpfile given `vs_sources_main` -> `f_tf_tensormap` outlet 1 -> Axis Flow, overlapping note moved, digest rewritten, stale spec and docs fixed. Moved after Matt's helpfile look passed (T029). Record: `.specify/stable/f_tf_axisflow/tasks.md`, "Stable preflight" and "Moved to stable/".

@@ -78,7 +78,7 @@ Take a source texture plus an f_vecfield and produce a visual result shaped by t
 | `f_vf_chroma` | tex + vecfield → composite + isolated layer | Field-steered chromatic aberration — R/B channels offset in opposite directions along the *local* field vector (vs. `f_lens`'s aberration, which is always centrifugal from a fixed center) |
 | `f_vf_prism` | tex + vecfield → composite + isolated layer + dispersion-direction vecfield | Field-driven RGB channel separation, luma-gated so prism color only appears where bright content meets the field; feather control blends hard-split ↔ spectral gradient |
 | `f_vf_advect` | tex + vecfield → composite + isolated layer + vecfield gradient of the accumulated flow, **temporal** | Frame-to-frame fluid advection — injected content spreads/dissipates/(if `decay`>1) amplifies over many frames, not just displaced once. The module to reach for when an effect needs to *build up* over time rather than react per-frame |
-| `f_vf_potential` | vecfield (+ optional color tex) → scalar, **temporal** | Integrates field magnitude over time into a 0–1 scalar whose isolines trace the flow. Built specifically to feed `f_weave`'s scalar inlet (curved isoline texture instead of straight lines) |
+| `f_vf_potential` | tex (trigger) + vecfield (+ optional color tex) → scalar, **temporal** | Integrates field magnitude over time into a 0–1 scalar whose isolines trace the flow. Built specifically to feed `f_weave`'s scalar inlet (curved isoline texture instead of straight lines) |
 
 ## Discrete-Item / Procedural Generators
 
@@ -182,7 +182,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_vf_chroma` | 4: source tex (+ctrl); vecfield; hue `mod`; dispersion `mod` | 2: tex (composite); tex (isolated chroma layer) | Source Required; vecfield Required (gated by `src_vecfield`); mods Optional | Source on both outlets (loop still runs at full cost) |
 | `f_vf_prism` | 4: source tex (+ctrl); vecfield; reach `mod`; spread `mod` | 3: tex (composite); tex (isolated prism layer); vecfield (weighted dispersion direction) | Source Required; vecfield Required (gated by `src_vecfield`); mods Optional | Standard bypass (source passthrough) |
 | `f_vf_advect` | 2: source tex (+ctrl); vecfield | 3: tex (composite); tex (advected layer); vecfield (gradient of the accumulated flow). **temporal** | Source Required; field Optional (suppressed when unconnected) | Source passes; feedback loop keeps running, state not reset |
-| `f_vf_potential` | 2: vecfield (+ctrl); color tex | 1: scalar. **temporal** | Vecfield Required; color tex Optional | Neutral (0, 0, 0, 1), NOT an input passthrough |
+| `f_vf_potential` | 3: tex trigger (+ctrl, content not read); vecfield; color tex | 1: scalar. **temporal** | Inlets 0 and 1 Required (one vecfield into both works); color tex Optional | Neutral (0, 0, 0, 1), NOT an input passthrough |
 
 ### Discrete-Item / Procedural Generators
 
