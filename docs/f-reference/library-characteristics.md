@@ -131,11 +131,11 @@ Characteristic: gen~/pfft~ modules with **no GL context**, driven by MSP cables,
 
 | Category | Modules | Character |
 |---|---|---|
-| Patterns | f_chladni, f_ks, f_wc, f_quasi, f_wave_field, f_cmap⚠ | Solver-driven, self-sustaining, field byproduct |
+| Patterns | f_chladni, f_ks, f_wc, f_quasi, f_cmap⚠ | Solver-driven, self-sustaining, field byproduct |
 | Generators/Discrete | f_grain, f_masonry, f_weave, f_stipple, f_vf_seeds | Arranged marks, shared param vocabulary |
 | Geometry/UV | f_droste, f_mobius, f_lens, f_stereo, f_sirds, f_ngon⚠, f_cmap⚠ | Stateless analytic coordinate warps |
 | Color/Tone | f_channel_grader, f_hue_processor, f_luma_processor, f_tone_curve, f_cmap⚠ | Terminal, tonal segmentation, pixel-value only |
-| ∇ Fields | f_vf_vortex, f_vf_vortex_multi, f_vf_fieldmap, f_vf_flow, f_vf_repulse, f_vf_optical_flow, f_vf_fluid, f_vf_ch, f_vf_lbm, f_vf_vorticity, f_chladni (partly) | Coherent jointly-computed RG vecfield producers |
+| ∇ Fields | f_vf_vortex, f_vf_vortex_multi, f_vf_fieldmap, f_vf_flow, f_vf_repulse, f_vf_optical_flow, f_vf_fluid, f_vf_ch, f_vf_lbm, f_vf_vorticity, f_wave_field, f_chladni (partly) | Coherent jointly-computed RG vecfield producers |
 | ∇ Effects | f_vf_warp, f_vf_streak, f_vf_glow, f_vf_chroma, f_vf_prism, f_vf_advect, f_caustic | Shared-field consumers, differing accumulation operator |
 | T_ Fields | f_tf_tensormap, f_tf_smooth, f_tf_sharpen | Structure (axis+anisotropy) signal, angle-doubled, NOT vecfield |
 | T_ Effects | f_tf_aniso_blur, f_tf_glyph, f_tf_hatch | Axis-aligned renderers, axis-blind or bridged |

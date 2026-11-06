@@ -13,7 +13,7 @@
 			100.0,
 			100.0,
 			960.0,
-			362.0
+			334.0
 		],
 		"gridsize": [
 			15.0,
@@ -50,7 +50,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -348,7 +348,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_wave_field",
+									"text": "f_wc",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -373,7 +373,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_wave_field.maxhelp"
+									"text": "loadunique f_wc.maxhelp"
 								}
 							},
 							{
@@ -388,7 +388,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Spectral wave field: held outline strike, LFO inlet, tunable dispersion; luma and gradient out",
+									"text": "Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -417,7 +417,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_wc",
+									"text": "f_masonry",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -442,7 +442,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_wc.maxhelp"
+									"text": "loadunique f_masonry.maxhelp"
 								}
 							},
 							{
@@ -457,7 +457,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it",
+									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -486,7 +486,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_masonry",
+									"text": "f_quasi",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -511,7 +511,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_masonry.maxhelp"
+									"text": "loadunique f_quasi.maxhelp"
 								}
 							},
 							{
@@ -526,7 +526,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Parametric masonry texture -- courses, bond, mortar, drift, color",
+									"text": "Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -555,7 +555,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_quasi",
+									"text": "f_stipple",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -580,7 +580,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_quasi.maxhelp"
+									"text": "loadunique f_stipple.maxhelp"
 								}
 							},
 							{
@@ -595,7 +595,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets",
+									"text": "2D hash field stipple texture",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -624,7 +624,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_stipple",
+									"text": "f_vf_seeds",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -649,7 +649,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_stipple.maxhelp"
+									"text": "loadunique f_vf_seeds.maxhelp"
 								}
 							},
 							{
@@ -664,7 +664,7 @@
 										150.0,
 										20.0
 									],
-									"text": "2D hash field stipple texture",
+									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -693,7 +693,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_vf_seeds",
+									"text": "f_weave",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -718,7 +718,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_vf_seeds.maxhelp"
+									"text": "loadunique f_weave.maxhelp"
 								}
 							},
 							{
@@ -733,80 +733,11 @@
 										150.0,
 										20.0
 									],
-									"text": "Discrete mark placement and orientation from a vecfield and shape tex -- Voronoi-style seeds with overlap",
-									"presentation": 1,
-									"presentation_rect": [
-										230.0,
-										266.0,
-										720.0,
-										20.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-30",
-									"maxclass": "textbutton",
-									"numinlets": 1,
-									"numoutlets": 3,
-									"outlettype": [
-										"",
-										"",
-										"int"
-									],
-									"parameter_enable": 0,
-									"fontsize": 12.0,
-									"patching_rect": [
-										20.0,
-										620.0,
-										150.0,
-										22.0
-									],
-									"text": "f_weave",
-									"presentation": 1,
-									"presentation_rect": [
-										10.0,
-										292.0,
-										210.0,
-										22.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "obj-31",
-									"maxclass": "message",
-									"numinlets": 2,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										20.0,
-										648.0,
-										230.0,
-										22.0
-									],
-									"text": "loadunique f_weave.maxhelp"
-								}
-							},
-							{
-								"box": {
-									"id": "obj-32",
-									"maxclass": "comment",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										260.0,
-										620.0,
-										150.0,
-										20.0
-									],
 									"text": "Parametric distance-field line texture with per-line phase variation; optional across and along inlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
-										294.0,
+										266.0,
 										720.0,
 										20.0
 									]
@@ -1005,30 +936,6 @@
 										0
 									]
 								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-30",
-										0
-									],
-									"destination": [
-										"obj-31",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"source": [
-										"obj-31",
-										0
-									],
-									"destination": [
-										"obj-1",
-										0
-									]
-								}
 							}
 						]
 					}
@@ -1062,7 +969,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -1683,7 +1590,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2118,7 +2025,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -2754,6 +2661,75 @@
 										20.0
 									]
 								}
+							},
+							{
+								"box": {
+									"id": "obj-28",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										560.0,
+										150.0,
+										22.0
+									],
+									"text": "f_wave_field",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										264.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-29",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										588.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_wave_field.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-30",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										560.0,
+										150.0,
+										20.0
+									],
+									"text": "Spectral wave field: held outline strike, LFO inlet, tunable dispersion; luma and gradient out",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										266.0,
+										720.0,
+										20.0
+									]
+								}
 							}
 						],
 						"lines": [
@@ -2948,6 +2924,30 @@
 										0
 									]
 								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-28",
+										0
+									],
+									"destination": [
+										"obj-29",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-29",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
 							}
 						]
 					}
@@ -2981,7 +2981,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -3695,7 +3695,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4037,7 +4037,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4379,7 +4379,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -4814,7 +4814,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [
@@ -5138,7 +5138,7 @@
 							0.0,
 							26.0,
 							960.0,
-							336.0
+							308.0
 						],
 						"openinpresentation": 1,
 						"gridsize": [

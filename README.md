@@ -31,7 +31,6 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_cmap` | ⚠ Paused. Complex-map feedback pull (z^n + w) for live input; built and benched, look not confirmed |
 | `f_grain` | Stochastic grain field with per-grain displacement and luma gating |
 | `f_ks` | Kuramoto-Sivashinsky generator: a self-sustaining chaotic pattern, solved on the GPU |
-| `f_wave_field` | Spectral wave field: held outline strike, LFO inlet, tunable dispersion; luma and gradient out |
 | `f_wc` | Wilson-Cowan form-constant generator: fixed 1024² solver, retinal map; a texture pulses it |
 | `f_masonry` | Parametric masonry texture -- courses, bond, mortar, drift, color |
 | `f_quasi` | Shepard-zoom quasicrystal generator: endless zoom, banded pattern; gradient vecfield and potential outlets |
@@ -72,6 +71,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_vf_vortex` | Single fixed-point vortex field -- convergence, curl, position, 4 mod inlets |
 | `f_vf_vortex_multi` | Three-site additive vortex field -- per-site position/conv/curl, 4 global mod inlets |
 | `f_vf_vorticity` | Vorticity confinement ("curl amp"): adds back the fine swirl a vecfield's curl implies; shows via f_vf_advect |
+| `f_wave_field` | Spectral wave field: held outline strike, LFO inlet, tunable dispersion; luma and gradient out |
 
 ### ∇ Effects
 

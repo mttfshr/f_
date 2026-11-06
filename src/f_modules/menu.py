@@ -48,7 +48,6 @@ CATEGORIES = [
         ("Quasi", "quasi", V),
         ("Seeds", "vf_seeds", V),
         ("Stipple", "stipple", N),
-        ("Wave Field", "wave_field", V),   # luma + gradient vecfield outlets; menu placement 2026-11-04 (Matt)
         ("Weave", "weave", N),          # no vecfield input since 2026-11-01 (inlet retired, signal_type removed)
         ("Wilson-Cowan", "wc", N),
     ]),
@@ -76,6 +75,7 @@ CATEGORIES = [
         ("Vortex", "vf_vortex", V),
         ("Vortex Multi", "vf_vortex_multi", V),
         ("Vorticity", "vf_vorticity", V),
+        ("Wave Field", "wave_field", V),   # luma + gradient vecfield outlets; in \u2207 Fields since 2026-11-05 (Matt)
     ]),
     ("\u2207 Effects", [
         ("Advect", "vf_advect", V),

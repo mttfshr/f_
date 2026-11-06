@@ -240,7 +240,6 @@
                                 "Quasi \u2207",
                                 "Seeds \u2207",
                                 "Stipple",
-                                "Wave Field \u2207",
                                 "Weave",
                                 "Wilson-Cowan"
                             ],
@@ -249,7 +248,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_disp",
-                            "parameter_mmax": 9,
+                            "parameter_mmax": 8,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -287,7 +286,6 @@
                                 "quasi",
                                 "vf_seeds",
                                 "stipple",
-                                "wave_field",
                                 "weave",
                                 "wc"
                             ],
@@ -296,7 +294,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_0_file",
-                            "parameter_mmax": 9,
+                            "parameter_mmax": 8,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -707,14 +705,15 @@
                                 "Repulse \u2207",
                                 "Vortex \u2207",
                                 "Vortex Multi \u2207",
-                                "Vorticity \u2207"
+                                "Vorticity \u2207",
+                                "Wave Field \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_3_disp",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -753,14 +752,15 @@
                                 "vf_repulse",
                                 "vf_vortex",
                                 "vf_vortex_multi",
-                                "vf_vorticity"
+                                "vf_vorticity",
+                                "wave_field"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_3_file",
-                            "parameter_mmax": 8,
+                            "parameter_mmax": 9,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
