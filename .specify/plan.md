@@ -17,7 +17,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow` and `f_tone_curve` moved, so all seven are in `.specify/stable/`; batch 4 (triage the older group) is next; plan and bar are in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
+0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow` and `f_tone_curve` moved, so all seven are in `.specify/stable/`; batch 4 is next (Matt, 2026-11-06): `f_vf_warp`, `f_stipple`, `f_vf_advect`, `f_vf_streak`, `f_vf_vortex`, `f_vf_prism`, `f_vf_seeds`, `f_vf_glow`, `f_vf_optical_flow`; `f_vf_repulse` and `f_sirds` join only if their filed tasks turn out to be done (no checkboxes, so unknown). Check open boxes and `status.json` flags against the current files first: many boxes are probably history, and `status.json` predates the `param-audit-1` doc fixes; plan and bar are in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
 
 2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
 3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
