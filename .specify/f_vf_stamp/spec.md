@@ -24,12 +24,12 @@ _Origin: `ideas/f_vf_stamp.md` (was `f_splat`, raised 2026-10-27 as the missing 
 ### Open, decided in Phase 0 (gates in `tasks.md`)
 
 - **G1 Envelope mechanism and units.** DECIDED 2026-11-05 (Matt): frames. A per-draw one-pole in the patcher (`env += (gate - env) * k`, `k` from `attack` and `release` in frames, `0` = instant), so no timer and no `line`. Alternative (not taken): `line` in ms (frame-rate dependent).
-- **G2 Ink encoding.** Which channels does `f_vf_advect`'s injection source read (RGB, alpha, premultiplied)? Out0 must match.
+- **G2 Ink encoding.** DECIDED 2026-11-05 (Matt, on Claude's reading of `src/f_vf_advect/codebox_advect.gen`): advect adds `sample(in1, uv) * inj_eff` on all four channels with no alpha gating, so RGB carries the mask and A stays 1: `out0 = vec(in0.rgb * cov * amount * env, 1.0)`.
 - **G3 Radial and swirl field definition.** Edge band only (the gradient of a soft mask is non-zero only in the `softness` band) versus a smoothed interior (extra taps or a blur); how magnitude is normalised so it does not depend on `softness`.
 - **G4 Gate button as a shared building block.** Extract the `ubutton`, `[sel bang 1 0]` and draw-counter boxes from `f_wave_field`'s `definition.py` into a schema UI type, or copy the raw boxes. DECIDED 2026-11-05 (Matt): extract.
 - **G5 Bypass.** DECIDED 2026-11-05 (Matt: "pass the input through"; reading confirmed by Matt the same day): out0 passes in0, out1 passes in1 when connected (else neutral 0.5 / 0.5); the gate and envelope are ignored, so a bypassed stamp hands the whole texture downstream as ink. FR-011's non-finite zap stays active in bypass (Claude's proposal; Matt did not object).
 - **G6 Dial set and ranges** (below), subject to `G-ui-density`.
-- **G7 Luma weights** the library uses for coverage (confirm against `f_luma_processor` / `f_vf_glow`).
+- **G7 Luma weights.** DECIDED 2026-11-05 (Matt): Rec.709 (0.2126, 0.7152, 0.0722). The library is split (`f_luma_processor` 601, `f_vf_glow` 709; list in `tasks.md`); 709 is what `f_vf_advect`'s ink pass stage uses.
 - **G8 Menu category** (held by `G-menu`).
 
 ---
@@ -44,7 +44,7 @@ A performer patches a shape texture into in0 and holds Stamp: the ink appears wh
 
 **Acceptance Scenarios**:
 1. **Given** a white disc on black and Stamp held, **When** run, **Then** out0 is the disc's RGB where covered and zero elsewhere.
-2. **Given** Stamp not held and the envelope at 0, **Then** out0 is zero and out1 is exactly neutral (0.5, 0.5).
+2. **Given** Stamp not held and the envelope at 0, **Then** out0 is (0, 0, 0, 1) and out1 is exactly neutral (0.5, 0.5).
 
 ### User Story 2 — Stir with a patched vecfield (Priority: P1)
 
@@ -87,8 +87,8 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 
 - **FR-001**: The module MUST be usable with nothing on in1. With nothing on in0 it stamps nothing (out0 black A = 1, out1 neutral): in0 gives the shape, so it is a processor, not a generator.
 - **FR-002**: The module MUST be stateless: output is a pure function of in0, in1, the params, the envelope value and the render size. No feedback texture.
-- **FR-003**: Coverage MUST be `cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * noise)`, flipped by `invert`, with the library's luma weights (G7) and a deterministic arithmetic hash noise (no `sin()`, as `f_ks`'s seed) seeded by `seed`.
-- **FR-004**: out0 MUST be the stamp's ink scaled by `cov`, `amount` and the envelope, in the encoding G2 settles; exactly zero when `cov * env` = 0.
+- **FR-003**: Coverage MUST be `cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * noise)`, flipped by `invert`, with Rec.709 luma (G7) and a deterministic arithmetic hash noise centred on 0 (plan ADR-5) (no `sin()`, as `f_ks`'s seed) seeded by `seed`.
+- **FR-004**: out0 MUST be `vec(in0.rgb * cov * amount * env, 1.0)` (G2); RGB exactly zero and A = 1 when `cov * env` = 0.
 - **FR-005**: With in1 connected, out1 MUST be `encode((in1.rg - 0.5) * 2 * cov * env * force)` per `f_vecfield_type.md` (`v * 0.5 + 0.5`, B = 0.5, A = 1), bounded, and exactly (0.5, 0.5) when `cov * env` = 0. An unconnected in1 MUST be recognised from the connected flag (via `vs_inState`), not from the value: `vs_black` would decode as a full -1 vector (the `f_vf_glow` ADR-2 lesson, `vs_black` suppression before the remap).
 - **FR-006**: With in1 unconnected, out1 MUST be the radial impulse (`impulse` Radial) or the swirl (`impulse` Swirl) derived from the gradient of `cov` by central differences, definition per G3, scaled by `force` and the envelope. With in1 connected the switch MUST have no effect.
 - **FR-007**: The Stamp control MUST be a held press: `ubutton` mouse-down sends `param stamp_gate 1`, mouse-up starts a release applied on the third draw bang after it; the `stamp` message is a tap, `stamp 1` / `stamp 0` press and release; a new press cancels a pending release. The Param is named `stamp_gate` (`gate` alone is a Gen operator name, as `edge` is). There is no stamp on load.
@@ -102,7 +102,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 ### Non-Functional Requirements
 
 - **NF-001** *(target, pending measurement)*: one `jit.gl.pix` pass; cost recorded at 1080p on the bench; the M1 is unmeasured and flagged (library rule).
-- **NF-002**: Float32 end to end for the vecfield; the ink outlet follows G2.
+- **NF-002**: Float32 end to end, both outlets (one `jit.gl.pix` stage).
 - **NF-003**: Verification follows the constitution's tiers (below).
 
 ## Parameters (proposed; final set fixed by G6, trimmed by `G-ui-density`)
@@ -125,7 +125,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 ## Success Criteria
 
 - **SC-001**: Coverage closed forms (the three regions of the smoothstep, `invert`, `softness` 0) match the mirror.
-- **SC-002**: Idle exactness: `cov * env` = 0 gives out0 exactly 0 and out1 exactly (0.5, 0.5, 0.5, 1).
+- **SC-002**: Idle exactness: `cov * env` = 0 gives out0 exactly (0, 0, 0, 1) and out1 exactly (0.5, 0.5, 0.5, 1).
 - **SC-003**: Linearity: out1 is linear in `force` and in the envelope while unsaturated; out1 = 0 where `cov` = 0.
 - **SC-004**: Radial: on a disc, out1 points outward across the edge band; swirl: divergence-free within the finite-difference tolerance, and equal to the radial field rotated 90 degrees; periodic wrap: a disc across the border gives the same field as the same disc moved to the centre, shifted.
 - **SC-005**: Gate: a tap is seen for at least two frames; a press cancels a pending release (offline check of the patcher logic plus the live module contract bench).
