@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ngain [-10 \u2013 10]\nreach [-0.5 \u2013 0.5]\nthreshold [-1 \u2013 1]\nmode [Cancel/Max/Abs Add/Turbulent]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ngain [-10 \u2013 10]\nreach [-0.5 \u2013 0.5]\nthreshold [-1 \u2013 1]\nmode [Cancel/Max/Abs Add/Turbulent]",
 					"fontsize": 12.0,
-					"linecount": 7
+					"linecount": 6
 				}
 			},
 			{

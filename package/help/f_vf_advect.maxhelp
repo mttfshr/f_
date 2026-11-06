@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndt [0 \u2013 0.05]\ndecay [0.8 \u2013 1.5]\ninjection [0 \u2013 0.2]\ngain [0 \u2013 4]\nmix_pct [0 \u2013 100]\nseparate [-2 \u2013 2]\nmode [Ride/Hold/Snap]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndt [0 \u2013 0.05]\ndecay [0.8 \u2013 1.5]\ninjection [0 \u2013 0.2]\ngain [0 \u2013 4]\nmix_pct [0 \u2013 100]\nseparate [-2 \u2013 2]\nmode [Ride/Hold/Snap]",
 					"fontsize": 12.0,
-					"linecount": 10
+					"linecount": 9
 				}
 			},
 			{

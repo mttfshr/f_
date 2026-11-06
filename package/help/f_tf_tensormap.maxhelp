@@ -105,9 +105,9 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nstrength [1 – 1000]\nradius [0 – 16]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nstrength [1 – 1000]\nradius [0 – 16]",
      "fontsize": 12.0,
-     "linecount": 7
+     "linecount": 6
     }
    },
    {

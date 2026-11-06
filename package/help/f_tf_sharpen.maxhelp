@@ -105,9 +105,9 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nsharpen [0 \u2013 4]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nsharpen [0 \u2013 4]",
      "fontsize": 12.0,
-     "linecount": 4
+     "linecount": 3
     }
    },
    {

@@ -92,7 +92,7 @@
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
 					"id": "d-8",
-					"linecount": 11,
+					"linecount": 10,
 					"maxclass": "comment",
 					"numinlets": 1,
 					"numoutlets": 0,
@@ -107,7 +107,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\nforce [0.0 – 0.2]\ndt [0.0 – 0.05]\nviscosity [0.0 – 1.0]\nproject [0.0 – 1.0]\ndrag [0.0 – 5.0]\ngain [0.0 – 10.0]\ndrift [0.0 – 1.0]\ntaps [1 – 16]\nbypass [0 / 1]"
+					"text": "External Control Messages\n\nforce [0.0 – 0.2]\ndt [0.0 – 0.05]\nviscosity [0.0 – 1.0]\nproject [0.0 – 1.0]\ndrag [0.0 – 5.0]\ngain [0.0 – 10.0]\ndrift [0.0 – 1.0]\ntaps [1 – 16]"
 				}
 			},
 			{

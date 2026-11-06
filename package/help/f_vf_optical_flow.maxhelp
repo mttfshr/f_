@@ -91,7 +91,7 @@
                     "fontface": 0,
                     "fontname": "Ableton Sans Light",
                     "id": "d-8",
-                    "linecount": 12,
+                    "linecount": 11,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
@@ -106,7 +106,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "External Control Messages\n\nscale [-0.05 \u2013 0.05]\ngain [-10.0 \u2013 10.0]\nmask_lo [0.0 \u2013 20.0]\nmask_hi [0.0 \u2013 20.0]\ndecay [0.0 \u2013 1.5]\ninjection [0.0 \u2013 2.0]\nstep [-0.1 \u2013 0.1]\nreach [0.0 \u2013 0.1]\nmix_pct [0.0 \u2013 100.0]\nbypass [0 / 1]"
+                    "text": "External Control Messages\n\nscale [-0.05 \u2013 0.05]\ngain [-10.0 \u2013 10.0]\nmask_lo [0.0 \u2013 20.0]\nmask_hi [0.0 \u2013 20.0]\ndecay [0.0 \u2013 1.5]\ninjection [0.0 \u2013 2.0]\nstep [-0.1 \u2013 0.1]\nreach [0.0 \u2013 0.1]\nmix_pct [0.0 \u2013 100.0]"
                 }
             },
             {

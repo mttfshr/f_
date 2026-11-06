@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\nradius [0 \u2013 0.2]\nfalloff [0 \u2013 0.05]\ngain [0 \u2013 1.5]\nmix_pct [0 \u2013 100]\ncolor_mix [0 \u2013 1]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\nradius [0 \u2013 0.2]\nfalloff [0 \u2013 0.05]\ngain [0 \u2013 1.5]\nmix_pct [0 \u2013 100]\ncolor_mix [0 \u2013 1]",
 					"fontsize": 12.0,
-					"linecount": 8
+					"linecount": 7
 				}
 			},
 			{

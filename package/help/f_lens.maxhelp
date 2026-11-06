@@ -100,8 +100,8 @@
       270.0,
       305.0
      ],
-     "text": "External Control Messages\n\naberration [-1.0 \u2013 1.0]\ndistortion [-1.0 \u2013 1.0]\ntransmission [-1.0 \u2013 1.0]\naberration_mod [0.0 \u2013 1.0]\ndistortion_mod [0.0 \u2013 1.0]\ntransmission_mod [0.0 \u2013 1.0]\nsurface_mod [0.0 \u2013 5.0]\nghost [-1.0 \u2013 1.0]\nghost_count [1 \u2013 4]\nghost_spacing [-1.0 \u2013 1.0]\nhalation [0.0 \u2013 1.0]\nhalation_threshold [0.0 \u2013 1.0]\nbypass [0 / 1]",
-     "linecount": 20,
+     "text": "External Control Messages\n\naberration [-1.0 \u2013 1.0]\ndistortion [-1.0 \u2013 1.0]\ntransmission [-1.0 \u2013 1.0]\naberration_mod [0.0 \u2013 1.0]\ndistortion_mod [0.0 \u2013 1.0]\ntransmission_mod [0.0 \u2013 1.0]\nsurface_mod [0.0 \u2013 5.0]\nghost [-1.0 \u2013 1.0]\nghost_count [1 \u2013 4]\nghost_spacing [-1.0 \u2013 1.0]\nhalation [0.0 \u2013 1.0]\nhalation_threshold [0.0 \u2013 1.0]",
+     "linecount": 19,
      "saved_attribute_attributes": {
       "textcolor": {
        "expression": "themecolor.live_control_fg"

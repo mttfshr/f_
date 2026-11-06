@@ -100,13 +100,13 @@
                         270.0,
                         213.0
                     ],
-                    "text": "External Control Messages\n\nspeed [0.0 \u2013 0.5]\ndamping [0.001 \u2013 5.0]\ndispersion [0.5 \u2013 2.0]\nring [0.0 \u2013 50.0]\nedge [0.0 \u2013 1.0]\nforce [0.0 \u2013 1.5]\nstrength [0.0 \u2013 1.0]\ngain [0.0 \u2013 10.0]\nlmode [0 / 1]\nstrike [bang / 1 / 0]\nreset [bang]\nbypass [0 / 1]",
+                    "text": "External Control Messages\n\nspeed [0.0 \u2013 0.5]\ndamping [0.001 \u2013 5.0]\ndispersion [0.5 \u2013 2.0]\nring [0.0 \u2013 50.0]\nedge [0.0 \u2013 1.0]\nforce [0.0 \u2013 1.5]\nstrength [0.0 \u2013 1.0]\ngain [0.0 \u2013 10.0]\nlmode [0 / 1]\nstrike [bang / 1 / 0]\nreset [bang]",
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "linecount": 14
+                    "linecount": 13
                 }
             },
             {

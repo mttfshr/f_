@@ -164,7 +164,6 @@ Right-justified text, Ableton Sans Light, lists only externally-addressable para
 ```
 External Control Messages
 
-bypass [0 / 1]
 zoom [1.1 – 100.0]
 n_arms [1 – 16]
 twist [-8.0 – 8.0]
@@ -172,7 +171,7 @@ rotation [0.0 – 1.0]
 time_s [continuous]
 ```
 
-Format ranges with en-dash (–), not hyphen. Boolean params use `[0 / 1]`. Continuous float signals use `[continuous]`.
+List `bypass [0 / 1]` only if the module's message `route` has a `bypass` selector; most take bypass only from the toggle, so the message does nothing (2026-11-06). Format ranges with en-dash (–), not hyphen. Boolean params use `[0 / 1]`. Continuous float signals use `[continuous]`.
 
 ---
 

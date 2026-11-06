@@ -65,11 +65,17 @@ Fixed: `library-characteristics.md` had two chains that cannot work, `f_tf_smoot
 
 Helpfile: confirmed no source was wired, so the demo showed only neutral gray. Added `vs_sources_main` -> `f_tf_tensormap` outlet 1 -> Axis Flow -> preview. The inlet note sat on top of the preview: moved beside the module and rewritten, with a second note by the preview. The digest now says what the module is for (spec: consumers can follow image structure). Live by Matt: T029.
 
-Left alone, not Axis Flow's alone: the helpfile lists `bypass [0 / 1]`, but the route is `mode angle gain gate`, so the message does not reach `bypass_gate` (read from the patcher; the contract bench reports the same for 43 modules, Hatch included). `codebox_axisflow.gen` line 2 cites the old mirror path `tests/test_tf_axisflow.py`: fixing it means a rebuild and a stale bench entry (`benchdeps.py` tracks the codebox). `menu.py` says `# no demo` on Tensor Advect, though `f_demo_axisflow` exists (`G-menu` holds `menu.py`). `skills/vsynth-bpatcher/SKILL.md` still has the old category table with Axis Flow under T_ Tensor (the skill needs Matt's re-upload).
+The helpfile listed `bypass [0 / 1]`, but the route is `mode angle gain gate`, so the message does not reach `bypass_gate` (read from the patcher). Matt, 2026-11-06: drop the line; see the note under "Moved to stable/".
+
+Left alone, not Axis Flow's alone: `codebox_axisflow.gen` line 2 cites the old mirror path `tests/test_tf_axisflow.py`: fixing it means a rebuild and a stale bench entry (`benchdeps.py` tracks the codebox). `menu.py` says `# no demo` on Tensor Advect, though `f_demo_axisflow` exists (`G-menu` holds `menu.py`). `skills/vsynth-bpatcher/SKILL.md` still has the old category table with Axis Flow under T_ Tensor (the skill needs Matt's re-upload).
 
 ## Moved to stable/ (2026-11-06)
 
 Matt's helpfile look passed, so the module moved. Live path references were updated in `plan.md`, the reference doc, the `definition.py` comment and the mirror test's docstring; drift still ok. There is no spike folder, and no `parents[N]` or `../` paths in the module's `.specify` folder, so no script needed changing. `HANDOFF_ARCHIVE.md` keeps the old path. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-091717-offline.log`). `bench_tf_axisflow.py` 9/9 after the move (Matt's go; log `tests/logs/20261106-091718-bench.log`), the first logged run and the first since `render_dim`.
+
+## Dead `bypass` line dropped from helpfiles (2026-11-06, offline by Claude)
+
+Matt's call: drop the line. Removed from 36 helpfiles, this one included, where the patcher's route has no `bypass` selector. Kept in the 9 that have one: `f_channel_grader`, `f_droste`, `f_grain`, `f_hue_processor`, `f_luma_processor`, `f_masonry`, `f_mobius`, `f_stereo`, `f_tone_curve`. Correction: the contract bench's "not in 43" overcounts. It reads the pix's native `bypass` attribute, so it misses `f_grain` and `f_masonry`, whose route feeds the jsui and then `bypass_gate` (read from the patchers; that they work is inferred, not run). `f_util_profile` is not in the bench; its inlet has no route to the toggle, so its line went too. `generate_helpfiles.py`, `make_missing_helpfiles.py` and `skills/f-helpfile/SKILL.md` no longer add the line by default. Not opened in Max.
 
 ## Notes (2026-10-16)
 - Mirror 16/16 (`tests/modules/tf_axisflow/test_tf_axisflow.py`); bench 5/5 (`tests/modules/tf_axisflow/bench_tf_axisflow.py`); contract/bench_expect/launch/benchdeps green; bench_modules shows f_tf_axisflow clean (its only failure is the 4 pre-existing f_a_decorrelate errors).

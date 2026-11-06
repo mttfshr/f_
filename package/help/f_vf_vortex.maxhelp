@@ -100,8 +100,8 @@
                         270.0,
                         183.0
                     ],
-                    "text": "External Control Messages\n\ncx [0.0 \u2013 1.0]\ncy [0.0 \u2013 1.0]\nconvergence [-1.0 \u2013 1.0]\ncurl [-1.0 \u2013 1.0]\nfalloff [0.0 \u2013 10.0]\ncx_amt [0.0 \u2013 1.0]\ncy_amt [0.0 \u2013 1.0]\nconvergence_amt [0.0 \u2013 1.0]\ncurl_amt [0.0 \u2013 1.0]\nbypass [0 / 1]",
-                    "linecount": 12,
+                    "text": "External Control Messages\n\ncx [0.0 \u2013 1.0]\ncy [0.0 \u2013 1.0]\nconvergence [-1.0 \u2013 1.0]\ncurl [-1.0 \u2013 1.0]\nfalloff [0.0 \u2013 10.0]\ncx_amt [0.0 \u2013 1.0]\ncy_amt [0.0 \u2013 1.0]\nconvergence_amt [0.0 \u2013 1.0]\ncurl_amt [0.0 \u2013 1.0]",
+                    "linecount": 11,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"

@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndt [0 \u2013 0.05]\ndecay [0.8 \u2013 1]\nstrength [0 \u2013 2]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndt [0 \u2013 0.05]\ndecay [0.8 \u2013 1]\nstrength [0 \u2013 2]",
 					"fontsize": 12.0,
-					"linecount": 6
+					"linecount": 5
 				}
 			},
 			{

@@ -102,13 +102,13 @@
 						270.0,
 						202.0
 					],
-					"text": "External Control Messages\n\ndt [0.0 – 0.05]\niface [1.5 – 12.0]\ncoarsen [0.0 – 1.0]\ninject [0.0 – 1.0]\nthresh [0.0 – 0.9]\npull [0.0 – 1.0]\nfill [-0.6 – 0.6]\nmix_pct [0 – 100]\ntaps [1 – 16]\nreset [bang]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndt [0.0 – 0.05]\niface [1.5 – 12.0]\ncoarsen [0.0 – 1.0]\ninject [0.0 – 1.0]\nthresh [0.0 – 0.9]\npull [0.0 – 1.0]\nfill [-0.6 – 0.6]\nmix_pct [0 – 100]\ntaps [1 – 16]\nreset [bang]",
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"linecount": 13
+					"linecount": 12
 				}
 			},
 			{

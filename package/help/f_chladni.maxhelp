@@ -100,8 +100,8 @@
                         270.0,
                         198.25
                     ],
-                    "text": "External Control Messages\n\nnote [0.0 \u2013 127.0]\namp [0.0 \u2013 1.0]\ndishradius [0.1 \u2013 4.0]\nreflectamt [0.0 \u2013 1.0]\nlinesharpness [0.1 \u2013 100.0]\nph0 [-6.2832 \u2013 6.2832]\nspread [0.1 \u2013 1.0]\nmode [0.0 \u2013 1.0]\nview_mode [0.0 \u2013 1.0]\ngain [0.0 \u2013 20.0]\nbypass [0 / 1]",
-                    "linecount": 13,
+                    "text": "External Control Messages\n\nnote [0.0 \u2013 127.0]\namp [0.0 \u2013 1.0]\ndishradius [0.1 \u2013 4.0]\nreflectamt [0.0 \u2013 1.0]\nlinesharpness [0.1 \u2013 100.0]\nph0 [-6.2832 \u2013 6.2832]\nspread [0.1 \u2013 1.0]\nmode [0.0 \u2013 1.0]\nview_mode [0.0 \u2013 1.0]\ngain [0.0 \u2013 20.0]",
+                    "linecount": 12,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"

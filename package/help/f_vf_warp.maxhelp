@@ -100,8 +100,8 @@
                         270.0,
                         122.0
                     ],
-                    "text": "External Control Messages\n\ngain [0.0 \u2013 1.5]\nmix_pct [0 \u2013 100]\nbypass [0 / 1]",
-                    "linecount": 5,
+                    "text": "External Control Messages\n\ngain [0.0 \u2013 1.5]\nmix_pct [0 \u2013 100]",
+                    "linecount": 4,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"

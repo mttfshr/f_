@@ -27,10 +27,10 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 ## Owed to Matt
 
 - **Runs and looks:** does bypass clear the `f_vf_potential` trail, and is that fine (inferred, not seen live); the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
-- **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no. `bypass [0 / 1]` in helpfiles: the message does not work in 43 modules (log `tests/logs/20261106-081412-bench.log`), so drop the line or add a route selector.
+- **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
-- **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).
+- **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`). Re-upload `skills/f-helpfile/SKILL.md` too (bypass line rule, 2026-11-06).
 
 ## Conventions in force
 

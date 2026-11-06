@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ns1_cx [0 \u2013 1]\ns1_cy [0 \u2013 1]\ns1_conv [0 \u2013 1]\ns1_curl [-1 \u2013 1]\ns2_cx [0 \u2013 1]\ns2_cy [0 \u2013 1]\ns2_conv [0 \u2013 1]\ns2_curl [-1 \u2013 1]\ns3_cx [0 \u2013 1]\ns3_cy [0 \u2013 1]\ns3_conv [0 \u2013 1]\ns3_curl [-1 \u2013 1]\nfalloff [0 \u2013 10]\ncx_amt [0 \u2013 1]\ncy_amt [0 \u2013 1]\nconv_amt [0 \u2013 1]\ncurl_amt [0 \u2013 1]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ns1_cx [0 \u2013 1]\ns1_cy [0 \u2013 1]\ns1_conv [0 \u2013 1]\ns1_curl [-1 \u2013 1]\ns2_cx [0 \u2013 1]\ns2_cy [0 \u2013 1]\ns2_conv [0 \u2013 1]\ns2_curl [-1 \u2013 1]\ns3_cx [0 \u2013 1]\ns3_cy [0 \u2013 1]\ns3_conv [0 \u2013 1]\ns3_curl [-1 \u2013 1]\nfalloff [0 \u2013 10]\ncx_amt [0 \u2013 1]\ncy_amt [0 \u2013 1]\nconv_amt [0 \u2013 1]\ncurl_amt [0 \u2013 1]",
 					"fontsize": 12.0,
-					"linecount": 20
+					"linecount": 19
 				}
 			},
 			{

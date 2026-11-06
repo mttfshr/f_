@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\nreach [0 \u2013 0.3]\nspread [0 \u2013 0.5]\nthreshold [0 \u2013 1]\nthreshold_width [0 \u2013 0.5]\nfeather [0 \u2013 0.5]\ngain [0 \u2013 2]\nmix_pct [0 \u2013 100]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\nreach [0 \u2013 0.3]\nspread [0 \u2013 0.5]\nthreshold [0 \u2013 1]\nthreshold_width [0 \u2013 0.5]\nfeather [0 \u2013 0.5]\ngain [0 \u2013 2]\nmix_pct [0 \u2013 100]",
 					"fontsize": 12.0,
-					"linecount": 10
+					"linecount": 9
 				}
 			},
 			{

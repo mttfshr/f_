@@ -105,9 +105,9 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nreach [0 – 1]\ngrain [0 – 1]\ndensity [0 – 1]\ncontrast [0 – 1]\nline_hard [0 – 1]\nstructure_floor [0 – 1]\nangle_offset [-1 – 1]\ncoh_floor [0 – 1]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nreach [0 – 1]\ngrain [0 – 1]\ndensity [0 – 1]\ncontrast [0 – 1]\nline_hard [0 – 1]\nstructure_floor [0 – 1]\nangle_offset [-1 – 1]\ncoh_floor [0 – 1]",
      "fontsize": 12.0,
-     "linecount": 11
+     "linecount": 10
     }
    },
    {

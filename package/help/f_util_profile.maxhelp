@@ -100,8 +100,8 @@
                         270.0,
                         122.0
                     ],
-                    "text": "External Control Messages\n\nres_rows [1 \u2013 128]\nres_cols [1 \u2013 128]\nfreq [1 \u2013 64]\nbypass [0 / 1]",
-                    "linecount": 6,
+                    "text": "External Control Messages\n\nres_rows [1 \u2013 128]\nres_cols [1 \u2013 128]\nfreq [1 \u2013 64]",
+                    "linecount": 5,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"

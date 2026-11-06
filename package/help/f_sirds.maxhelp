@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndepth_factor [-0.3 \u2013 0.3]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndepth_factor [-0.3 \u2013 0.3]",
 					"fontsize": 12.0,
-					"linecount": 4
+					"linecount": 3
 				}
 			},
 			{

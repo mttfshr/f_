@@ -78,15 +78,13 @@ def build_user_prompt(entry: dict, skill_text: str, template_json: str, docs_tex
     short_name = entry["short_name"]
     module_type = entry["module_type"]
 
-    # Format params for the prompt — exclude bypass from main list, add at end
+    # Format params for the prompt; bypass is not listed: most modules take it only from the
+    # toggle (no route selector). Add it by hand if the module's route has one.
     external_params = [p for p in entry["params"] if p["name"] != "bypass" and p["type"] != "internal"]
-    has_bypass = any(p["name"] == "bypass" for p in entry["params"])
 
     param_lines = []
     for p in external_params:
         param_lines.append(f"  {p['name']} {p['range']}  # {p['hint']}")
-    if has_bypass:
-        param_lines.append("  bypass [0 / 1]")
 
     params_block = "\n".join(param_lines)
 

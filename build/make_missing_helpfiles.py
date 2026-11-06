@@ -18,7 +18,7 @@ panel, module bpatcher + vs_preview, wiring), with the demo wiring per
     the demo surface; same single-wire demo.
 
 Param blocks are generated from src/<name>/definition.py (AST parse),
-internal/bypass params filtered: internal omitted, bypass always last
+internal/bypass params filtered: both omitted (bypass has no route selector in most modules)
 as [0 / 1]. text_button/menu params print their options.
 
 Run:  python3 build/make_missing_helpfiles.py   (writes package/help/)
@@ -36,15 +36,13 @@ EN = "\u2013"  # en dash, matching the existing helpfiles
 
 
 def extract_params(module):
-    """Ordered [(name, range_text)] from definition.py; internal dropped,
-    bypass forced last."""
+    """Ordered [(name, range_text)] from definition.py; internal and bypass dropped."""
     src = (SRC / module / "definition.py").read_text()
     if module == "f_vf_seeds":
         # params built via _ui() calls: (name, min, max, default, label, hint, ...)
         rows = []
         for m in re.finditer(r'_ui\("(\w+)",\s*([-\d.]+),\s*([-\d.]+),\s*[-\d.]+,\s*"([^"]*)"', src):
             rows.append((m.group(1), f"{m.group(2)} {EN} {m.group(3)}"))
-        rows.append(("bypass", "0 / 1"))
         return rows
     tree = ast.parse(src)
     found = []
@@ -81,7 +79,6 @@ def extract_params(module):
             continue  # not addressable by named message
         else:
             ordered.append((n, ""))
-    ordered.append(("bypass", "0 / 1"))
     return ordered
 
 

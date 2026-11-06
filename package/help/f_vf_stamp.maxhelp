@@ -100,13 +100,13 @@
 						270.0,
 						198.0
 					],
-					"text": "External Control Messages\n\nthreshold [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]\namount [0.0 \u2013 4.0]\nforce [0.0 \u2013 2.0]\nrim [0.005 \u2013 0.05]\nattack [0.0 \u2013 60.0]\nrelease [0.0 \u2013 120.0]\ninvert [0 / 1]\nimpulse [0 / 1]\nstamp [bang / 1 / 0]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\nthreshold [0.0 \u2013 1.0]\nsoftness [0.0 \u2013 1.0]\namount [0.0 \u2013 4.0]\nforce [0.0 \u2013 2.0]\nrim [0.005 \u2013 0.05]\nattack [0.0 \u2013 60.0]\nrelease [0.0 \u2013 120.0]\ninvert [0 / 1]\nimpulse [0 / 1]\nstamp [bang / 1 / 0]",
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"linecount": 13
+					"linecount": 12
 				}
 			},
 			{

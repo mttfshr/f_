@@ -25,6 +25,6 @@
 - **Found:** `library-characteristics.md` chained `f_tf_smooth` and `f_tf_sharpen` into Axis Flow; both output the raw tensor, so those chains cannot work (from the docs; not run). Fixed.
 - **Verified:** drift ok, menu and launcher `--check`, `test_generate_menu.py` 17/17 (log `tests/logs/20261106-084608-offline.log`). `bench_tf_axisflow.py` 9/9 (Matt's go; log `tests/logs/20261106-091718-bench.log`).
 - **Gates:** no row touched. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-091717-offline.log`).
-- **Owed to Matt:** decide what to do about `bypass [0 / 1]` in helpfiles: the message does not work in 43 modules (log `tests/logs/20261106-081412-bench.log`).
+- **Helpfiles:** dead `bypass [0 / 1]` line dropped from 36 (Matt's call), kept in the 9 whose route has the selector; generators and `skills/f-helpfile/SKILL.md` updated. The bench's "not in 43" overcounts (`f_grain`, `f_masonry`). Record: Axis Flow `tasks.md`. Owed to Matt: re-upload the f-helpfile skill.
 - **Pattern:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. A `git mv` into `stable/` adds a folder level, so check `parents[N]` and `../` paths in spike scripts and update the `Spec:` path in `definition.py`.
 - **Next:** `f_vf_fieldmap`, then `f_vf_potential`, `f_vf_flow`, `f_tone_curve`. The `f_vf_potential` and `f_vf_flow` helpfiles also have no upstream module wired (confirmed for `f_vf_flow` this session; `f_vf_potential` not opened).

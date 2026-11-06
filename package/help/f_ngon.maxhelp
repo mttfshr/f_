@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\nn_mirrors [2 \u2013 18]\nrotation [0 \u2013 6.28319]\nscale [0 \u2013 2]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\nn_mirrors [2 \u2013 18]\nrotation [0 \u2013 6.28319]\nscale [0 \u2013 2]",
 					"fontsize": 12.0,
-					"linecount": 6
+					"linecount": 5
 				}
 			},
 			{

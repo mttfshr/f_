@@ -100,8 +100,8 @@
                         270.0,
                         198.25
                     ],
-                    "text": "External Control Messages\n\nfreq [0.0 \u2013 20.0]\ncoarseness [1.0 \u2013 100.0]\nanisotropy [0.0 \u2013 4.0]\nangle [-360.0 \u2013 360.0]\nzoom [0.1 \u2013 4.0]\nthreshold [0.0 \u2013 2.0]\ncolorize [0.0 \u2013 1.0]\nalong_phase [-1.0 \u2013 1.0]\nacross_phase [-1.0 \u2013 1.0]\nsoftness [0.0 \u2013 2.0]\nbypass [0 / 1]",
-                    "linecount": 13,
+                    "text": "External Control Messages\n\nfreq [0.0 \u2013 20.0]\ncoarseness [1.0 \u2013 100.0]\nanisotropy [0.0 \u2013 4.0]\nangle [-360.0 \u2013 360.0]\nzoom [0.1 \u2013 4.0]\nthreshold [0.0 \u2013 2.0]\ncolorize [0.0 \u2013 1.0]\nalong_phase [-1.0 \u2013 1.0]\nacross_phase [-1.0 \u2013 1.0]\nsoftness [0.0 \u2013 2.0]",
+                    "linecount": 12,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"

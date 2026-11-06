@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndensity [0.0 \u2013 1.0]\njitter [0.0 \u2013 1.0]\nsize [0.0 \u2013 0.5]\nstretch [0.0 \u2013 1.0]\nstrength [0.0 \u2013 1.0]\nmag_weight [0.0 \u2013 1.0]\nfield_priority [0.0 \u2013 1.0]\nfield_gain [-1.5 \u2013 1.5]\nbomb [0.0 \u2013 1.0]\nphase [-1.0 \u2013 1.0]\nsize_mod [-1.0 \u2013 1.0]\nstretch_mod [-1.0 \u2013 1.0]\ncolor_mode [0.0 \u2013 1.0]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndensity [0.0 \u2013 1.0]\njitter [0.0 \u2013 1.0]\nsize [0.0 \u2013 0.5]\nstretch [0.0 \u2013 1.0]\nstrength [0.0 \u2013 1.0]\nmag_weight [0.0 \u2013 1.0]\nfield_priority [0.0 \u2013 1.0]\nfield_gain [-1.5 \u2013 1.5]\nbomb [0.0 \u2013 1.0]\nphase [-1.0 \u2013 1.0]\nsize_mod [-1.0 \u2013 1.0]\nstretch_mod [-1.0 \u2013 1.0]\ncolor_mode [0.0 \u2013 1.0]",
 					"fontsize": 12.0,
-					"linecount": 16
+					"linecount": 15
 				}
 			},
 			{

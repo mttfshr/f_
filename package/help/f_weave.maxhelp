@@ -105,9 +105,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 1]\nmarklen [0 \u2013 1]\noffset [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nvariant [0 \u2013 4]\nirreg [0 \u2013 1]\nnscale [0 \u2013 1]\nweight_m [0 \u2013 1]\nirreg_m [0 \u2013 1]\nmarklen_m [0 \u2013 1]\nmmode [0 / 1]\nbypass [0 / 1]",
+					"text": "External Control Messages\n\ndensity [0 \u2013 1]\nangle [0 \u2013 1]\nweight [0 \u2013 1]\nmarklen [0 \u2013 1]\noffset [0 \u2013 1]\nphase [-1 \u2013 1]\nsoftness [0 \u2013 2]\nvariant [0 \u2013 4]\nirreg [0 \u2013 1]\nnscale [0 \u2013 1]\nweight_m [0 \u2013 1]\nirreg_m [0 \u2013 1]\nmarklen_m [0 \u2013 1]\nmmode [0 / 1]",
 					"fontsize": 12.0,
-					"linecount": 17
+					"linecount": 16
 				}
 			},
 			{
