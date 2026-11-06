@@ -138,7 +138,7 @@
 							},
 							{
 								"box": {
-									"code": "Param angle(0.0);\nParam spread(0.5);\nParam bypass(0.0);\n\n// Base direction from angle param (0-1 maps to full circle)\ntheta = angle * twopi;\n\n// Texture perturbation: luminance of in1 offsets direction (processor: the texture is always there)\nperturb = (sample(in1, norm).x - 0.5) * spread * twopi;\ntheta = theta + perturb;\n\n// Encode as unit vecfield: cos/sin mapped from [-1,1] to [0,1]\nfx = cos(theta) * 0.5 + 0.5;\nfy = sin(theta) * 0.5 + 0.5;\n\nresult = vec(fx, fy, 0.5, 1.0);\nneutral = vec(0.5, 0.5, 0.5, 1.0);\nout1 = mix(result, neutral, bypass);\n",
+									"code": "Param angle(0.0);\nParam spread(0.5);\nParam bypass_gate(0.0);\n\n// Base direction from angle param (0-1 maps to full circle)\ntheta = angle * twopi;\n\n// Texture perturbation: luminance of in1 offsets direction (processor: the texture is always there)\nperturb = (sample(in1, norm).x - 0.5) * spread * twopi;\ntheta = theta + perturb;\n\n// Encode as unit vecfield: cos/sin mapped from [-1,1] to [0,1]\nfx = cos(theta) * 0.5 + 0.5;\nfy = sin(theta) * 0.5 + 0.5;\n\nresult = vec(fx, fy, 0.5, 1.0);\nneutral = vec(0.5, 0.5, 0.5, 1.0);\nout1 = mix(result, neutral, bypass_gate);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -744,8 +744,7 @@
 			{
 				"box": {
 					"id": "obj-27",
-					"maxclass": "attrui",
-					"attr": "bypass",
+					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -757,7 +756,7 @@
 						131.0,
 						22.0
 					],
-					"style": ""
+					"text": "prepend param bypass_gate"
 				}
 			}
 		],

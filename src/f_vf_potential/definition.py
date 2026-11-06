@@ -19,6 +19,10 @@ patcher = {
     "title":              "Potential",
     "signal_type":        "∇ in",
 
+    # Bypass drives the codebox Param `bypass_gate`, not the native @bypass, which skips the shader
+    # and would send the module input downstream instead of neutral black (G-bypass-native, Matt 2026-11-06).
+    "bypass_mode":        "param",
+
     "presentation_width":  190,
     "presentation_height": 100,
 

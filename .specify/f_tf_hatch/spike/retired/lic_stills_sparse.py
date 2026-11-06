@@ -1,12 +1,12 @@
 """Phase-0 stills 2: SPARSE input noise (impulses smeared into strokes). Scratch.
-  uv run --no-project --with numpy --with pillow python3 .specify/f_tf_hatch/spike/lic_stills_sparse.py [out.png]
+  uv run --no-project --with numpy --with pillow python3 .specify/f_tf_hatch/spike/retired/lic_stills_sparse.py [out.png]
 Rows: clean source, noisy source, synthetic coherence ramp (0 -> 1 left to right, axis 30 deg).
 Columns: dense reference | fill .01 len .5 | fill .01 len .25 | fill .03 len .25 | fill .01 len .25 line=1
 """
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch"), str(Path(__file__).parent)]
 
 import numpy as np  # noqa: E402

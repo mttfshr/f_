@@ -7,6 +7,10 @@ patcher = {
     "archetype":          "processor",
     "pix_type":           "float32",
 
+    # Bypass drives the codebox Param `bypass_gate`, not the native @bypass, which skips the shader
+    # and would send the raw input texture downstream as a vecfield (G-bypass-native, Matt 2026-11-06).
+    "bypass_mode":        "param",
+
     "presentation_width":  100,
     "presentation_height": 80,
 
@@ -27,7 +31,7 @@ Param gain(4.0);
 Param scale(0.004);
 Param rotate(0.0);
 Param thresh(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 // inset UV by scale to keep neighbor samples within bounds
 suv_x = norm.x * (1.0 - 2.0 * scale) + scale;
@@ -53,7 +57,7 @@ neutral = vec(0.5, 0.5, 0.5, 1.0);
 
 threshed = mix(field, neutral, step(L_center, thresh));
 
-out1 = mix(threshed, neutral, bypass);""",
+out1 = mix(threshed, neutral, bypass_gate);""",
 }
 
 # BEGIN overrides (build/capture.py rewrites only this block)

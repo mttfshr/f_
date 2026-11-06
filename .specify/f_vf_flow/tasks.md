@@ -7,7 +7,7 @@ applies, and no BYPASS_EXPECT entry exists — unlike sibling generator
 f_chladni, which has explicit const entries for exactly this shape).
 Ids start at T001._
 
-- [ ] T001: Add a `1: ("const", (0.5, 0.5, 0.5, 1.0), 0.0)`-style
+- [x] T001 (2026-11-06: the module was on native `@bypass`, so the neutral below never ran; moved to `bypass_gate`, entry added, live bench 2/2, log `tests/logs/20261106-081412-bench.log`): Add a `1: ("const", (0.5, 0.5, 0.5, 1.0), 0.0)`-style
   BYPASS_EXPECT entry for f_vf_flow in tests/contracts/bench_modules.py,
   mirroring the f_chladni generator-neutral pattern. The module's
   bypass mixes to the neutral vecfield (correct per family convention)

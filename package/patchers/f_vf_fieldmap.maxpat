@@ -140,7 +140,7 @@
 							},
 							{
 								"box": {
-									"code": "Param gain(4.0);\nParam scale(0.004);\nParam rotate(0.0);\nParam thresh(0.0);\nParam bypass(0.0);\n\n// inset UV by scale to keep neighbor samples within bounds\nsuv_x = norm.x * (1.0 - 2.0 * scale) + scale;\nsuv_y = norm.y * (1.0 - 2.0 * scale) + scale;\n\nL_center = sample(in1, vec(suv_x, suv_y)).x * 0.299 + sample(in1, vec(suv_x, suv_y)).y * 0.587 + sample(in1, vec(suv_x, suv_y)).z * 0.114;\nL_right  = sample(in1, vec(suv_x + scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x + scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x + scale, suv_y)).z * 0.114;\nL_left   = sample(in1, vec(suv_x - scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x - scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x - scale, suv_y)).z * 0.114;\nL_down   = sample(in1, vec(suv_x, suv_y + scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y + scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y + scale)).z * 0.114;\nL_up     = sample(in1, vec(suv_x, suv_y - scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y - scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y - scale)).z * 0.114;\n\ngx = (L_right - L_left) * gain;\ngy = (L_down  - L_up)   * gain;\n\nangle = rotate * pi / 180.0;\ncos_r = cos(angle);\nsin_r = sin(angle);\ngx2 = gx * cos_r - gy * sin_r;\ngy2 = gx * sin_r + gy * cos_r;\n\nfield   = vec(clamp(gx2 * 0.5 + 0.5, 0.0, 1.0), clamp(gy2 * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);\nneutral = vec(0.5, 0.5, 0.5, 1.0);\n\nthreshed = mix(field, neutral, step(L_center, thresh));\n\nout1 = mix(threshed, neutral, bypass);",
+									"code": "Param gain(4.0);\nParam scale(0.004);\nParam rotate(0.0);\nParam thresh(0.0);\nParam bypass_gate(0.0);\n\n// inset UV by scale to keep neighbor samples within bounds\nsuv_x = norm.x * (1.0 - 2.0 * scale) + scale;\nsuv_y = norm.y * (1.0 - 2.0 * scale) + scale;\n\nL_center = sample(in1, vec(suv_x, suv_y)).x * 0.299 + sample(in1, vec(suv_x, suv_y)).y * 0.587 + sample(in1, vec(suv_x, suv_y)).z * 0.114;\nL_right  = sample(in1, vec(suv_x + scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x + scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x + scale, suv_y)).z * 0.114;\nL_left   = sample(in1, vec(suv_x - scale, suv_y)).x * 0.299 + sample(in1, vec(suv_x - scale, suv_y)).y * 0.587 + sample(in1, vec(suv_x - scale, suv_y)).z * 0.114;\nL_down   = sample(in1, vec(suv_x, suv_y + scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y + scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y + scale)).z * 0.114;\nL_up     = sample(in1, vec(suv_x, suv_y - scale)).x * 0.299 + sample(in1, vec(suv_x, suv_y - scale)).y * 0.587 + sample(in1, vec(suv_x, suv_y - scale)).z * 0.114;\n\ngx = (L_right - L_left) * gain;\ngy = (L_down  - L_up)   * gain;\n\nangle = rotate * pi / 180.0;\ncos_r = cos(angle);\nsin_r = sin(angle);\ngx2 = gx * cos_r - gy * sin_r;\ngy2 = gx * sin_r + gy * cos_r;\n\nfield   = vec(clamp(gx2 * 0.5 + 0.5, 0.0, 1.0), clamp(gy2 * 0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);\nneutral = vec(0.5, 0.5, 0.5, 1.0);\n\nthreshed = mix(field, neutral, step(L_center, thresh));\n\nout1 = mix(threshed, neutral, bypass_gate);",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -954,8 +954,7 @@
 			{
 				"box": {
 					"id": "obj-33",
-					"maxclass": "attrui",
-					"attr": "bypass",
+					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -967,7 +966,7 @@
 						131.0,
 						22.0
 					],
-					"style": ""
+					"text": "prepend param bypass_gate"
 				}
 			}
 		],

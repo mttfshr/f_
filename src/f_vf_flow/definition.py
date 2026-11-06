@@ -20,6 +20,10 @@ patcher = {
     "pix_type":           "float32",
     "signal_type":        "∇ out",
 
+    # Bypass drives the codebox Param `bypass_gate`, not the native @bypass, which skips the shader
+    # and would send the raw input texture downstream as a vecfield (G-bypass-native, Matt 2026-11-06).
+    "bypass_mode":        "param",
+
     "presentation_width":  150,
     "presentation_height": 80,
 

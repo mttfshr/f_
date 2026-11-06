@@ -3,7 +3,7 @@ Param decay(0.98);
 Param strength(1.0);
 Param src_vecfield(0.0);
 Param src_color(0.0);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 uv = norm;
 
@@ -36,4 +36,4 @@ b = mix(1.0, color.z, src_color);
 // Modulate color by potential
 result = vec(r * potential_scaled, g * potential_scaled, b * potential_scaled, 1.0);
 neutral = vec(0.0, 0.0, 0.0, 1.0);
-out1 = mix(result, neutral, bypass);
+out1 = mix(result, neutral, bypass_gate);

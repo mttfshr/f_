@@ -136,7 +136,7 @@ Run via `.specify/maintenance/SKILL.md`; full findings in
   not `bypass_gate` like the rest of the library's Param-driven bypass
   modules — cosmetic, but worth matching for consistency next time this
   file is touched.
-- [ ] T025 **Bench: no contract/bypass entry, and a clean tier-1
+- [~] T025 (2026-11-06: bypass half done: moved from native `@bypass` to `bypass_gate`, entry added, live bench 2/2, log `tests/logs/20261106-081412-bench.log`. OPEN, not blocking stable: the tier-1 mirror) **Bench: no contract/bypass entry, and a clean tier-1
   candidate exists.** Not in `tests/contracts/bench_modules.py`'s `BYPASS_EXPECT`
   table at all (lower risk than most gaps found this week — single
   outlet, so there's no multi-outlet native-bypass flip risk to begin

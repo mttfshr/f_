@@ -17,7 +17,7 @@ Codebox (verbatim order):
   potential_scaled = potential * strength
   color = sample(in3, uv);  r/g/b = mix(1.0, color.c, src_color)
   result = vec(r*p, g*p, b*p, 1.0)
-  out1 = mix(result, vec(0,0,0,1), bypass)
+  out1 = mix(result, vec(0,0,0,1), bypass_gate)
 
 `bug` values are the mutations the tests must catch:
   "plus_dt"     (accumulate prev*decay - field_mag*dt, a sign slip on the field term),

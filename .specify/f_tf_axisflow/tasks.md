@@ -17,7 +17,7 @@ _Created: 2026-10-16_
 
 ## Phase 2: scratch patch (judgment)
 - [~] T010 (skipped 2026-10-16: the module itself is the live test) Scratch patch tensormap → axisflow → `f_vf_advect`, noise source.
-- [ ] T011 Matt: sweep `angle`, `gate`, `mode`; confirm no seam; decide defaults and `normalize`.
+- [x] T011 (Matt, 2026-11-06: current defaults accepted; `normalize` stays deferred per the reference doc) Matt: sweep `angle`, `gate`, `mode`; confirm no seam; decide defaults and `normalize`.
 
 ## Phase 3: module
 - [x] T012 `definition.py` (processor, bypass_mode param, 6 controls + bypass, menu for mode).
