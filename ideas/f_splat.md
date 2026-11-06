@@ -126,6 +126,53 @@ operator name (the same clash as `edge`). The raw boxes live in
 `definition.py` schema, instead of copying them, fits Matt's taste for general tools
 and is an open choice.
 
+## Stamp variant: the shape comes in as a texture (2026-11-05, Matt)
+
+Matt's idea: `f_splat` does not draw the blot. It is a **stamping tool**. Two inlets:
+
+```
+in0  texture   the stamp: its shape is the blot, its RGB is the ink      (where / what)
+in1  vecfield  direction and force of motion, at the same pixels          (how it moves)
+     control   splat / gate messages, the held press above
+
+out0 ink      the stamp, masked by the gate and envelope (texture)
+out1 impulse  in1 x the stamp's mask x amount x envelope  (vecfield contract: 0.5, 0.5, 0.5, 1 when idle)
+```
+
+Mirrors `f_wave_field`: there inlet 0 said where (and Strike hit its outlines) and
+inlet 1 said when (an LFO); here inlet 0 says where and what, and inlet 1 says how.
+The rest (inference, not tried):
+
+- **It answers two open questions.** Position is live, because the texture can move
+  (hold the press while the source moves and it paints a trail; a latch would need a
+  feedback buffer and a snapshot at the press, so it is not the default). The internal
+  random clock is not needed: random drops come from an upstream source (`f_grain`,
+  `f_vf_seeds`), and `f_ngon` already generates clean shapes.
+- **The module becomes stateless and tiny:** per pixel, no solver, no feedback, no DFT.
+  Tier 1 is closed forms: output = input x envelope, neutral when idle, impulse linear
+  in `amount`, impulse zero where the mask is zero.
+- **The unique parts are the pair and the gate:** one mask and one gate shape the ink
+  and the impulse together, so they register exactly, with the held press and its
+  envelope on top. Each single operation exists as a plain mixer; this is the same
+  stamp for any texture and vecfield pair (into `f_vf_advect`, `f_vf_ch` as oil,
+  `f_vf_warp`, ...), not only ink, which fits Matt's taste for general tools.
+- **Natural source pair: a camera and its own motion.** `f_vf_optical_flow` of a
+  camera is literally direction and force of motion, so camera luma on in0 and the
+  optical flow on in1 stamps ink where things move and stirs along that motion.
+- **The curl constraint moves to the vecfield.** The section above (the impulse needs
+  curl or `f_vf_fluid`'s `project` deletes it) now applies to what is patched into
+  in1: `f_vf_vortex`, a swirl, or optical flow carry curl; a radial field does not.
+  With in1 empty, a candidate fallback: derive the impulse from the stamp's own
+  gradient, swirl = the gradient rotated 90 degrees (divergence-free, with curl at the
+  edges), radial = the gradient itself. It needs a soft mask (a blurred or smoothed
+  threshold), the same band-width lesson as `f_wave_field`'s outline mask; unverified.
+- **Mask and edge.** Coverage from luma or alpha (Vsynth textures are usually A = 1)
+  with `threshold` and `softness` dials. An irregular edge can come from a noise-offset
+  threshold, which works for any stamp shape, instead of angular harmonics on a radius.
+
+The generated-blot design above (a disc with harmonics and satellites, a dipole
+profile) stays recorded as the alternative; this variant makes it a source upstream.
+
 ## Open questions
 
 - **Stateless pulse (recommended) versus held slots.** Pulse: tiny module,
@@ -135,8 +182,10 @@ and is an open choice.
   already provide.
 - **Trigger convention.** A Max message per splat, an internal random clock,
   or both. Needs a decision before any spec. The held press above is a third form: a gate with a `line` envelope.
-- **Position: latched at the press or live while held**, and whether the
-  gate arms the random clock (see the held-press section).
+- **Position and random clock:** answered by the stamp variant (live from the
+  texture; random drops come from an upstream source), if Matt takes that variant.
+- **Stamp versus generated blot; coverage from luma or alpha; the in1-empty
+  fallback; the name** (`f_stamp`?): see the stamp section.
 - **Gate button as a shared building block** in the `definition.py` schema, or
   copied raw boxes.
 - **Ink colour and mixing.** `f_vf_advect` advects channels as plain values,
