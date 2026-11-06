@@ -39,7 +39,7 @@ docs/f-reference/f_tf_tensormap.md, f_tensor_type.md   — Phase 5
 
 ⚠️ Do not begin Phase 1 until this checkpoint is confirmed.
 
-- [ ] T001 **DECISION GATE: verification tiers (constitution).** Recorded in plan.md ADR-8: tier 1 applies (closed-form eigen + angle recovery have independent ground truth), tier 2 applies (four codeboxes, a border question, a cost question), tier 3 applies (`strength`/`radius` defaults, visual character of B/A). Confirm or amend; nothing skipped.
+- [x] T001 (2026-11-06, Claude: closed by the build; plan ADR-8 stands, tier 1 `tests/modules/tf_tensormap/test_tf_tensormap.py`, tier 2 `bench_tf_tensormap.py`) **DECISION GATE: verification tiers (constitution).** Recorded in plan.md ADR-8: tier 1 applies (closed-form eigen + angle recovery have independent ground truth), tier 2 applies (four codeboxes, a border question, a cost question), tier 3 applies (`strength`/`radius` defaults, visual character of B/A). Confirm or amend; nothing skipped.
 - [x] T002 **DECISION GATE (Matt): module name and prefix.** **Decided 2026-10-16: `f_tf_tensormap`.** `tf` is the family prefix in use (parallel to `vf`); module prefix `tensormap`, object name `tensormap_pix`, following `f_vf_fieldmap`. Recorded in spec.md Clarifications. Still to do: the constitution's naming table needs an `f_tf_` entry (T042).
 - [x] T003 Create `tests/modules/tf_tensormap/test_tf_tensormap.py`; write the stage A mirror: Rec. 601 luma, the verified 3x3 Sobel from `.specify/stable/f_vf_sobel/spec.md`, outputs `(gx*gx, gx*gy, gy*gy)`. Sample through `gpu_sim.sample`/`nearest`, not array slicing (tests/README convention).
 - [x] T004 Stage B mirror: separable box sum (horizontal then vertical) written as the codebox's bounded loop would run, with weight gating `step(abs(i), radius)` and normalization by the actual tap count. Parameterized on `R_MAX` so T017 can change it.
@@ -130,7 +130,7 @@ docs/f-reference/f_tf_tensormap.md, f_tensor_type.md   — Phase 5
 - [x] T042 **(2026-10-16: constitution naming entry + Current Bpatchers rows, module-inventory rows; README row done earlier)** Update `README.md` (status table, build queue), `docs/f-reference/module-inventory.md`, and the constitution (Current Bpatchers; naming-convention entry for the family prefix if T002 settled one).
 - [x] T043 **(2026-10-16: hub updated; glow Q12 tasks T039-T043 in .specify/f_vf_glow/tasks.md, with the .w channel correction)** Update `ideas/f_tensorfield.md`: producer built, Phase 2's blocker cleared. Add the `f_vf_glow` anisotropy-inlet work (hub Q12 design) as tasks in `.specify/f_vf_glow/tasks.md` so the first consumer has a place to start.
 - [x] T044 **(2026-10-16)** Update `HANDOFF.md` (short; task-level detail lives here).
-- [ ] T045 Commit. Suggested split: spec/plan/tasks; tests and codeboxes; patcher and registration; docs. Plain message style per the repo's recent history.
+- [x] T045 (2026-11-06, Claude: committed as 2376cd7 and 6355983) Commit. Suggested split: spec/plan/tasks; tests and codeboxes; patcher and registration; docs. Plain message style per the repo's recent history.
 
 **Checkpoint:** Docs written, README updated, git clean.
 

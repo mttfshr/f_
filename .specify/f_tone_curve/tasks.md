@@ -5,7 +5,7 @@ folder (graduated straight to docs/). The audit found one stale
 cross-reference and one idea Matt flagged "wants this pursued for
 real". Ids start at T001._
 
-- [ ] T001: Fix the stale pointer in
+- [x] T001 (2026-11-06, Claude: both pointers now name `docs/f-reference/f_tone_curve.md`; the LUT work stays in the ideas file): Fix the stale pointer in
   ideas/lut_curve_and_color_controls.md: it twice cites a revisit note
   "added at `.specify/f_tone_curve/definition.py`" (lines 47, 124) —
   no such folder/file exists anywhere. Either create the folder and

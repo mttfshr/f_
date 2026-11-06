@@ -12,7 +12,7 @@ Ids start at T001._
   shouldn't silently pass or silently skip; one line makes the
   behavior asserted. First live run validates it (the same pattern
   f_chladni's generator-neutral entries use).
-- [ ] T002: Fold the OQ11 answer into ideas/f_tensorfield.md's
+- [x] T002 (2026-11-06, Claude: superseded, no edit. `ideas/f_tensorfield.md` already lists potential as sign-sensitive and excluded, confirmed 2026-10-16, and that is right: the increment is magnitude-only but the backward-advect lookup depends on direction, so "axis-blind" below is wrong): Fold the OQ11 answer into ideas/f_tensorfield.md's
   consumer audit table: f_vf_potential integrates field *magnitude*
   (codebox_potential.gen:20 — `field_mag = sqrt(fx*fx + fy*fy)`, line
   27 accumulates it), so it is axis-blind: a 180°-flipped field

@@ -27,4 +27,5 @@
 - **Live (Matt):** both helpfile looks pass; Split wording stays; the `bypass` control message that works in 7 of 50 modules is accepted, no gate row.
 - **Next candidates:** `f_tf_tensormap` (T001, T045 look like bookkeeping, not verified) and `f_tf_hatch` (T064). One item away: `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow`, `f_tone_curve`.
 - **Record mismatches, not fixed:** `f_wave_field` T034 unticked though live looks passed; `status.json` lists `f_vf_warp` under `stable/`, the dir is at the root; `f_vf_repulse` and `f_sirds` tasks have no checkboxes.
-- **Gates touched, no row edited:** none. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-080820-offline.log`).
+- **Batch 1 toward stable (Matt's go, offline):** ticked `f_tf_tensormap` T001 and T045, `f_vf_fieldmap` T023, `f_vf_potential` T002, `f_tone_curve` T001. The three bypass entries were NOT added: the modules use native `@bypass`, so a neutral expectation should fail live (inferred); new gate `G-bypass-native`. `f_tf_hatch` T064 waits on Matt.
+- **Gates touched:** `G-bypass-native` added. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-080820-offline.log`).

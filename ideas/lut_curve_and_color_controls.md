@@ -44,7 +44,7 @@ current 3-band model structurally cannot reach.
 
 Matt's response on reading this: agrees the `f_tone_curve` name is
 misleading, wants to pursue proper curve control for real. A revisit note
-has been added to `.specify/f_tone_curve/definition.py` pointing back
+is in `docs/f-reference/f_tone_curve.md`, pointing back
 here.
 
 ## Minor aside, logged but not chased
@@ -121,7 +121,7 @@ no if the codebox sandbox doesn't expose 3D sampling.
 
 Tabled — real finding, module owner wants to pursue it, but no
 architecture decided yet. Revisit note lives in
-`.specify/f_tone_curve/definition.py`; this file is the fuller research
+`docs/f-reference/f_tone_curve.md`; this file is the fuller research
 context behind that note. The 3D LUT addendum is a further-out,
 unverified extension of the same idea, not an independent thread — take
 the 1D per-channel curve as the near-term target and treat 3D LUTs as a

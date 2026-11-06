@@ -84,7 +84,7 @@
 - [x] T020 Write `docs/f-reference/f_vf_fieldmap.md` — param table, signal chain, calibration table by input type, notes
 - [x] T021 Update `docs/f-reference/f_vecfield_type.md` — f_vf_fieldmap row changed from Planned to Complete
 - [x] T022 Update `README.md` — f_vf_fieldmap added to f_vf_ family table
-- [ ] T023 Commit: `feat: f_vf_fieldmap — scalar texture to vecfield via central difference gradient`
+- [x] T023 (2026-11-06, Claude: the module is in git, first add before 8db79ae) Commit: `feat: f_vf_fieldmap — scalar texture to vecfield via central difference gradient`
 
 **Checkpoint**: Docs written. README updated. Git clean. Commit done.
 
