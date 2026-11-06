@@ -1,7 +1,7 @@
 # f_tensor - Tensor Field Type Contract
 
 _Created: 2026-10-16_
-_Status: Draft - one producer (`f_tf_tensormap`), one bridge (`f_tf_axisflow`), no direct consumers yet_
+_Status: one producer (`f_tf_tensormap`), one bridge (`f_tf_axisflow`), and the raw-tensor modules in Family members below_
 
 ---
 
@@ -53,7 +53,7 @@ Storing (cos θ, sin θ) of an unoriented axis forces an arbitrary sign, and the
 
 ## Consumer rules
 
-1. **Never feed outlet 1's R/G directly to a sign-sensitive consumer.** That is any module that displaces, accumulates, or forces along a direction: `f_vf_advect`, `f_vf_warp`, `f_caustic`, `f_vf_fluid`, `f_vf_potential`, `f_weave`, `f_vf_streak`, and (inferred) `f_vf_chroma`/`f_vf_prism`. The doubled angle moves them the wrong way, and the decoded sign flips at the branch cut.
+1. **Never feed outlet 1's R/G directly to a sign-sensitive consumer.** That is any module that displaces, accumulates, or forces along a direction: `f_vf_advect`, `f_vf_warp`, `f_caustic`, `f_vf_fluid`, `f_vf_potential`, `f_vf_streak`, and (inferred) `f_vf_chroma`/`f_vf_prism`. The doubled angle moves them the wrong way, and the decoded sign flips at the branch cut.
 2. **To drive them, go through `f_tf_axisflow`**, which turns the axis into a continuous vecfield without picking a sign.
 3. **Axis-blind uses are fine as-is:** B (trace) and A (coherence) as scalar mattes or modulation inputs; `f_vf_split` on outlet 1 returns cos 2θ and sin 2θ as scalar textures.
 4. **A consumer that needs θ itself** decodes `θ = 0.5 * atan2(G', R')` (G', R' decoded to -1..1). GenExpr `atan2` on sampled-texture input is verified safe on the GPU, with a benign ±pi difference exactly at the branch cut. The recovered θ flips by 180° where the true axis crosses vertical; use it only where the algorithm is symmetric to that.
@@ -81,6 +81,10 @@ Storing (cos θ, sin θ) of an unoriented axis forces an arbitrary sign, and the
 |---|---|---|
 | `f_tf_tensormap` | Producer | Image/scalar texture -> raw tensor + packed |
 | `f_tf_axisflow` | Bridge | Packed tensor -> vecfield (projection of a reference angle onto the edge line) |
+| `f_tf_smooth` | Processor | Raw tensor -> raw tensor, smoothed over time |
+| `f_tf_sharpen` | Processor | Raw tensor -> raw tensor, eigengap scaled |
+| `f_tf_aniso_blur` | Consumer | Raw tensor + source texture -> source blurred along the structure |
+| `f_tf_glyph` | Consumer (renderer) | Raw tensor -> one oriented glyph per cell |
 | `f_tf_hatch` | Consumer (renderer) | Raw tensor (outlet 0) -> marks. Decodes in-pixel; commits mark shape from coherence. Outputs marks only, never a tensor or vecfield |
 
-Planned consumers (hub: `ideas/f_tensorfield.md`): `f_vf_glow` anisotropy inlet, anisotropic blur, confidence-scaled marks in `f_vf_seeds`, a glyph-field renderer.
+Planned consumers (hub: `ideas/f_tensorfield.md`): `f_vf_glow` anisotropy inlet, confidence-scaled marks in `f_vf_seeds`.

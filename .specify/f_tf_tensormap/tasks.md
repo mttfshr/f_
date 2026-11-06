@@ -136,6 +136,16 @@ docs/f-reference/f_tf_tensormap.md, f_tensor_type.md   — Phase 5
 
 ---
 
+## Stable preflight (2026-11-06, not yet moved)
+
+Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--check` up to date; README row 110 chars or under; bypass is `bypass_gate` on stage C; helpfile box 154x84 equals the panel footprint. Contract bench clean in `tests/logs/20261106-081412-bench.log`; offline suite `tests/logs/20261106-081756-offline.log`.
+
+Fixed: the reference doc and `f_tensor_type.md` said nothing consumes outlet 0 and listed `f_weave` as a vecfield consumer (inlet retired 2026-11-01); `f_tensor_type.md` listed built modules as planned; spec still showed `width` / `height` as dials. The helpfile had no source, so its demo showed only the neutral output: `vs_sources_main` added, the comment moved off the preview, digest and comment now name outlet 0's consumers. Not yet opened in Max.
+
+Open: Matt's helpfile look; `bench_tf_tensormap.py` has no run in `tests/logs/`, so GPU parity since the 2026-10-30 `render_dim` change is not verified. The helpfile lists a `bypass` message that does not work here (same bench log), as accepted for Fluid and Split.
+
+---
+
 ## Dependencies & Execution Order
 
 - Phase 0 -> 1 -> 2 -> 3 -> 4 -> 5, strictly sequential.

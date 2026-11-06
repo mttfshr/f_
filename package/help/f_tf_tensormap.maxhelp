@@ -74,7 +74,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "Structure tensor of any texture -- where edges run, how strong, how sure. Feeds Axis Flow",
+     "text": "Structure tensor of any texture -- where edges run, how strong, how sure. Feeds the other T_ modules",
      "fontsize": 14.0,
      "linecount": 2,
      "varname": "autohelp_top_digest[3]"
@@ -105,7 +105,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nstrength [1 \u2013 1000]\nradius [0 \u2013 16]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nstrength [1 – 1000]\nradius [0 – 16]\nbypass [0 / 1]",
      "fontsize": 12.0,
      "linecount": 7
     }
@@ -156,6 +156,36 @@
    },
    {
     "box": {
+     "id": "d-3",
+     "maxclass": "bpatcher",
+     "name": "vs_sources_main.maxpat",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      "jit_gl_texture"
+     ],
+     "patching_rect": [
+      338.0,
+      23.75,
+      296.4,
+      125.5
+     ],
+     "bgmode": 1,
+     "border": 1,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
+     "lockedsize": 0,
+     "offset": [
+      0.0,
+      0.0
+     ],
+     "viewvisibility": 1
+    }
+   },
+   {
+    "box": {
      "id": "d-4",
      "maxclass": "bpatcher",
      "name": "f_tf_tensormap.maxpat",
@@ -167,7 +197,7 @@
      ],
      "patching_rect": [
       338.0,
-      24.0,
+      190.0,
       154.0,
       84.0
      ],
@@ -198,7 +228,7 @@
      ],
      "patching_rect": [
       338.0,
-      128.0,
+      294.0,
       236.0,
       249.0
      ],
@@ -223,10 +253,10 @@
      "numinlets": 1,
      "numoutlets": 0,
      "patching_rect": [
-      500.0,
-      148.0,
-      210.0,
-      51.0
+      590.0,
+      294.0,
+      175.0,
+      118.0
      ],
      "fontface": 0,
      "fontname": "Ableton Sans Light",
@@ -237,13 +267,25 @@
       0.0
      ],
      "bubble": 1,
-     "text": "Preview shows outlet 1: hue = edge\ndirection. Wire it to Axis Flow.",
+     "text": "Preview shows outlet 1: hue = edge direction. Outlet 1 feeds Axis Flow. Outlet 0 feeds Smooth, Sharpen, Aniso Blur, Glyph and Hatch.",
      "fontsize": 12.0,
-     "linecount": 2
+     "linecount": 6
     }
    }
   ],
   "lines": [
+   {
+    "patchline": {
+     "destination": [
+      "d-4",
+      0
+     ],
+     "source": [
+      "d-3",
+      0
+     ]
+    }
+   },
    {
     "patchline": {
      "destination": [

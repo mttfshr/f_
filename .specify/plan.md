@@ -17,7 +17,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-0. Stable push (Matt, 2026-11-06): batch 3 starts with `f_tf_tensormap`; plan and bar are in `HANDOFF.md`.
+0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap` preflighted, waiting on Matt's look and a bench go; plan and bar are in `HANDOFF.md`.
 
 1. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
 2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).

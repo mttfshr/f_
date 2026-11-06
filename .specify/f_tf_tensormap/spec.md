@@ -120,6 +120,8 @@ Neither outlet is an `f_vecfield` and neither should be labeled as one. Whether 
 | `height` | live.numbox | 64-8192 | 480 | Render height in pixels. Stages A, B_v use it for the vertical step. Exposed for now. |
 | `bypass` | jsui (bypass_toggle.js) | 0/1 | 0 | Outputs the zero-tensor neutral on both outlets. |
 
+**Superseded 2026-10-30:** `width` and `height` are no longer dials. They are internal Params driven by the render size (`render_dim`), and every stage outputs the render size. See `docs/f-reference/f_tf_tensormap.md`.
+
 **Name:** `f_tf_tensormap` (decided 2026-10-16, Matt; working name until then was `f_tf_structure`). `tf` is the tensor-field family prefix, parallel to `vf`.
 **Prefix:** `tensormap`
 **Object name:** `tensormap_pix` (same convention as `f_vf_fieldmap` -> `fieldmap` -> `fieldmap_pix`)

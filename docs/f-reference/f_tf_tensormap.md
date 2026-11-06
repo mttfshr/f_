@@ -11,7 +11,7 @@ Derives a **structure tensor** from any scalar-dominant texture: at each pixel, 
 
 Two outlets from one computed pass:
 
-- **Outlet 0, raw tensor.** Lossless Jxx, Jxy, Jyy. Nothing consumes it today; it is for a future glyph/stress renderer.
+- **Outlet 0, raw tensor.** Lossless Jxx, Jxy, Jyy. This is the input of `f_tf_smooth`, `f_tf_sharpen`, `f_tf_aniso_blur`, `f_tf_glyph` and `f_tf_hatch`.
 - **Outlet 1, packed.** The convenience form: axis direction (angle-doubled), trace and coherence in one RGBA texture.
 
 Neither outlet is an `f_vecfield`. See `docs/f-reference/f_tensor_type.md` for the encoding contract, and **`f_tf_axisflow`** to turn outlet 1 into a vecfield for consumers like `f_vf_advect`.
@@ -59,7 +59,7 @@ Stateless (no previous-frame pass). Internal textures are unbounded float32; onl
 - **θ is the dominant gradient direction: it points *across* the edge**, not along it. The along-edge direction is θ + 90°.
 - **Coherence** = (λ1-λ2)/(λ1+λ2): 1 on a clean edge, 0 where the structure has no preferred direction. Contrast-independent. It is noisy where trace is very small.
 - **Neutral values:** raw (0, 0.5, 0, 1); packed (0.5, 0.5, 0, 0). Isotropic pixels (trace < 1e-6) and pixels where the direction is undefined (equal eigenvalues) output R = G = 0.5, never an arbitrary angle.
-- **Angle-doubled:** outlet 1's R/G must **not** be fed to sign-sensitive consumers (`f_vf_advect`, `f_vf_warp`, `f_caustic`, `f_vf_fluid`, `f_vf_potential`, `f_weave`, ...). Route it through `f_tf_axisflow`.
+- **Angle-doubled:** outlet 1's R/G must **not** be fed to sign-sensitive consumers (`f_vf_advect`, `f_vf_warp`, `f_caustic`, `f_vf_fluid`, `f_vf_potential`, ...). Route it through `f_tf_axisflow`.
 
 ---
 
@@ -87,6 +87,7 @@ Per pass, M3 Max (M1 unmeasured), at R_MAX 16 and radius 16: about 0.9 ms at 108
 
 ```
 jit.gl.bfg -> f_tf_tensormap (outlet 1) -> f_tf_axisflow -> f_vf_advect (vecfield in)
+camera -> f_tf_tensormap (outlet 0) -> f_tf_smooth -> f_tf_hatch
 ```
 
 Also: coherence (A) as a "where is structure" matte; trace (B) as a strength map; outlet 1 into `f_vf_split` returns cos 2θ and sin 2θ as two scalar textures with no `atan2`.
