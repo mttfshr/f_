@@ -1314,14 +1314,15 @@
                                 "Axis Flow \u2207 T_",
                                 "Fieldmap \u2207",
                                 "Potential \u2207",
-                                "Split \u2207"
+                                "Split \u2207",
+                                "Stamp \u2207"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_disp",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 4,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1355,14 +1356,15 @@
                                 "tf_axisflow",
                                 "vf_fieldmap",
                                 "vf_potential",
-                                "vf_split"
+                                "vf_split",
+                                "vf_stamp"
                             ],
                             "parameter_initial": [
                                 0.0
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_7_file",
-                            "parameter_mmax": 3,
+                            "parameter_mmax": 4,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

@@ -105,6 +105,7 @@ No visual effect of their own — plumbing between other modules.
 | `f_util_matrix_2` | 2 tex (sources) + consumer param list → 2 tex passthrough + mod messages | CV-matrix-style modulation router — one source drives one destination column, textbook Eurorack patch-matrix semantics. ⚠ draft status, open design questions unresolved |
 | `f_util_profile` | tex → row profile tex + column profile tex | CPU-side dual-axis luminance profiler — collapses a texture to a 1D row-mean and column-mean signal for driving per-row/per-column modulation (e.g. into `f_masonry`'s course/column inlets) |
 | `f_vf_split` | vecfield → scalar + scalar | Splits a vecfield's X and Y channels into two separate grayscale textures, unipolar or bipolar encoding — for feeding a field's individual axes into scalar-only consumers |
+| `f_vf_stamp` | tex (stamp) + vecfield (optional) → ink + vecfield | Gated injector, stateless: a held press stamps the texture's luma mask as ink and as an impulse (inlet 1 masked, or radial / swirl from the stamp's edge), with an envelope in frames; feeds `f_vf_advect` and `f_vf_fluid` |
 
 ## Audio (`f_a_`) and Control Bridges
 
@@ -203,6 +204,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_util_matrix_2` | 3: source tex A; source tex B; control (`params`, `bypass`) | 3: tex A passthrough; tex B passthrough; message outlet (`<param> <source_idx> <amount>`) | Sources Required to modulate anything; textures pass through unchanged | Zeroes all modulation amounts; texture passthrough unchanged |
 | `f_util_profile` | 1: tex + ctrl | 2: tex (row profile 128×1); tex (column profile 1×128) | Required | **Freeze:** holds last computed profile on both outlets |
 | `f_vf_split` | 1: vecfield | 2: scalar (X); scalar (Y), unipolar or bipolar | Required | Both outlets pass the source vecfield through unsplit |
+| `f_vf_stamp` | 2: stamp tex (+ctrl); vecfield | 2: tex (ink); vecfield (impulse) | Optional (empty = black ink, neutral impulse) | Outlet 1 passes inlet 0, outlet 2 passes inlet 1 or neutral |
 | `f_a_decorrelate` (audio) | 1: audio signal (`inlet~`) | 1: audio signal (`outlet~`) | Required (audio in) | Not stated in doc |
 | `f_a_ripple` (audio) | None at the patch level (standalone prototype); `gen~` has one inlet taking `prepend <param>` messages | None at the patch level; `gen~` out 1 = audio (to its own `dac~`, scopes), out 2 = `render_count`, out 3 = `f0_h` | None (self-timed generator, new stimulus every `stim_dur`) | No bypass control. Silent while `output_level` = 0 (its default) |
 | `f_chladni_audio` (audio to control) | 1: audio signal | 1 wired: messages `m0amp` … `m7amp` every 20 ms (a second outlet object exists, unwired) | Required (audio in) | No bypass control |

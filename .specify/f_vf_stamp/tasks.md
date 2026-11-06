@@ -13,7 +13,7 @@ Record format: date, who observed (offline Claude / live Matt), source (log path
 - [x] T005 [GATE G5] DECIDED (Matt, 2026-11-05: "pass the input through"; reading CONFIRMED by Matt in chat the same day): bypass = out0 passes in0, out1 passes in1 when it is connected (neutral 0.5 / 0.5 when not), gate and envelope ignored, FR-011's non-finite zap still active. Consequence: a bypassed stamp hands the WHOLE texture downstream as ink, not nothing.
 - [x] T006 [GATE G6] DECIDED (Matt, 2026-11-05): `edge` and `seed` cut, `threshold` default 0.05, `amount` 0-4, `rim` added; the rest as the spec table. T032 tunes live.
 - [x] T007 [GATE G7] DECIDED (Matt, 2026-11-05): Rec.709. The library is split, no single weight (list in the Record below).
-- [ ] T008 [GATE G8] Menu category (the stamp takes and produces vecfields: Effects or Adapters). Held by `G-menu`; decide at Phase 3.
+- [x] T008 [GATE G8] Menu category (the stamp takes and produces vecfields: Effects or Adapters). Held by `G-menu`; decide at Phase 3.
 - [x] T009 NumPy mirror `tests/modules/vf_stamp/vf_stamp_mirror.py` and `test_vf_stamp.py`: coverage closed forms, idle exactness, linearity, mask zero, radial outward / swirl divergence-free and rotated 90 degrees, periodic wrap equivalence, noise range and determinism, non-finite zap (SC-001 to SC-004). Run `-q`.
 - [x] T010 Record the mirror's numbers for the radial and swirl band at `softness` 0.02 / 0.1 / 0.3 (feeds T003). Script `tests/modules/vf_stamp/vf_stamp_bands.py`; numbers in the Record below.
 
@@ -33,8 +33,8 @@ Record format: date, who observed (offline Claude / live Matt), source (log path
 
 ## Phase 3: docs and registration
 
-- [ ] T040 Reference doc, helpfile (the `f-helpfile` skill), menu placement (G8), README row (110 characters).
-- [ ] T041 `ideas/f_vf_stamp.md` status to built; `ideas/f_vf_ch.md`, `f_vf_emulsion.md`, `f_vf_mix.md` links check.
+- [x] T040 Reference doc, helpfile (the `f-helpfile` skill), menu placement (G8), README row (110 characters).
+- [x] T041 `ideas/f_vf_stamp.md` status to built; `ideas/f_vf_ch.md`, `f_vf_emulsion.md`, `f_vf_mix.md` links check.
 
 ## Record
 
@@ -57,3 +57,4 @@ Record format: date, who observed (offline Claude / live Matt), source (log path
 - 2026-11-05 (bench, Claude, on Matt's go): `tests/contracts/bench_modules.py` 2/2 over every shipped module (log `tests/logs/20261105-215801-bench.log`): `f_vf_stamp` bypass as G5 (outlets 1 and 2), `f_wave_field` still passes after T020. Phase 1 is verified as far as the bench can; Matt's live looks (T030-T032) are next.
 - 2026-11-05 (live, Matt, chat): T030-T032 pass ("passes - seems to be working really well"); no dial, range or default changed. The `src_stamp` look passes (`invert` on, a field on inlet 1, nothing on inlet 0, Stamp held), which closes the limit noted at the module bench. The four T022 additions stand (env snap, loadbang on the dials, Norm / Inv, the panel). `stamp` stays a known issue in the contract test; `max_depth` stays 6. Next is Phase 3 (T040, T041); T008 is still held by `G-menu`.
 - 2026-11-05 (live, Matt, chat): `f_wave_field` Strike passes after T020.
+- 2026-11-06 (offline, Claude, on Matt's "complete phase 3"): T040 reference doc, helpfile (from `f_wave_field`'s layout, not opened in Max), README row, inventory rows, launcher and menu regenerated. T008: placed under Adapters by Claude, not decided by Matt; `G-menu` stays open and the move is one line. T041: idea note and INDEX marked built, the three links resolve. Full offline suite at 07:50 (log `tests/logs/20261106-075056-offline.log`): 67 of 69 files green; the two failures, `test_generate_menu.py` and `test_launch.py`, were the unregistered module and pass after registration, 17/17 and 8/8 (log `tests/logs/20261106-075328-offline.log`). The whole suite was not re-run after that.

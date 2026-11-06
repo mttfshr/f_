@@ -1,6 +1,6 @@
 # f_vf_stamp (was `f_splat`) — a gated stamp: ink texture plus impulse vecfield
 
-**Status:** 🟡 **specced 2026-11-05** (`.specify/f_vf_stamp/`: spec, plan, tasks; nothing built). Raised 2026-10-27 with Matt
+**Status:** 🟢 **built 2026-11-05** (`docs/f-reference/f_vf_stamp.md`; record in `.specify/f_vf_stamp/`). This note keeps the design history; where it differs, the reference doc wins. Raised 2026-10-27 with Matt
 as the missing "drop of ink" piece for the ink-in-water look and for dropping
 oil into `f_vf_ch.md`. Name decided 2026-11-05 (below).
 

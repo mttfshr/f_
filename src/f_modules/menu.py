@@ -101,6 +101,7 @@ CATEGORIES = [
         ("Fieldmap", "vf_fieldmap", V),
         ("Potential", "vf_potential", V),
         ("Split", "vf_split", V),
+        ("Stamp", "vf_stamp", V),          # placed by Claude 2026-11-06 on Matt's "complete phase 3"; G8 / G-menu are his to move
     ]),
     ("Routing / Mod", [
         ("Matrix 2", "util_matrix_2", N),

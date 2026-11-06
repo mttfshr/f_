@@ -4683,6 +4683,75 @@
 										20.0
 									]
 								}
+							},
+							{
+								"box": {
+									"id": "obj-14",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										260.0,
+										150.0,
+										22.0
+									],
+									"text": "f_vf_stamp",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										124.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-15",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										288.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_vf_stamp.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-16",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										260.0,
+										150.0,
+										20.0
+									],
+									"text": "Gated stamp: a texture and a held press give ink and an impulse vecfield (radial, swirl or masked inlet)",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										126.0,
+										720.0,
+										20.0
+									]
+								}
 							}
 						],
 						"lines": [
@@ -4774,6 +4843,30 @@
 								"patchline": {
 									"source": [
 										"obj-12",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-14",
+										0
+									],
+									"destination": [
+										"obj-15",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-15",
 										0
 									],
 									"destination": [

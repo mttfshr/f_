@@ -30,7 +30,7 @@ _Origin: `ideas/f_vf_stamp.md` (was `f_splat`, raised 2026-10-27 as the missing 
 - **G5 Bypass.** DECIDED 2026-11-05 (Matt: "pass the input through"; reading confirmed by Matt the same day): out0 passes in0, out1 passes in1 when connected (else neutral 0.5 / 0.5); the gate and envelope are ignored, so a bypassed stamp hands the whole texture downstream as ink. FR-011's non-finite zap stays active in bypass (Claude's proposal; Matt did not object).
 - **G6 Dial set and ranges.** DECIDED 2026-11-05 (Matt): the table below. `edge` and `seed` are cut (no effect on hard-edged stamps; an irregular edge comes from upstream), `threshold` defaults to 0.05, `amount` is 0-4, `rim` is added. Live tuning at T032 can still move ranges and defaults.
 - **G7 Luma weights.** DECIDED 2026-11-05 (Matt): Rec.709 (0.2126, 0.7152, 0.0722). The library is split (`f_luma_processor` 601, `f_vf_glow` 709; list in `tasks.md`); 709 is what `f_vf_advect`'s ink pass stage uses.
-- **G8 Menu category** (held by `G-menu`).
+- **G8 Menu category.** Placed under Adapters by Claude, 2026-11-06, on Matt's "complete phase 3"; not a Matt decision, `G-menu` stays open.
 
 ---
 
