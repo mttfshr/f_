@@ -2,7 +2,7 @@
 
 **Status:** ⚪ idea only, not specced, not scheduled. Raised 2026-10-27 with Matt
 as the missing "drop of ink" piece for the ink-in-water look and for dropping
-oil into `f_vf_ch.md`. Name is a placeholder.
+oil into `f_vf_ch.md`. Name decided 2026-11-05 (below).
 
 > **Decisions 2026-11-05 (Matt):** (1) **Stamp only**: the shape comes in as a texture; the
 > module does not generate blots. Named **`f_vf_stamp`** (the `f_vf_` prefix: it takes and
