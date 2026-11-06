@@ -85,6 +85,47 @@ be projected away and the splat would stir nothing. Hence impulse modes:
   check against the closed form once the profile is chosen.
 - Neutral output (exactly 0.5, 0.5, 0.5, 1) when idle.
 
+## Held press: the gate button from `f_wave_field` (2026-11-05, raised by Matt)
+
+`f_wave_field` T042 built its Strike as a **held press**, not a trigger: a `ubutton`
+reports mouse-down and mouse-up, a `strike_gate` param is 1 while held, and a tap is
+a gate the patcher holds for a few draws (a release is applied on the third draw bang
+after it, so any press is seen by at least two rendered frames; counters, never
+timers). Reference: `docs/f-reference/f_wave_field.md`, decisions D11-D14 in
+`.specify/f_wave_field/tasks.md`.
+
+What it would give `f_splat` (inference, not tried):
+
+- **The envelope question gets a performer-sized answer: tap = drop, hold = pour.**
+  A patcher-level `line` ramps `amp` up on press and down on release; the sustain is
+  how long the button is held. The module stays a stateless pulse (no memory of its
+  own); persistence is still `f_vf_advect` (ink per splat = injection times the
+  envelope's integral) and `f_vf_fluid` (momentum = force times the integral). So a
+  hold is a faucet or a sustained jet, a tap is a kick.
+- **The one-frame-pulse worry is half-solved.** A tap is never one frame: the draw
+  counter spreads it over two to three, which matters at `f_vf_fluid`'s default
+  `force` of 0.02 per frame.
+- **Replace-versus-add is not this module's question.** `f_wave_field` pins
+  (replaces) because that module holds the field; `f_splat`'s outputs are stateless,
+  so whether a splat adds to what is there is decided by the consumers.
+
+What it does not settle:
+
+- **Where.** `f_wave_field` got its position from a texture's outlines or the frame
+  centre. A splat needs x and y: latched at the press, or following while held
+  (drag a brush through the ink, a stationary hold pours in one place)?
+- **Random mode.** Whether the gate also arms the internal random clock while held.
+
+Parts to reuse: a `ubutton` over a `panel` face (a plain `button` reports no
+release, `live.text` in button mode sends only a bang on click, `textbutton` sends
+two identical bangs); `[sel bang 1 0]` to decode a bare `strike` (tap), `strike 1`
+and `strike 0`; a PRESS `[t b b]` that cancels a pending release, a RELEASE that
+restarts the draw counter. Name the Param `<something>_gate`: `gate` alone is a Gen
+operator name (the same clash as `edge`). The raw boxes live in
+`src/f_wave_field/definition.py`; a general `gate button` UI type in the
+`definition.py` schema, instead of copying them, fits Matt's taste for general tools
+and is an open choice.
+
 ## Open questions
 
 - **Stateless pulse (recommended) versus held slots.** Pulse: tiny module,
@@ -93,7 +134,11 @@ be projected away and the splat would stir nothing. Hence impulse modes:
   `jit.gl.pix`, and duplicates persistence that `f_vf_advect` and `f_vf_fluid`
   already provide.
 - **Trigger convention.** A Max message per splat, an internal random clock,
-  or both. Needs a decision before any spec.
+  or both. Needs a decision before any spec. The held press above is a third form: a gate with a `line` envelope.
+- **Position: latched at the press or live while held**, and whether the
+  gate arms the random clock (see the held-press section).
+- **Gate button as a shared building block** in the `definition.py` schema, or
+  copied raw boxes.
 - **Ink colour and mixing.** `f_vf_advect` advects channels as plain values,
   which is additive-looking; subtractive watercolour mixing and paper effects
   may need their own treatment. Not looked at.
@@ -104,7 +149,7 @@ be projected away and the splat would stir nothing. Hence impulse modes:
 
 ## Related
 
-`f_vf_ch.md`, `f_vf_emulsion.md`, `f_vf_fluid`, `f_vf_advect`,
+`f_wave_field` (the held Strike), `f_vf_ch.md`, `f_vf_emulsion.md`, `f_vf_fluid`, `f_vf_advect`,
 `f_vf_vortex`, `f_vf_vortex_multi`, `f_grain`, `f_vf_seeds`, `f_vf_mix.md`
 (to add a splat to a performer's stirring force).
 
