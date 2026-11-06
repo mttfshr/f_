@@ -144,7 +144,7 @@ Fixed: the reference doc and `f_tensor_type.md` said nothing consumes outlet 0 a
 
 `bench_tf_tensormap.py` 8/8 on the live bench, first run on record since the 2026-10-30 `render_dim` change (log `tests/logs/20261106-082418-bench.log`).
 
-Live by Matt, 2026-11-06: helpfile look passes; bypass works and shows a mustard yellow, which matches the packed neutral (0.5, 0.5, 0) on the preview (the match is inferred). The bench reports the `bypass` control message as not working here (`tests/logs/20261106-081412-bench.log`), as accepted for Fluid and Split.
+Live by Matt, 2026-11-06: helpfile look passes; the bypass toggle works and shows a mustard yellow, which matches the packed neutral (0.5, 0.5, 0) on the preview (the match is inferred). The bench reports the `bypass` control message as not working here (`tests/logs/20261106-081412-bench.log`), as accepted for Fluid and Split.
 
 ---
 
