@@ -6,11 +6,11 @@ Record format: date, who observed (offline Claude / live Matt), source (log path
 
 ## Phase 0: gates and the mirror (BLOCKING for Phase 1)
 
-- [ ] T001 [GATE G1] Envelope: per-draw one-pole in frames (plan ADR-3) or `line` in ms. Decider: Matt. Claude's lean: one-pole in frames.
+- [x] T001 [GATE G1] DECIDED (Matt, 2026-11-05): the envelope is in FRAMES, a per-draw one-pole (plan ADR-3), not `line` in ms.
 - [ ] T002 [GATE G2] Ink encoding: read `f_vf_advect`'s injection source channels (RGB / alpha / premultiplied) and fix out0 to match. Decider: Claude from the source, Matt confirms.
 - [ ] T003 [GATE G3] Radial and swirl field: edge band only versus a smoothed interior; magnitude normalisation (plan ADR-4). Decided by the mirror numbers and a live look.
-- [ ] T004 [GATE G4] Gate button: extract a schema UI type from `f_wave_field`'s raw boxes (second user), or copy. Decider: Matt. Claude's lean: extract, guarded by `drift -v f_wave_field`.
-- [ ] T005 [GATE G5] Bypass: neutral outputs (proposed) or out0 passthrough. Decider: Matt.
+- [x] T004 [GATE G4] DECIDED (Matt, 2026-11-05): EXTRACT a schema UI type from `f_wave_field`'s raw boxes (`f_vf_stamp` is the second user), guarded by `drift -v f_wave_field`. Work is T020.
+- [x] T005 [GATE G5] DECIDED (Matt, 2026-11-05: "pass the input through"). Claude's READING, to confirm with Matt: bypass = out0 passes in0, out1 passes in1 when it is connected (neutral 0.5 / 0.5 when not). Consequence: a bypassed stamp hands the WHOLE texture downstream as ink, not nothing.
 - [ ] T006 [GATE G6] Dial set, ranges, defaults, with `G-ui-density` in mind. Decider: Matt.
 - [ ] T007 [GATE G7] Which luma weights the library uses for coverage (`f_luma_processor`, `f_vf_glow`); use the same.
 - [ ] T008 [GATE G8] Menu category (the stamp takes and produces vecfields: Effects or Adapters). Held by `G-menu`; decide at Phase 3.
@@ -39,3 +39,4 @@ Record format: date, who observed (offline Claude / live Matt), source (log path
 ## Record
 
 - 2026-11-05 (offline, Claude): spec, plan and this task list written from `ideas/f_vf_stamp.md` and the decisions Matt made in chat the same evening (stamp only, luma coverage, name `f_vf_stamp`, radial fallback with a swirl switch, the held press). The unsettled parts are the gates above; none of the design numbers (envelope law, field normalisation, dial ranges) has been tried.
+- 2026-11-05 (Matt, chat, 20:58): G1 frames, G4 extract, G5 pass the input through (reading above, unconfirmed). Open: T002, T003, T006 (dials), T007, T008, T009, T010. New session started from `HANDOFF.md`.

@@ -23,11 +23,11 @@ _Origin: `ideas/f_vf_stamp.md` (was `f_splat`, raised 2026-10-27 as the missing 
 
 ### Open, decided in Phase 0 (gates in `tasks.md`)
 
-- **G1 Envelope mechanism and units.** Proposed: a per-draw one-pole in the patcher (`env += (gate - env) * k`, `k` from `attack` and `release` in frames, `0` = instant), so no timer and no `line`. Alternative: `line` in ms (frame-rate dependent).
+- **G1 Envelope mechanism and units.** DECIDED 2026-11-05 (Matt): frames. A per-draw one-pole in the patcher (`env += (gate - env) * k`, `k` from `attack` and `release` in frames, `0` = instant), so no timer and no `line`. Alternative (not taken): `line` in ms (frame-rate dependent).
 - **G2 Ink encoding.** Which channels does `f_vf_advect`'s injection source read (RGB, alpha, premultiplied)? Out0 must match.
 - **G3 Radial and swirl field definition.** Edge band only (the gradient of a soft mask is non-zero only in the `softness` band) versus a smoothed interior (extra taps or a blur); how magnitude is normalised so it does not depend on `softness`.
-- **G4 Gate button as a shared building block.** Extract the `ubutton`, `[sel bang 1 0]` and draw-counter boxes from `f_wave_field`'s `definition.py` into a schema UI type, or copy the raw boxes. Matt has not decided; the plan proposes extracting.
-- **G5 Bypass.** Proposed: neutral outputs (out0 black A = 1, out1 0.5 / 0.5, nothing stamped), as `f_wave_field`; alternative: out0 passthrough of in0.
+- **G4 Gate button as a shared building block.** Extract the `ubutton`, `[sel bang 1 0]` and draw-counter boxes from `f_wave_field`'s `definition.py` into a schema UI type, or copy the raw boxes. DECIDED 2026-11-05 (Matt): extract.
+- **G5 Bypass.** DECIDED 2026-11-05 (Matt: "pass the input through"). Reading, unconfirmed: out0 passes in0, out1 passes in1 when connected (else neutral 0.5 / 0.5); a bypassed stamp therefore hands the whole texture downstream as ink.
 - **G6 Dial set and ranges** (below), subject to `G-ui-density`.
 - **G7 Luma weights** the library uses for coverage (confirm against `f_luma_processor` / `f_vf_glow`).
 - **G8 Menu category** (held by `G-menu`).

@@ -36,15 +36,14 @@ A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage wit
 
 **Context**: `f_wave_field` T042 built the press as `raw_boxes` (a `panel` face, a `ubutton`, `[sel bang 1 0]`, two `[t b b]`, a draw counter with `[sel 2]`). A plain `button` reports no release; `live.text` in button mode sends only a bang; `textbutton` sends two identical bangs; `ubutton` is the one with exact outlets.
 
-**Proposed decision**: extract the pattern into a `definition.py` schema UI type (a gate button naming its Param, message and release-draw count) and rebuild `f_wave_field` from it, checked by `drift -v f_wave_field` reproducing the same patcher. `f_vf_stamp` is the second user. This fits Matt's stated taste for general tools.
+**Decided (Matt, 2026-11-05)**: extract the pattern into a `definition.py` schema UI type (a gate button naming its Param, message and release-draw count) and rebuild `f_wave_field` from it, checked by `drift -v f_wave_field` reproducing the same patcher. `f_vf_stamp` is the second user. This fits Matt's stated taste for general tools.
 
-**Fallback if Matt declines**: copy the raw boxes, renaming `strike` to `stamp`.
 
 ### ADR-3: Envelope per draw, in the patcher (G1)
 
-**Proposed**: `[r draw]` drives a one-pole `env += (gate - env) * k`, `k` = 1 for `attack` 0 else `1 - exp(-1/attack)` (and likewise `release`), `[expr]` or a small `[zl]` / `[pak]` chain, sent as `param env`. No `line`, no timer: the envelope is in frames, consistent with the library's one-model-step-per-draw rule (`f_wave_field` G3). A tap then gives a short bump whose height depends on `attack`; with `attack` 0 the tap gives a full-strength stamp for its gate frames and the tail follows `release`.
+**Decided (Matt, 2026-11-05: frames)**: `[r draw]` drives a one-pole `env += (gate - env) * k`, `k` = 1 for `attack` 0 else `1 - exp(-1/attack)` (and likewise `release`), `[expr]` or a small `[zl]` / `[pak]` chain, sent as `param env`. No `line`, no timer: the envelope is in frames, consistent with the library's one-model-step-per-draw rule (`f_wave_field` G3). A tap then gives a short bump whose height depends on `attack`; with `attack` 0 the tap gives a full-strength stamp for its gate frames and the tail follows `release`.
 
-**Alternative**: `line` in ms (simple, frame-rate dependent).
+**Not taken**: `line` in ms (simple, frame-rate dependent).
 
 ### ADR-4: Radial and swirl from the stamp's gradient (G3)
 
@@ -64,7 +63,7 @@ Every neighbour read uses explicit integer texel indices with a modulo wrap, nev
 
 ### ADR-8: Bypass (G5)
 
-**Proposed**: neutral outputs (out0 black A = 1, out1 0.5 / 0.5): nothing is stamped. Matches `f_wave_field` and the vecfield-producer convention.
+**Decided (Matt, 2026-11-05: "pass the input through")**. Reading, to confirm: out0 passes in0, out1 passes in1 when connected, else neutral. Note the consequence: a bypassed stamp hands the whole texture downstream as ink. (The earlier proposal was neutral outputs, as `f_wave_field`.)
 
 ---
 
