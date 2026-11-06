@@ -55,7 +55,7 @@ A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage wit
 
 ### ADR-5: Coverage
 
-`cov = smoothstep(threshold - softness/2, threshold + softness/2, luma)`, `invert` as `1 - cov`.
+`cov = smoothstep(max(threshold - softness/2, 0), threshold + softness/2, luma)`, `invert` as `1 - cov`. The clamp keeps black uncovered at the low default `threshold`: without it, `softness` 0.3 covers black at 0.26, lets a patched in1 through across the frame and cuts the rim to about 1.48 s (mirror).
 
 **Cut (Matt, 2026-11-05, T006)**: the irregular edge (`edge`, `seed`, a noise offset on the threshold). On a hard-edged stamp it does nothing, because the noise cannot move a 0-to-1 step (T010); an irregular edge comes from upstream.
 

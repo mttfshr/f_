@@ -87,7 +87,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 
 - **FR-001**: The module MUST be usable with nothing on in1. With nothing on in0 it stamps nothing (out0 black A = 1, out1 neutral): in0 gives the shape, so it is a processor, not a generator.
 - **FR-002**: The module MUST be stateless: output is a pure function of in0, in1, the params, the envelope value and the render size. No feedback texture.
-- **FR-003**: Coverage MUST be `cov = smoothstep(threshold - softness/2, threshold + softness/2, luma)`, flipped by `invert`, with Rec.709 luma (G7).
+- **FR-003**: Coverage MUST be `cov = smoothstep(max(threshold - softness/2, 0), threshold + softness/2, luma)`, flipped by `invert`, with Rec.709 luma (G7). The clamp (Matt, 2026-11-05) means black never stamps, at any `softness`.
 - **FR-004**: out0 MUST be `vec(in0.rgb * cov * amount * env, 1.0)` (G2); RGB exactly zero and A = 1 when `cov * env` = 0.
 - **FR-005**: With in1 connected, out1 MUST be `encode((in1.rg - 0.5) * 2 * cov * env * force)` per `f_vecfield_type.md` (`v * 0.5 + 0.5`, B = 0.5, A = 1), bounded, and exactly (0.5, 0.5) when `cov * env` = 0. An unconnected in1 MUST be recognised from the connected flag (via `vs_inState`), not from the value: `vs_black` would decode as a full -1 vector (the `f_vf_glow` ADR-2 lesson, `vs_black` suppression before the remap).
 - **FR-006**: With in1 unconnected, out1 MUST be the radial impulse (`impulse` Radial) or the swirl (`impulse` Swirl) derived from `cov` by the wide central difference of G3 (reach set by `rim`), scaled by `force` and the envelope. With in1 connected the switch MUST have no effect.
@@ -133,7 +133,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 ## Edge Cases
 
 - `softness` 0 or a hard-edged stamp: `softness` acts in luma, so it does not change a 0-to-1 step; the band comes from `rim` alone (T010).
-- `softness` above `2 * threshold`: the band's lower edge goes below 0, so black is partly covered (at the default `threshold`, any `softness` above 0.1).
+- `softness` above `2 * threshold`: the band's lower edge is clamped at 0 (FR-003), so the band is narrower than `softness` and no longer centred on `threshold`.
 - A stamp smaller than a few texels; `threshold` at 0 or 1; `invert` on a full-white texture.
 - in1 non-neutral outside the mask (masked off); in1 with non-finite texels.
 - Render size changes at runtime; non-square render targets (the gradient steps are per-texel in each axis).

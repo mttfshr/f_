@@ -158,13 +158,24 @@ def test_diff_rim_integral():
     t = g.texture(N, N)
     t[..., 0:3] = (np.abs(nx - F32(0.5)) < F32(0.25)).astype(F32)[..., None]
     t[..., 3] = 1
-    for softness in (0.02, 0.3):
-        for reach in (1, 4):
-            # threshold 0.5 keeps the band inside 0-1; at the default 0.05, softness 0.3 covers black
-            # at 0.26 and the edge runs 0.26 to 1, not 0 to 1 (spec Edge Cases)
-            _, r = stamp_stage(t, threshold=0.5, softness=softness, reach=reach)
-            rx = decode(r)[0][5]
-            check(f"rim integral s={reach} softness={softness}", abs(float(rx[N // 2:].sum()) - 2 * reach), 1e-4)
+    for threshold in (0.05, 0.5):  # 0.05 with softness 0.3 needs FR-003's clamp to stay a 0-to-1 edge
+        for softness in (0.02, 0.3):
+            for reach in (1, 4):
+                _, r = stamp_stage(t, threshold=threshold, softness=softness, reach=reach)
+                rx = decode(r)[0][5]
+                check(f"rim integral th={threshold} s={reach} softness={softness}",
+                      abs(float(rx[N // 2:].sum()) - 2 * reach), 1e-4)
+
+
+def test_black_never_stamps():
+    """FR-003's clamp: black is uncovered at any softness, so a patched field stays masked off."""
+    t = disc(N)
+    v = vec_tex(0.6, -0.4)
+    for softness in (0.1, 0.3, 1.0):
+        _, o = stamp_stage(t, v, src_vec=1, softness=softness)
+        check(f"neutral on black at softness {softness}", abs(float(o[1, 1, 0]) - 0.5), 0)
+    _, o = stamp_stage(flat(0.0), v, src_vec=1, invert=1, softness=0.3)
+    check("invert: black is fully covered", abs(float(decode(o)[0][0, 0]) - 0.6), 1e-6)
 
 
 def test_rim_is_in_frame_units():

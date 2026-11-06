@@ -62,7 +62,8 @@ def coverage(in0, ix, iy, w, h, threshold, softness, invert, weights=LUMA):
     """cov at integer texel indices of a w x h render target (FR-003)."""
     rgb = zap(g.sample(in0, (ix + F32(0.5)) / F32(w), (iy + F32(0.5)) / F32(h)), 0)
     lum = rgb[..., 0] * weights[0] + rgb[..., 1] * weights[1] + rgb[..., 2] * weights[2]
-    c = smoothstep(F32(threshold) - F32(softness) / 2, F32(threshold) + F32(softness) / 2, lum)
+    low = max(F32(threshold) - F32(softness) / 2, F32(0))
+    c = smoothstep(low, F32(threshold) + F32(softness) / 2, lum)
     return _mix(c, F32(1) - c, invert)
 
 
