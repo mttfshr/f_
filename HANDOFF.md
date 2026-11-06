@@ -23,5 +23,5 @@
 
 - **Done (offline, Claude):** preflight, v1 wording removed from four docs, reference doc and spec brought up to date, helpfile given `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch. Moved after Matt's helpfile look passed (T068). Record: `.specify/stable/f_tf_hatch/tasks.md`, "Stable preflight" and "Moved to stable/".
 - **Verified:** drift ok, menu and launcher `--check`, `test_generate_menu.py` 17/17 (log `tests/logs/20261106-083730-offline.log`). `bench_tf_hatch.py` not re-run; no code changed; no log of the 13/13 run exists, only commit `742e9db`.
-- **Owed:** `tests/build/test_gates.py` not run since the tensormap move; needs Matt's go.
+- **Gates:** no row touched. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-084140-offline.log`).
 - **Next:** `f_tf_axisflow`. Its helpfile, and those of `f_vf_potential`, `f_vf_flow`, have no upstream module wired (per the previous entry, not opened this session).

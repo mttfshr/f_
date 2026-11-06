@@ -75,7 +75,7 @@ Helpfile: no source was wired, so the demo drew nothing. Added `vs_sources_main`
 
 ## Moved to stable/ (2026-11-06)
 
-Matt's helpfile look passed ("Look passes, move it"), so the module moved. Live path references were updated, and the spike scripts' root paths went one level deeper; the v1 records, `findings_2026-10-29.md` and `REGISTRATION_NOTES.md` keep the old path. Optional cost and the provisional dial defaults carry over per the stable bar. `tests/build/test_gates.py` has not been run since the tensormap move (needs Matt's go).
+Matt's helpfile look passed ("Look passes, move it"), so the module moved. Live path references were updated, and the spike scripts' root paths went one level deeper; the v1 records, `findings_2026-10-29.md` and `REGISTRATION_NOTES.md` keep the old path. Optional cost and the provisional dial defaults carry over per the stable bar. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-084140-offline.log`).
 
 ## Decisions (Matt unless noted)
 
