@@ -2,6 +2,18 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-05 (night): `f_vf_stamp` Phase 0 closed
+
+- **Decided (Matt, chat; record in `.specify/f_vf_stamp/tasks.md`):** G5 reading confirmed; G2 `out0 = vec(in0.rgb * cov * amount * env, 1.0)`; G7 Rec.709; G3 the plain wide central difference with a `rim` dial in frame widths (plan ADR-4); G6 the spec's table (`edge` and `seed` cut, `threshold` 0.05, `amount` 0-4); FR-003's band clamped at 0 so black never stamps.
+- **Commits:** 7ddc4a8, 269fdf6, 5667368, ed010cc, then this one.
+- **Verified:** `test_vf_stamp.py` 20/20 offline (Claude; log `tests/logs/20261105-212945-offline.log`). Mirror only.
+- **Also verified:** `tests/build/test_gates.py` 5/5 (Matt's go; log `tests/logs/20261105-213038-offline.log`).
+- **Not run:** any bench, the rest of the offline suite. Nothing is on the GPU.
+- **Inferred, not observed:** the radial leak through `project` (about 10% of energy, formula only; viscosity and `taps` not modelled); taps at about 0.15-0.2 brightness at advect's defaults; Swirl's on-screen direction against `f_vf_vortex`'s `curl`. All land at T030 / T032.
+- **Known limits at the defaults:** pure blue stamps at 0.81. `softness` and `rim` are different things: `softness` acts in luma, the band's width comes from `rim`.
+- **Owed to Matt:** T008 later (menu category, held by `G-menu`). The live looks come after Phase 1.
+- **Gates touched, no row edited:** `G-ui-density` (ten controls plus the press), `G-menu`, `G-edge-wrap`, `P-taxonomy`.
+
 ## 2026-11-05: `f_wave_field` closed out; `f_vf_stamp` specced
 
 - **Decided (Matt, chat):** `f_wave_field` goes under ∇ Fields (not Patterns); README ⚠ removed after he approved the helpfile. `f_splat` becomes `f_vf_stamp`: stamp only, luma coverage, radial impulse from the stamp's gradient when in1 is empty with a Radial / Swirl switch, the held press from `f_wave_field`. Then G1 frames, G4 extract, G5 "pass the input through" (Claude's reading, unconfirmed: out0 = in0, out1 = in1 when connected else neutral; a bypassed stamp hands the whole texture downstream).

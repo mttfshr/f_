@@ -99,6 +99,7 @@ BYPASS_EXPECT = {
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # luma: black, A = 1
         2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
     },
+    "f_vf_stamp": {2: ("vec", 2, 1e-6)},                # G5: out1 is in1 (implicit), out2 the field on inlet 2
     "f_quasi": {                                        # dual generator: bypass_gate = neutral values on every outlet
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # look: black, A = 1
         2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
@@ -176,7 +177,8 @@ PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
                             "f_tf_aniso_blur",  # single codebox; bypass_gate inside the pass (spec: bypass = passthrough of inlet 1)
                             "f_vf_fluid",     # fluid: Param gate on enc, not native @bypass (plan ADR-8)
                             "f_vf_ch",  # same: Param gate on enc, the solver keeps running (spec FR-011)
-                            "f_wave_field"}   # bypass_gate on enc only; the solver keeps running underneath (spec FR-013)
+                            "f_wave_field",   # bypass_gate on enc only; the solver keeps running underneath (spec FR-013)
+                            "f_vf_stamp"}     # single codebox; bypass_gate inside the pass (spec G5)
 
 # Processors whose bypass is DOCUMENTED to output a neutral field, not to pass the input through,
 # so the strict `out1 == in1 under bypass` check does not apply. f_vf_optical_flow: "bypass
@@ -202,7 +204,8 @@ INPUT_SIZE = {"f_vf_fluid": 512,
               "f_stipple": RENDER_DIM_SIZE,
               # 2026-11-01: f_weave took render_dim (T057); live run 09:53 failed its bypass frame, (640, 640, 4)
               # against the 64 x 64 input, the same shape as f_stipple.
-              "f_weave": RENDER_DIM_SIZE}
+              "f_weave": RENDER_DIM_SIZE,
+              "f_vf_stamp": RENDER_DIM_SIZE}
 
 # Modules whose primary inlet takes a VECFIELD (B = 0.5, A = 1): a random-RGBA input is not one,
 # and f_vf_fluid (correctly) refuses a texture whose B is not ~0.5 as a force. Char-representable
