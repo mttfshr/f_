@@ -85,6 +85,6 @@ Storing (cos θ, sin θ) of an unoriented axis forces an arbitrary sign, and the
 | `f_tf_sharpen` | Processor | Raw tensor -> raw tensor, eigengap scaled |
 | `f_tf_aniso_blur` | Consumer | Raw tensor + source texture -> source blurred along the structure |
 | `f_tf_glyph` | Consumer (renderer) | Raw tensor -> one oriented glyph per cell |
-| `f_tf_hatch` | Consumer (renderer) | Raw tensor (outlet 0) -> marks. Decodes in-pixel; commits mark shape from coherence. Outputs marks only, never a tensor or vecfield |
+| `f_tf_hatch` | Consumer (renderer) | Raw tensor (outlet 0) -> streaks. Decodes in-pixel; marches along the axis, coherence sets how faithfully each step follows it. Outputs luma only, never a tensor or vecfield |
 
 Planned consumers (hub: `ideas/f_tensorfield.md`): `f_vf_glow` anisotropy inlet, confidence-scaled marks in `f_vf_seeds`.

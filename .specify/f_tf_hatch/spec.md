@@ -2,8 +2,10 @@
 
 _Rewritten: 2026-10-28. v1 (lattice of oriented marks, branch T) is archived as
 `spec_v1.md` / `plan_v1.md` / `tasks_v1.md` and in git at `a24b8cd`._
-_Status: SPEC ONLY. No v2 code exists. The v1 codeboxes in `src/f_tf_hatch/` are still the
-shipped (broken) v1 until Phase 1 of the plan replaces them._
+_Status: built; `tasks.md` is the record and `docs/f-reference/f_tf_hatch.md` the shipped state.
+The Inlets and Parameters tables below were brought up to date 2026-11-06. The rest is the 2026-10-28
+design: since then the stroke-texture inlet and its pre-stage (`pre_h`, `pre_v`) and Coh Floor were
+added, and Strength was removed._
 
 ## Why v2 exists (the reset)
 
@@ -157,8 +159,9 @@ worth keeping.
 | # | Type | Description |
 |---|------|-------------|
 | 0 | texture (driving) | Raw tensor — `f_tf_tensormap` outlet 0 (or `f_tf_smooth` output). Same as v1. |
+| 1 | texture (optional) | Stroke texture: the marks streaked along the contours; unconnected = the built-in blobs (T033, T035) |
 
-(No tone inlet; no mod inlet in v2.)
+(No tone inlet.)
 
 ## Outlets
 
@@ -173,14 +176,14 @@ All provisional until tier 3. Count target: ≤ 8.
 
 | Name | Type | Range | Meaning |
 |------|------|-------|---------|
-| `length` | float | 0–1 | Total integration length (step size; `N` is fixed in the build). Longer = longer streaks |
+| `reach` (label Length) | float | 0–1 | Total integration length (step size; `N` is fixed in the build). Longer = longer streaks |
 | `grain` | float | 0–1 | Noise feature scale, log-mapped. Smaller = finer grain, thinner streaks |
 | `density` | float | 0–1 | Fraction of noise cells lit (stroke count). Provisional map `fill = 0.0025 · 2^(5·density)` → 0.0025…0.08; the 3% used in the stills is density ≈ 0.7 |
 | `contrast` | float | 0–1 | Stroke brightness gain (sparse: lit cells crossed × gain, 0.6 at 0 → 2.0 at 1, provisional) |
-| `line` | float | 0–1 | 0 = smooth LIC, 1 = hard engraved lines (threshold with a soft edge) |
+| `line_hard` (label Line) | float | 0–1 | 0 = smooth LIC, 1 = hard engraved lines (threshold with a soft edge) |
 | `structure_floor` | float | 0–1 | Presence floor, carried from v1 (default 0.1 provisional) |
-| `strength` | float | 0–1 | Tensor decode calibration, carried from v1 (match tensormap's) |
 | `angle_offset` | float | −1–1 | Rotates the streak direction relative to the structure axis (v1's offset) |
+| `coh_floor` | float | 0–1 | Fades undirected regions to black and ends strokes there; 0 = off (T034) |
 | `bypass` | toggle | — | Black on both outlets |
 
 Whether coherence persistence needs its own dial (`persist`) is OQ1.

@@ -54,7 +54,7 @@ Output a coherent f_vecfield (or, for f_chladni, an f_vecfield alongside other o
 | `f_tf_glyph` | raw tensor + tex → tex | Glyph-field renderer: one closed-form ellipse per grid cell, aspect from the eigenvalue ratio, axis from the tensor, gated on trace. Doubles as the family's universal debug view
 | `f_tf_sharpen` | raw tensor → raw tensor | Eigengap operator: scales the eigenvalue gap at fixed trace and untouched axis — commits or relaxes anisotropy with one dial. Not image sharpening
 | `f_tf_aniso_blur` | raw tensor + tex → tex | Coherence-enhancing smoother: integrates the source along the tensor's major axis, ellipse width from the eigenvalue ratio, isotropic fallback (Weickert rationale). Straight-axis v1
-| `f_tf_hatch` | raw tensor → tex (marks) | Orientation-committed hatching: dashes along the decoded axis via distance-field mechanics, mark commitment from coherence (strokes → dots → nothing). 3 stages, ~6 taps/pixel
+| `f_tf_hatch` | raw tensor (+ optional stroke tex) → tex (streaks) | Streamline (LIC) renderer: marches along the decoded axis through sparse noise, so strokes form where coherence is high and grain where it is low. 3 stages plus a 2-stage stroke-texture pre-filter, 16 steps per direction
 | `f_vf_flow` | tex → vecfield | Texture-driven direction field: the input's luminance sets the flow direction (needs a texture; no unconnected mode since 2026-11-01). Was built as `f_weave`'s field input; weave no longer takes a vecfield |
 | `f_vf_repulse` | tex → vecfield | Ring-samples 16 directions around each pixel, accumulates vectors pointing away from (or, with negative gain, toward) bright regions. Texture-shape-driven repulsion/attraction field |
 | `f_vf_optical_flow` | tex (video/live) → vecfield + confidence | Real Lucas-Kanade motion estimation between frames — genuine per-pixel motion field from a moving source, with aperture-problem handling. The "derive a field from what's actually moving in the shot" producer |
@@ -174,7 +174,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 |---|---|---|---|---|
 | `f_tf_glyph` | 2: tensor-raw (+ctrl); source tex (tint) | 1: tex (glyph composite) | Tensor Required (below-gate cells are empty); source tex Optional (unconnected = neutral white ink) | Passthrough of the source texture, not a neutral frame |
 | `f_tf_aniso_blur` | 2: tensor-raw; source tex (+ctrl) | 1: tex | Both needed: source unconnected = black output; tensor unconnected = isotropic fallback blur | Exact passthrough of inlet 1 (source) |
-| `f_tf_hatch` | 1: tensor-raw + ctrl | 2: tex (hatch marks); tex (mark mask) | Required | Black on both outlets |
+| `f_tf_hatch` | 2: tensor-raw (+ctrl); stroke tex | 2: tex (streaks); tex (streak field) | Tensor Required; stroke tex Optional (unconnected = built-in blobs) | Black on both outlets |
 | `f_vf_warp` | 2: source tex (+ctrl); vecfield | 2: tex (composite, `mix_pct`); tex (warped layer) | Source Required; field Optional (unconnected = unwarped source) | Source on both outlets |
 | `f_caustic` | 2: source tex (+ctrl); vecfield (no `vs_inState` fallback) | 2: tex (composite); tex (isolated caustic layer) | Both Required. Field unconnected = composite is a silent source passthrough, caustic layer black | Source on both outlets |
 | `f_vf_streak` | 2: source tex (+ctrl); vecfield | 2: tex (composite); tex (isolated streak) | Source Required; field Optional (unconnected = streak layer shows the source, composite only differs via `gain` × `mix_pct`) | Source on both outlets |

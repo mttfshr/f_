@@ -2,6 +2,23 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 3, `f_tf_tensormap` moved to `.specify/stable/`
+
+- **Done:** preflight, stale docs and spec fixed, helpfile given a source (Claude, offline); moved after Matt's helpfile look passed. Record: `.specify/stable/f_tf_tensormap/tasks.md`, "Moved to stable/".
+- **Verified:** `bench_tf_tensormap.py` 8/8 (log `tests/logs/20261106-082418-bench.log`); bypass live by Matt.
+- **Next:** `f_tf_hatch`. Its helpfile, and those of `f_tf_axisflow`, `f_vf_potential`, `f_vf_flow`, have no upstream module wired: fix each as it comes up (Claude's stated plan; Matt raised no objection, not an explicit yes).
+
+## 2026-11-06: `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/`
+
+- **Done (Claude, on Matt's go):** read the `.specify` dirs for stable candidates, ran module-preflight on these two, moved them, updated the live path references. Dated records in `.specify/test_bench/` and `.specify/build_cleanup/` keep the old path.
+- **Verified:** record in each module's `tasks.md`, "Moved to stable/". `bench_fluid.py` 11/11, 2 slow skipped (log `tests/logs/20261106-080539-bench.log`); drift ok for both after the move; offline log `tests/logs/20261106-080311-offline.log` is from before the move.
+- **Live (Matt):** both helpfile looks pass; Split wording stays; the `bypass` control message that works in 7 of 50 modules is accepted, no gate row.
+- **Also verified:** full offline suite 69 files (log `tests/logs/20261106-081756-offline.log`); live by Matt: bypassed `f_vf_flow` gives a neutral field, `f_vf_potential` black.
+- **Next:** Batch 3: preflight and move `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow`, `f_tone_curve` (helpfile work first), one at a time. Batch 4: triage the older group. Stable bar (Matt, 2026-11-06): wrong docs, unasserted bypass, real bugs and holding gates block; optional cost and parked mirrors carry over.
+- **Record mismatches, not fixed:** `f_wave_field` T034 unticked though live looks passed; `status.json` lists `f_vf_warp` under `stable/`, the dir is at the root; `f_vf_repulse` and `f_sirds` tasks have no checkboxes.
+- **Batch 1 toward stable (Matt's go, offline):** ticked `f_tf_tensormap` T001 and T045, `f_vf_fieldmap` T023, `f_vf_potential` T002, `f_tone_curve` T001. `f_vf_flow`, `f_vf_fieldmap`, `f_vf_potential` moved from native `@bypass` to `bypass_gate` (Matt's call), entries added, live `bench_modules.py` 2/2 (log `tests/logs/20261106-081412-bench.log`); 17 modules remain under new gate `G-bypass-native`. `f_tf_hatch` T064 closed (scripts in `spike/retired/`); `f_tf_axisflow` T011 closed (Matt: defaults accepted).
+- **Gates touched:** `G-bypass-native` added. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-080820-offline.log`).
+
 ## 2026-11-05 (late night): `f_vf_stamp` Phase 1 built, nothing run live
 
 - **Done (offline, Claude; record in `.specify/f_vf_stamp/tasks.md`):** T020 the `gate_button` schema type, `f_wave_field` Strike built from it; T021 the codebox; T022 the definition and envelope; T023 the patcher; T024 two bench files, written, not run.

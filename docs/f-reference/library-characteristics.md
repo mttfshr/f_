@@ -125,7 +125,7 @@ Characteristic: gen~/pfft~ modules with **no GL context**, driven by MSP cables,
 - **Bypass is not uniform.** Most modules pass source; `f_texrouter`, `f_util_profile` hold last frame (freeze); `f_vf_ch`, `f_ks`, `f_wc`, `f_vf_lbm` keep the solver running underneath and emit a neutral texture; `f_tf_smooth`/`f_tf_sharpen` passthrough exactly. Documented in the inventory's bypass table.
 - **Type boundaries are real boundaries.** `f_vecfield` ≠ tensor ≠ scalar; `f_tf_tensormap` outlet 1 is not a vecfield and sign-sensitive consumers must go via `f_tf_axisflow`. Unconnected inlets decode as neutral/black/grey per the inventory's driving-texture table, with documented traps (e.g. all-zeros decoding to a "phantom" non-SPD tensor in `f_tensor_type.md` rule 5).
 - **Temporal modules are consumers of their own history.** `f_vf_fluid`, `f_vf_ch`, `f_vf_lbm`, `f_vf_advect`, `f_vf_potential`, `f_tf_smooth`, `f_grain`'s feedback layer, `f_ks`, `f_wc` all have frame-to-frame state; wiring them into the non-temporal part of a chain changes the chain's time behavior.
-- **Named pipelines:** `f_tf_hatch` is a three-stage ~6-tap streamline (LIC) renderer; `f_tf_glyph` doubles as the tensor family's debug view; `f_tf_aniso_blur` is the coherence-enhancing smoother.
+- **Named pipelines:** `f_tf_hatch` is a three-stage streamline (LIC) renderer, 16 steps per direction, with a two-stage pre-filter for its stroke texture; `f_tf_glyph` doubles as the tensor family's debug view; `f_tf_aniso_blur` is the coherence-enhancing smoother.
 
 ## Summary map (per patcher file in `package/patchers/`)
 
@@ -335,7 +335,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 2. Release-performable inertia: `f_tf_smooth` in the above with `release` swept live → `f_tf_aniso_blur` on the same source — anisotropy confidence fades as the operator releases, blur relaxes toward isotropic.
 
 **f_tf_sharpen**
-1. Commit-to-hatch: `f_tf_smooth` → `f_tf_sharpen` → `f_tf_hatch` — the sharpened eigengap pushes coherence toward 1, so almost all cells become strokes rather than dots.
+1. Commit-to-hatch: `f_tf_smooth` → `f_tf_sharpen` → `f_tf_hatch` — the sharpened eigengap pushes coherence toward 1, so strokes follow the axis further and less of the frame reads as grain.
 2. Relax-then-axisflow: `f_tf_sharpen` (low, relaxing) → `f_tf_axisflow` → `f_vf_streak` — near-isotropic regions give an even blur; committed edges give hard streaks.
 
 **f_tf_aniso_blur**
@@ -347,8 +347,8 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 2. Glyph-cloth: `f_tf_glyph` composite → `f_weave` weight_tex on inlet 0 — ellipses modulate line weight; the glyph view becomes a control source.
 
 **f_tf_hatch**
-1. Keyed hatch composite: `f_tf_hatch` marks (marks outlet) → `vs_alpha_blend_2` over the source photo — hatching exactly where the tensor found structure, photo underneath.
-2. Hatch marks as seeds: `f_tf_hatch` mark mask → `f_vf_seeds` shape tex; vecfield = `f_tf_axisflow` of the same tensor — the seed engine places the hatch strokes where the structure lives.
+1. Keyed hatch composite: `f_tf_hatch` streaks (outlet 0) → `vs_alpha_blend_2` over the source photo — hatching exactly where the tensor found structure, photo underneath.
+2. Hatch marks as seeds: `f_tf_hatch` streak field (outlet 1) → `f_vf_seeds` shape tex; vecfield = `f_tf_axisflow` of the same tensor — the seed engine places the hatch strokes where the structure lives.
 
 **f_tf_axisflow**
 1. Across-mode flow: `f_tf_axisflow` (mode = across) → `f_vf_warp` (source = `f_weave`) — content pushed perpendicular to the edges: the weave gets combed away from its lines.

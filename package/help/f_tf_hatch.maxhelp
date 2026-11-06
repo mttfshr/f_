@@ -74,7 +74,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "Streamline renderer: strokes follow the tensor axis, lengthen where coherence is high, grain where it is low",
+     "text": "Makes a tensor field's structure visible: strokes where direction is sure, grain where it is lost",
      "fontsize": 14.0,
      "linecount": 2,
      "varname": "autohelp_top_digest[3]"
@@ -105,7 +105,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "External Control Messages\n\nreach [0 \u2013 1]\ngrain [0 \u2013 1]\ndensity [0 \u2013 1]\ncontrast [0 \u2013 1]\nline_hard [0 \u2013 1]\nstructure_floor [0 \u2013 1]\nangle_offset [-1 \u2013 1]\ncoh_floor [0 \u2013 1]\nbypass [0 / 1]",
+     "text": "External Control Messages\n\nreach [0 – 1]\ngrain [0 – 1]\ndensity [0 – 1]\ncontrast [0 – 1]\nline_hard [0 – 1]\nstructure_floor [0 – 1]\nangle_offset [-1 – 1]\ncoh_floor [0 – 1]\nbypass [0 / 1]",
      "fontsize": 12.0,
      "linecount": 11
     }
@@ -156,6 +156,68 @@
    },
    {
     "box": {
+     "id": "d-3",
+     "maxclass": "bpatcher",
+     "name": "vs_sources_main.maxpat",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      "jit_gl_texture"
+     ],
+     "patching_rect": [
+      338.0,
+      23.75,
+      296.4,
+      125.5
+     ],
+     "bgmode": 1,
+     "border": 1,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
+     "lockedsize": 0,
+     "offset": [
+      0.0,
+      0.0
+     ],
+     "viewvisibility": 1
+    }
+   },
+   {
+    "box": {
+     "id": "d-11",
+     "maxclass": "bpatcher",
+     "name": "f_tf_tensormap.maxpat",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "jit_gl_texture",
+      "jit_gl_texture"
+     ],
+     "patching_rect": [
+      338.0,
+      190.0,
+      154.0,
+      84.0
+     ],
+     "bgmode": 1,
+     "border": 1,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
+     "lockedsize": 0,
+     "offset": [
+      0.0,
+      0.0
+     ],
+     "viewvisibility": 1,
+     "varname": "f_tf_tensormap"
+    }
+   },
+   {
+    "box": {
      "id": "d-4",
      "maxclass": "bpatcher",
      "name": "f_tf_hatch.maxpat",
@@ -167,7 +229,7 @@
      ],
      "patching_rect": [
       338.0,
-      24.0,
+      294.0,
       191.0,
       152.0
      ],
@@ -198,7 +260,7 @@
      ],
      "patching_rect": [
       338.0,
-      196.0,
+      466.0,
       236.0,
       249.0
      ],
@@ -224,9 +286,9 @@
      "numoutlets": 0,
      "patching_rect": [
       545.0,
-      24.0,
+      294.0,
       215.0,
-      66.0
+      82.0
      ],
      "fontface": 0,
      "fontname": "Ableton Sans Light",
@@ -237,9 +299,9 @@
       0.0
      ],
      "bubble": 1,
-     "text": "In 0: tensor (f_tf_tensormap outlet 0,\nsmoothed upstream by f_tf_smooth).\nIn 1 (optional): stroke texture; left\nunconnected = the built-in blobs.",
+     "text": "In 0: raw tensor, Tensor Map outlet 0.\nOn moving sources put f_tf_smooth\nbetween them: Hatch holds no state.\nIn 1 (optional): stroke texture; left\nunconnected = the built-in blobs.",
      "fontsize": 12.0,
-     "linecount": 4
+     "linecount": 5
     }
    },
    {
@@ -250,7 +312,7 @@
      "numoutlets": 0,
      "patching_rect": [
       590.0,
-      196.0,
+      466.0,
       175.0,
       66.0
      ],
@@ -270,6 +332,30 @@
    }
   ],
   "lines": [
+   {
+    "patchline": {
+     "destination": [
+      "d-11",
+      0
+     ],
+     "source": [
+      "d-3",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "d-4",
+      0
+     ],
+     "source": [
+      "d-11",
+      0
+     ]
+    }
+   },
    {
     "patchline": {
      "destination": [

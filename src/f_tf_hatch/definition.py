@@ -13,14 +13,14 @@
 # bypass by design (nothing reads their outputs then).
 #
 # v2 chain: e1 decode + presence -> e2 streamline march (N = 16 per direction,
-# one pass, ~1.8 ms at 1080p) -> e3 style + encode. Params reach the stages by
+# one pass, ~3 ms at 1080p) -> e3 style + encode. Params reach the stages by
 # `pix_target`. Names that differ from the spec's table because GenExpr
 # reserves the word: `reach` (spec: length), `line_hard` (spec: line); the
 # dials keep the spec's labels.
 #
 # The module samples only at `norm` for the tensor and with `nearest` at
-# computed positions for the march (aux texture is render-sized), so
-# width/height params are not needed.
+# computed positions for the march (aux texture is render-sized). E2 still
+# needs width/height for the frame size, driven by render_dim below.
 
 CODEBOX_DIR = ""  # gen paths below are relative to this definition.py's own directory
 
@@ -180,8 +180,6 @@ patcher = {
             "label": "Offset",
             "pix_target": "e1",
         },
-        # Render size, driven by Vsynth through render_dim (never set by hand): `dim` reads 1 in a live
-        # jit.gl.pix, so E2 takes its frame size from these two Params.
         {
             "name": "coh_floor", "type": "float",
             "min": 0.0, "max": 1.0, "default": 0.0,
@@ -193,6 +191,8 @@ patcher = {
         },
         # 1 when the stroke-texture inlet is connected (vs_inState -> prepend param src_stroke -> E2)
         {"name": "src_stroke", "type": "internal"},
+        # Render size, driven by Vsynth through render_dim (never set by hand): `dim` reads 1 in a live
+        # jit.gl.pix, so E2 takes its frame size from these two Params.
         {"name": "width", "type": "internal"},
         {"name": "height", "type": "internal"},
         # The pre-stage's output size, floor(render / 4): driven by render_dim `downsample` (Param ow in the H pass, oh in the V pass).

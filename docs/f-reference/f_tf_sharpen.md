@@ -25,7 +25,7 @@ Jxy' = γ·Jxy,   θ' = θ                (axis rides through untouched)
 
 It is the tensor-space analog of a contrast dial applied to the anisotropy axis rather
 than the luminance axis. Every downstream renderer's character shifts with it (`f_tf_glyph`
-marks snap toward needles, `f_tf_aniso_blur` kernels stretch, `f_tf_hatch` strokes commit).
+marks snap toward needles, `f_tf_aniso_blur` kernels stretch, `f_tf_hatch` strokes run longer).
 
 **The relax branch is never a negative gap.** A literal negative γ would swap the
 eigenvalues and silently rotate every axis by 90°; `g = max(γ, 0)` plus the isotropic

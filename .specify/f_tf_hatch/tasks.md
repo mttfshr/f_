@@ -62,6 +62,17 @@ entries and the git log, so the commit hashes below are the record).
 - [x] T065 Tier-3 questions DECIDED 2026-10-31 (Matt, as leaned): OQ1 keep exponent 0.5, no `persist` dial, Coh Floor is the lever; OQ3 box kernel, cosine deferred until a look asks; OQ4 keep outlet 1, documented in the helpfile; OQ6 dense LIC dropped as a mode (the stroke-texture inlet at Density 1 covers it); OQ7 fanning cone deferred (reads as direction uncertain). OQ5 moot.
 - [x] T066 Hub Q17 (NaN masking in E1 on isotropic tensors) PROBED 2026-11-01: `.specify/f_tf_hatch/spike/bench_e1_nan_probe.py`, 5/5, zero NaN/inf in every case (exact zero, isotropic nonzero at 16/64/256, mixed texture, one ulp from isotropic); log `tests/logs/20261101-082451-bench.log`. The `+1e-7` bias was NOT adopted. Not tested: a live Vsynth render. Matt decided 2026-11-01: no permanent bench rows and no live check; the spike is the record.
 
+- [x] T067 Stable preflight (2026-11-06, offline by Claude), record below.
+- [ ] T068 Matt's helpfile look: the new demo chain at defaults, the digest, and the bypass toggle (black on the preview). Blocks the move to `.specify/stable/`.
+
+## Stable preflight (2026-11-06)
+
+Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--check` up to date; README row 110 chars or under, no ⚠; bypass is `bypass_gate` on stage e3, and the contract bench asserts black, A = 1 on both outlets (`tests/contracts/bench_modules.py`; `bench_modules.py` 2/2 in `tests/logs/20261106-081412-bench.log`, from before these edits, which touch only a comment there); helpfile box 191x152 against a footprint of 190.5x150; `test_generate_menu.py` 17/17 after the helpfile edit (`tests/logs/20261106-083730-offline.log`). No gate row holds Hatch. No code changed, so `bench_tf_hatch.py` was not re-run: 13/13 rests on commit `742e9db`; no log of that run is in `tests/logs/` (the latest there, `tf_hatch_bench_2026-10-30b.out`, is 12/12, before the pre-stage bench).
+
+Fixed: v1 wording survived in `module-inventory.md` (both rows: distance-field dashes, mark mask, one inlet), `f_tensor_type.md`, `f_tf_sharpen.md` and `library-characteristics.md` (~6 taps, strokes vs dots, the outlet names). The reference doc had old test counts, a chain diagram without the pre-stage, "three stages" for render size, and a `dim` note listing six modules where two remain. The spec still said no v2 code exists, listed `strength`, and had neither the stroke inlet nor `coh_floor`. Comments only in `definition.py` (said width/height are not needed; a misplaced render-size note; 1.8 ms) and `bench_modules.py`; drift still ok.
+
+Helpfile: no source was wired, so the demo drew nothing. Added `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch -> preview. The digest now says what the module is for (spec: making coherence visible), and the inlet comment says `f_tf_smooth` belongs between them on moving sources (not in the demo). Not opened in Max: T068. The text fit of the digest is unseen.
+
 ## Decisions (Matt unless noted)
 
 - 2026-10-28: reset to a streamline (LIC) renderer; v1 archived. `unsigned_nearest` aux; N = 16, one pass; coherence mixes into the march direction, exponent 0.5 (provisional).

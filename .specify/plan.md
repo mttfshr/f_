@@ -13,13 +13,12 @@ Closed 2026-11-01: the render-trigger check (`f_stipple` gated `r draw` plus `re
 
 Closed 2026-11-01 (evening): `f_weave` rework and promotion: the vecfield inlet retired (`G-weave-scope` Q1), the irregularity variants, `offset`, texture-modulated weight / marklen / irreg (tagged textures on inlet 0, via the new `mod_inlets` `tag` builder key), a compact panel with the mode controls in the title bar, `shape` removed, type dots gray. Live look, variant checks, `marklen_tex` and the live contract bench passed (Matt; bench log `tests/logs/20261101-210309-bench.log`); offline suite green (67 files). Details: `docs/f-reference/f_weave.md` "Promoted", `.specify/f_weave/tasks.md` T063-T066.
 
-Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), the `f_vf_advect` Trail rework, and `f_tf_hatch` (v2 built, benched, helpfile checked; only the spike-script tidy remains, Next 1; hub Q17, NaN masking in its E1 stage, probed clean 2026-11-01).
+Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity, quasi, grain, seeds; `f_masonry` and `f_cmap` stay exempt), its live contract bench (green 2026-10-31 after a harness input-size fix), the `f_vf_advect` Trail rework, and `f_tf_hatch` (v2 built, benched, helpfile checked; the spike-script tidy closed 2026-11-06, T064; hub Q17, NaN masking in its E1 stage, probed clean 2026-11-01).
 
 ## Next (Claude's lean; Matt decides)
 
-0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap` moved, `f_tf_hatch` is next; plan and bar are in `HANDOFF.md`.
+0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap` moved, `f_tf_hatch` preflight done and waiting on Matt's helpfile look; plan and bar are in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
 
-1. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
 2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
 3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 4. `f_masonry` adopts tagged textures (Matt, 2026-11-01: later, not yet). Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each: 6 params x 3 spaces = 18 depths, so "one tag per named `<param>_tex`" needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
@@ -27,7 +26,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
-- **Runs and looks:** does bypass clear the `f_vf_potential` trail, and is that fine (inferred, not seen live); the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Runs and looks:** the `f_tf_hatch` helpfile (T068, holds its move to stable); does bypass clear the `f_vf_potential` trail, and is that fine (inferred, not seen live); the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.

@@ -1,8 +1,8 @@
 # f_tf_hatch
 
 **Type:** Processor (f_tensor consumer, renderer)
-**Status:** v2 built 2026-10-29; tier 1 (NumPy mirror, 20/20) and tier 2 (GPU bench vs the
-mirror, 12/12, 2026-10-30) green; tier 3 live looks passed (the blob strokes, the stroke-texture
+**Status:** v2 built 2026-10-29; tier 1 (NumPy mirror, 24/24) and tier 2 (GPU bench vs the
+mirror, 13/13, 2026-10-30) green; tier 3 live looks passed (the blob strokes, the stroke-texture
 inlet, Coh Floor). The dial defaults are still provisional.
 (v1, a lattice of oriented marks, was replaced on 2026-10-28: it drew origin-anchored concentric
 rings in every source. v1 is archived as `.specify/f_tf_hatch/spec_v1.md`, `plan_v1.md`,
@@ -48,8 +48,8 @@ Requires a tensor input (processor archetype, `driving_inlet`); no self-generati
 
 ```
 in0 (tensor)  -> stage E1  decode + presence            -> aux (ca, sa, coherence, presence)
-in1 (texture, optional) ---------+
-                                 v
+in1 (texture, optional) -> pre_h, pre_v  box filter to render size / 4 ---+
+                                                                          v
                  stage E2  streamline march (16 steps per direction, one pass) -> (raw, presence)
                  stage E3  style + encode (the only stage that clamps)          -> outlets 0 and 1
 E1/E2 intermediates stay unbounded float32 and are never outlets.
@@ -136,8 +136,8 @@ on flat areas. Coh Floor is for strong but directionless energy: foliage, corner
 
 Hatch renders at **Vsynth's render resolution**, whatever size the tensor is. It takes the size
 from Vsynth the way Vsynth's own modules do (`r dim` receives `dim W H` from `vs_render`;
-`loadbang -> s trig_res` asks for it at load). All three stages run `@adapt 0` and follow the
-size, and E2's `width` / `height` params are driven the same way (the build key `render_dim`,
+`loadbang -> s trig_res` asks for it at load). All five stages run `@adapt 0` and follow the
+size (`pre_h` and `pre_v` at a quarter of it), and E2's `width` / `height` params are driven the same way (the build key `render_dim`,
 documented in `build/spec.md`). Nobody sets them by hand.
 
 Why: `dim` reads 1 inside a live Vsynth `jit.gl.pix`, regardless of `@adapt` and `@type` (found
@@ -206,10 +206,10 @@ zero-tensor guard, since axis and coherence are ratios).
 ## Notes
 
 - **Tests.** NumPy mirror `tests/modules/tf_hatch/tf_hatch_mirror.py` and tier 1
-  `test_tf_hatch.py` (20 tests: decode vs `eigh`, headline behaviors on coherent / isotropic /
-  ring fields, blob coverage and axis bias, the texture mode, Coh Floor); tier 2 GPU bench
-  `bench_tf_hatch.py` (12 tests: parity vs the mirror including the texture mode and Coh Floor,
-  edge cases, cost). The build key and its static guard: `tests/build/test_render_dim.py`.
+  `test_tf_hatch.py` (24 tests: decode vs `eigh`, headline behaviors on coherent / isotropic /
+  ring fields, blob coverage and axis bias, the texture mode, Coh Floor, the pre-stage); tier 2 GPU
+  bench `bench_tf_hatch.py` (13 tests: parity vs the mirror including the texture mode, Coh Floor
+  and the pre-stage, edge cases, cost). The build key and its static guard: `tests/build/test_render_dim.py`.
 - **The blobs.** Quintic value noise on a lattice rotated 22.5 degrees (so strokes along the axes
   and the diagonals see the same noise), thresholded with a soft ramp; the threshold is a
   closed-form cubic in Density (`BLOB_THR`, fit by `.specify/f_tf_hatch/spike/blob_fit.py`). They
@@ -217,9 +217,9 @@ zero-tensor guard, since axis and coherence are ratios).
 - **Spec OQ1 ("coherence only as persistence") is superseded** for `coh_floor > 0` (2026-10-29,
   Matt): the first form kept each undirected pixel's own mark, which read as bright dots; the
   chosen form fades them to black.
-- **Latent `dim` readers.** Six modules still read `dim` in code (`f_cmap`, `f_grain`,
-  `f_masonry`, `f_quasi`, `f_vf_seeds`, `f_vf_vorticity`); `tests/build/test_render_dim.py` keeps
-  them on an explicit exemption list until each gets `render_dim`.
+- **Latent `dim` readers.** Hatch found this bug; the other readers moved to `render_dim` by
+  2026-10-31 except `f_cmap` and `f_masonry`, which stay on the exemption list in
+  `tests/build/test_render_dim.py`.
 - Spec, plan, tasks, findings, spikes: `.specify/f_tf_hatch/`; session record in `HANDOFF.md`.
 
 ---
