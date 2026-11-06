@@ -24,6 +24,6 @@
 - **Done (offline, Claude):** preflight, docs and helpfiles fixed for both. Moved after Matt's helpfile looks passed (Flow T005, Tone Curve T004). Record: each module's `tasks.md`, "Stable preflight" and "Moved to stable/".
 - **Flow found:** docs said luminance, the codebox reads the red channel; inventory and an idea note still had the unconnected mode; prism chain wrong by meaning (Flow has no gate, it is unit length everywhere). Helpfile had no source: added `vs_sources_main` -> Flow -> preview.
 - **Tone Curve found:** still on native bypass, against the preflight rule; Matt decided to keep it (T005, `G-bypass-native`). Digest and README implied a curve editor. Falloff 0 default gives equal `smoothstep` edges (inferred hard step, not run). Luma-band chain reworked. Added a note.
-- **Tests:** neither has a mirror (T002 skips, Matt) or its own bench; contract bench only. `test_generate_menu.py` 17/17 (log `tests/logs/20261106-094623-offline.log`). Drift, menu and launcher `--check` ok. No bench run this session; `test_gates.py` after the move needs Matt's go.
+- **Tests:** neither has a mirror (T002 skips, Matt) or its own bench; contract bench only. `test_generate_menu.py` 17/17 (log `tests/logs/20261106-094623-offline.log`). Drift, menu and launcher `--check` ok. No bench run this session. `test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-095024-offline.log`).
 - **Gates:** `G-helpfiles` note added; `G-bypass-native` records Tone Curve keeps native.
-- **Next:** `test_gates.py` on Matt's go, then batch 4.
+- **Next:** batch 4 (triage the older group).

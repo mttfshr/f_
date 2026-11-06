@@ -37,4 +37,4 @@ Left alone: `codebox_flow.gen`'s comment says luminance (changing it would touch
 
 ## Moved to stable/ (2026-11-06)
 
-Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. The doc's path to this folder was updated. `tests/build/test_gates.py` not yet run after the move (needs Matt's go).
+Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. The doc's path to this folder was updated. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-095024-offline.log`).

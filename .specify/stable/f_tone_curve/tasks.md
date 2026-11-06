@@ -40,4 +40,4 @@ Left alone: `ideas/f_vf_seeds.md` says Tone Curve can color-map seeds (it cannot
 
 ## Moved to stable/ (2026-11-06)
 
-Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. The `G-bypass-native` row's path was updated. Native bypass carries over (T005). `tests/build/test_gates.py` not yet run after the move (needs Matt's go).
+Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. The `G-bypass-native` row's path was updated. Native bypass carries over (T005). `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-095024-offline.log`).
