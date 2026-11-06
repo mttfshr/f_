@@ -3,8 +3,8 @@
         "fileversion": 1,
         "appversion": {
             "major": 9,
-            "minor": 1,
-            "revision": 4,
+            "minor": 2,
+            "revision": 0,
             "architecture": "x64",
             "modernui": 1
         },
@@ -96,7 +96,7 @@
                     "numoutlets": 2,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "float" ],
-                    "patching_rect": [ 629.166642665863, 16.66666603088379, 75.0, 73.5 ],
+                    "patching_rect": [ 705.0, -2.0, 75.0, 73.5 ],
                     "varname": "vs_lfo",
                     "viewvisibility": 1
                 }
@@ -158,7 +158,7 @@
                     "numoutlets": 3,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 210.41665863990784, 332.29165399074554, 190.0, 130.0 ],
+                    "patching_rect": [ 210.41665863990784, 332.29165399074554, 194.0, 158.0 ],
                     "varname": "f_vf_advect",
                     "viewvisibility": 1
                 }
@@ -199,7 +199,7 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "offset": [ 0.0, 0.0 ],
-                    "patching_rect": [ 220.8333249092102, 519.5, 157.0, 22.0 ],
+                    "patching_rect": [ 220.8333249092102, 613.0, 157.0, 22.0 ],
                     "varname": "vs_output",
                     "viewvisibility": 1
                 }
@@ -324,9 +324,10 @@
             "obj-16::obj-23": [ "decay", "decay", 0 ],
             "obj-16::obj-26": [ "injection", "injection", 0 ],
             "obj-16::obj-29": [ "mix_amt", "gain", 0 ],
-            "obj-16::obj-32": [ "separate", "separate", 0 ],
-            "obj-16::obj-35": [ "mode", "mode", 0 ],
-            "obj-16::obj-90": [ "mix_pct", "mix_pct", 0 ],
+            "obj-16::obj-32": [ "separate", "mix_pct", 0 ],
+            "obj-16::obj-35": [ "mode[1]", "separate", 0 ],
+            "obj-16::obj-38": [ "mode", "mode", 0 ],
+            "obj-16::obj-41": [ "trail", "trail", 0 ],
             "obj-1::obj-14": [ "live.menu[1]", "live.menu", 0 ],
             "obj-1::obj-16": [ "live.menu[2]", "live.menu", 0 ],
             "obj-1::obj-18": [ "live.menu[16]", "live.menu", 0 ],
@@ -346,7 +347,7 @@
             "obj-26::obj-20": [ "strength", "gain", 0 ],
             "obj-26::obj-23": [ "reach", "reach", 0 ],
             "obj-26::obj-26": [ "threshold", "threshold", 0 ],
-            "obj-26::obj-29": [ "mode[1]", "mode", 0 ],
+            "obj-26::obj-29": [ "mode[2]", "mode", 0 ],
             "obj-29::obj-34": [ "live.dial[3]", "Freq", 0 ],
             "obj-29::obj-35": [ "live.dial[2]", "Freq", 0 ],
             "obj-29::obj-4": [ "lfo_freq__range", "live.text", 0 ],
@@ -367,6 +368,10 @@
             "obj-2::obj-33": [ "f_module_6_file", "live.menu", 0 ],
             "obj-2::obj-36": [ "f_module_7_disp", "live.menu", 0 ],
             "obj-2::obj-37": [ "f_module_7_file", "live.menu", 0 ],
+            "obj-2::obj-40": [ "f_module_8_disp", "live.menu", 0 ],
+            "obj-2::obj-41": [ "f_module_8_file", "live.menu", 0 ],
+            "obj-2::obj-44": [ "f_module_9_disp", "live.menu", 0 ],
+            "obj-2::obj-45": [ "f_module_9_file", "live.menu", 0 ],
             "obj-2::obj-8": [ "f_module_0_disp", "live.menu", 0 ],
             "obj-2::obj-9": [ "f_module_0_file", "live.menu", 0 ],
             "obj-30::obj-10": [ "textedit", "vs_preset_name", 0 ],
@@ -413,7 +418,6 @@
             "obj-5::obj-22": [ "offset", "offset", 0 ],
             "obj-5::obj-23": [ "angle", "angle", 0 ],
             "obj-5::obj-24": [ "skip", "skip", 0 ],
-            "obj-5::obj-25": [ "quantize", "quantize", 0 ],
             "obj-5::obj-26": [ "regularity", "regularity", 0 ],
             "obj-5::obj-27": [ "drift", "drift", 0 ],
             "obj-5::obj-28": [ "phase", "phase", 0 ],
@@ -466,6 +470,36 @@
                     "parameter_type": 0,
                     "parameter_unitstyle": 1
                 },
+                "obj-16::obj-32": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "separate",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-16::obj-35": {
+                    "parameter_invisible": 0,
+                    "parameter_longname": "mode[1]",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-16::obj-38": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
+                },
+                "obj-16::obj-41": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
                 "obj-1::obj-14": {
                     "parameter_longname": "live.menu[1]"
                 },
@@ -502,7 +536,7 @@
                 },
                 "obj-26::obj-29": {
                     "parameter_invisible": 0,
-                    "parameter_longname": "mode[1]",
+                    "parameter_longname": "mode[2]",
                     "parameter_modmode": 0,
                     "parameter_steps": 0,
                     "parameter_type": 0,
@@ -558,13 +592,6 @@
                     "parameter_unitstyle": 1
                 },
                 "obj-5::obj-24": {
-                    "parameter_invisible": 0,
-                    "parameter_modmode": 3,
-                    "parameter_steps": 0,
-                    "parameter_type": 0,
-                    "parameter_unitstyle": 1
-                },
-                "obj-5::obj-25": {
                     "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
