@@ -5,7 +5,7 @@
 mirror, 13/13, 2026-10-30) green; tier 3 live looks passed (the blob strokes, the stroke-texture
 inlet, Coh Floor). The dial defaults are still provisional.
 (v1, a lattice of oriented marks, was replaced on 2026-10-28: it drew origin-anchored concentric
-rings in every source. v1 is archived as `.specify/f_tf_hatch/spec_v1.md`, `plan_v1.md`,
+rings in every source. v1 is archived as `.specify/stable/f_tf_hatch/spec_v1.md`, `plan_v1.md`,
 `tasks_v1.md`, and in git at `a24b8cd`.)
 
 ---
@@ -172,7 +172,7 @@ pre-stage; blobs 3.0), `pre_h` 0.37 and `pre_v` 0.25 (both upper bounds at the b
 module in texture mode is about **7.4 ms** (conservative: E1 and E3 are floors too); its gate is
 8 ms, the blob gate stays 5. The pre-stage's GPU passes match the mirror exactly (0.0 error, 16:9,
 1:1 and a size 4 does not divide). Why a pre-stage: probes
-(`.specify/f_tf_hatch/spike/bench_cost_probe*.py`, `bench_downsample_probe.py`) showed the cost is
+(`.specify/stable/f_tf_hatch/spike/bench_cost_probe*.py`, `bench_downsample_probe.py`) showed the cost is
 the texture's memory footprint times the tiling stride, not the fetch count or the branch: a 4x4
 texture 2.7 ms, 256x256 4.8, 512x512 5.1, 1024x1024 6.9, 1920x1080 13.2; a box downsample is
 accurate to 1e-7 against NumPy. Vsynth's own textures may be 8-bit; that is not testable on the
@@ -212,7 +212,7 @@ zero-tensor guard, since axis and coherence are ratios).
   and the pre-stage, edge cases, cost). The build key and its static guard: `tests/build/test_render_dim.py`.
 - **The blobs.** Quintic value noise on a lattice rotated 22.5 degrees (so strokes along the axes
   and the diagonals see the same noise), thresholded with a soft ramp; the threshold is a
-  closed-form cubic in Density (`BLOB_THR`, fit by `.specify/f_tf_hatch/spike/blob_fit.py`). They
+  closed-form cubic in Density (`BLOB_THR`, fit by `.specify/stable/f_tf_hatch/spike/blob_fit.py`). They
   replaced the first lit-lattice-cell noise, whose squares painted cell-shaped patches.
 - **Spec OQ1 ("coherence only as persistence") is superseded** for `coh_floor > 0` (2026-10-29,
   Matt): the first form kept each undirected pixel's own mark, which read as bright dots; the
@@ -220,7 +220,7 @@ zero-tensor guard, since axis and coherence are ratios).
 - **Latent `dim` readers.** Hatch found this bug; the other readers moved to `render_dim` by
   2026-10-31 except `f_cmap` and `f_masonry`, which stay on the exemption list in
   `tests/build/test_render_dim.py`.
-- Spec, plan, tasks, findings, spikes: `.specify/f_tf_hatch/`; session record in `HANDOFF.md`.
+- Spec, plan, tasks, findings, spikes: `.specify/stable/f_tf_hatch/`; session record in `HANDOFF.md`.
 
 ---
 
@@ -228,7 +228,7 @@ zero-tensor guard, since axis and coherence are ratios).
 
 - `docs/f-reference/f_tensor_type.md` - the tensor encoding contract.
 - `.specify/f_tf_glyph/plan.md` ADR-2 - the canonical decode idiom (the basis of stage E1).
-- `.specify/f_tf_hatch/spec.md`, `plan.md` - the v2 design (line integral convolution of sparse
+- `.specify/stable/f_tf_hatch/spec.md`, `plan.md` - the v2 design (line integral convolution of sparse
   impulses along the axis field; coherence as persistence).
 - `build/spec.md` ("render_dim") and `docs/f-reference/f_wc.md` - the Vsynth `r dim` pattern.
 - `docs/f-reference/f_tf_tensormap.md`, `f_tf_smooth.md` - the upstream modules.

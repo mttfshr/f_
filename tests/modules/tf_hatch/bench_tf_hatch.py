@@ -423,7 +423,7 @@ def test_cost_per_stage_1080p():
     E2 ~1.7 ms (N = 16, nearest); bench floor ~0.8 ms/pass, so E1 and E3 read as upper bounds.
     The gate is the BLOB path (<= 5 ms). TEXTURE MODE (2026-10-30) has its own gate, <= 8 ms: E2 reads the pre-staged
     texture (render / 4: pre_h and pre_v, below the bench floor) and costs ~5 ms; E2 with a FULL-SIZE float32 texture,
-    11-13 ms at a low Grain (memory-bound; .specify/f_tf_hatch/spike/bench_cost_probe*.py), is reported for comparison."""
+    11-13 ms at a low Grain (memory-bound; .specify/stable/f_tf_hatch/spike/bench_cost_probe*.py), is reported for comparison."""
     tex = rand_tensor_tex(1080, 1920, seed=6)
     aux = m.stage_e1(tex, 0.0, 0.1, "unsigned_nearest")
     aux2 = np.zeros_like(aux)

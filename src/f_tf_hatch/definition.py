@@ -1,6 +1,6 @@
 # f_tf_hatch patcher definition (v2: streamline renderer)
 # Input to build/build_patcher.py
-# Spec: .specify/f_tf_hatch/{spec,plan}.md   Created: 2026-10-17   v2: 2026-10-29
+# Spec: .specify/stable/f_tf_hatch/{spec,plan}.md   Created: 2026-10-17   v2: 2026-10-29
 #
 # ARCHITECTURE NOTE -- primary node vs. real output node
 #

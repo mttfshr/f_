@@ -49,7 +49,7 @@ Replaced in Phase 1 (v1 equivalents deleted, never stubbed):
 - `docs/f-reference/f_tf_hatch.md`, helpfile (Phase 5)
 
 New scratch, outside the repo until it earns a place: a stills renderer
-(`.specify/f_tf_hatch/spike/` for anything kept).
+(`.specify/stable/f_tf_hatch/spike/` for anything kept).
 
 ## Dependency Blocks
 

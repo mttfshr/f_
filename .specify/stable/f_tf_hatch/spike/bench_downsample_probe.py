@@ -13,7 +13,7 @@ The pre-stage size is the render size / f on each axis, so the aspect follows th
 Variants (a)/(b), a mipmapped input texture, need texture flags the bench cannot set yet (see the HANDOFF note).
 
 Needs Max with tests/bench/bench.maxpat open.
-  tests/bench.sh .specify/f_tf_hatch/spike/bench_downsample_probe.py        (no -q: the numbers are notes)
+  tests/bench.sh .specify/stable/f_tf_hatch/spike/bench_downsample_probe.py        (no -q: the numbers are notes)
 Results are also appended to downsample_probe_2026-10-30.txt beside this file.
 """
 GROUP = "spike"

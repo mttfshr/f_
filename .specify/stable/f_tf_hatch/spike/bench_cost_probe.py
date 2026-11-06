@@ -12,7 +12,7 @@ E2 codebox and variants of it on the bench, all at 1080p, same bench and chain a
   H  one fetch + no branch, COHERENT aux
 
 Needs Max with tests/bench/bench.maxpat open.
-  tests/bench.sh -q .specify/f_tf_hatch/spike/bench_cost_probe.py
+  tests/bench.sh -q .specify/stable/f_tf_hatch/spike/bench_cost_probe.py
 """
 GROUP = "spike"
 ORDER = 999

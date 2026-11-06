@@ -1,17 +1,17 @@
-# SCRATCH debug patcher 5 (not shipped): the REAL f_tf_hatch E1 and E2 codeboxes followed by a
+# SCRATCH debug patcher 4 (not shipped): the REAL f_tf_hatch E1 and E2 codeboxes followed by a
 # display stage (codebox_d3.gen) that shows what E2 receives and produces in the live chain.
-# Build:  build/py.sh build/build_patcher.py .specify/f_tf_hatch/spike/dbg/definition5.py
-# Writes package/patchers/f_tf_hatch_dbg5.maxpat (UNTRACKED; delete it when done).
+# Build:  build/py.sh build/build_patcher.py .specify/stable/f_tf_hatch/spike/dbg/definition4.py
+# Writes package/patchers/f_tf_hatch_dbg4.maxpat (UNTRACKED; delete it when done).
 
 CODEBOX_DIR = ""
 
-SRC = "../../../../src/f_tf_hatch/"   # relative to this file: the shipped codeboxes
+SRC = "../../../../../src/f_tf_hatch/"   # relative to this file: the shipped codeboxes
 
 patcher = {
-    "name":        "f_tf_hatch_dbg5",
-    "prefix":      "hatchdbg5",
-    "object_name": "#0_hatchdbg5_pix",
-    "title":       "HatchDbg5",
+    "name":        "f_tf_hatch_dbg4",
+    "prefix":      "hatchdbg4",
+    "object_name": "#0_hatchdbg4_pix",
+    "title":       "HatchDbg4",
     "signal_type": "T_ in",
     "archetype":   "processor",
     "bypass_mode": "param",
@@ -21,12 +21,12 @@ patcher = {
     "presentation_height": 150,
 
     "pix_chain": [
-        {"id": "e1", "name": "#0_hatchdbg5_stage_e1", "gen": SRC + "codebox_stage_e1.gen",
-         "n_inlets": 1, "n_outlets": 1, "pix_type": "float32", "primary": True},
-        {"id": "e2", "name": "#0_hatchdbg5_stage_e2", "gen": "codebox_e2_dim.gen",
-         "n_inlets": 1, "n_outlets": 1, "pix_type": "float32", "primary": False},
-        {"id": "d3", "name": "#0_hatchdbg5_stage_d3", "gen": "codebox_d3.gen",
-         "n_inlets": 2, "n_outlets": 1, "pix_type": "float32", "primary": False},
+        {"id": "e1", "name": "#0_hatchdbg4_stage_e1", "gen": SRC + "codebox_stage_e1.gen",
+         "n_inlets": 1, "n_outlets": 1, "pix_type": "float32", "adapt": True, "primary": True},
+        {"id": "e2", "name": "#0_hatchdbg4_stage_e2", "gen": SRC + "codebox_stage_e2.gen",
+         "n_inlets": 1, "n_outlets": 1, "pix_type": "float32", "adapt": True, "primary": False},
+        {"id": "d3", "name": "#0_hatchdbg4_stage_d3", "gen": "codebox_d3.gen",
+         "n_inlets": 2, "n_outlets": 1, "pix_type": "float32", "adapt": True, "primary": False},
     ],
     "pix_wires": [
         ["e1", 0, "e2", 0],
@@ -58,21 +58,13 @@ patcher = {
         {"name": "gain", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5,
          "hint": "Multiplier for the E2 raw view: 0.01x .. 100x (0.5 = x1).",
          "label": "Gain", "pix_target": "d3"},
-                {"name": "bypass", "type": "bypass"},
+                {"name": "width", "type": "float", "min": 64.0, "max": 8192.0, "default": 640.0, "widget": "numbox",
+         "hint": "Render width in pixels (E2).", "label": "Width", "pix_target": "e2"},
+        {"name": "height", "type": "float", "min": 64.0, "max": 8192.0, "default": 480.0, "widget": "numbox",
+         "hint": "Render height in pixels (E2).", "label": "Height", "pix_target": "e2"},
+        {"name": "bypass", "type": "bypass"},
     ],
 }
-
-
-# The Vsynth convention (vs_edges, vs_pixelator): a global [r dim] into each jit.gl.pix's left inlet.
-# vs_render sends `dim W H`; the message sets the pix's dim attribute. Pix ids: primary obj-5,
-# support obj-50, obj-51 in chain order.
-patcher["raw_boxes"] = [
-    {"box": {"id": "obj-dimr", "maxclass": "newobj", "numinlets": 0, "numoutlets": 1,
-             "outlettype": [""], "patching_rect": [10.0, 10.0, 40.0, 22.0], "text": "r dim"}},
-]
-patcher["raw_lines"] = [
-    {"patchline": {"source": ["obj-dimr", 0], "destination": [t, 0]}} for t in ("obj-5", "obj-50", "obj-51")
-]
 
 patcher["overrides"] = {}
 # END overrides

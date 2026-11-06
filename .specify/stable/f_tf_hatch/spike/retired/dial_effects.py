@@ -1,8 +1,8 @@
 """Scratch: how much does each dial change the mirror's output on a structured scene?
-  uv run --no-project --with numpy --with pillow python3 .specify/f_tf_hatch/spike/retired/dial_effects.py"""
+  uv run --no-project --with numpy --with pillow python3 .specify/stable/f_tf_hatch/spike/retired/dial_effects.py"""
 import sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[5]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch"), str(Path(__file__).parent)]
 import numpy as np
 import lic_stills as S

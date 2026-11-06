@@ -1,6 +1,6 @@
 """
 tf_hatch_mirror.py -- NumPy mirror of the f_tf_hatch v2 (streamline / LIC)
-renderer. Spec: .specify/f_tf_hatch/spec.md (2026-10-28); plan Phases 0 and 2.
+renderer. Spec: .specify/stable/f_tf_hatch/spec.md (2026-10-28); plan Phases 0 and 2.
 
 Phase 2 (2026-10-28) folded v1's mirror into this file: `decode` (the canonical
 tensor decode idiom) and `presence` (the structure-floor ramp) are the parts the
@@ -193,7 +193,7 @@ def noise_at(px, py, cell_px, seed=0, fill=None):
 # wherever a path stays inside one cell). The blob noise replaces it: quintic value
 # noise on a ROTATED lattice (no pixel-axis bias), thresholded with a soft ramp so the
 # impulses are round blobs about a `grain` cell wide. The threshold is a CLOSED-FORM
-# cubic in `density` (fit by .specify/f_tf_hatch/spike/blob_fit.py), so the GPU needs no
+# cubic in `density` (fit by .specify/stable/f_tf_hatch/spike/blob_fit.py), so the GPU needs no
 # quantile lookup. Same hash12 as above, four taps per sample.
 BLOB_ROT = float(np.pi / 8)   # lattice rotation: 22.5 deg puts the pixel's 0 and 45 deg directions
                               # mirror-symmetric about the noise lattice, so axis and diagonal

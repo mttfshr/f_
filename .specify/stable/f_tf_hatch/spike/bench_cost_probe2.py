@@ -10,7 +10,7 @@ and the branch are not the cost. Here the shipped E2 codebox, 1080p, float32 tex
     G1c Grain 1.0 on a COHERENT aux (a real frame's paths)
 
 Needs Max with tests/bench/bench.maxpat open.
-  tests/bench.sh -q .specify/f_tf_hatch/spike/bench_cost_probe2.py
+  tests/bench.sh -q .specify/stable/f_tf_hatch/spike/bench_cost_probe2.py
 """
 GROUP = "spike"
 ORDER = 999

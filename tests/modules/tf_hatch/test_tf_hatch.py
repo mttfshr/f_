@@ -1,6 +1,6 @@
 """
 test_tf_hatch.py -- Tier-1 for f_tf_hatch v2 (streamline renderer), Phase 0.
-Spec .specify/f_tf_hatch/spec.md, acceptance criteria 1-8.
+Spec .specify/stable/f_tf_hatch/spec.md, acceptance criteria 1-8.
 
 Synthetic encoded-tensor fields with KNOWN coherence and axis; the module is only
 worth building if these pass in the mirror. Metrics are autocorrelation lengths of

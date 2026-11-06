@@ -1,12 +1,12 @@
 """Phase-0 stills for f_tf_hatch v2 (scratch). Renders the mirror on image-derived tensors.
-  uv run --no-project --with numpy --with pillow python3 .specify/f_tf_hatch/spike/retired/lic_stills.py [out.png]
+  uv run --no-project --with numpy --with pillow python3 .specify/stable/f_tf_hatch/spike/retired/lic_stills.py [out.png]
 Rows: a clean-ish source, then the same source with heavy camera-like noise.
 Columns: source | coherence | LIC smooth | LIC line=1 | coherence ignored (the trap)
 """
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[5]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch")]
 
 import numpy as np  # noqa: E402

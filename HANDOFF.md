@@ -4,7 +4,7 @@
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
-**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. Stable push in progress: batch 3, `f_tf_hatch` preflight done, waiting on Matt's helpfile look (T068) before the move; then `f_tf_axisflow`. Plan and bar: the 2026-11-06 entries in `HANDOFF_ARCHIVE.md`, and `.specify/plan.md` Next 0.
+**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. `f_tf_hatch` moved to `.specify/stable/` 2026-11-06. Stable push in progress: batch 3 continues at `f_tf_axisflow`. Plan and bar: the 2026-11-06 entries in `HANDOFF_ARCHIVE.md`, and `.specify/plan.md` Next 0.
 
 **Candidates (Matt decides):**
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
@@ -19,9 +19,9 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-06: batch 3, `f_tf_hatch` preflight done, not moved
+## 2026-11-06: batch 3, `f_tf_hatch` moved to `.specify/stable/`
 
-- **Done (offline, Claude):** preflight, v1 wording removed from four docs, reference doc and spec brought up to date, helpfile given `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch. Record: `.specify/f_tf_hatch/tasks.md`, "Stable preflight".
+- **Done (offline, Claude):** preflight, v1 wording removed from four docs, reference doc and spec brought up to date, helpfile given `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch. Moved after Matt's helpfile look passed (T068). Record: `.specify/stable/f_tf_hatch/tasks.md`, "Stable preflight" and "Moved to stable/".
 - **Verified:** drift ok, menu and launcher `--check`, `test_generate_menu.py` 17/17 (log `tests/logs/20261106-083730-offline.log`). `bench_tf_hatch.py` not re-run; no code changed; no log of the 13/13 run exists, only commit `742e9db`.
-- **Owed:** Matt's helpfile look (T068), then the move. `tests/build/test_gates.py` not run since the tensormap move; needs Matt's go.
+- **Owed:** `tests/build/test_gates.py` not run since the tensormap move; needs Matt's go.
 - **Next:** `f_tf_axisflow`. Its helpfile, and those of `f_vf_potential`, `f_vf_flow`, have no upstream module wired (per the previous entry, not opened this session).

@@ -7,13 +7,13 @@ SPIKE (mirror only, nothing shipped): three looks for the LOW-COHERENCE regions 
              (a patched copy of the mirror's stage_e2, `term=(lo, hi)`): undirected regions keep only the
              pixel's own impulse -- dots (blobs) or the texture showing through unstreaked
 Rows: blobs / noisy scene | texture / noisy scene | blobs / clean scene.  Columns: source | coherence | Clouds | Dark | Terminate.
-  uv run --no-project --with numpy --with pillow python3 .specify/f_tf_hatch/spike/low_coherence_looks.py [out.png]
+  uv run --no-project --with numpy --with pillow python3 .specify/stable/f_tf_hatch/spike/low_coherence_looks.py [out.png]
 """
 import inspect
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch")]
 
 import numpy as np  # noqa: E402

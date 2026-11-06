@@ -1,6 +1,6 @@
 # Tasks: f_tf_hatch (v2 — streamline renderer)
 
-**Spec**: `.specify/f_tf_hatch/spec.md`   **Plan**: `.specify/f_tf_hatch/plan.md`
+**Spec**: `.specify/stable/f_tf_hatch/spec.md`   **Plan**: `.specify/stable/f_tf_hatch/plan.md`
 **Reference doc**: `docs/f-reference/f_tf_hatch.md`   **Findings**: `findings_2026-10-29.md`
 **Archived v1**: `spec_v1.md`, `plan_v1.md`, `tasks_v1.md` (the 2026-10-28 reset, commit `35ca14a`, renamed
 `tasks.md` to `tasks_v1.md`; there was no v2 `tasks.md` until this file, written 2026-10-30 from the HANDOFF
@@ -60,10 +60,10 @@ entries and the git log, so the commit hashes below are the record).
 - [x] T063 (closed 2026-10-30/31: grain, quasi, seeds, vorticity migrated; `f_masonry` and `f_cmap` stay exempt) The six exempt modules read `dim` (latent live bug; list in `tests/build/test_render_dim.py`): `f_cmap` (paused), `f_grain`, `f_masonry`, `f_quasi`, `f_vf_seeds`, `f_vf_vorticity`. Not Hatch's work; tracked here because Hatch found it.
 - [x] T064 (closed 2026-11-06, Matt: archive; the three scripts below and `dial_effects.py`, which imports them, are in `spike/retired/` with a README) Housekeeping. DONE 2026-10-31: `package/examples/f_demo_hatch.maxpat` is tracked and consistent: its Hatch bpatcher has exactly the eight v2 bindings (reach to coh_floor); the `strength[1]` bindings belong to its `f_tf_tensormap` (obj-7), whose Strength dial is valid, so nothing was removed (the earlier note was a false alarm). Not tested: that it loads cleanly in Max. OPEN: the spike scripts `camera_like.py` and `lic_stills*.py` still pass `strength=` and fail (Strength was removed in T031).
 - [x] T065 Tier-3 questions DECIDED 2026-10-31 (Matt, as leaned): OQ1 keep exponent 0.5, no `persist` dial, Coh Floor is the lever; OQ3 box kernel, cosine deferred until a look asks; OQ4 keep outlet 1, documented in the helpfile; OQ6 dense LIC dropped as a mode (the stroke-texture inlet at Density 1 covers it); OQ7 fanning cone deferred (reads as direction uncertain). OQ5 moot.
-- [x] T066 Hub Q17 (NaN masking in E1 on isotropic tensors) PROBED 2026-11-01: `.specify/f_tf_hatch/spike/bench_e1_nan_probe.py`, 5/5, zero NaN/inf in every case (exact zero, isotropic nonzero at 16/64/256, mixed texture, one ulp from isotropic); log `tests/logs/20261101-082451-bench.log`. The `+1e-7` bias was NOT adopted. Not tested: a live Vsynth render. Matt decided 2026-11-01: no permanent bench rows and no live check; the spike is the record.
+- [x] T066 Hub Q17 (NaN masking in E1 on isotropic tensors) PROBED 2026-11-01: `.specify/stable/f_tf_hatch/spike/bench_e1_nan_probe.py`, 5/5, zero NaN/inf in every case (exact zero, isotropic nonzero at 16/64/256, mixed texture, one ulp from isotropic); log `tests/logs/20261101-082451-bench.log`. The `+1e-7` bias was NOT adopted. Not tested: a live Vsynth render. Matt decided 2026-11-01: no permanent bench rows and no live check; the spike is the record.
 
 - [x] T067 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T068 Matt's helpfile look: the new demo chain at defaults, the digest, and the bypass toggle (black on the preview). Blocks the move to `.specify/stable/`.
+- [x] T068 Matt's helpfile look PASSED 2026-11-06: the new demo chain at defaults, the digest, and the bypass toggle (black on the preview). Moved to `.specify/stable/`.
 
 ## Stable preflight (2026-11-06)
 
@@ -71,7 +71,11 @@ Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--chec
 
 Fixed: v1 wording survived in `module-inventory.md` (both rows: distance-field dashes, mark mask, one inlet), `f_tensor_type.md`, `f_tf_sharpen.md` and `library-characteristics.md` (~6 taps, strokes vs dots, the outlet names). The reference doc had old test counts, a chain diagram without the pre-stage, "three stages" for render size, and a `dim` note listing six modules where two remain. The spec still said no v2 code exists, listed `strength`, and had neither the stroke inlet nor `coh_floor`. Comments only in `definition.py` (said width/height are not needed; a misplaced render-size note; 1.8 ms) and `bench_modules.py`; drift still ok.
 
-Helpfile: no source was wired, so the demo drew nothing. Added `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch -> preview. The digest now says what the module is for (spec: making coherence visible), and the inlet comment says `f_tf_smooth` belongs between them on moving sources (not in the demo). Not opened in Max: T068. The text fit of the digest is unseen.
+Helpfile: no source was wired, so the demo drew nothing. Added `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch -> preview. The digest now says what the module is for (spec: making coherence visible), and the inlet comment says `f_tf_smooth` belongs between them on moving sources (not in the demo). Live by Matt: T068.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile look passed ("Look passes, move it"), so the module moved. Live path references were updated, and the spike scripts' root paths went one level deeper; the v1 records, `findings_2026-10-29.md` and `REGISTRATION_NOTES.md` keep the old path. Optional cost and the provisional dial defaults carry over per the stable bar. `tests/build/test_gates.py` has not been run since the tensormap move (needs Matt's go).
 
 ## Decisions (Matt unless noted)
 

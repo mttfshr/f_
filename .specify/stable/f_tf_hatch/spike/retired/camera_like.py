@@ -1,8 +1,8 @@
 """Scratch: the mirror at Matt's live settings on a camera-like tensor (small window), half 1080p.
-  uv run --no-project --with numpy --with pillow python3 .specify/f_tf_hatch/spike/retired/camera_like.py"""
+  uv run --no-project --with numpy --with pillow python3 .specify/stable/f_tf_hatch/spike/retired/camera_like.py"""
 import sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[5]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch"), str(Path(__file__).parent)]
 import numpy as np
 from PIL import Image

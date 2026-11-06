@@ -1,13 +1,13 @@
 """Scratch: band-limited impulses (rotated value noise, thresholded) vs the shipped lit lattice cells.
 Mirror only, half 1080p. B's noise gain is matched so mean raw march value equals A's (fair brightness).
-  uv run --no-project --with numpy --with pillow python3 .specify/f_tf_hatch/spike/bandlimited_noise.py [out.png]
+  uv run --no-project --with numpy --with pillow python3 .specify/stable/f_tf_hatch/spike/bandlimited_noise.py [out.png]
 Columns: source | coherence | A shipped (lit cells) | B band-limited blobs
 Gentle settings: contrast .5, line .5 (soft), reach .4; density/grain vary per row.
 """
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch")]
 
 import numpy as np  # noqa: E402

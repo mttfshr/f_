@@ -1,5 +1,5 @@
 # SCRATCH debug patcher (not shipped): shows what f_tf_hatch's E1 receives from the live tensor.
-# Build:  build/py.sh build/build_patcher.py .specify/f_tf_hatch/spike/dbg/definition.py
+# Build:  build/py.sh build/build_patcher.py .specify/stable/f_tf_hatch/spike/dbg/definition.py
 # Writes package/patchers/f_tf_hatch_dbg.maxpat (UNTRACKED; delete it when done).
 # Drop it where Hatch sits (after Smooth); the outlet goes to the render chain as usual.
 

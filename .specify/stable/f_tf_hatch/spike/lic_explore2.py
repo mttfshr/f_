@@ -1,10 +1,10 @@
 """Phase-0 exploration 2 (scratch). Seed-averaged ramp, v1-vs-LIC ringness, branch cut.
-  uv run --no-project --with numpy python3 .specify/f_tf_hatch/spike/lic_explore2.py
+  uv run --no-project --with numpy python3 .specify/stable/f_tf_hatch/spike/lic_explore2.py
 """
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch")]
 
 import numpy as np  # noqa: E402

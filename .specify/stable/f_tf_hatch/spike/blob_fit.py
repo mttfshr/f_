@@ -2,12 +2,12 @@
 For each density d the lit probability is fill = 0.0025 * 2^(5 d). Find the threshold whose SOFT-ramped
 coverage (mean of smoothstep(thr-w, thr+w, noise)) equals fill, fit thr(d) as a cubic, and check the
 coverage the cubic gives on an independent noise patch.
-  uv run --no-project --with numpy python3 .specify/f_tf_hatch/spike/blob_fit.py
+  uv run --no-project --with numpy python3 .specify/stable/f_tf_hatch/spike/blob_fit.py
 """
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 sys.path[:0] = [str(ROOT / "tests/lib"), str(ROOT / "tests/modules/tf_hatch")]
 
 import numpy as np  # noqa: E402

@@ -1,11 +1,11 @@
 # SCRATCH debug patcher 3 (not shipped): the REAL f_tf_hatch E1 and E2 codeboxes followed by a
 # display stage (codebox_d3.gen) that shows what E2 receives and produces in the live chain.
-# Build:  build/py.sh build/build_patcher.py .specify/f_tf_hatch/spike/dbg/definition3.py
+# Build:  build/py.sh build/build_patcher.py .specify/stable/f_tf_hatch/spike/dbg/definition3.py
 # Writes package/patchers/f_tf_hatch_dbg3.maxpat (UNTRACKED; delete it when done).
 
 CODEBOX_DIR = ""
 
-SRC = "../../../../src/f_tf_hatch/"   # relative to this file: the shipped codeboxes
+SRC = "../../../../../src/f_tf_hatch/"   # relative to this file: the shipped codeboxes
 
 patcher = {
     "name":        "f_tf_hatch_dbg3",

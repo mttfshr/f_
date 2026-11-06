@@ -17,7 +17,7 @@ Each case counts NaN and inf per channel (check: total must be 0) and compares t
 coherence and presence to the mirror; the axis of an isotropic pixel is undefined, so it is a note only.
 
 Needs Max with tests/bench/bench.maxpat open.
-  tests/bench.sh -q .specify/f_tf_hatch/spike/bench_e1_nan_probe.py
+  tests/bench.sh -q .specify/stable/f_tf_hatch/spike/bench_e1_nan_probe.py
 """
 GROUP = "spike"
 ORDER = 999
