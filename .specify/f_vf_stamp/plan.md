@@ -41,7 +41,7 @@ A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage wit
 
 ### ADR-3: Envelope per draw, in the patcher (G1)
 
-**Decided (Matt, 2026-11-05: frames)**: `[r draw]` drives a one-pole `env += (gate - env) * k`, `k` = 1 for `attack` 0 else `1 - exp(-1/attack)` (and likewise `release`), `[expr]` or a small `[zl]` / `[pak]` chain, sent as `param env`. No `line`, no timer: the envelope is in frames, consistent with the library's one-model-step-per-draw rule (`f_wave_field` G3). A tap then gives a short bump whose height depends on `attack`; with `attack` 0 the tap gives a full-strength stamp for its gate frames and the tail follows `release`.
+**Decided (Matt, 2026-11-05: frames)**: `[r draw]` drives a one-pole `env += (gate - env) * k`, `k` = 1 for `attack` 0 else `1 - exp(-1/attack)` (and likewise `release`), `[expr]` or a small `[zl]` / `[pak]` chain, sent as `param env`. No `line`, no timer: the envelope is in frames, consistent with the library's one-model-step-per-draw rule (`f_wave_field` G3). A tap then gives a short bump whose height depends on `attack`; with `attack` 0 the tap gives a full-strength stamp for its gate frames and the tail follows `release`. Below 0.001 `env` snaps to 0 (Claude, T022, for Matt's veto): a one-pole never reaches 0, and SC-002 wants the idle outputs exact. `[expr]` with comparisons, `[f]` holding the state.
 
 **Not taken**: `line` in ms (simple, frame-rate dependent).
 

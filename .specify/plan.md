@@ -7,7 +7,7 @@ _Rewritten 2026-10-31, updated 2026-11-05._ Orientation only: what is Active, wh
 1. **Record-keeping.** HANDOFF trimmed (older entries in `HANDOFF_ARCHIVE.md`), this focus doc and `gates.md` written 2026-10-31. Next: use it for a few sessions and measure the startup read; add per-workstream blocks and a generated survey only if the gates file isn't enough.
 2. **`f_modules` menu redesign** (Matt's, in progress). See `G-menu`.
 3. **`f_wave_field` redesign** (Matt's, 2026-11-04): done 2026-11-05 except T041: outline strike, LFO inlet, held press (T042), docs and helpfile (T040), in the menu under ∇ Fields, README ⚠ removed; live looks passed and benches green on the four-input harness. T041 (the `f_cymascope` audio front end) is not started. Record: `.specify/f_wave_field/tasks.md`.
-4. **`f_vf_stamp`** (Phase 0 closed 2026-11-05, no module code yet): a gated stamping tool (texture + vecfield in; ink + impulse out; radial / swirl switch). Phase 1: T020 and T021 done, next T022. Record: `.specify/f_vf_stamp/tasks.md`.
+4. **`f_vf_stamp`** (Phase 0 closed 2026-11-05, no module code yet): a gated stamping tool (texture + vecfield in; ink + impulse out; radial / swirl switch). Phase 1: T020-T022 done, next T023. Record: `.specify/f_vf_stamp/tasks.md`.
 
 Closed 2026-11-01: the render-trigger check (`f_stipple` gated `r draw` plus `render_dim` size, T044/T045; `f_weave` unconnected lines and optional inlets (reworked later the same day, below), live contract bench green 2/2; `f_vf_flow` needs a texture, re-typed processor), and `f_wave_field` T030 (Matt: passes with the existing defaults, no change; no bench re-run needed).
 
