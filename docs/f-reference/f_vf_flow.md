@@ -52,7 +52,7 @@ vfflow_pix (@type float32) out0 → out0 (f_vecfield)
 
 ## Notes
 
-- No `.specify/f_vf_flow/spec.md` exists — this doc is derived from `definition.py`'s header comment and param list, `codebox_flow.gen` and the shipped patcher.
+- No `.specify/stable/f_vf_flow/spec.md` exists — this doc is derived from `definition.py`'s header comment and param list, `codebox_flow.gen` and the shipped patcher.
 - The codebox comment says luminance; the code reads `.x`, the red channel.
 - `spread` 1 is a full turn, so black and white input point the same way.
 - See `docs/f-reference/f_vecfield_type.md` for the f_vecfield type contract. Until 2026-11-01 `f_vf_flow` was one of the few f_vecfield producers with a `"dual"` archetype; it is now a plain processor.

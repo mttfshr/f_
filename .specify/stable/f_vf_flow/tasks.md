@@ -19,7 +19,7 @@ Ids start at T001._
 - [x] T003 (decided 2026-11-01, Matt): f_vf_flow needs a texture; no unconnected rendering (no gated `r draw`, no size handling). Re-typed `processor` (was `dual`): `vs_inState`, `src_mode` and the unconnected codebox path removed. Render-trigger check closed for this module. Doc and descriptions updated (README, Launch, help, make_missing_helpfiles.py digest; 2026-11-01).
 
 - [x] T004 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T005 Matt's helpfile look: the new demo chain at defaults, the digest, the two notes. Do not move to `.specify/stable/` until it passes.
+- [x] T005 Matt's helpfile look PASSED 2026-11-06 ("helpfile looks pass"): the new demo chain at defaults, the digest, the two notes. Moved to `.specify/stable/`.
 
 ## Stable preflight (2026-11-06)
 
@@ -34,3 +34,7 @@ Chains in `library-characteristics.md`: `vs_wfg_3` -> Flow takes a texture, and 
 Helpfile: confirmed nothing was wired upstream, so the demo drew nothing. Added `vs_sources_main` -> Flow -> preview and moved the module and preview down. Expected at defaults (from the codebox, not seen): mid gray pink (1, .5, .5), dark toward purple, bright toward green, no gray. `vs_sources_main` opens on the Movie tab, so this depends on a movie being loaded. The note no longer names a consumer; a second sits beside the preview. Neither overlaps the preview (rects: preview 338-574 x 281-530; notes 525-760 x 170-242 and 590-780 x 281-379). The digest now says what the module is for. `test_generate_menu.py` 17/17 (`tests/logs/20261106-094613-offline.log`; passed again after the JSON format was restored, `tests/logs/20261106-094623-offline.log`). Live by Matt: T005.
 
 Left alone: `codebox_flow.gen`'s comment says luminance (changing it would touch a bench input). `build/make_missing_helpfiles.py`'s `f_weave` entry still says to feed Flow into in2; `package/help/f_weave.maxhelp` does not name Flow, and that is Weave's record. `skills/vsynth-bpatcher/SKILL.md` lists Flow as a producer, which is still true of its output.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. The doc's path to this folder was updated. `tests/build/test_gates.py` not yet run after the move (needs Matt's go).
