@@ -1,7 +1,7 @@
 # f_wave_field
 
 **Type:** Processor with two optional texture inlets (it works alone as a generator) — **temporal / has memory**. Outlets: luma and a gradient vecfield.
-**Status:** Built; redesigned 2026-11-04 (outline strike, LFO inlet, held press). Live look passed (Matt, 2026-11-04 22:59, his word only: which sub-checks he looked at is not recorded). Offline mirror and both live benches green 2026-11-04. README lists it with ⚠ Unverified (this doc and the helpfile are new; the cost was not re-measured after the redesign).
+**Status:** Built; redesigned 2026-11-04 (outline strike, LFO inlet, held press). Live look passed (Matt, 2026-11-04 22:59, his word only: which sub-checks he looked at is not recorded). Offline mirror and both live benches green 2026-11-04. The ⚠ was removed from the README row on 2026-11-05 (Matt, after looking at the helpfile). The cost was not re-measured after the redesign.
 
 _Reference written 2026-11-04 from `src/f_wave_field/` (definition + codeboxes), `.specify/f_wave_field/{spec,tasks}.md` (decisions D1-D14) and the module's tests. Where the 2026-10-23 spec and the shipped module differ, this doc follows the shipped module._
 

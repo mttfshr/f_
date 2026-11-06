@@ -388,7 +388,7 @@
 										150.0,
 										20.0
 									],
-									"text": "⚠ Unverified. Spectral wave field: held outline strike, LFO inlet, tunable dispersion; luma and gradient out",
+									"text": "Spectral wave field: held outline strike, LFO inlet, tunable dispersion; luma and gradient out",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
