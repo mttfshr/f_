@@ -142,7 +142,9 @@ Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--chec
 
 Fixed: the reference doc and `f_tensor_type.md` said nothing consumes outlet 0 and listed `f_weave` as a vecfield consumer (inlet retired 2026-11-01); `f_tensor_type.md` listed built modules as planned; spec still showed `width` / `height` as dials. The helpfile had no source, so its demo showed only the neutral output: `vs_sources_main` added, the comment moved off the preview, digest and comment now name outlet 0's consumers. Not yet opened in Max.
 
-Open: Matt's helpfile look; `bench_tf_tensormap.py` has no run in `tests/logs/`, so GPU parity since the 2026-10-30 `render_dim` change is not verified. The helpfile lists a `bypass` message that does not work here (same bench log), as accepted for Fluid and Split.
+`bench_tf_tensormap.py` 8/8 on the live bench, first run on record since the 2026-10-30 `render_dim` change (log `tests/logs/20261106-082418-bench.log`).
+
+Open: Matt's helpfile look. The helpfile lists a `bypass` message that does not work here (same bench log), as accepted for Fluid and Split.
 
 ---
 
