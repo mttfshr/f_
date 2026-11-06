@@ -63,7 +63,7 @@ Every neighbour read uses explicit integer texel indices with a modulo wrap, nev
 
 ### ADR-8: Bypass (G5)
 
-**Decided (Matt, 2026-11-05: "pass the input through")**. Reading, to confirm: out0 passes in0, out1 passes in1 when connected, else neutral. Note the consequence: a bypassed stamp hands the whole texture downstream as ink. (The earlier proposal was neutral outputs, as `f_wave_field`.)
+**Decided (Matt, 2026-11-05: "pass the input through"; reading confirmed the same day)**: out0 passes in0, out1 passes in1 when connected, else neutral; the gate and envelope are ignored; the FR-011 non-finite zap stays active. Note the consequence: a bypassed stamp hands the whole texture downstream as ink. (The earlier proposal was neutral outputs, as `f_wave_field`.)
 
 ---
 

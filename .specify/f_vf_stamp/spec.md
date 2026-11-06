@@ -27,7 +27,7 @@ _Origin: `ideas/f_vf_stamp.md` (was `f_splat`, raised 2026-10-27 as the missing 
 - **G2 Ink encoding.** Which channels does `f_vf_advect`'s injection source read (RGB, alpha, premultiplied)? Out0 must match.
 - **G3 Radial and swirl field definition.** Edge band only (the gradient of a soft mask is non-zero only in the `softness` band) versus a smoothed interior (extra taps or a blur); how magnitude is normalised so it does not depend on `softness`.
 - **G4 Gate button as a shared building block.** Extract the `ubutton`, `[sel bang 1 0]` and draw-counter boxes from `f_wave_field`'s `definition.py` into a schema UI type, or copy the raw boxes. DECIDED 2026-11-05 (Matt): extract.
-- **G5 Bypass.** DECIDED 2026-11-05 (Matt: "pass the input through"). Reading, unconfirmed: out0 passes in0, out1 passes in1 when connected (else neutral 0.5 / 0.5); a bypassed stamp therefore hands the whole texture downstream as ink.
+- **G5 Bypass.** DECIDED 2026-11-05 (Matt: "pass the input through"; reading confirmed by Matt the same day): out0 passes in0, out1 passes in1 when connected (else neutral 0.5 / 0.5); the gate and envelope are ignored, so a bypassed stamp hands the whole texture downstream as ink. FR-011's non-finite zap stays active in bypass (Claude's proposal; Matt did not object).
 - **G6 Dial set and ranges** (below), subject to `G-ui-density`.
 - **G7 Luma weights** the library uses for coverage (confirm against `f_luma_processor` / `f_vf_glow`).
 - **G8 Menu category** (held by `G-menu`).
