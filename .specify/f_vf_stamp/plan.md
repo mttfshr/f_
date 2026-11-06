@@ -47,11 +47,15 @@ A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage wit
 
 ### ADR-4: Radial and swirl from the stamp's gradient (G3)
 
-**Proposed**: `g = (cov(x+1,y) - cov(x-1,y), cov(x,y+1) - cov(x,y-1)) / 2` by integer texel index with periodic wrap (the `f_wave_field` outline-mask technique: neighbour texel index computed explicitly, read at its texel centre), outward direction `-g`, swirl direction the outward direction rotated 90 degrees (the sign convention is fixed in Phase 0). Magnitude normalised by the band slope (so it does not depend on `softness`): `-g / max(|g|, eps) * 4 * cov * (1 - cov)`, a bump that is largest mid-edge and zero in the interior and exterior. This gives an edge-band impulse (the blot's expanding rim); a smoothed interior (extra taps) is the Phase 0 alternative. Unverified; the mirror and a live look decide.
+**Decided (Matt, 2026-11-05, on the T010 numbers; live look owed at T030)**: `v = -(cov(x+s,y) - cov(x-s,y), cov(x,y+s) - cov(x,y-s))` by integer texel index with periodic wrap (the `f_wave_field` outline-mask technique: neighbour texel index computed explicitly, read at its texel centre), `s = max(1, round(rim * width))` on both axes. Swirl is `(-v.y, v.x)`, counterclockwise in uv; on-screen direction against `f_vf_vortex`'s `curl` is unchecked. Four neighbour coverage reads plus the centre, no divide. Each component is within +-1, so `force` above 1 can clip a component in the encode.
+
+**Rejected**: `-g / max(|g|, eps) * 4 * cov * (1 - cov)`, the first proposal: zero on a hard-edged stamp (`cov` is 0 or 1 at every texel centre), and at low `softness` on a soft stamp the projection keeps 0.43 of radial. Kept in the mirror as `field="unit"` for the record.
+
+**Known leak (mirror, inferred for the live module)**: the spectral projection and this stencil disagree at high k, so about 10% of radial energy survives `project` at wider reach. Viscosity and `taps` are not modelled; T030 decides whether it shows.
 
 ### ADR-5: Coverage and irregular edge
 
-`cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * (noise - 0.5))`, `invert` as `1 - cov`. The noise is a value noise on a hash that uses no `sin()`, seeded by `seed`, defined in texel space so the edge shape is stable. This works for any stamp shape, unlike angular harmonics on a radius.
+`cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * (noise - 0.5))`, `invert` as `1 - cov`. The noise is a value noise on a hash that uses no `sin()`, seeded by `seed`, defined in texel space so the edge shape is stable. It works on any stamp with a soft luma ramp, unlike angular harmonics on a radius; on a hard-edged stamp it does nothing, because the noise cannot move a 0-to-1 step (T010). Whether `edge` and `seed` stay is part of T006.
 
 ### ADR-6: Connected flags, not values
 
@@ -88,7 +92,7 @@ stamp -> out0 (ink), out1 (impulse)       r dim -> stamp (render size)
 ## Risks
 
 - **Radial at `project` 1 stirs nothing in `f_vf_fluid`** (by the curl constraint): by design, with the swirl switch as the answer; the look test confirms or corrects this.
-- **Gradient aliasing at small `softness`** (a one-texel band): the mirror and the live look decide the default and whether G3 needs a smoothed interior.
+- **Rim width at high render sizes**: `s` grows with the render (about 29 texels at 1920), which costs nothing in taps but has not been looked at live.
 - **Ink channel mismatch with `f_vf_advect`'s injection** (G2): read the consumer before fixing the encoding.
 - **Dial count** against `G-ui-density` (about ten controls).
 - **Schema extraction (ADR-2)** touches `f_wave_field`'s definition; `drift` is the guard.

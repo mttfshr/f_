@@ -14,10 +14,11 @@ Luma is Rec.709 (G7). Bypass (G5): out0 = in0, out1 = in1 when connected else ne
 FR-011 zap still active.
 
 The field (`field` argument) is what T003 has to choose, so both candidates are here:
-  "unit"  plan ADR-4 as written: g = central difference / 2, direction -g / max(|g|, eps),
-          magnitude 4 cov (1 - cov) from the centre texel.
-  "diff"  the plain wide central difference, no divide: v = -(cov(x+s) - cov(x-s), cov(y+s) -
-          cov(y-s)), s = `reach` texels. Each component is already in [-1, 1].
+  "unit"  REJECTED at T003, kept for the record: g = central difference / 2, direction
+          -g / max(|g|, eps), magnitude 4 cov (1 - cov) from the centre texel.
+  "diff"  DECIDED at T003 (plan ADR-4): the plain wide central difference, no divide:
+          v = -(cov(x+s) - cov(x-s), cov(y+s) - cov(y-s)). Each component is in [-1, 1].
+          s = rim_texels(rim, width) when `rim` is given, else `reach` texels.
 Swirl is the radial field rotated by (x, y) -> (-y, x) in either case.
 
 Neighbours use explicit integer texel indices with a modulo wrap (FR-010): the codebox reads them
@@ -40,6 +41,11 @@ LUMA_601 = (F32(0.299), F32(0.587), F32(0.114))
 SOFT_EPS = F32(1e-5)     # smoothstep width floor: softness 0 must not divide by zero
 UNIT_EPS = F32(1e-6)     # ADR-4's eps
 NOISE_CELL = 8
+
+
+def rim_texels(rim, w):
+    """The `rim` dial (frame widths) as a texel reach, the same on both axes."""
+    return max(1, int(np.floor(float(rim) * w + 0.5)))
 
 
 def zap(x, fill):
@@ -140,9 +146,11 @@ def impulse_field(cov_at, c0, ix, iy, w, h, field, reach, impulse, bug=None):
 
 def stamp_stage(in0, in1=None, threshold=0.5, softness=0.1, invert=0.0, edge_amt=0.0, seed=0,
                 amount=1.0, force=1.0, impulse=0.0, env=1.0, src_vec=0.0, bypass_gate=0.0,
-                field="diff", reach=1, size=None, bug=None):
+                field="diff", reach=1, rim=None, size=None, bug=None):
     """One frame of the stage. Returns (out0, out1), each float32 (H, W, 4)."""
     h, w = size if size else in0.shape[:2]
+    if rim is not None:
+        reach = rim_texels(rim, w)
     nx, ny, ix, iy = g.grid(h, w)
     weights = LUMA_601 if bug == "swap_luma" else LUMA
 

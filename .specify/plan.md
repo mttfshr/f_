@@ -27,7 +27,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 - **Runs and looks:** the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
-- **`f_vf_stamp` Phase 0 decisions:** G3 field definition and G6 dials (G1, G2, G4, G5, G7 are decided). `.specify/f_vf_stamp/tasks.md` T003, T006.
+- **`f_vf_stamp` Phase 0 decisions:** G6 dials (G1-G5 and G7 are decided). `.specify/f_vf_stamp/tasks.md` T006.
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).

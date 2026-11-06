@@ -17,8 +17,8 @@ import numpy as np
 
 from harness import check, note, run  # noqa: E402
 import gpu_sim as g  # noqa: E402
-from vf_stamp_mirror import (F32, decode, disc, hash2, project, stamp_stage,  # noqa: E402
-                             value_noise)
+from vf_stamp_mirror import (F32, decode, disc, hash2, project, rim_texels,  # noqa: E402
+                             stamp_stage, value_noise)
 
 N = 64
 FIELDS = (("diff", 1), ("diff", 4), ("unit", 1))
@@ -174,6 +174,20 @@ def test_diff_rim_integral():
             _, r = stamp_stage(t, softness=softness, reach=reach)
             rx = decode(r)[0][5]
             check(f"rim integral s={reach} softness={softness}", abs(float(rx[N // 2:].sum()) - 2 * reach), 1e-4)
+
+
+def test_rim_is_in_frame_units():
+    """T003: the rim's strength in frame units is 2 * rim at any render size, and rim bottoms out at 1 texel."""
+    rim = 1 / 16
+    for n in (64, 256):
+        nx = g.grid(n, n)[0]
+        t = g.texture(n, n)
+        t[..., 0:3] = (np.abs(nx - F32(0.5)) < F32(0.25)).astype(F32)[..., None]
+        t[..., 3] = 1
+        rx = decode(stamp_stage(t, rim=rim)[1])[0][5]
+        check(f"rim integral at N={n}", abs(float(rx[n // 2:].sum()) / n - 2 * rim), 1e-5)
+    check("default rim is 4 texels at 256", abs(rim_texels(0.015, 256) - 4), 0)
+    check("rim never reaches 0 texels", abs(rim_texels(0.001, 64) - 1), 0)
 
 
 def test_periodic_wrap():

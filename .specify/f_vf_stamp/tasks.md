@@ -8,7 +8,7 @@ Record format: date, who observed (offline Claude / live Matt), source (log path
 
 - [x] T001 [GATE G1] DECIDED (Matt, 2026-11-05): the envelope is in FRAMES, a per-draw one-pole (plan ADR-3), not `line` in ms.
 - [x] T002 [GATE G2] DECIDED (Matt, 2026-11-05, on Claude's read of `codebox_advect.gen`): `out0 = vec(in0.rgb * cov * amount * env, 1.0)`; RGB carries the mask, A stays 1.
-- [ ] T003 [GATE G3] Radial and swirl field: edge band only versus a smoothed interior; magnitude normalisation (plan ADR-4). Decided by the mirror numbers and a live look.
+- [x] T003 [GATE G3] DECIDED (Matt, 2026-11-05, on the T010 numbers): the plain wide central difference with a `rim` dial in frame widths (plan ADR-4). The live look is still owed at T030.
 - [x] T004 [GATE G4] DECIDED (Matt, 2026-11-05): EXTRACT a schema UI type from `f_wave_field`'s raw boxes (`f_vf_stamp` is the second user), guarded by `drift -v f_wave_field`. Work is T020.
 - [x] T005 [GATE G5] DECIDED (Matt, 2026-11-05: "pass the input through"; reading CONFIRMED by Matt in chat the same day): bypass = out0 passes in0, out1 passes in1 when it is connected (neutral 0.5 / 0.5 when not), gate and envelope ignored, FR-011's non-finite zap still active. Consequence: a bypassed stamp hands the WHOLE texture downstream as ink, not nothing.
 - [ ] T006 [GATE G6] Dial set, ranges, defaults, with `G-ui-density` in mind. Decider: Matt.

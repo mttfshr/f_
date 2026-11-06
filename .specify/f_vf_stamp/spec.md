@@ -25,7 +25,7 @@ _Origin: `ideas/f_vf_stamp.md` (was `f_splat`, raised 2026-10-27 as the missing 
 
 - **G1 Envelope mechanism and units.** DECIDED 2026-11-05 (Matt): frames. A per-draw one-pole in the patcher (`env += (gate - env) * k`, `k` from `attack` and `release` in frames, `0` = instant), so no timer and no `line`. Alternative (not taken): `line` in ms (frame-rate dependent).
 - **G2 Ink encoding.** DECIDED 2026-11-05 (Matt, on Claude's reading of `src/f_vf_advect/codebox_advect.gen`): advect adds `sample(in1, uv) * inj_eff` on all four channels with no alpha gating, so RGB carries the mask and A stays 1: `out0 = vec(in0.rgb * cov * amount * env, 1.0)`.
-- **G3 Radial and swirl field definition.** Edge band only (the gradient of a soft mask is non-zero only in the `softness` band) versus a smoothed interior (extra taps or a blur); how magnitude is normalised so it does not depend on `softness`.
+- **G3 Radial and swirl field definition.** DECIDED 2026-11-05 (Matt, on the T010 numbers; live look still owed at T030): the plain wide central difference, `v = -(cov(x+s) - cov(x-s), cov(y+s) - cov(y-s))`, no divide, swirl = `(-v.y, v.x)`. `s = max(1, round(rim * width))` texels on both axes, from a new `rim` dial in frame widths. Rim strength is about `2 * rim` in frame units whatever `softness` and render size.
 - **G4 Gate button as a shared building block.** Extract the `ubutton`, `[sel bang 1 0]` and draw-counter boxes from `f_wave_field`'s `definition.py` into a schema UI type, or copy the raw boxes. DECIDED 2026-11-05 (Matt): extract.
 - **G5 Bypass.** DECIDED 2026-11-05 (Matt: "pass the input through"; reading confirmed by Matt the same day): out0 passes in0, out1 passes in1 when connected (else neutral 0.5 / 0.5); the gate and envelope are ignored, so a bypassed stamp hands the whole texture downstream as ink. FR-011's non-finite zap stays active in bypass (Claude's proposal; Matt did not object).
 - **G6 Dial set and ranges** (below), subject to `G-ui-density`.
@@ -90,7 +90,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 - **FR-003**: Coverage MUST be `cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * noise)`, flipped by `invert`, with Rec.709 luma (G7) and a deterministic arithmetic hash noise centred on 0 (plan ADR-5) (no `sin()`, as `f_ks`'s seed) seeded by `seed`.
 - **FR-004**: out0 MUST be `vec(in0.rgb * cov * amount * env, 1.0)` (G2); RGB exactly zero and A = 1 when `cov * env` = 0.
 - **FR-005**: With in1 connected, out1 MUST be `encode((in1.rg - 0.5) * 2 * cov * env * force)` per `f_vecfield_type.md` (`v * 0.5 + 0.5`, B = 0.5, A = 1), bounded, and exactly (0.5, 0.5) when `cov * env` = 0. An unconnected in1 MUST be recognised from the connected flag (via `vs_inState`), not from the value: `vs_black` would decode as a full -1 vector (the `f_vf_glow` ADR-2 lesson, `vs_black` suppression before the remap).
-- **FR-006**: With in1 unconnected, out1 MUST be the radial impulse (`impulse` Radial) or the swirl (`impulse` Swirl) derived from the gradient of `cov` by central differences, definition per G3, scaled by `force` and the envelope. With in1 connected the switch MUST have no effect.
+- **FR-006**: With in1 unconnected, out1 MUST be the radial impulse (`impulse` Radial) or the swirl (`impulse` Swirl) derived from `cov` by the wide central difference of G3 (reach set by `rim`), scaled by `force` and the envelope. With in1 connected the switch MUST have no effect.
 - **FR-007**: The Stamp control MUST be a held press: `ubutton` mouse-down sends `param stamp_gate 1`, mouse-up starts a release applied on the third draw bang after it; the `stamp` message is a tap, `stamp 1` / `stamp 0` press and release; a new press cancels a pending release. The Param is named `stamp_gate` (`gate` alone is a Gen operator name, as `edge` is). There is no stamp on load.
 - **FR-008**: The envelope MUST be computed in the patcher per draw (G1), with `attack` and `release` in frames, `0` meaning instant; the codebox receives `env` as a Param.
 - **FR-009**: Both outlets MUST follow the render size (`render_dim` convention) and sample in0 and in1 bilinearly.
@@ -117,6 +117,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 | `amount` | 0–1 | 1 | ink strength |
 | `force` | 0–2 | 1 | impulse strength (the field is in vecfield units) |
 | `impulse` | Radial / Swirl | Radial | the in1-empty fallback; inert when in1 is connected |
+| `rim` | 0.005–0.05 | 0.015 | width of the radial / swirl band, in frame widths (Matt, 2026-11-05: a dial, not a constant); inert when in1 is connected |
 | `attack` | frames, 0–60 | 0 | envelope rise; 0 = instant |
 | `release` | frames, 0–120 | 8 | envelope fall; 0 = instant |
 | `stamp` | ubutton / message | | the held press |
@@ -133,7 +134,7 @@ A tap is a kick, a hold is a pour. `attack` and `release` (in frames, 0 = instan
 
 ## Edge Cases
 
-- `softness` 0 (a hard mask): the gradient is one texel wide; the radial field aliases (G3).
+- `softness` 0 or a hard-edged stamp: `softness` and `edge` act in luma, so neither changes a 0-to-1 step; the band comes from `rim` alone (T010).
 - A stamp smaller than a few texels; `threshold` at 0 or 1; `invert` on a full-white texture.
 - in1 non-neutral outside the mask (masked off); in1 with non-finite texels.
 - Render size changes at runtime; non-square render targets (the gradient steps are per-texel in each axis).
