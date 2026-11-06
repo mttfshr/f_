@@ -3,7 +3,7 @@
 > **Direction changed 2026-10-27.** The build direction is now a **separate
 > module**, not the fork described below: see `f_vf_ch.md` (a Cahn–Hilliard
 > phase field that takes two upstream velocity vecfields, one per phase, each
-> from its own `f_vf_fluid`, and blends them by φ) and `f_splat.md` (the drop of
+> from its own `f_vf_fluid`, and blends them by φ) and `f_vf_stamp.md` (the drop of
 > ink or oil). This
 > file stays as the analysis record: the cost tiers, the "why one fluid is
 > structural" finding, the φ-source argument and the timescale discussion all

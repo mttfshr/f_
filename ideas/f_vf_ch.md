@@ -21,7 +21,7 @@ Matt framed the family of looks 2026-10-27. How each is served:
 - **Watercolor ink dispersing in water** — mostly available today as the
   emulsion doc's Tier 0 (`f_vf_fluid` plus `f_vf_advect` with a coloured source),
   where smearing is the point. The missing piece is the drop of ink itself:
-  see `f_splat.md`.
+  see `f_vf_stamp.md`.
 - **Drops forming and sliding on glass** — the drops come from modules that
   already exist upstream (`f_grain`). The trail and rivulet-network half is the
   River rule parked in `f_ca.md`. Nothing is planned here.
@@ -89,7 +89,7 @@ the unresolved mod-inlet convention (`named_mod_textures.md` T4–T6).
 ## Proposed shape
 
 ```
-in0  φ source / control   (texture + messages: ink or oil injected, e.g. from f_splat)
+in0  φ source / control   (texture + messages: ink or oil injected, e.g. from f_vf_stamp)
 in1  velocity vecfield A  (f_vf_fluid out, phase A)       — required
 in2  velocity vecfield B  (f_vf_fluid out, phase B)       — required
 
@@ -257,7 +257,7 @@ NumPy only, in two parts:
 ## Related
 
 `f_vf_emulsion.md` (the analysis this started from; its Tiers, φ-source and
-timescale arguments still stand), `f_splat.md` (the way to drop ink or oil in),
+timescale arguments still stand), `f_vf_stamp.md` (the way to drop ink or oil in),
 `f_vf_fluid`, `f_vf_lbm`, `f_ks` (template for the spectral chain), `f_wc`
 (two-fields-per-chain packing), `f_vf_mix.md` (additive force combiner),
 `f_tf_tensormap` / `f_tensor_type.md` (the interface projector), `f_tf_aniso_blur`

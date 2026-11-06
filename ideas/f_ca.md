@@ -95,7 +95,7 @@ fixed internal resolution, a useful architectural precedent).
 ## Fluid coupling for the River rule (parked 2026-10-27)
 
 Discussed with Matt as a possible partner for the fluid modules; **parked**, not
-planned. The live fluid work is `f_vf_ch.md` and `f_splat.md`. What was
+planned. The live fluid work is `f_vf_ch.md` and `f_vf_stamp.md`. What was
 worked out, for when it is picked up:
 
 - **Flow-direction vecfield outlet (my inference, not in the draft).** Each new

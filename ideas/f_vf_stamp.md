@@ -1,8 +1,15 @@
-# f_splat (working name) — a triggered drop: ink blot plus impulse
+# f_vf_stamp (was `f_splat`) — a gated stamp: ink texture plus impulse vecfield
 
 **Status:** ⚪ idea only, not specced, not scheduled. Raised 2026-10-27 with Matt
 as the missing "drop of ink" piece for the ink-in-water look and for dropping
 oil into `f_vf_ch.md`. Name is a placeholder.
+
+> **Decisions 2026-11-05 (Matt):** (1) **Stamp only**: the shape comes in as a texture; the
+> module does not generate blots. Named **`f_vf_stamp`** (the `f_vf_` prefix: it takes and
+> produces vecfields). (2) **Coverage from luma**, not alpha. Still open: the fallback with
+> nothing on in1, and the dials. The sections from "Concept" to "Tier-1 checks" below
+> describe the original generated-blot design (2026-10-27) and are SUPERSEDED by the
+> stamp variant, except the curl constraint, which now applies to in1.
 
 ## The gap
 
@@ -94,7 +101,7 @@ after it, so any press is seen by at least two rendered frames; counters, never
 timers). Reference: `docs/f-reference/f_wave_field.md`, decisions D11-D14 in
 `.specify/f_wave_field/tasks.md`.
 
-What it would give `f_splat` (inference, not tried):
+What it would give `f_vf_stamp` (inference, not tried):
 
 - **The envelope question gets a performer-sized answer: tap = drop, hold = pour.**
   A patcher-level `line` ramps `amp` up on press and down on release; the sustain is
@@ -106,7 +113,7 @@ What it would give `f_splat` (inference, not tried):
   counter spreads it over two to three, which matters at `f_vf_fluid`'s default
   `force` of 0.02 per frame.
 - **Replace-versus-add is not this module's question.** `f_wave_field` pins
-  (replaces) because that module holds the field; `f_splat`'s outputs are stateless,
+  (replaces) because that module holds the field; `f_vf_stamp`'s outputs are stateless,
   so whether a splat adds to what is there is decided by the consumers.
 
 What it does not settle:
@@ -128,7 +135,7 @@ and is an open choice.
 
 ## Stamp variant: the shape comes in as a texture (2026-11-05, Matt)
 
-Matt's idea: `f_splat` does not draw the blot. It is a **stamping tool**. Two inlets:
+Matt's idea: `f_vf_stamp` does not draw the blot. It is a **stamping tool**. Two inlets:
 
 ```
 in0  texture   the stamp: its shape is the blot, its RGB is the ink      (where / what)

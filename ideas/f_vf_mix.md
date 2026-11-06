@@ -43,7 +43,7 @@ Whether `mix` should be a scalar param, a texture inlet, or both. Texture-driven
 - **A concrete consumer exists (2026-10-27):** `f_vf_ch.md` returns a force
   vecfield (buoyancy and surface tension) that must be added to the performer's
   own stirring force before `f_vf_fluid`'s single force inlet, and a splat
-  impulse (`f_splat.md`) would be added the same way. Additive is the mode
+  impulse (`f_vf_stamp.md`) would be added the same way. Additive is the mode
   that matters there.
 - Output must remain float32 RG to stay in the f_vecfield contract
 - Additive combination may need normalization or clamping to keep output in [0,1] range — need to decide whether to normalize or clip

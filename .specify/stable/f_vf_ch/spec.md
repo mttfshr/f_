@@ -6,7 +6,7 @@ _Created: 2026-10-27_
 _Status: Draft — not yet built_
 _Origin: `ideas/f_vf_ch.md`, which grew out of `ideas/f_vf_emulsion.md`
 (2026-09-29). Direction, name and the required second vecfield settled with Matt
-2026-10-27. Companion idea: `ideas/f_splat.md` (the drop of ink or oil)._
+2026-10-27. Companion idea: `ideas/f_vf_stamp.md` (the drop of ink or oil)._
 
 **Working name, chosen by Matt 2026-10-27.** Confirm at Phase 3 (gate G1).
 
@@ -21,7 +21,7 @@ derivation, not checked against the repo or tried. Phase 0 exists to test it.
 
 - **Phenomenon:** an oil-and-water light show: two fluids that do not mix, with
   different characters, viscosity first. Ink dispersing in water is served by
-  existing modules (`f_vf_fluid` + `f_vf_advect`) plus `f_splat`; drops on glass
+  existing modules (`f_vf_fluid` + `f_vf_advect`) plus `f_vf_stamp`; drops on glass
   and pooling water are out of scope here.
 - **A separate module, not a fork of `f_vf_fluid`.** `f_vf_fluid` uses all four
   channels of its DFT chain, so the phase field needs its own chain either way.
@@ -33,7 +33,7 @@ derivation, not checked against the repo or tried. Phase 0 exists to test it.
 - **The phase field φ has a dedicated source inlet,** not derived from any force
   (the argument in `f_vf_emulsion.md`: contrast in the image needs independent
   causes).
-- **Drops come from upstream** (`f_grain`, `f_splat`); this module does not
+- **Drops come from upstream** (`f_grain`, `f_vf_stamp`); this module does not
   generate them.
 - **Inputs are Fluid's encoded outlets** (render size, gain applied, clamped to ±1
   field units), not its raw solver state. That caps the velocity φ can feel.
@@ -366,4 +366,4 @@ one patch, menu placement and docs follow library conventions.
 - More than two phases; a free surface; variable density; compressibility.
 - Non-periodic edges; absorbing or reflecting boundaries.
 - Colouring φ (a downstream consumer's job).
-- Generating drops (upstream: `f_grain`, `f_splat`).
+- Generating drops (upstream: `f_grain`, `f_vf_stamp`).
