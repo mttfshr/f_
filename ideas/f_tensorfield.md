@@ -32,7 +32,7 @@ judgment in a scratch patch. All seven are registered (menu, README, launcher, i
 | Module | Role | Tier 1 | Tier 2 | Tier 3 / open gates |
 |---|---|---|---|---|
 | `f_tf_tensormap` | Producer: raw (0) + packed (1) | done | 8/8 | Done, live-checked 10-16 |
-| `f_tf_axisflow` | Bridge: packed tensor to seam-free vecfield | done | 5/5 | Done; drove `f_vf_advect` live. v2 ideas in backlog |
+| `f_tf_axisflow` | Bridge: packed tensor to seam-free vecfield | done | 9/9 | Done; drove `f_vf_advect` live. v2 ideas in backlog |
 | `f_tf_smooth` | Operator: one-pole temporal smoother | green | 6/6 | `release` default and range (T016) |
 | `f_tf_glyph` | Consumer: glyph field, family debug tap, **canonical decode idiom** | 14/14 | 6/6 | Variant menu and debug tints (look); defaults provisional |
 | `f_tf_sharpen` | Operator: eigengap exaggerate / relax, trace fixed | 15/15 | 6/6 | Dial mapping (0-4 one-sided vs bipolar vs log) and possible rename (T016/T017) |

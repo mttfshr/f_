@@ -310,7 +310,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_vf_prism**
 1. Dispersion-field reuse: `f_vf_prism` out2 (weighted dispersion direction vecfield) → `f_vf_split` → two scalars → `f_weave` across and along — the prism's own dispersion drives the weave's geometry.
-2. Brightness-gated only: `f_tf_smooth`-stabilized tensor → `f_tf_axisflow` → `f_vf_prism` — prism split follows image edges, not a synthetic field.
+2. Brightness-gated only: `f_tf_tensormap` outlet 1 → `f_tf_axisflow` → `f_vf_prism` — prism split follows image edges, not a synthetic field.
 
 **f_vf_advect**
 1. Excitable trails: camera → `f_vf_advect` (decay > 1) → `f_vf_glow` — accumulated flow amplifies frame to frame, self-igniting along the vortex street.
@@ -336,7 +336,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_tf_sharpen**
 1. Commit-to-hatch: `f_tf_smooth` → `f_tf_sharpen` → `f_tf_hatch` — the sharpened eigengap pushes coherence toward 1, so strokes follow the axis further and less of the frame reads as grain.
-2. Relax-then-axisflow: `f_tf_sharpen` (low, relaxing) → `f_tf_axisflow` → `f_vf_streak` — near-isotropic regions give an even blur; committed edges give hard streaks.
+2. Not into `f_tf_axisflow`: `f_tf_sharpen` and `f_tf_smooth` output the raw tensor, and axisflow reads only the packed form (tensormap outlet 1).
 
 **f_tf_aniso_blur**
 1. Structure-smoothing grade: camera → `f_tf_aniso_blur` (source = camera, tensor = same camera through `f_tf_tensormap` → `f_tf_smooth`) → `f_hue_processor` — blur only along structures, then selectively re-saturate.

@@ -2,6 +2,15 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 3, `f_tf_hatch` moved to `.specify/stable/`
+
+- **Done (offline, Claude):** preflight, v1 wording removed from four docs, reference doc and spec brought up to date, helpfile given `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch. Moved after Matt's helpfile look passed (T068). Record: `.specify/stable/f_tf_hatch/tasks.md`, "Stable preflight" and "Moved to stable/".
+- **Verified:** drift ok, menu and launcher `--check`, `test_generate_menu.py` 17/17 (log `tests/logs/20261106-083730-offline.log`). `bench_tf_hatch.py` not re-run; no code changed; no log of the 13/13 run exists, only commit `742e9db`.
+- **Gates:** no row touched. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-084140-offline.log`).
+- **Optional, Matt's call:** a `bench_tf_hatch.py` run to put a log on record for the 13/13.
+- **Pattern for the next module:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. Grep for v1 or stale wording beyond the reference doc: Hatch's was in `module-inventory.md`, `f_tensor_type.md`, `library-characteristics.md`. A `git mv` into `stable/` adds a folder level, so check `parents[N]` and `../` paths in spike scripts.
+- **Next:** `f_tf_axisflow`. Its helpfile, and those of `f_vf_potential`, `f_vf_flow`, have no upstream module wired (per the previous entry, not opened this session).
+
 ## 2026-11-06: batch 3, `f_tf_tensormap` moved to `.specify/stable/`
 
 - **Done:** preflight, stale docs and spec fixed, helpfile given a source (Claude, offline); moved after Matt's helpfile look passed. Record: `.specify/stable/f_tf_tensormap/tasks.md`, "Moved to stable/".

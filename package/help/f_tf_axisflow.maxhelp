@@ -74,7 +74,7 @@
        "expression": "themecolor.live_control_fg"
       }
      },
-     "text": "Turns a Tensor Map into a flow field that follows image edges, with no seam. Feeds Advect, Warp",
+     "text": "Lets vecfield modules follow image edges: turns Tensor Map's unsigned axis into seam-free signed flow",
      "fontsize": 14.0,
      "linecount": 2,
      "varname": "autohelp_top_digest[3]"
@@ -156,6 +156,68 @@
    },
    {
     "box": {
+     "id": "d-3",
+     "maxclass": "bpatcher",
+     "name": "vs_sources_main.maxpat",
+     "numinlets": 1,
+     "numoutlets": 1,
+     "outlettype": [
+      "jit_gl_texture"
+     ],
+     "patching_rect": [
+      338.0,
+      23.75,
+      296.4,
+      125.5
+     ],
+     "bgmode": 1,
+     "border": 1,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
+     "lockedsize": 0,
+     "offset": [
+      0.0,
+      0.0
+     ],
+     "viewvisibility": 1
+    }
+   },
+   {
+    "box": {
+     "id": "d-11",
+     "maxclass": "bpatcher",
+     "name": "f_tf_tensormap.maxpat",
+     "numinlets": 1,
+     "numoutlets": 2,
+     "outlettype": [
+      "jit_gl_texture",
+      "jit_gl_texture"
+     ],
+     "patching_rect": [
+      338.0,
+      190.0,
+      154.0,
+      84.0
+     ],
+     "bgmode": 1,
+     "border": 1,
+     "clickthrough": 0,
+     "enablehscroll": 0,
+     "enablevscroll": 0,
+     "lockeddragscroll": 0,
+     "lockedsize": 0,
+     "offset": [
+      0.0,
+      0.0
+     ],
+     "viewvisibility": 1,
+     "varname": "f_tf_tensormap"
+    }
+   },
+   {
+    "box": {
      "id": "d-4",
      "maxclass": "bpatcher",
      "name": "f_tf_axisflow.maxpat",
@@ -166,7 +228,7 @@
      ],
      "patching_rect": [
       338.0,
-      24.0,
+      294.0,
       154.0,
       90.0
      ],
@@ -197,7 +259,7 @@
      ],
      "patching_rect": [
       338.0,
-      168.0,
+      404.0,
       236.0,
       249.0
      ],
@@ -222,10 +284,10 @@
      "numinlets": 1,
      "numoutlets": 0,
      "patching_rect": [
-      500.0,
-      188.0,
-      210.0,
-      110.0
+      512.0,
+      294.0,
+      230.0,
+      98.0
      ],
      "fontface": 0,
      "fontname": "Ableton Sans Light",
@@ -236,13 +298,63 @@
       0.0
      ],
      "bubble": 1,
-     "text": "Input: Tensor Map outlet 1. Output goes\nto a vecfield inlet (e.g. Advect in2).\nOptional 2nd inlet: a vecfield (e.g.\nVortex) as the reference direction per\npixel; Angle rotates it. Negative Gain\nreverses the flow.",
+     "text": "In 0: Tensor Map outlet 1 (packed axis).\nSmooth and Sharpen output the raw\ntensor, which this cannot read.\nIn 1 (optional): a vecfield sets the\ndirection per pixel; Angle rotates it.\nTry Vortex: it stops one-way drift.",
+     "fontsize": 12.0,
+     "linecount": 6
+    }
+   },
+   {
+    "box": {
+     "id": "d-10",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      590.0,
+      404.0,
+      190.0,
+      98.0
+     ],
+     "fontface": 0,
+     "fontname": "Ableton Sans Light",
+     "bgcolor": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "bubble": 1,
+     "text": "Needs a running Vsynth render: the\noutput follows its size.\nPreview shows the field: gray = no\nflow. Feed a vecfield inlet (Advect\nor Warp inlet 1) to see it push.\nNegative Gain reverses the flow.",
      "fontsize": 12.0,
      "linecount": 6
     }
    }
   ],
   "lines": [
+   {
+    "patchline": {
+     "destination": [
+      "d-11",
+      0
+     ],
+     "source": [
+      "d-3",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "destination": [
+      "d-4",
+      0
+     ],
+     "source": [
+      "d-11",
+      1
+     ]
+    }
+   },
    {
     "patchline": {
      "destination": [

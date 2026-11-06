@@ -1,7 +1,7 @@
 # Spec: f_tf_axisflow
 
 _Created: 2026-10-16_
-_Status: Built 2026-10-16; signed gain and the reference inlet added 2026-10-17._
+_Status: Built 2026-10-16; signed gain and the reference inlet added 2026-10-17; `width` / `height` internal since 2026-10-30 (`render_dim`)._
 _Design history: `design.md` (same directory). Where they differ, this spec wins._
 _Hub: `ideas/f_tensorfield.md` (consumer audit, exclusion list)._
 
@@ -29,7 +29,8 @@ reference, fading to zero where the edge is perpendicular to it (gradient parall
 the price of having no seam.
 
 **Processor archetype, `driving_inlet`.** Inlet 0 carries the tensormap's outlet 1 (packed
-direction/trace/coherence) and all control messages. One outlet: vecfield.
+direction/trace/coherence) and all control messages. Inlet 1 (optional, added 2026-10-17) takes a
+reference vecfield. One outlet: vecfield.
 
 ---
 
@@ -69,10 +70,10 @@ changed here.
 | Param | Range / default | Meaning |
 |---|---|---|
 | `mode` | menu: along / across, along | follow the edge (reference projected onto the edge line), or its normal (onto the gradient axis) |
-| `angle` | −180–180°, 0 | reference direction φ; where the fade-to-zero lands |
+| `angle` | −180–180°, 0 | reference direction φ; where the fade-to-zero lands. With a reference vecfield connected it rotates that field |
 | `gain` | −4–4, 1 | signed output amplitude; negative reverses the flow (changed 2026-10-17) |
 | `gate` | 0–1, 1 | 0 = ignore coherence; 1 = multiply magnitude by coherence (A) |
-| `width`, `height` | 64–8192, 640 / 480, numbox | frame size in pixels. `dim` reads 1 inside live `jit.gl.pix` (see tensormap spec), so they are Params |
+| `width`, `height` | internal, no dials | frame size in pixels, driven from the render size by `render_dim` (2026-10-30). `dim` reads 1 inside live `jit.gl.pix` (see tensormap spec), so they are Params |
 | `bypass` | param bypass (`bypass_gate`) | neutral vecfield |
 
 ## Functional requirements
@@ -92,8 +93,9 @@ changed here.
   preserved otherwise.
 - **FR-008** Bypass MUST output the neutral vecfield via a `bypass_gate` Param (not the native
   `@bypass`), registered in `tests/contracts/bench_modules.py` `BYPASS_EXPECT`.
-- **FR-009** Vector magnitude MUST stay within the encodable range [−1, 1] for gain ≤ 1
-  (|v| ≤ 1 and the aspect scale ≤ 1 guarantee it); the output is clamped for higher gain.
+- **FR-009** Vector magnitude MUST stay within the encodable range [−1, 1] for |gain| ≤ 1 with the
+  `angle` reference (|v| ≤ 1 and the aspect scale ≤ 1 guarantee it); the output is clamped per axis
+  for higher gain or a reference longer than 1.
 
 ## Non-functional
 
@@ -111,12 +113,11 @@ changed here.
 
 - Edge exactly perpendicular to the reference (gradient parallel to it): v_along = 0 there (by design).
 - Very low coherence with `gate` = 1: flow vanishes; with `gate` = 0 it follows noisy axes.
-- `width`/`height` left at defaults on a different frame size: direction skewed by the ratio;
-  document it, same as the tensormap.
+- Tensor input at a size other than the render size: assumed not to happen (the reference doc says the
+  input is assumed render-sized).
 
 ## Out of scope
 
-- Per-pixel reference direction (a second inlet, e.g. bias toward a swirl field): built 2026-10-17 (see tasks Phase 5).
 - `normalize` / full-magnitude mode with a seam.
 - Trace gating (B channel): add only if the live test wants it.
 - Outlet 0 (raw tensor) input.

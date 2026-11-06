@@ -17,7 +17,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap` and `f_tf_hatch` moved, `f_tf_axisflow` is next; plan and bar are in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
+0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap` and `f_tf_hatch` moved, `f_tf_axisflow` preflighted 2026-11-06, waiting on Matt's helpfile look; plan and bar are in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
 
 2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
 3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.

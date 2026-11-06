@@ -80,7 +80,7 @@ Storing (cos θ, sin θ) of an unoriented axis forces an arbitrary sign, and the
 | Patch | Role | Notes |
 |---|---|---|
 | `f_tf_tensormap` | Producer | Image/scalar texture -> raw tensor + packed |
-| `f_tf_axisflow` | Bridge | Packed tensor -> vecfield (projection of a reference angle onto the edge line) |
+| `f_tf_axisflow` | Bridge | Packed tensor -> vecfield (projection of a reference direction onto the edge line) |
 | `f_tf_smooth` | Processor | Raw tensor -> raw tensor, smoothed over time |
 | `f_tf_sharpen` | Processor | Raw tensor -> raw tensor, eigengap scaled |
 | `f_tf_aniso_blur` | Consumer | Raw tensor + source texture -> source blurred along the structure |

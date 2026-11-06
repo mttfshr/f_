@@ -154,7 +154,7 @@ ellipse to circle), `f_lens` (predicted always circles). Also feeds adaptive ant
   an RGB-aware tensor that catches chroma edges (kuwahara does this); Gaussian pre-blur vs box
   radius; Scharr instead of Sobel if fine grain demands it; a decoded-convenience outlet if
   per-consumer decode proves noisy in tier 3.
-- **`f_tf_axisflow`:** per-pixel reference-direction inlet, `normalize`, trace gating.
+- **`f_tf_axisflow`:** `normalize`, trace gating (the per-pixel reference inlet was built 2026-10-17).
 - **`f_tf_smooth`:** attack shaping (release-only today by design), a reset bang or
   disagreement detector for hard scene cuts.
 - **`f_tf_hatch`:** tone gating (left out of v1), cross-hatch layering, curved-stroke marching

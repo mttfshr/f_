@@ -1,7 +1,7 @@
 # f_tf_axisflow
 
 **Type:** Processor (f_vecfield producer, tensor input)
-**Status:** Built 2026-10-16; mirror and bench tests green, live-checked with `f_vf_advect`. Helpfile written 2026-10-18.
+**Status:** Built 2026-10-16; mirror and bench tests green, live-checked with `f_vf_advect`. Helpfile written 2026-10-18, given a source chain 2026-11-06.
 **2026-10-17:** `gain` made signed and an optional per-pixel reference-vecfield inlet added (mirror 24/24; bench 9/9 on the GPU 2026-10-17; checked live by Matt 2026-10-17 (inlet position, `f_vf_vortex` as the reference into `f_vf_fluid`, `angle` and negative-gain sweep)).
 
 ---
@@ -69,7 +69,7 @@ One pass, no loops, no state.
 |---|---|---|---|
 | `mode` | Along / Across | Along | Along: flow follows the edges. Across: flow crosses them (gradient direction). |
 | `angle` | -180-180 deg | 0 | Reference direction. Where the fade-to-zero lands. With a reference vecfield connected it rotates that field instead. |
-| `gain` | -4-4 | 1 | Signed output amplitude: negative reverses the flow. Units are the short side of the frame, so consumers usually want small values. |
+| `gain` | -4-4 | 1 | Signed output amplitude: negative reverses the flow. Units are the short side of the frame, so consumers usually want small values. The output is clamped per axis to the encodable range, so a large vector at high gain loses length and can bend. |
 | `gate` | 0-1 | 1 | 0 = ignore coherence; 1 = scale flow by the tensormap's coherence, so only confident structure moves. |
 | `bypass` | 0/1 | 0 | Neutral vecfield. |
 
@@ -95,13 +95,15 @@ jit.gl.bfg -> f_tf_tensormap -(outlet 1)-> f_tf_axisflow -> f_vf_advect (vecfiel
                        source texture ------------------------------> f_vf_advect (texture in)
 ```
 
+The input must be tensormap outlet 1. `f_tf_smooth` and `f_tf_sharpen` output the raw tensor (the outlet 0 encoding), which this module does not read, so they cannot sit in front of it.
+
 Sweep `angle` to move where the flow fades. `gate` at 1 keeps flat or noisy areas still. Use **Across** to push along the gradient instead (toward or away from edges).
 
 ---
 
 ## Notes
 
-- Tests: `tests/modules/tf_axisflow/test_tf_axisflow.py` (NumPy mirror, 24 tests, including a mutation check that catches along/across swapped, and the signed-gain and reference-inlet cases) and `tests/modules/tf_axisflow/bench_tf_axisflow.py` (GPU parity, 9 tests, all green 2026-10-17, including the signed-gain and reference cases). Spec, plan, tasks: `.specify/f_tf_axisflow/`.
+- Tests: `tests/modules/tf_axisflow/test_tf_axisflow.py` (NumPy mirror, 24 tests, including a mutation check that catches along/across swapped, and the signed-gain and reference-inlet cases) and `tests/modules/tf_axisflow/bench_tf_axisflow.py` (GPU parity, 9 tests, all green 2026-10-17, including the signed-gain and reference cases; that run predates the 2026-10-30 `render_dim` change and no log of it is kept). Spec, plan, tasks: `.specify/f_tf_axisflow/`.
 - `phi` is a predefined GenExpr constant and cannot be assigned; the codebox uses `ref_ang`.
 - Deferred: a `normalize` mode that keeps full magnitude at the cost of a seam, trace gating.
 

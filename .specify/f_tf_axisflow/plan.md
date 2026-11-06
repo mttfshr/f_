@@ -2,6 +2,7 @@
 
 _Date: 2026-10-16_
 _Spec: `.specify/f_tf_axisflow/spec.md`_
+_Written before the reference inlet (2026-10-17) and `render_dim` (2026-10-30). Where they differ, the spec and the reference doc win._
 
 ## Summary
 
