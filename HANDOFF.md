@@ -26,7 +26,8 @@
 - **Decided (Matt, chat; record in `.specify/f_vf_stamp/tasks.md`):** G5 reading confirmed; G2 `out0 = vec(in0.rgb * cov * amount * env, 1.0)`; G7 Rec.709; G3 the plain wide central difference with a `rim` dial in frame widths (plan ADR-4); G6 the spec's table (`edge` and `seed` cut, `threshold` 0.05, `amount` 0-4); FR-003's band clamped at 0 so black never stamps.
 - **Commits:** 7ddc4a8, 269fdf6, 5667368, ed010cc, then this one.
 - **Verified:** `test_vf_stamp.py` 20/20 offline (Claude; log `tests/logs/20261105-212945-offline.log`). Mirror only.
-- **Not run:** any bench, `tests/build/test_gates.py`, the rest of the offline suite. Nothing is on the GPU.
+- **Also verified:** `tests/build/test_gates.py` 5/5 (Matt's go; log `tests/logs/20261105-213038-offline.log`).
+- **Not run:** any bench, the rest of the offline suite. Nothing is on the GPU.
 - **Inferred, not observed:** the radial leak through `project` (about 10% of energy, formula only; viscosity and `taps` not modelled); taps at about 0.15-0.2 brightness at advect's defaults; Swirl's on-screen direction against `f_vf_vortex`'s `curl`. All land at T030 / T032.
 - **Known limits at the defaults:** pure blue stamps at 0.81. `softness` and `rim` are different things: `softness` acts in luma, the band's width comes from `rim`.
 - **Owed to Matt:** T008 later (menu category, held by `G-menu`). The live looks come after Phase 1.
