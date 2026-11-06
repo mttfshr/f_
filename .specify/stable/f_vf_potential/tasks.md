@@ -23,7 +23,7 @@ Ids start at T001._
 - [x] T003 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/vf_potential/{vf_potential_mirror,test_vf_potential}.py`, 16/16 offline. Checks: the geometric series and fixed point for a uniform field, zero-field decay, bypass, clamp, advection, the strength/tint feedback closed form, and the direction of `decay` from the doc's own words (added 2026-10-20 after the planted-doc control for this module was missed by the author and the verifier). See `HANDOFF.md` 2026-10-20.
 
 - [x] T004 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T005 Matt's helpfile look: the new demo chain at defaults, the digest, the two notes, and the bypass toggle (does it clear the trail, and is that fine). Not moved to `.specify/stable/` until this passes.
+- [x] T005 Matt's helpfile look PASSED 2026-11-06 ("Look passes, move it"): the new demo chain at defaults, the digest, the two notes. Moved to `.specify/stable/`. He did not say whether bypass clears the trail, so that stays in `plan.md` Owed to Matt.
 
 ## Stable preflight (2026-11-06)
 
@@ -36,3 +36,7 @@ Chains in `library-characteristics.md`: every field into Potential is a vecfield
 Helpfile: nothing was wired upstream, so the demo showed nothing. Added `vs_sources_main` -> `f_vf_repulse` -> Potential inlets 0 and 1 -> preview, the doc's own typical chain, and moved the module and preview down. Expected at defaults (from the codebox, not seen): steady level is about half the field magnitude. `vs_sources_main` opens on the Movie tab. The note is rewritten beside the module, with a second beside the preview. Neither overlaps the preview (rects: preview 338-574 x 411-660; notes 560-780 x 281-353 and 590-780 x 411-509). The digest now says what the module is for. `test_generate_menu.py` 17/17 after the edit (`tests/logs/20261106-093622-offline.log`). Live by Matt: T005.
 
 Left alone: `definition.py`'s docstring calls the previous frame `in3` (it is `in4`) and says the vecfield is read from `in2` without naming the inlet; changing it may mark the bench stale, as with Axis Flow. `skills/vsynth-bpatcher/SKILL.md` lists Potential among modules that re-emit a vecfield (needs Matt's re-upload). `docs/f-reference/f_weave.md` still says `src_potential` is shipped; `src/f_weave/definition.py` has no such name, and that is Weave's record.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile look passed, so the module moved. The folder holds only this file: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing. Drift still ok. `tests/build/test_gates.py` not run: it needs Matt's go. Open: whether to keep the trigger inlet or make the vecfield drive inlet 0 (Matt's decision, asked 2026-11-06; a module change and rebuild).

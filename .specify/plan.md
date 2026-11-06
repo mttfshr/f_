@@ -17,7 +17,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow` and `f_vf_fieldmap` moved, `f_vf_potential` preflight done and waiting on Matt's helpfile look (T005), then `f_vf_flow`; plan and bar are in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
+0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap` and `f_vf_potential` moved, `f_vf_flow` is next; plan and bar are in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
 
 2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
 3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
@@ -26,8 +26,8 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
-- **Runs and looks:** the `f_vf_potential` helpfile (T005), including does bypass clear its trail, and is that fine (inferred, not seen live); the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
-- **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
+- **Runs and looks:** does bypass clear the `f_vf_potential` trail, and is that fine (inferred, not seen live); the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no. `f_vf_potential`: keep the trigger inlet, or make the vecfield drive inlet 0 (module change and rebuild).
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).

@@ -4,7 +4,7 @@
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
-**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. `f_tf_hatch` moved to `.specify/stable/` 2026-11-06. `f_tf_axisflow` moved to `.specify/stable/` 2026-11-06. `f_vf_fieldmap` moved to `.specify/stable/` 2026-11-06. Stable push in progress: `f_vf_potential` preflight done offline, waiting on Matt's helpfile look (T005), not moved; then `f_vf_flow`, `f_tone_curve`. Plan and bar: the 2026-11-06 entries in `HANDOFF_ARCHIVE.md`, and `.specify/plan.md` Next 0.
+**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. `f_tf_hatch` moved to `.specify/stable/` 2026-11-06. `f_tf_axisflow` moved to `.specify/stable/` 2026-11-06. `f_vf_fieldmap` and `f_vf_potential` moved to `.specify/stable/` 2026-11-06. Stable push in progress: batch 3 continues at `f_vf_flow`, then `f_tone_curve`. Plan and bar: the 2026-11-06 entries in `HANDOFF_ARCHIVE.md`, and `.specify/plan.md` Next 0.
 
 **Candidates (Matt decides):**
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
@@ -19,12 +19,13 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-06: batch 3, `f_vf_potential` preflight (not moved)
+## 2026-11-06: batch 3, `f_vf_potential` moved to `.specify/stable/`
 
-- **Done (offline, Claude):** preflight, docs and helpfile fixed; demo chain added (`vs_sources_main` -> `f_vf_repulse` -> Potential inlets 0 and 1 -> preview). Record: `.specify/f_vf_potential/tasks.md` "Stable preflight" (T004). Waiting on Matt's look (T005).
+- **Done (offline, Claude):** preflight, docs and helpfile fixed; demo chain added (`vs_sources_main` -> `f_vf_repulse` -> Potential inlets 0 and 1 -> preview). Moved after Matt's helpfile look passed (T005). Record: `.specify/stable/f_vf_potential/tasks.md`, "Stable preflight" and "Moved to stable/".
 - **Found:** three inlets, not two: 0 texture trigger (never read), 1 vecfield, 2 color; the docs and chains implied the field goes to inlet 0 (read from the patcher; not run). Helpfile still said axis-blind. `strength` and the red tint are inside the feedback loop. No menu recipe for the chain `library-characteristics.md` called pre-wired.
 - **Tests:** mirror in `tests/modules/vf_potential/` (not run); contract bench only. No `spec.md` or `plan.md` exists.
 - **Verified:** drift ok, menu and launcher `--check`; `test_generate_menu.py` 17/17 (log `tests/logs/20261106-093622-offline.log`). `bench_modules.py` 2/2 predates these edits, which touch no module code.
-- **Gates:** no row touched. `tests/build/test_gates.py` not run (needs Matt's go).
+- **Gates:** no row touched. `tests/build/test_gates.py` not run after the move (needs Matt's go).
 - **Pattern:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. Check patcher inlets against the docs, and chains by meaning, not only type.
-- **Next:** Matt's look, then the move, then `f_vf_flow` (helpfile has no upstream wired), `f_tone_curve`.
+- **Open (Matt):** keep Potential's trigger inlet, or make the vecfield drive inlet 0 (module change and rebuild).
+- **Next:** `f_vf_flow` (helpfile has no upstream wired), then `f_tone_curve`.
