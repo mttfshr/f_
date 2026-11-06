@@ -6,8 +6,9 @@ oil into `f_vf_ch.md`. Name decided 2026-11-05 (below).
 
 > **Decisions 2026-11-05 (Matt):** (1) **Stamp only**: the shape comes in as a texture; the
 > module does not generate blots. Named **`f_vf_stamp`** (the `f_vf_` prefix: it takes and
-> produces vecfields). (2) **Coverage from luma**, not alpha. Still open: the fallback with
-> nothing on in1, and the dials. The sections from "Concept" to "Tier-1 checks" below
+> produces vecfields). (2) **Coverage from luma**, not alpha. (3) **With nothing on in1 the
+> impulse is RADIAL, derived from the stamp's own gradient** (outward = minus the gradient of the
+> mask). Consequence below. Still open: the dials. The sections from "Concept" to "Tier-1 checks" below
 > describe the original generated-blot design (2026-10-27) and are SUPERSEDED by the
 > stamp variant, except the curl constraint, which now applies to in1.
 
@@ -169,10 +170,16 @@ The rest (inference, not tried):
 - **The curl constraint moves to the vecfield.** The section above (the impulse needs
   curl or `f_vf_fluid`'s `project` deletes it) now applies to what is patched into
   in1: `f_vf_vortex`, a swirl, or optical flow carry curl; a radial field does not.
-  With in1 empty, a candidate fallback: derive the impulse from the stamp's own
-  gradient, swirl = the gradient rotated 90 degrees (divergence-free, with curl at the
-  edges), radial = the gradient itself. It needs a soft mask (a blurred or smoothed
-  threshold), the same band-width lesson as `f_wave_field`'s outline mask; unverified.
+  With in1 empty, **decided 2026-11-05 (Matt): a radial impulse from the stamp's own
+  gradient**, outward = minus the gradient of the mask (the mask is high inside the
+  blot). It needs a soft mask (a blurred or smoothed threshold), the same band-width
+  lesson as `f_wave_field`'s outline mask; unverified. **Consequence (from the curl
+  section above, not yet seen in practice):** a radial field is curl-free, so
+  `f_vf_fluid` at its default `project` of 1 deletes it and the empty-in1 stamp stirs
+  nothing there; it shows at `project` below 1, or in a consumer that reads the field
+  directly (`f_vf_warp`, `f_vf_advect` advecting with it). The swirl alternative (the
+  gradient rotated 90 degrees: divergence-free, curl at the edges) would survive
+  `project` and is left as a possible switch.
 - **Mask and edge.** Coverage from luma or alpha (Vsynth textures are usually A = 1)
   with `threshold` and `softness` dials. An irregular edge can come from a noise-offset
   threshold, which works for any stamp shape, instead of angular harmonics on a radius.
@@ -182,17 +189,16 @@ profile) stays recorded as the alternative; this variant makes it a source upstr
 
 ## Open questions
 
-- **Stateless pulse (recommended) versus held slots.** Pulse: tiny module,
+- **Stateless pulse (recommended) versus held slots.** (Stateless: decided by the stamp variant, 2026-11-05.) Pulse: tiny module,
   composes with the two state holders, needs a patcher-level envelope.
   Slots: self-contained, but means N × params and array state in one
   `jit.gl.pix`, and duplicates persistence that `f_vf_advect` and `f_vf_fluid`
   already provide.
 - **Trigger convention.** A Max message per splat, an internal random clock,
   or both. Needs a decision before any spec. The held press above is a third form: a gate with a `line` envelope.
-- **Position and random clock:** answered by the stamp variant (live from the
-  texture; random drops come from an upstream source), if Matt takes that variant.
-- **Stamp versus generated blot; coverage from luma or alpha; the in1-empty
-  fallback; the name** (`f_stamp`?): see the stamp section.
+  (Decided 2026-11-05: the held press; position is live from the texture; no internal random clock.)
+- **Decided 2026-11-05 (Matt):** stamp only, luma coverage, name `f_vf_stamp`, radial in1-empty
+  fallback. The dial set (`threshold`, `softness`, `amount`, edge irregularity) is still open.
 - **Gate button as a shared building block** in the `definition.py` schema, or
   copied raw boxes.
 - **Ink colour and mixing.** `f_vf_advect` advects channels as plain values,
