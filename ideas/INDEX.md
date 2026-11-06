@@ -143,7 +143,7 @@ substantially move a file in `ideas/`, update its entry here too.
   `.specify/stable/f_vf_ch/`, reference `docs/f-reference/f_vf_ch.md`. Cost about
   3.7 ms at 1080p for this module alone (two Fluids not measured). Two-way coupling
   (stage 2) is not built and needs an untested cross-module feedback cycle.
-- **[f_vf_stamp.md](f_vf_stamp.md)** ⚪ — **2026-10-27 (was `f_splat`); renamed `f_vf_stamp` 2026-11-05.** Now a gated stamping tool (texture + vecfield in). A triggered drop:
+- **[f_vf_stamp.md](f_vf_stamp.md)** ⚪ — **2026-10-27 (was `f_splat`); renamed `f_vf_stamp` 2026-11-05.** Now a gated stamping tool (texture + vecfield in). **Specced 2026-11-05** (`.specify/f_vf_stamp/`). A triggered drop:
   an ink blot texture plus a matching impulse vecfield, as a stateless pulse
   whose persistence is left to `f_vf_advect` and `f_vf_fluid`. The impulse needs
   curl (swirl or dipole), or `project = 1` removes it. Idea only; stateless

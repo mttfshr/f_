@@ -1,12 +1,13 @@
 # f_ — Focus
 
-_Rewritten 2026-10-31, updated 2026-11-04._ Orientation only: what is Active, what is Next, what is owed to Matt. Blocked and parked things are in `.specify/gates.md`. Per-module detail is in `.specify/<module>/tasks.md` and `docs/f-reference/`. Session state is in `HANDOFF.md` (START HERE block). The previous full plan (resolved history, "Still open" 1-14, workstream prose) is in git: `git show 76c2ab8:.specify/plan.md`.
+_Rewritten 2026-10-31, updated 2026-11-05._ Orientation only: what is Active, what is Next, what is owed to Matt. Blocked and parked things are in `.specify/gates.md`. Per-module detail is in `.specify/<module>/tasks.md` and `docs/f-reference/`. Session state is in `HANDOFF.md` (START HERE block). The previous full plan (resolved history, "Still open" 1-14, workstream prose) is in git: `git show 76c2ab8:.specify/plan.md`.
 
 ## Active
 
 1. **Record-keeping.** HANDOFF trimmed (older entries in `HANDOFF_ARCHIVE.md`), this focus doc and `gates.md` written 2026-10-31. Next: use it for a few sessions and measure the startup read; add per-workstream blocks and a generated survey only if the gates file isn't enough.
 2. **`f_modules` menu redesign** (Matt's, in progress). See `G-menu`.
-3. **`f_wave_field` redesign** (Matt's, 2026-11-04, in progress): outline strike, an LFO inlet, the point exciter and X / Y removed; the held press is built through T042 offline (`strike_gate` pin, `ubutton` Strike); next is Matt's live look. Record: `.specify/f_wave_field/tasks.md` Phase 2b / 2c, D1-D12.
+3. **`f_wave_field` redesign** (Matt's, 2026-11-04): done 2026-11-05 except T041: outline strike, LFO inlet, held press (T042), docs and helpfile (T040), in the menu under ∇ Fields, README ⚠ removed; live looks passed and benches green on the four-input harness. T041 (the `f_cymascope` audio front end) is not started. Record: `.specify/f_wave_field/tasks.md`.
+4. **`f_vf_stamp`** (specced 2026-11-05, nothing built): a gated stamping tool (texture + vecfield in; ink + impulse out; radial / swirl switch). Phase 0 gates G1-G8 are in `.specify/f_vf_stamp/tasks.md`.
 
 Closed 2026-11-01: the render-trigger check (`f_stipple` gated `r draw` plus `render_dim` size, T044/T045; `f_weave` unconnected lines and optional inlets (reworked later the same day, below), live contract bench green 2/2; `f_vf_flow` needs a texture, re-typed processor), and `f_wave_field` T030 (Matt: passes with the existing defaults, no change; no bench re-run needed).
 
@@ -26,7 +27,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 - **Runs and looks:** the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
-- **`f_wave_field` (2026-11-04):** the live looks T037 and T043 (panel, `vs_lfo` and `vs_wfg_3` on inlet 1, uni / bi, the held press and the new Strike button).
+- **`f_vf_stamp` Phase 0 decisions (2026-11-05):** G1 envelope (per-draw one-pole in frames vs `line`), G4 gate button (extract a schema type vs copy), G5 bypass, G6 dials. `.specify/f_vf_stamp/tasks.md` T001-T008.
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).

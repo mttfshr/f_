@@ -1,0 +1,102 @@
+# Implementation Plan: f_vf_stamp
+
+**Date**: 2026-11-05
+**Spec**: .specify/f_vf_stamp/spec.md
+
+---
+
+## Summary
+
+A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage with two inputs (the stamp texture, an optional vecfield) and two outputs (ink, impulse vecfield), plus a patcher-level gate and envelope that drive two Params. No solver, no feedback, no DFT. It is a smaller cousin of `f_wave_field`'s `enc` stage: the same inlet-state handling, the same render-size output, the same Strike button pattern.
+
+---
+
+## Technical Context
+
+- **Runtime**: Max 9, `jit.gl.pix` GPU path (GenExpr codebox).
+- **Type**: `@type float32` (the impulse is a vecfield; the ink outlet follows G2).
+- **Inlets**: 2 texture inlets, each through `vs_inState` for an unconnected fallback and a connected flag (`src_vec`); control messages on in0.
+- **Outlets**: 2 (ink, impulse).
+- **Build**: `build/build_patcher.py` from `src/f_vf_stamp/definition.py`; the gate and envelope boxes are `raw_boxes` unless ADR-2 extracts the gate button into the schema.
+- **Test harness**: the codebox bench now passes up to four inputs (extended 2026-11-04); the stamp stage needs two, so it fits as is.
+
+---
+
+## Architecture Decisions
+
+### ADR-1: One stateless stage
+
+**Decision**: a single codebox `stamp` computes coverage, ink and impulse from in0, in1 and Params. No feedback, no state texture.
+
+**Rationale**: the module is a gated, shaped injector; everything that persists is downstream (`f_vf_advect`, `f_vf_fluid`). A pure function of its inputs is the cheapest thing to verify (tier 1 closed forms, tier 2 one stage against its mirror) and composes with any consumer.
+
+**Alternatives rejected**: held slots (N params, array state, duplicates the persistence downstream); a latch at the press (needs a feedback buffer).
+
+### ADR-2: The gate button (G4)
+
+**Context**: `f_wave_field` T042 built the press as `raw_boxes` (a `panel` face, a `ubutton`, `[sel bang 1 0]`, two `[t b b]`, a draw counter with `[sel 2]`). A plain `button` reports no release; `live.text` in button mode sends only a bang; `textbutton` sends two identical bangs; `ubutton` is the one with exact outlets.
+
+**Proposed decision**: extract the pattern into a `definition.py` schema UI type (a gate button naming its Param, message and release-draw count) and rebuild `f_wave_field` from it, checked by `drift -v f_wave_field` reproducing the same patcher. `f_vf_stamp` is the second user. This fits Matt's stated taste for general tools.
+
+**Fallback if Matt declines**: copy the raw boxes, renaming `strike` to `stamp`.
+
+### ADR-3: Envelope per draw, in the patcher (G1)
+
+**Proposed**: `[r draw]` drives a one-pole `env += (gate - env) * k`, `k` = 1 for `attack` 0 else `1 - exp(-1/attack)` (and likewise `release`), `[expr]` or a small `[zl]` / `[pak]` chain, sent as `param env`. No `line`, no timer: the envelope is in frames, consistent with the library's one-model-step-per-draw rule (`f_wave_field` G3). A tap then gives a short bump whose height depends on `attack`; with `attack` 0 the tap gives a full-strength stamp for its gate frames and the tail follows `release`.
+
+**Alternative**: `line` in ms (simple, frame-rate dependent).
+
+### ADR-4: Radial and swirl from the stamp's gradient (G3)
+
+**Proposed**: `g = (cov(x+1,y) - cov(x-1,y), cov(x,y+1) - cov(x,y-1)) / 2` by integer texel index with periodic wrap (the `f_wave_field` outline-mask technique: neighbour texel index computed explicitly, read at its texel centre), outward direction `-g`, swirl direction the outward direction rotated 90 degrees (the sign convention is fixed in Phase 0). Magnitude normalised by the band slope (so it does not depend on `softness`): `-g / max(|g|, eps) * 4 * cov * (1 - cov)`, a bump that is largest mid-edge and zero in the interior and exterior. This gives an edge-band impulse (the blot's expanding rim); a smoothed interior (extra taps) is the Phase 0 alternative. Unverified; the mirror and a live look decide.
+
+### ADR-5: Coverage and irregular edge
+
+`cov = smoothstep(threshold - softness/2, threshold + softness/2, luma + edge * (noise - 0.5))`, `invert` as `1 - cov`. The noise is a value noise on a hash that uses no `sin()`, seeded by `seed`, defined in texel space so the edge shape is stable. This works for any stamp shape, unlike angular harmonics on a radius.
+
+### ADR-6: Connected flags, not values
+
+An unconnected in1 is `vs_black` (0), which would decode as -1 after the vecfield remap. The codebox uses the `src_vec` flag from `vs_inState` (as `f_wave_field`'s `src_force` / `src_lfo`) and suppresses the in1 path from the flag, not from the value.
+
+### ADR-7: Periodic indices only
+
+Every neighbour read uses explicit integer texel indices with a modulo wrap, never an out-of-range `sample()` (`G-edge-wrap`). Gradient steps are per texel in each axis so a non-square render target is handled.
+
+### ADR-8: Bypass (G5)
+
+**Proposed**: neutral outputs (out0 black A = 1, out1 0.5 / 0.5): nothing is stamped. Matches `f_wave_field` and the vecfield-producer convention.
+
+---
+
+## Stage and wiring sketch
+
+```
+in0 (vs_inState) -> stamp (in 1)        in1 (vs_inState) -> stamp (in 2)
+gate button -> [sel bang 1 0] -> PRESS / RELEASE -> draw counter -> stamp_gate
+[r draw] -> envelope one-pole -> param env -> stamp
+stamp -> out0 (ink), out1 (impulse)       r dim -> stamp (render size)
+```
+
+---
+
+## Testing plan (constitution tiers)
+
+- **Tier 1**: NumPy mirror in `tests/modules/vf_stamp/`: coverage closed forms, idle exactness, linearity in `force` / envelope, mask zero, radial outward / swirl divergence-free and rotated 90 degrees, periodic wrap equivalence, hash noise range and determinism, non-finite zap.
+- **Tier 2**: `tests/modules/vf_stamp/bench_vf_stamp.py` runs the real codebox against the mirror (two inputs); a module bench (`bench_vf_stamp_module.py`) for the patcher: connected flags, gate sequence (tap seen for at least two frames, a press cancels a pending release), bypass.
+- **Contracts**: `tests/contracts/test_module_contracts.py` coverage for the new module (`#0_` scoping, bypass, outlets).
+- **Tier 3 (Matt)**: stamp into `f_vf_advect` + `f_vf_fluid`; Radial versus Swirl at `project` 1; camera plus `f_vf_optical_flow` as the in0 / in1 pair; the dial set and ranges.
+
+## Risks
+
+- **Radial at `project` 1 stirs nothing in `f_vf_fluid`** (by the curl constraint): by design, with the swirl switch as the answer; the look test confirms or corrects this.
+- **Gradient aliasing at small `softness`** (a one-texel band): the mirror and the live look decide the default and whether G3 needs a smoothed interior.
+- **Ink channel mismatch with `f_vf_advect`'s injection** (G2): read the consumer before fixing the encoding.
+- **Dial count** against `G-ui-density` (about ten controls).
+- **Schema extraction (ADR-2)** touches `f_wave_field`'s definition; `drift` is the guard.
+
+## Phasing (details in tasks.md)
+
+- **Phase 0**: gates G1-G8, the NumPy mirror, closed-form checks.
+- **Phase 1**: codebox, `definition.py`, patcher with the gate and envelope; optionally the schema gate-button type first.
+- **Phase 2**: tuning with Matt (dials, ranges, defaults, look).
+- **Phase 3**: reference doc, helpfile, menu placement, README row.

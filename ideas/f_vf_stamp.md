@@ -1,6 +1,6 @@
 # f_vf_stamp (was `f_splat`) — a gated stamp: ink texture plus impulse vecfield
 
-**Status:** ⚪ idea only, not specced, not scheduled. Raised 2026-10-27 with Matt
+**Status:** 🟡 **specced 2026-11-05** (`.specify/f_vf_stamp/`: spec, plan, tasks; nothing built). Raised 2026-10-27 with Matt
 as the missing "drop of ink" piece for the ink-in-water look and for dropping
 oil into `f_vf_ch.md`. Name decided 2026-11-05 (below).
 
@@ -8,7 +8,7 @@ oil into `f_vf_ch.md`. Name decided 2026-11-05 (below).
 > module does not generate blots. Named **`f_vf_stamp`** (the `f_vf_` prefix: it takes and
 > produces vecfields). (2) **Coverage from luma**, not alpha. (3) **With nothing on in1 the
 > impulse is RADIAL, derived from the stamp's own gradient** (outward = minus the gradient of the
-> mask). Consequence below. Still open: the dials. The sections from "Concept" to "Tier-1 checks" below
+> mask). Consequence below. (4) **A radial / swirl switch: yes.** Still open: the dials. The sections from "Concept" to "Tier-1 checks" below
 > describe the original generated-blot design (2026-10-27) and are SUPERSEDED by the
 > stamp variant, except the curl constraint, which now applies to in1.
 
@@ -178,8 +178,8 @@ The rest (inference, not tried):
   `f_vf_fluid` at its default `project` of 1 deletes it and the empty-in1 stamp stirs
   nothing there; it shows at `project` below 1, or in a consumer that reads the field
   directly (`f_vf_warp`, `f_vf_advect` advecting with it). The swirl alternative (the
-  gradient rotated 90 degrees: divergence-free, curl at the edges) would survive
-  `project` and is left as a possible switch.
+  gradient rotated 90 degrees: divergence-free, curl at the edges) survives
+  `project`: **a Radial / Swirl switch is in (Matt, 2026-11-05)**, inert when in1 is connected.
 - **Mask and edge.** Coverage from luma or alpha (Vsynth textures are usually A = 1)
   with `threshold` and `softness` dials. An irregular edge can come from a noise-offset
   threshold, which works for any stamp shape, instead of angular harmonics on a radius.
