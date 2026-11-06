@@ -23,7 +23,7 @@ Ids start at T001._
 - [x] T003 **Tier-1 NumPy mirror (omp run mirror-build-3, landed 2026-10-20).** `tests/modules/vf_potential/{vf_potential_mirror,test_vf_potential}.py`, 16/16 offline. Checks: the geometric series and fixed point for a uniform field, zero-field decay, bypass, clamp, advection, the strength/tint feedback closed form, and the direction of `decay` from the doc's own words (added 2026-10-20 after the planted-doc control for this module was missed by the author and the verifier). See `HANDOFF.md` 2026-10-20.
 
 - [x] T004 Stable preflight (2026-11-06, offline by Claude), record below.
-- [x] T005 Matt's helpfile look PASSED 2026-11-06 ("Look passes, move it"): the new demo chain at defaults, the digest, the two notes. Moved to `.specify/stable/`. He did not say whether bypass clears the trail, so that stays in `plan.md` Owed to Matt.
+- [x] T005 Matt's helpfile look PASSED 2026-11-06 ("Look passes, move it"): the new demo chain at defaults, the digest, the two notes. Moved to `.specify/stable/`. Bypass clearing the trail: "yes it's fine" (Matt, 2026-11-06).
 
 ## Stable preflight (2026-11-06)
 
