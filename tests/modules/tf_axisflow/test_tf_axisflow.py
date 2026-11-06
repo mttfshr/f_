@@ -1,6 +1,6 @@
 """
 test_tf_axisflow.py -- tier-1 NumPy mirror of the planned f_tf_axisflow bridge
-(.specify/f_tf_axisflow/{spec,plan,tasks}.md, Phase 0 T001-T006).
+(.specify/stable/f_tf_axisflow/{spec,plan,tasks}.md, Phase 0 T001-T006).
 
 Input is f_tf_tensormap outlet 1 (R,G = cos2t, sin2t packed, B = trace, A = coherence),
 where theta is the dominant GRADIENT direction (across the edge). Output is a signed

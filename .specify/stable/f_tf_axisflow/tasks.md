@@ -55,7 +55,7 @@ rotates it, unconnected = old behavior; title-bar label left as `T_ in ∇ out`.
 
 ## Phase 6: stable push (2026-11-06)
 - [x] T028 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T029 Matt's helpfile look: the new demo chain at defaults, the digest, the two notes, the bypass toggle. Then move to `.specify/stable/`.
+- [x] T029 Matt's helpfile look PASSED 2026-11-06 ("Look passes, move it"): the new demo chain at defaults, the digest, the two notes, the bypass toggle. Moved to `.specify/stable/`.
 
 ## Stable preflight (2026-11-06)
 
@@ -66,6 +66,10 @@ Fixed: `library-characteristics.md` had two chains that cannot work, `f_tf_smoot
 Helpfile: confirmed no source was wired, so the demo showed only neutral gray. Added `vs_sources_main` -> `f_tf_tensormap` outlet 1 -> Axis Flow -> preview. The inlet note sat on top of the preview: moved beside the module and rewritten, with a second note by the preview. The digest now says what the module is for (spec: consumers can follow image structure). Live by Matt: T029.
 
 Left alone, not Axis Flow's alone: the helpfile lists `bypass [0 / 1]`, but the route is `mode angle gain gate`, so the message does not reach `bypass_gate` (read from the patcher; the contract bench reports the same for 43 modules, Hatch included). `codebox_axisflow.gen` line 2 cites the old mirror path `tests/test_tf_axisflow.py`: fixing it means a rebuild and a stale bench entry (`benchdeps.py` tracks the codebox). `menu.py` says `# no demo` on Tensor Advect, though `f_demo_axisflow` exists (`G-menu` holds `menu.py`). `skills/vsynth-bpatcher/SKILL.md` still has the old category table with Axis Flow under T_ Tensor (the skill needs Matt's re-upload).
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile look passed, so the module moved. Live path references were updated in `plan.md`, the reference doc, the `definition.py` comment and the mirror test's docstring; drift still ok. There is no spike folder, and no `parents[N]` or `../` paths in the module's `.specify` folder, so no script needed changing. `HANDOFF_ARCHIVE.md` keeps the old path. `tests/build/test_gates.py` not run after the move (needs Matt's go).
 
 ## Notes (2026-10-16)
 - Mirror 16/16 (`tests/modules/tf_axisflow/test_tf_axisflow.py`); bench 5/5 (`tests/modules/tf_axisflow/bench_tf_axisflow.py`); contract/bench_expect/launch/benchdeps green; bench_modules shows f_tf_axisflow clean (its only failure is the 4 pre-existing f_a_decorrelate errors).

@@ -103,7 +103,7 @@ Sweep `angle` to move where the flow fades. `gate` at 1 keeps flat or noisy area
 
 ## Notes
 
-- Tests: `tests/modules/tf_axisflow/test_tf_axisflow.py` (NumPy mirror, 24 tests, including a mutation check that catches along/across swapped, and the signed-gain and reference-inlet cases) and `tests/modules/tf_axisflow/bench_tf_axisflow.py` (GPU parity, 9 tests, all green 2026-10-17, including the signed-gain and reference cases; that run predates the 2026-10-30 `render_dim` change and no log of it is kept). Spec, plan, tasks: `.specify/f_tf_axisflow/`.
+- Tests: `tests/modules/tf_axisflow/test_tf_axisflow.py` (NumPy mirror, 24 tests, including a mutation check that catches along/across swapped, and the signed-gain and reference-inlet cases) and `tests/modules/tf_axisflow/bench_tf_axisflow.py` (GPU parity, 9 tests, all green 2026-10-17, including the signed-gain and reference cases; that run predates the 2026-10-30 `render_dim` change and no log of it is kept). Spec, plan, tasks: `.specify/stable/f_tf_axisflow/`.
 - `phi` is a predefined GenExpr constant and cannot be assigned; the codebox uses `ref_ang`.
 - Deferred: a `normalize` mode that keeps full magnitude at the cost of a seam, trace gating.
 

@@ -1,6 +1,6 @@
 # f_tf_axisflow patcher definition
 # Input to build/build_patcher.py
-# Spec: .specify/f_tf_axisflow/{spec,plan,tasks}.md   Created: 2026-10-16
+# Spec: .specify/stable/f_tf_axisflow/{spec,plan,tasks}.md   Created: 2026-10-16
 #
 # Single-pix processor: tensormap outlet 1 (packed axis) in, signed vecfield out. The reference
 # direction is projected onto the edge line (or its normal), so there is no atan2 and no sign
