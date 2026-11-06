@@ -1,7 +1,7 @@
 # Tasks: f_vf_fieldmap
 
-**Spec**: `.specify/f_vf_fieldmap/spec.md`
-**Plan**: `.specify/f_vf_fieldmap/plan.md`
+**Spec**: `.specify/stable/f_vf_fieldmap/spec.md`
+**Plan**: `.specify/stable/f_vf_fieldmap/plan.md`
 **Build order**: Sequential. Complete each phase before next.
 **Branching**: All work on main. Commit after each phase checkpoint passes.
 
@@ -150,7 +150,7 @@ Run via `.specify/maintenance/SKILL.md`; full findings in
 ## Stable push (2026-11-06)
 
 - [x] T026 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T027 Matt's helpfile look: the demo at defaults, the digest, the two notes, the bypass toggle (gray on the preview). Not moved to `.specify/stable/` until this passes.
+- [x] T027 Matt's helpfile look PASSED 2026-11-06 ("the helpfile passes"), with one change: remove the Caustic, Warp and Streak references. Moved to `.specify/stable/`.
 
 ## Stable preflight (2026-11-06)
 
@@ -165,3 +165,7 @@ Chains in `library-characteristics.md`: all feed Fieldmap a texture (`f_chladni`
 Helpfile: `vs_sources_main` was already wired. It loads on the Movie tab, so what the demo shows at defaults depends on a movie being loaded; not seen by Claude. The old note said the field has no visible output, but the preview does show it, so it is rewritten and moved clear of the module, and a second note beside the preview says how to read it. Neither overlaps the preview (rects: preview 338-574 x 405-654; notes 512-742 x 294-392 and 590-780 x 404-502). The digest now says what the module is for (spec: a coherent vector field for consumers). Live by Matt: T027.
 
 Left alone: `menu.py` recipes Fluid Caustic and Vorticity Fluid run Fieldmap into Fluid; `G-menu` holds `menu.py`, and the saved Rotate in those demos was not found in the patchers. `definition.py` has no `Spec:` line, and the folder has no scripts, so a move needs neither change. Negative `scale` reaches `G-edge-wrap`'s out-of-range `sample()` case (from the codebox; not run), not added to that row's list.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile look passed, so the module moved. At his request the digest and the first note no longer name Caustic, Warp or Streak; the second note still names Fluid. Header paths in `plan.md` and `tasks.md` were updated; the build-history lines keep the old path. There are no scripts, no `parents[N]` or `../` paths in the folder, and no `Spec:` line in `definition.py`, so nothing else needed changing. Drift still ok; `test_generate_menu.py` 17/17 after the edit (`tests/logs/20261106-093056-offline.log`). `tests/build/test_gates.py` not run: it needs Matt's go. T025 (analytic mirror) stays open and carries over.

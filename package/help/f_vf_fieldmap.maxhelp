@@ -76,7 +76,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Turns any texture into a vecfield, so caustics, warps and streaks can follow its brightness slopes",
+                    "text": "Turns any texture into a vecfield, so other modules can follow its brightness slopes",
                     "varname": "autohelp_top_digest[3]"
                 }
             },
@@ -246,7 +246,7 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 12.0,
                     "id": "d-9",
-                    "linecount": 5,
+                    "linecount": 4,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
@@ -254,9 +254,9 @@
                         512.0,
                         294.0,
                         230.0,
-                        98.0
+                        72.0
                     ],
-                    "text": "Feed the outlet to a vecfield inlet\n(Caustic, Warp or Streak inlet 1): the\nfield does nothing until something\nreads it. Smooth sources give smooth\nfields; try the Noise tab."
+                    "text": "Feed the outlet to any vecfield inlet:\nthe field does nothing until something\nreads it. Smooth sources give smooth\nfields; try the Noise tab."
                 }
             },
             {
