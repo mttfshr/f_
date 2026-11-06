@@ -69,7 +69,7 @@ Left alone, not Axis Flow's alone: the helpfile lists `bypass [0 / 1]`, but the 
 
 ## Moved to stable/ (2026-11-06)
 
-Matt's helpfile look passed, so the module moved. Live path references were updated in `plan.md`, the reference doc, the `definition.py` comment and the mirror test's docstring; drift still ok. There is no spike folder, and no `parents[N]` or `../` paths in the module's `.specify` folder, so no script needed changing. `HANDOFF_ARCHIVE.md` keeps the old path. `tests/build/test_gates.py` not run after the move (needs Matt's go).
+Matt's helpfile look passed, so the module moved. Live path references were updated in `plan.md`, the reference doc, the `definition.py` comment and the mirror test's docstring; drift still ok. There is no spike folder, and no `parents[N]` or `../` paths in the module's `.specify` folder, so no script needed changing. `HANDOFF_ARCHIVE.md` keeps the old path. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-091717-offline.log`). `bench_tf_axisflow.py` 9/9 after the move (Matt's go; log `tests/logs/20261106-091718-bench.log`), the first logged run and the first since `render_dim`.
 
 ## Notes (2026-10-16)
 - Mirror 16/16 (`tests/modules/tf_axisflow/test_tf_axisflow.py`); bench 5/5 (`tests/modules/tf_axisflow/bench_tf_axisflow.py`); contract/bench_expect/launch/benchdeps green; bench_modules shows f_tf_axisflow clean (its only failure is the 4 pre-existing f_a_decorrelate errors).
