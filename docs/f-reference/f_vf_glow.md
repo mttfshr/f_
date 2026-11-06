@@ -91,7 +91,7 @@ Step count is fixed at 48. Jitter amplitude is 0.1 steps (±0.05), enough to eli
 ### Field topology determines glow character
 The visual result depends entirely on the field source:
 - **f_vf_vortex** → arc-shaped halos following rotational streamlines; asymmetric with `direction=1` or `2`
-- **f_vf_fieldmap** → tangential edge feathering; glow follows the gradient of the source (tangent to isolines, not radially outward from bright areas)
+- **f_vf_fieldmap** → edge feathering; glow follows the gradient of the source (across isolines, uphill toward brighter areas; `rotate` 90 turns it along them)
 - **f_vf_vortex_multi** → complex multi-arm halos with superimposed field contributions
 
 This is intentional — f_vf_glow is a field-aligned blur, not a conventional bloom. The field drives the blur direction. For radially-outward bloom, use f_vf_vortex with `curl=0, converge` negative — see Signal chain recipes below.

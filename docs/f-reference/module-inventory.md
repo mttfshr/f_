@@ -153,7 +153,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 |---|---|---|---|---|
 | `f_vf_vortex` | 5: ctrl/bang; 4 `mod` tex (cx, cy, convergence, curl) | 1: vecfield | None (params only) | Neutral vecfield |
 | `f_vf_vortex_multi` | 5: ctrl/bang; 4 global `mod` tex (+ optional per-site position inlets) | 1: vecfield | None (params only) | Neutral vecfield |
-| `f_vf_fieldmap` | 1: tex (scalar-dominant) + ctrl | 1: vecfield | Required (unconnected = neutral vecfield, zero gradient) | Neutral vecfield |
+| `f_vf_fieldmap` | 1: tex (scalar-dominant) + ctrl | 1: vecfield | Required (no `vs_inState`: unconnected = no output) | Neutral vecfield |
 | `f_vf_flow` | 1: tex (scalar, optional) + ctrl | 1: vecfield | Optional (unconnected = uniform field at `angle`; connected = direction perturbed by luma) | Neutral vecfield (not an input passthrough) |
 | `f_vf_repulse` | 1: tex + ctrl | 1: vecfield | Required | Neutral vecfield |
 | `f_vf_optical_flow` | 1: tex (live/video) + ctrl | 2: vecfield; confidence + axis (packed) | Required, and it must be moving (needs frame-to-frame change) | Neutral vecfield (out0); zero confidence (out1) |

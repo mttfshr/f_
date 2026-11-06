@@ -1,7 +1,7 @@
 # Spec: f_vf_fieldmap
 
 _Created: 2026-06-07_
-_Status: Draft_
+_Status: Built. Brought up to the shipped module 2026-11-06 (stable preflight); `strength` became `gain` on 2026-07-19, and the Clarifications below keep the old name as history._
 
 ---
 
@@ -11,7 +11,7 @@ A scalar-to-vecfield converter. Takes any scalar texture input and derives a vec
 
 **Producer in the f_vecfield family.** Primary use case: patch `jit.gl.bfg` (Perlin, Voronoi, fractal noise) into inlet 0, get a coherent vector field out. Any scalar-dominant texture works — f_grain, f_stipple, luma from a video source, etc.
 
-**Processor archetype — requires input.** No self-generating mode. Without a connected source, output is neutral field (all 0.5).
+**Processor archetype — requires input.** No self-generating mode. With nothing connected there is no output: the pix runs only when a texture arrives.
 
 **Single outlet — f_vecfield texture only.** The source texture is not re-output. Debug workflow: patch outlet 0 into vs_displacement or f_caustic.
 
@@ -24,19 +24,22 @@ Gradient computed via central difference at each pixel:
 ```
 // sample luminance at 4 neighbors
 // luma = 0.299*r + 0.587*g + 0.114*b (standard Rec. 601)
-L_right  = luma(sample(in0, norm + vec(h, 0)))
-L_left   = luma(sample(in0, norm - vec(h, 0)))
-L_down   = luma(sample(in0, norm + vec(0, h)))
-L_up     = luma(sample(in0, norm - vec(0, h)))
+// suv = norm * (1 - 2h) + h, the inset that keeps neighbors in bounds for positive h
+L_right  = luma(sample(in0, suv + vec(h, 0)))
+L_left   = luma(sample(in0, suv - vec(h, 0)))
+L_down   = luma(sample(in0, suv + vec(0, h)))
+L_up     = luma(sample(in0, suv - vec(0, h)))
 
-grad.x = (L_right - L_left) * strength
-grad.y = (L_down  - L_up)   * strength
+grad.x = (L_right - L_left) * gain
+grad.y = (L_down  - L_up)   * gain
+// grad is then rotated by `rotate` degrees
 
 // encode to f_vecfield
 R = clamp(grad.x * 0.5 + 0.5, 0.0, 1.0)
 G = clamp(grad.y * 0.5 + 0.5, 0.0, 1.0)
 B = 0.5
 A = 1.0
+// pixels with center luma <= thresh become neutral; bypass_gate mixes to neutral
 ```
 
 **Why central difference:** symmetric around the sample point — gradient is centered at the pixel being computed, not offset by half a step. Correct zero-crossing behavior (flat regions produce exactly 0.5 output). 4 samples is minimal cost for this quality level.
@@ -45,7 +48,7 @@ A = 1.0
 
 **Scale `h` (`scale` param):** expressed in normalized UV coordinates. Default ~2 pixels at 480p (`2.0 / 480.0 ≈ 0.004`). Low scale emphasizes fine gradient structure; high scale smooths over fine detail and extracts coarse structure. This is an expressive parameter — high scale with a high-frequency noise input produces a smoother, lower-frequency field than the input itself.
 
-**No auto-normalization:** gradient magnitude scales with input contrast and step size. The `strength` param is the user-facing calibration control. This avoids the multi-pass reduce operation that frame-level normalization would require.
+**No auto-normalization:** gradient magnitude scales with input contrast and step size. The `gain` param is the user-facing calibration control. This avoids the multi-pass reduce operation that frame-level normalization would require.
 
 ---
 
@@ -57,7 +60,7 @@ A = 1.0
 
 Single inlet. No mod inlets in v1 — the patch is a converter, not a modulated generator. Expressiveness comes from the input source.
 
-vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradient).
+No `vs_inState` or `vs_black` fallback: unconnected means no output.
 
 ---
 
@@ -65,9 +68,11 @@ vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradien
 
 | Param | UI | Range | Default | Notes |
 |---|---|---|---|---|
-| `strength` | live.dial | 0.0–10.0 | 4.0 | Scales gradient magnitude into f_vecfield range. Default 4.0 puts typical jit.gl.bfg Perlin output into useful range. |
-| `scale` | live.dial | 0.001–0.05 | 0.004 | Central difference neighbor distance in normalized UV coords. ~2px at 480p. Low = fine structure; high = coarse/smooth. |
-| `bypass` | jsui (bypass_toggle.js) | 0/1 | 0 | Bypass — outputs neutral field (all 0.5). |
+| `gain` | live.dial | -10–10 | 4.0 | Scales gradient magnitude into f_vecfield range. Default 4.0 puts typical jit.gl.bfg Perlin output into useful range. Negative inverts the field. |
+| `scale` | live.dial | -0.05–0.05 | 0.004 | Central difference neighbor distance in normalized UV coords. ~2px at 480p. Low = fine structure; high = coarse/smooth. |
+| `rotate` | live.dial | -180–180 | 0.0 | Rotates the field vector in degrees, after the gradient. |
+| `thresh` | live.dial | -2–2 | 0.0 | Pixels with center luma at or below this become neutral. |
+| `bypass` | jsui (bypass_toggle.js) | 0/1 | 0 | Drives the codebox Param `bypass_gate`: outputs neutral field (0.5, 0.5, 0.5, 1). Panel toggle only; no route selector. |
 
 **Prefix:** `fieldmap`
 **Object name:** `fieldmap_pix`
@@ -79,13 +84,14 @@ vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradien
 
 ```
 in0 (source texture + control) → routepass jit_gl_texture jit_matrix
-  jit_gl_texture branch → vs_inState → fieldmap_pix in0
-  unmatched → route <params> → live.dials → prepend param <name> → fieldmap_pix in0
+  jit_gl_texture branch → fieldmap_pix in0
+  unmatched → route <params> → live.dials → attrui → fieldmap_pix in0
+  bypass jsui → prepend param bypass_gate → fieldmap_pix in0
 
 fieldmap_pix out0 → out0 (f_vecfield texture, @type float32)
 ```
 
-vs_black fallback via vs_inState when inlet 0 unconnected. Neutral field when bypass active.
+Neutral field when bypass is active.
 
 ---
 
@@ -95,9 +101,9 @@ vs_black fallback via vs_inState when inlet 0 unconnected. Neutral field when by
 - **Flat input:** connect a solid-color texture. Output is flat 0.5/0.5/0.5/1.0 — zero gradient, neutral field.
 - **`scale` low:** fine-detail gradient structure visible. Caustic output shows tight, high-frequency banding.
 - **`scale` high:** coarser, smoother gradient. Caustic output shows broader, lower-frequency banding.
-- **`strength` = 0:** output is neutral field regardless of input.
-- **`strength` high:** gradient saturates — clamp behavior. Output still valid f_vecfield (clamped to 0/1).
-- **Unconnected inlet:** neutral field output (all 0.5). No crash, no black.
+- **`gain` = 0:** output is neutral field regardless of input.
+- **`gain` high:** gradient saturates — clamp behavior. Output still valid f_vecfield (clamped to 0/1).
+- **Unconnected inlet:** no output, no crash.
 - **Bypass:** output is flat 0.5/0.5/0.5/1.0.
 - **Loads in Vsynth.** Output accepted by f_caustic and vs_displacement without error.
 - **jit.gl.bfg → f_vf_fieldmap → f_caustic** is a working three-patch signal chain producing visible caustic structure.
@@ -106,7 +112,7 @@ vs_black fallback via vs_inState when inlet 0 unconnected. Neutral field when by
 
 ## Out of Scope (v1)
 
-- Mod inlets for strength or step — deferred to v2 if needed
+- Mod inlets for gain or scale — deferred to v2 if needed
 - Channel selector (R/G/B vs luminance) — luminance covers expected inputs
 - Auto-normalization — requires multi-pass; deferred indefinitely
 - Visual passthrough outlet — single outlet only; use vs_displacement for field visualization

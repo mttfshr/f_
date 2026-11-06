@@ -11,20 +11,21 @@ Converts any scalar texture into an f_vecfield texture by computing the spatial 
 
 Primary use case: patch `jit.gl.bfg` (Perlin, simplex, Voronoi, fractal) into inlet 0 and get a coherent vector field out. Any scalar-dominant texture works — f_grain, f_stipple, luma from video, etc.
 
-Processor archetype — requires input. Without a connected source, outputs neutral field (all 0.5).
+Processor archetype — requires input. There is no `vs_inState` or `vs_black` fallback and no `r draw`: the pix runs only when a texture arrives, so with nothing connected the module outputs nothing, and the output takes the input texture's size (read from the patcher; the behavior is inferred, not run).
 
 ---
 
 ## Signal Flow
 
 ```
-in0 (source texture + control) → vs_inState → fieldmap_pix
-  unmatched control → params route to dials → fieldmap_pix
+in0 (source texture + control) → routepass jit_gl_texture jit_matrix
+  jit_gl_texture → fieldmap_pix
+  unmatched control → route gain scale rotate thresh → dials → fieldmap_pix
+
+bypass jsui → prepend param bypass_gate → fieldmap_pix
 
 fieldmap_pix (@type float32) → out0 (f_vecfield)
 ```
-
-vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradient).
 
 ---
 
@@ -36,7 +37,7 @@ vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradien
 | `scale` | -0.05–0.05 | 0.004 | Central difference neighbor distance (normalized UV). Low = fine structure; High = coarse/smooth. ~2px at 480p. Negative inverts gradient axis. |
 | `rotate` | -180–180 | 0.0 | Rotates the field vector in degrees, applied after gradient computation. |
 | `thresh` | −2–2 | 0.0 | Suppresses the field (outputs neutral 0.5) below this center-pixel luma threshold. Luma is 0–1, so values below 0 never suppress and values above 1 suppress everywhere. |
-| `bypass` | 0/1 | 0 | Outputs neutral field (all 0.5) |
+| `bypass` | 0/1 | 0 | Panel toggle only: it drives the codebox Param `bypass_gate`, which mixes the output to the neutral field (0.5, 0.5, 0.5, 1). The route has no `bypass` selector, so a `bypass` message does nothing. Native `@bypass` is not used (migrated 2026-11-06). |
 
 **Prefix:** `fieldmap` — **Object name:** `fieldmap_pix`
 
@@ -44,7 +45,7 @@ vs_black fallback when inlet 0 unconnected: neutral field (all 0.5, zero gradien
 
 ## Field Computation
 
-UV is inset by `scale` before sampling (`suv = norm * (1 - 2*scale) + scale`) to keep all four neighbor samples within texture bounds. Luminance (Rec. 601: `0.299R + 0.587G + 0.114B`) sampled at center and 4 neighbors via central difference:
+UV is inset by `scale` before sampling (`suv = norm * (1 - 2*scale) + scale`) to keep all four neighbor samples within texture bounds. That holds for positive `scale` only: a negative `scale` pushes the samples outside 0–1, where they wrap (`G-edge-wrap`). Luminance (Rec. 601: `0.299R + 0.587G + 0.114B`) sampled at center and 4 neighbors via central difference:
 
 ```
 gx = (luma(suv.x + scale, suv.y) - luma(suv.x - scale, suv.y)) * gain
@@ -92,5 +93,7 @@ The fieldmap derives a vector field from the noise spatial structure. f_caustic 
 - **2026-07-19:** `strength` renamed to `gain`; `rotate` and `thresh` params added (rotate the field vector post-gradient; suppress field below a luma threshold). Also fixed: neighbor sampling now insets UV by `scale` to stay within texture bounds, avoiding edge-sample artifacts present in the earlier version.
 - `scale` doubles as a spatial frequency selector: low scale tracks fine noise structure, high scale extracts coarse structure from high-frequency inputs
 - No auto-normalization — gradient magnitude varies with input contrast; `gain` is the user calibration control
+- The inset also stretches the field against the source by up to ±`scale`. It matters only where the field must register with something else (`ideas/f_vf_glass.md`, NumPy only).
+- At `rotate` 0 the field is a pure gradient: curl-free, flowing uphill across the contours. At 90 it runs along the contours and is divergence-free. `f_caustic` and `f_vf_warp` are fine with either, but `f_vf_fluid` at its default `project` 1 removes a gradient force (its mirror: pure-gradient force gives velocity ≈ 0), so use `rotate` near 90 there. NumPy estimate 2026-11-06, offline by Claude, not run in Max: under 1% of the force energy survives a divergence-free projection on smooth noise at `rotate` 0, about 12% on hard edges, and 50% at 45.
 - Compatible with `vs_displacement` as a dumb two-channel texture (treats RG as independent scalars)
 - See `docs/f-reference/f_vecfield_type.md` for full type contract and consumer conventions

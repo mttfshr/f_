@@ -2,6 +2,16 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 3, `f_tf_axisflow` moved to `.specify/stable/`
+
+- **Done (offline, Claude):** preflight, helpfile given `vs_sources_main` -> `f_tf_tensormap` outlet 1 -> Axis Flow, overlapping note moved, digest rewritten, stale spec and docs fixed. Moved after Matt's helpfile look passed (T029). Record: `.specify/stable/f_tf_axisflow/tasks.md`, "Stable preflight" and "Moved to stable/".
+- **Found:** `library-characteristics.md` chained `f_tf_smooth` and `f_tf_sharpen` into Axis Flow; both output the raw tensor, so those chains cannot work (from the docs; not run). Fixed.
+- **Verified:** drift ok, menu and launcher `--check`, `test_generate_menu.py` 17/17 (log `tests/logs/20261106-084608-offline.log`). `bench_tf_axisflow.py` 9/9 (Matt's go; log `tests/logs/20261106-091718-bench.log`).
+- **Gates:** no row touched. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-091717-offline.log`).
+- **Helpfiles:** dead `bypass [0 / 1]` line dropped from 36 (Matt's call), kept in the 9 whose route has the selector; generators and `skills/f-helpfile/SKILL.md` updated. The bench's "not in 43" overcounts (`f_grain`, `f_masonry`). Record: Axis Flow `tasks.md`. Skill re-uploaded and stamped by Matt 2026-11-06.
+- **Pattern:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. A `git mv` into `stable/` adds a folder level, so check `parents[N]` and `../` paths in spike scripts and update the `Spec:` path in `definition.py`. Also check that chains in `library-characteristics.md` feed the module a type it reads, and that helpfile notes do not overlap the preview.
+- **Next:** `f_vf_fieldmap` (its helpfile already has `vs_sources_main` wired; no `tests/modules` folder named for it), then `f_vf_potential`, `f_vf_flow`, `f_tone_curve`. The `f_vf_potential` and `f_vf_flow` helpfiles also have no upstream module wired (confirmed for `f_vf_flow` this session; `f_vf_potential` not opened).
+
 ## 2026-11-06: batch 3, `f_tf_hatch` moved to `.specify/stable/`
 
 - **Done (offline, Claude):** preflight, v1 wording removed from four docs, reference doc and spec brought up to date, helpfile given `vs_sources_main` -> `f_tf_tensormap` outlet 0 -> Hatch. Moved after Matt's helpfile look passed (T068). Record: `.specify/stable/f_tf_hatch/tasks.md`, "Stable preflight" and "Moved to stable/".

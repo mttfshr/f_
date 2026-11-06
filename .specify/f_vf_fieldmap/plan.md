@@ -3,6 +3,8 @@
 **Date:** 2026-06-07
 **Spec:** `.specify/f_vf_fieldmap/spec.md`
 
+_Note 2026-11-06: this plan is the 2026-06-07 design and is kept as history. It predates `gain` (was `strength`), `rotate`, `thresh` and `bypass_gate`, and ADR 4's `vs_black` fallback was never in the shipped patcher. The spec and `docs/f-reference/f_vf_fieldmap.md` are current._
+
 ---
 
 ## Summary

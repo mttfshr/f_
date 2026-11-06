@@ -246,7 +246,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_tone_curve**
 1. Pulse conditioning: camera → `f_tone_curve` (crushed shadows) → `f_wc` pulse inlet — dark frames stop pulsing the Wilson-Cowan web entirely; the web rests between bright beats.
-2. Luma-band field: camera → `f_tone_curve` → `f_vf_fieldmap` → `f_vf_advect` — only the highlights' gradient advects; shadows stall the flow.
+2. Luma-band field: camera → `f_tone_curve` (crushed shadows) → `f_vf_fieldmap` → `f_vf_advect` — only the highlights' gradient advects; shadows stall the flow.
 
 ## ∇ Fields (producers)
 
@@ -260,7 +260,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_vf_fieldmap**
 1. Noise-field warp: `jit.gl.bfg` noise → `f_vf_fieldmap` → `f_vf_warp` (source = `f_masonry`) — noise gradients bend the brick wall.
-2. Field-seeded fluid: `f_vf_fieldmap` (source = camera luma) → `f_vf_fluid` force inlet → `f_vf_advect` — video luminance stirs an incompressible soup that then moves on its own.
+2. Field-seeded fluid: `f_vf_fieldmap` (source = camera luma, `rotate` near 90) → `f_vf_fluid` force inlet → `f_vf_advect` — video luminance stirs an incompressible soup that then moves on its own. At `rotate` 0 the force is a pure gradient, and Fluid's default `project` removes nearly all of it.
 
 **f_vf_flow**
 1. Waveform-directed flow: `vs_wfg_3` inverted output → `f_vf_flow` → `f_vf_streak` — the WFG's phase stripes set a scanning flow angle; streaks sweep in a time pattern.

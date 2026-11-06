@@ -76,7 +76,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "Converts a scalar texture into an f_vecfield via central-difference gradient",
+                    "text": "Turns any texture into a vecfield, so caustics, warps and streaks can follow its brightness slopes",
                     "varname": "autohelp_top_digest[3]"
                 }
             },
@@ -106,7 +106,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "External Control Messages\n\ngain [-10.0 \u2013 10.0]\nscale [-0.05 \u2013 0.05]\nrotate [-180.0 \u2013 180.0]\nthresh [0.0 \u2013 1.0]",
+                    "text": "External Control Messages\n\ngain [-10.0 \u2013 10.0]\nscale [-0.05 \u2013 0.05]\nrotate [-180.0 \u2013 180.0]\nthresh [-2.0 \u2013 2.0]",
                     "textjustification": 0
                 }
             },
@@ -246,17 +246,43 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 12.0,
                     "id": "d-9",
-                    "linecount": 3,
+                    "linecount": 5,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        500.0,
-                        300.0,
-                        190.0,
-                        55.0
+                        512.0,
+                        294.0,
+                        230.0,
+                        98.0
                     ],
-                    "text": "Try feeding this into:\nf_caustic or another vecfield\nconsumer -- the field itself has\nno visible output on its own"
+                    "text": "Feed the outlet to a vecfield inlet\n(Caustic, Warp or Streak inlet 1): the\nfield does nothing until something\nreads it. Smooth sources give smooth\nfields; try the Noise tab."
+                }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "bubble": 1,
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 12.0,
+                    "id": "d-10",
+                    "linecount": 5,
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        590.0,
+                        404.0,
+                        190.0,
+                        98.0
+                    ],
+                    "text": "Preview shows the field: gray = flat,\ncolor = slope. It runs uphill;\nnegative Gain reverses it, and Rotate\n90 turns it along the contours, which\nFluid needs. No source, no output."
                 }
             }
         ],

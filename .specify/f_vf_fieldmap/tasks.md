@@ -146,3 +146,22 @@ Run via `.specify/maintenance/SKILL.md`; full findings in
   difference gradient against a known analytic input, e.g. a linear
   ramp or sinusoid texture) — a good one to actually build rather than
   just record a skip decision for.
+
+## Stable push (2026-11-06)
+
+- [x] T026 Stable preflight (2026-11-06, offline by Claude), record below.
+- [ ] T027 Matt's helpfile look: the demo at defaults, the digest, the two notes, the bypass toggle (gray on the preview). Not moved to `.specify/stable/` until this passes.
+
+## Stable preflight (2026-11-06)
+
+Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--check` up to date; README row 110 chars or under, no ⚠; menu entry under Adapters, recipes in `menu.py`; bypass is `bypass_gate` (`bypass_mode: "param"`, neutral vecfield in `BYPASS_EXPECT`; `bench_modules.py` 2/2 in `tests/logs/20261106-081412-bench.log`, from before these edits, which touch no module code); helpfile box 154x91 against a footprint of 153.5x88 (the Thresh label sets the width). No gate row holds Fieldmap. The route is `gain scale rotate thresh`, no `bypass` selector, and the helpfile has no `bypass [0 / 1]` line, which is right.
+
+Tests: no folder in `tests/modules`, and no `bench_*` file of its own. Coverage found: the bypass entry in `tests/contracts/bench_modules.py`; a NumPy copy of the codebox in `tests/math/test_conservative_field.py`, which checks only that the loop integral is about 0 at rotate 0 and not at 90, and omits the encode clamp. That file was read, not run. The analytic mirror T025 asks for (ramp or sinusoid against the known gradient) is still missing. T025 stays open, not blocking stable. `test_generate_menu.py` names Fieldmap only as sample data.
+
+Fixed: the patcher has no `vs_inState`, so the reference doc, `module-inventory.md` and the spec were wrong to say an unconnected inlet gives a neutral field. It has no `r draw` either, so nothing connected means no output (wiring read from the patcher; the behavior is inferred, not run). The helpfile said `thresh [0.0 – 1.0]`, against -2 to 2 in `definition.py`; T024 had fixed only the doc. The reference doc's bypass row now names `bypass_gate` and says the toggle is the only way in; it also says the inset protects only positive `scale`, and notes the inset's stretch. The spec still had `strength`, 0-based ranges, no `rotate` or `thresh`, and no inset: brought up to the shipped module, Clarifications kept as history. `plan.md` got a note that it predates all this. `f_vf_glow.md` called the gradient tangent to isolines, against its own later text; it is perpendicular.
+
+Chains in `library-characteristics.md`: all feed Fieldmap a texture (`f_chladni` out1, `f_ks`, `vs_edges`, `f_mobius`, `f_tone_curve`, `vs_wfg_3`, bfg, camera), from the docs, not run. Its output carries B = 0.5, so it passes Fluid's force gate. One chain was type-correct and still wrong: Fieldmap at rotate 0 into `f_vf_fluid`. A gradient force is what Fluid's `project` removes, and the default is 1. Fluid's own record says pure-gradient force gives velocity about 0. NumPy estimate, offline by Claude, not run in Max: energy kept after projection is under 1% on smooth noise at rotate 0, about 12% on hard edges, 50% at 45, 88-100% at 90. The chain now says `rotate` near 90. Also added "(crushed shadows)" to the `f_tone_curve` chain, since its claim depends on that setting.
+
+Helpfile: `vs_sources_main` was already wired. It loads on the Movie tab, so what the demo shows at defaults depends on a movie being loaded; not seen by Claude. The old note said the field has no visible output, but the preview does show it, so it is rewritten and moved clear of the module, and a second note beside the preview says how to read it. Neither overlaps the preview (rects: preview 338-574 x 405-654; notes 512-742 x 294-392 and 590-780 x 404-502). The digest now says what the module is for (spec: a coherent vector field for consumers). Live by Matt: T027.
+
+Left alone: `menu.py` recipes Fluid Caustic and Vorticity Fluid run Fieldmap into Fluid; `G-menu` holds `menu.py`, and the saved Rotate in those demos was not found in the patchers. `definition.py` has no `Spec:` line, and the folder has no scripts, so a move needs neither change. Negative `scale` reaches `G-edge-wrap`'s out-of-range `sample()` case (from the codebox; not run), not added to that row's list.
