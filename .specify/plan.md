@@ -1,6 +1,6 @@
 # f_ — Focus
 
-_Rewritten 2026-10-31, updated 2026-11-05._ Orientation only: what is Active, what is Next, what is owed to Matt. Blocked and parked things are in `.specify/gates.md`. Per-module detail is in `.specify/<module>/tasks.md` and `docs/f-reference/`. Session state is in `HANDOFF.md` (START HERE block). The previous full plan (resolved history, "Still open" 1-14, workstream prose) is in git: `git show 76c2ab8:.specify/plan.md`.
+_Rewritten 2026-10-31, updated 2026-11-06._ Orientation only: what is Active, what is Next, what is owed to Matt. Blocked and parked things are in `.specify/gates.md`. Per-module detail is in `.specify/<module>/tasks.md` and `docs/f-reference/`. Session state is in `HANDOFF.md` (START HERE block). The previous full plan (resolved history, "Still open" 1-14, workstream prose) is in git: `git show 76c2ab8:.specify/plan.md`.
 
 ## Active
 
@@ -17,6 +17,8 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
+0. Stable push (Matt, 2026-11-06): batch 3 starts with `f_tf_tensormap`; plan and bar are in `HANDOFF.md`.
+
 1. Hatch tail: fix or archive the spike scripts that still pass `strength=` (T064); everything else about Hatch is closed.
 2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
 3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
@@ -25,7 +27,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
-- **Runs and looks:** the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Runs and looks:** does bypass clear the `f_vf_potential` trail, and is that fine (inferred, not seen live); the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the new and corrected helpfiles (Axis Flow, Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no.
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
