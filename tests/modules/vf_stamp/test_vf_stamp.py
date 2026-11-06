@@ -110,6 +110,24 @@ def test_patched_field_masked_and_linear():
     check("impulse switch inert when connected", float(np.abs(r - s).max()), 0)
 
 
+def test_empty_stamp_inlet():
+    """FR-001: nothing on in0 stamps nothing, even inverted, where black would otherwise cover the frame."""
+    empty = flat(0.0)
+    field = vec_tex(0.5, -0.25)
+    for label, kw in (("in1 connected", dict(in1=field, src_vec=1.0)), ("in1 empty", dict())):
+        a, b = stamp_stage(empty, invert=1.0, softness=0.0, src_stamp=0.0, **kw)
+        check(f"{label}: ink is black", float(np.abs(a[..., 0:3]).max()), 0)
+        check(f"{label}: alpha is 1", float(np.abs(a[..., 3] - 1).max()), 0)
+        check(f"{label}: impulse is neutral", float(np.abs(b[..., 0:2] - F32(0.5)).max()), 0)
+    _, b = stamp_stage(empty, in1=field, src_vec=1.0, invert=1.0, softness=0.0, src_stamp=0.0, bug="no_stamp_flag")
+    check("without the flag the field floods the frame", float(np.abs(b[..., 0:2] - F32(0.5)).max() <= 0.1), 0)
+    a0, b0 = stamp_stage(disc(N), src_stamp=1.0)
+    a1, b1 = stamp_stage(disc(N))
+    check("the flag on changes nothing", float(max(np.abs(a0 - a1).max(), np.abs(b0 - b1).max())), 0)
+    bypassed = stamp_stage(disc(N), in1=field, src_vec=1.0, src_stamp=0.0, bypass_gate=1.0)
+    check("bypass still passes the input", float(np.abs(bypassed[0] - disc(N)).max()), 0)
+
+
 def test_flag_not_value():
     """FR-005: an empty in1 reads vs_black; only the flag decides, so nothing decodes to -1."""
     t = disc(N)

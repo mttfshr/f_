@@ -3,7 +3,8 @@
 compute it; every texture read goes through gpu_sim.sample.
 
 Inputs as in the planned gen: in0 = stamp texture, in1 = vecfield (R,G encode (v - 0.5) * 2).
-src_vec is the vs_inState connected flag; in1 = None stands for vs_black (0, 0, 0, 0).
+src_vec is the vs_inState connected flag; in1 = None stands for vs_black (0, 0, 0, 0). src_stamp is in0's flag:
+with nothing on in0, cov is 0 whatever `invert` says (FR-001; black inverted would cover the frame).
 
     out0 = vec(in0.rgb * cov * amount * env, 1)                       (G2)
     out1 = encode(v), encode = v * 0.5 + 0.5, B = 0.5, A = 1          (f_vecfield_type)
@@ -26,7 +27,7 @@ at texel centres.
 
 `bug` values are mutations the tests must catch: "inward" (radial sign flipped), "clamp_edge"
 (neighbours clamped, not wrapped), "value_flag" (in1 used regardless of src_vec), "ink_no_env"
-(the ink ignores the envelope), "swap_luma" (Rec.601 weights).
+(the ink ignores the envelope), "swap_luma" (Rec.601 weights), "no_stamp_flag" (src_stamp ignored).
 """
 import numpy as np
 
@@ -101,7 +102,7 @@ def impulse_field(cov_at, c0, ix, iy, w, h, field, reach, impulse, bug=None):
     return rx.astype(F32), ry.astype(F32)
 
 
-def stamp_stage(in0, in1=None, threshold=0.05, softness=0.1, invert=0.0, amount=1.0, force=1.0, impulse=0.0, env=1.0, src_vec=0.0, bypass_gate=0.0,
+def stamp_stage(in0, in1=None, threshold=0.05, softness=0.1, invert=0.0, amount=1.0, force=1.0, impulse=0.0, env=1.0, src_vec=0.0, bypass_gate=0.0, src_stamp=1.0,
                 field="diff", reach=1, rim=None, size=None, bug=None):
     """One frame of the stage. Returns (out0, out1), each float32 (H, W, 4)."""
     h, w = size if size else in0.shape[:2]
@@ -110,8 +111,10 @@ def stamp_stage(in0, in1=None, threshold=0.05, softness=0.1, invert=0.0, amount=
     nx, ny, ix, iy = g.grid(h, w)
     weights = LUMA_601 if bug == "swap_luma" else LUMA
 
+    stamped = F32(1 if src_stamp >= 0.5 or bug == "no_stamp_flag" else 0)
+
     def cov_at(a, b):
-        return coverage(in0, a, b, w, h, threshold, softness, invert, weights)
+        return coverage(in0, a, b, w, h, threshold, softness, invert, weights) * stamped
 
     c0 = cov_at(ix, iy)
     src = g.sample(in0, nx, ny)

@@ -15,9 +15,9 @@ A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage wit
 
 - **Runtime**: Max 9, `jit.gl.pix` GPU path (GenExpr codebox).
 - **Type**: `@type float32` (the impulse is a vecfield; the ink outlet follows G2).
-- **Inlets**: 2 texture inlets, each through `vs_inState` for an unconnected fallback and a connected flag (`src_vec`); control messages on in0.
+- **Inlets**: 2 texture inlets, each through `vs_inState` for an unconnected fallback and a connected flag (`src_stamp`, `src_vec`); control messages on in0. The pix has three inputs (ADR-9).
 - **Outlets**: 2 (ink, impulse).
-- **Build**: `build/build_patcher.py` from `src/f_vf_stamp/definition.py`; the gate and envelope boxes are `raw_boxes` unless ADR-2 extracts the gate button into the schema.
+- **Build**: `build/build_patcher.py` from `src/f_vf_stamp/definition.py`; the gate is the `gate_button` type (T020), the envelope `raw_boxes`.
 - **Test harness**: the codebox bench now passes up to four inputs (extended 2026-11-04); the stamp stage needs two, so it fits as is.
 
 ---
@@ -61,7 +61,7 @@ A stateless vecfield-and-texture processor: one per-pixel `jit.gl.pix` stage wit
 
 ### ADR-6: Connected flags, not values
 
-An unconnected in1 is `vs_black` (0), which would decode as -1 after the vecfield remap. The codebox uses the `src_vec` flag from `vs_inState` (as `f_wave_field`'s `src_force` / `src_lfo`) and suppresses the in1 path from the flag, not from the value.
+An unconnected in1 is `vs_black` (0), which would decode as -1 after the vecfield remap. The codebox uses the `src_vec` flag from `vs_inState` (as `f_wave_field`'s `src_force` / `src_lfo`) and suppresses the in1 path from the flag, not from the value. in0 has its own flag, `src_stamp`: an empty in0 is black, which `invert` would read as full coverage, so `cov` is forced to 0 without it (Matt, 2026-11-05).
 
 ### ADR-7: Periodic indices only
 
@@ -71,13 +71,20 @@ Every neighbour read uses explicit integer texel indices with a modulo wrap, nev
 
 **Decided (Matt, 2026-11-05: "pass the input through"; reading confirmed the same day)**: out0 passes in0, out1 passes in1 when connected, else neutral; the gate and envelope are ignored; the FR-011 non-finite zap stays active. Note the consequence: a bypassed stamp hands the whole texture downstream as ink. (The earlier proposal was neutral outputs, as `f_wave_field`.)
 
+### ADR-9: Rendered by `r draw`, textures on cold inputs
+
+**Decided (Matt, 2026-11-05)**: the `f_wave_field` `enc` pattern. `r draw` goes to the pix's first inlet (a trigger the codebox does not read); the stamp texture arrives on the second input through `inlet_fanout`, the vecfield on the third through `mod_inlets` `fanout`. The stage then renders once per draw whether or not anything is connected, which FR-001 needs.
+
+**Rejected**: the texture on the first inlet, as `f_vf_glow`: with nothing on in0 the pix would never render (inferred from the builder's wiring), and adding `r draw` beside it would put two triggers on one inlet. Possible cost of the chosen way: one frame of lag from upstream, as in `f_wave_field`.
+
 ---
 
 ## Stage and wiring sketch
 
 ```
-in0 (vs_inState) -> stamp (in 1)        in1 (vs_inState) -> stamp (in 2)
-gate button -> [sel bang 1 0] -> PRESS / RELEASE -> draw counter -> stamp_gate
+[r draw] -> stamp (first input, a trigger only)
+in0 (vs_inState) -> stamp (second input)        in1 (vs_inState) -> stamp (third input)
+gate_button -> PRESS / RELEASE -> draw counter -> stamp_gate -> envelope
 [r draw] -> envelope one-pole -> param env -> stamp
 stamp -> out0 (ink), out1 (impulse)       r dim -> stamp (render size)
 ```

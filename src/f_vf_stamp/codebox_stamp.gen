@@ -1,0 +1,96 @@
+// codebox_stamp.gen -- f_vf_stamp: the one stage. Coverage from the stamp's luma, the ink, the impulse vecfield.
+// Stateless: a pure function of the two textures, the Params and the render size. Float32, render resolution.
+// Mirror: tests/modules/vf_stamp/vf_stamp_mirror.stamp_stage() (the mirror's two textures are the second and third
+// inputs here).
+//
+// Inputs (plan ADR-9): first = the `r draw` bang (not referenced; it triggers one render per draw, connected or not),
+// second = the stamp texture (cold), third = the vecfield (cold).
+// Outlets: the first is the ink, the second is the impulse vecfield.
+//   - coverage (FR-003): smoothstep of Rec.709 luma from max(threshold - softness / 2, 0) to threshold + softness / 2,
+//     by hand with a width floor (softness 0 must not divide by zero), flipped by `invert`. The clamp means black
+//     never stamps. src_stamp = 0 (nothing on the module's main inlet) forces it to 0: `invert` would otherwise read
+//     an empty inlet as full coverage (FR-001)
+//   - ink (G2): rgb * cov * amount * env, alpha 1
+//   - impulse, vecfield connected (FR-005): (field - 0.5) * 2 * cov * env * force. The flag src_vec decides, never the
+//     value: an unconnected inlet is black, which decodes to a full -1 vector
+//   - impulse, nothing connected (FR-006, plan ADR-4): the plain wide central difference of cov, negated, no divide;
+//     reach = max(1, round(rim * width)) texels on both axes. `impulse` 1 rotates it: (x, y) -> (-y, x)
+//   - encode: v * 0.5 + 0.5 clamped to 0..1, B = 0.5, A = 1 (f_vecfield_type); exact neutral when cov * env = 0
+//   - neighbours (FR-010): integer texel index with wrap(), read at the texel centre, so never an out-of-range sample
+//   - render size: Params width and height from render_dim (`dim` reads 1 live)
+//   - bypass_gate = 1 (G5; never the native @bypass): the first outlet passes the stamp, the second passes the vecfield
+//     when connected, else neutral. The zap below stays active
+//   - non-finite texels (FR-011): zapped on read, stamp to 0 (alpha 1), vecfield to 0.5, by abs(x) < 1e30 with switch():
+//     NaN == NaN is TRUE on this GPU, and mix() would carry a NaN through
+// Functions come before the Params and do not see them, so the Params are arguments.
+zap(xv, alt) {
+    return switch(abs(xv) < 1e30, xv, alt);
+}
+
+cov_at(xi, yi, w, h, low, high, inv, stp) {
+    su = (xi + 0.5) / w;
+    sv = (yi + 0.5) / h;
+    cr = zap(sample(in2, vec(su, sv)).x, 0);
+    cg = zap(sample(in2, vec(su, sv)).y, 0);
+    cb = zap(sample(in2, vec(su, sv)).z, 0);
+    lum = cr * 0.2126 + cg * 0.7152 + cb * 0.0722;
+    tt = clamp((lum - low) / max(high - low, 0.00001), 0, 1);
+    cc = tt * tt * (3 - 2 * tt);
+    return mix(cc, 1 - cc, inv) * stp;
+}
+
+Param threshold(0.05);
+Param softness(0.1);
+Param invert(0);
+Param amount(1);
+Param force(1);
+Param impulse(0);
+Param rim(0.015);
+Param env(0);
+Param src_stamp(0);
+Param src_vec(0);
+Param bypass_gate(0);
+Param width(480);
+Param height(480);
+
+ix = floor(norm.x * width);
+iy = floor(norm.y * height);
+lo = max(threshold - softness / 2, 0);
+hi = threshold + softness / 2;
+stamped = switch(src_stamp >= 0.5, 1, 0);
+conn = switch(src_vec >= 0.5, 1, 0);
+swirl = switch(impulse >= 0.5, 1, 0);
+
+c0 = cov_at(ix, iy, width, height, lo, hi, invert, stamped);
+
+sr = zap(sample(in2, norm).x, 0);
+sg = zap(sample(in2, norm).y, 0);
+sb = zap(sample(in2, norm).z, 0);
+sa = zap(sample(in2, norm).w, 1);
+
+ink = c0 * amount * env;
+
+fr = zap(sample(in3, norm).x, 0.5);
+fg = zap(sample(in3, norm).y, 0.5);
+
+gain_pat = c0 * env * force;
+pat_x = (fr - 0.5) * 2 * gain_pat;
+pat_y = (fg - 0.5) * 2 * gain_pat;
+
+reach = max(1, floor(rim * width + 0.5));
+xp = cov_at(wrap(ix + reach, 0, width), iy, width, height, lo, hi, invert, stamped);
+xm = cov_at(wrap(ix - reach, 0, width), iy, width, height, lo, hi, invert, stamped);
+yp = cov_at(ix, wrap(iy + reach, 0, height), width, height, lo, hi, invert, stamped);
+ym = cov_at(ix, wrap(iy - reach, 0, height), width, height, lo, hi, invert, stamped);
+rad_x = xm - xp;
+rad_y = ym - yp;
+fld_x = mix(rad_x, 0 - rad_y, swirl) * env * force;
+fld_y = mix(rad_y, rad_x, swirl) * env * force;
+
+vx = mix(fld_x, pat_x, conn);
+vy = mix(fld_y, pat_y, conn);
+ox = clamp(vx * 0.5 + 0.5, 0, 1);
+oy = clamp(vy * 0.5 + 0.5, 0, 1);
+
+out1 = vec(mix(sr * ink, sr, bypass_gate), mix(sg * ink, sg, bypass_gate), mix(sb * ink, sb, bypass_gate), mix(1, sa, bypass_gate));
+out2 = vec(mix(ox, mix(0.5, fr, conn), bypass_gate), mix(oy, mix(0.5, fg, conn), bypass_gate), 0.5, 1);
