@@ -1,7 +1,7 @@
 # Implementation Plan: f_vf_fluid
 
 _Created: 2026-09-23_
-_Spec: `.specify/f_vf_fluid/spec.md` (user stories, FRs, success criteria live
+_Spec: `.specify/stable/f_vf_fluid/spec.md` (user stories, FRs, success criteria live
 there — this file is HOW only)_
 _Research background: `ideas/ceyron_simulation_scripts_notes.md`_
 

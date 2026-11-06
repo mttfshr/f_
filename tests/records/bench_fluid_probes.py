@@ -2,7 +2,7 @@
 bench_fluid_probes.py -- Phase 0 GPU probes for f_vf_fluid (tasks.md T005-T007).
 These answer OPEN QUESTIONS, so most tests print measured facts (note) and
 assert only what the design already depends on; the answers are recorded in
-.specify/f_vf_fluid/tasks.md "Findings". Kept as a record of the bench-verified
+.specify/stable/f_vf_fluid/tasks.md "Findings". Kept as a record of the bench-verified
 facts, not as a regression gate for shipped modules.
 
   T005 E-seam   periodic bilinear: sample()+fract() vs four wrapped nearest() taps

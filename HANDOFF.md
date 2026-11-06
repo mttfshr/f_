@@ -1,10 +1,10 @@
 # HANDOFF
 
-## START HERE (2026-11-05)
+## START HERE (2026-11-06)
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
-**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. Nothing else is scheduled; Matt picks the next item.
+**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. Nothing else is scheduled; Matt picks the next item.
 
 **Candidates (Matt decides):**
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
@@ -20,16 +20,11 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-05 (late night): `f_vf_stamp` Phase 1 built, nothing run live
+## 2026-11-06: `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/`
 
-- **Done (offline, Claude; record in `.specify/f_vf_stamp/tasks.md`):** T020 the `gate_button` schema type, `f_wave_field` Strike built from it; T021 the codebox; T022 the definition and envelope; T023 the patcher; T024 two bench files, written, not run.
-- **Decided (Matt, chat):** plan ADR-9 (render on `r draw`, textures on cold inputs); `src_stamp`, so an empty in0 stamps nothing under `invert`; `stamp_gate` feeds the envelope only (FR-007). `obj-gate-*` ids taken by default.
-- **Live (Matt, chat):** T030-T032 and the `src_stamp` look pass, no dial changed; the four T022 additions stand; `stamp` stays a known issue, `max_depth` 6.
-- **Commits:** 4866d14, 034662c, 7429edb, 14a4ff4, then this one.
-- **Verified offline:** `f_wave_field` rebuild equal to the committed patcher in every box property and cord once 13 ids are mapped; `drift -v` ok for both modules; `test_build_gate_button.py` 10/10; `test_vf_stamp.py` 21/21; `test_module_contracts.py` 9/9 (log `tests/logs/20261105-215041-offline.log`; `stamp` is a new known issue, the path is one hop past `max_depth` 6); `test_bench_expect.py` 10/10.
-- **Bench (Matt's go):** `bench_vf_stamp.py` 10/10, first compile (log `tests/logs/20261105-215536-bench.log`); `bench_vf_stamp_module.py` 7/7 (log `tests/logs/20261105-215636-bench.log`). `bench_modules.py` 2/2 (log `tests/logs/20261105-215801-bench.log`).
-- **Phase 3 (2026-11-06, on Matt's word):** reference doc, helpfile, README, inventory, launcher, menu (Adapters, Claude's placement), idea notes. Offline suite 67 of 69 files before registration (log `tests/logs/20261106-075056-offline.log`); the other two pass after it (log `tests/logs/20261106-075328-offline.log`). Whole suite not re-run since.
-- **Also verified:** `tests/build/test_gates.py` 5/5 (Matt's go; log `tests/logs/20261105-222715-offline.log`).
-- **Owed to Matt:** open the new helpfile; move Stamp in the menu if Adapters is wrong (one line in `menu.py`, plus its README table).
-- **Note:** `make_missing_helpfiles.py` skips `gate_button`; the helpfile's `stamp` line is by hand.
-- **Gates touched, no row edited:** `G-menu` (T008 still held), `G-ui-density` (nine controls plus the press).
+- **Done (Claude, on Matt's go):** read the `.specify` dirs for stable candidates, ran module-preflight on these two, moved them, updated the live path references. Dated records in `.specify/test_bench/` and `.specify/build_cleanup/` keep the old path.
+- **Verified:** record in each module's `tasks.md`, "Moved to stable/". `bench_fluid.py` 11/11, 2 slow skipped (log `tests/logs/20261106-080539-bench.log`); drift ok for both after the move; offline log `tests/logs/20261106-080311-offline.log` is from before the move.
+- **Live (Matt):** both helpfile looks pass; Split wording stays; the `bypass` control message that works in 7 of 50 modules is accepted, no gate row.
+- **Next candidates:** `f_tf_tensormap` (T001, T045 look like bookkeeping, not verified) and `f_tf_hatch` (T064). One item away: `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow`, `f_tone_curve`.
+- **Record mismatches, not fixed:** `f_wave_field` T034 unticked though live looks passed; `status.json` lists `f_vf_warp` under `stable/`, the dir is at the root; `f_vf_repulse` and `f_sirds` tasks have no checkboxes.
+- **Gates touched, no row edited:** none. `tests/build/test_gates.py` not run.

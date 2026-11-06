@@ -252,7 +252,7 @@ the linear blend of the decoded fields — no conversion needed):
 
 - `docs/f-reference/f_vf_fluid.md` — the solver this forks from; stage table,
   parameter semantics, cost figures, the `vs_black` content-gate caveat.
-- `.specify/f_vf_fluid/{spec,plan,tasks}.md` — design record and findings.
+- `.specify/stable/f_vf_fluid/{spec,plan,tasks}.md` — design record and findings.
 - `docs/f-reference/f_vecfield_type.md` — the type contract φ's outlet would
   have to honor if exposed.
 - `ideas/named_mod_textures.md`, `.specify/plan.md` "UI density" and

@@ -1,6 +1,6 @@
 """
 fluid_mirror.py -- NumPy mirror of every f_vf_fluid stage, pass for pass, in
-float32 (plan ADR-1/-5/-6, .specify/f_vf_fluid/).
+float32 (plan ADR-1/-5/-6, .specify/stable/f_vf_fluid/).
 
 Chain:   pass -> adv -> fx -> fy -> spec -> iy -> ix -> enc      (ix -> pass)
   adv   self-advect the velocity state (PERIODIC bilinear) and add force

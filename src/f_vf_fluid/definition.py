@@ -13,7 +13,7 @@ bench's archetype lookup.
 Spectral (FFT) incompressible-flow VELOCITY SOLVER, a vecfield producer:
 a force vecfield goes in, an evolving velocity vecfield comes out. Dye/texture
 transport is left to f_vf_advect and friends fed from the outlet.
-See .specify/f_vf_fluid/{spec,plan,tasks}.md.
+See .specify/stable/f_vf_fluid/{spec,plan,tasks}.md.
 
 Stage chain (plan ADR-1), solver stages at a fixed 256x256 float32:
     pass -> adv -> fx -> fy -> spec -> iy -> ix -> enc      (ix -> pass feedback)

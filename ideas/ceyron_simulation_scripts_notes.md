@@ -477,4 +477,4 @@ decision. The Jacobi comparison now looks unnecessary: the FFT path is both exac
 
 ## Addendum (2026-09-23) — Specced as `f_vf_fluid`
 
-The FFT path is now a spec: `.specify/f_vf_fluid/spec.md` (new velocity-solver module that outputs an evolving vecfield; dye left to existing consumers; 256² periodic first build; `project` 0–1 covers the rung-2 look). Decisions and open experiments are recorded there; this file remains the research background.
+The FFT path is now a spec: `.specify/stable/f_vf_fluid/spec.md` (new velocity-solver module that outputs an evolving vecfield; dye left to existing consumers; 256² periodic first build; `project` 0–1 covers the rung-2 look). Decisions and open experiments are recorded there; this file remains the research background.

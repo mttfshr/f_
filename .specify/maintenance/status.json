@@ -294,7 +294,7 @@
       "note": "bypass/mix correct; minor: docs/f-reference/f_vf_split.md still says 'not yet listed in README' — it is listed"
     },
     "tasks_filed": [
-      ".specify/f_vf_split/T001"
+      ".specify/stable/f_vf_split/T001"
     ]
   },
   "f_ngon": {

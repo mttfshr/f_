@@ -269,6 +269,6 @@ timescale arguments still stand), `f_vf_stamp.md` (the way to drop ink or oil in
 Conversation with Matt, 2026-10-27; the two-upstream-vecfield blender and the
 required second inlet are his. Reading: `f_vf_emulsion.md`,
 `docs/f-reference/{f_vf_fluid,f_vf_lbm,f_vf_advect,f_ks,f_vecfield_type,f_tensor_type}.md`,
-`.specify/f_vf_fluid/{spec,plan}.md`, `tests/modules/fluid/fluid_mirror.py`.
+`.specify/stable/f_vf_fluid/{spec,plan}.md`, `tests/modules/fluid/fluid_mirror.py`.
 A repo search for Cahn–Hilliard, phase field, spinodal and shallow water found
 no prior mention.
