@@ -27,5 +27,5 @@
 - **Verified:** drift ok, menu and launcher `--check`; `test_generate_menu.py` 17/17 (log `tests/logs/20261106-093622-offline.log`). `bench_modules.py` 2/2 predates these edits, which touch no module code.
 - **Gates:** no row touched. `tests/build/test_gates.py` not run after the move (needs Matt's go).
 - **Pattern:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. Check patcher inlets against the docs, and chains by meaning, not only type.
-- **Open (Matt):** keep Potential's trigger inlet, or make the vecfield drive inlet 0 (module change and rebuild).
+- **Decided (Matt):** vecfields go in on inlet 1, not 0; Potential's inlets stay as they are.
 - **Next:** `f_vf_flow` (helpfile has no upstream wired), then `f_tone_curve`.
