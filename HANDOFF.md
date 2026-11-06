@@ -29,7 +29,8 @@
 - **Commits:** 4866d14, 034662c, 7429edb, 14a4ff4, then this one.
 - **Verified offline:** `f_wave_field` rebuild equal to the committed patcher in every box property and cord once 13 ids are mapped; `drift -v` ok for both modules; `test_build_gate_button.py` 10/10; `test_vf_stamp.py` 21/21; `test_module_contracts.py` 9/9 (log `tests/logs/20261105-215041-offline.log`; `stamp` is a new known issue, the path is one hop past `max_depth` 6); `test_bench_expect.py` 10/10.
 - **Bench (Matt's go):** `bench_vf_stamp.py` 10/10, first compile (log `tests/logs/20261105-215536-bench.log`); `bench_vf_stamp_module.py` 7/7 (log `tests/logs/20261105-215636-bench.log`). `bench_modules.py` 2/2 (log `tests/logs/20261105-215801-bench.log`).
-- **Not run:** the rest of the offline suite, `test_gates.py`. `f_wave_field` not reopened in Max since T020.
+- **Not run:** the rest of the offline suite. `f_wave_field` not reopened in Max since T020.
+- **Also verified:** `tests/build/test_gates.py` 5/5 (Matt's go; log `tests/logs/20261105-222715-offline.log`).
 - **Owed to Matt:** T008 (menu category, held by `G-menu`). No menu or README row until T040.
 - **Note:** `make_missing_helpfiles.py` skips `gate_button`, so `stamp` needs adding by hand at T040. An empty untracked `f_bench_dry.py` sits in the repo root (not Claude's).
 - **Gates touched, no row edited:** `G-menu` (T008 still held), `G-ui-density` (nine controls plus the press).
