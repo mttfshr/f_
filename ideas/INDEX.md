@@ -326,7 +326,7 @@ substantially move a file in `ideas/`, update its entry here too.
   it's a 3-band smoothstep lift, not an arbitrary curve. Real gap: no
   dependent-texture LUT (1×256 sampled per-channel) exists anywhere in `f_`.
   Matt wants this pursued for real; revisit note added at
-  `.specify/f_tone_curve/definition.py`.
+  `docs/f-reference/f_tone_curve.md`.
 - **[spectral_rainbow_colormap.md](spectral_rainbow_colormap.md)** 🔵 — A
   portable primitive from GPU Gems Ch. 8: closed-form scalar→rainbow-RGB via
   a 7-term triangular-bump sum, no LUT. Real gap in `f_vf_prism`, which only

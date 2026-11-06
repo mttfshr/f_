@@ -1,36 +1,40 @@
 # f_tone_curve — Bpatcher Spec
 
-_Last updated: 2026-05-25_
+_Last updated: 2026-11-06_
 _Status: Working_
 
 ## Concept
 
-Tone curve adjustment with shadow, midtone, and highlight bands. Applies brightness/luminance adjustments selectively by tonal range. The `low_mid` and `mid_high` breakpoints define the band boundaries; `edge_falloff` softens transitions between bands.
+Quick tonal shaping: brighten or darken shadows, mids and highlights separately. Each pixel's luma (Rec. 601) picks its band, and the band's dial is added equally to R, G and B, then clamped to 0-1; alpha passes through. The `low_mid` and `mid_high` breakpoints define the band boundaries (set on the two-handle slider or the numboxes; swapped handles are sorted); `edge_falloff` softens transitions between bands. All defaults are neutral, so the output equals the source until a dial moves.
+
+It is not a curve editor (see References). At `edge_falloff` 0, the default, the bands meet at a hard step, so different lifts on either side leave a visible contour at the crossover (inferred from the codebox, not run; `smoothstep` with equal edges is undefined in GLSL).
 
 ## Parameters
 
-| Name | Type | Description |
-|------|------|-------------|
-| `bypass` | toggle | Bypass processing |
-| `shadows` | float | Adjustment applied to shadow tones |
-| `midtones` | float | Adjustment applied to midtones |
-| `highlights` | float | Adjustment applied to highlights |
-| `edge_falloff` | float | Softness of transitions between tonal bands |
-| `low_mid` | float | Breakpoint between shadows and midtones |
-| `mid_high` | float | Breakpoint between midtones and highlights |
+| Name | Type | Range | Default | Description |
+|------|------|-------|---------|-------------|
+| `bypass` | toggle | 0/1 | 0 | Native `@bypass`: passes the raw input texture. The codebox's `Param bypass` mix does not run from the toggle (`G-bypass-native`) |
+| `shadows` | float | -1 to 1 | 0 | Lift added to shadow tones |
+| `midtones` | float | -1 to 1 | 0 | Lift added to midtones |
+| `highlights` | float | -1 to 1 | 0 | Lift added to highlights |
+| `edge_falloff` | float | 0-1 | 0 | Softness of transitions between tonal bands |
+| `low_mid` | float | 0-1 | 0.33 | Breakpoint between shadows and midtones |
+| `mid_high` | float | 0-1 | 0.67 | Breakpoint between midtones and highlights |
 
 ## Signal Chain
 
 ```
-texture in → jit.gl.pix (tone curve codebox)
-           → texture out
+in0 (texture + control) → routepass jit_gl_texture jit_matrix → jit.gl.pix @name tone_curve @type char → out0
 ```
 
-Parameters routed via `route bypass shadows midtones highlights edge_falloff low_mid mid_high`.
+One inlet; the texture is required. There is no `vs_inState`, no `vs_black` fallback and no `r draw`, so the incoming texture is the only thing that triggers the pix: nothing connected means no output. `@type char` means 8-bit output, so a float input is quantized and clamped here.
+
+Parameters routed via `route bypass shadows midtones highlights edge_falloff low_mid mid_high`; anything else goes to the pix.
 
 ## Loose Threads
 
-- None known. Uses the same low_mid / mid_high / edge_falloff parameters as f_luma_processor, but with different defaults (this module's edge_falloff default is 0.0, while luma_processor's is 0.1); consider whether these should always match when used in sequence.
+- Bypass is still native (`G-bypass-native`). For a texture processor the visible result is the same source passthrough.
+- Uses the same low_mid / mid_high / edge_falloff parameters as f_luma_processor, but with different defaults (this module's edge_falloff default is 0.0, while luma_processor's is 0.1); consider whether these should always match when used in sequence.
 
 ## References
 
@@ -40,4 +44,4 @@ See `docs/f-reference/f_tone_curve.md` (this file) for the full parameter refere
 
 ## Source File
 
-`patchers/f_tone_curve.maxpat`
+`package/patchers/f_tone_curve.maxpat`

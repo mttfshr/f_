@@ -56,13 +56,13 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_channel_grader` | Per-channel color grading |
 | `f_hue_processor` | Hue-selective processing |
 | `f_luma_processor` | Luminance-selective processing |
-| `f_tone_curve` | Tone curve adjustment |
+| `f_tone_curve` | Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor |
 
 ### ∇ Fields
 
 | Patch | Description |
 |---|---|
-| `f_vf_flow` | Texture-driven direction field -- brightness sets the flow angle; feeds any vecfield consumer |
+| `f_vf_flow` | Texture-driven direction field -- the red channel sets the flow angle; feeds any vecfield consumer |
 | `f_vf_fluid` | Incompressible-flow solver -- force vecfield in, evolving velocity field out; feed it to advect / warp / glow |
 | `f_vf_ch` | Blends two velocity vecfields (two Fluids) via a Cahn-Hilliard phase field; blended vecfield and phase out |
 | `f_vf_lbm` | Lattice Boltzmann channel flow around a mask-shaped obstacle; velocity vecfield out |

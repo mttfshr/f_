@@ -2,13 +2,13 @@
 f_vf_flow — definition.py
 
 Vecfield processor (Matt, 2026-11-01: flow needs a texture; it is not a dual). Takes a scalar texture on inlet 0 and
-turns its luminance into a flow direction: angle * 2pi + (luminance - 0.5) * spread * 2pi. With nothing connected it
+turns its red channel into a flow direction: angle * 2pi + (red - 0.5) * spread * 2pi. With nothing connected it
 renders nothing (no uniform-field mode, no render trigger).
 
 Output: float32 RG vecfield (0.5 = zero vector).
 Bypass: neutral vecfield (0.5, 0.5) — not passthrough.
 
-Signal chain: [optional scalar] → f_vf_flow → f_weave (vecfield inlet)
+Signal chain: [texture] → f_vf_flow → any vecfield inlet
 """
 
 patcher = {

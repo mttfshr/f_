@@ -104,7 +104,7 @@ codebox directly — confirmed, not a gap). But `f_tone_curve`, despite its
 name, is a 3-band luma-weighted additive lift, not an actual curve — it
 cannot express arbitrary shapes the way the chapter's dependent-texture
 LUT ("Curves") can. Real gap, module owner wants to pursue it. Revisit
-note added to `.specify/f_tone_curve/definition.py`. See
+note added to `docs/f-reference/f_tone_curve.md`. See
 `ideas/lut_curve_and_color_controls.md` for the full writeup (tabled,
 architecture not yet decided). Minor aside logged there too: chapter uses
 Rec. 709 luma weights, `f_tone_curve`/`f_caustic` use Rec. 601 — not

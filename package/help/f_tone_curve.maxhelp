@@ -69,7 +69,7 @@
       270.0,
       40.0
      ],
-     "text": "Shadow/midtone/highlight tone curve with adjustable band crossovers",
+     "text": "Lifts or lowers shadows, mids and highlights separately for quick tonal shaping; not a curve editor",
      "fontsize": 14.0,
      "varname": "autohelp_top_digest[3]",
      "linecount": 2,
@@ -127,11 +127,11 @@
       15.0,
       327.25,
       270.0,
-      120.0
+      150.0
      ],
-     "text": "References\n\nShares low_mid/mid_high/edge_falloff convention with\nf_luma_processor. See docs/f-reference/f_tone_curve.md\nfor the full parameter reference.",
+     "text": "References\n\nA three-band additive lift, an original\nconstruction with no external source. A real\ncurve (LUT) is a separate idea: see the doc.\nShares low_mid/mid_high/edge_falloff with\nf_luma_processor. See\ndocs/f-reference/f_tone_curve.md.",
      "fontsize": 12.0,
-     "linecount": 5,
+     "linecount": 8,
      "saved_attribute_attributes": {
       "textcolor": {
        "expression": "themecolor.live_control_fg"
@@ -242,6 +242,32 @@
       249.0
      ],
      "viewvisibility": 1
+    }
+   },
+   {
+    "box": {
+     "id": "d-9",
+     "maxclass": "comment",
+     "numinlets": 1,
+     "numoutlets": 0,
+     "patching_rect": [
+      518.0,
+      190.0,
+      240.0,
+      122.0
+     ],
+     "fontface": 0,
+     "fontname": "Ableton Sans Light",
+     "bgcolor": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "bubble": 1,
+     "text": "Starts neutral: output equals the\nsource until a dial moves. Each dial\nadds to or subtracts from one band,\npicked by each pixel's luma. The slider\nmoves the crossovers; raise Falloff\nto blend across them.",
+     "fontsize": 12.0,
+     "linecount": 6
     }
    }
   ],

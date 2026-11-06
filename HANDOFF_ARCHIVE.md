@@ -2,6 +2,17 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 3, `f_vf_potential` moved to `.specify/stable/`
+
+- **Done (offline, Claude):** preflight, docs and helpfile fixed; demo chain added (`vs_sources_main` -> `f_vf_repulse` -> Potential inlets 0 and 1 -> preview). Moved after Matt's helpfile look passed (T005). Record: `.specify/stable/f_vf_potential/tasks.md`, "Stable preflight" and "Moved to stable/".
+- **Found:** three inlets, not two: 0 texture trigger (never read), 1 vecfield, 2 color; the docs and chains implied the field goes to inlet 0 (read from the patcher; not run). Helpfile still said axis-blind. `strength` and the red tint are inside the feedback loop. No menu recipe for the chain `library-characteristics.md` called pre-wired.
+- **Tests:** mirror in `tests/modules/vf_potential/` (not run); contract bench only. No `spec.md` or `plan.md` exists.
+- **Verified:** drift ok, menu and launcher `--check`; `test_generate_menu.py` 17/17 (log `tests/logs/20261106-093622-offline.log`). `bench_modules.py` 2/2 predates these edits, which touch no module code.
+- **Gates:** no row touched. `tests/build/test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-093844-offline.log`).
+- **Pattern:** the "Stable preflight" and "Moved to stable/" sections of `.specify/stable/f_tf_hatch/tasks.md`. Check patcher inlets against the docs, and chains by meaning, not only type.
+- **Decided (Matt):** vecfields go in on inlet 1, not 0; Potential's inlets stay as they are.
+- **Next:** `f_vf_flow` (helpfile has no upstream wired), then `f_tone_curve`.
+
 ## 2026-11-06: batch 3, `f_vf_fieldmap` moved to `.specify/stable/`
 
 - **Done (offline, Claude):** preflight, docs, spec and helpfile fixed. Moved after Matt's helpfile look passed (T027), with the Caustic, Warp and Streak references removed at his request. Record: `.specify/stable/f_vf_fieldmap/tasks.md`, "Stable preflight" and "Moved to stable/".

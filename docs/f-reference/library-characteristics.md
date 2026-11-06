@@ -168,7 +168,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_wc**
 1. Cortical grid optics: `f_wc` with `out_view` = Unwrapped → `f_droste` → `f_lens` — the flat cortical grid of the web becomes an infinite-zoom spiral, then filmic lens treatment.
-2. Camera-pulsed web: live camera luma (via `f_tone_curve` to squash contrast) → `f_wc` pulse inlet — the web's pulse trains ride the video's rhythm, `out_mode` = Contour gives a clean overlay layer.
+2. Camera-pulsed web: live camera luma (via `f_tone_curve`, shadows up and highlights down to squash contrast) → `f_wc` pulse inlet — the web's pulse trains ride the video's rhythm, `out_mode` = Contour gives a clean overlay layer.
 
 **f_quasi**
 1. Self-referential aberration: `f_quasi` out2 (exact bounded gradient) → `f_vf_chroma` with out1 (banded luma) as the source — the quasicrystal's own gradient steers its RGB separation.
@@ -238,15 +238,15 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_hue_processor**
 1. Caustic color select: `f_caustic` composite → `f_hue_processor` — keep only the warm caustic bands' saturation, desaturate the rest of the frame.
-2. Grain palette lock: `f_grain` composite → `f_hue_processor` (center = the grain color) → `f_tone_curve` — the grade respects only the grain's palette, leaving other pixels flat.
+2. Grain palette lock: `f_grain` composite → `f_hue_processor` (center = the grain color) → `f_tone_curve` — Hue Processor's grade respects only the grain's palette, leaving other pixels flat; Tone Curve then shapes the whole frame by band.
 
 **f_luma_processor**
 1. Shadow-only weave boost: camera → `f_luma_processor` (shadow band lift) → `f_weave` weight_tex on inlet 0 — dark areas weave thick, bright ones thin.
 2. Tonal-gate prism: `f_vf_prism` composite → `f_luma_processor` → `f_channel_grader` — the prism's spectral split gets re-graded per tonal band, spectral gradient clean only in highlights.
 
 **f_tone_curve**
-1. Pulse conditioning: camera → `f_tone_curve` (crushed shadows) → `f_wc` pulse inlet — dark frames stop pulsing the Wilson-Cowan web entirely; the web rests between bright beats.
-2. Luma-band field: camera → `f_tone_curve` (crushed shadows) → `f_vf_fieldmap` → `f_vf_advect` — only the highlights' gradient advects; shadows stall the flow.
+1. Pulse conditioning: camera → `f_tone_curve` (crushed shadows) → `f_wc` pulse inlet (1) — dark frames stop pulsing the Wilson-Cowan web entirely; the web rests between bright beats.
+2. Luma-band field: camera → `f_tone_curve` (crushed shadows, Falloff raised) → `f_vf_fieldmap` → `f_vf_advect` inlet 1, with a source on inlet 0 — only the mids' and highlights' gradient advects; shadows stall the flow. At Falloff 0 the jump at `low_mid` is a hard edge, likely the strongest gradient in the frame.
 
 ## ∇ Fields (producers)
 
@@ -263,8 +263,8 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 2. Field-seeded fluid: `f_vf_fieldmap` (source = camera luma, `rotate` near 90) → `f_vf_fluid` force inlet → `f_vf_advect` — video luminance stirs an incompressible soup that then moves on its own. At `rotate` 0 the force is a pure gradient, and Fluid's default `project` removes nearly all of it.
 
 **f_vf_flow**
-1. Waveform-directed flow: `vs_wfg_3` inverted output → `f_vf_flow` → `f_vf_streak` — the WFG's phase stripes set a scanning flow angle; streaks sweep in a time pattern.
-2. Flow-gated prism: `f_vf_flow` → `f_vf_prism` (`src_vecfield` gate), only mid-luma source passes — direction field where it matters, no split elsewhere.
+1. Waveform-directed flow: `vs_wfg_3` inverted output → `f_vf_flow` → `f_vf_streak` inlet 1, with a source on inlet 0 — the WFG's phase stripes set a scanning flow angle; streaks sweep in a time pattern.
+2. Texture-steered prism: scalar texture → `f_vf_flow` → `f_vf_prism` inlet 1, with a source on inlet 0 — the texture sets the split direction. Flow is full strength everywhere, so it does not limit where the split appears; Prism's own `threshold` does, on bright source.
 
 **f_vf_repulse**
 1. Attraction variant: camera → `f_vf_repulse` with negative `gain` → `f_caustic` — brightness attracts, caustic sheets converge on the subject.

@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Texture-driven direction field -- brightness sets the flow angle; feeds any vecfield consumer",
+					"text": "Turns a texture's values into flow directions, one angle per pixel, at full strength everywhere",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
@@ -156,6 +156,36 @@
 			},
 			{
 				"box": {
+					"bgmode": 1,
+					"border": 1,
+					"clickthrough": 0,
+					"enablehscroll": 0,
+					"enablevscroll": 0,
+					"id": "d-3",
+					"lockeddragscroll": 0,
+					"lockedsize": 0,
+					"maxclass": "bpatcher",
+					"name": "vs_sources_main.maxpat",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"offset": [
+						0.0,
+						0.0
+					],
+					"outlettype": [
+						"jit_gl_texture"
+					],
+					"patching_rect": [
+						338.0,
+						23.75,
+						296.4,
+						125.5
+					],
+					"viewvisibility": 1
+				}
+			},
+			{
+				"box": {
 					"id": "d-4",
 					"maxclass": "bpatcher",
 					"name": "f_vf_flow.maxpat",
@@ -166,7 +196,7 @@
 					],
 					"patching_rect": [
 						338.0,
-						24.0,
+						170.0,
 						167.5,
 						91.0
 					],
@@ -197,7 +227,7 @@
 					],
 					"patching_rect": [
 						338.0,
-						135.0,
+						281.0,
 						236.0,
 						249.0
 					],
@@ -222,10 +252,10 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						500.0,
-						400.0,
-						210.0,
-						51.0
+						525.0,
+						170.0,
+						235.0,
+						72.0
 					],
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
@@ -236,13 +266,51 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Feed into any vecfield consumer,\nfor example f_vf_warp.",
+					"text": "Needs a texture on inlet 0: no source,\nno output. Its red channel turns the\nflow away from Angle; Spread sets how\nfar. Smooth sources give smooth fields.",
 					"fontsize": 12.0,
-					"linecount": 2
+					"linecount": 4
+				}
+			},
+			{
+				"box": {
+					"id": "d-10",
+					"maxclass": "comment",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						590.0,
+						281.0,
+						190.0,
+						98.0
+					],
+					"fontface": 0,
+					"fontname": "Ableton Sans Light",
+					"bgcolor": [
+						0.0,
+						0.0,
+						0.0,
+						0.0
+					],
+					"bubble": 1,
+					"text": "Preview shows the field as color.\nEvery pixel is full strength, so only\nbypass gives gray. Mid gray input\nflows along Angle; Spread 0 gives\none flat color, a uniform field.",
+					"fontsize": 12.0,
+					"linecount": 5
 				}
 			}
 		],
 		"lines": [
+			{
+				"patchline": {
+					"destination": [
+						"d-4",
+						0
+					],
+					"source": [
+						"d-3",
+						0
+					]
+				}
+			},
 			{
 				"patchline": {
 					"destination": [

@@ -1885,7 +1885,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Tone curve adjustment",
+									"text": "Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -2113,7 +2113,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Texture-driven direction field -- brightness sets the flow angle; feeds any vecfield consumer",
+									"text": "Texture-driven direction field -- the red channel sets the flow angle; feeds any vecfield consumer",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

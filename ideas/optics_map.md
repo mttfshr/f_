@@ -27,7 +27,7 @@ Each field consumer reads a different property of the same field: warp reads dis
 - **Lumia glass:** height -> fieldmap -> caustic, + warp + chroma (`f_lumia.md`).
 - **Underwater light:** one slow field warps the scene while caustic's isolated layer is added over it; one field, two jobs.
 - **God rays:** radial `f_vf_vortex` -> streak or glow (`godray_radial_accumulation.md`).
-- **Anamorphic flares:** `f_vf_flow` unconnected (uniform-direction field) -> streak at a horizontal angle; the field-driven half of `f_anamorph_unnamed.md` from existing modules.
+- **Anamorphic flares:** `f_vf_flow` at `spread` 0 with any texture connected (uniform-direction field) -> streak at a horizontal angle; the field-driven half of `f_anamorph_unnamed.md` from existing modules.
 - **Crystal / prism light:** field -> `f_vf_prism`, caustic layer added for bright cores.
 - **Afterglow:** `f_vf_advect` after any of the above for phosphor-like trails.
 

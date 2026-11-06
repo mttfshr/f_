@@ -24,7 +24,7 @@ Stateless, texture→texture, no geometric displacement. Reach for these when th
 | `f_channel_grader` | tex → tex | Per-channel lift/gamma/gain (film-style grade), R/G/B + master |
 | `f_hue_processor` | tex → tex | Isolates a hue band (center + asymmetric width + falloff), adjusts sat/lum/hue within it only. Low-sat regions gated out. ⚠ open UI bug on `hue_lower`/`hue_upper` |
 | `f_luma_processor` | tex → tex | Isolates a luma range (shadow/mid/high breakpoints), adjusts sat/lum/hue within it only. Structurally parallel to `f_tone_curve` |
-| `f_tone_curve` | tex → tex | Shadow/midtone/highlight brightness adjustment by tonal band. Structurally parallel to `f_luma_processor` |
+| `f_tone_curve` | tex → tex | Shadow/midtone/highlight brightness lift by tonal band; additive, not a curve editor. Structurally parallel to `f_luma_processor` |
 
 ## Geometry / UV Warp
 
@@ -55,7 +55,7 @@ Output a coherent f_vecfield (or, for f_chladni, an f_vecfield alongside other o
 | `f_tf_sharpen` | raw tensor → raw tensor | Eigengap operator: scales the eigenvalue gap at fixed trace and untouched axis — commits or relaxes anisotropy with one dial. Not image sharpening
 | `f_tf_aniso_blur` | raw tensor + tex → tex | Coherence-enhancing smoother: integrates the source along the tensor's major axis, ellipse width from the eigenvalue ratio, isotropic fallback (Weickert rationale). Straight-axis v1
 | `f_tf_hatch` | raw tensor (+ optional stroke tex) → tex (streaks) | Streamline (LIC) renderer: marches along the decoded axis through sparse noise, so strokes form where coherence is high and grain where it is low. 3 stages plus a 2-stage stroke-texture pre-filter, 16 steps per direction
-| `f_vf_flow` | tex → vecfield | Texture-driven direction field: the input's luminance sets the flow direction (needs a texture; no unconnected mode since 2026-11-01). Was built as `f_weave`'s field input; weave no longer takes a vecfield |
+| `f_vf_flow` | tex → vecfield | Texture-driven direction field: the input's red channel sets the flow direction, at full strength everywhere (needs a texture; no unconnected mode since 2026-11-01). Was built as `f_weave`'s field input; weave no longer takes a vecfield |
 | `f_vf_repulse` | tex → vecfield | Ring-samples 16 directions around each pixel, accumulates vectors pointing away from (or, with negative gain, toward) bright regions. Texture-shape-driven repulsion/attraction field |
 | `f_vf_optical_flow` | tex (video/live) → vecfield + confidence | Real Lucas-Kanade motion estimation between frames — genuine per-pixel motion field from a moving source, with aperture-problem handling. The "derive a field from what's actually moving in the shot" producer |
 | `f_vf_fluid` | vecfield (force) → vecfield, **temporal** | Spectral incompressible-flow solver — stir it with any force (video motion, a vortex, a wind) and the resulting swirl persists and evolves after the force stops, with `viscosity` (smoothing), `project` (swirl vs shock), and `drag`. Outputs a velocity field, not an image: feed it to `f_vf_advect`/`warp`/`glow`/`streak`. The "make a field that keeps moving on its own" module. 256² solver regardless of render size; ~2.5 ms/frame on the bench |
@@ -125,7 +125,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 
 **Legend.** Types as in "Reading the I/O column" above, plus `tensor-raw` (f_tensor_type outlet 0: Jxx/Jxy/Jyy), `tensor-packed` (outlet 1: cos2θ/sin2θ/trace/coherence, angle-doubled, NOT a vecfield), `mod` (optional modulation texture; unconnected = no modulation), `ctrl` (control messages that ride on the same physical inlet 0 as the texture, per Vsynth convention; not counted as a separate inlet). **Driving texture** = the input without which the output is not meaningful: **Required** (nothing useful out when unconnected), **Optional** (degrades to a defined fallback, named), **None** (self-sufficient). "Neutral vecfield" = (0.5, 0.5, 0.5, 1); "neutral tensor" = zero-tensor.
 
-**Doc gaps, so you know what is inferred:** `f_grain`, `f_droste`, `f_channel_grader`, `f_hue_processor`, `f_luma_processor` and `f_tone_curve` docs say only "bypass processing"; the bypass column for those is the family convention (source passthrough), not a documented measurement. `f_a_decorrelate`'s doc does not state its bypass behavior either. `f_ks`, `f_vf_lbm`, `f_ngon`, `f_a_ripple` and `f_chladni_audio` got reference docs on 2026-10-22 and are in the tables below; `f_a_ripple` and `f_chladni_audio` are hand-built patches with no bypass control at all.
+**Doc gaps, so you know what is inferred:** `f_grain`, `f_droste`, `f_channel_grader`, `f_hue_processor` and `f_luma_processor` docs say only "bypass processing"; the bypass column for those is the family convention (source passthrough), not a documented measurement. `f_a_decorrelate`'s doc does not state its bypass behavior either. `f_ks`, `f_vf_lbm`, `f_ngon`, `f_a_ripple` and `f_chladni_audio` got reference docs on 2026-10-22 and are in the tables below; `f_a_ripple` and `f_chladni_audio` are hand-built patches with no bypass control at all.
 
 ### Color / Tonal Grading
 
@@ -134,7 +134,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_channel_grader` | 1: tex + ctrl | 1: tex | Required (processor) | Source passthrough (convention) |
 | `f_hue_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
 | `f_luma_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
-| `f_tone_curve` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
+| `f_tone_curve` | 1: tex + ctrl | 1: tex | Required | Source passthrough (native `@bypass`, `G-bypass-native`) |
 
 ### Geometry / UV Warp
 
@@ -154,7 +154,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_vf_vortex` | 5: ctrl/bang; 4 `mod` tex (cx, cy, convergence, curl) | 1: vecfield | None (params only) | Neutral vecfield |
 | `f_vf_vortex_multi` | 5: ctrl/bang; 4 global `mod` tex (+ optional per-site position inlets) | 1: vecfield | None (params only) | Neutral vecfield |
 | `f_vf_fieldmap` | 1: tex (scalar-dominant) + ctrl | 1: vecfield | Required (no `vs_inState`: unconnected = no output) | Neutral vecfield |
-| `f_vf_flow` | 1: tex (scalar, optional) + ctrl | 1: vecfield | Optional (unconnected = uniform field at `angle`; connected = direction perturbed by luma) | Neutral vecfield (not an input passthrough) |
+| `f_vf_flow` | 1: tex + ctrl | 1: vecfield | Required (unconnected = no output; red channel perturbs `angle`) | Neutral vecfield via `bypass_gate` (not an input passthrough) |
 | `f_vf_repulse` | 1: tex + ctrl | 1: vecfield | Required | Neutral vecfield |
 | `f_vf_optical_flow` | 1: tex (live/video) + ctrl | 2: vecfield; confidence + axis (packed) | Required, and it must be moving (needs frame-to-frame change) | Neutral vecfield (out0); zero confidence (out1) |
 | `f_vf_fluid` | 1: vecfield (force) + ctrl | 1: vecfield. **temporal** | Optional: solver keeps running with no force; existing flow coasts down at the drag rate | Connected: force passed through unmodified. Unconnected: neutral vecfield. Solver keeps running underneath |
