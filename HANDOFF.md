@@ -4,10 +4,10 @@
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
-**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, the benches are written and await Matt's go, the codebox has never compiled; G8 waits for Phase 3. Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. Nothing else is scheduled; Matt picks the next item.
+**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, the codebox bench is green (10/10), the module and contract benches await Matt's go; G8 waits for Phase 3. Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. Nothing else is scheduled; Matt picks the next item.
 
 **Candidates (Matt decides):**
-- **`f_vf_stamp` benches** (start here if Matt says go): `tests/bench.sh -q tests/modules/vf_stamp/bench_vf_stamp.py` first (the codebox's first compile), then the module bench and `bench_modules.py`, then Phase 2's live looks.
+- **`f_vf_stamp` benches** (start here if Matt says go): `bench_vf_stamp.py` is green; next the module bench and `bench_modules.py`, then Phase 2's live looks.
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
 - `f_masonry` adopts tagged textures (Matt, 2026-11-01 21:17: "we will do masonry, but not this second"): design discussion first. Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each (6 x 3 = 18 depths, read from `src/f_masonry/definition.py`), so one tag per named `<param>_tex` needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
 - The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`); the compact `f_weave` panel is the first test case.
@@ -28,7 +28,8 @@
 - **For Matt's veto:** `env` snaps to 0 below 0.001; loadbang bangs the `attack` and `release` dials; `invert` reads Norm / Inv; panel copies `f_wave_field`.
 - **Commits:** 4866d14, 034662c, 7429edb, 14a4ff4, then this one.
 - **Verified offline:** `f_wave_field` rebuild equal to the committed patcher in every box property and cord once 13 ids are mapped; `drift -v` ok for both modules; `test_build_gate_button.py` 10/10; `test_vf_stamp.py` 21/21; `test_module_contracts.py` 9/9 (log `tests/logs/20261105-215041-offline.log`; `stamp` is a new known issue, the path is one hop past `max_depth` 6); `test_bench_expect.py` 10/10.
-- **Not run:** any bench, the rest of the offline suite, `test_gates.py`. **The codebox has never compiled.** `f_wave_field` not reopened in Max since T020.
-- **Owed to Matt:** the go for `bench_vf_stamp.py`, `bench_vf_stamp_module.py`, and `bench_modules.py` for both modules; then the live looks (T030-T032). Add the module by name: no menu or README row until T040.
+- **Bench (Matt's go):** `bench_vf_stamp.py` 10/10, first compile (log `tests/logs/20261105-215536-bench.log`).
+- **Not run:** the module bench, `bench_modules.py`, the rest of the offline suite, `test_gates.py`. `f_wave_field` not reopened in Max since T020.
+- **Owed to Matt:** the go for `bench_vf_stamp_module.py` and `bench_modules.py`; then the live looks (T030-T032). Add the module by name: no menu or README row until T040.
 - **Note:** `make_missing_helpfiles.py` skips `gate_button`, so `stamp` needs adding by hand at T040. An empty untracked `f_bench_dry.py` sits in the repo root (not Claude's).
 - **Gates touched, no row edited:** `G-menu` (T008 still held), `G-ui-density` (nine controls plus the press).
