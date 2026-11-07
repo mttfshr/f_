@@ -23,9 +23,9 @@
 
 ## 2026-11-07: f_poincare Phase 3 built (camera `rot`, `cam_x`, `cam_y`; rim policy), offline only
 
-- **State:** `src/f_poincare/codebox_poincare.gen` has the camera (rotation, then the disk translation, `|a|` clamped to 0.99) and an earlier rim fade near the clamp. Mirror `tests/modules/poincare/` 21/21 (`tests/run.sh -q`, log `tests/logs/20261107-083743-offline.log`). T030-T032 ticked; record in `.specify/f_poincare/tasks.md` (last Record entry). Nothing ran on the GPU.
+- **State:** `src/f_poincare/codebox_poincare.gen` has the camera (rotation, then the disk translation, `|a|` clamped to 0.99) and an earlier rim fade near the clamp. Mirror `tests/modules/poincare/` 21/21 (`tests/run.sh -q`, log `tests/logs/20261107-083743-offline.log`). T030-T032 ticked; record in `.specify/f_poincare/tasks.md` (last Record entry). Bench 9/9 on the GPU 2026-11-07 (Matt's go; log 20261107-083944-bench.log).
 - **Decisions taken on my recommendation (Matt has not seen them):** `rot` in radians; fade start `rim_fade - 0.04 (|a|/0.99)^2` (0.95 at the clamp, from the float32 measurement, worst B {3,7}); points outside the disk are scaled in before the camera to avoid a division by zero.
-- **Next (Matt):** say go for `tests/bench.sh -q tests/modules/poincare/bench_poincare.py` (the codebox changed, so the old A/B cases need a re-run too; camera cases are new and unrun); then T033, the live look in `~/Vsynth/patterns/poincare_a_look.maxpat` (regenerated with camera controls, never opened). Then Phase 4.
+- **Next (Matt):** T033, the live look in `~/Vsynth/patterns/poincare_a_look.maxpat` (regenerated with camera controls, never opened). Then Phase 4.
 - **Not done:** zero-camera bit-exactness on the GPU is inferred from arithmetic; the same stale items as below (plan.md Active list, README row, inventory, menu, `ideas/INDEX.md:187`); Matt's uncommitted `f_ks`, `plan.md` and docs edits stay uncommitted.
 
 ## 2026-11-06: f_poincare Phases 0-2 done (spec, mirror, mode A, mode B, one codebox)
