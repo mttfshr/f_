@@ -241,3 +241,13 @@ docs/
   **Update 2026-10-20:** the shader does not clamp its march, so out-of-frame reads WRAP in x on the GPU (probes P2/P6, the pix-to-pix scratch patch). The mirror now models that through `gpu_sim.OOB_DEFAULT`, and the whole-texel march test wraps its indices with mod; before this the clamp-only mirror was wrong at the frame edges and the test avoided them.
   **Decided 2026-10-19 (Matt): leave as is.** No cap, no guard; the finding below stays recorded and the reference doc's "normalization still holds above 1" wording is not touched. Revisit only if `falloff` near 2.0 shows up in live use.
   **Finding (decision above): `falloff` near 2.0 is unstable.** The eight step weights sum to `8 - 4 * falloff`, which is zero at `falloff = 2.0`, inside the dial's 0-2.5 range. The shader divides the weighted sum by it, so the streak layer there is rounding noise amplified by about 1 / 1e-7 (the mirror gets a clamped, wrong layer: worst error about 1.0 against the source; a GPU may give NaN or inf). The reference doc says the normalization "still holds" for `falloff` above 1. Options: cap the dial below 2.0 (or at about 1.9), or guard the divide (fall back to the source when `|w_sum|` is small). Not changed.
+
+
+## Stable preflight (2026-11-06)
+
+Offline by Claude, plus omp audit `advect-streak-audit-1` (all 6 planted doc errors found; the audit found no real streak error).
+
+- Drift ok. Menu and launcher `--check` up to date (README row 85 present).
+- `falloff` dial max 2.5 -> 1.99 (Matt, 2026-11-06, after 2.0 was shown to give a zero weight sum; no codebox guard, the dial cap is the protection). Doc range and the "normalization" wording updated.
+- Helpfile: the vecfield inlet was unwired. Added `f_vf_flow` (from `vs_sources_main`) to inlet 1; the comment now says inlet 0 / inlet 1 (it said "inlet 2"); `falloff` range in the message list 2.5 -> 1.99. Not opened in Max.
+- Not done: Matt's helpfile look, the live contract bench, and the move to `stable/`.

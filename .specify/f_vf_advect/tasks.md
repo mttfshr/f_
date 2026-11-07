@@ -187,3 +187,16 @@ Phase 1 (Scratch) ──→ Phase 2 (Build) ──→ Phase 3 (Integration) ─�
 - Object IDs in build_advect.py: standard infrastructure uses obj-1 through obj-16; advect_pix is obj-5; pass_pix and vecfield objects use obj-50+; param UI objects use obj-20+. Post-build injections (if any) should use obj-200+.
 
 - **2026-10-20, clamp edge fix:** the advect UV was clamped to exact [0, 1]; probe P9 showed x = 1.0 reads the first column and y = 0.0 the last row on the GPU, and the feedback loop re-injected the wrong edge every frame. Bounds are now 0.001 / 0.999 (codebox line 27; patcher text-patched, one line, because the builder's layout differs from the committed Max-saved file; `drift.py -v f_vf_advect` ok). Tier 1: the mirror follows, `test_whole_pixel_shifts_are_exact` now expects every edge to read its own edge, and the old behavior is the `exact_clamp` mutation (10/10). Tier 3 pending (Matt): a field flowing toward the right and bottom edges should show no far-edge content.
+
+
+## Stable preflight (2026-11-06)
+
+Offline by Claude, plus omp audit `advect-streak-audit-1` (snapshot 4459a3d; all 6 planted doc errors found; reports checked against the repo before use, none applied unchecked).
+
+- Drift ok after the comment edits (1 of 1). Menu and launcher `--check` up to date (README row 81 present, no warning marker).
+- Fixed: `definition.py` outlet-2 comment and the `spec.md` bypass note on out3 (the codebox mixes out3 to the vecfield input, or neutral 0.5 when unconnected: `codebox_advect.gen:82`); the doc's accumulation line now shows the `clamp(..., 0, 1)` at `codebox_advect.gen:53`. `trail` dial max 1000 -> 120 (Matt, 2026-11-06).
+- Helpfile: nothing was wired upstream. Added `vs_sources_main` to inlet 0 and `f_vf_flow` to inlet 1 (the prism pairing); added `trail` to the message list; comment text rewritten. Not opened in Max.
+- Left alone (Matt, 2026-11-06): `G-edge-wrap`, and the out3 gradient taps stay unclamped (`codebox_advect.gen:71-74`).
+- Open, Matt's call: `spec.md` Internal Architecture (`@type char`, pass_pix "identity", the Signal Flow route list) is pre-build and wrong against the shipped patcher (float32; separate stage; route list lacks gain, separate, mode, trail); too large for one edit. `definition.py:101` "Inject / 0.03" holds only at the default decay.
+- Shared-file edit for the main session: `tests/contracts/bench_modules.py` line 173 comment says feedback keeps running through bypass; the codebox mixes out1 and out2 to the source, so reread it before leaving it.
+- Not done: Matt's helpfile look, the live contract bench, and the move to `stable/`.

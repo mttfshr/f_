@@ -106,7 +106,7 @@
                             "expression": "themecolor.live_control_fg"
                         }
                     },
-                    "text": "External Control Messages\n\ngain [0.0 \u2013 1.5]\nmix_pct [0.0 \u2013 100.0]\nlength [0.0 \u2013 20.0]\nfalloff [0.0 \u2013 2.5]\ncolor_shift [0.0 \u2013 20.0]",
+                    "text": "External Control Messages\n\ngain [0.0 \u2013 1.5]\nmix_pct [0.0 \u2013 100.0]\nlength [0.0 \u2013 20.0]\nfalloff [0.0 \u2013 1.99]\ncolor_shift [0.0 \u2013 20.0]",
                     "textjustification": 0
                 }
             },
@@ -247,7 +247,7 @@
                     "fontname": "Ableton Sans Light",
                     "fontsize": 12.0,
                     "id": "d-9",
-                    "linecount": 3,
+                    "linecount": 4,
                     "maxclass": "comment",
                     "numinlets": 1,
                     "numoutlets": 0,
@@ -255,9 +255,40 @@
                         500.0,
                         300.0,
                         190.0,
-                        55.0
+                        63.0
                     ],
-                    "text": "Feed vecfield into inlet 2 from:\nf_vf_vortex, f_vf_vortex_multi,\nor f_vf_fieldmap"
+                    "text": "Source on inlet 0, vecfield on inlet 1\n(here f_vf_flow; f_vf_vortex,\nf_vf_vortex_multi or f_vf_fieldmap\nalso work)"
+                }
+            },
+            {
+                "box": {
+                    "id": "d-10",
+                    "maxclass": "bpatcher",
+                    "name": "f_vf_flow.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        470.0,
+                        165.0,
+                        167.5,
+                        91.0
+                    ],
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "viewvisibility": 1,
+                    "varname": "f_vf_flow"
                 }
             }
         ],
@@ -282,6 +313,30 @@
                     ],
                     "source": [
                         "d-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "d-10",
+                        0
+                    ],
+                    "source": [
+                        "d-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "d-4",
+                        1
+                    ],
+                    "source": [
+                        "d-10",
                         0
                     ]
                 }
