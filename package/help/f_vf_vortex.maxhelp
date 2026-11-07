@@ -69,7 +69,7 @@
                         270.0,
                         40.0
                     ],
-                    "text": "Single fixed-point vortex field -- continuously variable sink/source/spiral topology",
+                    "text": "Single-point vecfield (sink, source or spiral) to steer warp, advect and streak",
                     "fontsize": 14.0,
                     "varname": "autohelp_top_digest[3]",
                     "linecount": 2,
@@ -165,7 +165,7 @@
                     "lockedsize": 0,
                     "maxclass": "bpatcher",
                     "name": "f_vf_vortex.maxpat",
-                    "numinlets": 1,
+                    "numinlets": 5,
                     "numoutlets": 1,
                     "offset": [
                         0.0,
@@ -177,8 +177,8 @@
                     "patching_rect": [
                         338.0,
                         24.0,
-                        154.0,
-                        91.0
+                        196.0,
+                        160.0
                     ],
                     "viewvisibility": 1,
                     "varname": "f_vf_vortex"
@@ -207,7 +207,7 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        135.0,
+                        204.0,
                         236.0,
                         249.0
                     ],
@@ -229,12 +229,12 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        500.0,
-                        155.0,
+                        550.0,
+                        40.0,
                         210.0,
-                        51.0
+                        100.0
                     ],
-                    "text": "Feed into f_vf_warp, f_caustic, or\nf_vf_streak to visualize the field.",
+                    "text": "A generator: renders by itself, no\\ndriving texture. Feed into f_vf_warp,\\nf_caustic or f_vf_streak to visualize\\nthe field. Inlets 1-4 take optional mod\\ntextures (leave an Amt at 0 if unused).",
                     "fontsize": 12.0,
                     "linecount": 2,
                     "bubble": 1

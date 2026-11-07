@@ -16,7 +16,7 @@ Output is intended for f_vecfield consumers. Also compatible with `vs_displaceme
 ## Signal Flow
 
 ```
-in0 (bang + control) → params route to dials → vortex_pix
+in0 (control only; the module renders on its own `r draw`, no driving texture) → params route to dials → vortex_pix
 in1 (cx mod texture, optional)          → vs_inState → vortex_pix
 in2 (cy mod texture, optional)          → vs_inState → vortex_pix
 in3 (convergence mod texture, optional) → vs_inState → vortex_pix

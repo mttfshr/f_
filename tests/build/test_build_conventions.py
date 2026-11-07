@@ -193,10 +193,10 @@ def test_render_trigger_is_loud():
 
 
 def test_the_vortex_modules_ship_without_r_draw_and_keep_their_hand_built_controls():
+    # both left render_trigger "inlet" 2026-11-06 (Matt: a pure generator needs no driving texture)
     for name in ("f_vf_vortex", "f_vf_vortex_multi"):
         built, _ = drift.build_module(name)
-        texts = [b["box"].get("text") for b in built["patcher"]["boxes"]]
-        _eq(f"{name}: no `r draw`", "r draw" in texts, False)
+        _eq(f"{name}: renders on `r draw`", "r draw" in [b["box"].get("text") for b in built["patcher"]["boxes"]], True)
     built, _ = drift.build_module("f_vf_vortex_multi")
     classes = [b["box"]["maxclass"] for b in built["patcher"]["boxes"]]
     _eq("f_vf_vortex_multi keeps its nodes object and vsc_center_ctrl bpatcher (raw_boxes)",

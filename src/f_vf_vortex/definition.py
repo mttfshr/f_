@@ -5,7 +5,7 @@ patcher = {
     "title":              "Vortex",
     "signal_type":        "∇ out",
     "archetype":          "source",
-    "render_trigger":     "inlet",       # driven from its inlet; no `r draw` (as shipped)
+    # default render trigger (`r draw`): a pure generator, it does not read inlet 0 (Matt, 2026-11-06)
     "pix_type":           "float32",
 
     "presentation_width":  196,

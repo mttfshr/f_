@@ -225,6 +225,24 @@
 							},
 							{
 								"box": {
+									"id": "gen-obj-2",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										120.0,
+										30.0,
+										40.0,
+										22.0
+									],
+									"text": "r draw"
+								}
+							},
+							{
+								"box": {
 									"code": "Param s1_cx(0.3);\nParam s1_cy(0.3);\nParam s1_conv(0.5);\nParam s1_curl(0.0);\n\nParam s2_cx(0.5);\nParam s2_cy(0.5);\nParam s2_conv(0.5);\nParam s2_curl(0.0);\n\nParam s3_cx(0.7);\nParam s3_cy(0.7);\nParam s3_conv(0.5);\nParam s3_curl(0.0);\n\nParam falloff(2.0);\nParam cx_amt(0.0);\nParam cy_amt(0.0);\nParam conv_amt(0.0);\nParam curl_amt(0.0);\nParam bypass(0.0);\n\nuv = norm;\n\n// --- global mod offsets (decode 0-1 texture to signed, scale by amt) ---\ncx_mod   = (sample(in2, uv).x - 0.5) * 2.0 * cx_amt;\ncy_mod   = (sample(in3, uv).x - 0.5) * 2.0 * cy_amt;\nconv_mod = (sample(in4, uv).x - 0.5) * 2.0 * conv_amt;\ncurl_mod = (sample(in5, uv).x - 0.5) * 2.0 * curl_amt;\n\n// --- site 1 ---\ns1_dx = uv.x - (s1_cx + cx_mod);\ns1_dy = uv.y - (s1_cy + cy_mod);\ns1_r = sqrt(s1_dx*s1_dx + s1_dy*s1_dy);\ns1_r_safe = max(s1_r, 0.0001);\ns1_rx = s1_dx / s1_r_safe;\ns1_ry = s1_dy / s1_r_safe;\ns1_tx = -s1_ry;\ns1_ty = s1_rx;\ns1_fx = (s1_conv + conv_mod) * (-s1_rx) + (s1_curl + curl_mod) * s1_tx;\ns1_fy = (s1_conv + conv_mod) * (-s1_ry) + (s1_curl + curl_mod) * s1_ty;\ns1_strength = exp(-s1_r * max(falloff, 0.0));\ns1_fx = s1_fx * s1_strength;\ns1_fy = s1_fy * s1_strength;\n\n// --- site 2 ---\ns2_dx = uv.x - (s2_cx + cx_mod);\ns2_dy = uv.y - (s2_cy + cy_mod);\ns2_r = sqrt(s2_dx*s2_dx + s2_dy*s2_dy);\ns2_r_safe = max(s2_r, 0.0001);\ns2_rx = s2_dx / s2_r_safe;\ns2_ry = s2_dy / s2_r_safe;\ns2_tx = -s2_ry;\ns2_ty = s2_rx;\ns2_fx = (s2_conv + conv_mod) * (-s2_rx) + (s2_curl + curl_mod) * s2_tx;\ns2_fy = (s2_conv + conv_mod) * (-s2_ry) + (s2_curl + curl_mod) * s2_ty;\ns2_strength = exp(-s2_r * max(falloff, 0.0));\ns2_fx = s2_fx * s2_strength;\ns2_fy = s2_fy * s2_strength;\n\n// --- site 3 ---\ns3_dx = uv.x - (s3_cx + cx_mod);\ns3_dy = uv.y - (s3_cy + cy_mod);\ns3_r = sqrt(s3_dx*s3_dx + s3_dy*s3_dy);\ns3_r_safe = max(s3_r, 0.0001);\ns3_rx = s3_dx / s3_r_safe;\ns3_ry = s3_dy / s3_r_safe;\ns3_tx = -s3_ry;\ns3_ty = s3_rx;\ns3_fx = (s3_conv + conv_mod) * (-s3_rx) + (s3_curl + curl_mod) * s3_tx;\ns3_fy = (s3_conv + conv_mod) * (-s3_ry) + (s3_curl + curl_mod) * s3_ty;\ns3_strength = exp(-s3_r * max(falloff, 0.0));\ns3_fx = s3_fx * s3_strength;\ns3_fy = s3_fy * s3_strength;\n\n// --- additive sum and encode ---\nfx = s1_fx + s2_fx + s3_fx;\nfy = s1_fy + s2_fy + s3_fy;\n\nR = clamp(fx * 0.5 + 0.5, 0.0, 1.0);\nG = clamp(fy * 0.5 + 0.5, 0.0, 1.0);\n\nfield_out = vec(R, G, 0.5, 1.0);\nout1 = mix(field_out, vec(0.5, 0.5, 0.5, 1.0), bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
@@ -638,6 +656,24 @@
 						"parameter_enable": 0
 					},
 					"text": "js moduleSize.js"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-20a",
+					"maxclass": "newobj",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						30.0,
+						120.0,
+						50.0,
+						22.0
+					],
+					"text": "r draw"
 				}
 			},
 			{
@@ -2722,6 +2758,18 @@
 				"patchline": {
 					"source": [
 						"obj-3",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-20a",
 						0
 					],
 					"destination": [

@@ -217,6 +217,24 @@
 							},
 							{
 								"box": {
+									"id": "gen-obj-2",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										120.0,
+										30.0,
+										40.0,
+										22.0
+									],
+									"text": "r draw"
+								}
+							},
+							{
+								"box": {
 									"code": "Param cx(0.5);\nParam cy(0.5);\nParam convergence(0.5);\nParam curl(0.0);\nParam falloff(2.0);\nParam cx_amt(0.0);\nParam cy_amt(0.0);\nParam convergence_amt(0.0);\nParam curl_amt(0.0);\nParam bypass(0.0);\n\n// modulation offsets (decode from 0-1 to signed, scale by amt)\ncx_eff = cx + (sample(in2, norm).x - 0.5) * 2.0 * cx_amt;\ncy_eff = cy + (sample(in3, norm).x - 0.5) * 2.0 * cy_amt;\nconv_eff = convergence + (sample(in4, norm).x - 0.5) * 2.0 * convergence_amt;\ncurl_eff = curl + (sample(in5, norm).x - 0.5) * 2.0 * curl_amt;\n\n// offset from center\ndx = norm.x - cx_eff;\ndy = norm.y - cy_eff;\n\n// distance \u2014 guard div-by-zero\nr = sqrt(dx*dx + dy*dy);\nr_safe = max(r, 0.0001);\n\n// unit radial (pointing away from center)\nrx = dx / r_safe;\nry = dy / r_safe;\n\n// unit tangential (90 deg CCW of radial)\ntx = -ry;\nty = rx;\n\n// field: convergence pulls toward center (negate radial), curl rotates\nfx = conv_eff * (-rx) + curl_eff * tx;\nfy = conv_eff * (-ry) + curl_eff * ty;\n\n// exponential falloff \u2014 clamp to positive, no ring artifact\nf_safe = max(falloff, 0.0);\nstrength = exp(-r * f_safe);\nfx = fx * strength;\nfy = fy * strength;\n\n// encode signed [-1,1] to [0,1] range\nR = clamp(fx * 0.5 + 0.5, 0.0, 1.0);\nG = clamp(fy * 0.5 + 0.5, 0.0, 1.0);\n\nfield_out = vec(R, G, 0.5, 1.0);\nout1 = mix(field_out, vec(0.5, 0.5, 0.5, 1.0), bypass);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
@@ -630,6 +648,24 @@
 						"parameter_enable": 0
 					},
 					"text": "js moduleSize.js"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-20a",
+					"maxclass": "newobj",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						30.0,
+						120.0,
+						50.0,
+						22.0
+					],
+					"text": "r draw"
 				}
 			},
 			{
@@ -1785,6 +1821,18 @@
 				"patchline": {
 					"source": [
 						"obj-3",
+						0
+					],
+					"destination": [
+						"obj-5",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-20a",
 						0
 					],
 					"destination": [

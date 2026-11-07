@@ -16,7 +16,7 @@ Sites contribute additively per-pixel, each weighted by its own exponential fall
 ## Signal Flow
 
 ```
-in0 (bang + control) → params route to dials → vf_vortex_multi_pix
+in0 (control only; renders on its own `r draw`) → params route to dials → vf_vortex_multi_pix
 in1 (cx mod texture, optional)          → vs_inState → vf_vortex_multi_pix
 in2 (cy mod texture, optional)          → vs_inState → vf_vortex_multi_pix
 in3 (convergence mod texture, optional) → vs_inState → vf_vortex_multi_pix

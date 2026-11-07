@@ -133,3 +133,17 @@ one actionable item (.specify/maintenance/SKILL.md's stable/ bar)._
   live contract suite.
 
 - [x] T038 **Tier-1 NumPy mirror (omp run mirror-build-1, landed 2026-10-19).** `tests/modules/vf_vortex/{vf_vortex_mirror,test_vf_vortex}.py`, 16/16 offline. Checks: the doc's topology table, the doc's falloff law exp(-r * falloff) (a planted Gaussian in a snapshot copy was caught as a codebox-versus-doc disagreement), encoding, fixed point, modulation, bypass. The whole-frame and defaults checks re-derive the codebox (labeled). See `HANDOFF.md` 2026-10-19.
+
+## Stable preflight (2026-11-06, offline by Claude; helpfile not yet opened in Max)
+
+- [x] T040 Mechanical: drift 1 of 1 (`build/drift.py -v f_vf_vortex`), `generate_launch.py --check` and `generate_menu.py --check` up to date, README row present (no marker), reference doc matches the shipped state after the 2026-11-06 fixes (native bypass passes inlet 0 through; unconnected mod inlet offsets by `-amt`). Tier-1 mirror T038 stands (16/16, not re-run: no codebox change).
+- [x] T041 Helpfile fit: the bpatcher box was 154x91 (the old footprint) against the module's 196x160 and listed 1 inlet; now 196x160 with 5 inlets, preview moved to y=204, the hint comment moved right of the module and now carries the mod-inlet caveat. Digest rewritten to say what the module is for.
+- [x] T042 Matt's look at the helpfile: passes (live, 2026-11-06, after T043/T044).
+- Carried over (Matt, 2026-11-06): bypass stays native; the unconnected mod inlet offset (gate in the codebox) is deferred.
+- [x] T043 Helpfile had no driving texture (render_trigger is `inlet`, so nothing rendered): `vs_sources_main` added above the module and wired to inlet 0; module, preview and hint moved down; reference doc's inlet 0 line corrected (Matt, 2026-11-06). Still owed: T042. `f_vf_vortex_multi`'s helpfile has the same gap (no source box; not touched, it is in `stable/`).
+- [x] T044 Superseding T043 (Matt, 2026-11-06: a generator that does not read its input should not need a driving texture): `render_trigger "inlet"` removed from `definition.py`, so the module renders on `r draw` like the other generators; patcher rebuilt (adds `r draw` and the gen `r draw`; drift 0). Helpfile: the `vs_sources_main` box taken out again, hint reworded. `test_build_conventions.py` updated (vortex_multi still ships without `r draw`). **Not verified in Max:** that it renders on its own with nothing connected, and the mod inlets still work (the builder notes this combination as untested). `f_vf_vortex_multi` still renders only when a texture arrives; same question for it, it is in `stable/`.
+- [x] T042/T044 verified: **Live, Matt 2026-11-06: helpfile look passes (vortex). Contract bench by Claude at Matt's go: `bench_modules.py` 2/2, 0 unexpected issues, both vortex modules in the roster (`tests/logs/20261106-vortex-draw-bench.log`).** Rendering on its own with nothing connected: Matt's look passed.
+
+## Moved to stable/ (2026-11-06, Matt's go)
+
+After the preflight above: look passed, contract bench 2/2. Carried over under the stable bar: native bypass (passes inlet 0 through, Matt's call), the unconnected mod-inlet offset of `-amt` (documented; codebox gating deferred), T037 mirror stays as T038 landed.
