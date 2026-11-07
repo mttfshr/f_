@@ -50,6 +50,11 @@ _KS_NOTE = ("documented in src/f_ks/codebox_pass.gen header: {} is a fixed solve
             "only so the bench can vary it (tests/modules/ks/bench_ks.py); it is not a performable "
             "control (spec FR-001: L = 50, FR-003: seed amplitude 1)")
 KNOWN_ISSUES[("f_ks", "undriven", "#0_ks_pass.amp")] = _KS_NOTE.format("amp")
+_PC_NOTE = ("documented in src/f_poincare/definition.py and tasks.md T004/T032: {} is a fixed constant ({}) that stays a Param "
+            "only so the bench can vary it (tests/modules/poincare/bench_poincare.py); not a performable control (Matt decides "
+            "in T050 whether iterations is exposed)")
+KNOWN_ISSUES[("f_poincare", "undriven", "#0_poinc_pix.iterations")] = _PC_NOTE.format("iterations", "32")
+KNOWN_ISSUES[("f_poincare", "undriven", "#0_poinc_pix.rim_fade")] = _PC_NOTE.format("rim_fade", "0.99, moved in by the camera inside the codebox")
 _WF_NOTE = ("documented in src/f_wave_field/codebox_spec.gen and codebox_real.gen headers: dt is the per-frame model step "
             "(gate G3: one draw = 1/60 model second), a fixed constant that stays a Param only so the bench can vary it "
             "(tests/modules/wave_field/bench_wave_field.py); it is not a performable control")

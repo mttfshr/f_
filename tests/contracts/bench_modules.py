@@ -213,6 +213,8 @@ INPUT_SIZE = {"f_vf_fluid": 512,
               # against the 64 x 64 input, the same shape as f_stipple.
               "f_weave": RENDER_DIM_SIZE,
               "f_vf_stamp": RENDER_DIM_SIZE,
+              # 2026-11-07: f_poincare follows render_dim and passes inlet 0 through when bypassed.
+              "f_poincare": RENDER_DIM_SIZE,
               # 2026-11-06: f_vf_seeds follows render_dim and now passes inlet 0 through on out1.
               "f_vf_seeds": RENDER_DIM_SIZE}
 
