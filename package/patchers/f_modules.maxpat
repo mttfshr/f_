@@ -397,6 +397,7 @@
                                 "Lens",
                                 "Mobius",
                                 "Ngon",
+                                "Poincare",
                                 "SIRDS",
                                 "Stereo"
                             ],
@@ -405,7 +406,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_1_disp",
-                            "parameter_mmax": 5,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -440,6 +441,7 @@
                                 "lens",
                                 "mobius",
                                 "ngon",
+                                "poincare",
                                 "sirds",
                                 "stereo"
                             ],
@@ -448,7 +450,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_1_file",
-                            "parameter_mmax": 5,
+                            "parameter_mmax": 6,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

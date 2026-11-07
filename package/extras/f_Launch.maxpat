@@ -1293,7 +1293,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_sirds",
+									"text": "f_poincare",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -1318,7 +1318,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_sirds.maxhelp"
+									"text": "loadunique f_poincare.maxhelp"
 								}
 							},
 							{
@@ -1333,7 +1333,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern",
+									"text": "Poincare disk tiling: folds a texture into a hyperbolic {p,q} tiling, Whole or Sliver, with a camera",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -1362,7 +1362,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_stereo",
+									"text": "f_sirds",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -1387,7 +1387,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_stereo.maxhelp"
+									"text": "loadunique f_sirds.maxhelp"
 								}
 							},
 							{
@@ -1402,11 +1402,80 @@
 										150.0,
 										20.0
 									],
-									"text": "Stereographic projection display layer",
+									"text": "Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										154.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-20",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										380.0,
+										150.0,
+										22.0
+									],
+									"text": "f_stereo",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										180.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-21",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										408.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_stereo.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-22",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										380.0,
+										150.0,
+										20.0
+									],
+									"text": "Stereographic projection display layer",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										182.0,
 										720.0,
 										20.0
 									]
@@ -1550,6 +1619,30 @@
 								"patchline": {
 									"source": [
 										"obj-18",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-20",
+										0
+									],
+									"destination": [
+										"obj-21",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-21",
 										0
 									],
 									"destination": [

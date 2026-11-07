@@ -46,6 +46,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_lens` | Filmic lens -- aberration, distortion, transmission, ghost images, halation, spatial modulation |
 | `f_mobius` | Mobius transformation UV-space processor |
 | `f_ngon` | Regular N-gon generator / mask, live-modulatable vertex count; not yet confirmed or documented |
+| `f_poincare` | Poincare disk tiling: folds a texture into a hyperbolic {p,q} tiling, Whole or Sliver, with a camera |
 | `f_sirds` | Single Image Random Dot Stereogram -- real-time strips; a depth texture displaces a repeating pattern |
 | `f_stereo` | Stereographic projection display layer |
 

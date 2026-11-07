@@ -56,6 +56,7 @@ CATEGORIES = [
         ("Lens", "lens", N),
         ("Mobius", "mobius", N),
         ("Ngon", "ngon", N),
+        ("Poincare", "poincare", N),
         ("SIRDS", "sirds", N),
         ("Stereo", "stereo", N),
     ]),

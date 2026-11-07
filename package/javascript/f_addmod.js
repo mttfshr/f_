@@ -19,6 +19,7 @@ var SIZES = {
     "lens":           [231, 156],
     "mobius":         [185,  90],
     "ngon":           [154,  91],
+    "poincare":       [212,  90],
     "sirds":          [190, 130],
     "stereo":         [160,  90],
     "channel_grader": [150, 165],

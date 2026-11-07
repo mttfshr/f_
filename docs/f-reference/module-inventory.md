@@ -33,6 +33,7 @@ Stateless, remap sampling coordinates rather than color. No vecfield involved �
 | Module | I/O | What it does |
 |---|---|---|
 | `f_droste` | tex → tex | Log-polar spiral transform — infinite-zoom Droste/Escher recursion. `n_arms`, `twist`, continuous zoom/rotation |
+| `f_poincare` | tex → tex | Poincaré-disk tiling: folds the texture into a hyperbolic {p,q} tiling (`p_sides` and `q_vertex` live, 1/p + 1/q < 1/2 enforced), Whole (curved tile) or Sliver (kaleidoscope), with a hyperbolic camera (`cam_x`, `cam_y`, `rot`) and a rim fade |
 | `f_mobius` | tex → tex | Möbius-family UV transform (rotation/zoom blended with complex inversion `1/z`). Circles stay circles, no pinching even at extremes; loxodromic spiral motion in the 0.2–0.8 `invert` range |
 | `f_lens` | tex (+4 mod tex) → tex | Multi-effect filmic lens sim: chromatic aberration, barrel/pincushion distortion, vignette, surface-emboss displacement, ghost images, halation, tilt-shift focus, all in one chain. The "physically-evocative lens" module — closest existing thing to a fresnel-style focus/distortion combo. ⚠ bypass incomplete (halation/tiltshift stay live); tilt-shift slated for extraction to a future `f_focus` |
 | `f_stereo` | tex → tex (circular) | Wraps a flat texture onto a rotating sphere, projects to a circular disk (ortho↔stereographic blend). **Display-layer** — last processor before a circular screen, not a general effect |
@@ -142,6 +143,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 |---|---|---|---|---|
 | `f_droste` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
 | `f_mobius` | 1: tex + ctrl | 1: tex | Required | Raw source passthrough |
+| `f_poincare` | 1: tex + ctrl | 1: tex | Required | Source passthrough (contract bench, 2026-11-07) |
 | `f_lens` | 5: source tex + ctrl; 4 `mod` tex (aberration, distortion, transmission, surface/gradient) | 1: tex | Required (source); mods Optional (unconnected = black = no modulation) | Raw source passthrough. ⚠ Incomplete: halation stays live |
 | `f_stereo` | 1: tex | 1: tex (circular disk) | Required | Raw unwarped texture, circular mask removed |
 | `f_sirds` | 2: pattern tex (+ctrl); depth tex | 1: tex | Pattern Required; depth Optional (unconnected = zero displacement, flat tiled pattern) | Raw pattern, undisplaced |
