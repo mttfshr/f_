@@ -18,7 +18,7 @@
 // there is no priority order. Both modes are computed every pixel and fold_mode picks one with mix (branchless; cost is both).
 // Settled tests accept a final point within 1e-5 (squared distance) inside an edge circle: a pixel on a mirror line of the group lands
 // exactly on the circle, a knife-edge that float64 called unsettled and float32 settled (2026-11-06, mode B p = 4 on a square frame).
-// Guard: p_sides is rounded and clamped to 3..10, q_vertex is rounded and raised to the smallest integer with 1/p + 1/q < 1/2.
+// Camera: rot, cam_x, cam_y (see 'Camera' below the setup). Guard: p_sides is rounded and clamped to 3..10, q_vertex is rounded and raised to the smallest integer with 1/p + 1/q < 1/2.
 // width / height are the render size (the render_dim Params; `dim` is not used). bypass_gate = 1 passes the first inlet through
 // (scratch convention for this phase; the module's bypass behaviour is decided in T041).
 // Compile hazards avoided (skills/jit-gen-codebox): functions before Params and take Params as arguments, no unary minus before a
@@ -85,6 +85,9 @@ Param iterations(32);
 Param rim_fade(0.99);
 Param width(640.0);
 Param height(480.0);
+Param cam_x(0);
+Param cam_y(0);
+Param rot(0);
 Param bypass_gate(0);
 
 np_s = clamp(floor(p_sides + 0.5), 3.0, 10.0);
@@ -103,10 +106,33 @@ zx0 = (norm.x * 2.0 - 1.0) * asp_x;
 zy0 = (norm.y * 2.0 - 1.0) * asp_y;
 rscr = sqrt(zx0 * zx0 + zy0 * zy0);
 
-sax = zx0;
-say = zy0;
-sbx = zx0;
-sby = zy0;
+// Camera (T030): rotate by rot (radians), then the disk translation (z - a) / (1 - conj(a) z), |a| clamped to 0.99.
+// Zero camera: cos 0 = 1, sin 0 = 0, a = 0 give den = 1, so z passes through unchanged. The point is first scaled into the disk
+// (a no-op, factor exactly 1, for rscr < 0.9999) so 1 - conj(a) z can never reach 0 on the corner pixels outside the disk.
+// rscr stays the SCREEN radius: the disk edge and the rim fade do not move with the camera.
+cam_len = sqrt(cam_x * cam_x + cam_y * cam_y);
+cam_k = min(1.0, 0.99 / max(cam_len, 0.000001));
+cax = cam_x * cam_k;
+cay = cam_y * cam_k;
+// Rim fade start (T032): float32 drifts from float64 sooner when the camera is near the rim, so the fade starts earlier as |a| grows,
+// by up to 0.04 at the clamp (measured offline, tasks.md T032). Zero camera subtracts exactly 0.
+cam_eff = cam_len * cam_k / 0.99;
+rim_eff = rim_fade - 0.04 * cam_eff * cam_eff;
+cin = min(1.0, 0.9999 / max(rscr, 0.0001));
+crx = (zx0 * cos(rot) - zy0 * sin(rot)) * cin;
+cry = (zx0 * sin(rot) + zy0 * cos(rot)) * cin;
+cdre = 1.0 - (cax * crx + cay * cry);
+cdim = cax * cry - cay * crx;
+cden = max(cdre * cdre + cdim * cdim, 0.000001);
+cnx = crx - cax;
+cny = cry - cay;
+zx1 = (cnx * cdre - cny * cdim) / cden;
+zy1 = (cnx * cdim + cny * cdre) / cden;
+
+sax = zx1;
+say = zy1;
+sbx = zx1;
+sby = zy1;
 for (it = 0; it < iterations; it += 1) {
     sax, say = fold_step(sax, say, np_s, d_s, th_s, r2_s);
     sbx, sby = fold_step_b(sbx, sby, np_s, d_s, r2_s);
@@ -124,7 +150,7 @@ us = sx / (2.0 * tile_scale) + 0.5;
 vs = sy / (2.0 * tile_scale) + 0.5;
 in_tex = step(0.0, us) * (1.0 - step(1.0, us)) * step(0.0, vs) * (1.0 - step(1.0, vs));
 in_disk = 1.0 - step(1.0, rscr);
-keep = settled * in_tex * in_disk * (1.0 - smoothstep(rim_fade, 1.0, rscr));
+keep = settled * in_tex * in_disk * (1.0 - smoothstep(rim_eff, 1.0, rscr));
 
 uc = clamp(us, 0.001, 0.999);
 vc = clamp(vs, 0.001, 0.999);

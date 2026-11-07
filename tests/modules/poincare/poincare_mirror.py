@@ -252,19 +252,46 @@ def fold_b_k(zx, zy, p, q, iters=32, dt=np.float64):
     return zx, zy, dx * dx + dy * dy >= r2 - dt(SETTLE_TOL)
 
 
-def render(nx, ny, mode=0, p=4, q=5, tile_scale=0.26, iters=32, rim_fade=0.99, aspect=1.0, dt=np.float64):
-    """The codebox's whole pipeline for the ramp test texture, both modes (mode 0 = A, 1 = B), no camera."""
+def camera_dt(zx, zy, rr, cam_x, cam_y, rot, dt):
+    """The codebox's camera (T030), written as the GPU computes it (real arithmetic, no complex type, dt precision).
+    rr is the screen radius. The point is first scaled into the disk by min(1, 0.9999 / rr) (exactly 1 below 0.9999)."""
+    cam_x, cam_y, rot = dt(cam_x), dt(cam_y), dt(rot)
+    ln = np.sqrt(cam_x * cam_x + cam_y * cam_y)
+    k = min(dt(1), dt(A_MAX) / max(ln, dt(1e-6)))
+    ax, ay = cam_x * k, cam_y * k
+    cin = np.minimum(dt(1), dt(0.9999) / np.maximum(rr, dt(1e-4)))
+    rx = (zx * np.cos(rot) - zy * np.sin(rot)) * cin
+    ry = (zx * np.sin(rot) + zy * np.cos(rot)) * cin
+    dre = dt(1) - (ax * rx + ay * ry)
+    dim = ax * ry - ay * rx
+    den = np.maximum(dre * dre + dim * dim, dt(1e-6))
+    nx_, ny_ = rx - ax, ry - ay
+    return (nx_ * dre - ny_ * dim) / den, (nx_ * dim + ny_ * dre) / den
+
+
+def rim_start(rim_fade, cam_x, cam_y, dt=np.float64):
+    """The codebox's rim_eff: the fade starts 0.04 (|a| / 0.99)^2 earlier, |a| clamped to A_MAX (T032)."""
+    ln = np.sqrt(dt(cam_x) * dt(cam_x) + dt(cam_y) * dt(cam_y))
+    k = min(dt(1), dt(A_MAX) / max(ln, dt(1e-6)))
+    ce = ln * k / dt(0.99)
+    return dt(rim_fade) - dt(0.04) * ce * ce
+
+
+def render(nx, ny, mode=0, p=4, q=5, tile_scale=0.26, iters=32, rim_fade=0.99, aspect=1.0, dt=np.float64,
+           cam_x=0.0, cam_y=0.0, rot=0.0):
+    """The codebox's whole pipeline for the ramp test texture, both modes (mode 0 = A, 1 = B), with the camera (default: none)."""
     nx, ny = np.asarray(nx, dt), np.asarray(ny, dt)
     asp_x, asp_y = dt(max(aspect, 1.0)), dt(max(1.0 / aspect, 1.0))
     zx, zy = (nx * dt(2) - dt(1)) * asp_x, (ny * dt(2) - dt(1)) * asp_y
     rr = np.sqrt(zx * zx + zy * zy)
+    zx, zy = camera_dt(zx, zy, rr, cam_x, cam_y, rot, dt)
     fold = fold_b_k if mode else fold_a_k3
     sx, sy, settled = fold(zx, zy, p, q, iters, dt)
     u = sx / (dt(2) * dt(tile_scale)) + dt(0.5)
     v = sy / (dt(2) * dt(tile_scale)) + dt(0.5)
     inb = (u >= 0) * (u < 1) * (v >= 0) * (v < 1)
     uc, vc = np.clip(u, dt(0.001), dt(0.999)), np.clip(v, dt(0.001), dt(0.999))
-    fade = settled.astype(dt) * inb * (rr < 1) * (dt(1) - _smoothstep(dt(rim_fade), dt(1), rr, dt))
+    fade = settled.astype(dt) * inb * (rr < 1) * (dt(1) - _smoothstep(rim_start(rim_fade, cam_x, cam_y, dt), dt(1), rr, dt))
     return np.stack([uc * fade, vc * fade, uc * vc * fade], -1), settled, rr
 
 

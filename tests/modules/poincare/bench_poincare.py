@@ -40,7 +40,7 @@ import poincare_mirror as m
 
 CODE = (_paths.REPO / "src" / "f_poincare" / "codebox_poincare.gen").read_text()
 PINNED = dict(fold_mode=0.0, p_sides=4.0, q_vertex=5.0, tile_scale=0.26, iterations=32.0, rim_fade=0.99,
-              width=256.0, height=256.0, bypass_gate=0.0)
+              width=256.0, height=256.0, cam_x=0.0, cam_y=0.0, rot=0.0, bypass_gate=0.0)
 CASES = {                     # label: (params, (H, W))
     "{4,5} defaults": ({}, (256, 256)),
     "{4,6}": (dict(q_vertex=6.0, tile_scale=0.3178), (256, 256)),
@@ -55,6 +55,14 @@ CASES = {                     # label: (params, (H, W))
     "B {3,7}": (dict(fold_mode=1.0, p_sides=3.0, q_vertex=7.0, tile_scale=0.3), (256, 256)),
     "B {6,4}": (dict(fold_mode=1.0, p_sides=6.0, q_vertex=4.0, tile_scale=0.5), (256, 256)),
     "B {4,6} wide frame 256x144": (dict(fold_mode=1.0, q_vertex=6.0, tile_scale=0.5, width=256.0, height=144.0), (144, 256)),
+}
+# camera cases (T030/T031, written 2026-11-06, not yet run): compared with the mirror's camera_dt/render; |a| = 0.99 only inside r < 0.9
+# (T032: float32 colour drift appears from screen r about 0.95 there; the codebox moves the fade start in to match)
+CAMERA_CASES = {
+    "A {4,5} rot 0.6": (dict(rot=0.6), 0.97),
+    "A {4,5} cam (0.5, 0.3) rot 0.4": (dict(cam_x=0.5, cam_y=0.3, rot=0.4), 0.97),
+    "B {5,4} cam (-0.9, 0.0)": (dict(fold_mode=1.0, p_sides=5.0, q_vertex=4.0, tile_scale=0.4, cam_x=-0.9), 0.97),
+    "B {3,7} cam (0, 0.99)": (dict(fold_mode=1.0, p_sides=3.0, q_vertex=7.0, tile_scale=0.3, cam_y=0.99), 0.90),
 }
 FRACTIONS = ((0.30, 0.999), (0.90, 0.999), (0.97, 0.99))
 
@@ -80,7 +88,8 @@ def mirror(params, hw=(256, 256)):
     p = {**PINNED, **params}
     nx, ny = m.norm_grid(h, w)
     return m.render(nx, ny, 1 if p["fold_mode"] >= 0.5 else 0, p["p_sides"], p["q_vertex"], p["tile_scale"], p["iterations"],
-                    p["rim_fade"], aspect=w / h)
+                    p["rim_fade"], aspect=w / h,
+                    cam_x=p["cam_x"], cam_y=p["cam_y"], rot=p["rot"])
 
 
 def test_compiles_and_runs():
@@ -104,6 +113,33 @@ def test_matches_mirror():
             note(f"[{label}] r<{rmax}: fraction within tolerance", frac)
             assert frac >= need, f"[{label}] r<{rmax}: {frac:.5f} of pixels within tolerance, need {need}"
         print(f"    ok   [{label}] fractions within tolerance meet {FRACTIONS}")
+
+
+def test_camera_matches_mirror():
+    for label, (params, rlim) in CAMERA_CASES.items():
+        out = gpu(params)
+        want, _, rr = mirror(params)
+        tol = np.array([1.0 / 256, 1.0 / 256, 1.0 / 256])
+        err = (np.abs(out[..., :3].astype(np.float64) - want) / tol).max(-1)
+        for rmax, need in tuple(f for f in FRACTIONS if f[0] <= rlim) + ((rlim, 0.99),):
+            sel = rr < rmax
+            frac = float((err[sel] <= 1.0).mean())
+            note(f"[{label}] r<{rmax}: fraction within tolerance", frac)
+            assert frac >= need, f"[{label}] r<{rmax}: {frac:.5f}, need {need}"
+        print(f"    ok   [{label}] matches the mirror")
+
+
+def test_camera_at_the_clamp_is_finite_and_black_outside():
+    for params in (dict(cam_x=5.0), dict(cam_y=-3.0, fold_mode=1.0, p_sides=3.0, q_vertex=7.0, tile_scale=0.3), dict(cam_x=0.7, cam_y=0.7)):
+        out = gpu(params)
+        _, _, rr = mirror(params)
+        check(f"finite with {params}", 0 if np.isfinite(out).all() else 1, 0)
+        check("r >= 1 exactly black", float(np.abs(out[rr >= 1.0][:, :3]).max()), 0.0)
+
+
+def test_zero_camera_equals_default():
+    """Pinned zeros equal the Param defaults; the arithmetic claim (identical points) is proved in the mirror test."""
+    check("explicit zero camera equals the default frame", float(np.abs(gpu(dict(cam_x=0.0, cam_y=0.0, rot=0.0)) - gpu({})).max()), 0.0)
 
 
 def test_outside_the_disk_is_black():

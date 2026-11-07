@@ -339,5 +339,78 @@ def test_combined_codebox_fits_the_parser_budget():
     assert re.search(r"\bfold_mode\b", body) and "fold_step_b" in body
 
 
+# ---- the camera as the codebox runs it (T030, T031) ----
+
+def _screen(n, dt, aspect=1.0):
+    nx, ny = m.norm_grid(n, int(n * aspect), dt)
+    ax, ay = dt(max(aspect, 1.0)), dt(max(1.0 / aspect, 1.0))
+    zx, zy = (nx * dt(2) - dt(1)) * ax, (ny * dt(2) - dt(1)) * ay
+    return nx, ny, zx, zy, np.sqrt(zx * zx + zy * zy)
+
+
+def test_zero_camera_is_bit_exact_with_static():
+    """T030: cam_x = cam_y = rot = 0 returns the screen point itself (not merely close), in both precisions, and the whole
+    render equals the render without camera arguments, in both modes, for every pixel."""
+    for dt in (np.float64, np.float32):
+        nx, ny, zx, zy, rr = _screen(257, dt)
+        wx, wy = m.camera_dt(zx, zy, rr, 0.0, 0.0, 0.0, dt)
+        inside = rr < 0.9999
+        assert np.array_equal(wx[inside], zx[inside]) and np.array_equal(wy[inside], zy[inside]), dt
+        for mode in (0, 1):
+            a, _, _ = m.render(nx, ny, mode, 4, 5, 0.26, 32, 0.99, 1.0, dt)
+            b, _, _ = m.render(nx, ny, mode, 4, 5, 0.26, 32, 0.99, 1.0, dt, cam_x=0.0, cam_y=0.0, rot=0.0)
+            assert np.array_equal(a, b), (dt, mode)
+    print("    ok   zero camera: identical points (r < 0.9999) and identical frames, modes A and B, float64 and float32")
+
+
+def test_camera_dt_matches_the_complex_camera():
+    zx, zy = disk_points(400, 0.95)
+    rr = np.hypot(zx, zy)
+    for ax, ay, rot in ((0.31, -0.22, 0.7), (0.0, 0.0, 1.3), (-0.5, 0.4, -2.0)):
+        want = np.array(m.camera(zx, zy, ax, ay, rot))
+        got = np.array(m.camera_dt(zx, zy, rr, ax, ay, rot, np.float64))
+        check(f"camera_dt equals the complex camera, a=({ax},{ay}) rot={rot}", float(np.max(np.abs(got - want))), 1e-12)
+
+
+def test_camera_clamp_and_no_nan_at_the_rim():
+    """T031: |a| pushed far past 1 is clamped to 0.99; the whole frame, corner pixels outside the disk included, is finite
+    in both modes and both precisions, and outside the disk stays exactly black."""
+    for dt in (np.float64, np.float32):
+        for aspect in (1.0, 16 / 9):
+            nx, ny, zx, zy, rr = _screen(180, dt, aspect)
+            for cx, cy in ((5.0, 0.0), (0.0, -3.0), (0.7, 0.7), (0.99, 0.0), (-0.99, 0.0)):
+                for mode in (0, 1):
+                    img, _, rr2 = m.render(nx, ny, mode, 3 + 2 * mode, 7, 0.3, 32, 0.99, aspect, dt, cam_x=cx, cam_y=cy, rot=0.4)
+                    assert np.isfinite(img).all(), (dt, aspect, cx, cy, mode)
+                    assert (img[rr2 >= 1.0] == 0).all()
+    zx, zy = np.array([0.5]), np.array([0.0])
+    w = m.camera_dt(zx, zy, np.abs(zx), 5.0, 0.0, 0.0, np.float64)
+    ref = m.camera(zx, zy, 0.99, 0.0, 0.0)
+    check("|a| = 5 behaves as |a| = 0.99", abs(w[0][0] - ref[0][0]), 1e-12)
+    print("    ok   camera at and past the clamp: finite everywhere (corners too), black outside the disk")
+
+
+def test_rim_fade_start_tracks_the_float32_drift():
+    """T032: with the camera, float32 leaves float64 near the rim sooner; the fade start moves in by 0.04 (|a|/0.99)^2.
+    Where the fade has not yet begun (r < start) float32 and float64 colours differ by more than 4e-3 on at most 0.2% of pixels,
+    at the four pairs and |a| = 0.5, 0.9, 0.99 (measured offline 2026-11-06, scratch/t032_rim.py, 512 grid)."""
+    check("fade start at zero camera is rim_fade", float(m.rim_start(0.99, 0.0, 0.0)), 0.99 - 0.0)
+    check("fade start at |a| = 0.99 is 0.95", abs(float(m.rim_start(0.99, 0.99, 0.0)) - 0.95), 1e-12)
+    check("fade start at |a| = 5 (clamped) is 0.95", abs(float(m.rim_start(0.99, 5.0, 0.0)) - 0.95), 1e-12)
+    n = 512
+    worst = 0.0
+    for cam in (0.5, 0.9, 0.99):
+        for mode, p, q, ts in ((0, 4, 5, 0.26), (0, 4, 6, 0.3178), (1, 5, 4, 0.4), (1, 3, 7, 0.3)):
+            img = {}
+            for dt in (np.float64, np.float32):
+                nx, ny = m.norm_grid(n, n, dt)
+                img[dt], _, rr = m.render(nx, ny, mode, p, q, ts, 32, 0.99, 1.0, dt, cam_x=cam, cam_y=0.0, rot=0.3)
+            sel = rr < float(m.rim_start(0.99, cam, 0.0))
+            bad = (np.abs(img[np.float32].astype(np.float64) - img[np.float64]).max(-1) > 4e-3)[sel].mean()
+            worst = max(worst, float(bad))
+    note("worst fraction of pixels (r < fade start) with a float32 colour error > 4e-3", worst)
+    assert worst <= 0.002, worst
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))
