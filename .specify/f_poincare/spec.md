@@ -136,8 +136,8 @@ in mode A. Whether to warp the image into the tile instead is an open question.
 2. **Texture in the tile.** Crop to the curved tile (current), or warp the image into it.
 3. **Ports and archetype details.** Follow the processor pattern of the other texture
    processors; exact inlets/outlets are not specified here.
-4. **Gate row.** `P-moebius-tiling` in `.specify/gates.md` names this module and is
-   malformed (four cells in a five-column table). It needs rewording or splitting once
-   Matt decides what it still holds.
+4. **Gate row.** `P-moebius-tiling` in `.specify/gates.md` was reworded 2026-11-06 to name only
+   `f_apollonian` (Matt: "sounds good"). It was not malformed: the earlier "four cells in a five-column
+   table" claim was wrong (the Parked table has four columns).
 5. **Scratch patches** (`~/Vsynth/patterns/poincare-p4q5-scratch.maxpat` and the others)
    are not in the repo and need to be brought in as the starting point.
