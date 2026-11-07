@@ -23,11 +23,9 @@
 #   - Both outlets are redirected to stage_c via outlet_source_override
 #     (suppresses the automatic primary->outlet wire) + raw_lines
 #     (supplies the real stage_c->outlet wire explicitly).
-#   - bypass has the identical mismatch (auto-wires to primary/stage_a,
-#     but "bypass" should mean "output neutral field", which only makes
-#     sense at stage_c) -- fixed the same way: Param bypass declared in
-#     both codeboxes (harmless/unused in stage_a, meaningful in
-#     stage_c), fanned out to both via one extra raw_lines wire.
+#   - bypass: bypass_mode "param" (2026-11-06) drives Param bypass_gate on
+#     stage_c (confidence outlet to neutral) and stage_d (outlet 0 to the
+#     source frame, taken from stage_a's cur-passthrough on stage_d in3).
 #
 # stage_c's resolved object id is hardcoded below as "obj-53", derived
 # by hand from build_patcher.py's chain_pix_obj_id() formula (support
@@ -61,6 +59,12 @@ patcher = {
     "title":       "Optical Flow",
     "signal_type": "∇ out",
     "archetype":   "processor",
+
+    # Bypass drives the codebox Param `bypass_gate` on stages c and d (Matt, 2026-11-06: a bypassed module
+    # passes inlet 0 through on outlet 0, the confidence outlet goes neutral). The native @bypass sent the
+    # accumulated field's stage input on out 0 and skipped the shader.
+    "bypass_mode":   "param",
+    "bypass_target": ["c", "d"],
 
     "presentation_width":  190,
     "presentation_height": 130,
@@ -130,7 +134,7 @@ patcher = {
             "id":        "d",
             "name":      "#0_of_stage_d",
             "gen":       "codebox_stage_d.gen",
-            "n_inlets":  2,
+            "n_inlets":  3,
             "n_outlets": 1,
             "primary":   False,
         },
@@ -152,6 +156,7 @@ patcher = {
         ["e",  0, "d",    0],       # stage_e filled field -> stage_d in1 (injection)
         ["d",  0, "passd",0],       # stage_d -> pass_d (feedback loop)
         ["passd", 0, "d", 1],       # pass_d -> stage_d in2 (previous accumulated field)
+        ["a",  2, "d",    2],       # stage_a cur-passthrough -> stage_d in3 (the bypass passthrough, 2026-11-06)
     ],
 
     "outlets": [
@@ -172,19 +177,8 @@ patcher = {
     "raw_lines": [
         {"patchline": {"source": ["obj-56", 0], "destination": ["obj-2",   0]}},  # stage_d out (accumulated vecfield) -> outlet0
         {"patchline": {"source": ["obj-53", 1], "destination": ["obj-201", 0]}},  # stage_c out2 (confidence)          -> outlet1
-        # bypass fan-out: the automatic wire already targets primary
-        # (stage_a, obj-5) via bypass_pre_id(9)=obj-48 -> primary_obj_id
-        # (n_ui_params=9: scale, gain, mask_lo, mask_hi, decay, injection,
-        # step, reach, mix -- bypass_pre_id(n) = obj-{20 + n*3 + 1}, per
-        # build_patcher.py's UI_PARAM_BASE=20 formula. Recomputed
-        # 2026-07-18 when `reach`/`mix` were added for Stage E -- this
-        # shifts whenever ui_params count changes, must be hand-updated,
-        # not automatic). This adds the two other semantically-real
-        # destinations (stage_c, stage_d). Stage E itself doesn't need
-        # a bypass wire -- see codebox_stage_e.gen's header for why
-        # stage_c's + stage_d's own bypass already make it safe.
-        {"patchline": {"source": ["obj-48", 0], "destination": ["obj-53", 0]}},
-        {"patchline": {"source": ["obj-48", 0], "destination": ["obj-56", 0]}},
+        # bypass: bypass_mode "param" wires the toggle to stages c and d (bypass_target) itself, so no
+        # hand-written bypass lines (2026-11-06). Stage E needs no wire -- see codebox_stage_e.gen's header.
         # `step` param fan-out: pix_target="bh" above wires the automatic
         # param_pre_id(6)=obj-39 -> bh (obj-51) already; this adds the
         # second real destination, bv (obj-52), so both Stage B passes

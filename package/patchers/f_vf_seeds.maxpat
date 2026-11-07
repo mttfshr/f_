@@ -627,7 +627,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_vf_seeds \u2014 Stage 1c: Merge\n// in1: rank1A_coord  in2: rank2A_coord  in3: priA_pair\n// in4: rank1B_coord  in5: rank2B_coord  in6: priB_pair\n//\n// Small top-2 insertion across the 4 candidates surviving Stage 1a/1b\n// (each half already reduced its own 9 down to 2). Confirmed compiling\n// and correctly wired via direct scratch testing (2026-07-04) \u2014 full\n// history in plan.md ADR 7/8.\n//\n// out3 = seed coord, matching the ORIGINAL single-codebox contract\n// exactly (gx, gy, 0.0, 1.0) \u2014 not the dx/dy-carrying internal format\n// out1/out2 use for Stage 2/3's consumption. This outlet bypasses Stage 4\n// entirely (wired directly to the outer module's outlet), so it needs\n// its own bypass gating here rather than relying on Stage 4's.\n\nParam bypass(0.0);\n\ngxA1=sample(in1,vec(norm.x,norm.y)).x; gyA1=sample(in1,vec(norm.x,norm.y)).y;\ndxA1=sample(in1,vec(norm.x,norm.y)).z; dyA1=sample(in1,vec(norm.x,norm.y)).w;\ngxA2=sample(in2,vec(norm.x,norm.y)).x; gyA2=sample(in2,vec(norm.x,norm.y)).y;\ndxA2=sample(in2,vec(norm.x,norm.y)).z; dyA2=sample(in2,vec(norm.x,norm.y)).w;\npriA1=sample(in3,vec(norm.x,norm.y)).x;\npriA2=sample(in3,vec(norm.x,norm.y)).y;\n\ngxB1=sample(in4,vec(norm.x,norm.y)).x; gyB1=sample(in4,vec(norm.x,norm.y)).y;\ndxB1=sample(in4,vec(norm.x,norm.y)).z; dyB1=sample(in4,vec(norm.x,norm.y)).w;\ngxB2=sample(in5,vec(norm.x,norm.y)).x; gyB2=sample(in5,vec(norm.x,norm.y)).y;\ndxB2=sample(in5,vec(norm.x,norm.y)).z; dyB2=sample(in5,vec(norm.x,norm.y)).w;\npriB1=sample(in6,vec(norm.x,norm.y)).x;\npriB2=sample(in6,vec(norm.x,norm.y)).y;\n\nt0=step(priA2,priA1);\nbest_pri=mix(priA1,priA2,t0); best_gx=mix(gxA1,gxA2,t0); best_gy=mix(gyA1,gyA2,t0); best_dx=mix(dxA1,dxA2,t0); best_dy=mix(dyA1,dyA2,t0);\nsecond_pri=mix(priA2,priA1,t0); second_gx=mix(gxA2,gxA1,t0); second_gy=mix(gyA2,gyA1,t0); second_dx=mix(dxA2,dxA1,t0); second_dy=mix(dyA2,dyA1,t0);\n\nt=step(priB1,best_pri);\ndemoted_pri=mix(priB1,best_pri,t); demoted_gx=mix(gxB1,best_gx,t); demoted_gy=mix(gyB1,best_gy,t); demoted_dx=mix(dxB1,best_dx,t); demoted_dy=mix(dyB1,best_dy,t);\nbest_pri=mix(best_pri,priB1,t); best_gx=mix(best_gx,gxB1,t); best_gy=mix(best_gy,gyB1,t); best_dx=mix(best_dx,dxB1,t); best_dy=mix(best_dy,dyB1,t);\nt2=step(demoted_pri,second_pri);\nsecond_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);\n\nt=step(priB2,best_pri);\ndemoted_pri=mix(priB2,best_pri,t); demoted_gx=mix(gxB2,best_gx,t); demoted_gy=mix(gyB2,best_gy,t); demoted_dx=mix(dxB2,best_dx,t); demoted_dy=mix(dyB2,best_dy,t);\nbest_pri=mix(best_pri,priB2,t); best_gx=mix(best_gx,gxB2,t); best_gy=mix(best_gy,gyB2,t); best_dx=mix(best_dx,dxB2,t); best_dy=mix(best_dy,dyB2,t);\nt2=step(demoted_pri,second_pri);\nsecond_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);\n\nout1 = vec(best_gx, best_gy, best_dx, best_dy);\nout2 = vec(second_gx, second_gy, second_dx, second_dy);\nout3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
+									"code": "// f_vf_seeds \u2014 Stage 1c: Merge\n// in1: rank1A_coord  in2: rank2A_coord  in3: priA_pair\n// in4: rank1B_coord  in5: rank2B_coord  in6: priB_pair\n//\n// Small top-2 insertion across the 4 candidates surviving Stage 1a/1b\n// (each half already reduced its own 9 down to 2). Confirmed compiling\n// and correctly wired via direct scratch testing (2026-07-04) \u2014 full\n// history in plan.md ADR 7/8.\n//\n// out3 = seed coord, matching the ORIGINAL single-codebox contract\n// exactly (gx, gy, 0.0, 1.0) \u2014 not the dx/dy-carrying internal format\n// out1/out2 use for Stage 2/3's consumption. This outlet bypasses Stage 4\n// entirely (wired directly to the outer module's outlet), so it needs\n// its own bypass gating here rather than relying on Stage 4's.\n\nParam bypass_gate(0.0);\n\ngxA1=sample(in1,vec(norm.x,norm.y)).x; gyA1=sample(in1,vec(norm.x,norm.y)).y;\ndxA1=sample(in1,vec(norm.x,norm.y)).z; dyA1=sample(in1,vec(norm.x,norm.y)).w;\ngxA2=sample(in2,vec(norm.x,norm.y)).x; gyA2=sample(in2,vec(norm.x,norm.y)).y;\ndxA2=sample(in2,vec(norm.x,norm.y)).z; dyA2=sample(in2,vec(norm.x,norm.y)).w;\npriA1=sample(in3,vec(norm.x,norm.y)).x;\npriA2=sample(in3,vec(norm.x,norm.y)).y;\n\ngxB1=sample(in4,vec(norm.x,norm.y)).x; gyB1=sample(in4,vec(norm.x,norm.y)).y;\ndxB1=sample(in4,vec(norm.x,norm.y)).z; dyB1=sample(in4,vec(norm.x,norm.y)).w;\ngxB2=sample(in5,vec(norm.x,norm.y)).x; gyB2=sample(in5,vec(norm.x,norm.y)).y;\ndxB2=sample(in5,vec(norm.x,norm.y)).z; dyB2=sample(in5,vec(norm.x,norm.y)).w;\npriB1=sample(in6,vec(norm.x,norm.y)).x;\npriB2=sample(in6,vec(norm.x,norm.y)).y;\n\nt0=step(priA2,priA1);\nbest_pri=mix(priA1,priA2,t0); best_gx=mix(gxA1,gxA2,t0); best_gy=mix(gyA1,gyA2,t0); best_dx=mix(dxA1,dxA2,t0); best_dy=mix(dyA1,dyA2,t0);\nsecond_pri=mix(priA2,priA1,t0); second_gx=mix(gxA2,gxA1,t0); second_gy=mix(gyA2,gyA1,t0); second_dx=mix(dxA2,dxA1,t0); second_dy=mix(dyA2,dyA1,t0);\n\nt=step(priB1,best_pri);\ndemoted_pri=mix(priB1,best_pri,t); demoted_gx=mix(gxB1,best_gx,t); demoted_gy=mix(gyB1,best_gy,t); demoted_dx=mix(dxB1,best_dx,t); demoted_dy=mix(dyB1,best_dy,t);\nbest_pri=mix(best_pri,priB1,t); best_gx=mix(best_gx,gxB1,t); best_gy=mix(best_gy,gyB1,t); best_dx=mix(best_dx,dxB1,t); best_dy=mix(best_dy,dyB1,t);\nt2=step(demoted_pri,second_pri);\nsecond_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);\n\nt=step(priB2,best_pri);\ndemoted_pri=mix(priB2,best_pri,t); demoted_gx=mix(gxB2,best_gx,t); demoted_gy=mix(gyB2,best_gy,t); demoted_dx=mix(dxB2,best_dx,t); demoted_dy=mix(dyB2,best_dy,t);\nbest_pri=mix(best_pri,priB2,t); best_gx=mix(best_gx,gxB2,t); best_gy=mix(best_gy,gyB2,t); best_dx=mix(best_dx,dxB2,t); best_dy=mix(best_dy,dyB2,t);\nt2=step(demoted_pri,second_pri);\nsecond_pri=mix(second_pri,demoted_pri,t2); second_gx=mix(second_gx,demoted_gx,t2); second_gy=mix(second_gy,demoted_gy,t2); second_dx=mix(second_dx,demoted_dx,t2); second_dy=mix(second_dy,demoted_dy,t2);\n\nout1 = vec(best_gx, best_gy, best_dx, best_dy);\nout2 = vec(second_gx, second_gy, second_dx, second_dy);\nout3 = mix(vec(best_gx, best_gy, 0.0, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass_gate);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1297,7 +1297,7 @@
 				"box": {
 					"id": "obj-5",
 					"maxclass": "newobj",
-					"numinlets": 2,
+					"numinlets": 3,
 					"numoutlets": 3,
 					"outlettype": [
 						"jit_gl_texture",
@@ -1359,13 +1359,31 @@
 							},
 							{
 								"box": {
-									"code": "// f_vf_seeds \u2014 Stage 4: Composite\n// in1: rank1 render (mark_r, mark_g, mark_b, mark_a)\n// in2: rank2 render (mark_r, mark_g, mark_b, mark_a)\n//\n// Rank-1-over-rank-2 alpha composite, using rank1's own alpha (luma-keyed,\n// per Evolution 1.5) as the blend factor. bypass lives here for out1 \u2014\n// Stage 2/3's output is discarded either way once composited, so no\n// bypass gating needed upstream for the mark-color path (plan.md ADR 8).\n//\n// out2 = mark mask (comp_a as grayscale, matching the ORIGINAL\n// single-codebox contract's separate mask outlet).\n\nParam bypass(0.0);\n\nr1 = sample(in1, vec(norm.x, norm.y)).x;\ng1 = sample(in1, vec(norm.x, norm.y)).y;\nb1 = sample(in1, vec(norm.x, norm.y)).z;\na1 = sample(in1, vec(norm.x, norm.y)).w;\n\nr2 = sample(in2, vec(norm.x, norm.y)).x;\ng2 = sample(in2, vec(norm.x, norm.y)).y;\nb2 = sample(in2, vec(norm.x, norm.y)).z;\na2 = sample(in2, vec(norm.x, norm.y)).w;\n\ncomp_r = mix(r2, r1, a1);\ncomp_g = mix(g2, g1, a1);\ncomp_b = mix(b2, b1, a1);\ncomp_a = a1 + a2 * (1.0 - a1);\n\nout1 = mix(vec(comp_r, comp_g, comp_b, comp_a), vec(0.0, 0.0, 0.0, 0.0), bypass);\nout2 = mix(vec(comp_a, comp_a, comp_a, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);\n",
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_vf_seeds \u2014 Stage 4: Composite\n// in1: rank1 render (mark_r, mark_g, mark_b, mark_a)\n// in2: rank2 render (mark_r, mark_g, mark_b, mark_a)\n// in3: the module's shape texture (inlet 0), used only under bypass\n//\n// Rank-1-over-rank-2 alpha composite, using rank1's own alpha (luma-keyed,\n// per Evolution 1.5) as the blend factor. bypass_gate lives here for out1 \u2014\n// Stage 2/3's output is discarded either way once composited, so no\n// bypass gating needed upstream for the mark-color path (plan.md ADR 8).\n//\n// out2 = mark mask (comp_a as grayscale, matching the ORIGINAL\n// single-codebox contract's separate mask outlet).\n\nParam bypass_gate(0.0);\n\nr1 = sample(in1, vec(norm.x, norm.y)).x;\ng1 = sample(in1, vec(norm.x, norm.y)).y;\nb1 = sample(in1, vec(norm.x, norm.y)).z;\na1 = sample(in1, vec(norm.x, norm.y)).w;\n\nr2 = sample(in2, vec(norm.x, norm.y)).x;\ng2 = sample(in2, vec(norm.x, norm.y)).y;\nb2 = sample(in2, vec(norm.x, norm.y)).z;\na2 = sample(in2, vec(norm.x, norm.y)).w;\n\ncomp_r = mix(r2, r1, a1);\ncomp_g = mix(g2, g1, a1);\ncomp_b = mix(b2, b1, a1);\ncomp_a = a1 + a2 * (1.0 - a1);\n\n// Bypass (Matt, 2026-11-06): out1 passes the shape texture (inlet 0) through; the mask goes black.\nout1 = mix(vec(comp_r, comp_g, comp_b, comp_a), sample(in3, vec(norm.x, norm.y)), bypass_gate);\nout2 = mix(vec(comp_a, comp_a, comp_a, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass_gate);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 2,
+									"numinlets": 3,
 									"numoutlets": 2,
 									"outlettype": [
 										"",
@@ -1431,6 +1449,18 @@
 									],
 									"source": [
 										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
 										0
 									]
 								}
@@ -3443,8 +3473,7 @@
 			{
 				"box": {
 					"id": "obj-60",
-					"maxclass": "attrui",
-					"attr": "bypass",
+					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -3456,7 +3485,7 @@
 						131.0,
 						22.0
 					],
-					"style": ""
+					"text": "prepend param bypass_gate"
 				}
 			},
 			{
@@ -3632,6 +3661,18 @@
 					"destination": [
 						"obj-65",
 						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-17",
+						0
+					],
+					"destination": [
+						"obj-5",
+						2
 					]
 				}
 			},

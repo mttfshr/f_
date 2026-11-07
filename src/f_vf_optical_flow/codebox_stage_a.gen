@@ -1,12 +1,8 @@
 // Stage A: Ix/Iy spatial gradients (central diff, current-frame-only
 // per T003 decision) + It signed temporal diff. in1=current, in2=previous.
-// Param bypass declared here but unused -- this node is the module's
-// primary (for automatic source-inlet wiring), so it receives the
-// automatic bypass fan-out message too; the real bypass behavior (mix
-// to neutral field + zero confidence) lives in stage_c, wired via
-// raw_lines. See definition.py's architecture note.
+// No bypass here: bypass_mode "param" drives stages c and d only. out3 (the
+// current frame) also feeds stage_d's in3, the bypass passthrough (2026-11-06).
 Param scale(0.004);
-Param bypass(0.0);
 
 Lc_r = sample(in1, vec(norm.x + scale, norm.y)).x*0.2126 + sample(in1, vec(norm.x + scale, norm.y)).y*0.7152 + sample(in1, vec(norm.x + scale, norm.y)).z*0.0722;
 Lc_l = sample(in1, vec(norm.x - scale, norm.y)).x*0.2126 + sample(in1, vec(norm.x - scale, norm.y)).y*0.7152 + sample(in1, vec(norm.x - scale, norm.y)).z*0.0722;

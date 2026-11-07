@@ -70,6 +70,12 @@ BYPASS_EXPECT = {
     "f_vf_glow": {2: IN1},
     "f_vf_streak": {2: IN1},
     "f_vf_chroma": {2: IN1},
+    "f_vf_seeds": {                                     # generator (shape tex on inlet 0); Matt 2026-11-06: bypass passes inlet 0 on out1
+        1: IN1,                                         # composite stage: the shape texture
+        2: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # mask: black, A = 1
+        3: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # seed coord: black, A = 1
+    },
+    "f_vf_optical_flow": {2: ("const", (0.0, 0.5, 0.5, 1.0), 1e-6)},   # confidence: neutral; out1 is the source frame (implicit)
     "f_vf_prism": {2: IN1, 3: ("vec", 2, 0.0042)},     # out3: the vecfield input (neutral 0.5 if unconnected)
     "f_caustic": {2: IN1},
     "f_vf_split": {2: IN1},
@@ -184,12 +190,9 @@ PARTIAL_BYPASS_BY_DESIGN = {"f_vf_advect", "f_vf_seeds", "f_vf_optical_flow",
                             "f_vf_stamp"}     # single codebox; bypass_gate inside the pass (spec G5)
 
 # Processors whose bypass is DOCUMENTED to output a neutral field, not to pass the input through,
-# so the strict `out1 == in1 under bypass` check does not apply. f_vf_optical_flow: "bypass
-# should mean output neutral field" (src/f_vf_optical_flow/definition.py header;
-# codebox_stage_e.gen header). The check only started to run for it when its definition moved
-# into src/ (build_cleanup T007), because modulebench.archetype() reads the definition there;
-# before that its archetype was unknown and it was silently skipped.
-NEUTRAL_BYPASS_BY_DESIGN = {"f_vf_optical_flow", "f_tf_tensormap", "f_tf_axisflow", "f_vf_ch",
+# so the strict `out1 == in1 under bypass` check does not apply. (f_vf_optical_flow left this set
+# 2026-11-06: Matt's rule is that it passes inlet 0 through on out1.)
+NEUTRAL_BYPASS_BY_DESIGN = {"f_tf_tensormap", "f_tf_axisflow", "f_vf_ch",
                             "f_vf_flow", "f_vf_fieldmap", "f_vf_potential",
                             "f_wave_field"}   # a generator: the force inlet is optional, bypass = black / neutral vecfield
 
@@ -209,7 +212,9 @@ INPUT_SIZE = {"f_vf_fluid": 512,
               # 2026-11-01: f_weave took render_dim (T057); live run 09:53 failed its bypass frame, (640, 640, 4)
               # against the 64 x 64 input, the same shape as f_stipple.
               "f_weave": RENDER_DIM_SIZE,
-              "f_vf_stamp": RENDER_DIM_SIZE}
+              "f_vf_stamp": RENDER_DIM_SIZE,
+              # 2026-11-06: f_vf_seeds follows render_dim and now passes inlet 0 through on out1.
+              "f_vf_seeds": RENDER_DIM_SIZE}
 
 # Modules whose primary inlet takes a VECFIELD (B = 0.5, A = 1): a random-RGBA input is not one,
 # and f_vf_fluid (correctly) refuses a texture whose B is not ~0.5 as a force. Char-representable

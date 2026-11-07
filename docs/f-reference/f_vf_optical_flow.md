@@ -49,7 +49,7 @@ Spatial fill (Stage E) happens **before** temporal accumulation (Stage D), not a
 | `step` | -0.1–0.1 | 0.0015 | Stage B's 5-tap window spacing (normalized UV), both passes. Bipolar range lets negative values invert tap direction. |
 | `reach` | 0–0.1 | 0.01 | Stage E's directional-fill tap spacing along the locally-ambiguous axis. Same naming/role as `f_vf_prism`'s Reach. |
 | `mix` (`mix_pct`) | 0–100% | 100 | Stage E's dry/wet, independent of per-pixel confidence — dial the fill effect down or off entirely as a live performance control. |
-| `bypass` | 0/1 | 0 | Outputs pass through neutral (out0) / zero confidence (out1). |
+| `bypass` | 0/1 | 0 | Passthrough (Matt, 2026-11-06): out0 carries the source frame (inlet 0), out1 goes to neutral confidence. `bypass_gate` on stages C and D; it was the native `@bypass`. |
 
 **Prefix:** `opticalflow` — **Object name:** `opticalflow_pix`
 

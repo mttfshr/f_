@@ -128,8 +128,11 @@ def merge_stage(coordA1, coordA2, priA, coordB1, coordB2, priB, bypass=0.0, bug=
     return out1, out2, out3
 
 
-def composite_stage(r1, r2, bypass=0.0, bug=None):
+def composite_stage(r1, r2, bypass=0.0, bug=None, shape=None):
     """Stage 4: rank-1-over-rank-2 alpha composite; out2 = composited alpha as gray.
+
+    `shape` is in3, the module's shape texture (inlet 0): under bypass out1 passes it through
+    (Matt, 2026-11-06); None stands for an unconnected inlet, i.e. zeros.
 
     Returns (out1, out2).
     """
@@ -146,7 +149,7 @@ def composite_stage(r1, r2, bypass=0.0, bug=None):
         comp_b = _mix(b2_, b, a1)
     comp_a = a1 + a2 * (F32(1.0) - a1)
     comp = np.stack([comp_r, comp_g, comp_b, comp_a], axis=-1).astype(F32)
-    out1 = _mix(comp, np.zeros_like(comp), byp)
+    out1 = _mix(comp, np.zeros_like(comp) if shape is None else shape.astype(F32), byp)
     if bug == "out2_grayscale_rgba":
         mask = _mix(comp, np.zeros_like(comp), byp)
     elif bug == "no_bypass_out2":

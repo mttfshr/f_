@@ -1,16 +1,17 @@
 // f_vf_seeds — Stage 4: Composite
 // in1: rank1 render (mark_r, mark_g, mark_b, mark_a)
 // in2: rank2 render (mark_r, mark_g, mark_b, mark_a)
+// in3: the module's shape texture (inlet 0), used only under bypass
 //
 // Rank-1-over-rank-2 alpha composite, using rank1's own alpha (luma-keyed,
-// per Evolution 1.5) as the blend factor. bypass lives here for out1 —
+// per Evolution 1.5) as the blend factor. bypass_gate lives here for out1 —
 // Stage 2/3's output is discarded either way once composited, so no
 // bypass gating needed upstream for the mark-color path (plan.md ADR 8).
 //
 // out2 = mark mask (comp_a as grayscale, matching the ORIGINAL
 // single-codebox contract's separate mask outlet).
 
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 r1 = sample(in1, vec(norm.x, norm.y)).x;
 g1 = sample(in1, vec(norm.x, norm.y)).y;
@@ -27,5 +28,6 @@ comp_g = mix(g2, g1, a1);
 comp_b = mix(b2, b1, a1);
 comp_a = a1 + a2 * (1.0 - a1);
 
-out1 = mix(vec(comp_r, comp_g, comp_b, comp_a), vec(0.0, 0.0, 0.0, 0.0), bypass);
-out2 = mix(vec(comp_a, comp_a, comp_a, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass);
+// Bypass (Matt, 2026-11-06): out1 passes the shape texture (inlet 0) through; the mask goes black.
+out1 = mix(vec(comp_r, comp_g, comp_b, comp_a), sample(in3, vec(norm.x, norm.y)), bypass_gate);
+out2 = mix(vec(comp_a, comp_a, comp_a, 1.0), vec(0.0, 0.0, 0.0, 1.0), bypass_gate);

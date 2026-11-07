@@ -7,10 +7,11 @@
 //
 // in1 = stage_c's masked instantaneous vecfield (this frame's fresh
 // solve), in2 = previous accumulated field (via pass_d feedback loop,
-// same one-frame-delay mechanism as stage_a's own pass_pix loop).
+// same one-frame-delay mechanism as stage_a's own pass_pix loop),
+// in3 = the current source frame from stage_a (used only under bypass).
 Param decay(0.9);
 Param injection(0.3);
-Param bypass(0.0);
+Param bypass_gate(0.0);
 
 raw_u  = (sample(in1, norm).x - 0.5) * 2.0;
 raw_v  = (sample(in1, norm).y - 0.5) * 2.0;
@@ -26,6 +27,8 @@ accum_v = prev_v * decay + raw_v * injection;
 // both the module's real (u,v) outlet and next frame's "previous"
 // via the pass_d feedback loop
 field = vec(clamp(accum_u*0.5 + 0.5, 0.0, 1.0), clamp(accum_v*0.5 + 0.5, 0.0, 1.0), 0.5, 1.0);
-neutral = vec(0.5, 0.5, 0.5, 1.0);
 
-out1 = mix(field, neutral, bypass);
+
+// Bypass (Matt, 2026-11-06): the module is a passthrough, so outlet 0 carries the source frame
+// (stage_a's cur-passthrough, in3), not a neutral field. The confidence outlet goes neutral in stage_c.
+out1 = mix(field, sample(in3, norm), bypass_gate);

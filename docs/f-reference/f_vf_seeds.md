@@ -43,7 +43,7 @@ Traces to GPU Gems Ch. 20 ("Texture Bombing") throughout — see References.
 | `size_mod` | float | -1–1 | Mod tex → size modulation depth (bipolar) |
 | `stretch_mod` | float | -1–1 | Mod tex → stretch modulation depth (bipolar) |
 | `color_mode` | float | 0–1 | Blend between the shape tex's own color (0) and the color driving texture sampled at each seed's position (1) |
-| `bypass` | toggle | — | Fully transparent output (not opaque black — see Key Findings) |
+| `bypass` | toggle | — | Passes the shape texture (inlet 0) through on outlet 0; the mask and seed-coord outlets go black. With no shape texture connected, outlet 0 is transparent `(0,0,0,0)`. |
 
 ## Inlets
 
@@ -86,8 +86,10 @@ Stage 2/3 — render: full per-candidate downstream (orientation
             projection, mod-tex sample, gate, shape sample, luma alpha),
             one shared codebox instanced once per rank
 Stage 4   — composite: rank-1-over-rank-2 alpha composite using rank 1's
-            own luma-keyed alpha as the blend factor. bypass lives here
-            (and independently on Stage 1c, for the seed-coord outlet)
+            own luma-keyed alpha as the blend factor. bypass_gate lives here
+            (and independently on Stage 1c, for the seed-coord outlet);
+            Stage 4 also takes the shape texture on its third inlet
+            for the bypass passthrough
 ```
 
 **Luma-keyed alpha (prerequisite for correct compositing):** mark color's
@@ -96,8 +98,9 @@ this, overlapping marks read as hard black rectangles instead of
 respecting the shape tex's own masked silhouette — the rectangular gate
 has no relationship to the shape texture's actual content. Same
 luma-gating idiom `f_grain` already uses, applied here to the alpha
-channel specifically. Bypass output is fully transparent `(0,0,0,0)`,
-not opaque black.
+channel specifically. Under bypass outlet 0 passes the shape texture through (Matt,
+2026-11-06; it was native `@bypass`, which sent the rank 1 render
+downstream); unconnected, it reads transparent `(0,0,0,0)`.
 
 **Selection reduction — insertion into (best, second), not just a single
 winner:** each new candidate is compared to current best; whichever loses

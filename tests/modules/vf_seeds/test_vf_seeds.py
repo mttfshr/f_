@@ -211,21 +211,20 @@ def test_composite_full_and_zero_alpha_identities():
 
 
 def test_composite_bypass():
-    """The codebox comment fixes the bypass values: out1 blends to (0, 0, 0, 0) and out2 to
-    (0, 0, 0, 1) as bypass rises to 1."""
-    r1, r2 = render_tex(95), render_tex(96)
-    out1, out2 = composite_stage(r1, r2, bypass=1.0)
-    check("bypass out1 is (0, 0, 0, 0)", float(np.abs(out1).max()), 0.0)
+    """The codebox fixes the bypass values (Matt, 2026-11-06): out1 passes the shape texture (in3,
+    the module's inlet 0) through and out2 goes to (0, 0, 0, 1) as bypass rises to 1."""
+    r1, r2, shape = render_tex(95), render_tex(96), render_tex(99)
+    out1, out2 = composite_stage(r1, r2, bypass=1.0, shape=shape)
+    check("bypass out1 is the shape texture", float(np.abs(out1 - shape).max()), 0.0)
     black = const_tex((0.0, 0.0, 0.0, 1.0))
     check("bypass out2 is (0, 0, 0, 1)", float(np.abs(out2 - black).max()), 0.0)
 
 
-def test_bypass_out1_is_transparent_not_opaque_black():
-    """The doc's Key Findings say bypass output is fully transparent (0,0,0,0), i.e. alpha 0,
-    not opaque black: out1's alpha channel must be exactly 0 on bypass."""
+def test_bypass_out1_without_shape_is_transparent():
+    """With no shape texture connected in3 reads zeros, so out1 under bypass is (0,0,0,0): alpha 0."""
     r1, r2 = render_tex(97), render_tex(98)
     out1, _ = composite_stage(r1, r2, bypass=1.0)
-    check("doc: bypass alpha is 0 (transparent), not 1", float(np.abs(out1[..., 3]).max()), 0.0)
+    check("no shape: bypass alpha is 0 (transparent)", float(np.abs(out1[..., 3]).max()), 0.0)
 
 
 # --- generic point -----------------------------------------------------------------------

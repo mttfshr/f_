@@ -28,7 +28,7 @@ Architecture (Evolution 2, 2026-07-04 -- six-stage jit.gl.pix chain):
   Stage 2/3   -- render: full per-candidate downstream (orientation, mod-tex sample, gate, shape sample,
                 luma alpha), one shared codebox (codebox_seeds_render.gen) instanced once per rank.
   Stage 4     -- composite: rank-1-over-rank-2 alpha composite using rank 1's own luma-keyed alpha as the
-                blend factor (codebox_seeds_composite.gen). bypass lives here, and on Stage 1c, for the
+                blend factor (codebox_seeds_composite.gen). bypass_gate lives here, and on Stage 1c, for the
                 mark-color/mask outlets.
 
   A single-codebox implementation hit a hard platform ceiling (Max's GL2->GL3 shader transformer's Lua
@@ -58,7 +58,8 @@ Inlets:  0 shape tex + control (the driving inlet) | 1 vecfield (float32 RG, dri
          seed) | 2 mod tex (sampled at seed UV) | 3 color driving texture (Evolution 3, optional)
 Outlets: 0 mark color (rank 1 over rank 2, gated by the footprint) | 1 mark mask (luma, grayscale) |
          2 seed coord (rank 1's UV position only)
-Bypass:  black/transparent output (generator convention): Stage 1c and Stage 4 take the native @bypass.
+Bypass:  Param bypass_gate on Stage 1c and Stage 4 (Matt, 2026-11-06): outlet 0 passes the shape texture
+         (inlet 0) through, the mask and seed-coord outlets go black.
 """
 from pathlib import Path
 
@@ -127,7 +128,7 @@ patcher = {
     "name":               "f_vf_seeds",
     "prefix":             "vfseeds",
     "title":              "Seeds",
-    "archetype":          "source",         # a generator: no source inlet, bypass = black
+    "archetype":          "source",         # a generator: no source inlet; bypass passes the shape texture on outlet 0
     "render_trigger":     "inlet",          # no `r draw`: the module renders when the shape tex / vecfield arrive (as shipped)
     "signal_type":        "∇ in",
     "presentation_width":  190,
@@ -156,7 +157,7 @@ patcher = {
 
     # inlet 0 (shape tex + control): routepass -> vs_inState -> the two render stages' inlet 1; its
     # connected flag -> `prepend param src_shape` -> both render stages
-    "inlet_fanout": {"texture": [["render_1", 1], ["render_2", 1]],
+    "inlet_fanout": {"texture": [["render_1", 1], ["render_2", 1], ["4", 2]],
                      "state": _RENDER, "state_param": "src_shape"},
     # inlets 1-3: each its own vs_inState, fanned out to the stages that read it
     "mod_inlets": [
@@ -168,8 +169,10 @@ patcher = {
          "fanout": [["render_1", 4], ["render_2", 4]], "state_nodes": _RENDER},
     ],
 
-    # Bypass: the native attribute on the merge and composite stages only; the search halves and the render
-    # stages keep running (ADR 8: bypass gated at the composite stage).
+    # Bypass: Param bypass_gate on the merge and composite stages only; the search halves and the render
+    # stages keep running (ADR 8: bypass gated at the composite stage). The native @bypass sent the rank 1
+    # render (stage 4) / rank 1A coord (stage 1c) downstream and skipped the shader (Matt saw it live).
+    "bypass_mode":   "param",
     "bypass_target": ["1c", "4"],
 
     # The render size from Vsynth (build/spec.md "render_dim"): `dim` reads 1 inside a live jit.gl.pix, so the
@@ -193,7 +196,7 @@ patcher = {
          "n_outlets": 1, "pix_attrs": DEF, "primary": False},
         {"id": "render_2", "name": "vfseeds_render_2", "gen": "codebox_seeds_render.gen", "n_inlets": 5,
          "n_outlets": 1, "pix_attrs": DEF, "primary": False},
-        {"id": "4", "name": "vfseeds_composite", "gen": "codebox_seeds_composite.gen", "n_inlets": 2,
+        {"id": "4", "name": "vfseeds_composite", "gen": "codebox_seeds_composite.gen", "n_inlets": 3,
          "n_outlets": 2, "pix_attrs": DEF, "primary": True},
     ],
     "pix_wires": [

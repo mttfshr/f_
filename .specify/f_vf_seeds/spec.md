@@ -369,11 +369,12 @@ Stage 3 — Render (vfseeds_render_pix), instance B
   stay DRY.
 
 Stage 4 — Composite (vfseeds_composite_pix)
-  in: mark_r1, mark_r2, bypass
+  in: mark_r1, mark_r2, shape tex (inlet 0, bypass only), bypass_gate
   out: mark color (final)
   — rank-1-over-rank-2 alpha composite. bypass is applied only here —
     intermediate stages don't need their own bypass gating since their
     output is discarded either way once composited.
+    Under bypass (Matt, 2026-11-06) out1 is the shape texture, the mask and seed coord black.
 ```
 
 ### Acceptance Criteria

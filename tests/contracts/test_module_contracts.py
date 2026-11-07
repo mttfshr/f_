@@ -45,10 +45,6 @@ KNOWN_ISSUES = {
     ("f_vf_seeds", "undriven", "vfseeds_search_a.active_blend"): _SEEDS_NOTE,
     ("f_vf_seeds", "undriven", "vfseeds_search_a.sentinel"): _SEEDS_NOTE,
     ("f_vf_seeds", "undriven", "vfseeds_search_b.sentinel"): _SEEDS_NOTE,
-    ("f_vf_optical_flow", "unused", "#0_of_stage_a.bypass"):
-        "documented in src/f_vf_optical_flow/codebox_stage_a.gen's header: Param bypass is "
-        "declared but unused; this stage stays live under bypass by design "
-        "(plan.md, 'Bypassed multi-stage modules keep running')",
 }
 _KS_NOTE = ("documented in src/f_ks/codebox_pass.gen header: {} is a fixed solver constant that stays a Param "
             "only so the bench can vary it (tests/modules/ks/bench_ks.py); it is not a performable "
