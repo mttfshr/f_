@@ -72,13 +72,14 @@ out = mix(out, sample(source, uv), bypass)
 | `injection` | live.dial | 0.0–0.2 | 0.02 | Source bleed-in per frame. Fluid zone is 0.01–0.05; higher values give displacement character. |
 | `gain` | live.dial | 0.0–4.0 | 1.0 | Scales the accumulated result before blending; pushes into overdrive. |
 | `mix` | live.numbox | 0–100% | 100 | Wet/dry crossfade between the source and the driven result (internal codebox Param is `mix_pct`). |
+| `trail` | live.dial | 0.0–120.0 | 0.0 | Persistence multiplier on the classic loop (cubic dial taper); see `docs/f-reference/f_vf_advect.md`. Added 2026-10-28, reworked 2026-10-31, max 1000 -> 120 on 2026-11-06. |
 | `separate` | live.dial | -2.0–2.0 | 0.0 | Chroma separate intensity on the pass stage (Ride/Hold/Snap). |
 | `mode` | live.menu | Ride/Hold/Snap | 0 | Separate mode. |
 | `bypass` | bypass_toggle.js | 0/1 | 0 | Passes source texture unmodified; feedback loop stays warm. |
 
 **Prefix:** `vfadvect`
 **Object name:** `#0_advect_pix` (advect_pix), `#0_advect_pass` (pass_pix)
-**Output type:** `@type char`
+**Output type:** `@type float32` (both stages; rewritten 2026-11-06, was `char`)
 
 Hidden system params (not in UI, route, or parameters block):
 
@@ -90,29 +91,33 @@ Hidden system params (not in UI, route, or parameters block):
 
 ## Internal Architecture
 
-Two jit.gl.pix inside the bpatcher:
+_Rewritten 2026-11-06 to match the shipped patcher (`package/patchers/f_vf_advect.maxpat`, read offline by Claude; the omp audit `advect-streak-audit-1` had flagged the earlier block). The earlier text predated the separate stage and the extra outlets._
+
+Two jit.gl.pix inside the bpatcher, both `@type float32 @adapt 1`:
 
 ```
-pass_pix  — @name vfadvect_pass @type char @adapt 1
-              numinlets=1, gen: in1 → out1 (identity)
+pass_pix   — @name #0_advect_pass
+               the feedback stage: holds the previous frame and applies the
+               separate / mode chroma processing to it (Ride / Hold / Snap,
+               `codebox_advect_pass.gen`); separate = 0 is exact identity.
+               Controls `separate` and `mode` reach it directly.
 
-advect_pix — @name vfadvect_pix @type char @adapt 1
-              numinlets=3 (source in0, vecfield in1, previous_frame in2)
-              gen: in1=source, in2=vecfield, in3=previous_frame → codebox → out1
-```
-
-**Feedback wiring (inside bpatcher):**
-```
-advect_pix out0 → pass_pix in0       [current advected → held for next frame]
-pass_pix out0   → advect_pix in2     [previous frame → feeds back into advect]
-advect_pix out0 → bpatcher outlet 0  [output]
+advect_pix — @name #0_advect_pix
+               gen inlets: in1 source, in2 vecfield, in3 previous frame
+               gen outlets: out1 composite, out2 advected (pre-mix),
+                            out3 vecfield gradient of the accumulated flow
+               `codebox_advect.gen`; all other controls reach this stage.
 ```
 
-**Source and vecfield routing:**
+**Feedback wiring (inside the bpatcher):**
 ```
-bpatcher in0 → routepass → advect_pix in0     [source texture]
-bpatcher in1 (vecfield) → vs_inState → advect_pix in1
+advect_pix out0 → pass_pix in0        [current advected → held for next frame]
+pass_pix out0   → advect_pix in2      [previous frame → feeds back into advect]
 ```
+
+**Outlets (three):** advect_pix out0 → outlet 0 (composite); out1 → outlet 1 (advected, pre-mix); out2 → outlet 2 (vecfield gradient).
+
+**Bypass:** the loop keeps running. The codebox mixes out1 and out2 to the source by `bypass_gate`, and out3 to the vecfield input, or neutral 0.5 when unconnected (`codebox_advect.gen:59-60, 82`).
 
 ---
 
@@ -121,7 +126,8 @@ bpatcher in1 (vecfield) → vs_inState → advect_pix in1
 ```
 in0 (texture + control) → routepass jit_gl_texture jit_matrix
   jit_gl_texture → advect_pix in0          [source texture, gen in1]
-  unmatched → route dt decay injection mix → dials → attrui → advect_pix in0
+  unmatched → route dt decay injection gain mix separate mode trail → dials → attrui
+      (separate, mode → pass_pix; the rest → advect_pix in0)
 
 in1 (vecfield) → vs_inState
   vs_inState out0 (texture or vs_black) → advect_pix in1   [gen in2]
@@ -129,9 +135,9 @@ in1 (vecfield) → vs_inState
 
 pass_pix out0 → advect_pix in2             [previous frame, gen in3]
 advect_pix out0 → pass_pix in0            [feedback]
-advect_pix out0 → bpatcher outlet 0
+advect_pix out0, out1, out2 → bpatcher outlets 0, 1, 2
 
-bypass_toggle.js → attrui bypass → advect_pix in0
+bypass_toggle.js → prepend param bypass_gate → advect_pix in0
 ```
 
 ---
