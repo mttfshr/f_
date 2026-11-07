@@ -533,7 +533,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						58.0,
+						62.0,
 						2.0,
 						52.0,
 						17.0
@@ -607,7 +607,7 @@
 					"numoutlets": 2,
 					"outlettype": [
 						"",
-						"float"
+						"int"
 					],
 					"param_connect": "#0_poinc_pix::p_sides",
 					"parameter_enable": 1,
@@ -627,17 +627,17 @@
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_initial": [
-								4.0
+								4
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "p_sides",
-							"parameter_mmax": 10.0,
-							"parameter_mmin": 3.0,
+							"parameter_mmax": 10,
+							"parameter_mmin": 3,
 							"parameter_modmode": 0,
 							"parameter_shortname": "p_sides",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
+							"parameter_type": 1,
+							"parameter_unitstyle": 0
 						}
 					},
 					"varname": "p_sides"
@@ -698,7 +698,7 @@
 					"numoutlets": 2,
 					"outlettype": [
 						"",
-						"float"
+						"int"
 					],
 					"param_connect": "#0_poinc_pix::q_vertex",
 					"parameter_enable": 1,
@@ -718,17 +718,17 @@
 					"saved_attribute_attributes": {
 						"valueof": {
 							"parameter_initial": [
-								5.0
+								5
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "q_vertex",
-							"parameter_mmax": 10.0,
-							"parameter_mmin": 3.0,
+							"parameter_mmax": 10,
+							"parameter_mmin": 3,
 							"parameter_modmode": 0,
 							"parameter_shortname": "q_vertex",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
+							"parameter_type": 1,
+							"parameter_unitstyle": 0
 						}
 					},
 					"varname": "q_vertex"
