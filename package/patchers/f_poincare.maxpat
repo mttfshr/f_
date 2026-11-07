@@ -262,14 +262,14 @@
 					"patching_rect": [
 						760.0,
 						260.0,
-						300.0,
+						212.0,
 						90.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
-						300.0,
+						212.0,
 						90.0
 					],
 					"proportion": 0.5
@@ -293,7 +293,7 @@
 					"presentation_rect": [
 						10.5,
 						0.0,
-						92.0,
+						46.0,
 						21.0
 					],
 					"text": "Poincare"
@@ -322,7 +322,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						204.0,
+						114.0,
 						0.9,
 						70.0,
 						21.0
@@ -533,9 +533,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						0.0,
+						58.0,
+						2.0,
 						52.0,
-						47.0,
 						17.0
 					],
 					"text": "Whole",
@@ -619,8 +619,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
+						22.0,
 						41.0,
-						38.0,
 						34.0,
 						15.0
 					],
@@ -678,10 +678,10 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						20.0,
-						50.0,
-						18.0
+						4.0,
+						41.0,
+						16.0,
+						15.0
 					],
 					"text": "p",
 					"textjustification": 1,
@@ -710,8 +710,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						38.0,
+						22.0,
+						63.0,
 						34.0,
 						15.0
 					],
@@ -769,10 +769,10 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
-						20.0,
-						50.0,
-						18.0
+						4.0,
+						63.0,
+						16.0,
+						15.0
 					],
 					"text": "q",
 					"textjustification": 1,
@@ -807,7 +807,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						64.0,
 						38.0,
 						27.0,
 						43.0
@@ -873,7 +873,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						52.5,
 						20.0,
 						50.0,
 						18.0
@@ -911,7 +911,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
+						101.0,
 						38.0,
 						27.0,
 						43.0
@@ -977,7 +977,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
+						89.5,
 						20.0,
 						50.0,
 						18.0
@@ -1015,8 +1015,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
-						100.0,
+						138.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -1081,8 +1081,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
-						82.0,
+						126.5,
+						20.0,
 						50.0,
 						18.0
 					],
@@ -1119,8 +1119,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
-						100.0,
+						175.0,
+						38.0,
 						27.0,
 						43.0
 					],
@@ -1185,8 +1185,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
-						82.0,
+						163.5,
+						20.0,
 						50.0,
 						18.0
 					],
@@ -1214,7 +1214,7 @@
 						12.0
 					],
 					"presentation_rect": [
-						278.0,
+						188.0,
 						5.0,
 						18.0,
 						12.0

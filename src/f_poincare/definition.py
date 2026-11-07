@@ -18,7 +18,7 @@ patcher = {
     "title":              "Poincare",
     "signal_type":        "tex in/out",
 
-    "presentation_width":  300,
+    "presentation_width":  212,
     "presentation_height": 90,
 
     "archetype": "processor",
@@ -63,3 +63,25 @@ patcher = {
     ],
     "pix_wires": [],
 }
+
+# Presentation layout (2026-11-07, Matt: the Whole / Sliver switch up in the title bar, p over q with the label to the left of
+# the numbox, all four dials in one row). The builder's grid is only a default; overrides replace it.
+# BEGIN overrides (build/capture.py rewrites only this block)
+patcher["overrides"] = {
+    "bypass_jsui": {"presentation_rect": [188.0, 5.0, 18.0, 12.0]},
+    "title": {"presentation_rect": [10.5, 0.0, 46.0, 21.0]},
+    "fold_mode.ctl": {"presentation_rect": [58.0, 2.0, 52.0, 17.0]},
+    "p_sides.label": {"presentation_rect": [4.0, 41.0, 16.0, 15.0]},
+    "p_sides.ctl": {"presentation_rect": [22.0, 41.0, 34.0, 15.0]},
+    "q_vertex.label": {"presentation_rect": [4.0, 63.0, 16.0, 15.0]},
+    "q_vertex.ctl": {"presentation_rect": [22.0, 63.0, 34.0, 15.0]},
+    "tile_scale.ctl": {"presentation_rect": [64.0, 38.0, 27.0, 43.0]},
+    "tile_scale.label": {"presentation_rect": [52.5, 20.0, 50.0, 18.0]},
+    "cam_x.ctl": {"presentation_rect": [101.0, 38.0, 27.0, 43.0]},
+    "cam_x.label": {"presentation_rect": [89.5, 20.0, 50.0, 18.0]},
+    "cam_y.ctl": {"presentation_rect": [138.0, 38.0, 27.0, 43.0]},
+    "cam_y.label": {"presentation_rect": [126.5, 20.0, 50.0, 18.0]},
+    "rot.ctl": {"presentation_rect": [175.0, 38.0, 27.0, 43.0]},
+    "rot.label": {"presentation_rect": [163.5, 20.0, 50.0, 18.0]},
+}
+# END overrides
