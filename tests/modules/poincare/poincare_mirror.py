@@ -123,13 +123,15 @@ def grid(n):
 
 
 # ---------------------------------------------------------------------------------------------------------
-# Mode A as the codebox runs it (T010, src/f_poincare/codebox_poincare_a.gen): live p by testing only the 3 nearest
+# Mode A as the codebox runs it (T010, src/f_poincare/codebox_poincare.gen): live p by testing only the 3 nearest
 # circles by angle (T005: matches the p-circle chain on every pixel both settle, 56 pairs p, q in 3..10). Written so
 # the same code runs at float32 (`dt`): every constant and intermediate is cast, as the GPU computes in float32.
 # ---------------------------------------------------------------------------------------------------------
 
 P_MIN, P_MAX = 3, 10        # the codebox clamps the rounded `p_sides` here (mirror sweep covers 3..10)
 SEAM_BIAS = 1e-7            # added to the atan2 y-argument so (0, 0) never reaches atan2 (skills/jit-gen-codebox)
+SETTLE_TOL = 1e-5           # a final point within this of an edge circle's boundary (squared-distance units) counts as settled:
+                            # a pixel on a mirror line of the group lands exactly on the circle (knife-edge; 2026-11-06, mode B p=4)
 BIG_KEY = 1000.0            # sentinel index added to a circle the point is not inside
 
 
@@ -184,9 +186,10 @@ def fold_a_k3(zx, zy, p, q, iters=32, dt=np.float64):
     p_ = dt(pr)
     i0 = np.floor(np.arctan2(zx, zy + dt(SEAM_BIAS)) / (dt(2) * th) + dt(0.5))
     off = dt(2) * p_ + i0
-    hit = np.maximum(_inside(zx, zy, np.mod(off, p_), d, th, r2, dt),
-                     np.maximum(_inside(zx, zy, np.mod(off - dt(1), p_), d, th, r2, dt),
-                                _inside(zx, zy, np.mod(off + dt(1), p_), d, th, r2, dt)))
+    r2t = r2 - dt(SETTLE_TOL)
+    hit = np.maximum(_inside(zx, zy, np.mod(off, p_), d, th, r2t, dt),
+                     np.maximum(_inside(zx, zy, np.mod(off - dt(1), p_), d, th, r2t, dt),
+                                _inside(zx, zy, np.mod(off + dt(1), p_), d, th, r2t, dt)))
     return zx, zy, hit == 0
 
 
@@ -216,3 +219,54 @@ def norm_grid(h, w, dt=np.float64):
     """`norm` per pixel as the bench reads it: texel centres, row 0 where norm.y is smallest."""
     ry, rx = np.mgrid[0:h, 0:w]
     return (rx + dt(0.5)) / dt(w), (ry + dt(0.5)) / dt(h)
+
+
+# ---------------------------------------------------------------------------------------------------------
+# Mode B as the codebox runs it (T020): angle fold into [0, pi/p] (about the origin), then one inversion in the edge circle
+# on the +x axis, repeated; one more fold after the loop. The same guard as mode A (clamp_pq). `fold_mode` 0 = A, 1 = B.
+# ---------------------------------------------------------------------------------------------------------
+
+def wedge_dt(zx, zy, pr, dt):
+    """The codebox's fold: angle from atan2(y, x + bias), taken as (a + 2 pi) mod (2 pi / p), mirrored about the half sector."""
+    sector = dt(2) * dt(np.pi) / dt(pr)
+    rr = np.sqrt(zx * zx + zy * zy)
+    a = np.arctan2(zy, zx + dt(SEAM_BIAS))
+    am = np.mod(a + dt(2) * dt(np.pi), sector)
+    am = np.minimum(am, sector - am)
+    return rr * np.cos(am), rr * np.sin(am)
+
+
+def fold_b_k(zx, zy, p, q, iters=32, dt=np.float64):
+    """Mode B as coded. Returns (zx, zy, settled); settled = outside the edge circle after the final fold."""
+    pr, qr = clamp_pq(p, q)
+    d, r2 = geometry_dt(pr, qr, dt)
+    zx, zy = np.asarray(zx, dt).copy(), np.asarray(zy, dt).copy()
+    for _ in range(int(iters)):
+        zx, zy = wedge_dt(zx, zy, pr, dt)
+        dx, dy = zx - d, zy
+        inside = (dx * dx + dy * dy < r2).astype(dt)
+        s = r2 / np.maximum(dx * dx + dy * dy, dt(INV_FLOOR))
+        zx, zy = zx + (d + dx * s - zx) * inside, zy + (dy * s - zy) * inside
+    zx, zy = wedge_dt(zx, zy, pr, dt)
+    dx, dy = zx - d, zy
+    return zx, zy, dx * dx + dy * dy >= r2 - dt(SETTLE_TOL)
+
+
+def render(nx, ny, mode=0, p=4, q=5, tile_scale=0.26, iters=32, rim_fade=0.99, aspect=1.0, dt=np.float64):
+    """The codebox's whole pipeline for the ramp test texture, both modes (mode 0 = A, 1 = B), no camera."""
+    nx, ny = np.asarray(nx, dt), np.asarray(ny, dt)
+    asp_x, asp_y = dt(max(aspect, 1.0)), dt(max(1.0 / aspect, 1.0))
+    zx, zy = (nx * dt(2) - dt(1)) * asp_x, (ny * dt(2) - dt(1)) * asp_y
+    rr = np.sqrt(zx * zx + zy * zy)
+    fold = fold_b_k if mode else fold_a_k3
+    sx, sy, settled = fold(zx, zy, p, q, iters, dt)
+    u = sx / (dt(2) * dt(tile_scale)) + dt(0.5)
+    v = sy / (dt(2) * dt(tile_scale)) + dt(0.5)
+    inb = (u >= 0) * (u < 1) * (v >= 0) * (v < 1)
+    uc, vc = np.clip(u, dt(0.001), dt(0.999)), np.clip(v, dt(0.001), dt(0.999))
+    fade = settled.astype(dt) * inb * (rr < 1) * (dt(1) - _smoothstep(dt(rim_fade), dt(1), rr, dt))
+    return np.stack([uc * fade, vc * fade, uc * vc * fade], -1), settled, rr
+
+
+def render_a(nx, ny, p=4, q=5, tile_scale=0.26, iters=32, rim_fade=0.99, aspect=1.0, dt=np.float64):
+    return render(nx, ny, 0, p, q, tile_scale, iters, rim_fade, aspect, dt)

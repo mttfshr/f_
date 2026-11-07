@@ -281,5 +281,63 @@ def test_render_a_float32_tracks_float64_and_the_disk_is_empty():
     assert (a[rr < 0.5].sum(-1) > 0).mean() > 0.5, "the central region should show the texture"
 
 
+# ---- mode B as the codebox runs it, and the combined codebox's size (T020, T021) ----
+
+def test_mode_b_coded_matches_the_settled_domain_and_float32():
+    """fold_b_k is mode B with the codebox's atan2 bias and (a + 2 pi) mod sector fold: its settled points obey the
+    domain's inequalities, it matches the unbiased fold_b where both settle (the bias moves the angle by ~1e-7 / r, amplified
+    by the fold), and float32 equals float64 away from the rim."""
+    ry, rx = np.mgrid[0:200, 0:200]
+    zx, zy = (rx + 0.5) / 200 * 2 - 1, (ry + 0.5) / 200 * 2 - 1
+    sel = zx ** 2 + zy ** 2 < 0.998 ** 2
+    zx, zy = zx[sel], zy[sel]
+    for p, q in [(4, 5), (5, 4), (3, 7), (6, 4), (8, 3)]:
+        ax, ay, aok, _ = m.fold_b(zx, zy, p, q, iters=40)
+        bx, by, bok = m.fold_b_k(zx, zy, p, q, iters=40)
+        both = aok & bok
+        check(f"{{{p},{q}}} coded mode B equals fold_b where both settle", float(np.max(np.where(both, np.hypot(ax - bx, ay - by), 0.0))), 1e-3)
+        d, r2 = m.geometry(p, q)
+        a = np.arctan2(by, bx)
+        viol = max(float(np.max(np.where(bok, -a, 0.0))), float(np.max(np.where(bok, a - np.pi / p, 0.0))), 0.0)
+        check(f"{{{p},{q}}} settled points inside the wedge", viol, 1e-6)
+        circ = float(np.max(np.where(bok, r2 - ((bx - d) ** 2 + by ** 2), 0.0)))
+        check(f"{{{p},{q}}} settled points outside the circle up to SETTLE_TOL", circ, m.SETTLE_TOL * 1.01)
+    nx, ny = m.norm_grid(160, 160)
+    for p, q, ts in [(4, 5, 0.4), (5, 4, 0.4), (3, 7, 0.3)]:
+        a, _, rr = m.render(nx, ny, 1, p, q, ts)
+        b, _, _ = m.render(nx, ny, 1, p, q, ts, dt=np.float32)
+        dif = np.abs(a - b.astype(np.float64)).max(-1)
+        check(f"B {{{p},{q}}} float32 render equals float64 at r < 0.9 (fraction of pixels off by > 1e-3)", float((dif[rr < 0.9] > 1e-3).mean()), 0.0)
+
+
+def test_settle_tolerance_covers_the_mirror_line_knife_edge():
+    """Found 2026-11-06: at p = 4 on a square frame the pixel diagonal is a mirror line of the group, so those pixels land
+    exactly on the edge circle; strict `>= r2` called them unsettled in float64 and settled in float32. With SETTLE_TOL they settle in both."""
+    nx, ny = m.norm_grid(128, 128)
+    _, s64, rr = m.render(nx, ny, 1, 4, 5, 0.4)
+    _, s32, _ = m.render(nx, ny, 1, 4, 5, 0.4, dt=np.float32)
+    sel = rr < 0.9
+    note("B {4,5} fraction settled, r < 0.9: float64 / float32", (float(s64[sel].mean()), float(s32[sel].mean())))
+    assert s64[sel].all() and s32[sel].all(), "every pixel below r = 0.9 settles in both precisions"
+    _, a64, _ = m.render(nx, ny, 0, 4, 5, 0.26)
+    assert a64[sel].all(), "mode A as well"
+
+
+def test_combined_codebox_fits_the_parser_budget():
+    """T021: one codebox for both modes. The parser budget is about 250 statements per function body or top level and about
+    450 for the whole program (jit-gen-codebox, 2026-10-06). A statement is counted here as one terminating semicolon, the two
+    inside a `for (...)` header excluded: a rough upper bound on the real count."""
+    import re
+    from pathlib import Path
+    code = (Path(__file__).resolve().parents[3] / "src" / "f_poincare" / "codebox_poincare.gen").read_text()
+    body = "\n".join(l for l in code.splitlines() if not l.strip().startswith("//"))
+    total = body.count(";") - 2 * len(re.findall(r"\bfor\s*\(", body))
+    top = re.sub(r"\w+\([^)]*\)\s*\{[^}]*\}", "", body)         # functions removed
+    top_n = top.count(";") - 2 * len(re.findall(r"\bfor\s*\(", top))
+    note("statements (semicolons), whole program / top level", (total, top_n))
+    assert total < 300 and top_n < 150, (total, top_n)
+    assert re.search(r"\bfold_mode\b", body) and "fold_step_b" in body
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

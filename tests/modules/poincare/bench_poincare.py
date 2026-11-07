@@ -1,5 +1,5 @@
 """
-bench_poincare_a.py -- f_poincare mode A, tier 2 (tasks.md T011): the real codebox src/f_poincare/codebox_poincare_a.gen run on
+bench_poincare.py -- f_poincare modes A and B, tier 2 (tasks.md T011 for A, T022 for B): the real codebox src/f_poincare/codebox_poincare.gen run on
 the GPU through the codebox bench and diffed against the NumPy mirror (poincare_mirror.render_a), plus the invariants a mirror
 that shares the code's conventions could not catch (guards, outside the disk, bypass).
 
@@ -23,7 +23,7 @@ Pixels at r >= 0.97 are not compared (the float32 rim is T032); r >= 1 must be e
 
 Every job pins every Param (the bench keeps a Param's last value between jobs: bench-test-authoring #2).
 Needs Max with tests/bench/bench.maxpat open.
-Run:  tests/bench.sh tests/modules/poincare/bench_poincare_a.py        (ask Matt first: CLAUDE.md)
+Run:  tests/bench.sh tests/modules/poincare/bench_poincare.py        (ask Matt first: CLAUDE.md)
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
 ORDER = 67             # integers only; 66 is bench_vf_stamp_module, 70 is bench_modules
@@ -38,8 +38,8 @@ from harness import check, note, run
 
 import poincare_mirror as m
 
-CODE = (_paths.REPO / "src" / "f_poincare" / "codebox_poincare_a.gen").read_text()
-PINNED = dict(p_sides=4.0, q_vertex=5.0, tile_scale=0.26, iterations=32.0, rim_fade=0.99,
+CODE = (_paths.REPO / "src" / "f_poincare" / "codebox_poincare.gen").read_text()
+PINNED = dict(fold_mode=0.0, p_sides=4.0, q_vertex=5.0, tile_scale=0.26, iterations=32.0, rim_fade=0.99,
               width=256.0, height=256.0, bypass_gate=0.0)
 CASES = {                     # label: (params, (H, W))
     "{4,5} defaults": ({}, (256, 256)),
@@ -49,6 +49,12 @@ CASES = {                     # label: (params, (H, W))
     "{3,7} live p": (dict(p_sides=3.0, q_vertex=7.0, tile_scale=0.3), (256, 256)),
     "{4,5} at 16 iterations": (dict(iterations=16.0), (256, 256)),
     "{4,5} wide frame 256x144": (dict(width=256.0, height=144.0), (144, 256)),
+    # mode B (T022). tile_scale near the tile's vertex radius so the wedge's corner of the ramp fills the texture.
+    "B {4,5} (square frame: the p=4 mirror line falls on pixels)": (dict(fold_mode=1.0, tile_scale=0.4), (256, 256)),
+    "B {5,4}": (dict(fold_mode=1.0, p_sides=5.0, q_vertex=4.0, tile_scale=0.4), (256, 256)),
+    "B {3,7}": (dict(fold_mode=1.0, p_sides=3.0, q_vertex=7.0, tile_scale=0.3), (256, 256)),
+    "B {6,4}": (dict(fold_mode=1.0, p_sides=6.0, q_vertex=4.0, tile_scale=0.5), (256, 256)),
+    "B {4,6} wide frame 256x144": (dict(fold_mode=1.0, q_vertex=6.0, tile_scale=0.5, width=256.0, height=144.0), (144, 256)),
 }
 FRACTIONS = ((0.30, 0.999), (0.90, 0.999), (0.97, 0.99))
 
@@ -73,7 +79,8 @@ def mirror(params, hw=(256, 256)):
     h, w = hw
     p = {**PINNED, **params}
     nx, ny = m.norm_grid(h, w)
-    return m.render_a(nx, ny, p["p_sides"], p["q_vertex"], p["tile_scale"], p["iterations"], p["rim_fade"], aspect=w / h)
+    return m.render(nx, ny, 1 if p["fold_mode"] >= 0.5 else 0, p["p_sides"], p["q_vertex"], p["tile_scale"], p["iterations"],
+                    p["rim_fade"], aspect=w / h)
 
 
 def test_compiles_and_runs():
@@ -112,6 +119,14 @@ def test_guards_round_and_clamp():
     check("p = 4.4 rounds to 4", float(np.abs(gpu(dict(p_sides=4.4)) - ref).max()), 0.0)
     p3 = gpu(dict(p_sides=3.0, q_vertex=7.0, tile_scale=0.3))
     check("p = 2 clamps to p = 3", float(np.abs(gpu(dict(p_sides=2.0, q_vertex=7.0, tile_scale=0.3)) - p3).max()), 0.0)
+
+
+def test_mode_switch_is_a_threshold_at_one_half():
+    """fold_mode is read as step(0.5, fold_mode): 0.4 is mode A, 0.6 is mode B, and each is the same frame as 0 / 1."""
+    b = dict(tile_scale=0.4)
+    check("fold_mode 0.4 equals 0", float(np.abs(gpu(dict(fold_mode=0.4, **b)) - gpu(dict(fold_mode=0.0, **b))).max()), 0.0)
+    check("fold_mode 0.6 equals 1", float(np.abs(gpu(dict(fold_mode=0.6, **b)) - gpu(dict(fold_mode=1.0, **b))).max()), 0.0)
+    assert float(np.abs(gpu(dict(fold_mode=1.0, **b)) - gpu(dict(fold_mode=0.0, **b))).max()) > 0.1, "the two modes should differ"
 
 
 def test_bypass_is_the_first_inlet_exactly():

@@ -70,7 +70,7 @@ DATA = {
     "bench_vf_stamp": _MACHINERY + ["src/f_vf_stamp/codebox_*.gen"],
     "bench_vf_stamp_module": _MODULE_BENCH + ["package/patchers/f_vf_stamp.maxpat", "src/f_vf_stamp/codebox_*.gen"],
     "bench_quasi": _MACHINERY + ["src/f_quasi/codebox_*.gen"],
-    "bench_poincare_a": _MACHINERY + ["src/f_poincare/codebox_*.gen"],
+    "bench_poincare": _MACHINERY + ["src/f_poincare/codebox_*.gen"],
     "bench_cmap": _MACHINERY + ["src/f_cmap/codebox_*.gen"],
     "bench_wc": _MACHINERY + ["src/f_wc/codebox_*.gen"],
     "bench_wc_look": _MODULE_BENCH + ["package/patchers/f_wc.maxpat", "src/f_wc/codebox_*.gen"],

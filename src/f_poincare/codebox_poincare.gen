@@ -1,16 +1,23 @@
-// codebox_poincare_a.gen -- f_poincare mode A (whole tile): a texture folded into the {p,q} fundamental tile of the Poincare disk.
-// Mirror: tests/modules/poincare/poincare_mirror.py (fold_step_k3, fold_a_k3, render_a). Bench: tests/modules/poincare/bench_poincare_a.py.
+// codebox_poincare.gen -- f_poincare: a texture folded into a fundamental domain of the {p,q} tiling of the Poincare disk.
+// fold_mode 0 = mode A (whole tile, below), fold_mode 1 = mode B (sliver kaleidoscope, see 'Mode B').
+// Mirror: tests/modules/poincare/poincare_mirror.py (render, fold_step_k3, fold_a_k3, fold_b_k). Bench: tests/modules/poincare/bench_poincare.py.
 // Spec: .specify/f_poincare/spec.md (Mode A, Rim policy, Texture mapping); decisions: tasks.md T004 (32 iterations, fade from 0.99),
 // T005 (live p by testing only the 3 nearest circles by angle: it matches the p-circle chain on every pixel both settle,
 // 56 pairs p, q in 3..10; lowest index wins among them, and that priority order is part of mode A's definition), T006 (crop,
 // not warp: the settled point is the sample coordinate, tile_scale sets the texture extent).
 //
-// Each pixel is a point z in the unit disk (the disk's radius is the shorter side). Every iteration: find the circle index
+// Mode A: each pixel is a point z in the unit disk (the disk's radius is the shorter side). Every iteration: find the circle index
 // nearest to z by angle, test that circle and its two neighbours, invert once in the lowest-index one that contains z.
 // The p edge circles have centres (d sin(2 i th), d cos(2 i th)), th = pi / p, and radius sqrt(r2); d and r2 come from the
 // closed form (spec "Geometry"). The settled z samples the first inlet at z / (2 tile_scale) + 0.5, so the settled position
 // uses the same convention as the first inlet's norm. Black outside the unit disk, outside [0,1] of the texture, where the
 // loop has not settled, and faded to black from rim_fade to the rim.
+// Mode B (T020, spec 'Mode B'): each iteration folds the angle into [0, pi / p] about the origin (the angle is
+// (a + 2 pi) mod (2 pi / p), mirrored about the half sector), then inverts once in the single edge circle on the +x axis if the point
+// is inside it; one more fold after the loop. Settled = outside that circle. The (2, p, q) triangle is a strict fundamental domain, so
+// there is no priority order. Both modes are computed every pixel and fold_mode picks one with mix (branchless; cost is both).
+// Settled tests accept a final point within 1e-5 (squared distance) inside an edge circle: a pixel on a mirror line of the group lands
+// exactly on the circle, a knife-edge that float64 called unsettled and float32 settled (2026-11-06, mode B p = 4 on a square frame).
 // Guard: p_sides is rounded and clamped to 3..10, q_vertex is rounded and raised to the smallest integer with 1/p + 1/q < 1/2.
 // width / height are the render size (the render_dim Params; `dim` is not used). bypass_gate = 1 passes the first inlet through
 // (scratch convention for this phase; the module's bypass behaviour is decided in T041).
@@ -53,6 +60,24 @@ any_inside(zx, zy, np, d, th, r2) {
     return max(fa, max(fb, fc));
 }
 
+wedge(zx, zy, np) {
+    sector = twopi / np;
+    wr = sqrt(zx * zx + zy * zy);
+    wa = mod(atan2(zy, zx + 0.0000001) + twopi, sector);
+    wm = min(wa, sector - wa);
+    return wr * cos(wm), wr * sin(wm);
+}
+
+fold_step_b(zx, zy, np, d, r2) {
+    fx, fy = wedge(zx, zy, np);
+    bdx = fx - d;
+    bd2 = bdx * bdx + fy * fy;
+    inb = 1.0 - step(r2, bd2);
+    bs = r2 / max(bd2, 0.0001);
+    return fx + (d + bdx * bs - fx) * inb, fy + (fy * bs - fy) * inb;
+}
+
+Param fold_mode(0);
 Param p_sides(4);
 Param q_vertex(5);
 Param tile_scale(0.26);
@@ -78,12 +103,22 @@ zx0 = (norm.x * 2.0 - 1.0) * asp_x;
 zy0 = (norm.y * 2.0 - 1.0) * asp_y;
 rscr = sqrt(zx0 * zx0 + zy0 * zy0);
 
-sx = zx0;
-sy = zy0;
+sax = zx0;
+say = zy0;
+sbx = zx0;
+sby = zy0;
 for (it = 0; it < iterations; it += 1) {
-    sx, sy = fold_step(sx, sy, np_s, d_s, th_s, r2_s);
+    sax, say = fold_step(sax, say, np_s, d_s, th_s, r2_s);
+    sbx, sby = fold_step_b(sbx, sby, np_s, d_s, r2_s);
 }
-settled = 1.0 - any_inside(sx, sy, np_s, d_s, th_s, r2_s);
+sbx, sby = wedge(sbx, sby, np_s);
+bfx = sbx - d_s;
+settled_b = step(r2_s - 0.00001, bfx * bfx + sby * sby);
+settled_a = 1.0 - any_inside(sax, say, np_s, d_s, th_s, r2_s - 0.00001);
+mode_b = step(0.5, fold_mode);
+sx = mix(sax, sbx, mode_b);
+sy = mix(say, sby, mode_b);
+settled = mix(settled_a, settled_b, mode_b);
 
 us = sx / (2.0 * tile_scale) + 0.5;
 vs = sy / (2.0 * tile_scale) + 0.5;
