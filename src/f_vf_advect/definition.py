@@ -114,7 +114,7 @@ patcher = {
         {"name": "mode",      "type": "menu", "options": ["Ride", "Hold", "Snap"], "default": 0,
          "label": "Mode", "hint": None, "pix_target": "pass"},
         # Trail goes last of the controls so every existing dial keeps its slot on the panel
-        {"name": "trail",     "type": "float", "min": 0.0, "max": 1000.0, "default": 0.0, "label": "Trail",
+        {"name": "trail",     "type": "float", "min": 0.0, "max": 120.0, "default": 0.0, "label": "Trail",
          "exponent": 3.0,
          "hint": "How many times longer trails last than Decay alone makes them: 0 = off (exactly the classic loop), 1 = twice as long, 3 = four times, 9 = ten times. The settled brightness stays the same, so longer trails do not wash out. Has no effect at Decay 1.0 (nothing fades there)"},
         {"name": "src_vecfield", "type": "internal"},

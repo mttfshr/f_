@@ -1585,7 +1585,7 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "trail",
-							"parameter_mmax": 1000.0,
+							"parameter_mmax": 120.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
 							"parameter_exponent": 3.0,

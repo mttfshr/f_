@@ -988,7 +988,7 @@
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "falloff",
-							"parameter_mmax": 2.5,
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "falloff",

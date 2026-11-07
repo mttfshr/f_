@@ -40,7 +40,7 @@ vortex_pix (@type float32) → out0
 | `cy_amt` | 0–1 | 0.0 | cy modulation depth (inlet 2) |
 | `convergence_amt` | 0–1 | 0.0 | convergence modulation depth (inlet 3) |
 | `curl_amt` | 0–1 | 0.0 | curl modulation depth (inlet 4) |
-| `bypass` | 0/1 | 0 | Outputs neutral field (all 0.5) |
+| `bypass` | 0/1 | 0 | Native bypass: passes the input through (inlet 0 to the outlet) |
 
 **Prefix:** `vf_vortex` — **Object name:** `vf_vortex_pix`
 
@@ -50,7 +50,7 @@ vortex_pix (@type float32) → out0
 
 f_vecfield convention: `R = fx * 0.5 + 0.5`, `G = fy * 0.5 + 0.5`, `B = 0.5`, `A = 1.0`. Consumers decode via `(sample - 0.5) * 2.0`.
 
-Modulation inlets decode the same way: `(sample.x - 0.5) * 2.0 * amt` added to the base param value. At vs_black (0.5), offset is zero regardless of amt.
+Modulation inlets decode the same way: `(sample.x - 0.5) * 2.0 * amt` added to the base param value. A texture at 0.5 gives zero offset, but an unconnected mod inlet does not: with its `*_amt` > 0 the base param is offset by `-amt` (seen live, Matt, 2026-11-06; not yet gated in the codebox, to be fixed later). Leave `*_amt` at 0 for any mod inlet you do not connect.
 
 ---
 

@@ -34,7 +34,7 @@ When in1 is unconnected, vs_inState delivers vs_black; `src_vecfield` system par
 | `gain` | 0–1.5 | 0.3 | Streak intensity — scales the streak layer's contribution into the driven (fully-composited) state. Renamed from `strength` 2026-07-12 (gain/mix rollout). |
 | `mix_pct` | 0–100% | 0.0 | Wet/dry crossfade toward the driven state — a continuous blend, not spatial masking. Rendered as `live.numbox`; internal Param named `mix_pct` to avoid colliding with the codebox's `mix()` operator. Default 0 (off by default, matching this module's original load behavior). |
 | `length` | 0–20 | 0.15 | Streamline trace distance in UV space. Controls streak reach. |
-| `falloff` | 0–2.5 | 0.0 | 0 = uniform directional blur. 1 = linear trailing smear. >1 = negative tail weights (expressive artifact territory). |
+| `falloff` | 0–2.0 | 0.0 | 0 = uniform directional blur. 1 = linear trailing smear. >1 = negative tail weights (expressive artifact territory). At exactly 2.0 the weights sum to zero (`8 - 4 * falloff`) and the codebox divides by that sum with no guard, so the end of the dial is degenerate. |
 | `color_shift` | 0–20 | 0.0 | Chromatic separation along streak direction. 0 = none. |
 | `bypass` | 0/1 | 0 | out0 passes source; out1 (isolated streak layer) passes the **source**, not black, per the 2026-10-05 all-outlets-passthrough rule. |
 
@@ -74,7 +74,7 @@ Step count is fixed at 8. Field vectors are suppressed by `src_vecfield` when in
 
 - **2026-07-12 gain/mix rollout:** `strength` renamed to `gain`; `mix_pct` added (0–100% crossfade toward the driven/fully-composited state, default 0 — off by default, matching this module's original load behavior). Composite rewritten to the two-stage driven/mix pattern confirmed correct on `f_vf_prism`: `mix_pct` is a continuous blend toward the driven state, not spatial masking.
 - `src_vecfield` is a hidden system param driven by vs_inState outlet 1; not user-facing
-- `falloff > 1` extrapolates into negative tail weights — the normalization still holds but produces a contrast-boosted leading edge; expressive at high values
+- `falloff > 1` extrapolates into negative tail weights — normalization holds for `falloff` < 2.0 (the weight sum is `8 - 4 * falloff`, zero at 2.0, unguarded) and produces a contrast-boosted leading edge; expressive at high values
 - `color_shift` offsets R and B channels in opposite directions along the field X axis — chromatic aberration follows the streak geometry
 - out1 clips at high `gain`/`mix_pct` with bright sources; this is expected and often desirable
 - Typical expressive ranges: `length` 0.1–2.0, `falloff` 0–1.5, `color_shift` 0–3.0; extreme values available for deliberate effect
