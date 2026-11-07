@@ -243,5 +243,43 @@ def test_mutations_are_caught():
     print("    ok   a wrong r2, an unmirrored mode-B angle and a conjugate-free camera are each caught")
 
 
+# ---- mode A as the codebox runs it (T010): the 3-nearest-circles variant, the guard, float32 ----
+
+def test_k3_matches_the_chain():
+    """T005's result pinned: the 3 nearest circles by angle give the p-circle chain's settled point on every pixel both settle."""
+    ry, rx = np.mgrid[0:160, 0:160]
+    zx, zy = (rx + 0.5) / 160 * 2 - 1, (ry + 0.5) / 160 * 2 - 1
+    sel = zx ** 2 + zy ** 2 < 0.998 ** 2
+    zx, zy = zx[sel], zy[sel]
+    for p, q in [(4, 5), (4, 6), (5, 4), (6, 4), (8, 3), (3, 7), (10, 3)]:
+        rx_, ry_, rok, _ = m.fold_a(zx, zy, p, q, iters=40)
+        kx, ky, kok = m.fold_a_k3(zx, zy, p, q, iters=40)
+        both = rok & kok
+        note(f"{{{p},{q}}} both settled", float(both.mean()))
+        check(f"{{{p},{q}}} k3 settled position equals the chain", float(np.max(np.where(both, np.hypot(kx - rx_, ky - ry_), 0.0))), 1e-9)
+        assert both.mean() > 0.99, f"{{{p},{q}}} too few pixels settled by 40 iterations: {both.mean()}"
+
+
+def test_guard_rounds_and_clamps():
+    assert m.clamp_pq(4, 3) == (4, 5) and m.clamp_pq(4.4, 5.4) == (4, 5)
+    assert m.clamp_pq(2, 7) == (3, 7) and m.clamp_pq(3, 3) == (3, 7)
+    assert m.clamp_pq(5, 3) == (5, 4) and m.clamp_pq(8, 2) == (8, 3) and m.clamp_pq(11, 3) == (10, 3)
+    for p in range(3, 11):                       # every guarded pair is hyperbolic
+        for q in (1, 3, 5, 12):
+            assert m.valid(*m.clamp_pq(p, q)), (p, q)
+    print("    ok   p rounded and clamped to 3..10, q raised to the smallest hyperbolic integer")
+
+
+def test_render_a_float32_tracks_float64_and_the_disk_is_empty():
+    nx, ny = m.norm_grid(192, 192)
+    a, _, rr = m.render_a(nx, ny, 4, 5, 0.26)
+    b, _, _ = m.render_a(nx, ny, 4, 5, 0.26, dt=np.float32)
+    dif = np.abs(a - b.astype(np.float64)).max(-1)
+    note("float32 vs float64, worst at r < 0.9", float(dif[rr < 0.9].max()))
+    check("float32 render equals float64 to 1e-4 at r < 0.9", float(dif[rr < 0.9].max()), 1e-4)
+    check("outside the unit disk is exactly black", float(np.abs(a[rr >= 1.0]).max()), 0.0)
+    assert (a[rr < 0.5].sum(-1) > 0).mean() > 0.5, "the central region should show the texture"
+
+
 if __name__ == "__main__":
     sys.exit(run(globals()))

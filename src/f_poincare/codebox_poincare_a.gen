@@ -1,0 +1,99 @@
+// codebox_poincare_a.gen -- f_poincare mode A (whole tile): a texture folded into the {p,q} fundamental tile of the Poincare disk.
+// Mirror: tests/modules/poincare/poincare_mirror.py (fold_step_k3, fold_a_k3, render_a). Bench: tests/modules/poincare/bench_poincare_a.py.
+// Spec: .specify/f_poincare/spec.md (Mode A, Rim policy, Texture mapping); decisions: tasks.md T004 (32 iterations, fade from 0.99),
+// T005 (live p by testing only the 3 nearest circles by angle: it matches the p-circle chain on every pixel both settle,
+// 56 pairs p, q in 3..10; lowest index wins among them, and that priority order is part of mode A's definition), T006 (crop,
+// not warp: the settled point is the sample coordinate, tile_scale sets the texture extent).
+//
+// Each pixel is a point z in the unit disk (the disk's radius is the shorter side). Every iteration: find the circle index
+// nearest to z by angle, test that circle and its two neighbours, invert once in the lowest-index one that contains z.
+// The p edge circles have centres (d sin(2 i th), d cos(2 i th)), th = pi / p, and radius sqrt(r2); d and r2 come from the
+// closed form (spec "Geometry"). The settled z samples the first inlet at z / (2 tile_scale) + 0.5, so the settled position
+// uses the same convention as the first inlet's norm. Black outside the unit disk, outside [0,1] of the texture, where the
+// loop has not settled, and faded to black from rim_fade to the rim.
+// Guard: p_sides is rounded and clamped to 3..10, q_vertex is rounded and raised to the smallest integer with 1/p + 1/q < 1/2.
+// width / height are the render size (the render_dim Params; `dim` is not used). bypass_gate = 1 passes the first inlet through
+// (scratch convention for this phase; the module's bypass behaviour is decided in T041).
+// Compile hazards avoided (skills/jit-gen-codebox): functions before Params and take Params as arguments, no unary minus before a
+// parenthesis, no variables named e / phi / pi / cell / active / inN, no one-letter Params, no step() with two literals, loop
+// state declared before the loop, no outlet names in comments, atan2 never sees (0, 0).
+
+inside_c(zx, zy, idx, d, th, r2) {
+    cdx = zx - d * sin(2.0 * idx * th);
+    cdy = zy - d * cos(2.0 * idx * th);
+    return 1.0 - step(r2, cdx * cdx + cdy * cdy);
+}
+
+fold_step(zx, zy, np, d, th, r2) {
+    i_near = floor(atan2(zx, zy + 0.0000001) / (2.0 * th) + 0.5);
+    ia = mod(2.0 * np + i_near, np);
+    ib = mod(2.0 * np + i_near - 1.0, np);
+    ic = mod(2.0 * np + i_near + 1.0, np);
+    fa = inside_c(zx, zy, ia, d, th, r2);
+    fb = inside_c(zx, zy, ib, d, th, r2);
+    fc = inside_c(zx, zy, ic, d, th, r2);
+    ka = ia + (1.0 - fa) * 1000.0;
+    kb = ib + (1.0 - fb) * 1000.0;
+    kc = ic + (1.0 - fc) * 1000.0;
+    wk = min(ka, min(kb, kc));
+    has = 1.0 - step(500.0, wk);
+    wcx = d * sin(2.0 * wk * th);
+    wcy = d * cos(2.0 * wk * th);
+    wdx = zx - wcx;
+    wdy = zy - wcy;
+    sc = r2 / max(wdx * wdx + wdy * wdy, 0.0001);
+    return zx + (wcx + wdx * sc - zx) * has, zy + (wcy + wdy * sc - zy) * has;
+}
+
+any_inside(zx, zy, np, d, th, r2) {
+    i_near = floor(atan2(zx, zy + 0.0000001) / (2.0 * th) + 0.5);
+    fa = inside_c(zx, zy, mod(2.0 * np + i_near, np), d, th, r2);
+    fb = inside_c(zx, zy, mod(2.0 * np + i_near - 1.0, np), d, th, r2);
+    fc = inside_c(zx, zy, mod(2.0 * np + i_near + 1.0, np), d, th, r2);
+    return max(fa, max(fb, fc));
+}
+
+Param p_sides(4);
+Param q_vertex(5);
+Param tile_scale(0.26);
+Param iterations(32);
+Param rim_fade(0.99);
+Param width(640.0);
+Param height(480.0);
+Param bypass_gate(0);
+
+np_s = clamp(floor(p_sides + 0.5), 3.0, 10.0);
+q_min = floor(2.0 * np_s / (np_s - 2.0)) + 1.0;
+nq_s = max(floor(q_vertex + 0.5), q_min);
+th_s = pi / np_s;
+cosh_l = cos(pi / nq_s) / sin(th_s);
+t_half = sqrt((cosh_l - 1.0) / (cosh_l + 1.0));
+d_s = (t_half + 1.0 / t_half) * 0.5;
+rho_s = (1.0 / t_half - t_half) * 0.5;
+r2_s = rho_s * rho_s;
+
+asp_x = max(width / height, 1.0);
+asp_y = max(height / width, 1.0);
+zx0 = (norm.x * 2.0 - 1.0) * asp_x;
+zy0 = (norm.y * 2.0 - 1.0) * asp_y;
+rscr = sqrt(zx0 * zx0 + zy0 * zy0);
+
+sx = zx0;
+sy = zy0;
+for (it = 0; it < iterations; it += 1) {
+    sx, sy = fold_step(sx, sy, np_s, d_s, th_s, r2_s);
+}
+settled = 1.0 - any_inside(sx, sy, np_s, d_s, th_s, r2_s);
+
+us = sx / (2.0 * tile_scale) + 0.5;
+vs = sy / (2.0 * tile_scale) + 0.5;
+in_tex = step(0.0, us) * (1.0 - step(1.0, us)) * step(0.0, vs) * (1.0 - step(1.0, vs));
+in_disk = 1.0 - step(1.0, rscr);
+keep = settled * in_tex * in_disk * (1.0 - smoothstep(rim_fade, 1.0, rscr));
+
+uc = clamp(us, 0.001, 0.999);
+vc = clamp(vs, 0.001, 0.999);
+tr = sample(in1, vec(uc, vc)).x;
+tg = sample(in1, vec(uc, vc)).y;
+tb = sample(in1, vec(uc, vc)).z;
+out1 = mix(vec(tr * keep, tg * keep, tb * keep, 1.0), sample(in1, norm), bypass_gate);
