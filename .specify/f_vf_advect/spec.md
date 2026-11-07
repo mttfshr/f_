@@ -236,9 +236,12 @@ vecfield-shaped candidates were considered:
   information, not a rescaled copy
 - No change to out1 (composite/mix) or out2 (advected) behavior — pure
   addition
-- Bypass does NOT affect out3 — it stays **live**, continuing to output
-  the gradient of the accumulated feedback state (`out3 = field;`
-  unconditionally, no bypass mix). The feedback loop keeps running
+- [Superseded: the shipped codebox mixes out3 by `bypass_gate`, toward the
+  vecfield input, or neutral 0.5 when unconnected (`codebox_advect.gen:82`);
+  corrected 2026-11-06 from the omp audit `advect-streak-audit-1`, checked in
+  the repo.] Original design: bypass does NOT affect out3 — it stays **live**,
+  continuing to output the gradient of the accumulated feedback state
+  (`out3 = field;` unconditionally, no bypass mix). The feedback loop keeps running
   regardless of `bypass` (this module's whole bypass design keeps the
   loop warm), so a signal derived from that loop shouldn't flatten just
   because `out1` shows the dry source. Corrected 2026-07-12 after Max

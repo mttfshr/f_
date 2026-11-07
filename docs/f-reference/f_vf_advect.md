@@ -61,7 +61,7 @@ advect_pix out2 → out2 (vecfield gradient of the accumulated flow)
 field_xy = (sample(vecfield, uv) - 0.5) * 2.0 * step(0.5, src_vecfield)   // suppressed when unconnected
 src_uv   = uv - field_xy * dt
 advected = sample(previous_frame, src_uv) * decay
-out      = advected + sample(source, uv) * injection
+out      = clamp(advected + sample(source, uv) * injection, 0.0, 1.0)
 driven    = clamp(out * gain, 0.0, 1.0)
 composite = mix(source, driven, mix_pct / 100.0)                          // wet/dry
 composite = mix(composite, source, bypass_gate)

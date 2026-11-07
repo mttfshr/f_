@@ -12,7 +12,7 @@ Two jit.gl.pix inside one bpatcher:
 Outlets:
   0 — composite (wet/dry blended, `gain` then `mix_pct`)
   1 — advected  (raw accumulation pre-mix)
-  2 — vecfield  (gradient of the accumulated flow; always live, even under bypass)
+  2 — vecfield  (gradient of the accumulated flow; under bypass it mixes to the vecfield input, or to neutral 0.5 when unconnected)
 
 Rewritten 2026-10-05 (build_cleanup T014) from the shipped, hand-edited patcher. This file, its
 codeboxes and the old `build_advect.py` all predated the July dry/wet/gain work (mix_amt -> gain +
