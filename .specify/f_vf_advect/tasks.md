@@ -198,5 +198,5 @@ Offline by Claude, plus omp audit `advect-streak-audit-1` (snapshot 4459a3d; all
 - Helpfile: nothing was wired upstream. Added `vs_sources_main` to inlet 0 and `f_vf_flow` to inlet 1 (the prism pairing); added `trail` to the message list; comment text rewritten. Not opened in Max.
 - Left alone (Matt, 2026-11-06): `G-edge-wrap`, and the out3 gradient taps stay unclamped (`codebox_advect.gen:71-74`).
 - Open, Matt's call: `spec.md` Internal Architecture (`@type char`, pass_pix "identity", the Signal Flow route list) is pre-build and wrong against the shipped patcher (float32; separate stage; route list lacks gain, separate, mode, trail); too large for one edit. `definition.py:101` "Inject / 0.03" holds only at the default decay.
-- Shared-file edit for the main session: `tests/contracts/bench_modules.py` line 173 comment says feedback keeps running through bypass; the codebox mixes out1 and out2 to the source, so reread it before leaving it.
+- Shared files: none needed. `tests/contracts/bench_modules.py` line 173 ("feedback keeps running through bypass") stays true: the loop runs under bypass, only the outlets are mixed to the source.
 - Not done: Matt's helpfile look, the live contract bench, and the move to `stable/`.
