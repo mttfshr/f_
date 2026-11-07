@@ -2,6 +2,22 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 4 Group A moved to `.specify/stable/` (warp, stipple, glow, prism)
+
+- **Done:** offline preflight (commit `fb693ee`), then Matt's helpfile looks passed ("helpfile looks pass", live, for the group) and one live contract bench was green: `bench_modules.py` 2/2, 0 unexpected issues, all four in the roster (`tests/logs/20261106-192009-bench.log`, Max 9.2.0). Record: each module's `tasks.md`, "Stable preflight" and "Moved to stable/". Folders hold only markdown; 11 path references in docs and ideas updated.
+- **Real bug found and fixed (stipple):** zoom was divided into the displaced outlet twice (inferred from code); the bench has no check at zoom other than 1; Matt confirmed his look passed, including that outlet at zoom != 1 (live, by Matt, 2026-11-06).
+- **Carried over under the stable bar (Matt confirmed 2026-11-06):** glow T039-T043 (unbuilt anisotropy inlet), T023-T026 and T028, the dead `src_vecfield` binding; prism out3 8-bit and mirror T004; stipple T034-T038 and `freq` in `h_iso`; warp tier-3 look "per the docs".
+- **Gates:** `test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-192402-offline.log`). Matt confirmed the carry-overs. Stray `write` file deleted (Matt's yes).
+- **Not done:** `skills/vsynth-bpatcher/SKILL.md` lines 279 and 798 (Matt is re-uploading; then `skills/check.sh stamp`, and I make the two edits first); `library-characteristics.md:373`.
+- **Matt's calls, 2026-11-06 (decided in chat, nothing applied yet):**
+  1. `f_vf_streak`: narrow the `falloff` dial max below 2.0 (value not given; Claude proposed 1.9). This overrides the 2026-10-19 "leave as is" in its `tasks.md` T056; Claude wrongly said no such record existed. Then update the doc range and its "expressive" wording; no preset sets `falloff` above 0 in `package/`.
+  2. `G-edge-wrap`: leave alone for now. `f_vf_advect` out3 gradient taps stay unclamped (`codebox_advect.gen:71-74`).
+  3. Bypass: `f_vf_vortex` stays native and passes through when bypassed, so fix its doc ("outputs neutral field" is wrong). `f_vf_optical_flow` and `f_vf_seeds` should also pass through when bypassed; seeds does not behave correctly now (Matt saw it live). Open question before any work: passthrough of which input on which outlet.
+  4. Vortex mod inlets: Matt saw live that the fixed point moves with nothing connected (unconnected mod inlet with `cx_amt` > 0 offsets by `-amt`), so the doc's "offset is zero at vs_black" is wrong. Open: gate it in the codebox, or document it.
+  5. `f_vf_advect` `trail` dial max 1000 -> 120. Presets seen use up to about 99; `f_demo_quasi.json` and `f_demo_axisflow.json` arrays not read.
+- **Also owed in the advect preflight:** `definition.py:15` and `spec.md:239` say out3 stays live under bypass; the codebox mixes it to the vecfield input.
+- **omp:** Matt set model roles in omp (`TASK` is the subagent role) and chose a deepseek model; the bake-off and fresh-plant audit folders are not built. Doc audits only count when planted errors are found in the same run.
+
 ## 2026-11-06: batch 4 Group A preflight (warp, stipple, glow, prism), offline
 
 - **Done (Claude and four subagents, nothing run in Max):** docs, helpfiles and task records fixed for all four; none moved yet. Record: each module's `tasks.md`, "Stable preflight (2026-11-06)". Drift 1 of 1 each; menu and launcher `--check` ok; `test_generate_menu.py` 17/17 (log `tests/logs/20261106-191203-offline.log`).

@@ -1,6 +1,6 @@
 """
 test_vf_streak.py -- tier-1 NumPy mirror of the f_vf_streak shader (src/f_vf_streak/codebox_v1.gen;
-.specify/f_vf_streak/tasks.md T056, decided 2026-10-19: mirror by choice -- the codebox is a fixed 8-step
+.specify/stable/f_vf_streak/tasks.md T056, decided 2026-10-19: mirror by choice -- the codebox is a fixed 8-step
 unrolled march whose checks are invariants and closed forms, so the constitution rule alone would allow a skip).
 
 Ground truth is independent of the mirror:

@@ -1,7 +1,7 @@
 # Implementation Plan: f_vf_streak
 
 **Date:** 2026-06-08
-**Spec:** `.specify/f_vf_streak/spec.md`
+**Spec:** `.specify/stable/f_vf_streak/spec.md`
 
 ---
 

@@ -2,8 +2,8 @@
 
 > **Dated banner, 2026-10-18:** this is a build-era record. Per-module build scripts such as `build_caustic.py` named below were absorbed into `build/build_patcher.py` (keys documented in `build/spec.md`), so do not follow the build instructions here literally.
 
-**Spec**: `.specify/f_vf_advect/spec.md`
-**Plan**: `.specify/f_vf_advect/plan.md`
+**Spec**: `.specify/stable/f_vf_advect/spec.md`
+**Plan**: `.specify/stable/f_vf_advect/plan.md`
 **Build order**: Sequential. Complete each phase before the next. Phase 1 (scratch) is the hard gate — codeboxes are frozen before any build work begins.
 
 **2026-07-12: Phases 1-4 confirmed shipped in production** (two-pix
@@ -73,7 +73,7 @@ findings (perf/bench/convention) recorded in `.specify/maintenance/status.json`.
 patchers/
 └── f_vf_advect.maxpat              # Built patcher (distributed artifact)
 
-.specify/f_vf_advect/
+.specify/stable/f_vf_advect/
 ├── spec.md                         # ✅ Done
 ├── plan.md                         # ✅ Done
 ├── tasks.md                        # ✅ This file
@@ -103,7 +103,7 @@ patchers/
 - [ ] T009 Verify each parameter in isolation: dt=0 stops flow; decay=0 clears each frame; injection=0 decays to black; mix=0 shows raw source; bypass=1 shows source with loop warm
 - [ ] T010 Verify `@adapt 1`: connect a source at a different resolution from vs_render output — confirm no black output or resolution mismatch artifact
 - [ ] T011 Verify `#0_` scoping: duplicate the bpatcher (or add a second identical block) in the same patch — confirm both instances advect independently with separate feedback state
-- [ ] T012 Copy finalized advect_pix codebox content to `.specify/f_vf_advect/codebox_advect.gen` — this is the frozen source of truth
+- [ ] T012 Copy finalized advect_pix codebox content to `.specify/stable/f_vf_advect/codebox_advect.gen` — this is the frozen source of truth
 
 **Checkpoint:** Flow is visible and correct. All params work as specced. Two instances are independent. Codeboxes frozen. Do not modify codebox_advect.gen after this point.
 
@@ -113,7 +113,7 @@ patchers/
 
 **Purpose:** Write `build_advect.py` that generates the full bpatcher JSON from the frozen codebox, following the same pattern as `build_caustic.py`.
 
-- [ ] T013 Create `.specify/f_vf_advect/build_advect.py` — copy boilerplate from `build_caustic.py` (constants, wire/box helpers, moduleSize chain, bypass, param loop)
+- [ ] T013 Create `.specify/stable/f_vf_advect/build_advect.py` — copy boilerplate from `build_caustic.py` (constants, wire/box helpers, moduleSize chain, bypass, param loop)
 - [ ] T014 Define module identity constants in `build_advect.py`: `NAME`, `PREFIX` (`vfadvect`), `OBJECT_NAME` (`vfadvect_pix`), `PASS_NAME` (`vfadvect_pass`), `TITLE` (`Advect`), `PW`, `PH`
 - [ ] T015 Define `PARAMS` list in `build_advect.py`: `dt` (float, 0–0.1, default 0.02), `decay` (float, 0–1, default 0.95), `injection` (float, 0–1, default 0.05), `mix` (float, 0–1, default 1.0); `src_vecfield` as internal (not in PARAMS loop — driven by vs_inState)
 - [ ] T016 Write `gen_subpatcher_pass()` in `build_advect.py`: trivial 1-inlet gen (`in 1 → out 1`)
@@ -122,7 +122,7 @@ patchers/
 - [ ] T019 Add advect_pix box in `build_advect.py` (`obj-5`): `jit.gl.pix vsynth @name #0_vfadvect_pix @type char @adapt 1`, numinlets=3 (source in0, vecfield in1, previous in2), patcher=gen_subpatcher_advect()
 - [ ] T020 Add vecfield inlet (`obj-51`), vs_inState (`obj-52`), prepend param src_vecfield (`obj-53`) boxes in `build_advect.py`
 - [ ] T021 Wire patchlines in `build_advect.py`: feedback loop (`advect_pix out0 → pass_pix in0`, `pass_pix out0 → advect_pix in2`), vecfield chain (`inlet → vs_inState → advect_pix in1`; `vs_inState out1 → prepend src_vecfield → advect_pix in0`), outlet (`advect_pix out0 → outlet`)
-- [ ] T022 Run `python3 .specify/f_vf_advect/build_advect.py` and validate JSON: `python3 -c "import json; json.load(open('patchers/f_vf_advect.maxpat')); print('valid')"`
+- [ ] T022 Run `python3 .specify/stable/f_vf_advect/build_advect.py` and validate JSON: `python3 -c "import json; json.load(open('patchers/f_vf_advect.maxpat')); print('valid')"`
 - [ ] T023 Inspect generated JSON: confirm numinlets on advect_pix=3, pass_pix=1; confirm feedback wire and pass wire both present; confirm vs_inState wired correctly; confirm src_vecfield absent from route args
 
 **Checkpoint:** `f_vf_advect.maxpat` is valid JSON. Structural inspection passes.
@@ -200,3 +200,9 @@ Offline by Claude, plus omp audit `advect-streak-audit-1` (snapshot 4459a3d; all
 - `spec.md` Internal Architecture, Signal Flow, output type and `trail` row rewritten to the shipped patcher (Matt's call, 2026-11-06; read from the patcher offline, not run). Matt's helpfile look passed 2026-11-06 (live, by Matt). Still open: `definition.py:101` "Inject / 0.03" holds only at the default decay.
 - Shared files: none needed. `tests/contracts/bench_modules.py` line 173 ("feedback keeps running through bypass") stays true: the loop runs under bypass, only the outlets are mixed to the source.
 - Not done: Matt's helpfile look, the live contract bench, and the move to `stable/`.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile look passed 2026-11-06 (live, by Matt). Live benches by Claude at Matt's go, Max 9.2.0, git 98a22fe dirty: `bench_vf_advect.py` 2/2 and `bench_modules.py` 2/2 with 0 unexpected live contract issues, roster `f_vf_advect,f_vf_streak` (log `tests/logs/20261106-advect-streak-bench2.log`; `outs=[1, 2, 3] pix=2 bypass-leaves-active=2 (by design)`). The `bypass 1` control message works in 0 of 2 modules, as logged (informational, not an unexpected issue). The first run, `20261106-advect-streak-bench.log`, was stopped while still in `bench_fluid.py` and is not evidence.
+
+Carried over: `G-edge-wrap` (Matt: leave alone) and the unclamped out3 gradient taps (`codebox_advect.gen:71-74`); `definition.py:101` "Inject / 0.03" holds only at the default decay.

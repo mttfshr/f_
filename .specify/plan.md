@@ -17,7 +17,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Next (Claude's lean; Matt decides)
 
-0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow` and `f_tone_curve` moved, so all seven are in `.specify/stable/`; batch 4 triage is done (`.specify/maintenance/batch4_triage_2026-11-06.md`), Group A (`f_vf_warp`, `f_stipple`, `f_vf_glow`, `f_vf_prism`) moved to `.specify/stable/` 2026-11-06; Group B (`f_vf_advect`, `f_vf_streak`) follows Matt's calls; bar is in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
+0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow` and `f_tone_curve` moved, so all seven are in `.specify/stable/`; batch 4 triage is done (`.specify/maintenance/batch4_triage_2026-11-06.md`), Group A (`f_vf_warp`, `f_stipple`, `f_vf_glow`, `f_vf_prism`) moved to `.specify/stable/` 2026-11-06; Group B (`f_vf_advect`, `f_vf_streak`) moved to `.specify/stable/` 2026-11-06; next: `f_vf_optical_flow` and `f_vf_seeds` bypass passthrough, then the `f_vf_vortex` preflight; bar is in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
 
 2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
 3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
@@ -27,7 +27,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 ## Owed to Matt
 
 - **Runs and looks:** the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
-- **Decisions:** cap the `f_vf_advect` Trail dial near 50-100 (one-line change), yes or no. Batch 4 calls: listed in `.specify/maintenance/batch4_triage_2026-11-06.md`.
+- **Decisions:** Batch 4: the remaining calls are the optical_flow / seeds passthrough details and the vortex mod-inlet gating (Matt: later).
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.
 - **Later, no date:** the `f_weave` name (`G-weave-scope`, question 6): revisit once the module is better known.
 - **Uploads:** re-upload `skills/vsynth-bpatcher/SKILL.md` and run `skills/check.sh stamp` after the `vs_black` wording fix (also `docs/vsynth-reference/patterns.md`).

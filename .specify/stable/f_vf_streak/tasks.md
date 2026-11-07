@@ -1,7 +1,7 @@
 # Tasks: f_vf_streak
 
-**Spec**: `.specify/f_vf_streak/spec.md`
-**Plan**: `.specify/f_vf_streak/plan.md`
+**Spec**: `.specify/stable/f_vf_streak/spec.md`
+**Plan**: `.specify/stable/f_vf_streak/plan.md`
 **Build order**: Sequential. Complete each phase before the next. Phase 1 is the hard gate.
 **Commits**: After each phase checkpoint.
 
@@ -13,7 +13,7 @@
 patchers/
   f_vf_streak.maxpat              — built by build script from definition.py
 
-.specify/f_vf_streak/
+.specify/stable/f_vf_streak/
   spec.md                         — ✅ done
   plan.md                         — ✅ done
   tasks.md                        — this file
@@ -117,8 +117,8 @@ docs/
 **Purpose:** Confirm build_patcher.py dual-outlet support, then author definition file.
 
 - [ ] T017 Read `tools/build_patcher.py` — check whether dual gen outlet (two `out N` objects, two pix outlets, two bpatcher outlets) is supported via definition.py keys; look for any `dual_outlet`, `num_outlets`, or similar configuration
-- [ ] T018 If dual outlet is NOT supported natively: write `.specify/f_vf_streak/build_streak.py` modeled on `.specify/f_caustic/build_caustic.py` — adapt for f_vf_streak params (strength, length, falloff, color_shift), prefix `vfstreak`, vs_inState on in1 with src_vecfield state param
-- [ ] T019 If dual outlet IS supported natively: write `.specify/f_vf_streak/definition.py` with appropriate dual-outlet key; skip T018
+- [ ] T018 If dual outlet is NOT supported natively: write `.specify/stable/f_vf_streak/build_streak.py` modeled on `.specify/f_caustic/build_caustic.py` — adapt for f_vf_streak params (strength, length, falloff, color_shift), prefix `vfstreak`, vs_inState on in1 with src_vecfield state param
+- [ ] T019 If dual outlet IS supported natively: write `.specify/stable/f_vf_streak/definition.py` with appropriate dual-outlet key; skip T018
 - [ ] T020 Set presentation rect width — four dials + two outlet triangles requires wider than standard 78px; target ~120px wide; verify against moduleSize.js by checking similar multi-param patchers (f_caustic uses 190px as reference)
 - [ ] T021 Confirm params in definition/build script: `strength` (live.dial, 0–1, default 0.3), `length` (live.dial, 0–0.5, default 0.15), `falloff` (live.dial, 0–1, default 0.0), `color_shift` (live.dial, 0–1, default 0.0), `src_vecfield` (internal/hidden), `bypass`
 - [ ] T022 Confirm `src_vecfield` is present in codebox Param declaration and in vs_inState wiring — absent from route args, UI objects, and parameters block
@@ -133,7 +133,7 @@ docs/
 
 **Purpose:** Run the build script, validate JSON, inspect generated patcher structure.
 
-- [ ] T025 Run build script from repo root: `python3 .specify/f_vf_streak/build_streak.py` (or `python3 tools/build_patcher.py .specify/f_vf_streak/definition.py`)
+- [ ] T025 Run build script from repo root: `python3 .specify/stable/f_vf_streak/build_streak.py` (or `python3 tools/build_patcher.py .specify/stable/f_vf_streak/definition.py`)
 - [ ] T026 Validate JSON: `python3 -c "import json; json.load(open('patchers/f_vf_streak.maxpat'))"` — must pass with no errors
 - [ ] T027 Inspect pix object: confirm numinlets=3 (control, source, vecfield), numoutlets=2
 - [ ] T028 Inspect gen subpatcher: confirm `in 1`, `in 2`, codebox (numinlets=2, numoutlets=2), `out 1`, `out 2` all present and wired correctly
@@ -251,3 +251,9 @@ Offline by Claude, plus omp audit `advect-streak-audit-1` (all 6 planted doc err
 - `falloff` dial max 2.5 -> 1.99 (Matt, 2026-11-06, after 2.0 was shown to give a zero weight sum; no codebox guard, the dial cap is the protection). Doc range and the "normalization" wording updated.
 - Helpfile: the vecfield inlet was unwired. Added `f_vf_flow` (from `vs_sources_main`) to inlet 1; the comment now says inlet 0 / inlet 1 (it said "inlet 2"); `falloff` range in the message list 2.5 -> 1.99. Not opened in Max.
 - Not done: Matt's helpfile look, the live contract bench, and the move to `stable/`.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile look passed 2026-11-06 (live, by Matt). Live bench `bench_modules.py` 2/2, 0 unexpected live contract issues, roster `f_vf_advect,f_vf_streak` (log `tests/logs/20261106-advect-streak-bench2.log`; `outs=[1, 2] pix=1 bypass-leaves-active=1`; Max 9.2.0, git 98a22fe dirty, by Claude at Matt's go). No module-specific bench exists for streak.
+
+Carried over: the codebox has no guard for the zero weight sum at `falloff` 2.0 (the dial stops at 1.99); out-of-frame reads wrap on the GPU (T056 update 2026-10-20).

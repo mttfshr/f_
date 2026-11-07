@@ -3,7 +3,7 @@
 > **Dated banner, 2026-10-18:** this is a build-era record. Per-module build scripts such as `build_caustic.py` named below were absorbed into `build/build_patcher.py` (keys documented in `build/spec.md`), so do not follow the build instructions here literally.
 
 **Date:** 2026-06-09
-**Spec:** `.specify/f_vf_advect/spec.md`
+**Spec:** `.specify/stable/f_vf_advect/spec.md`
 
 ---
 
@@ -23,7 +23,7 @@ The codebox is the only novel shader work. The feedback wiring pattern is direct
 
 **Environment:** Max 9 / Vsynth package
 **Primary artifact:** `patchers/f_vf_advect.maxpat`
-**Build tool:** Per-module build script `.specify/f_vf_advect/build_advect.py` (see ADR 4)
+**Build tool:** Per-module build script `.specify/stable/f_vf_advect/build_advect.py` (see ADR 4)
 **Output type:** `@type char` on both pix objects
 **Pix objects:** `vfadvect_pix` (advect), `vfadvect_pass` (pass-through)
 

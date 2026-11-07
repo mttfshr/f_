@@ -34,9 +34,9 @@
       "note": null
     },
     "tasks_filed": [
-      ".specify/f_vf_advect/T145",
-      ".specify/f_vf_advect/T146",
-      ".specify/f_vf_advect/T147"
+      ".specify/stable/f_vf_advect/T145",
+      ".specify/stable/f_vf_advect/T146",
+      ".specify/stable/f_vf_advect/T147"
     ]
   },
   "f_masonry": {
@@ -205,7 +205,7 @@
     "last_audited": "2026-10-13",
     "perf": {
       "status": "flagged",
-      "note": "measured 2026-10-13 (tests/records/spike_four_module_cost.py, 512^2, chain=128): ~0.0150 ms/pass active, ~0.0162 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 8-step march (24 src + 16 field samples/pixel) confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip it, but no guard is warranted on cost grounds. See .specify/f_vf_streak/T054a"
+      "note": "measured 2026-10-13 (tests/records/spike_four_module_cost.py, 512^2, chain=128): ~0.0150 ms/pass active, ~0.0162 ms/pass bypassed -- NOT gpu-bound even at chain=128 (upper-bound figures only, below the bench's CPU-overhead floor). 8-step march (24 src + 16 field samples/pixel) confirmed negligible in absolute cost at practical resolution regardless of bypass; bypass_gate still doesn't architecturally skip it, but no guard is warranted on cost grounds. See .specify/stable/f_vf_streak/T054a"
     },
     "bench": {
       "status": "flagged",
@@ -216,9 +216,9 @@
       "note": "gain/mix_pct correct; dead preset key class exists in package/examples (f_vf_warp::strength in f_demo_warp.json; f_vf_seeds::strength in f_demo_seeds*.json — renamed modules' old param)"
     },
     "tasks_filed": [
-      ".specify/f_vf_streak/T054",
-      ".specify/f_vf_streak/T055",
-      ".specify/f_vf_streak/T054a"
+      ".specify/stable/f_vf_streak/T054",
+      ".specify/stable/f_vf_streak/T055",
+      ".specify/stable/f_vf_streak/T054a"
     ]
   },
   "f_vf_chroma": {

@@ -1,6 +1,6 @@
 """
 test_vf_advect.py -- tier-1 NumPy mirror of the f_vf_advect advect stage (src/f_vf_advect/codebox_advect.gen;
-.specify/f_vf_advect/tasks.md T147, decided 2026-10-19: tier 1 applies, build the mirror).
+.specify/stable/f_vf_advect/tasks.md T147, decided 2026-10-19: tier 1 applies, build the mirror).
 
 The ground truth is independent of the mirror: closed forms derived on paper, not the recurrence run twice.
 
