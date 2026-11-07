@@ -1,4 +1,4 @@
-"""poincare_mirror.py -- tier-1 NumPy mirror of the f_poincare folds (spec: .specify/f_poincare/spec.md).
+"""poincare_mirror.py -- tier-1 NumPy mirror of the f_poincare folds (spec: .specify/stable/f_poincare/spec.md).
 
 Float64 first (the float32 pass-for-pass mirror comes after the float64 one is trusted; every function
 takes `dt` so the same code runs at either precision). Pure functions on coordinate arrays, no texture

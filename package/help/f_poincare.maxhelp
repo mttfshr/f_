@@ -207,7 +207,7 @@
 					"patching_rect": [
 						338.0,
 						200.0,
-						212.0,
+						214.0,
 						90.0
 					],
 					"viewvisibility": 1,

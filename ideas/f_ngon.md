@@ -2,7 +2,7 @@
 
 _Status: Planned -- not yet specced_
 _Discovered: 2026-07-09, as a byproduct of f_poincare Phase 0 (kaleidoscope
-diagnostic scratch work, see .specify/f_poincare/)_
+diagnostic scratch work, see .specify/stable/f_poincare/)_
 
 ## Concept
 

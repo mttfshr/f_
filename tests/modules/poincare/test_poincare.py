@@ -1,4 +1,4 @@
-"""test_poincare.py -- tier-1 float64 mirror tests for f_poincare (spec: .specify/f_poincare/spec.md, task T002).
+"""test_poincare.py -- tier-1 float64 mirror tests for f_poincare (spec: .specify/stable/f_poincare/spec.md, task T002).
 
 Ground truth is independent of the mirror's own construction:
 

@@ -3,7 +3,7 @@
 **Type:** Processor: one texture in, one texture out, at the render size. Single `jit.gl.pix` stage, float32.
 **Status:** Built 2026-11-07. Mirror 21/21, GPU benches 9/9 (codebox) and 2/2 (module), live contract bench 2/2, live looks passed (Matt, 2026-11-06 and 2026-11-07); defaults and ranges confirmed by Matt 2026-11-07. Not yet through the stable preflight.
 
-_Reference written 2026-11-07 from `src/f_poincare/` (definition and codebox), `.specify/f_poincare/{spec,tasks}.md` and `tests/modules/poincare/`._
+_Reference written 2026-11-07 from `src/f_poincare/` (definition and codebox), `.specify/stable/f_poincare/{spec,tasks}.md` and `tests/modules/poincare/`._
 
 ---
 
@@ -74,10 +74,10 @@ Not controls (codebox Params with fixed values): `iterations` 32, `rim_fade` 0.9
 
 ## References
 
-The geometry is the standard right-triangle construction for regular tilings of the hyperbolic plane. With the tile's centre, an edge midpoint and a vertex as corners, `cosh(l) = cos(pi/q) / sin(pi/p)` gives the edge-circle distance and radius in closed form (derived and checked in development against two independent hyperbolic-trigonometry calculations; the module's scratch phase and tests are in `.specify/f_poincare/`). The fold itself is the usual reflect-until-inside loop for a Coxeter reflection group; the Poincare-disk isometry used by the camera is the Moebius map `z -> (z - a) / (1 - conj(a) z)`.
+The geometry is the standard right-triangle construction for regular tilings of the hyperbolic plane. With the tile's centre, an edge midpoint and a vertex as corners, `cosh(l) = cos(pi/q) / sin(pi/p)` gives the edge-circle distance and radius in closed form (derived and checked in development against two independent hyperbolic-trigonometry calculations; the module's scratch phase and tests are in `.specify/stable/f_poincare/`). The fold itself is the usual reflect-until-inside loop for a Coxeter reflection group; the Poincare-disk isometry used by the camera is the Moebius map `z -> (z - a) / (1 - conj(a) z)`.
 
 - Coxeter, H.S.M. (1957). "Crystal Symmetry and its Generalizations." Royal Society of Canada: the {p,q} tessellation notation.
 - Kopczynski, Celinska-Kopczynska & Czyzowicz (HyperRogue project). "Conformal Models of the Hyperbolic Plane." https://www.roguetemple.com/z/hyper/papers/conformal.pdf (the note on numerical precision near the disk boundary; read for background, no code taken).
 - Escher, M.C., *Circle Limit* woodcuts: the visual reference, not a source of code.
 
-No code was taken from another implementation. The three-nearest-circles selection and the rim-fade shift are original to this module (offline derivations, `.specify/f_poincare/tasks.md` T005 and T032).
+No code was taken from another implementation. The three-nearest-circles selection and the rim-fade shift are original to this module (offline derivations, `.specify/stable/f_poincare/tasks.md` T005 and T032).

@@ -1,7 +1,7 @@
 // codebox_poincare.gen -- f_poincare: a texture folded into a fundamental domain of the {p,q} tiling of the Poincare disk.
 // fold_mode 0 = mode A (whole tile, below), fold_mode 1 = mode B (sliver kaleidoscope, see 'Mode B').
 // Mirror: tests/modules/poincare/poincare_mirror.py (render, fold_step_k3, fold_a_k3, fold_b_k). Bench: tests/modules/poincare/bench_poincare.py.
-// Spec: .specify/f_poincare/spec.md (Mode A, Rim policy, Texture mapping); decisions: tasks.md T004 (32 iterations, fade from 0.99),
+// Spec: .specify/stable/f_poincare/spec.md (Mode A, Rim policy, Texture mapping); decisions: tasks.md T004 (32 iterations, fade from 0.99),
 // T005 (live p by testing only the 3 nearest circles by angle: it matches the p-circle chain on every pixel both settle,
 // 56 pairs p, q in 3..10; lowest index wins among them, and that priority order is part of mode A's definition), T006 (crop,
 // not warp: the settled point is the sample coordinate, tile_scale sets the texture extent).

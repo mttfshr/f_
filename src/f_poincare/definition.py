@@ -4,7 +4,7 @@ f_poincare -- definition.py
 A texture folded into a fundamental domain of the {p,q} tiling of the Poincare disk: mode A (whole curved tile) and
 mode B (the sliver kaleidoscope) in ONE codebox (codebox_poincare.gen), a hyperbolic camera (rot, cam_x, cam_y) and a
 rim fade. A texture processor: one inlet, one outlet. The output follows the render size (render_dim: Params `width`
-and `height`). Record: .specify/f_poincare/{spec,tasks}.md. Verification: tests/modules/poincare (float64 and float32
+and `height`). Record: .specify/stable/f_poincare/{spec,tasks}.md. Verification: tests/modules/poincare (float64 and float32
 mirror, bench_poincare.py GPU vs mirror, bench_poincare_module.py the shipped patcher).
 
 Not exposed as controls (codebox defaults, tasks.md T004/T032): iterations 32 and rim_fade 0.99 (the camera moves the
