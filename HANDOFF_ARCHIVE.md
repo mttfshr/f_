@@ -2,6 +2,30 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 4 closed: phase 3 bypass passthrough, f_vf_vortex to stable, f_ks name
+
+- **Phase 3 (commit before `c4af9fa`):** `f_vf_optical_flow` and `f_vf_seeds` bypass via `bypass_gate` (entry below).
+- **Vortex (`c4af9fa`):** preflight found the helpfile box 154x91 against the 196x160 module (fixed). Matt: a generator that does not read its input needs no driving texture, so `f_vf_vortex` and `f_vf_vortex_multi` dropped `render_trigger "inlet"` and render on `r draw`. Matt's looks pass (vortex, multi); contract bench 2/2 (`tests/logs/20261106-vortex-draw-bench.log`); `test_gates.py` 5/5. `f_vf_vortex` moved to `.specify/stable/`. Deferred: the unconnected mod-inlet offset (`-amt`).
+- **`f_ks` name closed (Matt):** file `f_ks`, title bar "Kuramoto-Sivashinsky" (T010 ticked, spec and reference doc corrected). **Uncommitted:** these `f_ks` edits, `plan.md`, this file.
+- **Next (fresh session, Matt picks):** the Candidates above; `f_ks` docs (T040) are now the only `f_ks` item.
+
+## 2026-11-06: phase 3, optical_flow and seeds bypass passthrough (live look and bench passed)
+
+- **Done (Claude, offline, since committed):** both modules moved from native `@bypass` to `bypass_mode: "param"` (`bypass_gate`). Rule (Matt): inlet 0 to the composite outlet, else out[0]. Seeds: stages 1c and 4, shape texture on a new stage 4 inlet, `out1` = shape tex, mask and seed coord black. Optical flow: stages c and d, source frame (stage a cur-passthrough) on a new stage d inlet, `out1` = source frame, confidence neutral. Records: seeds T050, optical_flow T041.
+- **Checked:** both rebuild with drift 0; optical_flow's hand-computed obj ids unchanged (read from the built patcher); `test_bench_expect.py` 10/10, `test_module_contracts.py` 9/9 (stale stage_a `bypass` exemption removed), `test_vf_seeds.py` 11/11 (log `tests/logs/20261106-221045-offline.log`). Full suite not run.
+- **Docs:** reference docs, inventory rows, seeds spec, `G-bypass-native` row (now 15 modules).
+- **Verified:** Matt's live look passes (2026-11-06); `bench_modules.py` 2/2, 0 unexpected issues (`tests/logs/20261106-phase3-bypass-bench.log`). **Owed:** `test_gates.py` with Matt's go.
+- **Not done:** vortex preflight; `vs_black` wording in the skill.
+
+## 2026-11-06: batch 4 Matt's calls applied; Group B (advect, streak) moved to `.specify/stable/`
+
+- **Applied (commits `c8583be`, `4459a3d`):** streak `falloff` max 2.5 -> 1.99 (Matt chose 1.99 over 2.0: weight sum `8 - 4 * falloff` is zero at 2.0, no codebox guard); advect `trail` max 1000 -> 120 (demo presets hold 0.0); vortex doc fixes (native bypass passes through; unconnected mod inlet with `*_amt` > 0 offsets by `-amt`, Matt: fix later, documented).
+- **Preflight (offline by Claude, plus omp audit `advect-streak-audit-1`, 6 of 6 planted doc errors found, reports checked in the repo):** advect bypass wording (`definition.py`, `spec.md`), doc clamp line, spec Internal Architecture / Signal Flow rewritten (Matt's call), both helpfiles wired upstream (`f_vf_flow` to inlet 1), streak helpfile falloff range fixed. Commits `96ba60d`, `0f253dd`, `a806cfb`, `98a22fe`.
+- **Matt, live:** both helpfile looks pass. **Benches by Claude at Matt's go:** `bench_vf_advect.py` 2/2, `bench_modules.py` 2/2, 0 unexpected issues (`tests/logs/20261106-advect-streak-bench2.log`). The first log, `...-bench.log`, was stopped early and is not evidence.
+- **Gates:** `G-bypass-native` row updated for vortex's doc; `test_gates.py` run only with Matt's go.
+- **Next (fresh session):** phase 3, `f_vf_optical_flow` and `f_vf_seeds` bypass passthrough (rule, Matt 2026-11-06: inlet 0 to the composite outlet, else out[0]); then the `f_vf_vortex` preflight (mod-inlet gating deferred).
+- **Not done:** `skills/vsynth-bpatcher/SKILL.md` lines 279 and 798 (Matt re-uploading); `library-characteristics.md:373`.
+
 ## 2026-11-06: batch 4 Group A moved to `.specify/stable/` (warp, stipple, glow, prism)
 
 - **Done:** offline preflight (commit `fb693ee`), then Matt's helpfile looks passed ("helpfile looks pass", live, for the group) and one live contract bench was green: `bench_modules.py` 2/2, 0 unexpected issues, all four in the roster (`tests/logs/20261106-192009-bench.log`, Max 9.2.0). Record: each module's `tasks.md`, "Stable preflight" and "Moved to stable/". Folders hold only markdown; 11 path references in docs and ideas updated.
