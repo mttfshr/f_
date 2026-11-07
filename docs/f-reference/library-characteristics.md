@@ -43,7 +43,7 @@ This is the temporal chain that no single Vsynth core module can do: `f_vf_fluid
 
 ## ∇ Effects (vecfield consumers) — shared field geometry, different character
 
-Characteristic: all consume `source + f_vecfield` and differ in the accumulation operator (warp: single-sample displacement; streak: integrate along streamlines; glow: 48-step bidirectional accumulation; chroma: counter-offset R/B; prism: luma-gated RGB separation; advect: frame-to-frame fluid advection; caustic: forward-scatter sheet accumulation). The field is the *shape*, the consumer is the *character*.
+Characteristic: all consume `source + f_vecfield` and differ in the accumulation operator (warp: single-sample displacement; streak: integrate along streamlines; glow: 48-step bidirectional accumulation; chroma: counter-offset R/B; prism: per-channel gated RGB separation; advect: frame-to-frame fluid advection; caustic: forward-scatter sheet accumulation). The field is the *shape*, the consumer is the *character*.
 
 Data flow (one field, five characters):
 
@@ -198,7 +198,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_stipple**
 1. Stipple as SIRDS pattern: `f_stipple` source mode composite → `f_sirds` pattern inlet, depth = `vs_fish_eye`-warped camera luma — a halftone stereogram.
-2. Processor-mode displacement feedback: camera → `f_stipple` processor mode (luma displaces the hash field) → `vs_mixer_fdbk` — the stipple field itself feeds the mix, decaying into a dithered residue.
+2. Processor-mode dither feedback: camera → `f_stipple` processor mode (the red channel dithers against the hash field; black and white unless Colorize is raised) → `vs_mixer_fdbk` — the stipple feeds the mix, decaying into a dithered residue. Displacement is not in this path; it exists only on the third outlet (displaced source).
 
 **f_vf_seeds**
 1. Flow-oriented marks: `f_vf_fluid` vecfield → `f_vf_seeds` field inlet; shape tex = `f_tf_hatch` marks; camera as mod — seeds orient to fluid flow and the hatch marks become the mark texture.
@@ -227,7 +227,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 2. Brick relief: `f_masonry` mask (low-passed via `vs_filter_lp4x`) → `f_sirds` depth; pattern = `f_stipple` source mode — the autostereogram's depth plan is the brick coursing.
 
 **f_ngon** ⚠ (tier-1 mirror only, undocumented)
-1. Kaleidoscope of the web: `f_wc` RGB → `f_ngon` (n = 8) → `f_vf_glow` — the form-constant web symmetrized and bloomed.
+1. Kaleidoscope of the web: `f_wc` RGB → `f_ngon` (n = 8) → `f_vf_glow` inlet 0, `f_vf_vortex` on inlet 1 — the form-constant web symmetrized and bloomed.
 2. Folded tensor hatching: `f_tf_hatch` marks → `f_ngon` → `f_stereo` — hatching mirrors into n-fold symmetry, rendered as a disk.
 
 ## Color / tone
@@ -268,14 +268,14 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_vf_repulse**
 1. Attraction variant: camera → `f_vf_repulse` with negative `gain` → `f_caustic` — brightness attracts, caustic sheets converge on the subject.
-2. Warp-away portrait: `f_vf_repulse` → `f_vf_warp` (source = same camera) — the image bends away from its own bright regions; composite `mix_pct` crossfades the two truths.
+2. Warp-away portrait: `f_vf_repulse` → `f_vf_warp` (source = same camera) — the surroundings close in on its bright regions, which shrink (warp reads along the vector, so content moves against it); composite `mix_pct` crossfades the two truths.
 
 **f_vf_optical_flow**
 1. Motion streaks: camera → `f_vf_optical_flow` → `f_vf_streak` (source = camera) — motion blur in the true motion direction, aperture-problem handled.
 2. Motion memory: vecfield out0 → `f_vf_fluid` force → `f_vf_advect` — after the motion stops, the fluid keeps the momentum; confidence out1 → `vs_comparator` gates where the fluid is force-fed.
 
 **f_vf_fluid**
-1. Vortex-stirred warp: `f_vf_vortex` → `f_vf_fluid` force → `f_vf_warp` (source = `f_weave`) — the weave is carried by persistent incompressible swirl.
+1. Vortex-stirred warp: `f_vf_vortex` → `f_vf_fluid` force → `f_vf_warp` (source = `f_weave`) — the weave is bent by persistent incompressible swirl.
 2. Two-fluid phase: two `f_vf_fluid` at different `viscosity`, one stirred by `f_vf_vortex`, one by optical flow → `f_vf_ch` → blended velocity out0 → `f_vf_glow` — droplet boundaries glow along the blended field.
 
 **f_vf_ch**
@@ -293,7 +293,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 ## ∇ Effects (consumers)
 
 **f_vf_warp**
-1. Warp-with-feedback: `f_vf_warp` warped layer out1 → `vs_mixer_fdbk` — displacement accumulates as feedback, trails bloom past their field.
+1. Warp-with-feedback: `f_vf_warp` warped layer out2 → `vs_mixer_fdbk` — the mixer's additive feedback sits after the warp, so the warped image builds up brighter; the displacement itself does not compound.
 2. Noise-warped masonry: `f_vf_fieldmap` of bfg noise → `f_vf_warp` (source = `f_masonry`) → `f_droste` — first a local bend, then a global one.
 
 **f_vf_streak**
@@ -301,8 +301,8 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 2. Chromatic streak grade: `f_vf_streak` (chromatic option on) → `f_hue_processor` — restrict the streak's spectral smear to one hue band.
 
 **f_vf_glow**
-1. Profile-driven radius: `f_util_profile` row profile → `f_vf_glow` radius mod inlet — glow radius breathes per row of luminance.
-2. Solver-energy bloom: `f_vf_fluid`-advected camera → `f_vf_glow` — energy in the flow field (its geometry) decides where light bleeds.
+1. Profile-driven radius: `f_util_profile` row profile → `f_vf_glow` radius mod inlet — glow radius varies left to right, one band per row of luminance (the 128 × 1 profile is read along x).
+2. Solver-energy bloom: `f_vf_fluid`-advected camera → `f_vf_glow` inlet 0, the same fluid field on inlet 1 — energy in the flow field (its geometry) decides where light bleeds.
 
 **f_vf_chroma**
 1. Palette-modulated aberration: `vs_cos_palettes` out → `f_vf_chroma` hue mod inlet — the rainbow direction is steered by a second, unrelated source.
@@ -310,10 +310,10 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_vf_prism**
 1. Dispersion-field reuse: `f_vf_prism` out2 (weighted dispersion direction vecfield) → `f_vf_split` → two scalars → `f_weave` across and along — the prism's own dispersion drives the weave's geometry.
-2. Brightness-gated only: `f_tf_tensormap` outlet 1 → `f_tf_axisflow` → `f_vf_prism` — prism split follows image edges, not a synthetic field.
+2. Brightness-gated only: `f_tf_tensormap` outlet 1 → `f_tf_axisflow` → `f_vf_prism` inlet 1, with a source on inlet 0 — prism split follows image edges, not a synthetic field.
 
 **f_vf_advect**
-1. Excitable trails: camera → `f_vf_advect` (decay > 1) → `f_vf_glow` — accumulated flow amplifies frame to frame, self-igniting along the vortex street.
+1. Excitable trails: camera → `f_vf_advect` (decay > 1) → `f_vf_glow` inlet 0, the advecting field on inlet 1 — accumulated flow amplifies frame to frame, self-igniting along the vortex street.
 2. Flow gradient as new field: `f_vf_advect` out2 gradient vecfield → `f_vf_potential` → `f_weave` — the advection's own history becomes woven isolines.
 
 **f_caustic**
@@ -328,7 +328,7 @@ Two additional example data flows per patcher, beyond the family-level chains ab
 
 **f_tf_tensormap**
 1. Edge-tracked advect: scalar source → `f_tf_tensormap` → `f_tf_axisflow` → `f_vf_advect` — content flows along image structure without sign seams.
-2. Trace-gated stipple: packed out1 B (trace) → `f_stipple` processor mode — where there is image structure, the stipple field responds; flat areas stay neutral.
+2. Orientation-driven stipple: packed out1 → `f_stipple` processor mode — Stipple reads red only, which in the packed texture is cos 2θ (0.5 on flat areas), so the dither follows edge orientation. Trace (B) and coherence (A) are not reachable without an unpack module (`f_tf_unpack`, not built).
 
 **f_tf_smooth**
 1. Stabilize then commit: camera → `f_tf_tensormap` → `f_tf_smooth` → `f_tf_sharpen` → `f_tf_glyph` — wobbling camera structure becomes crisp, stabilized, then exaggerated ellipses.

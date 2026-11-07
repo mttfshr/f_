@@ -76,7 +76,8 @@ result = mix(mono_out, color_out, colorize * src_mode);
 mask_out = vec(stipple, stipple, stipple, 1.0);
 
 // Displaced source: source sampled at displacement-warped UV
-disp_uv = vec(along_disp / max(zoom, 0.001), across_disp / max(zoom, 0.001));
+// along_disp / across_disp already carry zoom (once, from zoomed_along / zoomed_across)
+disp_uv = vec(along_disp, across_disp);
 // Reconstruct screen UV from rotated displaced coords
 disp_x = disp_uv.x * cx - disp_uv.y * sx;
 disp_y = disp_uv.x * sx + disp_uv.y * cx;

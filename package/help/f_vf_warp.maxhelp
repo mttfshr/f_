@@ -69,7 +69,7 @@
                         270.0,
                         40.0
                     ],
-                    "text": "UV warp via f_vecfield -- displaces a source texture along field streamlines",
+                    "text": "Bends an image with a vector field, one offset read per pixel: the plainest way to see a field",
                     "fontsize": 14.0,
                     "varname": "autohelp_top_digest[3]",
                     "linecount": 2,
@@ -129,7 +129,7 @@
                         270.0,
                         120.0
                     ],
-                    "text": "References\n\nSee docs/f-reference/f_vf_warp.md for the full\nalgorithm and a known bug (bypass does not gate\nthe out1 outlet -- see doc's Known Bug section).",
+                    "text": "References\n\nSee docs/f-reference/f_vf_warp.md.\nThe mechanism is the one in Sousa, \"Generic\nRefraction Simulation\", GPU Gems 2, Ch. 19.",
                     "fontsize": 12.0,
                     "linecount": 5,
                     "saved_attribute_attributes": {
@@ -207,7 +207,7 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        190.0,
+                        330.0,
                         154.0,
                         91.0
                     ],
@@ -238,7 +238,7 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        301.0,
+                        431.0,
                         236.0,
                         249.0
                     ],
@@ -260,15 +260,72 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        500.0,
-                        321.0,
-                        210.0,
-                        51.0
+                        510.0,
+                        330.0,
+                        250.0,
+                        58.0
                     ],
-                    "text": "Feed a vecfield into inlet 1 from:\nf_vf_vortex or f_vf_fieldmap.",
+                    "text": "Gain 0 (the default) shows the source\nunchanged: raise Gain to see the warp.\nMix crossfades outlet 0 back to the source.",
                     "fontsize": 12.0,
-                    "linecount": 2,
+                    "linecount": 3,
                     "bubble": 1
+                }
+            },
+            {
+                "box": {
+                    "bgcolor": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "Ableton Sans Light",
+                    "id": "d-10",
+                    "maxclass": "comment",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        590.0,
+                        431.0,
+                        190.0,
+                        98.0
+                    ],
+                    "text": "Each pixel reads the source at\nits own position plus the field\nvector, so content moves against\nthe arrows. This sink swells the\ncenter, and the very middle\nflips as Gain rises.",
+                    "fontsize": 12.0,
+                    "linecount": 6,
+                    "bubble": 1
+                }
+            },
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "d-11",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "f_vf_vortex.maxpat",
+                    "numinlets": 5,
+                    "numoutlets": 1,
+                    "offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "outlettype": [
+                        "jit_gl_texture"
+                    ],
+                    "patching_rect": [
+                        420.0,
+                        160.0,
+                        196.0,
+                        160.0
+                    ],
+                    "viewvisibility": 1,
+                    "varname": "f_vf_vortex"
                 }
             }
         ],
@@ -293,6 +350,30 @@
                     ],
                     "source": [
                         "d-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "d-11",
+                        0
+                    ],
+                    "source": [
+                        "d-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "d-4",
+                        1
+                    ],
+                    "source": [
+                        "d-11",
                         0
                     ]
                 }

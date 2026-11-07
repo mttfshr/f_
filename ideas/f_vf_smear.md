@@ -15,7 +15,7 @@ True spatially-continuous directional blur along field streamlines — the effec
 ## Relationship to other consumers
 
 - `f_vf_streak` — the single-pass approximation; works well at low-to-mid length
-- `f_vf_glow` — single-pass, accumulates luminance not color; different visual register
+- `f_vf_glow` — single-pass, accumulates color along a straight line; different visual register
 - `f_vf_smear` — this; true continuous smear
 - `f_vf_advect` — temporal transport with feedback; different architecture and visual character
 

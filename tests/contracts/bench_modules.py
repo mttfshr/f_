@@ -62,8 +62,8 @@ KNOWN = {
 #                        cannot hold 0.5 exactly, hence the tolerance there
 #   ("const", rgba, tol) a constant (a module with no texture input, bypassed to neutral values)
 # Expectations other than ("in", 1) for f_stipple, f_grain, f_chladni and the out3 of
-# f_vf_prism / f_vf_advect were derived from the codeboxes (2026-10-06) and are not yet seen
-# green live: the first live run validates them.
+# f_vf_prism / f_vf_advect were derived from the codeboxes (2026-10-06); both have since passed live
+# (contract bench, tests/logs/20261106-081412-bench.log, 0 unexpected issues).
 IN1 = ("in", 1)
 BYPASS_EXPECT = {
     "f_vf_warp": {2: IN1},      # out2 is the isolated warped layer; bypassed it is the unwarped source (fixed 2026-09-23)

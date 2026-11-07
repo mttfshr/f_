@@ -16,17 +16,18 @@ patcher = {
     "presentation_height": 160,
 
     # Three outlets: composite (primary), isolated prism layer, gate-
-    # weighted dispersion direction (float32 vecfield, ADR1)
+    # weighted dispersion direction (vecfield, ADR1).  The pix is @type char, so
+    # this outlet is 8-bit in practice; `signal_type` below does not change that.
     "outlets": [
         {"comment": "composite"},
         {"comment": "prism", "color": [0.6196078431372549, 0.9529411764705882, 0.6588235294117647, 1.0]},
         {"comment": "vecfield", "signal_type": "float32"},
     ],
 
-    # Inlet 1: source texture
-    # Inlet 2: vecfield
-    # Inlet 3: length mod
-    # Inlet 4: width mod
+    # Inlet 0: source texture
+    # Inlet 1: vecfield
+    # Inlet 2: length mod
+    # Inlet 3: width mod
     "mod_inlets": [
         {"label": "vecfield",    "state_param": "src_vecfield"},
         {"label": "reach mod",   "state_param": "src_length_mod"},

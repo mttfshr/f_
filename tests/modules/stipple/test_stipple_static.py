@@ -80,6 +80,16 @@ def test_output_follows_the_render_size():
     check("loadbang -> s trig_res (Vsynth re-sends the size)", 0 if trig and any(d[0] == trig[0] for _, d in lines) else 1, 0)
 
 
+def test_zoom_is_applied_once_to_the_displaced_outlet():
+    """Regression (2026-11-06): disp_uv divided by zoom a second time, so zoom != 1 magnified the displaced
+    outlet by 1/zoom^2 against the hash's 1/zoom. Exact at zoom 1, so the contract bench cannot see it."""
+    boxes, _ = _patcher()
+    code = boxes[_pix(boxes)].get("patcher", {})
+    text = json.dumps(code)
+    check("no second divide by zoom in disp_uv", 0 if "along_disp / max(zoom" not in text else 1, 0)
+    check("disp_uv takes the zoomed coords as they are", 0 if "disp_uv = vec(along_disp, across_disp)" in text else 1, 0)
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(run(globals()))

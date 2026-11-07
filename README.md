@@ -80,10 +80,10 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_caustic` | Optical caustic -- GPU forward scatter forming folded sheets; composited / isolated outlets |
 | `f_vf_advect` | Temporal fluid advection via f_vecfield -- accumulates flow across frames; decay >1.0 is excitable |
 | `f_vf_chroma` | Vecfield-driven chromatic aberration -- rainbow streak along field direction; composite / isolated outlets |
-| `f_vf_glow` | Field-aligned directional blur via f_vecfield -- accumulates along streamlines; composite / glow-layer outlets |
-| `f_vf_prism` | Vecfield-driven prism separation -- luma-gated RGB displacement along the field; composite / isolated outlets |
+| `f_vf_glow` | Bloom along a vecfield's local direction -- halos, trails, feathered edges; composite / glow-layer outlets |
+| `f_vf_prism` | Vecfield-driven prism separation -- brightness-gated RGB displacement; composite, isolated, vecfield outlets |
 | `f_vf_streak` | Directional blur via f_vecfield -- accumulates along streamlines; composite / isolated streak outlets |
-| `f_vf_warp` | UV warp via f_vecfield -- displaces source texture along field streamlines |
+| `f_vf_warp` | Bends a source texture by a vecfield, one offset read per pixel -- the plainest field distortion |
 
 ### T_ Fields
 

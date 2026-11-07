@@ -2,6 +2,15 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 4 triage and the omp doc harness
+
+- **Done (offline, Claude and omp; nothing run in Max):** triage of 11 modules. Record: `.specify/maintenance/batch4_triage_2026-11-06.md`. Candidates: warp, stipple, glow, prism. Needs work: advect, streak. Held: vortex, optical_flow, seeds. Out: repulse, sirds.
+- **omp harness:** first triage found 0 of 2 planted doc errors; claim ledger 6 of 9, gate failed; three-stage blind audit 11 of 12, 12 of 15 flags correct, gate passed narrowly. An omp `agree` is not a clean bill. Lessons: skill `omp-fanout`, `references/lessons.md`. Runs: `f_omp_runs/`, whose reports contain planted errors.
+- **Real doc errors found:** prism "Two outlets" and `strength`; glow line 25 `strength`; vortex `vs_black` (inferred, not run).
+- **Gates:** `G-edge-wrap` note added (`HANDOFF_ARCHIVE.md:941` says the clamp triage was done; Matt closes it). `G-bypass-native` note on optical_flow.
+- **Stray file:** an omp worker wrote `write` at the repo root; untracked, not staged, deletion waiting on Matt.
+- **Next:** Group A preflight. Matt's open calls are in the triage record.
+
 ## 2026-11-06: batch 3, `f_vf_flow` and `f_tone_curve` moved to `.specify/stable/`
 
 - **Done (offline, Claude):** preflight, docs and helpfiles fixed for both. Moved after Matt's helpfile looks passed (Flow T005, Tone Curve T004). Record: each module's `tasks.md`, "Stable preflight" and "Moved to stable/".

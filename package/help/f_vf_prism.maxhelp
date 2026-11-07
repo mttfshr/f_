@@ -74,7 +74,7 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "Vecfield-driven prism separation -- luma-gated RGB displacement along the field",
+					"text": "Light through a prism: bright areas cast split R, G, B fringes along a vecfield, over the source",
 					"fontsize": 14.0,
 					"linecount": 2,
 					"varname": "autohelp_top_digest[3]"
@@ -135,9 +135,9 @@
 							"expression": "themecolor.live_control_fg"
 						}
 					},
-					"text": "References\n\nSee docs/f-reference/f_vf_prism.md and\ndocs/f-reference/f_vecfield_type.md.",
+					"text": "References\n\nPer-channel displaced lookup, gates blurred\nacross the field: derived in development,\nno external source.\n\nSee docs/f-reference/f_vf_prism.md and\ndocs/f-reference/f_vecfield_type.md.",
 					"fontsize": 12.0,
-					"linecount": 4
+					"linecount": 8
 				}
 			},
 			{
@@ -156,18 +156,80 @@
 			},
 			{
 				"box": {
+					"bgmode": 1,
+					"border": 1,
+					"clickthrough": 0,
+					"enablehscroll": 0,
+					"enablevscroll": 0,
+					"id": "d-3",
+					"lockeddragscroll": 0,
+					"lockedsize": 0,
+					"maxclass": "bpatcher",
+					"name": "vs_sources_main.maxpat",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"offset": [
+						0.0,
+						0.0
+					],
+					"outlettype": [
+						"jit_gl_texture"
+					],
+					"patching_rect": [
+						338.0,
+						23.75,
+						296.4,
+						125.5
+					],
+					"viewvisibility": 1
+				}
+			},
+			{
+				"box": {
+					"id": "d-10",
+					"maxclass": "bpatcher",
+					"name": "f_vf_flow.maxpat",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"jit_gl_texture"
+					],
+					"patching_rect": [
+						470.0,
+						165.0,
+						167.5,
+						91.0
+					],
+					"bgmode": 1,
+					"border": 1,
+					"clickthrough": 0,
+					"enablehscroll": 0,
+					"enablevscroll": 0,
+					"lockeddragscroll": 0,
+					"lockedsize": 0,
+					"offset": [
+						0.0,
+						0.0
+					],
+					"viewvisibility": 1,
+					"varname": "f_vf_flow"
+				}
+			},
+			{
+				"box": {
 					"id": "d-4",
 					"maxclass": "bpatcher",
 					"name": "f_vf_prism.maxpat",
-					"numinlets": 2,
-					"numoutlets": 2,
+					"numinlets": 4,
+					"numoutlets": 3,
 					"outlettype": [
+						"jit_gl_texture",
 						"jit_gl_texture",
 						"jit_gl_texture"
 					],
 					"patching_rect": [
 						338.0,
-						24.0,
+						271.0,
 						208.0,
 						170.0
 					],
@@ -198,7 +260,7 @@
 					],
 					"patching_rect": [
 						338.0,
-						214.0,
+						456.0,
 						236.0,
 						249.0
 					],
@@ -223,10 +285,10 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						500.0,
-						479.0,
-						210.0,
-						51.0
+						560.0,
+						271.0,
+						225.0,
+						87.0
 					],
 					"fontface": 0,
 					"fontname": "Ableton Sans Light",
@@ -237,13 +299,75 @@
 						0.0
 					],
 					"bubble": 1,
-					"text": "Feed a vecfield into in2; any texture\ninto in1.",
+					"text": "Source on inlet 0, vecfield on inlet 1.\nBright areas cast an R, G, B echo along\nthe field: Reach sets how far, Spread\nhow far apart. Each channel has its own\ngate: pure red casts only red.",
 					"fontsize": 12.0,
-					"linecount": 2
+					"linecount": 5
+				}
+			},
+			{
+				"box": {
+					"id": "d-11",
+					"maxclass": "comment",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						590.0,
+						456.0,
+						190.0,
+						113.0
+					],
+					"fontface": 0,
+					"fontname": "Ableton Sans Light",
+					"bgcolor": [
+						0.0,
+						0.0,
+						0.0,
+						0.0
+					],
+					"bubble": 1,
+					"text": "Preview is the composite: source plus\nprism layer, clipped at white. Nothing\nover Threshold, nothing added. Color\nshows at bright edges; raise Spread\nto widen it.\nFlow is only a demo field.",
+					"fontsize": 12.0,
+					"linecount": 6
 				}
 			}
 		],
 		"lines": [
+			{
+				"patchline": {
+					"destination": [
+						"d-4",
+						0
+					],
+					"source": [
+						"d-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"destination": [
+						"d-10",
+						0
+					],
+					"source": [
+						"d-3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"destination": [
+						"d-4",
+						1
+					],
+					"source": [
+						"d-10",
+						0
+					]
+				}
+			},
 			{
 				"patchline": {
 					"destination": [

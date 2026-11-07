@@ -19,10 +19,10 @@ into a precomputed coefficient table needed either.
 
 ## Where this applies in `f_`
 
-Both `f_vf_glow` (`w = exp(-i*i*falloff)`, 48 taps) and `f_vf_prism`
-(11-tap Gaussian blur) call `exp()` fresh inside their per-tap loop today.
-This is a direct drop-in optimization candidate for both — same math,
-cheaper evaluation. Worth checking `f_vf_streak` and any other
+`f_vf_glow` (`w = exp(-i*i*falloff)`, 48 taps) calls `exp()` fresh inside
+its per-tap loop today. This is a direct drop-in optimization candidate —
+same math, cheaper evaluation. `f_vf_prism`'s 11-tap blur does not apply:
+v17 uses precomputed constant weights. Worth checking `f_vf_streak` and any other
 fixed-tap-count accumulation loop for the same pattern.
 
 ## Status

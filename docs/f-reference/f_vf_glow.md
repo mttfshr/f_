@@ -1,28 +1,36 @@
 # f_vf_glow
 
 **Type:** Processor (f_vecfield consumer)
-**Status:** Complete — gain/mix rollout applied 2026-07-12; doc refreshed 2026-10-12 against the shipped codebox (a maintenance audit found it stale on both counts)
+**Status:** Complete — gain/mix rollout applied 2026-07-12; doc checked line by line against the shipped patcher and codebox 2026-11-06 (stable preflight, offline by Claude)
 
 ---
 
 ## What it does
 
-Accumulates source texture samples along vecfield streamlines with exponential falloff, producing a directional glow shaped by the field topology. Unlike radially symmetric bloom, the glow is anisotropic — it follows field geometry, producing halos that arc along vortex arms, trail along gradient flows, or spread in any direction the field defines.
+Averages source texture samples along the local field direction with Gaussian weights, producing a directional glow shaped by the field topology. Unlike radially symmetric bloom, the glow is anisotropic — it follows field geometry, producing halos that turn with vortex arms, trail along gradient flows, or spread in any direction the field defines. Each pixel reads the field once, at the pixel, and sums along a straight line through it: it does not integrate a curved streamline, so curves come from neighboring pixels' lines turning with the field, and long reaches run straight along the tangent (code read, not run).
+
+There is no brightness threshold: the glow is a blurred copy of the whole source, so adding it brightens the whole frame. `mix_pct` defaults to 0, where the composite equals the source; raise Mix to see the glow on out0. out1 carries the glow at any Mix.
 
 Two outlets: a composite (source + glow) and the isolated glow layer for external compositing.
 
 Compatible with any f_vf_ producer: f_vf_vortex, f_vf_vortex_multi, f_vf_fieldmap.
+
+Processor archetype: only the texture on in0 triggers the pix. There is no `vs_inState` on in0 and no `r draw`, so with no source connected the module outputs nothing (wiring read from the patcher; the behavior is inferred, not run). The vecfield goes on in1, not in0.
 
 ---
 
 ## Signal Flow
 
 ```
-in0 (texture + control) → routepass → vfglow_pix in0   [source texture]
+in0 (texture + control) → routepass jit_gl_texture jit_matrix
+  jit_gl_texture → vfglow_pix in0   [source texture; the only trigger]
+  unmatched control → route radius falloff gain mix_pct color_mix direction → dials → vfglow_pix
 in1 (f_vecfield texture) → vs_inState → vfglow_pix in1  [field direction]
 in2 (radius mod texture) → vs_inState → vfglow_pix in2  [spatial radius variation]
 
-vfglow_pix (@type char) out0 → composite (source + glow * strength)
+bypass jsui → prepend param bypass_gate → vfglow_pix
+
+vfglow_pix (@type char) out0 → composite (source crossfaded by mix_pct toward source + glow * gain)
 vfglow_pix (@type char) out1 → glow layer (isolated)
 ```
 
@@ -34,13 +42,13 @@ When in1 is unconnected, vs_inState delivers vs_black; raw field value near (0,0
 
 | Param | Range | Default | Description |
 |---|---|---|---|
-| `radius` | 0–0.2 | 0.01 | UV step size per accumulation step. Controls spatial extent of glow. |
-| `falloff` | 0–0.05 | 0.002 | Exponential decay coefficient per step. Higher = tighter glow. |
+| `radius` | 0–0.2 | 0.01 | UV step per accumulation step at field magnitude 1; the step is `field * radius`, so weak field regions spread less. |
+| `falloff` | 0–0.05 | 0.002 | Gaussian weight coefficient: step `i` weighs `exp(-i * i * falloff)`. Higher = tighter glow; 0 = all 48 steps equal. |
 | `gain` | 0–1.5 | 0.8 | Glow intensity — scales the glow layer's contribution into the driven (fully-composited) state. Renamed from `strength` 2026-07-12 (gain/mix rollout). |
-| `mix` | 0–100% | 0% | Continuous crossfade toward the driven state (`mix_pct` internally), off by default. |
-| `color_mix` | 0–1 | 0.0 | 0 = full-color glow; 1 = luma-only (neutral/white) glow. |
+| `mix_pct` | 0–100 | 0 | Mix numbox. Continuous crossfade toward the driven state, off by default: at 0, out0 equals the source. The message is `mix_pct`, not `mix`. |
+| `color_mix` | 0–1 | 0.0 | 0 = full-color glow; 1 = luma-only (Rec. 709, neutral/white) glow. |
 | `direction` | 0–2 | 0 | 0 = bidirectional, 1 = forward only (trail), 2 = backward only (lead). |
-| `bypass` | 0/1 | 0 | out0 and out1 both pass through (source on out0; out1's bypassed value is the unprocessed source, per the 2026-10-05 all-outlets-passthrough rule). The 48-step accumulation loop still runs at full cost while bypassed — known open cost item (see Notes). |
+| `bypass` | 0/1 | 0 | Panel toggle only: it drives the codebox Param `bypass_gate`. The route has no `bypass` selector, so a `bypass` message does nothing. out0 and out1 both pass the source (2026-10-05 all-outlets-passthrough rule). The 48-step loop still runs at full cost while bypassed (see Notes). |
 
 **Prefix:** `vfglow` — **Object name:** `vfglow_pix`
 
@@ -48,7 +56,7 @@ When in1 is unconnected, vs_inState delivers vs_black; raw field value near (0,0
 
 ## Algorithm
 
-At each pixel, walks 48 steps forward and/or backward along the local field direction, accumulating weighted source samples. Step positions are jittered per-pixel per-step to break up banding artifacts.
+At each pixel, takes 48 straight steps forward and/or backward along the field vector read at that pixel, accumulating weighted source samples. Step positions are jittered per-pixel per-step to break up banding artifacts.
 
 ```
 // field remap and vs_black suppression
@@ -68,18 +76,19 @@ bwd_weight = 1.0 - step(0.5, direction) + step(1.5, direction)
 // 48-step accumulation with jitter
 for i in 1..48:
     w = exp(-i * i * falloff)
-    jitter = hash(uv, i) * 0.1          // ±0.05 step perturbation
+    jitter = (hash(uv, i) - 0.5) * 0.1  // ±0.05 step perturbation
     stepped = i + jitter
-    fwd_uv = clamp(uv + field * stepped)
-    bwd_uv = clamp(uv - field * stepped)
+    fwd_uv = clamp(uv + (dx, dy) * stepped)
+    bwd_uv = clamp(uv - (dx, dy) * stepped)
     accumulate fwd and bwd samples weighted by w * fwd/bwd_weight
 
 glow = accumulated / total_weight
 glow_rgb = mix(glow.rgb, luma(glow), color_mix)
 
 driven = clamp(src + glow * gain, 0, 1)             // gain/mix rollout, 2026-07-12
-out0 = mix(driven, src, max(bypass, 1 - mix_pct))   // mix_pct is the blend toward driven
-out1 = mix(glow, src, bypass)                       // all-outlets passthrough (2026-10-05)
+comp = mix(src, driven, mix_pct / 100)              // mix_pct is the blend toward driven
+out0 = mix(comp, src, bypass_gate)                  // alpha is the source's
+out1 = mix(glow, src, bypass_gate)                  // glow alpha 1; all-outlets passthrough (2026-10-05)
 ```
 
 Step count is fixed at 48. Jitter amplitude is 0.1 steps (±0.05), enough to eliminate banding without visible noise.
@@ -90,14 +99,14 @@ Step count is fixed at 48. Jitter amplitude is 0.1 steps (±0.05), enough to eli
 
 ### Field topology determines glow character
 The visual result depends entirely on the field source:
-- **f_vf_vortex** → arc-shaped halos following rotational streamlines; asymmetric with `direction=1` or `2`
+- **f_vf_vortex** → halos turning around the center with `curl`, radial streaks at its default `curl` 0; asymmetric with `direction=1` or `2`
 - **f_vf_fieldmap** → edge feathering; glow follows the gradient of the source (across isolines, uphill toward brighter areas; `rotate` 90 turns it along them)
 - **f_vf_vortex_multi** → complex multi-arm halos with superimposed field contributions
 
-This is intentional — f_vf_glow is a field-aligned blur, not a conventional bloom. The field drives the blur direction. For radially-outward bloom, use f_vf_vortex with `curl=0, converge` negative — see Signal chain recipes below.
+This is intentional — f_vf_glow is a field-aligned blur, not a conventional bloom. The field drives the blur direction. For radial bloom, use f_vf_vortex with `curl=0` — see Signal chain recipes below.
 
 ### vs_black suppression
-Raw field texture value is tested before remapping. Values near (0,0) in texture space (vs_black) zero the displacement, so each accumulation step samples the source pixel itself (no spatial glow spread; see above). This correctly handles the unconnected-inlet case. A zero-vector region in a real field is encoded as (0.5, 0.5), which passes through normally and produces zero displacement after remapping — no glow spread, which is also correct.
+Raw field texture value is tested before remapping. Values near (0,0) in texture space (vs_black) zero the displacement, so each accumulation step samples the source pixel itself (no spatial glow spread; see above). This correctly handles the unconnected-inlet case. The test is by value: `vs_inState`'s connection flag is wired to `param src_vecfield`, but the codebox declares no such Param and nothing reads it. A zero-vector region in a real field is encoded as (0.5, 0.5), which passes through normally and produces zero displacement after remapping — no glow spread, which is also correct. There the glow equals the source, so with Mix raised those regions still gain `gain` × source.
 
 ### Radius and banding
 At high `radius` values, step spacing increases and banding can appear on sources with sharp tonal transitions. The 48-step count and jitter handle most cases; if banding persists, lower `radius` or lower `falloff` to distribute weight across more steps.
@@ -107,38 +116,44 @@ Modulation is additive and scales with `radius`: `radius_eff = radius + mod * ra
 
 ### Direction modes
 - `direction=0` (bidirectional): symmetric halo around source edges along field
-- `direction=1` (forward): glow trails in the positive field direction — streaks follow flow
-- `direction=2` (backward): glow leads against the field direction — bloom precedes flow
+- `direction=1` (forward): each pixel samples ahead along the field, so a bright area's glow lands upstream of it — a trail behind anything moving with the field
+- `direction=2` (backward): each pixel samples behind, so the glow lands downstream — bloom ahead of the flow
 
 Forward/backward distinction is most visible with f_vf_vortex where the rotational direction is clear.
 
 ### Typical expressive ranges
-`radius` 0.005–0.05, `falloff` 0.001–0.01, `gain` 0.5–1.0. Extreme `radius` (>0.1) with low `falloff` (<0.001) produces long comet-tail streaks — expressive at high `direction` values with an asymmetric vortex field.
+`radius` 0.005–0.05, `falloff` 0.001–0.01, `gain` 0.5–1.0. Extreme `radius` (>0.1) with low `falloff` (<0.001) produces long comet-tail streaks — expressive at `direction` 1 or 2 with an asymmetric vortex field.
 
 - See `docs/f-reference/f_vecfield_type.md` for f_vecfield type contract
-- **2026-10-12 maintenance audit:** this doc was found stale (documented `strength`, pre-rollout bypass behavior); corrected the same day. One open cost item recorded in `.specify/f_vf_glow/T036`: the 48-step accumulation loop runs at full cost while bypassed (bypass_gate only mixes the final result — no early-exit guard), unprofiled. Flagged alongside prism/streak/chladni for a single profiling session.
+- **2026-10-12 maintenance audit:** this doc was found stale (documented `strength`, pre-rollout bypass behavior); corrected the same day. Cost: the 48-step accumulation loop runs at full cost while bypassed (bypass_gate only mixes the final result — no early-exit guard). Profiled 2026-10-13: 0.0573 ms/pass active, 0.0582 bypassed (512², tasks.md T036a); Matt decided a guard is not worth building now.
 
 ---
 
 ## Signal chain recipes
 
 ### Conventional radial bloom
-f_vf_vortex already spans the full rotational/radial axis via its **Converge** param. At `curl=0, converge` negative, the field is purely radially outward — a divergence source. Feed this into f_vf_glow for bloom that radiates outward from the vortex center rather than arcing tangentially.
+f_vf_vortex already spans the full rotational/radial axis via its `convergence` param. At `curl=0` the field is purely radial; negative `convergence` points it outward, though at `direction=0` the sign makes no difference. Feed this into f_vf_glow inlet 1 for bloom that radiates from the vortex center rather than turning around it. Raise `mix_pct` to see it on the composite.
 
 Suggested starting point:
-- f_vf_vortex: `curl=0, converge=-0.5 to -1.0`, position centered
+- f_vf_vortex: `curl=0, convergence=-0.5 to -1.0`, position centered
 - f_vf_glow: `direction=0` (bidirectional), `radius=0.02`, `falloff=0.002`
 
 For texture-driven bloom (glow radiates from bright image regions rather than a fixed point), try `f_vf_fieldmap` on a blurred or low-frequency source texture — fieldmap's gradient output points uphill toward brighter regions, perpendicular to luminance isolines, approximating an image-content-driven field.
 
 ### Comet tails / trailing streaks
-- f_vf_vortex: high curl, moderate converge
+- f_vf_vortex: high `curl`, moderate `convergence`
 - f_vf_glow: `direction=1` (forward) or `2` (backward), `radius=0.05–0.15`, `falloff=0.001`
 
-Long asymmetric streaks that arc around the vortex center. The isolated glow outlet (out1) composited additively downstream produces a bright trail without washing out the source.
+Long asymmetric streaks around the vortex center, straight along each pixel's tangent at this reach. The isolated glow outlet (out1) composited additively downstream produces a bright trail without washing out the source.
 
 ### Edge feathering
 - f_vf_fieldmap on source texture → f_vf_glow
 - `direction=0`, low `radius`, moderate `falloff`
 
-Softens edges by spreading them tangentially along the image gradient. Different from a Gaussian blur — the feathering direction follows image structure rather than spreading uniformly.
+Softens edges by spreading them across the edge, along the image gradient (`rotate` 90 on f_vf_fieldmap spreads along the edge instead). Different from a Gaussian blur — the feathering direction follows image structure rather than spreading uniformly.
+
+---
+
+## References
+
+The spec and plan name no external source for this technique. Each pixel gathers along a straight line in the local field direction, with Gaussian step weights and per-step jitter. Field type contract: `docs/f-reference/f_vecfield_type.md`.

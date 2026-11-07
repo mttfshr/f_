@@ -54,14 +54,16 @@ Scratch work lives at `~/Vsynth/patterns/` (not version controlled).
 
 **Purpose**: Encode confirmed codebox into definition.py; generate the production patcher.
 
-- [ ] T015 Create `.specify/f_vf_glow/definition.py` — patcher dict with confirmed codebox text, archetype, name, all params
-- [ ] T016 Add `outlets` key: `[{"label": "composite", "color": "green"}, {"label": "glow layer", "color": "cyan"}]`
-- [ ] T017 Add inlet definitions: in0 = `texture / control` (standard), in1 = `vecfield` (float32, cyan label), in2 = `radius mod` (gray label); all three with `vs_instate: true`
-- [ ] T018 Add all six params to definition.py params block with correct ranges and defaults from spec
-- [ ] T019 Run `tools/py.sh tools/build_patcher.py .specify/f_vf_glow/definition.py patchers/f_vf_glow.maxpat`
-- [ ] T020 Validate JSON: `python3 -c "import json; json.load(open('patchers/f_vf_glow.maxpat'))"` — must pass with no error
-- [ ] T021 Open `f_vf_glow.maxpat` in Max — confirm pix compiles (no red errors), all params visible in UI, presentation layer looks correct
-- [ ] T022 Verify inlet/outlet count in Max: 3 inlets, 2 outlets with correct label colors
+- [x] T015 Create `.specify/f_vf_glow/definition.py` — patcher dict with confirmed codebox text, archetype, name, all params
+- [x] T016 Add `outlets` key: `[{"label": "composite", "color": "green"}, {"label": "glow layer", "color": "cyan"}]`
+- [x] T017 Add inlet definitions: in0 = `texture / control` (standard), in1 = `vecfield` (float32, cyan label), in2 = `radius mod` (gray label); all three with `vs_instate: true`
+- [x] T018 Add all six params to definition.py params block with correct ranges and defaults from spec
+- [x] T019 Run `tools/py.sh tools/build_patcher.py .specify/f_vf_glow/definition.py patchers/f_vf_glow.maxpat`
+- [x] T020 Validate JSON: `python3 -c "import json; json.load(open('patchers/f_vf_glow.maxpat'))"` — must pass with no error
+- [x] T021 Open `f_vf_glow.maxpat` in Max — confirm pix compiles (no red errors), all params visible in UI, presentation layer looks correct
+- [x] T022 Verify inlet/outlet count in Max: 3 inlets, 2 outlets with correct label colors
+
+_T015-T022 closed 2026-11-06 (offline by Claude): shipped build checklist. `build/drift.py` reproduces `package/patchers/f_vf_glow.maxpat` from `src/f_vf_glow/definition.py`; 3 inlets and 2 outlets read from the patcher; the contract bench loads it (`tests/logs/20261106-081412-bench.log`). Paths here are the old ones. As shipped, in0 has no `vs_inState` (T017 said all three) and the params follow the gain/mix rollout._
 
 **Checkpoint**: Patch opens clean. All params present. Two outlets correctly labeled.
 
@@ -75,8 +77,10 @@ Scratch work lives at `~/Vsynth/patterns/` (not version controlled).
 - [ ] T024 Re-run all Phase 1 acceptance tests (T004–T014) against the built bpatcher — confirm all pass
 - [ ] T025 Test out1 isolated glow outlet: connect to a downstream `f_channel_grader` or viewer — confirm isolated layer only
 - [ ] T026 Test with `f_vf_vortex_multi` and `f_vf_fieldmap` as field sources — confirm module works with all vecfield producers
-- [ ] T027 Test bypass toggle in presentation: confirm clean pass-through on out0, black on out1
+- [x] T027 Test bypass toggle in presentation: confirm clean pass-through on out0, black on out1
 - [ ] T028 Save patch state with autopattr; close and reopen — confirm all params restore correctly
+
+_2026-11-06 (offline by Claude): T027 closed under the later all-outlets rule, so out1 passes the source, not black (ca02912; `BYPASS_EXPECT` in `tests/contracts/bench_modules.py`). T023-T026 and T028 stay open: no dated live record found. T045 covers T023; the rest are Matt's to confirm or waive._
 
 **Checkpoint**: All spec acceptance scenarios confirmed in production bpatcher context.
 
@@ -86,13 +90,15 @@ Scratch work lives at `~/Vsynth/patterns/` (not version controlled).
 
 **Purpose**: Make f_vf_glow a first-class member of the f_ library.
 
-- [ ] T029 Write `docs/f-reference/f_vf_glow.md` — as-built reference: params table, signal chain, inlet/outlet contract, known quirks (vs_black suppression behavior, radius mod scaling)
-- [ ] T030 Add `f_vf_glow` to `patchers/f_modules.maxpat` Vecfield category — run `.specify/f_modules/build_modules.py` to regenerate
-- [ ] T031 Add entry to `javascript/f_addmod.js` SIZES dict: `"vf_glow": [w, h]` — get dimensions from presentation_rect of background panel in built patcher
-- [ ] T032 Validate `f_modules.maxpat` JSON: `python3 -c "import json; json.load(open('patchers/f_modules.maxpat'))"`
-- [ ] T033 Add `f_vf_glow` row to `README.md` patch table (after `f_vf_advect`)
-- [ ] T034 Update `.specify/plan.md` work queue: mark f_vf_glow done, advance next item
-- [ ] T035 Write `HANDOFF.md` for session end
+- [x] T029 Write `docs/f-reference/f_vf_glow.md` — as-built reference: params table, signal chain, inlet/outlet contract, known quirks (vs_black suppression behavior, radius mod scaling)
+- [x] T030 Add `f_vf_glow` to `patchers/f_modules.maxpat` Vecfield category — run `.specify/f_modules/build_modules.py` to regenerate
+- [x] T031 Add entry to `javascript/f_addmod.js` SIZES dict: `"vf_glow": [w, h]` — get dimensions from presentation_rect of background panel in built patcher
+- [x] T032 Validate `f_modules.maxpat` JSON: `python3 -c "import json; json.load(open('patchers/f_modules.maxpat'))"`
+- [x] T033 Add `f_vf_glow` row to `README.md` patch table (after `f_vf_advect`)
+- [x] T034 Update `.specify/plan.md` work queue: mark f_vf_glow done, advance next item
+- [x] T035 Write `HANDOFF.md` for session end
+
+_T029-T035 closed 2026-11-06 (offline by Claude): doc exists; `src/f_modules/menu.py:84`; `package/javascript/f_addmod.js:41` [190, 120]; `generate_menu.py --check` up to date; `README.md:83`. T034-T035 are superseded by the current plan and HANDOFF records._
 
 **Checkpoint**: `f_vf_glow` spawnable from f_modules menu. Docs complete. README current.
 
@@ -224,7 +230,7 @@ _This module moved off .specify/stable/ this session: the audit found
 actionable items, and a module with open tasks doesn't meet stable/'s
 nothing-outstanding bar (.specify/maintenance/SKILL.md)._
 
-- [ ] T036: Profile the 48-tap accumulation loop's cost and A/B an
+- [x] T036 (closed 2026-11-06: profiled and decided in T036a, 0b6f3b1): Profile the 48-tap accumulation loop's cost and A/B an
   early-exit guard under param bypass. bypass_gate currently only
   mixes at the end — the loop runs full cost while bypassed (the known
   open item from plan.md's "Open: GPU cost", unmeasured for this
@@ -232,11 +238,11 @@ nothing-outstanding bar (.specify/maintenance/SKILL.md)._
   (unprofiled; also names prism/streak) and
   ideas/glow_profile_and_afterimage.md (3 more tabled ideas). A single
   profiling session could cover glow + prism + streak together.
-- [ ] T037: Refresh docs/f-reference/f_vf_glow.md — it still documents
+- [x] T037 (closed 2026-11-06 by the stable preflight below): Refresh docs/f-reference/f_vf_glow.md — it still documents
   `strength` (renamed gain/mix_pct 2026-07-17) and the pre-2026-10-05
   bypass behavior ("out1 passes source; out1 goes black" — the rule is
   now all-outlets passthrough). One doc pass.
-- [ ] T038: Record a tier-1-skip decision (or build the trivial
+- [x] T038 (closed 2026-11-06: mirror built, T044): Record a tier-1-skip decision (or build the trivial
   closed-form mirror: falloff weights + zero-vector field →
   passthrough). The module predates Verification Tiers with no
   recorded decision — same shape as f_grain/f_vf_advect's finding.
@@ -269,3 +275,21 @@ reads `sample(in4, uv).w`.
 - [ ] T043 Docs: `docs/f-reference/f_vf_glow.md` (new inlet), helpfile, README note. Deferred (do not build): a performer-facing gain dial (waits for `mod_depth_ui_density.md`).
 
 - [x] T044 **Tier-1 NumPy mirror (omp run mirror-build-1, landed 2026-10-19).** `tests/modules/vf_glow/{vf_glow_mirror,test_vf_glow}.py`, 10/10 offline. Checks: a zero field returns the source, ramp readbacks, the closed-form composite and Rec. 709 luma (color_mix 1), bypass on both outlets. See `HANDOFF.md` 2026-10-19.
+- [x] T046 Stable preflight (2026-11-06, offline by Claude), record below.
+- [ ] T045 Matt's helpfile look: the new demo chain, the digest, the two notes, and the Mix 50 load message.
+
+## Stable preflight (2026-11-06)
+
+Part 1 offline by Claude: drift ok, no baseline entry; menu and launcher `--check` up to date; README row 110 chars before the edit offered, no ⚠; menu entry `menu.py:84`, recipe Chladni Glow; bypass is `bypass_gate` (`bypass_mode: "param"`, `BYPASS_EXPECT` `{2: IN1}`; contract bench line in `tests/logs/20261106-081412-bench.log`, from before these edits, which touch no patcher or codebox); helpfile box 208x130 against a 190x120 frame. The route is `radius falloff gain mix_pct color_mix direction`, no `bypass` selector, and the helpfile has no `bypass [0 / 1]` line, which is right. No gate row holds Glow except `G-helpfiles`, which names it. Tests: mirror `tests/modules/vf_glow/` (T044; read, not run this session) and the contract bench; no `bench_*` file of its own.
+
+Patcher against docs: three inlets (texture / control, vecfield, radius mod), two outlets (composite, glow). `vs_inState` on inlets 1 and 2 only. No `r draw`, so only the source triggers the pix, and no source means no output (wiring read; behavior inferred, not run).
+
+Fixed in the doc: `strength` at line 25; "streamlines", since the codebox reads the field once and steps in a straight line (code read, not run); "exponential" falloff, which is Gaussian in the step index; the `mix_pct` pseudocode; `direction` 1 and 2, which had the glow on the wrong side (a gather lands the glow opposite the sampling direction); `converge`, which is `convergence`; "high `direction` values"; "tangentially along the image gradient"; the cost note still saying unprofiled. Added: no threshold, Mix 0 means composite = source, bypass is toggle only.
+
+Found, not changed: `vs_inState` outlet 1 feeds `param src_vecfield`, but the codebox has no such Param; the field is gated by value (`step(0.02, raw_x + raw_y)`). Output is unaffected as far as the code shows. Whether Max logs anything for the unknown param was not checked. `spec.md` and `plan.md` still say `strength` (6 lines each) and predate the rollout.
+
+Chains in `library-characteristics.md`: several fed Glow no field, which gives no spread; the row profile varies across x, not per row (its doc: consumers sample at normalized X). Edits returned to the main session, not applied here.
+
+Helpfile: nothing was wired upstream, and the bpatcher box said 2 inlets (now 3). Added `vs_sources_main` -> inlet 0, `f_vf_vortex` -> inlet 1, and loadbang -> `delay 300` -> `mix_pct 50`, the `f_vf_ch` pattern, because at Mix 0 the preview would show only the source. Added `direction`, which was missing from the message list. Window height raised 50 px to fit the stack. Expected (from the codebox, not seen): source plus 0.4 x glow, radial streaks through the center, frame brighter; depends on a movie being loaded on the Movie tab. No box overlaps another by rect (preview 338-574 x 466-715; notes 556-761 x 328-426 and 590-766 x 466-686). `test_generate_menu.py` 17/17 (`tests/logs/20261106-181204-offline.log`). Live by Matt: T045.
+
+Phase 5 (T039-T043) is unbuilt and stays open: Matt's call whether it carries over, since `stable/` means nothing outstanding.

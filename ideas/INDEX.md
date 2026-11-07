@@ -354,8 +354,8 @@ there, then the chapter-specific files for depth.
   algorithm does **not** apply (glow is already 1D directional, nothing to
   separate).
 - **[incremental_gaussian_taps.md](incremental_gaussian_taps.md)** 🔵 — Small
-  optimization: replace per-tap `exp()` in `f_vf_glow`'s 48-tap loop and
-  `f_vf_prism`'s 11-tap blur with a forward-differencing recurrence. Not
+  optimization: replace per-tap `exp()` in `f_vf_glow`'s 48-tap loop
+  with a forward-differencing recurrence. Not
   urgent; whether it even matters on this GPU pipeline is **unverified**.
 - **[line_edge_antialiasing.md](line_edge_antialiasing.md)** 🔵 — Root-caused
   a real `f_weave` bug: smoothstep edge width is fixed in UV space and

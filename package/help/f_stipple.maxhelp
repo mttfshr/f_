@@ -69,7 +69,7 @@
                         270.0,
                         40.0
                     ],
-                    "text": "2D hash field stipple -- dither/density or luma-driven displacement",
+                    "text": "Hash-field stipple: halftones a texture by its red channel, or makes stipple alone",
                     "fontsize": 14.0,
                     "varname": "autohelp_top_digest[3]",
                     "linecount": 2,
@@ -129,9 +129,9 @@
                         270.0,
                         120.0
                     ],
-                    "text": "References\n\nSee docs/f-reference/f_stipple.md for the full dual-mode\n(dither/displacement) algorithm and the source-mode\nversus processor-mode auto-detection via vs_inState.",
+                    "text": "References\n\nAn original construction, no external source.\nSee docs/f-reference/f_stipple.md for the dual-mode\nalgorithm (source or processor, picked by what is\nconnected) and the three outlets.",
                     "fontsize": 12.0,
-                    "linecount": 5,
+                    "linecount": 6,
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
@@ -196,20 +196,21 @@
                     "maxclass": "bpatcher",
                     "name": "f_stipple.maxpat",
                     "numinlets": 1,
-                    "numoutlets": 2,
+                    "numoutlets": 3,
                     "offset": [
                         0.0,
                         0.0
                     ],
                     "outlettype": [
                         "jit_gl_texture",
+                        "jit_gl_texture",
                         "jit_gl_texture"
                     ],
                     "patching_rect": [
                         338.0,
                         190.0,
-                        154.0,
-                        91.0
+                        196.0,
+                        160.0
                     ],
                     "viewvisibility": 1,
                     "varname": "f_stipple"
@@ -238,7 +239,7 @@
                     ],
                     "patching_rect": [
                         338.0,
-                        301.0,
+                        370.0,
                         236.0,
                         249.0
                     ],
@@ -260,14 +261,14 @@
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        500.0,
-                        321.0,
-                        210.0,
-                        51.0
+                        550.0,
+                        190.0,
+                        225.0,
+                        150.0
                     ],
-                    "text": "Works best with a textured/moving\nsource -- try f_grain or live camera.",
+                    "text": "With a source wired in, the first\noutlet is the source's red channel\ndithered black and white by the hash\nfield; Colorize 1 keeps its color.\nThe second outlet is that mask, the\nthird the source displaced by Thresh.\nOnly the first is previewed. With\nnothing patched in, the dials alone\nmake the stipple.",
                     "fontsize": 12.0,
-                    "linecount": 2,
+                    "linecount": 9,
                     "bubble": 1
                 }
             }

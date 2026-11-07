@@ -112,12 +112,14 @@
 - [ ] T036 Integration test: f_stipple processor/density with incoming WFG texture (confirm halftone effect visible)
 - [ ] T037 Integration test: f_stipple processor/displacement with incoming WFG texture (confirm warp effect visible)
 - [ ] T038 Check frame rate with f_stipple in chain — acceptable performance?
-- [ ] T039 Write `docs/f_stipple.md` — as-built reference: params table, signal chain, usage notes, known issues
-- [ ] T040 Update `README.md` — add f_stipple to bpatcher status table (Working), update build queue
-- [ ] T041 Update `ideas/f_stipple.md` — mark as built, link to docs
-- [ ] T042 Commit: `git add -A && git commit -m "add f_stipple — 2D hash field stipple source/processor"`
+- [x] T039 Write `docs/f_stipple.md` — as-built reference: params table, signal chain, usage notes, known issues. Done at `docs/f-reference/f_stipple.md` (the path moved; refreshed by T043 2026-10-12 and again in the 2026-11-06 preflight, below).
+- [x] T040 Update `README.md` — add f_stipple to bpatcher status table (Working), update build queue. Row present at `README.md` line 37 (`| f_stipple | 2D hash field stipple texture |`, no warning mark; read 2026-11-06).
+- [x] T041 Update `ideas/f_stipple.md` — mark as built, link to docs. Closed as moot, not done: `ideas/` has no `f_stipple.md` (checked 2026-11-06).
+- [x] T042 Commit: `git add -A && git commit -m "add f_stipple — 2D hash field stipple source/processor"`. Closed as superseded: the module has been committed since `27f5d7e` (2026-05-30, `git log`).
 
 **Checkpoint**: Block 4 verification passes. README updated. Docs written. Committed.
+
+T034-T037 are still live checks nobody has done (no source in any record); T035-T037 are written for the pre-rewrite modes, and `proc_mode` no longer exists, so read them as: source mode into a texture consumer, a texture in and the composite (T036), and a texture in and the third outlet (T037). T038 is the optional cost check, never run. See the preflight record for which to fold into Matt's look.
 
 ---
 
@@ -167,3 +169,34 @@ stable/'s nothing-outstanding bar._
 
 - [x] **T044 — source-mode render trigger. DONE 2026-11-01.** Unconnected, `f_stipple` drew nothing (Matt, live, 2026-11-01; the `f_quasi` bug). `definition.py` `raw_boxes`/`raw_lines`: `r draw` → `gate 1 1` → pix inlet 0, the gate closed by `vs_inState`'s connected flag through `== 0` (Matt chose gated, per-module raw_lines). Offline by Claude: `tests/modules/stipple/test_stipple_static.py`, `drift -v f_stipple` ok.
 - [x] **T045 — output follows the render size. DONE 2026-11-01.** With the trigger in, unconnected source mode was a solid frame flipping white/black around `threshold` 0.2 (Matt, live). Inferred cause, not probed: the pix adapted to `vs_black` (1x1). `definition.py`: `pix_attrs "@adapt 0 @dim 256 256"` and `render_dim {"size_stages": ["primary"]}` (Matt's decision; no width/height Params, the codebox reads `norm`). Offline by Claude: static test 4/4, `test_render_dim` 12/12, drift ok. Live by Matt, 2026-11-01: "works as expected". Live contract bench (`tests/bench.sh -q tests/contracts/bench_modules.py`, Max 9.2.0, run by Claude with Matt's go and his bench open): first run 08:48 FAIL 1/2, three `f_stipple` bypass outlets "(640, 640, 4), expected (64, 64, 4)" (a harness gap, inferred the same as the four earlier render_dim modules, not probed); `f_stipple` added to `INPUT_SIZE` in `tests/contracts/bench_modules.py`; re-run 08:52 GREEN 2/2, 0 unexpected issues (log `tests/logs/20261101-085202-bench.log`; the `f_a_decorrelate` XFAILs are the known audio case).
+
+---
+
+## Stable preflight (2026-11-06)
+
+- [x] **T046 Stable preflight (2026-11-06, offline by Claude), record below.**
+- [ ] **T047 Matt's helpfile look** (new demo at defaults, digest, note, the third outlet at `zoom` other than 1). Worth folding into the same look: T034 (save and reopen keeps the dials), T036 and T037 (a texture in; composite dithered, third outlet warped), and T035 if a stipple-to-droste patch is handy. T038 stays optional. None of these is ticked: no record has a source for them.
+
+Part 1 offline by Claude: `drift -v f_stipple` ok (1 of 1, after the zoom fix below); README row present, no warning mark; menu entry `Stipple` in `src/f_modules/menu.py` line 50; bypass is `bypass_gate` (`bypass_mode: "param"`, all three outlets mix to the dual passthrough, `BYPASS_EXPECT` in `tests/contracts/bench_modules.py`; the live contract bench was green 2/2 on 2026-11-01, `tests/logs/20261101-085202-bench.log`, from before this session's zoom edit). The route is the ten param names, no `bypass` selector, so the helpfile has no `bypass [0 / 1]` line, which is right. Helpfile box was 154x91 against a panel of 191x157 (cropped); now 196x160. The Freq label starts at x -7.5, outside any bpatcher box. Tests: no NumPy mirror (TIER1, Matt's skip); `tests/modules/stipple/test_stipple_static.py` (trigger and size wiring, plus the zoom guard); the contract bench entries `BYPASS_EXPECT` and `INPUT_SIZE`; `tests/contracts/test_bench_expect.py`; no `bench_*` file of its own.
+
+**Bug found and fixed.** Offline by Claude, 2026-11-06, inferred from the code (not run): `definition.py` divided by `zoom` twice into the displaced (third) outlet, so at `zoom` other than 1 it scaled by 1/zoom² while the hash scaled by 1/zoom. Exact at `zoom` 1, so the bench could not see it. Fixed by the main session (Matt chose to fix: `disp_uv = vec(along_disp, across_disp)`, one divide, comment added; patcher rebuilt, drift ok), with `test_zoom_is_applied_once_to_the_displaced_outlet` added to the static test (5/5, per the main session). **The displaced outlet at `zoom` other than 1 has not been seen live**; that is in Matt's look (T047).
+
+Patcher against docs: one inlet (texture / control), three outlets. `routepass` -> `vs_inState` -> pix; `vs_inState` flag -> `prepend param src_mode`; unconnected, `r draw` -> `gate 1 1` -> pix, closed by the flag through `== 0` (T044); `r dim` and `@adapt 0 @dim 256 256` (T045). Dials go live.dial -> attrui -> pix, not `prepend param`; only `src_mode` and `bypass_gate` use `prepend param`. Read from the patcher, not run.
+
+Doc fixes (`docs/f-reference/f_stipple.md`):
+- The codebox reads `.r` (red), not luma: concept, algorithm and parameter rows said luma or brightness. A colored texture steers by red alone (code read, not run).
+- The displaced outlet was "out2" in the signal chain and Algorithm but "out3" in the Loose Threads, References and the banners: a numbering mix-up, not two outlets. Max numbers outlets from 0 (composite 0, mask 1, displaced 2) and the codebox from 1 (`out1`, `out2`, `out3`); the doc now says so once and uses "third outlet".
+- `freq` multiplies only the parallel hash; `h_iso` has no `freq` term, so `freq` does nothing at `anisotropy` 0. Documented as the code is. **Whether `h_iso` should take `freq` is Matt's open question; not decided, not changed.**
+- `threshold` runs opposite ways: higher is less white in source mode, more white in processor mode.
+- `along_phase` and `across_phase` also pan the third outlet.
+- The hash is 0-1 only while `anisotropy` is up to 1; above that the blend extrapolates.
+- `softness` 0 gives equal smoothstep edges (undefined in GLSL; inferred hard step, not run).
+- "A connected texture is not resampled" was misleading: the output is render-sized, so another-sized input is sampled by normalized coordinates (the bench's 64x64 input came out 640x640, T045).
+- Source-mode alpha: 1.0 on the composite and mask outlets in every mode (code read; not looked at in Vsynth).
+- Dual-module check on both modes: source mode (nothing connected) is dials only, colorize no effect, third outlet black; processor mode dithers red against the hash and warps the third outlet by red times `threshold`.
+
+Helpfile (`package/help/f_stipple.maxhelp`): the source was already wired (`vs_sources_main` -> Stipple -> preview), so nothing to wire; the box is 196x160 with the preview moved down to y 370; note d-9 sat on the preview (500-710 x 321-372 against 338-574 x 301-550) and is now at 550-775 x 190-340, clear of both module and preview; the module box said 2 outlets and now says 3; the digest no longer says luma; the "try f_grain or live camera" consumer-style tip became a note about this module. Expected at defaults (inferred from the codebox, not seen): with a source on the Movie tab, `vs_inState` reports connected, so processor mode: the first outlet is black and white, white where the source's red (unbiased at `threshold` 0.5) beats the hash, blended at `anisotropy` 0.5; red-bright areas dense, red-dark areas sparse, with chunky grain from `coarseness` 20. With no movie loaded, what appears depends on what `vs_sources_main` emits (not checked). JSON parses; format unchanged (`git diff` is small).
+
+Chains in `library-characteristics.md` (by type and meaning; shared file, edits returned to the main session): line 201 (displacement feedback) was wrong: red does not displace the hash field, it dithers the composite and warps only the third outlet. Line 331 was wrong by channel: Stipple reads red, the packed `f_tf_tensormap` red is cos 2theta, trace (B) is not reachable (no `f_tf_unpack`). Lines 167, 325 and 361 hold by type and channel (f_ks is grayscale, so red equals luma; `f_vf_split` outputs grayscale; `f_vf_potential` multiplies its color source into R, G and B, so red is the potential only when no color source is connected, not checked). Line 282 (f_vf_ch grey phase) holds. Other mentions: `module-inventory.md` line 92 said luma "displaces the hash field"; `skills/vsynth-bpatcher/SKILL.md` line 798 names a "Displace" header toggle that was removed.
+
+Left alone: the 2026-10-18 banners and the pre-rewrite bodies of `spec.md`, `plan.md` and this file's Phases 0-4 (dated history; the banners point at the doc and `definition.py`); `ideas/droste_singularity.md` (dated discovery note). Still open: T034-T038 above.

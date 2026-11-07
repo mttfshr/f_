@@ -4,7 +4,7 @@ Offline by Claude and omp, nothing run in Max. Rows combine omp report `f_omp_ru
 
 | Module | Status | Reason |
 |---|---|---|
-| `f_vf_warp` | Candidate | 46 boxes stale; bypass_gate, named bench entry (opened). Tier-3 note is stale (`HANDOFF_ARCHIVE.md:941`) |
+| `f_vf_warp` | Candidate | 46 boxes stale; bypass_gate, named bench entry (opened). Tier-3 note is stale (`HANDOFF_ARCHIVE.md:950`) |
 | `f_stipple` | Candidate | T034-T037 live checks, T038 optional cost; bypass_gate, named entry (opened) |
 | `f_vf_glow` | Candidate | Helpfile unwired and thin; line 25 stale `strength`; T039-T043 unbuilt, Matt's call |
 | `f_vf_prism` | Candidate | T001 residue (bench comment, `exp()` note, both opened); "Two outlets" and `strength` stale; helpfile unwired |

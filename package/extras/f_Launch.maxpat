@@ -3276,7 +3276,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Field-aligned directional blur via f_vecfield -- accumulates along streamlines; composite / glow-layer outlets",
+									"text": "Bloom along a vecfield's local direction -- halos, trails, feathered edges; composite / glow-layer outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3345,7 +3345,7 @@
 										150.0,
 										20.0
 									],
-									"text": "Vecfield-driven prism separation -- luma-gated RGB displacement along the field; composite / isolated outlets",
+									"text": "Vecfield-driven prism separation -- brightness-gated RGB displacement; composite, isolated, vecfield outlets",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
@@ -3483,7 +3483,7 @@
 										150.0,
 										20.0
 									],
-									"text": "UV warp via f_vecfield -- displaces source texture along field streamlines",
+									"text": "Bends a source texture by a vecfield, one offset read per pixel -- the plainest field distortion",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,

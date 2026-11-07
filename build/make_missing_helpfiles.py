@@ -185,8 +185,8 @@ MODULES = {
         references="References\n\nSee docs/f-reference/f_vf_flow.md and\ndocs/f-reference/f_vecfield_type.md."),
     "f_vf_glow": dict(
         title="Glow",
-        digest="Field-aligned directional blur -- accumulates along streamlines with exponential falloff",
-        recipe="Feed a vecfield into in2; any texture\ninto in1.",
+        digest="Bloom that follows a vecfield instead of spreading evenly: halos, trails, feathered edges",
+        recipe="Source on inlet 0, a vecfield on\ninlet 1: with no field nothing\nspreads.",
         references="References\n\nSee docs/f-reference/f_vf_glow.md and\ndocs/f-reference/f_vecfield_type.md."),
     "f_vf_potential": dict(
         title="Potential",
@@ -195,8 +195,8 @@ MODULES = {
         references="References\n\nSee docs/f-reference/f_vf_potential.md.\nIntegrates field magnitude only -- axis-blind\n(a 180-degree flipped field looks identical)."),
     "f_vf_prism": dict(
         title="Prism",
-        digest="Vecfield-driven prism separation -- luma-gated RGB displacement along the field",
-        recipe="Feed a vecfield into in2; any texture\ninto in1.",
+        digest="Light through a prism: bright areas cast split R, G, B fringes along a vecfield, over the source",
+        recipe="Source on inlet 0, vecfield on inlet 1.",
         references="References\n\nSee docs/f-reference/f_vf_prism.md and\ndocs/f-reference/f_vecfield_type.md."),
     "f_vf_repulse": dict(
         title="Repulse",
