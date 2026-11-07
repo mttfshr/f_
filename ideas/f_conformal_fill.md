@@ -34,3 +34,7 @@ This is a genuinely new module category for this project — everything else in 
 - Whether the boundary-point pole selection (the two points mapped to ±∞) needs to be a user choice or can be automated from the shape's geometry
 - Resolution/quality tradeoffs given the ~5 minute reference solve time — whether a lower-res solve + GPU upsampling is viable for practical shapes
 - Whether this ever needs live animation (the paper's own use case is a static tessellated shape, not a moving one) — if it's static-per-shape, that's a very different performance context than everything else in `f_`, which is arguably fine but worth being explicit about
+
+## Update 2026-11-07
+
+`f_poincare` is built (`docs/f-reference/f_poincare.md`). Its camera, fold, rim fade and sampling are the runtime half of this module, and its camera's three parameters cover the pole-choice question; see `ideas/f_poincare_lessons.md` (inferred, not built). Still not specced.

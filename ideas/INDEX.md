@@ -188,7 +188,8 @@ substantially move a file in `ideas/`, update its entry here too.
   `docs/f-reference/f_poincare.md`) — Poincaré disk hyperbolic tiling as a texture
   processor: Whole / Sliver folds, live {p,q}, a hyperbolic camera. Shares Möbius-transform
   DNA with `f_mobius`/`f_stereo`. Vecfield-aware version parked (`P-uv-vecfield`); the
-  fractal sibling `f_apollonian` stays paused.
+  fractal sibling `f_apollonian` stays paused. What the build taught for `f_apollonian` and
+  `f_conformal_fill`: `f_poincare_lessons.md`.
 - **[f_apollonian.md](f_apollonian.md)** ⏸ PAUSED (`.specify/paused/`, same
   algebra bug as `f_poincare`) — Apollonian gasket via iterated
   circle inversion; shares a Möbius-iteration core with `f_poincare` (maybe

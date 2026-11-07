@@ -54,3 +54,7 @@ Three shaders reviewed. Not portable verbatim (different language/runtime — GL
 ## Build sequence
 
 Not yet started. Proposed first step (not yet done): scratch-test the Ford-circles construction (simplest of the three — fixed 8-iteration loop, no early exit) plus one final animatable inversion, and confirm visual match against the reference before touching camera motion, texture sampling, or the f_poincare merge question.
+
+## Update 2026-11-07
+
+`f_poincare` is built; see `ideas/f_poincare_lessons.md` for what transfers here (a float64 mirror first, the order-dependence of overlapping circles, a branchless settle loop that needs no `break`, the three-nearest-circles trick, knife-edge tolerance, the unsettled-pixel policy). Paused status unchanged (`P-moebius-tiling`).
