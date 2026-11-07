@@ -58,7 +58,7 @@ field-following glow, and that stack already runs the bounded bidirectional loop
 - **Decision (Matt, 2026-10-17):** merge with hub Q12 rather than build a module. Q12's design
   (an `anisotropy` mod inlet, `state_param` connection detection, a confidence gate that pulls
   `direction` 1/2 toward the bidirectional floor) delivers most of the gesture at near-zero
-  cost. Tasks T039-T043 are in `.specify/f_vf_glow/tasks.md`, all unticked.
+  cost. Tasks T039-T043 are in `.specify/stable/f_vf_glow/tasks.md`, all unticked.
 - **Reopen condition:** live A/B against the gate-only version shows the full tensor-inlet shape
   (radius proportional to eigenvalue, weight proportional to coherence, both) is materially
   different.

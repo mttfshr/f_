@@ -2,6 +2,15 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 4 Group A preflight (warp, stipple, glow, prism), offline
+
+- **Done (Claude and four subagents, nothing run in Max):** docs, helpfiles and task records fixed for all four; none moved yet. Record: each module's `tasks.md`, "Stable preflight (2026-11-06)". Drift 1 of 1 each; menu and launcher `--check` ok; `test_generate_menu.py` 17/17 (log `tests/logs/20261106-191203-offline.log`).
+- **Real bug (stipple):** zoom was divided into the displaced outlet twice (found offline, inferred from code); fixed in `definition.py`, patcher rebuilt, guard test added (`test_stipple_static.py` 5/5). Not seen live: the third outlet at zoom != 1 is in T047.
+- **Doc errors fixed:** stipple reads red not luma, and threshold runs opposite ways per mode; warp reads `uv + offset`, so content moves against the vector; glow `strength` and falloff law; prism has three outlets and a per-channel gate. README rows for warp, glow, prism rewritten, launcher regenerated.
+- **Not done:** `skills/vsynth-bpatcher/SKILL.md` lines 279 and 798 (need Matt's re-upload and `skills/check.sh stamp`); `library-characteristics.md:373` glow line; prism out3 is 8-bit.
+- **Open for Matt:** helpfile looks, one bench run for the group, glow T039-T043 carry over, glow T023-T026 and T028, dead `src_vecfield` binding, prism out3 8-bit and mirror (T004), stipple `freq` in `h_iso`, plus the batch 4 calls in the triage record. omp harness lessons are in the previous (archived) entry.
+- **Stray file:** `write` at the repo root is still untracked; deletion waits on Matt.
+
 ## 2026-11-06: batch 4 triage and the omp doc harness
 
 - **Done (offline, Claude and omp; nothing run in Max):** triage of 11 modules. Record: `.specify/maintenance/batch4_triage_2026-11-06.md`. Candidates: warp, stipple, glow, prism. Needs work: advect, streak. Held: vortex, optical_flow, seeds. Out: repulse, sirds.

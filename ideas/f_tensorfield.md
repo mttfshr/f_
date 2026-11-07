@@ -133,7 +133,7 @@ mode), the raw doubled components avoid `atan2` entirely. Unassessed per module.
 **Q12. `f_vf_glow` anisotropy inlet: continuous, per-pixel `direction` blend (design done,
 build parked).** The first Phase 2 module, chosen because it needs no new panel dial and so is
 not behind the UI-density question. Triage merged the proposed `f_tf_glow` into it. Tasks T039-T043
-in `.specify/f_vf_glow/tasks.md` are all unticked. Design, grounded in `codebox_v1.gen`:
+in `.specify/stable/f_vf_glow/tasks.md` are all unticked. Design, grounded in `codebox_v1.gen`:
 
 - `fwd_mode`/`bwd_mode` are already branchless from `direction`. The change continuizes the
   weight reaching the loop; `direction` keeps its meaning and default.

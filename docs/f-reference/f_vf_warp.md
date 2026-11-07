@@ -82,4 +82,4 @@ Earlier this module used the native `jit.gl.pix` `bypass` attribute like every o
 - Works well with animated vortex fields (f_vf_vortex with modulated cx/cy/curl)
 - See `docs/f-reference/f_vecfield_type.md` for f_vecfield type contract
 - The mechanism (sample field, remap, scale, add to UV, sample source) is the refraction technique of Sousa, "Generic Refraction Simulation", *GPU Gems 2*, Ch. 19, arrived at independently. The chapter's refraction mask is not implemented here: the offset applies across the whole frame (`ideas/gpu_gems_research.md`)
-- Tests: no tier-1 mirror (skip decided by Matt, T051, `.specify/f_vf_warp/tasks.md`) and no `bench_*` file of its own; the contract bench's bypass entry and `tests/build/test_build_multistage.py` cover it
+- Tests: no tier-1 mirror (skip decided by Matt, T051, `.specify/stable/f_vf_warp/tasks.md`) and no `bench_*` file of its own; the contract bench's bypass entry and `tests/build/test_build_multistage.py` cover it

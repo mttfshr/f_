@@ -276,7 +276,7 @@ reads `sample(in4, uv).w`.
 
 - [x] T044 **Tier-1 NumPy mirror (omp run mirror-build-1, landed 2026-10-19).** `tests/modules/vf_glow/{vf_glow_mirror,test_vf_glow}.py`, 10/10 offline. Checks: a zero field returns the source, ramp readbacks, the closed-form composite and Rec. 709 luma (color_mix 1), bypass on both outlets. See `HANDOFF.md` 2026-10-19.
 - [x] T046 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T045 Matt's helpfile look: the new demo chain, the digest, the two notes, and the Mix 50 load message.
+- [x] T045 Matt's helpfile look: the new demo chain, the digest, the two notes, and the Mix 50 load message.
 
 ## Stable preflight (2026-11-06)
 
@@ -293,3 +293,9 @@ Chains in `library-characteristics.md`: several fed Glow no field, which gives n
 Helpfile: nothing was wired upstream, and the bpatcher box said 2 inlets (now 3). Added `vs_sources_main` -> inlet 0, `f_vf_vortex` -> inlet 1, and loadbang -> `delay 300` -> `mix_pct 50`, the `f_vf_ch` pattern, because at Mix 0 the preview would show only the source. Added `direction`, which was missing from the message list. Window height raised 50 px to fit the stack. Expected (from the codebox, not seen): source plus 0.4 x glow, radial streaks through the center, frame brighter; depends on a movie being loaded on the Movie tab. No box overlaps another by rect (preview 338-574 x 466-715; notes 556-761 x 328-426 and 590-766 x 466-686). `test_generate_menu.py` 17/17 (`tests/logs/20261106-181204-offline.log`). Live by Matt: T045.
 
 Phase 5 (T039-T043) is unbuilt and stays open: Matt's call whether it carries over, since `stable/` means nothing outstanding.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile looks passed 2026-11-06 ("helpfile looks pass", for the group, live by Matt). Contract bench `tests/contracts/bench_modules.py` 2/2, 0 unexpected live contract issues, all four modules in the roster (log `tests/logs/20261106-192009-bench.log`, Max 9.2.0, git fb693ee dirty; run by Claude at Matt's go, live). The folder holds only markdown: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. References to this folder in docs and ideas were updated to `.specify/stable/`.
+
+Carried over under the stable bar (Matt confirmed 2026-11-06): T039-T043, the unbuilt tensor anisotropy inlet (a future feature, not a bug or a doc fault); T023-T026 and T028, no dated live record found; the dead `src_vecfield` binding (the patcher sends a param the codebox never declares; output looks unaffected, Max's log not checked). Gate `G-helpfiles` still lists the old audit finding; this module's helpfile was rewritten and looked at.

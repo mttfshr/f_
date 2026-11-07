@@ -1,7 +1,7 @@
 # f_vf_prism
 
 **Type:** Processor (f_vecfield consumer; its third outlet also emits a vecfield)
-**Status:** Working — listed in README.md's patch table; maintenance-audited 2026-10-12; stable preflight 2026-11-06 (offline by Claude, see `.specify/f_vf_prism/tasks.md`)
+**Status:** Working — listed in README.md's patch table; maintenance-audited 2026-10-12; stable preflight 2026-11-06 (offline by Claude, see `.specify/stable/f_vf_prism/tasks.md`)
 
 ---
 
@@ -65,7 +65,7 @@ vfprism_pix (@type char) out3 → outlet 2: dispersion vecfield (8-bit)
 
 ## Notes
 
-- An earlier version of this note claimed `.specify/f_vf_prism/spec.md` was a stale copy of `f_vf_chroma`'s spec.md; **corrected 2026-10-12**: the spec was rewritten 2026-07-11 against the production module (its own correction note documents the fork cleanup), and it now describes the shipped `reach`/`threshold`/`feather` design. Its bypass lines and its out3 acceptance criteria are behind the code; this doc follows the code.
+- An earlier version of this note claimed `.specify/stable/f_vf_prism/spec.md` was a stale copy of `f_vf_chroma`'s spec.md; **corrected 2026-10-12**: the spec was rewritten 2026-07-11 against the production module (its own correction note documents the fork cleanup), and it now describes the shipped `reach`/`threshold`/`feather` design. Its bypass lines and its out3 acceptance criteria are behind the code; this doc follows the code.
 - **`codebox_v17.gen` is the version currently wired into `definition.py`** — this module went through many iterations (`codebox_v1.gen` through `codebox_v17.gen` all exist in `src/f_vf_prism/`); only v17 is live, adding the out3 gate-weighted vecfield outlet (ADR1) and the `strength` → `gain` rename on top of the v15 baseline. The 11 tap weights are constants in the codebox, with no `exp()`.
 - Displaced lookups clamp to 0.001 / 0.999, not 0 / 1: on the GPU an exact edge coordinate reads the opposite edge (2026-10-20).
 - Listed in `README.md`'s patch table.
@@ -73,7 +73,7 @@ vfprism_pix (@type char) out3 → outlet 2: dispersion vecfield (8-bit)
 
 ## References
 
-Per-channel displaced lookup with the gate values blurred across the field: derived in development, no external source (origin in `.specify/f_vf_prism/continuity.md`).
+Per-channel displaced lookup with the gate values blurred across the field: derived in development, no external source (origin in `.specify/stable/f_vf_prism/continuity.md`).
 
 ## Source File
 

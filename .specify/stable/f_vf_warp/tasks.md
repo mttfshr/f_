@@ -243,7 +243,7 @@ confirmed and the reference doc already documents it accurately, unlike
 
 - [x] T053 Close T001-T046 as a passed build checklist. Source: the module shipped and is in use: `ddd9a0e` (first patcher commit), `package/patchers/f_vf_warp.maxpat`, `docs/f-reference/f_vf_warp.md`, README row, `f_addmod.js` size entry, menu entry under ∇ Effects (`src/f_modules/menu.py:87`), all opened 2026-11-06. No per-item results were recorded at build time, so T031-T040 are not individual observations, and T037 (`f_vf_vortex_multi`) and T039 (save and reload) have no specific record. Paths and `strength` in those tasks are as written then.
 - [x] T054 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T055 Matt's helpfile look: the new chain at defaults and with Gain raised, the digest, the two notes. Then the move to `.specify/stable/`.
+- [x] T055 Matt's helpfile look: the new chain at defaults and with Gain raised, the digest, the two notes. Then the move to `.specify/stable/`.
 
 ## Stable preflight (2026-11-06)
 
@@ -262,3 +262,9 @@ Chains in `library-characteristics.md`: by type all feed Warp a source and a vec
 Helpfile: confirmed no vecfield was wired, so `src_vecfield` stayed 0 and the demo could only show the source. Added `f_vf_vortex` (`d-11`, 196x160, its footprint), triggered by `vs_sources_main` on its inlet 0 since it has no `r draw`, out to Warp inlet 1. Warp and preview moved down. The old note sat on the preview and named producers; replaced. Stale bypass-bug References text replaced. Digest now says what it is for. Expected (from the codebox, not seen): at defaults the output equals the source, because Gain is 0; a note says so. With Gain raised, the center swells outward and a small disc in the middle reads point-flipped, because the default sink's vector (0.5 at center) overshoots the center there. `vs_sources_main` opens on the Movie tab, so all of this, the vortex included, depends on a movie being loaded. No overlaps (rects: vortex 420-616 x 160-320; Warp 338-492 x 330-421; preview 338-574 x 431-680; notes 510-760 x 330-388 and 590-780 x 431-529). Preview ends at y 680 of a 681 window. JSON parses and round-trips in the file's format. Live by Matt: T055.
 
 Left alone: `spec.md` and `plan.md` are pre-T049 and pre-T052 (`strength`, default 0.1, out2 ungated); outside this pass's edit list, header line returned to the main session. The codebox comments and the `definition.py` REVISIT note's `strength` are dated. `ideas/f_vf_seeds.md:157` says Warp can feed a vecfield (it outputs textures; an old idea note). `f_vf_vortex.maxhelp` has its own box at 154x91 against a 196x160 footprint and nothing upstream, which is Vortex's record.
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile looks passed 2026-11-06 ("helpfile looks pass", for the group, live by Matt). Contract bench `tests/contracts/bench_modules.py` 2/2, 0 unexpected live contract issues, all four modules in the roster (log `tests/logs/20261106-192009-bench.log`, Max 9.2.0, git fb693ee dirty; run by Claude at Matt's go, live). The folder holds only markdown: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. References to this folder in docs and ideas were updated to `.specify/stable/`.
+
+Carried over (stable bar: optional cost and parked mirrors do not block): no tier-1 mirror (T051, Matt's skip); the clamp-edge tier-3 look is recorded only as "per the docs, not verified" (`HANDOFF_ARCHIVE.md` line 950 names no observer); `f_demo_sampleplatter.maxpat`'s dial and `package/help/streak-demo.json` still say `strength` (not touched).

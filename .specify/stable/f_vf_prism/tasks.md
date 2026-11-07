@@ -4,7 +4,7 @@ _Created by the 2026-10-12 maintenance pass: the folder had
 spec.md/plan.md/continuity.md but no tasks.md. The original build's
 task tracking lived in plan.md phases. Ids start at T001._
 
-- [ ] T001: Profile the 11-tap blur's cost including the bypassed
+- [x] T001: Profile the 11-tap blur's cost including the bypassed
   full-cost question: the 33 gate calls (11 taps × 3 channels, each a
   displaced sample) are fully unrolled with no early-exit guard under
   param bypass; no measurement exists. Fold into the glow/streak
@@ -29,7 +29,7 @@ task tracking lived in plan.md phases. Ids start at T001._
 - **2026-10-20, clamp edge fix:** v17's three `displaced_r/g/b` helpers clamped the displaced coordinate to exact [0, 1], so on the GPU (probe P9: x = 1.0 reads the first column, y = 0.0 the last row) gate taps near the right and low-y edges read the opposite edge's luma. Bounds are now 0.001 / 0.999 (six lines plus a comment). Patcher regenerated, one-line diff, `drift.py -v f_vf_prism` ok. No tier-1 mirror exists. Tier 3 pending (Matt): a bright left or top edge should no longer produce prism fringes along the right or bottom edge.
 
 - [x] T002 Stable preflight (2026-11-06, offline by Claude), record below.
-- [ ] T003 Matt's helpfile look: the new demo chain at defaults, the digest, the two notes.
+- [x] T003 Matt's helpfile look: the new demo chain at defaults, the digest, the two notes.
 - [ ] T004 Matt's call: tier-1 mirror. None exists and prism is in the `P-mirrors` queue; skip, or build before the move.
 
 ## Stable preflight (2026-11-06)
@@ -51,3 +51,9 @@ Chains in `library-characteristics.md`: by type all hold (texture into inlet 0, 
 Helpfile: confirmed nothing was wired upstream, so the demo drew nothing. Added `vs_sources_main` to inlet 0 and `f_vf_flow` (the pairing `f_demo_ngon` uses) to inlet 1; box counts corrected to 4 in, 3 out. Expected at defaults (from the codebox, not seen): source plus a bright echo about 5% of the frame along Flow's field, with color only as a thin fringe at bright edges (about 0.005 UV), white inside large bright areas. No pixel over 0.7 means output equals source. `vs_sources_main` opens on the Movie tab, so this depends on a movie being loaded. Neither note overlaps the preview (rects: preview 338-574 x 456-705; notes 560-785 x 271-358 and 590-780 x 456-569). Preview bottom is 705, past the skill's 681 usable height; nobody has looked. JSON parses. Live by Matt: T003.
 
 Left alone: `continuity.md` (a 2026-06-20 session doc that stops at v14, not the tasks record); `spec.md` (`bypass` lines say black and neutral; line 228 says out3 is near-neutral where gates agree, the code does the opposite); the `Luma gate` hints in `definition.py` (executable, they reach the patcher); `codebox_v17.gen`'s "strength-scaled" comment (a bench input).
+
+## Moved to stable/ (2026-11-06)
+
+Matt's helpfile looks passed 2026-11-06 ("helpfile looks pass", for the group, live by Matt). Contract bench `tests/contracts/bench_modules.py` 2/2, 0 unexpected live contract issues, all four modules in the roster (log `tests/logs/20261106-192009-bench.log`, Max 9.2.0, git fb693ee dirty; run by Claude at Matt's go, live). T001 ticked: the bench header comment and `ideas/incremental_gaussian_taps.md` edits landed in `fb693ee`, and the cost part is T001a. The folder holds only markdown: no scripts, no `parents[N]` or `../` paths, and `definition.py` has no `Spec:` line, so nothing needed changing there. References to this folder in docs and ideas were updated to `.specify/stable/`. `continuity.md` stays in the folder and is behind v17.
+
+Carried over: T004 (tier-1 mirror, `P-mirrors`); the third outlet is 8-bit (`@type char`) while `docs/f-reference/f_vecfield_type.md` asks for float32, the bench tolerance allows for it, and Matt has not decided whether to change the pix type; `Luma gate` hints in `definition.py` are executable and need a rebuild to change.

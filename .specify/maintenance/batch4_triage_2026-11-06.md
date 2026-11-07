@@ -31,3 +31,7 @@ Open for Matt: streak falloff; whether `G-edge-wrap` closes and advect out3 taps
 | `doc-prose-pilot-2` | decompose, answer blind from code, compare | 11 of 12 | Gate passed narrowly; 12 of 15 flags correct; missed real `vs_black` error |
 
 Reports in `f_omp_runs/` contain planted errors that exist only in those run folders. Never apply a fix from them without checking the repo. An omp `agree` is not a clean bill: preflight still reads the patcher and doc. Before a wave on the remaining modules, fix the premise, shared-word and `agree` leaks (skill `omp-fanout`, `references/lessons.md`) and plant errors in every run.
+
+## Update 2026-11-06 (evening)
+
+Group A (warp, stipple, glow, prism) preflighted, looked at by Matt, bench green, moved to `.specify/stable/`. Real bug found by preflight: stipple zoom divided in twice (fixed). Everything else above is unchanged.

@@ -19,7 +19,7 @@ outlet pairs (`f_vf_glow`, `f_vf_chroma`, `f_vf_prism`, `f_vf_streak`,
 
 ## Finding 1: two structurally different module shapes, not one
 
-Read `f_vf_glow`'s actual codebox (`.specify/f_vf_glow/codebox_v1.gen`)
+Read `f_vf_glow`'s actual codebox (`.specify/stable/f_vf_glow/codebox_v1.gen`)
 to ground this rather than reasoning about it abstractly. Current
 behavior:
 
@@ -169,7 +169,7 @@ broadly even at `mix=100%` (visible in Matt's screenshot testing).
 Retained only as a record of a wrong turn — see the vocabulary finding
 above for the corrected direction (occlusion using a private coverage
 signal, computed internally, no alpha channel involved) and
-`.specify/f_vf_prism/plan.md` for the full attempt-by-attempt history.
+`.specify/stable/f_vf_prism/plan.md` for the full attempt-by-attempt history.
 
 **Context (2026-07-12, after `f_vf_prism` testing)**: even after fixing
 the source-bleed bug above (`driven` = pure effect layer, no source
