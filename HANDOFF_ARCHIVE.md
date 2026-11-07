@@ -2,6 +2,15 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-06: batch 3, `f_vf_flow` and `f_tone_curve` moved to `.specify/stable/`
+
+- **Done (offline, Claude):** preflight, docs and helpfiles fixed for both. Moved after Matt's helpfile looks passed (Flow T005, Tone Curve T004). Record: each module's `tasks.md`, "Stable preflight" and "Moved to stable/".
+- **Flow found:** docs said luminance, the codebox reads the red channel; inventory and an idea note still had the unconnected mode; prism chain wrong by meaning (Flow has no gate, it is unit length everywhere). Helpfile had no source: added `vs_sources_main` -> Flow -> preview.
+- **Tone Curve found:** still on native bypass, against the preflight rule; Matt decided to keep it (T005, `G-bypass-native`). Digest and README implied a curve editor. Falloff 0 default gives equal `smoothstep` edges (inferred hard step, not run). Luma-band chain reworked. Added a note.
+- **Tests:** neither has a mirror (T002 skips, Matt) or its own bench; contract bench only. `test_generate_menu.py` 17/17 (log `tests/logs/20261106-094623-offline.log`). Drift, menu and launcher `--check` ok. No bench run this session. `test_gates.py` 5/5 after the move (Matt's go; log `tests/logs/20261106-095024-offline.log`).
+- **Gates:** `G-helpfiles` note added; `G-bypass-native` records Tone Curve keeps native.
+- **Next:** batch 4, scope in the State paragraph above.
+
 ## 2026-11-06: batch 3, `f_vf_potential` moved to `.specify/stable/`
 
 - **Done (offline, Claude):** preflight, docs and helpfile fixed; demo chain added (`vs_sources_main` -> `f_vf_repulse` -> Potential inlets 0 and 1 -> preview). Moved after Matt's helpfile look passed (T005). Record: `.specify/stable/f_vf_potential/tasks.md`, "Stable preflight" and "Moved to stable/".
