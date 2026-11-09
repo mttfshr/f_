@@ -68,14 +68,15 @@ def test_flat_field_cases():
 
 
 def test_extent_closed_form():
-    """c = b * x under a uniform Fx: P = c - a * T * Fx * b, away from the border."""
+    """c = b * x under a uniform Fx: P = c * exp(-a * T * Fx * b / c), away from the border."""
     h, w = 256, 256
     b = 0.002
     t = frame(h, w)
     t[..., :3] = (0.2 + b * np.arange(w, dtype=np.float64))[None, :, None].astype(F32)
     o = ink(t, uniform_field(h, w, 0.5), travel=0.4, extent=1.5)
     T = 0.4 * TRAVEL_MAX * h
-    want = t[..., :3] - F32(1.5 * T * 0.5 * b)
+    c = np.asarray(t[..., :3], np.float64)
+    want = c * np.exp(-1.5 * T * 0.5 * b / c)
     check("ramp under a uniform field: the closed form", err(o[8:-8, 8:-8, :3], want[8:-8, 8:-8]), 1e-5)
 
 
@@ -87,7 +88,7 @@ def test_extent_converging_field_gathers():
     sink[..., 1] = (((64.0 - yy) / 128.0) * 0.5 + 0.5).astype(F32)
     o = ink(frame(h, w, 0.5), sink, travel=0.5, extent=1.0)[..., 0]
     T = 0.5 * TRAVEL_MAX * h
-    want = 0.5 + 1.0 * 0.5 * T * (2.0 / 128.0)
+    want = 0.5 * np.exp(1.0 * T * (2.0 / 128.0))
     note("flat 0.5 in a sink: center, expected", (round(float(o[64, 64]), 5), round(want, 5)))
     check("a converging field gathers ink", abs(float(o[64, 64]) - want), 1e-4)
     source = uniform_field(h, w)
@@ -110,8 +111,26 @@ def test_extent_conserves_ink():
     o = ink(bump, f, travel=0.5, extent=1.0)[..., 0]
     a, b = float(bump[..., 0].mean()), float(o.mean())
     note("mean before, after", (round(a, 6), round(b, 6)))
-    check("the total of ink is conserved within 2%", abs(b / a - 1), 0.02)
+    # 2% with the additive step (0.003% measured); the gain form measures 4.2%, the price of keeping the color and staying above 0.
+    check("the total of ink is roughly conserved (within 6%)", abs(b / a - 1), 0.06)
     check("while it did move", float(not err(o, bump[..., 0]) > 0.05), 0)
+
+
+def test_extent_keeps_the_color_of_the_ink():
+    """Matt, 2026-11-09: accumulation is the same color as the ink, more intense. One gain for the three channels, never below 0."""
+    h, w = 256, 256
+    x = smooth(h, w)
+    x[..., 0] = np.clip(x[..., 0] + 0.2, 0.05, 2)
+    x[..., 1] = np.clip(x[..., 1], 0.05, 2)
+    x[..., 2] = np.clip(x[..., 2] - 0.2, 0.05, 2)
+    o = ink(x, swirl_field(h, w), travel=1.0, extent=2.0)
+    g = o[..., :3] / x[..., :3]
+    check("every channel takes the same gain", float((g.max(-1) - g.min(-1)).max()), 1e-5)
+    check("the gain reaches both sides of 1", float(not (g.min() < 0.8 and g.max() > 1.25)), 0)
+    strong = frame(h, w, 0.5)
+    strong[:, 128:, :3] = 0.9
+    s = ink(strong, uniform_field(h, w, 1.0), travel=1.0, extent=2.0)
+    check("nothing goes below 0, however strong the flow", float(-min(float(s[..., :3].min()), 0.0)), 0)
 
 
 def test_bulge_moves_only_edges():
@@ -177,8 +196,9 @@ def test_border_nonfinite_channels_alpha_bypass():
     a = np.random.default_rng(2).uniform(0, 1, (64, 64, 4)).astype(F32)
     b = a.copy()
     b[..., 1] = 1 - b[..., 1]
-    p, q = ink(a, f, **kw), ink(b, f, **kw)
-    check("channels are independent", max(err(p[..., 0], q[..., 0]), err(p[..., 2], q[..., 2])), 0)
+    p, q = ink(a, f, travel=0.5, bulge=1.0), ink(b, f, travel=0.5, bulge=1.0)
+    check("bulge keeps channels independent", max(err(p[..., 0], q[..., 0]), err(p[..., 2], q[..., 2])), 0)
+    p = ink(a, f, **kw)
     check("alpha passes through", err(p[..., 3], a[..., 3]), 0)
     check("output is not clamped: a value above 1 survives", err(ink(frame(32, 32, 1.7), uniform_field(32, 32)), frame(32, 32, 1.7)), 0)
     check("a neutral field changes nothing", err(ink(frame(64, 64, 1.0), uniform_field(64, 64), extent=2.0), frame(64, 64, 1.0)), 0)
@@ -196,6 +216,7 @@ def test_mutations():
         "bulge_backward": (tone, f, dict(bulge=1.0)),
         "travel_in_texels": (tone, f, dict(extent=1.0)),
         "no_field_zap": (tone, bad, dict(extent=1.0)),
+        "per_channel": (tone, f, dict(extent=1.0)),
     }
     for bug, (src, fld, kw) in cases.items():
         a, b = ink(src, fld, **kw), ink(src, fld, bug=bug, **kw)

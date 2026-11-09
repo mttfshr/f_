@@ -1,11 +1,13 @@
 """ink_mirror.py -- tier-1 float32 NumPy mirror of f_ink as narrowed 2026-11-09 (spec "Narrowed", plan ADR-9, tasks T050-T054).
 
-Ink moves along a vecfield. Three stages, per channel, stateless:
+Ink moves along a vecfield. Three stages, stateless (bulge per channel, extent one gain from luma):
     zap     non-finite components to 0.
     bulge   only the edges move: each channel is read back along the field by T * bulge * e, where e rises with the local slope,
             so a flat interior stays put. T = travel * TRAVEL_MAX * H texels. Read by manual bilinear from exact texels.
-    extent  one step of mass transport: P = c + a * (-(u . grad c) - cavg * T * div F), u = F * T. Ink carried into an edge piles up
-            there, ink carried away from one starves it, and a converging field gathers ink. Bypass and the source alpha end here.
+    extent  one step of mass transport, on luma: flux = -(u . grad L) - Lavg * T * div F, u = F * T. Ink carried into a slope piles up
+            there, ink carried away from one starves it, and a converging field gathers ink. It is applied as a gain,
+            P = c * exp(clamp(a * flux / max(Lavg, 0.02), -2.5, 1.6)), so ink keeps its own color and only its intensity changes, and
+            it cannot go below 0 (Matt, 2026-11-09: the first form, per channel and additive, showed as black). Bypass and alpha end here.
 
 Slopes are central differences over `span` texels (about 3 at 1080), so both effects work on smooth tone, where there are no marks.
 With no field connected F is 0, and the module is exact identity. Output is unclamped (FR-010).
@@ -13,7 +15,7 @@ With no field connected F is 0, and the module is exact identity. Output is uncl
 Constants are inferred from one frame of Matt's (plan ADR-9), tuned live: TRAVEL_MAX, EDGE_G0, SPAN_H.
 
 `bug` values are mutations the tests must catch: "extent_sign", "no_div", "no_edge_weight", "bulge_backward", "travel_in_texels",
-"no_field_zap".
+"no_field_zap", "per_channel".
 """
 import numpy as np
 
@@ -21,6 +23,9 @@ F32 = np.float32
 TRAVEL_MAX = 0.05       # travel = 1, in frame heights
 EDGE_G0 = 7.0           # slope, per frame height, at which an edge counts as fully an edge
 SPAN_H = 0.003          # the slope's half-span, in frame heights
+LUMA = (0.2126, 0.7152, 0.0722)
+LUMA_MIN = 0.02         # the gain's denominator never falls below this, so near-black cannot blow up
+GAIN_LO, GAIN_HI = -2.5, 1.6    # exponent limits: at most about 12x thinner and 5x denser
 
 
 def zap(x):
@@ -90,6 +95,15 @@ def bulge_stage(x, fx, fy, travel, bulge, bug=None):
     return out.astype(F32)
 
 
+def extent_gain(c, fx, fy, t, tdiv, amount, s, ix, iy, bug=None):
+    gx, gy, cavg = slopes(c, ix, iy, s)
+    flux = F32(0) - (fx * t * gx + fy * t * gy) - cavg * tdiv
+    expo = F32(amount) * flux / np.maximum(cavg, F32(LUMA_MIN))
+    if bug == "extent_sign":
+        expo = -expo
+    return np.exp(np.clip(expo, F32(GAIN_LO), F32(GAIN_HI))).astype(F32)
+
+
 def extent_stage(x, fx, fy, travel, amount, bug=None):
     """x: H x W x 3."""
     h, w = x.shape[:2]
@@ -100,12 +114,10 @@ def extent_stage(x, fx, fy, travel, amount, bug=None):
     dfx = (tap(fx, ix, iy, s, 0) - tap(fx, ix, iy, -s, 0)) / two
     dfy = (tap(fy, ix, iy, 0, s) - tap(fy, ix, iy, 0, -s)) / two
     tdiv = t * (dfx + dfy) * (F32(0) if bug == "no_div" else F32(1))
-    out = np.zeros_like(x)
-    sign = F32(-1) if bug == "extent_sign" else F32(1)
-    for i in range(3):
-        gx, gy, cavg = slopes(x[..., i], ix, iy, s)
-        out[..., i] = x[..., i] + F32(amount) * sign * (F32(0) - (fx * t * gx + fy * t * gy) - cavg * tdiv)
-    return out.astype(F32)
+    if bug == "per_channel":
+        return np.stack([x[..., i] * extent_gain(x[..., i], fx, fy, t, tdiv, amount, s, ix, iy, bug) for i in range(3)], -1).astype(F32)
+    luma = (x[..., 0] * F32(LUMA[0]) + x[..., 1] * F32(LUMA[1]) + x[..., 2] * F32(LUMA[2])).astype(F32)
+    return (x * extent_gain(luma, fx, fy, t, tdiv, amount, s, ix, iy, bug)[..., None]).astype(F32)
 
 
 def ink(x, field=None, travel=0.5, extent=0.0, bulge=0.0, bypass=0.0, bug=None):

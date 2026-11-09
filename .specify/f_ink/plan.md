@@ -81,7 +81,7 @@ package/help/f_ink.maxhelp      # Phase 3
 
 Three stages: `zap` -> `bulge` -> `extent`; the vecfield goes to the last two. T = travel * 0.05 * H texels. Slopes are central differences over `s` = max(1, round(0.003 * H)) texels.
 `bulge`: e = clamp(|grad c| * H / 7, 0, 1), read c at p - F * T * bulge * e by a manual bilinear (a data-dependent coordinate can jump, and hardware `sample()` then goes nearest).
-`extent`: P = c + extent * (-(F T . grad c) - cavg * T * div F).
+`extent` (revised 2026-11-09, Matt: accumulation keeps the ink's color): flux = -(F T . grad L) - Lavg * T * div F, on luma; P = c * exp(clamp(extent * flux / max(Lavg, 0.02), -2.5, 1.6)). The exponent limits and the 0.02 are inferred, tuned live.
 **Inferred, from one frame of Matt's (tuned live):** the travel scale 0.05, the edge gain 7 (the 90th percentile slope of that frame), the span.
 **Why:** the old design needed marks with edges; Matt's frame has none, so it could only dim (edge pool) or posterize (spread). Mock-up: `scratch/experiments/f_ink_look/4_field_pool.png` (local; stand-in fields, gaussian slopes where the codeboxes use central differences).
 **Unconnected inlet:** identity, which differs from what Claude told Matt on 11-09 ("a plain, even rim"); a self-derived field is the alternative if he wants one.

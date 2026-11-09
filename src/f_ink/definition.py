@@ -63,7 +63,7 @@ patcher = {
     "params": [
         {"name": "extent", "type": "float", "min": 0.0, "max": 2.0, "default": 0.0, "label": "Extent",
          "pix_target": "extent",
-         "hint": "How much ink the field carries: it piles up where the flow runs into a slope and starves where it leaves one. Output is not clamped. PROVISIONAL"},
+         "hint": "How much ink the field carries: it piles up, denser in its own color, where the flow runs into a slope, and thins where it leaves one. Output is not clamped. PROVISIONAL"},
         {"name": "bulge", "type": "float", "min": 0.0, "max": 2.0, "default": 0.0, "label": "Bulge",
          "pix_target": "bulge",
          "hint": "Moves only the outlines along the field, so edges swell and pinch while flat areas hold still. PROVISIONAL"},

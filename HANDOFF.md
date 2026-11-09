@@ -30,3 +30,5 @@
 - **Open:** cost unresolved (bench floor, about 0.8 ms upper bound per stage). With no field the module is identity (T054). Constants inferred from one frame (ADR-9).
 - **Fixed on the way (Matt's go):** `f_separate`'s pix name is now `#0_`-scoped, so a second instance no longer collides; contract bench 2/2 (`-084909`).
 - **Lesson:** mock on real footage; the sheets on clean shapes predicted nothing. The module bench closes `bench.maxpat`; `benchclient.reopen()` restores it.
+- **Extent keeps the ink's color (Matt):** it is now one gain from luma, because the additive per-channel form went below 0 and showed as black. Not yet looked at.
+- **Bare pix names:** a second instance of a module whose pix name is not `#0_`-scoped collides; `f_vf_flow` failed the contract bench the same way (`tests/logs/20261109-090417-bench.log`) while a live patch was open.

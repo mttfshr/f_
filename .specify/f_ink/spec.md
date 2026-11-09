@@ -11,7 +11,7 @@ _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink bod
 **This section supersedes the rest of this spec wherever they differ.** Matt: mottle, dropout and their field inlets belong to blends elsewhere; "maybe we should be trying to hone how edge pool works".
 
 f_ink is ink that moves along a vecfield. It takes a texture (in0) and a vecfield (in1, `f_vecfield_type.md`), per channel, stateless, unclamped float32.
-- **N-001 Extent:** one step of mass transport along the field. Ink piles up where the flow runs into a slope and starves where it leaves one; a converging field gathers ink. The total of ink over the frame is conserved to within 2% on a test bump.
+- **N-001 Extent:** one step of mass transport along the field. Ink piles up where the flow runs into a slope and thins where it leaves one; a converging field gathers ink. Accumulation is the same color as the ink, more intense (Matt, 2026-11-09): one gain from luma for the three channels, never below 0. The total of ink over the frame stays within about 6% on a test bump (measured 4.2%).
 - **N-002 Bulge:** only the outlines move along the field, weighted by the local slope, so flat areas hold still.
 - **N-003 Travel:** how far, for both; replaces Spread (folded in, Matt).
 - **N-004:** with no field connected, or with Extent and Bulge at 0, the output is exactly the input. Detected from the connected flag.
