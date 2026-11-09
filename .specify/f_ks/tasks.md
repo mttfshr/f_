@@ -23,7 +23,7 @@ Created 2026-10-20 from the spec's "Open Experiments". Each task says whether th
 
 ### Decision gates (Matt)
 
-- [ ] T010 Naming: `f_ks` is a placeholder (see the spec header). Decide before the Phase 3 menu and README entry. Matt passed on naming it 2026-10-31; still open.
+- [x] T010 Naming: closed by Matt, 2026-11-06 ("f_ks has its name"). File `f_ks`, title bar "Kuramoto-Sivashinsky", both as shipped (`src/f_ks/definition.py` `name` / `title`); no rename. Spec header and Clarifications corrected, and the reference doc's "placeholder" line removed, 2026-11-06.
 - [x] T011 Bypass behavior for a pure generator with no pass-through input (open experiment 5): decide in Phase 1, not inherited from `f_vf_fluid`. Decided 2026-10-21 (Matt: "do what other modules do"): follow `f_chladni`, the existing generator with no texture input, whose bypass outputs black with alpha 1. Implemented as a `bypass_gate` Param on `enc` only (the f_vf_fluid ADR-8 mechanism), so the solver keeps running and the state stays warm.
 - [x] T012 Output mapping and `rate` default DECIDED 2026-10-31 (Matt, live look): keep the clamp map and the shipped defaults; no seed shaping or warm-up work. Live measure: the pattern reads as a pattern about 3 s after reset at the default `rate`, about 2 s at the top of the range; nothing is too slow. (The 2026-10-21 frame statistics predicted a longer warm-up; the live feel is what counts.)
 - [x] T013 Reset trigger: both (decided 2026-10-21): a button on the panel and a `reset` message on the control inlet; also fires once on load. Holds `reseed` for three draw bangs (never a timer), and bumps the seed `salt` so every reset is a new pattern.

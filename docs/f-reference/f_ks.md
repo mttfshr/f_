@@ -85,7 +85,6 @@ The mean-zeroing is mandatory, not a toggle: the nonlinearity integrates domain-
 
 ## Known issues / open
 
-- **Name `f_ks` is a placeholder** (T010).
 - **Output mapping, `rate` default, reset warm-up** are tier-3 decisions (T012, T030).
 - **Render-size following needs a live look:** the output size follows the render size via `r dim`, which still needs a check in Vsynth (T022).
 - **Spec drift:** `.specify/f_ks/spec.md` still says "Draft — not yet built", describes a `rate` multiplier with an internal clamp (the shipped `rate` is `dt` itself) and a 128² fallback. `tasks.md` is the live record.

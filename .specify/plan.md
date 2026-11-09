@@ -19,7 +19,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 0. Stable push (Matt, 2026-11-06): batch 3, `f_tf_tensormap`, `f_tf_hatch`, `f_tf_axisflow`, `f_vf_fieldmap`, `f_vf_potential`, `f_vf_flow` and `f_tone_curve` moved, so all seven are in `.specify/stable/`; batch 4 triage is done (`.specify/maintenance/batch4_triage_2026-11-06.md`), Group A (`f_vf_warp`, `f_stipple`, `f_vf_glow`, `f_vf_prism`) moved to `.specify/stable/` 2026-11-06; Group B (`f_vf_advect`, `f_vf_streak`) moved to `.specify/stable/` 2026-11-06; `f_vf_optical_flow` and `f_vf_seeds` bypass passthrough done 2026-11-06 (look and bench passed); `f_vf_vortex` moved to `.specify/stable/` 2026-11-06, batch 4 done; bar is in `HANDOFF_ARCHIVE.md`, 2026-11-06 entries.
 
-2. `f_ks`: its name (T010) and docs (T040) remain (tuning done 2026-10-31: map, defaults and ranges unchanged).
+2. `f_ks`: its docs (T040) remain (name closed 2026-11-06, T010) (tuning done 2026-10-31: map, defaults and ranges unchanged).
 3. Packaging (`G-packaging`): the biggest strategic gap; no tag, icon or install test yet.
 4. `f_masonry` adopts tagged textures (Matt, 2026-11-01: later, not yet). Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each: 6 params x 3 spaces = 18 depths, so "one tag per named `<param>_tex`" needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
 5. The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`).

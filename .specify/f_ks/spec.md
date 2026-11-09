@@ -9,8 +9,9 @@ Sivashinsky). Stability question resolved by `tests/records/spike_ks_stability.p
 `f_vf_fluid` already uses is real-time-stable, one step per frame. Matt:
 "spec it" (2026-10-13)._
 
-**Working name — not settled.** `f_ks` (parallels `f_chladni`'s
-physics-name convention) is a placeholder; see Clarifications.
+**Name — settled (Matt, 2026-11-06).** The file is `f_ks` (parallels
+`f_chladni`'s physics-name convention) and the title bar reads
+"Kuramoto-Sivashinsky". Neither is a placeholder.
 
 ---
 
@@ -57,8 +58,9 @@ physics-name convention) is a placeholder; see Clarifications.
 
 ### Open, not yet decided
 
-- **Naming.** `f_ks` is a placeholder (see header). Flagging rather than
-  deciding, same as `f_tf_tensormap` was flagged in `ideas/f_tensorfield.md`.
+- **Naming.** Closed: file `f_ks`, title bar "Kuramoto-Sivashinsky" (Matt, 2026-11-06, T010). It was
+  flagged as a working name until then, as `f_tf_tensormap` was in
+  `ideas/f_tensorfield.md`.
 - **Output encoding.** `u`'s dynamic range is bounded but not naturally
   [0,1] (spike's soaks show `max|u|` in the low-to-mid single digits at
   the measured safe `dt`, but this hasn't been tuned for how it should
