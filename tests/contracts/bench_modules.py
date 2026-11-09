@@ -108,6 +108,7 @@ BYPASS_EXPECT = {
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # luma: black, A = 1
         2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
     },
+    "f_separate": {2: IN1, 3: IN1, 4: IN1},             # the (zapped) source on all four outlets (spec FR-012, P10)
     "f_vf_stamp": {2: ("vec", 2, 1e-6)},                # G5: out1 is in1 (implicit), out2 the field on inlet 2
     "f_quasi": {                                        # dual generator: bypass_gate = neutral values on every outlet
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # look: black, A = 1
@@ -213,6 +214,8 @@ INPUT_SIZE = {"f_vf_fluid": 512,
               # against the 64 x 64 input, the same shape as f_stipple.
               "f_weave": RENDER_DIM_SIZE,
               "f_vf_stamp": RENDER_DIM_SIZE,
+              # 2026-11-08: f_separate follows render_dim (size_stages) and passes the source through on all four outlets.
+              "f_separate": RENDER_DIM_SIZE,
               # 2026-11-07: f_poincare follows render_dim and passes inlet 0 through when bypassed.
               "f_poincare": RENDER_DIM_SIZE,
               # 2026-11-06: f_vf_seeds follows render_dim and now passes inlet 0 through on out1.

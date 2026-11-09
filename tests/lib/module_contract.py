@@ -43,13 +43,13 @@ PIX_BUILTINS = {"bypass", "activeinput", "adapt", "colormode", "dim", "dimscale"
 _PARAM_RE = re.compile(r"\bParam\s+([A-Za-z_]\w*)\s*\(")
 TRAVERSE_TOKENS = {"t", "trigger", "prepend", "scale", "zl", "pack", "pak", "int", "i",
                    "float", "f", "expr", "+", "*", "/", "%", "-", "line", "!-", "!/", "round", "clip",
-                   "gate", "change", "speedlim", "deferlow", "defer"}
+                   "gate", "change", "speedlim", "deferlow", "defer", "unpack"}  # unpack: f_separate's swatch colour route
 # Pure message routers / selectors. Passing THROUGH one is legitimate when asking "does this route token go anywhere"
 # (f_caustic's scene control entry and its `detail` ladder), but NOT when following an attrui to its target: a route
 # renames the message, and an attrui's attribute name must equal a pix Param. So it is opt-in (through_routes).
 ROUTING_TOKENS = {"route", "select", "sel"}
 PASS_THROUGH = ("live.dial", "live.numbox", "live.menu", "live.toggle", "flonum",
-                "number", "toggle", "umenu")
+                "number", "toggle", "umenu", "swatch")   # swatch: f_separate's ink colours
 
 
 def _text(box):
