@@ -1938,7 +1938,7 @@
 										150.0,
 										22.0
 									],
-									"text": "f_tone_curve",
+									"text": "f_separate",
 									"presentation": 1,
 									"presentation_rect": [
 										10.0,
@@ -1963,7 +1963,7 @@
 										230.0,
 										22.0
 									],
-									"text": "loadunique f_tone_curve.maxhelp"
+									"text": "loadunique f_separate.maxhelp"
 								}
 							},
 							{
@@ -1978,11 +1978,80 @@
 										150.0,
 										20.0
 									],
-									"text": "Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor",
+									"text": "⚠ Unverified. Splits an image into up to three spot-color plates of additive inks, plus a summed preview",
 									"presentation": 1,
 									"presentation_rect": [
 										230.0,
 										98.0,
+										720.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-14",
+									"maxclass": "textbutton",
+									"numinlets": 1,
+									"numoutlets": 3,
+									"outlettype": [
+										"",
+										"",
+										"int"
+									],
+									"parameter_enable": 0,
+									"fontsize": 12.0,
+									"patching_rect": [
+										20.0,
+										260.0,
+										150.0,
+										22.0
+									],
+									"text": "f_tone_curve",
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										124.0,
+										210.0,
+										22.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-15",
+									"maxclass": "message",
+									"numinlets": 2,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										20.0,
+										288.0,
+										230.0,
+										22.0
+									],
+									"text": "loadunique f_tone_curve.maxhelp"
+								}
+							},
+							{
+								"box": {
+									"id": "obj-16",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										260.0,
+										150.0,
+										20.0
+									],
+									"text": "Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										126.0,
 										720.0,
 										20.0
 									]
@@ -2078,6 +2147,30 @@
 								"patchline": {
 									"source": [
 										"obj-12",
+										0
+									],
+									"destination": [
+										"obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-14",
+										0
+									],
+									"destination": [
+										"obj-15",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"source": [
+										"obj-15",
 										0
 									],
 									"destination": [

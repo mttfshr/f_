@@ -25,6 +25,7 @@ var SIZES = {
     "channel_grader": [150, 165],
     "hue_processor":  [150, 120],
     "luma_processor": [150, 120],
+    "separate":       [191, 200],
     "tone_curve":     [150, 120],
     "vf_ch":          [190, 150],
     "vf_flow":        [150,  80],

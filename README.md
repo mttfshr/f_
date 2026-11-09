@@ -57,6 +57,7 @@ This table is also the source for the package's launcher patcher (`package/extra
 | `f_channel_grader` | Per-channel color grading |
 | `f_hue_processor` | Hue-selective processing |
 | `f_luma_processor` | Luminance-selective processing |
+| `f_separate` | ⚠ Unverified. Splits an image into up to three spot-color plates of additive inks, plus a summed preview |
 | `f_tone_curve` | Lifts or lowers shadows, mids and highlights separately, with movable crossovers; not a curve editor |
 
 ### ∇ Fields

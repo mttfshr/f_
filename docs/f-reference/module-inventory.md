@@ -24,6 +24,7 @@ Stateless, texture→texture, no geometric displacement. Reach for these when th
 | `f_channel_grader` | tex → tex | Per-channel lift/gamma/gain (film-style grade), R/G/B + master |
 | `f_hue_processor` | tex → tex | Isolates a hue band (center + asymmetric width + falloff), adjusts sat/lum/hue within it only. Low-sat regions gated out. ⚠ open UI bug on `hue_lower`/`hue_upper` |
 | `f_luma_processor` | tex → tex | Isolates a luma range (shadow/mid/high breakpoints), adjusts sat/lum/hue within it only. Structurally parallel to `f_tone_curve` |
+| `f_separate` | tex → tex x 3 (plates) + tex (preview) | Splits a colour image into up to three spot-colour plates, inks as colours of light that add on black; Unmix, Nearest or Project per pixel, stateless |
 | `f_tone_curve` | tex → tex | Shadow/midtone/highlight brightness lift by tonal band; additive, not a curve editor. Structurally parallel to `f_luma_processor` |
 
 ## Geometry / UV Warp
@@ -135,6 +136,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_channel_grader` | 1: tex + ctrl | 1: tex | Required (processor) | Source passthrough (convention) |
 | `f_hue_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
 | `f_luma_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
+| `f_separate` | 1: tex + ctrl | 4: tex (plates 1-3); tex (preview) | Required | Source on all four outlets (`bypass_gate`; codebox bench, contract bench not yet run) |
 | `f_tone_curve` | 1: tex + ctrl | 1: tex | Required | Source passthrough (native `@bypass`, `G-bypass-native`) |
 
 ### Geometry / UV Warp
