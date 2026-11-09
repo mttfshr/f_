@@ -1,0 +1,65 @@
+# Tasks: f_ink
+
+**Spec**: spec.md · **Plan**: plan.md · Created 2026-11-08 (Claude, with Matt). No module code yet.
+
+Record format: date, who observed (offline Claude / live Matt), source (log path, commit).
+
+**Gate convention for this list:** a gate marked **PRELIMINARY** was decided by Claude's own recommendation on Matt's instruction (2026-11-08), not by Matt. It stays unticked until Matt confirms it or a measurement settles it. Gates Matt decided in the clarify session (Q1 to Q5) are ticked.
+
+## Expected source layout
+
+```
+src/f_ink/{definition.py, codebox_blur.gen, codebox_fx_a.gen, codebox_fx_b.gen, codebox_dir.gen}
+tests/modules/ink/{ink_mirror.py, test_ink.py, bench_ink.py, bench_ink_module.py}
+package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink.maxhelp
+```
+
+## Phase 0: gates and the mirror (BLOCKING for Phase 1)
+
+- [x] T001 [GATE Q1] DECIDED (Matt, 2026-11-08): the effects run in one fixed order.
+- [x] T002 [GATE G6] DECIDED (Matt, 2026-11-08): output is unclamped float32.
+- [x] T003 [GATE G3] DECIDED (Matt, 2026-11-08): patterns fixed to the frame, no switch.
+- [x] T004 [GATE G8] DECIDED (Matt, 2026-11-08): two dedicated optional inlets (in1 amount texture, in2 spread-direction vecfield).
+- [x] T005 [GATE Q5] DECIDED (Matt, 2026-11-08): three channel gains.
+- [ ] T006 [GATE G1] PRELIMINARY: tiers 1, 2 and 3 all apply (plan "Testing plan"); nothing skipped.
+- [ ] T007 [GATE G2] PRELIMINARY: every length in frame heights; x scaled by the aspect (plan ADR-7).
+- [ ] T008 [GATE G4] MEASURE on the bench first (T024): does `sample()` interpolate on this hardware? Until then the design uses only `nearest` taps at texel centres (plan ADR-2). Resolves the disagreement between `ideas/f_deflicker.md` and `.specify/f_vf_stamp/spec.md` FR-009.
+- [ ] T009 [GATE G5] MEASURE: the spread cap (stride at or below 2 texels, plan ADR-2) and the cost of the four blur stages at 1080p; decide whether the pool blur can reuse the spread blur.
+- [ ] T010 [GATE G7] PRELIMINARY: clamp-to-edge at the frame border, by explicit texel index math.
+- [ ] T011 [GATE G9] DEFERRED by Matt (linear-light versus encoded). PRELIMINARY: treat values as given; revisit at T031 and add a switch if the look needs it.
+- [ ] T012 [GATE G10] PRELIMINARY: three-octave value noise from the sin hash for mottle, one octave for tooth (plan ADR-4); confirm the statement count when written.
+- [ ] T013 [GATE G11] PRELIMINARY: keep the name `f_ink`; menu category at Phase 3 (`G-menu`).
+- [ ] T014 [GATE G12] PRELIMINARY: panel grouped as Spread / Edge / Mottle / Dropout, then P2 rows (Fleck, Band, Gains, Drivers); decide the final layout at T040 with Matt (`G-ui-density`).
+- [ ] T015 Confirm with Matt the five assumptions left in the spec (A1 polarity, A2 per channel, A3 stateless, A4 frame-relative units, A6 identity at zero) and the two small G8 details (what in1 scales, how in2 elongates the kernel).
+- [ ] T016 [US1-US4] NumPy mirror `tests/modules/ink/ink_mirror.py` and `test_ink.py` per the plan's Tier 1 list: identity at zero, spread (disc area, merge, thin, bias), mottle statistics, dropout monotone and light-first, edge-pool rim, determinism, render-size scaling, border, non-finite zap. Run `tests/run.sh -q tests/modules/ink`.
+- [ ] T017 [US1] Record in the mirror the measured numbers that settle SC thresholds still marked open in the spec (mottle mean shift, area preservation of the re-threshold).
+
+## Phase 1: build
+
+- [ ] T020 [US1] `src/f_ink/codebox_blur.gen`: one separable 15-tap tent pass, direction and radius as Params, nearest taps by index, border clamp. Follow `skills/jit-gen-codebox/SKILL.md`.
+- [ ] T021 [US1] [US3] [US4] `src/f_ink/codebox_fx_a.gen`: re-threshold with `bias` and `soften`, edge pooling (plan ADR-3), exact identity at zero amounts.
+- [ ] T022 [US2] [US3] `src/f_ink/codebox_fx_b.gen`: mottle, tooth and dropout, zap, `bypass_gate` (plan ADR-4, ADR-6), alpha pass-through.
+- [ ] T023 `src/f_ink/definition.py`: `pix_chain` with the six stages and `pix_wires`, `render_dim`, the P1 dials, `bypass` as `bypass_gate`; then `build/py.sh build/build_patcher.py`, drift check, JSON validate, `tests/contracts/test_module_contracts.py` (offline only).
+- [ ] T024 `tests/modules/ink/bench_ink.py` and `bench_ink_module.py` (read `skills/bench-test-authoring` first). Written offline; run only with Matt's go, `-q`. First bench item: `sample()` interpolation (T008) and blur-stage cost (T009).
+- [ ] T025 [US5] `fx_b` additions: flecks and banding (P2 stories).
+- [ ] T026 [US6] Channel gains in `fx_b`; the in1 amount driver and its connected flag (`src_amt`); definition and mirror updates.
+- [ ] T027 [US6] `src/f_ink/codebox_dir.gen`: directional spread along the in2 vecfield (`src_dir`), mirror and bench.
+
+## Phase 2: tuning (Matt)
+
+- [ ] T030 Live look: `f_stipple`, `f_tf_hatch`, `f_wave_field` or `f_ks` through f_ink; does it read as ink on paper? Mottle, dropout and edge pooling especially.
+- [ ] T031 Live look: one deliberately bent use (per-channel gains, a field-driven spread); check linear-light (T011).
+- [ ] T032 Dial ranges, defaults, the `spread` cap, the octave weights; back into the codebox and `definition.py`, then re-run tiers 1 and 2.
+
+## Phase 3: docs and registration
+
+- [ ] T040 Reference doc `docs/f-reference/f_ink.md`, helpfile (the `f-helpfile` skill), menu placement (T013), README Patches row (110 characters; regenerate the launcher), inventory rows.
+- [ ] T041 `ideas/f_print_styles.md` status for stage 3 to built; INDEX entry; `.specify/gates.md` rows touched; module-preflight skill checklist before `.specify/stable/`.
+
+## Dependencies and order
+
+Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order; T024 (written) can follow T023; T025, T026 and T027 are P2 and follow a passing P1 bench. Parallel: T025 and T026 touch the same file (`codebox_fx_b.gen`), so they are not parallel in practice; T027 is.
+
+## Record
+
+- 2026-11-08 (offline, Claude): spec clarified with Matt (Q1 to Q5), then this plan and task list written from it. The gates marked PRELIMINARY are Claude's own recommendations, taken on Matt's instruction; nothing here has been run or measured.
