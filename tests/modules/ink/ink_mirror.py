@@ -4,7 +4,7 @@ driver inlets are P2 (T025-T027) and are added with their stages. Stateless, sta
 
 Stages (each a codebox later, so bench_ink.py can diff them one by one):
     zap         non-finite input components to 0, BEFORE any blur (a NaN in a tap poisons a whole kernel).
-    blur_pass   one separable pass: 15 tent taps at nearest texels, border by index clamp (G7).
+    blur_pass   one separable pass: 15 taps at nearest texels, tent weights set by the radius, border by index clamp (G7).
     threshold   spread's re-threshold: S = smoothstep(0.5 - w/2 - bias, 0.5 + w/2 - bias, B), w = max(soften, SOFT_MIN),
                 then mix(x, S, spread), so spread 0 is exact identity.
     pool        edge pooling, from a blur of S at pool_width: P = S + edge_pool * S * 2 * max(S - Bp, 0).
@@ -17,8 +17,11 @@ Two departures from plan.md, both because the plan's text contradicts the spec (
   And the pool blur reads S, not in0, because FR-008 puts spread before pooling, so the rim follows the moved edge. That adds
   a stage (blur, blur, threshold, blur, blur, pool, fx_b = 7, plan said 6) and rules out reusing the spread blur (ADR-3 open).
 
-Inferred choices the plan leaves open: the blend weight is `spread` itself; the offset of tap k is sign(k) * floor(|k| * stride
-+ 0.5), symmetric, so a kernel has no drift; SOFT_MIN guards smoothstep at soften 0.
+Matt, 2026-11-08: the taps are one texel apart (a spacing of 2 combs a 1-texel line), so every blur reaches 7 texels at most.
+The offsets are therefore fixed and the radius sets the weights (replacing ADR-2's rounded offsets, which were lumpy at sizes
+between whole strides).
+
+Inferred choices the plan leaves open: the blend weight is `spread` itself; SOFT_MIN guards smoothstep at soften 0.
 
 The hash is float32 sin, as the codebox will be, but a GPU sin differs from NumPy's in the low bits and the multiplier magnifies
 that, so a bench can compare the patterns' statistics only, never their texels (inferred from the size of the multiplier).
@@ -32,11 +35,10 @@ up that is on the GPU is for bench_ink.py to establish.
 import numpy as np
 
 F32 = np.float32
-SPREAD_CAP_H = 14.0 / 1080.0    # spread = 1, in frame heights (plan ADR-2; G5 / T009 still to settle it)
-MAX_STRIDE = 2.0                # plan ADR-2; texels between taps
+SPREAD_CAP_H = 7.0 / 1080.0     # spread = 1, in frame heights: 7 texels at 1080 (Matt, 2026-11-08, stride 1)
+MAX_STRIDE = 1.0                # texels between taps (Matt, 2026-11-08: stride 2 combs a 1-texel line); holds every blur at 7 texels
 SOFT_MIN = 1e-3
 HALF = 7
-TENT = np.array([(HALF + 1 - abs(k)) / float((HALF + 1) ** 2) for k in range(-HALF, HALF + 1)], dtype=F32)
 OCTAVE_WEIGHTS = (1.0, 0.5, 0.25)
 
 
@@ -44,15 +46,20 @@ def zap(x):
     return np.where(np.isfinite(x), x, F32(0)).astype(F32)
 
 
-def tap_offsets(radius_tx):
-    stride = min(float(radius_tx) / HALF, MAX_STRIDE)
-    return [int(np.sign(k) * np.floor(abs(k) * stride + 0.5)) for k in range(-HALF, HALF + 1)]
+def tap_weights(radius_tx):
+    """Taps at the fixed offsets -7..7, one texel apart; the radius only changes the weights: a tent of half-width r + 1,
+    normalized. r = 0 is one tap of weight 1, and the weights move continuously with the dial."""
+    r = min(float(radius_tx), float(HALF) * MAX_STRIDE)
+    w = np.array([max(0.0, 1.0 - abs(k) / (r + 1.0)) for k in range(-HALF, HALF + 1)], dtype=np.float64)
+    return (w / w.sum()).astype(F32)
 
 
 def blur_pass(x, axis, radius_tx):
     n = x.shape[axis]
     out = np.zeros_like(x)
-    for w, off in zip(TENT, tap_offsets(radius_tx)):
+    for w, off in zip(tap_weights(radius_tx), range(-HALF, HALF + 1)):
+        if w == 0:
+            continue
         idx = np.clip(np.arange(n) + off, 0, n - 1)
         out += w * np.take(x, idx, axis=axis)
     return out.astype(F32)
@@ -123,7 +130,7 @@ def fx_b(c, px, py, mottle, mottle_scale, dropout, tooth_scale, seed, bug=None):
     return np.where(probe < F32(dropout) * tooth, F32(0), c).astype(F32)
 
 
-def ink(x, spread=0.0, bias=0.0, soften=0.2, edge_pool=0.0, pool_width=0.01, mottle=0.0, mottle_scale=0.15, dropout=0.0,
+def ink(x, spread=0.0, bias=0.0, soften=0.2, edge_pool=0.0, pool_width=0.005, mottle=0.0, mottle_scale=0.15, dropout=0.0,
         tooth_scale=0.004, seed=1.0, bypass=0.0, bug=None):
     """x: H x W x 4 float32. Returns H x W x 4; RGB processed per channel, alpha from the source."""
     h, w = x.shape[:2]

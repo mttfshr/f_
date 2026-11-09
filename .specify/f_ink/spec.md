@@ -160,11 +160,11 @@ A performer gives the three channels different gains (`gain_r`, `gain_g`, `gain_
 
 | Param | Range | Default | Notes |
 |---|---|---|---|
-| `spread` | 0-1 | 0 | blur radius in frame units, capped by G5 |
+| `spread` | 0-1 | 0 | blur radius in frame units; 1 is 7 texels at 1080 (G5, Matt, 2026-11-08) |
 | `bias` | -1 to 1 | 0 | after the blur: toward gain (fatter) or loss (thinner) |
 | `soften` | 0-1 | 0.2 | edge softness of the re-threshold |
 | `edge_pool` | 0-1 | 0 | amount |
-| `pool_width` | frame units | 0.01 | rim width |
+| `pool_width` | frame units | 0.005 | rim width; shares the 7-texel blur reach (Matt, 2026-11-08, stride 1) |
 | `mottle` | 0-1 | 0 | amount |
 | `mottle_scale` | frame units | 0.15 | blotch size |
 | `dropout` | 0-1 | 0 | amount |
