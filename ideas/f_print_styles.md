@@ -40,6 +40,7 @@ Not a swizzle. Vsynth's RGB swizzle plus a recolour gives at most three plates t
 
 That app (Matt, 2026-11-08) is specific to riso machines' halftone and overprint options and gives a live composite preview showing the colour shift caused by the palette clamping your ink choices create. Consequences (inferred from his description, not the app):
 
+- **Update 2026-11-08 (Matt, `f_separate` review; supersedes the multiply and paper wording in this section):** "paper is a metaphor": the background is black and inks are colours of light that ADD. `f_separate` outputs one coloured texture per ink (coverage times ink colour) plus a summed preview, so a later `f_paper` inherits addition, not a subtractive overprint. `f_screen` and `f_engrave` work on the RGB channels of each texture, with a Channels / Single toggle (Single = one screen for a spot colour).
 - Separation and overprint are one coupled decision: `f_separate` and `f_paper` must share one overprint model, `f_separate` inverting what `f_paper` applies.
 - The preview is a chain: `f_separate` into `f_paper` with no screen between shows the gamut-clamped image; inserting `f_screen` gives the real look.
 - A test: separate and recompose a flat patch of each ink; it should come back unchanged.

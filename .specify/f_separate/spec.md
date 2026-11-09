@@ -12,8 +12,8 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 
 - **Not a swizzle.** Vsynth's RGB swizzle with a recolour gives at most three plates tied to R, G and B. `f_separate` splits a full-colour image into arbitrary spot-colour inks from a palette, or into CMYK-like inks, which is what makes it worth a module (Matt: "could be more interesting").
 - **Plates:** up to three, one per ink. Alpha is not a plate. Vsynth's invert module reverses a channel if needed. Spot-colour separation is the interesting part (Matt).
-- **The reference is the prepress app** Matt uses for riso. It is specific to riso machines' halftone and overprint options and gives a **live composite preview showing the overall colour shift from the palette clamping** the chosen inks create. Its riso-specific halftone options are not to be emulated (Matt).
-- **Separation and overprint are one coupled decision:** `f_separate` unmixes with the overprint model that `f_paper` will mix with (Claude's consequence of Matt's description, inferred).
+- **SUPERSEDED 2026-11-08 (print is a vocabulary for screens; no prepress comparison decides anything): the reference was the prepress app** Matt uses for riso. It is specific to riso machines' halftone and overprint options and gives a **live composite preview showing the overall colour shift from the palette clamping** the chosen inks create. Its riso-specific halftone options are not to be emulated (Matt).
+- **Separation and overprint are one coupled decision (now additive light, P2):** `f_separate` unmixes with the overprint model that `f_paper` will mix with (Claude's consequence of Matt's description, inferred).
 - **A vocabulary, not a goal:** the separation is one operator in the print vocabulary and can be bent into a digital colour-reduction tool as well.
 - **Undecided by Matt ("I don't know yet"):** the separation method for riso, and the CMYK scope. The method here is the preliminary decision below.
 

@@ -37,9 +37,9 @@ package/patchers/f_separate.maxpat    docs/f-reference/f_separate.md    package/
 
 - [x] T020 [US1] [US2] [US3] [US4] `src/f_separate/codebox_separate.gen`: density, 3×N solve with ridge, plates and preview, degenerate handling, zap, bypass on both outlets, alpha pass-through (plan ADR-1 to ADR-4, ADR-7). Follow `skills/jit-gen-codebox/SKILL.md`.
 - [x] T021 `src/f_separate/definition.py`: one stage with four outlets (three plates, preview), the three swatches plus a saturation dial each (T009), `render_dim`, the colour controls (T009), `inks`, `mode`, `bypass_gate`; then `build/py.sh build/build_patcher.py`, drift check, JSON validate, `tests/contracts/test_module_contracts.py` (offline only).
-- [ ] T022 `tests/modules/separate/bench_separate.py` and `bench_separate_module.py` (read `skills/bench-test-authoring` first). Written offline; run only with Matt's go, `-q`. First bench item: per-pixel cost at 1080p.
-- [ ] T023 [US5] Nearest mode in the codebox (plan ADR-5): `mode` Param, mirror and bench.
-- [ ] T024 [US6] Per-ink gains (`gain1` to `gain3`) in the codebox and the mirror.
+- [ ] T022 HALF DONE (`bench_separate.py` 5/5, log `tests/logs/20261108-222210-bench.log`; `bench_separate_module.py` and the 1080p cost not done) `tests/modules/separate/bench_separate.py` and `bench_separate_module.py` (read `skills/bench-test-authoring` first). Written offline; run only with Matt's go, `-q`. First bench item: per-pixel cost at 1080p.
+- [x] T023 [US5] Nearest mode in the codebox (plan ADR-5): `sep_mode` Param, mirror and bench (bench 5/5, `tests/logs/20261108-222210-bench.log`).
+- [x] T024 [US6] Per-ink gains (`gain1` to `gain3`) in the codebox and the mirror (same bench log).
 
 ## Phase 2: tuning (Matt)
 
