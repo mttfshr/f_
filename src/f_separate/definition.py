@@ -72,8 +72,9 @@ patcher = {
 #   default: loadbang -> deferlow -> `set r g b 1.` paints the swatch without sending. The colour is sent once, later:
 #            first `r draw` -> [onebang 1] -> [delay 100] -> bang each swatch. A bang at load (0f0826d) left all four outlets
 #            black on Matt's look, 2026-11-08; INFERRED cause: too early for the pix or the swatch, so timed off a draw
-#   sat:     satN dial -> expr * 255 -> [t b f] -> f: `prepend saturation` -> swatch, then b: bang -> the swatch sends its
-#            colour again. UNVERIFIED in Max: whether `saturation` alone re-sends (the bang is the safe order)
+#   sat:     satN dial (0..1) -> [t b f] -> f: `prepend saturation` -> swatch, then b: bang -> the swatch sends its colour
+#            again. The attribute is 0..1 (swatch.maxhelp saves 1.0); a `* 255` here had no visible effect on the module bench,
+#            2026-11-08. UNVERIFIED in Max: whether `saturation` alone re-sends (the bang is the safe order)
 # Ids: the route is obj-4 (outlet 7 + N is inkN), the primary pix obj-5, the dials are the builder's (sat1-3).
 DEFAULTS = {1: (1.0, 0.25, 0.0), 2: (0.0, 0.6, 0.6), 3: (0.45, 0.0, 1.0)}
 SAT_DIAL = {1: "obj-35", 2: "obj-38", 3: "obj-41"}
@@ -124,12 +125,10 @@ for n, (r, g, bl) in DEFAULTS.items():
         _box(pp, "newobj", f"prepend param ink{n}_{c}", rect=(300 + 130 * j, y + 70, 120, 22))
         _line(un, j, pp, 0)
         _line(pp, 0, "obj-5", 0)
-    ex, tr, ps = f"obj-raw-ex{n}", f"obj-raw-tr{n}", f"obj-raw-ps{n}"
-    _box(ex, "newobj", "expr $f1 * 255.", rect=(520, y, 100, 22))
+    tr, ps = f"obj-raw-tr{n}", f"obj-raw-ps{n}"
     _box(tr, "newobj", "t b f", outs=2, rect=(520, y + 30, 50, 22), otypes=["bang", "float"])
     _box(ps, "newobj", "prepend saturation", rect=(520, y + 60, 120, 22))
-    _line(SAT_DIAL[n], 0, ex, 0)
-    _line(ex, 0, tr, 0)
+    _line(SAT_DIAL[n], 0, tr, 0)
     _line(tr, 1, ps, 0)
     _line(ps, 0, sw, 0)
     _line(tr, 0, sw, 0)
