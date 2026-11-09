@@ -1,7 +1,7 @@
 # f_separate
 
 **Type:** Processor: stateless, per pixel. One texture in; four textures out (three plates and their sum).
-**Status:** Built 2026-11-08. Tier 1 and both benches green (Verification below). Tuning looks passed, live by Matt 2026-11-08 (T030, T031). The panel was laid out to Matt's direction the same day: Mode in the title bar, Inks at the left, Gain, Sat and Ink in one column per ink (not yet seen in Max).
+**Status:** Built 2026-11-08. Tier 1 and both benches green (Verification below). Tuning looks passed, live by Matt 2026-11-08 (T030, T031). The panel was laid out to Matt's direction the same day: Mode in the title bar, Inks at the left, Gain, Sat and Ink in one column per ink (look passed, Matt).
 
 _Reference written 2026-11-08 from `src/f_separate/` (definition and codebox), `.specify/f_separate/{spec,plan,tasks}.md` and the module's tests._
 
@@ -78,17 +78,16 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 
 - **Reading the preview.** Unmix with fewer than three inks is a projection: what the inks cannot reach is lost and the preview shows it. Where inks sum past 1 in a channel, the preview clips.
 - **A black ink** contributes nothing: its plate is black and the solve stays finite. Under Nearest it ties with black and an ink wins the tie, also black.
-- **Values as given.** The maths runs on the values it receives, with no linear-light conversion (`G-linear-light`, deferred by Matt to the looks).
+- **Values as given.** The maths runs on the values it receives, with no linear-light conversion (Matt, 2026-11-08, after the tuning looks).
 - **One texture in, no neighbours.** Per-plate halftone, grain and misregistration are other modules' jobs (`f_screen`, `f_ink`, `f_misregister`, not built); a per-plate tone curve is `f_tone_curve` upstream.
 - **Cost.** Not measured (NF-001 asks for a 1080p figure). One pass, about 90 statements (per `tasks.md`).
 
 ## Known issues / open
 
 - **The first Sat dial move shifts an ink slightly and it does not come back.** Ink 1 starts at (1, 0.25, 0) and reads (1, 0.238, 0.004) after Sat 1 goes to 0.5 and back (module bench). Inferred: the bang recomputes the colour from the swatch's position. If so, a pastel set by message would also snap to the swatch's plane when its dial moves; not tested.
-- **Persistence.** A swatch's state came back through a preset recall (Matt); whether a plain reopen keeps it is unconfirmed.
 - **Console lines.** `method get_filterset called on invalid object`, `method gettype called on invalid object` and `patcher doesn't understand "getattr"` appeared on Matt's looks; unexplained, and whether other modules print them is unchecked.
 - **Menu category** (Color / Tone) was placed by Claude, provisional (`G-menu`).
-- **Preliminary gates** in `tasks.md` (T004, T006, T007, T010, T011) are Claude's recommendations, not yet Matt's decisions (`G-print-prelim`): the unconstrained solve then clamp is the one most likely to change if the gamut boundary looks wrong.
+- **Preliminary gates** in `tasks.md` (T004, T006, T007, T011) are Claude's recommendations, not yet Matt's decisions (`G-print-prelim`): the unconstrained solve then clamp is the one most likely to change if the gamut boundary looks wrong.
 
 ## Verification
 
@@ -96,7 +95,7 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 - `bench_separate.py`: the real codebox against the mirror, 5/5, worst 4.8e-7 (log `tests/logs/20261108-222210-bench.log`, per `tasks.md`).
 - `bench_separate_module.py`: the shipped patcher, 5/5, worst 6.6e-7 on the first green run (latest log `tests/logs/20261108-224811-bench.log`): load touching nothing, Mode and ink count, `inkN` messages, gains, the Sat dial.
 - `tests/contracts/bench_modules.py`: 2/2 (log `tests/logs/20261108-224839-bench.log`), including bypass passing the source on all four outlets.
-- Live (Matt, 2026-11-08): the swatch route (T009), the plates showing after `aeaf7b3`, the tuning looks (T030, T031), the Sat dial, the helpfile.
+- Live (Matt, 2026-11-08): the swatch route (T009), the plates showing after `aeaf7b3`, the tuning looks (T030, T031), the Sat dial, the helpfile, the panel, a plain reopen keeping a changed swatch.
 
 ## References
 
