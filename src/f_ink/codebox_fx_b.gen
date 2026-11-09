@@ -1,10 +1,12 @@
-// f_ink -- the last stage: mottle, then dropout, then bypass and the source alpha (spec FR-005, FR-006, FR-013, plan ADR-4,
-// ADR-6, T022). Mirror: tests/modules/ink/ink_mirror.fx_b and the end of ink().
-// First input: the pooled image. Second input: the zapped source.
+// f_ink -- the last stage: mottle, then dropout, then bypass and the source alpha (spec FR-005, FR-006, FR-013, FR-017, plan ADR-4,
+// ADR-6, ADR-8, T036). Mirror: tests/modules/ink/ink_mirror.fx_b and the end of ink().
+// Inputs, in order: the pooled image; the zapped source; the mottle field; the tooth field. A field's luma replaces the built-in
+// noise when its connected flag is 1 (the flag, not the value: an unconnected inlet is not reliably black).
 // Coordinates are frame heights (x scaled by the aspect), fixed to the frame (Matt, Q3). The hash is sin (noise() is black
 // on this path); a GPU sin differs from NumPy's in the low bits, so the bench can compare statistics only, not texels.
-// Mottle is a gain centered on 1, so a coverage of 0 stays 0. Dropout compares max(c, 0), so a negative value is left
-// alone at dropout 0, and the comparison is strict, so dropout 0 removes nothing.
+// Mottle only thins ink, most where it is dense, so a coverage of 0 stays 0. Dropout has soft edges; below dropout 0.05 the whole
+// effect fades in, so dropout 0 is exact identity. The fields are read with sample(), since they can be any size: exact at 1:1,
+// and smooth rather than blocky when magnified.
 hash_2d(ix, iy, sd) {
     hv = sin(ix * 127.1 + iy * 311.7 + sd) * 43758.5453;
     return hv - floor(hv);
@@ -29,36 +31,79 @@ vnoise(px, py, scl, sd) {
     return near_row + (far_row - near_row) * uy;
 }
 
-mottle_field(px, py, scl, sd) {
-    oct1 = vnoise(px, py, scl, sd);
-    oct2 = vnoise(px, py, scl * 0.5, sd + 17.0);
-    oct3 = vnoise(px, py, scl * 0.25, sd + 34.0);
-    return (oct1 + oct2 * 0.5 + oct3 * 0.25) / 1.75;
+rot_noise(px, py, ang, scl, sd) {
+    ca = cos(ang);
+    sa = sin(ang);
+    return vnoise(px * ca - py * sa, px * sa + py * ca, scl, sd);
 }
 
-ink_c(cv, gain_m, thresh_d) {
-    cm = cv * gain_m;
-    return switch(max(cm, 0.0) < thresh_d, 0.0, cm);
+fbm_2(px, py, scl, sd, gn) {
+    oct1 = rot_noise(px, py, 0.7, scl, sd);
+    oct2 = rot_noise(px, py, 1.8, scl * 0.5, sd + 17.0);
+    return (oct1 + oct2 * gn) / (1.0 + gn);
+}
+
+fbm_3(px, py, scl, sd, gn) {
+    oct1 = rot_noise(px, py, 0.7, scl, sd);
+    oct2 = rot_noise(px, py, 1.8, scl * 0.5, sd + 17.0);
+    oct3 = rot_noise(px, py, 2.9, scl * 0.25, sd + 34.0);
+    return (oct1 + oct2 * gn + oct3 * gn * gn) / (1.0 + gn + gn * gn);
+}
+
+stretch_v(nv, kv) {
+    return clamp((nv - 0.5) * kv + 0.5, 0.0, 1.0);
+}
+
+builtin_mottle(px, py, scl, sd) {
+    speck = stretch_v(fbm_3(px, py, scl * 0.1, sd, 0.6), 1.9);
+    broad = stretch_v(fbm_2(px, py, scl, sd + 200.0, 0.5), 1.8);
+    return clamp(speck * 0.6 + broad * 0.55 - 0.05, 0.0, 1.0);
+}
+
+builtin_tooth(px, py, scl, sd) {
+    cell_sz = max(scl, 0.00001) / 3.0;
+    white = hash_2d(floor(px / cell_sz), floor(py / cell_sz), sd + 300.0);
+    return stretch_v(fbm_2(px, py, scl, sd + 101.0, 0.7) * 0.7 + white * 0.3, 2.6);
+}
+
+zap_c(xv) {
+    return switch(abs(xv) < 1e30, xv, 0.0);
+}
+
+field_luma(rv, gv, bv) {
+    return clamp(zap_c(rv) * 0.2126 + zap_c(gv) * 0.7152 + zap_c(bv) * 0.0722, 0.0, 1.0);
+}
+
+ink_c(cv, field_m, amt_m, thresh_d, soft_w, fade_d) {
+    thinned = cv * (1.0 - amt_m * field_m * smoothstep(0.15, 0.9, cv));
+    kept = smoothstep(thresh_d - soft_w, thresh_d + soft_w, max(thinned, 0.0));
+    return thinned * (1.0 - (1.0 - kept) * fade_d);
 }
 
 Param width(1920.0);
 Param height(1080.0);
 Param mottle(0.0);
-Param mottle_scale(0.15);
+Param mottle_scale(0.045);
 Param dropout(0.0);
-Param tooth_scale(0.004);
+Param tooth_scale(0.003);
 Param seed(1.0);
+Param src_mottle(0.0);
+Param src_tooth(0.0);
 Param bypass_gate(0.0);
 
 aspect = width / max(height, 1.0);
 frame_x = norm.x * aspect;
 frame_y = norm.y;
 
-gain_m = 1.0 + mottle * (mottle_field(frame_x, frame_y, mottle_scale, seed) - 0.5) * 2.0;
-thresh_d = dropout * vnoise(frame_x, frame_y, tooth_scale, seed + 101.0);
+field_m = switch(src_mottle > 0.5, field_luma(sample(in3, norm).x, sample(in3, norm).y, sample(in3, norm).z), builtin_mottle(frame_x, frame_y, mottle_scale, seed));
+tooth_v = switch(src_tooth > 0.5, field_luma(sample(in4, norm).x, sample(in4, norm).y, sample(in4, norm).z), builtin_tooth(frame_x, frame_y, tooth_scale, seed));
 
-r_ink = ink_c(nearest(in1, norm).x, gain_m, thresh_d);
-g_ink = ink_c(nearest(in1, norm).y, gain_m, thresh_d);
-b_ink = ink_c(nearest(in1, norm).z, gain_m, thresh_d);
+fade_d = min(dropout / 0.05, 1.0);
+thresh_d = 1.35 * dropout * tooth_v;
+soft_w = max(0.1 * fade_d, 0.0001);
+
+r_ink = ink_c(nearest(in1, norm).x, field_m, mottle, thresh_d, soft_w, fade_d);
+g_ink = ink_c(nearest(in1, norm).y, field_m, mottle, thresh_d, soft_w, fade_d);
+b_ink = ink_c(nearest(in1, norm).z, field_m, mottle, thresh_d, soft_w, fade_d);
 
 out1 = vec(mix(r_ink, nearest(in2, norm).x, bypass_gate), mix(g_ink, nearest(in2, norm).y, bypass_gate), mix(b_ink, nearest(in2, norm).z, bypass_gate), nearest(in2, norm).w);

@@ -1,4 +1,4 @@
-"""test_ink.py -- tier-1 tests for the not-yet-built f_ink module (T016, T017; SC-001 to SC-006, P1 effects).
+"""test_ink.py -- tier-1 tests for the f_ink module (T016, T017, T033, T034; SC-001 to SC-006, P1 effects).
 
 Ground truth is independent of the mirror: invariants and closed forms from the spec (identity at zero, kernel support, a flat
 field stays flat, 0 stays 0, monotone amounts, ratios of feature sizes). Measurements that settle open numbers are printed as
@@ -11,7 +11,7 @@ import sys
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-from ink_mirror import F32, SPREAD_CAP_H, blur2, blur_pass, ink, tap_weights  # noqa: E402
+from ink_mirror import F32, SPREAD_CAP_H, blur2, blur_pass, ink, pool_blur, tap_weights  # noqa: E402
 
 
 def frame(h, w, value=0.0):
@@ -128,25 +128,29 @@ def test_continuous_tone_through_spread():
 
 
 def test_mottle():
-    """SC-003 and T017."""
+    """SC-003 and FR-005 (revised 2026-11-09): ink only thins, most where it is dense."""
     h = 512
-    flat = frame(h, h, 0.8)
+    flat = frame(h, h, 1.0)
     stds = [float(ink(flat, mottle=m)[..., 0].std()) for m in (0.0, 0.25, 0.5, 1.0)]
     note("mottle std at 0, 0.25, 0.5, 1", [round(s, 5) for s in stds])
     check("std is monotone in the amount", float(any(q <= p for p, q in zip(stds, stds[1:]))), 0)
-    shifts = [float(ink(flat, mottle=1.0, seed=s)[..., 0].mean()) - 0.8 for s in range(1, 13)]
-    note("T017: mottle mean shift on flat 0.8, amount 1, 12 seeds: worst, mean", (round(max(map(abs, shifts)), 5), round(float(np.mean(shifts)), 5)))
-    check("mean stays near the input (worst of 12 seeds)", max(map(abs, shifts)), 0.08)
+    means = [float(ink(flat, mottle=m)[..., 0].mean()) for m in (0.0, 0.25, 0.5, 1.0)]
+    note("mottle mean on flat 1 at 0, 0.25, 0.5, 1", [round(s, 5) for s in means])
+    check("the mean falls with the amount", float(any(q >= p for p, q in zip(means, means[1:]))), 0)
+    check("mottle never adds ink", float(ink(flat, mottle=1.0)[..., 0].max()) - 1.0, 0)
     check("coverage 0 stays 0", float(np.abs(ink(frame(64, 64), mottle=1.0)[..., :3]).max()), 0)
-    field = lambda sc, s: ink(frame(h, h, 1.0), mottle=1.0, mottle_scale=sc, seed=s)[..., 0]
-    a = np.mean([half_lag(field(0.05, s)) for s in (1, 2, 3, 4)])
-    b = np.mean([half_lag(field(0.10, s)) for s in (1, 2, 3, 4)])
-    note("mottle half-lag in texels at scale 0.05, 0.10", (a, b))
-    check("correlation length tracks the scale (ratio near 2)", abs(b / a - 2), 0.6)
+    low = float(np.abs(ink(frame(64, 64, 0.1), mottle=1.0)[..., 0] - 0.1).max())
+    check("light tones are left alone (below the density weight)", low, 1e-6)
+    field = lambda sc, s: ink(flat, mottle=1.0, mottle_scale=sc, seed=s)[..., 0]
+    a = np.mean([half_lag(field(0.1, s)) for s in (1, 2, 3, 4)])
+    b = np.mean([half_lag(field(0.2, s)) for s in (1, 2, 3, 4)])
+    note("mottle half-lag in texels at scale 0.1, 0.2", (a, b))
+    check("correlation length tracks the scale (ratio near 2)", abs(b / a - 2), 0.7)
+
 
 
 def test_dropout():
-    """SC-004."""
+    """SC-004 and FR-006 (revised 2026-11-09): soft edges, light first, pinholes reach solids only at high amounts."""
     h = 512
     def lost(v, d, sc=0.01, seed=1):
         return float((ink(frame(h, h, v), dropout=d, tooth_scale=sc, seed=seed)[..., 0] == 0).mean())
@@ -155,37 +159,56 @@ def test_dropout():
         note(f"dropped fraction of flat {v} at dropout 0, 0.4, 0.7, 1", [round(q, 4) for q in f])
         check(f"flat {v}: monotone in the amount", float(any(q < p for p, q in zip(f, f[1:]))), 0)
     check("lighter loses more than midtone", float(not lost(0.3, 0.8) > lost(0.6, 0.8)), 0)
-    check("a solid holds at dropout 1", lost(1.0, 1.0), 0)
+    check("a solid holds at dropout 0.5", lost(1.0, 0.5), 0)
+    pin = lost(1.0, 1.0)
+    note("fraction of a solid lost at dropout 1", round(pin, 4))
+    check("a solid takes some pinholes at dropout 1", float(not 0 < pin < 0.5), 0)
+    o = ink(frame(h, h, 0.5), dropout=0.7, tooth_scale=0.02)[..., 0]
+    check("edges are soft (values between 0 and the input exist)", float(not ((o > 0.01) & (o < 0.49)).any()), 0)
     def edges(sc):
         m = ink(frame(h, h, 0.5), dropout=1.0, tooth_scale=sc)[..., 0] == 0
         return float((m[:, 1:] != m[:, :-1]).sum())
-    r = edges(0.01) / edges(0.02)
-    note("tooth transitions, scale 0.01 / 0.02", round(r, 3))
+    r = edges(0.02) / edges(0.04)
+    note("tooth transitions, scale 0.02 / 0.04", round(r, 3))
     check("specks grow with tooth_scale (ratio near 2)", abs(r - 2), 0.6)
 
 
+
 def test_edge_pool():
-    """SC-005, FR-007."""
+    """SC-005, FR-007 (reversed 2026-11-09): the rim stays full and the body of the mark thins."""
     d = disc(512, 512, 0.25)
-    base = ink(d)[..., 0]
-    o = ink(d, edge_pool=1.0, pool_width=0.01)[..., 0]
-    delta = o - base
-    check("the rim rises above the interior", float(not o.max() > 1.5), 0)
+    a = 0.4
+    o = ink(d, edge_pool=a)[..., 0]
     y, x = np.mgrid[0:512, 0:512]
     r = np.hypot(x + 0.5 - 256, y + 0.5 - 256) - 128
-    check("interior unchanged beyond the kernel", float(np.abs(delta[r < -24]).max()), 1e-6)
+    check("deep inside, the mark is at 1 - amount", float(np.abs(o[r < -32] - (1 - a)).max()), 1e-5)
+    check("the rim is brighter than the body", float(not o[(r < 0) & (r > -3)].max() > (1 - a) + 0.3), 0)
+    check("nothing exceeds the input (visible on a full-value mark)", float(o.max()) - 1.0, 1e-5)
     check("exterior stays 0", float(np.abs(o[r > 1]).max()), 0)
     for v in (0.0, 0.25, 0.5, 0.8, 1.0, 1.7):
-        check(f"a flat {v} field is unchanged", err(ink(frame(48, 48, v), edge_pool=1.0)[..., :3], np.full((48, 48, 3), v, F32)), 1e-6)
+        check(f"a flat {v} field thins to {v} * (1 - amount)", err(ink(frame(48, 48, v), edge_pool=a)[..., :3], np.full((48, 48, 3), v * (1 - a), F32)), 1e-5)
+    half = frame(256, 8, 0.0)
+    half[128:, :, :3] = 0.5
+    p = ink(half, edge_pool=a)[:, 4, 0]
+    check("a partial tone gets the same rim, in proportion", abs(float(p[128:131].max()) / 0.5 - float(ink(half * 2, edge_pool=a)[:, 4, 0][128:131].max())), 0.02)
     t = frame(1080, 8)
     t[540:, :, :3] = 1
     def width(pw):
         """Summed rim height / peak, so the width is not quantized to whole texels."""
-        q = ink(t, edge_pool=1.0, pool_width=pw)[:, 4, 0] - 1.0 * t[:, 4, 0]
+        q = ink(t, edge_pool=1.0, pool_width=pw)[:, 4, 0]
         return float(q.sum() / q.max())
-    a, b = width(0.0032), width(0.0064)
-    note("rim width in texels at pool_width 0.0032, 0.0064 (3.5 and 6.9 texels at 1080)", (round(a, 3), round(b, 3)))
-    check("rim width tracks pool_width (ratio near 2)", abs(b / a - 2), 0.5)
+    b, c = width(0.007), width(0.014)
+    note("rim width in texels at pool_width 0.007, 0.014 (7.6 and 15 texels at 1080)", (round(b, 3), round(c, 3)))
+    check("rim width tracks pool_width (ratio between 1.4 and 2.2)", float(not 1.4 < c / b < 2.2), 0)
+    line = frame(1080, 8)[..., :1]
+    line[540, :, 0] = 1
+    for w_tx in (3.0, 9.0, 15.0, 21.0):
+        q = pool_blur(line, w_tx)[:, 4, 0]
+        near = q[540 - 30: 540 + 30]
+        c_ = float(np.abs(np.diff(near)).max() / near.max())
+        note(f"pool blur of a 1-texel line, width {w_tx}: largest step / peak", round(c_, 3))
+        check(f"pool blur width {w_tx}: no comb", c_, 0.6)
+
 
 
 def test_pool_follows_spread():
@@ -193,14 +216,14 @@ def test_pool_follows_spread():
     t = frame(1080, 8)
     t[540:, :, :3] = 1
     kw = dict(spread=1.0, bias=0.45)
-    s = ink(t, **kw)[:, 4, 0]
-    q = ink(t, edge_pool=1.0, pool_width=0.002, **kw)[:, 4, 0] - s
-    edge = int(np.argmax(s > 0.5))
-    peak = int(np.argmax(q))
+    o = ink(t, edge_pool=0.6, pool_width=0.004, **kw)[:, 4, 0]
+    edge = int(np.argmax(ink(t, **kw)[:, 4, 0] > 0.5))
+    peak = int(np.argmax(o))
     note("original edge, moved edge, rim peak (rows)", (540, edge, peak))
     check("the spread moved the edge far enough for this test to mean something", float(not 540 - edge >= 4), 0)
     check("the rim peak is nearer the moved edge than the original", float(not abs(peak - edge) < abs(peak - 540)), 0)
-    check("the rim peak is at the moved edge", abs(peak - edge), 2)
+    check("the rim peak is at the moved edge", abs(peak - edge), 3)
+
 
 
 def test_stability_and_seed():
@@ -213,7 +236,7 @@ def test_stability_and_seed():
 
 def test_render_size_and_aspect():
     """SC-006, FR-011: lengths are frame-relative, and square on a non-square frame."""
-    field = lambda h, w: ink(frame(h, w, 1.0), mottle=1.0, mottle_scale=0.1)[..., 0]
+    field = lambda h, w: ink(frame(h, w, 1.0), mottle=1.0, mottle_scale=0.2)[..., 0]
     a, b = half_lag(field(256, 256)), half_lag(field(512, 512))
     note("mottle half-lag at 256 and 512", (a, b))
     check("pattern scales with the frame (ratio near 2)", abs(b / a - 2), 0.4)
@@ -261,21 +284,48 @@ def test_nonfinite_channels_alpha_bypass():
     check("soften 0 stays finite on a blur of exactly 0.5", float(not np.isfinite(z).all()), 0)
 
 
+def test_fields():
+    """FR-017: a connected field replaces the built-in noise; its luma is what counts."""
+    rng = np.random.default_rng(5)
+    f = frame(64, 64)
+    f[..., :3] = rng.uniform(0, 1, (64, 64, 1))
+    o = ink(frame(64, 64, 1.0), mottle=0.6, mottle_field=f)[..., 0]
+    check("mottle field on flat 1: out = 1 - amount * field", err(o, 1 - 0.6 * f[..., 0]), 1e-5)
+    check("the seed and scale do nothing once a field is patched", err(o, ink(frame(64, 64, 1.0), mottle=0.6, mottle_field=f, seed=9, mottle_scale=0.3)[..., 0]), 0)
+    g = frame(64, 64)
+    g[..., 1] = 1.0
+    o = ink(frame(64, 64, 1.0), mottle=1.0, mottle_field=g)[..., 0]
+    check("a green field reads as its luma (0.7152)", err(o, np.full((64, 64), 1 - 0.7152, F32)), 1e-5)
+    half = frame(64, 64)
+    half[:, 32:, :3] = 1.0
+    o = ink(frame(64, 64, 0.5), dropout=0.8, tooth_field=half)[..., 0]
+    check("tooth 0 keeps the ink", err(o[:, :32], np.full((64, 32), 0.5, F32)), 1e-6)
+    check("tooth 1 removes it", float(np.abs(o[:, 32:]).max()), 1e-6)
+    bad = frame(64, 64, 0.5)
+    bad[3, 3, :3] = np.nan
+    check("a non-finite field cannot reach the output", float(not np.isfinite(ink(frame(64, 64, 1.0), mottle=1.0, mottle_field=bad, dropout=0.5, tooth_field=bad)).all()), 0)
+    check("fields do nothing at amount 0", err(ink(frame(64, 64, 0.7), mottle_field=f, tooth_field=f), frame(64, 64, 0.7)), 0)
+
+
 def test_mutations():
-    """Each plausible mistake changes what the checks above look at, including the plan's two forms."""
+    """Each plausible mistake changes what the checks above look at."""
     d = disc(128, 128)
     nan = frame(64, 64, 0.5)
     nan[32, 32, :3] = np.nan
+    g = frame(64, 64, 0.3)
     cases = {
-        "plan_pool": (frame(32, 32, 0.5), dict(edge_pool=1.0)),
+        "pool_additive": (d, dict(edge_pool=1.0)),
         "zap_late": (nan, dict(spread=1.0)),
         "no_soften_guard": (frame(32, 32, 0.5), dict(spread=1.0, soften=0.0)),
-        "dropout_negative": (frame(32, 32, -0.5), dict()),
-        "pool_no_s": (d, dict(edge_pool=1.0)),
         "mottle_additive": (frame(32, 32), dict(mottle=1.0)),
         "pool_from_source": (d, dict(spread=1.0, bias=0.2, edge_pool=1.0)),
         "snap_ignored": (frame(32, 32, 0.3), dict(spread=1.0, snap=0.0)),
+        "field_ignored": (frame(64, 64, 1.0), dict(mottle=1.0, mottle_field=g)),
+        "dropout_hard": (frame(128, 128, 0.5), dict(dropout=0.7, tooth_scale=0.05)),
     }
+    half = frame(128, 8)
+    half[64:, :, :3] = 0.5
+    cases["pool_no_norm"] = (half, dict(edge_pool=1.0))     # a partial tone: the band alone would under-read its rim
     for bug, (src, kw) in cases.items():
         a, b = ink(src, **kw), ink(src, bug=bug, **kw)
         bad = not np.isfinite(b).all()

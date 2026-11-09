@@ -53,11 +53,11 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 
 ### Rework from the first look (2026-11-09; spec FR-005, 006, 007, 017; plan ADR-8)
 
-- [ ] T033 Mirror and tier 1: edge pool thins the body (candidate C), two more blur passes; the old flat-field and rim-above-1 tests rewritten to the reversed FR-007.
-- [ ] T034 Mirror and tier 1: mottle thins only, dropout with soft edges, both taking a field; built-in fallbacks (mottle C, dropout B).
-- [ ] T035 `codebox_pool.gen` and the cascade stages; `definition.py` (ten stages).
-- [ ] T036 `codebox_fx_b.gen`: the new mottle and dropout, in1/in2 fields through `mod_inlets` with `src_mottle`, `src_tooth`; dial mapping; build, contract and drift.
-- [ ] T037 Benches updated (four-input `fx_b`, field inlets connected and not, cost of the extra stages); run with Matt's go.
+- [x] T033 (2026-11-09, offline, Claude) Mirror and tier 1: edge pool thins the body (candidate C), two more blur passes; the old flat-field and rim-above-1 tests rewritten to the reversed FR-007.
+- [x] T034 (2026-11-09, offline, Claude) Mirror and tier 1: mottle thins only, dropout with soft edges, both taking a field; built-in fallbacks (mottle C, dropout B).
+- [x] T035 (2026-11-09, Claude) `codebox_pool.gen` and the cascade stages; `definition.py` (ten stages).
+- [x] T036 (2026-11-09, Claude) `codebox_fx_b.gen`: the new mottle and dropout, in1/in2 fields through `mod_inlets` with `src_mottle`, `src_tooth`; dial mapping; build, contract and drift.
+- [x] T037 (2026-11-09, bench run by Claude; T009's cost still only an upper bound) Benches updated (four-input `fx_b`, field inlets connected and not, cost of the extra stages); run with Matt's go.
 - [ ] T038 Live look (Matt): edge pool, mottle and dropout, with and without a patched field. Then spread, snap and bias, which are "fairly subtle" (Matt, set aside for later).
 
 ## Phase 3: docs and registration
@@ -87,3 +87,7 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
   - **Not tested:** arrival order at the two-input stages (a static source hides a one-frame lag; the harness has no per-frame input swap), still inferred; to be judged on moving input at T030.
 - 2026-11-09 (live, Matt; first look, T030 partial): spread, snap and bias "seem fairly subtle now", set aside for later. Refine first: edge pool is "too subtle to really notice"; mottle "seems like generic noise and seems just like an additive mix of something unrelated to the texture in black"; dropout "doesn't look like paper grain at all, it looks like nubby pixelation". Offline reading by Claude, inferred: on a mark of value 1 the pooled rim only goes above 1, which a screen clips, so the rim cannot show on full-value marks; dropout is one octave of lattice noise, hard-thresholded, at about 4 texels.
 - 2026-11-09 (Matt, chat, after the candidate sheets): edge pool candidate C. Mottle and dropout: "read incoming textures to determine the noise or texture field": new optional field inlets, one each, built-in noise when unconnected. Candidates are NumPy mock-ups by Claude, offline, nothing in Max. Inlet numbering and the built-in looks are Claude's, provisional (plan ADR-8). Rework is T033-T038.
+- 2026-11-09 (bench, Claude, Max 9.2.0; no live look yet): T033-T037. Tier 1 16/16 (`tests/logs/20261109-081023-offline.log`); contract test 9/9, drift 16/16, expectations 10/10 (`tests/logs/20261109-081218-offline.log`); codebox bench 12/12 with `--slow` (`tests/logs/20261109-081507-bench.log`); module bench 6/6 (`tests/logs/20261109-081603-bench.log`); contract bench 2/2, ten stages (`tests/logs/20261109-081230-bench.log`). With both fields patched there is no hash, so the patcher equals the mirror texel by texel: worst 6.0e-7. Mottle std within 1% of the mirror's, dropout fractions within 0.004, built-in fields, statistics only.
+  - **Pool blur (Claude):** C in the sheet used three blur pairs; shipped is two, the second with taps 2 texels apart (it reads an image the first pair has smoothed; a 1-texel line stays free of a comb in tier 1). The dial's width is shared as q + 2q, 21 texels at most. `pool_width` default 0.014, range 0 to 0.02; `edge_pool` is the fraction the body thins, so C is about 0.4.
+  - **Built-in noise differs slightly from the sheets:** rotated octaves throughout, and no domain warp on the slow patches (cost; judged at T038). Field reads use `sample()` so a field of another size is not blocky; `nearest()` everywhere else.
+  - **T009:** still unresolved, every stage at the bench floor (0.63 to 0.73 ms upper bound). Ten stages are at most about 6.7 ms (arithmetic, inferred); the true figure is unmeasured.

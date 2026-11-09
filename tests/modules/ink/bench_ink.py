@@ -51,7 +51,7 @@ EXACT = 0.0
 TOL = 1e-5
 TOL_SHARP = 5e-4
 PIN_THRESH = {"spread": 0.0, "snap": 1.0, "bias": 0.0, "soften": 0.2}
-PIN_FX = {"mottle": 0.0, "mottle_scale": 0.15, "dropout": 0.0, "tooth_scale": 0.004, "seed": 1.0, "bypass_gate": 0.0}
+PIN_FX = {"mottle": 0.0, "mottle_scale": 0.045, "dropout": 0.0, "tooth_scale": 0.003, "seed": 1.0, "bypass_gate": 0.0, "src_mottle": 0.0, "src_tooth": 0.0}
 
 
 def noisy(h=64, w=64, seed=3, lo=0.0, hi=1.0):
@@ -114,21 +114,22 @@ def test_zap():
     check("zap: nothing non-finite is left", float(not np.isfinite(got).all()), 0.0)
 
 
-def blur_case(label, axis, role, value, src, radius_tx, tol=TOL):
+def blur_case(label, axis, role, value, src, radius_tx, stride=1, tol=TOL):
     params = {("spread" if role == "spread" else "pool_width"): value, **size(src)}
-    got = gpu(DEFN._blur(axis, role), [src], params)
-    want = blur_pass(src, 1 if axis == 0 else 0, radius_tx)     # codebox axis 0 is horizontal, NumPy axis 1 is a row
+    got = gpu(DEFN._blur(axis, role, stride), [src], params)
+    want = blur_pass(src, 1 if axis == 0 else 0, radius_tx, stride)     # codebox axis 0 is horizontal, NumPy axis 1 is a row
     worst = mx(got[..., :3], want[..., :3])
     note(f"{label}: max error", worst)
     check(f"{label}: vs mirror", worst, tol)
 
 
 def test_blur_stages_as_shipped():
-    """Both roles, both axes, a fractional radius and the 7-texel cap, on a non-square frame, so the border is exercised."""
+    """Both roles, both axes, both strides, a fractional radius and the cap, on a non-square frame, so the border is exercised."""
     t = noisy(48, 96)
     for axis in (0, 1):
-        for pw in (0.04, 0.1, 0.5):         # 1.92 and 4.8 texels; 24 is held at 7
-            blur_case(f"pool blur, axis {axis}, width {pw}", axis, "pool", pw, t, pw * 48)
+        for stride in (1, 2):
+            for pw in (0.12, 0.3, 1.5):     # a third of it, in texels: 1.92, 4.8, and 24 held at 7
+                blur_case(f"pool blur, axis {axis}, stride {stride}, width {pw}", axis, "pool", pw, t, pw / 3.0 * 48, stride)
     tall = noisy(1080, 128)                 # spread 1 is 7 texels only at 1080
     for axis in (0, 1):
         for sp in (0.3, 1.0):
@@ -163,15 +164,17 @@ def test_pool():
     check("edge_pool 0: exactly S", mx(gpu(POOL, [bp, s], {"edge_pool": 0.0})[..., :3], s[..., :3]), EXACT)
 
 
-def fx(pooled, src, **deltas):
-    return gpu(FX_B, [pooled, src], {**PIN_FX, **size(pooled), **deltas})
+def fx(pooled, src, m_field=None, t_field=None, **deltas):
+    blank = np.zeros_like(pooled)
+    flags = {"src_mottle": 0.0 if m_field is None else 1.0, "src_tooth": 0.0 if t_field is None else 1.0}
+    return gpu(FX_B, [pooled, src, blank if m_field is None else m_field, blank if t_field is None else t_field], {**PIN_FX, **size(pooled), **flags, **deltas})
 
 
-def mirror_fx(c, **kw):
+def mirror_fx(c, m_field=None, t_field=None, **kw):
     h, w = c.shape[:2]
     px, py = coords(h, w)
     args = {**PIN_FX, **kw}
-    return mirror_fx_b(c[..., :3], px, py, args["mottle"], args["mottle_scale"], args["dropout"], args["tooth_scale"], args["seed"])
+    return mirror_fx_b(c[..., :3], px, py, args["mottle"], args["mottle_scale"], args["dropout"], args["tooth_scale"], args["seed"], m_field, t_field)
 
 
 def test_fx_identity_bypass_alpha():
@@ -183,6 +186,24 @@ def test_fx_identity_bypass_alpha():
     check("bypass: exactly the source, with the effects on", mx(byp, b), EXACT)
 
 
+def test_fx_fields():
+    """FR-017: with both fields connected there is no hash in the result, so the comparison is texel by texel."""
+    c, src = noisy(64, 96, seed=8), noisy(64, 96, seed=9)
+    mf, tf = noisy(64, 96, seed=10), noisy(64, 96, seed=11)
+    for mot, dro in ((0.6, 0.0), (0.0, 0.6), (0.8, 0.5), (1.0, 1.0)):
+        worst = mx(fx(c, src, mf, tf, mottle=mot, dropout=dro)[..., :3], mirror_fx(c, mf, tf, mottle=mot, dropout=dro))
+        note(f"fields, mottle {mot}, dropout {dro}: max error", worst)
+        check(f"fields, mottle {mot}, dropout {dro}: vs mirror", worst, TOL)
+    bad = mf.copy()
+    bad[3, 3, :3] = np.nan
+    got = fx(c, src, bad, bad, mottle=1.0, dropout=0.5)
+    check("a non-finite field cannot reach the output", float(not np.isfinite(got).all()), 0.0)
+    a = fx(flat(1.0, 64, 96), src, None, None, mottle=1.0)
+    b = fx(flat(1.0, 64, 96), src, mf, None, mottle=1.0)
+    check("the connected flag switches the source of the field", float(mx(a, b) < 0.01), 0.0)
+    check("a zeroed field thins nothing", mx(fx(c, src, np.zeros_like(c), None, mottle=1.0)[..., :3], c[..., :3]), EXACT)
+
+
 def test_fx_mottle_statistics():
     c = flat(0.8)
     stds = []
@@ -191,7 +212,8 @@ def test_fx_mottle_statistics():
         stds.append(float(got.std()))
         note(f"mottle {amt}: std GPU, mirror; mean GPU, mirror", f"{got.std():.4f} {want.std():.4f}; {got.mean():.4f} {want.mean():.4f}")
         check(f"mottle {amt}: std within 25% of the mirror's", abs(float(got.std()) / float(want.std()) - 1.0), 0.25)
-        check(f"mottle {amt}: mean near the input", abs(float(got.mean()) - 0.8), 0.12)
+        check(f"mottle {amt}: mean within 0.08 of the mirror's", abs(float(got.mean()) - float(want.mean())), 0.08)
+        check(f"mottle {amt}: never adds ink", float(got.max()) - 0.8, 1e-6)
     check("mottle: std grows with the amount", float(not (stds[0] < stds[1] < stds[2])), 0.0)
     check("mottle: black stays black", float(np.abs(fx(flat(0.0), c, mottle=1.0)[..., :3]).max()), EXACT)
 
@@ -211,9 +233,11 @@ def test_fx_dropout_statistics():
     fr = [lost(fx(c, c, dropout=d, tooth_scale=sc)) for d in (0.3, 0.6, 1.0)]
     note("dropout 0.3, 0.6, 1 on 0.3: fraction lost", fr)
     check("dropout: the loss grows with the amount", float(not (fr[0] <= fr[1] <= fr[2] and fr[0] < fr[2])), 0.0)
-    light, mid, solid = (lost(fx(flat(v), flat(v), dropout=1.0, tooth_scale=sc)) for v in (0.3, 0.6, 1.0))
+    light, mid = (lost(fx(flat(v), flat(v), dropout=1.0, tooth_scale=sc)) for v in (0.3, 0.6))
     check("dropout: light loses more than mid", float(not light > mid), 0.0)
-    check("dropout: a solid loses nothing", solid, EXACT)
+    check("dropout: a solid holds at 0.5", lost(fx(flat(1.0), flat(1.0), dropout=0.5, tooth_scale=sc)), EXACT)
+    soft = fx(flat(0.5), flat(0.5), dropout=0.7, tooth_scale=sc)[..., 0]
+    check("dropout: edges are soft", float(not ((soft > 0.01) & (soft < 0.49)).any()), 0.0)
 
 
 def roughness(a):
@@ -249,7 +273,8 @@ def test_cost_at_1080p():
               ("blur (spread 1)", DEFN._blur(0, "spread"), [t], {"spread": 1.0, **hd}),
               ("thresh", THRESH, [t], {**PIN_THRESH, "spread": 1.0}),
               ("pool", POOL, [t, t], {"edge_pool": 1.0}),
-              ("fx_b (mottle, dropout)", FX_B, [t, t], {**PIN_FX, **hd, "mottle": 1.0, "dropout": 1.0})]
+              ("fx_b (mottle, dropout, built-in fields)", FX_B, [t, t, t, t], {**PIN_FX, **hd, "mottle": 1.0, "dropout": 1.0}),
+              ("fx_b (both fields patched)", FX_B, [t, t, t, t], {**PIN_FX, **hd, "mottle": 1.0, "dropout": 1.0, "src_mottle": 1.0, "src_tooth": 1.0})]
     for name, code, inputs, params in stages:
         r = bc.measure(code, inputs, dim=(1920, 1080), chain=8, params=params)
         k = int(r.get("chain") or 8)

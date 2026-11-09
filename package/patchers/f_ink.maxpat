@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						802.0,
+						902.0,
 						30.0,
 						30.0
 					]
@@ -266,7 +266,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used four times: spread H and V, pool H and V. definition.py renders this template per stage: the radius Param becomes\n// `spread` or `pool_width`, and the axis Param a constant, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, one texel apart (Matt, 2026-11-08: a stride of 2 combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The reach is capped at 7 texels (above 1080 it shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008 is still to measure). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam spread(0.0);\naxis = 0.0;\nradius = spread * 7.0 / 1080.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = k - 7.0;\n    wt = max(0.0, 1.0 - abs(off) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
+									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam spread(0.0);\naxis = 0.0;\nstride = 1.0;\nradius = spread * 7.0 / 1080.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -385,7 +385,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used four times: spread H and V, pool H and V. definition.py renders this template per stage: the radius Param becomes\n// `spread` or `pool_width`, and the axis Param a constant, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, one texel apart (Matt, 2026-11-08: a stride of 2 combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The reach is capped at 7 texels (above 1080 it shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008 is still to measure). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam spread(0.0);\naxis = 1.0;\nradius = spread * 7.0 / 1080.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = k - 7.0;\n    wt = max(0.0, 1.0 - abs(off) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
+									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam spread(0.0);\naxis = 1.0;\nstride = 1.0;\nradius = spread * 7.0 / 1080.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -623,7 +623,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used four times: spread H and V, pool H and V. definition.py renders this template per stage: the radius Param becomes\n// `spread` or `pool_width`, and the axis Param a constant, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, one texel apart (Matt, 2026-11-08: a stride of 2 combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The reach is capped at 7 texels (above 1080 it shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008 is still to measure). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.005);\naxis = 0.0;\nradius = pool_width;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = k - 7.0;\n    wt = max(0.0, 1.0 - abs(off) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
+									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 0.0;\nstride = 1.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -742,7 +742,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used four times: spread H and V, pool H and V. definition.py renders this template per stage: the radius Param becomes\n// `spread` or `pool_width`, and the axis Param a constant, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, one texel apart (Matt, 2026-11-08: a stride of 2 combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The reach is capped at 7 texels (above 1080 it shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008 is still to measure). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.005);\naxis = 1.0;\nradius = pool_width;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = k - 7.0;\n    wt = max(0.0, 1.0 - abs(off) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
+									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 1.0;\nstride = 1.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -818,7 +818,7 @@
 				"box": {
 					"id": "obj-60",
 					"maxclass": "newobj",
-					"numinlets": 2,
+					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"jit_gl_texture",
@@ -861,31 +861,13 @@
 							},
 							{
 								"box": {
-									"id": "gen-obj-10",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										80.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 2"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- edge pooling (spec FR-007, plan ADR-3, T021). Mirror: tests/modules/ink/ink_mirror.pool.\n// P = S + edge_pool * S * 2 * max(S - Bp, 0). The band S - Bp is 0 on any flat field and 0.5 on a straight edge, and the\n// factor S keeps the rim on the ink side.\n// First input: Bp, the blur of S at pool_width. Second input: S. The blur arrives last and jit.gl.pix renders on its\n// left inlet, so the blur has to be the left one, or this stage would use last frame's rim.\npool_c(sc, bc, amt) {\n    return sc + amt * sc * 2.0 * max(sc - bc, 0.0);\n}\n\nParam edge_pool(0.0);\n\nout1 = vec(pool_c(nearest(in2, norm).x, nearest(in1, norm).x, edge_pool), pool_c(nearest(in2, norm).y, nearest(in1, norm).y, edge_pool), pool_c(nearest(in2, norm).z, nearest(in1, norm).z, edge_pool), 1.0);\n",
+									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 0.0;\nstride = 2.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 2,
+									"numinlets": 1,
 									"numoutlets": 1,
 									"outlettype": [
 										""
@@ -930,11 +912,118 @@
 							{
 								"patchline": {
 									"destination": [
-										"gen-obj-2",
-										1
+										"gen-obj-3",
+										0
 									],
 									"source": [
-										"gen-obj-10",
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						680.0,
+						240.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool_h2 @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_ink_stage_pool_h2"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-61",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 1.0;\nstride = 2.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 1,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
 										0
 									]
 								}
@@ -955,17 +1044,17 @@
 					},
 					"patching_rect": [
 						30.0,
-						680.0,
-						216.0,
+						730.0,
+						240.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_pool"
+					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool_v2 @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_ink_stage_pool_v2"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-61",
+					"id": "obj-62",
 					"maxclass": "newobj",
 					"numinlets": 2,
 					"numoutlets": 2,
@@ -1028,7 +1117,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- the last stage: mottle, then dropout, then bypass and the source alpha (spec FR-005, FR-006, FR-013, plan ADR-4,\n// ADR-6, T022). Mirror: tests/modules/ink/ink_mirror.fx_b and the end of ink().\n// First input: the pooled image. Second input: the zapped source.\n// Coordinates are frame heights (x scaled by the aspect), fixed to the frame (Matt, Q3). The hash is sin (noise() is black\n// on this path); a GPU sin differs from NumPy's in the low bits, so the bench can compare statistics only, not texels.\n// Mottle is a gain centered on 1, so a coverage of 0 stays 0. Dropout compares max(c, 0), so a negative value is left\n// alone at dropout 0, and the comparison is strict, so dropout 0 removes nothing.\nhash_2d(ix, iy, sd) {\n    hv = sin(ix * 127.1 + iy * 311.7 + sd) * 43758.5453;\n    return hv - floor(hv);\n}\n\nvnoise(px, py, scl, sd) {\n    sz = max(scl, 0.00001);\n    gx = px / sz;\n    gy = py / sz;\n    ix = floor(gx);\n    iy = floor(gy);\n    fx = gx - ix;\n    fy = gy - iy;\n    ux = fx * fx * (3.0 - 2.0 * fx);\n    uy = fy * fy * (3.0 - 2.0 * fy);\n    ha = hash_2d(ix, iy, sd);\n    hb = hash_2d(ix + 1.0, iy, sd);\n    hc = hash_2d(ix, iy + 1.0, sd);\n    hd = hash_2d(ix + 1.0, iy + 1.0, sd);\n    near_row = ha + (hb - ha) * ux;\n    far_row = hc + (hd - hc) * ux;\n    return near_row + (far_row - near_row) * uy;\n}\n\nmottle_field(px, py, scl, sd) {\n    oct1 = vnoise(px, py, scl, sd);\n    oct2 = vnoise(px, py, scl * 0.5, sd + 17.0);\n    oct3 = vnoise(px, py, scl * 0.25, sd + 34.0);\n    return (oct1 + oct2 * 0.5 + oct3 * 0.25) / 1.75;\n}\n\nink_c(cv, gain_m, thresh_d) {\n    cm = cv * gain_m;\n    return switch(max(cm, 0.0) < thresh_d, 0.0, cm);\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam mottle(0.0);\nParam mottle_scale(0.15);\nParam dropout(0.0);\nParam tooth_scale(0.004);\nParam seed(1.0);\nParam bypass_gate(0.0);\n\naspect = width / max(height, 1.0);\nframe_x = norm.x * aspect;\nframe_y = norm.y;\n\ngain_m = 1.0 + mottle * (mottle_field(frame_x, frame_y, mottle_scale, seed) - 0.5) * 2.0;\nthresh_d = dropout * vnoise(frame_x, frame_y, tooth_scale, seed + 101.0);\n\nr_ink = ink_c(nearest(in1, norm).x, gain_m, thresh_d);\ng_ink = ink_c(nearest(in1, norm).y, gain_m, thresh_d);\nb_ink = ink_c(nearest(in1, norm).z, gain_m, thresh_d);\n\nout1 = vec(mix(r_ink, nearest(in2, norm).x, bypass_gate), mix(g_ink, nearest(in2, norm).y, bypass_gate), mix(b_ink, nearest(in2, norm).z, bypass_gate), nearest(in2, norm).w);\n",
+									"code": "// f_ink -- edge pooling (spec FR-007, reversed 2026-11-09; plan ADR-8, T035). Mirror: tests/modules/ink/ink_mirror.pool.\n// rim = clamp(2 * max(S - Bp, 0) / max(S, 0.001), 0, 1); P = S * ((1 - edge_pool) + edge_pool * rim).\n// The rim stays at the value of the mark and the body thins. The earlier form raised the rim instead, and above 1 a screen clips\n// it, so it could not show on a full-value mark. Dividing by S gives a partial tone the same rim, in proportion.\n// First input: Bp, the blur of S at pool_width. Second input: S. The blur arrives last and jit.gl.pix renders on its\n// left inlet, so the blur has to be the left one, or this stage would use last frame's rim.\npool_c(sc, bc, amt) {\n    rim = clamp(2.0 * max(sc - bc, 0.0) / max(sc, 0.001), 0.0, 1.0);\n    return sc * ((1.0 - amt) + amt * rim);\n}\n\nParam edge_pool(0.0);\n\nout1 = vec(pool_c(nearest(in2, norm).x, nearest(in1, norm).x, edge_pool), pool_c(nearest(in2, norm).y, nearest(in1, norm).y, edge_pool), pool_c(nearest(in2, norm).z, nearest(in1, norm).z, edge_pool), 1.0);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1104,7 +1193,216 @@
 					},
 					"patching_rect": [
 						30.0,
-						730.0,
+						780.0,
+						216.0,
+						22.0
+					],
+					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_ink_stage_pool"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-63",
+					"maxclass": "newobj",
+					"numinlets": 4,
+					"numoutlets": 2,
+					"outlettype": [
+						"jit_gl_texture",
+						""
+					],
+					"patcher": {
+						"fileversion": 1,
+						"appversion": {
+							"major": 9,
+							"minor": 1,
+							"revision": 4,
+							"architecture": "x64",
+							"modernui": 1
+						},
+						"classnamespace": "jit.gen",
+						"rect": [
+							100.0,
+							100.0,
+							700.0,
+							600.0
+						],
+						"boxes": [
+							{
+								"box": {
+									"id": "gen-obj-1",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 1"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-10",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										80.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 2"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-11",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										138.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 3"
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-12",
+									"maxclass": "newobj",
+									"numinlets": 0,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										196.0,
+										30.0,
+										28.0,
+										22.0
+									],
+									"text": "in 4"
+								}
+							},
+							{
+								"box": {
+									"code": "// f_ink -- the last stage: mottle, then dropout, then bypass and the source alpha (spec FR-005, FR-006, FR-013, FR-017, plan ADR-4,\n// ADR-6, ADR-8, T036). Mirror: tests/modules/ink/ink_mirror.fx_b and the end of ink().\n// Inputs, in order: the pooled image; the zapped source; the mottle field; the tooth field. A field's luma replaces the built-in\n// noise when its connected flag is 1 (the flag, not the value: an unconnected inlet is not reliably black).\n// Coordinates are frame heights (x scaled by the aspect), fixed to the frame (Matt, Q3). The hash is sin (noise() is black\n// on this path); a GPU sin differs from NumPy's in the low bits, so the bench can compare statistics only, not texels.\n// Mottle only thins ink, most where it is dense, so a coverage of 0 stays 0. Dropout has soft edges; below dropout 0.05 the whole\n// effect fades in, so dropout 0 is exact identity. The fields are read with sample(), since they can be any size: exact at 1:1,\n// and smooth rather than blocky when magnified.\nhash_2d(ix, iy, sd) {\n    hv = sin(ix * 127.1 + iy * 311.7 + sd) * 43758.5453;\n    return hv - floor(hv);\n}\n\nvnoise(px, py, scl, sd) {\n    sz = max(scl, 0.00001);\n    gx = px / sz;\n    gy = py / sz;\n    ix = floor(gx);\n    iy = floor(gy);\n    fx = gx - ix;\n    fy = gy - iy;\n    ux = fx * fx * (3.0 - 2.0 * fx);\n    uy = fy * fy * (3.0 - 2.0 * fy);\n    ha = hash_2d(ix, iy, sd);\n    hb = hash_2d(ix + 1.0, iy, sd);\n    hc = hash_2d(ix, iy + 1.0, sd);\n    hd = hash_2d(ix + 1.0, iy + 1.0, sd);\n    near_row = ha + (hb - ha) * ux;\n    far_row = hc + (hd - hc) * ux;\n    return near_row + (far_row - near_row) * uy;\n}\n\nrot_noise(px, py, ang, scl, sd) {\n    ca = cos(ang);\n    sa = sin(ang);\n    return vnoise(px * ca - py * sa, px * sa + py * ca, scl, sd);\n}\n\nfbm_2(px, py, scl, sd, gn) {\n    oct1 = rot_noise(px, py, 0.7, scl, sd);\n    oct2 = rot_noise(px, py, 1.8, scl * 0.5, sd + 17.0);\n    return (oct1 + oct2 * gn) / (1.0 + gn);\n}\n\nfbm_3(px, py, scl, sd, gn) {\n    oct1 = rot_noise(px, py, 0.7, scl, sd);\n    oct2 = rot_noise(px, py, 1.8, scl * 0.5, sd + 17.0);\n    oct3 = rot_noise(px, py, 2.9, scl * 0.25, sd + 34.0);\n    return (oct1 + oct2 * gn + oct3 * gn * gn) / (1.0 + gn + gn * gn);\n}\n\nstretch_v(nv, kv) {\n    return clamp((nv - 0.5) * kv + 0.5, 0.0, 1.0);\n}\n\nbuiltin_mottle(px, py, scl, sd) {\n    speck = stretch_v(fbm_3(px, py, scl * 0.1, sd, 0.6), 1.9);\n    broad = stretch_v(fbm_2(px, py, scl, sd + 200.0, 0.5), 1.8);\n    return clamp(speck * 0.6 + broad * 0.55 - 0.05, 0.0, 1.0);\n}\n\nbuiltin_tooth(px, py, scl, sd) {\n    cell_sz = max(scl, 0.00001) / 3.0;\n    white = hash_2d(floor(px / cell_sz), floor(py / cell_sz), sd + 300.0);\n    return stretch_v(fbm_2(px, py, scl, sd + 101.0, 0.7) * 0.7 + white * 0.3, 2.6);\n}\n\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nfield_luma(rv, gv, bv) {\n    return clamp(zap_c(rv) * 0.2126 + zap_c(gv) * 0.7152 + zap_c(bv) * 0.0722, 0.0, 1.0);\n}\n\nink_c(cv, field_m, amt_m, thresh_d, soft_w, fade_d) {\n    thinned = cv * (1.0 - amt_m * field_m * smoothstep(0.15, 0.9, cv));\n    kept = smoothstep(thresh_d - soft_w, thresh_d + soft_w, max(thinned, 0.0));\n    return thinned * (1.0 - (1.0 - kept) * fade_d);\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam mottle(0.0);\nParam mottle_scale(0.045);\nParam dropout(0.0);\nParam tooth_scale(0.003);\nParam seed(1.0);\nParam src_mottle(0.0);\nParam src_tooth(0.0);\nParam bypass_gate(0.0);\n\naspect = width / max(height, 1.0);\nframe_x = norm.x * aspect;\nframe_y = norm.y;\n\nfield_m = switch(src_mottle > 0.5, field_luma(sample(in3, norm).x, sample(in3, norm).y, sample(in3, norm).z), builtin_mottle(frame_x, frame_y, mottle_scale, seed));\ntooth_v = switch(src_tooth > 0.5, field_luma(sample(in4, norm).x, sample(in4, norm).y, sample(in4, norm).z), builtin_tooth(frame_x, frame_y, tooth_scale, seed));\n\nfade_d = min(dropout / 0.05, 1.0);\nthresh_d = 1.35 * dropout * tooth_v;\nsoft_w = max(0.1 * fade_d, 0.0001);\n\nr_ink = ink_c(nearest(in1, norm).x, field_m, mottle, thresh_d, soft_w, fade_d);\ng_ink = ink_c(nearest(in1, norm).y, field_m, mottle, thresh_d, soft_w, fade_d);\nb_ink = ink_c(nearest(in1, norm).z, field_m, mottle, thresh_d, soft_w, fade_d);\n\nout1 = vec(mix(r_ink, nearest(in2, norm).x, bypass_gate), mix(g_ink, nearest(in2, norm).y, bypass_gate), mix(b_ink, nearest(in2, norm).z, bypass_gate), nearest(in2, norm).w);\n",
+									"fontface": 0,
+									"fontname": "<Monospaced>",
+									"fontsize": 12.0,
+									"id": "gen-obj-2",
+									"maxclass": "codebox",
+									"numinlets": 4,
+									"numoutlets": 1,
+									"outlettype": [
+										""
+									],
+									"patching_rect": [
+										22.0,
+										80.0,
+										550.0,
+										380.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "gen-obj-3",
+									"maxclass": "newobj",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										22.0,
+										490.0,
+										35.0,
+										22.0
+									],
+									"text": "out 1"
+								}
+							}
+						],
+						"lines": [
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										0
+									],
+									"source": [
+										"gen-obj-1",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										1
+									],
+									"source": [
+										"gen-obj-10",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										2
+									],
+									"source": [
+										"gen-obj-11",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-2",
+										3
+									],
+									"source": [
+										"gen-obj-12",
+										0
+									]
+								}
+							},
+							{
+								"patchline": {
+									"destination": [
+										"gen-obj-3",
+										0
+									],
+									"source": [
+										"gen-obj-2",
+										0
+									]
+								}
+							}
+						]
+					},
+					"patching_rect": [
+						30.0,
+						830.0,
 						216.0,
 						22.0
 					],
@@ -1405,6 +1703,118 @@
 						"parameter_enable": 0
 					},
 					"text": "js moduleSize.js"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-100",
+					"maxclass": "inlet",
+					"comment": "mottle field (optional): luma sets where ink thins. Unconnected = the built-in speckle",
+					"index": 0,
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						20.0,
+						30.0,
+						30.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-101",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						260.0,
+						70.0,
+						80.0,
+						22.0
+					],
+					"text": "vs_inState"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-103",
+					"maxclass": "inlet",
+					"comment": "tooth field (optional): luma sets where ink drops out, brightest first. Unconnected = the built-in paper grain",
+					"index": 0,
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						430.0,
+						20.0,
+						30.0,
+						30.0
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-104",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 2,
+					"outlettype": [
+						"",
+						""
+					],
+					"patching_rect": [
+						430.0,
+						70.0,
+						80.0,
+						22.0
+					],
+					"text": "vs_inState"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-102",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						260.0,
+						120.0,
+						160.0,
+						22.0
+					],
+					"text": "prepend param src_mottle"
+				}
+			},
+			{
+				"box": {
+					"id": "obj-105",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						430.0,
+						120.0,
+						160.0,
+						22.0
+					],
+					"text": "prepend param src_tooth"
 				}
 			},
 			{
@@ -1872,7 +2282,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Ink collects at the edges of marks: a denser rim, up to twice the mark's value at 1. Flat areas stay as they are. Output is not clamped",
+					"hint": "Ink is pushed to the edges of marks: the rim stays full and the body thins, to nothing at 1. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -1976,7 +2386,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Width of the Edge Pool rim, in frame heights. It shares the 7-texel reach of the blur. PROVISIONAL",
+					"hint": "Width of the rim, in frame heights. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2004,12 +2414,12 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.005
+								0.014
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "pool_width",
-							"parameter_mmax": 0.013,
+							"parameter_mmax": 0.02,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "pool_width",
@@ -2064,6 +2474,44 @@
 			},
 			{
 				"box": {
+					"id": "obj-703",
+					"maxclass": "attrui",
+					"attr": "pool_width",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						386.0,
+						368.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-704",
+					"maxclass": "attrui",
+					"attr": "pool_width",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						386.0,
+						392.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
 					"id": "obj-37",
 					"maxclass": "comment",
 					"fontname": "Ableton Sans Light",
@@ -2099,7 +2547,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Uneven density in blotches. It scales the ink that is there, so black stays black",
+					"hint": "Ink thins unevenly, most where it is dense. Black stays black. Patch a texture into the mottle inlet to choose the pattern (its luma: bright thins most)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2203,7 +2651,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Blotch size, in frame heights. PROVISIONAL",
+					"hint": "Size of the built-in mottle patches, in frame heights; the speckle is a tenth of this. No effect when a field is patched. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2231,12 +2679,12 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.15
+								0.045
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
 							"parameter_longname": "mottle_scale",
-							"parameter_mmax": 0.5,
+							"parameter_mmax": 0.3,
 							"parameter_mmin": 0.01,
 							"parameter_modmode": 3,
 							"parameter_shortname": "mottle_scale",
@@ -2307,7 +2755,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Ink fails to take on the paper's tooth: pinholes and skips, lighter values first, solids last",
+					"hint": "Ink fails to take on the paper's tooth: pinholes and skips, lighter values first, solids last. Patch a texture into the tooth inlet to choose the pattern (its luma: bright drops first)",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2411,7 +2859,7 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Grain of the paper, in frame heights. PROVISIONAL",
+					"hint": "Grain of the built-in paper tooth, in frame heights. No effect when a field is patched. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2439,7 +2887,7 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								0.004
+								0.003
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
@@ -2509,7 +2957,7 @@
 					"id": "obj-50",
 					"maxclass": "live.numbox",
 					"fontname": "Ableton Sans Light",
-					"hint": "Picks the mottle and tooth patterns. They are fixed to the frame and do not move",
+					"hint": "Picks the built-in mottle and tooth patterns. They are fixed to the frame and do not move",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
@@ -2647,7 +3095,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						892.0,
+						992.0,
 						40.0,
 						22.0
 					],
@@ -2665,7 +3113,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						170.0,
-						892.0,
+						992.0,
 						60.0,
 						22.0
 					],
@@ -2683,7 +3131,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						170.0,
-						922.0,
+						1022.0,
 						70.0,
 						22.0
 					],
@@ -2699,7 +3147,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						80.0,
-						892.0,
+						992.0,
 						60.0,
 						22.0
 					],
@@ -2718,7 +3166,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						80.0,
-						922.0,
+						1022.0,
 						60.0,
 						22.0
 					],
@@ -2737,7 +3185,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						952.0,
+						1052.0,
 						120.0,
 						22.0
 					],
@@ -2755,7 +3203,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						160.0,
-						952.0,
+						1052.0,
 						120.0,
 						22.0
 					],
@@ -2808,11 +3256,107 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-61",
+						"obj-63",
 						0
 					],
 					"destination": [
 						"obj-2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-100",
+						0
+					],
+					"destination": [
+						"obj-101",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						0
+					],
+					"destination": [
+						"obj-63",
+						2
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						1
+					],
+					"destination": [
+						"obj-102",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-102",
+						0
+					],
+					"destination": [
+						"obj-63",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-103",
+						0
+					],
+					"destination": [
+						"obj-104",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-104",
+						0
+					],
+					"destination": [
+						"obj-63",
+						3
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-104",
+						1
+					],
+					"destination": [
+						"obj-105",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-105",
+						0
+					],
+					"destination": [
+						"obj-63",
 						0
 					]
 				}
@@ -2836,7 +3380,7 @@
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						0
 					]
 				}
@@ -2916,11 +3460,35 @@
 			{
 				"patchline": {
 					"source": [
+						"obj-60",
+						0
+					],
+					"destination": [
+						"obj-61",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-61",
+						0
+					],
+					"destination": [
+						"obj-62",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"obj-57",
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-62",
 						1
 					]
 				}
@@ -2928,11 +3496,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-60",
+						"obj-62",
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						0
 					]
 				}
@@ -2944,7 +3512,7 @@
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						1
 					]
 				}
@@ -3184,7 +3752,7 @@
 						0
 					],
 					"destination": [
-						"obj-60",
+						"obj-62",
 						0
 					]
 				}
@@ -3256,7 +3824,7 @@
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						0
 					]
 				}
@@ -3292,7 +3860,7 @@
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						0
 					]
 				}
@@ -3328,7 +3896,7 @@
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						0
 					]
 				}
@@ -3364,7 +3932,7 @@
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						0
 					]
 				}
@@ -3400,7 +3968,7 @@
 						0
 					],
 					"destination": [
-						"obj-61",
+						"obj-63",
 						0
 					]
 				}
@@ -3473,6 +4041,54 @@
 					],
 					"destination": [
 						"obj-59",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-35",
+						0
+					],
+					"destination": [
+						"obj-703",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-703",
+						0
+					],
+					"destination": [
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-35",
+						0
+					],
+					"destination": [
+						"obj-704",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-704",
+						0
+					],
+					"destination": [
+						"obj-61",
 						0
 					]
 				}
@@ -3592,6 +4208,30 @@
 						0
 					],
 					"destination": [
+						"obj-62",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-63",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
 						"obj-rd-1",
 						0
 					]
@@ -3688,7 +4328,31 @@
 						0
 					],
 					"destination": [
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-3",
+						0
+					],
+					"destination": [
 						"obj-61",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-3",
+						0
+					],
+					"destination": [
+						"obj-63",
 						0
 					]
 				}
@@ -3748,7 +4412,31 @@
 						0
 					],
 					"destination": [
+						"obj-60",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-4",
+						0
+					],
+					"destination": [
 						"obj-61",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-4",
+						0
+					],
+					"destination": [
+						"obj-63",
 						0
 					]
 				}

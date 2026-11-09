@@ -167,12 +167,12 @@ A performer gives the three channels different gains (`gain_r`, `gain_g`, `gain_
 | `bias` | -1 to 1 | 0 | after the blur: toward gain (fatter) or loss (thinner) |
 | `snap` | 0-1 | 1 | how much the blur hardens back into a mark; 0 is a plain blur that keeps tone (name and default provisional) |
 | `soften` | 0-1 | 0.2 | edge softness of the re-threshold |
-| `edge_pool` | 0-1 | 0 | amount |
-| `pool_width` | frame units | 0.005 | rim width; shares the 7-texel blur reach (Matt, 2026-11-08, stride 1) |
+| `edge_pool` | 0-1 | 0 | how far the body of a mark thins |
+| `pool_width` | 0-0.02 | 0.014 | rim width in frame heights; 21 texels of reach (two blur pairs) |
 | `mottle` | 0-1 | 0 | amount |
-| `mottle_scale` | frame units | 0.15 | blotch size |
+| `mottle_scale` | 0.01-0.3 | 0.045 | built-in patch size, speckle a tenth of it; no effect with a field patched |
 | `dropout` | 0-1 | 0 | amount |
-| `tooth_scale` | frame units | 0.004 | paper grain size |
+| `tooth_scale` | 0.001-0.02 | 0.003 | built-in grain size; no effect with a field patched |
 | `fleck` | 0-1 | 0 | amount (P2) |
 | `band` | 0-1 | 0 | amount (P2), with period |
 | `seed` | int | 1 | pattern seed |

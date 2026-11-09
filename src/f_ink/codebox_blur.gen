@@ -1,17 +1,19 @@
 // f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.
-// Used four times: spread H and V, pool H and V. definition.py renders this template per stage: the radius Param becomes
-// `spread` or `pool_width`, and the axis Param a constant, so every Param left in a shipped stage is driven.
-//   - 15 taps at the fixed offsets -7..7, one texel apart (Matt, 2026-11-08: a stride of 2 combs a 1-texel line).
+// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param
+// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.
+//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads
+//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).
 //   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a
 //     radius of 0 is exactly the input, and the weights move continuously with the dial.
-//   - The reach is capped at 7 texels (above 1080 it shrinks in frame heights, accepted with the cap).
+//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).
 //   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.
-//   - nearest() at texel centers, no interpolation (T008 is still to measure). width and height come from render_dim:
+//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:
 //     `dim` reads 1 in a live jit.gl.pix.
 // radius is in frame heights. axis: 0 horizontal, 1 vertical.
 Param width(1920.0);
 Param height(1080.0);
 Param radius(0.0);
+Param stride(1.0);
 Param axis(0.0);
 
 r_tx = clamp(radius * height, 0.0, 7.0);
@@ -20,8 +22,8 @@ iy = floor(norm.y * height);
 acc = vec(0.0, 0.0, 0.0, 0.0);
 wsum = 0.0;
 for (k = 0; k < 15; k += 1) {
-    off = k - 7.0;
-    wt = max(0.0, 1.0 - abs(off) / (r_tx + 1.0));
+    off = (k - 7.0) * stride;
+    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));
     tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);
     ty = clamp(iy + off * axis, 0.0, height - 1.0);
     acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;

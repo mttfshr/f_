@@ -79,7 +79,7 @@ package/help/f_ink.maxhelp      # Phase 3
 
 ### ADR-8: After the first look (2026-11-09; supersedes parts of ADR-3, ADR-4, ADR-5)
 
-**Edge pool (Matt, candidate C):** `rim = clamp(2 * max(S - Bp, 0) / max(S, 1e-3), 0, 1)`; `P = S * ((1 - d) + d * rim)`, with `d` from `edge_pool` (the mock-up used 0.4 at a value of the dial still to be mapped). `Bp` needs about 12 texels of reach, so a second pair of 15-tap passes: ten stages (inferred from the mock-up; cost unmeasured).
+**Edge pool (Matt, candidate C):** `rim = clamp(2 * max(S - Bp, 0) / max(S, 1e-3), 0, 1)`; `P = S * ((1 - d) + d * rim)`, with `d` = `edge_pool`. `Bp` is two H,V pairs of 15 taps, the second with taps 2 texels apart, the width shared as q + 2q (21 texels at most): ten stages (cost unmeasured).
 **Field inlets (Matt):** in1 is the mottle field and in2 the tooth field, luma of each, connected flags `src_mottle` and `src_tooth`, wired by `mod_inlets` `fanout` to `fx_b`. The P2 drivers of ADR-5 (amount texture, spread-direction vecfield) move to in3 and in4 (Claude's numbering, to confirm). `fx_b` then has four inputs, the bench's limit, so the amount driver (T026) will need its own stage.
 **Built-in noise when unconnected (Claude, provisional: Matt chose inlets, not a built-in look):** mottle candidate C, speckle in slow patches; dropout candidate B, fine tooth with soft edges.
 
@@ -107,11 +107,11 @@ package/help/f_ink.maxhelp      # Phase 3
 ## Stage and wiring sketch
 
 ```
-in0 -> zap -> blur_h -> blur_v -> thresh -> pool_h -> pool_v -> pool (left inlet) -> fx_b -> out0
-         |                          +-------(S)----------------> pool (right inlet)    ^
-         +----------------(source, for bypass and alpha)-------------------------------+ (right inlet)
-in1 (vs_inState, src_amt) -> fx_b   (P2)
-in2 (vs_inState, src_dir) -> dir stage ---------------> replaces blur_v result where field != 0   (P2)
+in0 -> zap -> blur_h -> blur_v -> thresh -> pool_h -> pool_v -> pool_h2 -> pool_v2 -> pool (left) -> fx_b -> out0
+         |                            +---------(S)----------------------------> pool (right)    ^
+         +----------------(source, for bypass and alpha)---------------------------------------+ (2nd)
+in1 (vs_inState, src_mottle) -> fx_b (3rd)      in2 (vs_inState, src_tooth) -> fx_b (4th)
+in3, in4: the P2 drivers (ADR-5, ADR-8)
 r dim -> every stage (render size)
 ```
 
