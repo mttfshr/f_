@@ -31,7 +31,7 @@ Closed 2026-10-30/31: the `render_dim` migration (all tensor modules, vorticity,
 
 ## Owed to Matt
 
-- **Runs and looks:** `f_separate`: does the preview outlet show (the plates do, Matt 2026-11-08); does a plain reopen keep a changed swatch; does a saturation dial change the swatch; does the Mode menu fit; the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
+- **Runs and looks:** `f_separate` module bench (`tests/modules/separate/bench_separate_module.py`, written, not run); does the preview outlet show (the plates do, Matt 2026-11-08); does a plain reopen keep a changed swatch; does a saturation dial change the swatch; does the Mode menu fit; the new `f_vf_stamp` helpfile; the regenerated `f_modules` dropdowns; the corrected helpfile (Caustic notes); `f_caustic` demo-patch chain-cost check (untouched since 2026-10-08).
 - **Decisions (print-styles):** the PRELIMINARY gates in the `f_ink`, `f_screen` and `f_engrave` `tasks.md` files and the remaining ones in `f_separate` (`G-print-prelim`); which `f_separate` mode to keep or default to (Unmix, Nearest, Project); then `f_engrave`'s method, once its spike report exists (`G-engrave-method`).
 - **Decisions:** Batch 4: the remaining calls are the optical_flow / seeds passthrough details and the vortex mod-inlet gating (Matt: later).
 - **Optional cleanup:** `scratch/experiments/f_weave_character/` (local, gitignored) is redundant with the shipped `f_weave`; delete whenever.

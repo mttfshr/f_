@@ -68,6 +68,7 @@ DATA = {
     "bench_wave_field": _MACHINERY + ["src/f_wave_field/codebox_*.gen"],
     "bench_wave_field_module": _MODULE_BENCH + ["package/patchers/f_wave_field.maxpat", "src/f_wave_field/codebox_*.gen"],
     "bench_separate": _MACHINERY + ["src/f_separate/codebox_*.gen"],
+    "bench_separate_module": _MODULE_BENCH + ["package/patchers/f_separate.maxpat", "src/f_separate/codebox_*.gen"],
     "bench_vf_stamp": _MACHINERY + ["src/f_vf_stamp/codebox_*.gen"],
     "bench_vf_stamp_module": _MODULE_BENCH + ["package/patchers/f_vf_stamp.maxpat", "src/f_vf_stamp/codebox_*.gen"],
     "bench_quasi": _MACHINERY + ["src/f_quasi/codebox_*.gen"],
