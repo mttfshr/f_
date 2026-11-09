@@ -94,8 +94,8 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 
 - `tests/modules/separate/test_separate.py`: NumPy mirror, 13/13 (log `tests/logs/20261108-221722-offline.log`, per `tasks.md`).
 - `bench_separate.py`: the real codebox against the mirror, 5/5, worst 4.8e-7 (log `tests/logs/20261108-222210-bench.log`, per `tasks.md`).
-- `bench_separate_module.py`: the shipped patcher, 5/5, worst 6.6e-7 (log `tests/logs/20261108-223656-bench.log`): load touching nothing, Mode and ink count, `inkN` messages, gains, the Sat dial.
-- `tests/contracts/bench_modules.py`: **not yet run for this module**, so bypass on the shipped patcher is unverified (the codebox bench has it exact on all four outlets).
+- `bench_separate_module.py`: the shipped patcher, 5/5, worst 6.6e-7 on the first green run (latest log `tests/logs/20261108-224811-bench.log`): load touching nothing, Mode and ink count, `inkN` messages, gains, the Sat dial.
+- `tests/contracts/bench_modules.py`: 2/2 (log `tests/logs/20261108-224839-bench.log`), including bypass passing the source on all four outlets.
 - Live (Matt, 2026-11-08): the swatch route (T009), the plates showing after `aeaf7b3`, the tuning looks (T030, T031), the Sat dial, the helpfile.
 
 ## References
