@@ -72,6 +72,12 @@ package/patchers/f_separate.maxpat   docs/f-reference/f_separate.md   package/he
 
 **Decision (Matt: yes; details preliminary)**: squared RGB distance from the pixel to each ink and to black; the nearest wins; an ink winning gets coverage 1 and the others 0; black winning gives all 0.
 
+### ADR-5b: Project mode (spec P12)
+
+**Decision (Matt, 2026-11-08)**: a third `sep_mode`: each ink's coverage is its own projection, `clamp(gain_i * (k_i . x) / (k_i . k_i), 0, 1)`, with no matrix solve and no dependence on the other inks. The codebox adds three divisions (about six statements); the mirror adds a `project` mode and a `project_joint` mutation. A black ink gives 0 (the divisor floor is 1e-8).
+**Why**: moving one swatch changed the other plates under Unmix, an inherent property of the joint least squares when inks overlap in colour (checked on the mirror: a plate moved by 0.18 to 0.25 with no or little clamping); Matt finds the independent rule easier to reason about.
+**Cost**: no exact round trip for overlapping inks, bleed between inks that share colour. Unmix stays the default.
+
 ### ADR-6: Colour controls (G6)
 
 **Decision (preliminary)**: Phase 0 first tries one `swatch` box per ink colour (three) in `raw_boxes`, outputs unpacked to the Params `ink1_r` … `ink3_b` (nine Params). The fallback is nine float dials grouped in rows. Unverified: the first build task proves the swatch route offline (JSON and route) and Matt confirms it in Max.

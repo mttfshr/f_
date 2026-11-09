@@ -10,13 +10,15 @@ Unmix (P1, P2): c = clamp(gain * (K^T K + lam I)^-1 K^T x, 0, 1)   (gain, then o
     the codebox must do it (N <= 3).
 Nearest (P6): the winner among the N inks and black (squared RGB distance; ties go to an ink,
     lowest index) gets coverage 1 (then gain, then clamp), the others 0; black winning gives 0.
+Project (P12, Matt 2026-11-08): each ink alone: c_i = clamp(gain_i * (k_i . x) / (k_i . k_i), 0, 1); a plate
+    depends only on the source and its own ink (no joint solve, so no exact round trip for overlapping inks).
 Outputs (P5): plates 0..2, plate i = clamp(gain_i * c_i, 0, 1) * k_i (black beyond `inks`);
     preview = clamp(sum of the plates, 0, 1). Alpha is the source's on all four. Non-finite
     input components are zapped to 0 first (FR-010). Bypass (P10): the zapped source on all four.
     in0 = None stands for nothing connected: black, alpha 0 (vs_black), on all four.
 
 `bug` values are mutations the tests must catch: "no_clamp", "gain_after_clamp", "preview_no_clamp",
-"nearest_no_black", "skip_zap", "ignore_alpha", "pack_rgb" (plates packed into R, G, B as before
+"nearest_no_black", "skip_zap", "ignore_alpha", "project_joint", "pack_rgb" (plates packed into R, G, B as before
 the 2026-11-08 decision).
 """
 import numpy as np
@@ -77,9 +79,12 @@ def separate_stage(src, inks, n_inks=3, mode="unmix", gains=(1, 1, 1), bypass=0,
         win = np.argmin(d, -1)
         cov = np.stack([(win == i).astype(F32) for i in range(n_inks)], -1)
     else:
-        minv = ridge_inverse(k)
-        raw = np.einsum("nm,...m->...n", minv, np.einsum("cn,...c->...n", k, rgb)).astype(F32)
-        cov = raw
+        t = np.einsum("cn,...c->...n", k, rgb).astype(F32)
+        if mode == "project" and bug != "project_joint":
+            kk = (k * k).sum(0).astype(F32)
+            cov = (t / np.maximum(kk, F32(1e-8))).astype(F32)       # each ink on its own
+        else:
+            cov = np.einsum("nm,...m->...n", ridge_inverse(k), t).astype(F32)
     if bug == "gain_after_clamp":
         cov = (np.clip(cov, 0, 1) * g).astype(F32)          # clamp first, gain unbounded after
     elif bug == "no_clamp":

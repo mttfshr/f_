@@ -40,8 +40,8 @@ patcher = {
     "params": [
         {"name": "n_inks", "type": "int", "min": 1, "max": 3, "default": 2, "label": "Inks",
          "hint": "How many inks are active. Unused plates are black"},
-        {"name": "sep_mode", "type": "text_button", "options": ["Unmix", "Nearest"], "default": 0, "label": "Mode",
-         "hint": "Unmix finds the best-fit coverage of each ink per pixel. Nearest gives each pixel wholly to its nearest ink, or to none when black is nearest"},
+        {"name": "sep_mode", "type": "menu", "options": ["Unmix", "Nearest", "Project"], "default": 0, "label": "Mode",
+         "hint": "Unmix: the best-fit coverage of all the inks together (exact round trip, but plates depend on each other). Nearest: each pixel wholly to its nearest ink, or to none when black is nearest. Project: each ink on its own, so a plate never depends on the other inks (the preview can overshoot)"},
         {"name": "gain1", "type": "float", "min": 0.0, "max": 2.0, "default": 1.0, "label": "Gain 1",
          "hint": "Plate 1 coverage gain. Above 1 saturates faster but never exceeds the ink colour"},
         {"name": "gain2", "type": "float", "min": 0.0, "max": 2.0, "default": 1.0, "label": "Gain 2",

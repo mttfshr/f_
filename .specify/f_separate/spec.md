@@ -32,6 +32,8 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 - **P10 Bypass** (Matt: yes): the source goes to all four outlets.
 - **P11 Polarity** (Matt: yes): more light in the source means more coverage; the source is an ordinary colour image.
 
+- **P12 Project mode** (Matt, 2026-11-08, after seeing that moving one ink's swatch changed the other plates: the joint solve makes plates depend on each other whenever the ink colours overlap; "the independent alternative might be easier to reason about"): a third `sep_mode`, Project: each ink alone, `c_i = clamp(gain_i * (k_i . x) / (k_i . k_i), 0, 1)`. A plate depends only on the source and its own ink; the cost is no exact round trip for overlapping inks (the preview can overshoot and clip) and bleed (the teal patch gives a violet plate 0.50 through shared blue, measured on the mirror). Unmix stays the default; Matt picks by look.
+
 ### Consequences noted, not yet applied elsewhere
 
 - The FRs, user stories and success criteria were reconciled with this list on 2026-11-08 (tasks T013a). A gain above 1 cannot push a plate past its ink colour (follows from P9; preliminary).
@@ -96,6 +98,15 @@ With one ink the plate is the projection of the pixel onto that ink's colour; wi
 1. **Given** Nearest, **Then** each pixel has at most one plate non-black, and that plate is exactly its ink colour.
 2. **Given** a pixel exactly an ink colour, **Then** that plate is that colour and the others are black.
 
+### User Story 4b: Project mode (Priority: P2)
+
+`sep_mode` Project makes each plate depend only on the source and its own ink (P12).
+
+**Acceptance Scenarios**:
+1. **Given** Project, **When** any other ink's colour changes, **Then** an ink's plate is unchanged exactly.
+2. **Given** orthogonal inks (red, green, blue) or one ink, **Then** Project equals Unmix.
+3. **Given** a patch exactly an ink's colour, **Then** that ink's plate is that colour in full (other plates may be non-zero where inks share colour).
+
 ### User Story 5: Per-ink gain (Priority: P2)
 
 A per-ink gain (0-2) on the coverage, so one ink can be weakened or strengthened without changing the palette. The gain is applied before the 0..1 clamp of P9, so a gain above 1 saturates a plate faster but never makes it brighter than its ink colour (preliminary: follows from P9). The full per-plate tone curve belongs upstream in `f_tone_curve`.
@@ -117,6 +128,7 @@ A per-ink gain (0-2) on the coverage, so one ink can be weakened or strengthened
 - **FR-005**: Outlet 3 MUST be the sum of the three plate outlets clamped to 0..1 (P5), so that for any pixel whose colour the palette can reproduce, it equals the source within tolerance (the round trip).
 - **FR-006**: A black pixel MUST give all-black plates, and a pixel exactly an ink's colour MUST give that plate exactly its ink colour and the others black (within tolerance).
 - **FR-007**: Degenerate inks and pixels (G4) MUST NOT produce NaN or Inf: a black ink, duplicate or collinear inks, and non-finite input are all handled and tested.
+- **FR-014**: In Project mode (P12), each coverage MUST be `clamp(gain_i * (k_i . x) / (k_i . k_i), 0, 1)` and MUST NOT depend on any other ink.
 - **FR-008**: In Nearest mode, each pixel MUST have at most one non-black plate, equal to its ink colour (P6).
 - **FR-009**: Alpha MUST pass through from the source on all four outlets.
 - **FR-010**: The outlets MUST be float32 and bounded to 0..1; no NaN or Inf MAY reach any (non-finite input texels are zapped).
@@ -137,7 +149,7 @@ A per-ink gain (0-2) on the coverage, so one ink can be weakened or strengthened
 | `inks` | 1-3 | 2 | how many inks are active |
 | `ink1`, `ink2`, `ink3` | colours (swatch) | three distinct spot colours | full-coverage colours of the inks, colours of light (G6) |
 | `sat1`, `sat2`, `sat3` | 0-1 | 1 | saturation of each swatch's colour plane; panel-only, not codebox Params (T009) |
-| `mode` | Unmix / Nearest | Unmix | Nearest is P6 |
+| `sep_mode` | Unmix / Nearest / Project | Unmix | Nearest is P6, Project is P12 (a menu; `mode` would bind to a pix attribute) |
 | `gain1`, `gain2`, `gain3` | 0-2 | 1 | per-ink coverage gain (User Story 5) |
 | `bypass` | toggle | 0 | passthrough on all four outlets |
 

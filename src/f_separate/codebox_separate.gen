@@ -8,6 +8,8 @@
 //     lam = 1e-4 * trace(K^T K) / N + 1e-8 (relative ridge; an inferred choice, gate G3)
 //   - nearest (sep_mode 1): the nearest of the N inks and black (squared RGB distance; ties go to the lowest ink, black
 //     last) gets coverage 1, the others 0; then gain and the same clamp
+//   - project (sep_mode 2): each ink alone, c_i = clamp(gain_i * (k_i . x) / (k_i . k_i), 0, 1); a plate depends only on
+//     the source and its own ink (Matt, 2026-11-08: easier to reason about than the joint solve)
 //   - outlets: 1 to 3 = the plates, coverage * ink colour; 4 = the preview, the sum of the plates clamped to 0..1.
 //     Alpha is the source's on all four.
 //   - bypass_gate = 1: the (zapped) source on all four outlets
@@ -91,10 +93,14 @@ w1 = switch(d1 <= d2 && d1 <= d3 && d1 <= d0, 1, 0) * act1;
 w2 = switch(d2 < d1 && d2 <= d3 && d2 <= d0, 1, 0) * act2;
 w3 = switch(d3 < d1 && d3 < d2 && d3 <= d0, 1, 0) * act3;
 
-near_flag = switch(sep_mode >= 0.5, 1, 0);
-cv1 = clamp(mix(raw1, w1, near_flag) * gain1, 0, 1) * act1;
-cv2 = clamp(mix(raw2, w2, near_flag) * gain2, 0, 1) * act2;
-cv3 = clamp(mix(raw3, w3, near_flag) * gain3, 0, 1) * act3;
+near_flag = switch(sep_mode >= 0.5 && sep_mode < 1.5, 1, 0);
+proj_flag = switch(sep_mode >= 1.5, 1, 0);
+pj1 = t1 / max(m11, 0.00000001);
+pj2 = t2 / max(m22, 0.00000001);
+pj3 = t3 / max(m33, 0.00000001);
+cv1 = clamp(mix(mix(raw1, w1, near_flag), pj1, proj_flag) * gain1, 0, 1) * act1;
+cv2 = clamp(mix(mix(raw2, w2, near_flag), pj2, proj_flag) * gain2, 0, 1) * act2;
+cv3 = clamp(mix(mix(raw3, w3, near_flag), pj3, proj_flag) * gain3, 0, 1) * act3;
 
 p1r = cv1 * k1r;
 p1g = cv1 * k1g;

@@ -168,6 +168,38 @@ def test_nearest():
     check("near-black goes to no plate", max(float(np.abs(o[..., :3]).max()) for o in dark), 0)
 
 
+def test_project_mode():
+    """P12: each plate depends only on the source and its own ink; orthogonal inks equal the joint solve."""
+    rng = np.random.default_rng(13)
+    x = rng.uniform(0, 1, (64, 3)).astype(F32)
+    base = separate_stage(img(x), SPOT, mode="project")
+    worst = 0.0
+    for j in (0, 1, 2):                                      # move ink j: the other plates must not change at all
+        moved = SPOT.copy()
+        moved[j] = rng.uniform(0, 1, 3).astype(F32)
+        out = separate_stage(img(x), moved, mode="project")
+        for i in (0, 1, 2):
+            if i != j:
+                worst = max(worst, err(out[i], base[i]))
+    note("worst change of an untouched plate", worst)
+    check("project: an ink's plate does not depend on the other inks", worst, 0)
+    a = separate_stage(img(x), RGB3, mode="project")
+    b = separate_stage(img(x), RGB3, mode="unmix")
+    check("project equals unmix for orthogonal inks", max(err(a[i], b[i]) for i in range(4)), 2e-3)
+    ink1 = separate_stage(img([SPOT[1]]), SPOT, mode="project")
+    check("project: an ink's own colour gives its plate in full", err(ink1[1][0, 0, :3], SPOT[1]), 1e-3)
+    note("project bleed into plate 3 from the teal patch (shared blue)", float(np.abs(ink1[2][0, 0, :3]).max()))
+    grey = np.array([[0.8, 0.8, 0.8]] * 3, dtype=F32)
+    ramp = img([[v, v, v] for v in np.linspace(0, 1, 17)])
+    p = separate_stage(ramp, grey, n_inks=1, mode="project")[0][0, :, 0]
+    u = separate_stage(ramp, grey, n_inks=1, mode="unmix")[0][0, :, 0]
+    check("one ink: project equals unmix", err(p, u), 2e-3)
+    black = np.array([[0, 0, 0], [0, 0.6, 0.6], [0.45, 0, 1]], dtype=F32)
+    o = separate_stage(img(x), black, mode="project")
+    check("project with a black ink: finite and the black ink's plate is black",
+          float(np.abs(o[0][..., :3]).max()) + (0.0 if all(np.isfinite(q).all() for q in o) else 1.0), 1e-6)
+
+
 def test_gains():
     """User Story 5: gain before the clamp; a plate never exceeds its ink colour; gain 0 empties a plate."""
     k = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=F32)
@@ -212,6 +244,7 @@ def test_mutations():
         "skip_zap": (img([[np.nan, 0.5, 0.5]]), SPOT, dict()),
         "ignore_alpha": (img([[0.5, 0.5, 0.5]]) * np.array([1, 1, 1, 0.3], dtype=F32), SPOT, dict()),
         "pack_rgb": (img([[0.2, 0.8, 0.1]]), SPOT, dict()),
+        "project_joint": (img([[0.3, 0.6, 0.7]]), SPOT, dict(mode="project")),
     }
     for bug, (src, pal, kw) in cases.items():
         a = separate_stage(src, pal, **kw)
