@@ -74,8 +74,8 @@ package/help/f_ink.maxhelp      # Phase 3
 
 ### ADR-3: Edge pooling from the pool-width blur (spec FR-007)
 
-**Decision (preliminary)**: with `B_p` the blur at `pool_width` and `S` the spread result, `pooled = S + edge_pool * S * 4 * B_p * (1 - B_p)`. The band term is 0 in flat areas (B_p near 0 or 1) and peaks at 1 on a boundary; multiplying by `S` puts the rim on the ink side. No ink is added where the input is 0.
-**Open**: whether the pool blur can reuse the spread blur when the two radii are equal (saves two stages); decided by cost in Phase 0.
+**Decision (preliminary; corrected 2026-11-08 by the mirror, see tasks.md Record)**: with `B_p` the blur of `S` at `pool_width` and `S` the spread result, `pooled = S + edge_pool * S * 2 * max(S - B_p, 0)`. The band term is 0 on any flat field and is 0.5 on a straight edge, so the rim peaks at twice S at amount 1; multiplying by `S` keeps it on the ink side. No ink is added where the input is 0. The first form, `4 * B_p * (1 - B_p)`, was 1 on a flat 0.5 field, against FR-007.
+**Consequence**: the pool blur reads `S`, so it cannot reuse the spread blur. Stages are blur, blur, threshold, blur, blur, pool, `fx_b` (seven). Non-finite input is zapped before the first blur, not in `fx_b`.
 
 ### ADR-4: Mottle, tooth, flecks, bands from the sin hash in frame-height units (G2, G3, G10)
 

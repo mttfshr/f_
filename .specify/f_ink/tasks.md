@@ -31,15 +31,15 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 - [ ] T013 [GATE G11] PRELIMINARY: keep the name `f_ink`; menu category at Phase 3 (`G-menu`).
 - [ ] T014 [GATE G12] PRELIMINARY: panel grouped as Spread / Edge / Mottle / Dropout, then P2 rows (Fleck, Band, Gains, Drivers); decide the final layout at T040 with Matt (`G-ui-density`).
 - [ ] T015 Confirm with Matt the five assumptions left in the spec (A1 polarity, A2 per channel, A3 stateless, A4 frame-relative units, A6 identity at zero) and the two small G8 details (what in1 scales, how in2 elongates the kernel).
-- [ ] T016 [US1-US4] NumPy mirror `tests/modules/ink/ink_mirror.py` and `test_ink.py` per the plan's Tier 1 list: identity at zero, spread (disc area, merge, thin, bias), mottle statistics, dropout monotone and light-first, edge-pool rim, determinism, render-size scaling, border, non-finite zap. Run `tests/run.sh -q tests/modules/ink`.
-- [ ] T017 [US1] Record in the mirror the measured numbers that settle SC thresholds still marked open in the spec (mottle mean shift, area preservation of the re-threshold).
+- [x] T016 (2026-11-08, offline, Claude; 15/15, log `tests/logs/20261108-232003-offline.log`) [US1-US4] NumPy mirror `tests/modules/ink/ink_mirror.py` and `test_ink.py` per the plan's Tier 1 list: identity at zero, spread (disc area, merge, thin, bias), mottle statistics, dropout monotone and light-first, edge-pool rim, determinism, render-size scaling, border, non-finite zap. Run `tests/run.sh -q tests/modules/ink/test_ink.py`.
+- [x] T017 (2026-11-08, offline, Claude; numbers in Record) [US1] Record in the mirror the measured numbers that settle SC thresholds still marked open in the spec (mottle mean shift, area preservation of the re-threshold).
 
 ## Phase 1: build
 
-- [ ] T020 [US1] `src/f_ink/codebox_blur.gen`: one separable 15-tap tent pass, direction and radius as Params, nearest taps by index, border clamp. Follow `skills/jit-gen-codebox/SKILL.md`.
-- [ ] T021 [US1] [US3] [US4] `src/f_ink/codebox_fx_a.gen`: re-threshold with `bias` and `soften`, edge pooling (plan ADR-3), exact identity at zero amounts.
-- [ ] T022 [US2] [US3] `src/f_ink/codebox_fx_b.gen`: mottle, tooth and dropout, zap, `bypass_gate` (plan ADR-4, ADR-6), alpha pass-through.
-- [ ] T023 `src/f_ink/definition.py`: `pix_chain` with the six stages and `pix_wires`, `render_dim`, the P1 dials, `bypass` as `bypass_gate`; then `build/py.sh build/build_patcher.py`, drift check, JSON validate, `tests/contracts/test_module_contracts.py` (offline only).
+- [ ] T020 [US1] `src/f_ink/codebox_blur.gen`: one separable 15-tap tent pass, direction and radius as Params, nearest taps by index, border clamp, non-finite taps zapped (the mirror zaps before any blur). Follow `skills/jit-gen-codebox/SKILL.md`.
+- [ ] T021 [US1] [US3] [US4] `src/f_ink/codebox_fx_a.gen`: re-threshold with `bias` and `soften`, then edge pooling in its own stage after the pool blur (plan ADR-3, corrected), exact identity at zero amounts.
+- [ ] T022 [US2] [US3] `src/f_ink/codebox_fx_b.gen`: mottle, tooth and dropout, `bypass_gate` (plan ADR-4, ADR-6), alpha pass-through.
+- [ ] T023 `src/f_ink/definition.py`: `pix_chain` with the seven stages and `pix_wires`, `render_dim`, the P1 dials, `bypass` as `bypass_gate`; then `build/py.sh build/build_patcher.py`, drift check, JSON validate, `tests/contracts/test_module_contracts.py` (offline only).
 - [ ] T024 `tests/modules/ink/bench_ink.py` and `bench_ink_module.py` (read `skills/bench-test-authoring` first). Written offline; run only with Matt's go, `-q`. First bench item: `sample()` interpolation (T008) and blur-stage cost (T009).
 - [ ] T025 [US5] `fx_b` additions: flecks and banding (P2 stories).
 - [ ] T026 [US6] Channel gains in `fx_b`; the in1 amount driver and its connected flag (`src_amt`); definition and mirror updates.
@@ -63,3 +63,8 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
 ## Record
 
 - 2026-11-08 (offline, Claude): spec clarified with Matt (Q1 to Q5), then this plan and task list written from it. The gates marked PRELIMINARY are Claude's own recommendations, taken on Matt's instruction; nothing here has been run or measured.
+- 2026-11-08 (offline, Claude): T016 and T017 done: `tests/modules/ink/ink_mirror.py` and `test_ink.py`, P1 effects, 15/15, seven mutations caught, log `tests/logs/20261108-232003-offline.log`. Matt, same day: skip the `G-print-prelim` review for now and go on to this phase, so the mirror uses the PRELIMINARY gates as written. Nothing here has run in Max.
+  - **Plan corrected (Claude; the plan contradicted the spec):** ADR-3's band `4 * Bp * (1 - Bp)` is 1 on a flat 0.5 field, against FR-007 (mutation `plan_pool`, error 0.5); the band is now `S - Bp`. The pool blur reads S, not in0, for FR-008 (with the edge moved 8 rows, the rim peaks 2 rows from the moved edge); that makes seven stages and rules out reusing the spread blur (ADR-3 open, T009 part). Zap moved from `fx_b` to before the blurs (mutation `zap_late`). Dropout compares `max(c, 0)`, so a negative input is left alone at dropout 0 (`dropout_negative`).
+  - **T017 numbers:** disc area at spread 1, neutral bias: -0.095%. Mottle mean shift on flat 0.8, amount 1, 12 seeds: worst 0.072, mean +0.0075 (the deviation is per seed: few large cells at scale 0.15).
+  - **T009, offline half (measured; the bench half, cost, is open):** a 1-texel line through the blur: largest step between neighbors / peak is 0.125 at H=540 (stride 1, smooth), 0.875 at H=720, 1.000 at H=1080 and 2160 (stride 2: every other texel is 0, a comb). So ADR-2's "stride at or below 2" does not protect thin marks. The stride limit also holds the radius at 14 texels at H=2160, half its size in frame heights, against FR-011. Open for Matt.
+  - **Tone through spread (measured; open for Matt):** the re-threshold assumes two-valued marks. Flat 0.3 at spread 0.25, 0.5, 1 gives 0.225, 0.15, 0; flat 0.8 gives 0.85, 0.9, 1; flat 0.5 stays. Continuous-tone input posterizes as spread rises. The blend weight (`spread` itself) is an inferred choice.
