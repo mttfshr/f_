@@ -78,6 +78,7 @@ patcher = {
 # Ids: the route is obj-4 (outlet 7 + N is inkN), the primary pix obj-5, the dials are the builder's (sat1-3).
 DEFAULTS = {1: (1.0, 0.25, 0.0), 2: (0.0, 0.6, 0.6), 3: (0.45, 0.0, 1.0)}
 SAT_DIAL = {1: "obj-35", 2: "obj-38", 3: "obj-41"}
+COL_CENTRE = {1: 66.0, 2: 113.0, 3: 160.0}    # panel columns, one per ink: Gain, Sat and the swatch share a centre (Matt, 2026-11-08)
 RAW_BOXES, RAW_LINES = [], []
 
 
@@ -108,10 +109,10 @@ _line("obj-raw-once", 0, "obj-raw-wait", 0)
 for n, (r, g, bl) in DEFAULTS.items():
     y = 300 + 130 * (n - 1)
     sw, un, st = f"obj-raw-sw{n}", f"obj-raw-un{n}", f"obj-raw-set{n}"
-    sx = 4 + 64 * (n - 1)
-    _box(sw, "swatch", ins=1, outs=2, rect=(300, y, 60, 30), pres=(sx, 160, 56, 36), otypes=["", "float"],
+    cx = COL_CENTRE[n]
+    _box(sw, "swatch", ins=1, outs=2, rect=(300, y, 60, 30), pres=(cx - 22, 160, 44, 36), otypes=["", "float"],
          varname=f"ink{n}_swatch")
-    _box(f"obj-raw-lbl{n}", "comment", f"Ink {n}", outs=0, rect=(380, y - 20, 50, 18), pres=(sx - 6, 144, 50, 18),
+    _box(f"obj-raw-lbl{n}", "comment", f"Ink {n}", outs=0, rect=(380, y - 20, 50, 18), pres=(cx - 25, 144, 50, 18),
          fontname="Ableton Sans Light", fontsize=9.5, textjustification=1, varname=f"lbl_ink{n}")
     _box(st, "message", f"set {r} {g} {bl} 1.", rect=(380, y, 120, 22))
     _box(un, "newobj", "unpack 0. 0. 0. 0.", outs=4, rect=(300, y + 40, 100, 22), otypes=["float"] * 4)
@@ -135,3 +136,33 @@ for n, (r, g, bl) in DEFAULTS.items():
 
 patcher["raw_boxes"] = RAW_BOXES
 patcher["raw_lines"] = RAW_LINES
+
+
+# ---- the panel (Matt, 2026-11-08) ------------------------------------------------------------------------------------
+# Title bar: name, Mode menu (no label), signal type. Left column: Inks, a true integer numbox (as f_poincare's p and q).
+# Three columns, one per ink: Gain, Sat and the swatch on one centre.
+_ROW_GAIN, _ROW_SAT = 38.0, 100.0   # dial tops; a label sits 18 px above
+
+
+def _dial_at(name, centre, y):
+    return {f"{name}.ctl":   {"presentation_rect": [centre - 13.5, y, 27.0, 43.0]},
+            f"{name}.label": {"presentation_rect": [centre - 25.0, y - 18.0, 50.0, 18.0]}}
+
+
+_ov = {
+    "title":         {"presentation_rect": [10.5, 0.0, 46.0, 21.0]},
+    "sep_mode.ctl":  {"presentation_rect": [60.0, 3.0, 52.0, 15.0]},
+    "sep_mode.label": {"hidden": 1},
+    "signal_type":   {"presentation_rect": [116.0, 0.9, 49.0, 21.0]},
+    "n_inks.ctl":    {"presentation_rect": [4.0, _ROW_GAIN, 34.0, 15.0], "outlettype": ["", "int"],
+                      "saved_attribute_attributes": {"valueof": {
+                          "parameter_initial": [2.0], "parameter_initial_enable": 1, "parameter_linknames": 1,
+                          "parameter_longname": "n_inks", "parameter_mmax": 3.0, "parameter_mmin": 1.0,
+                          "parameter_modmode": 3, "parameter_shortname": "n_inks",
+                          "parameter_type": 1, "parameter_unitstyle": 0}}},
+    "n_inks.label":  {"presentation_rect": [-4.0, _ROW_GAIN - 18.0, 50.0, 18.0]},
+}
+for _n, _c in COL_CENTRE.items():
+    _ov.update(_dial_at(f"gain{_n}", _c, _ROW_GAIN))
+    _ov.update(_dial_at(f"sat{_n}", _c, _ROW_SAT))
+patcher["overrides"] = _ov

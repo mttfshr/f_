@@ -432,7 +432,7 @@
 					"presentation_rect": [
 						10.5,
 						0.0,
-						92.0,
+						46.0,
 						21.0
 					],
 					"text": "Separate"
@@ -461,9 +461,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						95.0,
+						116.0,
 						0.9,
-						70.0,
+						49.0,
 						21.0
 					],
 					"text": "tex in/out"
@@ -659,7 +659,7 @@
 					"numoutlets": 2,
 					"outlettype": [
 						"",
-						"float"
+						"int"
 					],
 					"param_connect": "separate_pix::n_inks",
 					"parameter_enable": 1,
@@ -688,8 +688,8 @@
 							"parameter_mmin": 1.0,
 							"parameter_modmode": 3,
 							"parameter_shortname": "n_inks",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
+							"parameter_type": 1,
+							"parameter_unitstyle": 0
 						}
 					},
 					"varname": "n_inks"
@@ -730,7 +730,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						-4.0,
 						20.0,
 						50.0,
 						18.0
@@ -763,9 +763,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						37.0,
+						60.0,
+						3.0,
 						52.0,
-						45.0,
 						15.0
 					],
 					"saved_attribute_attributes": {
@@ -834,7 +834,8 @@
 					],
 					"text": "Mode",
 					"textjustification": 1,
-					"varname": "lbl_sep_mode"
+					"varname": "lbl_sep_mode",
+					"hidden": 1
 				}
 			},
 			{
@@ -865,7 +866,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						52.5,
 						38.0,
 						27.0,
 						43.0
@@ -931,7 +932,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						41.0,
 						20.0,
 						50.0,
 						18.0
@@ -969,7 +970,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						115.0,
+						99.5,
 						38.0,
 						27.0,
 						43.0
@@ -1035,7 +1036,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						103.5,
+						88.0,
 						20.0,
 						50.0,
 						18.0
@@ -1073,7 +1074,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						152.0,
+						146.5,
 						38.0,
 						27.0,
 						43.0
@@ -1139,7 +1140,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						140.5,
+						135.0,
 						20.0,
 						50.0,
 						18.0
@@ -1177,7 +1178,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						52.5,
 						100.0,
 						27.0,
 						43.0
@@ -1224,7 +1225,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						-7.5,
+						41.0,
 						82.0,
 						50.0,
 						18.0
@@ -1262,7 +1263,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						41.0,
+						99.5,
 						100.0,
 						27.0,
 						43.0
@@ -1309,7 +1310,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						29.5,
+						88.0,
 						82.0,
 						50.0,
 						18.0
@@ -1347,7 +1348,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
+						146.5,
 						100.0,
 						27.0,
 						43.0
@@ -1394,7 +1395,7 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						66.5,
+						135.0,
 						82.0,
 						50.0,
 						18.0
@@ -1611,9 +1612,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						4.0,
+						44.0,
 						160.0,
-						56.0,
+						44.0,
 						36.0
 					],
 					"varname": "ink1_swatch"
@@ -1635,7 +1636,7 @@
 					"text": "Ink 1",
 					"presentation": 1,
 					"presentation_rect": [
-						-2.0,
+						41.0,
 						144.0,
 						50.0,
 						18.0
@@ -1794,9 +1795,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						68.0,
+						91.0,
 						160.0,
-						56.0,
+						44.0,
 						36.0
 					],
 					"varname": "ink2_swatch"
@@ -1818,7 +1819,7 @@
 					"text": "Ink 2",
 					"presentation": 1,
 					"presentation_rect": [
-						62.0,
+						88.0,
 						144.0,
 						50.0,
 						18.0
@@ -1977,9 +1978,9 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						132.0,
+						138.0,
 						160.0,
-						56.0,
+						44.0,
 						36.0
 					],
 					"varname": "ink3_swatch"
@@ -2001,7 +2002,7 @@
 					"text": "Ink 3",
 					"presentation": 1,
 					"presentation_rect": [
-						126.0,
+						135.0,
 						144.0,
 						50.0,
 						18.0

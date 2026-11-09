@@ -1,7 +1,7 @@
 # f_separate
 
 **Type:** Processor: stateless, per pixel. One texture in; four textures out (three plates and their sum).
-**Status:** Built 2026-11-08. Tier 1 and both benches green (Verification below). Plates seen live by Matt 2026-11-08; the tuning looks (T030-T032) are still to come, and the panel layout is a placeholder (`G-ui-density`).
+**Status:** Built 2026-11-08. Tier 1 and both benches green (Verification below). Tuning looks passed, live by Matt 2026-11-08 (T030, T031). The panel was laid out to Matt's direction the same day: Mode in the title bar, Inks at the left, Gain, Sat and Ink in one column per ink (not yet seen in Max).
 
 _Reference written 2026-11-08 from `src/f_separate/` (definition and codebox), `.specify/f_separate/{spec,plan,tasks}.md` and the module's tests._
 
@@ -87,7 +87,7 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 - **The first Sat dial move shifts an ink slightly and it does not come back.** Ink 1 starts at (1, 0.25, 0) and reads (1, 0.238, 0.004) after Sat 1 goes to 0.5 and back (module bench). Inferred: the bang recomputes the colour from the swatch's position. If so, a pastel set by message would also snap to the swatch's plane when its dial moves; not tested.
 - **Persistence.** A swatch's state came back through a preset recall (Matt); whether a plain reopen keeps it is unconfirmed.
 - **Console lines.** `method get_filterset called on invalid object`, `method gettype called on invalid object` and `patcher doesn't understand "getattr"` appeared on Matt's looks; unexplained, and whether other modules print them is unchecked.
-- **Panel layout** is a placeholder (`G-ui-density`). **Menu category** (Color / Tone) was placed by Claude, provisional (`G-menu`).
+- **Menu category** (Color / Tone) was placed by Claude, provisional (`G-menu`).
 - **Preliminary gates** in `tasks.md` (T004, T006, T007, T010, T011) are Claude's recommendations, not yet Matt's decisions (`G-print-prelim`): the unconstrained solve then clamp is the one most likely to change if the gamut boundary looks wrong.
 
 ## Verification
@@ -96,7 +96,7 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 - `bench_separate.py`: the real codebox against the mirror, 5/5, worst 4.8e-7 (log `tests/logs/20261108-222210-bench.log`, per `tasks.md`).
 - `bench_separate_module.py`: the shipped patcher, 5/5, worst 6.6e-7 (log `tests/logs/20261108-223656-bench.log`): load touching nothing, Mode and ink count, `inkN` messages, gains, the Sat dial.
 - `tests/contracts/bench_modules.py`: **not yet run for this module**, so bypass on the shipped patcher is unverified (the codebox bench has it exact on all four outlets).
-- Live (Matt, 2026-11-08): the swatch route (T009) and the plates showing after `aeaf7b3`.
+- Live (Matt, 2026-11-08): the swatch route (T009), the plates showing after `aeaf7b3`, the tuning looks (T030, T031), the Sat dial, the helpfile.
 
 ## References
 
