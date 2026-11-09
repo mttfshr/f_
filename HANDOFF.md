@@ -22,6 +22,8 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
+- **2026-11-08 (latest):** `f_separate` mirror and tests built (T014, T015), 12/12 offline; `f_screen` and `f_engrave` got a `plate` toggle Channels / Single (Matt). Next: the `f_separate` codebox needs T009 (colour-control route) first; or review `f_screen` gates.
+
 ## 2026-11-08 (later): f_separate P-list reviewed with Matt
 
 - **Decided (Matt, chat, one at a time):** paper is the black background, no `paper` param; overprint is additive light; plates are one coloured RGB outlet per ink (`c_i * k_i`) plus a fourth preview outlet (sum); Nearest includes black; no black plate or CMYK; per-pixel; bypass to all four outlets. No comparison with prepress apps: print is a vocabulary for screens (memory `print-is-vocabulary`). Recorded in `f_separate/spec.md` "Decided with Matt", plan ADR-1 to ADR-5, tasks T005-T013.

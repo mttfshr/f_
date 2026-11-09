@@ -30,8 +30,8 @@ package/patchers/f_separate.maxpat    docs/f-reference/f_separate.md    package/
 - [x] T012 [GATE G9] CLOSED: additive overprint is commutative, order is moot.
 - [x] T013 P-list review done with Matt, 2026-11-08 (chat, one at a time): P1 to P11, recorded in the spec "Decided with Matt". Outcomes: black background and additive overprint (P2, P3), four outlets with coloured plates (P5), Nearest includes black (P6), no black plate (P7), bypass to all four outlets (P10). Contract note for `f_paper` still to go into `ideas/f_print_styles.md`.
 - [x] T013a Spec FRs, stories and success criteria reconciled with the P-list (2026-11-08, Claude, offline); the coloured-plate consequence is an open gate note in the `f_screen`, `f_ink` and `f_engrave` specs (needs Matt). Gain above 1 cannot exceed the ink colour (follows from P9; preliminary).
-- [ ] T014 [US1] [US2] [US3] NumPy mirror `tests/modules/separate/separate_mirror.py` and `test_separate.py` (additive model only; no second model): flat ink patches, overprint pairs (sums), black, a grey ramp, the round trip (in and out of gamut, random palettes), bounds, degenerate palettes, one-ink monotonicity, non-finite zap. Run `tests/run.sh -q tests/modules/separate`.
-- [ ] T015 [US5] Mirror additions for Nearest mode (at most one plate at 1; exact ink colours map to their plate).
+- [x] T014 [US1] [US2] [US3] NumPy mirror `tests/modules/separate/separate_mirror.py` and `test_separate.py` (additive model only; no second model): flat ink patches, overprint pairs (sums), black, a grey ramp, the round trip (in and out of gamut, random palettes), bounds, degenerate palettes, one-ink monotonicity, non-finite zap. Run `tests/run.sh -q tests/modules/separate`.
+- [x] T015 [US4] Mirror additions for Nearest mode (at most one plate at 1; exact ink colours map to their plate).
 
 ## Phase 1: build
 
@@ -57,5 +57,7 @@ package/patchers/f_separate.maxpat    docs/f-reference/f_separate.md    package/
 Phase 0 gates, then the mirror (T014) before any codebox; T009 (the colour route) gates T021; T020 to T022 in order; T023 and T024 both edit `codebox_separate.gen`, so they run in sequence.
 
 ## Record
+
+- 2026-11-08 (offline, Claude): `tests/modules/separate/separate_mirror.py` and `test_separate.py` written (T014, T015); `tests/run.sh -q` 12/12, log `tests/logs/20261108-213624-offline.log`. Measured: in-gamut round trip worst 4.8e-4; float32 vs a float64 ridge solve worst 1.1e-5; the ridge's bias against the unregularised least squares up to 4.6e-3 (random palettes, condition number up to 12). The ridge is relative (`1e-4 * trace(K^T K) / N + 1e-8`), an inferred choice (T006 stays PRELIMINARY). Seven mutations are caught. Not run in Max; the codebox does not exist yet.
 
 - 2026-11-08 (offline, Claude): spec drafted, then this plan and task list written from it. Gates marked PRELIMINARY are Claude's recommendations, taken on Matt's instruction; nothing here has been run or measured. A search of `src/f_vf_glow/definition.py` and `build/spec.md` for a colour-picker type found none (output: `color_mix` is a float dial); T009 depends on that.
