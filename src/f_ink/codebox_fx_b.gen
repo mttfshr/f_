@@ -1,0 +1,64 @@
+// f_ink -- the last stage: mottle, then dropout, then bypass and the source alpha (spec FR-005, FR-006, FR-013, plan ADR-4,
+// ADR-6, T022). Mirror: tests/modules/ink/ink_mirror.fx_b and the end of ink().
+// First input: the pooled image. Second input: the zapped source.
+// Coordinates are frame heights (x scaled by the aspect), fixed to the frame (Matt, Q3). The hash is sin (noise() is black
+// on this path); a GPU sin differs from NumPy's in the low bits, so the bench can compare statistics only, not texels.
+// Mottle is a gain centered on 1, so a coverage of 0 stays 0. Dropout compares max(c, 0), so a negative value is left
+// alone at dropout 0, and the comparison is strict, so dropout 0 removes nothing.
+hash_2d(ix, iy, sd) {
+    hv = sin(ix * 127.1 + iy * 311.7 + sd) * 43758.5453;
+    return hv - floor(hv);
+}
+
+vnoise(px, py, scl, sd) {
+    sz = max(scl, 0.00001);
+    gx = px / sz;
+    gy = py / sz;
+    ix = floor(gx);
+    iy = floor(gy);
+    fx = gx - ix;
+    fy = gy - iy;
+    ux = fx * fx * (3.0 - 2.0 * fx);
+    uy = fy * fy * (3.0 - 2.0 * fy);
+    ha = hash_2d(ix, iy, sd);
+    hb = hash_2d(ix + 1.0, iy, sd);
+    hc = hash_2d(ix, iy + 1.0, sd);
+    hd = hash_2d(ix + 1.0, iy + 1.0, sd);
+    near_row = ha + (hb - ha) * ux;
+    far_row = hc + (hd - hc) * ux;
+    return near_row + (far_row - near_row) * uy;
+}
+
+mottle_field(px, py, scl, sd) {
+    oct1 = vnoise(px, py, scl, sd);
+    oct2 = vnoise(px, py, scl * 0.5, sd + 17.0);
+    oct3 = vnoise(px, py, scl * 0.25, sd + 34.0);
+    return (oct1 + oct2 * 0.5 + oct3 * 0.25) / 1.75;
+}
+
+ink_c(cv, gain_m, thresh_d) {
+    cm = cv * gain_m;
+    return switch(max(cm, 0.0) < thresh_d, 0.0, cm);
+}
+
+Param width(1920.0);
+Param height(1080.0);
+Param mottle(0.0);
+Param mottle_scale(0.15);
+Param dropout(0.0);
+Param tooth_scale(0.004);
+Param seed(1.0);
+Param bypass_gate(0.0);
+
+aspect = width / max(height, 1.0);
+frame_x = norm.x * aspect;
+frame_y = norm.y;
+
+gain_m = 1.0 + mottle * (mottle_field(frame_x, frame_y, mottle_scale, seed) - 0.5) * 2.0;
+thresh_d = dropout * vnoise(frame_x, frame_y, tooth_scale, seed + 101.0);
+
+r_ink = ink_c(nearest(in1, norm).x, gain_m, thresh_d);
+g_ink = ink_c(nearest(in1, norm).y, gain_m, thresh_d);
+b_ink = ink_c(nearest(in1, norm).z, gain_m, thresh_d);
+
+out1 = vec(mix(r_ink, nearest(in2, norm).x, bypass_gate), mix(g_ink, nearest(in2, norm).y, bypass_gate), mix(b_ink, nearest(in2, norm).z, bypass_gate), nearest(in2, norm).w);

@@ -2,6 +2,17 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04 and 2026-11-08 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-08 (session 4): `f_separate` to stable; `f_ink` Phase 0 mirror
+
+- **`f_separate`:** preflight passed (T041, digest look by Matt), moved to `.specify/stable/f_separate/` (`5733e2e`). 1080p cost recorded as UNMEASURED (Matt, T022); `test_cost_at_1080p` exists, `@slow`, never run. T004, T006, T007, T011 stay unticked (Matt: leave them). Menu category still provisional (`G-menu`).
+- **Console lines:** `get_filterset` / `gettype` also print from `f_poincare.maxhelp` (live by Matt), so not this module; cause unknown, parked as `P-console`.
+- **US spelling only (Matt):** in memory; `f_separate` swept (`09bde42`, text only: the patcher differs by spelling alone). Archival spec, plan and tasks left as written; the rest of the repo not swept.
+- **`f_ink` Phase 0:** `tests/modules/ink/{ink_mirror,test_ink}.py`, P1 effects, 15/15, 8 mutations caught (log `tests/logs/20261108-232548-offline.log`). Offline, Claude; nothing in Max. T015 accepted for now (Matt); PRELIMINARY gates skipped for now (Matt).
+- **Plan corrected by the mirror:** edge-pool band is `S - Bp` (the old form raised flat 0.5, against FR-007); pool blur reads S (FR-008), so SEVEN stages, not six; zap before the blurs.
+- **Decided (Matt):** spread reach capped at one-texel taps, 7 texels (a stride of 2 combed 1-texel lines at 1080). Taps are at fixed offsets and the radius sets the tent weights. New dial `snap` (0 plain blur keeps tone, 1 re-threshold). Provisional (Claude): `pool_width` default 0.005, `snap` name and default 1, `SNAP_GATE` 0.125.
+- **Not done:** the plan's wiring sketch and ADR-1 still show six stages (redraw at T020-T023); T008 and T009's cost are bench items at T024.
+- **Tooling gap, unchanged:** `tests/bench.sh`'s `needs_codebox` exempts only three named files, so a `*_module.py` bench also needs `bench.maxpat` open (Matt to decide).
+
 ## 2026-11-08 (sessions 2-3): `f_separate` designed with Matt, built, benched, documented, looks passed
 
 - **Decided (Matt, chat):** print is a vocabulary for screens, never a prepress comparison. Paper is a metaphor: background black, no `paper` param. Inks add as light. One coloured texture per ink (three outlets) plus a summed preview. Modes Unmix (joint solve, default), Nearest (black is a candidate), Project (each ink alone). Three swatches with a saturation dial each. `f_screen` and `f_engrave` get a Channels / Single toggle. Record: `.specify/stable/f_separate/spec.md` "Decided with Matt".

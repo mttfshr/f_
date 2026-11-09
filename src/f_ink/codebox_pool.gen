@@ -1,0 +1,12 @@
+// f_ink -- edge pooling (spec FR-007, plan ADR-3, T021). Mirror: tests/modules/ink/ink_mirror.pool.
+// P = S + edge_pool * S * 2 * max(S - Bp, 0). The band S - Bp is 0 on any flat field and 0.5 on a straight edge, and the
+// factor S keeps the rim on the ink side.
+// First input: Bp, the blur of S at pool_width. Second input: S. The blur arrives last and jit.gl.pix renders on its
+// left inlet, so the blur has to be the left one, or this stage would use last frame's rim.
+pool_c(sc, bc, amt) {
+    return sc + amt * sc * 2.0 * max(sc - bc, 0.0);
+}
+
+Param edge_pool(0.0);
+
+out1 = vec(pool_c(nearest(in2, norm).x, nearest(in1, norm).x, edge_pool), pool_c(nearest(in2, norm).y, nearest(in1, norm).y, edge_pool), pool_c(nearest(in2, norm).z, nearest(in1, norm).z, edge_pool), 1.0);
