@@ -30,7 +30,7 @@
 - **Saturation dial fixed:** `saturation` is 0..1, the `* 255` is gone (bench 5/5). Left alone: the first dial move shifts an ink slightly, and returning the dial does not restore the exact default (`.specify/f_separate/tasks.md` Record).
 - **Live looks (Matt, 2026-11-08):** helpfile, tuning (T030, T031) and the Sat dial passed. Panel re-laid to his direction (Mode in the title bar, Inks an integer at the left, one column per ink), look passed; module bench 5/5 after the change (`tests/logs/20261108-224811-bench.log`). A plain reopen keeps a changed swatch (Matt). Linear-light: values as given, closed for `f_separate` (T010).
 - **Review:** `tests/lib/module_contract.py` now follows `swatch` and `unpack` (shared check). `f_separate` is documented and registered (T040): Color / Tone in the menu (provisional, `G-menu`), README row without a warning (T030, T031 passed).
-- **Gates check:** `tests/build/test_gates.py` 5/5 (`tests/logs/20261108-224059-offline.log`), BEFORE the last two `gates.md` edits (`G-ui-density` note, `G-linear-light`). Not re-run: ask Matt, then run it first thing next session.
+- **Gates check:** `tests/build/test_gates.py` 5/5 (`tests/logs/20261108-224059-offline.log`), BEFORE the last two `gates.md` edits (`G-ui-density` note, `G-linear-light`). Re-run 2026-11-08 (session 4): 5/5, `tests/logs/20261108-225804-offline.log`.
 - **Contract bench:** 2/2 (`tests/logs/20261108-224839-bench.log`), first run for `f_separate`, bypass on all four outlets.
 - **Not run:** the 1080p cost.
 - **Tooling gap, not changed:** `tests/bench.sh`'s `needs_codebox` exempts only three named files, so a `*_module.py` bench also needs `bench.maxpat` open (Matt to decide).

@@ -67,12 +67,12 @@
 						15.0,
 						75.0,
 						270.0,
-						40.0
+						60.0
 					],
-					"text": "Splits an image into up to three spot-colour plates, plus their sum as a preview",
+					"text": "First stage of a print look: pulls a color image apart into up to three inks, so each can be treated on its own.",
 					"fontsize": 14.0,
 					"varname": "autohelp_top_digest[3]",
-					"linecount": 2,
+					"linecount": 3,
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"
@@ -158,7 +158,7 @@
 						270.0,
 						175.0
 					],
-					"text": "References\n\nInks are colours of light on black, and add:\npixel = sum of coverage * ink colour.\n\nUnmix: least squares by the normal equations,\nc = (K^T K + lam I)^-1 K^T x, with a small ridge.\n\nThe ink model and the Nearest and Project\nmodes are original. See docs/f-reference.",
+					"text": "References\n\nInks are colors of light on black, and add:\npixel = sum of coverage * ink color.\n\nUnmix: least squares by the normal equations,\nc = (K^T K + lam I)^-1 K^T x, with a small ridge.\n\nThe ink model and the Nearest and Project\nmodes are original. See docs/f-reference.",
 					"fontsize": 12.0,
 					"linecount": 10,
 					"saved_attribute_attributes": {
