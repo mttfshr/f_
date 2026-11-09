@@ -26,7 +26,7 @@ import sys
 import numpy as np
 
 import benchclient as bc
-from harness import check, note, run
+from harness import check, note, run, slow
 from separate_mirror import F32, separate_stage
 
 CODE = (_paths.REPO / "src" / "f_separate" / "codebox_separate.gen").read_text()
@@ -130,6 +130,29 @@ def test_bypass_and_bounds():
     lo = min(float(o[..., :3].min()) for o in out)
     hi = max(float(o[..., :3].max()) for o in out)
     check("outputs within 0..1", max(-lo, hi - 1.0, 0.0), 1e-6)
+
+
+@slow       # a timing measurement (tests/bench.sh --slow); NF-001 records it, nothing is asserted
+def test_cost_at_1080p():
+    """ms per pass for each mode at 1920x1080, three inks, all four outlets. The bench clamps the chain to 8 slots. When the
+    pass hides inside the bench's own per-frame work, 4K is run instead (4x the pixels): its figure / 4 is the 1080p
+    equivalent. A small input is enough: the cost follows the output size. Each later slot reads the previous slot's out1, so
+    the input is only representative for the first; the codebox has no per-pixel loop, so this should not change the cost
+    (inferred)."""
+    src = photo()
+    for mode, name in MODES.items():
+        params = {**PINNED, "sep_mode": float(mode)}
+        r = bc.measure(CODE, [src], dim=(1920, 1080), chain=8, params=params)
+        k = int(r.get("chain") or 8)
+        if r.get("gpu_bound"):
+            note(f"{name}: 1920x1080 ms per pass (chain {k})", f"{r['ms_per_pass']:.3f}")
+            continue
+        r = bc.measure(CODE, [src], dim=(3840, 2160), chain=8, params=params)
+        k = int(r.get("chain") or 8)
+        if r.get("gpu_bound"):
+            note(f"{name}: 1080p-equivalent ms per pass, from 4K (chain {k})", f"{r['ms_per_pass'] / 4:.3f}")
+        else:
+            note(f"{name}: NOT resolved at 4K, 1080p-equivalent upper bound ms per pass", f"{r['ms_per_pass_upper_bound'] / 4:.3f}")
 
 
 if __name__ == "__main__":
