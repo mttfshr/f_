@@ -49,7 +49,7 @@ def test_identity_at_zero():
     rng = np.random.default_rng(1)
     x = rng.uniform(-0.5, 2.0, (64, 96, 4)).astype(F32)
     check("every amount 0: output equals input", err(ink(x), x), 0)
-    check("dials without an amount do nothing", err(ink(x, bias=0.4, soften=0.7, pool_width=0.03, mottle_scale=0.02, tooth_scale=0.05, seed=9), x), 0)
+    check("dials without an amount do nothing", err(ink(x, snap=0.3, bias=0.4, soften=0.7, pool_width=0.03, mottle_scale=0.02, tooth_scale=0.05, seed=9), x), 0)
 
 
 def test_blur_kernel():
@@ -109,10 +109,22 @@ def test_stride_comb():
 
 
 def test_continuous_tone_through_spread():
-    """Measured for Matt: the re-threshold assumes two-valued marks; FR-004 and 'any texture in' meet here."""
+    """The snap dial (Matt, 2026-11-08): 0 keeps tone, 1 hardens toward a mark, between is a blend."""
     for v in (0.2, 0.3, 0.5, 0.7, 0.8):
-        a = [float(ink(frame(32, 32, v), spread=s)[0, 0, 0]) for s in (0.25, 0.5, 1.0)]
-        note(f"flat {v} through spread 0.25, 0.5, 1", [round(q, 4) for q in a])
+        flat = frame(32, 32, v)
+        a = [float(ink(flat, spread=1.0, snap=q)[0, 0, 0]) for q in (0.0, 0.25, 0.5, 1.0)]
+        note(f"flat {v} at spread 1 through snap 0, 0.25, 0.5, 1", [round(q, 4) for q in a])
+        check(f"flat {v}: snap 0 keeps the tone", err(ink(flat, spread=1.0, snap=0.0)[..., :3], flat[..., :3]), 1e-6)
+    d = disc(128, 128)
+    check("snap 0 is exactly the blur", err(ink(d, spread=1.0, snap=0.0)[..., :3], blur2(d[..., :3], SPREAD_CAP_H * 128)), 0)
+    hard = [int(((lambda o: (o > 0.01) & (o < 0.99))(ink(disc(540, 540), spread=1.0, snap=q)[..., 0])).sum()) for q in (0.0, 0.5, 1.0)]
+    note("disc: texels between 0 and 1 at snap 0, 0.5, 1", hard)
+    a = float(ink(frame(32, 32, 0.3), spread=1.0, snap=0.5)[0, 0, 0])
+    check("snap blends between the blur and the mark", abs(a - 0.15), 1e-6)
+    check("snap has full strength by spread 0.125", abs(float(ink(frame(32, 32, 0.3), spread=0.125, snap=1.0)[0, 0, 0])), 1e-6)
+    low = float(ink(frame(32, 32, 0.3), spread=0.0625, snap=1.0)[0, 0, 0])
+    note("flat 0.3 at spread 0.0625, snap 1 (half the gate)", round(low, 4))
+    check("snap fades in below the gate, continuously", abs(low - 0.15), 1e-6)
 
 
 def test_mottle():
@@ -262,6 +274,7 @@ def test_mutations():
         "pool_no_s": (d, dict(edge_pool=1.0)),
         "mottle_additive": (frame(32, 32), dict(mottle=1.0)),
         "pool_from_source": (d, dict(spread=1.0, bias=0.2, edge_pool=1.0)),
+        "snap_ignored": (frame(32, 32, 0.3), dict(spread=1.0, snap=0.0)),
     }
     for bug, (src, kw) in cases.items():
         a, b = ink(src, **kw), ink(src, bug=bug, **kw)

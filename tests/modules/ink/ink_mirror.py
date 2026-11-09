@@ -5,8 +5,9 @@ driver inlets are P2 (T025-T027) and are added with their stages. Stateless, sta
 Stages (each a codebox later, so bench_ink.py can diff them one by one):
     zap         non-finite input components to 0, BEFORE any blur (a NaN in a tap poisons a whole kernel).
     blur_pass   one separable pass: 15 taps at nearest texels, tent weights set by the radius, border by index clamp (G7).
-    threshold   spread's re-threshold: S = smoothstep(0.5 - w/2 - bias, 0.5 + w/2 - bias, B), w = max(soften, SOFT_MIN),
-                then mix(x, S, spread), so spread 0 is exact identity.
+    threshold   spread's re-threshold: H = smoothstep(0.5 - w/2 - bias, 0.5 + w/2 - bias, B), w = max(soften, SOFT_MIN),
+                then S = mix(B, H, snap * min(spread / SNAP_GATE, 1)). Snap 0 is a pure blur, which keeps continuous tone;
+                snap 1 hardens the blur back into a mark (Matt, 2026-11-08). At spread 0 the blur is one tap, so S = x exactly.
     pool        edge pooling, from a blur of S at pool_width: P = S + edge_pool * S * 2 * max(S - Bp, 0).
     fx_b        mottle, then dropout, then bypass.
 
@@ -21,7 +22,7 @@ Matt, 2026-11-08: the taps are one texel apart (a spacing of 2 combs a 1-texel l
 The offsets are therefore fixed and the radius sets the weights (replacing ADR-2's rounded offsets, which were lumpy at sizes
 between whole strides).
 
-Inferred choices the plan leaves open: the blend weight is `spread` itself; SOFT_MIN guards smoothstep at soften 0.
+Inferred choices the plan leaves open: SNAP_GATE; SOFT_MIN guards smoothstep at soften 0.
 
 The hash is float32 sin, as the codebox will be, but a GPU sin differs from NumPy's in the low bits and the multiplier magnifies
 that, so a bench can compare the patterns' statistics only, never their texels (inferred from the size of the multiplier).
@@ -30,7 +31,7 @@ Coordinates: texel centers, p = ((i + 0.5) / W * aspect, (j + 0.5) / H), one uni
 up that is on the GPU is for bench_ink.py to establish.
 
 `bug` values are mutations the tests must catch: "plan_pool", "zap_late", "no_soften_guard", "dropout_negative", "pool_no_s",
-"mottle_additive", "pool_from_source".
+"mottle_additive", "pool_from_source", "snap_ignored".
 """
 import numpy as np
 
@@ -38,6 +39,7 @@ F32 = np.float32
 SPREAD_CAP_H = 7.0 / 1080.0     # spread = 1, in frame heights: 7 texels at 1080 (Matt, 2026-11-08, stride 1)
 MAX_STRIDE = 1.0                # texels between taps (Matt, 2026-11-08: stride 2 combs a 1-texel line); holds every blur at 7 texels
 SOFT_MIN = 1e-3
+SNAP_GATE = 0.125               # spread at which snap reaches full strength: a radius near 1 texel at 1080 (inferred)
 HALF = 7
 OCTAVE_WEIGHTS = (1.0, 0.5, 0.25)
 
@@ -69,13 +71,15 @@ def blur2(x, radius_tx):
     return blur_pass(blur_pass(x, 1, radius_tx), 0, radius_tx)
 
 
-def threshold(x, b, spread, bias, soften, bug=None):
+def threshold(b, spread, snap, bias, soften, bug=None):
     w = F32(soften if bug == "no_soften_guard" else max(soften, SOFT_MIN))
     e0, e1 = F32(0.5) - w / 2 - F32(bias), F32(0.5) + w / 2 - F32(bias)
     with np.errstate(divide="ignore", invalid="ignore"):
         t = np.clip((b - e0) / (e1 - e0), 0, 1)
     s = t * t * (3 - 2 * t)
-    return (x * (F32(1) - F32(spread)) + s * F32(spread)).astype(F32)
+    amount = F32(1) if bug == "snap_ignored" else F32(snap)
+    gate = F32(min(float(spread) / SNAP_GATE, 1.0))
+    return (b * (F32(1) - amount * gate) + s * (amount * gate)).astype(F32)
 
 
 def pool(s, bp, edge_pool, bug=None):
@@ -130,7 +134,7 @@ def fx_b(c, px, py, mottle, mottle_scale, dropout, tooth_scale, seed, bug=None):
     return np.where(probe < F32(dropout) * tooth, F32(0), c).astype(F32)
 
 
-def ink(x, spread=0.0, bias=0.0, soften=0.2, edge_pool=0.0, pool_width=0.005, mottle=0.0, mottle_scale=0.15, dropout=0.0,
+def ink(x, spread=0.0, snap=1.0, bias=0.0, soften=0.2, edge_pool=0.0, pool_width=0.005, mottle=0.0, mottle_scale=0.15, dropout=0.0,
         tooth_scale=0.004, seed=1.0, bypass=0.0, bug=None):
     """x: H x W x 4 float32. Returns H x W x 4; RGB processed per channel, alpha from the source."""
     h, w = x.shape[:2]
@@ -138,7 +142,7 @@ def ink(x, spread=0.0, bias=0.0, soften=0.2, edge_pool=0.0, pool_width=0.005, mo
     src = zap(x[..., :3]) if bug != "zap_late" else x[..., :3].astype(F32)
     with np.errstate(invalid="ignore"):
         b = blur2(src, float(spread) * SPREAD_CAP_H * h)
-        s = threshold(src, b, spread, bias, soften, bug)
+        s = threshold(b, spread, snap, bias, soften, bug)
         bp = blur2(src if bug == "pool_from_source" else s, float(pool_width) * h)
         p = pool(s, bp, edge_pool, bug)
     px, py = coords(h, w)

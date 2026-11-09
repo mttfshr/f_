@@ -26,6 +26,7 @@ _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink bod
 - Q4: How does f_ink take outside drivers? → A: Two dedicated optional inlets (FR-014): in1 a texture whose luma scales the effect amounts by position, in2 a vecfield that sets the spread direction. Tagged textures are not used (`P-mod-textures`: tags suit many named targets, a dedicated inlet one role-defining signal).
 - Q3: Mottle, tooth, flecks and bands fixed to the frame or to the image? → A: Fixed to the frame only, no switch (FR-009). An animated input moves under a static paper; an image-locked effect, if wanted, comes from a driver input.
 - Q2: Clamp the output to 0..1? → A: No, unclamped float32 (FR-010). Edge pooling and bent uses may exceed 1; a downstream module clamps if wanted. A clamp switch can be added later.
+- Tone through spread (Matt, 2026-11-08, after the mirror showed the re-threshold posterizing continuous tone): a separate dial, `snap` (FR-004).
 
 ### Assumed by Claude, to confirm (inferred, nothing tried)
 
@@ -136,7 +137,7 @@ A performer gives the three channels different gains (`gain_r`, `gain_g`, `gain_
 - **FR-001**: The module MUST be a processor: in0 is a texture (in1 and in2 are the optional drivers of FR-014). With nothing connected it outputs black. All behaviour below is per channel (A2) and in frame-relative units (A4).
 - **FR-002**: The module MUST be stateless (A3): the output is a pure function of in0, any driver inputs, the params, the seed and the render size. No feedback texture.
 - **FR-003**: With every effect amount at 0, the output MUST equal the input exactly (A6).
-- **FR-004**: Spread MUST blur each channel by a radius set in frame units, then re-threshold with a bias and a softness, so marks fatten, thin, round and merge; its kernel, stage count and radius cap are fixed by G5.
+- **FR-004**: Spread MUST blur each channel by a radius set in frame units, then re-threshold with a bias and a softness, so marks fatten, thin, round and merge. A separate `snap` dial MUST set how much of the re-threshold applies: at 0 the result is the plain blur, which keeps continuous tone (Matt, 2026-11-08). Its kernel, stage count and radius cap are fixed by G5.
 - **FR-005**: Mottle MUST modulate density with a smooth pattern whose feature size is `mottle_scale`; it MUST NOT add ink where the input is 0.
 - **FR-006**: Dropout MUST remove ink where the input coverage is below a tooth value that varies by position at the grain `tooth_scale`, so light tones drop out first and solids last.
 - **FR-007**: Edge pooling MUST raise coverage in a band along the edges of marks, of width `pool_width`, and MUST leave flat areas unchanged.
@@ -162,6 +163,7 @@ A performer gives the three channels different gains (`gain_r`, `gain_g`, `gain_
 |---|---|---|---|
 | `spread` | 0-1 | 0 | blur radius in frame units; 1 is 7 texels at 1080 (G5, Matt, 2026-11-08) |
 | `bias` | -1 to 1 | 0 | after the blur: toward gain (fatter) or loss (thinner) |
+| `snap` | 0-1 | 1 | how much the blur hardens back into a mark; 0 is a plain blur that keeps tone (name and default provisional) |
 | `soften` | 0-1 | 0.2 | edge softness of the re-threshold |
 | `edge_pool` | 0-1 | 0 | amount |
 | `pool_width` | frame units | 0.005 | rim width; shares the 7-texel blur reach (Matt, 2026-11-08, stride 1) |

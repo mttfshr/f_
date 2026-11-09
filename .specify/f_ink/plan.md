@@ -68,7 +68,7 @@ package/help/f_ink.maxhelp      # Phase 3
 ### ADR-2: Spread is two separable passes of nearest taps (G5, G4)
 
 **Decision (preliminary)**: a 15-tap kernel per pass at the fixed offsets -7..7, one texel apart (Matt, 2026-11-08), with tent weights set by the radius and normalized (so the dial moves continuously and radius 0 is one tap), read by explicit texel index with `nearest` (never an interpolated tap), borders by index clamp (G7). The `spread` dial maps to a radius in frame heights up to a cap. **The reach is 7 texels** (the first plan allowed a stride of 2, which the mirror showed combs a 1-texel line at 1080); at 1080p that is about 0.0065 of a frame height, and above 1080p it is held at 7 texels, so it shrinks in frame heights (against FR-011, accepted with the cap). If Matt's looks want more reach, a second cascade of the same two passes doubles the reach (variances of Gaussian-like kernels add; inferred).
-**Then**: `fx_a` re-thresholds the blur: `S = smoothstep(0.5 - soften/2 - bias, 0.5 + soften/2 - bias, B)` blended with the original so that `spread` 0 is exact identity (FR-003 in the spec).
+**Then**: `fx_a` re-thresholds the blur: `S = smoothstep(0.5 - soften/2 - bias, 0.5 + soften/2 - bias, B)` then `mix(B, S, snap * min(spread / 0.125, 1))` (Matt, 2026-11-08: `snap` keeps continuous tone at 0). At `spread` 0 the blur is one tap of weight 1, so the result is exactly the input (FR-003 in the spec).
 **Alternatives rejected**: a downsample then upsample (needs interpolation, G4 unresolved); one 2-D pass (over the read budget).
 **Consequence**: reach is limited by the cap, recorded as the spec's G5 answer once measured.
 
