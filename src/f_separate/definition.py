@@ -69,9 +69,9 @@ patcher = {
 # ---- the swatches (raw boxes; T009) ---------------------------------------------------------------------------------
 #   colour:  route outlet inkN -> swatch -> unpack -> three `prepend param inkN_c` -> the pix (a swatch change and a
 #            module message `inkN r g b` both go through the swatch, so the display and the Params never disagree)
-#   default: loadbang -> deferlow -> [t b b] -> `set r g b 1.` (paints the swatch with the codebox default) then `bang`
-#            (the swatch sends it, so the Params follow; `set` alone leaves the Params on the codebox defaults, which
-#            did not match what Matt saw at first load, 2026-11-08). A preset recall then overrides it
+#   default: loadbang -> deferlow -> `set r g b 1.` paints the swatch without sending. The colour is sent once, later:
+#            first `r draw` -> [onebang 1] -> [delay 100] -> bang each swatch. A bang at load (0f0826d) left all four outlets
+#            black on Matt's look, 2026-11-08; INFERRED cause: too early for the pix or the swatch, so timed off a draw
 #   sat:     satN dial -> expr * 255 -> [t b f] -> f: `prepend saturation` -> swatch, then b: bang -> the swatch sends its
 #            colour again. UNVERIFIED in Max: whether `saturation` alone re-sends (the bang is the safe order)
 # Ids: the route is obj-4 (outlet 7 + N is inkN), the primary pix obj-5, the dials are the builder's (sat1-3).
@@ -99,6 +99,11 @@ def _line(a, ao, b, bi):
 _box("obj-raw-load", "newobj", "loadbang", rect=(560, 20, 60, 22))
 _box("obj-raw-def", "newobj", "deferlow", rect=(560, 50, 60, 22))
 _line("obj-raw-load", 0, "obj-raw-def", 0)
+_box("obj-raw-draw", "newobj", "r draw", ins=0, rect=(640, 20, 50, 22))
+_box("obj-raw-once", "newobj", "onebang 1", ins=2, outs=2, rect=(640, 50, 70, 22), otypes=["bang", "bang"])
+_box("obj-raw-wait", "newobj", "delay 100", ins=2, rect=(640, 80, 70, 22), otypes=["bang"])
+_line("obj-raw-draw", 0, "obj-raw-once", 0)
+_line("obj-raw-once", 0, "obj-raw-wait", 0)
 for n, (r, g, bl) in DEFAULTS.items():
     y = 300 + 130 * (n - 1)
     sw, un, st = f"obj-raw-sw{n}", f"obj-raw-un{n}", f"obj-raw-set{n}"
@@ -110,14 +115,9 @@ for n, (r, g, bl) in DEFAULTS.items():
     _box(st, "message", f"set {r} {g} {bl} 1.", rect=(380, y, 120, 22))
     _box(un, "newobj", "unpack 0. 0. 0. 0.", outs=4, rect=(300, y + 40, 100, 22), otypes=["float"] * 4)
     _line("obj-4", 7 + n, sw, 0)
-    tb, bg = f"obj-raw-tb{n}", f"obj-raw-bg{n}"
-    _box(tb, "newobj", "t b b", outs=2, rect=(470, y - 30, 50, 22), otypes=["bang", "bang"])
-    _box(bg, "message", "bang", rect=(430, y - 5, 40, 22))
-    _line("obj-raw-def", 0, tb, 0)
-    _line(tb, 1, st, 0)        # first: paint the default
+    _line("obj-raw-def", 0, st, 0)     # paint the default at load
     _line(st, 0, sw, 0)
-    _line(tb, 0, bg, 0)        # then: bang, so the swatch SENDS it and the Params follow (fixed 2026-11-08, Matt's look)
-    _line(bg, 0, sw, 0)
+    _line("obj-raw-wait", 0, sw, 0)    # after the first draw: the swatch SENDS its colour, so the Params follow
     _line(sw, 0, un, 0)
     for j, c in enumerate("rgb"):
         pp = f"obj-raw-pp{n}{c}"
