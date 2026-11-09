@@ -51,9 +51,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **G12 Drivers.** Preliminary P8: none. A later optional modulation inlet (pitch or size by a texture) is possible and would be a new version.
 - **G13 Naming alignment.** `softness`, `jitter`, `shape`, `angle` follow `docs/f-reference/discrete_item_conventions.md` (not opened this session); check that the names mean the same here.
 
-### Open gate added 2026-11-08: coloured plates from `f_separate` (needs Matt's call)
-
-Matt decided that `f_separate` gives each plate its own outlet as a coloured texture (`coverage * ink colour`), because one RGB channel cannot carry a spot colour such as teal. This spec was written assuming plates are the R, G and B channels of one texture. Options: (a) one `f_screen` instance per plate, processing the plate's brightness and keeping its colour (the dot pattern multiplies the plate colour); (b) keep the three-channel mode for tone textures and add the coloured-plate mode as the first option. The per-plate angle params (`angle_r/g/b`) would then move to one `angle` per instance. Not decided; the P-list items here that mention R, G and B stay as written until it is.
+- **Plates from `f_separate` (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures, so this spec holds as written. (A coloured plate such as teal has two non-zero channels; per-channel angles would split its dots, see the note in `tasks.md` if present.)
 
 ---
 
