@@ -1,0 +1,116 @@
+// codebox_separate.gen -- f_separate: the one stage. Splits a colour image into up to three spot-colour plates.
+// Stateless, per pixel. Float32. Mirror: tests/modules/separate/separate_mirror.separate_stage().
+//
+// Model (Matt, 2026-11-08): black background, inks are colours of light that ADD. pixel = sum_i c_i * k_i, k_i the
+// ink colour (Params inkN_r/g/b), c_i the coverage in 0..1.
+//   - unmix: c = clamp(gain * (K^T K + lam I)^-1 K^T x, 0, 1), K = 3 x N (N = n_inks). The 3x3 inverse is by
+//     cofactors. Inks beyond n_inks have a zero column in K and a 1 on the diagonal, so they decouple and come out 0.
+//     lam = 1e-4 * trace(K^T K) / N + 1e-8 (relative ridge; an inferred choice, gate G3)
+//   - nearest (sep_mode 1): the nearest of the N inks and black (squared RGB distance; ties go to the lowest ink, black
+//     last) gets coverage 1, the others 0; then gain and the same clamp
+//   - outlets: 1 to 3 = the plates, coverage * ink colour; 4 = the preview, the sum of the plates clamped to 0..1.
+//     Alpha is the source's on all four.
+//   - bypass_gate = 1: the (zapped) source on all four outlets
+//   - non-finite input components are zapped to 0 first: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU)
+// Params are named so none equals a jit.gl.pix attribute (`mode` would bind to the attribute: sep_mode).
+zap(xv) {
+    return switch(abs(xv) < 1e30, xv, 0);
+}
+
+Param ink1_r(1.0);
+Param ink1_g(0.25);
+Param ink1_b(0.0);
+Param ink2_r(0.0);
+Param ink2_g(0.6);
+Param ink2_b(0.6);
+Param ink3_r(0.45);
+Param ink3_g(0.0);
+Param ink3_b(1.0);
+Param n_inks(2);
+Param sep_mode(0);
+Param gain1(1);
+Param gain2(1);
+Param gain3(1);
+Param bypass_gate(0);
+
+xr = zap(sample(in1, norm).x);
+xg = zap(sample(in1, norm).y);
+xb = zap(sample(in1, norm).z);
+xa = zap(sample(in1, norm).w);
+
+act1 = switch(n_inks >= 0.5, 1, 0);
+act2 = switch(n_inks >= 1.5, 1, 0);
+act3 = switch(n_inks >= 2.5, 1, 0);
+
+k1r = clamp(ink1_r, 0, 1) * act1;
+k1g = clamp(ink1_g, 0, 1) * act1;
+k1b = clamp(ink1_b, 0, 1) * act1;
+k2r = clamp(ink2_r, 0, 1) * act2;
+k2g = clamp(ink2_g, 0, 1) * act2;
+k2b = clamp(ink2_b, 0, 1) * act2;
+k3r = clamp(ink3_r, 0, 1) * act3;
+k3g = clamp(ink3_g, 0, 1) * act3;
+k3b = clamp(ink3_b, 0, 1) * act3;
+
+// K^T K (symmetric) and the ridge
+m11 = k1r * k1r + k1g * k1g + k1b * k1b;
+m12 = k1r * k2r + k1g * k2g + k1b * k2b;
+m13 = k1r * k3r + k1g * k3g + k1b * k3b;
+m22 = k2r * k2r + k2g * k2g + k2b * k2b;
+m23 = k2r * k3r + k2g * k3g + k2b * k3b;
+m33 = k3r * k3r + k3g * k3g + k3b * k3b;
+lam = 0.0001 * (m11 + m22 + m33) / max(act1 + act2 + act3, 1) + 0.00000001;
+ma = m11 + switch(act1 > 0.5, lam, 1);
+me = m22 + switch(act2 > 0.5, lam, 1);
+mi = m33 + switch(act3 > 0.5, lam, 1);
+
+// cofactors and determinant of [[ma, m12, m13], [m12, me, m23], [m13, m23, mi]]
+c11 = me * mi - m23 * m23;
+c12 = m13 * m23 - m12 * mi;
+c13 = m12 * m23 - m13 * me;
+c22 = ma * mi - m13 * m13;
+c23 = m12 * m13 - ma * m23;
+c33 = ma * me - m12 * m12;
+det = ma * c11 + m12 * c12 + m13 * c13;
+idet = 1 / det;
+
+// K^T x
+t1 = k1r * xr + k1g * xg + k1b * xb;
+t2 = k2r * xr + k2g * xg + k2b * xb;
+t3 = k3r * xr + k3g * xg + k3b * xb;
+raw1 = (c11 * t1 + c12 * t2 + c13 * t3) * idet;
+raw2 = (c12 * t1 + c22 * t2 + c23 * t3) * idet;
+raw3 = (c13 * t1 + c23 * t2 + c33 * t3) * idet;
+
+// nearest: squared distance to each active ink and to black (an inactive ink is out of the race)
+d0 = xr * xr + xg * xg + xb * xb;
+d1 = switch(act1 > 0.5, (xr - k1r) * (xr - k1r) + (xg - k1g) * (xg - k1g) + (xb - k1b) * (xb - k1b), 1000000000);
+d2 = switch(act2 > 0.5, (xr - k2r) * (xr - k2r) + (xg - k2g) * (xg - k2g) + (xb - k2b) * (xb - k2b), 1000000000);
+d3 = switch(act3 > 0.5, (xr - k3r) * (xr - k3r) + (xg - k3g) * (xg - k3g) + (xb - k3b) * (xb - k3b), 1000000000);
+w1 = switch(d1 <= d2 && d1 <= d3 && d1 <= d0, 1, 0) * act1;
+w2 = switch(d2 < d1 && d2 <= d3 && d2 <= d0, 1, 0) * act2;
+w3 = switch(d3 < d1 && d3 < d2 && d3 <= d0, 1, 0) * act3;
+
+near_flag = switch(sep_mode >= 0.5, 1, 0);
+cv1 = clamp(mix(raw1, w1, near_flag) * gain1, 0, 1) * act1;
+cv2 = clamp(mix(raw2, w2, near_flag) * gain2, 0, 1) * act2;
+cv3 = clamp(mix(raw3, w3, near_flag) * gain3, 0, 1) * act3;
+
+p1r = cv1 * k1r;
+p1g = cv1 * k1g;
+p1b = cv1 * k1b;
+p2r = cv2 * k2r;
+p2g = cv2 * k2g;
+p2b = cv2 * k2b;
+p3r = cv3 * k3r;
+p3g = cv3 * k3g;
+p3b = cv3 * k3b;
+
+sr = clamp(p1r + p2r + p3r, 0, 1);
+sg = clamp(p1g + p2g + p3g, 0, 1);
+sb = clamp(p1b + p2b + p3b, 0, 1);
+
+out1 = vec(mix(p1r, xr, bypass_gate), mix(p1g, xg, bypass_gate), mix(p1b, xb, bypass_gate), xa);
+out2 = vec(mix(p2r, xr, bypass_gate), mix(p2g, xg, bypass_gate), mix(p2b, xb, bypass_gate), xa);
+out3 = vec(mix(p3r, xr, bypass_gate), mix(p3g, xg, bypass_gate), mix(p3b, xb, bypass_gate), xa);
+out4 = vec(mix(sr, xr, bypass_gate), mix(sg, xg, bypass_gate), mix(sb, xb, bypass_gate), xa);

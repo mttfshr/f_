@@ -4,7 +4,7 @@ in the order a codebox would compute it.
 
 Model (Matt, 2026-11-08): the background is black and inks are colours of light that ADD.
     pixel = sum_i c_i * k_i          k_i = ink colour (RGB, 0..1), c_i = coverage in 0..1
-Unmix (P1, P2): c = clamp(gain * (K^T K + lam I)^-1 K^T x, 0, 1)       K = 3 x N, N = `inks`
+Unmix (P1, P2): c = clamp(gain * (K^T K + lam I)^-1 K^T x, 0, 1)   (gain, then one clamp: FR-004)       K = 3 x N, N = `inks`
     lam = LAM_REL * trace(K^T K) / N + LAM_ABS    (relative ridge, so a dim ink is not biased;
     an INFERRED choice, gate G3, not measured on a bench). The N x N inverse is by cofactors, as
     the codebox must do it (N <= 3).
@@ -79,13 +79,13 @@ def separate_stage(src, inks, n_inks=3, mode="unmix", gains=(1, 1, 1), bypass=0,
     else:
         minv = ridge_inverse(k)
         raw = np.einsum("nm,...m->...n", minv, np.einsum("cn,...c->...n", k, rgb)).astype(F32)
-        cov = raw if bug == "no_clamp" else np.clip(raw, 0, 1).astype(F32)
-        if bug == "gain_after_clamp":
-            cov = (cov * g).astype(F32)
-            g = np.ones_like(g)
-    cov = (cov * g).astype(F32) if bug != "gain_after_clamp" else cov
-    if bug not in ("no_clamp", "gain_after_clamp"):
-        cov = np.clip(cov, 0, 1).astype(F32)
+        cov = raw
+    if bug == "gain_after_clamp":
+        cov = (np.clip(cov, 0, 1) * g).astype(F32)          # clamp first, gain unbounded after
+    elif bug == "no_clamp":
+        cov = (cov * g).astype(F32)
+    else:
+        cov = np.clip(cov * g, 0, 1).astype(F32)             # FR-004: gain, then ONE clamp
     plates = []
     for i in range(3):
         p = np.zeros(rgb.shape, dtype=F32)
