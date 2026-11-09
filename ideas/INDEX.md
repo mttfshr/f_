@@ -261,6 +261,10 @@ substantially move a file in `ideas/`, update its entry here too.
 
 ## Optics, lens, color
 
+- **[f_print_styles.md](f_print_styles.md)** ⚪ — Emulating print processes (riso, offset, xerox,
+  intaglio, screen print): a family of small stage modules (separation, screen, ink body,
+  misregistration, paper) passing RGBA plates. Riso first; form-following intaglio lines
+  (tensor family) in Phase 2. Decisions of 2026-11-07 recorded; concept only, nothing built.
 - **[f_deflicker.md](f_deflicker.md)** ⚪ — Downstream utility that holds an input's overall
   brightness near its usual level (whole-frame pumping flattens, structure untouched; one De-flicker dial).
   Born in `f_wc` (then `f_formconstants`) T075 (2026-10-25), moved out as a general tool. Carries the measured GPU
