@@ -1,0 +1,46 @@
+// f_ink -- stage 3 of 3: extent, then bypass and the source alpha (spec "Narrowed", plan ADR-9). Mirror: tests/modules/ink/ink_mirror.extent_stage.
+// One step of mass transport: P = c + extent * (-(u . grad c) - cavg * T * div F), u = F * T, T the travel in texels.
+// Ink carried into a slope piles up, ink carried away from one starves it, and a converging field gathers ink. The sum of ink over
+// the frame stays nearly the same, so this moves brightness around rather than dimming it. Output is not clamped (FR-010).
+// Inputs, in order: the bulged image; the vecfield (RG, 0.5 is zero); the zapped source. With the connected flag at 0 the field is
+// zero and this is exact identity. The field is read with sample(), since it can be any size: exact at 1:1.
+zap_c(xv) {
+    return switch(abs(xv) < 1e30, xv, 0.0);
+}
+
+ext_c(c0, cl, cr, cd, cu, ux, uy, s_tx, t_div, amt) {
+    gx = (cr - cl) / (2.0 * s_tx);
+    gy = (cu - cd) / (2.0 * s_tx);
+    cavg = (cl + cr + cd + cu) * 0.25;
+    return c0 + amt * (0.0 - (ux * gx + uy * gy) - cavg * t_div);
+}
+
+Param width(1920.0);
+Param height(1080.0);
+Param travel(0.5);
+Param extent(0.0);
+Param src_field(0.0);
+Param bypass_gate(0.0);
+
+s_tx = max(1.0, floor(0.003 * height + 0.5));
+reach = travel * 0.05 * height;
+ix = floor(norm.x * width);
+iy = floor(norm.y * height);
+ul = (clamp(ix - s_tx, 0.0, width - 1.0) + 0.5) / width;
+ur = (clamp(ix + s_tx, 0.0, width - 1.0) + 0.5) / width;
+vd = (clamp(iy - s_tx, 0.0, height - 1.0) + 0.5) / height;
+vu = (clamp(iy + s_tx, 0.0, height - 1.0) + 0.5) / height;
+um = (ix + 0.5) / width;
+vm = (iy + 0.5) / height;
+
+ux = (zap_c(sample(in2, norm).x) - 0.5) * 2.0 * reach * src_field;
+uy = (zap_c(sample(in2, norm).y) - 0.5) * 2.0 * reach * src_field;
+dfx = (zap_c(sample(in2, vec(ur, vm)).x) - zap_c(sample(in2, vec(ul, vm)).x)) * 2.0 / (2.0 * s_tx);
+dfy = (zap_c(sample(in2, vec(um, vu)).y) - zap_c(sample(in2, vec(um, vd)).y)) * 2.0 / (2.0 * s_tx);
+t_div = reach * (dfx + dfy) * src_field;
+
+r_ink = ext_c(nearest(in1, norm).x, nearest(in1, vec(ul, vm)).x, nearest(in1, vec(ur, vm)).x, nearest(in1, vec(um, vd)).x, nearest(in1, vec(um, vu)).x, ux, uy, s_tx, t_div, extent);
+g_ink = ext_c(nearest(in1, norm).y, nearest(in1, vec(ul, vm)).y, nearest(in1, vec(ur, vm)).y, nearest(in1, vec(um, vd)).y, nearest(in1, vec(um, vu)).y, ux, uy, s_tx, t_div, extent);
+b_ink = ext_c(nearest(in1, norm).z, nearest(in1, vec(ul, vm)).z, nearest(in1, vec(ur, vm)).z, nearest(in1, vec(um, vd)).z, nearest(in1, vec(um, vu)).z, ux, uy, s_tx, t_div, extent);
+
+out1 = vec(mix(r_ink, nearest(in3, norm).x, bypass_gate), mix(g_ink, nearest(in3, norm).y, bypass_gate), mix(b_ink, nearest(in3, norm).z, bypass_gate), nearest(in3, norm).w);

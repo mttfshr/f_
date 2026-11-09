@@ -1,10 +1,23 @@
 # Spec: f_ink
 
 _Created: 2026-11-08_
-_Status: Draft: not yet built, not yet clarified_
+_Status: narrowed 2026-11-09 (see "Narrowed"); built and benched, looks in progress_
 _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink body"). Name `f_ink` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
 
 ---
+
+## Narrowed (Matt, 2026-11-09, after two live looks)
+
+**This section supersedes the rest of this spec wherever they differ.** Matt: mottle, dropout and their field inlets belong to blends elsewhere; "maybe we should be trying to hone how edge pool works".
+
+f_ink is ink that moves along a vecfield. It takes a texture (in0) and a vecfield (in1, `f_vecfield_type.md`), per channel, stateless, unclamped float32.
+- **N-001 Extent:** one step of mass transport along the field. Ink piles up where the flow runs into a slope and starves where it leaves one; a converging field gathers ink. The total of ink over the frame is conserved to within 2% on a test bump.
+- **N-002 Bulge:** only the outlines move along the field, weighted by the local slope, so flat areas hold still.
+- **N-003 Travel:** how far, for both; replaces Spread (folded in, Matt).
+- **N-004:** with no field connected, or with Extent and Bulge at 0, the output is exactly the input. Detected from the connected flag.
+- **N-005:** both effects read the slope of the tone, so they work on smooth images with no hard marks.
+- **Kept from below:** FR-010 (unclamped, no NaN), FR-011, FR-012, FR-013, FR-015, A1-A4, A6.
+- **Removed:** spread, snap, bias, soften (FR-004), edge_pool / pool_width (FR-007), mottle (FR-005), dropout (FR-006), FR-017, the amount driver of FR-014. Flecks, banding and channel gains (US5, US6, FR-016) are not built and are not in this version.
 
 ## Clarifications
 

@@ -77,6 +77,15 @@ package/help/f_ink.maxhelp      # Phase 3
 **Decision (preliminary; corrected 2026-11-08 by the mirror, see tasks.md Record)**: with `B_p` the blur of `S` at `pool_width` and `S` the spread result, `pooled = S + edge_pool * S * 2 * max(S - B_p, 0)`. The band term is 0 on any flat field and is 0.5 on a straight edge, so the rim peaks at twice S at amount 1; multiplying by `S` keeps it on the ink side. No ink is added where the input is 0. The first form, `4 * B_p * (1 - B_p)`, was 1 on a flat 0.5 field, against FR-007.
 **Consequence**: the pool blur reads `S`, so it cannot reuse the spread blur. Stages are `zap`, blur, blur, threshold, blur, blur, pool, `fx_b` (eight since 2026-11-09). Non-finite input is zapped before the first blur, not in `fx_b`.
 
+### ADR-9: Ink moves along a vecfield (2026-11-09; supersedes ADR-1 to ADR-5 and ADR-8)
+
+Three stages: `zap` -> `bulge` -> `extent`; the vecfield goes to the last two. T = travel * 0.05 * H texels. Slopes are central differences over `s` = max(1, round(0.003 * H)) texels.
+`bulge`: e = clamp(|grad c| * H / 7, 0, 1), read c at p - F * T * bulge * e by a manual bilinear (a data-dependent coordinate can jump, and hardware `sample()` then goes nearest).
+`extent`: P = c + extent * (-(F T . grad c) - cavg * T * div F).
+**Inferred, from one frame of Matt's (tuned live):** the travel scale 0.05, the edge gain 7 (the 90th percentile slope of that frame), the span.
+**Why:** the old design needed marks with edges; Matt's frame has none, so it could only dim (edge pool) or posterize (spread). Mock-up: `scratch/experiments/f_ink_look/4_field_pool.png` (local; stand-in fields, gaussian slopes where the codeboxes use central differences).
+**Unconnected inlet:** identity, which differs from what Claude told Matt on 11-09 ("a plain, even rim"); a self-derived field is the alternative if he wants one.
+
 ### ADR-8: After the first look (2026-11-09; supersedes parts of ADR-3, ADR-4, ADR-5)
 
 **Edge pool (Matt, candidate C):** `rim = clamp(2 * max(S - Bp, 0) / max(S, 1e-3), 0, 1)`; `P = S * ((1 - d) + d * rim)`, with `d` = `edge_pool`. `Bp` is two H,V pairs of 15 taps, the second with taps 2 texels apart, the width shared as q + 2q (21 texels at most): ten stages (cost unmeasured).

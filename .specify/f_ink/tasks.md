@@ -1,6 +1,6 @@
 # Tasks: f_ink
 
-**Spec**: spec.md · **Plan**: plan.md · Created 2026-11-08 (Claude, with Matt). No module code yet.
+**Spec**: spec.md · **Plan**: plan.md · Created 2026-11-08 (Claude, with Matt). **Narrowed 2026-11-09: T050 onward is the current work; everything above it describes the earlier design (spec "Narrowed", plan ADR-9).**
 
 Record format: date, who observed (offline Claude / live Matt), source (log path, commit).
 
@@ -60,6 +60,15 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 - [x] T037 (2026-11-09, bench run by Claude; T009's cost still only an upper bound) Benches updated (four-input `fx_b`, field inlets connected and not, cost of the extra stages); run with Matt's go.
 - [ ] T038 Live look (Matt): edge pool, mottle and dropout, with and without a patched field. Then spread, snap and bias, which are "fairly subtle" (Matt, set aside for later).
 
+### Narrowed: vecfield-driven ink (2026-11-09; spec "Narrowed", plan ADR-9)
+
+- [x] T050 (2026-11-09, offline, Claude) Mirror and tier 1 rewritten for extent and bulge.
+- [x] T051 (2026-11-09, Claude) `codebox_bulge.gen`, `codebox_extent.gen`, `definition.py` (three stages, one vecfield inlet); old stages removed.
+- [x] T052 (2026-11-09, bench run by Claude; cost only an upper bound) Benches rewritten and run.
+- [ ] T053 Live look (Matt), with a real vecfield: repulse or optical flow. Dial ranges and the inferred constants (plan ADR-9).
+- [ ] T054 Decide with Matt: what the module does with no field (identity now), and whether a soft shoulder is wanted.
+- T006-T014 (PRELIMINARY gates), T025-T027 (P2), T030-T032, T038: of the earlier design, not carried over except as listed in spec "Narrowed".
+
 ## Phase 3: docs and registration
 
 - [ ] T040 Reference doc `docs/f-reference/f_ink.md`, helpfile (the `f-helpfile` skill), menu placement (T013), README Patches row (110 characters; regenerate the launcher), inventory rows.
@@ -92,3 +101,5 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
   - **Built-in noise differs slightly from the sheets:** rotated octaves throughout, and no domain warp on the slow patches (cost; judged at T038). Field reads use `sample()` so a field of another size is not blocky; `nearest()` everywhere else.
   - **T009:** still unresolved, every stage at the bench floor (0.63 to 0.73 ms upper bound). Ten stages are at most about 6.7 ms (arithmetic, inferred); the true figure is unmeasured.
 - 2026-11-09 (live, Matt; second look, T038): edge pool "just makes the image darker toward 1.0 with no discernable change to the ink dynamics"; mottle and dropout "still look pretty unrefined"; spread "is acting like a posterize param". His test frame is smooth continuous tone with no hard marks (`scratch/experiments/f_ink_look/frame.png`), which the candidate sheets, made on clean white shapes, did not represent. **Decided (Matt, chat):** narrow the module: remove mottle, dropout and their two field inlets (those looks belong to blends elsewhere); edge pooling driven by a vecfield is the core, extent and bulge first; spread folds into edge travel. Spec, plan and code not yet changed: direction is being mocked on his frame.
+- 2026-11-09 (Matt, chat): "Extent plus bulge". (Bench, Claude, Max 9.2.0; no live look yet): tier 1 10/10 (`tests/logs/20261109-083440-offline.log`); contract test 9/9, drift 16/16, expectations 10/10 (`tests/logs/20261109-083609-offline.log`); codebox bench 5/5 with `--slow` (`tests/logs/20261109-083619-bench.log`); module bench 2/2 (`tests/logs/20261109-083646-bench.log`). Bulge worst 6.5e-6 against the mirror, extent 4.8e-7; patcher 1.5e-6. Ink conserved: mean 0.03068 to 0.030679 on the test bump. Cost not resolved: 0.74 to 0.88 ms upper bound per stage at 1080p equivalent, the bench's floor.
+  - **Contract bench 1/2 (`tests/logs/20261109-083659-bench.log`), f_ink clean; the failure is in f_separate:** "name separate_pix already in use", then no attribute on its dials. Its `object_name` is bare, not `#0_`-scoped, against the library convention (`src/f_separate/definition.py:18`). It passed earlier today; INFERRED: Matt's live patch had an f_separate open by then. Not fixed here.

@@ -46,7 +46,7 @@
 					"numoutlets": 0,
 					"patching_rect": [
 						30.0,
-						902.0,
+						552.0,
 						30.0,
 						30.0
 					]
@@ -77,16 +77,8 @@
 					"id": "obj-4",
 					"maxclass": "newobj",
 					"numinlets": 1,
-					"numoutlets": 11,
+					"numoutlets": 3,
 					"outlettype": [
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
 						"",
 						"",
 						""
@@ -94,10 +86,10 @@
 					"patching_rect": [
 						56.5,
 						204.0,
-						799.0,
+						223.0,
 						22.0
 					],
-					"text": "route spread bias snap soften edge_pool pool_width mottle mottle_scale dropout tooth_scale seed"
+					"text": "route extent bulge travel"
 				}
 			},
 			{
@@ -147,7 +139,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- stage 1 of 8: non-finite components to 0, before any blur (one NaN in a tap would poison a whole kernel).\n// Mirror: tests/modules/ink/ink_mirror.zap. Its output is also the source that bypass and alpha read in the last stage.\n// abs(x) < 1e30 with switch(): NaN == NaN is TRUE on this GPU, so an x == x test does nothing.\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nout1 = vec(zap_c(nearest(in1, norm).x), zap_c(nearest(in1, norm).y), zap_c(nearest(in1, norm).z), zap_c(nearest(in1, norm).w));\n",
+									"code": "// f_ink -- stage 1 of 3: non-finite components to 0, before any blur (one NaN in a tap would poison a whole kernel).\n// Mirror: tests/modules/ink/ink_mirror.zap. Its output is also the source that bypass and alpha read in the last stage.\n// abs(x) < 1e30 with switch(): NaN == NaN is TRUE on this GPU, so an x == x test does nothing.\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nout1 = vec(zap_c(nearest(in1, norm).x), zap_c(nearest(in1, norm).y), zap_c(nearest(in1, norm).z), zap_c(nearest(in1, norm).w));\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -221,840 +213,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-55",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam spread(0.0);\naxis = 0.0;\nstride = 1.0;\nradius = spread * 7.0 / 1080.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"id": "gen-obj-2",
-									"maxclass": "codebox",
-									"numinlets": 1,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										0
-									],
-									"source": [
-										"gen-obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-3",
-										0
-									],
-									"source": [
-										"gen-obj-2",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						30.0,
-						430.0,
-						232.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_blur_h @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_blur_h"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-56",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam spread(0.0);\naxis = 1.0;\nstride = 1.0;\nradius = spread * 7.0 / 1080.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"id": "gen-obj-2",
-									"maxclass": "codebox",
-									"numinlets": 1,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										0
-									],
-									"source": [
-										"gen-obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-3",
-										0
-									],
-									"source": [
-										"gen-obj-2",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						30.0,
-						480.0,
-						232.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_blur_v @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_blur_v"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-57",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- the re-threshold of spread (spec FR-004, plan ADR-2, T021). Mirror: tests/modules/ink/ink_mirror.threshold.\n// H = smoothstep(0.5 - w/2 - bias, 0.5 + w/2 - bias, B), then S = mix(B, H, snap * min(spread / 0.125, 1)).\n// snap 0 is a plain blur, which keeps continuous tone; snap 1 hardens the blur back into a mark (Matt, 2026-11-08).\n// At spread 0 the blend factor is exactly 0, so the input passes unchanged. Alpha is restored in the last stage.\n// 0.125 is SNAP_GATE (inferred, tuned at T032); 0.001 keeps smoothstep's edges apart at soften 0.\nhard_c(bc, lo_e, hi_e, amt) {\n    held = smoothstep(lo_e, hi_e, bc);\n    return bc * (1.0 - amt) + held * amt;\n}\n\nParam spread(0.0);\nParam snap(1.0);\nParam bias(0.0);\nParam soften(0.2);\n\nsoft_w = max(soften, 0.001);\nlo_edge = 0.5 - soft_w * 0.5 - bias;\nhi_edge = 0.5 + soft_w * 0.5 - bias;\nblend_amt = snap * min(spread / 0.125, 1.0);\n\nout1 = vec(hard_c(nearest(in1, norm).x, lo_edge, hi_edge, blend_amt), hard_c(nearest(in1, norm).y, lo_edge, hi_edge, blend_amt), hard_c(nearest(in1, norm).z, lo_edge, hi_edge, blend_amt), 1.0);\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"id": "gen-obj-2",
-									"maxclass": "codebox",
-									"numinlets": 1,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										0
-									],
-									"source": [
-										"gen-obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-3",
-										0
-									],
-									"source": [
-										"gen-obj-2",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						30.0,
-						530.0,
-						232.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_thresh @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_thresh"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-58",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 0.0;\nstride = 1.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"id": "gen-obj-2",
-									"maxclass": "codebox",
-									"numinlets": 1,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										0
-									],
-									"source": [
-										"gen-obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-3",
-										0
-									],
-									"source": [
-										"gen-obj-2",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						30.0,
-						580.0,
-						232.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool_h @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_pool_h"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-59",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 1.0;\nstride = 1.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"id": "gen-obj-2",
-									"maxclass": "codebox",
-									"numinlets": 1,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										0
-									],
-									"source": [
-										"gen-obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-3",
-										0
-									],
-									"source": [
-										"gen-obj-2",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						30.0,
-						630.0,
-						232.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool_v @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_pool_v"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-60",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 0.0;\nstride = 2.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"id": "gen-obj-2",
-									"maxclass": "codebox",
-									"numinlets": 1,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										0
-									],
-									"source": [
-										"gen-obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-3",
-										0
-									],
-									"source": [
-										"gen-obj-2",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						30.0,
-						680.0,
-						240.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool_h2 @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_pool_h2"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-61",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"jit_gl_texture",
-						""
-					],
-					"patcher": {
-						"fileversion": 1,
-						"appversion": {
-							"major": 9,
-							"minor": 1,
-							"revision": 4,
-							"architecture": "x64",
-							"modernui": 1
-						},
-						"classnamespace": "jit.gen",
-						"rect": [
-							100.0,
-							100.0,
-							700.0,
-							600.0
-						],
-						"boxes": [
-							{
-								"box": {
-									"id": "gen-obj-1",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 1"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- one separable blur pass (spec FR-004, plan ADR-2, T020). Mirror: tests/modules/ink/ink_mirror.blur_pass.\n// Used six times: spread H and V, and two pairs of pool H and V. definition.py renders this template per stage: the radius Param\n// becomes `spread` or `pool_width`, and the axis and stride Params constants, so every Param left in a shipped stage is driven.\n//   - 15 taps at the fixed offsets -7..7, in units of `stride` texels. 1 everywhere except the second pool pair, 2, which reads\n//     an image the first pair has already smoothed (Matt, 2026-11-08: a stride of 2 on a raw image combs a 1-texel line).\n//   - The radius only sets the weights: a tent of half-width r + 1, normalized. r = 0 is one tap of weight 1, so a\n//     radius of 0 is exactly the input, and the weights move continuously with the dial.\n//   - The radius is capped at 7 tap spacings (the spread's reach above 1080 shrinks in frame heights, accepted with the cap).\n//   - Border: clamp-to-edge by integer index (T010, G7), never an out-of-range read.\n//   - nearest() at texel centers, no interpolation (T008: sample() is unreliable on a texel corner). width and height come from render_dim:\n//     `dim` reads 1 in a live jit.gl.pix.\n// radius is in frame heights. axis: 0 horizontal, 1 vertical.\nParam width(1920.0);\nParam height(1080.0);\nParam pool_width(0.014);\naxis = 1.0;\nstride = 2.0;\nradius = pool_width / 3.0;\n\nr_tx = clamp(radius * height, 0.0, 7.0);\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nacc = vec(0.0, 0.0, 0.0, 0.0);\nwsum = 0.0;\nfor (k = 0; k < 15; k += 1) {\n    off = (k - 7.0) * stride;\n    wt = max(0.0, 1.0 - abs(k - 7.0) / (r_tx + 1.0));\n    tx = clamp(ix + off * (1.0 - axis), 0.0, width - 1.0);\n    ty = clamp(iy + off * axis, 0.0, height - 1.0);\n    acc = acc + nearest(in1, vec((tx + 0.5) / width, (ty + 0.5) / height)) * wt;\n    wsum = wsum + wt;\n}\n\nout1 = acc / wsum;\n",
-									"fontface": 0,
-									"fontname": "<Monospaced>",
-									"fontsize": 12.0,
-									"id": "gen-obj-2",
-									"maxclass": "codebox",
-									"numinlets": 1,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										22.0,
-										80.0,
-										550.0,
-										380.0
-									]
-								}
-							},
-							{
-								"box": {
-									"id": "gen-obj-3",
-									"maxclass": "newobj",
-									"numinlets": 1,
-									"numoutlets": 0,
-									"patching_rect": [
-										22.0,
-										490.0,
-										35.0,
-										22.0
-									],
-									"text": "out 1"
-								}
-							}
-						],
-						"lines": [
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-2",
-										0
-									],
-									"source": [
-										"gen-obj-1",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
-										"gen-obj-3",
-										0
-									],
-									"source": [
-										"gen-obj-2",
-										0
-									]
-								}
-							}
-						]
-					},
-					"patching_rect": [
-						30.0,
-						730.0,
-						240.0,
-						22.0
-					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool_v2 @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_pool_v2"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-62",
+					"id": "obj-50",
 					"maxclass": "newobj",
 					"numinlets": 2,
 					"numoutlets": 2,
@@ -1117,7 +276,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- edge pooling (spec FR-007, reversed 2026-11-09; plan ADR-8, T035). Mirror: tests/modules/ink/ink_mirror.pool.\n// rim = clamp(2 * max(S - Bp, 0) / max(S, 0.001), 0, 1); P = S * ((1 - edge_pool) + edge_pool * rim).\n// The rim stays at the value of the mark and the body thins. The earlier form raised the rim instead, and above 1 a screen clips\n// it, so it could not show on a full-value mark. Dividing by S gives a partial tone the same rim, in proportion.\n// First input: Bp, the blur of S at pool_width. Second input: S. The blur arrives last and jit.gl.pix renders on its\n// left inlet, so the blur has to be the left one, or this stage would use last frame's rim.\npool_c(sc, bc, amt) {\n    rim = clamp(2.0 * max(sc - bc, 0.0) / max(sc, 0.001), 0.0, 1.0);\n    return sc * ((1.0 - amt) + amt * rim);\n}\n\nParam edge_pool(0.0);\n\nout1 = vec(pool_c(nearest(in2, norm).x, nearest(in1, norm).x, edge_pool), pool_c(nearest(in2, norm).y, nearest(in1, norm).y, edge_pool), pool_c(nearest(in2, norm).z, nearest(in1, norm).z, edge_pool), 1.0);\n",
+									"code": "// f_ink -- stage 2 of 3: bulge. Only the edges move along the field (spec \"Narrowed\", plan ADR-9). Mirror: tests/modules/ink/ink_mirror.bulge_stage.\n// Each channel is read back along the field by T * bulge * e. T is the travel in texels; e rises with the channel's local slope, so\n// a flat interior holds still and the outline ripples. On smooth tone the slope is what stands in for an edge.\n// Inputs, in order: the zapped image; the vecfield (RG, 0.5 is zero, 0..1 is -1..1). With the connected flag at 0 the field is zero.\n// The read is a manual bilinear from four nearest() taps per channel, because a coordinate that jumps between neighbors makes\n// hardware sample() fall back to nearest. width and height come from render_dim: `dim` reads 1 in a live jit.gl.pix.\nbil_r(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).x * (1.0 - ax) + nearest(in1, vec(u1, v0)).x * ax;\n    far_row = nearest(in1, vec(u0, v1)).x * (1.0 - ax) + nearest(in1, vec(u1, v1)).x * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nbil_g(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).y * (1.0 - ax) + nearest(in1, vec(u1, v0)).y * ax;\n    far_row = nearest(in1, vec(u0, v1)).y * (1.0 - ax) + nearest(in1, vec(u1, v1)).y * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nbil_b(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).z * (1.0 - ax) + nearest(in1, vec(u1, v0)).z * ax;\n    far_row = nearest(in1, vec(u0, v1)).z * (1.0 - ax) + nearest(in1, vec(u1, v1)).z * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nedge_w(cl, cr, cd, cu, s_tx, h_tx) {\n    gx = (cr - cl) / (2.0 * s_tx);\n    gy = (cu - cd) / (2.0 * s_tx);\n    return clamp(sqrt(gx * gx + gy * gy) * h_tx / 7.0, 0.0, 1.0);\n}\n\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam travel(0.5);\nParam bulge(0.0);\nParam src_field(0.0);\n\ns_tx = max(1.0, floor(0.003 * height + 0.5));\nreach = travel * 0.05 * height * bulge;\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nxc = ix + 0.5;\nyc = iy + 0.5;\nul = (clamp(ix - s_tx, 0.0, width - 1.0) + 0.5) / width;\nur = (clamp(ix + s_tx, 0.0, width - 1.0) + 0.5) / width;\nvd = (clamp(iy - s_tx, 0.0, height - 1.0) + 0.5) / height;\nvu = (clamp(iy + s_tx, 0.0, height - 1.0) + 0.5) / height;\num = xc / width;\nvm = yc / height;\n\nffx = (zap_c(sample(in2, norm).x) - 0.5) * 2.0 * reach * src_field;\nffy = (zap_c(sample(in2, norm).y) - 0.5) * 2.0 * reach * src_field;\n\ne_r = edge_w(nearest(in1, vec(ul, vm)).x, nearest(in1, vec(ur, vm)).x, nearest(in1, vec(um, vd)).x, nearest(in1, vec(um, vu)).x, s_tx, height);\ne_g = edge_w(nearest(in1, vec(ul, vm)).y, nearest(in1, vec(ur, vm)).y, nearest(in1, vec(um, vd)).y, nearest(in1, vec(um, vu)).y, s_tx, height);\ne_b = edge_w(nearest(in1, vec(ul, vm)).z, nearest(in1, vec(ur, vm)).z, nearest(in1, vec(um, vd)).z, nearest(in1, vec(um, vu)).z, s_tx, height);\n\nout1 = vec(bil_r(xc - ffx * e_r, yc - ffy * e_r, width, height), bil_g(xc - ffx * e_g, yc - ffy * e_g, width, height), bil_b(xc - ffx * e_b, yc - ffy * e_b, width, height), 1.0);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -1193,19 +352,19 @@
 					},
 					"patching_rect": [
 						30.0,
-						780.0,
-						216.0,
+						430.0,
+						224.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_pool @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_pool"
+					"text": "jit.gl.pix vsynth @name #0_ink_stage_bulge @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_ink_stage_bulge"
 				}
 			},
 			{
 				"box": {
-					"id": "obj-63",
+					"id": "obj-51",
 					"maxclass": "newobj",
-					"numinlets": 4,
+					"numinlets": 3,
 					"numoutlets": 2,
 					"outlettype": [
 						"jit_gl_texture",
@@ -1284,31 +443,13 @@
 							},
 							{
 								"box": {
-									"id": "gen-obj-12",
-									"maxclass": "newobj",
-									"numinlets": 0,
-									"numoutlets": 1,
-									"outlettype": [
-										""
-									],
-									"patching_rect": [
-										196.0,
-										30.0,
-										28.0,
-										22.0
-									],
-									"text": "in 4"
-								}
-							},
-							{
-								"box": {
-									"code": "// f_ink -- the last stage: mottle, then dropout, then bypass and the source alpha (spec FR-005, FR-006, FR-013, FR-017, plan ADR-4,\n// ADR-6, ADR-8, T036). Mirror: tests/modules/ink/ink_mirror.fx_b and the end of ink().\n// Inputs, in order: the pooled image; the zapped source; the mottle field; the tooth field. A field's luma replaces the built-in\n// noise when its connected flag is 1 (the flag, not the value: an unconnected inlet is not reliably black).\n// Coordinates are frame heights (x scaled by the aspect), fixed to the frame (Matt, Q3). The hash is sin (noise() is black\n// on this path); a GPU sin differs from NumPy's in the low bits, so the bench can compare statistics only, not texels.\n// Mottle only thins ink, most where it is dense, so a coverage of 0 stays 0. Dropout has soft edges; below dropout 0.05 the whole\n// effect fades in, so dropout 0 is exact identity. The fields are read with sample(), since they can be any size: exact at 1:1,\n// and smooth rather than blocky when magnified.\nhash_2d(ix, iy, sd) {\n    hv = sin(ix * 127.1 + iy * 311.7 + sd) * 43758.5453;\n    return hv - floor(hv);\n}\n\nvnoise(px, py, scl, sd) {\n    sz = max(scl, 0.00001);\n    gx = px / sz;\n    gy = py / sz;\n    ix = floor(gx);\n    iy = floor(gy);\n    fx = gx - ix;\n    fy = gy - iy;\n    ux = fx * fx * (3.0 - 2.0 * fx);\n    uy = fy * fy * (3.0 - 2.0 * fy);\n    ha = hash_2d(ix, iy, sd);\n    hb = hash_2d(ix + 1.0, iy, sd);\n    hc = hash_2d(ix, iy + 1.0, sd);\n    hd = hash_2d(ix + 1.0, iy + 1.0, sd);\n    near_row = ha + (hb - ha) * ux;\n    far_row = hc + (hd - hc) * ux;\n    return near_row + (far_row - near_row) * uy;\n}\n\nrot_noise(px, py, ang, scl, sd) {\n    ca = cos(ang);\n    sa = sin(ang);\n    return vnoise(px * ca - py * sa, px * sa + py * ca, scl, sd);\n}\n\nfbm_2(px, py, scl, sd, gn) {\n    oct1 = rot_noise(px, py, 0.7, scl, sd);\n    oct2 = rot_noise(px, py, 1.8, scl * 0.5, sd + 17.0);\n    return (oct1 + oct2 * gn) / (1.0 + gn);\n}\n\nfbm_3(px, py, scl, sd, gn) {\n    oct1 = rot_noise(px, py, 0.7, scl, sd);\n    oct2 = rot_noise(px, py, 1.8, scl * 0.5, sd + 17.0);\n    oct3 = rot_noise(px, py, 2.9, scl * 0.25, sd + 34.0);\n    return (oct1 + oct2 * gn + oct3 * gn * gn) / (1.0 + gn + gn * gn);\n}\n\nstretch_v(nv, kv) {\n    return clamp((nv - 0.5) * kv + 0.5, 0.0, 1.0);\n}\n\nbuiltin_mottle(px, py, scl, sd) {\n    speck = stretch_v(fbm_3(px, py, scl * 0.1, sd, 0.6), 1.9);\n    broad = stretch_v(fbm_2(px, py, scl, sd + 200.0, 0.5), 1.8);\n    return clamp(speck * 0.6 + broad * 0.55 - 0.05, 0.0, 1.0);\n}\n\nbuiltin_tooth(px, py, scl, sd) {\n    cell_sz = max(scl, 0.00001) / 3.0;\n    white = hash_2d(floor(px / cell_sz), floor(py / cell_sz), sd + 300.0);\n    return stretch_v(fbm_2(px, py, scl, sd + 101.0, 0.7) * 0.7 + white * 0.3, 2.6);\n}\n\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nfield_luma(rv, gv, bv) {\n    return clamp(zap_c(rv) * 0.2126 + zap_c(gv) * 0.7152 + zap_c(bv) * 0.0722, 0.0, 1.0);\n}\n\nink_c(cv, field_m, amt_m, thresh_d, soft_w, fade_d) {\n    thinned = cv * (1.0 - amt_m * field_m * smoothstep(0.15, 0.9, cv));\n    kept = smoothstep(thresh_d - soft_w, thresh_d + soft_w, max(thinned, 0.0));\n    return thinned * (1.0 - (1.0 - kept) * fade_d);\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam mottle(0.0);\nParam mottle_scale(0.045);\nParam dropout(0.0);\nParam tooth_scale(0.003);\nParam seed(1.0);\nParam src_mottle(0.0);\nParam src_tooth(0.0);\nParam bypass_gate(0.0);\n\naspect = width / max(height, 1.0);\nframe_x = norm.x * aspect;\nframe_y = norm.y;\n\nfield_m = switch(src_mottle > 0.5, field_luma(sample(in3, norm).x, sample(in3, norm).y, sample(in3, norm).z), builtin_mottle(frame_x, frame_y, mottle_scale, seed));\ntooth_v = switch(src_tooth > 0.5, field_luma(sample(in4, norm).x, sample(in4, norm).y, sample(in4, norm).z), builtin_tooth(frame_x, frame_y, tooth_scale, seed));\n\nfade_d = min(dropout / 0.05, 1.0);\nthresh_d = 1.35 * dropout * tooth_v;\nsoft_w = max(0.1 * fade_d, 0.0001);\n\nr_ink = ink_c(nearest(in1, norm).x, field_m, mottle, thresh_d, soft_w, fade_d);\ng_ink = ink_c(nearest(in1, norm).y, field_m, mottle, thresh_d, soft_w, fade_d);\nb_ink = ink_c(nearest(in1, norm).z, field_m, mottle, thresh_d, soft_w, fade_d);\n\nout1 = vec(mix(r_ink, nearest(in2, norm).x, bypass_gate), mix(g_ink, nearest(in2, norm).y, bypass_gate), mix(b_ink, nearest(in2, norm).z, bypass_gate), nearest(in2, norm).w);\n",
+									"code": "// f_ink -- stage 3 of 3: extent, then bypass and the source alpha (spec \"Narrowed\", plan ADR-9). Mirror: tests/modules/ink/ink_mirror.extent_stage.\n// One step of mass transport: P = c + extent * (-(u . grad c) - cavg * T * div F), u = F * T, T the travel in texels.\n// Ink carried into a slope piles up, ink carried away from one starves it, and a converging field gathers ink. The sum of ink over\n// the frame stays nearly the same, so this moves brightness around rather than dimming it. Output is not clamped (FR-010).\n// Inputs, in order: the bulged image; the vecfield (RG, 0.5 is zero); the zapped source. With the connected flag at 0 the field is\n// zero and this is exact identity. The field is read with sample(), since it can be any size: exact at 1:1.\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\next_c(c0, cl, cr, cd, cu, ux, uy, s_tx, t_div, amt) {\n    gx = (cr - cl) / (2.0 * s_tx);\n    gy = (cu - cd) / (2.0 * s_tx);\n    cavg = (cl + cr + cd + cu) * 0.25;\n    return c0 + amt * (0.0 - (ux * gx + uy * gy) - cavg * t_div);\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam travel(0.5);\nParam extent(0.0);\nParam src_field(0.0);\nParam bypass_gate(0.0);\n\ns_tx = max(1.0, floor(0.003 * height + 0.5));\nreach = travel * 0.05 * height;\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nul = (clamp(ix - s_tx, 0.0, width - 1.0) + 0.5) / width;\nur = (clamp(ix + s_tx, 0.0, width - 1.0) + 0.5) / width;\nvd = (clamp(iy - s_tx, 0.0, height - 1.0) + 0.5) / height;\nvu = (clamp(iy + s_tx, 0.0, height - 1.0) + 0.5) / height;\num = (ix + 0.5) / width;\nvm = (iy + 0.5) / height;\n\nux = (zap_c(sample(in2, norm).x) - 0.5) * 2.0 * reach * src_field;\nuy = (zap_c(sample(in2, norm).y) - 0.5) * 2.0 * reach * src_field;\ndfx = (zap_c(sample(in2, vec(ur, vm)).x) - zap_c(sample(in2, vec(ul, vm)).x)) * 2.0 / (2.0 * s_tx);\ndfy = (zap_c(sample(in2, vec(um, vu)).y) - zap_c(sample(in2, vec(um, vd)).y)) * 2.0 / (2.0 * s_tx);\nt_div = reach * (dfx + dfy) * src_field;\n\nr_ink = ext_c(nearest(in1, norm).x, nearest(in1, vec(ul, vm)).x, nearest(in1, vec(ur, vm)).x, nearest(in1, vec(um, vd)).x, nearest(in1, vec(um, vu)).x, ux, uy, s_tx, t_div, extent);\ng_ink = ext_c(nearest(in1, norm).y, nearest(in1, vec(ul, vm)).y, nearest(in1, vec(ur, vm)).y, nearest(in1, vec(um, vd)).y, nearest(in1, vec(um, vu)).y, ux, uy, s_tx, t_div, extent);\nb_ink = ext_c(nearest(in1, norm).z, nearest(in1, vec(ul, vm)).z, nearest(in1, vec(ur, vm)).z, nearest(in1, vec(um, vd)).z, nearest(in1, vec(um, vu)).z, ux, uy, s_tx, t_div, extent);\n\nout1 = vec(mix(r_ink, nearest(in3, norm).x, bypass_gate), mix(g_ink, nearest(in3, norm).y, bypass_gate), mix(b_ink, nearest(in3, norm).z, bypass_gate), nearest(in3, norm).w);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
 									"id": "gen-obj-2",
 									"maxclass": "codebox",
-									"numinlets": 4,
+									"numinlets": 3,
 									"numoutlets": 1,
 									"outlettype": [
 										""
@@ -1377,18 +518,6 @@
 							{
 								"patchline": {
 									"destination": [
-										"gen-obj-2",
-										3
-									],
-									"source": [
-										"gen-obj-12",
-										0
-									]
-								}
-							},
-							{
-								"patchline": {
-									"destination": [
 										"gen-obj-3",
 										0
 									],
@@ -1402,12 +531,12 @@
 					},
 					"patching_rect": [
 						30.0,
-						830.0,
-						216.0,
+						480.0,
+						232.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_fx_b @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_fx_b"
+					"text": "jit.gl.pix vsynth @name #0_ink_stage_extent @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_ink_stage_extent"
 				}
 			},
 			{
@@ -1423,7 +552,7 @@
 						""
 					],
 					"patching_rect": [
-						1135.5,
+						980.0,
 						100.0,
 						56.0,
 						22.0
@@ -1455,17 +584,17 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						915.5,
+						760.0,
 						260.0,
 						190.0,
-						185.0
+						95.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						190.0,
-						185.0
+						95.0
 					],
 					"proportion": 0.5
 				}
@@ -1479,7 +608,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1135.5,
+						980.0,
 						200.0,
 						80.0,
 						21.0
@@ -1510,7 +639,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1225.5,
+						1070.0,
 						200.0,
 						60.0,
 						21.0
@@ -1542,7 +671,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1135.5,
+						980.0,
 						232.0,
 						5.0,
 						5.0
@@ -1574,7 +703,7 @@
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
-						1155.5,
+						1000.0,
 						232.0,
 						5.0,
 						5.0
@@ -1599,7 +728,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						760.0,
 						20.0,
 						60.0,
 						22.0
@@ -1617,7 +746,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						760.0,
 						50.0,
 						180.0,
 						22.0
@@ -1638,7 +767,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						760.0,
 						110.0,
 						80.0,
 						22.0
@@ -1657,7 +786,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						760.0,
 						140.0,
 						60.0,
 						22.0
@@ -1675,7 +804,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						760.0,
 						170.0,
 						80.0,
 						22.0
@@ -1693,7 +822,7 @@
 						""
 					],
 					"patching_rect": [
-						915.5,
+						760.0,
 						200.0,
 						100.0,
 						22.0
@@ -1709,7 +838,7 @@
 				"box": {
 					"id": "obj-100",
 					"maxclass": "inlet",
-					"comment": "mottle field (optional): luma sets where ink thins. Unconnected = the built-in speckle",
+					"comment": "vecfield: the flow that moves the ink (repulse, optical flow). Unconnected, the module passes its input through",
 					"index": 0,
 					"numinlets": 0,
 					"numoutlets": 1,
@@ -1745,44 +874,6 @@
 			},
 			{
 				"box": {
-					"id": "obj-103",
-					"maxclass": "inlet",
-					"comment": "tooth field (optional): luma sets where ink drops out, brightest first. Unconnected = the built-in paper grain",
-					"index": 0,
-					"numinlets": 0,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						430.0,
-						20.0,
-						30.0,
-						30.0
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "obj-104",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						""
-					],
-					"patching_rect": [
-						430.0,
-						70.0,
-						80.0,
-						22.0
-					],
-					"text": "vs_inState"
-				}
-			},
-			{
-				"box": {
 					"id": "obj-102",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -1796,25 +887,7 @@
 						160.0,
 						22.0
 					],
-					"text": "prepend param src_mottle"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-105",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						430.0,
-						120.0,
-						160.0,
-						22.0
-					],
-					"text": "prepend param src_tooth"
+					"text": "prepend param src_field"
 				}
 			},
 			{
@@ -1828,14 +901,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "Ink gain: blurs each channel, then Snap hardens it back into a mark. 1 reaches 7 texels at 1080; the reach is capped there, so above 1080 it shrinks with the frame. PROVISIONAL",
+					"hint": "How much ink the field carries: it piles up where the flow runs into a slope and starves where it leaves one. Output is not clamped. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_ink_stage_blur_h::spread",
+					"param_connect": "#0_ink_stage_extent::extent",
 					"parameter_enable": 1,
 					"patching_rect": [
 						46.5,
@@ -1860,11 +933,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "spread",
-							"parameter_mmax": 1.0,
+							"parameter_longname": "extent",
+							"parameter_mmax": 2.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "spread",
+							"parameter_shortname": "extent",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -1873,14 +946,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "spread"
+					"varname": "extent"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-21",
 					"maxclass": "attrui",
-					"attr": "spread",
+					"attr": "extent",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -1889,44 +962,6 @@
 					"patching_rect": [
 						26.0,
 						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-700",
-					"maxclass": "attrui",
-					"attr": "spread",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						26.0,
-						344.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-701",
-					"maxclass": "attrui",
-					"attr": "spread",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						26.0,
-						368.0,
 						68.0,
 						22.0
 					],
@@ -1954,9 +989,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Spread",
+					"text": "Extent",
 					"textjustification": 1,
-					"varname": "lbl_spread"
+					"varname": "lbl_extent"
 				}
 			},
 			{
@@ -1970,14 +1005,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "After the blur: positive fattens marks, negative thins them. Needs Spread and Snap above 0. PROVISIONAL",
+					"hint": "Moves only the outlines along the field, so edges swell and pinch while flat areas hold still. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_ink_stage_thresh::bias",
+					"param_connect": "#0_ink_stage_bulge::bulge",
 					"parameter_enable": 1,
 					"patching_rect": [
 						118.5,
@@ -2002,11 +1037,11 @@
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "bias",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": -1.0,
+							"parameter_longname": "bulge",
+							"parameter_mmax": 2.0,
+							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "bias",
+							"parameter_shortname": "bulge",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2015,14 +1050,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "bias"
+					"varname": "bulge"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-24",
 					"maxclass": "attrui",
-					"attr": "bias",
+					"attr": "bulge",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2058,9 +1093,9 @@
 						50.0,
 						18.0
 					],
-					"text": "Bias",
+					"text": "Bulge",
 					"textjustification": 1,
-					"varname": "lbl_bias"
+					"varname": "lbl_bulge"
 				}
 			},
 			{
@@ -2074,14 +1109,14 @@
 						1.0
 					],
 					"fontname": "Ableton Sans Light",
-					"hint": "How much the blur hardens back into a mark. 0 is a plain blur that keeps continuous tone; 1 posterizes continuous tone as Spread rises. PROVISIONAL",
+					"hint": "How far the ink travels, for both Extent and Bulge: 1 is 5% of the frame height at the field's full strength. PROVISIONAL",
 					"numinlets": 1,
 					"numoutlets": 2,
 					"outlettype": [
 						"",
 						"float"
 					],
-					"param_connect": "#0_ink_stage_thresh::snap",
+					"param_connect": "#0_ink_stage_bulge::travel",
 					"parameter_enable": 1,
 					"patching_rect": [
 						190.5,
@@ -2102,15 +1137,15 @@
 						},
 						"valueof": {
 							"parameter_initial": [
-								1.0
+								0.5
 							],
 							"parameter_initial_enable": 1,
 							"parameter_linknames": 1,
-							"parameter_longname": "snap",
+							"parameter_longname": "travel",
 							"parameter_mmax": 1.0,
 							"parameter_mmin": 0.0,
 							"parameter_modmode": 3,
-							"parameter_shortname": "snap",
+							"parameter_shortname": "travel",
 							"parameter_type": 0,
 							"parameter_unitstyle": 1
 						}
@@ -2119,14 +1154,14 @@
 					"triangle": 1,
 					"valuepopup": 1,
 					"valuepopuplabel": 1,
-					"varname": "snap"
+					"varname": "travel"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-27",
 					"maxclass": "attrui",
-					"attr": "snap",
+					"attr": "travel",
 					"numinlets": 1,
 					"numoutlets": 1,
 					"outlettype": [
@@ -2135,6 +1170,25 @@
 					"patching_rect": [
 						170.0,
 						310.0,
+						68.0,
+						22.0
+					],
+					"style": ""
+				}
+			},
+			{
+				"box": {
+					"id": "obj-700",
+					"maxclass": "attrui",
+					"attr": "travel",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						170.0,
+						344.0,
 						68.0,
 						22.0
 					],
@@ -2162,890 +1216,14 @@
 						50.0,
 						18.0
 					],
-					"text": "Snap",
+					"text": "Travel",
 					"textjustification": 1,
-					"varname": "lbl_snap"
+					"varname": "lbl_travel"
 				}
 			},
 			{
 				"box": {
 					"id": "obj-29",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Edge softness of the hardened mark. PROVISIONAL",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_thresh::soften",
-					"parameter_enable": 1,
-					"patching_rect": [
-						262.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						115.0,
-						38.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.2
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "soften",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "soften",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "soften"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-30",
-					"maxclass": "attrui",
-					"attr": "soften",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						242.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-31",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						251.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						103.5,
-						20.0,
-						50.0,
-						18.0
-					],
-					"text": "Soften",
-					"textjustification": 1,
-					"varname": "lbl_soften"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-32",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Ink is pushed to the edges of marks: the rim stays full and the body thins, to nothing at 1. PROVISIONAL",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_pool::edge_pool",
-					"parameter_enable": 1,
-					"patching_rect": [
-						334.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						152.0,
-						38.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "edge_pool",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "edge_pool",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "edge_pool"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-33",
-					"maxclass": "attrui",
-					"attr": "edge_pool",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						314.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-34",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						323.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						140.5,
-						20.0,
-						50.0,
-						18.0
-					],
-					"text": "Edge Pool",
-					"textjustification": 1,
-					"varname": "lbl_edge_pool"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-35",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Width of the rim, in frame heights. PROVISIONAL",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_pool_h::pool_width",
-					"parameter_enable": 1,
-					"patching_rect": [
-						406.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						4.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.014
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "pool_width",
-							"parameter_mmax": 0.02,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "pool_width",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "pool_width"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-36",
-					"maxclass": "attrui",
-					"attr": "pool_width",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						386.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-702",
-					"maxclass": "attrui",
-					"attr": "pool_width",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						386.0,
-						344.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-703",
-					"maxclass": "attrui",
-					"attr": "pool_width",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						386.0,
-						368.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-704",
-					"maxclass": "attrui",
-					"attr": "pool_width",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						386.0,
-						392.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-37",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						395.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						-7.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Pool W",
-					"textjustification": 1,
-					"varname": "lbl_pool_width"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-38",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Ink thins unevenly, most where it is dense. Black stays black. Patch a texture into the mottle inlet to choose the pattern (its luma: bright thins most)",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_fx_b::mottle",
-					"parameter_enable": 1,
-					"patching_rect": [
-						478.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						41.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "mottle",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "mottle",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "mottle"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-39",
-					"maxclass": "attrui",
-					"attr": "mottle",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						458.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-40",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						467.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						29.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Mottle",
-					"textjustification": 1,
-					"varname": "lbl_mottle"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-41",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Size of the built-in mottle patches, in frame heights; the speckle is a tenth of this. No effect when a field is patched. PROVISIONAL",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_fx_b::mottle_scale",
-					"parameter_enable": 1,
-					"patching_rect": [
-						550.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						78.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.045
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "mottle_scale",
-							"parameter_mmax": 0.3,
-							"parameter_mmin": 0.01,
-							"parameter_modmode": 3,
-							"parameter_shortname": "mottle_scale",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "mottle_scale"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-42",
-					"maxclass": "attrui",
-					"attr": "mottle_scale",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						530.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-43",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						539.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						66.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Mottle Sz",
-					"textjustification": 1,
-					"varname": "lbl_mottle_scale"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-44",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Ink fails to take on the paper's tooth: pinholes and skips, lighter values first, solids last. Patch a texture into the tooth inlet to choose the pattern (its luma: bright drops first)",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_fx_b::dropout",
-					"parameter_enable": 1,
-					"patching_rect": [
-						622.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						115.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "dropout",
-							"parameter_mmax": 1.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "dropout",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "dropout"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-45",
-					"maxclass": "attrui",
-					"attr": "dropout",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						602.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-46",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						611.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						103.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Dropout",
-					"textjustification": 1,
-					"varname": "lbl_dropout"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-47",
-					"maxclass": "live.dial",
-					"activedialcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"fontname": "Ableton Sans Light",
-					"hint": "Grain of the built-in paper tooth, in frame heights. No effect when a field is patched. PROVISIONAL",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_fx_b::tooth_scale",
-					"parameter_enable": 1,
-					"patching_rect": [
-						694.5,
-						250.0,
-						27.0,
-						43.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						152.0,
-						100.0,
-						27.0,
-						43.0
-					],
-					"saved_attribute_attributes": {
-						"activedialcolor": {
-							"expression": ""
-						},
-						"valueof": {
-							"parameter_initial": [
-								0.003
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "tooth_scale",
-							"parameter_mmax": 0.02,
-							"parameter_mmin": 0.001,
-							"parameter_modmode": 3,
-							"parameter_shortname": "tooth_scale",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"showname": 0,
-					"triangle": 1,
-					"valuepopup": 1,
-					"valuepopuplabel": 1,
-					"varname": "tooth_scale"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-48",
-					"maxclass": "attrui",
-					"attr": "tooth_scale",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						674.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-49",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						683.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						140.5,
-						82.0,
-						50.0,
-						18.0
-					],
-					"text": "Tooth Sz",
-					"textjustification": 1,
-					"varname": "lbl_tooth_scale"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-50",
-					"maxclass": "live.numbox",
-					"fontname": "Ableton Sans Light",
-					"hint": "Picks the built-in mottle and tooth patterns. They are fixed to the frame and do not move",
-					"numinlets": 1,
-					"numoutlets": 2,
-					"outlettype": [
-						"",
-						"float"
-					],
-					"param_connect": "#0_ink_stage_fx_b::seed",
-					"parameter_enable": 1,
-					"patching_rect": [
-						758.0,
-						250.0,
-						44.0,
-						15.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						4.0,
-						162.0,
-						34.0,
-						15.0
-					],
-					"saved_attribute_attributes": {
-						"valueof": {
-							"parameter_initial": [
-								1.0
-							],
-							"parameter_initial_enable": 1,
-							"parameter_linknames": 1,
-							"parameter_longname": "seed",
-							"parameter_mmax": 999.0,
-							"parameter_mmin": 0.0,
-							"parameter_modmode": 3,
-							"parameter_shortname": "seed",
-							"parameter_type": 0,
-							"parameter_unitstyle": 1
-						}
-					},
-					"varname": "seed"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-51",
-					"maxclass": "attrui",
-					"attr": "seed",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						746.0,
-						310.0,
-						68.0,
-						22.0
-					],
-					"style": ""
-				}
-			},
-			{
-				"box": {
-					"id": "obj-52",
-					"maxclass": "comment",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.5,
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						755.0,
-						180.0,
-						50.0,
-						18.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						-7.5,
-						144.0,
-						50.0,
-						18.0
-					],
-					"text": "Seed",
-					"textjustification": 1,
-					"varname": "lbl_seed"
-				}
-			},
-			{
-				"box": {
-					"id": "obj-53",
 					"maxclass": "jsui",
 					"filename": "bypass_toggle.js",
 					"hint": "Bypass",
@@ -3056,7 +1234,7 @@
 					],
 					"presentation": 1,
 					"patching_rect": [
-						1135.5,
+						980.0,
 						130.0,
 						18.0,
 						12.0
@@ -3073,7 +1251,7 @@
 			},
 			{
 				"box": {
-					"id": "obj-54",
+					"id": "obj-30",
 					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 1,
@@ -3081,7 +1259,7 @@
 						""
 					],
 					"patching_rect": [
-						1135.5,
+						980.0,
 						160.0,
 						131.0,
 						22.0
@@ -3095,7 +1273,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						992.0,
+						642.0,
 						40.0,
 						22.0
 					],
@@ -3113,7 +1291,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						170.0,
-						992.0,
+						642.0,
 						60.0,
 						22.0
 					],
@@ -3131,7 +1309,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						170.0,
-						1022.0,
+						672.0,
 						70.0,
 						22.0
 					],
@@ -3147,7 +1325,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						80.0,
-						992.0,
+						642.0,
 						60.0,
 						22.0
 					],
@@ -3166,7 +1344,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						80.0,
-						1022.0,
+						672.0,
 						60.0,
 						22.0
 					],
@@ -3185,7 +1363,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						30.0,
-						1052.0,
+						702.0,
 						120.0,
 						22.0
 					],
@@ -3203,7 +1381,7 @@
 					"maxclass": "newobj",
 					"patching_rect": [
 						160.0,
-						1052.0,
+						702.0,
 						120.0,
 						22.0
 					],
@@ -3256,7 +1434,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-63",
+						"obj-51",
 						0
 					],
 					"destination": [
@@ -3284,8 +1462,20 @@
 						0
 					],
 					"destination": [
-						"obj-63",
-						2
+						"obj-50",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-101",
+						0
+					],
+					"destination": [
+						"obj-51",
+						1
 					]
 				}
 			},
@@ -3308,7 +1498,7 @@
 						0
 					],
 					"destination": [
-						"obj-63",
+						"obj-50",
 						0
 					]
 				}
@@ -3316,11 +1506,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-103",
+						"obj-102",
 						0
 					],
 					"destination": [
-						"obj-104",
+						"obj-51",
 						0
 					]
 				}
@@ -3328,23 +1518,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-104",
+						"obj-29",
 						0
 					],
 					"destination": [
-						"obj-63",
-						3
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-104",
-						1
-					],
-					"destination": [
-						"obj-105",
+						"obj-30",
 						0
 					]
 				}
@@ -3352,35 +1530,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-105",
+						"obj-30",
 						0
 					],
 					"destination": [
-						"obj-63",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-53",
-						0
-					],
-					"destination": [
-						"obj-54",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-54",
-						0
-					],
-					"destination": [
-						"obj-63",
+						"obj-51",
 						0
 					]
 				}
@@ -3392,7 +1546,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-50",
 						0
 					]
 				}
@@ -3400,107 +1554,11 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-55",
+						"obj-50",
 						0
 					],
 					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-56",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-57",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-58",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-59",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-60",
-						0
-					],
-					"destination": [
-						"obj-61",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-61",
-						0
-					],
-					"destination": [
-						"obj-62",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-57",
-						0
-					],
-					"destination": [
-						"obj-62",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-62",
-						0
-					],
-					"destination": [
-						"obj-63",
+						"obj-51",
 						0
 					]
 				}
@@ -3512,8 +1570,8 @@
 						0
 					],
 					"destination": [
-						"obj-63",
-						1
+						"obj-51",
+						2
 					]
 				}
 			},
@@ -3608,7 +1666,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-51",
 						0
 					]
 				}
@@ -3644,7 +1702,7 @@
 						0
 					],
 					"destination": [
-						"obj-57",
+						"obj-50",
 						0
 					]
 				}
@@ -3680,270 +1738,6 @@
 						0
 					],
 					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						3
-					],
-					"destination": [
-						"obj-29",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-29",
-						0
-					],
-					"destination": [
-						"obj-30",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-30",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						4
-					],
-					"destination": [
-						"obj-32",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-32",
-						0
-					],
-					"destination": [
-						"obj-33",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-33",
-						0
-					],
-					"destination": [
-						"obj-62",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						5
-					],
-					"destination": [
-						"obj-35",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-35",
-						0
-					],
-					"destination": [
-						"obj-36",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-36",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						6
-					],
-					"destination": [
-						"obj-38",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-38",
-						0
-					],
-					"destination": [
-						"obj-39",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-39",
-						0
-					],
-					"destination": [
-						"obj-63",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						7
-					],
-					"destination": [
-						"obj-41",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-41",
-						0
-					],
-					"destination": [
-						"obj-42",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-42",
-						0
-					],
-					"destination": [
-						"obj-63",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						8
-					],
-					"destination": [
-						"obj-44",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-44",
-						0
-					],
-					"destination": [
-						"obj-45",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-45",
-						0
-					],
-					"destination": [
-						"obj-63",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						9
-					],
-					"destination": [
-						"obj-47",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-47",
-						0
-					],
-					"destination": [
-						"obj-48",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-48",
-						0
-					],
-					"destination": [
-						"obj-63",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-4",
-						10
-					],
-					"destination": [
 						"obj-50",
 						0
 					]
@@ -3952,31 +1746,7 @@
 			{
 				"patchline": {
 					"source": [
-						"obj-50",
-						0
-					],
-					"destination": [
-						"obj-51",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-51",
-						0
-					],
-					"destination": [
-						"obj-63",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-20",
+						"obj-26",
 						0
 					],
 					"destination": [
@@ -3992,103 +1762,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-20",
-						0
-					],
-					"destination": [
-						"obj-701",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-701",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-35",
-						0
-					],
-					"destination": [
-						"obj-702",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-702",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-35",
-						0
-					],
-					"destination": [
-						"obj-703",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-703",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-35",
-						0
-					],
-					"destination": [
-						"obj-704",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-704",
-						0
-					],
-					"destination": [
-						"obj-61",
+						"obj-51",
 						0
 					]
 				}
@@ -4124,7 +1798,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-50",
 						0
 					]
 				}
@@ -4136,91 +1810,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-0",
-						0
-					],
-					"destination": [
-						"obj-57",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-0",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-0",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-0",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-0",
-						0
-					],
-					"destination": [
-						"obj-61",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-0",
-						0
-					],
-					"destination": [
-						"obj-62",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-0",
-						0
-					],
-					"destination": [
-						"obj-63",
+						"obj-51",
 						0
 					]
 				}
@@ -4280,7 +1870,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-50",
 						0
 					]
 				}
@@ -4292,67 +1882,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-3",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-3",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-3",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-3",
-						0
-					],
-					"destination": [
-						"obj-61",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-3",
-						0
-					],
-					"destination": [
-						"obj-63",
+						"obj-51",
 						0
 					]
 				}
@@ -4364,7 +1894,7 @@
 						0
 					],
 					"destination": [
-						"obj-55",
+						"obj-50",
 						0
 					]
 				}
@@ -4376,67 +1906,7 @@
 						0
 					],
 					"destination": [
-						"obj-56",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-4",
-						0
-					],
-					"destination": [
-						"obj-58",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-4",
-						0
-					],
-					"destination": [
-						"obj-59",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-4",
-						0
-					],
-					"destination": [
-						"obj-60",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-4",
-						0
-					],
-					"destination": [
-						"obj-61",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"obj-rd-4",
-						0
-					],
-					"destination": [
-						"obj-63",
+						"obj-51",
 						0
 					]
 				}
@@ -4444,58 +1914,18 @@
 		],
 		"parameters": {
 			"obj-20": [
-				"spread",
-				"spread",
+				"extent",
+				"extent",
 				0
 			],
 			"obj-23": [
-				"bias",
-				"bias",
+				"bulge",
+				"bulge",
 				0
 			],
 			"obj-26": [
-				"snap",
-				"snap",
-				0
-			],
-			"obj-29": [
-				"soften",
-				"soften",
-				0
-			],
-			"obj-32": [
-				"edge_pool",
-				"edge_pool",
-				0
-			],
-			"obj-35": [
-				"pool_width",
-				"pool_width",
-				0
-			],
-			"obj-38": [
-				"mottle",
-				"mottle",
-				0
-			],
-			"obj-41": [
-				"mottle_scale",
-				"mottle_scale",
-				0
-			],
-			"obj-44": [
-				"dropout",
-				"dropout",
-				0
-			],
-			"obj-47": [
-				"tooth_scale",
-				"tooth_scale",
-				0
-			],
-			"obj-50": [
-				"seed",
-				"seed",
+				"travel",
+				"travel",
 				0
 			],
 			"parameterbanks": {

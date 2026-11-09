@@ -1,25 +1,15 @@
 """
-bench_ink_module.py -- f_ink T024 (module half): the shipped patcher in the live module bench. The codebox bench (bench_ink.py)
-cannot see this layer: ten stages and their cords, the two field inlets and their connected flags, the render size arriving by `r dim`, a dial with several stage targets, and
-the Param defaults reaching the stages at load.
-
-Each job is a `segments` timeline (bench_module.js): control messages one per frame, a wait in frames, a snapshot. The source is fed
-every frame at the render size, 640 x 640 (bench_modules.RENDER_DIM_SIZE).
+bench_ink_module.py -- f_ink (narrowed 2026-11-09, T052): the shipped patcher in the live module bench: the three stages and their
+cords, the vecfield inlet and its connected flag, the render size arriving by `r dim`, and a dial with two stage targets.
 
 Asserted (thresholds written before the first run; not to be loosened to make a failure pass):
-  - load, no messages at all: the output is the source (identity through eight stages)
-  - spread reaches both blurs and the threshold: matches the mirror, and the result is 2-D (not one axis only)
-  - bias, snap and soften reach the threshold
-  - edge_pool with pool_width UNTOUCHED: matches the mirror at the definition's default (the default reaches both pool stages)
-  - pool_width moves the rim
-  - mottle, mottle_scale, dropout, tooth_scale and seed reach fx_b (statistics; the hash is not comparable texel by texel)
-  - with both field inlets patched the output equals the mirror texel by texel (no hash in it); the flags switch the source
+  - load, nothing touched, field connected or not: the output is the source
+  - field unconnected, amounts up: still the source (the flag, not the inlet's contents)
+  - field connected: Extent, Bulge, both, and Travel each match the mirror texel by texel
 
-Tolerances:
-  TOL  5e-4: ten stages of float32 arithmetic against the mirror, with smoothstep at soften 0.2 multiplying rounding by about 5.
+Tolerance: TOL 5e-4, three stages of float32 against the mirror, as written.
 
-Not here: bypass is the contract bench's (tests/contracts/bench_modules.py, BYPASS_EXPECT); the cost; the order of arrival at a
-two-input stage (a static source hides a one-frame lag, and the harness has no per-frame input swap), which stays inferred.
+Not here: bypass is the contract bench's (tests/contracts/bench_modules.py, BYPASS_EXPECT).
 
 Needs Max with tests/bench/bench_module.maxpat open (Vsynth performance patches closed).
 Run:  tests/bench.sh -q tests/modules/ink/bench_ink_module.py       (ask Matt first: CLAUDE.md)
@@ -38,41 +28,28 @@ import jxf
 import modulebench as mb
 from harness import check, note, run
 from ink_mirror import F32, ink
+from test_ink import smooth, swirl_field
 
 N = 640
 SETTLE = 30            # frames after a control message
 TOL = 5e-4
-DEFAULTS = dict(spread=0.0, snap=1.0, bias=0.0, soften=0.2, edge_pool=0.0, pool_width=0.014, mottle=0.0, mottle_scale=0.045, dropout=0.0,
-                tooth_scale=0.003, seed=1.0)
+SRC = smooth(N, N)
+SRC[..., 3] = np.random.default_rng(5).uniform(0.2, 1, (N, N)).astype(F32)
+FIELD = swirl_field(N, N)
 
 
-def source(seed=5, n=N):
-    """Inside 0..1 and finite (out-of-range and non-finite values are the codebox bench's): a solid disc on 0, in R; a set of bars,
-    in G; a smooth ramp, in B; random alpha."""
-    rng = np.random.default_rng(seed)
-    t = np.zeros((n, n, 4), F32)
-    yy, xx = np.mgrid[0:n, 0:n]
-    t[..., 0] = ((xx - n * 0.4) ** 2 + (yy - n * 0.6) ** 2 < (n * 0.2) ** 2).astype(F32)
-    t[..., 1] = (xx // 12 % 2).astype(F32)
-    t[..., 2] = ((xx + yy) / (2.0 * n - 2.0)).astype(F32)
-    t[..., 3] = rng.uniform(0.2, 1, (n, n))
-    return t
-
-
-SRC = source()
-
-
-def job(segments, warmup=30, fields=()):
-    """One segments job. `fields` are extra input textures, on inlets 1 and up. Returns {tag: array} for the one outlet."""
+def job(segments, warmup=30, connect=True):
+    """One segments job. Returns {tag: array} for the one outlet."""
     bc.reopen(ports=bc.MODULE_PORTS, patch="bench_module.maxpat")
     j, job_dir = bc.new_job("module", warmup=warmup, settle=6, timeout_ms=60000)
     j["wrapper"] = f"mjob_{j['id']}.maxpat"
-    j["inputs"] = [f"in{i + 1}.jxf" for i in range(1 + len(fields))]
-    for i, tex in enumerate((SRC, *fields)):
+    textures = (SRC, FIELD) if connect else (SRC,)
+    j["inputs"] = [f"in{i + 1}.jxf" for i in range(len(textures))]
+    for i, tex in enumerate(textures):
         jxf.write_rgba(job_dir / f"in{i + 1}.jxf", tex)
     j["segments"] = segments
     wrapper = bc.BENCH_DIR / j["wrapper"]
-    wrapper.write_text(json.dumps(mb.make_wrapper("f_ink.maxpat", 1 + len(fields), 1), indent=2))
+    wrapper.write_text(json.dumps(mb.make_wrapper("f_ink.maxpat", len(textures), 1), indent=2))
     r = bc.run_job(j, job_dir, ports=bc.MODULE_PORTS)
     for old in bc.BENCH_DIR.glob("mjob_*.maxpat"):
         if old != wrapper:
@@ -92,11 +69,11 @@ def frame(frames, tag):
     return got
 
 
-def matches(got, label, tol=TOL, **deltas):
-    want = ink(SRC, **{**DEFAULTS, **deltas})
+def matches(got, label, **kw):
+    want = ink(SRC, FIELD, **{"travel": 0.5, **kw})
     worst = mx(got[..., :3], want[..., :3])
     note(f"{label}: max rgb error", worst)
-    check(f"{label}: vs mirror", worst, tol)
+    check(f"{label}: vs mirror", worst, TOL)
     check(f"{label}: alpha is the source's", mx(got[..., 3], SRC[..., 3]), 1e-6)
 
 
@@ -104,76 +81,23 @@ def step(tag, *params):
     return {"params": [list(p) for p in params], "wait": SETTLE, "snap": tag}
 
 
-def test_load_is_identity():
-    got = frame(job([{"wait": SETTLE, "snap": "load"}]), "load")
-    check("load, nothing touched: the output is the source", mx(got, SRC), 1e-6)
+def test_unconnected_field_is_identity():
+    f = job([{"wait": SETTLE, "snap": "load"}, step("up", ("extent", 2.0), ("bulge", 2.0), ("travel", 1.0))], connect=False)
+    check("load: the output is the source", mx(frame(f, "load"), SRC), 1e-6)
+    check("no field, amounts up: still the source", mx(frame(f, "up"), SRC), 1e-6)
 
 
-def test_spread_dial():
-    f = job([step("half", ("spread", 0.5)), step("full", ("spread", 1.0)), step("back", ("spread", 0.0))])
-    half, full = frame(f, "half"), frame(f, "full")
-    matches(half, "spread 0.5", spread=0.5)
-    matches(full, "spread 1", spread=1.0)
-    # The blurs are one per axis. Snap off shows the raw blur better, but the bars' G channel varies along x only, and R (a disc) along
-    # both: if the vertical pass were dead the disc's top edge would stay as sharp as its source, which the mirror row above would catch.
-    check("spread back to 0: the source again", mx(frame(f, "back"), SRC), 1e-6)
-
-
-def test_threshold_dials():
-    f = job([step("bias", ("spread", 1.0), ("bias", 0.2)),
-             step("snap", ("spread", 1.0), ("bias", 0.0), ("snap", 0.0)),
-             step("soften", ("spread", 1.0), ("bias", 0.0), ("snap", 1.0), ("soften", 0.7))])
-    matches(frame(f, "bias"), "bias 0.2", spread=1.0, bias=0.2)
-    matches(frame(f, "snap"), "snap 0", spread=1.0, snap=0.0)
-    matches(frame(f, "soften"), "soften 0.7", spread=1.0, soften=0.7)
-
-
-def test_edge_pool():
-    f = job([step("default_width", ("edge_pool", 0.4)), step("narrower", ("edge_pool", 0.4), ("pool_width", 0.005))])
-    default, narrower = frame(f, "default_width"), frame(f, "narrower")
-    matches(default, "edge_pool 0.4, pool_width untouched", edge_pool=0.4)
-    matches(narrower, "edge_pool 0.4, pool_width 0.005", edge_pool=0.4, pool_width=0.005)
-    inside = SRC[..., 0] == 1
-    check("the body of the disc thins", float(not float(np.median(default[..., 0][inside])) < 0.65), 0.0)
-    check("the rim stays full", float(not default[..., 0].max() > 0.95), 0.0)
-    check("pool_width moves the rim", float(mx(default[..., 0], narrower[..., 0]) < 0.01), 0.0)
-
-
-def test_fx_dials():
-    f = job([step("mottle", ("mottle", 1.0)),
-             step("mottle_big", ("mottle", 1.0), ("mottle_scale", 0.2)),
-             step("seed2", ("mottle", 1.0), ("mottle_scale", 0.045), ("seed", 2)),
-             step("dropout", ("mottle", 0.0), ("seed", 1), ("dropout", 1.0)),
-             step("tooth", ("dropout", 1.0), ("tooth_scale", 0.01))])
-    mottle, big, seed2, drop, tooth = (frame(f, t) for t in ("mottle", "mottle_big", "seed2", "dropout", "tooth"))
-    inside = SRC[..., 0] == 1
-    outside = SRC[..., 0] == 0
-    check("mottle varies the disc", float(not mottle[..., 0][inside].std() > 0.02), 0.0)
-    check("mottle never adds ink", float(mottle[..., 0].max()) - 1.0, 1e-6)
-    check("mottle leaves black black", float(np.abs(mottle[..., 0][outside]).max()), 1e-6)
-    check("mottle_scale changes the pattern", float(mx(mottle, big) < 0.01), 0.0)
-    check("seed changes the pattern", float(mx(mottle, seed2) < 0.01), 0.0)
-    ramp = SRC[..., 2]
-    low, high = (ramp > 0.1) & (ramp < 0.35), ramp > 0.75
-    lost_low, lost_high = float((drop[..., 2][low] == 0).mean()), float((drop[..., 2][high] == 0).mean())
-    note("dropout 1 on the ramp: fraction lost low, high", f"{lost_low:.4f} {lost_high:.4f}")
-    check("dropout: lighter tones lose more", float(not lost_low > lost_high), 0.0)
-    check("tooth_scale changes the pattern", float(mx(drop, tooth) < 0.01), 0.0)
-
-
-def test_field_inlets():
-    """FR-017, through the patcher: both fields patched means no hash, so this is exact. Inlet 1 is mottle, inlet 2 is tooth."""
-    rng = np.random.default_rng(9)
-    mf, tf = np.zeros((N, N, 4), F32), np.zeros((N, N, 4), F32)
-    mf[..., :3] = rng.uniform(0, 1, (N, N, 1)).astype(F32)
-    tf[..., :3] = ((np.mgrid[0:N, 0:N][1] / (N - 1.0))[..., None]).astype(F32)
-    mf[..., 3] = tf[..., 3] = 1.0
-    f = job([{"wait": SETTLE, "snap": "patched_idle"},
-             step("mottle", ("mottle", 0.7)),
-             step("both", ("mottle", 0.7), ("dropout", 0.6))], fields=(mf, tf))
-    check("fields patched, amounts 0: the output is the source", mx(frame(f, "patched_idle"), SRC), 1e-6)
-    matches(frame(f, "mottle"), "mottle field", mottle=0.7, mottle_field=mf)
-    matches(frame(f, "both"), "mottle and tooth fields", mottle=0.7, dropout=0.6, mottle_field=mf, tooth_field=tf)
+def test_dials():
+    f = job([{"wait": SETTLE, "snap": "idle"},
+             step("extent", ("extent", 1.0)),
+             step("both", ("extent", 1.0), ("bulge", 1.0)),
+             step("travel", ("travel", 1.0)),
+             step("bulge_only", ("extent", 0.0), ("bulge", 1.5), ("travel", 0.5))])
+    check("field connected, amounts 0: the source", mx(frame(f, "idle"), SRC), 1e-6)
+    matches(frame(f, "extent"), "extent 1", extent=1.0)
+    matches(frame(f, "both"), "extent 1, bulge 1", extent=1.0, bulge=1.0)
+    matches(frame(f, "travel"), "travel 1, reaching both stages", extent=1.0, bulge=1.0, travel=1.0)
+    matches(frame(f, "bulge_only"), "bulge 1.5", bulge=1.5)
 
 
 if __name__ == "__main__":

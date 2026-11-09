@@ -1,25 +1,14 @@
 """
-bench_ink.py -- f_ink T024 (codebox half): each stage's real codebox on the GPU through the codebox bench, diffed against
-ink_mirror.py stage by stage (the constitution says whole chains are not covered by this bench). This is also the first time
-these codeboxes are COMPILED: a syntax error shows as a failed job.
+bench_ink.py -- f_ink (narrowed 2026-11-09, T052): each stage's real codebox on the GPU through the codebox bench, diffed against
+ink_mirror.py stage by stage.
 
-The blur is run as definition.py renders it for each of its four stages, since that is what ships.
-
-The hash multiplier magnifies a GPU sin's low bits, so mottle and tooth are compared by statistics, never texel by texel; the
-arithmetic around them is exact and has its own rows (amount 0 is exact identity, bypass is exact).
-
-Every Param is pinned in every job (the bench keeps a Param's last value). width and height are Params, because a codebox cannot
-trust `dim`; they are set to the job's real size.
+Every Param is pinned in every job (the bench keeps a Param's last value). width and height are Params, set to the job's real size.
 
 Tolerances (written before the first run):
-  EXACT       0.0: a blend factor or weight of exactly 0, the identity the spec asks for (SC-001).
-  TOL         1e-5: float32 sums of up to 15 taps, where the mirror normalizes the weights first and the codebox last.
-  TOL_SHARP   5e-4: smoothstep at soften 0, width 0.001: float32 rounding near the edge is multiplied by about 1500.
+  EXACT  0.0: a factor of exactly 0, the identity the spec asks for.
+  TOL    1e-5: float32 differences and a manual bilinear, in a different order from the mirror's.
 
-Measurements for the record, not gates:
-  T008 (G4)   what sample() returns at a texel corner and at a quarter texel. Matrix-fed input only; a pix-to-pix read is not
-              reachable from this bench (the module bench exercises nearest() on that path).
-  T009 (G5)   the cost of each stage at 1920x1080, run with --slow.
+Cost is @slow, run with --slow, and noted only.
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh -q tests/modules/ink/bench_ink.py       (ask Matt first: CLAUDE.md)
@@ -28,44 +17,22 @@ GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchde
 ORDER = 172            # integers only
 
 import paths as _paths
-import importlib.util
 import sys
 
 import numpy as np
 
 import benchclient as bc
 from harness import check, note, run, slow
-from ink_mirror import F32, SPREAD_CAP_H, blur_pass, coords, fx_b as mirror_fx_b, pool as mirror_pool, threshold, zap as mirror_zap
+from ink_mirror import F32, bulge_stage, extent_stage, field_uv, zap as mirror_zap
+from test_ink import smooth, swirl_field
 
 SRC = _paths.REPO / "src" / "f_ink"
-_spec = importlib.util.spec_from_file_location("ink_definition", SRC / "definition.py")
-DEFN = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(DEFN)
-
 ZAP = (SRC / "codebox_zap.gen").read_text()
-THRESH = (SRC / "codebox_thresh.gen").read_text()
-POOL = (SRC / "codebox_pool.gen").read_text()
-FX_B = (SRC / "codebox_fx_b.gen").read_text()
-
+BULGE = (SRC / "codebox_bulge.gen").read_text()
+EXTENT = (SRC / "codebox_extent.gen").read_text()
 EXACT = 0.0
 TOL = 1e-5
-TOL_SHARP = 5e-4
-PIN_THRESH = {"spread": 0.0, "snap": 1.0, "bias": 0.0, "soften": 0.2}
-PIN_FX = {"mottle": 0.0, "mottle_scale": 0.045, "dropout": 0.0, "tooth_scale": 0.003, "seed": 1.0, "bypass_gate": 0.0, "src_mottle": 0.0, "src_tooth": 0.0}
-
-
-def noisy(h=64, w=64, seed=3, lo=0.0, hi=1.0):
-    rng = np.random.default_rng(seed)
-    t = np.zeros((h, w, 4), np.float32)
-    t[..., :3] = rng.uniform(lo, hi, (h, w, 3))
-    t[..., 3] = rng.uniform(0.2, 1, (h, w))
-    return t
-
-
-def flat(value, h=256, w=256):
-    t = np.full((h, w, 4), value, np.float32)
-    t[..., 3] = 1.0
-    return t
+H, W = 96, 160
 
 
 def gpu(code, inputs, params):
@@ -84,22 +51,14 @@ def size(t):
     return {"width": float(t.shape[1]), "height": float(t.shape[0])}
 
 
-# ---- measurements first: T008 ----------------------------------------------------------------------------------------------
+def noisy(seed=3):
+    """Hard edges and values outside 0..1, on top of the smooth tone."""
+    rng = np.random.default_rng(seed)
+    t = smooth(H, W).copy()
+    t[..., :3] += rng.uniform(-0.3, 0.6, (H, W, 3)).astype(F32) * (rng.uniform(0, 1, (H, W, 1)) > 0.8)
+    t[..., 3] = rng.uniform(0.2, 1, (H, W))
+    return t.astype(F32)
 
-def test_sample_interpolation_probe():
-    """T008 (G4): noted, not asserted. The design uses nearest() only, so nothing here depends on the answer."""
-    n = 64
-    t = noisy(n, n)
-    x = t[..., 0].astype(np.float64)
-    for label, frac in (("texel corner", 0.5), ("quarter texel", 0.25)):
-        got = gpu(f"out1 = sample(in1, vec(norm.x + {frac} / {n}.0, norm.y));", [t], {})[..., 0]
-        inner_got, a, b = got[:, :-1], x[:, :-1], x[:, 1:]
-        note(f"sample() at a {label}: max error against bilinear", mx(inner_got, a * (1 - frac) + b * frac))
-        note(f"sample() at a {label}: max error against the left texel", mx(inner_got, a))
-        note(f"sample() at a {label}: max error against the right texel", mx(inner_got, b))
-
-
-# ---- the stages ------------------------------------------------------------------------------------------------------------
 
 def test_zap():
     t = noisy()
@@ -107,174 +66,61 @@ def test_zap():
     t[4, 5, 1] = np.inf
     t[6, 7, 2] = -np.inf
     t[8, 9, 3] = np.nan
-    t[10, 11, :3] = -0.3
-    t[12, 13, :3] = 1.6
     got = gpu(ZAP, [t], {})
     check("zap: every component matches the mirror", mx(got, mirror_zap(t)), EXACT)
-    check("zap: nothing non-finite is left", float(not np.isfinite(got).all()), 0.0)
 
 
-def blur_case(label, axis, role, value, src, radius_tx, stride=1, tol=TOL):
-    params = {("spread" if role == "spread" else "pool_width"): value, **size(src)}
-    got = gpu(DEFN._blur(axis, role, stride), [src], params)
-    want = blur_pass(src, 1 if axis == 0 else 0, radius_tx, stride)     # codebox axis 0 is horizontal, NumPy axis 1 is a row
-    worst = mx(got[..., :3], want[..., :3])
-    note(f"{label}: max error", worst)
-    check(f"{label}: vs mirror", worst, tol)
+def bulge_gpu(t, f, travel, bulge, flag=1.0):
+    return gpu(BULGE, [t, f], {**size(t), "travel": travel, "bulge": bulge, "src_field": flag})
 
 
-def test_blur_stages_as_shipped():
-    """Both roles, both axes, both strides, a fractional radius and the cap, on a non-square frame, so the border is exercised."""
-    t = noisy(48, 96)
-    for axis in (0, 1):
-        for stride in (1, 2):
-            for pw in (0.12, 0.3, 1.5):     # a third of it, in texels: 1.92, 4.8, and 24 held at 7
-                blur_case(f"pool blur, axis {axis}, stride {stride}, width {pw}", axis, "pool", pw, t, pw / 3.0 * 48, stride)
-    tall = noisy(1080, 128)                 # spread 1 is 7 texels only at 1080
-    for axis in (0, 1):
-        for sp in (0.3, 1.0):
-            blur_case(f"spread blur, axis {axis}, spread {sp}", axis, "spread", sp, tall, sp * SPREAD_CAP_H * 1080)
+def extent_gpu(t, f, src, travel, extent, flag=1.0, bypass=0.0):
+    return gpu(EXTENT, [t, f, src], {**size(t), "travel": travel, "extent": extent, "src_field": flag, "bypass_gate": bypass})
 
 
-def test_blur_radius_zero_is_exact():
-    t = noisy(48, 96)
-    for axis in (0, 1):
-        check(f"spread 0, axis {axis}: exactly the input", mx(gpu(DEFN._blur(axis, "spread"), [t], {"spread": 0.0, **size(t)})[..., :3], t[..., :3]), EXACT)
-        check(f"pool width 0, axis {axis}: exactly the input", mx(gpu(DEFN._blur(axis, "pool"), [t], {"pool_width": 0.0, **size(t)})[..., :3], t[..., :3]), EXACT)
+def test_bulge():
+    t, f = noisy(), swirl_field(H, W)
+    fx, fy = field_uv(f, H, W)
+    for travel, amt in ((0.25, 0.5), (0.5, 1.0), (1.0, 2.0)):
+        got = bulge_gpu(t, f, travel, amt)[..., :3]
+        worst = mx(got, bulge_stage(t[..., :3], fx, fy, travel, amt))
+        note(f"bulge, travel {travel}, amount {amt}: max error", worst)
+        check(f"bulge, travel {travel}, amount {amt}: vs mirror", worst, TOL)
+    check("bulge 0: exactly the input", mx(bulge_gpu(t, f, 1.0, 0.0)[..., :3], t[..., :3]), EXACT)
+    check("no field flag: exactly the input", mx(bulge_gpu(t, f, 1.0, 2.0, flag=0.0)[..., :3], t[..., :3]), EXACT)
 
 
-def test_threshold():
-    t = noisy(64, 64, lo=-0.2, hi=1.3)
-    for spread, snap, bias, soften, tol in ((0.5, 1.0, 0.0, 0.2, TOL), (1.0, 1.0, 0.2, 0.2, TOL), (1.0, 1.0, -0.2, 0.6, TOL),
-                                            (0.06, 1.0, 0.0, 0.2, TOL), (1.0, 0.5, 0.1, 0.2, TOL), (1.0, 1.0, 0.0, 0.0, TOL_SHARP)):
-        p = {"spread": spread, "snap": snap, "bias": bias, "soften": soften}
-        worst = mx(gpu(THRESH, [t], p)[..., :3], threshold(t[..., :3], spread, snap, bias, soften))
-        note(f"threshold {p}: max error", worst)
-        check(f"threshold {p}: vs mirror", worst, tol)
-    check("spread 0: exactly the input", mx(gpu(THRESH, [t], PIN_THRESH)[..., :3], t[..., :3]), EXACT)
-    check("snap 0: exactly the input", mx(gpu(THRESH, [t], {**PIN_THRESH, "spread": 1.0, "snap": 0.0})[..., :3], t[..., :3]), EXACT)
+def test_extent():
+    t, f, src = noisy(), swirl_field(H, W), noisy(seed=5)
+    fx, fy = field_uv(f, H, W)
+    for travel, amt in ((0.25, 0.5), (0.5, 1.0), (1.0, 2.0)):
+        got = extent_gpu(t, f, src, travel, amt)[..., :3]
+        worst = mx(got, extent_stage(t[..., :3], fx, fy, travel, amt))
+        note(f"extent, travel {travel}, amount {amt}: max error", worst)
+        check(f"extent, travel {travel}, amount {amt}: vs mirror", worst, TOL)
+    out = extent_gpu(t, f, src, 0.5, 0.0)
+    check("extent 0: exactly the input", mx(out[..., :3], t[..., :3]), EXACT)
+    check("alpha is the source's", mx(out[..., 3], src[..., 3]), EXACT)
+    check("no field flag: exactly the input", mx(extent_gpu(t, f, src, 1.0, 2.0, flag=0.0)[..., :3], t[..., :3]), EXACT)
+    check("bypass: exactly the source, with the effect on", mx(extent_gpu(t, f, src, 1.0, 2.0, bypass=1.0), src), EXACT)
 
 
-def test_pool():
-    bp, s = noisy(64, 64, seed=4), noisy(64, 64, seed=5)
-    for a in (0.3, 1.0):
-        worst = mx(gpu(POOL, [bp, s], {"edge_pool": a})[..., :3], mirror_pool(s[..., :3], bp[..., :3], a))
-        note(f"pool {a}: max error", worst)
-        check(f"pool {a}: vs mirror (left input is the blur, right is S)", worst, TOL)
-    check("edge_pool 0: exactly S", mx(gpu(POOL, [bp, s], {"edge_pool": 0.0})[..., :3], s[..., :3]), EXACT)
+def test_nonfinite_field():
+    t, f, src = noisy(), swirl_field(H, W), noisy(seed=5)
+    f[10, 11, :2] = np.nan
+    f[20, 21, 0] = np.inf
+    check("bulge: no NaN from the field", float(not np.isfinite(bulge_gpu(t, f, 0.5, 1.0)).all()), 0.0)
+    check("extent: no NaN from the field", float(not np.isfinite(extent_gpu(t, f, src, 0.5, 1.0)).all()), 0.0)
 
 
-def fx(pooled, src, m_field=None, t_field=None, **deltas):
-    blank = np.zeros_like(pooled)
-    flags = {"src_mottle": 0.0 if m_field is None else 1.0, "src_tooth": 0.0 if t_field is None else 1.0}
-    return gpu(FX_B, [pooled, src, blank if m_field is None else m_field, blank if t_field is None else t_field], {**PIN_FX, **size(pooled), **flags, **deltas})
-
-
-def mirror_fx(c, m_field=None, t_field=None, **kw):
-    h, w = c.shape[:2]
-    px, py = coords(h, w)
-    args = {**PIN_FX, **kw}
-    return mirror_fx_b(c[..., :3], px, py, args["mottle"], args["mottle_scale"], args["dropout"], args["tooth_scale"], args["seed"], m_field, t_field)
-
-
-def test_fx_identity_bypass_alpha():
-    a, b = noisy(64, 96, seed=6, lo=-0.2, hi=1.3), noisy(64, 96, seed=7)
-    got = fx(a, b)
-    check("amounts 0: exactly the first input", mx(got[..., :3], a[..., :3]), EXACT)
-    check("alpha is the source's", mx(got[..., 3], b[..., 3]), EXACT)
-    byp = fx(a, b, mottle=1.0, dropout=1.0, bypass_gate=1.0)
-    check("bypass: exactly the source, with the effects on", mx(byp, b), EXACT)
-
-
-def test_fx_fields():
-    """FR-017: with both fields connected there is no hash in the result, so the comparison is texel by texel."""
-    c, src = noisy(64, 96, seed=8), noisy(64, 96, seed=9)
-    mf, tf = noisy(64, 96, seed=10), noisy(64, 96, seed=11)
-    for mot, dro in ((0.6, 0.0), (0.0, 0.6), (0.8, 0.5), (1.0, 1.0)):
-        worst = mx(fx(c, src, mf, tf, mottle=mot, dropout=dro)[..., :3], mirror_fx(c, mf, tf, mottle=mot, dropout=dro))
-        note(f"fields, mottle {mot}, dropout {dro}: max error", worst)
-        check(f"fields, mottle {mot}, dropout {dro}: vs mirror", worst, TOL)
-    bad = mf.copy()
-    bad[3, 3, :3] = np.nan
-    got = fx(c, src, bad, bad, mottle=1.0, dropout=0.5)
-    check("a non-finite field cannot reach the output", float(not np.isfinite(got).all()), 0.0)
-    a = fx(flat(1.0, 64, 96), src, None, None, mottle=1.0)
-    b = fx(flat(1.0, 64, 96), src, mf, None, mottle=1.0)
-    check("the connected flag switches the source of the field", float(mx(a, b) < 0.01), 0.0)
-    check("a zeroed field thins nothing", mx(fx(c, src, np.zeros_like(c), None, mottle=1.0)[..., :3], c[..., :3]), EXACT)
-
-
-def test_fx_mottle_statistics():
-    c = flat(0.8)
-    stds = []
-    for amt in (0.25, 0.5, 1.0):
-        got, want = fx(c, c, mottle=amt)[..., 0], mirror_fx(c, mottle=amt)[..., 0]
-        stds.append(float(got.std()))
-        note(f"mottle {amt}: std GPU, mirror; mean GPU, mirror", f"{got.std():.4f} {want.std():.4f}; {got.mean():.4f} {want.mean():.4f}")
-        check(f"mottle {amt}: std within 25% of the mirror's", abs(float(got.std()) / float(want.std()) - 1.0), 0.25)
-        check(f"mottle {amt}: mean within 0.08 of the mirror's", abs(float(got.mean()) - float(want.mean())), 0.08)
-        check(f"mottle {amt}: never adds ink", float(got.max()) - 0.8, 1e-6)
-    check("mottle: std grows with the amount", float(not (stds[0] < stds[1] < stds[2])), 0.0)
-    check("mottle: black stays black", float(np.abs(fx(flat(0.0), c, mottle=1.0)[..., :3]).max()), EXACT)
-
-
-def lost(t):
-    return float((t[..., 0] == 0).mean())
-
-
-def test_fx_dropout_statistics():
-    sc = 0.02
-    for v in (0.3, 0.6):
-        c = flat(v)
-        got, want = lost(fx(c, c, dropout=1.0, tooth_scale=sc)), lost(mirror_fx(c, dropout=1.0, tooth_scale=sc))
-        note(f"dropout 1 on {v}: fraction lost GPU, mirror", f"{got:.4f} {want:.4f}")
-        check(f"dropout 1 on {v}: fraction within 0.1 of the mirror's", abs(got - want), 0.1)
-    c = flat(0.3)
-    fr = [lost(fx(c, c, dropout=d, tooth_scale=sc)) for d in (0.3, 0.6, 1.0)]
-    note("dropout 0.3, 0.6, 1 on 0.3: fraction lost", fr)
-    check("dropout: the loss grows with the amount", float(not (fr[0] <= fr[1] <= fr[2] and fr[0] < fr[2])), 0.0)
-    light, mid = (lost(fx(flat(v), flat(v), dropout=1.0, tooth_scale=sc)) for v in (0.3, 0.6))
-    check("dropout: light loses more than mid", float(not light > mid), 0.0)
-    check("dropout: a solid holds at 0.5", lost(fx(flat(1.0), flat(1.0), dropout=0.5, tooth_scale=sc)), EXACT)
-    soft = fx(flat(0.5), flat(0.5), dropout=0.7, tooth_scale=sc)[..., 0]
-    check("dropout: edges are soft", float(not ((soft > 0.01) & (soft < 0.49)).any()), 0.0)
-
-
-def roughness(a):
-    """Mean absolute step between neighbors along x and along y: it falls as the features grow."""
-    return float(np.abs(np.diff(a, axis=1)).mean()), float(np.abs(np.diff(a, axis=0)).mean())
-
-
-def test_fx_scale_and_aspect():
-    c = flat(0.8)
-    fine = roughness(fx(c, c, mottle=1.0, mottle_scale=0.05)[..., 0])[0]
-    coarse = roughness(fx(c, c, mottle=1.0, mottle_scale=0.2)[..., 0])[0]
-    note("mottle roughness at scale 0.05, 0.2", f"{fine:.5f} {coarse:.5f}")
-    check("mottle: a larger scale is smoother", float(not coarse < fine), 0.0)
-    wide = flat(0.8, 128, 256)              # features square on a 2:1 frame (ADR-7)
-    rx, ry = roughness(fx(wide, wide, mottle=1.0, mottle_scale=0.05)[..., 0])
-    note("2:1 frame: roughness along x, along y", f"{rx:.5f} {ry:.5f}")
-    check("2:1 frame: square features (x and y roughness within 35%)", abs(rx / ry - 1.0), 0.35)
-    a, b = fx(c, c, mottle=1.0, seed=1.0), fx(c, c, mottle=1.0, seed=2.0)
-    check("seed changes the pattern", float(mx(a, b) < 0.01), 0.0)
-    check("same seed, same pattern, bit for bit", mx(a, fx(c, c, mottle=1.0, seed=1.0)), EXACT)
-
-
-# ---- T009 ------------------------------------------------------------------------------------------------------------------
-
-@slow       # a timing measurement (tests/bench.sh --slow); NF-001 and T009 record it, nothing is asserted
+@slow       # a timing measurement (tests/bench.sh --slow); nothing is asserted
 def test_cost_at_1080p():
-    """ms per stage at 1920x1080 with the blurs at their widest (every tap read regardless, the weights only change). The bench
-    clamps the chain to 8 slots. When a pass hides inside the bench's own per-frame work, 4K is run instead, with width and height
-    still 1080p so the tap offsets are unchanged: its figure / 4 is the 1080p equivalent."""
-    t = noisy(64, 64)
-    hd = {"width": 1920.0, "height": 1080.0}
+    """ms per stage at 1920x1080, as in bench_separate. Width and height stay 1080p when 4K is run to get above the bench's floor."""
+    t, f = noisy(), swirl_field(H, W)
+    hd = {"width": 1920.0, "height": 1080.0, "travel": 0.5, "src_field": 1.0}
     stages = [("zap", ZAP, [t], {}),
-              ("blur (spread 1)", DEFN._blur(0, "spread"), [t], {"spread": 1.0, **hd}),
-              ("thresh", THRESH, [t], {**PIN_THRESH, "spread": 1.0}),
-              ("pool", POOL, [t, t], {"edge_pool": 1.0}),
-              ("fx_b (mottle, dropout, built-in fields)", FX_B, [t, t, t, t], {**PIN_FX, **hd, "mottle": 1.0, "dropout": 1.0}),
-              ("fx_b (both fields patched)", FX_B, [t, t, t, t], {**PIN_FX, **hd, "mottle": 1.0, "dropout": 1.0, "src_mottle": 1.0, "src_tooth": 1.0})]
+              ("bulge", BULGE, [t, f], {**hd, "bulge": 1.0}),
+              ("extent", EXTENT, [t, f, t], {**hd, "extent": 1.0, "bypass_gate": 0.0})]
     for name, code, inputs, params in stages:
         r = bc.measure(code, inputs, dim=(1920, 1080), chain=8, params=params)
         k = int(r.get("chain") or 8)
