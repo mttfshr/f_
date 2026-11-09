@@ -30,4 +30,6 @@
 - **Saturation dial fixed:** `saturation` is 0..1, the `* 255` is gone (bench 5/5). Left alone: the first dial move shifts an ink slightly, and returning the dial does not restore the exact default (`.specify/f_separate/tasks.md` Record).
 - **Unverified in Max:** the Mode menu's fit, plain-reopen persistence (preset recall worked, Matt). Panel layout is a placeholder.
 - **Review:** `tests/lib/module_contract.py` now follows `swatch` and `unpack` (shared check). `f_separate` is documented and registered (T040): Color / Tone in the menu (provisional, `G-menu`), README row `⚠ Unverified` until T030; the helpfile has not been opened in Max.
-- **Not run:** `tests/build/test_gates.py` after this session's `gates.md` edits; the live contract bench.
+- **Gates check:** `tests/build/test_gates.py` 5/5 after the `gates.md` edits (`tests/logs/20261108-224059-offline.log`).
+- **Not run:** the live contract bench for `f_separate` (bypass on the shipped patcher); the 1080p cost.
+- **Tooling gap, not changed:** `tests/bench.sh`'s `needs_codebox` exempts only three named files, so a `*_module.py` bench also needs `bench.maxpat` open (Matt to decide).
