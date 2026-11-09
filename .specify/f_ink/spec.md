@@ -28,7 +28,7 @@ _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink bod
 - Q2: Clamp the output to 0..1? → A: No, unclamped float32 (FR-010). Edge pooling and bent uses may exceed 1; a downstream module clamps if wanted. A clamp switch can be added later.
 - Tone through spread (Matt, 2026-11-08, after the mirror showed the re-threshold posterizing continuous tone): a separate dial, `snap` (FR-004).
 
-### Assumed by Claude, to confirm (inferred, nothing tried)
+### Assumed by Claude, accepted for now by Matt, 2026-11-08 (T015; nothing tried in Max)
 
 - A1 **Polarity:** channel value is ink coverage, high = more ink. A black-on-white image is inverted upstream.
 - A2 **Per channel:** each channel is processed independently, with no mixing between channels.
