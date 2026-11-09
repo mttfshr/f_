@@ -1,6 +1,32 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31 and 2026-11-04 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04 and 2026-11-08 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-07 (later): f_poincare Phase 4 built offline (definition, patcher, contracts, module bench written)
+
+- **State:** `src/f_poincare/definition.py` builds `package/patchers/f_poincare.maxpat` (Whole/Sliver, p, q, Scale, Cam x/y, Rot, bypass = passthrough). Drift 16/16, offline contracts 9/9 (two XFAIL for the unexposed `iterations`, `rim_fade`). `bench_poincare_module.py` written and registered, not run. Record: `.specify/f_poincare/tasks.md` last entry. T040 ticked; T041 and T042 owed live runs.
+- **Benches run 2026-11-07 (Matt's go):** module bench 2/2, live contract bench 2/2 (`BENCH_MODULES=f_poincare`), logs in `tasks.md`. **Next (Matt):** open `package/patchers/f_poincare.maxpat` in Max for a look at the panel (300 x 90, a guess; layout `overrides` via `build/capture.py`). Then Phase 5 (tuning, docs, helpfile, menu, README, preflight).
+
+## 2026-11-07 (evening): f_poincare Phases 4-5 done except preflight (T052)
+
+- **State:** the module is built, benched (module 2/2 and live contract 2/2 re-run after the panel and int-numbox changes, logs in `tasks.md`), documented (`docs/f-reference/f_poincare.md`, `package/help/f_poincare.maxhelp`), in the menu (Space & Optics) and the README. Panel is compact (212 x 90); defaults and ranges confirmed by Matt (T050). T051 done offline.
+- **Done after this entry:** T052 preflight passed, helpfile looked at (Matt), module moved to `.specify/stable/f_poincare/`, `ideas/INDEX.md` entry updated. **Next:** the `plan.md` Active list does not mention `f_poincare` (not touched: Matt's uncommitted `f_ks` edit); pick the next item from Candidates.
+- **Not committed on purpose:** Matt's `f_ks` and `plan.md` edits, and `package/examples/f_demo_poincare.maxpat` (his demo).
+
+## 2026-11-07: f_poincare Phase 3 built (camera `rot`, `cam_x`, `cam_y`; rim policy), offline only
+
+- **State:** `src/f_poincare/codebox_poincare.gen` has the camera (rotation, then the disk translation, `|a|` clamped to 0.99) and an earlier rim fade near the clamp. Mirror `tests/modules/poincare/` 21/21 (`tests/run.sh -q`, log `tests/logs/20261107-083743-offline.log`). T030-T032 ticked; record in `.specify/f_poincare/tasks.md` (last Record entry). Bench 9/9 on the GPU 2026-11-07 (Matt's go; log 20261107-083944-bench.log).
+- **Decisions taken on my recommendation (Matt has not seen them):** `rot` in radians; fade start `rim_fade - 0.04 (|a|/0.99)^2` (0.95 at the clamp, from the float32 measurement, worst B {3,7}); points outside the disk are scaled in before the camera to avoid a division by zero.
+- **Next:** Phase 4 (`definition.py`, builder, drift, contracts). T033 passed live (Matt, 2026-11-07), including the earlier rim fade.
+- **Not done:** zero-camera bit-exactness on the GPU is inferred from arithmetic; the same stale items as below (plan.md Active list, README row, inventory, menu, `ideas/INDEX.md:187`); Matt's uncommitted `f_ks`, `plan.md` and docs edits stay uncommitted.
+
+## 2026-11-06: f_poincare Phases 0-2 done (spec, mirror, mode A, mode B, one codebox)
+
+- **State:** modes A and B work in ONE codebox, `src/f_poincare/codebox_poincare.gen` (`fold_mode` 0 = A whole tile, 1 = B sliver; live `p_sides` 3..10 and `q_vertex`, guarded; 32 iterations; rim fade from 0.99; crop, not warp; `tile_scale` 0.26 for both, Matt). Bench `tests/modules/poincare/bench_poincare.py` 6/6 on the GPU (log `tests/logs/20261106-234836-bench.log`); mirror `tests/modules/poincare/` 17/17 (`tests/run.sh -q`, log `tests/logs/20261106-234631-offline.log`); live looks for A and B passed (Matt, scratch patch `~/Vsynth/patterns/poincare_a_look.maxpat`, built by the gitignored `scratch/build_poincare_a_look.py`). Record: `.specify/f_poincare/tasks.md` (T001-T008, T010-T012, T020-T023 ticked).
+- **Decisions (Matt, 2026-11-06):** T006 crop; T007 `P-moebius-tiling` row reworded to name only `f_apollonian` (it was not malformed, my earlier claim was wrong; `test_gates.py` 5/5); T008 `Poincare`, Space & Optics, kind N (entries are written in T051, not yet).
+- **Findings:** mode A needs the lowest-index priority order; the 3 nearest circles by angle match the p-circle chain (56 pairs); `SETTLE_TOL` 1e-5 added to the settled tests because mirror-line pixels land exactly on an edge circle (B at p = 4 on square frames); the bench tolerance is per channel (a disclosed correction after the first run).
+- **Next: Phase 3** (T030 camera `rot`, `cam_x`, `cam_y`, zero camera bit-exact with static; T031 rim policy check with `|a|` at the clamp; T032 float32 rim vs float64; T033 live look). Offline numbers already measured for it: with `|a|` 0.99, 32 iterations leave <= 0.04% unsettled (B {3,7} worst), first at screen r >= 0.999 (tasks.md T004 record). Then Phase 4 (`definition.py`, builder, drift, contracts).
+- **Not done:** `plan.md` Active list does not mention `f_poincare` (not touched: it holds Matt's uncommitted `f_ks` edit); the README Patches row, `module-inventory.md`, menu entry, `ideas/INDEX.md:187` (still says PAUSED) are all stale or missing for it; Matt's uncommitted `f_ks`, `plan.md` and docs edits stay uncommitted.
 
 ## 2026-11-06: batch 4 closed: phase 3 bypass passthrough, f_vf_vortex to stable, f_ks name
 

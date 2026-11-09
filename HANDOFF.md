@@ -1,14 +1,15 @@
 # HANDOFF
 
-## START HERE (2026-11-06)
+## START HERE (2026-11-08)
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
 **State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. `f_tf_hatch` moved to `.specify/stable/` 2026-11-06. `f_tf_axisflow` moved to `.specify/stable/` 2026-11-06. `f_vf_fieldmap` and `f_vf_potential` moved to `.specify/stable/` 2026-11-06. `f_vf_flow` and `f_tone_curve` moved to `.specify/stable/` 2026-11-06, so all seven batch 3 modules are moved. Stable push: batch 4 triage is done (`.specify/maintenance/batch4_triage_2026-11-06.md`); Group A (`f_vf_warp`, `f_stipple`, `f_vf_glow`, `f_vf_prism`) moved to `.specify/stable/` 2026-11-06 after Matt's helpfile looks and one live contract bench (2/2, log `tests/logs/20261106-192009-bench.log`). Group B (`f_vf_advect`, `f_vf_streak`) moved to `.specify/stable/` 2026-11-06 after Matt's batch 4 calls were applied (entry below). Batch 4 is finished (vortex moved 2026-11-06); next: pick from Candidates below (optical_flow and seeds bypass passthrough: done, looks and bench passed, entry below). Plan and bar: the 2026-11-06 entries in `HANDOFF_ARCHIVE.md`, and `.specify/plan.md` Next 0.
 
-**New 2026-11-06:** `f_poincare` is BUILT and moved to `.specify/stable/f_poincare/` (2026-11-07): Phases 0-5 and the T052 preflight done; entry below.
+**New 2026-11-08:** the print-styles family is SPECIFIED, nothing built: `ideas/f_print_styles.md` plus spec, plan and tasks for `f_ink`, `f_screen`, `f_separate`, `f_engrave` in `.specify/<module>/`. Only `f_ink` was clarified with Matt; every other open gate is a PRELIMINARY recommendation of Claude's (`G-print-prelim`). Entry below. `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
 **Candidates (Matt decides):**
+- Print-styles: review the PRELIMINARY gates, then the clarify questions for `f_screen`, `f_separate`, `f_engrave`, then `f_ink` Phase 0 (`.specify/f_ink/tasks.md` T016, the NumPy mirror). `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
 - `f_masonry` adopts tagged textures (Matt, 2026-11-01 21:17: "we will do masonry, but not this second"): design discussion first. Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each (6 x 3 = 18 depths, read from `src/f_masonry/definition.py`), so one tag per named `<param>_tex` needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
 - The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`); the compact `f_weave` panel is the first test case.
@@ -21,29 +22,11 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-07 (later): f_poincare Phase 4 built offline (definition, patcher, contracts, module bench written)
+## 2026-11-08: print-styles family: idea note, four specs, plans and tasks (nothing built)
 
-- **State:** `src/f_poincare/definition.py` builds `package/patchers/f_poincare.maxpat` (Whole/Sliver, p, q, Scale, Cam x/y, Rot, bypass = passthrough). Drift 16/16, offline contracts 9/9 (two XFAIL for the unexposed `iterations`, `rim_fade`). `bench_poincare_module.py` written and registered, not run. Record: `.specify/f_poincare/tasks.md` last entry. T040 ticked; T041 and T042 owed live runs.
-- **Benches run 2026-11-07 (Matt's go):** module bench 2/2, live contract bench 2/2 (`BENCH_MODULES=f_poincare`), logs in `tasks.md`. **Next (Matt):** open `package/patchers/f_poincare.maxpat` in Max for a look at the panel (300 x 90, a guess; layout `overrides` via `build/capture.py`). Then Phase 5 (tuning, docs, helpfile, menu, README, preflight).
-
-## 2026-11-07 (evening): f_poincare Phases 4-5 done except preflight (T052)
-
-- **State:** the module is built, benched (module 2/2 and live contract 2/2 re-run after the panel and int-numbox changes, logs in `tasks.md`), documented (`docs/f-reference/f_poincare.md`, `package/help/f_poincare.maxhelp`), in the menu (Space & Optics) and the README. Panel is compact (212 x 90); defaults and ranges confirmed by Matt (T050). T051 done offline.
-- **Done after this entry:** T052 preflight passed, helpfile looked at (Matt), module moved to `.specify/stable/f_poincare/`, `ideas/INDEX.md` entry updated. **Next:** the `plan.md` Active list does not mention `f_poincare` (not touched: Matt's uncommitted `f_ks` edit); pick the next item from Candidates.
-- **Not committed on purpose:** Matt's `f_ks` and `plan.md` edits, and `package/examples/f_demo_poincare.maxpat` (his demo).
-
-## 2026-11-07: f_poincare Phase 3 built (camera `rot`, `cam_x`, `cam_y`; rim policy), offline only
-
-- **State:** `src/f_poincare/codebox_poincare.gen` has the camera (rotation, then the disk translation, `|a|` clamped to 0.99) and an earlier rim fade near the clamp. Mirror `tests/modules/poincare/` 21/21 (`tests/run.sh -q`, log `tests/logs/20261107-083743-offline.log`). T030-T032 ticked; record in `.specify/f_poincare/tasks.md` (last Record entry). Bench 9/9 on the GPU 2026-11-07 (Matt's go; log 20261107-083944-bench.log).
-- **Decisions taken on my recommendation (Matt has not seen them):** `rot` in radians; fade start `rim_fade - 0.04 (|a|/0.99)^2` (0.95 at the clamp, from the float32 measurement, worst B {3,7}); points outside the disk are scaled in before the camera to avoid a division by zero.
-- **Next:** Phase 4 (`definition.py`, builder, drift, contracts). T033 passed live (Matt, 2026-11-07), including the earlier rim fade.
-- **Not done:** zero-camera bit-exactness on the GPU is inferred from arithmetic; the same stale items as below (plan.md Active list, README row, inventory, menu, `ideas/INDEX.md:187`); Matt's uncommitted `f_ks`, `plan.md` and docs edits stay uncommitted.
-
-## 2026-11-06: f_poincare Phases 0-2 done (spec, mirror, mode A, mode B, one codebox)
-
-- **State:** modes A and B work in ONE codebox, `src/f_poincare/codebox_poincare.gen` (`fold_mode` 0 = A whole tile, 1 = B sliver; live `p_sides` 3..10 and `q_vertex`, guarded; 32 iterations; rim fade from 0.99; crop, not warp; `tile_scale` 0.26 for both, Matt). Bench `tests/modules/poincare/bench_poincare.py` 6/6 on the GPU (log `tests/logs/20261106-234836-bench.log`); mirror `tests/modules/poincare/` 17/17 (`tests/run.sh -q`, log `tests/logs/20261106-234631-offline.log`); live looks for A and B passed (Matt, scratch patch `~/Vsynth/patterns/poincare_a_look.maxpat`, built by the gitignored `scratch/build_poincare_a_look.py`). Record: `.specify/f_poincare/tasks.md` (T001-T008, T010-T012, T020-T023 ticked).
-- **Decisions (Matt, 2026-11-06):** T006 crop; T007 `P-moebius-tiling` row reworded to name only `f_apollonian` (it was not malformed, my earlier claim was wrong; `test_gates.py` 5/5); T008 `Poincare`, Space & Optics, kind N (entries are written in T051, not yet).
-- **Findings:** mode A needs the lowest-index priority order; the 3 nearest circles by angle match the p-circle chain (56 pairs); `SETTLE_TOL` 1e-5 added to the settled tests because mirror-line pixels land exactly on an edge circle (B at p = 4 on square frames); the bench tolerance is per channel (a disclosed correction after the first run).
-- **Next: Phase 3** (T030 camera `rot`, `cam_x`, `cam_y`, zero camera bit-exact with static; T031 rim policy check with `|a|` at the clamp; T032 float32 rim vs float64; T033 live look). Offline numbers already measured for it: with `|a|` 0.99, 32 iterations leave <= 0.04% unsettled (B {3,7} worst), first at screen r >= 0.999 (tasks.md T004 record). Then Phase 4 (`definition.py`, builder, drift, contracts).
-- **Not done:** `plan.md` Active list does not mention `f_poincare` (not touched: it holds Matt's uncommitted `f_ks` edit); the README Patches row, `module-inventory.md`, menu entry, `ideas/INDEX.md:187` (still says PAUSED) are all stale or missing for it; Matt's uncommitted `f_ks`, `plan.md` and docs edits stay uncommitted.
-
+- **State:** `ideas/f_print_styles.md` (goal: print behaviours are a vocabulary, not the goal; five stages; decisions) and, for `f_ink`, `f_screen`, `f_separate`, `f_engrave`, a `spec.md`, `plan.md` and `tasks.md` each. Commits `34f6f74`, `f6e291c`, `2f44430`, `46faace`. Nothing built, run or measured.
+- **Matt's decisions (chat):** small stage modules composed in Max, plain `f_` names; riso first, `f_ink` (stage 3) the immediate interest; RGB plates, up to three; `f_ink` clarify Q1-Q5 (fixed order, unclamped output, frame-fixed patterns, two driver inlets, channel gains); `f_engrave` separate from `f_tf_hatch`, method a Phase 0 gate; no riso-specific halftoning.
+- **Preliminary, NOT Matt's calls (his instruction: accept my recommendations):** the P-lists in the `f_screen`, `f_separate`, `f_engrave` specs and every unticked PRELIMINARY gate in the four `tasks.md` files. Most consequential: `f_separate`'s density overprint model (a contract with the unwritten `f_paper`) and `f_screen`'s per-cell sampling and 15/75/45 angles.
+- **Unmeasured:** whether `sample()` interpolates (`ideas/f_deflicker.md` and the `f_vf_stamp` spec FR-009 disagree), the `f_ink` spread cap and blur cost, `f_screen`'s round-dot area function (an inferred derivation). `f_engrave`'s candidates D and E are from memory of the literature, not read.
+- **Gates:** `G-print-prelim`, `G-engrave-method`, `G-linear-light` added; `G-menu`, `G-ui-density`, `P-mod-textures` annotated. `tests/build/test_gates.py` not run on them.
+- **Next:** Matt reviews the preliminary calls; clarify sessions for the other three specs; `f_ink` T016. `f_misregister` and `f_paper` have no spec.
