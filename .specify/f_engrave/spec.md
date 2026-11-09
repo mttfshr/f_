@@ -51,7 +51,7 @@ These are Claude's recommendations accepted in place so the spec can proceed; no
 - **G12 Code sharing with `f_tf_hatch`.** The tensor decode is reusable; whether code can be shared between modules in this build system is unverified.
 - **G13 Name, menu and panel.** Menu category under `G-menu`; the control set under `G-ui-density`; this module is a new tensor consumer (`G-tensor-t3` does not change).
 
-- **Plates from `f_separate` (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures, so this spec holds as written. (A coloured plate such as teal has two non-zero channels; per-channel angles would split its dots, see the note in `tasks.md` if present.)
+- **Plates from `f_separate`, and the plate toggle (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures. Because a real spot-colour screen is ONE screen, a `plate` toggle chooses how a texture is read: **Channels** (the spec as written: R, G and B are separate plates, each with its own angle offset) or **Single** (the whole texture is one plate with one offset: the tone is the brightest channel, `t = max(r, g, b)`; the colour is normalised to full brightness, `rgb / t`; the output is that colour times the mark, so a teal plate gets one set of teal lines and its two non-zero channels are not split). Matt chose the brightest-channel tone with normalised colour over keeping the plate's original brightness (which would cap the dot area): a dimmer plate colour is restored with a gain downstream. Black (`t` near 0) gives black. Alpha passes through. Default: Channels (a full-colour texture), Single for spot-colour plates. Details (which angle param Single reads, default) are gate G-plate in `tasks.md`.
 
 ---
 
@@ -152,6 +152,7 @@ Controls for the character of the line: `softness` of the edge, a `min_width` ha
 | `coh_floor` | 0-1 | 0.1 | coherence below which the fallback blends in |
 | `softness` | 0-1 | 0.1 | edge ramp width |
 | `min_width` | 0-1 | 0 | hairline floor (P2 story) |
+| `plate` | Channels / Single | Channels | how the texture is read; Single is one plate (tone = brightest channel, colour normalised); reads `offset_r` as its one angle (name decided in Phase 0) |
 | `bypass` | toggle | 0 | in1 passthrough |
 
 ## Success Criteria

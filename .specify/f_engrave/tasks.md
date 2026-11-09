@@ -41,6 +41,9 @@ package/patchers/f_engrave.maxpat    docs/f-reference/f_engrave.md    package/he
 - [ ] T032 [GATE G6] Choose the fallback blend and `coh_floor` default from the seam visible in the numbers.
 - [ ] T033 [GATE G9/G10] Record `sample()` behaviour and the cost estimate for the winner; decide whether it fits (spec NF-001, NF-002).
 
+- [ ] T033a [GATE G-plate] Plate toggle Channels / Single (Matt, 2026-11-08; spec "Plates from `f_separate`"). Phase 0: add Single to the NumPy mirror (tone `max(r,g,b)`, colour `rgb/t`, black stays black, one angle) and test: a teal plate gets one set of marks with equal channels' pattern; Channels mode unchanged. Settle which angle param Single reads and the default (PRELIMINARY: `offset_r`).
+- [ ] T033b Phase 1: `plate` Param in the codebox and `definition.py`; bench Single against the mirror (read `skills/bench-test-authoring` first).
+
 ## Phase 1: build (CONDITIONAL; rewrite at T030)
 
 - [ ] T040 [US1] [US2] [US3] Mirror of the winner at shader scale: `tests/modules/engrave/engrave_mirror.py` and `test_engrave.py` for SC-001 to SC-007 (plate independence, render-size scaling, determinism, non-finite zap included). Run `tests/run.sh -q tests/modules/engrave`.

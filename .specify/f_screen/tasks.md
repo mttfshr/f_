@@ -35,6 +35,9 @@ package/patchers/f_screen.maxpat    docs/f-reference/f_screen.md    package/help
 - [ ] T017 [US1] [US3] NumPy mirror `tests/modules/screen/screen_mirror.py` and `test_screen.py`: area law (flat patches, several tones, pitches, angles), tone extremes exact, monotone ramp, lattice period and orientation, plate independence, non-finite zap, render-size scaling. Run `tests/run.sh -q tests/modules/screen`.
 - [ ] T018 [US6] Mirror additions for jitter (exact at 0, mean preserved at 1, no overlap beyond the cell) and for Threshold and Bayer.
 
+- [ ] T016a [GATE G-plate] Plate toggle Channels / Single (Matt, 2026-11-08; spec "Plates from `f_separate`"). Phase 0: add Single to the NumPy mirror (tone `max(r,g,b)`, colour `rgb/t`, black stays black, one angle) and test: a teal plate gets one set of marks with equal channels' pattern; Channels mode unchanged. Settle which angle param Single reads and the default (PRELIMINARY: `angle_r`).
+- [ ] T016b Phase 1: `plate` Param in the codebox and `definition.py`; bench Single against the mirror (read `skills/bench-test-authoring` first).
+
 ## Phase 1: build
 
 - [ ] T020 [US1] [US3] [US4] `src/f_screen/codebox_screen.gen`: rotation, cell, tone read, spot functions for Dot and Line, soft edge, exact extremes, zap, bypass, alpha pass-through (plan ADR-1 to ADR-4, ADR-7). Follow `skills/jit-gen-codebox/SKILL.md`.

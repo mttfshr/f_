@@ -51,7 +51,7 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **G12 Drivers.** Preliminary P8: none. A later optional modulation inlet (pitch or size by a texture) is possible and would be a new version.
 - **G13 Naming alignment.** `softness`, `jitter`, `shape`, `angle` follow `docs/f-reference/discrete_item_conventions.md` (not opened this session); check that the names mean the same here.
 
-- **Plates from `f_separate` (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures, so this spec holds as written. (A coloured plate such as teal has two non-zero channels; per-channel angles would split its dots, see the note in `tasks.md` if present.)
+- **Plates from `f_separate`, and the plate toggle (Matt, 2026-11-08):** `f_separate` outputs three textures, each carrying one spot colour as its RGB channels; this module operates on the RGB channels of each of those textures. Because a real spot-colour screen is ONE screen, a `plate` toggle chooses how a texture is read: **Channels** (the spec as written: R, G and B are separate plates, each with its own angle) or **Single** (the whole texture is one plate with one angle: the tone is the brightest channel, `t = max(r, g, b)`; the colour is normalised to full brightness, `rgb / t`; the output is that colour times the mark, so a teal plate gets one set of teal dots and its two non-zero channels are not split). Matt chose the brightest-channel tone with normalised colour over keeping the plate's original brightness (which would cap the dot area): a dimmer plate colour is restored with a gain downstream. Black (`t` near 0) gives black. Alpha passes through. Default: Channels (a full-colour texture), Single for spot-colour plates. Details (which angle param Single reads, default) are gate G-plate in `tasks.md`.
 
 ---
 
@@ -168,6 +168,7 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 | `jitter` | 0-1 | 0 | regular to hash-displaced (P2) |
 | `level` | 0-1 | 0.5 | Threshold type only |
 | `seed` | int | 1 | for jitter |
+| `plate` | Channels / Single | Channels | how the texture is read; Single is one plate (tone = brightest channel, colour normalised); reads `angle_r` as its one angle (name decided in Phase 0) |
 | `bypass` | toggle | 0 | passthrough |
 
 ## Success Criteria
