@@ -26,6 +26,7 @@ _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink bod
 - Q4: How does f_ink take outside drivers? → A: Two dedicated optional inlets (FR-014): in1 a texture whose luma scales the effect amounts by position, in2 a vecfield that sets the spread direction. Tagged textures are not used (`P-mod-textures`: tags suit many named targets, a dedicated inlet one role-defining signal).
 - Q3: Mottle, tooth, flecks and bands fixed to the frame or to the image? → A: Fixed to the frame only, no switch (FR-009). An animated input moves under a static paper; an image-locked effect, if wanted, comes from a driver input.
 - Q2: Clamp the output to 0..1? → A: No, unclamped float32 (FR-010). Edge pooling and bent uses may exceed 1; a downstream module clamps if wanted. A clamp switch can be added later.
+- First live look (Matt, 2026-11-09): edge pool too subtle, so candidate C (the rim stays full, the body thins, about a 12-texel rim). Mottle and dropout read an incoming texture for their field, one inlet each (FR-017). Mock-ups: `scratch/experiments/f_ink_look/` (local).
 - Tone through spread (Matt, 2026-11-08, after the mirror showed the re-threshold posterizing continuous tone): a separate dial, `snap` (FR-004).
 
 ### Assumed by Claude, accepted for now by Matt, 2026-11-08 (T015; nothing tried in Max)
@@ -138,9 +139,9 @@ A performer gives the three channels different gains (`gain_r`, `gain_g`, `gain_
 - **FR-002**: The module MUST be stateless (A3): the output is a pure function of in0, any driver inputs, the params, the seed and the render size. No feedback texture.
 - **FR-003**: With every effect amount at 0, the output MUST equal the input exactly (A6).
 - **FR-004**: Spread MUST blur each channel by a radius set in frame units, then re-threshold with a bias and a softness, so marks fatten, thin, round and merge. A separate `snap` dial MUST set how much of the re-threshold applies: at 0 the result is the plain blur, which keeps continuous tone (Matt, 2026-11-08). Its kernel, stage count and radius cap are fixed by G5.
-- **FR-005**: Mottle MUST modulate density with a smooth pattern whose feature size is `mottle_scale`; it MUST NOT add ink where the input is 0.
-- **FR-006**: Dropout MUST remove ink where the input coverage is below a tooth value that varies by position at the grain `tooth_scale`, so light tones drop out first and solids last.
-- **FR-007**: Edge pooling MUST raise coverage in a band along the edges of marks, of width `pool_width`, and MUST leave flat areas unchanged.
+- **FR-005** (revised 2026-11-09, Matt, after the first look): Mottle MUST only thin ink, most where ink is dense, and MUST NOT add ink where the input is 0. Its field comes from the mottle field inlet (FR-017) when connected, otherwise from built-in fine noise whose size is `mottle_scale`.
+- **FR-006** (revised 2026-11-09): Dropout MUST remove ink where the coverage is below a tooth value that varies by position, with soft edges, so light tones drop out first. Solids go last, and at high amounts they MAY take pinholes. The tooth comes from the tooth field inlet (FR-017) when connected, otherwise from built-in fine noise at the grain `tooth_scale`.
+- **FR-007** (reversed 2026-11-09, Matt chose candidate C): Edge pooling MUST keep the edges of marks at full value and thin the body of the mark, in a band of width `pool_width` set inward from the edge. A flat area of ink therefore thins when Edge Pool is up (this replaces "leave flat areas unchanged": a rim above 1 clips on a screen and cannot show on a full-value mark). No ink is added where the input is 0, and Edge Pool 0 is exact identity.
 - **FR-008**: The effects MUST apply in this fixed order: spread, edge pooling, mottle, dropout, flecks, banding. The order is not configurable (Matt, 2026-11-08).
 - **FR-009**: Patterns (mottle, tooth, flecks, bands) MUST be deterministic from the seed and fixed to the frame (Matt, 2026-11-08; no image-lock switch), so successive frames of the same input are identical.
 - **FR-010**: The output MUST be float32, with no NaN or Inf reaching any outlet (non-finite input texels are zapped to 0). The output MUST NOT be clamped to 0..1 (Matt, 2026-11-08); identity at zero stays exact.
@@ -149,6 +150,7 @@ A performer gives the three channels different gains (`gain_r`, `gain_g`, `gain_
 - **FR-013**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through.
 - **FR-014**: The module MUST have two optional driver inlets (Matt, 2026-11-08): in1, a texture whose luma scales the effect amounts by position (luma 0 leaves that region unchanged); in2, a vecfield (`f_vecfield_type.md`) that sets the spread direction. With neither connected the module behaves as without drivers. An unconnected driver MUST be recognised from the connected flag (via `vs_inState`), not from its value (the `vs_black` lesson cited in the `f_vf_stamp` spec).
 - **FR-016**: Three channel gains MUST each scale every effect amount (and the in1 driver's effect on it) for their channel; with all gains at 1 the module behaves as without them, and a gain of 0 leaves that channel unchanged (Matt, 2026-11-08).
+- **FR-017** (Matt, 2026-11-09): Two more optional inlets, one for each: a mottle field and a tooth field, any texture, luma used in place of the built-in noise. Unconnected, the built-in noise is used. Recognised from the connected flag, not the value (as FR-014).
 - **FR-015**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements

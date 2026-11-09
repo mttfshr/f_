@@ -51,6 +51,15 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 - [ ] T031 Live look: one deliberately bent use (per-channel gains, a field-driven spread); check linear-light (T011).
 - [ ] T032 Dial ranges, defaults, the `spread` cap, the octave weights; back into the codebox and `definition.py`, then re-run tiers 1 and 2.
 
+### Rework from the first look (2026-11-09; spec FR-005, 006, 007, 017; plan ADR-8)
+
+- [ ] T033 Mirror and tier 1: edge pool thins the body (candidate C), two more blur passes; the old flat-field and rim-above-1 tests rewritten to the reversed FR-007.
+- [ ] T034 Mirror and tier 1: mottle thins only, dropout with soft edges, both taking a field; built-in fallbacks (mottle C, dropout B).
+- [ ] T035 `codebox_pool.gen` and the cascade stages; `definition.py` (ten stages).
+- [ ] T036 `codebox_fx_b.gen`: the new mottle and dropout, in1/in2 fields through `mod_inlets` with `src_mottle`, `src_tooth`; dial mapping; build, contract and drift.
+- [ ] T037 Benches updated (four-input `fx_b`, field inlets connected and not, cost of the extra stages); run with Matt's go.
+- [ ] T038 Live look (Matt): edge pool, mottle and dropout, with and without a patched field. Then spread, snap and bias, which are "fairly subtle" (Matt, set aside for later).
+
 ## Phase 3: docs and registration
 
 - [ ] T040 Reference doc `docs/f-reference/f_ink.md`, helpfile (the `f-helpfile` skill), menu placement (T013), README Patches row (110 characters; regenerate the launcher), inventory rows.
@@ -77,3 +86,4 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
   - **T009 result, partial:** no stage cost resolved, even at 4K. Upper bounds at 1080p equivalent: 0.67 to 0.71 ms per pass for every stage, which is the bench's floor and not the stages' cost. Eight stages are at most about 5.6 ms (arithmetic, inferred as a sum); the true figure is unmeasured. T009 stays open.
   - **Not tested:** arrival order at the two-input stages (a static source hides a one-frame lag; the harness has no per-frame input swap), still inferred; to be judged on moving input at T030.
 - 2026-11-09 (live, Matt; first look, T030 partial): spread, snap and bias "seem fairly subtle now", set aside for later. Refine first: edge pool is "too subtle to really notice"; mottle "seems like generic noise and seems just like an additive mix of something unrelated to the texture in black"; dropout "doesn't look like paper grain at all, it looks like nubby pixelation". Offline reading by Claude, inferred: on a mark of value 1 the pooled rim only goes above 1, which a screen clips, so the rim cannot show on full-value marks; dropout is one octave of lattice noise, hard-thresholded, at about 4 texels.
+- 2026-11-09 (Matt, chat, after the candidate sheets): edge pool candidate C. Mottle and dropout: "read incoming textures to determine the noise or texture field": new optional field inlets, one each, built-in noise when unconnected. Candidates are NumPy mock-ups by Claude, offline, nothing in Max. Inlet numbering and the built-in looks are Claude's, provisional (plan ADR-8). Rework is T033-T038.
