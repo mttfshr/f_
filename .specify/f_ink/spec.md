@@ -50,6 +50,10 @@ _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink bod
 - **G11 Name and menu.** `f_ink` is a placeholder; menu category under `G-menu`.
 - **G12 Control set.** About a dozen dials plus the three channel gains is a dense panel (`G-ui-density`): grouping, and which dials are P2. The per-channel form is resolved (clarify Q5).
 
+### Open gate added 2026-11-08: coloured plates from `f_separate` (needs Matt's call)
+
+Matt decided that `f_separate` gives each plate its own outlet as a coloured texture (`coverage * ink colour`), because one RGB channel cannot carry a spot colour such as teal. This spec was written assuming plates are the R, G and B channels of one texture. `f_ink` is any-texture-in, so it should work unchanged on a coloured plate; check that the channel gains and the spread/mottle behave on a plate that has a colour (T-list gate to add). Not decided; the P-list items here that mention R, G and B stay as written until it is.
+
 ---
 
 ## User Stories

@@ -51,6 +51,10 @@ These are Claude's recommendations accepted in place so the spec can proceed; no
 - **G12 Code sharing with `f_tf_hatch`.** The tensor decode is reusable; whether code can be shared between modules in this build system is unverified.
 - **G13 Name, menu and panel.** Menu category under `G-menu`; the control set under `G-ui-density`; this module is a new tensor consumer (`G-tensor-t3` does not change).
 
+### Open gate added 2026-11-08: coloured plates from `f_separate` (needs Matt's call)
+
+Matt decided that `f_separate` gives each plate its own outlet as a coloured texture (`coverage * ink colour`), because one RGB channel cannot carry a spot colour such as teal. This spec was written assuming plates are the R, G and B channels of one texture. Options: as for `f_screen` (one instance per coloured plate on its brightness, or keep channel mode). `offset_r/g/b` would become one `offset` per instance. Not decided; the P-list items here that mention R, G and B stay as written until it is.
+
 ---
 
 ## User Stories

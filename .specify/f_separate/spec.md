@@ -1,7 +1,7 @@
 # Spec: f_separate
 
 _Created: 2026-11-08_
-_Status: Draft: P-list reviewed with Matt 2026-11-08 (additive, black background, coloured plates); FRs and stories not yet reconciled; not built_
+_Status: Draft: P-list reviewed with Matt 2026-11-08 (additive, black background, coloured plates); FRs, stories and success criteria reconciled 2026-11-08; not built_
 _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separation"), modelled on the prepress app Matt uses to separate full-colour images into riso spot-colour inks. Name `f_separate` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
 
 ---
@@ -11,7 +11,7 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 ### Resolved with Matt (2026-11-07 / 2026-11-08, in chat)
 
 - **Not a swizzle.** Vsynth's RGB swizzle with a recolour gives at most three plates tied to R, G and B. `f_separate` splits a full-colour image into arbitrary spot-colour inks from a palette, or into CMYK-like inks, which is what makes it worth a module (Matt: "could be more interesting").
-- **Plates are RGB channels, up to three.** Alpha is not a plate. Vsynth's invert module reverses a channel if needed. Spot-colour separation is the interesting part (Matt).
+- **Plates:** up to three, one per ink. Alpha is not a plate. Vsynth's invert module reverses a channel if needed. Spot-colour separation is the interesting part (Matt).
 - **The reference is the prepress app** Matt uses for riso. It is specific to riso machines' halftone and overprint options and gives a **live composite preview showing the overall colour shift from the palette clamping** the chosen inks create. Its riso-specific halftone options are not to be emulated (Matt).
 - **Separation and overprint are one coupled decision:** `f_separate` unmixes with the overprint model that `f_paper` will mix with (Claude's consequence of Matt's description, inferred).
 - **A vocabulary, not a goal:** the separation is one operator in the print vocabulary and can be bent into a digital colour-reduction tool as well.
@@ -34,7 +34,7 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 
 ### Consequences noted, not yet applied elsewhere
 
-- The FRs, user stories and success criteria below still describe the old model (paper, plates in R/G/B, two outlets); to be reconciled (tasks T013a).
+- The FRs, user stories and success criteria were reconciled with this list on 2026-11-08 (tasks T013a). A gain above 1 cannot push a plate past its ink colour (follows from P9; preliminary).
 - `f_screen`, `f_ink` and `f_engrave` were specced with plates as single channels; with coloured plates they act on the plate's brightness and keep its colour. To be noted in those specs.
 - `f_paper` inherits additive light (the contract is simpler: sum of plates), no Beer-Lambert.
 
@@ -56,58 +56,51 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 
 ### User Story 1: Separate into spot-colour plates (Priority: P1)
 
-A performer patches a full-colour image, picks up to three ink colours, and gets one plate per ink: where each ink needs to print for the inks together to reproduce the image.
+A performer patches a full-colour image, picks up to three ink colours, and gets one plate per ink on its own outlet: how much of each ink's light is needed for the inks together to reproduce the image. Each plate is the ink's colour times its coverage (a teal ink gives a teal plate).
 
 **Why this priority**: the module's purpose.
 
-**Independent Test**: tier 1 on flat patches of each ink colour, of their overprints, and of grey ramps.
+**Independent Test**: tier 1 on flat patches of each ink colour, of their overlaps, and of grey ramps.
 
 **Acceptance Scenarios**:
-1. **Given** a patch exactly the colour of ink 2 at full coverage, **Then** plate 2 is 1 and the other plates are 0.
-2. **Given** a patch of the overprint of inks 1 and 2 at full coverage, **Then** plates 1 and 2 are 1 and plate 3 is 0.
-3. **Given** a patch the colour of the paper, **Then** every plate is 0.
+1. **Given** a patch exactly the colour of ink 2, **Then** plate 2 is exactly ink 2's colour and the other plates are black.
+2. **Given** a patch that is the sum of inks 1 and 2 (within 0..1), **Then** plates 1 and 2 are their ink colours and plate 3 is black.
+3. **Given** a black patch, **Then** every plate is black.
 4. **Given** any pixel, **Then** every plate is within 0..1.
 
 ### User Story 2: Live gamut preview (Priority: P1)
 
-out1 shows the plates recomposed on the paper. Colours the inks cannot reproduce visibly shift toward what they can, so choosing inks becomes a visible decision.
+Outlet 3 shows the plates added together on black. Colours the inks cannot reproduce visibly shift toward what they can, so choosing inks becomes a visible decision.
 
 **Independent Test**: tier 1 round trip on an image inside the palette's gamut and one outside.
 
 **Acceptance Scenarios**:
-1. **Given** an image made only of colours the palette can reproduce, **Then** out1 equals the source within tolerance (the round trip).
-2. **Given** an image with colours outside the gamut, **Then** out1 differs from the source, and the difference is the colour shift from the clamping.
-3. **Given** a change to one ink colour, **Then** out1 updates immediately and the plates change accordingly.
+1. **Given** an image made only of colours the palette can reproduce, **Then** the preview equals the source within tolerance (the round trip).
+2. **Given** an image with colours outside the gamut, **Then** the preview differs from the source, and the difference is the colour the inks cannot make (plus clipping where inks sum past 1).
+3. **Given** a change to one ink colour, **Then** the preview updates immediately and the plates change accordingly.
+4. **Given** any inputs, **Then** the preview equals the sum of the three plate outlets, clamped to 0..1.
 
 ### User Story 3: One and two inks (Priority: P1)
 
-With one ink the plate is a tone of that ink (a luma-like projection); with two it is the best two-ink reproduction. The count `inks` selects 1, 2 or 3.
+With one ink the plate is the projection of the pixel onto that ink's colour; with two it is the best two-ink reproduction. The count `inks` selects 1, 2 or 3.
 
 **Acceptance Scenarios**:
-1. **Given** `inks` 1 and a black ink on white paper, **Then** plate 1 grows monotonically as the source darkens.
-2. **Given** `inks` 2, **Then** plate 3 is exactly 0 and the preview shows the two-ink gamut.
+1. **Given** `inks` 1 and a grey ink, **Then** plate 1 grows monotonically as the source brightens.
+2. **Given** `inks` 2, **Then** plate 3 is exactly black and the preview shows the two-ink gamut (a colour the two inks cannot make is lost).
 
-### User Story 4: Paper colour (Priority: P1)
+### User Story 4: Hard split (Priority: P2)
 
-`paper` sets the colour the plates are relative to, so cream or tinted stock changes the separation and the preview.
-
-**Acceptance Scenarios**:
-1. **Given** a cream paper colour, **Then** a source patch of that colour gives all-zero plates.
-2. **Given** a change in `paper`, **Then** the plates and the preview both change.
-
-### User Story 5: Hard split (Priority: P2)
-
-`mode` Nearest assigns each pixel wholly to its nearest ink (or to none when closest to the paper), giving flat spot-colour plates for a screen-print look.
+`mode` Nearest assigns each pixel wholly to its nearest ink, or to none when black is closest, giving flat spot-colour plates.
 
 **Acceptance Scenarios**:
-1. **Given** Nearest, **Then** each pixel has at most one plate at 1 and the rest at 0.
-2. **Given** a pixel exactly an ink colour, **Then** that plate is 1.
+1. **Given** Nearest, **Then** each pixel has at most one plate non-black, and that plate is exactly its ink colour.
+2. **Given** a pixel exactly an ink colour, **Then** that plate is that colour and the others are black.
 
-### User Story 6: Per-ink tone shaping (Priority: P2)
+### User Story 5: Per-ink gain (Priority: P2)
 
-A per-plate gain (or curve) on the coverages before the preview, so one ink can be weakened or strengthened without changing the palette. (The full per-plate tone curve belongs upstream in `f_tone_curve`.)
+A per-ink gain (0-2) on the coverage, so one ink can be weakened or strengthened without changing the palette. The gain is applied before the 0..1 clamp of P9, so a gain above 1 saturates a plate faster but never makes it brighter than its ink colour (preliminary: follows from P9). The full per-plate tone curve belongs upstream in `f_tone_curve`.
 
-### User Story 7: Standard f_ module behaviour (Priority: P3)
+### User Story 6: Standard f_ module behaviour (Priority: P3)
 
 `bypass`, `#0_` scoped names, helpfile, menu entry, README row.
 
@@ -117,24 +110,24 @@ A per-plate gain (or curve) on the coverages before the preview, so one ink can 
 
 ### Functional Requirements
 
-- **FR-001**: The module MUST be a processor: in0 is a colour texture. With nothing connected it outputs black on both outlets.
+- **FR-001**: The module MUST be a processor: in0 is a colour texture. With nothing connected it outputs black on all four outlets.
 - **FR-002**: The module MUST be per-pixel and stateless (P8): the outputs are pure functions of in0 and the params.
-- **FR-003**: out0 MUST carry the plates: ink 1 coverage in R, ink 2 in G, ink 3 in B, channels for unused inks exactly 0 (`inks`), each bounded to 0..1.
-- **FR-004**: In Unmix mode, the coverages MUST be the least-squares solution under the overprint model (P2, G2) for the pixel's colour relative to `paper`, clamped to 0..1 (P1, P4, G3).
-- **FR-005**: out1 MUST be the plates recomposed on `paper` by the same model (P5), so that for any pixel whose colour the palette can reproduce, out1 equals the source within tolerance (the round trip).
-- **FR-006**: A pixel the colour of the paper MUST give all-zero plates, and a pixel exactly an ink's full-coverage colour MUST give that plate 1 and the others 0 (within tolerance).
-- **FR-007**: Degenerate inks and pixels (G4) MUST NOT produce NaN or Inf: an ink equal to the paper, a zero channel in an ink, a collinear palette, and a pixel brighter than the paper are all handled and tested.
-- **FR-008**: In Nearest mode, each pixel MUST have at most one plate at 1 and the rest at exactly 0.
-- **FR-009**: Alpha MUST pass through from the source on both outlets.
-- **FR-010**: The outlets MUST be float32 and bounded to 0..1; no NaN or Inf MAY reach either (non-finite input texels are zapped).
-- **FR-011**: The ink and paper colours MUST be controllable live (G6), and a change MUST take effect on the next frame.
-- **FR-012**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through on both outlets (P10).
+- **FR-003**: Outlets 0 to 2 MUST carry the plates: plate `i` is `c_i * k_i` (ink colour times coverage, each coverage in 0..1), exactly black for any ink beyond `inks`.
+- **FR-004**: In Unmix mode, the coverages MUST be the least-squares solution of `K c = x` (P1, P2, G3) for the pixel colour `x`, clamped to 0..1, with the gain applied before the clamp.
+- **FR-005**: Outlet 3 MUST be the sum of the three plate outlets clamped to 0..1 (P5), so that for any pixel whose colour the palette can reproduce, it equals the source within tolerance (the round trip).
+- **FR-006**: A black pixel MUST give all-black plates, and a pixel exactly an ink's colour MUST give that plate exactly its ink colour and the others black (within tolerance).
+- **FR-007**: Degenerate inks and pixels (G4) MUST NOT produce NaN or Inf: a black ink, duplicate or collinear inks, and non-finite input are all handled and tested.
+- **FR-008**: In Nearest mode, each pixel MUST have at most one non-black plate, equal to its ink colour (P6).
+- **FR-009**: Alpha MUST pass through from the source on all four outlets.
+- **FR-010**: The outlets MUST be float32 and bounded to 0..1; no NaN or Inf MAY reach any (non-finite input texels are zapped).
+- **FR-011**: The ink colours MUST be controllable live (G6), and a change MUST take effect on the next frame.
+- **FR-012**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through on all four outlets (P10).
 - **FR-013**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
 
 ### Non-Functional Requirements
 
 - **NF-001** *(target, pending measurement)*: one pass at 1080p with cost recorded on the bench, stated as measured or unmeasured (library rule).
-- **NF-002**: The per-pixel solve MUST fit the codebox statement budget (about 250 per function body, about 450 per program; `skills/jit-gen-codebox/SKILL.md`); the palette's pseudo-inverse is computed once per palette change, not per pixel, if the build system allows it (inferred; G3).
+- **NF-002**: The per-pixel solve MUST fit the codebox statement budget (about 250 per function body, about 450 per program; `skills/jit-gen-codebox/SKILL.md`); the palette's pseudo-inverse is computed once per palette change, not per pixel, if the build system allows it (inferred; G3). Four outlets from one stage are unverified in this build system.
 - **NF-003**: Verification follows the constitution's tiers (G1).
 
 ## Parameters (provisional; tuned live at tier 3)
@@ -142,38 +135,36 @@ A per-plate gain (or curve) on the coverages before the preview, so one ink can 
 | Param | Range | Default | Notes |
 |---|---|---|---|
 | `inks` | 1-3 | 2 | how many inks are active |
-| `ink1`, `ink2`, `ink3` | colours | three distinct spot colours | full-coverage colours of the inks (G6) |
-| `paper` | colour | white | the colour the plates are relative to |
-| `mode` | Unmix / Nearest | Unmix | Nearest is P2 |
-| `gain1`, `gain2`, `gain3` | 0-2 | 1 | per-ink coverage gain (P2 story) |
-| `bypass` | toggle | 0 | passthrough on both outlets |
+| `ink1`, `ink2`, `ink3` | colours | three distinct spot colours | full-coverage colours of the inks, colours of light (G6) |
+| `mode` | Unmix / Nearest | Unmix | Nearest is P6 |
+| `gain1`, `gain2`, `gain3` | 0-2 | 1 | per-ink coverage gain (User Story 5) |
+| `bypass` | toggle | 0 | passthrough on all four outlets |
 
 ## Success Criteria
 
-- **SC-001**: Reproduction: flat patches of each ink, each overprint pair, the paper colour and a grey ramp separate to the expected plates within tolerance (User Story 1).
-- **SC-002**: Round trip: for sources inside the palette's gamut, `out1` equals the source within `[set in Phase 0]`; for sources outside, `out1` is the nearest reproducible colour under the model.
+- **SC-001**: Reproduction: flat patches of each ink, each overlap pair (the sum), black and a grey ramp separate to the expected plates within tolerance (User Story 1).
+- **SC-002**: Round trip: for sources inside the palette's gamut, the preview equals the source within `[set in Phase 0]`; for sources outside, it is the nearest reproducible colour under the model.
 - **SC-003**: Bounds: plates and preview are within 0..1 for any input, including values above 1, below 0 and non-finite.
-- **SC-004**: Degenerate palettes: an ink equal to the paper, a zero-channel ink, and a collinear palette produce no NaN or Inf and a defined result.
-- **SC-005**: Monotone: with one ink, the plate rises monotonically as the source darkens toward the ink.
-- **SC-006**: Nearest mode: at most one plate is nonzero per pixel; exact ink colours map to their plate.
-- **SC-007**: Live update: changing an ink or the paper changes the plates and the preview on the next frame.
-- **SC-008**: Tier-3 look (Matt): a full-colour photo with two or three chosen riso-style inks shows a preview that matches what his prepress app's preview does in character (the colour shift from the palette), and one deliberately bent use (three unrelated colours, or a very narrow palette) reads as intentionally digital.
+- **SC-004**: Degenerate palettes: a black ink, duplicate inks and a collinear palette produce no NaN or Inf and a defined result.
+- **SC-005**: Monotone: with one ink, the plate rises monotonically as the source brightens toward the ink.
+- **SC-006**: Nearest mode: at most one plate is non-black per pixel; exact ink colours map to their plate.
+- **SC-007**: Live update: changing an ink changes the plates and the preview on the next frame.
+- **SC-008**: Tier-3 look (Matt): a full-colour photo with two or three chosen inks shows plates and a preview that look and behave well on screen (the colour shift from the palette is legible), and one deliberately bent use (three unrelated colours, or a very narrow palette) reads as intentionally digital. No comparison with a print or prepress reference.
 
 ## Edge Cases
 
-- `inks` 1 with an ink very close to the paper colour (tiny dynamic range).
-- Two inks of nearly the same colour (collinear), or an ink the colour of black (full density in every channel).
-- A source brighter than the paper, darker than any overprint, or outside 0..1.
+- `inks` 1 with a very dim ink (tiny dynamic range).
+- Two inks of nearly the same colour (collinear), or a black ink (a zero column).
+- A source darker than black, outside 0..1, or brighter than the inks can sum to.
 - An all-black and an all-white source; a source colour exactly between inks.
-- A paper colour with a zero channel.
-- Changing `inks` at runtime (the unused channels go to exactly 0).
+- Changing `inks` at runtime (the unused plates go to exactly black).
 - Colours outside the gamut near the boundary (the preview's clamp seam).
+- Inks that sum past 1 in a channel (the preview clips).
 
 ## Out of Scope (This Version)
 
 - Halftoning or any spatial treatment (`f_screen`, `f_engrave`, `f_ink`).
-- Black generation and a fourth plate (P7).
-- Order-dependent (translucent) overprint (G9).
+- A black plate, CMYK and a fourth plate (P7).
 - Picking the palette from the image automatically.
-- Paper texture, ink colour physics beyond the model, misregistration and emboss (`f_paper`, `f_misregister`).
+- A paper parameter or texture: the background is black (P3). Misregistration and emboss (`f_misregister`).
 - A full per-plate tone curve (`f_tone_curve`).
