@@ -138,7 +138,7 @@ A per-ink gain (0-2) on the coverage, so one ink can be weakened or strengthened
 
 ### Non-Functional Requirements
 
-- **NF-001** *(target, pending measurement)*: one pass at 1080p with cost recorded on the bench, stated as measured or unmeasured (library rule).
+- **NF-001** *(stated UNMEASURED, Matt, 2026-11-08)*: one pass at 1080p with cost recorded on the bench, stated as measured or unmeasured (library rule).
 - **NF-002**: The per-pixel solve MUST fit the codebox statement budget (about 250 per function body, about 450 per program; `skills/jit-gen-codebox/SKILL.md`); the palette's pseudo-inverse is computed once per palette change, not per pixel, if the build system allows it (inferred; G3). Four outlets from one stage are unverified in this build system.
 - **NF-003**: Verification follows the constitution's tiers (G1).
 

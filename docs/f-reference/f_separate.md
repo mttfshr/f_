@@ -80,7 +80,7 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 - **A black ink** contributes nothing: its plate is black and the solve stays finite. Under Nearest it ties with black and an ink wins the tie, also black.
 - **Values as given.** The maths runs on the values it receives, with no linear-light conversion (Matt, 2026-11-08, after the tuning looks).
 - **One texture in, no neighbours.** Per-plate halftone, grain and misregistration are other modules' jobs (`f_screen`, `f_ink`, `f_misregister`, not built); a per-plate tone curve is `f_tone_curve` upstream.
-- **Cost.** Not measured (NF-001 asks for a 1080p figure). One pass, about 90 statements (per `tasks.md`).
+- **Cost.** Unmeasured at 1080p (NF-001; Matt, 2026-11-08). `tests/bench.sh --slow` on `bench_separate.py` measures it. One pass, about 90 statements (per `tasks.md`).
 
 ## Known issues / open
 
