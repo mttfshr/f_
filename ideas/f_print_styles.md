@@ -36,7 +36,7 @@ Tentative (Matt: "a decision but I'm not sure it's the decision", 2026-11-08): `
 
 ### Stage 1: `f_separate`
 
-**Status 2026-11-08:** built, benched, documented (`docs/f-reference/f_separate.md`); tuning looks pending. Light on black with additive inks: where this section still says multiply or paper, the update below replaces it.
+**Status 2026-11-08:** built, benched, documented (`docs/f-reference/f_separate.md`), looks passed, moved to `.specify/stable/f_separate/`; the 1080p cost is unmeasured. Light on black with additive inks: where this section still says multiply or paper, the update below replaces it.
 
 Not a swizzle. Vsynth's RGB swizzle plus a recolour gives at most three plates tied to R, G and B. `f_separate` would split a full-colour image into CMYK or arbitrary spot-colour inks from a palette, like the prepress app Matt uses for riso separations. The value is the palette-aware split: an unmix against the ink colours, and a rule for what to give up when there are fewer inks than colours.
 
