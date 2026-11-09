@@ -8,8 +8,10 @@
 
 **New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_ink` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
+**FIRST next session (Matt, 2026-11-09):** after looking at the same-color Extent: "this all still seems off". Discuss `f_ink` with him before any build, mock-up or bench (`G-ink-direction`).
+
 **Candidates (Matt decides):**
-- Print-styles, FIRST (Matt, 2026-11-08: skip the `G-print-prelim` review for now): `f_ink`: P1 is built and benched (T020-T024, `.specify/f_ink/tasks.md`). Narrowed 2026-11-09 (Matt) to ink moving along a vecfield: Extent, Bulge, Travel, three stages (spec "Narrowed", plan ADR-9), built and benched (T050-T052). Next: Matt's look with a real vecfield, T053. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
+- Print-styles, FIRST (Matt, 2026-11-08: skip the `G-print-prelim` review for now): `f_ink`: P1 is built and benched (T020-T024, `.specify/f_ink/tasks.md`). Narrowed 2026-11-09 (Matt) to ink moving along a vecfield: Extent, Bulge, Travel, three stages (spec "Narrowed", plan ADR-9), built and benched (T050-T052). **STOP: discuss with Matt before doing anything else on `f_ink` (`G-ink-direction`).** Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
 - `f_masonry` adopts tagged textures (Matt, 2026-11-01 21:17: "we will do masonry, but not this second"): design discussion first. Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each (6 x 3 = 18 depths, read from `src/f_masonry/definition.py`), so one tag per named `<param>_tex` needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
 - The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`); the compact `f_weave` panel is the first test case.
@@ -32,3 +34,4 @@
 - **Lesson:** mock on real footage; the sheets on clean shapes predicted nothing. The module bench closes `bench.maxpat`; `benchclient.reopen()` restores it.
 - **Extent keeps the ink's color (Matt):** it is now one gain from luma, because the additive per-channel form went below 0 and showed as black. Not yet looked at.
 - **Bare pix names:** a second instance of a module whose pix name is not `#0_`-scoped collides; `f_vf_flow` failed the contract bench the same way (`tests/logs/20261109-090417-bench.log`) while a live patch was open.
+- **Stopped here (Matt):** "this all still seems off"; discuss more before doing anything else. The offered `#0_` cleanup session (28 modules) was not started.
