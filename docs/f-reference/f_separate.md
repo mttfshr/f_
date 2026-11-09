@@ -85,7 +85,7 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 ## Known issues / open
 
 - **The first Sat dial move shifts an ink slightly and it does not come back.** Ink 1 starts at (1, 0.25, 0) and reads (1, 0.238, 0.004) after Sat 1 goes to 0.5 and back (module bench). Inferred: the bang recomputes the colour from the swatch's position. If so, a pastel set by message would also snap to the swatch's plane when its dial moves; not tested.
-- **Console lines.** `method get_filterset called on invalid object`, `method gettype called on invalid object` and `patcher doesn't understand "getattr"` appeared on Matt's looks; unexplained, and whether other modules print them is unchecked.
+- **Console lines.** `method get_filterset called on invalid object`, `method gettype called on invalid object` and `patcher doesn't understand "getattr"` print when this helpfile opens. They are not specific to this module: the first two also print from `f_poincare.maxhelp` (Matt, 2026-11-08). Cause unknown (`P-console` in `.specify/gates.md`).
 - **Menu category** (Color / Tone) was placed by Claude, provisional (`G-menu`).
 - **Preliminary gates** in `tasks.md` (T004, T006, T007, T011) are Claude's recommendations, not yet Matt's decisions (`G-print-prelim`): the unconstrained solve then clamp is the one most likely to change if the gamut boundary looks wrong.
 
