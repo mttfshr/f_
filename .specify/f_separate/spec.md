@@ -1,7 +1,7 @@
 # Spec: f_separate
 
 _Created: 2026-11-08_
-_Status: Draft: not yet built, not yet clarified_
+_Status: Draft: P-list reviewed with Matt 2026-11-08 (additive, black background, coloured plates); FRs and stories not yet reconciled; not built_
 _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separation"), modelled on the prepress app Matt uses to separate full-colour images into riso spot-colour inks. Name `f_separate` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
 
 ---
@@ -17,33 +17,38 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 - **A vocabulary, not a goal:** the separation is one operator in the print vocabulary and can be bent into a digital colour-reduction tool as well.
 - **Undecided by Matt ("I don't know yet"):** the separation method for riso, and the CMYK scope. The method here is the preliminary decision below.
 
-### Preliminary decisions taken by Claude (Matt, 2026-11-08: "accept your own recommendations for preliminary gates")
+### Decided with Matt, P-list review (2026-11-08, chat, one at a time)
 
-These are Claude's recommendations accepted in place so the spec can proceed; none is a Matt decision, and each is open to his reversal.
+- **Paper is the background, and it is black.** Matt: "we're not printing on paper. paper is a metaphor"; other modules behave the same. There is no `paper` parameter. Ink colours are colours of light. This replaced the density (Beer-Lambert) model and the paper-relative maths; the prepress app is no longer a reference for any decision (print is a vocabulary: see `ideas/f_print_styles.md`).
+- **P1 Palette unmix** (Matt: yes). Up to three inks (`inks` 1 to 3), each a colour. Per pixel, the coverage of each ink that best reproduces the pixel's colour, clamped to 0..1.
+- **P2 Overprint is additive light** (Matt: "add"). Pixel colour is `sum_i c_i * k_i` on black. Linear in the coverages, so the unmix is an exact small least-squares solve; no logs, no epsilon, order-independent. The preview clips where inks sum past 1. The screen-blend alternative (`1 - prod(1 - c_i k_i)`, never clips, not exactly invertible) was offered and not chosen.
+- **P3 No paper parameter** (Matt: the background is always black).
+- **P4 Fewer inks:** least-squares projection onto the chosen inks; what they cannot reproduce is lost and the preview shows it (Matt: yes).
+- **P5 Four outlets** (Matt): one coloured plate per ink, each `c_i * k_i` (a teal ink gives a teal plate; plates cannot be packed into R, G and B), black for unused inks, plus a fourth **preview** outlet, the sum of the plates. Reason (Matt): a single RGB channel cannot represent a spot colour like teal.
+- **P6 Nearest mode** (Matt: yes): `mode` Nearest assigns each pixel wholly to the nearest ink or to black (black is a candidate), by RGB distance; the winner's coverage is 1, the others 0. Unmix is the default.
+- **P7 No black generation, no CMYK** (Matt: yes): up to three coloured-light inks; black is the background, there is no black plate or fourth plate.
+- **P8 Per-pixel and stateless** (Matt: yes): no neighbourhood, no feedback, one texture input.
+- **P9 Bounds** (Matt: yes): coverages and the preview clamped to 0..1.
+- **P10 Bypass** (Matt: yes): the source goes to all four outlets.
+- **P11 Polarity** (Matt: yes): more light in the source means more coverage; the source is an ordinary colour image.
 
-- **P1 Palette unmix.** Up to three inks (`inks` 1 to 3), each with a colour. The module finds, for each pixel, the coverage of each ink that best reproduces the pixel's colour, under the overprint model P2, clamped to 0..1.
-- **P2 Overprint model: density (Beer-Lambert-like).** An ink with full-coverage colour `k` (relative to the paper) has optical density `d = -log(k)` per channel; coverages add: the colour of a pixel is `paper * exp(-sum_i c_i * d_i)`. Taking logs makes the model linear in the coverages, so the unmix is a small least-squares solve. Overprint is order-independent (a multiply). Riso inks are in reality translucent and order-dependent; order is out of scope. This model is Claude's choice, not checked against the prepress app or any print behaviour, and is gate G2.
-- **P3 Paper colour is a parameter** (`paper`, default white), because the model is relative to the paper.
-- **P4 Fewer inks than three:** the unmix is the least-squares projection onto the chosen inks (the colour the inks can best reproduce); what the inks cannot reproduce is the "clamping" the preview shows.
-- **P5 Two outlets.** out0 is the plates: ink 1 coverage in R, ink 2 in G, ink 3 in B (unused channels 0). out1 is the **preview composite**: the plates recomposed on the paper by the same model, so the colour shift from the palette is visible live. The preview duplicates `f_paper`'s maths in a minimal form (G5).
-- **P6 Hard split mode (P2 story):** `mode` Nearest assigns each pixel wholly to the nearest ink (or none), for flat spot-colour jobs. The default is Unmix.
-- **P7 No black generation; palettes only.** A real CMYK needs a fourth plate and a nonlinear black extraction; CMYK is a four-ink palette and is out of scope as a three-channel result. Black is simply one of the inks.
-- **P8 Per-pixel and stateless:** no neighbourhood, no feedback, no texture other than in0. Output is a pure function of in0 and the params.
-- **P9 Plates bounded to 0..1;** the preview bounded to 0..1.
-- **P10 Bypass** passes the source through on both outlets.
-- **P11 Polarity as elsewhere in the family:** high channel value = more ink coverage in the plates. The source image is ordinary colour.
+### Consequences noted, not yet applied elsewhere
 
-### Open, decided in Phase 0 (gates; to be carried into `tasks.md`)
+- The FRs, user stories and success criteria below still describe the old model (paper, plates in R/G/B, two outlets); to be reconciled (tasks T013a).
+- `f_screen`, `f_ink` and `f_engrave` were specced with plates as single channels; with coloured plates they act on the plate's brightness and keep its colour. To be noted in those specs.
+- `f_paper` inherits additive light (the contract is simpler: sum of plates), no Beer-Lambert.
 
-- **G1 Verification tiers.** The first Phase 0 task. Proposal: tier 1 mirrors the unmix and the round trip (closed forms, no Max); tier 2 benches the real codebox; tier 3 is Matt's live look against his prepress app.
-- **G2 Overprint model.** The density model P2 versus a coverage-weighted multiply (`paper * product_i (1 - c_i * (1 - k_i))`, order-independent but not linear in the coverages, so the unmix is not a linear solve). Decide by round trip and by whether the preview behaves as Matt's app does. Shared with `f_paper`, whose spec is not yet written.
-- **G3 Solve and constraints.** Unconstrained least squares then clamp (cheap, not optimal) versus a constrained solve for three inks; ridge handling when the ink colours are nearly collinear.
-- **G4 Degenerate inks.** An ink equal to the paper (zero density), an ink with a zero channel (the logarithm is undefined), and a pixel brighter than the paper: epsilon, clamp, and what the preview shows.
-- **G5 Preview and `f_paper`.** Whether the preview stays inside `f_separate` (P5) or is only produced by a chain into `f_paper`; whether code can be shared between modules is unverified.
-- **G6 Colour parameters in `definition.py`.** How a colour control (three ink swatches, the paper swatch) is expressed in `build/spec.md` and `build_patcher.py`; not read for this spec. If there is no colour-picker type, the colours may have to be three numbers each.
-- **G7 Linear-light versus encoded values.** The density model is defined on reflectance (linear light). Deferred (Matt, for `f_ink`); here it changes the unmix directly, so decide before tier 3.
-- **G8 Name, menu and panel.** The menu category under `G-menu`; the control set (three swatches plus paper, count, mode) under `G-ui-density`.
-- **G9 Order dependence.** Riso overprint is order-dependent; whether to add an ink order later (out of scope now).
+### Open, decided in Phase 0 (gates; carried into `tasks.md`)
+
+- **G1 Verification tiers.** Proposal: tier 1 mirrors the unmix and the round trip (closed forms, no Max); tier 2 benches the real codebox; tier 3 is Matt's live look.
+- **G2 Overprint model.** CLOSED by P2 (additive).
+- **G3 Solve and constraints.** Unconstrained least squares then clamp versus a non-negative solve for three inks; ridge when the ink colours are nearly collinear.
+- **G4 Degenerate inks.** A black ink (zero column), duplicate or collinear inks, and non-finite input. (Paper-related cases are gone.)
+- **G5 Preview.** CLOSED by P5: the preview is the fourth outlet.
+- **G6 Colour parameters in `definition.py`.** Three ink colours (no paper); a `swatch` route or nine float dials; not yet proved.
+- **G7 Linear-light versus encoded values.** Deferred (Matt). Additive light is physically linear light; whether to treat the input as encoded is a look decision.
+- **G8 Name, menu and panel.** Menu category under `G-menu`; control set (three swatches, count, mode, gains) under `G-ui-density`.
+- **G9 Order dependence.** Moot: additive overprint is commutative.
 
 ---
 

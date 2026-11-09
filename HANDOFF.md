@@ -22,6 +22,11 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
+## 2026-11-08 (later): f_separate P-list reviewed with Matt
+
+- **Decided (Matt, chat, one at a time):** paper is the black background, no `paper` param; overprint is additive light; plates are one coloured RGB outlet per ink (`c_i * k_i`) plus a fourth preview outlet (sum); Nearest includes black; no black plate or CMYK; per-pixel; bypass to all four outlets. No comparison with prepress apps: print is a vocabulary for screens (memory `print-is-vocabulary`). Recorded in `f_separate/spec.md` "Decided with Matt", plan ADR-1 to ADR-5, tasks T005-T013.
+- **Not done:** `f_separate` FRs/stories/SCs still describe the old model (T013a); the coloured-plate consequence is not yet noted in the `f_screen`, `f_ink`, `f_engrave` specs. Mirror not built (T014). Matt has not reviewed the other three modules' PRELIMINARY gates.
+
 ## 2026-11-08: print-styles family: idea note, four specs, plans and tasks (nothing built)
 
 - **State:** `ideas/f_print_styles.md` (goal: print behaviours are a vocabulary, not the goal; five stages; decisions) and, for `f_ink`, `f_screen`, `f_separate`, `f_engrave`, a `spec.md`, `plan.md` and `tasks.md` each. Commits `34f6f74`, `f6e291c`, `2f44430`, `46faace`. Nothing built, run or measured.

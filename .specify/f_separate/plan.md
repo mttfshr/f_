@@ -3,20 +3,20 @@
 **Date**: 2026-11-08
 **Spec**: .specify/f_separate/spec.md
 
-All gate decisions below are **preliminary**: Claude's recommendations, accepted in place on Matt's instruction (2026-11-08). Matt has not confirmed them, and the overprint model in particular is Claude's choice, not checked against his prepress app. Derivations marked inferred are worked out, not run.
+Matt reviewed the P-list on 2026-11-08 (spec "Decided with Matt"): black background, additive overprint, coloured plates, four outlets. The remaining gate details below (ridge, solve, colour controls, linear-light) are Claude's preliminary recommendations. Derivations marked inferred are worked out, not run.
 
 ---
 
 ## Summary
 
-A stateless, per-pixel processor in one `jit.gl.pix` stage with two outlets. It converts each pixel to optical density relative to the paper, solves a small least-squares problem for the coverage of each of up to three inks, clamps the result to 0..1 and writes it as three plates (outlet 0). It then recomposes the plates on the paper by the same model and writes that as a live preview (outlet 1). The colour controls are the open build question (spec G6).
+A stateless, per-pixel processor in one `jit.gl.pix` stage with four outlets. It solves a small least-squares problem for the coverage of each of up to three ink colours (additive light on black), clamps to 0..1, and writes each coverage times its ink colour to its own plate outlet (0 to 2). Outlet 3 is the sum, a live preview. The colour controls are the open build question (spec G6).
 
 ---
 
 ## Technical Context
 
 - **Runtime**: Max 9, `jit.gl.pix` GPU path (GenExpr). `@type float32`.
-- **Archetype**: processor, in0 the `driving_inlet`; one stage; two outlets (the build supports several outlets per stage: `f_vf_glow` has two). With in0 unconnected both outlets are black.
+- **Archetype**: processor, in0 the `driving_inlet`; one stage; four outlets (the build supports several outlets per stage: `f_vf_glow` has two; four is unverified). With in0 unconnected all outlets are black.
 - **Limits** (`skills/jit-gen-codebox/SKILL.md`, read, not re-run): about 250 statements per function and about 450 per program. The solve below is a few dozen statements per pixel (inferred).
 - **Colour controls**: a search of `src/f_vf_glow/definition.py` and `build/spec.md` (2026-11-08) found no colour-picker parameter type (`f_vf_glow`'s `color_mix` is a float dial). So colours are either three float dials each, or a raw `swatch` object per colour routed to Params. Unverified; spec G6, gate T009.
 - **Build**: `src/f_separate/definition.py` → `build/build_patcher.py` → `package/patchers/f_separate.maxpat`.
@@ -27,7 +27,6 @@ A stateless, per-pixel processor in one `jit.gl.pix` stage with two outlets. It 
 
 ✅ Codebox-first; one concern (colour into plates); the patcher is a thin wrapper.
 ✅ Numbers before eyes: reproduction of each ink, overprints, the paper, the round trip and degenerate palettes are all closed forms or invariants (spec SC-001 to SC-006), so tiers 1 and 2 come before the live look.
-⚠️ The overprint model is not a decision to settle by eye alone: it fixes the contract with `f_paper` (whose spec is not written). Mitigation: record the model in this plan and the spec, test the round trip, and hold the contract open (T008).
 ⚠️ A per-pixel solve costs more than a lookup; mitigated by the small size (N ≤ 3) and measured on the bench.
 
 ---
@@ -50,47 +49,45 @@ package/patchers/f_separate.maxpat   docs/f-reference/f_separate.md   package/he
 
 ## Architecture Decisions
 
-### ADR-1: Density model, solved in log space (G2, spec P2)
+### ADR-1: Additive-light model (G2 closed; spec P2, P3)
 
-**Decision (preliminary, inferred)**: for paper colour `P` and an ink with full-coverage colour `k_i`, the density of ink `i` per channel is `d_i = -ln(max(k_i, ε) / P)` (clamped at 0 where `k_i` exceeds `P`). A pixel with colour `x` has target density `t = -ln(max(x, ε) / P)` (clamped at 0 where `x` exceeds `P`). Coverages add: `t ≈ D c`, where `D` is 3×N with columns `d_i`. The recomposed colour is `P * exp(-D c)`.
-**Rationale**: logs make the overprint linear in the coverages, so the unmix is one small least-squares solve, a few dozen operations and order-independent. It is also a reasonable first model of translucent ink layers (inferred).
-**Alternative kept for comparison**: the coverage-weighted multiply `P * Π_i (1 - c_i (1 - k_i / P))`, not linear in `c`. Decide by the round trip and by comparing the preview with Matt's prepress app (T008).
-**Consequence**: `f_paper` will need to apply this same model; the contract is written into this plan so the later spec can inherit it.
+**Decision (Matt, 2026-11-08)**: background is black, overprint is additive light. For ink colours `k_i` (RGB), coverages `c_i` in 0..1: the pixel colour is `K c` with `K` the 3×N matrix of ink colours. The unmix is the least-squares solution of `K c ≈ x`, clamped to 0..1. Linear, exact, order-independent.
+**Rejected**: density (Beer-Lambert) model, undefined on black; coverage-weighted multiply, black on black; screen blend `1 - Π(1 - c_i k_i)` (never clips but no exact unmix; Matt chose add).
+**Consequence**: `f_paper` (unspecced) inherits additive light: the sum of plates.
 
 ### ADR-2: Solve and constraint (G3, spec P1, P4)
 
-**Decision (preliminary)**: for `N` inks, `c = clamp((DᵀD + λ I)⁻¹ Dᵀ t, 0, 1)` with a small ridge `λ` (about 1e-4, tuned) for collinear palettes. `DᵀD` is N×N with N ≤ 3, inverted in closed form by cofactors in a function. Unconstrained solve then clamp is cheap and not optimal; a constrained (non-negative) solve for three inks is the alternative if the clamp looks wrong near the gamut boundary (tier 3).
-**Fewer inks than three** (`inks` 1 or 2): the same formula with `D` of N columns; the unused plate channels are written as exactly 0.
+**Decision (preliminary)**: `c = clamp((KᵀK + λ I)⁻¹ Kᵀ x, 0, 1)` with a small ridge `λ` (about 1e-4, tuned) for collinear palettes; `KᵀK` is N×N with N ≤ 3, inverted in closed form by cofactors. A non-negative constrained solve is the alternative if the clamp looks wrong near the gamut boundary (tier 3).
+**Fewer inks** (`inks` 1 or 2): the same formula with `K` of N columns; unused plates are exactly black. With one ink the plate is the projection of the pixel onto that ink's colour.
 
 ### ADR-3: Degenerate cases (G4, spec FR-007)
 
-**Decision (preliminary)**: `ε = 1e-4` on every logarithm argument; an ink equal to the paper has zero density (its column is zero, ridge keeps the inverse finite, its plate comes out 0); a pixel brighter than the paper has `t` clamped to 0, so every plate is 0; non-finite input is zapped to 0 before anything else.
+**Decision (preliminary)**: a black ink has a zero column (ridge keeps the inverse finite, its plate comes out 0); duplicate or collinear inks are handled by the ridge; non-finite input is zapped to 0 first. No logarithms, so no epsilon.
 
-### ADR-4: Two outlets and the preview (G5, spec P5)
+### ADR-4: Four outlets (G5 closed; spec P5)
 
-**Decision (preliminary)**: out1 is `P * exp(-D c)` with the gains applied to `c`, clamped to 0..1, computed in the same stage from the same `D`. The preview duplicates `f_paper`'s core, minimally. Sharing code with a future `f_paper` is unverified in this build system; if it is not possible, the duplication stays small (about five statements).
-**Rejected**: no preview outlet (the live gamut preview is the point of the module, per Matt's description of the prepress app).
+**Decision (Matt)**: outlets 0 to 2 are plates `gain_i * c_i * k_i` (RGB, ink-coloured), one per ink, black for unused inks; outlet 3 is the preview, the sum of the plates, clamped to 0..1. A single RGB channel cannot carry a spot colour such as teal, so plates are not packed into R, G and B. The gain-above-1 bound question (can a plate exceed its ink colour?) is open, with the gains (User Story 6).
 
 ### ADR-5: Nearest mode (spec P6, User Story 5)
 
-**Decision (preliminary)**: for each pixel compute the squared RGB distance to each ink colour and to the paper; the nearest wins; if an ink wins, its plate is 1 and the others 0, if the paper wins all are 0. RGB distance, not density distance, for now (inferred: simpler, and the decision is a tier-3 look).
+**Decision (Matt: yes; details preliminary)**: squared RGB distance from the pixel to each ink and to black; the nearest wins; an ink winning gets coverage 1 and the others 0; black winning gives all 0.
 
 ### ADR-6: Colour controls (G6)
 
-**Decision (preliminary)**: Phase 0 first tries one `swatch` box per colour (three inks plus paper) in `raw_boxes`, outputs unpacked to the Params `ink1_r` … `paper_b` (twelve Params). The fallback is twelve float dials grouped in rows. Unverified: the first build task proves the swatch route offline (JSON and route) and Matt confirms it in Max.
+**Decision (preliminary)**: Phase 0 first tries one `swatch` box per ink colour (three) in `raw_boxes`, outputs unpacked to the Params `ink1_r` … `ink3_b` (nine Params). The fallback is nine float dials grouped in rows. Unverified: the first build task proves the swatch route offline (JSON and route) and Matt confirms it in Max.
 **Rejected**: hard-coding the palette in the codebox.
 
 ### ADR-7: Bypass, alpha, bounds (spec FR-009, FR-010, FR-012)
 
-**Decision**: `bypass` is the codebox `bypass_gate` Param (never native `@bypass`); both outlets pass the source through. Alpha copied from the source on both outlets. Plates and preview clamped to 0..1.
+**Decision**: `bypass` is the codebox `bypass_gate` Param (never native `@bypass`); all four outlets pass the source through (Matt, P10). Alpha copied from the source on all outlets. Coverages and preview clamped to 0..1.
 
 ---
 
 ## Stage and wiring sketch
 
 ```
-in0 (driving_inlet) -> separate -> out0 (plates), out1 (preview)
-swatch x4 -> unpack -> Params ink1_r .. paper_b -> separate
+in0 (driving_inlet) -> separate -> out0..out2 (plates 1-3), out3 (preview)
+swatch x3 -> unpack -> Params ink1_r .. ink3_b -> separate
 inks / mode / gains / bypass -> Params -> separate
 ```
 
@@ -99,22 +96,22 @@ inks / mode / gains / bypass -> Params -> separate
 ## Testing plan (constitution tiers)
 
 - **G1 decided (preliminary)**: tiers 1, 2 and 3 all apply.
-- **Tier 1**: `separate_mirror.py` / `test_separate.py`: flat patches of each ink, each overprint pair, the paper colour and a grey ramp; the round trip for in-gamut and out-of-gamut colours (random palettes included); bounds; degenerate palettes (ink equal to paper, zero-channel ink, collinear inks); one-ink monotonicity; Nearest mode; non-finite zap. Run `tests/run.sh -q tests/modules/separate`.
+- **Tier 1**: `separate_mirror.py` / `test_separate.py`: flat patches of each ink, each overprint pair (sum), black and a grey ramp; the round trip for in-gamut and out-of-gamut colours (random palettes included); bounds; degenerate palettes (black ink, duplicate or collinear inks); one-ink monotonicity; Nearest mode; non-finite zap. Run `tests/run.sh -q tests/modules/separate`.
 - **Tier 2**: `bench_separate.py` runs the real codebox against the mirror; first item is the per-pixel cost at 1080p. `bench_separate_module.py` covers bypass on both outlets, the live colour change, and the colour-control route. Read `skills/bench-test-authoring` before writing either.
-- **Contracts**: register in `tests/contracts/test_module_contracts.py` and `bench_modules.py` (two outlets, `BYPASS_EXPECT`).
-- **Tier 3 (Matt)**: a photo with two and three chosen inks; compare the preview with his prepress app's; a bent use (three unrelated colours, a narrow palette).
+- **Contracts**: register in `tests/contracts/test_module_contracts.py` and `bench_modules.py` (four outlets, `BYPASS_EXPECT`).
+- **Tier 3 (Matt)**: a photo with two and three chosen inks; judge the preview and the plates on screen (no prepress comparison); a bent use (three unrelated colours, a narrow palette).
 
 ## Risks
 
-- **The model may not match the prepress app's preview** (it is Claude's choice): the alternative model and the Nearest mode are the fallbacks; Matt's tier-3 comparison decides.
+- **Clipping:** inks that sum past 1 clip in the preview; the screen blend was offered and not chosen.
 - **The swatch route is unverified**: twelve dials are the fallback, at the cost of panel density (`G-ui-density`).
-- **Linear-light (G7)**: the density model is defined on reflectance; applying it to encoded values may shift mid-tones. Deferred by Matt; revisit at tier 3 and add a switch if the look needs it.
+- **Linear-light (G7)**: additive light is linear; applying it to encoded values may shift mid-tones. Deferred by Matt; revisit at tier 3 and add a switch if the look needs it.
 - **Collinear palettes** make the solve unstable; the ridge and tests cover it, tuned live.
-- **Contract with `f_paper`**: this plan fixes a model its spec has not seen.
+- **Contract with `f_paper`**: additive light, simple.
 
 ## Phasing (details in tasks.md)
 
 - **Phase 0**: gates, the mirror, the colour-control route.
 - **Phase 1**: codebox (Unmix first, then Nearest and gains), `definition.py`, patcher, benches.
-- **Phase 2**: tuning with Matt against the prepress app.
+- **Phase 2**: tuning with Matt, live.
 - **Phase 3**: reference doc, helpfile, menu, README.

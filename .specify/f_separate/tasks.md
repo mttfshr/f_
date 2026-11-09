@@ -20,16 +20,17 @@ package/patchers/f_separate.maxpat    docs/f-reference/f_separate.md    package/
 - [x] T002 [GATE] DECIDED (Matt, 2026-11-08): not a swizzle; a palette-aware separation with a live composite preview of the palette's colour shift.
 - [x] T003 [GATE] DECIDED (Matt, 2026-11-08): no riso-specific halftone emulation (affects `f_screen`, noted here for the contract).
 - [ ] T004 [GATE G1] PRELIMINARY: tiers 1, 2 and 3 all apply.
-- [ ] T005 [GATE G2] PRELIMINARY: the density model (plan ADR-1). Keep the coverage-weighted multiply as the comparison model in the mirror.
-- [ ] T006 [GATE G3] PRELIMINARY: unconstrained least squares then clamp, ridge for collinear palettes (plan ADR-2); a constrained solve is the alternative if the boundary looks wrong.
-- [ ] T007 [GATE G4] PRELIMINARY: `ε` and the clamps of plan ADR-3; test each degenerate case.
-- [ ] T008 [GATE G2/G5] Ask Matt to compare the preview of the mirror's output against his prepress app on one image and one palette; record which overprint model matches better. Until then the density model stands.
-- [ ] T009 [GATE G6] Prove the colour-control route: a `swatch` per colour unpacked to Params, in a scratch `definition.py` (offline: JSON and route; Matt confirms in Max). Fallback: twelve float dials. Read `build/spec.md` for how raw boxes feed Params.
-- [ ] T010 [GATE G7] DEFERRED by Matt (linear-light versus encoded). PRELIMINARY: apply the model to values as given; revisit at T032 and add a switch if the look needs it.
-- [ ] T011 [GATE G8] PRELIMINARY: keep the name `f_separate`; menu category at Phase 3 (`G-menu`); the panel grouped as Inks / Paper / Mode (`G-ui-density`).
-- [ ] T012 [GATE G9] PRELIMINARY: ink order out of scope (order-independent overprint).
-- [ ] T013 Confirm the eleven preliminary decisions P1-P11 in the spec with Matt (or note which he reverses), and note the contract with `f_paper` in `ideas/f_print_styles.md`.
-- [ ] T014 [US1] [US2] [US3] [US4] NumPy mirror `tests/modules/separate/separate_mirror.py` and `test_separate.py`: flat ink patches, overprint pairs, the paper, a grey ramp, the round trip (in and out of gamut, random palettes), bounds, degenerate palettes, one-ink monotonicity, non-finite zap. Run `tests/run.sh -q tests/modules/separate`.
+- [x] T005 [GATE G2] DECIDED (Matt, 2026-11-08): overprint is additive light on a black background ("add"); density and multiply models dropped, no paper parameter.
+- [ ] T006 [GATE G3] PRELIMINARY: unconstrained least squares then clamp, ridge for collinear palettes (plan ADR-2); a non-negative solve is the alternative if the boundary looks wrong.
+- [ ] T007 [GATE G4] PRELIMINARY: degenerate cases are a black ink, duplicate or collinear inks, and non-finite input (plan ADR-3); test each.
+- [x] T008 [GATE G2/G5] CLOSED (Matt, 2026-11-08): no prepress-app comparison (print is a vocabulary, output is for screens). G2 by T005; G5 by T013: the preview is the fourth outlet.
+- [ ] T009 [GATE G6] Prove the colour-control route: a `swatch` per ink (three) unpacked to Params, in a scratch `definition.py` (offline: JSON and route; Matt confirms in Max). Fallback: nine float dials. Read `build/spec.md` for how raw boxes feed Params.
+- [ ] T010 [GATE G7] DEFERRED by Matt (linear-light versus encoded). PRELIMINARY: apply the maths to values as given; revisit at T032.
+- [ ] T011 [GATE G8] PRELIMINARY: keep the name `f_separate`; menu category at Phase 3 (`G-menu`); the panel grouped as Inks / Mode (`G-ui-density`).
+- [x] T012 [GATE G9] CLOSED: additive overprint is commutative, order is moot.
+- [x] T013 P-list review done with Matt, 2026-11-08 (chat, one at a time): P1 to P11, recorded in the spec "Decided with Matt". Outcomes: black background and additive overprint (P2, P3), four outlets with coloured plates (P5), Nearest includes black (P6), no black plate (P7), bypass to all four outlets (P10). Contract note for `f_paper` still to go into `ideas/f_print_styles.md`.
+- [ ] T013a Reconcile spec FRs, user stories and success criteria (paper, R/G/B plates, two outlets, prepress wording) with the decided P-list; note the coloured-plate consequence in the `f_screen`, `f_ink` and `f_engrave` specs; open item: can a gain above 1 push a plate past its ink colour (User Story 6)?
+- [ ] T014 [US1] [US2] [US3] NumPy mirror `tests/modules/separate/separate_mirror.py` and `test_separate.py` (additive model only; no second model): flat ink patches, overprint pairs (sums), black, a grey ramp, the round trip (in and out of gamut, random palettes), bounds, degenerate palettes, one-ink monotonicity, non-finite zap. Run `tests/run.sh -q tests/modules/separate`.
 - [ ] T015 [US5] Mirror additions for Nearest mode (at most one plate at 1; exact ink colours map to their plate).
 
 ## Phase 1: build
@@ -42,7 +43,7 @@ package/patchers/f_separate.maxpat    docs/f-reference/f_separate.md    package/
 
 ## Phase 2: tuning (Matt)
 
-- [ ] T030 Live look: a photo with two and then three inks; does the preview match the character of his prepress app's? (T008)
+- [ ] T030 Live look: a photo with two and then three inks; do the plates and the preview look and behave well on screen? (No prepress comparison; Matt, 2026-11-08.)
 - [ ] T031 Live look: Nearest mode; a bent use (three unrelated colours, a very narrow palette).
 - [ ] T032 Ridge, clamps, defaults and linear-light (T010); back into the codebox and `definition.py`, then re-run tiers 1 and 2.
 
