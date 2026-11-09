@@ -15,7 +15,7 @@ The nine ink Params are `internal`: the swatches drive them, never a dial.
 patcher = {
     "name":                "f_separate",
     "prefix":              "separate",
-    "object_name":         "separate_pix",
+    "object_name":         "#0_separate_pix",
     "title":               "Separate",
     "signal_type":         "tex in/out",
     "archetype":           "processor",

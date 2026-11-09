@@ -350,8 +350,8 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name separate_pix @adapt 0 @dim 256 256 @type float32",
-					"varname": "separate_pix"
+					"text": "jit.gl.pix vsynth @name #0_separate_pix @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_separate_pix"
 				}
 			},
 			{
@@ -661,7 +661,7 @@
 						"",
 						"int"
 					],
-					"param_connect": "separate_pix::n_inks",
+					"param_connect": "#0_separate_pix::n_inks",
 					"parameter_enable": 1,
 					"patching_rect": [
 						38.0,
@@ -753,7 +753,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "separate_pix::sep_mode",
+					"param_connect": "#0_separate_pix::sep_mode",
 					"parameter_enable": 1,
 					"patching_rect": [
 						102.0,
@@ -856,7 +856,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "separate_pix::gain1",
+					"param_connect": "#0_separate_pix::gain1",
 					"parameter_enable": 1,
 					"patching_rect": [
 						190.5,
@@ -960,7 +960,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "separate_pix::gain2",
+					"param_connect": "#0_separate_pix::gain2",
 					"parameter_enable": 1,
 					"patching_rect": [
 						262.5,
@@ -1064,7 +1064,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "separate_pix::gain3",
+					"param_connect": "#0_separate_pix::gain3",
 					"parameter_enable": 1,
 					"patching_rect": [
 						334.5,
@@ -1168,7 +1168,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "separate_pix::sat1",
+					"param_connect": "#0_separate_pix::sat1",
 					"parameter_enable": 1,
 					"patching_rect": [
 						406.5,
@@ -1253,7 +1253,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "separate_pix::sat2",
+					"param_connect": "#0_separate_pix::sat2",
 					"parameter_enable": 1,
 					"patching_rect": [
 						478.5,
@@ -1338,7 +1338,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "separate_pix::sat3",
+					"param_connect": "#0_separate_pix::sat3",
 					"parameter_enable": 1,
 					"patching_rect": [
 						550.5,

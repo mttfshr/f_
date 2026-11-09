@@ -28,5 +28,5 @@
 - **Narrowed (Matt):** ink moves along a vecfield. Extent (mass transport), Bulge (outlines only), Travel; three stages; mottle, dropout, spread's threshold removed. Spec "Narrowed", plan ADR-9, tasks T050-T054.
 - **Benched (Claude, in Max):** tier 1 10/10, codebox 5/5 (`tests/logs/20261109-083619-bench.log`), module 2/2 (`-083646`). Patcher against the mirror: worst 1.5e-6. Not yet looked at.
 - **Open:** cost unresolved (bench floor, about 0.8 ms upper bound per stage). With no field the module is identity (T054). Constants inferred from one frame (ADR-9).
-- **Found, not fixed:** contract bench 1/2 (`-083659`): `f_separate`'s pix name is not `#0_`-scoped, so a second instance collides (`src/f_separate/definition.py:18`).
+- **Fixed on the way (Matt's go):** `f_separate`'s pix name is now `#0_`-scoped, so a second instance no longer collides; contract bench 2/2 (`-084909`).
 - **Lesson:** mock on real footage; the sheets on clean shapes predicted nothing. The module bench closes `bench.maxpat`; `benchclient.reopen()` restores it.
