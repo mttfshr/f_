@@ -1,6 +1,6 @@
 """
 bench_separate_module.py -- f_separate T022 (module half): the shipped patcher in the live module bench. The codebox bench
-(bench_separate.py) cannot see this layer: the `r draw` -> delay -> bang that sends the default colours, the route -> swatch ->
+(bench_separate.py) cannot see this layer: the `r draw` -> delay -> bang that sends the default colors, the route -> swatch ->
 unpack -> `prepend param` chain, the saturation dials, the Mode menu. That layer is where Matt's all-black look of 2026-11-08 was.
 
 Each job is a `segments` timeline (bench_module.js): control messages one per frame, a wait in frames, a snapshot of all four
@@ -8,15 +8,15 @@ outlets. The source is fed every frame at the render size, 640 x 640 (bench_modu
 checked.
 
 Reading the inks back. In Project mode with gain 1, a white pixel has coverage sum(k) / sum(k*k), which is at least 1 for k in
-0..1, so it clamps to 1 and the plate shows the ink colour exactly. The source has a white patch for this. The rows that compare
+0..1, so it clamps to 1 and the plate shows the ink color exactly. The source has a white patch for this. The rows that compare
 against the mirror use the inks READ BACK, so a swatch error cannot pass as, or be hidden by, a solve error; the read-back inks
 get their own rows.
 
 Asserted (thresholds written before the first run; not to be loosened to make a failure pass):
   - load, no messages at all: plates 1 and 2 are not black, plate 3 is, all four match the mirror (the all-black regression)
-  - the default inks arrive close to the definition's colours (BANG_TOL)
+  - the default inks arrive close to the definition's colors (BANG_TOL)
   - Mode menu and Inks: Unmix, Nearest, Project at three inks, and one ink, match the mirror
-  - `inkN r g b` reaches ink N only, close to the commanded colour (LIST_TOL), and leaves the other plates exactly unchanged
+  - `inkN r g b` reaches ink N only, close to the commanded color (LIST_TOL), and leaves the other plates exactly unchanged
   - gains reach the pix
   - a saturation dial changes its own ink and leaves the other plates exactly unchanged (T021's open question)
 
@@ -27,7 +27,7 @@ Tolerances:
   BANG_TOL  the defaults arrive by `set` then a bang, and a bang outputs "the current color at the selected (x,y) position"
             (swatch.maxref), so they may be quantised to the swatch's pixels. INFERRED from the maxref, not measured: one pixel of
             hue across about 56 pixels is about 6/56 = 0.11 in RGB, half of that from rounding, plus lightness. 0.15 catches a
-            wrong colour, not a slightly different one. The real number is noted; recalibrate from it and record why.
+            wrong color, not a slightly different one. The real number is noted; recalibrate from it and record why.
 
 Not here: bypass is the contract bench's (tests/contracts/bench_modules.py, BYPASS_EXPECT); the 1080p cost; persistence across a
 plain reopen (not reachable from this harness; Matt's look). The source stays inside 0..1 and is finite: out-of-range and
@@ -61,7 +61,7 @@ DEFAULTS = np.array([[1.0, 0.25, 0.0], [0.0, 0.6, 0.6], [0.45, 0.0, 1.0]], dtype
 
 
 def photo(seed=5, n=N):
-    """Random colours and alpha inside 0..1, and the white patch that reads the inks back."""
+    """Random colors and alpha inside 0..1, and the white patch that reads the inks back."""
     rng = np.random.default_rng(seed)
     t = np.zeros((n, n, 4), F32)
     t[..., :3] = rng.uniform(0, 1, (n, n, 3))
@@ -104,7 +104,7 @@ def outs(frames, tag):
 
 
 def readback(got):
-    """The ink colours, from the white patch of a Project snapshot taken with gain 1 and three inks."""
+    """The ink colors, from the white patch of a Project snapshot taken with gain 1 and three inks."""
     return np.array([got[i][PATCH // 2, PATCH // 2, :3] for i in range(3)], dtype=F32)
 
 
@@ -124,8 +124,8 @@ def test_load_touching_nothing():
     f = job([{"wait": SETTLE, "snap": "load"}, READ])
     load, inks = outs(f, "load"), readback(outs(f, "read"))
     note("default inks read back", inks.tolist())
-    note("default inks: worst distance from the definition's colours", mx(inks, DEFAULTS))
-    check("default inks arrive near the definition's colours", mx(inks, DEFAULTS), BANG_TOL)
+    note("default inks: worst distance from the definition's colors", mx(inks, DEFAULTS))
+    check("default inks arrive near the definition's colors", mx(inks, DEFAULTS), BANG_TOL)
     check("load: plate 1 is not black", float(load[0][..., :3].max() < 0.1), 0.0)
     check("load: plate 2 is not black", float(load[1][..., :3].max() < 0.1), 0.0)
     check("load: preview is not black", float(load[3][..., :3].max() < 0.1), 0.0)
@@ -148,7 +148,7 @@ def test_mode_menu_and_ink_count():
 
 
 def test_ink_message_reaches_one_ink():
-    """`inkN r g b` goes route -> swatch -> unpack -> `prepend param`. The second colour is a pastel, off the swatch's plane."""
+    """`inkN r g b` goes route -> swatch -> unpack -> `prepend param`. The second color is a pastel, off the swatch's plane."""
     one, two = np.array([0.2, 0.0, 0.8], F32), np.array([0.6, 0.5, 0.4], F32)
     f = job([READ,
              {"params": [["ink1", *one.tolist()]], "wait": SETTLE, "snap": "moved1"},
@@ -156,7 +156,7 @@ def test_ink_message_reaches_one_ink():
     before, moved1, moved2 = outs(f, "read"), outs(f, "moved1"), outs(f, "moved2")
     note("ink 1 commanded distance", mx(readback(moved1)[0], one))
     note("ink 2 (pastel) commanded distance", mx(readback(moved2)[1], two))
-    check("ink1 message: ink 1 is the commanded colour", mx(readback(moved1)[0], one), LIST_TOL)
+    check("ink1 message: ink 1 is the commanded color", mx(readback(moved1)[0], one), LIST_TOL)
     check("ink2 message: ink 2 is the commanded pastel", mx(readback(moved2)[1], two), LIST_TOL)
     check("ink1 message: plate 2 exactly unchanged (Project)", mx(moved1[1], before[1]), 0.0)
     check("ink1 message: plate 3 exactly unchanged (Project)", mx(moved1[2], before[2]), 0.0)
@@ -175,7 +175,7 @@ def test_gains():
 
 
 def test_saturation_dial():
-    """T021's open question: dial -> expr -> [t b f] -> `saturation`, then a bang, so the swatch sends its colour again."""
+    """T021's open question: dial -> expr -> [t b f] -> `saturation`, then a bang, so the swatch sends its color again."""
     f = job([READ,
              {"params": [["sat1", 0.5]], "wait": SETTLE, "snap": "half"},
              {"params": [["sat1", 1.0]], "wait": SETTLE, "snap": "back"}])

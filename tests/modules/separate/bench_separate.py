@@ -5,14 +5,14 @@ diffed against separate_mirror.separate_stage. One pass per job, one input (the 
 This is also the first time the codebox is COMPILED: a syntax error shows as a failed job (status and errors in the
 message), and Matt's first Max look (2026-11-08) found black outputs that offline tests cannot explain.
 
-Every Param is pinned in every job (the bench keeps a Param's last value). Params: the nine ink colours, n_inks, sep_mode
+Every Param is pinned in every job (the bench keeps a Param's last value). Params: the nine ink colors, n_inks, sep_mode
 (0 Unmix, 1 Nearest, 2 Project), gain1-3, bypass_gate.
 
 Tolerances:
   TOL  the codebox does the same float32 arithmetic as the mirror but in a different order (cofactors, the ridge, divisions),
        and a GPU `/` and `clamp` are not NumPy's. Measured offline between the mirror and a NumPy transcription of the codebox:
        1.2e-4 worst; 2e-3 allows the GPU's own division. A first run may need this recalibrated; the number is then recorded.
-  The 1:1 read of an input texture at texel centres through sample() is exact on this path (jit-gen-codebox, bench facts).
+  The 1:1 read of an input texture at texel centers through sample() is exact on this path (jit-gen-codebox, bench facts).
 
 Needs Max with tests/bench/bench.maxpat open.
 Run:  tests/bench.sh -q tests/modules/separate/bench_separate.py
@@ -41,7 +41,7 @@ MODES = {0: "unmix", 1: "nearest", 2: "project"}
 
 
 def photo(seed=3, n=N):
-    """Colourful, with values outside 0..1 on a few texels and a hard patch of each ink colour."""
+    """Colorful, with values outside 0..1 on a few texels and a hard patch of each ink color."""
     rng = np.random.default_rng(seed)
     t = np.zeros((n, n, 4), np.float32)
     t[..., :3] = rng.uniform(0, 1, (n, n, 3))

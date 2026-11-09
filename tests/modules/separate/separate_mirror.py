@@ -2,8 +2,8 @@
 .specify/stable/f_separate/spec.md, plan ADR-1 to ADR-5, tasks T014-T015). Float32, per pixel, stateless,
 in the order a codebox would compute it.
 
-Model (Matt, 2026-11-08): the background is black and inks are colours of light that ADD.
-    pixel = sum_i c_i * k_i          k_i = ink colour (RGB, 0..1), c_i = coverage in 0..1
+Model (Matt, 2026-11-08): the background is black and inks are colors of light that ADD.
+    pixel = sum_i c_i * k_i          k_i = ink color (RGB, 0..1), c_i = coverage in 0..1
 Unmix (P1, P2): c = clamp(gain * (K^T K + lam I)^-1 K^T x, 0, 1)   (gain, then one clamp: FR-004)       K = 3 x N, N = `inks`
     lam = LAM_REL * trace(K^T K) / N + LAM_ABS    (relative ridge, so a dim ink is not biased;
     an INFERRED choice, gate G3, not measured on a bench). The N x N inverse is by cofactors, as
@@ -62,7 +62,7 @@ def ridge_inverse(k):
 
 
 def separate_stage(src, inks, n_inks=3, mode="unmix", gains=(1, 1, 1), bypass=0, bug=None):
-    """src: (H, W, 4) float32 or None. inks: (3, 3) rows = ink colours. Returns four (H, W, 4) arrays."""
+    """src: (H, W, 4) float32 or None. inks: (3, 3) rows = ink colors. Returns four (H, W, 4) arrays."""
     if src is None:
         z = np.zeros((1, 1, 4), dtype=F32)
         return z, z.copy(), z.copy(), z.copy()

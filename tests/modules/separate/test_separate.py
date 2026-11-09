@@ -1,6 +1,6 @@
 """test_separate.py -- tier-1 tests for the not-yet-built f_separate module (T014, T015; SC-001 to SC-006).
 
-Ground truth is independent of the mirror: closed forms from the spec (an ink's own colour gives
+Ground truth is independent of the mirror: closed forms from the spec (an ink's own color gives
 its plate, sums of orthogonal inks, black gives black, the round trip x = K c, the one-ink
 projection k.x / k.k) and a float64 least-squares reference (np.linalg.lstsq, clamped).
 
@@ -47,7 +47,7 @@ def test_cofactor_inverse():
 
 
 def test_ink_patches():
-    """SC-001: a patch exactly an ink's colour gives that plate exactly that colour, the others black."""
+    """SC-001: a patch exactly an ink's color gives that plate exactly that color, the others black."""
     worst = 0.0
     for inks in (RGB3, SPOT):
         for i in range(3):
@@ -88,7 +88,7 @@ def test_round_trip():
         out = separate_stage(img(x), k)
         if inside.any():
             worst_in = max(worst_in, err(out[3][0, inside, :3], x[inside]))
-        y = rng.uniform(0, 1, (8, 3)).astype(F32)   # arbitrary colours, mostly outside the gamut
+        y = rng.uniform(0, 1, (8, 3)).astype(F32)   # arbitrary colors, mostly outside the gamut
         out = separate_stage(img(y), k)
         kd, yd = k.T.astype(np.float64), y.astype(np.float64).T          # kd = K (3 x N)
         c_ls = np.clip(np.linalg.lstsq(kd, yd, rcond=None)[0].T, 0, 1)    # unregularised, clamped
@@ -130,8 +130,8 @@ def test_degenerate_palettes():
         ok = all(np.isfinite(o).all() and o[..., :3].min() >= 0 and o[..., :3].max() <= 1 for o in out)
         check(f"{name} palette finite and bounded", 0 if ok else 1, 0)
     out = separate_stage(img([0.5 * pal_dup[0]]), pal_dup)
-    note("duplicate-ink preview error for a reproducible colour", err(out[3][0, 0, :3], 0.5 * pal_dup[0]))
-    check("duplicate inks still reproduce a reproducible colour", err(out[3][0, 0, :3], 0.5 * pal_dup[0]), 3e-3)
+    note("duplicate-ink preview error for a reproducible color", err(out[3][0, 0, :3], 0.5 * pal_dup[0]))
+    check("duplicate inks still reproduce a reproducible color", err(out[3][0, 0, :3], 0.5 * pal_dup[0]), 3e-3)
     out = separate_stage(img([[0, 0.6, 0.6]]), pal_black)
     check("black ink gets no coverage", float(np.abs(out[0][0, 0, :3]).max()), 1e-6)
 
@@ -145,15 +145,15 @@ def test_fewer_inks():
     check("one ink: unused plates black", float(max(np.abs(out[1][..., :3]).max(), np.abs(out[2][..., :3]).max())), 0)
     out = separate_stage(img([x]), SPOT, n_inks=2)
     check("two inks: plate 3 exactly black", float(np.abs(out[2][..., :3]).max()), 0)
-    grey = np.array([[0.8, 0.8, 0.8]] * 3, dtype=F32)
+    gray = np.array([[0.8, 0.8, 0.8]] * 3, dtype=F32)
     ramp = [[v, v, v] for v in np.linspace(0, 1, 17)]
-    out = separate_stage(img(ramp), grey, n_inks=1)
+    out = separate_stage(img(ramp), gray, n_inks=1)
     p = out[0][0, :, 0]
-    check("one grey ink: plate monotone in brightness", float(np.maximum(0, p[:-1] - p[1:]).max()), 1e-6)
+    check("one gray ink: plate monotone in brightness", float(np.maximum(0, p[:-1] - p[1:]).max()), 1e-6)
 
 
 def test_nearest():
-    """P6, FR-008, SC-006: at most one plate non-black, equal to its ink colour; black is a candidate."""
+    """P6, FR-008, SC-006: at most one plate non-black, equal to its ink color; black is a candidate."""
     rng = np.random.default_rng(5)
     x = rng.uniform(0, 1, (200, 3)).astype(F32)
     out = separate_stage(img(x), SPOT, mode="nearest")
@@ -163,7 +163,7 @@ def test_nearest():
     for i in range(3):
         o = separate_stage(img([SPOT[i]]), SPOT, mode="nearest")
         worst = max(worst, err(o[i][0, 0, :3], SPOT[i]))
-    check("exact ink colours map to their plate", worst, 1e-6)
+    check("exact ink colors map to their plate", worst, 1e-6)
     dark = separate_stage(img([[0.01, 0.01, 0.01]]), SPOT, mode="nearest")
     check("near-black goes to no plate", max(float(np.abs(o[..., :3]).max()) for o in dark), 0)
 
@@ -187,12 +187,12 @@ def test_project_mode():
     b = separate_stage(img(x), RGB3, mode="unmix")
     check("project equals unmix for orthogonal inks", max(err(a[i], b[i]) for i in range(4)), 2e-3)
     ink1 = separate_stage(img([SPOT[1]]), SPOT, mode="project")
-    check("project: an ink's own colour gives its plate in full", err(ink1[1][0, 0, :3], SPOT[1]), 1e-3)
+    check("project: an ink's own color gives its plate in full", err(ink1[1][0, 0, :3], SPOT[1]), 1e-3)
     note("project bleed into plate 3 from the teal patch (shared blue)", float(np.abs(ink1[2][0, 0, :3]).max()))
-    grey = np.array([[0.8, 0.8, 0.8]] * 3, dtype=F32)
+    gray = np.array([[0.8, 0.8, 0.8]] * 3, dtype=F32)
     ramp = img([[v, v, v] for v in np.linspace(0, 1, 17)])
-    p = separate_stage(ramp, grey, n_inks=1, mode="project")[0][0, :, 0]
-    u = separate_stage(ramp, grey, n_inks=1, mode="unmix")[0][0, :, 0]
+    p = separate_stage(ramp, gray, n_inks=1, mode="project")[0][0, :, 0]
+    u = separate_stage(ramp, gray, n_inks=1, mode="unmix")[0][0, :, 0]
     check("one ink: project equals unmix", err(p, u), 2e-3)
     black = np.array([[0, 0, 0], [0, 0.6, 0.6], [0.45, 0, 1]], dtype=F32)
     o = separate_stage(img(x), black, mode="project")
@@ -201,12 +201,12 @@ def test_project_mode():
 
 
 def test_gains():
-    """User Story 5: gain before the clamp; a plate never exceeds its ink colour; gain 0 empties a plate."""
+    """User Story 5: gain before the clamp; a plate never exceeds its ink color; gain 0 empties a plate."""
     k = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=F32)
     a = separate_stage(img([[0.4, 0, 0]]), k, gains=(2, 1, 1))
     check("gain 2 on coverage 0.4 gives 0.8", err(a[0][0, 0, 0], 0.8), 1e-3)
     b = separate_stage(img([[0.7, 0, 0]]), k, gains=(2, 1, 1))
-    check("gain 2 on coverage 0.7 saturates at the ink colour", err(b[0][0, 0, 0], 1.0), 1e-3)
+    check("gain 2 on coverage 0.7 saturates at the ink color", err(b[0][0, 0, 0], 1.0), 1e-3)
     c = separate_stage(img([[0.7, 0.7, 0]]), k, gains=(0, 1, 1))
     check("gain 0 empties plate 0", float(np.abs(c[0][..., :3]).max()), 1e-6)
     check("gain 0 leaves other plates", err(c[1][0, 0, 1], 0.7), 1e-3)

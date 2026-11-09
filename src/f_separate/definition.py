@@ -1,14 +1,14 @@
 """
 f_separate -- definition.py
 
-Splits a colour image into up to three spot-colour plates. The background is black and the inks are colours of light that
-add (Matt, 2026-11-08): pixel = sum of coverage * ink colour. Outlets 0 to 2 are the plates (each ink-coloured), outlet 3
+Splits a color image into up to three spot-color plates. The background is black and the inks are colors of light that
+add (Matt, 2026-11-08): pixel = sum of coverage * ink color. Outlets 0 to 2 are the plates (each ink-colored), outlet 3
 the preview (the plates summed). Stateless, per pixel. Spec, plan and tasks: .specify/stable/f_separate/{spec,plan,tasks}.md.
 Mirror: tests/modules/separate/separate_mirror.py.
 
-Colours (T009, proven live by Matt 2026-11-08): three `swatch` boxes, each route outlet -> swatch -> unpack ->
+Colors (T009, proven live by Matt 2026-11-08): three `swatch` boxes, each route outlet -> swatch -> unpack ->
 three `prepend param inkN_c` -> the pix. A swatch is a hue by lightness plane at one saturation, so each ink also has a
-saturation dial (`sat1`-`sat3`) feeding the swatch's `saturation` message, then a bang so the swatch sends its colour again.
+saturation dial (`sat1`-`sat3`) feeding the swatch's `saturation` message, then a bang so the swatch sends its color again.
 The nine ink Params are `internal`: the swatches drive them, never a dial.
 """
 
@@ -43,17 +43,17 @@ patcher = {
         {"name": "sep_mode", "type": "menu", "options": ["Unmix", "Nearest", "Project"], "default": 0, "label": "Mode",
          "hint": "Unmix: the best-fit coverage of all the inks together (exact round trip, but plates depend on each other). Nearest: each pixel wholly to its nearest ink, or to none when black is nearest. Project: each ink on its own, so a plate never depends on the other inks (the preview can overshoot)"},
         {"name": "gain1", "type": "float", "min": 0.0, "max": 2.0, "default": 1.0, "label": "Gain 1",
-         "hint": "Plate 1 coverage gain. Above 1 saturates faster but never exceeds the ink colour"},
+         "hint": "Plate 1 coverage gain. Above 1 saturates faster but never exceeds the ink color"},
         {"name": "gain2", "type": "float", "min": 0.0, "max": 2.0, "default": 1.0, "label": "Gain 2",
          "hint": "Plate 2 coverage gain"},
         {"name": "gain3", "type": "float", "min": 0.0, "max": 2.0, "default": 1.0, "label": "Gain 3",
          "hint": "Plate 3 coverage gain"},
         {"name": "sat1", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0, "label": "Sat 1", "pix_wire": False,
-         "hint": "Saturation of swatch 1's colour plane (lower for pastels and greys)"},
+         "hint": "Saturation of swatch 1's color plane (lower for pastels and grays)"},
         {"name": "sat2", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0, "label": "Sat 2", "pix_wire": False,
-         "hint": "Saturation of swatch 2's colour plane"},
+         "hint": "Saturation of swatch 2's color plane"},
         {"name": "sat3", "type": "float", "min": 0.0, "max": 1.0, "default": 1.0, "label": "Sat 3", "pix_wire": False,
-         "hint": "Saturation of swatch 3's colour plane"},
+         "hint": "Saturation of swatch 3's color plane"},
         {"name": "ink1", "type": "raw_ui"}, {"name": "ink2", "type": "raw_ui"}, {"name": "ink3", "type": "raw_ui"},
         {"name": "bypass", "type": "bypass"},
     ] + [
@@ -67,18 +67,18 @@ patcher = {
 
 
 # ---- the swatches (raw boxes; T009) ---------------------------------------------------------------------------------
-#   colour:  route outlet inkN -> swatch -> unpack -> three `prepend param inkN_c` -> the pix (a swatch change and a
+#   color:  route outlet inkN -> swatch -> unpack -> three `prepend param inkN_c` -> the pix (a swatch change and a
 #            module message `inkN r g b` both go through the swatch, so the display and the Params never disagree)
-#   default: loadbang -> deferlow -> `set r g b 1.` paints the swatch without sending. The colour is sent once, later:
+#   default: loadbang -> deferlow -> `set r g b 1.` paints the swatch without sending. The color is sent once, later:
 #            first `r draw` -> [onebang 1] -> [delay 100] -> bang each swatch. A bang at load (0f0826d) left all four outlets
 #            black on Matt's look, 2026-11-08; INFERRED cause: too early for the pix or the swatch, so timed off a draw
-#   sat:     satN dial (0..1) -> [t b f] -> f: `prepend saturation` -> swatch, then b: bang -> the swatch sends its colour
+#   sat:     satN dial (0..1) -> [t b f] -> f: `prepend saturation` -> swatch, then b: bang -> the swatch sends its color
 #            again. The attribute is 0..1 (swatch.maxhelp saves 1.0); a `* 255` here had no visible effect on the module bench,
 #            2026-11-08. UNVERIFIED in Max: whether `saturation` alone re-sends (the bang is the safe order)
 # Ids: the route is obj-4 (outlet 7 + N is inkN), the primary pix obj-5, the dials are the builder's (sat1-3).
 DEFAULTS = {1: (1.0, 0.25, 0.0), 2: (0.0, 0.6, 0.6), 3: (0.45, 0.0, 1.0)}
 SAT_DIAL = {1: "obj-35", 2: "obj-38", 3: "obj-41"}
-COL_CENTRE = {1: 66.0, 2: 113.0, 3: 160.0}    # panel columns, one per ink: Gain, Sat and the swatch share a centre (Matt, 2026-11-08)
+COL_CENTRE = {1: 66.0, 2: 113.0, 3: 160.0}    # panel columns, one per ink: Gain, Sat and the swatch share a center (Matt, 2026-11-08)
 RAW_BOXES, RAW_LINES = [], []
 
 
@@ -119,7 +119,7 @@ for n, (r, g, bl) in DEFAULTS.items():
     _line("obj-4", 7 + n, sw, 0)
     _line("obj-raw-def", 0, st, 0)     # paint the default at load
     _line(st, 0, sw, 0)
-    _line("obj-raw-wait", 0, sw, 0)    # after the first draw: the swatch SENDS its colour, so the Params follow
+    _line("obj-raw-wait", 0, sw, 0)    # after the first draw: the swatch SENDS its color, so the Params follow
     _line(sw, 0, un, 0)
     for j, c in enumerate("rgb"):
         pp = f"obj-raw-pp{n}{c}"
@@ -140,7 +140,7 @@ patcher["raw_lines"] = RAW_LINES
 
 # ---- the panel (Matt, 2026-11-08) ------------------------------------------------------------------------------------
 # Title bar: name, Mode menu (no label), signal type. Left column: Inks, a true integer numbox (as f_poincare's p and q).
-# Three columns, one per ink: Gain, Sat and the swatch on one centre.
+# Three columns, one per ink: Gain, Sat and the swatch on one center.
 _ROW_GAIN, _ROW_SAT = 38.0, 100.0   # dial tops; a label sits 18 px above
 
 

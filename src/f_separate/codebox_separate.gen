@@ -1,8 +1,8 @@
-// codebox_separate.gen -- f_separate: the one stage. Splits a colour image into up to three spot-colour plates.
+// codebox_separate.gen -- f_separate: the one stage. Splits a color image into up to three spot-color plates.
 // Stateless, per pixel. Float32. Mirror: tests/modules/separate/separate_mirror.separate_stage().
 //
-// Model (Matt, 2026-11-08): black background, inks are colours of light that ADD. pixel = sum_i c_i * k_i, k_i the
-// ink colour (Params inkN_r/g/b), c_i the coverage in 0..1.
+// Model (Matt, 2026-11-08): black background, inks are colors of light that ADD. pixel = sum_i c_i * k_i, k_i the
+// ink color (Params inkN_r/g/b), c_i the coverage in 0..1.
 //   - unmix: c = clamp(gain * (K^T K + lam I)^-1 K^T x, 0, 1), K = 3 x N (N = n_inks). The 3x3 inverse is by
 //     cofactors. Inks beyond n_inks have a zero column in K and a 1 on the diagonal, so they decouple and come out 0.
 //     lam = 1e-4 * trace(K^T K) / N + 1e-8 (relative ridge; an inferred choice, gate G3)
@@ -10,7 +10,7 @@
 //     last) gets coverage 1, the others 0; then gain and the same clamp
 //   - project (sep_mode 2): each ink alone, c_i = clamp(gain_i * (k_i . x) / (k_i . k_i), 0, 1); a plate depends only on
 //     the source and its own ink (Matt, 2026-11-08: easier to reason about than the joint solve)
-//   - outlets: 1 to 3 = the plates, coverage * ink colour; 4 = the preview, the sum of the plates clamped to 0..1.
+//   - outlets: 1 to 3 = the plates, coverage * ink color; 4 = the preview, the sum of the plates clamped to 0..1.
 //     Alpha is the source's on all four.
 //   - bypass_gate = 1: the (zapped) source on all four outlets
 //   - non-finite input components are zapped to 0 first: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU)
