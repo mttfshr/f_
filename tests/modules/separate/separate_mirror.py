@@ -1,5 +1,5 @@
 """separate_mirror.py -- tier-1 NumPy mirror of the not-yet-built f_separate module (spec:
-.specify/f_separate/spec.md, plan ADR-1 to ADR-5, tasks T014-T015). Float32, per pixel, stateless,
+.specify/stable/f_separate/spec.md, plan ADR-1 to ADR-5, tasks T014-T015). Float32, per pixel, stateless,
 in the order a codebox would compute it.
 
 Model (Matt, 2026-11-08): the background is black and inks are colours of light that ADD.

@@ -1,7 +1,7 @@
 # Implementation Plan: f_separate
 
 **Date**: 2026-11-08
-**Spec**: .specify/f_separate/spec.md
+**Spec**: .specify/stable/f_separate/spec.md
 
 Matt reviewed the P-list on 2026-11-08 (spec "Decided with Matt"): black background, additive overprint, coloured plates, four outlets. The remaining gate details below (ridge, solve, colour controls, linear-light) are Claude's preliminary recommendations. Derivations marked inferred are worked out, not run.
 

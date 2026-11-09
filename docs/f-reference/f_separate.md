@@ -3,7 +3,7 @@
 **Type:** Processor: stateless, per pixel. One texture in; four textures out (three plates and their sum).
 **Status:** Built 2026-11-08. Tier 1 and both benches green (Verification below). Tuning looks passed, live by Matt 2026-11-08 (T030, T031). The panel was laid out to Matt's direction the same day: Mode in the title bar, Inks at the left, Gain, Sat and Ink in one column per ink (look passed, Matt).
 
-_Reference written 2026-11-08 from `src/f_separate/` (definition and codebox), `.specify/f_separate/{spec,plan,tasks}.md` and the module's tests._
+_Reference written 2026-11-08 from `src/f_separate/` (definition and codebox), `.specify/stable/f_separate/{spec,plan,tasks}.md` and the module's tests._
 
 ---
 
@@ -102,8 +102,8 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 Original to this library: the module was designed in development and takes no code or formula from an outside source.
 
 - Least squares by the normal equations, and ridge (Tikhonov) regularisation, are standard linear algebra.
-- The light-on-black ink model and the Nearest and Project modes were decided with Matt (`.specify/f_separate/spec.md`, "Decided with Matt").
-- `ideas/f_print_styles.md`; `.specify/f_separate/{spec,plan,tasks}.md`. Related: `f_tone_curve.md`.
+- The light-on-black ink model and the Nearest and Project modes were decided with Matt (`.specify/stable/f_separate/spec.md`, "Decided with Matt").
+- `ideas/f_print_styles.md`; `.specify/stable/f_separate/{spec,plan,tasks}.md`. Related: `f_tone_curve.md`.
 
 ## Source Files
 

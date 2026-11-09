@@ -3,7 +3,7 @@ f_separate -- definition.py
 
 Splits a colour image into up to three spot-colour plates. The background is black and the inks are colours of light that
 add (Matt, 2026-11-08): pixel = sum of coverage * ink colour. Outlets 0 to 2 are the plates (each ink-coloured), outlet 3
-the preview (the plates summed). Stateless, per pixel. Spec, plan and tasks: .specify/f_separate/{spec,plan,tasks}.md.
+the preview (the plates summed). Stateless, per pixel. Spec, plan and tasks: .specify/stable/f_separate/{spec,plan,tasks}.md.
 Mirror: tests/modules/separate/separate_mirror.py.
 
 Colours (T009, proven live by Matt 2026-11-08): three `swatch` boxes, each route outlet -> swatch -> unpack ->
