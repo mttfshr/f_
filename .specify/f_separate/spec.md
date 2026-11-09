@@ -45,7 +45,7 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 - **G3 Solve and constraints.** Unconstrained least squares then clamp versus a non-negative solve for three inks; ridge when the ink colours are nearly collinear.
 - **G4 Degenerate inks.** A black ink (zero column), duplicate or collinear inks, and non-finite input. (Paper-related cases are gone.)
 - **G5 Preview.** CLOSED by P5: the preview is the fourth outlet.
-- **G6 Colour parameters in `definition.py`.** Three ink colours (no paper); a `swatch` route or nine float dials; not yet proved.
+- **G6 Colour parameters in `definition.py`.** CLOSED (T009, 2026-11-08): three `swatch` boxes unpacked to nine Params, plus a saturation dial per ink (Matt: pastels, greys and dim inks matter); nine float dials are the fallback.
 - **G7 Linear-light versus encoded values.** Deferred (Matt). Additive light is physically linear light; whether to treat the input as encoded is a look decision.
 - **G8 Name, menu and panel.** Menu category under `G-menu`; control set (three swatches, count, mode, gains) under `G-ui-density`.
 - **G9 Order dependence.** Moot: additive overprint is commutative.
@@ -135,7 +135,8 @@ A per-ink gain (0-2) on the coverage, so one ink can be weakened or strengthened
 | Param | Range | Default | Notes |
 |---|---|---|---|
 | `inks` | 1-3 | 2 | how many inks are active |
-| `ink1`, `ink2`, `ink3` | colours | three distinct spot colours | full-coverage colours of the inks, colours of light (G6) |
+| `ink1`, `ink2`, `ink3` | colours (swatch) | three distinct spot colours | full-coverage colours of the inks, colours of light (G6) |
+| `sat1`, `sat2`, `sat3` | 0-1 | 1 | saturation of each swatch's colour plane; panel-only, not codebox Params (T009) |
 | `mode` | Unmix / Nearest | Unmix | Nearest is P6 |
 | `gain1`, `gain2`, `gain3` | 0-2 | 1 | per-ink coverage gain (User Story 5) |
 | `bypass` | toggle | 0 | passthrough on all four outlets |
