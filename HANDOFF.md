@@ -10,10 +10,10 @@
 
 **New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_ink` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
-**FIRST next session (2026-11-10):** `f_ink` was discussed and re-mocked offline four times (`.specify/f_ink/tasks.md` Record, the 2026-11-10 entries; sheets in `scratch/experiments/f_ink_look/`, local). Working direction (Matt: "a better direction"): erosion and deposition, three layers (water, pigment in suspension, pigment on the paper) over a terrain texture, wet once and dried; a feedback module, composite plus thickness outlets. Owed by Matt: a look at `9_vecfield.png` and the vecfield's role (push on a terrain, or the only driver). Then the spec rewrite. The built module (Extent, Bulge, Travel) is unchanged. `G-ink-direction` is still open; no build or bench before the spec.
+**FIRST next session (2026-11-10):** `f_ink` has a new spec (`.specify/f_ink/spec.md`, the erosion model; entry below). Go through its PRELIMINARY assumptions with Matt, T060-T071 in `.specify/f_ink/tasks.md`, starting with polarity (T060), wetting (T061) and solver size (T065). Then rewrite `plan.md` (T072). No build, mirror or bench before that (`G-ink-direction`).
 
 **Candidates (Matt decides):**
-- Print-styles, FIRST (Matt, 2026-11-08: skip the `G-print-prelim` review for now): `f_ink`: P1 is built and benched (T020-T024, `.specify/f_ink/tasks.md`). Narrowed 2026-11-09 (Matt) to ink moving along a vecfield: Extent, Bulge, Travel, three stages (spec "Narrowed", plan ADR-9), built and benched (T050-T052). **STOP: discuss with Matt before doing anything else on `f_ink` (`G-ink-direction`).** Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
+- Print-styles, FIRST: `f_ink`, as in the FIRST line above. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
 - `f_masonry` adopts tagged textures (Matt, 2026-11-01 21:17: "we will do masonry, but not this second"): design discussion first. Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each (6 x 3 = 18 depths, read from `src/f_masonry/definition.py`), so one tag per named `<param>_tex` needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
 - The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`); the compact `f_weave` panel is the first test case.
@@ -26,9 +26,10 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-09 (later): vecfield solvers follow the render size
+## 2026-11-10: `f_ink` reframed as erosion and deposition; spec rewritten
 
-- **Bug (Matt):** `f_vf_lbm`'s outlet ignored the render size. Cause (inferred from the definition): `enc` was `@adapt 1` and its left inlet got only the `r draw` bang, which does not size it. `f_vf_fluid` and `f_vf_ch` had the same setup (their plan ADR-2 assumed the bang sized it).
-- **Fix:** each `enc` is `@adapt 0` with `render_dim: {size_stages: ["enc"]}`. The codeboxes read `norm`, so no size Params; the solver sizes are unchanged. Commits `29bc8b9`, `4e449c1`.
-- **Checked:** offline, `test_drift` passed (`tests/logs/20261109-221739-offline.log`); live by Matt 2026-11-09, all three follow the render size (`4a6e9af`, recorded in each module's `tasks.md`).
-- **No gates or plan rows touched.**
+- **Discussion (Matt):** pooling is a finite amount of ink drawn away from some places and collected in others, then "the identical process at tiny scale of what happens in an alluvial plain".
+- **Four offline mocks** (Claude, NumPy on his frame; `scratch/experiments/f_ink_look/`, local, sheets 6 to 9). The first two were rejected or passed over; the third (water, pigment in suspension, pigment on paper, over a terrain) is "a better direction", wet-once looks good; the fourth showed the vecfield as a push keeps the pools and the field alone does not.
+- **Decided (Matt):** a feedback module; composite and thickness outlets; areas come from the land; the terrain is an incoming texture; the vecfield pushes, field-only with no terrain.
+- **Spec rewritten** (`.specify/f_ink/spec.md`); twelve PRELIMINARY assumptions are T060-T071. `plan.md` is stale (T072). Nothing built; `src/f_ink/` is still the 2026-11-09 build. Nothing run in Max.
+- **Gates touched:** `G-ink-direction` (direction set, now holds the PRELIMINARY review), `G-print-prelim`, `G-linear-light` (T068), `P-mod-textures` (four inlets proposed). `test_gates` 5/5 after the edits (log in the commit).

@@ -3,6 +3,8 @@
 **Date**: 2026-11-08
 **Spec**: .specify/f_ink/spec.md
 
+**STALE since 2026-11-10:** the spec was rewritten for the erosion model. This plan describes the 2026-11-09 build (ADR-9) and is to be rewritten (tasks T072).
+
 All gate decisions below are **preliminary**: Claude's recommendations, accepted in place on Matt's instruction (2026-11-08) so the plan can proceed. Matt has not confirmed them. Where a gate is a measurement, the plan says what to measure and what Claude assumes until then (marked inferred).
 
 ---

@@ -2,6 +2,13 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08 and 2026-11-10 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-09 (later): vecfield solvers follow the render size
+
+- **Bug (Matt):** `f_vf_lbm`'s outlet ignored the render size. Cause (inferred from the definition): `enc` was `@adapt 1` and its left inlet got only the `r draw` bang, which does not size it. `f_vf_fluid` and `f_vf_ch` had the same setup (their plan ADR-2 assumed the bang sized it).
+- **Fix:** each `enc` is `@adapt 0` with `render_dim: {size_stages: ["enc"]}`. The codeboxes read `norm`, so no size Params; the solver sizes are unchanged. Commits `29bc8b9`, `4e449c1`.
+- **Checked:** offline, `test_drift` passed (`tests/logs/20261109-221739-offline.log`); live by Matt 2026-11-09, all three follow the render size (`4a6e9af`, recorded in each module's `tasks.md`).
+- **No gates or plan rows touched.**
+
 ## 2026-11-09: `f_ink` built, two looks, narrowed to vecfield-driven ink
 
 - **Built and rebuilt:** the original P1 (eight stages), then a rework (ten), both benched green and both judged by Matt live as unrefined on smooth footage. Those designs are in git: `b8f44dc`, `6eb1eb6`.

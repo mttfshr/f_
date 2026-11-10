@@ -65,9 +65,27 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 - [x] T050 (2026-11-09, offline, Claude) Mirror and tier 1 rewritten for extent and bulge.
 - [x] T051 (2026-11-09, Claude) `codebox_bulge.gen`, `codebox_extent.gen`, `definition.py` (three stages, one vecfield inlet); old stages removed.
 - [x] T052 (2026-11-09, bench run by Claude; cost only an upper bound) Benches rewritten and run.
-- [ ] T053 Live look (Matt), with a real vecfield: repulse or optical flow. Dial ranges and the inferred constants (plan ADR-9).
-- [ ] T054 Decide with Matt: what the module does with no field (identity now), and whether a soft shoulder is wanted.
+- T053, T054: lapsed 2026-11-10 with the spec rewrite; never run.
 - T006-T014 (PRELIMINARY gates), T025-T027 (P2), T030-T032, T038: of the earlier design, not carried over except as listed in spec "Narrowed".
+
+### Rewrite: erosion model (2026-11-10; spec rewritten the same day; plan not yet)
+
+Every gate here is PRELIMINARY: Claude's assumption in spec "Assumed by Claude", for Matt to confirm or reverse (`G-ink-direction`). No build before T060, T061 and T065 are settled.
+
+- [ ] T060 [GATE P1] Polarity and render: a wash over a light underlayer, pigment as absorbance; the reverse of `f_separate`'s black background.
+- [ ] T061 [GATE P2] Wetting: wet once on a press or trigger; what a moving input does between wettings; whether always-wet is a mode.
+- [ ] T062 [GATE P3] Inlets: picture, terrain, vecfield, underlayer.
+- [ ] T063 [GATE P4] Behaviour with nothing connected.
+- [ ] T064 [GATE P5] One water layer for the three channels.
+- [ ] T065 [GATE P6] Solver size: render size or a fixed grid. MEASURE the cost first.
+- [ ] T066 [GATE P7] Frame edge: water leaves at the edge (proposal), or a wall.
+- [ ] T067 [GATE P8] Flow model: no momentum of its own (proposal).
+- [ ] T068 [GATE P9] Linear light (`G-linear-light`).
+- [ ] T069 [GATE P10] What the thickness outlet carries; a water outlet or not.
+- [ ] T070 [GATE P11] Dial set and names (`G-ui-density`, `G-menu`).
+- [ ] T071 [GATE P12] Verification tiers.
+- [ ] T072 Rewrite `plan.md` for this spec (it still describes the 2026-11-09 build).
+- [ ] T073 Mirror and tier 1 for the three layers (bowl, conservation, field push), from `scratch/experiments/f_ink_look/vecfield_mock.py`.
 
 ## Phase 3: docs and registration
 
@@ -113,3 +131,4 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
 - 2026-11-10 (offline, Claude, NumPy on `frame.png` at 320 texels; nothing built, nothing in Max): `scratch/experiments/f_ink_look/alluvial_mock.py`, sheet `8_alluvial.png` (local). Three layers on a terrain texture: water, pigment in suspension, pigment on the paper (the source, as absorbance). Water runs downhill on terrain plus depth; lift is proportional to flow speed and depth, pigment settles below a speed threshold or when the water is gone, and mixes in standing water. Wet once: 3600 steps, evaporates to dry. Always wet: constant rain and drain, the paper layer relaxes toward the source. Two terrains: a noise landscape, and the image's blurred luma (bright is high), each with paper grain. Measured (wet once, noise terrain): pigment total 802157.6 before and after, water 0 at the end. First run with lift rate 0.10 was nearly invisible; the sheet uses 0.9 and settle rate 0.004. INFERRED and untuned: every rate, the terrain heights, the film and depth limits. The flow is a depth-limited diffusive wave, a stand-in: no momentum, so no vecfield push yet. No look by Matt yet.
 - 2026-11-10 (Matt, chat, after `8_alluvial.png`): "yes I think this seems like a better direction"; the wet-once looks, dried and still running, "are looking good". Vecfield role (push on the terrain, or the only driver): "I don't know yet -- can we see both?".
 - 2026-11-10 (offline, Claude, NumPy, 320 texels, wet once; nothing built, nothing in Max): `scratch/experiments/f_ink_look/vecfield_mock.py`, sheet `9_vecfield.png` (local). The field is added to the face velocity. Stand-in fields: a constant tilt down-right, and a spiral (swirl plus a weaker inward pull). PUSH on the noise terrain: the pools stay and the drainage bends along the field. ONLY, on flat paper grain: no pools form; the picture smears along the field with grain, and with the tilt the water ends up along the right and bottom frame edges (seen in the water panel at step 900). Claude's reading (inferred from these two fields only): pooling needs low ground or a converging field, so a field alone gives a run, not a pool. Pigment total 802157.6 to 802157.06 (ONLY, spiral). Constants as in `alluvial_mock.py`, untuned. No look by Matt yet.
+- 2026-11-10 (Matt, chat, after `9_vecfield.png`): vecfield as a push on a terrain, field-only when no terrain is connected: "i concur". Rewrite the spec: yes. (Offline, Claude): `spec.md` rewritten for the erosion model; the earlier versions are at `3bdf92a`. Twelve PRELIMINARY assumptions (spec P1-P12) are tasks T060-T071; T053 and T054 lapsed. `plan.md` is stale (T072). `src/f_ink/` and its tests are unchanged and still the 2026-11-09 build. `tests/build/test_gates.py` 5/5 before these edits (`tests/logs/20261110-094805-offline.log`).
