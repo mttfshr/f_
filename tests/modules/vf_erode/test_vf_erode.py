@@ -1,6 +1,8 @@
-"""test_vf_erode.py -- tier-1 tests for f_vf_erode as narrowed 2026-11-09 (spec "Narrowed", plan ADR-9, T050). Ground truth is independent of the
-mirror: closed forms (a linear ramp under a uniform field, a converging field on flat tone), invariants (identity, conservation, a flat
-interior holds still, render-size scaling) and mutations.
+"""test_vf_erode.py -- tier-1 tests for f_vf_erode, the erosion model (spec 2026-11-10, plan ADR-3, T073). Ground truth is independent of the
+mirror: invariants (conservation, non-negativity, stillness, identity), a direction (bowl, constant field) and mutations.
+
+Covers SC-101 to SC-105 and the Polarity behavior of US3. Not covered, by design: render-size scaling (FR-111, the bench decides how),
+the look (SC-107, Matt), and anything about the codeboxes (tier 2).
 
 Run:  tests/run.sh -q tests/modules/vf_erode/test_vf_erode.py
 """
@@ -9,220 +11,226 @@ import sys
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-from vf_erode_mirror import EDGE_G0, F32, TRAVEL_MAX, ink, span_tx  # noqa: E402
+from vf_erode_mirror import F32, DEFAULTS, enc, field_uv, load, new_state, run as run_steps, step, totals  # noqa: E402
+
+H, W = 40, 56
+FAST = dict(dry=0.004)       # dry in about 250 steps instead of 600
 
 
-def frame(h, w, value=0.0):
-    t = np.zeros((h, w, 4), dtype=F32)
+def picture(h=H, w=W, seed=1, lo=0.1, hi=0.95):
+    # lo 0.1: under Darker a display value below EPS ** (1 / GAMMA), about 0.081, is lifted to it (the log is bounded), so identity holds from there up
+    t = np.zeros((h, w, 4), F32)
+    t[..., :3] = np.random.default_rng(seed).uniform(lo, hi, (h, w, 3)).astype(F32)
+    t[..., 3] = 1
+    return t
+
+
+def flat(value, h=H, w=W):
+    t = np.zeros((h, w, 4), F32)
     t[..., :3] = value
     t[..., 3] = 1
     return t
 
 
-def uniform_field(h, w, fx=0.0, fy=0.0):
-    t = np.zeros((h, w, 4), dtype=F32)
-    t[..., 0] = fx * 0.5 + 0.5
-    t[..., 1] = fy * 0.5 + 0.5
-    t[..., 2] = 0.5
-    t[..., 3] = 1
-    return t
-
-
-def smooth(h, w, seed=1):
-    """A smooth tone, in frame-relative coordinates, the kind of frame Matt tested on."""
+def bowl(h=H, w=W, depth=6.0):
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
-    u, v = (xx + 0.5) / h, (yy + 0.5) / h
-    t = frame(h, w)
-    for i in range(3):
-        a = 0.5 + 0.22 * np.sin(5.1 * u + 1.3 * seed + i) * np.cos(6.3 * v + i * 2) + 0.15 * np.sin(11.0 * u + 7.0 * v + seed)
-        t[..., i] = a.astype(F32)
-    return t
+    r2 = ((xx - (w - 1) / 2) / (w / 2)) ** 2 + ((yy - (h - 1) / 2) / (h / 2)) ** 2
+    return (depth * np.minimum(r2, 1.0)).astype(F32)
 
 
-def swirl_field(h, w, seed=2):
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
-    u, v = (xx + 0.5) / h, (yy + 0.5) / h
-    fx = 0.6 * np.sin(7.0 * v + seed) * np.cos(4.0 * u)
-    fy = 0.6 * np.cos(6.0 * u + seed) * np.sin(5.0 * v)
-    t = uniform_field(h, w)
-    t[..., 0], t[..., 1] = (fx * 0.5 + 0.5).astype(F32), (fy * 0.5 + 0.5).astype(F32)
-    return t
+def const_field(fx, fy, h=H, w=W):
+    t = np.zeros((h, w, 4), F32)
+    t[..., 0], t[..., 1], t[..., 2], t[..., 3] = fx * 0.5 + 0.5, fy * 0.5 + 0.5, 0.5, 1
+    return field_uv(t)
 
 
 def err(a, b):
-    return float(np.abs(np.asarray(a, dtype=np.float64) - np.asarray(b, dtype=np.float64)).max())
+    return float(np.abs(np.asarray(a, np.float64) - np.asarray(b, np.float64)).max())
 
 
-def test_identity():
-    x = np.random.default_rng(1).uniform(-0.5, 2.0, (64, 96, 4)).astype(F32)
-    f = swirl_field(64, 96)
-    check("amounts 0: exactly the input", err(ink(x, f), x), 0)
-    check("travel alone does nothing", err(ink(x, f, travel=1.0), x), 0)
-    check("no field: exactly the input, amounts up", err(ink(x, None, extent=2.0, bulge=2.0), x), 0)
-    check("travel 0: exactly the input, amounts up", err(ink(x, f, travel=0.0, extent=2.0, bulge=2.0), x), 0)
+def wet(img, polarity="darker", **kw):
+    return load(new_state(*img.shape[:2]), img, polarity)
 
 
-def test_flat_field_cases():
-    flat = frame(64, 64, 0.6)
-    check("a flat tone in a uniform field stays flat", err(ink(flat, uniform_field(64, 64, 0.8, -0.4), extent=2.0, bulge=2.0), flat), 1e-6)
+def test_conservation_closed_edge():
+    """SC-101: with a closed edge pigment is conserved per channel, step by step, on a rough terrain with a field."""
+    img = picture()
+    T = bowl() + np.random.default_rng(2).uniform(0, 0.8, (H, W)).astype(F32)
+    st = wet(img)
+    t0 = totals(st)
+    worst = 0.0
+    for _ in range(300):
+        st = step(st, T, const_field(0.5, -0.3), edge="closed", **FAST)
+        worst = max(worst, float(np.abs(totals(st) - t0).max() / t0.max()))
+    note("worst relative drift over 300 steps", worst)
+    check("closed edge: pigment per channel conserved", worst, 1e-5)
+    check("closed edge: nothing escaped", float(np.abs(st["escaped"]).max()), 1e-9)
 
 
-def test_extent_closed_form():
-    """c = b * x under a uniform Fx: P = c * exp(-a * T * Fx * b / c), away from the border."""
-    h, w = 256, 256
-    b = 0.002
-    t = frame(h, w)
-    t[..., :3] = (0.2 + b * np.arange(w, dtype=np.float64))[None, :, None].astype(F32)
-    o = ink(t, uniform_field(h, w, 0.5), travel=0.4, extent=1.5)
-    T = 0.4 * TRAVEL_MAX * h
-    c = np.asarray(t[..., :3], np.float64)
-    want = c * np.exp(-1.5 * T * 0.5 * b / c)
-    check("ramp under a uniform field: the closed form", err(o[8:-8, 8:-8, :3], want[8:-8, 8:-8]), 1e-5)
+def test_conservation_open_edge():
+    """T066: with an open edge, pigment in the frame plus pigment that left through the edge equals what was loaded."""
+    img = picture(seed=3)
+    T = np.linspace(0, 4, W, dtype=F32)[None, :].repeat(H, 0)[:, ::-1].copy()     # slopes down toward x = 0
+    st = wet(img)
+    t0 = totals(st)
+    st = run_steps(st, 400, T, const_field(-0.4, 0.0), **FAST)
+    leaked = st["escaped"]
+    note("pigment that left, per channel", float(leaked.max() / t0.max()))
+    check("open edge: in frame + escaped = loaded", float(np.abs(totals(st) + leaked - t0).max() / t0.max()), 1e-5)
+    check("open edge: nothing comes back in", float(max(st["entered"].max(), st["entered_w"]) / t0.max()), 1e-9)
+    check("open edge: some pigment did leave (the test can fail)", 1.0 - float(leaked.min() > 0.001 * t0.max()), 0)
 
 
-def test_extent_converging_field_gathers():
-    h, w = 128, 128
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
-    sink = uniform_field(h, w)
-    sink[..., 0] = (((64.0 - xx) / 128.0) * 0.5 + 0.5).astype(F32)
-    sink[..., 1] = (((64.0 - yy) / 128.0) * 0.5 + 0.5).astype(F32)
-    o = ink(frame(h, w, 0.5), sink, travel=0.5, extent=1.0)[..., 0]
-    T = 0.5 * TRAVEL_MAX * h
-    want = 0.5 * np.exp(1.0 * T * (2.0 / 128.0))
-    note("flat 0.5 in a sink: center, expected", (round(float(o[64, 64]), 5), round(want, 5)))
-    check("a converging field gathers ink", abs(float(o[64, 64]) - want), 1e-4)
-    source = uniform_field(h, w)
-    source[..., 0] = 1.0 - sink[..., 0]
-    source[..., 1] = 1.0 - sink[..., 1]
-    check("a diverging field starves it", float(not ink(frame(h, w, 0.5), source, travel=0.5, extent=1.0)[64, 64, 0] < 0.5), 0)
+def test_bowl():
+    """SC-102: a flat tone on a bowl: pigment falls at the rim and rises at the bottom."""
+    img = flat(0.4)
+    st = run_steps(wet(img), 500, bowl(), None, **FAST)
+    p0 = wet(img)["p"].mean(axis=2)
+    p1 = (st["p"] + st["s"]).mean(axis=2)
+    rim = np.zeros((H, W), bool); rim[:6] = rim[-6:] = True; rim[:, :6] = rim[:, -6:] = True
+    mid = np.zeros((H, W), bool); mid[H // 2 - 4:H // 2 + 4, W // 2 - 4:W // 2 + 4] = True
+    note("rim: before, after", (float(p0[rim].mean()), float(p1[rim].mean())))
+    note("bottom: before, after", (float(p0[mid].mean()), float(p1[mid].mean())))
+    check("pigment at the rim is lower", 1.0 - float(p1[rim].mean() < p0[rim].mean()), 0)
+    check("pigment at the bottom is higher", 1.0 - float(p1[mid].mean() > p0[mid].mean()), 0)
 
 
-def test_extent_conserves_ink():
-    """Transport moves ink rather than dimming it: the failure of the last design."""
-    h, w = 512, 512
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
-    r2 = (xx - 256) ** 2 + (yy - 256) ** 2
-    bump = frame(h, w)
-    bump[..., :3] = (0.8 * np.exp(-r2 / (2 * 40.0 ** 2)))[..., None].astype(F32)
-    env = np.exp(-r2 / (2 * 120.0 ** 2))
-    f = uniform_field(h, w)
-    f[..., 0] = (env * np.sin((xx + yy) / 30.0) * 0.5 * 0.6 + 0.5).astype(F32)
-    f[..., 1] = (env * np.cos((xx - yy) / 30.0) * 0.5 * 0.6 + 0.5).astype(F32)
-    o = ink(bump, f, travel=0.5, extent=1.0)[..., 0]
-    a, b = float(bump[..., 0].mean()), float(o.mean())
-    note("mean before, after", (round(a, 6), round(b, 6)))
-    # 2% with the additive step (0.003% measured); the gain form measures 4.2%, the price of keeping the color and staying above 0.
-    check("the total of ink is roughly conserved (within 6%)", abs(b / a - 1), 0.06)
-    check("while it did move", float(not err(o, bump[..., 0]) > 0.05), 0)
+def test_flat_and_still():
+    """SC-104: a flat terrain with no field returns the input once dried, and a dried wash does not change."""
+    img = picture(seed=4)
+    st = run_steps(wet(img), 400, None, None, **FAST)
+    out, _ = enc(st, img)
+    check("flat terrain, no field: output equals the input", err(out[..., :3], img[..., :3]), 1e-5)
+    nxt = step(st, None, None, **FAST)
+    check("dried: a further step changes nothing (paper)", err(nxt["p"], st["p"]), 0)
+    check("dried: a further step changes nothing (suspension, water)", max(err(nxt["s"], st["s"]), err(nxt["w"], st["w"])), 0)
+    check("dried: no water left", float(st["w"].max()), 0)
+    t = bowl()
+    d = wet(img)
+    for _ in range(12000):                                   # a deep pool dries at a rate per cell, so it takes far longer than the flat sheet
+        d = step(d, t, const_field(0.3, 0.2), dry=0.02)
+        if d["w"].max() == 0:
+            break
+    note("steps to dry on a bowl with a field", _ + 1)
+    check("the bowl dried", float(d["w"].max()), 0)
+    d2 = step(d, t, const_field(0.3, 0.2), **FAST)
+    check("dried on a bowl with a field: still", err(d2["p"], d["p"]), 0)
 
 
-def test_extent_keeps_the_color_of_the_ink():
-    """Matt, 2026-11-09: accumulation is the same color as the ink, more intense. One gain for the three channels, never below 0."""
-    h, w = 256, 256
-    x = smooth(h, w)
-    x[..., 0] = np.clip(x[..., 0] + 0.2, 0.05, 2)
-    x[..., 1] = np.clip(x[..., 1], 0.05, 2)
-    x[..., 2] = np.clip(x[..., 2] - 0.2, 0.05, 2)
-    o = ink(x, swirl_field(h, w), travel=1.0, extent=2.0)
-    g = o[..., :3] / x[..., :3]
-    check("every channel takes the same gain", float((g.max(-1) - g.min(-1)).max()), 1e-5)
-    check("the gain reaches both sides of 1", float(not (g.min() < 0.8 and g.max() > 1.25)), 0)
-    strong = frame(h, w, 0.5)
-    strong[:, 128:, :3] = 0.9
-    s = ink(strong, uniform_field(h, w, 1.0), travel=1.0, extent=2.0)
-    check("nothing goes below 0, however strong the flow", float(-min(float(s[..., :3].min()), 0.0)), 0)
+def centroid(st):
+    m = (st["p"] + st["s"]).sum(axis=2).astype(np.float64)
+    yy, xx = np.mgrid[0:m.shape[0], 0:m.shape[1]]
+    return float((m * xx).sum() / m.sum()), float((m * yy).sum() / m.sum())
 
 
-def test_bulge_moves_only_edges():
-    h, w = 256, 256
-    t = frame(h, w)
-    t[:, 128:, :3] = 1
-    f = uniform_field(h, w, 1.0)
-    o = ink(t, f, travel=0.5, bulge=1.0)[..., 0]
-    d = 0.5 * TRAVEL_MAX * h
-    note("step edge at x = 128, travel distance in texels", d)
-    s = int(span_tx(h))
-    check("flat ink beyond the span holds still", err(o[:, 128 + s + 1:], np.ones((h, w - 129 - s), F32)), 1e-6)
-    check("flat paper beyond the span holds still", err(o[:, :128 - s - 1], np.zeros((h, 127 - s), F32)), 1e-6)
-    check("the edge moved", float(err(o, t[..., 0]) < 0.1), 0)
-    tone = smooth(256, 256)
-    g = swirl_field(256, 256)
-    a = ink(tone, g, travel=0.5, bulge=0.5)
-    b = ink(tone, g, travel=0.5, bulge=1.5)
-    c = ink(tone, g, travel=0.5, bulge=1.0)
-    check("more bulge moves it further", float(not err(b, tone) > err(c, tone) > err(a, tone)), 0)
+def test_field_push():
+    """SC-103: on a bowl a constant field moves the pooled pigment along it; push 0 equals no field exactly."""
+    img = flat(0.4)
+    T = bowl()
+    none = run_steps(wet(img), 500, T, None, **FAST)
+    f = const_field(0.8, 0.0)
+    right = run_steps(wet(img), 500, T, f, **FAST)
+    left = run_steps(wet(img), 500, T, const_field(-0.8, 0.0), **FAST)
+    cx0, cx1, cx2 = centroid(none)[0], centroid(right)[0], centroid(left)[0]
+    note("centroid x: none, +field, -field", (cx0, cx1, cx2))
+    check("a +x field moves the centroid toward +x", 1.0 - float(cx1 > cx0 + 0.2), 0)
+    check("a -x field moves it toward -x", 1.0 - float(cx2 < cx0 - 0.2), 0)
+    z = run_steps(wet(img), 200, T, f, push=0.0, **FAST)
+    n = run_steps(wet(img), 200, T, None, **FAST)
+    check("push 0 equals no field, exactly", max(err(z["p"], n["p"]), err(z["s"], n["s"]), err(z["w"], n["w"])), 0)
+    # field only (no terrain): the water runs along the field
+    only = run_steps(wet(picture(seed=5)), 120, None, f, **FAST)
+    check("field only: the wash moves along +x", 1.0 - float(centroid(only)[0] > centroid(wet(picture(seed=5)))[0] + 0.1), 0)
 
 
-def test_bulge_follows_the_field():
-    """A soft ramp under a +x field: ink moves toward +x, so at any texel the value read comes from smaller x."""
-    h, w = 256, 256
-    t = frame(h, w)
-    t[..., :3] = (np.arange(w, dtype=np.float64) / (w - 1.0) * 0.5 + 0.25)[None, :, None].astype(F32)
-    slope = 0.5 / (w - 1.0) * h
-    e = min(slope / EDGE_G0, 1.0)
-    o = ink(t, uniform_field(h, w, 1.0), travel=0.5, bulge=1.0)[..., 0]
-    d = 0.5 * TRAVEL_MAX * h * 1.0 * e
-    check("the ramp shifts along the field by travel * edge weight", err(o[32:-32, 32:-32], t[32:-32, 32:-32, 0] - F32(d * 0.5 / (w - 1.0))), 1e-5)
+def test_stability():
+    """SC-105: at the extremes of every dial nothing goes negative or non-finite, and the pigment never grows."""
+    img = picture(seed=6, lo=0.01, hi=1.0)
+    T = np.random.default_rng(7).uniform(0, 6, (H, W)).astype(F32)
+    f = const_field(1.0, -1.0)
+    cases = [dict(flow=1.0, push=3.0, lift=1.0, settle=1.0, dry=0.0, speed=4.0),
+             dict(flow=0.0, push=0.0, lift=0.0, settle=0.0, dry=0.05, speed=0.1),
+             dict(flow=1.0, push=0.0, lift=1.0, settle=0.0, dry=0.0, speed=4.0),
+             dict(flow=0.0, push=3.0, lift=1.0, settle=0.0, dry=0.0, speed=4.0)]
+    for kw in cases:
+        st = wet(img)
+        t0 = totals(st)
+        lo, hi = 0.0, 0.0
+        for _ in range(150):
+            st = step(st, T, f, **kw)
+            lo = min(lo, float(min(st["p"].min(), st["s"].min(), st["w"].min())))
+        finite = all(np.isfinite(st[k]).all() for k in ("p", "s", "w"))
+        grew = float(((totals(st) + st["escaped"]) / t0).max())
+        note(f"{kw}: min layer, total/loaded", (lo, grew))
+        check(f"finite {kw}", 1.0 - float(finite), 0)
+        check(f"no negative layer {kw}", -lo, 1e-6)
+        check(f"pigment never grows {kw}", 1.0 - float(grew <= 1 + 1e-5), 0)
 
 
-def test_render_size():
-    """FR-011: travel is frame-relative, so the picture scales with the frame."""
-    a = ink(smooth(256, 256), swirl_field(256, 256), travel=0.5, extent=1.0, bulge=1.0)
-    b = ink(smooth(512, 512), swirl_field(512, 512), travel=0.5, extent=1.0, bulge=1.0)
-    e = err(a[16:-16:4, 16:-16:4, :3], (b[32:-32:8, 32:-32:8, :3] + b[33:-31:8, 33:-31:8, :3]) * 0.5)
-    note("256 against 512, worst difference", e)
-    check("the result follows the frame", e, 0.02)
-    wide = ink(smooth(256, 512), swirl_field(256, 512), travel=0.5, extent=1.0)
-    check("a wide frame computes", float(not np.isfinite(wide).all()), 0)
+def test_polarity_and_unwetted():
+    """US3, T075, T076: composite against a background, thickness, and the unwetted frame."""
+    img = picture(seed=8, lo=0.1, hi=1.0)
+    for pol in ("darker", "lighter"):
+        out, th = enc(new_state(H, W), img, None, pol)
+        check(f"{pol}: unwetted, no background: output equals the input", err(out[..., :3], img[..., :3]), 1e-5)
+        check(f"{pol}: alpha passes through", err(out[..., 3], img[..., 3]), 0)
+    bg = picture(seed=9, lo=0.2, hi=0.8)
+    out, th = enc(wet(flat(1.0), "darker"), flat(1.0), bg, "darker")
+    check("darker: a white picture (no pigment) shows the background", err(out[..., :3], bg[..., :3]), 1e-5)
+    check("darker: thickness is 0 with no pigment", float(np.abs(th).max()), 0)
+    out, th = enc(wet(flat(0.0), "lighter"), flat(0.0), bg, "lighter")
+    check("lighter: a black picture (no pigment) shows the background", err(out[..., :3], bg[..., :3]), 1e-5)
+    # more pigment, no brighter (Darker) and no darker (Lighter)
+    st = wet(img, "darker")
+    more = dict(st, p=st["p"] * F32(1.5))
+    a, b = enc(st, img, bg, "darker")[0], enc(more, img, bg, "darker")[0]
+    check("darker: more pigment is never brighter", float((b[..., :3] > a[..., :3] + 1e-6).sum()), 0)
+    st = wet(img, "lighter")
+    more = dict(st, p=st["p"] * F32(1.5))
+    a, b = enc(st, img, bg, "lighter")[0], enc(more, img, bg, "lighter")[0]
+    check("lighter: more pigment is never darker", float((b[..., :3] < a[..., :3] - 1e-6).sum()), 0)
+    th1 = enc(wet(img), img, None, "darker")[1]
+    th2 = enc(wet(img * np.array([1, 1, 1, 1], F32) * F32(0.5)), img, None, "darker")[1]
+    check("thickness rises with pigment (a darker picture is thicker)", 1.0 - float(th2.mean() > th1.mean()), 0)
+    # after the first wetting a moving in0 is ignored (T074, T076)
+    loaded = wet(img)
+    o1 = enc(loaded, img, None)[0]
+    o2 = enc(loaded, picture(seed=99), None)[0]
+    check("after a wetting, in0 no longer reaches the layers", err(o1, o2), 0)
 
 
-def test_border_nonfinite_channels_alpha_bypass():
-    t = frame(128, 128)
-    t[:3, :, :3] = 1
-    o = ink(t, uniform_field(128, 128, 0.0, -1.0), travel=1.0, bulge=1.0, extent=1.0)[..., 0]
-    check("ink at the top does not wrap to the bottom", float(np.abs(o[-3:]).max()), 0)
-    x = smooth(64, 64)
-    x[20, 20, :3] = np.nan
-    x[30, 30, 1] = np.inf
-    f = swirl_field(64, 64)
-    f[10, 10, :2] = np.nan
-    kw = dict(travel=0.5, extent=1.0, bulge=1.0)
-    o = ink(x, f, **kw)
-    check("no NaN or Inf reaches the output", float(not np.isfinite(o).all()), 0)
-    z = x.copy()
-    z[20, 20, :3] = 0
-    z[30, 30, 1] = 0
-    check("bypass passes the zapped source", err(ink(x, f, bypass=1.0, **kw), z), 0)
-    a = np.random.default_rng(2).uniform(0, 1, (64, 64, 4)).astype(F32)
-    b = a.copy()
-    b[..., 1] = 1 - b[..., 1]
-    p, q = ink(a, f, travel=0.5, bulge=1.0), ink(b, f, travel=0.5, bulge=1.0)
-    check("bulge keeps channels independent", max(err(p[..., 0], q[..., 0]), err(p[..., 2], q[..., 2])), 0)
-    p = ink(a, f, **kw)
-    check("alpha passes through", err(p[..., 3], a[..., 3]), 0)
-    check("output is not clamped: a value above 1 survives", err(ink(frame(32, 32, 1.7), uniform_field(32, 32)), frame(32, 32, 1.7)), 0)
-    check("a neutral field changes nothing", err(ink(frame(64, 64, 1.0), uniform_field(64, 64), extent=2.0), frame(64, 64, 1.0)), 0)
+def test_input_hygiene():
+    """FR-110: non-finite input texels are zapped; non-square frames run; no NaN reaches a layer."""
+    img = picture(h=24, w=70, seed=10)
+    img[3, 4, :3] = np.nan
+    img[5, 6, 0] = np.inf
+    st = run_steps(wet(img), 50, None, None, **FAST)
+    check("non-finite input: every layer finite", 1.0 - float(all(np.isfinite(st[k]).all() for k in ("p", "s", "w"))), 0)
+    out, th = enc(st, img)
+    check("non-finite input: outlets finite", 1.0 - float(np.isfinite(out).all() and np.isfinite(th).all()), 0)
 
 
 def test_mutations():
-    h, w = 128, 128
-    tone, f = smooth(h, w), swirl_field(h, w)
-    bad = f.copy()
-    bad[9, 9, :2] = np.nan
-    cases = {
-        "extent_sign": (tone, f, dict(extent=1.0)),
-        "no_div": (tone, f, dict(extent=1.0)),
-        "no_edge_weight": (tone, f, dict(bulge=1.0)),
-        "bulge_backward": (tone, f, dict(bulge=1.0)),
-        "travel_in_texels": (tone, f, dict(extent=1.0)),
-        "no_field_zap": (tone, bad, dict(extent=1.0)),
-        "per_channel": (tone, f, dict(extent=1.0)),
-    }
-    for bug, (src, fld, kw) in cases.items():
-        a, b = ink(src, fld, **kw), ink(src, fld, bug=bug, **kw)
-        e = 1.0 if not np.isfinite(b).all() else err(a, b)
-        note(f"mutation '{bug}' worst error", e)
-        check(f"mutation caught: {bug}", float(e <= 1e-3), 0)
+    """Each bug the plan guards against must be caught by a test above."""
+    img = picture(seed=11)
+    T = bowl()
+    f = const_field(0.8, 0.0)
+    base = run_steps(wet(img), 200, T, f, **FAST)
+    back = run_steps(wet(img), 200, T, f, bug="push_backward", **FAST)
+    check("mutation caught: push_backward moves the centroid the other way", 1.0 - float(centroid(back)[0] < centroid(base)[0]), 0)
+    st = run_steps(wet(img), 120, T, f, bug="drop_receiver", edge="closed", **FAST)
+    t0 = totals(wet(img))
+    check("mutation caught: drop_receiver breaks conservation", 1.0 - float(np.abs(totals(st) - t0).max() / t0.max() > 1e-3), 0)
+    st = run_steps(wet(img), 60, None, f, bug="edge_reenter", **FAST)
+    check("mutation caught: edge_reenter lets pigment back in at the edge", 1.0 - float(st["entered"].max() > 1e-3 * totals(wet(img)).max()), 0)
+    s2 = wet(picture(seed=6, lo=0.01, hi=1.0))
+    rough = np.random.default_rng(7).uniform(0, 6, (H, W)).astype(F32)
+    lo = 0.0
+    for _ in range(150):
+        s2 = step(s2, rough, const_field(1.0, -1.0), bug="no_flux_cap", flow=1.0, push=3.0, speed=4.0, dry=0.0)
+        lo = min(lo, float(np.nanmin(s2["w"])))
+    bad = (not np.isfinite(s2["w"]).all()) or lo < -1e-6
+    check("mutation caught: no_flux_cap goes negative or non-finite", 1.0 - float(bad), 0)
 
 
 if __name__ == "__main__":
