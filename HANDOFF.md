@@ -1,10 +1,12 @@
 # HANDOFF
 
-## START HERE (2026-11-09)
+## START HERE (2026-11-10)
 
 **Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
 
 **State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. `f_tf_hatch` moved to `.specify/stable/` 2026-11-06. `f_tf_axisflow` moved to `.specify/stable/` 2026-11-06. `f_vf_fieldmap` and `f_vf_potential` moved to `.specify/stable/` 2026-11-06. `f_vf_flow` and `f_tone_curve` moved to `.specify/stable/` 2026-11-06, so all seven batch 3 modules are moved. Stable push: batch 4 triage is done (`.specify/maintenance/batch4_triage_2026-11-06.md`); Group A (`f_vf_warp`, `f_stipple`, `f_vf_glow`, `f_vf_prism`) moved to `.specify/stable/` 2026-11-06 after Matt's helpfile looks and one live contract bench (2/2, log `tests/logs/20261106-192009-bench.log`). Group B (`f_vf_advect`, `f_vf_streak`) moved to `.specify/stable/` 2026-11-06 after Matt's batch 4 calls were applied (entry below). Batch 4 is finished (vortex moved 2026-11-06); next: pick from Candidates below (optical_flow and seeds bypass passthrough: done, looks and bench passed, entry below). Plan and bar: the 2026-11-06 entries in `HANDOFF_ARCHIVE.md`, and `.specify/plan.md` Next 0.
+
+**New 2026-11-09 (later):** `f_vf_lbm`, `f_vf_fluid` and `f_vf_ch` now follow the render size (`render_dim` on `enc`), verified live by Matt (entry below). The FIRST next-session item is unchanged.
 
 **New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_ink` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
@@ -24,14 +26,9 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-09: `f_ink` built, two looks, narrowed to vecfield-driven ink
+## 2026-11-09 (later): vecfield solvers follow the render size
 
-- **Built and rebuilt:** the original P1 (eight stages), then a rework (ten), both benched green and both judged by Matt live as unrefined on smooth footage. Those designs are in git: `b8f44dc`, `6eb1eb6`.
-- **Narrowed (Matt):** ink moves along a vecfield. Extent (mass transport), Bulge (outlines only), Travel; three stages; mottle, dropout, spread's threshold removed. Spec "Narrowed", plan ADR-9, tasks T050-T054.
-- **Benched (Claude, in Max):** tier 1 10/10, codebox 5/5 (`tests/logs/20261109-083619-bench.log`), module 2/2 (`-083646`). Patcher against the mirror: worst 1.5e-6. Not yet looked at.
-- **Open:** cost unresolved (bench floor, about 0.8 ms upper bound per stage). With no field the module is identity (T054). Constants inferred from one frame (ADR-9).
-- **Fixed on the way (Matt's go):** `f_separate`'s pix name is now `#0_`-scoped, so a second instance no longer collides; contract bench 2/2 (`-084909`).
-- **Lesson:** mock on real footage; the sheets on clean shapes predicted nothing. The module bench closes `bench.maxpat`; `benchclient.reopen()` restores it.
-- **Extent keeps the ink's color (Matt):** it is now one gain from luma, because the additive per-channel form went below 0 and showed as black. Not yet looked at.
-- **Bare pix names:** a second instance of a module whose pix name is not `#0_`-scoped collides; `f_vf_flow` failed the contract bench the same way (`tests/logs/20261109-090417-bench.log`) while a live patch was open.
-- **Stopped here (Matt):** "this all still seems off"; discuss more before doing anything else. The offered `#0_` cleanup session (28 modules) was not started.
+- **Bug (Matt):** `f_vf_lbm`'s outlet ignored the render size. Cause (inferred from the definition): `enc` was `@adapt 1` and its left inlet got only the `r draw` bang, which does not size it. `f_vf_fluid` and `f_vf_ch` had the same setup (their plan ADR-2 assumed the bang sized it).
+- **Fix:** each `enc` is `@adapt 0` with `render_dim: {size_stages: ["enc"]}`. The codeboxes read `norm`, so no size Params; the solver sizes are unchanged. Commits `29bc8b9`, `4e449c1`.
+- **Checked:** offline, `test_drift` passed (`tests/logs/20261109-221739-offline.log`); live by Matt 2026-11-09, all three follow the render size (`4a6e9af`, recorded in each module's `tasks.md`).
+- **No gates or plan rows touched.**
