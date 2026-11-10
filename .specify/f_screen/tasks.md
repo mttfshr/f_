@@ -19,7 +19,7 @@ package/patchers/f_screen.maxpat    docs/f-reference/f_screen.md    package/help
 - [x] T001 [GATE] DECIDED (Matt, 2026-11-08): no riso-specific halftone work; general halftoning only.
 - [x] T002 [GATE] TENTATIVE (Matt, 2026-11-08: "a decision but I'm not sure it's the decision"): fixed-angle screens only; form-following marks go to `f_engrave`.
 - [ ] T003 [GATE G1] PRELIMINARY: tiers 1, 2 and 3 all apply.
-- [ ] T004 [GATE G2] PRELIMINARY: lengths in frame heights, x scaled by the aspect (shared with `f_ink`).
+- [ ] T004 [GATE G2] PRELIMINARY: lengths in frame heights, x scaled by the aspect (shared with `f_vf_erode`).
 - [ ] T005 [GATE G3] Verify the area-preserving spot functions in the mirror (plan ADR-2): line exact, square exact, round dot by `A(r)`, shape morph within tolerance. The round-dot derivation is inferred and must pass before the codebox copies it.
 - [ ] T006 [GATE G4] PRELIMINARY: per-cell tone at the cell centre, one `nearest` tap. MEASURE the staircase on a ramp and a cell-average alternative (up to 16 taps) in the mirror before tier 3.
 - [ ] T007 [GATE G5] MEASURE: the smallest pitch (in texels) at which the area law holds within tolerance, and the antialiasing ramp width (plan ADR-3). Assumed about 3 texels until then.
@@ -50,7 +50,7 @@ package/patchers/f_screen.maxpat    docs/f-reference/f_screen.md    package/help
 ## Phase 2: tuning (Matt)
 
 - [ ] T030 Live look: a photo through three plates at 15, 75, 45; rosette and moiré; the staircase of dot sizes (T006).
-- [ ] T031 Live look: `f_screen` into `f_ink`; does it read as a print? One bent use (coarse screen, odd angles, a line screen on a simulation).
+- [ ] T031 Live look: `f_screen` into `f_vf_erode`; does it read as a print? One bent use (coarse screen, odd angles, a line screen on a simulation).
 - [ ] T032 Dial ranges, defaults, default angles, the smallest pitch, softness; back into the codebox and `definition.py`, then re-run tiers 1 and 2.
 
 ## Phase 3: docs and registration

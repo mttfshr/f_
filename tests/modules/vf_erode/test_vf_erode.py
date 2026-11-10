@@ -1,15 +1,15 @@
-"""test_ink.py -- tier-1 tests for f_ink as narrowed 2026-11-09 (spec "Narrowed", plan ADR-9, T050). Ground truth is independent of the
+"""test_vf_erode.py -- tier-1 tests for f_vf_erode as narrowed 2026-11-09 (spec "Narrowed", plan ADR-9, T050). Ground truth is independent of the
 mirror: closed forms (a linear ramp under a uniform field, a converging field on flat tone), invariants (identity, conservation, a flat
 interior holds still, render-size scaling) and mutations.
 
-Run:  tests/run.sh -q tests/modules/ink/test_ink.py
+Run:  tests/run.sh -q tests/modules/vf_erode/test_vf_erode.py
 """
 import sys
 
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-from ink_mirror import EDGE_G0, F32, TRAVEL_MAX, ink, span_tx  # noqa: E402
+from vf_erode_mirror import EDGE_G0, F32, TRAVEL_MAX, ink, span_tx  # noqa: E402
 
 
 def frame(h, w, value=0.0):

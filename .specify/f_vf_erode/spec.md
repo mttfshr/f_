@@ -1,15 +1,15 @@
-# Spec: f_ink
+# Spec: f_vf_erode (formerly f_ink; renamed 2026-11-10)
 
-_Created: 2026-11-08. Rewritten 2026-11-10 (the erosion model); the 2026-11-08 and 2026-11-09 versions are in git (`git show 3bdf92a:.specify/f_ink/spec.md`)._
+_Created: 2026-11-08. Rewritten 2026-11-10 (the erosion model); the 2026-11-08 and 2026-11-09 versions are in git (`git show 3bdf92a:.specify/f_vf_erode/spec.md`)._
 _Updated 2026-11-10 (later): T060-T065, T074, T075 decided (Matt)._
-_Status: specified, not built. The module in `src/f_ink/` is still the 2026-11-09 build (Extent, Bulge, Travel), which this spec replaces._
-_Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink body"). Name `f_ink` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
+_Status: specified, not built. The module in `src/f_vf_erode/` is still the 2026-11-09 build (Extent, Bulge, Travel), which this spec replaces._
+_Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink body"). Name `f_vf_erode` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
 
 ---
 
 ## What it is
 
-f_ink treats the incoming picture as ink laid on a surface, wets it, and lets the water rearrange it. Ink pooling is erosion and deposition at small scale, the process of an alluvial plain (Matt, 2026-11-10): running water draws ink away from some places and drops it in others. Where ink is drawn away, more of the background and its texture show; where it collects, less. A Polarity control picks whether collected ink makes the picture darker or lighter (below).
+f_vf_erode treats the incoming picture as ink laid on a surface, wets it, and lets the water rearrange it. Ink pooling is erosion and deposition at small scale, the process of an alluvial plain (Matt, 2026-11-10): running water draws ink away from some places and drops it in others. Where ink is drawn away, more of the background and its texture show; where it collects, less. A Polarity control picks whether collected ink makes the picture darker or lighter (below).
 
 There are three layers over a terrain:
 
@@ -25,7 +25,7 @@ Fast water lifts pigment off the paper. Slow water, and water that dries up, dro
 - **Any texture in, texture out** (2026-11-08). No ink color or plate logic; RGB, alpha is not a plate.
 - **Drivers from anywhere** (2026-11-08), each on a dedicated inlet, not a tagged texture (clarify Q4, `P-mod-textures`).
 - **Unclamped float32 output** (2026-11-08, clarify Q2).
-- **The model above** (2026-11-10): after four offline mocks, "this seems like a better direction"; the wet-once looks, dried and still running, "are looking good" (`.specify/f_ink/tasks.md` Record; sheets `8_alluvial.png`, `9_vecfield.png`, local).
+- **The model above** (2026-11-10): after four offline mocks, "this seems like a better direction"; the wet-once looks, dried and still running, "are looking good" (`.specify/f_vf_erode/tasks.md` Record; sheets `8_alluvial.png`, `9_vecfield.png`, local).
 - **A feedback module** (2026-11-10): the earlier "stateless" assumption (A3) and "static first" are dropped. Ink that travels needs iteration.
 - **Two outlets** (2026-11-10): the composite over the background, and the ink thickness as a scalar.
 - **Pools are large** (2026-11-10): "larger areas with one or two clean edges"; ink runs together inside a pool, so not many small areas (the first mock "looks more like mottled texture"). Where ink is drawn away, the background shows "delineated with finer and lighter ink, not darker".
@@ -40,6 +40,8 @@ Fast water lifts pigment off the paper. Slow water, and water that dries up, dro
 - **Wet once** (2026-11-10, T061): a held press or trigger floods the frame, loads the current picture as the paper pigment, and the wash runs and dries ("sounds good"). Between wettings a moving in0 does nothing: the wash holds until the next wetting; always-wet is not in this version (T074, "Confirm T074").
 - **Render size** (2026-11-10, T065): the layers run at the render size "if at all possible". A fixed solver grid is the fallback only if a measured cost rules render size out, and that call is Matt's.
 - **Remaining assumptions** (2026-11-10, T066-T071, "confirm all"): **Frame edge**: water and its pigment leave at the edge, no wall (P7). **Flow**: no momentum of its own; inertia comes through the vecfield (P8). **Linear light**: the frame is converted to linear light before the log, as in the mocks (P9, `G-linear-light`). **Thickness outlet**: pigment on the paper only, as luma of absorbance, no water outlet (P10). **Dials**: the set and names in the table below, ranges from tuning; panel under `G-ui-density`, menu under `G-menu` (P11). **Verification**: tier 1 NumPy mirror (conservation and closed-form cases), tier 2 bench against the mirror, tier 3 live (P12).
+
+- **Before the first wetting** (2026-11-10, T076, "2> confirm"): until the first wetting the output shows the picture as if loaded, so an unwetted picture comes out as the input; after it, in0 no longer reaches the layers. A moving in0 is visible until the first press.
 
 ## Assumed by Claude, not yet confirmed
 
@@ -154,4 +156,4 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 - Counting or labeling strokes; a region-map inlet (Matt, 2026-11-10: only if areas from the land fall short).
 - Spread, snap, bias, mottle, dropout, flecks, banding, channel gains, and Extent, Bulge, Travel (the 2026-11-08 and 2026-11-09 designs).
 - Ink color, paper, overprint and plate logic (`f_paper`, `f_separate`); screens and line work (`f_screen`, `f_engrave`).
-- Audio analysis: audio drives f_ink only through an upstream texture.
+- Audio analysis: audio drives f_vf_erode only through an upstream texture.

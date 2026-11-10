@@ -139,7 +139,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- stage 1 of 3: non-finite components to 0, before any blur (one NaN in a tap would poison a whole kernel).\n// Mirror: tests/modules/ink/ink_mirror.zap. Its output is also the source that bypass and alpha read in the last stage.\n// abs(x) < 1e30 with switch(): NaN == NaN is TRUE on this GPU, so an x == x test does nothing.\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nout1 = vec(zap_c(nearest(in1, norm).x), zap_c(nearest(in1, norm).y), zap_c(nearest(in1, norm).z), zap_c(nearest(in1, norm).w));\n",
+									"code": "// f_vf_erode -- stage 1 of 3: non-finite components to 0, before any blur (one NaN in a tap would poison a whole kernel).\n// Mirror: tests/modules/vf_erode/ink_mirror.zap. Its output is also the source that bypass and alpha read in the last stage.\n// abs(x) < 1e30 with switch(): NaN == NaN is TRUE on this GPU, so an x == x test does nothing.\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nout1 = vec(zap_c(nearest(in1, norm).x), zap_c(nearest(in1, norm).y), zap_c(nearest(in1, norm).z), zap_c(nearest(in1, norm).w));\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -204,11 +204,11 @@
 					"patching_rect": [
 						30.0,
 						380.0,
-						208.0,
+						240.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_zap @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_zap"
+					"text": "jit.gl.pix vsynth @name #0_vferode_stage_zap @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_vferode_stage_zap"
 				}
 			},
 			{
@@ -276,7 +276,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- stage 2 of 3: bulge. Only the edges move along the field (spec \"Narrowed\", plan ADR-9). Mirror: tests/modules/ink/ink_mirror.bulge_stage.\n// Each channel is read back along the field by T * bulge * e. T is the travel in texels; e rises with the channel's local slope, so\n// a flat interior holds still and the outline ripples. On smooth tone the slope is what stands in for an edge.\n// Inputs, in order: the zapped image; the vecfield (RG, 0.5 is zero, 0..1 is -1..1). With the connected flag at 0 the field is zero.\n// The read is a manual bilinear from four nearest() taps per channel, because a coordinate that jumps between neighbors makes\n// hardware sample() fall back to nearest. width and height come from render_dim: `dim` reads 1 in a live jit.gl.pix.\nbil_r(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).x * (1.0 - ax) + nearest(in1, vec(u1, v0)).x * ax;\n    far_row = nearest(in1, vec(u0, v1)).x * (1.0 - ax) + nearest(in1, vec(u1, v1)).x * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nbil_g(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).y * (1.0 - ax) + nearest(in1, vec(u1, v0)).y * ax;\n    far_row = nearest(in1, vec(u0, v1)).y * (1.0 - ax) + nearest(in1, vec(u1, v1)).y * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nbil_b(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).z * (1.0 - ax) + nearest(in1, vec(u1, v0)).z * ax;\n    far_row = nearest(in1, vec(u0, v1)).z * (1.0 - ax) + nearest(in1, vec(u1, v1)).z * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nedge_w(cl, cr, cd, cu, s_tx, h_tx) {\n    gx = (cr - cl) / (2.0 * s_tx);\n    gy = (cu - cd) / (2.0 * s_tx);\n    return clamp(sqrt(gx * gx + gy * gy) * h_tx / 7.0, 0.0, 1.0);\n}\n\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam travel(0.5);\nParam bulge(0.0);\nParam src_field(0.0);\n\ns_tx = max(1.0, floor(0.003 * height + 0.5));\nreach = travel * 0.05 * height * bulge;\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nxc = ix + 0.5;\nyc = iy + 0.5;\nul = (clamp(ix - s_tx, 0.0, width - 1.0) + 0.5) / width;\nur = (clamp(ix + s_tx, 0.0, width - 1.0) + 0.5) / width;\nvd = (clamp(iy - s_tx, 0.0, height - 1.0) + 0.5) / height;\nvu = (clamp(iy + s_tx, 0.0, height - 1.0) + 0.5) / height;\num = xc / width;\nvm = yc / height;\n\nffx = (zap_c(sample(in2, norm).x) - 0.5) * 2.0 * reach * src_field;\nffy = (zap_c(sample(in2, norm).y) - 0.5) * 2.0 * reach * src_field;\n\ne_r = edge_w(nearest(in1, vec(ul, vm)).x, nearest(in1, vec(ur, vm)).x, nearest(in1, vec(um, vd)).x, nearest(in1, vec(um, vu)).x, s_tx, height);\ne_g = edge_w(nearest(in1, vec(ul, vm)).y, nearest(in1, vec(ur, vm)).y, nearest(in1, vec(um, vd)).y, nearest(in1, vec(um, vu)).y, s_tx, height);\ne_b = edge_w(nearest(in1, vec(ul, vm)).z, nearest(in1, vec(ur, vm)).z, nearest(in1, vec(um, vd)).z, nearest(in1, vec(um, vu)).z, s_tx, height);\n\nout1 = vec(bil_r(xc - ffx * e_r, yc - ffy * e_r, width, height), bil_g(xc - ffx * e_g, yc - ffy * e_g, width, height), bil_b(xc - ffx * e_b, yc - ffy * e_b, width, height), 1.0);\n",
+									"code": "// f_vf_erode -- stage 2 of 3: bulge. Only the edges move along the field (spec \"Narrowed\", plan ADR-9). Mirror: tests/modules/vf_erode/ink_mirror.bulge_stage.\n// Each channel is read back along the field by T * bulge * e. T is the travel in texels; e rises with the channel's local slope, so\n// a flat interior holds still and the outline ripples. On smooth tone the slope is what stands in for an edge.\n// Inputs, in order: the zapped image; the vecfield (RG, 0.5 is zero, 0..1 is -1..1). With the connected flag at 0 the field is zero.\n// The read is a manual bilinear from four nearest() taps per channel, because a coordinate that jumps between neighbors makes\n// hardware sample() fall back to nearest. width and height come from render_dim: `dim` reads 1 in a live jit.gl.pix.\nbil_r(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).x * (1.0 - ax) + nearest(in1, vec(u1, v0)).x * ax;\n    far_row = nearest(in1, vec(u0, v1)).x * (1.0 - ax) + nearest(in1, vec(u1, v1)).x * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nbil_g(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).y * (1.0 - ax) + nearest(in1, vec(u1, v0)).y * ax;\n    far_row = nearest(in1, vec(u0, v1)).y * (1.0 - ax) + nearest(in1, vec(u1, v1)).y * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nbil_b(xc, yc, w_tx, h_tx) {\n    tx = clamp(xc - 0.5, 0.0, w_tx - 1.0);\n    ty = clamp(yc - 0.5, 0.0, h_tx - 1.0);\n    i0 = floor(tx);\n    j0 = floor(ty);\n    ax = tx - i0;\n    ay = ty - j0;\n    u0 = (i0 + 0.5) / w_tx;\n    u1 = (min(i0 + 1.0, w_tx - 1.0) + 0.5) / w_tx;\n    v0 = (j0 + 0.5) / h_tx;\n    v1 = (min(j0 + 1.0, h_tx - 1.0) + 0.5) / h_tx;\n    near_row = nearest(in1, vec(u0, v0)).z * (1.0 - ax) + nearest(in1, vec(u1, v0)).z * ax;\n    far_row = nearest(in1, vec(u0, v1)).z * (1.0 - ax) + nearest(in1, vec(u1, v1)).z * ax;\n    return near_row * (1.0 - ay) + far_row * ay;\n}\n\nedge_w(cl, cr, cd, cu, s_tx, h_tx) {\n    gx = (cr - cl) / (2.0 * s_tx);\n    gy = (cu - cd) / (2.0 * s_tx);\n    return clamp(sqrt(gx * gx + gy * gy) * h_tx / 7.0, 0.0, 1.0);\n}\n\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam travel(0.5);\nParam bulge(0.0);\nParam src_field(0.0);\n\ns_tx = max(1.0, floor(0.003 * height + 0.5));\nreach = travel * 0.05 * height * bulge;\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nxc = ix + 0.5;\nyc = iy + 0.5;\nul = (clamp(ix - s_tx, 0.0, width - 1.0) + 0.5) / width;\nur = (clamp(ix + s_tx, 0.0, width - 1.0) + 0.5) / width;\nvd = (clamp(iy - s_tx, 0.0, height - 1.0) + 0.5) / height;\nvu = (clamp(iy + s_tx, 0.0, height - 1.0) + 0.5) / height;\num = xc / width;\nvm = yc / height;\n\nffx = (zap_c(sample(in2, norm).x) - 0.5) * 2.0 * reach * src_field;\nffy = (zap_c(sample(in2, norm).y) - 0.5) * 2.0 * reach * src_field;\n\ne_r = edge_w(nearest(in1, vec(ul, vm)).x, nearest(in1, vec(ur, vm)).x, nearest(in1, vec(um, vd)).x, nearest(in1, vec(um, vu)).x, s_tx, height);\ne_g = edge_w(nearest(in1, vec(ul, vm)).y, nearest(in1, vec(ur, vm)).y, nearest(in1, vec(um, vd)).y, nearest(in1, vec(um, vu)).y, s_tx, height);\ne_b = edge_w(nearest(in1, vec(ul, vm)).z, nearest(in1, vec(ur, vm)).z, nearest(in1, vec(um, vd)).z, nearest(in1, vec(um, vu)).z, s_tx, height);\n\nout1 = vec(bil_r(xc - ffx * e_r, yc - ffy * e_r, width, height), bil_g(xc - ffx * e_g, yc - ffy * e_g, width, height), bil_b(xc - ffx * e_b, yc - ffy * e_b, width, height), 1.0);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -353,11 +353,11 @@
 					"patching_rect": [
 						30.0,
 						430.0,
-						224.0,
+						256.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_bulge @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_bulge"
+					"text": "jit.gl.pix vsynth @name #0_vferode_stage_bulge @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_vferode_stage_bulge"
 				}
 			},
 			{
@@ -443,7 +443,7 @@
 							},
 							{
 								"box": {
-									"code": "// f_ink -- stage 3 of 3: extent, then bypass and the source alpha (spec \"Narrowed\", plan ADR-9). Mirror: tests/modules/ink/ink_mirror.extent_stage.\n// One step of mass transport, on luma: flux = -(F T . grad L) - Lavg * T * div F, with T the travel in texels. Ink carried into a slope\n// piles up, ink carried away from one starves it, and a converging field gathers ink. It is applied as one gain for the three\n// channels, P = c * exp(clamp(extent * flux / max(Lavg, 0.02), -2.5, 1.6)), so ink keeps its own color and only its intensity changes,\n// and it cannot go below 0 (Matt, 2026-11-09: the first form, additive per channel, showed as black). Output is not clamped (FR-010).\n// Inputs, in order: the bulged image; the vecfield (RG, 0.5 is zero); the zapped source. With the connected flag at 0 the field is\n// zero and this is exact identity. The field is read with sample(), since it can be any size: exact at 1:1.\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nluma_at(ut, vt) {\n    return nearest(in1, vec(ut, vt)).x * 0.2126 + nearest(in1, vec(ut, vt)).y * 0.7152 + nearest(in1, vec(ut, vt)).z * 0.0722;\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam travel(0.5);\nParam extent(0.0);\nParam src_field(0.0);\nParam bypass_gate(0.0);\n\ns_tx = max(1.0, floor(0.003 * height + 0.5));\nreach = travel * 0.05 * height;\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nul = (clamp(ix - s_tx, 0.0, width - 1.0) + 0.5) / width;\nur = (clamp(ix + s_tx, 0.0, width - 1.0) + 0.5) / width;\nvd = (clamp(iy - s_tx, 0.0, height - 1.0) + 0.5) / height;\nvu = (clamp(iy + s_tx, 0.0, height - 1.0) + 0.5) / height;\num = (ix + 0.5) / width;\nvm = (iy + 0.5) / height;\n\nux = (zap_c(sample(in2, norm).x) - 0.5) * 2.0 * reach * src_field;\nuy = (zap_c(sample(in2, norm).y) - 0.5) * 2.0 * reach * src_field;\ndfx = (zap_c(sample(in2, vec(ur, vm)).x) - zap_c(sample(in2, vec(ul, vm)).x)) * 2.0 / (2.0 * s_tx);\ndfy = (zap_c(sample(in2, vec(um, vu)).y) - zap_c(sample(in2, vec(um, vd)).y)) * 2.0 / (2.0 * s_tx);\nt_div = reach * (dfx + dfy) * src_field;\n\nl_l = luma_at(ul, vm);\nl_r = luma_at(ur, vm);\nl_d = luma_at(um, vd);\nl_u = luma_at(um, vu);\ngx = (l_r - l_l) / (2.0 * s_tx);\ngy = (l_u - l_d) / (2.0 * s_tx);\nlavg = (l_l + l_r + l_d + l_u) * 0.25;\nflux = 0.0 - (ux * gx + uy * gy) - lavg * t_div;\ngain_e = exp(clamp(extent * flux / max(lavg, 0.02), -2.5, 1.6));\n\nout1 = vec(mix(nearest(in1, norm).x * gain_e, nearest(in3, norm).x, bypass_gate), mix(nearest(in1, norm).y * gain_e, nearest(in3, norm).y, bypass_gate), mix(nearest(in1, norm).z * gain_e, nearest(in3, norm).z, bypass_gate), nearest(in3, norm).w);\n",
+									"code": "// f_vf_erode -- stage 3 of 3: extent, then bypass and the source alpha (spec \"Narrowed\", plan ADR-9). Mirror: tests/modules/vf_erode/ink_mirror.extent_stage.\n// One step of mass transport, on luma: flux = -(F T . grad L) - Lavg * T * div F, with T the travel in texels. Ink carried into a slope\n// piles up, ink carried away from one starves it, and a converging field gathers ink. It is applied as one gain for the three\n// channels, P = c * exp(clamp(extent * flux / max(Lavg, 0.02), -2.5, 1.6)), so ink keeps its own color and only its intensity changes,\n// and it cannot go below 0 (Matt, 2026-11-09: the first form, additive per channel, showed as black). Output is not clamped (FR-010).\n// Inputs, in order: the bulged image; the vecfield (RG, 0.5 is zero); the zapped source. With the connected flag at 0 the field is\n// zero and this is exact identity. The field is read with sample(), since it can be any size: exact at 1:1.\nzap_c(xv) {\n    return switch(abs(xv) < 1e30, xv, 0.0);\n}\n\nluma_at(ut, vt) {\n    return nearest(in1, vec(ut, vt)).x * 0.2126 + nearest(in1, vec(ut, vt)).y * 0.7152 + nearest(in1, vec(ut, vt)).z * 0.0722;\n}\n\nParam width(1920.0);\nParam height(1080.0);\nParam travel(0.5);\nParam extent(0.0);\nParam src_field(0.0);\nParam bypass_gate(0.0);\n\ns_tx = max(1.0, floor(0.003 * height + 0.5));\nreach = travel * 0.05 * height;\nix = floor(norm.x * width);\niy = floor(norm.y * height);\nul = (clamp(ix - s_tx, 0.0, width - 1.0) + 0.5) / width;\nur = (clamp(ix + s_tx, 0.0, width - 1.0) + 0.5) / width;\nvd = (clamp(iy - s_tx, 0.0, height - 1.0) + 0.5) / height;\nvu = (clamp(iy + s_tx, 0.0, height - 1.0) + 0.5) / height;\num = (ix + 0.5) / width;\nvm = (iy + 0.5) / height;\n\nux = (zap_c(sample(in2, norm).x) - 0.5) * 2.0 * reach * src_field;\nuy = (zap_c(sample(in2, norm).y) - 0.5) * 2.0 * reach * src_field;\ndfx = (zap_c(sample(in2, vec(ur, vm)).x) - zap_c(sample(in2, vec(ul, vm)).x)) * 2.0 / (2.0 * s_tx);\ndfy = (zap_c(sample(in2, vec(um, vu)).y) - zap_c(sample(in2, vec(um, vd)).y)) * 2.0 / (2.0 * s_tx);\nt_div = reach * (dfx + dfy) * src_field;\n\nl_l = luma_at(ul, vm);\nl_r = luma_at(ur, vm);\nl_d = luma_at(um, vd);\nl_u = luma_at(um, vu);\ngx = (l_r - l_l) / (2.0 * s_tx);\ngy = (l_u - l_d) / (2.0 * s_tx);\nlavg = (l_l + l_r + l_d + l_u) * 0.25;\nflux = 0.0 - (ux * gx + uy * gy) - lavg * t_div;\ngain_e = exp(clamp(extent * flux / max(lavg, 0.02), -2.5, 1.6));\n\nout1 = vec(mix(nearest(in1, norm).x * gain_e, nearest(in3, norm).x, bypass_gate), mix(nearest(in1, norm).y * gain_e, nearest(in3, norm).y, bypass_gate), mix(nearest(in1, norm).z * gain_e, nearest(in3, norm).z, bypass_gate), nearest(in3, norm).w);\n",
 									"fontface": 0,
 									"fontname": "<Monospaced>",
 									"fontsize": 12.0,
@@ -532,11 +532,11 @@
 					"patching_rect": [
 						30.0,
 						480.0,
-						232.0,
+						264.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_ink_stage_extent @adapt 0 @dim 256 256 @type float32",
-					"varname": "#0_ink_stage_extent"
+					"text": "jit.gl.pix vsynth @name #0_vferode_stage_extent @adapt 0 @dim 256 256 @type float32",
+					"varname": "#0_vferode_stage_extent"
 				}
 			},
 			{
@@ -558,7 +558,7 @@
 						22.0
 					],
 					"text": "autopattr",
-					"varname": "ink_autopattr"
+					"varname": "vferode_autopattr"
 				}
 			},
 			{
@@ -620,7 +620,7 @@
 						92.0,
 						21.0
 					],
-					"text": "Ink"
+					"text": "Erode"
 				}
 			},
 			{
@@ -908,7 +908,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_ink_stage_extent::extent",
+					"param_connect": "#0_vferode_stage_extent::extent",
 					"parameter_enable": 1,
 					"patching_rect": [
 						46.5,
@@ -1012,7 +1012,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_ink_stage_bulge::bulge",
+					"param_connect": "#0_vferode_stage_bulge::bulge",
 					"parameter_enable": 1,
 					"patching_rect": [
 						118.5,
@@ -1116,7 +1116,7 @@
 						"",
 						"float"
 					],
-					"param_connect": "#0_ink_stage_bulge::travel",
+					"param_connect": "#0_vferode_stage_bulge::travel",
 					"parameter_enable": 1,
 					"patching_rect": [
 						190.5,

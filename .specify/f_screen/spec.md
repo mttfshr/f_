@@ -10,13 +10,13 @@ _Origin: `ideas/f_print_styles.md` (stage 2 of the print-styles family, "tone to
 
 ### Resolved with Matt (2026-11-07 / 2026-11-08, in chat)
 
-- **A vocabulary, not a goal** (as for `f_ink`): the screen is one composable operator that can reproduce a print look as a recipe and can also be bent into results that look unmistakably digital.
+- **A vocabulary, not a goal** (as for `f_vf_erode`): the screen is one composable operator that can reproduce a print look as a recipe and can also be bent into results that look unmistakably digital.
 - **Plain `f_` name** (no family prefix). Plates are RGB channels, up to three; alpha is not a plate. A reversed channel comes from Vsynth's invert module.
 - **Halftoning in general.** No riso-specific halftone work (Matt, 2026-11-08).
 - **Fixed-angle screens only** (tentative: "a decision but I'm not sure it's the decision"). Marks that follow the image's form (stretched dots, hatching, engraving) belong to the tensor family and the later `f_engrave`, not here.
 - **Dithering is one operation.** A halftone is a comparison of tone against a threshold field; ordered dither is the same comparison with a different field. `f_screen` is the threshold-field stage, with a soft compare.
 - **`f_screen` and `ideas/f_dither_grain.md` stay separate for now** (Matt: "maybe", the question is open). They share only the cell vocabulary.
-- **Print-faithful output.** Dot gain, mottle, dropout and the rest of the ink's behaviour belong to `f_ink`, which follows `f_screen` in a chain.
+- **Print-faithful output.** Dot gain, mottle, dropout and the rest of the ink's behaviour belong to `f_vf_erode`, which follows `f_screen` in a chain.
 
 ### Preliminary decisions taken by Claude (Matt, 2026-11-08: "proceed and accept your own recommendations for preliminary gates")
 
@@ -28,24 +28,24 @@ These are not Matt's calls. They are Claude's recommendations, accepted in place
 - **P4 Rotation about the frame centre.** The lattice is fixed to the frame, never to the image, so an animated input moves under a static screen.
 - **P5 One shared pitch** for all three plates; the angle is per plate.
 - **P6 Default angles 15, 75 and 45 degrees** for R, G and B (inferred from the offset convention, which separates screens by 30 degrees or more to limit moiré; not tested).
-- **P7 Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_ink` (unclamped) because a mark is either there or not.
+- **P7 Output is bounded to 0..1** by construction (coverage), with input above 1 saturating to full and below 0 giving none. This differs from `f_vf_erode` (unclamped) because a mark is either there or not.
 - **P8 No driver inlets in v1** (G12).
 - **P9 Stochastic (FM) stipple is out of scope.** `f_stipple` is a hash-field stipple (its doc, read 2026-11-08), and it reads only the red channel.
-- **P10 Units are frame-relative,** as for `f_ink` (A4 there; gate G2).
-- **P11 Polarity as in `f_ink`:** high channel value = more ink.
+- **P10 Units are frame-relative,** as for `f_vf_erode` (A4 there; gate G2).
+- **P11 Polarity as in `f_vf_erode`:** high channel value = more ink.
 - **P12 Bypass** passes the source through.
 
 ### Open, decided in Phase 0 (gates; to be carried into `tasks.md`)
 
 - **G1 Verification tiers.** The first Phase 0 task (constitution). Proposal: tier 1 (NumPy mirror: closed forms on flat patches and ramps), tier 2 (bench of the real codebox), tier 3 live.
-- **G2 Units.** Frame widths or frame heights for `pitch`; shared with `f_ink` G2.
+- **G2 Units.** Frame widths or frame heights for `pitch`; shared with `f_vf_erode` G2.
 - **G3 Spot functions.** The threshold field for each type (round dot, line) must be area-preserving (P3): the fraction of a cell below threshold t equals t. A round dot's radius is not linear in tone, and a dot at tone above one half has to merge into its neighbours. Settle the functions and test the area law on the mirror.
 - **G4 Per-cell versus per-pixel tone sampling.** Preliminary P1. Open details: a single centre tap versus a small average over the cell (taps are limited to about 16 reads per stage), and what the cell-boundary staircase looks like on a smooth ramp.
 - **G5 Smallest usable pitch and antialiasing.** The pitch (in texels) below which the screen aliases or the dot area stops tracking tone, and the edge ramp width in texels.
 - **G6 Lattice origin and rotation.** Preliminary P4 (frame centre); check that 0, 45 and 90 degrees are exact and that rotation about the centre keeps the grid stable on non-square frames.
 - **G7 Jitter.** How much displacement keeps neighbouring marks from overlapping, and whether the displacement adds statements within the budget (about 250 per function body, about 450 per program; `skills/jit-gen-codebox/SKILL.md`).
-- **G8 `sample()` behaviour.** `ideas/f_deflicker.md` (2026-10-25) says a bilinear tap on a texel corner returned one texel; settle on the bench, shared with `f_ink` G4. The screen's own pattern needs no sampling (it is analytic), only the tone read.
-- **G9 Linear-light versus encoded tone.** Deferred (Matt, for `f_ink`; the same call applies here). It changes how a mid-tone maps to dot area.
+- **G8 `sample()` behaviour.** `ideas/f_deflicker.md` (2026-10-25) says a bilinear tap on a texel corner returned one texel; settle on the bench, shared with `f_vf_erode` G4. The screen's own pattern needs no sampling (it is analytic), only the tone read.
+- **G9 Linear-light versus encoded tone.** Deferred (Matt, for `f_vf_erode`; the same call applies here). It changes how a mid-tone maps to dot area.
 - **G10 Name and menu.** `f_screen` or `f_halftone`; menu category under `G-menu`.
 - **G11 Control set.** Pitch, three angles, type, shape, softness, jitter, level, seed: about ten dials plus the type menu (`G-ui-density`).
 - **G12 Drivers.** Preliminary P8: none. A later optional modulation inlet (pitch or size by a texture) is possible and would be a new version.
@@ -180,7 +180,7 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 - **SC-005**: Plate independence: changing one channel's angle or tone leaves the other channels' outputs unchanged.
 - **SC-006**: Stability: two frames of the same input are bit-identical; a render-size change scales the lattice with the frame.
 - **SC-007**: Jitter: at 0 the lattice is exact; at 1 the mean coverage still equals the tone.
-- **SC-008**: Tier-3 look (Matt): a photo through three plates at 15, 75 and 45 degrees reads as a halftone print with the expected rosette and no unintended moiré; followed by `f_ink` it reads as ink on paper; one deliberately bent use (a very coarse screen, odd angles, or a line screen on a simulation) reads as intentionally digital.
+- **SC-008**: Tier-3 look (Matt): a photo through three plates at 15, 75 and 45 degrees reads as a halftone print with the expected rosette and no unintended moiré; followed by `f_vf_erode` it reads as ink on paper; one deliberately bent use (a very coarse screen, odd angles, or a line screen on a simulation) reads as intentionally digital.
 
 ## Edge Cases
 
@@ -199,7 +199,7 @@ A `Threshold` type (a hard or soft cut at a level, the linocut and xerox base) a
 - Marks that follow the image's form: stretched dots, hatching, engraving (`f_engrave`, the tensor family).
 - Stochastic (FM) stipple (`f_stipple`) and error diffusion (sequential; a blue-noise threshold is the stand-in).
 - Image-to-plate separation (`f_separate`).
-- Ink behaviour: dot gain, mottle, dropout, edge pooling (`f_ink`); misregistration (`f_misregister`); colour and overprint (`f_paper`).
+- Ink behaviour: dot gain, mottle, dropout, edge pooling (`f_vf_erode`); misregistration (`f_misregister`); colour and overprint (`f_paper`).
 - A fourth (CMYK black) plate.
 - Riso-specific halftone options.
 - Driver inlets (G12); drivers can be added in a later version.

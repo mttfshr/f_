@@ -1,6 +1,6 @@
 """
-bench_ink.py -- f_ink (narrowed 2026-11-09, T052): each stage's real codebox on the GPU through the codebox bench, diffed against
-ink_mirror.py stage by stage.
+bench_vf_erode.py -- f_vf_erode (narrowed 2026-11-09, T052): each stage's real codebox on the GPU through the codebox bench, diffed against
+vf_erode_mirror.py stage by stage.
 
 Every Param is pinned in every job (the bench keeps a Param's last value). width and height are Params, set to the job's real size.
 
@@ -12,7 +12,7 @@ Tolerances (written before the first run):
 Cost is @slow, run with --slow, and noted only.
 
 Needs Max with tests/bench/bench.maxpat open.
-Run:  tests/bench.sh -q tests/modules/ink/bench_ink.py       (ask Matt first: CLAUDE.md)
+Run:  tests/bench.sh -q tests/modules/vf_erode/bench_vf_erode.py       (ask Matt first: CLAUDE.md)
 """
 GROUP = "regression"   # tests/bench.sh runs "regression"; see tests/lib/benchdeps.py list --group
 ORDER = 172            # integers only
@@ -24,10 +24,10 @@ import numpy as np
 
 import benchclient as bc
 from harness import check, note, run, slow
-from ink_mirror import F32, bulge_stage, extent_stage, field_uv, zap as mirror_zap
-from test_ink import smooth, swirl_field
+from vf_erode_mirror import F32, bulge_stage, extent_stage, field_uv, zap as mirror_zap
+from test_vf_erode import smooth, swirl_field
 
-SRC = _paths.REPO / "src" / "f_ink"
+SRC = _paths.REPO / "src" / "f_vf_erode"
 ZAP = (SRC / "codebox_zap.gen").read_text()
 BULGE = (SRC / "codebox_bulge.gen").read_text()
 EXTENT = (SRC / "codebox_extent.gen").read_text()

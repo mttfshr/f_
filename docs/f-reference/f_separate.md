@@ -79,7 +79,7 @@ Per pixel, with `x` the source RGB and `K` the 3 x N matrix of active inks:
 - **Reading the preview.** Unmix with fewer than three inks is a projection: what the inks cannot reach is lost and the preview shows it. Where inks sum past 1 in a channel, the preview clips.
 - **A black ink** contributes nothing: its plate is black and the solve stays finite. Under Nearest it ties with black and an ink wins the tie, also black.
 - **Values as given.** The maths runs on the values it receives, with no linear-light conversion (Matt, 2026-11-08, after the tuning looks).
-- **One texture in, no neighbors.** Per-plate halftone, grain and misregistration are other modules' jobs (`f_screen`, `f_ink`, `f_misregister`, not built); a per-plate tone curve is `f_tone_curve` upstream.
+- **One texture in, no neighbors.** Per-plate halftone, grain and misregistration are other modules' jobs (`f_screen`, `f_vf_erode`, `f_misregister`, not built); a per-plate tone curve is `f_tone_curve` upstream.
 - **Cost.** Unmeasured at 1080p (NF-001; Matt, 2026-11-08). `tests/bench.sh --slow` on `bench_separate.py` measures it. One pass, about 90 statements (per `tasks.md`).
 
 ## Known issues / open

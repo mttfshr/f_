@@ -37,7 +37,7 @@ _Origin: `ideas/f_print_styles.md` (stage 1 of the print-styles family, "separat
 ### Consequences noted, not yet applied elsewhere
 
 - The FRs, user stories and success criteria were reconciled with this list on 2026-11-08 (tasks T013a). A gain above 1 cannot push a plate past its ink colour (follows from P9; preliminary).
-- `f_screen`, `f_ink` and `f_engrave` were specced with plates as single channels; with coloured plates they act on the plate's brightness and keep its colour. To be noted in those specs.
+- `f_screen`, `f_vf_erode` and `f_engrave` were specced with plates as single channels; with coloured plates they act on the plate's brightness and keep its colour. To be noted in those specs.
 - `f_paper` inherits additive light (the contract is simpler: sum of plates), no Beer-Lambert.
 
 ### Open, decided in Phase 0 (gates; carried into `tasks.md`)
@@ -176,7 +176,7 @@ A per-ink gain (0-2) on the coverage, so one ink can be weakened or strengthened
 
 ## Out of Scope (This Version)
 
-- Halftoning or any spatial treatment (`f_screen`, `f_engrave`, `f_ink`).
+- Halftoning or any spatial treatment (`f_screen`, `f_engrave`, `f_vf_erode`).
 - A black plate, CMYK and a fourth plate (P7).
 - Picking the palette from the image automatically.
 - A paper parameter or texture: the background is black (P3). Misregistration and emboss (`f_misregister`).

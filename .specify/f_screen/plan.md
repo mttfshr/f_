@@ -9,7 +9,7 @@ All gate decisions below are **preliminary**: Claude's recommendations, accepted
 
 ## Summary
 
-A stateless, analytic processor in one `jit.gl.pix` stage. For each of the three channels it rotates the pixel into that plate's lattice, finds the cell, reads the tone once at the cell centre, and compares it with an area-preserving spot function to decide ink or no ink, with a soft edge. Dot and Line are P1; jitter, shape, Threshold and Bayer are P2. The lattice is a function of position alone, so the module samples the input only to read tone. It is the threshold-field half of the print-styles family; ink behaviour is `f_ink`'s job.
+A stateless, analytic processor in one `jit.gl.pix` stage. For each of the three channels it rotates the pixel into that plate's lattice, finds the cell, reads the tone once at the cell centre, and compares it with an area-preserving spot function to decide ink or no ink, with a soft edge. Dot and Line are P1; jitter, shape, Threshold and Bayer are P2. The lattice is a function of position alone, so the module samples the input only to read tone. It is the threshold-field half of the print-styles family; ink behaviour is `f_vf_erode`'s job.
 
 ---
 
@@ -52,7 +52,7 @@ package/patchers/f_screen.maxpat   docs/f-reference/f_screen.md   package/help/f
 
 ### ADR-1: One stage, analytic lattice (spec FR-002, G6)
 
-**Decision**: the lattice is computed from the pixel's position, never from a texture. Position `p = ((uv.x - 0.5) * aspect, uv.y - 0.5)` in frame heights (preliminary G2, shared with `f_ink`); rotate by `-θ_c` about the frame centre (preliminary G6); lattice coordinates `q = R(-θ_c) p / pitch`; the cell is `round(q)` and the local position `f = q - round(q)` in `[-0.5, 0.5]²`.
+**Decision**: the lattice is computed from the pixel's position, never from a texture. Position `p = ((uv.x - 0.5) * aspect, uv.y - 0.5)` in frame heights (preliminary G2, shared with `f_vf_erode`); rotate by `-θ_c` about the frame centre (preliminary G6); lattice coordinates `q = R(-θ_c) p / pitch`; the cell is `round(q)` and the local position `f = q - round(q)` in `[-0.5, 0.5]²`.
 **Rationale**: a pure function of position is the cheapest thing to mirror exactly and keeps the screen fixed to the frame (spec P4). Rotating about the centre keeps a rotation of 0, 45 or 90 degrees exact on a centred grid (to be checked, G6).
 **Rejected**: a lattice built from a noise texture; a per-image-fixed lattice (spec P4).
 
@@ -106,7 +106,7 @@ r dim -> screen (render size, aspect)
 - **Tier 1**: `screen_mirror.py` / `test_screen.py`: area law on flat patches (several tones, pitches, angles), tone extremes exact, monotone along a ramp, lattice period and orientation (autocorrelation), plate independence, jitter 0 exact and jitter 1 mean preserved, render-size scaling, non-finite zap. Run `tests/run.sh -q tests/modules/screen`.
 - **Tier 2**: `bench_screen.py` runs the real codebox against the mirror (one input); first checks `sample()` inside a function and the smallest usable pitch. `bench_screen_module.py` covers bypass and the connected flag. Read `skills/bench-test-authoring` before writing either.
 - **Contracts**: register in `tests/contracts/test_module_contracts.py` and `bench_modules.py`.
-- **Tier 3 (Matt)**: a photo through three plates at 15, 75, 45; followed by `f_ink`; a bent use.
+- **Tier 3 (Matt)**: a photo through three plates at 15, 75, 45; followed by `f_vf_erode`; a bent use.
 
 ## Risks
 

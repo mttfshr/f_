@@ -1,5 +1,5 @@
 """
-bench_ink_module.py -- f_ink (narrowed 2026-11-09, T052): the shipped patcher in the live module bench: the three stages and their
+bench_vf_erode_module.py -- f_vf_erode (narrowed 2026-11-09, T052): the shipped patcher in the live module bench: the three stages and their
 cords, the vecfield inlet and its connected flag, the render size arriving by `r dim`, and a dial with two stage targets.
 
 Asserted (thresholds written before the first run; not to be loosened to make a failure pass):
@@ -12,7 +12,7 @@ Tolerance: TOL 5e-4, three stages of float32 against the mirror, as written.
 Not here: bypass is the contract bench's (tests/contracts/bench_modules.py, BYPASS_EXPECT).
 
 Needs Max with tests/bench/bench_module.maxpat open (Vsynth performance patches closed).
-Run:  tests/bench.sh -q tests/modules/ink/bench_ink_module.py       (ask Matt first: CLAUDE.md)
+Run:  tests/bench.sh -q tests/modules/vf_erode/bench_vf_erode_module.py       (ask Matt first: CLAUDE.md)
 """
 GROUP = "regression"
 ORDER = 173            # integers only
@@ -27,8 +27,8 @@ import benchclient as bc
 import jxf
 import modulebench as mb
 from harness import check, note, run
-from ink_mirror import F32, ink
-from test_ink import smooth, swirl_field
+from vf_erode_mirror import F32, ink
+from test_vf_erode import smooth, swirl_field
 
 N = 640
 SETTLE = 30            # frames after a control message
@@ -49,7 +49,7 @@ def job(segments, warmup=30, connect=True):
         jxf.write_rgba(job_dir / f"in{i + 1}.jxf", tex)
     j["segments"] = segments
     wrapper = bc.BENCH_DIR / j["wrapper"]
-    wrapper.write_text(json.dumps(mb.make_wrapper("f_ink.maxpat", len(textures), 1), indent=2))
+    wrapper.write_text(json.dumps(mb.make_wrapper("f_vf_erode.maxpat", len(textures), 1), indent=2))
     r = bc.run_job(j, job_dir, ports=bc.MODULE_PORTS)
     for old in bc.BENCH_DIR.glob("mjob_*.maxpat"):
         if old != wrapper:

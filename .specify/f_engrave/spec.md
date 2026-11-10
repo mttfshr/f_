@@ -10,7 +10,7 @@ _Origin: `ideas/f_print_styles.md` (stage 2, the form-following line module for 
 
 ### Resolved with Matt (2026-11-07 / 2026-11-08, in chat)
 
-- **A vocabulary, not a goal** (as for `f_ink`): engraving-style line work is one operator in the print vocabulary, usable for a faithful intaglio look and equally for results that look unmistakably digital.
+- **A vocabulary, not a goal** (as for `f_vf_erode`): engraving-style line work is one operator in the print vocabulary, usable for a faithful intaglio look and equally for results that look unmistakably digital.
 - **Lines follow the image's form,** which means the tensor family (`f_tf_*`) supplies the direction. Intaglio is a later phase than riso.
 - **Separate from `f_tf_hatch`.** This is its own module and does not evolve hatch. Hatch is stable and stays as it is; it may later pick up some of this module's flexibility (Matt, 2026-11-08).
 - **The method is a Phase 0 gate** (Matt, 2026-11-08): the three candidates are tried in a scratch spike and chosen by looking and by the criteria below, not by reasoning in advance.
@@ -39,15 +39,15 @@ These are Claude's recommendations accepted in place so the spec can proceed; no
 
 - **G1 Verification tiers.** The first Phase 0 task. Proposal: tier 1 mirrors the geometry criteria (SC-001 to SC-005) in NumPy; tier 2 benches the real codebox; tier 3 live. A scratch spike comes before any of it (G2).
 - **G2 Line-field method.** The module's core and the unsolved problem: evenly spaced, coherent parallel lines whose phase is continuous along a direction field (the phase must be integrated, and it breaks at singularities). Candidates, none tried: (a) LIC over a line-pattern seed; (b) a line pattern warped by a smoothed luma field, so the lines are iso-lines of tone; (c) lines spaced by distance to the previous line; the plan (`plan.md` ADR-3) adds two more for the spike, a global phase solve on a coarse grid and oriented Gabor or phasor-style kernels. **Stop rule:** if no candidate meets SC-001 to SC-004 in the spike, the module is not built and the spec is parked with the result recorded.
-- **G3 Units.** Frame widths or frame heights for `pitch`; shared with `f_ink` and `f_screen`.
+- **G3 Units.** Frame widths or frame heights for `pitch`; shared with `f_vf_erode` and `f_screen`.
 - **G4 State.** Whether the chosen method needs frame-to-frame state (for example an integrated phase). A stateless method is preferred (P11); a stateful one changes the bench and the bypass behaviour.
 - **G5 Singularity policy.** What the lines do at degenerate points of the field (knots, wedges, swirls, which `f_tf_hatch` shows as topology): converge, fade, or leave a gap. Measure the spacing distortion around them.
 - **G6 Fallback blend.** The coherence ramp and `fallback_angle` of P7, and the visible seam where direction switches.
 - **G7 Tone to width.** The mapping near 0 (hairlines, lines thinner than a texel) and near 1 (merge into a solid), and whether a line ends or only thins in highlights.
 - **G8 Per-line versus per-pixel tone.** Preliminary P9. Which taps and how many (about 16 reads per stage; `ideas/f_deflicker.md`).
-- **G9 `sample()` behaviour.** Shared with `f_ink` G4 and `f_screen` G8.
+- **G9 `sample()` behaviour.** Shared with `f_vf_erode` G4 and `f_screen` G8.
 - **G10 Codebox budget and cost.** About 250 statements per function and about 450 per program (`skills/jit-gen-codebox/SKILL.md`); a long march is the likely cost. For scale, `f_tf_hatch`'s reference doc gives its streamline stage as about 5 to 12 ms (hardware not stated); this module's cost is unmeasured.
-- **G11 Linear-light versus encoded tone.** Deferred (Matt), as for `f_ink`.
+- **G11 Linear-light versus encoded tone.** Deferred (Matt), as for `f_vf_erode`.
 - **G12 Code sharing with `f_tf_hatch`.** The tensor decode is reusable; whether code can be shared between modules in this build system is unverified.
 - **G13 Name, menu and panel.** Menu category under `G-menu`; the control set under `G-ui-density`; this module is a new tensor consumer (`G-tensor-t3` does not change).
 
@@ -166,7 +166,7 @@ Numeric limits marked `[set in Phase 0]` are fixed from the spike's measurements
 - **SC-005**: Stability: for a small perturbation of the tensor, the mean absolute change of the output is below `[set in Phase 0]` of what the same perturbation would cause by re-phasing; identical input gives identical output.
 - **SC-006**: Plate independence: changing one plate's offset or tone leaves the others unchanged.
 - **SC-007**: Render-size scaling: the line count across the frame is unchanged by a render-size change.
-- **SC-008**: Tier-3 look (Matt): a photo through `f_tf_tensormap`, smoothing, and `f_engrave` reads as an engraving, with crosshatch from a second plate, and followed by `f_ink` and `f_paper` it reads as an intaglio print; one bent use (lines on a simulation, or lines whose pitch is very coarse) reads as intentionally digital.
+- **SC-008**: Tier-3 look (Matt): a photo through `f_tf_tensormap`, smoothing, and `f_engrave` reads as an engraving, with crosshatch from a second plate, and followed by `f_vf_erode` and `f_paper` it reads as an intaglio print; one bent use (lines on a simulation, or lines whose pitch is very coarse) reads as intentionally digital.
 
 ## Edge Cases
 
@@ -184,7 +184,7 @@ Numeric limits marked `[set in Phase 0]` are fixed from the spike's measurements
 
 - Fixed-angle screens and dots (`f_screen`).
 - Image-to-plate separation (`f_separate`) and the tensor itself (`f_tf_tensormap`, smoothing).
-- Ink body (`f_ink`), misregistration, paper and emboss (`f_paper`).
+- Ink body (`f_vf_erode`), misregistration, paper and emboss (`f_paper`).
 - Tone-gated crosshatch inside the module (P4: made with plates).
 - Guilloche and other designed ornament patterns.
 - Evolving `f_tf_hatch`.

@@ -1,4 +1,4 @@
-// f_ink -- stage 2 of 3: bulge. Only the edges move along the field (spec "Narrowed", plan ADR-9). Mirror: tests/modules/ink/ink_mirror.bulge_stage.
+// f_vf_erode -- stage 2 of 3: bulge. Only the edges move along the field (spec "Narrowed", plan ADR-9). Mirror: tests/modules/vf_erode/ink_mirror.bulge_stage.
 // Each channel is read back along the field by T * bulge * e. T is the travel in texels; e rises with the channel's local slope, so
 // a flat interior holds still and the outline ripples. On smooth tone the slope is what stands in for an edge.
 // Inputs, in order: the zapped image; the vecfield (RG, 0.5 is zero, 0..1 is -1..1). With the connected flag at 0 the field is zero.

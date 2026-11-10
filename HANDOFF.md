@@ -8,12 +8,12 @@
 
 **New 2026-11-09 (later):** `f_vf_lbm`, `f_vf_fluid` and `f_vf_ch` now follow the render size (`render_dim` on `enc`), verified live by Matt (entry below). The FIRST next-session item is unchanged.
 
-**New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_ink` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
+**New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_vf_erode` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
-**FIRST next session (2026-11-10):** `f_ink` (`.specify/f_ink/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). T066-T071 are confirmed too ("confirm all"): the review is done. `plan.md` is rewritten (T072, 2026-11-10). Matt wants the module renamed `f_vf_erode` (T077: not done; the rename touches `.specify/f_ink`, `src/`, `package/`, `tests/`, docs, README, launcher). Next: T076 (Matt) and the rename, then a go to mirror and build. No build, mirror or bench before that (`G-ink-direction`).
+**FIRST next session (2026-11-10):** `f_vf_erode` (`.specify/f_vf_erode/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). T066-T071 are confirmed too ("confirm all"): the review is done. `plan.md` is rewritten (T072, 2026-11-10). the module is renamed `f_vf_erode` (T077, done 2026-11-10) and T076 is confirmed. Next: a go to mirror and build (T073). No build, mirror or bench before that (`G-ink-direction`).
 
 **Candidates (Matt decides):**
-- Print-styles, FIRST: `f_ink`, as in the FIRST line above. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
+- Print-styles, FIRST: `f_vf_erode`, as in the FIRST line above. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
 - `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
 - `f_masonry` adopts tagged textures (Matt, 2026-11-01 21:17: "we will do masonry, but not this second"): design discussion first. Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each (6 x 3 = 18 depths, read from `src/f_masonry/definition.py`), so one tag per named `<param>_tex` needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
 - The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`); the compact `f_weave` panel is the first test case.
@@ -26,14 +26,14 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-10 (later): `f_ink` polarity, wetting and solver size decided
+## 2026-11-10 (later): `f_vf_erode` polarity, wetting and solver size decided
 
 - **Decided (Matt, chat):** T060 Polarity is a control, Darker or Lighter; the library has no layers concept and background means no light, so in3 is the background (`underlayer` renamed). T061 wet once, as written. T065 the layers run at the render size if at all possible; the 1080p cost, measured at build, is the only thing that could change it, and that call is Matt's.
 - **T075 confirmed (Matt, "Confirm T075"), proposed by Claude:** how each setting renders: Darker filters a background that is white when in3 is unconnected, Lighter adds over a black one, so an unwetted picture comes out unchanged in both; one solver for both, only the load and the composite differ; default Darker; a switch takes effect at the next wetting. Also confirmed (Matt, "Confirm T074"), T074: a moving in0 does nothing between wettings; always-wet is not in this version.
 - **Records:** spec, tasks, `G-ink-direction`, `G-print-prelim`, `P-mod-textures` (inlet name) and `plan.md` Next 1. Nothing built or run; `test_gates` not run (asked).
 
-## 2026-11-10 (latest): `f_ink` review finished
+## 2026-11-10 (latest): `f_vf_erode` review finished
 
 - **Decided (Matt, "confirm all"):** T066-T071, Claude's proposals as written: water leaves at the frame edge; no momentum of its own; linear light before the log; thickness outlet is pigment on the paper only, no water outlet; the dial set in spec "Parameters"; verification tiers 1-3.
 - **Records:** spec (P7-P12 to Decided, none left), `tasks.md` T066-T071 ticked, `G-ink-direction`, `G-print-prelim`, `plan.md` Next 1. Inferred, not checked: the mirror's conservation test (SC-101) must count pigment that leaves at the edge. Nothing built or run; `test_gates` not run (asked).
-- **Plan (offline, Claude):** `.specify/f_ink/plan.md` rewritten; the solver design is inferred, not run. New PRELIMINARY gate T076 (before the first wetting). Rename to `f_vf_erode` requested by Matt, recorded as T077, not done.
+- **Plan (offline, Claude):** `.specify/f_vf_erode/plan.md` rewritten; the solver design is inferred, not run. T076 (before the first wetting) confirmed by Matt. Renamed `f_ink` to `f_vf_erode` (T077): dirs, files, references, patcher rebuilt; tests not run; the archive and dated logs keep the old name.

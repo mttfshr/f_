@@ -28,7 +28,7 @@ Tentative (Matt: "a decision but I'm not sure it's the decision", 2026-11-08): `
 |---|---|---|
 | 1 Separation | full-colour image to plates | `f_separate` |
 | 2 Tone-to-mark | plate tone to dots, grain, threshold or lines | `f_screen`; `f_engrave` (form-following, later) |
-| 3 Ink body | dot gain, mottle, dropout, edge pooling, flecks, banding | `f_ink` |
+| 3 Ink body | dot gain, mottle, dropout, edge pooling, flecks, banding | `f_vf_erode` |
 | 4 Process artifacts | per-plate misregistration, wobble, ghosting | `f_misregister` |
 | 5 Substrate | plates x ink colours onto paper: overprint, tint, tooth, show-through, emboss | `f_paper` |
 
@@ -63,9 +63,9 @@ Dithering, halftoning and hatching are largely **one operation**: compare tone t
 - **Main risk (inferred, untested):** engraving needs evenly spaced, coherent parallel lines, and keeping line phase continuous along a direction field is a known hard problem (the phase must be integrated, and it breaks at singularities). Options for a scratch spike: LIC over a line-pattern seed; a line pattern warped by a smoothed luma field (iso-lines of tone); lines spaced by distance to the previous line. Pick by looking.
 - Plate wipe tone, ink relief and a plate-mark emboss belong to `f_paper`, shared with letterpress.
 
-### Stage 3: `f_ink` (Matt's immediate interest)
+### Stage 3: `f_vf_erode` (Matt's immediate interest)
 
-"Ink on paper" is a metaphorical framing: describe the characteristics of physical ink, simulate them, then bend the metaphor to things that look unmistakably digital. So `f_ink` (inferred design consequences):
+"Ink on paper" is a metaphorical framing: describe the characteristics of physical ink, simulate them, then bend the metaphor to things that look unmistakably digital. So `f_vf_erode` (inferred design consequences):
 
 - It takes **any texture and returns a texture**, with no ink colour, paper or plate assumption (those live in `f_paper`). It works per channel on whatever it gets, which takes the plate-convention question off its critical path and means it can be tried today on the output of `f_stipple`, `f_tf_hatch`, `f_wave_field` or anything else.
 - Dial names stay physical (Spread, Mottle, Dropout, Edge Pool), but ranges may exceed what ink does: anisotropic spread, negative gain, per-channel rates so R, G and B bleed at different speeds.
@@ -76,7 +76,7 @@ Dithering, halftoning and hatching are largely **one operation**: compare tone t
 
 ### Stages 4 and 5
 
-`f_misregister` gives each plate its own offset, rotation and scale (riso passes are separate drums, so each plate drifts independently), plus wobble and ghosting. `f_paper` composites plates by their ink colours with the shared overprint model, and adds tint, tooth, show-through and emboss. Banding can live in `f_ink`.
+`f_misregister` gives each plate its own offset, rotation and scale (riso passes are separate drums, so each plate drifts independently), plus wobble and ghosting. `f_paper` composites plates by their ink colours with the shared overprint model, and adds tint, tooth, show-through and emboss. Banding can live in `f_vf_erode`.
 
 ## Existing pieces (per the inventory unless noted)
 
@@ -92,9 +92,9 @@ Dithering, halftoning and hatching are largely **one operation**: compare tone t
 
 Riso signature (general knowledge): one to three spot-colour passes, each its own drum with its own misregistration; a grainy "grain touch" screen or a coarse halftone; heavily mottled ink with dropout; translucent inks that overprint into mixed colours; uncoated warm paper; slight banding.
 
-- **Chain:** `f_separate` (N spot inks) then `f_screen` (grain or coarse AM, per-plate angle) then `f_ink` (mottle, dropout, gain) then `f_misregister` then `f_paper` (overprint, tint, tooth).
+- **Chain:** `f_separate` (N spot inks) then `f_screen` (grain or coarse AM, per-plate angle) then `f_vf_erode` (mottle, dropout, gain) then `f_misregister` then `f_paper` (overprint, tint, tooth).
 - **Done when:** a photo through a two-ink chain reads as riso on Matt's live look. Nothing else counts as done.
-- **Module count is open:** the spike could be built as these modules, or as a scratch patch first to find which stages really are separate (scratch before spec). Because `f_ink` stands alone, it is also a natural first piece.
+- **Module count is open:** the spike could be built as these modules, or as a scratch patch first to find which stages really are separate (scratch before spec). Because `f_vf_erode` stands alone, it is also a natural first piece.
 
 ## Other styles as recipes (later; cost is mostly presets)
 
@@ -110,7 +110,7 @@ Matt thinks hatch could use more control over the character of the individual ma
 2. **Module names:** all placeholders. `screen` collides in meaning with `ideas/circular_screen.md`, so `f_halftone` may fit better.
 3. **`f_separate`:** the separation method (luma into one plate, nearest ink colour, or channel invert to CMY; Matt: "I don't know yet"); CMYK scope (real CMYK with black generation, or palettes only); the overprint model; how much palette UI (compact panel, see `G-ui-density`). Matt's prepress app is the reference for what it offers.
 4. **Per-plate parameters:** one param set per plate on a single module (many dials), or one module instance per plate. Tagged-texture inputs (`P-mod-textures`) could drive mottle or misregistration.
-5. **Mottle:** one `f_ink` feature, or a shared `f_util_mod_texture`-style generator other stages can use?
+5. **Mottle:** one `f_vf_erode` feature, or a shared `f_util_mod_texture`-style generator other stages can use?
 6. **`f_screen` and `f_dither_grain`:** fold together, share a cell core, or stay separate? Matt: "maybe, let's discuss". Whether this build system can share code between modules is unverified.
 7. **Oriented marks (tentative above):** is it right that `f_screen` stays fixed-angle and all form-following marks go to the tensor family?
 8. **Stage 3 scope:** static only first, with bleed over time a later stateful module, or both from the start?
@@ -120,4 +120,4 @@ Matt thinks hatch could use more control over the character of the individual ma
 - `G-tensor-t3`: the line module would be a new tensor consumer; it does not change the open tier-3 items.
 - `G-ui-density`: per-plate params make a dense panel, a test case for the UI-density conversation.
 - `G-menu`: new modules need a category and menu entries; wait on or ride the redesign.
-- `P-mod-textures`: touched only if per-plate params or `f_ink` drivers use tagged textures (questions 4 and 5).
+- `P-mod-textures`: touched only if per-plate params or `f_vf_erode` drivers use tagged textures (questions 4 and 5).

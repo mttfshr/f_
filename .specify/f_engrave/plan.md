@@ -87,7 +87,7 @@ Each at two tone levels (flat 0.5 and a ramp) and with a small perturbation copy
 
 ### ADR-7: Bounds, alpha, bypass, units (spec FR-008 to FR-011)
 
-**Decision**: output clamped to 0..1; non-finite input zapped; alpha from in1; `bypass` is the codebox `bypass_gate` Param (never native `@bypass`); lengths in frame heights (shared with `f_ink` and `f_screen`).
+**Decision**: output clamped to 0..1; non-finite input zapped; alpha from in1; `bypass` is the codebox `bypass_gate` Param (never native `@bypass`); lengths in frame heights (shared with `f_vf_erode` and `f_screen`).
 
 ---
 
@@ -108,7 +108,7 @@ r dim -> every stage                                          tone read at line 
 - **Tier 1**: the harness metrics (spec SC-001 to SC-007) on F1 to F5; plate independence; determinism; stability under perturbation.
 - **Tier 2**: after the decision, each stage's real codebox against the mirror (stage by stage, per the constitution); the first bench measures `sample()` (spec G9) and the cost against `f_tf_hatch`'s.
 - **Contracts**: register in `tests/contracts/test_module_contracts.py` and `bench_modules.py`.
-- **Tier 3 (Matt)**: a photo through `f_tf_tensormap`, smoothing, and `f_engrave`; crosshatch from a second plate; followed by `f_ink` and `f_paper`; a bent use.
+- **Tier 3 (Matt)**: a photo through `f_tf_tensormap`, smoothing, and `f_engrave`; crosshatch from a second plate; followed by `f_vf_erode` and `f_paper`; a bent use.
 
 ## Risks
 

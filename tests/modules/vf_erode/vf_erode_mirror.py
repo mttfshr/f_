@@ -1,4 +1,4 @@
-"""ink_mirror.py -- tier-1 float32 NumPy mirror of f_ink as narrowed 2026-11-09 (spec "Narrowed", plan ADR-9, tasks T050-T054).
+"""vf_erode_mirror.py -- tier-1 float32 NumPy mirror of f_vf_erode as narrowed 2026-11-09 (spec "Narrowed", plan ADR-9, tasks T050-T054).
 
 Ink moves along a vecfield. Three stages, stateless (bulge per channel, extent one gain from luma):
     zap     non-finite components to 0.

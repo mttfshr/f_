@@ -1,7 +1,7 @@
-# Implementation Plan: f_ink
+# Implementation Plan: f_vf_erode (formerly f_ink; renamed 2026-11-10, T077)
 
-**Date**: 2026-11-10 (rewritten for the erosion model; the 2026-11-08/09 plan is at `git show 31f0c6f:.specify/f_ink/plan.md`)
-**Spec**: .specify/f_ink/spec.md (every gate T060-T071 is confirmed by Matt, 2026-11-10; the spec has no PRELIMINARY assumption left except what this plan adds, below)
+**Date**: 2026-11-10 (rewritten for the erosion model; the 2026-11-08/09 plan is at `git show 31f0c6f:.specify/f_vf_erode/plan.md`)
+**Spec**: .specify/f_vf_erode/spec.md (every gate T060-T071 is confirmed by Matt, 2026-11-10; the spec has no PRELIMINARY assumption left except what this plan adds, below)
 
 Everything about the solver's internals below is Claude's design, worked out offline from reading `f_vf_lbm` and `f_vf_ch` (their docs and `definition.py` headers) and not yet run. It is **inferred** until the mirror (T073) and the bench confirm it.
 
@@ -18,7 +18,7 @@ A feedback module on the library's state-loop pattern (`f_vf_lbm`, `f_vf_fluid`,
 - **Runtime**: Max 9, `jit.gl.pix`, GenExpr codeboxes, `@type float32` end to end (spec FR-110).
 - **Archetype**: processor, in0 the `driving_inlet`. in1 terrain, in2 vecfield, in3 background (T062), each optional, through `mod_inlets` with `vs_inState` connected flags (`src_terrain`, `src_field`, `src_bg`), never recognised by value (FR-109). Four inputs is the codebox bench's limit, so no stage reads more than four.
 - **Chain, stage by stage**: a `pix_chain` (`build/spec.md`), tested per stage; the constitution says whole chains are not covered by the bench.
-- **Build**: `src/f_ink/definition.py` → `build/build_patcher.py` → `package/patchers/f_ink.maxpat`; the `src/f_ink/codebox_*.gen` files of the 2026-11-09 build (`zap`, `blur`, `fx_a`, `fx_b`, `dir`, bulge, extent) are replaced; they stay in git.
+- **Build**: `src/f_vf_erode/definition.py` → `build/build_patcher.py` → `package/patchers/f_vf_erode.maxpat`; the `src/f_vf_erode/codebox_*.gen` files of the 2026-11-09 build (`zap`, `blur`, `fx_a`, `fx_b`, `dir`, bulge, extent) are replaced; they stay in git.
 - **Limits** (`skills/jit-gen-codebox/SKILL.md`): about 250 statements per function and 450 per program; about 16 reads per stage; no `noise()` on this path; a data-dependent `sample()` coordinate can jump to nearest, so every tap is an explicit texel index read with `nearest`.
 - **Precedent used**: the atlas and `hold` of `f_vf_lbm` (one texture, so one hot inlet per stage and no multi-outlet ordering; its first three-texture version produced noise live), the frame-gate and `r draw` wiring of `f_vf_lbm`/`f_ks`.
 
@@ -36,18 +36,18 @@ A feedback module on the library's state-loop pattern (`f_vf_lbm`, `f_vf_fluid`,
 ## Project Structure
 
 ```
-src/f_ink/
+src/f_vf_erode/
   definition.py            # source of truth (FR-114)
   codebox_hold.gen         # loop break, identity, triggered by the frame gate
   codebox_load.gen         # wetting: picture -> paper pigment, water flood; else passes the state
   codebox_flow.gen         # water through the faces (terrain, push, edge)
   codebox_pigment.gen      # suspension carried and mixed; lift and settle with the paper layer; dry
   codebox_enc.gen          # composite per Polarity, thickness, bypass gate, alpha
-tests/modules/ink/
-  ink_mirror.py            # float32 NumPy mirror, stage for stage (T073)
-  test_ink.py              # tier 1, SC-101..SC-105
-  bench_ink.py             # tier 2, each stage's codebox vs the mirror
-  bench_ink_module.py      # shipped patcher: flags, identity, bypass
+tests/modules/vf_erode/
+  vf_erode_mirror.py            # float32 NumPy mirror, stage for stage (T073)
+  test_vf_erode.py              # tier 1, SC-101..SC-105
+  bench_vf_erode.py             # tier 2, each stage's codebox vs the mirror
+  bench_vf_erode_module.py      # shipped patcher: flags, identity, bypass
 ```
 
 The 2026-11-09 tests and codeboxes are removed in the build commit, not before.
@@ -94,10 +94,10 @@ Every stage has at most three inlets, so the bench drives each directly (NF-103)
 **Thickness (T069)**: outlet 1 is pigment on the paper only, as luma of absorbance (Darker) or luma of the pigment (Lighter); no water outlet.
 **Identity**: a wetted, flat-terrain, no-field wash returns the input, within the round-trip of log, exp and the transfer curve in float32 (SC-104). The tolerance is stated in the mirror, not assumed to be exact (inferred).
 
-### ADR-5: Before the first wetting (new, PRELIMINARY, T076)
+### ADR-5: Before the first wetting (T076, confirmed by Matt 2026-11-10)
 
 The spec says an unwetted picture with in3 unconnected comes out equal to the input (US3.4) but leaves open what an unwetted frame is: `enc` has no paper layer yet. **Proposal**: the spare channel of plane B is a "wash loaded" flag; until the first wetting `enc` outputs in0 composited as if loaded (the picture over the background by the same formula), so the unwetted output is the input; after the first wetting `enc` reads the layers and in0 no longer reaches them (T074).
-**Consequence**: a moving in0 is visible until the first wetting and held after it. This is a visible behaviour change at the first press, so it needs Matt's confirmation (T076).
+**Consequence**: a moving in0 is visible until the first wetting and held after it.
 
 ### ADR-6: Bypass, units, render size
 
@@ -107,8 +107,8 @@ The spec says an unwetted picture with in3 unconnected comes out equal to the in
 
 ## Testing plan (constitution tiers)
 
-- **Tier 1** (T073, `ink_mirror.py`, `test_ink.py`, float32, stage for stage): SC-101 conservation (closed-edge switch, and the open-edge count); SC-102 bowl (rim down, bottom up); SC-103 constant field moves the centroid, push 0 equals no field; SC-104 dried wash is still, flat terrain with no field returns the input; SC-105 stability at the extremes of every dial, no negative layer, no non-finite value. Plus Polarity: Darker and Lighter identity at an unconnected background; thickness zero where there is no pigment. The mirror reads `scratch/experiments/f_ink_look/vecfield_mock.py` (local) for the form of the push, not its constants.
-- **Tier 2**: `bench_ink.py` runs each real codebox against the mirror; the first bench task is the 1080p cost of the atlas stages (NF-102), recorded as measured or unmeasured. Read `skills/bench-test-authoring` before writing either bench file, as the repo requires. `bench_ink_module.py` checks the shipped patcher: connected flags, wetting, bypass.
+- **Tier 1** (T073, `vf_erode_mirror.py`, `test_vf_erode.py`, float32, stage for stage): SC-101 conservation (closed-edge switch, and the open-edge count); SC-102 bowl (rim down, bottom up); SC-103 constant field moves the centroid, push 0 equals no field; SC-104 dried wash is still, flat terrain with no field returns the input; SC-105 stability at the extremes of every dial, no negative layer, no non-finite value. Plus Polarity: Darker and Lighter identity at an unconnected background; thickness zero where there is no pigment. The mirror reads `scratch/experiments/f_vf_erode_look/vecfield_mock.py` (local) for the form of the push, not its constants.
+- **Tier 2**: `bench_vf_erode.py` runs each real codebox against the mirror; the first bench task is the 1080p cost of the atlas stages (NF-102), recorded as measured or unmeasured. Read `skills/bench-test-authoring` before writing either bench file, as the repo requires. `bench_vf_erode_module.py` checks the shipped patcher: connected flags, wetting, bypass.
 - **Contracts**: add the module to `tests/contracts/test_module_contracts.py` and `bench_modules.py`.
 - **Tier 3 (Matt)**: SC-107, his test frame and a stroke-like source with a real terrain and a real vecfield (for example from `f_vf_fluid`); one deliberately bent use; dial ranges and defaults. Panel layout (`G-ui-density`) and menu category (`G-menu`) are decided then, not here.
 

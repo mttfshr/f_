@@ -1,10 +1,10 @@
 """
-f_ink -- definition.py
+f_vf_erode -- definition.py
 
 Ink that moves along a vecfield (narrowed 2026-11-09, Matt, after two live looks: mottle, dropout and the threshold spread are
 gone). Patch a vecfield (repulse, optical flow) into the second inlet: Bulge moves the outlines along it, Extent carries ink along
 it so it piles up and starves at the slopes of the image, and Travel sets how far for both. Per channel, in frame-height units,
-stateless. Spec, plan and tasks: .specify/f_ink/{spec,plan,tasks}.md. Mirror: tests/modules/ink/ink_mirror.py.
+stateless. Spec, plan and tasks: .specify/f_vf_erode/{spec,plan,tasks}.md. Mirror: tests/modules/vf_erode/vf_erode_mirror.py.
 
 Three stages: zap -> bulge -> extent. The source reaches `zap` (the primary); the one outlet comes from `extent`. A pix renders on
 its left inlet, so each stage's left inlet is the image, which arrives last; the vecfield and the source are on the right.
@@ -14,15 +14,15 @@ Dial ranges and defaults are provisional; the panel layout is the builder's unti
 
 
 def _stage(id_, n_inlets, gen, primary=False):
-    return {"id": id_, "name": f"#0_ink_stage_{id_}", "gen": gen, "n_inlets": n_inlets, "n_outlets": 1,
+    return {"id": id_, "name": f"#0_vferode_stage_{id_}", "gen": gen, "n_inlets": n_inlets, "n_outlets": 1,
             "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": primary}
 
 
 patcher = {
-    "name":        "f_ink",
-    "prefix":      "ink",
-    "object_name": "#0_ink_pix",
-    "title":       "Ink",
+    "name":        "f_vf_erode",
+    "prefix":      "vferode",
+    "object_name": "#0_vferode_pix",
+    "title":       "Erode",
     "signal_type": "tex in/out",
     "archetype":   "processor",
 

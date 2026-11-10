@@ -20,7 +20,7 @@ package/patchers/f_engrave.maxpat    docs/f-reference/f_engrave.md    package/he
 - [x] T001 [GATE] DECIDED (Matt, 2026-11-08): the line-field method is a Phase 0 gate; the three candidates are tried and chosen by looking and by measured criteria.
 - [x] T002 [GATE] DECIDED (Matt, 2026-11-08): `f_engrave` is separate from `f_tf_hatch`; hatch stays as it is.
 - [ ] T003 [GATE G1] PRELIMINARY: the spike is part of tier 1; tiers 2 and 3 apply to the winner.
-- [ ] T004 [GATE G3] PRELIMINARY: lengths in frame heights, shared with `f_ink` and `f_screen`.
+- [ ] T004 [GATE G3] PRELIMINARY: lengths in frame heights, shared with `f_vf_erode` and `f_screen`.
 - [ ] T005 [GATE G4] PRELIMINARY: prefer a stateless method; a stateful winner needs a stated reason and the bypass behaviour of plan ADR-6.
 - [ ] T006 [GATE G7/G8] PRELIMINARY: tone-to-width by `|s| < tone/2`, per-line tone read, hairlines by a texel-wide antialiasing ramp (plan ADR-4).
 - [ ] T007 Read `docs/f-reference/f_tf_hatch.md` and `docs/f-reference/f_tensor_type.md` again for the exact raw-tensor encoding and decode idiom; write the decode into `tests/modules/engrave/spike/fields.py` so the fields are real encoded tensors, not angles.
@@ -55,7 +55,7 @@ package/patchers/f_engrave.maxpat    docs/f-reference/f_engrave.md    package/he
 ## Phase 2: tuning (Matt, CONDITIONAL)
 
 - [ ] T050 Live look: a photo through `f_tf_tensormap`, smoothing and `f_engrave`; crosshatch from a second plate; does it read as an engraving?
-- [ ] T051 Live look: followed by `f_ink` and `f_paper` (once those exist); one bent use.
+- [ ] T051 Live look: followed by `f_vf_erode` and `f_paper` (once those exist); one bent use.
 - [ ] T052 Pitch range, defaults, offsets, fallback, softness; back into the codebox and `definition.py`, then re-run tiers 1 and 2.
 
 ## Phase 3: docs and registration (CONDITIONAL)
