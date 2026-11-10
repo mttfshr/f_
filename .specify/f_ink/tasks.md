@@ -86,7 +86,9 @@ Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by
 - [x] T071 [GATE P12] (2026-11-10, Matt, chat: "confirm all") Verification tiers.
 - [x] T074 [GATE P2] (2026-11-10, Matt, chat: "Confirm T074") What a moving in0 does between wettings (proposal: nothing; the wash holds until the next wetting), and always-wet (proposal: not in this version; US5 stays a later mode).
 - [x] T075 [GATE P1] (2026-11-10, Matt, chat: "Confirm T075") How each Polarity setting renders (spec Decided, "Polarity render"): Darker filters a background that is white when in3 is unconnected; Lighter adds over a background that is black; default Darker; a switch takes effect at the next wetting.
-- [ ] T072 Rewrite `plan.md` for this spec (it still describes the 2026-11-09 build).
+- [x] T072 (2026-11-10, offline by Claude) Rewrite `plan.md` for this spec: done; the design is inferred until T073 and the bench.
+- [ ] T076 [GATE ADR-5] PRELIMINARY (Claude's proposal, not confirmed): before the first wetting `enc` shows the picture as if loaded (so US3.4 holds); after it, in0 no longer reaches the layers. A moving in0 is therefore visible until the first press.
+- [ ] T077 Rename the module to `f_vf_erode` (Matt, 2026-11-10, chat: "i'd like to rename the module"). Not done: the directory, `src/`, `package/`, `tests/`, docs, README and launcher references all move together, in their own step. Open for Matt: `f_vf_` marks a vecfield module in this library, and this one takes a vecfield in but puts out a texture and a thickness scalar; he chose the name, so this is a question, not a block.
 - [ ] T073 Mirror and tier 1 for the three layers (bowl, conservation, field push), from `scratch/experiments/f_ink_look/vecfield_mock.py`.
 
 ## Phase 3: docs and registration
@@ -139,3 +141,4 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
 - 2026-11-10 (Matt, chat): "Confirm T074". (Offline, Claude): spec P2 removed from the assumptions; wet once with in0 held between wettings is in Decided and FR-107; US5 (always wet) marked later. Nothing built or run.
 - 2026-11-10 (Matt, chat): "confirm all three" (T062-T064). (Offline, Claude): spec P3-P5 moved to Decided; FR-109 cites the tasks. Nothing built or run.
 - 2026-11-10 (Matt, chat): "confirm all" (T066-T071). (Offline, Claude): spec P7-P12 moved to Decided ("Remaining assumptions"); no PRELIMINARY assumptions are left in the spec. Inferred, not checked: SC-101 (conservation with a closed edge) needs a closed-edge switch or a count of pigment that leaves, in the mirror (T073). Nothing built or run.
+- 2026-11-10 (Claude, offline): `plan.md` rewritten for the erosion model (state atlas, hold-load-flow-pigment-enc chain, conservative face fluxes, Polarity and linear light in load and enc). Added T076 (ADR-5, PRELIMINARY). Matt then said he wants the module renamed `f_vf_erode`: T077, not done. Nothing built or run.

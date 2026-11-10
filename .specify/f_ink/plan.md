@@ -1,40 +1,35 @@
 # Implementation Plan: f_ink
 
-**Date**: 2026-11-08
-**Spec**: .specify/f_ink/spec.md
+**Date**: 2026-11-10 (rewritten for the erosion model; the 2026-11-08/09 plan is at `git show 31f0c6f:.specify/f_ink/plan.md`)
+**Spec**: .specify/f_ink/spec.md (every gate T060-T071 is confirmed by Matt, 2026-11-10; the spec has no PRELIMINARY assumption left except what this plan adds, below)
 
-**STALE since 2026-11-10:** the spec was rewritten for the erosion model. This plan describes the 2026-11-09 build (ADR-9) and is to be rewritten (tasks T072).
-
-All gate decisions below are **preliminary**: Claude's recommendations, accepted in place on Matt's instruction (2026-11-08) so the plan can proceed. Matt has not confirmed them. Where a gate is a measurement, the plan says what to measure and what Claude assumes until then (marked inferred).
+Everything about the solver's internals below is Claude's design, worked out offline from reading `f_vf_lbm` and `f_vf_ch` (their docs and `definition.py` headers) and not yet run. It is **inferred** until the mirror (T073) and the bench confirm it.
 
 ---
 
 ## Summary
 
-A stateless processor built as a short chain of `jit.gl.pix` stages: two separable blur passes for spread, two more at the pool width for edge pooling, and one or two final stages for mottle, dropout, flecks, banding, channel gains and bypass. Every stage is per pixel and reads only `nearest` taps at texel centres. No feedback, no solver. The driver inlets (an amount texture, a spread-direction vecfield) are P2 and add one input and one stage. Verification follows the constitution: a NumPy mirror of every effect against closed forms, a bench of each stage's real codebox, then Matt's live looks.
+A feedback module on the library's state-loop pattern (`f_vf_lbm`, `f_vf_fluid`, `f_ks`): a `hold` stage breaks the loop, and the solver state is one float32 texture, an atlas of RGBA planes at the render size. Per frame, one solver step in two stages: water moves through shared faces, then pigment is carried, lifted and dropped. A wetting loads the picture; an output stage composites the pigment over the background per Polarity. Water, suspension and paper layers are seven channels, so two planes. Verification follows the constitution: a NumPy mirror of the three layers (T073), each stage's real codebox on the bench against it, then Matt's live looks.
 
 ---
 
 ## Technical Context
 
-- **Runtime**: Max 9, `jit.gl.pix` GPU path (GenExpr codebox). Type `@type float32` end to end (spec FR-010).
-- **Archetype**: processor, in0 the `driving_inlet`; in1 and in2 optional, through `mod_inlets` with `vs_inState` connected flags (`src_amt`, `src_dir`), as `f_vf_glow` does for its radius mod texture. With in0 unconnected the output is black.
-- **Multi-stage**: a `pix_chain` (`build/spec.md`), stages wired by `pix_wires`. The constitution says whole chains are not covered by the bench: **test stage by stage**.
-- **Limits that shape the design** (`skills/jit-gen-codebox/SKILL.md`, `ideas/f_deflicker.md`, read this session, not re-run): about 250 statements per function body and about 450 per program; about 16 reads per stage (a 256-tap codebox breaks the translator); `noise()` outputs black in the GPU path, so use the sin hash; a bilinear tap on a texel corner returned ONE texel in one measurement, so nothing here depends on interpolation.
-- **Precedent for a separable blur in this repo**: `f_tf_hatch`'s stroke-texture pre-filter is two stages, `pre_h` and `pre_v` (its reference doc, read 2026-11-08).
-- **Build**: `src/f_ink/definition.py` → `build/build_patcher.py` → `package/patchers/f_ink.maxpat`; `src/f_ink/codebox_*.gen`.
-- **Test harness**: the codebox bench passes up to four inputs; no stage here needs more than three.
-
----
+- **Runtime**: Max 9, `jit.gl.pix`, GenExpr codeboxes, `@type float32` end to end (spec FR-110).
+- **Archetype**: processor, in0 the `driving_inlet`. in1 terrain, in2 vecfield, in3 background (T062), each optional, through `mod_inlets` with `vs_inState` connected flags (`src_terrain`, `src_field`, `src_bg`), never recognised by value (FR-109). Four inputs is the codebox bench's limit, so no stage reads more than four.
+- **Chain, stage by stage**: a `pix_chain` (`build/spec.md`), tested per stage; the constitution says whole chains are not covered by the bench.
+- **Build**: `src/f_ink/definition.py` → `build/build_patcher.py` → `package/patchers/f_ink.maxpat`; the `src/f_ink/codebox_*.gen` files of the 2026-11-09 build (`zap`, `blur`, `fx_a`, `fx_b`, `dir`, bulge, extent) are replaced; they stay in git.
+- **Limits** (`skills/jit-gen-codebox/SKILL.md`): about 250 statements per function and 450 per program; about 16 reads per stage; no `noise()` on this path; a data-dependent `sample()` coordinate can jump to nearest, so every tap is an explicit texel index read with `nearest`.
+- **Precedent used**: the atlas and `hold` of `f_vf_lbm` (one texture, so one hot inlet per stage and no multi-outlet ordering; its first three-texture version produced noise live), the frame-gate and `r draw` wiring of `f_vf_lbm`/`f_ks`.
 
 ## Constitution Check
 
-✅ Codebox-first: all logic in `.gen` files; the patcher is a thin wrapper.
-✅ Numbers before eyes (constraint 6): every effect has a closed form or an invariant (spec SC-001 to SC-007), so tiers 1 and 2 come before the live look.
-✅ One bpatcher, one concern: ink body only; screens, colour, paper and plates are other modules.
-✅ Specs before building: this plan follows the clarified spec.
-⚠️ Panel density (`G-ui-density`): about 14 dials plus three channel gains; mitigated by grouping and by making flecks, banding, gains and drivers P2.
-⚠️ Cost (spec NF-001): five or six stages at 1080p; unmeasured, mitigated by the stage-by-stage bench and a cap on `spread` set by measurement.
+✅ Codebox-first; the patcher is a thin wrapper.
+✅ Numbers before eyes: conservation, bowl, field centroid, stillness and stability each have a closed form or invariant (spec SC-101 to SC-105), so tiers 1 and 2 precede the live look.
+✅ One concern: ink pooling; paper, plates, screens and line work are other modules.
+✅ Specs before building: this plan follows the confirmed spec.
+⚠️ Cost (NF-102): the atlas at 1080p is 1920 x 2160 float32 with two or more stages per step; unmeasured. It decides whether render size holds (T065, Matt's call).
+⚠️ Panel density (`G-ui-density`): nine dials; the layout is a gate, not decided here.
 
 ---
 
@@ -42,112 +37,93 @@ A stateless processor built as a short chain of `jit.gl.pix` stages: two separab
 
 ```
 src/f_ink/
-  definition.py                 # source of truth (spec FR-015)
-  codebox_blur.gen              # one separable pass (horizontal/vertical by a Param), used for spread and for pool
-  codebox_fx_a.gen              # re-threshold (bias, soften), edge pooling
-  codebox_fx_b.gen              # mottle, tooth/dropout, flecks, banding, gains, driver scale, bypass, zap
-  codebox_dir.gen               # P2: directional spread along the in2 vecfield
+  definition.py            # source of truth (FR-114)
+  codebox_hold.gen         # loop break, identity, triggered by the frame gate
+  codebox_load.gen         # wetting: picture -> paper pigment, water flood; else passes the state
+  codebox_flow.gen         # water through the faces (terrain, push, edge)
+  codebox_pigment.gen      # suspension carried and mixed; lift and settle with the paper layer; dry
+  codebox_enc.gen          # composite per Polarity, thickness, bypass gate, alpha
 tests/modules/ink/
-  ink_mirror.py                 # float32 NumPy mirror, stage for stage
-  test_ink.py                   # tier 1 (SC-001..SC-007)
-  bench_ink.py                  # tier 2, each stage's real codebox vs the mirror
-  bench_ink_module.py           # shipped patcher: flags, identity, bypass
-package/patchers/f_ink.maxpat   # built
-docs/f-reference/f_ink.md       # Phase 3
-package/help/f_ink.maxhelp      # Phase 3
+  ink_mirror.py            # float32 NumPy mirror, stage for stage (T073)
+  test_ink.py              # tier 1, SC-101..SC-105
+  bench_ink.py             # tier 2, each stage's codebox vs the mirror
+  bench_ink_module.py      # shipped patcher: flags, identity, bypass
 ```
+
+The 2026-11-09 tests and codeboxes are removed in the build commit, not before.
 
 ---
 
 ## Architecture Decisions
 
-### ADR-1: Stateless, per channel, stages not a monolith (G1, spec FR-002)
+### ADR-1: One state atlas at the render size (spec FR-101, FR-111)
 
-**Decision**: every output channel depends only on the same channel of in0 (plus the driver and params). Stages in order (corrected 2026-11-09, eight): `zap`; `blur_h` → `blur_v` (spread); `thresh`; `pool_h` → `pool_v` (pool width, reading S); `pool`; `fx_b`.
-**Rationale**: the effects' order is fixed (spec FR-008), and a blur cannot share a stage with anything that reads its result at other positions. Splitting `fx` in two keeps each codebox under the statement budget.
-**Rejected**: a single codebox with a 2-D loop (over the tap and statement budget); a stateful accumulation (out of scope).
+**Decision**: seven channels in two RGBA planes stacked vertically in one `@type float32` texture of W x 2H, W x H the render size (`render_dim`). Plane A: water depth `w` in R, suspension `s` RGB in the rest would need four channels, so: A = (w, s_r, s_g, s_b); B = (p_r, p_g, p_b, spare). The spare channel is a "wash loaded" flag (see ADR-5).
+**Why**: the `f_vf_lbm` finding, one texture and a single hot inlet per stage.
+**Fallback (Matt's call, T065)**: a fixed solver grid, only if the 1080p bench cost rules render size out; outlets still follow the render size (FR-111).
+**Rejected**: separate textures per layer (undocumented outlet firing order; noise live in `f_vf_lbm`'s first version).
 
-### ADR-2: Spread is two separable passes of nearest taps (G5, G4)
-
-**Decision (preliminary)**: a 15-tap kernel per pass at the fixed offsets -7..7, one texel apart (Matt, 2026-11-08), with tent weights set by the radius and normalized (so the dial moves continuously and radius 0 is one tap), read by explicit texel index with `nearest` (never an interpolated tap), borders by index clamp (G7). The `spread` dial maps to a radius in frame heights up to a cap. **The reach is 7 texels** (the first plan allowed a stride of 2, which the mirror showed combs a 1-texel line at 1080); at 1080p that is about 0.0065 of a frame height, and above 1080p it is held at 7 texels, so it shrinks in frame heights (against FR-011, accepted with the cap). If Matt's looks want more reach, a second cascade of the same two passes doubles the reach (variances of Gaussian-like kernels add; inferred).
-**Then**: `fx_a` re-thresholds the blur: `S = smoothstep(0.5 - soften/2 - bias, 0.5 + soften/2 - bias, B)` then `mix(B, S, snap * min(spread / 0.125, 1))` (Matt, 2026-11-08: `snap` keeps continuous tone at 0). At `spread` 0 the blur is one tap of weight 1, so the result is exactly the input (FR-003 in the spec).
-**Alternatives rejected**: a downsample then upsample (needs interpolation, G4 unresolved); one 2-D pass (over the read budget).
-**Consequence**: reach is limited by the cap, recorded as the spec's G5 answer once measured.
-
-### ADR-3: Edge pooling from the pool-width blur (spec FR-007)
-
-**Decision (preliminary; corrected 2026-11-08 by the mirror, see tasks.md Record)**: with `B_p` the blur of `S` at `pool_width` and `S` the spread result, `pooled = S + edge_pool * S * 2 * max(S - B_p, 0)`. The band term is 0 on any flat field and is 0.5 on a straight edge, so the rim peaks at twice S at amount 1; multiplying by `S` keeps it on the ink side. No ink is added where the input is 0. The first form, `4 * B_p * (1 - B_p)`, was 1 on a flat 0.5 field, against FR-007.
-**Consequence**: the pool blur reads `S`, so it cannot reuse the spread blur. Stages are `zap`, blur, blur, threshold, blur, blur, pool, `fx_b` (eight since 2026-11-09). Non-finite input is zapped before the first blur, not in `fx_b`.
-
-### ADR-9: Ink moves along a vecfield (2026-11-09; supersedes ADR-1 to ADR-5 and ADR-8)
-
-Three stages: `zap` -> `bulge` -> `extent`; the vecfield goes to the last two. T = travel * 0.05 * H texels. Slopes are central differences over `s` = max(1, round(0.003 * H)) texels.
-`bulge`: e = clamp(|grad c| * H / 7, 0, 1), read c at p - F * T * bulge * e by a manual bilinear (a data-dependent coordinate can jump, and hardware `sample()` then goes nearest).
-`extent` (revised 2026-11-09, Matt: accumulation keeps the ink's color): flux = -(F T . grad L) - Lavg * T * div F, on luma; P = c * exp(clamp(extent * flux / max(Lavg, 0.02), -2.5, 1.6)). The exponent limits and the 0.02 are inferred, tuned live.
-**Inferred, from one frame of Matt's (tuned live):** the travel scale 0.05, the edge gain 7 (the 90th percentile slope of that frame), the span.
-**Why:** the old design needed marks with edges; Matt's frame has none, so it could only dim (edge pool) or posterize (spread). Mock-up: `scratch/experiments/f_ink_look/4_field_pool.png` (local; stand-in fields, gaussian slopes where the codeboxes use central differences).
-**Unconnected inlet:** identity, which differs from what Claude told Matt on 11-09 ("a plain, even rim"); a self-derived field is the alternative if he wants one.
-
-### ADR-8: After the first look (2026-11-09; supersedes parts of ADR-3, ADR-4, ADR-5)
-
-**Edge pool (Matt, candidate C):** `rim = clamp(2 * max(S - Bp, 0) / max(S, 1e-3), 0, 1)`; `P = S * ((1 - d) + d * rim)`, with `d` = `edge_pool`. `Bp` is two H,V pairs of 15 taps, the second with taps 2 texels apart, the width shared as q + 2q (21 texels at most): ten stages (cost unmeasured).
-**Field inlets (Matt):** in1 is the mottle field and in2 the tooth field, luma of each, connected flags `src_mottle` and `src_tooth`, wired by `mod_inlets` `fanout` to `fx_b`. The P2 drivers of ADR-5 (amount texture, spread-direction vecfield) move to in3 and in4 (Claude's numbering, to confirm). `fx_b` then has four inputs, the bench's limit, so the amount driver (T026) will need its own stage.
-**Built-in noise when unconnected (Claude, provisional: Matt chose inlets, not a built-in look):** mottle candidate C, speckle in slow patches; dropout candidate B, fine tooth with soft edges.
-
-### ADR-4: Mottle, tooth, flecks, bands from the sin hash in frame-height units (G2, G3, G10)
-
-**Decision (preliminary)**: coordinates are `(uv.x * aspect, uv.y)` so one unit is a frame height and features are square on any frame; patterns are fixed to the frame (Matt, Q3). Mottle is value noise on a lattice of size `mottle_scale` with three octaves (weights 1, 1/2, 1/4), smoothstep-interpolated, from `fract(sin(dot(p, (127.1, 311.7)) + seed) * 43758.5453)`. Mottle modulates the local gain `1 + mottle * (m - 0.5) * 2`, applied multiplicatively so a coverage of 0 stays 0 (spec FR-005). Tooth is one octave of the same hash at `tooth_scale`; dropout removes ink where `coverage < dropout * tooth`, so light tones drop first (spec FR-006). Flecks are sparse hash peaks, banding a sine of the coordinate along `band_angle`.
-**Mean of mottle**: the gain is centred on 1 in the field, so the mean of the output stays near the input's (spec User Story 2, scenario 2; to be measured).
-**Rejected**: `noise()` (black on this path); a texture-based noise (needs another input).
-
-### ADR-5: Gains and drivers (spec Q4, Q5, FR-014, FR-016)
-
-**Decision (preliminary)**: each effect amount is multiplied by `gain_c` for channel `c` and by the in1 driver's luma at the pixel (nearest read; the amount is 1 when in1 is unconnected, from the connected flag, not the value: the `vs_black` lesson in the `f_vf_stamp` spec). In P2, in2 (a vecfield, `f_vecfield_type.md`) sets a spread direction: a short directional blur along the field (the `f_vf_streak` idea, not read) replaces the H/V pair where the field's magnitude is nonzero, mixed by magnitude. The neutral field is detected by the connected flag.
-**Rejected**: tagged textures (Matt, Q4).
-
-### ADR-6: Bypass and identity (spec FR-003, FR-013)
-
-**Decision**: bypass is the codebox `bypass_gate` Param in `fx_b` (never native `@bypass`), source passthrough; the earlier stages keep running. With every amount at 0, each stage's result equals its input exactly by construction (blend factors of 0, not a numerical near-zero), which is what SC-001 tests.
-
-### ADR-7: Units and render size (G2)
-
-**Decision (preliminary)**: every length in frame heights; the pix stages take the render size from `r dim` (the `render_dim` build key), as the existing modules do. Non-square frames: x is scaled by the aspect before any pattern is evaluated.
-
----
-
-## Stage and wiring sketch
+### ADR-2: Stages (one solver step per `r draw`)
 
 ```
-in0 -> zap -> blur_h -> blur_v -> thresh -> pool_h -> pool_v -> pool_h2 -> pool_v2 -> pool (left) -> fx_b -> out0
-         |                            +---------(S)----------------------------> pool (right)    ^
-         +----------------(source, for bypass and alpha)---------------------------------------+ (2nd)
-in1 (vs_inState, src_mottle) -> fx_b (3rd)      in2 (vs_inState, src_tooth) -> fx_b (4th)
-in3, in4: the P2 drivers (ADR-5, ADR-8)
-r dim -> every stage (render size)
+r draw -> hold -> load -> flow -> pigment -> (pigment -> hold: feedback, one-frame latency)
+                                     pigment -> enc -> out0, out1
+in0 -> load (picture, hot? no: cold) ; in0 -> enc (alpha, bypass source)
+in1 terrain -> flow ; in2 vecfield -> flow ; in3 background -> enc
 ```
+
+- `hold`: identity; the loop break.
+- `load`: on a wetting (a Param edge, `wet`, with a counter so a held press floods once per press), writes p = the picture as pigment (per Polarity and linear light, ADR-4), s = 0, w = flood depth; otherwise passes the state unchanged. Inlets: state (hot), picture, `src` flags.
+- `flow`: updates w only (ADR-3). Inlets: state (hot), terrain, vecfield.
+- `pigment`: transports s with the water just moved, then lift, settle, dry (ADR-3). Inlets: new state from `flow` (hot) and the previous flows it needs, see ADR-3.
+- `enc`: render-size composite (ADR-4), thickness, `bypass_gate`, alpha from in0. Inlets: state, background, picture.
+Every stage has at most three inlets, so the bench drives each directly (NF-103).
+
+### ADR-3: Conservative face-flux update, gather form (FR-102 to FR-106, P7, P8)
+
+**Decision**: each face between two neighboring texels carries a flux `F_face` computed from the same two cells' values by the same formula, so what leaves one cell arrives in the next. Per cell the codebox gathers its four faces (explicit indices) rather than scattering. Face velocity: `flow * -grad(terrain + w)` across the face plus `push * field` sampled at the face (spec FR-102). **No momentum of its own** (T067): the velocity is recomputed every step from the slope, so nothing coasts. Flux is limited to a fraction of the donor cell's depth (at most 1/4 each, so four outgoing faces cannot take more than the cell holds), which keeps depth non-negative and kills the checkerboard (NF-101). `dry` removes depth at a rate; `w` clamps to zero below an epsilon so a dried wash is exactly still (FR-106).
+**Pigment**: the flux carries suspension from the donor, `s_face = F_face * s_donor / max(w_donor, eps)` per channel; the same face value is added to the receiver and subtracted from the donor. Mixing where water stands is a diffusion term through the same faces, scaled by the smaller of the two depths. Pigment is carried per channel and never mixed between channels (T064).
+**Lift and settle** (cell-local, between `p` and `s`): `lift * speedmeasure * w` moves paper pigment into suspension, limited to what the paper holds; `settle * (1 - speedmeasure)` drops it, and all of `s` drops where `w` falls to zero. The speed measure is the cell's face-flux magnitude over the donor depth, clamped to 0..1 (inferred form; tuned live).
+**Frame edge (T066)**: water and its pigment leave. Reads beyond the frame use an explicit index clamp for the terrain and field, with the neighbor's depth taken as 0 and its terrain as the cell's own, so the edge face carries an outflow and nothing re-enters. Conservation (SC-101) is then checked as **pigment in = pigment left in the frame + pigment that left through the edge**; the mirror counts the second term. (The spec says "closed edge"; the mirror gets a closed-edge switch, test only, so the closed-edge statement of SC-101 can be tested as written.)
+**Why two stages**: `flow` and `pigment` each stay under the read and statement budgets; `pigment` needs the face fluxes `flow` computed. Re-deriving them in `pigment` from the old and new depth is the conservative option (one formula, evaluated twice); passing them in a third plane would add a second texture, which ADR-1 rules out (inferred; the mirror decides).
+**Speed**: one step per frame. The `speed` dial sets the step size up to the stability limit; more steps per frame would unroll the stage pair, decided only after the cost measurement (NF-102).
+
+### ADR-4: Polarity, linear light and the composite (T060, T068, T075)
+
+**Decision**: the picture is converted to linear light on load. **Darker**: pigment = absorbance = `-log(max(lin, eps))`, composite = `bg * exp(-(p + s))` with `bg` white when in3 is unconnected. **Lighter**: pigment = the linear color, composite = `bg + p + s` with `bg` black when unconnected. The result is converted back to display encoding in `enc`. One solver for both: only `load` and `enc` read Polarity. A switch takes effect at the next wetting; the stored layers are in the old units until then (spec Edge Cases).
+**Thickness (T069)**: outlet 1 is pigment on the paper only, as luma of absorbance (Darker) or luma of the pigment (Lighter); no water outlet.
+**Identity**: a wetted, flat-terrain, no-field wash returns the input, within the round-trip of log, exp and the transfer curve in float32 (SC-104). The tolerance is stated in the mirror, not assumed to be exact (inferred).
+
+### ADR-5: Before the first wetting (new, PRELIMINARY, T076)
+
+The spec says an unwetted picture with in3 unconnected comes out equal to the input (US3.4) but leaves open what an unwetted frame is: `enc` has no paper layer yet. **Proposal**: the spare channel of plane B is a "wash loaded" flag; until the first wetting `enc` outputs in0 composited as if loaded (the picture over the background by the same formula), so the unwetted output is the input; after the first wetting `enc` reads the layers and in0 no longer reaches them (T074).
+**Consequence**: a moving in0 is visible until the first wetting and held after it. This is a visible behaviour change at the first press, so it needs Matt's confirmation (T076).
+
+### ADR-6: Bypass, units, render size
+
+**Decision**: `bypass_gate` Param in `enc` (never native `@bypass`), source passthrough, the loop keeps running (FR-113). Every length and rate is in frame heights, converted to texels at the render size; x is scaled by the aspect for any slope or push (FR-111). Non-finite input texels are zapped in `load` and in `flow`'s reads (FR-110).
 
 ---
 
 ## Testing plan (constitution tiers)
 
-- **G1 decided (preliminary)**: tiers 1, 2 and 3 all apply; nothing is skipped.
-- **Tier 1**: `tests/modules/ink/ink_mirror.py` and `test_ink.py`: identity at zero; spread on a disc, a line and a gap (area, merge, thin, bias); mottle statistics (standard deviation monotone in the amount, correlation length against `mottle_scale`, zero where input is zero); dropout fraction monotone and light-first; edge-pool rim over interior; determinism and render-size scaling; channel gain independence; border behaviour; non-finite zap. Run `tests/run.sh -q`.
-- **Tier 2**: `bench_ink.py` runs each stage's real codebox against the mirror; the first bench task is to measure `sample()` on this hardware (G4) and the cost of the blur stages (G5). `bench_ink_module.py` checks the shipped patcher (connected flags, identity, bypass). Read `skills/bench-test-authoring` before writing either, as the repo requires.
-- **Contracts**: add the module to `tests/contracts/test_module_contracts.py` and `bench_modules.py` expectations.
-- **Tier 3 (Matt)**: `f_stipple`, `f_tf_hatch` and `f_wave_field` or `f_ks` through f_ink; one deliberately bent use; the dial ranges and defaults.
+- **Tier 1** (T073, `ink_mirror.py`, `test_ink.py`, float32, stage for stage): SC-101 conservation (closed-edge switch, and the open-edge count); SC-102 bowl (rim down, bottom up); SC-103 constant field moves the centroid, push 0 equals no field; SC-104 dried wash is still, flat terrain with no field returns the input; SC-105 stability at the extremes of every dial, no negative layer, no non-finite value. Plus Polarity: Darker and Lighter identity at an unconnected background; thickness zero where there is no pigment. The mirror reads `scratch/experiments/f_ink_look/vecfield_mock.py` (local) for the form of the push, not its constants.
+- **Tier 2**: `bench_ink.py` runs each real codebox against the mirror; the first bench task is the 1080p cost of the atlas stages (NF-102), recorded as measured or unmeasured. Read `skills/bench-test-authoring` before writing either bench file, as the repo requires. `bench_ink_module.py` checks the shipped patcher: connected flags, wetting, bypass.
+- **Contracts**: add the module to `tests/contracts/test_module_contracts.py` and `bench_modules.py`.
+- **Tier 3 (Matt)**: SC-107, his test frame and a stroke-like source with a real terrain and a real vecfield (for example from `f_vf_fluid`); one deliberately bent use; dial ranges and defaults. Panel layout (`G-ui-density`) and menu category (`G-menu`) are decided then, not here.
 
 ## Risks
 
-- **Spread cap too small** for the look wanted (stride limit): the cascade extension (ADR-2) is the answer; cost doubles.
-- **Mottle looks like noise, not ink**: the octave weights, the scale and the way it enters (gain versus threshold) are tier-3 judgments; the field source can be swapped for a driver texture (P2).
-- **Cost** of five or six stages at 1080p is unmeasured (spec NF-001).
-- **Statement budget** in `fx_b` (mottle + tooth + flecks + banding + gains): the split into functions is the mitigation; the fallback is a third stage.
-- **`sample()` inside functions and loops** (inferred risk from the library's earlier findings): the first bench checks it.
-- **Linear-light (G9)** may change how spread reads on mid-tones: deferred by Matt; revisit at tier 3 and, if needed, add a switch.
+- **Cost** of the 2H atlas at 1080p (NF-102): the fallback is a fixed grid, Matt's call.
+- **Re-deriving the fluxes in `pigment`** may not reproduce `flow`'s limited fluxes exactly (conservation off by rounding): the mirror's conservation test finds it; the fallback is one fused stage if the statement budget allows (inferred, 250 statements).
+- **Stability at high `push`** with a strong field at the frame edge (spec Edge Cases): the flux limit is the guard; SC-105 tests it.
+- **Lift and settle forms** (the speed measure) are inferred; the bowl and field tests check direction, only the live look checks whether it reads as ink.
+- **Repeat wetting before dry** (spec Edge Cases): `load` overwrites the paper layer and adds to the water; whether the old suspension is kept or dropped is a build-time choice, to record.
+- **Linear-light round trip** costs precision near black under Darker (log of a small value): the `eps` is set in the mirror.
 
 ## Phasing (details in tasks.md)
 
-- **Phase 0**: gates and the NumPy mirror (closed forms, statistics).
-- **Phase 1**: P1 build (blur stages, `fx_a`, `fx_b` with mottle and dropout), `definition.py`, patcher, benches; then P2 (flecks, banding, gains, drivers).
-- **Phase 2**: tuning with Matt.
+- **Phase 0**: mirror and tier 1 (T073), then the 1080p cost probe on the bench.
+- **Phase 1**: stage codeboxes and benches in order: `flow`, `pigment`, `load`, `enc`; then `definition.py`, patcher, module bench, contracts.
+- **Phase 2**: tuning with Matt (dials, ranges, defaults, SC-107).
 - **Phase 3**: reference doc, helpfile, menu placement, README row.
