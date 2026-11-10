@@ -10,7 +10,7 @@
 
 **New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_ink` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
-**FIRST next session (2026-11-10):** `f_ink` (`.specify/f_ink/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). T075 and T074 are confirmed too. Go on with Matt through T062-T064 and T066-T071, then rewrite `plan.md` (T072). No build, mirror or bench before that (`G-ink-direction`).
+**FIRST next session (2026-11-10):** `f_ink` (`.specify/f_ink/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). T075 and T074 are confirmed too. T062-T064 are confirmed too. Go on with Matt through T066-T071, then rewrite `plan.md` (T072). No build, mirror or bench before that (`G-ink-direction`).
 
 **Candidates (Matt decides):**
 - Print-styles, FIRST: `f_ink`, as in the FIRST line above. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).

@@ -1,7 +1,7 @@
 # Spec: f_ink
 
 _Created: 2026-11-08. Rewritten 2026-11-10 (the erosion model); the 2026-11-08 and 2026-11-09 versions are in git (`git show 3bdf92a:.specify/f_ink/spec.md`)._
-_Updated 2026-11-10 (later): T060, T061, T065, T074, T075 decided (Matt)._
+_Updated 2026-11-10 (later): T060-T065, T074, T075 decided (Matt)._
 _Status: specified, not built. The module in `src/f_ink/` is still the 2026-11-09 build (Extent, Bulge, Travel), which this spec replaces._
 _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink body"). Name `f_ink` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
 
@@ -34,14 +34,14 @@ Fast water lifts pigment off the paper. Slow water, and water that dries up, dro
 - **The vecfield pushes** (2026-11-10, "I concur"): it is added to the downhill flow. With no terrain connected, the field alone drives the water.
 - **Polarity is a control** (2026-11-10, T060): "we want to be able to choose here", "a control for whether it gets lighter or darker". The library has no layers concept, and background means no light, so in3 is the background, not an underlayer. How the two settings render is the next item (T075).
 - **Polarity render** (2026-11-10, T075, "Confirm T075"): one solver for both settings; only the load and the composite differ. **Darker**: pigment is absorbance (the negative log of the color) and the composite is the background times exp(-pigment), so pooled ink is deeper and drawn-away ink is thinner and lighter; this is what the mocks did. The background is the light being filtered, so with in3 unconnected it is white. **Lighter**: pigment is the color itself, as light, and the composite is background plus pigment, so pooled ink is brighter and drawn-away ink fades toward the background; with in3 unconnected it is black (no light), as in `f_separate`. In both, an unwetted picture with in3 unconnected comes out as the input. Default: Darker. A switch takes effect at the next wetting.
+- **Inlets** (2026-11-10, T062, "confirm all three"): in0 picture, in1 terrain (luma is height), in2 vecfield (`f_vecfield_type.md`), in3 background. Four inputs is the codebox bench's limit.
+- **Nothing connected** (2026-11-10, T063): no terrain and no field, the water has nowhere to go, the wash dries in place, and the output is the picture. No background: white under Darker, black under Lighter (T075).
+- **One water layer for three channels** (2026-11-10, T064): the channels share the water and the flow; pigment is carried per channel and never mixed between channels. This replaces the old A2.
 - **Wet once** (2026-11-10, T061): a held press or trigger floods the frame, loads the current picture as the paper pigment, and the wash runs and dries ("sounds good"). Between wettings a moving in0 does nothing: the wash holds until the next wetting; always-wet is not in this version (T074, "Confirm T074").
 - **Render size** (2026-11-10, T065): the layers run at the render size "if at all possible". A fixed solver grid is the fallback only if a measured cost rules render size out, and that call is Matt's.
 
 ## Assumed by Claude, not yet confirmed (PRELIMINARY; each is a gate in `tasks.md`)
 
-- **P3 Inlets.** in0 picture, in1 terrain (luma is height), in2 vecfield (`f_vecfield_type.md`), in3 background. Four inputs is the codebox bench's limit.
-- **P4 Nothing connected.** No terrain and no field: the water has nowhere to go, the wash dries in place, and the output is the picture. No background: white under Darker, black under Lighter (T075, decided).
-- **P5 One water layer for three channels.** The channels share the water and the flow; pigment is carried per channel and never mixed between channels. This replaces the old A2.
 - **P7 Frame edge.** In the mocks the edge was a wall and water piled against it, leaving a dark border line. Proposal: water and its pigment leave at the edge.
 - **P8 Flow model.** The mocks used a depth-limited downhill flow with no momentum, so nothing coasts. Inertia, if wanted, arrives through the vecfield (for example from `f_vf_fluid`). Whether the module needs its own momentum is open.
 - **P9 Linear light** (`G-linear-light`): the mocks converted the frame to linear light before taking the log. Open.
@@ -102,7 +102,7 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 - **FR-106**: Water MUST dry at a rate set by a dial; a dried wash MUST be still.
 - **FR-107**: Wet once (T061, T074). Wetting MUST load the current in0 picture as the pigment on the paper. Between wettings, changes at in0 MUST NOT reach the layers.
 - **FR-108**: Outlet 0 MUST be the composite of the pigment (on the paper and in suspension) over the background, per the Polarity control (T075). Outlet 1 MUST be the thickness, per P10.
-- **FR-109**: Inlets per P3. Each optional inlet MUST be recognised as unconnected from its connected flag (`vs_inState`), not from its value. Behaviour with inlets missing per P4.
+- **FR-109**: Inlets per T062. Each optional inlet MUST be recognised as unconnected from its connected flag (`vs_inState`), not from its value. Behaviour with inlets missing per T063.
 - **FR-110**: Float32, unclamped, with no NaN or Inf reaching any outlet or any stored layer (non-finite input texels are zapped to 0).
 - **FR-111**: Every length and rate MUST follow the render size (`render_dim`), and the module MUST be correct for non-square frames. The layers run at the render size (Matt, T065); if a measured cost forces a fixed solver grid (Matt's call), the outlets still follow the render size.
 - **FR-112**: Frame edge per P7, by explicit index math.
