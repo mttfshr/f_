@@ -70,7 +70,7 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 
 ### Rewrite: erosion model (2026-11-10; spec rewritten the same day; plan not yet)
 
-Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by Claude", for Matt to confirm or reverse (`G-ink-direction`). T060, T061 and T065 were settled 2026-11-10 (Matt); T075 2026-11-10 too; the build waits on T074, the rest of the gates and the plan rewrite (T072).
+Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by Claude", for Matt to confirm or reverse (`G-ink-direction`). T060, T061 and T065 were settled 2026-11-10 (Matt); T075 2026-11-10 too; T074 2026-11-10 too; the build waits on the rest of the gates and the plan rewrite (T072).
 
 - [x] T060 [GATE P1] (2026-11-10, Matt, chat) Polarity: a control, Darker or Lighter. "we want to be able to choose here"; no layers concept, background means no light, so in3 is the background. How each setting renders is spec P1, PRELIMINARY (T075).
 - [x] T061 [GATE P2] (2026-11-10, Matt, chat: "sounds good") Wet once on a press or trigger, as written. Its two open parts are T074.
@@ -84,7 +84,7 @@ Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by
 - [ ] T069 [GATE P10] What the thickness outlet carries; a water outlet or not.
 - [ ] T070 [GATE P11] Dial set and names (`G-ui-density`, `G-menu`).
 - [ ] T071 [GATE P12] Verification tiers.
-- [ ] T074 [GATE P2] PRELIMINARY: what a moving in0 does between wettings (proposal: nothing; the wash holds until the next wetting), and always-wet (proposal: not in this version; US5 stays a later mode).
+- [x] T074 [GATE P2] (2026-11-10, Matt, chat: "Confirm T074") What a moving in0 does between wettings (proposal: nothing; the wash holds until the next wetting), and always-wet (proposal: not in this version; US5 stays a later mode).
 - [x] T075 [GATE P1] (2026-11-10, Matt, chat: "Confirm T075") How each Polarity setting renders (spec Decided, "Polarity render"): Darker filters a background that is white when in3 is unconnected; Lighter adds over a background that is black; default Darker; a switch takes effect at the next wetting.
 - [ ] T072 Rewrite `plan.md` for this spec (it still describes the 2026-11-09 build).
 - [ ] T073 Mirror and tier 1 for the three layers (bowl, conservation, field push), from `scratch/experiments/f_ink_look/vecfield_mock.py`.
@@ -136,3 +136,4 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
 - 2026-11-10 (Matt, chat, after `9_vecfield.png`): vecfield as a push on a terrain, field-only when no terrain is connected: "i concur". Rewrite the spec: yes. (Offline, Claude): `spec.md` rewritten for the erosion model; the earlier versions are at `3bdf92a`. Twelve PRELIMINARY assumptions (spec P1-P12) are tasks T060-T071; T053 and T054 lapsed. `plan.md` is stale (T072). `src/f_ink/` and its tests are unchanged and still the 2026-11-09 build. `tests/build/test_gates.py` 5/5 before these edits (`tests/logs/20261110-094805-offline.log`).
 - 2026-11-10 (Matt, chat, review of T060, T061, T065): T060 "we want to be able to choose here. generally we don't have a 'layers' concept and 'background' means no light. can we have a control for whether it gets lighter or darker?"; T061 "sounds good"; T065 "we want render size if at all possible." (Offline, Claude): spec updated (Decided, P1, P3, P4, FR-108, FR-111, US3, the parameter table, an edge case), P6 removed from the assumptions; `underlayer` renamed `background`. New PRELIMINARY gates T074 (wetting's open parts) and T075 (how each Polarity setting renders). Nothing built or run.
 - 2026-11-10 (Matt, chat): "Confirm T075". (Offline, Claude): the render of each Polarity setting moved from spec P1 to Decided; P1 removed from the assumptions. Nothing built or run.
+- 2026-11-10 (Matt, chat): "Confirm T074". (Offline, Claude): spec P2 removed from the assumptions; wet once with in0 held between wettings is in Decided and FR-107; US5 (always wet) marked later. Nothing built or run.
