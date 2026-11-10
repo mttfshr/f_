@@ -1,0 +1,83 @@
+// PROBE for the 1080p cost (T073 follow-up, plan NF-102): same read pattern and similar arithmetic as the planned `flow` stage with the
+// pigment transport fused in (the five state reads give every face's two cells, so no second pass is needed). Not the real stage:
+// the edge is an index clamp, the terrain is its .x channel, and nothing here is checked against the mirror.
+// in1 = state atlas 1920 x 2160 (plane A rows 0..1079: w, s.rgb; plane B rows 1080..2159: p.rgb, flag), in2 = terrain, in3 = field (1920 x 1080).
+Param flow(0.4);
+Param push(1.0);
+Param speed(1.0);
+
+W = 1920;
+H = 1080;
+px = floor(norm.x * W);
+yt = floor(norm.y * 2 * H);
+pl = floor(yt / H);
+py = yt - pl * H;
+xl = clamp(px - 1, 0, W - 1);
+xr = clamp(px + 1, 0, W - 1);
+yu = clamp(py - 1, 0, H - 1);
+yd = clamp(py + 1, 0, H - 1);
+
+sc = nearest(in1, vec((px + 0.5) / W, (py + 0.5) / (2 * H)));
+sl = nearest(in1, vec((xl + 0.5) / W, (py + 0.5) / (2 * H)));
+sr = nearest(in1, vec((xr + 0.5) / W, (py + 0.5) / (2 * H)));
+su = nearest(in1, vec((px + 0.5) / W, (yu + 0.5) / (2 * H)));
+sd = nearest(in1, vec((px + 0.5) / W, (yd + 0.5) / (2 * H)));
+tc = 6 * nearest(in2, vec((px + 0.5) / W, (py + 0.5) / H)).x;
+tl = 6 * nearest(in2, vec((xl + 0.5) / W, (py + 0.5) / H)).x;
+tr = 6 * nearest(in2, vec((xr + 0.5) / W, (py + 0.5) / H)).x;
+tu = 6 * nearest(in2, vec((px + 0.5) / W, (yu + 0.5) / H)).x;
+td = 6 * nearest(in2, vec((px + 0.5) / W, (yd + 0.5) / H)).x;
+fc = nearest(in3, vec((px + 0.5) / W, (py + 0.5) / H));
+fl = nearest(in3, vec((xl + 0.5) / W, (py + 0.5) / H));
+fr = nearest(in3, vec((xr + 0.5) / W, (py + 0.5) / H));
+fu = nearest(in3, vec((px + 0.5) / W, (yu + 0.5) / H));
+fd = nearest(in3, vec((px + 0.5) / W, (yd + 0.5) / H));
+
+kp = 0.2 * push;
+cc = sc.yzw / max(sc.x, 0.001);
+cl = sl.yzw / max(sl.x, 0.001);
+cr = sr.yzw / max(sr.x, 0.001);
+cu = su.yzw / max(su.x, 0.001);
+cd = sd.yzw / max(sd.x, 0.001);
+ec = tc + sc.x;
+
+// left face (left -> centre)
+v = clamp(speed * (-flow * (ec - (tl + sl.x)) + kp * (fl.x + fc.x - 1)), -0.2, 0.2);
+sel = v > 0;
+wu = sc.x + (sl.x - sc.x) * sel;
+q = v * min(wu, 0.5) * clamp(wu / 0.15, 0, 1);
+cdn = cc + (cl - cc) * sel;
+ql = q;
+sfl = cdn * q + 0.04 * min(min(sl.x, sc.x), 1) * (cl - cc);
+
+// right face (centre -> right)
+v = clamp(speed * (-flow * ((tr + sr.x) - ec) + kp * (fc.x + fr.x - 1)), -0.2, 0.2);
+sel = v > 0;
+wu = sr.x + (sc.x - sr.x) * sel;
+q = v * min(wu, 0.5) * clamp(wu / 0.15, 0, 1);
+cdn = cr + (cc - cr) * sel;
+qr = q;
+sfr = cdn * q + 0.04 * min(min(sc.x, sr.x), 1) * (cc - cr);
+
+// up face (up -> centre)
+v = clamp(speed * (-flow * (ec - (tu + su.x)) + kp * (fu.y + fc.y - 1)), -0.2, 0.2);
+sel = v > 0;
+wu = sc.x + (su.x - sc.x) * sel;
+q = v * min(wu, 0.5) * clamp(wu / 0.15, 0, 1);
+cdn = cc + (cu - cc) * sel;
+qu = q;
+sfu = cdn * q + 0.04 * min(min(su.x, sc.x), 1) * (cu - cc);
+
+// down face (centre -> down)
+v = clamp(speed * (-flow * ((td + sd.x) - ec) + kp * (fc.y + fd.y - 1)), -0.2, 0.2);
+sel = v > 0;
+wu = sd.x + (sc.x - sd.x) * sel;
+q = v * min(wu, 0.5) * clamp(wu / 0.15, 0, 1);
+cdn = cd + (cc - cd) * sel;
+qd = q;
+sfd = cdn * q + 0.04 * min(min(sc.x, sd.x), 1) * (cc - cd);
+
+wn = sc.x - qr + ql - qd + qu;
+sn = sc.yzw - sfr + sfl - sfd + sfu;
+a = vec(wn, sn.x, sn.y, sn.z);
+out1 = sc + (a - sc) * (1 - pl);

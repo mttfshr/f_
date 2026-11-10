@@ -1,0 +1,19 @@
+// PROBE for the render-size output stage: reads both planes' pigment (p, s), the background and the picture; log-free composite and the
+// display encoding by pow. in1 = state atlas 1920 x 2160, in2 = background, in3 = picture (1920 x 1080), output 1920 x 1080.
+Param polarity(0.0);
+W = 1920;
+H = 1080;
+px = floor(norm.x * W);
+py = floor(norm.y * H);
+a = nearest(in1, vec((px + 0.5) / W, (py + 0.5) / (2 * H)));
+b = nearest(in1, vec((px + 0.5) / W, (py + H + 0.5) / (2 * H)));
+bg = pow(max(nearest(in2, norm).xyz, 0), vec(2.2, 2.2, 2.2));
+pic = nearest(in3, norm);
+t = a.yzw + b.xyz;
+dk = bg * exp(-t);
+lt = bg + t;
+lin = dk + (lt - dk) * polarity;
+o = pow(max(lin, 0), vec(0.4545, 0.4545, 0.4545));
+th = dot(b.xyz, vec(0.2126, 0.7152, 0.0722));
+out1 = vec(o.x, o.y, o.z, pic.w);
+out2 = vec(th, th, th, 1);

@@ -1,0 +1,49 @@
+// PROBE for the 1080p cost: same reads and similar arithmetic as the planned `pigment` stage (lift, settle, dry, per cell).
+// It reads both planes of its cell and the four neighbors' depth for the slope, and writes both planes. Not the real stage.
+// in1 = state atlas 1920 x 2160, in2 = terrain, in3 = field (1920 x 1080).
+Param flow(0.4);
+Param push(1.0);
+Param speed(1.0);
+Param lift(0.9);
+Param settle(0.004);
+Param dry(0.0016);
+
+W = 1920;
+H = 1080;
+px = floor(norm.x * W);
+yt = floor(norm.y * 2 * H);
+pl = floor(yt / H);
+py = yt - pl * H;
+xl = clamp(px - 1, 0, W - 1);
+xr = clamp(px + 1, 0, W - 1);
+yu = clamp(py - 1, 0, H - 1);
+yd = clamp(py + 1, 0, H - 1);
+
+a = nearest(in1, vec((px + 0.5) / W, (py + 0.5) / (2 * H)));
+b = nearest(in1, vec((px + 0.5) / W, (py + H + 0.5) / (2 * H)));
+wl = nearest(in1, vec((xl + 0.5) / W, (py + 0.5) / (2 * H))).x;
+wr = nearest(in1, vec((xr + 0.5) / W, (py + 0.5) / (2 * H))).x;
+wu = nearest(in1, vec((px + 0.5) / W, (yu + 0.5) / (2 * H))).x;
+wd = nearest(in1, vec((px + 0.5) / W, (yd + 0.5) / (2 * H))).x;
+tl = 6 * nearest(in2, vec((xl + 0.5) / W, (py + 0.5) / H)).x;
+tr = 6 * nearest(in2, vec((xr + 0.5) / W, (py + 0.5) / H)).x;
+tu = 6 * nearest(in2, vec((px + 0.5) / W, (yu + 0.5) / H)).x;
+td = 6 * nearest(in2, vec((px + 0.5) / W, (yd + 0.5) / H)).x;
+f = nearest(in3, vec((px + 0.5) / W, (py + 0.5) / H));
+
+w = max(a.x - dry * speed, 0);
+gx = 0.5 * ((tr + wr) - (tl + wl));
+gy = 0.5 * ((td + wd) - (tu + wu));
+cx = 0.2 * push * (f.x - 0.5) * 2 - flow * gx;
+cy = 0.2 * push * (f.y - 0.5) * 2 - flow * gy;
+spd = min(sqrt(cx * cx + cy * cy) * speed, 0.2) * clamp(w / 0.15, 0, 1);
+lf = clamp(lift * spd * min(w, 1), 0, 0.5);
+pg = b.xyz * lf;
+s = a.yzw + pg;
+p = b.xyz - pg;
+dr = clamp(max(settle * speed * clamp(1 - spd / 0.03, 0, 1), clamp(1 - w / 0.08, 0, 1)), 0, 1);
+s2 = s * (1 - dr);
+p2 = p + s * dr;
+oa = vec(w, s2.x, s2.y, s2.z);
+ob = vec(p2.x, p2.y, p2.z, b.w);
+out1 = ob + (oa - ob) * (1 - pl);

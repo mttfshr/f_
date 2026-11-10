@@ -1,0 +1,2 @@
+// PROBE: the loop break (identity over the whole atlas), as `f_vf_lbm`'s hold.
+out1 = nearest(in1, norm);
