@@ -90,13 +90,17 @@ patcher = {
     #   pass -> adv (in2) -> fx -> fy -> spec -> iy -> ix -> pass   (feedback)
     #                                               ix -> enc (in2) -> outlet
     # Solver stages are @adapt 0 @dim 256 256 float32; only `enc` follows the render size (the
-    # primary, and the one outlet).  The `r draw` bang on `enc` makes it take the render-context
-    # size even with the force inlet unconnected (plan ADR-2).
+    # primary, and the one outlet), sized by render_dim below.  Plan ADR-2 assumed the `r draw`
+    # bang on `enc` gave it the render-context size; it did not (superseded 2026-11-09).
     "inlet_comment": "force vecfield / control",
     "inlet_fanout": {"texture": [["adv", 1], ["enc", 1]],
                      "state": ["adv", "enc"], "state_param": "src_vecfield"},
     "draw_triggers": ["adv", "enc"],
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
+    # Output follows the render size (2026-11-09, same fix as f_vf_lbm): `r dim` -> enc, which is `@adapt 0`. enc
+    # used to be `@adapt 1` with only the `r draw` bang on its left inlet, which never sized it to the render.
+    # enc reads `norm`, not `dim`, so no size Params; the solver stages keep their fixed size.
+    "render_dim": {"size_stages": ["enc"]},
 
     "pix_chain": [
         {"id": "pass", "name": "#0_fluid_pass", "gen": "pass",                 "n_inlets": 1, "n_outlets": 1,
@@ -114,7 +118,7 @@ patcher = {
         {"id": "ix",   "name": "#0_fluid_ix",   "gen": "codebox_dft_ix.gen",  "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": False},
         {"id": "enc",  "name": "#0_fluid_enc",  "gen": "codebox_enc.gen",     "n_inlets": 3, "n_outlets": 1,
-         "pix_attrs": "@adapt 1 @type float32", "primary": True},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": True},
     ],
     "pix_wires": [
         ["pass", 0, "adv", 2],      # previous state

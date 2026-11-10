@@ -94,6 +94,10 @@ patcher = {
     ],
     "draw_triggers": ["inab", "pass", "enc"],
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
+    # Output follows the render size (2026-11-09, same fix as f_vf_lbm): `r dim` -> enc, which is `@adapt 0`. enc
+    # used to be `@adapt 1` with only the `r draw` bang on its left inlet, which never sized it to the render.
+    # enc reads `norm`, not `dim`, so no size Params; the solver stages keep their fixed size.
+    "render_dim": {"size_stages": ["enc"]},
 
     "pix_chain": [
         {"id": "inab", "name": "#0_imm_inab", "gen": "codebox_inab.gen",    "n_inlets": 3, "n_outlets": 1,
@@ -115,7 +119,7 @@ patcher = {
         {"id": "ix",   "name": "#0_imm_ix",   "gen": "codebox_dft_ix.gen",  "n_inlets": 1, "n_outlets": 1,
          "pix_attrs": SOLVER, "primary": False},
         {"id": "enc",  "name": "#0_imm_enc",  "gen": "codebox_enc.gen",     "n_inlets": 3, "n_outlets": 2,
-         "pix_attrs": "@adapt 1 @type float32", "primary": True},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": True},
     ],
     "pix_wires": [
         ["hold", 0, "pass", 1],     # previous state (cold)

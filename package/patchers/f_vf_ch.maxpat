@@ -1507,7 +1507,7 @@
 						200.0,
 						22.0
 					],
-					"text": "jit.gl.pix vsynth @name #0_imm_enc @adapt 1 @type float32",
+					"text": "jit.gl.pix vsynth @name #0_imm_enc @adapt 0 @dim 256 256 @type float32",
 					"varname": "#0_imm_enc"
 				}
 			},
@@ -2917,6 +2917,58 @@
 			},
 			{
 				"box": {
+					"id": "obj-rd-0",
+					"maxclass": "newobj",
+					"patching_rect": [
+						480.0,
+						942.0,
+						40.0,
+						22.0
+					],
+					"text": "r dim",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-5",
+					"maxclass": "newobj",
+					"patching_rect": [
+						620.0,
+						942.0,
+						60.0,
+						22.0
+					],
+					"text": "loadbang",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						"bang"
+					]
+				}
+			},
+			{
+				"box": {
+					"id": "obj-rd-6",
+					"maxclass": "newobj",
+					"patching_rect": [
+						620.0,
+						972.0,
+						70.0,
+						22.0
+					],
+					"text": "s trig_res",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"outlettype": []
+				}
+			},
+			{
+				"box": {
 					"id": "obj-raw-1",
 					"maxclass": "button",
 					"patching_rect": [
@@ -4015,6 +4067,30 @@
 					],
 					"destination": [
 						"obj-53",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-5",
+						0
+					],
+					"destination": [
+						"obj-rd-6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"obj-rd-0",
+						0
+					],
+					"destination": [
+						"obj-5",
 						0
 					]
 				}
