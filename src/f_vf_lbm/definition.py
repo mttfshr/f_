@@ -19,7 +19,7 @@ the order jit.gl.pix fires its outlets (undocumented) and, live, produced noise 
   stream   gather: new[x] = old[x - e_i] (explicit periodic indices)
   mac      ux, uy, rho from the streamed state, one texel per lattice cell (192x108)
   mprev    one-step delay of the mac texture
-  enc      render-size bilinear upsample + gain + clamp + f_vecfield encode + Speed blend + bypass gate
+  enc      render-size (render_dim) bilinear upsample + gain + clamp + f_vecfield encode + Speed blend + bypass gate
 
 Every numerics stage has at most three inlets, so the codebox bench (which drives three) can test each against
 the mirror. `hold` and `mprev` are identities.
@@ -94,6 +94,12 @@ patcher = {
     # no draw_triggers: the frame gate (raw boxes below) takes `r draw` itself and triggers enc after the solver
     "bypass_mode": "param",             # jsui -> prepend param bypass_gate -> enc (the primary)
 
+    # Output follows the render size (2026-11-09): `r dim` -> enc, which is `@adapt 0`. enc used to be `@adapt 1`
+    # with only the `r draw` bang on its left inlet, on the assumption that the bang sizes it to the render; it did
+    # not (Matt, 2026-11-09: the outlet ignored the render dims). enc reads `norm`, not `dim`, so no size Params.
+    # The solver stays 192x108 (literals in the codeboxes).
+    "render_dim": {"size_stages": ["enc"]},
+
     "pix_chain": [
         {"id": "hold",    "name": "#0_lbm_hold",    "gen": "codebox_hold.gen",    "n_inlets": 2, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 192 324 @type float32", "primary": False},
@@ -106,7 +112,7 @@ patcher = {
         {"id": "mprev",   "name": "#0_lbm_mprev",   "gen": "codebox_mprev.gen",   "n_inlets": 2, "n_outlets": 1,
          "pix_attrs": "@adapt 0 @dim 192 108 @type float32", "primary": False},
         {"id": "enc",     "name": "#0_lbm_enc",     "gen": "codebox_enc.gen",     "n_inlets": 3, "n_outlets": 1,
-         "pix_attrs": "@adapt 1 @type float32", "primary": True},
+         "pix_attrs": "@adapt 0 @dim 256 256 @type float32", "primary": True},
     ],
     "pix_wires": [
         ["hold", 0, "collide", 0],        # the state atlas: collide's one hot inlet

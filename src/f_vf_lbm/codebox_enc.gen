@@ -2,7 +2,7 @@
 // f_vecfield (RG = XY, 0.5 = zero, B = 0.5, A = 1) and apply the bypass gate. Runs at RENDER resolution.
 // Mirror: tests/modules/vf_lbm/vf_lbm_mirror.encode() (at the solver size this is exactly that function).
 //
-// Inlets: first = `r draw` bang (unused; it triggers every frame and gives this pix the render-context size),
+// Inlets: first = `r draw` bang (unused; it triggers every frame) and `dim W H` from render_dim (the output size),
 // second = the macro texture (R = ux, G = uy) from the mac stage, third = the previous step's macro texture
 // from the mprev stage.
 //   - SPEED BLEND: the velocity shown is mix(previous, current, phase / nsteps). The frame gate sends phase = 1..N
