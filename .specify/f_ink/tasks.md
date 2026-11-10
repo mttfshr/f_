@@ -70,20 +70,22 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 
 ### Rewrite: erosion model (2026-11-10; spec rewritten the same day; plan not yet)
 
-Every gate here is PRELIMINARY: Claude's assumption in spec "Assumed by Claude", for Matt to confirm or reverse (`G-ink-direction`). No build before T060, T061 and T065 are settled.
+Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by Claude", for Matt to confirm or reverse (`G-ink-direction`). T060, T061 and T065 were settled 2026-11-10 (Matt); the build waits on T074 and T075 and on the plan rewrite (T072).
 
-- [ ] T060 [GATE P1] Polarity and render: a wash over a light underlayer, pigment as absorbance; the reverse of `f_separate`'s black background.
-- [ ] T061 [GATE P2] Wetting: wet once on a press or trigger; what a moving input does between wettings; whether always-wet is a mode.
+- [x] T060 [GATE P1] (2026-11-10, Matt, chat) Polarity: a control, Darker or Lighter. "we want to be able to choose here"; no layers concept, background means no light, so in3 is the background. How each setting renders is spec P1, PRELIMINARY (T075).
+- [x] T061 [GATE P2] (2026-11-10, Matt, chat: "sounds good") Wet once on a press or trigger, as written. Its two open parts are T074.
 - [ ] T062 [GATE P3] Inlets: picture, terrain, vecfield, underlayer.
 - [ ] T063 [GATE P4] Behaviour with nothing connected.
 - [ ] T064 [GATE P5] One water layer for the three channels.
-- [ ] T065 [GATE P6] Solver size: render size or a fixed grid. MEASURE the cost first.
+- [x] T065 [GATE P6] (2026-11-10, Matt, chat) Render size "if at all possible". The 1080p cost is measured at build (NF-102); a fixed solver grid only if that cost rules render size out, and that call is Matt's.
 - [ ] T066 [GATE P7] Frame edge: water leaves at the edge (proposal), or a wall.
 - [ ] T067 [GATE P8] Flow model: no momentum of its own (proposal).
 - [ ] T068 [GATE P9] Linear light (`G-linear-light`).
 - [ ] T069 [GATE P10] What the thickness outlet carries; a water outlet or not.
 - [ ] T070 [GATE P11] Dial set and names (`G-ui-density`, `G-menu`).
 - [ ] T071 [GATE P12] Verification tiers.
+- [ ] T074 [GATE P2] PRELIMINARY: what a moving in0 does between wettings (proposal: nothing; the wash holds until the next wetting), and always-wet (proposal: not in this version; US5 stays a later mode).
+- [ ] T075 [GATE P1] PRELIMINARY: how each Polarity setting renders (spec P1): Darker filters a background that is white when in3 is unconnected; Lighter adds over a background that is black; default Darker; a switch takes effect at the next wetting.
 - [ ] T072 Rewrite `plan.md` for this spec (it still describes the 2026-11-09 build).
 - [ ] T073 Mirror and tier 1 for the three layers (bowl, conservation, field push), from `scratch/experiments/f_ink_look/vecfield_mock.py`.
 
@@ -132,3 +134,4 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
 - 2026-11-10 (Matt, chat, after `8_alluvial.png`): "yes I think this seems like a better direction"; the wet-once looks, dried and still running, "are looking good". Vecfield role (push on the terrain, or the only driver): "I don't know yet -- can we see both?".
 - 2026-11-10 (offline, Claude, NumPy, 320 texels, wet once; nothing built, nothing in Max): `scratch/experiments/f_ink_look/vecfield_mock.py`, sheet `9_vecfield.png` (local). The field is added to the face velocity. Stand-in fields: a constant tilt down-right, and a spiral (swirl plus a weaker inward pull). PUSH on the noise terrain: the pools stay and the drainage bends along the field. ONLY, on flat paper grain: no pools form; the picture smears along the field with grain, and with the tilt the water ends up along the right and bottom frame edges (seen in the water panel at step 900). Claude's reading (inferred from these two fields only): pooling needs low ground or a converging field, so a field alone gives a run, not a pool. Pigment total 802157.6 to 802157.06 (ONLY, spiral). Constants as in `alluvial_mock.py`, untuned. No look by Matt yet.
 - 2026-11-10 (Matt, chat, after `9_vecfield.png`): vecfield as a push on a terrain, field-only when no terrain is connected: "i concur". Rewrite the spec: yes. (Offline, Claude): `spec.md` rewritten for the erosion model; the earlier versions are at `3bdf92a`. Twelve PRELIMINARY assumptions (spec P1-P12) are tasks T060-T071; T053 and T054 lapsed. `plan.md` is stale (T072). `src/f_ink/` and its tests are unchanged and still the 2026-11-09 build. `tests/build/test_gates.py` 5/5 before these edits (`tests/logs/20261110-094805-offline.log`).
+- 2026-11-10 (Matt, chat, review of T060, T061, T065): T060 "we want to be able to choose here. generally we don't have a 'layers' concept and 'background' means no light. can we have a control for whether it gets lighter or darker?"; T061 "sounds good"; T065 "we want render size if at all possible." (Offline, Claude): spec updated (Decided, P1, P3, P4, FR-108, FR-111, US3, the parameter table, an edge case), P6 removed from the assumptions; `underlayer` renamed `background`. New PRELIMINARY gates T074 (wetting's open parts) and T075 (how each Polarity setting renders). Nothing built or run.

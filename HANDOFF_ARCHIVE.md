@@ -2,6 +2,14 @@
 
 Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08 and 2026-11-10 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
 
+## 2026-11-10: `f_ink` reframed as erosion and deposition; spec rewritten
+
+- **Discussion (Matt):** pooling is a finite amount of ink drawn away from some places and collected in others, then "the identical process at tiny scale of what happens in an alluvial plain".
+- **Four offline mocks** (Claude, NumPy on his frame; `scratch/experiments/f_ink_look/`, local, sheets 6 to 9). The first two were rejected or passed over; the third (water, pigment in suspension, pigment on paper, over a terrain) is "a better direction", wet-once looks good; the fourth showed the vecfield as a push keeps the pools and the field alone does not.
+- **Decided (Matt):** a feedback module; composite and thickness outlets; areas come from the land; the terrain is an incoming texture; the vecfield pushes, field-only with no terrain.
+- **Spec rewritten** (`.specify/f_ink/spec.md`); twelve PRELIMINARY assumptions are T060-T071. `plan.md` is stale (T072). Nothing built; `src/f_ink/` is still the 2026-11-09 build. Nothing run in Max.
+- **Gates touched:** `G-ink-direction` (direction set, now holds the PRELIMINARY review), `G-print-prelim`, `G-linear-light` (T068), `P-mod-textures` (four inlets proposed). `test_gates` 5/5 after the edits (log in the commit).
+
 ## 2026-11-09 (later): vecfield solvers follow the render size
 
 - **Bug (Matt):** `f_vf_lbm`'s outlet ignored the render size. Cause (inferred from the definition): `enc` was `@adapt 1` and its left inlet got only the `r draw` bang, which does not size it. `f_vf_fluid` and `f_vf_ch` had the same setup (their plan ADR-2 assumed the bang sized it).

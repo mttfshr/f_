@@ -1,6 +1,7 @@
 # Spec: f_ink
 
 _Created: 2026-11-08. Rewritten 2026-11-10 (the erosion model); the 2026-11-08 and 2026-11-09 versions are in git (`git show 3bdf92a:.specify/f_ink/spec.md`)._
+_Updated 2026-11-10 (later): T060, T061, T065 decided (Matt)._
 _Status: specified, not built. The module in `src/f_ink/` is still the 2026-11-09 build (Extent, Bulge, Travel), which this spec replaces._
 _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink body"). Name `f_ink` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
 
@@ -8,7 +9,7 @@ _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink bod
 
 ## What it is
 
-f_ink treats the incoming picture as ink laid on a surface, wets it, and lets the water rearrange it. Ink pooling is erosion and deposition at small scale, the process of an alluvial plain (Matt, 2026-11-10): running water draws ink away from some places and drops it in others. Where ink is drawn away, more of the underlayer and its texture show; where it collects, less.
+f_ink treats the incoming picture as ink laid on a surface, wets it, and lets the water rearrange it. Ink pooling is erosion and deposition at small scale, the process of an alluvial plain (Matt, 2026-11-10): running water draws ink away from some places and drops it in others. Where ink is drawn away, more of the background and its texture show; where it collects, less. A Polarity control picks whether collected ink makes the picture darker or lighter (below).
 
 There are three layers over a terrain:
 
@@ -26,20 +27,22 @@ Fast water lifts pigment off the paper. Slow water, and water that dries up, dro
 - **Unclamped float32 output** (2026-11-08, clarify Q2).
 - **The model above** (2026-11-10): after four offline mocks, "this seems like a better direction"; the wet-once looks, dried and still running, "are looking good" (`.specify/f_ink/tasks.md` Record; sheets `8_alluvial.png`, `9_vecfield.png`, local).
 - **A feedback module** (2026-11-10): the earlier "stateless" assumption (A3) and "static first" are dropped. Ink that travels needs iteration.
-- **Two outlets** (2026-11-10): the composite over an underlayer, and the ink thickness as a scalar.
-- **Pools are large** (2026-11-10): "larger areas with one or two clean edges"; ink runs together inside a pool, so not many small areas (the first mock "looks more like mottled texture"). Where ink is drawn away, the underlayer shows "delineated with finer and lighter ink, not darker".
+- **Two outlets** (2026-11-10): the composite over the background, and the ink thickness as a scalar.
+- **Pools are large** (2026-11-10): "larger areas with one or two clean edges"; ink runs together inside a pool, so not many small areas (the first mock "looks more like mottled texture"). Where ink is drawn away, the background shows "delineated with finer and lighter ink, not darker".
 - **Areas come from the land** (2026-11-10): no stage that counts or labels strokes. An area is whatever drains to the same low place.
 - **The terrain is an incoming texture** (2026-11-10), whatever it represents: paper grain, a landscape, or the picture itself.
 - **The vecfield pushes** (2026-11-10, "I concur"): it is added to the downhill flow. With no terrain connected, the field alone drives the water.
+- **Polarity is a control** (2026-11-10, T060): "we want to be able to choose here", "a control for whether it gets lighter or darker". The library has no layers concept, and background means no light, so in3 is the background, not an underlayer. How the two settings render is in P1, which stays PRELIMINARY for its detail.
+- **Wet once** (2026-11-10, T061): P2 as written, "sounds good". Its two open parts are T074.
+- **Render size** (2026-11-10, T065): the layers run at the render size "if at all possible". A fixed solver grid is the fallback only if a measured cost rules render size out, and that call is Matt's.
 
 ## Assumed by Claude, not yet confirmed (PRELIMINARY; each is a gate in `tasks.md`)
 
-- **P1 Polarity and render.** The picture is a wash over a light underlayer: pigment is absorbance (the negative log of the color), the composite is underlayer times exp(-pigment), so thin ink is lighter and pooled ink is deeper, and an untouched picture over a white underlayer is the input. This is what the mocks did. It is the reverse of `f_separate`'s black background with additive light, and of the old A1 (high = more ink).
+- **P1 Polarity render** (the control is decided; this is how each setting renders). The solver is the same for both; only how the picture is loaded and how the composite is made differ. **Darker**: pigment is absorbance (the negative log of the color) and the composite is the background times exp(-pigment), so pooled ink is deeper and drawn-away ink is thinner and lighter; this is what the mocks did. The background is the light being filtered, so with in3 unconnected it is white, or nothing would show. **Lighter**: pigment is the color itself, as light, and the composite is background plus pigment, so pooled ink is brighter and drawn-away ink fades toward the background; with in3 unconnected the background is black (no light), as in `f_separate`. In both, an unwetted picture with in3 unconnected comes out as the input. Default: Darker, the setting whose looks Matt has seen (proposal).
 - **P2 Wetting.** Wet once: a held press or trigger floods the frame, loads the current picture as the paper pigment, and the wash runs and dries. What a moving input does between wettings is open. An always-wet mode (steady rain and drain, the picture keeps re-inking) was mocked and neither chosen nor ruled out.
-- **P3 Inlets.** in0 picture, in1 terrain (luma is height), in2 vecfield (`f_vecfield_type.md`), in3 underlayer. Four inputs is the codebox bench's limit.
-- **P4 Nothing connected.** No terrain and no field: the water has nowhere to go, the wash dries in place, and the output is the picture. No underlayer: white.
+- **P3 Inlets.** in0 picture, in1 terrain (luma is height), in2 vecfield (`f_vecfield_type.md`), in3 background. Four inputs is the codebox bench's limit.
+- **P4 Nothing connected.** No terrain and no field: the water has nowhere to go, the wash dries in place, and the output is the picture. No background: white under Darker, black under Lighter (P1).
 - **P5 One water layer for three channels.** The channels share the water and the flow; pigment is carried per channel and never mixed between channels. This replaces the old A2.
-- **P6 Solver size.** Whether the layers run at the render size or at a fixed solver size as `f_vf_fluid`, `f_vf_ch` and `f_vf_lbm` do. The grain and the thin lines want resolution; the cost wants a small grid. A measurement.
 - **P7 Frame edge.** In the mocks the edge was a wall and water piled against it, leaving a dark border line. Proposal: water and its pigment leave at the edge.
 - **P8 Flow model.** The mocks used a depth-limited downhill flow with no momentum, so nothing coasts. Inertia, if wanted, arrives through the vecfield (for example from `f_vf_fluid`). Whether the module needs its own momentum is open.
 - **P9 Linear light** (`G-linear-light`): the mocks converted the frame to linear light before taking the log. Open.
@@ -69,10 +72,11 @@ The performer patches a vecfield into in2. The drainage leans along the field an
 
 ### US3: Show what is underneath (P1)
 
-The performer patches an underlayer into in3. Where ink has been drawn away, the underlayer and its texture show through thin, light ink; where ink has pooled, it is covered. Outlet 1 gives the thickness for use elsewhere.
+The performer patches a background into in3. Where ink has been drawn away, the background and its texture show through thin ink; where ink has pooled, it is covered (Darker) or outshone (Lighter). Outlet 1 gives the thickness for use elsewhere.
 
-1. **Given** a region with no pigment left, **then** the composite there equals the underlayer.
-2. **Given** more pigment at a texel, **then** every channel of the composite there is no brighter.
+1. **Given** a region with no pigment left, **then** the composite there equals the background, in both settings.
+2. **Given** more pigment at a texel, **then** every channel of the composite there is no brighter under Darker and no darker under Lighter.
+4. **Given** no wetting and in3 unconnected, **then** outlet 0 equals the input in both settings.
 3. **Given** any state, **then** outlet 1 is zero where there is no pigment and rises with it.
 
 ### US4: Field only (P2)
@@ -98,10 +102,10 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 - **FR-105**: With a closed edge and no re-inking, pigment MUST be conserved per channel. No layer may go negative.
 - **FR-106**: Water MUST dry at a rate set by a dial; a dried wash MUST be still.
 - **FR-107**: Wetting per P2. Wetting MUST load the current in0 picture as the pigment on the paper.
-- **FR-108**: Outlet 0 MUST be the composite of the pigment (on the paper and in suspension) over the underlayer, per P1. Outlet 1 MUST be the thickness, per P10.
+- **FR-108**: Outlet 0 MUST be the composite of the pigment (on the paper and in suspension) over the background, per P1 and the Polarity control. Outlet 1 MUST be the thickness, per P10.
 - **FR-109**: Inlets per P3. Each optional inlet MUST be recognised as unconnected from its connected flag (`vs_inState`), not from its value. Behaviour with inlets missing per P4.
 - **FR-110**: Float32, unclamped, with no NaN or Inf reaching any outlet or any stored layer (non-finite input texels are zapped to 0).
-- **FR-111**: Every length and rate MUST follow the render size (`render_dim`), and the module MUST be correct for non-square frames. If P6 chooses a fixed solver size, the outlets still follow the render size.
+- **FR-111**: Every length and rate MUST follow the render size (`render_dim`), and the module MUST be correct for non-square frames. The layers run at the render size (Matt, T065); if a measured cost forces a fixed solver grid (Matt's call), the outlets still follow the render size.
 - **FR-112**: Frame edge per P7, by explicit index math.
 - **FR-113**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through; the layers keep running.
 - **FR-114**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.
@@ -109,7 +113,7 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 ### Non-functional
 
 - **NF-101**: The update MUST be stable at every dial setting: no checkerboard in standing water and no growth without bound. (Both were seen in the mocks before the step and the depth were limited.)
-- **NF-102** *(target, pending measurement)*: cost recorded at 1080p on the bench, stated as measured or unmeasured.
+- **NF-102** *(target, pending measurement)*: cost recorded at 1080p on the bench, stated as measured or unmeasured. This is the measurement that decides whether render size holds (FR-111).
 - **NF-103**: Every stage MUST fit the codebox statement and read budgets (`skills/jit-gen-codebox/SKILL.md`).
 - **NF-104**: Verification per P12.
 
@@ -117,6 +121,7 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 
 | Param | Notes |
 |---|---|
+| `polarity` | Darker or Lighter (decided, T060; name provisional) |
 | `wet` | the wetting press or trigger (P2) |
 | `flow` | how strongly water runs downhill on the terrain |
 | `push` | how strongly the vecfield moves the water |
@@ -134,7 +139,7 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 - **SC-104**: Stillness and identity: a dried wash does not change; flat terrain with no field returns the input (US1.3, US1.4).
 - **SC-105**: Stability: no checkerboard and no non-finite value at the extremes of every dial.
 - **SC-106**: The patcher matches the mirror on the bench within a stated tolerance.
-- **SC-107**: Tier-3 look (Matt): on his test frame and on a stroke-like source, with a real terrain texture and a real vecfield, it reads as ink pooling: large pools with clean edges, pale drawn-away areas with the underlayer showing. And one deliberately bent use reads as intentionally digital.
+- **SC-107**: Tier-3 look (Matt): on his test frame and on a stroke-like source, with a real terrain texture and a real vecfield, it reads as ink pooling: large pools with clean edges, drawn-away areas with the background showing. And one deliberately bent use reads as intentionally digital.
 
 ## Edge Cases
 
@@ -142,6 +147,7 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 - A flat terrain; a terrain with one enormous basin; terrain values outside 0..1.
 - A field at full strength pointing at the frame edge; a field with no convergence.
 - Wetting again before the wash has dried.
+- Switching Polarity while the wash runs (proposal: it takes effect at the next wetting, because the stored pigment was loaded for one setting; switching the render alone would re-read absorbance as light).
 - Render size changes at runtime; non-square frames.
 - An inlet connected but flat (all 0 or all 1).
 - Alpha: passes through from the source.

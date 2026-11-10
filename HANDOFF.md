@@ -10,7 +10,7 @@
 
 **New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_ink` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
-**FIRST next session (2026-11-10):** `f_ink` has a new spec (`.specify/f_ink/spec.md`, the erosion model; entry below). Go through its PRELIMINARY assumptions with Matt, T060-T071 in `.specify/f_ink/tasks.md`, starting with polarity (T060), wetting (T061) and solver size (T065). Then rewrite `plan.md` (T072). No build, mirror or bench before that (`G-ink-direction`).
+**FIRST next session (2026-11-10):** `f_ink` (`.specify/f_ink/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). Go on with Matt through T075 and T074 (the proposals that came out of them), then T062-T064 and T066-T071, then rewrite `plan.md` (T072). No build, mirror or bench before that (`G-ink-direction`).
 
 **Candidates (Matt decides):**
 - Print-styles, FIRST: `f_ink`, as in the FIRST line above. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
@@ -26,10 +26,8 @@
 
 **End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
-## 2026-11-10: `f_ink` reframed as erosion and deposition; spec rewritten
+## 2026-11-10 (later): `f_ink` polarity, wetting and solver size decided
 
-- **Discussion (Matt):** pooling is a finite amount of ink drawn away from some places and collected in others, then "the identical process at tiny scale of what happens in an alluvial plain".
-- **Four offline mocks** (Claude, NumPy on his frame; `scratch/experiments/f_ink_look/`, local, sheets 6 to 9). The first two were rejected or passed over; the third (water, pigment in suspension, pigment on paper, over a terrain) is "a better direction", wet-once looks good; the fourth showed the vecfield as a push keeps the pools and the field alone does not.
-- **Decided (Matt):** a feedback module; composite and thickness outlets; areas come from the land; the terrain is an incoming texture; the vecfield pushes, field-only with no terrain.
-- **Spec rewritten** (`.specify/f_ink/spec.md`); twelve PRELIMINARY assumptions are T060-T071. `plan.md` is stale (T072). Nothing built; `src/f_ink/` is still the 2026-11-09 build. Nothing run in Max.
-- **Gates touched:** `G-ink-direction` (direction set, now holds the PRELIMINARY review), `G-print-prelim`, `G-linear-light` (T068), `P-mod-textures` (four inlets proposed). `test_gates` 5/5 after the edits (log in the commit).
+- **Decided (Matt, chat):** T060 Polarity is a control, Darker or Lighter; the library has no layers concept and background means no light, so in3 is the background (`underlayer` renamed). T061 wet once, as written. T065 the layers run at the render size if at all possible; the 1080p cost, measured at build, is the only thing that could change it, and that call is Matt's.
+- **Proposed (Claude, PRELIMINARY):** T075 how each setting renders: Darker filters a background that is white when in3 is unconnected, Lighter adds over a black one, so an unwetted picture comes out unchanged in both; one solver for both, only the load and the composite differ; default Darker; a switch takes effect at the next wetting. T074: a moving in0 does nothing between wettings; always-wet is not in this version.
+- **Records:** spec, tasks, `G-ink-direction`, `G-print-prelim`, `P-mod-textures` (inlet name) and `plan.md` Next 1. Nothing built or run; `test_gates` not run (asked).
