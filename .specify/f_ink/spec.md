@@ -39,15 +39,11 @@ Fast water lifts pigment off the paper. Slow water, and water that dries up, dro
 - **One water layer for three channels** (2026-11-10, T064): the channels share the water and the flow; pigment is carried per channel and never mixed between channels. This replaces the old A2.
 - **Wet once** (2026-11-10, T061): a held press or trigger floods the frame, loads the current picture as the paper pigment, and the wash runs and dries ("sounds good"). Between wettings a moving in0 does nothing: the wash holds until the next wetting; always-wet is not in this version (T074, "Confirm T074").
 - **Render size** (2026-11-10, T065): the layers run at the render size "if at all possible". A fixed solver grid is the fallback only if a measured cost rules render size out, and that call is Matt's.
+- **Remaining assumptions** (2026-11-10, T066-T071, "confirm all"): **Frame edge**: water and its pigment leave at the edge, no wall (P7). **Flow**: no momentum of its own; inertia comes through the vecfield (P8). **Linear light**: the frame is converted to linear light before the log, as in the mocks (P9, `G-linear-light`). **Thickness outlet**: pigment on the paper only, as luma of absorbance, no water outlet (P10). **Dials**: the set and names in the table below, ranges from tuning; panel under `G-ui-density`, menu under `G-menu` (P11). **Verification**: tier 1 NumPy mirror (conservation and closed-form cases), tier 2 bench against the mirror, tier 3 live (P12).
 
-## Assumed by Claude, not yet confirmed (PRELIMINARY; each is a gate in `tasks.md`)
+## Assumed by Claude, not yet confirmed
 
-- **P7 Frame edge.** In the mocks the edge was a wall and water piled against it, leaving a dark border line. Proposal: water and its pigment leave at the edge.
-- **P8 Flow model.** The mocks used a depth-limited downhill flow with no momentum, so nothing coasts. Inertia, if wanted, arrives through the vecfield (for example from `f_vf_fluid`). Whether the module needs its own momentum is open.
-- **P9 Linear light** (`G-linear-light`): the mocks converted the frame to linear light before taking the log. Open.
-- **P10 Thickness outlet.** Which quantity: pigment on the paper (as luma of absorbance), or including what is in suspension; and whether water depth deserves a third outlet.
-- **P11 Dial set and names**, below. Panel under `G-ui-density`; menu category under `G-menu`.
-- **P12 Verification tiers**: tier 1 NumPy mirror (conservation and closed-form cases), tier 2 bench against the mirror, tier 3 live.
+None left (2026-11-10). New assumptions made at build or mirror time are added here as PRELIMINARY.
 
 ## User Stories
 

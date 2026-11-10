@@ -70,7 +70,7 @@ package/patchers/f_ink.maxpat    docs/f-reference/f_ink.md    package/help/f_ink
 
 ### Rewrite: erosion model (2026-11-10; spec rewritten the same day; plan not yet)
 
-Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by Claude", for Matt to confirm or reverse (`G-ink-direction`). T060, T061 and T065 were settled 2026-11-10 (Matt); T075 2026-11-10 too; T074 2026-11-10 too, T062-T064 the same day; the build waits on T066-T071 and the plan rewrite (T072).
+Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by Claude", for Matt to confirm or reverse (`G-ink-direction`). T060, T061 and T065 were settled 2026-11-10 (Matt); T075 2026-11-10 too; T074 2026-11-10 too, T062-T064 the same day; T066-T071 were confirmed 2026-11-10 too ("confirm all"); the build waits on the plan rewrite (T072).
 
 - [x] T060 [GATE P1] (2026-11-10, Matt, chat) Polarity: a control, Darker or Lighter. "we want to be able to choose here"; no layers concept, background means no light, so in3 is the background. How each setting renders is spec P1, PRELIMINARY (T075).
 - [x] T061 [GATE P2] (2026-11-10, Matt, chat: "sounds good") Wet once on a press or trigger, as written. Its two open parts are T074.
@@ -78,12 +78,12 @@ Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by
 - [x] T063 [GATE P4] (2026-11-10, Matt, same) Behaviour with nothing connected.
 - [x] T064 [GATE P5] (2026-11-10, Matt, same) One water layer for the three channels.
 - [x] T065 [GATE P6] (2026-11-10, Matt, chat) Render size "if at all possible". The 1080p cost is measured at build (NF-102); a fixed solver grid only if that cost rules render size out, and that call is Matt's.
-- [ ] T066 [GATE P7] Frame edge: water leaves at the edge (proposal), or a wall.
-- [ ] T067 [GATE P8] Flow model: no momentum of its own (proposal).
-- [ ] T068 [GATE P9] Linear light (`G-linear-light`).
-- [ ] T069 [GATE P10] What the thickness outlet carries; a water outlet or not.
-- [ ] T070 [GATE P11] Dial set and names (`G-ui-density`, `G-menu`).
-- [ ] T071 [GATE P12] Verification tiers.
+- [x] T066 [GATE P7] (2026-11-10, Matt, chat: "confirm all") Frame edge: water leaves at the edge (proposal), or a wall.
+- [x] T067 [GATE P8] (2026-11-10, Matt, chat: "confirm all") Flow model: no momentum of its own (proposal).
+- [x] T068 [GATE P9] (2026-11-10, Matt, chat: "confirm all") Linear light (`G-linear-light`).
+- [x] T069 [GATE P10] (2026-11-10, Matt, chat: "confirm all") What the thickness outlet carries; a water outlet or not.
+- [x] T070 [GATE P11] (2026-11-10, Matt, chat: "confirm all") Dial set and names (`G-ui-density`, `G-menu`).
+- [x] T071 [GATE P12] (2026-11-10, Matt, chat: "confirm all") Verification tiers.
 - [x] T074 [GATE P2] (2026-11-10, Matt, chat: "Confirm T074") What a moving in0 does between wettings (proposal: nothing; the wash holds until the next wetting), and always-wet (proposal: not in this version; US5 stays a later mode).
 - [x] T075 [GATE P1] (2026-11-10, Matt, chat: "Confirm T075") How each Polarity setting renders (spec Decided, "Polarity render"): Darker filters a background that is white when in3 is unconnected; Lighter adds over a background that is black; default Darker; a switch takes effect at the next wetting.
 - [ ] T072 Rewrite `plan.md` for this spec (it still describes the 2026-11-09 build).
@@ -138,3 +138,4 @@ Phase 0 gates, then the mirror (T016) before any codebox; T020 to T023 in order;
 - 2026-11-10 (Matt, chat): "Confirm T075". (Offline, Claude): the render of each Polarity setting moved from spec P1 to Decided; P1 removed from the assumptions. Nothing built or run.
 - 2026-11-10 (Matt, chat): "Confirm T074". (Offline, Claude): spec P2 removed from the assumptions; wet once with in0 held between wettings is in Decided and FR-107; US5 (always wet) marked later. Nothing built or run.
 - 2026-11-10 (Matt, chat): "confirm all three" (T062-T064). (Offline, Claude): spec P3-P5 moved to Decided; FR-109 cites the tasks. Nothing built or run.
+- 2026-11-10 (Matt, chat): "confirm all" (T066-T071). (Offline, Claude): spec P7-P12 moved to Decided ("Remaining assumptions"); no PRELIMINARY assumptions are left in the spec. Inferred, not checked: SC-101 (conservation with a closed edge) needs a closed-edge switch or a count of pigment that leaves, in the mirror (T073). Nothing built or run.

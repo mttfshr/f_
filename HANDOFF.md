@@ -10,7 +10,7 @@
 
 **New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_ink` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
 
-**FIRST next session (2026-11-10):** `f_ink` (`.specify/f_ink/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). T075 and T074 are confirmed too. T062-T064 are confirmed too. Go on with Matt through T066-T071, then rewrite `plan.md` (T072). No build, mirror or bench before that (`G-ink-direction`).
+**FIRST next session (2026-11-10):** `f_ink` (`.specify/f_ink/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). T066-T071 are confirmed too ("confirm all"): the review is done. Next: rewrite `.specify/f_ink/plan.md` (T072), then ask Matt for a go to mirror and build. No build, mirror or bench before that (`G-ink-direction`).
 
 **Candidates (Matt decides):**
 - Print-styles, FIRST: `f_ink`, as in the FIRST line above. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
@@ -31,3 +31,8 @@
 - **Decided (Matt, chat):** T060 Polarity is a control, Darker or Lighter; the library has no layers concept and background means no light, so in3 is the background (`underlayer` renamed). T061 wet once, as written. T065 the layers run at the render size if at all possible; the 1080p cost, measured at build, is the only thing that could change it, and that call is Matt's.
 - **T075 confirmed (Matt, "Confirm T075"), proposed by Claude:** how each setting renders: Darker filters a background that is white when in3 is unconnected, Lighter adds over a black one, so an unwetted picture comes out unchanged in both; one solver for both, only the load and the composite differ; default Darker; a switch takes effect at the next wetting. Also confirmed (Matt, "Confirm T074"), T074: a moving in0 does nothing between wettings; always-wet is not in this version.
 - **Records:** spec, tasks, `G-ink-direction`, `G-print-prelim`, `P-mod-textures` (inlet name) and `plan.md` Next 1. Nothing built or run; `test_gates` not run (asked).
+
+## 2026-11-10 (latest): `f_ink` review finished
+
+- **Decided (Matt, "confirm all"):** T066-T071, Claude's proposals as written: water leaves at the frame edge; no momentum of its own; linear light before the log; thickness outlet is pigment on the paper only, no water outlet; the dial set in spec "Parameters"; verification tiers 1-3.
+- **Records:** spec (P7-P12 to Decided, none left), `tasks.md` T066-T071 ticked, `G-ink-direction`, `G-print-prelim`, `plan.md` Next 1. Inferred, not checked: the mirror's conservation test (SC-101) must count pigment that leaves at the edge. Nothing built or run; `test_gates` not run (asked).
