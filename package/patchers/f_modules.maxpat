@@ -550,6 +550,7 @@
                         "valueof": {
                             "parameter_enum": [
                                 "Channel Grader",
+                                "Erode",
                                 "Hue Processor",
                                 "Luma Processor",
                                 "Separate",
@@ -560,7 +561,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_disp",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 5,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -592,6 +593,7 @@
                         "valueof": {
                             "parameter_enum": [
                                 "channel_grader",
+                                "vf_erode",
                                 "hue_processor",
                                 "luma_processor",
                                 "separate",
@@ -602,7 +604,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_2_file",
-                            "parameter_mmax": 4,
+                            "parameter_mmax": 5,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2

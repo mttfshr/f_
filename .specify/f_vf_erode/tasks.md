@@ -113,7 +113,7 @@ Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by
 
 ## Phase 3: docs and registration
 
-- [ ] T040 Reference doc `docs/f-reference/f_vf_erode.md`, helpfile (the `f-helpfile` skill), menu placement (T013), README Patches row (110 characters; regenerate the launcher), inventory rows.
+- [~] T040 (2026-11-10, Claude, partly) Reference doc `docs/f-reference/f_vf_erode.md` written; README Patches row, inventory rows (two), menu entry under Color / Tone next to Separate (provisional, `G-menu`, Matt's to move), launcher and menu regenerated (`test_launch.py` 8/8, `test_generate_menu.py` run, see HANDOFF). NOT done: the helpfile (`f-helpfile` skill, written in a Claude session), `ideas/f_print_styles.md` and INDEX status (T041).
 - [ ] T041 `ideas/f_print_styles.md` status for stage 3 to built; INDEX entry; `.specify/gates.md` rows touched; module-preflight skill checklist before `.specify/stable/`.
 
 ## Dependencies and order

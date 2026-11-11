@@ -62,3 +62,9 @@
 - **Matt's report:** with Feed on and Darker, the frame goes black. **Cause (reasoned from the code, plus tier-1 `without fade` check):** the deposit only adds. **Fix, T094:** a `fade` dial returns ink above the picture's pigment toward it, only while feeding; default 0.02 (Claude's guess). Mirror, `test_vf_erode.py` 11/11, codebox, dial, patcher rebuilt, contract 9/9, drift 16/16.
 - **Benched (T095):** codebox bench 17/17, module bench 5/5 (`tests/logs/20261110-173333-bench.log`). Gate `G-ink-direction` closed (its tripwire was met; `test_gates` flagged it). Committed with the whole erode build.
 - **Live (Matt, 2026-11-10):** with Fade the fed output looks right ("looks amazing now"). That was at all defaults (his words), so the defaults stand for now (Fade 0.02, Feed's default is 0: the dial was raised by him, value not recorded).
+
+## 2026-11-10 (docs): `f_vf_erode` reference doc and registration
+
+- **Done (Claude, offline):** `docs/f-reference/f_vf_erode.md`, README row (105 chars), module-inventory rows, menu entry under Color / Tone (provisional, `G-menu`), launcher and menu regenerated. Not done: the helpfile, T041 (`ideas/f_print_styles.md`, INDEX), render-size scaling (T083), panel height.
+- **Next:** the helpfile (`f-helpfile` skill, f_droste.maxhelp is the template), or T083.
+

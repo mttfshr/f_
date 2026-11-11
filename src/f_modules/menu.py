@@ -62,6 +62,7 @@ CATEGORIES = [
     ]),
     ("Color / Tone", [
         ("Channel Grader", "channel_grader", N),
+        ("Erode", "vf_erode", N),          # placed by Claude 2026-11-10 next to Separate (print-styles); G-menu is Matt's to move
         ("Hue Processor", "hue_processor", N),
         ("Luma Processor", "luma_processor", N),
         ("Separate", "separate", N),       # placed by Claude 2026-11-08 (T040, T011 preliminary); G-menu is Matt's to move

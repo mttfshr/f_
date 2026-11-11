@@ -25,6 +25,7 @@ Stateless, texture→texture, no geometric displacement. Reach for these when th
 | `f_hue_processor` | tex → tex | Isolates a hue band (center + asymmetric width + falloff), adjusts sat/lum/hue within it only. Low-sat regions gated out. ⚠ open UI bug on `hue_lower`/`hue_upper` |
 | `f_luma_processor` | tex → tex | Isolates a luma range (shadow/mid/high breakpoints), adjusts sat/lum/hue within it only. Structurally parallel to `f_tone_curve` |
 | `f_separate` | tex → tex x 3 (plates) + tex (preview) | Splits a color image into up to three spot-color plates, inks as colors of light that add on black; Unmix, Nearest or Project per pixel, stateless |
+| `f_vf_erode` | tex + terrain tex + vecfield + background tex → ink tex + thickness tex, **temporal** | Water and pigment solver: wet once (or Feed continuously) and ink pools in the low places of a terrain, pushed by a vecfield; Darker or Lighter polarity, Fade keeps a fed frame from saturating. Optional inlets 1-3 |
 | `f_tone_curve` | tex → tex | Shadow/midtone/highlight brightness lift by tonal band; additive, not a curve editor. Structurally parallel to `f_luma_processor` |
 
 ## Geometry / UV Warp
@@ -137,6 +138,7 @@ Added 2026-10-22 from the per-module docs in this folder. This is a wiring cheat
 | `f_hue_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
 | `f_luma_processor` | 1: tex + ctrl | 1: tex | Required | Source passthrough (convention) |
 | `f_separate` | 1: tex + ctrl | 4: tex (plates 1-3); tex (preview) | Required | Source on all four outlets (`bypass_gate`; codebox bench 5/5, contract bench 2/2) |
+| `f_vf_erode` | 4: picture tex + ctrl; terrain tex; vecfield; background tex | 2: tex (ink); tex (thickness) | Optional (picture required to draw) | Picture on both outlets (`bypass_gate` in `enc`; the solver keeps running). **temporal** |
 | `f_tone_curve` | 1: tex + ctrl | 1: tex | Required | Source passthrough (native `@bypass`, `G-bypass-native`) |
 
 ### Geometry / UV Warp
