@@ -11,7 +11,7 @@ import sys
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-from vf_erode_mirror import F32, DEFAULTS, enc, feed, field_uv, load, new_state, pigment_from_picture, run as run_steps, step, totals  # noqa: E402
+from vf_erode_mirror import lift_from_dial, settle_from_dial, REF_H, F32, scales, DEFAULTS, enc, feed, field_uv, load, new_state, pigment_from_picture, run as run_steps, step, totals  # noqa: E402
 
 H, W = 40, 56
 FAST = dict(dry=0.004)       # dry in about 250 steps instead of 600
@@ -279,6 +279,81 @@ def test_feed_fade_follows_a_changing_picture():
           0.0 if float(nofade["p"].mean() - st["p"].mean()) > 0.0 else 1.0, 0)
     check("fade 0 is the old Feed, exactly", err(feed(st, a, "darker", 0.2, fade=0.0)["p"], feed(st, a, "darker", 0.2)["p"]), 0)
     check("fade with feed 0 does nothing (wet-once stays conservative)", err(feed(st, a, "darker", 0.0, fade=1.0)["p"], st["p"]), 0)
+
+
+def _scene(h):
+    """One physical scene in frame units at render height h (width 1.5 h): a smooth terrain, picture and field, so size changes only the sampling."""
+    w = h * 3 // 2
+    y, x = (np.mgrid[0:h, 0:w] + 0.5) / h
+    T = (3.0 * np.sin(5 * x) * np.cos(4 * y) + 3.0 * ((x - 0.7) ** 2 + (y - 0.5) ** 2)).astype(F32)
+    pic = np.zeros((h, w, 4), F32)
+    pic[..., 3] = 1
+    pic[..., :3] = (0.55 + 0.4 * np.sin(9 * x + 2 * y)[..., None] * np.array([1, 0.7, 0.4])).astype(F32)
+    return T, pic, (np.full((h, w), 0.3, F32), np.full((h, w), -0.2, F32))
+
+
+def _run_scene(h, k, steps):
+    T, pic, F = _scene(h)
+    st = load(new_state(h, h * 3 // 2), pic, "darker")
+    for _ in range(steps):
+        st = step(st, T, F, k=k, edge="closed", dry=0.002)
+    return st
+
+
+def _pool(a):
+    return a.reshape(a.shape[0] // 2, 2, a.shape[1] // 2, 2, *a.shape[2:]).mean(axis=(1, 3))
+
+
+def test_render_size_scaling():
+    """T083: the same scene at render heights h and 2h (k = h / REF_H) gives the same frame-unit result; k = 1 is the old module exactly;
+    above the cap everything runs slower, never faster."""
+    st0 = new_state(H, W)
+    a = step(load(st0, picture(), "darker"), None, None, k=1.0)
+    b = step(load(st0, picture(), "darker"), None, None)
+    check("k = 1 (the default) is the unscaled module exactly", err(a["p"], b["p"]) + err(a["w"], b["w"]) + err(a["s"], b["s"]), 0)
+    h = 48
+    for steps in (40, 120):
+        coarse, fine = _run_scene(h, h / REF_H, steps), _run_scene(2 * h, 2 * h / REF_H, steps)
+        moved = float(np.abs(coarse["p"] - _run_scene(h, h / REF_H, 0)["p"]).mean() + np.abs(coarse["s"]).mean())
+        dp = float(np.abs(_pool(fine["p"]) - coarse["p"]).mean())
+        ds = float(np.abs(_pool(fine["s"]) - coarse["s"]).mean())
+        note(f"steps {steps}: paper pigment moved (mean) {moved:.3f}", f"pooled fine vs coarse: paper {dp:.4f}, suspension {ds:.4f}")
+        check(f"scaling: the paper pigment of the same scene at {h} and {2 * h} texels agrees, steps {steps} (mean difference below 2% of what moved)", dp / moved, 0.02)
+        check(f"scaling: so does the suspension, steps {steps}", ds / max(float(np.abs(coarse["s"]).mean()), 1e-9), 0.02)
+        un_c, un_f = _run_scene(h, 1.0, steps), _run_scene(2 * h, 1.0, steps)
+        du = float(np.abs(_pool(un_f["p"]) - un_c["p"]).mean())
+        check(f"the unscaled run (k = 1 at both sizes) does NOT agree: scaling is what made it agree, steps {steps}", 0.0 if du > 10 * dp else 1.0, 0)
+    fm, kv, km = scales(1.0)
+    check("at k = 1 every multiplier is 1", abs(fm - 1) + abs(kv - 1) + abs(km - 1), 0)
+    fm, kv, km = scales(3.0)
+    check("above the cap the velocity scale stops at 1.25, so the solver cannot be pushed past its flux limit", abs(kv - 1.25), 0)
+    st = new_state(H, W)
+    st = load(st, picture(), "darker", 4.0)
+    T = bowl(depth=6.0)
+    for _ in range(80):
+        st = step(st, T, const_field(1.0, -0.7), k=3.0, flow=2.0, push=4.0, lift=2.0, speed=4.0, edge="open")
+    ok = all(np.isfinite(st[kk]).all() and st[kk].min() >= 0 for kk in ("p", "s", "w"))
+    check("k = 3 (far above the cap) at extreme dials: finite and non-negative", 1.0 - float(ok), 0)
+
+
+def test_lift_and_settle_dials():
+    """2026-11-10: the Lift and Settle dials are curves whose defaults reproduce the old defaults, and the whole range now does something."""
+    check("lift dial default 0.7 is the old default 0.9", abs(lift_from_dial(0.7) - 0.9), 1e-9)
+    check("settle dial default 0.19 is the old default 0.004 (within 3%)", abs(settle_from_dial(0.19) / 0.004 - 1), 0.03)
+    check("both curves start at 0 and rise monotonically", 0.0 if lift_from_dial(0) == 0 and settle_from_dial(0) == 0 and all(
+        lift_from_dial(a) < lift_from_dial(b) and settle_from_dial(a) < settle_from_dial(b) for a, b in ((0.1, 0.2), (0.5, 0.6), (0.9, 1.0))) else 1.0, 0)
+    check("lift dial 1 is about twice the default (the top is no longer dead beyond saturation)", abs(lift_from_dial(1.0) / 0.9 - 2.04), 0.1)
+    # slow water that still moves (speed 0.05 of 0.2) now settles pigment; the old threshold (0.03) dropped none at all there
+    T = np.zeros((H, W), F32)
+    F = const_field(0.5, 0.0)
+    base = load(new_state(H, W), picture(), "darker", 1.0)
+    st = base
+    st = dict(st, s=(0.3 * np.ones((H, W, 3))).astype(F32), p=np.zeros((H, W, 3), F32))
+    lo = step(st, T, F, only="react", settle=0.0)
+    hi = step(st, T, F, only="react", settle=settle_from_dial(0.6))
+    gain = float(hi["p"].mean() - lo["p"].mean())
+    check("settle: in slowly moving water a higher Settle puts more pigment on the paper in one step (monotone, above 1e-3)", 0.0 if gain > 1e-3 else 1.0, 0)
+    check("settle 0 puts none down in water that is moving", float(lo["p"].mean()), 1e-9)
 
 
 def test_mutations():

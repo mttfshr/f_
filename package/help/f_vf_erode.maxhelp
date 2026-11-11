@@ -100,7 +100,7 @@
 						270.0,
 						222.0
 					],
-					"text": "External Control Messages\n\npolar_sw [0 Darker / 1 Lighter]\nflow [0.0 \u2013 2.0]\npush [0.0 \u2013 4.0]\nlift [0.0 \u2013 2.0]\nsettle [0.0 \u2013 0.05]\ndry [0.0 \u2013 0.02]\nspeed [0.0 \u2013 4.0]\nflood [0.0 \u2013 4.0]\nfeed [0.0 \u2013 1.0]\nfade [0.0 \u2013 1.0]\nwet [bang / 1 / 0]",
+					"text": "External Control Messages\n\npolar_sw [0 Darker / 1 Lighter]\nflow [0.0 \u2013 2.0]\npush [0.0 \u2013 4.0]\nlift [0.0 \u2013 1.0]\nsettle [0.0 \u2013 1.0]\ndry [0.0 \u2013 0.02]\nspeed [0.0 \u2013 4.0]\nflood [0.0 \u2013 4.0]\nfeed [0.0 \u2013 1.0]\nfade [0.0 \u2013 1.0]\nwet [bang / 1 / 0]",
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"

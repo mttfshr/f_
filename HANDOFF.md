@@ -71,3 +71,12 @@
 - **Panel (Matt, 2026-11-10, chat):** the Darker / Lighter toggle moved to the title bar via `overrides` in `definition.py` (title 40 px wide, toggle at x 50, 52 x 15); patcher rebuilt, drift and contract tests pass. Not seen in Max: check it clears the "tex in/out" label. The row it left (y 52) is empty; the dial rows were not moved.
 - **Panel (Matt, 2026-11-10):** the Wet button moved into the first slot of the dial grid (button 3.5, 46; label above it) and the panel height cut from 232 to 150; helpfile bpatcher rect updated. Not seen in Max. Drift, contract, gate_button tests pass.
 
+## 2026-11-10 (scaling): `f_vf_erode` render-size scaling written (offline)
+
+- **Decided (Matt):** reference render size 1920, cap-limited scaling. **Done (Claude, offline):** mirror `scales()`, tier-1 `test_render_size_scaling` (12/12), `prep`/`transport`/`react` codeboxes derive k from the height Param, bench passes k to the mirror, patcher rebuilt, contract 9/9, drift 16/16, spec FR-117, tasks T083 (`[~]`).
+- **Assumed, check:** 1920 is a render HEIGHT (his screenshot is near square). **Not done:** the bench run (ask first), a live look (his size should look unchanged), the cost at a 1920 x 3840 atlas. **Uncommitted.**- **Benched (Claude, Matt's go):** 17/17 and 5/5 (`tests/logs/20261110-180135-bench.log`), errors at or below 1.2e-7 against the mirror; but at 48 texels (k = 0.025) the motion is small, so the benches are weak on the 1920 constants. Next: your live look at your size (should be unchanged) and at another size.- **Live (Matt, 2026-11-10):** scaling passes at 1920 x 1920 and 2160 x 2160. He finds some dials subtle. Offline check (inferred, synthetic scene, mirror): lift is saturated at its default (useful range about 0-0.3) and settle is nearly inert; speed, push, flow, dry respond. Matt decides whether to remap; see tasks.md.
+
+## 2026-11-10 (dials): Lift and Settle reworked (offline)
+
+- **Done (Claude, offline, Matt: "Lift and settle"):** Lift dial 0..1 default 0.7 (square curve, old 0.9 at the default); Settle dial 0..1 default 0.19 (cubic, old 0.004 at the default) and the settle speed threshold 0.03 -> 0.1. Mirror, tier 1 13/13, codebox, definition, bench, doc, helpfile updated; contract 9/9, drift 16/16. Default look should be nearly unchanged (mean output change under 1% in the synthetic check, inferred). **Caveat:** patches saved with the old dial values (Lift 0.9, Settle 0.004) will read them on the new curves. **Not done:** the bench run (ask first), Matt's live look, commit.
+

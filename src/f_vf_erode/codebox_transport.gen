@@ -50,11 +50,15 @@ Param height(256);
 
 W = max(width, 3);
 H = max(height, 3);
+// RENDER-SIZE SCALING (T083; mirror `scales()`): the constants below are right at a render height of 1920. kr = H / 1920, kc = min(kr, 1.25):
+// the velocity cap scales by kc, the slope coefficient by kr * kc, diffusion by kc * kc. Above the cap everything runs slower, never faster.
+kr = H / 1920;
+kc = min(kr, 1.25);
 wlim = 0.5;
 film = 0.15;
-mixk = 0.04;
-vmax = 0.2;
-kk = speed * flow;
+mixk = 0.04 * kc * kc;
+vmax = 0.2 * kc;
+kk = speed * flow * kr * kc;
 
 px = floor(norm.x * W);
 yt = floor(norm.y * 2 * H);

@@ -51,8 +51,8 @@ One texture keeps every stage to a single hot inlet (the `f_vf_lbm` finding). No
 | `polar_sw` | text button | Darker / Lighter | Darker | How the pigment is stored and composited. Takes effect at the next wetting |
 | `flow` | float | 0–2 | 0.4 | How strongly the water runs downhill on the terrain |
 | `push` | float | 0–4 | 1 | How strongly the vecfield moves the water. 0 equals no vecfield |
-| `lift` | float | 0–2 | 0.9 | How readily running water takes pigment off the paper |
-| `settle` | float | 0–0.05 | 0.004 | How readily slow water puts pigment back. Water that has gone puts all of it down |
+| `lift` | float | 0–1 | 0.7 | How readily running water takes pigment off the paper. A square curve: effective rate 0.9 * (d / 0.7)^2, so the default is the old 0.9 and the top of the dial is about twice that |
+| `settle` | float | 0–1 | 0.19 | How readily slow water puts pigment back, so less is carried far. A cubic curve: effective rate 0.6 * d^3, 0.004 (the old default) at the default. Water that has gone puts all of it down regardless |
 | `dry` | float | 0–0.02 | 0.0016 | Water lost per step. A dried wash is still |
 | `speed` | float | 0–4 | 1 | Step size of each solver step, limited inside the solver for stability |
 | `flood` | float | 0–4 | 1 | Water a wetting adds (and the depth Feed relaxes toward) |
@@ -72,10 +72,10 @@ Per frame, in order. Every length and rate is in **texels at one size**: scaling
 1. **prep.** Terrain luma (0.2126, 0.7152, 0.0722) times 6 gives a height. The vecfield is decoded `(v - 0.5) * 2` and scaled by `push * 0.1`. For each cell's four faces it stores the static face velocity `speed * (-flow * (T_B - T_A) + 0.5 * (F_A + F_B))`, with A the left or up cell and B the right or down one; a face is stored by both of its cells from the same operands, so what leaves one arrives in the next, bit for bit. A second plane stores the lift and settle drive: the field minus `flow` times the terrain gradient.
 2. **load.** On a Wet press edge: paper pigment = the picture in linear light (display ^ 2.2), as absorbance `-log(clamp(lin, 0.001, 1))` under Darker or as `lin` under Lighter; suspension emptied; `flood` added to the water. A state that was never loaded carries no pigment. Then Feed: `p += feed * max(pigment - p, 0) - fade * max(p - pigment, 0)` and `w += feed * max(flood - w, 0)`; feeding counts as loaded.
 3. **transport.** For each face: `v = clamp(static - speed * flow * (w_B - w_A), -0.2, 0.2)`, the flux `q = v * min(w_up, 0.5) * clamp(w_up / 0.15, 0, 1)` from the upwind cell, and the suspended pigment `c_up * q + 0.04 * min(w_A, w_B, 1) * (c_A - c_B)` per channel (no channel ever mixes with another). Water and suspension then gain and lose through the four faces, and the water loses `dry * speed`. At the **frame edge** water and pigment leave (the cell beyond the frame has the terrain continued linearly and depth 0 as a donor), so nothing re-enters.
-4. **react.** From the water's surface slope and the field, a speed measure `min(|drive| * speed, 0.2) * clamp(w / 0.15, 0, 1)`. Lift: paper to suspension by `clamp(lift * speed measure * min(w, 1), 0, 0.5)`. Settle: suspension to paper by `max(settle * speed * (1 - speed measure / 0.03), clamp(1 - w / 0.08, 0, 1))`. It also clears non-finite and negative values from the state it writes back.
+4. **react.** From the water's surface slope and the field, a speed measure `min(|drive| * speed, 0.2) * clamp(w / 0.15, 0, 1)`. Lift: paper to suspension by `clamp(lift * speed measure * min(w, 1), 0, 0.5)`, with `lift` the dial's curve and the speed measured in 1920-height texels. Settle: suspension to paper by `max(settle * speed * (1 - speed measure / 0.1), clamp(1 - w / 0.08, 0, 1))`, `settle` the dial's curve (the threshold was 0.03 before 2026-11-10; at that value the dial was nearly inert). It also clears non-finite and negative values from the state it writes back.
 5. **enc.** Darker: `background * exp(-(p + s))`; Lighter: `background + p + s`; then display = linear ^ (1 / 2.2). Alpha from the picture. Outlet 2 is the luma of the pigment on the paper only (no water outlet). Before the first wetting, and with Feed 0, the picture is shown as if loaded. Bypass passes the picture on both outlets.
 
-The constants (6, 0.1, 0.2, 0.5, 0.15, 0.04, 0.03, 0.08, 2.2, 0.001) are the NumPy mirror's, marked INFERRED there: starting values from the mocks, not tuned.
+The constants (6, 0.1, 0.2, 0.5, 0.15, 0.04, 0.1, 0.08, 2.2, 0.001) are the NumPy mirror's, marked INFERRED there: starting values from the mocks, not tuned.
 
 ---
 

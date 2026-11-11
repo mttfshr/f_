@@ -109,6 +109,7 @@ A continuous source, so the module follows an animated or live input. A `feed` d
 - **FR-109**: Inlets per T062. Each optional inlet MUST be recognised as unconnected from its connected flag (`vs_inState`), not from its value. Behaviour with inlets missing per T063.
 - **FR-110**: Float32, unclamped, with no NaN or Inf reaching any outlet or any stored layer (non-finite input texels are zapped to 0).
 - **FR-111**: Every length and rate MUST follow the render size (`render_dim`), and the module MUST be correct for non-square frames. The layers run at the render size (Matt, T065); if a measured cost forces a fixed solver grid (Matt's call), the outlets still follow the render size.
+- **FR-117**: Render-size scaling (FR-111 realised, T083): the constants are right at a render height of 1920; at height H, k = H / 1920 and kc = min(k, 1.25): the field's velocity and the velocity caps scale by kc, `flow` by k * kc, diffusion by kc squared, and the lift uses the speed in 1920-height texels. At k = 1 nothing changes. Above the cap the pace is slower, never faster.
 - **FR-112**: Frame edge per P7, by explicit index math.
 - **FR-113**: Bypass MUST use a codebox `bypass_gate` Param (never native `@bypass`) and pass the source through; the layers keep running.
 - **FR-114**: Standard behaviour: `#0_`-scoped names, `routepass` / `route` / `autopattr` with `varname`, `definition.py` as the source of truth.

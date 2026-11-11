@@ -5,7 +5,7 @@
 //   plane 0 (rows 0..H-1):   R = static velocity across the cell's LEFT face (x, positive = to the right), G = RIGHT face,
 //                            B = UP face (y, positive = down the rows), A = DOWN face
 //   plane 1 (rows H..2H-1):  R, G = (cx, cy) without the water slope: the field minus flow * the terrain gradient
-//   face velocity = speed * (-flow * (T_B - T_A) + 0.5 * (F_A + F_B)); A is the left/up cell, B the right/down cell. The water
+//   face velocity = speed * (-fe * (T_B - T_A) + 0.5 * (F_A + F_B)); A is the left/up cell, B the right/down cell. The water
 //   adds its own slope term (-speed * flow * (w_B - w_A)) in the transport stage. A face is stored by BOTH of its cells and the
 //   two are the same operands in the same order, so the water leaving one cell is exactly what arrives in the next.
 //   FRAME EDGE (T066, plan ADR-3): the cell beyond the frame has the terrain continued linearly (odd reflection) and the field
@@ -54,7 +54,12 @@ px = floor(norm.x * W);
 yt = floor(norm.y * 2 * H);
 kp = floor(yt / H);
 py = yt - kp * H;
-fs = push * 0.1;
+// RENDER-SIZE SCALING (T083, Matt chose cap-limited; mirror `scales()`): the constants are right at a render height of 1920 (the size Matt looked at).
+// kr = H / 1920; kc = min(kr, 1.25). The field's velocity scales by kc, and `flow` by kr * kc (the terrain slope per texel shrinks by 1 / kr).
+kr = H / 1920;
+kc = min(kr, 1.25);
+fe = flow * kr * kc;
+fs = push * 0.1 * kc;
 
 tc = hgt(px, py, W, H, src_terrain);
 tl = switch(px > 0.5, hgt(px - 1, py, W, H, src_terrain), 2 * tc - hgt(px + 1, py, W, H, src_terrain));
@@ -69,16 +74,16 @@ fyc = fdy(px, py, W, H, src_field, fs);
 fyu = fdy(px, py - 1, W, H, src_field, fs);
 fyd = fdy(px, py + 1, W, H, src_field, fs);
 
-vl = speed * (-flow * (tc - tl) + 0.5 * (fxl + fxc));
-vr = speed * (-flow * (tr - tc) + 0.5 * (fxc + fxr));
-vu = speed * (-flow * (tc - tu) + 0.5 * (fyu + fyc));
-vd = speed * (-flow * (td - tc) + 0.5 * (fyc + fyd));
+vl = speed * (-fe * (tc - tl) + 0.5 * (fxl + fxc));
+vr = speed * (-fe * (tr - tc) + 0.5 * (fxc + fxr));
+vu = speed * (-fe * (tc - tu) + 0.5 * (fyu + fyc));
+vd = speed * (-fe * (td - tc) + 0.5 * (fyc + fyd));
 
 // terrain gradient (np.gradient: central inside, one-sided at the frame edge)
 gtx = switch(px < 0.5, tr - tc, switch(px > W - 1.5, tc - tl, 0.5 * (tr - tl)));
 gty = switch(py < 0.5, td - tc, switch(py > H - 1.5, tc - tu, 0.5 * (td - tu)));
-c0x = fxc - flow * gtx;
-c0y = fyc - flow * gty;
+c0x = fxc - fe * gtx;
+c0y = fyc - fe * gty;
 
 o0 = switch(kp < 0.5, vl, c0x);
 o1 = switch(kp < 0.5, vr, c0y);

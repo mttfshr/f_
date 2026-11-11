@@ -5,25 +5,33 @@
 // minus flow * the gradient of the water depth (np.gradient: central inside, one-sided at the frame edge), and
 //   spd    = min(sqrt(cx^2 + cy^2) * speed, vmax) * clamp(w / film, 0, 1)
 //   lift   = p * clamp(lift * spd * min(w, 1), 0, 0.5)              paper -> suspension
-//   drop   = s * clamp(max(settle * speed * clamp(1 - spd / sp0, 0, 1), clamp(1 - w / 0.08, 0, 1)), 0, 1)     suspension -> paper
+//   drop   = s * clamp(max(settlee * speed * clamp(1 - spd / sp0, 0, 1), clamp(1 - w / 0.08, 0, 1)), 0, 1)     suspension -> paper
 // so fast water takes pigment and slow or shallow water puts it down, and all of it where the water is gone. film 0.15, vmax 0.2,
-// sp0 0.03 and the 0.08 are the mirror's constants; the speed measure and these forms are INFERRED, checked only by the bowl and
+// sp0 0.1 and the 0.08 are the mirror's constants; the speed measure and these forms are INFERRED, checked only by the bowl and
 // field tests (direction), and by Matt's live look (does it read as ink).
 // This is the last stage of the loop: it writes the state atlas back to the hold stage, so it also sanitizes it (non-finite and
 // negative water, pigment and suspension read as 0). The load flag passes unchanged.
 // Inlets (outer order): first = the state from the transport stage (hot), second = the prep stage's atlas (cold).
 Param flow(0.4);
 Param speed(1);
-Param lift(0.9);
-Param settle(0.004);
+Param lift(0.7);
+Param settle(0.19);
 Param width(256);
 Param height(256);
 
 W = max(width, 3);
 H = max(height, 3);
+// RENDER-SIZE SCALING (T083; mirror `scales()`): constants right at a render height of 1920; kr = H / 1920, kc = min(kr, 1.25). The velocity cap and the
+// settle threshold scale by kc, `flow` by kr * kc, and the lift uses the speed in 1920-height texels (spd / kc) so its rate per step does not depend on the size.
+kr = H / 1920;
+kc = min(kr, 1.25);
 film = 0.15;
-vmax = 0.2;
-sp0 = 0.03;
+vmax = 0.2 * kc;
+sp0 = 0.1 * kc;
+// The dials are curves (2026-11-10, Matt: some dials were too subtle; mirror lift_from_dial() and settle_from_dial()): Lift 0..1 maps to
+// 0.9 * (d / 0.7) ^ 2 (0.9 at the default 0.7, the old default), Settle 0..1 to 0.6 * d ^ 3 (0.004 at the default 0.19, the old default).
+lifte = 0.9 * (lift / 0.7) * (lift / 0.7);
+settlee = 0.6 * settle * settle * settle;
 
 px = floor(norm.x * W);
 yt = floor(norm.y * 2 * H);
@@ -50,11 +58,11 @@ wd = switch(abs(wd) < 1e30, max(wd, 0), 0);
 
 gwx = switch(px < 0.5, wr - wc, switch(px > W - 1.5, wc - wl, 0.5 * (wr - wl)));
 gwy = switch(py < 0.5, wd - wc, switch(py > H - 1.5, wc - wu, 0.5 * (wd - wu)));
-cx = nearest(in2, vec(uc, vb)).x - flow * gwx;
-cy = nearest(in2, vec(uc, vb)).y - flow * gwy;
+cx = nearest(in2, vec(uc, vb)).x - flow * kr * kc * gwx;
+cy = nearest(in2, vec(uc, vb)).y - flow * kr * kc * gwy;
 spd = min(sqrt(cx * cx + cy * cy) * speed, vmax) * clamp(wc / film, 0, 1);
-kl = clamp(lift * spd * min(wc, 1), 0, 0.5);
-kd = clamp(max(settle * speed * clamp(1 - spd / sp0, 0, 1), clamp(1 - wc / 0.08, 0, 1)), 0, 1);
+kl = clamp(lifte * (spd / kc) * min(wc, 1), 0, 0.5);
+kd = clamp(max(settlee * speed * clamp(1 - spd / sp0, 0, 1), clamp(1 - wc / 0.08, 0, 1)), 0, 1);
 
 pr = nearest(in1, vec(uc, vb)).x;
 pg = nearest(in1, vec(uc, vb)).y;

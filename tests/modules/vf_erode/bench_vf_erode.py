@@ -33,13 +33,14 @@ from harness import check, note, run
 SRC = _paths.REPO / "src" / "f_vf_erode"
 W, H = 64, 48
 BANG = np.zeros((4, 4, 4), np.float32)
+KR = H / em.REF_H        # the render-size scaling factor the codeboxes derive from the height Param (T083): 48 / 1920
 SIZE = {"width": float(W), "height": float(H)}
 # The bench keeps a Param's last value between jobs: every job pins every Param its codebox declares.
 PINNED = {
     "prep": dict(SIZE, flow=0.4, push=1.0, speed=1.0, src_terrain=1.0, src_field=1.0),
     "load": dict(SIZE, polar_sw=0.0, flood=1.0, feed=0.0, fade=0.0, wet_gate=0.0),
     "transport": dict(SIZE, flow=0.4, speed=1.0, dry=0.0016),
-    "react": dict(SIZE, flow=0.4, speed=1.0, lift=0.9, settle=0.004),
+    "react": dict(SIZE, flow=0.4, speed=1.0, lift=0.7, settle=0.19),
     "enc": dict(polar_sw=0.0, src_bg=0.0, bypass_gate=0.0),
 }
 TOL_PREP = 2e-5         # float32 products and sums of values up to about 6 (terrain relief)
@@ -127,7 +128,9 @@ def prep_expected(terrain, field, flow, push, speed):
     """The static face velocities and drive, written from the mirror's own definitions (T, Tp odd reflection, edge-replicated field)."""
     T = em.terrain_height(terrain).astype(np.float64)
     fx, fy = em.field_uv(field)
-    fx, fy = fx.astype(np.float64) * push * em.FIELD_SCALE, fy.astype(np.float64) * push * em.FIELD_SCALE
+    fe, kc = flow * KR * min(KR, em.K_CAP), min(KR, em.K_CAP)           # T083: the codeboxes scale `flow` by kr * kc and the field by kc
+    flow = fe
+    fx, fy = fx.astype(np.float64) * push * em.FIELD_SCALE * kc, fy.astype(np.float64) * push * em.FIELD_SCALE * kc
     Tp = np.pad(T, 1, mode="reflect", reflect_type="odd")
     Fxp, Fyp = np.pad(fx, 1, mode="edge"), np.pad(fy, 1, mode="edge")
     vl = speed * (-flow * (T - Tp[1:-1, :-2]) + 0.5 * (Fxp[1:-1, :-2] + fx))
@@ -196,7 +199,7 @@ def test_transport_matches_the_mirror():
     for flow, speed, dry in ((0.4, 1.0, 0.0016), (0.9, 1.6, 0.01)):
         pa = prep_gpu(terrain, field, push=2.0, flow=flow, speed=speed)
         got = gpu("transport", [atl, pa], (W, 2 * H), flow=flow, speed=speed, dry=dry)
-        want = em.step(st, T, F, only="transport", flow=flow, speed=speed, dry=dry, push=2.0, edge="open")
+        want = em.step(st, T, F, only="transport", flow=flow, speed=speed, dry=dry, push=2.0, edge="open", k=KR)
         check(f"transport (flow {flow}, speed {speed}, dry {dry}): water", mx(got[:H, :, 0], want["w"]), TOL_STAGE)
         check("transport: suspension", mx(got[:H, :, 1:4], want["s"]), TOL_STAGE)
         check("transport: the paper pigment and the flag pass unchanged", mx(got[H:], atl[H:]), 0.0)
@@ -231,10 +234,10 @@ def test_react_matches_the_mirror():
     T, F = em.terrain_height(terrain), em.field_uv(field)
     st = random_state(7, wlo=0.0, whi=1.0, zeros=True)
     atl = to_atlas(st, 3.0)
-    for flow, speed, lift, settle in ((0.4, 1.0, 0.9, 0.004), (1.0, 2.0, 1.8, 0.04)):
+    for flow, speed, lift, settle in ((0.4, 1.0, 0.7, 0.19), (1.0, 2.0, 1.0, 0.5)):       # the DIAL values; the mirror takes the curves
         pa = prep_gpu(terrain, field, push=2.0, flow=flow, speed=speed)
         got = gpu("react", [atl, pa], (W, 2 * H), flow=flow, speed=speed, lift=lift, settle=settle)
-        want = em.step(st, T, F, only="react", flow=flow, speed=speed, lift=lift, settle=settle, push=2.0)
+        want = em.step(st, T, F, only="react", flow=flow, speed=speed, lift=em.lift_from_dial(lift), settle=em.settle_from_dial(settle), push=2.0, k=KR)
         check(f"react (flow {flow}, speed {speed}, lift {lift}, settle {settle}): the water is unchanged", mx(got[:H, :, 0], st["w"]), 0.0)
         check("react: suspension", mx(got[:H, :, 1:4], want["s"]), TOL_STAGE)
         check("react: paper pigment", mx(got[H:, :, :3], want["p"]), TOL_STAGE)
@@ -370,7 +373,7 @@ def test_chain_fed_still_picture_converges_like_the_mirror():
         atl = gpu("load", [atl, pic], (W, 2 * H), feed=0.2)
         atl = gpu("transport", [atl, pa], (W, 2 * H), dry=0.004)
         atl = gpu("react", [atl, pa], (W, 2 * H))
-        st = em.step(em.feed(st, pic, "darker", 0.2), None, None, edge="open", dry=0.004)
+        st = em.step(em.feed(st, pic, "darker", 0.2), None, None, edge="open", dry=0.004, k=KR)
     check("fed chain, 30 steps: water vs the mirror", mx(atl[:H, :, 0], st["w"]), TOL_CHAIN)
     check("fed chain: paper pigment vs the mirror", mx(atl[H:, :, :3], st["p"]), TOL_CHAIN)
     pig = em.pigment_from_picture(pic, "darker")
@@ -391,7 +394,7 @@ def test_chain_dark_then_light_picture_is_followed():
         atl = gpu("load", [atl, pic], (W, 2 * H), feed=0.2, fade=0.1)
         atl = gpu("transport", [atl, pa], (W, 2 * H), dry=0.004)
         atl = gpu("react", [atl, pa], (W, 2 * H))
-        st = em.step(em.feed(st, pic, "darker", 0.2, fade=0.1), None, None, edge="open", dry=0.004)
+        st = em.step(em.feed(st, pic, "darker", 0.2, fade=0.1), None, None, edge="open", dry=0.004, k=KR)
     check("dark then light chain, 100 steps: paper pigment vs the mirror", mx(atl[H:, :, :3], st["p"]), TOL_CHAIN)
     pb = em.pigment_from_picture(b, "darker")
     check("the paper has followed the light picture up (shortfall under 3e-3 of the dark peak)", mx(atl[H:, :, :3], pb) / float(em.pigment_from_picture(a, "darker").max()), 3e-3)
@@ -402,14 +405,14 @@ def test_chain_load_then_ten_steps_matches_the_mirror():
     terrain, field = textures(14)
     T, F = em.terrain_height(terrain), em.field_uv(field)
     pic = picture(14, 0.15, 0.95)
-    kw = dict(flow=0.6, speed=1.2, lift=0.9, settle=0.004, dry=0.0016)
+    kw = dict(flow=0.6, speed=1.2, lift=0.7, settle=0.19, dry=0.0016)          # DIAL values for the GPU; the mirror takes the curves
     pa = prep_gpu(terrain, field, push=1.5, flow=kw["flow"], speed=kw["speed"])
     atl = gpu("load", [to_atlas(em.new_state(H, W), 0.0), pic], (W, 2 * H), wet_gate=1.0, flood=1.0)
     st = em.load(em.new_state(H, W), pic, "darker", flood=1.0)
     for i in range(10):
         atl = gpu("transport", [atl, pa], (W, 2 * H), flow=kw["flow"], speed=kw["speed"], dry=kw["dry"])
         atl = gpu("react", [atl, pa], (W, 2 * H), flow=kw["flow"], speed=kw["speed"], lift=kw["lift"], settle=kw["settle"])
-        st = em.step(st, T, F, push=1.5, edge="open", **kw)
+        st = em.step(st, T, F, push=1.5, edge="open", **dict(kw, lift=em.lift_from_dial(kw["lift"]), settle=em.settle_from_dial(kw["settle"])), k=KR)
     check("chain, 10 steps: water vs the mirror", mx(atl[:H, :, 0], st["w"]), TOL_CHAIN)
     check("chain, 10 steps: suspension", mx(atl[:H, :, 1:4], st["s"]), TOL_CHAIN)
     check("chain, 10 steps: paper pigment", mx(atl[H:, :, :3], st["p"]), TOL_CHAIN)

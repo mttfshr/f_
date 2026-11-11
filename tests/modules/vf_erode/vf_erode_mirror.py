@@ -20,6 +20,8 @@ GAMMA = 2.2          # INFERRED: display to linear light by a plain power (T068)
 EPS = 0.001          # INFERRED: smallest linear value taken by the log (Darker); the mocks used 0.004, widened to 0.001 2026-11-10 (Matt)
 LUMA = np.array([0.2126, 0.7152, 0.0722], F32)
 RELIEF = 6.0         # INFERRED: terrain luma 0..1 to height; the mock's hills were 0..6
+REF_H = 1920.0       # render height at which every constant below is correct (Matt, 2026-11-10: the size he looked at, 1920); k = H / REF_H
+K_CAP = 1.25         # velocity-type constants stop scaling here: the flux limit (4 faces * vmax * kc < 1) is what keeps the water stable (see `scales`)
 FIELD_SCALE = 0.1    # INFERRED: decoded vecfield (-1..1) to a face velocity at push 1; the mock's tilt was 0.06
 
 DEFAULTS = dict(
@@ -31,9 +33,35 @@ DEFAULTS = dict(
     dry=0.0016,          # mock evaporation per step
     speed=1.0,           # step size multiplier, bounded by vmax
     flood=1.0,           # depth a wetting adds
-    wlim=0.5, film=0.15, mix=0.04, vmax=0.2, sp0=0.03,   # mock constants; vmax and mix chosen so no cell can give away more than it holds
+    wlim=0.5, film=0.15, mix=0.04, vmax=0.2, sp0=0.1,   # mock constants; vmax and mix chosen so no cell can give away more than it holds
+    k=1.0,               # render height / REF_H (T083): lengths scale with the render, so the per-texel constants below are scaled (see `scales`)
     edge="open",         # T066; "closed" exists for the conservation test only
 )
+
+
+def lift_from_dial(d):
+    """The Lift dial (0..1, default 0.7) to the effective lift rate: a square curve with 0.9, the old default, at the dial's default. The old linear
+    0..2 dial was saturated above about 0.3 (2026-11-10 sensitivity check), so its top was dead."""
+    return 0.9 * (float(d) / 0.7) ** 2
+
+
+def settle_from_dial(d):
+    """The Settle dial (0..1, default 0.19) to the effective settle rate: 0.6 * d ** 3, about 0.004 (the old default) at the dial's default. The
+    effective range is 0..0.6 (was 0..0.05, which moved the output by under 0.004): with sp0 raised from 0.03 to 0.1 the dial now acts on slow
+    water that is still moving, not only on nearly still water."""
+    return 0.6 * float(d) ** 3
+
+
+def scales(k):
+    """T083, the render-size scaling (Matt chose "cap-limited", 2026-11-10). At a render height H the same picture has k = H / REF_H times as many
+    texels, so per-step quantities measured in texels must change for the same motion in frame units:
+      the field's velocity and every velocity cap scale by kc = min(k, K_CAP);
+      the terrain and water slopes per texel shrink by 1 / k, so `flow` is multiplied by k * kc (k ** 2 up to the cap);
+      diffusion (texels squared per step) by kc ** 2.
+    Rates that act on a cell alone (dry, lift, settle) and the depths (film, wlim) do not scale. Above the cap everything runs slower than at
+    REF_H, never faster, so the cap cannot make the solver unstable. Returns (flow multiplier, velocity scale, diffusion scale)."""
+    kc = min(float(k), K_CAP)
+    return float(k) * kc, kc, kc * kc
 
 
 def zap(a):
@@ -115,10 +143,11 @@ def step(st, terrain=None, field=None, bug=None, only=None, **kw):
     h, wd = w.shape
     T = np.zeros((h, wd), F32) if terrain is None else terrain
     fx, fy = (np.zeros((h, wd), F32),) * 2 if field is None else field
-    fx, fy = fx * F32(P["push"] * FIELD_SCALE), fy * F32(P["push"] * FIELD_SCALE)
+    fm, kv, km = scales(P["k"])
+    fx, fy = fx * F32(P["push"] * FIELD_SCALE * kv), fy * F32(P["push"] * FIELD_SCALE * kv)
     if bug == "push_backward":
         fx, fy = -fx, -fy
-    flow, speed, vmax = F32(P["flow"]), F32(P["speed"]), F32(P["vmax"])
+    flow, speed, vmax = F32(P["flow"] * fm), F32(P["speed"]), F32(P["vmax"] * kv)
 
     out_w, out_s, in_w, in_s = 0.0, np.zeros(3), 0.0, np.zeros(3)
     if only != "react":
@@ -142,7 +171,7 @@ def step(st, terrain=None, field=None, bug=None, only=None, **kw):
             qy[0, :] = qy[-1, :] = 0
         conc = np.pad(s / np.maximum(w, F32(1e-3))[..., None], ((1, 1), (1, 1), (0, 0)), mode="edge" if bug == "edge_reenter" else "constant")
         cl, cr, cu, cd = conc[1:-1, :-1], conc[1:-1, 1:], conc[:-1, 1:-1], conc[1:, 1:-1]
-        mix = F32(P["mix"])
+        mix = F32(P["mix"] * km)
         sx = np.where((vx > 0)[..., None], cl, cr) * qx[..., None] + (mix * np.minimum(np.minimum(wl, wr), 1))[..., None] * (cl - cr)
         sy = np.where((vy > 0)[..., None], cu, cd) * qy[..., None] + (mix * np.minimum(np.minimum(wu, wdn), 1))[..., None] * (cu - cd)
         if P["edge"] == "closed":
@@ -169,9 +198,9 @@ def step(st, terrain=None, field=None, bug=None, only=None, **kw):
         gy, gx = np.gradient(T + w)
         cx, cy = fx - flow * gx, fy - flow * gy
         spd = np.minimum(np.sqrt(cx * cx + cy * cy) * speed, vmax) * np.clip(w / F32(P["film"]), 0, 1)
-        lift = p * np.clip(F32(P["lift"]) * spd * np.minimum(w, 1), 0, 0.5)[..., None]
+        lift = p * np.clip(F32(P["lift"]) * (spd / F32(kv)) * np.minimum(w, 1), 0, 0.5)[..., None]       # spd / kv: speed in REF_H texels, so the rate per step does not depend on the render size
         p, s = p - lift, s + lift
-        drop = s * np.clip(np.maximum(F32(P["settle"]) * speed * np.clip(1 - spd / F32(P["sp0"]), 0, 1), np.clip(1 - w / F32(0.08), 0, 1)), 0, 1)[..., None]
+        drop = s * np.clip(np.maximum(F32(P["settle"]) * speed * np.clip(1 - spd / F32(P["sp0"] * kv), 0, 1), np.clip(1 - w / F32(0.08), 0, 1)), 0, 1)[..., None]
         p, s = p + drop, s - drop
     return dict(w=w, s=s.astype(F32), p=p.astype(F32), loaded=st["loaded"], escaped=st["escaped"] + out_s, escaped_w=st["escaped_w"] + out_w,
                 entered=st["entered"] + in_s, entered_w=st["entered_w"] + in_w)
