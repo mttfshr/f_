@@ -113,7 +113,7 @@ Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by
 
 ## Phase 3: docs and registration
 
-- [~] T040 (2026-11-10, Claude, partly) Reference doc `docs/f-reference/f_vf_erode.md` written; README Patches row, inventory rows (two), menu entry under Color / Tone next to Separate (provisional, `G-menu`, Matt's to move), launcher and menu regenerated (`test_launch.py` 8/8, `test_generate_menu.py` run, see HANDOFF). NOT done: the helpfile (`f-helpfile` skill, written in a Claude session), `ideas/f_print_styles.md` and INDEX status (T041).
+- [~] T040 (2026-11-10, Claude, partly) Reference doc `docs/f-reference/f_vf_erode.md` written; README Patches row, inventory rows (two), menu entry under Color / Tone next to Separate (provisional, `G-menu`, Matt's to move), launcher and menu regenerated (`test_launch.py` 8/8, `test_generate_menu.py` run, see HANDOFF). Helpfile `package/help/f_vf_erode.maxhelp` written 2026-11-10 (Claude, offline, per the `f-helpfile` skill, modelled on `f_vf_stamp.maxhelp`; JSON valid, launcher shows it clickable, `test_launch.py` 8/8; NOT opened in Max, layout and text heights are estimates). NOT done: `ideas/f_print_styles.md` and INDEX status (T041).
 - [ ] T041 `ideas/f_print_styles.md` status for stage 3 to built; INDEX entry; `.specify/gates.md` rows touched; module-preflight skill checklist before `.specify/stable/`.
 
 ## Dependencies and order
