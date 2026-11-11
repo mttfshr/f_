@@ -37,7 +37,7 @@ patcher = {
     "archetype":   "processor",
 
     "presentation_width":  190,
-    "presentation_height": 232,
+    "presentation_height": 150,      # two dial rows end at y 143; the Wet button took the empty first slot (Matt, 2026-11-10)
 
     "outlets": [
         {"comment": "ink (composite over the background)"},
@@ -76,7 +76,7 @@ patcher = {
          "pix_target": "load",
          "hint": "With Feed above 0: how fast ink above what the picture holds returns to the picture, so a picture that gets lighter is followed and the frame does not go black. Small = pooled ink lasts about 1 / Fade frames. 0 = it never fades. PROVISIONAL"},
         {"name": "wet", "type": "gate_button", "label": "Wet", "gate_param": "wet_gate",
-         "rect": [78.0, 186.0, 28.0, 28.0], "label_rect": [67.0, 164.0, 50.0, 18.0],
+         "rect": [3.5, 46.0, 28.0, 28.0], "label_rect": [-7.5, 20.0, 50.0, 18.0],     # column 0 of the first dial row, under its label (Matt, 2026-11-10)
          "hint": "Wet once: the picture on inlet 0 becomes the pigment on the paper and the frame is flooded. Holding does not wet again"},
         {"name": "bypass", "type": "bypass"},
 

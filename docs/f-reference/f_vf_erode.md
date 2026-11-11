@@ -93,7 +93,7 @@ The constants (6, 0.1, 0.2, 0.5, 0.15, 0.04, 0.03, 0.08, 2.2, 0.001) are the Num
 - **Render-size scaling** (T083): constants are in texels, so at other sizes the physics scales differently (looser or tighter pools). The mirror and benches are at one size each (64 x 48 and 640 x 640). The look Matt approved was at his render size, not recorded.
 - **Cost.** The probe codeboxes at 1080p were 6.3 ms upper bound for one step (`tests/logs/20261110-101838-bench.log`); the real stages are not measured (NF-102 asks only that it be recorded). Render size was kept (T065).
 - **Animated input** is not in a bench (the harness feeds one static texture); Matt's live look covers it.
-- **Panel layout** (`G-ui-density`): the height of 232 was not adjusted for the Feed and Fade dials. **Menu category** (`G-menu`): placed under Color / Tone by Claude, provisional, Matt's to move. **Helpfile:** not written.
+- **Panel layout** (`G-ui-density`): Polarity is in the title bar and Wet in the first slot of the dial grid (Matt, 2026-11-10); panel 190 x 150. Not yet looked at in Max. **Menu category** (`G-menu`): placed under Color / Tone by Claude, provisional, Matt's to move. **Helpfile:** not written.
 - **Frame-edge model and the lift/settle forms** are inferred; only the bowl and field tests (direction) and Matt's look check them.
 - `tests/contracts/bench_modules.py` fails as a whole on `f_vf_fluid`'s frame size (640 against 512), not on this module; the `f_vf_erode` row is clean.
 

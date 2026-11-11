@@ -1177,14 +1177,14 @@
 						915.5,
 						260.0,
 						190.0,
-						232.0
+						150.0
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0.0,
 						0.0,
 						190.0,
-						232.0
+						150.0
 					],
 					"proportion": 0.5
 				}
@@ -3003,8 +3003,8 @@
 					"rounded": 14,
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						186.0,
+						3.5,
+						46.0,
 						28.0,
 						28.0
 					],
@@ -3037,8 +3037,8 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						78.0,
-						186.0,
+						3.5,
+						46.0,
 						28.0,
 						28.0
 					],
@@ -3062,8 +3062,8 @@
 					"numoutlets": 0,
 					"presentation": 1,
 					"presentation_rect": [
-						67.0,
-						164.0,
+						-7.5,
+						20.0,
 						50.0,
 						18.0
 					],

@@ -327,7 +327,7 @@
 						650.0,
 						24.0,
 						190.0,
-						232.0
+						150.0
 					],
 					"viewvisibility": 1,
 					"varname": "f_vf_erode"
