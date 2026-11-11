@@ -85,3 +85,9 @@
 - **Done (Claude, Matt's go):** T041 (ideas note and INDEX), preflight T042 passed and the module moved to `.specify/stable/f_vf_erode/`. One planned bench batch: codebox 17/17, module 5/5, contract row clean (`tests/logs/20261110-183303-bench.log`, `-183434-bench.log`; the contract bench still fails whole on `f_vf_fluid`'s frame size). Digest line reworded; `generate_menu` regenerated (was stale after the panel change).
 - **Open, not blocking:** the 1920 x 3840 cost is unmeasured; the menu category is provisional (`G-menu`); `f_vf_fluid` 640 vs 512 in the contract bench is Matt's call; the `skills/jit-gen-codebox/SKILL.md` line on `exp(-(a + b))` needs Matt's re-upload.
 
+## 2026-11-10 (ideas): `f_misregister` paused, scoped-presets utility captured
+
+- **Decided (Matt, chat):** `f_misregister` is paused, not parked. Core Vsynth modules already do offset, rotation, displacement, sample-and-hold, noise and delay, so a transform module would duplicate a chain. His idea: a custom scoped `pattrstorage` plus a linked parameter list over any chain (store everything, expose a few dials, one control driving several parameters, presets that morph), like Ableton racks and macros but user-assembled. Claude's lean, not decided: a sidecar first.
+- **Written (Claude):** `ideas/f_util_scoped_presets.md`, an INDEX entry, and a status note in `ideas/f_print_styles.md` Stage 4. Nothing built, nothing verified in Max.
+- **Owed to Matt:** open `scratch/experiments/scoped_presets/spike_scoped_presets.maxpat` (local, gitignored; built by `build_spike.py` beside it) in Max and answer the six notes at the bottom of the patch (does the pattrstorage see both modules' dials and under what names; store, recall and morph; macro by message; persistence). Hand-authored JSON, validated for parse, ids and cords only: not opened in Max, so a broken box is possible.
+

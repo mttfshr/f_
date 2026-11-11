@@ -508,6 +508,7 @@ there, then the chapter-specific files for depth.
   *character* extractor (energy/tilt/flatness/flux/bang), fixed 4-band split
   at musically meaningful crossovers, for post-mix/complex-soundscape input.
   Parallel to `f_util_profile` but audio→control instead of GPU→CPU.
+- **[f_util_scoped_presets.md](f_util_scoped_presets.md)** 🧰 — A custom scoped `pattrstorage` plus a linked parameter list over any chain of modules: store everything, expose a few dials, one control driving several parameters, presets that morph (Matt, 2026-11-10; a sidecar first). Prompted by `f_misregister` (paused, not parked) and Ableton racks and macros. Concept only; experiment 1 (a scratch patch) is owed to Matt in Max.
 - **[f_util_compound_dial.md](f_util_compound_dial.md)** 🧰 — Custom `jsui`
   widget: two concentric rings controlling two independent params in one
   UI footprint. Blocked on a broader "UI density" design question, not

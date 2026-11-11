@@ -78,6 +78,8 @@ Dithering, halftoning and hatching are largely **one operation**: compare tone t
 
 ### Stages 4 and 5
 
+**`f_misregister`, 2026-11-10 (Matt): paused, not parked.** Vsynth already has offset, rotation, displacement, sample-and-hold, noise and delay, so a transform module would duplicate a chain. What a chain lacks is one coherent control surface over the plates' shared random event; `ideas/f_util_scoped_presets.md` is the way to find out whether `f_misregister` needs to be a module at all. Candidates that may survive: a registration source (seeded per-plate offset, rotation and a smooth paper-warp field, with a sheet-change trigger) and registration marks and color bars as a small generator. Sharp halftone shifts belong in `f_screen` as a phase input, not here.
+
 `f_misregister` gives each plate its own offset, rotation and scale (riso passes are separate drums, so each plate drifts independently), plus wobble and ghosting. `f_paper` composites plates by their ink colours with the shared overprint model, and adds tint, tooth, show-through and emboss. Banding can live in `f_vf_erode`.
 
 ## Existing pieces (per the inventory unless noted)
