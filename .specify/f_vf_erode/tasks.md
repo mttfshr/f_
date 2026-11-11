@@ -111,6 +111,8 @@ Every unticked gate here is PRELIMINARY: Claude's assumption in spec "Assumed by
 - 2026-11-10 (live, Matt, chat, with a screenshot): with Fade, Feed on an animated input "looks amazing now" (the missing piece); no longer going black. Observed by Matt live at ALL DEFAULTS (his words, chat): so the shipped defaults, Fade 0.02 included, are confirmed by that one look on that input; no tuning owed from it.
 - [x] T095 (2026-11-10, bench run by Claude, Matt's go; log `tests/logs/20261110-173333-bench.log`) Fade benched: codebox bench 17/17, module bench 5/5. `load` with fade 0.1 and 1.0 (feed 0.3) and fade 1.0 with feed 0 (does nothing), both Polarity settings, against the mirror (worst 5e-7); a 100-step dark-then-light chain matches the mirror (3.6e-7) and the paper follows the light picture up.
 
+- 2026-11-10 (live, Matt, chat): the panel is right: Polarity in the title bar, Wet in the first dial slot, panel 190 x 150; the helpfile text fits. Closes the panel-layout item for this module (`G-ui-density` still holds the general design conversation).
+
 ## Phase 3: docs and registration
 
 - [~] T040 (2026-11-10, Claude, partly) Reference doc `docs/f-reference/f_vf_erode.md` written; README Patches row, inventory rows (two), menu entry under Color / Tone next to Separate (provisional, `G-menu`, Matt's to move), launcher and menu regenerated (`test_launch.py` 8/8, `test_generate_menu.py` run, see HANDOFF). Helpfile `package/help/f_vf_erode.maxhelp` written 2026-11-10 (Claude, offline, per the `f-helpfile` skill, modelled on `f_vf_stamp.maxhelp`; JSON valid, launcher shows it clickable, `test_launch.py` 8/8; NOT opened in Max, layout and text heights are estimates). NOT done: `ideas/f_print_styles.md` and INDEX status (T041).
