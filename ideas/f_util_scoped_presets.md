@@ -24,9 +24,17 @@ A **custom scoped `pattrstorage` plus a linked parameter list**: pick any chain 
 - The Recipes dropdown in `f_modules` (`f_addmod.js`) places a row of modules; it has no container, shared controls or state.
 - Related compaction ideas: `f_util_compound_dial.md` (two parameters in one widget), `f_util_mod_texture.md` and the tagged-texture convention (`P-mod-textures`).
 
-## Experiment 1 (the spike, owed to Matt in Max)
+## Experiment 1 (revised 2026-11-10, Matt): the spike IS the `f_misregister` work
 
-`scratch/experiments/scoped_presets/spike_scoped_presets.maxpat` (built by `build_spike.py` there): a pattern source into `f_channel_grader` (`chain_a`) into `f_luma_processor` (`chain_b`) into a preview, with a `pattrstorage spike_ps @parameter_enable 1`, store, recall and morph controls, and one macro slider driving one dial in each module by message. Questions it answers, in order of how much they decide:
+Matt's direction: do not test the store on a throwaway chain. Compose a real chain that approaches print misregistration from existing modules, and see whether it gets there or leaves a gap for a module to fill. That chain carries the scoped store as well, so both questions get answered on one real case.
+
+`scratch/experiments/misregister_chain/` (local, gitignored): `build_chain.py` builds `misregister_chain.maxpat`, with `misreg_press.js` beside it. Source into `f_separate`, then three `vs_offset+rot` for the plates and three for faint ghost copies, into a `vs_mixer_6`, with a preview of the misregistered result beside `f_separate`'s own registered preview. The "press" is a small `js`: one random event per sheet, split into a part shared by all plates (`corr`) and an independent part per plate, a leaky random walk for wobble per frame, and a ghost level and offset. Four `live.dial`s (wear, corr, wobble, ghost) plus gofs are the simplified control list, and a `pattrstorage @parameter_enable 1` sits over the whole patch with store, recall and dump. Not in this round, on purpose, because they are the likely gap: a smooth non-rigid paper warp, sharp halftone shifts, registration marks.
+
+The older single-purpose spike (`scratch/experiments/scoped_presets/`) stays as a smaller test of the store alone.
+
+Questions, in order of how much they decide:
+
+(Original, smaller spike) `scratch/experiments/scoped_presets/spike_scoped_presets.maxpat` (built by `build_spike.py` there): a pattern source into `f_channel_grader` (`chain_a`) into `f_luma_processor` (`chain_b`) into a preview, with a `pattrstorage spike_ps @parameter_enable 1`, store, recall and morph controls, and one macro slider driving one dial in each module by message. Questions it answers, in order of how much they decide:
 
 1. Does the `pattrstorage` see the dials of both modules, and under what names?
 2. Do store, recall and a morph move the dials and the picture?
