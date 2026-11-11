@@ -1495,15 +1495,16 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain, pri
     Returns (boxes, lines) in the raw_boxes/raw_lines shape; ids are `obj-rd-N`."""
     if not isinstance(rd, dict):
         raise ValueError(f"render_dim must be a dict, not {rd!r}")
-    unknown = sorted(set(rd) - {"width_param", "height_param", "param_stages", "size_stages", "downsample"})
+    unknown = sorted(set(rd) - {"width_param", "height_param", "param_stages", "size_stages", "downsample", "atlas_stages"})
     if unknown:
         raise ValueError(f"render_dim: unknown key(s) {unknown} (allowed: width_param, height_param, "
-                         f"param_stages, size_stages, downsample)")
+                         f"param_stages, size_stages, downsample, atlas_stages)")
+    atlas = rd.get("atlas_stages", [])
     ds = rd.get("downsample")
     wp, hp = rd.get("width_param"), rd.get("height_param")
     param_stages, size_stages = rd.get("param_stages", []), rd.get("size_stages", [])
-    if not (wp or hp or param_stages or size_stages or ds):
-        raise ValueError("render_dim: declare param_stages (with width_param and height_param), size_stages and/or downsample")
+    if not (wp or hp or param_stages or size_stages or ds or atlas):
+        raise ValueError("render_dim: declare param_stages (with width_param and height_param), size_stages, atlas_stages and/or downsample")
     if bool(wp) != bool(hp):
         raise ValueError("render_dim: width_param and height_param go together (one `unpack` feeds both)")
     if bool(wp) != bool(param_stages):
@@ -1586,7 +1587,7 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain, pri
     lines = [line(5, 0, 6, 0)]
     for o in s_objs:
         lines.append(line(0, 0, o, 0))                       # r dim -> the pix: its output follows the render size
-    if wp or ds:
+    if wp or ds or atlas:
         boxes += [box(1, "route dim", 1, 2, [530.0, 320.0, 60.0, 22.0]),
                   box(2, "unpack i i", 1, 2, [530.0, 350.0, 60.0, 22.0], ["int", "int"])]
         lines += [line(0, 0, 1, 0), line(1, 0, 2, 0)]
@@ -1596,6 +1597,18 @@ def build_render_dim(rd, chain_id_to_obj, primary_obj_id, params, pix_chain, pri
         lines += [line(2, 0, 3, 0), line(2, 1, 4, 0)]
         lines += [line(3, 0, o, 0) for o in pw_objs]
         lines += [line(4, 0, o, 0) for o in ph_objs]
+    if atlas:
+        # atlas_stages (2026-11-10, f_vf_erode): a state atlas is the render size with two planes stacked vertically, W x 2H.
+        # unpack fires H (right) first: expr 2H lands in pack's cold right inlet, then W fires pack once.
+        a_objs = nodes(atlas, "atlas_stages")
+        for ref in atlas:
+            if "@adapt 0" not in chain_nodes[ref].get("pix_attrs", ""):
+                raise ValueError(f"render_dim atlas_stages: node {ref!r} must set pix_attrs with '@adapt 0'")
+        boxes += [box(20, "expr $i1*2", 1, 1, [830.0, 500.0, 80.0, 22.0]),
+                  box(21, "pack 0 0", 2, 1, [830.0, 530.0, 60.0, 22.0]),
+                  box(22, "prepend dim", 1, 1, [830.0, 560.0, 80.0, 22.0])]
+        lines += [line(2, 1, 20, 0), line(20, 0, 21, 1), line(2, 0, 21, 0), line(21, 0, 22, 0)]
+        lines += [line(22, 0, o, 0) for o in a_objs]
     if ds:
         F, hs, vs = ds["factor"], chain_id_to_obj[ds["h_stage"]], chain_id_to_obj[ds["v_stage"]]
         # unpack fires its RIGHT outlet (H) first, then the left (W): H reaches every cold right inlet before W

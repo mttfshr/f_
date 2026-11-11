@@ -1,0 +1,8 @@
+// codebox_hold.gen -- f_vf_erode: the loop break and one-frame delay of the state atlas (the f_vf_lbm / f_ks hold idiom).
+// An identity pass over the atlas: W x 2H float32 at the render size, two RGBA planes stacked vertically (plan ADR-1).
+//   plane A (rows 0..H-1):   R water depth w, GBA pigment in suspension s
+//   plane B (rows H..2H-1):  RGB pigment on the paper p, A the load flag (see codebox_load.gen)
+// Inlets (outer order): first = the frame bang and the `dim W 2H` message (hot; unused in the code), second = the state from
+// the react stage (cold). The load stage is triggered by this stage's output, so the loop advances once per frame.
+// Not benched on its own (an identity); the live module bench covers it.
+out1 = nearest(in2, norm);

@@ -78,6 +78,8 @@ DATA = {
     "bench_wc": _MACHINERY + ["src/f_wc/codebox_*.gen"],
     "bench_wc_look": _MODULE_BENCH + ["package/patchers/f_wc.maxpat", "src/f_wc/codebox_*.gen"],
     "bench_vf_lbm": _MACHINERY + ["src/f_vf_lbm/codebox_*.gen"],
+    "bench_vf_erode": _MACHINERY + ["src/f_vf_erode/codebox_*.gen", "tests/modules/vf_erode/vf_erode_mirror.py"],
+    "bench_vf_erode_module": _MODULE_BENCH + ["package/patchers/f_vf_erode.maxpat", "src/f_vf_erode/codebox_*.gen"],
     "bench_vf_lbm_module": _MODULE_BENCH + ["package/patchers/f_vf_lbm.maxpat", "src/f_vf_lbm/codebox_*.gen"],
     "bench_mirror_findings_probes": _MACHINERY + ["src/f_stereo/codebox_v1.gen", "src/f_luma_processor/codebox_luma_processor.gen", "src/f_chladni/definition.py"],
     "bench_modules": _MODULE_BENCH,            # plus one patcher per module, see PER_MODULE

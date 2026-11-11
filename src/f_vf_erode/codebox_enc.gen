@@ -1,0 +1,67 @@
+// codebox_enc.gen -- f_vf_erode: the composite and the thickness at the render size, with the bypass gate (plan ADR-4, ADR-5, ADR-6).
+// Mirror: tests/modules/vf_erode/vf_erode_mirror.enc().
+//
+//   Darker:  linear = background * exp(-(p + s)), the background white when inlet 3 is unconnected
+//   Lighter: linear = background + p + s, the background black when unconnected (T075); then display = linear ^ (1 / 2.2)
+//   outlet 1: that composite, alpha from the picture. outlet 2: the thickness, the luma of the pigment ON THE PAPER (absorbance
+//   under Darker, light under Lighter); no water outlet (T069).
+//   BEFORE THE FIRST WETTING (the load flag in plane B's A channel is below 2, T076) the picture is shown as if loaded, so an
+//   unwetted module returns its input (US3.4); after the first wetting the picture no longer reaches the layers (T074).
+//   bypass_gate = 1 passes the picture (zapped) on both outlets; the loop keeps running underneath (FR-113). The Param is never named bypass.
+// The atlas is the render size, so it is read by normalized coordinates: plane A at v = norm.y / 2, plane B at 0.5 + norm.y / 2.
+// Inlets (outer order): first = the frame bang and `dim W H` (hot), second = the state atlas from the react stage, third = the picture
+// (in0 of the module), fourth = the background (in3 of the module, flag src_bg). Non-finite texels read as 0 (FR-110).
+lin(x) {
+  y = switch(abs(x) < 1e30, x, 0);
+  return pow(max(y, 0), 2.2);
+}
+Param polar_sw(0);
+Param src_bg(0);
+Param bypass_gate(0);
+
+va = norm.y * 0.5;
+vb = 0.5 + norm.y * 0.5;
+loaded = step(1.5, nearest(in2, vec(norm.x, vb)).w);
+
+pic_r = nearest(in3, norm).x;
+pic_g = nearest(in3, norm).y;
+pic_b = nearest(in3, norm).z;
+pic_a = nearest(in3, norm).w;
+pic_r = switch(abs(pic_r) < 1e30, pic_r, 0);
+pic_g = switch(abs(pic_g) < 1e30, pic_g, 0);
+pic_b = switch(abs(pic_b) < 1e30, pic_b, 0);
+pic_a = switch(abs(pic_a) < 1e30, pic_a, 0);
+
+// pigment on the paper: the state's, or the picture's before the first wetting
+dk = step(polar_sw, 0.5);
+mr = switch(dk > 0.5, -log(clamp(lin(pic_r), 0.001, 1)), lin(pic_r));
+mg = switch(dk > 0.5, -log(clamp(lin(pic_g), 0.001, 1)), lin(pic_g));
+mb = switch(dk > 0.5, -log(clamp(lin(pic_b), 0.001, 1)), lin(pic_b));
+pr = switch(loaded > 0.5, nearest(in2, vec(norm.x, vb)).x, mr);
+pg = switch(loaded > 0.5, nearest(in2, vec(norm.x, vb)).y, mg);
+pb = switch(loaded > 0.5, nearest(in2, vec(norm.x, vb)).z, mb);
+pr = switch(abs(pr) < 1e30, max(pr, 0), 0);
+pg = switch(abs(pg) < 1e30, max(pg, 0), 0);
+pb = switch(abs(pb) < 1e30, max(pb, 0), 0);
+sr = switch(loaded > 0.5, nearest(in2, vec(norm.x, va)).y, 0);
+sg = switch(loaded > 0.5, nearest(in2, vec(norm.x, va)).z, 0);
+sb = switch(loaded > 0.5, nearest(in2, vec(norm.x, va)).w, 0);
+sr = switch(abs(sr) < 1e30, max(sr, 0), 0);
+sg = switch(abs(sg) < 1e30, max(sg, 0), 0);
+sb = switch(abs(sb) < 1e30, max(sb, 0), 0);
+
+// NOTE: exp(-(a + b)) compiled as exp(-a + b) (bench, 2026-11-10: the GPU composite fitted p - s on three channels), so the sum is written exp(-a - b).
+// background: white (Darker) or black (Lighter) when unconnected
+br = switch(src_bg > 0.5, lin(nearest(in4, norm).x), dk);
+bg = switch(src_bg > 0.5, lin(nearest(in4, norm).y), dk);
+bb = switch(src_bg > 0.5, lin(nearest(in4, norm).z), dk);
+cr = switch(dk > 0.5, br * exp(-pr - sr), br + pr + sr);
+cg = switch(dk > 0.5, bg * exp(-pg - sg), bg + pg + sg);
+cb = switch(dk > 0.5, bb * exp(-pb - sb), bb + pb + sb);
+dr = pow(max(switch(abs(cr) < 1e30, cr, 0), 0), 1 / 2.2);
+dg = pow(max(switch(abs(cg) < 1e30, cg, 0), 0), 1 / 2.2);
+db = pow(max(switch(abs(cb) < 1e30, cb, 0), 0), 1 / 2.2);
+th = 0.2126 * pr + 0.7152 * pg + 0.0722 * pb;
+
+out1 = vec(mix(dr, pic_r, bypass_gate), mix(dg, pic_g, bypass_gate), mix(db, pic_b, bypass_gate), pic_a);
+out2 = vec(mix(th, pic_r, bypass_gate), mix(th, pic_g, bypass_gate), mix(th, pic_b, bypass_gate), pic_a);

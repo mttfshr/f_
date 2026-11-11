@@ -11,14 +11,14 @@ import sys
 import numpy as np
 
 from harness import check, note, run  # noqa: E402
-from vf_erode_mirror import F32, DEFAULTS, enc, field_uv, load, new_state, run as run_steps, step, totals  # noqa: E402
+from vf_erode_mirror import F32, DEFAULTS, enc, feed, field_uv, load, new_state, pigment_from_picture, run as run_steps, step, totals  # noqa: E402
 
 H, W = 40, 56
 FAST = dict(dry=0.004)       # dry in about 250 steps instead of 600
 
 
 def picture(h=H, w=W, seed=1, lo=0.1, hi=0.95):
-    # lo 0.1: under Darker a display value below EPS ** (1 / GAMMA), about 0.081, is lifted to it (the log is bounded), so identity holds from there up
+    # lo 0.1: under Darker a display value below EPS ** (1 / GAMMA), about 0.043, is lifted to it (the log is bounded), so identity holds from there up
     t = np.zeros((h, w, 4), F32)
     t[..., :3] = np.random.default_rng(seed).uniform(lo, hi, (h, w, 3)).astype(F32)
     t[..., 3] = 1
@@ -208,6 +208,77 @@ def test_input_hygiene():
     check("non-finite input: every layer finite", 1.0 - float(all(np.isfinite(st[k]).all() for k in ("p", "s", "w"))), 0)
     out, th = enc(st, img)
     check("non-finite input: outlets finite", 1.0 - float(np.isfinite(out).all() and np.isfinite(th).all()), 0)
+
+
+def test_feed():
+    """US5 Feed: rate 0 is exactly wet-once; a still picture on a flat frame converges to itself and never overshoots; the deposit is
+    monotone and bounded by the picture; a changed picture adds ink where it holds more and never takes any away by itself;
+    the open-edge solver plus Feed stays finite and non-negative at extreme dials."""
+    img = picture()
+    z = new_state(H, W)
+    st0 = feed(z, img, "darker", 0.0)
+    check("feed 0: the state is the input state, untouched (wet-once)", err(st0["p"], z["p"]) + err(st0["w"], z["w"]) + float(st0["loaded"] != z["loaded"]), 0)
+    pig = pigment_from_picture(img, "darker")
+    st = z
+    for _ in range(60):
+        st = feed(st, img, "darker", 0.2)
+        st = step(st, None, None, edge="closed", **FAST)
+    check("feed 0.2 on a flat frame, still picture, 60 steps: the paper holds the picture's pigment (shortfall under 1e-3 of it)",
+          err(st["p"], pig) / float(pig.max()), 1e-3)
+    check("feed: the paper never exceeds the picture's pigment (no overshoot)", float(np.max(st["p"] - pig)), 1e-6)
+    out, _ = enc(st, img)
+    check("feed: so the composite returns the picture (identity, within the bounded log)", err(out[..., :3], img[..., :3]), 2e-3)
+    check("feed: the water settles where the feed balances the drying: flood - dry / rate = 0.98 (flat frame, closed edge)", float(abs(st["w"].mean() - (1.0 - 0.004 / 0.2))), 0.01)
+    # monotone deposit and a changed picture
+    a, b = picture(seed=3), picture(seed=4)
+    sa = z
+    for _ in range(40):
+        sa = feed(sa, a, "darker", 0.3)
+    sb = feed(sa, b, "darker", 0.3)
+    check("feed: a deposit never lowers the paper pigment", float(np.max(sa["p"] - sb["p"])), 0)
+    pb = pigment_from_picture(b, "darker")
+    check("feed: where the new picture holds more it is deposited toward it, nowhere above it",
+          float(np.max(np.maximum(sb["p"] - np.maximum(sa["p"], pb), 0))), 1e-6)
+    check("feed: where the new picture holds less the old ink stays (no erase by feeding alone)",
+          err(np.where(pb < sa["p"], sb["p"], sa["p"]), sa["p"]), 1e-6)
+    # stability with a field and a terrain, open edge, extreme dials, fed
+    T = bowl() + np.random.default_rng(5).uniform(0, 0.8, (H, W)).astype(F32)
+    F = const_field(1.0, -0.7)
+    st = z
+    for _ in range(120):
+        st = feed(st, img, "darker", 1.0, flood=4.0)
+        st = step(st, T, F, flow=2.0, push=4.0, lift=2.0, speed=4.0, edge="open")
+    ok = all(np.isfinite(st[k]).all() and st[k].min() >= 0 for k in ("p", "s", "w"))
+    check("feed 1 with flood 4, flow 2, push 4, speed 4 on a terrain and a field: finite and non-negative", 1.0 - float(ok), 0)
+
+
+def test_feed_fade_follows_a_changing_picture():
+    """Fade: with a changing input the frame must follow it in both directions and never saturate to black."""
+    a, b = picture(seed=6, lo=0.1, hi=0.5), picture(seed=7, lo=0.6, hi=0.95)       # a dark picture, then a light one
+    pa, pb = pigment_from_picture(a, "darker"), pigment_from_picture(b, "darker")
+    st = new_state(H, W)
+    for _ in range(60):
+        st = step(feed(st, a, "darker", 0.2, fade=0.1), None, None, edge="closed", **FAST)
+    check("fade: dark picture held 60 steps: the paper has converged on it", err(st["p"], pa) / float(pa.max()), 2e-3)
+    for _ in range(80):
+        st = step(feed(st, b, "darker", 0.2, fade=0.1), None, None, edge="closed", **FAST)
+    check("fade: then a LIGHT picture held 80 steps: the paper has come back up to it (it follows lighter)", err(st["p"], pb) / float(pa.max()), 2e-3)
+    out, _ = enc(st, b)
+    check("fade: and the composite is the light picture", err(out[..., :3], b[..., :3]), 2e-3)
+    # many alternations: the pigment stays bounded by the picture's, never accumulates
+    st = new_state(H, W)
+    top = np.maximum(pa, pb)
+    for k in range(400):
+        st = step(feed(st, a if (k // 10) % 2 == 0 else b, "darker", 0.2, fade=0.1), None, None, edge="closed", **FAST)
+    check("fade: 400 steps of alternating pictures: the paper never exceeds the darker picture's pigment (no saturation)",
+          float(np.max(st["p"] - top)), 1e-3)
+    nofade = new_state(H, W)
+    for k in range(400):
+        nofade = step(feed(nofade, a if (k // 10) % 2 == 0 else b, "darker", 0.2, fade=0.0), None, None, edge="closed", **FAST)
+    check("without fade the same run keeps the darker picture's ink (the black-out the dial exists for): paper mean above the light picture's by more than 0.1",
+          0.0 if float(nofade["p"].mean() - st["p"].mean()) > 0.0 else 1.0, 0)
+    check("fade 0 is the old Feed, exactly", err(feed(st, a, "darker", 0.2, fade=0.0)["p"], feed(st, a, "darker", 0.2)["p"]), 0)
+    check("fade with feed 0 does nothing (wet-once stays conservative)", err(feed(st, a, "darker", 0.0, fade=1.0)["p"], st["p"]), 0)
 
 
 def test_mutations():

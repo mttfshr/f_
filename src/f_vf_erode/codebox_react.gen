@@ -1,0 +1,88 @@
+// codebox_react.gen -- f_vf_erode: pigment is lifted off the paper by running water and dropped by slow or shallow water (plan ADR-3).
+// W x 2H float32 atlas in and out. Mirror: tests/modules/vf_erode/vf_erode_mirror.step(), the lift and settle part.
+//
+// Cell-local. The drive is the speed of the water measured from its current surface: (cx, cy) = the prep stage's static part
+// minus flow * the gradient of the water depth (np.gradient: central inside, one-sided at the frame edge), and
+//   spd    = min(sqrt(cx^2 + cy^2) * speed, vmax) * clamp(w / film, 0, 1)
+//   lift   = p * clamp(lift * spd * min(w, 1), 0, 0.5)              paper -> suspension
+//   drop   = s * clamp(max(settle * speed * clamp(1 - spd / sp0, 0, 1), clamp(1 - w / 0.08, 0, 1)), 0, 1)     suspension -> paper
+// so fast water takes pigment and slow or shallow water puts it down, and all of it where the water is gone. film 0.15, vmax 0.2,
+// sp0 0.03 and the 0.08 are the mirror's constants; the speed measure and these forms are INFERRED, checked only by the bowl and
+// field tests (direction), and by Matt's live look (does it read as ink).
+// This is the last stage of the loop: it writes the state atlas back to the hold stage, so it also sanitizes it (non-finite and
+// negative water, pigment and suspension read as 0). The load flag passes unchanged.
+// Inlets (outer order): first = the state from the transport stage (hot), second = the prep stage's atlas (cold).
+Param flow(0.4);
+Param speed(1);
+Param lift(0.9);
+Param settle(0.004);
+Param width(256);
+Param height(256);
+
+W = max(width, 3);
+H = max(height, 3);
+film = 0.15;
+vmax = 0.2;
+sp0 = 0.03;
+
+px = floor(norm.x * W);
+yt = floor(norm.y * 2 * H);
+kp = floor(yt / H);
+py = yt - kp * H;
+uc = (px + 0.5) / W;
+ul = (max(px - 1, 0) + 0.5) / W;
+ur = (min(px + 1, W - 1) + 0.5) / W;
+va = (py + 0.5) / (2 * H);
+vu = (max(py - 1, 0) + 0.5) / (2 * H);
+vd = (min(py + 1, H - 1) + 0.5) / (2 * H);
+vb = (H + py + 0.5) / (2 * H);
+
+wc = nearest(in1, vec(uc, va)).x;
+wl = nearest(in1, vec(ul, va)).x;
+wr = nearest(in1, vec(ur, va)).x;
+wu = nearest(in1, vec(uc, vu)).x;
+wd = nearest(in1, vec(uc, vd)).x;
+wc = switch(abs(wc) < 1e30, max(wc, 0), 0);
+wl = switch(abs(wl) < 1e30, max(wl, 0), 0);
+wr = switch(abs(wr) < 1e30, max(wr, 0), 0);
+wu = switch(abs(wu) < 1e30, max(wu, 0), 0);
+wd = switch(abs(wd) < 1e30, max(wd, 0), 0);
+
+gwx = switch(px < 0.5, wr - wc, switch(px > W - 1.5, wc - wl, 0.5 * (wr - wl)));
+gwy = switch(py < 0.5, wd - wc, switch(py > H - 1.5, wc - wu, 0.5 * (wd - wu)));
+cx = nearest(in2, vec(uc, vb)).x - flow * gwx;
+cy = nearest(in2, vec(uc, vb)).y - flow * gwy;
+spd = min(sqrt(cx * cx + cy * cy) * speed, vmax) * clamp(wc / film, 0, 1);
+kl = clamp(lift * spd * min(wc, 1), 0, 0.5);
+kd = clamp(max(settle * speed * clamp(1 - spd / sp0, 0, 1), clamp(1 - wc / 0.08, 0, 1)), 0, 1);
+
+pr = nearest(in1, vec(uc, vb)).x;
+pg = nearest(in1, vec(uc, vb)).y;
+pb = nearest(in1, vec(uc, vb)).z;
+fl = nearest(in1, vec(uc, vb)).w;
+sr = nearest(in1, vec(uc, va)).y;
+sg = nearest(in1, vec(uc, va)).z;
+sb = nearest(in1, vec(uc, va)).w;
+pr = switch(abs(pr) < 1e30, max(pr, 0), 0);
+pg = switch(abs(pg) < 1e30, max(pg, 0), 0);
+pb = switch(abs(pb) < 1e30, max(pb, 0), 0);
+fl = switch(abs(fl) < 1e30, fl, 0);
+sr = switch(abs(sr) < 1e30, max(sr, 0), 0);
+sg = switch(abs(sg) < 1e30, max(sg, 0), 0);
+sb = switch(abs(sb) < 1e30, max(sb, 0), 0);
+
+// lift, then drop (the drop takes the suspension that includes what was just lifted)
+tr = sr + pr * kl;
+tg = sg + pg * kl;
+tb = sb + pb * kl;
+ur_ = pr - pr * kl;
+ug = pg - pg * kl;
+ub = pb - pb * kl;
+nsr = tr - tr * kd;
+nsg = tg - tg * kd;
+nsb = tb - tb * kd;
+npr = ur_ + tr * kd;
+npg = ug + tg * kd;
+npb = ub + tb * kd;
+
+out1 = vec(switch(kp < 0.5, wc, npr), switch(kp < 0.5, nsr, npg), switch(kp < 0.5, nsg, npb), switch(kp < 0.5, nsb, fl));

@@ -1,0 +1,87 @@
+// codebox_prep.gen -- f_vf_erode: the static part of the water's face velocities and of the lift/settle drive, from the terrain
+// and the vecfield. W x 2H float32 at the render size (the same atlas shape as the state; plan ADR-2, amended 2026-11-10).
+// Mirror: tests/modules/vf_erode/vf_erode_mirror.step(), the parts of vx, vy and (cx, cy) that do not depend on the water depth.
+//
+//   plane 0 (rows 0..H-1):   R = static velocity across the cell's LEFT face (x, positive = to the right), G = RIGHT face,
+//                            B = UP face (y, positive = down the rows), A = DOWN face
+//   plane 1 (rows H..2H-1):  R, G = (cx, cy) without the water slope: the field minus flow * the terrain gradient
+//   face velocity = speed * (-flow * (T_B - T_A) + 0.5 * (F_A + F_B)); A is the left/up cell, B the right/down cell. The water
+//   adds its own slope term (-speed * flow * (w_B - w_A)) in the transport stage. A face is stored by BOTH of its cells and the
+//   two are the same operands in the same order, so the water leaving one cell is exactly what arrives in the next.
+//   FRAME EDGE (T066, plan ADR-3): the cell beyond the frame has the terrain continued linearly (odd reflection) and the field
+//   replicated, so the static part of an edge face is the one-sided terrain slope plus the edge field.
+// Inlets (outer order): first = the frame bang and `dim W 2H` (hot), second = the terrain (cold), third = the vecfield (cold).
+// Unconnected inlets are known from the connected flags (src_terrain, src_field), never from the value (FR-109).
+// Terrain luma (0.2126, 0.7152, 0.0722) times RELIEF; the field is decoded (v - 0.5) * 2 and scaled by push * FIELD_SCALE.
+// RELIEF and FIELD_SCALE are INFERRED starting values, the mirror's (tuned live). Non-finite texels read as 0 (FR-110).
+hgt(xi, yi, W, H, on) {
+  uu = (clamp(xi, 0, W - 1) + 0.5) / W;
+  vv = (clamp(yi, 0, H - 1) + 0.5) / H;
+  rr = nearest(in2, vec(uu, vv)).x;
+  gg = nearest(in2, vec(uu, vv)).y;
+  bb = nearest(in2, vec(uu, vv)).z;
+  rr = switch(abs(rr) < 1e30, rr, 0);
+  gg = switch(abs(gg) < 1e30, gg, 0);
+  bb = switch(abs(bb) < 1e30, bb, 0);
+  return switch(on > 0.5, 6 * (0.2126 * rr + 0.7152 * gg + 0.0722 * bb), 0);
+}
+fdx(xi, yi, W, H, on, fs) {
+  uu = (clamp(xi, 0, W - 1) + 0.5) / W;
+  vv = (clamp(yi, 0, H - 1) + 0.5) / H;
+  ff = nearest(in3, vec(uu, vv)).x;
+  ff = switch(abs(ff) < 1e30, ff, 0.5);
+  return switch(on > 0.5, 2 * fs * (ff - 0.5), 0);
+}
+fdy(xi, yi, W, H, on, fs) {
+  uu = (clamp(xi, 0, W - 1) + 0.5) / W;
+  vv = (clamp(yi, 0, H - 1) + 0.5) / H;
+  ff = nearest(in3, vec(uu, vv)).y;
+  ff = switch(abs(ff) < 1e30, ff, 0.5);
+  return switch(on > 0.5, 2 * fs * (ff - 0.5), 0);
+}
+
+Param flow(0.4);
+Param push(1);
+Param speed(1);
+Param src_terrain(0);
+Param src_field(0);
+Param width(256);
+Param height(256);
+
+W = max(width, 3);
+H = max(height, 3);
+px = floor(norm.x * W);
+yt = floor(norm.y * 2 * H);
+kp = floor(yt / H);
+py = yt - kp * H;
+fs = push * 0.1;
+
+tc = hgt(px, py, W, H, src_terrain);
+tl = switch(px > 0.5, hgt(px - 1, py, W, H, src_terrain), 2 * tc - hgt(px + 1, py, W, H, src_terrain));
+tr = switch(px < W - 1.5, hgt(px + 1, py, W, H, src_terrain), 2 * tc - hgt(px - 1, py, W, H, src_terrain));
+tu = switch(py > 0.5, hgt(px, py - 1, W, H, src_terrain), 2 * tc - hgt(px, py + 1, W, H, src_terrain));
+td = switch(py < H - 1.5, hgt(px, py + 1, W, H, src_terrain), 2 * tc - hgt(px, py - 1, W, H, src_terrain));
+
+fxc = fdx(px, py, W, H, src_field, fs);
+fxl = fdx(px - 1, py, W, H, src_field, fs);
+fxr = fdx(px + 1, py, W, H, src_field, fs);
+fyc = fdy(px, py, W, H, src_field, fs);
+fyu = fdy(px, py - 1, W, H, src_field, fs);
+fyd = fdy(px, py + 1, W, H, src_field, fs);
+
+vl = speed * (-flow * (tc - tl) + 0.5 * (fxl + fxc));
+vr = speed * (-flow * (tr - tc) + 0.5 * (fxc + fxr));
+vu = speed * (-flow * (tc - tu) + 0.5 * (fyu + fyc));
+vd = speed * (-flow * (td - tc) + 0.5 * (fyc + fyd));
+
+// terrain gradient (np.gradient: central inside, one-sided at the frame edge)
+gtx = switch(px < 0.5, tr - tc, switch(px > W - 1.5, tc - tl, 0.5 * (tr - tl)));
+gty = switch(py < 0.5, td - tc, switch(py > H - 1.5, tc - tu, 0.5 * (td - tu)));
+c0x = fxc - flow * gtx;
+c0y = fyc - flow * gty;
+
+o0 = switch(kp < 0.5, vl, c0x);
+o1 = switch(kp < 0.5, vr, c0y);
+o2 = switch(kp < 0.5, vu, 0);
+o3 = switch(kp < 0.5, vd, 1);
+out1 = vec(o0, o1, o2, o3);

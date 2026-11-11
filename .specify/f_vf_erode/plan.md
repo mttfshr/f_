@@ -105,6 +105,12 @@ The spec says an unwetted picture with in3 unconnected comes out equal to the in
 
 ---
 
+### Amendment 2026-11-10 (T080, as built offline; inferred until the bench)
+
+Stages as written in `src/f_vf_erode/definition.py`: `hold -> load -> transport -> react -> hold`, plus `prep -> transport, react`, `react -> enc`. `prep` (new) holds the static face velocities and the static lift drive; `transport` is ADR-3's flow and pigment transport fused; `react` is lift and settle. The load flag is 2 * loaded + the wet gate as last seen (ADR-5). `render_dim` has a new `atlas_stages` key (W x 2H). See `tasks.md` T080 and T081.
+
+---
+
 ## Testing plan (constitution tiers)
 
 - **Tier 1** (T073, `vf_erode_mirror.py`, `test_vf_erode.py`, float32, stage for stage): SC-101 conservation (closed-edge switch, and the open-edge count); SC-102 bowl (rim down, bottom up); SC-103 constant field moves the centroid, push 0 equals no field; SC-104 dried wash is still, flat terrain with no field returns the input; SC-105 stability at the extremes of every dial, no negative layer, no non-finite value. Plus Polarity: Darker and Lighter identity at an unconnected background; thickness zero where there is no pigment. The mirror reads `scratch/experiments/f_ink_look/vecfield_mock.py` (local) for the form of the push, not its constants.

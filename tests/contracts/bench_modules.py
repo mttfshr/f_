@@ -109,7 +109,7 @@ BYPASS_EXPECT = {
         2: ("const", (0.5, 0.5, 0.5, 1.0), 1e-6),       # gradient vecfield: neutral
     },
     "f_separate": {2: IN1, 3: IN1, 4: IN1},             # the (zapped) source on all four outlets (spec FR-012, P10)
-    "f_vf_erode": {1: IN1},                                  # bypass_gate in the last stage: the zapped source (spec FR-013)
+    "f_vf_erode": {1: IN1, 2: IN1},                          # bypass_gate in enc: the zapped source on both outlets (spec FR-113)
     "f_vf_stamp": {2: ("vec", 2, 1e-6)},                # G5: out1 is in1 (implicit), out2 the field on inlet 2
     "f_quasi": {                                        # dual generator: bypass_gate = neutral values on every outlet
         1: ("const", (0.0, 0.0, 0.0, 1.0), 0.0),        # look: black, A = 1

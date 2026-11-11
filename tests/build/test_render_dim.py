@@ -185,6 +185,26 @@ def test_downsample_generates_the_divide_and_the_two_stage_messages():
         [c("0", 0, ph, 0), c("0", 0, pv, 0)], [False, False])
 
 
+def test_atlas_stages_get_dim_w_and_twice_h():
+    d = chain_defn(render_dim=dict(RD, atlas_stages=["e1", "e2"]))
+    top, cords = top_and_cords(d)
+    c = lambda a, ao, b, bi: ((a if a.startswith("obj-") else f"obj-rd-{a}", ao), (b if b.startswith("obj-") else f"obj-rd-{b}", bi)) in cords
+    e1, e2, e3 = (pix_id(top, n) for n in ("#0_t_e1", "#0_t_e2", "#0_t_e3"))
+    _eq("the three atlas boxes", [top[f"obj-rd-{i}"].get("text") for i in (20, 21, 22)], ["expr $i1*2", "pack 0 0", "prepend dim"])
+    _eq("unpack: height (right) -> the doubling expr -> pack's cold inlet; width (left) -> pack's hot inlet; pack -> prepend dim",
+        [c("2", 1, "20", 0), c("20", 0, "21", 1), c("2", 0, "21", 0), c("21", 0, "22", 0)], [True] * 4)
+    _eq("`dim W 2H` reaches the atlas stages and not the others", [c("22", 0, e1, 0), c("22", 0, e2, 0), c("22", 0, e3, 0)],
+        [True, True, False])
+    top, _ = top_and_cords(chain_defn(render_dim={"atlas_stages": ["e1"]}))
+    _eq("atlas_stages alone builds (route and unpack come with it)",
+        sorted(b.get("text") for i, b in top.items() if str(i).startswith("obj-rd-")),
+        sorted(["loadbang", "pack 0 0", "prepend dim", "r dim", "route dim", "s trig_res", "unpack i i", "expr $i1*2"]))
+    d = chain_defn(render_dim={"atlas_stages": ["e3"]})
+    d["pix_chain"][2]["pix_attrs"] = "@dim 256 256"
+    _eq("an atlas stage must be @adapt 0", raises(lambda: bp.build(d), "adapt 0"), True)
+    _eq("an unknown atlas stage is loud", raises(lambda: bp.build(chain_defn(render_dim={"atlas_stages": ["zz"]})), "zz"), True)
+
+
 def test_downsample_works_alone_and_the_factor_is_in_the_expr():
     d = ds_defn()
     d["render_dim"] = {"downsample": dict(DS, factor=8)}

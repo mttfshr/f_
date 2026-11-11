@@ -80,9 +80,13 @@ The performer patches a background into in3. Where ink has been drawn away, the 
 
 With no terrain connected, the field alone moves the water: the picture runs along the field and no pools form unless the field converges. This is a run, not a pool (seen in the fourth mock; inferred from two stand-in fields).
 
-### US5: Always wet (later; not in this version, T074)
+### US5: Feed (Matt, 2026-11-10: "feed is great"; supersedes "later" in T074)
 
-Steady rain and drain, the picture keeps re-inking, so the module follows a live input. Softer than wet once.
+A continuous source, so the module follows an animated or live input. A `feed` dial (0 = wet once, exactly as before). While it is above 0, each step deposits a fraction `feed` of the shortfall between the incoming picture's pigment and the paper's, and the water relaxes toward `flood`. Pigment the solver has moved away is refilled where the picture holds more; where the picture holds less the old ink stays until it moves or dries. A still picture on a flat frame converges to itself (identity). The Wet button still works alongside it. Different from a frame delay: the memory is the water and pigment state, moved by terrain and vecfield, not an old copy of the image.
+
+**Fade (2026-11-10, Matt's report: the frame went black):** a `fade` dial returns ink above what the picture holds toward the picture, only while feeding, so a driving texture that gets lighter is followed and the frame cannot saturate (FR-116).
+
+**Decided by Claude, not Matt (reversible; Matt said only "feed is great")**: the deposit is bounded-additive (shortfall) rather than relax-toward-frame, and the water is relaxed toward `flood` rather than floored. Mirror: `feed()` in `tests/modules/vf_erode/vf_erode_mirror.py`; tier 1 `test_feed`.
 
 ### US6: Standard f_ module behaviour (P3)
 
@@ -98,6 +102,8 @@ Steady rain and drain, the picture keeps re-inking, so the module follows a live
 - **FR-104**: Pigment MUST be lifted from the paper at a rate that rises with the water's speed and depth, and MUST be dropped where the water is slow and wherever the water runs out.
 - **FR-105**: With a closed edge and no re-inking, pigment MUST be conserved per channel. No layer may go negative.
 - **FR-106**: Water MUST dry at a rate set by a dial; a dried wash MUST be still.
+- **FR-115**: Feed (US5): with `feed` > 0 the load stage deposits as US5 says, every step, with no press. `feed` 0 MUST be exactly wet-once. A deposit MUST never lower the paper pigment, and MUST never take it above the picture's.
+- **FR-116**: Fade (US5): with `feed` > 0, paper pigment above the picture's returns toward it at rate `fade`; with `feed` 0 it MUST do nothing. A fed run on an alternating picture MUST NOT exceed the darker picture's pigment.
 - **FR-107**: Wet once (T061, T074). Wetting MUST load the current in0 picture as the pigment on the paper. Between wettings, changes at in0 MUST NOT reach the layers.
 - **FR-108**: Outlet 0 MUST be the composite of the pigment (on the paper and in suspension) over the background, per the Polarity control (T075). Outlet 1 MUST be the thickness, per P10.
 - **FR-109**: Inlets per T062. Each optional inlet MUST be recognised as unconnected from its connected flag (`vs_inState`), not from its value. Behaviour with inlets missing per T063.

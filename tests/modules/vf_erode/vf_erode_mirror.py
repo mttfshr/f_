@@ -17,7 +17,7 @@ import numpy as np
 F32 = np.float32
 
 GAMMA = 2.2          # INFERRED: display to linear light by a plain power (T068); the real transfer curve is a tuning choice
-EPS = 0.004          # INFERRED: smallest linear value taken by the log (Darker); the mocks used 0.004
+EPS = 0.001          # INFERRED: smallest linear value taken by the log (Darker); the mocks used 0.004, widened to 0.001 2026-11-10 (Matt)
 LUMA = np.array([0.2126, 0.7152, 0.0722], F32)
 RELIEF = 6.0         # INFERRED: terrain luma 0..1 to height; the mock's hills were 0..6
 FIELD_SCALE = 0.1    # INFERRED: decoded vecfield (-1..1) to a face velocity at push 1; the mock's tilt was 0.06
@@ -72,6 +72,27 @@ def load(st, img, polarity="darker", flood=1.0):
     return st
 
 
+def feed(st, img, polarity="darker", rate=0.0, flood=1.0, fade=0.0):
+    """Feed (US5, 2026-11-10): a continuous source. Each step a fraction `rate` of the SHORTFALL between the picture's pigment and the paper's is
+    deposited (p += rate * max(pig - p, 0): bounded, so a still picture converges to itself and never darkens without limit, and pigment the
+    solver moved away is refilled), and the water relaxes toward `flood` (w += rate * max(flood - w, 0)). rate 0 is the wet-once module, exactly.
+    Feeding counts as loaded: the unwetted pass-through of the picture ends at the first fed step. INFERRED form, chosen by Claude (additive
+    over relax-toward-frame; Matt said "feed is great" without choosing), tuned live.
+    FADE (2026-11-10, Matt: the frame went black under a changing input): the excess, p above the picture's pigment, returns toward the picture at
+    rate `fade` (p -= fade * max(p - pig, 0)), so a picture that gets lighter is followed. Only with feed > 0, so wet-once stays conservative.
+    fade = rate is the plain relax toward the frame; a small fade lets the pooled ink last about 1 / fade steps."""
+    if rate <= 0:
+        return st
+    st = dict(st)
+    pig = pigment_from_picture(img, polarity)
+    r = F32(min(rate, 1.0))
+    f = F32(min(max(fade, 0.0), 1.0))
+    st["p"] = (st["p"] + r * np.maximum(pig - st["p"], 0) - f * np.maximum(st["p"] - pig, 0)).astype(F32)
+    st["w"] = (st["w"] + r * np.maximum(F32(flood) - st["w"], 0)).astype(F32)
+    st["loaded"] = True
+    return st
+
+
 def terrain_height(tex):
     if tex is None:
         return None
@@ -86,8 +107,9 @@ def field_uv(field):
     return ((f[..., 0] - F32(0.5)) * 2).astype(F32), ((f[..., 1] - F32(0.5)) * 2).astype(F32)
 
 
-def step(st, terrain=None, field=None, bug=None, **kw):
-    """One solver step: water through the faces, pigment carried with it, drying, then lift and settle (plan ADR-3)."""
+def step(st, terrain=None, field=None, bug=None, only=None, **kw):
+    """One solver step: water through the faces, pigment carried with it, drying, then lift and settle (plan ADR-3). `only` = "transport" or "react" runs
+    just that half (the codeboxes are two stages, and the bench compares them one at a time)."""
     P = dict(DEFAULTS, **kw)
     w, s, p = st["w"], st["s"], st["p"]
     h, wd = w.shape
@@ -98,56 +120,59 @@ def step(st, terrain=None, field=None, bug=None, **kw):
         fx, fy = -fx, -fy
     flow, speed, vmax = F32(P["flow"]), F32(P["speed"]), F32(P["vmax"])
 
-    # Water. The virtual cell beyond the edge has the terrain continued linearly and the edge cell's own depth for the slope
-    # (so a flat frame has no edge flow and a terrain that slopes out drains), and depth 0 as a donor (nothing comes back in).
-    Tp = np.pad(T, 1, mode="reflect", reflect_type="odd")
-    eta = Tp + np.pad(w, 1, mode="edge")
-    eta[1:-1, 1:-1] = T + w
-    Fxp, Fyp = np.pad(fx, 1, mode="edge"), np.pad(fy, 1, mode="edge")
-    vx = speed * (-flow * (eta[1:-1, 1:] - eta[1:-1, :-1]) + F32(0.5) * (Fxp[1:-1, 1:] + Fxp[1:-1, :-1]))
-    vy = speed * (-flow * (eta[1:, 1:-1] - eta[:-1, 1:-1]) + F32(0.5) * (Fyp[1:, 1:-1] + Fyp[:-1, 1:-1]))
-    if bug != "no_flux_cap":
-        vx, vy = np.clip(vx, -vmax, vmax), np.clip(vy, -vmax, vmax)
-    wz = np.pad(w, 1, mode="edge" if bug == "edge_reenter" else "constant")
-    wl, wr, wu, wdn = wz[1:-1, :-1], wz[1:-1, 1:], wz[:-1, 1:-1], wz[1:, 1:-1]
-    wux, wuy = np.where(vx > 0, wl, wr), np.where(vy > 0, wu, wdn)
-    qx = vx * np.minimum(wux, F32(P["wlim"])) * np.clip(wux / F32(P["film"]), 0, 1)
-    qy = vy * np.minimum(wuy, F32(P["wlim"])) * np.clip(wuy / F32(P["film"]), 0, 1)
-    if P["edge"] == "closed":
-        qx[:, 0] = qx[:, -1] = 0
-        qy[0, :] = qy[-1, :] = 0
-    conc = np.pad(s / np.maximum(w, F32(1e-3))[..., None], ((1, 1), (1, 1), (0, 0)), mode="edge" if bug == "edge_reenter" else "constant")
-    cl, cr, cu, cd = conc[1:-1, :-1], conc[1:-1, 1:], conc[:-1, 1:-1], conc[1:, 1:-1]
-    mix = F32(P["mix"])
-    sx = np.where((vx > 0)[..., None], cl, cr) * qx[..., None] + (mix * np.minimum(np.minimum(wl, wr), 1))[..., None] * (cl - cr)
-    sy = np.where((vy > 0)[..., None], cu, cd) * qy[..., None] + (mix * np.minimum(np.minimum(wu, wdn), 1))[..., None] * (cu - cd)
-    if P["edge"] == "closed":
-        sx[:, 0] = sx[:, -1] = 0
-        sy[0, :] = sy[-1, :] = 0
-    wz[1:-1, :-1] -= qx; wz[1:-1, 1:] += qx; wz[:-1, 1:-1] -= qy; wz[1:, 1:-1] += qy
-    sz = np.pad(s, ((1, 1), (1, 1), (0, 0)))
-    sz[1:-1, :-1] -= sx
-    if bug != "drop_receiver":
-        sz[1:-1, 1:] += sx
-    sz[:-1, 1:-1] -= sy; sz[1:, 1:-1] += sy
-    out_w = float(wz.sum(dtype=np.float64) - wz[1:-1, 1:-1].sum(dtype=np.float64))
-    out_s = sz.sum(axis=(0, 1), dtype=np.float64) - sz[1:-1, 1:-1].sum(axis=(0, 1), dtype=np.float64)
-    bs, bw = sz.copy(), wz.copy()
-    bs[1:-1, 1:-1] = 0
-    bw[1:-1, 1:-1] = 0
-    in_s = -np.minimum(bs, 0).sum(axis=(0, 1), dtype=np.float64)      # pigment that came back in through the edge (must stay 0)
-    in_w = float(-np.minimum(bw, 0).sum(dtype=np.float64))
-    w, s = wz[1:-1, 1:-1].copy(), sz[1:-1, 1:-1].copy()
+    out_w, out_s, in_w, in_s = 0.0, np.zeros(3), 0.0, np.zeros(3)
+    if only != "react":
+        # Water. The virtual cell beyond the edge has the terrain continued linearly and the edge cell's own depth for the slope
+        # (so a flat frame has no edge flow and a terrain that slopes out drains), and depth 0 as a donor (nothing comes back in).
+        Tp = np.pad(T, 1, mode="reflect", reflect_type="odd")
+        eta = Tp + np.pad(w, 1, mode="edge")
+        eta[1:-1, 1:-1] = T + w
+        Fxp, Fyp = np.pad(fx, 1, mode="edge"), np.pad(fy, 1, mode="edge")
+        vx = speed * (-flow * (eta[1:-1, 1:] - eta[1:-1, :-1]) + F32(0.5) * (Fxp[1:-1, 1:] + Fxp[1:-1, :-1]))
+        vy = speed * (-flow * (eta[1:, 1:-1] - eta[:-1, 1:-1]) + F32(0.5) * (Fyp[1:, 1:-1] + Fyp[:-1, 1:-1]))
+        if bug != "no_flux_cap":
+            vx, vy = np.clip(vx, -vmax, vmax), np.clip(vy, -vmax, vmax)
+        wz = np.pad(w, 1, mode="edge" if bug == "edge_reenter" else "constant")
+        wl, wr, wu, wdn = wz[1:-1, :-1], wz[1:-1, 1:], wz[:-1, 1:-1], wz[1:, 1:-1]
+        wux, wuy = np.where(vx > 0, wl, wr), np.where(vy > 0, wu, wdn)
+        qx = vx * np.minimum(wux, F32(P["wlim"])) * np.clip(wux / F32(P["film"]), 0, 1)
+        qy = vy * np.minimum(wuy, F32(P["wlim"])) * np.clip(wuy / F32(P["film"]), 0, 1)
+        if P["edge"] == "closed":
+            qx[:, 0] = qx[:, -1] = 0
+            qy[0, :] = qy[-1, :] = 0
+        conc = np.pad(s / np.maximum(w, F32(1e-3))[..., None], ((1, 1), (1, 1), (0, 0)), mode="edge" if bug == "edge_reenter" else "constant")
+        cl, cr, cu, cd = conc[1:-1, :-1], conc[1:-1, 1:], conc[:-1, 1:-1], conc[1:, 1:-1]
+        mix = F32(P["mix"])
+        sx = np.where((vx > 0)[..., None], cl, cr) * qx[..., None] + (mix * np.minimum(np.minimum(wl, wr), 1))[..., None] * (cl - cr)
+        sy = np.where((vy > 0)[..., None], cu, cd) * qy[..., None] + (mix * np.minimum(np.minimum(wu, wdn), 1))[..., None] * (cu - cd)
+        if P["edge"] == "closed":
+            sx[:, 0] = sx[:, -1] = 0
+            sy[0, :] = sy[-1, :] = 0
+        wz[1:-1, :-1] -= qx; wz[1:-1, 1:] += qx; wz[:-1, 1:-1] -= qy; wz[1:, 1:-1] += qy
+        sz = np.pad(s, ((1, 1), (1, 1), (0, 0)))
+        sz[1:-1, :-1] -= sx
+        if bug != "drop_receiver":
+            sz[1:-1, 1:] += sx
+        sz[:-1, 1:-1] -= sy; sz[1:, 1:-1] += sy
+        out_w = float(wz.sum(dtype=np.float64) - wz[1:-1, 1:-1].sum(dtype=np.float64))
+        out_s = sz.sum(axis=(0, 1), dtype=np.float64) - sz[1:-1, 1:-1].sum(axis=(0, 1), dtype=np.float64)
+        bs, bw = sz.copy(), wz.copy()
+        bs[1:-1, 1:-1] = 0
+        bw[1:-1, 1:-1] = 0
+        in_s = -np.minimum(bs, 0).sum(axis=(0, 1), dtype=np.float64)      # pigment that came back in through the edge (must stay 0)
+        in_w = float(-np.minimum(bw, 0).sum(dtype=np.float64))
+        w, s = wz[1:-1, 1:-1].copy(), sz[1:-1, 1:-1].copy()
 
-    w = np.maximum(w - F32(P["dry"]) * speed, 0).astype(F32)
-    # Lift and settle, cell by cell, from the current slope and push (plan ADR-3; the speed measure is INFERRED).
-    gy, gx = np.gradient(T + w)
-    cx, cy = fx - flow * gx, fy - flow * gy
-    spd = np.minimum(np.sqrt(cx * cx + cy * cy) * speed, vmax) * np.clip(w / F32(P["film"]), 0, 1)
-    lift = p * np.clip(F32(P["lift"]) * spd * np.minimum(w, 1), 0, 0.5)[..., None]
-    p, s = p - lift, s + lift
-    drop = s * np.clip(np.maximum(F32(P["settle"]) * speed * np.clip(1 - spd / F32(P["sp0"]), 0, 1), np.clip(1 - w / F32(0.08), 0, 1)), 0, 1)[..., None]
-    p, s = p + drop, s - drop
+        w = np.maximum(w - F32(P["dry"]) * speed, 0).astype(F32)
+    if only != "transport":
+        # Lift and settle, cell by cell, from the current slope and push (plan ADR-3; the speed measure is INFERRED).
+        gy, gx = np.gradient(T + w)
+        cx, cy = fx - flow * gx, fy - flow * gy
+        spd = np.minimum(np.sqrt(cx * cx + cy * cy) * speed, vmax) * np.clip(w / F32(P["film"]), 0, 1)
+        lift = p * np.clip(F32(P["lift"]) * spd * np.minimum(w, 1), 0, 0.5)[..., None]
+        p, s = p - lift, s + lift
+        drop = s * np.clip(np.maximum(F32(P["settle"]) * speed * np.clip(1 - spd / F32(P["sp0"]), 0, 1), np.clip(1 - w / F32(0.08), 0, 1)), 0, 1)[..., None]
+        p, s = p + drop, s - drop
     return dict(w=w, s=s.astype(F32), p=p.astype(F32), loaded=st["loaded"], escaped=st["escaped"] + out_s, escaped_w=st["escaped_w"] + out_w,
                 entered=st["entered"] + in_s, entered_w=st["entered_w"] + in_w)
 

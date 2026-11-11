@@ -1,8 +1,0 @@
-// f_vf_erode -- stage 1 of 3: non-finite components to 0, before any blur (one NaN in a tap would poison a whole kernel).
-// Mirror: tests/modules/vf_erode/ink_mirror.zap. Its output is also the source that bypass and alpha read in the last stage.
-// abs(x) < 1e30 with switch(): NaN == NaN is TRUE on this GPU, so an x == x test does nothing.
-zap_c(xv) {
-    return switch(abs(xv) < 1e30, xv, 0.0);
-}
-
-out1 = vec(zap_c(nearest(in1, norm).x), zap_c(nearest(in1, norm).y), zap_c(nearest(in1, norm).z), zap_c(nearest(in1, norm).w));

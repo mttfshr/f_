@@ -1,0 +1,100 @@
+// codebox_load.gen -- f_vf_erode: the wetting (spec FR-107, plan ADR-2 and ADR-4). W x 2H float32 atlas in and out.
+// Mirror: tests/modules/vf_erode/vf_erode_mirror.load() and pigment_from_picture().
+//
+// On a wetting the picture becomes the pigment on the paper, the suspension is emptied and the frame is flooded (flood is ADDED to
+// the water already there, so a repeat wetting before the wash dries keeps its water and drops the old suspension: the plan's
+// build-time choice, to record). Otherwise the state passes unchanged, and a moving picture at the second inlet does nothing (T074).
+//   Polarity (polar_sw: 0 Darker, 1 Lighter; takes effect at the next wetting, T075): the picture is converted to linear light
+//   (display ^ 2.2, the mirror's GAMMA, INFERRED), then Darker stores the absorbance -log(clamp(lin, 0.001, 1)) and Lighter stores lin.
+// The wetting is the press edge of `wet_gate` (the Wet button holds it open for at least one frame): the load flag in the A channel
+// of plane B stores two bits, 2 * loaded + the gate as last seen, so a held press wets once. 0 = never loaded.
+//   (A texture that was never written reads (0, 0, 0, 1): flag 1 = not loaded, gate seen as 1, harmless.)
+// FEED (Param feed, 0..1): a continuous source, see the end of the code. 0 = wet once; above 0 the flag counts as loaded.
+// Inlets (outer order): first = the state from the hold stage (hot), second = the picture, in0 of the module (cold).
+// Non-finite picture and state texels read as 0 (FR-110).
+Param polar_sw(0);
+Param flood(1);
+Param feed(0);
+Param fade(0.02);
+Param wet_gate(0);
+Param width(256);
+Param height(256);
+
+W = max(width, 3);
+H = max(height, 3);
+px = floor(norm.x * W);
+yt = floor(norm.y * 2 * H);
+kp = floor(yt / H);
+py = yt - kp * H;
+uc = (px + 0.5) / W;
+va = (py + 0.5) / (2 * H);
+vb = (H + py + 0.5) / (2 * H);
+vp = (py + 0.5) / H;
+
+fg = nearest(in1, vec(uc, vb)).w;
+fg = switch(abs(fg) < 1e30, fg, 0);
+fg = clamp(floor(fg + 0.5), 0, 3);
+loaded = step(1.5, fg);
+prevg = fg - 2 * loaded;
+gate = step(0.5, wet_gate);
+wet = gate * (1 - prevg);
+fr = clamp(feed, 0, 1);
+feedon = step(0.000001, fr);
+newflag = 2 * max(max(loaded, wet), feedon) + gate;
+
+// the picture as linear light, then as pigment
+rr = nearest(in2, vec(uc, vp)).x;
+gg = nearest(in2, vec(uc, vp)).y;
+bb = nearest(in2, vec(uc, vp)).z;
+rr = switch(abs(rr) < 1e30, rr, 0);
+gg = switch(abs(gg) < 1e30, gg, 0);
+bb = switch(abs(bb) < 1e30, bb, 0);
+lr = pow(max(rr, 0), 2.2);
+lg = pow(max(gg, 0), 2.2);
+lb = pow(max(bb, 0), 2.2);
+pr = switch(polar_sw < 0.5, -log(clamp(lr, 0.001, 1)), lr);
+pg = switch(polar_sw < 0.5, -log(clamp(lg, 0.001, 1)), lg);
+pb = switch(polar_sw < 0.5, -log(clamp(lb, 0.001, 1)), lb);
+
+// the held state
+wc = nearest(in1, vec(uc, va)).x;
+sr = nearest(in1, vec(uc, va)).y;
+sg = nearest(in1, vec(uc, va)).z;
+sb = nearest(in1, vec(uc, va)).w;
+qr = nearest(in1, vec(uc, vb)).x;
+qg = nearest(in1, vec(uc, vb)).y;
+qb = nearest(in1, vec(uc, vb)).z;
+wc = switch(abs(wc) < 1e30, wc, 0);
+sr = switch(abs(sr) < 1e30, sr, 0);
+sg = switch(abs(sg) < 1e30, sg, 0);
+sb = switch(abs(sb) < 1e30, sb, 0);
+qr = switch(abs(qr) < 1e30, qr, 0);
+qg = switch(abs(qg) < 1e30, qg, 0);
+qb = switch(abs(qb) < 1e30, qb, 0);
+
+// A state that was never loaded is not a state: a texture nothing has written reads (0, 0, 0, 1), so its suspension in the A channel of
+// plane A would be 1 (found by the module bench, 2026-11-10, with Feed and no press: a blue cast that stayed). Not loaded = no pigment.
+sr = sr * loaded;
+sg = sg * loaded;
+sb = sb * loaded;
+qr = qr * loaded;
+qg = qg * loaded;
+qb = qb * loaded;
+a0 = switch(wet > 0.5, wc + flood, wc);
+a1 = switch(wet > 0.5, 0, sr);
+a2 = switch(wet > 0.5, 0, sg);
+a3 = switch(wet > 0.5, 0, sb);
+b0 = switch(wet > 0.5, pr, qr);
+b1 = switch(wet > 0.5, pg, qg);
+b2 = switch(wet > 0.5, pb, qb);
+// FEED (US5, FR-115): after the wetting test, deposit the fraction `feed` of the shortfall between the picture's pigment and the paper's,
+// and relax the water toward `flood`. feed 0 changes nothing (fr * anything = 0), so the module is wet-once exactly.
+// Mirror: vf_erode_mirror.feed().
+// FADE: the excess, paper pigment above the picture's, returns toward the picture at `fade`, only while feeding (so a picture that gets
+// lighter is followed and the frame cannot saturate). Mirror: the `fade` term of vf_erode_mirror.feed().
+fd = clamp(fade, 0, 1) * feedon;
+b0 = b0 + fr * max(pr - b0, 0) - fd * max(b0 - pr, 0);
+b1 = b1 + fr * max(pg - b1, 0) - fd * max(b1 - pg, 0);
+b2 = b2 + fr * max(pb - b2, 0) - fd * max(b2 - pb, 0);
+a0 = a0 + fr * max(flood - a0, 0);
+out1 = vec(switch(kp < 0.5, a0, b0), switch(kp < 0.5, a1, b1), switch(kp < 0.5, a2, b2), switch(kp < 0.5, a3, newflag));

@@ -1,0 +1,127 @@
+// codebox_transport.gen -- f_vf_erode: water and the suspended pigment move through the cell faces (plan ADR-3), then the water dries.
+// W x 2H float32 atlas in and out. Mirror: tests/modules/vf_erode/vf_erode_mirror.step(), the water, flux and dry parts.
+//
+// GATHER form: each cell computes the four faces it shares (left, right, up, down) from the same operands as its neighbour does, so
+// what leaves one cell arrives in the next. Per face between A (left/up) and B (right/down):
+//   v  = clamp(prep - speed * flow * (w_B - w_A), -vmax, vmax)      prep = the static velocity from codebox_prep.gen
+//   q  = v * min(w_up, wlim) * clamp(w_up / film, 0, 1)             w_up = the depth of the donor cell (A when v > 0, else B)
+//   sf = c_donor * q + mixk * min(min(w_A, w_B), 1) * (c_A - c_B)   per channel; c = s / max(w, 0.001); never mixed between channels
+// w_new = w + q_left - q_right + q_up - q_down, then w = max(w - dry * speed, 0) (a dried wash is exactly still, FR-106); s likewise.
+// FRAME EDGE (T066): for the slope term the cell beyond the frame has the edge cell's own depth (clamped read), as a DONOR it has
+// depth 0 and no pigment (so nothing comes back in, and no diffusion across the edge). wlim 0.5, film 0.15, mixk 0.04 and vmax 0.2
+// are the mirror's constants, chosen so no cell can give away more than it holds (SC-105); INFERRED, tuned live.
+// Plane B (the paper pigment and the load flag) passes unchanged. Inlets (outer order): first = the state from the load stage
+// (hot), second = the static velocities from the prep stage (cold). Non-finite state texels read as 0 (FR-110).
+vel(vs, wa, wb, kk, vmax) {
+  return clamp(vs - kk * (wb - wa), -vmax, vmax);
+}
+fq(v, wad, wbd, wlim, film) {
+  wup = switch(v > 0, wad, wbd);
+  return v * min(wup, wlim) * clamp(wup / film, 0, 1);
+}
+sfc(v, q, wad, wbd, sa, sb, mixk) {
+  ca = sa / max(wad, 0.001);
+  cb = sb / max(wbd, 0.001);
+  cd = switch(v > 0, ca, cb);
+  return cd * q + mixk * min(min(wad, wbd), 1) * (ca - cb);
+}
+rw(uu, vv) {
+  x = nearest(in1, vec(uu, vv)).x;
+  return switch(abs(x) < 1e30, max(x, 0), 0);
+}
+rsr(uu, vv, ok) {
+  x = nearest(in1, vec(uu, vv)).y;
+  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);
+}
+rsg(uu, vv, ok) {
+  x = nearest(in1, vec(uu, vv)).z;
+  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);
+}
+rsb(uu, vv, ok) {
+  x = nearest(in1, vec(uu, vv)).w;
+  return switch(ok > 0.5 && abs(x) < 1e30, x, 0);
+}
+
+Param flow(0.4);
+Param speed(1);
+Param dry(0.0016);
+Param width(256);
+Param height(256);
+
+W = max(width, 3);
+H = max(height, 3);
+wlim = 0.5;
+film = 0.15;
+mixk = 0.04;
+vmax = 0.2;
+kk = speed * flow;
+
+px = floor(norm.x * W);
+yt = floor(norm.y * 2 * H);
+kp = floor(yt / H);
+py = yt - kp * H;
+uc = (px + 0.5) / W;
+ul = (max(px - 1, 0) + 0.5) / W;
+ur = (min(px + 1, W - 1) + 0.5) / W;
+va = (py + 0.5) / (2 * H);
+vu = (max(py - 1, 0) + 0.5) / (2 * H);
+vd = (min(py + 1, H - 1) + 0.5) / (2 * H);
+vb = (H + py + 0.5) / (2 * H);
+okl = step(0.5, px);
+okr = step(px, W - 1.5);
+oku = step(0.5, py);
+okd = step(py, H - 1.5);
+
+// depths: the clamped read (the edge cell's own value) for the slope, and the donor depth, 0 beyond the frame
+wc = rw(uc, va);
+wl = rw(ul, va);
+wr = rw(ur, va);
+wu = rw(uc, vu);
+wd = rw(uc, vd);
+wld = wl * okl;
+wrd = wr * okr;
+wud = wu * oku;
+wdd = wd * okd;
+
+// the static velocities of this cell's four faces
+pl = nearest(in2, vec(uc, va)).x;
+pr = nearest(in2, vec(uc, va)).y;
+pu = nearest(in2, vec(uc, va)).z;
+pd = nearest(in2, vec(uc, va)).w;
+vlf = vel(pl, wl, wc, kk, vmax);
+vrf = vel(pr, wc, wr, kk, vmax);
+vuf = vel(pu, wu, wc, kk, vmax);
+vdf = vel(pd, wc, wd, kk, vmax);
+
+ql = fq(vlf, wld, wc, wlim, film);
+qr = fq(vrf, wc, wrd, wlim, film);
+qu = fq(vuf, wud, wc, wlim, film);
+qd = fq(vdf, wc, wdd, wlim, film);
+wn = max(wc + ql - qr + qu - qd - dry * speed, 0);
+
+// pigment in suspension, per channel (a virtual cell beyond the frame holds none)
+rc = rsr(uc, va, 1);
+rl = rsr(ul, va, okl);
+rr = rsr(ur, va, okr);
+ru = rsr(uc, vu, oku);
+rd = rsr(uc, vd, okd);
+gc = rsg(uc, va, 1);
+gl = rsg(ul, va, okl);
+gr = rsg(ur, va, okr);
+gu = rsg(uc, vu, oku);
+gd = rsg(uc, vd, okd);
+bc = rsb(uc, va, 1);
+bl = rsb(ul, va, okl);
+br = rsb(ur, va, okr);
+bu = rsb(uc, vu, oku);
+bd = rsb(uc, vd, okd);
+rn = rc + sfc(vlf, ql, wld, wc, rl, rc, mixk) - sfc(vrf, qr, wc, wrd, rc, rr, mixk) + sfc(vuf, qu, wud, wc, ru, rc, mixk) - sfc(vdf, qd, wc, wdd, rc, rd, mixk);
+gn = gc + sfc(vlf, ql, wld, wc, gl, gc, mixk) - sfc(vrf, qr, wc, wrd, gc, gr, mixk) + sfc(vuf, qu, wud, wc, gu, gc, mixk) - sfc(vdf, qd, wc, wdd, gc, gd, mixk);
+bn = bc + sfc(vlf, ql, wld, wc, bl, bc, mixk) - sfc(vrf, qr, wc, wrd, bc, br, mixk) + sfc(vuf, qu, wud, wc, bu, bc, mixk) - sfc(vdf, qd, wc, wdd, bc, bd, mixk);
+
+// plane B passes
+q0 = nearest(in1, vec(uc, vb)).x;
+q1 = nearest(in1, vec(uc, vb)).y;
+q2 = nearest(in1, vec(uc, vb)).z;
+q3 = nearest(in1, vec(uc, vb)).w;
+out1 = vec(switch(kp < 0.5, wn, q0), switch(kp < 0.5, rn, q1), switch(kp < 0.5, gn, q2), switch(kp < 0.5, bn, q3));
