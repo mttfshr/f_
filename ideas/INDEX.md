@@ -261,7 +261,7 @@ substantially move a file in `ideas/`, update its entry here too.
 
 ## Optics, lens, color
 
-- **[f_print_styles.md](f_print_styles.md)** ⚪ — **`f_separate` (stage 1) built and moved to stable 2026-11-08** (`docs/f-reference/f_separate.md`); the rest specified or unspecified. Emulating print processes (riso, offset, xerox,
+- **[f_print_styles.md](f_print_styles.md)** ⚪ — **`f_separate` (stage 1) built and moved to stable 2026-11-08** (`docs/f-reference/f_separate.md`); **`f_vf_erode` (stage 3) built as an erosion solver and moved to stable 2026-11-10** (`docs/f-reference/f_vf_erode.md`); the rest specified or unspecified. Emulating print processes (riso, offset, xerox,
   intaglio, screen print): a family of small stage modules (separation, screen, ink body,
   misregistration, paper) passing RGBA plates. Riso first; form-following intaglio lines
   (tensor family) in Phase 2. Decisions of 2026-11-07 recorded; concept only, nothing built.

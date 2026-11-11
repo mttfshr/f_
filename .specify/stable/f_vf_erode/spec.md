@@ -1,6 +1,6 @@
 # Spec: f_vf_erode (formerly f_ink; renamed 2026-11-10)
 
-_Created: 2026-11-08. Rewritten 2026-11-10 (the erosion model); the 2026-11-08 and 2026-11-09 versions are in git (`git show 3bdf92a:.specify/f_vf_erode/spec.md`)._
+_Created: 2026-11-08. Rewritten 2026-11-10 (the erosion model); the 2026-11-08 and 2026-11-09 versions are in git (`git show 3bdf92a:.specify/stable/f_vf_erode/spec.md`)._
 _Updated 2026-11-10 (later): T060-T065, T074, T075 decided (Matt)._
 _Status: specified, not built. The module in `src/f_vf_erode/` is still the 2026-11-09 build (Extent, Bulge, Travel), which this spec replaces._
 _Origin: `ideas/f_print_styles.md` (stage 3 of the print-styles family, "ink body"). Name `f_vf_erode` is a placeholder (plain `f_`, no family prefix: Matt, 2026-11-07)._
@@ -25,7 +25,7 @@ Fast water lifts pigment off the paper. Slow water, and water that dries up, dro
 - **Any texture in, texture out** (2026-11-08). No ink color or plate logic; RGB, alpha is not a plate.
 - **Drivers from anywhere** (2026-11-08), each on a dedicated inlet, not a tagged texture (clarify Q4, `P-mod-textures`).
 - **Unclamped float32 output** (2026-11-08, clarify Q2).
-- **The model above** (2026-11-10): after four offline mocks, "this seems like a better direction"; the wet-once looks, dried and still running, "are looking good" (`.specify/f_vf_erode/tasks.md` Record; sheets `8_alluvial.png`, `9_vecfield.png`, local).
+- **The model above** (2026-11-10): after four offline mocks, "this seems like a better direction"; the wet-once looks, dried and still running, "are looking good" (`.specify/stable/f_vf_erode/tasks.md` Record; sheets `8_alluvial.png`, `9_vecfield.png`, local).
 - **A feedback module** (2026-11-10): the earlier "stateless" assumption (A3) and "static first" are dropped. Ink that travels needs iteration.
 - **Two outlets** (2026-11-10): the composite over the background, and the ink thickness as a scalar.
 - **Pools are large** (2026-11-10): "larger areas with one or two clean edges"; ink runs together inside a pool, so not many small areas (the first mock "looks more like mottled texture"). Where ink is drawn away, the background shows "delineated with finer and lighter ink, not darker".

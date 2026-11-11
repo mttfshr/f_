@@ -6,7 +6,7 @@ A picture goes in; on a wetting it becomes pigment on the paper and the frame is
 (inlet 1) pushed by a vecfield (inlet 2), lifts pigment off the paper where it runs fast and puts it down where it slows, so
 ink pools in the low places and leaves the high ones. Inlet 3 is the background the pigment sits on. Polarity: Darker filters
 a background that is white when unconnected, Lighter adds over a black one.
-Spec, plan, tasks: .specify/f_vf_erode/{spec,plan,tasks}.md. Mirror: tests/modules/vf_erode/vf_erode_mirror.py.
+Spec, plan, tasks: .specify/stable/f_vf_erode/{spec,plan,tasks}.md. Mirror: tests/modules/vf_erode/vf_erode_mirror.py.
 
 State: ONE float32 atlas at the render size, W x 2H, two RGBA planes stacked vertically (plan ADR-1):
   plane A  R water depth, GBA pigment in suspension      plane B  RGB pigment on the paper, A the load flag

@@ -1,7 +1,7 @@
 # Implementation Plan: f_vf_erode (formerly f_ink; renamed 2026-11-10, T077)
 
-**Date**: 2026-11-10 (rewritten for the erosion model; the 2026-11-08/09 plan is at `git show 31f0c6f:.specify/f_vf_erode/plan.md`)
-**Spec**: .specify/f_vf_erode/spec.md (every gate T060-T071 is confirmed by Matt, 2026-11-10; the spec has no PRELIMINARY assumption left except what this plan adds, below)
+**Date**: 2026-11-10 (rewritten for the erosion model; the 2026-11-08/09 plan is at `git show 31f0c6f:.specify/stable/f_vf_erode/plan.md`)
+**Spec**: .specify/stable/f_vf_erode/spec.md (every gate T060-T071 is confirmed by Matt, 2026-11-10; the spec has no PRELIMINARY assumption left except what this plan adds, below)
 
 Everything about the solver's internals below is Claude's design, worked out offline from reading `f_vf_lbm` and `f_vf_ch` (their docs and `definition.py` headers) and not yet run. It is **inferred** until the mirror (T073) and the bench confirm it.
 

@@ -3,7 +3,7 @@
 **Type:** Processor with a state: a water-and-pigment solver. Inlets: picture (0), terrain (1), vecfield (2), background (3). Outlets: ink (composite over the background) and thickness.
 **Status:** Built, benched and looked at live 2026-11-10. Benches green: codebox 17/17, module 5/5, tier 1 11/11. Live look (Matt, chat, 2026-11-10, at all defaults, with Feed raised on an animated input): "looks amazing". Helpfile, panel layout and menu category are still to do (see Known issues).
 
-_Reference written 2026-11-10 from `src/f_vf_erode/` (definition and six codeboxes), `.specify/f_vf_erode/{spec,plan,tasks}.md` (gates T060-T095, ADR-1 to ADR-6) and the module's tests. Numbers marked inferred were worked out, not observed._
+_Reference written 2026-11-10 from `src/f_vf_erode/` (definition and six codeboxes), `.specify/stable/f_vf_erode/{spec,plan,tasks}.md` (gates T060-T095, ADR-1 to ADR-6) and the module's tests. Numbers marked inferred were worked out, not observed._
 
 ---
 
@@ -110,7 +110,7 @@ The constants (6, 0.1, 0.2, 0.5, 0.15, 0.04, 0.1, 0.08, 2.2, 0.001) are the NumP
 Original to this library: the model was designed in development from four offline mocks (`scratch/experiments/f_ink_look/`, local) and takes no code or formula from an outside source.
 
 - Conservative face fluxes, upwind donors and a flux limit are standard finite-volume practice; the state-atlas and hold pattern follow `f_vf_lbm.md` and `f_vf_ch.md`.
-- `.specify/f_vf_erode/{spec,plan,tasks}.md`; `ideas/f_print_styles.md`. Related: `f_separate.md`, `f_vf_fluid.md`, `f_vf_stamp.md`, `f_vecfield_type.md`.
+- `.specify/stable/f_vf_erode/{spec,plan,tasks}.md`; `ideas/f_print_styles.md`. Related: `f_separate.md`, `f_vf_fluid.md`, `f_vf_stamp.md`, `f_vecfield_type.md`.
 
 ## Source Files
 

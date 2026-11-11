@@ -69,7 +69,7 @@
 						270.0,
 						60.0
 					],
-					"text": "Water and pigment solver -- ink pools in the low places of a terrain",
+					"text": "Turns a picture into wet ink that runs and pools over a terrain you supply",
 					"saved_attribute_attributes": {
 						"textcolor": {
 							"expression": "themecolor.live_control_fg"

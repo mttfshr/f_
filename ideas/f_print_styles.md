@@ -28,7 +28,7 @@ Tentative (Matt: "a decision but I'm not sure it's the decision", 2026-11-08): `
 |---|---|---|
 | 1 Separation | full-colour image to plates | `f_separate` |
 | 2 Tone-to-mark | plate tone to dots, grain, threshold or lines | `f_screen`; `f_engrave` (form-following, later) |
-| 3 Ink body | dot gain, mottle, dropout, edge pooling, flecks, banding | `f_vf_erode` |
+| 3 Ink body | ink that runs and pools over a terrain (built 2026-11-10; dot gain, mottle, dropout, flecks, banding are not in it) | `f_vf_erode` |
 | 4 Process artifacts | per-plate misregistration, wobble, ghosting | `f_misregister` |
 | 5 Substrate | plates x ink colours onto paper: overprint, tint, tooth, show-through, emboss | `f_paper` |
 
@@ -64,6 +64,8 @@ Dithering, halftoning and hatching are largely **one operation**: compare tone t
 - Plate wipe tone, ink relief and a plate-mark emboss belong to `f_paper`, shared with letterpress.
 
 ### Stage 3: `f_vf_erode` (Matt's immediate interest)
+
+**Status 2026-11-10: built and moved to `.specify/stable/f_vf_erode/`, as something other than the sketch below.** After two live looks on the blur-and-threshold design (mottle, dropout, spread) Matt narrowed it (2026-11-09), then redirected it (2026-11-10) to an erosion model: a picture becomes pigment on paper, water runs over a terrain texture pushed by a vecfield, lifts pigment where it runs fast and puts it down where it slows, so ink pools in the low places. It is a stateful solver (wet once, or Feed continuously for an animated input), with Darker and Lighter polarity. Benched, documented (`docs/f-reference/f_vf_erode.md`), helpfile written, looks passed (Matt, 2026-11-10). The mottle, dropout, edge-pool, flecks and banding operations below are NOT in it (they belong to blends elsewhere, per Matt), and nothing about plates or paper is assumed. The text under this status is the original sketch and is kept as history.
 
 "Ink on paper" is a metaphorical framing: describe the characteristics of physical ink, simulate them, then bend the metaphor to things that look unmistakably digital. So `f_vf_erode` (inferred design consequences):
 
