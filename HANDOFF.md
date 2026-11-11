@@ -68,4 +68,5 @@
 - **Done (Claude, offline):** `docs/f-reference/f_vf_erode.md`, README row (105 chars), module-inventory rows, menu entry under Color / Tone (provisional, `G-menu`), launcher and menu regenerated. Not done: the helpfile, T041 (`ideas/f_print_styles.md`, INDEX), render-size scaling (T083), panel height.
 - **Next:** the helpfile (`f-helpfile` skill, f_droste.maxhelp is the template), or T083.
 - **Helpfile (Claude, offline):** `package/help/f_vf_erode.maxhelp` written (two sources: picture and terrain, two previews: ink and thickness); not opened in Max. Owed to Matt: open it and check the text fits and the Wet button works there.
+- **Panel (Matt, 2026-11-10, chat):** the Darker / Lighter toggle moved to the title bar via `overrides` in `definition.py` (title 40 px wide, toggle at x 50, 52 x 15); patcher rebuilt, drift and contract tests pass. Not seen in Max: check it clears the "tex in/out" label. The row it left (y 52) is empty; the dial rows were not moved.
 

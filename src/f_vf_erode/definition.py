@@ -140,3 +140,11 @@ patcher = {
         ["react", 0, "enc", 1],           # state -> encode (cold)
     ],
 }
+
+
+# The Darker / Lighter toggle lives in the title bar (Matt, 2026-11-10), like f_weave's mode controls: [Erode] [Darker] ... [type label] [bypass].
+# The title shrinks to its text; the toggle is 52 px wide so it clears the right-justified "tex in/out" label (its text starts near x 109).
+patcher["overrides"] = {
+    "title":        {"presentation_rect": [10.5, 0.0, 40.0, 21.0]},
+    "polar_sw.ctl": {"presentation_rect": [50.0, 3.0, 52.0, 15.0]},
+}

@@ -1207,7 +1207,7 @@
 					"presentation_rect": [
 						10.5,
 						0.0,
-						92.0,
+						40.0,
 						21.0
 					],
 					"text": "Erode"
@@ -1652,10 +1652,10 @@
 					],
 					"presentation": 1,
 					"presentation_rect": [
-						0.0,
+						50.0,
+						3.0,
 						52.0,
-						53.5,
-						17.0
+						15.0
 					],
 					"text": "Darker",
 					"texton": "Lighter",
