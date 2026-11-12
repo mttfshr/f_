@@ -1,6 +1,110 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08 and 2026-11-10 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10 and 2026-11-11 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-10 to 11-11: the `f_vf_erode` session (moved out of HANDOFF.md 2026-11-11)
+
+Entries in the order they were written (oldest first), then the START HERE block as it stood at the start of the session.
+
+### 2026-11-10 (later): `f_vf_erode` polarity, wetting and solver size decided
+
+- **Decided (Matt, chat):** T060 Polarity is a control, Darker or Lighter; the library has no layers concept and background means no light, so in3 is the background (`underlayer` renamed). T061 wet once, as written. T065 the layers run at the render size if at all possible; the 1080p cost, measured at build, is the only thing that could change it, and that call is Matt's.
+- **T075 confirmed (Matt, "Confirm T075"), proposed by Claude:** how each setting renders: Darker filters a background that is white when in3 is unconnected, Lighter adds over a black one, so an unwetted picture comes out unchanged in both; one solver for both, only the load and the composite differ; default Darker; a switch takes effect at the next wetting. Also confirmed (Matt, "Confirm T074"), T074: a moving in0 does nothing between wettings; always-wet is not in this version.
+- **Records:** spec, tasks, `G-ink-direction`, `G-print-prelim`, `P-mod-textures` (inlet name) and `plan.md` Next 1. Nothing built or run; `test_gates` not run (asked).
+
+### 2026-11-10 (latest): `f_vf_erode` review finished
+
+- **Decided (Matt, "confirm all"):** T066-T071, Claude's proposals as written: water leaves at the frame edge; no momentum of its own; linear light before the log; thickness outlet is pigment on the paper only, no water outlet; the dial set in spec "Parameters"; verification tiers 1-3.
+- **Records:** spec (P7-P12 to Decided, none left), `tasks.md` T066-T071 ticked, `G-ink-direction`, `G-print-prelim`, `plan.md` Next 1. Inferred, not checked: the mirror's conservation test (SC-101) must count pigment that leaves at the edge. Nothing built or run; `test_gates` not run (asked).
+- **Plan (offline, Claude):** `.specify/stable/f_vf_erode/plan.md` rewritten; the solver design is inferred, not run. T076 (before the first wetting) confirmed by Matt. Renamed `f_ink` to `f_vf_erode` (T077): dirs, files, references, patcher rebuilt; tests not run; the archive and dated logs keep the old name.
+- **T073 (offline, Claude):** `tests/modules/vf_erode/vf_erode_mirror.py` and `test_vf_erode.py`, 9/9, log `tests/logs/20261110-101051-offline.log`. SC-105 caught a real fault (settle fraction above 1 at speed 4); Darker's log is bounded, so display values below about 0.081 are lifted (`G-linear-light`, Matt's call); edge model changed from the plan's wording (plan ADR-3 updated). Old 2026-11-09 benches removed. Not run: any bench, Max, `test_gates`.
+- **Cost probe (Claude):** written (`tests/modules/vf_erode/bench_vf_erode_cost.py`, `probe/`), NOT run: the bench was not reachable. Needs `tests/bench/bench.maxpat` open in Max; then `tests/bench.sh tests/modules/vf_erode/bench_vf_erode_cost.py`. Nothing measured, so NF-102 is still unmeasured. Inferred: transport can be one stage (plan ADR-2/3 amendment owed once the real stage exists).
+- **Cost probe run (live, Matt's bench):** 1080p, one step per frame: hold 1.58, transport 1.58, enc 0.90 (all upper bounds), react 2.24 ms (resolved); sum 6.3 ms upper bound, extra step 3.8 ms. Probe codeboxes, not the real stages. Render size vs a fixed solver grid is Matt's call (T065). Log: `tests/logs/20261110-101838-bench.log`.
+- **Decided (Matt, "Keep render size"):** T065 closed: the layers run at the render size. Real stage cost is measured at build; reopen only if far above the probe.
+
+### 2026-11-10 (end): `f_vf_erode` stage codeboxes written (offline)
+
+- **Done (Claude, offline, Matt's "go"):** `src/f_vf_erode/codebox_{hold,prep,load,transport,react,enc}.gen` and `definition.py` (six stages, state atlas W x 2H at the render size); patcher built; contract test 9/9, `test_render_dim` 13/13 with the new builder key `atlas_stages`. Darker log floor widened earlier the same day (mirror EPS 0.001, `G-linear-light`). Details and the design changes from the plan: `.specify/stable/f_vf_erode/tasks.md` T080-T083, plan amendment.
+- **Not done, not verified:** nothing has compiled in Max and no bench ran, so every codebox is unchecked (inferred from the mirror). The codeboxes still carry the mirror's constants in texels, no render-size scaling (T083). The old 2026-11-09 `bulge`, `extent` and `zap` codeboxes were removed from `src/`.
+- **Benches (2026-11-10, Claude, Matt's go):** `bench_vf_erode.py` 13/13 on the live bench (`tests/logs/20261110-105232-bench.log`): every stage matches the mirror to 1e-6 or better; it found one codebox bug, `exp(-(a + b))` in `enc` compiled as `exp(-a + b)` (fixed, written `exp(-a - b)`; worth a line in `skills/jit-gen-codebox/SKILL.md`, which needs your re-upload and `skills/check.sh stamp`). Module bench 4/4 and the contract bench row clean (T082b); the contract bench as a whole fails on `f_vf_fluid`'s frame size (640 against 512, not this module; yours to decide).
+- **Next:** your live look in Max (SC-107: the Wet button, a real terrain and vecfield), then tuning; render-size scaling of the constants is open (T083).
+
+### 2026-11-10 (later): `f_vf_erode` Feed designed (offline)
+
+- **Decided (Matt, "feed is great"):** a continuous source so the module can follow an animated input. A frame delay it is not: the memory is the water and pigment state. **Claude's pick, reversible:** bounded-additive deposit (a fraction of the shortfall) and water relaxed toward `flood`; Matt did not choose between this and relax-toward-frame.
+- **Done (offline):** spec US5 and FR-115, mirror `feed()`, `test_feed`; `test_vf_erode.py` 10/10. **Not done:** the codebox, the dial, the benches (T092, T093); nothing run in Max.
+- **T092 done (offline):** `codebox_load.gen` has the `feed` Param and the deposit; Feed dial added; patcher rebuilt; contract 9/9, drift 16/16. Not compiled in Max, not benched; the panel height was not adjusted for the extra dial.
+- **Benched (T093, Claude, Matt's go):** codebox bench 15/15 (`tests/logs/20261110-111906-bench.log`), module bench 5/5 (`tests/logs/20261110-111815-bench.log`). Found and fixed a real fault: Feed from a fresh start inherited a suspension of 1 in blue from the empty texture's alpha; a not-yet-loaded state now carries no pigment.
+- **Next:** your live look with an animated texture into Feed (the harness cannot feed a moving input), the panel height for the extra dial (`G-ui-density`), then tuning; render-size scaling is open (T083).
+
+### 2026-11-10 (later still): Feed saturation, `fade` added (offline)
+
+- **Matt's report:** with Feed on and Darker, the frame goes black. **Cause (reasoned from the code, plus tier-1 `without fade` check):** the deposit only adds. **Fix, T094:** a `fade` dial returns ink above the picture's pigment toward it, only while feeding; default 0.02 (Claude's guess). Mirror, `test_vf_erode.py` 11/11, codebox, dial, patcher rebuilt, contract 9/9, drift 16/16.
+- **Benched (T095):** codebox bench 17/17, module bench 5/5 (`tests/logs/20261110-173333-bench.log`). Gate `G-ink-direction` closed (its tripwire was met; `test_gates` flagged it). Committed with the whole erode build.
+- **Live (Matt, 2026-11-10):** with Fade the fed output looks right ("looks amazing now"). That was at all defaults (his words), so the defaults stand for now (Fade 0.02, Feed's default is 0: the dial was raised by him, value not recorded).
+
+### 2026-11-10 (docs): `f_vf_erode` reference doc and registration
+
+- **Done (Claude, offline):** `docs/f-reference/f_vf_erode.md`, README row (105 chars), module-inventory rows, menu entry under Color / Tone (provisional, `G-menu`), launcher and menu regenerated. Not done: the helpfile, T041 (`ideas/f_print_styles.md`, INDEX), render-size scaling (T083), panel height.
+- **Next:** the helpfile (`f-helpfile` skill, f_droste.maxhelp is the template), or T083.
+- **Helpfile (Claude, offline):** `package/help/f_vf_erode.maxhelp` written (two sources: picture and terrain, two previews: ink and thickness); not opened in Max. Owed to Matt: open it and check the text fits and the Wet button works there.
+- **Panel (Matt, 2026-11-10, chat):** the Darker / Lighter toggle moved to the title bar via `overrides` in `definition.py` (title 40 px wide, toggle at x 50, 52 x 15); patcher rebuilt, drift and contract tests pass. Not seen in Max: check it clears the "tex in/out" label. The row it left (y 52) is empty; the dial rows were not moved.
+- **Panel (Matt, 2026-11-10):** the Wet button moved into the first slot of the dial grid (button 3.5, 46; label above it) and the panel height cut from 232 to 150; helpfile bpatcher rect updated. Not seen in Max. Drift, contract, gate_button tests pass.
+
+### 2026-11-10 (scaling): `f_vf_erode` render-size scaling written (offline)
+
+- **Decided (Matt):** reference render size 1920, cap-limited scaling. **Done (Claude, offline):** mirror `scales()`, tier-1 `test_render_size_scaling` (12/12), `prep`/`transport`/`react` codeboxes derive k from the height Param, bench passes k to the mirror, patcher rebuilt, contract 9/9, drift 16/16, spec FR-117, tasks T083 (`[~]`).
+- **Assumed, check:** 1920 is a render HEIGHT (his screenshot is near square). **Not done:** the bench run (ask first), a live look (his size should look unchanged), the cost at a 1920 x 3840 atlas. **Uncommitted.**- **Benched (Claude, Matt's go):** 17/17 and 5/5 (`tests/logs/20261110-180135-bench.log`), errors at or below 1.2e-7 against the mirror; but at 48 texels (k = 0.025) the motion is small, so the benches are weak on the 1920 constants. Next: your live look at your size (should be unchanged) and at another size.- **Live (Matt, 2026-11-10):** scaling passes at 1920 x 1920 and 2160 x 2160. He finds some dials subtle. Offline check (inferred, synthetic scene, mirror): lift is saturated at its default (useful range about 0-0.3) and settle is nearly inert; speed, push, flow, dry respond. Matt decides whether to remap; see tasks.md.
+
+### 2026-11-10 (dials): Lift and Settle reworked (offline)
+
+- **Done (Claude, offline, Matt: "Lift and settle"):** Lift dial 0..1 default 0.7 (square curve, old 0.9 at the default); Settle dial 0..1 default 0.19 (cubic, old 0.004 at the default) and the settle speed threshold 0.03 -> 0.1. Mirror, tier 1 13/13, codebox, definition, bench, doc, helpfile updated; contract 9/9, drift 16/16. Default look should be nearly unchanged (mean output change under 1% in the synthetic check, inferred). **Caveat:** patches saved with the old dial values (Lift 0.9, Settle 0.004) will read them on the new curves. **Not done:** the bench run (ask first), Matt's live look, commit.
+
+### 2026-11-10 (close): `f_vf_erode` closed, moved to stable
+
+- **Done (Claude, Matt's go):** T041 (ideas note and INDEX), preflight T042 passed and the module moved to `.specify/stable/f_vf_erode/`. One planned bench batch: codebox 17/17, module 5/5, contract row clean (`tests/logs/20261110-183303-bench.log`, `-183434-bench.log`; the contract bench still fails whole on `f_vf_fluid`'s frame size). Digest line reworded; `generate_menu` regenerated (was stale after the panel change).
+- **Open, not blocking:** the 1920 x 3840 cost is unmeasured; the menu category is provisional (`G-menu`); `f_vf_fluid` 640 vs 512 in the contract bench is Matt's call; the `skills/jit-gen-codebox/SKILL.md` line on `exp(-(a + b))` needs Matt's re-upload.
+
+### 2026-11-10 (ideas): `f_misregister` paused, scoped-presets utility captured
+
+- **Decided (Matt, chat):** `f_misregister` is paused, not parked. Core Vsynth modules already do offset, rotation, displacement, sample-and-hold, noise and delay, so a transform module would duplicate a chain. His idea: a custom scoped `pattrstorage` plus a linked parameter list over any chain (store everything, expose a few dials, one control driving several parameters, presets that morph), like Ableton racks and macros but user-assembled. Claude's lean, not decided: a sidecar first.
+- **Written (Claude):** `ideas/f_util_scoped_presets.md`, an INDEX entry, and a status note in `ideas/f_print_styles.md` Stage 4. Nothing built, nothing verified in Max.
+- **Owed to Matt:** open `scratch/experiments/scoped_presets/spike_scoped_presets.maxpat` (local, gitignored; built by `build_spike.py` beside it) in Max and answer the six notes at the bottom of the patch (does the pattrstorage see both modules' dials and under what names; store, recall and morph; macro by message; persistence). Hand-authored JSON, validated for parse, ids and cords only: not opened in Max, so a broken box is possible.
+- **Revised (Matt, 2026-11-10):** the spike should BE the `f_misregister` work: compose the phenomenon from existing modules and find the gap. Built `scratch/experiments/misregister_chain/` (local, gitignored): `build_chain.py` -> `misregister_chain.maxpat`, `misreg_press.js` (sheet, shared/independent error via `corr`, wobble, ghost; logic checked in Node only). Not opened in Max: the `vs_offset+rot` message units are not verified (a `unit` / `aunit` calibration is in the patch), hand-authored JSON checked for parse, ids and cords only. Notes at the bottom of the patch say what to report. `ideas/f_util_scoped_presets.md` Experiment 1 updated.
+- **Result (Matt, live, 2026-11-10):** the misregister chain works as designed; save and recall of the scoped store works. Gap named: per-plate character (ink and color distribution, density, overbleed), as a few performable params, not vintage-filter looks; registration marks dropped. Claude's mapping (inferred, untried): density via grader or tone curve, distribution via `f_vf_erode` per plate with a noise terrain, overbleed probably a real gap (no blur or spread module found). Recorded in `ideas/f_util_scoped_presets.md`. Next: Matt picks round 2.
+- **Correction (Matt, 2026-11-10):** Vsynth has `vs_filter_lp2x/lp4x/hp4x/spat`, `vs_convolve`, `vs_comparator`, `vs_duotoner`; Claude's earlier claim that overbleed had no module was wrong (it grepped "blur"). Built round 2: `scratch/experiments/misregister_chain/build_chain2.py` -> `misregister_chain2.maxpat` (local): per plate lp -> duotoner -> `f_vf_erode` (own `vs_noise_2` terrain, Lighter, Feed 0.3 sent at load) -> grader -> offset (+ ghost), into the mixer. Validated for parse, ids, cords; not opened in Max. Three erodes at render size may be heavy; seeds of the noise modules not checked. Notes at the bottom of the patch.
+
+### 2026-11-11 (ideas): `f_misregister` becomes a randomizer preset
+
+- **Decided (Matt, chat):** think of the orchestrator as a general randomizer, as a percentage; the plates are groups. Written: `ideas/f_util_randomizer.md` (placeholder name), INDEX entry, cross-links in `f_util_scoped_presets.md` and `f_print_styles.md`. Concept only; nothing built, the `script send` addressing untested.
+- **Owed to Matt:** the round 2 look (`misregister_chain2.maxpat`, five notes at the bottom). **Next, with Matt's go:** a table-driven engine from `misreg_press.js`, tested on round 2.
+
+### Old START HERE (2026-11-10)
+
+
+**Read order for a new session:** CLAUDE.md, this block, `.specify/plan.md` (one-page focus), `.specify/gates.md`. README.md is NOT required. Older entries are in `HANDOFF_ARCHIVE.md`: grep it, do not read it whole.
+
+**State:** `f_wave_field` is finished except T041 (the `f_cymascope` audio front end, not started): redesign built, docs and helpfile written, in the menu under ∇ Fields, README ⚠ removed, live looks passed, benches green on the four-input harness (record: `.specify/f_wave_field/tasks.md`). `f_vf_stamp` (was `f_splat`) is BUILT OFFLINE, nothing run: `.specify/f_vf_stamp/{spec,plan,tasks}.md`; Phase 0 and T020-T024 are done, benches green (10/10, 7/7, 2/2), live looks passed, documented and registered (Phase 3 done 2026-11-06; the helpfile is not yet opened in Max); menu category provisional under Adapters (`G-menu`). Earlier closed work (`f_vf_ch` rename, `f_weave` promotion, `f_stipple` / `f_vf_flow` render triggers, the `render_dim` migration, Hatch, `f_ks` tuning, the Claims rule) is in `HANDOFF_ARCHIVE.md` and the module `tasks.md` files. `f_vf_fluid` and `f_vf_split` moved to `.specify/stable/` 2026-11-06. `f_tf_tensormap` moved to `.specify/stable/` 2026-11-06. `f_tf_hatch` moved to `.specify/stable/` 2026-11-06. `f_tf_axisflow` moved to `.specify/stable/` 2026-11-06. `f_vf_fieldmap` and `f_vf_potential` moved to `.specify/stable/` 2026-11-06. `f_vf_flow` and `f_tone_curve` moved to `.specify/stable/` 2026-11-06, so all seven batch 3 modules are moved. Stable push: batch 4 triage is done (`.specify/maintenance/batch4_triage_2026-11-06.md`); Group A (`f_vf_warp`, `f_stipple`, `f_vf_glow`, `f_vf_prism`) moved to `.specify/stable/` 2026-11-06 after Matt's helpfile looks and one live contract bench (2/2, log `tests/logs/20261106-192009-bench.log`). Group B (`f_vf_advect`, `f_vf_streak`) moved to `.specify/stable/` 2026-11-06 after Matt's batch 4 calls were applied (entry below). Batch 4 is finished (vortex moved 2026-11-06); next: pick from Candidates below (optical_flow and seeds bypass passthrough: done, looks and bench passed, entry below). Plan and bar: the 2026-11-06 entries in `HANDOFF_ARCHIVE.md`, and `.specify/plan.md` Next 0.
+
+**New 2026-11-09 (later):** `f_vf_lbm`, `f_vf_fluid` and `f_vf_ch` now follow the render size (`render_dim` on `enc`), verified live by Matt (entry below). The FIRST next-session item is unchanged.
+
+**New 2026-11-08:** the print-styles family (`ideas/f_print_styles.md`): `f_separate` is built, benched, documented and its looks passed; preflight passed and moved to `.specify/stable/f_separate/` 2026-11-08 (the 1080p cost is recorded as unmeasured, T022; entry below). `f_vf_erode` was narrowed after two looks to vecfield-driven ink, built and benched (2026-11-09; third look owed, not in the menu or README); `f_screen` and `f_engrave` are specified, nothing built; the open gates of all three are PRELIMINARY (`G-print-prelim`). `f_poincare` is BUILT and in `.specify/stable/f_poincare/` (2026-11-07; its entries are in `HANDOFF_ARCHIVE.md`).
+
+**FIRST next session (2026-11-10):** `f_vf_erode` (`.specify/stable/f_vf_erode/spec.md`, the erosion model): T060, T061, T065 are settled (entry below). T066-T071 are confirmed too ("confirm all"): the review is done. `plan.md` is rewritten (T072, 2026-11-10). the module is renamed `f_vf_erode` (T077, done 2026-11-10) and T076 is confirmed. The mirror and tier-1 tests are written and pass 9/9 (T073, offline; findings in `.specify/stable/f_vf_erode/tasks.md` Record). The stage codeboxes and patcher are written (T080, T081; entry below); next: Matt's go on the benches (T082), then the live compile check in Max (`G-ink-direction`).
+
+**Candidates (Matt decides):**
+- Print-styles, FIRST: `f_vf_erode`, as in the FIRST line above. Later: the PRELIMINARY gates and clarify questions for `f_screen` and `f_engrave`. `f_engrave` starts with a spike that may end in a stop (`G-engrave-method`).
+- `f_wave_field` T041: the `f_cymascope` front end now produces an LFO texture for inlet 1 (and strike triggers); not started.
+- `f_masonry` adopts tagged textures (Matt, 2026-11-01 21:17: "we will do masonry, but not this second"): design discussion first. Its modulation is by space (slot, brick, pixel) with a depth per appearance param in each (6 x 3 = 18 depths, read from `src/f_masonry/definition.py`), so one tag per named `<param>_tex` needs a decision about the spaces. It is the module on the never-regenerate list (`G-masonry`).
+- The UI design conversation toward a design skill: `ideas/ui_design_concepts.md` (gate `G-ui-density`); the compact `f_weave` panel is the first test case.
+- `f_weave` name and identity: keeping `weave` for now (Matt, 2026-11-01 21:26), to revisit once he knows the module better (question 6; the names discussed are listed in `ideas/f_weave_scope_questions.md`); the other scope questions are tabled.
+- `f_ks` still needs its docs (T040) (name closed, T010) (its tuning is done).
+- `vs_black` wording in `skills/vsynth-bpatcher/SKILL.md` and `docs/vsynth-reference/patterns.md` (the skill needs Matt's re-upload and `skills/check.sh stamp`). New fact for that wording: `vs_black` is a 1x1 texture (`vs_render.maxpat`).
+- `f_vf_seeds` cost at 1080p is unmeasured; optional cap on the `f_vf_advect` Trail dial.
+
+**Process:** discuss design before code; one phase per turn; ask before any bench run (the codebox bench now passes up to FOUR inputs); Desktop Commander for files (load schemas with ToolSearch; tool names vary by client; in the desktop app, 2026-11-05, the plain Bash tool ran on the Mac); `edit_block` for targeted edits, and never rewrite a CRLF file in text mode; commit per module. Do not mention or follow up on demo `.maxpat` files Matt edits (Matt, 2026-11-01). Long bench runs outlast the relay's 60 s wait: start with a short timeout, then ask Matt to say when it is done. Ad-hoc numpy scripts: `uv run --no-project --with numpy python3 script.py` (system `python3` and `build/py.sh` have no numpy); `sed -i` needs an extension on this Mac, so edit with Python or `edit_block`.
+
+**End of session:** update this block and the `.specify/gates.md` rows you touched. Keep the new entry under about 15 lines; narrative goes in the commit message.
 
 ## 2026-11-10: `f_ink` reframed as erosion and deposition; spec rewritten
 
