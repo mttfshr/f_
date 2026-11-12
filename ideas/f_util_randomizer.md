@@ -46,6 +46,14 @@ Convention (Matt): inlet 0 of a module is the standard control-message inlet. Th
 - **`script send` addressing** writes straight into the dials and would fight any driver on inlet 0. Treat it as the convenience route for the scoped-presets store, not for a chain with live drivers. Still untested.
 - **Inferred, not checked:** that every target module accepts plain `name value` messages on inlet 0 (round 1 did this to `vs_offset+rot`), and that signal-rate drivers need a `snapshot~` first.
 
+## Per-param control and UI (Matt and Claude, 2026-11-12)
+
+Every `name value` on inlet 0 is keyed by name, so each param has independent state. Per-param controls: amount (percent of range), chance, group (shared draw, correlation), wobble, trim (safe subrange), lock (pass through). Global amount and chance scale all rows like a macro.
+
+- **Inlets (Matt's decision):** inlet 0 = the base stream (the library convention); inlet 1 = the randomizer's own settings (per-row amount, chance, group, seed, re-roll). A second inlet, not a name prefix, so the settings can be driven by an LFO or preset without colliding with a target's param names.
+- **First engine pass (Matt's decision):** the table is text or a dictionary, no UI. The engine decides what the UI must expose.
+- **UI sketch for later:** a table of rows (name, base, offset, effective bar; amount and chance editable), a master strip (global amount, chance, re-roll, seed, bake to preset), and a detail editor for the selected row (group, wobble, trim, lock). Rows fill from the scoped-presets param list or by learning names seen on inlet 0.
+
 ## What it takes from the repo
 
 - A per-module parameter catalog: `build/extract_params.py` already pulls name, range, default and hint for `f_` modules (read once, not tested as a catalog source). Vsynth modules are not in it; their ranges would come from the dial attributes.
