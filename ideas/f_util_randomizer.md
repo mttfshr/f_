@@ -35,6 +35,17 @@ Three layers, in order: **base** (scoped presets: macros and a linked parameter 
 
 Every shipped module has a scripting name (`erode1`, `density2`) and takes `<param> <value>` messages on its first inlet; Max's `thispatcher` can send them with `script send <name> <message>`. A target table (plate or group, module name, parameter, range, correlation group, chance, trim) plus one `thispatcher` then needs no wire per parameter. Round 1's `misreg_press.js` used a fixed set of outlets instead; the table-driven version would replace them. Unverified: whether a dial moves on screen when driven this way, how repeated parameter names behave, and how many messages per frame are acceptable (send only values that changed, and only on triggers for the non-wobble targets).
 
+## Wiring: the randomizer is the single writer (Matt and Claude, 2026-11-12)
+
+Convention (Matt): inlet 0 of a module is the standard control-message inlet. The textures and vecfields on a module's other inlets never touch the randomizer; it is a control-side sidecar.
+
+- **All scalar params go through the randomizer.** Its outlet is the only wire into the module's inlet 0. Any `name value` arriving at the randomizer is a base: a dial, a preset recall, or an external driver such as an LFO.
+- **Output** is `clamp(base + offset)` for every incoming base message. The offset is sample-and-hold per param and changes only on a re-roll (chance, wobble tick, button). A driver that already modulates a param keeps modulating it, with the offset riding on top.
+- **Unmanaged names pass through unchanged**, so the randomizer can sit on inlet 0 and do nothing until a table is given.
+- **Why not drivers straight to the module:** two writers to one param means the last message wins (the LFO erases the offset, or the wobble tick erases the LFO), and the randomizer would have no base to be relative to.
+- **`script send` addressing** writes straight into the dials and would fight any driver on inlet 0. Treat it as the convenience route for the scoped-presets store, not for a chain with live drivers. Still untested.
+- **Inferred, not checked:** that every target module accepts plain `name value` messages on inlet 0 (round 1 did this to `vs_offset+rot`), and that signal-rate drivers need a `snapshot~` first.
+
 ## What it takes from the repo
 
 - A per-module parameter catalog: `build/extract_params.py` already pulls name, range, default and hint for `f_` modules (read once, not tested as a catalog source). Vsynth modules are not in it; their ranges would come from the dial attributes.
