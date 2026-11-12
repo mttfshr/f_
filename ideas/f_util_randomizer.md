@@ -54,6 +54,14 @@ Every `name value` on inlet 0 is keyed by name, so each param has independent st
 - **First engine pass (Matt's decision):** the table is text or a dictionary, no UI. The engine decides what the UI must expose.
 - **UI sketch for later:** a table of rows (name, base, offset, effective bar; amount and chance editable), a master strip (global amount, chance, re-roll, seed, bake to preset), and a detail editor for the selected row (group, wobble, trim, lock). Rows fill from the scoped-presets param list or by learning names seen on inlet 0.
 
+## Borrowed from Live and Max for Live (Matt and Claude, 2026-11-12; from memory, not verified)
+
+Inspiration: Live's rack Randomize with per-macro exclusion and min/max ranges, Macro Variations (snapshots), the native Random MIDI effect (Chance, Scale, Sign), the Max for Live LFO (random and smooth shapes, Jitter, Depth and Offset), clip note probability, Max's `drunk`.
+
+- **In the first engine pass (Matt):** sign (unipolar or bipolar per row), slew (the offset glides to its new value over a time instead of jumping), and drunk mode (bounded random walk with a step size; bounds reflect or clamp).
+- **Later:** beat-synced rate and trigger re-roll, one-step undo of a roll, exclude from global re-roll (lock covers part of it).
+- **Per-row mode** is then: uniform re-roll, drunk walk, or smooth wobble. Single writer, per-name state and inlet 1 for settings are unchanged.
+
 ## What it takes from the repo
 
 - A per-module parameter catalog: `build/extract_params.py` already pulls name, range, default and hint for `f_` modules (read once, not tested as a catalog source). Vsynth modules are not in it; their ranges would come from the dial attributes.
