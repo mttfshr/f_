@@ -94,3 +94,8 @@
 - **Result (Matt, live, 2026-11-10):** the misregister chain works as designed; save and recall of the scoped store works. Gap named: per-plate character (ink and color distribution, density, overbleed), as a few performable params, not vintage-filter looks; registration marks dropped. Claude's mapping (inferred, untried): density via grader or tone curve, distribution via `f_vf_erode` per plate with a noise terrain, overbleed probably a real gap (no blur or spread module found). Recorded in `ideas/f_util_scoped_presets.md`. Next: Matt picks round 2.
 - **Correction (Matt, 2026-11-10):** Vsynth has `vs_filter_lp2x/lp4x/hp4x/spat`, `vs_convolve`, `vs_comparator`, `vs_duotoner`; Claude's earlier claim that overbleed had no module was wrong (it grepped "blur"). Built round 2: `scratch/experiments/misregister_chain/build_chain2.py` -> `misregister_chain2.maxpat` (local): per plate lp -> duotoner -> `f_vf_erode` (own `vs_noise_2` terrain, Lighter, Feed 0.3 sent at load) -> grader -> offset (+ ghost), into the mixer. Validated for parse, ids, cords; not opened in Max. Three erodes at render size may be heavy; seeds of the noise modules not checked. Notes at the bottom of the patch.
 
+## 2026-11-11 (ideas): `f_misregister` becomes a randomizer preset
+
+- **Decided (Matt, chat):** think of the orchestrator as a general randomizer, as a percentage; the plates are groups. Written: `ideas/f_util_randomizer.md` (placeholder name), INDEX entry, cross-links in `f_util_scoped_presets.md` and `f_print_styles.md`. Concept only; nothing built, the `script send` addressing untested.
+- **Owed to Matt:** the round 2 look (`misregister_chain2.maxpat`, five notes at the bottom). **Next, with Matt's go:** a table-driven engine from `misreg_press.js`, tested on round 2.
+
