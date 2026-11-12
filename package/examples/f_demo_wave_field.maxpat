@@ -9,8 +9,28 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 737.0, 152.0, 941.0, 849.0 ],
+        "rect": [ 670.0, 106.0, 941.0, 849.0 ],
         "boxes": [
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 1,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-2",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "vs_render.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 1,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "" ],
+                    "patching_rect": [ 691.0, 394.0, 96.85526317358028, 146.5 ],
+                    "viewvisibility": 1
+                }
+            },
             {
                 "box": {
                     "bgmode": 1,
@@ -27,7 +47,7 @@
                     "numoutlets": 1,
                     "offset": [ 0.0, 0.0 ],
                     "outlettype": [ "jit_gl_texture" ],
-                    "patching_rect": [ 92.0, 488.0, 190.0, 100.0 ],
+                    "patching_rect": [ 160.0, 485.0, 190.0, 100.0 ],
                     "varname": "f_vf_potential",
                     "viewvisibility": 1
                 }
@@ -110,27 +130,6 @@
                     "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
                     "patching_rect": [ 336.0, 670.0, 190.0, 150.0 ],
                     "varname": "f_vf_advect",
-                    "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
-                    "bgmode": 1,
-                    "border": 1,
-                    "clickthrough": 0,
-                    "enablehscroll": 0,
-                    "enablevscroll": 0,
-                    "id": "obj-20",
-                    "lockeddragscroll": 0,
-                    "lockedsize": 0,
-                    "maxclass": "bpatcher",
-                    "name": "vs_cos_palettes.maxpat",
-                    "numinlets": 2,
-                    "numoutlets": 3,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
-                    "patching_rect": [ 265.0, 576.0, 113.0, 44.13157894736842 ],
-                    "varname": "vs_cos_palettes",
                     "viewvisibility": 1
                 }
             },
@@ -269,27 +268,6 @@
                     "clickthrough": 0,
                     "enablehscroll": 0,
                     "enablevscroll": 0,
-                    "id": "obj-2",
-                    "lockeddragscroll": 0,
-                    "lockedsize": 0,
-                    "maxclass": "bpatcher",
-                    "name": "vs_render.maxpat",
-                    "numinlets": 1,
-                    "numoutlets": 1,
-                    "offset": [ 0.0, 0.0 ],
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 714.0, 409.0, 96.85526317358028, 146.5 ],
-                    "varname": "vs_render",
-                    "viewvisibility": 1
-                }
-            },
-            {
-                "box": {
-                    "bgmode": 1,
-                    "border": 1,
-                    "clickthrough": 0,
-                    "enablehscroll": 0,
-                    "enablevscroll": 0,
                     "id": "obj-3",
                     "lockeddragscroll": 0,
                     "lockedsize": 0,
@@ -362,13 +340,6 @@
             {
                 "patchline": {
                     "destination": [ "obj-13", 0 ],
-                    "order": 1,
-                    "source": [ "obj-14", 0 ]
-                }
-            },
-            {
-                "patchline": {
-                    "destination": [ "obj-20", 1 ],
                     "order": 0,
                     "source": [ "obj-14", 0 ]
                 }
@@ -376,7 +347,8 @@
             {
                 "patchline": {
                     "destination": [ "obj-21", 0 ],
-                    "source": [ "obj-20", 2 ]
+                    "order": 1,
+                    "source": [ "obj-14", 0 ]
                 }
             },
             {
@@ -429,9 +401,6 @@
             "obj-1::obj-45::obj-19": [ "live.numbox[2]", "live.numbox[1]", 0 ],
             "obj-1::obj-45::obj-32": [ "live.numbox", "live.numbox", 0 ],
             "obj-1::obj-45::obj-9": [ "live.numbox[3]", "live.numbox", 0 ],
-            "obj-20::obj-13": [ "vs_cp_menu", "live.menu", 0 ],
-            "obj-20::obj-26": [ "scale", "live.arrows", 0 ],
-            "obj-20::obj-8": [ "vs_cp_mode", "Mode", 0 ],
             "obj-21::obj-20": [ "dt[1]", "dt", 0 ],
             "obj-21::obj-23": [ "decay", "decay", 0 ],
             "obj-21::obj-26": [ "injection", "injection", 0 ],
@@ -613,9 +582,6 @@
                 },
                 "obj-1::obj-32": {
                     "parameter_longname": "live.numbox[4]"
-                },
-                "obj-20::obj-26": {
-                    "parameter_range": [ 0.0, 1.0 ]
                 },
                 "obj-21::obj-20": {
                     "parameter_invisible": 0,

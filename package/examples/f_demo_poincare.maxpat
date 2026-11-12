@@ -9,8 +9,29 @@
             "modernui": 1
         },
         "classnamespace": "box",
-        "rect": [ 1.0, 95.0, 941.0, 849.0 ],
+        "rect": [ 695.0, 104.0, 941.0, 849.0 ],
         "boxes": [
+            {
+                "box": {
+                    "bgmode": 1,
+                    "border": 0,
+                    "clickthrough": 0,
+                    "enablehscroll": 0,
+                    "enablevscroll": 0,
+                    "id": "obj-14",
+                    "lockeddragscroll": 0,
+                    "lockedsize": 0,
+                    "maxclass": "bpatcher",
+                    "name": "f_separate.maxpat",
+                    "numinlets": 1,
+                    "numoutlets": 4,
+                    "offset": [ 0.0, 0.0 ],
+                    "outlettype": [ "jit_gl_texture", "jit_gl_texture", "jit_gl_texture", "jit_gl_texture" ],
+                    "patching_rect": [ 44.5, 541.0, 191.0, 200.0 ],
+                    "varname": "f_separate",
+                    "viewvisibility": 1
+                }
+            },
             {
                 "box": {
                     "bgmode": 1,
@@ -353,6 +374,12 @@
             },
             {
                 "patchline": {
+                    "destination": [ "obj-3", 0 ],
+                    "source": [ "obj-14", 3 ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [ "obj-21", 0 ],
                     "source": [ "obj-20", 2 ]
                 }
@@ -378,7 +405,7 @@
             },
             {
                 "patchline": {
-                    "destination": [ "obj-3", 0 ],
+                    "destination": [ "obj-14", 0 ],
                     "order": 0,
                     "source": [ "obj-6", 0 ]
                 }
@@ -408,6 +435,14 @@
             "obj-12::obj-38": [ "exc_y", "strength", 0 ],
             "obj-12::obj-41": [ "frequency", "gain", 0 ],
             "obj-12::obj-44": [ "amplitude", "lmode", 0 ],
+            "obj-14::obj-20": [ "n_inks", "n_inks", 0 ],
+            "obj-14::obj-23": [ "sep_mode", "sep_mode", 0 ],
+            "obj-14::obj-26": [ "gain1", "gain1", 0 ],
+            "obj-14::obj-29": [ "gain2", "gain2", 0 ],
+            "obj-14::obj-32": [ "gain3", "gain3", 0 ],
+            "obj-14::obj-35": [ "sat1", "sat1", 0 ],
+            "obj-14::obj-38": [ "sat2", "sat2", 0 ],
+            "obj-14::obj-41": [ "sat3", "sat3", 0 ],
             "obj-1::obj-10": [ "vs_preset_name", "vs_preset_name", 0 ],
             "obj-1::obj-11": [ "live.text[5]", "live.text", 0 ],
             "obj-1::obj-15": [ "live.tab", "live.tab", 0 ],
@@ -573,6 +608,41 @@
                 "obj-12::obj-44": {
                     "parameter_invisible": 0,
                     "parameter_longname": "amplitude",
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-14::obj-20": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-14::obj-23": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 0,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 9
+                },
+                "obj-14::obj-26": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-14::obj-29": {
+                    "parameter_invisible": 0,
+                    "parameter_modmode": 3,
+                    "parameter_steps": 0,
+                    "parameter_type": 0,
+                    "parameter_unitstyle": 1
+                },
+                "obj-14::obj-32": {
+                    "parameter_invisible": 0,
                     "parameter_modmode": 3,
                     "parameter_steps": 0,
                     "parameter_type": 0,
