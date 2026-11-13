@@ -56,7 +56,12 @@ function ensureGroup(name) { if (name != "-" && !groups[name]) { groups[name] = 
 
 function defRange(p) { return PARAM[p] || {lo: 0, hi: 1}; }
 function keyOf(r) { return r.param ? r.outlet + "|" + r.param : ""; }      // a row with no param yet (just added) has no key and sends nothing
-function mkRow(a, blankOk) {                                 // a row record from [outlet, param, lo, hi, amount, chance, wobble, group, trim, mode, sign], or null
+function mkRow(a, blankOk) {                                 // always with its random streams (a row made by `add` or a cell edit is never reseeded before its first roll or tick)
+  var r = mkRow0(a, blankOk);
+  if (r) { var id = r.outlet + "|" + r.param; r.rng = warm({s: hash(G.seed + "|" + id)}); r.gate = warm({s: hash(G.seed + "|gate|" + id)}); r.wr = warm({s: hash(G.seed + "|wob|" + id)}); }
+  return r;
+}
+function mkRow0(a, blankOk) {                                 // a row record from [outlet, param, lo, hi, amount, chance, wobble, group, trim, mode, sign], or null
   var o = Math.round(num(a[0], 0)), p = (a[1] === undefined || a[1] === "") ? "" : String(a[1]);
   if (o < 1 || o > OUTS || (!p && !blankOk)) return null;
   var d = defRange(p);

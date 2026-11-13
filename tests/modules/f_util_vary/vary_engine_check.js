@@ -86,6 +86,9 @@ c.out.length = 0; c.set("add"); assert(ui(c).some(function (m) { return m[1] == 
 c.set("cell", 1, "param", "x"); c.set("cell", 1, "amt", 100); c.set("cell", 1, "lo", -1); c.set("cell", 1, "hi", 1); c.set("roll");
 assert(Math.abs(lastv(c, 0, "x")) > 0, "the row works once its param is chosen"); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "param_idx" && m[3] == 0; }), "param index pushed back");
 
+// a row made by `add` (or edited by a cell) rolls and ticks without error, wobble included
+c = load(); c.set("add"); c.set("cell", 1, "wob", 50); np = c.posts.length; c.set("roll"); c.set("tick"); c.set("cell", 1, "param", "x"); c.base("x", 0.5); c.set("roll"); c.set("tick"); assert.strictEqual(c.posts.length, np, "no error from a row made by add");
+
 // 13. a table line arriving as a list led by a symbol is the same as the message
 c = load(); c.ctxlist = true; c.inlet = 1; c.messagename = "list"; c.anything("row", 2, "x", 0, 1, 10, 100); c.base("x", 0.5); assert(on(c, 1, "x").length == 1 && on(c, 0, "x").length == 1, "list-led row accepted");
 
