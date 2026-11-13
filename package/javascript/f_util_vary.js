@@ -4,7 +4,7 @@
 //          an outlet's table row adds variation to its own copy. No row, amount 0 and chance 0 all give the plain base: with an empty table
 //          this is a transparent wire.
 // Inlet 1: vary's own settings and table lines: roll, tick, seed, amount, chance, wobble (a scale), slew (ms), debug, refresh, clear, dump,
-//          and the table lines   row / param / group.   (Kept off inlet 0 so a module param named `amount` or `seed` cannot collide.)
+//          and the table lines   row / param / group / knob.   (Kept off inlet 0 so a module param named `amount` or `seed` cannot collide.)
 // Outlets 0..OUTS-1: one per destination (1..OUTS in the table).
 //
 // Table lines:
@@ -14,13 +14,13 @@
 //        mode: u (uniform re-roll) | d (drunk: bounded walk)    sign: bi | up | down    group: name or -
 // effective = clamp(base + trim + offset * amount + wobble, lo, hi), in units of the range. The offset is held between rolls; the draw is
 // corr * (group's shared draw) + (1 - corr) * (the row's own draw). One global seed; every group and row derives its own streams from it.
-inlets = 2; outlets = 4;
+inlets = 2; outlets = 6;   // 0-3 destinations; 4 monitor (a list of 0..1 row positions, for a multislider); 5 labels (`set ...` for a comment)
 // Everything lives in one closure: Max js calls any GLOBAL function named like an incoming message, and a base may be called anything.
 function anything() { V.anything(messagename, arrayfromargs(arguments), inlet); }
 var V = (function () {
 var OUTS = 4;
 var G = {amount: 1, chance: 1, wobble: 1, slew: 0, seed: 1};
-var rows = [], byKey = {}, groups = {}, PARAM = {}, BASE = {}, last = 0, DEBUG = 0, t0 = 0;
+var rows = [], byKey = {}, groups = {}, PARAM = {}, BASE = {}, KN = {}, last = 0, DEBUG = 0, t0 = 0, MON = 16;
 
 function mul32(a, b) { return ((((a >>> 16) * b) % 65536) * 65536 + (a & 65535) * b) % 4294967296; }     // exact 32-bit multiply (doubles lose bits above 2^53)
 function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h = (h ^ s.charCodeAt(i)) >>> 0; h = mul32(h, 16777619); } return h || 1; }
@@ -51,11 +51,11 @@ function rowCmd(a) {
            sign: a[10] === undefined ? "bi" : String(a[10]), off: 0, tgt: 0, sent: null, wk: 0};
   var key = o + "|" + p;
   if (byKey[key] !== undefined) rows[byKey[key]] = r; else { byKey[key] = rows.length; rows.push(r); }
-  ensureGroup(r.group); reseed();
+  ensureGroup(r.group); reseed(); labels();
 }
 function paramCmd(a) { if (a[0] !== undefined) PARAM[String(a[0])] = {lo: num(a[1], 0), hi: num(a[2], 1)}; }
 function groupCmd(a) { if (a[0] === undefined) return; var n = String(a[0]); ensureGroup(n); groups[n].corr = clamp(num(a[1], 0.5), 0, 1); }
-function clearCmd() { rows = []; byKey = {}; groups = {}; PARAM = {}; }          // bases are kept, so a re-applied table finds them
+function clearCmd() { rows = []; byKey = {}; groups = {}; PARAM = {}; KN = {}; labels(); }          // bases are kept, so a re-applied table finds them
 
 function value(r) {
   var range = r.hi - r.lo;
@@ -69,7 +69,39 @@ function emitRow(r, force) {
     if (DEBUG) post("vary", "out" + r.outlet, r.param, v.toFixed(5), "+" + (now() - t0) + "ms\n");
   }
 }
-function emitRows(force) { for (var i = 0; i < rows.length; i++) emitRow(rows[i], force); }
+function emitRows(force) {
+  var any = false;
+  for (var i = 0; i < rows.length; i++) { var before = rows[i].sent; emitRow(rows[i], force); if (rows[i].sent !== before) any = true; }
+  if (any) monitor();
+}
+function monitor() {                                          // normalized position of each row's value in its range, for a multislider
+  var l = [], n = Math.min(MON, rows.length);
+  for (var i = 0; i < n; i++) { var r = rows[i]; l.push((BASE[r.param] === undefined || r.hi == r.lo) ? 0 : clamp((value(r) - r.lo) / (r.hi - r.lo), 0, 1)); }
+  if (n) outlet(4, l);
+}
+function labels() {
+  var t = [], n = Math.min(MON, rows.length);
+  for (var i = 0; i < n; i++) t.push("o" + rows[i].outlet + "." + rows[i].param);
+  outlet(5, "set", t.length ? t.join(" ") : "(no rows)");
+}
+// knob <n> row <outlet> <param> <field>   or   knob <n> group <name>.   Values arrive as `k <n> <0..1>` from a dial.
+function knobCmd(a) {
+  var n = Math.round(num(a[0], 0));
+  if (n < 1 || n > 4) { post("f_util_vary: knob 1-4 only: " + a.join(" ") + "\n"); return; }
+  if (a[1] == "row") KN[n] = {kind: "row", key: Math.round(num(a[2], 0)) + "|" + String(a[3]), field: String(a[4])};
+  else if (a[1] == "group") KN[n] = {kind: "group", name: String(a[2])};
+  else post("f_util_vary: knob needs row or group: " + a.join(" ") + "\n");
+}
+function knobSet(a) {
+  var k = KN[Math.round(num(a[0], 0))], v = clamp(num(a[1], 0), 0, 1);
+  if (!k) return;
+  if (k.kind == "group") { if (groups[k.name]) groups[k.name].corr = v; return; }
+  var i = byKey[k.key]; if (i === undefined) return;
+  var r = rows[i];
+  if (k.field == "amount") r.amount = v * 100; else if (k.field == "chance") r.chance = v * 100; else if (k.field == "wobble") r.wobble = v * 100;
+  else if (k.field == "trim") r.trim = (v * 2 - 1) * 100; else return;
+  emitRows(false);
+}
 
 function base(name, a) {                                   // a base arrives on inlet 0
   var v = num(a[0], NaN);
@@ -79,6 +111,7 @@ function base(name, a) {                                   // a base arrives on 
     if (i !== undefined && !isNaN(v)) emitRow(rows[i], true);
     else outlet.apply(null, [o - 1, name].concat(a));      // no row for this outlet: the plain base
   }
+  if (rows.length && !isNaN(v)) monitor();
 }
 
 function roll() {
@@ -120,6 +153,8 @@ function settings(name, a) {                                 // inlet 1
     case "row": rowCmd(a); break;
     case "param": paramCmd(a); break;
     case "group": groupCmd(a); break;
+    case "knob": knobCmd(a); break;
+    case "k": knobSet(a); break;
     case "roll": roll(); break;
     case "tick": tick(); break;
     case "refresh": refresh(); break;
@@ -134,5 +169,8 @@ function settings(name, a) {                                 // inlet 1
     default: if (name.charAt(0) != "#") post("f_util_vary: unknown setting " + name + "\n");
   }
 }
-  return {anything: function (name, a, inl) { if (inl == 1) settings(name, a); else base(name, a); }};
+  return {anything: function (name, a, inl) {
+    if (name == "list" && a.length && typeof a[0] == "string") { name = a[0]; a = a.slice(1); }      // a text/coll line may arrive as a list led by a symbol
+    if (inl == 1) settings(name, a); else base(name, a);
+  }};
 })();

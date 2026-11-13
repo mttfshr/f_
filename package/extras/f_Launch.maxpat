@@ -5451,6 +5451,62 @@
 										20.0
 									]
 								}
+							},
+							{
+								"box": {
+									"id": "obj-11",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										20.0,
+										260.0,
+										150.0,
+										20.0
+									],
+									"text": "f_util_vary",
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									],
+									"presentation": 1,
+									"presentation_rect": [
+										10.0,
+										126.0,
+										210.0,
+										20.0
+									]
+								}
+							},
+							{
+								"box": {
+									"id": "obj-12",
+									"maxclass": "comment",
+									"numinlets": 1,
+									"numoutlets": 0,
+									"patching_rect": [
+										260.0,
+										260.0,
+										150.0,
+										20.0
+									],
+									"text": "Control utility -- varies named control values per destination (amount, chance, groups, wobble); draft status",
+									"presentation": 1,
+									"presentation_rect": [
+										230.0,
+										126.0,
+										720.0,
+										20.0
+									],
+									"textcolor": [
+										0.55,
+										0.55,
+										0.55,
+										1.0
+									]
+								}
 							}
 						],
 						"lines": [

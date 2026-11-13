@@ -51,6 +51,10 @@
   "f_util_profile": {
    "reason": "js-driven CPU luminance profiler (moduleSize/profile_rows/profile_cols js plus live.* controls); not expressible in the schema. Its stale definition.py (1 June, failed to build) was deleted on purpose on 2026-10-05; it is in git history.",
    "status": "out_of_scope"
+  },
+  "f_util_vary": {
+   "reason": "Hand-built control utility (js engine f_util_vary.js, a message-box table, live.dial strip, multislider); no jit.gl.pix codebox, so the schema cannot express it. Source: src/f_util_vary/build_vary_patcher.py; spec in .specify/f_util_vary/.",
+   "status": "out_of_scope"
   }
  }
 }

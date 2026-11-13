@@ -30,11 +30,11 @@ assert.notStrictEqual(on(c, 1, "x")[0][2], 0.3, "outlet 2 not plain");
 // 3. determinism and recall: the same seed gives the same draw
 var a = load(), b = load();
 [a, b].forEach(function (k) { k.row(1, "x", -1, 1, 50, 100, 0, "g"); k.row(2, "x", -1, 1, 50, 100, 0, "g"); k.base("x", 0); k.set("seed", 17); });
-assert.deepStrictEqual(a.out, b.out, "same seed, same draw");
+assert.strictEqual(JSON.stringify(a.out), JSON.stringify(b.out), "same seed, same draw");
 var v17 = lastv(a, 0, "x"); a.set("seed", 18); assert.notStrictEqual(lastv(a, 0, "x"), v17); a.set("seed", 17); assert.strictEqual(lastv(a, 0, "x"), v17, "roll 17 recalls");
 
 // 4. clamp; no emit from a row before its base; amount 0 returns the base
-c = load(); c.row(1, "v", 0, 1, 100, 100); c.set("roll"); assert.strictEqual(c.out.length, 0, "no emit before a base");
+c = load(); c.row(1, "v", 0, 1, 100, 100); c.set("roll"); assert.strictEqual(c.out.filter(function (m) { return m[0] < 4; }).length, 0, "no emit before a base");
 c.base("v", 0.99); for (var i = 0; i < 50; i++) { c.set("roll"); var e = lastv(c, 0, "v"); assert(e >= 0 && e <= 1, "clamped"); }
 c.set("amount", 0); assert.strictEqual(lastv(c, 0, "v"), 0.99, "amount 0 -> base");
 
@@ -71,4 +71,17 @@ assert.strictEqual(on(c, 0, "x")[0][2], 0.4, "refresh sends the plain base to ou
 
 // 11. bad rows are reported, not added
 c = load(); c.row(9, "x"); c.row(0, "x"); assert(c.posts.length == 2, "two bad rows reported"); c.base("x", 1); assert.strictEqual(c.out.length, 4, "still a plain wire");
+
+// 12. knobs: a knob maps 0..1 onto a row field (or a group's correlation)
+c = load(); c.row(1, "x", -1, 1, 0, 100); c.base("x", 0); c.set("knob", 1, "row", 1, "x", "amount"); c.set("roll");
+assert.strictEqual(lastv(c, 0, "x"), 0, "amount 0: no variation yet"); c.set("k", 1, 0.5); assert(Math.abs(lastv(c, 0, "x")) > 0, "knob raises the row's amount"); assert.strictEqual(c.out.filter(function (m) { return m[0] == 4; }).length > 0, true, "monitor list sent");
+c.set("knob", 2, "row", 1, "x", "trim"); c.set("k", 2, 1); c.set("k", 1, 0); assert(Math.abs(lastv(c, 0, "x") - 1) < 1e-9, "trim knob at 1 = +100% of the range (clamped to hi)");
+c.set("group", "g", 0.2); c.set("knob", 3, "group", "g"); c.set("k", 3, 0.9); c.set("knob", 9, "row", 1, "x", "amount"); assert(c.posts.length >= 1, "bad knob reported");
+
+// 13. a table line arriving as a list led by a symbol is the same as the message
+c = load(); c.ctxlist = true; c.inlet = 1; c.messagename = "list"; c.anything("row", 2, "x", 0, 1, 10, 100); c.base("x", 0.5); assert(on(c, 1, "x").length == 1 && on(c, 0, "x").length == 1, "list-led row accepted");
+
+// 14. monitor and label outlets
+c = load(); c.row(1, "x", 0, 1, 50, 100); c.row(2, "y", 0, 1, 50, 100); assert(c.out.some(function (m) { return m[0] == 5 && m[1] == "set" && m[2] == "o1.x o2.y"; }), "labels");
+c.base("x", 0.5); c.base("y", 0.5); var mon = c.out.filter(function (m) { return m[0] == 4; }); assert(mon.length > 0 && mon[mon.length - 1][1].length == 2, "monitor list has one value per row");
 console.log("ok");

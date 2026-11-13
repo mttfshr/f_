@@ -109,6 +109,7 @@ CATEGORIES = [
     ("Routing / Mod", [
         ("Matrix 2", "util_matrix_2", N),
         ("Profile", "util_profile", N),
+        ("Vary", "util_vary", N),
         ("Tex Router", "texrouter", N),
     ]),
 ]

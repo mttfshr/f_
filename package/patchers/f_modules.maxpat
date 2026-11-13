@@ -1471,6 +1471,7 @@
                             "parameter_enum": [
                                 "Matrix 2",
                                 "Profile",
+                                "Vary",
                                 "Tex Router"
                             ],
                             "parameter_initial": [
@@ -1478,7 +1479,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_8_disp",
-                            "parameter_mmax": 2,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
@@ -1511,6 +1512,7 @@
                             "parameter_enum": [
                                 "util_matrix_2",
                                 "util_profile",
+                                "util_vary",
                                 "texrouter"
                             ],
                             "parameter_initial": [
@@ -1518,7 +1520,7 @@
                             ],
                             "parameter_invisible": 2,
                             "parameter_longname": "f_module_8_file",
-                            "parameter_mmax": 2,
+                            "parameter_mmax": 3,
                             "parameter_modmode": 0,
                             "parameter_shortname": "live.menu",
                             "parameter_type": 2
