@@ -88,6 +88,14 @@ Offset and rotation targets per plate, one correlation group per drum (a press e
 
 Generalize `scratch/experiments/misregister_chain/misreg_press.js` into a table-driven engine and test it on the round 2 chain (`misregister_chain2.maxpat`) with three targets per plate: offset x and y, spread cutoff, density gain. That checks the `script send` addressing, whether the dials move on screen, and whether the base and effective split holds. Matt's go is needed first; Matt's round 2 look (five notes at the bottom of that patch) is still owed.
 
+## First engine pass: decided (Matt, 2026-11-12)
+
+- **Output:** the wired single writer (not `script send`). The engine is the only wire into each target module's inlet 0.
+- **Keys:** `module.param` (for example `lp1.cutoff`), on every base message in and every row of the table.
+- **Seed:** one global seed; each group derives its own stream from it.
+- **Table:** plain text, one row per line (target, lo, hi, amount, chance, group, trim, mode, sign); loaded at start.
+- **Not decided, Claude's lean:** the js emits one outlet of `module param value`, and a `route lp1 erode1 ...` in the patch fans it to each module's inlet 0 (a js has a fixed outlet count, so one outlet per module would not follow the table).
+
 ## Gates this touches
 
 `G-ui-density` (a control surface over many dials), `G-menu` (a new utility needs a place), `P-mod-textures` only if targets include tagged textures. None cleared or reopened.
