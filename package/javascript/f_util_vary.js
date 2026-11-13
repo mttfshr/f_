@@ -115,7 +115,7 @@ function uiMake(i) {
 }
 function uiGrow() {                                          // as many row UIs as rows
   if (restoring) return;
-  while (UIN < rows.length) { UIN++; uiMake(UIN); }
+  while (UIN < rows.length) { UIN++; uiMake(UIN); pushNames(UIN); }
   while (UIN > rows.length) { _uiRemove(UIN); UIN--; }
 }
 function uiRebuild() {                                       // an embedded patch saves its scripted rows, so remove any that came back and build them from the table
@@ -124,7 +124,7 @@ function uiRebuild() {                                       // an embedded patc
   UIN = 0; uiGrow(); pushAll(); gpush();
 }
 function addName(p) { if (p && NAMES.indexOf(p) < 0) { NAMES.push(p); if (!restoring && UIN) pushAll(); } }
-function pushNames() { if (!NAMES.length) return; for (var n = 1; n <= UIN; n++) outlet.apply(null, [8, n, "names"].concat(NAMES)); }
+function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n <= (only || UIN); n++) outlet.apply(null, [8, n, "names"].concat(NAMES)); }      // `only`: just that row (a new one)
 function pushRow(i) {
   if (restoring || i >= UIN) return;
   var r = rows[i], n = i + 1, g = /^g([1-4])$/.exec(r.group);

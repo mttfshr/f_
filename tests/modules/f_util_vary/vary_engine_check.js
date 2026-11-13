@@ -82,6 +82,7 @@ assert.strictEqual(sc(c).filter(function (m) { return m[2] == "connect"; }).leng
 assert(sc(c)[0].indexOf("vr1") > 0 && sc(c)[0].indexOf("f_util_vary_row.maxpat") > 0, "named vr1, from f_util_vary_row.maxpat");
 c.base("x", 0); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "names" && m[3] == "x"; }), "a base name is offered to the row's menu");
 c.out.length = 0; c.base("x", 0); assert.strictEqual(on(c, 0, "x").length, 1, "a row with no param yet is a plain wire");
+c.out.length = 0; c.set("add"); assert(ui(c).some(function (m) { return m[1] == 2 && m[2] == "names" && m[3] == "x"; }), "a row added after the names were seen is given them");
 c.set("cell", 1, "param", "x"); c.set("cell", 1, "amt", 100); c.set("cell", 1, "lo", -1); c.set("cell", 1, "hi", 1); c.set("roll");
 assert(Math.abs(lastv(c, 0, "x")) > 0, "the row works once its param is chosen"); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "param_idx" && m[3] == 0; }), "param index pushed back");
 
