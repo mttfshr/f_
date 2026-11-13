@@ -21,7 +21,7 @@ _Spec_: `.specify/f_util_vary/spec.md`. Record who observed what, and when.
   - **2026-11-13 (Matt's call):** the g dials also get one pattr each (`vary_g1`..`vary_g4`); the table now holds only the rows. Per-row control pattrs were rejected (a slot could not create rows). Offline only; Matt to check live.
 
 ## Phase 2: documentation and registration
-- [ ] T020 Reference doc `docs/f-reference/f_util_vary.md`; helpfile (`f-helpfile` skill); README row (110 chars, then `build/py.sh build/generate_launch.py`); menu entry in `src/f_modules/menu.py` (`G-menu`). Partly done 2026-11-12 (Claude): README row (draft status) and menu entry `Vary` under Routing / Mod (provisional, `G-menu`), launcher and menu regenerated; reference doc written 2026-11-13 (Claude, offline, from the engine source: `docs/f-reference/f_util_vary.md`); helpfile still to do (after T003).
+- [ ] T020 Reference doc `docs/f-reference/f_util_vary.md`; helpfile (`f-helpfile` skill); README row (110 chars, then `build/py.sh build/generate_launch.py`); menu entry in `src/f_modules/menu.py` (`G-menu`). Partly done 2026-11-12 (Claude): README row (draft status) and menu entry `Vary` under Routing / Mod (provisional, `G-menu`), launcher and menu regenerated; reference doc written 2026-11-13 (Claude, offline, from the engine source: `docs/f-reference/f_util_vary.md`); helpfile `package/help/f_util_vary.maxhelp` written 2026-11-13 by Claude from the f_vf_stamp model (a demo with the bpatcher, three base messages and four output boxes); NOT opened in Max, Matt's look owed; launcher regenerated.
 
 ## Phase 3: preflight
 - [ ] T030 Module preflight checklist (`module-preflight` skill).
