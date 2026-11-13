@@ -21,20 +21,6 @@
         "boxes": [
             {
                 "box": {
-                    "id": "obj-1",
-                    "maxclass": "panel",
-                    "numinlets": 1,
-                    "numoutlets": 0,
-                    "patching_rect": [
-                        0.0,
-                        -2.0,
-                        303.0,
-                        765.0
-                    ]
-                }
-            },
-            {
-                "box": {
                     "bgcolor": [
                         0.2,
                         0.2,
@@ -176,6 +162,20 @@
                         }
                     },
                     "fontsize": 12.0
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "panel",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        0.0,
+                        -2.0,
+                        303.0,
+                        765.0
+                    ]
                 }
             },
             {
