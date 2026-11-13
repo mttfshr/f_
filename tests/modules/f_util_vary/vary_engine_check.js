@@ -85,7 +85,8 @@ c.base("x", 0); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "na
 c.out.length = 0; c.base("x", 0); assert.strictEqual(on(c, 0, "x").length, 1, "a row with no param yet is a plain wire");
 c.out.length = 0; c.set("add"); assert(ui(c).some(function (m) { return m[1] == 2 && m[2] == "names" && m[3] == "x"; }), "a row added after the names were seen is given them");
 c.set("cell", 1, "param", "x"); c.set("cell", 1, "amt", 100); c.set("cell", 1, "lo", -1); c.set("cell", 1, "hi", 1); c.set("roll");
-assert(Math.abs(lastv(c, 0, "x")) > 0, "the row works once its param is chosen"); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "param_idx" && m[3] == 0; }), "param index pushed back");
+assert(Math.abs(lastv(c, 0, "x")) > 0, "the row works once its param is chosen"); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "param_idx" && m[3] == 1; }), "param index pushed back (item 0 is the placeholder)");
+c.set("cell", 1, "param", "-"); c.out.length = 0; c.base("x", 0.5); assert.strictEqual(on(c, 0, "x").length, 1, "choosing the placeholder clears the param (a plain wire again)");
 
 // a row made by `add` (or edited by a cell) rolls and ticks without error, wobble included
 c = load(); c.set("add"); c.set("cell", 1, "wob", 50); np = c.posts.length; c.set("roll"); c.set("tick"); c.set("cell", 1, "param", "x"); c.base("x", 0.5); c.set("roll"); c.set("tick"); assert.strictEqual(c.posts.length, np, "no error from a row made by add");

@@ -140,7 +140,7 @@ function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n 
 function pushRow(i) {
   if (restoring || i >= UIN) return;
   var r = rows[i], n = i + 1, g = /^g([1-4])$/.exec(r.group);
-  outlet(8, n, "out", r.outlet); outlet(8, n, "param_idx", NAMES.indexOf(r.param)); outlet(8, n, "lo", r.lo === null ? 0 : r.lo); outlet(8, n, "hi", r.hi === null ? 0 : r.hi);      // an unset side shows 0
+  outlet(8, n, "out", r.outlet); outlet(8, n, "param_idx", NAMES.indexOf(r.param) + 1);      // item 0 of the menu is the placeholder "-" (no param yet) outlet(8, n, "lo", r.lo === null ? 0 : r.lo); outlet(8, n, "hi", r.hi === null ? 0 : r.hi);      // an unset side shows 0
   outlet(8, n, "amt", r.amount); outlet(8, n, "chance", r.chance); outlet(8, n, "wob", r.wobble); outlet(8, n, "trim", r.trim);
   outlet(8, n, "group", g ? Number(g[1]) : 0); outlet(8, n, "mode", r.mode); outlet(8, n, "sign", r.sign);
 }
@@ -152,6 +152,7 @@ function uiCell(a) {                                         // `cell <i> <field
   if (i < 0 || i >= rows.length) return;
   if (f == "del") { rows.splice(i, 1); reindex(); reseed(); labels(); uiGrow(); pushAll(); resend(); commit(); return; }
   if (FIELD[f] === undefined) { post("f_util_vary: unknown row field " + f + "\n"); return; }
+  if (f == "param" && v == "-") v = "";                        // the menu's placeholder item: back to no param
   if (f == "group") { var gn = num(v, 0); v = gn >= 1 ? "g" + Math.min(4, Math.round(gn)) : "-"; }
   var cells = rowCells(rows[i]).map(String); cells[FIELD[f]] = v;
   var nr = mkRow(cells, true), old = rows[i], oldKey = keyOf(old), key = nr ? keyOf(nr) : "";

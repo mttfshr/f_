@@ -55,9 +55,9 @@ target = {"out": "c_out", "param_idx": "c_param", "lo": "c_lo", "hi": "c_hi", "a
 for k, f in enumerate(FIELDS):
     if f in target:
         obj("ps_" + f, "prepend set", [20 + 70 * k, 150, 70, 22], 1, 1); ln("r2", k, "ps_" + f, 0); ln("ps_" + f, 0, target[f], 0)
-# the names list -> the param menu (clear, then append each name)
+# the names list -> the param menu (clear, a placeholder item `-` at index 0, then each name)
 k = FIELDS.index("names")
-obj("nt", "t l b", [20, 200, 50, 22], 1, 2); msg("nclr", "clear", [20, 230, 40, 22]); obj("nit", "zl iter 1", [80, 230, 60, 22], 2, 2); obj("nap", "prepend append", [80, 260, 90, 22], 1, 1)
+obj("nt", "t l b", [20, 200, 50, 22], 1, 2); msg("nclr", "clear, append -", [20, 230, 90, 22]); obj("nit", "zl iter 1", [80, 230, 60, 22], 2, 2); obj("nap", "prepend append", [80, 260, 90, 22], 1, 1)
 ln("r2", k, "nt", 0); ln("nt", 1, "nclr", 0); ln("nclr", 0, "c_param", 0); ln("nt", 0, "nit", 0); ln("nit", 0, "nap", 0); ln("nap", 0, "c_param", 0)
 # mode u / d -> the toggle; sign bi / up / down -> the sign menu
 k = FIELDS.index("mode")

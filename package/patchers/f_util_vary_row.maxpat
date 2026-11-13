@@ -675,10 +675,10 @@
 					"patching_rect": [
 						20,
 						230,
-						40,
+						90,
 						22
 					],
-					"text": "clear",
+					"text": "clear, append -",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.0
 				}
