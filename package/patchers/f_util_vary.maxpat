@@ -176,6 +176,37 @@
 			{
 				"box": {
 					"id": "roll",
+					"maxclass": "textbutton",
+					"text": "⚅",
+					"mode": 0,
+					"hint": "roll",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						"int"
+					],
+					"patching_rect": [
+						20,
+						120,
+						40,
+						22
+					],
+					"presentation": 1,
+					"presentation_rect": [
+						8,
+						23,
+						40,
+						22
+					],
+					"fontname": "Ableton Sans Light",
+					"fontsize": 18.0
+				}
+			},
+			{
+				"box": {
+					"id": "rollm",
 					"maxclass": "message",
 					"numinlets": 2,
 					"numoutlets": 1,
@@ -184,20 +215,13 @@
 					],
 					"patching_rect": [
 						20,
-						120,
+						150,
 						40,
 						22
 					],
 					"text": "roll",
 					"fontname": "Ableton Sans Light",
-					"fontsize": 9.0,
-					"presentation": 1,
-					"presentation_rect": [
-						8,
-						24,
-						40,
-						18
-					]
+					"fontsize": 9.0
 				}
 			},
 			{
@@ -2738,6 +2762,18 @@
 				"patchline": {
 					"source": [
 						"roll",
+						0
+					],
+					"destination": [
+						"rollm",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"rollm",
 						0
 					],
 					"destination": [

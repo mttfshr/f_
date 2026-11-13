@@ -62,7 +62,9 @@ for dot_id, y, hint in (("obj-19f", 5.0, "Takes: no vecfield or tensor"), ("obj-
 add({"id": "title", "maxclass": "comment", "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 100, 21], "text": "f_util_vary", "fontname": FONT, "fontsize": 12.0,
      "presentation": 1, "presentation_rect": [10.5, 0.0, 92.0, 21.0]})
 com("hint", "bases in the left inlet, settings in the right; 8 outlets", [400, 40, 300, 20], [104, 3, 264, 16], 8.0)
-msg("roll", "roll", [20, 120, 40, 22], [8, 24, 40, 18])
+add({"id": "roll", "maxclass": "textbutton", "text": "\u2685", "mode": 0, "hint": "roll", "numinlets": 1, "numoutlets": 3, "outlettype": ["", "", "int"],
+     "patching_rect": [20, 120, 40, 22], "presentation": 1, "presentation_rect": [8, 23, 40, 22], "fontname": FONT, "fontsize": 18.0})
+msg("rollm", "roll", [20, 150, 40, 22])
 obj("seedn", "number", [70, 120, 50, 22], 1, 2, ["", "bang"], presentation=1, presentation_rect=[54, 24, 44, 18], fontname=FONT, fontsize=9.0)
 com("seedl", "seed", [130, 120, 40, 20], [100, 25, 34, 16], 8.0)
 for k, (name, lo, hi, init, unit) in enumerate([("amount", 0.0, 2.0, 1.0, 1), ("chance", 0.0, 1.0, 1.0, 1), ("wobble", 0.0, 1.0, 1.0, 1), ("slew", 0.0, 2000.0, 0.0, 2)]):
@@ -112,7 +114,7 @@ for k in range(8):
     add({"id": f"out{k+1}", "maxclass": "outlet", "numinlets": 1, "numoutlets": 0, "patching_rect": [20 + 60 * k, 500, 30, 30], "comment": f"destination {k+1}"})
     ln("js", k, f"out{k+1}", 0)
 ln("js", 8, "mon", 0); ln("js", 9, "labels", 0)
-ln("roll", 0, "js", 1)
+ln("roll", 0, "rollm", 0); ln("rollm", 0, "js", 1)
 obj("pseed", "prepend seed", [70, 150, 80, 22], 1, 1); ln("pt_seed", 0, "pseed", 0); ln("pseed", 0, "js", 1)
 obj("draw", "r draw", [270, 120, 60, 22], 0, 1); msg("tick", "tick", [270, 150, 40, 22]); ln("draw", 0, "tick", 0); ln("tick", 0, "js", 1)
 
@@ -123,5 +125,5 @@ assert len(ids) == len(set(ids)), "duplicate ids"
 for l in lines:
     for e in (l["patchline"]["source"][0], l["patchline"]["destination"][0]):
         assert e in ids, e
-OUT.write_text(json.dumps({"patcher": patcher}, indent="\t"))
+OUT.write_text(json.dumps({"patcher": patcher}, indent="\t", ensure_ascii=False), encoding="utf-8")
 print("wrote", OUT, len(ids), "boxes", len(lines), "cords")
