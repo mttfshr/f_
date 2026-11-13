@@ -242,6 +242,7 @@ function tick() {
 function refresh() { labels(); uiRebuild(); resend(); }      // loadbang: rebuild the row UIs from the table, then re-send every base
 function seedCmd(v) { G.seed = num(v, 1); reseed(); for (var i = 0; i < rows.length; i++) { rows[i].tgt = 0; rows[i].off = 0; } roll(); commit(); }   // "roll N" recalls a draw
 function dumpCmd() {
+  post("f_util_vary: strip values held by the engine: amount", G.amount, "chance", G.chance, "wobble", G.wobble, "slew", G.slew, "seed", G.seed, "\n");
   for (var i = 0; i < rows.length; i++) { var r = rows[i]; post("out" + r.outlet, r.param, "base", BASE[r.param], "off", r.off.toFixed(3), "group", r.group, "\n"); }
 }
 
