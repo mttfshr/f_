@@ -96,6 +96,19 @@ Generalize `scratch/experiments/misregister_chain/misreg_press.js` into a table-
 - **Table:** plain text, one row per line (target, lo, hi, amount, chance, group, trim, mode, sign); loaded at start.
 - **Not decided, Claude's lean:** the js emits one outlet of `module param value`, and a `route lp1 erode1 ...` in the patch fans it to each module's inlet 0 (a js has a fixed outlet count, so one outlet per module would not follow the table).
 
+## Shipping design: decided (Matt and Claude, 2026-11-12; supersedes the `module.param` keys and the `route` fan-out above)
+
+Vary only moves control scalars, so it knows nothing about its targets. It is a transparent wire with variation added.
+
+- **Inlet 0:** bases by name (`x 0.1`, `hue 0.5`), the ordinary control messages a module takes. **Inlet 1:** vary's own settings (roll, seed, amount, chance, wobble, slew, table lines, `row ...`), so a module param named `amount` cannot collide.
+- **Outlets:** one per destination (the thing downstream); **4 to start** (Matt: "3 or 4"). Each outlet sends ordinary module messages (`x 0.13`), wired straight to a module's inlet 0: no `route`, no `prepend`.
+- **Passthrough rule (Matt):** every base that arrives goes out of EVERY outlet. A table row only adds variation to one outlet's copy of one param. No row, amount 0 or chance 0 all give the plain base, so vary with an empty table is a transparent wire. (This reverses an earlier Claude lean of "silent when omitted".) A `mute <outlet> <param>` line is possible later, not built.
+- **Rows:** `row <outlet> <param> lo hi amount% chance% wobble group trim% mode sign`; at most outlets x params, usually fewer. Wobble moves from global to per-row (Matt's case: a different wobble per param per group); the global wobble stays as a scale. Per-param range defaults (`param <name> lo hi`) so rows do not repeat the range. Correlation groups run across outlets (plates).
+- **Table storage:** an embedded `text @embed 1` inside the patch, edited by double-click, applied by an apply button (dump into the engine). No file path (the `File` lookup failed twice). A `row ...` message adds or replaces a row, but only the text is saved.
+- **UI:** the controls reached for differ every time, so the panel is a fixed strip (roll, seed, amount, chance, wobble, slew) plus 4 assignable knobs, each mapped in the table to any field of any row (`knob <n> <outlet> <param> <field>`), plus read-only live bars per row. Text table first; a grid editor and an add-row button later (`G-ui-density`).
+- **Capacity:** no hard limit on rows; only the outlet count is fixed. The cost is messages per frame under slew and wobble. Unmeasured; plan for a few dozen rows.
+- **Not decided:** per-destination bases (a shared base per param name for now); non-float params (menus, toggles); the menu category (`G-menu`).
+
 ## Gates this touches
 
 `G-ui-density` (a control surface over many dials), `G-menu` (a new utility needs a place), `P-mod-textures` only if targets include tagged textures. None cleared or reopened.
