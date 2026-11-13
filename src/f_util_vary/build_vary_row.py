@@ -42,7 +42,7 @@ for f, x, lo, size in DIALS:
 ui("c_mode", "toggle", [262, 3, 14, 14], 1, ["int"])
 ui("c_sign", "umenu", [279, 2, 38, 16], 3, ["int", "", ""], items=["bi", ",", "up", ",", "down"], arrow=0)
 ui("c_grp", "number", [319, 2, 22, 16], 2, ["", "bang"], minimum=0, maximum=4)
-ui("c_del", "textbutton", [343, 2, 16, 16], 3, ["", "", "int"], text="-", mode=0)
+ui("c_del", "textbutton", [343, 0, 24, 20], 3, ["", "", "int"], text="-", mode=0)
 
 # ---- in: engine -> controls ----
 add({"id": "in", "maxclass": "inlet", "numinlets": 0, "numoutlets": 1, "outlettype": [""], "patching_rect": [20, 20, 30, 30], "comment": "<i> <field> <value>"})
