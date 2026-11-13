@@ -80,6 +80,9 @@ var RECIPES = {
 };
 // END RECIPES
 
+// Modules that must be placed EMBEDDED (embed 1): their saved state (f_util_vary's table) is kept in the patch only when embedded.
+var EMBED = {"util_vary": 1};
+
 // Place one module's bpatcher in the user's patch at (x, y); returns its width.
 function place(target, mod, x, y) {
     var size = SIZES[mod] || [200, 150]; // fallback if a new module isn't listed yet
@@ -89,6 +92,7 @@ function place(target, mod, x, y) {
     myobj.message("border", 0);
     myobj.replace("f_" + mod + ".maxpat");
     myobj.rect = [x, y, x + size[0], y + size[1]];
+    if (EMBED[mod]) myobj.message("embed", 1);
     return size[0];
 }
 
