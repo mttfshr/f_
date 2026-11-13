@@ -1,6 +1,6 @@
-# f_util_randomizer (placeholder name)
+# f_util_vary
 
-_Captured 2026-11-11 in chat with Matt, from the `f_misregister` experiment. Concept only: nothing built, nothing verified in Max for this idea. The name is a placeholder (Matt has not chosen; `f_util_variance` and `f_util_press` were floated)._
+_Captured 2026-11-11 in chat with Matt, from the `f_misregister` experiment. Concept only: nothing built, nothing verified in Max for this idea. The name `f_util_vary` was chosen by Matt 2026-11-12 (this note was `f_util_randomizer.md`; `f_util_variance`, `f_util_press` and others were considered)._
 _Status: Idea. Companion to `ideas/f_util_scoped_presets.md` (the base layer) and `ideas/f_print_styles.md` (Stage 4, `f_misregister`, now folded in here)._
 
 ## Where it came from
@@ -77,7 +77,7 @@ Offset and rotation targets per plate, one correlation group per drum (a press e
 
 ## Open questions
 
-1. Name (placeholder above), and whether it is one table or two utilities.
+1. Name: closed (`f_util_vary`, Matt, 2026-11-12). Still open: whether it is one table or two utilities.
 2. Container or sidecar (same question as `f_util_scoped_presets`; sidecar first).
 3. How to exclude the varied dials from the store, or whether the controls alone are stored.
 4. Handling of non-float parameters, and per-target safe subranges.

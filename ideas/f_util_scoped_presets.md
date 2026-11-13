@@ -47,7 +47,7 @@ Questions, in order of how much they decide:
 
 If 1 and 2 hold, a sidecar is mostly a UI and a link table. If they fail, the container route or a message-based store is the fallback.
 
-**Update 2026-11-11:** the variation layer (per-plate randomness, chance, wobble) is recorded separately in `ideas/f_util_randomizer.md`; it sits on top of this utility as the second layer (base here, variation there), possibly as one target table.
+**Update 2026-11-11:** the variation layer (per-plate randomness, chance, wobble) is recorded separately in `ideas/f_util_vary.md`; it sits on top of this utility as the second layer (base here, variation there), possibly as one target table.
 
 ## Why it matters for the print family
 
