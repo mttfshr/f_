@@ -148,6 +148,7 @@ function pushAll() { if (restoring) return; pushNames(); for (var i = 0; i < UIN
 function gpush() {                                           // group correlations and the strip values go to their dials / number box (`set`, so nothing is sent back)
   if (restoring) return;
   for (var n = 1; n <= 4; n++) if (groups["g" + n]) outlet(9, "g" + n, groups["g" + n].corr);
+  if (DEBUG) post("f_util_vary: pushing strip values", G.amount, G.chance, G.wobble, G.slew, G.seed, "\n");
   outlet(9, "amount", G.amount); outlet(9, "chance", G.chance); outlet(9, "wobble", G.wobble); outlet(9, "slew", G.slew); outlet(9, "seed", G.seed);
 }
 
@@ -186,6 +187,7 @@ function commit() {
   if (ser != lastSer) { lastSer = ser; outlet.apply(G0, [6].concat(t)); }
 }
 function restore(a) {
+  if (DEBUG) post("f_util_vary: restore received", a.length, "atoms, starts", a.slice(0, 7).join(" "), "\n");
   var ser = ["restore"].concat(a).join(" ");
   if (ser == serialize().join(" ")) return;                    // the echo of what was just stored
   restoring = true;
@@ -252,7 +254,7 @@ function settings(name, a) {                                 // inlet 1
     case "token": TOKEN = String(a[0]); break;
     case "cell": uiCell(a); break;
     case "restore": restore(a); break;
-    case "globals": G.amount = clamp(num(a[0], 1), 0, 4); G.chance = clamp(num(a[1], 1), 0, 1); G.wobble = clamp(num(a[2], 1), 0, 1); G.slew = Math.max(0, num(a[3], 0)); G.seed = num(a[4], 1); reseed(); break;
+    case "globals": G.amount = clamp(num(a[0], 1), 0, 4); G.chance = clamp(num(a[1], 1), 0, 1); G.wobble = clamp(num(a[2], 1), 0, 1); G.slew = Math.max(0, num(a[3], 0)); G.seed = num(a[4], 1); reseed(); if (DEBUG) post("f_util_vary: restored strip values", G.amount, G.chance, G.wobble, G.slew, G.seed, "\n"); break;
     case "roll": roll(); break;
     case "tick": tick(); break;
     case "refresh": refresh(); break;
