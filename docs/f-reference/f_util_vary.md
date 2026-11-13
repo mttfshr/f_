@@ -96,7 +96,7 @@ drunk), sign (bi / up / down), group (0 none, 1-4 = g1-g4) and a **-** that dele
 row has no param and sends nothing until one is chosen; a bad outlet or a duplicate
 outlet + param is refused and the row restored.
 
-The engine is the source of truth and keeps the table in a plain `pattr vary_table`. **The table is saved with presets, not with the patch:** if the patch has a `pattrstorage` over it (the Vsynth presets module), storing a preset stores the table, and recalling the preset rebuilds the rows. A plain patch save does not keep it (an unembedded bpatcher keeps no state: scratch tests, Matt, live, 2026-11-13). The strip values (amount, chance, wobble, slew, seed) and the group correlations travel inside the same stored table (a `globals` line), so one store carries the whole module; the engine pushes them back to the dials on a recall. A row with no param yet is not saved.
+The engine is the source of truth and keeps the table in a plain `pattr vary_table`. **The table is saved with presets, not with the patch:** if the patch has a `pattrstorage` over it (the Vsynth presets module), storing a preset stores the table, and recalling the preset rebuilds the rows. A plain patch save does not keep it (an unembedded bpatcher keeps no state: scratch tests, Matt, live, 2026-11-13). The strip values each have their own plain `pattr` (`vary_amount`, `vary_chance`, `vary_wobble`, `vary_slew`, `vary_seed`) between the dial and the engine, so the same `pattrstorage` stores them and a recall moves the dials directly; the group correlations ride in the table. A recalled seed rolls once. A row with no param yet is not saved.
 
 ---
 

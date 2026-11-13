@@ -145,11 +145,9 @@ function pushRow(i) {
   outlet(8, n, "group", g ? Number(g[1]) : 0); outlet(8, n, "mode", r.mode); outlet(8, n, "sign", r.sign);
 }
 function pushAll() { if (restoring) return; pushNames(); for (var i = 0; i < UIN; i++) pushRow(i); }
-function gpush() {                                           // group correlations and the strip values go to their dials / number box (`set`, so nothing is sent back)
+function gpush() {                                           // group correlations go to their dials (`set`, so nothing is sent back)
   if (restoring) return;
   for (var n = 1; n <= 4; n++) if (groups["g" + n]) outlet(9, "g" + n, groups["g" + n].corr);
-  if (DEBUG) post("f_util_vary: pushing strip values", G.amount, G.chance, G.wobble, G.slew, G.seed, "\n");
-  outlet(9, "amount", G.amount); outlet(9, "chance", G.chance); outlet(9, "wobble", G.wobble); outlet(9, "slew", G.slew); outlet(9, "seed", G.seed);
 }
 
 function uiCell(a) {                                         // `cell <i> <field> <value>` from row i's controls (i counts from 1)
@@ -175,7 +173,6 @@ function rowCells(r) { return [r.outlet, r.param, r.lo, r.hi, r.amount, r.chance
 // (an unembedded bpatcher keeps nothing: Matt's scratch tests, 2026-11-13). A row with no param yet is not stored. ----
 function serialize() {
   var t = ["restore"], i, k;
-  t.push("globals", G.amount, G.chance, G.wobble, G.slew, G.seed, "|");            // the strip values travel with the table (one store for the whole module)
   for (k in PARAM) t.push("param", k, PARAM[k].lo, PARAM[k].hi, "|");
   for (i = 0; i < gorder.length; i++) t.push("group", gorder[i], groups[gorder[i]].corr, "|");
   for (i = 0; i < rows.length; i++) if (rows[i].param) t = t.concat(["row"], rowCells(rows[i]), ["|"]);
@@ -240,7 +237,7 @@ function tick() {
   emitRows(false);
 }
 function refresh() { labels(); uiRebuild(); resend(); }      // loadbang: rebuild the row UIs from the table, then re-send every base
-function seedCmd(v) { G.seed = num(v, 1); reseed(); for (var i = 0; i < rows.length; i++) { rows[i].tgt = 0; rows[i].off = 0; } roll(); commit(); }   // "roll N" recalls a draw
+function seedCmd(v) { G.seed = num(v, 1); reseed(); for (var i = 0; i < rows.length; i++) { rows[i].tgt = 0; rows[i].off = 0; } roll(); }   // "roll N" recalls a draw
 function dumpCmd() {
   post("f_util_vary: strip values held by the engine: amount", G.amount, "chance", G.chance, "wobble", G.wobble, "slew", G.slew, "seed", G.seed, "\n");
   for (var i = 0; i < rows.length; i++) { var r = rows[i]; post("out" + r.outlet, r.param, "base", BASE[r.param], "off", r.off.toFixed(3), "group", r.group, "\n"); }
@@ -255,15 +252,14 @@ function settings(name, a) {                                 // inlet 1
     case "token": TOKEN = String(a[0]); break;
     case "cell": uiCell(a); break;
     case "restore": restore(a); break;
-    case "globals": G.amount = clamp(num(a[0], 1), 0, 4); G.chance = clamp(num(a[1], 1), 0, 1); G.wobble = clamp(num(a[2], 1), 0, 1); G.slew = Math.max(0, num(a[3], 0)); G.seed = num(a[4], 1); reseed(); if (DEBUG) post("f_util_vary: restored strip values", G.amount, G.chance, G.wobble, G.slew, G.seed, "\n"); break;
     case "roll": roll(); break;
     case "tick": tick(); break;
     case "refresh": refresh(); break;
     case "seed": seedCmd(a[0]); break;
-    case "amount": G.amount = clamp(num(a[0], 1), 0, 4); emitRows(false); commit(); break;
-    case "chance": G.chance = clamp(num(a[0], 1), 0, 1); commit(); break;
-    case "wobble": G.wobble = clamp(num(a[0], 1), 0, 1); commit(); break;
-    case "slew": G.slew = Math.max(0, num(a[0], 0)); commit(); break;
+    case "amount": G.amount = clamp(num(a[0], 1), 0, 4); emitRows(false); break;
+    case "chance": G.chance = clamp(num(a[0], 1), 0, 1); break;
+    case "wobble": G.wobble = clamp(num(a[0], 1), 0, 1); break;
+    case "slew": G.slew = Math.max(0, num(a[0], 0)); break;
     case "debug": DEBUG = num(a[0], 1) ? 1 : 0; post("f_util_vary: debug " + DEBUG + "\n"); break;
     case "clear": clearCmd(); break;
     case "dump": dumpCmd(); break;

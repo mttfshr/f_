@@ -305,6 +305,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_amount",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						20,
+						230,
+						100,
+						22
+					],
+					"text": "pattr vary_amount"
+				}
+			},
+			{
+				"box": {
 					"id": "p_amount",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -314,11 +334,29 @@
 					],
 					"patching_rect": [
 						20,
-						230,
+						260,
 						70,
 						22
 					],
 					"text": "prepend amount"
+				}
+			},
+			{
+				"box": {
+					"id": "s_amount",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						20,
+						290,
+						70,
+						22
+					],
+					"text": "prepend set"
 				}
 			},
 			{
@@ -368,6 +406,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_chance",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						90,
+						230,
+						100,
+						22
+					],
+					"text": "pattr vary_chance"
+				}
+			},
+			{
+				"box": {
 					"id": "p_chance",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -377,11 +435,29 @@
 					],
 					"patching_rect": [
 						90,
-						230,
+						260,
 						70,
 						22
 					],
 					"text": "prepend chance"
+				}
+			},
+			{
+				"box": {
+					"id": "s_chance",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						90,
+						290,
+						70,
+						22
+					],
+					"text": "prepend set"
 				}
 			},
 			{
@@ -431,6 +507,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_wobble",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						160,
+						230,
+						100,
+						22
+					],
+					"text": "pattr vary_wobble"
+				}
+			},
+			{
+				"box": {
 					"id": "p_wobble",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -440,11 +536,29 @@
 					],
 					"patching_rect": [
 						160,
-						230,
+						260,
 						70,
 						22
 					],
 					"text": "prepend wobble"
+				}
+			},
+			{
+				"box": {
+					"id": "s_wobble",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						160,
+						290,
+						70,
+						22
+					],
+					"text": "prepend set"
 				}
 			},
 			{
@@ -494,6 +608,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_slew",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						230,
+						230,
+						100,
+						22
+					],
+					"text": "pattr vary_slew"
+				}
+			},
+			{
+				"box": {
 					"id": "p_slew",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -503,92 +637,11 @@
 					],
 					"patching_rect": [
 						230,
-						230,
+						260,
 						70,
 						22
 					],
 					"text": "prepend slew"
-				}
-			},
-			{
-				"box": {
-					"id": "rg",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 10,
-					"outlettype": [
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
-						"",
-						""
-					],
-					"patching_rect": [
-						20,
-						380,
-						260,
-						22
-					],
-					"text": "route g1 g2 g3 g4 amount chance wobble slew seed"
-				}
-			},
-			{
-				"box": {
-					"id": "s_amount",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						300,
-						410,
-						70,
-						22
-					],
-					"text": "prepend set"
-				}
-			},
-			{
-				"box": {
-					"id": "s_chance",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						370,
-						410,
-						70,
-						22
-					],
-					"text": "prepend set"
-				}
-			},
-			{
-				"box": {
-					"id": "s_wobble",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						440,
-						410,
-						70,
-						22
-					],
-					"text": "prepend set"
 				}
 			},
 			{
@@ -601,12 +654,54 @@
 						""
 					],
 					"patching_rect": [
-						510,
-						410,
+						230,
+						290,
 						70,
 						22
 					],
 					"text": "prepend set"
+				}
+			},
+			{
+				"box": {
+					"id": "rg",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 5,
+					"outlettype": [
+						"",
+						"",
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						20,
+						380,
+						120,
+						22
+					],
+					"text": "route g1 g2 g3 g4"
+				}
+			},
+			{
+				"box": {
+					"id": "pt_seed",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						400,
+						500,
+						100,
+						22
+					],
+					"text": "pattr vary_seed"
 				}
 			},
 			{
@@ -619,8 +714,8 @@
 						""
 					],
 					"patching_rect": [
-						580,
-						410,
+						510,
+						500,
 						70,
 						22
 					],
@@ -1733,6 +1828,18 @@
 						0
 					],
 					"destination": [
+						"pt_amount",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_amount",
+						0
+					],
+					"destination": [
 						"p_amount",
 						0
 					]
@@ -1753,92 +1860,8 @@
 			{
 				"patchline": {
 					"source": [
-						"d_chance",
+						"pt_amount",
 						0
-					],
-					"destination": [
-						"p_chance",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"p_chance",
-						0
-					],
-					"destination": [
-						"js",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"d_wobble",
-						0
-					],
-					"destination": [
-						"p_wobble",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"p_wobble",
-						0
-					],
-					"destination": [
-						"js",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"d_slew",
-						0
-					],
-					"destination": [
-						"p_slew",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"p_slew",
-						0
-					],
-					"destination": [
-						"js",
-						1
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"js",
-						9
-					],
-					"destination": [
-						"rg",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"rg",
-						4
 					],
 					"destination": [
 						"s_amount",
@@ -1861,8 +1884,44 @@
 			{
 				"patchline": {
 					"source": [
-						"rg",
-						5
+						"d_chance",
+						0
+					],
+					"destination": [
+						"pt_chance",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_chance",
+						0
+					],
+					"destination": [
+						"p_chance",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"p_chance",
+						0
+					],
+					"destination": [
+						"js",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_chance",
+						0
 					],
 					"destination": [
 						"s_chance",
@@ -1885,8 +1944,44 @@
 			{
 				"patchline": {
 					"source": [
-						"rg",
-						6
+						"d_wobble",
+						0
+					],
+					"destination": [
+						"pt_wobble",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_wobble",
+						0
+					],
+					"destination": [
+						"p_wobble",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"p_wobble",
+						0
+					],
+					"destination": [
+						"js",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_wobble",
+						0
 					],
 					"destination": [
 						"s_wobble",
@@ -1909,8 +2004,44 @@
 			{
 				"patchline": {
 					"source": [
-						"rg",
-						7
+						"d_slew",
+						0
+					],
+					"destination": [
+						"pt_slew",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_slew",
+						0
+					],
+					"destination": [
+						"p_slew",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"p_slew",
+						0
+					],
+					"destination": [
+						"js",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_slew",
+						0
 					],
 					"destination": [
 						"s_slew",
@@ -1933,8 +2064,32 @@
 			{
 				"patchline": {
 					"source": [
+						"js",
+						9
+					],
+					"destination": [
 						"rg",
-						8
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"seedn",
+						0
+					],
+					"destination": [
+						"pt_seed",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_seed",
+						0
 					],
 					"destination": [
 						"s_seed",
@@ -2389,7 +2544,7 @@
 			{
 				"patchline": {
 					"source": [
-						"seedn",
+						"pt_seed",
 						0
 					],
 					"destination": [

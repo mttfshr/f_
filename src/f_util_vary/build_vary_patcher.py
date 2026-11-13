@@ -68,12 +68,14 @@ com("seedl", "seed", [130, 120, 40, 20], [100, 25, 34, 16], 8.0)
 for k, (name, lo, hi, init, unit) in enumerate([("amount", 0.0, 2.0, 1.0, 1), ("chance", 0.0, 1.0, 1.0, 1), ("wobble", 0.0, 1.0, 1.0, 1), ("slew", 0.0, 2000.0, 0.0, 2)]):
     x = 8 + 50 * k
     dial("d_" + name, name, [20 + 70 * k, 160, 50, 60], [x, 46, 46, 58], lo, hi, init, unit)
-    obj("p_" + name, "prepend " + name, [20 + 70 * k, 230, 70, 22], 1, 1)
-    ln("d_" + name, 0, "p_" + name, 0); ln("p_" + name, 0, "js", 1)
-obj("rg", "route g1 g2 g3 g4 amount chance wobble slew seed", [20, 380, 260, 22], 1, 10); ln("js", 9, "rg", 0)
-for k, nm in enumerate(["amount", "chance", "wobble", "slew"]):         # the strip values come back from the table too (engine outlet 9)
-    obj(f"s_{nm}", "prepend set", [300 + 70 * k, 410, 70, 22], 1, 1); ln("rg", 4 + k, f"s_{nm}", 0); ln(f"s_{nm}", 0, f"d_{nm}", 0)
-obj("s_seed", "prepend set", [580, 410, 70, 22], 1, 1); ln("rg", 8, "s_seed", 0); ln("s_seed", 0, "seedn", 0)
+    # dial -> pattr (stored by the patch's pattrstorage, so a preset keeps it) -> engine, and -> `set` back to the dial (a recall moves the dial without the engine's help)
+    obj("pt_" + name, "pattr vary_" + name, [20 + 70 * k, 230, 100, 22], 1, 3, ["", "", ""])
+    obj("p_" + name, "prepend " + name, [20 + 70 * k, 260, 70, 22], 1, 1)
+    obj("s_" + name, "prepend set", [20 + 70 * k, 290, 70, 22], 1, 1)
+    ln("d_" + name, 0, "pt_" + name, 0); ln("pt_" + name, 0, "p_" + name, 0); ln("p_" + name, 0, "js", 1); ln("pt_" + name, 0, "s_" + name, 0); ln("s_" + name, 0, "d_" + name, 0)
+obj("rg", "route g1 g2 g3 g4", [20, 380, 120, 22], 1, 5); ln("js", 9, "rg", 0)
+obj("pt_seed", "pattr vary_seed", [400, 500, 100, 22], 1, 3, ["", "", ""]); obj("s_seed", "prepend set", [510, 500, 70, 22], 1, 1)
+ln("seedn", 0, "pt_seed", 0); ln("pt_seed", 0, "s_seed", 0); ln("s_seed", 0, "seedn", 0)
 for k in range(4):
     x = 8 + 50 * k
     dial(f"d_g{k+1}", f"g{k+1}", [20 + 70 * k, 270, 50, 60], [x, 108, 46, 58], 0.0, 1.0, 0.5)
@@ -110,7 +112,7 @@ for k in range(4):
     ln("js", k, f"out{k+1}", 0)
 ln("js", 4, "mon", 0); ln("js", 5, "labels", 0)
 ln("roll", 0, "js", 1)
-obj("pseed", "prepend seed", [70, 150, 80, 22], 1, 1); ln("seedn", 0, "pseed", 0); ln("pseed", 0, "js", 1)
+obj("pseed", "prepend seed", [70, 150, 80, 22], 1, 1); ln("pt_seed", 0, "pseed", 0); ln("pseed", 0, "js", 1)
 obj("draw", "r draw", [270, 120, 60, 22], 0, 1); msg("tick", "tick", [270, 150, 40, 22]); ln("draw", 0, "tick", 0); ln("tick", 0, "js", 1)
 
 patcher = {"fileversion": 1, "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1}, "classnamespace": "box",
