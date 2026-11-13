@@ -18,7 +18,11 @@ inlets = 2; outlets = 10;   // 0-3 destinations; 4 monitor (a list of 0..1 row p
                             // 6 table state for a pattr (`restore ...`); 7 `script ...` for a thispatcher (the row UIs are scripted); 8 to the row UIs (`<i> <field> <value>`);
                             // 9 group correlation dials (`g<n> <corr>`)
 // Everything lives in one closure: Max js calls any GLOBAL function named like an incoming message, and a base may be called anything.
-function anything() { V.anything(messagename, arrayfromargs(arguments), inlet); }
+var G0 = this;                                            // the js global, as `this` for outlet.apply
+function anything() {
+  try { V.anything(messagename, arrayfromargs(arguments), inlet); }
+  catch (e) { post("f_util_vary: error handling '" + messagename + "': " + e + (e.lineNumber ? " (line " + e.lineNumber + ")" : "") + "\n"); }
+}
 function _uiRemove(n) {                                   // delete the scripted row UI `vr<n>` if it exists (an embedded patch keeps them across a save)
   try { var o = this.patcher.getnamed("vr" + n); if (o) { this.patcher.remove(o); return 1; } } catch (e) { }
   return 0;
@@ -124,7 +128,7 @@ function uiRebuild() {                                       // an embedded patc
   UIN = 0; uiGrow(); pushAll(); gpush();
 }
 function addName(p) { if (p && NAMES.indexOf(p) < 0) { NAMES.push(p); if (!restoring && UIN) pushAll(); } }
-function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n <= (only || UIN); n++) outlet.apply(null, [8, n, "names"].concat(NAMES)); }      // `only`: just that row (a new one)
+function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n <= (only || UIN); n++) outlet.apply(G0, [8, n, "names"].concat(NAMES)); }      // `only`: just that row (a new one)
 function pushRow(i) {
   if (restoring || i >= UIN) return;
   var r = rows[i], n = i + 1, g = /^g([1-4])$/.exec(r.group);
@@ -165,7 +169,7 @@ function serialize() {
 function commit() {
   if (restoring) return;
   var t = serialize(), ser = t.join(" ");
-  if (ser != lastSer) { lastSer = ser; outlet.apply(null, [6].concat(t)); }
+  if (ser != lastSer) { lastSer = ser; outlet.apply(G0, [6].concat(t)); }
 }
 function restore(a) {
   var ser = ["restore"].concat(a).join(" ");
@@ -186,7 +190,7 @@ function base(name, a) {                                   // a base arrives on 
   for (var o = 1; o <= OUTS; o++) {
     var i = byKey[o + "|" + name];
     if (i !== undefined && !isNaN(v)) emitRow(rows[i], true);
-    else outlet.apply(null, [o - 1, name].concat(a));      // no row for this outlet: the plain base
+    else outlet.apply(G0, [o - 1, name].concat(a));      // no row for this outlet: the plain base
   }
   if (rows.length && !isNaN(v)) monitor();
 }
