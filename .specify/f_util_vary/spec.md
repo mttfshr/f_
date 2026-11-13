@@ -9,7 +9,7 @@ A control-side utility: bases in by name on inlet 0, varied copies out per desti
 - Inlet 0: `<param> <value>` bases. Inlet 1: settings and table lines. 4 outlets (destinations), each carrying ordinary `<param> <value>` messages.
 - Every base goes out of every outlet; a row adds variation to one outlet's copy.
 - Row: `row <outlet> <param> lo hi amount chance wobble group trim mode sign`; `param <name> lo hi` defaults; `group <name> <corr>`; one global seed; global amount, chance, wobble scale, slew.
-- Table is an embedded `text` object, applied by a button. Four assignable knobs mapped by `knob` lines.
+- Table: three editable cellblock grids (rows, groups, knobs), the engine as the source of truth, a `pattr` keeping it; the same lines (`row`, `group`, `param`, `knob`) also work as messages on inlet 1. Four assignable knobs.
 
 ## Out of scope for v1
 Per-destination bases, non-float params, a grid editor, an add-row button, `mute` lines.

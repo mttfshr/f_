@@ -4,7 +4,7 @@
 //          an outlet's table row adds variation to its own copy. No row, amount 0 and chance 0 all give the plain base: with an empty table
 //          this is a transparent wire.
 // Inlet 1: vary's own settings and table lines: roll, tick, seed, amount, chance, wobble (a scale), slew (ms), debug, refresh, clear, dump,
-//          and the table lines   row / param / group / knob.   (Kept off inlet 0 so a module param named `amount` or `seed` cannot collide.)
+//          and the table lines   row / param / group / knob, and `cell <grid> <col> <row> <value>` (an edit in a cellblock), `restore ...` (from the pattr).   (Kept off inlet 0 so a module param named `amount` or `seed` cannot collide.)
 // Outlets 0..OUTS-1: one per destination (1..OUTS in the table).
 //
 // Table lines:
@@ -14,13 +14,15 @@
 //        mode: u (uniform re-roll) | d (drunk: bounded walk)    sign: bi | up | down    group: name or -
 // effective = clamp(base + trim + offset * amount + wobble, lo, hi), in units of the range. The offset is held between rolls; the draw is
 // corr * (group's shared draw) + (1 - corr) * (the row's own draw). One global seed; every group and row derives its own streams from it.
-inlets = 2; outlets = 6;   // 0-3 destinations; 4 monitor (a list of 0..1 row positions, for a multislider); 5 labels (`set ...` for a comment)
+inlets = 2; outlets = 10;   // 0-3 destinations; 4 monitor (a list of 0..1 row positions, for a multislider); 5 labels (`set ...` for a comment);
+                            // 6 table state for a pattr (`restore ...`); 7, 8, 9 `set <col> <row> <value>` for the rows, groups and knobs cellblocks
 // Everything lives in one closure: Max js calls any GLOBAL function named like an incoming message, and a base may be called anything.
 function anything() { V.anything(messagename, arrayfromargs(arguments), inlet); }
 var V = (function () {
 var OUTS = 4;
 var G = {amount: 1, chance: 1, wobble: 1, slew: 0, seed: 1};
-var rows = [], byKey = {}, groups = {}, PARAM = {}, BASE = {}, KN = {}, last = 0, DEBUG = 0, t0 = 0, MON = 16;
+var rows = [], byKey = {}, groups = {}, gorder = [], PARAM = {}, BASE = {}, KN = {}, last = 0, DEBUG = 0, t0 = 0, MON = 16;
+var GR = 12, GG = 6, GK = 4, restoring = false, lastSer = "", RAW = [], PEND = [[], [], []];      // grid sizes: rows, groups, knobs
 
 function mul32(a, b) { return ((((a >>> 16) * b) % 65536) * 65536 + (a & 65535) * b) % 4294967296; }     // exact 32-bit multiply (doubles lose bits above 2^53)
 function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h = (h ^ s.charCodeAt(i)) >>> 0; h = mul32(h, 16777619); } return h || 1; }
@@ -39,23 +41,27 @@ function reseed() {
     r.rng = warm({s: hash(G.seed + "|" + id)}); r.gate = warm({s: hash(G.seed + "|gate|" + id)}); r.wr = warm({s: hash(G.seed + "|wob|" + id)}); r.wk = 0;
   }
 }
-function ensureGroup(name) { if (name != "-" && !groups[name]) groups[name] = {corr: 0.5, shared: 0, rng: warm({s: hash(G.seed + "|g|" + name)})}; }
+function ensureGroup(name) { if (name != "-" && !groups[name]) { groups[name] = {corr: 0.5, shared: 0, rng: warm({s: hash(G.seed + "|g|" + name)})}; gorder.push(name); } }
 
 function defRange(p) { return PARAM[p] || {lo: 0, hi: 1}; }
-function rowCmd(a) {
-  var o = Math.round(num(a[0], 0)), p = a[1] === undefined ? "" : String(a[1]);
-  if (o < 1 || o > OUTS || !p) { post("f_util_vary: bad row (outlet 1-" + OUTS + " and a param name needed): " + a.join(" ") + "\n"); return; }
+function mkRow(a) {                                          // a row record from [outlet, param, lo, hi, amount, chance, wobble, group, trim, mode, sign], or null
+  var o = Math.round(num(a[0], 0)), p = (a[1] === undefined || a[1] === "") ? "" : String(a[1]);
+  if (o < 1 || o > OUTS || !p) return null;
   var d = defRange(p);
-  var r = {outlet: o, param: p, lo: num(a[2], d.lo), hi: num(a[3], d.hi), amount: num(a[4], 10), chance: num(a[5], 100), wobble: num(a[6], 0),
-           group: (a[7] === undefined || a[7] === "-") ? "-" : String(a[7]), trim: num(a[8], 0), mode: a[9] === undefined ? "u" : String(a[9]),
-           sign: a[10] === undefined ? "bi" : String(a[10]), off: 0, tgt: 0, sent: null, wk: 0};
-  var key = o + "|" + p;
-  if (byKey[key] !== undefined) rows[byKey[key]] = r; else { byKey[key] = rows.length; rows.push(r); }
-  ensureGroup(r.group); reseed(); labels();
+  return {outlet: o, param: p, lo: num(a[2], d.lo), hi: num(a[3], d.hi), amount: num(a[4], 10), chance: num(a[5], 100), wobble: num(a[6], 0),
+          group: (a[7] === undefined || a[7] === "" || a[7] === "-") ? "-" : String(a[7]), trim: num(a[8], 0), mode: (a[9] === undefined || a[9] === "") ? "u" : String(a[9]),
+          sign: (a[10] === undefined || a[10] === "") ? "bi" : String(a[10]), off: 0, tgt: 0, sent: null, wk: 0};
 }
-function paramCmd(a) { if (a[0] !== undefined) PARAM[String(a[0])] = {lo: num(a[1], 0), hi: num(a[2], 1)}; }
-function groupCmd(a) { if (a[0] === undefined) return; var n = String(a[0]); ensureGroup(n); groups[n].corr = clamp(num(a[1], 0.5), 0, 1); }
-function clearCmd() { rows = []; byKey = {}; groups = {}; PARAM = {}; KN = {}; labels(); }          // bases are kept, so a re-applied table finds them
+function rowCmd(a) {
+  var r = mkRow(a);
+  if (!r) { post("f_util_vary: bad row (outlet 1-" + OUTS + " and a param name needed): " + a.join(" ") + "\n"); return; }
+  var key = r.outlet + "|" + r.param, idx;
+  if (byKey[key] !== undefined) { idx = byKey[key]; rows[idx] = r; } else { idx = rows.length; byKey[key] = idx; rows.push(r); }
+  ensureGroup(r.group); reseed(); labels(); gridRow(idx); commit();
+}
+function paramCmd(a) { if (a[0] !== undefined) { PARAM[String(a[0])] = {lo: num(a[1], 0), hi: num(a[2], 1)}; commit(); } }
+function groupCmd(a) { if (a[0] === undefined) return; var n = String(a[0]); ensureGroup(n); groups[n].corr = clamp(num(a[1], 0.5), 0, 1); gridGroups(); commit(); }
+function clearCmd() { rows = []; byKey = {}; groups = {}; gorder = []; PARAM = {}; KN = {}; RAW = []; PEND = [[], [], []]; labels(); gridAll(); commit(); }          // bases are kept, so a re-applied table finds them
 
 function value(r) {
   var range = r.hi - r.lo;
@@ -87,10 +93,11 @@ function labels() {
 // knob <n> row <outlet> <param> <field>   or   knob <n> group <name>.   Values arrive as `k <n> <0..1>` from a dial.
 function knobCmd(a) {
   var n = Math.round(num(a[0], 0));
-  if (n < 1 || n > 4) { post("f_util_vary: knob 1-4 only: " + a.join(" ") + "\n"); return; }
-  if (a[1] == "row") KN[n] = {kind: "row", key: Math.round(num(a[2], 0)) + "|" + String(a[3]), field: String(a[4])};
-  else if (a[1] == "group") KN[n] = {kind: "group", name: String(a[2])};
-  else post("f_util_vary: knob needs row or group: " + a.join(" ") + "\n");
+  if (n < 1 || n > GK) { post("f_util_vary: knob 1-" + GK + " only: " + a.join(" ") + "\n"); return; }
+  if (a[1] == "row") { KN[n] = {kind: "row", key: Math.round(num(a[2], 0)) + "|" + String(a[3]), field: String(a[4])}; RAW[n - 1] = ["row", String(a[2]), String(a[3]), String(a[4])]; }
+  else if (a[1] == "group") { KN[n] = {kind: "group", name: String(a[2])}; RAW[n - 1] = ["group", String(a[2]), "", ""]; }
+  else { post("f_util_vary: knob needs row or group: " + a.join(" ") + "\n"); return; }
+  gridKnobs(); commit();
 }
 function knobSet(a) {
   var k = KN[Math.round(num(a[0], 0))], v = clamp(num(a[1], 0), 0, 1);
@@ -101,6 +108,84 @@ function knobSet(a) {
   if (k.field == "amount") r.amount = v * 100; else if (k.field == "chance") r.chance = v * 100; else if (k.field == "wobble") r.wobble = v * 100;
   else if (k.field == "trim") r.trim = (v * 2 - 1) * 100; else return;
   emitRows(false);
+}
+
+// ---- the three cellblocks (rows, groups, knobs): the engine pushes `set <col> <row> <value>`; an edit comes back as `cell <grid> <col> <row> <value>` ----
+function rowCells(r) { return [r.outlet, r.param, r.lo, r.hi, r.amount, r.chance, r.wobble, r.group, r.trim, r.mode, r.sign]; }
+function gset(g, c, r, v) { if (v === undefined || v === "") outlet(7 + g, "set", c, r); else outlet(7 + g, "set", c, r, v); }
+function gridRow(i) { var cells = rowCells(rows[i]); for (var c = 0; c < 11; c++) gset(0, c, i, cells[c]); }
+function gridGroups() {
+  for (var i = 0; i < GG; i++) { var pend = PEND[1][i] || [], n = gorder[i]; gset(1, 0, i, n !== undefined ? n : pend[0]); gset(1, 1, i, n !== undefined ? groups[n].corr : pend[1]); }
+}
+function gridKnobs() { for (var i = 0; i < GK; i++) { var raw = RAW[i] || []; for (var c = 0; c < 4; c++) gset(2, c, i, raw[c]); } }
+function gridAll() {
+  for (var i = 0; i < GR; i++) { if (i < rows.length) gridRow(i); else { var pend = PEND[0][i] || []; for (var c = 0; c < 11; c++) gset(0, c, i, pend[c]); } }
+  gridGroups(); gridKnobs();
+}
+function reindex() { byKey = {}; for (var i = 0; i < rows.length; i++) byKey[rows[i].outlet + "|" + rows[i].param] = i; }
+function cellCmd(a) {
+  var g = Math.round(num(a[0], -1)), c = Math.round(num(a[1], -1)), r = Math.round(num(a[2], -1)), v = a.slice(3).join(" ");
+  if (DEBUG) post("f_util_vary: cell", a.join(" "), "\n");
+  if (g < 0 || g > 2 || c < 0 || r < 0) { post("f_util_vary: cell not understood: " + a.join(" ") + "\n"); return; }
+  if (g == 0) cellRow(c, r, v); else if (g == 1) cellGroup(c, r, v); else cellKnob(c, r, v);
+}
+function cellRow(c, r, v) {
+  if (c > 10 || r >= GR) return;
+  if (r >= rows.length) {                                      // a row being typed: held until it has an outlet and a param, then appended
+    var pend = PEND[0][r] = PEND[0][r] || []; pend[c] = v;
+    var nr = mkRow(pend);
+    if (nr && !byKey[nr.outlet + "|" + nr.param]) { PEND[0][r] = []; rowCmd(pend.slice()); gridAll(); }
+    return;
+  }
+  var cells = rowCells(rows[r]).map(String); cells[c] = v;
+  if (cells[0] === "" || cells[1] === "") {                    // clearing the outlet or the param deletes the row
+    rows.splice(r, 1); reindex(); reseed(); labels(); gridAll(); commit(); return;
+  }
+  var nr2 = mkRow(cells), old = rows[r];
+  var key = nr2 ? nr2.outlet + "|" + nr2.param : "";
+  if (!nr2 || (key != old.outlet + "|" + old.param && byKey[key] !== undefined)) { post("f_util_vary: cannot use that cell value (outlet 1-" + OUTS + ", one row per outlet and param)\n"); gridRow(r); return; }
+  if (key == old.outlet + "|" + old.param) { var k2 = ["rng", "gate", "wr", "off", "tgt", "sent", "wk"]; for (var i = 0; i < k2.length; i++) nr2[k2[i]] = old[k2[i]]; rows[r] = nr2; }
+  else { rows[r] = nr2; reindex(); reseed(); }
+  ensureGroup(nr2.group); labels(); gridRow(r); gridGroups(); commit(); emitRows(false);
+}
+function cellGroup(c, r, v) {
+  if (c > 1 || r >= GG) return;
+  if (r < gorder.length) { if (c == 1) { groups[gorder[r]].corr = clamp(num(v, 0.5), 0, 1); commit(); } else gridGroups(); return; }       // a name cannot be renamed
+  var pend = PEND[1][r] = PEND[1][r] || []; pend[c] = v;
+  if (pend[0]) { var name = String(pend[0]); ensureGroup(name); groups[name].corr = clamp(num(pend[1], 0.5), 0, 1); PEND[1][r] = []; gridGroups(); commit(); }
+}
+function cellKnob(c, r, v) {
+  if (c > 3 || r >= GK) return;
+  var raw = RAW[r] = RAW[r] || ["", "", "", ""]; raw[c] = v; var n = r + 1;
+  if (raw[0] == "row" && raw[1] && raw[2] && raw[3]) knobCmd([n, "row", raw[1], raw[2], raw[3]]);
+  else if (raw[0] == "group" && raw[1]) knobCmd([n, "group", raw[1]]);
+  else { delete KN[n]; commit(); }
+}
+
+// ---- persistence: the whole table as one list for a pattr (`restore row ... | group ... | knob ...`); the pattr echoes it back, so an unchanged one is ignored ----
+function serialize() {
+  var t = ["restore"], i, k;
+  for (k in PARAM) t.push("param", k, PARAM[k].lo, PARAM[k].hi, "|");
+  for (i = 0; i < gorder.length; i++) t.push("group", gorder[i], groups[gorder[i]].corr, "|");
+  for (i = 0; i < rows.length; i++) t = t.concat(["row"], rowCells(rows[i]), ["|"]);
+  for (i = 1; i <= GK; i++) if (KN[i] && RAW[i - 1]) t.push("knob", i, RAW[i - 1][0], RAW[i - 1][1], RAW[i - 1][2], RAW[i - 1][3], "|");
+  return t;
+}
+function commit() {
+  if (restoring) return;
+  var t = serialize(), ser = t.join(" ");
+  if (ser != lastSer) { lastSer = ser; outlet.apply(null, [6].concat(t)); }
+}
+function restore(a) {
+  var ser = ["restore"].concat(a).join(" ");
+  if (ser == serialize().join(" ")) return;                    // the echo of what was just stored
+  restoring = true;
+  rows = []; byKey = {}; groups = {}; gorder = []; PARAM = {}; KN = {}; RAW = []; PEND = [[], [], []];
+  var seg = [];
+  for (var i = 0; i <= a.length; i++) {
+    if (i == a.length || a[i] == "|") { if (seg.length) settings(String(seg[0]), seg.slice(1)); seg = []; } else seg.push(a[i]);
+  }
+  restoring = false; lastSer = serialize().join(" "); labels(); gridAll(); refresh();
 }
 
 function base(name, a) {                                   // a base arrives on inlet 0
@@ -142,7 +227,7 @@ function tick() {
   }
   emitRows(false);
 }
-function refresh() { for (var p in BASE) base(p, [BASE[p]]); }      // re-send every known base through the (new) table
+function refresh() { labels(); gridAll(); for (var p in BASE) base(p, [BASE[p]]); }      // re-send every known base through the (new) table
 function seedCmd(v) { G.seed = num(v, 1); reseed(); for (var i = 0; i < rows.length; i++) { rows[i].tgt = 0; rows[i].off = 0; } roll(); }   // "roll N" recalls a draw
 function dumpCmd() {
   for (var i = 0; i < rows.length; i++) { var r = rows[i]; post("out" + r.outlet, r.param, "base", BASE[r.param], "off", r.off.toFixed(3), "group", r.group, "\n"); }
@@ -155,6 +240,8 @@ function settings(name, a) {                                 // inlet 1
     case "group": groupCmd(a); break;
     case "knob": knobCmd(a); break;
     case "k": knobSet(a); break;
+    case "cell": cellCmd(a); break;
+    case "restore": restore(a); break;
     case "roll": roll(); break;
     case "tick": tick(); break;
     case "refresh": refresh(); break;

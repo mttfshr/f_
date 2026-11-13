@@ -58,7 +58,7 @@ var SIZES = {
     "vf_stamp":       [190, 232],
     "util_matrix_2":  [230, 120],
     "util_profile":   [200, 120],
-    "util_vary":      [340, 200],
+    "util_vary":      [340, 474],
     "texrouter":      [213, 130]
 };
 // END SIZES
