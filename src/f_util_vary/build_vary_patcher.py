@@ -70,7 +70,10 @@ for k, (name, lo, hi, init, unit) in enumerate([("amount", 0.0, 2.0, 1.0, 1), ("
     dial("d_" + name, name, [20 + 70 * k, 160, 50, 60], [x, 46, 46, 58], lo, hi, init, unit)
     obj("p_" + name, "prepend " + name, [20 + 70 * k, 230, 70, 22], 1, 1)
     ln("d_" + name, 0, "p_" + name, 0); ln("p_" + name, 0, "js", 1)
-obj("rg", "route g1 g2 g3 g4", [20, 380, 120, 22], 1, 5); ln("js", 9, "rg", 0)
+obj("rg", "route g1 g2 g3 g4 amount chance wobble slew seed", [20, 380, 260, 22], 1, 10); ln("js", 9, "rg", 0)
+for k, nm in enumerate(["amount", "chance", "wobble", "slew"]):         # the strip values come back from the table too (engine outlet 9)
+    obj(f"s_{nm}", "prepend set", [300 + 70 * k, 410, 70, 22], 1, 1); ln("rg", 4 + k, f"s_{nm}", 0); ln(f"s_{nm}", 0, f"d_{nm}", 0)
+obj("s_seed", "prepend set", [580, 410, 70, 22], 1, 1); ln("rg", 8, "s_seed", 0); ln("s_seed", 0, "seedn", 0)
 for k in range(4):
     x = 8 + 50 * k
     dial(f"d_g{k+1}", f"g{k+1}", [20 + 70 * k, 270, 50, 60], [x, 108, 46, 58], 0.0, 1.0, 0.5)

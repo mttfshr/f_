@@ -125,4 +125,10 @@ d2.set("restore", ...saved.slice(1)); assert.strictEqual(d2.out.filter(function 
 var e = load(); e.inlet = 1; e.messagename = "list"; e.anything.apply(e, saved); assert(e.out.length > 0, "a list-led restore from the pattr is accepted");
 assert(saved.indexOf("|") > 0 && saved.indexOf("group") >= 0 && saved.indexOf("row") >= 0 && saved.indexOf("param") >= 0, "everything is in the stored list");
 assert.strictEqual(saved.filter(function (t) { return t == "row"; }).length, 1, "a blank row (no param yet) is not stored");
+// the strip values (amount, chance, wobble, slew, seed) are part of the stored table and are pushed to their dials on a restore
+c = load(); c.set("amount", 0.5); c.set("chance", 0.3); c.set("wobble", 0.2); c.set("slew", 120); c.set("seed", 9);
+stores = c.out.filter(function (m) { return m[0] == 6; }); saved = stores[stores.length - 1].slice(1);
+assert.deepStrictEqual(saved.slice(0, 8), ["restore", "globals", 0.5, 0.3, 0.2, 120, 9, "|"], "the strip values are in the stored list");
+d2 = load(); d2.set.apply(d2, ["restore"].concat(saved.slice(1)));
+["amount", 0.5, "chance", 0.3, "wobble", 0.2, "slew", 120, "seed", 9].forEach(function (v, i, a) { if (i % 2 == 0) assert(d2.out.some(function (m) { return m[0] == 9 && m[1] == v && m[2] == a[i + 1]; }), "dial " + v + " pushed on restore"); });
 console.log("ok");
