@@ -49,7 +49,7 @@
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.0,
 					"minimum": 1,
-					"maximum": 4
+					"maximum": 8
 				}
 			},
 			{

@@ -155,7 +155,7 @@
 						300,
 						20
 					],
-					"text": "bases in the left inlet, settings in the right; 4 outlets",
+					"text": "bases in the left inlet, settings in the right; 8 outlets",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 8.0,
 					"textcolor": [
@@ -1738,8 +1738,11 @@
 					"id": "js",
 					"maxclass": "newobj",
 					"numinlets": 2,
-					"numoutlets": 10,
+					"numoutlets": 13,
 					"outlettype": [
+						"",
+						"",
+						"",
 						"",
 						"",
 						"",
@@ -1819,6 +1822,66 @@
 						30
 					],
 					"comment": "destination 4"
+				}
+			},
+			{
+				"box": {
+					"id": "out5",
+					"maxclass": "outlet",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						260,
+						500,
+						30,
+						30
+					],
+					"comment": "destination 5"
+				}
+			},
+			{
+				"box": {
+					"id": "out6",
+					"maxclass": "outlet",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						320,
+						500,
+						30,
+						30
+					],
+					"comment": "destination 6"
+				}
+			},
+			{
+				"box": {
+					"id": "out7",
+					"maxclass": "outlet",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						380,
+						500,
+						30,
+						30
+					],
+					"comment": "destination 7"
+				}
+			},
+			{
+				"box": {
+					"id": "out8",
+					"maxclass": "outlet",
+					"numinlets": 1,
+					"numoutlets": 0,
+					"patching_rect": [
+						440,
+						500,
+						30,
+						30
+					],
+					"comment": "destination 8"
 				}
 			},
 			{
@@ -2495,7 +2558,7 @@
 				"patchline": {
 					"source": [
 						"js",
-						6
+						10
 					],
 					"destination": [
 						"pt",
@@ -2519,7 +2582,7 @@
 				"patchline": {
 					"source": [
 						"js",
-						7
+						11
 					],
 					"destination": [
 						"tp",
@@ -2606,7 +2669,7 @@
 						4
 					],
 					"destination": [
-						"mon",
+						"out5",
 						0
 					]
 				}
@@ -2616,6 +2679,54 @@
 					"source": [
 						"js",
 						5
+					],
+					"destination": [
+						"out6",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"js",
+						6
+					],
+					"destination": [
+						"out7",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"js",
+						7
+					],
+					"destination": [
+						"out8",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"js",
+						8
+					],
+					"destination": [
+						"mon",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"js",
+						9
 					],
 					"destination": [
 						"labels",

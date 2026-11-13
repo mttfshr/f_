@@ -18,7 +18,7 @@ var lastv = function (c, o, name) { var m = on(c, o, name); return m[m.length - 
 
 // 1. an empty table is a transparent wire: every base goes out of every outlet unchanged
 var c = load(); c.base("x", 0.25);
-assert.deepStrictEqual(c.out, [[0, "x", 0.25], [1, "x", 0.25], [2, "x", 0.25], [3, "x", 0.25]], "passthrough to every outlet");
+assert.deepStrictEqual(c.out, [0, 1, 2, 3, 4, 5, 6, 7].map(function (k) { return [k, "x", 0.25]; }), "passthrough to every outlet");
 c.out.length = 0; c.base("hue", 0.1, 0.2); assert.deepStrictEqual(c.out[0], [0, "hue", 0.1, 0.2], "a list passes through whole");
 
 // 2. a row on outlet 2 varies only outlet 2; the others still get the plain base
@@ -35,7 +35,7 @@ assert.strictEqual(JSON.stringify(a.out), JSON.stringify(b.out), "same seed, sam
 var v17 = lastv(a, 0, "x"); a.set("seed", 18); assert.notStrictEqual(lastv(a, 0, "x"), v17); a.set("seed", 17); assert.strictEqual(lastv(a, 0, "x"), v17, "roll 17 recalls");
 
 // 4. clamp; no emit from a row before its base; amount 0 returns the base
-c = load(); c.row(1, "v", 0, 1, 100, 100); c.set("roll"); assert.strictEqual(c.out.filter(function (m) { return m[0] < 4; }).length, 0, "no emit before a base");
+c = load(); c.row(1, "v", 0, 1, 100, 100); c.set("roll"); assert.strictEqual(c.out.filter(function (m) { return m[0] < 8; }).length, 0, "no emit before a base");
 c.base("v", 0.99); for (var i = 0; i < 50; i++) { c.set("roll"); var e = lastv(c, 0, "v"); assert(e >= 0 && e <= 1, "clamped"); }
 c.set("amount", 0); assert.strictEqual(lastv(c, 0, "v"), 0.99, "amount 0 -> base");
 
@@ -63,7 +63,7 @@ w1.set("seed", 3); for (i = 0; i < 20; i++) w1.set("tick"); w0.set("seed", 3); w
 assert.strictEqual(lastv(w0, 0, "r"), lastv(w1, 0, "r"), "wobble ticks do not change the draw (separate stream)");
 
 // 9. collisions: a base named like a setting is just a base on inlet 0; the same word on inlet 1 is the setting
-c = load(); c.base("amount", 0.4); c.base("roll", 0.7); c.base("value", 1); assert.strictEqual(c.out.length, 12, "settings names on inlet 0 pass through"); assert.strictEqual(on(c, 0, "roll")[0][2], 0.7);
+c = load(); c.base("amount", 0.4); c.base("roll", 0.7); c.base("value", 1); assert.strictEqual(c.out.length, 24, "settings names on inlet 0 pass through"); assert.strictEqual(on(c, 0, "roll")[0][2], 0.7);
 c.row(1, "x", -1, 1, 100, 100); c.base("x", 0); c.set("roll"); c.set("amount", 0); assert.strictEqual(lastv(c, 0, "x"), 0, "amount on inlet 1 is the setting");
 
 // 10. re-applying a table keeps the bases (clear, then rows, then refresh)
@@ -71,11 +71,11 @@ c = load(); c.base("x", 0.4); c.set("clear"); c.row(3, "x", 0, 1, 100, 100); c.o
 assert.strictEqual(on(c, 0, "x")[0][2], 0.4, "refresh sends the plain base to outlets without a row"); assert.strictEqual(on(c, 2, "x").length, 1, "and the row's outlet gets its value");
 
 // 11. bad rows are reported, not added
-c = load(); c.row(9, "x"); c.row(0, "x"); assert(c.posts.length == 2, "two bad rows reported"); c.base("x", 1); assert.strictEqual(c.out.length, 4, "still a plain wire");
+c = load(); c.row(9, "x"); c.row(0, "x"); assert(c.posts.length == 2, "two bad rows reported"); c.base("x", 1); assert.strictEqual(c.out.length, 8, "still a plain wire");
 
 // 12. a blank row from `add` gets a row UI; its param is picked from the names seen; edits come back as `cell <i> <field> <value>`
-var sc = function (c) { return c.out.filter(function (m) { return m[0] == 7 && m[1] == "script"; }); };
-var ui = function (c) { return c.out.filter(function (m) { return m[0] == 8; }); };
+var sc = function (c) { return c.out.filter(function (m) { return m[0] == 11 && m[1] == "script"; }); };
+var ui = function (c) { return c.out.filter(function (m) { return m[0] == 12; }); };
 c = load(); c.set("token", "T9"); c.set("add");
 assert.strictEqual(sc(c).filter(function (m) { return m[2] == "newobject"; }).length, 1, "one bpatcher scripted for the new row");
 assert.strictEqual(sc(c).filter(function (m) { return m[2] == "connect"; }).length, 1, "and one cord scripted (engine to row; the row answers by send)");
@@ -99,8 +99,14 @@ c.base("q", 0); c.set("seed", 6); assert(lastv(c, 0, "q") != 0 && Math.abs(lastv
 c = load(); c.ctxlist = true; c.inlet = 1; c.messagename = "list"; c.anything("row", 2, "x", 0, 1, 10, 100); c.base("x", 0.5); assert(on(c, 1, "x").length == 1 && on(c, 0, "x").length == 1, "list-led row accepted");
 
 // 14. monitor and label outlets
-c = load(); c.row(1, "x", 0, 1, 50, 100); c.row(2, "y", 0, 1, 50, 100); assert(c.out.some(function (m) { return m[0] == 5 && m[1] == "set" && m[2] == "o1.x o2.y"; }), "labels");
-c.base("x", 0.5); c.base("y", 0.5); var mon = c.out.filter(function (m) { return m[0] == 4; }); assert(mon.length > 0 && mon[mon.length - 1][1].length == 2, "monitor list has one value per row");
+c = load(); c.row(1, "x", 0, 1, 50, 100); c.row(2, "y", 0, 1, 50, 100); assert(c.out.some(function (m) { return m[0] == 9 && m[1] == "set" && m[2] == "o1.x o2.y"; }), "labels");
+c.base("x", 0.5); c.base("y", 0.5); var mon = c.out.filter(function (m) { return m[0] == 8; }); assert(mon.length > 0 && mon[mon.length - 1][1].length == 2, "monitor list has one value per row");
+// a row UI is pushed every field, lo and hi included (a stray comment once swallowed them)
+c = load(); c.row(1, "x", -2, 3, 40, 70, 5, "-", 10, "d", "up"); c.out.length = 0; c.set("refresh");
+["out", "param_idx", "lo", "hi", "amt", "chance", "wob", "trim", "group", "mode", "sign"].forEach(function (f) { assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == f; }), "row UI pushed " + f); });
+assert(ui(c).some(function (m) { return m[2] == "lo" && m[3] == -2; }) && ui(c).some(function (m) { return m[2] == "hi" && m[3] == 3; }), "with the right lo and hi");
+c.out.length = 0; c.row(8, "y"); c.base("y", 0.5); assert.strictEqual(on(c, 7, "y").length, 1, "outlet 8 exists");
+
 // 15. cell edits: amount 0 stops the variation; a bad outlet or a duplicate is refused and the row repushed; group numbers become g1..g4; del removes the row
 c = load(); c.row(1, "x", -1, 1, 50, 100, 0, "-", 0, "u", "bi"); c.base("x", 0); c.set("cell", 1, "amt", 0); c.set("roll"); assert.strictEqual(lastv(c, 0, "x"), 0, "amount 0");
 c.set("cell", 1, "amt", 100); c.set("roll"); assert(Math.abs(lastv(c, 0, "x")) > 0, "and back up");
@@ -117,12 +123,12 @@ assert.deepStrictEqual(c.removed.slice().sort(), ["vr1", "vr2", "vr3"], "saved r
 
 // 16. persistence: the table is stored as one `restore ...` list for a pattr, and restoring it rebuilds the same table
 c = load(); c.set("param", "x", -1, 1); c.set("group", "g", 0.9); c.row(1, "x", "-", "-", 30, 80, 5, "g", 10, "d", "up"); c.set("add");
-var stores = c.out.filter(function (m) { return m[0] == 6; }); var saved = stores[stores.length - 1].slice(1);
+var stores = c.out.filter(function (m) { return m[0] == 10; }); var saved = stores[stores.length - 1].slice(1);
 assert.strictEqual(saved[0], "restore"); var d2 = load(); d2.set.apply(d2, ["restore"].concat(saved.slice(1)));
-var again = d2.out.filter(function (m) { return m[0] == 6; });
+var again = d2.out.filter(function (m) { return m[0] == 10; });
 assert.strictEqual(again.length, 0, "restoring does not store again (no echo loop)");
 d2.base("x", 0); d2.set("roll"); assert(on(d2, 0, "x").length >= 1, "the restored row is live");
-d2.set("restore", ...saved.slice(1)); assert.strictEqual(d2.out.filter(function (m) { return m[0] == 6; }).length, 0, "the echo of an unchanged table is ignored");
+d2.set("restore", ...saved.slice(1)); assert.strictEqual(d2.out.filter(function (m) { return m[0] == 10; }).length, 0, "the echo of an unchanged table is ignored");
 var e = load(); e.inlet = 1; e.messagename = "list"; e.anything.apply(e, saved); assert(e.out.length > 0, "a list-led restore from the pattr is accepted");
 assert(saved.indexOf("|") > 0 && saved.indexOf("row") >= 0 && saved.indexOf("param") >= 0, "everything is in the stored list");
 assert.strictEqual(saved.filter(function (t) { return t == "row"; }).length, 1, "a blank row (no param yet) is not stored");

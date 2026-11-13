@@ -127,7 +127,7 @@
                         270.0,
                         330.0
                     ],
-                    "text": "Inlets, outlets and rows\n\nIn 0: bases, any <param> <value> message. Every base goes out of EVERY outlet, so with no rows vary is a plain wire.\nIn 1: vary's own messages (above).\nOut 1-4: destinations. Wire each to a module's left inlet.\n\nPress + to add a row. A row varies one param on one outlet: out, param (a menu of the names seen on In 0), lo and hi (blank = no clamp, amount is then a share of the base), amt and chn (amount and chance in percent), wob (slow drift), trim (a fixed offset), mode (off: new draw each roll, on: drunk walk), sign (both ways, up only, down only), grp (0 none, 1-4 share a draw; the g dials set how much). Roll draws; seed N recalls a draw.\n\nSave: the rows, dials and seed are stored by the patch's pattrstorage (the Vsynth presets module): store a preset, then recall it. A plain patch save keeps nothing.",
+                    "text": "Inlets, outlets and rows\n\nIn 0: bases, any <param> <value> message. Every base goes out of EVERY outlet, so with no rows vary is a plain wire.\nIn 1: vary's own messages (above).\nOut 1-8: destinations. Wire each to a module's left inlet.\n\nPress + to add a row. A row varies one param on one outlet: out, param (a menu of the names seen on In 0), lo and hi (blank = no clamp, amount is then a share of the base), amt and chn (amount and chance in percent), wob (slow drift), trim (a fixed offset), mode (off: new draw each roll, on: drunk walk), sign (both ways, up only, down only), grp (0 none, 1-4 share a draw; the g dials set how much). Roll draws; seed N recalls a draw.\n\nSave: the rows, dials and seed are stored by the patch's pattrstorage (the Vsynth presets module): store a preset, then recall it. A plain patch save keeps nothing.",
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
@@ -367,12 +367,16 @@
                     "maxclass": "bpatcher",
                     "name": "f_util_vary.maxpat",
                     "numinlets": 2,
-                    "numoutlets": 4,
+                    "numoutlets": 8,
                     "offset": [
                         0.0,
                         0.0
                     ],
                     "outlettype": [
+                        "",
+                        "",
+                        "",
+                        "",
                         "",
                         "",
                         "",
@@ -484,11 +488,11 @@
                     "numoutlets": 0,
                     "patching_rect": [
                         338.0,
-                        622.0,
+                        650.0,
                         380.0,
                         22.0
                     ],
-                    "text": "outlets 1-4: the base plus each row's variation",
+                    "text": "outlets 1-8: the base plus each row's variation",
                     "saved_attribute_attributes": {
                         "textcolor": {
                             "expression": "themecolor.live_control_fg"
@@ -496,6 +500,86 @@
                     },
                     "bubble": 1,
                     "bubbleside": 1
+                }
+            },
+            {
+                "box": {
+                    "id": "d-o4",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        338.0,
+                        618.0,
+                        86.0,
+                        24.0
+                    ],
+                    "text": "(out 5)",
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 13.0
+                }
+            },
+            {
+                "box": {
+                    "id": "d-o5",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        431.0,
+                        618.0,
+                        86.0,
+                        24.0
+                    ],
+                    "text": "(out 6)",
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 13.0
+                }
+            },
+            {
+                "box": {
+                    "id": "d-o6",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        524.0,
+                        618.0,
+                        86.0,
+                        24.0
+                    ],
+                    "text": "(out 7)",
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 13.0
+                }
+            },
+            {
+                "box": {
+                    "id": "d-o7",
+                    "maxclass": "message",
+                    "numinlets": 2,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        617.0,
+                        618.0,
+                        86.0,
+                        24.0
+                    ],
+                    "text": "(out 8)",
+                    "fontname": "Ableton Sans Light",
+                    "fontsize": 13.0
                 }
             }
         ],
@@ -604,6 +688,54 @@
                     ],
                     "destination": [
                         "d-o3",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "d-4",
+                        4
+                    ],
+                    "destination": [
+                        "d-o4",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "d-4",
+                        5
+                    ],
+                    "destination": [
+                        "d-o5",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "d-4",
+                        6
+                    ],
+                    "destination": [
+                        "d-o6",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "d-4",
+                        7
+                    ],
+                    "destination": [
+                        "d-o7",
                         1
                     ]
                 }

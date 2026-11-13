@@ -15,9 +15,8 @@
 //        mode: u (uniform re-roll) | d (drunk: bounded walk)    sign: bi | up | down    group: name or -
 // effective = clamp(base + trim + offset * amount + wobble, lo, hi), in units of the range. The offset is held between rolls; the draw is
 // corr * (group's shared draw) + (1 - corr) * (the row's own draw). One global seed; every group and row derives its own streams from it.
-inlets = 2; outlets = 10;   // 0-3 destinations; 4 monitor (a list of 0..1 row positions, for a multislider); 5 labels (`set ...` for a comment);
-                            // 6 table state for a pattr (`restore ...`); 7 `script ...` for a thispatcher (the row UIs are scripted); 8 to the row UIs (`<i> <field> <value>`);
-                            // 9 group correlation dials (`g<n> <corr>`)
+inlets = 2; outlets = 13;   // 0-7 destinations; 8 monitor (a list of 0..1 row positions, for a multislider); 9 labels (`set ...` for a comment);
+                            // 10 table state for a pattr (`restore ...`); 11 `script ...` for a thispatcher (the row UIs are scripted); 12 to the row UIs (`<i> <field> <value>`)
 // Everything lives in one closure: Max js calls any GLOBAL function named like an incoming message, and a base may be called anything.
 var G0 = this;                                            // the js global, as `this` for outlet.apply
 function anything() {
@@ -29,7 +28,7 @@ function _uiRemove(n) {                                   // delete the scripted
   return 0;
 }
 var V = (function () {
-var OUTS = 4;
+var OUTS = 8;
 var G = {amount: 1, chance: 1, wobble: 1, slew: 0, seed: 1};
 var TOKEN = "none";                                          // unique per placed instance (the patcher sends `token #0`); rows send back on `<TOKEN>_cell`
 var rows = [], byKey = {}, groups = {}, gorder = [], PARAM = {}, BASE = {}, NAMES = [], last = 0, DEBUG = 0, t0 = 0, MON = 16;
@@ -109,21 +108,21 @@ function emitRows(force) {
 function monitor() {                                          // normalized position of each row's value in its range, for a multislider
   var l = [], n = Math.min(MON, rows.length);
   for (var i = 0; i < n; i++) { var r = rows[i]; l.push((!r.param || BASE[r.param] === undefined) ? 0 : (r.lo !== null && r.hi !== null) ? (r.hi == r.lo ? 0 : clamp((value(r) - r.lo) / (r.hi - r.lo), 0, 1)) : clamp(0.5 + (value(r) - BASE[r.param]) / (2 * rangeOf(r)), 0, 1)); }
-  if (n) outlet(4, l);
+  if (n) outlet(8, l);
 }
 function labels() {
   var t = [], n = Math.min(MON, rows.length);
   for (var i = 0; i < n; i++) t.push("o" + rows[i].outlet + "." + (rows[i].param || "?"));
-  outlet(5, "set", t.length ? t.join(" ") : "(no rows)");
+  outlet(9, "set", t.length ? t.join(" ") : "(no rows)");
 }
 
 // ---- the row UIs: one scripted bpatcher (f_util_vary_row.maxpat) per row, named vr<i>; it takes `<i> <field> <value>` from outlet 8 (a scripted cord) and answers `cell <i> <field> <value>` by `send <TOKEN>_cell`, which the patcher
 // receives into inlet 1 (a scripted cord back did not reach the engine in Max, Matt 2026-11-13) ----
 function uiMake(i) {
   var y = ROWY0 + (i - 1) * ROWH;
-  outlet(7, "script", "newobject", "bpatcher", "@name", "f_util_vary_row.maxpat", "@args", i, TOKEN, "@varname", "vr" + i, "@presentation", 1, "@presentation_rect", 2, y, ROWW, 20,
+  outlet(11, "script", "newobject", "bpatcher", "@name", "f_util_vary_row.maxpat", "@args", i, TOKEN, "@varname", "vr" + i, "@presentation", 1, "@presentation_rect", 2, y, ROWW, 20,
          "@patching_rect", 560, y, ROWW, 20);
-  outlet(7, "script", "connect", "eng", 8, "vr" + i, 0);
+  outlet(11, "script", "connect", "eng", 12, "vr" + i, 0);
 }
 function uiGrow() {                                          // as many row UIs as rows
   if (restoring) return;
@@ -136,13 +135,14 @@ function uiRebuild() {                                       // an embedded patc
   UIN = 0; uiGrow(); pushAll();
 }
 function addName(p) { if (p && NAMES.indexOf(p) < 0) { NAMES.push(p); if (!restoring && UIN) pushAll(); } }
-function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n <= (only || UIN); n++) outlet.apply(G0, [8, n, "names"].concat(NAMES)); }      // `only`: just that row (a new one)
+function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n <= (only || UIN); n++) outlet.apply(G0, [12, n, "names"].concat(NAMES)); }      // `only`: just that row (a new one)
 function pushRow(i) {
   if (restoring || i >= UIN) return;
   var r = rows[i], n = i + 1, g = /^g([1-4])$/.exec(r.group);
-  outlet(8, n, "out", r.outlet); outlet(8, n, "param_idx", NAMES.indexOf(r.param) + 1);      // item 0 of the menu is the placeholder "-" (no param yet) outlet(8, n, "lo", r.lo === null ? 0 : r.lo); outlet(8, n, "hi", r.hi === null ? 0 : r.hi);      // an unset side shows 0
-  outlet(8, n, "amt", r.amount); outlet(8, n, "chance", r.chance); outlet(8, n, "wob", r.wobble); outlet(8, n, "trim", r.trim);
-  outlet(8, n, "group", g ? Number(g[1]) : 0); outlet(8, n, "mode", r.mode); outlet(8, n, "sign", r.sign);
+  outlet(12, n, "out", r.outlet); outlet(12, n, "param_idx", NAMES.indexOf(r.param) + 1);      // item 0 of the menu is the placeholder "-" (no param yet)
+  outlet(12, n, "lo", r.lo === null ? 0 : r.lo); outlet(12, n, "hi", r.hi === null ? 0 : r.hi);      // an unset side shows 0
+  outlet(12, n, "amt", r.amount); outlet(12, n, "chance", r.chance); outlet(12, n, "wob", r.wobble); outlet(12, n, "trim", r.trim);
+  outlet(12, n, "group", g ? Number(g[1]) : 0); outlet(12, n, "mode", r.mode); outlet(12, n, "sign", r.sign);
 }
 function pushAll() { if (restoring) return; pushNames(); for (var i = 0; i < UIN; i++) pushRow(i); }
 
@@ -177,7 +177,7 @@ function serialize() {
 function commit() {
   if (restoring) return;
   var t = serialize(), ser = t.join(" ");
-  if (ser != lastSer) { lastSer = ser; outlet.apply(G0, [6].concat(t)); }
+  if (ser != lastSer) { lastSer = ser; outlet.apply(G0, [10].concat(t)); }
 }
 function restore(a) {
   if (DEBUG) post("f_util_vary: restore received", a.length, "atoms, starts", a.slice(0, 7).join(" "), "\n");

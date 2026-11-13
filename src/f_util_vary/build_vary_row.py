@@ -32,7 +32,7 @@ def ui(i, cls, prect, nout, types, **kw):
 
 
 # ---- controls (presentation) ----
-ui("c_out", "number", [2, 2, 22, 16], 2, ["", "bang"], minimum=1, maximum=4)
+ui("c_out", "number", [2, 2, 22, 16], 2, ["", "bang"], minimum=1, maximum=8)
 ui("c_param", "umenu", [26, 2, 64, 16], 3, ["int", "", ""], items=[], arrow=0)
 ui("c_lo", "flonum", [93, 2, 38, 16], 2, ["", "bang"])
 ui("c_hi", "flonum", [133, 2, 38, 16], 2, ["", "bang"])

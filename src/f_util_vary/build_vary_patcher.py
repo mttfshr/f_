@@ -4,7 +4,7 @@
 Layout (presentation 372 x 488): roll + seed, a strip of four dials (amount, chance, wobble, slew), four group-correlation dials (g1-g4), a multislider of live
 row positions with a label comment, and the table as rows of controls: the + button makes a row (the engine scripts a f_util_vary_row.maxpat bpatcher, built by
 build_vary_row.py), each row has out / param / lo / hi / amount / chance / wobble / trim / mode / sign / group / delete. The engine owns the table and a pattr keeps it;
-the table is saved by the patch's pattrstorage (presets), not with the patch itself. js = f_util_vary.js. Inlet 0 bases, inlet 1 settings; four destination outlets.
+the table is saved by the patch's pattrstorage (presets), not with the patch itself. js = f_util_vary.js. Inlet 0 bases, inlet 1 settings; eight destination outlets.
 
     python3 src/f_util_vary/build_vary_patcher.py
 """
@@ -61,7 +61,7 @@ for dot_id, y, hint in (("obj-19f", 5.0, "Takes: no vecfield or tensor"), ("obj-
          "patching_rect": [400, 250 + y, 5.0, 5.0], "presentation": 1, "presentation_rect": [4.0, y, 5.0, 5.0], "rounded": 6})
 add({"id": "title", "maxclass": "comment", "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 100, 21], "text": "f_util_vary", "fontname": FONT, "fontsize": 12.0,
      "presentation": 1, "presentation_rect": [10.5, 0.0, 92.0, 21.0]})
-com("hint", "bases in the left inlet, settings in the right; 4 outlets", [400, 40, 300, 20], [104, 3, 264, 16], 8.0)
+com("hint", "bases in the left inlet, settings in the right; 8 outlets", [400, 40, 300, 20], [104, 3, 264, 16], 8.0)
 msg("roll", "roll", [20, 120, 40, 22], [8, 24, 40, 18])
 obj("seedn", "number", [70, 120, 50, 22], 1, 2, ["", "bang"], presentation=1, presentation_rect=[54, 24, 44, 18], fontname=FONT, fontsize=9.0)
 com("seedl", "seed", [130, 120, 40, 20], [100, 25, 34, 16], 8.0)
@@ -101,17 +101,17 @@ obj("rcell", "r #0_cell", [350, 580, 90, 22], 0, 1); ln("rcell", 0, "js", 1)
 msg("tokm", "token #0", [450, 580, 70, 22]); ln("ld2", 0, "tokm", 0); ln("tokm", 0, "js", 1)
 # the table is kept by the engine; a plain pattr holds it (one `restore ...` list). The patch's pattrstorage (the Vsynth presets module) stores it with a preset and a recall sends it back
 # (Matt's scratch test 2026-11-13: a plain pattr in an unembedded bpatcher is listed by the host pattrstorage with its full list)
-obj("pt", "pattr vary_table", [20, 540, 200, 22], 1, 3, ["", "", ""]); ln("js", 6, "pt", 0); ln("pt", 0, "js", 1)
+obj("pt", "pattr vary_table", [20, 540, 200, 22], 1, 3, ["", "", ""]); ln("js", 10, "pt", 0); ln("pt", 0, "js", 1)
 
 # ---- plumbing (not on the surface) ----
 add({"id": "in0", "maxclass": "inlet", "numinlets": 0, "numoutlets": 1, "outlettype": [""], "patching_rect": [20, 20, 30, 30], "comment": "bases: <param> <value>"})
 add({"id": "in1", "maxclass": "inlet", "numinlets": 0, "numoutlets": 1, "outlettype": [""], "patching_rect": [220, 20, 30, 30], "comment": "settings and table lines"})
-obj("js", "js f_util_vary.js", [20, 70, 230, 22], 2, 10, varname="eng"); ln("js", 7, "tp", 0)
+obj("js", "js f_util_vary.js", [20, 70, 230, 22], 2, 13, varname="eng"); ln("js", 11, "tp", 0)
 ln("in0", 0, "js", 0); ln("in1", 0, "js", 1)
-for k in range(4):
+for k in range(8):
     add({"id": f"out{k+1}", "maxclass": "outlet", "numinlets": 1, "numoutlets": 0, "patching_rect": [20 + 60 * k, 500, 30, 30], "comment": f"destination {k+1}"})
     ln("js", k, f"out{k+1}", 0)
-ln("js", 4, "mon", 0); ln("js", 5, "labels", 0)
+ln("js", 8, "mon", 0); ln("js", 9, "labels", 0)
 ln("roll", 0, "js", 1)
 obj("pseed", "prepend seed", [70, 150, 80, 22], 1, 1); ln("pt_seed", 0, "pseed", 0); ln("pseed", 0, "js", 1)
 obj("draw", "r draw", [270, 120, 60, 22], 0, 1); msg("tick", "tick", [270, 150, 40, 22]); ln("draw", 0, "tick", 0); ln("tick", 0, "js", 1)

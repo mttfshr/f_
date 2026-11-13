@@ -23,11 +23,11 @@ The `draw` message (`r draw`) drives the per-frame tick (slew and wobble).
 
 ## Outputs
 
-**Outlets 0-3**: destinations 1-4. Each sends ordinary module messages (`x 0.13`), wired
+**Outlets 0-7**: destinations 1-8. Each sends ordinary module messages (`x 0.13`), wired
 straight to a module's inlet 0: no `route`, no `prepend`.
 
-Internal outlets (4-9) feed the panel: row monitor, labels, the `pattr`, and the three
-grids.
+Internal outlets (8-12) feed the panel: row monitor, labels, the `pattr`, the scripted
+rows and their controls.
 
 ---
 
@@ -81,7 +81,7 @@ Row defaults: range from `param` (else unset: no clamp, and amount is a percenta
 
 - **mode:** `u` uniform re-roll, `d` drunk (bounded walk, reflects at the bounds).
 - **sign:** `bi` both ways, `up` only above the base, `down` only below.
-- **outlet:** 1-4. One row per outlet and param.
+- **outlet:** 1-8. One row per outlet and param.
 - **trim:** fixed bias, percent of range (a plate's personality). **wobble:** slow leaky
   drift, percent of range, scaled by the global wobble.
 
@@ -90,7 +90,7 @@ Row defaults: range from `param` (else unset: no clamp, and amount is a percenta
 Fixed strip: roll, seed, amount, chance, wobble, slew. Four group dials (g1-g4) set each
 group's correlation. A 16-bar multislider shows each row's position in its range, with a
 label comment. The **+** button adds a row (up to 12): the engine scripts one
-`f_util_vary_row` bpatcher per row. A row has: out (1-4), param (a menu of the names seen on
+`f_util_vary_row` bpatcher per row. A row has: out (1-8), param (a menu of the names seen on
 inlet 0), lo, hi, four dials (amount %, chance %, wobble %, trim %), mode (off uniform, on
 drunk), sign (bi / up / down), group (0 none, 1-4 = g1-g4) and a **-** that deletes it. A new
 row has no param and sends nothing until one is chosen; a bad outlet or a duplicate
