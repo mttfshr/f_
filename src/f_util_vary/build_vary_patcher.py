@@ -73,14 +73,15 @@ for k, (name, lo, hi, init, unit) in enumerate([("amount", 0.0, 2.0, 1.0, 1), ("
     obj("p_" + name, "prepend " + name, [20 + 70 * k, 260, 70, 22], 1, 1)
     obj("s_" + name, "prepend set", [20 + 70 * k, 290, 70, 22], 1, 1)
     ln("d_" + name, 0, "pt_" + name, 0); ln("pt_" + name, 0, "p_" + name, 0); ln("p_" + name, 0, "js", 1); ln("pt_" + name, 0, "s_" + name, 0); ln("s_" + name, 0, "d_" + name, 0)
-obj("rg", "route g1 g2 g3 g4", [20, 380, 120, 22], 1, 5); ln("js", 9, "rg", 0)
 obj("pt_seed", "pattr vary_seed", [400, 500, 100, 22], 1, 3, ["", "", ""]); obj("s_seed", "prepend set", [510, 500, 70, 22], 1, 1)
 ln("seedn", 0, "pt_seed", 0); ln("pt_seed", 0, "s_seed", 0); ln("s_seed", 0, "seedn", 0)
-for k in range(4):
+for k in range(4):                                           # group correlation: dial -> pattr -> engine, and `set` back to the dial (as the strip values)
     x = 8 + 50 * k
     dial(f"d_g{k+1}", f"g{k+1}", [20 + 70 * k, 270, 50, 60], [x, 108, 46, 58], 0.0, 1.0, 0.5)
-    obj(f"p_g{k+1}", f"prepend group g{k+1}", [20 + 70 * k, 340, 100, 22], 1, 1); ln(f"d_g{k+1}", 0, f"p_g{k+1}", 0); ln(f"p_g{k+1}", 0, "js", 1)
-    obj(f"s_g{k+1}", "prepend set", [150 + 70 * k, 410, 70, 22], 1, 1); ln("rg", k, f"s_g{k+1}", 0); ln(f"s_g{k+1}", 0, f"d_g{k+1}", 0)
+    obj(f"pt_g{k+1}", f"pattr vary_g{k+1}", [20 + 70 * k, 340, 100, 22], 1, 3, ["", "", ""])
+    obj(f"p_g{k+1}", f"prepend group g{k+1}", [20 + 70 * k, 370, 100, 22], 1, 1)
+    obj(f"s_g{k+1}", "prepend set", [20 + 70 * k, 400, 70, 22], 1, 1)
+    ln(f"d_g{k+1}", 0, f"pt_g{k+1}", 0); ln(f"pt_g{k+1}", 0, f"p_g{k+1}", 0); ln(f"p_g{k+1}", 0, "js", 1); ln(f"pt_g{k+1}", 0, f"s_g{k+1}", 0); ln(f"s_g{k+1}", 0, f"d_g{k+1}", 0)
 add({"id": "mon", "maxclass": "multislider", "numinlets": 1, "numoutlets": 2, "outlettype": ["", ""], "patching_rect": [400, 80, 124, 100], "size": 16, "setminmax": [0.0, 1.0],
      "ignoreclick": 1, "contdata": 1, "peakcolor": [0.8, 0.8, 0.8, 1.0], "slidercolor": [0.35, 0.8, 0.8, 1.0], "bgcolor": [0.05, 0.05, 0.05, 1.0],
      "presentation": 1, "presentation_rect": [208, 24, 160, 100]})

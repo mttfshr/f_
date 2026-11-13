@@ -664,28 +664,6 @@
 			},
 			{
 				"box": {
-					"id": "rg",
-					"maxclass": "newobj",
-					"numinlets": 1,
-					"numoutlets": 5,
-					"outlettype": [
-						"",
-						"",
-						"",
-						"",
-						""
-					],
-					"patching_rect": [
-						20,
-						380,
-						120,
-						22
-					],
-					"text": "route g1 g2 g3 g4"
-				}
-			},
-			{
-				"box": {
 					"id": "pt_seed",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -769,6 +747,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_g1",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						20,
+						340,
+						100,
+						22
+					],
+					"text": "pattr vary_g1"
+				}
+			},
+			{
+				"box": {
 					"id": "p_g1",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -778,7 +776,7 @@
 					],
 					"patching_rect": [
 						20,
-						340,
+						370,
 						100,
 						22
 					],
@@ -795,8 +793,8 @@
 						""
 					],
 					"patching_rect": [
-						150,
-						410,
+						20,
+						400,
 						70,
 						22
 					],
@@ -850,6 +848,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_g2",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						90,
+						340,
+						100,
+						22
+					],
+					"text": "pattr vary_g2"
+				}
+			},
+			{
+				"box": {
 					"id": "p_g2",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -859,7 +877,7 @@
 					],
 					"patching_rect": [
 						90,
-						340,
+						370,
 						100,
 						22
 					],
@@ -876,8 +894,8 @@
 						""
 					],
 					"patching_rect": [
-						220,
-						410,
+						90,
+						400,
 						70,
 						22
 					],
@@ -931,6 +949,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_g3",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						160,
+						340,
+						100,
+						22
+					],
+					"text": "pattr vary_g3"
+				}
+			},
+			{
+				"box": {
 					"id": "p_g3",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -940,7 +978,7 @@
 					],
 					"patching_rect": [
 						160,
-						340,
+						370,
 						100,
 						22
 					],
@@ -957,8 +995,8 @@
 						""
 					],
 					"patching_rect": [
-						290,
-						410,
+						160,
+						400,
 						70,
 						22
 					],
@@ -1012,6 +1050,26 @@
 			},
 			{
 				"box": {
+					"id": "pt_g4",
+					"maxclass": "newobj",
+					"numinlets": 1,
+					"numoutlets": 3,
+					"outlettype": [
+						"",
+						"",
+						""
+					],
+					"patching_rect": [
+						230,
+						340,
+						100,
+						22
+					],
+					"text": "pattr vary_g4"
+				}
+			},
+			{
+				"box": {
 					"id": "p_g4",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -1021,7 +1079,7 @@
 					],
 					"patching_rect": [
 						230,
-						340,
+						370,
 						100,
 						22
 					],
@@ -1038,8 +1096,8 @@
 						""
 					],
 					"patching_rect": [
-						360,
-						410,
+						230,
+						400,
 						70,
 						22
 					],
@@ -2064,18 +2122,6 @@
 			{
 				"patchline": {
 					"source": [
-						"js",
-						9
-					],
-					"destination": [
-						"rg",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
 						"seedn",
 						0
 					],
@@ -2116,6 +2162,18 @@
 						0
 					],
 					"destination": [
+						"pt_g1",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_g1",
+						0
+					],
+					"destination": [
 						"p_g1",
 						0
 					]
@@ -2136,7 +2194,7 @@
 			{
 				"patchline": {
 					"source": [
-						"rg",
+						"pt_g1",
 						0
 					],
 					"destination": [
@@ -2164,6 +2222,18 @@
 						0
 					],
 					"destination": [
+						"pt_g2",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_g2",
+						0
+					],
+					"destination": [
 						"p_g2",
 						0
 					]
@@ -2184,8 +2254,8 @@
 			{
 				"patchline": {
 					"source": [
-						"rg",
-						1
+						"pt_g2",
+						0
 					],
 					"destination": [
 						"s_g2",
@@ -2212,6 +2282,18 @@
 						0
 					],
 					"destination": [
+						"pt_g3",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_g3",
+						0
+					],
+					"destination": [
 						"p_g3",
 						0
 					]
@@ -2232,8 +2314,8 @@
 			{
 				"patchline": {
 					"source": [
-						"rg",
-						2
+						"pt_g3",
+						0
 					],
 					"destination": [
 						"s_g3",
@@ -2260,6 +2342,18 @@
 						0
 					],
 					"destination": [
+						"pt_g4",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"pt_g4",
+						0
+					],
+					"destination": [
 						"p_g4",
 						0
 					]
@@ -2280,8 +2374,8 @@
 			{
 				"patchline": {
 					"source": [
-						"rg",
-						3
+						"pt_g4",
+						0
 					],
 					"destination": [
 						"s_g4",

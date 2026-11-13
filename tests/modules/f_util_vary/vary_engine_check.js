@@ -105,7 +105,7 @@ c = load(); c.row(1, "x", -1, 1, 50, 100, 0, "-", 0, "u", "bi"); c.base("x", 0);
 c.set("cell", 1, "amt", 100); c.set("roll"); assert(Math.abs(lastv(c, 0, "x")) > 0, "and back up");
 c.out.length = 0; var np = c.posts.length; c.set("cell", 1, "out", 9); assert(c.posts.length > np && ui(c).some(function (m) { return m[2] == "out" && m[3] == 1; }), "bad outlet refused, row repushed");
 c.set("add"); c.set("cell", 2, "param", "x"); np = c.posts.length; c.set("cell", 2, "param", "x"); c.set("cell", 2, "out", 1); assert(c.posts.length > np, "duplicate outlet + param refused");
-c.out.length = 0; c.set("cell", 1, "group", 2); assert(c.out.some(function (m) { return m[0] == 9 && m[1] == "g2"; }), "group dial pushed"); assert(ui(c).some(function (m) { return m[2] == "group" && m[3] == 2; }), "group number pushed back");
+c.out.length = 0; c.set("cell", 1, "group", 2); assert(ui(c).some(function (m) { return m[2] == "group" && m[3] == 2; }), "group number pushed back");
 c.have = {vr1: 1, vr2: 1}; c.out.length = 0; c.set("cell", 1, "del", 1); assert.strictEqual(on(c, 0, "x")[0][2], 0, "after del the outlet is a plain wire again"); assert.deepStrictEqual(c.removed, ["vr2"], "the last row UI removed");
 // a group made on the group dials correlates rows
 c = load(); c.set("group", "g1", 0.8); c.row(1, "x", -1, 1, 50, 100, 0, "g1"); c.row(2, "x", -1, 1, 50, 100, 0, "g1"); c.base("x", 0); c.set("roll");
@@ -123,6 +123,6 @@ assert.strictEqual(again.length, 0, "restoring does not store again (no echo loo
 d2.base("x", 0); d2.set("roll"); assert(on(d2, 0, "x").length >= 1, "the restored row is live");
 d2.set("restore", ...saved.slice(1)); assert.strictEqual(d2.out.filter(function (m) { return m[0] == 6; }).length, 0, "the echo of an unchanged table is ignored");
 var e = load(); e.inlet = 1; e.messagename = "list"; e.anything.apply(e, saved); assert(e.out.length > 0, "a list-led restore from the pattr is accepted");
-assert(saved.indexOf("|") > 0 && saved.indexOf("group") >= 0 && saved.indexOf("row") >= 0 && saved.indexOf("param") >= 0, "everything is in the stored list");
+assert(saved.indexOf("|") > 0 && saved.indexOf("row") >= 0 && saved.indexOf("param") >= 0, "everything is in the stored list");
 assert.strictEqual(saved.filter(function (t) { return t == "row"; }).length, 1, "a blank row (no param yet) is not stored");
 console.log("ok");

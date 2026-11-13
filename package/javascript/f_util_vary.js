@@ -78,14 +78,14 @@ function rowCmd(a) {
   var key = keyOf(r), idx;
   if (byKey[key] !== undefined) { idx = byKey[key]; rows[idx] = r; }
   else { if (rows.length >= GR) { post("f_util_vary: at most " + GR + " rows\n"); return; } idx = rows.length; byKey[key] = idx; rows.push(r); }
-  ensureGroup(r.group); addName(r.param); reseed(); labels(); uiGrow(); pushRow(idx); gpush(); commit();
+  ensureGroup(r.group); addName(r.param); reseed(); labels(); uiGrow(); pushRow(idx); commit();
 }
 function addCmd() {
   if (rows.length >= GR) { post("f_util_vary: at most " + GR + " rows\n"); return; }
   rows.push(mkRow([1, ""], true)); labels(); uiGrow(); pushRow(rows.length - 1);
 }
 function paramCmd(a) { if (a[0] !== undefined) { PARAM[String(a[0])] = {lo: num(a[1], 0), hi: num(a[2], 1)}; commit(); } }
-function groupCmd(a) { if (a[0] === undefined) return; var n = String(a[0]); ensureGroup(n); groups[n].corr = clamp(num(a[1], 0.5), 0, 1); gpush(); commit(); }
+function groupCmd(a) { if (a[0] === undefined) return; var n = String(a[0]); ensureGroup(n); groups[n].corr = clamp(num(a[1], 0.5), 0, 1); }      // the g dials' pattrs send these; not part of the table
 function clearCmd() { rows = []; byKey = {}; groups = {}; gorder = []; PARAM = {}; labels(); uiGrow(); commit(); }          // bases are kept, so a re-applied table finds them
 
 function rangeOf(r) { return (r.lo !== null && r.hi !== null) ? r.hi - r.lo : (Math.abs(BASE[r.param]) || 1); }
@@ -133,7 +133,7 @@ function uiGrow() {                                          // as many row UIs 
 function uiRebuild() {                                       // an embedded patch saves its scripted rows, so remove any that came back and build them from the table
   if (restoring) return;
   for (var n = 1; n <= GR; n++) _uiRemove(n);
-  UIN = 0; uiGrow(); pushAll(); gpush();
+  UIN = 0; uiGrow(); pushAll();
 }
 function addName(p) { if (p && NAMES.indexOf(p) < 0) { NAMES.push(p); if (!restoring && UIN) pushAll(); } }
 function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n <= (only || UIN); n++) outlet.apply(G0, [8, n, "names"].concat(NAMES)); }      // `only`: just that row (a new one)
@@ -145,10 +145,6 @@ function pushRow(i) {
   outlet(8, n, "group", g ? Number(g[1]) : 0); outlet(8, n, "mode", r.mode); outlet(8, n, "sign", r.sign);
 }
 function pushAll() { if (restoring) return; pushNames(); for (var i = 0; i < UIN; i++) pushRow(i); }
-function gpush() {                                           // group correlations go to their dials (`set`, so nothing is sent back)
-  if (restoring) return;
-  for (var n = 1; n <= 4; n++) if (groups["g" + n]) outlet(9, "g" + n, groups["g" + n].corr);
-}
 
 function uiCell(a) {                                         // `cell <i> <field> <value>` from row i's controls (i counts from 1)
   var i = Math.round(num(a[0], 0)) - 1, f = String(a[1]), v = a.slice(2).join(" ");
@@ -162,7 +158,7 @@ function uiCell(a) {                                         // `cell <i> <field
   if (!nr || (key && key != oldKey && byKey[key] !== undefined)) { post("f_util_vary: cannot use that value (outlet 1-" + OUTS + ", one row per outlet and param)\n"); pushRow(i); return; }
   if (key == oldKey) { var k2 = ["rng", "gate", "wr", "off", "tgt", "sent", "wk"]; for (var j = 0; j < k2.length; j++) nr[k2[j]] = old[k2[j]]; rows[i] = nr; }
   else { rows[i] = nr; reindex(); reseed(); }
-  ensureGroup(nr.group); addName(nr.param); labels(); pushRow(i); gpush(); commit();
+  ensureGroup(nr.group); addName(nr.param); labels(); pushRow(i); commit();
   if (key != oldKey) resend(); else emitRows(false);
 }
 
@@ -174,7 +170,6 @@ function rowCells(r) { return [r.outlet, r.param, r.lo, r.hi, r.amount, r.chance
 function serialize() {
   var t = ["restore"], i, k;
   for (k in PARAM) t.push("param", k, PARAM[k].lo, PARAM[k].hi, "|");
-  for (i = 0; i < gorder.length; i++) t.push("group", gorder[i], groups[gorder[i]].corr, "|");
   for (i = 0; i < rows.length; i++) if (rows[i].param) t = t.concat(["row"], rowCells(rows[i]), ["|"]);
   return t;
 }
