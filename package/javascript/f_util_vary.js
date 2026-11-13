@@ -166,7 +166,8 @@ function uiCell(a) {                                         // `cell <i> <field
 function rowCells(r) { return [r.outlet, r.param, r.lo, r.hi, r.amount, r.chance, r.wobble, r.group, r.trim, r.mode, r.sign]; }
 
 // ---- persistence: the whole table as one list for a pattr (`restore row ... | group ... | param ...`); the pattr echoes it back, so an unchanged one is ignored.
-// The pattr saves with the patch only when f_util_vary is placed as an EMBEDDED bpatcher (Matt's scratch test, 2026-11-13). A row with no param yet is not stored. ----
+// The pattr is stored by the patch's pattrstorage (the presets module), so the table is saved with a preset and comes back on a recall; it is NOT saved with the patch itself
+// (an unembedded bpatcher keeps nothing: Matt's scratch tests, 2026-11-13). A row with no param yet is not stored. ----
 function serialize() {
   var t = ["restore"], i, k;
   for (k in PARAM) t.push("param", k, PARAM[k].lo, PARAM[k].hi, "|");

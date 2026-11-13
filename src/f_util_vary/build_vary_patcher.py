@@ -4,7 +4,7 @@
 Layout (presentation 372 x 488): roll + seed, a strip of four dials (amount, chance, wobble, slew), four group-correlation dials (g1-g4), a multislider of live
 row positions with a label comment, and the table as rows of controls: the + button makes a row (the engine scripts a f_util_vary_row.maxpat bpatcher, built by
 build_vary_row.py), each row has out / param / lo / hi / amount / chance / wobble / trim / mode / sign / group / delete. The engine owns the table and a pattr keeps it;
-it saves only when f_util_vary is placed as an EMBEDDED bpatcher (Matt's scratch test, 2026-11-13). js = f_util_vary.js. Inlet 0 bases, inlet 1 settings; four destination outlets.
+the table is saved by the patch's pattrstorage (presets), not with the patch itself. js = f_util_vary.js. Inlet 0 bases, inlet 1 settings; four destination outlets.
 
     python3 src/f_util_vary/build_vary_patcher.py
 """
@@ -93,8 +93,9 @@ obj("tp", "thispatcher", [260, 580, 80, 22], 1, 2, ["", ""])
 # the row UIs answer on `send #0_cell` (#0 is unique to this placed instance); the token tells the engine that name
 obj("rcell", "r #0_cell", [350, 580, 90, 22], 0, 1); ln("rcell", 0, "js", 1)
 msg("tokm", "token #0", [450, 580, 70, 22]); ln("ld2", 0, "tokm", 0); ln("tokm", 0, "js", 1)
-# the table is kept by the engine; a pattr stores it (one `restore ...` list) and echoes it back at load
-obj("pt", "pattr vary_table @autorestore 1", [20, 540, 200, 22], 1, 3, ["", "", ""]); ln("js", 6, "pt", 0); ln("pt", 0, "js", 1)
+# the table is kept by the engine; a plain pattr holds it (one `restore ...` list). The patch's pattrstorage (the Vsynth presets module) stores it with a preset and a recall sends it back
+# (Matt's scratch test 2026-11-13: a plain pattr in an unembedded bpatcher is listed by the host pattrstorage with its full list)
+obj("pt", "pattr vary_table", [20, 540, 200, 22], 1, 3, ["", "", ""]); ln("js", 6, "pt", 0); ln("pt", 0, "js", 1)
 
 # ---- plumbing (not on the surface) ----
 add({"id": "in0", "maxclass": "inlet", "numinlets": 0, "numoutlets": 1, "outlettype": [""], "patching_rect": [20, 20, 30, 30], "comment": "bases: <param> <value>"})

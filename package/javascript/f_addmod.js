@@ -80,14 +80,6 @@ var RECIPES = {
 };
 // END RECIPES
 
-// Modules that must be placed EMBEDDED (embed 1): their saved state (f_util_vary's table) is kept in the patch only when embedded.
-var EMBED = {"util_vary": 1};
-var PENDING = [], embedTask = null;
-function embedLater() {                                   // embed is sent again a moment after placing: the message form `embed 1` is not understood by a bpatcher (Matt, 2026-11-13), so it is set as a box attribute
-    var o;
-    while ((o = PENDING.shift())) { try { o.setboxattr("embed", 1); } catch (e) { post("f_addmod: embed failed: " + e + "\n"); } }
-}
-
 // Place one module's bpatcher in the user's patch at (x, y); returns its width.
 function place(target, mod, x, y) {
     var size = SIZES[mod] || [200, 150]; // fallback if a new module isn't listed yet
@@ -97,13 +89,6 @@ function place(target, mod, x, y) {
     myobj.message("border", 0);
     myobj.replace("f_" + mod + ".maxpat");
     myobj.rect = [x, y, x + size[0], y + size[1]];
-    if (EMBED[mod]) {
-        try { myobj.setboxattr("embed", 1); } catch (e) { post("f_addmod: embed failed: " + e + "\n"); }
-        PENDING.push(myobj);
-        if (embedTask) embedTask.cancel();
-        embedTask = new Task(embedLater, this);
-        embedTask.schedule(250);
-    }
     return size[0];
 }
 

@@ -96,10 +96,7 @@ drunk), sign (bi / up / down), group (0 none, 1-4 = g1-g4) and a **-** that dele
 row has no param and sends nothing until one is chosen; a bad outlet or a duplicate
 outlet + param is refused and the row restored.
 
-The engine is the source of truth and keeps the table in an engine-owned `pattr
-vary_table`. **f_util_vary must be placed as an embedded bpatcher (embed 1):** an
-unembedded one saves neither the pattr nor scripted rows (Matt, live scratch test,
-2026-11-13). Rows are rebuilt from the table on load. A row with no param yet is not saved.
+The engine is the source of truth and keeps the table in a plain `pattr vary_table`. **The table is saved with presets, not with the patch:** if the patch has a `pattrstorage` over it (the Vsynth presets module), storing a preset stores the table, and recalling the preset rebuilds the rows. A plain patch save does not keep it (an unembedded bpatcher keeps no state: scratch tests, Matt, live, 2026-11-13). The strip and group dials are parameters, stored by presets like any module's dials. A row with no param yet is not saved.
 
 ---
 

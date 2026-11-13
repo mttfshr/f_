@@ -1446,7 +1446,7 @@
 						200,
 						22
 					],
-					"text": "pattr vary_table @autorestore 1"
+					"text": "pattr vary_table"
 				}
 			},
 			{
