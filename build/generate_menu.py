@@ -167,7 +167,7 @@ def validate(menu, groups):
         problems.append(f"module listed twice: {m}")
 
     # pfft~ inner subpatches are dependencies (loaded by name), not modules
-    NOT_MODULES = {"f_a_decorrelate_inner"}
+    NOT_MODULES = {"f_a_decorrelate_inner", "f_util_vary_row"}
     on_disk = {p.stem for p in PATCHERS_DIR.glob("*.maxpat")} - NOT_MODULES
     for m in modules:
         if f"f_{m}" not in on_disk:

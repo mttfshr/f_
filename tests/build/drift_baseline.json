@@ -8,6 +8,9 @@
   "f_a_decorrelate_inner": {
    "status": "no_definition"
   },
+  "f_util_vary_row": {
+   "status": "no_definition"
+  },
   "f_a_ripple": {
    "reason": "gen~ audio generator (no jit.gl.pix, no presentation UI); the schema has no audio archetype. Spec in .specify/f_a_ripple/. Revisit if an audio archetype is added.",
    "status": "out_of_scope"
@@ -53,7 +56,7 @@
    "status": "out_of_scope"
   },
   "f_util_vary": {
-   "reason": "Hand-built control utility (js engine f_util_vary.js, a message-box table, live.dial strip, multislider); no jit.gl.pix codebox, so the schema cannot express it. Source: src/f_util_vary/build_vary_patcher.py; spec in .specify/f_util_vary/.",
+   "reason": "Hand-built control utility (js engine f_util_vary.js, scripted per-row bpatchers (f_util_vary_row), live.dial strip, multislider); no jit.gl.pix codebox, so the schema cannot express it. Source: src/f_util_vary/build_vary_patcher.py; spec in .specify/f_util_vary/.",
    "status": "out_of_scope"
   }
  }

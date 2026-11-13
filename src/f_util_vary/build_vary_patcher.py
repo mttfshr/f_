@@ -1,9 +1,10 @@
 """Builds package/patchers/f_util_vary.maxpat (T002). A hand-built utility, so it is out_of_scope for the definition.py ratchet
 (tests/build/drift_baseline.json); this script is the source, and a hand edit in Max is to be written back here.
 
-Layout (presentation 340 x 488): roll + seed, a strip of four dials (amount, chance, wobble, slew), four knob dials (assigned by `knob` lines in the
-table), a multislider of live row positions with a label comment, and the table as three jit.cellblock grids (rows, groups,
-knobs) that you edit in place; the engine owns the table and a pattr keeps it. js = f_util_vary.js. Inlet 0 bases, inlet 1 settings; four destination outlets.
+Layout (presentation 372 x 488): roll + seed, a strip of four dials (amount, chance, wobble, slew), four group-correlation dials (g1-g4), a multislider of live
+row positions with a label comment, and the table as rows of controls: the + button makes a row (the engine scripts a f_util_vary_row.maxpat bpatcher, built by
+build_vary_row.py), each row has out / param / lo / hi / amount / chance / wobble / trim / mode / sign / group / delete. The engine owns the table and a pattr keeps it;
+it saves only when f_util_vary is placed as an EMBEDDED bpatcher (Matt's scratch test, 2026-11-13). js = f_util_vary.js. Inlet 0 bases, inlet 1 settings; four destination outlets.
 
     python3 src/f_util_vary/build_vary_patcher.py
 """
@@ -53,14 +54,14 @@ def ln(a, ao, b, bi): lines.append({"patchline": {"source": [a, ao], "destinatio
 
 # ---- presentation surface ----
 add({"id": "bg", "maxclass": "panel", "angle": 270.0, "background": 1, "bgcolor": [0.0, 0.0, 0.0, 1.0], "border": 1, "bordercolor": [0.0, 0.03529411765, 0.2274509804, 1.0],
-     "mode": 0, "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 340, 488], "presentation": 1, "presentation_rect": [0, 0, 340, 488], "proportion": 0.5})
+     "mode": 0, "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 372, 488], "presentation": 1, "presentation_rect": [0, 0, 372, 488], "proportion": 0.5})
 # the library's title bar: two type dots (takes / outputs: neither, so dim gray) and the module name at x 10.5 (tests/build/test_generate_menu.py)
 for dot_id, y, hint in (("obj-19f", 5.0, "Takes: no vecfield or tensor"), ("obj-19g", 12.0, "Outputs: no vecfield or tensor")):
     add({"id": dot_id, "maxclass": "panel", "background": 0, "bgcolor": [0.28, 0.28, 0.28, 1.0], "border": 0, "mode": 0, "hint": hint, "numinlets": 1, "numoutlets": 0,
          "patching_rect": [400, 250 + y, 5.0, 5.0], "presentation": 1, "presentation_rect": [4.0, y, 5.0, 5.0], "rounded": 6})
 add({"id": "title", "maxclass": "comment", "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 100, 21], "text": "f_util_vary", "fontname": FONT, "fontsize": 12.0,
      "presentation": 1, "presentation_rect": [10.5, 0.0, 92.0, 21.0]})
-com("hint", "bases in the left inlet, settings in the right; 4 outlets", [400, 40, 300, 20], [104, 3, 232, 16], 8.0)
+com("hint", "bases in the left inlet, settings in the right; 4 outlets", [400, 40, 300, 20], [104, 3, 264, 16], 8.0)
 msg("roll", "roll", [20, 120, 40, 22], [8, 24, 40, 18])
 obj("seedn", "number", [70, 120, 50, 22], 1, 2, ["", "bang"], presentation=1, presentation_rect=[54, 24, 44, 18], fontname=FONT, fontsize=9.0)
 com("seedl", "seed", [130, 120, 40, 20], [100, 25, 34, 16], 8.0)
@@ -69,39 +70,33 @@ for k, (name, lo, hi, init, unit) in enumerate([("amount", 0.0, 2.0, 1.0, 1), ("
     dial("d_" + name, name, [20 + 70 * k, 160, 50, 60], [x, 46, 46, 58], lo, hi, init, unit)
     obj("p_" + name, "prepend " + name, [20 + 70 * k, 230, 70, 22], 1, 1)
     ln("d_" + name, 0, "p_" + name, 0); ln("p_" + name, 0, "js", 1)
+obj("rg", "route g1 g2 g3 g4", [20, 380, 120, 22], 1, 5); ln("js", 9, "rg", 0)
 for k in range(4):
     x = 8 + 50 * k
-    dial(f"d_k{k+1}", f"k{k+1}", [20 + 70 * k, 270, 50, 60], [x, 108, 46, 58], 0.0, 1.0, 0.5)
-    obj(f"p_k{k+1}", f"prepend k {k+1}", [20 + 70 * k, 340, 80, 22], 1, 1)
-    ln(f"d_k{k+1}", 0, f"p_k{k+1}", 0); ln(f"p_k{k+1}", 0, "js", 1)
+    dial(f"d_g{k+1}", f"g{k+1}", [20 + 70 * k, 270, 50, 60], [x, 108, 46, 58], 0.0, 1.0, 0.5)
+    obj(f"p_g{k+1}", f"prepend group g{k+1}", [20 + 70 * k, 340, 100, 22], 1, 1); ln(f"d_g{k+1}", 0, f"p_g{k+1}", 0); ln(f"p_g{k+1}", 0, "js", 1)
+    obj(f"s_g{k+1}", "prepend set", [150 + 70 * k, 410, 70, 22], 1, 1); ln("rg", k, f"s_g{k+1}", 0); ln(f"s_g{k+1}", 0, f"d_g{k+1}", 0)
 add({"id": "mon", "maxclass": "multislider", "numinlets": 1, "numoutlets": 2, "outlettype": ["", ""], "patching_rect": [400, 80, 124, 100], "size": 16, "setminmax": [0.0, 1.0],
      "ignoreclick": 1, "contdata": 1, "peakcolor": [0.8, 0.8, 0.8, 1.0], "slidercolor": [0.35, 0.8, 0.8, 1.0], "bgcolor": [0.05, 0.05, 0.05, 1.0],
-     "presentation": 1, "presentation_rect": [208, 24, 124, 100]})
-com("labels", "(no rows)", [400, 190, 124, 40], [208, 126, 124, 40], 8.0)
-# ---- the table: three jit.cellblock grids (selmode 5 = edit in place; rowhead 1 = the first grid row is a header the engine never touches) ----
-RH, FS = 14, 9.0
-GRIDS = [("cbr", [4, 188, 334, 13 * RH + 4], 11, 13, 30, ["out", "param", "lo", "hi", "amt%", "chance", "wob%", "group", "trim%", "mode", "sign"]),
-         ("cbg", [4, 380, 108, 7 * RH + 4], 2, 7, 52, ["group", "corr"]),
-         ("cbk", [124, 380, 214, 5 * RH + 4], 4, 5, 52, ["row/group", "out|group", "param", "field"])]
-com("tl", "table: double-click a cell to edit; type a new row in the first empty line (needs out + param); clear out or param to delete", [400, 300, 400, 20], [4, 172, 332, 14], 8.0)
-for k, (cid, rect, ncol, nrow, cw, heads) in enumerate(GRIDS):
-    add({"id": cid, "maxclass": "jit.cellblock", "numinlets": 2, "numoutlets": 3, "outlettype": ["list", "list", "list"], "patching_rect": [400 + 10 * k, 320, rect[2], rect[3]],
-         "rows": nrow, "cols": ncol, "colwidth": cw, "rowheight": RH, "selmode": 5, "rowhead": 1, "neverdirty": 1, "precision": 3, "fontname": FONT, "fontsize": FS,
-         "presentation": 1, "presentation_rect": rect})
-    obj(f"pc{k}", f"prepend cell {k}", [20 + 100 * k, 560, 90, 22], 1, 1); ln(cid, 0, f"pc{k}", 0); ln(f"pc{k}", 0, "js", 1)
-    ln("js", 7 + k, cid, 0)
-    msg(f"hd{k}", ", ".join(f"set {c} 0 {h}" for c, h in enumerate(heads)), [20, 600 + 28 * k, 640, 22]); ln(f"hd{k}", 0, cid, 0)
-obj("ld2", "loadbang", [20, 580, 60, 22], 1, 1, ["bang"])
-for k in range(3): ln("ld2", 0, f"hd{k}", 0)
-msg("rf", "refresh", [560, 580, 60, 22]); ln("ld2", 0, "rf", 0); ln("rf", 0, "js", 1)
+     "presentation": 1, "presentation_rect": [208, 24, 160, 100]})
+com("labels", "(no rows)", [400, 190, 124, 40], [208, 126, 160, 40], 8.0)
+# ---- the table: a header, the + button, and (below, made at runtime by the engine) one vary_row bpatcher per row ----
+HEAD = [("out", 2), ("param", 26), ("lo", 93), ("hi", 133), ("amt", 173), ("chn", 195), ("wob", 217), ("trim", 239), ("mode", 262), ("sign", 279), ("grp", 319)]
+for name, x in HEAD:
+    com("h_" + name, name, [400 + x, 400, 40, 16], [x, 170, 40, 14], 7.0)
+add({"id": "plus", "maxclass": "textbutton", "text": "+", "mode": 0, "numinlets": 1, "numoutlets": 3, "outlettype": ["", "", "int"], "patching_rect": [400, 420, 20, 20],
+     "presentation": 1, "presentation_rect": [343, 168, 16, 16], "fontname": FONT, "fontsize": 11.0})
+msg("addm", "add", [430, 420, 40, 22]); ln("plus", 0, "addm", 0); ln("addm", 0, "js", 1)
+obj("ld2", "loadbang", [20, 580, 60, 22], 1, 1, ["bang"]); obj("dly", "delay 300", [90, 580, 60, 22], 1, 1)
+msg("rf", "refresh", [160, 580, 60, 22]); ln("ld2", 0, "dly", 0); ln("dly", 0, "rf", 0); ln("rf", 0, "js", 1)
+obj("tp", "thispatcher", [260, 580, 80, 22], 1, 2, ["", ""])
 # the table is kept by the engine; a pattr stores it (one `restore ...` list) and echoes it back at load
 obj("pt", "pattr vary_table @autorestore 1", [20, 540, 200, 22], 1, 3, ["", "", ""]); ln("js", 6, "pt", 0); ln("pt", 0, "js", 1)
-obj("ap", "autopattr", [240, 540, 70, 22], 1, 4, ["", "", "", ""])
 
 # ---- plumbing (not on the surface) ----
 add({"id": "in0", "maxclass": "inlet", "numinlets": 0, "numoutlets": 1, "outlettype": [""], "patching_rect": [20, 20, 30, 30], "comment": "bases: <param> <value>"})
 add({"id": "in1", "maxclass": "inlet", "numinlets": 0, "numoutlets": 1, "outlettype": [""], "patching_rect": [220, 20, 30, 30], "comment": "settings and table lines"})
-obj("js", "js f_util_vary.js", [20, 70, 230, 22], 2, 10)
+obj("js", "js f_util_vary.js", [20, 70, 230, 22], 2, 10, varname="eng"); ln("js", 7, "tp", 0)
 ln("in0", 0, "js", 0); ln("in1", 0, "js", 1)
 for k in range(4):
     add({"id": f"out{k+1}", "maxclass": "outlet", "numinlets": 1, "numoutlets": 0, "patching_rect": [20 + 60 * k, 500, 30, 30], "comment": f"destination {k+1}"})
@@ -112,7 +107,7 @@ obj("pseed", "prepend seed", [70, 150, 80, 22], 1, 1); ln("seedn", 0, "pseed", 0
 obj("draw", "r draw", [270, 120, 60, 22], 0, 1); msg("tick", "tick", [270, 150, 40, 22]); ln("draw", 0, "tick", 0); ln("tick", 0, "js", 1)
 
 patcher = {"fileversion": 1, "appversion": {"major": 9, "minor": 1, "revision": 4, "architecture": "x64", "modernui": 1}, "classnamespace": "box",
-           "rect": [100.0, 100.0, 860.0, 760.0], "openinpresentation": 1, "boxes": boxes, "lines": lines, "autosave": 0}
+           "rect": [100.0, 100.0, 900.0, 760.0], "openinpresentation": 1, "boxes": boxes, "lines": lines, "autosave": 0}
 ids = [b["box"]["id"] for b in boxes]
 assert len(ids) == len(set(ids)), "duplicate ids"
 for l in lines:

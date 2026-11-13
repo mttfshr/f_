@@ -72,8 +72,8 @@ effective = clamp(base + trim + offset * amount + wobble, lo, hi)     (in units 
 param <name> <lo> <hi>            default range for a param
 group <name> <corr 0..1>          1 = members share one draw, 0 = independent
 row <outlet> <param> [lo hi amount% chance% wobble% group trim% mode sign]
-knob <n> row <outlet> <param> <field>      field: amount | chance | wobble | trim
-knob <n> group <name>                      the knob sets that group's correlation
+add                               a blank row (the + button)
+cell <i> <field> <value>          an edit from row i's controls (out param lo hi amt chance wob trim group mode sign, or del)
 ```
 
 Row defaults: range from `param` (else 0-1), amount 10, chance 100, wobble 0, group `-`
@@ -87,14 +87,19 @@ Row defaults: range from `param` (else 0-1), amount 10, chance 100, wobble 0, gr
 
 ## Panel
 
-Fixed strip: roll, seed, amount, chance, wobble, slew. Four assignable knobs (mapped with
-`knob` lines, value `k <n> <0..1>`). A 16-bar multislider shows each row's position in its
-range, with a label comment. Three `jit.cellblock` grids edit the rows (11 columns x 12),
-groups (2 x 6) and knobs (4 x 4). The first grid row is a header. Typing a row in the first
-empty line creates it once it has an outlet and a param; clearing the outlet or the param
-deletes it. A bad outlet or a duplicate outlet + param is refused and the cell restored.
-The engine is the source of truth; an engine-owned `pattr vary_table` keeps the table as
-one `restore ...` list.
+Fixed strip: roll, seed, amount, chance, wobble, slew. Four group dials (g1-g4) set each
+group's correlation. A 16-bar multislider shows each row's position in its range, with a
+label comment. The **+** button adds a row (up to 12): the engine scripts one
+`f_util_vary_row` bpatcher per row. A row has: out (1-4), param (a menu of the names seen on
+inlet 0), lo, hi, four dials (amount %, chance %, wobble %, trim %), mode (off uniform, on
+drunk), sign (bi / up / down), group (0 none, 1-4 = g1-g4) and a **-** that deletes it. A new
+row has no param and sends nothing until one is chosen; a bad outlet or a duplicate
+outlet + param is refused and the row restored.
+
+The engine is the source of truth and keeps the table in an engine-owned `pattr
+vary_table`. **f_util_vary must be placed as an embedded bpatcher (embed 1):** an
+unembedded one saves neither the pattr nor scripted rows (Matt, live scratch test,
+2026-11-13). Rows are rebuilt from the table on load. A row with no param yet is not saved.
 
 ---
 
@@ -106,8 +111,8 @@ one `restore ...` list.
 
 ## Status
 
-- Offline engine check passes (`tests/modules/f_util_vary/`, sections 1-16; per
-  `.specify/f_util_vary/tasks.md`, T001/T002b).
+- Offline engine check passes (`tests/modules/f_util_vary/`). The row UI (T004) is built
+  offline and has NOT been opened in Max.
 - Live (Matt, 2026-11-12): panel renders, grids show and edit rows; the scratch
   prototype's behaviors passed. Not yet checked live: `roll` with typed rows, the groups
   and knobs grids, row deletion, save and reopen (T003).

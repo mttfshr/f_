@@ -32,7 +32,7 @@ PATCHERS_DIR = REPO_ROOT / "package" / "patchers"
 # pfft~ subpatches load by NAME from the same folder as their parent
 # (pfft-spectral-processing skill: pfft~ cannot embed its subpatch inline) --
 # dependencies, not modules: no README row, exempt from module checks.
-NOT_MODULES = {"f_a_decorrelate_inner"}
+NOT_MODULES = {"f_a_decorrelate_inner", "f_util_vary_row"}
 HELP_DIR = REPO_ROOT / "package" / "help"
 OUT = REPO_ROOT / "package" / "extras" / "f_Launch.maxpat"
 

@@ -6,7 +6,8 @@ function load() {
              arrayfromargs: function (x) { return Array.prototype.slice.call(x); }, Date: Date, Math: Math, inlet: 0, messagename: ""};
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(__dirname, "../../../package/javascript/f_util_vary.js"), "utf8"), ctx);
-  ctx.out = out; ctx.posts = posts;
+  ctx.out = out; ctx.posts = posts; ctx.have = {}; ctx.removed = [];
+  ctx.patcher = {getnamed: function (n) { return ctx.have[n] ? {n: n} : null; }, remove: function (o) { ctx.removed.push(o.n); delete ctx.have[o.n]; }};
   ctx.base = function (n) { ctx.inlet = 0; ctx.messagename = n; ctx.anything.apply(ctx, Array.prototype.slice.call(arguments, 1)); };
   ctx.set = function (n) { ctx.inlet = 1; ctx.messagename = n; ctx.anything.apply(ctx, Array.prototype.slice.call(arguments, 1)); };
   ctx.row = function () { ctx.set.apply(ctx, ["row"].concat(Array.prototype.slice.call(arguments))); };
@@ -72,11 +73,17 @@ assert.strictEqual(on(c, 0, "x")[0][2], 0.4, "refresh sends the plain base to ou
 // 11. bad rows are reported, not added
 c = load(); c.row(9, "x"); c.row(0, "x"); assert(c.posts.length == 2, "two bad rows reported"); c.base("x", 1); assert.strictEqual(c.out.length, 4, "still a plain wire");
 
-// 12. knobs: a knob maps 0..1 onto a row field (or a group's correlation)
-c = load(); c.row(1, "x", -1, 1, 0, 100); c.base("x", 0); c.set("knob", 1, "row", 1, "x", "amount"); c.set("roll");
-assert.strictEqual(lastv(c, 0, "x"), 0, "amount 0: no variation yet"); c.set("k", 1, 0.5); assert(Math.abs(lastv(c, 0, "x")) > 0, "knob raises the row's amount"); assert.strictEqual(c.out.filter(function (m) { return m[0] == 4; }).length > 0, true, "monitor list sent");
-c.set("knob", 2, "row", 1, "x", "trim"); c.set("k", 2, 1); c.set("k", 1, 0); assert(Math.abs(lastv(c, 0, "x") - 1) < 1e-9, "trim knob at 1 = +100% of the range (clamped to hi)");
-c.set("group", "g", 0.2); c.set("knob", 3, "group", "g"); c.set("k", 3, 0.9); c.set("knob", 9, "row", 1, "x", "amount"); assert(c.posts.length >= 1, "bad knob reported");
+// 12. a blank row from `add` gets a row UI; its param is picked from the names seen; edits come back as `cell <i> <field> <value>`
+var sc = function (c) { return c.out.filter(function (m) { return m[0] == 7 && m[1] == "script"; }); };
+var ui = function (c) { return c.out.filter(function (m) { return m[0] == 8; }); };
+c = load(); c.set("add");
+assert.strictEqual(sc(c).filter(function (m) { return m[2] == "newobject"; }).length, 1, "one bpatcher scripted for the new row");
+assert.strictEqual(sc(c).filter(function (m) { return m[2] == "connect"; }).length, 2, "and two cords scripted");
+assert(sc(c)[0].indexOf("vr1") > 0 && sc(c)[0].indexOf("f_util_vary_row.maxpat") > 0, "named vr1, from f_util_vary_row.maxpat");
+c.base("x", 0); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "names" && m[3] == "x"; }), "a base name is offered to the row's menu");
+c.out.length = 0; c.base("x", 0); assert.strictEqual(on(c, 0, "x").length, 1, "a row with no param yet is a plain wire");
+c.set("cell", 1, "param", "x"); c.set("cell", 1, "amt", 100); c.set("cell", 1, "lo", -1); c.set("cell", 1, "hi", 1); c.set("roll");
+assert(Math.abs(lastv(c, 0, "x")) > 0, "the row works once its param is chosen"); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "param_idx" && m[3] == 0; }), "param index pushed back");
 
 // 13. a table line arriving as a list led by a symbol is the same as the message
 c = load(); c.ctxlist = true; c.inlet = 1; c.messagename = "list"; c.anything("row", 2, "x", 0, 1, 10, 100); c.base("x", 0.5); assert(on(c, 1, "x").length == 1 && on(c, 0, "x").length == 1, "list-led row accepted");
@@ -84,28 +91,22 @@ c = load(); c.ctxlist = true; c.inlet = 1; c.messagename = "list"; c.anything("r
 // 14. monitor and label outlets
 c = load(); c.row(1, "x", 0, 1, 50, 100); c.row(2, "y", 0, 1, 50, 100); assert(c.out.some(function (m) { return m[0] == 5 && m[1] == "set" && m[2] == "o1.x o2.y"; }), "labels");
 c.base("x", 0.5); c.base("y", 0.5); var mon = c.out.filter(function (m) { return m[0] == 4; }); assert(mon.length > 0 && mon[mon.length - 1][1].length == 2, "monitor list has one value per row");
-// 15. the rows grid: engine rows are pushed as `set <col> <row> <value>` on outlet 7; an edit comes back as `cell 0 <col> <row> <value>`
-var sets = function (c, o) { return c.out.filter(function (m) { return m[0] == o && m[1] == "set"; }); };
-c = load(); c.row(1, "x", -1, 1, 50, 100, 0, "-", 0, "u", "bi");
-assert(sets(c, 7).some(function (m) { return m[2] == 1 && m[3] == 1 && m[4] == "x"; }), "param cell pushed to the rows grid");
-c.base("x", 0); c.set("cell", 0, 4, 1, 0); c.set("roll"); assert.strictEqual(lastv(c, 0, "x"), 0, "editing the amount cell to 0 stops the variation");
-c.set("cell", 0, 4, 1, 100); c.set("roll"); assert(Math.abs(lastv(c, 0, "x")) > 0, "and back up");
-// typing a new row into the first empty grid row: held until outlet and param are both there
-c.set("cell", 0, 0, 2, 2); c.set("cell", 0, 1, 2, "y"); c.base("y", 0.5); c.out.length = 0; c.set("roll");
-assert(on(c, 1, "y").length >= 1 && on(c, 0, "y").length == 0, "a typed row appears on its outlet only after both cells exist");
-// a bad outlet is refused and the grid is repushed; clearing the param deletes the row
-c.out.length = 0; c.set("cell", 0, 0, 1, 9); assert(c.posts.length >= 1 && sets(c, 7).length >= 1, "bad outlet refused, cell repushed");
-c.set("cell", 0, 1, 1, ""); c.out.length = 0; c.base("x", 0.4); assert.strictEqual(on(c, 0, "x")[0][2], 0.4, "a deleted row is a plain wire again");
-// duplicate outlet + param is refused
-var np = c.posts.length; c.row(1, "y", 0, 1, 10, 100); c.set("cell", 0, 0, 2, 2); assert(c.posts.length > np, "duplicate key refused");
-// groups grid and knobs grid
-c = load(); c.set("cell", 1, 0, 1, "sway"); c.set("cell", 1, 1, 1, 0.8); c.row(1, "x", -1, 1, 50, 100, 0, "sway"); c.row(2, "x", -1, 1, 50, 100, 0, "sway"); c.base("x", 0); c.set("roll");
-assert(Math.abs(lastv(c, 0, "x") - lastv(c, 1, "x")) < 0.3 * 0.5 * 2 + 1e-9 && lastv(c, 0, "x") != lastv(c, 1, "x"), "group made in the grid with corr 0.8 correlates the rows");
-c.set("cell", 2, 0, 1, "row"); c.set("cell", 2, 1, 1, 1); c.set("cell", 2, 2, 1, "x"); c.set("cell", 2, 3, 1, "amount"); c.set("k", 1, 0); c.set("k", 1, 1);
-assert(Math.abs(lastv(c, 0, "x")) > 0, "a knob assigned in the grid drives the row's amount");
+// 15. cell edits: amount 0 stops the variation; a bad outlet or a duplicate is refused and the row repushed; group numbers become g1..g4; del removes the row
+c = load(); c.row(1, "x", -1, 1, 50, 100, 0, "-", 0, "u", "bi"); c.base("x", 0); c.set("cell", 1, "amt", 0); c.set("roll"); assert.strictEqual(lastv(c, 0, "x"), 0, "amount 0");
+c.set("cell", 1, "amt", 100); c.set("roll"); assert(Math.abs(lastv(c, 0, "x")) > 0, "and back up");
+c.out.length = 0; var np = c.posts.length; c.set("cell", 1, "out", 9); assert(c.posts.length > np && ui(c).some(function (m) { return m[2] == "out" && m[3] == 1; }), "bad outlet refused, row repushed");
+c.set("add"); c.set("cell", 2, "param", "x"); np = c.posts.length; c.set("cell", 2, "param", "x"); c.set("cell", 2, "out", 1); assert(c.posts.length > np, "duplicate outlet + param refused");
+c.out.length = 0; c.set("cell", 1, "group", 2); assert(c.out.some(function (m) { return m[0] == 9 && m[1] == "g2"; }), "group dial pushed"); assert(ui(c).some(function (m) { return m[2] == "group" && m[3] == 2; }), "group number pushed back");
+c.have = {vr1: 1, vr2: 1}; c.out.length = 0; c.set("cell", 1, "del", 1); assert.strictEqual(on(c, 0, "x")[0][2], 0, "after del the outlet is a plain wire again"); assert.deepStrictEqual(c.removed, ["vr2"], "the last row UI removed");
+// a group made on the group dials correlates rows
+c = load(); c.set("group", "g1", 0.8); c.row(1, "x", -1, 1, 50, 100, 0, "g1"); c.row(2, "x", -1, 1, 50, 100, 0, "g1"); c.base("x", 0); c.set("roll");
+assert(Math.abs(lastv(c, 0, "x") - lastv(c, 1, "x")) < 0.3 * 0.5 * 2 + 1e-9 && lastv(c, 0, "x") != lastv(c, 1, "x"), "corr 0.8 correlates the rows");
+// refresh removes any saved row UIs (an embedded patch keeps them) and builds them again from the table
+c = load(); c.have = {vr1: 1, vr2: 1, vr3: 1}; c.row(1, "x"); c.removed.length = 0; c.out.length = 0; c.set("refresh");
+assert.deepStrictEqual(c.removed.slice().sort(), ["vr1", "vr2", "vr3"], "saved row UIs removed"); assert.strictEqual(sc(c).filter(function (m) { return m[2] == "newobject"; }).length, 1, "one rebuilt from the table");
 
 // 16. persistence: the table is stored as one `restore ...` list for a pattr, and restoring it rebuilds the same table
-c = load(); c.set("param", "x", -1, 1); c.set("group", "g", 0.9); c.row(1, "x", "-", "-", 30, 80, 5, "g", 10, "d", "up"); c.set("knob", 2, "row", 1, "x", "chance");
+c = load(); c.set("param", "x", -1, 1); c.set("group", "g", 0.9); c.row(1, "x", "-", "-", 30, 80, 5, "g", 10, "d", "up"); c.set("add");
 var stores = c.out.filter(function (m) { return m[0] == 6; }); var saved = stores[stores.length - 1].slice(1);
 assert.strictEqual(saved[0], "restore"); var d2 = load(); d2.set.apply(d2, ["restore"].concat(saved.slice(1)));
 var again = d2.out.filter(function (m) { return m[0] == 6; });
@@ -113,8 +114,6 @@ assert.strictEqual(again.length, 0, "restoring does not store again (no echo loo
 d2.base("x", 0); d2.set("roll"); assert(on(d2, 0, "x").length >= 1, "the restored row is live");
 d2.set("restore", ...saved.slice(1)); assert.strictEqual(d2.out.filter(function (m) { return m[0] == 6; }).length, 0, "the echo of an unchanged table is ignored");
 var e = load(); e.inlet = 1; e.messagename = "list"; e.anything.apply(e, saved); assert(e.out.length > 0, "a list-led restore from the pattr is accepted");
-// the stored list has the groups, params, rows and knobs, with | between
-assert(saved.indexOf("|") > 0 && saved.indexOf("group") >= 0 && saved.indexOf("row") >= 0 && saved.indexOf("knob") >= 0 && saved.indexOf("param") >= 0, "everything is in the stored list");
-// the header row (grid row 0) is not data: a click on it does nothing
-c = load(); c.row(1, "x", 0, 1, 10, 100); var nn = c.out.length; c.set("cell", 0, 1, 0, "param"); assert.strictEqual(c.out.length, nn, "header click ignored");
+assert(saved.indexOf("|") > 0 && saved.indexOf("group") >= 0 && saved.indexOf("row") >= 0 && saved.indexOf("param") >= 0, "everything is in the stored list");
+assert.strictEqual(saved.filter(function (t) { return t == "row"; }).length, 1, "a blank row (no param yet) is not stored");
 console.log("ok");
