@@ -76,9 +76,10 @@ c = load(); c.row(9, "x"); c.row(0, "x"); assert(c.posts.length == 2, "two bad r
 // 12. a blank row from `add` gets a row UI; its param is picked from the names seen; edits come back as `cell <i> <field> <value>`
 var sc = function (c) { return c.out.filter(function (m) { return m[0] == 7 && m[1] == "script"; }); };
 var ui = function (c) { return c.out.filter(function (m) { return m[0] == 8; }); };
-c = load(); c.set("add");
+c = load(); c.set("token", "T9"); c.set("add");
 assert.strictEqual(sc(c).filter(function (m) { return m[2] == "newobject"; }).length, 1, "one bpatcher scripted for the new row");
-assert.strictEqual(sc(c).filter(function (m) { return m[2] == "connect"; }).length, 2, "and two cords scripted");
+assert.strictEqual(sc(c).filter(function (m) { return m[2] == "connect"; }).length, 1, "and one cord scripted (engine to row; the row answers by send)");
+assert(sc(c)[0].indexOf("T9") > 0, "the instance token is in the row args");
 assert(sc(c)[0].indexOf("vr1") > 0 && sc(c)[0].indexOf("f_util_vary_row.maxpat") > 0, "named vr1, from f_util_vary_row.maxpat");
 c.base("x", 0); assert(ui(c).some(function (m) { return m[1] == 1 && m[2] == "names" && m[3] == "x"; }), "a base name is offered to the row's menu");
 c.out.length = 0; c.base("x", 0); assert.strictEqual(on(c, 0, "x").length, 1, "a row with no param yet is a plain wire");

@@ -394,16 +394,19 @@
 			{
 				"box": {
 					"id": "outl",
-					"maxclass": "outlet",
+					"maxclass": "newobj",
 					"numinlets": 1,
 					"numoutlets": 0,
+					"outlettype": [],
 					"patching_rect": [
 						20,
-						400,
-						30,
-						30
+						440,
+						90,
+						22
 					],
-					"comment": "cell <i> <field> <value>"
+					"text": "s #2_cell",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0
 				}
 			},
 			{

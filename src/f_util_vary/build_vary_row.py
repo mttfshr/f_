@@ -1,7 +1,7 @@
 """Builds package/patchers/f_util_vary_row.maxpat: ONE row of f_util_vary's table (368 x 20), made at runtime by the engine (`script newobject bpatcher @name
-f_util_vary_row.maxpat @args <i>`), one per row. Controls: out, param (a menu of the names seen), lo, hi, four dials (amount, chance, wobble, trim), mode, sign, group, delete.
+f_util_vary_row.maxpat @args <i> <token>`), one per row. Controls: out, param (a menu of the names seen), lo, hi, four dials (amount, chance, wobble, trim), mode, sign, group, delete.
 In:  `<i> <field> <value>` from the engine (route #1 keeps the ones for this row; `set` so nothing is sent back).
-Out: `cell <i> <field> <value>` when a control is touched, to the engine's right inlet. Hand-built, like f_util_vary.
+Out: `cell <i> <field> <value>` when a control is touched, sent on `s #2_cell` (args: row number, instance token) and received by the f_util_vary patcher. Hand-built, like f_util_vary.
 
     python3 src/f_util_vary/build_vary_row.py
 """
@@ -46,7 +46,7 @@ ui("c_del", "textbutton", [343, 2, 16, 16], 3, ["", "", "int"], text="-", mode=0
 
 # ---- in: engine -> controls ----
 add({"id": "in", "maxclass": "inlet", "numinlets": 0, "numoutlets": 1, "outlettype": [""], "patching_rect": [20, 20, 30, 30], "comment": "<i> <field> <value>"})
-add({"id": "outl", "maxclass": "outlet", "numinlets": 1, "numoutlets": 0, "patching_rect": [20, 400, 30, 30], "comment": "cell <i> <field> <value>"})
+obj("outl", "s #2_cell", [20, 440, 90, 22], 1, 0, [])
 obj("r1", "route #1", [20, 60, 60, 22], 1, 2)
 FIELDS = ["out", "param_idx", "names", "lo", "hi", "amt", "chance", "wob", "trim", "group", "mode", "sign"]
 obj("r2", "route " + " ".join(FIELDS), [20, 90, 520, 22], 1, len(FIELDS) + 1)

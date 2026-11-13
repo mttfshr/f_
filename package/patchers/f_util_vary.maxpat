@@ -1393,6 +1393,44 @@
 			},
 			{
 				"box": {
+					"id": "rcell",
+					"maxclass": "newobj",
+					"numinlets": 0,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						350,
+						580,
+						90,
+						22
+					],
+					"text": "r #0_cell"
+				}
+			},
+			{
+				"box": {
+					"id": "tokm",
+					"maxclass": "message",
+					"numinlets": 2,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						450,
+						580,
+						70,
+						22
+					],
+					"text": "token #0",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0
+				}
+			},
+			{
+				"box": {
 					"id": "pt",
 					"maxclass": "newobj",
 					"numinlets": 1,
@@ -1945,6 +1983,42 @@
 				"patchline": {
 					"source": [
 						"rf",
+						0
+					],
+					"destination": [
+						"js",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"rcell",
+						0
+					],
+					"destination": [
+						"js",
+						1
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"ld2",
+						0
+					],
+					"destination": [
+						"tokm",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"tokm",
 						0
 					],
 					"destination": [

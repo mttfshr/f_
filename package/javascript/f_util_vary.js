@@ -31,6 +31,7 @@ function _uiRemove(n) {                                   // delete the scripted
 var V = (function () {
 var OUTS = 4;
 var G = {amount: 1, chance: 1, wobble: 1, slew: 0, seed: 1};
+var TOKEN = "none";                                          // unique per placed instance (the patcher sends `token #0`); rows send back on `<TOKEN>_cell`
 var rows = [], byKey = {}, groups = {}, gorder = [], PARAM = {}, BASE = {}, NAMES = [], last = 0, DEBUG = 0, t0 = 0, MON = 16;
 var GR = 12, UIN = 0, restoring = false, lastSer = "";        // GR: most rows the panel has room for; UIN: row UIs made so far
 var ROWY0 = 186, ROWH = 22, ROWW = 368;                      // presentation geometry of the row strips
@@ -116,13 +117,13 @@ function labels() {
   outlet(5, "set", t.length ? t.join(" ") : "(no rows)");
 }
 
-// ---- the row UIs: one scripted bpatcher (f_util_vary_row.maxpat) per row, named vr<i>; it takes `<i> <field> <value>` from outlet 8 and answers `cell <i> <field> <value>` on inlet 1 ----
+// ---- the row UIs: one scripted bpatcher (f_util_vary_row.maxpat) per row, named vr<i>; it takes `<i> <field> <value>` from outlet 8 (a scripted cord) and answers `cell <i> <field> <value>` by `send <TOKEN>_cell`, which the patcher
+// receives into inlet 1 (a scripted cord back did not reach the engine in Max, Matt 2026-11-13) ----
 function uiMake(i) {
   var y = ROWY0 + (i - 1) * ROWH;
-  outlet(7, "script", "newobject", "bpatcher", "@name", "f_util_vary_row.maxpat", "@args", i, "@varname", "vr" + i, "@presentation", 1, "@presentation_rect", 2, y, ROWW, 20,
+  outlet(7, "script", "newobject", "bpatcher", "@name", "f_util_vary_row.maxpat", "@args", i, TOKEN, "@varname", "vr" + i, "@presentation", 1, "@presentation_rect", 2, y, ROWW, 20,
          "@patching_rect", 560, y, ROWW, 20);
   outlet(7, "script", "connect", "eng", 8, "vr" + i, 0);
-  outlet(7, "script", "connect", "vr" + i, 0, "eng", 1);
 }
 function uiGrow() {                                          // as many row UIs as rows
   if (restoring) return;
@@ -242,6 +243,7 @@ function settings(name, a) {                                 // inlet 1
     case "param": paramCmd(a); break;
     case "group": groupCmd(a); break;
     case "add": addCmd(); break;
+    case "token": TOKEN = String(a[0]); break;
     case "cell": uiCell(a); break;
     case "restore": restore(a); break;
     case "roll": roll(); break;

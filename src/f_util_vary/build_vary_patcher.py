@@ -90,6 +90,9 @@ msg("addm", "add", [430, 420, 40, 22]); ln("plus", 0, "addm", 0); ln("addm", 0, 
 obj("ld2", "loadbang", [20, 580, 60, 22], 1, 1, ["bang"]); obj("dly", "delay 300", [90, 580, 60, 22], 1, 1)
 msg("rf", "refresh", [160, 580, 60, 22]); ln("ld2", 0, "dly", 0); ln("dly", 0, "rf", 0); ln("rf", 0, "js", 1)
 obj("tp", "thispatcher", [260, 580, 80, 22], 1, 2, ["", ""])
+# the row UIs answer on `send #0_cell` (#0 is unique to this placed instance); the token tells the engine that name
+obj("rcell", "r #0_cell", [350, 580, 90, 22], 0, 1); ln("rcell", 0, "js", 1)
+msg("tokm", "token #0", [450, 580, 70, 22]); ln("ld2", 0, "tokm", 0); ln("tokm", 0, "js", 1)
 # the table is kept by the engine; a pattr stores it (one `restore ...` list) and echoes it back at load
 obj("pt", "pattr vary_table @autorestore 1", [20, 540, 200, 22], 1, 3, ["", "", ""]); ln("js", 6, "pt", 0); ln("pt", 0, "js", 1)
 
