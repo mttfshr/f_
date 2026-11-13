@@ -1,6 +1,13 @@
 # HANDOFF archive
 
-Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11 and 2026-11-12 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+Entries moved out of `HANDOFF.md` on 2026-10-31, 2026-11-04, 2026-11-08, 2026-11-10, 2026-11-11, 2026-11-12 and 2026-11-13 (newest first, as they were). Not read at session start: grep it for history. The full pre-trim `HANDOFF.md` is also in git (commit 76c2ab8).
+
+## 2026-11-12: misregistration chain, then `f_util_vary` built (moved out of HANDOFF.md 2026-11-13)
+
+- **Done and committed (Claude, with Matt's go):** misregistration round 2 simplified to one plate and passed Matt's look; the randomizer engine prototyped and live-checked feature by feature in scratch; named `f_util_vary`; shipping design decided (see START HERE); T001 engine, T002 patcher, T002b editable cellblock grids; README row, menu entry, drift baseline entry; ideas note renamed `f_util_vary.md`.
+- **Fixed from the Max docs:** cellblocks edit only with `selmode 5`; `colwidth` is one default for all columns (my per-column messages had reset it to 10).
+- **Not done, not verified:** the T003 live checks and save and reopen (START HERE); reference doc, helpfile, preflight. `tests/build/test_gates.py` was not run (needs Matt's go); `plan.md` has one line on `f_misregister`, `gates.md` has no vary row, and `G-menu` should mention the provisional `Vary` placement.
+- Last commit before this one: `46f2d09`.
 
 ## 2026-11-12: misregistration chain and the randomizer experiment (moved out of HANDOFF.md 2026-11-12)
 
