@@ -89,6 +89,10 @@ assert(Math.abs(lastv(c, 0, "x")) > 0, "the row works once its param is chosen")
 // a row made by `add` (or edited by a cell) rolls and ticks without error, wobble included
 c = load(); c.set("add"); c.set("cell", 1, "wob", 50); np = c.posts.length; c.set("roll"); c.set("tick"); c.set("cell", 1, "param", "x"); c.base("x", 0.5); c.set("roll"); c.set("tick"); assert.strictEqual(c.posts.length, np, "no error from a row made by add");
 
+// no range set: unclamped, and the variation scales with the base (a base of 3 varies; a base of 0 uses 1)
+c = load(); c.row(1, "q", "-", "-", 20, 100); c.base("q", 3); c.set("seed", 5); assert(lastv(c, 0, "q") != 3 && Math.abs(lastv(c, 0, "q") - 3) <= 0.6 + 1e-9, "unset range scales with the base");
+c.base("q", 0); c.set("seed", 6); assert(lastv(c, 0, "q") != 0 && Math.abs(lastv(c, 0, "q")) <= 0.2 + 1e-9, "a base of 0 uses a range of 1");
+
 // 13. a table line arriving as a list led by a symbol is the same as the message
 c = load(); c.ctxlist = true; c.inlet = 1; c.messagename = "list"; c.anything("row", 2, "x", 0, 1, 10, 100); c.base("x", 0.5); assert(on(c, 1, "x").length == 1 && on(c, 0, "x").length == 1, "list-led row accepted");
 

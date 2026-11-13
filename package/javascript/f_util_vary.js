@@ -8,7 +8,8 @@
 // Outlets 0..OUTS-1: one per destination (1..OUTS in the table).
 //
 // Table lines:
-//   param <name> <lo> <hi>                                   default range for a param (rows may write - for lo and hi)
+//   param <name> <lo> <hi>                                   default range for a param (rows may write - for lo and hi). With no range at all a row is unclamped and
+//                                                            its amount is a percentage of the base's own size (1 when the base is 0)
 //   group <name> <corr 0..1>                                 correlation: 1 = members share one draw, 0 = independent
 //   row <outlet> <param> [lo hi amount% chance% wobble% group trim% mode sign]
 //        mode: u (uniform re-roll) | d (drunk: bounded walk)    sign: bi | up | down    group: name or -
@@ -54,7 +55,7 @@ function reseed() {
 }
 function ensureGroup(name) { if (name != "-" && !groups[name]) { groups[name] = {corr: 0.5, shared: 0, rng: warm({s: hash(G.seed + "|g|" + name)})}; gorder.push(name); } }
 
-function defRange(p) { return PARAM[p] || {lo: 0, hi: 1}; }
+function defRange(p) { return PARAM[p] || {lo: null, hi: null}; }      // null = unset: no clamp on that side, and the variation is a share of the base's own size
 function keyOf(r) { return r.param ? r.outlet + "|" + r.param : ""; }      // a row with no param yet (just added) has no key and sends nothing
 function mkRow(a, blankOk) {                                 // always with its random streams (a row made by `add` or a cell edit is never reseeded before its first roll or tick)
   var r = mkRow0(a, blankOk);
@@ -86,9 +87,10 @@ function paramCmd(a) { if (a[0] !== undefined) { PARAM[String(a[0])] = {lo: num(
 function groupCmd(a) { if (a[0] === undefined) return; var n = String(a[0]); ensureGroup(n); groups[n].corr = clamp(num(a[1], 0.5), 0, 1); gpush(); commit(); }
 function clearCmd() { rows = []; byKey = {}; groups = {}; gorder = []; PARAM = {}; labels(); uiGrow(); commit(); }          // bases are kept, so a re-applied table finds them
 
+function rangeOf(r) { return (r.lo !== null && r.hi !== null) ? r.hi - r.lo : (Math.abs(BASE[r.param]) || 1); }
 function value(r) {
-  var range = r.hi - r.lo;
-  return clamp(BASE[r.param] + r.trim / 100 * range + r.off * G.amount * r.amount / 100 * range + G.wobble * r.wobble / 100 * r.wk * range, r.lo, r.hi);
+  var range = rangeOf(r), lo = r.lo === null ? -Infinity : r.lo, hi = r.hi === null ? Infinity : r.hi;
+  return clamp(BASE[r.param] + r.trim / 100 * range + r.off * G.amount * r.amount / 100 * range + G.wobble * r.wobble / 100 * r.wk * range, lo, hi);
 }
 function emitRow(r, force) {
   if (!r.param || BASE[r.param] === undefined) return;
@@ -105,7 +107,7 @@ function emitRows(force) {
 }
 function monitor() {                                          // normalized position of each row's value in its range, for a multislider
   var l = [], n = Math.min(MON, rows.length);
-  for (var i = 0; i < n; i++) { var r = rows[i]; l.push((!r.param || BASE[r.param] === undefined || r.hi == r.lo) ? 0 : clamp((value(r) - r.lo) / (r.hi - r.lo), 0, 1)); }
+  for (var i = 0; i < n; i++) { var r = rows[i]; l.push((!r.param || BASE[r.param] === undefined) ? 0 : (r.lo !== null && r.hi !== null) ? (r.hi == r.lo ? 0 : clamp((value(r) - r.lo) / (r.hi - r.lo), 0, 1)) : clamp(0.5 + (value(r) - BASE[r.param]) / (2 * rangeOf(r)), 0, 1)); }
   if (n) outlet(4, l);
 }
 function labels() {
@@ -137,7 +139,7 @@ function pushNames(only) { if (!NAMES.length) return; for (var n = only || 1; n 
 function pushRow(i) {
   if (restoring || i >= UIN) return;
   var r = rows[i], n = i + 1, g = /^g([1-4])$/.exec(r.group);
-  outlet(8, n, "out", r.outlet); outlet(8, n, "param_idx", NAMES.indexOf(r.param)); outlet(8, n, "lo", r.lo); outlet(8, n, "hi", r.hi);
+  outlet(8, n, "out", r.outlet); outlet(8, n, "param_idx", NAMES.indexOf(r.param)); outlet(8, n, "lo", r.lo === null ? 0 : r.lo); outlet(8, n, "hi", r.hi === null ? 0 : r.hi);      // an unset side shows 0
   outlet(8, n, "amt", r.amount); outlet(8, n, "chance", r.chance); outlet(8, n, "wob", r.wobble); outlet(8, n, "trim", r.trim);
   outlet(8, n, "group", g ? Number(g[1]) : 0); outlet(8, n, "mode", r.mode); outlet(8, n, "sign", r.sign);
 }

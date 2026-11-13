@@ -76,7 +76,7 @@ add                               a blank row (the + button)
 cell <i> <field> <value>          an edit from row i's controls (out param lo hi amt chance wob trim group mode sign, or del)
 ```
 
-Row defaults: range from `param` (else 0-1), amount 10, chance 100, wobble 0, group `-`
+Row defaults: range from `param` (else unset: no clamp, and amount is a percentage of the base's own size, 1 when the base is 0; the panel shows an unset side as 0), amount 10, chance 100, wobble 0, group `-`
 (none), trim 0, mode `u`, sign `bi`. Use `-` for an omitted field.
 
 - **mode:** `u` uniform re-roll, `d` drunk (bounded walk, reflects at the bounds).
