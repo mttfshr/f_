@@ -1,7 +1,7 @@
 """Builds package/patchers/f_util_vary.maxpat (T002). A hand-built utility, so it is out_of_scope for the definition.py ratchet
 (tests/build/drift_baseline.json); this script is the source, and a hand edit in Max is to be written back here.
 
-Layout (presentation 340 x 474): roll + seed, a strip of four dials (amount, chance, wobble, slew), four knob dials (assigned by `knob` lines in the
+Layout (presentation 340 x 488): roll + seed, a strip of four dials (amount, chance, wobble, slew), four knob dials (assigned by `knob` lines in the
 table), a multislider of live row positions with a label comment, and the table as three jit.cellblock grids (rows, groups,
 knobs) that you edit in place; the engine owns the table and a pattr keeps it. js = f_util_vary.js. Inlet 0 bases, inlet 1 settings; four destination outlets.
 
@@ -53,7 +53,7 @@ def ln(a, ao, b, bi): lines.append({"patchline": {"source": [a, ao], "destinatio
 
 # ---- presentation surface ----
 add({"id": "bg", "maxclass": "panel", "angle": 270.0, "background": 1, "bgcolor": [0.0, 0.0, 0.0, 1.0], "border": 1, "bordercolor": [0.0, 0.03529411765, 0.2274509804, 1.0],
-     "mode": 0, "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 340, 474], "presentation": 1, "presentation_rect": [0, 0, 340, 474], "proportion": 0.5})
+     "mode": 0, "numinlets": 1, "numoutlets": 0, "patching_rect": [400, 20, 340, 488], "presentation": 1, "presentation_rect": [0, 0, 340, 488], "proportion": 0.5})
 # the library's title bar: two type dots (takes / outputs: neither, so dim gray) and the module name at x 10.5 (tests/build/test_generate_menu.py)
 for dot_id, y, hint in (("obj-19f", 5.0, "Takes: no vecfield or tensor"), ("obj-19g", 12.0, "Outputs: no vecfield or tensor")):
     add({"id": dot_id, "maxclass": "panel", "background": 0, "bgcolor": [0.28, 0.28, 0.28, 1.0], "border": 0, "mode": 0, "hint": hint, "numinlets": 1, "numoutlets": 0,
@@ -78,25 +78,21 @@ add({"id": "mon", "maxclass": "multislider", "numinlets": 1, "numoutlets": 2, "o
      "ignoreclick": 1, "contdata": 1, "peakcolor": [0.8, 0.8, 0.8, 1.0], "slidercolor": [0.35, 0.8, 0.8, 1.0], "bgcolor": [0.05, 0.05, 0.05, 1.0],
      "presentation": 1, "presentation_rect": [208, 24, 124, 100]})
 com("labels", "(no rows)", [400, 190, 124, 40], [208, 126, 124, 40], 8.0)
-# ---- the table: three cellblocks ----
-GRIDS = [("cbr", "rows", [4, 196, 332, 168], 11, 12, [22, 46, 30, 30, 30, 30, 30, 44, 26, 22, 22],
-          ["out", "param", "lo", "hi", "amt%", "chance", "wob%", "group", "trim%", "mode", "sign"]),
-         ("cbg", "groups", [4, 384, 106, 84], 2, 6, [60, 46], ["group", "corr"]),
-         ("cbk", "knobs", [124, 384, 212, 56], 4, 4, [40, 44, 64, 64], ["knob 1-4: row/group", "outlet|group", "param", "field"])]
+# ---- the table: three jit.cellblock grids (selmode 5 = edit in place; rowhead 1 = the first grid row is a header the engine never touches) ----
+RH, FS = 14, 9.0
+GRIDS = [("cbr", [4, 188, 334, 13 * RH + 4], 11, 13, 30, ["out", "param", "lo", "hi", "amt%", "chance", "wob%", "group", "trim%", "mode", "sign"]),
+         ("cbg", [4, 380, 108, 7 * RH + 4], 2, 7, 52, ["group", "corr"]),
+         ("cbk", [124, 380, 214, 5 * RH + 4], 4, 5, 52, ["row/group", "out|group", "param", "field"])]
 com("tl", "table: double-click a cell to edit; type a new row in the first empty line (needs out + param); clear out or param to delete", [400, 300, 400, 20], [4, 172, 332, 14], 8.0)
-for k, (cid, nm, rect, ncol, nrow, widths, heads) in enumerate(GRIDS):
-    obj(cid, f"jit.cellblock @rows {nrow} @cols {ncol} @colwidth 30 @rowheight 14 @fontsize 9", [400 + 10 * k, 320, rect[2], rect[3]], 2, 4, ["list", "list", "", "list"], presentation=1, presentation_rect=rect)
-    x = rect[0]
-    for c, (w, h) in enumerate(zip(widths, heads)):
-        com(f"h{k}_{c}", h, [400, 340, w, 14], [x, rect[1] - 13, w + 20 if k == 2 else w, 12], 7.0)
-        x += w
+for k, (cid, rect, ncol, nrow, cw, heads) in enumerate(GRIDS):
+    add({"id": cid, "maxclass": "jit.cellblock", "numinlets": 2, "numoutlets": 3, "outlettype": ["list", "list", "list"], "patching_rect": [400 + 10 * k, 320, rect[2], rect[3]],
+         "rows": nrow, "cols": ncol, "colwidth": cw, "rowheight": RH, "selmode": 5, "rowhead": 1, "neverdirty": 1, "precision": 3, "fontname": FONT, "fontsize": FS,
+         "presentation": 1, "presentation_rect": rect})
     obj(f"pc{k}", f"prepend cell {k}", [20 + 100 * k, 560, 90, 22], 1, 1); ln(cid, 0, f"pc{k}", 0); ln(f"pc{k}", 0, "js", 1)
     ln("js", 7 + k, cid, 0)
-widths_msg = {"cbr": GRIDS[0][5], "cbg": GRIDS[1][5], "cbk": GRIDS[2][5]}
-for k, (cid, nm, rect, ncol, nrow, widths, heads) in enumerate(GRIDS):
-    msg(f"cw{k}", ", ".join(f"colwidth {c} {w}" for c, w in enumerate(widths)), [20, 600 + 28 * k, 520, 22]); ln(f"cw{k}", 0, cid, 0)
+    msg(f"hd{k}", ", ".join(f"set {c} 0 {h}" for c, h in enumerate(heads)), [20, 600 + 28 * k, 640, 22]); ln(f"hd{k}", 0, cid, 0)
 obj("ld2", "loadbang", [20, 580, 60, 22], 1, 1, ["bang"])
-for k in range(3): ln("ld2", 0, f"cw{k}", 0)
+for k in range(3): ln("ld2", 0, f"hd{k}", 0)
 msg("rf", "refresh", [560, 580, 60, 22]); ln("ld2", 0, "rf", 0); ln("rf", 0, "js", 1)
 # the table is kept by the engine; a pattr stores it (one `restore ...` list) and echoes it back at load
 obj("pt", "pattr vary_table @autorestore 1", [20, 540, 200, 22], 1, 3, ["", "", ""]); ln("js", 6, "pt", 0); ln("pt", 0, "js", 1)

@@ -43,14 +43,14 @@
 						400,
 						20,
 						340,
-						474
+						488
 					],
 					"presentation": 1,
 					"presentation_rect": [
 						0,
 						0,
 						340,
-						474
+						488
 					],
 					"proportion": 0.5
 				}
@@ -875,358 +875,36 @@
 			{
 				"box": {
 					"id": "cbr",
-					"maxclass": "newobj",
+					"maxclass": "jit.cellblock",
 					"numinlets": 2,
-					"numoutlets": 4,
+					"numoutlets": 3,
 					"outlettype": [
 						"list",
 						"list",
-						"",
 						"list"
 					],
 					"patching_rect": [
 						400,
 						320,
-						332,
-						168
+						334,
+						186
 					],
-					"text": "jit.cellblock @rows 12 @cols 11 @colwidth 30 @rowheight 14 @fontsize 9",
+					"rows": 13,
+					"cols": 11,
+					"colwidth": 30,
+					"rowheight": 14,
+					"selmode": 5,
+					"rowhead": 1,
+					"neverdirty": 1,
+					"precision": 3,
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0,
 					"presentation": 1,
 					"presentation_rect": [
 						4,
-						196,
-						332,
-						168
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_0",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						22,
-						14
-					],
-					"text": "out",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						4,
-						183,
-						22,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_1",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						46,
-						14
-					],
-					"text": "param",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						26,
-						183,
-						46,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_2",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						30,
-						14
-					],
-					"text": "lo",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						72,
-						183,
-						30,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_3",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						30,
-						14
-					],
-					"text": "hi",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						102,
-						183,
-						30,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_4",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						30,
-						14
-					],
-					"text": "amt%",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						132,
-						183,
-						30,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_5",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						30,
-						14
-					],
-					"text": "chance",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						162,
-						183,
-						30,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_6",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						30,
-						14
-					],
-					"text": "wob%",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						192,
-						183,
-						30,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_7",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						44,
-						14
-					],
-					"text": "group",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						222,
-						183,
-						44,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_8",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						26,
-						14
-					],
-					"text": "trim%",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						266,
-						183,
-						26,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_9",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						22,
-						14
-					],
-					"text": "mode",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						292,
-						183,
-						22,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h0_10",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						22,
-						14
-					],
-					"text": "sign",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						314,
-						183,
-						22,
-						12
+						188,
+						334,
+						186
 					]
 				}
 			},
@@ -1250,89 +928,57 @@
 			},
 			{
 				"box": {
-					"id": "cbg",
-					"maxclass": "newobj",
+					"id": "hd0",
+					"maxclass": "message",
 					"numinlets": 2,
-					"numoutlets": 4,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						20,
+						600,
+						640,
+						22
+					],
+					"text": "set 0 0 out, set 1 0 param, set 2 0 lo, set 3 0 hi, set 4 0 amt%, set 5 0 chance, set 6 0 wob%, set 7 0 group, set 8 0 trim%, set 9 0 mode, set 10 0 sign",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0
+				}
+			},
+			{
+				"box": {
+					"id": "cbg",
+					"maxclass": "jit.cellblock",
+					"numinlets": 2,
+					"numoutlets": 3,
 					"outlettype": [
 						"list",
 						"list",
-						"",
 						"list"
 					],
 					"patching_rect": [
 						410,
 						320,
-						106,
-						84
+						108,
+						102
 					],
-					"text": "jit.cellblock @rows 6 @cols 2 @colwidth 30 @rowheight 14 @fontsize 9",
+					"rows": 7,
+					"cols": 2,
+					"colwidth": 52,
+					"rowheight": 14,
+					"selmode": 5,
+					"rowhead": 1,
+					"neverdirty": 1,
+					"precision": 3,
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0,
 					"presentation": 1,
 					"presentation_rect": [
 						4,
-						384,
-						106,
-						84
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h1_0",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						60,
-						14
-					],
-					"text": "group",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						4,
-						371,
-						60,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h1_1",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						46,
-						14
-					],
-					"text": "corr",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						64,
-						371,
-						46,
-						12
+						380,
+						108,
+						102
 					]
 				}
 			},
@@ -1356,149 +1002,57 @@
 			},
 			{
 				"box": {
-					"id": "cbk",
-					"maxclass": "newobj",
+					"id": "hd1",
+					"maxclass": "message",
 					"numinlets": 2,
-					"numoutlets": 4,
+					"numoutlets": 1,
+					"outlettype": [
+						""
+					],
+					"patching_rect": [
+						20,
+						628,
+						640,
+						22
+					],
+					"text": "set 0 0 group, set 1 0 corr",
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0
+				}
+			},
+			{
+				"box": {
+					"id": "cbk",
+					"maxclass": "jit.cellblock",
+					"numinlets": 2,
+					"numoutlets": 3,
 					"outlettype": [
 						"list",
 						"list",
-						"",
 						"list"
 					],
 					"patching_rect": [
 						420,
 						320,
-						212,
-						56
+						214,
+						74
 					],
-					"text": "jit.cellblock @rows 4 @cols 4 @colwidth 30 @rowheight 14 @fontsize 9",
+					"rows": 5,
+					"cols": 4,
+					"colwidth": 52,
+					"rowheight": 14,
+					"selmode": 5,
+					"rowhead": 1,
+					"neverdirty": 1,
+					"precision": 3,
+					"fontname": "Ableton Sans Light",
+					"fontsize": 9.0,
 					"presentation": 1,
 					"presentation_rect": [
 						124,
-						384,
-						212,
-						56
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h2_0",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						40,
-						14
-					],
-					"text": "knob 1-4: row/group",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						124,
-						371,
-						60,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h2_1",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						44,
-						14
-					],
-					"text": "outlet|group",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						164,
-						371,
-						64,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h2_2",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						64,
-						14
-					],
-					"text": "param",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						208,
-						371,
-						84,
-						12
-					]
-				}
-			},
-			{
-				"box": {
-					"id": "h2_3",
-					"maxclass": "comment",
-					"numinlets": 1,
-					"numoutlets": 0,
-					"patching_rect": [
-						400,
-						340,
-						64,
-						14
-					],
-					"text": "field",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 7.0,
-					"textcolor": [
-						0.8,
-						0.8,
-						0.8,
-						1.0
-					],
-					"presentation": 1,
-					"presentation_rect": [
-						272,
-						371,
-						84,
-						12
+						380,
+						214,
+						74
 					]
 				}
 			},
@@ -1522,47 +1076,7 @@
 			},
 			{
 				"box": {
-					"id": "cw0",
-					"maxclass": "message",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						20,
-						600,
-						520,
-						22
-					],
-					"text": "colwidth 0 22, colwidth 1 46, colwidth 2 30, colwidth 3 30, colwidth 4 30, colwidth 5 30, colwidth 6 30, colwidth 7 44, colwidth 8 26, colwidth 9 22, colwidth 10 22",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.0
-				}
-			},
-			{
-				"box": {
-					"id": "cw1",
-					"maxclass": "message",
-					"numinlets": 2,
-					"numoutlets": 1,
-					"outlettype": [
-						""
-					],
-					"patching_rect": [
-						20,
-						628,
-						520,
-						22
-					],
-					"text": "colwidth 0 60, colwidth 1 46",
-					"fontname": "Ableton Sans Light",
-					"fontsize": 9.0
-				}
-			},
-			{
-				"box": {
-					"id": "cw2",
+					"id": "hd2",
 					"maxclass": "message",
 					"numinlets": 2,
 					"numoutlets": 1,
@@ -1572,10 +1086,10 @@
 					"patching_rect": [
 						20,
 						656,
-						520,
+						640,
 						22
 					],
-					"text": "colwidth 0 40, colwidth 1 44, colwidth 2 64, colwidth 3 64",
+					"text": "set 0 0 row/group, set 1 0 out|group, set 2 0 param, set 3 0 field",
 					"fontname": "Ableton Sans Light",
 					"fontsize": 9.0
 				}
@@ -2071,6 +1585,18 @@
 			{
 				"patchline": {
 					"source": [
+						"hd0",
+						0
+					],
+					"destination": [
+						"cbr",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
 						"cbg",
 						0
 					],
@@ -2097,6 +1623,18 @@
 					"source": [
 						"js",
 						8
+					],
+					"destination": [
+						"cbg",
+						0
+					]
+				}
+			},
+			{
+				"patchline": {
+					"source": [
+						"hd1",
+						0
 					],
 					"destination": [
 						"cbg",
@@ -2143,31 +1681,7 @@
 			{
 				"patchline": {
 					"source": [
-						"cw0",
-						0
-					],
-					"destination": [
-						"cbr",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"cw1",
-						0
-					],
-					"destination": [
-						"cbg",
-						0
-					]
-				}
-			},
-			{
-				"patchline": {
-					"source": [
-						"cw2",
+						"hd2",
 						0
 					],
 					"destination": [
@@ -2183,7 +1697,7 @@
 						0
 					],
 					"destination": [
-						"cw0",
+						"hd0",
 						0
 					]
 				}
@@ -2195,7 +1709,7 @@
 						0
 					],
 					"destination": [
-						"cw1",
+						"hd1",
 						0
 					]
 				}
@@ -2207,7 +1721,7 @@
 						0
 					],
 					"destination": [
-						"cw2",
+						"hd2",
 						0
 					]
 				}

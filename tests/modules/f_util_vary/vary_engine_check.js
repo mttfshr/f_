@@ -87,21 +87,21 @@ c.base("x", 0.5); c.base("y", 0.5); var mon = c.out.filter(function (m) { return
 // 15. the rows grid: engine rows are pushed as `set <col> <row> <value>` on outlet 7; an edit comes back as `cell 0 <col> <row> <value>`
 var sets = function (c, o) { return c.out.filter(function (m) { return m[0] == o && m[1] == "set"; }); };
 c = load(); c.row(1, "x", -1, 1, 50, 100, 0, "-", 0, "u", "bi");
-assert(sets(c, 7).some(function (m) { return m[2] == 1 && m[3] == 0 && m[4] == "x"; }), "param cell pushed to the rows grid");
-c.base("x", 0); c.set("cell", 0, 4, 0, 0); c.set("roll"); assert.strictEqual(lastv(c, 0, "x"), 0, "editing the amount cell to 0 stops the variation");
-c.set("cell", 0, 4, 0, 100); c.set("roll"); assert(Math.abs(lastv(c, 0, "x")) > 0, "and back up");
+assert(sets(c, 7).some(function (m) { return m[2] == 1 && m[3] == 1 && m[4] == "x"; }), "param cell pushed to the rows grid");
+c.base("x", 0); c.set("cell", 0, 4, 1, 0); c.set("roll"); assert.strictEqual(lastv(c, 0, "x"), 0, "editing the amount cell to 0 stops the variation");
+c.set("cell", 0, 4, 1, 100); c.set("roll"); assert(Math.abs(lastv(c, 0, "x")) > 0, "and back up");
 // typing a new row into the first empty grid row: held until outlet and param are both there
-c.set("cell", 0, 0, 1, 2); c.set("cell", 0, 1, 1, "y"); c.base("y", 0.5); c.out.length = 0; c.set("roll");
+c.set("cell", 0, 0, 2, 2); c.set("cell", 0, 1, 2, "y"); c.base("y", 0.5); c.out.length = 0; c.set("roll");
 assert(on(c, 1, "y").length >= 1 && on(c, 0, "y").length == 0, "a typed row appears on its outlet only after both cells exist");
 // a bad outlet is refused and the grid is repushed; clearing the param deletes the row
-c.out.length = 0; c.set("cell", 0, 0, 0, 9); assert(c.posts.length >= 1 && sets(c, 7).length >= 1, "bad outlet refused, cell repushed");
-c.set("cell", 0, 1, 0, ""); c.out.length = 0; c.base("x", 0.4); assert.strictEqual(on(c, 0, "x")[0][2], 0.4, "a deleted row is a plain wire again");
+c.out.length = 0; c.set("cell", 0, 0, 1, 9); assert(c.posts.length >= 1 && sets(c, 7).length >= 1, "bad outlet refused, cell repushed");
+c.set("cell", 0, 1, 1, ""); c.out.length = 0; c.base("x", 0.4); assert.strictEqual(on(c, 0, "x")[0][2], 0.4, "a deleted row is a plain wire again");
 // duplicate outlet + param is refused
-var np = c.posts.length; c.row(1, "y", 0, 1, 10, 100); c.set("cell", 0, 0, 1, 2); assert(c.posts.length > np, "duplicate key refused");
+var np = c.posts.length; c.row(1, "y", 0, 1, 10, 100); c.set("cell", 0, 0, 2, 2); assert(c.posts.length > np, "duplicate key refused");
 // groups grid and knobs grid
-c = load(); c.set("cell", 1, 0, 0, "sway"); c.set("cell", 1, 1, 0, 0.8); c.row(1, "x", -1, 1, 50, 100, 0, "sway"); c.row(2, "x", -1, 1, 50, 100, 0, "sway"); c.base("x", 0); c.set("roll");
+c = load(); c.set("cell", 1, 0, 1, "sway"); c.set("cell", 1, 1, 1, 0.8); c.row(1, "x", -1, 1, 50, 100, 0, "sway"); c.row(2, "x", -1, 1, 50, 100, 0, "sway"); c.base("x", 0); c.set("roll");
 assert(Math.abs(lastv(c, 0, "x") - lastv(c, 1, "x")) < 0.3 * 0.5 * 2 + 1e-9 && lastv(c, 0, "x") != lastv(c, 1, "x"), "group made in the grid with corr 0.8 correlates the rows");
-c.set("cell", 2, 0, 0, "row"); c.set("cell", 2, 1, 0, 1); c.set("cell", 2, 2, 0, "x"); c.set("cell", 2, 3, 0, "amount"); c.set("k", 1, 0); c.set("k", 1, 1);
+c.set("cell", 2, 0, 1, "row"); c.set("cell", 2, 1, 1, 1); c.set("cell", 2, 2, 1, "x"); c.set("cell", 2, 3, 1, "amount"); c.set("k", 1, 0); c.set("k", 1, 1);
 assert(Math.abs(lastv(c, 0, "x")) > 0, "a knob assigned in the grid drives the row's amount");
 
 // 16. persistence: the table is stored as one `restore ...` list for a pattr, and restoring it rebuilds the same table
@@ -115,4 +115,6 @@ d2.set("restore", ...saved.slice(1)); assert.strictEqual(d2.out.filter(function 
 var e = load(); e.inlet = 1; e.messagename = "list"; e.anything.apply(e, saved); assert(e.out.length > 0, "a list-led restore from the pattr is accepted");
 // the stored list has the groups, params, rows and knobs, with | between
 assert(saved.indexOf("|") > 0 && saved.indexOf("group") >= 0 && saved.indexOf("row") >= 0 && saved.indexOf("knob") >= 0 && saved.indexOf("param") >= 0, "everything is in the stored list");
+// the header row (grid row 0) is not data: a click on it does nothing
+c = load(); c.row(1, "x", 0, 1, 10, 100); var nn = c.out.length; c.set("cell", 0, 1, 0, "param"); assert.strictEqual(c.out.length, nn, "header click ignored");
 console.log("ok");

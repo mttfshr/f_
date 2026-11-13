@@ -112,7 +112,7 @@ function knobSet(a) {
 
 // ---- the three cellblocks (rows, groups, knobs): the engine pushes `set <col> <row> <value>`; an edit comes back as `cell <grid> <col> <row> <value>` ----
 function rowCells(r) { return [r.outlet, r.param, r.lo, r.hi, r.amount, r.chance, r.wobble, r.group, r.trim, r.mode, r.sign]; }
-function gset(g, c, r, v) { if (v === undefined || v === "") outlet(7 + g, "set", c, r); else outlet(7 + g, "set", c, r, v); }
+function gset(g, c, r, v) { r += 1; if (v === undefined || v === "") outlet(7 + g, "set", c, r); else outlet(7 + g, "set", c, r, v); }     // grid row 0 is the header row (rowhead 1)
 function gridRow(i) { var cells = rowCells(rows[i]); for (var c = 0; c < 11; c++) gset(0, c, i, cells[c]); }
 function gridGroups() {
   for (var i = 0; i < GG; i++) { var pend = PEND[1][i] || [], n = gorder[i]; gset(1, 0, i, n !== undefined ? n : pend[0]); gset(1, 1, i, n !== undefined ? groups[n].corr : pend[1]); }
@@ -124,8 +124,9 @@ function gridAll() {
 }
 function reindex() { byKey = {}; for (var i = 0; i < rows.length; i++) byKey[rows[i].outlet + "|" + rows[i].param] = i; }
 function cellCmd(a) {
-  var g = Math.round(num(a[0], -1)), c = Math.round(num(a[1], -1)), r = Math.round(num(a[2], -1)), v = a.slice(3).join(" ");
+  var g = Math.round(num(a[0], -1)), c = Math.round(num(a[1], -1)), r = Math.round(num(a[2], -1)) - 1, v = a.slice(3).join(" ");        // minus the header row
   if (DEBUG) post("f_util_vary: cell", a.join(" "), "\n");
+  if (r == -1 && c >= 0 && g >= 0 && g <= 2) return;       // a click on the header row
   if (g < 0 || g > 2 || c < 0 || r < 0) { post("f_util_vary: cell not understood: " + a.join(" ") + "\n"); return; }
   if (g == 0) cellRow(c, r, v); else if (g == 1) cellGroup(c, r, v); else cellKnob(c, r, v);
 }
