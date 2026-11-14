@@ -2,7 +2,7 @@
 f_halftone -- definition.py
 
 Tone to marks: a fixed-angle halftone screen, one plate per color channel (R, G, B), each with its own angle and lattice
-phase. Dot and Line types and shape so far (T020, T021, T023); jitter, Threshold, Bayer and the Single plate mode are later tasks.
+phase. Dot, Line, Threshold and Bayer, shape and jitter (T020-T025); the Single plate mode is a later task (T016b).
 Stateless, one stage. A texture processor: one inlet, one outlet; the output follows the render size (render_dim: Params
 `width` and `height`). Spec, plan and tasks: .specify/f_halftone/{spec,plan,tasks}.md.
 Mirror: tests/modules/halftone/halftone_mirror.py.
@@ -32,14 +32,20 @@ patcher = {
     "outlets": [{"comment": "texture"}],
 
     "params": [
-        {"name": "screen", "type": "menu", "options": ["Dot", "Line"], "default": 0, "label": "Screen",
-         "hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone"},
+        {"name": "screen", "type": "menu", "options": ["Dot", "Line", "Threshold", "Bayer"], "default": 0, "label": "Screen",
+         "hint": "Dot: a lattice of dots, each sized by the tone at its center. Line: parallel lines whose width follows the tone. Threshold: ink where the tone is above Level. Bayer: an ordered dither, one pixel per mark"},
         {"name": "pitch", "type": "float", "min": 0.003, "max": 0.2, "default": 0.012, "label": "Pitch",
          "hint": "Lattice period in frame heights. Below about 10 pixels the inked area stops tracking the tone"},
         {"name": "softness", "type": "float", "min": 0.0, "max": 1.0, "default": 0.1, "label": "Soft",
          "hint": "Width of the edge between ink and no ink. 0 is as sharp as one pixel allows"},
-        {"name": "shape", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Shape",
+        {"name": "dot_shape", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Shape",
          "hint": "Dot only: round at 0, square at 1, the same inked area at every setting"},
+        {"name": "jitter", "type": "float", "min": 0.0, "max": 1.0, "default": 0.0, "label": "Jitter",
+         "hint": "Dot only: moves each dot off the lattice, from a regular screen at 0 toward a random one at 1. Above mid-tone it loses a little ink"},
+        {"name": "seed", "type": "int", "min": 1, "max": 999, "default": 1, "label": "Seed", "modmode": 0,
+         "hint": "Which random jitter pattern"},
+        {"name": "level", "type": "float", "min": 0.0, "max": 1.0, "default": 0.5, "label": "Level",
+         "hint": "Threshold only: the tone above which there is ink. Soft widens the cut"},
         {"name": "angle_r", "type": "float", "min": 0.0, "max": 180.0, "default": 15.0, "label": "Angle R",
          "hint": "Screen angle of the red plate, in degrees"},
         {"name": "angle_g", "type": "float", "min": 0.0, "max": 180.0, "default": 75.0, "label": "Angle G",
@@ -89,9 +95,18 @@ _ov = {
 }
 _ov.update(_dial_at("pitch", _COL_LEFT, _ROW_TOP))
 _ov.update(_dial_at("softness", _COL_LEFT, _ROW_LOW))
-_ov.update(_dial_at("shape", _COL_LEFT, _ROW_LOW + 62.0))     # T023: a third row on the left, under Soft
+_ov.update(_dial_at("dot_shape", _COL_LEFT, _ROW_LOW + 62.0))     # T023: a third row on the left, under Soft
 for _c, _x in _PLATE_X.items():
     _ov.update(_dial_at(f"angle_{_c}", _x + 18.5, _ROW_TOP))
     _ov.update(_dial_at(f"phase_{_c}_x", _x, _ROW_LOW))
     _ov.update(_dial_at(f"phase_{_c}_y", _x + 37.0, _ROW_LOW))
+# T024, T025 (2026-11-14): Jitter, Seed and Level on the third row, under the red and green plates
+_ov.update(_dial_at("jitter", _PLATE_X["r"], _ROW_LOW + 62.0))
+_ov.update(_dial_at("level", _PLATE_X["g"], _ROW_LOW + 62.0))
+_ov["seed.ctl"] = {"presentation_rect": [_PLATE_X["r"] + 37.0 - 17.0, _ROW_LOW + 62.0 + 14.0, 34.0, 15.0], "outlettype": ["", "int"],
+                   "saved_attribute_attributes": {"valueof": {
+                       "parameter_initial": [1.0], "parameter_initial_enable": 1, "parameter_linknames": 1,
+                       "parameter_longname": "seed", "parameter_mmax": 999.0, "parameter_mmin": 1.0, "parameter_modmode": 0,
+                       "parameter_shortname": "seed", "parameter_type": 1, "parameter_unitstyle": 0}}}
+_ov["seed.label"] = {"presentation_rect": [_PLATE_X["r"] + 37.0 - 25.0, _ROW_LOW + 62.0 - 4.0, 50.0, 18.0]}
 patcher["overrides"] = _ov

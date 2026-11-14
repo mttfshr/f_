@@ -12,7 +12,7 @@ fed every frame at the render size, 640 x 640 (bench_modules.RENDER_DIM_SIZE); e
 Asserted:
   - load, no messages: the output is the render size and matches the mirror at the definition's defaults. This is the row that
     proves `width` and `height` arrive: at the codebox defaults (1920 x 1080) the lattice would be a different one.
-  - the Screen menu (Line), pitch, softness, shape (T023, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
+  - the Screen menu (Line, Threshold, Bayer), pitch, softness, shape, level, jitter, seed (T023-T025, 2026-11-14), the three angles and the six phase dials each reach the pix: the frame matches the
     mirror with that value, and differs from the frame before it.
 A picture is compared as a fraction of values within TOL (bench_halftone.py explains why edge pixels can flip cells).
 
@@ -41,9 +41,9 @@ N = 640
 SETTLE = 30            # frames after a control message
 TOL = 2e-3
 FRAC_BAD = 5e-3
-DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "shape": 0.0, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
+DEFAULTS = {"screen": 0, "pitch": 0.012, "softness": 0.1, "dot_shape": 0.0, "jitter": 0.0, "seed": 1, "level": 0.5, "angle_r": 15.0, "angle_g": 75.0, "angle_b": 45.0,
             "phase_r_x": 0.0, "phase_r_y": 0.0, "phase_g_x": 0.0, "phase_g_y": 0.0, "phase_b_x": 0.0, "phase_b_y": 0.0}
-SCREENS = {0: "dot", 1: "line"}
+SCREENS = {0: "dot", 1: "line", 2: "threshold", 3: "bayer"}
 
 
 def photo(seed=6, n=N):
@@ -95,7 +95,8 @@ def matches(got, label, **deltas):
                           angles=(p["angle_r"], p["angle_g"], p["angle_b"]),
                           phases=((p["phase_r_x"], p["phase_r_y"]), (p["phase_g_x"], p["phase_g_y"]),
                                   (p["phase_b_x"], p["phase_b_y"])),
-                          softness=p["softness"], shape=p["shape"])
+                          softness=p["softness"], shape=p["dot_shape"], jitter=p["jitter"],
+                          seed=int(p["seed"]), level=p["level"])
     err = np.abs(got[..., :3].astype(np.float64) - want[..., :3].astype(np.float64))
     bad = float((err > TOL).mean())
     note(f"{label}: worst rgb error (edge pixels may flip cells)", float(err.max()))
@@ -121,7 +122,7 @@ def test_screen_pitch_softness():
              {"params": [["screen", 1]], "wait": SETTLE, "snap": "line"},
              {"params": [["screen", 0], ["pitch", 0.03]], "wait": SETTLE, "snap": "pitch"},
              {"params": [["softness", 0.5]], "wait": SETTLE, "snap": "soft"},
-             {"params": [["softness", 0.1], ["shape", 1.0]], "wait": SETTLE, "snap": "shape"}])
+             {"params": [["softness", 0.1], ["dot_shape", 1.0]], "wait": SETTLE, "snap": "shape"}])
     load, line, pitch, soft, shape = (snap(f, t) for t in ("load", "line", "pitch", "soft", "shape"))
     matches(line, "Screen menu: Line", screen=1)
     differs(line, load, "Screen menu")
@@ -129,8 +130,35 @@ def test_screen_pitch_softness():
     differs(pitch, load, "pitch")
     matches(soft, "softness 0.5", pitch=0.03, softness=0.5)
     check("softness: the frame changed", float(np.abs(soft[..., :3] - pitch[..., :3]).max() < 0.1), 0.0)
-    matches(shape, "shape 1 (T023)", pitch=0.03, shape=1.0)
+    matches(shape, "shape 1 (T023)", pitch=0.03, dot_shape=1.0)
     differs(shape, pitch, "shape")
+
+
+def test_types_jitter_seed_level():
+    """T024, T025 (2026-11-14): the Screen menu's Threshold and Bayer, Level, Jitter and Seed reach the pix. A jittered frame is
+    compared by its mean coverage only (the hash differs a little between GPU and NumPy: bench_halftone.py)."""
+    f = job([{"params": [["pitch", 0.03]], "wait": 60, "snap": "base"},
+             {"params": [["screen", 2]], "wait": SETTLE, "snap": "thr"},
+             {"params": [["level", 0.3]], "wait": SETTLE, "snap": "lvl"},
+             {"params": [["screen", 3]], "wait": SETTLE, "snap": "bay"},
+             {"params": [["screen", 0], ["jitter", 1.0]], "wait": SETTLE, "snap": "jit"},
+             {"params": [["seed", 5]], "wait": SETTLE, "snap": "seed"}])
+    base, thr, lvl, bay, jit, sd = (snap(f, t) for t in ("base", "thr", "lvl", "bay", "jit", "seed"))
+    matches(thr, "Screen menu: Threshold", pitch=0.03, screen=2)
+    differs(thr, base, "Threshold")
+    matches(lvl, "Level 0.3", pitch=0.03, screen=2, level=0.3)
+    differs(lvl, thr, "Level")
+    matches(bay, "Screen menu: Bayer", pitch=0.03, screen=3, level=0.3)
+    differs(bay, lvl, "Bayer")
+    for got, label, seed in ((jit, "Jitter 1", 1), (sd, "Seed 5", 5)):
+        want = halftone_stage(SRC, screen="dot", pitch=0.03,
+                              angles=(DEFAULTS["angle_r"], DEFAULTS["angle_g"], DEFAULTS["angle_b"]),
+                              softness=DEFAULTS["softness"], jitter=1.0, seed=seed)
+        dmean = max(abs(float(got[..., c].mean()) - float(want[..., c].mean())) for c in range(3))
+        note(f"{label}: worst channel mean minus the mirror's", dmean)
+        check(f"{label}: mean coverage is the mirror's", dmean, 0.04)   # the seed-to-seed spread: bench_halftone.py JIT_MEAN
+    differs(jit, base, "Jitter")
+    differs(sd, jit, "Seed")
 
 
 def test_angles_reach_their_own_plate():

@@ -1,18 +1,23 @@
 // codebox_halftone.gen -- f_halftone: the one stage. Tone to marks on a fixed-angle lattice, one plate per color channel.
 // Stateless, per pixel. Float32. Mirror: tests/modules/halftone/halftone_mirror.halftone_stage() (the conventions in its
 // docstring are the ones followed here). T020: Dot and Line, soft edge, exact extremes, zap, bypass, alpha; the per-plate
-// phase (FR-016) is in because it is part of the lattice formula. Shape added 2026-11-14 (T023). Not here yet: jitter (T024),
-// Threshold and Bayer (T025), the Single plate mode (T016b).
+// phase (FR-016) is in because it is part of the lattice formula. 2026-11-14: shape (T023), jitter (T024), Threshold and
+// Bayer (T025). Not here yet: the Single plate mode (T016b).
 //
 // Lattice (plan ADR-1): p = ((u - .5) * aspect, v - .5) in frame heights; q = R(-angle) p / pitch - phase;
 //   lattice cell = floor(q + .5), local f = q - that, in [-.5, .5]^2.
 // Spot functions (ADR-2): Dot T = A(r), the area of the radius-r circle inside the unit cell; Line T = 2 |f_y|.
-//   shape (T023, Dot only) morphs round to square: T = mix(A(r), (2 max(|f_x|, |f_y|))^2, shape), the slope likewise.
+//   dot_shape (T023, Dot only; a Param named `shape` never received its value on the bench, 2026-11-14) morphs round to square: T = mix(A(r), (2 max(|f_x|, |f_y|))^2, shape), the slope likewise.
 // Soft edge (ADR-3): coverage = clamp(.5 + (tone - T) / w, 0, 1), w = max(softness / 2, aa) * |dT/dd|,
 //   aa = 1 / (pitch in texels); then tone <= 0 gives exactly 0 and tone >= 1 exactly 1.
 // Tone (ADR-4): ONE nearest read per plate at a texel centre: Dot at the lattice cell's centre, Line at the pixel's own
 //   position along its centreline row. The reads are in the main body, the tone is passed to the functions (gate G8).
-// screen: 0 = Dot, 1 = Line. Angles in degrees. bypass_gate = 1: the (zapped) source.
+// Jitter (ADR-5, Dot only): each cell centre moves by jitter * .5 * (hash - .5) cells (the sin hash, seeded); the nine cells
+//   around the pixel are tested and the largest coverage wins; the tone is read at each displaced centre. jitter 0 takes the
+//   one-cell path, so the regular lattice is exactly the T020 one.
+// Threshold (ADR-6): smoothstep(level - w, level + w, tone), w = softness / 2 (a hard step at softness 0), per pixel.
+// Bayer: the 8 x 8 ordered matrix by texel, M = sum over bits b of 4^(2-b) (2 (x_b xor y_b) + y_b); lit where tone > (M + .5) / 64.
+// screen: 0 = Dot, 1 = Line, 2 = Threshold, 3 = Bayer. Angles in degrees. bypass_gate = 1: the (zapped) source.
 // Non-finite input is zapped to 0: abs(x) < 1e30 with switch() (NaN == NaN is TRUE on this GPU).
 // The render size comes from the Params `width` and `height` (render_dim; the size global reads 1 inside a live Vsynth pix,
 // build/spec.md). A bench job must set both to the output's size.
@@ -57,9 +62,8 @@ read_uv(qx, qy, is_line, cs, sn, pit, phx, phy, asp, wd, ht) {
     return (ti + 0.5) / wd, (tj + 0.5) / ht;
 }
 
-cover(qx, qy, is_line, tone, soft, aa, shp) {
-    fx = qx - floor(qx + 0.5);
-    fy = qy - floor(qy + 0.5);
+// coverage at local lattice coordinates (fx, fy) relative to a mark's centre
+cover_local(fx, fy, is_line, tone, soft, aa, shp) {
     rad = sqrt(fx * fx + fy * fy);
     sq = max(abs(fx), abs(fy));
     thr_dot = mix(area_round(rad), 4 * sq * sq, shp);
@@ -69,6 +73,56 @@ cover(qx, qy, is_line, tone, soft, aa, shp) {
     wid = max(soft * 0.5, aa) * max(abs(slp), 0.000001);
     cov = clamp(0.5 + (tone - thr) / wid, 0, 1);
     return switch(tone <= 0, 0, switch(tone >= 1, 1, cov));
+}
+
+cover(qx, qy, is_line, tone, soft, aa, shp) {
+    return cover_local(qx - floor(qx + 0.5), qy - floor(qy + 0.5), is_line, tone, soft, aa, shp);
+}
+
+// T024: the jittered Dot. ch picks the plate's channel (0 r, 1 g, 2 b). Reads inside a function and a loop are exact (T010).
+dot_jit(qx, qy, ch, cs, sn, pit, phx, phy, asp, wd, ht, soft, aa, shp, jit, sd) {
+    cx = floor(qx + 0.5);
+    cy = floor(qy + 0.5);
+    best = 0;
+    for (j = 0; j < 3; j += 1) {
+        for (i = 0; i < 3; i += 1) {
+            nx = cx + i - 1;
+            ny = cy + j - 1;
+            hx = fract(sin(nx * 127.1 + ny * 311.7 + sd * 74.7) * 43758.5453);
+            hy = fract(sin(nx * 269.5 + ny * 183.3 + sd * 246.1) * 43758.5453);
+            gx = nx + jit * 0.5 * (hx - 0.5);
+            gy = ny + jit * 0.5 * (hy - 0.5);
+            xx = gx + phx;
+            yy = gy + phy;
+            ppx = (cs * xx - sn * yy) * pit;
+            ppy = (sn * xx + cs * yy) * pit;
+            ti = clamp(floor((ppx / asp + 0.5) * wd), 0, wd - 1);
+            tj = clamp(floor((ppy + 0.5) * ht), 0, ht - 1);
+            ru = (ti + 0.5) / wd;
+            rv = (tj + 0.5) / ht;
+            tone = zap(switch(ch < 0.5, nearest(in1, vec(ru, rv)).x,
+                       switch(ch < 1.5, nearest(in1, vec(ru, rv)).y, nearest(in1, vec(ru, rv)).z)));
+            best = max(best, cover_local(qx - gx, qy - gy, 0, tone, soft, aa, shp));
+        }
+    }
+    return best;
+}
+
+// T025: the Threshold and Bayer coverage of one per-pixel tone
+thresh(tone, lvl, soft) {
+    hw = soft * 0.5;
+    return switch(hw > 0, smoothstep(lvl - hw, lvl + hw, tone), switch(tone > lvl, 1, 0));
+}
+
+bayer(tone, ix, iy) {
+    x0 = mod(ix, 2);
+    x1 = mod(floor(ix / 2), 2);
+    x2 = mod(floor(ix / 4), 2);
+    y0 = mod(iy, 2);
+    y1 = mod(floor(iy / 2), 2);
+    y2 = mod(floor(iy / 4), 2);
+    mm = 16 * (2 * abs(x0 - y0) + y0) + 4 * (2 * abs(x1 - y1) + y1) + (2 * abs(x2 - y2) + y2);
+    return switch(tone > (mm + 0.5) / 64, 1, 0);
 }
 
 Param screen(0);
@@ -83,7 +137,10 @@ Param phase_g_y(0);
 Param phase_b_x(0);
 Param phase_b_y(0);
 Param softness(0.1);
-Param shape(0);
+Param dot_shape(0);
+Param jitter(0);
+Param seed(1);
+Param level(0.5);
 Param bypass_gate(0);
 Param width(1920);
 Param height(1080);
@@ -101,8 +158,12 @@ py = norm.y - 0.5;
 pit = max(pitch, 0.0001);
 aa = 1 / (pit * ht);
 soft = clamp(softness, 0, 1);
-shp = clamp(shape, 0, 1);
+shp = clamp(dot_shape, 0, 1);
 is_line = switch(abs(screen - 1) < 0.5, 1, 0);
+is_thr = switch(abs(screen - 2) < 0.5, 1, 0);
+is_bay = switch(abs(screen - 3) < 0.5, 1, 0);
+jit = clamp(jitter, 0, 1);
+use_jit = switch(jit > 0, 1, 0) * switch(screen < 0.5, 1, 0);
 d2r = pi / 180;
 
 // red plate
@@ -112,6 +173,9 @@ qxr, qyr = lat_xy(px, py, csr, snr, pit, phase_r_x, phase_r_y);
 ur, vr = read_uv(qxr, qyr, is_line, csr, snr, pit, phase_r_x, phase_r_y, asp, wd, ht);
 tone_r = zap(nearest(in1, vec(ur, vr)).x);
 cov_r = cover(qxr, qyr, is_line, tone_r, soft, aa, shp);
+if (use_jit > 0.5) {
+    cov_r = dot_jit(qxr, qyr, 0, csr, snr, pit, phase_r_x, phase_r_y, asp, wd, ht, soft, aa, shp, jit, seed);
+}
 
 // green plate
 csg = snap0(cos(angle_g * d2r));
@@ -120,6 +184,9 @@ qxg, qyg = lat_xy(px, py, csg, sng, pit, phase_g_x, phase_g_y);
 ug, vg = read_uv(qxg, qyg, is_line, csg, sng, pit, phase_g_x, phase_g_y, asp, wd, ht);
 tone_g = zap(nearest(in1, vec(ug, vg)).y);
 cov_g = cover(qxg, qyg, is_line, tone_g, soft, aa, shp);
+if (use_jit > 0.5) {
+    cov_g = dot_jit(qxg, qyg, 1, csg, sng, pit, phase_g_x, phase_g_y, asp, wd, ht, soft, aa, shp, jit, seed);
+}
 
 // blue plate
 csb = snap0(cos(angle_b * d2r));
@@ -128,5 +195,15 @@ qxb, qyb = lat_xy(px, py, csb, snb, pit, phase_b_x, phase_b_y);
 ub, vb = read_uv(qxb, qyb, is_line, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht);
 tone_b = zap(nearest(in1, vec(ub, vb)).z);
 cov_b = cover(qxb, qyb, is_line, tone_b, soft, aa, shp);
+if (use_jit > 0.5) {
+    cov_b = dot_jit(qxb, qyb, 2, csb, snb, pit, phase_b_x, phase_b_y, asp, wd, ht, soft, aa, shp, jit, seed);
+}
+
+// T025: Threshold and Bayer replace the lattice, per pixel
+ixb = floor(norm.x * wd);
+iyb = floor(norm.y * ht);
+cov_r = switch(is_thr > 0.5, thresh(zr, level, soft), switch(is_bay > 0.5, bayer(zr, ixb, iyb), cov_r));
+cov_g = switch(is_thr > 0.5, thresh(zg, level, soft), switch(is_bay > 0.5, bayer(zg, ixb, iyb), cov_g));
+cov_b = switch(is_thr > 0.5, thresh(zb, level, soft), switch(is_bay > 0.5, bayer(zb, ixb, iyb), cov_b));
 
 out1 = mix(vec(cov_r, cov_g, cov_b, za), vec(zr, zg, zb, za), step(0.5, bypass_gate));
