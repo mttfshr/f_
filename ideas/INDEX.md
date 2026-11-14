@@ -320,6 +320,11 @@ substantially move a file in `ideas/`, update its entry here too.
   render context matches the truth, r 0.994 at 3.5 d*; one frame of lag vs
   pix chains; cost and untested items listed). Map plus findings, not a spec;
   built from the inventory, not per-module docs.
+- **[f_sparkle.md](f_sparkle.md)** ⚪ — Parametric sparkles (2026-11-14): pixels over
+  a luma threshold grow sparkles (cross, star, glint, burst, disc, dust); headroom over the
+  threshold sets size and, in tier mode, the kind. Two engines: Gather (star filter, tap
+  loop like `f_vf_glow`, ~256-tap cap) vs Cells (discrete glitter, texture bombing).
+  Lean: Cells first; test threshold → `f_vf_glow` composition before building Gather.
 - **[f_raster.md](f_raster.md)** ⚪ — Resolution-as-parameter: downsample/
   upsample with independent interpolation mode, for deliberate pixelation and
   as a pre-filter/anti-aliasing utility feeding UV-transformers (droste,
